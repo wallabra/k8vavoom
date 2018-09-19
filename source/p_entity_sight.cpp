@@ -410,8 +410,12 @@ static bool SightPathTraverse(sight_trace_t &Trace, VThinker *Self,
   {
     y1 += 1.0;        // don't side exactly on a line
   }
+
+  // check if `Length()` and `SetPointDirXY()` are happy
+  if (x1 == x2 && y1 == y2) { x2 += 0.01; y2 += 0.01; }
+
   Trace.Delta = Trace.End - Trace.Start;
-  Trace.Plane.SetPointDir(Trace.Start, Trace.Delta);
+  Trace.Plane.SetPointDirXY(Trace.Start, Trace.Delta);
   Trace.EarlyOut = false;
   Trace.LineStart = Trace.Start;
 

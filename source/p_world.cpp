@@ -294,13 +294,16 @@ void VPathTraverse::Init(VThinker *Self, float InX1, float InY1, float x2,
 //  if (fmod(y1 - BlockMapOrgY, MAPBLOCKSIZE) == 0.0)
     y1 += 1.0;  // don't side exactly on a line
 
+  // check if `Length()` and `SetPointDirXY()` are happy
+  if (x1 == x2 && y1 == y2) { x2 += 0.01; y2 += 0.01; }
+
   trace_org = TVec(x1, y1, 0);
   trace_dest = TVec(x2, y2, 0);
-  trace_delta = trace_dest - trace_org;
+  trace_delta = trace_dest-trace_org;
   trace_dir = Normalise(trace_delta);
   trace_len = Length(trace_delta);
 
-  trace_plane.SetPointDir(trace_org, trace_delta);
+  trace_plane.SetPointDirXY(trace_org, trace_delta);
 
   x1 -= Self->XLevel->BlockMapOrgX;
   y1 -= Self->XLevel->BlockMapOrgY;

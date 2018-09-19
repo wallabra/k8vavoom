@@ -105,8 +105,6 @@ if (ENABLE_VCCRUN)
   )
 
   set(VCCRUN_RUNTIME_SOURCES
-    ../source/maths.h
-    ../source/maths.cpp
     ../source/pr_cmds.cpp
     ../source/pr_exec.cpp
     ../source/scripts.h

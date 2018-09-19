@@ -265,8 +265,6 @@ set(MAIN_COMMON_SOURCES
   lockdefs.h
   mapinfo.cpp
   mapinfo.h
-  maths.cpp
-  maths.h
   menu.cpp
   menu.h
   misc.cpp

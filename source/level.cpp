@@ -1674,46 +1674,33 @@ void CalcLine(line_t *line)
   guard(CalcLine);
   //  Calc line's slopetype
   line->dir = *line->v2 - *line->v1;
-  if (!line->dir.x)
-  {
+  if (!line->dir.x) {
     line->slopetype = ST_VERTICAL;
-  }
-  else if (!line->dir.y)
-  {
+  } else if (!line->dir.y) {
     line->slopetype = ST_HORIZONTAL;
-  }
-  else
-  {
-    if (line->dir.y / line->dir.x > 0)
-    {
+  } else {
+    if (line->dir.y/line->dir.x > 0) {
       line->slopetype = ST_POSITIVE;
-    }
-    else
-    {
+    } else {
       line->slopetype = ST_NEGATIVE;
     }
   }
 
-  line->SetPointDir(*line->v1, line->dir);
+  line->SetPointDirXY(*line->v1, line->dir);
 
-  //  Calc line's bounding box
-  if (line->v1->x < line->v2->x)
-  {
+  // calc line's bounding box
+  if (line->v1->x < line->v2->x) {
     line->bbox[BOXLEFT] = line->v1->x;
     line->bbox[BOXRIGHT] = line->v2->x;
-  }
-  else
-  {
+  } else {
     line->bbox[BOXLEFT] = line->v2->x;
     line->bbox[BOXRIGHT] = line->v1->x;
   }
-  if (line->v1->y < line->v2->y)
-  {
+
+  if (line->v1->y < line->v2->y) {
     line->bbox[BOXBOTTOM] = line->v1->y;
     line->bbox[BOXTOP] = line->v2->y;
-  }
-  else
-  {
+  } else {
     line->bbox[BOXBOTTOM] = line->v2->y;
     line->bbox[BOXTOP] = line->v1->y;
   }

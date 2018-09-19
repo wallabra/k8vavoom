@@ -362,7 +362,7 @@ bool VLevel::TraceLine(linetrace_t &Trace, const TVec &Start, const TVec &End,
   Trace.End = realEnd;
   Trace.Delta = realEnd-Start;
 
-  Trace.Plane.SetPointDir(Start, Trace.Delta);
+  Trace.Plane.SetPointDirXY(Start, Trace.Delta);
 
   Trace.LineStart = Trace.Start;
 

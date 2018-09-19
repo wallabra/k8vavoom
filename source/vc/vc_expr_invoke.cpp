@@ -28,10 +28,6 @@
 #include <float.h>
 #include <math.h>
 
-#if !defined(VCC_STANDALONE_EXECUTOR) && defined(IN_VCC)
-# include "../maths.h"
-#endif
-
 // builtin codes
 #define BUILTIN_OPCODE_INFO
 #include "../progdefs.h"

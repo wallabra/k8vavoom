@@ -63,6 +63,7 @@
 #include "memorystream.h"// in-memory streams
 #include "arraystream.h"// stream for reading from array
 #include "bitstream.h" // streams for bit-data
+#include "mathutil.h"
 #include "vector.h" // vector math
 #include "matrix.h" // matrices
 #include "xml.h" // xml file parsing

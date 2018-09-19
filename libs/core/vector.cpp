@@ -22,136 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# include "gamedefs.h"
-#else
-# if defined(IN_VCC)
-#  include "../utils/vcc/vcc.h"
-# elif defined(VCC_STANDALONE_EXECUTOR)
-#  include "../vccrun/vcc_run.h"
-# endif
-#endif
-
-
-class VRotMatrix {
-public:
-  float m[3][3];
-
-  VRotMatrix (const TVec &Axis, float Angle) {
-    float s = msin(Angle);
-    float c = mcos(Angle);
-    float t = 1-c;
-
-    m[0][0] = t*Axis.x*Axis.x+c;
-    m[0][1] = t*Axis.x*Axis.y-s*Axis.z;
-    m[0][2] = t*Axis.x*Axis.z+s*Axis.y;
-
-    m[1][0] = t*Axis.y*Axis.x+s*Axis.z;
-    m[1][1] = t*Axis.y*Axis.y+c;
-    m[1][2] = t*Axis.y*Axis.z-s*Axis.x;
-
-    m[2][0] = t*Axis.z*Axis.x-s*Axis.y;
-    m[2][1] = t*Axis.z*Axis.y+s*Axis.x;
-    m[2][2] = t*Axis.z*Axis.z+c;
-  }
-
-  friend inline TVec operator * (const TVec &v, const VRotMatrix &m) {
-    return TVec(
-      m.m[0][0]*v.x+m.m[0][1]*v.y+m.m[0][2]*v.z,
-      m.m[1][0]*v.x+m.m[1][1]*v.y+m.m[1][2]*v.z,
-      m.m[2][0]*v.x+m.m[2][1]*v.y+m.m[2][2]*v.z);
-  }
-};
-
-
-//==========================================================================
-//
-//  mlog2
-//
-//==========================================================================
-/*
-int mlog2 (int val) {
-  int answer = 0;
-  while (val >>= 1) ++answer;
-  return answer;
-}
-*/
-
-
-//==========================================================================
-//
-//  mround
-//
-//==========================================================================
-/*
-int mround (float Val) {
-  return (int)floor(Val+0.5);
-}
-*/
-
-
-//==========================================================================
-//
-//  ToPowerOf2
-//
-//==========================================================================
-int ToPowerOf2 (int val) {
-  /*
-  int answer = 1;
-  while (answer < val) answer <<= 1;
-  return answer;
-  */
-  if (val < 1) val = 1;
-  --val;
-  val |= val>>1;
-  val |= val>>2;
-  val |= val>>4;
-  val |= val>>8;
-  val |= val>>16;
-  ++val;
-  return val;
-}
-
-
-//==========================================================================
-//
-//  AngleMod
-//
-//==========================================================================
-/*
-float AngleMod (float angle) {
-#if 1
-  angle = fmodf(angle, 360.0f);
-  while (angle < 0.0) angle += 360.0;
-  while (angle >= 360.0) angle -= 360.0;
-#else
-  angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
-#endif
-  return angle;
-}
-*/
-
-
-//==========================================================================
-//
-//  AngleMod180
-//
-//==========================================================================
-/*
-float AngleMod180 (float angle) {
-#if 1
-  angle = fmodf(angle, 360.0f);
-  while (angle < -180.0) angle += 360.0;
-  while (angle >= 180.0) angle -= 360.0;
-#else
-  angle += 180;
-  angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
-  angle -= 180;
-#endif
-  return angle;
-}
-*/
+#include "core.h"
 
 
 //==========================================================================
@@ -245,6 +116,19 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 
 //==========================================================================
 //
+//  RotateVectorAroundVector
+//
+//==========================================================================
+TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) {
+  guard(RotateVectorAroundVector);
+  VRotMatrix M(Axis, Angle);
+  return Vector*M;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  ProjectPointOnPlane
 //
 //==========================================================================
@@ -283,17 +167,4 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
 
   // normalise the result
   dst = Normalise(dst);
-}
-
-
-//==========================================================================
-//
-//  RotateVectorAroundVector
-//
-//==========================================================================
-TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) {
-  guard(RotateVectorAroundVector);
-  VRotMatrix M(Axis, Angle);
-  return Vector*M;
-  unguard;
 }

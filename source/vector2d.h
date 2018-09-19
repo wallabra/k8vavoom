@@ -69,13 +69,13 @@ public:
   inline void Set (const TVec2D &Anormal, double Adist) { normal = Anormal; dist = Adist; }
 
   // Initialises vertical plane from point and direction
-  inline void SetPointDir (const TVec2D &point, const TVec2D &dir) {
+  inline void SetPointDirXY (const TVec2D &point, const TVec2D &dir) {
     normal = Normalise(TVec2D(dir.y, -dir.x));
     dist = DotProduct(point, normal);
   }
 
   // Initialises vertical plane from 2 points
   inline void Set2Points (const TVec2D &v1, const TVec2D &v2) {
-    SetPointDir(v1, v2-v1);
+    SetPointDirXY(v1, v2-v1);
   }
 };

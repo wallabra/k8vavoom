@@ -603,7 +603,9 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   TVec org = TVec(SrcNode->x, SrcNode->y, 0);
   TVec dir = TVec(SrcNode->dx, SrcNode->dy, 0);
   if (SrcNode->too_long) { dir.x /= 2; dir.y /= 2; }
-  Node->SetPointDir(org, dir);
+  // check if `Length()` and `SetPointDirXY()` are happy
+  if (dir.x == 0 && dir.y == 0) Host_Error("AJBSP: invalid BSP node");
+  Node->SetPointDirXY(org, dir);
 
   Node->bbox[0][0] = SrcNode->r.bounds.minx;
   Node->bbox[0][1] = SrcNode->r.bounds.miny;

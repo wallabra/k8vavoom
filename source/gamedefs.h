@@ -36,7 +36,6 @@
 #include "common.h"   //  Common types
 #include "language.h" //  Localisation
 #include "misc.h"   //  Misc utilites
-#include "maths.h"    //  Misc math methods
 #include "cvar.h"   //  Console variables
 #include "infostr.h"  //  Info strings
 #include "debug.h"    //  Debug file

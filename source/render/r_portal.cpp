@@ -255,7 +255,7 @@ void VPortal::SetUpRanges(VViewClipper &Range, bool Revert)
           continue;
         }
         TPlane P;
-        P.SetPointDir(v1, Dir);
+        P.SetPointDirXY(v1, Dir);
         if ((DotProduct(vieworg, P.normal) - P.dist < 0.01) != Revert)
         {
           //  View origin is on the back side.

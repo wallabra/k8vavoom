@@ -86,6 +86,21 @@ public:
 };
 
 
+class TAVec {
+public:
+  float pitch;
+  float yaw;
+  float roll;
+
+  TAVec () {}
+  TAVec (float APitch, float AYaw, float ARoll) : pitch(APitch), yaw(AYaw), roll(ARoll) {}
+
+  friend VStream &operator << (VStream &Strm, TAVec &v) {
+    return Strm << v.pitch << v.yaw << v.roll;
+  }
+};
+
+
 static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) { return TVec(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z); }
 static __attribute__((unused)) inline TVec operator - (const TVec &v1, const TVec &v2) { return TVec(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z); }
 
@@ -128,3 +143,105 @@ static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, cons
 static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return (v1.x*v2.y)-(v1.y*v2.x); }
 
 static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
+
+
+void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up);
+void AngleVector (const TAVec &angles, TVec &forward);
+void VectorAngles (const TVec &vec, TAVec &angles);
+void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles);
+TVec RotateVectorAroundVector (const TVec &, const TVec &, float);
+
+
+//==========================================================================
+//
+//                PLANES
+//
+//==========================================================================
+
+enum {
+  PLANE_X,
+  PLANE_Y,
+  PLANE_Z,
+  PLANE_NEG_X,
+  PLANE_NEG_Y,
+  PLANE_NEG_Z,
+  PLANE_ANY,
+};
+
+
+class TPlane {
+ public:
+  TVec normal;
+  float dist;
+  int type;
+  int signbits;
+  int reserved1;
+  int reserved2;
+
+  void CalcBits () {
+         if (normal.x == 1.0) type = PLANE_X;
+    else if (normal.y == 1.0) type = PLANE_Y;
+    else if (normal.z == 1.0) type = PLANE_Z;
+    else if (normal.x == -1.0) type = PLANE_NEG_X;
+    else if (normal.y == -1.0) type = PLANE_NEG_Y;
+    else if (normal.z == -1.0) type = PLANE_NEG_Z;
+    else type = PLANE_ANY;
+
+    signbits = 0;
+    if (normal.x < 0.0) signbits |= 1;
+    if (normal.y < 0.0) signbits |= 2;
+    if (normal.z < 0.0) signbits |= 4;
+  }
+
+  inline void Set (const TVec &Anormal, float Adist) {
+    normal = Anormal;
+    dist = Adist;
+    CalcBits();
+  }
+
+  // initialises vertical plane from point and direction
+  inline void SetPointDirXY (const TVec &point, const TVec &dir) {
+#if 0
+    if (dir.x != 0 || dir.y != 0) {
+      normal = Normalise(TVec(dir.y, -dir.x, 0));
+    } else {
+      //k8: what to do here?!
+      normal = TVec(0, 0, 1);
+    }
+#else
+    normal = Normalise(TVec(dir.y, -dir.x, 0));
+#endif
+    dist = DotProduct(point, normal);
+    CalcBits();
+  }
+
+  // initialises vertical plane from 2 points
+  inline void Set2Points (const TVec &v1, const TVec &v2) {
+    SetPointDirXY(v1, v2-v1);
+  }
+
+  // get z of point with given x and y coords
+  // don't try to use it on a vertical plane
+  inline float GetPointZ (float x, float y) const {
+    return (dist-normal.x*x-normal.y*y)/normal.z;
+  }
+
+  inline float GetPointZ (const TVec &v) const {
+    return GetPointZ(v.x, v.y);
+  }
+
+  // returns side 0 (front) or 1 (back).
+  inline int PointOnSide (const TVec &point) const {
+    return (DotProduct(point, normal)-dist <= 0);
+  }
+
+  // returns side 0 (front), 1 (back), or 2 (on).
+  inline int PointOnSide2 (const TVec &point) const {
+    float dot = DotProduct(point, normal)-dist;
+    return (dot < -0.1 ? 1 : dot > 0.1 ? 0 : 2);
+  }
+};
+
+
+void ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal);
+void PerpendicularVector (TVec &dst, const TVec &src); // assumes "src" is normalised
