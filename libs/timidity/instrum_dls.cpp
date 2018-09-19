@@ -836,11 +836,13 @@ void Timidity_FreeDLS(DLS_Data *patches)
 	FreeDLS(patches);
 }
 
+/*
 static double RelativeGainToLinear(int centibels)
 {
 	// v = 10^(cb/(200*65536)) * V
 	return 100.0 * pow(10.0, (double)(centibels / 65536) / 200.0);
 }
+*/
 
 /* convert timecents to sec */
 static double to_msec(int timecent)
@@ -1019,15 +1021,9 @@ static void load_region_dls(MidiSong* song, DLS_Data *patches, Sample *sample, D
 		}
 
 		value = load_connection(art->cConnections, artList, CONN_DST_PAN) / 2;
-		sample->panning = (int)((0.5 + to_normalized_percent(value)) * 127.0);
-		if (sample->panning < 0)
-		{
-			sample->panning = 0;
-		}
-		if (sample->panning > 128)
-		{
-			sample->panning = 127;
-		}
+		int panval = (int)((0.5 + to_normalized_percent(value)) * 127.0);
+		if (sample->panning < 0) panval = 0; else if (sample->panning > 128) panval = 127;
+		sample->panning = panval;
 
 		//ctl->cmsg(CMSG_INFO, VERB_NORMAL, 
 		//	"%d, Rate=%d LV=%d HV=%d Low=%d Hi=%d Root=%d Pan=%d Attack=%f Hold=%f Sustain=%d Decay=%f Release=%f\n", index, sample->sample_rate, rgn->header->RangeVelocity.usLow, rgn->header->RangeVelocity.usHigh, sample->low_freq, sample->high_freq, sample->root_freq, sample->panning, attack, hold, sustain, decay, release);
