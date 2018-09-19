@@ -730,6 +730,7 @@ void VLevel::Destroy()
         r = nullptr;
       }
     }
+    // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
   }
