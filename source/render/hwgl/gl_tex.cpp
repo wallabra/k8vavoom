@@ -402,44 +402,49 @@ void VOpenGLDrawer::UploadTexture8(int Width, int Height, const vuint8 *Data,
   Z_Free(NewData);
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::UploadTexture
 //
 //==========================================================================
-
-void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t *data)
-{
+void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t *data) {
   guard(VOpenGLDrawer::UploadTexture);
-  int   w, h;
+  int w, h;
   vuint8 *image;
-  vuint8 *stackbuf = (vuint8 *)Z_Malloc(256 * 128 * 4);
 
-  w = ToPowerOf2(width);
-  if (w > maxTexSize) w = maxTexSize;
-  h = ToPowerOf2(height);
-  if (h > maxTexSize) h = maxTexSize;
+  if (width < 1 || height < 1) {
+    GCon->Logf("WARNING: fucked texture (w=%d; h=%d)", width, height);
+    width = w = 2;
+    height = h = 2;
+    data = nullptr;
+  } else {
+    w = ToPowerOf2(width);
+    if (w > maxTexSize) w = maxTexSize;
+    h = ToPowerOf2(height);
+    if (h > maxTexSize) h = maxTexSize;
+  }
 
-  if (w * h * 4 <= int(sizeof(stackbuf)))
-  {
-    image = stackbuf;
+  if (w*h*4 <= TmpImgBufSize && tmpImgBuf) {
+    image = tmpImgBuf;
+  } else {
+    image = (vuint8 *)Z_Malloc(w*h*4);
   }
-  else
-  {
-    image = (vuint8*)Z_Malloc(w * h * 4);
+
+  if (data) {
+    //if (width > 1 && height > 1) VTexture::SmoothEdges((vuint8 *)data, width, height, (vuint8 *)data);
+    if (w != width || h != height) {
+      // Smooth transparent edges
+      VTexture::SmoothEdges((vuint8 *)data, width, height, (vuint8 *)data);
+      // must rescale image to get "top" mipmap texture image
+      VTexture::ResampleTexture(width, height, (vuint8 *)data, w, h, image, multisampling_sample);
+    } else {
+      memcpy(image, data, w*h*4);
+    }
+  } else {
+    memset(image, 0, w*h*4);
   }
-  //if (width > 1 && height > 1) VTexture::SmoothEdges((vuint8 *)data, width, height, (vuint8 *)data);
-  if (w != width || h != height)
-  {
-    /* Smooth transparent edges */
-    VTexture::SmoothEdges((vuint8 *)data, width, height, (vuint8 *)data);
-    /* must rescale image to get "top" mipmap texture image */
-    VTexture::ResampleTexture(width, height, (vuint8 *)data, w, h, image, multisampling_sample);
-  }
-  else
-  {
-    memcpy(image, data, w*h*4);
-  }
+
   VTexture::AdjustGamma((rgba_t*)image, w * h);
   glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
@@ -453,7 +458,6 @@ void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t *data)
   }
 //#endif
 
-  if (image != stackbuf) Z_Free(image);
-  Z_Free(stackbuf);
+  if (image != tmpImgBuf) Z_Free(image);
   unguard;
 }

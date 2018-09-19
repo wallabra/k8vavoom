@@ -68,6 +68,18 @@ VOpenGLDrawer::VOpenGLDrawer ()
   mainFBO = 0;
   mainFBOColorTid = 0;
   mainFBODepthStencilTid = 0;
+
+  tmpImgBuf = (vuint8 *)Z_Malloc(TmpImgBufSize);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::~VOpenGLDrawer
+//
+//==========================================================================
+VOpenGLDrawer::~VOpenGLDrawer () {
+  if (tmpImgBuf) { Z_Free(tmpImgBuf); tmpImgBuf = nullptr; }
 }
 
 

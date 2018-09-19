@@ -407,6 +407,7 @@ class VOpenGLDrawer : public VDrawer {
 public:
   // VDrawer interface
   VOpenGLDrawer ();
+  virtual ~VOpenGLDrawer () override;
   virtual void InitResolution () override;
   virtual void StartUpdate (bool allowClear=true) override;
   virtual void Setup2D () override;
@@ -502,6 +503,9 @@ private:
 
 protected:
   enum { M_INFINITY = 8000 };
+
+  enum { TmpImgBufSize = 256*256*4 };
+  vuint8 *tmpImgBuf;
 
   GLuint mainFBO;
   GLuint mainFBOColorTid;
