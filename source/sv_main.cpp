@@ -583,45 +583,32 @@ static void G_DoCompleted()
   if (!deathmatch && !HubChange) GCmdBuf << "TeleportNewMap\n";
 }
 
+
 //==========================================================================
 //
 //  COMMAND TeleportNewMap
 //
 //==========================================================================
-
-COMMAND(TeleportNewMap)
-{
+COMMAND(TeleportNewMap) {
   guard(COMMAND TeleportNewMap);
-  if (Source == SRC_Command)
-  {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
 
-  if (GGameInfo->NetMode == NM_None ||
-    GGameInfo->NetMode == NM_Client)
-  {
-    return;
-  }
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
 
-  if (Args.Num() == 3)
-  {
+  if (Args.Num() == 3) {
     GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
     LeavePosition = atoi(*Args[2]);
-  }
-  else if (sv.intermission != 1)
-  {
+  } else if (sv.intermission != 1) {
     return;
   }
 
-  if (!deathmatch)
-  {
-    if (VStr(GLevelInfo->NextMap).StartsWith("EndGame"))
-    {
-      for (int i = 0; i < svs.max_clients; i++)
-      {
-        if (GGameInfo->Players[i])
-        {
+  if (!deathmatch) {
+    if (VStr(GLevelInfo->NextMap).StartsWith("EndGame")) {
+      for (int i = 0; i < svs.max_clients; ++i) {
+        if (GGameInfo->Players[i]) {
           GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
         }
       }
@@ -633,14 +620,11 @@ COMMAND(TeleportNewMap)
 #ifdef CLIENT
   Draw_TeleportIcon();
 #endif
+
   RebornPosition = LeavePosition;
   GGameInfo->RebornPosition = RebornPosition;
   mapteleport_issued = true;
-  if (GGameInfo->NetMode == NM_Standalone)
-  {
-    // Copy the base slot to the reborn slot
-    SV_UpdateRebornSlot();
-  }
+  //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
   unguard;
 }
 
@@ -1126,39 +1110,25 @@ void SV_ShutdownGame()
   unguard;
 }
 
+
 #ifdef CLIENT
-
 //==========================================================================
 //
-//  G_DoSingleReborn
-//
-//  Called by G_Ticker based on gameaction.  Loads a game from the reborn
-// save slot.
+//  COMMAND Restart
 //
 //==========================================================================
-
-COMMAND(Restart)
-{
+COMMAND(Restart) {
   guard(COMMAND Restart);
-  if (GGameInfo->NetMode != NM_Standalone)
-  {
-    return;
-  }
-
-  if (SV_RebornSlotAvailable())
-  {
-    // Use the reborn code if the slot is available
-    SV_LoadGame(SV_GetRebornSlot());
-  }
-  else
+  if (GGameInfo->NetMode != NM_Standalone) return;
+  //if (!SV_LoadQuicksaveSlot())
   {
     // reload the level from scratch
     SV_SpawnServer(*GLevel->MapName, true, false);
   }
   unguard;
 }
-
 #endif
+
 
 //==========================================================================
 //

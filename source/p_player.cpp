@@ -207,11 +207,8 @@ void VBasePlayer::SpawnClient()
     sv_map_travel = false;
   }
 
-  // For single play, save immediately into the reborn slot
-  if (GGameInfo->NetMode < NM_DedicatedServer)
-  {
-    SV_SaveGame(SV_GetRebornSlot(), REBORN_DESCRIPTION);
-  }
+  // for single play, save immediately into the reborn slot
+  //!if (GGameInfo->NetMode < NM_DedicatedServer) SV_SaveGameToReborn();
   unguard;
 }
 

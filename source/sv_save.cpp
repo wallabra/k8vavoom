@@ -44,7 +44,6 @@ static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore 
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define REBORN_SLOT  (9)
 #define QUICKSAVE_SLOT  (-666)
 
 #define EMPTYSTRING  "empty slot"
@@ -1190,41 +1189,6 @@ void SV_InitBaseSlot () {
 
 //==========================================================================
 //
-// SV_GetRebornSlot
-//
-//==========================================================================
-int SV_GetRebornSlot () {
-  return REBORN_SLOT;
-}
-
-
-//==========================================================================
-//
-// SV_RebornSlotAvailable
-//
-// Returns true if the reborn slot is available.
-//
-//==========================================================================
-bool SV_RebornSlotAvailable () {
-  if (Sys_FileExists(SV_GetSaveSlotFileName(REBORN_SLOT))) return true;
-  return false;
-}
-
-
-//==========================================================================
-//
-// SV_UpdateRebornSlot
-//
-// Copies the base slot to the reborn slot.
-//
-//==========================================================================
-void SV_UpdateRebornSlot () {
-  BaseSlot.SaveToSlot(REBORN_SLOT);
-}
-
-
-//==========================================================================
-//
 // SV_MapTeleport
 //
 //==========================================================================
@@ -1367,6 +1331,27 @@ void SV_AutoSaveOnLevelExit () {
 }
 
 
+void SV_AutoSave () {
+  if (!CheckIfSaveIsAllowed()) return;
+
+  int aslot = SV_FindAutosaveSlot();
+  if (!aslot) {
+    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    return;
+  }
+
+  Draw_SaveIcon();
+
+  TTimeVal tv;
+  GetTimeOfDay(&tv);
+  VStr svname = TimeVal2Str(&tv, true)+": "+VStr("AUTO: ")+(*GLevel->MapName);
+
+  SV_SaveGame(aslot, svname);
+
+  GCon->Logf("Game autosaved to slot #%d", -aslot);
+}
+
+
 //==========================================================================
 //
 //  COMMAND Save
@@ -1415,10 +1400,7 @@ COMMAND(Load) {
 
   Draw_LoadIcon();
   SV_LoadGame(slot);
-  if (GGameInfo->NetMode == NM_Standalone) {
-    // copy the base slot to the reborn slot
-    SV_UpdateRebornSlot();
-  }
+  //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
   unguard;
 }
 
