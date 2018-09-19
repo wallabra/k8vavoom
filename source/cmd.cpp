@@ -797,6 +797,7 @@ COMMAND(Exec) {
     delete Strm;
     delete[] buf;
     GCon->Log(VStr("Error reading ")+Args[1]);
+    return;
   }
   delete Strm;
 
