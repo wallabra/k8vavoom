@@ -210,7 +210,7 @@ extern TVec       viewright;
 extern TVec       viewup;
 extern TAVec      viewangles;
 
-extern VCvarB     r_fog;
+extern VCvarI     r_fog;
 extern VCvarF     r_fog_r;
 extern VCvarF     r_fog_g;
 extern VCvarF     r_fog_b;

@@ -62,7 +62,7 @@ TClipPlane        view_clipplanes[5];
 
 int           r_visframecount;
 
-VCvarB          r_fog("r_fog", false, "Fog mode.");
+VCvarI          r_fog("r_fog", "0", "Fog mode (0:GL_LINEAR; 1:GL_LINEAR; 2:GL_EXP; 3:GL_EXP2; add 4 to get \"nicer\" fog).");
 VCvarB          r_fog_test("r_fog_test", false, "Is fog testing enabled?");
 VCvarF          r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
 VCvarF          r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
