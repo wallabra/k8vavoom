@@ -57,7 +57,8 @@ VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less t
 //
 //==========================================================================
 VOpenGLDrawer::VOpenGLDrawer ()
-  : texturesGenerated(false)
+  : VDrawer()
+  , texturesGenerated(false)
   , lastgamma(0)
   , CurrentFade(0)
 {
@@ -729,6 +730,8 @@ void VOpenGLDrawer::InitResolution () {
   ShadowsModelFogViewOrigin = p_glGetUniformLocationARB(ShadowsModelFogProgram, "ViewOrigin");
   ShadowsModelFogAllowTransparency = p_glGetUniformLocationARB(ShadowsModelFogProgram, "AllowTransparency");
 
+  mInitialized = true;
+
   unguard;
 }
 
@@ -827,7 +830,7 @@ void VOpenGLDrawer::Setup2D () {
 //  VOpenGLDrawer::StartUpdate
 //
 //==========================================================================
-void VOpenGLDrawer::StartUpdate () {
+void VOpenGLDrawer::StartUpdate (bool allowClear) {
   guard(VOpenGLDrawer::StartUpdate);
   glFinish();
 
@@ -835,7 +838,7 @@ void VOpenGLDrawer::StartUpdate () {
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
   }
 
-  if (clear) glClear(GL_COLOR_BUFFER_BIT);
+  if (allowClear && clear) glClear(GL_COLOR_BUFFER_BIT);
 
   switch (tex_linear) {
     case 1:
@@ -922,6 +925,7 @@ void VOpenGLDrawer::BeginDirectUpdate () {
   guard(VOpenGLDrawer::BeginDirectUpdate);
   glFinish();
   glDrawBuffer(GL_FRONT);
+  if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, 0);
   unguard;
 }
 
@@ -934,6 +938,7 @@ void VOpenGLDrawer::BeginDirectUpdate () {
 void VOpenGLDrawer::EndDirectUpdate () {
   guard(VOpenGLDrawer::EndDirectUpdate);
   glDrawBuffer(GL_BACK);
+  if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
   unguard;
 }
 

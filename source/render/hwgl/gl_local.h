@@ -408,8 +408,8 @@ public:
   // VDrawer interface
   VOpenGLDrawer ();
   virtual void InitResolution () override;
-  virtual void StartUpdate () override;
-  void Setup2D ();
+  virtual void StartUpdate (bool allowClear=true) override;
+  virtual void Setup2D () override;
   virtual void BeginDirectUpdate () override;
   virtual void EndDirectUpdate () override;
   virtual void *ReadScreen (int *, bool *) override;

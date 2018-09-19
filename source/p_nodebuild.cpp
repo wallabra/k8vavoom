@@ -30,6 +30,9 @@
 #include "filesys/fwaddefs.h"
 #include "ajbsp/bsp.h"
 
+#include "drawer.h"
+
+
 namespace ajbsp {
   extern bool lev_doing_hexen;
   extern int num_old_vert;
@@ -912,20 +915,42 @@ static PVSThreadInfo pvsTreadList[PVSThreadMax];
 static int pvsNextPortal, pvsMaxPortals, pvsLastReport; // next portal to process
 static mythread_mutex pvsNPLock;
 static double pvsLastReportTime;
+static double pvsReportTimeout;
+static int pvsReportPNum;
+
+static mythread_mutex pvsPingLock;
+static mythread_cond pvsPingCond;
+static int pvsPBarCur, pvsPBarMax;
 
 
 static int getNextPortalNum () {
   mythread_mutex_lock(&pvsNPLock);
   int res = pvsNextPortal++;
-  if (res-pvsLastReport >= 512) {
+  if (res-pvsLastReport >= pvsReportPNum) {
     pvsLastReport = res;
     const double tt = Sys_Time();
-    if (tt-pvsLastReportTime >= 2.5) {
+    if (tt-pvsLastReportTime >= pvsReportTimeout) {
       pvsLastReportTime = tt;
-      int cur = res;
-      if (cur > pvsMaxPortals) cur = pvsMaxPortals;
-      int prc = cur*100/pvsMaxPortals;
-      GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, pvsMaxPortals);
+      mythread_mutex_lock(&pvsPingLock);
+      pvsPBarCur = res;
+      if (pvsPBarCur > pvsMaxPortals) pvsPBarCur = pvsMaxPortals;
+      pvsPBarMax = pvsMaxPortals;
+      // signal...
+      mythread_cond_signal(&pvsPingCond);
+      // ...and unlock
+      mythread_mutex_unlock(&pvsPingLock);
+    }
+  } else {
+    // we HAVE to report "completion", or main thread will hang
+    if (res == pvsMaxPortals) {
+      mythread_mutex_lock(&pvsPingLock);
+      pvsPBarCur = res;
+      if (pvsPBarCur > pvsMaxPortals) pvsPBarCur = pvsMaxPortals;
+      pvsPBarMax = pvsMaxPortals;
+      // signal...
+      mythread_cond_signal(&pvsPingCond);
+      // ...and unlock
+      mythread_mutex_unlock(&pvsPingLock);
     }
   }
   mythread_mutex_unlock(&pvsNPLock);
@@ -990,6 +1015,32 @@ static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
 }
 }
 
+enum {
+  PBarHPad = 20,
+  PBarVPad = 20,
+  PBarHeight = 20,
+};
+
+
+static int lastPBarWdt = -666;
+
+static void pvsDrawPBar (int cur, int max) {
+  if (Drawer && Drawer->IsInited()) {
+    int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
+    if (cur < max && wdt == lastPBarWdt) return;
+    lastPBarWdt = wdt;
+    Drawer->StartUpdate(false); // don't clear
+    Drawer->FillRect(PBarHPad-2, ScreenHeight-PBarVPad-PBarHeight-2, ScreenWidth-PBarHPad+2, ScreenHeight-PBarVPad+2, 0xffffffff);
+    Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
+    Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
+    if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
+    Drawer->Update();
+  } else {
+    int prc = cur*100/max;
+    GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, max);
+  }
+}
+
 
 static void pvsStartThreads (const PVSInfo &anfo) {
   pvsNextPortal = 0;
@@ -997,7 +1048,14 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   pvsMaxPortals = anfo.numportals;
   int pvsThreadsToUse = loader_pvs_builder_threads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
+
+  pvsReportTimeout = (Drawer && Drawer->IsInited() ? 0.05 : 2.5);
+  pvsReportPNum = (Drawer && Drawer->IsInited() ? 32 : 512);
+
   mythread_mutex_init(&pvsNPLock);
+  mythread_mutex_init(&pvsPingLock);
+  mythread_cond_init(&pvsPingCond);
+
   int ccount = 0;
   pvsLastReportTime = Sys_Time();
   for (int f = 0; f < pvsThreadsToUse; ++f) {
@@ -1006,10 +1064,33 @@ static void pvsStartThreads (const PVSInfo &anfo) {
     if (pvsTreadList[f].created) ++ccount;
   }
   if (ccount == 0) Sys_Error("Cannot create PVS worker threads");
+
+  // loop until we'll get at least one complete progress
+  bool wasProgress = false;
+  lastPBarWdt = -666;
+  mythread_mutex_lock(&pvsPingLock);
+  for (;;) {
+    mythread_cond_wait(&pvsPingCond, &pvsPingLock);
+    // got one!
+    bool done = (pvsPBarCur == pvsPBarMax);
+    if (done && !wasProgress) break; // don't spam with progress messages
+    pvsDrawPBar(pvsPBarCur, pvsPBarMax);
+    wasProgress = true;
+    if (done) break;
+  }
+  mythread_mutex_unlock(&pvsPingLock);
+
+  if (wasProgress && Drawer && Drawer->IsInited()) pvsDrawPBar(42, 42);
+
+  // wait for all threads to complete
   for (int f = 0; f < pvsThreadsToUse; ++f) {
     if (pvsTreadList[f].created) mythread_join(pvsTreadList[f].trd);
   }
+
   mythread_mutex_destroy(&pvsNPLock);
+  mythread_mutex_destroy(&pvsPingLock);
+  mythread_cond_destroy(&pvsPingCond);
+
   if (pvsNextPortal < anfo.numportals) Sys_Error("PVS worker threads gone ape");
 }
 

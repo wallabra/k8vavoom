@@ -114,18 +114,23 @@ public:
   virtual void BuildLightMap(surface_t *) = 0;
 };
 
-class VDrawer
-{
+class VDrawer {
+protected:
+  bool mInitialized;
+
 public:
   VRenderLevelDrawer *RendLev;
 
-  VDrawer () : RendLev(nullptr) {}
+  VDrawer () : RendLev(nullptr) { mInitialized = false; }
   virtual ~VDrawer () {}
 
   virtual void Init() = 0;
   virtual bool SetResolution(int, int, bool) = 0;
   virtual void InitResolution() = 0;
-  virtual void StartUpdate() = 0;
+  inline bool IsInited () const { return mInitialized; }
+
+  virtual void StartUpdate (bool allowClear=true) = 0;
+  virtual void Setup2D () = 0;
   virtual void Update() = 0;
   virtual void BeginDirectUpdate() = 0;
   virtual void EndDirectUpdate() = 0;

@@ -56,6 +56,7 @@ IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL", "SDL OpenGL rasteris
 void VSdlOpenGLDrawer::Init () {
   hw_window = nullptr;
   hw_glctx = nullptr;
+  mInitialized = false; // just in case
 }
 
 
@@ -234,5 +235,6 @@ void VSdlOpenGLDrawer::Shutdown() {
     SDL_DestroyWindow(hw_window);
     hw_window = nullptr;
   }
+  mInitialized = false;
   unguard;
 }
