@@ -46,8 +46,8 @@ private:
   char *data; // string, 0-terminated (0 is not in length); can be null
 
 private:
-  inline Store *store () { return (data ? ((Store *)data)-1 : nullptr); }
-  inline Store *store () const { return (data ? ((Store *)data)-1 : nullptr); }
+  inline Store *store () { return (data ? (Store *)(data-sizeof(Store)) : nullptr); }
+  inline Store *store () const { return (data ? (Store *)(data-sizeof(Store)) : nullptr); }
 
   inline void incref () const {
     if (data) ++store()->rc;

@@ -299,6 +299,7 @@ void VStr::makeMutable () {
   if (!data || store()->rc == 1) return; // nothing to do
   // allocate new string
   Store *oldstore = store();
+  const char *olddata = data;
   size_t olen = (size_t)oldstore->length;
   size_t newsz = olen+64; // overallocate a little
   Store *newdata = (Store *)malloc(sizeof(Store)+newsz+1);
@@ -306,9 +307,9 @@ void VStr::makeMutable () {
   newdata->length = (int)olen;
   newdata->alloted = (int)newsz;
   newdata->rc = 1;
-  data = (char *)(newdata+1);
+  data = ((char *)newdata)+sizeof(Store);
   // copy old data
-  memcpy(data, oldstore+1, olen+1);
+  memcpy(data, olddata, olen+1);
   --oldstore->rc; // decrement old refcounter
 #ifdef VAVOOM_TEST_VSTR
   fprintf(stderr, "VStr: makeMutable: old=%p(%d); new=%p(%d)\n", oldstore+1, oldstore->rc, data, newdata->rc);
@@ -345,7 +346,7 @@ void VStr::resize (int newlen) {
     #ifdef VAVOOM_TEST_VSTR
     fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", data, 0, ns+1, ns->rc);
     #endif
-    data = (char *)(ns+1);
+    data = ((char *)ns)+sizeof(Store);
     data[newlen] = 0;
     return;
   }
@@ -363,7 +364,7 @@ void VStr::resize (int newlen) {
         #ifdef VAVOOM_TEST_VSTR
         fprintf(stderr, "VStr: realloced(shrink): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
         #endif
-        data = (char *)(ns+1);
+        data = ((char *)ns)+sizeof(Store);
       }
     } else {
       // grow
@@ -381,7 +382,7 @@ void VStr::resize (int newlen) {
         #ifdef VAVOOM_TEST_VSTR
         fprintf(stderr, "VStr: realloced(grow): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
         #endif
-        data = (char *)(ns+1);
+        data = ((char *)ns)+sizeof(Store);
       }
     }
     store()->length = newlen;
@@ -407,7 +408,7 @@ void VStr::resize (int newlen) {
     }
 
     // copy data
-    memcpy(ns+1, data, newlen);
+    memcpy(((char *)ns)+sizeof(Store), data, newlen);
     // setup info
     ns->length = newlen;
     ns->alloted = alloclen;
@@ -418,7 +419,7 @@ void VStr::resize (int newlen) {
     fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
     #endif
     // use new data
-    data = (char *)(ns+1);
+    data = ((char *)ns)+sizeof(Store);
   }
 
   // some functions expects this
@@ -438,11 +439,11 @@ void VStr::setContent (const char *s, int len) {
     ns->length = len;
     ns->alloted = (int)newsz;
     ns->rc = 1;
-    memcpy(ns+1, s, len);
+    memcpy(((char *)ns)+sizeof(Store), s, len);
     // free this string
     clear();
     // use new data
-    data = (char *)(ns+1);
+    data = ((char *)ns)+sizeof(Store);
     data[len] = 0;
     #ifdef VAVOOM_TEST_VSTR
     fprintf(stderr, "VStr: setContent: new=%p(%d)\n", data, store()->rc);
