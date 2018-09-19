@@ -1072,9 +1072,9 @@ static bool AM_clipMline(mline_t *ml, fline_t *fl)
     TOP   = 8
   };
 
-  register int  outcode1 = 0;
-  register int  outcode2 = 0;
-  register int  outside;
+  int  outcode1 = 0;
+  int  outcode2 = 0;
+  int  outside;
 
   fpoint_t    tmp = { 0, 0};
   int       dx;
