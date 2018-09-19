@@ -852,6 +852,12 @@ bool VLevel::PolyCheckMobjBlocking(seg_t *seg, polyobj_t *po)
           }
           if (mobj->EntityFlags & VEntity::EF_Corpse)
           {
+            if ((mobj->EntityFlags & VEntity::EF_Solid) == 0) {
+              tmbbox[BOXTOP] = mobj->Origin.y + mobj->Radius;
+              tmbbox[BOXBOTTOM] = mobj->Origin.y - mobj->Radius;
+              tmbbox[BOXLEFT] = mobj->Origin.x - mobj->Radius;
+              tmbbox[BOXRIGHT] = mobj->Origin.x + mobj->Radius;
+            }
             if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
               tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
               tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
