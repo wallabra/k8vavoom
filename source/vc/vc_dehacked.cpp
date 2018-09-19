@@ -1306,7 +1306,7 @@ static void LoadDehackedFile (VStream *Strm) {
         Lump = W_CheckNumForName(VName(*LumpName, VName::AddLower8));
       }
       if (Lump < 0) {
-        GCon->Logf(va("Lump %s not found", *LumpName));
+        GCon->Logf("Lump '%s' not found", *LumpName);
       } else {
         char *SavedPatch = Patch;
         char *SavedPatchPtr = PatchPtr;
