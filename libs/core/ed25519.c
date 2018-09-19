@@ -40,6 +40,7 @@ static inline uint32_t U8TO32_LE(const unsigned char *p) {
 	 ((uint32_t)(p[3]) << 24));
 }
 
+/*
 static inline uint64_t U8TO64_LE(const unsigned char *p) {
 	return
 	(((uint64_t)(p[0])      ) |
@@ -62,6 +63,7 @@ static inline void U64TO8_LE(unsigned char *p, const uint64_t v) {
 	p[6] = (unsigned char)(v >> 48);
 	p[7] = (unsigned char)(v >> 56);
 }
+*/
 
 
 /* define ED25519_SUFFIX to have it appended to the end of each public function */
