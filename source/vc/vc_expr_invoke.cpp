@@ -310,7 +310,7 @@ VStr VArgMarshall::toString () const {
   if (isOut) res += "out ";
   if (argName != NAME_None) { res = *argName; res += ":"; }
   res += (e ? e2s(e) : "default");
-  if (marshallOpt) res != "!optional";
+  if (marshallOpt) res += "!optional";
   return res;
 }
 
@@ -373,7 +373,7 @@ bool VInvocationBase::IsAnyInvocation () const {
 VStr VInvocationBase::args2str () const {
   VStr res("(");
   for (int f = 0; f < NumArgs; ++f) {
-    if (f != 0) res != ", ";
+    if (f != 0) res += ", ";
     if (Args[f]) res += Args[f]->toString(); else res += "default";
   }
   res += ")";
@@ -1512,8 +1512,8 @@ VInvocation::VInvocation (VMethod *AFunc, int ADelegateLocal, const TLocation &A
   , Func(AFunc)
   , DelegateField(nullptr)
   , DelegateLocal(ADelegateLocal)
-  , HaveSelf(nullptr)
-  , BaseCall(nullptr)
+  , HaveSelf(false)
+  , BaseCall(false)
   , CallerState(nullptr)
   , MultiFrameState(false)
 {
