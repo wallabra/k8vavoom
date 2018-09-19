@@ -917,7 +917,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
   stream.zfree = Z_NULL;
   err = deflateInit(&stream, png_level);
 
-  if (err != Z_OK) return false;
+  if (err != Z_OK) { delete [] temprow; return false; }
 
   y = height;
   stream.next_out = buffer;
@@ -964,7 +964,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
     err = deflate(&stream, /*(y == 0) ? Z_FINISH :*/ 0);
     if (err != Z_OK) break;
     while (stream.avail_out == 0) {
-      if (!WriteIDAT(file, buffer, sizeof(buffer))) return false;
+      if (!WriteIDAT(file, buffer, sizeof(buffer))) { delete [] temprow; return false; }
       stream.next_out = buffer;
       stream.avail_out = sizeof(buffer);
       if (stream.avail_in != 0) {
@@ -978,7 +978,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
     err = deflate(&stream, Z_FINISH);
     if (err != Z_OK) break;
     if (stream.avail_out == 0) {
-      if (!WriteIDAT(file, buffer, sizeof(buffer))) return false;
+      if (!WriteIDAT(file, buffer, sizeof(buffer))) { delete [] temprow; return false; }
       stream.next_out = buffer;
       stream.avail_out = sizeof(buffer);
     }
@@ -986,9 +986,9 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
   deflateEnd(&stream);
 
-  if (err != Z_STREAM_END) return false;
+  if (err != Z_STREAM_END) { delete [] temprow; return false; }
 
-  if (!WriteIDAT(file, buffer, sizeof(buffer)-stream.avail_out)) return false;
+  if (!WriteIDAT(file, buffer, sizeof(buffer)-stream.avail_out)) { delete [] temprow; return false; }
 
   // write IEND
   vuint32 foo[2], crc;
@@ -999,8 +999,10 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
   crc = BigLong(crc);
 
   file->Serialise(foo, 8);
-  if (file->IsError()) return false;
+  if (file->IsError()) { delete [] temprow; return false; }
   file->Serialise(&crc, 4);
+
+  delete [] temprow;
   return !file->IsError();
 }
 
