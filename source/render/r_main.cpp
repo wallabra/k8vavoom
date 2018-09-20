@@ -892,14 +892,14 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
 
   Drawer->BeginShadowVolumesPass();
 
-  subsector_t   *sub;
-  int       leafnum;
-  vuint8 *dyn_facevis;
-  linetrace_t   Trace;
-  TVec      Delta;
+  linetrace_t Trace;
+  TVec Delta;
 
   CurrLightsNumber = 0;
   CurrShadowsNumber = 0;
+
+  const float rlightraduisSq = r_lights_radius*r_lights_radius;
+  const float rlightraduisSightSq = r_lights_radius_sight_check*r_lights_radius_sight_check;
 
   if (!FixedLight && r_static_lights) {
 #ifdef RADVLIGHT_GRID_OPTIMIZER
@@ -914,17 +914,19 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
       //if (!Lights[i].radius) continue;
       if (!Lights[i].active) continue;
 
-      sub = Level->PointInSubsector(Lights[i].origin);
-      dyn_facevis = Level->LeafPVS(sub);
-
-      // Check potential visibility
-      if (!(dyn_facevis[Lights[i].leafnum >> 3] & (1 << (Lights[i].leafnum & 7)))) continue;
-
-      //  Don't do lights that are too far away.
+      // don't do lights that are too far away
       Delta = Lights[i].origin - vieworg;
       Delta.z = 0;
-      if (Delta.Length() > r_lights_radius) continue;
-      if (Delta.Length() > r_lights_radius_sight_check /*&& !Level->TraceLine(Trace, Lights[i].origin, vieworg, SPF_NOBLOCKSIGHT)*/) {
+      const float dlenSq = Delta.length2DSquared();
+
+      if (dlenSq > rlightraduisSq) continue;
+
+      // check potential visibility (this should be moved to sight check for precise pvs, but...)
+      subsector_t *sub = Level->PointInSubsector(Lights[i].origin);
+      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      if (!(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
+
+      if (dlenSq > rlightraduisSightSq) {
         // check some more rays
         if (!RadiusCastRay(Lights[i].origin, vieworg, Lights[i].radius, true)) continue;
       }
@@ -973,19 +975,21 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
     for (int i = 0; i < MAX_DLIGHTS; i++, l++) {
       if (!l->radius || l->die < Level->Time) continue;
 
-      sub = Level->PointInSubsector(l->origin);
-      dyn_facevis = Level->LeafPVS(sub);
-
-      leafnum = Level->PointInSubsector(l->origin) - Level->Subsectors;
-
-      // Check potential visibility
-      if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7)))) continue;
 
       //  Don't do lights that are too far away.
       Delta = l->origin - vieworg;
       Delta.z = 0;
-      if (Delta.Length() > r_lights_radius) continue;
-      if (Delta.Length() > r_lights_radius_sight_check /*&& !Level->TraceLine(Trace, l->origin, vieworg, SPF_NOBLOCKSIGHT)*/) {
+      const float dlenSq = Delta.length2DSquared();
+
+      if (dlenSq > rlightraduisSq) continue;
+
+      // check potential visibility (this should be moved to sight check for precise pvs, but...)
+      subsector_t *sub = Level->PointInSubsector(l->origin);
+      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      int leafnum = Level->PointInSubsector(l->origin) - Level->Subsectors;
+      if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+
+      if (dlenSq > rlightraduisSightSq) {
         // check some more rays
         if (!RadiusCastRay(l->origin, vieworg, l->radius, true)) continue;
       }
