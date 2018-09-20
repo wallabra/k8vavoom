@@ -57,6 +57,12 @@ override void CreateChoices () {
 
 
   CreateChoiceTextLabel("");
+  CreateChoiceTextLabel("Deepwater options");
+  CreateOnOffCvar("Classic deepwater", 'deepwater_hacks');
+  CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra');
+
+
+  CreateChoiceTextLabel("");
   CreateChoiceTextLabel("Headshots Options");
   CreateOnOffCvar("Headshots", 'k8HSEnabled');
   CreateOnOffCvar("Criticals", 'k8HSCriticals');
