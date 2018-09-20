@@ -113,9 +113,11 @@ void VActorDisplayWindow::OnDraw()
   if (!R_DrawStateModelFrame(CastState, CastState->NextState ? CastState->NextState : CastState,
      TimeFrac, TVec(-128.0, 0.0, -48.0), 0.0))
   {
+    auto ow = VirtualWidth, oh = VirtualHeight;
     SCR_SetVirtualScreen(320, 200);
     R_DrawSpritePatch(160, 170, CastState->SpriteIndex, CastState->Frame, 0);
-    SCR_SetVirtualScreen(640, 480);
+    //SCR_SetVirtualScreen(640, 480);
+    SCR_SetVirtualScreen(ow, oh);
   }
   unguard;
 }

@@ -614,6 +614,28 @@ void SetOrigin(int x, int y)
   SetPos(x, y);
 }
 
+
+void SetDefaultVirtualScreenSize () {
+  /*
+  int rw = GetRealWidth();
+  int rh = GetRealHeight();
+  if (rw < 640 || rh < 480) {
+    SetVirtualScreen(640, 480);
+  } else {
+    float scalex = 1.0-((rw%640)/640.0);
+    float scaley = 1.0-((rh%480)/480.0);
+    int nw = int(640*scalex);
+    int nh = int(480*scaley);
+    nh = 596;
+    print("dims:(%d,%d); scale:(%f,%f); new:(%d,%d)", GetRealWidth(), GetRealHeight(), scalex, scaley, nw, nh);
+    //SetVirtualScreen(640, 480);
+    SetVirtualScreen(rw/2, rh/2);
+  }
+  */
+  SetVirtualScreen(640, 480);
+}
+
+
 void DrawFullScreenPic(int Handle)
 {
   picinfo_t pinf;
@@ -637,7 +659,7 @@ void DrawFullScreenPic(int Handle)
     }
     R_DrawPic(0, 0, Handle);
   }
-  SetVirtualScreen(640, 480);
+  SetDefaultVirtualScreenSize();
 }
 
 defaultproperties

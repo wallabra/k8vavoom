@@ -62,6 +62,10 @@
 
   // graphics
   DECLARE_FUNCTION(SetVirtualScreen)
+  DECLARE_FUNCTION(GetVirtualWidth)
+  DECLARE_FUNCTION(GetVirtualHeight)
+  DECLARE_FUNCTION(GetRealWidth)
+  DECLARE_FUNCTION(GetRealHeight)
   DECLARE_FUNCTION(R_RegisterPic)
   DECLARE_FUNCTION(R_RegisterPicPal)
   DECLARE_FUNCTION(R_GetPicInfo)
