@@ -64,6 +64,7 @@ static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loa
 static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
 
 static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
+static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", 0);
 static VCvarI loader_cache_compression_level("loader_cache_compression_level", "9", "Cache file compression level [0..9]", CVAR_Archive);
 
 
@@ -544,6 +545,8 @@ bool VLevel::LoadCachedData (VStream *strm) {
 //==========================================================================
 void VLevel::LoadMap (VName AMapName) {
   guard(VLevel::LoadMap);
+  bool killCache = loader_cache_ignore_one;
+  loader_cache_ignore_one = false;
   bool AuxiliaryMap = false;
   int lumpnum;
   VName MapLumpName;
@@ -701,9 +704,13 @@ void VLevel::LoadMap (VName AMapName) {
 
   //FIXME: load cache file into temp buffer, and process it later
   if (!loader_force_nodes_rebuild && sha512valid) {
-    VStream *strm = FL_OpenSysFileRead(cacheFileName);
-    hasCacheFile = !!strm;
-    delete strm;
+    if (killCache) {
+      Sys_FileDelete(cacheFileName);
+    } else {
+      VStream *strm = FL_OpenSysFileRead(cacheFileName);
+      hasCacheFile = !!strm;
+      delete strm;
+    }
   }
 
   double NodeBuildTime = -Sys_Time();
