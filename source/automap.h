@@ -23,22 +23,11 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void AM_Init();
-bool AM_Responder(event_t *ev);
-void AM_Ticker();
-void AM_Drawer();
-// Called to force the automap to quit
-// if the level is completed while it is up.
-void AM_Stop();
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
+void AM_Init ();
+bool AM_Responder (event_t *ev);
+void AM_Ticker ();
+void AM_Drawer ();
+// called to force the automap to quit if the level is completed while it is up
+void AM_Stop ();
 
 extern int automapactive; // In AutoMap mode? 0: no; 1: normal; -1: overlay
