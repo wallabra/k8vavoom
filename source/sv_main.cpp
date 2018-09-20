@@ -219,14 +219,13 @@ void SV_SendClientMessages()
   //  Update player replication infos.
   for (int i = 0; i < svs.max_clients; i++)
   {
-    if (!GGameInfo->Players[i])
-    {
-      continue;
-    }
-
     VBasePlayer *Player = GGameInfo->Players[i];
+    if (!Player) continue;
+    if (Player->GetFlags()&_OF_Destroyed) continue;
 
     VPlayerReplicationInfo *RepInfo = Player->PlayerReplicationInfo;
+    if (!RepInfo) continue;
+
     RepInfo->PlayerName = Player->PlayerName;
     RepInfo->UserInfo = Player->UserInfo;
     RepInfo->TranslStart = Player->TranslStart;
@@ -968,7 +967,7 @@ void SV_DropClient(VBasePlayer *Player, bool crash)
   GGameInfo->Players[SV_GetPlayerNum(Player)] = nullptr;
   Player->PlayerFlags &= ~VBasePlayer::PF_Spawned;
 
-  Player->PlayerReplicationInfo->DestroyThinker();
+  if (Player->PlayerReplicationInfo) Player->PlayerReplicationInfo->DestroyThinker();
 
   delete Player->Net;
   Player->Net = nullptr;

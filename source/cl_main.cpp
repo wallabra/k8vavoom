@@ -162,6 +162,7 @@ void CL_DecayLights()
 void CL_UpdateMobjs()
 {
   guard(CL_UpdateMobjs);
+  if (!GClLevel) return; //k8: this is wrong!
   for (TThinkerIterator<VThinker> Th(GClLevel); Th; ++Th)
   {
     Th->eventClientTick(host_frametime);

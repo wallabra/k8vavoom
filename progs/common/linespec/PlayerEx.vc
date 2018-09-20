@@ -1094,6 +1094,7 @@ final void NextWeapon()
 
 final Weapon BestWeapon(optional class!Ammo AmmoType)
 {
+  if (!MO) return none;
   bool Powered = !!EntityEx(MO).FindInventory(PowerWeaponLevel2);
   Weapon Best = none;
   Inventory Item;

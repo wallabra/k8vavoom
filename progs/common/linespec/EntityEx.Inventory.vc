@@ -80,6 +80,7 @@ void RemoveInventory(Inventory Item)
 final Inventory FindInventory(class!Inventory ItemClass)
 {
   Inventory Check;
+  if (!ItemClass) return none;
 
   for (Check = Inventory; Check; Check = Check.Inventory)
   {
