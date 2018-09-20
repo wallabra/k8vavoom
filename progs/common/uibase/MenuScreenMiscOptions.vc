@@ -44,8 +44,16 @@ override void CreateChoices () {
   CreateChoiceTextLabel("Internal Node Builder");
   CreateOnOffCvar("Force node rebuilding", 'loader_force_nodes_rebuild');
   CreateOnOffCvar("Fast&bad nodes", 'nodes_fast_and_bad');
+  CreateOnOffCvar("Allow PWAD z-nodes", 'nodes_allow_compressed');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
+
+  CreateChoiceTextLabel("");
+  CreateChoiceTextLabel("Cache options");
   CreateOnOffCvar("Cache built data", 'loader_cache_data');
+  CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
+  CreateOnOffCvar("Kill cache for next map", 'loader_cache_ignore_one');
+  CreateFloatSliderCvar("Cache timout (seconds)", 'loader_cache_time_limit', 0.5, 0.5, 16);
+  CreateFloatSliderCvar("Cache max age (days)", 'loader_cache_max_age_days', 1, 1, 32);
 
 
   CreateChoiceTextLabel("");
