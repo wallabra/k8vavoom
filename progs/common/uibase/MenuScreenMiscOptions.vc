@@ -31,9 +31,10 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');
   CreateOnOffCvar("Autoaim", 'autoaim');
+  CreateOnOffCvar("Overlay automap", 'am_overlay');
+  CreateOnOffCvar("Show stats on automap", 'am_show_stats');
   CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');
   CreateOnOffCvar("Berserk autoswitch", 'k8BerserkSwitch');
-  CreateOnOffCvar("Overlay automap", 'am_overlay');
   CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
   CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
   CreateFloatSliderCvar("Bobbing", 'movebob', 0.1, 0, 1);
@@ -43,7 +44,7 @@ override void CreateChoices () {
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Internal Node Builder");
   CreateOnOffCvar("Force node rebuilding", 'loader_force_nodes_rebuild');
-  CreateOnOffCvar("Fast&bad nodes", 'nodes_fast_and_bad');
+  CreateOnOffCvar("Fast and bad nodes", 'nodes_fast_and_bad');
   CreateOnOffCvar("Allow PWAD z-nodes", 'nodes_allow_compressed');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
 
@@ -51,7 +52,7 @@ override void CreateChoices () {
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Cache options");
   CreateOnOffCvar("Cache built data", 'loader_cache_data');
-  CreateOnOffCvar("Kill cache for next map", 'loader_cache_ignore_one');
+  CreateOnOffCvar("(*) Kill cache for next map", 'loader_cache_ignore_one');
   CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
   CreateFloatSliderCvar("Cache timout (seconds)", 'loader_cache_time_limit', 0.5, 0.5, 16);
   CreateFloatSliderCvar("Cache max age (days)", 'loader_cache_max_age_days', 1, 1, 32);
@@ -67,8 +68,8 @@ override void CreateChoices () {
   CreateChoiceSubHeader("Headshots Options");
   CreateOnOffCvar("Headshots", 'k8HSEnabled');
   CreateOnOffCvar("Criticals", 'k8HSCriticals');
-  CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
   CreateOnOffCvar("Announce criticals", 'k8HSShowCriticals');
+  CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
 
 
   //CreateChoiceSubHeader("");
@@ -87,7 +88,7 @@ override void CreateChoices () {
   CreateChoiceSubHeader("Elven Gifts");
   CreateOnOffCvar("Ammo King", 'k8AmmoKing');
   CreateOnOffCvar("Elven Gift", 'k8ElvenGift');
-  CreateOnOffCvar("PainElem. Attacks", 'k8ElvenPaine');
+  CreateOnOffCvar("Pain Elemental Attacks", 'k8ElvenPaine');
 }
 
 

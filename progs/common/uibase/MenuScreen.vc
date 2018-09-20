@@ -107,6 +107,7 @@ MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   onoff.SetOrigin(ChoicesStartX, currentY);
   onoff.Text = text;
   onoff.SetSessionCvar(cvname);
+  if (Width > 320) onoff.Width = Width;
   currentY += onoff.Height;
   return onoff;
 }
@@ -143,7 +144,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
     btn.TextColour = CR_ORANGE;
     btn.TextColourFocus = CR_ORANGE;
   }
-  btn.Height = 14;
+  btn.Height = 12;
   currentY += btn.Height;
   return btn;
 }
