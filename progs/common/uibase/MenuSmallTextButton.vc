@@ -22,26 +22,30 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MenuSmallTextButton : MenuTextButton;
 
-class MenuSmallTextButton:MenuTextButton;
 
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-override void SetOrigin(int x, int y)
-{
-  if (TextHAlign == hright)
-  {
+override void SetOrigin(int x, int y) {
+  if (TextHAlign == hright) {
     CursorXOffs = 200;
-    SetPos(x - CursorXOffs, y);
-  }
-  else
-  {
+    SetPos(x-CursorXOffs, y);
+  } else {
     SetPos(x, y);
   }
+}
+
+override void OnDraw () {
+  int y = 0;
+       if (TextVAlign == vbottom) y += Height-1;
+  else if (TextVAlign == vcenter) y += Height/2;
+  SetFont(TextFont);
+  SetTextAlign(TextHAlign, TextVAlign);
+  DrawText(CursorXOffs, y, Text, IsFocus() ? TextColourFocus : TextColour);
 }
 
 defaultproperties

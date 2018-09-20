@@ -55,8 +55,9 @@ const int MAXPLAYERS = 8;
 enum {
   hleft,   //Left
   hcentre, //Centred
-  hright   //Right
+  hright,  //Right
 };
+alias hcenter = hcentre;
 
 //
 // Vertical text alignement
@@ -64,8 +65,9 @@ enum {
 enum {
   vtop,    //Top
   vcentre, //Centre
-  vbottom  //Bottom
+  vbottom, //Bottom
 };
+alias vcenter = vcentre;
 
 // Text colours.
 enum {

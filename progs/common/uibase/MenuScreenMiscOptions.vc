@@ -40,15 +40,16 @@ override void CreateChoices () {
   CreateFloatSliderCvar("Save compression", 'save_compression_level', 1, 0, 9);
 
 
-  CreateChoiceTextLabel("");
-  CreateChoiceTextLabel("Internal Node Builder");
+  //CreateChoiceSubHeader("");
+  CreateChoiceSubHeader("Internal Node Builder");
   CreateOnOffCvar("Force node rebuilding", 'loader_force_nodes_rebuild');
   CreateOnOffCvar("Fast&bad nodes", 'nodes_fast_and_bad');
   CreateOnOffCvar("Allow PWAD z-nodes", 'nodes_allow_compressed');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
 
-  CreateChoiceTextLabel("");
-  CreateChoiceTextLabel("Cache options");
+
+  //CreateChoiceSubHeader("");
+  CreateChoiceSubHeader("Cache options");
   CreateOnOffCvar("Cache built data", 'loader_cache_data');
   CreateOnOffCvar("Kill cache for next map", 'loader_cache_ignore_one');
   CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
@@ -56,27 +57,25 @@ override void CreateChoices () {
   CreateFloatSliderCvar("Cache max age (days)", 'loader_cache_max_age_days', 1, 1, 32);
 
 
-  CreateChoiceTextLabel("");
-  CreateChoiceTextLabel("Deepwater options");
+  //CreateChoiceSubHeader("");
+  CreateChoiceSubHeader("Deepwater options");
   CreateOnOffCvar("Classic deepwater", 'deepwater_hacks');
   CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra');
 
 
-  CreateChoiceTextLabel("");
-  CreateChoiceTextLabel("Headshots Options");
+  //CreateChoiceSubHeader("");
+  CreateChoiceSubHeader("Headshots Options");
   CreateOnOffCvar("Headshots", 'k8HSEnabled');
   CreateOnOffCvar("Criticals", 'k8HSCriticals');
   CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
   CreateOnOffCvar("Announce criticals", 'k8HSShowCriticals');
 
 
-  CreateChoiceTextLabel("");
-  CreateChoiceTextLabel("Headshots Fastkill");
-
+  //CreateChoiceSubHeader("");
+  CreateChoiceSubHeader("Headshots Fastkill");
   CreateOnOffCvar("Fastkills", 'k8HSFastKillAnnoyingMonsters');
   CreateOnOffCvar("FK Pain Elementals", 'k8HSInstaKillPainElementals');
   CreateOnOffCvar("FK Lost Souls", 'k8HSInstaKillLostSouls');
-
   CreateFloatSliderCvar("Arch-Vile FK Damage", 'k8HSFastKillArchVileDamage', 10, 10, 400);
 
   //TODO: CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
@@ -84,9 +83,8 @@ override void CreateChoices () {
   //TODO: CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
 
 
-  CreateChoiceTextLabel("");
-  CreateChoiceTextLabel("Elven Gifts");
-
+  //CreateChoiceSubHeader("");
+  CreateChoiceSubHeader("Elven Gifts");
   CreateOnOffCvar("Ammo King", 'k8AmmoKing');
   CreateOnOffCvar("Elven Gift", 'k8ElvenGift');
   CreateOnOffCvar("PainElem. Attacks", 'k8ElvenPaine');

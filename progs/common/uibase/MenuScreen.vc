@@ -128,20 +128,22 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 
 
 // should be called from `CreateChoices()` (and `currentY` must be set)
-// default color: CR_OLIVE
-MenuTextButton CreateChoiceTextLabel (string text, optional int color) {
+// default color: CR_ORANGE
+MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
   btn.Text = text;
   btn.Focusable = false;
+  btn.TextHAlign = hcenter;
+  btn.TextVAlign = vbottom;
   if (specified_color) {
     btn.TextColour = color;
     btn.TextColourFocus = color;
   } else {
-    btn.TextColour = CR_OLIVE;
-    btn.TextColourFocus = CR_OLIVE;
+    btn.TextColour = CR_ORANGE;
+    btn.TextColourFocus = CR_ORANGE;
   }
-  btn.Height = 10;
+  btn.Height = 14;
   currentY += btn.Height;
   return btn;
 }
