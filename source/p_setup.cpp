@@ -52,7 +52,8 @@ static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3.0", "Cache d
 static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remove cached data older than this number of days (<=0: none).", CVAR_Archive);
 
 static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
-static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply DeepWater hacks? (not working right yet)", 0);
+static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply self-referenced deepwater hacks?", CVAR_Archive);
+static VCvarB deepwater_hacks_extra("deepwater_hacks_extra", true, "Apply deepwater hacks to fix some map errors? (not working right yet)", CVAR_Archive);
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
@@ -3420,6 +3421,7 @@ void VLevel::FixSelfRefDeepWater () {
 //==========================================================================
 
 // bits: 0: normal, back floor; 1: normal, front ceiling
+// this tries to detect and fix bugs like Doom2:MAP04
 int VLevel::IsDeepWater (line_t *line) {
   // should have both sectors
   if (!line || !line->frontsector || !line->backsector) return 0;
@@ -3430,13 +3432,27 @@ int VLevel::IsDeepWater (line_t *line) {
   // ignore sloped floors
   if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
   if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
+  // back sector should have height
+  if (line->backsector->floor.minz >= line->backsector->ceiling.minz) return 0;
+  // front sector should have height
+  if (line->frontsector->floor.minz >= line->frontsector->ceiling.minz) return 0;
 
   int res = 0;
   // floor: back sidedef should have no texture
   if (Sides[line->sidenum[1]].BottomTexture == 0 && !line->backsector->heightsec &&
       Sides[line->sidenum[0]].TopTexture > 0 && Sides[line->sidenum[0]].MidTexture == 0) {
     // it should be lower than front
-    if (line->frontsector->floor.minz > line->backsector->floor.minz) res |= 1;
+    if (line->frontsector->floor.minz > line->backsector->floor.minz) {
+      res |= 1;
+#ifdef DEBUG_DEEP_WATERS
+      if (dbg_deep_water) {
+        int lidx = (int)(ptrdiff_t)(line-Lines);
+        GCon->Logf("    DEEP WATER; LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
+        GCon->Logf("    DEEP WATER; LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
+        //if (!line->partner) GCon->Logf("  NO PARTNER!");
+      }
+    }
+#endif
   }
   /*
   // ceiling: front sidedef should have no texture
@@ -3501,7 +3517,7 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
     hs = (line->frontsector->heightsec = line->backsector);
   }
 #ifdef DEBUG_DEEP_WATERS
-  if (dbg_deep_water) GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d; fsf=%f; bsf=%f; type=%d", lidx, type, line->frontsector->floor.minz, line->backsector->floor.minz, type);
+  if (dbg_deep_water) GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d; fsf=%f; bsf=%f", lidx, type, line->frontsector->floor.minz, line->backsector->floor.minz);
 #endif
   hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
   hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
@@ -3520,22 +3536,21 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
 void VLevel::FixDeepWaters () {
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) Sectors[sidx].deepref = nullptr;
 
-  if (!deepwater_hacks) {
-    GCon->Logf("DeepWater detection skipped.");
-    return;
+  if (deepwater_hacks) {
+    FixSelfRefDeepWater();
   }
 
-  FixSelfRefDeepWater();
-
-  for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
-    sector_t *sec = &Sectors[sidx];
-    if (!IsDeepOk(sec)) continue;
+  if (deepwater_hacks_extra) {
+    for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
+      sector_t *sec = &Sectors[sidx];
+      if (!IsDeepOk(sec)) continue;
 #ifdef DEBUG_DEEP_WATERS
-    if (dbg_deep_water) GCon->Logf("DWSEC=%d", sidx);
+      if (dbg_deep_water) GCon->Logf("DWSEC=%d", sidx);
 #endif
-    for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
-      line_t *ld = sec->lines[lidx];
-      FixDeepWater(ld, (int)(ld-Lines));
+      for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
+        line_t *ld = sec->lines[lidx];
+        FixDeepWater(ld, (int)(ld-Lines));
+      }
     }
   }
 }
