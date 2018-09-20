@@ -301,7 +301,7 @@ VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, 
 void VTexture::AdjustGamma (rgba_t *data, int size) {
 #ifdef CLIENT
   guard(VTexture::AdjustGamma);
-  vuint8 *gt = gammatable[usegamma];
+  const vuint8 *gt = getGammaTable(usegamma); //gammatable[usegamma];
   for (int i = 0; i < size; ++i) {
     data[i].r = gt[data[i].r];
     data[i].g = gt[data[i].g];

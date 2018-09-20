@@ -242,8 +242,10 @@ extern vuint8     r_white_colour;
 
 extern vuint8     r_rgbtable[32 * 32 * 32 + 4];
 
-extern int        usegamma;
-extern vuint8     gammatable[5][256];
+extern int usegamma;
+//extern const vuint8 gammatable[5][256];
+extern const vuint8 *getGammaTable (int idx);
+
 
 extern float      PixelAspect;
 

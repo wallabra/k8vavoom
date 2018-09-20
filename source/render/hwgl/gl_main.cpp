@@ -897,13 +897,15 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::Update
+//  VOpenGLDrawer::FinishUpdate
 //
 //==========================================================================
 void VOpenGLDrawer::FinishUpdate () {
   if (mainFBO) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
     glDisable(GL_DEPTH_TEST);
@@ -922,6 +924,9 @@ void VOpenGLDrawer::FinishUpdate () {
       glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
       glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
     glEnd();
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
     glFlush();
   }

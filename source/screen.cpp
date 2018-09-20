@@ -50,7 +50,7 @@ int usegamma = 0;
 bool graphics_started = false;
 
 // Table of RGB values in current gamma corection level
-byte gammatable[5][256] = {
+static const vuint8 gammatable[5][256] = {
   {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
   17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,
   33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,
@@ -133,6 +133,11 @@ byte gammatable[5][256] = {
   251,252,252,253,254,254,255,255}
 };
 
+
+const vuint8 *getGammaTable (int idx) {
+  if (idx < 0) idx = 0; else if (idx > 4) idx = 4;
+  return gammatable[idx];
+}
 
 static bool setresolutionneeded = false;
 static int setwidth;
