@@ -39,6 +39,7 @@ override void SetOrigin(int x, int y) {
   }
 }
 
+
 override void OnDraw () {
   int y = 0;
        if (TextVAlign == vbottom) y += Height-1;
@@ -48,8 +49,8 @@ override void OnDraw () {
   DrawText(CursorXOffs, y, Text, IsFocus() ? TextColourFocus : TextColour);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   TextFont = 'smallfont';
   TextColour = CR_WHITE;
   TextColourFocus = CR_YELLOW;

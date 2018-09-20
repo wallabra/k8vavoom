@@ -22,23 +22,21 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenMasterList : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
+override void CreateChoices () {
   MenuSList Lst = MenuSList(NewChild(MenuSList));
   Lst.Master = true;
   Lst.StartSearching();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Title = "JOIN GAME";
 }
