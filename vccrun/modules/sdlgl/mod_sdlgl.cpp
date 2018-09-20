@@ -928,7 +928,7 @@ static vuint32 curmodflagsL = 0;
 // ////////////////////////////////////////////////////////////////////////// //
 static int sdl2TranslateKey (SDL_Scancode scan) {
   if (scan >= SDL_SCANCODE_A && scan <= SDL_SCANCODE_Z) return (int)(scan-SDL_SCANCODE_A+'a');
-  if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_9) return (int)(scan-SDL_SCANCODE_A+'1');
+  if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_9) return (int)(scan-SDL_SCANCODE_1+'1');
 
   switch (scan) {
     case SDL_SCANCODE_1: return '0';

@@ -77,7 +77,7 @@ static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse curs
 // ////////////////////////////////////////////////////////////////////////// //
 static int sdl2TranslateKey (SDL_Scancode scan) {
   if (scan >= SDL_SCANCODE_A && scan <= SDL_SCANCODE_Z) return (int)(scan-SDL_SCANCODE_A+'a');
-  if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_9) return (int)(scan-SDL_SCANCODE_A+'1');
+  if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_9) return (int)(scan-SDL_SCANCODE_1+'1');
 
   switch (scan) {
     case SDL_SCANCODE_1: return '0';
