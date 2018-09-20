@@ -207,7 +207,7 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   if (is_view_model)
   {
     // hack the depth range to prevent view model from poking into walls
-    glDepthRange(0.0, 0.3);
+    if (CanUseRevZ()) glDepthRange(0.7, 1.0); else glDepthRange(0.0, 0.3);
   }
 
   //

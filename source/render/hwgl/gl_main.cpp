@@ -33,6 +33,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive);
 static VCvarB gl_disable_reverse_z("gl_disable_reverse_z", false, "Completely disable reverse z, even if it is available? (not permanent)", 0);
+VCvarB VOpenGLDrawer::gl_dbg_adv_reverse_z("gl_dbg_adv_reverse_z", false, "Don't do this.", 0); // force-enable reverse z for advanced renderer
 
 VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite interpolation mode.", CVAR_Archive);
@@ -94,14 +95,7 @@ VOpenGLDrawer::~VOpenGLDrawer () {
 //==========================================================================
 void VOpenGLDrawer::RestoreDepthFunc () {
   // advanced renderer doesn't support reverse z yet
-  if (!useReverseZ || (RendLev && RendLev->NeedsInfiniteFarClip)) {
-    // normal
-    glDepthFunc(GL_LEQUAL);
-  } else {
-    // reversed
-    //GCon->Logf("***REV***");
-    glDepthFunc(GL_GEQUAL);
-  }
+  glDepthFunc(!CanUseRevZ() ? GL_LEQUAL : GL_GEQUAL);
 }
 
 
@@ -1022,7 +1016,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   }
 
   VMatrix4 ProjMat = VMatrix4::Identity;
-  if (!useReverseZ || (RendLev && RendLev->NeedsInfiniteFarClip)) {
+  if (!CanUseRevZ()) {
     // normal
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);

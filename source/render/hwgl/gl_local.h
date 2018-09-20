@@ -504,6 +504,7 @@ private:
   bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
 
   void RestoreDepthFunc ();
+  inline bool CanUseRevZ () const { return (gl_dbg_adv_reverse_z ? useReverseZ : useReverseZ && (!RendLev || !RendLev->NeedsInfiniteFarClip)); }
 
 protected:
   enum { M_INFINITY = 8000 };
@@ -806,6 +807,7 @@ protected:
   static VCvarB gl_smooth_particles;
   static VCvarB gl_dump_vendor;
   static VCvarB gl_dump_extensions;
+  static VCvarB gl_dbg_adv_reverse_z;
 
   //  extensions
   bool CheckExtension(const char*);
