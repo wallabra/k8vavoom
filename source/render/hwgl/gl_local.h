@@ -399,6 +399,8 @@ typedef void (APIENTRY *glGenFramebuffersFn) (GLsizei n, GLuint *framebuffers);
 typedef GLenum (APIENTRY *glCheckFramebufferStatusFn) (GLenum target);
 typedef void (APIENTRY *glBindFramebufferFn) (GLenum target, GLuint framebuffer);
 
+typedef void (APIENTRY *glClipControl_t) (GLenum origin, GLenum depth);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
@@ -506,6 +508,8 @@ protected:
 
   enum { TmpImgBufSize = 256*256*4 };
   vuint8 *tmpImgBuf;
+
+  bool useReverseZ;
 
   GLuint mainFBO;
   GLuint mainFBOColorTid;
@@ -940,6 +944,8 @@ protected:
   _(glGetBufferPointervARB);
 
   _(glDrawRangeElementsEXT);
+
+  _(glClipControl);
 #undef _
 
   void MultiTexCoord(int level, GLfloat s, GLfloat t)
