@@ -31,7 +31,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?.", CVAR_Archive);
+static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive);
+static VCvarB gl_disable_reverse_z("gl_disable_reverse_z", false, "Completely disable reverse z, even if it is available? (not permanent)", 0);
 
 VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite interpolation mode.", CVAR_Archive);
@@ -92,11 +93,14 @@ VOpenGLDrawer::~VOpenGLDrawer () {
 //
 //==========================================================================
 void VOpenGLDrawer::RestoreDepthFunc () {
-  if (!useReverseZ) {
+  // advanced renderer doesn't support reverse z yet
+  if (!useReverseZ || (RendLev && RendLev->NeedsInfiniteFarClip)) {
+    // normal
     glDepthFunc(GL_LEQUAL);
   } else {
+    // reversed
+    //GCon->Logf("***REV***");
     glDepthFunc(GL_GEQUAL);
-    //glDepthFunc(GL_GREATER);
   }
 }
 
@@ -108,6 +112,8 @@ void VOpenGLDrawer::RestoreDepthFunc () {
 //==========================================================================
 void VOpenGLDrawer::InitResolution () {
   guard(VOpenGLDrawer::InitResolution);
+
+  GCon->Logf(NAME_Init, "Setting up new resolution: %dx%d", ScreenWidth, ScreenHeight);
 
   if (gl_dump_vendor) {
     GCon->Logf(NAME_Init, "GL_VENDOR: %s", glGetString(GL_VENDOR));
@@ -150,8 +156,12 @@ void VOpenGLDrawer::InitResolution () {
     //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
     p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
     if (p_glClipControl) {
-      GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z.");
+      GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z");
       useReverseZ = true;
+      if (gl_disable_reverse_z) {
+        GCon->Logf(NAME_Init, "OpenGL: oops, used disabled reverse z, i shall obey");
+        useReverseZ = false;
+      }
     }
   } else {
     p_glClipControl = nullptr;
@@ -405,39 +415,32 @@ void VOpenGLDrawer::InitResolution () {
   // allocate FBO object
   glGenFramebuffers(1, &mainFBO);
   if (mainFBO == 0) Sys_Error("OpenGL: cannot create main FBO");
-  //glnvg__checkError(gl, "glnvg__allocFBO: glGenFramebuffers");
   glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-  //scope(exit) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // attach 2D texture to this mainFBO
   glGenTextures(1, &mainFBOColorTid);
   if (mainFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
   glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
-  //scope(exit) glBindTexture(GL_TEXTURE_2D, 0);
+
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
   //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_T");
-  //FIXME: linear or nearest?
+
   //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_MIN_FILTER");
+
   //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_MAG_FILTER");
+
   // empty texture
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-  // create texture with only one color channel
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, gl.fboWidth, gl.fboHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gl.fboWidth, gl.fboHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexImage2D (color)");
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mainFBOColorTid, 0);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glFramebufferTexture2D (color)");
 
   // attach stencil texture to this FBO
   glGenTextures(1, &mainFBODepthStencilTid);
   if (mainFBODepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for main FBO");
   glBindTexture(GL_TEXTURE_2D, mainFBODepthStencilTid);
+
   (void)glGetError();
   if (!useReverseZ) {
     if (major >= 3 && gl_enable_floating_zbuffer) GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
@@ -455,40 +458,17 @@ void VOpenGLDrawer::InitResolution () {
       Sys_Error("OpenGL initialization error");
     }
   }
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexImage2D (stencil)");
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mainFBODepthStencilTid, 0);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glFramebufferTexture2D (stencil)");
 
   {
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-      /*
-      import core.stdc.stdio;
-      if (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) printf("fucked attachement\n");
-      if (status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS) printf("fucked dimensions\n");
-      if (status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) printf("missing attachement\n");
-      if (status == GL_FRAMEBUFFER_UNSUPPORTED) printf("unsupported\n");
-      */
-      Sys_Error("OpenGL: framebuffer creation failed");
-    }
+    if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed");
   }
 
 
   glClearColor(0.0, 0.0, 0.0, 0.0); // Black Background
-  //glClearDepth(1.0); // Depth Buffer Setup
-  if (!useReverseZ) {
-    //oglNormalZTests();
-    //glDepthFunc(GL_LESS); // default would be GL_LESS
-    glClearDepth(1.0f); // default would be 1.0f
-    // OpenGL 4.5 feature; see "GL_ARB_clip_control" extension
-    //if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // standard OpenGL
-    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
-  } else {
-    //oglReversedZTests();
-    //glDepthFunc(GL_GREATER); // default would be GL_LESS
-    glClearDepth(0.0f); // default would be 1.0f
-    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-  }
+  glClearDepth(!useReverseZ ? 1.0f : 0.0f);
+  if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   RestoreDepthFunc();
   glDepthRange(0.0, 1.0);
 
@@ -500,20 +480,8 @@ void VOpenGLDrawer::InitResolution () {
 
 
   glClearColor(0.0, 0.0, 0.0, 0.0); // Black Background
-  //glClearDepth(1.0); // Depth Buffer Setup
-  if (!useReverseZ) {
-    //oglNormalZTests();
-    //glDepthFunc(GL_LESS); // default would be GL_LESS
-    glClearDepth(1.0f); // default would be 1.0f
-    // OpenGL 4.5 feature; see "GL_ARB_clip_control" extension
-    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
-    //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
-  } else {
-    //oglReversedZTests();
-    //glDepthFunc(GL_GREATER); // default would be GL_LESS
-    glClearDepth(0.0f); // default would be 1.0f
-    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-  }
+  glClearDepth(!useReverseZ ? 1.0f : 0.0f);
+  if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   RestoreDepthFunc();
   glDepthRange(0.0, 1.0);
 
@@ -1053,15 +1021,11 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     R_DrawViewBorder();
   }
 
-  glViewport(rd->x, ScreenHeight - rd->height - rd->y, rd->width, rd->height);
-
-  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-
-  glMatrixMode(GL_PROJECTION);    // Select The Projection Matrix
   VMatrix4 ProjMat = VMatrix4::Identity;
-
-  if (!useReverseZ) {
+  if (!useReverseZ || (RendLev && RendLev->NeedsInfiniteFarClip)) {
     // normal
+    glClearDepth(1.0f);
+    glDepthFunc(GL_LEQUAL);
     ProjMat[0][0] = 1.0/rd->fovx;
     ProjMat[1][1] = 1.0/rd->fovy;
     ProjMat[2][3] = -1.0;
@@ -1075,13 +1039,22 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     }
   } else {
     // reversed
+    //GCon->Logf("!!!REV!!!");
+    glClearDepth(0.0f);
+    glDepthFunc(GL_GEQUAL);
     for (int f = 0; f < 4; ++f) for (int c = 0; c < 4; ++c) ProjMat.m[f][c] = 0;
     ProjMat[0][0] = 1.0/rd->fovx;
     ProjMat[1][1] = 1.0/rd->fovy;
     ProjMat[2][3] = -1.0;
     ProjMat[3][2] = 0.001;
   }
+  //RestoreDepthFunc();
 
+  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+  glViewport(rd->x, ScreenHeight - rd->height - rd->y, rd->width, rd->height);
+
+  glMatrixMode(GL_PROJECTION);    // Select The Projection Matrix
   glLoadMatrixf(ProjMat[0]);
 
   glMatrixMode(GL_MODELVIEW);     // Select The Modelview Matrix

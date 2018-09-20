@@ -352,7 +352,7 @@ static void ChangeResolution (int InWidth, int InHeight) {
       }
     }
   }
-  GCon->Logf("%dx%d.", ScreenWidth, ScreenHeight);
+  //GCon->Logf("%dx%d.", ScreenWidth, ScreenHeight);
 
   screen_width = ScreenWidth;
   screen_height = ScreenHeight;

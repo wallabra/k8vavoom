@@ -578,14 +578,24 @@ void VOpenGLDrawer::BeginLightShadowVolumes () {
   glClear(GL_STENCIL_BUFFER_BIT);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   glEnable(GL_POLYGON_OFFSET_FILL);
-  glPolygonOffset(1.0f, 10.0f);
-  glDepthFunc(!useReverseZ ? GL_LESS : GL_GREATER);
 
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
   glStencilFunc(GL_ALWAYS, 0x0, 0xff);
-  p_glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
-  p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
+
+  //if (!useReverseZ)
+  {
+    // normal
+    glPolygonOffset(1.0f, 10.0f);
+    glDepthFunc(GL_LESS);
+    p_glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
+    p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
+  }
+  /*
+  else {
+    k8: dunno
+  }
+  */
 
   p_glUseProgramObjectARB(SurfZBufProgram);
   swcount = 0;
@@ -601,6 +611,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes () {
 void VOpenGLDrawer::EndLightShadowVolumes () {
   guard(VOpenGLDrawer::EndLightShadowVolumes);
   if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
+  RestoreDepthFunc();
   unguard;
 }
 
