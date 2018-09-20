@@ -503,6 +503,8 @@ private:
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
 
+  void RestoreDepthFunc ();
+
 protected:
   enum { M_INFINITY = 8000 };
 

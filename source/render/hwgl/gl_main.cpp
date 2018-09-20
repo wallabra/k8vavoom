@@ -88,6 +88,21 @@ VOpenGLDrawer::~VOpenGLDrawer () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::RestoreDepthFunc
+//
+//==========================================================================
+void VOpenGLDrawer::RestoreDepthFunc () {
+  if (!useReverseZ) {
+    glDepthFunc(GL_LEQUAL);
+  } else {
+    glDepthFunc(GL_GEQUAL);
+    //glDepthFunc(GL_GREATER);
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::InitResolution
 //
 //==========================================================================
@@ -135,8 +150,8 @@ void VOpenGLDrawer::InitResolution () {
     //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
     p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
     if (p_glClipControl) {
-      GCon->Logf(NAME_Init, "OpenGL: glClipControl found, (NOT) using reverse z.");
-      //useReverseZ = true; //k8: not ready yet
+      GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z.");
+      useReverseZ = true;
     }
   } else {
     p_glClipControl = nullptr;
@@ -463,17 +478,20 @@ void VOpenGLDrawer::InitResolution () {
   //glClearDepth(1.0); // Depth Buffer Setup
   if (!useReverseZ) {
     //oglNormalZTests();
-    glDepthFunc(GL_LESS); // default would be GL_LESS
+    //glDepthFunc(GL_LESS); // default would be GL_LESS
     glClearDepth(1.0f); // default would be 1.0f
     // OpenGL 4.5 feature; see "GL_ARB_clip_control" extension
     //if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE); // standard OpenGL
     if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   } else {
     //oglReversedZTests();
-    glDepthFunc(GL_GREATER); // default would be GL_LESS
+    //glDepthFunc(GL_GREATER); // default would be GL_LESS
     glClearDepth(0.0f); // default would be 1.0f
     if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
   }
+  RestoreDepthFunc();
+  glDepthRange(0.0, 1.0);
+
   glClearStencil(0);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
@@ -485,17 +503,20 @@ void VOpenGLDrawer::InitResolution () {
   //glClearDepth(1.0); // Depth Buffer Setup
   if (!useReverseZ) {
     //oglNormalZTests();
-    glDepthFunc(GL_LESS); // default would be GL_LESS
+    //glDepthFunc(GL_LESS); // default would be GL_LESS
     glClearDepth(1.0f); // default would be 1.0f
     // OpenGL 4.5 feature; see "GL_ARB_clip_control" extension
     if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
     //glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   } else {
     //oglReversedZTests();
-    glDepthFunc(GL_GREATER); // default would be GL_LESS
+    //glDepthFunc(GL_GREATER); // default would be GL_LESS
     glClearDepth(0.0f); // default would be 1.0f
     if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
   }
+  RestoreDepthFunc();
+  glDepthRange(0.0, 1.0);
+
   glClearStencil(0);
 
   glClear(GL_COLOR_BUFFER_BIT);
@@ -509,14 +530,6 @@ void VOpenGLDrawer::InitResolution () {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
-
-  /*
-  if (!useReverseZ) {
-    glDepthFunc(GL_LEQUAL);
-    glDepthRange(0.0, 1.0);
-  }
-  */
-  glDepthRange(0.0, 1.0);
 
   glDisable(GL_POLYGON_SMOOTH);
 
@@ -1048,6 +1061,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   VMatrix4 ProjMat = VMatrix4::Identity;
 
   if (!useReverseZ) {
+    // normal
     ProjMat[0][0] = 1.0/rd->fovx;
     ProjMat[1][1] = 1.0/rd->fovy;
     ProjMat[2][3] = -1.0;
@@ -1060,11 +1074,12 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
       ProjMat[3][2] = -2.0 * maxdist / (maxdist - 1.0);
     }
   } else {
+    // reversed
     for (int f = 0; f < 4; ++f) for (int c = 0; c < 4; ++c) ProjMat.m[f][c] = 0;
     ProjMat[0][0] = 1.0/rd->fovx;
     ProjMat[1][1] = 1.0/rd->fovy;
     ProjMat[2][3] = -1.0;
-    ProjMat[3][3] = 0.001;
+    ProjMat[3][2] = 0.001;
   }
 
   glLoadMatrixf(ProjMat[0]);

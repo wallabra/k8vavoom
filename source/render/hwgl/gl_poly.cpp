@@ -656,7 +656,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, 
 void VOpenGLDrawer::BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
   guard(VOpenGLDrawer::BeginLightPass);
   //glDepthFunc(GL_LEQUAL);
-  glDepthFunc(!useReverseZ ? GL_LEQUAL : GL_GEQUAL);
+  RestoreDepthFunc();
 
   glDisable(GL_POLYGON_OFFSET_FILL);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -1292,7 +1292,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
       glDepthFunc(GL_ALWAYS);
       DrawPortalArea(Portal);
       //glDepthFunc(GL_LEQUAL);
-      glDepthFunc(!useReverseZ ? GL_LEQUAL : GL_GEQUAL);
+      RestoreDepthFunc();
       glDepthRange(0, 1);
     } else {
       glDepthMask(GL_FALSE);
@@ -1349,7 +1349,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glDepthFunc(GL_ALWAYS);
       DrawPortalArea(Portal);
       //glDepthFunc(GL_LEQUAL);
-      glDepthFunc(!useReverseZ ? GL_LEQUAL : GL_GEQUAL);
+      RestoreDepthFunc();
       glDepthRange(0, 1);
     } else {
       glDepthMask(GL_TRUE);
@@ -1362,7 +1362,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
     glDepthFunc(GL_ALWAYS);
     DrawPortalArea(Portal);
     //glDepthFunc(GL_LEQUAL);
-    glDepthFunc(!useReverseZ ? GL_LEQUAL : GL_GEQUAL);
+    RestoreDepthFunc();
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
