@@ -504,7 +504,8 @@ private:
   bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
 
   void RestoreDepthFunc ();
-  inline bool CanUseRevZ () const { return (gl_dbg_adv_reverse_z ? useReverseZ : useReverseZ && (!RendLev || !RendLev->NeedsInfiniteFarClip)); }
+  //inline bool CanUseRevZ () const { return (gl_dbg_adv_reverse_z ? useReverseZ : useReverseZ && (!RendLev || !RendLev->NeedsInfiniteFarClip)); }
+  inline bool CanUseRevZ () const { return useReverseZ; }
 
 protected:
   enum { M_INFINITY = 8000 };

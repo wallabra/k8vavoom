@@ -583,19 +583,19 @@ void VOpenGLDrawer::BeginLightShadowVolumes () {
   glDisable(GL_CULL_FACE);
   glStencilFunc(GL_ALWAYS, 0x0, 0xff);
 
-  //if (!useReverseZ)
-  {
+  if (!CanUseRevZ()) {
     // normal
-    glPolygonOffset(1.0f, 10.0f);
+    //glPolygonOffset(1.0f, 10.0f); //k8: this seems to be unnecessary
     glDepthFunc(GL_LESS);
-    p_glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
-    p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
+    //glDepthFunc(GL_LEQUAL);
+  } else {
+    // reversed
+    //glPolygonOffset(-1.0f, -10.0f); //k8: this seems to be unnecessary
+    glDepthFunc(GL_GREATER);
+    //glDepthFunc(GL_GEQUAL);
   }
-  /*
-  else {
-    k8: dunno
-  }
-  */
+  p_glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP);
+  p_glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP);
 
   p_glUseProgramObjectARB(SurfZBufProgram);
   swcount = 0;
@@ -612,6 +612,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
   guard(VOpenGLDrawer::EndLightShadowVolumes);
   if (glsw_report_verts) GCon->Logf("swcount=%d", swcount);
   RestoreDepthFunc();
+  glPolygonOffset(0.0f, 0.0f);
   unguard;
 }
 
