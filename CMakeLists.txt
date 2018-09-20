@@ -114,6 +114,8 @@ set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wall")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wabi=10")
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fabi-version=10")
 #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address")
+# k8: fuck you, gcc. i have my own style, gtfo.
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-misleading-indentation")
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.4)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wimplicit-fallthrough")
