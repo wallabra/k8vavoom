@@ -365,6 +365,7 @@ defaultproperties {
   Y = 140;
   Width = 320;
   Height = 200;
+
   TitleX = 160;
   TitleY = 24;
   Focusable = true;

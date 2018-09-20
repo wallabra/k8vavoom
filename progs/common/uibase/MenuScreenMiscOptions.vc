@@ -93,10 +93,17 @@ override void CreateChoices () {
 }
 
 
-defaultproperties
-{
-  ChoicesStartX = 160;
+defaultproperties {
+  X = 60;
+  Y = 10;
+  Width = 640-60*2;
+  Height = 480-10*2;
+
+  ChoicesStartX = 260;
   ChoicesStartY = 26;
+
+  TitleX = 260;
+
   SelectorType = MenuSelector_SmallRight;
   Title = "MISC OPTIONS";
   MenuScrollable = true;

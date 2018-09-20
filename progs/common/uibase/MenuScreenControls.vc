@@ -232,10 +232,17 @@ override void CursorMoved () {
 }
 
 
-defaultproperties
-{
-  ChoicesStartX = 150;
+defaultproperties {
+  X = 130;
+  Y = 60;
+  Width = 380;
+  Height = 360;
+
+  ChoicesStartX = 190;
   ChoicesStartY = 26;
+
+  TitleX = 190;
+
   SelectorType = MenuSelector_SmallRight;
   Title = "SETUP CONTROLS";
   MenuScrollable = true;
