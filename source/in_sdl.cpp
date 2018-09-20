@@ -75,79 +75,92 @@ static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse curs
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static vuint8 sdl2TranslateKey (SDL_Keycode ksym) {
-  if (ksym >= 'a' && ksym <= 'z') return (vuint8)ksym;
-  if (ksym >= '0' && ksym <= '9') return (vuint8)ksym;
+static int sdl2TranslateKey (SDL_Scancode scan) {
+  if (scan >= SDL_SCANCODE_A && scan <= SDL_SCANCODE_Z) return (int)(scan-SDL_SCANCODE_A+'a');
+  if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_9) return (int)(scan-SDL_SCANCODE_A+'1');
 
-  switch (ksym) {
-    case SDLK_UP: return K_UPARROW;
-    case SDLK_LEFT: return K_LEFTARROW;
-    case SDLK_RIGHT: return K_RIGHTARROW;
-    case SDLK_DOWN: return K_DOWNARROW;
-    case SDLK_INSERT: return K_INSERT;
-    case SDLK_DELETE: return K_DELETE;
-    case SDLK_HOME: return K_HOME;
-    case SDLK_END: return K_END;
-    case SDLK_PAGEUP: return K_PAGEUP;
-    case SDLK_PAGEDOWN: return K_PAGEDOWN;
+  switch (scan) {
+    case SDL_SCANCODE_1: return '0';
+    case SDL_SCANCODE_SPACE: return ' ';
+    case SDL_SCANCODE_MINUS: return '-';
+    case SDL_SCANCODE_EQUALS: return '=';
+    case SDL_SCANCODE_LEFTBRACKET: return '[';
+    case SDL_SCANCODE_RIGHTBRACKET: return ']';
+    case SDL_SCANCODE_BACKSLASH: return '\\';
+    case SDL_SCANCODE_SEMICOLON: return ';';
+    case SDL_SCANCODE_APOSTROPHE: return '\'';
+    case SDL_SCANCODE_COMMA: return ',';
+    case SDL_SCANCODE_PERIOD: return '.';
+    case SDL_SCANCODE_SLASH: return '/';
 
-    case SDLK_KP_0: return K_PAD0;
-    case SDLK_KP_1: return K_PAD1;
-    case SDLK_KP_2: return K_PAD2;
-    case SDLK_KP_3: return K_PAD3;
-    case SDLK_KP_4: return K_PAD4;
-    case SDLK_KP_5: return K_PAD5;
-    case SDLK_KP_6: return K_PAD6;
-    case SDLK_KP_7: return K_PAD7;
-    case SDLK_KP_8: return K_PAD8;
-    case SDLK_KP_9: return K_PAD9;
+    case SDL_SCANCODE_UP: return K_UPARROW;
+    case SDL_SCANCODE_LEFT: return K_LEFTARROW;
+    case SDL_SCANCODE_RIGHT: return K_RIGHTARROW;
+    case SDL_SCANCODE_DOWN: return K_DOWNARROW;
+    case SDL_SCANCODE_INSERT: return K_INSERT;
+    case SDL_SCANCODE_DELETE: return K_DELETE;
+    case SDL_SCANCODE_HOME: return K_HOME;
+    case SDL_SCANCODE_END: return K_END;
+    case SDL_SCANCODE_PAGEUP: return K_PAGEUP;
+    case SDL_SCANCODE_PAGEDOWN: return K_PAGEDOWN;
 
-    case SDLK_NUMLOCKCLEAR: return K_NUMLOCK;
-    case SDLK_KP_DIVIDE: return K_PADDIVIDE;
-    case SDLK_KP_MULTIPLY: return K_PADMULTIPLE;
-    case SDLK_KP_MINUS: return K_PADMINUS;
-    case SDLK_KP_PLUS: return K_PADPLUS;
-    case SDLK_KP_ENTER: return K_PADENTER;
-    case SDLK_KP_PERIOD: return K_PADDOT;
+    case SDL_SCANCODE_KP_0: return K_PAD0;
+    case SDL_SCANCODE_KP_1: return K_PAD1;
+    case SDL_SCANCODE_KP_2: return K_PAD2;
+    case SDL_SCANCODE_KP_3: return K_PAD3;
+    case SDL_SCANCODE_KP_4: return K_PAD4;
+    case SDL_SCANCODE_KP_5: return K_PAD5;
+    case SDL_SCANCODE_KP_6: return K_PAD6;
+    case SDL_SCANCODE_KP_7: return K_PAD7;
+    case SDL_SCANCODE_KP_8: return K_PAD8;
+    case SDL_SCANCODE_KP_9: return K_PAD9;
 
-    case SDLK_ESCAPE: return K_ESCAPE;
-    case SDLK_RETURN: return K_ENTER;
-    case SDLK_TAB: return K_TAB;
-    case SDLK_BACKSPACE: return K_BACKSPACE;
+    case SDL_SCANCODE_NUMLOCKCLEAR: return K_NUMLOCK;
+    case SDL_SCANCODE_KP_DIVIDE: return K_PADDIVIDE;
+    case SDL_SCANCODE_KP_MULTIPLY: return K_PADMULTIPLE;
+    case SDL_SCANCODE_KP_MINUS: return K_PADMINUS;
+    case SDL_SCANCODE_KP_PLUS: return K_PADPLUS;
+    case SDL_SCANCODE_KP_ENTER: return K_PADENTER;
+    case SDL_SCANCODE_KP_PERIOD: return K_PADDOT;
 
-    case SDLK_BACKQUOTE: return K_BACKQUOTE;
-    case SDLK_CAPSLOCK: return K_CAPSLOCK;
+    case SDL_SCANCODE_ESCAPE: return K_ESCAPE;
+    case SDL_SCANCODE_RETURN: return K_ENTER;
+    case SDL_SCANCODE_TAB: return K_TAB;
+    case SDL_SCANCODE_BACKSPACE: return K_BACKSPACE;
 
-    case SDLK_F1: return K_F1;
-    case SDLK_F2: return K_F2;
-    case SDLK_F3: return K_F3;
-    case SDLK_F4: return K_F4;
-    case SDLK_F5: return K_F5;
-    case SDLK_F6: return K_F6;
-    case SDLK_F7: return K_F7;
-    case SDLK_F8: return K_F8;
-    case SDLK_F9: return K_F9;
-    case SDLK_F10: return K_F10;
-    case SDLK_F11: return K_F11;
-    case SDLK_F12: return K_F12;
+    case SDL_SCANCODE_GRAVE: return K_BACKQUOTE;
+    case SDL_SCANCODE_CAPSLOCK: return K_CAPSLOCK;
 
-    case SDLK_LSHIFT: return K_LSHIFT;
-    case SDLK_RSHIFT: return K_RSHIFT;
-    case SDLK_LCTRL: return K_LCTRL;
-    case SDLK_RCTRL: return K_RCTRL;
-    case SDLK_LALT: return K_LALT;
-    case SDLK_RALT: return K_RALT;
+    case SDL_SCANCODE_F1: return K_F1;
+    case SDL_SCANCODE_F2: return K_F2;
+    case SDL_SCANCODE_F3: return K_F3;
+    case SDL_SCANCODE_F4: return K_F4;
+    case SDL_SCANCODE_F5: return K_F5;
+    case SDL_SCANCODE_F6: return K_F6;
+    case SDL_SCANCODE_F7: return K_F7;
+    case SDL_SCANCODE_F8: return K_F8;
+    case SDL_SCANCODE_F9: return K_F9;
+    case SDL_SCANCODE_F10: return K_F10;
+    case SDL_SCANCODE_F11: return K_F11;
+    case SDL_SCANCODE_F12: return K_F12;
 
-    case SDLK_LGUI: return K_LWIN;
-    case SDLK_RGUI: return K_RWIN;
-    case SDLK_MENU: return K_MENU;
+    case SDL_SCANCODE_LSHIFT: return K_LSHIFT;
+    case SDL_SCANCODE_RSHIFT: return K_RSHIFT;
+    case SDL_SCANCODE_LCTRL: return K_LCTRL;
+    case SDL_SCANCODE_RCTRL: return K_RCTRL;
+    case SDL_SCANCODE_LALT: return K_LALT;
+    case SDL_SCANCODE_RALT: return K_RALT;
 
-    case SDLK_PRINTSCREEN: return K_PRINTSCRN;
-    case SDLK_SCROLLLOCK: return K_SCROLLLOCK;
-    case SDLK_PAUSE: return K_PAUSE;
+    case SDL_SCANCODE_LGUI: return K_LWIN;
+    case SDL_SCANCODE_RGUI: return K_RWIN;
+    case SDL_SCANCODE_MENU: return K_MENU;
+
+    case SDL_SCANCODE_PRINTSCREEN: return K_PRINTSCRN;
+    case SDL_SCANCODE_SCROLLLOCK: return K_SCROLLLOCK;
+    case SDL_SCANCODE_PAUSE: return K_PAUSE;
 
     default:
-      if (ksym >= ' ' && ksym < 127) return (vuint8)ksym;
+      //if (scan >= ' ' && scan < 127) return (vuint8)scan;
       break;
   }
 
@@ -253,7 +266,7 @@ void VSdlInputDevice::ReadInput () {
       case SDL_KEYDOWN:
       case SDL_KEYUP:
         {
-          int kk = sdl2TranslateKey(ev.key.keysym.sym);
+          int kk = sdl2TranslateKey(ev.key.keysym.scancode);
           if (kk > 0) GInput->KeyEvent(kk, (ev.key.state == SDL_PRESSED) ? 1 : 0);
         }
         break;
