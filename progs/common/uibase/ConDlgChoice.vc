@@ -22,19 +22,18 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class ConDlgChoice : MenuSmallTextButton;
 
 int ImpulseNum;
 
-override void ActivateEvent()
-{
+
+override void ActivateEvent () {
   CmdBuf_AddText("Impulse %d\n", ImpulseNum);
   StopLocalSounds();
   GetClGame().PopMenu();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   TextHAlign = hleft;
 }

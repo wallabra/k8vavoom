@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class FinaleScreen : Widget;
 
 const float TEXTSPEED = 0.1;
@@ -30,202 +29,141 @@ const float TEXTWAIT  = 7.0;
 
 const int CastCount = 17;
 
-ClientGameShared    ClGame;
+ClientGameShared ClGame;
 
-FinaleBackground    Background;
-ActorDisplayWindow    CastWin;
+FinaleBackground Background;
+ActorDisplayWindow CastWin;
 
-name          FinaleType;
-float         FinaleTime;
-int           FinaleStage;
-float         FinaleEndTime;
-string          FinaleText;
-int           StrifeFinaleType;
-int           FinalePage;
-float         FinaleTimer;
+name FinaleType;
+float FinaleTime;
+int FinaleStage;
+float FinaleEndTime;
+string FinaleText;
+int StrifeFinaleType;
+int FinalePage;
+float FinaleTimer;
 
-int           castnum;
-int           castframes;
-int           castonmelee;
-bool          castattacking;
-bool          castdeath;
+int castnum;
+int castframes;
+int castonmelee;
+bool castattacking;
+bool castdeath;
 
-// Casting by id Software. in order of appearance
-class!EntityEx     castorder[CastCount];
-//
-// Character cast strings
-//
-name          caststrings[CastCount];
+// casting by id Software. in order of appearance
+class!EntityEx[CastCount] castorder;
+// character cast strings
+name[CastCount] caststrings;
+
 
 //==========================================================================
 //
 //  StartFinale
 //
 //==========================================================================
-
-final void StartFinale(name AFinaleType)
-{
+final void StartFinale (name AFinaleType) {
   FinaleType = AFinaleType;
   FinaleTime = 0.0;
 
-  if (!StrStartsWith(va("%n", FinaleType), "EndGame"))
-  {
-    FinaleType = ClGame.DefaultFinaleType;
-  }
+  if (!StrStartsWith(va("%n", FinaleType), "EndGame")) FinaleType = ClGame.DefaultFinaleType;
 
-  if (FinaleType == 'EndGamePic1')
-  {
-    if (!IsMapPresent('e2m1') && WadLumpPresent('order'))
-    {
-      InitPic('order');
-    }
-    else
-    {
-      InitPic('credit');
-    }
-  }
-  else if (FinaleType == 'EndGamePic2')
-  {
+  if (FinaleType == 'EndGamePic1') {
+    if (!IsMapPresent('e2m1') && WadLumpPresent('order')) InitPic('order'); else InitPic('credit');
+  } else if (FinaleType == 'EndGamePic2') {
     InitPic('victory2');
-  }
-  else if (FinaleType == 'EndGamePic3')
-  {
-    if (WadLumpPresent('endpic'))
-    {
+  } else if (FinaleType == 'EndGamePic3') {
+    if (WadLumpPresent('endpic')) {
       InitPic('endpic');
-    }
-    else
-    {
-      // Just show credits screen for extended episodes
+    } else {
+      // just show credits screen for extended episodes
       InitPic('credit');
     }
-  }
-  else if (FinaleType == 'EndGameUnderwater')
-  {
+  } else if (FinaleType == 'EndGameUnderwater') {
     InitUnderwater();
-  }
-  else if (FinaleType == 'EndGameBunny')
-  {
+  } else if (FinaleType == 'EndGameBunny') {
     InitBunnyScroll();
-  }
-  else if (FinaleType == 'EndGameDemon')
-  {
+  } else if (FinaleType == 'EndGameDemon') {
     InitDemonScroll();
-  }
-  else if (FinaleType == 'EndGameCast')
-  {
+  } else if (FinaleType == 'EndGameCast') {
     StartCast();
-  }
-  else if (FinaleType == 'EndGameChess')
-  {
+  } else if (FinaleType == 'EndGameChess') {
     InitChess();
-  }
-  else if (FinaleType == 'EndGameStrife')
-  {
+  } else if (FinaleType == 'EndGameStrife') {
     InitStrifeFinale();
-  }
-  else if (StrStartsWith(va("%n", FinaleType), "EndGameCustomPic"))
-  {
-    InitPic(StrToName(substr(va("%n", FinaleType), 16,
-      strlen(va("%n", FinaleType)) - 16)));
-  }
-  else
-  {
+  } else if (StrStartsWith(va("%n", FinaleType), "EndGameCustomPic")) {
+    string ft = va("%n", FinaleType);
+    InitPic(StrToName(substr(ft, 16, ft.length-16)));
+  } else {
     print("Unknown finale type %n", FinaleType);
     InitPic('credit');
   }
 }
+
 
 //==========================================================================
 //
 //  OnCreate
 //
 //==========================================================================
-
-override void OnCreate()
-{
+override void OnCreate () {
   ::OnCreate();
   Background = NewChild(FinaleBackground);
   Background.FScreen = self;
-  Background.ScaleX = itof(Width) / itof(Background.Width);
-  Background.ScaleY = itof(Height) / itof(Background.Height);
+  Background.ScaleX = float(Width)/float(Background.Width);
+  Background.ScaleY = float(Height)/float(Background.Height);
 }
+
 
 //==========================================================================
 //
 //  OnVisibilityChanged
 //
 //==========================================================================
-
-override void OnVisibilityChanged(bool bNewVisibility)
-{
+override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
 }
+
 
 //==========================================================================
 //
 //  OnPostDraw
 //
 //==========================================================================
-
-override void OnPostDraw()
-{
-  if (FinaleType == 'EndGameCast')
-  {
-    CastPostDraw();
-  }
-  else if (FinaleType == 'EndGameChess')
-  {
-    ChessPostDraw();
-  }
+override void OnPostDraw () {
+       if (FinaleType == 'EndGameCast') CastPostDraw();
+  else if (FinaleType == 'EndGameChess') ChessPostDraw();
 }
+
 
 //===========================================================================
 //
 //  Responder
 //
 //===========================================================================
-
-bool Responder(event_t * event)
-{
-  if (FinaleType == 'EndGameCast')
-  {
-    return CastResponder(event);
-  }
+bool Responder (event_t *event) {
+  if (FinaleType == 'EndGameCast') return CastResponder(event);
   return false;
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   FinaleTime += DeltaTime;
-  if (FinaleType == 'EndGameCast')
-  {
-    CastTicker(DeltaTime);
-  }
-  else if (FinaleType == 'EndGameChess')
-  {
-    ChessTicker();
-  }
-  else if (FinaleType == 'EndGameStrife')
-  {
-    StrifeFinalTicker(DeltaTime);
-  }
+       if (FinaleType == 'EndGameCast') CastTicker(DeltaTime);
+  else if (FinaleType == 'EndGameChess')ChessTicker();
+  else if (FinaleType == 'EndGameStrife') StrifeFinalTicker(DeltaTime);
 }
+
 
 //==========================================================================
 //
 //  InitPic
 //
 //==========================================================================
-
-final void InitPic(name PicName)
-{
+final void InitPic (name PicName) {
   Background.InitPic(PicName);
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
@@ -234,14 +172,13 @@ final void InitPic(name PicName)
 #endif
 }
 
+
 //==========================================================================
 //
 //  InitUnderwater
 //
 //==========================================================================
-
-final void InitUnderwater()
-{
+final void InitUnderwater () {
   Background.InitPicPal('e2end', 'e2pal');
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
@@ -250,14 +187,13 @@ final void InitUnderwater()
 #endif
 }
 
+
 //==========================================================================
 //
 //  InitBunnyScroll
 //
 //==========================================================================
-
-final void InitBunnyScroll()
-{
+final void InitBunnyScroll () {
   Background.InitBunnyScroll();
 #ifdef FIXME
   S_StartSong("d_bunny", P_GetCDEnd2Track(), true);
@@ -266,14 +202,13 @@ final void InitBunnyScroll()
 #endif
 }
 
+
 //==========================================================================
 //
 //  InitDemonScroll
 //
 //==========================================================================
-
-final void InitDemonScroll()
-{
+final void InitDemonScroll () {
   Background.InitDemon();
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
@@ -282,14 +217,13 @@ final void InitDemonScroll()
 #endif
 }
 
+
 //==========================================================================
 //
 //  StartCast
 //
 //==========================================================================
-
-final void StartCast()
-{
+final void StartCast () {
 #ifdef FIXME
   S_StartSong("d_evil", P_GetCDEnd2Track(), true);
 #else
@@ -297,8 +231,7 @@ final void StartCast()
 #endif
   Background.InitPic('bossback');
 
-  if (!CastWin)
-  {
+  if (!CastWin) {
     CastWin = ActorDisplayWindow(NewChild(ActorDisplayWindow));
     CastWin.SetPos(0, 0);
     CastWin.SetSize(640, 480);
@@ -313,34 +246,27 @@ final void StartCast()
   castattacking = false;
 }
 
+
 //==========================================================================
 //
 //  CastSound
 //
 //==========================================================================
-
-final void DoCastSound(state CurState, class Cls, name State, int Offset,
-  name Sound)
-{
+final void DoCastSound (state CurState, class Cls, name State, int Offset, name Sound) {
   state S = FindClassState(Cls, State);
-  if (S)
-  {
+  if (S) {
     S = GetStatePlus(S, Offset);
-    if (S == CurState)
-    {
-      LocalSound(Sound);
-    }
+    if (S == CurState) LocalSound(Sound);
   }
 }
 
+
 //==========================================================================
 //
 //  CastSound
 //
 //==========================================================================
-
-final void CastSound(state State)
-{
+final void CastSound (state State) {
   // sound hacks....
   DoCastSound(State, DoomPlayer, 'Missile', 0, 'weapons/sshotf');
   DoCastSound(State, ZombieMan, 'Missile', 1, 'grunt/attack');
@@ -370,95 +296,65 @@ final void CastSound(state State)
   DoCastSound(State, Archvile, 'Missile', 1, 'vile/start');
 }
 
+
 //==========================================================================
 //
 //  CastTicker
 //
 //==========================================================================
-
-final void CastTicker(float DeltaTime)
-{
+final void CastTicker (float DeltaTime) {
   CastWin.CastTime -= DeltaTime;
-  if (CastWin.CastTime > 0.0)
-  {
-    return; // not time to change state yet
-  }
-
+  if (CastWin.CastTime > 0.0) return; // not time to change state yet
   SetNextCastState(CastWin.StateTime, CastWin.NextState);
 }
+
 
 //==========================================================================
 //
 //  SetNextCastState
 //
 //==========================================================================
-
-final void SetNextCastState(float StateTime, state NextState)
-{
+final void SetNextCastState (float StateTime, state NextState) {
   state NewState;
-
-  if (StateTime == -1.0 || !NextState)
-  {
+  if (StateTime == -1.0 || !NextState) {
     // switch from deathstate to next monster
-    castnum++;
+    ++castnum;
     castdeath = false;
-    if (castnum == CastCount)
-    {
-      castnum = 0;
-    }
-    if (castorder[castnum].default.SightSound)
-    {
-      LocalSound(castorder[castnum].default.SightSound);
-    }
+    if (castnum == CastCount) castnum = 0;
+    if (castorder[castnum].default.SightSound) LocalSound(castorder[castnum].default.SightSound);
     NewState = FindClassState(castorder[castnum], 'See');
     castframes = 0;
-  }
-  else
-  {
+  } else {
     // just advance to next state in animation
-//      if (caststate == &states[S1_PLAY_ATK1])
-//          goto stopattack;    // Oh, gross hack!
+    //if (caststate == &states[S1_PLAY_ATK1]) goto stopattack; // oh, gross hack!
     NewState = NextState;
-    if (NewState == FindClassState(castorder[castnum], 'Spawn'))
-    {
+    if (NewState == FindClassState(castorder[castnum], 'Spawn')) {
       NewState = FindClassState(castorder[castnum], 'See');
     }
-    castframes++;
-
+    ++castframes;
     CastSound(NewState);
   }
 
-  if (castframes == 12)
-  {
+  if (castframes == 12) {
     // go into attack frame
     castattacking = true;
-    if (castonmelee)
-    {
+    if (castonmelee) {
       NewState = FindClassState(castorder[castnum], 'Melee');
-    }
-    else
-    {
+    } else {
       NewState = FindClassState(castorder[castnum], 'Missile');
     }
     castonmelee ^= 1;
-    if (!NewState)
-    {
-      if (castonmelee)
-      {
+    if (!NewState) {
+      if (castonmelee) {
         NewState = FindClassState(castorder[castnum], 'Melee');
-      }
-      else
-      {
+      } else {
         NewState = FindClassState(castorder[castnum], 'Missile');
       }
     }
   }
 
-  if (castattacking)
-  {
-    if (castframes == 24 ||
-      NewState == FindClassState(castorder[castnum], 'See'))
-    {
+  if (castattacking) {
+    if (castframes == 24 || NewState == FindClassState(castorder[castnum], 'See')) {
       castattacking = false;
       castframes = 0;
       NewState = FindClassState(castorder[castnum], 'See');
@@ -467,29 +363,19 @@ final void SetNextCastState(float StateTime, state NextState)
 
   CastWin.SetState(NewState);
   CastWin.CastTime = CastWin.StateTime;
-  if (CastWin.CastTime < 0.0)
-  {
-    CastWin.CastTime = 15.0 / 35.0;
-  }
+  if (CastWin.CastTime < 0.0) CastWin.CastTime = 15.0/35.0;
 }
+
 
 //==========================================================================
 //
 //  CastResponder
 //
 //==========================================================================
+final bool CastResponder (event_t *ev) {
+  if (ev->type != ev_keydown) return false;
 
-final bool CastResponder(event_t *ev)
-{
-  if (ev->type != ev_keydown)
-  {
-    return false;
-  }
-
-  if (castdeath)
-  {
-    return true;  // already in dying frames
-  }
+  if (castdeath) return true; // already in dying frames
 
   // go into death frame
   castdeath = true;
@@ -497,35 +383,30 @@ final bool CastResponder(event_t *ev)
   CastWin.CastTime = CastWin.StateTime;
   castframes = 0;
   castattacking = false;
-  if (castorder[castnum].default.DeathSound)
-  {
-    LocalSound(castorder[castnum].default.DeathSound);
-  }
+  if (castorder[castnum].default.DeathSound) LocalSound(castorder[castnum].default.DeathSound);
 
   return true;
 }
+
 
 //==========================================================================
 //
 //  CastPostDraw
 //
 //==========================================================================
-
-final void CastPostDraw()
-{
+final void CastPostDraw () {
   SetFont('smallfont');
   SetTextAlign(hcentre, vtop);
   DrawText(320, 440, GetLangString(caststrings[castnum]));
 }
+
 
 //==========================================================================
 //
 //  InitChess
 //
 //==========================================================================
-
-final void InitChess()
-{
+final void InitChess () {
   FinaleStage = 0;
   FinaleEndTime = 2.0;
   Background.InitChess();
@@ -537,227 +418,200 @@ final void InitChess()
 #endif
 }
 
+
 //==========================================================================
 //
 //  ChessTicker
 //
 //==========================================================================
-
-final void ChessTicker()
-{
-  if (FinaleStage < 5 && FinaleTime >= FinaleEndTime)
-  {
+final void ChessTicker () {
+  if (FinaleStage < 5 && FinaleTime >= FinaleEndTime) {
     FinaleTime = 0.0;
-    FinaleStage++;
-    switch (FinaleStage)
-    {
-    case 1: // Text 1
-      GetFinaleText('win1msg');
-      break;
-    case 2: // Pic 2, Text 2
-      GetFinaleText('win2msg');
-      Background.fpage1 = R_RegisterPic('finale2');
+    ++FinaleStage;
+    switch (FinaleStage) {
+      case 1: // Text 1
+        GetFinaleText('win1msg');
+        break;
+      case 2: // Pic 2, Text 2
+        GetFinaleText('win2msg');
+        Background.fpage1 = R_RegisterPic('finale2');
 #ifdef FIXME
-      S_StartSong("orb", P_GetCDEnd2Track(), false);
+        S_StartSong("orb", P_GetCDEnd2Track(), false);
 #else
-      CmdBuf_AddText("music play orb\n");
+        CmdBuf_AddText("music play orb\n");
 #endif
-      break;
-    case 3: // Pic 2 -- Fade out
-      FinaleEndTime = 2.0;
-      break;
-    case 4: // Pic 3 -- Fade in
-      Background.fpage1 = R_RegisterPic('finale3');
-      FinaleEndTime = 2.0;
+        break;
+      case 3: // Pic 2 -- Fade out
+        FinaleEndTime = 2.0;
+        break;
+      case 4: // Pic 3 -- Fade in
+        Background.fpage1 = R_RegisterPic('finale3');
+        FinaleEndTime = 2.0;
 #ifdef FIXME
-      S_StartSong("chess", P_GetCDEnd3Track(), true);
+        S_StartSong("chess", P_GetCDEnd3Track(), true);
 #else
-      CmdBuf_AddText("music loop chess\n");
+        CmdBuf_AddText("music loop chess\n");
 #endif
-      break;
-    case 5: // Pic 3 , Text 3
-      GetFinaleText('win3msg');
-      break;
+        break;
+      case 5: // Pic 3 , Text 3
+        GetFinaleText('win3msg');
+        break;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  GetFinaleText
 //
 //==========================================================================
-
-final void GetFinaleText(name msgLumpName)
-{
+final void GetFinaleText (name msgLumpName) {
   FinaleText = LoadTextLump(msgLumpName);
-  FinaleEndTime = itof(strlen(FinaleText)) * TEXTSPEED + TEXTWAIT;
+  FinaleEndTime = float(FinaleText.length)*TEXTSPEED+TEXTWAIT;
 }
+
 
 //===========================================================================
 //
 //  TextWrite
 //
 //===========================================================================
-
-final void TextWrite()
-{
+final void TextWrite () {
   // draw some of the text onto the screen
-  int count = ftoi((FinaleTime - 0.3) / TEXTSPEED);
-  count = Clamp(count, 0, strlen(FinaleText));
-
+  int count = clamp(int((FinaleTime-0.3)/TEXTSPEED), 0, FinaleText.length);
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(180, (FinaleStage == 5) ? 275 : 145, substr(FinaleText, 0, count));
+  DrawText(180, (FinaleStage == 5 ? 275 : 145), FinaleText[0..count]);
 }
+
 
 //==========================================================================
 //
 //  ChessPostDraw
 //
 //==========================================================================
-
-final void ChessPostDraw()
-{
-  switch (FinaleStage)
-  {
-  case 1:
-  case 2:
-  case 5:
-    TextWrite();
-    break;
+final void ChessPostDraw () {
+  switch (FinaleStage) {
+    case 1:
+    case 2:
+    case 5:
+      TextWrite();
+      break;
   }
 }
+
 
 //===========================================================================
 //
 //  InitStrifeFinale
 //
 //===========================================================================
-
-final void InitStrifeFinale()
-{
-  FinalePage = StrifeFinaleType * 10;
+final void InitStrifeFinale () {
+  FinalePage = StrifeFinaleType*10;
   FinaleStage = 0;
   PlayStrifeFinalePage();
 }
+
 
 //===========================================================================
 //
 //  PlayStrifeFinalePage
 //
 //===========================================================================
-
-final void PlayStrifeFinalePage()
-{
-  switch (FinalePage)
-  {
-    //  Happy ending.
-  case 0:
-    StopLocalSounds();
-    CmdBuf_AddText("music loop d_happy\n");
-    Background.InitPic('ss4f1');
-    LocalSound('svox/rie01');
-    FinaleTimer = 13.0;
-    FinalePage = 1;
-    break;
-
-  case 1:
-    Background.InitPic('ss4f2');
-    LocalSound('svox/bbx01');
-    FinaleTimer = 11.0;
-    FinalePage = 2;
-    break;
-
-  case 2:
-    Background.InitPic('ss4f3');
-    LocalSound('svox/bbx02');
-    FinaleTimer = 14.0;
-    FinalePage = 3;
-    break;
-
-  case 3:
-    Background.InitPic('ss4f4');
-    FinaleTimer = 28.0;
-    FinalePage = -1;
-    break;
-
-    //  Sad ending.
-  case 10:
-    StopLocalSounds();
-    CmdBuf_AddText("music loop d_sad\n");
-    Background.InitPic('ss5f1');
-    LocalSound('svox/ss501b');
-    FinaleTimer = 11.0;
-    FinalePage = 11;
-    break;
-
-  case 11:
-    Background.InitPic('ss5f2');
-    LocalSound('svox/ss502b');
-    FinaleTimer = 10.0;
-    FinalePage = 12;
-    break;
-
-  case 12:
-    Background.InitPic('ss5f3');
-    LocalSound('svox/ss503b');
-    FinaleTimer = 11.0;
-    FinalePage = -1;
-    break;
-
-    //  Dark ending.
-  case 20:
-    StopLocalSounds();
-    CmdBuf_AddText("music loop d_end\n");
-    Background.InitPic('ss6f1');
-    LocalSound('svox/ss601a');
-    FinaleTimer = 8.0;
-    FinalePage = 21;
-    break;
-
-  case 21:
-    Background.InitPic('ss6f2');
-    LocalSound('svox/ss602a');
-    FinaleTimer = 8.0;
-    FinalePage = 22;
-    break;
-
-  case 22:
-    Background.InitPic('ss6f3');
-    LocalSound('svox/ss603a');
-    FinaleTimer = 9.0;
-    FinalePage = -1;
-    break;
-
-  case -1:
-    CmdBuf_AddText("music loop d_fast\n");
-    Background.InitPic('credit');
-    FinaleStage = 1;
-    break;
+final void PlayStrifeFinalePage () {
+  switch (FinalePage) {
+    // happy ending
+    case 0:
+      StopLocalSounds();
+      CmdBuf_AddText("music loop d_happy\n");
+      Background.InitPic('ss4f1');
+      LocalSound('svox/rie01');
+      FinaleTimer = 13.0;
+      FinalePage = 1;
+      break;
+    case 1:
+      Background.InitPic('ss4f2');
+      LocalSound('svox/bbx01');
+      FinaleTimer = 11.0;
+      FinalePage = 2;
+      break;
+    case 2:
+      Background.InitPic('ss4f3');
+      LocalSound('svox/bbx02');
+      FinaleTimer = 14.0;
+      FinalePage = 3;
+      break;
+    case 3:
+      Background.InitPic('ss4f4');
+      FinaleTimer = 28.0;
+      FinalePage = -1;
+      break;
+    // sad ending
+    case 10:
+      StopLocalSounds();
+      CmdBuf_AddText("music loop d_sad\n");
+      Background.InitPic('ss5f1');
+      LocalSound('svox/ss501b');
+      FinaleTimer = 11.0;
+      FinalePage = 11;
+      break;
+    case 11:
+      Background.InitPic('ss5f2');
+      LocalSound('svox/ss502b');
+      FinaleTimer = 10.0;
+      FinalePage = 12;
+      break;
+    case 12:
+      Background.InitPic('ss5f3');
+      LocalSound('svox/ss503b');
+      FinaleTimer = 11.0;
+      FinalePage = -1;
+      break;
+    // dark ending
+    case 20:
+      StopLocalSounds();
+      CmdBuf_AddText("music loop d_end\n");
+      Background.InitPic('ss6f1');
+      LocalSound('svox/ss601a');
+      FinaleTimer = 8.0;
+      FinalePage = 21;
+      break;
+    case 21:
+      Background.InitPic('ss6f2');
+      LocalSound('svox/ss602a');
+      FinaleTimer = 8.0;
+      FinalePage = 22;
+      break;
+    case 22:
+      Background.InitPic('ss6f3');
+      LocalSound('svox/ss603a');
+      FinaleTimer = 9.0;
+      FinalePage = -1;
+      break;
+    case -1:
+      CmdBuf_AddText("music loop d_fast\n");
+      Background.InitPic('credit');
+      FinaleStage = 1;
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  StrifeFinalTicker
 //
 //==========================================================================
-
-final void StrifeFinalTicker(float DeltaTime)
-{
-  if (FinaleStage == 0)
-  {
+final void StrifeFinalTicker (float DeltaTime) {
+  if (FinaleStage == 0) {
     FinaleTimer -= DeltaTime;
-    if (FinaleTimer <= 0.0)
-    {
-      PlayStrifeFinalePage();
-    }
+    if (FinaleTimer <= 0.0) PlayStrifeFinalePage();
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bTickEnabled = true;
   Focusable = true;
   Width = 640;

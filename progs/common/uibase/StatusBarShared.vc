@@ -22,84 +22,80 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class StatusBarShared : Widget;
 
-ClientGameBase    ClGame;
+ClientGameBase ClGame;
 
 const int NUM_NOTIFY_LINES = 5;
 
-string        notify_lines[NUM_NOTIFY_LINES];
-float       notify_times[NUM_NOTIFY_LINES];
-int         num_notify;
-int         first_notify;
+string[NUM_NOTIFY_LINES] notify_lines;
+float[NUM_NOTIFY_LINES] notify_times;
+int num_notify;
+int first_notify;
 
-array!SplitLine  CentreMessageLines;
-int         CentreMessageHeight;
-float       CentreTime;
+array!SplitLine CentreMessageLines;
+int CentreMessageHeight;
+float CentreTime;
 
-Widget        HudMsgWin;
+Widget HudMsgWin;
 
-enum
-{
+enum {
   HUDMSG_PLAIN,
   HUDMSG_FADEOUT,
   HUDMSG_TYPEON,
   HUDMSG_FADEINOUT
-};
-const int HUDMSG_LOG      = 0x80000000;
+}
+
+const int HUDMSG_LOG          = 0x80000000;
 const int HUDMSG_COLOURSTRING = 0x40000000;
+
 
 //==========================================================================
 //
 //  OnCreate
 //
 //==========================================================================
-
-override void OnCreate()
-{
+override void OnCreate () {
   ::OnCreate();
   HudMsgWin = NewChild(Widget);
   HudMsgWin.Width = Width;
   HudMsgWin.Height = Height;
 }
 
+
 //==========================================================================
 //
 //  StartMap
 //
 //==========================================================================
-
-void StartMap()
-{
+void StartMap () {
   ClearNotify();
   ClearCentreMessage();
   ClearHudMessages();
 }
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
+override void OnDraw () {
   DrawNotify();
   DrawCentreMessage();
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   UpdateNotify(DeltaTime);
   UpdateCentreMessage(DeltaTime);
 }
+
 
 //**************************************************************************
 //  Notify messages
@@ -110,90 +106,71 @@ override void Tick(float DeltaTime)
 //  ClearNotify
 //
 //==========================================================================
-
-void ClearNotify()
-{
+void ClearNotify () {
   num_notify = 0;
   first_notify = 0;
 }
+
 
 //==========================================================================
 //
 //  AddNotifyMessage
 //
 //==========================================================================
-
-void AddNotifyMessage(string Str)
-{
-  array!SplitLine  Lines;
-  int         i;
+void AddNotifyMessage (string Str) {
+  array!SplitLine Lines;
 
   SetFont('smallfont');
   SplitText(Str, Lines, 640);
 
-  for (i = 0; i < Lines.Num; i++)
-  {
-    if (num_notify >= NUM_NOTIFY_LINES)
-    {
-      num_notify--;
-      first_notify++;
+  foreach (auto i; 0..Lines.length) {
+    if (num_notify >= NUM_NOTIFY_LINES) {
+      --num_notify;
+      ++first_notify;
     }
-    notify_lines[(num_notify + first_notify) % NUM_NOTIFY_LINES] =
-      Lines[i].Text;
-    notify_times[(num_notify + first_notify) % NUM_NOTIFY_LINES] =
-      GetCvarF('notify_time');
-    num_notify++;
+    notify_lines[(num_notify+first_notify)%NUM_NOTIFY_LINES] = Lines[i].Text;
+    notify_times[(num_notify+first_notify)%NUM_NOTIFY_LINES] = GetCvarF('notify_time');
+    ++num_notify;
   }
 }
+
 
 //==========================================================================
 //
 //  DrawNotify
 //
 //==========================================================================
-
-void DrawNotify()
-{
+void DrawNotify () {
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
 
   int col = GetCvar('font_colour');
 
-  //  Notify lines
+  // notify lines
   int y = 0;
   int i = 0;
-  while (i < num_notify)
-  {
-    if (notify_times[(i + first_notify) % NUM_NOTIFY_LINES] <= 0.0)
-    {
-      first_notify++;
-      num_notify--;
-    }
-    else
-    {
-      DrawText(4, y, notify_lines[(i + first_notify) %
-        NUM_NOTIFY_LINES], col);
+  while (i < num_notify) {
+    if (notify_times[(i+first_notify)%NUM_NOTIFY_LINES] <= 0.0) {
+      ++first_notify;
+      --num_notify;
+    } else {
+      DrawText(4, y, notify_lines[(i+first_notify)%NUM_NOTIFY_LINES], col);
       y += 9;
-      i++;
+      ++i;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  UpdateNotify
 //
 //==========================================================================
-
-void UpdateNotify(float DeltaTime)
-{
-  int   i;
-
-  for (i = 0; i < num_notify; i++)
-  {
-    notify_times[(i + first_notify) % NUM_NOTIFY_LINES] -= DeltaTime;
-  }
+void UpdateNotify (float DeltaTime) {
+  foreach (auto i; 0..num_notify) notify_times[(i+first_notify)%NUM_NOTIFY_LINES] -= DeltaTime;
 }
+
 
 //**************************************************************************
 //  Centre message
@@ -204,63 +181,50 @@ void UpdateNotify(float DeltaTime)
 //  ClearCentreMessage
 //
 //==========================================================================
-
-void ClearCentreMessage()
-{
+void ClearCentreMessage () {
   CentreTime = 0.0;
 }
+
 
 //==========================================================================
 //
 //  AddCentreMessage
 //
 //==========================================================================
-
-void AddCentreMessage(string Msg)
-{
+void AddCentreMessage (string Msg) {
   SetFont('smallfont');
   CentreMessageHeight = SplitText(Msg, CentreMessageLines, 600);
   CentreTime = GetCvarF('centre_message_time');
 }
+
 
 //==========================================================================
 //
 //  DrawCentreMessage
 //
 //==========================================================================
-
-void DrawCentreMessage()
-{
-  int   i;
-
-  if (CentreTime && CentreMessageLines.Num)
-  {
-    int LineH = CentreMessageHeight / CentreMessageLines.Num;
+void DrawCentreMessage () {
+  if (CentreTime && CentreMessageLines.length) {
+    int LineH = CentreMessageHeight/CentreMessageLines.Num;
     SetFont('smallfont');
     SetTextAlign(hleft, vtop);
-    for (i = 0; i < CentreMessageLines.Num; i++)
-    {
-      DrawText(320 - CentreMessageLines[i].Width / 2, 360 + i * LineH,
-        CentreMessageLines[i].Text, GetCvar('font_colour2'),
-        CR_YELLOW);
+    foreach (auto i; 0..CentreMessageLines.length) {
+      DrawText(320-CentreMessageLines[i].Width/2, 360+i*LineH, CentreMessageLines[i].Text, GetCvar('font_colour2'), CR_YELLOW);
     }
   }
 }
+
 
 //==========================================================================
 //
 //  UpdateCentreMessage
 //
 //==========================================================================
-
-void UpdateCentreMessage(float DeltaTime)
-{
+void UpdateCentreMessage (float DeltaTime) {
   CentreTime -= DeltaTime;
-  if (CentreTime < 0.0)
-  {
-    CentreTime = 0.0;
-  }
+  if (CentreTime < 0.0) CentreTime = 0.0;
 }
+
 
 //**************************************************************************
 //  HUD messages
@@ -271,95 +235,75 @@ void UpdateCentreMessage(float DeltaTime)
 //  ClearHudMessages
 //
 //==========================================================================
-
-void ClearHudMessages()
-{
+void ClearHudMessages () {
   HudMsgWin.DestroyAllChildren();
 }
+
 
 //==========================================================================
 //
 //  AddHudMessage
 //
 //==========================================================================
-
-void AddHudMessage(string Message, name Font, int Type, int Id, int Colour,
+void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   string ColourName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
-  Widget    Probe;
-  HUDMessage  Msg;
+  Widget Probe;
+  HUDMessage Msg;
 
-  //  Log to console if needed.
-  if (Type & HUDMSG_LOG)
-  {
+  // log to console if needed.
+  if (Type&HUDMSG_LOG) {
     print("\ci<------------------------------->");
     print("%s%s", TextColourString(Colour), Message);
     print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
 
-  //  Handle colours specified by name.
-  if (Type & HUDMSG_COLOURSTRING)
-  {
-    Colour = FindTextColour(ColourName);
-  }
+  // handle colours specified by name
+  if (Type&HUDMSG_COLOURSTRING) Colour = FindTextColour(ColourName);
 
-  //  Remove previous message with the same ID.
-  if (Id && Id != 0xffffffff)
-  {
-    for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next)
-    {
-      if (HUDMessage(Probe).Id == Id)
-      {
+  // remove previous message with the same ID
+  if (Id && Id != 0xffffffff) {
+    for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
+      if (HUDMessage(Probe).Id == Id) {
         Probe.Destroy();
         break;
       }
     }
   }
 
-  switch (Type & 0xffff)
-  {
-  default:
-  case HUDMSG_PLAIN:
-    Msg = HudMsgWin.NewChild(HUDMessage);
-    break;
-
-  case HUDMSG_FADEOUT:
-    Msg = HudMsgWin.NewChild(HUDMessageFadeOut);
-    break;
-
-  case HUDMSG_TYPEON:
-    Msg = HudMsgWin.NewChild(HUDMessageTypeOnFadeOut);
-    break;
-
-  case HUDMSG_FADEINOUT:
-    Msg = HudMsgWin.NewChild(HUDMessageFadeInOut);
-    break;
+  switch (Type&0xffff) {
+    default:
+    case HUDMSG_PLAIN:
+      Msg = HudMsgWin.NewChild(HUDMessage);
+      break;
+    case HUDMSG_FADEOUT:
+      Msg = HudMsgWin.NewChild(HUDMessageFadeOut);
+      break;
+    case HUDMSG_TYPEON:
+      Msg = HudMsgWin.NewChild(HUDMessageTypeOnFadeOut);
+      break;
+    case HUDMSG_FADEINOUT:
+      Msg = HudMsgWin.NewChild(HUDMessageFadeInOut);
+      break;
   }
-  Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight,
-    HoldTime, Time1, Time2);
+  Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
-  //  Insert in the list in the proper location.
+  // insert in the list in the proper location
   Probe = HudMsgWin.FirstChild;
-  while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id))
-  {
-    Probe = Probe.Next;
-  }
-  if (Probe)
-  {
-    Msg.MoveBefore(Probe);
-  }
+  while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
+  if (Probe) Msg.MoveBefore(Probe);
 }
 
-void SB_Drawer(int sb_view)
-{
+
+void SB_Drawer (int sb_view) {
 }
 
-void SB_UpdateWidgets()
-{
+
+void SB_UpdateWidgets () {
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

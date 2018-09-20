@@ -22,204 +22,152 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class ConDialog : MenuScreen;
 
-struct RandomConversation
-{
-  string    Name;
-  string    Texts[10];
+struct RandomConversation {
+  string Name;
+  string[10] Texts;
 };
 
-//  Background
-int         BackPic;
+// background
+int BackPic;
 
-//  Speech
-string        SpeakerName;
-string        SpeechText;
+// speech
+string SpeakerName;
+string SpeechText;
 
-//  Choices
-ConDlgChoice    WinChoices[6];
-int         NumChoices;
+// choices
+ConDlgChoice[6] WinChoices;
+int NumChoices;
 
-// True if gold icon should be drawn
-bool        bNeedGold;
+// true if gold icon should be drawn
+bool bNeedGold;
 
-RandomConversation  RandomConversations[5];
-string        CancelTexts[3];
+RandomConversation[5] RandomConversations;
+string[3] CancelTexts;
+
 
 //==========================================================================
 //
 //  SetSpeech
 //
 //==========================================================================
-
-void SetSpeech(EntityEx Speaker, int SpeechNum)
-{
-  int i;
+void SetSpeech (EntityEx Speaker, int SpeechNum) {
   GameObject::RogueConSpeech *Speech;
 
-  if (!SpeechNum)
-    return;
-  if (SpeechNum < 0)
-  {
+  if (!SpeechNum) return;
+  if (SpeechNum < 0) {
     SpeechNum = -SpeechNum;
-    if (SpeechNum > ClGame.GLevel.GenericSpeeches.length)
-      return;
-    Speech = &ClGame.GLevel.GenericSpeeches[SpeechNum - 1];
+    if (SpeechNum > ClGame.GLevel.GenericSpeeches.length) return;
+    Speech = &ClGame.GLevel.GenericSpeeches[SpeechNum-1];
+  } else {
+    if (SpeechNum > ClGame.GLevel.LevelSpeeches.length) return;
+    Speech = &ClGame.GLevel.LevelSpeeches[SpeechNum-1];
   }
-  else
-  {
-    if (SpeechNum > ClGame.GLevel.LevelSpeeches.length)
-      return;
-    Speech = &ClGame.GLevel.LevelSpeeches[SpeechNum - 1];
-  }
-  if (Speech->BackPic)
-  {
-    BackPic = R_RegisterPic(Speech->BackPic);
-  }
+  if (Speech->BackPic) BackPic = R_RegisterPic(Speech->BackPic);
 
-  //  Get name of the speaker.
-  if (Speech->Name)
-  {
-    SpeakerName = Speech->Name;
-  }
-  else if (Speaker)
-  {
-    SpeakerName = Speaker.StrifeName;
-  }
-  if (!SpeakerName)
-  {
-    SpeakerName = "Person";
-  }
+  // get name of the speaker
+       if (Speech->Name) SpeakerName = Speech->Name;
+  else if (Speaker) SpeakerName = Speaker.StrifeName;
+  if (!SpeakerName) SpeakerName = "Person";
 
   SpeechText = Speech->Text;
 
-  //  Check for random conversation text.
-  if (!strcmp(substr(SpeechText, 0, 6), "RANDOM"))
-  {
-    string TempStr;
-
-    TempStr = substr(SpeechText, 7, strlen(SpeechText) - 7);
-    for (i = 0; i < 5; i++)
-    {
-      if (!strcmp(TempStr, RandomConversations[i].Name))
-      {
-        SpeechText = RandomConversations[i].Texts[P_Random() % 10];
+  // check for random conversation text
+  if (!strcmp(substr(SpeechText, 0, 6), "RANDOM")) {
+    string TempStr = substr(SpeechText, 7, strlen(SpeechText)-7);
+    foreach (auto i; 0..5) {
+      if (!strcmp(TempStr, RandomConversations[i].Name)) {
+        SpeechText = RandomConversations[i].Texts[P_Random()%10];
         break;
       }
     }
   }
 
-  //  Split speach text.
+  // split speach text
   SetFont('smallfont');
   SpeechText = SplitTextWithNewlines(SpeechText, 640 - 128);
 
-  for (i = 0; i < 5; i++)
-  {
-    if (!Speech->Choices[i].Text)
-    {
-      continue;
-    }
+  foreach (auto i; 0..5) {
+    if (!Speech->Choices[i].Text) continue;
     WinChoices[NumChoices] = ConDlgChoice(NewChild(ConDlgChoice));
-    if (Speech->Choices[i].NeedItem1 == 168 &&
-      Speech->Choices[i].NeedAmount1 > 0)
-    {
-      WinChoices[NumChoices].Text = va("%s for %d gold",
-        Speech->Choices[i].Text, Speech->Choices[i].NeedAmount1);
+    if (Speech->Choices[i].NeedItem1 == 168 && Speech->Choices[i].NeedAmount1 > 0) {
+      WinChoices[NumChoices].Text = va("%s for %d gold", Speech->Choices[i].Text, Speech->Choices[i].NeedAmount1);
       bNeedGold = true;
-    }
-    else
-    {
+    } else {
       WinChoices[NumChoices].Text = Speech->Choices[i].Text;
     }
-    WinChoices[NumChoices].ImpulseNum = 201 + i;
-    NumChoices++;
+    WinChoices[NumChoices].ImpulseNum = 201+i;
+    ++NumChoices;
   }
 
   WinChoices[NumChoices] = ConDlgChoice(NewChild(ConDlgChoice));
-  WinChoices[NumChoices].Text = CancelTexts[P_Random() % 3];
+  WinChoices[NumChoices].Text = CancelTexts[P_Random()%3];
   WinChoices[NumChoices].ImpulseNum = 200;
-  NumChoices++;
+  ++NumChoices;
 
-  for (i = 0; i < NumChoices; i++)
-  {
-    WinChoices[i].SetPos(100, 440 - NumChoices * 18 + i * 18);
-  }
+  foreach (auto i; 0..NumChoices) WinChoices[i].SetPos(100, 440-NumChoices*18+i*18);
 
-  if (Speech->Voice)
-  {
-    LocalSound(Speech->Voice);
-  }
+  if (Speech->Voice) LocalSound(Speech->Voice);
 
   SetDefaultChoice();
 }
+
 
 //==========================================================================
 //
 //  DrawBackButton
 //
 //==========================================================================
-
-override void DrawBackButton()
-{
-  //  Don't draw back button on conversation windows...
+override void DrawBackButton () {
+  // don't draw back button on conversation windows...
 }
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
+override void OnDraw () {
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  if (BackPic != -1)
-  {
+  if (BackPic != -1) {
     DrawFullScreenPic(BackPic);
-  }
-  else
-  {
+  } else {
     ShadeRect(60, 46, 515, 70, 0.3);
   }
-  if (bNeedGold)
-  {
-    Inventory Item;
-    Item = EntityEx(StatusBarShared(ClGame.GSBar).ClGame.cl.MO).FindInventory(Coin);
-
-    DrawPic(480, 510 - NumChoices * 22,  R_RegisterPic('i_coin'));
-    DrawText(510, 510 - NumChoices * 22, va("%d", Item ? Item.Amount : 0), CR_WHITE);
+  if (bNeedGold) {
+    Inventory Item = EntityEx(StatusBarShared(ClGame.GSBar).ClGame.cl.MO).FindInventory(Coin);
+    DrawPic(480, 510-NumChoices*22,  R_RegisterPic('i_coin'));
+    DrawText(510, 510-NumChoices*22, va("%d", Item ? Item.Amount : 0), CR_WHITE);
   }
 
-  ShadeRect(60, 438 - NumChoices * 22, 501, NumChoices * 22, 0.3);
+  ShadeRect(60, 438-NumChoices*22, 501, NumChoices*22, 0.3);
   DrawText(64, 48, SpeakerName, CR_GREEN);
   DrawText(64, 72, SpeechText);
 }
+
 
 //==========================================================================
 //
 //  OnKeyDown
 //
 //==========================================================================
-
-override bool OnKeyDown(int key)
-{
-  switch (key)
-  {
-  case K_ESCAPE:
-  case K_MOUSE2:
-    CmdBuf_AddText("Impulse 200\n");
-    StopLocalSounds();
-    ClGame.PopMenu();
-    return true;
+override bool OnKeyDown (int key) {
+  switch (key) {
+    case K_ESCAPE:
+    case K_MOUSE2:
+      CmdBuf_AddText("Impulse 200\n");
+      StopLocalSounds();
+      ClGame.PopMenu();
+      return true;
   }
   return ::OnKeyDown(key);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   X = 0;
   Y = 0;
   Width = 640;
@@ -227,32 +175,32 @@ defaultproperties
   SelectorType = MenuSelector_Big;
   BackPic = -1;
   RandomConversations[0].Name = "PEASANT";
-  RandomConversations[0].Texts[0] = "PLEASE DON\'T HURT ME.";
-  RandomConversations[0].Texts[1] = "IF YOU\'RE LOOKING TO HURT ME, I\'M \nNOT REALLY WORTH THE EFFORT.";
-  RandomConversations[0].Texts[2] = "I DON\'T KNOW ANYTHING.";
-  RandomConversations[0].Texts[3] = "GO AWAY OR I\'LL CALL THE GUARDS!";
+  RandomConversations[0].Texts[0] = "PLEASE DON'T HURT ME.";
+  RandomConversations[0].Texts[1] = "IF YOU'RE LOOKING TO HURT ME, I'M \nNOT REALLY WORTH THE EFFORT.";
+  RandomConversations[0].Texts[2] = "I DON'T KNOW ANYTHING.";
+  RandomConversations[0].Texts[3] = "GO AWAY OR I'LL CALL THE GUARDS!";
   RandomConversations[0].Texts[4] = "I WISH SOMETIMES THAT ALL THESE \nREBELS WOULD JUST LEARN THEIR \nPLACE AND STOP THIS NONSENSE.";
   RandomConversations[0].Texts[5] = "JUST LEAVE ME ALONE, OK?";
-  RandomConversations[0].Texts[6] = "I\'M NOT SURE, BUT SOMETIMES I THINK \nTHAT I KNOW SOME OF THE ACOLYTES.";
-  RandomConversations[0].Texts[7] = "THE ORDER\'S GOT EVERYTHING AROUND HERE PRETTY WELL LOCKED UP TIGHT.";
-  RandomConversations[0].Texts[8] = "THERE\'S NO WAY THAT THIS IS JUST A \nSECURITY FORCE.";
-  RandomConversations[0].Texts[9] = "I\'VE HEARD THAT THE ORDER IS REALLY \nNERVOUS ABOUT THE FRONT\'S \nACTIONS AROUND HERE.";
+  RandomConversations[0].Texts[6] = "I'M NOT SURE, BUT SOMETIMES I THINK \nTHAT I KNOW SOME OF THE ACOLYTES.";
+  RandomConversations[0].Texts[7] = "THE ORDER'S GOT EVERYTHING AROUND HERE PRETTY WELL LOCKED UP TIGHT.";
+  RandomConversations[0].Texts[8] = "THERE'S NO WAY THAT THIS IS JUST A \nSECURITY FORCE.";
+  RandomConversations[0].Texts[9] = "I'VE HEARD THAT THE ORDER IS REALLY \nNERVOUS ABOUT THE FRONT'S \nACTIONS AROUND HERE.";
   RandomConversations[1].Name = "REBEL";
-  RandomConversations[1].Texts[0] = "THERE\'S NO WAY THE ORDER WILL \nSTAND AGAINST US.";
-  RandomConversations[1].Texts[1] = "WE\'RE ALMOST READY TO STRIKE. \nMACIL\'S PLANS ARE FALLING IN PLACE.";
-  RandomConversations[1].Texts[2] = "WE\'RE ALL BEHIND YOU, DON\'T WORRY.";
-  RandomConversations[1].Texts[3] = "DON\'T GET TOO CLOSE TO ANY OF THOSE BIG ROBOTS. THEY\'LL MELT YOU DOWN \nFOR SCRAP!";
+  RandomConversations[1].Texts[0] = "THERE'S NO WAY THE ORDER WILL \nSTAND AGAINST US.";
+  RandomConversations[1].Texts[1] = "WE'RE ALMOST READY TO STRIKE. \nMACIL'S PLANS ARE FALLING IN PLACE.";
+  RandomConversations[1].Texts[2] = "WE'RE ALL BEHIND YOU, DON'T WORRY.";
+  RandomConversations[1].Texts[3] = "DON'T GET TOO CLOSE TO ANY OF THOSE BIG ROBOTS. THEY'LL MELT YOU DOWN \nFOR SCRAP!";
   RandomConversations[1].Texts[4] = "THE DAY OF OUR GLORY WILL SOON \nCOME, AND THOSE WHO OPPOSE US WILL \nBE CRUSHED!";
-  RandomConversations[1].Texts[5] = "DON\'T GET TOO COMFORTABLE. WE\'VE \nSTILL GOT OUR WORK CUT OUT FOR US.";
-  RandomConversations[1].Texts[6] = "MACIL SAYS THAT YOU\'RE THE NEW \nHOPE. BEAR THAT IN MIND.";
-  RandomConversations[1].Texts[7] = "ONCE WE\'VE TAKEN THESE CHARLATANS DOWN, WE\'LL BE ABLE TO REBUILD THIS WORLD AS IT SHOULD BE.";
-  RandomConversations[1].Texts[8] = "REMEMBER THAT YOU AREN\'T FIGHTING \nJUST FOR YOURSELF, BUT FOR \nEVERYONE HERE AND OUTSIDE.";
+  RandomConversations[1].Texts[5] = "DON'T GET TOO COMFORTABLE. WE'VE \nSTILL GOT OUR WORK CUT OUT FOR US.";
+  RandomConversations[1].Texts[6] = "MACIL SAYS THAT YOU'RE THE NEW \nHOPE. BEAR THAT IN MIND.";
+  RandomConversations[1].Texts[7] = "ONCE WE'VE TAKEN THESE CHARLATANS DOWN, WE'LL BE ABLE TO REBUILD THIS WORLD AS IT SHOULD BE.";
+  RandomConversations[1].Texts[8] = "REMEMBER THAT YOU AREN'T FIGHTING \nJUST FOR YOURSELF, BUT FOR \nEVERYONE HERE AND OUTSIDE.";
   RandomConversations[1].Texts[9] = "AS LONG AS ONE OF US STILL STANDS, \nWE WILL WIN.";
   RandomConversations[2].Name = "AGUARD";
   RandomConversations[2].Texts[0] = "MOVE ALONG,  PEASANT.";
   RandomConversations[2].Texts[1] = "FOLLOW THE TRUE FAITH, ONLY THEN \nWILL YOU BEGIN TO UNDERSTAND.";
   RandomConversations[2].Texts[2] = "ONLY THROUGH DEATH CAN ONE BE \nTRULY REBORN.";
-  RandomConversations[2].Texts[3] = "I\'M NOT INTERESTED IN YOUR USELESS \nDRIVEL.";
+  RandomConversations[2].Texts[3] = "I'M NOT INTERESTED IN YOUR USELESS \nDRIVEL.";
   RandomConversations[2].Texts[4] = "IF I HAD WANTED TO TALK TO YOU I \nWOULD HAVE TOLD YOU SO.";
   RandomConversations[2].Texts[5] = "GO AND ANNOY SOMEONE ELSE!";
   RandomConversations[2].Texts[6] = "KEEP MOVING!";
@@ -262,12 +210,12 @@ defaultproperties
   RandomConversations[3].Name = "BEGGAR";
   RandomConversations[3].Texts[0] = "ALMS FOR THE POOR?";
   RandomConversations[3].Texts[1] = "WHAT ARE YOU LOOKING AT, SURFACER?";
-  RandomConversations[3].Texts[2] = "YOU WOULDN\'T HAVE ANY EXTRA FOOD, WOULD YOU?";
+  RandomConversations[3].Texts[2] = "YOU WOULDN'T HAVE ANY EXTRA FOOD, WOULD YOU?";
   RandomConversations[3].Texts[3] = "YOU  SURFACE PEOPLE WILL NEVER \nUNDERSTAND US.";
-  RandomConversations[3].Texts[4] = "HA, THE GUARDS CAN\'T FIND US.  THOSE \nIDIOTS DON\'T EVEN KNOW WE EXIST. ";
+  RandomConversations[3].Texts[4] = "HA, THE GUARDS CAN'T FIND US.  THOSE \nIDIOTS DON'T EVEN KNOW WE EXIST. ";
   RandomConversations[3].Texts[5] = "ONE DAY EVERYONE BUT THOSE WHO SERVE THE ORDER WILL BE FORCED TO   JOIN US.";
   RandomConversations[3].Texts[6] = "STARE NOW,  BUT YOU KNOW THAT THIS WILL BE YOUR OWN FACE ONE DAY.";
-  RandomConversations[3].Texts[7] = "THERE\'S NOTHING THING MORE \nANNOYING THAN A SURFACER WITH AN ATTITUDE!";
+  RandomConversations[3].Texts[7] = "THERE'S NOTHING THING MORE \nANNOYING THAN A SURFACER WITH AN ATTITUDE!";
   RandomConversations[3].Texts[8] = "THE ORDER WILL MAKE SHORT WORK OF YOUR PATHETIC FRONT.";
   RandomConversations[3].Texts[9] = "WATCH YOURSELF SURFACER. WE KNOW OUR ENEMIES!";
   RandomConversations[4].Name = "PGUARD";
@@ -280,7 +228,7 @@ defaultproperties
   RandomConversations[4].Texts[6] = "TAKE YOUR PLACE AMONG THE \nRIGHTEOUS, JOIN US!";
   RandomConversations[4].Texts[7] = "THE ORDER PROTECTS ITS OWN.";
   RandomConversations[4].Texts[8] = "ACOLYTES?  THEY HAVE YET TO SEE THE FULL GLORY OF THE ORDER.";
-  RandomConversations[4].Texts[9] = "IF THERE IS ANY HONOR INSIDE THAT \nPATHETIC SHELL OF A BODY, \nYOU\'LL ENTER INTO THE ARMS OF THE \nORDER.";
+  RandomConversations[4].Texts[9] = "IF THERE IS ANY HONOR INSIDE THAT \nPATHETIC SHELL OF A BODY, \nYOU'LL ENTER INTO THE ARMS OF THE \nORDER.";
   CancelTexts[0] = "BYE!";
   CancelTexts[1] = "Thanks, Bye!";
   CancelTexts[2] = "See you later!";
