@@ -50,8 +50,8 @@ override void CreateChoices () {
   CreateChoiceTextLabel("");
   CreateChoiceTextLabel("Cache options");
   CreateOnOffCvar("Cache built data", 'loader_cache_data');
-  CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
   CreateOnOffCvar("Kill cache for next map", 'loader_cache_ignore_one');
+  CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
   CreateFloatSliderCvar("Cache timout (seconds)", 'loader_cache_time_limit', 0.5, 0.5, 16);
   CreateFloatSliderCvar("Cache max age (days)", 'loader_cache_max_age_days', 1, 1, 32);
 
