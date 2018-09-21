@@ -29,7 +29,7 @@
 #define MAXHEALTH       100
 #define DEFAULT_GRAVITY     1225.0
 
-#define REBORN_DESCRIPTION    "TEMP GAME"
+//#define REBORN_DESCRIPTION    "TEMP GAME"
 
 struct tmtrace_t;
 class VMessageOut;
@@ -250,7 +250,7 @@ extern bool   completed;
 
 void G_TeleportNewMap(int map, int position);
 void G_WorldDone();
-void G_PlayerReborn(int player);
+//void G_PlayerReborn(int player);
 void G_StartNewInit();
 
 extern VBasePlayer *GPlayersBase[MAXPLAYERS]; // Bookkeeping on players - state.

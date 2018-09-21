@@ -2445,7 +2445,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
   bool        ResetInventory = false;
   Inventory     Item;
 
-  //print("************SpawnPlayer: 000; Voodoo=%s", (Voodoo ? "tan" : "ona"));
+  //print("************SpawnPlayer: 000; Voodoo=%b; PST=%d", PlayerState);
   if (PlayerState == PST_REBORN)
   {
     PlayerReborn();
@@ -2534,6 +2534,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
   if (ResetInventory)
   {
     Level.XLevel.StartTypedACScripts(Level::SCRIPT_Respawn, 0, 0, 0, MO, true, false);
+    k8ElvenGifted = false;
   }
 
   // elven gifts

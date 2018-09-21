@@ -768,6 +768,7 @@ void SV_SpawnServer(const char *mapname, bool spawn_thinkers, bool titlemap)
 
   if (GGameInfo->NetMode != NM_None)
   {
+    //fprintf(stderr, "SV_SpawnServer!!!\n");
     //  Level change
     for (i = 0; i < MAXPLAYERS; i++)
     {
@@ -1118,11 +1119,13 @@ void SV_ShutdownGame()
 //==========================================================================
 COMMAND(Restart) {
   guard(COMMAND Restart);
+  //fprintf(stderr, "*****RESTART!\n");
   if (GGameInfo->NetMode != NM_Standalone) return;
   //if (!SV_LoadQuicksaveSlot())
   {
     // reload the level from scratch
     SV_SpawnServer(*GLevel->MapName, true, false);
+    if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
   }
   unguard;
 }

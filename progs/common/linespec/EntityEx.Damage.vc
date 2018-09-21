@@ -1114,6 +1114,7 @@ void Died(EntityEx source, EntityEx inflictor)
   }
   else
   {
+    //if (bIsPlayer) writeln("************ DESTROYING PLAYER!");
     Destroy();
   }
 }
