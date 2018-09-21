@@ -62,7 +62,8 @@ namespace ajbsp {
 static VCvarB loader_build_pvs("loader_build_pvs", false, "Build simple PVS on node rebuilding?", CVAR_Archive);
 static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "3", "Number of threads to use in PVS builder.", CVAR_Archive);
 
-static VCvarB nodes_fast_and_bad("nodes_fast_and_bad", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
+static VCvarB nodes_fast_mode("nodes_fast_mode", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
+static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various node builder warnings?", CVAR_Archive);
 
 static char message_buf[1024];
 
@@ -137,6 +138,8 @@ __attribute__((format(printf,1,2))) void ajbsp_PrintMsg (const char *fmt, ...) {
 //
 //==========================================================================
 __attribute__((format(printf,1,2))) void ajbsp_PrintVerbose (const char *fmt, ...) {
+  if (!nodes_show_warnings) return;
+
   va_list args;
 
   va_start(args, fmt);
@@ -154,6 +157,8 @@ __attribute__((format(printf,1,2))) void ajbsp_PrintVerbose (const char *fmt, ..
 //
 //==========================================================================
 __attribute__((format(printf,1,2))) void ajbsp_PrintDetail (const char *fmt, ...) {
+  if (!nodes_show_warnings) return;
+
   va_list args;
 
   va_start(args, fmt);
@@ -669,7 +674,7 @@ void VLevel::BuildNodes () {
   guard(VLevel::BuildNodes);
   // set up glBSP build globals
   nodebuildinfo_t nb_info;
-  nb_info.fast = nodes_fast_and_bad;
+  nb_info.fast = nodes_fast_mode;
   nb_info.warnings = true; // not currently used, but meh
   nb_info.do_blockmap = true;
   nb_info.do_reject = true;
@@ -705,6 +710,7 @@ void VLevel::BuildNodes () {
   // unused vertices from seg splits would keep accumulating.
   //ajbsp::PruneVerticesAtEnd();
   GCon->Logf("AJBSP: copied %d original vertexes out of %d", ajbsp::num_vertices, NumVertexes);
+  GCon->Logf("AJBSP: building nodes (%s mode)", (nodes_fast_mode ? "fast" : "normal"));
 
   ajbsp::DetectOverlappingVertices();
   ajbsp::DetectOverlappingLines();
@@ -730,6 +736,10 @@ void VLevel::BuildNodes () {
     ajbsp::CheckLimits();
     ajbsp::SortSegs();
 
+    GCon->Logf("AJBSP: built with %d nodes, %d subsectors, %d segs, %d vertexes",
+      ajbsp::num_nodes, ajbsp::num_subsecs, ajbsp::num_segs, ajbsp::num_vertices);
+    GCon->Logf("AJBSP: heights of subtrees: %d/%d",
+      ajbsp::ComputeBspHeight(root_node->r.node), ajbsp::ComputeBspHeight(root_node->l.node));
     GCon->Logf("AJBSP: copying built data");
     // copy nodes into internal structures
     CopyInfo nfo;

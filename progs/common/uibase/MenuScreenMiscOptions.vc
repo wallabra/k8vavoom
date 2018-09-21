@@ -44,7 +44,8 @@ override void CreateChoices () {
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Internal Node Builder");
   CreateOnOffCvar("Force node rebuilding", 'loader_force_nodes_rebuild');
-  CreateOnOffCvar("Fast and bad nodes", 'nodes_fast_and_bad');
+  CreateOnOffCvar("Fast mode (suboptimal)", 'nodes_fast_mode');
+  CreateOnOffCvar("Show builder warnings", 'nodes_show_warnings');
   CreateOnOffCvar("Allow PWAD z-nodes", 'nodes_allow_compressed');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
 
