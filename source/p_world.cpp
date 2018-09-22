@@ -338,6 +338,32 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 
 //==========================================================================
 //
+//  VPathTraverse::NewIntercept
+//
+//  insert new intercept
+//  this is faster than sorting, as most intercepts are already sorted
+//
+//==========================================================================
+intercept_t &VPathTraverse::NewIntercept (const float frac) {
+  int pos = Intercepts.length();
+  if (pos == 0 || Intercepts[pos-1].frac <= frac) {
+    // no need to bubble, just append it
+    intercept_t &xit = Intercepts.Alloc();
+    xit.frac = frac;
+    return xit;
+  }
+  // bubble
+  while (pos > 0 && Intercepts[pos-1].frac > frac) --pos;
+  // insert
+  intercept_t it;
+  it.frac = frac;
+  Intercepts.insert(pos, it);
+  return Intercepts[pos];
+}
+
+
+//==========================================================================
+//
 //  VPathTraverse::AddLineIntercepts
 //
 //  Looks for lines in the given block that intercept the given trace to add
@@ -366,7 +392,7 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
     // try to early out the check
     if (EarlyOut && frac < 1.0 && !ld->backsector) return false; // stop checking
 
-    intercept_t &In = Intercepts.Alloc();
+    intercept_t &In = NewIntercept(frac);
     In.frac = frac;
     In.Flags = intercept_t::IF_IsALine;
     In.line = ld;
@@ -391,7 +417,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     if (dist < 0) continue; // behind source
     const float frac = dist/trace_len;
 
-    intercept_t &In = Intercepts.Alloc();
+    intercept_t &In = NewIntercept(frac);
     In.frac = frac;
     In.Flags = 0;
     In.line = nullptr;
