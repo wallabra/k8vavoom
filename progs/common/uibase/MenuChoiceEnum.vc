@@ -68,7 +68,7 @@ override void SetOrigin (int x, int y) {
   if (bLeftAlign) {
     SetPos(x, y);
   } else {
-    CursorXOffs = 200;
+    CursorXOffs = /*200*/CursorXOffsHR;
     SetPos(x-CursorXOffs, y);
   }
 }
@@ -119,6 +119,7 @@ void SetInitialValue (int AValue) {
 //
 //==========================================================================
 override void OnDraw () {
+  //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
   int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);

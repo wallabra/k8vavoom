@@ -25,6 +25,9 @@
 
 class MenuChoice_OnOff : MenuChoiceEnum;
 
+int TextFocusedColor = CR_YELLOW;
+int TextNormalColor = CR_WHITE;
+
 
 //==========================================================================
 //
@@ -32,7 +35,8 @@ class MenuChoice_OnOff : MenuChoiceEnum;
 //
 //==========================================================================
 override void OnDraw () {
-  int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
+  //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
+  int Col = (IsFocus() ? TextFocusedColor : TextNormalColor);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);

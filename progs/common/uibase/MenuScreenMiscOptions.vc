@@ -28,9 +28,10 @@ class MenuScreenMiscOptions : MenuScreen;
 
 override void CreateChoices () {
   currentY = ChoicesStartY;
+  //ChoicesStartX = 10;
 
   CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');
-  CreateOnOffCvar("Autoaim", 'autoaim');
+  CreateOnOffCvar("Autoaim for rockets/plasma", 'autoaim');
   CreateOnOffCvar("Overlay automap", 'am_overlay');
   CreateOnOffCvar("Show stats on automap", 'am_show_stats');
   CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');
@@ -53,16 +54,20 @@ override void CreateChoices () {
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Cache options");
   CreateOnOffCvar("Cache built data", 'loader_cache_data');
-  CreateOnOffCvar("(*) Kill cache for next map", 'loader_cache_ignore_one');
+  auto aurccoo = CreateOnOffCvar("(autoreset) Kill cache for next map", 'loader_cache_ignore_one');
+  aurccoo.TextNormalColor = CR_BRICK;
   CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
-  CreateFloatSliderCvar("Cache timout (seconds)", 'loader_cache_time_limit', 0.5, 0.5, 16);
+  CreateFloatSliderCvar("Cache timeout (seconds)", 'loader_cache_time_limit', 0.5, 0.5, 16);
   CreateFloatSliderCvar("Cache max age (days)", 'loader_cache_max_age_days', 1, 1, 32);
 
 
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Deepwater options");
   CreateOnOffCvar("Classic deepwater", 'deepwater_hacks');
-  CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra');
+  auto dwbuggy = CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra');
+  //dwbuggy.TextNormalColor = CR_LIGHTBLUE;
+  //dwbuggy.TextNormalColor = CR_DARKRED;
+  dwbuggy.TextNormalColor = CR_PURPLE;
 
 
   //CreateChoiceSubHeader("");
@@ -94,9 +99,9 @@ override void CreateChoices () {
 
 
 defaultproperties {
-  X = 60;
+  X = 30;
   Y = 10;
-  Width = 640-60*2;
+  Width = 640-30*2;
   Height = 480-10*2;
 
   ChoicesStartX = 260;

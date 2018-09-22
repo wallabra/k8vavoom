@@ -104,10 +104,16 @@ void CreateChoices () {
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
-  onoff.SetOrigin(ChoicesStartX, currentY);
+  if (Width > 320) {
+    onoff.Width = Width;
+    onoff.CursorXOffs = Width/2;
+    onoff.CursorXOffsHR = Width/2;
+    onoff.SetOrigin(Width/2, currentY);
+  } else {
+    onoff.SetOrigin(ChoicesStartX, currentY);
+  }
   onoff.Text = text;
   onoff.SetSessionCvar(cvname);
-  if (Width > 320) onoff.Width = Width;
   currentY += onoff.Height;
   return onoff;
 }
@@ -115,8 +121,20 @@ MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
 
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, optional float min, optional float max) {
+  if (Items.length > 0 && Items[$-1] !isa MenuChoiceSlider && Items[$-1].Height == 10) {
+    Items[$-2].Height = 8;
+    currentY -= 2;
+  }
   auto slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  slider.SetOrigin(ChoicesStartX, currentY);
+  if (Width > 320) {
+    slider.Width = Width;
+    slider.Width = Width;
+    slider.CursorXOffs = Width/2;
+    slider.CursorXOffsHR = Width/2;
+    slider.SetOrigin(Width/2, currentY);
+  } else {
+    slider.SetOrigin(ChoicesStartX, currentY);
+  }
   slider.Text = text;
   slider.cvarSession = cvname;
   slider.ValueDelta = delta;
@@ -132,11 +150,17 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 // default color: CR_ORANGE
 MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  btn.SetOrigin(ChoicesStartX, currentY);
-  btn.Text = text;
-  btn.Focusable = false;
   btn.TextHAlign = hcenter;
   btn.TextVAlign = vbottom;
+  if (Width > 320) {
+    btn.Width = Width;
+    btn.CursorXOffs = Width/2;
+    btn.SetOrigin(0, currentY);
+  } else {
+    btn.SetOrigin(ChoicesStartX, currentY);
+  }
+  btn.Text = text;
+  btn.Focusable = false;
   if (specified_color) {
     btn.TextColour = color;
     btn.TextColourFocus = color;
@@ -153,6 +177,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
 MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
+  if (Width > 320) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuClass(asubmenuClass);
   currentY += btn.Height;
@@ -163,6 +188,7 @@ MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
 MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass) {
   auto btn = MenuTextButton(NewChild(MenuBigTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
+  if (Width > 320) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuClass(asubmenuClass);
   currentY += btn.Height;

@@ -30,9 +30,9 @@ class MenuSmallTextButton : MenuTextButton;
 //  SetOrigin
 //
 //==========================================================================
-override void SetOrigin(int x, int y) {
+override void SetOrigin (int x, int y) {
   if (TextHAlign == hright) {
-    CursorXOffs = 200;
+    CursorXOffs = /*200*/CursorXOffsHR;
     SetPos(x-CursorXOffs, y);
   } else {
     SetPos(x, y);
@@ -44,6 +44,7 @@ override void OnDraw () {
   int y = 0;
        if (TextVAlign == vbottom) y += Height-1;
   else if (TextVAlign == vcenter) y += Height/2;
+  //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
   DrawText(CursorXOffs, y, Text, IsFocus() ? TextColourFocus : TextColour);

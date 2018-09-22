@@ -26,6 +26,7 @@ class MenuChoice : Widget;
 
 int CursorXOffs;
 int CursorYOffs;
+int CursorXOffsHR; // for right-aligned text
 name cvarSession; // if not empty, value will be saved in it, and read back on creation
 
 
@@ -119,4 +120,5 @@ defaultproperties {
   //Height = 200;
   Height = 24;
   cvarSession = '';
+  CursorXOffsHR = 200;
 }
