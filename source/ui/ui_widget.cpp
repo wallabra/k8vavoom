@@ -914,6 +914,28 @@ void VWidget::FillRectWithFlat(int X, int Y, int Width, int Height,
 
 //==========================================================================
 //
+//  VWidget::FillRect
+//
+//==========================================================================
+
+void VWidget::FillRect(int X, int Y, int Width, int Height, int color) {
+  guard(VWidget::FillRect);
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = X + Width;
+  float Y2 = Y + Height;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Width;
+  float T2 = Height;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->FillRect(X1, Y1, X2, Y2, color);
+  }
+  unguard;
+}
+
+//==========================================================================
+//
 //  VWidget::ShadeRect
 //
 //==========================================================================
@@ -1376,6 +1398,17 @@ IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat)
   Self->FillRectWithFlat(X, Y, Width, Height, Name);
 }
 
+IMPLEMENT_FUNCTION(VWidget, FillRect)
+{
+  P_GET_INT(color);
+  P_GET_INT(Height);
+  P_GET_INT(Width);
+  P_GET_INT(Y);
+  P_GET_INT(X);
+  P_GET_SELF;
+  Self->FillRect(X, Y, Width, Height, color);
+}
+
 IMPLEMENT_FUNCTION(VWidget, ShadeRect)
 {
   P_GET_FLOAT(Shade);
@@ -1462,4 +1495,14 @@ IMPLEMENT_FUNCTION(VWidget, FindTextColour)
 {
   P_GET_STR(Name);
   RET_INT(VFont::FindTextColour(*Name.ToLower()));
+}
+
+
+IMPLEMENT_FUNCTION(VWidget, TranslateXY)
+{
+  P_GET_PTR(float, py);
+  P_GET_PTR(float, px);
+  P_GET_SELF;
+  if (px) *px = (Self->ClipRect.ScaleX*(*px)+Self->ClipRect.OriginX)*fScaleXI;
+  if (py) *py = (Self->ClipRect.ScaleY*(*py)+Self->ClipRect.OriginY)*fScaleYI;
 }

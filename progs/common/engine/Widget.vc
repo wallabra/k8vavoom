@@ -183,6 +183,7 @@ native final void SetFocus ();
 native final void DrawPic (int X, int Y, int Handle, optional float Alpha, optional int Translation);
 native final void DrawShadowedPic (int X, int Y, int Handle);
 native final void FillRectWithFlat (int x, int y, int width, int height, name Name);
+native final void FillRect (int x, int y, int width, int height, int color);
 // darkens a screen region
 native final void ShadeRect (int x, int y, int w, int h, float shade);
 
@@ -207,6 +208,18 @@ native final void DrawText (int X, int Y, string Text, optional int Colour,
 native final void DrawCursor ();
 // returns colour ID for specified name
 native static final int FindTextColour (string Name);
+
+/*
+final int X2Virtual (float x) { return int(ClipRect.ScaleX*x+ClipRect.OriginX); }
+final int Y2Virtual (float y) { return int(ClipRect.ScaleY*y+ClipRect.OriginY); }
+*/
+
+native final void TranslateXY (ref float x, ref float y);
+
+final int X2Virtual (float x) { float tmp = 0; TranslateXY(x, tmp); return int(x); }
+final int Y2Virtual (float y) { float tmp = 0; TranslateXY(tmp, y); return int(y); }
+
+final void XY2Virtual (optional ref float x, optional ref float y) { TranslateXY(x, y); }
 
 
 //==========================================================================
