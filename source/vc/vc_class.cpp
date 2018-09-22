@@ -752,7 +752,7 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
         for (int j = 0; j < SubList.Num(); ++j) {
           if (VStr::ICmp(*SubList[j].Name, *SubLabel) == 0) return &SubList[j];
         }
-        if (Exact && VStr::ICmp(*SubLabel, "None") != 0) return nullptr; //k8:HACK! 'None' is nothing
+        if (Exact /*&& VStr::ICmp(*SubLabel, "None") != 0*/) return nullptr; //k8:HACK! 'None' is nothing
       }
       return &StateLabels[i];
     }

@@ -2240,12 +2240,12 @@ VName VParser::ParseStateString () {
   }
 
   if (Lex.Check(TK_Dot)) {
-    if (Lex.Token != TK_Identifier) {
+    if (Lex.Token != TK_Identifier && Lex.Token != TK_None) {
       ParseError(Lex.Location, "Identifier expected");
       return NAME_None;
     }
     StateStr += ".";
-    StateStr += *Lex.Name;
+    if (Lex.Token != TK_None) StateStr += *Lex.Name; else StateStr += "None";
     Lex.NextToken();
   }
 
