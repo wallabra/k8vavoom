@@ -78,6 +78,8 @@ VCvarB          r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
 VCvarF          r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
 VCvarF          r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
 
+static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
+
 extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
 extern VCvarI r_hashlight_static_div;
@@ -278,15 +280,25 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
   if (canHit) return true;
   if (!advanced || radius <= 8) return false;
   // check some more rays
-  for (int dy = -1; dy <= 1; ++dy) {
-    for (int dx = -1; dx <= 1; ++dx) {
-      if ((dy|dx) == 0) continue;
-      TVec np = org;
-      np.x += radius*(0.7f*dx);
-      np.y += radius*(0.7f*dy);
-      canHit = !!Level->TraceLine(Trace, np, dest, SPF_NOBLOCKSIGHT);
-      if (canHit) return true;
+  if (r_lights_cast_many_rays) {
+    for (int dy = -1; dy <= 1; ++dy) {
+      for (int dx = -1; dx <= 1; ++dx) {
+        if ((dy|dx) == 0) continue;
+        TVec np = org;
+        np.x += radius*(0.73f*dx);
+        np.y += radius*(0.73f*dy);
+        canHit = !!Level->TraceLine(Trace, np, dest, SPF_NOBLOCKSIGHT);
+        if (canHit) return true;
+      }
     }
+  } else {
+    // check only "head" and "feet"
+    TVec np = org;
+    np.y += radius*0.73f;
+    if (Level->TraceLine(Trace, np, dest, SPF_NOBLOCKSIGHT)) return true;
+    np = org;
+    np.y -= radius*0.73f;
+    if (Level->TraceLine(Trace, np, dest, SPF_NOBLOCKSIGHT)) return true;
   }
   return false;
 }
