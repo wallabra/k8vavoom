@@ -334,7 +334,7 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
   mapy = yt1;
 
   //k8: zdoom is using 1000 here; why?
-  for (int count = 0; count < 64; ++count) {
+  for (int count = 0; count < /*64*/100; ++count) {
     if (!SightBlockLinesIterator(Trace, Self, mapx, mapy)) {
       Trace.EarlyOut = true;
       return false; // early out

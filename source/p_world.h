@@ -33,6 +33,7 @@
 //
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  VBlockLinesIterator
@@ -42,118 +43,97 @@
 // SV_BlockLinesIterator, then make one or more calls to it.
 //
 //==========================================================================
-
-class VBlockLinesIterator
-{
+class VBlockLinesIterator {
 private:
   VLevel *Level;
   line_t **LinePtr;
   polyblock_t *PolyLink;
-  vint32      PolySegIdx;
+  vint32 PolySegIdx;
   vint32 *List;
 
 public:
-  VBlockLinesIterator(VLevel*, int, int, line_t**);
-  bool GetNext();
+  VBlockLinesIterator (VLevel *Level, int x, int y, line_t **);
+  bool GetNext ();
 };
+
 
 //==========================================================================
 //
 //  VBlockThingsIterator
 //
 //==========================================================================
-
-class VBlockThingsIterator
-{
+class VBlockThingsIterator {
 private:
   VEntity *Ent;
 
 public:
-  VBlockThingsIterator(VLevel *Level, int x, int y)
-  {
-    if (x < 0 || x >= Level->BlockMapWidth ||
-      y < 0 || y >= Level->BlockMapHeight)
-    {
+  VBlockThingsIterator (VLevel *Level, int x, int y) {
+    if (x < 0 || x >= Level->BlockMapWidth || y < 0 || y >= Level->BlockMapHeight) {
       Ent = nullptr;
-    }
-    else
-    {
-      Ent = Level->BlockLinks[y * Level->BlockMapWidth + x];
+    } else {
+      Ent = Level->BlockLinks[y*Level->BlockMapWidth+x];
     }
   }
-  operator bool() const
-  {
-    return !!Ent;
-  }
-  void operator ++()
-  {
-    Ent = Ent->BlockMapNext;
-  }
-  VEntity *operator *() const
-  {
-    return Ent;
-  }
-  VEntity *operator ->() const
-  {
-    return Ent;
-  }
+
+  inline operator bool () const { return !!Ent; }
+  inline void operator ++ () { Ent = Ent->BlockMapNext; }
+  inline VEntity *operator * () const { return Ent; }
+  inline VEntity *operator -> () const { return Ent; }
 };
+
 
 //==========================================================================
 //
 //  VRadiusThingsIterator
 //
 //==========================================================================
-
-class VRadiusThingsIterator : public VScriptIterator
-{
+class VRadiusThingsIterator : public VScriptIterator {
 private:
   VThinker *Self;
   VEntity **EntPtr;
   VEntity *Ent;
-  int     x;
-  int     y;
-  int     xl;
-  int     xh;
-  int     yl;
-  int     yh;
+  int x;
+  int y;
+  int xl;
+  int xh;
+  int yl;
+  int yh;
 
 public:
-  VRadiusThingsIterator(VThinker*, VEntity**, TVec, float);
-  virtual bool GetNext() override;
+  VRadiusThingsIterator (VThinker *, VEntity **, TVec, float);
+  virtual bool GetNext () override;
 };
+
 
 //==========================================================================
 //
 //  VPathTraverse
 //
 //  Traces a line from x1,y1 to x2,y2, calling the traverser function for
-// each. Returns true if the traverser function returns true for all lines.
+//  each. Returns true if the traverser function returns true for all lines.
 //
 //==========================================================================
-
-class VPathTraverse : public VScriptIterator
-{
+class VPathTraverse : public VScriptIterator {
 private:
-  TArray<intercept_t>   Intercepts;
+  TArray<intercept_t> Intercepts;
 
-  TPlane          trace_plane;
-  TVec          trace_org;
-  TVec          trace_dest;
-  TVec          trace_delta;
-  TVec          trace_dir;
-  float         trace_len;
+  TPlane trace_plane;
+  TVec trace_org;
+  TVec trace_dest;
+  TVec trace_delta;
+  TVec trace_dir;
+  float trace_len;
 
-  int           Count;
+  int Count;
   intercept_t *In;
   intercept_t **InPtr;
 
 public:
-  VPathTraverse(VThinker*, intercept_t**, float, float, float, float, int);
-  virtual bool GetNext() override;
+  VPathTraverse (VThinker *, intercept_t **, float, float, float, float, int);
+  virtual bool GetNext () override;
 
 private:
-  void Init(VThinker*, float, float, float, float, int);
-  bool AddLineIntercepts(VThinker*, int, int, bool);
-  void AddThingIntercepts(VThinker*, int, int);
+  void Init (VThinker *, float, float, float, float, int);
+  bool AddLineIntercepts (VThinker *, int, int, bool);
+  void AddThingIntercepts (VThinker *, int, int);
 };
