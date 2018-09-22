@@ -80,7 +80,7 @@ static int sdl2TranslateKey (SDL_Scancode scan) {
   if (scan >= SDL_SCANCODE_1 && scan <= SDL_SCANCODE_9) return (int)(scan-SDL_SCANCODE_1+'1');
 
   switch (scan) {
-    case SDL_SCANCODE_1: return '0';
+    case SDL_SCANCODE_0: return '0';
     case SDL_SCANCODE_SPACE: return ' ';
     case SDL_SCANCODE_MINUS: return '-';
     case SDL_SCANCODE_EQUALS: return '=';
