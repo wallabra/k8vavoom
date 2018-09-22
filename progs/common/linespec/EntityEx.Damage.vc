@@ -290,7 +290,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         if (doSpray) {
           bool poolType2 = (P_Random() >= 0x80);
           name bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient', 'Blood');
-          name poolClassName = k8GetBloodClassName((poolType2 ? 'K8Gore_GrowingBloodPool2' : 'K8Gore_GrowingBloodPool'), 'none');
+          name poolClassName = k8GetBloodClassName((poolType2 ? 'K8Gore_GrowingBloodPool2' : 'K8Gore_GrowingBloodPool'), '');
           //writeln("bloodtype: ", GetClassName(self.BloodType), "; ", GetClassName(GetClassReplacee(self.BloodType)));
 
           if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {

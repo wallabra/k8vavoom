@@ -131,7 +131,8 @@ final void SetWeapon(int WpnNum)
   {
   default:
   case WEAPON_Dummy:
-    MissileState = FindState('Missile', 'None', true);
+    //MissileState = FindState('Missile', 'None', true);
+    MissileState = FindState('Missile', '', true);
     break;
 
   case WEAPON_Fist:

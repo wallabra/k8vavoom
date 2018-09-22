@@ -747,7 +747,7 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
   guard(VClass::FindStateLabel);
   for (int i = 0; i < StateLabels.Num(); ++i) {
     if (!VStr::ICmp(*StateLabels[i].Name, *AName)) {
-      if (SubLabel != NAME_None) {
+      if (SubLabel != NAME_None && VStr::ICmp(*SubLabel, "None") != 0) { //k8:HACK!
         TArray<VStateLabel>& SubList = StateLabels[i].SubLabels;
         for (int j = 0; j < SubList.Num(); ++j) {
           if (VStr::ICmp(*SubList[j].Name, *SubLabel) == 0) return &SubList[j];
