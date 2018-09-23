@@ -22,113 +22,53 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VLevel::CheckPlane
 //
 //==========================================================================
+bool VLevel::CheckPlane (linetrace_t &Trace, const sec_plane_t *Plane) const {
+  if (Plane->flags&Trace.PlaneNoBlockFlags) return true; // plane doesn't block
 
-bool VLevel::CheckPlane(linetrace_t &Trace, const sec_plane_t *Plane) const
-{
-  guard(VLevel::CheckPlane);
-  if (Plane->flags & Trace.PlaneNoBlockFlags)
-  {
-    //  Plane doesn't block
-    return true;
-  }
+  const float OrgDist = DotProduct(Trace.LineStart, Plane->normal)-Plane->dist;
+  if (OrgDist < -0.1) return true; // ignore back side
 
-  float OrgDist = DotProduct(Trace.LineStart, Plane->normal) - Plane->dist;
-  if (OrgDist < -0.1)
-  {
-    //  Ignore back side
-    return true;
-  }
+  const float HitDist = DotProduct(Trace.LineEnd, Plane->normal)-Plane->dist;
+  if (HitDist >= -0.1) return true; // didn't cross plane
 
-  float HitDist = DotProduct(Trace.LineEnd, Plane->normal) - Plane->dist;
-  if (HitDist >= -0.1)
-  {
-    //  Didn't cross Plane
-    return true;
-  }
+  if (Plane->pic == skyflatnum) return false; // hit sky, don't clip
 
-  if (Plane->pic == skyflatnum)
-  {
-    //  Hit sky, don't clip
-    return false;
-  }
-
-  //  Hit Plane
-  Trace.LineEnd -= (Trace.LineEnd - Trace.LineStart) * HitDist / (HitDist - OrgDist);
+  // hit Plane
+  Trace.LineEnd -= (Trace.LineEnd-Trace.LineStart)*HitDist/(HitDist-OrgDist);
   Trace.HitPlaneNormal = Plane->normal;
 
-  //  Crosses Plane
+  // crosses Plane
   return false;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VLevel::CheckPlanes
 //
 //==========================================================================
-
-bool VLevel::CheckPlanes(linetrace_t &Trace, sector_t *Sec) const
-{
+bool VLevel::CheckPlanes (linetrace_t &Trace, sector_t *Sec) const {
   guard(VLevel::CheckPlanes);
   sec_region_t *StartReg = SV_PointInRegion(Sec, Trace.LineStart);
 
-  if (StartReg != nullptr)
-  {
-    for (sec_region_t *Reg = StartReg; Reg != nullptr; Reg = Reg->next)
-    {
-      if (!CheckPlane(Trace, Reg->floor))
-      {
-        //  Hit floor
-        return false;
-      }
-      if (!CheckPlane(Trace, Reg->ceiling))
-      {
-        //  Hit ceiling
-        return false;
-      }
+  if (StartReg != nullptr) {
+    for (sec_region_t *Reg = StartReg; Reg != nullptr; Reg = Reg->next) {
+      if (!CheckPlane(Trace, Reg->floor)) return false; // hit floor
+      if (!CheckPlane(Trace, Reg->ceiling)) return false; // hit ceiling
     }
 
-    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev)
-    {
-      if (!CheckPlane(Trace, Reg->floor))
-      {
-        //  Hit floor
-        return false;
-      }
-      if (!CheckPlane(Trace, Reg->ceiling))
-      {
-        //  Hit ceiling
-        return false;
-      }
+    for (sec_region_t *Reg = StartReg->prev; Reg != nullptr; Reg = Reg->prev) {
+      if (!CheckPlane(Trace, Reg->floor)) return false; // hit floor
+      if (!CheckPlane(Trace, Reg->ceiling)) return false; // hit ceiling
     }
   }
 
@@ -136,31 +76,28 @@ bool VLevel::CheckPlanes(linetrace_t &Trace, sector_t *Sec) const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLevel::CheckLine
 //
 //==========================================================================
-
-bool VLevel::CheckLine(linetrace_t &Trace, seg_t *Seg) const
-{
+bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
   guard(VLevel::CheckLine);
   line_t *line;
-  int       s1;
-  int       s2;
+  int s1;
+  int s2;
   sector_t *front;
-  float     frac;
-  float     num;
-  float     den;
-  TVec      hit_point;
+  float frac;
+  float num;
+  float den;
+  TVec hit_point;
 
   line = Seg->linedef;
-  if (!line)
-    return true;
+  if (!line) return true;
 
   // allready checked other side?
-  if (line->validcount == validcount)
-    return true;
+  if (line->validcount == validcount) return true;
 
   line->validcount = validcount;
 
@@ -168,78 +105,55 @@ bool VLevel::CheckLine(linetrace_t &Trace, seg_t *Seg) const
   s2 = Trace.Plane.PointOnSide2(*line->v2);
 
   // line isn't crossed?
-  if (s1 == s2)
-    return true;
+  if (s1 == s2) return true;
 
   s1 = line->PointOnSide2(Trace.Start);
   s2 = line->PointOnSide2(Trace.End);
 
   // line isn't crossed?
-  if (s1 == s2 || (s1 == 2 && s2 == 0))
-    return true;
+  if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
 
   // crosses a two sided line
-  if (s1 == 0 || s1 == 2)
-  {
-    front = line->frontsector;
-  }
-  else
-  {
-    front = line->backsector;
-  }
+  front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
 
-  // Intercept vector.
-  // Don't need to check if den == 0, because then planes are paralel
+  // intercept vector
+  // don't need to check if den == 0, because then planes are paralel
   // (they will never cross) or it's the same plane (also rejected)
   den = DotProduct(Trace.Delta, line->normal);
-  num = line->dist - DotProduct(Trace.Start, line->normal);
-  frac = num / den;
-  hit_point = Trace.Start + frac * Trace.Delta;
+  num = line->dist-DotProduct(Trace.Start, line->normal);
+  frac = num/den;
+  hit_point = Trace.Start+frac*Trace.Delta;
 
   Trace.LineEnd = hit_point;
 
-  if (front)
-  {
-    if (!CheckPlanes(Trace, front))
-    {
-      return false;
-    }
+  if (front) {
+    if (!CheckPlanes(Trace, front)) return false;
   }
   Trace.LineStart = Trace.LineEnd;
 
-  if (line->flags & ML_TWOSIDED)
-  {
+  if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
     opening_t *open;
 
     open = SV_LineOpenings(line, hit_point, Trace.PlaneNoBlockFlags);
-    while (open)
-    {
-      if (open->bottom <= hit_point.z && open->top >= hit_point.z)
-      {
-        return true;
-      }
+    while (open) {
+      if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
       open = open->next;
     }
   }
 
-  //  Hit line
-  if (s1 == 0 || s1 == 2)
-  {
+  // hit line
+  if (s1 == 0 || s1 == 2) {
     Trace.HitPlaneNormal = line->normal;
-  }
-  else
-  {
+  } else {
     Trace.HitPlaneNormal = -line->normal;
   }
 
-  if (!(line->flags & ML_TWOSIDED))
-  {
-    Trace.SightEarlyOut = true;
-  }
+  if (!(line->flags&ML_TWOSIDED)) Trace.SightEarlyOut = true;
   return false;
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -248,29 +162,22 @@ bool VLevel::CheckLine(linetrace_t &Trace, seg_t *Seg) const
 //  Returns true if trace crosses the given subsector successfully.
 //
 //==========================================================================
-
-bool VLevel::CrossSubsector(linetrace_t &Trace, int num) const
-{
+bool VLevel::CrossSubsector (linetrace_t &Trace, int num) const {
   guard(VLevel::CrossSubsector);
   subsector_t *sub;
-  int       count;
+  int count;
   seg_t *seg;
-  int       polyCount;
+  int polyCount;
   seg_t **polySeg;
 
   sub = &Subsectors[num];
 
-  if (sub->poly)
-  {
-    // Check the polyobj in the subsector first
+  if (sub->poly) {
+    // check the polyobj in the subsector first
     polyCount = sub->poly->numsegs;
     polySeg = sub->poly->segs;
-    while (polyCount--)
-    {
-      if (!CheckLine(Trace, *polySeg++))
-      {
-        return false;
-      }
+    while (polyCount--) {
+      if (!CheckLine(Trace, *polySeg++)) return false;
     }
   }
 
@@ -278,17 +185,14 @@ bool VLevel::CrossSubsector(linetrace_t &Trace, int num) const
   count = sub->numlines;
   seg = &Segs[sub->firstline];
 
-  for ( ; count ; seg++, count--)
-  {
-    if (!CheckLine(Trace, seg))
-    {
-      return false;
-    }
+  for ( ; count ; seg++, count--) {
+    if (!CheckLine(Trace, seg)) return false;
   }
   // passed the subsector ok
   return true;
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -297,58 +201,40 @@ bool VLevel::CrossSubsector(linetrace_t &Trace, int num) const
 //  Returns true if trace crosses the given node successfully.
 //
 //==========================================================================
-
-bool VLevel::CrossBSPNode(linetrace_t &Trace, int BspNum) const
-{
+bool VLevel::CrossBSPNode (linetrace_t &Trace, int BspNum) const {
   guard(VLevel::CrossBSPNode);
-  if (BspNum == -1)
-  {
-    return CrossSubsector(Trace, 0);
-  }
+  if (BspNum == -1) return CrossSubsector(Trace, 0);
 
-  if (!(BspNum & NF_SUBSECTOR))
-  {
+  if (!(BspNum&NF_SUBSECTOR)) {
     node_t *Bsp = &Nodes[BspNum];
 
     // decide which side the start point is on
     int Side = Bsp->PointOnSide2(Trace.Start);
-    if (Side == 2)
-    {
-      Side = 0; // an "on" should cross both sides
-    }
+    if (Side == 2) Side = 0; // an "on" should cross both sides
 
     // cross the starting side
-    if (!CrossBSPNode(Trace, Bsp->children[Side]))
-    {
-      return false;
-    }
+    if (!CrossBSPNode(Trace, Bsp->children[Side])) return false;
 
     // the partition plane is crossed here
-    if (Side == Bsp->PointOnSide2(Trace.End))
-    {
-      // the line doesn't touch the other side
-      return true;
-    }
+    if (Side == Bsp->PointOnSide2(Trace.End)) return true; // the line doesn't touch the other side
 
     // cross the ending side
-    return CrossBSPNode(Trace, Bsp->children[Side ^ 1]);
+    return CrossBSPNode(Trace, Bsp->children[Side^1]);
   }
 
-  return CrossSubsector(Trace, BspNum & (~NF_SUBSECTOR));
+  return CrossSubsector(Trace, BspNum&(~NF_SUBSECTOR));
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLevel::TraceLine
 //
 //==========================================================================
-
-bool VLevel::TraceLine(linetrace_t &Trace, const TVec &Start, const TVec &End,
-  int PlaneNoBlockFlags) const
-{
+bool VLevel::TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, int PlaneNoBlockFlags) const {
   guard(VLevel::TraceLine);
-  validcount++;
+  ++validcount;
 
   TVec realEnd = End;
 
@@ -378,14 +264,13 @@ bool VLevel::TraceLine(linetrace_t &Trace, const TVec &Start, const TVec &End,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Script natives
 //
 //==========================================================================
-
-IMPLEMENT_FUNCTION(VLevel, TraceLine)
-{
+IMPLEMENT_FUNCTION(VLevel, TraceLine) {
   P_GET_PTR(TVec, HitNormal);
   P_GET_PTR(TVec, HitPoint);
   P_GET_VEC(End);
