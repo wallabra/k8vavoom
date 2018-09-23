@@ -581,51 +581,64 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // look for any free slot (or free one if necessary)
   dlight_t *dl = DLights;
-  for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-    // replace dlight of the same owner
-    // (but keep looping, 'cause we may want to drop this light altogether)
-    if (!dlowner && Owner && dl->Owner == Owner) {
-      dlowner = dl;
-      if (isPlr) break;
-      continue;
+  // first try to find owned light to replace
+  if (Owner) {
+    for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
+      if (dl->Owner == Owner) { dlowner = dl; break; }
     }
-    // remove dead lights
-    if (dl->die < Level->Time) dl->radius = 0;
-    // unused light?
-    if (dl->radius <= 0) {
-      dl->flags = 0;
-      if (!dldying) dldying = dl;
-      continue;
-    }
-    // don't replace player's lights
-    if (dl->flags&dlight_t::PlayerLight) continue;
-    // replace furthest light
-    float dist = length2DSquared(dl->origin-cl->ViewOrg);
-    if (dist > bestdist) {
-      bestdist = dist;
-      dlbestdist = dl;
-    }
-    // check if we already have dynamic light around new origin
-    if (!isPlr) {
-      float dd = length2DSquared(dl->origin-lorg);
-      if (dd <= 6) {
-        if (radius > 0 && dl->radius > radius) return nullptr;
-        dlreplace = dl;
-        //break; // stop searching, we have a perfect candidate
-      } else if (dd < radsq) {
-        // if existing light radius is greater than new radius, drop new light, 'cause
-        // we have too much lights around one point (prolly due to several things at one place)
-        if (radius > 0 && dl->radius > radius) return nullptr;
-        // otherwise, replace this light
-        dlreplace = dl;
-        //break; // stop searching, we have a perfect candidate
+  }
+
+  // look for any free slot (or free one if necessary)
+  if (!dlowner) {
+    dl = DLights;
+    for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
+      // replace dlight of the same owner
+      // (but keep looping, 'cause we may want to drop this light altogether)
+      /*
+      if (!dlowner && Owner && dl->Owner == Owner) {
+        dlowner = dl;
+        if (isPlr) break;
+        continue;
+      }
+      */
+      // remove dead lights
+      if (dl->die < Level->Time) dl->radius = 0;
+      // unused light?
+      if (dl->radius <= 0) {
+        dl->flags = 0;
+        if (!dldying) dldying = dl;
+        continue;
+      }
+      // don't replace player's lights
+      if (dl->flags&dlight_t::PlayerLight) continue;
+      // replace furthest light
+      float dist = length2DSquared(dl->origin-cl->ViewOrg);
+      if (dist > bestdist) {
+        bestdist = dist;
+        dlbestdist = dl;
+      }
+      // check if we already have dynamic light around new origin
+      if (!isPlr) {
+        float dd = length2DSquared(dl->origin-lorg);
+        if (dd <= 6*6) {
+          if (radius > 0 && dl->radius >= radius) return nullptr;
+          dlreplace = dl;
+          break; // stop searching, we have a perfect candidate
+        } else if (dd < radsq) {
+          // if existing light radius is greater than new radius, drop new light, 'cause
+          // we have too much lights around one point (prolly due to several things at one place)
+          if (radius > 0 && dl->radius >= radius) return nullptr;
+          // otherwise, replace this light
+          dlreplace = dl;
+          //break; // stop searching, we have a perfect candidate
+        }
       }
     }
   }
 
   if (dlowner) {
     // remove replaced light
-    if (dlreplace && dlreplace != dlowner) memset((void *)dlreplace, 0, sizeof(*dlreplace));
+    //if (dlreplace && dlreplace != dlowner) memset((void *)dlreplace, 0, sizeof(*dlreplace));
     dl = dlowner;
   } else {
     dl = dlreplace;
