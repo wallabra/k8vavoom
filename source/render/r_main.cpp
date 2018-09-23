@@ -274,6 +274,8 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
 //
 //==========================================================================
 bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float radius, bool advanced) {
+#if 0
+  // BSP tracing
   float dsq = length2DSquared(org-dest);
   if (dsq <= 1) return true;
   linetrace_t Trace;
@@ -302,6 +304,10 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
     if (Level->TraceLine(Trace, np, dest, SPF_NOBLOCKSIGHT)) return true;
   }
   return false;
+#else
+ // blockmap tracing
+ return Level->CastCanSee(org, dest, (advanced ? radius : 0));
+#endif
 }
 
 

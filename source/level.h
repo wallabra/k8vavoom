@@ -290,6 +290,9 @@ class VLevel : public VGameObject {
 
   bool TraceLine (linetrace_t &, const TVec &, const TVec &, int) const;
 
+  //  doesn't check pvs or reject
+  bool CastCanSee (const TVec &org, const TVec &dest, float radius) const;
+
   void SetCameraToTexture (VEntity *, VName, int);
 
   msecnode_t *AddSecnode (sector_t *, VEntity *, msecnode_t *);
