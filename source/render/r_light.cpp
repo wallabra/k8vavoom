@@ -812,15 +812,17 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       if (!(sub->dlightbits&(1<<i))) continue;
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
-      if (r_dynamic_clip && Level->VisData) {
-        const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-        int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
-        // check potential visibility
-        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
-      }
       float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
-        if (r_dynamic_clip) {
+        //fprintf(stderr, "add=%f\n", add);
+        // 6 is arbitrary; add correlates with light radius
+        if (r_dynamic_clip && add > 6) {
+          if (Level->VisData) {
+            const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+            int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+            // check potential visibility
+            if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+          }
           if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
