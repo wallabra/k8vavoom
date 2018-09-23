@@ -267,7 +267,7 @@ class VLevel : public VGameObject {
   void LoadMap (VName MapName);
 
   subsector_t *PointInSubsector (const TVec &point) const;
-  vuint8 *LeafPVS (const subsector_t *ss) const;
+  const vuint8 *LeafPVS (const subsector_t *ss) const;
 
   VThinker *SpawnThinker (VClass *, const TVec& = TVec(0, 0, 0),
     const TAVec& = TAVec(0, 0, 0), mthing_t* = nullptr,

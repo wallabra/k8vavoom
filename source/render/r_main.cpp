@@ -815,8 +815,7 @@ void VRenderLevelShared::SetupCameraFrame(VEntity *Camera, VTexture *Tex,
 void VRenderLevelShared::MarkLeaves()
 {
   guard(VRenderLevelShared::MarkLeaves);
-  byte  *vis;
-  node_t  *node;
+  node_t *node;
   int   i;
 
   if (r_oldviewleaf == r_viewleaf)
@@ -825,7 +824,7 @@ void VRenderLevelShared::MarkLeaves()
   r_visframecount++;
   r_oldviewleaf = r_viewleaf;
 
-  vis = Level->LeafPVS(r_viewleaf);
+  const vuint8 *vis = Level->LeafPVS(r_viewleaf);
 
   for (i = 0; i < Level->NumSubsectors; i++)
   {

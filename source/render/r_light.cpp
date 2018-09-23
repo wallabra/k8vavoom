@@ -80,7 +80,7 @@ static float lightmapr[18 * 18 * 4];
 static float lightmapg[18 * 18 * 4];
 static float lightmapb[18 * 18 * 4];
 static bool light_hit;
-static byte *facevis;
+static const vuint8 *facevis;
 static bool is_coloured;
 
 static int c_bad;
@@ -569,7 +569,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
         lastDLightView = cl->ViewOrg;
         lastDLightViewSub = sub = Level->PointInSubsector(cl->ViewOrg);
       }
-      vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
@@ -683,7 +683,7 @@ void VRenderLevel::MarkLights (dlight_t *light, int bit, int bspnum) {
     subsector_t *ss = &Level->Subsectors[num];
 
     if (r_dynamic_clip && Level->VisData) {
-      vuint8 *dyn_facevis = Level->LeafPVS(ss);
+      const vuint8 *dyn_facevis = Level->LeafPVS(ss);
       int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
       // check potential visibility
       if (!(dyn_facevis[leafnum >> 3] & (1 << (leafnum & 7)))) return;
@@ -800,7 +800,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
       if (r_dynamic_clip && Level->VisData) {
-        vuint8 *dyn_facevis = Level->LeafPVS(sub);
+        const vuint8 *dyn_facevis = Level->LeafPVS(sub);
         int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         // check potential visibility
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
@@ -876,7 +876,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     if (r_dynamic_clip && Level->VisData) {
       sub = Level->PointInSubsector(impact);
-      vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;

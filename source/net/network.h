@@ -303,7 +303,7 @@ public:
 private:
   vuint8 *UpdatePvs;
   int UpdatePvsSize;
-  vuint8 *LeafPvs;
+  const vuint8 *LeafPvs;
   VViewClipper Clipper;
 
 public:

@@ -94,7 +94,7 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
       // check potential visibility
       /*
       subsector_t *sub = Level->PointInSubsector(nl.origin);
-      vuint8 *dyn_facevis = Level->LeafPVS(sub);
+      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       if (!(dyn_facevis[nl.leafnum>>3]&(1<<(nl.leafnum&7)))) continue;
       */
 
@@ -178,7 +178,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
   // add static lights
   if (r_static_lights) {
     if (!staticLightsFiltered) RefilterStaticLights();
-    vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
     for (int i = 0; i < Lights.Num(); i++) {
       //if (!Lights[i].radius) continue;
       if (!Lights[i].active) continue;
@@ -201,7 +201,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
 
   // add dynamic lights
   if (r_dynamic) {
-    vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
     for (int i = 0; i < MAX_DLIGHTS; i++) {
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;

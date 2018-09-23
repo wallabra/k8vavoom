@@ -290,14 +290,23 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 
   //k8: zdoom is using 1000 here; why?
   for (int count = 0 ; count < 100; ++count) {
-    if (flags&PT_ADDLINES) if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT))) return; // early out
+    if (flags&PT_ADDLINES) {
+      if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT))) {
+        // don't throw away things before the line
+        if (Intercepts.length() && (flags&PT_ADDTHINGS) != 0) {
+          const float frac = Intercepts[Intercepts.length()-1].frac;
+          AddThingIntercepts(Self, mapx, mapy, frac);
+        }
+        return; // early out
+      }
+    }
 
     //k8: should this be moved to top?
     if (flags&PT_ADDTHINGS) AddThingIntercepts(Self, mapx, mapy);
 
     if (mapx == xt2 && mapy == yt2) break;
 
-    // [RH] Handle corner cases properly instead of pretending they don't exist.
+    // [RH] handle corner cases properly instead of pretending they don't exist
     if (int(yintercept) == mapy) {
       yintercept += ystep;
       mapx += mapxstep;
@@ -312,7 +321,15 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
       if (flags&PT_ADDLINES) {
         if (!AddLineIntercepts(Self, mapx+mapxstep, mapy, !!(flags&PT_EARLYOUT)) ||
             !AddLineIntercepts(Self, mapx, mapy+mapystep, !!(flags&PT_EARLYOUT)))
+        {
+          // don't throw away things before the line
+          if (Intercepts.length() && (flags&PT_ADDTHINGS) != 0) {
+            const float frac = Intercepts[Intercepts.length()-1].frac;
+            AddThingIntercepts(Self, mapx+mapxstep, mapy, frac);
+            AddThingIntercepts(Self, mapx, mapy+mapystep, frac);
+          }
           return; // early out
+        }
       }
 
       if (flags&PT_ADDTHINGS) {
@@ -408,7 +425,7 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 //  VPathTraverse::AddThingIntercepts
 //
 //==========================================================================
-void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
+void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy, float maxfrac) {
   guard(VPathTraverse::AddThingIntercepts);
   for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
     const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
@@ -416,6 +433,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
     if (dist < 0) continue; // behind source
     const float frac = dist/trace_len;
+    if (frac >= maxfrac) continue;
 
     intercept_t &In = NewIntercept(frac);
     In.frac = frac;

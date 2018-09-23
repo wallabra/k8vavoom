@@ -1204,7 +1204,7 @@ void VLevel::BuildPVS () {
 
 /*REJECT: rebuild it with PVS
     auto sub = Level->PointInSubsector(cl->ViewOrg);
-    vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    const vuint8 *dyn_facevis = Level->LeafPVS(sub);
     auto leafnum = Level->PointInSubsector(lorg)-Level->Subsectors;
     // check potential visibility
     if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) {
