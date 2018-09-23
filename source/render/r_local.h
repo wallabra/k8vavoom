@@ -272,14 +272,10 @@ protected:
   friend class VSectorStackPortal;
   friend class VMirrorPortal;
 
-  enum
-  {
+  enum {
     MAX_TRANS_SPRITES = 256,
-
-    MAX_PARTICLES     = 2048, // default max # of particles at one
-                    //  time
-    ABSOLUTE_MIN_PARTICLES  = 512,  // no fewer than this no matter what's
-                    //  on the command line
+    MAX_PARTICLES = 2048, // default max # of particles at one time
+    ABSOLUTE_MIN_PARTICLES = 512, // no fewer than this no matter what's on the command line
     MAX_DLIGHTS = 32,
   };
 

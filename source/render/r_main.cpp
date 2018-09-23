@@ -993,7 +993,6 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
     for (int i = 0; i < MAX_DLIGHTS; i++, l++) {
       if (!l->radius || l->die < Level->Time) continue;
 
-
       //  Don't do lights that are too far away.
       Delta = l->origin - vieworg;
       Delta.z = 0;
