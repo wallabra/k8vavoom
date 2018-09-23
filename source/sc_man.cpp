@@ -463,6 +463,38 @@ void VScriptParser::ExpectName8 () {
 
 //==========================================================================
 //
+//  VScriptParser::ExpectName8Def
+//
+//==========================================================================
+void VScriptParser::ExpectName8Def (VName def) {
+  guard(VScriptParser::ExpectName8Def);
+  ExpectString();
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  // translate "$name" strings
+  if (String.Length() > 1 && String[0] == '$') {
+    VStr qs = String.mid(1, String.length()-1).toLowerCase();
+    if (GLanguage.HasTranslation(*qs)) {
+      qs = *GLanguage[*qs];
+      if (dbg_show_name_remap) GCon->Logf("**** <%s>=<%s>\n", *String, *qs);
+      String = qs;
+    }
+  }
+#endif
+
+  if (String.Length() > 8) {
+    GCon->Logf("Name '%s' is too long", *String);
+    Name8 = def;
+  } else {
+    Name8 = VName(*String, VName::AddLower8);
+  }
+
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::ExpectName
 //
 //==========================================================================

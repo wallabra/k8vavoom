@@ -582,8 +582,9 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     }
     else if (sc->Check("titlepatch"))
     {
+      //FIXME: quoted string is a textual level name
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      sc->ExpectName8Def(NAME_None);
       info->TitlePatch = sc->Name8;
     }
     else if (sc->Check("par"))

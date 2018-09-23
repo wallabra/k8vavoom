@@ -59,6 +59,7 @@ public:
   bool GetString ();
   void ExpectString ();
   void ExpectName8 ();
+  void ExpectName8Def (VName def);
   void ExpectName ();
   void ExpectIdentifier ();
   bool Check (const char *);
