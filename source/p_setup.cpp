@@ -1972,8 +1972,13 @@ void VLevel::LoadNodes(int Lump)
         children[1] ^= NF_SUBSECTOR_OLD | NF_SUBSECTOR;
     }
 
-    if (dx == 0 && dy == 0) Host_Error("invalid nodes (dir)");
-    no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
+    if (dx == 0 && dy == 0) {
+      //Host_Error("invalid nodes (dir)");
+      GCon->Log("invalid BSP node (zero direction)");
+      no->SetPointDirXY(TVec(x, y, 0), TVec(0.001f, 0, 0));
+    } else {
+      no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
+    }
 
     for (int j = 0; j < 2; j++)
     {
@@ -2308,11 +2313,21 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
       y = yy;
       dx = dxx;
       dy = dyy;
-      no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
+      if (dx == 0 && dy == 0) {
+        //Host_Error("invalid nodes (dir)");
+        GCon->Log("invalid BSP node (zero direction)");
+        no->SetPointDirXY(TVec(x, y, 0), TVec(0.001f, 0, 0));
+      } else {
+        no->SetPointDirXY(TVec(x, y, 0), TVec(dx, dy, 0));
+      }
     } else {
       vint32 x, y, dx, dy;
       *Strm << x << y << dx << dy;
-      no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
+      if (dx == 0 && dy == 0) {
+        no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(0.001f, 0, 0));
+      } else {
+        no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
+      }
     }
 
     *Strm << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
