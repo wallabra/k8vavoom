@@ -50,6 +50,9 @@
 #define MAPBTOFRAC     (MAPBLOCKSHIFT-FRACBITS)
 
 
+static VCvarB compat_better_sight("compat_better_sight", true, "Check more points in LOS calculations?", CVAR_Archive);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 typedef int fixed_t;
 
@@ -243,7 +246,7 @@ static bool SightBlockLinesIterator (sight_trace_t &Trace, VThinker *Self, int x
 //  SightPathTraverse
 //
 //  Traces a line from x1,y1 to x2,y2, calling the traverser function for
-// each. Returns true if the traverser function returns true for all lines
+//  each. Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
 static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector) {
@@ -446,49 +449,65 @@ bool VEntity::CanSee (VEntity *Other) {
     return false;
   }
 
-  // an unobstructed LOS is possible
-  // now look from eyes of t1 to any part of t2
-  Trace.Start = Origin;
-  Trace.Start.z += Height*0.75;
-  Trace.End = Other->Origin;
-  Trace.End.z += Other->Height*0.5;
+  static const float xmult[3] = { 0.0f, -1.0f, 1.0f };
+  const float xofs = Other->Radius*0.73f;
 
-  // check middle
+  for (int d = 0; d < 3; ++d) {
+    // an unobstructed LOS is possible
+    // now look from eyes of t1 to any part of t2
+    Trace.Start = Origin;
+    Trace.Start.z += Height*0.75;
+    Trace.End = Other->Origin;
+    Trace.End.x += xofs*xmult[d];
+    Trace.End.z += Other->Height*0.5;
+
+    // check middle
 #ifdef USE_BSP
-  if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
+    if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
 #else
-  if (SightPathTraverse(Trace, this, Other->SubSector->sector))
+    if (SightPathTraverse(Trace, this, Other->SubSector->sector))
 #endif
-  {
-    return true;
-  }
+    {
+      return true;
+    }
 #ifdef USE_BSP
-  if (Trace.SightEarlyOut)
+    if (Trace.SightEarlyOut)
 #else
-  if (Trace.EarlyOut)
+    if (Trace.EarlyOut)
 #endif
-  {
-    return false;
+    {
+      if (!compat_better_sight || Other->Radius < 12) return false; // player is 16
+      continue;
+    }
+
+    // check head
+    Trace.End = Other->Origin;
+    Trace.End.x += xofs*xmult[d];
+    Trace.End.z += Other->Height;
+#ifdef USE_BSP
+    if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
+#else
+    if (SightPathTraverse2(Trace, this, Other->SubSector->sector))
+#endif
+    {
+      return true;
+    }
+
+    // check feet
+    Trace.End = Other->Origin;
+    Trace.End.x += xofs*xmult[d];
+    Trace.End.z -= Other->FloorClip;
+#ifdef USE_BSP
+    if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
+#else
+    if (SightPathTraverse2(Trace, this, Other->SubSector->sector))
+#endif
+    {
+      return true;
+    }
+
+    if (!compat_better_sight || Other->Radius < 12) break; // player is 16
   }
 
-  // check head
-  Trace.End = Other->Origin;
-  Trace.End.z += Other->Height;
-#ifdef USE_BSP
-  if (XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT))
-#else
-  if (SightPathTraverse2(Trace, this, Other->SubSector->sector))
-#endif
-  {
-    return true;
-  }
-
-  // check feet
-  Trace.End = Other->Origin;
-  Trace.End.z -= Other->FloorClip;
-#ifdef USE_BSP
-  return XLevel->TraceLine(Trace, Trace.Start, Trace.End, SPF_NOBLOCKSIGHT);
-#else
-  return SightPathTraverse2(Trace, this, Other->SubSector->sector);
-#endif
+  return false;
 }
