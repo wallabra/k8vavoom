@@ -808,7 +808,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       float add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), r_dynamic_clip_more)) continue;
+          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;

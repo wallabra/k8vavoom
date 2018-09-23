@@ -54,6 +54,8 @@ VCvarI r_hashlight_dynamic_div("r_hashlight_dynamic_div", "8", "Divisor for dyna
 
 VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.56", "How close static lights should be to be filtered out?\n(0.5-0.7 is usually ok).", CVAR_Archive);
 
+extern VCvarB r_dynamic_clip_more;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // code
@@ -189,7 +191,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
       add = Lights[i].radius-Length(p-Lights[i].origin);
       if (add > 0) {
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, Lights[i].origin, (mobj ? mobj->Radius : 0), r_dynamic_clip_more)) continue;
+          if (!RadiusCastRay(p, Lights[i].origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
         lr += add * ((Lights[i].colour >> 16) & 255) / 255.0;
@@ -217,7 +219,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
       add = (dl.radius-dl.minlight)-Length(p-dl.origin);
       if (add > 0) {
         if (r_dynamic_clip) {
-          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), r_dynamic_clip_more)) continue;
+          if (!RadiusCastRay(p, dl.origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;

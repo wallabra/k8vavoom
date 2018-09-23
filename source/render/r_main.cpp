@@ -84,6 +84,7 @@ extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
 extern VCvarI r_hashlight_static_div;
 extern VCvarI r_hashlight_dynamic_div;
+extern VCvarB r_dynamic_clip_more;
 
 VDrawer         *Drawer;
 
@@ -278,7 +279,7 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
   linetrace_t Trace;
   bool canHit = !!Level->TraceLine(Trace, org, dest, SPF_NOBLOCKSIGHT);
   if (canHit) return true;
-  if (!advanced || radius <= 8) return false;
+  if (!advanced || radius < 12) return false;
   // check some more rays
   if (r_lights_cast_many_rays) {
     for (int dy = -1; dy <= 1; ++dy) {
@@ -939,7 +940,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
 
       if (dlenSq > rlightraduisSightSq) {
         // check some more rays
-        if (!RadiusCastRay(Lights[i].origin, vieworg, Lights[i].radius, true)) continue;
+        if (!RadiusCastRay(Lights[i].origin, vieworg, Lights[i].radius, /*true*/r_dynamic_clip_more)) continue;
       }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
@@ -1002,7 +1003,7 @@ void VAdvancedRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *R
 
       if (dlenSq > rlightraduisSightSq) {
         // check some more rays
-        if (!RadiusCastRay(l->origin, vieworg, l->radius, true)) continue;
+        if (!RadiusCastRay(l->origin, vieworg, l->radius, /*true*/r_dynamic_clip_more)) continue;
       }
 
 #ifdef RADVLIGHT_GRID_OPTIMIZER
