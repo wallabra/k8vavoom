@@ -921,12 +921,14 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       for (int s = 0; s < smax; ++s) {
         // do more dynlight clipping
         if (r_dynamic_clip && r_dynamic_clip_more) {
-          linetrace_t Trace;
           float us = starts+s*step;
           float ut = startt+t*step;
           TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
           if (length2DSquared(spt-dl.origin) > 1) {
-            if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
+            //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
+            //linetrace_t Trace;
+            //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
+            if (!Level->CastCanSee(dl.origin, spt, 0)) continue;
           }
         }
         //
