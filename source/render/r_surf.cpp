@@ -32,7 +32,8 @@
 #define USE_FASTER_SUBDIVIDER
 
 
-#define MAXSPLITVERTS   128
+//#define MAXSPLITVERTS   128
+#define MAXSPLITVERTS   256
 #define ON_EPSILON      0.1
 #define subdivide_size    240
 
