@@ -136,7 +136,7 @@ void VWidget::Init (VWidget *AParent) {
 //==========================================================================
 void VWidget::Destroy () {
   guard(VWidget::Destroy);
-  if ((GetFlags()&_OF_Destroyed) != 0) return;
+  //if ((GetFlags()&_OF_Destroyed) != 0) return;
   OnDestroy();
   if (ParentWidget) ParentWidget->RemoveChild(this);
   DestroyAllChildren();
