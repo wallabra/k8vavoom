@@ -1348,7 +1348,7 @@ VName VAcsLevel::GetNewLowerName (int idx) {
 //  VAcsLevel::PutNewString
 //
 //==========================================================================
-int VAcsLevel::PutNewString (const VStr &str) {
+int VAcsLevel::PutNewString (VStr str) {
   auto idxp = stringMapByStr.find(str);
   if (idxp) return *idxp;
   // add string

@@ -105,7 +105,7 @@ public:
 
   VStr GetNewString (int idx);
   VName GetNewLowerName (int idx);
-  int PutNewString (const VStr &str);
+  int PutNewString (VStr str);
 };
 
 

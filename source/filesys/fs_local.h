@@ -76,7 +76,7 @@ private:
   //void cacheDir ();
 
   // -1, or index in `CachedFiles`
-  int findFileCI (const VStr &fname);
+  int findFileCI (VStr fname);
 
 public:
   VFilesDir (const VStr &aPath);

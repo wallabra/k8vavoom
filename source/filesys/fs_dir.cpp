@@ -76,7 +76,7 @@ void VFilesDir::cacheDir () {
 //  VFilesDir::findFileCI
 //
 //==========================================================================
-int VFilesDir::findFileCI (const VStr &fname) {
+int VFilesDir::findFileCI (VStr fname) {
   // search
   VStr fn = fname.ToLower(); //(ignoreExt ? fname.stripExtension() : fname);
   int *idx = cachedMap.find(fn);
