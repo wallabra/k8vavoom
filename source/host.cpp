@@ -664,6 +664,7 @@ COMMAND(Quit)
   host_request_exit = true;
 }
 
+
 //==========================================================================
 //
 //  Host_Shutdown
@@ -671,65 +672,59 @@ COMMAND(Quit)
 //  Return to default system state
 //
 //==========================================================================
+void Host_Shutdown () {
+  static bool shutting_down = false;
 
-void Host_Shutdown()
-{
-  static bool   shutting_down = false;
-
-  if (shutting_down)
-  {
+  if (shutting_down) {
     GCon->Log("Recursive shutdown");
     return;
   }
   shutting_down = true;
 
 #define SAFE_SHUTDOWN(name, args) \
-  try { GCon->Log("Doing "#name); name args; } catch (...) { GCon->Log(#name" failed"); }
+  try { /*GCon->Log("Doing "#name);*/ name args; } catch (...) { GCon->Log(#name" failed"); }
 
 #ifdef CLIENT
-  SAFE_SHUTDOWN(C_Shutdown, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(C_Shutdown, ()) // console
   SAFE_SHUTDOWN(CL_Shutdown, ())
 #endif
 #ifdef SERVER
   SAFE_SHUTDOWN(SV_Shutdown, ())
 #endif
-  if (GNet)
-  {
+  if (GNet) {
     SAFE_SHUTDOWN(delete GNet,)
     GNet = nullptr;
   }
 #ifdef CLIENT
-  if (GInput)
-  {
+  if (GInput) {
     SAFE_SHUTDOWN(delete GInput,)
     GInput = nullptr;
   }
-  SAFE_SHUTDOWN(V_Shutdown, ())
-  if (GAudio)
-  {
+  SAFE_SHUTDOWN(V_Shutdown, ()) // video
+  if (GAudio) {
     SAFE_SHUTDOWN(delete GAudio,)
     GAudio = nullptr;
   }
-  SAFE_SHUTDOWN(T_Shutdown, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(T_Shutdown, ()) // font system
 #endif
-  SAFE_SHUTDOWN(Sys_Shutdown, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(Sys_Shutdown, ()) // nothing at all
 
-  if (GSoundManager)
-  {
+  if (GSoundManager) {
     SAFE_SHUTDOWN(delete GSoundManager,)
     GSoundManager = nullptr;
   }
-  SAFE_SHUTDOWN(R_ShutdownTexture, ())
-  SAFE_SHUTDOWN(R_ShutdownData, ())
-  SAFE_SHUTDOWN(VCommand::Shutdown, ())
-  SAFE_SHUTDOWN(VCvar::Shutdown, ())
-  SAFE_SHUTDOWN(ShutdownMapInfo, ())
-  SAFE_SHUTDOWN(FL_Shutdown, ())
-  SAFE_SHUTDOWN(W_Shutdown, ())
-  SAFE_SHUTDOWN(GLanguage.FreeData, ())
-  SAFE_SHUTDOWN(ShutdownDecorate, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownTexture, ()) // texture manager
+  //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownData, ()) // various game tables
+  //k8:no need to do this:SAFE_SHUTDOWN(VCommand::Shutdown, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(VCvar::Shutdown, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(ShutdownMapInfo, ()) // mapinfo
+  //k8:no need to do this:SAFE_SHUTDOWN(FL_Shutdown, ()) // filesystem
+  //k8:no need to do this:SAFE_SHUTDOWN(W_Shutdown, ()) // wads
+  //k8:no need to do this:SAFE_SHUTDOWN(GLanguage.FreeData, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(ShutdownDecorate, ())
 
-  SAFE_SHUTDOWN(VObject::StaticExit, ())
-  SAFE_SHUTDOWN(VName::StaticExit, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(VObject::StaticExit, ())
+  //k8:no need to do this:SAFE_SHUTDOWN(VName::StaticExit, ())
   //SAFE_SHUTDOWN(Z_Shutdown, ())
+  //GCon->Log("VaVoom: shutdown complete");
 }
