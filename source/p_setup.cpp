@@ -1284,8 +1284,10 @@ void VLevel::LoadSectors(int Lump)
   {
     //  Read data.
     vint16 floorheight, ceilingheight, lightlevel, special, tag;
-    char floorpic[8];
-    char ceilingpic[8];
+    char floorpic[9];
+    char ceilingpic[9];
+    memset(floorpic, 0, sizeof(floorpic));
+    memset(ceilingpic, 0, sizeof(ceilingpic));
     *Strm << floorheight << ceilingheight;
     Strm->Serialise(floorpic, 8);
     Strm->Serialise(ceilingpic, 8);
@@ -1453,9 +1455,12 @@ void VLevel::LoadSideDefs(int Lump)
     Strm->Seek(sd->BottomTexture * 30);
     vint16 textureoffset;
     vint16 rowoffset;
-    char toptexture[8];
-    char bottomtexture[8];
-    char midtexture[8];
+    char toptexture[9];
+    char bottomtexture[9];
+    char midtexture[9];
+    memset(toptexture, 0, sizeof(toptexture));
+    memset(bottomtexture, 0, sizeof(bottomtexture));
+    memset(midtexture, 0, sizeof(midtexture));
     vint16 sector;
     *Strm << textureoffset << rowoffset;
     Strm->Serialise(toptexture, 8);
