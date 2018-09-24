@@ -48,6 +48,70 @@ VWidget *VWidget::CreateNewWidget (VClass *AClass, VWidget *AParent) {
 
 //==========================================================================
 //
+//  VWidget::cleanupWidgets
+//
+//==========================================================================
+void VWidget::cleanupWidgets () {
+  if ((GetFlags()&_OF_Destroyed) != 0) return;
+  // if we're marked as dead, kill us and gtfo
+  if (IsDeadManWalking()) return;
+  /*
+  if (IsDeadManWalking()) {
+    Destroy();
+    return;
+  }
+  */
+  // need cleanup?
+  if (!IsNeedCleanup()) return;
+  // do children cleanup
+  VWidget *w = FirstChildWidget;
+  while (w) {
+    VWidget *next = w->NextWidget;
+    // is child alive?
+    if ((w->GetFlags()&_OF_Destroyed) == 0) {
+      // is child marked as dead?
+      if (w->IsDeadManWalking()) {
+        // destroy it, and go on
+        w->Destroy();
+        w = next;
+        continue;
+      }
+      // do child cleanup
+      w->cleanupWidgets();
+      // is child alive?
+      if ((w->GetFlags()&_OF_Destroyed) != 0) {
+        // nope
+        w = next;
+        continue;
+      }
+      // is child marked as dead?
+      if (w->IsDeadManWalking()) {
+        // destroy it, and go on
+        w->Destroy();
+        w = next;
+        continue;
+      }
+    }
+    w = next;
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::MarkDead
+//
+//==========================================================================
+void VWidget::MarkDead () {
+  if ((GetFlags()&_OF_Destroyed) != 0) return;
+  WidgetFlags |= WF_DeadManWalking;
+  for (VWidget *w = FirstChildWidget; w; w = w->NextWidget) w->MarkDead();
+  for (VWidget *w = this; w; w = w->ParentWidget) w->WidgetFlags |= WF_NeedCleanup;
+}
+
+
+//==========================================================================
+//
 //  VWidget::Init
 //
 //==========================================================================
@@ -72,6 +136,7 @@ void VWidget::Init (VWidget *AParent) {
 //==========================================================================
 void VWidget::Destroy () {
   guard(VWidget::Destroy);
+  if ((GetFlags()&_OF_Destroyed) != 0) return;
   OnDestroy();
   if (ParentWidget) ParentWidget->RemoveChild(this);
   DestroyAllChildren();
@@ -88,6 +153,7 @@ void VWidget::Destroy () {
 void VWidget::AddChild (VWidget *NewChild) {
   guard(VWidget::AddChild);
   if (!NewChild) return;
+  if (NewChild->IsDeadManWalking() || (NewChild->GetFlags()&_OF_Destroyed) != 0) return;
   if (NewChild == this) Sys_Error("VWidget::AddChild: trying to add `this` to `this`");
   if (!NewChild->ParentWidget) Sys_Error("VWidget::AddChild: trying to adopt a child without any official papers");
   if (NewChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to adopt an alien child");
@@ -919,8 +985,22 @@ IMPLEMENT_FUNCTION(VWidget, NewChild) {
 
 IMPLEMENT_FUNCTION(VWidget, Destroy) {
   P_GET_SELF;
-  delete Self;
-  Self = nullptr;
+  //k8: don't delete it, GC will do
+  //delete Self;
+  //Self = nullptr;
+  if (Self && (Self->GetFlags()&_OF_Destroyed) == 0) {
+    Self->SetCleanupFlag();
+    Self->Destroy();
+  }
+}
+
+IMPLEMENT_FUNCTION(VWidget, MarkDead) {
+  P_GET_SELF;
+  if (Self && (Self->GetFlags()&_OF_Destroyed) == 0) {
+    //Self->SetCleanupFlag();
+    //Self->WidgetFlags |= WF_DeadManWalking;
+    Self->MarkDead();
+  }
 }
 
 IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren) {

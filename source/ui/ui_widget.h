@@ -100,6 +100,9 @@ private:
     WF_RMouseDown   = 0x0040,
     // shadowed text
     WF_TextShadowed = 0x0080,
+    // marked as dead
+    WF_DeadManWalking = 0x4000,
+    WF_NeedCleanup = 0x8000,
   };
   vuint32 WidgetFlags;
 
@@ -123,12 +126,21 @@ private:
   bool TransferAndClipRect (float&, float&, float&, float&, float&, float&, float&, float&) const;
   void DrawString (int, int, const VStr&, int, int, float);
 
+  void cleanupWidgets ();
+
+  inline void SetCleanupFlag () { for (VWidget *w = this; w; w = w->ParentWidget) w->WidgetFlags |= WF_NeedCleanup; }
+  inline bool IsNeedCleanup () const { return ((WidgetFlags&WF_NeedCleanup) != 0); }
+
+  void MarkDead ();
+
   friend class VRootWidget;
 
 public:
   // destroys all child widgets
   virtual void Init (VWidget *);
   virtual void Destroy () override;
+
+  inline bool IsDeadManWalking () const { return ((WidgetFlags&WF_DeadManWalking) != 0); }
 
   void DestroyAllChildren ();
 
@@ -337,6 +349,7 @@ public:
   // script natives
   DECLARE_FUNCTION(NewChild)
   DECLARE_FUNCTION(Destroy)
+  DECLARE_FUNCTION(MarkDead)
   DECLARE_FUNCTION(DestroyAllChildren)
 
   DECLARE_FUNCTION(GetRootWidget)

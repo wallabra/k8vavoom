@@ -62,8 +62,8 @@ void VRootWidget::Init () {
 //==========================================================================
 void VRootWidget::DrawWidgets () {
   guard(VRootWidget::DrawWidgets)
+  cleanupWidgets();
   DrawTree();
-
   if (RootFlags&RWF_MouseEnabled) DrawPic(MouseX-16, MouseY-16, MouseCursorPic);
   unguard;
 }
@@ -77,6 +77,7 @@ void VRootWidget::DrawWidgets () {
 void VRootWidget::TickWidgets (float DeltaTime) {
   guard(VRootWidget::TickWidgets);
   if (GetFlags()&_OF_Destroyed) return;
+  cleanupWidgets();
   if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) {
     SizeScaleX = fScaleX;
     SizeScaleY = fScaleY;
