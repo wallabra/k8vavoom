@@ -39,7 +39,7 @@ override void CreateChoices()
   Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Enum.SetOrigin(ChoicesStartX, currentY);
   Enum.Text = "Decals";
-  Enum.SetInitialValue(GetCvar('decals_enabled'));
+  Enum.SetInitialValue(GetCvar('r_decals_enabled'));
   Enum.ValueChanging = &ChangeDecals;
   currentY += Enum.Height;
 
@@ -202,7 +202,7 @@ override void CreateChoices()
 //==========================================================================
 
 bool ChangeDecals (Object Sender, int newValue) {
-  SetCvar('decals_enabled', newValue);
+  SetCvar('r_decals_enabled', newValue);
   return true;
 }
 
