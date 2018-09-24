@@ -577,9 +577,9 @@ int main (int argc, char **argv) {
 
     if (dumpProfile) VObject::DumpProfile();
     VSoundManager::StaticShutdown();
-    VCvar::Shutdown();
-    VObject::StaticExit();
-    VName::StaticExit();
+    //VCvar::Shutdown();
+    //VObject::StaticExit();
+    //VName::StaticExit();
   } catch (VException& e) {
     ret.i = -1;
 #ifndef WIN32
