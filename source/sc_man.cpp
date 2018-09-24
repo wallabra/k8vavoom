@@ -483,7 +483,11 @@ void VScriptParser::ExpectName8Def (VName def) {
 #endif
 
   if (String.Length() > 8) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     GCon->Logf("Name '%s' is too long", *String);
+#else
+    fprintf(stderr, "Name '%s' is too long\n", *String);
+#endif
     Name8 = def;
   } else {
     Name8 = VName(*String, VName::AddLower8);
