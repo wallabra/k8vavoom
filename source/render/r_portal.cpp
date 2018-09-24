@@ -26,31 +26,32 @@
 //**  Portals.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+/*
+static vuint8 *portalMemPool = nullptr;
+static int pmpUsed = 0, pmpSize = 0;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+struct PMPMarker {
+  int pmpMark; // used
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+  PMPMarker () { pmpMark = pmpUsed; }
+  ~PMPMarker () { pmpUsed = pmpMark; }
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+  vuint8 *alloc (int size) {
+    if (size < 1) size = 1;
+    if (pmpUsed+size > pmpSize) {
+      pmpSize = ((pmpUsed+size)|0xfff)+1;
+      portalMemPool = (vuint8 *)realloc(portalMemPool, pmpSize);
+      if (!portalMemPool) Sys_Error("Portal Pool: out of memory!");
+    }
+    return portalMemPool
+  }
+};
+*/
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern VCvarB r_decals_enabled;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -138,14 +139,8 @@ bool VPortal::MatchMirror(TPlane*) const
 void VPortal::Draw(bool UseStencil)
 {
   guard(VPortal::Draw);
-  bool oldDecalsEnabled = r_decals_enabled;
-  if (UseStencil) r_decals_enabled = false;
 
-  if (!Drawer->StartPortal(this, UseStencil)) {
-    // all portal polygons are clipped away
-    if (UseStencil) r_decals_enabled = oldDecalsEnabled;
-    return;
-  }
+  if (!Drawer->StartPortal(this, UseStencil)) return; // all portal polygons are clipped away
 
   //  Save renderer settings.
   TVec SavedViewOrg = vieworg;
@@ -170,6 +165,7 @@ void VPortal::Draw(bool UseStencil)
     //  Set up BSP visibility table and translated sprites. This has to
     // be done only for portals that do rendering of view.
     RLev->BspVis = new vuint8[RLev->VisSize];
+    //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
     memset((void *)TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t) * VRenderLevel::MAX_TRANS_SPRITES);
     RLev->trans_sprites = TransSprites;
@@ -200,7 +196,6 @@ void VPortal::Draw(bool UseStencil)
   Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
-  if (UseStencil) r_decals_enabled = oldDecalsEnabled;
 
   Z_Free(TransSprites);
   unguard;

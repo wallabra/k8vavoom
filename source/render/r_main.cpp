@@ -247,6 +247,7 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
   HorizonPortalsHead = nullptr;
   HorizonPortalsTail = nullptr;
   PortalDepth = 0;
+  //VPortal::ResetFrame();
 
   VisSize = (Level->NumSubsectors + 7) >> 3;
   BspVis = new vuint8[VisSize];

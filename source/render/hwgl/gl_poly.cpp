@@ -82,7 +82,7 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
     // this is not strictly necessary, but 'cmon, be polite!
     // later fix: 'cmon, it is not necessary at all!
     // later fix: it is necessary for stenciled portals; clear stencil buffer there
-    //glClear(GL_STENCIL_BUFFER_BIT);
+    glClear(GL_STENCIL_BUFFER_BIT);
   }
   //glDisable(GL_STENCIL_TEST);
 }
@@ -1286,8 +1286,6 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     p_glUseProgramObjectARB(SurfZBufProgram);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
-
-    glClear(GL_STENCIL_BUFFER_BIT);
 
     // set up stencil test
     if (!RendLev->PortalDepth) glEnable(GL_STENCIL_TEST);

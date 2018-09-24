@@ -42,6 +42,7 @@ static bool MirrorClipSegs;
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
 
 extern int light_reset_surface_cache; // in r_light.cpp
+extern VCvarB r_decals_enabled;
 
 
 //==========================================================================
@@ -810,9 +811,17 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 void VRenderLevelShared::RenderPortals () {
   guard(VRenderLevelShared::RenderPortals);
   ++PortalLevel;
+
+  //FIXME: disable decals for portals
+  //       i should rewrite decal rendering, so we can skip stencil buffer
+  //       (or emulate stencil buffer with texture and shaders)
+  bool oldDecalsEnabled = r_decals_enabled;
+  r_decals_enabled = false;
   for (int i = 0; i < Portals.Num(); ++i) {
     if (Portals[i] && Portals[i]->Level == PortalLevel) Portals[i]->Draw(true);
   }
+  r_decals_enabled = oldDecalsEnabled;
+
   for (int i = 0; i < Portals.Num(); ++i) {
     if (Portals[i] && Portals[i]->Level == PortalLevel) {
       delete Portals[i];
