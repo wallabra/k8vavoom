@@ -177,7 +177,7 @@ void DrawLine (int LineIdx, int x, int y, string Text) {
 //==========================================================================
 override void Tick (float DeltaTime) {
   Time += DeltaTime;
-  if (HoldTime && HoldTime < Time) Destroy();
+  if (HoldTime && HoldTime < Time) MarkDead(); //Destroy();
 }
 
 

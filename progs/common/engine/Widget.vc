@@ -135,6 +135,7 @@ delegate bool KeyUp (Object Sender, int Key);
 //  Creation and destruction of widgets.
 native final spawner Widget NewChild (class!Widget ChildClass);
 override native final void Destroy ();
+native final void MarkDead ();
 native final void DestroyAllChildren ();
 
 native final RootWidget GetRootWidget ();

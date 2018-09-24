@@ -76,7 +76,7 @@ override void Tick(float DeltaTime)
   {
     if (FadeOutTime < Time)
     {
-      Destroy();
+      MarkDead(); //Destroy();
     }
     else
     {
