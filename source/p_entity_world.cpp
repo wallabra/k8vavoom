@@ -1658,6 +1658,7 @@ void VEntity::SlideMove(float StepVelScale)
   float newy;
   int hitcount;
   tmtrace_t tmtrace;
+  memset((void *)&tmtrace, 0, sizeof(tmtrace)); // valgrind: AnyBlockingLine
 
   hitcount = 0;
 
@@ -1759,9 +1760,7 @@ void VEntity::SlideMove(float StepVelScale)
       BestSlideLine->normal, 1.0);
     XMove = Velocity.x * StepVelScale;
     YMove = Velocity.y * StepVelScale;
-  }
-  while (!TryMove(tmtrace, TVec(Origin.x + XMove, Origin.y + YMove,
-    Origin.z), true));
+  } while (!TryMove(tmtrace, TVec(Origin.x + XMove, Origin.y + YMove, Origin.z), true));
   unguard;
 }
 
