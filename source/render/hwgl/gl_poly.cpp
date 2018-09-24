@@ -1287,6 +1287,8 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
 
+    glClear(GL_STENCIL_BUFFER_BIT);
+
     // set up stencil test
     if (!RendLev->PortalDepth) glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
