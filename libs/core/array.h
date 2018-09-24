@@ -34,8 +34,9 @@ inline void *operator new (size_t, void *Ptr, EArrayNew, EArrayNew) { return Ptr
 
 template<class T> class TArray {
 private:
-  int ArrNum;
-  int ArrSize;
+  // 2d info is from `VScriptArray`
+  int ArrNum; // if bit 31 is set, this is 1st dim of 2d array
+  int ArrSize; // if bit 31 is set in `ArrNum`, this is 2nd dim of 2d array
   T *ArrData;
 
 public:
@@ -45,10 +46,17 @@ public:
 
   ~TArray () { clear(); }
 
+  inline int length1D () const { return (ArrNum >= 0 ? ArrNum : (ArrNum&0x7fffffff)*(ArrSize&0x7fffffff)); }
+
+  // this is from `VScriptArray`
+  inline bool Is2D () const { return (ArrNum < 0); }
+  inline void Flatten () { if (Is2D()) { int oldlen = length1D(); ArrSize = ArrNum = oldlen; } }
+
   inline void Clear () { clear(); }
 
   void clear () {
     if (ArrData) {
+      Flatten(); // just in case
       for (int i = 0; i < ArrSize; ++i) ArrData[i].~T();
       Z_Free(ArrData);
     }
@@ -73,8 +81,29 @@ public:
     check(NewSize >= 0);
 
     if (NewSize <= 0) { clear(); return; }
+
+    Flatten(); // just in case
     if (NewSize == ArrSize) return;
 
+    //k8: ok, it was fubared anyway, so we'll go with realloc
+    if (NewSize < ArrSize) {
+      // free unused elements
+      for (int i = NewSize; i < ArrSize; ++i) ArrData[i].~T();
+    }
+    // realloc buffer
+    T *newbuf = (T *)Z_Realloc(ArrData, NewSize*sizeof(T));
+    if (!newbuf) { fprintf(stderr, "FATAL: out of memory!\n"); abort(); }
+    ArrData = newbuf;
+    // init new data
+    if (NewSize > ArrSize) {
+      memset((void *)(ArrData+ArrSize), 0, (NewSize-ArrSize)*sizeof(T));
+      for (int i = ArrSize; i < NewSize; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
+    }
+
+    ArrSize = NewSize;
+    if (ArrNum > NewSize) ArrNum = NewSize;
+
+    /*
     T *OldData = ArrData;
     int OldSize = ArrSize;
     ArrSize = NewSize;
@@ -89,6 +118,7 @@ public:
       for (int i = 0; i < OldSize; ++i) OldData[i].~T();
       Z_Free(OldData);
     }
+    */
   }
   inline void resize (int NewSize) { Resize(NewSize); }
 
