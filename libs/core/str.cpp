@@ -408,7 +408,11 @@ void VStr::resize (int newlen) {
     }
 
     // copy data
-    memcpy(((char *)ns)+sizeof(Store), data, newlen);
+    if (newlen > oldlen) {
+      memcpy(((char *)ns)+sizeof(Store), data, oldlen+1);
+    } else {
+      memcpy(((char *)ns)+sizeof(Store), data, newlen+1);
+    }
     // setup info
     ns->length = newlen;
     ns->alloted = alloclen;
