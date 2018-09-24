@@ -636,6 +636,11 @@ bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// VScriptArray
+// ////////////////////////////////////////////////////////////////////////// //
+
+
 #if !defined(IN_VCC)
 
 //==========================================================================
@@ -643,16 +648,17 @@ bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
 //  VScriptArray::VScriptArray
 //
 //==========================================================================
-VScriptArray::VScriptArray (const TArray<VStr>& xarr) {
+VScriptArray::VScriptArray (const TArray<VStr> &xarr) {
   ArrData = nullptr;
   ArrNum = 0;
   ArrSize = 0;
   if (xarr.Num()) {
-    size_t bytesize = xarr.Num()*sizeof(void*);
-    ArrData = new vuint8[bytesize];
+    size_t bytesize = xarr.Num()*sizeof(VStr);
+    //ArrData = new vuint8[bytesize];
+    ArrData = (vuint8 *)Z_Malloc(bytesize);
     memset(ArrData, 0, bytesize);
     VStr **aa = (VStr **)ArrData;
-    for (int f = 0; f < xarr.Num(); ++f) *(VStr*)(&aa[f]) = xarr[f];
+    for (int f = 0; f < xarr.Num(); ++f) *(VStr *)(&aa[f]) = xarr[f];
     ArrSize = ArrNum = xarr.Num();
   }
 }
@@ -673,7 +679,8 @@ void VScriptArray::Clear (const VFieldType &Type) {
       int InnerSize = Type.GetSize();
       for (int i = 0; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
     }
-    delete[] ArrData;
+    //delete[] ArrData;
+    Z_Free(ArrData);
   }
   ArrData = nullptr;
   ArrNum = 0;
@@ -718,35 +725,70 @@ void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
   Flatten(); // flatten 2d array (anyway)
   if (NewSize == ArrSize) return;
 
+  //k8: this can be used interchangeably with `TArray()`, so use `Z_XXX()` here too
+  //    also, moving elements with dtors can be dangerous, but we don't care
+  //    FIXME: introduce `postblit()` for data types
+
+  int InnerSize = Type.GetSize();
+  vint32 oldSize = ArrSize;
+  ArrSize = NewSize;
+
+  if (ArrNum > NewSize) {
+    if (VField::NeedToDestructField(Type)) {
+      // clear old data
+      for (int i = NewSize; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
+    }
+    ArrNum = NewSize;
+  }
+
+  ArrData = (vuint8 *)Z_Realloc(ArrData, ArrSize*InnerSize);
+
+  if (NewSize > oldSize) {
+    // got some new elements, clear them
+    memset(ArrData+oldSize*InnerSize, 0, (NewSize-oldSize)*InnerSize);
+  }
+
+#if 0
   vuint8 *OldData = ArrData;
-  //vint32 OldSize = ArrSize;
+  vint32 OldSize = ArrSize;
   vint32 oldlen = ArrNum;
   ArrSize = NewSize;
   if (ArrNum > NewSize) ArrNum = NewSize;
 
   int InnerSize = Type.GetSize();
-  ArrData = new vuint8[ArrSize*InnerSize];
-  // use simple copy if it is possible
+  //ArrData = new vuint8[ArrSize*InnerSize];
+  bool needDtor = VField::NeedToDestructField(Type);
+
   // coincidentally, simple copy is possible for everything that doesn't require destructing
-  if (VField::NeedToDestructField(Type)) {
+  // for pod (data that doesn't need dtor), use realloc
+  if (needDtor) {
+    // realloc
+    ArrData = (vuint8 *)Z_Realloc(ArrData, ArrSize*InnerSize);
+    // clear new data
+    if (ArrSize > OldSize) memset(ArrData+OldSize*InnerSize, 0, (ArrSize-OldSize)*InnerSize);
+  } else {
+    // alloc new buffer, and copy data
+    ArrData = (vuint8 *)Z_Malloc(ArrSize*InnerSize);
     // clear new data, 'cause `VField::CopyFieldValue()` assume valid data
     memset(ArrData, 0, ArrSize*InnerSize);
     for (int i = 0; i < ArrNum; ++i) VField::CopyFieldValue(OldData+i*InnerSize, ArrData+i*InnerSize, Type);
-  } else {
-    // copy old data
-    if (ArrNum > 0) memcpy(ArrData, OldData, ArrNum*InnerSize);
-    // clear tail, so further growth will not hit random values
-    if (ArrNum < ArrSize) memset(ArrData+ArrNum*InnerSize, 0, (ArrSize-ArrNum)*InnerSize);
-  }
-
-  if (OldData) {
-    // don't waste time destructing types without dtors
-    if (VField::NeedToDestructField(Type)) {
-      // no need to clear the whole array, as any resizes will zero out unused elements
-      for (int i = 0; i < oldlen; ++i) VField::DestructField(OldData+i*InnerSize, Type);
+    {
+      // copy old data
+      if (ArrNum > 0) memcpy(ArrData, OldData, ArrNum*InnerSize);
+      // clear tail, so further growth will not hit random values
+      if (ArrNum < ArrSize) memset(ArrData+ArrNum*InnerSize, 0, (ArrSize-ArrNum)*InnerSize);
     }
-    delete[] OldData;
+
+    if (OldData) {
+      // don't waste time destructing types without dtors
+      if (VField::NeedToDestructField(Type)) {
+        // no need to clear the whole array, as any resizes will zero out unused elements
+        for (int i = 0; i < oldlen; ++i) VField::DestructField(OldData+i*InnerSize, Type);
+      }
+      delete[] OldData;
+    }
   }
+#endif
 
   unguard;
 }
@@ -795,7 +837,7 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
   else if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32, Type); // resize will take care of cleanups
   else if (doShrink && ArrSize > 32 && NewNum > 32 && NewNum < ArrSize/3) Resize(NewNum+NewNum/3+8, Type); // resize will take care of cleanups
   else if (NewNum < ArrNum) {
-    // clear unused values (so possible array growth will not hit stale data, and strings won't hang it memory)
+    // clear unused values (so possible array growth will not hit stale data, and strings won't hang in memory)
     int InnerSize = Type.GetSize();
     if (VField::NeedToDestructField(Type)) {
       for (int i = NewNum; i < ArrNum; ++i) VField::DestructField(ArrData+i*InnerSize, Type);
