@@ -2391,11 +2391,11 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           delete E;
           E = nullptr;
         } else if (Args[i]->IsStrConst()) {
-          VStr Val = Args[i]->GetStrConst(ec.Package);
+          const char *Val = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
           delete Args[i];
           Args[i] = nullptr;
-          Args[i] = new VNameLiteral(*Val, ALoc);
+          Args[i] = new VNameLiteral(Val, ALoc);
         }
         break;
       case TYPE_String:
@@ -2414,16 +2414,16 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           E = nullptr;
         }
         if (Args[i]->IsStrConst()) {
-          VStr CName = Args[i]->GetStrConst(ec.Package);
+          const char *CName = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
-          VClass *Cls = VClass::FindClassNoCase(*CName);
+          VClass *Cls = VClass::FindClassNoCase(CName);
           if (!Cls) {
-            ParseWarning(ALoc, "No such class `%s`", *CName);
+            ParseWarning(ALoc, "No such class `%s`", CName);
             delete Args[i];
             Args[i] = nullptr;
             Args[i] = new VNoneLiteral(ALoc);
           } else if (Func->ParamTypes[i].Class && !Cls->IsChildOf(Func->ParamTypes[i].Class)) {
-            ParseWarning(ALoc, "Class `%s` is not a descendant of `%s`", *CName, Func->ParamTypes[i].Class->GetName());
+            ParseWarning(ALoc, "Class `%s` is not a descendant of `%s`", CName, Func->ParamTypes[i].Class->GetName());
             delete Args[i];
             Args[i] = nullptr;
             Args[i] = new VNoneLiteral(ALoc);
@@ -2457,7 +2457,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             }
           }
         } else if (Args[i]->IsStrConst()) {
-          VStr Lbl = Args[i]->GetStrConst(ec.Package);
+          VStr Lbl = VStr(Args[i]->GetStrConst(ec.Package));
           TLocation ALoc = Args[i]->Loc;
           int DCol = Lbl.IndexOf("::");
           if (DCol >= 0) {

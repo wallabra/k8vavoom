@@ -469,8 +469,8 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
     return nullptr;
   }
 
-  if (sval->Type.Type == TYPE_String && sval->IsStrConst() && sval->GetStrConst(ec.Package).length() == 1) {
-    const char *s = *sval->GetStrConst(ec.Package);
+  if (sval->Type.Type == TYPE_String && sval->IsStrConst() && VStr::length(sval->GetStrConst(ec.Package)) == 1) {
+    const char *s = sval->GetStrConst(ec.Package);
     val = new VIntLiteral((vuint8)s[0], sval->Loc);
     delete sval;
     sval = val->Resolve(ec); // will never fail
@@ -1567,8 +1567,8 @@ void VStringGetLength::DoSyntaxCopyTo (VExpression *e) {
 VExpression *VStringGetLength::DoResolve (VEmitContext &ec) {
   // optimize it for string literals
   if (StrExpr->IsStrConst()) {
-    VStr val = StrExpr->GetStrConst(ec.Package);
-    VExpression *e = new VIntLiteral(val.Length(), Loc);
+    const char *val = StrExpr->GetStrConst(ec.Package);
+    VExpression *e = new VIntLiteral(VStr::length(val), Loc);
     e = e->Resolve(ec);
     delete this;
     return e;

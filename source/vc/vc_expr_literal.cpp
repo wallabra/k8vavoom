@@ -364,7 +364,7 @@ bool VStringLiteral::IsStrConst () const {
 //  VStringLiteral::GetStrConst
 //
 //==========================================================================
-VStr VStringLiteral::GetStrConst (VPackage *Pkg) const {
+const char *VStringLiteral::GetStrConst (VPackage *Pkg) const {
   return &Pkg->Strings[Value];
 }
 
