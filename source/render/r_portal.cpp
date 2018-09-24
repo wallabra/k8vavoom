@@ -58,91 +58,83 @@ struct PMPMarker {
 //  VPortal::VPortal
 //
 //==========================================================================
-
 VPortal::VPortal(VRenderLevelShared *ARLev)
-: RLev(ARLev)
+  : RLev(ARLev)
 {
-  Level = RLev->PortalLevel + 1;
+  Level = RLev->PortalLevel+1;
 }
+
 
 //==========================================================================
 //
 //  VPortal::~VPortal
 //
 //==========================================================================
-
-VPortal::~VPortal()
-{
+VPortal::~VPortal () {
 }
+
 
 //==========================================================================
 //
 //  VPortal::NeedsDepthBuffer
 //
 //==========================================================================
-
-bool VPortal::NeedsDepthBuffer() const
-{
+bool VPortal::NeedsDepthBuffer () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VPortal::IsSky
 //
 //==========================================================================
-
-bool VPortal::IsSky() const
-{
+bool VPortal::IsSky () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VPortal::MatchSky
 //
 //==========================================================================
-
-bool VPortal::MatchSky(VSky*) const
-{
+bool VPortal::MatchSky (VSky *) const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VPortal::MatchSkyBox
 //
 //==========================================================================
-
-bool VPortal::MatchSkyBox(VEntity*) const
-{
+bool VPortal::MatchSkyBox (VEntity *) const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VPortal::MatchMirror
 //
 //==========================================================================
-
-bool VPortal::MatchMirror(TPlane*) const
-{
+bool VPortal::MatchMirror (TPlane *) const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VPortal::Draw
 //
 //==========================================================================
-
-void VPortal::Draw(bool UseStencil)
-{
+void VPortal::Draw (bool UseStencil) {
   guard(VPortal::Draw);
 
   if (!Drawer->StartPortal(this, UseStencil)) return; // all portal polygons are clipped away
 
-  //  Save renderer settings.
+  // save renderer settings
   TVec SavedViewOrg = vieworg;
   TAVec SavedViewAngles = viewangles;
   TVec SavedViewForward = viewforward;
@@ -157,23 +149,21 @@ void VPortal::Draw(bool UseStencil)
   TClipPlane SavedClip = view_clipplanes[4];
   TClipPlane *SavedClipLink = view_clipplanes[3].next;
 
-  VRenderLevel::trans_sprite_t *TransSprites =
-    (VRenderLevel::trans_sprite_t *)Z_Calloc(sizeof(VRenderLevel::trans_sprite_t) * VRenderLevel::MAX_TRANS_SPRITES);
+  VRenderLevel::trans_sprite_t *TransSprites = (VRenderLevel::trans_sprite_t *)Z_Calloc(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
 
-  if (NeedsDepthBuffer())
-  {
-    //  Set up BSP visibility table and translated sprites. This has to
-    // be done only for portals that do rendering of view.
+  if (NeedsDepthBuffer()) {
+    // set up BSP visibility table and translated sprites
+    // this has to be done only for portals that do rendering of view
     RLev->BspVis = new vuint8[RLev->VisSize];
     //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
-    memset((void *)TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t) * VRenderLevel::MAX_TRANS_SPRITES);
+    memset((void *)TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
     RLev->trans_sprites = TransSprites;
   }
 
   DrawContents();
 
-  //  Restore render settings.
+  // restore render settings
   vieworg = SavedViewOrg;
   viewangles = SavedViewAngles;
   viewforward = SavedViewForward;
@@ -182,11 +172,7 @@ void VPortal::Draw(bool UseStencil)
   RLev->ViewEnt = SavedViewEnt;
   RLev->ExtraLight = SavedExtraLight;
   RLev->FixedLight = SavedFixedLight;
-  if (NeedsDepthBuffer())
-  {
-    delete[] RLev->BspVis;
-    RLev->BspVis = nullptr;
-  }
+  if (NeedsDepthBuffer()) delete [] RLev->BspVis;
   RLev->BspVis = SavedBspVis;
   RLev->trans_sprites = SavedTransSprites;
   MirrorClip = SavedMirrorClip;
@@ -201,67 +187,45 @@ void VPortal::Draw(bool UseStencil)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VPortal::SetUpRanges
 //
 //==========================================================================
-
-void VPortal::SetUpRanges(VViewClipper &Range, bool Revert)
-{
+void VPortal::SetUpRanges (VViewClipper &Range, bool Revert) {
   guard(VPortal::SetUpRanges);
   Range.ClearClipNodes(vieworg, RLev->Level);
-  for (int i = 0; i < Surfs.Num(); i++)
-  {
-    if (Surfs[i]->plane->normal.z == 0)
-    {
-      //  Wall
-      seg_t *Seg = (seg_t*)Surfs[i]->plane;
+  for (int i = 0; i < Surfs.Num(); ++i) {
+    if (Surfs[i]->plane->normal.z == 0) {
+      // wall
+      seg_t *Seg = (seg_t *)Surfs[i]->plane;
       check(Seg >= RLev->Level->Segs);
-      check(Seg < RLev->Level->Segs + RLev->Level->NumSegs);
+      check(Seg < RLev->Level->Segs+RLev->Level->NumSegs);
       float a1 = Range.PointToClipAngle(*Seg->v2);
       float a2 = Range.PointToClipAngle(*Seg->v1);
-      if (Revert)
-      {
+      if (Revert) {
         Range.AddClipRange(a2, a1);
-      }
-      else
-      {
+      } else {
         Range.AddClipRange(a1, a2);
       }
-    }
-    else
-    {
-      //  Subsector
-      for (int j = 0; j < Surfs[i]->count; j++)
-      {
-        TVec v1;
-        TVec v2;
-        if ((Surfs[i]->plane->normal.z < 0) != Revert)
-        {
-          v1 = Surfs[i]->verts[j < Surfs[i]->count - 1 ? j + 1 : 0];
+    } else {
+      // subsector
+      for (int j = 0; j < Surfs[i]->count; ++j) {
+        TVec v1, v2;
+        if ((Surfs[i]->plane->normal.z < 0) != Revert) {
+          v1 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0];
           v2 = Surfs[i]->verts[j];
-        }
-        else
-        {
+        } else {
           v1 = Surfs[i]->verts[j];
-          v2 = Surfs[i]->verts[j < Surfs[i]->count - 1 ? j + 1 : 0];
+          v2 = Surfs[i]->verts[j < Surfs[i]->count-1 ? j+1 : 0];
         }
-        TVec Dir = v2 - v1;
+        TVec Dir = v2-v1;
         Dir.z = 0;
-        if (Dir.x > -0.01 && Dir.x < 0.01 && Dir.y > -0.01 &&
-          Dir.y < 0.01)
-        {
-          //  Too short.
-          continue;
-        }
+        if (Dir.x > -0.01 && Dir.x < 0.01 && Dir.y > -0.01 && Dir.y < 0.01) continue; // too short
         TPlane P;
         P.SetPointDirXY(v1, Dir);
-        if ((DotProduct(vieworg, P.normal) - P.dist < 0.01) != Revert)
-        {
-          //  View origin is on the back side.
-          continue;
-        }
+        if ((DotProduct(vieworg, P.normal)-P.dist < 0.01) != Revert) continue; // view origin is on the back side
         float a1 = Range.PointToClipAngle(v2);
         float a2 = Range.PointToClipAngle(v1);
         Range.AddClipRange(a1, a2);
@@ -271,47 +235,43 @@ void VPortal::SetUpRanges(VViewClipper &Range, bool Revert)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VSkyPortal::NeedsDepthBuffer
 //
 //==========================================================================
-
-bool VSkyPortal::NeedsDepthBuffer() const
-{
+bool VSkyPortal::NeedsDepthBuffer () const {
   return false;
 }
+
 
 //==========================================================================
 //
 //  VSkyPortal::IsSky
 //
 //==========================================================================
-
-bool VSkyPortal::IsSky() const
-{
+bool VSkyPortal::IsSky () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VSkyPortal::MatchSky
 //
 //==========================================================================
-
-bool VSkyPortal::MatchSky(VSky *ASky) const
-{
-  return Level == RLev->PortalLevel + 1 && Sky == ASky;
+bool VSkyPortal::MatchSky (VSky *ASky) const {
+  return (Level == RLev->PortalLevel+1 && Sky == ASky);
 }
+
 
 //==========================================================================
 //
 //  VSkyPortal::DrawContents
 //
 //==========================================================================
-
-void VSkyPortal::DrawContents()
-{
+void VSkyPortal::DrawContents () {
   guard(VSkyPortal::DrawContents);
   vieworg = TVec(0, 0, 0);
   RLev->TransformFrustum();
@@ -323,51 +283,45 @@ void VSkyPortal::DrawContents()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VSkyBoxPortal::IsSky
 //
 //==========================================================================
-
-bool VSkyBoxPortal::IsSky() const
-{
+bool VSkyBoxPortal::IsSky () const {
   return true;
 }
+
 
 //==========================================================================
 //
 //  VSkyBoxPortal::MatchSkyBox
 //
 //==========================================================================
-
-bool VSkyBoxPortal::MatchSkyBox(VEntity *AEnt) const
-{
-  return Level == RLev->PortalLevel + 1 && Viewport == AEnt;
+bool VSkyBoxPortal::MatchSkyBox (VEntity *AEnt) const {
+  return (Level == RLev->PortalLevel+1 && Viewport == AEnt);
 }
+
 
 //==========================================================================
 //
 //  VSkyBoxPortal::DrawContents
 //
 //==========================================================================
-
-void VSkyBoxPortal::DrawContents()
-{
+void VSkyBoxPortal::DrawContents () {
   guard(VSkyBoxPortal::DrawContents);
-  //  Set view origin to be sky view origin.
+  // set view origin to be sky view origin
   RLev->ViewEnt = Viewport;
   vieworg = Viewport->Origin;
   viewangles.yaw += Viewport->Angles.yaw;
   AngleVectors(viewangles, viewforward, viewright, viewup);
 
-  //  No light flashes in the sky.
+  // no light flashes in the sky
   RLev->ExtraLight = 0;
-  if (RLev->ColourMap == CM_Default)
-  {
-    RLev->FixedLight = 0;
-  }
+  if (RLev->ColourMap == CM_Default) RLev->FixedLight = 0;
 
-  //  Reuse FixedModel flag to prevent recursion
+  // reuse FixedModel flag to prevent recursion
   Viewport->EntityFlags |= VEntity::EF_FixedModel;
 
   RLev->RenderScene(&refdef, nullptr);
@@ -376,35 +330,33 @@ void VSkyBoxPortal::DrawContents()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VSectorStackPortal::MatchSkyBox
 //
 //==========================================================================
-
-bool VSectorStackPortal::MatchSkyBox(VEntity *AEnt) const
-{
-  return Level == RLev->PortalLevel + 1 && Viewport == AEnt;
+bool VSectorStackPortal::MatchSkyBox (VEntity *AEnt) const {
+  return (Level == RLev->PortalLevel+1 && Viewport == AEnt);
 }
+
 
 //==========================================================================
 //
 //  VSectorStackPortal::DrawContents
 //
 //==========================================================================
-
-void VSectorStackPortal::DrawContents()
-{
+void VSectorStackPortal::DrawContents () {
   guard(VSectorStackPortal::DrawContents);
   VViewClipper Range;
   VPortal::SetUpRanges(Range, false);
 
   RLev->ViewEnt = Viewport;
   VEntity *Mate = Viewport->eventSkyBoxGetMate();
-  vieworg.x = vieworg.x + Viewport->Origin.x - Mate->Origin.x;
-  vieworg.y = vieworg.y + Viewport->Origin.y - Mate->Origin.y;
+  vieworg.x = vieworg.x+Viewport->Origin.x-Mate->Origin.x;
+  vieworg.y = vieworg.y+Viewport->Origin.y-Mate->Origin.y;
 
-  //  Reuse FixedModel flag to prevent recursion
+  // reuse FixedModel flag to prevent recursion
   Viewport->EntityFlags |= VEntity::EF_FixedModel;
 
   RLev->RenderScene(&refdef, &Range);
@@ -413,44 +365,40 @@ void VSectorStackPortal::DrawContents()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMirrorPortal::MatchMirror
 //
 //==========================================================================
-
-bool VMirrorPortal::MatchMirror(TPlane *APlane) const
-{
-  return Level == RLev->PortalLevel + 1 &&
-    Plane->normal == APlane->normal && Plane->dist == APlane->dist;
+bool VMirrorPortal::MatchMirror (TPlane *APlane) const {
+  return (Level == RLev->PortalLevel+1 && Plane->normal == APlane->normal && Plane->dist == APlane->dist);
 }
+
 
 //==========================================================================
 //
 //  VMirrorPortal::DrawContents
 //
 //==========================================================================
-
-void VMirrorPortal::DrawContents()
-{
+void VMirrorPortal::DrawContents () {
   guard(VMirrorPortal::DrawContents);
   RLev->ViewEnt = nullptr;
 
-  RLev->MirrorLevel++;
-  MirrorFlip = RLev->MirrorLevel & 1;
+  ++RLev->MirrorLevel;
+  MirrorFlip = RLev->MirrorLevel&1;
   MirrorClip = true;
 
-  float Dist = DotProduct(vieworg, Plane->normal) - Plane->dist;
-  vieworg -= 2 * Dist * Plane->normal;
+  float Dist = DotProduct(vieworg, Plane->normal)-Plane->dist;
+  vieworg -= 2*Dist*Plane->normal;
 
   Dist = DotProduct(viewforward, Plane->normal);
-  viewforward -= 2 * Dist * Plane->normal;
+  viewforward -= 2*Dist*Plane->normal;
   Dist = DotProduct(viewright, Plane->normal);
-  viewright -= 2 * Dist * Plane->normal;
+  viewright -= 2*Dist*Plane->normal;
   Dist = DotProduct(viewup, Plane->normal);
-  viewup -= 2 * Dist * Plane->normal;
-  VectorsAngles(viewforward, MirrorFlip ? -viewright : viewright, viewup,
-    viewangles);
+  viewup -= 2*Dist*Plane->normal;
+  VectorsAngles(viewforward, (MirrorFlip ? -viewright : viewright), viewup, viewangles);
 
   VViewClipper Range;
   SetUpRanges(Range, true);
@@ -462,23 +410,19 @@ void VMirrorPortal::DrawContents()
   view_clipplanes[4].clipflag = 0x10;
 
   int *pindex = RLev->FrustumIndexes[4];
-  for (int j = 0; j < 3; j++)
-  {
-    if (view_clipplanes[4].normal[j] < 0)
-    {
+  for (int j = 0; j < 3; ++j) {
+    if (view_clipplanes[4].normal[j] < 0) {
       pindex[j] = j;
-      pindex[j + 3] = j + 3;
-    }
-    else
-    {
-      pindex[j] = j + 3;
-      pindex[j + 3] = j;
+      pindex[j+3] = j+3;
+    } else {
+      pindex[j] = j+3;
+      pindex[j+3] = j;
     }
   }
 
   RLev->RenderScene(&refdef, &Range);
 
-  RLev->MirrorLevel--;
-  MirrorFlip = RLev->MirrorLevel & 1;
+  --RLev->MirrorLevel;
+  MirrorFlip = RLev->MirrorLevel&1;
   unguard;
 }
