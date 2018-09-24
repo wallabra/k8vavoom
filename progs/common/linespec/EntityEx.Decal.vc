@@ -33,7 +33,7 @@
 final void SpawnDecal (TVec org, name dectype, int side, line_t *li) {
   //writeln("DECAL: ", dectype);
   if (!dectype || !li || !XLevel) return; // just in case
-  if (!GetCvarB('decals_enabled')) return;
+  if (!GetCvarB('r_decals_enabled')) return;
   //XLevel.AddDecal(org, dectype, side, li);
   int lidx = XLevel.GetLineIndex(li);
   if (lidx < 0 || lidx >= XLevel.Lines.length) return;
