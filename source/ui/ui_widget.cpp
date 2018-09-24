@@ -22,222 +22,164 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "drawer.h"
 #include "ui.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_CLASS(V, Widget);
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VWidget::CreateNewWidget
 //
 //==========================================================================
-
-VWidget *VWidget::CreateNewWidget(VClass *AClass, VWidget *AParent)
-{
+VWidget *VWidget::CreateNewWidget (VClass *AClass, VWidget *AParent) {
   guard(VWidget::CreateNewWidget);
-  VWidget *W = (VWidget*)StaticSpawnObject(AClass);
+  VWidget *W = (VWidget *)StaticSpawnObject(AClass);
   W->OfsX = W->OfsY = 0;
   W->Init(AParent);
   return W;
   unguardf(("(%s)", AClass->GetName()));
 }
 
+
 //==========================================================================
 //
 //  VWidget::Init
 //
 //==========================================================================
-
-void VWidget::Init(VWidget *AParent)
-{
+void VWidget::Init (VWidget *AParent) {
   guard(VWidget::Init);
-  // Set default values
+  // set default values
   SetFont(SmallFont);
   SetTextAlign(hleft, vtop);
 
   ParentWidget = AParent;
-  if (ParentWidget)
-  {
-    ParentWidget->AddChild(this);
-  }
+  if (ParentWidget) ParentWidget->AddChild(this);
   ClipTree();
   OnCreate();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::Destroy
 //
 //==========================================================================
-
-void VWidget::Destroy()
-{
+void VWidget::Destroy () {
   guard(VWidget::Destroy);
   OnDestroy();
+  if (ParentWidget) ParentWidget->RemoveChild(this);
   DestroyAllChildren();
-  if (ParentWidget)
-  {
-    ParentWidget->RemoveChild(this);
-  }
   Super::Destroy();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::AddChild
 //
 //==========================================================================
-
-void VWidget::AddChild(VWidget *NewChild)
-{
+void VWidget::AddChild (VWidget *NewChild) {
   guard(VWidget::AddChild);
+  if (!NewChild) return;
+  if (NewChild == this) Sys_Error("VWidget::AddChild: trying to add `this` to `this`");
+  if (!NewChild->ParentWidget) Sys_Error("VWidget::AddChild: trying to adopt a child without any official papers");
+  if (NewChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to adopt an alien child");
+
   NewChild->PrevWidget = LastChildWidget;
   NewChild->NextWidget = nullptr;
-  if (LastChildWidget)
-  {
+  if (LastChildWidget) {
     LastChildWidget->NextWidget = NewChild;
-  }
-  else
-  {
+  } else {
     FirstChildWidget = NewChild;
   }
   LastChildWidget = NewChild;
   OnChildAdded(NewChild);
-  if (!CurrentFocusChild)
-  {
-    SetCurrentFocusChild(NewChild);
-  }
+  if (!CurrentFocusChild) SetCurrentFocusChild(NewChild);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::RemoveChild
 //
 //==========================================================================
-
-void VWidget::RemoveChild(VWidget *InChild)
-{
+void VWidget::RemoveChild (VWidget *InChild) {
   guard(VWidget::RemoveChild);
-  if (InChild->PrevWidget)
-  {
+  if (!InChild) return;
+  if (InChild->ParentWidget != this) Sys_Error("VWidget::AddChild: trying to orphan an alien child");
+  if (InChild->PrevWidget) {
     InChild->PrevWidget->NextWidget = InChild->NextWidget;
-  }
-  else
-  {
+  } else {
     FirstChildWidget = InChild->NextWidget;
   }
-  if (InChild->NextWidget)
-  {
+  if (InChild->NextWidget) {
     InChild->NextWidget->PrevWidget = InChild->PrevWidget;
-  }
-  else
-  {
+  } else {
     LastChildWidget = InChild->PrevWidget;
   }
   InChild->PrevWidget = nullptr;
   InChild->NextWidget = nullptr;
   InChild->ParentWidget = nullptr;
   OnChildRemoved(InChild);
-  if (CurrentFocusChild == InChild)
-  {
-    FindNewFocus();
-  }
+  if (CurrentFocusChild == InChild) FindNewFocus();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::DestroyAllChildren
 //
 //==========================================================================
-
-void VWidget::DestroyAllChildren()
-{
+void VWidget::DestroyAllChildren () {
   guard(VWidget::DestroyAllChildren);
-  while (FirstChildWidget)
-  {
-    FirstChildWidget->ConditionalDestroy();
-  }
+  while (FirstChildWidget) FirstChildWidget->ConditionalDestroy();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::GetRootWidget
 //
 //==========================================================================
-
-VRootWidget *VWidget::GetRootWidget()
-{
+VRootWidget *VWidget::GetRootWidget () {
   guard(VWidget::GetRootWidget);
   VWidget *W = this;
-  while (W->ParentWidget)
-  {
-    W = W->ParentWidget;
-  }
-  return (VRootWidget*)W;
+  while (W->ParentWidget) W = W->ParentWidget;
+  return (VRootWidget *)W;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::Lower
 //
 //==========================================================================
-
-void VWidget::Lower()
-{
+void VWidget::Lower () {
   guard(VWidget::Lower);
-  if (!ParentWidget)
-  {
-    Sys_Error("Can't lower root window");
-  }
+  if (!ParentWidget) Sys_Error("Can't lower root window");
 
-  if (ParentWidget->FirstChildWidget == this)
-  {
-    //  Already there
-    return;
-  }
+  if (ParentWidget->FirstChildWidget == this) return; // already there
 
-  //  Unlink from current location
+  // unlink from current location
   PrevWidget->NextWidget = NextWidget;
-  if (NextWidget)
-  {
+  if (NextWidget) {
     NextWidget->PrevWidget = PrevWidget;
-  }
-  else
-  {
+  } else {
     ParentWidget->LastChildWidget = PrevWidget;
   }
 
-  //  Link on bottom
+  // link on bottom
   PrevWidget = nullptr;
   NextWidget = ParentWidget->FirstChildWidget;
   ParentWidget->FirstChildWidget->PrevWidget = this;
@@ -245,38 +187,27 @@ void VWidget::Lower()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::Raise
 //
 //==========================================================================
-
-void VWidget::Raise()
-{
+void VWidget::Raise () {
   guard(VWidget::Raise);
-  if (!ParentWidget)
-  {
-    Sys_Error("Can't raise root window");
-  }
+  if (!ParentWidget) Sys_Error("Can't raise root window");
 
-  if (ParentWidget->LastChildWidget == this)
-  {
-    //  Already there
-    return;
-  }
+  if (ParentWidget->LastChildWidget == this) return; // already there
 
-  //  Unlink from current location
+  // unlink from current location
   NextWidget->PrevWidget = PrevWidget;
-  if (PrevWidget)
-  {
+  if (PrevWidget) {
     PrevWidget->NextWidget = NextWidget;
-  }
-  else
-  {
+  } else {
     ParentWidget->FirstChildWidget = NextWidget;
   }
 
-  //  Link on top
+  // link on top
   PrevWidget = ParentWidget->LastChildWidget;
   NextWidget = nullptr;
   ParentWidget->LastChildWidget->NextWidget = this;
@@ -284,133 +215,95 @@ void VWidget::Raise()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::MoveBefore
 //
 //==========================================================================
-
-void VWidget::MoveBefore(VWidget *Other)
-{
+void VWidget::MoveBefore (VWidget *Other) {
   guard(VWidget::MoveBefore);
-  if (ParentWidget != Other->ParentWidget)
-  {
-    Sys_Error("Must have the same parent widget");
-  }
-  if (Other == this)
-  {
-    Sys_Error("Can't move before self");
-  }
+  if (!Other) return;
+  if (ParentWidget != Other->ParentWidget) Sys_Error("Must have the same parent widget");
+  if (Other == this) Sys_Error("Can't move before self");
 
-  if (Other->PrevWidget == this)
-  {
-    //  Already there
-    return;
-  }
+  if (Other->PrevWidget == this) return; // already there
 
-  //  Unlink from current location
-  if (PrevWidget)
-  {
+  // unlink from current location
+  if (PrevWidget) {
     PrevWidget->NextWidget = NextWidget;
-  }
-  else
-  {
+  } else {
     ParentWidget->FirstChildWidget = NextWidget;
   }
-  if (NextWidget)
-  {
+
+  if (NextWidget) {
     NextWidget->PrevWidget = PrevWidget;
-  }
-  else
-  {
+  } else {
     ParentWidget->LastChildWidget = PrevWidget;
   }
 
-  //  Link in new position
+  // link in new position
   PrevWidget = Other->PrevWidget;
   NextWidget = Other;
   Other->PrevWidget = this;
-  if (PrevWidget)
-  {
+  if (PrevWidget) {
     PrevWidget->NextWidget = this;
-  }
-  else
-  {
+  } else {
     ParentWidget->FirstChildWidget = this;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::MoveAfter
 //
 //==========================================================================
-
-void VWidget::MoveAfter(VWidget *Other)
-{
+void VWidget::MoveAfter (VWidget *Other) {
   guard(VWidget::MoveAfter);
-  if (ParentWidget != Other->ParentWidget)
-  {
-    Sys_Error("Must have the same parent widget");
-  }
-  if (Other == this)
-  {
-    Sys_Error("Can't move after self");
-  }
+  if (!Other) return;
+  if (ParentWidget != Other->ParentWidget) Sys_Error("Must have the same parent widget");
+  if (Other == this) Sys_Error("Can't move after self");
 
-  if (Other->NextWidget == this)
-  {
-    //  Already there
-    return;
-  }
+  if (Other->NextWidget == this) return; // already there
 
-  //  Unlink from current location
-  if (PrevWidget)
-  {
+  // unlink from current location
+  if (PrevWidget) {
     PrevWidget->NextWidget = NextWidget;
-  }
-  else
-  {
+  } else {
     ParentWidget->FirstChildWidget = NextWidget;
   }
-  if (NextWidget)
-  {
+
+  if (NextWidget) {
     NextWidget->PrevWidget = PrevWidget;
-  }
-  else
-  {
+  } else {
     ParentWidget->LastChildWidget = PrevWidget;
   }
 
-  //  Link in new position
+  // link in new position
   NextWidget = Other->NextWidget;
   PrevWidget = Other;
   Other->NextWidget = this;
-  if (NextWidget)
-  {
+  if (NextWidget) {
     NextWidget->PrevWidget = this;
-  }
-  else
-  {
+  } else {
     ParentWidget->LastChildWidget = this;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::ClipTree
 //
 //==========================================================================
-
-void VWidget::ClipTree()
-{
+void VWidget::ClipTree () {
   guard(VWidget::ClipTree);
-  //  Set up clipping rectangle.
-  if (ParentWidget)
-  {
-    //  Clipping rectangle is relative to the parent widget.
+  // set up clipping rectangle
+  if (ParentWidget) {
+    // clipping rectangle is relative to the parent widget
     ClipRect.OriginX = ParentWidget->ClipRect.OriginX+ParentWidget->ClipRect.ScaleX*(PosX+ParentWidget->OfsX);
     ClipRect.OriginY = ParentWidget->ClipRect.OriginY+ParentWidget->ClipRect.ScaleY*(PosY+ParentWidget->OfsY);
     ClipRect.ScaleX = ParentWidget->ClipRect.ScaleX*SizeScaleX;
@@ -420,42 +313,35 @@ void VWidget::ClipTree()
     ClipRect.ClipX2 = ClipRect.OriginX+ClipRect.ScaleX*SizeWidth;
     ClipRect.ClipY2 = ClipRect.OriginY+ClipRect.ScaleY*SizeHeight;
 
-    //  Clip against the parent widget's clipping rectangle.
+    // clip against the parent widget's clipping rectangle
     if (ClipRect.ClipX1 < ParentWidget->ClipRect.ClipX1) ClipRect.ClipX1 = ParentWidget->ClipRect.ClipX1;
     if (ClipRect.ClipY1 < ParentWidget->ClipRect.ClipY1) ClipRect.ClipY1 = ParentWidget->ClipRect.ClipY1;
     if (ClipRect.ClipX2 > ParentWidget->ClipRect.ClipX2) ClipRect.ClipX2 = ParentWidget->ClipRect.ClipX2;
     if (ClipRect.ClipY2 > ParentWidget->ClipRect.ClipY2) ClipRect.ClipY2 = ParentWidget->ClipRect.ClipY2;
-  }
-  else
-  {
-    //  This is the root widget.
+  } else {
+    // this is the root widget
     ClipRect.OriginX = PosX;
     ClipRect.OriginY = PosY;
     ClipRect.ScaleX = SizeScaleX;
     ClipRect.ScaleY = SizeScaleY;
     ClipRect.ClipX1 = ClipRect.OriginX;
     ClipRect.ClipY1 = ClipRect.OriginY;
-    ClipRect.ClipX2 = ClipRect.OriginX + ClipRect.ScaleX * SizeWidth;
-    ClipRect.ClipY2 = ClipRect.OriginY + ClipRect.ScaleY * SizeHeight;
+    ClipRect.ClipX2 = ClipRect.OriginX+ClipRect.ScaleX*SizeWidth;
+    ClipRect.ClipY2 = ClipRect.OriginY+ClipRect.ScaleY*SizeHeight;
   }
 
-  //  Set up clipping rectangles in child widgets.
-  for (VWidget *W = FirstChildWidget; W; W = W->NextWidget)
-  {
-    W->ClipTree();
-  }
+  // set up clipping rectangles in child widgets
+  for (VWidget *W = FirstChildWidget; W; W = W->NextWidget) W->ClipTree();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::SetConfiguration
 //
 //==========================================================================
-
-void VWidget::SetConfiguration(int NewX, int NewY, int NewWidth,
-  int HewHeight, float NewScaleX, float NewScaleY)
-{
+void VWidget::SetConfiguration (int NewX, int NewY, int NewWidth, int HewHeight, float NewScaleX, float NewScaleY) {
   guard(VWidget::SetConfiguration);
   PosX = NewX;
   PosY = NewY;
@@ -469,211 +355,153 @@ void VWidget::SetConfiguration(int NewX, int NewY, int NewWidth,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::SetVisibility
 //
 //==========================================================================
-
-void VWidget::SetVisibility(bool NewVisibility)
-{
+void VWidget::SetVisibility (bool NewVisibility) {
   guard(VWidget::SetVisibility);
-  if (!!(WidgetFlags & WF_IsVisible) != NewVisibility)
-  {
-    if (NewVisibility)
-    {
+  if (!!(WidgetFlags&WF_IsVisible) != NewVisibility) {
+    if (NewVisibility) {
       WidgetFlags |= WF_IsVisible;
-      if (ParentWidget && !ParentWidget->CurrentFocusChild)
-      {
-        ParentWidget->SetCurrentFocusChild(this);
-      }
+      if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
     }
-    else
-    {
+    else {
       WidgetFlags &= ~WF_IsVisible;
-      if (ParentWidget && ParentWidget->CurrentFocusChild == this)
-      {
-        ParentWidget->FindNewFocus();
-      }
+      if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
     }
     OnVisibilityChanged(NewVisibility);
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::SetEnabled
 //
 //==========================================================================
-
-void VWidget::SetEnabled(bool NewEnabled)
-{
+void VWidget::SetEnabled (bool NewEnabled) {
   guard(VWidget::SetEnabled);
-  if (!!(WidgetFlags & WF_IsEnabled) != NewEnabled)
-  {
-    if (NewEnabled)
-    {
+  if (!!(WidgetFlags&WF_IsEnabled) != NewEnabled) {
+    if (NewEnabled) {
       WidgetFlags |= WF_IsEnabled;
-      if (ParentWidget && !ParentWidget->CurrentFocusChild)
-      {
-        ParentWidget->SetCurrentFocusChild(this);
-      }
-    }
-    else
-    {
+      if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
+    } else {
       WidgetFlags &= ~WF_IsEnabled;
-      if (ParentWidget && ParentWidget->CurrentFocusChild == this)
-      {
-        ParentWidget->FindNewFocus();
-      }
+      if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
     }
     OnEnableChanged(NewEnabled);
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::SetFocusable
 //
 //==========================================================================
-
-void VWidget::SetFocusable(bool NewFocusable)
-{
+void VWidget::SetFocusable (bool NewFocusable) {
   guard(VWidget::SetFocusable);
-  if (!!(WidgetFlags & WF_IsFocusable) != NewFocusable)
-  {
-    if (NewFocusable)
-    {
+  if (!!(WidgetFlags&WF_IsFocusable) != NewFocusable) {
+    if (NewFocusable) {
       WidgetFlags |= WF_IsFocusable;
-      if (ParentWidget && !ParentWidget->CurrentFocusChild)
-      {
-        ParentWidget->SetCurrentFocusChild(this);
-      }
-    }
-    else
-    {
+      if (ParentWidget && !ParentWidget->CurrentFocusChild) ParentWidget->SetCurrentFocusChild(this);
+    } else {
       WidgetFlags &= ~WF_IsFocusable;
-      if (ParentWidget && ParentWidget->CurrentFocusChild == this)
-      {
-        ParentWidget->FindNewFocus();
-      }
+      if (ParentWidget && ParentWidget->CurrentFocusChild == this) ParentWidget->FindNewFocus();
     }
     OnFocusableChanged(NewFocusable);
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::SetCurrentFocusChild
 //
 //==========================================================================
-
-void VWidget::SetCurrentFocusChild(VWidget *NewFocus)
-{
+void VWidget::SetCurrentFocusChild (VWidget *NewFocus) {
   guard(VWidget::SetCurrentFocusChild);
-  //  Check f it's already focused.
-  if (CurrentFocusChild == NewFocus)
+  // check f it's already focused
+  if (CurrentFocusChild == NewFocus) return;
+
+  // make sure it's visible, enabled and focusable
+  if (NewFocus &&
+      (!(NewFocus->WidgetFlags&WF_IsVisible) ||
+       !(NewFocus->WidgetFlags&WF_IsEnabled) ||
+       !(NewFocus->WidgetFlags&WF_IsFocusable)))
   {
     return;
   }
 
-  //  Make sure it's visible, enabled and focusable.
-  if (NewFocus && (!(NewFocus->WidgetFlags & WF_IsVisible) ||
-    !(NewFocus->WidgetFlags & WF_IsEnabled) ||
-    !(NewFocus->WidgetFlags & WF_IsFocusable)))
-  {
-    return;
-  }
+  // if we have a focused child, send focus lost event
+  if (CurrentFocusChild) CurrentFocusChild->OnFocusLost();
 
-  //  If we have a focused child, send focus lost event.
-  if (CurrentFocusChild)
-  {
-    CurrentFocusChild->OnFocusLost();
-  }
-
-  //  Make it the current focus.
+  // make it the current focus
   CurrentFocusChild = NewFocus;
-  if (CurrentFocusChild)
-  {
-    CurrentFocusChild->OnFocusReceived();
-  }
+  if (CurrentFocusChild) CurrentFocusChild->OnFocusReceived();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::IsFocus
 //
 //==========================================================================
-
-bool VWidget::IsFocus(bool Recurse) const
-{
+bool VWidget::IsFocus (bool Recurse) const {
   guard(VWidget::IsFocus);
-  //  Root is always focused.
-  if (!ParentWidget)
-  {
-    return true;
-  }
-  if (Recurse)
-  {
+  // root is always focused
+  if (!ParentWidget) return true;
+  if (Recurse) {
     const VWidget *W = this;
-    while (W->ParentWidget && W->ParentWidget->CurrentFocusChild == W)
-    {
-      W = W->ParentWidget;
-    }
+    while (W->ParentWidget && W->ParentWidget->CurrentFocusChild == W) W = W->ParentWidget;
     return !W->ParentWidget;
-  }
-  else
-  {
-    return ParentWidget->CurrentFocusChild == this;
+  } else {
+    return (ParentWidget->CurrentFocusChild == this);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::SetFocus
 //
 //==========================================================================
-
-void VWidget::SetFocus()
-{
+void VWidget::SetFocus () {
   guard(VWidget::SetFocus);
-  if (ParentWidget)
-  {
-    ParentWidget->SetCurrentFocusChild(this);
-  }
+  if (ParentWidget) ParentWidget->SetCurrentFocusChild(this);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::FindNewFocus
 //
 //==========================================================================
-
-void VWidget::FindNewFocus()
-{
+void VWidget::FindNewFocus () {
   guard(VWidget::FindNewFocus);
-  for (VWidget *W = CurrentFocusChild->NextWidget; W; W = W->NextWidget)
-  {
-    if ((W->WidgetFlags & WF_IsFocusable) &&
-      (W->WidgetFlags & WF_IsVisible) &&
-      (W->WidgetFlags & WF_IsEnabled))
+  for (VWidget *W = CurrentFocusChild->NextWidget; W; W = W->NextWidget) {
+    if ((W->WidgetFlags&WF_IsFocusable) &&
+        (W->WidgetFlags&WF_IsVisible) &&
+        (W->WidgetFlags&WF_IsEnabled))
     {
       SetCurrentFocusChild(W);
       return;
     }
   }
 
-  for (VWidget *W = CurrentFocusChild->PrevWidget; W; W = W->PrevWidget)
-  {
-    if ((W->WidgetFlags & WF_IsFocusable) &&
-      (W->WidgetFlags & WF_IsVisible) &&
-      (W->WidgetFlags & WF_IsEnabled))
+  for (VWidget *W = CurrentFocusChild->PrevWidget; W; W = W->PrevWidget) {
+    if ((W->WidgetFlags&WF_IsFocusable) &&
+        (W->WidgetFlags&WF_IsVisible) &&
+        (W->WidgetFlags&WF_IsEnabled))
     {
       SetCurrentFocusChild(W);
       return;
@@ -684,23 +512,18 @@ void VWidget::FindNewFocus()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::GetWidgetAt
 //
 //==========================================================================
-
-VWidget *VWidget::GetWidgetAt(float X, float Y)
-{
+VWidget *VWidget::GetWidgetAt (float X, float Y) {
   guard(VWidget::GetWidgetAt);
-  for (VWidget *W = LastChildWidget; W; W = W->PrevWidget)
-  {
-    if (!(W->WidgetFlags & WF_IsVisible))
-    {
-      continue;
-    }
+  for (VWidget *W = LastChildWidget; W; W = W->PrevWidget) {
+    if (!(W->WidgetFlags&WF_IsVisible)) continue;
     if (X >= W->ClipRect.ClipX1 && X < W->ClipRect.ClipX2 &&
-      Y >= W->ClipRect.ClipY1 && Y < W->ClipRect.ClipY2)
+        Y >= W->ClipRect.ClipY1 && Y < W->ClipRect.ClipY2)
     {
       return W->GetWidgetAt(X, Y);
     }
@@ -709,50 +532,43 @@ VWidget *VWidget::GetWidgetAt(float X, float Y)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::DrawTree
 //
 //==========================================================================
-
-void VWidget::DrawTree()
-{
+void VWidget::DrawTree () {
   guard(VWidget::DrawTree);
-  if (!(WidgetFlags & WF_IsVisible) || !ClipRect.HasArea())
-  {
-    //  Not visible or clipped away.
-    return;
-  }
+  if (GetFlags()&_OF_Destroyed) return;
+  if (!(WidgetFlags&WF_IsVisible) || !ClipRect.HasArea()) return; // not visible or clipped away
 
-  //  Main draw event for this widget.
+  // main draw event for this widget
   OnDraw();
 
-  //  Draw chid widgets.
-  for (VWidget *c = FirstChildWidget; c; c = c->NextWidget)
-  {
+  // draw chid widgets
+  for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
+    if (c->GetFlags()&_OF_Destroyed) continue;
     c->DrawTree();
   }
 
-  //  Do any drawing after child wigets have been drawn.
+  // do any drawing after child wigets have been drawn
   OnPostDraw();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::TickTree
 //
 //==========================================================================
-
-void VWidget::TickTree(float DeltaTime)
-{
+void VWidget::TickTree (float DeltaTime) {
   guard(VWidget::TickTree);
-  if (WidgetFlags & WF_TickEnabled)
-  {
-    Tick(DeltaTime);
-  }
-  for (VWidget *c = FirstChildWidget; c; c = c->NextWidget)
-  {
+  if (GetFlags()&_OF_Destroyed) return;
+  if (WidgetFlags&WF_TickEnabled) Tick(DeltaTime);
+  for (VWidget *c = FirstChildWidget; c; c = c->NextWidget) {
+    if (c->GetFlags()&_OF_Destroyed) continue;
     c->TickTree(DeltaTime);
   }
   unguard;
@@ -763,121 +579,103 @@ void VWidget::TickTree(float DeltaTime)
 //  VWidget::TransferAndClipRect
 //
 //==========================================================================
-
-bool VWidget::TransferAndClipRect(float &X1, float &Y1, float &X2, float &Y2,
+bool VWidget::TransferAndClipRect (float &X1, float &Y1, float &X2, float &Y2,
   float &S1, float &T1, float &S2, float &T2) const
 {
   guard(VWidget::TransferAndClipRect);
-  X1 = ClipRect.ScaleX * X1 + ClipRect.OriginX;
-  Y1 = ClipRect.ScaleY * Y1 + ClipRect.OriginY;
-  X2 = ClipRect.ScaleX * X2 + ClipRect.OriginX;
-  Y2 = ClipRect.ScaleY * Y2 + ClipRect.OriginY;
-  if (X1 < ClipRect.ClipX1)
-  {
-    S1 = S1 + (X1 - ClipRect.ClipX1) / (X1 - X2) * (S2 - S1);
+  X1 = ClipRect.ScaleX*X1+ClipRect.OriginX;
+  Y1 = ClipRect.ScaleY*Y1+ClipRect.OriginY;
+  X2 = ClipRect.ScaleX*X2+ClipRect.OriginX;
+  Y2 = ClipRect.ScaleY*Y2+ClipRect.OriginY;
+  if (X1 < ClipRect.ClipX1) {
+    S1 = S1+(X1-ClipRect.ClipX1)/(X1-X2)*(S2-S1);
     X1 = ClipRect.ClipX1;
   }
-  if (X2 > ClipRect.ClipX2)
-  {
-    S2 = S2 + (X2 - ClipRect.ClipX2) / (X1 - X2) * (S2 - S1);
+  if (X2 > ClipRect.ClipX2) {
+    S2 = S2+(X2-ClipRect.ClipX2)/(X1-X2)*(S2-S1);
     X2 = ClipRect.ClipX2;
   }
-  if (Y1 < ClipRect.ClipY1)
-  {
-    T1 = T1 + (Y1 - ClipRect.ClipY1) / (Y1 - Y2) * (T2 - T1);
+  if (Y1 < ClipRect.ClipY1) {
+    T1 = T1+(Y1-ClipRect.ClipY1)/(Y1-Y2)*(T2-T1);
     Y1 = ClipRect.ClipY1;
   }
-  if (Y2 > ClipRect.ClipY2)
-  {
-    T2 = T2 + (Y2 - ClipRect.ClipY2) / (Y1 - Y2) * (T2 - T1);
+  if (Y2 > ClipRect.ClipY2) {
+    T2 = T2+(Y2-ClipRect.ClipY2)/(Y1-Y2)*(T2-T1);
     Y2 = ClipRect.ClipY2;
   }
-  return X1 < X2 && Y1 < Y2;
+  return (X1 < X2 && Y1 < Y2);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::DrawPic
 //
 //==========================================================================
-
-void VWidget::DrawPic(int X, int Y, int Handle, float Alpha, int Trans)
-{
+void VWidget::DrawPic (int X, int Y, int Handle, float Alpha, int Trans) {
   guard(VWidget::DrawPic);
   DrawPic(X, Y, GTextureManager(Handle), Alpha, Trans);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::DrawPic
 //
 //==========================================================================
-
-void VWidget::DrawPic(int X, int Y, VTexture *Tex, float Alpha, int Trans)
-{
+void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
   guard(VWidget::DrawPic);
-  if (!Tex)
-  {
-    return;
-  }
+  if (!Tex) return;
 
   X -= Tex->GetScaledSOffset();
   Y -= Tex->GetScaledTOffset();
   float X1 = X;
   float Y1 = Y;
-  float X2 = X + Tex->GetScaledWidth();
-  float Y2 = Y + Tex->GetScaledHeight();
+  float X2 = X+Tex->GetScaledWidth();
+  float Y2 = Y+Tex->GetScaledHeight();
   float S1 = 0;
   float T1 = 0;
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2))
-  {
-    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex,
-      R_GetCachedTranslation(Trans, nullptr), Alpha);
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::DrawShadowedPic
 //
 //==========================================================================
-
-void VWidget::DrawShadowedPic(int X, int Y, int Handle)
-{
+void VWidget::DrawShadowedPic (int X, int Y, int Handle) {
   guard(VWidget::DrawShadowedPic);
   DrawShadowedPic(X, Y, GTextureManager(Handle));
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::DrawShadowedPic
 //
 //==========================================================================
-
-void VWidget::DrawShadowedPic(int X, int Y, VTexture *Tex)
-{
+void VWidget::DrawShadowedPic (int X, int Y, VTexture *Tex) {
   guard(VWidget::DrawShadowedPic);
-  if (!Tex)
-  {
-    return;
-  }
+  if (!Tex) return;
 
-  float X1 = X - Tex->GetScaledSOffset() + 2;
-  float Y1 = Y - Tex->GetScaledTOffset() + 2;
-  float X2 = X - Tex->GetScaledSOffset() + 2 + Tex->GetScaledWidth();
-  float Y2 = Y - Tex->GetScaledTOffset() + 2 + Tex->GetScaledHeight();
+  float X1 = X-Tex->GetScaledSOffset()+2;
+  float Y1 = Y-Tex->GetScaledTOffset()+2;
+  float X2 = X-Tex->GetScaledSOffset()+2+Tex->GetScaledWidth();
+  float Y2 = Y-Tex->GetScaledTOffset()+2+Tex->GetScaledHeight();
   float S1 = 0;
   float T1 = 0;
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2))
-  {
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
     Drawer->DrawPicShadow(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, 0.625);
   }
 
@@ -885,45 +683,42 @@ void VWidget::DrawShadowedPic(int X, int Y, VTexture *Tex)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::FillRectWithFlat
 //
 //==========================================================================
-
-void VWidget::FillRectWithFlat(int X, int Y, int Width, int Height,
-  VName Name)
-{
+void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name) {
   guard(VWidget::FillRectWithFlat);
+  if (Name == NAME_None) return;
   float X1 = X;
   float Y1 = Y;
-  float X2 = X + Width;
-  float Y2 = Y + Height;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
   float S1 = 0;
   float T1 = 0;
   float S2 = Width;
   float T2 = Height;
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2))
-  {
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
     Drawer->FillRectWithFlat(X1, Y1, X2, Y2, S1, T1, S2, T2,
-      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat,
-      true, true)));
+      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true, true)));
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::FillRect
 //
 //==========================================================================
-
-void VWidget::FillRect(int X, int Y, int Width, int Height, int color) {
+void VWidget::FillRect (int X, int Y, int Width, int Height, int color) {
   guard(VWidget::FillRect);
   float X1 = X;
   float Y1 = Y;
-  float X2 = X + Width;
-  float Y2 = Y + Height;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
   float S1 = 0;
   float T1 = 0;
   float S2 = Width;
@@ -934,337 +729,290 @@ void VWidget::FillRect(int X, int Y, int Width, int Height, int color) {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::ShadeRect
 //
 //==========================================================================
-
-void VWidget::ShadeRect(int X, int Y, int Width, int Height, float Shade)
-{
+void VWidget::ShadeRect (int X, int Y, int Width, int Height, float Shade) {
   guard(VWidget::ShadeRect);
   float X1 = X;
   float Y1 = Y;
-  float X2 = X + Width;
-  float Y2 = Y + Height;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
   float S1 = 0;
   float T1 = 0;
   float S2 = 0;
   float T2 = 0;
-  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2))
-  {
-    Drawer->ShadeRect((int)X1, (int)Y1, (int)X2 - (int)X1, (int)Y2 - (int)Y1, Shade);
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->ShadeRect((int)X1, (int)Y1, (int)X2-(int)X1, (int)Y2-(int)Y1, Shade);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::SetFont
 //
 //==========================================================================
-
-void VWidget::SetFont(VFont *AFont)
-{
+void VWidget::SetFont (VFont *AFont) {
   guard(VWidget::SetFont);
+  if (!AFont) Sys_Error("VWidget::SetFont: cannot set `nullptr` font");
   Font = AFont;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::SetFont
 //
 //==========================================================================
-
-void VWidget::SetFont(VName FontName)
-{
+void VWidget::SetFont(VName FontName) {
   guard(VWidget::SetFont);
   VFont *F = VFont::GetFont(FontName, FontName);
-  if (F)
-  {
+  if (F) {
     Font = F;
-  }
-  else
-  {
-    GCon->Logf("No such font %s", *FontName);
+  } else {
+    GCon->Logf("No such font '%s'", *FontName);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::SetTextAlign
 //
 //==========================================================================
-
-void VWidget::SetTextAlign(halign_e NewHAlign, valign_e NewVAlign)
-{
+void VWidget::SetTextAlign (halign_e NewHAlign, valign_e NewVAlign) {
   guard(VWidget::SetTextAlign);
   HAlign = NewHAlign;
   VAlign = NewVAlign;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWidget::SetTextShadow
 //
 //==========================================================================
-
-void VWidget::SetTextShadow(bool State)
-{
-  if (State)
+void VWidget::SetTextShadow (bool State) {
+  if (State) {
     WidgetFlags |= WF_TextShadowed;
-  else
+  } else {
     WidgetFlags &= ~WF_TextShadowed;
+  }
 }
+
 
 //==========================================================================
 //
 //  VWidget::DrawString
 //
 //==========================================================================
-
-void VWidget::DrawString(int x, int y, const VStr &String, int NormalColour,
-  int BoldColour, float Alpha)
-{
+void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, int BoldColour, float Alpha) {
   guard(VWidget::DrawNString);
-  if (String.IsEmpty())
-    return;
+  if (String.length() == 0) return;
 
   int cx = x;
   int cy = y;
   int Kerning = Font->GetKerning();
   int Colour = NormalColour;
 
-  if (HAlign == hcentre)
-    cx -= Font->StringWidth(String) / 2;
-  if (HAlign == hright)
-    cx -= Font->StringWidth(String);
+  if (HAlign == hcentre) cx -= Font->StringWidth(String)/2;
+  if (HAlign == hright) cx -= Font->StringWidth(String);
 
-  for (const char *SPtr = *String; *SPtr;)
-  {
+  for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::GetChar(SPtr);
 
-    //  Check for colour escape.
-    if (c == TEXT_COLOUR_ESCAPE)
-    {
+    // check for colour escape.
+    if (c == TEXT_COLOUR_ESCAPE) {
       Colour = VFont::ParseColourEscape(SPtr, NormalColour, BoldColour);
       continue;
     }
 
     int w;
     VTexture *Tex = Font->GetChar(c, &w, Colour);
-    if (Tex)
-    {
-      if (WidgetFlags & WF_TextShadowed)
-        DrawShadowedPic(cx, cy, Tex);
-      else
-        DrawPic(cx, cy, Tex, Alpha);
+    if (Tex) {
+      if (WidgetFlags&WF_TextShadowed) DrawShadowedPic(cx, cy, Tex); else DrawPic(cx, cy, Tex, Alpha);
     }
-    cx += w + Kerning;
+    cx += w+Kerning;
   }
   LastX = cx;
   LastY = cy;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::DrawText
 //
 //==========================================================================
-
-void VWidget::DrawText(int x, int y, const VStr &String, int NormalColour,
-  int BoldColour, float Alpha)
-{
+void VWidget::DrawText (int x, int y, const VStr &String, int NormalColour, int BoldColour, float Alpha) {
   guard(VWidget::DrawText);
   int start = 0;
   int cx = x;
   int cy = y;
 
-  if (VAlign == vcentre)
-    cy -= Font->TextHeight(String) / 2;
-  if (VAlign == vbottom)
-    cy -= Font->TextHeight(String);
+  if (VAlign == vcentre) cy -= Font->TextHeight(String)/2;
+  if (VAlign == vbottom) cy -= Font->TextHeight(String);
 
-  //  Need this for correct cursor position with empty strings.
+  // need this for correct cursor position with empty strings
   LastX = cx;
   LastY = cy;
 
-  for (int i = 0; i < String.Length(); i++)
-  {
-    if (String[i] == '\n')
-    {
-      VStr cs(String, start, i - start);
+  for (int i = 0; i < String.length(); ++i) {
+    if (String[i] == '\n') {
+      VStr cs(String, start, i-start);
       DrawString(cx, cy, cs, NormalColour, BoldColour, Alpha);
       cy += Font->GetHeight();
-      start = i + 1;
+      start = i+1;
     }
-    if (i == String.Length() - 1)
-    {
-      DrawString(cx, cy, VStr(String, start, String.Length() - start),
-        NormalColour, BoldColour, Alpha);
+    if (i == String.length()-1) {
+      DrawString(cx, cy, VStr(String, start, String.Length()-start), NormalColour, BoldColour, Alpha);
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VWidget::DrawCursor
 //
 //==========================================================================
-
-void VWidget::DrawCursor()
-{
+void VWidget::DrawCursor () {
   DrawCursorAt(LastX, LastY);
 }
+
 
 //==========================================================================
 //
 //  VWidget::DrawCursorAt
 //
 //==========================================================================
-
-void VWidget::DrawCursorAt(int x, int y)
-{
+void VWidget::DrawCursorAt (int x, int y) {
   guard(VWidget::DrawCursorAt);
-  if ((int)(host_time * 4) & 1)
-  {
+  if ((int)(host_time*4)&1) {
     int w;
     DrawPic(x, y, Font->GetChar('_', &w, CR_UNTRANSLATED));
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Natives
 //
 //==========================================================================
-
-IMPLEMENT_FUNCTION(VWidget, NewChild)
-{
+IMPLEMENT_FUNCTION(VWidget, NewChild) {
   P_GET_PTR(VClass, ChildClass);
   P_GET_SELF;
   RET_REF(CreateNewWidget(ChildClass, Self));
 }
 
-IMPLEMENT_FUNCTION(VWidget, Destroy)
-{
+IMPLEMENT_FUNCTION(VWidget, Destroy) {
   P_GET_SELF;
   delete Self;
   Self = nullptr;
 }
 
-IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren)
-{
+IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren) {
   P_GET_SELF;
   Self->DestroyAllChildren();
 }
 
-IMPLEMENT_FUNCTION(VWidget, GetRootWidget)
-{
+IMPLEMENT_FUNCTION(VWidget, GetRootWidget) {
   P_GET_SELF;
   RET_REF(Self->GetRootWidget());
 }
 
-IMPLEMENT_FUNCTION(VWidget, Lower)
-{
+IMPLEMENT_FUNCTION(VWidget, Lower) {
   P_GET_SELF;
   Self->Lower();
 }
 
-IMPLEMENT_FUNCTION(VWidget, Raise)
-{
+IMPLEMENT_FUNCTION(VWidget, Raise) {
   P_GET_SELF;
   Self->Raise();
 }
 
-IMPLEMENT_FUNCTION(VWidget, MoveBefore)
-{
+IMPLEMENT_FUNCTION(VWidget, MoveBefore) {
   P_GET_REF(VWidget, Other);
   P_GET_SELF;
   Self->MoveBefore(Other);
 }
 
-IMPLEMENT_FUNCTION(VWidget, MoveAfter)
-{
+IMPLEMENT_FUNCTION(VWidget, MoveAfter) {
   P_GET_REF(VWidget, Other);
   P_GET_SELF;
   Self->MoveAfter(Other);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetPos)
-{
+IMPLEMENT_FUNCTION(VWidget, SetPos) {
   P_GET_INT(NewY);
   P_GET_INT(NewX);
   P_GET_SELF;
   Self->SetPos(NewX, NewY);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetX)
-{
+IMPLEMENT_FUNCTION(VWidget, SetX) {
   P_GET_INT(NewX);
   P_GET_SELF;
   Self->SetX(NewX);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetY)
-{
+IMPLEMENT_FUNCTION(VWidget, SetY) {
   P_GET_INT(NewY);
   P_GET_SELF;
   Self->SetY(NewY);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetOfsX)
-{
+IMPLEMENT_FUNCTION(VWidget, SetOfsX) {
   P_GET_INT(NewX);
   P_GET_SELF;
   Self->SetOfsX(NewX);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetOfsY)
-{
+IMPLEMENT_FUNCTION(VWidget, SetOfsY) {
   P_GET_INT(NewY);
   P_GET_SELF;
   Self->SetOfsY(NewY);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetSize)
-{
+IMPLEMENT_FUNCTION(VWidget, SetSize) {
   P_GET_INT(NewHeight);
   P_GET_INT(NewWidth);
   P_GET_SELF;
   Self->SetSize(NewWidth, NewHeight);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetWidth)
-{
+IMPLEMENT_FUNCTION(VWidget, SetWidth) {
   P_GET_INT(NewWidth);
   P_GET_SELF;
   Self->SetWidth(NewWidth);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetHeight)
-{
+IMPLEMENT_FUNCTION(VWidget, SetHeight) {
   P_GET_INT(NewHeight);
   P_GET_SELF;
   Self->SetHeight(NewHeight);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetScale)
-{
+IMPLEMENT_FUNCTION(VWidget, SetScale) {
   P_GET_FLOAT(NewScaleY);
   P_GET_FLOAT(NewScaleX);
   P_GET_SELF;
   Self->SetScale(NewScaleX, NewScaleY);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetConfiguration)
-{
+IMPLEMENT_FUNCTION(VWidget, SetConfiguration) {
   P_GET_FLOAT_OPT(NewScaleY, 1.0);
   P_GET_FLOAT_OPT(NewScaleX, 1.0);
   P_GET_INT(NewHeight);
@@ -1272,103 +1020,87 @@ IMPLEMENT_FUNCTION(VWidget, SetConfiguration)
   P_GET_INT(NewY);
   P_GET_INT(NewX);
   P_GET_SELF;
-  Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX,
-    NewScaleY);
+  Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetVisibility)
-{
+IMPLEMENT_FUNCTION(VWidget, SetVisibility) {
   P_GET_BOOL(bNewVisibility);
   P_GET_SELF;
   Self->SetVisibility(bNewVisibility);
 }
 
-IMPLEMENT_FUNCTION(VWidget, Show)
-{
+IMPLEMENT_FUNCTION(VWidget, Show) {
   P_GET_SELF;
   Self->Show();
 }
 
-IMPLEMENT_FUNCTION(VWidget, Hide)
-{
+IMPLEMENT_FUNCTION(VWidget, Hide) {
   P_GET_SELF;
   Self->Hide();
 }
 
-IMPLEMENT_FUNCTION(VWidget, IsVisible)
-{
+IMPLEMENT_FUNCTION(VWidget, IsVisible) {
   P_GET_BOOL_OPT(Recurse, true);
   P_GET_SELF;
   RET_BOOL(Self->IsVisible(Recurse));
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetEnabled)
-{
+IMPLEMENT_FUNCTION(VWidget, SetEnabled) {
   P_GET_BOOL(bNewEnabled);
   P_GET_SELF;
   Self->SetEnabled(bNewEnabled);
 }
 
-IMPLEMENT_FUNCTION(VWidget, Enable)
-{
+IMPLEMENT_FUNCTION(VWidget, Enable) {
   P_GET_SELF;
   Self->Enable();
 }
 
-IMPLEMENT_FUNCTION(VWidget, Disable)
-{
+IMPLEMENT_FUNCTION(VWidget, Disable) {
   P_GET_SELF;
   Self->Disable();
 }
 
-IMPLEMENT_FUNCTION(VWidget, IsEnabled)
-{
+IMPLEMENT_FUNCTION(VWidget, IsEnabled) {
   P_GET_BOOL_OPT(Recurse, true);
   P_GET_SELF;
   RET_BOOL(Self->IsEnabled(Recurse));
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetFocusable)
-{
+IMPLEMENT_FUNCTION(VWidget, SetFocusable) {
   P_GET_BOOL(bNewFocusable);
   P_GET_SELF;
   Self->SetFocusable(bNewFocusable);
 }
 
-IMPLEMENT_FUNCTION(VWidget, IsFocusable)
-{
+IMPLEMENT_FUNCTION(VWidget, IsFocusable) {
   P_GET_SELF;
   RET_BOOL(Self->IsFocusable());
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetCurrentFocusChild)
-{
+IMPLEMENT_FUNCTION(VWidget, SetCurrentFocusChild) {
   P_GET_REF(VWidget, NewFocus);
   P_GET_SELF;
   Self->SetCurrentFocusChild(NewFocus);
 }
 
-IMPLEMENT_FUNCTION(VWidget, GetCurrentFocus)
-{
+IMPLEMENT_FUNCTION(VWidget, GetCurrentFocus) {
   P_GET_SELF;
   RET_REF(Self->GetCurrentFocus());
 }
 
-IMPLEMENT_FUNCTION(VWidget, IsFocus)
-{
+IMPLEMENT_FUNCTION(VWidget, IsFocus) {
   P_GET_BOOL_OPT(Recurse, true);
   P_GET_SELF;
   RET_BOOL(Self->IsFocus(Recurse));
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetFocus)
-{
+IMPLEMENT_FUNCTION(VWidget, SetFocus) {
   P_GET_SELF;
   Self->SetFocus();
 }
 
-IMPLEMENT_FUNCTION(VWidget, DrawPic)
-{
+IMPLEMENT_FUNCTION(VWidget, DrawPic) {
   P_GET_INT_OPT(Translation, 0);
   P_GET_FLOAT_OPT(Alpha, 1.0);
   P_GET_INT(Handle);
@@ -1378,8 +1110,7 @@ IMPLEMENT_FUNCTION(VWidget, DrawPic)
   Self->DrawPic(X, Y, Handle, Alpha, Translation);
 }
 
-IMPLEMENT_FUNCTION(VWidget, DrawShadowedPic)
-{
+IMPLEMENT_FUNCTION(VWidget, DrawShadowedPic) {
   P_GET_INT(Handle);
   P_GET_INT(Y);
   P_GET_INT(X);
@@ -1387,8 +1118,7 @@ IMPLEMENT_FUNCTION(VWidget, DrawShadowedPic)
   Self->DrawShadowedPic(X, Y, Handle);
 }
 
-IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat)
-{
+IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat) {
   P_GET_NAME(Name);
   P_GET_INT(Height);
   P_GET_INT(Width);
@@ -1398,8 +1128,7 @@ IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat)
   Self->FillRectWithFlat(X, Y, Width, Height, Name);
 }
 
-IMPLEMENT_FUNCTION(VWidget, FillRect)
-{
+IMPLEMENT_FUNCTION(VWidget, FillRect) {
   P_GET_INT(color);
   P_GET_INT(Height);
   P_GET_INT(Width);
@@ -1409,8 +1138,7 @@ IMPLEMENT_FUNCTION(VWidget, FillRect)
   Self->FillRect(X, Y, Width, Height, color);
 }
 
-IMPLEMENT_FUNCTION(VWidget, ShadeRect)
-{
+IMPLEMENT_FUNCTION(VWidget, ShadeRect) {
   P_GET_FLOAT(Shade);
   P_GET_INT(Height);
   P_GET_INT(Width);
@@ -1420,44 +1148,38 @@ IMPLEMENT_FUNCTION(VWidget, ShadeRect)
   Self->ShadeRect(X, Y, Width, Height, Shade);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetFont)
-{
+IMPLEMENT_FUNCTION(VWidget, SetFont) {
   P_GET_NAME(FontName);
   P_GET_SELF;
   Self->SetFont(FontName);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetTextAlign)
-{
+IMPLEMENT_FUNCTION(VWidget, SetTextAlign) {
   P_GET_INT(valign);
   P_GET_INT(halign);
   P_GET_SELF;
   Self->SetTextAlign((halign_e)halign, (valign_e)valign);
 }
 
-IMPLEMENT_FUNCTION(VWidget, SetTextShadow)
-{
+IMPLEMENT_FUNCTION(VWidget, SetTextShadow) {
   P_GET_BOOL(State);
   P_GET_SELF;
   Self->SetTextShadow(State);
 }
 
-IMPLEMENT_FUNCTION(VWidget, TextWidth)
-{
+IMPLEMENT_FUNCTION(VWidget, TextWidth) {
   P_GET_STR(text);
   P_GET_SELF;
   RET_INT(Self->Font->TextWidth(text));
 }
 
-IMPLEMENT_FUNCTION(VWidget, TextHeight)
-{
+IMPLEMENT_FUNCTION(VWidget, TextHeight) {
   P_GET_STR(text);
   P_GET_SELF;
   RET_INT(Self->Font->TextHeight(text));
 }
 
-IMPLEMENT_FUNCTION(VWidget, SplitText)
-{
+IMPLEMENT_FUNCTION(VWidget, SplitText) {
   P_GET_INT(MaxWidth);
   P_GET_PTR(TArray<VSplitLine>, Lines);
   P_GET_STR(Text);
@@ -1465,16 +1187,14 @@ IMPLEMENT_FUNCTION(VWidget, SplitText)
   RET_INT(Self->Font->SplitText(Text, *Lines, MaxWidth));
 }
 
-IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines)
-{
+IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines) {
   P_GET_INT(MaxWidth);
   P_GET_STR(Text);
   P_GET_SELF;
   RET_STR(Self->Font->SplitTextWithNewlines(Text, MaxWidth));
 }
 
-IMPLEMENT_FUNCTION(VWidget, DrawText)
-{
+IMPLEMENT_FUNCTION(VWidget, DrawText) {
   P_GET_FLOAT_OPT(Alpha, 1.0);
   P_GET_INT_OPT(BoldColour, CR_UNTRANSLATED);
   P_GET_INT_OPT(Colour, CR_UNTRANSLATED);
@@ -1485,21 +1205,18 @@ IMPLEMENT_FUNCTION(VWidget, DrawText)
   Self->DrawText(X, Y, String, Colour, BoldColour, Alpha);
 }
 
-IMPLEMENT_FUNCTION(VWidget, DrawCursor)
-{
+IMPLEMENT_FUNCTION(VWidget, DrawCursor) {
   P_GET_SELF;
   Self->DrawCursor();
 }
 
-IMPLEMENT_FUNCTION(VWidget, FindTextColour)
-{
+IMPLEMENT_FUNCTION(VWidget, FindTextColour) {
   P_GET_STR(Name);
   RET_INT(VFont::FindTextColour(*Name.ToLower()));
 }
 
 
-IMPLEMENT_FUNCTION(VWidget, TranslateXY)
-{
+IMPLEMENT_FUNCTION(VWidget, TranslateXY) {
   P_GET_PTR(float, py);
   P_GET_PTR(float, px);
   P_GET_SELF;

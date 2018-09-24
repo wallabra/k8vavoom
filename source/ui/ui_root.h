@@ -22,41 +22,38 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class VRootWidget : public VWidget
-{
+class VRootWidget : public VWidget {
   DECLARE_CLASS(VRootWidget, VWidget, 0)
 
 private:
-  enum
-  {
-    //  True if mouse cursor is currently enabled.
-    RWF_MouseEnabled    = 0x0001,
+  enum {
+    // true if mouse cursor is currently enabled
+    RWF_MouseEnabled = 0x0001,
   };
-  vuint32       RootFlags;
+  vuint32 RootFlags;
 
-  //  Current mouse cursor position.
-  int         MouseX;
-  int         MouseY;
+  // current mouse cursor position
+  int MouseX;
+  int MouseY;
 
-  //  Current mouse cursor graphic.
-  int         MouseCursorPic;
+  // current mouse cursor graphic
+  int MouseCursorPic;
 
-  void MouseMoveEvent(int, int);
-  bool MouseButtonEvent(int, bool);
+  void MouseMoveEvent (int, int);
+  bool MouseButtonEvent (int, bool);
 
 public:
-  VRootWidget();
-  void Init();
-  virtual void Init(VWidget*) override { Sys_Error("Root canot have a parent"); }
+  VRootWidget ();
+  void Init ();
+  virtual void Init (VWidget*) override { Sys_Error("Root canot have a parent"); }
 
-  void DrawWidgets();
-  void TickWidgets(float DeltaTime);
-  bool Responder(event_t *Event);
+  void DrawWidgets ();
+  void TickWidgets (float DeltaTime);
+  bool Responder (event_t *Event);
 
-  void SetMouse(bool MouseOn);
+  void SetMouse (bool MouseOn);
 
-  static void StaticInit();
+  static void StaticInit ();
 
   DECLARE_FUNCTION(SetMouse)
 };
