@@ -180,7 +180,8 @@ VSoundManager::~VSoundManager()
   {
     if (SeqInfo[i].Data)
     {
-      delete[] SeqInfo[i].Data;
+      //delete[] SeqInfo[i].Data;
+      Z_Free(SeqInfo[i].Data);
       SeqInfo[i].Data = nullptr;
     }
   }
@@ -1195,9 +1196,10 @@ void VSoundManager::ParseSequenceScript(VScriptParser *sc)
       {
         TempData[1] = (TempData.Num() - 2) / 2;
         TempData.Append(SSCMD_End);
-        SeqInfo[SeqId].Data = new vint32[TempData.Num()];
-        memcpy(SeqInfo[SeqId].Data, TempData.Ptr(), TempData.Num() *
-          sizeof(vint32));
+        int tmplen = TempData.length()*4;
+        SeqInfo[SeqId].Data = (vint32 *)Z_Malloc(tmplen);
+        memset(SeqInfo[SeqId].Data, 0, tmplen);
+        if (TempData.length()) memcpy(SeqInfo[SeqId].Data, TempData.Ptr(), TempData.Num()*sizeof(vint32));
         inSequence = false;
         sc->SetCMode(false);
       }
@@ -1352,9 +1354,11 @@ void VSoundManager::ParseSequenceScript(VScriptParser *sc)
     {
       //  end
       TempData.Append(SSCMD_End);
-      SeqInfo[SeqId].Data = new vint32[TempData.Num()];
-      memcpy(SeqInfo[SeqId].Data, TempData.Ptr(), TempData.Num() *
-        sizeof(vint32));
+      //SeqInfo[SeqId].Data = new vint32[TempData.Num()];
+      int tmplen = TempData.length()*4;
+      SeqInfo[SeqId].Data = (vint32 *)Z_Malloc(tmplen);
+      memset(SeqInfo[SeqId].Data, 0, tmplen);
+      if (TempData.length()) memcpy(SeqInfo[SeqId].Data, TempData.Ptr(), TempData.Num()*sizeof(vint32));
       inSequence = false;
     }
     else
