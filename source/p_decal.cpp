@@ -30,7 +30,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VCvarB decals_enabled("decals_enabled", true, "Enable decal spawning, processing and rendering?", CVAR_Archive);
+VCvarB r_decals_enabled("r_decals_enabled", true, "Enable decal spawning, processing and rendering?", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

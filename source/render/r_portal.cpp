@@ -44,6 +44,8 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern VCvarB r_decals_enabled;
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

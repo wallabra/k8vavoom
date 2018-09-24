@@ -31,14 +31,14 @@
 
 //#define VAVOOM_DECALS_DEBUG
 
-extern VCvarB decals_enabled;
+extern VCvarB r_decals_enabled;
 
 IMPLEMENT_CLASS(V, Level);
 
 VLevel *GLevel;
 VLevel *GClLevel;
 
-static VCvarI decal_onetype_max("decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment", CVAR_Archive);
+static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment", CVAR_Archive);
 
 
 //==========================================================================
@@ -1091,7 +1091,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
 #ifdef VAVOOM_DECALS_DEBUG
       fprintf(stderr, "  ** found seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
 #endif
-      int dcmaxcount = decal_onetype_max;
+      int dcmaxcount = r_decal_onetype_max;
            if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
       else if (tinf.width >= 64 || tinf.height >= 64) dcmaxcount = 16;
       else if (tinf.width >= 32 || tinf.height >= 32) dcmaxcount = 32;
@@ -1412,7 +1412,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level) {
   guard(VLevel::AddDecal);
 
-  if (!decals_enabled) return;
+  if (!r_decals_enabled) return;
   if (!li || dectype == NAME_None) return; // just in case
 
   sector_t *sec = (side ? li->backsector : li->frontsector);

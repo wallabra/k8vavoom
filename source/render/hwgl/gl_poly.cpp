@@ -25,7 +25,7 @@
 #include "gl_local.h"
 #include "render/r_local.h"
 
-extern VCvarB decals_enabled;
+extern VCvarB r_decals_enabled;
 extern VCvarI r_ambient;
 extern VCvarB r_allow_ambient;
 
@@ -81,8 +81,10 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
     // clear stencil buffer, as other stages may expect it cleared
     // this is not strictly necessary, but 'cmon, be polite!
     // later fix: 'cmon, it is not necessary at all!
+    // later fix: it is necessary for stenciled portals; clear stencil buffer there
     //glClear(GL_STENCIL_BUFFER_BIT);
   }
+  //glDisable(GL_STENCIL_TEST);
 }
 
 
@@ -92,7 +94,7 @@ void VOpenGLDrawer::RenderShaderDecalsEnd () {
 //
 //==========================================================================
 void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
-  if (!decals_enabled) return;
+  if (!r_decals_enabled) return;
 
   if (!surf->dcseg || !surf->dcseg->decals) return; // nothing to do
 
@@ -112,7 +114,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
 //
 //==========================================================================
 bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache) {
-  if (!decals_enabled) return false;
+  if (!r_decals_enabled) return false;
 
   if (!surf->dcseg || !surf->dcseg->decals) return false; // nothing to do
 
