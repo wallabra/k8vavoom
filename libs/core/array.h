@@ -54,7 +54,7 @@ public:
 
   inline void Clear () { clear(); }
 
-  void clear () {
+  inline void clear () {
     if (ArrData) {
       Flatten(); // just in case
       for (int i = 0; i < ArrSize; ++i) ArrData[i].~T();
@@ -62,6 +62,13 @@ public:
     }
     ArrData = nullptr;
     ArrNum = ArrSize = 0;
+  }
+
+  // don't free array data
+  inline void reset () {
+    Flatten(); // just in case
+    for (int f = 0; f < ArrNum; ++f) ArrData[f].~T();
+    ArrNum = 0;
   }
 
   inline int Num () const { return ArrNum; }
