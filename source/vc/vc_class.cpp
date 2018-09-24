@@ -1622,7 +1622,9 @@ void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
 //==========================================================================
 void VClass::CleanObject (VObject *Obj) {
   guard(VClass::CleanObject);
-  for (VField *F = ReferenceFields; F; F = F->NextReference) VField::CleanField((vuint8 *)Obj+F->Ofs, F->Type);
+  if (Obj) {
+    for (VField *F = ReferenceFields; F; F = F->NextReference) VField::CleanField((vuint8 *)Obj+F->Ofs, F->Type);
+  }
   unguardf(("(%s)", GetName()));
 }
 
@@ -1634,7 +1636,9 @@ void VClass::CleanObject (VObject *Obj) {
 //==========================================================================
 void VClass::DestructObject (VObject *Obj) {
   guard(VClass::DestructObject);
-  for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField((vuint8 *)Obj+F->Ofs, F->Type);
+  if (Obj) {
+    for (VField *F = DestructorFields; F; F = F->DestructorLink) VField::DestructField((vuint8 *)Obj+F->Ofs, F->Type);
+  }
   unguardf(("(%s)", GetName()));
 }
 
