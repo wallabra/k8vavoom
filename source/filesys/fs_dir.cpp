@@ -131,9 +131,10 @@ bool VFilesDir::FileExists (const VStr &Name) {
 //==========================================================================
 VStream *VFilesDir::OpenFileRead (const VStr &Name) {
   guard(FL_OpenFileRead);
-  int fidx = findFileCI(Name);
+  VStr storedName = Name;
+  int fidx = findFileCI(storedName);
   if (fidx == -1) return nullptr;
-  VStr tmpName = path+"/"+Name;
+  VStr tmpName = path+"/"+storedName;
   FILE *File = fopen(*tmpName, "rb");
   if (!File) return nullptr;
   return new VStreamFileReader(File, GCon, tmpName);

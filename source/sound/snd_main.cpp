@@ -638,12 +638,11 @@ void VAudio::AddSeqChoice(int OriginId, VName Name)
 void VAudio::StopSequence(int origin_id)
 {
   guard(VAudio::StopSequence);
-  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
-  {
-    if (node->OriginId == origin_id)
-    {
-      delete node;
-    }
+  VSoundSeqNode *node = SequenceListHead;
+  while (node) {
+    VSoundSeqNode *next = node->Next;
+    if (node->OriginId == origin_id) delete node; // this should exclude node from list
+    node = next;
   }
   unguard;
 }
