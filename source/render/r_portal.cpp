@@ -138,9 +138,12 @@ bool VPortal::MatchMirror(TPlane*) const
 void VPortal::Draw(bool UseStencil)
 {
   guard(VPortal::Draw);
-  if (!Drawer->StartPortal(this, UseStencil))
-  {
-    //  All portal polygons are clipped away.
+  bool oldDecalsEnabled = r_decals_enabled;
+  if (UseStencil) r_decals_enabled = false;
+
+  if (!Drawer->StartPortal(this, UseStencil)) {
+    // all portal polygons are clipped away
+    if (UseStencil) r_decals_enabled = oldDecalsEnabled;
     return;
   }
 
@@ -197,6 +200,7 @@ void VPortal::Draw(bool UseStencil)
   Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
+  if (UseStencil) r_decals_enabled = oldDecalsEnabled;
 
   Z_Free(TransSprites);
   unguard;
