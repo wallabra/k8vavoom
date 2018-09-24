@@ -127,6 +127,7 @@ void* safe_malloc(size_t count)
 {
 	void* p;
 
+	if (count == 0) count = 8; else count += 8; //k8: easier than fix crap everywhere
 	if ((p = malloc(count)))
 	{
 		return p;
