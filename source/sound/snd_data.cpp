@@ -902,7 +902,13 @@ int VSoundManager::GetSoundID(const char *name)
     }
   }
 
-  GCon->Logf("WARNING! Can't find sound named %s", name);
+  static TMap<VName, bool> reportMap;
+  VName sname = VName(name);
+  if (!reportMap.has(sname)) {
+    reportMap.put(sname, true);
+    GCon->Logf("WARNING! Can't find sound named '%s'", name);
+  }
+
   return 0;
   unguard;
 }
