@@ -29,54 +29,42 @@
 //**************************************************************************
 //#define RADVLIGHT_GRID_OPTIMIZER
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 
-// MACROS ------------------------------------------------------------------
+//#define VAVOOM_DEBUG_PORTAL_POOL
 
-// TYPES -------------------------------------------------------------------
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+void R_FreeSkyboxData ();
 
-void R_FreeSkyboxData();
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+int screenblocks = 0;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+TVec vieworg;
+TVec viewforward;
+TVec viewright;
+TVec viewup;
+TAVec viewangles;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+TClipPlane view_clipplanes[5];
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+int r_visframecount;
 
-int           screenblocks = 0;
+VCvarI r_fog("r_fog", "0", "Fog mode (0:GL_LINEAR; 1:GL_LINEAR; 2:GL_EXP; 3:GL_EXP2; add 4 to get \"nicer\" fog).");
+VCvarB r_fog_test("r_fog_test", false, "Is fog testing enabled?");
+VCvarF r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
+VCvarF r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
+VCvarF r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
+VCvarF r_fog_start("r_fog_start", "1.0", "Fog start distance.");
+VCvarF r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
+VCvarF r_fog_density("r_fog_density", "0.5", "Fog density.");
 
-TVec          vieworg;
-TVec          viewforward;
-TVec          viewright;
-TVec          viewup;
-TAVec         viewangles;
-
-TClipPlane        view_clipplanes[5];
-
-int           r_visframecount;
-
-VCvarI          r_fog("r_fog", "0", "Fog mode (0:GL_LINEAR; 1:GL_LINEAR; 2:GL_EXP; 3:GL_EXP2; add 4 to get \"nicer\" fog).");
-VCvarB          r_fog_test("r_fog_test", false, "Is fog testing enabled?");
-VCvarF          r_fog_r("r_fog_r", "0.5", "Fog color: red component.");
-VCvarF          r_fog_g("r_fog_g", "0.5", "Fog color: green component.");
-VCvarF          r_fog_b("r_fog_b", "0.5", "Fog color: blue component.");
-VCvarF          r_fog_start("r_fog_start", "1.0", "Fog start distance.");
-VCvarF          r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
-VCvarF          r_fog_density("r_fog_density", "0.5", "Fog density.");
-
-VCvarI          aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
-VCvarB          r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
-VCvarB          r_vsync("r_vsync", false, "VSync mode.", CVAR_Archive);
-VCvarB          r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
-VCvarF          r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
-VCvarF          r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
+VCvarI aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
+VCvarB r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
+VCvarB r_vsync("r_vsync", false, "VSync mode.", CVAR_Archive);
+VCvarB r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
+VCvarF r_fade_factor("r_fade_factor", "4.0", "Fade actor lights?", CVAR_Archive);
+VCvarF r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor.", CVAR_Archive);
 
 static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
 
@@ -86,26 +74,25 @@ extern VCvarI r_hashlight_static_div;
 extern VCvarI r_hashlight_dynamic_div;
 extern VCvarB r_dynamic_clip_more;
 
-VDrawer         *Drawer;
+VDrawer *Drawer;
 
-refdef_t        refdef;
+refdef_t refdef;
 
-float         PixelAspect;
+float PixelAspect;
 
-bool          MirrorFlip;
-bool          MirrorClip;
+bool MirrorFlip = false;
+bool MirrorClip = false;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FDrawerDesc    *DrawerList[DRAWER_MAX];
+static FDrawerDesc *DrawerList[DRAWER_MAX];
 
-VCvarI          screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
-bool          set_resolutioon_needed = true;
+VCvarI screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
+bool set_resolutioon_needed = true;
 
-// Angles in the SCREENWIDTH wide window.
-VCvarF          fov("fov", "90", "Field of vision.");
+// angles in the SCREENWIDTH wide window
+VCvarF fov("fov", "90", "Field of vision.");
 
-TVec          clip_base[4];
+TVec clip_base[4];
 
 //
 //  Translation tables
@@ -114,11 +101,207 @@ VTextureTranslation *PlayerTranslations[MAXPLAYERS + 1];
 static TArray<VTextureTranslation*> CachedTranslations;
 
 // if true, load all graphics at start
-VCvarB          precache("precache", true, "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
+VCvarB precache("precache", true, "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
 
-static VCvarI     r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
+static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
 
-// CODE --------------------------------------------------------------------
+
+// ////////////////////////////////////////////////////////////////////////// //
+// pool allocator for portal data
+// ////////////////////////////////////////////////////////////////////////// //
+VRenderLevelShared::PPNode *VRenderLevelShared::pphead = nullptr;
+VRenderLevelShared::PPNode *VRenderLevelShared::ppcurr = nullptr;
+int VRenderLevelShared::ppMinNodeSize = 0;
+
+/*
+static PPMark {
+  PPNode *curr;
+  int currused;
+};
+*/
+/*
+  struct PPNode {
+    vuint8 *mem;
+    int size;
+    int used;
+    PPNode *next;
+  };
+*/
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::SetMinPoolNodeSize
+//
+//==========================================================================
+void VRenderLevelShared::SetMinPoolNodeSize (int minsz) {
+  if (minsz < 0) minsz = 0;
+  minsz = (minsz|0xfff)+1;
+  if (ppMinNodeSize < minsz) {
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+    fprintf(stderr, "PORTALPOOL: new min node size is %d\n", minsz);
+#endif
+    ppMinNodeSize = minsz;
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CreatePortalPool
+//
+//==========================================================================
+void VRenderLevelShared::CreatePortalPool () {
+  KillPortalPool();
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+  fprintf(stderr, "PORTALPOOL: new\n");
+#endif
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::KillPortalPool
+//
+//==========================================================================
+void VRenderLevelShared::KillPortalPool () {
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+  int count = 0, total = 0;
+#endif
+  while (pphead) {
+    PPNode *n = pphead;
+    pphead = n->next;
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+    ++count;
+    total += n->size;
+#endif
+    free(n->mem);
+    free(n);
+  }
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+  if (count) fprintf(stderr, "PORTALPOOL: freed %d nodes (%d total bytes)\n", count, total);
+#endif
+  pphead = ppcurr = nullptr;
+  ppMinNodeSize = 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ResetPortalPool
+//
+//  called on frame start
+//
+//==========================================================================
+void VRenderLevelShared::ResetPortalPool () {
+  ppcurr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::MarkPortalPool
+//
+//==========================================================================
+void VRenderLevelShared::MarkPortalPool (PPMark *mark) {
+  if (!mark) return;
+  mark->curr = ppcurr;
+  mark->currused = (ppcurr ? ppcurr->used : 0);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RestorePortalPool
+//
+//==========================================================================
+void VRenderLevelShared::RestorePortalPool (PPMark *mark) {
+  if (!mark || mark->currused == -666) return;
+  ppcurr = mark->curr;
+  if (ppcurr) ppcurr->used = mark->currused;
+  mark->currused = -666; // just in case
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::AllocPortalPool
+//
+//==========================================================================
+vuint8 *VRenderLevelShared::AllocPortalPool (int size) {
+  if (size < 1) size = 1;
+  int reqsz = size;
+  if (reqsz%16 != 0) reqsz = (reqsz|0x0f)+1;
+  int allocsz = (reqsz|0xfff)+1;
+       if (allocsz < ppMinNodeSize) allocsz = ppMinNodeSize;
+  else if (allocsz > ppMinNodeSize) ppMinNodeSize = allocsz;
+  // was anything allocated?
+  if (ppcurr == nullptr && pphead && pphead->size < allocsz) {
+    // cannot use first node, free pool (it will be recreated later)
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+    fprintf(stderr, "PORTALPOOL: freeing allocated nodes (old size is %d, minsize is %d)\n", pphead->size, allocsz);
+#endif
+    while (pphead) {
+      PPNode *n = pphead;
+      pphead = n->next;
+      free(n->mem);
+      free(n);
+    }
+  }
+  // no nodes at all?
+  if (pphead == nullptr) {
+    if (ppcurr != nullptr) Sys_Error("PortalPool: ppcur is not empty");
+    // allocate first node
+    pphead = (PPNode *)malloc(sizeof(PPNode));
+    pphead->mem = (vuint8 *)malloc(allocsz);
+    pphead->size = allocsz;
+    pphead->used = 0;
+    pphead->next = nullptr;
+  }
+  // was anything allocated?
+  if (ppcurr == nullptr) {
+    // nope, we should have a good first node here
+    if (!pphead) Sys_Error("PortalPool: pphead is empty");
+    if (pphead->size < reqsz) Sys_Error("PortalPool: pphead is too small");
+    ppcurr = pphead;
+    ppcurr->used = 0;
+  }
+  // check for easy case
+  if (ppcurr->used+reqsz <= ppcurr->size) {
+    vuint8 *res = ppcurr->mem+ppcurr->used;
+    ppcurr->used += reqsz;
+    return res;
+  }
+  // check if we have enough room in the next pool node
+  if (ppcurr->next && reqsz <= ppcurr->next->size) {
+    // yes; move to the next node, and use it
+    ppcurr = ppcurr->next;
+    ppcurr->used = reqsz;
+    return ppcurr->mem;
+  }
+  // next node is absent or too small: kill "rest" nodes
+  if (ppcurr->next) {
+#ifdef VAVOOM_DEBUG_PORTAL_POOL
+    fprintf(stderr, "PORTALPOOL: freeing \"rest\" nodes (old size is %d, minsize is %d)\n", ppcurr->size, allocsz);
+#endif
+    while (ppcurr->next) {
+      PPNode *n = ppcurr;
+      ppcurr->next = n->next;
+      free(n->mem);
+      free(n);
+    }
+  }
+  // allocate a new node
+  PPNode *nnn = (PPNode *)malloc(sizeof(PPNode));
+  nnn->mem = (vuint8 *)malloc(allocsz);
+  nnn->size = allocsz;
+  nnn->used = reqsz;
+  nnn->next = nullptr;
+  ppcurr->next = nnn;
+  ppcurr = nnn;
+  return ppcurr->mem;
+}
+
 
 //==========================================================================
 //
@@ -254,6 +437,8 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
 
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
+
+  CreatePortalPool();
 
   InitParticles();
   ClearParticles();
@@ -441,6 +626,8 @@ VRenderLevelShared::~VRenderLevelShared()
     delete SideSkies[i];
     SideSkies[i] = nullptr;
   }
+
+  KillPortalPool();
   //unguard;
 }
 

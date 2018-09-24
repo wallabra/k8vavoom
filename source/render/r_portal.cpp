@@ -30,29 +30,6 @@
 #include "r_local.h"
 
 
-/*
-static vuint8 *portalMemPool = nullptr;
-static int pmpUsed = 0, pmpSize = 0;
-
-struct PMPMarker {
-  int pmpMark; // used
-
-  PMPMarker () { pmpMark = pmpUsed; }
-  ~PMPMarker () { pmpUsed = pmpMark; }
-
-  vuint8 *alloc (int size) {
-    if (size < 1) size = 1;
-    if (pmpUsed+size > pmpSize) {
-      pmpSize = ((pmpUsed+size)|0xfff)+1;
-      portalMemPool = (vuint8 *)realloc(portalMemPool, pmpSize);
-      if (!portalMemPool) Sys_Error("Portal Pool: out of memory!");
-    }
-    return portalMemPool
-  }
-};
-*/
-
-
 //==========================================================================
 //
 //  VPortal::VPortal
@@ -149,14 +126,25 @@ void VPortal::Draw (bool UseStencil) {
   TClipPlane SavedClip = view_clipplanes[4];
   TClipPlane *SavedClipLink = view_clipplanes[3].next;
 
-  VRenderLevel::trans_sprite_t *TransSprites = (VRenderLevel::trans_sprite_t *)Z_Calloc(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
+  // this is used as "restore BspVis" flag
+  VRenderLevel::trans_sprite_t *TransSprites = nullptr; //(VRenderLevel::trans_sprite_t *)Z_Calloc(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
+  VRenderLevelShared::PPMark pmark;
+  VRenderLevelShared::MarkPortalPool(&pmark);
 
   if (NeedsDepthBuffer()) {
     // set up BSP visibility table and translated sprites
     // this has to be done only for portals that do rendering of view
-    RLev->BspVis = new vuint8[RLev->VisSize];
+    //RLev->BspVis = (vuint8 *)malloc(RLev->VisSize+1);
+    // notify allocator about minimal node size
+    VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize+sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
+    // allocate now bsp vis
+    RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize);
+    if (RLev->VisSize) memset(RLev->BspVis, 0, RLev->VisSize);
     //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
+    //TransSprites = (VRenderLevel::trans_sprite_t *)malloc(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
+    // allocate new transsprites list
+    TransSprites = (VRenderLevel::trans_sprite_t *)VRenderLevelShared::AllocPortalPool(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
     memset((void *)TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
     RLev->trans_sprites = TransSprites;
   }
@@ -172,7 +160,7 @@ void VPortal::Draw (bool UseStencil) {
   RLev->ViewEnt = SavedViewEnt;
   RLev->ExtraLight = SavedExtraLight;
   RLev->FixedLight = SavedFixedLight;
-  if (NeedsDepthBuffer()) delete [] RLev->BspVis;
+  //if (TransSprites) free(RLev->BspVis);
   RLev->BspVis = SavedBspVis;
   RLev->trans_sprites = SavedTransSprites;
   MirrorClip = SavedMirrorClip;
@@ -183,7 +171,10 @@ void VPortal::Draw (bool UseStencil) {
 
   Drawer->EndPortal(this, UseStencil);
 
-  Z_Free(TransSprites);
+  // restore ppol
+  VRenderLevelShared::RestorePortalPool(&pmark);
+
+  //if (TransSprites) free(TransSprites);
   unguard;
 }
 

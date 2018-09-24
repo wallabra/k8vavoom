@@ -28,6 +28,7 @@
 //**************************************************************************
 
 #include "gl_local.h"
+#include "../r_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -886,6 +887,8 @@ void VOpenGLDrawer::Setup2D () {
 void VOpenGLDrawer::StartUpdate (bool allowClear) {
   guard(VOpenGLDrawer::StartUpdate);
   glFinish();
+
+  VRenderLevelShared::ResetPortalPool();
 
   if (mainFBO) {
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);

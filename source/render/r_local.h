@@ -504,6 +504,38 @@ public:
   virtual void AddStaticLight(const TVec&, float, vuint32) override;
   virtual dlight_t *AllocDlight(VThinker *Owner, const TVec &lorg, float radius) override;
   virtual void DecayLights(float) override;
+
+public: // k8: so i don't have to fuck with friends
+  struct PPNode {
+    vuint8 *mem;
+    int size;
+    int used;
+    PPNode *next;
+  };
+
+  struct PPMark {
+    PPNode *curr;
+    int currused;
+
+    PPMark () : curr(nullptr), currused(-666) {}
+    inline bool isValid () const { return (currused != -666); }
+  };
+
+
+  static PPNode *pphead;
+  static PPNode *ppcurr;
+  static int ppMinNodeSize;
+
+  static void CreatePortalPool ();
+  static void KillPortalPool ();
+
+public:
+  static void ResetPortalPool (); // called on frame start
+  static void SetMinPoolNodeSize (int minsz);
+
+  static void MarkPortalPool (PPMark *mark);
+  static void RestorePortalPool (PPMark *mark);
+  static vuint8 *AllocPortalPool (int size);
 };
 
 class VRenderLevel : public VRenderLevelShared
