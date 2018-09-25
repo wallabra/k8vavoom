@@ -487,7 +487,7 @@ private:
           vint32 innerSize = intType.GetSize();
           vint32 dim = type.GetArrayDim();
           vint8 ittag = (vint8)intType.Type;
-          strm << STRM_INDEX_U(ittag);
+          strm << ittag;
           strm << STRM_INDEX_U(innerSize);
           strm << STRM_INDEX_U(dim);
           if (strm.IsError()) return false;
@@ -507,8 +507,8 @@ private:
           vint32 d = a->length();
           vuint8 is2d = (a->Is2D() ? 1 : 0);
           vuint8 ittag = (vuint8)intType.Type;
-          strm << STRM_INDEX_U(is2d);
-          strm << STRM_INDEX_U(ittag);
+          strm << is2d;
+          strm << ittag;
           strm << STRM_INDEX_U(innerSize);
           if (is2d) {
             vuint32 d1 = a->length1();
@@ -787,7 +787,7 @@ private:
         {
           vint8 itype;
           vint32 innerSize, dim;
-          strm << STRM_INDEX_U(itype);
+          strm << itype;
           strm << STRM_INDEX_U(innerSize);
           strm << STRM_INDEX_U(dim);
           if (strm.IsError()) return false;
@@ -811,8 +811,8 @@ private:
         {
           vuint8 is2d, itype;
           vint32 innerSize = 0, dim = 0, d1 = 0, d2 = 0;
-          strm << STRM_INDEX_U(is2d);
-          strm << STRM_INDEX_U(itype);
+          strm << is2d;
+          strm << itype;
           strm << STRM_INDEX_U(innerSize);
           if (is2d) {
             strm << STRM_INDEX_U(d1);
