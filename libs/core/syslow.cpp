@@ -227,6 +227,7 @@ void Sys_Yield () {
 #include <conio.h>
 #include <sys/timeb.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <windows.h>
 
 #ifndef R_OK
