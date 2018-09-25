@@ -28,9 +28,12 @@ void main ()
   if (FogEnabled)
   {
     float FogFactor_3;
-    float z;
 
-    z = (gl_FragCoord.z / gl_FragCoord.w);
+#ifdef VAVOOM_REVERSE_Z
+    float z = 1.0/gl_FragCoord.w;
+#else
+    float z = gl_FragCoord.z/gl_FragCoord.w;
+#endif
 
     if ((FogType == 3))
     {

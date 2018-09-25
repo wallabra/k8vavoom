@@ -30,7 +30,11 @@ void main ()
   vec4 TexColour = texture2D (Texture, TextureCoordinate);
   if (TexColour.w < 0.1) discard;
 
-  float z = (gl_FragCoord.z / gl_FragCoord.w);
+#ifdef VAVOOM_REVERSE_Z
+  float z = 1.0/gl_FragCoord.w;
+#else
+  float z = gl_FragCoord.z/gl_FragCoord.w;
+#endif
 
   float FogFactor;
   if (FogType == 3) {

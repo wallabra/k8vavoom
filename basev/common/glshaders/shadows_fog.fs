@@ -8,7 +8,11 @@ uniform float FogEnd;
 
 
 void main () {
-  float z = (gl_FragCoord.z/gl_FragCoord.w);
+#ifdef VAVOOM_REVERSE_Z
+  float z = 1.0/gl_FragCoord.w;
+#else
+  float z = gl_FragCoord.z/gl_FragCoord.w;
+#endif
 
   float FogFactor;
   if (FogType == 3) {
