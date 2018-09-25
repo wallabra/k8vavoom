@@ -989,21 +989,8 @@ void VScriptArray::SwapElements (int i0, int i1, const VFieldType &Type) {
 //  VScriptArray::CallComparePtr
 //
 //==========================================================================
-//bool VScriptArray::CallComparePtr (const void *p0, const void *p1, const VFieldType &Type, VObject *self, VMethod *fnless)
-
-
-//==========================================================================
-//
-//  VScriptArray::CallCompare
-//
-//==========================================================================
-bool VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless) {
-  if (i0 == i1) return false;
-  //fprintf(stderr, "VScriptArray::CallCompare: i0=%d; i1=%d\n", i0, i1);
-  int InnerSize = Type.GetSize();
-  vuint8 *p0 = ArrData+i0*InnerSize;
-  vuint8 *p1 = ArrData+i1*InnerSize;
-  //return CallComparePtr(p0, p1, Type, self, fnless);
+int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fnless) {
+  if (p0 == p1) return 0; // same indicies are always equal
   // self
   if ((fnless->Flags&FUNC_Static) == 0) P_PASS_REF(self);
   // first arg
@@ -1055,28 +1042,48 @@ bool VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject 
     }
   }
   auto ret = VObject::ExecuteFunction(fnless);
-  return (ret.i != 0);
+  return ret.i;
 }
 
 
-/*
-struct QSortInfo {
+//==========================================================================
+//
+//  VScriptArray::CallCompare
+//
+//==========================================================================
+int VScriptArray::CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless) {
+  if (i0 == i1) return 0; // same indicies are always equal
+  //fprintf(stderr, "VScriptArray::CallCompare: i0=%d; i1=%d\n", i0, i1);
+  int InnerSize = Type.GetSize();
+  vuint8 *p0 = ArrData+i0*InnerSize;
+  vuint8 *p1 = ArrData+i1*InnerSize;
+  return CallComparePtr(p0, p1, Type, self, fnless);
+}
+
+
+struct VSASortInfo {
   VScriptArray *arr;
   VFieldType Type;
+  VObject *self;
+  VMethod *fnless;
+  vuint8 *ArrData;
 };
 
 
 extern "C" {
-  static int QComparator (const void *a, const void *b, void *udata) {
-    auto nfo = (QSortInfo *)udata;
-    return (VScriptArray::CallComparePtr(
-  }
+static int vsaCompare (const void *aa, const void *bb, void *udata) {
+  VSASortInfo *si = (VSASortInfo *)udata;
+  /*
+  const int InnerSize = si->Type.GetSize();
+  const vuint8 *a = (const vuint8 *)aa;
+  const vuint8 *b = (const vuint8 *)bb;
+  const int i0 = ((int)(ptrdiff_t)(a-si->ArrData))/InnerSize;
+  const int i1 = ((int)(ptrdiff_t)(b-si->ArrData))/InnerSize;
+  return si->arr->CallCompare(i0, i1, si->Type, si->self, si->fnless);
+  */
+  return VScriptArray::CallComparePtr((void *)aa, (void *)bb, si->Type, si->self, si->fnless);
 }
-  qsort_r(ArrData, ArrNum, InnerSize, &QComparator, &nfo);
-       void qsort_r(void *base, size_t nmemb, size_t size,
-                  int (*compar)(const void *, const void *, void *),
-                  void *arg);
-*/
+}
 
 
 //==========================================================================
@@ -1156,6 +1163,8 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
   if (count > ArrNum) count = ArrNum;
   */
 
+  Flatten();
+
   if (ArrNum < 2) return true;
   int count = ArrNum;
 
@@ -1169,10 +1178,11 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
   */
 
   if (count == 2) {
-    if (CallCompare(0, 1, Type, self, fnless)) SwapElements(0, 1, Type);
+    if (CallCompare(0, 1, Type, self, fnless) < 0) SwapElements(0, 1, Type);
     return true;
   }
 
+#if 0
   auto end = count-1;
 
   // heapify
@@ -1184,8 +1194,8 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
       auto child = 2*root+1; // left child
       if (child > end) break;
       auto swap = root;
-      if (CallCompare(swap, child, Type, self, fnless)) swap = child;
-      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless)) swap = child+1;
+      if (CallCompare(swap, child, Type, self, fnless) < 0) swap = child;
+      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless) < 0) swap = child+1;
       if (swap == root) break;
       SwapElements(swap, root, Type);
       root = swap;
@@ -1202,13 +1212,22 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
       auto child = 2*root+1; // left child
       if (child > end) break;
       auto swap = root;
-      if (CallCompare(swap, child, Type, self, fnless)) swap = child;
-      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless)) swap = child+1;
+      if (CallCompare(swap, child, Type, self, fnless) < 0) swap = child;
+      if (child+1 <= end && CallCompare(swap, child+1, Type, self, fnless) < 0) swap = child+1;
       if (swap == root) break;
       SwapElements(swap, root, Type);
       root = swap;
     }
   }
+#else
+  VSASortInfo si;
+  si.arr = this;
+  si.Type = Type;
+  si.self = self;
+  si.fnless = fnless;
+  si.ArrData = ArrData;
+  timsort_r(ArrData, (size_t)ArrNum, (size_t)Type.GetSize(), &vsaCompare, &si);
+#endif
 
   return true;
 }

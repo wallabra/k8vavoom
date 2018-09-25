@@ -1306,10 +1306,8 @@ bool VDynArraySort::checkDelegateType (VMethod *dg) {
 
   if (dg->NumParams != 2) { ParseError(Loc, "`.sort` delegate must have two parameters"); return false; }
 
-  if (dg->NumParams != 2) { ParseError(Loc, "`.sort` delegate must return `bool`"); return false; }
-
-  if (dg->ReturnType.Type != TYPE_Int && dg->ReturnType.Type != TYPE_Bool) {
-    ParseError(Loc, "`.sort` delegate must return `bool`");
+  if (dg->ReturnType.Type != TYPE_Int) {
+    ParseError(Loc, "`.sort` delegate must return `int`");
     return false;
   }
 

@@ -149,11 +149,11 @@ public:
   void SetSize2D (int dim1, int dim2, const VFieldType &Type);
 
   void SwapElements (int i0, int i1, const VFieldType &Type);
-  bool CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless);
+  int CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless);
   // only for flat arrays
   bool Sort (const VFieldType &Type, VObject *self, VMethod *fnless);
 
-  //static bool CallComparePtr (const void *p0, const void *p1, const VFieldType &Type, VObject *self, VMethod *fnless);
+  static int CallComparePtr (void *p0, void *p1, const VFieldType &Type, VObject *self, VMethod *fnless);
 };
 
 // required for VaVoom C VM
