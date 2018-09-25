@@ -205,6 +205,7 @@ static void doCacheCleanup () {
       dellist.append(fname);
     } else if (ftime < currtime && currtime-ftime > 60*60*24*loader_cache_max_age_days) {
       GCon->Logf("cache: deleting old file '%s'", *shortname);
+      dellist.append(fname);
     } else {
       //GCon->Logf("cache: age=%d for '%s'", currtime-ftime, *shortname);
     }
