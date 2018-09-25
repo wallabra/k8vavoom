@@ -32,8 +32,6 @@
 #define USE_FASTER_SUBDIVIDER
 
 
-//#define MAXSPLITVERTS   128
-//#define MAXSPLITVERTS   256
 #define ON_EPSILON      (0.1)
 #define subdivide_size  (240)
 
@@ -57,48 +55,24 @@ static segpart_t *pspart;
 // ////////////////////////////////////////////////////////////////////////// //
 // pool allocator for split vertices
 // ////////////////////////////////////////////////////////////////////////// //
-/*
-static SPVNode {
-  float dot;
-  float side;
-  TVec vt1, vt2;
-};
-*/
-
 static float *spvPoolDots = nullptr;
 static int *spvPoolSides = nullptr;
 static TVec *spvPoolV1 = nullptr;
 static TVec *spvPoolV2 = nullptr;
 static int spvPoolSize = 0;
-static int spvPoolUsed = 0;
 
 
-// k8: i am not sure if we really need a pool, or can just reuse it
-//     looks like we can reuse, but better be safe that sorry
-struct SPVMarker {
-  int markU;
-
-  SPVMarker () { markU = spvPoolUsed; }
-  ~SPVMarker () { spvPoolUsed = markU; }
-
-  inline float *getDots () const { return spvPoolDots+markU; }
-  inline int *getSides () const { return spvPoolSides+markU; }
-  inline TVec *getVerts1 () const { return spvPoolV1+markU; }
-  inline TVec *getVerts2 () const { return spvPoolV2+markU; }
-
-  inline void alloc (int count) {
-    if (count < 1) count = 1;
-    if (spvPoolUsed+count > spvPoolSize) {
-      //auto oldsz = spvPoolSize;
-      spvPoolSize = ((spvPoolUsed+count+1)|0xfff)+1;
-      spvPoolDots = (float *)realloc(spvPoolDots, spvPoolSize*sizeof(spvPoolDots[0])); if (!spvPoolDots) Sys_Error("OOM!");
-      spvPoolSides = (int *)realloc(spvPoolSides, spvPoolSize*sizeof(spvPoolSides[0])); if (!spvPoolSides) Sys_Error("OOM!");
-      spvPoolV1 = (TVec *)realloc(spvPoolV1, spvPoolSize*sizeof(spvPoolV1[0])); if (!spvPoolV1) Sys_Error("OOM!");
-      spvPoolV2 = (TVec *)realloc(spvPoolV2, spvPoolSize*sizeof(spvPoolV2[0])); if (!spvPoolV2) Sys_Error("OOM!");
-    }
-    spvPoolUsed += count;
+static inline void spvReserve (int size) {
+  if (size < 1) size = 1;
+  size = (size|0xfff)+1;
+  if (spvPoolSize < size) {
+    spvPoolSize = size;
+    spvPoolDots = (float *)realloc(spvPoolDots, spvPoolSize*sizeof(spvPoolDots[0])); if (!spvPoolDots) Sys_Error("OOM!");
+    spvPoolSides = (int *)realloc(spvPoolSides, spvPoolSize*sizeof(spvPoolSides[0])); if (!spvPoolSides) Sys_Error("OOM!");
+    spvPoolV1 = (TVec *)realloc(spvPoolV1, spvPoolSize*sizeof(spvPoolV1[0])); if (!spvPoolV1) Sys_Error("OOM!");
+    spvPoolV2 = (TVec *)realloc(spvPoolV2, spvPoolSize*sizeof(spvPoolV2[0])); if (!spvPoolV2) Sys_Error("OOM!");
   }
-};
+}
 
 
 //**************************************************************************
@@ -344,8 +318,6 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 
   ++c_subdivides;
 
-  //if (f->count > MAXSPLITVERTS) Host_Error("f->count > MAXSPLITVERTS\n");
-
   TPlane plane;
 
   plane.normal = axis;
@@ -359,18 +331,12 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
     PlaneFront = 1,
   };
 
-  SPVMarker spv = SPVMarker();
-  //fprintf(stderr, "SPV(0): used=%d; size=%d\n", spvPoolUsed, spvPoolSize);
-  spv.alloc(f->count);
-  //fprintf(stderr, "SPV(1): used=%d; size=%d\n", spvPoolUsed, spvPoolSize);
+  spvReserve(f->count*2+2); //k8: `f->count+1` is enough, but...
 
-  float *dots = spv.getDots();
-  int *sides = spv.getSides();
-  TVec *verts1 = spv.getVerts1();
-  TVec *verts2 = spv.getVerts2();
-
-  //float dots[MAXSPLITVERTS+1];
-  //int sides[MAXSPLITVERTS+1]; // -1 is back; 0 is on; 1 is front
+  float *dots = spvPoolDots;
+  int *sides = spvPoolSides;
+  TVec *verts1 = spvPoolV1;
+  TVec *verts2 = spvPoolV2;
 
   for (int i = 0; i < f->count; ++i) {
     const float dot = DotProduct(f->verts[i], plane.normal)-plane.dist;
@@ -429,38 +395,29 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
         intersectAgainstPlane(mid, plane, vb, va); // `(b, a)` for robustness; was (a, b)
         // consistently clip edge as ordered going from in front -> behind
         //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
-        //f.unsafeArrayAppend(mid);
-        //b.unsafeArrayAppend(mid);
         verts1[count1++] = mid;
         verts2[count2++] = mid;
       }
       // in all three cases, output b to the front side
-      //f.unsafeArrayAppend(vb);
       verts1[count1++] = vb;
     } else if (btype == PlaneBack) {
       if (atype == PlaneFront) {
         // edge (a, b) straddles plane, output intersection point
         intersectAgainstPlane(mid, plane, va, vb); // `(b, a)` for robustness; was (a, b)
         //assert(plane.pointSide(mid.pos) == Plane.Coplanar);
-        //f.unsafeArrayAppend(mid);
-        //b.unsafeArrayAppend(mid);
         verts1[count1++] = mid;
         verts2[count2++] = mid;
       } else if (atype == PlaneCoplanar) {
         // output a when edge (a, b) goes from 'on' to 'behind' plane
-        //b.unsafeArrayAppend(va);
         verts2[count2++] = va;
       }
       // in all three cases, output b to the back side
-      //b.unsafeArrayAppend(vb);
       verts2[count2++] = vb;
     } else {
       // b is on the plane. In all three cases output b to the front side
-      //f.unsafeArrayAppend(vb);
       verts1[count1++] = vb;
       // in one case, also output b to back side
       if (atype == PlaneBack) {
-        //b.unsafeArrayAppend(vb);
         verts2[count2++] = vb;
       }
     }
