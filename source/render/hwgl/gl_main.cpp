@@ -1272,8 +1272,35 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
   Strm = nullptr;
   Buf[Size] = 0; // append terminator
 
+  // build source text
+  VStr vsShaderSrc;
+
+  //const GLcharARB *ShaderText = Buf.Ptr();
+  if (CanUseRevZ()) {
+    if (Buf[0] == '#') {
+      // skip first line (this should be "#version")
+      int bpos = 0;
+      while (Buf[bpos] && Buf[bpos] != '\n') ++bpos;
+      if (Buf[bpos] == '\n') {
+        //HACK
+        Buf[bpos] = 0;
+        vsShaderSrc = VStr(Buf.Ptr());
+        vsShaderSrc += "\n"; // restore erased newline
+        vsShaderSrc += "#define VAVOOM_REVERSE_Z\n";
+        ++bpos; // skip erased newline
+        vsShaderSrc += Buf.Ptr()+bpos;
+      } else {
+        vsShaderSrc = VStr("#define VAVOOM_REVERSE_Z\n")+Buf.Ptr();
+      }
+    } else {
+      vsShaderSrc = VStr("#define VAVOOM_REVERSE_Z\n")+Buf.Ptr();
+    }
+  } else {
+    vsShaderSrc = VStr(Buf.Ptr());
+  }
+
   // upload source text
-  const GLcharARB *ShaderText = Buf.Ptr();
+  const GLcharARB *ShaderText = *vsShaderSrc;
   p_glShaderSourceARB(Shader, 1, &ShaderText, nullptr);
 
   // compile it
