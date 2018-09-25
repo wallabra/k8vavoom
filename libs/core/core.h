@@ -75,4 +75,6 @@
 
 #include "syslow.h"
 
+#include "timsort.h"
+
 #endif

@@ -51,4 +51,7 @@ add_library(core STATIC
   ed25519.c
   chacha20.c
   sha2.c
+  timsort-impl.h
+  timsort.h
+  timsort.c
 )
