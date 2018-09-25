@@ -282,7 +282,7 @@ IMPLEMENT_FUNCTION(VObject, appLoadOptions) {
       return;
     }
     delete rds;
-    delete xbuf;
+    delete [] xbuf;
     rds = new VStreamMemRead(wrs->getData(), wrs->Tell());
     ObjectLoader ldr(*rds, cls);
     bool uerr = !ldr.loadAll();
