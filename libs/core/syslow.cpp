@@ -44,12 +44,13 @@
 struct DirInfo {
   DIR *dh;
   VStr path; // with slash
+  bool wantDirs;
 };
 
 
 //==========================================================================
 //
-//  isDir
+//  isRegularFile
 //
 //==========================================================================
 static bool isRegularFile (const VStr &filename) {
@@ -57,6 +58,19 @@ static bool isRegularFile (const VStr &filename) {
   if (filename.length() == 0) return false;
   if (stat(*filename, &st) == -1) return false;
   return (S_ISREG(st.st_mode) != 0);
+}
+
+
+//==========================================================================
+//
+//  isDirectory
+//
+//==========================================================================
+static bool isDirectory (const VStr &filename) {
+  struct stat st;
+  if (filename.length() == 0) return false;
+  if (stat(*filename, &st) == -1) return false;
+  return (S_ISDIR(st.st_mode) != 0);
 }
 
 
@@ -121,7 +135,7 @@ bool Sys_CreateDirectory (const VStr &path) {
 //  Sys_OpenDir
 //
 //==========================================================================
-void *Sys_OpenDir (const VStr &path) {
+void *Sys_OpenDir (const VStr &path, bool wantDirs) {
   if (path.isEmpty()) return nullptr;
   DIR *dh = opendir(*path);
   if (!dh) return nullptr;
@@ -130,6 +144,7 @@ void *Sys_OpenDir (const VStr &path) {
   memset((void *)res, 0, sizeof(DirInfo));
   res->dh = dh;
   res->path = path;
+  res->wantDirs = wantDirs;
   if (res->path.length() == 0) res->path = "./";
   if (res->path[res->path.length()-1] != '/') res->path += "/";
   return (void *)res;
@@ -149,8 +164,13 @@ VStr Sys_ReadDir (void *adir) {
     struct dirent *de = readdir(dh->dh);
     if (!de) break;
     if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
-    if (!isRegularFile(dh->path+de->d_name)) continue;
-    return de->d_name;
+    VStr diskName = dh->path+de->d_name;
+    bool isRegFile = isRegularFile(diskName);
+    if (!isRegFile && !dh->wantDirs) continue; // skip directories
+    if (!isRegFile && !isDirectory(diskName)) continue; // something strange
+    VStr res = VStr(de->d_name);
+    if (!isRegFile) res += "/";
+    return res;
   }
   closedir(dh->dh);
   dh->dh = nullptr;
@@ -240,12 +260,13 @@ struct ShitdozeDir {
   WIN32_FIND_DATA dir_buf;
   VStr path;
   bool gotName;
+  bool wantDirs;
 };
 
 
 //==========================================================================
 //
-//  isDir
+//  isRegularFile
 //
 //==========================================================================
 static bool isRegularFile (const VStr &filename) {
@@ -253,6 +274,19 @@ static bool isRegularFile (const VStr &filename) {
   DWORD attrs = GetFileAttributes(*filename);
   if (attrs == INVALID_FILE_ATTRIBUTES) return false;
   return ((attrs&(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_DIRECTORY)) == 0);
+}
+
+
+//==========================================================================
+//
+//  isDirectory
+//
+//==========================================================================
+static bool isDirectory (const VStr &filename) {
+  if (filename.length() == 0) return false;
+  DWORD attrs = GetFileAttributes(*filename);
+  if (attrs == INVALID_FILE_ATTRIBUTES) return false;
+  return ((attrs&FILE_ATTRIBUTE_DIRECTORY) != 0);
 }
 
 
@@ -318,7 +352,7 @@ bool Sys_CreateDirectory (const VStr &path) {
 //  Sys_OpenDir
 //
 //==========================================================================
-void *Sys_OpenDir (const VStr &dirname) {
+void *Sys_OpenDir (const VStr &dirname, bool wantDirs) {
   if (dirname.isEmpty()) return nullptr;
   auto sd = (ShitdozeDir *)malloc(sizeof(ShitdozeDir));
   if (!sd) return nullptr;
@@ -330,6 +364,7 @@ void *Sys_OpenDir (const VStr &dirname) {
   if (sd->dir_handle == INVALID_HANDLE_VALUE) { free(sd); return nullptr; }
   sd->gotName = true;
   sd->path = path;
+  sd->wantDirs = wantDirs;
   return (void *)sd;
 }
 
@@ -349,7 +384,13 @@ VStr Sys_ReadDir (void *adir) {
     sd->gotName = false;
     auto res = VStr(sd->dir_buf.cFileName);
     if (res != "." && res != "..") return res;
-    if (isRegularFile(sd->path+res)) return res;
+
+    VStr diskName = sd->path+res;
+    bool isRegFile = isRegularFile(diskName);
+    if (!isRegFile && !sd->wantDirs) continue; // skip directories
+    if (!isRegFile && !isDirectory(diskName)) continue; // something strange
+    if (!isRegFile) res += "/";
+    return res;
   }
 }
 

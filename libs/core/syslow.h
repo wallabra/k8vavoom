@@ -37,8 +37,9 @@ bool Sys_CreateDirectory (const VStr &path);
 void Sys_FileDelete (const VStr &filename);
 
 // can return `nullptr` for invalid path
-void *Sys_OpenDir (const VStr &path); // nullptr: error
-// never returns directories; returns empty string on end-of-dir; returns names w/o path
+void *Sys_OpenDir (const VStr &path, bool wantDirs=false); // nullptr: error
+// returns empty string on end-of-dir; returns names w/o path
+// if `wantDirs` is true, dir names are ends with "/"; never returns "." and ".."
 VStr Sys_ReadDir (void *adir);
 void Sys_CloseDir (void *adir);
 
