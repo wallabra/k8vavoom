@@ -225,6 +225,7 @@ override void Cheat_Gimme()
     }
     foreach AllClasses(Weapon, WpnCls)
     {
+      if (WpnCls.default.bCheatNotWeapon) continue;
       if (!FindClassState(WpnCls, 'Ready'))
       {
         //  Abstract base class.
