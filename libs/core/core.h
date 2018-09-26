@@ -68,6 +68,8 @@
 #include "matrix.h" // matrices
 #include "xml.h" // xml file parsing
 
+#include "md5.h"
+
 #include "hashset.h"
 #include "wlist.h"
 
