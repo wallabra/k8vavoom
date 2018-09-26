@@ -252,80 +252,65 @@ void VBasePlayer::CentrePrintf(const char *s, ...)
   unguard;
 }
 
+
 //===========================================================================
 //
 //  VBasePlayer::SetViewState
 //
 //===========================================================================
-
-void VBasePlayer::SetViewState(int position, VState *stnum)
-{
+void VBasePlayer::SetViewState (int position, VState *stnum) {
   guard(VBasePlayer::SetViewState);
   VViewState &VSt = ViewStates[position];
   VState *state = stnum;
-  do
-  {
-    if (!state)
-    {
-      // Object removed itself.
+  int watchcatCount = 1024;
+  do {
+    if (--watchcatCount <= 0) {
+      //k8: FIXME!
+      GCon->Logf("ERROR: WatchCat interrupted `VBasePlayer::SetViewState`!");
+      break;
+    }
+    if (!state) {
+      // object removed itself
       VSt.State = nullptr;
       VSt.StateTime = -1;
       break;
     }
     VSt.State = state;
-    VSt.StateTime = state->Time;  // could be 0
-    if (state->Misc1)
-    {
-      VSt.SX = state->Misc1;
-    }
-    if (state->Misc2)
-    {
-      VSt.SY = state->Misc2;
-    }
-    // Call action routine.
-    if (state->Function)
-    {
+    VSt.StateTime = state->Time; // could be 0
+    if (state->Misc1) VSt.SX = state->Misc1;
+    if (state->Misc2) VSt.SY = state->Misc2;
+    // call action routine
+    if (state->Function) {
       Level->XLevel->CallingState = state;
       P_PASS_REF(MO);
       ExecuteFunction(state->Function);
-      if (!VSt.State)
-      {
-        break;
-      }
+      if (!VSt.State) break;
     }
     state = VSt.State->NextState;
-  }
-  while (!VSt.StateTime); // An initial state of 0 could cycle through.
+  } while (!VSt.StateTime); // an initial state of 0 could cycle through
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::AdvanceViewStates
 //
 //==========================================================================
-
-void VBasePlayer::AdvanceViewStates(float deltaTime)
-{
-  for (int i = 0; i < NUMPSPRITES; i++)
-  {
+void VBasePlayer::AdvanceViewStates (float deltaTime) {
+  for (int i = 0; i < NUMPSPRITES; ++i) {
     VViewState &St = ViewStates[i];
     // a null state means not active
-    if (St.State)
-    {
+    if (St.State) {
       // drop tic count and possibly change state
       // a -1 tic count never changes
-      if (St.StateTime != -1.0)
-      {
+      if (St.StateTime != -1.0) {
         St.StateTime -= deltaTime;
-        if (eventCheckDoubleFiringSpeed())
-        {
-          // [BC] Apply double firing speed.
+        if (eventCheckDoubleFiringSpeed()) {
+          // [BC] Apply double firing speed
           St.StateTime -= deltaTime;
         }
-
-        if (St.StateTime <= 0.0)
-        {
+        if (St.StateTime <= 0.0) {
           St.StateTime = 0.0;
           SetViewState(i, St.State->NextState);
         }
@@ -333,6 +318,7 @@ void VBasePlayer::AdvanceViewStates(float deltaTime)
     }
   }
 }
+
 
 //==========================================================================
 //
