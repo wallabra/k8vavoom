@@ -163,6 +163,12 @@ static const ResDirInfo resdirs[] = {
 };
 
 
+static const char *moreresdirs[] = {
+  "models/",
+  nullptr,
+};
+
+
 //==========================================================================
 //
 //  VZipFile::VZipFile
@@ -335,6 +341,11 @@ void VZipFile::OpenArchive (VStream *fstream) {
     if (canHasPrefix) {
       for (const ResDirInfo *di = resdirs; di->pfx; ++di) {
         if (Files[i].Name.StartsWith(di->pfx)) { canHasPrefix = false; break; }
+      }
+      if (canHasPrefix) {
+        for (const char **dn = moreresdirs; *dn; ++dn) {
+          if (Files[i].Name.StartsWith(*dn)) { canHasPrefix = false; break; }
+        }
       }
     }
 
