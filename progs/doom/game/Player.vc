@@ -241,153 +241,111 @@ const int
 
 override void Cheat_Gimme()
 {
-  int         i;
-  int         i1;
-  class!Inventory  Cls;
+  int i = 0;
+  int i1 = 0;
+  class!Inventory Cls;
 
-  i1 = 0;
   // All
-  if (Cmd_CheckParm("All"))
-    i1 |= GIMME_ALL;
+  if (Cmd_CheckParm("All")) i1 |= GIMME_ALL;
 
   // Powers
-  if (Cmd_CheckParm("Powers"))
-    i1 |= GIMME_POWERS;
-  if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul"))
-    i1 |= GIMME_INVULNERABILITY;
-  if (Cmd_CheckParm("Bersek"))
-    i1 |= GIMME_STRENGTH;
-  if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis"))
-    i1 |= GIMME_INVISIBILITY;
-  if (Cmd_CheckParm("Suit"))
-    i1 |= GIMME_IRONFEET;
-  if (Cmd_CheckParm("AllMap"))
-    i1 |= GIMME_ALLMAP;
-  if (Cmd_CheckParm("LiteAmp"))
-    i1 |= GIMME_INFRARED;
+  if (Cmd_CheckParm("Powers")) i1 |= GIMME_POWERS;
+  if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul")) i1 |= GIMME_INVULNERABILITY;
+  if (Cmd_CheckParm("Bersek")) i1 |= GIMME_STRENGTH;
+  if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis")) i1 |= GIMME_INVISIBILITY;
+  if (Cmd_CheckParm("Suit")) i1 |= GIMME_IRONFEET;
+  if (Cmd_CheckParm("AllMap")) i1 |= GIMME_ALLMAP;
+  if (Cmd_CheckParm("LiteAmp")) i1 |= GIMME_INFRARED;
 
   // Health
-  if (Cmd_CheckParm("Health"))
-    i1 |= GIMME_HEALTH;
-  if (Cmd_CheckParm("Health2"))
-    i1 |= GIMME_HEALTH2;
+  if (Cmd_CheckParm("Health")) i1 |= GIMME_HEALTH;
+  if (Cmd_CheckParm("Health2")) i1 |= GIMME_HEALTH2;
 
   // Armor
-  if (Cmd_CheckParm("Armor"))
-    i1 |= GIMME_ARMOR;
-  if (Cmd_CheckParm("Armor2"))
-    i1 |= GIMME_ARMOR2;
+  if (Cmd_CheckParm("Armor")) i1 |= GIMME_ARMOR;
+  if (Cmd_CheckParm("Armor2")) i1 |= GIMME_ARMOR2;
 
   // Weapons
-  if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All"))
-  {
-    foreach AllClasses(Weapon, Cls)
-    {
-      class!Weapon repl = class!Weapon(GetClassReplacement(Cls));
-      if (repl && repl != Cls) continue;
-      auto st = FindClassState(Cls, 'Ready');
+  if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All")) {
+    class!Weapon WpnCls;
+    foreach AllClasses(Weapon, WpnCls) {
+      if (WpnCls.default.bCheatNotWeapon) continue;
+      class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
+      if (repl && repl != WpnCls) continue;
+      auto st = FindClassState(WpnCls, 'Ready');
       if (!st) continue; // an abstract base class
       if (!AreStateSpritesPresent(st)) continue; // no sprites
-      Weapon Wpn = Weapon(Level.Spawn(Cls, default, default, default, false));
+      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, false));
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
       if (!Wpn.TryPickup(EntityEx(MO))) {
         Wpn.Destroy();
       } else {
-        //print("CHEAT: got '%n'!", GetClassName(Cls));
+        //print("CHEAT: got '%n'!", GetClassName(WpnCls));
       }
     }
   }
 
   // Backpack
-  if (Cmd_CheckParm("Backpack") || Cmd_CheckParm("All"))
-  {
+  if (Cmd_CheckParm("Backpack") || Cmd_CheckParm("All")) {
     BackpackItem Pack = Level.Spawn(Backpack, default, default, default, false);
     Pack.bDropped = true;
-    if (!Pack.TryPickup(EntityEx(MO)))
-    {
-      Pack.Destroy();
-    }
+    if (!Pack.TryPickup(EntityEx(MO))) Pack.Destroy();
   }
 
   // Ammo
-  if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All"))
-  {
-    foreach AllClasses(Ammo, Cls)
-    {
-      //  Only direct descendants.
-      if (GetClassParent(Cls) != Ammo)
-      {
-        continue;
-      }
+  if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All")) {
+    foreach AllClasses(Ammo, Cls) {
+      // Only direct descendants.
+      if (GetClassParent(Cls) != Ammo) continue;
       Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-      if (!AmmoItem)
-      {
+      if (!AmmoItem) {
         AmmoItem = Level.Spawn(Cls, default, default, default, false);
-        if (!AmmoItem.TryPickup(EntityEx(MO)))
-        {
+        if (!AmmoItem.TryPickup(EntityEx(MO))) {
           AmmoItem.Destroy();
           AmmoItem = none;
         }
       }
-      if (AmmoItem)
-      {
-        AmmoItem.Amount = AmmoItem.MaxAmount;
-      }
+      if (AmmoItem) AmmoItem.Amount = AmmoItem.MaxAmount;
     }
   }
 
   // Keys
-  if (Cmd_CheckParm("Keys") || Cmd_CheckParm("All"))
-  {
-    foreach AllClasses(Key, Cls)
-    {
-      if (!FindClassState(Cls, 'Spawn'))
-      {
-        //  Abstract class
-        continue;
-      }
+  if (Cmd_CheckParm("Keys") || Cmd_CheckParm("All")) {
+    foreach AllClasses(Key, Cls) {
+      class!Key repl = class!Key(GetClassReplacement(Cls));
+      if (repl && repl != Cls) continue;
+      auto st = FindClassState(Cls, 'Spawn');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
       EntityEx(MO).GiveInventoryType(Cls);
     }
   }
 
   // Powers
-  if (i1 & GIMME_INVULNERABILITY)
-    EntityEx(MO).GiveInventoryType(InvulnerabilitySphere);
-  if (i1 & GIMME_STRENGTH)
-    EntityEx(MO).GiveInventoryType(PowerStrength);
-  if (i1 & GIMME_INVISIBILITY)
-    EntityEx(MO).GiveInventoryType(PowerInvisibility);
-  if (i1 & GIMME_IRONFEET)
-    EntityEx(MO).GiveInventoryType(PowerIronFeet);
-  if (i1 & GIMME_INFRARED)
-    EntityEx(MO).GiveInventoryType(PowerLightAmp);
+  if (i1 & GIMME_INVULNERABILITY) EntityEx(MO).GiveInventoryType(InvulnerabilitySphere);
+  if (i1 & GIMME_STRENGTH) EntityEx(MO).GiveInventoryType(PowerStrength);
+  if (i1 & GIMME_INVISIBILITY) EntityEx(MO).GiveInventoryType(PowerInvisibility);
+  if (i1 & GIMME_IRONFEET) EntityEx(MO).GiveInventoryType(PowerIronFeet);
+  if (i1 & GIMME_INFRARED) EntityEx(MO).GiveInventoryType(PowerLightAmp);
 
   //  Items
-  if (i1 & GIMME_ALLMAP)
-    EntityEx(MO).GiveInventoryType(Allmap);
+  if (i1 & GIMME_ALLMAP) EntityEx(MO).GiveInventoryType(Allmap);
 
   // Health
-  if ((i1 & GIMME_HEALTH) && (Health < 100))
-  {
+  if ((i1 & GIMME_HEALTH) && (Health < 100)) {
     Health = 100;
     MO.Health = 100;
   }
-  if (i1 & GIMME_HEALTH2)
-  {
+  if (i1 & GIMME_HEALTH2) {
     Health = 200;
     MO.Health = 200;
   }
 
   // Armor
-  if (i1 & GIMME_ARMOR)
-  {
-    EntityEx(MO).GiveInventoryType(GreenArmor);
-  }
-  if (i1 & GIMME_ARMOR2)
-  {
-    EntityEx(MO).GiveInventoryType(BlueArmor);
-  }
+  if (i1 & GIMME_ARMOR) EntityEx(MO).GiveInventoryType(GreenArmor);
+  if (i1 & GIMME_ARMOR2) EntityEx(MO).GiveInventoryType(BlueArmor);
+
   cprint("YOU GOT IT");
 }
 
