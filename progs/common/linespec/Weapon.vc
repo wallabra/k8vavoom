@@ -57,7 +57,7 @@ name      UpSound;
 name      ReadySound;
 
 //  Weapon slot this weapon is placed in.
-//int       Slot;
+int     SlotNumber = -1;
 //  Weapons with lower values have greater priority
 int       SelectionOrder;
 //  Position this weapon has in each slot
@@ -127,6 +127,30 @@ replication
   reliable if (Role == ROLE_Authority && bNetOwner)
     Ammo1, Ammo2;
 }
+
+
+//==========================================================================
+//
+//  OnMapSpawn
+//
+//==========================================================================
+/*
+override void OnMapSpawn (mthing_t *mthing) {
+  print("WEAPON '%n' spawned!", GetClassName(Class));
+  ::OnMapSpawn(mthing);
+}
+
+//==========================================================================
+//
+//  BeginPlay
+//
+//==========================================================================
+override void BeginPlay () {
+  print("WEAPON '%n' BeginPlay!", GetClassName(Class));
+  ::BeginPlay();
+}
+*/
+
 
 //==========================================================================
 //

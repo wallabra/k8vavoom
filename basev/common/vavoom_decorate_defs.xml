@@ -408,7 +408,7 @@
     <prop_class name="Weapon.SisterWeapon" property="SisterWeaponType" />
     <prop_name name="Weapon.UpSound" property="UpSound" />
     <prop_float name="Weapon.YAdjust" property="PSpriteSY" />
-    <prop_int_unsupported name="Weapon.SlotNumber" />
+    <prop_int_trunced name="Weapon.SlotNumber" property="SlotNumber" />
     <!-- Vavoom specific -->
     <prop_float name="Weapon.BotCombatDist" property="BotCombatDist" />
     <prop_int name="Weapon.PlayerModelVersion" property="PlayerModelVersion" />

@@ -283,17 +283,18 @@ override void Cheat_Gimme()
   {
     foreach AllClasses(Weapon, Cls)
     {
-      if (!FindClassState(Cls, 'Ready'))
-      {
-        //  An abstract base class.
-        continue;
-      }
+      class!Weapon repl = class!Weapon(GetClassReplacement(Cls));
+      if (repl && repl != Cls) continue;
+      auto st = FindClassState(Cls, 'Ready');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
       Weapon Wpn = Weapon(Level.Spawn(Cls, default, default, default, false));
       Wpn.AmmoGive1 = 0;
       Wpn.AmmoGive2 = 0;
-      if (!Wpn.TryPickup(EntityEx(MO)))
-      {
+      if (!Wpn.TryPickup(EntityEx(MO))) {
         Wpn.Destroy();
+      } else {
+        //print("CHEAT: got '%n'!", GetClassName(Cls));
       }
     }
   }
