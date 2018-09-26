@@ -22,108 +22,103 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class Weapon : Inventory abstract;
 
-class Weapon : Inventory
-  abstract;
+const float LOWERSPEED = 6.0;
+const float RAISESPEED = 6.0;
 
-const float LOWERSPEED    = 6.0;
-const float RAISESPEED    = 6.0;
+const float WEAPONBOTTOM = 128.0;
+const float WEAPONTOP    = 32.0;
 
-const float WEAPONBOTTOM  = 128.0;
-const float WEAPONTOP   = 32.0;
-
-enum
-{
+enum {
   FIRE_Primary,
   FIRE_Secondary,
+  // special value for CheckAmmo
+  FIRE_Either,
+}
 
-  //  Special value for CheckAmmo.
-  FIRE_Either
-};
-
-//  Type of ammo weapon needs to operate.
-class!Ammo   AmmoType1;
-class!Ammo   AmmoType2;
-//  How much ammo to give when picked up.
-int       AmmoGive1;
-int       AmmoGive2;
-//  How much ammo used in each shot.
-int       AmmoUse1;
-int       AmmoUse2;
-//  Weapon given together with current one.
+// type of ammo weapon needs to operate
+class!Ammo AmmoType1;
+class!Ammo AmmoType2;
+// how much ammo to give when picked up
+int AmmoGive1;
+int AmmoGive2;
+// how much ammo used in each shot
+int AmmoUse1;
+int AmmoUse2;
+// weapon given together with current one
 class!Weapon SisterWeaponType;
 
-name      UpSound;
-name      ReadySound;
+name UpSound;
+name ReadySound;
 
-//  Weapon slot this weapon is placed in.
-int     SlotNumber = -1;
-//  Weapons with lower values have greater priority
-int       SelectionOrder;
-//  Position this weapon has in each slot
-int       Position;
-//  Kickback from this weapon
-float     Kickback;
+// weapon slot this weapon is placed in
+int SlotNumber = -1;
+// weapons with lower values have greater priority
+int SelectionOrder;
+// position this weapon has in each slot
+int Position;
+// kickback from this weapon
+float Kickback;
 
-// Y-adjustment value for full screen
-float     PSpriteSY;
+// y-adjustment value for full screen
+float PSpriteSY;
 
-//  For displaying weapon with player model.
-int       PlayerModelVersion;
+// for displaying weapon with player model
+int PlayerModelVersion;
 
-ubyte      FireMode;
+ubyte FireMode;
 
-float     BotCombatDist;
+float BotCombatDist;
 
-int       ReloadCounter;
+int ReloadCounter;
 
-//  Switch away if got ammo for more powerfull weapon.
-bool      bWimpyWeapon;
-//  Don't auto fire
-bool      bNoAutoFire;
-//  This is a powered up version of another weapon
-bool      bPoweredUp;
-//  Does Heretic staff level 2 style kickback.
-bool      bStaff2Kickback;
-//  Ammo is optional
-bool      bAmmoOptional;
-//  Ammo is optional for alternate fire
-bool      bAltAmmoOptional;
-//  Half a chance to play the reay sound.
-bool      bReadySndHalf;
-//  Don't bob weapon.
-bool      bDontBob;
-//  Doesn't allert monsters when fired.
-bool      bNoAlert;
-//  Not considered a weapon by gimme cheat
-bool      bCheatNotWeapon;
-//  Use axe's blood splatter
-bool      bAxeBlood;
-//  Never switch to this weapon when picked up
-bool      bNoAutoSwitch;
-//  Primary fire uses both ammo types
-bool      bPrimaryUsesBoth;
-//  Alternate fire uses both ammo types
-bool      bAltUsesBoth;
-//  This weapon was given when owner morphed into something.
-bool      bGivenAsMorphWeapon;
+// switch away if got ammo for more powerfull weapon
+bool bWimpyWeapon;
+// don't auto fire
+bool bNoAutoFire;
+// this is a powered up version of another weapon
+bool bPoweredUp;
+// does Heretic staff level 2 style kickback
+bool bStaff2Kickback;
+// ammo is optional
+bool bAmmoOptional;
+// ammo is optional for alternate fire
+bool bAltAmmoOptional;
+// half a chance to play the reay sound
+bool bReadySndHalf;
+// don't bob weapon
+bool bDontBob;
+// doesn't allert monsters when fired
+bool bNoAlert;
+// not considered a weapon by gimme cheat
+bool bCheatNotWeapon;
+// use axe's blood splatter
+bool bAxeBlood;
+// never switch to this weapon when picked up
+bool bNoAutoSwitch;
+// primary fire uses both ammo types
+bool bPrimaryUsesBoth;
+// alternate fire uses both ammo types
+bool bAltUsesBoth;
+// this weapon was given when owner morphed into something
+bool bGivenAsMorphWeapon;
 
-//  It's a melee weapon
-bool      bBotMelee;
-//  It's a projectile weapon
-bool      bBotProjectile;
-//  It's a BFG
-bool      bBotBfg;
+// it's a melee weapon
+bool bBotMelee;
+// it's a projectile weapon
+bool bBotProjectile;
+// it's a BFG
+bool bBotBfg;
 
-//  Runtime in-inventory references.
-Ammo      Ammo1;
-Ammo      Ammo2;
-Weapon      SisterWeapon;
+// runtime in-inventory references
+Ammo Ammo1;
+Ammo Ammo2;
+Weapon SisterWeapon;
 
-float     FOVScale;
+float FOVScale;
 
-replication
-{
+replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     Ammo1, Ammo2;
 }
@@ -131,175 +126,128 @@ replication
 
 //==========================================================================
 //
-//  OnMapSpawn
-//
-//==========================================================================
-/*
-override void OnMapSpawn (mthing_t *mthing) {
-  print("WEAPON '%n' spawned!", GetClassName(Class));
-  ::OnMapSpawn(mthing);
-}
-
-//==========================================================================
-//
-//  BeginPlay
-//
-//==========================================================================
-override void BeginPlay () {
-  print("WEAPON '%n' BeginPlay!", GetClassName(Class));
-  ::BeginPlay();
-}
-*/
-
-
-//==========================================================================
-//
 //  Destroyed
 //
 //==========================================================================
-
-override void Destroyed()
-{
-  if (SisterWeapon)
-  {
+override void Destroyed () {
+  if (SisterWeapon) {
     SisterWeapon.SisterWeapon = none;
     SisterWeapon.Destroy();
   }
   ::Destroyed();
 }
 
+
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  //  If sprites for ready state are missing, you can't pick up this
-  // weapon.
+override bool TryPickup (EntityEx Toucher) {
+  // if sprites for ready state are missing, you can't pick up this weapon
   state ReadyState = FindState('Ready');
-  if (ReadyState && AreStateSpritesPresent(ReadyState))
-  {
+  if (ReadyState && AreStateSpritesPresent(ReadyState)) {
     return ::TryPickup(Toucher);
   }
   return false;
 }
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Item.Class == Class)
-  {
-    if (Weapon(Item).PickupForAmmo(self))
-    {
-      Item.bPickupGood = true;
-    }
+override bool HandlePickup (Inventory Item) {
+  if (Item.Class == Class) {
+    if (Weapon(Item).PickupForAmmo(self)) Item.bPickupGood = true;
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   Weapon Copy = Weapon(::CreateCopy(Toucher));
-  if (Copy)
-  {
+  if (Copy) {
     Copy.AmmoGive1 = AmmoGive1;
     Copy.AmmoGive2 = AmmoGive2;
   }
   return Copy;
 }
 
+
 //==========================================================================
 //
 //  CreateTossable
 //
 //==========================================================================
-
-override Inventory CreateTossable()
-{
-  //  Drop the weapon that is meant to be placed in a level, i.e. that
-  // normally gives you ammo.
+override Inventory CreateTossable () {
+  // drop the weapon that is meant to be placed in a level, i.e. that normally gives you ammo
   if (SisterWeapon && !default.AmmoGive1 && !default.AmmoGive2 &&
-    (SisterWeapon.default.AmmoGive1 > 0 ||
-     SisterWeapon.default.AmmoGive2 > 0))
+      (SisterWeapon.default.AmmoGive1 > 0 || SisterWeapon.default.AmmoGive2 > 0))
   {
     return SisterWeapon.CreateTossable();
   }
 
   Weapon Copy = Weapon(::CreateTossable());
-  if (Copy)
-  {
-    //  If weapon has a sister weapon, remove it too.
-    if (SisterWeapon)
-    {
+  if (Copy) {
+    // if weapon has a sister weapon, remove it too
+    if (SisterWeapon) {
       SisterWeapon.SisterWeapon = none;
       SisterWeapon.Destroy();
     }
-    //  Dropped weapons don't have ammo to prevent cheating.
+    // dropped weapons don't have ammo to prevent cheating
     Copy.AmmoGive1 = 0;
     Copy.AmmoGive2 = 0;
   }
   return Copy;
 }
 
+
 //==========================================================================
 //
 //  AttachToOwner
 //
 //==========================================================================
-
-override void AttachToOwner(EntityEx NewOwner)
-{
+override void AttachToOwner (EntityEx NewOwner) {
   ::AttachToOwner(NewOwner);
 
-  //  Set up references to ammo items since they are used a lots.
+  // set up references to ammo items since they are used a lots
   Ammo1 = AddAmmo(NewOwner, AmmoType1, AmmoGive1);
   Ammo2 = AddAmmo(NewOwner, AmmoType2, AmmoGive2);
   SisterWeapon = AddWeapon(SisterWeaponType);
 
-  if (Owner.Player && !bNoAutoSwitch && GetCvarB('wpn_autoswitch'))
-  {
-    //  Doom and Strife always switch to a new weapon, Heretic and Hexen
-    // only switch to more powerful weapons, always check for ammo.
+  if (Owner.Player && !bNoAutoSwitch && GetCvarB('wpn_autoswitch')) {
+    // Doom and Strife always switch to a new weapon, Heretic and Hexen
+    // only switch to more powerful weapons, always check for ammo
     int ReadySlot = -1;
     int ReadyIndex = -1;
     int NewSlot;
     int NewIndex;
-    if (PlayerEx(Owner.Player).ReadyWeapon)
-    {
+    if (PlayerEx(Owner.Player).ReadyWeapon) {
       LineSpecialGameInfo(Level.Game).FindWeaponSlot(
         class!Weapon(PlayerEx(Owner.Player).ReadyWeapon.Class),
         ReadySlot, ReadyIndex, PlayerEx(Owner.Player).ReadyWeapon.Position);
     }
-    LineSpecialGameInfo(Level.Game).FindWeaponSlot(
-      class!Weapon(Class), NewSlot, NewIndex, Position);
+    LineSpecialGameInfo(Level.Game).FindWeaponSlot(class!Weapon(Class), NewSlot, NewIndex, Position);
     if (CheckAmmo(FIRE_Either, false) &&
-      (LineSpecialGameInfo(Level.Game).bAlwaysSwitchNewWeapon ||
-      !PlayerEx(Owner.Player).ReadyWeapon || NewSlot > ReadySlot) ||
-      (NewSlot == ReadySlot && NewIndex < ReadyIndex))
+        (LineSpecialGameInfo(Level.Game).bAlwaysSwitchNewWeapon ||
+        !PlayerEx(Owner.Player).ReadyWeapon || NewSlot > ReadySlot) ||
+        (NewSlot == ReadySlot && NewIndex < ReadyIndex))
     {
       PlayerEx(Owner.Player).PendingWeapon = self;
     }
   }
 }
+
 
 //==========================================================================
 //
@@ -308,134 +256,101 @@ override void AttachToOwner(EntityEx NewOwner)
 //  Returns false if the ammo can't be picked up at all
 //
 //==========================================================================
+final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
+  if (!AmmoType) return none;
 
-final Ammo AddAmmo(EntityEx Toucher, class!Ammo AmmoType, int count)
-{
-  if (!AmmoType)
-  {
-    return none;
-  }
-
-  if (!bIgnoreSkill)
-  {
-    //  Extra ammo in baby mode and nightmare mode
-    count = ftoi(itof(count) * Level.World.SkillAmmoFactor);
+  if (!bIgnoreSkill) {
+    // extra ammo in baby mode and nightmare mode
+    count = ftoi(itof(count)*Level.World.SkillAmmoFactor);
   }
 
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
-  if (!AmmoItem)
-  {
+  if (!AmmoItem) {
     AmmoItem = Spawn(AmmoType, default, default, default, false);
     AmmoItem.AttachToOwner(Toucher);
     AmmoItem.Amount = count;
-  }
-  else if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
-  {
+  } else if (AmmoItem.Amount < AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
     AmmoItem.Amount += count;
   }
 
-  if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
-  {
+  if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
     AmmoItem.Amount = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
   }
+
   return AmmoItem;
 }
+
 
 //==========================================================================
 //
 //  AddExistingAmmo
 //
 //==========================================================================
-
-final bool AddExistingAmmo(Ammo AmmoItem, int count)
-{
+final bool AddExistingAmmo (Ammo AmmoItem, int count) {
   int oldammo;
 
-  if (!AmmoItem || count <= 0)
-  {
-    return false;
-  }
-  if (AmmoItem.Amount == AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
-  {
-    return false;
-  }
+  if (!AmmoItem || count <= 0) return false;
+  if (AmmoItem.Amount == AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) return false;
 
-  if (!bIgnoreSkill)
-  {
-    //  Extra ammo in baby mode and nightmare mode
-    count = ftoi(itof(count) * Level.World.SkillAmmoFactor);
+  if (!bIgnoreSkill) {
+    // extra ammo in baby mode and nightmare mode
+    count = ftoi(itof(count)*Level.World.SkillAmmoFactor);
   }
 
   oldammo = AmmoItem.Amount;
   AmmoItem.Amount += count;
-  if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax())
-  {
+  if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
     AmmoItem.Amount = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
   }
 
-  if (oldammo <= 0 && AmmoItem.Owner.Player)
-  {
+  if (oldammo <= 0 && AmmoItem.Owner.Player) {
     PlayerEx(AmmoItem.Owner.Player).GotAmmo(AmmoItem);
   }
+
   return true;
 }
+
 
 //==========================================================================
 //
 //  AddWeapon
 //
 //==========================================================================
-
-final Weapon AddWeapon(class!Weapon WeaponType)
-{
-  if (!WeaponType)
-  {
-    return none;
-  }
+final Weapon AddWeapon (class!Weapon WeaponType) {
+  if (!WeaponType) return none;
   Weapon Wpn = Weapon(EntityEx(Owner).FindInventory(WeaponType));
-  if (!Wpn)
-  {
+  if (!Wpn) {
     Wpn = Spawn(WeaponType, default, default, default, false);
     Wpn.AttachToOwner(EntityEx(Owner));
   }
   return Wpn;
 }
 
+
 //==========================================================================
 //
 //  PickupForAmmo
 //
 //==========================================================================
-
-bool PickupForAmmo(Weapon ExistingWeapon)
-{
+bool PickupForAmmo (Weapon ExistingWeapon) {
   // leave placed weapons forever on net games
-  if (ShouldStay() && !bDropped)
-  {
-    return false;
-  }
+  if (ShouldStay() && !bDropped) return false;
   bool gaveammo = false;
-  if (AddExistingAmmo(ExistingWeapon.Ammo1, AmmoGive1))
-  {
-    gaveammo = true;
-  }
-  if (AddExistingAmmo(ExistingWeapon.Ammo2, AmmoGive2))
-  {
-    gaveammo = true;
-  }
+  if (AddExistingAmmo(ExistingWeapon.Ammo1, AmmoGive1)) gaveammo = true;
+  if (AddExistingAmmo(ExistingWeapon.Ammo2, AmmoGive2)) gaveammo = true;
   return gaveammo;
 }
+
 
 //==========================================================================
 //
 //  ShouldStay
 //
 //==========================================================================
-
-override bool ShouldStay()
-{
+override bool ShouldStay () {
   return LineSpecialGameInfo(Level.Game).bWeaponsStay;
 }
+
 
 //==========================================================================
 //
@@ -444,182 +359,127 @@ override bool ShouldStay()
 //  Using a weapon makes it active.
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
-  //  Can't directly use powered up weapon.
-  if (bPoweredUp)
-  {
-    return false;
-  }
-
-  //  See which weapon to use.
+override bool Use (bool Pickup) {
+  // can't directly use powered up weapon
+  if (bPoweredUp) return false;
+  // see which weapon to use
   Weapon UseWpn = self;
   if (SisterWeapon && SisterWeapon.bPoweredUp &&
-    EntityEx(Owner).FindInventory(PowerWeaponLevel2))
+      EntityEx(Owner).FindInventory(PowerWeaponLevel2))
   {
     UseWpn = SisterWeapon;
   }
-  if (Owner.bIsPlayer && PlayerEx(Owner.Player).ReadyWeapon != UseWpn)
-  {
+  if (Owner.bIsPlayer && PlayerEx(Owner.Player).ReadyWeapon != UseWpn) {
     PlayerEx(Owner.Player).PendingWeapon = UseWpn;
   }
   return false;
 }
+
 
 //==========================================================================
 //
 //  GetUpState
 //
 //==========================================================================
-
-state GetUpState()
-{
+state GetUpState () {
   return FindState('Select');
 }
+
 
 //==========================================================================
 //
 //  GetDownState
 //
 //==========================================================================
-
-state GetDownState()
-{
+state GetDownState () {
   return FindState('Deselect');
 }
+
 
 //==========================================================================
 //
 //  GetReadyState
 //
 //==========================================================================
-
-state GetReadyState()
-{
+state GetReadyState () {
   return FindState('Ready');
 }
+
 
 //==========================================================================
 //
 //  GetAttackState
 //
 //==========================================================================
-
-state GetAttackState(bool Hold)
-{
+state GetAttackState (bool Hold) {
   state S = none;
-  if (Hold)
-  {
-    S = FindState('Hold');
-  }
-  if (!S)
-  {
-    S = FindState('Fire');
-  }
+  if (Hold) S = FindState('Hold');
+  if (!S) S = FindState('Fire');
   return S;
 }
+
 
 //==========================================================================
 //
 //  GetAltAttackState
 //
 //==========================================================================
-
-state GetAltAttackState(bool Hold)
-{
+state GetAltAttackState (bool Hold) {
   state S = none;
-  if (Hold)
-  {
-    S = FindState('AltHold');
-  }
-  if (!S)
-  {
-    S = FindState('AltFire');
-  }
+  if (Hold) S = FindState('AltHold');
+  if (!S) S = FindState('AltFire');
   return S;
 }
+
 
 //==========================================================================
 //
 //  GetReloadState
 //
 //==========================================================================
-
-state GetReloadState()
-{
+state GetReloadState () {
   return FindState('Reload');
 }
+
 
 //==========================================================================
 //
 //  CheckAmmo
 //
 //  Returns true if there is enough mana to shoot.  If not, selects the
-// next weapon to use.
+//  next weapon to use.
 //
 //==========================================================================
-
-bool CheckAmmo(ubyte Mode, bool AutoSwitch, optional bool RequireAmmo)
-{
-  //  Search for infinite ammo power. Any subclass will do.
+bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
+  // search for infinite ammo power; any subclass will do
   Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
-  while (InfiniteAmmo)
-  {
-    if (PowerInfiniteAmmo(InfiniteAmmo))
-    {
-      break;
-    }
+  while (InfiniteAmmo) {
+    if (PowerInfiniteAmmo(InfiniteAmmo)) break;
     InfiniteAmmo = InfiniteAmmo.Inventory;
   }
 
-  if (InfiniteAmmo)
-  {
-    // Don't waste ammo if we have an infinite ammo powerup
+  if (InfiniteAmmo) {
+    // don't waste ammo if we have an infinite ammo powerup
     return true;
   }
 
-  if (Mode == FIRE_Either)
-  {
-    if (CheckAmmo(FIRE_Primary, false) || CheckAmmo(FIRE_Secondary, false))
-    {
-      return true;
-    }
-  }
-  else
-  {
-    if (!RequireAmmo && bAmmoOptional)
-    {
-      return true;
-    }
+  if (Mode == FIRE_Either) {
+    if (CheckAmmo(FIRE_Primary, false) || CheckAmmo(FIRE_Secondary, false)) return true;
+  } else {
+    if (!RequireAmmo && bAmmoOptional) return true;
 
-    int Amount1 = Ammo1 ? Ammo1.Amount : 0;
-    int Amount2 = Ammo2 ? Ammo2.Amount : 0;
+    int Amount1 = (Ammo1 ? Ammo1.Amount : 0);
+    int Amount2 = (Ammo2 ? Ammo2.Amount : 0);
 
     bool Good = true;
-    if ((Mode == FIRE_Primary || bAltUsesBoth) && Amount1 < AmmoUse1)
-    {
-      Good = false;
-    }
-    if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Amount2 < AmmoUse2)
-    {
-      Good = false;
-    }
-    //  If weapon has no secondary fire, there's never enough ammo for it.
-    if (Mode == FIRE_Secondary && !FindState('AltFire'))
-    {
-      Good = false;
-    }
-    if (Good)
-    {
-      return true;
-    }
+    if ((Mode == FIRE_Primary || bAltUsesBoth) && Amount1 < AmmoUse1) Good = false;
+    if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Amount2 < AmmoUse2) Good = false;
+    // if weapon has no secondary fire, there's never enough ammo for it
+    if (Mode == FIRE_Secondary && !FindState('AltFire')) Good = false;
+    if (Good) return true;
   }
 
-  if (!AutoSwitch)
-  {
-    return false;
-  }
+  if (!AutoSwitch) return false;
 
   // out of ammo, pick a weapon to change to
   Weapon Best = PlayerEx(Owner.Player).BestWeapon();
@@ -629,102 +489,70 @@ bool CheckAmmo(ubyte Mode, bool AutoSwitch, optional bool RequireAmmo)
   return false;
 }
 
+
 //==========================================================================
 //
 //  DepleteAmmo
 //
 //==========================================================================
-
-final bool DepleteAmmo(ubyte Mode, optional bool CheckEnough,
-  optional int DehackedUse)
-{
-  //  Search for infinite ammo power. Any subclass will do.
+final bool DepleteAmmo (ubyte Mode, optional bool CheckEnough, optional int DehackedUse) {
+  // search for infinite ammo power; any subclass will do
   Inventory InfiniteAmmo = EntityEx(Owner).Inventory;
-  while (InfiniteAmmo)
-  {
-    if (PowerInfiniteAmmo(InfiniteAmmo))
-    {
-      break;
-    }
+  while (InfiniteAmmo) {
+    if (PowerInfiniteAmmo(InfiniteAmmo)) break;
     InfiniteAmmo = InfiniteAmmo.Inventory;
   }
 
-  if (InfiniteAmmo)
-  {
-    // Don't waste ammo if we have an infinite ammo powerup
+  if (InfiniteAmmo) {
+    // don't waste ammo if we have an infinite ammo powerup
     return true;
   }
 
-  //  Default parameter values
-  if (!specified_CheckEnough)
-  {
-    CheckEnough = true;
-  }
-  if (!specified_DehackedUse)
-  {
-    DehackedUse = AmmoUse1;
-  }
+  // default parameter values
+  if (!specified_CheckEnough) CheckEnough = true;
+  if (!specified_DehackedUse) DehackedUse = AmmoUse1;
 
-  if (CheckEnough && !CheckAmmo(Mode, false))
-  {
-    return false;
-  }
+  if (CheckEnough && !CheckAmmo(Mode, false)) return false;
 
-  if ((Mode == FIRE_Primary || bAltUsesBoth) && Ammo1)
-  {
-    if (LineSpecialGameInfo(Level.Game).bDehacked)
-    {
+  if ((Mode == FIRE_Primary || bAltUsesBoth) && Ammo1) {
+    if (LineSpecialGameInfo(Level.Game).bDehacked) {
       Ammo1.Amount -= DehackedUse;
-    }
-    else
-    {
+    } else {
       Ammo1.Amount -= AmmoUse1;
     }
   }
-  if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Ammo2)
-  {
-    Ammo2.Amount -= AmmoUse2;
-  }
+  if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Ammo2) Ammo2.Amount -= AmmoUse2;
 
-  //  Don't let ammo go below zero.
-  if (Ammo1 && Ammo1.Amount < 0)
-  {
-    Ammo1.Amount = 0;
-  }
-  if (Ammo2 && Ammo2.Amount < 0)
-  {
-    Ammo2.Amount = 0;
-  }
+  // don't let ammo go below zero
+  if (Ammo1 && Ammo1.Amount < 0) Ammo1.Amount = 0;
+  if (Ammo2 && Ammo2.Amount < 0) Ammo2.Amount = 0;
+
   return true;
 }
+
 
 //===========================================================================
 //
 //  EndPowerup
 //
 //===========================================================================
-
-final void EndPowerup()
-{
-  if (SisterWeapon)
-  {
+final void EndPowerup () {
+  if (SisterWeapon) {
     PlayerEx(Owner.Player).SetWeapon(SisterWeapon);
-    if (SisterWeapon.GetReadyState() != GetReadyState())
-    {
-      PlayerEx(Owner.Player).SetViewState(ps_weapon,
-        SisterWeapon.GetReadyState());
+    if (SisterWeapon.GetReadyState() != GetReadyState()) {
+      PlayerEx(Owner.Player).SetViewState(ps_weapon, SisterWeapon.GetReadyState());
     }
   }
 }
 
-states
-{
+
+states {
 LightDone:
   SHTG E 0 A_Light0
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   PickupSound = 'misc/w_pkup';
 }
