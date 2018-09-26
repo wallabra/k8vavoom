@@ -722,7 +722,8 @@ void VLevel::SaveCachedData (VStream *strm) {
   }
 
   // write vertex indicies in linedefs
-  *arrstrm << NumLines;
+  int lncount = NumLines;
+  *arrstrm << lncount;
   GCon->Logf("cache: writing %d linedef vertices", NumLines);
   for (int f = 0; f < NumLines; ++f) {
     line_t &L = Lines[f];
@@ -881,9 +882,9 @@ bool VLevel::LoadCachedData (VStream *strm) {
   }
 
   // fix up vertex pointers in linedefs
-  int lncount;
+  int lncount = -1;
   *arrstrm << lncount;
-  if (lncount != NumLines) { delete arrstrm; GCon->Log("cache file corrupted (linedefs)"); return false; }
+  if (lncount != NumLines) { delete arrstrm; GCon->Logf("cache file corrupted (linedefs: got %d, want %d)", lncount, NumLines); return false; }
   GCon->Logf("cache: reading %d linedef vertices", NumLines);
   for (int f = 0; f < NumLines; ++f) {
     line_t &L = Lines[f];
@@ -933,11 +934,11 @@ bool VLevel::LoadCachedData (VStream *strm) {
     doPlaneIO(arrstrm, seg);
     vint32 v1num = -1;
     *arrstrm << v1num;
-    if (v1num < 0) { delete arrstrm; GCon->Log("cache file corrupted (seg v1)"); return false; }
+    if (v1num < 0 || v1num >= NumVertexes) { delete arrstrm; GCon->Log("cache file corrupted (seg v1)"); return false; }
     seg->v1 = Vertexes+v1num;
     vint32 v2num = -1;
     *arrstrm << v2num;
-    if (v2num < 0) { delete arrstrm; GCon->Log("cache file corrupted (seg v2)"); return false; }
+    if (v2num < 0 || v1num >= NumVertexes) { delete arrstrm; GCon->Log("cache file corrupted (seg v2)"); return false; }
     seg->v2 = Vertexes+v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;
@@ -1115,18 +1116,18 @@ load_again:
     if (W_LumpName(LIdx) == NAME_blockmap) BlockmapLump = LIdx++;
 
     sha512valid = hashLump(nullptr, &md5ctx, lumpnum); // md5
-    sha512valid = sha512valid || hashLump(nullptr, &md5ctx, ThingsLump); // md5
+    if (sha512valid) sha512valid = hashLump(nullptr, &md5ctx, ThingsLump); // md5
 
-    sha512valid = sha512valid || hashLump(&sha512ctx, &md5ctx, LinesLump);
-    sha512valid = sha512valid || hashLump(&sha512ctx, &md5ctx, SidesLump);
-    sha512valid = sha512valid || hashLump(&sha512ctx, nullptr, VertexesLump); // not in md5
-    sha512valid = sha512valid || hashLump(&sha512ctx, &md5ctx, SectorsLump);
+    if (sha512valid) sha512valid = hashLump(&sha512ctx, &md5ctx, LinesLump);
+    if (sha512valid) sha512valid = hashLump(&sha512ctx, &md5ctx, SidesLump);
+    if (sha512valid) sha512valid = hashLump(&sha512ctx, nullptr, VertexesLump); // not in md5
+    if (sha512valid) sha512valid = hashLump(&sha512ctx, &md5ctx, SectorsLump);
 
     // determine level format
     if (W_LumpName(LIdx) == NAME_behavior) {
       LevelFlags |= LF_Extended;
       BehaviorLump = LIdx++;
-      sha512valid = sha512valid || hashLump(nullptr, &md5ctx, BehaviorLump); // md5
+      if (sha512valid) sha512valid = hashLump(nullptr, &md5ctx, BehaviorLump); // md5
     }
 
     //  Verify that it's a valid map.
@@ -1195,7 +1196,7 @@ load_again:
   double NodeBuildTime = -Sys_Time();
   //bool glNodesFound = false;
 
-  if (/*cachedDataLoaded*/hasCacheFile) {
+  if (hasCacheFile) {
     UseComprGLNodes = false;
     CompressedGLNodesLump = -1;
     NeedNodesBuild = false;
@@ -1223,7 +1224,7 @@ load_again:
   double SidesTime = 0;
   double DecalProcessingTime = 0;
   // begin processing map lumps
-  if (LevelFlags & LF_TextMap) {
+  if (LevelFlags&LF_TextMap) {
     VertexTime = -Sys_Time();
     LoadTextMap(lumpnum+1, MInfo);
     VertexTime += Sys_Time();
@@ -1268,6 +1269,7 @@ load_again:
   Lines2Time += Sys_Time();
 
   if (hasCacheFile) {
+    //GCon->Logf("using cache file: %s", *cacheFileName);
     VStream *strm = FL_OpenSysFileRead(cacheFileName);
     cachedDataLoaded = LoadCachedData(strm);
     if (!cachedDataLoaded) {
