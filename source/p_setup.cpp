@@ -989,13 +989,13 @@ void VLevel::LoadMap (VName AMapName) {
 
   sha512_ctx sha512ctx;
   MD5Context md5ctx;
+
+  sha512_init(&sha512ctx);
   md5ctx.Init();
 
   bool sha512valid = false;
   VStr cacheFileName;
   VStr cacheDir = getCacheDir();
-
-  if (cacheDir.length()) sha512_init(&sha512ctx);
 
   // check for UDMF map
   if (W_LumpName(lumpnum+1) == NAME_textmap) {
@@ -1017,7 +1017,7 @@ void VLevel::LoadMap (VName AMapName) {
         }
       }
     }
-    /*if (cacheDir.length())*/ sha512valid = hashLump(&sha512ctx, &md5ctx, lumpnum+1);
+    sha512valid = hashLump(&sha512ctx, &md5ctx, lumpnum+1);
   } else {
     // find all lumps
     int LIdx = lumpnum+1;
@@ -1034,18 +1034,18 @@ void VLevel::LoadMap (VName AMapName) {
     if (W_LumpName(LIdx) == NAME_blockmap) BlockmapLump = LIdx++;
 
     sha512valid = hashLump(nullptr, &md5ctx, lumpnum); // md5
-    sha512valid = hashLump(nullptr, &md5ctx, ThingsLump); // md5
+    sha512valid = sha512valid || hashLump(nullptr, &md5ctx, ThingsLump); // md5
 
-    /*if (cacheDir.length())*/ sha512valid = hashLump(&sha512ctx, &md5ctx, LinesLump);
-    /*if (cacheDir.length())*/ sha512valid = hashLump(&sha512ctx, &md5ctx, SidesLump);
-    /*if (cacheDir.length())*/ sha512valid = hashLump(&sha512ctx, nullptr, VertexesLump); // not in md5
-    /*if (cacheDir.length())*/ sha512valid = hashLump(&sha512ctx, &md5ctx, SectorsLump);
+    sha512valid = sha512valid || hashLump(&sha512ctx, &md5ctx, LinesLump);
+    sha512valid = sha512valid || hashLump(&sha512ctx, &md5ctx, SidesLump);
+    sha512valid = sha512valid || hashLump(&sha512ctx, nullptr, VertexesLump); // not in md5
+    sha512valid = sha512valid || hashLump(&sha512ctx, &md5ctx, SectorsLump);
 
     // determine level format
     if (W_LumpName(LIdx) == NAME_behavior) {
       LevelFlags |= LF_Extended;
       BehaviorLump = LIdx++;
-      /*if (cacheDir.length())*/ sha512valid = hashLump(&sha512ctx, &md5ctx, BehaviorLump);
+      sha512valid = sha512valid || hashLump(nullptr, &md5ctx, BehaviorLump); // md5
     }
 
     //  Verify that it's a valid map.
@@ -1078,24 +1078,21 @@ void VLevel::LoadMap (VName AMapName) {
   }
   InitTime += Sys_Time();
 
-  VStr sha512hashstr;
   if (sha512valid) {
     vuint8 sha512hash[SHA512_DIGEST_SIZE];
     sha512_final(&sha512ctx, sha512hash);
-    sha512hashstr = VStr::buf2hex(sha512hash, SHA512_DIGEST_SIZE);
-    MapHash = sha512hashstr;
+    MapHash = VStr::buf2hex(sha512hash, SHA512_DIGEST_SIZE);
     vuint8 md5digest[MD5Context::DIGEST_SIZE];
     md5ctx.Final(md5digest);
     MapHashMD5 = VStr::buf2hex(md5digest, MD5Context::DIGEST_SIZE);
 
-    if (dbg_show_map_hash) GCon->Logf("MAP HASH SHA: %s", *sha512hashstr);
+    if (dbg_show_map_hash) GCon->Logf("MAP HASH SHA: %s", *MapHash);
     if (dbg_show_map_hash) GCon->Logf("MAP HASH MD5: %s", *MapHashMD5);
   }
 
   bool cachedDataLoaded = false;
   if (sha512valid && cacheDir.length()) {
-    if (dbg_show_map_hash)
-    cacheFileName = VStr("mapcache_")+sha512hashstr+".cache";
+    cacheFileName = VStr("mapcache_")+MapHash+".cache";
     cacheFileName = cacheDir+"/"+cacheFileName;
   } else {
     sha512valid = false;
