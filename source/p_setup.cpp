@@ -3475,20 +3475,35 @@ int VLevel::IsDeepWater (line_t *line) {
 #ifdef DEBUG_DEEP_WATERS
       if (dbg_deep_water) {
         int lidx = (int)(ptrdiff_t)(line-Lines);
-        GCon->Logf("    DEEP WATER; LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
-        GCon->Logf("    DEEP WATER; LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
-        //if (!line->partner) GCon->Logf("  NO PARTNER!");
+        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
+        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
       }
     }
 #endif
   }
-  /*
-  // ceiling: front sidedef should have no texture
-  if (Sides[line->sidenum[1]].TopTexture == 0 && !line->frontsector->heightsec) {
-    // it should be higher than front
-    if (line->frontsector->ceiling.minz < line->backsector->ceiling.minz) res |= 2;
+
+  // front sector floor is lower than back sector floor, and
+  // back sidedef has no texture, and
+  // front sidedef has no texture
+  if (line->frontsector->floor.minz < line->backsector->floor.minz && !line->frontsector->heightsec &&
+      Sides[line->sidenum[1]].BottomTexture == 0 &&
+      Sides[line->sidenum[0]].BottomTexture == 0)
+  {
+    res |= 2;
+#ifdef DEBUG_DEEP_WATERS
+    if (dbg_deep_water) {
+      int lidx = (int)(ptrdiff_t)(line-Lines);
+      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
+      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
+    }
+#endif
   }
-  */
+/*
+211: -128..128
+ 20: 0..128
+front: 211
+back: 20
+*/
 
   // done
   return res;
