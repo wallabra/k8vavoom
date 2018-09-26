@@ -1367,8 +1367,6 @@ load_again:
   FloodZones();
   FloodZonesTime += Sys_Time();
 
-  FixDeepWaters();
-
   double ConvTime = -Sys_Time();
   // load conversations
   LoadRogueConScript(GGameInfo->GenericConScript, -1, GenericSpeeches, NumGenericSpeeches);
@@ -1435,6 +1433,10 @@ load_again:
   DecalProcessingTime = -Sys_Time();
   PostProcessForDecals();
   DecalProcessingTime += Sys_Time();
+
+  // do it here, so it won't touch sloped floors
+  FixDeepWaters();
+
 
   TotalTime += Sys_Time();
   if (true || show_level_load_times) {
@@ -3962,11 +3964,20 @@ int VLevel::IsDeepWater (line_t *line) {
         int lidx = (int)(ptrdiff_t)(line-Lines);
         GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
         GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
+        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_floor_plane_norm=(%f,%f,%f)", lidx, line->frontsector->floor.normal.x, line->frontsector->floor.normal.y, line->frontsector->floor.normal.z);
+        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_ceiling_plane_norm=(%f,%f,%f)", lidx, line->frontsector->ceiling.normal.x, line->frontsector->ceiling.normal.y, line->frontsector->ceiling.normal.z);
+        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; back_floor_plane_norm=(%f,%f,%f)", lidx, line->backsector->floor.normal.x, line->backsector->floor.normal.y, line->backsector->floor.normal.z);
+        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; back_ceiling_plane_norm=(%f,%f,%f)", lidx, line->backsector->ceiling.normal.x, line->backsector->ceiling.normal.y, line->backsector->ceiling.normal.z);
       }
     }
 #endif
   }
 
+  //FIXME: temporarily turned off
+  //TODO: process according to https://doomwiki.org/wiki/Instant_raising_and_lowering_sectors
+  //      i.e. find all linedefs that does "instant rising", and process only tagged "instant" sectors
+
+  /*
   // front sector floor is lower than back sector floor, and
   // back sidedef has no texture, and
   // front sidedef has no lower and upper texture (and middle too?)
@@ -3980,9 +3991,14 @@ int VLevel::IsDeepWater (line_t *line) {
       int lidx = (int)(ptrdiff_t)(line-Lines);
       GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
       GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
+      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_floor_plane_norm=(%f,%f,%f)", lidx, line->frontsector->floor.normal.x, line->frontsector->floor.normal.y, line->frontsector->floor.normal.z);
+      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_ceiling_plane_norm=(%f,%f,%f)", lidx, line->frontsector->ceiling.normal.x, line->frontsector->ceiling.normal.y, line->frontsector->ceiling.normal.z);
+      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; back_floor_plane_norm=(%f,%f,%f)", lidx, line->backsector->floor.normal.x, line->backsector->floor.normal.y, line->backsector->floor.normal.z);
+      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; back_ceiling_plane_norm=(%f,%f,%f)", lidx, line->backsector->ceiling.normal.x, line->backsector->ceiling.normal.y, line->backsector->ceiling.normal.z);
     }
 #endif
   }
+  */
 /*
 211: -128..128
  20: 0..128
@@ -4068,7 +4084,7 @@ void VLevel::FixDeepWaters () {
     FixSelfRefDeepWater();
   }
 
-  if (deepwater_hacks_extra) {
+  if (deepwater_hacks_extra && (LevelFlags&LF_Extended) == 0) {
     for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
       if (!IsDeepOk(sec)) continue;
