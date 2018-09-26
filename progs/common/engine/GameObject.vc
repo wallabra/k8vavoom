@@ -415,6 +415,8 @@ enum {
   LNSPEC_LightStrobe,
   LNSPEC_LightStop,
 
+  LNSPEC_PlaneCopy, // 118
+
   LNSPEC_ThingDamage = 119,
   LNSPEC_QuakeTremor,// 120
   LNSPEC_LineSetIdentification,

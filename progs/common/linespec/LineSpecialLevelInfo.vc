@@ -1232,6 +1232,7 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
   // LNSPEC_3DFloor:
   // LNSPEC_Contents:
   // LNSPEC_PlaneAlign:
+  // LNSPEC_PlaneCopy:
   // LNSPEC_TransferHeights:
   // LNSPEC_ScrollTextureModel:
   // LNSPEC_ScrollTextureOffsets:

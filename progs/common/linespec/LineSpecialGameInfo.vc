@@ -872,74 +872,120 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
 //
 //==========================================================================
 
-void SetSlopes(Level InLevel)
-{
-  int i, s;
-
-  for (i = 0; i < InLevel.Lines.length; i++)
-  {
-    if (InLevel.Lines[i].special == LNSPEC_PlaneAlign)
-    {
-      InLevel.Lines[i].special = 0;
-      InLevel.Lines[i].LineTag = InLevel.Lines[i].arg3;
-      if (InLevel.Lines[i].backsector != nullptr)
-      {
-        // args[0] is for floor, args[1] is for ceiling
-        //
-        // As a special case, if args[1] is 0,
-        // then args[0], bits 2-3 are for ceiling.
-        for (s = 0; s < 2; s++)
-        {
-          int bits = (s == 0 ? InLevel.Lines[i].arg1 :
-            InLevel.Lines[i].arg2) & 3;
-
-          if (s == 1 && bits == 0)
-            bits = (InLevel.Lines[i].arg1 >> 2) & 3;
-
-          if (bits == 1)      // align front side to back
-            AlignPlane(InLevel, InLevel.Lines[i].frontsector,
-              &InLevel.Lines[i], s);
-          else if (bits == 2)   // align back side to front
-            AlignPlane(InLevel, InLevel.Lines[i].backsector,
-              &InLevel.Lines[i], s);
+void SetSlopes (Level InLevel) {
+  array!int planeCopyList;
+  foreach (auto i; 0..InLevel.Lines.length) {
+    line_t *line = &InLevel.Lines[i];
+    switch (line.special) {
+      case LNSPEC_PlaneAlign:
+        line.special = 0;
+        line.LineTag = InLevel.Lines[i].arg3;
+        if (line.backsector) {
+          // args[0] is for floor, args[1] is for ceiling
+          //
+          // As a special case, if args[1] is 0,
+          // then args[0], bits 2-3 are for ceiling.
+          foreach (auto s; 0..2) {
+            int bits = (s == 0 ? line.arg1 : line.arg2)&3;
+            //if (s == 1 && bits == 0) bits = (InLevel.Lines[i].arg1 >> 2) & 3;
+            if (s == 1 && !line.arg2) bits = (line.arg1>>2)&3;
+            if (bits == 1) {
+              // align front side to back
+              AlignPlane(InLevel, line.frontsector, line, s);
+            } else if (bits == 2) {
+              // align back side to front
+              AlignPlane(InLevel, line.backsector, line, s);
+            }
+          }
         }
-      }
+        break;
+      case LNSPEC_PlaneCopy:
+        // save for later processing
+        planeCopyList[$] = i;
+        //print("%d: Plane_Copy", i);
+        break;
+    }
+  }
+  // copy planes
+  foreach (auto lidx; planeCopyList) {
+    //print("%d: Plane_Copy", lidx);
+    // Plane_Copy (front floor, front ceiling, back floor, back ceiling, share)
+    line_t *line = &InLevel.Lines[lidx];
+    line.special = 0;
+    CopyPlaneBetweenTaggedSectors(InLevel, line.frontsector, line.arg1, IsCeiling:false); // front floor
+    CopyPlaneBetweenTaggedSectors(InLevel, line.frontsector, line.arg2, IsCeiling:true); // front ceiling
+    CopyPlaneBetweenTaggedSectors(InLevel, line.backsector, line.arg3, IsCeiling:false); // back floor
+    CopyPlaneBetweenTaggedSectors(InLevel, line.backsector, line.arg4, IsCeiling:true); // back ceiling
+    // share
+    int share = line.arg5&3;
+    if (share && share != 3) {
+      if (share&1) CopyPlaneBetweenSectors(InLevel, line.backsector, line.frontsector, IsCeiling:false); // front floor to back floor
+      if (share&2) CopyPlaneBetweenSectors(InLevel, line.frontsector, line.backsector, IsCeiling:false); // back floor to front floor
+    }
+    share = (line.arg5>>2)&3;
+    if (share && share != 3) {
+      if (share&1) CopyPlaneBetweenSectors(InLevel, line.backsector, line.frontsector, IsCeiling:true); // front ceiling to back ceiling
+      if (share&2) CopyPlaneBetweenSectors(InLevel, line.frontsector, line.backsector, IsCeiling:true); // back ceiling to front ceiling
     }
   }
 }
 
+
 //===========================================================================
 //
-//  CopyPlane
+//  CopyPlaneBetweenSectors
 //
 //===========================================================================
-
-void CopyPlane(Level InLevel, mthing_t *mthing, bool IsCeiling)
-{
-  sector_t *dst;
-  sector_t *src;
-  int     secnum;
-
-  dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-  secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
-  if (secnum == -1)
-  {
-    return;
-  }
-
-  src = &InLevel.Sectors[secnum];
-
-  if (!IsCeiling)
-  {
+void CopyPlaneBetweenSectors (Level InLevel, sector_t *dst, sector_t *src, bool IsCeiling) {
+  if (!src || !dst || src == dst) return; // just in case
+  if (!IsCeiling) {
     dst->floor.normal = src->floor.normal;
     dst->floor.dist = src->floor.dist;
-  }
-  else
-  {
+  } else {
     dst->ceiling.normal = src->ceiling.normal;
     dst->ceiling.dist = src->ceiling.dist;
   }
 }
+
+
+//===========================================================================
+//
+//  CopyPlaneBetweenTaggedSectors
+//
+//===========================================================================
+void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srctag, bool IsCeiling) {
+  if (srctag <= 0 || !dst) return; // just in case
+  int secnum = InLevel.FindSectorFromTag(srctag, -1);
+  if (secnum == -1) return; // no source sector
+  CopyPlaneBetweenSectors(InLevel, &InLevel.Sectors[secnum], dst, IsCeiling);
+}
+
+
+//===========================================================================
+//
+//  CopyPlaneWithThing
+//
+//===========================================================================
+void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+  sector_t *dst;
+  sector_t *src;
+  int secnum;
+
+  dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
+  if (secnum == -1) return;
+
+  src = &InLevel.Sectors[secnum];
+
+  if (!IsCeiling) {
+    dst->floor.normal = src->floor.normal;
+    dst->floor.dist = src->floor.dist;
+  } else {
+    dst->ceiling.normal = src->ceiling.normal;
+    dst->ceiling.dist = src->ceiling.dist;
+  }
+}
+
 
 //==========================================================================
 //
@@ -1158,117 +1204,6 @@ void StaticInit(Level InLevel, line_t *line)
   }
 }
 
-//==========================================================================
-//
-//  IsDeepWater
-//
-//  "Deep water" is inner sector whose height is less than outer sector,
-//  and back sidedef has no lower texture
-//
-//==========================================================================
-
-// -1: self-referenced; 1: "simple"
-final int IsDeepWater (Level InLevel, line_t *line) {
-  if (!line || !line->frontsector || !line->backsector) return 0;
-  if (line->backsector->heightsec) return 0; // already processed
-  if (line->sidenum[0] < 0 || line->sidenum[1] < 0) return 0;
-  // ignore sloped floors
-  if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
-  if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
-  // back sidedef should have no texture
-  if (InLevel.Sides[line->sidenum[1]].BottomTexture != 0) return 0;
-  if (InLevel.Sides[line->sidenum[1]].TopTexture != 0) return 0;
-  if (InLevel.Sides[line->sidenum[1]].MidTexture != 0) return 0;
-  // self-referenced?
-  if (line->frontsector == line->backsector) return -1;
-  // it should be lower than front
-  if (line->frontsector->floor.minz <= line->backsector->floor.minz) return 0;
-  // yeah
-  return 1;
-}
-
-final void FixDeepWater (Level InLevel, int lidx, line_t *line) {
-  return;
-  if (!line->backsector) return;
-  if (line->backsector->heightsec) return; // already processed
-
-  int type = IsDeepWater(InLevel, line);
-  if (type == 0) return; // not a deep water
-
-/*
-  if (lidx == 627 || lidx == 619) {
-    line->backsector->heightsec = &InLevel.Sectors[97]; //InLevel.Lines[613].frontsector;
-    line->backsector->bIgnoreHeightSec = false;
-    line->backsector->bFakeFloorOnly = true;
-    line->backsector->bNoFakeLight = true;
-    line->backsector->bClipFakePlanes = true;
-    return;
-  }
-*/
-
-  /*
-  if (lidx == 616 && line->backsector) {
-    print("*** %d", (line->frontsector == InLevel.Lines[619].backsector ? 999 : 0));
-  }
-  if (lidx == 619) {
-    print("#619: btex(u,m,l)=(%d,%d,%d) %d %d",
-      InLevel.Sides[line->sidenum[1]].TopTexture,
-      InLevel.Sides[line->sidenum[1]].MidTexture,
-      InLevel.Sides[line->sidenum[1]].BottomTexture,
-      (IsDeepWater(InLevel, line) ? 1 : 0),
-      (line->frontsector == line->backsector ? 666 : 0)
-    );
-
-    print("line #%d: frontfloor=(%f,%f); backfloor=(%f,%f); ftex(u,m,l)=(%d,%d,%d); btex(u,m,l)=(%d,%d,%d);", lidx,
-      line->frontsector->floor.minz, line->frontsector->floor.maxz,
-      line->backsector->floor.minz, line->backsector->floor.maxz,
-      InLevel.Sides[line->sidenum[0]].TopTexture,
-      InLevel.Sides[line->sidenum[0]].MidTexture,
-      InLevel.Sides[line->sidenum[0]].BottomTexture,
-      InLevel.Sides[line->sidenum[1]].TopTexture,
-      InLevel.Sides[line->sidenum[1]].MidTexture,
-      InLevel.Sides[line->sidenum[1]].BottomTexture
-    );
-  }
-  */
-
-  /*
-  print("line #%d: frontfloor=(%f,%f); backfloor=(%f,%f); ftex(u,m,l)=(%d,%d,%d); btex(u,m,l)=(%d,%d,%d);", lidx,
-    line->frontsector->floor.minz, line->frontsector->floor.maxz,
-    line->backsector->floor.minz, line->backsector->floor.maxz,
-    InLevel.Sides[line->sidenum[0]].TopTexture,
-    InLevel.Sides[line->sidenum[0]].MidTexture,
-    InLevel.Sides[line->sidenum[0]].BottomTexture,
-    InLevel.Sides[line->sidenum[1]].TopTexture,
-    InLevel.Sides[line->sidenum[1]].MidTexture,
-    InLevel.Sides[line->sidenum[1]].BottomTexture
-  );
-  */
-  if (type > 0) {
-    // mark as deep water
-    print("*** DEEP WATER; LINEDEF #%d", lidx);
-    line->backsector->bIgnoreHeightSec = false;
-    line->backsector->bFakeFloorOnly = true;
-    line->backsector->bNoFakeLight = true;
-    line->backsector->bClipFakePlanes = true;
-    line->backsector->heightsec = line->frontsector;
-  } else {
-    print("SELF-REFERENCED, LINEDEF #%d", lidx);
-  }
-/*
-  bool      bHasExtrafloors;  //  This sector has extrafloors.
-  bool      bExtrafloorSource;  //  This sector is a source of an extrafloor.
-  bool      bTransferSource;  //  Source of an heightsec or transfer light.
-  bool      bFakeFloorOnly;   //  When used as heightsec in R_FakeFlat, only copies floor
-  bool      bClipFakePlanes;  //  As a heightsec, clip planes to target sector's planes
-  bool      bNoFakeLight;   //  heightsec does not change lighting
-  bool      bIgnoreHeightSec; //  heightsec is only for triggering sector actions
-  bool      bUnderWater;    //  Sector is underwater
-  bool      bSilent;      //  Actors don't make noise in this sector.
-  bool      bNoFallingDamage; //  No falling damage in this sector.
-*/
-}
-
 
 //==========================================================================
 //
@@ -1359,165 +1294,136 @@ override void SpawnWorld(Level InLevel)
   MakeVertexFloorHeights(InLevel);
   MakeVertexCeilingHeights(InLevel);
   CleanVertexHeights(InLevel);
-  for (i = 0; i < InLevel.Things.length; i++)
-  {
+
+  for (i = 0; i < InLevel.Things.length; i++) {
     mthing = &InLevel.Things[i];
     if (mthing->type == COPY_FLOOR_PLANE_TYPE ||
-      mthing->type == COPY_CEILING_PLANE_TYPE)
+        mthing->type == COPY_CEILING_PLANE_TYPE)
     {
-      CopyPlane(InLevel, mthing, mthing->type & 1);
+      CopyPlaneWithThing(InLevel, mthing, mthing->type & 1);
       mthing->type = 0;
     }
   }
 
-  //  Set up 3D floors, transfers of light, etc.
-  //print("******* LINES: %d", InLevel.Lines.length);
-  for (i = 0; i < InLevel.Lines.length; i++)
-  {
+  // set up 3D floors, transfers of light, etc.
+  for (i = 0; i < InLevel.Lines.length; i++) {
     line = &InLevel.Lines[i];
-    FixDeepWater(InLevel, i, line);
-    switch (line->special)
-    {
-    case LNSPEC_SectorSet3dFloor:
-      SpawnExtraFloors(InLevel, line);
-      line->special = 0;
-      break;
-    case LNSPEC_Contents:
-      MakeContents(line);
-      line->special = 0;
-      break;
-    case LNSPEC_TransferFloorLight:
-      for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
-        SecNum >= 0;
-        SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
-      {
-        InLevel.SetFloorLightSector(&InLevel.Sectors[SecNum],
-          line->frontsector);
-      }
-      line->special = 0;
-      line->frontsector->bTransferSource = true;
-      break;
-    case LNSPEC_TransferCeilingLight:
-      for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
-        SecNum >= 0;
-        SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
-      {
-        InLevel.SetCeilingLightSector(&InLevel.Sectors[SecNum],
-          line->frontsector);
-      }
-      line->special = 0;
-      line->frontsector->bTransferSource = true;
-      break;
-    case LNSPEC_SectorSetFriction:
-      if (line->arg2)
-      {
-        //  Allow setting friction amount from parameter
-        length = line->arg2 <= 200 ? line->arg2 : 200;
-      }
-      else
-      {
-        length = ftoi(Length(*line->v2 - *line->v1));
-      }
-      SetSectorFriction(InLevel, line->arg1, length, false);
-      line->special = 0;
-      break;
-    case LNSPEC_TransferHeights:
-      MakeHeightSec(InLevel, line);
-      line->special = 0;
-      break;
-    case LNSPEC_StaticInit:
-      StaticInit(InLevel, line);
-      line->special = 0;
-      break;
+    switch (line->special) {
+      case LNSPEC_SectorSet3dFloor:
+        SpawnExtraFloors(InLevel, line);
+        line->special = 0;
+        break;
+      case LNSPEC_Contents:
+        MakeContents(line);
+        line->special = 0;
+        break;
+      case LNSPEC_TransferFloorLight:
+        for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
+             SecNum >= 0;
+             SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
+        {
+          InLevel.SetFloorLightSector(&InLevel.Sectors[SecNum], line->frontsector);
+        }
+        line->special = 0;
+        line->frontsector->bTransferSource = true;
+        break;
+      case LNSPEC_TransferCeilingLight:
+        for (SecNum = InLevel.FindSectorFromTag(line->arg1, -1);
+             SecNum >= 0;
+             SecNum = InLevel.FindSectorFromTag(line->arg1, SecNum))
+        {
+          InLevel.SetCeilingLightSector(&InLevel.Sectors[SecNum], line->frontsector);
+        }
+        line->special = 0;
+        line->frontsector->bTransferSource = true;
+        break;
+      case LNSPEC_SectorSetFriction:
+        if (line->arg2) {
+          // allow setting friction amount from parameter
+          length = line->arg2 <= 200 ? line->arg2 : 200;
+        } else {
+          length = ftoi(Length(*line->v2 - *line->v1));
+        }
+        SetSectorFriction(InLevel, line->arg1, length, false);
+        line->special = 0;
+        break;
+      case LNSPEC_TransferHeights:
+        MakeHeightSec(InLevel, line);
+        line->special = 0;
+        break;
+      case LNSPEC_StaticInit:
+        StaticInit(InLevel, line);
+        line->special = 0;
+        break;
     }
   }
 
-  //  Initialise initial friction values.
-  for (i = 0; i < InLevel.Sectors.length; i++)
-  {
+  // initialise initial friction values
+  for (i = 0; i < InLevel.Sectors.length; i++) {
     InLevel.Sectors[i].Friction = EntityEx::FRICTION_NORMAL;
-    //  Handle Sky2 sector special.
-    if (InLevel.Sectors[i].special == SECSPEC_Sky2)
-    {
+    // handle Sky2 sector special
+    if (InLevel.Sectors[i].special == SECSPEC_Sky2) {
       InLevel.Sectors[i].Sky = SKY_FROM_SIDE;
     }
   }
 
-  //  Process translucent lines
-  for (i = 0; i < InLevel.Lines.length; i++)
-  {
+  // process translucent lines
+  for (i = 0; i < InLevel.Lines.length; i++) {
     line = &InLevel.Lines[i];
-    switch (line->special)
-    {
-    case LNSPEC_LineTranslucent:
-      alpha = itof(line->arg2) / 255.0;
-      if (line->arg1)
-      {
-        for (j = 0; j < InLevel.Lines.length; j++)
-        {
-          if (InLevel.Lines[j].LineTag == line->arg1)
-          {
-            InLevel.Lines[j].alpha = alpha;
-            if (line->arg3 == 1)
-            {
-              InLevel.Lines[j].flags |= ML_ADDITIVE;
+    switch (line->special) {
+      case LNSPEC_LineTranslucent:
+        alpha = fclamp(float(line->arg2)/255.0, 0, 255);
+        if (line->arg1) {
+          for (j = 0; j < InLevel.Lines.length; ++j) {
+            if (InLevel.Lines[j].LineTag == line->arg1) {
+              InLevel.Lines[j].alpha = alpha;
+              if (line->arg3 == 1) InLevel.Lines[j].flags |= ML_ADDITIVE;
             }
           }
+        } else {
+          line->alpha = alpha;
+          if (line->arg3 == 1) line->flags |= ML_ADDITIVE;
         }
-      }
-      else
-      {
-        line->alpha = alpha;
-        if (line->arg3 == 1)
-        {
-          line->flags |= ML_ADDITIVE;
-        }
-      }
-      line->special = 0;
-      break;
-
-    case LNSPEC_GlassBreak:
-      if (line->arg2 != 255)
-      {
-        line->alpha = itof(line->arg2) / 255.0;
-      }
-      break;
+        line->special = 0;
+        break;
+      case LNSPEC_GlassBreak:
+        if (line->arg2 != 255) line->alpha = fclamp(float(line->arg2)/255.0, 0, 255);
+        break;
     }
   }
 
-  //  Spawn polyobjects.
-  for (i = 0; i < InLevel.Things.length; i++)
-  {
+  // spawn polyobjects
+  for (i = 0; i < InLevel.Things.length; i++) {
     mthing = &InLevel.Things[i];
-    switch (mthing->type)
-    {
-    case PO_SPAWN_TYPE_HEXEN:
-    case PO_SPAWNCRUSH_TYPE_HEXEN:
-      if (!bUseHexenPolyobjTypes) break;
-      goto case; //k8: is it right???
-    case PO_SPAWN_TYPE:
-    case PO_SPAWNCRUSH_TYPE:
-    case PO_SPAWNHURT_TYPE:
-      // Polyobj StartSpot Pt.
-      InLevel.SpawnPolyobj(mthing->x, mthing->y, mthing->angle,
-        mthing->type == PO_SPAWNCRUSH_TYPE_HEXEN ||
-        mthing->type == PO_SPAWNCRUSH_TYPE ||
-        mthing->type == PO_SPAWNHURT_TYPE,
-        mthing->type == PO_SPAWNHURT_TYPE);
-      mthing->type = 0;
-      break;
+    switch (mthing->type) {
+      case PO_SPAWN_TYPE_HEXEN:
+      case PO_SPAWNCRUSH_TYPE_HEXEN:
+        if (!bUseHexenPolyobjTypes) break;
+        goto case; //k8: is it right???
+      case PO_SPAWN_TYPE:
+      case PO_SPAWNCRUSH_TYPE:
+      case PO_SPAWNHURT_TYPE:
+        // Polyobj StartSpot Pt.
+        InLevel.SpawnPolyobj(mthing->x, mthing->y, mthing->angle,
+          mthing->type == PO_SPAWNCRUSH_TYPE_HEXEN ||
+          mthing->type == PO_SPAWNCRUSH_TYPE ||
+          mthing->type == PO_SPAWNHURT_TYPE,
+          mthing->type == PO_SPAWNHURT_TYPE);
+        mthing->type = 0;
+        break;
 
-    case PO_ANCHOR_TYPE_HEXEN:
-      if (!bUseHexenPolyobjTypes) break;
-      goto case; //k8: is it right???
-    case PO_ANCHOR_TYPE:
-      // Polyobj Anchor Pt.
-      InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, mthing->angle);
-      mthing->type = 0;
-      break;
+      case PO_ANCHOR_TYPE_HEXEN:
+        if (!bUseHexenPolyobjTypes) break;
+        goto case; //k8: is it right???
+      case PO_ANCHOR_TYPE:
+        // Polyobj Anchor Pt.
+        InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, mthing->angle);
+        mthing->type = 0;
+        break;
     }
   }
 }
+
 
 //==========================================================================
 //
