@@ -79,10 +79,11 @@ import 'linespec';
 #include "ConDialog.vc"
 
 #include "StatusBarShared.vc"
-#include "HUDMessage.vc"
-#include "HUDMessageFadeOut.vc"
-#include "HUDMessageTypeOnFadeOut.vc"
-#include "HUDMessageFadeInOut.vc"
+
+#include "hud/HUDMessage.vc"
+#include "hud/HUDMessageFadeOut.vc"
+#include "hud/HUDMessageTypeOnFadeOut.vc"
+#include "hud/HUDMessageFadeInOut.vc"
 
 #include "IntermissionBackground.vc"
 
