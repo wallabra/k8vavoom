@@ -3484,10 +3484,10 @@ int VLevel::IsDeepWater (line_t *line) {
 
   // front sector floor is lower than back sector floor, and
   // back sidedef has no texture, and
-  // front sidedef has no texture
+  // front sidedef has no lower and upper texture (and middle too?)
   if (line->frontsector->floor.minz < line->backsector->floor.minz && !line->frontsector->heightsec &&
-      Sides[line->sidenum[1]].BottomTexture == 0 &&
-      Sides[line->sidenum[0]].BottomTexture == 0)
+      Sides[line->sidenum[1]].BottomTexture == 0 && Sides[line->sidenum[1]].TopTexture == 0 && Sides[line->sidenum[1]].MidTexture == 0 &&
+      Sides[line->sidenum[0]].BottomTexture == 0 && Sides[line->sidenum[0]].TopTexture == 0 && Sides[line->sidenum[0]].MidTexture == 0)
   {
     res |= 2;
 #ifdef DEBUG_DEEP_WATERS
