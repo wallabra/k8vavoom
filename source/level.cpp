@@ -623,7 +623,7 @@ void VLevel::Destroy () {
     Sectors[0].lines = nullptr;
   }
 
-  if (Segs && NumSegs) {
+  if (Segs) {
     for (int f = 0; f < NumSegs; ++f) {
       decal_t *decal = Segs[f].decals;
       while (decal) {
@@ -643,23 +643,31 @@ void VLevel::Destroy () {
 
   delete[] Vertexes;
   Vertexes = nullptr;
+  NumVertexes = 0;
   delete[] Sectors;
   Sectors = nullptr;
+  NumSectors = 0;
   delete[] Sides;
   Sides = nullptr;
+  NumSides = 0;
   delete[] Lines;
   Lines = nullptr;
+  NumLines = 0;
   delete[] Segs;
   Segs = nullptr;
+  NumSegs = 0;
   delete[] Subsectors;
   Subsectors = nullptr;
+  NumSubsectors = 0;
   delete[] Nodes;
   Nodes = nullptr;
+  NumNodes = 0;
   if (VisData) delete[] VisData; else delete[] NoVis;
   VisData = nullptr;
   NoVis = nullptr;
   delete[] BlockMapLump;
   BlockMapLump = nullptr;
+  BlockMapLumpSize = 0;
   delete[] BlockLinks;
   BlockLinks = nullptr;
   delete[] RejectMatrix;
@@ -667,8 +675,10 @@ void VLevel::Destroy () {
   RejectMatrixSize = 0;
   delete[] Things;
   Things = nullptr;
+  NumThings = 0;
   delete[] Zones;
   Zones = nullptr;
+  NumZones = 0;
 
   delete[] BaseLines;
   BaseLines = nullptr;

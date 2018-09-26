@@ -132,7 +132,7 @@ enum
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 002.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 003.\n";
 static bool cacheCleanupComplete = false;
 
 
@@ -606,6 +606,81 @@ static void doPlaneIO (VStream *strm, TPlane *n) {
 
 //==========================================================================
 //
+//  VLevel::ClearCachedData
+//
+//==========================================================================
+void VLevel::ClearAllLevelData () {
+  if (Sectors) {
+    for (int i = 0; i < NumSectors; ++i) {
+      sec_region_t *r = Sectors[i].botregion;
+      while (r) {
+        sec_region_t *Next = r->next;
+        delete r;
+        r = Next;
+      }
+    }
+    // line buffer is shared, so this correctly deletes it
+    delete[] Sectors[0].lines;
+    Sectors[0].lines = nullptr;
+  }
+
+  for (int f = 0; f < NumLines; ++f) {
+    line_t *ld = Lines+f;
+    delete[] ld->v1lines;
+    delete[] ld->v2lines;
+  }
+
+  delete[] Vertexes;
+  Vertexes = nullptr;
+  NumVertexes = 0;
+
+  delete[] Sectors;
+  Sectors = nullptr;
+  NumSectors = 0;
+
+  delete[] Sides;
+  Sides = nullptr;
+  NumSides = 0;
+
+  delete[] Lines;
+  Lines = nullptr;
+  NumLines = 0;
+
+  delete[] Segs;
+  Segs = nullptr;
+  NumSegs = 0;
+
+  delete[] Subsectors;
+  Subsectors = nullptr;
+  NumSubsectors = 0;
+
+  delete[] Nodes;
+  Nodes = nullptr;
+  NumNodes = 0;
+
+  if (VisData) delete[] VisData; else delete[] NoVis;
+  VisData = nullptr;
+  NoVis = nullptr;
+
+  delete[] BlockMapLump;
+  BlockMapLump = nullptr;
+  BlockMapLumpSize = 0;
+
+  delete[] BlockLinks;
+  BlockLinks = nullptr;
+
+  delete[] RejectMatrix;
+  RejectMatrix = nullptr;
+  RejectMatrixSize = 0;
+
+  delete[] Things;
+  Things = nullptr;
+  NumThings = 0;
+}
+
+
+//==========================================================================
+//
 //  VLevel::SaveCachedData
 //
 //==========================================================================
@@ -646,6 +721,7 @@ void VLevel::SaveCachedData (VStream *strm) {
   }
 
   // write vertex indicies in linedefs
+  *arrstrm << NumLines;
   GCon->Logf("cache: writing %d linedef vertices", NumLines);
   for (int f = 0; f < NumLines; ++f) {
     line_t &L = Lines[f];
@@ -769,14 +845,14 @@ bool VLevel::LoadCachedData (VStream *strm) {
   // flags (nothing for now)
   vuint32 flags = 0x29a;
   *arrstrm << flags;
-  if (flags != 0) { delete arrstrm; Host_Error("cache file corrupted (flags)"); }
+  if (flags != 0) { delete arrstrm; GCon->Log("cache file corrupted (flags)"); return false; }
 
   //TODO: more checks
 
   // nodes
   *arrstrm << NumNodes;
   GCon->Logf("cache: reading %d nodes", NumNodes);
-  if (NumNodes == 0 || NumNodes > 0x1fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (nodes)"); }
+  if (NumNodes == 0 || NumNodes > 0x1fffffff) { delete arrstrm; GCon->Log("cache file corrupted (nodes)"); return false; }
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, NumNodes*sizeof(node_t));
   for (int f = 0; f < NumNodes; ++f) {
@@ -804,6 +880,9 @@ bool VLevel::LoadCachedData (VStream *strm) {
   }
 
   // fix up vertex pointers in linedefs
+  int lncount;
+  *arrstrm << lncount;
+  if (lncount != NumLines) { delete arrstrm; GCon->Log("cache file corrupted (linedefs)"); return false; }
   GCon->Logf("cache: reading %d linedef vertices", NumLines);
   for (int f = 0; f < NumLines; ++f) {
     line_t &L = Lines[f];
@@ -834,7 +913,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
   // sectors
   GCon->Logf("cache: reading %d sectors", NumSectors);
   *arrstrm << checkSecNum;
-  if (checkSecNum != NumSectors) { delete arrstrm; delete strm; Host_Error("cache file corrupted (sectors)"); }
+  if (checkSecNum != NumSectors) { delete arrstrm; GCon->Logf("cache file corrupted (sectors)"); return false; }
   for (int f = 0; f < NumSectors; ++f) {
     sector_t *sector = &Sectors[f];
     vint32 ssnum = -1;
@@ -853,11 +932,11 @@ bool VLevel::LoadCachedData (VStream *strm) {
     doPlaneIO(arrstrm, seg);
     vint32 v1num = -1;
     *arrstrm << v1num;
-    if (v1num < 0) { delete arrstrm; delete strm; Host_Error("cache file corrupted (seg v1)"); }
+    if (v1num < 0) { delete arrstrm; GCon->Log("cache file corrupted (seg v1)"); return false; }
     seg->v1 = Vertexes+v1num;
     vint32 v2num = -1;
     *arrstrm << v2num;
-    if (v2num < 0) { delete arrstrm; delete strm; Host_Error("cache file corrupted (seg v2)"); }
+    if (v2num < 0) { delete arrstrm; GCon->Log("cache file corrupted (seg v2)"); return false; }
     seg->v2 = Vertexes+v2num;
     *arrstrm << seg->offset;
     *arrstrm << seg->length;
@@ -884,7 +963,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // reject
   *arrstrm << RejectMatrixSize;
-  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (reject)"); }
+  if (RejectMatrixSize < 0 || RejectMatrixSize > 0x1fffffff) { delete arrstrm; GCon->Log("cache file corrupted (reject)"); return false; }
   if (RejectMatrixSize) {
     GCon->Logf("cache: reading %d bytes of reject table", RejectMatrixSize);
     RejectMatrix = new vuint8[RejectMatrixSize];
@@ -893,7 +972,7 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // blockmap
   *arrstrm << BlockMapLumpSize;
-  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (blockmap)"); }
+  if (BlockMapLumpSize < 0 || BlockMapLumpSize > 0x1fffffff) { delete arrstrm; GCon->Log("cache file corrupted (blockmap)"); return false; }
   if (BlockMapLumpSize) {
     GCon->Logf("cache: reading %d cells of blockmap table", BlockMapLumpSize);
     BlockMapLump = new vint32[BlockMapLumpSize];
@@ -902,14 +981,14 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // pvs
   *arrstrm << vissize;
-  if (vissize < 0 || vissize > 0x6fffffff) { delete arrstrm; delete strm; Host_Error("cache file corrupted (pvs)"); }
+  if (vissize < 0 || vissize > 0x6fffffff) { delete arrstrm; GCon->Log("cache file corrupted (pvs)"); return false; }
   if (vissize > 0) {
     GCon->Logf("cache: reading %d bytes of pvs table", vissize);
     VisData = new vuint8[vissize];
     arrstrm->Serialize(VisData, vissize);
   }
 
-  if (arrstrm->IsError()) { delete arrstrm; delete strm; Host_Error("cache file corrupted (read error)"); }
+  if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cache file corrupted (read error)"); return false; }
   delete arrstrm;
   return true;
 }
@@ -930,6 +1009,7 @@ void VLevel::LoadMap (VName AMapName) {
   decanimlist = nullptr;
   decanimuid = 0;
 
+load_again:
   double TotalTime = -Sys_Time();
   double InitTime = -Sys_Time();
   MapName = AMapName;
@@ -1112,7 +1192,7 @@ void VLevel::LoadMap (VName AMapName) {
   }
 
   double NodeBuildTime = -Sys_Time();
-  bool glNodesFound = false;
+  //bool glNodesFound = false;
 
   if (/*cachedDataLoaded*/hasCacheFile) {
     UseComprGLNodes = false;
@@ -1125,7 +1205,7 @@ void VLevel::LoadMap (VName AMapName) {
         GCon->Logf("no GL nodes found, VaVoom will use internal node builder");
         NeedNodesBuild = true;
       } else {
-        glNodesFound = true;
+        //glNodesFound = true;
       }
     } else {
       if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
@@ -1191,7 +1271,11 @@ void VLevel::LoadMap (VName AMapName) {
     cachedDataLoaded = LoadCachedData(strm);
     if (!cachedDataLoaded) {
       GCon->Logf("cache data is obsolete or in invalid format");
-      if (!glNodesFound) NeedNodesBuild = true;
+      delete strm;
+      Sys_FileDelete(cacheFileName);
+      ClearAllLevelData();
+      goto load_again;
+      //if (!glNodesFound) NeedNodesBuild = true;
     }
     delete strm;
   }

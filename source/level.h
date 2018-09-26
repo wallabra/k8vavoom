@@ -311,6 +311,7 @@ class VLevel : public VGameObject {
 
   void SaveCachedData (VStream *strm);
   bool LoadCachedData (VStream *strm);
+  void ClearAllLevelData (); // call this if cache is corrupted
 
   void FixKnownMapErrors ();
 
