@@ -878,6 +878,66 @@ void GrabFon2 () {
 }
 
 
+struct DiskFile {
+  VStr diskName;
+  VStr zipName;
+};
+
+
+//==========================================================================
+//
+//  CreateFileList
+//
+//==========================================================================
+static void CreateFileList (TArray<DiskFile> &flist, VStr diskpath, VStr destpath, bool recurse, VStr ext) {
+  auto dir = Sys_OpenDir(diskpath, recurse); // want directories?
+  if (!dir) return;
+  if (destpath.length()) {
+    for (char *cp = destpath.GetMutableCharPointer(0); *cp; ++cp) if (*cp == '\\') *cp = '/';
+    if (destpath[destpath.length()-1] != '/') destpath += "/";
+  }
+  if (diskpath.length()) {
+    for (char *cp = diskpath.GetMutableCharPointer(0); *cp; ++cp) if (*cp == '\\') *cp = '/';
+    if (diskpath[diskpath.length()-1] != '/') diskpath += "/";
+  }
+  for (;;) {
+    VStr fname = Sys_ReadDir(dir);
+    if (fname.isEmpty()) break;
+    if (fname[fname.length()-1] == '/') {
+      CreateFileList(flist, diskpath+fname, destpath+fname, recurse, ext);
+    } else {
+      if (ext.length()) {
+        if (fname.length() < ext.length()) continue;
+        if (ext.ICmp(*fname+fname.length()-ext.length()) != 0) continue;
+      }
+      DiskFile &dfl = flist.alloc();
+      dfl.diskName = diskpath+fname;
+      dfl.zipName = destpath+fname;
+    }
+  }
+  Sys_CloseDir(dir);
+}
+
+
+extern "C" {
+static int DFICompare (const void *a, const void *b) {
+  DiskFile *fa = (DiskFile *)a;
+  DiskFile *fb = (DiskFile *)b;
+  return fa->zipName.ICmp(fb->zipName);
+}
+}
+
+//==========================================================================
+//
+//  SortFileList
+//
+//==========================================================================
+void SortFileList (TArray<DiskFile> &flist) {
+  if (flist.length() < 2) return;
+  qsort(flist.ptr(), (size_t)flist.length(), (size_t)sizeof(DiskFile), &DFICompare);
+}
+
+
 //==========================================================================
 //
 //  ParseScript
@@ -958,6 +1018,42 @@ void ParseScript (const char *name) {
       continue;
     }
 
+    bool isScanDir = false;
+    bool isScanDirRecurse = false;
+    bool isScanDirWithExt = false;
+
+         if (SC_Compare("$recursedir")) { isScanDir = true; isScanDirRecurse = true; isScanDirWithExt = false; }
+    else if (SC_Compare("$recursedirext")) { isScanDir = true; isScanDirRecurse = true; isScanDirWithExt = true; }
+    else if (SC_Compare("$onlydir")) { isScanDir = true; isScanDirRecurse = false; isScanDirWithExt = false; }
+    else if (SC_Compare("$onlydirext")) { isScanDir = true; isScanDirRecurse = false; isScanDirWithExt = true; }
+
+    if (isScanDir) {
+      // $recursedir zippath diskpath
+      // $recursedirext zippath diskpath ext
+      if (!Zip) Error("$recursedir cannot be used outsize of ZIP");
+      SC_MustGetString();
+      VStr zippath = VStr(sc_String);
+      SC_MustGetString();
+      VStr diskpath = VStr(sc_String);
+      VStr ext;
+      if (isScanDirWithExt) {
+        SC_MustGetString();
+        ext = VStr(sc_String);
+      }
+      //fprintf(stderr, "ZIP: dest=<%s>; disk=<%s>\n", *zippath, *diskpath);
+      TArray<DiskFile> flist;
+      CreateFileList(flist, diskpath, zippath, isScanDirRecurse, ext);
+      SortFileList(flist);
+      for (int f = 0; f < flist.length(); ++f) {
+        //fprintf(stderr, "  <%s> -> <%s>\n", *flist[f].diskName, *flist[f].zipName);
+        void *data;
+        int size = LoadFile(*flist[f].diskName, &data);
+        AddToZip(*flist[f].zipName, data, size);
+        Z_Free(data);
+      }
+      continue;
+    }
+
     if (GrabMode) {
       if (!Zip && strlen(sc_String) > 8) SC_ScriptError("Lump name is too long.");
       memset(lumpname, 0, sizeof(lumpname));
@@ -973,7 +1069,7 @@ void ParseScript (const char *name) {
       else if (SC_Compare("pic15")) GrabPic15();
       else if (SC_Compare("fon1")) GrabFon1();
       else if (SC_Compare("fon2")) GrabFon2();
-      else SC_ScriptError(va("Unknown command %s", sc_String));
+      else SC_ScriptError(va("Unknown command: \"%s\"", sc_String));
     } else if (Zip) {
       strcpy(lumpname, sc_String);
       SC_MustGetString();
