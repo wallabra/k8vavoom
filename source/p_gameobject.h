@@ -67,6 +67,16 @@ enum {
   LNSPEC_StaticInit           = 190,
   LNSPEC_LineTranslucent      = 208,
   LNSPEC_TransferHeights      = 209,
+
+  LNSPEC_PlaneCopy = 118,
+  LNSPEC_PlaneAlign = 181,
+
+  /*
+  LNSPEC_FloorLowerToNearest = 22,
+  LNSPEC_FloorLowerToLowestChange = 241,
+  LNSPEC_FloorLowerToHighest = 242,
+  LNSPEC_ElevatorLowerToNearest = 247,
+  */
 };
 
 
