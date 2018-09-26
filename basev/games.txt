@@ -30,13 +30,14 @@ end
 
 // FreeDoom 2
 game basev/doom2
-base basev/doom2
+base basev/doom
 iwad freedoom2.wad
 param -freedoom2
 end
 
 // Doom II:TNT Evilution
 game basev/tnt
+base basev/doom
 base basev/doom2
 iwad tnt.wad
 param -tnt
@@ -44,6 +45,7 @@ end
 
 // Doom II:The Plutonia Experiment
 game basev/plutonia
+base basev/doom
 base basev/doom2
 iwad plutonia.wad
 param -plutonia
@@ -78,6 +80,7 @@ end
 
 // No Rest for the Living
 game basev/nerve
+base basev/doom
 base basev/doom2
 iwad doom2.wad
 addfile nerve.wad
