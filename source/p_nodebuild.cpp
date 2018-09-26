@@ -485,6 +485,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
       destseg->linedef = ldef;
 
       if (ldef->sidenum[srcseg->side] < 0 || ldef->sidenum[srcseg->side] >= Level->NumSides) {
+        /*
         if (srcseg->side == 1) {
           if ((ldef->flags&ML_TWOSIDED) != 0) {
             GCon->Logf("ERROR: linedef #%d is marked as a two-sided, but has no second side!", srcseg->linedef->index);
@@ -492,6 +493,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
             GCon->Logf("ERROR: linedef #%d is not a two-sided, but has seg for the second side!", srcseg->linedef->index);
           }
         }
+        */
         Sys_Error("AJBSP: seg #%d: ldef=%d; seg->side=%d; sidenum=%d (max sidenum is %d)\n", i, srcseg->linedef->index, srcseg->side, ldef->sidenum[srcseg->side], Level->NumSides-1);
       }
 
@@ -502,6 +504,14 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
       if (ldef->flags&ML_TWOSIDED) {
         if (ldef->sidenum[srcseg->side^1] < 0 || ldef->sidenum[srcseg->side^1] >= Level->NumSides) Sys_Error("AJBSP: another side of two-sided linedef is fucked");
         destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
+      } else if (ldef->sidenum[srcseg->side^1] >= 0) {
+        if (ldef->sidenum[srcseg->side^1] >= Level->NumSides) Sys_Error("AJBSP: another side of blocking two-sided linedef is fucked");
+        destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
+        // not a two-sided, so clear backsector (just in case) -- nope
+        //destseg->backsector = nullptr;
+      } else {
+        destseg->backsector = nullptr;
+        ldef->flags &= ~ML_TWOSIDED; // just in case
       }
 
       if (srcseg->side) {

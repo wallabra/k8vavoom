@@ -69,6 +69,7 @@ static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level d
 static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", 0);
 static VCvarI loader_cache_compression_level("loader_cache_compression_level", "9", "Cache file compression level [0..9]", CVAR_Archive);
 
+static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", 0/*CVAR_Archive*/);
 
 // MACROS ------------------------------------------------------------------
 
@@ -1868,9 +1869,11 @@ void VLevel::CreateSides()
       // has second side
       if (Line->sidenum[1] < 0 || Line->sidenum[1] >= NumSides) Host_Error("Bad sidedef index %d for linedef #%d", Line->sidenum[1], i);
       // just a warning (and a fix)
-      if (!(Line->flags&ML_TWOSIDED)) {
-        GCon->Logf("WARNING: linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
-        Line->flags |= ML_TWOSIDED; //k8: we need to set this, or clipper will glitch
+      if ((Line->flags&ML_TWOSIDED) == 0) {
+        if (loader_force_fix_2s) {
+          GCon->Logf("WARNING: linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
+          Line->flags |= ML_TWOSIDED; //k8: we need to set this, or clipper will glitch
+        }
       }
       ++NumNewSides;
     } else {
@@ -2295,9 +2298,12 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
       li->sidedef = &Sides[ldef->sidenum[side]];
       li->frontsector = Sides[ldef->sidenum[side]].Sector;
 
-      if (ldef->flags & ML_TWOSIDED)
-      {
-        li->backsector = Sides[ldef->sidenum[side ^ 1]].Sector;
+      //if (ldef->flags & ML_TWOSIDED) li->backsector = Sides[ldef->sidenum[side ^ 1]].Sector;
+      if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
+        li->backsector = Sides[ldef->sidenum[side^1]].Sector;
+      } else {
+        li->backsector = nullptr;
+        ldef->flags &= ~ML_TWOSIDED;
       }
 
       if (side)
@@ -2749,7 +2755,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
           li->sidedef = &Sides[ldef->sidenum[side]];
           li->frontsector = Sides[ldef->sidenum[side]].Sector;
 
-          if ((ldef->flags&ML_TWOSIDED) != 0 && ldef->sidenum[side^1]) {
+          if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
             li->backsector = Sides[ldef->sidenum[side^1]].Sector;
           } else {
             li->backsector = nullptr;
