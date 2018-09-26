@@ -95,6 +95,9 @@ static const char *spritename;
 static TArray<VLightEffectDef>    GLightEffectDefs;
 static TArray<VParticleEffectDef> GParticleEffectDefs;
 
+static VCvarB spr_report_missing_rotations("spr_report_missing_rotations", false, "Report missing sprite rotations?");
+static VCvarB spr_report_missing_patches("spr_report_missing_patches", false, "Report missing sprite patches?");
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -461,9 +464,11 @@ void R_InstallSprite(const char *name, int index)
     case -1:
       // no rotations were found for that frame at all
       if (GArgs.CheckParm("-sprstrict")) {
-        Sys_Error("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
+        Sys_Error("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
       } else {
-        GCon->Logf("R_InstallSprite: No patches found for %s frame %c", spritename, frame+'A');
+        if (spr_report_missing_patches) {
+          GCon->Logf("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
+        }
       }
       break;
 
@@ -496,9 +501,11 @@ void R_InstallSprite(const char *name, int index)
         if (sprtemp[frame].lump[rotation] == -1)
         {
           if (GArgs.CheckParm("-sprstrict")) {
-            Sys_Error("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
+            Sys_Error("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
           } else {
-            GCon->Logf("R_InstallSprite: Sprite %s frame %c is missing rotations", spritename, frame+'A');
+            if (spr_report_missing_rotations) {
+              GCon->Logf("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
+            }
           }
         }
       }
