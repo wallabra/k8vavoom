@@ -22,10 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class GameObject : Object
-  native
-  abstract;
+class GameObject : Object native abstract;
 
 const int TICRATE = 35;
 
@@ -136,7 +133,7 @@ const int
   ML_WRAP_MIDTEX         = 0x00100000,
   ML_FIRSTSIDEONLY       = 0x00800000, // Actiavte only when crossed from front side.
   ML_KEEPDATA            = 0x01000000; // Keep FloorData or CeilingData after activating them.
-                                        // Used to simulate original Heretic behaviour.
+                                       // Used to simulate original Heretic behaviour.
 
 //  These will be converted.
 const int
@@ -167,10 +164,10 @@ enum {
 //  SECTOR PLANE FLAGS
 //
 enum {
-  SPF_NOBLOCKING    = 1,
-  SPF_NOBLOCKSIGHT  = 2,
-  SPF_NOBLOCKSHOOT  = 4,
-  SPF_ADDITIVE      = 8,
+  SPF_NOBLOCKING   = 1,
+  SPF_NOBLOCKSIGHT = 2,
+  SPF_NOBLOCKSHOOT = 4,
+  SPF_ADDITIVE     = 8,
 };
 
 const int SKY_FROM_SIDE = 0x8000;
@@ -535,44 +532,42 @@ enum {
   LNSPEC_Max
 };
 
+
 //==========================================================================
 //
 //  Level
 //
 //==========================================================================
 
-//
 // LineDef
-//
 struct line_t : TPlane {
-  // Vertices, from v1 to v2.
+  // vertices, from v1 to v2.
   TVec *v1;
   TVec *v2;
 
-  // Precalculated v2 - v1 for side checking.
+  // precalculated v2-v1 for side checking
   TVec __dir;
 
-  // Animation related.
+  // animation related
   int flags;
   int SpacFlags;
 
-  // Visual appearance: SideDefs.
-  //  sidenum[1] will be -1 if one sided
-  int sidenum[2];
+  // visual appearance: SideDefs
+  // sidenum[1] will be -1 if one sided
+  int[2] sidenum;
 
-  // Neat. Another bounding box, for the extent
-  //  of the LineDef.
-  float bbox[4];
+  // neat. another bounding box, for the extent of the LineDef
+  float[4] bbox;
 
-  // To aid move clipping.
+  // to aid move clipping
   int __slopetype;
 
-  // Front and back sector.
-  // Note: redundant? Can be retrieved from SideDefs.
+  // front and back sector
+  // note: redundant? can be retrieved from SideDefs
   sector_t *frontsector;
   sector_t *backsector;
 
-  // if == validcount, already checked
+  // if == validcount, already checked (used in various traversing, like LOS, and other line tracing)
   int validcount;
 
   float alpha;
@@ -603,26 +598,26 @@ struct line_t : TPlane {
   //int v2linesCount;
 };
 
-//
-// The SideDef.
-//
+
+// the SideDef
 struct side_t {
-  //  Add this to the calculated texture column
+  // add this to the calculated texture column
   float TopTextureOffset;
   float BotTextureOffset;
   float MidTextureOffset;
 
-  //  Add this to the calculated texture top
+  // add this to the calculated texture top
   float TopRowOffset;
   float BotRowOffset;
   float MidRowOffset;
 
-  //  Texture indices. We do not maintain names here.
+  // texture indices: we do not maintain names here
+  // 0 means "no texture"; -1 means "i forgot what it is"
   int TopTexture;
   int BottomTexture;
   int MidTexture;
 
-  //  Sector the SideDef is facing.
+  // sector the SideDef is facing
   sector_t *Sector;
 
   int LineNum;
@@ -631,6 +626,7 @@ struct side_t {
 
   int Light;
 };
+
 
 struct sec_plane_t : TPlane {
   float minz;
@@ -661,6 +657,7 @@ struct sec_plane_t : TPlane {
   Entity SkyBox;
 };
 
+
 struct sec_params_t {
   int lightlevel;
   int LightColour;
@@ -668,12 +665,13 @@ struct sec_params_t {
   int contents;
 };
 
+
 struct sec_region_t {
-  //  Linked list of regions in bottom to top order
+  // linked list of regions in bottom to top order
   sec_region_t *prev;
   sec_region_t *next;
 
-  //  Planes
+  // planes
   sec_plane_t *floor;
   sec_plane_t *ceiling;
 
@@ -705,6 +703,7 @@ struct msecnode_t {
   msecnode_t *TNext;  // next msecnode_t for this thing
   msecnode_t *SPrev;  // prev msecnode_t for this sector
   msecnode_t *SNext;  // next msecnode_t for this sector
+  int Visited; // killough 4/4/98, 4/7/98: used in search algorithms
 };
 
 //
@@ -716,8 +715,8 @@ struct sector_t {
   sec_plane_t ceiling;
   sec_params_t params;
 
-  sec_region_t *topregion;  //  Highest region
-  sec_region_t *botregion;  //  Lowest region
+  sec_region_t *topregion; // highest region
+  sec_region_t *botregion; // lowest region
 
   sector_t *deepref; // deep water hack
 
@@ -737,37 +736,37 @@ struct sector_t {
   // origin for any sounds played by the sector
   TVec soundorg;
 
-  // if == validcount, already checked
+  // if == validcount, already checked (used in various traversing, like LOS, and other line tracing)
   int validcount;
 
   // list of subsectors in sector
   // used to check if client can see this sector (it needs to be updated)
-  void *__subsectors;
+  subsector_t *__subsectors;
 
-  //  List of things in sector.
+  // list of things in sector
   Entity ThingList;
   msecnode_t *TouchingThingList;
 
-  line_t*[] lines;  // [linecount] size
-  //line_t **lines;  // [linecount] size
+  line_t*[] lines; // [linecount] size
+  //line_t **lines; // [linecount] size
   //int linecount;
 
-  //  Boom's fake floors.
+  // Boom's fake floors
   sector_t *heightsec;
-  void *fakefloorinfo;    //  Info for rendering.
+  void *fakefloorinfo; // info for rendering
 
-  //  Flags.
-  bool bHasExtrafloors;  //  This sector has extrafloors.
-  bool bExtrafloorSource;  //  This sector is a source of an extrafloor.
-  bool bTransferSource;  //  Source of an heightsec or transfer light.
-  bool bFakeFloorOnly;   //  When used as heightsec in R_FakeFlat, only copies floor
-  bool bClipFakePlanes;  //  As a heightsec, clip planes to target sector's planes
-  bool bNoFakeLight;   //  heightsec does not change lighting
-  bool bIgnoreHeightSec; //  heightsec is only for triggering sector actions
-  bool bUnderWater;    //  Sector is underwater
-  bool bSilent;      //  Actors don't make noise in this sector.
-  bool bNoFallingDamage; //  No falling damage in this sector.
-  bool bFakeCeilingOnly;   //  When used as heightsec in R_FakeFlat, only copies ceiling
+  // flags
+  bool bHasExtrafloors;   // this sector has extrafloors
+  bool bExtrafloorSource; // this sector is a source of an extrafloor
+  bool bTransferSource;   // source of an heightsec or transfer light
+  bool bFakeFloorOnly;    // when used as heightsec in R_FakeFlat, only copies floor
+  bool bClipFakePlanes;   // as a heightsec, clip planes to target sector's planes
+  bool bNoFakeLight;      // heightsec does not change lighting
+  bool bIgnoreHeightSec;  // heightsec is only for triggering sector actions
+  bool bUnderWater;       // sector is underwater
+  bool bSilent;           // actors don't make noise in this sector
+  bool bNoFallingDamage;  // no falling damage in this sector
+  bool bFakeCeilingOnly;  // when used as heightsec in R_FakeFlat, only copies ceiling
 
   // 0 = untraversed, 1,2 = sndlines -1
   int soundtraversed;
@@ -775,33 +774,31 @@ struct sector_t {
   // thing that made a sound (or null)
   Entity SoundTarget;
 
-  // Thinker for reversable actions
+  // thinker for reversable actions
   Thinker FloorData;
   Thinker CeilingData;
   Thinker LightingData;
   Thinker AffectorData;
 
-  //  Sector action triggers.
+  // sector action triggers
   Entity ActionList;
 
   int Damage;
 
   float Friction;
   float MoveFactor;
-  float Gravity;
+  float Gravity; // Sector gravity (1.0 is normal)
 
   int Sky;
 
-  int Zone;
+  int Zone; // reverb zone id
 };
 
-//
-// LineSeg
-//
 
+// LineSeg
 struct seg_t : TPlane {
-  TVec  *v1;
-  TVec  *v2;
+  TVec *v1;
+  TVec *v2;
 
   float offset;
   float length;
@@ -810,8 +807,8 @@ struct seg_t : TPlane {
   line_t *linedef;
   seg_t *lsnext; // next seg in linedef
 
-  // Sector references.
-  // Could be retrieved from linedef, too.
+  // sector references
+  // could be retrieved from linedef, too
   // backsector is nullptr for one sided lines
   sector_t *frontsector;
   sector_t *backsector;
@@ -819,7 +816,7 @@ struct seg_t : TPlane {
   seg_t *partner; // from glnodes
   subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
 
-  //  Side of line (for light calculations)
+  // side of line (for light calculations: 0 or 1)
   int side;
 
   void/*drawseg_t*/ *drawsegs;
@@ -830,16 +827,16 @@ struct seg_t : TPlane {
 //  Polyobj data
 //
 struct polyobj_t {
-  void *__segs;
+  seg_t **__segs;
   int __numsegs;
   TVec startSpot;
-  void *__originalPts;  // used as the base for the rotations
-  void *__prevPts;    // use to restore the old point values
+  TVec *__originalPts; // used as the base for the rotations
+  TVec *__prevPts; // use to restore the old point values
   float angle;
-  int tag;      // reference tag assigned in HereticEd
+  int tag; // reference tag assigned in HereticEd
   int[4] __bbox;
   int validcount;
-  bool bCrush;     // should the polyobj attempt to crush mobjs?
+  bool bCrush; // should the polyobj attempt to crush mobjs?
   bool bHurtOnTouch;
   int seqType;
   subsector_t *__subsector;
@@ -861,20 +858,18 @@ struct subregion_t {
   void/*drawseg_t*/ *lines;
 };
 
-//
-//  A SubSector.
-//  References a Sector. Basically, this is a list of LineSegs, indicating
-// the visible walls that define (all or some) sides of a convex BSP leaf.
-//
-struct subsector_t
-{
+
+// a subsector; references a sector
+// basically, this is a list of LineSegs, indicating
+// the visible walls that define (all or some) sides of a convex BSP leaf
+struct subsector_t {
   sector_t *sector;
-  void *__seclink;
+  subsector_t *__seclink;
   int __numlines;
   int __firstline;
   polyobj_t *__poly;
 
-  void *__parent;
+  node_t *__parent;
   int __VisFrame;
   int __SkyVisFrame;
 
@@ -886,9 +881,41 @@ struct subsector_t
   subregion_t *__regions;
 };
 
+
+//==========================================================================
 //
-// Map thing definition with initialised fields for global use.
+//  Node
 //
+//==========================================================================
+
+// indicate a leaf
+enum {
+  NF_SUBSECTOR = 0x80000000,
+};
+
+// BSP node
+struct node_t : TPlane {
+  // bounding box for each child
+  //float bbox[2][6];
+  float[6] bbox0;
+  float[6] bbox1;
+
+  // if NF_SUBSECTOR its a subsector
+  int[2] children; // unsigned
+
+  node_t *parent;
+  int VisFrame;
+  int SkyVisFrame;
+};
+
+
+//==========================================================================
+//
+//  Thing
+//
+//==========================================================================
+
+// map thing definition with initialised fields for global use
 struct mthing_t {
   int tid;
   float x;
@@ -911,42 +938,42 @@ struct mthing_t {
 //
 
 struct RogueConChoice {
-  int GiveItem; //  Item given on success
-  int NeedItem1;  //  Required item 1
-  int NeedItem2;  //  Required item 2
-  int NeedItem3;  //  Required item 3
-  int NeedAmount1;//  Amount of item 1
-  int NeedAmount2;//  Amount of item 2
-  int NeedAmount3;//  Amount of item 3
-  string Text;   //  Text of the answer
-  string TextOK;   //  Message displayed on success
-  int Next;   //  Dialog to go on success, negative values to go here immediately
-  int Objectives; //  Mission objectives, LOGxxxx lump
-  string TextNo;   //  Message displayed on failure (player doesn't
-            // have needed thing, it haves enough health/ammo,
-            // item is not ready, quest is not completed)
+  int GiveItem; // item given on success
+  int NeedItem1; // required item 1
+  int NeedItem2; // required item 2
+  int NeedItem3; // required item 3
+  int NeedAmount1; // amount of item 1
+  int NeedAmount2; // amount of item 2
+  int NeedAmount3; // amount of item 3
+  string Text; // text of the answer
+  string TextOK; // message displayed on success
+  int Next; // dialog to go on success, negative values to go here immediately
+  int Objectives; // mission objectives, LOGxxxx lump
+  string TextNo; // message displayed on failure (player doesn't
+                 // have needed thing, it haves enough health/ammo,
+                 // item is not ready, quest is not completed)
 };
 
 struct RogueConSpeech {
-  int SpeakerID;  //  Type of the object (MT_xxx)
-  int DropItem; //  Item dropped when killed
-  int CheckItem1; //  Item 1 to check for jump
-  int CheckItem2; //  Item 2 to check for jump
-  int CheckItem3; //  Item 3 to check for jump
-  int JumpToConv; //  Jump to conversation if have certain item(s)
-  string Name;   //  Name of the character
-  name Voice;    //  Voice to play
-  name BackPic;  //  Picture of the speaker
-  string Text;   //  Message
-  RogueConChoice[5] Choices;  //  Choices
+  int SpeakerID; // type of the object (MT_xxx)
+  int DropItem; // item dropped when killed
+  int CheckItem1; // item 1 to check for jump
+  int CheckItem2; // item 2 to check for jump
+  int CheckItem3; // item 3 to check for jump
+  int JumpToConv; // jump to conversation if have certain item(s)
+  string Name; // name of the character
+  name Voice; // voice to play
+  name BackPic; // picture of the speaker
+  string Text; // message
+  RogueConChoice[5] Choices; // choices
 };
+
 
 //==========================================================================
 //
 //  Other stuff
 //
 //==========================================================================
-
 struct opening_t {
   float top;
   float bottom;
@@ -960,6 +987,7 @@ struct opening_t {
   opening_t *next;
 };
 
+
 struct intercept_t {
   float frac; // along trace line
   bool bIsALine;
@@ -967,6 +995,7 @@ struct intercept_t {
   Entity Thing;
   line_t *line;
 };
+
 
 struct VAnimDoorDef {
   int Texture;
@@ -976,6 +1005,7 @@ struct VAnimDoorDef {
   //int *Frames;
   //int NumFrames;
 };
+
 
 struct VSplashInfo {
   name Name;
@@ -993,6 +1023,7 @@ struct VSplashInfo {
   name Sound;
   bool bNoAlert;
 };
+
 
 struct VTerrainInfo {
   name Name;
@@ -1012,9 +1043,11 @@ struct VTerrainInfo {
   name RightStepSounds;
 };
 
+
 struct LockGroup {
   array!class AnyKeyList;
 };
+
 
 struct LockDef {
   array!LockGroup Locks;
@@ -1024,17 +1057,19 @@ struct LockDef {
   name LockedSound;
 };
 
+
 struct dlight_t {
   TVec origin;
   float radius;
-  float die;    // stop lighting after this time
-  float decay;    // drop this each second
+  float die; // stop lighting after this time
+  float decay; // drop this each second
   float minlight; // don't add when contributing less
   int type;
   int colour;
   private void *__owner;
   bool bPlayerLight; // set in alloc, player lights should survive
 };
+
 
 struct particle_t {
   TVec org;
@@ -1049,6 +1084,6 @@ struct particle_t {
   float gravity;
 };
 
-defaultproperties
-{
+
+defaultproperties {
 }

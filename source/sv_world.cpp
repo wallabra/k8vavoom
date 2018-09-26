@@ -585,7 +585,7 @@ bool VLevel::ChangeSector(sector_t *sector, int crunch)
   //  Mark all things invalid.
   for (n = sector->TouchingThingList; n; n = n->SNext)
   {
-    n->Visited = false;
+    n->Visited = 0;
   }
 
   do
@@ -596,7 +596,7 @@ bool VLevel::ChangeSector(sector_t *sector, int crunch)
       if (!n->Visited)
       {
         //  Unprocessed thing found, mark thing as processed.
-        n->Visited = true;
+        n->Visited = 1;
         //  jff 4/7/98 Don't do these.
         if (!(n->Thing->EntityFlags & VEntity::EF_NoBlockmap))
         {
