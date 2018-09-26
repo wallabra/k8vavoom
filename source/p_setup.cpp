@@ -2299,7 +2299,7 @@ void VLevel::LoadGLSegs(int Lump, int NumBaseVerts)
       li->frontsector = Sides[ldef->sidenum[side]].Sector;
 
       //if (ldef->flags & ML_TWOSIDED) li->backsector = Sides[ldef->sidenum[side ^ 1]].Sector;
-      if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
+      if ((ldef->flags&ML_TWOSIDED) != 0 && ldef->sidenum[side^1] >= 0) {
         li->backsector = Sides[ldef->sidenum[side^1]].Sector;
       } else {
         li->backsector = nullptr;
@@ -2755,7 +2755,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
           li->sidedef = &Sides[ldef->sidenum[side]];
           li->frontsector = Sides[ldef->sidenum[side]].Sector;
 
-          if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
+          if ((ldef->flags&ML_TWOSIDED) != 0 && ldef->sidenum[side^1] >= 0) {
             li->backsector = Sides[ldef->sidenum[side^1]].Sector;
           } else {
             li->backsector = nullptr;
