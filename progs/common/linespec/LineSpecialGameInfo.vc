@@ -1253,45 +1253,57 @@ override void SpawnWorld(Level InLevel)
 
   //  Spawn slopes.
   SetSlopes(InLevel);
+
+  // order:
+  //  pass:
+  //   FLOOR_SLOPE_TYPE
+  //   CEILING_SLOPE_TYPE
+  //   SLOPE_FLOOR_POINT_LINE_TYPE
+  //   SLOPE_CEILING_POINT_LINE_TYPE
+  //   SET_FLOOR_SLOPE_TYPE
+  //   SET_CEILING_SLOPE_TYPE
+  //  pass:
+  //   COPY_FLOOR_PLANE_TYPE
+  //   COPY_CEILING_PLANE_TYPE
+  //  pass:
+  //   FLOOR_VERTEX_HEIGHT_TYPE
+  //   CEILING_VERTEX_HEIGHT_TYPE
+
   for (i = 0; i < InLevel.Things.length; i++) {
     mthing = &InLevel.Things[i];
     switch (mthing->type) {
       case FLOOR_SLOPE_TYPE:
-        print("SLOPE: FLOOR_SLOPE_TYPE");
+        //print("SLOPE: FLOOR_SLOPE_TYPE");
         MakeSlope(InLevel, mthing, false);
         mthing->type = 0;
         break;
       case CEILING_SLOPE_TYPE:
-        print("SLOPE: CEILING_SLOPE_TYPE");
+        //print("SLOPE: CEILING_SLOPE_TYPE");
         MakeSlope(InLevel, mthing, true);
         mthing->type = 0;
         break;
       case SLOPE_FLOOR_POINT_LINE_TYPE:
-        print("SLOPE: SLOPE_FLOOR_POINT_LINE_TYPE");
+        //print("SLOPE: SLOPE_FLOOR_POINT_LINE_TYPE");
         SlopeLineToPoint(InLevel, mthing, false);
         mthing->type = 0;
         break;
       case SLOPE_CEILING_POINT_LINE_TYPE:
-        print("SLOPE: SLOPE_CEILING_POINT_LINE_TYPE");
+        //print("SLOPE: SLOPE_CEILING_POINT_LINE_TYPE");
         SlopeLineToPoint(InLevel, mthing, true);
         mthing->type = 0;
         break;
       case SET_FLOOR_SLOPE_TYPE:
-        print("SLOPE: SET_FLOOR_SLOPE_TYPE");
+        //print("SLOPE: SET_FLOOR_SLOPE_TYPE");
         SetSlope(InLevel, mthing, false);
         mthing->type = 0;
         break;
       case SET_CEILING_SLOPE_TYPE:
-        print("SLOPE: SET_CEILING_SLOPE_TYPE");
+        //print("SLOPE: SET_CEILING_SLOPE_TYPE");
         SetSlope(InLevel, mthing, true);
         mthing->type = 0;
         break;
       }
   }
-  MakeVertexFloorHeights(InLevel);
-  MakeVertexCeilingHeights(InLevel);
-  CleanVertexHeights(InLevel);
-  ProcessCopySlopes(InLevel);
 
   for (i = 0; i < InLevel.Things.length; i++) {
     mthing = &InLevel.Things[i];
@@ -1302,6 +1314,12 @@ override void SpawnWorld(Level InLevel)
       mthing->type = 0;
     }
   }
+
+  MakeVertexFloorHeights(InLevel);
+  MakeVertexCeilingHeights(InLevel);
+  CleanVertexHeights(InLevel);
+
+  ProcessCopySlopes(InLevel);
 
   // set up 3D floors, transfers of light, etc.
   for (i = 0; i < InLevel.Lines.length; i++) {
