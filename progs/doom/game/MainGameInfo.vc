@@ -25,7 +25,7 @@
 
 class MainGameInfo : LineSpecialGameInfo;
 
-const int NUM_SPECIALS = 348;
+const int NUM_SPECIALS = 394;
 
 struct spec_trans_t
 {
@@ -532,6 +532,16 @@ void InitTranslationTables()
   SetLineTrans(345, LNSPEC_PlaneAlign, 2, 2, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(346, LNSPEC_PlaneAlign, 2, 1, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(347, LNSPEC_PlaneAlign, 1, 2, 0, 0, 0, SPAC_Cross, false);
+
+  // eternity
+  SetLineTrans(386, LNSPEC_PlaneAlign, 1, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(387, LNSPEC_PlaneAlign, 0, 1, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(388, LNSPEC_PlaneAlign, 1, 1, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(389, LNSPEC_PlaneAlign, 2, 0, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(390, LNSPEC_PlaneAlign, 0, 2, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(391, LNSPEC_PlaneAlign, 2, 2, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(392, LNSPEC_PlaneAlign, 2, 1, 0, 0, 0, SPAC_Cross, false);
+  SetLineTrans(393, LNSPEC_PlaneAlign, 1, 2, 0, 0, 0, SPAC_Cross, false);
 }
 
 //==========================================================================
@@ -962,6 +972,37 @@ void TranslateLine(Level InLevel, line_t *line)
       line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
       line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
     }
+    return;
+
+  //EDGE plane-copy
+  case 394: // Slope_FrontFloorToTaggedSlope
+    line->special = LNSPEC_PlaneCopy;
+    //line->arg1 = line->tag;
+    line->arg2 = 0;
+    line->arg3 = 0;
+    line->arg4 = 0;
+    line->arg5 = 0;
+    //line->tag = 0;
+    return;
+  case 395: // Slope_FrontCeilingToTaggedSlope
+    line->special = LNSPEC_PlaneCopy;
+    //line->arg2 = line->tag;
+    line->arg2 = line->arg1;
+    line->arg1 = 0;
+    line->arg3 = 0;
+    line->arg4 = 0;
+    line->arg5 = 0;
+    //line->tag = 0;
+    return;
+  case 396: // Slope_FrontFloorAndCeilingToTaggedSlope
+    line->special = LNSPEC_PlaneCopy;
+    //line->arg1 = line->tag;
+    //line->arg2 = line->tag;
+    line->arg2 = line->arg2;
+    line->arg3 = 0;
+    line->arg4 = 0;
+    line->arg5 = 0;
+    //line->tag = 0;
     return;
   }
 

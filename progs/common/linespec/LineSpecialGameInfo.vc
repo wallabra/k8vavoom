@@ -773,6 +773,7 @@ void MakeVertexCeilingHeights(Level InLevel)
   }
 }
 
+
 //==========================================================================
 //
 //  AlignPlane
@@ -780,58 +781,51 @@ void MakeVertexCeilingHeights(Level InLevel)
 //  Set slopes for sectors, based on line specials
 //
 //  Aligns the floor or ceiling of a sector to the corresponding plane
-// on the other side of the reference line. (By definition, line must be
-// two-sided.)
+//  on the other side of the reference line. (By definition, line must be
+//  two-sided.)
 //
 //  If (which & 1), sets floor.
 //  If (which & 2), sets ceiling.
 //
 //==========================================================================
-
-void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
-{
+void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which) {
   sector_t *refsec;
   float bestdist;
   TVec *refvert = (sec->lines[0])->v1;
-  int i;
+  //int i;
   //line_t **probe;
-  float dist;
+  //float dist;
   TVec *vert;
   TVec p, v1, v2, cross;
   sec_plane_t *refplane;
   sec_plane_t *srcplane;
   float srcheight, destheight;
 
-  if (line->backsector == nullptr)
-    return;
+  if (line->backsector == nullptr) return;
 
-  // Find furthest vertex from the reference line. It, along with the two
-  // ends of the line will define the plane.
+  // find furthest vertex from the reference line
+  // it, along with the two ends of the line will define the plane
   bestdist = 0.0;
   /*
-  for (i = sec.lines.length * 2, probe = sec->lines.ptr; i > 0; i--)
-  {
-    if (i & 1)
-    {
+  for (int i = sec.lines.length*2, probe = &sec->lines[0]; i > 0; i--) {
+    if (i&1) {
       vert = (*probe)->v2;
       probe = &probe[1];
-    }
-    else
+    } else {
       vert = (*probe)->v1;
+    }
     dist = fabs(DotProduct(*vert, line->normal) - line->dist);
-
-    if (dist > bestdist)
-    {
+    if (dist > bestdist) {
       bestdist = dist;
       refvert = vert;
     }
   }
   */
-  int lnum = sec.lines.length;
-  for (i = 0; i < lnum; ++i) {
+  //int lnum = sec.lines.length;
+  foreach (auto i; 0..sec.lines.length) {
     // v1
     vert = sec.lines[i]->v1;
-    dist = fabs(DotProduct(*vert, line->normal)-line->dist);
+    float dist = fabs(DotProduct(*vert, line->normal)-line->dist);
     if (dist > bestdist) { bestdist = dist; refvert = vert; }
     // v2
     vert = sec.lines[i]->v2;
@@ -839,7 +833,7 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
     if (dist > bestdist) { bestdist = dist; refvert = vert; }
   }
 
-  refsec = line->frontsector == sec ? line->backsector : line->frontsector;
+  refsec = (line->frontsector == sec ? line->backsector : line->frontsector);
 
   p = *line->v1;
   v1 = *line->v2 - *line->v1;
@@ -856,9 +850,8 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
 
   cross = Normalise(CrossProduct(v1, v2));
 
-  // Fix backward normals
-  if ((cross.z < 0.0 && which == 0) || (cross.z > 0.0 && which == 1))
-  {
+  // fix backward normals
+  if ((cross.z < 0.0 && which == 0) || (cross.z > 0.0 && which == 1)) {
     cross = -cross;
   }
 
@@ -866,66 +859,66 @@ void AlignPlane(Level InLevel, sector_t *sec, line_t *line, int which)
   srcplane->dist = DotProduct(cross, p);
 }
 
+
 //==========================================================================
 //
 //  SetSlopes
 //
 //==========================================================================
-
 void SetSlopes (Level InLevel) {
-  array!int planeCopyList;
   foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
-    switch (line.special) {
-      case LNSPEC_PlaneAlign:
-        line.special = 0;
-        line.LineTag = InLevel.Lines[i].arg3;
-        if (line.backsector) {
-          // args[0] is for floor, args[1] is for ceiling
-          //
-          // As a special case, if args[1] is 0,
-          // then args[0], bits 2-3 are for ceiling.
-          foreach (auto s; 0..2) {
-            int bits = (s == 0 ? line.arg1 : line.arg2)&3;
-            //if (s == 1 && bits == 0) bits = (InLevel.Lines[i].arg1 >> 2) & 3;
-            if (s == 1 && !line.arg2) bits = (line.arg1>>2)&3;
-            if (bits == 1) {
-              // align front side to back
-              AlignPlane(InLevel, line.frontsector, line, s);
-            } else if (bits == 2) {
-              // align back side to front
-              AlignPlane(InLevel, line.backsector, line, s);
-            }
+    if (line.special == LNSPEC_PlaneAlign) {
+      line.special = 0;
+      line.LineTag = InLevel.Lines[i].arg3;
+      if (line.backsector) {
+        // args[0] is for floor, args[1] is for ceiling
+        //
+        // As a special case, if args[1] is 0,
+        // then args[0], bits 2-3 are for ceiling.
+        foreach (auto s; 0..2) {
+          int bits = (s == 0 ? line.arg1 : line.arg2)&3;
+          //if (s == 1 && bits == 0) bits = (InLevel.Lines[i].arg1 >> 2) & 3;
+          if (s == 1 && !line.arg2) bits = (line.arg1>>2)&3;
+          if (bits == 1) {
+            // align front side to back
+            AlignPlane(InLevel, line.frontsector, line, s);
+          } else if (bits == 2) {
+            // align back side to front
+            AlignPlane(InLevel, line.backsector, line, s);
           }
         }
-        break;
-      case LNSPEC_PlaneCopy:
-        // save for later processing
-        planeCopyList[$] = i;
-        //print("%d: Plane_Copy", i);
-        break;
+      }
     }
   }
-  // copy planes
-  foreach (auto lidx; planeCopyList) {
-    //print("%d: Plane_Copy", lidx);
-    // Plane_Copy (front floor, front ceiling, back floor, back ceiling, share)
-    line_t *line = &InLevel.Lines[lidx];
-    line.special = 0;
-    CopyPlaneBetweenTaggedSectors(InLevel, line.frontsector, line.arg1, IsCeiling:false); // front floor
-    CopyPlaneBetweenTaggedSectors(InLevel, line.frontsector, line.arg2, IsCeiling:true); // front ceiling
-    CopyPlaneBetweenTaggedSectors(InLevel, line.backsector, line.arg3, IsCeiling:false); // back floor
-    CopyPlaneBetweenTaggedSectors(InLevel, line.backsector, line.arg4, IsCeiling:true); // back ceiling
-    // share
-    int share = line.arg5&3;
-    if (share && share != 3) {
-      if (share&1) CopyPlaneBetweenSectors(InLevel, line.backsector, line.frontsector, IsCeiling:false); // front floor to back floor
-      if (share&2) CopyPlaneBetweenSectors(InLevel, line.frontsector, line.backsector, IsCeiling:false); // back floor to front floor
-    }
-    share = (line.arg5>>2)&3;
-    if (share && share != 3) {
-      if (share&1) CopyPlaneBetweenSectors(InLevel, line.backsector, line.frontsector, IsCeiling:true); // front ceiling to back ceiling
-      if (share&2) CopyPlaneBetweenSectors(InLevel, line.frontsector, line.backsector, IsCeiling:true); // back ceiling to front ceiling
+}
+
+
+//==========================================================================
+//
+//  ProcessCopySlopes
+//
+//==========================================================================
+void ProcessCopySlopes (Level InLevel) {
+  foreach (auto i; 0..InLevel.Lines.length) {
+    line_t *line = &InLevel.Lines[i];
+    if (line.special == LNSPEC_PlaneCopy) {
+      line.special = 0;
+      CopyPlaneBetweenTaggedSectors(InLevel, line.frontsector, line.arg1, IsCeiling:false); // front floor
+      CopyPlaneBetweenTaggedSectors(InLevel, line.frontsector, line.arg2, IsCeiling:true); // front ceiling
+      CopyPlaneBetweenTaggedSectors(InLevel, line.backsector, line.arg3, IsCeiling:false); // back floor
+      CopyPlaneBetweenTaggedSectors(InLevel, line.backsector, line.arg4, IsCeiling:true); // back ceiling
+      // share
+      int share = line.arg5&3;
+      if (share && share != 3) {
+        if (share&1) CopyPlaneBetweenSectors(InLevel, line.backsector, line.frontsector, IsCeiling:false); // front floor to back floor
+        if (share&2) CopyPlaneBetweenSectors(InLevel, line.frontsector, line.backsector, IsCeiling:false); // back floor to front floor
+      }
+      share = (line.arg5>>2)&3;
+      if (share && share != 3) {
+        if (share&1) CopyPlaneBetweenSectors(InLevel, line.backsector, line.frontsector, IsCeiling:true); // front ceiling to back ceiling
+        if (share&2) CopyPlaneBetweenSectors(InLevel, line.frontsector, line.backsector, IsCeiling:true); // back ceiling to front ceiling
+      }
     }
   }
 }
@@ -1260,40 +1253,45 @@ override void SpawnWorld(Level InLevel)
 
   //  Spawn slopes.
   SetSlopes(InLevel);
-  for (i = 0; i < InLevel.Things.length; i++)
-  {
+  for (i = 0; i < InLevel.Things.length; i++) {
     mthing = &InLevel.Things[i];
-    switch (mthing->type)
-    {
-    case FLOOR_SLOPE_TYPE:
-      MakeSlope(InLevel, mthing, false);
-      mthing->type = 0;
-      break;
-    case CEILING_SLOPE_TYPE:
-      MakeSlope(InLevel, mthing, true);
-      mthing->type = 0;
-      break;
-    case SLOPE_FLOOR_POINT_LINE_TYPE:
-      SlopeLineToPoint(InLevel, mthing, false);
-      mthing->type = 0;
-      break;
-    case SLOPE_CEILING_POINT_LINE_TYPE:
-      SlopeLineToPoint(InLevel, mthing, true);
-      mthing->type = 0;
-      break;
-    case SET_FLOOR_SLOPE_TYPE:
-      SetSlope(InLevel, mthing, false);
-      mthing->type = 0;
-      break;
-    case SET_CEILING_SLOPE_TYPE:
-      SetSlope(InLevel, mthing, true);
-      mthing->type = 0;
-      break;
-    }
+    switch (mthing->type) {
+      case FLOOR_SLOPE_TYPE:
+        print("SLOPE: FLOOR_SLOPE_TYPE");
+        MakeSlope(InLevel, mthing, false);
+        mthing->type = 0;
+        break;
+      case CEILING_SLOPE_TYPE:
+        print("SLOPE: CEILING_SLOPE_TYPE");
+        MakeSlope(InLevel, mthing, true);
+        mthing->type = 0;
+        break;
+      case SLOPE_FLOOR_POINT_LINE_TYPE:
+        print("SLOPE: SLOPE_FLOOR_POINT_LINE_TYPE");
+        SlopeLineToPoint(InLevel, mthing, false);
+        mthing->type = 0;
+        break;
+      case SLOPE_CEILING_POINT_LINE_TYPE:
+        print("SLOPE: SLOPE_CEILING_POINT_LINE_TYPE");
+        SlopeLineToPoint(InLevel, mthing, true);
+        mthing->type = 0;
+        break;
+      case SET_FLOOR_SLOPE_TYPE:
+        print("SLOPE: SET_FLOOR_SLOPE_TYPE");
+        SetSlope(InLevel, mthing, false);
+        mthing->type = 0;
+        break;
+      case SET_CEILING_SLOPE_TYPE:
+        print("SLOPE: SET_CEILING_SLOPE_TYPE");
+        SetSlope(InLevel, mthing, true);
+        mthing->type = 0;
+        break;
+      }
   }
   MakeVertexFloorHeights(InLevel);
   MakeVertexCeilingHeights(InLevel);
   CleanVertexHeights(InLevel);
+  ProcessCopySlopes(InLevel);
 
   for (i = 0; i < InLevel.Things.length; i++) {
     mthing = &InLevel.Things[i];
