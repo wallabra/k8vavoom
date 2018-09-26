@@ -15,6 +15,18 @@ add_dependencies(linespec vcc engine)
 
 add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/uibase/classes.vc ${OUTDIR}/uibase.dat
-  DEPENDS vcc uibase/*.vc uibase/hud/*.vc ${OUTDIR}/engine.dat)
+  DEPENDS
+    vcc
+    uibase/*.vc
+    uibase/hud/*.vc
+    uibase/condlg/*.vc
+    uibase/finale/*.vc
+    uibase/client/*.vc
+    uibase/menus/*.vc
+    uibase/wgchoice/*.vc
+    uibase/wgslotsl/*.vc
+    uibase/wgselector/*.vc
+    uibase/wgtextbtn/*.vc
+    ${OUTDIR}/engine.dat)
 add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat)
 add_dependencies(uibase vcc engine linespec)
