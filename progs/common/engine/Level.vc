@@ -53,6 +53,8 @@ struct StateCall
 };
 
 native readonly name MapName;
+native readonly string MapHash;
+native readonly string MapHashMD5;
 
 //  Flags.
 native readonly private bool bForServer; // true if this level belongs to the server

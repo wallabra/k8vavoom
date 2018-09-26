@@ -135,6 +135,8 @@ class VLevel : public VGameObject {
   friend class VUdmfParser;
 
   VName MapName;
+  VStr MapHash;
+  VStr MapHashMD5;
 
   // flags
   enum {
@@ -309,6 +311,8 @@ class VLevel : public VGameObject {
 
   void SaveCachedData (VStream *strm);
   bool LoadCachedData (VStream *strm);
+
+  void FixKnownMapErrors ();
 
 private:
   // map loaders
