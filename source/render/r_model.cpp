@@ -34,7 +34,8 @@ enum { NUMVERTEXNORMALS = 162 };
 extern VCvarF gl_alpha_threshold;
 static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
 
-static VCvarB dbg_alias_model_error("dbg_alias_model_error", false, "Show errors in alias models?", 0/*CVAR_Archive*/);
+static VCvarB mdl_report_errors("mdl_report_errors", false, "Show errors in alias models?", 0/*CVAR_Archive*/);
+static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias model loading?", 0/*CVAR_Archive*/);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -144,7 +145,9 @@ void R_InitModels () {
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
-    GCon->Logf("parsing model definition '%s'", *W_FullLumpName(Lump));
+    if (mdl_verbose_loading) {
+      GCon->Logf("parsing model definition '%s'", *W_FullLumpName(Lump));
+    }
     // parse the file
     VXmlDocument *Doc = new VXmlDocument();
     Doc->Parse(*Strm, "models/models.xml");
@@ -614,7 +617,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
       TVec PlaneNormal = CrossProduct(d1, d2);
       if (lengthSquared(PlaneNormal) == 0) {
         //k8:hack!
-        if (dbg_alias_model_error) {
+        if (mdl_report_errors) {
           GCon->Logf("Alias model '%s' has degenerate triangle %d; v1=(%f,%f,%f), v2=(%f,%f,%f); v3=(%f,%f,%f); d1=(%f,%f,%f); d2=(%f,%f,%f); cross=(%f,%f,%f)",
             *mod->Name, j, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, d1.x, d1.y, d1.z, d2.x, d2.y, d2.z, PlaneNormal.x, PlaneNormal.y, PlaneNormal.z);
         }
@@ -632,7 +635,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
           }
         }
         if (!ok) {
-          if (dbg_alias_model_error) {
+          if (mdl_report_errors) {
             GCon->Logf("  CANNOT FIX!");
           }
           cannotFix = true;
@@ -647,7 +650,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
     }
     pframe = (mframe_t *)((byte *)pframe+pmodel->framesize);
   }
-  if (!dbg_alias_model_error && hadError && showError) {
+  if (!mdl_report_errors && hadError && showError) {
     GCon->Logf("WARNING: Alias model '%s' has some degenerate triangles!%s", *mod->Name, (cannotFix ? " (cannot fix)" : ""));
   }
 

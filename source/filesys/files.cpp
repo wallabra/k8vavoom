@@ -50,6 +50,9 @@ VStr fl_savedir;
 VStr fl_gamedir;
 
 TArray<VSearchPath *> SearchPaths;
+bool fsys_report_added_paks = false;
+static VCvarB fsys_report_system_wads("fsys_report_system_wads", false, "Report loaded system wads?", CVAR_Archive);
+static VCvarB fsys_report_user_wads("fsys_report_user_wads", true, "Report loaded user wads?", CVAR_Archive);
 
 TArray<VStr> wadfiles;
 //static bool bIwadAdded;
@@ -178,7 +181,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
     delete[] Buf;
     Buf = nullptr;
 
-    GCon->Logf("Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
+    if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
     VZipFile *pk3 = new VZipFile(ZipStrm, ZipName+":"+pk3s[i]);
     AddZipFile(ZipName+":"+pk3s[i], pk3, false);
   }
@@ -575,7 +578,9 @@ void FL_Init () {
   guard(FL_Init);
   const char *p;
 
-  GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
+  //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
+
+  fsys_report_added_paks = fsys_report_system_wads;
 
   //  Set up base directory (main data files).
   fl_basedir = ".";
@@ -680,6 +685,7 @@ void FL_Init () {
 
   int fp = GArgs.CheckParm("-file");
   if (fp) {
+    fsys_report_added_paks = fsys_report_user_wads;
     fsys_skipSounds = false;
     fsys_skipSprites = false;
     for (int f = 1; f < fp; ++f) {
@@ -714,7 +720,9 @@ void FL_Init () {
     fsys_skipSprites = false;
   }
 
+  fsys_report_added_paks = fsys_report_system_wads;
   if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
+  fsys_report_added_paks = fsys_report_user_wads;
 
   RenameSprites();
   unguard;

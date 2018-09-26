@@ -219,7 +219,7 @@ VZipFile::VZipFile(const VStr &zipfile)
 {
   guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
-  GCon->Logf(NAME_Init, "Adding \"%s\"...", *ZipFileName);
+  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *ZipFileName);
   auto fstream = FL_OpenSysFileRead(ZipFileName);
   check(fstream);
   OpenArchive(fstream);

@@ -88,7 +88,7 @@ void VWadFile::Open (const VStr &FileName, const VStr &AGwaDir, bool FixVoices, 
     Stream = FL_OpenSysFileRead(FileName);
     if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
   }
-  GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
   Stream->Serialise(&header, sizeof(header));
@@ -143,7 +143,7 @@ void VWadFile::OpenSingleLump (const VStr &FileName) {
   // open the file and add to directory
   Stream = FL_OpenSysFileRead(FileName);
   if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
-  GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   Name = FileName;
   GwaDir = VStr();

@@ -208,5 +208,7 @@ void GLVis_BuildPVS (const char *srcfile, const char *gwafile);
 
 extern TArray<VSearchPath *> SearchPaths;
 
+extern bool fsys_report_added_paks;
+
 
 #endif
