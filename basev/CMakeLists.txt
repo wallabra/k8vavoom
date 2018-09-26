@@ -9,7 +9,7 @@ add_subdirectory(heretic)
 add_subdirectory(hexen)
 add_subdirectory(nerve)
 add_subdirectory(plutonia)
-add_subdirectory(strife)
+#add_subdirectory(strife)
 add_subdirectory(tnt)
 
 add_subdirectory(mods)

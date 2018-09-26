@@ -63,18 +63,18 @@ param -hexen
 end
 
 // Teaser Strife
-game basev/strife
-iwad strife0.wad
-param -strifeteaser
-fixvoices
-end
+//!game basev/strife
+//!iwad strife0.wad
+//!param -strifeteaser
+//!fixvoices
+//!end
 
 // Strife
-game basev/strife
-iwad strife1.wad
-addfile voices.wad
-param -strife
-end
+//!game basev/strife
+//!iwad strife1.wad
+//!addfile voices.wad
+//!param -strife
+//!end
 
 // No Rest for the Living
 game basev/nerve
