@@ -285,14 +285,14 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[127].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
     Sides[Lines[128].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
     // remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
-    Sectors[19].tag = -1;
-    Sectors[20].tag = -1;
-    Sectors[23].tag = -1;
-    Sectors[28].tag = -1;
-    Sectors[33].tag = -1;
-    Sectors[34].tag = -1;
-    Sectors[83].tag = -1;
-    Sectors[85].tag = -1;
+    Sectors[19].tag = 0;
+    Sectors[20].tag = 0;
+    Sectors[23].tag = 0;
+    Sectors[28].tag = 0;
+    Sectors[33].tag = 0;
+    Sectors[34].tag = 0;
+    Sectors[83].tag = 0;
+    Sectors[85].tag = 0;
     HashSectors();
     GCon->Logf("MAPFIX: Doom II: MAP04 detected and fixed");
     return;
@@ -301,8 +301,8 @@ void VLevel::FixKnownMapErrors () {
   // Doom II: MAP05
   if (MapHashMD5 == "9e061ad7fbcd7fad968c976cb4aa3b9d") {
     // fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
-    Sectors[4].tag = -1;
-    Sectors[153].tag = -1;
+    Sectors[4].tag = 0;
+    Sectors[153].tag = 0;
     HashSectors();
     GCon->Logf("MAPFIX: Doom II: MAP05 detected and fixed");
     return;
