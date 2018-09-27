@@ -497,9 +497,9 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
         destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
       } else if (ldef->sidenum[srcseg->side^1] >= 0) {
         if (ldef->sidenum[srcseg->side^1] >= Level->NumSides) Sys_Error("AJBSP: another side of blocking two-sided linedef is fucked");
-        //destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
-        // not a two-sided, so clear backsector (just in case)
-        destseg->backsector = nullptr;
+        destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
+        // not a two-sided, so clear backsector (just in case) -- nope
+        //destseg->backsector = nullptr;
       } else {
         destseg->backsector = nullptr;
         ldef->flags &= ~ML_TWOSIDED; // just in case
