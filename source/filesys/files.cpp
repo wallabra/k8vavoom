@@ -59,26 +59,30 @@ TArray<VStr> wadfiles;
 static TArray<VStr> IWadDirs;
 static int IWadIndex;
 
-struct WadPakInfo {
-  VStr path; // lowercased
-  bool isSystem; // true: don't strip path
-};
 
-static TArray<WadPakInfo> wpklist;
+// ////////////////////////////////////////////////////////////////////////// //
+static TArray<VStr> wpklist; // everything is lowercased
 
+// asystem
 static void wpkAppend (const VStr &fname, bool asystem) {
   if (fname.length() == 0) return;
   VStr fn = fname.toLowerCase();
+  if (!asystem) {
+    fn = fn.extractFileName();
+    if (fn.length() == 0) fn = fname.toLowerCase();
+  }
   // check for duplicates
   for (int f = wpklist.length()-1; f >= 0; --f) {
-    if (wpklist[f].path != fn) continue;
-    if (wpklist[f].isSystem != asystem) continue;
+    if (wpklist[f] != fn) continue;
     // i found her!
     return;
   }
+  /*
   WadPakInfo &wi = wpklist.Alloc();
   wi.path = fn;
   wi.isSystem = asystem;
+  */
+  wpklist.append(fn);
 }
 
 
@@ -100,17 +104,10 @@ static int cmpfuncCINoExt (const void *v1, const void *v2) {
 //  AddZipFile
 //
 //==========================================================================
-TArray<VStr> GetWadPk3List (bool fullpath) {
+const TArray<VStr> &GetWadPk3List () {
+  /*
   TArray<VStr> res;
   for (int f = 0; f < wpklist.length(); ++f) {
-    /*
-    bool found = false;
-    VStr fname = wpklist[f];
-    if (!fullpath) fname = fname.extractFileName();
-    fname = fname.toLowerCase();
-    for (int c = 0; c < res.length(); ++c) if (res[c] == fname) { found = true; break; }
-    if (!found) res.Append(fname);
-    */
     VStr fname = wpklist[f].path;
     //if (fname == "/opt/vavoom/share/vavoom/doomu.wad") fname = "/usr/local/share/vavoom/doomu.wad";
     if (!fullpath && !wpklist[f].isSystem) fname = fname.extractFileName();
@@ -119,6 +116,8 @@ TArray<VStr> GetWadPk3List (bool fullpath) {
   // and sort it
   //qsort(res.Ptr(), res.length(), sizeof(VStr), cmpfuncCI);
   return res;
+  */
+  return wpklist;
 }
 
 
@@ -259,14 +258,17 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
   }
 
+  // add system dir, if it has any files
+  if (ZipFiles.length() || WadFiles.length()) wpkAppend(dir+"/", true); // don't strip path
+
   // now add wads, then pk3s
   for (int i = 0; i < WadFiles.length(); ++i) {
-    if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
+    //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
     W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
-    if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
+    //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     AddZipFile(bdx+"/"+ZipFiles[i]);
   }
 
