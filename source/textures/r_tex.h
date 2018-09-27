@@ -93,7 +93,7 @@ public:
   virtual ~VMultiPatchTexture () override;
   virtual void SetFrontSkyLayer () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload() override;
+  virtual void Unload () override;
 };
 
 
