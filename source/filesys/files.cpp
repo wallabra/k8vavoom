@@ -32,6 +32,8 @@ bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
 bool fsys_skipDehacked = false;
 
+static bool fsys_onlyOneBaseFile = false;
+
 
 struct version_t {
   //VStr MainWad;
@@ -263,14 +265,17 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   if (ZipFiles.length() || WadFiles.length()) wpkAppend(dir+"/", true); // don't strip path
 
   // now add wads, then pk3s
-  for (int i = 0; i < WadFiles.length(); ++i) {
-    //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
-    W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
+  if (!fsys_onlyOneBaseFile) {
+    for (int i = 0; i < WadFiles.length(); ++i) {
+      //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
+      W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
+    }
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     AddZipFile(bdx+"/"+ZipFiles[i]);
+    if (fsys_onlyOneBaseFile) break;
   }
 
   // finally add directory itself
@@ -562,6 +567,8 @@ void FL_Init () {
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
 
   fsys_report_added_paks = fsys_report_system_wads;
+
+  fsys_onlyOneBaseFile = GArgs.CheckParm("-nakedbase");
 
   //  Set up base directory (main data files).
   fl_basedir = ".";
