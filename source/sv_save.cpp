@@ -371,6 +371,33 @@ static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
 }
 
 
+//==========================================================================
+//
+//  SV_DeleteSlotFile
+//
+//==========================================================================
+static bool SV_DeleteSlotFile (int slot) {
+  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return false;
+  auto svdir = SV_GetSavesDir();
+  auto dir = Sys_OpenDir(svdir);
+  if (!dir) return false;
+  // scan
+  auto svpfx = GetSaveSlotBaseFileName(slot);
+  TArray<VStr> tokill;
+  for (;;) {
+    VStr fname = Sys_ReadDir(dir);
+    if (fname.isEmpty()) break;
+    VStr flow = fname.toLowerCase();
+    if (flow.startsWith(svpfx) && flow.endsWith(".vsg")) tokill.append(svdir+"/"+fname);
+  }
+  Sys_CloseDir(dir);
+  if (tokill.length() == 0) return false;
+  // remove old saves
+  for (int f = 0; f < tokill.length(); ++f) Sys_FileDelete(tokill[f]);
+  return true;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 struct TTimeVal {
   int secs; // actually, unsigned
@@ -1453,6 +1480,58 @@ COMMAND(Save) {
   SV_SaveGame(atoi(*Args[1]), Args[2]);
 
   GCon->Log("Game saved");
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  COMMAND DeleteSavedGame <slotidx|quick>
+//
+//==========================================================================
+COMMAND(DeleteSavedGame) {
+  guard(COMMAND DeleteSavedGame);
+
+  //GCon->Logf("DeleteSavedGame: argc=%d", Args.length());
+
+  if (Args.Num() != 2) return;
+
+  if (!CheckIfLoadIsAllowed()) return;
+
+  VStr numstr = Args[1];
+
+  //GCon->Logf("DeleteSavedGame: <%s>", *numstr);
+
+  if (numstr.ICmp("quick") == 0) {
+    if (SV_DeleteSlotFile(QUICKSAVE_SLOT)) GCon->Log("quicksave deleted");
+    return;
+  }
+
+  int pos = 0;
+  while (pos < numstr.length() && (vuint8)numstr[pos] <= ' ') ++pos;
+  if (pos >= numstr.length()) return;
+
+  bool neg = false;
+  if (numstr[pos] == '-') {
+    neg = true;
+    ++pos;
+    if (pos >= numstr.length()) return;
+  }
+
+  int slot = 0;
+  while (pos < numstr.length()) {
+    char ch = numstr[pos++];
+    if (ch < '0' || ch > '9') return;
+    slot = slot*10+ch-'0';
+  }
+  //GCon->Logf("DeleteSavedGame: slot=%d (neg=%d)", slot, (neg ? 1 : 0));
+  if (slot < 0 || slot > 9) return;
+  if (neg) slot = -slot;
+
+  if (SV_DeleteSlotFile(slot)) {
+    if (slot < 0) GCon->Logf("autosave #%d deleted", -slot); else GCon->Logf("savegame #%d deleted", slot);
+  }
+
   unguard;
 }
 
