@@ -249,6 +249,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   if (dirit) {
     for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
       //fprintf(stderr, "  <%s>\n", *test);
+      if (test[0] == '_' || test[0] =='.') continue; // skip it
       VStr ext = test.ExtractFileExtension().ToLower();
            if (ext == "wad") WadFiles.Append(test);
       else if (ext == "pk3") ZipFiles.Append(test);
