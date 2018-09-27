@@ -22,70 +22,58 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenEpisode : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
+override void CreateChoices () {
   MenuChoiceEpisode Epi;
-  int         currentY;
-  int         i;
-  EpisodeDef *EDef;
-
-  currentY = ChoicesStartY;
-  for (i = 0; i < P_GetNumEpisodes(); i++)
-  {
-    EDef = P_GetEpisodeDef(i);
-    if (EDef->bOptional && !IsMapPresent(EDef->Name))
-    {
-      continue;
-    }
+  int currentY = ChoicesStartY;
+  int ecount = P_GetNumEpisodes();
+  //if (ecount > 6) Height = 400;
+  int calcHeight = ChoicesStartY;
+  foreach (auto i; 0..ecount) {
+    EpisodeDef *EDef = P_GetEpisodeDef(i);
+    if (EDef->bOptional && !IsMapPresent(EDef->Name)) continue;
     Epi = MenuChoiceEpisode(NewChild(MenuChoiceEpisode));
     Epi.SetPos(ChoicesStartX, currentY);
-    if (EDef->PicName)
-    {
-      Epi.PicHandle = R_RegisterPic(EDef->PicName);
-    }
-    else if (EDef->bLookupText)
-    {
-      Epi.Text = GetLangString(StrToName(EDef->Text));
-    }
-    else
-    {
-      Epi.Text = EDef->Text;
-    }
+           if (EDef->PicName) Epi.PicHandle = R_RegisterPic(EDef->PicName);
+    else if (EDef->bLookupText) Epi.Text = GetLangString(StrToName(EDef->Text));
+    else Epi.Text = EDef->Text;
     Epi.EDef = EDef;
     Epi.Activated = &ActivateEpisode;
     currentY += Epi.Height;
+    calcHeight += Epi.Height;
+  }
+  calcHeight = clamp(calcHeight, 200, 440);
+  if (calcHeight > Height) {
+    Height = calcHeight;
+    Y = (480-calcHeight)/2;
+    Width = 370; // for "the plutonia experiment"
   }
 }
+
 
 //==========================================================================
 //
 //  ActivateEpisode
 //
 //==========================================================================
-
-void ActivateEpisode(Object Sender)
-{
+void ActivateEpisode (Object Sender) {
   MenuChoiceEpisode Epi = MenuChoiceEpisode(Sender);
-  if (!IsMapPresent(Epi.EDef->Name))
-  {
-    ClGame.MessageBoxStartMessage("ONLY AVAILABLE IN THE REGISTERED VERSION",
-      ClientGameShared::MB_Shareware, false);
+  if (!IsMapPresent(Epi.EDef->Name)) {
+    ClGame.MessageBoxStartMessage("ONLY AVAILABLE IN THE REGISTERED VERSION", ClientGameShared::MB_Shareware, false);
     return;
   }
   ClientGameShared(ClGame).SetEpisode(Epi.EDef);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ChoicesStartX = 48;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
