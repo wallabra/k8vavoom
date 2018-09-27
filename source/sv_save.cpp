@@ -261,11 +261,16 @@ static VStr SV_GetSaveSlotBaseFileName (int slot) {
     modlist += wadlist[f];
     modlist += "\n";
   }
+#if 0
   // get list hash
   vuint8 sha512[SHA512_DIGEST_SIZE];
   sha512_buf(sha512, *modlist, (size_t)modlist.length());
   // convert to hex
   VStr shahex = VStr::buf2hex(sha512, SHA512_DIGEST_SIZE);
+#else
+  vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
+  VStr shahex = VStr::buf2hex(&xxhashval, 4);
+#endif
   if (slot == QUICKSAVE_SLOT) return shahex+VStr("_quicksave_00.vsg");
   if (slot < 0) return VStr(va("%s_autosave_%02d.vsg", *shahex, -slot));
   return VStr(va("%s_normsave_%02d.vsg", *shahex, slot+1));
