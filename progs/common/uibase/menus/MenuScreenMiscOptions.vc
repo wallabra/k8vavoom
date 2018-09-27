@@ -50,6 +50,7 @@ override void CreateChoices () {
   CreateOnOffCvar("Show builder warnings", 'nodes_show_warnings');
   CreateOnOffCvar("Allow PWAD z-nodes", 'nodes_allow_compressed');
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
+  CreateFloatSliderCvar("PVS threads", 'loader_pvs_builder_threads', 1, 1, 16);
 
 
   //CreateChoiceSubHeader("");
@@ -65,10 +66,12 @@ override void CreateChoices () {
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Deepwater options");
   CreateOnOffCvar("Classic deepwater", 'deepwater_hacks');
+  /*
   auto dwbuggy = CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra');
   //dwbuggy.TextNormalColor = CR_LIGHTBLUE;
   //dwbuggy.TextNormalColor = CR_DARKRED;
   dwbuggy.TextNormalColor = CR_PURPLE;
+  */
 
 
   //CreateChoiceSubHeader("");

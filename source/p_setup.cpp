@@ -55,7 +55,7 @@ static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remov
 
 static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
 static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply self-referenced deepwater hacks?", CVAR_Archive);
-static VCvarB deepwater_hacks_extra("deepwater_hacks_extra", true, "Apply deepwater hacks to fix some map errors? (not working right yet)", CVAR_Archive);
+static VCvarB deepwater_hacks_extra("deepwater_hacks_extra_ex", false, "Apply deepwater hacks to fix some map errors? (not working right yet)", 0/*CVAR_Archive*/);
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
