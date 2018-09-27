@@ -515,7 +515,7 @@ void VLevel::FixKnownMapErrors () {
 //  hashLump
 //
 //==========================================================================
-static bool hashLump (sha512_ctx *sha512ctx, MD5Context *md5ctx, int lumpnum) {
+static bool hashLump (sha224_ctx *sha224ctx, MD5Context *md5ctx, int lumpnum) {
   if (lumpnum < 0) return false;
   static vuint8 buf[65536];
   VStream *strm = W_CreateLumpReaderNum(lumpnum);
@@ -526,7 +526,7 @@ static bool hashLump (sha512_ctx *sha512ctx, MD5Context *md5ctx, int lumpnum) {
     if (rd > (int)sizeof(buf)) rd = (int)sizeof(buf);
     strm->Serialise(buf, rd);
     if (strm->IsError()) { delete strm; return false; }
-    if (sha512ctx) sha512_update(sha512ctx, buf, rd);
+    if (sha224ctx) sha224_update(sha224ctx, buf, rd);
     if (md5ctx) md5ctx->Update(buf, (unsigned)rd);
     left -= rd;
   }
@@ -1069,13 +1069,13 @@ load_again:
   VisData = nullptr;
   NoVis = nullptr;
 
-  sha512_ctx sha512ctx;
+  sha224_ctx sha224ctx;
   MD5Context md5ctx;
 
-  sha512_init(&sha512ctx);
+  sha224_init(&sha224ctx);
   md5ctx.Init();
 
-  bool sha512valid = false;
+  bool sha224valid = false;
   VStr cacheFileName;
   VStr cacheDir = getCacheDir();
 
@@ -1099,7 +1099,7 @@ load_again:
         }
       }
     }
-    sha512valid = hashLump(&sha512ctx, &md5ctx, lumpnum+1);
+    sha224valid = hashLump(&sha224ctx, &md5ctx, lumpnum+1);
   } else {
     // find all lumps
     int LIdx = lumpnum+1;
@@ -1115,19 +1115,19 @@ load_again:
     if (W_LumpName(LIdx) == NAME_reject) RejectLump = LIdx++;
     if (W_LumpName(LIdx) == NAME_blockmap) BlockmapLump = LIdx++;
 
-    sha512valid = hashLump(nullptr, &md5ctx, lumpnum); // md5
-    if (sha512valid) sha512valid = hashLump(nullptr, &md5ctx, ThingsLump); // md5
+    sha224valid = hashLump(nullptr, &md5ctx, lumpnum); // md5
+    if (sha224valid) sha224valid = hashLump(nullptr, &md5ctx, ThingsLump); // md5
 
-    if (sha512valid) sha512valid = hashLump(&sha512ctx, &md5ctx, LinesLump);
-    if (sha512valid) sha512valid = hashLump(&sha512ctx, &md5ctx, SidesLump);
-    if (sha512valid) sha512valid = hashLump(&sha512ctx, nullptr, VertexesLump); // not in md5
-    if (sha512valid) sha512valid = hashLump(&sha512ctx, &md5ctx, SectorsLump);
+    if (sha224valid) sha224valid = hashLump(&sha224ctx, &md5ctx, LinesLump);
+    if (sha224valid) sha224valid = hashLump(&sha224ctx, &md5ctx, SidesLump);
+    if (sha224valid) sha224valid = hashLump(&sha224ctx, nullptr, VertexesLump); // not in md5
+    if (sha224valid) sha224valid = hashLump(&sha224ctx, &md5ctx, SectorsLump);
 
     // determine level format
     if (W_LumpName(LIdx) == NAME_behavior) {
       LevelFlags |= LF_Extended;
       BehaviorLump = LIdx++;
-      if (sha512valid) sha512valid = hashLump(nullptr, &md5ctx, BehaviorLump); // md5
+      if (sha224valid) sha224valid = hashLump(nullptr, &md5ctx, BehaviorLump); // md5
     }
 
     //  Verify that it's a valid map.
@@ -1160,30 +1160,30 @@ load_again:
   }
   InitTime += Sys_Time();
 
-  if (sha512valid) {
-    vuint8 sha512hash[SHA512_DIGEST_SIZE];
-    sha512_final(&sha512ctx, sha512hash);
-    MapHash = VStr::buf2hex(sha512hash, SHA512_DIGEST_SIZE);
+  if (sha224valid) {
+    vuint8 sha224hash[SHA224_DIGEST_SIZE];
+    sha224_final(&sha224ctx, sha224hash);
+    MapHash = VStr::buf2hex(sha224hash, SHA224_DIGEST_SIZE);
+
     vuint8 md5digest[MD5Context::DIGEST_SIZE];
     md5ctx.Final(md5digest);
     MapHashMD5 = VStr::buf2hex(md5digest, MD5Context::DIGEST_SIZE);
 
-    if (dbg_show_map_hash) GCon->Logf("MAP HASH SHA: %s", *MapHash);
     if (dbg_show_map_hash) GCon->Logf("MAP HASH MD5: %s", *MapHashMD5);
   }
 
   bool cachedDataLoaded = false;
-  if (sha512valid && cacheDir.length()) {
-    cacheFileName = VStr("mapcache_")+MapHash+".cache";
+  if (sha224valid && cacheDir.length()) {
+    cacheFileName = VStr("mapcache_")+MapHash.left(32)+".cache"; // yeah, truncated
     cacheFileName = cacheDir+"/"+cacheFileName;
   } else {
-    sha512valid = false;
+    sha224valid = false;
   }
 
   bool hasCacheFile = false;
 
   //FIXME: load cache file into temp buffer, and process it later
-  if (!loader_force_nodes_rebuild && sha512valid) {
+  if (!loader_force_nodes_rebuild && sha224valid) {
     if (killCache) {
       Sys_FileDelete(cacheFileName);
     } else {
@@ -1346,7 +1346,7 @@ load_again:
 
 
   // update cache
-  if (loader_cache_data && saveCachedData && sha512valid && TotalTime+Sys_Time() > loader_cache_time_limit) {
+  if (loader_cache_data && saveCachedData && sha224valid && TotalTime+Sys_Time() > loader_cache_time_limit) {
     VStream *strm = FL_OpenSysFileWrite(cacheFileName);
     SaveCachedData(strm);
     delete strm;
