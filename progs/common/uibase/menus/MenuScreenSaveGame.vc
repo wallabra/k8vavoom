@@ -49,15 +49,3 @@ override void SwitchAutoNormal () {
 defaultproperties {
   Title = "SAVE GAME";
 }
-
-/*  if (sv.active && svs.max_clients > 1)
-  {
-    MB_StartMessage("can't save net game", nullptr, false);
-    return;
-  }
-
-  if (!sv.active || sv.intermission)
-  {
-    MB_StartMessage("you can't save if you aren't playing!", nullptr, false);
-    return;
-  }*/

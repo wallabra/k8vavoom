@@ -31,6 +31,7 @@ int pic_M_LSRGHT;
 int pic_M_FSLOT;
 
 bool DrawSlotPic;
+bool DrawStrikeLine;
 
 
 //**************************************************************************
@@ -68,11 +69,11 @@ int DrawSlot (int y, string text, bool entering) {
     if (pic_M_FSLOT != -1) {
       DrawPic(0, y, pic_M_FSLOT);
     } else {
-      DrawPic(3, y + 12, pic_M_LSLEFT);
+      DrawPic(3, y+12, pic_M_LSLEFT);
       for (j = 0, xx = 11; j < 24; j++, xx += 8) {
-        DrawPic(xx, y + 12, pic_M_LSCNTR);
+        DrawPic(xx, y+12, pic_M_LSCNTR);
       }
-      DrawPic(xx, y + 12, pic_M_LSRGHT);
+      DrawPic(xx, y+12, pic_M_LSRGHT);
     }
   } else {
     ShadeRect(0, y+4, 128, 10, GetCvarF('menu_darkening'));
@@ -80,8 +81,13 @@ int DrawSlot (int y, string text, bool entering) {
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(5, y + 5, text);
+  DrawText(5, y+5, text);
   if (entering) DrawCursor();
+
+  if (DrawStrikeLine) {
+    FillRect(4, y+5+2, 24*8+5+2, 2+2, 0xff_00_00_00);
+    FillRect(5, y+5+3, 24*8+5, 2, 0xff_ff_00_00);
+  }
 
   return 20;
 }

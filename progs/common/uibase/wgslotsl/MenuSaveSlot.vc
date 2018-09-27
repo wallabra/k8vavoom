@@ -31,6 +31,7 @@ bool bEnteringText;
 int SlotNum;
 string Text;
 string EnterText;
+bool waitingDeletion; // special rendering
 
 
 //==========================================================================
@@ -50,11 +51,35 @@ override void OnCreate () {
 //
 //==========================================================================
 override void OnDraw () {
+  DrawStrikeLine = waitingDeletion;
   if (bEnteringText && IsFocus()) {
     DrawSlot(0, EnterText, true);
   } else {
     DrawSlot(0, Text, false);
   }
+  DrawStrikeLine = false;
+}
+
+
+//==========================================================================
+//
+//  OnFocusReceived
+//
+//==========================================================================
+override void OnFocusReceived () {
+  waitingDeletion = false;
+  ::OnFocusReceived();
+}
+
+
+//==========================================================================
+//
+//  OnFocusLost
+//
+//==========================================================================
+override void OnFocusLost () {
+  waitingDeletion = false;
+  ::OnFocusLost();
 }
 
 
@@ -78,12 +103,14 @@ override bool OnKeyDown (int key) {
     switch (key) {
       case K_ESCAPE:
       case K_MOUSE2:
+        waitingDeletion = false;
         bEnteringText = false;
         break;
 
       case K_ENTER:
       case K_PADENTER:
       case K_MOUSE1:
+        waitingDeletion = false;
         bEnteringText = false;
         if (EnterText) {
           Text = EnterText;
@@ -93,7 +120,11 @@ override bool OnKeyDown (int key) {
         break;
 
       case K_BACKSPACE:
-        if (EnterText) EnterText = EnterText[0..$-1];
+        if (EnterText) {
+          EnterText = EnterText[0..$-1];
+        } else {
+          waitingDeletion = false;
+        }
         break;
 
       default:
@@ -108,10 +139,32 @@ override bool OnKeyDown (int key) {
     return true;
   }
 
+  if (key == K_DELETE || key == K_PADDOT) {
+    if (Status) {
+      if (!waitingDeletion) {
+        waitingDeletion = true;
+      } else {
+        waitingDeletion = false;
+        Status = 0;
+        Text = "*deleted slot*";
+        //print("DEL! slot=%d; status=%d", SlotNum, Status);
+        CmdBuf_AddText("DeleteSavedGame %d\n", SlotNum);
+      }
+    }
+    return true;
+  }
+
+  if (key == K_INSERT || key == K_PAD0) {
+    waitingDeletion = false;
+    return true;
+  }
+
   if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
+    waitingDeletion = false;
     ActivateSlot();
     return true;
   }
+
   return false;
 }
 
@@ -123,6 +176,7 @@ override bool OnKeyDown (int key) {
 //==========================================================================
 override void OnMouseClick (int X, int Y) {
   SetFocus();
+  waitingDeletion = false;
   if (bEnteringText) {
     bEnteringText = false;
     if (EnterText) {
@@ -131,7 +185,6 @@ override void OnMouseClick (int X, int Y) {
       GetClGame().ForceMenuOff();
     }
   }
-
   ActivateSlot();
 }
 
