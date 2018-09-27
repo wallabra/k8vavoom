@@ -278,17 +278,40 @@ static void LoadImage () {
 
 //==========================================================================
 //
+//  rgbDistanceSquared
+//
+//  see https://www.compuphase.com/cmetric.htm
+//
+//==========================================================================
+static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
+  const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
+  const vint32 r = (vint32)r0-(vint32)r1;
+  const vint32 g = (vint32)g0-(vint32)g1;
+  const vint32 b = (vint32)b0-(vint32)b1;
+  return (((512+rmean)*r*r)/256)+4*g*g+(((767-rmean)*b*b)/256);
+}
+
+
+//==========================================================================
+//
 //  my_bestfit_colour
 //
 //==========================================================================
 int my_bestfit_colour (int r, int g, int b) {
   int best_colour = 0;
-  int best_dist = 0x1000000;
+  int best_dist = 0x7fffffff;
+
+  if (r < 0) r = 0; else if (r > 255) r = 255;
+  if (g < 0) g = 0; else if (g > 255) g = 255;
+  if (b < 0) b = 0; else if (b > 255) b = 255;
 
   for (int i = 1; i < 256; ++i) {
+    /*
     int dist = (ImgPal[i].r-r)*(ImgPal[i].r-r)+
       (ImgPal[i].g-g)*(ImgPal[i].g-g)+
       (ImgPal[i].b-b)*(ImgPal[i].b-b);
+    */
+    int dist = rgbDistanceSquared(r, g, b, ImgPal[i].r, ImgPal[i].g, ImgPal[i].b);
     if (dist < best_dist) {
       best_colour = i;
       best_dist = dist;

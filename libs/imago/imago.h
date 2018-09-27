@@ -31,6 +31,15 @@
 
 class VImage {
 public:
+  // see https://www.compuphase.com/cmetric.htm
+  static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
+    const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
+    const vint32 r = (vint32)r0-(vint32)r1;
+    const vint32 g = (vint32)g0-(vint32)g1;
+    const vint32 b = (vint32)b0-(vint32)b1;
+    return (((512+rmean)*r*r)/256)+4*g*g+(((767-rmean)*b*b)/256);
+  }
+
   // texture data formats
   enum ImageType {
     IT_Pal,  // paletised
@@ -48,8 +57,10 @@ public:
     RGB (const RGBA &c) : r(c.r), g(c.g), b(c.b) {}
     inline bool operator == (const RGB &c) const { return (r == c.r && g == c.g && b == c.b); }
     inline bool operator == (const RGBA &c) const { return (c.a == 255 && r == c.r && g == c.g && b == c.b); }
-    inline int distSq (const RGB &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b); }
-    inline int distSq (const RGBA &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(255-c.a)*(255-c.a); }
+    //inline int distSq (const RGB &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b); }
+    //inline int distSq (const RGBA &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(255-c.a)*(255-c.a); }
+    inline int distSq (const RGBA &c) const { return rgbDistanceSquared(r, g, b, c.r*c.a/255, c.g*c.a/255, c.b*c.a/255); }
+    inline int distSq (const RGB &c) const { return rgbDistanceSquared(r, g, b, c.r, c.g, c.b); }
     inline bool isTransparent () const { return false; }
     inline bool isOpaque () const { return true; }
     // ignores alpha
@@ -68,8 +79,10 @@ public:
     RGBA (const RGBA &c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
     inline bool operator == (const RGB &c) const { return (a == 255 && r == c.r && g == c.g && b == c.b); }
     inline bool operator == (const RGBA &c) const { return (a == c.a && r == c.r && g == c.g && b == c.b); }
-    inline int distSq (const RGB &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(255-a)*(255-a); }
-    inline int distSq (const RGBA &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(a-c.a)*(a-c.a); }
+    //inline int distSq (const RGB &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(255-a)*(255-a); }
+    //inline int distSq (const RGBA &c) const { return (r-c.r)*(r-c.r)+(g-c.g)*(g-c.g)+(b-c.b)*(b-c.b)+(a-c.a)*(a-c.a); }
+    inline int distSq (const RGBA &c) const { return rgbDistanceSquared(r*a/255, g*a/255, b*a/255, c.r*c.a/255, c.g*c.a/255, c.b*c.a/255); }
+    inline int distSq (const RGB &c) const { return rgbDistanceSquared(r*a/255, g*a/255, b*a/255, c.r, c.g, c.b); }
     inline bool isTransparent () const { return (a == 0); }
     inline bool isOpaque () const { return (a == 255); }
     // ignores alpha

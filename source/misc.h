@@ -57,3 +57,13 @@ void M_RgbToHsv(vuint8, vuint8, vuint8, vuint8&, vuint8&, vuint8&);
 void M_RgbToHsv(float, float, float, float&, float&, float&);
 void M_HsvToRgb(vuint8, vuint8, vuint8, vuint8&, vuint8&, vuint8&);
 void M_HsvToRgb(float, float, float, float&, float&, float&);
+
+
+// see https://www.compuphase.com/cmetric.htm
+static inline __attribute__((unused)) vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
+  const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
+  const vint32 r = (vint32)r0-(vint32)r1;
+  const vint32 g = (vint32)g0-(vint32)g1;
+  const vint32 b = (vint32)b0-(vint32)b1;
+  return (((512+rmean)*r*r)/256)+4*g*g+(((767-rmean)*b*b)/256);
+}
