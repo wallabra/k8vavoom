@@ -784,79 +784,49 @@ void MakeVertexCeilingHeights(Level InLevel)
 //  on the other side of the reference line. (By definition, line must be
 //  two-sided.)
 //
-//  If (which & 1), sets floor.
-//  If (which & 2), sets ceiling.
+//  If which == 0, sets floor.
+//  If which == 1, sets ceiling.
 //
 //==========================================================================
-void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which) {
-  sector_t *refsec;
-  float bestdist;
-  TVec *refvert = (sec->lines[0])->v1;
-  //int i;
-  //line_t **probe;
-  //float dist;
-  TVec *vert;
-  TVec p, v1, v2, cross;
-  sec_plane_t *refplane;
-  sec_plane_t *srcplane;
-  float srcheight, destheight;
-
+void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which, int lineidx) {
   if (line->backsector == nullptr) return;
 
   // find furthest vertex from the reference line
   // it, along with the two ends of the line will define the plane
-  bestdist = 0.0;
-  /*
-  for (int i = sec.lines.length*2, probe = &sec->lines[0]; i > 0; i--) {
-    if (i&1) {
-      vert = (*probe)->v2;
-      probe = &probe[1];
-    } else {
-      vert = (*probe)->v1;
-    }
-    dist = fabs(DotProduct(*vert, line->normal) - line->dist);
-    if (dist > bestdist) {
-      bestdist = dist;
-      refvert = vert;
-    }
-  }
-  */
-  //int lnum = sec.lines.length;
+  TVec *refvert = sec.lines[0].v1;
+  float bestdist = -1;
   foreach (auto i; 0..sec.lines.length) {
-    // v1
-    vert = sec.lines[i]->v1;
-    float dist = fabs(DotProduct(*vert, line->normal)-line->dist);
-    if (dist > bestdist) { bestdist = dist; refvert = vert; }
-    // v2
-    vert = sec.lines[i]->v2;
-    dist = fabs(DotProduct(*vert, line->normal)-line->dist);
-    if (dist > bestdist) { bestdist = dist; refvert = vert; }
+    foreach (auto vidx; 0..2) {
+      TVec *vert = (!vidx ? sec.lines[i].v1 : sec.lines[i].v2);
+      float dist = fabs(DotProduct(*vert, line.normal)-line.dist);
+      //TVec dir = (*line->v2)-(*line->v1);
+      //float dist = fabs((line.v1.y-vert.y)*dir.x-(line.v1.x-vert.x)*dir.y);
+      if (dist > bestdist) { bestdist = dist; refvert = vert; }
+    }
   }
 
-  refsec = (line->frontsector == sec ? line->backsector : line->frontsector);
+  sector_t *refsec = (line.frontsector == sec ? line.backsector : line.frontsector);
 
-  p = *line->v1;
-  v1 = *line->v2 - *line->v1;
-  v2 = *refvert - *line->v1;
+  sec_plane_t *srcplane = (which == 0 ? &sec.floor : &sec.ceiling);
+  float srcheight = (which == 0 ? sec.floor.TexZ : sec.ceiling.TexZ);
+  float destheight = (which == 0 ? refsec.floor.TexZ : refsec.ceiling.TexZ);
 
-  refplane = (which == 0) ? &refsec->floor : &refsec->ceiling;
-  srcplane = (which == 0) ? &sec->floor : &sec->ceiling;
-  srcheight = (which == 0) ? sec->floor.TexZ : sec->ceiling.TexZ;
-  destheight = (which == 0) ? refsec->floor.TexZ : refsec->ceiling.TexZ;
-
+  TVec p = *line.v1;
   p.z = destheight;
-  v1.z = 0.0;
-  v2.z = srcheight - destheight;
 
-  cross = Normalise(CrossProduct(v1, v2));
+  TVec v1 = (*line.v2)-(*line.v1);
+  v1.z = 0;
+
+  TVec v2 = (*refvert)-(*line.v1);
+  v2.z = srcheight-destheight;
+
+  TVec cross = Normalise(CrossProduct(v1, v2));
 
   // fix backward normals
-  if ((cross.z < 0.0 && which == 0) || (cross.z > 0.0 && which == 1)) {
-    cross = -cross;
-  }
+  if ((which == 0 && cross.z < 0) || (which == 1 && cross.z > 0)) cross = -cross;
 
-  srcplane->normal = cross;
-  srcplane->dist = DotProduct(cross, p);
+  srcplane.normal = cross;
+  srcplane.dist = DotProduct(cross, p);
 }
 
 
@@ -880,12 +850,14 @@ void SetSlopes (Level InLevel) {
           int bits = (s == 0 ? line.arg1 : line.arg2)&3;
           //if (s == 1 && bits == 0) bits = (InLevel.Lines[i].arg1 >> 2) & 3;
           if (s == 1 && !line.arg2) bits = (line.arg1>>2)&3;
-          if (bits == 1) {
-            // align front side to back
-            AlignPlane(InLevel, line.frontsector, line, s);
-          } else if (bits == 2) {
-            // align back side to front
-            AlignPlane(InLevel, line.backsector, line, s);
+          switch (bits) {
+            case 1: // align front side to back
+              AlignPlane(InLevel, line.frontsector, line, s, i);
+              break;
+            case 2:
+              // align back side to front
+              AlignPlane(InLevel, line.backsector, line, s, i);
+              break;
           }
         }
       }
