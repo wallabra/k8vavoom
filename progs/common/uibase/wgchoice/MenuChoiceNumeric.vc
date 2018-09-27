@@ -1,0 +1,202 @@
+﻿//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+
+class MenuChoiceNumeric : MenuChoice;
+
+string Text;
+
+float Value;
+float ValueDelta;
+float MinValue;
+float MaxValue;
+
+int TextFocusedColor = CR_YELLOW;
+int TextNormalColor = CR_WHITE;
+
+int ValueFocusedColor = CR_GREEN; //CR_YELLOW;
+int ValueNormalColor = CR_RED;
+
+delegate bool ValueChanging (Object Sender, float NewValue);
+
+
+//==========================================================================
+//
+//  getSavedValue
+//
+//==========================================================================
+float getSavedValue (optional float defval) {
+  if (!specified_defval) defval = Value;
+  if (cvarSession) return getSavedFloat(cvarSession, defval);
+  return defval;
+}
+
+
+//==========================================================================
+//
+//  SetSessionCvar
+//
+//==========================================================================
+void SetSessionCvar (name Name, optional float defval) {
+  if (!specified_defval) defval = 0;
+  cvarSession = Name;
+  if (Name) defval = getSavedFloat(Name, defval);
+  if (SetNewValue(defval)) Value = defval;
+}
+
+
+//==========================================================================
+//
+//  SetOrigin
+//
+//==========================================================================
+override void SetOrigin (int x, int y) {
+  SetPos(x-CursorXOffs, y);
+}
+
+
+//==========================================================================
+//
+//  SetNewValue
+//
+//==========================================================================
+bool SetNewValue (float newValue) {
+  if (ValueChanging) {
+    if (!ValueChanging(self, newValue)) return false;
+  }
+  if (cvarSession) setSavedFloat(cvarSession, newValue);
+  Value = newValue;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  SetInitialValue
+//
+//==========================================================================
+void SetInitialValue (float AValue) {
+  Value = AValue;
+  if (Value < MinValue) Value = MinValue;
+  if (Value > MaxValue) Value = MaxValue;
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  int Col = (IsFocus() ? TextFocusedColor : TextNormalColor);
+
+  /*
+  if (bLeftAlign) {
+    SetTextAlign(hleft, vtop);
+    DrawText(0, 0, Text, Col);
+  } else
+  */
+  {
+    SetTextAlign(hright, vtop);
+    DrawText(CursorXOffs, 0, Text, Col);
+  }
+
+  //int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
+  int xx = CursorXOffs+10;
+  int Col2 = (IsFocus() ? ValueFocusedColor : ValueNormalColor);
+  SetTextAlign(hleft, vtop);
+  // integer?
+  if (fabs(Value)-int(fabs(Value)) == 0 && fabs(ValueDelta)-int(fabs(ValueDelta)) == 0) {
+    // int
+    DrawText(xx, 0, va("%d", int(Value)), Col2);
+  } else {
+    // float
+    string s = va("%f", Value);
+    while (s.length && s[$-1] == '0') s = s[0..$-1];
+    if (!s) s = va("%f", Value); else if (s[$-1] == ".") s ~= "0";
+    DrawText(xx, 0, s, Col2);
+  }
+}
+
+
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
+  float newValue;
+  switch (key) {
+    case K_LEFTARROW:
+    case K_MWHEELDOWN:
+      newValue = Value-ValueDelta;
+      if (newValue < MinValue) newValue = MinValue;
+      if (SetNewValue(newValue)) LocalSound('menu/change');
+      return true;
+    case K_RIGHTARROW:
+    case K_MWHEELUP:
+      newValue = Value+ValueDelta;
+      if (newValue > MaxValue) newValue = MaxValue;
+      if (SetNewValue(newValue)) LocalSound('menu/change');
+      return true;
+  }
+  return ::OnKeyDown(key);
+}
+
+
+//==========================================================================
+//
+//  OnMouseClick
+//
+//==========================================================================
+override void OnMouseClick (int X, int Y) {
+  SetFocus();
+  float newValue = Value-ValueDelta;
+  if (newValue < MinValue) newValue = MinValue;
+  if (SetNewValue(newValue)) LocalSound('menu/change');
+}
+
+
+//==========================================================================
+//
+//  OnRMouseClick
+//
+//==========================================================================
+override void OnRMouseClick (int X, int Y) {
+  SetFocus();
+  float newValue = Value+ValueDelta;
+  if (newValue > MaxValue) newValue = MaxValue;
+  if (SetNewValue(newValue)) LocalSound('menu/change');
+}
+
+
+defaultproperties {
+  Width = 360;
+  Height = 10;
+  //CursorXOffs = 200;
+  Value = 0.0;
+  ValueDelta = 1.0;
+  MinValue = 0.0;
+  MaxValue = 1.0;
+}
