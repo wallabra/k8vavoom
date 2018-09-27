@@ -245,52 +245,30 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   TArray<VStr> WadFiles;
   TArray<VStr> ZipFiles;
 
-  // find all .wad files in that directory
+  // find all .wad/.pk3 files in that directory
   auto dirit = Sys_OpenDir(bdx);
   if (dirit) {
     for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
       //fprintf(stderr, "  <%s>\n", *test);
       VStr ext = test.ExtractFileExtension().ToLower();
-      if (ext == "wad") WadFiles.Append(test);
+           if (ext == "wad") WadFiles.Append(test);
+      else if (ext == "pk3") ZipFiles.Append(test);
     }
     Sys_CloseDir(dirit);
     qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
-  }
-
-  // find all .pk3 files in that directory
-  dirit = Sys_OpenDir(bdx);
-  if (dirit) {
-    for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
-      //fprintf(stderr, "  <%s>\n", *test);
-      VStr ext = test.ExtractFileExtension().ToLower();
-      if (ext == "pk3") ZipFiles.Append(test);
-    }
-    Sys_CloseDir(dirit);
     qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
   }
 
   // now add wads, then pk3s
   for (int i = 0; i < WadFiles.length(); ++i) {
-    wpkAppend(dir+"/"+WadFiles[i], true); // system pak
+    if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
     W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
-    wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
+    if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     AddZipFile(bdx+"/"+ZipFiles[i]);
   }
-
-  // then add wad##.wad files
-  /*
-  VStr gwadir;
-  if (fl_savedir.IsNotEmpty() && basedir != fl_savedir) gwadir = fl_savedir+"/"+dir;
-  for (int i = 0; i < 1024; ++i) {
-    VStr buf = bdx+"/wad"+i+".wad";
-    if (!Sys_FileExists(buf)) break;
-    wpkAppend(dir+"/wad"+i+".wad", true); // system pak
-    W_AddFile(buf, gwadir, false);
-  }
-  */
 
   // finally add directory itself
   VFilesDir *info = new VFilesDir(bdx);
@@ -688,6 +666,7 @@ void FL_Init () {
     fsys_report_added_paks = fsys_report_user_wads;
     fsys_skipSounds = false;
     fsys_skipSprites = false;
+    bool noStoreInSave = false;
     for (int f = 1; f < fp; ++f) {
            if (VStr::Cmp(GArgs[f], "-skipsounds") == 0) fsys_skipSounds = true;
       else if (VStr::Cmp(GArgs[f], "-allowsounds") == 0) fsys_skipSounds = false;
@@ -704,17 +683,19 @@ void FL_Init () {
         else if (VStr::Cmp(GArgs[fp], "-skipsprites") == 0) fsys_skipSprites = true;
         else if (VStr::Cmp(GArgs[fp], "-allowsprites") == 0) fsys_skipSprites = false;
         else if (VStr::Cmp(GArgs[fp], "-skipdehacked") == 0) fsys_skipDehacked = true;
-        else if (VStr::Cmp(GArgs[fp], "-allodehacked") == 0) fsys_skipDehacked = false;
-        else inFile = (VStr::Cmp(GArgs[fp], "-file") == 0);
+        else if (VStr::Cmp(GArgs[fp], "-allowdehacked") == 0) fsys_skipDehacked = false;
+        else if (VStr::Cmp(GArgs[fp], "-cosmetic") == 0) noStoreInSave = true;
+        else { inFile = (VStr::Cmp(GArgs[fp], "-file") == 0); if (inFile) noStoreInSave = false; }
         continue;
       }
       if (!inFile) continue;
       if (!Sys_FileExists(VStr(GArgs[fp]))) {
         GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
       } else {
-        wpkAppend(VStr(GArgs[fp]), false); // non-system pak
+        if (!noStoreInSave) wpkAppend(VStr(GArgs[fp]), false); // non-system pak
         AddAnyFile(GArgs[fp], true);
       }
+      noStoreInSave = false; // autoreset
     }
     fsys_skipSounds = false;
     fsys_skipSprites = false;
