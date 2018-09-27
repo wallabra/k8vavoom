@@ -244,14 +244,14 @@ static VStr SV_GetSavesDir () {
 
 //==========================================================================
 //
-//  SV_GetSaveSlotBaseFileName
+//  GetSaveSlotBaseFileName
 //
 //  if slot is < 0, this is autosave slot
 //  QUICKSAVE_SLOT is quicksave slot
 //  returns empty string for invalid slot
 //
 //==========================================================================
-static VStr SV_GetSaveSlotBaseFileName (int slot) {
+static VStr GetSaveSlotBaseFileName (int slot) {
   if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return VStr();
   VStr modlist;
   // get list of loaded modules
@@ -271,27 +271,107 @@ static VStr SV_GetSaveSlotBaseFileName (int slot) {
   vuint32 xxhashval = XXHash32::hash(*modlist, (vint32)modlist.length(), (vuint32)wadlist.length());
   VStr shahex = VStr::buf2hex(&xxhashval, 4);
 #endif
-  if (slot == QUICKSAVE_SLOT) return shahex+VStr("_quicksave_00.vsg");
-  if (slot < 0) return VStr(va("%s_autosave_%02d.vsg", *shahex, -slot));
-  return VStr(va("%s_normsave_%02d.vsg", *shahex, slot+1));
+  if (slot == QUICKSAVE_SLOT) return shahex+VStr("_quicksave");
+  if (slot < 0) return VStr(va("%s_autosave_%02d", *shahex, -slot));
+  return VStr(va("%s_normsave_%02d", *shahex, slot+1));
 }
 
 
 //==========================================================================
 //
-//  SV_GetSaveSlotFileName
+//  GetSaveSlotFileName
 //
 //  see above about slot values meaning
 //  returns empty string for invalid slot
 //
 //==========================================================================
-static VStr SV_GetSaveSlotFileName (int slot) {
-  VStr bfn = SV_GetSaveSlotBaseFileName(slot);
+/*
+static VStr GetSaveSlotFileName (int slot) {
+  VStr bfn = GetSaveSlotBaseFileName(slot);
   if (bfn.isEmpty()) return bfn;
   return SV_GetSavesDir()+"/"+bfn;
 }
+*/
 
 
+//==========================================================================
+//
+//  SV_OpenSlotFileRead
+//
+//  open savegame slot file if it exists
+//
+//==========================================================================
+static VStream *SV_OpenSlotFileRead (int slot) {
+  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return nullptr;
+  auto svdir = SV_GetSavesDir();
+  auto dir = Sys_OpenDir(svdir);
+  if (!dir) return nullptr;
+  auto svpfx = GetSaveSlotBaseFileName(slot);
+  for (;;) {
+    VStr fname = Sys_ReadDir(dir);
+    if (fname.isEmpty()) break;
+    VStr flow = fname.toLowerCase();
+    if (flow.startsWith(svpfx) && flow.endsWith(".vsg")) {
+      Sys_CloseDir(dir);
+      return FL_OpenSysFileRead(svdir+"/"+fname);
+    }
+  }
+  Sys_CloseDir(dir);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  SV_CreateSlotFileWrite
+//
+//  create new savegame slot file
+//  also, removes any existing savegame file for the same slot
+//
+//==========================================================================
+static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
+  if (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63)) return nullptr;
+  if (slot == QUICKSAVE_SLOT) descr = VStr();
+  auto svdir = SV_GetSavesDir();
+  FL_CreatePath(svdir); // just in case
+  auto dir = Sys_OpenDir(svdir);
+  if (!dir) return nullptr;
+  // scan
+  auto svpfx = GetSaveSlotBaseFileName(slot);
+  TArray<VStr> tokill;
+  for (;;) {
+    VStr fname = Sys_ReadDir(dir);
+    if (fname.isEmpty()) break;
+    VStr flow = fname.toLowerCase();
+    if (flow.startsWith(svpfx) && flow.endsWith(".vsg")) tokill.append(svdir+"/"+fname);
+  }
+  Sys_CloseDir(dir);
+  // remove old saves
+  for (int f = 0; f < tokill.length(); ++f) Sys_FileDelete(tokill[f]);
+  // normalize description
+  VStr newdesc;
+  for (int f = 0; f < descr.length(); ++f) {
+    char ch = descr[f];
+    if (!ch) continue;
+    if (ch >= '0' && ch <= '9') { newdesc += ch; continue; }
+    if (ch >= 'A' && ch <= 'Z') { newdesc += ch-'A'+'a'; continue; } // poor man's tolower()
+    if (ch >= 'a' && ch <= 'z') { newdesc += ch; continue; }
+    // replace with underscore
+    if (newdesc.length() == 0) continue;
+    if (newdesc[newdesc.length()-1] == '_') continue;
+    newdesc += "_";
+  }
+  while (newdesc.length() && newdesc[0] == '_') newdesc.chopLeft(1);
+  while (newdesc.length() && newdesc[newdesc.length()-1] == '_') newdesc.chopRight(1);
+  // finalize file name
+  svpfx = svdir+"/"+svpfx;
+  if (newdesc.length()) { svpfx += "_"; svpfx += newdesc; }
+  svpfx += ".vsg";
+  return FL_OpenSysFileWrite(svpfx);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct TTimeVal {
   int secs; // actually, unsigned
   int usecs;
@@ -480,7 +560,7 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
 bool VSaveSlot::LoadSlot (int Slot) {
   guard(VSaveSlot::LoadSlot);
   Clear();
-  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
+  VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (!Strm) {
     GCon->Log("Savegame file doesn't exist");
     return false;
@@ -581,15 +661,8 @@ bool VSaveSlot::LoadSlot (int Slot) {
 //==========================================================================
 void VSaveSlot::SaveToSlot (int Slot) {
   guard(VSaveSlot::SaveToSlot);
-  VStr savefname = SV_GetSaveSlotFileName(Slot);
-  if (savefname.isEmpty()) {
-    GCon->Logf("ERROR: cannot save to slot %d!", Slot);
-    return;
-  }
 
-  FL_CreatePath(SV_GetSavesDir()); // just in case
-
-  VStream *Strm = FL_OpenSysFileWrite(*savefname);
+  VStream *Strm = SV_CreateSlotFileWrite(Slot, Description);
   if (!Strm) {
     GCon->Logf("ERROR: cannot save to slot %d!", Slot);
     return;
@@ -682,7 +755,7 @@ VSavedMap *VSaveSlot::FindMap (VName Name) {
 //==========================================================================
 bool SV_GetSaveString (int Slot, VStr &Desc) {
   guard(SV_GetSaveString);
-  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
+  VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
     memset(VersionText, 0, sizeof(VersionText));
@@ -733,7 +806,7 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
 //==========================================================================
 void SV_GetSaveDateString (int Slot, VStr &datestr) {
   guard(SV_GetSaveDate);
-  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
+  VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
     memset(VersionText, 0, sizeof(VersionText));
@@ -764,7 +837,7 @@ void SV_GetSaveDateString (int Slot, VStr &datestr) {
 static bool SV_GetSaveDateTVal (int Slot, TTimeVal *tv) {
   guard(SV_GetSaveDate);
   memset((void *)tv, 0, sizeof(*tv));
-  VStream *Strm = FL_OpenSysFileRead(SV_GetSaveSlotFileName(Slot));
+  VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (Strm) {
     char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
     memset(VersionText, 0, sizeof(VersionText));
