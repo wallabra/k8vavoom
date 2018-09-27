@@ -52,9 +52,9 @@ VStr fl_savedir;
 VStr fl_gamedir;
 
 TArray<VSearchPath *> SearchPaths;
-bool fsys_report_added_paks = false;
-static VCvarB fsys_report_system_wads("fsys_report_system_wads", false, "Report loaded system wads?", CVAR_Archive);
-static VCvarB fsys_report_user_wads("fsys_report_user_wads", true, "Report loaded user wads?", CVAR_Archive);
+bool fsys_report_added_paks = true;
+//static VCvarB fsys_report_system_wads("fsys_report_system_wads", false, "Report loaded system wads?", CVAR_Archive);
+//static VCvarB fsys_report_user_wads("fsys_report_user_wads", true, "Report loaded user wads?", CVAR_Archive);
 
 TArray<VStr> wadfiles;
 //static bool bIwadAdded;
@@ -566,7 +566,10 @@ void FL_Init () {
 
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
 
-  fsys_report_added_paks = fsys_report_system_wads;
+  bool reportIWads = (GArgs.CheckParm("-reportiwad") || GArgs.CheckParm("-reportiwads"));
+  bool reportPWads = (GArgs.CheckParm("-silentpwad") || GArgs.CheckParm("-silencepwad") || GArgs.CheckParm("-silentpwads") || GArgs.CheckParm("-silencepwads") ? false : true);
+
+  fsys_report_added_paks = reportIWads;
 
   fsys_onlyOneBaseFile = GArgs.CheckParm("-nakedbase");
 
@@ -673,7 +676,7 @@ void FL_Init () {
 
   int fp = GArgs.CheckParm("-file");
   if (fp) {
-    fsys_report_added_paks = fsys_report_user_wads;
+    fsys_report_added_paks = reportPWads;
     fsys_skipSounds = false;
     fsys_skipSprites = false;
     bool noStoreInSave = false;
@@ -711,9 +714,9 @@ void FL_Init () {
     fsys_skipSprites = false;
   }
 
-  fsys_report_added_paks = fsys_report_system_wads;
+  fsys_report_added_paks = reportIWads;
   if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
-  fsys_report_added_paks = fsys_report_user_wads;
+  fsys_report_added_paks = reportPWads;
 
   RenameSprites();
   unguard;
