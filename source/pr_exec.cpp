@@ -154,7 +154,7 @@ static void cstPush (VMethod *func) {
   if (cstUsed == cstSize) {
     //FIXME: handle OOM here
     cstSize += 16384;
-    callStack = (CallStackItem *)realloc(callStack, sizeof(callStack[0])*cstSize);
+    callStack = (CallStackItem *)Z_Realloc(callStack, sizeof(callStack[0])*cstSize);
   }
   callStack[cstUsed].func = func;
   callStack[cstUsed].ip = nullptr;
@@ -237,7 +237,7 @@ static void pushOldIterator (VScriptIterator *iter) {
   if (iterStackUsed == iterStackSize) {
     // grow
     iterStackSize = ((iterStackSize+1)|0x3ff)+1;
-    iterStack = (VScriptIterator **)realloc(iterStack, iterStackSize*sizeof(iterStack[0]));
+    iterStack = (VScriptIterator **)Z_Realloc(iterStack, iterStackSize*sizeof(iterStack[0]));
     if (!iterStack) { cstDump(nullptr); Sys_Error("popOldIterator: out of memory for iterator stack"); }
     if (iterStackUsed >= iterStackSize) { cstDump(nullptr); Sys_Error("popOldIterator: WTF?!"); }
   }

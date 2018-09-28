@@ -459,10 +459,10 @@ struct SelfDestructBuf {
   vuint8 *buf;
 
   SelfDestructBuf (vint32 sz) {
-    buf = (vuint8 *)malloc(sz);
+    buf = (vuint8 *)Z_Malloc(sz);
     if (!buf) Sys_Error("Out of memory!");
   }
-  ~SelfDestructBuf () { free(buf); }
+  ~SelfDestructBuf () { Z_Free(buf); }
 };
 
 

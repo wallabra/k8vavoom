@@ -175,8 +175,8 @@ void VRenderLevelShared::KillPortalPool () {
     ++count;
     total += n->size;
 #endif
-    free(n->mem);
-    free(n);
+    Z_Free(n->mem);
+    Z_Free(n);
   }
 #ifdef VAVOOM_DEBUG_PORTAL_POOL
   if (count) fprintf(stderr, "PORTALPOOL: freed %d nodes (%d total bytes)\n", count, total);
@@ -244,16 +244,16 @@ vuint8 *VRenderLevelShared::AllocPortalPool (int size) {
     while (pphead) {
       PPNode *n = pphead;
       pphead = n->next;
-      free(n->mem);
-      free(n);
+      Z_Free(n->mem);
+      Z_Free(n);
     }
   }
   // no nodes at all?
   if (pphead == nullptr) {
     if (ppcurr != nullptr) Sys_Error("PortalPool: ppcur is not empty");
     // allocate first node
-    pphead = (PPNode *)malloc(sizeof(PPNode));
-    pphead->mem = (vuint8 *)malloc(allocsz);
+    pphead = (PPNode *)Z_Malloc(sizeof(PPNode));
+    pphead->mem = (vuint8 *)Z_Malloc(allocsz);
     pphead->size = allocsz;
     pphead->used = 0;
     pphead->next = nullptr;
@@ -287,13 +287,13 @@ vuint8 *VRenderLevelShared::AllocPortalPool (int size) {
     while (ppcurr->next) {
       PPNode *n = ppcurr;
       ppcurr->next = n->next;
-      free(n->mem);
-      free(n);
+      Z_Free(n->mem);
+      Z_Free(n);
     }
   }
   // allocate a new node
-  PPNode *nnn = (PPNode *)malloc(sizeof(PPNode));
-  nnn->mem = (vuint8 *)malloc(allocsz);
+  PPNode *nnn = (PPNode *)Z_Malloc(sizeof(PPNode));
+  nnn->mem = (vuint8 *)Z_Malloc(allocsz);
   nnn->size = allocsz;
   nnn->used = reqsz;
   nnn->next = nullptr;
@@ -1679,15 +1679,27 @@ COMMAND(TimeRefresh)
   RenderTime = 0;
   UpdateTime = 0;
   start = Sys_Time();
-  for (i = 0; i < 128; i++)
-  {
+
+  int renderAlloc = 0;
+  int renderRealloc = 0;
+  int renderFree = 0;
+
+  for (i = 0; i < 128; i++) {
     cl->ViewAngles.yaw = (float)(i) * 360.0 / 128.0;
 
     Drawer->StartUpdate();
 
+    zone_malloc_call_count = 0;
+    zone_realloc_call_count = 0;
+    zone_free_call_count = 0;
+
     RenderTime -= Sys_Time();
     R_RenderPlayerView();
     RenderTime += Sys_Time();
+
+    renderAlloc += zone_malloc_call_count;
+    renderRealloc += zone_realloc_call_count;
+    renderFree += zone_free_call_count;
 
     UpdateTime -= Sys_Time();
     Drawer->Update();
@@ -1697,6 +1709,9 @@ COMMAND(TimeRefresh)
   time = stop - start;
   GCon->Logf("%f seconds (%f fps)", time, 128 / time);
   GCon->Logf("Render time %f, update time %f", RenderTime, UpdateTime);
+  GCon->Logf("Render malloc calls: %d", renderAlloc);
+  GCon->Logf("Render realloc calls: %d", renderRealloc);
+  GCon->Logf("Render free calls: %d", renderFree);
 
   cl->ViewAngles.yaw = startangle;
   unguard;

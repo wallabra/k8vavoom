@@ -77,7 +77,7 @@ private:
     if (!add) return;
     ++add;
     while (bufalloted-bufused < add) bufalloted = (bufalloted|0x7ff)+1;
-    buf = (char *)realloc(buf, bufalloted);
+    buf = (char *)Z_Realloc(buf, bufalloted);
     if (!buf) { VObject::VMDumpCallStack(); Sys_Error("Out of memory"); }
   }
 
@@ -85,7 +85,7 @@ public:
   PFFmtBuf (size_t resv=0) : buf(nullptr), bufalloted(0), bufused(0) {
     reserve(resv);
   }
-  ~PFFmtBuf () { if (buf) free(buf); }
+  ~PFFmtBuf () { if (buf) Z_Free(buf); }
 
   const char *getCStr () {
     if (!bufused) return "";
