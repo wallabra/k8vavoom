@@ -36,6 +36,7 @@ static char message_buf[SYS_MSG_BUFLEN];
 
 void Failure(const char *fmt, ...)
 {
+#if 0
 	va_list args;
 
 	va_start(args, fmt);
@@ -46,6 +47,7 @@ void Failure(const char *fmt, ...)
 		ajbsp_PrintVerbose("FAILURE: %s", message_buf);
 	/*else
 		ajbsp_PrintVerbose("    %s", message_buf);*/
+#endif
 }
 
 
