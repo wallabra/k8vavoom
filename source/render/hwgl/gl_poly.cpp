@@ -626,12 +626,23 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) {
   guard(VOpenGLDrawer::RenderSurfaceShadowVolume);
+  if (surf->count < 1) return; // just in case
   if (surf->plane->PointOnSide(vieworg) && LightCanCross) return; // viewer is in back side or on plane
-  float dist = DotProduct(LightPos, surf->plane->normal) - surf->plane->dist;
+  float dist = DotProduct(LightPos, surf->plane->normal)-surf->plane->dist;
   if ((dist <= 0.0 && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
 
-  TArray<TVec> v;
-  v.SetNum(surf->count);
+  static TVec *poolVec = nullptr;
+  static int poolVecSize = 0;
+
+  //TArray<TVec> v;
+  //v.SetNum(surf->count);
+
+  if (poolVecSize < surf->count) {
+    poolVecSize = (surf->count|0xfff)+1;
+    poolVec = (TVec *)Z_Realloc(poolVec, poolVecSize*sizeof(TVec));
+  }
+
+  TVec *v = poolVec;
 
   swcount += surf->count*4;
 
