@@ -676,6 +676,35 @@ final void A_ChangeScaleYExt (float delta, optional float killLimit) {
 }
 
 
+final void A_LayToFloorWithYaw (float yaw) {
+  auto sec = Level.XLevel.PointInSector(Origin);
+  if (!sec) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 0;
+    return;
+  }
+  TVec norm = sec.floor.normal;
+  //print("floor normal: %v", norm);
+  if (norm.x == 0 && norm.y == 0) {
+    /*
+    norm.z = -norm.z;
+    VectorAngles(norm, Angles);
+    print("  angles: %v", Angles);
+    */
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 0;
+  } else {
+    VectorAngles(norm, Angles);
+    //print("floor normal: %v; angles: %v", norm, Angles);
+    Angles.pitch = AngleMod360(Angles.pitch+90);
+    // alas
+    //Angles.yaw = yaw;
+  }
+}
+
+
 //==========================================================================
 //
 //  A_WeaponReady

@@ -289,9 +289,10 @@ Actor K8Gore_BloodSpot$(Color) {
     SpawnNormally:
       //TNT1 A 0 A_SpawnItem("GibRemoving")
       TNT1 A 0
-      TNT1 A 0 A_SetRollExt(0)
-      TNT1 A 0 A_SetYawExt(Random(0, 360))
-      TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
       TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
@@ -1397,9 +1398,10 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      TNT1 A 0 A_SetRollExt(0)
-      TNT1 A 0 A_SetYawExt(Random(0, 360))
-      TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_SetScaleXExt(Random(6, 12)/10.0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRed$(Color)",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
@@ -1454,9 +1456,10 @@ Actor K8Gore_GrowingBloodPool2$(Color) : K8Gore_BloodSpot$(Color) {
     Spawn:
       TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      TNT1 A 0 A_SetRollExt(0)
-      TNT1 A 0 A_SetYawExt(Random(0, 360))
-      TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_SetScaleXExt(Random(6, 12)/10.0)
       TNT5 A 1
       TNT1 A 0 //A_SpawnItemEx("K8Gore_BootSmearerRed$(Color)",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
