@@ -836,10 +836,10 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   // signature
   strm->Serialise(sign, 32);
-  if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, 32) != 0) return false;
+  if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, 32) != 0) { GCon->Log("invalid cache file signature"); return false; }
 
   VZipStreamReader *arrstrm = new VZipStreamReader(true, strm);
-  if (arrstrm->IsError()) { delete arrstrm; return false; }
+  if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cannot create cache decompressor"); return false; }
 
   int vissize = -1;
   int checkSecNum = -1;
@@ -1183,7 +1183,7 @@ load_again:
   bool hasCacheFile = false;
 
   //FIXME: load cache file into temp buffer, and process it later
-  if (!loader_force_nodes_rebuild && sha224valid) {
+  if (sha224valid) {
     if (killCache) {
       Sys_FileDelete(cacheFileName);
     } else {
