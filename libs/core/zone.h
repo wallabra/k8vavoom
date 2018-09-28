@@ -27,7 +27,13 @@
 //**
 //**************************************************************************
 
+extern int zone_malloc_call_count;
+extern int zone_realloc_call_count;
+extern int zone_free_call_count;
+
+
 inline void *Z_Malloc (size_t size) {
+  ++zone_malloc_call_count;
   void *res = malloc(size > 0 ? size : size+1);
   if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
   return res;
@@ -35,6 +41,7 @@ inline void *Z_Malloc (size_t size) {
 
 
 inline void *Z_Realloc (void *ptr, size_t size) {
+  ++zone_realloc_call_count;
   if (size) {
     void *res = realloc(ptr, size);
     if (!res) { fprintf(stdout, "FATAL: out of memory!\n"); *(int*)0 = 0; }
@@ -55,5 +62,6 @@ inline void *Z_Calloc (size_t size) {
 
 
 inline void Z_Free (void *ptr) {
+  ++zone_free_call_count;
   if (ptr) free(ptr);
 }

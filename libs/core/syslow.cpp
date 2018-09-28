@@ -40,6 +40,11 @@
 #include <sys/types.h>
 #include <time.h>
 
+// k8: ah, let it be here, why not...
+int zone_malloc_call_count = 0;
+int zone_realloc_call_count = 0;
+int zone_free_call_count = 0;
+
 
 struct DirInfo {
   DIR *dh;
