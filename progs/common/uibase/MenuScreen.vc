@@ -51,6 +51,9 @@ name ClearMenusSound;
 int currentY;
 
 
+enum WidthThreshold = 380;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 void CreateMenu () {
   CreateTitle();
@@ -104,7 +107,8 @@ void CreateChoices () {
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
-  if (Width > 320) {
+  if (Width > WidthThreshold) {
+    //print("[%s] wdt=%d", text, Width);
     onoff.Width = Width;
     onoff.CursorXOffs = Width/2;
     onoff.CursorXOffsHR = Width/2;
@@ -126,7 +130,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
     currentY -= 2;
   }
   auto slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  if (Width > 320) {
+  if (Width > WidthThreshold) {
     slider.Width = Width;
     slider.Width = Width;
     slider.CursorXOffs = Width/2;
@@ -149,7 +153,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta, optional float min, optional float max) {
   auto slider = MenuChoiceNumeric(NewChild(MenuChoiceNumeric));
-  if (Width > 320) {
+  if (Width > WidthThreshold) {
     slider.Width = Width;
     slider.Width = Width;
     slider.CursorXOffs = Width/2;
@@ -175,7 +179,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.TextHAlign = hcenter;
   btn.TextVAlign = vbottom;
-  if (Width > 320) {
+  if (Width > WidthThreshold) {
     btn.Width = Width;
     btn.CursorXOffs = Width/2;
     btn.SetOrigin(0, currentY);
@@ -200,7 +204,7 @@ MenuTextButton CreateChoiceSubHeader (string text, optional int color) {
 MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
   auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
-  if (Width > 320) btn.Width = Width;
+  if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuClass(asubmenuClass);
   currentY += btn.Height;
@@ -211,7 +215,7 @@ MenuTextButton CreateSubMenuText (string text, class!MenuScreen asubmenuClass) {
 MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass) {
   auto btn = MenuTextButton(NewChild(MenuBigTextButton));
   btn.SetOrigin(ChoicesStartX, currentY);
-  if (Width > 320) btn.Width = Width;
+  if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
   btn.SetSubMenuClass(asubmenuClass);
   currentY += btn.Height;
