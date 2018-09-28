@@ -673,8 +673,18 @@ void VOpenGLDrawer::DrawAliasModelShadow(const TVec &origin, const TAVec &angles
   VMatrix4 InvRotationMatrix = RotationMatrix.Inverse();
   TVec LocalLightPos = InvRotationMatrix.Transform(LightPos);
 
-  TArray<bool> PlaneSides;
-  PlaneSides.SetNum(Mdl->Tris.Num());
+  //TArray<bool> PlaneSides;
+  //PlaneSides.SetNum(Mdl->Tris.Num());
+  static vuint8 *psPool = nullptr;
+  static int psPoolSize = 0;
+
+  if (psPoolSize < Mdl->Tris.Num()) {
+    psPoolSize = (Mdl->Tris.Num()|0xfff)+1;
+    psPool = (vuint8 *)Z_Realloc(psPool, psPoolSize*sizeof(vuint8));
+  }
+
+  vuint8 *PlaneSides = psPool;
+
   VMeshFrame *PlanesFrame = Inter >= 0.5 ? NextFrameDesc : FrameDesc;
   TPlane *P = PlanesFrame->Planes;
   for (int i = 0; i < Mdl->Tris.Num(); i++, P++)
