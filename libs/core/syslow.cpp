@@ -46,6 +46,26 @@ int zone_realloc_call_count = 0;
 int zone_free_call_count = 0;
 
 
+/*
+  static void *operator new (size_t size);
+  static void *operator new[] (size_t size);
+  static void operator delete (void *p);
+  static void operator delete[] (void *p);
+*/
+#include <new>
+
+void *operator new [] (std::size_t s) noexcept(false) /*throw(std::bad_alloc)*/ {
+  //fprintf(stderr, "new[]\n");
+  return Z_Calloc(s);
+}
+
+
+void operator delete [] (void *p) throw () {
+  //fprintf(stderr, "delete[]\n");
+  Z_Free(p);
+}
+
+
 struct DirInfo {
   DIR *dh;
   VStr path; // with slash
