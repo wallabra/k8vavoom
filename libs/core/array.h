@@ -71,6 +71,12 @@ public:
     ArrNum = 0;
   }
 
+  // don't free array data
+  inline void resetNoDtor () {
+    Flatten(); // just in case
+    ArrNum = 0;
+  }
+
   inline int Num () const { return ArrNum; }
   inline int Length () const { return ArrNum; }
   inline int length () const { return ArrNum; }
