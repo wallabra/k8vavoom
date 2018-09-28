@@ -503,6 +503,10 @@ private:
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
 
+  // regular renderer building parts
+  // returns `true` if we need to re-setup texture
+  bool RenderSimpleSurface (surface_t *surf);
+
   void RestoreDepthFunc ();
   //inline bool CanUseRevZ () const { return (gl_dbg_adv_reverse_z ? useReverseZ : useReverseZ && (!RendLev || !RendLev->NeedsInfiniteFarClip)); }
   inline bool CanUseRevZ () const { return useReverseZ; }
