@@ -32,11 +32,20 @@
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::QueueWorldSurface
+//  VRenderLevel::QueueWorldSurface
 //
 //==========================================================================
-void VAdvancedRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
-  guard(VAdvancedRenderLevel::QueueWorldSurface);
+void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
+  guard(VRenderLevel::QueueWorldSurface);
+  bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount);
+  surf->dcseg = seg;
+
+  if (lightmaped) {
+    CacheSurface(surf);
+    //if (Drawer->HaveMultiTexture) return; // always have
+    return;
+  }
+
   QueueSimpleSurf(seg, surf);
   unguard;
 }
@@ -44,13 +53,43 @@ void VAdvancedRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderWorld
+//  VRenderLevel::RenderWorld
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  guard(VAdvancedRenderLevel::RenderWorld);
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+extern vuint32 glWDPolyTotal;
+extern vuint32 glWDVertexTotal;
+extern vuint32 glWDTextureChangesTotal;
+#endif
+
+void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
+  guard(VRenderLevel::RenderWorld);
+
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  double stt = -Sys_Time();
+#endif
   RenderBspWorld(rd, Range);
-  Drawer->DrawWorldAmbientPass();
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("   RenderBspWorld: %f", stt);
+#endif
+
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  glWDPolyTotal = 0;
+  glWDVertexTotal = 0;
+  glWDTextureChangesTotal = 0;
+  stt = -Sys_Time();
+#endif
+  Drawer->WorldDrawing();
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("   Drawer->WorldDrawing: %f (%u polys, %u vertices, %u texture changes)", stt, glWDPolyTotal, glWDVertexTotal, glWDTextureChangesTotal);
+#endif
+
+  //stt = -Sys_Time();
   RenderPortals();
+  //stt += Sys_Time();
+  //GCon->Logf("   RenderPortals: %f", stt);
+
   unguard;
 }

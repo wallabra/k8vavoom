@@ -500,31 +500,6 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
 
 //==========================================================================
 //
-//  VRenderLevel::VRenderLevel
-//
-//==========================================================================
-
-VRenderLevel::VRenderLevel(VLevel *ALevel)
-: VRenderLevelShared(ALevel)
-, c_subdivides(0)
-, c_seg_div(0)
-, freeblocks(nullptr)
-{
-  guard(VRenderLevel::VRenderLevel);
-  NeedsInfiniteFarClip = false;
-
-  memset(cacheblocks, 0, sizeof(cacheblocks));
-  memset(blockbuf, 0, sizeof(blockbuf));
-
-  FlushCaches();
-
-  memset(DLights, 0, sizeof(DLights));
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::~VRenderLevelShared
 //
 //==========================================================================
@@ -1004,64 +979,6 @@ void VRenderLevelShared::MarkLeaves()
       }
     }
   }
-  unguard;
-}
-
-//==========================================================================
-//
-//  VRenderLevel::RenderScene
-//
-//==========================================================================
-
-void VRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *Range)
-{
-  guard(VRenderLevel::RenderScene);
-  r_viewleaf = Level->PointInSubsector(vieworg);
-
-  TransformFrustum();
-
-  Drawer->SetupViewOrg();
-
-
-#ifdef VAVOOM_RENDER_TIMES
-  double stt = -Sys_Time();
-#endif
-  MarkLeaves();
-#ifdef VAVOOM_RENDER_TIMES
-  stt += Sys_Time();
-  GCon->Logf("  MarkLeaves: %f", stt);
-#endif
-
-#ifdef VAVOOM_RENDER_TIMES
-  stt = -Sys_Time();
-#endif
-  UpdateWorld(RD, Range);
-#ifdef VAVOOM_RENDER_TIMES
-  stt += Sys_Time();
-  GCon->Logf("  UpdateWorld: %f", stt);
-#endif
-
-#ifdef VAVOOM_RENDER_TIMES
-  stt = -Sys_Time();
-#endif
-  RenderWorld(RD, Range);
-#ifdef VAVOOM_RENDER_TIMES
-  stt += Sys_Time();
-  GCon->Logf("  RenderWorld: %f", stt);
-#endif
-
-#ifdef VAVOOM_RENDER_TIMES
-  stt = -Sys_Time();
-#endif
-  RenderMobjs(RPASS_Normal);
-#ifdef VAVOOM_RENDER_TIMES
-  stt += Sys_Time();
-  GCon->Logf("  RenderMobjs: %f", stt);
-#endif
-
-  DrawParticles();
-
-  DrawTranslucentPolys();
   unguard;
 }
 

@@ -23,7 +23,8 @@
 //**
 //**************************************************************************
 //**
-//**  BSP traversal, handling of LineSegs for rendering.
+//**  Rendering main loop and setup functions, utility functions (BSP,
+//**  geometry, trigonometry). See tables.c, too.
 //**
 //**************************************************************************
 #include "gamedefs.h"
@@ -32,25 +33,77 @@
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::QueueWorldSurface
+//  VRenderLevel::VRenderLevel
 //
 //==========================================================================
-void VAdvancedRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
-  guard(VAdvancedRenderLevel::QueueWorldSurface);
-  QueueSimpleSurf(seg, surf);
-  unguard;
+VRenderLevel::VRenderLevel (VLevel *ALevel)
+  : VRenderLevelShared(ALevel)
+  , c_subdivides(0)
+  , c_seg_div(0)
+  , freeblocks(nullptr)
+{
+  NeedsInfiniteFarClip = false;
+
+  memset(cacheblocks, 0, sizeof(cacheblocks));
+  memset(blockbuf, 0, sizeof(blockbuf));
+
+  FlushCaches();
+
+  memset(DLights, 0, sizeof(DLights));
 }
 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderWorld
+//  VRenderLevel::RenderScene
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  guard(VAdvancedRenderLevel::RenderWorld);
-  RenderBspWorld(rd, Range);
-  Drawer->DrawWorldAmbientPass();
-  RenderPortals();
+void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
+  guard(VRenderLevel::RenderScene);
+  r_viewleaf = Level->PointInSubsector(vieworg);
+
+  TransformFrustum();
+
+  Drawer->SetupViewOrg();
+
+#ifdef VAVOOM_RENDER_TIMES
+  double stt = -Sys_Time();
+#endif
+  MarkLeaves();
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  MarkLeaves: %f", stt);
+#endif
+
+#ifdef VAVOOM_RENDER_TIMES
+  stt = -Sys_Time();
+#endif
+  UpdateWorld(RD, Range);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  UpdateWorld: %f", stt);
+#endif
+
+#ifdef VAVOOM_RENDER_TIMES
+  stt = -Sys_Time();
+#endif
+  RenderWorld(RD, Range);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  RenderWorld: %f", stt);
+#endif
+
+#ifdef VAVOOM_RENDER_TIMES
+  stt = -Sys_Time();
+#endif
+  RenderMobjs(RPASS_Normal);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  RenderMobjs: %f", stt);
+#endif
+
+  DrawParticles();
+
+  DrawTranslucentPolys();
   unguard;
 }

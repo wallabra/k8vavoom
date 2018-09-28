@@ -105,11 +105,14 @@ set(RENDERBASE_SOURCES
   render/r_public.h
   render/r_shared.h
   render/r_bsp.cpp
+  render/r_bsp_reg.cpp
+  render/r_bsp_adv.cpp
   render/r_data.cpp
   render/r_data.cpp
   render/r_light.cpp
   render/r_light_adv.cpp
   render/r_main.cpp
+  render/r_main_reg.cpp
   render/r_main_adv.cpp
   render/r_model.cpp
   render/r_particle.cpp
@@ -117,6 +120,7 @@ set(RENDERBASE_SOURCES
   render/r_sky.cpp
   render/r_surf.cpp
   render/r_surf_adv.cpp
+  render/r_surf_reg.cpp
   render/r_things.cpp
   render/r_things_adv.cpp
 )
