@@ -332,24 +332,15 @@ vuint32 glWDPolyTotal = 0;
 vuint32 glWDVertexTotal = 0;
 vuint32 glWDTextureChangesTotal = 0;
 
-
-static surface_t **surfList = nullptr;
-static vuint32 surfListUsed = 0;
-static vuint32 surfListSize = 0;
-
-
-static inline void surfListClear () {
-  surfListUsed = 0;
-}
+struct SurfListItem {
+  surface_t *surf;
+  surfcache_t *cache;
+};
 
 
-static inline void surfListAppend (surface_t *surf) {
-  if (surfListUsed == surfListSize) {
-    surfListSize += 65536;
-    surfList = (surface_t **)Z_Realloc(surfList, surfListSize*sizeof(surfList[0]));
-  }
-  surfList[surfListUsed++] = surf;
-}
+VOpenGLDrawer::SurfListItem *VOpenGLDrawer::surfList = nullptr;
+vuint32 VOpenGLDrawer::surfListUsed = 0;
+vuint32 VOpenGLDrawer::surfListSize = 0;
 
 
 extern "C" {
@@ -373,8 +364,13 @@ static int surfCmp (const void *a, const void *b, void *udata) {
 //  returns `true` if we need to re-setup texture
 //
 //==========================================================================
-bool VOpenGLDrawer::RenderSimpleSurface (surface_t *surf) {
+bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   texinfo_t *textr = surf->texinfo;
+
+  if (textureChanged) {
+    SetTexture(textr->Tex, textr->ColourMap);
+    ++glWDTextureChangesTotal;
+  }
 
   p_glUniform3fvARB(SurfSimpleSAxisLoc, 1, &textr->saxis.x);
   p_glUniform1fARB(SurfSimpleSOffsLoc, textr->soffs);
@@ -423,6 +419,93 @@ bool VOpenGLDrawer::RenderSimpleSurface (surface_t *surf) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::RenderLMapSurface
+//
+//==========================================================================
+bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, surfcache_t *cache) {
+  texinfo_t *tex = surf->texinfo;
+
+  if (textureChanged) {
+    SetTexture(tex->Tex, tex->ColourMap);
+    ++glWDTextureChangesTotal;
+  }
+
+  p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &tex->saxis.x);
+  p_glUniform1fARB(SurfLightmapSOffsLoc, tex->soffs);
+  p_glUniform1fARB(SurfLightmapTexIWLoc, tex_iw);
+  p_glUniform3fvARB(SurfLightmapTAxisLoc, 1, &tex->taxis.x);
+  p_glUniform1fARB(SurfLightmapTOffsLoc, tex->toffs);
+  p_glUniform1fARB(SurfLightmapTexIHLoc, tex_ih);
+  p_glUniform1fARB(SurfLightmapTexMinSLoc, surf->texturemins[0]);
+  p_glUniform1fARB(SurfLightmapTexMinTLoc, surf->texturemins[1]);
+  p_glUniform1fARB(SurfLightmapCacheSLoc, cache->s);
+  p_glUniform1fARB(SurfLightmapCacheTLoc, cache->t);
+
+  if (surf->Fade) {
+    p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_TRUE);
+    p_glUniform4fARB(SurfLightmapFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
+    p_glUniform1fARB(SurfLightmapFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
+    p_glUniform1fARB(SurfLightmapFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
+    p_glUniform1fARB(SurfLightmapFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
+  } else {
+    p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_FALSE);
+  }
+
+  bool doDecals = tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
+
+  // fill stencil buffer for decals
+  if (doDecals) RenderPrepareShaderDecals(surf);
+
+  ++glWDPolyTotal;
+  glBegin(GL_POLYGON);
+  for (int i = 0; i < surf->count; ++i) {
+    ++glWDVertexTotal;
+    glVertex(surf->verts[i]);
+  }
+  glEnd();
+
+  // draw decals
+  if (doDecals) {
+    if (RenderFinishShaderDecals(surf, true, false, cache)) {
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      p_glUseProgramObjectARB(SurfLightmapProgram);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::UpdateAndUploadSurfaceTexture
+//
+//  update/(re)generate texture if necessary
+//
+//==========================================================================
+void VOpenGLDrawer::UpdateAndUploadSurfaceTexture (surface_t *surf) {
+  texinfo_t *textr = surf->texinfo;
+  auto Tex = textr->Tex;
+  if (Tex->CheckModified()) FlushTexture(Tex);
+  auto CMap = textr->ColourMap;
+  if (CMap) {
+    VTexture::VTransData *TData = Tex->FindDriverTrans(nullptr, CMap);
+    if (!TData) {
+      TData = &Tex->DriverTranslated.Alloc();
+      TData->Handle = 0;
+      TData->Trans = nullptr;
+      TData->ColourMap = CMap;
+      GenerateTexture(Tex, (GLuint*)&TData->Handle, nullptr, CMap);
+    }
+  } else if (!Tex->DriverHandle) {
+    GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::WorldDrawing
 //
 //==========================================================================
@@ -430,7 +513,7 @@ void VOpenGLDrawer::WorldDrawing () {
   guard(VOpenGLDrawer::WorldDrawing);
   surfcache_t *cache;
   surface_t *surf;
-  texinfo_t *tex;
+  texinfo_t *prevTR;
 
   // first draw horizons
   if (RendLev->HorizonPortalsHead) {
@@ -464,65 +547,26 @@ void VOpenGLDrawer::WorldDrawing () {
     if (!gl_sort_textures) {
       for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
         if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-
-        texinfo_t *textr = surf->texinfo;
-        SetTexture(textr->Tex, textr->ColourMap);
-        ++glWDTextureChangesTotal;
-
-        RenderSimpleSurface(surf);
+        RenderSimpleSurface(true, surf);
       }
     } else {
       surfListClear();
       for (surf = RendLev->SimpleSurfsHead; surf; surf = surf->DrawNext) {
         if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-        // update/(re)generate texture if necessary
-        texinfo_t *textr = surf->texinfo;
-        auto Tex = textr->Tex;
-        if (Tex->CheckModified()) FlushTexture(Tex);
-        auto CMap = textr->ColourMap;
-        if (CMap) {
-          VTexture::VTransData *TData = Tex->FindDriverTrans(nullptr, CMap);
-          if (!TData) {
-            TData = &Tex->DriverTranslated.Alloc();
-            TData->Handle = 0;
-            TData->Trans = nullptr;
-            TData->ColourMap = CMap;
-            GenerateTexture(Tex, (GLuint*)&TData->Handle, nullptr, CMap);
-          }
-        } else if (!Tex->DriverHandle) {
-          GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
-        }
-        // add to render list
         surfListAppend(surf);
       }
       if (surfListUsed > 0) {
         timsort_r(surfList, surfListUsed, sizeof(surfList[0]), &surfCmp, nullptr);
-        //qsort_r(surfList, surfListUsed, sizeof(surfList[0]), &surfCmp, nullptr);
-
-        texinfo_t *prevTR = nullptr;
+        prevTR = nullptr;
         for (vuint32 sidx = 0; sidx < surfListUsed; ++sidx) {
-          surf = surfList[sidx];
-
+          surf = surfList[sidx].surf;
+          bool texChanded = false;
           texinfo_t *textr = surf->texinfo;
-          bool doSetTexture = false;
           if (!prevTR || prevTR->Tex != textr->Tex || prevTR->ColourMap != textr->ColourMap) {
-            doSetTexture = true;
-          } else {
-            /*
-            auto Tex = textr->Tex;
-            if (Tex->CheckModified()) Sys_Error("texture is modified, but it shouldn't be!");
-                 if (textr->ColourMap && !Tex->FindDriverTrans(nullptr, textr->ColourMap)) Sys_Error("texture has no driver translation, but it should have one!");
-            else if (!Tex->DriverHandle) Sys_Error("texture is not uploaded, but it shouldn't be!");
-            */
-          }
-
-          if (doSetTexture) {
-            SetTexture(textr->Tex, textr->ColourMap);
-            ++glWDTextureChangesTotal;
             prevTR = textr;
+            texChanded = true;
           }
-
-          if (RenderSimpleSurface(surf)) prevTR = nullptr;
+          if (RenderSimpleSurface(texChanded, surf)) prevTR = nullptr;
         }
       }
     }
@@ -532,9 +576,10 @@ void VOpenGLDrawer::WorldDrawing () {
   p_glUniform1iARB(SurfLightmapTextureLoc, 0);
   p_glUniform1iARB(SurfLightmapLightMapLoc, 1);
   p_glUniform1iARB(SurfLightmapSpecularMapLoc, 2);
-  p_glUniform1iARB(SurfLightmapFogTypeLoc, r_fog & 3);
+  p_glUniform1iARB(SurfLightmapFogTypeLoc, r_fog&3);
 
   // draw surfaces with lightmaps
+  prevTR = nullptr;
   for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {
     if (!RendLev->light_chain[lb]) continue;
 
@@ -561,52 +606,30 @@ void VOpenGLDrawer::WorldDrawing () {
 
     SelectTexture(0);
 
-    for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
-      surf = cache->surf;
-      if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
-
-      tex = surf->texinfo;
-      SetTexture(tex->Tex, tex->ColourMap);
-
-      p_glUniform3fvARB(SurfLightmapSAxisLoc, 1, &tex->saxis.x);
-      p_glUniform1fARB(SurfLightmapSOffsLoc, tex->soffs);
-      p_glUniform1fARB(SurfLightmapTexIWLoc, tex_iw);
-      p_glUniform3fvARB(SurfLightmapTAxisLoc, 1, &tex->taxis.x);
-      p_glUniform1fARB(SurfLightmapTOffsLoc, tex->toffs);
-      p_glUniform1fARB(SurfLightmapTexIHLoc, tex_ih);
-      p_glUniform1fARB(SurfLightmapTexMinSLoc, surf->texturemins[0]);
-      p_glUniform1fARB(SurfLightmapTexMinTLoc, surf->texturemins[1]);
-      p_glUniform1fARB(SurfLightmapCacheSLoc, cache->s);
-      p_glUniform1fARB(SurfLightmapCacheTLoc, cache->t);
-
-      if (surf->Fade) {
-        p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_TRUE);
-        p_glUniform4fARB(SurfLightmapFogColourLoc, ((surf->Fade>>16)&255)/255.0f, ((surf->Fade>>8)&255)/255.0f, (surf->Fade&255)/255.0f, 1.0f);
-        p_glUniform1fARB(SurfLightmapFogDensityLoc, (surf->Fade == FADE_LIGHT ? 0.3 : r_fog_density));
-        p_glUniform1fARB(SurfLightmapFogStartLoc, (surf->Fade == FADE_LIGHT ? 1.0 : r_fog_start));
-        p_glUniform1fARB(SurfLightmapFogEndLoc, (surf->Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end));
-      } else {
-        p_glUniform1iARB(SurfLightmapFogEnabledLoc, GL_FALSE);
+    if (!gl_sort_textures) {
+      for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
+        surf = cache->surf;
+        if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+        RenderLMapSurface(true, surf, cache);
       }
-
-      bool doDecals = tex->Tex && !tex->noDecals && surf->dcseg && surf->dcseg->decals;
-
-      // fill stencil buffer for decals
-      if (doDecals) RenderPrepareShaderDecals(surf);
-
-      ++glWDPolyTotal;
-      glBegin(GL_POLYGON);
-      for (int i = 0; i < surf->count; ++i) {
-        ++glWDVertexTotal;
-        glVertex(surf->verts[i]);
+    } else {
+      surfListClear();
+      for (cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
+        surf = cache->surf;
+        if (surf->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+        surfListAppend(surf, cache);
       }
-      glEnd();
-
-      // draw decals
-      if (doDecals) {
-        if (RenderFinishShaderDecals(surf, true, false, cache)) {
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          p_glUseProgramObjectARB(SurfLightmapProgram);
+      if (surfListUsed > 0) {
+        timsort_r(surfList, surfListUsed, sizeof(surfList[0]), &surfCmp, nullptr);
+        for (vuint32 sidx = 0; sidx < surfListUsed; ++sidx) {
+          surf = surfList[sidx].surf;
+          bool texChanded = false;
+          texinfo_t *textr = surf->texinfo;
+          if (!prevTR || prevTR->Tex != textr->Tex || prevTR->ColourMap != textr->ColourMap) {
+            prevTR = textr;
+            texChanded = true;
+          }
+          if (RenderLMapSurface(texChanded, surf, surfList[sidx].cache)) prevTR = nullptr;
         }
       }
     }

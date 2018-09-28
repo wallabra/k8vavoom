@@ -503,13 +503,41 @@ private:
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
 
+  void UpdateAndUploadSurfaceTexture (surface_t *surf);
+
   // regular renderer building parts
   // returns `true` if we need to re-setup texture
-  bool RenderSimpleSurface (surface_t *surf);
+  bool RenderSimpleSurface (bool textureChanged, surface_t *surf);
+  bool RenderLMapSurface (bool textureChanged, surface_t *surf, surfcache_t *cache);
 
   void RestoreDepthFunc ();
   //inline bool CanUseRevZ () const { return (gl_dbg_adv_reverse_z ? useReverseZ : useReverseZ && (!RendLev || !RendLev->NeedsInfiniteFarClip)); }
   inline bool CanUseRevZ () const { return useReverseZ; }
+
+private:
+  struct SurfListItem {
+    surface_t *surf;
+    surfcache_t *cache;
+  };
+
+  static SurfListItem *surfList;
+  static vuint32 surfListUsed;
+  static vuint32 surfListSize;
+
+  inline void surfListClear () {
+    surfListUsed = 0;
+  }
+
+  inline void surfListAppend (surface_t *surf, surfcache_t *cache=nullptr) {
+    UpdateAndUploadSurfaceTexture(surf);
+    if (surfListUsed == surfListSize) {
+      surfListSize += 65536;
+      surfList = (SurfListItem *)Z_Realloc(surfList, surfListSize*sizeof(surfList[0]));
+    }
+    SurfListItem *si = &surfList[surfListUsed++];
+    si->surf = surf;
+    si->cache = cache;
+  }
 
 protected:
   enum { M_INFINITY = 8000 };
