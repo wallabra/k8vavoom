@@ -158,9 +158,9 @@ private:
       // nothing was allocated, so allocate something now
       if (mEBSize == 0) {
         mEBSize = InitSize;
-        mBuckets = (TEntry **)malloc(mEBSize*sizeof(TEntry *));
+        mBuckets = (TEntry **)Z_Malloc(mEBSize*sizeof(TEntry *));
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
-        mEntries = (TEntry *)malloc(mEBSize*sizeof(TEntry));
+        mEntries = (TEntry *)Z_Malloc(mEBSize*sizeof(TEntry));
         memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
         for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].empty = true;
       }
@@ -265,9 +265,9 @@ public:
       if (other.mBucketsUsed > 0) {
         // has some entries
         mEBSize = nextPOTU32(vuint32(mBucketsUsed));
-        mBuckets = (TEntry **)malloc(mEBSize*sizeof(TEntry *));
+        mBuckets = (TEntry **)Z_Malloc(mEBSize*sizeof(TEntry *));
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
-        mEntries = (TEntry *)malloc(mEBSize*sizeof(TEntry));
+        mEntries = (TEntry *)Z_Malloc(mEBSize*sizeof(TEntry));
         memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
         for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].empty = true;
         mFirstEntry = mLastEntry = -1;
@@ -290,10 +290,10 @@ public:
     freeEntries();
 #endif
     mFreeEntryHead = nullptr;
-    free(mBuckets);
+    Z_Free(mBuckets);
     mBucketsUsed = 0;
     mBuckets = nullptr;
-    free((void *)mEntries);
+    Z_Free((void *)mEntries);
     mEBSize = 0;
     mEntries = nullptr;
     mFreeEntryHead = nullptr;
@@ -363,9 +363,9 @@ public:
       mLastEntry = mBucketsUsed-1;
     }
     // shrink
-    mBuckets = (TEntry **)realloc(mBuckets, newsz*sizeof(TEntry *));
+    mBuckets = (TEntry **)Z_Realloc(mBuckets, newsz*sizeof(TEntry *));
     // shrink
-    mEntries = (TEntry *)realloc((void *)mEntries, newsz*sizeof(TEntry));
+    mEntries = (TEntry *)Z_Realloc((void *)mEntries, newsz*sizeof(TEntry));
     mEBSize = newsz;
     // mFreeEntryHead will be fixed in `rehash()`
     // reinsert entries
@@ -505,10 +505,10 @@ public:
       //if (newsz <= 1024*1024*1024) then newsz *= 2 else raise Exception.Create('hash table too big');
       newsz *= 2;
       // resize buckets array
-      mBuckets = (TEntry **)realloc(mBuckets, newsz*sizeof(TEntry *));
+      mBuckets = (TEntry **)Z_Realloc(mBuckets, newsz*sizeof(TEntry *));
       memset(mBuckets+mEBSize, 0, (newsz-mEBSize)*sizeof(TEntry *));
       // resize entries array
-      mEntries = (TEntry *)realloc((void *)mEntries, newsz*sizeof(TEntry));
+      mEntries = (TEntry *)Z_Realloc((void *)mEntries, newsz*sizeof(TEntry));
       memset((void *)(mEntries+mEBSize), 0, (newsz-mEBSize)*sizeof(TEntry));
       for (vuint32 f = mEBSize; f < newsz; ++f) mEntries[f].empty = true;
       mEBSize = newsz;

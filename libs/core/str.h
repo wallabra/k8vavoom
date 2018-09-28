@@ -61,7 +61,7 @@ private:
         #ifdef VAVOOM_TEST_VSTR
         fprintf(stderr, "VStr: freeing %p\n", data);
         #endif
-        free(store());
+        Z_Free(store());
       }
       data = nullptr;
     }
@@ -541,7 +541,7 @@ template<typename T> VStr shitppTypeName () {
   char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
   if (dmn) {
     tpn = VStr(dmn);
-    free(dmn);
+    Z_Free(dmn);
   }
   return tpn;
 }
@@ -552,7 +552,7 @@ template<class T> VStr shitppTypeNameObj (const T &o) {
   char *dmn = abi::__cxa_demangle(*tpn, nullptr, nullptr, nullptr);
   if (dmn) {
     tpn = VStr(dmn);
-    free(dmn);
+    Z_Free(dmn);
   }
   return tpn;
 }

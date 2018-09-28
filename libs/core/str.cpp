@@ -302,7 +302,7 @@ void VStr::makeMutable () {
   const char *olddata = data;
   size_t olen = (size_t)oldstore->length;
   size_t newsz = olen+64; // overallocate a little
-  Store *newdata = (Store *)malloc(sizeof(Store)+newsz+1);
+  Store *newdata = (Store *)Z_Malloc(sizeof(Store)+newsz+1);
   if (!newdata) Sys_Error("Out of memory");
   newdata->length = (int)olen;
   newdata->alloted = (int)newsz;
@@ -338,7 +338,7 @@ void VStr::resize (int newlen) {
   // new allocation?
   if (!data) {
     size_t newsz = (size_t)(newlen+64);
-    Store *ns = (Store *)malloc(sizeof(Store)+newsz+1);
+    Store *ns = (Store *)Z_Malloc(sizeof(Store)+newsz+1);
     if (!ns) Sys_Error("Out of memory");
     ns->length = newlen;
     ns->alloted = newsz;
@@ -359,7 +359,7 @@ void VStr::resize (int newlen) {
       if (newlen < store()->alloted/2) {
         // realloc
         store()->alloted = newlen+64;
-        Store *ns = (Store *)realloc(store(), sizeof(Store)+(size_t)store()->alloted+1);
+        Store *ns = (Store *)Z_Realloc(store(), sizeof(Store)+(size_t)store()->alloted+1);
         if (!ns) Sys_Error("Out of memory");
         #ifdef VAVOOM_TEST_VSTR
         fprintf(stderr, "VStr: realloced(shrink): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
@@ -371,10 +371,10 @@ void VStr::resize (int newlen) {
       if (newlen > store()->alloted) {
         // need more room
         size_t newsz = (size_t)(newlen+(newlen < 0x0fffffff ? newlen/2 : 0));
-        Store *ns = (Store *)realloc(store(), sizeof(Store)+newsz+1);
+        Store *ns = (Store *)Z_Realloc(store(), sizeof(Store)+newsz+1);
         if (!ns) {
           // try exact
-          ns = (Store *)realloc(store(), sizeof(Store)+(size_t)newlen+1);
+          ns = (Store *)Z_Realloc(store(), sizeof(Store)+(size_t)newlen+1);
           if (!ns) Sys_Error("Out of memory");
           newsz = (size_t)newlen;
         }
@@ -399,10 +399,10 @@ void VStr::resize (int newlen) {
     }
 
     // allocate new storage
-    Store *ns = (Store *)malloc(sizeof(Store)+alloclen+1);
+    Store *ns = (Store *)Z_Malloc(sizeof(Store)+alloclen+1);
     if (!ns) {
       // try exact
-      ns = (Store *)malloc(sizeof(Store)+(size_t)newlen+1);
+      ns = (Store *)Z_Malloc(sizeof(Store)+(size_t)newlen+1);
       if (!ns) Sys_Error("Out of memory");
       alloclen = newlen;
     }
@@ -438,7 +438,7 @@ void VStr::setContent (const char *s, int len) {
   if (s && s[0]) {
     if (len < 0) len = (int)strlen(s);
     size_t newsz = len+64;
-    Store *ns = (Store *)malloc(sizeof(Store)+(size_t)newsz+1);
+    Store *ns = (Store *)Z_Malloc(sizeof(Store)+(size_t)newsz+1);
     if (!ns) Sys_Error("Out of memory");
     ns->length = len;
     ns->alloted = (int)newsz;
