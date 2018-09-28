@@ -1684,6 +1684,10 @@ COMMAND(TimeRefresh)
   int renderRealloc = 0;
   int renderFree = 0;
 
+  int renderPeakAlloc = 0;
+  int renderPeakRealloc = 0;
+  int renderPeakFree = 0;
+
   for (i = 0; i < 128; i++) {
     cl->ViewAngles.yaw = (float)(i) * 360.0 / 128.0;
 
@@ -1701,6 +1705,10 @@ COMMAND(TimeRefresh)
     renderRealloc += zone_realloc_call_count;
     renderFree += zone_free_call_count;
 
+    if (renderPeakAlloc < zone_malloc_call_count) renderPeakAlloc = zone_malloc_call_count;
+    if (renderPeakRealloc < zone_realloc_call_count) renderPeakRealloc = zone_realloc_call_count;
+    if (renderPeakFree < zone_free_call_count) renderPeakFree = zone_free_call_count;
+
     UpdateTime -= Sys_Time();
     Drawer->Update();
     UpdateTime += Sys_Time();
@@ -1712,6 +1720,9 @@ COMMAND(TimeRefresh)
   GCon->Logf("Render malloc calls: %d", renderAlloc);
   GCon->Logf("Render realloc calls: %d", renderRealloc);
   GCon->Logf("Render free calls: %d", renderFree);
+  GCon->Logf("Render peak malloc calls: %d", renderPeakAlloc);
+  GCon->Logf("Render peak realloc calls: %d", renderPeakRealloc);
+  GCon->Logf("Render peak free calls: %d", renderPeakFree);
 
   cl->ViewAngles.yaw = startangle;
   unguard;
