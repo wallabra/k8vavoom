@@ -81,7 +81,7 @@ void CL_Init()
 {
   guard(CL_Init);
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
-  TLocation::ClearSourceFiles();
+  //!TLocation::ClearSourceFiles();
 
   ClientNetContext = new VClientNetContext();
   GClGame = (VClientGameBase*)VObject::StaticSpawnObject(

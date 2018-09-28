@@ -3321,7 +3321,7 @@ void ProcessDecorateScripts () {
 
   VClass::StaticReinitStatesLookup();
 
-  TLocation::ClearSourceFiles();
+  //!TLocation::ClearSourceFiles();
   unguard;
 }
 

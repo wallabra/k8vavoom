@@ -938,6 +938,6 @@ void ProcessDecalDefs () {
   for (auto it = VDecalAnim::listHead; it; it = it->next) it->fixup();
   for (auto it = VDecalDef::listHead; it; it = it->next) it->fixup();
 
-  TLocation::ClearSourceFiles();
+  //!TLocation::ClearSourceFiles();
   unguard;
 }
