@@ -33,6 +33,7 @@
 #include "r_local.h"
 
 //#define VAVOOM_DEBUG_PORTAL_POOL
+//#define VAVOOM_RENDER_TIMES
 
 
 void R_FreeSkyboxData ();
@@ -1055,13 +1056,42 @@ void VRenderLevel::RenderScene(const refdef_t *RD, const VViewClipper *Range)
 
   Drawer->SetupViewOrg();
 
+
+#ifdef VAVOOM_RENDER_TIMES
+  double stt = -Sys_Time();
+#endif
   MarkLeaves();
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  MarkLeaves: %f", stt);
+#endif
 
+#ifdef VAVOOM_RENDER_TIMES
+  stt = -Sys_Time();
+#endif
   UpdateWorld(RD, Range);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  UpdateWorld: %f", stt);
+#endif
 
+#ifdef VAVOOM_RENDER_TIMES
+  stt = -Sys_Time();
+#endif
   RenderWorld(RD, Range);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  RenderWorld: %f", stt);
+#endif
 
+#ifdef VAVOOM_RENDER_TIMES
+  stt = -Sys_Time();
+#endif
   RenderMobjs(RPASS_Normal);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("  RenderMobjs: %f", stt);
+#endif
 
   DrawParticles();
 
@@ -1289,16 +1319,21 @@ void VRenderLevelShared::RenderPlayerView()
   UpdateParticles(host_frametime);
   PushDlights();
 
-  //  Update camera textures that were visible in last frame.
-  for (int i = 0; i < Level->CameraTextures.Num(); i++)
-  {
-    UpdateCameraTexture(Level->CameraTextures[i].Camera,
-      Level->CameraTextures[i].TexNum, Level->CameraTextures[i].FOV);
+  // update camera textures that were visible in last frame
+  for (int i = 0; i < Level->CameraTextures.Num(); ++i) {
+    UpdateCameraTexture(Level->CameraTextures[i].Camera, Level->CameraTextures[i].TexNum, Level->CameraTextures[i].FOV);
   }
 
   SetupFrame();
 
+#ifdef VAVOOM_RENDER_TIMES
+  double stt = -Sys_Time();
+#endif
   RenderScene(&refdef, nullptr);
+#ifdef VAVOOM_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("render scene time: %f", stt);
+#endif
 
   // draw the psprites on top of everything
   if (fov <= 90.0 && cl->MO == cl->Camera &&

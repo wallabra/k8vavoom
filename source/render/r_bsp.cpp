@@ -30,6 +30,8 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+//#define VAVOOM_LOWLEVEL_RENDER_TIMES
+
 
 #define HORIZON_SURF_SIZE (sizeof(surface_t) + sizeof(TVec) * 3)
 
@@ -839,11 +841,41 @@ void VRenderLevelShared::RenderPortals () {
 //  VRenderLevel::RenderWorld
 //
 //==========================================================================
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+extern vuint32 glWDPolyTotal;
+extern vuint32 glWDVertexTotal;
+extern vuint32 glWDTextureChangesTotal;
+#endif
+
 void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   guard(VRenderLevel::RenderWorld);
+
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  double stt = -Sys_Time();
+#endif
   RenderBspWorld(rd, Range);
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("   RenderBspWorld: %f", stt);
+#endif
+
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  glWDPolyTotal = 0;
+  glWDVertexTotal = 0;
+  glWDTextureChangesTotal = 0;
+  stt = -Sys_Time();
+#endif
   Drawer->WorldDrawing();
+#ifdef VAVOOM_LOWLEVEL_RENDER_TIMES
+  stt += Sys_Time();
+  GCon->Logf("   Drawer->WorldDrawing: %f (%u polys, %u vertices, %u texture changes)", stt, glWDPolyTotal, glWDVertexTotal, glWDTextureChangesTotal);
+#endif
+
+  //stt = -Sys_Time();
   RenderPortals();
+  //stt += Sys_Time();
+  //GCon->Logf("   RenderPortals: %f", stt);
+
   unguard;
 }
 
