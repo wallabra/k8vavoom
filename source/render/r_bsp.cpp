@@ -752,7 +752,9 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
     if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
     memset(BspVis, 0, VisSize);
-    if (PortalLevel == 0) WorldSurfs.Resize(4096);
+    if (PortalLevel == 0) {
+      if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
+    }
     MirrorClipSegs = MirrorClip && !view_clipplanes[4].normal.z;
 
     // head node is the last node output
@@ -780,7 +782,9 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
       unguard;
 
       guard(VRenderLevelShared::RenderBspWorld::World surfaces);
-      for (int i = 0; i < WorldSurfs.Num(); ++i) {
+      //fprintf(stderr, "WSL=%d\n", WorldSurfs.Num());
+      const int wslen = WorldSurfs.Num();
+      for (int i = 0; i < wslen; ++i) {
         switch (WorldSurfs[i].Type) {
           case 0:
             {
@@ -797,7 +801,8 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
             break;
         }
       }
-      WorldSurfs.Clear();
+      //WorldSurfs.Clear();
+      WorldSurfs.resetNoDtor();
       unguard;
     }
   } while (light_reset_surface_cache);
