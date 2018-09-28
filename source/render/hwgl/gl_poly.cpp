@@ -367,6 +367,8 @@ static int surfCmp (const void *a, const void *b, void *udata) {
 bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   texinfo_t *textr = surf->texinfo;
 
+  //return false;
+
   if (textureChanged) {
     SetTexture(textr->Tex, textr->ColourMap);
     ++glWDTextureChangesTotal;
@@ -397,7 +399,8 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   if (doDecals) RenderPrepareShaderDecals(surf);
 
   ++glWDPolyTotal;
-  glBegin(GL_POLYGON);
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
   for (int i = 0; i < surf->count; ++i) {
     ++glWDVertexTotal;
     glVertex(surf->verts[i]);
@@ -457,7 +460,8 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   if (doDecals) RenderPrepareShaderDecals(surf);
 
   ++glWDPolyTotal;
-  glBegin(GL_POLYGON);
+  //glBegin(GL_POLYGON);
+  glBegin(GL_TRIANGLE_FAN);
   for (int i = 0; i < surf->count; ++i) {
     ++glWDVertexTotal;
     glVertex(surf->verts[i]);
