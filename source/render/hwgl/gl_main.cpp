@@ -154,7 +154,7 @@ void VOpenGLDrawer::InitResolution () {
       GCon->Logf(NAME_Init, "OpenGL: glClipControl found, using reverse z");
       useReverseZ = true;
       if (gl_disable_reverse_z) {
-        GCon->Logf(NAME_Init, "OpenGL: oops, used disabled reverse z, i shall obey");
+        GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
         useReverseZ = false;
       }
     }
