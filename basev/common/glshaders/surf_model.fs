@@ -57,8 +57,9 @@ void main () {
 
     float ClampTransp = clamp (((ClampFogFactor - 0.1) / 0.9), 0.0, 1.0);
 
-    FinalColour.xyz = mix(FogColour.xyz, TexColour.xyz, ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
-    FinalColour.w = mix(FogColour.w, TexColour.w, ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
+    //FinalColour.xyz = mix(FogColour.xyz, TexColour.xyz, ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
+    //FinalColour.w = mix(FogColour.w, TexColour.w, ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
+    FinalColour = mix(FogColour, TexColour, ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
   }
 
   if (!AllowTransparency) {

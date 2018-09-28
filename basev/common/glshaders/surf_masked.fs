@@ -39,9 +39,9 @@ void main () {
     float ClampFactor = clamp(FogFactor_3, 0.0, 1.0);
     FogFactor_3 = ClampFactor;
 
-    float FogFactor = clamp(((ClampFactor-AlphaRef)/(1.0-AlphaRef)), 0.0, 1.0);
+    //float FogFactor = clamp(((ClampFactor-AlphaRef)/(1.0-AlphaRef)), 0.0, 1.0);
+    float FogFactor = clamp((ClampFactor-0.1)/0.9, 0.0, 1.0);
     FinalColour_1 = mix(FogColour, TexColour, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
-    //FinalColour_1.a = TexColour.a;
   }
 
   gl_FragColor = FinalColour_1;
