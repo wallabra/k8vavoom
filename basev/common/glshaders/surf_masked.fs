@@ -12,21 +12,14 @@ uniform float AlphaRef;
 
 varying vec2 TextureCoordinate;
 
-void main ()
-{
-  vec4 FinalColour_1;
-  vec4 TexColour;
 
-  TexColour = (texture2D (Texture, TextureCoordinate) * Light);
-  FinalColour_1 = TexColour;
+void main () {
+  vec4 TexColour = (texture2D (Texture, TextureCoordinate) * Light);
+  vec4 FinalColour_1 = TexColour;
 
-  if ((TexColour.w < AlphaRef))
-  {
-    discard;
-  };
+  if (TexColour.w < AlphaRef) discard;
 
-  if (FogEnabled)
-  {
+  if (FogEnabled) {
     float FogFactor_3;
 
 #ifdef VAVOOM_REVERSE_Z
@@ -35,36 +28,21 @@ void main ()
     float z = gl_FragCoord.z/gl_FragCoord.w;
 #endif
 
-    if ((FogType == 3))
-    {
-      FogFactor_3 = exp2(((
-        ((-(FogDensity) * FogDensity) * z)
-        * z) * 1.442695));
+    if (FogType == 3) {
+      FogFactor_3 = exp2(-FogDensity*FogDensity*z*z*1.442695);
+    } else if (FogType == 2) {
+      FogFactor_3 = exp2(-FogDensity*z*1.442695);
+    } else {
+      FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
     }
-    else
-    {
-      if ((FogType == 2))
-      {
-        FogFactor_3 = exp2(((
-          -(FogDensity)
-          * z) * 1.442695));
-      }
-      else
-      {
-        FogFactor_3 = ((FogEnd - z) / (FogEnd - FogStart));
-      };
-    };
-    float ClampFactor;
 
-    ClampFactor = clamp (FogFactor_3, 0.0, 1.0);
+    float ClampFactor = clamp(FogFactor_3, 0.0, 1.0);
     FogFactor_3 = ClampFactor;
-    float FogFactor;
 
-    FogFactor = clamp (((ClampFactor - AlphaRef) / (1.0 - AlphaRef)), 0.0, 1.0);
-    FinalColour_1 = mix (FogColour, TexColour, (FogFactor * (FogFactor *
-      (3.0 - (2.0 * FogFactor))
-      )));
-  };
+    float FogFactor = clamp(((ClampFactor-AlphaRef)/(1.0-AlphaRef)), 0.0, 1.0);
+    FinalColour_1 = mix(FogColour, TexColour, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
+    //FinalColour_1.a = TexColour.a;
+  }
 
   gl_FragColor = FinalColour_1;
 }
