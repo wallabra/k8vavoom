@@ -820,7 +820,7 @@ void VLevel::BuildNodes () {
           BlockMapLump[i] = (tmp == -1 ? -1 : (vuint16)tmp&0xffff);
         }
       } else {
-        GCon->Logf("AJBSP: blockmap overflowed, will be rebuild by VaVoom");
+        GCon->Logf("AJBSP: blockmap overflowed, will be rebuilt by VaVoom");
         delete [] BlockMapLump;
         BlockMapLump = nullptr;
         BlockMapLumpSize = 0;
