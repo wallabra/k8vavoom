@@ -45,7 +45,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 extern int light_mem;
 
-static subsector_t *r_sub;
+subsector_t *r_surf_sub;
 static sec_plane_t *r_floor;
 static sec_plane_t *r_ceiling;
 
@@ -129,17 +129,6 @@ inline float TextureOffsetTScale(VTexture *pic)
   return 1.0;
 }
 
-//==========================================================================
-//
-//  IsSky
-//
-//==========================================================================
-
-inline bool IsSky(sec_plane_t *SPlane)
-{
-  return SPlane->pic == skyflatnum || (SPlane->SkyBox &&
-    SPlane->SkyBox->eventSkyBoxGetAlways());
-}
 
 //**************************************************************************
 //**
@@ -237,24 +226,6 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
   unguard;
 }
 
-//==========================================================================
-//
-//  VAdvancedRenderLevel::InitSurfs
-//
-//==========================================================================
-
-void VAdvancedRenderLevel::InitSurfs(surface_t *surfs, texinfo_t *texinfo,
-  TPlane *plane, subsector_t *sub)
-{
-  guard(VAdvancedRenderLevel::InitSurfs);
-  //  It's always one surface.
-  if (surfs && plane)
-  {
-    surfs->texinfo = texinfo;
-    surfs->plane = plane;
-  }
-  unguard;
-}
 
 //==========================================================================
 //
@@ -447,17 +418,6 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
   if (nextaxis) back = SubdivideFace(back, *nextaxis, nullptr);
   return back;
   unguard;
-}
-
-
-//==========================================================================
-//
-//  VAdvancedRenderLevel::SubdivideFace
-//
-//==========================================================================
-surface_t *VAdvancedRenderLevel::SubdivideFace(surface_t *f, const TVec&, const TVec *) {
-  // advanced renderer can draw whole surface
-  return f;
 }
 
 
@@ -886,17 +846,6 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::SubdivideSeg
-//
-//==========================================================================
-surface_t *VAdvancedRenderLevel::SubdivideSeg(surface_t *surf, const TVec &, const TVec *) {
-  // qdvanced renderer can draw whole surface
-  return surf;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::CreateWSurfs
 //
 //==========================================================================
@@ -1021,7 +970,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
     else if (linedef->flags&ML_DONTPEGTOP)
     {
       // top of texture at top of top region
-      sp->texinfo.toffs = r_sub->sector->topregion->ceiling->TexZ;
+      sp->texinfo.toffs = r_surf_sub->sector->topregion->ceiling->TexZ;
     }
     else
     {
@@ -1041,7 +990,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
     wv[2].z = topz2;
     wv[3].z = botz2;
 
-    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
     sp->frontTopDist = r_ceiling->dist;
     sp->frontBotDist = r_floor->dist;
@@ -1067,7 +1016,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       wv[1].z = wv[2].z = skyheight;
       wv[3].z = topz2;
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
     }
@@ -1150,7 +1099,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
     wv[2].z = top_topz2;
     wv[3].z = MAX(back_topz2, botz2);
 
-    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
     sp->frontTopDist = r_ceiling->dist;
     sp->frontBotDist = r_floor->dist;
@@ -1180,7 +1129,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       wv[1].z = wv[2].z = skyheight;
       wv[3].z = topz2;
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
     }
@@ -1223,7 +1172,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
     wv[2].z = MIN(back_botz2, topz2);
     wv[3].z = botz2;
 
-    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+    sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
     sp->frontTopDist = r_ceiling->dist;
     sp->frontBotDist = r_floor->dist;
@@ -1307,7 +1256,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
         wv[3].z = MAX(midbotz2, z_org-texh);
       }
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
     }
 
     sp->frontTopDist = r_ceiling->dist;
@@ -1355,7 +1304,7 @@ void VRenderLevelShared::CreateSegParts(drawseg_t *dseg, seg_t *seg)
       wv[2].z = MIN(extratopz2, topz2);
       wv[3].z = MAX(extrabotz2, botz2);
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
       sp->frontBotDist = r_floor->dist;
@@ -1380,7 +1329,7 @@ void VRenderLevelShared::UpdateRowOffset(segpart_t *sp, float RowOffset)
   sp->texinfo.toffs += (RowOffset-sp->RowOffset)*TextureOffsetTScale(sp->texinfo.Tex);
   sp->RowOffset = RowOffset;
   FlushSurfCaches(sp->surfs);
-  InitSurfs(sp->surfs, &sp->texinfo, nullptr, r_sub);
+  InitSurfs(sp->surfs, &sp->texinfo, nullptr, r_surf_sub);
   unguard;
 }
 
@@ -1397,7 +1346,7 @@ void VRenderLevelShared::UpdateTextureOffset(segpart_t *sp,
   sp->texinfo.soffs += (TextureOffset-sp->TextureOffset)*TextureOffsetSScale(sp->texinfo.Tex);
   sp->TextureOffset = TextureOffset;
   FlushSurfCaches(sp->surfs);
-  InitSurfs(sp->surfs, &sp->texinfo, nullptr, r_sub);
+  InitSurfs(sp->surfs, &sp->texinfo, nullptr, r_surf_sub);
   unguard;
 }
 
@@ -1478,7 +1427,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       else if (linedef->flags&ML_DONTPEGTOP)
       {
         // top of texture at top of top region
-        sp->texinfo.toffs = r_sub->sector->topregion->ceiling->TexZ;
+        sp->texinfo.toffs = r_surf_sub->sector->topregion->ceiling->TexZ;
       }
       else
       {
@@ -1500,7 +1449,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       wv[2].z = topz2;
       wv[3].z = botz2;
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
       sp->frontBotDist = r_floor->dist;
@@ -1542,7 +1491,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       wv[1].z = wv[2].z = skyheight;
       wv[3].z = topz2;
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
     }
@@ -1626,7 +1575,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       wv[2].z = top_topz2;
       wv[3].z = MAX(back_topz2, botz2);
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
       sp->frontBotDist = r_floor->dist;
@@ -1676,7 +1625,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       wv[1].z = wv[2].z = skyheight;
       wv[3].z = topz2;
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
     }
@@ -1735,7 +1684,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
       wv[2].z = MIN(back_botz2, topz2);
       wv[3].z = botz2;
 
-      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+      sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
 
       sp->frontTopDist = r_ceiling->dist;
       sp->frontBotDist = r_floor->dist;
@@ -1849,7 +1798,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
           wv[3].z = MAX(midbotz2, z_org-texh);
         }
 
-        sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_sub);
+        sp->surfs = CreateWSurfs(wv, &sp->texinfo, seg, r_surf_sub);
       }
       else
       {
@@ -1920,7 +1869,7 @@ void VRenderLevelShared::UpdateDrawSeg(drawseg_t *dseg, bool ShouldClip)
         wv[2].z = MIN(extratopz2, topz2);
         wv[3].z = MAX(extrabotz2, botz2);
 
-        spp->surfs = CreateWSurfs(wv, &spp->texinfo, seg, r_sub);
+        spp->surfs = CreateWSurfs(wv, &spp->texinfo, seg, r_surf_sub);
 
         spp->frontTopDist = r_ceiling->dist;
         spp->frontBotDist = r_floor->dist;
@@ -1988,19 +1937,6 @@ void VRenderLevel::PreRender()
   GCon->Logf(NAME_Dev, "%d subdivides", c_subdivides);
   GCon->Logf(NAME_Dev, "%d seg subdivides", c_seg_div);
   GCon->Logf(NAME_Dev, "%dk light mem", light_mem/1024);
-  unguard;
-}
-
-//==========================================================================
-//
-//  VAdvancedRenderLevel::PreRender
-//
-//==========================================================================
-
-void VAdvancedRenderLevel::PreRender()
-{
-  guard(VAdvancedRenderLevel::PreRender);
-  CreateWorldSurfaces();
   unguard;
 }
 
@@ -2094,7 +2030,7 @@ void VRenderLevelShared::CreateWorldSurfaces()
       //  Skip sectors containing original polyobjs
       continue;
     }
-    r_sub = sub;
+    r_surf_sub = sub;
     for (reg = sub->sector->botregion; reg; reg = reg->next)
     {
       r_floor = reg->floor;
@@ -2164,19 +2100,19 @@ void VRenderLevelShared::UpdateSubRegion(subregion_t *region, bool ClipSegs)
 
   r_floor = region->floorplane;
   r_ceiling = region->ceilplane;
-  if (r_sub->sector->fakefloors)
+  if (r_surf_sub->sector->fakefloors)
   {
-    if (r_floor == &r_sub->sector->floor)
+    if (r_floor == &r_surf_sub->sector->floor)
     {
-      r_floor = &r_sub->sector->fakefloors->floorplane;
+      r_floor = &r_surf_sub->sector->fakefloors->floorplane;
     }
-    if (r_ceiling == &r_sub->sector->ceiling)
+    if (r_ceiling == &r_surf_sub->sector->ceiling)
     {
-      r_ceiling = &r_sub->sector->fakefloors->ceilplane;
+      r_ceiling = &r_surf_sub->sector->fakefloors->ceilplane;
     }
   }
 
-  count = r_sub->numlines;
+  count = r_surf_sub->numlines;
   drawseg_t *ds = region->lines;
   while (count--)
   {
@@ -2184,14 +2120,14 @@ void VRenderLevelShared::UpdateSubRegion(subregion_t *region, bool ClipSegs)
     ds++;
   }
 
-  UpdateSecSurface(region->floor, region->floorplane, r_sub);
-  UpdateSecSurface(region->ceil, region->ceilplane, r_sub);
+  UpdateSecSurface(region->floor, region->floorplane, r_surf_sub);
+  UpdateSecSurface(region->ceil, region->ceilplane, r_surf_sub);
 
-  if (r_sub->poly)
+  if (r_surf_sub->poly)
   {
     //  Update the polyobj
-    int polyCount = r_sub->poly->numsegs;
-    polySeg = r_sub->poly->segs;
+    int polyCount = r_surf_sub->poly->numsegs;
+    polySeg = r_surf_sub->poly->segs;
     while (polyCount--)
     {
       UpdateDrawSeg((*polySeg)->drawsegs, ClipSegs);
@@ -2203,7 +2139,7 @@ void VRenderLevelShared::UpdateSubRegion(subregion_t *region, bool ClipSegs)
   {
     if (ClipSegs)
     {
-      if (!ViewClip.ClipCheckRegion(region->next, r_sub, false))
+      if (!ViewClip.ClipCheckRegion(region->next, r_surf_sub, false))
       {
         return;
       }
@@ -2222,77 +2158,40 @@ void VRenderLevelShared::UpdateSubRegion(subregion_t *region, bool ClipSegs)
 void VRenderLevel::UpdateSubsector(int num, float *bbox)
 {
   guard(VRenderLevel::UpdateSubsector);
-  r_sub = &Level->Subsectors[num];
+  r_surf_sub = &Level->Subsectors[num];
 
-  if (r_sub->VisFrame != r_visframecount)
+  if (r_surf_sub->VisFrame != r_visframecount)
   {
     return;
   }
 
-  if (!r_sub->sector->linecount)
+  if (!r_surf_sub->sector->linecount)
   {
     //  Skip sectors containing original polyobjs
     return;
   }
 
-  if (!ViewClip.ClipCheckSubsector(r_sub, false))
+  if (!ViewClip.ClipCheckSubsector(r_surf_sub, false))
   {
     return;
   }
 
-  bbox[2] = r_sub->sector->floor.minz;
-  if (IsSky(&r_sub->sector->ceiling))
+  bbox[2] = r_surf_sub->sector->floor.minz;
+  if (IsSky(&r_surf_sub->sector->ceiling))
   {
     bbox[5] = skyheight;
   }
   else
   {
-    bbox[5] = r_sub->sector->ceiling.maxz;
+    bbox[5] = r_surf_sub->sector->ceiling.maxz;
   }
 
-  UpdateSubRegion(r_sub->regions, true);
+  UpdateSubRegion(r_surf_sub->regions, true);
 
-  ViewClip.ClipAddSubsectorSegs(r_sub, false);
+  ViewClip.ClipAddSubsectorSegs(r_surf_sub, false);
   unguard;
 }
 
-//==========================================================================
-//
-//  VAdvancedRenderLevel::UpdateSubsector
-//
-//==========================================================================
-
-void VAdvancedRenderLevel::UpdateSubsector(int num, float *bbox)
-{
-  guard(VAdvancedRenderLevel::UpdateSubsector);
-  r_sub = &Level->Subsectors[num];
-
-  if (!r_sub->sector->linecount)
-  {
-    //  Skip sectors containing original polyobjs
-    return;
-  }
-
-  if (!ViewClip.ClipCheckSubsector(r_sub, false))
-  {
-    return;
-  }
-
-  bbox[2] = r_sub->sector->floor.minz;
-  if (IsSky(&r_sub->sector->ceiling))
-  {
-    bbox[5] = skyheight;
-  }
-  else
-  {
-    bbox[5] = r_sub->sector->ceiling.maxz;
-  }
-
-  UpdateSubRegion(r_sub->regions, true);
-
-  ViewClip.ClipAddSubsectorSegs(r_sub, false);
-  unguard;
-}
 
 //==========================================================================
 //
@@ -2347,53 +2246,6 @@ void VRenderLevel::UpdateBSPNode(int bspnum, float *bbox)
   unguard;
 }
 
-//==========================================================================
-//
-//  VAdvancedRenderLevel::UpdateBSPNode
-//
-//==========================================================================
-
-void VAdvancedRenderLevel::UpdateBSPNode(int bspnum, float *bbox)
-{
-  guard(VAdvancedRenderLevel::UpdateBSPNode);
-  if (ViewClip.ClipIsFull())
-  {
-    return;
-  }
-
-  if (!ViewClip.ClipIsBBoxVisible(bbox, false))
-  {
-    return;
-  }
-
-  if (bspnum == -1)
-  {
-    UpdateSubsector(0, bbox);
-    return;
-  }
-
-  // Found a subsector?
-  if (!(bspnum&NF_SUBSECTOR))
-  {
-    node_t *bsp = &Level->Nodes[bspnum];
-
-    // Decide which side the view point is on.
-    int side = bsp->PointOnSide(vieworg);
-
-    UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
-    bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
-    bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
-    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1], false))
-    {
-      return;
-    }
-    UpdateBSPNode(bsp->children[side^1], bsp->bbox[side^1]);
-    return;
-  }
-
-  UpdateSubsector(bspnum&(~NF_SUBSECTOR), bbox);
-  unguard;
-}
 
 //==========================================================================
 //
@@ -2751,41 +2603,6 @@ void VRenderLevel::UpdateWorld(const refdef_t *rd, const VViewClipper *Range)
   unguard;
 }
 
-//==========================================================================
-//
-//  VAdvancedRenderLevel::UpdateWorld
-//
-//==========================================================================
-
-void VAdvancedRenderLevel::UpdateWorld(const refdef_t *rd, const VViewClipper *Range)
-{
-  guard(VAdvancedRenderLevel::UpdateWorld);
-  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
-
-  ViewClip.ClearClipNodes(vieworg, Level);
-  ViewClip.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup,
-    rd->fovx, rd->fovy);
-  if (Range)
-  {
-    //  Range contains a valid range, so we must clip away holes in it.
-    ViewClip.ClipToRanges(*Range);
-  }
-
-  //  Update fake sectors.
-  for (int i = 0; i < Level->NumSectors; i++)
-  {
-    sector_t *sec = &Level->Sectors[i];
-    if (sec->deepref) {
-      UpdateDeepWater(sec);
-    } else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec))
-    {
-      UpdateFakeFlats(sec);
-    }
-  }
-
-  UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output
-  unguard;
-}
 
 //==========================================================================
 //

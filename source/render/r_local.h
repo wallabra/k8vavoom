@@ -705,4 +705,17 @@ extern VTextureTranslation      IceTranslation;
 extern TArray<VTextureTranslation*> DecorateTranslations;
 extern TArray<VTextureTranslation*> BloodTranslations;
 
+extern subsector_t *r_surf_sub;
+
+
+//==========================================================================
+//
+//  IsSky
+//
+//==========================================================================
+
+static inline bool IsSky(sec_plane_t *SPlane) {
+  return SPlane->pic == skyflatnum || (SPlane->SkyBox && SPlane->SkyBox->eventSkyBoxGetAlways());
+}
+
 #endif
