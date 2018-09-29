@@ -55,6 +55,9 @@ override void CreateChoices () {
   CreateFloatSliderCvar("Specular Level", 'r_specular', 0.1, 0, 2);
   CreateOnOffCvar("Blend sprites", 'gl_blend_sprites');
 
+  auto maxaniso = GetCvarF('gl_max_anisotropy');
+  if (maxaniso > 1) CreateFloatNumericCvar("Anisotropy level", 'gl_texture_filter_anisotropic', 1, 1, maxaniso);
+
   CreateEnumCvar("Texture Filter", 'gl_texture_filter',
     "Nearest",
     "Nearest Mipmap",

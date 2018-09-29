@@ -178,6 +178,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
     slider.SetOrigin(Width/2, currentY);
   } else {
     slider.SetOrigin(ChoicesStartX, currentY);
+    //slider.CursorXOffs = ChoicesStartX;
   }
   slider.Text = text;
   slider.cvarSession = cvname;

@@ -194,7 +194,7 @@ override void OnRMouseClick (int X, int Y) {
 defaultproperties {
   Width = 360;
   Height = 10;
-  //CursorXOffs = 200;
+  CursorXOffs = 200;
   Value = 0.0;
   ValueDelta = 1.0;
   MinValue = 0.0;

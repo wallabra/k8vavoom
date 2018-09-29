@@ -40,7 +40,7 @@ VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture interpol
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::model_filter("gl_model_filter", "0", "Model interpolation mode.", CVAR_Archive);
 VCvarB VOpenGLDrawer::gl_2d_filtering("gl_2d_filtering", true, "Filter 2D interface.", CVAR_Archive);
-VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
+VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "0", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", true, "Alpha-blend sprites?", CVAR_Archive);
 VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", CVAR_Archive);
@@ -55,6 +55,8 @@ VCvarB VOpenGLDrawer::gl_dump_extensions("gl_dump_extensions", false, "Dump avai
 
 // was 0.333
 VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.15", "Alpha threshold (less than this will not be drawn).", CVAR_Archive);
+
+static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy level (r/o).", CVAR_Rom);
 
 
 //==========================================================================
@@ -243,6 +245,7 @@ void VOpenGLDrawer::InitResolution () {
     if (max_anisotropy < 1) max_anisotropy = 1;
     GCon->Logf(NAME_Init, "Max anisotropy %g", (double)max_anisotropy);
   }
+  gl_max_anisotropy = (int)max_anisotropy;
 
   // clamp to edge extension
   if (CheckExtension("GL_SGIS_texture_edge_clamp") || CheckExtension("GL_EXT_texture_edge_clamp")) {
