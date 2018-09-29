@@ -68,22 +68,19 @@ struct PalEntry {
   };
 #endif
 
-  PalEntry () {}
-  PalEntry (vuint32 argb) { d = argb; }
-  //PalEntry (vuint8 ir, vuint8 ig, vuint8 ib) : a(255), r(ir), g(ig), b(ib) {}
-  PalEntry (vuint8 ia, vuint8 ir, vuint8 ig, vuint8 ib) { a = ia; r = ir; g = ig; b = ib; }
+  PalEntry () : d(0) {}
   PalEntry (const PalEntry &src) : d(src.d) {}
 
   static inline PalEntry RGB (int r, int g, int b) { return PalEntry(255, clampToByte(r), clampToByte(g), clampToByte(b)); }
-  static inline PalEntry RGBA (int r, int g, int b, int a) { return PalEntry(clampToByte(r), clampToByte(g), clampToByte(b), clampToByte(a)); }
+  static inline PalEntry RGBA (int r, int g, int b, int a) { return PalEntry(clampToByte(a), clampToByte(r), clampToByte(g), clampToByte(b)); }
 
-  static inline PalEntry Transparent () { return PalEntry(0); }
+  static inline PalEntry Transparent () { return PalEntry(); }
 
   inline void operator = (vuint32 other) { d = other; }
   inline void operator = (const PalEntry &other) { d = other.d; }
 
-  //inline operator vuint32 () const { return d; }
-  //inline void setRGB (const PalEntry &other) { d = other.d&0xffffff; }
+  inline operator vuint32 () const { return d; }
+  inline void setRGB (const PalEntry &other) { d = (other.d&0xffffffU)|0xff000000U; }
 
   inline PalEntry modulate (PalEntry other) const {
     if (isWhite()) {
@@ -119,9 +116,13 @@ struct PalEntry {
   inline bool isOpaque () const { return ((d&0xff000000U) == 0xff000000U); }
   inline bool isTransparent () const { return ((d&0xff000000U) == 0); }
 
-  inline PalEntry premulted () const { return PalEntry(a, r*a/255, g*a/255, b*2/255); }
+  inline PalEntry premulted () const { return PalEntry(a, r*a/255, g*a/255, b*a/255); }
 
   inline PalEntry inverseColor () const { PalEntry nc; nc.a = a; nc.r = 255-r; nc.g = 255-g; nc.b = 255-b; return nc; }
+
+private:
+  PalEntry (vuint32 argb) { d = argb; }
+  PalEntry (vuint8 ia, vuint8 ir, vuint8 ig, vuint8 ib) { a = ia; r = ir; g = ig; b = ib; }
 };
 
 

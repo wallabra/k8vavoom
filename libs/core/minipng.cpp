@@ -129,6 +129,8 @@ bool PNGHandle::loadIDAT () {
 
 
 void PNGHandle::guessPremult () {
+  premult = true;
+  return;
   premult = false;
   if (width < 1 || height < 1 || hasTrans) return;
   switch (colortype) {
@@ -173,16 +175,16 @@ void PNGHandle::guessPremult () {
 // as we will premultiply it all again, just make all transparent pixels that we cannot restore black, 'cause why not?
 PalEntry PNGHandle::getPixel (int x, int y) const {
   const vuint8 *a = pixaddr(x, y);
-  if (!a) return PalEntry(0);
+  if (!a) return PalEntry::Transparent();
   switch (colortype) {
     case ColorGrayscale:
-      if (hasTrans && trans[a[0]]) return PalEntry::RGBA(255, 255, 255, 0); // transparent
-      return PalEntry::RGBA(255, 255, 255, a[0]); // non-premultiplied with alpha
+      if (hasTrans && trans[a[0]] == 0) return PalEntry::RGBA(255, 255, 255, 255); // transparent
+      return PalEntry::RGBA(255, 255, 255, 255-a[0]); // non-premultiplied with alpha
     case ColorRGB:
       if (hasTrans && a[0] == tR && a[1] == tG && a[2] == tB) return PalEntry::Transparent(); // transparent, and black
       return PalEntry::RGB(a[0], a[1], a[2]); // opaque
     case ColorPaletted:
-      if (hasTrans && trans[a[0]]) return PalEntry::Transparent(); // transparent, and black
+      if (hasTrans && trans[a[0]] == 0) return PalEntry::Transparent(); // transparent, and black
       return PalEntry::RGB(pal[a[0]*3+0], pal[a[0]*3+1], pal[a[0]*3+2]);
     case ColorGrayscaleAlpha:
       // not premultiplied, or completely opaque?
@@ -195,32 +197,55 @@ PalEntry PNGHandle::getPixel (int x, int y) const {
       if (!premult || a[3] == 255) return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
       if (binaryAlpha || a[3] == 0) return PalEntry::Transparent(); // transparent, and black
       // try to restore color
-      //return PalEntry::RGBA(a[0]*255/a[3], a[1]*255/a[3], a[2]*255/a[3], a[3]);
+      //return PalEntry::RGBA(a[0]*255/a[3], a[1]*255/a[3], a[2]*255/a[3], 255-a[3]);
       return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
+      //return PalEntry::RGB(255, 0, 0);
   }
   return PalEntry::Transparent();
 }
 
 
-static inline void MakeChunk (void *where, vuint32 type, size_t len);
-static inline void StuffPalette (const PalEntry *from, vuint8 *to);
+//==========================================================================
+//
+// MakeChunk
+//
+// Prepends the chunk length and type and appends the chunk's CRC32.
+// There must be 8 bytes available before the chunk passed and 4 bytes
+// after the chunk.
+//
+//==========================================================================
+static inline void MakeChunk (void *where, vuint32 type, size_t len) {
+  vuint8 *data = (vuint8 *)where;
+  *(vuint32 *)(data-8) = BigLong((unsigned int)len);
+  *(vuint32 *)(data-4) = type;
+  *(vuint32 *)(data+len) = BigLong((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
+}
+
+
+//==========================================================================
+//
+// StuffPalette
+//
+// Converts 256 4-byte palette entries to 3 bytes each.
+//
+//==========================================================================
+static void StuffPalette (const PalEntry *from, vuint8 *to) {
+  for (int i = 256; i > 0; --i) {
+    to[0] = from->r;
+    to[1] = from->g;
+    to[2] = from->b;
+    from += 1;
+    to += 3;
+  }
+}
+
+
 static bool WriteIDAT (VStream *file, const vuint8 *data, int len);
 static void UnfilterRow (int width, vuint8 *dest, vuint8 *stream, vuint8 *prev, int bpp);
 static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const vuint8 *rowin, vuint8 *rowout, bool grayscale);
 
 int png_level = 9;
 float png_gamma = 0;
-
-/*
-CUSTOM_CVAR(Int, png_level, 5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-  if (self < 0)
-    self = 0;
-  else if (self > 9)
-    self = 9;
-}
-CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-*/
 
 
 //==========================================================================
@@ -883,41 +908,6 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
     }
   }
   return true;
-}
-
-
-//==========================================================================
-//
-// MakeChunk
-//
-// Prepends the chunk length and type and appends the chunk's CRC32.
-// There must be 8 bytes available before the chunk passed and 4 bytes
-// after the chunk.
-//
-//==========================================================================
-static inline void MakeChunk (void *where, vuint32 type, size_t len) {
-  vuint8 *data = (vuint8 *)where;
-  *(vuint32 *)(data-8) = BigLong((unsigned int)len);
-  *(vuint32 *)(data-4) = type;
-  *(vuint32 *)(data+len) = BigLong((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
-}
-
-
-//==========================================================================
-//
-// StuffPalette
-//
-// Converts 256 4-byte palette entries to 3 bytes each.
-//
-//==========================================================================
-static void StuffPalette (const PalEntry *from, vuint8 *to) {
-  for (int i = 256; i > 0; --i) {
-    to[0] = from->r;
-    to[1] = from->g;
-    to[2] = from->b;
-    from += 1;
-    to += 3;
-  }
 }
 
 

@@ -167,11 +167,9 @@ static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return 
 
 // this is actually branch-less for ints on x86, and even for longs on x86_64
 static __attribute__((unused)) vuint8 clampToByte (vint32 n) {
-  /*
   n &= -(vint32)(n >= 0);
   return (vuint8)(n|((255-(vint32)n)>>31));
-  */
-  return (n < 0 ? 0 : n > 255 ? 255 : n);
+  //return (n < 0 ? 0 : n > 255 ? 255 : n);
 }
 
 static __attribute__((unused)) vuint8 clampToByteU (vuint32 n) {
