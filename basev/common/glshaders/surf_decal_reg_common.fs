@@ -1,0 +1,91 @@
+// decal renderer for regular case (normal and lightmapped surfaces)
+
+uniform sampler2D Texture;
+#ifdef REG_LIGHTMAP
+uniform sampler2D LightMap;
+uniform sampler2D SpecularMap;
+#endif
+uniform vec4 Light;
+uniform vec4 SplatColour; // do recolor if .a is not zero
+uniform float SplatAlpha; // image alpha will be multiplied by this
+uniform bool FogEnabled;
+uniform int FogType;
+uniform vec4 FogColour;
+uniform float FogDensity;
+uniform float FogStart;
+uniform float FogEnd;
+
+varying vec2 TextureCoordinate;
+#ifdef REG_LIGHTMAP
+varying vec2 LightmapCoordinate;
+#endif
+
+
+void main () {
+  vec4 FinalColour_1;
+  vec4 TexColour;
+
+  if (SplatAlpha <= 0.05) discard;
+
+  TexColour = texture2D(Texture, TextureCoordinate);
+  if (TexColour.a < 0.05) discard;
+
+  if (SplatColour.a != 0.0) {
+    FinalColour_1.r = SplatColour.r*TexColour.r;
+    FinalColour_1.g = SplatColour.g*TexColour.r;
+    FinalColour_1.b = SplatColour.b*TexColour.r;
+    FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
+  } else {
+    FinalColour_1.r = TexColour.r;
+    FinalColour_1.g = TexColour.g;
+    FinalColour_1.b = TexColour.b;
+    FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
+  }
+  if (FinalColour_1.a < 0.05) discard;
+
+#ifdef REG_LIGHTMAP
+  // lightmapped
+  vec4 lmc = texture2D(LightMap, LightmapCoordinate);
+  vec4 spc = texture2D(SpecularMap, LightmapCoordinate);
+  FinalColour_1.r = clamp(FinalColour_1.r*lmc.r+spc.r, 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g*lmc.g+spc.g, 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b*lmc.b+spc.b, 0.0, 1.0);
+#else
+  // normal
+  FinalColour_1.r = clamp(FinalColour_1.r*(Light.r*Light.a), 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g*(Light.g*Light.a), 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b*(Light.b*Light.a), 0.0, 1.0);
+#endif
+
+  if (FogEnabled) {
+    float FogFactor_3;
+
+#ifdef VAVOOM_REVERSE_Z
+    float z = 1.0/gl_FragCoord.w;
+#else
+    float z = gl_FragCoord.z/gl_FragCoord.w;
+#endif
+
+    if (FogType == 3) {
+      FogFactor_3 = exp2(-FogDensity*FogDensity*z*z*1.442695);
+    } else if (FogType == 2) {
+      FogFactor_3 = exp2(-FogDensity*z*1.442695);
+    } else {
+      FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
+    }
+
+    FogFactor_3 = clamp(FogFactor_3, 0.0, 1.0);
+
+    float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
+    float aa = FinalColour_1.a;
+    FinalColour_1 = mix(FogColour, FinalColour_1, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
+    FinalColour_1.r = clamp(FinalColour_1.r, 0.0, 1.0);
+    FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
+    FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
+    FinalColour_1.a = aa;
+  }
+
+  //FinalColour_1 = vec4(1, 0, 0, 1);
+
+  gl_FragColor = FinalColour_1;
+}
