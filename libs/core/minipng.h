@@ -52,14 +52,40 @@ enum ESSType {
 };
 
 struct PalEntry {
+#ifdef __BIG_ENDIAN__
+  union {
+    struct {
+      vuint8 a, r, g, b;
+    };
+    vuint32 d;
+  };
+#else
+  union {
+    struct {
+      vuint8 b, g, r, a;
+    };
+    vuint32 d;
+  };
+#endif
+
   PalEntry () {}
   PalEntry (vuint32 argb) { d = argb; }
+  //PalEntry (vuint8 ir, vuint8 ig, vuint8 ib) : a(255), r(ir), g(ig), b(ib) {}
+  PalEntry (vuint8 ia, vuint8 ir, vuint8 ig, vuint8 ib) { a = ia; r = ir; g = ig; b = ib; }
+  PalEntry (const PalEntry &src) : d(src.d) {}
 
-  inline operator vuint32 () const { return d; }
+  static inline PalEntry RGB (int r, int g, int b) { return PalEntry(255, clampToByte(r), clampToByte(g), clampToByte(b)); }
+  static inline PalEntry RGBA (int r, int g, int b, int a) { return PalEntry(clampToByte(r), clampToByte(g), clampToByte(b), clampToByte(a)); }
 
-  inline void SetRGB (PalEntry other) { d = other.d & 0xffffff; }
+  static inline PalEntry Transparent () { return PalEntry(0); }
 
-  inline PalEntry Modulate (PalEntry other) const {
+  inline void operator = (vuint32 other) { d = other; }
+  inline void operator = (const PalEntry &other) { d = other.d; }
+
+  //inline operator vuint32 () const { return d; }
+  //inline void setRGB (const PalEntry &other) { d = other.d&0xffffff; }
+
+  inline PalEntry modulate (PalEntry other) const {
     if (isWhite()) {
       return other;
     } else if (other.isWhite()) {
@@ -72,48 +98,31 @@ struct PalEntry {
     }
   }
 
-  inline int Luminance () const { return (r*77+g*143+b*37)>>8; }
+  // see https://www.compuphase.com/cmetric.htm
+  inline vint32 distanceSquared (const PalEntry &other) const {
+    const vint32 rmean = ((vint32)r+(vint32)other.r)/2;
+    const vint32 dr = (vint32)r-(vint32)other.r;
+    const vint32 dg = (vint32)g-(vint32)other.g;
+    const vint32 db = (vint32)b-(vint32)other.b;
+    return (((512+rmean)*dr*dr)/256)+4*dg*dg+(((767-rmean)*db*db)/256);
+  }
+
+  inline int luminance () const { return (r*77+g*143+b*37)>>8; }
 
   // this for 'nocoloredspritelighting' and not the same as desaturation.
   // the normal formula results in a value that's too dark.
-  inline void Decolorize () {
-    int v = (r+g+b);
-    r = g = b = ((255*3)+v+v)/9;
-  }
+  inline void decolorize () { const int v = r+g+b; r = g = b = ((255*3)+v+v)/9; }
 
-  inline bool isBlack() const { return (d & 0xffffff) == 0; }
+  inline bool isBlack () const { return ((d&0xffffffU) == 0); }
+  inline bool isWhite () const { return ((d&0xffffffU) == 0xffffffU); }
 
-  inline bool isWhite() const { return (d & 0xffffff) == 0xffffff; }
+  inline bool isOpaque () const { return ((d&0xff000000U) == 0xff000000U); }
+  inline bool isTransparent () const { return ((d&0xff000000U) == 0); }
 
-  inline PalEntry &operator = (vuint32 other) { d = other; return *this; }
-  inline PalEntry InverseColor() const { PalEntry nc; nc.a = a; nc.r = 255-r; nc.g = 255-g; nc.b = 255-b; return nc; }
-#ifdef __BIG_ENDIAN__
-  PalEntry (vuint8 ir, vuint8 ig, vuint8 ib) : a(0), r(ir), g(ig), b(ib) {}
-  PalEntry (vuint8 ia, vuint8 ir, vuint8 ig, vuint8 ib) : a(ia), r(ir), g(ig), b(ib) {}
-  union {
-    struct {
-      vuint8 a, r, g, b;
-    };
-    vuint32 d;
-  };
-#else
-  PalEntry (vuint8 ir, vuint8 ig, vuint8 ib) : b(ib), g(ig), r(ir), a(0) {}
-  PalEntry (vuint8 ia, vuint8 ir, vuint8 ig, vuint8 ib) : b(ib), g(ig), r(ir), a(ia) {}
-  union {
-    struct {
-      vuint8 b, g, r, a;
-    };
-    vuint32 d;
-  };
-#endif
+  inline PalEntry premulted () const { return PalEntry(a, r*a/255, g*a/255, b*2/255); }
+
+  inline PalEntry inverseColor () const { PalEntry nc; nc.a = a; nc.r = 255-r; nc.g = 255-g; nc.b = 255-b; return nc; }
 };
-
-/*
-inline int Luminance(int r, int g, int b)
-{
-  return (r * 77 + g * 143 + b * 37) >> 8;
-}
-*/
 
 
 // Start writing an 8-bit palettized PNG file.
@@ -142,6 +151,14 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
 // PNG Reading --------------------------------------------------------------
 struct PNGHandle {
+  enum {
+    ColorGrayscale = 0,
+    ColorRGB = 2,
+    ColorPaletted = 3,
+    ColorGrayscaleAlpha = 4,
+    ColorRGBA = 6,
+  };
+
   struct Chunk {
     vuint32 ID;
     vuint32 Offset;
@@ -157,6 +174,8 @@ struct PNGHandle {
   vuint8 trans[768]; //alpha for palette (color 0 will be transparent for paletted images, as DooM does it this way)
   vuint8 tR, tG, tB; // transparent color for RGB images
   bool hasTrans;
+  bool premult; // loader will try to guess if PNG with alpha channel is premultiplied
+  bool binaryAlpha; // for premultiplied
   unsigned int ChunkPt;
 
   int width;
@@ -165,19 +184,31 @@ struct PNGHandle {
   vuint8 colortype;
   vuint8 interlace;
   vuint8 *pixbuf;
+  int xmul;
 
-  PNGHandle (VStream *file);
   ~PNGHandle ();
 
+  // use this to load the actual PNG data
+  // you should get `PNGHandle` from `M_VerifyPNG()`
+  // returns  `false` on error
   bool loadIDAT ();
 
-  vuint8 getR (int x, int y) const;
-  vuint8 getG (int x, int y) const;
-  vuint8 getB (int x, int y) const;
-  vuint8 getA (int x, int y) const;
+  // tries to return non-premultiplied pixel value
+  PalEntry getPixel (int x, int y) const;
 
 private:
-  const vuint8 *pixaddr (int x, int y) const;
+  PNGHandle (VStream *file);
+  PNGHandle ();
+  PNGHandle (const PNGHandle &);
+  void operator = (const PNGHandle &) const;
+
+  inline const vuint8 *pixaddr (int x, int y) const {
+    return (width > 0 && height > 0 && xmul > 0 && x >= 0 && y >= 0 && x < width && y < height ? &pixbuf[y*(width*4)+x*xmul] : nullptr);
+  }
+
+  void guessPremult ();
+
+  friend PNGHandle *M_VerifyPNG (VStream *file);
 };
 
 

@@ -106,9 +106,9 @@ enum {
 
 //int mlog2 (int val);
 //int mround (float);
-static __attribute((unused)) inline int mround (float Val) { return (int)floor(Val+0.5); }
+static __attribute__((unused)) inline int mround (float Val) { return (int)floor(Val+0.5); }
 
-static __attribute((unused)) inline int ToPowerOf2 (int val) {
+static __attribute__((unused)) inline int ToPowerOf2 (int val) {
   /*
   int answer = 1;
   while (answer < val) answer <<= 1;
@@ -128,7 +128,7 @@ static __attribute((unused)) inline int ToPowerOf2 (int val) {
 //float AngleMod (float angle);
 //float AngleMod180 (float angle);
 
-static __attribute((unused)) inline float AngleMod (float angle) {
+static __attribute__((unused)) inline float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
   while (angle < 0.0) angle += 360.0;
@@ -139,7 +139,7 @@ static __attribute((unused)) inline float AngleMod (float angle) {
   return angle;
 }
 
-static __attribute((unused)) inline float AngleMod180 (float angle) {
+static __attribute__((unused)) inline float AngleMod180 (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
   while (angle < -180.0) angle += 360.0;
@@ -153,16 +153,30 @@ static __attribute((unused)) inline float AngleMod180 (float angle) {
 }
 
 
-static __attribute((unused)) inline float msin (float angle) { return sin(DEG2RAD(angle)); }
-static __attribute((unused)) inline float mcos (float angle) { return cos(DEG2RAD(angle)); }
-static __attribute((unused)) inline float mtan (float angle) { return tan(DEG2RAD(angle)); }
-static __attribute((unused)) inline float masin (float x) { return RAD2DEG(asin(x)); }
-static __attribute((unused)) inline float macos (float x) { return RAD2DEG(acos(x)); }
-static __attribute((unused)) inline float matan (float y, float x) { return RAD2DEG(atan2(y, x)); }
+static __attribute__((unused)) inline float msin (float angle) { return sin(DEG2RAD(angle)); }
+static __attribute__((unused)) inline float mcos (float angle) { return cos(DEG2RAD(angle)); }
+static __attribute__((unused)) inline float mtan (float angle) { return tan(DEG2RAD(angle)); }
+static __attribute__((unused)) inline float masin (float x) { return RAD2DEG(asin(x)); }
+static __attribute__((unused)) inline float macos (float x) { return RAD2DEG(acos(x)); }
+static __attribute__((unused)) inline float matan (float y, float x) { return RAD2DEG(atan2(y, x)); }
 
 
 static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0/256.0; }
 static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0/360.0); }
+
+
+// this is actually branch-less for ints on x86, and even for longs on x86_64
+static __attribute__((unused)) vuint8 clampToByte (vint32 n) {
+  /*
+  n &= -(vint32)(n >= 0);
+  return (vuint8)(n|((255-(vint32)n)>>31));
+  */
+  return (n < 0 ? 0 : n > 255 ? 255 : n);
+}
+
+static __attribute__((unused)) vuint8 clampToByteU (vuint32 n) {
+  return (vuint8)((n&0xff)|(255-((-(vint32)(n < 256))>>24)));
+}
 
 
 #endif

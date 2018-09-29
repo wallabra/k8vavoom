@@ -540,10 +540,12 @@ private:
   }
 
 protected:
-  enum { M_INFINITY = 8000 };
+  //enum { M_INFINITY = 8000 };
+  enum { M_INFINITY = 36000 };
 
-  enum { TmpImgBufSize = 256*256*4 };
-  vuint8 *tmpImgBuf;
+  vuint8 *tmpImgBuf0;
+  vuint8 *tmpImgBuf1;
+  int tmpImgBufSize;
 
   bool useReverseZ;
 
@@ -562,15 +564,14 @@ protected:
   float tex_iw;
   float tex_ih;
 
-  GLenum maxfilter;
-  GLenum minfilter;
-  GLenum mipfilter;
+  //GLenum maxfilter;
+  //GLenum minfilter;
+  //GLenum mipfilter;
   GLenum ClampToEdge;
-  GLfloat max_anisotropy;
+  GLfloat max_anisotropy; // 1.0: off
 
-  GLenum spr_maxfilter;
-  GLenum spr_minfilter;
-  GLenum spr_mipfilter;
+  //GLenum spr_maxfilter;
+  //GLenum spr_mipfilter;
 
   int lastgamma;
   int CurrentFade;
@@ -826,8 +827,9 @@ protected:
   GLint ShadowsModelFogAllowTransparency;
 
   // console variables
-  static VCvarI tex_linear;
-  static VCvarI sprite_tex_linear;
+  static VCvarI texture_filter;
+  static VCvarI sprite_filter;
+  static VCvarI model_filter;
   static VCvarB gl_2d_filtering;
   static VCvarI gl_texture_filter_anisotropic;
   static VCvarB clear;
@@ -870,6 +872,8 @@ protected:
 
   void UploadModel(VMeshModel *Mdl);
   void UnloadModels();
+
+  void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
 
 #define _(x)  x##_t p_##x
   _(glMultiTexCoord2fARB);

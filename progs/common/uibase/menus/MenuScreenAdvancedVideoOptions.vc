@@ -22,487 +22,69 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenAdvancedVideoOptions : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
+override void CreateChoices () {
+  currentY = ChoicesStartY;
 
-override void CreateChoices()
-{
-  MenuChoiceSlider  Slider;
-  MenuChoiceEnum    Enum;
+  CreateOnOffCvar("Decals", 'r_decals_enabled');
+  CreateOnOffCvar("Sort textures", 'gl_sort_textures');
+  CreateOnOffCvar("Darken lights", 'r_darken');
+  CreateOnOffCvar("Simulate Faded lights", 'r_fade_light');
+  CreateFloatSliderCvar("Light Fade Factor", 'r_fade_factor', 1, 1, 10);
+  CreateFloatSliderCvar("Sky Brightness Factor", 'r_sky_bright_factor', 0.1, 0.1, 1);
+  CreateOnOffCvar("Extra lighmap samples", 'r_extrasamples');
+  CreateOnOffCvar("Dynamic lights", 'r_dynamic');
+  CreateOnOffCvar("Clip Dynamic Lights", 'r_dynamic_clip');
+  CreateOnOffCvar("Properly Clip DynLights", 'r_dynamic_clip_more');
+  CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
+    "Normal",
+    "Original (4:3)",
+    "Wide Screen 1 (16:9)",
+    "Wide Screen 2 (16:10)"
+  );
+  CreateOnOffCvar("Model Dynamic lighting", 'r_model_light');
+  CreateOnOffCvar("Model shadows", 'r_model_shadows');
+  CreateOnOffCvar("Additive Static Lights", 'r_static_add');
+  CreateFloatSliderCvar("Specular Level", 'r_specular', 0.1, 0, 2);
+  CreateOnOffCvar("Blend sprites", 'gl_blend_sprites');
 
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Decals";
-  Enum.SetInitialValue(GetCvar('r_decals_enabled'));
-  Enum.ValueChanging = &ChangeDecals;
-  currentY += Enum.Height;
+  CreateEnumCvar("Texture Filter", 'gl_texture_filter',
+    "Nearest",
+    "Nearest Mipmap",
+    "Linear Nearest",
+    "Bilinear",
+    "Trilinear"
+  );
 
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Sort textures";
-  Enum.SetInitialValue(GetCvar('gl_sort_textures'));
-  Enum.ValueChanging = delegate bool (Object Sender, int newValue) { SetCvar('gl_sort_textures', newValue); return true; };
-  currentY += Enum.Height;
+  CreateEnumCvar("Sprites Filter", 'gl_sprite_filter',
+    "Nearest",
+    "Nearest Mipmap",
+    "Linear Nearest",
+    "Bilinear",
+    "Trilinear"
+  );
 
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Darken lights";
-  Enum.SetInitialValue(GetCvar('r_darken'));
-  Enum.ValueChanging = &ChangeDarken;
-  currentY += Enum.Height;
+  CreateEnumCvar("Models Filter", 'gl_model_filter',
+    "Nearest",
+    "Nearest Mipmap",
+    "Linear Nearest",
+    "Bilinear",
+    "Trilinear"
+  );
 
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Simulate Faded lights";
-  Enum.SetInitialValue(GetCvar('r_fade_light'));
-  Enum.ValueChanging = &ChangeFade;
-  currentY += Enum.Height;
-
-  Slider = NewChild(MenuChoiceSlider);
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Light Fade Factor";
-  Slider.ValueDelta = 1.0;
-  Slider.MaxValue = 10.0;
-  Slider.MinValue = 1.0;
-  Slider.SetInitialValue(GetCvarF('r_fade_factor'));
-  Slider.ValueChanging = &ChangeFactor;
-  currentY += Slider.Height;
-
-  Slider = NewChild(MenuChoiceSlider);
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Sky Brightness Factor";
-  Slider.ValueDelta = 0.1;
-  Slider.MaxValue = 1.0;
-  Slider.MinValue = 0.1;
-  Slider.SetInitialValue(GetCvarF('r_sky_bright_factor'));
-  Slider.ValueChanging = &ChangeSkyFactor;
-  currentY += Slider.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Extra lighmap samples";
-  Enum.SetInitialValue(GetCvar('r_extrasamples'));
-  Enum.ValueChanging = &ChangeExtraSamples;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Dynamic lights";
-  Enum.SetInitialValue(GetCvar('r_dynamic'));
-  Enum.ValueChanging = &ChangeDynamic;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Clip Dynamic Lights";
-  Enum.SetInitialValue(GetCvar('r_dynamic_clip'));
-  Enum.ValueChanging = delegate bool (Object Sender, int newValue) { SetCvar('r_dynamic_clip', newValue); return true; };
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Properly Clip DynLights";
-  Enum.SetInitialValue(GetCvar('r_dynamic_clip_more'));
-  Enum.ValueChanging = delegate bool (Object Sender, int newValue) { SetCvar('r_dynamic_clip_more', newValue); return true; };
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Aspect Ratio";
-  Enum.AddItem("Normal");
-  Enum.AddItem("Original (4:3)");
-  Enum.AddItem("Wide Screen 1 (16:9)");
-  Enum.AddItem("Wide Screen 2 (16:10)");
-  Enum.SetInitialValue(GetCvar('r_aspect_ratio'));
-  Enum.ValueChanging = &ChangeAspectRation;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Model Dynamic lighting";
-  Enum.SetInitialValue(GetCvar('r_model_light'));
-  Enum.ValueChanging = &ChangeModelLights;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Model shadows";
-  Enum.SetInitialValue(GetCvar('r_model_shadows'));
-  Enum.ValueChanging = &ChangeModelShadows;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Additive Lights";
-  Enum.SetInitialValue(GetCvar('r_static_add'));
-  Enum.ValueChanging = &ChangeStaticAdd;
-  currentY += Enum.Height;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Specular Level";
-  Slider.ValueDelta = 0.1;
-  Slider.MaxValue = 2.0;
-  Slider.SetInitialValue(GetCvarF('r_specular'));
-  Slider.ValueChanging = &ChangeSpecular;
-  currentY += Slider.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Blend sprite borders";
-  Enum.SetInitialValue(GetCvar('gl_blend_sprites'));
-  Enum.ValueChanging = &ChangeGlBlendSprites;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Texture Filter";
-  Enum.AddItem("Nearest");
-  Enum.AddItem("Linear");
-  Enum.AddItem("Linear Nearest");
-  Enum.AddItem("Linear Linear");
-  Enum.AddItem("Bilinear");
-  Enum.AddItem("Trilinear");
-  Enum.SetInitialValue(GetCvar('gl_tex_linear'));
-  Enum.ValueChanging = &ChangeGlTexLinear;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Sprites Filter";
-  Enum.AddItem("Nearest");
-  Enum.AddItem("Linear");
-  Enum.AddItem("Linear Nearest");
-  Enum.AddItem("Linear Linear");
-  Enum.AddItem("Bilinear");
-  Enum.AddItem("Trilinear");
-  Enum.SetInitialValue(GetCvar('gl_sprite_tex_linear'));
-  Enum.ValueChanging = &ChangeGlSprTexLinear;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Model Sector Lightning";
-  Enum.SetInitialValue(GetCvar('gl_model_lighting'));
-  Enum.ValueChanging = &ChangeGlModelLighting;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Specular Highlights";
-  Enum.SetInitialValue(GetCvar('gl_specular_highlights'));
-  Enum.ValueChanging = &ChangeGlSpecularHighlights;
-  currentY += Enum.Height;
+  CreateOnOffCvar("Model Sector Lightning", 'gl_model_lighting');
+  CreateOnOffCvar("Specular Highlights", 'gl_specular_highlights');
 }
 
 
-//==========================================================================
-//
-//  ChangeDecals
-//
-//==========================================================================
-
-bool ChangeDecals (Object Sender, int newValue) {
-  SetCvar('r_decals_enabled', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeDarken
-//
-//==========================================================================
-
-bool ChangeDarken(Object Sender, int newValue)
-{
-  SetCvar('r_darken', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeFade
-//
-//==========================================================================
-
-bool ChangeFade(Object Sender, int newValue)
-{
-  SetCvar('r_fade_light', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeFactor
-//
-//==========================================================================
-
-bool ChangeFactor(Object Sender, float newValue)
-{
-  SetCvarF('r_fade_factor', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeSkyFactor
-//
-//==========================================================================
-
-bool ChangeSkyFactor(Object Sender, float newValue)
-{
-  SetCvarF('r_sky_bright_factor', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeExtraSamples
-//
-//==========================================================================
-
-bool ChangeExtraSamples(Object Sender, int newValue)
-{
-  SetCvar('r_extrasamples', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeDynamic
-//
-//==========================================================================
-
-bool ChangeDynamic(Object Sender, int newValue)
-{
-  SetCvar('r_dynamic', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeAspectRation
-//
-//==========================================================================
-
-bool ChangeAspectRation(Object Sender, int newValue)
-{
-  SetCvar('r_aspect_ratio', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeModelLights
-//
-//==========================================================================
-
-bool ChangeModelLights(Object Sender, int newValue)
-{
-  SetCvar('r_model_light', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeModelShadows
-//
-//==========================================================================
-
-bool ChangeModelShadows(Object Sender, int newValue)
-{
-  SetCvar('r_model_shadows', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeColouredLights
-//
-//==========================================================================
-
-bool ChangeColouredLights(Object Sender, int newValue)
-{
-  SetCvar('d_coloured_lights', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeSubdiv
-//
-//==========================================================================
-
-bool ChangeSubdiv(Object Sender, int newValue)
-{
-  SetCvar('d_subdiv', newValue + 1);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeStaticAdd
-//
-//==========================================================================
-
-bool ChangeStaticAdd(Object Sender, int newValue)
-{
-  SetCvar('r_static_add', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeSpecular
-//
-//==========================================================================
-
-bool ChangeSpecular(Object Sender, float newValue)
-{
-  SetCvarF('r_specular', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeGlBlendSprites
-//
-//==========================================================================
-
-bool ChangeGlBlendSprites(Object Sender, int newValue)
-{
-  SetCvar('gl_blend_sprites', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeGlTexLinear
-//
-//==========================================================================
-
-bool ChangeGlTexLinear(Object Sender, int newValue)
-{
-  SetCvar('gl_tex_linear', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeGlSprTexLinear
-//
-//==========================================================================
-
-bool ChangeGlSprTexLinear(Object Sender, int newValue)
-{
-  SetCvar('gl_sprite_tex_linear', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeGlModelLighting
-//
-//==========================================================================
-
-bool ChangeGlModelLighting(Object Sender, int newValue)
-{
-  SetCvar('gl_model_lighting', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeGlSpecularHighlights
-//
-//==========================================================================
-
-bool ChangeGlSpecularHighlights(Object Sender, int newValue)
-{
-  SetCvar('gl_specular_highlights', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeD3dBlendSprites
-//
-//==========================================================================
-
-bool ChangeD3dBlendSprites(Object Sender, int newValue)
-{
-  SetCvar('d3d_blend_sprites', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeD3dTexFilter
-//
-//==========================================================================
-
-bool ChangeD3dTexFilter(Object Sender, int newValue)
-{
-  SetCvar('d3d_tex_linear', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeD3dSprTexFilter
-//
-//==========================================================================
-
-bool ChangeD3dSprTexFilter(Object Sender, int newValue)
-{
-  SetCvar('d3d_sprite_tex_linear', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeD3dDither
-//
-//==========================================================================
-
-bool ChangeD3dDither(Object Sender, int newValue)
-{
-  SetCvar('d3d_dither', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeD3dModelLighting
-//
-//==========================================================================
-
-bool ChangeD3dModelLighting(Object Sender, int newValue)
-{
-  SetCvar('d3d_model_lighting', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeD3dSpecularHighlights
-//
-//==========================================================================
-
-bool ChangeD3dSpecularHighlights(Object Sender, int newValue)
-{
-  SetCvar('d3d_specular_highlights', newValue);
-  return true;
-}
-
-defaultproperties
-{
+defaultproperties {
   Width = 380;
   Height = 260;
   ChoicesStartX = 200;

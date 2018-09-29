@@ -36,8 +36,9 @@ static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "En
 static VCvarB gl_disable_reverse_z("gl_disable_reverse_z", false, "Completely disable reverse z, even if it is available? (not permanent)", 0);
 VCvarB VOpenGLDrawer::gl_dbg_adv_reverse_z("gl_dbg_adv_reverse_z", false, "Don't do this.", 0); // force-enable reverse z for advanced renderer
 
-VCvarI VOpenGLDrawer::tex_linear("gl_tex_linear", "0", "Texture interpolation mode.", CVAR_Archive);
-VCvarI VOpenGLDrawer::sprite_tex_linear("gl_sprite_tex_linear", "0", "Sprite interpolation mode.", CVAR_Archive);
+VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture interpolation mode.", CVAR_Archive);
+VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite interpolation mode.", CVAR_Archive);
+VCvarI VOpenGLDrawer::model_filter("gl_model_filter", "0", "Model interpolation mode.", CVAR_Archive);
 VCvarB VOpenGLDrawer::gl_2d_filtering("gl_2d_filtering", true, "Filter 2D interface.", CVAR_Archive);
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "4", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
@@ -75,7 +76,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   mainFBOColorTid = 0;
   mainFBODepthStencilTid = 0;
 
-  tmpImgBuf = (vuint8 *)Z_Malloc(TmpImgBufSize);
+  tmpImgBuf0 = nullptr;
+  tmpImgBuf1 = nullptr;
+  tmpImgBufSize = 0;
 }
 
 
@@ -85,7 +88,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
 //
 //==========================================================================
 VOpenGLDrawer::~VOpenGLDrawer () {
-  if (tmpImgBuf) { Z_Free(tmpImgBuf); tmpImgBuf = nullptr; }
+  if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
+  if (tmpImgBuf1) { Z_Free(tmpImgBuf1); tmpImgBuf1 = nullptr; }
+  tmpImgBufSize = 0;
 }
 
 
@@ -97,6 +102,56 @@ VOpenGLDrawer::~VOpenGLDrawer () {
 void VOpenGLDrawer::RestoreDepthFunc () {
   // advanced renderer doesn't support reverse z yet
   glDepthFunc(!CanUseRevZ() ? GL_LEQUAL : GL_GEQUAL);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RestoreDepthFunc
+//
+//==========================================================================
+void VOpenGLDrawer::SetupTextureFiltering (int level) {
+  // for anisotropy, we require trilinear filtering
+  if (max_anisotropy > 1) {
+    if (gl_texture_filter_anisotropic > 1) {
+      // turn on trilinear filtering
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      // setup anisotropy level
+      glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT),
+        (gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic)
+      );
+      return;
+    }
+    // we have anisotropy, but it is turned off
+    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1); // 1 is minimum, i.e. "off"
+  }
+  int mipfilter, maxfilter;
+  // setup filtering
+  switch (level) {
+    case 1: // nearest mipmap
+      maxfilter = GL_NEAREST;
+      mipfilter = GL_NEAREST_MIPMAP_NEAREST;
+      break;
+    case 2: // linear nearest
+      maxfilter = GL_LINEAR;
+      mipfilter = GL_LINEAR_MIPMAP_NEAREST;
+      break;
+    case 3: // bilinear
+      maxfilter = GL_LINEAR;
+      mipfilter = GL_LINEAR;
+      break;
+    case 4: // trilinear
+      maxfilter = GL_LINEAR;
+      mipfilter = GL_LINEAR_MIPMAP_LINEAR;
+      break;
+    default: // nearest, no mipmaps
+      maxfilter = GL_NEAREST;
+      mipfilter = GL_NEAREST;
+      break;
+  }
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
 }
 
 
@@ -126,6 +181,7 @@ void VOpenGLDrawer::InitResolution () {
   // check the maximum texture size
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
   GCon->Logf(NAME_Init, "Maximum texture size: %d", maxTexSize);
+  if (maxTexSize < 1024) maxTexSize = 1024; // 'cmon!
 
   /*
   if (CheckExtension("ARB_get_proc_address")) {
@@ -184,7 +240,8 @@ void VOpenGLDrawer::InitResolution () {
   max_anisotropy = 1.0;
   if (ext_anisotropy && CheckExtension("GL_EXT_texture_filter_anisotropic")) {
     glGetFloatv(GLenum(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT), &max_anisotropy);
-    GCon->Logf(NAME_Init, "Max anisotropy %f", max_anisotropy);
+    if (max_anisotropy < 1) max_anisotropy = 1;
+    GCon->Logf(NAME_Init, "Max anisotropy %g", (double)max_anisotropy);
   }
 
   // clamp to edge extension
@@ -890,44 +947,15 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 
   VRenderLevelShared::ResetPortalPool();
 
-  if (mainFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-  }
+  if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
 
   if (allowClear && clear) glClear(GL_COLOR_BUFFER_BIT);
 
-  switch (tex_linear) {
-    case 1:
-      maxfilter = GL_LINEAR;
-      minfilter = GL_LINEAR;
-      mipfilter = GL_NEAREST;
-      break;
-    case 2:
-      maxfilter = GL_LINEAR;
-      minfilter = GL_LINEAR;
-      mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
-      break;
-    case 3:
-      maxfilter = GL_LINEAR;
-      minfilter = GL_LINEAR;
-      mipfilter = GL_LINEAR /*GL_LINEAR_MIPMAP_LINEAR*/;
-      break;
-    case 4: // BILINEAR
-      maxfilter = GL_NEAREST;
-      minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
-      mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
-      break;
-    case 5: // TRILINEAR
-      maxfilter = GL_NEAREST;
-      minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
-      mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
-      break;
-    default:
-      maxfilter = GL_NEAREST;
-      minfilter = GL_NEAREST;
-      mipfilter = GL_NEAREST;
-      break;
-  }
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // turn off anisotropy
+  glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1); // 1 is minimum, i.e. "off"
 
   if (usegamma != lastgamma) {
     FlushTextures();

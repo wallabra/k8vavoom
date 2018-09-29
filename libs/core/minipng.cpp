@@ -83,11 +83,21 @@ struct IHDR {
 
 PNGHandle::PNGHandle (VStream *file) : ChunkPt(0), width(0), height(0), pixbuf(nullptr) {
   File = file;
+  memset(pal, 0, sizeof(pal));
+  memset(trans, 255, sizeof(trans));
+  tR = tG = tB = 0;
+  hasTrans = false;
+  premult = false;
+  binaryAlpha = false;
+  bitdepth = 0;
+  colortype = 0;
+  interlace = 0;
+  xmul = 0;
 }
 
 
 PNGHandle::~PNGHandle () {
-  delete[] pixbuf;
+  delete[] pixbuf; pixbuf = nullptr;
 #ifdef MINIPNG_LOAD_TEXT_CHUNKS
   for (int i = 0; i < TextChunks.length(); ++i) {
     delete[] TextChunks[i];
@@ -112,73 +122,83 @@ bool PNGHandle::loadIDAT () {
   if (fidlen == 0) return false;
   delete[] pixbuf;
   pixbuf = new vuint8[width*height*4];
-  return M_ReadIDAT(*File, pixbuf, width, height, width*4, bitdepth, colortype, interlace, fidlen);
+  bool res = M_ReadIDAT(*File, pixbuf, width, height, width*4, bitdepth, colortype, interlace, fidlen);
+  if (res) guessPremult();
+  return res;
 }
 
 
-const vuint8 *PNGHandle::pixaddr (int x, int y) const {
-  if (width < 1 || height < 1 || x < 0 || y < 0 || x >= width || y >= height) return nullptr;
-  int xmul;
+void PNGHandle::guessPremult () {
+  premult = false;
+  if (width < 1 || height < 1 || hasTrans) return;
   switch (colortype) {
-    case 0: xmul = 1; break; // grayscale
-    case 2: xmul = 3; break; // RGB
-    case 3: xmul = 1; break; // paletted
-    case 4: xmul = 2; break; // grayscale+alpha
-    case 6: xmul = 4; break; // RGBA
-    default: return nullptr;
-  }
-  return &pixbuf[y*(width*4)+x*xmul];
-}
-
-
-vuint8 PNGHandle::getR (int x, int y) const {
-  const vuint8 *a = pixaddr(x, y);
-  if (!a) return 0;
-  if (colortype == 3) return pal[a[0]*3+0]; // paletted
-  return a[0]; // other chunks
-}
-
-vuint8 PNGHandle::getG (int x, int y) const {
-  const vuint8 *a = pixaddr(x, y);
-  if (!a) return 0;
-  switch (colortype) {
-    case 0: return a[0]; // grayscale
-    case 2: return a[1]; // RGB
-    case 3: return pal[a[0]*3+1]; // paletted
-    case 4: return a[0]; // grayscale+alpha
-    case 6: return a[1]; // RGBA
-  }
-  return 0;
-}
-
-vuint8 PNGHandle::getB (int x, int y) const {
-  const vuint8 *a = pixaddr(x, y);
-  if (!a) return 0;
-  switch (colortype) {
-    case 0: return a[0]; // grayscale
-    case 2: return a[2]; // RGB
-    case 3: return pal[a[0]*3+2]; // paletted
-    case 4: return a[0]; // grayscale+alpha
-    case 6: return a[2]; // RGBA
-  }
-  return 0;
-}
-
-vuint8 PNGHandle::getA (int x, int y) const {
-  const vuint8 *a = pixaddr(x, y);
-  if (!a) return 0;
-  switch (colortype) {
-    case 0: return (hasTrans ? trans[a[0]] : 255); // grayscale
-    case 2: // RGB
-      if (hasTrans) {
-        if (a[0] == tR && a[1] == tG && a[2] == tB) return 0;
+    case ColorGrayscaleAlpha:
+      // hack: exclude fully transparent pixels, as those may be used to remove "fringe"
+      premult = true;
+      binaryAlpha = true;
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          const vuint8 *a = pixaddr(x, y);
+          if (a[1] == 0) continue; // fully transparent
+          if (a[0] > 255*a[1]) {
+            premult = false;
+            binaryAlpha = false;
+            return;
+          }
+          if (binaryAlpha && (a[1] != 0 && a[1] != 255)) binaryAlpha = false;
+        }
       }
-      return 255;
-    case 3: return (hasTrans ? trans[a[0]] : 255); // paletted
-    case 4: return a[1]; // grayscale+alpha
-    case 6: return a[3]; // RGBA
+      break;
+    case ColorRGBA:
+      // hack: exclude fully transparent pixels, as those may be used to remove "fringe"
+      premult = true;
+      binaryAlpha = true;
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          const vuint8 *a = pixaddr(x, y);
+          if (a[3] == 0) continue; // fully transparent
+          if (a[0] > 255*a[3] || a[1] > 255*a[3] || a[2] > 255*a[3]) {
+            premult = false;
+            binaryAlpha = false;
+            return;
+          }
+          if (binaryAlpha && (a[3] != 0 && a[3] != 255)) binaryAlpha = false;
+        }
+      }
+      break;
   }
-  return 0;
+}
+
+
+// as we will premultiply it all again, just make all transparent pixels that we cannot restore black, 'cause why not?
+PalEntry PNGHandle::getPixel (int x, int y) const {
+  const vuint8 *a = pixaddr(x, y);
+  if (!a) return PalEntry(0);
+  switch (colortype) {
+    case ColorGrayscale:
+      if (hasTrans && trans[a[0]]) return PalEntry::RGBA(255, 255, 255, 0); // transparent
+      return PalEntry::RGBA(255, 255, 255, a[0]); // non-premultiplied with alpha
+    case ColorRGB:
+      if (hasTrans && a[0] == tR && a[1] == tG && a[2] == tB) return PalEntry::Transparent(); // transparent, and black
+      return PalEntry::RGB(a[0], a[1], a[2]); // opaque
+    case ColorPaletted:
+      if (hasTrans && trans[a[0]]) return PalEntry::Transparent(); // transparent, and black
+      return PalEntry::RGB(pal[a[0]*3+0], pal[a[0]*3+1], pal[a[0]*3+2]);
+    case ColorGrayscaleAlpha:
+      // not premultiplied, or completely opaque?
+      if (!premult || a[1] == 255) return PalEntry::RGBA(a[0], a[0], a[0], a[1]);
+      if (binaryAlpha || a[1] == 0) PalEntry::RGBA(255, 255, 255, 0); // transparent
+      // premultiplied, and with non-binary alpha: ignore shade
+      return PalEntry::RGBA(255, 255, 255, a[1]);
+    case ColorRGBA:
+      // not premultiplied, or completely opaque?
+      if (!premult || a[3] == 255) return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
+      if (binaryAlpha || a[3] == 0) return PalEntry::Transparent(); // transparent, and black
+      // try to restore color
+      //return PalEntry::RGBA(a[0]*255/a[3], a[1]*255/a[3], a[2]*255/a[3], a[3]);
+      return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
+  }
+  return PalEntry::Transparent();
 }
 
 
@@ -555,12 +575,22 @@ PNGHandle *M_VerifyPNG (VStream *filer) {
   memset(png->trans, 255, sizeof(png->trans));
   png->trans[0] = 0; // DooM does this
   png->hasTrans = false;
+  png->premult = false;
 
   chunk.ID = data[1];
   chunk.Offset = 16;
   chunk.Size = BigLong((unsigned int)data[0]);
   png->Chunks.Append(chunk);
   png->File->Seek(16);
+
+  switch (png->colortype) {
+    case PNGHandle::ColorGrayscale: png->xmul = 1; break;
+    case PNGHandle::ColorRGB: png->xmul = 3; break;
+    case PNGHandle::ColorPaletted: png->xmul = 1; break;
+    case PNGHandle::ColorGrayscaleAlpha: png->xmul = 2; break;
+    case PNGHandle::ColorRGBA: png->xmul = 4; break;
+    default: delete png; return nullptr;
+  }
 
   for (;;) {
     if (png->File->TotalSize()-png->File->Tell() <= (int)chunk.Size+4) break;
@@ -595,14 +625,15 @@ PNGHandle *M_VerifyPNG (VStream *filer) {
       vuint16 v;
       bool error = false;
       switch (png->colortype) {
-        case 0: // grayscale
+        case PNGHandle::ColorGrayscale:
           if (chunk.Size != 2) { error = true; break; } // invalid chunk
           if (!readU16BE(png->File, &v)) { error = true; break; }
+          png->hasTrans = true;
           memset(png->trans, 255, sizeof(png->trans));
           png->trans[convertBPP(v, png->bitdepth)] = 0;
           chunk.Size = 0; // don't try to seek past its contents again
           break;
-        case 3: // paletted
+        case PNGHandle::ColorPaletted:
           png->hasTrans = true;
           if (chunk.Size > 256) { error = true; break; } // invalid chunk
           memset(png->trans, 255, sizeof(png->trans));
@@ -612,7 +643,7 @@ PNGHandle *M_VerifyPNG (VStream *filer) {
           }
           chunk.Size = 0; // don't try to seek past its contents again
           break;
-        case 2: // RGB
+        case PNGHandle::ColorRGB:
           if (chunk.Size != 3*2) { error = true; break; } // invalid chunk
           png->hasTrans = true;
           if (!readU16BE(png->File, &v)) { error = true; break; }
@@ -690,9 +721,9 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
   bool initpass;
 
   switch (colortype) {
-    case 2: bytesPerPixel = 3; break; // RGB
-    case 4: bytesPerPixel = 2; break; // LA
-    case 6: bytesPerPixel = 4; break; // RGBA
+    case PNGHandle::ColorRGB: bytesPerPixel = 3; break; // RGB
+    case PNGHandle::ColorGrayscaleAlpha: bytesPerPixel = 2; break; // LA
+    case PNGHandle::ColorRGBA: bytesPerPixel = 4; break; // RGBA
     default: bytesPerPixel = 1; break;
   }
 
@@ -762,7 +793,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
       chunklen -= stream.avail_in;
     }
 
-    err = inflate (&stream, Z_SYNC_FLUSH);
+    err = inflate(&stream, Z_SYNC_FLUSH);
     if (err != Z_OK && err != Z_STREAM_END) {
       // something unexpected happened
       inflateEnd(&stream);
@@ -785,7 +816,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
         passbuff ^= 1;
         in = prev;
         if (bitdepth < 8) {
-          UnpackPixels(passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2], colortype == 0);
+          UnpackPixels(passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2], (colortype == PNGHandle::ColorGrayscale));
           in = adam7buff[2];
         }
         // distribute pixels into the output buffer
@@ -848,7 +879,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
     // interlaced images only need their final pass unpacked
     passpitch = pitch<<interlace;
     for (curr = buffer+pitch*interlace; curr <= prev; curr += passpitch) {
-      UnpackPixels(width, bytesPerRowIn, bitdepth, curr, curr, colortype == 0);
+      UnpackPixels(width, bytesPerRowIn, bitdepth, curr, curr, (colortype == PNGHandle::ColorGrayscale));
     }
   }
   return true;
@@ -1179,10 +1210,7 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const vuint8
   // expand grayscale to 8bpp
   if (grayscale) {
     // put the 2-bit lookup table on the stack, since it's probably already in a cache line
-    union {
-      vuint32 bits2l;
-      vuint8 bits2[4];
-    };
+    vuint8 bits2[4];
 
     out = rowout+width;
     switch (bitdepth) {
@@ -1193,7 +1221,10 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const vuint8
         }
         break;
       case 2:
-        bits2l = MAKE_ID(0x00,0x55,0xAA,0xFF);
+        bits2[0] = 0x00;
+        bits2[1] = 0x55;
+        bits2[2] = 0xAA;
+        bits2[3] = 0xFF;
         while (--out >= rowout) {
           *out = bits2[*out];
         }

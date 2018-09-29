@@ -43,8 +43,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static vuint8 ptex[8][8] =
-{
+static const vuint8 ptex[8][8] = {
   { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 1, 1, 0, 0, 0 },
@@ -55,40 +54,38 @@ static vuint8 ptex[8][8] =
   { 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VOpenGLDrawer::GenerateTextures
 //
 //==========================================================================
-
-void VOpenGLDrawer::GenerateTextures()
-{
+void VOpenGLDrawer::GenerateTextures () {
   guard(VOpenGLDrawer::GenerateTextures);
-  int     i, j;
-  rgba_t    pbuf[8][8];
+  rgba_t pbuf[8][8];
 
   glGenTextures(NUM_BLOCK_SURFS, lmap_id);
   glGenTextures(NUM_BLOCK_SURFS, addmap_id);
   glGenTextures(1, &particle_texture);
 
-  for (j = 0; j < 8; j++)
-  {
-    for (i = 0; i < 8; i++)
-    {
+  for (int j = 0; j < 8; ++j) {
+    for (int i = 0; i < 8; ++i) {
       pbuf[j][i].r = 255;
       pbuf[j][i].g = 255;
       pbuf[j][i].b = 255;
-      pbuf[j][i].a = vuint8(ptex[j][i] * 255);
+      pbuf[j][i].a = vuint8(ptex[j][i]*255);
     }
   }
-  VTexture::SmoothEdges((vuint8 *)pbuf, 8, 8, (vuint8 *)pbuf);
+  VTexture::PremultiplyRGBAInPlace((vuint8 *)pbuf, 8, 8);
+  VTexture::SmoothEdges((vuint8 *)pbuf, 8, 8);
+
   glBindTexture(GL_TEXTURE_2D, particle_texture);
-  //  Set up texture anisotropic filtering.
+  // set up texture anisotropic filtering
   if (max_anisotropy > 1.0) {
     //glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(max_anisotropy));
-    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
+    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT),
+      (GLfloat)(gl_texture_filter_anisotropic < 1 ? 1.0f : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic)
+    );
   }
   glTexImage2D(GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbuf);
 
@@ -96,33 +93,27 @@ void VOpenGLDrawer::GenerateTextures()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::FlushTextures
 //
 //==========================================================================
-
-void VOpenGLDrawer::FlushTextures()
-{
+void VOpenGLDrawer::FlushTextures () {
   guard(VOpenGLDrawer::FlushTextures);
-  for (int i = 0; i < GTextureManager.GetNumTextures(); i++)
-  {
-    FlushTexture(GTextureManager[i]);
-  }
+  for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) FlushTexture(GTextureManager[i]);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::DeleteTextures
 //
 //==========================================================================
-
-void VOpenGLDrawer::DeleteTextures()
-{
+void VOpenGLDrawer::DeleteTextures () {
   guard(VOpenGLDrawer::DeleteTextures);
-  if (texturesGenerated)
-  {
+  if (texturesGenerated) {
     FlushTextures();
     glDeleteTextures(NUM_BLOCK_SURFS, lmap_id);
     glDeleteTextures(NUM_BLOCK_SURFS, addmap_id);
@@ -130,9 +121,8 @@ void VOpenGLDrawer::DeleteTextures()
     texturesGenerated = false;
   }
 
-  //  Delete all created shader objects.
-  for (int i = CreatedShaderObjects.Num() - 1; i >= 0; i--)
-  {
+  // delete all created shader objects
+  for (int i = CreatedShaderObjects.length()-1; i >= 0; --i) {
     p_glDeleteObjectARB(CreatedShaderObjects[i]);
   }
   CreatedShaderObjects.Clear();
@@ -141,112 +131,94 @@ void VOpenGLDrawer::DeleteTextures()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::FlushTexture
 //
 //==========================================================================
-
-void VOpenGLDrawer::FlushTexture(VTexture *Tex)
-{
+void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
   guard(VOpenGLDrawer::FlushTexture);
-  if (Tex->DriverHandle)
-  {
+  if (!Tex) return;
+  if (Tex->DriverHandle) {
     glDeleteTextures(1, (GLuint*)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
-  for (int j = 0; j < Tex->DriverTranslated.Num(); j++)
-  {
+  for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
     glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
   }
   Tex->DriverTranslated.Clear();
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::PrecacheTexture
 //
 //==========================================================================
-
-void VOpenGLDrawer::PrecacheTexture(VTexture *Tex)
-{
+void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
   guard(VOpenGLDrawer::PrecacheTexture);
+  if (!Tex) return;
   SetTexture(Tex, 0);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::SetTexture
 //
 //==========================================================================
-
-void VOpenGLDrawer::SetTexture(VTexture *Tex, int CMap)
-{
+void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
   guard(VOpenGLDrawer::SetTexture);
+  if (!Tex) Sys_Error("cannot set null texture");
+  SetSpriteLump(Tex, nullptr, CMap);
+  SetupTextureFiltering(texture_filter);
+  /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
-  if (Tex->Type == TEXTYPE_WallPatch || Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat)
-  {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR /*GL_NEAREST*/ /*GL_LINEAR_MIPMAP_NEAREST*/);
-  }
-  else
-  {
+  if (Tex->Type == TEXTYPE_WallPatch || Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat) {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR / *GL_NEAREST* / / *GL_LINEAR_MIPMAP_NEAREST* /);
+  } else {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
   }
   if (max_anisotropy > 1.0) {
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
     glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
   }
-
-  SetSpriteLump(Tex, nullptr, CMap);
+  */
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::SetSpriteLump
 //
 //==========================================================================
-
-void VOpenGLDrawer::SetSpriteLump(VTexture *Tex,
-  VTextureTranslation *Translation, int CMap)
-{
+void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap) {
   guard(VOpenGLDrawer::SetSpriteLump);
-  if (Tex->CheckModified())
-  {
-    FlushTexture(Tex);
-  }
-  if (Translation || CMap)
-  {
+  if (Tex->CheckModified()) FlushTexture(Tex);
+  if (Translation || CMap) {
     VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
-    if (TData)
-    {
+    if (TData) {
       glBindTexture(GL_TEXTURE_2D, TData->Handle);
-    }
-    else
-    {
+    } else {
       TData = &Tex->DriverTranslated.Alloc();
       TData->Handle = 0;
       TData->Trans = Translation;
       TData->ColourMap = CMap;
-      GenerateTexture(Tex, (GLuint*)&TData->Handle, Translation, CMap);
+      GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap);
     }
-  }
-  else
-  {
-    if (!Tex->DriverHandle)
-    {
+  } else {
+    if (!Tex->DriverHandle) {
       GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
-    }
-    else
-    {
+    } else {
       glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
     }
   }
-
-  tex_iw = 1.0 / Tex->GetWidth();
-  tex_ih = 1.0 / Tex->GetHeight();
+  tex_iw = 1.0/Tex->GetWidth();
+  tex_ih = 1.0/Tex->GetHeight();
   unguard;
 }
 
@@ -256,9 +228,8 @@ void VOpenGLDrawer::SetSpriteLump(VTexture *Tex,
 //  VOpenGLDrawer::SetPic
 //
 //==========================================================================
-void VOpenGLDrawer::SetPic(VTexture *Tex, VTextureTranslation *Trans, int CMap) {
+void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
   guard(VOpenGLDrawer::SetPic);
-
   /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
   if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
@@ -268,16 +239,12 @@ void VOpenGLDrawer::SetPic(VTexture *Tex, VTextureTranslation *Trans, int CMap) 
   }
   */
 
-  if (gl_2d_filtering) {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  } else {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  }
-  if (max_anisotropy > 1.0) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 0.0f);
-
   SetSpriteLump(Tex, Trans, CMap);
+  int flt = (gl_2d_filtering ? GL_LINEAR : GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
+  if (max_anisotropy > 1.0) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
+
   unguard;
 }
 
@@ -290,14 +257,17 @@ void VOpenGLDrawer::SetPic(VTexture *Tex, VTextureTranslation *Trans, int CMap) 
 void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
   guard(VOpenGLDrawer::SetPicModel);
 
+  SetSpriteLump(Tex, Trans, CMap);
+  SetupTextureFiltering(model_filter);
+  /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
   if (Tex->Type == TEXTYPE_Skin || Tex->Type == TEXTYPE_FontChar) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipfilter);
   } else {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
   }
+  */
 
-  SetSpriteLump(Tex, Trans, CMap);
   unguard;
 }
 
@@ -307,96 +277,57 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //  VOpenGLDrawer::GenerateTexture
 //
 //==========================================================================
-
-void VOpenGLDrawer::GenerateTexture(VTexture *Tex, GLuint *pHandle,
-  VTextureTranslation *Translation, int CMap)
-{
+void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap) {
   guard(VOpenGLDrawer::GenerateTexture);
-  if (!*pHandle)
-  {
-    glGenTextures(1, pHandle);
-  }
+  if (!*pHandle) glGenTextures(1, pHandle);
   glBindTexture(GL_TEXTURE_2D, *pHandle);
 
-  //  Try to load high resolution version.
+  // try to load high resolution version
   VTexture *SrcTex = Tex->GetHighResolutionTexture();
-  if (!SrcTex)
-  {
-    SrcTex = Tex;
-  }
+  if (!SrcTex) SrcTex = Tex;
 
-  //  Upload data.
-  if (Translation && CMap)
-  {
+  // upload data
+  if (Translation && CMap) {
     rgba_t TmpPal[256];
     const vuint8 *TrTab = Translation->GetTable();
     const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
-    for (int i = 0; i < 256; i++)
-    {
-      TmpPal[i] = CMPal[TrTab[i]];
-    }
-    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(),
-      SrcTex->GetPixels8(), TmpPal);
-  }
-  else if (Translation)
-  {
-    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(),
-      SrcTex->GetPixels8(), Translation->GetPalette());
-  }
-  else if (CMap)
-  {
-    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(),
-      SrcTex->GetPixels8(), ColourMaps[CMap].GetPalette());
-  }
-  else
-  {
+    for (int i = 0; i < 256; ++i) TmpPal[i] = CMPal[TrTab[i]];
+    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8(), TmpPal);
+  } else if (Translation) {
+    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8(), Translation->GetPalette());
+  } else if (CMap) {
+    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8(), ColourMaps[CMap].GetPalette());
+  } else {
     vuint8 *block = SrcTex->GetPixels();
-    if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal)
-    {
-      UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block,
-        SrcTex->GetPalette());
-    }
-    else
-    {
-      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(),
-        (rgba_t*)block);
+    if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
+      UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette());
+    } else {
+      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block);
     }
   }
 
-  //  Set up texture wrapping.
+  // set up texture wrapping
   if (Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat || Tex->Type == TEXTYPE_Overload || Tex->Type == TEXTYPE_WallPatch) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //fprintf(stderr, "::: generating normal texture for <%s> (type=%d)\n", *Tex->Name, Tex->Type);
   } else {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
-    //fprintf(stderr, "::: generating clamped texture for <%s> (type=%d)\n", *Tex->Name, Tex->Type);
   }
-  //  Set up texture anisotropic filtering.
-  if (max_anisotropy > 1.0) {
-    //glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), max_anisotropy);
-    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
-  }
+  // other parameters will be set by a caller
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenGLDrawer::UploadTexture8
 //
 //==========================================================================
-
-void VOpenGLDrawer::UploadTexture8(int Width, int Height, const vuint8 *Data,
-  const rgba_t *Pal)
-{
-  rgba_t *NewData = (rgba_t*)Z_Calloc(Width * Height * 4);
-  for (int i = 0; i < Width * Height; i++)
-  {
-    if (Data[i])
-    {
-      NewData[i] = Pal[Data[i]];
-    }
+void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal) {
+  rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
+  for (int i = 0; i < Width*Height; ++i) {
+    if (Data[i]) NewData[i] = Pal[Data[i]];
   }
   UploadTexture(Width, Height, NewData);
   Z_Free(NewData);
@@ -408,56 +339,71 @@ void VOpenGLDrawer::UploadTexture8(int Width, int Height, const vuint8 *Data,
 //  VOpenGLDrawer::UploadTexture
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture(int width, int height, const rgba_t *data) {
+void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
   guard(VOpenGLDrawer::UploadTexture);
-  int w, h;
-  vuint8 *image;
 
-  if (width < 1 || height < 1) {
-    GCon->Logf("WARNING: fucked texture (w=%d; h=%d)", width, height);
-    width = w = 2;
-    height = h = 2;
-    data = nullptr;
-  } else {
-    w = ToPowerOf2(width);
-    if (w > maxTexSize) w = maxTexSize;
-    h = ToPowerOf2(height);
-    if (h > maxTexSize) h = maxTexSize;
+  if (width < 1 || height < 1) Sys_Error("WARNING: fucked texture (w=%d; h=%d)", width, height);
+  if (!data) Sys_Error("WARNING: fucked texture (w=%d; h=%d, no data)", width, height);
+
+  int w = ToPowerOf2(width);
+  if (w > maxTexSize) w = maxTexSize;
+  int h = ToPowerOf2(height);
+  if (h > maxTexSize) h = maxTexSize;
+
+  // get two temporary buffers: 0 for resampled image, 1 for premultiplied image
+  if (tmpImgBufSize < w*h*4) {
+    tmpImgBufSize = ((w*h*4)|0xffff)+1;
+    tmpImgBuf0 = (vuint8 *)Z_Realloc(tmpImgBuf0, tmpImgBufSize);
+    tmpImgBuf1 = (vuint8 *)Z_Realloc(tmpImgBuf1, tmpImgBufSize);
   }
 
-  if (w*h*4 <= TmpImgBufSize && tmpImgBuf) {
-    image = tmpImgBuf;
-  } else {
-    image = (vuint8 *)Z_Malloc(w*h*4);
-  }
+  vuint8 *image = tmpImgBuf0;
+  vuint8 *pmimage = tmpImgBuf1;
 
-  if (data) {
-    //if (width > 1 && height > 1) VTexture::SmoothEdges((vuint8 *)data, width, height, (vuint8 *)data);
-    if (w != width || h != height) {
-      // Smooth transparent edges
-      VTexture::SmoothEdges((vuint8 *)data, width, height, (vuint8 *)data);
+  if (w != width || h != height) {
+    // smooth transparent edges
+    if (width <= maxTexSize && height <= maxTexSize) {
+      memcpy(pmimage, data, width*height*4);
+      VTexture::SmoothEdges(pmimage, width, height);
       // must rescale image to get "top" mipmap texture image
-      VTexture::ResampleTexture(width, height, (vuint8 *)data, w, h, image, multisampling_sample);
+      VTexture::ResampleTexture(width, height, pmimage, w, h, image, multisampling_sample);
     } else {
-      memcpy(image, data, w*h*4);
+      VTexture::ResampleTexture(width, height, (const vuint8 *)data, w, h, image, multisampling_sample);
     }
   } else {
-    memset(image, 0, w*h*4);
+    memcpy(image, data, w*h*4);
+    VTexture::SmoothEdges(image, w, h);
   }
 
-  VTexture::AdjustGamma((rgba_t*)image, w * h);
-  glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+  VTexture::AdjustGamma((rgba_t *)image, w*h);
+  //VTexture::PremultiplyRGBA(pmimage, image, w, h);
+  //VTexture::SmoothEdges(pmimage, w, h, pmimage);
+  memcpy(pmimage, image, w*h*4);
 
-//#ifdef VAVOOM_USE_MIPMAPS
-  for (int level = 1; w > 1 || h > 1; level++)
-  {
-    VTexture::MipMap(w, h, image);
-    if (w > 1) w >>= 1;
-    if (h > 1) h >>= 1;
-    glTexImage2D(GL_TEXTURE_2D, level, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+  /*
+  if (hasHWMipmaps) {
+    //glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+    glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
   }
-//#endif
+  */
+  glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+  glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pmimage);
 
-  if (image != tmpImgBuf) Z_Free(image);
+  // generate mipmaps
+  /*
+  if (hasHWMipmaps) {
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+  } else {
+    for (int level = 1; w > 1 || h > 1; ++level) {
+      VTexture::MipMap(w, h, image);
+      if (w > 1) w >>= 1;
+      if (h > 1) h >>= 1;
+      VTexture::PremultiplyRGBA(pmimage, image, w, h);
+      glTexImage2D(GL_TEXTURE_2D, level, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pmimage);
+    }
+  }
+  */
+
   unguard;
 }

@@ -264,10 +264,11 @@ vuint8 *VPngTexture::GetPixels () {
   vuint8 *dest = Pixels;
   for (int y = 0; y < png->height; ++y) {
     for (int x = 0; x < png->width; ++x) {
-      *dest++ = png->getR(x, y);
-      *dest++ = png->getG(x, y);
-      *dest++ = png->getB(x, y);
-      *dest++ = png->getA(x, y);
+      auto clr = png->getPixel(x, y); // unmultiplied
+      *dest++ = clr.r;
+      *dest++ = clr.g;
+      *dest++ = clr.b;
+      *dest++ = clr.a;
     }
   }
 

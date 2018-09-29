@@ -265,10 +265,12 @@ public:
   virtual VTexture *GetHighResolutionTexture ();
   VTransData *FindDriverTrans (VTextureTranslation *, int);
 
-  static void AdjustGamma (rgba_t *, int);
-  static void SmoothEdges (vuint8 *, int, int, vuint8 *);
-  static void ResampleTexture (int, int, const vuint8 *, int, int, vuint8 *, int);
-  static void MipMap (int, int, vuint8 *);
+  static void AdjustGamma (rgba_t *, int); // for non-premultiplied
+  static void SmoothEdges (vuint8 *, int, int); // for non-premultiplied
+  static void ResampleTexture (int, int, const vuint8 *, int, int, vuint8 *, int); // for non-premultiplied
+  static void MipMap (int, int, vuint8 *); // for non-premultiplied
+  static void PremultiplyRGBAInPlace (void *databuff, int w, int h);
+  static void PremultiplyRGBA (void *dest, const void *src, int w, int h);
 
 protected:
   void FixupPalette (vuint8 *Pixels, rgba_t *Palette);

@@ -124,6 +124,46 @@ MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
 
 
 // should be called from `CreateChoices()` (and `currentY` must be set)
+MenuChoiceEnum CreateEnumCvar (string text, name cvname,
+  optional string item0, optional string item1, optional string item2,
+  optional string item3, optional string item4, optional string item5,
+  optional string item6, optional string item7, optional string item8,
+  optional string item9, optional string item10, optional string item11,
+  optional string item12, optional string item13, optional string item14)
+{
+  auto en = MenuChoiceEnum(NewChild(MenuChoiceEnum));
+  if (Width > WidthThreshold) {
+    //print("[%s] wdt=%d", text, Width);
+    en.Width = Width;
+    en.CursorXOffs = Width/2;
+    en.CursorXOffsHR = Width/2;
+    en.SetOrigin(Width/2, currentY);
+  } else {
+    en.SetOrigin(ChoicesStartX, currentY);
+  }
+  en.Text = text;
+  if (specified_item0) en.AddItem(item0);
+  if (specified_item1) en.AddItem(item1);
+  if (specified_item2) en.AddItem(item2);
+  if (specified_item3) en.AddItem(item3);
+  if (specified_item4) en.AddItem(item4);
+  if (specified_item5) en.AddItem(item5);
+  if (specified_item6) en.AddItem(item6);
+  if (specified_item7) en.AddItem(item7);
+  if (specified_item8) en.AddItem(item8);
+  if (specified_item9) en.AddItem(item9);
+  if (specified_item10) en.AddItem(item10);
+  if (specified_item11) en.AddItem(item11);
+  if (specified_item12) en.AddItem(item12);
+  if (specified_item13) en.AddItem(item13);
+  if (specified_item14) en.AddItem(item14);
+  en.SetSessionCvar(cvname);
+  currentY += en.Height;
+  return en;
+}
+
+
+// should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, optional float min, optional float max) {
   if (Items.length > 0 && Items[$-1] !isa MenuChoiceSlider && Items[$-1].Height == 10) {
     Items[$-2].Height = 8;

@@ -293,9 +293,88 @@ VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, 
 }
 
 
+  // prepare temp buffer (for fringe removing)
+  /*
+  //  WARNING! not thred-safe! (using static buffer)
+  //
+  static vuint8 *tempbuf = nullptr;
+  static vint32 tbsize = 0;
+  if (tbsize < (w+2)*(h+2)*4) {
+    tbsize = (((w+2)*(h+2)*4)|0xffff)+1;
+    tempbuf = (vuint8 *)Z_Realloc(tempbuf, tbsize);
+  }
+
+  const int tw = w+2;
+  const int th = h+2;
+
+  // copy image to temp buffer, with transparent border
+  memset(tempbuf, 0, tw*4); // top row
+  for (int y = 1; y <= h; ++y) {
+    *(vuint32)(tempbuf+(y*tw)*4) = 0; // left border
+    memcpy(tempbuf+(y*tw)*4+4, data+((y-1)*w)*4, w*4);
+    *(vuint32)(tempbuf+(y*tw)*4+(w+1)*4) = 0; // right border
+  }
+  memset(tempbuf+((h+1)*tw)*4, 0, tw*4); // bottom row
+  */
+
+  // remove fringes, by setting transparent pixel colors to average of
+  // surrounding non-transparent ones
+
+// 0: transparent
+
+//==========================================================================
+//
+//  VTexture::PremultiplyRGBAInPlace
+//
+//==========================================================================
+void VTexture::PremultiplyRGBAInPlace (void *databuff, int w, int h) {
+  if (w < 1 || h < 1) return;
+  vuint8 *data = (vuint8 *)databuff;
+  // premultiply original image
+  for (int count = w*h; count > 0; --count, data += 4) {
+    int a = data[3];
+    if (a == 0) {
+      data[0] = data[1] = data[2] = 0;
+    } else if (a != 255) {
+      data[0] = data[0]*a/255;
+      data[1] = data[1]*a/255;
+      data[2] = data[2]*a/255;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VTexture::PremultiplyRGBA
+//
+//==========================================================================
+void VTexture::PremultiplyRGBA (void *dest, const void *src, int w, int h) {
+  if (w < 1 || h < 1) return;
+  const vuint8 *s = (const vuint8 *)src;
+  vuint8 *d = (vuint8 *)dest;
+  // premultiply image
+  for (int count = w*h; count > 0; --count, s += 4, d += 4) {
+    int a = s[3];
+    if (a == 0) {
+      *(vuint32 *)d = 0;
+    } else if (a == 255) {
+      *(vuint32 *)d = *(const vuint32 *)s;
+    } else {
+      d[0] = s[0]*a/255;
+      d[1] = s[1]*a/255;
+      d[2] = s[2]*a/255;
+      d[3] = a;
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  VTexture::AdjustGamma
+//
+//  non-premultiplied
 //
 //==========================================================================
 void VTexture::AdjustGamma (rgba_t *data, int size) {
@@ -318,11 +397,12 @@ void VTexture::AdjustGamma (rgba_t *data, int size) {
 //
 //  This one comes directly from GZDoom
 //
+//  non-premultiplied
+//
 //==========================================================================
 #define CHKPIX(ofs) (l1[(ofs)*4+MSB] == 255 ? (( ((vuint32*)l1)[0] = ((vuint32*)l1)[ofs]&SOME_MASK), trans = true ) : false)
 
-void VTexture::SmoothEdges (vuint8 *buffer, int w, int h, vuint8 *dataout) {
-  guard(VTexture::SmoothEdges);
+void VTexture::SmoothEdges (vuint8 *buffer, int w, int h) {
   int x, y;
   // why the fuck you would use 0 on big endian here?
   int MSB = 3;
@@ -379,10 +459,9 @@ void VTexture::SmoothEdges (vuint8 *buffer, int w, int h, vuint8 *dataout) {
   if (l1[MSB] == 0 && !CHKPIX(-w)) {
     CHKPIX(-1);
   }
-
-  dataout = l1;
-  unguard;
 }
+
+#undef CHKPIX
 
 
 //==========================================================================
@@ -391,6 +470,7 @@ void VTexture::SmoothEdges (vuint8 *buffer, int w, int h, vuint8 *dataout) {
 //
 //  Resizes texture.
 //  This is a simplified version of gluScaleImage from sources of MESA 3.0
+//  non-premultiplied
 //
 //==========================================================================
 void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain, int widthout, int heightout, vuint8 *dataout, int sampling_type) {
@@ -501,6 +581,7 @@ void VTexture::ResampleTexture (int widthin, int heightin, const vuint8 *datain,
 //  VTexture::MipMap
 //
 //  Scales image down for next mipmap level, operates in place
+//  non-premultiplied
 //
 //==========================================================================
 void VTexture::MipMap (int width, int height, vuint8 *InIn) {

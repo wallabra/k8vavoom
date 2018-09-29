@@ -177,10 +177,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
 
   if (/*!advanced*/true) {
     glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    //glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   glDisable(GL_DEPTH_TEST);
@@ -1257,7 +1255,6 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   unguard;
 }
 
-
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawSpritePolygon
@@ -1272,45 +1269,7 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   TVec texpt;
 
   SetSpriteLump(Tex, Translation, CMap);
-
-  switch (sprite_tex_linear) {
-    case 1:
-      spr_maxfilter = GL_LINEAR;
-      spr_minfilter = GL_LINEAR;
-      spr_mipfilter = GL_NEAREST;
-      break;
-    case 2:
-      spr_maxfilter = GL_LINEAR;
-      spr_minfilter = GL_LINEAR;
-      spr_mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
-      break;
-    case 3:
-      spr_maxfilter = GL_LINEAR;
-      spr_minfilter = GL_LINEAR;
-      spr_mipfilter = GL_LINEAR /*GL_LINEAR_MIPMAP_LINEAR*/;
-      break;
-    case 4: // BILINEAR
-      spr_maxfilter = GL_NEAREST;
-      spr_minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
-      spr_mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_NEAREST*/;
-      break;
-    case 5: // TRILINEAR
-      spr_maxfilter = GL_NEAREST;
-      spr_minfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
-      spr_mipfilter = GL_NEAREST /*GL_LINEAR_MIPMAP_LINEAR*/;
-      break;
-    default:
-      spr_maxfilter = GL_NEAREST;
-      spr_minfilter = GL_NEAREST;
-      spr_mipfilter = GL_NEAREST;
-      break;
-  }
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, spr_mipfilter);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spr_maxfilter);
-  //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
-  if (max_anisotropy > 1.0) {
-    glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), (GLfloat)(gl_texture_filter_anisotropic < 0 ? 0 : gl_texture_filter_anisotropic > max_anisotropy ? max_anisotropy : gl_texture_filter_anisotropic));
-  }
+  SetupTextureFiltering(sprite_filter);
 
   p_glUseProgramObjectARB(SurfMaskedProgram);
   p_glUniform1iARB(SurfMaskedTextureLoc, 0);
