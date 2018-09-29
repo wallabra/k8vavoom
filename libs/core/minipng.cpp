@@ -31,7 +31,6 @@
 **---------------------------------------------------------------------------
 **
 */
-
 #include <stdlib.h>
 #ifdef USE_INTERNAL_ZLIB
 # include "../zlib/zlib.h"
@@ -39,14 +38,6 @@
 # include <zlib.h>
 #endif
 
-/*
-#include "m_crc32.h"
-#include "m_swap.h"
-#include "c_cvars.h"
-#include "r_defs.h"
-#include "v_video.h"
-#include "m_png.h"
-*/
 #include "core.h"
 
 
@@ -87,8 +78,6 @@ PNGHandle::PNGHandle (VStream *file) : ChunkPt(0), width(0), height(0), pixbuf(n
   memset(trans, 255, sizeof(trans));
   tR = tG = tB = 0;
   hasTrans = false;
-  premult = false;
-  binaryAlpha = false;
   bitdepth = 0;
   colortype = 0;
   interlace = 0;
@@ -122,53 +111,7 @@ bool PNGHandle::loadIDAT () {
   if (fidlen == 0) return false;
   delete[] pixbuf;
   pixbuf = new vuint8[width*height*4];
-  bool res = M_ReadIDAT(*File, pixbuf, width, height, width*4, bitdepth, colortype, interlace, fidlen);
-  if (res) guessPremult();
-  return res;
-}
-
-
-void PNGHandle::guessPremult () {
-  premult = true;
-  return;
-  premult = false;
-  if (width < 1 || height < 1 || hasTrans) return;
-  switch (colortype) {
-    case ColorGrayscaleAlpha:
-      // hack: exclude fully transparent pixels, as those may be used to remove "fringe"
-      premult = true;
-      binaryAlpha = true;
-      for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-          const vuint8 *a = pixaddr(x, y);
-          if (a[1] == 0) continue; // fully transparent
-          if (a[0] > 255*a[1]) {
-            premult = false;
-            binaryAlpha = false;
-            return;
-          }
-          if (binaryAlpha && (a[1] != 0 && a[1] != 255)) binaryAlpha = false;
-        }
-      }
-      break;
-    case ColorRGBA:
-      // hack: exclude fully transparent pixels, as those may be used to remove "fringe"
-      premult = true;
-      binaryAlpha = true;
-      for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-          const vuint8 *a = pixaddr(x, y);
-          if (a[3] == 0) continue; // fully transparent
-          if (a[0] > 255*a[3] || a[1] > 255*a[3] || a[2] > 255*a[3]) {
-            premult = false;
-            binaryAlpha = false;
-            return;
-          }
-          if (binaryAlpha && (a[3] != 0 && a[3] != 255)) binaryAlpha = false;
-        }
-      }
-      break;
-  }
+  return M_ReadIDAT(*File, pixbuf, width, height, width*4, bitdepth, colortype, interlace, fidlen);
 }
 
 
@@ -178,28 +121,18 @@ PalEntry PNGHandle::getPixel (int x, int y) const {
   if (!a) return PalEntry::Transparent();
   switch (colortype) {
     case ColorGrayscale:
-      if (hasTrans && trans[a[0]] == 0) return PalEntry::RGBA(255, 255, 255, 255); // transparent
-      return PalEntry::RGBA(255, 255, 255, 255-a[0]); // non-premultiplied with alpha
+      if (hasTrans && trans[a[0]] == 0) return PalEntry::Transparent();
+      return PalEntry::RGBA(255, 255, 255, a[0]).premulted();
     case ColorRGB:
-      if (hasTrans && a[0] == tR && a[1] == tG && a[2] == tB) return PalEntry::Transparent(); // transparent, and black
+      if (hasTrans && a[0] == tR && a[1] == tG && a[2] == tB) return PalEntry::Transparent();
       return PalEntry::RGB(a[0], a[1], a[2]); // opaque
     case ColorPaletted:
-      if (hasTrans && trans[a[0]] == 0) return PalEntry::Transparent(); // transparent, and black
-      return PalEntry::RGB(pal[a[0]*3+0], pal[a[0]*3+1], pal[a[0]*3+2]);
+      if (hasTrans && trans[a[0]] == 0) return PalEntry::Transparent();
+      return PalEntry::RGB(pal[a[0]*3+0], pal[a[0]*3+1], pal[a[0]*3+2]); // opaque
     case ColorGrayscaleAlpha:
-      // not premultiplied, or completely opaque?
-      if (!premult || a[1] == 255) return PalEntry::RGBA(a[0], a[0], a[0], a[1]);
-      if (binaryAlpha || a[1] == 0) PalEntry::RGBA(255, 255, 255, 0); // transparent
-      // premultiplied, and with non-binary alpha: ignore shade
-      return PalEntry::RGBA(255, 255, 255, a[1]);
+      return PalEntry::RGBA(a[0], a[0], a[0], a[1]).premulted();
     case ColorRGBA:
-      // not premultiplied, or completely opaque?
-      if (!premult || a[3] == 255) return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
-      if (binaryAlpha || a[3] == 0) return PalEntry::Transparent(); // transparent, and black
-      // try to restore color
-      //return PalEntry::RGBA(a[0]*255/a[3], a[1]*255/a[3], a[2]*255/a[3], 255-a[3]);
-      return PalEntry::RGBA(a[0], a[1], a[2], a[3]);
-      //return PalEntry::RGB(255, 0, 0);
+      return PalEntry::RGBA(a[0], a[1], a[2], a[3]).premulted();
   }
   return PalEntry::Transparent();
 }
@@ -600,7 +533,6 @@ PNGHandle *M_VerifyPNG (VStream *filer) {
   memset(png->trans, 255, sizeof(png->trans));
   png->trans[0] = 0; // DooM does this
   png->hasTrans = false;
-  png->premult = false;
 
   chunk.ID = data[1];
   chunk.Offset = 16;

@@ -175,8 +175,6 @@ struct PNGHandle {
   vuint8 trans[768]; //alpha for palette (color 0 will be transparent for paletted images, as DooM does it this way)
   vuint8 tR, tG, tB; // transparent color for RGB images
   bool hasTrans;
-  bool premult; // loader will try to guess if PNG with alpha channel is premultiplied
-  bool binaryAlpha; // for premultiplied
   unsigned int ChunkPt;
 
   int width;
@@ -194,7 +192,7 @@ struct PNGHandle {
   // returns  `false` on error
   bool loadIDAT ();
 
-  // tries to return non-premultiplied pixel value
+  // returns premultiplied pixel value
   PalEntry getPixel (int x, int y) const;
 
 private:
@@ -206,8 +204,6 @@ private:
   inline const vuint8 *pixaddr (int x, int y) const {
     return (width > 0 && height > 0 && xmul > 0 && x >= 0 && y >= 0 && x < width && y < height ? &pixbuf[y*(width*4)+x*xmul] : nullptr);
   }
-
-  void guessPremult ();
 
   friend PNGHandle *M_VerifyPNG (VStream *file);
 };
