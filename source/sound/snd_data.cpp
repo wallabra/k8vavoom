@@ -22,17 +22,12 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "snd_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 #define VV_ALLOW_SFX_TRUNCATION
+
+static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
 
 
 #ifdef CLIENT
@@ -111,7 +106,9 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
   if (realLen == 0) realLen = 1;
 
   if (realLen < Data.length() && Sfx.LumpNum >= 0) {
-    GCon->Logf("SOUND: '%s' is truncated by %d silent frames (%d frames left)", *W_FullLumpName(Sfx.LumpNum), Data.length()-realLen, realLen);
+    if (snd_verbose_truncate) {
+      GCon->Logf("SOUND: '%s' is truncated by %d silent frames (%d frames left)", *W_FullLumpName(Sfx.LumpNum), Data.length()-realLen, realLen);
+    }
   }
 #else
   int realLen = Data.length();
