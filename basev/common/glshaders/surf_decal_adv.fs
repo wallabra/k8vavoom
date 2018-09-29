@@ -12,39 +12,32 @@ void main () {
   vec4 FinalColour_1;
   vec4 TexColour;
 
-  if (SplatAlpha <= 0.0) discard;
+  if (SplatAlpha <= 0.05) discard;
 
   TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.1) discard;
+  if (TexColour.a < 0.05) discard;
 
-  float fina;
-
-  if (TexColour.r == TexColour.g && TexColour.r == TexColour.b && TexColour.a == 1.0) {
-    float lumi = min(0.2126*TexColour.r+0.7152*TexColour.g+0.0722*TexColour.b, 1.0);
-    if (lumi < 0.1) discard;
-    fina = clamp(lumi*SplatAlpha, 0.0, 1.0);
+  if (SplatColour.a != 0.0) {
+    FinalColour_1.r = SplatColour.r*TexColour.r;
+    FinalColour_1.g = SplatColour.g*TexColour.r;
+    FinalColour_1.b = SplatColour.b*TexColour.r;
+    FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
   } else {
-    fina = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
+    FinalColour_1.r = TexColour.r;
+    FinalColour_1.g = TexColour.g;
+    FinalColour_1.b = TexColour.b;
+    FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   }
+  if (FinalColour_1.a < 0.05) discard;
 
-  //float ClampTransp = clamp((fina-0.1)/0.9, 0.0, 1.0);
-  //fina = fina*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
-  //fina = clamp(fina+0.1, 0.0, 1.0);
+  if (SplatAlpha <= 0.0) discard;
 
-  if (fina <= 0.0) discard;
+  // normal
+  FinalColour_1.r = clamp(FinalColour_1.r*(Light.r*Light.a), 0.0, 1.0);
+  FinalColour_1.g = clamp(FinalColour_1.g*(Light.g*Light.a), 0.0, 1.0);
+  FinalColour_1.b = clamp(FinalColour_1.b*(Light.b*Light.a), 0.0, 1.0);
 
 /*
-#if 0
-  FinalColour_1.r = clamp(TexColour.r*Light.a, 0.0, 1.0);
-  FinalColour_1.g = clamp(TexColour.g*Light.a, 0.0, 1.0);
-  FinalColour_1.b = clamp(TexColour.b*Light.a, 0.0, 1.0);
-#else
-  FinalColour_1.r = clamp(TexColour.r, 0.0, 1.0);
-  FinalColour_1.g = clamp(TexColour.g, 0.0, 1.0);
-  FinalColour_1.b = clamp(TexColour.b, 0.0, 1.0);
-#endif
-*/
-
   const float multer = 1.0;
   float sa = SplatColour.a;
   FinalColour_1.r = clamp((FinalColour_1.r*(1.0-sa)+SplatColour.r*sa)*multer, 0.0, 1.0);
@@ -61,6 +54,7 @@ void main () {
   FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
   FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
 #endif
+*/
 
   //FinalColour_1.r = 1;
 

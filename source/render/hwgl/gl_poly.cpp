@@ -178,7 +178,15 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
   if (/*!advanced*/true) {
     glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    if (advanced) {
+      //glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+      //glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+      //TODO: this is wrong: ambient light info is lost here (only texture colors are left)
+      //      we need to store ambient light in another texture, and sample it in shader
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    }
   }
 
   glDisable(GL_DEPTH_TEST);
