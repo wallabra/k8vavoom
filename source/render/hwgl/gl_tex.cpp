@@ -379,6 +379,7 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
   //VTexture::PremultiplyRGBA(pmimage, image, w, h);
   //VTexture::SmoothEdges(pmimage, w, h, pmimage);
   memcpy(pmimage, image, w*h*4);
+  //for (int f = 0; f < w*h; ++f) pmimage[f*4+3] = 255;
 
   /*
   if (hasHWMipmaps) {

@@ -1279,6 +1279,24 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
 
 //==========================================================================
 //
+//  readTextFile
+//
+//==========================================================================
+static VStr readTextFile (const VStr &fname) {
+  VStream *strm = FL_OpenFileRead(fname);
+  if (!strm) Sys_Error("Failed to open shader '%s'", *fname);
+  int size = strm->TotalSize();
+  if (size == 0) return VStr();
+  VStr res;
+  res.setLength(size, 0);
+  strm->Serialise(res.GetMutableCharPointer(0), size);
+  delete strm;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
@@ -1290,42 +1308,54 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
   CreatedShaderObjects.Append(Shader);
 
   // load source file
-  VStream *Strm = FL_OpenFileRead(FileName);
-  if (!Strm) Sys_Error("Failed to open %s", *FileName);
-  int Size = Strm->TotalSize();
-  TArray<char> Buf;
-  Buf.SetNum(Size+1);
-  Strm->Serialise(Buf.Ptr(), Size);
-  delete Strm;
-  Strm = nullptr;
-  Buf[Size] = 0; // append terminator
+  VStr vsShaderSrc = readTextFile(FileName);
 
   // build source text
-  VStr vsShaderSrc;
-
-  //const GLcharARB *ShaderText = Buf.Ptr();
   if (CanUseRevZ()) {
-    if (Buf[0] == '#') {
+    if (vsShaderSrc.length() && vsShaderSrc[0] == '#') {
       // skip first line (this should be "#version")
-      int bpos = 0;
-      while (Buf[bpos] && Buf[bpos] != '\n') ++bpos;
-      if (Buf[bpos] == '\n') {
-        //HACK
-        Buf[bpos] = 0;
-        vsShaderSrc = VStr(Buf.Ptr());
-        vsShaderSrc += "\n"; // restore erased newline
-        vsShaderSrc += "#define VAVOOM_REVERSE_Z\n";
-        ++bpos; // skip erased newline
-        vsShaderSrc += Buf.Ptr()+bpos;
+      int epos = 0;
+      while (epos < vsShaderSrc.length() && vsShaderSrc[epos] != '\n') ++epos;
+      if (epos < vsShaderSrc.length()) ++epos; // skip eol
+      VStr ns = vsShaderSrc.mid(0, epos);
+      ns += "#define VAVOOM_REVERSE_Z\n";
+      vsShaderSrc.chopLeft(epos);
+      ns += vsShaderSrc;
+      vsShaderSrc = ns;
+    } else {
+      VStr ns = "#define VAVOOM_REVERSE_Z\n";
+      ns += vsShaderSrc;
+      vsShaderSrc = ns;
+    }
+  }
+
+  // process $include
+  //FIXME: nested "$include", and proper directive parsing
+  VStr res;
+  int pos = 0;
+  while (pos < vsShaderSrc.length()) {
+    if (vsShaderSrc[pos] == '$') {
+      // directive
+      int start = pos;
+      while (pos < vsShaderSrc.length() && (vuint8)vsShaderSrc[pos] > ' ') ++pos;
+      VStr cmd = vsShaderSrc.mid(start, pos-start);
+      if (cmd == "$include") {
+        while (pos < vsShaderSrc.length() && vsShaderSrc[pos] != '\n' && (vuint8)vsShaderSrc[pos] <= ' ') ++pos;
+        start = pos;
+        while (pos < vsShaderSrc.length() && (vuint8)vsShaderSrc[pos] > ' ') ++pos;
+        if (pos == start) Sys_Error("directive \"%s\" in shader '%s' expects file name", *cmd, *FileName);
+        res += readTextFile(FileName.extractFilePath()+vsShaderSrc.mid(start, pos-start));
+        if (res.length() && res[res.length()-1] != '\n') res += '\n';
+        while (pos < vsShaderSrc.length() && vsShaderSrc[pos] != '\n') ++pos;
+        if (pos < vsShaderSrc.length()) ++pos;
       } else {
-        vsShaderSrc = VStr("#define VAVOOM_REVERSE_Z\n")+Buf.Ptr();
+        Sys_Error("invalid directive \"%s\" in shader '%s'", *cmd, *FileName);
       }
     } else {
-      vsShaderSrc = VStr("#define VAVOOM_REVERSE_Z\n")+Buf.Ptr();
+      do { res += vsShaderSrc[pos++]; } while (pos < vsShaderSrc.length() && vsShaderSrc[pos-1] != '\n');
     }
-  } else {
-    vsShaderSrc = VStr(Buf.Ptr());
   }
+  vsShaderSrc = res;
 
   // upload source text
   const GLcharARB *ShaderText = *vsShaderSrc;
