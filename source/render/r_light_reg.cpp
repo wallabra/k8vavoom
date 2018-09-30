@@ -1158,7 +1158,7 @@ void VRenderLevel::FreeSurfCache (surfcache_t *block) {
 //  VRenderLevel::CacheSurface
 //
 //==========================================================================
-void VRenderLevel::CacheSurface (surface_t *surface) {
+bool VRenderLevel::CacheSurface (surface_t *surface) {
   guard(VRenderLevel::CacheSurface);
   surfcache_t *cache;
   int smax, tmax;
@@ -1174,7 +1174,7 @@ void VRenderLevel::CacheSurface (surface_t *surface) {
     cache->chain = light_chain[bnum];
     light_chain[bnum] = cache;
     cache->lastframe = cacheframecount;
-    return;
+    return true;
   }
 
   // determine shape of surface
@@ -1186,7 +1186,7 @@ void VRenderLevel::CacheSurface (surface_t *surface) {
   if (!cache) {
     cache = AllocBlock(smax, tmax);
     // in rare case of surface cache overflow, just skip the light
-    if (!cache) return; // alas
+    if (!cache) return false; // alas
     surface->CacheSurf = cache;
     cache->owner = &surface->CacheSurf;
     cache->surf = surface;
@@ -1232,5 +1232,7 @@ void VRenderLevel::CacheSurface (surface_t *surface) {
     add_chain[bnum] = cache;
     add_changed[bnum] = true;
   }
+
+  return true;
   unguard;
 }

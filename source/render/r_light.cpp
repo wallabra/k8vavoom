@@ -221,3 +221,13 @@ void VRenderLevelShared::DecayLights (float time) {
 //==========================================================================
 void VRenderLevelShared::FreeSurfCache (surfcache_t*) {
 }
+
+
+//==========================================================================
+//
+// VRenderLevelShared::CacheSurface
+//
+//==========================================================================
+bool VRenderLevelShared::CacheSurface (surface_t*) {
+  return false;
+}

@@ -41,9 +41,9 @@ void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
   surf->dcseg = seg;
 
   if (lightmaped) {
-    CacheSurface(surf);
-    //if (Drawer->HaveMultiTexture) return; // always have
-    return;
+    if (CacheSurface(surf)) return;
+    // cannot do lightmapping, draw as normal surface instead
+    // this is ugly, but much better than lost surfaces
   }
 
   QueueSimpleSurf(seg, surf);

@@ -399,6 +399,7 @@ protected:
   virtual surface_t *SubdivideSeg(surface_t*, const TVec&, const TVec*) = 0;
   virtual void QueueWorldSurface(seg_t*, surface_t*) = 0;
   virtual void FreeSurfCache(surfcache_t*);
+  virtual bool CacheSurface(surface_t*);
 
   //  General
   void ExecuteSetViewSize();
@@ -578,7 +579,7 @@ private:
   surfcache_t *AllocBlock(int, int);
   surfcache_t *FreeBlock(surfcache_t*, bool);
   virtual void FreeSurfCache(surfcache_t*) override;
-  void CacheSurface(surface_t*);
+  virtual bool CacheSurface(surface_t*) override;
 
   //  World BSP rendering
   virtual void QueueWorldSurface(seg_t*, surface_t*) override;

@@ -704,11 +704,14 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
   static const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   // if we hit a cache overflow, render everything again, to avoid partial frames
-  int renderattempts = 16;
+  int renderattempts = 2;
   do {
     if (light_reset_surface_cache) {
-      if (--renderattempts <= 0) Sys_Error("Surface cache overflow, cannot repair");
-      GCon->Logf("Surface cache overflow, starting it all again, %d attemts left", renderattempts);
+      if (--renderattempts <= 0) {
+        GCon->Log("*** Surface cache overflow, cannot repair");
+        break;
+      }
+      GCon->Logf("*** Surface cache overflow, starting it all again, %d attemts left", renderattempts);
       GentlyFlushAllCaches();
       light_reset_surface_cache = 0;
     }
