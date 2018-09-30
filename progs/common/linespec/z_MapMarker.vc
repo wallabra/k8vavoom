@@ -1,0 +1,89 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+// https://zdoom.org/wiki/Classes:MapMarker
+// TODO
+class MapMarker : Actor;
+
+
+// just remove it for now
+states
+{
+Spawn:
+  TNT1 A 0
+  Stop
+}
+
+defaultproperties {
+  bDormant = true;
+  bNoBlockmap = true;
+  bNoSector = true;
+  bNoGravity = true;
+  bNoSplash = true;
+  bSolid = false;
+  bShootable = false;
+  bNoBlood = true;
+
+  Health = 0;
+  Radius = 8.0;
+  Height = 8.0;
+  Mass = 99999.0;
+}
+
+
+/*
+class MapMarker : Actor
+{
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DONTSPLASH
+		+INVISIBLE
+		Scale 0.5;
+	}
+	States
+	{
+	Spawn:
+		AMRK A -1;
+		Stop;
+	}
+	
+	override void BeginPlay ()
+	{
+		ChangeStatNum (STAT_MAPMARKER);
+	}
+
+	override void Activate (Actor activator)
+	{
+		bDormant = true;
+	}
+
+	override void Deactivate (Actor activator)
+	{
+		bDormant = false;
+	}
+	
+}
+*/

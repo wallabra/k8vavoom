@@ -348,6 +348,8 @@ enum
 #include "ForceFieldGuard.vc"
 #include "PowerCoupling.vc"
 
+#include "z_MapMarker.vc"
+
 class Blood : Actor decorate;
 class BloodSplatter : Actor decorate;
 class AxeBlood : Actor decorate;
