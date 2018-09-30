@@ -412,6 +412,12 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         info->Sky1ScrollDelta = 0;
         info->Sky2ScrollDelta = 0;
         GCon->Logf("MSG: using gz skybox '%s'", *skbname);
+        if (!sc->IsAtEol()) {
+          sc->Check(",");
+          sc->ExpectFloatWithSign();
+          if (HexenMode) sc->Float /= 256.0;
+          if (sc->Float != 0) GCon->Logf("MSG: ignoring sky scroll for skybox (this is mostly harmless)");
+        }
       } else {
         sc->SetCMode(true);
         info->SkyBox = NAME_None;
