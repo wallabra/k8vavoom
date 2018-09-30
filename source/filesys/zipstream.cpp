@@ -167,7 +167,7 @@ void VZipStreamReader::Serialise (void *V, int Length) {
   if (BytesRead != Length)
   {
     bError = true;
-    GCon->Logf("Only read %d of %d bytes", BytesRead, Length);
+    GCon->Logf("VZipStreamReader: only read %d of %d bytes", BytesRead, Length);
   }
   unguard;
 }

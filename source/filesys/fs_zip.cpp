@@ -859,7 +859,7 @@ bool VZipFileReader::LzmaRestart () {
   FileStream->Seek(pos_in_zipfile);
   FileStream->Serialise(ziplzmahdr, 4);
   FileStream->Serialise(lzmaprhdr, 5);
-  rest_read_uncompressed -= 4+5;
+  rest_read_compressed -= 4+5;
 
   if (FileStream->IsError()) {
     bError = true;
@@ -893,7 +893,7 @@ bool VZipFileReader::LzmaRestart () {
   }
 
 #ifdef K8_UNLZMA_DEBUG
-  fprintf(stderr, "LZMA: %u bytes in header\n", (unsigned)(FileStream->Tell()-pos_in_zipfile));
+  fprintf(stderr, "LZMA: %u bytes in header, pksize=%d, unpksize=%d\n", (unsigned)(FileStream->Tell()-pos_in_zipfile), (int)Info.compressed_size, (int)Info.uncompressed_size);
 #endif
 
   lzma_lzma_preset(&lzmaopts, 9|LZMA_PRESET_EXTREME);
@@ -1106,7 +1106,7 @@ void VZipFileReader::Serialise (void *V, int Length) {
       }
       vuint32 uOutThis = outbefore-lzmastream.avail_out;
 #ifdef K8_UNLZMA_DEBUG
-      fprintf(stderr, "LZMA: processed %u packed bytes, unpacked %u bytes (err=%d)\n", (unsigned)(inbefore-lzmastream.avail_in), uOutThis, err);
+      fprintf(stderr, "LZMA: processed %u packed bytes, unpacked %u bytes (err=%d); (want %d, got so far %d, left %d : %d)\n", (unsigned)(inbefore-lzmastream.avail_in), uOutThis, err, Length, iRead, Length-iRead, Length-iRead-uOutThis);
 #endif
       Crc32 = crc32(Crc32, bufBefore, (uInt)uOutThis);
       rest_read_uncompressed -= uOutThis;
