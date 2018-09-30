@@ -30,6 +30,8 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+static VCvarB r_reg_disable_things("r_reg_disable_things", false, "Disable rendering of things (regular renderer).", 0/*CVAR_Archive*/);
+
 
 //==========================================================================
 //
@@ -66,41 +68,29 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
 
   Drawer->SetupViewOrg();
 
-#ifdef VAVOOM_RENDER_TIMES
+  if (times_render_highlevel) GCon->Log("========= RenderScene =========");
+
   double stt = -Sys_Time();
-#endif
   MarkLeaves();
-#ifdef VAVOOM_RENDER_TIMES
   stt += Sys_Time();
-  GCon->Logf("  MarkLeaves: %f", stt);
-#endif
+  if (times_render_highlevel) GCon->Logf("MarkLeaves: %f", stt);
 
-#ifdef VAVOOM_RENDER_TIMES
-  stt = -Sys_Time();
-#endif
-  UpdateWorld(RD, Range);
-#ifdef VAVOOM_RENDER_TIMES
-  stt += Sys_Time();
-  GCon->Logf("  UpdateWorld: %f", stt);
-#endif
+  if (!r_disable_world_update) {
+    stt = -Sys_Time();
+    UpdateWorld(RD, Range);
+    stt += Sys_Time();
+    if (times_render_highlevel) GCon->Logf("UpdateWorld: %f", stt);
+  }
 
-#ifdef VAVOOM_RENDER_TIMES
   stt = -Sys_Time();
-#endif
   RenderWorld(RD, Range);
-#ifdef VAVOOM_RENDER_TIMES
   stt += Sys_Time();
-  GCon->Logf("  RenderWorld: %f", stt);
-#endif
+  if (times_render_highlevel) GCon->Logf("RenderWorld: %f", stt);
 
-#ifdef VAVOOM_RENDER_TIMES
   stt = -Sys_Time();
-#endif
-  RenderMobjs(RPASS_Normal);
-#ifdef VAVOOM_RENDER_TIMES
+  if (!r_reg_disable_things) RenderMobjs(RPASS_Normal);
   stt += Sys_Time();
-  GCon->Logf("  RenderMobjs: %f", stt);
-#endif
+  if (times_render_highlevel) GCon->Logf("RenderMobjs: %f", stt);
 
   DrawParticles();
 

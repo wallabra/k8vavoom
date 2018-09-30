@@ -88,7 +88,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
 
   MarkLeaves();
 
-  UpdateWorld(RD, Range);
+  if (!r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);
   RenderMobjsAmbient();

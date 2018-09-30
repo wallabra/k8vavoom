@@ -29,9 +29,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-//#define VAVOOM_LOWLEVEL_RENDER_TIMES
-
-
 #define HORIZON_SURF_SIZE (sizeof(surface_t) + sizeof(TVec) * 3)
 
 
@@ -41,6 +38,11 @@ static sec_region_t *r_region;
 static bool MirrorClipSegs;
 
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
+
+VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
+VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
+VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
+
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;

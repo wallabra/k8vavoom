@@ -33,7 +33,6 @@
 #include "r_local.h"
 
 //#define VAVOOM_DEBUG_PORTAL_POOL
-//#define VAVOOM_RENDER_TIMES
 
 
 void R_FreeSkyboxData ();
@@ -1029,19 +1028,13 @@ void VRenderLevelShared::RenderPlayerView()
 
   SetupFrame();
 
-#ifdef VAVOOM_RENDER_TIMES
   double stt = -Sys_Time();
-#endif
   RenderScene(&refdef, nullptr);
-#ifdef VAVOOM_RENDER_TIMES
   stt += Sys_Time();
-  GCon->Logf("render scene time: %f", stt);
-#endif
+  if (times_render_highlevel) GCon->Logf("render scene time: %f", stt);
 
   // draw the psprites on top of everything
-  if (fov <= 90.0 && cl->MO == cl->Camera &&
-    GGameInfo->NetMode != NM_TitleMap)
-  {
+  if (fov <= 90.0 && cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) {
     DrawPlayerSprites();
   }
 
