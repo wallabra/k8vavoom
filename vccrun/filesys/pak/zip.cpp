@@ -686,7 +686,7 @@ bool VZipFileReader::lzmaRestart () {
   fileStream->Seek(pos_in_zipfile);
   fileStream->Serialise(ziplzmahdr, 4);
   fileStream->Serialise(lzmaprhdr, 5);
-  rest_read_uncompressed -= 4+5;
+  rest_read_compressed -= 4+5;
 
   if (fileStream->IsError()) {
     bError = true;
