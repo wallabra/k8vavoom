@@ -107,6 +107,9 @@ static void ParseSkyBoxesScript(VScriptParser *sc)
 //
 //  ParseMapDefSkyBoxesScript
 //
+//  TODO: https://zdoom.org/wiki/GLDEFS#Skybox_definitions
+//  TODO: "fliptop"
+//
 //==========================================================================
 void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
   skyboxinfo_t &info = skyboxinfo.Alloc();
@@ -114,12 +117,26 @@ void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
   sc->ExpectString();
   info.Name = *sc->String;
   GCon->Logf("MSG: found gz skybox '%s'", *info.Name);
+  if (sc->Check("fliptop")) GCon->Logf("MSG: gz skybox '%s' require fliptop, which is not supported by VaVoom yet", *info.Name);
+  VStr txnames[6];
+  int txcount = 0;
+  bool gotSq = false;
   sc->Expect("{");
-  for (int i = 0; i < 6; ++i) {
+  while (txcount < 6) {
+    if (sc->Check("}")) { gotSq = true; break; }
     sc->ExpectString();
-    info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*sc->String), TEXTYPE_SkyMap);
+    txnames[txcount++] = sc->String;
   }
-  sc->Expect("}");
+  if (!gotSq) sc->Expect("}");
+  if (txcount != 3 && txcount != 6) sc->Error(va("Invalid skybox '%s' (%d textures found)", *info.Name, txcount));
+  if (txcount == 3) {
+    for (int i = 0; i < 4; ++i) info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*txnames[0]), TEXTYPE_SkyMap);
+    info.surfs[4].texture = GTextureManager.AddFileTexture(VName(*txnames[1]), TEXTYPE_SkyMap);
+    info.surfs[5].texture = GTextureManager.AddFileTexture(VName(*txnames[2]), TEXTYPE_SkyMap);
+  } else {
+    // full
+    for (int i = 0; i < 6; ++i) info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*txnames[i]), TEXTYPE_SkyMap);
+  }
 }
 
 
