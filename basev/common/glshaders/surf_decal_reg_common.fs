@@ -31,14 +31,14 @@ void main () {
   if (TexColour.a < 0.05) discard;
 
   if (SplatColour.a != 0.0) {
-    FinalColour_1.r = SplatColour.r*TexColour.r;
-    FinalColour_1.g = SplatColour.g*TexColour.r;
-    FinalColour_1.b = SplatColour.b*TexColour.r;
+    FinalColour_1.r = SplatColour.r*TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.g = SplatColour.g*TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.b = SplatColour.b*TexColour.r*SplatAlpha; // convert to premultiplied
     FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
   } else {
-    FinalColour_1.r = TexColour.r;
-    FinalColour_1.g = TexColour.g;
-    FinalColour_1.b = TexColour.b;
+    FinalColour_1.r = TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.g = TexColour.g*SplatAlpha; // convert to premultiplied
+    FinalColour_1.b = TexColour.b*SplatAlpha; // convert to premultiplied
     FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   }
   if (FinalColour_1.a < 0.05) discard;
@@ -77,12 +77,14 @@ void main () {
     FogFactor_3 = clamp(FogFactor_3, 0.0, 1.0);
 
     float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
-    float aa = FinalColour_1.a;
+    //float aa = FinalColour_1.a;
     FinalColour_1 = mix(FogColour, FinalColour_1, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
+    /*
     FinalColour_1.r = clamp(FinalColour_1.r, 0.0, 1.0);
     FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
     FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
     FinalColour_1.a = aa;
+    */
   }
 
   //FinalColour_1 = vec4(1, 0, 0, 1);
