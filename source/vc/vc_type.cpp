@@ -155,6 +155,8 @@ bool VFieldType::Equals (const VFieldType &Other) const {
 //==========================================================================
 bool VFieldType::IsCompatiblePointerRelaxed (const VFieldType &other) const {
   if (!IsPointer() || !other.IsPointer()) return false;
+  // void is compatible with anything
+  if (IsVoidPointer() || other.IsVoidPointer()) return true;
   if (InnerType == TYPE_Struct) {
     if (other.InnerType != TYPE_Struct) return false;
     return (other.Struct->IsA(Struct) || Struct->IsA(other.Struct));

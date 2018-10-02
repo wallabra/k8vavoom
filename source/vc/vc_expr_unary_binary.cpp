@@ -784,7 +784,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       }
       // still, check of pointers are of the same type
       if (op1->Type.IsPointer() && !op1->Type.IsCompatiblePointerRelaxed(op2->Type)) {
-        ParseError(Loc, "Pointer type mismatch");
+        ParseError(Loc, "%s", va("Pointer type mismatch (`%s` vs `%s`)", *op1->Type.GetName(), *op2->Type.GetName()));
         delete this;
         return nullptr;
       }
