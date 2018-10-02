@@ -1300,6 +1300,117 @@ static VStr readTextFile (const VStr &fname) {
 
 //==========================================================================
 //
+//  isEmptyLine
+//
+//==========================================================================
+static bool isEmptyLine (const VStr &s) {
+  int pos = 0;
+  while (pos < s.length()) {
+    if ((vuint8)s[pos] > ' ') return false;
+    ++pos;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  isCommentLine
+//
+//==========================================================================
+static bool isCommentLine (const VStr &s) {
+  if (s.length() < 2) return false;
+  int pos = 0;
+  while (pos+1 < s.length()) {
+    if (s[pos] == '/' && s[pos+1] == '/') return true;
+    if ((vuint8)s[pos] > ' ') return false;
+    ++pos;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  isVersionLine
+//
+//==========================================================================
+static bool isVersionLine (const VStr &s) {
+  if (s.length() < 2) return false;
+  int pos = 0;
+  while (pos < s.length()) {
+    if ((vuint8)s[pos] == '#') {
+      ++pos;
+      while (pos < s.length() && (vuint8)s[pos] <= ' ') ++pos;
+      if (pos >= s.length()) return false;
+      if (s[pos+0] == 'v' && s[pos+1] == 'e' && s[pos+2] == 'r' && s[pos+3] == 's' &&
+          s[pos+4] == 'i' && s[pos+5] == 'o' && s[pos+6] == 'n') return true;
+      return false;
+    }
+    if ((vuint8)s[pos] > ' ') return false;
+    ++pos;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  getDirective
+//
+//==========================================================================
+static VStr getDirective (const VStr &s) {
+  int pos = 0;
+  while (pos+1 < s.length()) {
+    if (s[pos] == '$') {
+      ++pos;
+      while (pos < s.length() && (vuint8)s[pos] <= ' ') ++pos;
+      if (pos >= s.length()) return VStr("$");
+      int start = pos;
+      while (pos < s.length() && (vuint8)s[pos] > ' ') ++pos;
+      return s.mid(start, pos-start);
+    }
+    if ((vuint8)s[pos] > ' ') return VStr();
+    ++pos;
+  }
+  return VStr();
+}
+
+
+//==========================================================================
+//
+//  getDirectiveArg
+//
+//==========================================================================
+static VStr getDirectiveArg (const VStr &s) {
+  int pos = 0;
+  while (pos+1 < s.length()) {
+    if (s[pos] == '$') {
+      ++pos;
+      while (pos < s.length() && (vuint8)s[pos] <= ' ') ++pos;
+      if (pos >= s.length()) return VStr();
+      while (pos < s.length() && (vuint8)s[pos] > ' ') ++pos;
+      while (pos < s.length() && (vuint8)s[pos] <= ' ') ++pos;
+      if (pos >= s.length()) return VStr();
+      if (s[pos] == '"') {
+        int start = ++pos;
+        while (pos < s.length() && s[pos] != '"') ++pos;
+        return s.mid(start, pos-start);
+      } else {
+        int start = pos;
+        while (pos < s.length() && (vuint8)s[pos] > ' ') ++pos;
+        return s.mid(start, pos-start);
+      }
+    }
+    if ((vuint8)s[pos] > ' ') return VStr();
+    ++pos;
+  }
+  return VStr();
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
@@ -1311,57 +1422,62 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
   CreatedShaderObjects.Append(Shader);
 
   // load source file
-  VStr vsShaderSrc = readTextFile(FileName);
+  VStr ssrc = readTextFile(FileName);
 
   // build source text
+  bool needToAddRevZ = CanUseRevZ();
+  /*
   if (CanUseRevZ()) {
-    if (vsShaderSrc.length() && vsShaderSrc[0] == '#') {
+    if (ssrc.length() && ssrc[0] == '#') {
       // skip first line (this should be "#version")
       int epos = 0;
-      while (epos < vsShaderSrc.length() && vsShaderSrc[epos] != '\n') ++epos;
-      if (epos < vsShaderSrc.length()) ++epos; // skip eol
-      VStr ns = vsShaderSrc.mid(0, epos);
+      while (epos < ssrc.length() && ssrc[epos] != '\n') ++epos;
+      if (epos < ssrc.length()) ++epos; // skip eol
+      VStr ns = ssrc.mid(0, epos);
       ns += "#define VAVOOM_REVERSE_Z\n";
-      vsShaderSrc.chopLeft(epos);
-      ns += vsShaderSrc;
-      vsShaderSrc = ns;
+      ssrc.chopLeft(epos);
+      ns += ssrc;
+      ssrc = ns;
     } else {
       VStr ns = "#define VAVOOM_REVERSE_Z\n";
-      ns += vsShaderSrc;
-      vsShaderSrc = ns;
+      ns += ssrc;
+      ssrc = ns;
     }
   }
+  */
 
   // process $include
   //FIXME: nested "$include", and proper directive parsing
   VStr res;
-  int pos = 0;
-  while (pos < vsShaderSrc.length()) {
-    if (vsShaderSrc[pos] == '$') {
-      // directive
-      int start = pos;
-      while (pos < vsShaderSrc.length() && (vuint8)vsShaderSrc[pos] > ' ') ++pos;
-      VStr cmd = vsShaderSrc.mid(start, pos-start);
-      if (cmd == "$include") {
-        while (pos < vsShaderSrc.length() && vsShaderSrc[pos] != '\n' && (vuint8)vsShaderSrc[pos] <= ' ') ++pos;
-        start = pos;
-        while (pos < vsShaderSrc.length() && (vuint8)vsShaderSrc[pos] > ' ') ++pos;
-        if (pos == start) Sys_Error("directive \"%s\" in shader '%s' expects file name", *cmd, *FileName);
-        res += readTextFile(FileName.extractFilePath()+vsShaderSrc.mid(start, pos-start));
-        if (res.length() && res[res.length()-1] != '\n') res += '\n';
-        while (pos < vsShaderSrc.length() && vsShaderSrc[pos] != '\n') ++pos;
-        if (pos < vsShaderSrc.length()) ++pos;
-      } else {
-        Sys_Error("invalid directive \"%s\" in shader '%s'", *cmd, *FileName);
-      }
-    } else {
-      do { res += vsShaderSrc[pos++]; } while (pos < vsShaderSrc.length() && vsShaderSrc[pos-1] != '\n');
+  while (ssrc.length()) {
+    // find line end
+    int epos = 0;
+    while (epos < ssrc.length() && ssrc[epos] != '\n') ++epos;
+    if (epos < ssrc.length()) ++epos; // skip "\n"
+    // extract line
+    VStr line = ssrc.left(epos);
+    ssrc.chopLeft(epos);
+    if (isEmptyLine(line)) { res += line; continue; }
+    if (isCommentLine(line)) { res += line; continue; }
+    // add "reverse z" define
+    if (needToAddRevZ) {
+      if (isVersionLine(line)) { res += line; continue; }
+      res += "#define VAVOOM_REVERSE_Z\n";
+      needToAddRevZ = false;
     }
+    VStr cmd = getDirective(line);
+    if (cmd.length() == 0) { res += line; continue; }
+    if (cmd != "include") Sys_Error("%s", va("invalid directive \"%s\" in shader '%s'", *cmd, *FileName));
+    VStr fname = getDirectiveArg(line);
+    if (fname.length() == 0) Sys_Error("%s", va("directive \"%s\" in shader '%s' expects file name", *cmd, *FileName));
+    res += readTextFile(FileName.extractFilePath()+fname);
+    if (res.length() && res[res.length()-1] != '\n') res += '\n';
   }
-  vsShaderSrc = res;
+  //fprintf(stderr, "================ %s ================\n%s\n=================================\n", *FileName, *res);
+  //vsShaderSrc = res;
 
   // upload source text
-  const GLcharARB *ShaderText = *vsShaderSrc;
+  const GLcharARB *ShaderText = *res;
   p_glShaderSourceARB(Shader, 1, &ShaderText, nullptr);
 
   // compile it
