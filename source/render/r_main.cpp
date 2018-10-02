@@ -68,6 +68,8 @@ VCvarF r_sky_bright_factor("r_sky_bright_factor", "1.0", "Skybright actor factor
 
 static VCvarB r_lights_cast_many_rays("r_lights_cast_many_rays", false, "Cast more rays to better check light visibility (usually doesn't make visuals any better)?", CVAR_Archive);
 
+static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha for fullscreen HUD", CVAR_Archive);
+
 extern VCvarF r_lights_radius;
 extern VCvarF r_lights_radius_sight_check;
 extern VCvarI r_hashlight_static_div;
