@@ -370,6 +370,7 @@ enum {
   DECLARE_OPC(PtrEquals, None),
   DECLARE_OPC(PtrNotEquals, None),
   DECLARE_OPC(PtrToBool, None),
+  DECLARE_OPC(PtrSubtract, TypeSize),
 
   // conversions
   DECLARE_OPC(IntToFloat, None),

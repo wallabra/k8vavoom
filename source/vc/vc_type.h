@@ -78,6 +78,9 @@ public:
 
   bool Equals (const VFieldType &) const;
 
+  // used for `==` and `!=` -- allow substructs and subclasses
+  bool IsCompatiblePointerRelaxed (const VFieldType &) const;
+
   VFieldType MakePointerType () const;
   VFieldType GetPointerInnerType () const;
   VFieldType MakeArrayType (int, const TLocation &) const;
@@ -107,6 +110,7 @@ public:
   VStr GetName () const;
 
   bool IsAnyArray () const;
+  inline bool IsPointer () const { return (Type == TYPE_Pointer); } // useless, but nice
 
   bool IsReusingDisabled () const;
   bool IsReplacableWith (const VFieldType &atype) const;

@@ -718,6 +718,7 @@ struct Instr {
       // pointer opeartors
       case OPC_PtrEquals:
       case OPC_PtrNotEquals:
+      case OPC_PtrSubtract:
         spdelta = -1;
         return;
       case OPC_PtrToBool:

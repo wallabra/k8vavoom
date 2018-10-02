@@ -701,7 +701,16 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
            if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) Type = TYPE_Int;
       else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) Type = TYPE_Float;
       else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) Type = TYPE_Vector;
-      else {
+      else if (Oper == Subtract && (op1->Type.IsPointer() && op2->Type.IsPointer())) {
+        // we can subtract pointers to get index, 'cause why not?
+        // still, check if pointers are of the same type
+        if (!op1->Type.GetPointerInnerType().Equals(op2->Type.GetPointerInnerType())) {
+          ParseError(Loc, "Pointer type mismatch");
+          delete this;
+          return nullptr;
+        }
+        Type = TYPE_Int;
+      } else {
         ParseError(Loc, "Expression type mismatch");
         delete this;
         return nullptr;
@@ -773,6 +782,12 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         delete this;
         return nullptr;
       }
+      // still, check of pointers are of the same type
+      if (op1->Type.IsPointer() && !op1->Type.IsCompatiblePointerRelaxed(op2->Type)) {
+        ParseError(Loc, "Pointer type mismatch");
+        delete this;
+        return nullptr;
+      }
       Type = TYPE_Int;
       break;
     case StrCat:
@@ -808,7 +823,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         }
         Type = TYPE_Int;
       } else {
-        ParseError(Loc, "`isa` expects class or struct");
+        ParseError(Loc, "`isa` expects class or object");
         delete this;
         return nullptr;
       }
@@ -956,6 +971,7 @@ void VBinary::Emit (VEmitContext &ec) {
            if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Subtract, Loc);
       else if (op1->Type.Type == TYPE_Float && op2->Type.Type == TYPE_Float) ec.AddStatement(OPC_FSubtract, Loc);
       else if (op1->Type.Type == TYPE_Vector && op2->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VSubtract, Loc);
+      else if (op1->Type.IsPointer() && op2->Type.IsPointer()) ec.AddStatement(OPC_PtrSubtract, op1->Type.GetPointerInnerType(), Loc);
       break;
     case Multiply:
            if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Int) ec.AddStatement(OPC_Multiply, Loc);

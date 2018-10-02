@@ -1771,6 +1771,20 @@ func_loop:
         sp[-1].i = !!sp[-1].p;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_PtrSubtract)
+        {
+          if (!sp[-2].p) { cstDump(ip); Sys_Error("Invalid pointer math (first operand is `nullptr`)"); }
+          if (!sp[-1].p) { cstDump(ip); Sys_Error("Invalid pointer math (second operand is `nullptr`)"); }
+          //if ((uintptr_t)sp[-2].p < (uintptr_t)sp[-1].p) { cstDump(ip); Sys_Error("Invalid pointer math (first operand is out of range)"); }
+          int tsize = ReadInt32(ip+1);
+          ptrdiff_t diff = ((intptr_t)sp[-2].p-(intptr_t)sp[-1].p)/tsize;
+          if (diff < -0x7fffffff || diff > 0x7fffffff) { cstDump(ip); Sys_Error("Invalid pointer math (difference is too big)"); }
+          sp -= 1;
+          sp[-1].i = (int)diff;
+        }
+        ip += 5;
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_IntToFloat)
         ++ip;
         ftemp = (float)sp[-1].i;

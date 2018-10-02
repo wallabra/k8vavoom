@@ -150,6 +150,23 @@ bool VFieldType::Equals (const VFieldType &Other) const {
 
 //==========================================================================
 //
+//  VFieldType::IsCompatiblePointerRelaxed
+//
+//==========================================================================
+bool VFieldType::IsCompatiblePointerRelaxed (const VFieldType &other) const {
+  if (!IsPointer() || !other.IsPointer()) return false;
+  if (InnerType == TYPE_Struct) {
+    if (other.InnerType != TYPE_Struct) return false;
+    return (other.Struct->IsA(Struct) || Struct->IsA(other.Struct));
+  }
+  if (InnerType == TYPE_Class) return (other.InnerType == TYPE_Class); // any two are ok, why not?
+  if (InnerType == TYPE_Reference) return (other.InnerType == TYPE_Reference); // any two are ok, why not?
+  return Equals(other);
+}
+
+
+//==========================================================================
+//
 //  VFieldType::MakePointerType
 //
 //==========================================================================
