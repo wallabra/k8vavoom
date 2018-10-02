@@ -57,7 +57,9 @@ VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
 //  VImgzTexture::VImgzTexture
 //
 //==========================================================================
-VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset) : Pixels(nullptr)
+VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
+  : VTexture()
+  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);

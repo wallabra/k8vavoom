@@ -30,6 +30,8 @@
 #ifndef _GAMEDEFS_H
 #define _GAMEDEFS_H
 
+#include <GL/gl.h>
+
 #include "../libs/core/core.h"
 
 #include "build.h"    //  Build settings

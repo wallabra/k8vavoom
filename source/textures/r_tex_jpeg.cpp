@@ -104,7 +104,9 @@ VTexture *VJpegTexture::Create (VStream &Strm, int LumpNum) {
 //  VJpegTexture::VJpegTexture
 //
 //==========================================================================
-VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight) : Pixels(nullptr)
+VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight)
+  : VTexture()
+  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);

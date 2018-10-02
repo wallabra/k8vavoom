@@ -45,7 +45,10 @@ VTexture *VAutopageTexture::Create (VStream &Strm, int LumpNum) {
 //  VAutopageTexture::VAutopageTexture
 //
 //==========================================================================
-VAutopageTexture::VAutopageTexture (int ALumpNum) : Pixels(nullptr) {
+VAutopageTexture::VAutopageTexture (int ALumpNum)
+  : VTexture()
+  , Pixels(nullptr)
+{
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
   Width = 320;

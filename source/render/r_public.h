@@ -208,6 +208,11 @@ public:
   bool staticNoDecals;
   bool animNoDecals;
   bool animated; // used to select "no decals" flag
+  bool needFBO;
+
+  GLuint mFBO;
+  GLuint mFBOColorTid;
+  GLuint mFBODepthStencilTid;
 
   // driver data
   struct VTransData {

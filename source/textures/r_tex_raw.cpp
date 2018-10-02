@@ -78,7 +78,8 @@ VTexture *VRawPicTexture::Create (VStream &Strm, int LumpNum) {
 //
 //==========================================================================
 VRawPicTexture::VRawPicTexture (int ALumpNum, int APalLumpNum)
-  : PalLumpNum(APalLumpNum)
+  : VTexture()
+  , PalLumpNum(APalLumpNum)
   , Pixels(nullptr)
   , Palette(nullptr)
 {

@@ -71,7 +71,8 @@ VTexture *VPatchTexture::Create (VStream &Strm, int LumpNum) {
 //
 //==========================================================================
 VPatchTexture::VPatchTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
-  : Pixels(nullptr)
+  : VTexture()
+  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);

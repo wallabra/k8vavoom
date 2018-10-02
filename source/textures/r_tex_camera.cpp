@@ -33,7 +33,8 @@
 //
 //==========================================================================
 VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
-  : Pixels(nullptr)
+  : VTexture()
+  , Pixels(nullptr)
   , bNeedsUpdate(true)
   , bUpdated(false)
 {
@@ -43,6 +44,7 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   Width = AWidth;
   Height = AHeight;
   bIsCameraTexture = true;
+  needFBO = true;
 }
 
 

@@ -87,7 +87,8 @@ VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
 //
 //==========================================================================
 VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t &Hdr)
-  : Pixels(nullptr)
+  : VTexture()
+  , Pixels(nullptr)
   , Palette(nullptr)
 {
   SourceLump = ALumpNum;

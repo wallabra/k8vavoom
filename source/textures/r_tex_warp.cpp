@@ -33,7 +33,8 @@
 //
 //==========================================================================
 VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
-  : SrcTex(ASrcTex)
+  : VTexture()
+  , SrcTex(ASrcTex)
   , Pixels(nullptr)
   , GenTime(0)
   , Speed(aspeed)

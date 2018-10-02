@@ -105,7 +105,8 @@ VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
 //
 //==========================================================================
 VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
-  : Pixels(nullptr)
+  : VTexture()
+  , Pixels(nullptr)
   , Palette(nullptr)
 {
   SourceLump = ALumpNum;

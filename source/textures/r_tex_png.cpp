@@ -121,7 +121,8 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
 //
 //==========================================================================
 VPngTexture::VPngTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
-  : Pixels(0)
+  : VTexture()
+  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);

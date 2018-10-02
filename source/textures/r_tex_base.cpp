@@ -104,6 +104,10 @@ VTexture::VTexture ()
   , HiResTexture(0)
   , Pixels8BitValid(false)
 {
+  needFBO = false;
+  mFBO = 0;
+  mFBOColorTid = 0;
+  mFBODepthStencilTid = 0;
 }
 
 

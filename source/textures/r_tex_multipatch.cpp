@@ -35,7 +35,8 @@
 //==========================================================================
 VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     VTexture **PatchLookup, int NumPatchLookup, int FirstTex, bool IsStrife)
-  : Pixels(nullptr)
+  : VTexture()
+  , Pixels(nullptr)
 {
   guard(VMultiPatchTexture::VMultiPatchTexture);
   Type = TEXTYPE_Wall;

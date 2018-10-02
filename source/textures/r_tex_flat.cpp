@@ -44,7 +44,10 @@ VTexture *VFlatTexture::Create (VStream &, int LumpNum) {
 //  VFlatTexture::VFlatTexture
 //
 //==========================================================================
-VFlatTexture::VFlatTexture (int InLumpNum) : Pixels(nullptr) {
+VFlatTexture::VFlatTexture (int InLumpNum)
+  : VTexture()
+  , Pixels(nullptr)
+{
   guard(VFlatTexture::VFlatTexture);
   SourceLump = InLumpNum;
   Type = TEXTYPE_Flat;
