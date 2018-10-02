@@ -108,6 +108,7 @@ VTexture::VTexture ()
   mFBO = 0;
   mFBOColorTid = 0;
   mFBODepthStencilTid = 0;
+  SavedDriverHandle = 0;
 }
 
 

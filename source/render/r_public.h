@@ -229,6 +229,7 @@ public:
     void *DriverData;
   };
   TArray<VTransData> DriverTranslated;
+  vuint32 SavedDriverHandle;
 
 protected:
   vuint8 *Pixels8Bit;

@@ -859,6 +859,7 @@ protected:
   void FlushTextures();
   void DeleteTextures();
   void FlushTexture(VTexture*);
+  void DeleteTexture(VTexture*);
   void SetTexture(VTexture*, int);
   void SetSpriteLump(VTexture*, VTextureTranslation*, int);
   void SetPic(VTexture*, VTextureTranslation*, int);

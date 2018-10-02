@@ -101,7 +101,7 @@ void VOpenGLDrawer::GenerateTextures () {
 //==========================================================================
 void VOpenGLDrawer::FlushTextures () {
   guard(VOpenGLDrawer::FlushTextures);
-  for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) FlushTexture(GTextureManager[i]);
+  for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) DeleteTexture(GTextureManager[i]);
   unguard;
 }
 
@@ -141,8 +141,35 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
   guard(VOpenGLDrawer::FlushTexture);
   if (!Tex) return;
   if (Tex->DriverHandle) {
+    if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
+    Tex->SavedDriverHandle = Tex->DriverHandle;
+    //glDeleteTextures(1, (GLuint*)&Tex->DriverHandle);
+    Tex->DriverHandle = 0;
+  }
+  for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
+    glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
+  }
+  Tex->DriverTranslated.resetNoDtor();
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DeleteTexture
+//
+//==========================================================================
+void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
+  guard(VOpenGLDrawer::FlushTexture);
+  if (!Tex) return;
+  if (Tex->DriverHandle) {
+    if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
     glDeleteTextures(1, (GLuint*)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
+    Tex->SavedDriverHandle = 0;
+  } else if (Tex->SavedDriverHandle) {
+    glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
+    Tex->SavedDriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
     glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
@@ -198,23 +225,30 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
 //==========================================================================
 void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap) {
   guard(VOpenGLDrawer::SetSpriteLump);
-  if (Tex->CheckModified()) FlushTexture(Tex);
-  if (Translation || CMap) {
-    VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
-    if (TData) {
-      glBindTexture(GL_TEXTURE_2D, TData->Handle);
+  if (mInitialized) {
+    if (Tex->CheckModified()) FlushTexture(Tex);
+    if (Translation || CMap) {
+      VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
+      if (TData) {
+        glBindTexture(GL_TEXTURE_2D, TData->Handle);
+      } else {
+        TData = &Tex->DriverTranslated.Alloc();
+        TData->Handle = 0;
+        TData->Trans = Translation;
+        TData->ColourMap = CMap;
+        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap);
+      }
     } else {
-      TData = &Tex->DriverTranslated.Alloc();
-      TData->Handle = 0;
-      TData->Trans = Translation;
-      TData->ColourMap = CMap;
-      GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap);
-    }
-  } else {
-    if (!Tex->DriverHandle) {
-      GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
-    } else {
-      glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
+      if (!Tex->DriverHandle) {
+        if (Tex->SavedDriverHandle) {
+          Tex->DriverHandle = Tex->SavedDriverHandle;
+          Tex->SavedDriverHandle = 0;
+          //fprintf(stderr, "reusing texture %u!\n", Tex->DriverHandle);
+        }
+        GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
+      } else {
+        glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
+      }
     }
   }
   tex_iw = 1.0/Tex->GetWidth();
@@ -279,6 +313,7 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //==========================================================================
 void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap) {
   guard(VOpenGLDrawer::GenerateTexture);
+
   if (!*pHandle) glGenTextures(1, pHandle);
   glBindTexture(GL_TEXTURE_2D, *pHandle);
 
