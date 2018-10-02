@@ -1206,7 +1206,16 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   p_glUseProgramObjectARB(SurfMaskedProgram);
   p_glUniform1iARB(SurfMaskedTextureLoc, 0);
-  p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog & 3);
+  p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog&3);
+
+  if (blend_sprites || Additive || Alpha < 1.0) {
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
+    glEnable(GL_BLEND);
+    if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  } else {
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
+    Alpha = 1.0f;
+  }
 
   if (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount) {
     RendLev->BuildLightMap(surf);
@@ -1243,13 +1252,6 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
 
-  if (blend_sprites || Additive || Alpha < 1.0) {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
-    glEnable(GL_BLEND);
-  } else {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
-  }
-  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   glBegin(GL_POLYGON);
   for (int i = 0; i < surf->count; ++i) {
@@ -1287,7 +1289,16 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
 
   p_glUseProgramObjectARB(SurfMaskedProgram);
   p_glUniform1iARB(SurfMaskedTextureLoc, 0);
-  p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog & 3);
+  p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog&3);
+
+  if (blend_sprites || Additive || Alpha < 1.0) {
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
+    glEnable(GL_BLEND);
+    if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  } else {
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
+    Alpha = 1.0f;
+  }
 
   p_glUniform4fARB(SurfMaskedLightLoc,
     ((light >> 16) & 255) / 255.0,
@@ -1305,14 +1316,6 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   } else {
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
-
-  if (blend_sprites || Additive || Alpha < 1.0) {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
-    glEnable(GL_BLEND);
-  } else {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
-  }
-  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   glBegin(GL_QUADS);
 
