@@ -153,6 +153,8 @@ static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CV
 
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
 
+static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
+
 static int grid = 0;
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called
@@ -1315,10 +1317,14 @@ static vuint32 StringToColour (const char *str) {
   int r, g, b;
   char *p;
 
+  vuint32 alpha = (int)((am_overlay_alpha < 0 ? 0.1f : am_overlay_alpha > 1 ? 1.0f : am_overlay_alpha)*255);
+  alpha <<= 24;
+  //const vuint32 alpha = 0xff000000U;
+
   r = strtol(str, &p, 16) & 0xff;
   g = strtol(p, &p, 16) & 0xff;
   b = strtol(p, &p, 16) & 0xff;
-  return 0xff000000 | (r << 16) | (g << 8) | b;
+  return alpha | (r << 16) | (g << 8) | b;
 }
 
 
@@ -1376,6 +1382,12 @@ static void AM_CheckVariables () {
 void AM_Drawer () {
   if (!automapactive) return;
 
+  if (am_overlay) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+    //glColor4f(1, 1, 1, (am_overlay_alpha < 0.1f ? 0.1f : am_overlay_alpha > 1.0f ? 1.0f : am_overlay_alpha));
+  }
+
   AM_CheckVariables();
   AM_clearFB();
   Drawer->StartAutomap();
@@ -1393,4 +1405,11 @@ void AM_Drawer () {
   if (am_show_stats) AM_DrawLevelStats();
   if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
   if (use_marks) AM_drawMarks();
+
+  if (am_overlay) {
+    glDisable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    //glColor4f(1, 1, 1, 1);
+  }
 }
