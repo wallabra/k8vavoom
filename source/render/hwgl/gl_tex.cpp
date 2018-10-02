@@ -22,26 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gl_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const vuint8 ptex[8][8] = {
   { 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -142,8 +127,12 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
   if (!Tex) return;
   if (Tex->DriverHandle) {
     if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
-    Tex->SavedDriverHandle = Tex->DriverHandle;
-    //glDeleteTextures(1, (GLuint*)&Tex->DriverHandle);
+    if (gl_recreate_changed_textures) {
+      glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
+      Tex->SavedDriverHandle = 0;
+    } else {
+      Tex->SavedDriverHandle = Tex->DriverHandle;
+    }
     Tex->DriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
@@ -241,9 +230,14 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
     } else {
       if (!Tex->DriverHandle) {
         if (Tex->SavedDriverHandle) {
-          Tex->DriverHandle = Tex->SavedDriverHandle;
-          Tex->SavedDriverHandle = 0;
-          //fprintf(stderr, "reusing texture %u!\n", Tex->DriverHandle);
+          if (gl_recreate_changed_textures) {
+            glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
+            Tex->SavedDriverHandle = 0;
+          } else {
+            Tex->DriverHandle = Tex->SavedDriverHandle;
+            Tex->SavedDriverHandle = 0;
+            //fprintf(stderr, "reusing texture %u!\n", Tex->DriverHandle);
+          }
         }
         GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
       } else {
