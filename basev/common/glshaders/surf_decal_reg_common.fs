@@ -25,10 +25,10 @@ void main () {
   vec4 FinalColour_1;
   vec4 TexColour;
 
-  if (SplatAlpha <= 0.05) discard;
+  if (SplatAlpha <= 0.01) discard;
 
   TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.05) discard;
+  if (TexColour.a < 0.01) discard;
 
   if (SplatColour.a != 0.0) {
     FinalColour_1.r = SplatColour.r*TexColour.r*SplatAlpha; // convert to premultiplied
@@ -41,7 +41,7 @@ void main () {
     FinalColour_1.b = TexColour.b*SplatAlpha; // convert to premultiplied
     FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   }
-  if (FinalColour_1.a < 0.05) discard;
+  if (FinalColour_1.a < 0.01) discard;
 
 #ifdef REG_LIGHTMAP
   // lightmapped
@@ -57,37 +57,7 @@ void main () {
   FinalColour_1.b = clamp(FinalColour_1.b*(Light.b*Light.a), 0.0, 1.0);
 #endif
 
-  if (FogEnabled) {
-    float FogFactor_3;
-
-#ifdef VAVOOM_REVERSE_Z
-    float z = 1.0/gl_FragCoord.w;
-#else
-    float z = gl_FragCoord.z/gl_FragCoord.w;
-#endif
-
-    if (FogType == 3) {
-      FogFactor_3 = exp2(-FogDensity*FogDensity*z*z*1.442695);
-    } else if (FogType == 2) {
-      FogFactor_3 = exp2(-FogDensity*z*1.442695);
-    } else {
-      FogFactor_3 = (FogEnd-z)/(FogEnd-FogStart);
-    }
-
-    FogFactor_3 = clamp(FogFactor_3, 0.0, 1.0);
-
-    float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
-    //float aa = FinalColour_1.a;
-    FinalColour_1 = mix(FogColour, FinalColour_1, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
-    /*
-    FinalColour_1.r = clamp(FinalColour_1.r, 0.0, 1.0);
-    FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
-    FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
-    FinalColour_1.a = aa;
-    */
-  }
-
-  //FinalColour_1 = vec4(1, 0, 0, 1);
+  $include "common_fog.fs"
 
   gl_FragColor = FinalColour_1;
 }
