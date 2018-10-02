@@ -1460,18 +1460,23 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
     if (isEmptyLine(line)) { res += line; continue; }
     if (isCommentLine(line)) { res += line; continue; }
     // add "reverse z" define
-    if (needToAddRevZ) {
-      if (isVersionLine(line)) { res += line; continue; }
-      res += "#define VAVOOM_REVERSE_Z\n";
-      needToAddRevZ = false;
-    }
     VStr cmd = getDirective(line);
-    if (cmd.length() == 0) { res += line; continue; }
+    if (cmd.length() == 0) {
+      if (needToAddRevZ) {
+        if (isVersionLine(line)) { res += line; continue; }
+        res += "#define VAVOOM_REVERSE_Z\n";
+        needToAddRevZ = false;
+      }
+      res += line;
+      continue;
+    }
     if (cmd != "include") Sys_Error("%s", va("invalid directive \"%s\" in shader '%s'", *cmd, *FileName));
     VStr fname = getDirectiveArg(line);
     if (fname.length() == 0) Sys_Error("%s", va("directive \"%s\" in shader '%s' expects file name", *cmd, *FileName));
-    res += readTextFile(FileName.extractFilePath()+fname);
-    if (res.length() && res[res.length()-1] != '\n') res += '\n';
+    VStr incf = readTextFile(FileName.extractFilePath()+fname);
+    if (incf.length() && incf[incf.length()-1] != '\n') incf += '\n';
+    incf += ssrc;
+    ssrc = incf;
   }
   //fprintf(stderr, "================ %s ================\n%s\n=================================\n", *FileName, *res);
   //vsShaderSrc = res;
@@ -1491,7 +1496,8 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName) {
     GLsizei LogLen;
     p_glGetInfoLogARB(Shader, sizeof(LogText)-1, &LogLen, LogText);
     LogText[LogLen] = 0;
-    Sys_Error("Failed to compile shader %s: %s", *FileName, LogText);
+    fprintf(stderr, "================ %s ================\n%s\n=================================\n%s\b", *FileName, *res, LogText);
+    Sys_Error("%s", va("Failed to compile shader %s: %s", *FileName, LogText));
   }
   return Shader;
   unguard;
