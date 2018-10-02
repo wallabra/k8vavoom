@@ -321,7 +321,8 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   glDisable(GL_ALPHA_TEST);
   if (Additive)
   {
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   glPopMatrix();

@@ -550,7 +550,8 @@ void VOpenGLDrawer::InitResolution () {
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   GenerateTextures();
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glShadeModel(GL_FLAT);
 

@@ -416,7 +416,8 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   // draw decals
   if (doDecals) {
     if (RenderFinishShaderDecals(surf, false, false, nullptr)) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       p_glUseProgramObjectARB(SurfSimpleProgram);
       return true;
     }
@@ -477,7 +478,8 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   // draw decals
   if (doDecals) {
     if (RenderFinishShaderDecals(surf, true, false, cache)) {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       p_glUseProgramObjectARB(SurfLightmapProgram);
       return true;
     }
@@ -992,7 +994,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 //==========================================================================
 void VOpenGLDrawer::DrawWorldFogPass () {
   guard(VOpenGLDrawer::DrawWorldFogPass);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   // draw surfaces
   p_glUseProgramObjectARB(ShadowsFogProgram);
@@ -1258,7 +1261,10 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   glEnd();
 
   if (blend_sprites || Additive || Alpha < 1.0) glDisable(GL_BLEND);
-  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  if (Additive) {
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  }
 
   unguard;
 }
@@ -1337,7 +1343,10 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   glEnd();
 
   if (blend_sprites || Additive || Alpha < 1.0) glDisable(GL_BLEND);
-  if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  if (Additive) {
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  }
 
   unguard;
 }
