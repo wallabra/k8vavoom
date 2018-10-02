@@ -52,9 +52,9 @@ void main () {
   FinalColour_1.b = clamp(FinalColour_1.b*lmc.b+spc.b, 0.0, 1.0);
 #else
   // normal
-  FinalColour_1.r = clamp(FinalColour_1.r*(Light.r*Light.a), 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g*(Light.g*Light.a), 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b*(Light.b*Light.a), 0.0, 1.0);
+  FinalColour_1.r = clamp((FinalColour_1.r*Light.r)*Light.a, 0.0, 1.0);
+  FinalColour_1.g = clamp((FinalColour_1.g*Light.g)*Light.a, 0.0, 1.0);
+  FinalColour_1.b = clamp((FinalColour_1.b*Light.b)*Light.a, 0.0, 1.0);
 #endif
 
   $include "common_fog.fs"

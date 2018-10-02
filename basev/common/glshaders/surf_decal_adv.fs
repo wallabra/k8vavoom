@@ -33,9 +33,9 @@ void main () {
   if (SplatAlpha <= 0.0) discard;
 
   // normal
-  FinalColour_1.r = clamp(FinalColour_1.r*(Light.r*Light.a), 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g*(Light.g*Light.a), 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b*(Light.b*Light.a), 0.0, 1.0);
+  FinalColour_1.r = clamp((FinalColour_1.r*Light.r)*Light.a, 0.0, 1.0);
+  FinalColour_1.g = clamp((FinalColour_1.g*Light.g)*Light.a, 0.0, 1.0);
+  FinalColour_1.b = clamp((FinalColour_1.b*Light.b)*Light.a, 0.0, 1.0);
 
 /*
   const float multer = 1.0;

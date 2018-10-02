@@ -5,25 +5,21 @@ uniform float Alpha;
 
 varying vec2 TextureCoordinate;
 
-void main ()
-{
-  vec4 FinalColour;
-  vec4 TexCol;
 
-  TexCol = texture2D (Texture, TextureCoordinate);
-  FinalColour.xyz = TexCol.xyz;
+void main () {
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  if (TexColour.a < 0.01) discard;
 
-  if ((TexCol.w < 0.4))
-  {
-    discard;
-  };
-  float Transp;
+  //vec4 FinalColour = TexColour;
+  // premultiply
+  vec4 FinalColour_1;
+  FinalColour_1.r = TexColour.r*Alpha;
+  FinalColour_1.g = TexColour.g*Alpha;
+  FinalColour_1.b = TexColour.b*Alpha;
+  FinalColour_1.a = TexColour.a*Alpha;
 
-  Transp = clamp (((Alpha - 0.4) / 0.6), 0.0, 1.0);
+  //!float Transp = clamp(((Alpha-0.4)/0.6), 0.0, 1.0);
+  //!FinalColour_1.a = TexColour.a*(Transp*(Transp*(3.0-(2.0*Transp))));
 
-  FinalColour.w = (TexCol.w * (Transp * (Transp *
-    (3.0 - (2.0 * Transp))
-    )));
-
-  gl_FragColor = FinalColour;
+  gl_FragColor = FinalColour_1;
 }
