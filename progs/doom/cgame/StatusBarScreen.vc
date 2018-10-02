@@ -437,7 +437,7 @@ void SB_DrawFullscreenStats () {
   float fsalpha = ST_FULLSCREEN_ALPHA;
   if (CvarExists('r_hud_fullscreen_alpha')) {
     fsalpha = GetCvarF('r_hud_fullscreen_alpha');
-    if (fsalpha < 0.1) fsalpha = ST_FULLSCREEN_ALPHA;
+    if (fsalpha < 0) fsalpha = ST_FULLSCREEN_ALPHA;
   }
 
   // health
