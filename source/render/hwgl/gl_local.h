@@ -515,6 +515,9 @@ private:
   inline bool CanUseRevZ () const { return useReverseZ; }
 
 private:
+  vuint8 *readBackTempBuf;
+  int readBackTempBufSize;
+
   struct SurfListItem {
     surface_t *surf;
     surfcache_t *cache;

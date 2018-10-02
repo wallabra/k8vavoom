@@ -81,6 +81,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   tmpImgBuf0 = nullptr;
   tmpImgBuf1 = nullptr;
   tmpImgBufSize = 0;
+
+  readBackTempBuf = nullptr;
+  readBackTempBufSize = 0;
 }
 
 
@@ -93,6 +96,8 @@ VOpenGLDrawer::~VOpenGLDrawer () {
   if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
   if (tmpImgBuf1) { Z_Free(tmpImgBuf1); tmpImgBuf1 = nullptr; }
   tmpImgBufSize = 0;
+  if (readBackTempBuf) { Z_Free(readBackTempBuf); readBackTempBuf = nullptr; }
+  readBackTempBufSize = 0;
 }
 
 
@@ -1216,28 +1221,36 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
 //==========================================================================
 void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
   guard(VOpenGLDrawer::ReadBackScreen);
+
+  if (readBackTempBufSize < ScreenWidth*ScreenHeight*4) {
+    readBackTempBufSize = ScreenWidth*ScreenHeight*4;
+    readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
+  }
+
   if (mainFBO == 0) {
     glReadBuffer(GL_BACK);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glReadPixels(0, ScreenHeight-Height, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Dest);
-    rgba_t *Temp = new rgba_t[Width];
+    //rgba_t *Temp = new rgba_t[Width];
+    rgba_t *Temp = (rgba_t *)readBackTempBuf;
     for (int i = 0; i < Height/2; ++i) {
       memcpy(Temp, Dest+i*Width, Width*sizeof(rgba_t));
       memcpy(Dest+i*Width, Dest+(Height-1-i)*Width, Width*sizeof(rgba_t));
       memcpy(Dest+(Height-1-i)*Width, Temp, Width*sizeof(rgba_t));
     }
-    delete[] Temp;
-    Temp = nullptr;
+    //delete[] Temp;
+    //Temp = nullptr;
   } else {
     glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
+    //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
+    rgba_t *temp = (rgba_t *)readBackTempBuf;
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
     glBindTexture(GL_TEXTURE_2D, 0);
     for (int y = 0; y < Height; ++y) {
       memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, Width*sizeof(rgba_t));
     }
-    delete[] temp;
+    //delete[] temp;
   }
   unguard;
 }
