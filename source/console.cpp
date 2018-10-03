@@ -500,9 +500,31 @@ static void DoPrint (const char *buf) {
 //
 //==========================================================================
 void FConsoleDevice::Serialise (const char *V, EName Event) {
-  dprintf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours());
+  VStr rc = VStr(V).RemoveColours();
+  dprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
-  printf("%s: %s\n", VName::SafeString(Event), *VStr(V).RemoveColours()); //k8
+  bool badSeedFound = false;
+  for (const char *s = *rc; *s; ++s) {
+    if ((vuint8)*s < ' ') {
+      if (*s != '\n' && *s != '\t') {
+        badSeedFound = true;
+        break;
+      }
+    } else if ((vuint8)*s == 127) {
+      badSeedFound = true;
+      break;
+    }
+  }
+  if (badSeedFound) {
+    for (char *s = rc.GetMutableCharPointer(0); *s; ++s) {
+      if ((vuint8)*s < ' ') {
+        if (*s != '\n' && *s != '\t') *s = ' ';
+      } else if ((vuint8)*s == 127) {
+        *s = ' ';
+      }
+    }
+  }
+  printf("%s: %s\n", VName::SafeString(Event), *rc);
   DoPrint(V);
   DoPrint("\n");
 }
