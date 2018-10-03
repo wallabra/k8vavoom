@@ -457,6 +457,10 @@ struct sector_t {
   int Sky;
 
   int Zone; // reverb zone id
+
+  // this is used to check for "floor holes" that should be filled to emulate original flat floodfill bug
+  // if sector has more than one neighbour, this is `nullptr`
+  sector_t *othersec;
 };
 
 

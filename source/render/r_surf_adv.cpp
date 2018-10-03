@@ -131,10 +131,7 @@ void VAdvancedRenderLevel::UpdateBSPNode (int bspnum, float *bbox) {
     UpdateBSPNode(bsp->children[side], bsp->bbox[side]);
     bbox[2] = MIN(bsp->bbox[0][2], bsp->bbox[1][2]);
     bbox[5] = MAX(bsp->bbox[0][5], bsp->bbox[1][5]);
-    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1], false))
-    {
-      return;
-    }
+    if (!ViewClip.ClipIsBBoxVisible(bsp->bbox[side^1], false)) return;
     UpdateBSPNode(bsp->children[side^1], bsp->bbox[side^1]);
     return;
   }
@@ -162,6 +159,7 @@ void VAdvancedRenderLevel::UpdateWorld (const refdef_t *rd, const VViewClipper *
     sector_t *sec = &Level->Sectors[i];
          if (sec->deepref) UpdateDeepWater(sec);
     else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
+    else if (sec->othersec) UpdateFloodBug(sec);
   }
 
   UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output

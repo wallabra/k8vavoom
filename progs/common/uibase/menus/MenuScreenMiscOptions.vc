@@ -67,12 +67,10 @@ override void CreateChoices () {
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Deepwater options");
   CreateOnOffCvar("Classic deepwater", 'deepwater_hacks');
-  /*
-  auto dwbuggy = CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra');
+  auto dwbuggy = CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra_ex');
   //dwbuggy.TextNormalColor = CR_LIGHTBLUE;
   //dwbuggy.TextNormalColor = CR_DARKRED;
   dwbuggy.TextNormalColor = CR_PURPLE;
-  */
 
 
   //CreateChoiceSubHeader("");

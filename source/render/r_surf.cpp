@@ -1503,8 +1503,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
   if (diffTex) {
     if (CopyPlaneIfValid(&ff->floorplane, &s->floor, &sec->ceiling)) {
       ff->floorplane.pic = s->floor.pic;
-    }
-    else if (s && s->SectorFlags&sector_t::SF_FakeFloorOnly) {
+    } else if (s && s->SectorFlags&sector_t::SF_FakeFloorOnly) {
       if (underwater) {
         //tempsec->ColourMap = s->ColourMap;
         ff->params.Fade = s->params.Fade;
@@ -1573,7 +1572,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
 #endif
 
   if (underwater || doorunderwater /*||
-    (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))*/
+      (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))*/
      )
   {
     ff->floorplane.normal = sec->floor.normal;
@@ -1586,8 +1585,8 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
 
   // killough 11/98: prevent sudden light changes from non-water sectors:
   if ((underwater /*&& !back*/) || doorunderwater ||
-    (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))
-    )
+      (heightsec && vieworg.z <= heightsec->floor.GetPointZ(vieworg))
+     )
   {
     // head-below-floor hack
     ff->floorplane.pic = diffTex ? sec->floor.pic : s->floor.pic;
@@ -1679,7 +1678,7 @@ void VRenderLevelShared::UpdateFakeFlats (sector_t *sec) {
 
 //==========================================================================
 //
-// VRenderLevelShared::UpdateDeepWater
+//  VRenderLevelShared::UpdateDeepWater
 //
 //==========================================================================
 void VRenderLevelShared::UpdateDeepWater (sector_t *sec) {
@@ -1700,6 +1699,32 @@ void VRenderLevelShared::UpdateDeepWater (sector_t *sec) {
   ff->floorplane.dist = s->floor.dist;
 
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::UpdateFloodBug
+//
+//  emulate floodfill bug
+//
+//==========================================================================
+void VRenderLevelShared::UpdateFloodBug (sector_t *sec) {
+  if (!sec) return; // just in case
+  sector_t *other = sec->othersec;
+  if (!other) return; // just in case
+  fakefloor_t *ff = sec->fakefloors;
+  if (!ff) return; // just in case
+  // replace sector being drawn with a copy to be hacked
+  if (sec->floor.minz < other->floor.minz) {
+    ff->floorplane = other->floor;
+    ff->ceilplane = sec->ceiling;
+    ff->params = other->params;
+  } else {
+    ff->floorplane = sec->floor;
+    ff->ceilplane = sec->ceiling;
+    ff->params = sec->params;
+  }
 }
 
 

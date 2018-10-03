@@ -42,6 +42,7 @@
 #ifdef CLIENT
 # include "drawer.h"
 #endif
+#include "render/r_local.h"
 
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", 0/*CVAR_Archive*/);
@@ -55,7 +56,7 @@ static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remov
 
 static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
 static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply self-referenced deepwater hacks?", CVAR_Archive);
-static VCvarB deepwater_hacks_extra("deepwater_hacks_extra_ex", false, "Apply deepwater hacks to fix some map errors? (not working right yet)", 0/*CVAR_Archive*/);
+static VCvarB deepwater_hacks_extra("deepwater_hacks_extra_ex", false, "Apply deepwater hacks to fix some map errors? (not working right yet)", CVAR_Archive);
 static VCvarB build_blockmap("build_blockmap", false, "Build blockmap?", CVAR_Archive);
 static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
@@ -1435,6 +1436,7 @@ load_again:
   DecalProcessingTime += Sys_Time();
 
   // do it here, so it won't touch sloped floors
+  // it will set `othersec` for sectors too
   FixDeepWaters();
 
 
@@ -3838,6 +3840,7 @@ void VLevel::FloodZone(sector_t *Sec, int Zone)
   unguard;
 }
 
+
 //==========================================================================
 //
 // VLevel::FixSelfRefDeepWater
@@ -3929,14 +3932,15 @@ void VLevel::FixSelfRefDeepWater () {
   delete[] self_subs;
 }
 
+
 //==========================================================================
 //
 // VLevel::IsDeepWater
 //
+//  bits: 0: normal, back floor; 1: normal, front ceiling
+//  this tries to detect and fix bugs like Doom2:MAP04
+//
 //==========================================================================
-
-// bits: 0: normal, back floor; 1: normal, front ceiling
-// this tries to detect and fix bugs like Doom2:MAP04
 int VLevel::IsDeepWater (line_t *line) {
   // should have both sectors
   if (!line || !line->frontsector || !line->backsector) return 0;
@@ -4010,6 +4014,7 @@ back: 20
   return res;
 }
 
+
 //==========================================================================
 //
 // VLevel::IsDeepOk
@@ -4017,7 +4022,6 @@ back: 20
 // all lines should have the same front/back
 //
 //==========================================================================
-
 bool VLevel::IsDeepOk (sector_t *sec) {
   if (!sec || sec->linecount < 2) return false;
   int dwt = 0, xidx = -1;
@@ -4038,12 +4042,12 @@ bool VLevel::IsDeepOk (sector_t *sec) {
   return true;
 }
 
+
 //==========================================================================
 //
 // VLevel::FixDeepWater
 //
 //==========================================================================
-
 void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
   if (!line->frontsector || !line->backsector) return;
 
@@ -4078,12 +4082,118 @@ void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
 
 
 void VLevel::FixDeepWaters () {
-  for (vint32 sidx = 0; sidx < NumSectors; ++sidx) Sectors[sidx].deepref = nullptr;
+  for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
+    sector_t *sec = &Sectors[sidx];
+    sec->deepref = nullptr;
+    sec->othersec = nullptr;
+    // fix "floor holes"
+    if (!deepwater_hacks_extra) continue;
+    if (sec->linecount == 0) continue;
+    // slopes aren't interesting
+    if (sec->floor.normal.z != 1.0) continue;
+    if (sec->ceiling.normal.z != -1.0) continue;
+    if (sec->floor.minz >= sec->ceiling.minz) continue;
+    //fprintf(stderr, "... #%d ...\n", sidx);
+    // if all linedefs has the same backsector, this is our candidate
+    // also, "our" side shouldn't have bottom texture
+    sector_t *other = nullptr;
+    for (int f = 0; f < sec->linecount; ++f) {
+      line_t *line = sec->lines[f];
+      if (!(!!line->frontsector && !!line->backsector)) continue;
+      sector_t *bs;
+      int myside;
+      if (line->frontsector == sec) {
+        // back
+        bs = line->backsector;
+        myside = 0;
+      } else if (line->backsector == sec) {
+        // front?
+        bs = line->frontsector;
+        myside = 1;
+      } else {
+        other = nullptr;
+        continue;
+      }
+      if (sec->floor.minz >= bs->floor.minz) { other = nullptr; break; }
+      if (bs->floor.minz >= bs->ceiling.minz) { other = nullptr; break; }
+      // sloped?
+      if (bs->floor.normal.z != 1.0) { other = nullptr; break; }
+      if (bs->ceiling.normal.z != -1.0) { other = nullptr; break; }
+      if (!other) other = bs;
+      if (other != bs) {
+        // DooM II: MAP04; oops
+        if (other->floor.minz != bs->floor.minz) { other = nullptr; break; }
+        if (other->floor.pic != bs->floor.pic) { other = nullptr; break; }
+        if (other->params.lightlevel != bs->params.lightlevel) { other = nullptr; break; }
+        if (other->params.LightColour != bs->params.LightColour) { other = nullptr; break; }
+        //{ other = nullptr; break; }
+      }
+      //fprintf(stderr, "POSSIBLE: sector #%d (line #%d)\n", sidx, (int)(ptrdiff_t)(line-Lines));
+      // check for missing bottom texture
+      if (line->sidenum[myside] < 0) { other = nullptr; break; } // sanity check
+      if (Sides[line->sidenum[myside]].BottomTexture != 0) { other = nullptr; break; }
+      // looks good
+    }
+    if (!other) continue;
+    // other sector should not be us, and it should not be a slope
+    if (other == sec) continue;
+    // slopes aren't interesting
+    if (other->floor.normal.z != 1.0) continue;
+    if (other->ceiling.normal.z != -1.0) continue;
+    // check height
+    if (sec->floor.minz >= other->floor.minz) continue; // nope
+    GCon->Logf("FLATFIX: found illusiopit at sector #%d", sidx);
+    sec->othersec = other;
+
+    sec->fakefloors = new fakefloor_t;
+    fakefloor_t *ff = sec->fakefloors;
+    memset((void *)ff, 0, sizeof(fakefloor_t));
+    ff->floorplane = sec->othersec->floor;
+    ff->ceilplane = sec->ceiling;
+    ff->params = sec->params;
+  }
+
+  /*
+  do {
+    vint32 sidx = 72;
+    sector_t *sec = &Sectors[sidx];
+    if (sec->floor.normal.z != 1.0) continue;
+    if (sec->ceiling.normal.z != -1.0) continue;
+    fprintf(stderr, "... #%d ...\n", sidx);
+    sector_t *lastother = nullptr;
+    for (int f = 0; f < sec->linecount; ++f) {
+      line_t *line = sec->lines[f];
+      if (!(!!line->frontsector && !!line->backsector)) continue;
+      if (line->frontsector != sec && line->backsector != sec) continue;
+      sector_t *bs;
+      int side;
+      if (line->frontsector == sec) {
+        // back
+        bs = line->backsector;
+        side = 1;
+      } else {
+        // front?
+        bs = line->frontsector;
+        side = 0;
+      }
+      if (sec->floor.minz > bs->floor.minz) continue; // nope
+      if (!lastother) lastother = bs;
+      if (lastother != bs) {
+        if (lastother->floor.minz != bs->floor.minz) continue;
+        if (lastother->floor.pic != bs->floor.pic) continue;
+        if (lastother->params.lightlevel != bs->params.lightlevel) continue;
+        if (lastother->params.LightColour != bs->params.LightColour) continue;
+      }
+      fprintf(stderr, "  line #%d: fsec=%d; bsec=%d; side=%d\n", (int)(ptrdiff_t)(line-Lines), (int)(ptrdiff_t)(line->frontsector-Sectors), (int)(ptrdiff_t)(line->backsector-Sectors), side);
+    }
+  } while (0);
+  */
 
   if (deepwater_hacks) {
     FixSelfRefDeepWater();
   }
 
+  /*
   if (deepwater_hacks_extra && (LevelFlags&LF_Extended) == 0) {
     for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
@@ -4097,6 +4207,7 @@ void VLevel::FixDeepWaters () {
       }
     }
   }
+  */
 }
 
 
