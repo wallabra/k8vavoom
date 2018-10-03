@@ -191,6 +191,24 @@ IMPLEMENT_FUNCTION(VObject, RotateVectorAroundVector) {
   RET_VEC(RotateVectorAroundVector(Vector, Axis, Angle));
 }
 
+//native static final bool IsPlainFloor (const ref TPlane plane); // valid only for floors
+IMPLEMENT_FUNCTION(VObject, IsPlainFloor) {
+  P_GET_PTR(TPlane, plane);
+  RET_BOOL(plane->normal.z == 1.0);
+}
+
+//native static final bool IsPlainCeiling (const ref TPlane plane); // valid only for ceilings
+IMPLEMENT_FUNCTION(VObject, IsPlainCeiling) {
+  P_GET_PTR(TPlane, plane);
+  RET_BOOL(plane->normal.z == -1.0);
+}
+
+//native static final bool IsSlopedFlat (const ref TPlane plane);
+IMPLEMENT_FUNCTION(VObject, IsSlopedFlat) {
+  P_GET_PTR(TPlane, plane);
+  RET_BOOL(fabs(plane->normal.z) != 1.0);
+}
+
 
 //**************************************************************************
 //

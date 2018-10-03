@@ -340,6 +340,10 @@ native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot)
 native static final void VectorRotateAroundZ (ref TVec vec, float angle);
 // rotates vector around another vector
 native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec Axis, float angle);
+// use on `sec_plane_t` to check if the plane is non-sloped
+native static final bool IsPlainFloor (const ref TPlane plane); // valid only for floors
+native static final bool IsPlainCeiling (const ref TPlane plane); // valid only for ceilings
+native static final bool IsSlopedFlat (const ref TPlane plane);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -44,6 +44,9 @@
   DECLARE_FUNCTION(RotateDirectionVector)
   DECLARE_FUNCTION(VectorRotateAroundZ)
   DECLARE_FUNCTION(RotateVectorAroundVector)
+  DECLARE_FUNCTION(IsPlainFloor)
+  DECLARE_FUNCTION(IsPlainCeiling)
+  DECLARE_FUNCTION(IsSlopedFlat)
 
   // string functions
   DECLARE_FUNCTION(strlen)
