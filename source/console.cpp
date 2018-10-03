@@ -22,85 +22,66 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "drawer.h"
 
-// MACROS ------------------------------------------------------------------
 
 #define MAXHISTORY       (32)
 #define MAX_LINES        (1024)
 #define MAX_LINE_LENGTH  (80)
 
-// TYPES -------------------------------------------------------------------
 
-enum cons_state_t
-{
+enum cons_state_t {
   cons_closed,
   cons_opening,
   cons_open,
   cons_closing
 };
 
-class FConsoleDevice : public FOutputDevice
-{
+
+class FConsoleDevice : public FOutputDevice {
 public:
-  virtual void Serialise(const char *V, EName Event) override;
+  virtual void Serialise (const char *V, EName Event) override;
 };
 
-class FConsoleLog : public VLogListener
-{
+
+class FConsoleLog : public VLogListener {
 public:
-  virtual void Serialise(const char *V, EName Event) override;
+  virtual void Serialise (const char *V, EName Event) override;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+extern bool graphics_started;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+FConsoleDevice Console;
+FOutputDevice *GCon = &Console;
 
-extern bool       graphics_started;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static TILine c_iline = {"", 0};
 
-FConsoleDevice      Console;
+static cons_state_t consolestate = cons_closed;
 
-FOutputDevice     *GCon = &Console;
+static char clines[MAX_LINES][MAX_LINE_LENGTH];
+static int num_lines = 0;
+static int first_line = 0;
+static int last_line = 0;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static TILine     c_iline = {"", 0};
-
-static cons_state_t   consolestate = cons_closed;
-
-static char       clines[MAX_LINES][MAX_LINE_LENGTH];
-static int        num_lines = 0;
-static int        first_line = 0;
-static int        last_line = 0;
-
-static char       c_history_buf[MAXHISTORY][MAX_ILINE_LENGTH];
-/*
-static int        c_history_last;
-*/
-static int        c_history_size = 0;
-static int        c_history_current = -1;
+static char c_history_buf[MAXHISTORY][MAX_ILINE_LENGTH];
+static int c_history_size = 0;
+static int c_history_current = -1;
 static char *c_history[MAXHISTORY] = {nullptr}; // 0 is oldest
 
-static float      cons_h = 0;
+static float cons_h = 0;
 
-static VCvarF     con_height("con_height", "240", "Console height.", CVAR_Archive);
-static VCvarF     con_speed("con_speed", "6666", "Console sliding speed.", CVAR_Archive);
+static VCvarF con_height("con_height", "240", "Console height.", CVAR_Archive);
+static VCvarF con_speed("con_speed", "6666", "Console sliding speed.", CVAR_Archive);
 
-//  Autocomplete
-static int        c_autocompleteIndex = -1;
-static VStr       c_autocompleteString;
-static FConsoleLog    ConsoleLog;
+// autocomplete
+static int c_autocompleteIndex = -1;
+static VStr c_autocompleteString;
+static FConsoleLog ConsoleLog;
 
 
 //==========================================================================
@@ -259,7 +240,7 @@ void C_Drawer () {
 
   // lines
   i = last_line;
-  while ((y + 9 > 0) && i--) {
+  while ((y+9 > 0) && i--) {
     T_DrawText(4, y, clines[(i+first_line)%MAX_LINES], CR_UNTRANSLATED);
     y -= 9;
   }

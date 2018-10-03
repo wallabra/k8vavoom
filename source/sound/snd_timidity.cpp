@@ -173,7 +173,7 @@ int VTimidityAudioCodec::ctl_msg(int type, int verbosity_level, const char *fmt,
     s_timidity_verbosity < verbosity_level)
     return 0;
   va_start(ap, fmt);
-  vsprintf(Buf, fmt, ap);
+  vsnprintf(Buf, sizeof(Buf), fmt, ap);
   GCon->Log(Buf);
   va_end(ap);
   return 0;

@@ -222,10 +222,10 @@ void VBasePlayer::Printf(const char *s, ...)
 {
   guard(VBasePlayer::Printf);
   va_list v;
-  char  buf[1024];
+  static char buf[4096];
 
   va_start(v, s);
-  vsprintf(buf, s, v);
+  vsnprintf(buf, sizeof(buf), s, v);
   va_end(v);
 
   eventClientPrint(buf);
@@ -242,10 +242,10 @@ void VBasePlayer::CentrePrintf(const char *s, ...)
 {
   guard(VBasePlayer::CentrePrintf);
   va_list v;
-  char  buf[1024];
+  static char  buf[4096];
 
   va_start(v, s);
-  vsprintf(buf, s, v);
+  vsnprintf(buf, sizeof(buf), s, v);
   va_end(v);
 
   eventClientCentrePrint(buf);

@@ -512,10 +512,10 @@ void Host_Frame()
 void Host_EndGame(const char *message, ...)
 {
   va_list argptr;
-  char string[1024];
+  static char string[4096];
 
-  va_start(argptr,message);
-  vsprintf(string,message,argptr);
+  va_start(argptr, message);
+  vsnprintf(string, sizeof(string), message, argptr);
   va_end(argptr);
 
   throw EndGame(string);
@@ -532,10 +532,10 @@ void Host_EndGame(const char *message, ...)
 void Host_Error(const char *error, ...)
 {
   va_list argptr;
-  char string[1024];
+  static char string[4096];
 
   va_start(argptr, error);
-  vsprintf(string, error, argptr);
+  vsnprintf(string, sizeof(string), error, argptr);
   va_end(argptr);
 
   throw RecoverableError(string);

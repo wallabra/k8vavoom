@@ -318,10 +318,10 @@ void VThinker::BroadcastPrintf(const char *s, ...)
 {
   guard(VThinker::BroadcastPrintf);
   va_list v;
-  char  buf[1024];
+  static char  buf[4096];
 
   va_start(v, s);
-  vsprintf(buf, s, v);
+  vsnprintf(buf, sizeof(buf), s, v);
   va_end(v);
 
   BroadcastPrint(buf);
@@ -353,10 +353,10 @@ void VThinker::BroadcastCentrePrintf(const char *s, ...)
 {
   guard(VThinker::BroadcastCentrePrintf);
   va_list v;
-  char  buf[1024];
+  static char  buf[4096];
 
   va_start(v, s);
-  vsprintf(buf, s, v);
+  vsnprintf(buf, sizeof(buf), s, v);
   va_end(v);
 
   BroadcastCentrePrint(buf);

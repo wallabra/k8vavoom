@@ -23,23 +23,13 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
+void C_Init ();
+bool C_Responder (event_t *);
+void C_Drawer ();
+bool C_Active ();
+void C_Start ();
+void C_StartFull ();
+void C_Stop ();
+void C_Shutdown ();
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void C_Init();
-bool C_Responder(event_t*);
-void C_Drawer();
-bool C_Active();
-void C_Start();
-void C_StartFull();
-void C_Stop();
-void C_Shutdown();
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
-
-extern FOutputDevice  *GCon;
+extern FOutputDevice *GCon;

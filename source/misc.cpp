@@ -88,24 +88,26 @@ void FOutputDevice::Log(EName Type, const VStr &S)
 {
   Serialise(*S, Type);
 }
-__attribute__((format(printf, 2, 3))) void FOutputDevice::Logf(const char *Fmt, ...)
-{
+
+
+static char string[32768];
+
+__attribute__((format(printf, 2, 3))) void FOutputDevice::Logf(const char *Fmt, ...) {
   va_list argptr;
-  char string[1024];
 
   va_start(argptr, Fmt);
-  vsprintf(string, Fmt, argptr);
+  vsnprintf(string, sizeof(string), Fmt, argptr);
   va_end(argptr);
 
   Serialise(string, NAME_Log);
 }
+
 __attribute__((format(printf, 3, 4))) void FOutputDevice::Logf(EName Type, const char *Fmt, ...)
 {
   va_list argptr;
-  char string[1024];
 
   va_start(argptr, Fmt);
-  vsprintf(string, Fmt, argptr);
+  vsnprintf(string, sizeof(string), Fmt, argptr);
   va_end(argptr);
 
   Serialise(string, Type);
