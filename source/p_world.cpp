@@ -349,6 +349,7 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
   }
 
   Count = Intercepts.Num();
+  In = Intercepts.Ptr();
   unguard;
 }
 
@@ -361,9 +362,9 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 //  this is faster than sorting, as most intercepts are already sorted
 //
 //==========================================================================
-intercept_t &VPathTraverse::NewIntercept (const float frac) {
+intercept_t &VPathTraverse::NewIntercept (const float frac, bool asThing) {
   int pos = Intercepts.length();
-  if (pos == 0 || Intercepts[pos-1].frac <= frac) {
+  if (pos == 0 || Intercepts[pos-1].frac < frac) {
     // no need to bubble, just append it
     intercept_t &xit = Intercepts.Alloc();
     xit.frac = frac;
@@ -371,6 +372,9 @@ intercept_t &VPathTraverse::NewIntercept (const float frac) {
   }
   // bubble
   while (pos > 0 && Intercepts[pos-1].frac > frac) --pos;
+  if (asThing) {
+    while (pos > 0 && Intercepts[pos-1].frac >= frac && !Intercepts[pos-1].thing) --pos;
+  }
   // insert
   intercept_t it;
   it.frac = frac;
@@ -409,7 +413,7 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
     // try to early out the check
     if (EarlyOut && frac < 1.0 && !ld->backsector) return false; // stop checking
 
-    intercept_t &In = NewIntercept(frac);
+    intercept_t &In = NewIntercept(frac, false);
     In.frac = frac;
     In.Flags = intercept_t::IF_IsALine;
     In.line = ld;
@@ -435,7 +439,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy, floa
     const float frac = dist/trace_len;
     if (frac >= maxfrac) continue;
 
-    intercept_t &In = NewIntercept(frac);
+    intercept_t &In = NewIntercept(frac, true);
     In.frac = frac;
     In.Flags = 0;
     In.line = nullptr;
@@ -455,6 +459,10 @@ bool VPathTraverse::GetNext () {
   if (!Count) return false; // everything was traversed
   --Count;
 
+  *InPtr = In++;
+  return true;
+
+  /*k8: it is already sorted
   if (In) In->frac = 99999.0; // mark previous intercept as checked
 
   // go through the sorted list
@@ -471,5 +479,6 @@ bool VPathTraverse::GetNext () {
 
   *InPtr = In;
   return true;
+  */
   unguard;
 }

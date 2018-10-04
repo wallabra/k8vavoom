@@ -136,5 +136,5 @@ private:
   void Init (VThinker *, float, float, float, float, int);
   bool AddLineIntercepts (VThinker *, int, int, bool);
   void AddThingIntercepts (VThinker *, int, int, float maxfrac=9999999.0f);
-  intercept_t &NewIntercept (const float frac);
+  intercept_t &NewIntercept (const float frac, bool asThing);
 };
