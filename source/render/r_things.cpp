@@ -95,99 +95,68 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   const TVec &saxis, const TVec &taxis, const TVec &texorg)
 {
   guard(VRenderLevelShared::DrawTranslucentPoly);
-  int i;
+
+  // make room
+  if (traspUsed == traspSize) {
+    if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
+    traspSize += 0x10000;
+    trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
+  }
 
   TVec mid(0, 0, 0);
-  for (i = 0; i < count; i++)
-  {
-    mid += sv[i];
-  }
+  for (int i = 0; i < count; ++i) mid += sv[i];
   mid /= count;
-  float dist = fabs(DotProduct(mid - vieworg, viewforward));
-  //float dist = Length(mid - vieworg);
-  int found = -1;
-  float best_dist = -1;
-  for (i = 0; i < MAX_TRANS_SPRITES; i++)
-  {
-    trans_sprite_t &spr = trans_sprites[i];
-    if (!spr.Alpha)
-    {
-      if (type)
-        memcpy(spr.Verts, sv, sizeof(TVec) * 4);
-      spr.dist = dist;
-      spr.lump = lump;
-      spr.normal = normal;
-      spr.pdist = pdist;
-      spr.saxis = saxis;
-      spr.taxis = taxis;
-      spr.texorg = texorg;
-      spr.surf = surf;
-      spr.Alpha = Alpha;
-      spr.Additive = Additive;
-      spr.translation = translation;
-      spr.type = type;
-      spr.light = light;
-      spr.Fade = Fade;
-      return;
-    }
-    if (spr.dist > best_dist)
-    {
-      found = i;
-      best_dist = spr.dist;
-    }
-  }
-  if (best_dist > dist)
-  {
-    //  All slots are full, draw and replace a far away sprite
-    trans_sprite_t &spr = trans_sprites[found];
-    if (spr.type == 2)
-    {
-      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha,
-        spr.Additive, spr.TimeFrac, RPASS_Normal);
-    }
-    else if (spr.type)
-    {
-      Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-        spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-        ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-        spr.saxis, spr.taxis, spr.texorg);
-    }
-    else
-    {
-      check(spr.surf);
-      Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
-    }
-    if (type)
-      memcpy(spr.Verts, sv, sizeof(TVec) * 4);
-    spr.dist = dist;
-    spr.lump = lump;
-    spr.normal = normal;
-    spr.pdist = pdist;
-    spr.saxis = saxis;
-    spr.taxis = taxis;
-    spr.texorg = texorg;
-    spr.surf = surf;
-    spr.Alpha = Alpha;
-    spr.Additive = Additive;
-    spr.translation = translation;
-    spr.type = type;
-    spr.light = light;
-    spr.Fade = Fade;
-    return;
+  float dist = fabs(DotProduct(mid-vieworg, viewforward));
+  //float dist = Length(mid-vieworg);
+
+  trans_sprite_t &spr = trans_sprites[traspUsed++];
+  if (type) memcpy(spr.Verts, sv, sizeof(TVec)*4);
+  spr.dist = dist;
+  spr.lump = lump;
+  spr.normal = normal;
+  spr.pdist = pdist;
+  spr.saxis = saxis;
+  spr.taxis = taxis;
+  spr.texorg = texorg;
+  spr.surf = surf;
+  spr.Alpha = Alpha;
+  spr.Additive = Additive;
+  spr.translation = translation;
+  spr.type = type;
+  spr.light = light;
+  spr.Fade = Fade;
+
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::RenderTranslucentAliasModel
+//
+//==========================================================================
+void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
+  guard(VRenderLevelShared::RenderTranslucentAliasModel);
+
+  // make room
+  if (traspUsed == traspSize) {
+    if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
+    traspSize += 0x10000;
+    trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
 
-  //  All slots are full and are nearer to current sprite so draw it
-  if (type)
-  {
-    Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
-      Additive, GetTranslation(translation), ColourMap, light, Fade,
-      normal, pdist, saxis, taxis, texorg);
-  }
-  else
-  {
-    check(surf);
-    Drawer->DrawMaskedPolygon(surf, Alpha, Additive);
-  }
+  float dist = fabs(DotProduct(mobj->Origin-vieworg, viewforward));
+
+  trans_sprite_t &spr = trans_sprites[traspUsed++];
+  spr.Ent = mobj;
+  spr.light = light;
+  spr.Fade = Fade;
+  spr.Alpha = Alpha;
+  spr.Additive = Additive;
+  spr.dist = dist;
+  spr.type = 2;
+  spr.TimeFrac = TimeFrac;
+
   unguard;
 }
 
@@ -396,64 +365,6 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
 
 //==========================================================================
 //
-//  VRenderLevelShared::RenderTranslucentAliasModel
-//
-//==========================================================================
-void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
-  guard(VRenderLevelShared::RenderTranslucentAliasModel);
-
-  float dist = fabs(DotProduct(mobj->Origin-vieworg, viewforward));
-  int found = -1;
-  float best_dist = -1;
-  for (int i = 0; i < MAX_TRANS_SPRITES; ++i) {
-    trans_sprite_t &spr = trans_sprites[i];
-    if (!spr.Alpha) {
-      spr.Ent = mobj;
-      spr.light = light;
-      spr.Fade = Fade;
-      spr.Alpha = Alpha;
-      spr.Additive = Additive;
-      spr.dist = dist;
-      spr.type = 2;
-      spr.TimeFrac = TimeFrac;
-      return;
-    }
-    if (spr.dist > best_dist) {
-      found = i;
-      best_dist = spr.dist;
-    }
-  }
-  if (best_dist > dist) {
-    // all slots are full, draw and replace a far away sprite
-    trans_sprite_t &spr = trans_sprites[found];
-    if (spr.type == 2) {
-      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
-    } else if (spr.type) {
-      Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-        spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-        ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-        spr.saxis, spr.taxis, spr.texorg);
-    } else {
-      check(spr.surf);
-      Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
-    }
-    spr.Ent = mobj;
-    spr.light = light;
-    spr.Fade = Fade;
-    spr.Alpha = Alpha;
-    spr.Additive = Additive;
-    spr.dist = dist;
-    spr.type = 2;
-    spr.TimeFrac = TimeFrac;
-    return;
-  }
-  DrawEntityModel(mobj, light, Fade, Alpha, Additive, TimeFrac, RPASS_Normal);
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::RenderAliasModel
 //
 //==========================================================================
@@ -570,51 +481,53 @@ void VRenderLevelShared::RenderMobjs(ERenderPass Pass) {
 
 //==========================================================================
 //
+//  traspCmp
+//
+//==========================================================================
+extern "C" {
+  static int traspCmp (const void *a, const void *b, void * /*udata*/) {
+    if (a == b) return 0;
+    float d0 = ((const VRenderLevelShared::trans_sprite_t *)a)->dist;
+    float d1 = ((const VRenderLevelShared::trans_sprite_t *)b)->dist;
+    if (d1 < d0) return -1;
+    if (d1 > d0) return 1;
+    return 0;
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DrawTranslucentPolys
 //
 //==========================================================================
 void VRenderLevelShared::DrawTranslucentPolys () {
   guard(VRenderLevelShared::DrawTranslucentPolys);
-  int i, found;
-  do {
-    found = -1;
-    float best_dist = -1;
-    for (i = 0; i < MAX_TRANS_SPRITES; i++)
-    {
-      trans_sprite_t &spr = trans_sprites[i];
-      if (!spr.Alpha)
-      {
-        continue;
-      }
-      if (spr.dist > best_dist)
-      {
-        found = i;
-        best_dist = spr.dist;
-      }
+
+  if (traspUsed <= traspFirst) return; // nothing to do
+
+  // sort 'em
+  timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
+
+  // render 'em
+  for (int f = traspFirst; f < traspUsed; ++f) {
+    trans_sprite_t &spr = trans_sprites[f];
+    if (spr.type == 2) {
+      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
+    } else if (spr.type) {
+      Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
+                                spr.Alpha, spr.Additive, GetTranslation(spr.translation),
+                                ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
+                                spr.saxis, spr.taxis, spr.texorg);
+    } else {
+      check(spr.surf);
+      Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
     }
-    if (found != -1)
-    {
-      trans_sprite_t &spr = trans_sprites[found];
-      if (spr.type == 2)
-      {
-        DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha,
-          spr.Additive, spr.TimeFrac, RPASS_Normal);
-      }
-      else if (spr.type)
-      {
-        Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-          spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-          ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-          spr.saxis, spr.taxis, spr.texorg);
-      }
-      else
-      {
-        check(spr.surf);
-        Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
-      }
-      spr.Alpha = 0;
-    }
-  } while (found != -1);
+  }
+
+  // reset list
+  traspUsed = traspFirst;
+
   unguard;
 }
 
@@ -726,6 +639,7 @@ void VRenderLevelShared::RenderPSprite(VViewState *VSt, float PSP_DIST,
     DotProduct(dv[0], -viewforward), saxis, taxis, texorg);
   unguard;
 }
+
 
 //==========================================================================
 //

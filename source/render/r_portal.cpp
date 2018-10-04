@@ -121,32 +121,30 @@ void VPortal::Draw (bool UseStencil) {
   int SavedExtraLight = RLev->ExtraLight;
   int SavedFixedLight = RLev->FixedLight;
   vuint8 *SavedBspVis = RLev->BspVis;
-  VRenderLevel::trans_sprite_t *SavedTransSprites = RLev->trans_sprites;
+  auto savedTraspFirst = RLev->traspFirst;
+  auto savedTraspUsed = RLev->traspUsed;
   bool SavedMirrorClip = MirrorClip;
   TClipPlane SavedClip = view_clipplanes[4];
   TClipPlane *SavedClipLink = view_clipplanes[3].next;
 
-  // this is used as "restore BspVis" flag
-  VRenderLevel::trans_sprite_t *TransSprites = nullptr; //(VRenderLevel::trans_sprite_t *)Z_Calloc(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
   VRenderLevelShared::PPMark pmark;
   VRenderLevelShared::MarkPortalPool(&pmark);
 
+  bool restoreVis = false;
   if (NeedsDepthBuffer()) {
     // set up BSP visibility table and translated sprites
     // this has to be done only for portals that do rendering of view
-    //RLev->BspVis = (vuint8 *)malloc(RLev->VisSize+1);
+
     // notify allocator about minimal node size
-    VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize+sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
-    // allocate now bsp vis
+    VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize);
+    // allocate new bsp vis
     RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize);
     if (RLev->VisSize) memset(RLev->BspVis, 0, RLev->VisSize);
     //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
-    //TransSprites = (VRenderLevel::trans_sprite_t *)malloc(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
     // allocate new transsprites list
-    TransSprites = (VRenderLevel::trans_sprite_t *)VRenderLevelShared::AllocPortalPool(sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
-    memset((void *)TransSprites, 0, sizeof(VRenderLevel::trans_sprite_t)*VRenderLevel::MAX_TRANS_SPRITES);
-    RLev->trans_sprites = TransSprites;
+    RLev->traspFirst = RLev->traspUsed;
+    restoreVis = true;
   }
 
   DrawContents();
@@ -160,9 +158,11 @@ void VPortal::Draw (bool UseStencil) {
   RLev->ViewEnt = SavedViewEnt;
   RLev->ExtraLight = SavedExtraLight;
   RLev->FixedLight = SavedFixedLight;
-  //if (TransSprites) free(RLev->BspVis);
-  RLev->BspVis = SavedBspVis;
-  RLev->trans_sprites = SavedTransSprites;
+  if (restoreVis) {
+    RLev->BspVis = SavedBspVis;
+    RLev->traspFirst = savedTraspFirst;
+    RLev->traspUsed = savedTraspUsed;
+  }
   MirrorClip = SavedMirrorClip;
   view_clipplanes[4] = SavedClip;
   view_clipplanes[3].next = SavedClipLink;
@@ -174,7 +174,6 @@ void VPortal::Draw (bool UseStencil) {
   // restore ppol
   VRenderLevelShared::RestorePortalPool(&pmark);
 
-  //if (TransSprites) free(TransSprites);
   unguard;
 }
 

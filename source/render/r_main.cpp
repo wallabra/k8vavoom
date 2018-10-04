@@ -388,36 +388,38 @@ void R_Start(VLevel *ALevel)
 //==========================================================================
 
 VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
-: VRenderLevelDrawer()
-, Level(ALevel)
-, ViewEnt(nullptr)
-, MirrorLevel(0)
-, PortalLevel(0)
-, VisSize(0)
-, BspVis(nullptr)
-, r_viewleaf(nullptr)
-, r_oldviewleaf(nullptr)
-, old_fov(90.0)
-, prev_aspect_ratio(0)
-, ExtraLight(0)
-, FixedLight(0)
-, Particles(0)
-, ActiveParticles(0)
-, FreeParticles(0)
-, CurrentSky1Texture(-1)
-, CurrentSky2Texture(-1)
-, CurrentDoubleSky(false)
-, CurrentLightning(false)
-, trans_sprites(MainTransSprites)
-, free_wsurfs(nullptr)
-, AllocatedWSurfBlocks(nullptr)
-, AllocatedSubRegions(nullptr)
-, AllocatedDrawSegs(nullptr)
-, AllocatedSegParts(nullptr)
-, cacheframecount(0)
+  : VRenderLevelDrawer()
+  , Level(ALevel)
+  , ViewEnt(nullptr)
+  , MirrorLevel(0)
+  , PortalLevel(0)
+  , VisSize(0)
+  , BspVis(nullptr)
+  , r_viewleaf(nullptr)
+  , r_oldviewleaf(nullptr)
+  , old_fov(90.0)
+  , prev_aspect_ratio(0)
+  , ExtraLight(0)
+  , FixedLight(0)
+  , Particles(0)
+  , ActiveParticles(0)
+  , FreeParticles(0)
+  , CurrentSky1Texture(-1)
+  , CurrentSky2Texture(-1)
+  , CurrentDoubleSky(false)
+  , CurrentLightning(false)
+  , trans_sprites(nullptr)
+  , traspUsed(0)
+  , traspSize(0)
+  , traspFirst(0)
+  , free_wsurfs(nullptr)
+  , AllocatedWSurfBlocks(nullptr)
+  , AllocatedSubRegions(nullptr)
+  , AllocatedDrawSegs(nullptr)
+  , AllocatedSegParts(nullptr)
+  , cacheframecount(0)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
-  memset(MainTransSprites, 0, sizeof(MainTransSprites));
 
   memset(light_block, 0, sizeof(light_block));
   memset(block_changed, 0, sizeof(block_changed));
@@ -448,11 +450,87 @@ VRenderLevelShared::VRenderLevelShared(VLevel *ALevel)
   screenblocks = 0;
 
   // preload graphics
-  if (precache)
-  {
-    PrecacheLevel();
-  }
+  if (precache) PrecacheLevel();
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::~VRenderLevelShared
+//
+//==========================================================================
+VRenderLevelShared::~VRenderLevelShared () {
+  // free fake floor data
+  for (int i = 0; i < Level->NumSectors; ++i) {
+    if (Level->Sectors[i].fakefloors) {
+      delete Level->Sectors[i].fakefloors;
+      Level->Sectors[i].fakefloors = nullptr;
+    }
+  }
+
+  for (int i = 0; i < Level->NumSubsectors; ++i) {
+    for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next) {
+      if (r->floor != nullptr) {
+        FreeSurfaces(r->floor->surfs);
+        delete r->floor;
+        r->floor = nullptr;
+      }
+      if (r->ceil != nullptr) {
+        FreeSurfaces(r->ceil->surfs);
+        delete r->ceil;
+        r->ceil = nullptr;
+      }
+    }
+  }
+
+  // free seg parts
+  for (int i = 0; i < Level->NumSegs; ++i) {
+    for (drawseg_t *ds = Level->Segs[i].drawsegs; ds; ds = ds->next) {
+      FreeSegParts(ds->top);
+      FreeSegParts(ds->mid);
+      FreeSegParts(ds->bot);
+      FreeSegParts(ds->topsky);
+      FreeSegParts(ds->extra);
+      if (ds->HorizonTop) Z_Free(ds->HorizonTop);
+      if (ds->HorizonBot) Z_Free(ds->HorizonBot);
+    }
+  }
+
+  // free allocated wall surface blocks
+  for (void *Block = AllocatedWSurfBlocks; Block; ) {
+    void *Next = *(void **)Block;
+    Z_Free(Block);
+    Block = Next;
+  }
+  AllocatedWSurfBlocks = nullptr;
+
+  // free big blocks
+  delete[] AllocatedSubRegions;
+  AllocatedSubRegions = nullptr;
+  delete[] AllocatedDrawSegs;
+  AllocatedDrawSegs = nullptr;
+  delete[] AllocatedSegParts;
+  AllocatedSegParts = nullptr;
+
+  delete[] Particles;
+  Particles = nullptr;
+  delete[] BspVis;
+  BspVis = nullptr;
+
+  for (int i = 0; i < SideSkies.Num(); ++i) {
+    delete SideSkies[i];
+    SideSkies[i] = nullptr;
+  }
+
+  KillPortalPool();
+
+  // free translucent sprite list
+  if (trans_sprites) Z_Free(trans_sprites);
+  trans_sprites = nullptr;
+  traspUsed = 0;
+  traspSize = 0;
+  traspFirst = 0;
 }
 
 
@@ -496,97 +574,6 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
  // blockmap tracing
  return Level->CastCanSee(org, dest, (advanced ? radius : 0));
 #endif
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::~VRenderLevelShared
-//
-//==========================================================================
-
-VRenderLevelShared::~VRenderLevelShared()
-{
-  //guard(VRenderLevelShared::~VRenderLevelShared);
-  //  Free fake floor data.
-  for (int i = 0; i < Level->NumSectors; i++)
-  {
-    if (Level->Sectors[i].fakefloors)
-    {
-      delete Level->Sectors[i].fakefloors;
-      Level->Sectors[i].fakefloors = nullptr;
-    }
-  }
-
-  for (int i = 0; i < Level->NumSubsectors; i++)
-  {
-    for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next)
-    {
-      if (r->floor != nullptr)
-      {
-        FreeSurfaces(r->floor->surfs);
-        delete r->floor;
-        r->floor = nullptr;
-      }
-      if (r->ceil != nullptr)
-      {
-        FreeSurfaces(r->ceil->surfs);
-        delete r->ceil;
-        r->ceil = nullptr;
-      }
-    }
-  }
-
-  //  Free seg parts.
-  for (int i = 0; i < Level->NumSegs; i++)
-  {
-    for (drawseg_t *ds = Level->Segs[i].drawsegs; ds; ds = ds->next)
-    {
-      FreeSegParts(ds->top);
-      FreeSegParts(ds->mid);
-      FreeSegParts(ds->bot);
-      FreeSegParts(ds->topsky);
-      FreeSegParts(ds->extra);
-      if (ds->HorizonTop)
-      {
-        Z_Free(ds->HorizonTop);
-      }
-      if (ds->HorizonBot)
-      {
-        Z_Free(ds->HorizonBot);
-      }
-    }
-  }
-  //  Free allocated wall surface blocks.
-  for (void *Block = AllocatedWSurfBlocks; Block;)
-  {
-    void *Next = *(void**)Block;
-    Z_Free(Block);
-    Block = Next;
-  }
-  AllocatedWSurfBlocks = nullptr;
-
-  //  Free big blocks.
-  delete[] AllocatedSubRegions;
-  AllocatedSubRegions = nullptr;
-  delete[] AllocatedDrawSegs;
-  AllocatedDrawSegs = nullptr;
-  delete[] AllocatedSegParts;
-  AllocatedSegParts = nullptr;
-
-  delete[] Particles;
-  Particles = nullptr;
-  delete[] BspVis;
-  BspVis = nullptr;
-
-  for (int i = 0; i < SideSkies.Num(); i++)
-  {
-    delete SideSkies[i];
-    SideSkies[i] = nullptr;
-  }
-
-  KillPortalPool();
-  //unguard;
 }
 
 

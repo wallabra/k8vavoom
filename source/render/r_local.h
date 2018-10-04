@@ -263,8 +263,7 @@ enum ERenderPass
   RPASS_NonShadow,
 };
 
-class VRenderLevelShared : public VRenderLevelDrawer
-{
+class VRenderLevelShared : public VRenderLevelDrawer {
 protected:
   friend class VPortal;
   friend class VSkyPortal;
@@ -272,48 +271,43 @@ protected:
   friend class VSectorStackPortal;
   friend class VMirrorPortal;
 
+public:
   enum {
-    MAX_TRANS_SPRITES = 256,
     MAX_PARTICLES = 2048, // default max # of particles at one time
     ABSOLUTE_MIN_PARTICLES = 512, // no fewer than this no matter what's on the command line
     MAX_DLIGHTS = 32,
   };
 
-  struct trans_sprite_t
-  {
-    TVec      Verts[4];
-    union
-    {
+  struct trans_sprite_t {
+    TVec Verts[4];
+    union {
       surface_t *surf;
       VEntity *Ent;
     };
-    int       lump;
-    TVec      normal;
-    union
-    {
-      float   pdist;
-      float   TimeFrac;
+    int lump;
+    TVec normal;
+    union {
+      float pdist;
+      float TimeFrac;
     };
-    TVec      saxis;
-    TVec      taxis;
-    TVec      texorg;
-    float     Alpha;
-    bool      Additive;
-    int       translation;
-    int       type;
-    float     dist;
-    vuint32     light;
-    vuint32     Fade;
+    TVec saxis;
+    TVec taxis;
+    TVec texorg;
+    float Alpha;
+    bool Additive;
+    int translation;
+    int type;
+    float dist;
+    vuint32 light;
+    vuint32 Fade;
   };
 
-  struct world_surf_t
-  {
+  struct world_surf_t {
     surface_t *Surf;
-    vuint8      Type;
+    vuint8 Type;
   };
 
-  struct light_t
-  {
+  struct light_t {
     TVec origin;
     float radius;
     vuint32 colour;
@@ -321,67 +315,72 @@ protected:
     bool active; // for filtering
   };
 
+protected:
   VLevel *Level;
 
   VEntity *ViewEnt;
 
-  int       FrustumIndexes[5][6];
-  int       MirrorLevel;
-  int       PortalLevel;
-  int       VisSize;
+  int FrustumIndexes[5][6];
+  int MirrorLevel;
+  int PortalLevel;
+  int VisSize;
   vuint8 *BspVis;
 
   subsector_t *r_viewleaf;
   subsector_t *r_oldviewleaf;
-  float     old_fov;
-  int       prev_aspect_ratio;
+  float old_fov;
+  int prev_aspect_ratio;
 
-  //  Bumped light from gun blasts
-  int       ExtraLight;
-  int       FixedLight;
-  int       ColourMap;
+  // bumped light from gun blasts
+  int ExtraLight;
+  int FixedLight;
+  int ColourMap;
 
-  int       NumParticles;
+  int NumParticles;
   particle_t *Particles;
   particle_t *ActiveParticles;
   particle_t *FreeParticles;
 
-  //  Sky variables
-  int       CurrentSky1Texture;
-  int       CurrentSky2Texture;
-  bool      CurrentDoubleSky;
-  bool      CurrentLightning;
-  VSky      BaseSky;
+  // sky variables
+  int CurrentSky1Texture;
+  int CurrentSky2Texture;
+  bool CurrentDoubleSky;
+  bool CurrentLightning;
+  VSky BaseSky;
 
-  //  World render variables
-  VViewClipper      ViewClip;
-  TArray<world_surf_t>  WorldSurfs;
-  TArray<VPortal*>    Portals;
-  TArray<VSky*>     SideSkies;
+  // world render variables
+  VViewClipper ViewClip;
+  TArray<world_surf_t> WorldSurfs;
+  TArray<VPortal *> Portals;
+  TArray<VSky *> SideSkies;
 
+  // (partially) transparent sprites list
+  // cleared in `DrawTranslucentPolys()`
   trans_sprite_t *trans_sprites;
-  trans_sprite_t  MainTransSprites[MAX_TRANS_SPRITES];
+  int traspUsed;
+  int traspSize;
+  int traspFirst; // for portals, `DrawTranslucentPolys()` will start from this
 
-  sec_plane_t   sky_plane;
-  float     skyheight;
+  sec_plane_t sky_plane;
+  float skyheight;
   surface_t *free_wsurfs;
   void *AllocatedWSurfBlocks;
   subregion_t *AllocatedSubRegions;
   drawseg_t *AllocatedDrawSegs;
   segpart_t *AllocatedSegParts;
 
-  //  Light variables
+  // light variables
   TArray<light_t> Lights;
-  dlight_t    DLights[MAX_DLIGHTS];
+  dlight_t DLights[MAX_DLIGHTS];
 
-  // Only regular renderer needs this.
-  vuint32     cacheframecount;
+  // only regular renderer needs this
+  vuint32 cacheframecount;
 
-  //  Moved here so that model rendering methods can be merged.
-  TVec      CurrLightPos;
-  float     CurrLightRadius;
-  int             CurrLightsNumber;
-  int             CurrShadowsNumber;
+  // moved here so that model rendering methods can be merged
+  TVec CurrLightPos;
+  float CurrLightRadius;
+  int CurrLightsNumber;
+  int CurrShadowsNumber;
 
   // used in `AllocDlight()` to save one call to `PointInSubsector()`
   // reset in `RenderPlayerView()`
