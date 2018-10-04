@@ -30,6 +30,8 @@
 //**************************************************************************
 #include "gamedefs.h"
 
+static VCvarB dbg_use_buggy_thing_traverser("dbg_use_buggy_thing_traverser", false, "Use old and buggy thing traverser (for debug)?", 0);
+
 
 #define FRACBITS  (16)
 #define FRACUNIT  (1<<FRACBITS)
@@ -124,8 +126,7 @@ bool VBlockLinesIterator::GetNext () {
 //  VRadiusThingsIterator::VRadiusThingsIterator
 //
 //==========================================================================
-VRadiusThingsIterator::VRadiusThingsIterator(VThinker *ASelf,
-  VEntity **AEntPtr, TVec Org, float Radius)
+VRadiusThingsIterator::VRadiusThingsIterator(VThinker *ASelf, VEntity **AEntPtr, TVec Org, float Radius)
   : Self(ASelf)
   , EntPtr(AEntPtr)
 {
@@ -172,6 +173,11 @@ bool VRadiusThingsIterator::GetNext () {
   }
   unguard;
 }
+
+
+// path traverser will never build intercept list recursively, so
+// we can use static hashmap to mark things. yay!
+static TMapNC<VEntity *, bool> vptSeenThings;
 
 
 //==========================================================================
@@ -225,6 +231,8 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 
   // check if `Length()` and `SetPointDirXY()` are happy
   if (x1 == x2 && y1 == y2) { x2 += 0.01; y2 += 0.01; }
+
+  vptSeenThings.reset(); // don't shrink buckets
 
   trace_org = TVec(x1, y1, 0);
   trace_dest = TVec(x2, y2, 0);
@@ -436,19 +444,44 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 //==========================================================================
 void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy, float maxfrac) {
   guard(VPathTraverse::AddThingIntercepts);
-  for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
-    const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
-    if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
-    const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
-    if (dist < 0) continue; // behind source
-    const float frac = dist/trace_len;
-    if (frac >= maxfrac) continue;
+  if (dbg_use_buggy_thing_traverser) {
+    for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
+      const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
+      if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
+      const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
+      if (dist < 0) continue; // behind source
+      const float frac = dist/trace_len;
+      if (frac >= maxfrac) continue;
 
-    intercept_t &In = NewIntercept(frac, true);
-    In.frac = frac;
-    In.Flags = 0;
-    In.line = nullptr;
-    In.thing = *It;
+      intercept_t &In = NewIntercept(frac, true);
+      In.frac = frac;
+      In.Flags = 0;
+      In.line = nullptr;
+      In.thing = *It;
+    }
+  } else {
+    // "better"
+    for (int dy = -1; dy < 2; ++dy) {
+      for (int dx = -1; dx < 2; ++dx) {
+        for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); Self && It; ++It) {
+          const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
+          if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
+          const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
+          if (dist < 0) continue; // behind source
+          const float frac = dist/trace_len;
+          if (frac >= maxfrac) continue;
+
+          if (vptSeenThings.has(*It)) continue;
+          vptSeenThings.put(*It, true);
+
+          intercept_t &In = NewIntercept(frac, true);
+          In.frac = frac;
+          In.Flags = 0;
+          In.line = nullptr;
+          In.thing = *It;
+        }
+      }
+    }
   }
   unguard;
 }
