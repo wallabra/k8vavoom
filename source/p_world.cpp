@@ -288,15 +288,14 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
   mapx = xt1;
   mapy = yt1;
 
+  float earlyFrac = 1000;
+
   //k8: zdoom is using 1000 here; why?
   for (int count = 0 ; count < 100; ++count) {
     if (flags&PT_ADDLINES) {
-      if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT))) {
-        // don't throw away things before the line
-        if (Intercepts.length() && (flags&PT_ADDTHINGS) != 0) {
-          const float frac = Intercepts[Intercepts.length()-1].frac;
-          AddThingIntercepts(Self, mapx, mapy, frac);
-        }
+      if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT), earlyFrac)) {
+        // don't throw away things before the early out line
+        if (flags&PT_ADDTHINGS) AddThingIntercepts(Self, mapx, mapy, earlyFrac);
         return; // early out
       }
     }
@@ -319,12 +318,13 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
       // continues), but the other two blocks adjacent to the corner also need to
       // be checked.
       if (flags&PT_ADDLINES) {
-        if (!AddLineIntercepts(Self, mapx+mapxstep, mapy, !!(flags&PT_EARLYOUT)) ||
-            !AddLineIntercepts(Self, mapx, mapy+mapystep, !!(flags&PT_EARLYOUT)))
+        float ef1 = 1000;
+        if (!AddLineIntercepts(Self, mapx+mapxstep, mapy, !!(flags&PT_EARLYOUT), earlyFrac) ||
+            !AddLineIntercepts(Self, mapx, mapy+mapystep, !!(flags&PT_EARLYOUT), ef1))
         {
           // don't throw away things before the line
-          if (Intercepts.length() && (flags&PT_ADDTHINGS) != 0) {
-            const float frac = Intercepts[Intercepts.length()-1].frac;
+          if (flags&PT_ADDTHINGS) {
+            const float frac = (earlyFrac < ef1 ? earlyFrac : ef1);
             AddThingIntercepts(Self, mapx+mapxstep, mapy, frac);
             AddThingIntercepts(Self, mapx, mapy+mapystep, frac);
           }
@@ -393,9 +393,10 @@ intercept_t &VPathTraverse::NewIntercept (const float frac, bool asThing) {
 //  Returns `false` if earlyout and a solid line hit.
 //
 //==========================================================================
-bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut) {
+bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut, float &earlyFrac) {
   guard(VPathTraverse::AddLineIntercepts);
   line_t *ld;
+  earlyFrac = 1000;
   for (VBlockLinesIterator It(Self->XLevel, mapx, mapy, &ld); It.GetNext(); ) {
     float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
     float dot2 = DotProduct(*ld->v2, trace_plane.normal)-trace_plane.dist;
@@ -411,7 +412,11 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
     if (frac < 0 || frac > 1.0) continue; // behind source or beyond end point
 
     // try to early out the check
-    if (EarlyOut && frac < 1.0 && !ld->backsector) return false; // stop checking
+    if (EarlyOut && frac < 1.0 && !ld->backsector) {
+      // stop checking
+      earlyFrac = frac;
+      return false;
+    }
 
     intercept_t &In = NewIntercept(frac, false);
     In.frac = frac;
