@@ -27,51 +27,42 @@
 //**  misc. LUTs.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+enum {
+  ML_PASSUSE_BOOM = 0x0200, // Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
 
-enum
-{
-  ML_PASSUSE_BOOM       = 0x0200, //  Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
-
-  MTF_AMBUSH    = 0x0008, // Deaf monsters/do not react to sound.
-  MTF_DORMANT   = 0x0010, // The thing is dormant
-  MTF_GSINGLE   = 0x0100, // Appearing in game modes
-  MTF_GCOOP   = 0x0200,
+  MTF_AMBUSH      = 0x0008, // Deaf monsters/do not react to sound.
+  MTF_DORMANT     = 0x0010, // The thing is dormant
+  MTF_GSINGLE     = 0x0100, // Appearing in game modes
+  MTF_GCOOP       = 0x0200,
   MTF_GDEATHMATCH = 0x0400,
-  MTF_SHADOW    = 0x0800,
-  MTF_ALTSHADOW = 0x1000,
-  MTF_FRIENDLY  = 0x2000,
+  MTF_SHADOW      = 0x0800,
+  MTF_ALTSHADOW   = 0x1000,
+  MTF_FRIENDLY    = 0x2000,
   MTF_STANDSTILL  = 0x4000,
 };
 
-class VUdmfParser
-{
+
+class VUdmfParser {
 public:
-  //  Supported namespaces. Use bits to have faster cheks.
-  enum
-  {
-    //  Standard namespaces.
+  // supported namespaces; use bits to have faster cheks
+  enum {
+    // standard namespaces
     NS_Doom       = 0x01,
-    NS_Heretic      = 0x02,
+    NS_Heretic    = 0x02,
     NS_Hexen      = 0x04,
     NS_Strife     = 0x08,
-    //  Vavoom's namespace.
+    // Vavoom's namespace
     NS_Vavoom     = 0x10,
-    //  ZDoom's namespaces.
+    // ZDoom's namespaces
     NS_ZDoom      = 0x20,
-    NS_ZDoomTranslated  = 0x40,
+    NS_ZDoomTranslated = 0x40,
   };
 
-  enum
-  {
+  enum {
     TK_None,
     TK_Int,
     TK_Float,
@@ -79,194 +70,122 @@ public:
     TK_Identifier,
   };
 
-  struct VParsedLine
-  {
-    line_t    L;
-    int     V1Index;
-    int     V2Index;
+  struct VParsedLine {
+    line_t L;
+    int V1Index;
+    int V2Index;
   };
 
-  struct VParsedSide
-  {
-    side_t    S;
-    VStr    TopTexture;
-    VStr    MidTexture;
-    VStr    BotTexture;
-    int     SectorIndex;
+  struct VParsedSide {
+    side_t S;
+    VStr TopTexture;
+    VStr MidTexture;
+    VStr BotTexture;
+    int SectorIndex;
   };
 
-  VScriptParser   sc;
-  bool        bExtended;
-  vuint8        NS;
-  VStr        Key;
-  int         ValType;
-  int         ValInt;
-  float       ValFloat;
-  VStr        Val;
-  TArray<vertex_t>  ParsedVertexes;
-  TArray<sector_t>  ParsedSectors;
+  VScriptParser sc;
+  bool bExtended;
+  vuint8 NS;
+  VStr Key;
+  int ValType;
+  int ValInt;
+  float ValFloat;
+  VStr Val;
+  TArray<vertex_t> ParsedVertexes;
+  TArray<sector_t> ParsedSectors;
   TArray<VParsedLine> ParsedLines;
   TArray<VParsedSide> ParsedSides;
-  TArray<mthing_t>  ParsedThings;
+  TArray<mthing_t> ParsedThings;
 
-  VUdmfParser(int);
-  void Parse(VLevel*, const mapInfo_t&);
-  void ParseVertex();
-  void ParseSector(VLevel*);
-  void ParseLineDef(const mapInfo_t&);
-  void ParseSideDef();
-  void ParseThing();
-  void ParseKey();
-  int CheckInt();
-  float CheckFloat();
-  bool CheckBool();
-  VStr CheckString();
-  void Flag(int&, int);
-  void Flag(vuint32&, int);
+  VUdmfParser (int);
+  void Parse (VLevel *, const mapInfo_t &);
+  void ParseVertex ();
+  void ParseSector (VLevel *);
+  void ParseLineDef (const mapInfo_t &);
+  void ParseSideDef ();
+  void ParseThing ();
+  void ParseKey ();
+  int CheckInt ();
+  float CheckFloat ();
+  bool CheckBool ();
+  VStr CheckString ();
+  void Flag (int &, int);
+  void Flag (vuint32 &, int);
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VUdmfParser::VUdmfParser
 //
 //==========================================================================
-
-VUdmfParser::VUdmfParser(int Lump)
-: sc("textmap", W_CreateLumpReaderNum(Lump))
+VUdmfParser::VUdmfParser (int Lump)
+  : sc("textmap", W_CreateLumpReaderNum(Lump))
 {
 }
+
 
 //==========================================================================
 //
 //  VUdmfParser::Parse
 //
 //==========================================================================
-
-void VUdmfParser::Parse(VLevel *Level, const mapInfo_t &MInfo)
-{
+void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
   guard(VUdmfParser::Parse);
   sc.SetCMode(true);
 
   bExtended = false;
 
-  //  Get namespace name.
+  // get namespace name
   sc.Expect("namespace");
   sc.Expect("=");
   sc.ExpectString();
   VStr Namespace = sc.String;
   sc.Expect(";");
-  //  Vavoom's namespace.
-  if (!Namespace.ICmp("Vavoom"))
-  {
-    NS = NS_Vavoom;
-    bExtended = true;
-  }
-  //  Standard namespaces.
-  else if (!Namespace.ICmp("Doom"))
-  {
-    NS = NS_Doom;
-  }
-  else if (!Namespace.ICmp("Heretic"))
-  {
-    NS = NS_Heretic;
-  }
-  else if (!Namespace.ICmp("Hexen"))
-  {
-    NS = NS_Hexen;
-    bExtended = true;
-  }
-  else if (!Namespace.ICmp("Strife"))
-  {
-    NS = NS_Strife;
-  }
-  //  ZDoom namespaces.
-  else if (!Namespace.ICmp("ZDoom"))
-  {
-    NS = NS_ZDoom;
-    bExtended = true;
-  }
-  else if (!Namespace.ICmp("ZDoomTranslated"))
-  {
-    NS = NS_ZDoomTranslated;
-  }
-  else
-  {
-    //  Unknown namespace.
-    NS = 0;
-  }
+  // Vavoom's namespace
+       if (!Namespace.ICmp("Vavoom")) { NS = NS_Vavoom; bExtended = true; }
+  // standard namespaces
+  else if (!Namespace.ICmp("Doom")) NS = NS_Doom;
+  else if (!Namespace.ICmp("Heretic")) NS = NS_Heretic;
+  else if (!Namespace.ICmp("Hexen")) { NS = NS_Hexen; bExtended = true; }
+  else if (!Namespace.ICmp("Strife")) NS = NS_Strife;
+  // ZDoom namespaces
+  else if (!Namespace.ICmp("ZDoom")) { NS = NS_ZDoom; bExtended = true; }
+  else if (!Namespace.ICmp("ZDoomTranslated")) NS = NS_ZDoomTranslated;
+  else NS = 0; // unknown namespace
 
-  while (!sc.AtEnd())
-  {
-    if (sc.Check("vertex"))
-    {
-      ParseVertex();
-    }
-    else if (sc.Check("sector"))
-    {
-      ParseSector(Level);
-    }
-    else if (sc.Check("linedef"))
-    {
-      ParseLineDef(MInfo);
-    }
-    else if (sc.Check("sidedef"))
-    {
-      ParseSideDef();
-    }
-    else if (sc.Check("thing"))
-    {
-      ParseThing();
-    }
-    else
-    {
-      sc.Error("Syntax error");
-    }
+  while (!sc.AtEnd()) {
+         if (sc.Check("vertex")) ParseVertex();
+    else if (sc.Check("sector")) ParseSector(Level);
+    else if (sc.Check("linedef")) ParseLineDef(MInfo);
+    else if (sc.Check("sidedef")) ParseSideDef();
+    else if (sc.Check("thing")) ParseThing();
+    else sc.Error("Syntax error");
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VUdmfParser::ParseVertex
 //
 //==========================================================================
-
-void VUdmfParser::ParseVertex()
-{
+void VUdmfParser::ParseVertex () {
   guard(VUdmfParser::ParseVertex);
-  //  Allocate a new vertex.
+  // allocate a new vertex
   vertex_t &V = ParsedVertexes.Alloc();
   V = TVec(0, 0, 0);
-
   sc.Expect("{");
-  while (!sc.Check("}"))
-  {
+  while (!sc.Check("}")) {
     ParseKey();
-    if (!Key.ICmp("x"))
-    {
-      V.x = CheckFloat();
-    }
-    else if (!Key.ICmp("y"))
-    {
-      V.y = CheckFloat();
-    }
+         if (!Key.ICmp("x")) V.x = CheckFloat();
+    else if (!Key.ICmp("y")) V.y = CheckFloat();
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -1224,37 +1143,60 @@ void VUdmfParser::Flag(vuint32 &Field, int Mask)
   unguard;
 }
 
+
+struct VertexInfo {
+  float xy[2];
+  int idx;
+
+  VertexInfo (const vertex_t &v, int aidx) { xy[0] = v.x; xy[1] = v.y; idx = aidx; }
+  inline bool operator == (const VertexInfo &vi) const { return (xy[0] == vi.xy[0] && xy[1] == vi.xy[1]); }
+  inline bool operator != (const VertexInfo &vi) const { return (xy[0] != vi.xy[0] || xy[1] != vi.xy[1]); }
+};
+
+inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+
+
 //==========================================================================
 //
 //  VLevel::LoadTextMap
 //
 //==========================================================================
-
-void VLevel::LoadTextMap(int Lump, const mapInfo_t &MInfo)
-{
+void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   guard(VLevel::LoadTextMap);
   VUdmfParser Parser(Lump);
   Parser.Parse(this, MInfo);
 
-  if (Parser.bExtended)
-  {
-    LevelFlags |= LF_Extended;
-  }
+  if (Parser.bExtended) LevelFlags |= LF_Extended;
 
-  //  Copy vertexes.
+  // copy vertexes
   NumVertexes = Parser.ParsedVertexes.Num();
   Vertexes = new vertex_t[NumVertexes];
-  memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(vertex_t) * NumVertexes);
+  memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(vertex_t)*NumVertexes);
 
-  //  Copy sectors.
+  // check for duplicate vertices
+  TMapNC<VertexInfo, int> vmap; // value: in parsed array
+  TMapNC<int, int> vremap; // key: original vertex index; value: new vertex index
+
+  for (int f = 0; f < NumVertexes; ++f) {
+    VertexInfo vi = VertexInfo(Vertexes[f], f);
+    auto ip = vmap.find(vi);
+    if (ip) {
+      vremap.put(f, *ip);
+      GCon->Logf("UDMF: vertex %d is duplicate of vertex %d", f, *ip);
+    } else {
+      vremap.put(f, f);
+      vmap.put(vi, f);
+    }
+  }
+
+  // copy sectors
   NumSectors = Parser.ParsedSectors.Num();
   Sectors = new sector_t[NumSectors];
-  for (int i = 0; i < NumSectors; i++)
-  {
+  for (int i = 0; i < NumSectors; ++i) {
     sector_t &S = Sectors[i];
     Sectors[i] = Parser.ParsedSectors[i];
 
-    //  Region
+    // region
     sec_region_t *region = new sec_region_t;
     memset((void *)region, 0, sizeof(*region));
     region->floor = &S.floor;
@@ -1265,113 +1207,95 @@ void VLevel::LoadTextMap(int Lump, const mapInfo_t &MInfo)
   }
   HashSectors();
 
-  //  Copy line defs.
+  // copy line defs
   NumLines = Parser.ParsedLines.Num();
   Lines = new line_t[NumLines];
-  for (int i = 0; i < NumLines; i++)
-  {
+  for (int i = 0; i < NumLines; ++i) {
     Lines[i] = Parser.ParsedLines[i].L;
-    if (Parser.ParsedLines[i].V1Index < 0 ||
-      Parser.ParsedLines[i].V1Index >= NumVertexes)
-    {
+    if (Parser.ParsedLines[i].V1Index < 0 || Parser.ParsedLines[i].V1Index >= NumVertexes) {
       Host_Error("Bad vertex index %d (07)", Parser.ParsedLines[i].V1Index);
     }
-    if (Parser.ParsedLines[i].V2Index < 0 ||
-      Parser.ParsedLines[i].V2Index >= NumVertexes)
-    {
+    if (Parser.ParsedLines[i].V2Index < 0 || Parser.ParsedLines[i].V2Index >= NumVertexes) {
       Host_Error("Bad vertex index %d (08)", Parser.ParsedLines[i].V2Index);
     }
-    Lines[i].v1 = &Vertexes[Parser.ParsedLines[i].V1Index];
-    Lines[i].v2 = &Vertexes[Parser.ParsedLines[i].V2Index];
+
+    auto ip = vremap.find(Parser.ParsedLines[i].V1Index);
+    if (!ip || *ip < 0 || *ip >= NumVertexes) Sys_Error("UDMF: internal error (v0)");
+    Lines[i].v1 = &Vertexes[*ip];
+
+    ip = vremap.find(Parser.ParsedLines[i].V2Index);
+    if (!ip || *ip < 0 || *ip >= NumVertexes) Sys_Error("UDMF: internal error (v1)");
+    Lines[i].v2 = &Vertexes[*ip];
+
+    //Lines[i].v1 = &Vertexes[Parser.ParsedLines[i].V1Index];
+    //Lines[i].v2 = &Vertexes[Parser.ParsedLines[i].V2Index];
   }
 
-  if (!(LevelFlags & LF_Extended))
-  {
-    //  Translate level to Hexen format
+  if (!(LevelFlags&LF_Extended)) {
+    // translate level to Hexen format
     GGameInfo->eventTranslateLevel(this);
   }
 
-  //  Copy side defs.
+  // copy side defs
   NumSides = Parser.ParsedSides.Num();
   CreateSides();
   side_t *sd = Sides;
-  for (int i = 0; i < NumSides; i++, sd++)
-  {
+  for (int i = 0; i < NumSides; ++i, ++sd) {
     VUdmfParser::VParsedSide &Src = Parser.ParsedSides[sd->BottomTexture];
     int Spec = sd->MidTexture;
     int Tag = sd->TopTexture;
     *sd = Src.S;
 
-    if (Src.SectorIndex < 0 || Src.SectorIndex >= NumSectors)
-    {
-      Host_Error("Bad sector index %d", Src.SectorIndex);
-    }
+    if (Src.SectorIndex < 0 || Src.SectorIndex >= NumSectors) Host_Error("Bad sector index %d", Src.SectorIndex);
     sd->Sector = &Sectors[Src.SectorIndex];
 
-    switch (Spec)
-    {
-    case LNSPEC_LineTranslucent:
-      //  In BOOM midtexture can be translucency table lump name.
-      sd->MidTexture = GTextureManager.CheckNumForName(
-        VName(*Src.MidTexture, VName::AddLower8),
-        TEXTYPE_Wall, true, true);
-      if (sd->MidTexture == -1)
-      {
-        sd->MidTexture = 0;
-      }
-      sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall);
-      sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall);
-      break;
+    switch (Spec) {
+      case LNSPEC_LineTranslucent:
+        // in BOOM midtexture can be translucency table lump name
+        sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower8), TEXTYPE_Wall, true, true);
+        if (sd->MidTexture == -1) sd->MidTexture = 0;
+        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall);
+        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall);
+        break;
 
-    case LNSPEC_TransferHeights:
-      sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, true);
-      sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall, true);
-      sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, true);
-      break;
+      case LNSPEC_TransferHeights:
+        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, true);
+        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall, true);
+        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, true);
+        break;
 
-    case LNSPEC_StaticInit:
-      {
-        bool HaveCol;
-        bool HaveFade;
-        vuint32 Col;
-        vuint32 Fade;
-        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall);
-        int TmpTop = TexNumOrColour(*Src.TopTexture, TEXTYPE_Wall,
-          HaveCol, Col);
-        sd->BottomTexture = TexNumOrColour(*Src.BotTexture, TEXTYPE_Wall,
-          HaveFade, Fade);
-        if (HaveCol || HaveFade)
+      case LNSPEC_StaticInit:
         {
-          for (int j = 0; j < NumSectors; j++)
-          {
-            if (Sectors[j].tag == Tag)
-            {
-              if (HaveCol)
-              {
-                Sectors[j].params.LightColour = Col;
-              }
-              if (HaveFade)
-              {
-                Sectors[j].params.Fade = Fade;
+          bool HaveCol;
+          bool HaveFade;
+          vuint32 Col;
+          vuint32 Fade;
+          sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall);
+          int TmpTop = TexNumOrColour(*Src.TopTexture, TEXTYPE_Wall, HaveCol, Col);
+          sd->BottomTexture = TexNumOrColour(*Src.BotTexture, TEXTYPE_Wall, HaveFade, Fade);
+          if (HaveCol || HaveFade) {
+            for (int j = 0; j < NumSectors; ++j) {
+              if (Sectors[j].tag == Tag) {
+                if (HaveCol) Sectors[j].params.LightColour = Col;
+                if (HaveFade) Sectors[j].params.Fade = Fade;
               }
             }
           }
+          sd->TopTexture = TmpTop;
         }
-        sd->TopTexture = TmpTop;
-      }
-      break;
+        break;
 
-    default:
-      sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall);
-      sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall);
-      sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall);
-      break;
+      default:
+        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall);
+        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall);
+        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall);
+        break;
     }
   }
 
-  //  Copy things.
+  // copy things
   NumThings = Parser.ParsedThings.Num();
   Things = new mthing_t[NumThings];
-  memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t) * NumThings);
+  memcpy(Things, Parser.ParsedThings.Ptr(), sizeof(mthing_t)*NumThings);
   unguard;
 }
