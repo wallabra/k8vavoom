@@ -362,7 +362,8 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, "BloodType");
         P.SetField2(Lst.Class, "BloodSplatterType");
       } else if (PN->Name == "prop_stencil_colour") {
-        /*VPropDef &P =*/(void)Lst.NewProp(PROP_StencilColour, PN);
+        VPropDef &P = Lst.NewProp(PROP_StencilColour, PN);
+        P.SetField(Lst.Class, "StencilColour");
       } else if (PN->Name == "prop_monster") {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_Monster, PN);
       } else if (PN->Name == "prop_projectile") {
@@ -2331,8 +2332,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
               else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
               else if (sc->Check("Add")) RenderStyle = STYLE_Add;
-              else if (sc->Check("Stencil")) { if (dbg_show_decorate_unsupported) GCon->Logf("%s: Render style 'Stencil' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName()); } //FIXME
-              else if (sc->Check("Shaded")) RenderStyle = STYLE_Fuzzy; //FIXME -- This is an aproximated style... but it's not the desired one!
+              else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
+              else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
+              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Translucent; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Fuzzy; if (dbg_show_decorate_unsupported) GCon->Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
               else sc->Error("Bad render style");
               P.Field->SetByte(DefObj, RenderStyle);
             }
@@ -2370,13 +2375,23 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
             break;
           case PROP_StencilColour:
             //FIXME
-            if (sc->CheckNumber()) {
-              sc->ExpectNumber();
-              sc->ExpectNumber();
-            } else {
-              sc->ExpectString();
+            {
+              vuint32 Col;
+              if (sc->CheckNumber()) {
+                int r = MID(0, sc->Number, 255);
+                sc->Check(",");
+                sc->ExpectNumber();
+                int g = MID(0, sc->Number, 255);
+                sc->Check(",");
+                sc->ExpectNumber();
+                int b = MID(0, sc->Number, 255);
+                Col = 0xff000000 | (r << 16) | (g << 8) | b;
+              } else {
+                sc->ExpectString();
+                Col = M_ParseColour(sc->String);
+              }
+              P.Field->SetInt(DefObj, Col);
             }
-            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property 'StencilColor' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName());
             break;
           case PROP_Monster:
             SetClassFieldBool(Class, "bShootable", true);

@@ -56,7 +56,7 @@
     <prop_blood_colour name="BloodColor" />
     <prop_blood_type name="BloodType" />
     <prop_name name="Decal" property="DecalName" />
-    <prop_stencil_colour name="StencilColor" />
+    <prop_stencil_colour name="StencilColor" property="StencilColour" />
     <!--  Obituaries -->
     <prop_string name="Obituary" property="Obituary" />
     <prop_string name="HitObituary" property="HitObituary" />

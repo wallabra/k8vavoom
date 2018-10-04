@@ -439,12 +439,15 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     case STYLE_Normal: Alpha = 1.0; break;
     case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
     case STYLE_Add: Additive = true; break;
+    case STYLE_Stencil: break;
+    case STYLE_AddStencil: Additive = true; break;
   }
   Alpha = MID(0.0, Alpha, 1.0);
   if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
 
   // setup lighting
   vuint32 light;
+
   if (RendStyle == STYLE_Fuzzy) {
     light = 0;
   } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
@@ -453,6 +456,12 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   } else {
     light = LightPoint(mobj->Origin, mobj);
   }
+
+  //FIXME: fake "solid color" with colored light for now
+  if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
+    light = (light&0xff000000)|(mobj->StencilColour&0xffffff);
+  }
+
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
 
   // try to draw a model
@@ -713,22 +722,13 @@ void VRenderLevelShared::DrawPlayerSprites()
     RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None: return;
+    case STYLE_Normal: Alpha = 1.0; break;
+    case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
+    case STYLE_Add: Additive = true; break;
+    case STYLE_Stencil: break;
+    case STYLE_AddStencil: Additive = true; break;
   }
   Alpha = MID(0.0, Alpha, 1.0);
 
@@ -753,13 +753,16 @@ void VRenderLevelShared::DrawPlayerSprites()
     {
       light = LightPoint(vieworg, cl->MO);
     }
+
+    //FIXME: fake "solid color" with colored light for now
+    if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
+      light = (light&0xff000000)|(cl->MO->StencilColour&0xffffff);
+    }
+
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
 
-    if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha,
-      Additive))
-    {
-      RenderPSprite(&cl->ViewStates[i], 3 - i, light, Fade, Alpha,
-        Additive);
+    if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
+      RenderPSprite(&cl->ViewStates[i], 3 - i, light, Fade, Alpha, Additive);
     }
   }
   unguard;

@@ -89,6 +89,8 @@ enum
   STYLE_OptFuzzy,       // Draw as fuzzy or translucent, based on user preference
   STYLE_Translucent = 64,   // Draw translucent
   STYLE_Add,          // Draw additive
+  STYLE_Stencil, // solid color
+  STYLE_AddStencil, // solid color, additive
 };
 
 //  Colour tralslation types.
@@ -161,6 +163,8 @@ class VEntity : public VThinker
   vuint8      RenderStyle;
   float     Alpha;
   int       Translation;
+
+  int StencilColour;
 
   float     FloorClip;    // value to use for floor clipping
 
