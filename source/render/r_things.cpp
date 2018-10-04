@@ -83,15 +83,13 @@ VCvarF      crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR
 
 static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VRenderLevelShared::DrawTranslucentPoly
 //
 //==========================================================================
-
-void VRenderLevelShared::DrawTranslucentPoly(surface_t *surf, TVec *sv,
+void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
   bool type, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg)
@@ -106,7 +104,7 @@ void VRenderLevelShared::DrawTranslucentPoly(surface_t *surf, TVec *sv,
   }
   mid /= count;
   float dist = fabs(DotProduct(mid - vieworg, viewforward));
-//  float dist = Length(mid - vieworg);
+  //float dist = Length(mid - vieworg);
   int found = -1;
   float best_dist = -1;
   for (i = 0; i < MAX_TRANS_SPRITES; i++)
@@ -193,15 +191,13 @@ void VRenderLevelShared::DrawTranslucentPoly(surface_t *surf, TVec *sv,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::RenderSprite
 //
 //==========================================================================
-
-void VRenderLevelShared::RenderSprite(VEntity *thing, vuint32 light,
-  vuint32 Fade, float Alpha, bool Additive)
-{
+void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive) {
   guard(VRenderLevelShared::RenderSprite);
   int spr_type = thing->SpriteType;
 
@@ -211,212 +207,183 @@ void VRenderLevelShared::RenderSprite(VEntity *thing, vuint32 light,
   TVec sprright;
   TVec sprup;
 
-  float   dot;
-  TVec    tvec;
-  float   sr;
-  float   cr;
+  float dot;
+  TVec tvec;
+  float sr;
+  float cr;
 
-  switch (spr_type)
-  {
-  case SPR_VP_PARALLEL_UPRIGHT:
-    //  Generate the sprite's axes, with sprup straight up in worldspace,
-    // and sprright parallel to the viewplane. This will not work if the
-    // view direction is very close to straight up or down, because the
-    // cross product will be between two nearly parallel vectors and
-    // starts to approach an undefined state, so we don't draw if the two
-    // vectors are less than 1 degree apart
-    dot = viewforward.z;  //  same as DotProduct(viewforward, sprup)
-                // because sprup is 0, 0, 1
-    if ((dot > 0.999848) || (dot < -0.999848))  // cos(1 degree) = 0.999848
-      return;
+  switch (spr_type) {
+    case SPR_VP_PARALLEL_UPRIGHT:
+      // Generate the sprite's axes, with sprup straight up in worldspace,
+      // and sprright parallel to the viewplane. This will not work if the
+      // view direction is very close to straight up or down, because the
+      // cross product will be between two nearly parallel vectors and
+      // starts to approach an undefined state, so we don't draw if the two
+      // vectors are less than 1 degree apart
+      dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+      if (dot > 0.999848 || dot < -0.999848) return; // cos(1 degree) = 0.999848
+      sprup = TVec(0, 0, 1);
+      // CrossProduct(sprup, viewforward)
+      sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+      // CrossProduct(sprright, sprup)
+      sprforward = TVec(-sprright.y, sprright.x, 0);
+      break;
 
-    sprup = TVec(0, 0, 1);
-    //  CrossProduct(sprup, viewforward)
-    sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
-    //  CrossProduct(sprright, sprup)
-    sprforward = TVec(-sprright.y, sprright.x, 0);
-    break;
+    case SPR_FACING_UPRIGHT:
+      // Generate the sprite's axes, with sprup straight up in worldspace,
+      // and sprright perpendicular to sprorigin. This will not work if the
+      // view direction is very close to straight up or down, because the
+      // cross product will be between two nearly parallel vectors and
+      // starts to approach an undefined state, so we don't draw if the two
+      // vectors are less than 1 degree apart
+      tvec = Normalise(sprorigin - vieworg);
+      dot = tvec.z; // same as DotProduct (tvec, sprup), because sprup is 0, 0, 1
+      if (dot > 0.999848 || dot < -0.999848) return; // cos(1 degree) = 0.999848
+      sprup = TVec(0, 0, 1);
+      // CrossProduct(sprup, -sprorigin)
+      sprright = Normalise(TVec(tvec.y, -tvec.x, 0));
+      // CrossProduct(sprright, sprup)
+      sprforward = TVec(-sprright.y, sprright.x, 0);
+      break;
 
-  case SPR_FACING_UPRIGHT:
-    //  Generate the sprite's axes, with sprup straight up in worldspace,
-    // and sprright perpendicular to sprorigin. This will not work if the
-    // view direction is very close to straight up or down, because the
-    // cross product will be between two nearly parallel vectors and
-    // starts to approach an undefined state, so we don't draw if the two
-    // vectors are less than 1 degree apart
-    tvec = Normalise(sprorigin - vieworg);
-    dot = tvec.z; //  same as DotProduct (tvec, sprup) because
-            // sprup is 0, 0, 1
-    if ((dot > 0.999848) || (dot < -0.999848))  // cos(1 degree) = 0.999848
-      return;
-    sprup = TVec(0, 0, 1);
-    //  CrossProduct(sprup, -sprorigin)
-    sprright = Normalise(TVec(tvec.y, -tvec.x, 0));
-    //  CrossProduct(sprright, sprup)
-    sprforward = TVec(-sprright.y, sprright.x, 0);
-    break;
+    case SPR_VP_PARALLEL:
+      // Generate the sprite's axes, completely parallel to the viewplane.
+      // There are no problem situations, because the sprite is always in
+      // the same position relative to the viewer
+      sprup = viewup;
+      sprright = viewright;
+      sprforward = viewforward;
+      break;
 
-  case SPR_VP_PARALLEL:
-    //  Generate the sprite's axes, completely parallel to the viewplane.
-    // There are no problem situations, because the sprite is always in
-    // the same position relative to the viewer
-    sprup = viewup;
-    sprright = viewright;
-    sprforward = viewforward;
-    break;
+    case SPR_ORIENTED:
+      // generate the sprite's axes, according to the sprite's world orientation
+      AngleVectors(thing->Angles, sprforward, sprright, sprup);
+      break;
 
-  case SPR_ORIENTED:
-    //  Generate the sprite's axes, according to the sprite's world
-    // orientation
-    AngleVectors(thing->Angles, sprforward, sprright, sprup);
-    break;
+    case SPR_VP_PARALLEL_ORIENTED:
+      // Generate the sprite's axes, parallel to the viewplane, but
+      // rotated in that plane around the centre according to the sprite
+      // entity's roll angle. So sprforward stays the same, but sprright
+      // and sprup rotate
+      sr = msin(thing->Angles.roll);
+      cr = mcos(thing->Angles.roll);
 
-  case SPR_VP_PARALLEL_ORIENTED:
-    //  Generate the sprite's axes, parallel to the viewplane, but
-    // rotated in that plane around the centre according to the sprite
-    // entity's roll angle. So sprforward stays the same, but sprright
-    // and sprup rotate
-    sr = msin(thing->Angles.roll);
-    cr = mcos(thing->Angles.roll);
+      sprforward = viewforward;
+      sprright = TVec(viewright.x * cr + viewup.x * sr, viewright.y * cr +
+        viewup.y * sr, viewright.z * cr + viewup.z * sr);
+      sprup = TVec(viewright.x * -sr + viewup.x * cr, viewright.y * -sr +
+        viewup.y * cr, viewright.z * -sr + viewup.z * cr);
+      break;
 
-    sprforward = viewforward;
-    sprright = TVec(viewright.x * cr + viewup.x * sr, viewright.y * cr +
-      viewup.y * sr, viewright.z * cr + viewup.z * sr);
-    sprup = TVec(viewright.x * -sr + viewup.x * cr, viewright.y * -sr +
-      viewup.y * cr, viewright.z * -sr + viewup.z * cr);
-    break;
+    case SPR_VP_PARALLEL_UPRIGHT_ORIENTED:
+      // Generate the sprite's axes, with sprup straight up in worldspace,
+      // and sprright parallel to the viewplane and then rotated in that
+      // plane around the centre according to the sprite entity's roll
+      // angle. So sprforward stays the same, but sprright and sprup rotate
+      // This will not work if the view direction is very close to straight
+      // up or down, because the cross product will be between two nearly
+      // parallel vectors and starts to approach an undefined state, so we
+      // don't draw if the two vectors are less than 1 degree apart
+      dot = viewforward.z;  //  same as DotProduct(viewforward, sprup)
+                  // because sprup is 0, 0, 1
+      if ((dot > 0.999848) || (dot < -0.999848))  // cos(1 degree) = 0.999848
+        return;
 
-  case SPR_VP_PARALLEL_UPRIGHT_ORIENTED:
-    //  Generate the sprite's axes, with sprup straight up in worldspace,
-    // and sprright parallel to the viewplane and then rotated in that
-    // plane around the centre according to the sprite entity's roll
-    // angle. So sprforward stays the same, but sprright and sprup rotate
-    // This will not work if the view direction is very close to straight
-    // up or down, because the cross product will be between two nearly
-    // parallel vectors and starts to approach an undefined state, so we
-    // don't draw if the two vectors are less than 1 degree apart
-    dot = viewforward.z;  //  same as DotProduct(viewforward, sprup)
-                // because sprup is 0, 0, 1
-    if ((dot > 0.999848) || (dot < -0.999848))  // cos(1 degree) = 0.999848
-      return;
+      sr = msin(thing->Angles.roll);
+      cr = mcos(thing->Angles.roll);
 
-    sr = msin(thing->Angles.roll);
-    cr = mcos(thing->Angles.roll);
+      //  CrossProduct(TVec(0, 0, 1), viewforward)
+      tvec = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+      //  CrossProduct(tvec, TVec(0, 0, 1))
+      sprforward = TVec(-tvec.y, tvec.x, 0);
+      //  Rotate
+      sprright = TVec(tvec.x * cr, tvec.y * cr, tvec.z * cr + sr);
+      sprup = TVec(tvec.x * -sr, tvec.y * -sr, tvec.z * -sr + cr);
+      break;
 
-    //  CrossProduct(TVec(0, 0, 1), viewforward)
-    tvec = Normalise(TVec(viewforward.y, -viewforward.x, 0));
-    //  CrossProduct(tvec, TVec(0, 0, 1))
-    sprforward = TVec(-tvec.y, tvec.x, 0);
-    //  Rotate
-    sprright = TVec(tvec.x * cr, tvec.y * cr, tvec.z * cr + sr);
-    sprup = TVec(tvec.x * -sr, tvec.y * -sr, tvec.z * -sr + cr);
-    break;
-
-  default:
-    Sys_Error("RenderSprite: Bad sprite type %d", spr_type);
+    default:
+      Sys_Error("RenderSprite: Bad sprite type %d", spr_type);
   }
 
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
 
-  VState *DispState = (thing->EntityFlags & VEntity::EF_UseDispState) ?
-    thing->DispState : thing->State;
+  VState *DispState = (thing->EntityFlags&VEntity::EF_UseDispState ? thing->DispState : thing->State);
   int SpriteIndex = DispState->SpriteIndex;
-  if (thing->FixedSpriteName != NAME_None)
-  {
-    SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
-  }
+  if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
 
   // decide which patch to use for sprite relative to player
-  if ((unsigned)SpriteIndex >= MAX_SPRITE_MODELS)
-  {
+  if ((unsigned)SpriteIndex >= MAX_SPRITE_MODELS) {
 #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
 #endif
     return;
   }
   sprdef = &sprites[SpriteIndex];
-  if ((DispState->Frame & VState::FF_FRAMEMASK) >= sprdef->numframes)
-  {
+  if ((DispState->Frame&VState::FF_FRAMEMASK) >= sprdef->numframes) {
 #ifdef PARANOID
-    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d",
-      SpriteIndex, DispState->Frame);
+    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, DispState->Frame);
 #endif
     return;
   }
+
   sprframe = &sprdef->spriteframes[DispState->Frame & VState::FF_FRAMEMASK];
 
-  int     lump;
-  bool    flip;
+  int lump;
+  bool flip;
 
-  if (sprframe->rotate)
-  {
+  if (sprframe->rotate) {
     // choose a different rotation based on player view
     //FIXME must use sprforward here?
-    float ang = matan(sprorigin.y - vieworg.y,
-      sprorigin.x - vieworg.x);
-    if (sprframe->lump[0] == sprframe->lump[1])
-    {
-      ang = AngleMod(ang - thing->Angles.yaw + 180.0 + 45.0 / 2.0);
+    float ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
+    if (sprframe->lump[0] == sprframe->lump[1]) {
+      ang = AngleMod(ang-thing->Angles.yaw+180.0+45.0/2.0);
+    } else {
+      ang = matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x);
+      ang = AngleMod(ang-thing->Angles.yaw+180.0+45.0/4.0);
     }
-    else
-    {
-      ang = matan(sprforward.y + viewforward.y,
-        sprforward.x + viewforward.x);
-      ang = AngleMod(ang - thing->Angles.yaw + 180.0 + 45.0 / 4.0);
-    }
-    vuint32 rot = (vuint32)(ang * 16.0 / 360.0) & 15;
+    vuint32 rot = (vuint32)(ang*16.0/360.0)&15;
     lump = sprframe->lump[rot];
     flip = sprframe->flip[rot];
-  }
-  else
-  {
+  } else {
     // use single rotation for all views
     lump = sprframe->lump[0];
     flip = sprframe->flip[0];
   }
-  if (lump <= 0)
-  {
+  if (lump <= 0) {
 #ifdef PARANOID
-    GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present",
-      SpriteIndex, DispState->Frame);
+    GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present", SpriteIndex, DispState->Frame);
 #endif
-    // Sprite lump is not present
+    // sprite lump is not present
     return;
   }
+
   VTexture *Tex = GTextureManager[lump];
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
 
-  TVec  sv[4];
+  TVec sv[4];
 
-  TVec start = -TexSOffset * sprright * thing->ScaleX;
-  TVec end = (TexWidth - TexSOffset) * sprright * thing->ScaleX;
+  TVec start = -TexSOffset*sprright*thing->ScaleX;
+  TVec end = (TexWidth-TexSOffset)*sprright*thing->ScaleX;
 
-  if (r_fix_sprite_offsets && TexTOffset < TexHeight &&
-    2 * TexTOffset + r_sprite_fix_delta >= TexHeight)
-  {
-    TexTOffset = TexHeight;
-  }
-  TVec topdelta = TexTOffset * sprup * thing->ScaleY;
-  TVec botdelta = (TexTOffset - TexHeight) * sprup * thing->ScaleY;
+  if (r_fix_sprite_offsets && TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight) TexTOffset = TexHeight;
+  TVec topdelta = TexTOffset*sprup*thing->ScaleY;
+  TVec botdelta = (TexTOffset-TexHeight)*sprup*thing->ScaleY;
 
-  sv[0] = sprorigin + start + botdelta;
-  sv[1] = sprorigin + start + topdelta;
-  sv[2] = sprorigin + end + topdelta;
-  sv[3] = sprorigin + end + botdelta;
+  sv[0] = sprorigin+start+botdelta;
+  sv[1] = sprorigin+start+topdelta;
+  sv[2] = sprorigin+end+topdelta;
+  sv[3] = sprorigin+end+botdelta;
 
-  if (Alpha < 1.0 || Additive || r_sort_sprites)
-  {
+  if (Alpha < 1.0 || Additive || r_sort_sprites) {
     DrawTranslucentPoly(nullptr, sv, 4, lump, Alpha, Additive,
       thing->Translation, true, light, Fade, -sprforward, DotProduct(
       sprorigin, -sprforward), (flip ? -sprright : sprright) /
       thing->ScaleX, -sprup / thing->ScaleY, flip ? sv[2] : sv[1]);
-  }
-  else
-  {
+  } else {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
@@ -426,26 +393,21 @@ void VRenderLevelShared::RenderSprite(VEntity *thing, vuint32 light,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::RenderTranslucentAliasModel
 //
 //==========================================================================
-
-void VRenderLevelShared::RenderTranslucentAliasModel(VEntity *mobj,
-  vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac)
-{
+void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
   guard(VRenderLevelShared::RenderTranslucentAliasModel);
-  int i;
 
-  float dist = fabs(DotProduct(mobj->Origin - vieworg, viewforward));
+  float dist = fabs(DotProduct(mobj->Origin-vieworg, viewforward));
   int found = -1;
   float best_dist = -1;
-  for (i = 0; i < MAX_TRANS_SPRITES; i++)
-  {
+  for (int i = 0; i < MAX_TRANS_SPRITES; ++i) {
     trans_sprite_t &spr = trans_sprites[i];
-    if (!spr.Alpha)
-    {
+    if (!spr.Alpha) {
       spr.Ent = mobj;
       spr.light = light;
       spr.Fade = Fade;
@@ -456,30 +418,22 @@ void VRenderLevelShared::RenderTranslucentAliasModel(VEntity *mobj,
       spr.TimeFrac = TimeFrac;
       return;
     }
-    if (spr.dist > best_dist)
-    {
+    if (spr.dist > best_dist) {
       found = i;
       best_dist = spr.dist;
     }
   }
-  if (best_dist > dist)
-  {
-    //  All slots are full, draw and replace a far away sprite
+  if (best_dist > dist) {
+    // all slots are full, draw and replace a far away sprite
     trans_sprite_t &spr = trans_sprites[found];
-    if (spr.type == 2)
-    {
-      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha,
-        spr.Additive, spr.TimeFrac, RPASS_Normal);
-    }
-    else if (spr.type)
-    {
+    if (spr.type == 2) {
+      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
+    } else if (spr.type) {
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
         spr.Alpha, spr.Additive, GetTranslation(spr.translation),
         ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
         spr.saxis, spr.taxis, spr.texorg);
-    }
-    else
-    {
+    } else {
       check(spr.surf);
       Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
     }
@@ -497,12 +451,12 @@ void VRenderLevelShared::RenderTranslucentAliasModel(VEntity *mobj,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::RenderAliasModel
 //
 //==========================================================================
-
 bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, ERenderPass Pass)
 {
@@ -538,137 +492,91 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::RenderThing
 //
 //==========================================================================
-
-void VRenderLevelShared::RenderThing(VEntity *mobj, ERenderPass Pass)
-{
+void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   guard(VRenderLevelShared::RenderThing);
-  if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO))
-  {
-    //  Don't draw camera actor.
-    return;
-  }
+  if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
-  if ((mobj->EntityFlags & VEntity::EF_NoSector) ||
-    (mobj->EntityFlags & VEntity::EF_Invisible))
-  {
-    return;
-  }
+  if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
 
-  if (!mobj->State)
-  {
-    return;
-  }
-
-  //  Skip things in subsectors that are not visible.
-  int SubIdx = mobj->SubSector - Level->Subsectors;
-  if (!(BspVis[SubIdx >> 3] & (1 << (SubIdx & 7))))
-  {
-    return;
-  }
+  if (!mobj->State) return;
 
   int RendStyle = mobj->RenderStyle;
+  if (RendStyle == STYLE_None) return;
+
+  // skip things in subsectors that are not visible
+  int SubIdx = mobj->SubSector-Level->Subsectors;
+  if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) return;
+
   float Alpha = mobj->Alpha;
   bool Additive = false;
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+  } else if (RendStyle == STYLE_OptFuzzy) {
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None: return;
+    case STYLE_Normal: Alpha = 1.0; break;
+    case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
+    case STYLE_Add: Additive = true; break;
   }
   Alpha = MID(0.0, Alpha, 1.0);
+  if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
 
-  if (!Alpha)
-  {
-    // Never make a vissprite when MF2_DONTDRAW is flagged.
-    return;
-  }
-
-  //  Setup lighting
+  // setup lighting
   vuint32 light;
-  if (RendStyle == STYLE_Fuzzy)
-  {
+  if (RendStyle == STYLE_Fuzzy) {
     light = 0;
-  }
-  else if ((mobj->State->Frame & VState::FF_FULLBRIGHT) ||
-    (mobj->EntityFlags & (VEntity::EF_FullBright | VEntity::EF_Bright)))
-  {
+  } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
+             (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
     light = 0xffffffff;
-  }
-  else
-  {
+  } else {
     light = LightPoint(mobj->Origin, mobj);
   }
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
 
-  //  Try to draw a model. If it's a script and it doesn't
-  // specify model for this frame, draw sprite instead.
-  if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass))
-  {
+  // try to draw a model
+  // if it's a script and it doesn't specify model for this frame, draw sprite instead
+  if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass)) {
     RenderSprite(mobj, light, Fade, Alpha, Additive);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VRenderLevelShared::RenderMobjs
 //
 //==========================================================================
-
-void VRenderLevelShared::RenderMobjs(ERenderPass Pass)
-{
+void VRenderLevelShared::RenderMobjs(ERenderPass Pass) {
   guard(VRenderLevelShared::RenderMobjs);
-  if (!r_draw_mobjs)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
+  if (!r_draw_mobjs) return;
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
     RenderThing(*Ent, Pass);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VRenderLevelShared::DrawTranslucentPolys
 //
 //==========================================================================
-
-void VRenderLevelShared::DrawTranslucentPolys()
-{
+void VRenderLevelShared::DrawTranslucentPolys () {
   guard(VRenderLevelShared::DrawTranslucentPolys);
   int i, found;
-  do
-  {
+  do {
     found = -1;
     float best_dist = -1;
     for (i = 0; i < MAX_TRANS_SPRITES; i++)
@@ -709,6 +617,7 @@ void VRenderLevelShared::DrawTranslucentPolys()
   } while (found != -1);
   unguard;
 }
+
 
 //==========================================================================
 //
