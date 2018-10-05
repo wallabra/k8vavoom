@@ -3972,12 +3972,12 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
     if (line->frontsector == sec) {
       // back
       bs = line->backsector;
-      //if (myside == 1) continue;
+      if (myside == 1) continue;
       myside = 0;
     } else if (line->backsector == sec) {
       // front
       bs = line->frontsector;
-      //if (myside == 0) continue;
+      if (myside == 0) continue;
       myside = 1;
     } else {
       return 0; // something's strange in the neighbourhood
