@@ -3938,6 +3938,143 @@ void VLevel::FixSelfRefDeepWater () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+enum {
+  FFBugFloor = 0x01U,
+  FFBugCeiling = 0x02U,
+};
+
+
+//==========================================================================
+//
+//  VLevel::IsFloodBugSector
+//
+//==========================================================================
+vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
+  if (!sec) return 0;
+  int res = FFBugFloor|FFBugCeiling;
+  for (int f = 0; f < sec->linecount; ++f) {
+    if (!res) return 0;
+    line_t *line = sec->lines[f];
+    if (!(!!line->frontsector && !!line->backsector)) continue;
+    sector_t *bs;
+    int myside;
+    if (line->frontsector == sec) {
+      // back
+      bs = line->backsector;
+      myside = 0;
+    } else if (line->backsector == sec) {
+      // front
+      bs = line->frontsector;
+      myside = 1;
+    } else {
+      return 0; // something's strange in the neighbourhood
+    }
+    if (bs == sec) return 0; // this is self-referenced sector, nothing to see here, come along
+    // check for possible floor floodbug
+    if (res&FFBugFloor) {
+      // line has no bottom texture?
+      if (Sides[line->sidenum[myside]].BottomTexture != 0) { res &= ~FFBugFloor; continue; }
+      // slope?
+      if (bs->floor.normal.z != 1.0) { res &= ~FFBugFloor; continue; }
+      // height?
+      if (bs->floor.minz < sec->floor.minz) { res &= ~FFBugFloor; continue; }
+    }
+    // check for possible ceiline floodbug
+    if (res&FFBugCeiling) {
+      // line has no bottom texture?
+      if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; continue; }
+      // slope?
+      if (bs->ceiling.normal.z != -1.0) { res &= ~FFBugCeiling; continue; }
+      // height?
+      if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
+    }
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VLevel::FindGoodFloodSector
+//
+//  try to find a sector to borrow a fake surface
+//  we'll try each neighbour sector until we'll find a sector without
+//  flood bug
+//
+//==========================================================================
+sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
+  if (!sec) return nullptr;
+  TArray<sector_t *> good;
+  TArray<sector_t *> seen;
+  TArray<sector_t *> sameBug;
+  seen.append(sec);
+  vuint32 bugMask = (wantFloor ? FFBugFloor : FFBugCeiling);
+  for (;;) {
+    for (int f = 0; f < sec->linecount; ++f) {
+      line_t *line = sec->lines[f];
+      if (!(!!line->frontsector && !!line->backsector)) continue;
+      sector_t *bs;
+      if (line->frontsector == sec) {
+        // back
+        bs = line->backsector;
+      } else if (line->backsector == sec) {
+        // front
+        bs = line->frontsector;
+      } else {
+        return nullptr; // something's strange in the neighbourhood
+      }
+      // bs is possible sector to move to
+      bool wasSeen = false;
+      for (int c = seen.length(); c > 0; --c) if (seen[c-1] == bs) { wasSeen = true; break; }
+      seen.append(bs);
+      if (wasSeen) continue; // we already rejected this sector
+      vuint32 ffbug = IsFloodBugSector(bs);
+      if (ffbug) {
+        if ((ffbug&bugMask) != 0) {
+          sameBug.append(bs);
+          continue;
+        }
+      }
+      // we found a sector without floodbug, check if it is a good one
+      // sloped?
+      if (wantFloor && bs->floor.normal.z != 1.0) continue;
+      if (!wantFloor && bs->ceiling.normal.z != -1.0) continue;
+      // check height
+      if (wantFloor && bs->floor.minz < sec->floor.minz) continue;
+      if (!wantFloor && bs->ceiling.minz > sec->ceiling.minz) continue;
+      // possible good sector, remember it
+      good.append(bs);
+    }
+    // if we have no good sectors, try neighbour sector with the same bug
+    if (good.length() != 0) break;
+    if (good.length() == 0) return nullptr; // oops
+    sec = good[0];
+    good.removeAt(0);
+  }
+  // here we should have some good sectors
+  if (good.length() == 0) return nullptr; // sanity check
+  if (good.length() == 1) return good[0];
+  // we have several good sectors; check if they have the same height, and the same flat texture
+  sector_t *res = good[0];
+  for (int f = 1; f < good.length(); ++f) {
+    sec = good[f];
+    //!if (sec->params.lightlevel != res->params.lightlevel) return nullptr; //k8: ignore this?
+    //!if (sec->params.LightColour != res->params.LightColour) return nullptr; //k8: ignore this?
+    if (wantFloor) {
+      // floor
+      if (sec->floor.minz != res->floor.minz) return nullptr;
+      if (sec->floor.pic != res->floor.pic) return nullptr;
+    } else {
+      // ceiling
+      if (sec->ceiling.minz != res->ceiling.minz) return nullptr;
+      if (sec->ceiling.pic != res->ceiling.pic) return nullptr;
+    }
+  }
+  return res;
+}
+
+
 //==========================================================================
 //
 // VLevel::FixDeepWaters
@@ -3947,7 +4084,8 @@ void VLevel::FixDeepWaters () {
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
     sector_t *sec = &Sectors[sidx];
     sec->deepref = nullptr;
-    sec->othersec = nullptr;
+    sec->othersecFloor = nullptr;
+    sec->othersecCeiling = nullptr;
   }
 
   if (deepwater_hacks) FixSelfRefDeepWater();
@@ -3960,63 +4098,23 @@ void VLevel::FixDeepWaters () {
       // slopes aren't interesting
       if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) continue;
       if (sec->floor.minz >= sec->ceiling.minz) continue;
-      //fprintf(stderr, "... #%d ...\n", sidx);
-      // if all linedefs has the same backsector, this is our candidate
-      // also, "our" side shouldn't have bottom texture
-      sector_t *other = nullptr;
-      for (int f = 0; f < sec->linecount; ++f) {
-        line_t *line = sec->lines[f];
-        if (!(!!line->frontsector && !!line->backsector)) continue;
-        sector_t *bs;
-        int myside;
-        if (line->frontsector == sec) {
-          // back
-          bs = line->backsector;
-          myside = 0;
-        } else if (line->backsector == sec) {
-          // front?
-          bs = line->frontsector;
-          myside = 1;
-        } else {
-          other = nullptr;
-          continue;
-        }
-        if (sec->floor.minz >= bs->floor.minz) { other = nullptr; break; }
-        if (bs->floor.minz >= bs->ceiling.minz) { other = nullptr; break; }
-        // sloped?
-        if (bs->floor.normal.z != 1.0) { other = nullptr; break; }
-        if (bs->ceiling.normal.z != -1.0) { other = nullptr; break; }
-        if (!other) other = bs;
-        if (other != bs) {
-          // DooM II: MAP04; oops
-          if (other->floor.minz != bs->floor.minz) { other = nullptr; break; }
-          if (other->floor.pic != bs->floor.pic) { other = nullptr; break; }
-          if (other->params.lightlevel != bs->params.lightlevel) { other = nullptr; break; }
-          if (other->params.LightColour != bs->params.LightColour) { other = nullptr; break; }
-          //{ other = nullptr; break; }
-        }
-        //fprintf(stderr, "POSSIBLE: sector #%d (line #%d)\n", sidx, (int)(ptrdiff_t)(line-Lines));
-        // check for missing bottom texture
-        if (line->sidenum[myside] < 0) { other = nullptr; break; } // sanity check
-        if (Sides[line->sidenum[myside]].BottomTexture != 0) { other = nullptr; break; }
-        // looks good
-      }
-      if (!other) continue;
-      // other sector should not be us, and it should not be a slope
-      if (other == sec) continue;
-      // slopes aren't interesting
-      if (other->floor.normal.z != 1.0 || other->ceiling.normal.z != -1.0) continue;
-      // check height
-      if (sec->floor.minz >= other->floor.minz) continue; // nope
-      GCon->Logf("FLATFIX: found illusiopit at sector #%d", sidx);
-      sec->othersec = other;
+      vuint32 bugFlags = IsFloodBugSector(sec);
+      if (bugFlags == 0) continue;
+      sector_t *fsecFloor = nullptr, *fsecCeiling = nullptr;
+      if (bugFlags&FFBugFloor) fsecFloor = FindGoodFloodSector(sec, true);
+      if (bugFlags&FFBugCeiling) fsecCeiling = FindGoodFloodSector(sec, false);
+      if (!fsecFloor && !fsecCeiling) continue;
+      GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%s; ceiling:%s)", sidx, (fsecFloor ? "tan" : "ona"), (fsecCeiling ? "tan" : "ona"));
+      sec->othersecFloor = fsecFloor;
+      sec->othersecCeiling = fsecCeiling;
       // allocate fakefloor data (engine require it to complete setup)
       sec->fakefloors = new fakefloor_t;
       fakefloor_t *ff = sec->fakefloors;
       memset((void *)ff, 0, sizeof(fakefloor_t));
-      ff->floorplane = sec->othersec->floor;
-      ff->ceilplane = sec->ceiling;
+      ff->floorplane = (fsecFloor ? fsecFloor : sec)->floor;
+      ff->ceilplane = (fsecCeiling ? fsecCeiling : sec)->ceiling;
       ff->params = sec->params;
+      //sec->SectorFlags = (fsecFloor ? SF_FakeFloorOnly : 0)|(fsecCeiling ? SF_FakeCeilingOnly : 0);
     }
   }
 }

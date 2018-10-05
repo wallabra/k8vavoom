@@ -159,7 +159,7 @@ void VAdvancedRenderLevel::UpdateWorld (const refdef_t *rd, const VViewClipper *
     sector_t *sec = &Level->Sectors[i];
          if (sec->deepref) UpdateDeepWater(sec);
     else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
-    else if (sec->othersec) UpdateFloodBug(sec);
+    else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
   }
 
   UpdateBSPNode(Level->NumNodes-1, dummy_bbox); // head node is the last node output

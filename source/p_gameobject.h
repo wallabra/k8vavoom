@@ -460,7 +460,8 @@ struct sector_t {
 
   // this is used to check for "floor holes" that should be filled to emulate original flat floodfill bug
   // if sector has more than one neighbour, this is `nullptr`
-  sector_t *othersec;
+  sector_t *othersecFloor;
+  sector_t *othersecCeiling;
 };
 
 

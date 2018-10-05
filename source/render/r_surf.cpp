@@ -1711,19 +1711,20 @@ void VRenderLevelShared::UpdateDeepWater (sector_t *sec) {
 //==========================================================================
 void VRenderLevelShared::UpdateFloodBug (sector_t *sec) {
   if (!sec) return; // just in case
-  sector_t *other = sec->othersec;
-  if (!other) return; // just in case
   fakefloor_t *ff = sec->fakefloors;
   if (!ff) return; // just in case
   // replace sector being drawn with a copy to be hacked
-  if (sec->floor.minz < other->floor.minz) {
-    ff->floorplane = other->floor;
-    ff->ceilplane = sec->ceiling;
-    ff->params = other->params;
-  } else {
-    ff->floorplane = sec->floor;
-    ff->ceilplane = sec->ceiling;
-    ff->params = sec->params;
+  ff->floorplane = sec->floor;
+  ff->ceilplane = sec->ceiling;
+  ff->params = sec->params;
+  // floor
+  if (sec->othersecFloor && sec->floor.minz < sec->othersecFloor->floor.minz) {
+    ff->floorplane = sec->othersecFloor->floor;
+    ff->params = sec->othersecFloor->params;
+  }
+  if (sec->othersecCeiling && sec->ceiling.minz > sec->othersecCeiling->ceiling.minz) {
+    ff->ceilplane = sec->othersecCeiling->ceiling;
+    ff->params = sec->othersecCeiling->params;
   }
 }
 
