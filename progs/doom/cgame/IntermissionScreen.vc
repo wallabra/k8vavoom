@@ -22,57 +22,53 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class IntermissionScreen : Widget;
 
-//  Intermission states
-enum
-{
+// intermission states
+enum {
   IMS_Stats,
   IMS_NextLoc,
   IMS_NoState,
   IMS_Text,
-  IMS_Done
+  IMS_Done,
 };
 
 ClientGameBase ClGame;
 
-// GLOBAL LOCATIONS
+// global locations
 const int WI_SPACINGY = 33;
-
 const int WI_TITLEY   = 12;
 
-// SINGPLE-PLAYER STUFF
-const int SP_STATSX   = 210;
-const int SP_STATSY   = 190;
+// singple-player stuff
+const int SP_STATSX = 210;
+const int SP_STATSY = 190;
 
-const int SP_TIMEX    = 176;
-const int SP_TIMEY    = 308;
+const int SP_TIMEX = 176;
+const int SP_TIMEY = 308;
 
-const int SP_PARX   = 376;
-const int SP_PARY   = 308;
+const int SP_PARX = 376;
+const int SP_PARY = 308;
 
-// NET GAME STUFF
-const int NG_STATSY   = 210;
-const int NG_STATSX   = (172 + 32 / 2);
+// net game stuff
+const int NG_STATSY = 210;
+const int NG_STATSX = (172+32/2);
 
-const int NG_SPACINGX     = 64;
+const int NG_SPACINGX = 64;
 
-// DEATHMATCH STUFF
-const int DM_MATRIXX    = 202;
-const int DM_MATRIXY    = 208;
+// deathmatch stuff
+const int DM_MATRIXX = 202;
+const int DM_MATRIXY = 208;
 
-const int DM_TOTALSX    = 329;
-const int DM_DEATHSX    = 429;
+const int DM_TOTALSX = 329;
+const int DM_DEATHSX = 429;
 
-const int DM_SPACINGX   = 40;
+const int DM_SPACINGX = 40;
 
 // in seconds
-const float SHOWNEXTLOCDELAY  = 4.0;
+const float SHOWNEXTLOCDELAY = 4.0;
 
-//  Different between registered DOOM (1994) and Ultimate DOOM - Final
-// edition (retail, 1995?).
-const int NUMEPISODES   = 3;
+// different between registered DOOM (1994) and Ultimate DOOM - Final edition (retail, 1995?)
+const int NUMEPISODES = 3;
 const int NUMMAPS     = 9;
 
 const float TEXTSPEED = 0.1;
@@ -90,9 +86,9 @@ int sp_state;
 int ng_state;
 int dm_state;
 
-int       TotalKills;
-int       TotalItems;
-int       TotalSecret;
+int TotalKills;
+int TotalItems;
+int TotalSecret;
 
 int cnt_kills[MAXPLAYERS];
 int cnt_items[MAXPLAYERS];
@@ -104,7 +100,7 @@ int cnt_frags[MAXPLAYERS];
 int dm_Frags[MAXPLAYERS];
 int dm_Deaths[MAXPLAYERS];
 
-// Face background, your face, your dead face
+// face background, your face, your dead face
 int p[MAXPLAYERS];
 
 int star;
@@ -121,7 +117,7 @@ int im_nextepisode;
 int im_nextmap;
 
 
-IntermissionBackground    Background;
+IntermissionBackground Background;
 
 
 //==========================================================================
@@ -154,19 +150,16 @@ final bool checkForDoom2 () {
 //  Start
 //
 //==========================================================================
-
-void Start()
-{
+void Start () {
   StopAllSounds();
   ClGame.skipintermission = false;
   cnt = 0.0;
   btime = 0.0;
 
-  if (!Background)
-  {
+  if (!Background) {
     Background = NewChild(IntermissionBackground);
-    Background.ScaleX = itof(Width) / itof(Background.Width);
-    Background.ScaleY = itof(Height) / itof(Background.Height);
+    Background.ScaleX = float(Width)/float(Background.Width);
+    Background.ScaleY = float(Height)/float(Background.Height);
   }
 
   if (!checkForDoom2()) {
@@ -180,33 +173,22 @@ void Start()
   TotalItems = ClGame.cl.Level.TotalItems;
   TotalSecret = ClGame.cl.Level.TotalSecret;
 
-  if (!TotalKills)
-    TotalKills = 1;
+  if (!TotalKills) TotalKills = 1;
+  if (!TotalItems) TotalItems = 1;
+  if (!TotalSecret) TotalSecret = 1;
 
-  if (!TotalItems)
-    TotalItems = 1;
+       if (ClGame.deathmatch) IM_InitDeathmatchStats();
+  else if (ClGame.maxclients > 1) IM_InitCooperativeStats();
+  else IM_InitSingleStats();
 
-  if (!TotalSecret)
-    TotalSecret = 1;
-
-  if (ClGame.deathmatch)
-    IM_InitDeathmatchStats();
-  else if (ClGame.maxclients > 1)
-    IM_InitCooperativeStats();
-  else
-    IM_InitSingleStats();
-
-  if (interstate == IMS_Stats)
-  {
+  if (interstate == IMS_Stats) {
     IM_LoadData();
 
     // intermission music
-    if (ClGame.im.InterMusic)
-    {
+    if (ClGame.im.InterMusic) {
       CmdBuf_AddText(va("music loop %n\n", ClGame.im.InterMusic));
     }
-    else
-    {
+    else {
 #ifdef FIXME
       if (checkForDoom2()) {
         S_StartSong("D_DM2INT", P_GetCDIntermissionTrack(), true);
@@ -221,30 +203,21 @@ void Start()
       }
 #endif
     }
-  }
-  else
-  {
+  } else {
     IM_InitText();
   }
 }
+
 
 //==========================================================================
 //
 //  FindEpisodeAndMap
 //
 //==========================================================================
-
-void FindEpisodeAndMap(name Name, int *epi, int *map)
-{
-  int e;
-  int m;
-
-  for (e = 1; e <= 3; e++)
-  {
-    for (m = 1; m <= 9; m++)
-    {
-      if (Name == StrToName(va("e%dm%d", e, m)))
-      {
+void FindEpisodeAndMap (name Name, int *epi, int *map) {
+  foreach (auto e; 1..4) {
+    foreach (auto m; 1..10) {
+      if (Name == StrToName(va("e%dm%d", e, m))) {
         *epi = e;
         *map = m;
         return;
@@ -255,6 +228,7 @@ void FindEpisodeAndMap(name Name, int *epi, int *map)
   *map = 1;
 }
 
+
 //==========================================================================
 //
 //  Tick
@@ -262,83 +236,58 @@ void FindEpisodeAndMap(name Name, int *epi, int *map)
 //  Updates stuff each frame
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   // counter for general background animation
   btime += DeltaTime;
 
-  switch (interstate)
-  {
-  case IMS_Stats:
-    if (ClGame.deathmatch)
-      IM_UpdateDeathmatchStats(DeltaTime);
-    else if (ClGame.maxclients > 1)
-      IM_UpdateCooperativeStats(DeltaTime);
-    else
-      IM_UpdateSingleStats(DeltaTime);
-    break;
-
-  case IMS_NextLoc:
-    if (!checkForDoom2()) IM_UpdateNextLoc(DeltaTime);
-    break;
-
-  case IMS_NoState:
-    IM_UpdateNoState(DeltaTime);
-    break;
-
-  case IMS_Text:
-    IM_UpdateText(DeltaTime);
-    break;
-
-  case IMS_Done:
-    break;
+  switch (interstate) {
+    case IMS_Stats:
+           if (ClGame.deathmatch) IM_UpdateDeathmatchStats(DeltaTime);
+      else if (ClGame.maxclients > 1) IM_UpdateCooperativeStats(DeltaTime);
+      else IM_UpdateSingleStats(DeltaTime);
+      break;
+    case IMS_NextLoc:
+      if (!checkForDoom2()) IM_UpdateNextLoc(DeltaTime);
+      break;
+    case IMS_NoState:
+      IM_UpdateNoState(DeltaTime);
+      break;
+    case IMS_Text:
+      IM_UpdateText(DeltaTime);
+      break;
+    case IMS_Done:
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  OnPostDraw
 //
 //==========================================================================
-
-override void OnPostDraw()
-{
+override void OnPostDraw () {
   SetFont('bigfont');
-
-  switch (interstate)
-  {
-  case IMS_Stats:
-    if (ClGame.deathmatch)
-    {
-      IM_DrawDeathmatchStats();
-    }
-    else if (ClGame.maxclients > 1)
-    {
-      IM_DrawCooperativeStats();
-    }
-    else
-    {
-      IM_DrawSingleStats();
-    }
-    break;
-
-  case IMS_NextLoc:
-    if (!checkForDoom2()) IM_DrawNextLoc();
-    break;
-
-  case IMS_NoState:
-    IM_DrawNoState();
-    break;
-
-  case IMS_Text:
-    IM_DrawText();
-    break;
-
-  case IMS_Done:
-    break;
+  switch (interstate) {
+    case IMS_Stats:
+           if (ClGame.deathmatch) IM_DrawDeathmatchStats();
+      else if (ClGame.maxclients > 1) IM_DrawCooperativeStats();
+      else IM_DrawSingleStats();
+      break;
+    case IMS_NextLoc:
+      if (!checkForDoom2()) IM_DrawNextLoc();
+      break;
+    case IMS_NoState:
+      IM_DrawNoState();
+      break;
+    case IMS_Text:
+      IM_DrawText();
+      break;
+    case IMS_Done:
+      break;
   }
 }
+
 
 //**************************************************************************
 //**
@@ -351,9 +300,7 @@ override void OnPostDraw()
 //  IM_InitAnimatedBack
 //
 //==========================================================================
-
-void IM_InitAnimatedBack()
-{
+void IM_InitAnimatedBack () {
   /*
   print("IM_InitAnimatedBack: interstate=%d; exitpic=%n; enterpic=%n", interstate, ClGame.im.ExitPic, ClGame.im.EnterPic);
   print("  LeaveMap=%n; LeaveCluster=%d; LeaveName=%s; LeaveTitlePatch=%n; ExitPic=%n", ClGame.im.LeaveMap, ClGame.im.LeaveCluster, ClGame.im.LeaveName, ClGame.im.LeaveTitlePatch, ClGame.im.ExitPic);
@@ -363,7 +310,7 @@ void IM_InitAnimatedBack()
   print("  TextFlat=%n; TextPic=%n; TextMusic=%n; bTextIsLump=%d", ClGame.im.TextFlat, ClGame.im.TextPic, ClGame.im.TextMusic, ClGame.im.bTextIsLump);
   */
 
-  name BgPic = interstate ? ClGame.im.ExitPic : ClGame.im.EnterPic;
+  name BgPic = (interstate ? ClGame.im.ExitPic : ClGame.im.EnterPic);
   //print("  BgPic0: %n (present=%d); im_episode=%d; isdoom2=%s", BgPic, WadLumpPresent(BgPic), im_episode, (IsAnyDoom2 ? "tan" : "ona"));
   if (!BgPic) {
     if (checkForDoom2()) {
@@ -382,34 +329,22 @@ void IM_InitAnimatedBack()
     IntermissionBackground::STATE_Default, ClientGameShared(ClGame));
 }
 
+
 //==========================================================================
 //
 //  IM_LoadData
 //
 //==========================================================================
-
-void IM_LoadData()
-{
+void IM_LoadData () {
   picinfo_t info;
-  int i;
 
-  if (ClGame.im.LeaveTitlePatch)
-  {
-    LeaveTitlePic = R_RegisterPic(ClGame.im.LeaveTitlePatch);
-  }
-  if (ClGame.im.EnterTitlePatch)
-  {
-    EnterTitlePic = R_RegisterPic(ClGame.im.EnterTitlePatch);
-  }
+  if (ClGame.im.LeaveTitlePatch) LeaveTitlePic = R_RegisterPic(ClGame.im.LeaveTitlePatch);
+  if (ClGame.im.EnterTitlePatch) EnterTitlePic = R_RegisterPic(ClGame.im.EnterTitlePatch);
 
-  if (ClGame.maxclients > 1 || ClGame.deathmatch)
-  {
+  if (ClGame.maxclients > 1 || ClGame.deathmatch) {
     // face backgrounds
-//      for (i = 0; i < MAXPLAYERS; i++)
-    for (i = 0; i < 4; i++)
-    {
-      p[i] = R_RegisterPic(StrToName(va("stpb%i", i)));
-    }
+    //for (i = 0; i < MAXPLAYERS; i++)
+    foreach (auto i; 0..4) p[i] = R_RegisterPic(StrToName(va("stpb%i", i)));
 
     // your face
     star = R_RegisterPic('stfst01');
@@ -421,15 +356,15 @@ void IM_LoadData()
   }
 }
 
+
 //==========================================================================
 //
 //  IM_UnloadData
 //
 //==========================================================================
-
-void IM_UnloadData()
-{
+void IM_UnloadData () {
 }
+
 
 //==========================================================================
 //
@@ -438,30 +373,26 @@ void IM_UnloadData()
 //  Draws "<Levelname> Finished!"
 //
 //==========================================================================
-
-void IM_DrawLF()
-{
+void IM_DrawLF () {
   picinfo_t info;
   int y = WI_TITLEY;
 
   // draw <LevelName>
-  if (ClGame.im.LeaveTitlePatch)
-  {
+  if (ClGame.im.LeaveTitlePatch) {
     R_GetPicInfo(LeaveTitlePic, &info);
-    DrawPic(320 - info.width / 2, y, LeaveTitlePic);
-    y += info.height + TextHeight("DUMMY") / 4;
-  }
-  else
-  {
+    DrawPic(320-info.width/2, y, LeaveTitlePic);
+    y += info.height+TextHeight("DUMMY")/4;
+  } else {
     SetTextAlign(hcentre, vtop);
     DrawText(320, y, ClGame.im.LeaveName);
-    y += (5 * TextHeight("DUMMY")) / 4;
+    y += (5*TextHeight("DUMMY"))/4;
   }
 
   // draw "Finished!"
   SetTextAlign(hcentre, vtop);
   DrawText(320, y, "finished");
 }
+
 
 //==========================================================================
 //
@@ -470,9 +401,7 @@ void IM_DrawLF()
 //  Draws "Entering <LevelName>"
 //
 //==========================================================================
-
-void IM_DrawEL()
-{
+void IM_DrawEL () {
   picinfo_t info;
   int y = WI_TITLEY;
 
@@ -481,32 +410,27 @@ void IM_DrawEL()
   DrawText(320, y, "entering");
 
   // draw level
-  y += (5 * TextHeight("DUMMY")) / 4;
-  if (ClGame.im.EnterTitlePatch)
-  {
+  y += (5*TextHeight("DUMMY"))/4;
+  if (ClGame.im.EnterTitlePatch) {
     R_GetPicInfo(EnterTitlePic, &info);
-    DrawPic(320 - info.width / 2, y, EnterTitlePic);
-  }
-  else
-  {
+    DrawPic(320-info.width/2, y, EnterTitlePic);
+  } else {
     DrawText(320, y, ClGame.im.EnterName);
   }
 }
+
 
 //==========================================================================
 //
 //  IM_DrawPercent
 //
 //==========================================================================
-
-void IM_DrawPercent(int x, int y, int p)
-{
-  if (p < 0)
-    return;
-
+void IM_DrawPercent (int x, int y, int p) {
+  if (p < 0) return;
   SetTextAlign(hright, vtop);
   DrawText(x, y, va("%d%%", p));
 }
+
 
 //==========================================================================
 //
@@ -515,49 +439,43 @@ void IM_DrawPercent(int x, int y, int p)
 //  Display level completion time and par, or "sucks" message if overflow.
 //
 //==========================================================================
-
-void IM_DrawTime(int x, int y, int t, string BaseText, bool sucks)
-{
-  if (t < 0)
-    return;
+void IM_DrawTime (int x, int y, int t, string BaseText, bool sucks) {
+  if (t < 0) return;
 
   SetTextAlign(hleft, vtop);
 
   string Text;
-  if (!sucks || !ClGame.cl.Level.SuckTime || t < ClGame.cl.Level.SuckTime * 60 * 60)
-  {
+  if (!sucks || !ClGame.cl.Level.SuckTime || t < ClGame.cl.Level.SuckTime*60*60) {
     Text = BaseText;
-    if (t >= 60 * 60)
-    {
-      Text = strcat(Text, va("%d:", t / (60 * 60)));
-      if ((t / 60) % 60 < 10)
-        Text = strcat(Text, va("0%d", (t / 60) % 60));
-      else
-        Text = strcat(Text, va("%d", (t / 60) % 60));
+    if (t >= 60*60) {
+      Text = strcat(Text, va("%d:", t/(60*60)));
+      if ((t/60)%60 < 10) {
+        Text = strcat(Text, va("0%d", (t/60)%60));
+      } else {
+        Text = strcat(Text, va("%d", (t/60)%60));
+      }
+    } else {
+      Text = strcat(Text, va("%d", t/60));
     }
-    else
-      Text = strcat(Text, va("%d", t / 60));
-    if (t % 60 < 10)
-      Text = strcat(Text, va(":0%d", t % 60));
-    else
-      Text = strcat(Text, va(":%d", t % 60));
-  }
-  else
-  {
+    if (t%60 < 10) {
+      Text = strcat(Text, va(":0%d", t%60));
+    } else {
+      Text = strcat(Text, va(":%d", t%60));
+    }
+  } else {
     // "sucks"
     Text = strcat(BaseText, "sucks");
   }
   DrawText(x, y, Text);
 }
 
+
 //==========================================================================
 //
 //  IM_InitSingleStats
 //
 //==========================================================================
-
-void IM_InitSingleStats()
-{
+void IM_InitSingleStats () {
   interstate = IMS_Stats;
   ClGame.skipintermission = 0;
   sp_state = 1;
@@ -566,180 +484,138 @@ void IM_InitSingleStats()
   cnt_secret[0] = -1;
   cnt_time = -1;
   cnt_pause = 1.0;
-  if (ClGame.cl.Level.bNoIntermission)
-  {
-    interstate = IMS_NoState;
-  }
+  if (ClGame.cl.Level.bNoIntermission) interstate = IMS_NoState;
 }
+
 
 //==========================================================================
 //
 //  IM_DrawSingleStats
 //
 //==========================================================================
-
-void IM_DrawSingleStats()
-{
+void IM_DrawSingleStats () {
   // line height
-  int lh;
-
-  lh = (3 * TextHeight("DUMMY")) / 2;
+  int lh = (3*TextHeight("DUMMY"))/2;
 
   IM_DrawLF();
 
   SetTextAlign(hleft, vtop);
 
   DrawText(SP_STATSX, SP_STATSY, "kills");
-  DrawText(SP_STATSX, SP_STATSY + lh, "items");
-  DrawText(SP_STATSX, SP_STATSY + 2 * lh, "scrt");
+  DrawText(SP_STATSX, SP_STATSY+lh, "items");
+  DrawText(SP_STATSX, SP_STATSY+2*lh, "scrt");
 
-  IM_DrawPercent(640 - SP_STATSX, SP_STATSY, cnt_kills[0]);
-  IM_DrawPercent(640 - SP_STATSX, SP_STATSY + lh, cnt_items[0]);
-  IM_DrawPercent(640 - SP_STATSX, SP_STATSY + 2 * lh, cnt_secret[0]);
+  IM_DrawPercent(640-SP_STATSX, SP_STATSY, cnt_kills[0]);
+  IM_DrawPercent(640-SP_STATSX, SP_STATSY+lh, cnt_items[0]);
+  IM_DrawPercent(640-SP_STATSX, SP_STATSY+2*lh, cnt_secret[0]);
   IM_DrawTime(SP_TIMEX, SP_TIMEY, cnt_time, "time: ", true);
-  if (cnt_time >= 0 && ClGame.cl.Level.ParTime)
+  if (cnt_time >= 0 && ClGame.cl.Level.ParTime) {
     IM_DrawTime(SP_PARX, SP_PARY, ClGame.cl.Level.ParTime, "par: ", false);
+  }
 }
+
 
 //==========================================================================
 //
 //  IM_UpdateSingleStats
 //
 //==========================================================================
-
-void IM_UpdateSingleStats(float DeltaTime)
-{
-  if (ClGame.skipintermission && sp_state != 10)
-  {
+void IM_UpdateSingleStats (float DeltaTime) {
+  if (ClGame.skipintermission && sp_state != 10) {
     ClGame.skipintermission = 0;
-    cnt_kills[0] = (ClGame.cl.KillCount * 100) / TotalKills;
-    cnt_items[0] = (ClGame.cl.ItemCount * 100) / TotalItems;
-    cnt_secret[0] = (ClGame.cl.SecretCount * 100) / TotalSecret;
-    cnt_time = ftoi(ClGame.GLevel.LevelInfo.CompletitionTime);
+    cnt_kills[0] = (ClGame.cl.KillCount*100)/TotalKills;
+    cnt_items[0] = (ClGame.cl.ItemCount*100)/TotalItems;
+    cnt_secret[0] = (ClGame.cl.SecretCount*100)/TotalSecret;
+    cnt_time = int(ClGame.GLevel.LevelInfo.CompletitionTime);
     LocalSound('weapons/rocklx');
     sp_state = 10;
   }
 
-  if (sp_state == 2)
-  {
+  if (sp_state == 2) {
     cnt_kills[0] += 2;
 
-    if (!(ftoi(btime * 35.0) & 3))
-      LocalSound('weapons/pistol');
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
-    if (cnt_kills[0] >= (ClGame.cl.KillCount * 100) / TotalKills)
-    {
-      cnt_kills[0] = (ClGame.cl.KillCount * 100) / TotalKills;
+    if (cnt_kills[0] >= (ClGame.cl.KillCount*100)/TotalKills) {
+      cnt_kills[0] = (ClGame.cl.KillCount*100)/TotalKills;
       LocalSound('weapons/rocklx');
-      sp_state++;
+      ++sp_state;
     }
-  }
-  else if (sp_state == 4)
-  {
+  } else if (sp_state == 4) {
     cnt_items[0] += 2;
 
-    if (!(ftoi(btime * 35.0) & 3))
-      LocalSound('weapons/pistol');
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
-    if (cnt_items[0] >= (ClGame.cl.ItemCount * 100) / TotalItems)
-    {
-      cnt_items[0] = (ClGame.cl.ItemCount * 100) / TotalItems;
+    if (cnt_items[0] >= (ClGame.cl.ItemCount*100)/TotalItems) {
+      cnt_items[0] = (ClGame.cl.ItemCount*100)/TotalItems;
       LocalSound('weapons/rocklx');
-      sp_state++;
+      ++sp_state;
     }
-  }
-  else if (sp_state == 6)
-  {
+  } else if (sp_state == 6) {
     cnt_secret[0] += 2;
 
-    if (!(ftoi(btime * 35.0) & 3))
-      LocalSound('weapons/pistol');
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
-    if (cnt_secret[0] >= (ClGame.cl.SecretCount * 100) / TotalSecret)
-    {
-      cnt_secret[0] = (ClGame.cl.SecretCount * 100) / TotalSecret;
+    if (cnt_secret[0] >= (ClGame.cl.SecretCount*100)/TotalSecret) {
+      cnt_secret[0] = (ClGame.cl.SecretCount*100)/TotalSecret;
       LocalSound('weapons/rocklx');
-      sp_state++;
+      ++sp_state;
     }
-  }
-
-  else if (sp_state == 8)
-  {
-    if (!(ftoi(btime * 35.0) & 3))
-      LocalSound('weapons/pistol');
+  } else if (sp_state == 8) {
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
     cnt_time += 3;
 
-    if (cnt_time >= ftoi(ClGame.GLevel.LevelInfo.CompletitionTime))
-    {
-      cnt_time = ftoi(ClGame.GLevel.LevelInfo.CompletitionTime);
+    if (cnt_time >= int(ClGame.GLevel.LevelInfo.CompletitionTime)) {
+      cnt_time = int(ClGame.GLevel.LevelInfo.CompletitionTime);
       LocalSound('weapons/rocklx');
-      sp_state++;
+      ++sp_state;
     }
-  }
-  else if (sp_state == 10)
-  {
-    if (ClGame.skipintermission)
-    {
+  } else if (sp_state == 10) {
+    if (ClGame.skipintermission) {
       LocalSound('weapons/shotgr');
-
       if (checkForDoom2()) {
         IM_InitNoState();
       } else {
         IM_InitNextLoc();
       }
     }
-  }
-  else if (sp_state & 1)
-  {
+  } else if (sp_state&1) {
     cnt_pause -= DeltaTime;
-    if (cnt_pause <= 0.0)
-    {
-      sp_state++;
+    if (cnt_pause <= 0.0) {
+      ++sp_state;
       cnt_pause = 1.0;
     }
   }
-
 }
+
 
 //==========================================================================
 //
 //  IM_InitCooperativeStats
 //
 //==========================================================================
-
-void IM_InitCooperativeStats()
-{
-  int i;
-
+void IM_InitCooperativeStats () {
   interstate = IMS_Stats;
   ClGame.skipintermission = 0;
   ng_state = 1;
-
   cnt_pause = 1.0;
-
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
+  foreach (auto i; 0..MAXPLAYERS) {
     cnt_kills[i] = 0;
     cnt_items[i] = 0;
     cnt_secret[i] = 0;
     cnt_frags[i] = 0;
   }
-
-  if (ClGame.cl.Level.bNoIntermission)
-  {
-    interstate = IMS_NoState;
-  }
+  if (ClGame.cl.Level.bNoIntermission) interstate = IMS_NoState;
 }
+
 
 //==========================================================================
 //
 //  IM_DrawCooperativeStats
 //
 //==========================================================================
-
-void IM_DrawCooperativeStats()
-{
+void IM_DrawCooperativeStats () {
   int i;
   int x;
   int y;
@@ -753,37 +629,37 @@ void IM_DrawCooperativeStats()
 
   SetTextAlign(hright, vtop);
   // draw stat titles (top line)
-  DrawText(NG_STATSX + NG_SPACINGX, NG_STATSY, "kills");
+  DrawText(NG_STATSX+NG_SPACINGX, NG_STATSY, "kills");
 
-  DrawText(NG_STATSX + 2 * NG_SPACINGX, NG_STATSY, "items");
+  DrawText(NG_STATSX+2*NG_SPACINGX, NG_STATSY, "items");
 
-  DrawText(NG_STATSX + 3 * NG_SPACINGX, NG_STATSY, "scrt");
+  DrawText(NG_STATSX+3*NG_SPACINGX, NG_STATSY, "scrt");
 
-  DrawText(NG_STATSX + 4 * NG_SPACINGX, NG_STATSY, "frgs");
+  DrawText(NG_STATSX+4*NG_SPACINGX, NG_STATSY, "frgs");
 
   // draw stats
-  y = NG_STATSY + TextHeight("kills");
+  y = NG_STATSY+TextHeight("kills");
 
   foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
   {
     i = RepInfo.PlayerNum;
     x = NG_STATSX;
     R_GetPicInfo(p[i], &info);
-    DrawPic(x - info.width, y, p[i]);
+    DrawPic(x-info.width, y, p[i]);
 
     if (i == ClGame.cl.ClientNum)
-      DrawPic(x - info.width, y, star);
+      DrawPic(x-info.width, y, star);
 
     x += NG_SPACINGX;
-    IM_DrawPercent(x - pwidth, y + 10, cnt_kills[i]);
+    IM_DrawPercent(x-pwidth, y+10, cnt_kills[i]);
     x += NG_SPACINGX;
-    IM_DrawPercent(x - pwidth, y + 10, cnt_items[i]);
+    IM_DrawPercent(x-pwidth, y+10, cnt_items[i]);
     x += NG_SPACINGX;
-    IM_DrawPercent(x - pwidth, y + 10, cnt_secret[i]);
+    IM_DrawPercent(x-pwidth, y+10, cnt_secret[i]);
     x += NG_SPACINGX;
 
     SetTextAlign(hright, vtop);
-    DrawText(x, y + 10, va("%d", cnt_frags[i]));
+    DrawText(x, y+10, va("%d", cnt_frags[i]));
 
     y += WI_SPACINGY;
   }
@@ -808,9 +684,9 @@ void IM_UpdateCooperativeStats(float DeltaTime)
 
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
     {
-      cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount * 100) / TotalKills;
-      cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount * 100) / TotalItems;
-      cnt_secret[RepInfo.PlayerNum] = (RepInfo.SecretCount * 100) / TotalSecret;
+      cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount*100)/TotalKills;
+      cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount*100)/TotalItems;
+      cnt_secret[RepInfo.PlayerNum] = (RepInfo.SecretCount*100)/TotalSecret;
       cnt_frags[RepInfo.PlayerNum] = RepInfo.Frags;
     }
     LocalSound('weapons/rocklx');
@@ -819,7 +695,7 @@ void IM_UpdateCooperativeStats(float DeltaTime)
 
   if (ng_state == 2)
   {
-    if (!(ftoi(btime * 35.0) & 3))
+    if (!(int(btime*35.0)&3))
       LocalSound('weapons/pistol');
 
     stillticking = false;
@@ -828,8 +704,8 @@ void IM_UpdateCooperativeStats(float DeltaTime)
     {
       cnt_kills[RepInfo.PlayerNum] += 2;
 
-      if (cnt_kills[RepInfo.PlayerNum] >= (RepInfo.KillCount * 100) / TotalKills)
-        cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount * 100) / TotalKills;
+      if (cnt_kills[RepInfo.PlayerNum] >= (RepInfo.KillCount*100)/TotalKills)
+        cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount*100)/TotalKills;
       else
         stillticking = true;
     }
@@ -842,7 +718,7 @@ void IM_UpdateCooperativeStats(float DeltaTime)
   }
   else if (ng_state == 4)
   {
-    if (!(ftoi(btime * 35.0) & 3))
+    if (!(int(btime*35.0)&3))
       LocalSound('weapons/pistol');
 
     stillticking = false;
@@ -850,8 +726,8 @@ void IM_UpdateCooperativeStats(float DeltaTime)
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
     {
       cnt_items[RepInfo.PlayerNum] += 2;
-      if (cnt_items[RepInfo.PlayerNum] >= (RepInfo.ItemCount * 100) / TotalItems)
-        cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount * 100) / TotalItems;
+      if (cnt_items[RepInfo.PlayerNum] >= (RepInfo.ItemCount*100)/TotalItems)
+        cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount*100)/TotalItems;
       else
         stillticking = true;
     }
@@ -863,7 +739,7 @@ void IM_UpdateCooperativeStats(float DeltaTime)
   }
   else if (ng_state == 6)
   {
-    if (!(ftoi(btime * 35.0) & 3))
+    if (!(int(btime*35.0)&3))
       LocalSound('weapons/pistol');
 
     stillticking = false;
@@ -872,8 +748,8 @@ void IM_UpdateCooperativeStats(float DeltaTime)
     {
       cnt_secret[RepInfo.PlayerNum] += 2;
 
-      if (cnt_secret[RepInfo.PlayerNum] >= RepInfo.SecretCount * 100 / TotalSecret)
-        cnt_secret[RepInfo.PlayerNum] = RepInfo.SecretCount * 100 / TotalSecret;
+      if (cnt_secret[RepInfo.PlayerNum] >= RepInfo.SecretCount*100/TotalSecret)
+        cnt_secret[RepInfo.PlayerNum] = RepInfo.SecretCount*100/TotalSecret;
       else
         stillticking = true;
     }
@@ -886,7 +762,7 @@ void IM_UpdateCooperativeStats(float DeltaTime)
   }
   else if (ng_state == 8)
   {
-    if (!(ftoi(btime * 35.0) & 3))
+    if (!(int(btime*35.0)&3))
       LocalSound('weapons/pistol');
 
     stillticking = false;
@@ -919,7 +795,7 @@ void IM_UpdateCooperativeStats(float DeltaTime)
       }
     }
   }
-  else if (ng_state & 1)
+  else if (ng_state&1)
   {
     cnt_pause -= DeltaTime;
     if (cnt_pause <= 0.0)
@@ -972,8 +848,8 @@ void IM_DrawDeathmatchStats()
 
   SetTextAlign(hcentre, vtop);
   // draw stat titles (top line)
-  DrawText(DM_TOTALSX, DM_MATRIXY - WI_SPACINGY, "FRAGS");
-  DrawText(DM_DEATHSX, DM_MATRIXY - WI_SPACINGY, "DEATHS");
+  DrawText(DM_TOTALSX, DM_MATRIXY-WI_SPACINGY, "FRAGS");
+  DrawText(DM_DEATHSX, DM_MATRIXY-WI_SPACINGY, "DEATHS");
 
   // draw stats
   y = DM_MATRIXY;
@@ -983,11 +859,11 @@ void IM_DrawDeathmatchStats()
     if (RepInfo.PlayerNum == ClGame.cl.ClientNum)
     {
       R_GetPicInfo(star, &info);
-      DrawPic(DM_MATRIXX - info.width - 5, y - 8, star);
+      DrawPic(DM_MATRIXX-info.width-5, y-8, star);
     }
     SetTextAlign(hleft, vtop);
     SetFont('smallfont');
-    DrawText(DM_MATRIXX, y + 5, RepInfo.PlayerName);
+    DrawText(DM_MATRIXX, y+5, RepInfo.PlayerName);
     SetTextAlign(hright, vtop);
     SetFont('bigfont');
     DrawText(DM_TOTALSX, y, va("%d", dm_Frags[RepInfo.PlayerNum]));
@@ -1025,7 +901,7 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
 
   if (dm_state == 2)
   {
-    if (!(ftoi(btime * 35.0) & 3))
+    if (!(int(btime*35.0)&3))
       LocalSound('weapons/pistol');
 
     stillticking = false;
@@ -1072,7 +948,7 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
       }
     }
   }
-  else if (dm_state & 1)
+  else if (dm_state&1)
   {
     cnt_pause -= DeltaTime;
     if (cnt_pause <= 0.0)
@@ -1083,93 +959,82 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
   }
 }
 
+
 //==========================================================================
 //
 //  IM_InitNextLoc
 //
 //==========================================================================
-
-void IM_InitNextLoc()
-{
+void IM_InitNextLoc () {
   interstate = IMS_NextLoc;
   ClGame.skipintermission = 0;
   cnt = SHOWNEXTLOCDELAY;
-
   IM_InitAnimatedBack();
 }
+
 
 //==========================================================================
 //
 //  IM_DrawNextLoc
 //
 //==========================================================================
-
-void IM_DrawNextLoc()
-{
-  // draws which level you are entering..
+void IM_DrawNextLoc () {
+  // draws which level you are entering
   IM_DrawEL();
 }
+
 
 //==========================================================================
 //
 //  IM_UpdateNextLoc
 //
 //==========================================================================
-
-void IM_UpdateNextLoc(float DeltaTime)
-{
+void IM_UpdateNextLoc (float DeltaTime) {
   cnt -= DeltaTime;
-  if (cnt <= 0.0 || ClGame.skipintermission)
-    IM_InitNoState();
+  if (cnt <= 0.0 || ClGame.skipintermission) IM_InitNoState();
 }
+
 
 //==========================================================================
 //
 //  IM_InitNoState
 //
 //==========================================================================
-
-void IM_InitNoState()
-{
+void IM_InitNoState () {
   interstate = IMS_NoState;
   ClGame.skipintermission = 0;
   cnt = 0.3;
 }
+
 
 //==========================================================================
 //
 //  IM_DrawNoState
 //
 //==========================================================================
-
-void IM_DrawNoState()
-{
+void IM_DrawNoState () {
   if (checkForDoom2()) {
-    // draws which level you are entering..
-    if (ClGame.im.LeaveMap != 'map30')
-    {
-      IM_DrawEL();
-    }
+    // draws which level you are entering
+    if (ClGame.im.LeaveMap != 'map30') IM_DrawEL();
   } else {
     IM_DrawNextLoc();
   }
 }
+
 
 //==========================================================================
 //
 //  IM_UpdateNoState
 //
 //==========================================================================
-
-void IM_UpdateNoState(float DeltaTime)
-{
+void IM_UpdateNoState (float DeltaTime) {
   cnt -= DeltaTime;
-  if (cnt <= 0.0)
-  {
+  if (cnt <= 0.0) {
     IM_UnloadData();
     IM_InitText();
   }
 }
+
 
 //==========================================================================
 //
@@ -1186,52 +1051,45 @@ string HubText;
 name TextFlat;
 int TextPic;
 
+bool imDrawWholeText;
+
+
 //==========================================================================
 //
 //  IM_InitText
 //
 //==========================================================================
+void IM_InitText () {
+  imDrawWholeText = false;
 
-void IM_InitText()
-{
-  if (ClGame.deathmatch || !ClGame.im.Text)
-  {
+  if (ClGame.deathmatch || !ClGame.im.Text) {
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
     Background.State = IntermissionBackground::STATE_Done;
     return;
   }
 
-  if (ClGame.im.bTextIsLump)
-  {
+  if (ClGame.im.bTextIsLump) {
     HubText = LoadTextLump(StrToName(ClGame.im.Text));
-  }
-  else
-  {
+  } else {
     HubText = ClGame.im.Text;
   }
-  HubCount = itof(strlen(HubText)) * TEXTSPEED + TEXTWAIT;
+  HubCount = float(strlen(HubText))*TEXTSPEED+TEXTWAIT;
 
   TextFlat = '';
   TextPic = 0;
-  if (ClGame.im.TextPic)
-  {
+  if (ClGame.im.TextPic) {
     TextPic = R_RegisterPic(ClGame.im.TextPic);
-  }
-  else if (ClGame.im.TextFlat)
-  {
+  } else if (ClGame.im.TextFlat) {
     TextFlat = ClGame.im.TextFlat;
   }
 
   interstate = IMS_Text;
   intertime = 0.0;
 
-  if (ClGame.im.TextMusic)
-  {
+  if (ClGame.im.TextMusic) {
     CmdBuf_AddText(va("music loop %n\n", ClGame.im.TextMusic));
-  }
-  else
-  {
+  } else {
     if (checkForDoom2()) {
 #ifdef FIXME
       S_StartSong("d_read_m", P_GetCDEnd1Track(), true);
@@ -1248,53 +1106,47 @@ void IM_InitText()
   }
 }
 
+
+final int IM_GetCurrTextLength () {
+  if (imDrawWholeText) return HubText.length;
+  return clamp(int((intertime-0.3)/TEXTSPEED), 0, HubText.length);
+}
+
+
 //==========================================================================
 //
 //  IM_DrawText
 //
 //==========================================================================
-
-void IM_DrawText()
-{
-  int count;
-
+void IM_DrawText () {
   // erase the entire screen to a tiled background
-  if (TextPic)
-  {
-    DrawFullScreenPic(TextPic);
-  }
-  else if (TextFlat)
-  {
-    FillRectWithFlat(0, 0, 640, 480, TextFlat);
-  }
-  else
-  {
-    R_FillRect(0, 0, 640, 480, 0);
-  }
+       if (TextPic) DrawFullScreenPic(TextPic);
+  else if (TextFlat) FillRectWithFlat(0, 0, 640, 480, TextFlat);
+  else R_FillRect(0, 0, 640, 480, 0);
 
   // draw some of the text onto the screen
-  count = ftoi((intertime - 0.3) / TEXTSPEED);
-  if (count < 0)
-    count = 0;
-  if (count > strlen(HubText))
-    count = strlen(HubText);
+  //int count = clamp(int((intertime-0.3)/TEXTSPEED), 0, HubText.length);
+  int count = IM_GetCurrTextLength();
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(170, 150, substr(HubText, 0, count));
+  DrawText(170, 150, HubText[0..count]);
 }
+
 
 //==========================================================================
 //
 //  IM_UpdateText
 //
 //==========================================================================
-
-void IM_UpdateText(float DeltaTime)
-{
+void IM_UpdateText (float DeltaTime) {
   intertime += DeltaTime;
-  if (ClGame.skipintermission || intertime > HubCount)
-  {
+  if (ClGame.skipintermission && !imDrawWholeText && IM_GetCurrTextLength() < HubText.length) {
+    imDrawWholeText = true;
+    ClGame.skipintermission = false;
+    return;
+  }
+  if (ClGame.skipintermission || intertime > HubCount) {
     ClGame.skipintermission = false;
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
@@ -1302,23 +1154,19 @@ void IM_UpdateText(float DeltaTime)
   }
 }
 
+
 //==========================================================================
 //
 //  OnVisibilityChanged
 //
 //==========================================================================
-
-override void OnVisibilityChanged(bool bNewVisibility)
-{
+override void OnVisibilityChanged (bool bNewVisibility) {
   bTickEnabled = bNewVisibility;
-  if (Background)
-  {
-    Background.bTickEnabled = bNewVisibility;
-  }
+  if (Background) Background.bTickEnabled = bNewVisibility;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bTickEnabled = true;
   Focusable = true;
   Width = 640;
