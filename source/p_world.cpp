@@ -296,20 +296,13 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
   mapx = xt1;
   mapy = yt1;
 
-  float earlyFrac = 1000;
-
   //k8: zdoom is using 1000 here; why?
   for (int count = 0 ; count < 100; ++count) {
-    if (flags&PT_ADDLINES) {
-      if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT), earlyFrac)) {
-        // don't throw away things before the early out line
-        if (flags&PT_ADDTHINGS) AddThingIntercepts(Self, mapx, mapy, earlyFrac);
-        return; // early out
-      }
-    }
-
-    //k8: should this be moved to top?
     if (flags&PT_ADDTHINGS) AddThingIntercepts(Self, mapx, mapy);
+
+    if (flags&PT_ADDLINES) {
+      if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT))) break; // early out
+    }
 
     if (mapx == xt2 && mapy == yt2) break;
 
@@ -325,24 +318,17 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
       // being entered need to be checked (which will happen when this loop
       // continues), but the other two blocks adjacent to the corner also need to
       // be checked.
-      if (flags&PT_ADDLINES) {
-        float ef1 = 1000;
-        if (!AddLineIntercepts(Self, mapx+mapxstep, mapy, !!(flags&PT_EARLYOUT), earlyFrac) ||
-            !AddLineIntercepts(Self, mapx, mapy+mapystep, !!(flags&PT_EARLYOUT), ef1))
-        {
-          // don't throw away things before the line
-          if (flags&PT_ADDTHINGS) {
-            const float frac = (earlyFrac < ef1 ? earlyFrac : ef1);
-            AddThingIntercepts(Self, mapx+mapxstep, mapy, frac);
-            AddThingIntercepts(Self, mapx, mapy+mapystep, frac);
-          }
-          return; // early out
-        }
-      }
-
       if (flags&PT_ADDTHINGS) {
         AddThingIntercepts(Self, mapx+mapxstep, mapy);
         AddThingIntercepts(Self, mapx, mapy+mapystep);
+      }
+
+      if (flags&PT_ADDLINES) {
+        if (!AddLineIntercepts(Self, mapx+mapxstep, mapy, !!(flags&PT_EARLYOUT)) ||
+            !AddLineIntercepts(Self, mapx, mapy+mapystep, !!(flags&PT_EARLYOUT)))
+        {
+          break; // early out
+        }
       }
 
       xintercept += xstep;
@@ -358,6 +344,12 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 
   Count = Intercepts.Num();
   In = Intercepts.Ptr();
+
+  // just in case
+#ifdef PARANOID
+  for (int f = 1; f < Count; ++f) if (In[f].frac < In[f-1].frac) Sys_Error("VPathTraverse: internal sorting error");
+#endif
+
   unguard;
 }
 
@@ -370,9 +362,9 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 //  this is faster than sorting, as most intercepts are already sorted
 //
 //==========================================================================
-intercept_t &VPathTraverse::NewIntercept (const float frac, bool asThing) {
+intercept_t &VPathTraverse::NewIntercept (const float frac) {
   int pos = Intercepts.length();
-  if (pos == 0 || Intercepts[pos-1].frac < frac) {
+  if (pos == 0 || Intercepts[pos-1].frac <= frac) {
     // no need to bubble, just append it
     intercept_t &xit = Intercepts.Alloc();
     xit.frac = frac;
@@ -380,14 +372,23 @@ intercept_t &VPathTraverse::NewIntercept (const float frac, bool asThing) {
   }
   // bubble
   while (pos > 0 && Intercepts[pos-1].frac > frac) --pos;
-  if (asThing) {
-    while (pos > 0 && Intercepts[pos-1].frac >= frac && !Intercepts[pos-1].thing) --pos;
-  }
   // insert
   intercept_t it;
   it.frac = frac;
   Intercepts.insert(pos, it);
   return Intercepts[pos];
+}
+
+
+//==========================================================================
+//
+//  VPathTraverse::RemoveInterceptsAfter
+//
+//==========================================================================
+void VPathTraverse::RemoveInterceptsAfter (const float frac) {
+  int len = Intercepts.length();
+  while (len > 0 && Intercepts[len-1].frac >= frac) --len;
+  if (len != Intercepts.length()) Intercepts.setLength(len, false); // don't resize
 }
 
 
@@ -401,10 +402,9 @@ intercept_t &VPathTraverse::NewIntercept (const float frac, bool asThing) {
 //  Returns `false` if earlyout and a solid line hit.
 //
 //==========================================================================
-bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut, float &earlyFrac) {
+bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut) {
   guard(VPathTraverse::AddLineIntercepts);
   line_t *ld;
-  earlyFrac = 1000;
   for (VBlockLinesIterator It(Self->XLevel, mapx, mapy, &ld); It.GetNext(); ) {
     float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
     float dot2 = DotProduct(*ld->v2, trace_plane.normal)-trace_plane.dist;
@@ -415,22 +415,26 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
     // find the fractional intercept point along the trace line
     const float den = DotProduct(ld->normal, trace_delta);
     if (den == 0) continue;
+
     const float num = ld->dist-DotProduct(trace_org, ld->normal);
     const float frac = num/den;
-    if (frac < 0 || frac > 1.0) continue; // behind source or beyond end point
+    if (frac < 0 || frac > 1.0f) continue; // behind source or beyond end point
 
+    bool doExit = false;
     // try to early out the check
-    if (EarlyOut && frac < 1.0 && !ld->backsector) {
+    if (EarlyOut && frac < 1.0f && (!ld->backsector || !(ld->flags&ML_TWOSIDED))) {
       // stop checking
-      earlyFrac = frac;
-      return false;
+      RemoveInterceptsAfter(frac); // this will remove blocking line, but we need it, hence the flag
+      doExit = true;
     }
 
-    intercept_t &In = NewIntercept(frac, false);
+    intercept_t &In = NewIntercept(frac);
     In.frac = frac;
     In.Flags = intercept_t::IF_IsALine;
     In.line = ld;
     In.thing = nullptr;
+
+    if (doExit) return false; // early out flag
   }
   return true;
   unguard;
@@ -442,7 +446,7 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 //  VPathTraverse::AddThingIntercepts
 //
 //==========================================================================
-void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy, float maxfrac) {
+void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
   guard(VPathTraverse::AddThingIntercepts);
   if (dbg_use_buggy_thing_traverser) {
     for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
@@ -451,9 +455,9 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy, floa
       const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
       if (dist < 0) continue; // behind source
       const float frac = dist/trace_len;
-      if (frac >= maxfrac) continue;
+      if (frac < 0 || frac > 1.0f) continue;
 
-      intercept_t &In = NewIntercept(frac, true);
+      intercept_t &In = NewIntercept(frac);
       In.frac = frac;
       In.Flags = 0;
       In.line = nullptr;
@@ -469,12 +473,12 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy, floa
           const float dist = DotProduct((It->Origin-trace_org), trace_dir); //dist -= sqrt(It->radius * It->radius - dot * dot);
           if (dist < 0) continue; // behind source
           const float frac = dist/trace_len;
-          if (frac >= maxfrac) continue;
+          if (frac < 0 || frac > 1.0f) continue;
 
           if (vptSeenThings.has(*It)) continue;
           vptSeenThings.put(*It, true);
 
-          intercept_t &In = NewIntercept(frac, true);
+          intercept_t &In = NewIntercept(frac);
           In.frac = frac;
           In.Flags = 0;
           In.line = nullptr;
@@ -497,26 +501,9 @@ bool VPathTraverse::GetNext () {
   if (!Count) return false; // everything was traversed
   --Count;
 
+  //k8: it is already sorted
   *InPtr = In++;
   return true;
 
-  /*k8: it is already sorted
-  if (In) In->frac = 99999.0; // mark previous intercept as checked
-
-  // go through the sorted list
-  float Dist = 99999.0;
-  intercept_t *EndIn = Intercepts.Ptr()+Intercepts.Num();
-  for (intercept_t *Scan = Intercepts.Ptr(); Scan < EndIn; ++Scan) {
-    if (Scan->frac < Dist) {
-      Dist = Scan->frac;
-      In = Scan;
-    }
-  }
-
-  if (Dist > 1.0) return false; // checked everything in range
-
-  *InPtr = In;
-  return true;
-  */
   unguard;
 }
