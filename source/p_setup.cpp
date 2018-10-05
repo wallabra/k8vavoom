@@ -3955,8 +3955,8 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (sec->linecount == 0 || sec->deepref) return 0;
   if (sec->floor.minz >= sec->ceiling.minz) return 0;
   if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) return 0;
-  int res = FFBugFloor|FFBugCeiling; // not yet
-  //int res = FFBugFloor;
+  //int res = FFBugFloor|FFBugCeiling; // not yet
+  int res = FFBugFloor;
   int myside = -1;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) return 0;
