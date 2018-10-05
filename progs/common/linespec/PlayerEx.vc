@@ -1262,7 +1262,7 @@ final bool UsePuzzleItem(int PuzzleItemType)
   y1 = MO.Origin.y;
   x2 = x1 + USERANGE * PuzzleUseDir.x;
   y2 = y1 + USERANGE * PuzzleUseDir.y;
-  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES | PT_ADDTHINGS)
+  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS|PT_EARLYOUT)
   {
     EntityEx mobj;
     TVec hit_point;

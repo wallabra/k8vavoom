@@ -588,7 +588,7 @@ bool CheckPath(float ang, float dist)
 
   EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
 
-  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES)
+  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_EARLYOUT)
   {
     Actor th;
     line_t *ld;
