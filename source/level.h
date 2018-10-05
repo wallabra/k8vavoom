@@ -336,9 +336,6 @@ private:
 
   void FixDeepWaters ();
   void FixSelfRefDeepWater (); // called from `FixDeepWaters`
-  void FixDeepWater (line_t *line, vint32 lidx);
-  bool IsDeepOk (sector_t *sec); // all lines should have the same front/back
-  int IsDeepWater (line_t *line);
 
   void BuildDecalsVVList ();
   void BuildDecalsVVListOld ();

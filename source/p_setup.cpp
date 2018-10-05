@@ -3849,8 +3849,7 @@ void VLevel::FloodZone(sector_t *Sec, int Zone)
 //
 //==========================================================================
 void VLevel::FixSelfRefDeepWater () {
-  vuint8 *self_subs = new vuint8[NumSubsectors];
-  memset(self_subs, 0, NumSubsectors);
+  vuint8 *self_subs = (vuint8 *)Z_Calloc(NumSubsectors);
 
   for (int i = 0; i < NumSegs; ++i) {
     const seg_t *seg = &Segs[i];
@@ -3859,7 +3858,13 @@ void VLevel::FixSelfRefDeepWater () {
     if (!seg->linedef) continue; //k8: miniseg check (i think)
     if (!seg->front_sub) { GCon->Logf("INTERNAL ERROR IN GLBSP LOADER: FRONT SUBSECTOR IS NOT SET!"); return; }
 
-    if (seg->linedef->backsector && seg->linedef->frontsector == seg->linedef->backsector) {
+    sector_t *fs = seg->linedef->frontsector;
+    sector_t *bs = seg->linedef->backsector;
+
+    // slopes aren't interesting
+    if (bs && fs == bs &&
+        fs->floor.normal.z == 1.0 /*&& fs->ceiling.normal.z == -1.0*/ &&
+        bs->floor.normal.z == 1.0 /*&& bs->ceiling.normal.z == -1.0*/) {
       self_subs[seg->front_sub-Subsectors] |= 1;
     } else {
       self_subs[seg->front_sub-Subsectors] |= 2;
@@ -3929,285 +3934,91 @@ void VLevel::FixSelfRefDeepWater () {
     }
   }
 
-  delete[] self_subs;
+  Z_Free(self_subs);
 }
 
 
 //==========================================================================
 //
-// VLevel::IsDeepWater
-//
-//  bits: 0: normal, back floor; 1: normal, front ceiling
-//  this tries to detect and fix bugs like Doom2:MAP04
+// VLevel::FixDeepWaters
 //
 //==========================================================================
-int VLevel::IsDeepWater (line_t *line) {
-  // should have both sectors
-  if (!line || !line->frontsector || !line->backsector) return 0;
-  // should not be self-referencing
-  if (line->frontsector == line->backsector) return 0;
-  // should have both sides
-  if (line->sidenum[0] < 0 || line->sidenum[1] < 0) return 0;
-  // ignore sloped floors
-  if (line->frontsector->floor.minz != line->frontsector->floor.maxz) return 0;
-  if (line->backsector->floor.minz != line->backsector->floor.maxz) return 0;
-  // back sector should have height
-  if (line->backsector->floor.minz >= line->backsector->ceiling.minz) return 0;
-  // front sector should have height
-  if (line->frontsector->floor.minz >= line->frontsector->ceiling.minz) return 0;
-
-  int res = 0;
-  // floor: back sidedef should have no texture
-  if (Sides[line->sidenum[1]].BottomTexture == 0 && !line->backsector->heightsec &&
-      Sides[line->sidenum[0]].TopTexture > 0 && Sides[line->sidenum[0]].MidTexture == 0) {
-    // it should be lower than front
-    if (line->frontsector->floor.minz > line->backsector->floor.minz) {
-      res |= 1;
-#ifdef DEBUG_DEEP_WATERS
-      if (dbg_deep_water) {
-        int lidx = (int)(ptrdiff_t)(line-Lines);
-        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
-        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
-        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_floor_plane_norm=(%f,%f,%f)", lidx, line->frontsector->floor.normal.x, line->frontsector->floor.normal.y, line->frontsector->floor.normal.z);
-        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; front_ceiling_plane_norm=(%f,%f,%f)", lidx, line->frontsector->ceiling.normal.x, line->frontsector->ceiling.normal.y, line->frontsector->ceiling.normal.z);
-        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; back_floor_plane_norm=(%f,%f,%f)", lidx, line->backsector->floor.normal.x, line->backsector->floor.normal.y, line->backsector->floor.normal.z);
-        GCon->Logf("    DEEP WATER(1); LINEDEF #%d; back_ceiling_plane_norm=(%f,%f,%f)", lidx, line->backsector->ceiling.normal.x, line->backsector->ceiling.normal.y, line->backsector->ceiling.normal.z);
-      }
-    }
-#endif
-  }
-
-  //FIXME: temporarily turned off
-  //TODO: process according to https://doomwiki.org/wiki/Instant_raising_and_lowering_sectors
-  //      i.e. find all linedefs that does "instant rising", and process only tagged "instant" sectors
-
-  /*
-  // front sector floor is lower than back sector floor, and
-  // back sidedef has no texture, and
-  // front sidedef has no lower and upper texture (and middle too?)
-  if (line->frontsector->floor.minz < line->backsector->floor.minz && !line->frontsector->heightsec &&
-      Sides[line->sidenum[1]].BottomTexture == 0 && Sides[line->sidenum[1]].TopTexture == 0 && Sides[line->sidenum[1]].MidTexture == 0 &&
-      Sides[line->sidenum[0]].BottomTexture == 0 && Sides[line->sidenum[0]].TopTexture == 0 && Sides[line->sidenum[0]].MidTexture == 0)
-  {
-    res |= 2;
-#ifdef DEBUG_DEEP_WATERS
-    if (dbg_deep_water) {
-      int lidx = (int)(ptrdiff_t)(line-Lines);
-      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_floor_z=%f; back_floor_z=%f", lidx, line->frontsector->floor.minz, line->backsector->floor.minz);
-      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_ceiling_z=%f; back_ceiling_z=%f", lidx, line->frontsector->ceiling.minz, line->backsector->ceiling.minz);
-      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_floor_plane_norm=(%f,%f,%f)", lidx, line->frontsector->floor.normal.x, line->frontsector->floor.normal.y, line->frontsector->floor.normal.z);
-      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; front_ceiling_plane_norm=(%f,%f,%f)", lidx, line->frontsector->ceiling.normal.x, line->frontsector->ceiling.normal.y, line->frontsector->ceiling.normal.z);
-      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; back_floor_plane_norm=(%f,%f,%f)", lidx, line->backsector->floor.normal.x, line->backsector->floor.normal.y, line->backsector->floor.normal.z);
-      GCon->Logf("    DEEP WATER(2); LINEDEF #%d; back_ceiling_plane_norm=(%f,%f,%f)", lidx, line->backsector->ceiling.normal.x, line->backsector->ceiling.normal.y, line->backsector->ceiling.normal.z);
-    }
-#endif
-  }
-  */
-/*
-211: -128..128
- 20: 0..128
-front: 211
-back: 20
-*/
-
-  // done
-  return res;
-}
-
-
-//==========================================================================
-//
-// VLevel::IsDeepOk
-//
-// all lines should have the same front/back
-//
-//==========================================================================
-bool VLevel::IsDeepOk (sector_t *sec) {
-  if (!sec || sec->linecount < 2) return false;
-  int dwt = 0, xidx = -1;
-  for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
-    dwt = IsDeepWater(sec->lines[lidx]);
-    if (dwt != 0) { xidx = lidx; break; }
-  }
-  if (!dwt) return false;
-  for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
-    line_t *ld = sec->lines[lidx];
-    if (!ld) return false; // just in case
-    int xdwt = IsDeepWater(sec->lines[lidx]);
-    if (!xdwt) continue;
-    if (xdwt != dwt) return false;
-    if (ld->frontsector != sec->lines[xidx]->frontsector) return false;
-    if (ld->backsector != sec->lines[xidx]->backsector) return false;
-  }
-  return true;
-}
-
-
-//==========================================================================
-//
-// VLevel::FixDeepWater
-//
-//==========================================================================
-void VLevel::FixDeepWater (line_t *line, vint32 lidx) {
-  if (!line->frontsector || !line->backsector) return;
-
-  int type = IsDeepWater(line);
-  if (type == 0) return; // not a deep water
-  if (type == 3) return; //k8: i am not sure, but...
-
-  // mark as deep water
-  sector_t *hs;
-  if (type != 2) {
-    if (line->backsector->heightsec) return; // already processed
-    hs = (line->backsector->heightsec = line->frontsector);
-  } else {
-    if (line->frontsector->heightsec) return; // already processed
-    hs = (line->frontsector->heightsec = line->backsector);
-  }
-#ifdef DEBUG_DEEP_WATERS
-  if (dbg_deep_water) GCon->Logf("*** DEEP WATER; LINEDEF #%d; type=%d; fsf=%f; bsf=%f", lidx, type, line->frontsector->floor.minz, line->backsector->floor.minz);
-#endif
-  hs->SectorFlags &= ~sector_t::SF_IgnoreHeightSec;
-  hs->SectorFlags &= ~sector_t::SF_ClipFakePlanes;
-  hs->SectorFlags &= ~sector_t::SF_FakeFloorOnly;
-  hs->SectorFlags &= ~sector_t::SF_FakeCeilingOnly;
-  //hs->SectorFlags |= sector_t::SF_NoFakeLight;
-  if (type == 1) {
-    hs->SectorFlags |= sector_t::SF_FakeFloorOnly;
-  } else if (type == 2) {
-    hs->SectorFlags |= sector_t::SF_FakeCeilingOnly;
-    //hs->SectorFlags |= sector_t::SF_ClipFakePlanes;
-  }
-}
-
-
 void VLevel::FixDeepWaters () {
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
     sector_t *sec = &Sectors[sidx];
     sec->deepref = nullptr;
     sec->othersec = nullptr;
+  }
+
+  if (deepwater_hacks) FixSelfRefDeepWater();
+
+  if (deepwater_hacks_extra) {
     // fix "floor holes"
-    if (!deepwater_hacks_extra) continue;
-    if (sec->linecount == 0) continue;
-    // slopes aren't interesting
-    if (sec->floor.normal.z != 1.0) continue;
-    if (sec->ceiling.normal.z != -1.0) continue;
-    if (sec->floor.minz >= sec->ceiling.minz) continue;
-    //fprintf(stderr, "... #%d ...\n", sidx);
-    // if all linedefs has the same backsector, this is our candidate
-    // also, "our" side shouldn't have bottom texture
-    sector_t *other = nullptr;
-    for (int f = 0; f < sec->linecount; ++f) {
-      line_t *line = sec->lines[f];
-      if (!(!!line->frontsector && !!line->backsector)) continue;
-      sector_t *bs;
-      int myside;
-      if (line->frontsector == sec) {
-        // back
-        bs = line->backsector;
-        myside = 0;
-      } else if (line->backsector == sec) {
-        // front?
-        bs = line->frontsector;
-        myside = 1;
-      } else {
-        other = nullptr;
-        continue;
-      }
-      if (sec->floor.minz >= bs->floor.minz) { other = nullptr; break; }
-      if (bs->floor.minz >= bs->ceiling.minz) { other = nullptr; break; }
-      // sloped?
-      if (bs->floor.normal.z != 1.0) { other = nullptr; break; }
-      if (bs->ceiling.normal.z != -1.0) { other = nullptr; break; }
-      if (!other) other = bs;
-      if (other != bs) {
-        // DooM II: MAP04; oops
-        if (other->floor.minz != bs->floor.minz) { other = nullptr; break; }
-        if (other->floor.pic != bs->floor.pic) { other = nullptr; break; }
-        if (other->params.lightlevel != bs->params.lightlevel) { other = nullptr; break; }
-        if (other->params.LightColour != bs->params.LightColour) { other = nullptr; break; }
-        //{ other = nullptr; break; }
-      }
-      //fprintf(stderr, "POSSIBLE: sector #%d (line #%d)\n", sidx, (int)(ptrdiff_t)(line-Lines));
-      // check for missing bottom texture
-      if (line->sidenum[myside] < 0) { other = nullptr; break; } // sanity check
-      if (Sides[line->sidenum[myside]].BottomTexture != 0) { other = nullptr; break; }
-      // looks good
-    }
-    if (!other) continue;
-    // other sector should not be us, and it should not be a slope
-    if (other == sec) continue;
-    // slopes aren't interesting
-    if (other->floor.normal.z != 1.0) continue;
-    if (other->ceiling.normal.z != -1.0) continue;
-    // check height
-    if (sec->floor.minz >= other->floor.minz) continue; // nope
-    GCon->Logf("FLATFIX: found illusiopit at sector #%d", sidx);
-    sec->othersec = other;
-
-    sec->fakefloors = new fakefloor_t;
-    fakefloor_t *ff = sec->fakefloors;
-    memset((void *)ff, 0, sizeof(fakefloor_t));
-    ff->floorplane = sec->othersec->floor;
-    ff->ceilplane = sec->ceiling;
-    ff->params = sec->params;
-  }
-
-  /*
-  do {
-    vint32 sidx = 72;
-    sector_t *sec = &Sectors[sidx];
-    if (sec->floor.normal.z != 1.0) continue;
-    if (sec->ceiling.normal.z != -1.0) continue;
-    fprintf(stderr, "... #%d ...\n", sidx);
-    sector_t *lastother = nullptr;
-    for (int f = 0; f < sec->linecount; ++f) {
-      line_t *line = sec->lines[f];
-      if (!(!!line->frontsector && !!line->backsector)) continue;
-      if (line->frontsector != sec && line->backsector != sec) continue;
-      sector_t *bs;
-      int side;
-      if (line->frontsector == sec) {
-        // back
-        bs = line->backsector;
-        side = 1;
-      } else {
-        // front?
-        bs = line->frontsector;
-        side = 0;
-      }
-      if (sec->floor.minz > bs->floor.minz) continue; // nope
-      if (!lastother) lastother = bs;
-      if (lastother != bs) {
-        if (lastother->floor.minz != bs->floor.minz) continue;
-        if (lastother->floor.pic != bs->floor.pic) continue;
-        if (lastother->params.lightlevel != bs->params.lightlevel) continue;
-        if (lastother->params.LightColour != bs->params.LightColour) continue;
-      }
-      fprintf(stderr, "  line #%d: fsec=%d; bsec=%d; side=%d\n", (int)(ptrdiff_t)(line-Lines), (int)(ptrdiff_t)(line->frontsector-Sectors), (int)(ptrdiff_t)(line->backsector-Sectors), side);
-    }
-  } while (0);
-  */
-
-  if (deepwater_hacks) {
-    FixSelfRefDeepWater();
-  }
-
-  /*
-  if (deepwater_hacks_extra && (LevelFlags&LF_Extended) == 0) {
     for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
-      if (!IsDeepOk(sec)) continue;
-#ifdef DEBUG_DEEP_WATERS
-      if (dbg_deep_water) GCon->Logf("DWSEC=%d", sidx);
-#endif
-      for (vint32 lidx = 0; lidx < sec->linecount; ++lidx) {
-        line_t *ld = sec->lines[lidx];
-        FixDeepWater(ld, (int)(ld-Lines));
+      if (sec->linecount == 0 || sec->deepref) continue;
+      // slopes aren't interesting
+      if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) continue;
+      if (sec->floor.minz >= sec->ceiling.minz) continue;
+      //fprintf(stderr, "... #%d ...\n", sidx);
+      // if all linedefs has the same backsector, this is our candidate
+      // also, "our" side shouldn't have bottom texture
+      sector_t *other = nullptr;
+      for (int f = 0; f < sec->linecount; ++f) {
+        line_t *line = sec->lines[f];
+        if (!(!!line->frontsector && !!line->backsector)) continue;
+        sector_t *bs;
+        int myside;
+        if (line->frontsector == sec) {
+          // back
+          bs = line->backsector;
+          myside = 0;
+        } else if (line->backsector == sec) {
+          // front?
+          bs = line->frontsector;
+          myside = 1;
+        } else {
+          other = nullptr;
+          continue;
+        }
+        if (sec->floor.minz >= bs->floor.minz) { other = nullptr; break; }
+        if (bs->floor.minz >= bs->ceiling.minz) { other = nullptr; break; }
+        // sloped?
+        if (bs->floor.normal.z != 1.0) { other = nullptr; break; }
+        if (bs->ceiling.normal.z != -1.0) { other = nullptr; break; }
+        if (!other) other = bs;
+        if (other != bs) {
+          // DooM II: MAP04; oops
+          if (other->floor.minz != bs->floor.minz) { other = nullptr; break; }
+          if (other->floor.pic != bs->floor.pic) { other = nullptr; break; }
+          if (other->params.lightlevel != bs->params.lightlevel) { other = nullptr; break; }
+          if (other->params.LightColour != bs->params.LightColour) { other = nullptr; break; }
+          //{ other = nullptr; break; }
+        }
+        //fprintf(stderr, "POSSIBLE: sector #%d (line #%d)\n", sidx, (int)(ptrdiff_t)(line-Lines));
+        // check for missing bottom texture
+        if (line->sidenum[myside] < 0) { other = nullptr; break; } // sanity check
+        if (Sides[line->sidenum[myside]].BottomTexture != 0) { other = nullptr; break; }
+        // looks good
       }
+      if (!other) continue;
+      // other sector should not be us, and it should not be a slope
+      if (other == sec) continue;
+      // slopes aren't interesting
+      if (other->floor.normal.z != 1.0 || other->ceiling.normal.z != -1.0) continue;
+      // check height
+      if (sec->floor.minz >= other->floor.minz) continue; // nope
+      GCon->Logf("FLATFIX: found illusiopit at sector #%d", sidx);
+      sec->othersec = other;
+      // allocate fakefloor data (engine require it to complete setup)
+      sec->fakefloors = new fakefloor_t;
+      fakefloor_t *ff = sec->fakefloors;
+      memset((void *)ff, 0, sizeof(fakefloor_t));
+      ff->floorplane = sec->othersec->floor;
+      ff->ceilplane = sec->ceiling;
+      ff->params = sec->params;
     }
   }
-  */
 }
 
 
