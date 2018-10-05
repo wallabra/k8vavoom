@@ -3952,25 +3952,38 @@ enum {
 //==========================================================================
 vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (!sec) return 0;
+  if (sec->linecount == 0 || sec->deepref) return 0;
+  if (sec->floor.minz >= sec->ceiling.minz) return 0;
+  if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) return 0;
   int res = FFBugFloor|FFBugCeiling;
+  int myside = -1;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) return 0;
     line_t *line = sec->lines[f];
     if (!(!!line->frontsector && !!line->backsector)) continue;
+    //if (!line->frontsector || !line->backsector) return 0;
     sector_t *bs;
-    int myside;
+    /*
+    if (myside >= 0) {
+      if (myside == 0 && line->backsector == sec) continue;
+      if (myside == 1 && line->frontsector == sec) continue;
+    }
+    */
     if (line->frontsector == sec) {
       // back
       bs = line->backsector;
+      //if (myside == 1) continue;
       myside = 0;
     } else if (line->backsector == sec) {
       // front
       bs = line->frontsector;
+      //if (myside == 0) continue;
       myside = 1;
     } else {
       return 0; // something's strange in the neighbourhood
     }
     if (bs == sec) return 0; // this is self-referenced sector, nothing to see here, come along
+    if (bs->floor.minz >= bs->ceiling.minz) return 0; // this looks like a door, don't "fix" anything
     // check for possible floor floodbug
     if (res&FFBugFloor) {
       // line has no bottom texture?
@@ -3980,9 +3993,9 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       // height?
       if (bs->floor.minz < sec->floor.minz) { res &= ~FFBugFloor; continue; }
     }
-    // check for possible ceiline floodbug
+    // check for possible ceiling floodbug
     if (res&FFBugCeiling) {
-      // line has no bottom texture?
+      // line has no top texture?
       if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; continue; }
       // slope?
       if (bs->ceiling.normal.z != -1.0) { res &= ~FFBugCeiling; continue; }
