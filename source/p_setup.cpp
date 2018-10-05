@@ -3955,7 +3955,8 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (sec->linecount == 0 || sec->deepref) return 0;
   if (sec->floor.minz >= sec->ceiling.minz) return 0;
   if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) return 0;
-  int res = FFBugFloor|FFBugCeiling;
+  int res = FFBugFloor|FFBugCeiling; // not yet
+  //int res = FFBugFloor;
   int myside = -1;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) return 0;
@@ -3991,9 +3992,11 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       // slope?
       if (bs->floor.normal.z != 1.0) { res &= ~FFBugFloor; continue; }
       // height?
-      if (bs->floor.minz < sec->floor.minz) { res &= ~FFBugFloor; continue; }
+      if (bs->floor.minz <= sec->floor.minz) { res &= ~FFBugFloor; continue; }
+      //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
     }
     // check for possible ceiling floodbug
+    //TODO: here we should ignore lifts
     if (res&FFBugCeiling) {
       // line has no top texture?
       if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; continue; }
@@ -4001,6 +4004,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       if (bs->ceiling.normal.z != -1.0) { res &= ~FFBugCeiling; continue; }
       // height?
       if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
+      if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
     }
   }
   return res;
