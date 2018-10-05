@@ -223,7 +223,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
 VStr VLanguage::HandleEscapes (const VStr &Src) {
   guard(VLanguage::HandleEscapes);
   bool hasWork = false;
-  for (size_t i = Src.Length(); i > 0; --i) if (Src[i] == '\\') { hasWork = true; break; }
+  for (size_t i = Src.Length(); i > 0; --i) if (Src[i-1] == '\\') { hasWork = true; break; }
   if (!hasWork) return VStr(Src);
   VStr Ret;
   for (int i = 0; i < Src.Length(); ++i) {
