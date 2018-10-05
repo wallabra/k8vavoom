@@ -56,8 +56,10 @@ static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore 
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
 //#define SAVE_VERSION_TEXT          "Version 1.34.5"
-#define SAVE_VERSION_TEXT          "Version 1.34.6"
+#define SAVE_VERSION_TEXT          "Version 1.34.6.1"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
+
+static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");
 
 #define SAVE_EXTDATA_ID_END      (0)
 #define SAVE_EXTDATA_ID_DATEVAL  (1)
@@ -696,7 +698,7 @@ void VSaveSlot::SaveToSlot (int Slot) {
   }
 
   // write version info
-  char VersionText[SAVE_VERSION_TEXT_LENGTH];
+  char VersionText[SAVE_VERSION_TEXT_LENGTH+1];
   memset(VersionText, 0, SAVE_VERSION_TEXT_LENGTH);
   VStr::Cpy(VersionText, SAVE_VERSION_TEXT);
   Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
