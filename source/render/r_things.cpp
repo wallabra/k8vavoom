@@ -782,15 +782,10 @@ void VRenderLevelShared::DrawCrosshair()
     if (crosshair_alpha < 0.0)  crosshair_alpha = 0.0;
     if (crosshair_alpha > 1.0)  crosshair_alpha = 1.0;
 
-    int     cy;
-    if (screenblocks < 11)
-      cy = (480 - sb_height) / 2;
-    else
-      cy = 240;
+    int cy = (screenblocks < 11 ? (VirtualHeight-sb_height)/2 : VirtualHeight/2);
     cy += r_crosshair_yofs;
-    int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i",
-      (int)crosshair), VName::AddLower8), TEXTYPE_Pic);
-    R_DrawPic(320, cy, handle, crosshair_alpha);
+    int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", (int)crosshair), VName::AddLower8), TEXTYPE_Pic);
+    R_DrawPic(VirtualWidth/2, cy, handle, crosshair_alpha);
   }
   unguard;
 }
