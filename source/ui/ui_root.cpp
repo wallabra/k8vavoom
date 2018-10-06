@@ -71,6 +71,23 @@ void VRootWidget::DrawWidgets () {
 
 //==========================================================================
 //
+//  VRootWidget::RefreshScale
+//
+//==========================================================================
+void VRootWidget::RefreshScale () {
+  //fprintf(stderr, "new scale: %g, %g\n", (double)fScaleX, (double)fScaleY);
+  SizeScaleX = fScaleX;
+  SizeScaleY = fScaleY;
+  SizeWidth = VirtualWidth;
+  SizeHeight = VirtualHeight;
+  ClipRect.ClipX2 = VirtualWidth-1;
+  ClipRect.ClipY2 = VirtualHeight-1;
+  ClipTree();
+}
+
+
+//==========================================================================
+//
 //  VRootWidget::TickWidgets
 //
 //==========================================================================
@@ -78,16 +95,7 @@ void VRootWidget::TickWidgets (float DeltaTime) {
   guard(VRootWidget::TickWidgets);
   if (GetFlags()&_OF_Destroyed) return;
   cleanupWidgets();
-  if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) {
-    //fprintf(stderr, "new scale: %g, %g\n", (double)fScaleX, (double)fScaleY);
-    SizeScaleX = fScaleX;
-    SizeScaleY = fScaleY;
-    SizeWidth = VirtualWidth;
-    SizeHeight = VirtualHeight;
-    ClipRect.ClipX2 = VirtualWidth-1;
-    ClipRect.ClipY2 = VirtualHeight-1;
-    ClipTree();
-  }
+  if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) RefreshScale();
   TickTree(DeltaTime);
   unguard;
 }

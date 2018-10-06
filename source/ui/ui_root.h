@@ -53,6 +53,8 @@ public:
 
   void SetMouse (bool MouseOn);
 
+  void RefreshScale ();
+
   static void StaticInit ();
 
   DECLARE_FUNCTION(SetMouse)
