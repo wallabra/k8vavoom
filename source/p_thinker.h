@@ -23,132 +23,112 @@
 //**
 //**************************************************************************
 
-enum
-{
+enum {
   ROLE_None,
   ROLE_DumbProxy,
-  ROLE_Authority
+  ROLE_Authority,
 };
 
-//  Type of the sound origin, used for origin IDs when playing sounds.
-enum
-{
+// type of the sound origin, used for origin IDs when playing sounds
+enum {
   SNDORG_Entity,
   SNDORG_Sector,
   SNDORG_PolyObj,
 };
 
-//
-//  VThinker
-//
-//  Doubly linked list of actors and other special elements of a level.
-//
-class VThinker : public VGameObject
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+// doubly linked list of actors and other special elements of a level
+class VThinker : public VGameObject {
   DECLARE_CLASS(VThinker, VGameObject, 0)
 
-  VLevel *XLevel;   //  Level object.
-  VLevelInfo *Level;    //  Level info object.
+  VLevel *XLevel; // level object
+  VLevelInfo *Level; // level info object
 
   VThinker *Prev;
   VThinker *Next;
 
-  vuint8      Role;
-  vuint8      RemoteRole;
+  vuint8 Role;
+  vuint8 RemoteRole;
 
-  enum
-  {
-    TF_AlwaysRelevant     = 0x00000001,
-    TF_NetInitial       = 0x00000002,
-    TF_NetOwner         = 0x00000004,
+  enum {
+    TF_AlwaysRelevant = 0x00000001,
+    TF_NetInitial     = 0x00000002,
+    TF_NetOwner       = 0x00000004,
   };
-  vuint32     ThinkerFlags;
+  vuint32 ThinkerFlags;
 
-  static int    FIndex_Tick;
+  static int FIndex_Tick;
 
-  VThinker();
+  VThinker ();
 
-  //  VObject interface
-  virtual void Destroy() override;
-  virtual void Serialise(VStream&) override;
+  // VObject interface
+  virtual void Destroy () override;
+  virtual void Serialise (VStream &) override;
 
-  //  VThinker interface
-  virtual void Tick(float);
-  virtual void DestroyThinker();
-  virtual void AddedToLevel();
-  virtual void RemovedFromLevel();
+  // VThinker interface
+  virtual void Tick (float);
+  virtual void DestroyThinker ();
+  virtual void AddedToLevel ();
+  virtual void RemovedFromLevel ();
 
-  void StartSound(const TVec&, vint32, vint32, vint32, float, float, bool, bool=false);
-  void StopSound(vint32, vint32);
-  void StartSoundSequence(const TVec&, vint32, VName, vint32);
-  void AddSoundSequenceChoice(vint32, VName);
-  void StopSoundSequence(vint32);
+  void StartSound (const TVec &, vint32, vint32, vint32, float, float, bool, bool=false);
+  void StopSound (vint32, vint32);
+  void StartSoundSequence (const TVec &, vint32, VName, vint32);
+  void AddSoundSequenceChoice (vint32, VName);
+  void StopSoundSequence (vint32);
 
-  void BroadcastPrint(const char*);
-  void BroadcastPrintf(const char*, ...);
-  void BroadcastCentrePrint(const char*);
-  void BroadcastCentrePrintf(const char*, ...);
+  void BroadcastPrint (const char *);
+  void BroadcastPrintf (const char *, ...) __attribute__((format(printf,2,3)));
+  void BroadcastCentrePrint (const char *);
+  void BroadcastCentrePrintf (const char *, ...) __attribute__((format(printf,2,3)));
 
   DECLARE_FUNCTION(Spawn)
   DECLARE_FUNCTION(Destroy)
 
-  //  Print functions
+  // print functions
   DECLARE_FUNCTION(bprint)
 
   DECLARE_FUNCTION(AllocDlight)
   DECLARE_FUNCTION(NewParticle)
   DECLARE_FUNCTION(GetAmbientSound)
 
-  //  Iterators
+  // iterators
   DECLARE_FUNCTION(AllThinkers)
   DECLARE_FUNCTION(AllActivePlayers)
   DECLARE_FUNCTION(PathTraverse)
   DECLARE_FUNCTION(RadiusThings)
 
-  void eventClientTick(float DeltaTime)
-  {
+  void eventClientTick (float DeltaTime) {
     P_PASS_SELF;
     P_PASS_FLOAT(DeltaTime);
     EV_RET_VOID(NAME_ClientTick);
   }
 };
 
-template <class T> class TThinkerIterator
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+template <class T> class TThinkerIterator {
 private:
   VThinker *Th;
-  void GetNext()
-  {
-    while (Th && (!Th->IsA(T::StaticClass()) ||
-      (Th->GetFlags() & _OF_DelayedDestroy)))
-    {
-      Th = Th->Next;
-    }
+
+  void GetNext () {
+    while (Th && (!Th->IsA(T::StaticClass()) || (Th->GetFlags()&_OF_DelayedDestroy))) Th = Th->Next;
   }
+
 public:
-  TThinkerIterator(const VLevel *Level)
-  {
+  TThinkerIterator (const VLevel *Level) {
     Th = Level->ThinkerHead;
     GetNext();
   }
-  operator bool()
-  {
-    return Th != nullptr;
-  }
-  void operator ++()
-  {
-    if (Th)
-    {
+
+  inline operator bool () const { return Th != nullptr; }
+  inline void operator ++ () {
+    if (Th) {
       Th = Th->Next;
       GetNext();
     }
   }
-  T *operator ->()
-  {
-    return (T*)Th;
-  }
-  T *operator *()
-  {
-    return (T*)Th;
-  }
+  inline T *operator -> () { return (T*)Th; }
+  inline T *operator * () { return (T*)Th; }
 };
