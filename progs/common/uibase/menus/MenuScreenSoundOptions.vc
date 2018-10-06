@@ -22,193 +22,37 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenSoundOptions : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
+override void CreateChoices () {
+  CreateOnOffCvar("External Music", 'snd_external_music');
+  CreateEnumCvar("MIDI Decoder", 'snd_mid_player',
+    "Timidity"
+  );
 
-override void CreateChoices()
-{
-  MenuChoiceSlider  Slider;
-  MenuChoiceEnum    Enum;
-  MenuTextButton    Btn;
-  //int         currentY;
-  //currentY = ChoicesStartY;
+  CreateSubMenuText("Module Decoder Options", MenuScreenMODOptions);
+  currentY += 10;
 
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "External Music";
-  Enum.SetInitialValue(GetCvar('snd_external_music'));
-  Enum.ValueChanging = &ChangeExternalMusic;
-  currentY += Enum.Height;
-
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "MIDI Decoder";
-  Enum.AddItem("Timidity");
-  //Enum.AddItem("WildMidi");
-  //Enum.AddItem("FluidSynth");
-  Enum.SetInitialValue(GetCvar('snd_mid_player'));
-  Enum.ValueChanging = &ChangeMIDIPlayer;
-  currentY += Enum.Height;
-
-  /*
-  Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Module Decoder";
-  Enum.AddItem("MikMod");
-  Enum.AddItem("MODPlug");
-  Enum.AddItem("XMPLite");
-  Enum.SetInitialValue(GetCvar('snd_mod_player'));
-  Enum.ValueChanging = &ChangeMODPlayer;
-  currentY += Enum.Height;
-  */
-
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
-  Btn.Text = "Module Decoder Options";
-  Btn.Activated = &ActivateMODOptions;
-  currentY += Btn.Height + 10;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Music volume";
-  Slider.ValueDelta = 0.1;
-  Slider.SetInitialValue(GetCvarF('snd_music_volume'));
-  Slider.ValueChanging = &ChangeMusicVolume;
-  currentY += Slider.Height;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Sound volume";
-  Slider.ValueDelta = 0.1;
-  Slider.SetInitialValue(GetCvarF('snd_sfx_volume'));
-  Slider.ValueChanging = &ChangeSoundVolume;
-  currentY += Slider.Height;
-
-  Slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  Slider.SetOrigin(ChoicesStartX, currentY);
-  Slider.Text = "Sound Channels";
-  Slider.MinValue = 8.0;
-  Slider.MaxValue = 256.0;
-  Slider.ValueDelta = 8.0;
-  Slider.SetInitialValue(itof(GetCvar('snd_channels')));
-  Slider.ValueChanging = &ChangeSoundChannels;
-  currentY += Slider.Height;
+  CreateFloatSliderCvar("Music Volume", 'snd_music_volume', delta:0.1);
+  CreateFloatSliderCvar("Sound Volume", 'snd_sfx_volume', delta:0.1);
+  CreateFloatSliderCvar("Sound Channels", 'snd_channels', delta:8, min:8, max:256-8);
 
   /* this doesn't work yet
-  Enum = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Swap stereo";
-  Enum.SetInitialValue(GetCvar('snd_swap_stereo'));
-  Enum.ValueChanging = &ChangeSwapStereo;
+  CreateOnOffCvar("Swap stereo", 'snd_swap_stereo');
   */
+
   CreateFloatSliderCvar("Random sound pitch", 'snd_random_pitch', 0.05, 0, 1);
   CreateFloatSliderCvar("Random pitch boost", 'snd_random_pitch_boost', 0.1, 1, 4);
 }
 
-//==========================================================================
-//
-//  ChangeSoundVolume
-//
-//==========================================================================
 
-bool ChangeSoundVolume(Object Sender, float newValue)
-{
-  SetCvarF('snd_sfx_volume', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeSwapStereo
-//
-//==========================================================================
-/*
-bool ChangeSwapStereo(Object Sender, int newValue)
-{
-  SetCvar('snd_swap_stereo', newValue);
-  return true;
-}
-*/
-
-//==========================================================================
-//
-//  ChangeMusicVolume
-//
-//==========================================================================
-
-bool ChangeMusicVolume(Object Sender, float newValue)
-{
-  SetCvarF('snd_music_volume', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeExternalMusic
-//
-//==========================================================================
-
-bool ChangeExternalMusic(Object Sender, int newValue)
-{
-  SetCvar('snd_external_music', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeMIDIPlayer
-//
-//==========================================================================
-
-bool ChangeMIDIPlayer(Object Sender, int newValue)
-{
-  SetCvar('snd_mid_player', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeMODPlayer
-//
-//==========================================================================
-
-bool ChangeMODPlayer(Object Sender, int newValue)
-{
-  SetCvar('snd_mod_player', newValue);
-  return true;
-}
-
-//==========================================================================
-//
-//  ChangeSoundChannels
-//
-//==========================================================================
-
-bool ChangeSoundChannels(Object Sender, float newValue)
-{
-  SetCvar('snd_channels', ftoi(newValue));
-  return true;
-}
-
-//==========================================================================
-//
-//  ActivateMODOptions
-//
-//==========================================================================
-void ActivateMODOptions(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMODOptions));
-}
-
-
-defaultproperties
-{
+defaultproperties {
   Width = 370;
   ChoicesStartX = 210;
   ChoicesStartY = 37;

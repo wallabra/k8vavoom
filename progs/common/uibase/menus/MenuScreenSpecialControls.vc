@@ -22,52 +22,36 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenSpecialControls : MenuScreenControls;
+
 
 //==========================================================================
 //
 //  CreateControlKeyChoices
 //
 //==========================================================================
-
-override void CreateControlKeyChoices()
-{
-  int i, j;
-
-  // First, generate arrays for using for building controls list
+override void CreateControlKeyChoices () {
+  // first, generate arrays for using for building controls list
   GenerateArrays();
 
-  if (menukeys_list.Num > 0)
-  {
-    for (i = 0; i < menukeys_list.Num; i++)
-    {
-      // For each menukey, we must check the alias name
-      // inside of all defaultbinds and binds, to extract
-      // key binds
+  if (menukeys_list.Num > 0) {
+    foreach (auto i; 0..menukeys_list.length) {
+      // for each menukey, we must check the alias name inside of all defaultbinds and binds, to extract key binds
 
-      // First look inside of default binds list
-      if (dbinds_list.Num > 0)
-      {
-        for (j = 0; j < dbinds_list.Num; j++)
-        {
-          if (!strcmp(menukeys_list[i].alias_name, dbinds_list[j].alias_name))
-          {
-            // The alias name is the same, so we'll use the bind
-            // for a MenuControlKey
+      // first look inside of default binds list
+      if (dbinds_list.Num > 0) {
+        foreach (auto j; 0..dbinds_list.length) {
+          if (!strcmp(menukeys_list[i].alias_name, dbinds_list[j].alias_name)) {
+            // the alias name is the same, so we'll use the bind for a MenuControlKey
             AddControl(menukeys_list[i].desc, dbinds_list[j].alias_name, "");
           }
         }
       }
-      // Also look inside of the binds list
-      if (binds_list.Num > 0)
-      {
-        for (j = 0; j < binds_list.Num; j++)
-        {
-          if (!strcmp(menukeys_list[i].alias_name, binds_list[j].alias_name))
-          {
-            // The alias name is the same, so we'll use the bind
-            // for a MenuControlKey
+      // also look inside of the binds list
+      if (binds_list.length > 0) {
+        foreach (auto j; 0..binds_list.length) {
+          if (!strcmp(menukeys_list[i].alias_name, binds_list[j].alias_name)) {
+            // the alias name is the same, so we'll use the bind for a MenuControlKey
             AddControl(menukeys_list[i].desc, binds_list[j].alias_name, "");
           }
         }
@@ -76,6 +60,6 @@ override void CreateControlKeyChoices()
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -40,19 +40,15 @@ MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
 
+
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  MenuTextButton    Btn;
-  int currY = ChoicesStartY;
-
+override void CreateChoices () {
   Mode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Mode.SetOrigin(ChoicesStartX, currY);
+  Mode.SetOrigin(ChoicesStartX, currentY);
   Mode.Text = "Resolution";
   Mode.AddItem("640x480");
   Mode.AddItem("800x600");
@@ -61,59 +57,58 @@ override void CreateChoices()
   Mode.AddItem("1280x1024");
   Mode.AddItem("1600x1200");
   Mode.SetInitialValue(GetModeValue());
-  currY += Mode.Height;
+  currentY += Mode.Height;
 
   Width = MenuInputLine(NewChild(MenuInputLine));
-  Width.SetOrigin(ChoicesStartX + 10, currY);
+  Width.SetOrigin(ChoicesStartX+10, currentY);
   Width.CursorXOffs = -10;
   Width.Text = "Width";
   Width.Value = GetCvarS('screen_width');
   Width.DisableSlotRendering();
-  currY += Width.Height;
+  currentY += Width.Height;
 
   Height = MenuInputLine(NewChild(MenuInputLine));
-  Height.SetOrigin(ChoicesStartX + 10, currY);
+  Height.SetOrigin(ChoicesStartX+10, currentY);
   Height.CursorXOffs = -10;
   Height.Text = "Height";
   Height.Value = GetCvarS('screen_height');
   Height.DisableSlotRendering();
-  currY += Height.Height;
+  currentY += Height.Height;
 
   Depth = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Depth.SetOrigin(ChoicesStartX, currY);
+  Depth.SetOrigin(ChoicesStartX, currentY);
   Depth.Text = "Bit depth";
   Depth.AddItem("16");
   Depth.AddItem("24");
   Depth.AddItem("32");
   Depth.SetInitialValue(GetDepthValue());
-  currY += Depth.Height;
+  currentY += Depth.Height;
 
   Windowed = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  Windowed.SetOrigin(ChoicesStartX, currY);
+  Windowed.SetOrigin(ChoicesStartX, currentY);
   Windowed.Text = "Windowed";
   Windowed.SetInitialValue(GetCvar('screen_windowed'));
-  currY += Windowed.Height;
+  currentY += Windowed.Height;
 
   VSync = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  VSync.SetOrigin(ChoicesStartX, currY);
+  VSync.SetOrigin(ChoicesStartX, currentY);
   VSync.Text = "VSync";
   VSync.SetInitialValue(GetCvar('r_vsync'));
-  currY += VSync.Height;
+  currentY += VSync.Height;
 
-  Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currY);
+  MenuTextButton Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Set Resolution";
   Btn.Activated = &ActivateSetMode;
 }
+
 
 //==========================================================================
 //
 //  GetModeValue
 //
 //==========================================================================
-
-final int GetModeValue()
-{
+final int GetModeValue () {
   int w = GetCvar('screen_width');
   int h = GetCvar('screen_height');
   foreach (auto mi; 0..modes.length) {
@@ -122,49 +117,33 @@ final int GetModeValue()
   return 0;
 }
 
+
 //==========================================================================
 //
 //  GetDepthValue
 //
 //==========================================================================
-
-final int GetDepthValue()
-{
-  int b;
-  int bi;
-
-  b = GetCvar('screen_bpp');
-
-  for (bi = 0; bi < 3; bi++)
-  {
-    if (depths[bi] == b)
-    {
-      break;
-    }
-  }
-  if (bi == 3)
-  {
-    bi = 0;
-  }
-  return bi;
+final int GetDepthValue () {
+  int b = GetCvar('screen_bpp');
+  foreach (auto bi; 0..3) if (depths[bi] == b) return bi;
+  return 0;
 }
+
 
 //==========================================================================
 //
 //  ActivateSetMode
 //
 //==========================================================================
-
-void ActivateSetMode(Object Sender)
-{
+void ActivateSetMode (Object Sender) {
   SetCvar('screen_windowed', Windowed.Value);
   SetCvar('r_vsync', VSync.Value);
   CmdBuf_AddText("SetResolution %d %d\n", atoi(Width.Value) ? atoi(Width.Value) : modes[Mode.Value].width,
     atoi(Height.Value) ? atoi(Height.Value) : modes[Mode.Value].height);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ChoicesStartX = 120;
   ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;

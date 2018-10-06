@@ -34,14 +34,10 @@ override void CreateChoices () {
   CreateFloatSliderCvar("Amplification", 'snd_xmp_amp', 1, 0, 3);
   CreateOnOffCvar("All DSP effects", 'snd_xmp_full_dsp');
 
-  auto Enum = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Enum.SetOrigin(ChoicesStartX, currentY);
-  Enum.Text = "Interpolator";
-  Enum.AddItem("Nearest");
-  Enum.AddItem("Linear");
-  Enum.AddItem("Spline");
-  Enum.SetInitialValue(GetCvar('snd_xmp_interpolator'));
-  Enum.ValueChanging = delegate bool (Object Sender, int newValue) { SetCvar('snd_xmp_interpolator', newValue); return true; };
+  CreateEnumCvar("Interpolator", 'snd_xmp_interpolator',
+    "Nearest",
+    "Linear",
+    "Spline");
 }
 
 

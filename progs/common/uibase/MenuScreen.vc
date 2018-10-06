@@ -104,6 +104,7 @@ void CreateChoices () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
@@ -166,7 +167,7 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, optional float min, optional float max) {
   if (Items.length > 0 && Items[$-1] !isa MenuChoiceSlider && Items[$-1].Height == 10) {
-    Items[$-2].Height = 8;
+    Items[$-1].Height = 8;
     currentY -= 2;
   }
   auto slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
@@ -264,11 +265,13 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 void CreateSelector () {
   if (SelectorType) Selector = NewChild(SelectorType);
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 final int CalcTotalHeight () {
   int res = 0;
   for (int n = 0; n < Items.Length; ++n) {

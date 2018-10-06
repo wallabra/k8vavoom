@@ -22,94 +22,71 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenSkill : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  int i;
-  int j;
-  int CurY = ChoicesStartY;
-  for (i = 0; i < P_GetNumSkills(); i++)
-  {
+override void CreateChoices () {
+  foreach (auto i; 0..P_GetNumSkills()) {
     MenuChoiceSkill Btn = MenuChoiceSkill(NewChild(MenuChoiceSkill));
     SkillDef *SDef = P_GetSkillDef(i);
-    Btn.SetPos(ChoicesStartX, CurY);
-    if (SDef->bMenuNameIsPic)
-    {
+    Btn.SetPos(ChoicesStartX, currentY);
+    if (SDef->bMenuNameIsPic) {
       Btn.PicHandle = R_RegisterPic(StrToName(SDef->MenuName));
-    }
-    else
-    {
+    } else {
       Btn.SetText(SDef->MenuName);
     }
-    for (j = 0; j < SDef->PlayerClassNames.Num; j++)
-    {
-      if (!stricmp(SDef->PlayerClassNames[j].ClassName,
-        ClGame.SkillClassName))
-      {
+    foreach (auto j; 0..SDef->PlayerClassNames.length) {
+      if (!stricmp(SDef->PlayerClassNames[j].ClassName, ClGame.SkillClassName)) {
         Btn.SetText(SDef->PlayerClassNames[j].MenuName);
         Btn.PicHandle = 0;
       }
     }
-    if (strlen(SDef->TextColour) > 0)
-    {
-      Btn.Text = strcat(strcat("\c[", SDef->TextColour),
-        strcat("]", Btn.Text));
-    }
+    if (strlen(SDef->TextColour) > 0) Btn.Text = strcat(strcat("\c[", SDef->TextColour), strcat("]", Btn.Text));
     Btn.SkillIndex = i;
     Btn.bMustConfirm = SDef->bMustConfirm;
     Btn.ConfirmationText = SDef->ConfirmationText;
     Btn.Activated = &ActivateSkill;
-    CurY += Btn.Height;
+    currentY += Btn.Height;
   }
 }
+
 
 //==========================================================================
 //
 //  SetDefaultChoice
 //
 //==========================================================================
-
-override void SetDefaultChoice()
-{
+override void SetDefaultChoice () {
   ::SetDefaultChoice();
-  CycleNextChoice();
-  CycleNextChoice();
-  CycleNextChoice();
+  foreach (auto i; 0..P_GetNumSkills()-2) CycleNextChoice();
 }
+
 
 //==========================================================================
 //
 //  ActivateSkill
 //
 //==========================================================================
-
-void ActivateSkill(Object Sender)
-{
+void ActivateSkill (Object Sender) {
   MenuChoiceSkill Btn = MenuChoiceSkill(Sender);
-  if (Btn.bMustConfirm)
-  {
+  if (Btn.bMustConfirm) {
     ClGame.SkillToConfirm = Btn.SkillIndex;
     ClGame.MessageBoxStartMessage(
       strlen(Btn.ConfirmationText) > 0 ? Btn.ConfirmationText :
       "are you sure? this skill level\nisn\'t even remotely fair.\n\npress y or n.",
       ClientGameShared::MB_Nightmare, true);
-  }
-  else
-  {
+  } else {
     ClGame.NewGame(Btn.SkillIndex);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ChoicesStartX = 38;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;

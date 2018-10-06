@@ -22,21 +22,16 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenSinglePlayer : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  MenuTextButton    Btn;
-  int         currentY;
-
-  currentY = ChoicesStartY;
+override void CreateChoices () {
+  MenuTextButton Btn;
 
   Btn = MenuTextButton(NewChild(MenuBigTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
@@ -63,63 +58,53 @@ override void CreateChoices()
   currentY += Btn.Height;
 }
 
+
 //==========================================================================
 //
 //  ActivateNewGame
 //
 //==========================================================================
-
-void ActivateNewGame(Object Sender)
-{
-  if (!ClGame.local_server)
-  {
-    return;
-  }
-  if (ClGame.Game.PlayerClasses.Num > 1)
-  {
+void ActivateNewGame (Object Sender) {
+  if (!ClGame.local_server) return;
+  if (ClGame.Game.PlayerClasses.Num > 1) {
     ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenClass));
-  }
-  else
-  {
+  } else {
     ClientGameShared(ClGame).SetPClass(0);
   }
 }
+
 
 //==========================================================================
 //
 //  ActivateLoad
 //
 //==========================================================================
-
-void ActivateLoad(Object Sender)
-{
+void ActivateLoad (Object Sender) {
   ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenLoadGame));
 }
+
 
 //==========================================================================
 //
 //  ActivateSave
 //
 //==========================================================================
-
-void ActivateSave(Object Sender)
-{
+void ActivateSave (Object Sender) {
   ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSaveGame));
 }
+
 
 //==========================================================================
 //
 //  ActivateEndGame
 //
 //==========================================================================
-
-void ActivateEndGame(Object Sender)
-{
+void ActivateEndGame (Object Sender) {
   CmdBuf_AddText("Disconnect\n");
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ChoicesStartX = 97;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
