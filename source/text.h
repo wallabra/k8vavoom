@@ -23,29 +23,24 @@
 //**
 //**************************************************************************
 
-//
-// Horisontal alignement
-//
-enum halign_e
-{
-  hleft,    //Left
-  hcentre,  //Centred
-  hright    //Right
+// horisontal alignement
+enum halign_e {
+  hleft,   //Left
+  hcentre, //Centred
+  hright,  //Right
+  hcenter = hcentre,
 };
 
-//
-// Vertical alignement
-//
-enum valign_e
-{
-  vtop,   //Top
-  vcentre,  //Centre
-  vbottom   //Bottom
+// vertical alignement
+enum valign_e {
+  vtop,    //Top
+  vcentre, //Centre
+  vbottom, //Bottom
+  vcenter = vcentre,
 };
 
-//  Text colours, these must match the constants used in ACS.
-enum
-{
+// text colours, these must match the constants used in ACS
+enum {
   CR_UNDEFINED = -1,
   CR_BRICK,
   CR_TAN,
@@ -73,16 +68,16 @@ enum
 
 class VFont;
 
-void T_Init();
-void T_Shutdown();
+void T_Init ();
+void T_Shutdown ();
 
-void T_SetFont(VFont*);
-void T_SetAlign(halign_e, valign_e);
+void T_SetFont (VFont *);
+void T_SetAlign (halign_e, valign_e);
 
-void T_DrawText(int, int, const VStr&, int);
+void T_DrawText (int, int, const VStr &, int);
 
-void T_DrawCursor();
-void T_DrawCursorAt(int, int);
+void T_DrawCursor ();
+void T_DrawCursorAt (int, int);
 
 extern VFont *SmallFont;
 extern VFont *ConFont;
