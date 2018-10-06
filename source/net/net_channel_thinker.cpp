@@ -242,7 +242,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
       LInfo->Level = LInfo;
       GClLevel->LevelInfo = LInfo;
       cl->Level = LInfo;
-      cl->Net->SendCommand("Spawn\n");
+      cl->Net->SendCommand("Client_Spawn\n");
       cls.signon = 1;
     }
 #endif

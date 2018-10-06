@@ -612,7 +612,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
       case CMD_PreRender:
         Level->RenderData->PreRender();
 #ifdef CLIENT
-        if (cls.signon) Host_Error("Spawn command already sent");
+        if (cls.signon) Host_Error("Client_Spawn command already sent");
         if (!UserInfoSent) {
           cl->eventServerSetUserInfo(cls.userinfo);
           UserInfoSent = true;
