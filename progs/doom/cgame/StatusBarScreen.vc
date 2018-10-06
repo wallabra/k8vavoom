@@ -432,6 +432,19 @@ void DrawAmmo (int CountX, int CountY, int MaxX, int MaxY, class!Inventory AmmoC
 void SB_DrawFullscreenStats () {
   if (!cl || !cl.MO) return;
 
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+
+  // fullscreen widgets
+  int ST_TDHEALTHX = 120;
+  int ST_TDHEALTHY = ovh-20; //460;
+
+  int ST_TDARMORX = 280;
+  int ST_TDARMORY = ovh-20; //460;
+
+  int ST_TDAMMOX = 620;
+  int ST_TDAMMOY = ovh-20; //460;
+
   //print("LEVEL: %s (%n)", cl.Level.LevelName, cl.MO.XLevel.MapName);
 
   float fsalpha = ST_FULLSCREEN_ALPHA;
@@ -470,7 +483,7 @@ void SB_DrawFullscreenStats () {
     if (Key(Item)) {
       int Pic = R_RegisterPic(Item.IconName);
       if (Pic >= 0) {
-        DrawPic(KeyX, 470, Pic, fsalpha);
+        DrawPic(KeyX, /*470*/ovh-10, Pic, fsalpha);
         KeyX += 20;
       }
     }
@@ -486,21 +499,21 @@ void SB_DrawFullscreenStats () {
     // inventory
     Inventory Item = cl.InvFirst;
     foreach (auto i; 0..7) {
-      DrawPic(210+i*31, 448, pic_artibox, fsalpha);
+      DrawPic(210+i*31, /*448*/ovh-32, pic_artibox, fsalpha);
       if (Item) {
-        DrawShadowedPic(207+i*31, 446, R_RegisterPic(Item.IconName));
-        SB_DrawSmallNum(238+i*31, 470, Item.Amount);
-        if (Item == cl.InvPtr) DrawPic(210+i*31, 448, pic_selectbox, fsalpha);
+        DrawShadowedPic(207+i*31, /*446*/ovh-34, R_RegisterPic(Item.IconName));
+        SB_DrawSmallNum(238+i*31, /*470*/ovh-10, Item.Amount);
+        if (Item == cl.InvPtr) DrawPic(210+i*31, /*448*/ovh-32, pic_selectbox, fsalpha);
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, 447, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
-    if (Item) DrawPic(429, 447, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, /*447*/ovh-33, pic_invgeml[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
+    if (Item) DrawPic(429, /*447*/ovh-33, pic_invgemr[!(ClGame.GLevel.TicTime & 4) ? 0 : 1], fsalpha);
   } else if (cl.InvPtr) {
     // ready artifact
-    DrawPic(486, 448, pic_artibox, fsalpha);
-    DrawShadowedPic(483, 446, R_RegisterPic(cl.InvPtr.IconName));
-    SB_DrawSmallNum(514, 470, cl.InvPtr.Amount);
+    DrawPic(486, /*448*/ovh-32, pic_artibox, fsalpha);
+    DrawShadowedPic(483, /*446*/ovh-34, R_RegisterPic(cl.InvPtr.IconName));
+    SB_DrawSmallNum(514, /*470*/ovh-10, cl.InvPtr.Amount);
   }
 }
 
@@ -522,12 +535,19 @@ void SB_DrawPause () {
 //==========================================================================
 override void SB_Drawer (int sb_view) {
   if (!cl || !cl.MO) return;
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  if (Width != ovw) Width = ovw;
+  if (Height != ovh) Height = ovh;
+  //SetVirtualScreen(640, 480);
   if (sb_view == SB_VIEW_FULLSCREEN) {
     SB_DrawFullscreenStats();
   } else {
+    // this is broken for now
     SB_DrawMainBar();
   }
   SB_DrawPause();
+  //SetVirtualScreen(ovw, ovh);
 }
 
 

@@ -82,6 +82,10 @@ void VRootWidget::TickWidgets (float DeltaTime) {
     //fprintf(stderr, "new scale: %g, %g\n", (double)fScaleX, (double)fScaleY);
     SizeScaleX = fScaleX;
     SizeScaleY = fScaleY;
+    SizeWidth = VirtualWidth;
+    SizeHeight = VirtualHeight;
+    ClipRect.ClipX2 = VirtualWidth-1;
+    ClipRect.ClipY2 = VirtualHeight-1;
     ClipTree();
   }
   TickTree(DeltaTime);
