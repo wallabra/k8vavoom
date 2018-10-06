@@ -337,26 +337,41 @@ override void Tick (float DeltaTime) {
 //==========================================================================
 override void OnDraw () {
   if (BackgroundPic > 0) {
-    DrawPic(0, 0, BackgroundPic);
-  } else if (BackgroundFlat) {
-    FillRectWithFlat(0, 0, Width, Height, BackgroundFlat);
-  }
-  for (int i = 0; i < Anims.Num; ++i) {
-    if (!CheckCond(Anims[i].Cond, Anims[i].MapName1, Anims[i].MapName2)) continue;
-    if (Anims[i].Ctr >= 0) DrawPic(Anims[i].X, Anims[i].Y, Anims[i].Pics[Anims[i].Ctr]);
-  }
-
-  if (State > STATE_Default) {
-    for (int i = 0; i < Spots.Num; ++i) {
-      // flash level we are leaving now
-      if (Spots[i].Map == ClGame.im.LeaveMap && State == STATE_PrevLoc && (ftoi(2.0 * btime) & 1)) continue;
-      if (IsVisited(Spots[i].Map)) DrawPic(Spots[i].X, Spots[i].Y, SplatPic);
-      if (Spots[i].Map == ClGame.im.EnterMap && (State == STATE_Done ||
-          (State == STATE_NextLoc && (ftoi(32.0 * btime) & 31) < 20)))
-      {
-        DrawPointer(i);
+    //DrawPic(0, 0, BackgroundPic);
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    picinfo_t pinf;
+    R_GetPicInfo(BackgroundPic, &pinf);
+    if (pinf.width >= 320 && pinf.height >= 200) {
+      SetVirtualScreen(pinf.width, pinf.height);
+    } else {
+      SetVirtualScreen(320, 200);
+    }
+    R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_404040);
+    R_DrawPic(0, 0, BackgroundPic);
+    if (Anims.length) {
+      SetVirtualScreen(640, 480);
+      for (int i = 0; i < Anims.Num; ++i) {
+        if (!CheckCond(Anims[i].Cond, Anims[i].MapName1, Anims[i].MapName2)) continue;
+        if (Anims[i].Ctr >= 0) DrawPic(Anims[i].X, Anims[i].Y, Anims[i].Pics[Anims[i].Ctr]);
       }
     }
+    if (State > STATE_Default && Spots.length) {
+      SetVirtualScreen(640, 480);
+      for (int i = 0; i < Spots.Num; ++i) {
+        // flash level we are leaving now
+        if (Spots[i].Map == ClGame.im.LeaveMap && State == STATE_PrevLoc && (ftoi(2.0 * btime) & 1)) continue;
+        if (IsVisited(Spots[i].Map)) DrawPic(Spots[i].X, Spots[i].Y, SplatPic);
+        if (Spots[i].Map == ClGame.im.EnterMap && (State == STATE_Done ||
+            (State == STATE_NextLoc && (ftoi(32.0 * btime) & 31) < 20)))
+        {
+          DrawPointer(i);
+        }
+      }
+    }
+  } else if (BackgroundFlat) {
+    FillRectWithFlat(0, 0, Width, Height, BackgroundFlat);
   }
 }
 

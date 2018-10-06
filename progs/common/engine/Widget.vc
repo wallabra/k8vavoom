@@ -499,11 +499,15 @@ void DrawEmptyScreen () {
 //
 //==========================================================================
 void DrawFullScreenPic (int Handle) {
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  scope(exit) SetVirtualScreen(ovw, ovh);
   picinfo_t pinf;
   R_GetPicInfo(Handle, &pinf);
   if (pinf.width < 1 || pinf.height < 1) {
     DrawEmptyScreen();
   } else {
+    /*
     if (pinf.width <= 320 && pinf.height <= 200) {
       SetVirtualScreen(pinf.width, pinf.height);
     } else {
@@ -517,9 +521,18 @@ void DrawFullScreenPic (int Handle) {
       //print("title pic: %dx%d", pinf.width, pinf.height);
       //SetVirtualScreen(pinf.width, pinf.height);
     }
+    */
+    //print("title pic: %dx%d", pinf.width, pinf.height);
+    if (pinf.width >= 320 && pinf.height >= 200) {
+      SetVirtualScreen(pinf.width, pinf.height);
+    } else {
+      SetVirtualScreen(320, 200);
+    }
+    //SetVirtualScreen(320, 200);
+    R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
     R_DrawPic(0, 0, Handle);
   }
-  SetDefaultVirtualScreenSize();
+  //SetDefaultVirtualScreenSize();
 }
 
 
