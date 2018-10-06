@@ -320,7 +320,7 @@ public:
   void PrepareOut (int);
   void Flush ();
   bool IsLocalConnection ();
-  inline VStr GetAddress () const { return NetCon->Address; }
+  inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
   void Tick ();
   void SendCommand (VStr Str);
   void SetUpFatPVS ();
