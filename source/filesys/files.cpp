@@ -908,7 +908,6 @@ public:
 VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
   guard(FL_OpenFileWrite);
   VStr tmpName;
-
   if (isFullName) {
     tmpName = Name;
   } else {
@@ -923,6 +922,52 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
   if (!File) return nullptr;
   return new VStreamFileWriter(File, GCon, tmpName);
   unguard;
+}
+
+
+//==========================================================================
+//
+//  FL_GetConfigDir
+//
+//==========================================================================
+VStr FL_GetConfigDir () {
+  VStr res;
+#if !defined(_WIN32)
+  const char *HomeDir = getenv("HOME");
+  if (HomeDir && HomeDir[0]) {
+    res = VStr(HomeDir)+"/.vavoom";
+  }
+#else
+  res = ".";
+#endif
+  return res;
+}
+
+
+//==========================================================================
+//
+//  FL_OpenFileReadInCfgDir
+//
+//==========================================================================
+VStream *FL_OpenFileReadInCfgDir (const VStr &Name) {
+  VStr diskName = FL_GetConfigDir()+"/"+Name;
+  FILE *File = fopen(*diskName, "rb");
+  if (File) return new VStreamFileReader(File, GCon, Name);
+  return FL_OpenFileRead(Name);
+}
+
+
+//==========================================================================
+//
+//  FL_OpenFileWriteInCfgDir
+//
+//==========================================================================
+VStream *FL_OpenFileWriteInCfgDir (const VStr &Name) {
+  VStr diskName = FL_GetConfigDir()+"/"+Name;
+  FL_CreatePath(diskName.ExtractFilePath());
+  FILE *File = fopen(*diskName, "wb");
+  if (!File) return nullptr;
+  return new VStreamFileWriter(File, GCon, Name);
 }
 
 

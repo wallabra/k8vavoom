@@ -27,12 +27,17 @@
 void FL_Init ();
 void FL_Shutdown ();
 
+VStr FL_GetConfigDir ();
+
 bool FL_FileExists (const VStr &fname);
 void FL_CreatePath (const VStr &Path);
 
 VStream *FL_OpenFileRead (const VStr &Name);
 // set `isFullName` to `true` to prevent adding anything to file name
 VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName=false);
+
+VStream *FL_OpenFileReadInCfgDir (const VStr &Name);
+VStream *FL_OpenFileWriteInCfgDir (const VStr &Name);
 
 VStream *FL_OpenSysFileRead (const VStr &Name);
 VStream *FL_OpenSysFileWrite (const VStr &Name);
