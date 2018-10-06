@@ -3717,7 +3717,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
 
   x2 = x1 + UseThingRange * useDir.x;
   y2 = y1 + UseThingRange * useDir.y;
-  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS|PT_EARLYOUT) {
+  foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     if (!in->bIsALine) {
       // check height
       if (Origin.z >= in->Thing.Origin.z+in->Thing.Height ||

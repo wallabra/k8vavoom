@@ -75,7 +75,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   }
 
   lineStart = shootOrigin;
-  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|PT_EARLYOUT) {
+  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
     TVec hit_point, real_hit_point;
     line_t *li;
 
@@ -193,7 +193,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   }
 
   lineStart = shootOrigin;
-  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|(allowEntities ? PT_ADDTHINGS : 0)|PT_EARLYOUT) {
+  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|(allowEntities ? PT_ADDTHINGS : 0)/*|PT_EARLYOUT*/) {
     TVec hit_point, real_hit_point;
     line_t *li;
 
@@ -424,7 +424,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
   aim_range = distance;
   linetarget = none;
 
-  foreach PathTraverse(in, Origin.x, Origin.y, x2, y2, PT_ADDLINES|PT_ADDTHINGS|PT_EARLYOUT) {
+  foreach PathTraverse(in, Origin.x, Origin.y, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     line_t *li;
     EntityEx th;
     float thingtopslope;
@@ -694,7 +694,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
   lineStart = shootOrigin;
 
   //print("=== LineAttack ===");
-  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS|PT_EARLYOUT) {
+  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     TVec hit_point, real_hit_point;
     line_t *li;
     EntityEx th;
@@ -940,7 +940,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
   bool DidHit = false;
-  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS|PT_EARLYOUT) {
+  foreach PathTraverse(in, Origin.x, Origin.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     TVec hit_point;
     line_t *li;
     EntityEx th;
