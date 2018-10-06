@@ -357,11 +357,16 @@ static void ChangeResolution (int InWidth, int InHeight) {
   screen_width = ScreenWidth;
   screen_height = ScreenHeight;
 
+  if (ScreenWidth >= 1280) VirtualWidth = ScreenWidth/2;
+  if (ScreenHeight >= 960) VirtualHeight = ScreenHeight/2;
+
   fScaleX = (float)ScreenWidth / (float)VirtualWidth;
   fScaleY = (float)ScreenHeight / (float)VirtualHeight;
 
   fScaleXI = (float)VirtualWidth / (float)ScreenWidth;
   fScaleYI = (float)VirtualHeight / (float)ScreenHeight;
+
+  //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
 
   unguard;
 }
@@ -552,5 +557,6 @@ void SCR_SetVirtualScreen (int Width, int Height) {
   fScaleY = (float)ScreenHeight/(float)VirtualHeight;
   fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
   fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
+  //GCon->Logf("***SCALE1: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
   unguard;
 }

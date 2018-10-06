@@ -79,6 +79,7 @@ void VRootWidget::TickWidgets (float DeltaTime) {
   if (GetFlags()&_OF_Destroyed) return;
   cleanupWidgets();
   if (SizeScaleX != fScaleX || SizeScaleY != fScaleY) {
+    //fprintf(stderr, "new scale: %g, %g\n", (double)fScaleX, (double)fScaleY);
     SizeScaleX = fScaleX;
     SizeScaleY = fScaleY;
     ClipTree();
