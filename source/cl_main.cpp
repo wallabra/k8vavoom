@@ -28,6 +28,8 @@
 #include "ui/ui.h"
 #include "sv_local.h"
 
+#define VAVOOM_DEMO_VERSION  (1)
+
 
 void CL_SetUpNetClient (VSocketPublic *);
 void SV_ConnectClient (VBasePlayer *);
@@ -445,7 +447,7 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
   VStr name = VStr("demos/")+DemoName.DefaultExtension(".dem");
 
   GCon->Logf("Playing demo from '%s'...", *name);
-  VStream *Strm = FL_OpenFileRead(name);
+  VStream *Strm = FL_OpenFileReadInCfgDir(name);
   if (!Strm) {
     GCon->Logf("ERROR: couldn't open '%s'.", *name);
     return;
@@ -457,6 +459,33 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
     delete Strm;
     GCon->Logf("ERROR: '%s' is not a Vavoom demo.", *name);
     return;
+  }
+
+  vuint32 ver = -1;
+  *Strm << ver;
+  if (ver != VAVOOM_DEMO_VERSION) {
+    delete Strm;
+    GCon->Logf("ERROR: '%s' has invalid version.", *name);
+    return;
+  }
+
+  auto wadlist = GetWadPk3List();
+  int wadlen = wadlist.length();
+  int dmwadlen = -1;
+  *Strm << STRM_INDEX(dmwadlen);
+  if (dmwadlen != wadlen) {
+    delete Strm;
+    GCon->Logf("ERROR: '%s' was recorded with differrent mod set.", *name);
+    return;
+  }
+  for (int f = 0; f < wadlen; ++f) {
+    VStr s;
+    *Strm << s;
+    if (s != wadlist[f]) {
+      delete Strm;
+      GCon->Logf("ERROR: '%s' was recorded with differrent mod set.", *name);
+      return;
+    }
   }
 
   // disconnect from server
@@ -578,14 +607,22 @@ COMMAND(Record) {
   if (c > 2) VCommand::ExecuteString(VStr("map ")+Args[2], SRC_Command, nullptr);
 
   // open the demo file
-  GCon->Logf("recording to %s.", *name);
-  cls.demofile = FL_OpenFileWrite(name);
+  GCon->Logf("recording to '%s'...", *name);
+  cls.demofile = FL_OpenFileWriteInCfgDir(name);
   if (!cls.demofile) {
-    GCon->Log("ERROR: couldn't open.");
+    GCon->Logf("ERROR: couldn't create '%s'.", *name);
     return;
   }
 
-  cls.demofile->Serialise(const_cast<char*>("VDEM"), 4);
+  cls.demofile->Serialise(const_cast<char *>("VDEM"), 4);
+
+  vuint32 ver = VAVOOM_DEMO_VERSION;
+  *cls.demofile << ver;
+
+  auto wadlist = GetWadPk3List();
+  int wadlen = wadlist.length();
+  *cls.demofile << STRM_INDEX(wadlen);
+  for (int f = 0; f < wadlen; ++f) *cls.demofile << wadlist[f];
 
   cls.demorecording = true;
 
