@@ -23,18 +23,8 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
+void CT_Init ();
+void CT_Drawer ();
+bool CT_Responder (event_t *ev);
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void CT_Init();
-void CT_Drawer();
-bool CT_Responder(event_t *ev);
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
-
-extern bool   chatmodeon;
+extern bool chatmodeon;

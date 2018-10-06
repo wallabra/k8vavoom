@@ -22,70 +22,43 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  TILine::Init
 //
 //==========================================================================
-
-void TILine::Init(void)
-{
-    len = 0;
-    Data[0] = 0;
+void TILine::Init () {
+ len = 0;
+ Data[0] = 0;
 }
+
 
 //==========================================================================
 //
 //  TILine::AddChar
 //
 //==========================================================================
-
-void TILine::AddChar(char ch)
-{
-    if (len < MAX_ILINE_LENGTH)
-    {
+void TILine::AddChar (char ch) {
+  if (len < MAX_ILINE_LENGTH) {
     Data[len++] = ch;
     Data[len] = 0;
-    }
+  }
 }
+
 
 //==========================================================================
 //
 //  TILine::DelChar
 //
 //==========================================================================
-
-void TILine::DelChar(void)
-{
-    if (len)
-  {
-    Data[--len] = 0;
-  }
+void TILine::DelChar () {
+  if (len) Data[--len] = 0;
 }
+
 
 //==========================================================================
 //
@@ -95,18 +68,14 @@ void TILine::DelChar(void)
 //  Returns true if it ate the key
 //
 //==========================================================================
-
-bool TILine::Key(byte ch)
-{
-  if (ch >= ' ' && ch < 128)
-  {
+bool TILine::Key (byte ch) {
+  if (ch >= ' ' && ch < 128) {
     ch = GInput->TranslateKey(ch);
     AddChar((char)ch);
-  }
-  else if (ch == K_BACKSPACE)
+  } else if (ch == K_BACKSPACE) {
     DelChar();
-  else if (ch != K_ENTER && ch != K_PADENTER)
+  } else if (ch != K_ENTER && ch != K_PADENTER) {
     return false; // did not eat key
-
+  }
   return true; // ate the key
 }

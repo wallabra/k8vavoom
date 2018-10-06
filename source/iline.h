@@ -23,31 +23,21 @@
 //**
 //**************************************************************************
 //**
-//**  Input line library.
+//**  input line library
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
+#define MAX_ILINE_LENGTH  (79)
 
-// MACROS ------------------------------------------------------------------
+// input text line widget
+class TILine {
+public:
+  char Data[MAX_ILINE_LENGTH+1]; // line of text
+  int len; // current line length
 
-#define MAX_ILINE_LENGTH  79
-
-// TYPES -------------------------------------------------------------------
-
-// Input Text Line widget
-class TILine
-{
- public:
-  void Init(void);
-  void AddChar(char ch);
-  void DelChar(void);
-  bool Key(byte ch);  // whether eaten
-
-    char    Data[MAX_ILINE_LENGTH + 1]; // line of text
-    int     len;              // current line length
+public:
+  void Init ();
+  void AddChar (char ch);
+  void DelChar ();
+  bool Key (byte ch); // whether eaten
 };
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
