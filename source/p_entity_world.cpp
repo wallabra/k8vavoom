@@ -26,21 +26,15 @@
 //**  VEntity collision, physics and related methods.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-#define WATER_SINK_FACTOR   3.0
-#define WATER_SINK_SPEED    0.5
+#define WATER_SINK_FACTOR  (3.0)
+#define WATER_SINK_SPEED   (0.5)
 
-// TYPES -------------------------------------------------------------------
 
-struct cptrace_t
-{
+struct cptrace_t {
   TVec Pos;
   float bbox[4];
   float FloorZ;
@@ -50,8 +44,7 @@ struct cptrace_t
   sec_plane_t *Ceiling;
 };
 
-struct tmtrace_t
-{
+struct tmtrace_t {
   VEntity *StepThing;
   TVec End;
   float BBox[4];
@@ -61,10 +54,8 @@ struct tmtrace_t
   sec_plane_t *Floor;
   sec_plane_t *Ceiling;
 
-  enum
-  {
-    TF_FloatOk = 0x01,  // if true, move would be ok if
-              // within tmtrace.FloorZ - tmtrace.CeilingZ
+  enum {
+    TF_FloatOk = 0x01,  // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
   };
   vuint32 TraceFlags;
 
@@ -78,52 +69,41 @@ struct tmtrace_t
 
   // keep track of special lines as they are hit,
   // but don't process them until the move is proven valid
-  TArray<line_t*>   SpecHit;
+  TArray<line_t *> SpecHit;
 
   VEntity *BlockingMobj;
   line_t *AnyBlockingLine; // any blocking lines (including two-sided)
 };
 
-//  Searches though the surrounding mapblocks for monsters/players
-//      distance is in MAPBLOCKUNITS
-class VRoughBlockSearchIterator : public VScriptIterator
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+// searches though the surrounding mapblocks for monsters/players
+// distance is in MAPBLOCKUNITS
+class VRoughBlockSearchIterator : public VScriptIterator {
 private:
   VEntity *Self;
-  int     Distance;
+  int Distance;
   VEntity *Ent;
   VEntity **EntPtr;
 
-  int     StartX;
-  int     StartY;
-  int     Count;
-  int     CurrentEdge;
-  int     BlockIndex;
-  int     FirstStop;
-  int     SecondStop;
-  int     ThirdStop;
-  int     FinalStop;
+  int StartX;
+  int StartY;
+  int Count;
+  int CurrentEdge;
+  int BlockIndex;
+  int FirstStop;
+  int SecondStop;
+  int ThirdStop;
+  int FinalStop;
 
 public:
-  VRoughBlockSearchIterator(VEntity*, int, VEntity**);
-  virtual bool GetNext() override;
+  VRoughBlockSearchIterator (VEntity *, int, VEntity **);
+  virtual bool GetNext () override;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern VCvarB compat_nopassover;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //**************************************************************************
 //
@@ -135,158 +115,122 @@ extern VCvarB compat_nopassover;
 //
 //  VEntity::CreateSecNodeList
 //
-// phares 3/14/98
+//  phares 3/14/98
 //
 //  Alters/creates the sector_list that shows what sectors the object resides in
 //
 //=============================================================================
-
-void VEntity::CreateSecNodeList()
-{
+void VEntity::CreateSecNodeList () {
   guard(VEntity::CreateSecNodeList);
   int xl, xh, yl, yh, bx, by;
   msecnode_t *Node;
 
-  // First, clear out the existing Thing fields. As each node is
-  // added or verified as needed, Thing will be set properly. When
-  // finished, delete all nodes where Thing is still nullptr. These
-  // represent the sectors the Thing has vacated.
+  // first, clear out the existing Thing fields. as each node is
+  // added or verified as needed, Thing will be set properly.
+  // when finished, delete all nodes where Thing is still nullptr.
+  // these represent the sectors the Thing has vacated.
 
   Node = XLevel->SectorList;
-  while (Node)
-  {
+  while (Node) {
     Node->Thing = nullptr;
     Node = Node->TNext;
   }
 
   float tmbbox[4];
-  tmbbox[BOXTOP] = Origin.y + Radius;
-  tmbbox[BOXBOTTOM] = Origin.y - Radius;
-  tmbbox[BOXRIGHT] = Origin.x + Radius;
-  tmbbox[BOXLEFT] = Origin.x - Radius;
+  tmbbox[BOXTOP] = Origin.y+Radius;
+  tmbbox[BOXBOTTOM] = Origin.y-Radius;
+  tmbbox[BOXRIGHT] = Origin.x+Radius;
+  tmbbox[BOXLEFT] = Origin.x-Radius;
 
-  validcount++; // used to make sure we only process a line once
+  ++validcount; // used to make sure we only process a line once
 
-  xl = MapBlock(tmbbox[BOXLEFT] - XLevel->BlockMapOrgX);
-  xh = MapBlock(tmbbox[BOXRIGHT] - XLevel->BlockMapOrgX);
-  yl = MapBlock(tmbbox[BOXBOTTOM] - XLevel->BlockMapOrgY);
-  yh = MapBlock(tmbbox[BOXTOP] - XLevel->BlockMapOrgY);
+  xl = MapBlock(tmbbox[BOXLEFT]-XLevel->BlockMapOrgX);
+  xh = MapBlock(tmbbox[BOXRIGHT]-XLevel->BlockMapOrgX);
+  yl = MapBlock(tmbbox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+  yh = MapBlock(tmbbox[BOXTOP]-XLevel->BlockMapOrgY);
 
-  for (bx = xl; bx <= xh; bx++)
-  {
-    for (by = yl; by <= yh; by++)
-    {
+  for (bx = xl; bx <= xh; ++bx) {
+    for (by = yl; by <= yh; ++by) {
       line_t *ld;
-      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
-      {
-        //  Locates all the sectors the object is in by looking at
-        // the lines that cross through it. You have already decided
-        // that the object is allowed at this location, so don't
+      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
+        // locates all the sectors the object is in by looking at the lines that cross through it.
+        // you have already decided that the object is allowed at this location, so don't
         // bother with checking impassable or blocking lines.
         if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
-          tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
-          tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
-          tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+            tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+            tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+            tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
         {
           continue;
         }
 
-        if (P_BoxOnLineSide(tmbbox, ld) != -1)
-        {
-          continue;
-        }
+        if (P_BoxOnLineSide(tmbbox, ld) != -1) continue;
 
-        // This line crosses through the object.
+        // this line crosses through the object
 
-        // Collect the sector(s) from the line and add to the
-        // SectorList you're examining. If the Thing ends up being
-        // allowed to move to this position, then the sector_list will
+        // collect the sector(s) from the line and add to the SectorList you're examining.
+        // if the Thing ends up being allowed to move to this position, then the sector_list will
         // be attached to the Thing's VEntity at TouchingSectorList.
 
-        XLevel->SectorList = XLevel->AddSecnode(ld->frontsector,
-          this, XLevel->SectorList);
+        XLevel->SectorList = XLevel->AddSecnode(ld->frontsector, this, XLevel->SectorList);
 
-        // Don't assume all lines are 2-sided, since some Things like
+        // don't assume all lines are 2-sided, since some Things like
         // MT_TFOG are allowed regardless of whether their radius
         // takes them beyond an impassable linedef.
 
         // killough 3/27/98, 4/4/98:
-        // Use sidedefs instead of 2s flag to determine two-sidedness.
+        // use sidedefs instead of 2s flag to determine two-sidedness
 
-        if (ld->backsector)
-        {
-          XLevel->SectorList = XLevel->AddSecnode(ld->backsector,
-            this, XLevel->SectorList);
+        if (ld->backsector) {
+          XLevel->SectorList = XLevel->AddSecnode(ld->backsector, this, XLevel->SectorList);
         }
       }
     }
   }
 
-  // Add the sector of the (x,y) point to sector_list.
+  // add the sector of the (x,y) point to sector_list
   XLevel->SectorList = XLevel->AddSecnode(Sector, this, XLevel->SectorList);
 
-  // Now delete any nodes that won't be used. These are the ones where
-  // Thing is still nullptr.
+  // now delete any nodes that won't be used
+  // these are the ones where Thing is still nullptr
 
   Node = XLevel->SectorList;
-  while (Node)
-  {
-    if (Node->Thing == nullptr)
-    {
-      if (Node == XLevel->SectorList)
-      {
-        XLevel->SectorList = Node->TNext;
-      }
+  while (Node) {
+    if (Node->Thing == nullptr) {
+      if (Node == XLevel->SectorList) XLevel->SectorList = Node->TNext;
       Node = XLevel->DelSecnode(Node);
-    }
-    else
-    {
+    } else {
       Node = Node->TNext;
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VEntity::UnlinkFromWorld
 //
-//  Unlinks a thing from block map and sectors. On each position change,
-// BLOCKMAP and other lookups maintaining lists ot things inside these
-// structures need to be updated.
+//  unlinks a thing from block map and sectors. on each position change,
+//  BLOCKMAP and other lookups maintaining lists ot things inside these
+//  structures need to be updated.
 //
 //==========================================================================
-
-void VEntity::UnlinkFromWorld()
-{
+void VEntity::UnlinkFromWorld () {
   guard(SV_UnlinkFromWorld);
-  if (!SubSector)
-  {
-    return;
-  }
+  if (!SubSector) return;
 
-  if (!(EntityFlags & EF_NoSector))
-  {
+  if (!(EntityFlags&EF_NoSector)) {
     // invisible things don't need to be in sector list
     // unlink from subsector
-    if (SNext)
-    {
-      SNext->SPrev = SPrev;
-    }
-    if (SPrev)
-    {
-      SPrev->SNext = SNext;
-    }
-    else
-    {
-      Sector->ThingList = SNext;
-    }
+    if (SNext) SNext->SPrev = SPrev;
+    if (SPrev) SPrev->SNext = SNext; else Sector->ThingList = SNext;
     SNext = nullptr;
     SPrev = nullptr;
 
     // phares 3/14/98
     //
-    //  Save the sector list pointed to by TouchingSectorList. In
+    // Save the sector list pointed to by TouchingSectorList. In
     // LinkToWorld, we'll keep any nodes that represent sectors the Thing
     // still touches. We'll add new ones then, and delete any nodes for
     // sectors the Thing has vacated. Then we'll put it back into
@@ -294,40 +238,30 @@ void VEntity::UnlinkFromWorld()
     // deleting/creating for nodes, when most of the time you just get
     // back what you deleted anyway.
     //
-    //  If this Thing is being removed entirely, then the calling routine
+    // If this Thing is being removed entirely, then the calling routine
     // will clear out the nodes in sector_list.
     //
     XLevel->DelSectorList();
     XLevel->SectorList = TouchingSectorList;
-    TouchingSectorList = nullptr; //to be restored by LinkToWorld
+    TouchingSectorList = nullptr; // to be restored by LinkToWorld
   }
 
-  if (!(EntityFlags & EF_NoBlockmap))
-  {
-    //  Inert things don't need to be in blockmap
-    //  Unlink from block map
-    if (BlockMapNext)
-    {
-      BlockMapNext->BlockMapPrev = BlockMapPrev;
-    }
-
-    if (BlockMapPrev)
-    {
+  if (!(EntityFlags&EF_NoBlockmap)) {
+    // inert things don't need to be in blockmap
+    // unlink from block map
+    if (BlockMapNext) BlockMapNext->BlockMapPrev = BlockMapPrev;
+    if (BlockMapPrev) {
       BlockMapPrev->BlockMapNext = BlockMapNext;
-    }
-    else
-    {
-      int blockx = MapBlock(Origin.x - XLevel->BlockMapOrgX);
-      int blocky = MapBlock(Origin.y - XLevel->BlockMapOrgY);
+    } else {
+      int blockx = MapBlock(Origin.x-XLevel->BlockMapOrgX);
+      int blocky = MapBlock(Origin.y-XLevel->BlockMapOrgY);
 
       if (blockx >= 0 && blockx < XLevel->BlockMapWidth &&
-        blocky >= 0 && blocky < XLevel->BlockMapHeight)
+          blocky >= 0 && blocky < XLevel->BlockMapHeight)
       {
-        check(XLevel->BlockLinks[blocky * XLevel->BlockMapWidth + blockx] == this);
-        if (XLevel->BlockLinks[blocky * XLevel->BlockMapWidth + blockx] == this)
-        {
-          XLevel->BlockLinks[blocky * XLevel->BlockMapWidth + blockx] =
-            BlockMapNext;
+        check(XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx] == this);
+        if (XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx] == this) {
+          XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx] = BlockMapNext;
         }
       }
     }
@@ -337,6 +271,7 @@ void VEntity::UnlinkFromWorld()
   unguardf(("(%s)", GetClass()->GetName()));
 }
 
+
 //==========================================================================
 //
 //  VEntity::LinkToWorld
@@ -345,53 +280,37 @@ void VEntity::UnlinkFromWorld()
 //  Sets thing->subsector properly
 //
 //==========================================================================
-
-void VEntity::LinkToWorld()
-{
+void VEntity::LinkToWorld () {
   guard(VEntity::LinkToWorld);
   subsector_t *ss;
   sec_region_t *reg;
   sec_region_t *r;
 
-  if (SubSector)
-  {
-    UnlinkFromWorld();
-  }
+  if (SubSector) UnlinkFromWorld();
 
   // link into subsector
   ss = XLevel->PointInSubsector(Origin);
-  reg = SV_FindThingGap(ss->sector->botregion, Origin,
-    Origin.z, Origin.z + Height);
+  reg = SV_FindThingGap(ss->sector->botregion, Origin, Origin.z, Origin.z+Height);
   SubSector = ss;
   Sector = ss->sector;
 
   r = reg;
-  while (r->floor->flags && r->prev)
-  {
-    r = r->prev;
-  }
+  while (r->floor->flags && r->prev) r = r->prev;
   Floor = r->floor;
   FloorZ = r->floor->GetPointZ(Origin);
 
   r = reg;
-  while (r->ceiling->flags && r->next)
-  {
-    r = r->next;
-  }
+  while (r->ceiling->flags && r->next) r = r->next;
   Ceiling = r->ceiling;
   CeilingZ = r->ceiling->GetPointZ(Origin);
 
   // link into sector
-  if (!(EntityFlags & EF_NoSector))
-  {
+  if (!(EntityFlags&EF_NoSector)) {
     // invisible things don't go into the sector links
     VEntity **Link = &Sector->ThingList;
     SPrev = nullptr;
     SNext = *Link;
-    if (*Link)
-    {
-      (*Link)->SPrev = this;
-    }
+    if (*Link) (*Link)->SPrev = this;
     *Link = this;
 
     // phares 3/16/98
@@ -407,37 +326,27 @@ void VEntity::LinkToWorld()
     // at sector_t->touching_thinglist) are broken. When a node is
     // added, new sector links are created.
     CreateSecNodeList();
-    TouchingSectorList = XLevel->SectorList;  // Attach to thing
-    XLevel->SectorList = nullptr;    // clear for next time
-  }
-  else
-  {
+    TouchingSectorList = XLevel->SectorList; // attach to thing
+    XLevel->SectorList = nullptr; // clear for next time
+  } else {
     XLevel->DelSectorList();
   }
 
   // link into blockmap
-  if (!(EntityFlags & EF_NoBlockmap))
-  {
+  if (!(EntityFlags&EF_NoBlockmap)) {
     // inert things don't need to be in blockmap
-    int blockx = MapBlock(Origin.x - XLevel->BlockMapOrgX);
-    int blocky = MapBlock(Origin.y - XLevel->BlockMapOrgY);
+    int blockx = MapBlock(Origin.x-XLevel->BlockMapOrgX);
+    int blocky = MapBlock(Origin.y-XLevel->BlockMapOrgY);
 
     if (blockx >= 0 && blockx < XLevel->BlockMapWidth &&
-      blocky >= 0 && blocky < XLevel->BlockMapHeight)
+        blocky >= 0 && blocky < XLevel->BlockMapHeight)
     {
-      VEntity **link = &XLevel->BlockLinks[
-        blocky * XLevel->BlockMapWidth + blockx];
+      VEntity **link = &XLevel->BlockLinks[blocky*XLevel->BlockMapWidth+blockx];
       BlockMapPrev = nullptr;
       BlockMapNext = *link;
-      if (*link)
-      {
-        (*link)->BlockMapPrev = this;
-      }
-
+      if (*link) (*link)->BlockMapPrev = this;
       *link = this;
-    }
-    else
-    {
+    } else {
       // thing is off the map
       BlockMapNext = BlockMapPrev = nullptr;
     }
@@ -445,14 +354,13 @@ void VEntity::LinkToWorld()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VEntity::CheckWater
 //
 //==========================================================================
-
-bool VEntity::CheckWater()
-{
+bool VEntity::CheckWater () {
   guard(VEntity::CheckWater);
   TVec point;
   int cont;
@@ -463,38 +371,28 @@ bool VEntity::CheckWater()
   WaterLevel = 0;
   WaterType = 0;
   cont = SV_PointContents(Sector, point);
-  if (cont > 0)
-  {
+  if (cont > 0) {
     WaterType = cont;
     WaterLevel = 1;
-    point.z = Origin.z + Height * 0.5;
+    point.z = Origin.z+Height*0.5;
     cont = SV_PointContents(Sector, point);
-    if (cont > 0)
-    {
+    if (cont > 0) {
       WaterLevel = 2;
-      if (EntityFlags & EF_IsPlayer)
-      {
+      if (EntityFlags&EF_IsPlayer) {
         point = Player->ViewOrg;
         cont = SV_PointContents(Sector, point);
-        if (cont > 0)
-        {
-          WaterLevel = 3;
-        }
-      }
-      else
-      {
-        point.z = Origin.z + Height * 0.75;
+        if (cont > 0) WaterLevel = 3;
+      } else {
+        point.z = Origin.z+Height*0.75;
         cont = SV_PointContents(Sector, point);
-        if (cont > 0)
-        {
-          WaterLevel = 3;
-        }
+        if (cont > 0) WaterLevel = 3;
       }
     }
   }
   return WaterLevel > 1;
   unguard;
 }
+
 
 //**************************************************************************
 //
@@ -514,9 +412,7 @@ bool VEntity::CheckWater()
 //   (doesn't need to be related to the mobj_t->x,y)
 //
 //==========================================================================
-
-bool VEntity::CheckPosition(TVec Pos)
-{
+bool VEntity::CheckPosition (TVec Pos) {
   guard(VEntity::CheckPosition);
   int xl;
   int xh;
@@ -532,148 +428,108 @@ bool VEntity::CheckPosition(TVec Pos)
 
   cptrace.Pos = Pos;
 
-  cptrace.bbox[BOXTOP] = Pos.y + Radius;
-  cptrace.bbox[BOXBOTTOM] = Pos.y - Radius;
-  cptrace.bbox[BOXRIGHT] = Pos.x + Radius;
-  cptrace.bbox[BOXLEFT] = Pos.x - Radius;
+  cptrace.bbox[BOXTOP] = Pos.y+Radius;
+  cptrace.bbox[BOXBOTTOM] = Pos.y-Radius;
+  cptrace.bbox[BOXRIGHT] = Pos.x+Radius;
+  cptrace.bbox[BOXLEFT] = Pos.x-Radius;
 
   newsubsec = XLevel->PointInSubsector(Pos);
 
   // The base floor / ceiling is from the subsector that contains the point.
   // Any contacted lines the step closer together will adjust them.
-  gap = SV_FindThingGap(newsubsec->sector->botregion, Pos,
-    Pos.z, Pos.z + Height);
+  gap = SV_FindThingGap(newsubsec->sector->botregion, Pos, Pos.z, Pos.z+Height);
   reg = gap;
-  while (reg->prev && reg->floor->flags & SPF_NOBLOCKING)
-  {
-    reg = reg->prev;
-  }
+  while (reg->prev && (reg->floor->flags&SPF_NOBLOCKING) != 0) reg = reg->prev;
   cptrace.Floor = reg->floor;
   cptrace.FloorZ = reg->floor->GetPointZ(Pos);
   cptrace.DropOffZ = cptrace.FloorZ;
   reg = gap;
-  while (reg->next && reg->ceiling->flags & SPF_NOBLOCKING)
-  {
-    reg = reg->next;
-  }
+  while (reg->next && (reg->ceiling->flags&SPF_NOBLOCKING) != 0) reg = reg->next;
   cptrace.Ceiling = reg->ceiling;
   cptrace.CeilingZ = reg->ceiling->GetPointZ(Pos);
 
-  validcount++;
+  ++validcount;
 
-  if (EntityFlags & EF_ColideWithThings)
-  {
+  if (EntityFlags&EF_ColideWithThings) {
     // Check things first, possibly picking things up.
     // The bounding box is extended by MAXRADIUS
     // because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
-    xl = MapBlock(cptrace.bbox[BOXLEFT] - XLevel->BlockMapOrgX - MAXRADIUS);
-    xh = MapBlock(cptrace.bbox[BOXRIGHT] - XLevel->BlockMapOrgX + MAXRADIUS);
-    yl = MapBlock(cptrace.bbox[BOXBOTTOM] - XLevel->BlockMapOrgY - MAXRADIUS);
-    yh = MapBlock(cptrace.bbox[BOXTOP] - XLevel->BlockMapOrgY + MAXRADIUS);
+    xl = MapBlock(cptrace.bbox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
+    xh = MapBlock(cptrace.bbox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
+    yl = MapBlock(cptrace.bbox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
+    yh = MapBlock(cptrace.bbox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
 
-    for (bx = xl; bx <= xh; bx++)
-    {
-      for (by = yl; by <= yh; by++)
-      {
-        for (VBlockThingsIterator It(XLevel, bx, by); It; ++It)
-        {
-          if (!CheckThing(cptrace, *It))
-          {
-            return false;
-          }
+    for (bx = xl; bx <= xh; ++bx) {
+      for (by = yl; by <= yh; ++by) {
+        for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
+          if (!CheckThing(cptrace, *It)) return false;
         }
       }
     }
   }
 
-  if (EntityFlags & EF_ColideWithWorld)
-  {
+  if (EntityFlags&EF_ColideWithWorld) {
     // check lines
-    xl = MapBlock(cptrace.bbox[BOXLEFT] - XLevel->BlockMapOrgX);
-    xh = MapBlock(cptrace.bbox[BOXRIGHT] - XLevel->BlockMapOrgX);
-    yl = MapBlock(cptrace.bbox[BOXBOTTOM] - XLevel->BlockMapOrgY);
-    yh = MapBlock(cptrace.bbox[BOXTOP] - XLevel->BlockMapOrgY);
+    xl = MapBlock(cptrace.bbox[BOXLEFT]-XLevel->BlockMapOrgX);
+    xh = MapBlock(cptrace.bbox[BOXRIGHT]-XLevel->BlockMapOrgX);
+    yl = MapBlock(cptrace.bbox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+    yh = MapBlock(cptrace.bbox[BOXTOP]-XLevel->BlockMapOrgY);
 
-    for (bx = xl; bx <= xh; bx++)
-    {
-      for (by = yl; by <= yh; by++)
-      {
+    for (bx = xl; bx <= xh; ++bx) {
+      for (by = yl; by <= yh; ++by) {
         line_t *ld;
-        for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
-        {
+        for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
           good &= CheckLine(cptrace, ld);
         }
       }
     }
 
-    if (!good)
-    {
-      return false;
-    }
+    if (!good) return false;
   }
 
   return true;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VEntity::CheckThing
 //
 //==========================================================================
-
-bool VEntity::CheckThing(cptrace_t &cptrace, VEntity *Other)
-{
+bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
   guardSlow(VEntity::CheckThing);
   // don't clip against self
-  if (Other == this)
-  {
-    return true;
-  }
+  if (Other == this) return true;
   // can't hit thing
-  if (!(Other->EntityFlags & EF_ColideWithThings))
-  {
-    return true;
-  }
-  if (!(Other->EntityFlags & EF_Solid))
-  {
-    return true;
-  }
+  if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
+  if (!(Other->EntityFlags&EF_Solid)) return true;
 
-  float blockdist = Other->Radius + Radius;
+  float blockdist = Other->Radius+Radius;
 
-  if (fabs(Other->Origin.x - cptrace.Pos.x) >= blockdist ||
-    fabs(Other->Origin.y - cptrace.Pos.y) >= blockdist)
+  if (fabs(Other->Origin.x-cptrace.Pos.x) >= blockdist ||
+      fabs(Other->Origin.y-cptrace.Pos.y) >= blockdist)
   {
     // didn't hit it
     return true;
   }
 
-  if ((EntityFlags & EF_PassMobj) || (EntityFlags & EF_Missile) ||
-    (Other->EntityFlags & EF_ActLikeBridge))
+  if ((EntityFlags&EF_PassMobj) || (EntityFlags&EF_Missile) ||
+      (Other->EntityFlags&EF_ActLikeBridge))
   {
-    //  Prevent some objects from overlapping
-    if (EntityFlags & Other->EntityFlags & EF_DontOverlap)
-    {
-      return false;
-    }
+    // prevent some objects from overlapping
+    if (EntityFlags&Other->EntityFlags&EF_DontOverlap) return false;
     // check if a mobj passed over/under another object
-    if (cptrace.Pos.z >= Other->Origin.z + Other->Height)
-    {
-      return true;
-    }
-    if (cptrace.Pos.z + Height <= Other->Origin.z)
-    {
-      // under thing
-      return true;
-    }
+    if (cptrace.Pos.z >= Other->Origin.z+Other->Height) return true;
+    if (cptrace.Pos.z+Height <= Other->Origin.z) return true; // under thing
   }
 
   return false;
   unguardSlow;
 }
+
 
 //==========================================================================
 //
@@ -682,105 +538,57 @@ bool VEntity::CheckThing(cptrace_t &cptrace, VEntity *Other)
 //  Adjusts cptrace.FloorZ and cptrace.CeilingZ as lines are contacted
 //
 //==========================================================================
-
-bool VEntity::CheckLine(cptrace_t &cptrace, line_t *ld)
-{
+bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
   guardSlow(VEntity::CheckLine);
   if (cptrace.bbox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
-    cptrace.bbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
-    cptrace.bbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
-    cptrace.bbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+      cptrace.bbox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+      cptrace.bbox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+      cptrace.bbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
   {
     return true;
   }
 
-  if (P_BoxOnLineSide(&cptrace.bbox[0], ld) != -1)
-  {
-    return true;
-  }
+  if (P_BoxOnLineSide(&cptrace.bbox[0], ld) != -1) return true;
 
-  // A line has been hit
-  if (!ld->backsector)
-  {
-    // One sided line
-    return false;
-  }
+  // a line has been hit
+  if (!ld->backsector) return false; // One sided line
 
-  if (!(ld->flags & ML_RAILING))
-  {
-    if (ld->flags & ML_BLOCKEVERYTHING)
-    {
-      // Explicitly blocking everything
-      return false;
-    }
-
-    if ((EntityFlags & VEntity::EF_CheckLineBlocking) &&
-      (ld->flags & ML_BLOCKING))
-    {
-      // Explicitly blocking everything
-      return false;
-    }
-
-    if ((EntityFlags & VEntity::EF_CheckLineBlockMonsters) &&
-      (ld->flags & ML_BLOCKMONSTERS))
-    {
-      // Block monsters only
-      return false;
-    }
-
-    if ((EntityFlags & VEntity::EF_IsPlayer) &&
-      (ld->flags & ML_BLOCKPLAYERS))
-    {
-      // Block players only
-      return false;
-    }
-
-    if ((EntityFlags & VEntity::EF_Float) &&
-      (ld->flags & ML_BLOCK_FLOATERS))
-    {
-      // Block floaters only
-      return false;
-    }
+  if (!(ld->flags&ML_RAILING)) {
+    if (ld->flags&ML_BLOCKEVERYTHING) return false; // explicitly blocking everything
+    if ((EntityFlags&VEntity::EF_CheckLineBlocking) && (ld->flags&ML_BLOCKING)) return false; // explicitly blocking everything
+    if ((EntityFlags&VEntity::EF_CheckLineBlockMonsters) && (ld->flags&ML_BLOCKMONSTERS)) return false; // block monsters only
+    if ((EntityFlags&VEntity::EF_IsPlayer) && (ld->flags&ML_BLOCKPLAYERS)) return false; // block players only
+    if ((EntityFlags&VEntity::EF_Float) && (ld->flags&ML_BLOCK_FLOATERS)) return false; // block floaters only
   }
 
   // set openrange, opentop, openbottom
-  TVec hit_point = cptrace.Pos - (DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
+  TVec hit_point = cptrace.Pos-(DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
   open = SV_FindOpening(open, cptrace.Pos.z, cptrace.Pos.z+Height);
 
-  if (open)
-  {
+  if (open) {
     // adjust floor / ceiling heights
-    if (!(open->ceiling->flags & SPF_NOBLOCKING) && open->top < cptrace.CeilingZ)
-    {
+    if (!(open->ceiling->flags&SPF_NOBLOCKING) && open->top < cptrace.CeilingZ) {
       cptrace.Ceiling = open->ceiling;
       cptrace.CeilingZ = open->top;
     }
 
-    if (!(open->floor->flags & SPF_NOBLOCKING) && open->bottom > cptrace.FloorZ)
-    {
+    if (!(open->floor->flags&SPF_NOBLOCKING) && open->bottom > cptrace.FloorZ) {
       cptrace.Floor = open->floor;
       cptrace.FloorZ = open->bottom;
     }
 
-    if (open->lowfloor < cptrace.DropOffZ)
-    {
-      cptrace.DropOffZ = open->lowfloor;
-    }
+    if (open->lowfloor < cptrace.DropOffZ) cptrace.DropOffZ = open->lowfloor;
 
-    if (ld->flags & ML_RAILING)
-    {
-      cptrace.FloorZ += 32;
-    }
-  }
-  else
-  {
+    if (ld->flags&ML_RAILING) cptrace.FloorZ += 32;
+  } else {
     cptrace.CeilingZ = cptrace.FloorZ;
   }
 
   return true;
   unguardSlow;
 }
+
 
 //**************************************************************************
 //
@@ -792,7 +600,7 @@ bool VEntity::CheckLine(cptrace_t &cptrace, line_t *ld)
 //
 //  VEntity::CheckRelPosition
 //
-//  This is purely informative, nothing is modified
+// This is purely informative, nothing is modified
 // (except things picked up).
 //
 // in:
@@ -817,9 +625,7 @@ bool VEntity::CheckLine(cptrace_t &cptrace, line_t *ld)
 //   blocked, or blocked by a line).
 //
 //==========================================================================
-
-bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
-{
+bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   guard(VEntity::CheckRelPosition);
   int xl;
   int xh;
@@ -829,45 +635,33 @@ bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
   int by;
   subsector_t *newsubsec;
   VEntity *thingblocker;
-//  VEntity *fakedblocker;
+  //VEntity *fakedblocker;
   bool good = true;
 
   tmtrace.End = Pos;
 
-  tmtrace.BBox[BOXTOP] = Pos.y + Radius;
-  tmtrace.BBox[BOXBOTTOM] = Pos.y - Radius;
-  tmtrace.BBox[BOXRIGHT] = Pos.x + Radius;
-  tmtrace.BBox[BOXLEFT] = Pos.x - Radius;
+  tmtrace.BBox[BOXTOP] = Pos.y+Radius;
+  tmtrace.BBox[BOXBOTTOM] = Pos.y-Radius;
+  tmtrace.BBox[BOXRIGHT] = Pos.x+Radius;
+  tmtrace.BBox[BOXLEFT] = Pos.x-Radius;
 
   newsubsec = XLevel->PointInSubsector(Pos);
   tmtrace.CeilingLine = nullptr;
 
-  // The base floor / ceiling is from the subsector
-  // that contains the point.
-  // Any contacted lines the step closer together
-  // will adjust them.
-  if (newsubsec->sector->SectorFlags & sector_t::SF_HasExtrafloors)
-  {
-    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion,
-      tmtrace.End, tmtrace.End.z, tmtrace.End.z + (Height ? 1.0 : Height));
+  // the base floor / ceiling is from the subsector that contains the point
+  // any contacted lines the step closer together will adjust them
+  if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
+    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height ? 1.0 : Height));
     sec_region_t *reg = gap;
-    while (reg->prev && reg->floor->flags & SPF_NOBLOCKING)
-    {
-      reg = reg->prev;
-    }
+    while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
     tmtrace.Floor = reg->floor;
     tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
     tmtrace.DropOffZ = tmtrace.FloorZ;
     reg = gap;
-    while (reg->next && reg->ceiling->flags & SPF_NOBLOCKING)
-    {
-      reg = reg->next;
-    }
+    while (reg->next && reg->ceiling->flags&SPF_NOBLOCKING) reg = reg->next;
     tmtrace.Ceiling = reg->ceiling;
     tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
-  }
-  else
-  {
+  } else {
     sec_region_t *reg = newsubsec->sector->botregion;
     tmtrace.Floor = reg->floor;
     tmtrace.FloorZ = reg->floor->GetPointZ(tmtrace.End);
@@ -876,66 +670,50 @@ bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
     tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
   }
 
-  validcount++;
+  ++validcount;
   tmtrace.SpecHit.Clear();
 
   tmtrace.BlockingMobj = nullptr;
   tmtrace.StepThing = nullptr;
   thingblocker = nullptr;
-//  fakedblocker = nullptr;
+  //fakedblocker = nullptr;
 
-  // Check things first, possibly picking things up.
-  // The bounding box is extended by MAXRADIUS
+  // check things first, possibly picking things up.
+  // the bounding box is extended by MAXRADIUS
   // because mobj_ts are grouped into mapblocks
   // based on their origin point, and can overlap
   // into adjacent blocks by up to MAXRADIUS units.
-  if (EntityFlags & EF_ColideWithThings)
-  {
-    xl = MapBlock(tmtrace.BBox[BOXLEFT] - XLevel->BlockMapOrgX - MAXRADIUS);
-    xh = MapBlock(tmtrace.BBox[BOXRIGHT] - XLevel->BlockMapOrgX + MAXRADIUS);
-    yl = MapBlock(tmtrace.BBox[BOXBOTTOM] - XLevel->BlockMapOrgY - MAXRADIUS);
-    yh = MapBlock(tmtrace.BBox[BOXTOP] - XLevel->BlockMapOrgY + MAXRADIUS);
+  if (EntityFlags&EF_ColideWithThings) {
+    xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX-MAXRADIUS);
+    xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
+    yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
+    yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
 
-    for (bx = xl; bx <= xh; bx++)
-    {
-      for (by = yl; by <= yh; by++)
-      {
-        for (VBlockThingsIterator It(XLevel, bx, by); It; ++It)
-        {
-          if (!CheckRelThing(tmtrace, *It))
-          {
+    for (bx = xl; bx <= xh; ++bx) {
+      for (by = yl; by <= yh; ++by) {
+        for (VBlockThingsIterator It(XLevel, bx, by); It; ++It) {
+          if (!CheckRelThing(tmtrace, *It)) {
             // continue checking for other things in to see if we hit something
             if (!tmtrace.BlockingMobj || compat_nopassover ||
-              (Level->LevelInfoFlags2 & VLevelInfo::LIF2_CompatNoPassOver))
+                (Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver))
             {
               // slammed into something
               return false;
-            }
-            else if (!tmtrace.BlockingMobj->Player &&
-              !(EntityFlags & VEntity::EF_Float) &&
-              !(EntityFlags & VEntity::EF_Missile) &&
-              tmtrace.BlockingMobj->Origin.z + tmtrace.BlockingMobj->Height - tmtrace.End.z <= MaxStepHeight)
+            } else if (!tmtrace.BlockingMobj->Player &&
+                       !(EntityFlags&VEntity::EF_Float) &&
+                       !(EntityFlags&VEntity::EF_Missile) &&
+                       tmtrace.BlockingMobj->Origin.z+tmtrace.BlockingMobj->Height-tmtrace.End.z <= MaxStepHeight)
             {
-              if (!thingblocker || tmtrace.BlockingMobj->Origin.z > thingblocker->Origin.z)
-              {
-                thingblocker = tmtrace.BlockingMobj;
-              }
+              if (!thingblocker || tmtrace.BlockingMobj->Origin.z > thingblocker->Origin.z) thingblocker = tmtrace.BlockingMobj;
               tmtrace.BlockingMobj = nullptr;
-            }
-            else if (Player && tmtrace.End.z + Height - tmtrace.BlockingMobj->Origin.z <= MaxStepHeight)
-            {
-              if (thingblocker)
-              { // something to step up on, set it as
-                // the blocker so that we don't step up
-                return false;
-              }
+            } else if (Player && tmtrace.End.z+Height-tmtrace.BlockingMobj->Origin.z <= MaxStepHeight) {
+              if (thingblocker) return false; // something to step up on, set it as the blocker so that we don't step up
               // nothing is blocking, but this object potentially could
               // if there is something else to step on
               //fakedblocker = tmtrace.BlockingMobj;
               tmtrace.BlockingMobj = nullptr;
-            }
-            else
-            { // blocking
+            } else {
+              // blocking
               return false;
             }
           }
@@ -945,30 +723,25 @@ bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
   }
 
   // check lines
-  validcount++;
+  ++validcount;
 
   float thingdropoffz = tmtrace.FloorZ;
   tmtrace.FloorZ = tmtrace.DropOffZ;
   tmtrace.BlockingMobj = nullptr;
 
-  if (EntityFlags & EF_ColideWithWorld)
-  {
-    xl = MapBlock(tmtrace.BBox[BOXLEFT] - XLevel->BlockMapOrgX);
-    xh = MapBlock(tmtrace.BBox[BOXRIGHT] - XLevel->BlockMapOrgX);
-    yl = MapBlock(tmtrace.BBox[BOXBOTTOM] - XLevel->BlockMapOrgY);
-    yh = MapBlock(tmtrace.BBox[BOXTOP] - XLevel->BlockMapOrgY);
+  if (EntityFlags&EF_ColideWithWorld) {
+    xl = MapBlock(tmtrace.BBox[BOXLEFT]-XLevel->BlockMapOrgX);
+    xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX);
+    yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+    yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
 
     line_t *fuckhit = nullptr;
-    for (bx = xl; bx <= xh; bx++)
-    {
-      for (by = yl; by <= yh; by++)
-      {
+    for (bx = xl; bx <= xh; ++bx) {
+      for (by = yl; by <= yh; ++by) {
         line_t *ld;
-        for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
-        {
+        for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
           //good &= CheckRelLine(tmtrace, ld);
           if (!CheckRelLine(tmtrace, ld)) {
-
             good = false;
             if (!fuckhit) {/* printf("*** fuckhit!\n");*/ fuckhit = ld; }
           }
@@ -976,29 +749,23 @@ bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
       }
     }
 
-    if (!good)
-    {
+    if (!good) {
       //printf("*** NOTGOOD\n");
       if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
 
-    if (tmtrace.CeilingZ - tmtrace.FloorZ < Height)
-    {
+    if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
       //printf("*** SHITHEIGHT\n");
       if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
   }
 
-  if (tmtrace.StepThing)
-  {
-    tmtrace.DropOffZ = thingdropoffz;
-  }
+  if (tmtrace.StepThing) tmtrace.DropOffZ = thingdropoffz;
 
   tmtrace.BlockingMobj = thingblocker;
-  if (tmtrace.BlockingMobj)
-  {
+  if (tmtrace.BlockingMobj) {
     //printf("*** MOBJ\n");
     return false;
   }
@@ -1007,81 +774,67 @@ bool VEntity::CheckRelPosition(tmtrace_t &tmtrace, TVec Pos)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VEntity::CheckRelThing
 //
 //==========================================================================
-
-bool VEntity::CheckRelThing(tmtrace_t &tmtrace, VEntity *Other)
-{
+bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
   guardSlow(VEntity::CheckRelThing);
   // don't clip against self
-  if (Other == this)
-  {
-    return true;
-  }
+  if (Other == this) return true;
   // can't hit thing
-  if (!(Other->EntityFlags & EF_ColideWithThings))
-  {
-    return true;
-  }
+  if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
 
-  float blockdist = Other->Radius + Radius;
+  float blockdist = Other->Radius+Radius;
 
-  if (fabs(Other->Origin.x - tmtrace.End.x) >= blockdist ||
-    fabs(Other->Origin.y - tmtrace.End.y) >= blockdist)
+  if (fabs(Other->Origin.x-tmtrace.End.x) >= blockdist ||
+      fabs(Other->Origin.y-tmtrace.End.y) >= blockdist)
   {
     // didn't hit it
     return true;
   }
 
   tmtrace.BlockingMobj = Other;
-  if (!(Level->LevelInfoFlags2 & VLevelInfo::LIF2_CompatNoPassOver) &&
-    !compat_nopassover &&
-    (!(EntityFlags & EF_Float) ||
-    !(EntityFlags & EF_Missile) ||
-    !(EntityFlags & EF_NoGravity)) &&
-    (Other->EntityFlags & EF_Solid) &&
-    (Other->EntityFlags & EF_ActLikeBridge))
+  if (!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
+      !compat_nopassover &&
+      (!(EntityFlags&EF_Float) ||
+       !(EntityFlags&EF_Missile) ||
+       !(EntityFlags&EF_NoGravity)) &&
+      (Other->EntityFlags&EF_Solid) &&
+      (Other->EntityFlags&EF_ActLikeBridge))
   {
     // allow actors to walk on other actors as well as floors
-    if (fabs(Other->Origin.x - tmtrace.End.x) < Other->Radius ||
-      fabs(Other->Origin.y - tmtrace.End.y) < Other->Radius)
+    if (fabs(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
+        fabs(Other->Origin.y-tmtrace.End.y) < Other->Radius)
     {
-      if (Other->Origin.z + Other->Height >= tmtrace.FloorZ &&
-        Other->Origin.z + Other->Height <= tmtrace.End.z + MaxStepHeight)
+      if (Other->Origin.z+Other->Height >= tmtrace.FloorZ &&
+          Other->Origin.z+Other->Height <= tmtrace.End.z+MaxStepHeight)
       {
         tmtrace.StepThing = Other;
-        tmtrace.FloorZ = Other->Origin.z + Other->Height;
+        tmtrace.FloorZ = Other->Origin.z+Other->Height;
       }
     }
   }
   //if (!(tmtrace.Thing->EntityFlags & VEntity::EF_NoPassMobj) || Actor(Other).bSpecial)
-  if ((((EntityFlags & EF_PassMobj) ||
-    (Other->EntityFlags & EF_ActLikeBridge)) &&
-    !(Level->LevelInfoFlags2 & VLevelInfo::LIF2_CompatNoPassOver) &&
-    !compat_nopassover) || (EntityFlags & EF_Missile))
+  if ((((EntityFlags&EF_PassMobj) ||
+       (Other->EntityFlags&EF_ActLikeBridge)) &&
+       !(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
+       !compat_nopassover) ||
+      (EntityFlags&EF_Missile))
   {
-    //  Prevent some objects from overlapping
-    if (EntityFlags & Other->EntityFlags & EF_DontOverlap)
-    {
-      return false;
-    }
+    // prevent some objects from overlapping
+    if (EntityFlags&Other->EntityFlags&EF_DontOverlap) return false;
     // check if a mobj passed over/under another object
-    if (tmtrace.End.z >= Other->Origin.z + Other->Height)
-    {
-      return true;  // overhead
-    }
-    if (tmtrace.End.z + Height <= Other->Origin.z)
-    {
-      return true;  // underneath
-    }
+    if (tmtrace.End.z >= Other->Origin.z+Other->Height) return true; // overhead
+    if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
   }
 
   return eventTouch(Other);
   unguardSlow;
 }
+
 
 //==========================================================================
 //
@@ -1090,24 +843,19 @@ bool VEntity::CheckRelThing(tmtrace_t &tmtrace, VEntity *Other)
 //  Adjusts tmtrace.FloorZ and tmtrace.CeilingZ as lines are contacted
 //
 //==========================================================================
-
-bool VEntity::CheckRelLine(tmtrace_t &tmtrace, line_t *ld)
-{
+bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
   guardSlow(VEntity::CheckRelLine);
   if (tmtrace.BBox[BOXRIGHT] <= ld->bbox[BOXLEFT] ||
-    tmtrace.BBox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
-    tmtrace.BBox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
-    tmtrace.BBox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+      tmtrace.BBox[BOXLEFT] >= ld->bbox[BOXRIGHT] ||
+      tmtrace.BBox[BOXTOP] <= ld->bbox[BOXBOTTOM] ||
+      tmtrace.BBox[BOXBOTTOM] >= ld->bbox[BOXTOP])
   {
     return true;
   }
 
-  if (P_BoxOnLineSide(&tmtrace.BBox[0], ld) != -1)
-  {
-    return true;
-  }
+  if (P_BoxOnLineSide(&tmtrace.BBox[0], ld) != -1) return true;
 
-  // A line has been hit
+  // a line has been hit
 
   // The moving thing's destination position will cross the given line.
   // If this should not be allowed, return false.
@@ -1115,60 +863,49 @@ bool VEntity::CheckRelLine(tmtrace_t &tmtrace, line_t *ld)
   // NOTE: specials are NOT sorted by order, so two special lines that are only 8 pixels apart
   //       could be crossed in either order.
 
-  if (!ld->backsector)
-  {
-    // One sided line
+  if (!ld->backsector) {
+    // one sided line
     BlockedByLine(ld);
     // mark the line as blocking line
     tmtrace.BlockingLine = tmtrace.AnyBlockingLine = ld;
     return false;
   }
 
-  if (!(ld->flags & ML_RAILING))
-  {
-    if (ld->flags & ML_BLOCKEVERYTHING)
-    {
-      // Explicitly blocking everything
+  if (!(ld->flags&ML_RAILING)) {
+    if (ld->flags&ML_BLOCKEVERYTHING) {
+      // explicitly blocking everything
       BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
       //printf("*** 000000\n");
       return false;
     }
 
-    if ((EntityFlags & VEntity::EF_CheckLineBlocking) &&
-      (ld->flags & ML_BLOCKING))
-    {
-      // Explicitly blocking everything
+    if ((EntityFlags&VEntity::EF_CheckLineBlocking) && (ld->flags&ML_BLOCKING)) {
+      // explicitly blocking everything
       BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
       //printf("*** 000001\n");
       return false;
     }
 
-    if ((EntityFlags & VEntity::EF_CheckLineBlockMonsters) &&
-      (ld->flags & ML_BLOCKMONSTERS))
-    {
-      // Block monsters only
+    if ((EntityFlags&VEntity::EF_CheckLineBlockMonsters) && (ld->flags&ML_BLOCKMONSTERS)) {
+      // block monsters only
       BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
       //printf("*** 000002\n");
       return false;
     }
 
-    if ((EntityFlags & VEntity::EF_IsPlayer) &&
-      (ld->flags & ML_BLOCKPLAYERS))
-    {
-      // Block players only
+    if ((EntityFlags&VEntity::EF_IsPlayer) && (ld->flags&ML_BLOCKPLAYERS)) {
+      // block players only
       BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
       //printf("*** 000003\n");
       return false;
     }
 
-    if ((EntityFlags & VEntity::EF_Float) &&
-      (ld->flags & ML_BLOCK_FLOATERS))
-    {
-      // Block floaters only
+    if ((EntityFlags&VEntity::EF_Float) && (ld->flags&ML_BLOCK_FLOATERS)) {
+      // block floaters only
       BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
       //printf("*** 000004\n");
@@ -1177,72 +914,52 @@ bool VEntity::CheckRelLine(tmtrace_t &tmtrace, line_t *ld)
   }
 
   // set openrange, opentop, openbottom
-  TVec hit_point = tmtrace.End - (DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
+  TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
   opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
   open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+Height);
 
-  if (open)
-  {
+  if (open) {
     // adjust floor / ceiling heights
-    if (!(open->ceiling->flags & SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ)
-    {
+    if (!(open->ceiling->flags&SPF_NOBLOCKING) && open->top < tmtrace.CeilingZ) {
       tmtrace.Ceiling = open->ceiling;
       tmtrace.CeilingZ = open->top;
       tmtrace.CeilingLine = ld;
     }
 
-    if (!(open->floor->flags & SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ)
-    {
+    if (!(open->floor->flags&SPF_NOBLOCKING) && open->bottom > tmtrace.FloorZ) {
       tmtrace.Floor = open->floor;
       tmtrace.FloorZ = open->bottom;
       tmtrace.FloorLine = ld;
     }
 
-    if (open->lowfloor < tmtrace.DropOffZ)
-    {
-      tmtrace.DropOffZ = open->lowfloor;
-    }
+    if (open->lowfloor < tmtrace.DropOffZ) tmtrace.DropOffZ = open->lowfloor;
 
-    if (ld->flags & ML_RAILING)
-    {
-      tmtrace.FloorZ += 32;
-    }
-  }
-  else
-  {
+    if (ld->flags&ML_RAILING) tmtrace.FloorZ += 32;
+  } else {
     tmtrace.CeilingZ = tmtrace.FloorZ;
   }
 
   // if contacted a special line, add it to the list
-  if (ld->special)
-  {
-    tmtrace.SpecHit.Append(ld);
-  }
+  if (ld->special) tmtrace.SpecHit.Append(ld);
 
   //printf("*** PASS!\n");
   return true;
   unguardSlow;
 }
 
+
 //==========================================================================
 //
 //  VEntity::BlockedByLine
 //
 //==========================================================================
-
-void VEntity::BlockedByLine(line_t *ld)
-{
+void VEntity::BlockedByLine (line_t *ld) {
   guardSlow(VEntity::BlockedByLine);
-  if (EntityFlags & EF_Blasted)
-  {
-    eventBlastedHitLine();
-  }
-  if (ld->special)
-  {
-    eventCheckForPushSpecial(ld, 0);
-  }
+  if (EntityFlags&EF_Blasted) eventBlastedHitLine();
+  if (ld->special) eventCheckForPushSpecial(ld, 0);
   unguardSlow;
 }
+
 
 //==========================================================================
 //
@@ -1251,9 +968,7 @@ void VEntity::BlockedByLine(line_t *ld)
 //  Attempt to move to a new position, crossing special lines.
 //
 //==========================================================================
-
-bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
-{
+bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   guard(VEntity::TryMove);
   bool check;
   TVec oldorg;
@@ -1262,32 +977,29 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
 
   check = CheckRelPosition(tmtrace, newPos);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
-  if (!check)
-  {
+  if (!check) {
     VEntity *O = tmtrace.BlockingMobj;
-    if (!O || !(EntityFlags & EF_IsPlayer) ||
-        (O->EntityFlags & EF_IsPlayer) ||
-        O->Origin.z + O->Height - Origin.z > MaxStepHeight ||
-        O->CeilingZ - (O->Origin.z + O->Height) < Height ||
-        tmtrace.CeilingZ - (O->Origin.z + O->Height) < Height)
+    if (!O || !(EntityFlags&EF_IsPlayer) ||
+        (O->EntityFlags&EF_IsPlayer) ||
+        O->Origin.z+O->Height-Origin.z > MaxStepHeight ||
+        O->CeilingZ-(O->Origin.z+O->Height) < Height ||
+        tmtrace.CeilingZ-(O->Origin.z+O->Height) < Height)
     {
-      // Can't step up or doesn't fit
+      // can't step up or doesn't fit
       PushLine(tmtrace);
       return false;
     }
-    if (!(EntityFlags & EF_PassMobj) || compat_nopassover ||
-        (Level->LevelInfoFlags2 & VLevelInfo::LIF2_CompatNoPassOver))
+    if (!(EntityFlags&EF_PassMobj) || compat_nopassover ||
+        (Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver))
     {
-      // Can't go over
+      // can't go over
       return false;
     }
   }
 
-  if (EntityFlags & EF_ColideWithWorld)
-  {
-    if (tmtrace.CeilingZ - tmtrace.FloorZ < Height)
-    {
-      // Doesn't fit
+  if (EntityFlags&EF_ColideWithWorld) {
+    if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
+      // doesn't fit
       PushLine(tmtrace);
       //printf("*** WORLD(0)!\n");
       return false;
@@ -1295,57 +1007,48 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
 
     tmtrace.TraceFlags |= tmtrace_t::TF_FloatOk;
 
-    if (tmtrace.CeilingZ - Origin.z < Height && !(EntityFlags & EF_Fly) &&
-        !(EntityFlags & EF_IgnoreCeilingStep))
+    if (tmtrace.CeilingZ-Origin.z < Height && !(EntityFlags&EF_Fly) &&
+        !(EntityFlags&EF_IgnoreCeilingStep))
     {
       // mobj must lower itself to fit
       PushLine(tmtrace);
       //printf("*** WORLD(1)!\n");
       return false;
     }
-    if (EntityFlags & EF_Fly)
-    {
-      // When flying, slide up or down blocking lines until the actor
-      // is not blocked.
-      if (Origin.z + Height > tmtrace.CeilingZ)
-      {
-        // If sliding down, make sure we don't have another object below.
+    if (EntityFlags&EF_Fly) {
+      // when flying, slide up or down blocking lines until the actor is not blocked
+      if (Origin.z+Height > tmtrace.CeilingZ) {
+        // if sliding down, make sure we don't have another object below
         if ((!tmtrace.BlockingMobj || !tmtrace.BlockingMobj->CheckOnmobj() ||
             (tmtrace.BlockingMobj->CheckOnmobj() &&
              tmtrace.BlockingMobj->CheckOnmobj() != this)) &&
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          Velocity.z = -8.0 * 35.0;
+          Velocity.z = -8.0*35.0;
         }
         PushLine(tmtrace);
         return false;
-      }
-      else if (Origin.z < tmtrace.FloorZ &&
-        tmtrace.FloorZ - tmtrace.DropOffZ > MaxStepHeight)
-      {
-        // Check to make sure there's nothing in the way for the step up
+      } else if (Origin.z < tmtrace.FloorZ && tmtrace.FloorZ-tmtrace.DropOffZ > MaxStepHeight) {
+        // check to make sure there's nothing in the way for the step up
         if ((!tmtrace.BlockingMobj || !tmtrace.BlockingMobj->CheckOnmobj() ||
             (tmtrace.BlockingMobj->CheckOnmobj() &&
              tmtrace.BlockingMobj->CheckOnmobj() != this)) &&
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          Velocity.z = 8.0 * 35.0;
+          Velocity.z = 8.0*35.0;
         }
         PushLine(tmtrace);
         return false;
       }
     }
-    if (!(EntityFlags & EF_IgnoreFloorStep))
-    {
-      if (tmtrace.FloorZ - Origin.z > MaxStepHeight)
-      {
-        // Too big a step up
-        if (EntityFlags & EF_CanJump && Health > 0.0)
-        {
-          // Check to make sure there's nothing in the way for the step up
-          if (!Velocity.z || tmtrace.FloorZ - Origin.z > 48.0 ||
+    if (!(EntityFlags&EF_IgnoreFloorStep)) {
+      if (tmtrace.FloorZ-Origin.z > MaxStepHeight) {
+        // too big a step up
+        if (EntityFlags&EF_CanJump && Health > 0.0) {
+          // check to make sure there's nothing in the way for the step up
+          if (!Velocity.z || tmtrace.FloorZ-Origin.z > 48.0 ||
               (tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
               TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
           {
@@ -1353,35 +1056,27 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
             //printf("*** WORLD(2)!\n");
             return false;
           }
-        }
-        else
-        {
+        } else {
           PushLine(tmtrace);
           //printf("*** WORLD(3)!\n");
           return false;
         }
       }
-      if ((EntityFlags & EF_Missile) && !(EntityFlags & EF_StepMissile) &&
+      if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) &&
           tmtrace.FloorZ > Origin.z)
       {
         PushLine(tmtrace);
         //printf("*** WORLD(4)!\n");
         return false;
       }
-      if (Origin.z < tmtrace.FloorZ)
-      {
-        if (EntityFlags & EF_StepMissile)
-        {
+      if (Origin.z < tmtrace.FloorZ) {
+        if (EntityFlags&EF_StepMissile) {
           Origin.z = tmtrace.FloorZ;
-          // If moving down, cancel vertical component of velocity
-          if (Velocity.z < 0)
-          {
-            Velocity.z = 0.0;
-          }
+          // if moving down, cancel vertical component of velocity
+          if (Velocity.z < 0) Velocity.z = 0.0;
         }
-        // Check to make sure there's nothing in the way for the step up
-        if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
-        {
+        // check to make sure there's nothing in the way for the step up
+        if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ))) {
           PushLine(tmtrace);
           //printf("*** WORLD(5)!\n");
           return false;
@@ -1389,41 +1084,35 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
       }
     }
     // killough 3/15/98: Allow certain objects to drop off
-    if ((!AllowDropOff && !(EntityFlags & EF_DropOff) &&
-        !(EntityFlags & EF_Float) && !(EntityFlags & EF_Missile)) ||
-        (EntityFlags & EF_NoDropOff))
+    if ((!AllowDropOff && !(EntityFlags&EF_DropOff) &&
+        !(EntityFlags&EF_Float) && !(EntityFlags&EF_Missile)) ||
+        (EntityFlags&EF_NoDropOff))
     {
-      if (!(EntityFlags & EF_AvoidingDropoff))
-      {
+      if (!(EntityFlags&EF_AvoidingDropoff)) {
         float floorz = tmtrace.FloorZ;
         // [RH] If the thing is standing on something, use its current z as the floorz.
         // This is so that it does not walk off of things onto a drop off.
-        if (EntityFlags & EF_OnMobj)
-        {
-          floorz = MAX(Origin.z, tmtrace.FloorZ);
-        }
+        if (EntityFlags&EF_OnMobj) floorz = MAX(Origin.z, tmtrace.FloorZ);
 
-        if ((floorz - tmtrace.DropOffZ > MaxDropoffHeight) &&
-            !(EntityFlags & EF_Blasted))
+        if ((floorz-tmtrace.DropOffZ > MaxDropoffHeight) &&
+            !(EntityFlags&EF_Blasted))
         {
           // Can't move over a dropoff unless it's been blasted
           //printf("*** WORLD(6)!\n");
           return false;
         }
-      }
-      else
-      {
+      } else {
         // special logic to move a monster off a dropoff
         // this intentionally does not check for standing on things.
-        if (FloorZ - tmtrace.FloorZ > MaxDropoffHeight ||
-            DropOffZ - tmtrace.DropOffZ > MaxDropoffHeight)
+        if (FloorZ-tmtrace.FloorZ > MaxDropoffHeight ||
+            DropOffZ-tmtrace.DropOffZ > MaxDropoffHeight)
         {
           //printf("*** WORLD(7)!\n");
           return false;
         }
       }
     }
-    if (EntityFlags & EF_CantLeaveFloorpic &&
+    if (EntityFlags&EF_CantLeaveFloorpic &&
         (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z))
     {
       // must stay within a sector of a certain floor type
@@ -1434,15 +1123,13 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
 
   bool OldAboveFakeFloor = false;
   bool OldAboveFakeCeiling = false;
-  if (Sector->heightsec)
-  {
-    float EyeZ = Player ? Player->ViewOrg.z : Origin.z + Height * 0.5;
-    OldAboveFakeFloor = EyeZ > Sector->heightsec->floor.GetPointZ(Origin);
-    OldAboveFakeCeiling = EyeZ > Sector->heightsec->ceiling.GetPointZ(Origin);
+  if (Sector->heightsec) {
+    float EyeZ = (Player ? Player->ViewOrg.z : Origin.z+Height*0.5);
+    OldAboveFakeFloor = (EyeZ > Sector->heightsec->floor.GetPointZ(Origin));
+    OldAboveFakeCeiling = (EyeZ > Sector->heightsec->ceiling.GetPointZ(Origin));
   }
 
-  // the move is ok,
-  // so link the thing into its new position
+  // the move is ok, so link the thing into its new position
   UnlinkFromWorld();
 
   oldorg = Origin;
@@ -1455,41 +1142,30 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
   Floor = tmtrace.Floor;
   Ceiling = tmtrace.Ceiling;
 
-  if (EntityFlags & EF_FloorClip)
-  {
+  if (EntityFlags&EF_FloorClip) {
     eventHandleFloorclip();
-  }
-  else
-  {
+  } else {
     FloorClip = 0.0;
   }
 
-  //
   // if any special lines were hit, do the effect
-  //
-  if (EntityFlags & EF_ColideWithWorld)
-  {
-    while (tmtrace.SpecHit.Num() > 0)
-    {
+  if (EntityFlags&EF_ColideWithWorld) {
+    while (tmtrace.SpecHit.Num() > 0) {
       int side;
       int oldside;
 
       // see if the line was crossed
-      ld = tmtrace.SpecHit[tmtrace.SpecHit.Num() - 1];
-      tmtrace.SpecHit.SetNum(tmtrace.SpecHit.Num() - 1, false);
+      ld = tmtrace.SpecHit[tmtrace.SpecHit.Num()-1];
+      tmtrace.SpecHit.SetNum(tmtrace.SpecHit.Num()-1, false);
       side = ld->PointOnSide(Origin);
       oldside = ld->PointOnSide(oldorg);
-      if (side != oldside)
-      {
-        if (ld->special)
-        {
-          eventCrossSpecialLine(ld, oldside);
-        }
+      if (side != oldside) {
+        if (ld->special) eventCrossSpecialLine(ld, oldside);
       }
     }
   }
 
-  //  Do additional check here to avoid calling progs.
+  // do additional check here to avoid calling progs
   if ((OldSec->heightsec && Sector->heightsec && Sector->ActionList) ||
       (OldSec != Sector && (OldSec->ActionList || Sector->ActionList)))
   {
@@ -1500,25 +1176,19 @@ bool VEntity::TryMove(tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VEntity::PushLine
 //
 //==========================================================================
-
-void VEntity::PushLine(const tmtrace_t &tmtrace)
-{
+void VEntity::PushLine (const tmtrace_t &tmtrace) {
   guardSlow(VEntity::PushLine);
-  if (EntityFlags & EF_ColideWithWorld)
-  {
-    if (EntityFlags & EF_Blasted)
-    {
-      eventBlastedHitLine();
-    }
+  if (EntityFlags&EF_ColideWithWorld) {
+    if (EntityFlags&EF_Blasted) eventBlastedHitLine();
     int NumSpecHitTemp = tmtrace.SpecHit.Num();
-    while (NumSpecHitTemp > 0)
-    {
-      NumSpecHitTemp--;
+    while (NumSpecHitTemp > 0) {
+      --NumSpecHitTemp;
       // see if the line was crossed
       line_t *ld = tmtrace.SpecHit[NumSpecHitTemp];
       int side = ld->PointOnSide(Origin);
@@ -1527,6 +1197,7 @@ void VEntity::PushLine(const tmtrace_t &tmtrace)
   }
   unguardSlow;
 }
+
 
 //**************************************************************************
 //
@@ -1543,91 +1214,62 @@ void VEntity::PushLine(const tmtrace_t &tmtrace)
 //  Slide off of the impacting object
 //
 //==========================================================================
-
-TVec VEntity::ClipVelocity(const TVec &in, const TVec &normal, float overbounce)
-{
-  return in - normal * (DotProduct(in, normal) * overbounce);
+TVec VEntity::ClipVelocity (const TVec &in, const TVec &normal, float overbounce) {
+  return in-normal*(DotProduct(in, normal)*overbounce);
 }
+
 
 //==========================================================================
 //
 //  VEntity::SlidePathTraverse
 //
 //==========================================================================
-
-void VEntity::SlidePathTraverse(float &BestSlideFrac, line_t *&BestSlideLine,
-  float x, float y, float StepVelScale)
-{
+void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, float x, float y, float StepVelScale) {
   guard(VEntity::SlidePathTraverse);
   TVec SlideOrg(x, y, Origin.z);
-  TVec SlideDir = Velocity * StepVelScale;
+  TVec SlideDir = Velocity*StepVelScale;
   intercept_t *in;
-  for (VPathTraverse It(this, &in, x, y, x + SlideDir.x,
-    y + SlideDir.y, PT_ADDLINES); It.GetNext(); )
-  {
-    if (!(in->Flags & intercept_t::IF_IsALine))
-    {
-      Host_Error("PTR_SlideTraverse: not a line?");
-    }
+  for (VPathTraverse It(this, &in, x, y, x+SlideDir.x, y+SlideDir.y, PT_ADDLINES); It.GetNext(); ) {
+    if (!(in->Flags&intercept_t::IF_IsALine)) Host_Error("PTR_SlideTraverse: not a line?");
 
     line_t *li = in->line;
 
     bool IsBlocked = false;
-    if (!(li->flags & ML_TWOSIDED) || !li->backsector)
-    {
-      if (li->PointOnSide(Origin))
-      {
-        // don't hit the back side
-        continue;
-      }
+    if (!(li->flags&ML_TWOSIDED) || !li->backsector) {
+      if (li->PointOnSide(Origin)) continue; // don't hit the back side
       IsBlocked = true;
-    }
-    else if (li->flags & (ML_BLOCKING | ML_BLOCKEVERYTHING))
-    {
+    } else if (li->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) {
       IsBlocked = true;
-    }
-    else if ((EntityFlags & EF_IsPlayer) && (li->flags & ML_BLOCKPLAYERS))
-    {
+    } else if ((EntityFlags&EF_IsPlayer) && (li->flags&ML_BLOCKPLAYERS)) {
       IsBlocked = true;
-    }
-    else if ((EntityFlags & EF_CheckLineBlockMonsters) && (li->flags & ML_BLOCKMONSTERS))
-    {
+    } else if ((EntityFlags&EF_CheckLineBlockMonsters) && (li->flags&ML_BLOCKMONSTERS)) {
       IsBlocked = true;
     }
 
-    if (!IsBlocked)
-    {
+    if (!IsBlocked) {
       // set openrange, opentop, openbottom
-      TVec hit_point = SlideOrg + in->frac * SlideDir;
+      TVec hit_point = SlideOrg+in->frac*SlideDir;
       opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
-      open = SV_FindOpening(open, Origin.z, Origin.z + Height);
+      open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
       if (open && (open->range >= Height) &&  //  fits
-        (open->top - Origin.z >= Height) && // mobj is not too high
-        (open->bottom - Origin.z <= MaxStepHeight)) // not too big a step up
+          (open->top-Origin.z >= Height) && // mobj is not too high
+          (open->bottom-Origin.z <= MaxStepHeight)) // not too big a step up
       {
         // this line doesn't block movement
-        if (Origin.z < open->bottom)
-        {
-          // Check to make sure there's nothing in the way for the step up
+        if (Origin.z < open->bottom) {
+          // check to make sure there's nothing in the way for the step up
           TVec CheckOrg = Origin;
           CheckOrg.z = open->bottom;
-          if (!TestMobjZ(CheckOrg))
-          {
-            continue;
-          }
-        }
-        else
-        {
+          if (!TestMobjZ(CheckOrg)) continue;
+        } else {
           continue;
         }
       }
     }
 
-    // the line blocks movement,
-    // see if it is closer than best so far
-    if (in->frac < BestSlideFrac)
-    {
+    // the line blocks movement, see if it is closer than best so far
+    if (in->frac < BestSlideFrac) {
       BestSlideFrac = in->frac;
       BestSlideLine = li;
     }
@@ -1636,6 +1278,7 @@ void VEntity::SlidePathTraverse(float &BestSlideFrac, line_t *&BestSlideLine,
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -1646,9 +1289,7 @@ void VEntity::SlidePathTraverse(float &BestSlideFrac, line_t *&BestSlideLine,
 //  This is a kludgy mess.
 //
 //==========================================================================
-
-void VEntity::SlideMove(float StepVelScale)
-{
+void VEntity::SlideMove (float StepVelScale) {
   guard(VEntity::SlideMove);
   float leadx;
   float leady;
@@ -1662,43 +1303,32 @@ void VEntity::SlideMove(float StepVelScale)
 
   hitcount = 0;
 
-  float XMove = Velocity.x * StepVelScale;
-  float YMove = Velocity.y * StepVelScale;
-  do
-  {
-    if (++hitcount == 3)
-    {
+  float XMove = Velocity.x*StepVelScale;
+  float YMove = Velocity.y*StepVelScale;
+  do {
+    if (++hitcount == 3) {
       // don't loop forever
-      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y + YMove, Origin.z),
-        true))
-      {
-        TryMove(tmtrace, TVec(Origin.x + XMove, Origin.y, Origin.z),
-          true);
+      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true)) {
+        TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
       }
       return;
     }
 
     // trace along the three leading corners
-    if (XMove > 0.0)
-    {
-      leadx = Origin.x + Radius;
-      trailx = Origin.x - Radius;
-    }
-    else
-    {
-      leadx = Origin.x - Radius;
-      trailx = Origin.x + Radius;
+    if (XMove > 0.0) {
+      leadx = Origin.x+Radius;
+      trailx = Origin.x-Radius;
+    } else {
+      leadx = Origin.x-Radius;
+      trailx = Origin.x+Radius;
     }
 
-    if (Velocity.y > 0.0)
-    {
-      leady = Origin.y + Radius;
-      traily = Origin.y - Radius;
-    }
-    else
-    {
-      leady = Origin.y - Radius;
-      traily = Origin.y + Radius;
+    if (Velocity.y > 0.0) {
+      leady = Origin.y+Radius;
+      traily = Origin.y-Radius;
+    } else {
+      leady = Origin.y-Radius;
+      traily = Origin.y+Radius;
     }
 
     float BestSlideFrac = 1.00001f;
@@ -1709,60 +1339,43 @@ void VEntity::SlideMove(float StepVelScale)
     SlidePathTraverse(BestSlideFrac, BestSlideLine, leadx, traily, StepVelScale);
 
     // move up to the wall
-    if (BestSlideFrac == 1.00001f)
-    {
+    if (BestSlideFrac == 1.00001f) {
       // the move must have hit the middle, so stairstep
-      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y + YMove, Origin.z),
-        true))
-      {
-        TryMove(tmtrace, TVec(Origin.x + XMove, Origin.y, Origin.z),
-          true);
+      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true)) {
+        TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
       }
       return;
     }
 
     // fudge a bit to make sure it doesn't hit
     BestSlideFrac -= 0.03125;
-    if (BestSlideFrac > 0.0)
-    {
-      newx = XMove * BestSlideFrac;
-      newy = YMove * BestSlideFrac;
+    if (BestSlideFrac > 0.0) {
+      newx = XMove*BestSlideFrac;
+      newy = YMove*BestSlideFrac;
 
-      if (!TryMove(tmtrace, TVec(Origin.x + newx, Origin.y + newy,
-        Origin.z), true))
-      {
-        if (!TryMove(tmtrace, TVec(Origin.x, Origin.y + YMove,
-          Origin.z), true))
-        {
-          TryMove(tmtrace, TVec(Origin.x + XMove, Origin.y,
-            Origin.z), true);
+      if (!TryMove(tmtrace, TVec(Origin.x+newx, Origin.y+newy, Origin.z), true)) {
+        if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true)) {
+          TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
         }
         return;
       }
     }
 
-    // Now continue along the wall.
-    // First calculate remainder.
-    BestSlideFrac = 1.0 - (BestSlideFrac + 0.03125);
+    // now continue along the wall
+    // first calculate remainder
+    BestSlideFrac = 1.0-(BestSlideFrac+0.03125);
 
-    if (BestSlideFrac > 1.0)
-    {
-      BestSlideFrac = 1.0;
-    }
-
-    if (BestSlideFrac <= 0.0)
-    {
-      return;
-    }
+    if (BestSlideFrac > 1.0) BestSlideFrac = 1.0;
+    if (BestSlideFrac <= 0.0) return;
 
     // clip the moves
-    Velocity = ClipVelocity(Velocity * BestSlideFrac,
-      BestSlideLine->normal, 1.0);
-    XMove = Velocity.x * StepVelScale;
-    YMove = Velocity.y * StepVelScale;
-  } while (!TryMove(tmtrace, TVec(Origin.x + XMove, Origin.y + YMove, Origin.z), true));
+    Velocity = ClipVelocity(Velocity*BestSlideFrac, BestSlideLine->normal, 1.0);
+    XMove = Velocity.x*StepVelScale;
+    YMove = Velocity.y*StepVelScale;
+  } while (!TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y+YMove, Origin.z), true));
   unguard;
 }
+
 
 //**************************************************************************
 //
@@ -1777,160 +1390,111 @@ void VEntity::SlideMove(float StepVelScale)
 //  VEntity::BounceWall
 //
 //============================================================================
-
-void VEntity::BounceWall(float overbounce, float bouncefactor)
-{
+void VEntity::BounceWall (float overbounce, float bouncefactor) {
   guard(VEntity::BounceWall);
   TVec SlideOrg;
 
-  if (Velocity.x > 0.0)
-  {
-    SlideOrg.x = Origin.x + Radius;
-  }
-  else
-  {
-    SlideOrg.x = Origin.x - Radius;
-  }
-  if (Velocity.y > 0.0)
-  {
-    SlideOrg.y = Origin.y + Radius;
-  }
-  else
-  {
-    SlideOrg.y = Origin.y - Radius;
-  }
+  if (Velocity.x > 0.0) SlideOrg.x = Origin.x+Radius; else SlideOrg.x = Origin.x-Radius;
+  if (Velocity.y > 0.0) SlideOrg.y = Origin.y+Radius; else SlideOrg.y = Origin.y-Radius;
   SlideOrg.z = Origin.z;
-  TVec SlideDir = Velocity * host_frametime;
+  TVec SlideDir = Velocity*host_frametime;
   line_t *BestSlideLine = nullptr;
   intercept_t *in;
 
-  for (VPathTraverse It(this, &in, SlideOrg.x, SlideOrg.y, SlideOrg.x +
-    SlideDir.x, SlideOrg.y + SlideDir.y, PT_ADDLINES); It.GetNext(); )
-  {
-    if (!(in->Flags & intercept_t::IF_IsALine))
-    {
-      Host_Error("PTR_BounceTraverse: not a line?");
-    }
+  for (VPathTraverse It(this, &in, SlideOrg.x, SlideOrg.y, SlideOrg.x+SlideDir.x, SlideOrg.y+SlideDir.y, PT_ADDLINES); It.GetNext(); ) {
+    if (!(in->Flags&intercept_t::IF_IsALine)) Host_Error("PTR_BounceTraverse: not a line?");
     line_t *li = in->line;
-    TVec hit_point = SlideOrg + in->frac * SlideDir;
+    TVec hit_point = SlideOrg+in->frac*SlideDir;
 
-    if (li->flags & ML_TWOSIDED)
-    {
+    if (li->flags&ML_TWOSIDED) {
       // set openrange, opentop, openbottom
       opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
-      open = SV_FindOpening(open, Origin.z, Origin.z + Height);
+      open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
       if (open != nullptr && open->range >= Height &&  // fits
-        Origin.z + Height <= open->top &&
+        Origin.z+Height <= open->top &&
         Origin.z >= open->bottom) // mobj is not too high
       {
         continue; // this line doesn't block movement
       }
-    }
-    else
-    {
-      if (li->PointOnSide(Origin))
-      {
-        continue; // don't hit the back side
-      }
+    } else {
+      if (li->PointOnSide(Origin)) continue; // don't hit the back side
     }
 
     BestSlideLine = li;
-    break;  // don't bother going farther
+    break; // don't bother going farther
   }
 
-  if (BestSlideLine)
-  {
+  if (BestSlideLine) {
     TAVec delta_ang;
     TAVec lineang;
-    TVec  delta;
+    TVec delta;
 
-    // Convert BesSlideLine normal to an angle
+    // convert BesSlideLine normal to an angle
     VectorAngles(BestSlideLine->normal, lineang);
-    if (BestSlideLine->PointOnSide(Origin) == 1)
-    {
-      lineang.yaw += 180.0;
-    }
+    if (BestSlideLine->PointOnSide(Origin) == 1) lineang.yaw += 180.0;
 
-    // Convert the line angle back to a vector, so that
+    // convert the line angle back to a vector, so that
     // we can use it to calculate the delta against
     // the Velocity vector
     AngleVector(lineang, delta);
-    delta = (delta * 2.0) - Velocity;
+    delta = (delta*2.0)-Velocity;
 
-    // Finally get the delta angle to use
+    // finally get the delta angle to use
     VectorAngles(delta, delta_ang);
 
-    Velocity.x = (Velocity.x * bouncefactor) * cos(delta_ang.yaw);
-    Velocity.y = (Velocity.y * bouncefactor) * sin(delta_ang.yaw);
+    Velocity.x = (Velocity.x*bouncefactor)*cos(delta_ang.yaw);
+    Velocity.y = (Velocity.y*bouncefactor)*sin(delta_ang.yaw);
     Velocity = ClipVelocity(Velocity, BestSlideLine->normal, overbounce);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VEntity::UpdateVelocity
 //
 //==========================================================================
-
-void VEntity::UpdateVelocity()
-{
+void VEntity::UpdateVelocity () {
   guard(VEntity::UpdateVelocity);
-/*  if (Origin.z <= FloorZ && !Velocity.x && !Velocity.y &&
-    !Velocity.z && !bCountKill && !(EntityFlags & EF_IsPlayer))
+  /*
+  if (Origin.z <= FloorZ && !Velocity.x && !Velocity.y &&
+      !Velocity.z && !bCountKill && !(EntityFlags & EF_IsPlayer))
   {
-    //  No gravity for non-moving things on ground to prevent
-    // static objects from sliding on slopes
+    // no gravity for non-moving things on ground to prevent static objects from sliding on slopes
     return;
-  }*/
+  }
+  */
 
-  //  Don't add gravity if standing on slope with normal.z > 0.7 (aprox
-  // 45 degrees)
-  if (!(EntityFlags & EF_NoGravity) && (Origin.z > FloorZ ||
-    Floor->normal.z <= 0.7))
-  {
-    if (WaterLevel < 2)
-    {
-      Velocity.z -= Gravity * Level->Gravity * Sector->Gravity *
-        host_frametime;
-    }
-    else if (!(EntityFlags & EF_IsPlayer) || Health <= 0)
-    {
+  // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
+  if (!(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || Floor->normal.z <= 0.7)) {
+    if (WaterLevel < 2) {
+      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*host_frametime;
+    } else if (!(EntityFlags&EF_IsPlayer) || Health <= 0) {
       float startvelz, sinkspeed;
 
-      // Water Gravity
-      Velocity.z -= Gravity * Level->Gravity * Sector->Gravity / 10.0 *
-        host_frametime;
+      // water gravity
+      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0*host_frametime;
       startvelz = Velocity.z;
 
-      if (EntityFlags & EF_Corpse)
-        sinkspeed = -WATER_SINK_SPEED / 3.0;
-      else
-        sinkspeed = -WATER_SINK_SPEED;
+      if (EntityFlags&EF_Corpse) sinkspeed = -WATER_SINK_SPEED/3.0; else sinkspeed = -WATER_SINK_SPEED;
 
-      if (Velocity.z < sinkspeed)
-      {
-        if (startvelz < sinkspeed)
-          Velocity.z = startvelz;
-        else
-          Velocity.z = sinkspeed;
-      }
-      else
-      {
-        Velocity.z = startvelz + (Velocity.z - startvelz) *
-          WATER_SINK_FACTOR;
+      if (Velocity.z < sinkspeed) {
+        if (startvelz < sinkspeed) Velocity.z = startvelz; else Velocity.z = sinkspeed;
+      } else {
+        Velocity.z = startvelz+(Velocity.z-startvelz)*WATER_SINK_FACTOR;
       }
     }
   }
 
-  // Friction
-  if (Velocity.x || Velocity.y/* || Velocity.z*/)
-  {
+  // friction
+  if (Velocity.x || Velocity.y/* || Velocity.z*/) {
     eventApplyFriction();
   }
   unguard;
 }
+
 
 //**************************************************************************
 //
@@ -1945,70 +1509,37 @@ void VEntity::UpdateVelocity()
 //  Checks if the new Z position is legal
 //
 //=============================================================================
-
-VEntity *VEntity::TestMobjZ(const TVec &TryOrg)
-{
+VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
   guard(VEntity::TestMobjZ);
   int xl, xh, yl, yh, bx, by;
 
   // can't hit thing
-  if (!(EntityFlags & EF_ColideWithThings))
-  {
-    return nullptr;
-  }
-  // Not Solid
-  if (!(EntityFlags & EF_Solid))
-  {
-    return nullptr;
-  }
+  if (!(EntityFlags&EF_ColideWithThings)) return nullptr;
+  // not solid
+  if (!(EntityFlags&EF_Solid)) return nullptr;
 
-  //
   // the bounding box is extended by MAXRADIUS because mobj_ts are grouped
   // into mapblocks based on their origin point, and can overlap into adjacent
   // blocks by up to MAXRADIUS units
-  //
-  xl = MapBlock(TryOrg.x - Radius - XLevel->BlockMapOrgX - MAXRADIUS);
-  xh = MapBlock(TryOrg.x + Radius - XLevel->BlockMapOrgX + MAXRADIUS);
-  yl = MapBlock(TryOrg.y - Radius - XLevel->BlockMapOrgY - MAXRADIUS);
-  yh = MapBlock(TryOrg.y + Radius - XLevel->BlockMapOrgY + MAXRADIUS);
+  xl = MapBlock(TryOrg.x-Radius-XLevel->BlockMapOrgX-MAXRADIUS);
+  xh = MapBlock(TryOrg.x+Radius-XLevel->BlockMapOrgX+MAXRADIUS);
+  yl = MapBlock(TryOrg.y-Radius-XLevel->BlockMapOrgY-MAXRADIUS);
+  yh = MapBlock(TryOrg.y+Radius-XLevel->BlockMapOrgY+MAXRADIUS);
 
   // xl->xh, yl->yh determine the mapblock set to search
-  for (bx = xl; bx <= xh; bx++)
-  {
-    for (by = yl; by <= yh; by++)
-    {
-      for (VBlockThingsIterator Other(XLevel, bx, by); Other; ++Other)
-      {
-        if (*Other == this)
+  for (bx = xl; bx <= xh; ++bx) {
+    for (by = yl; by <= yh; ++by) {
+      for (VBlockThingsIterator Other(XLevel, bx, by); Other; ++Other) {
+        if (*Other == this) continue; // don't clip against self
+        if (!(Other->EntityFlags&EF_ColideWithThings)) continue; // can't hit thing
+        if (!(Other->EntityFlags&EF_Solid)) continue; // not solid
+        if (TryOrg.z > Other->Origin.z+Other->Height) continue; // over thing
+        if (TryOrg.z+Height < Other->Origin.z) continue; // under thing
+        float blockdist = Other->Radius+Radius;
+        if (fabs(Other->Origin.x-TryOrg.x) >= blockdist ||
+            fabs(Other->Origin.y-TryOrg.y) >= blockdist)
         {
-          // Don't clip against self
-          continue;
-        }
-        if (!(Other->EntityFlags & EF_ColideWithThings))
-        {
-          // Can't hit thing
-          continue;
-        }
-        if (!(Other->EntityFlags & EF_Solid))
-        {
-          // Not solid
-          continue;
-        }
-        if (TryOrg.z > Other->Origin.z + Other->Height)
-        {
-          // over thing
-          continue;
-        }
-        if (TryOrg.z + Height < Other->Origin.z)
-        {
-          // under thing
-          continue;
-        }
-        float blockdist = Other->Radius + Radius;
-        if (fabs(Other->Origin.x - TryOrg.x) >= blockdist ||
-          fabs(Other->Origin.y - TryOrg.y) >= blockdist)
-        {
-          // Didn't hit thing
+          // didn't hit thing
           continue;
         }
         return *Other;
@@ -2020,6 +1551,7 @@ VEntity *VEntity::TestMobjZ(const TVec &TryOrg)
   unguard;
 }
 
+
 //=============================================================================
 //
 //  VEntity::FakeZMovement
@@ -2027,29 +1559,17 @@ VEntity *VEntity::TestMobjZ(const TVec &TryOrg)
 //  Fake the zmovement so that we can check if a move is legal
 //
 //=============================================================================
-
-TVec VEntity::FakeZMovement()
-{
+TVec VEntity::FakeZMovement () {
   guard(VEntity::FakeZMovement);
   TVec Ret;
   eventCalcFakeZMovement(Ret, host_frametime);
-
-  //
-  //  clip movement
-  //
-  if (Ret.z <= FloorZ)
-  {
-    // Hit the floor
-    Ret.z = FloorZ;
-  }
-  if (Ret.z + Height > CeilingZ)
-  {
-    // hit the ceiling
-    Ret.z = CeilingZ - Height;
-  }
+  // clip movement
+  if (Ret.z <= FloorZ) Ret.z = FloorZ; // hit the floor
+  if (Ret.z+Height > CeilingZ) Ret.z = CeilingZ-Height; // hit the ceiling
   return Ret;
   unguard;
 }
+
 
 //=============================================================================
 //
@@ -2058,13 +1578,12 @@ TVec VEntity::FakeZMovement()
 //  Checks if an object is above another object
 //
 //=============================================================================
-
-VEntity *VEntity::CheckOnmobj()
-{
+VEntity *VEntity::CheckOnmobj () {
   guard(VEntity::CheckOnmobj);
   return TestMobjZ(FakeZMovement());
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -2072,7 +1591,7 @@ VEntity *VEntity::CheckOnmobj()
 //
 // This routine checks for Lost Souls trying to be spawned    // phares
 // across 1-sided lines, impassible lines, or "monsters can't //   |
-// cross" lines. Draw an imaginary line between the PE      //   V
+// cross" lines. Draw an imaginary line between the PE        //   V
 // and the new Lost Soul spawn spot. If that line crosses
 // a 'blocking' line, then disallow the spawn. Only search
 // lines in the blocks of the blockmap where the bounding box
@@ -2084,34 +1603,29 @@ VEntity *VEntity::CheckOnmobj()
 // false.
 //
 //==========================================================================
-
-bool VEntity::CheckSides(TVec lsPos)
-{
+bool VEntity::CheckSides (TVec lsPos) {
   guard(VEntity::CheckSides);
   int bx,by,xl,xh,yl,yh;
 
-  // Here is the bounding box of the trajectory
+  // here is the bounding box of the trajectory
   float tmbbox[4];
   tmbbox[BOXLEFT] = MIN(Origin.x, lsPos.x);
   tmbbox[BOXRIGHT] = MAX(Origin.x, lsPos.x);
   tmbbox[BOXTOP] = MAX(Origin.y, lsPos.y);
   tmbbox[BOXBOTTOM] = MIN(Origin.y, lsPos.y);
 
-  // Determine which blocks to look in for blocking lines
-  xl = MapBlock(tmbbox[BOXLEFT] - XLevel->BlockMapOrgX);
-  xh = MapBlock(tmbbox[BOXRIGHT] - XLevel->BlockMapOrgX);
-  yl = MapBlock(tmbbox[BOXBOTTOM] - XLevel->BlockMapOrgY);
-  yh = MapBlock(tmbbox[BOXTOP] - XLevel->BlockMapOrgY);
+  // determine which blocks to look in for blocking lines
+  xl = MapBlock(tmbbox[BOXLEFT]-XLevel->BlockMapOrgX);
+  xh = MapBlock(tmbbox[BOXRIGHT]-XLevel->BlockMapOrgX);
+  yl = MapBlock(tmbbox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+  yh = MapBlock(tmbbox[BOXTOP]-XLevel->BlockMapOrgY);
 
   // xl->xh, yl->yh determine the mapblock set to search
-  validcount++; // prevents checking same line twice
-  for (bx = xl; bx <= xh; bx++)
-  {
-    for (by = yl; by <= yh; by++)
-    {
+  ++validcount; // prevents checking same line twice
+  for (bx = xl; bx <= xh; ++bx) {
+    for (by = yl; by <= yh; ++by) {
       line_t *ld;
-      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); )
-      {
+      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
         // Checks to see if a PE->LS trajectory line crosses a blocking
         // line. Returns false if it does.
         //
@@ -2126,18 +1640,13 @@ bool VEntity::CheckSides(TVec lsPos)
         // intersection of the trajectory and the line, but that takes
         // longer and probably really isn't worth the effort.
 
-        if (ld->flags & (ML_BLOCKING | ML_BLOCKMONSTERS |
-          ML_BLOCKEVERYTHING))
-        {
+        if (ld->flags&(ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)) {
           if (tmbbox[BOXLEFT] <= ld->bbox[BOXRIGHT] &&
-            tmbbox[BOXRIGHT] >= ld->bbox[BOXLEFT] &&
-            tmbbox[BOXTOP] >= ld->bbox[BOXBOTTOM] &&
-            tmbbox[BOXBOTTOM] <= ld->bbox[BOXTOP])
+              tmbbox[BOXRIGHT] >= ld->bbox[BOXLEFT] &&
+              tmbbox[BOXTOP] >= ld->bbox[BOXBOTTOM] &&
+              tmbbox[BOXBOTTOM] <= ld->bbox[BOXTOP])
           {
-            if (ld->PointOnSide(Origin) != ld->PointOnSide(lsPos))
-            {
-                return true;  // line blocks trajectory
-            }
+            if (ld->PointOnSide(Origin) != ld->PointOnSide(lsPos)) return true; // line blocks trajectory
           }
         }
 
@@ -2150,6 +1659,7 @@ bool VEntity::CheckSides(TVec lsPos)
   unguard;
 }
 
+
 //=============================================================================
 //
 //  CheckDropOff
@@ -2159,14 +1669,12 @@ bool VEntity::CheckSides(TVec lsPos)
 //  Monsters try to move away from tall dropoffs.
 //
 //  In Doom, they were never allowed to hang over dropoffs, and would remain
-// stuck if involuntarily forced over one. This logic, combined with P_TryMove,
-// allows monsters to free themselves without making them tend to hang over
-// dropoffs.
+//  stuck if involuntarily forced over one. This logic, combined with P_TryMove,
+//  allows monsters to free themselves without making them tend to hang over
+//  dropoffs.
 //
 //=============================================================================
-
-void VEntity::CheckDropOff(float &DeltaX, float &DeltaY)
-{
+void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
   guard(VEntity::CheckDropOff);
   float t_bbox[4];
   int xl;
@@ -2176,292 +1684,220 @@ void VEntity::CheckDropOff(float &DeltaX, float &DeltaY)
   int bx;
   int by;
 
-  // Try to move away from a dropoff
+  // try to move away from a dropoff
   DeltaX = 0;
   DeltaY = 0;
 
-  t_bbox[BOXTOP]   = Origin.y + Radius;
-  t_bbox[BOXBOTTOM]= Origin.y - Radius;
-  t_bbox[BOXRIGHT] = Origin.x + Radius;
-  t_bbox[BOXLEFT]  = Origin.x - Radius;
+  t_bbox[BOXTOP] = Origin.y+Radius;
+  t_bbox[BOXBOTTOM] = Origin.y-Radius;
+  t_bbox[BOXRIGHT] = Origin.x+Radius;
+  t_bbox[BOXLEFT] = Origin.x-Radius;
 
-  xl = MapBlock(t_bbox[BOXLEFT] - XLevel->BlockMapOrgX);
-  xh = MapBlock(t_bbox[BOXRIGHT] - XLevel->BlockMapOrgX);
-  yl = MapBlock(t_bbox[BOXBOTTOM] - XLevel->BlockMapOrgY);
-  yh = MapBlock(t_bbox[BOXTOP] - XLevel->BlockMapOrgY);
+  xl = MapBlock(t_bbox[BOXLEFT]-XLevel->BlockMapOrgX);
+  xh = MapBlock(t_bbox[BOXRIGHT]-XLevel->BlockMapOrgX);
+  yl = MapBlock(t_bbox[BOXBOTTOM]-XLevel->BlockMapOrgY);
+  yh = MapBlock(t_bbox[BOXTOP]-XLevel->BlockMapOrgY);
 
   // check lines
-  validcount++;
-  for (bx = xl; bx <= xh; bx++)
-  {
-    for (by = yl; by <= yh; by++)
-    {
+  ++validcount;
+  for (bx = xl; bx <= xh; ++bx) {
+    for (by = yl; by <= yh; ++by) {
       line_t *line;
-      for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); )
-      {
-        // Ignore one-sided linedefs
-        if (!line->backsector)
-        {
-          continue;
-        }
-        // Linedef must be contacted
+      for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); ) {
+        if (!line->backsector) continue; // ignore one-sided linedefs
+        // linedef must be contacted
         if (t_bbox[BOXRIGHT] > line->bbox[BOXLEFT] &&
-          t_bbox[BOXLEFT] < line->bbox[BOXRIGHT] &&
-          t_bbox[BOXTOP] > line->bbox[BOXBOTTOM] &&
-          t_bbox[BOXBOTTOM] < line->bbox[BOXTOP] &&
-          P_BoxOnLineSide(t_bbox, line) == -1)
+            t_bbox[BOXLEFT] < line->bbox[BOXRIGHT] &&
+            t_bbox[BOXTOP] > line->bbox[BOXBOTTOM] &&
+            t_bbox[BOXBOTTOM] < line->bbox[BOXTOP] &&
+            P_BoxOnLineSide(t_bbox, line) == -1)
         {
-          // New logic for 3D Floors
-          sec_region_t*FrontReg = SV_FindThingGap(
-            line->frontsector->botregion,
-            Origin, Origin.z, Origin.z + Height);
-          sec_region_t*BackReg = SV_FindThingGap(
-            line->backsector->botregion,
-            Origin, Origin.z, Origin.z + Height);
+          // new logic for 3D Floors
+          sec_region_t*FrontReg = SV_FindThingGap(line->frontsector->botregion, Origin, Origin.z, Origin.z+Height);
+          sec_region_t*BackReg = SV_FindThingGap(line->backsector->botregion, Origin, Origin.z, Origin.z+Height);
           float front = FrontReg->floor->GetPointZ(Origin);
           float back = BackReg->floor->GetPointZ(Origin);
 
-          // The monster must contact one of the two floors,
-          // and the other must be a tall dropoff.
+          // the monster must contact one of the two floors, and the other must be a tall dropoff
           TVec Dir;
-          if (back == Origin.z &&
-            front < Origin.z - MaxDropoffHeight)
-          {
+          if (back == Origin.z && front < Origin.z-MaxDropoffHeight) {
             // front side dropoff
             Dir = line->normal;
-          }
-          else if (front == Origin.z &&
-            back < Origin.z - MaxDropoffHeight)
-          {
+          } else if (front == Origin.z && back < Origin.z-MaxDropoffHeight) {
             // back side dropoff
             Dir = -line->normal;
-          }
-          else
-          {
+          } else {
             continue;
           }
-          // Move away from dropoff at a standard speed.
-          // Multiple contacted linedefs are cumulative
-          // (e.g. hanging over corner)
-          DeltaX += Dir.x * 32.0;
-          DeltaY += Dir.y * 32.0;
+          // move away from dropoff at a standard speed
+          // multiple contacted linedefs are cumulative (e.g. hanging over corner)
+          DeltaX += Dir.x*32.0;
+          DeltaY += Dir.y*32.0;
         }
       }
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VRoughBlockSearchIterator
 //
 //==========================================================================
-
-VRoughBlockSearchIterator::VRoughBlockSearchIterator(VEntity *ASelf,
-  int ADistance, VEntity **AEntPtr)
-: Self(ASelf)
-, Distance(ADistance)
-, Ent(nullptr)
-, EntPtr(AEntPtr)
-, Count(1)
-, CurrentEdge(-1)
+VRoughBlockSearchIterator::VRoughBlockSearchIterator (VEntity *ASelf, int ADistance, VEntity **AEntPtr)
+  : Self(ASelf)
+  , Distance(ADistance)
+  , Ent(nullptr)
+  , EntPtr(AEntPtr)
+  , Count(1)
+  , CurrentEdge(-1)
 {
   guard(VRoughBlockSearchIterator::VRoughBlockSearchIterator);
-  StartX = MapBlock(Self->Origin.x - Self->XLevel->BlockMapOrgX);
-  StartY = MapBlock(Self->Origin.y - Self->XLevel->BlockMapOrgY);
+  StartX = MapBlock(Self->Origin.x-Self->XLevel->BlockMapOrgX);
+  StartY = MapBlock(Self->Origin.y-Self->XLevel->BlockMapOrgY);
 
-  //  Start with current block
+  // start with current block
   if (StartX >= 0 && StartX < Self->XLevel->BlockMapWidth &&
-    StartY >= 0 && StartY < Self->XLevel->BlockMapHeight)
+      StartY >= 0 && StartY < Self->XLevel->BlockMapHeight)
   {
-    Ent = Self->XLevel->BlockLinks[StartY * Self->XLevel->BlockMapWidth +
-      StartX];
+    Ent = Self->XLevel->BlockLinks[StartY*Self->XLevel->BlockMapWidth+StartX];
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VRoughBlockSearchIterator::GetNext
 //
 //==========================================================================
-
-bool VRoughBlockSearchIterator::GetNext()
-{
+bool VRoughBlockSearchIterator::GetNext () {
   guard(VRoughBlockSearchIterator::GetNext);
-  int   BlockX;
-  int   BlockY;
+  int BlockX;
+  int BlockY;
 
-  while (1)
-  {
-    if (Ent)
-    {
+  for (;;) {
+    if (Ent) {
       *EntPtr = Ent;
       Ent = Ent->BlockMapNext;
       return true;
     }
 
-    switch (CurrentEdge)
-    {
-    case 0:
-      // Trace the first block section (along the top)
-      if (BlockIndex <= FirstStop)
-      {
-        Ent = Self->XLevel->BlockLinks[BlockIndex];
-        BlockIndex++;
-      }
-      else
-      {
-        CurrentEdge = 1;
-        BlockIndex--;
-      }
-      break;
-
-    case 1:
-      // Trace the second block section (right edge)
-      if (BlockIndex <= SecondStop)
-      {
-        Ent = Self->XLevel->BlockLinks[BlockIndex];
-        BlockIndex += Self->XLevel->BlockMapWidth;
-      }
-      else
-      {
-        CurrentEdge = 2;
-        BlockIndex -= Self->XLevel->BlockMapWidth;
-      }
-      break;
-
-    case 2:
-      // Trace the third block section (bottom edge)
-      if (BlockIndex >= ThirdStop)
-      {
-        Ent = Self->XLevel->BlockLinks[BlockIndex];
-        BlockIndex--;
-      }
-      else
-      {
-        CurrentEdge = 3;
-        BlockIndex++;
-      }
-      break;
-
-    case 3:
-      // Trace the final block section (left edge)
-      if (BlockIndex > FinalStop)
-      {
-        Ent = Self->XLevel->BlockLinks[BlockIndex];
-        BlockIndex -= Self->XLevel->BlockMapWidth;
-      }
-      else
-      {
-        CurrentEdge = -1;
-      }
-      break;
-
-    default:
-      if (Count > Distance)
-      {
-        //  We are done
-        return false;
-      }
-      BlockX = StartX - Count;
-      BlockY = StartY - Count;
-
-      if (BlockY < 0)
-      {
-        BlockY = 0;
-      }
-      else if (BlockY >= Self->XLevel->BlockMapHeight)
-      {
-        BlockY = Self->XLevel->BlockMapHeight - 1;
-      }
-      if (BlockX < 0)
-      {
-        BlockX = 0;
-      }
-      else if (BlockX >= Self->XLevel->BlockMapWidth)
-      {
-        BlockX = Self->XLevel->BlockMapWidth - 1;
-      }
-      BlockIndex = BlockY * Self->XLevel->BlockMapWidth + BlockX;
-      FirstStop = StartX + Count;
-      if (FirstStop < 0)
-      {
-        Count++;
+    switch (CurrentEdge) {
+      case 0:
+        // trace the first block section (along the top)
+        if (BlockIndex <= FirstStop) {
+          Ent = Self->XLevel->BlockLinks[BlockIndex];
+          ++BlockIndex;
+        } else {
+          CurrentEdge = 1;
+          --BlockIndex;
+        }
         break;
-      }
-      if (FirstStop >= Self->XLevel->BlockMapWidth)
-      {
-        FirstStop = Self->XLevel->BlockMapWidth - 1;
-      }
-      SecondStop = StartY + Count;
-      if (SecondStop < 0)
-      {
-        Count++;
+      case 1:
+        // trace the second block section (right edge)
+        if (BlockIndex <= SecondStop) {
+          Ent = Self->XLevel->BlockLinks[BlockIndex];
+          BlockIndex += Self->XLevel->BlockMapWidth;
+        } else {
+          CurrentEdge = 2;
+          BlockIndex -= Self->XLevel->BlockMapWidth;
+        }
         break;
-      }
-      if (SecondStop >= Self->XLevel->BlockMapHeight)
-      {
-        SecondStop = Self->XLevel->BlockMapHeight - 1;
-      }
-      ThirdStop = SecondStop * Self->XLevel->BlockMapWidth + BlockX;
-      SecondStop = SecondStop * Self->XLevel->BlockMapWidth + FirstStop;
-      FirstStop += BlockY * Self->XLevel->BlockMapWidth;
-      FinalStop = BlockIndex;
-      Count++;
-      CurrentEdge = 0;
-      break;
+      case 2:
+        // trace the third block section (bottom edge)
+        if (BlockIndex >= ThirdStop) {
+          Ent = Self->XLevel->BlockLinks[BlockIndex];
+          --BlockIndex;
+        } else {
+          CurrentEdge = 3;
+          ++BlockIndex;
+        }
+        break;
+      case 3:
+        // trace the final block section (left edge)
+        if (BlockIndex > FinalStop) {
+          Ent = Self->XLevel->BlockLinks[BlockIndex];
+          BlockIndex -= Self->XLevel->BlockMapWidth;
+        } else {
+          CurrentEdge = -1;
+        }
+        break;
+      default:
+        if (Count > Distance) return false; // we are done
+        BlockX = StartX-Count;
+        BlockY = StartY-Count;
+
+        if (BlockY < 0) {
+          BlockY = 0;
+        } else if (BlockY >= Self->XLevel->BlockMapHeight) {
+          BlockY = Self->XLevel->BlockMapHeight-1;
+        }
+        if (BlockX < 0) {
+          BlockX = 0;
+        } else if (BlockX >= Self->XLevel->BlockMapWidth) {
+          BlockX = Self->XLevel->BlockMapWidth-1;
+        }
+        BlockIndex = BlockY*Self->XLevel->BlockMapWidth+BlockX;
+        FirstStop = StartX+Count;
+        if (FirstStop < 0) { ++Count; break; }
+        if (FirstStop >= Self->XLevel->BlockMapWidth) FirstStop = Self->XLevel->BlockMapWidth-1;
+        SecondStop = StartY+Count;
+        if (SecondStop < 0) { ++Count; break; }
+        if (SecondStop >= Self->XLevel->BlockMapHeight) SecondStop = Self->XLevel->BlockMapHeight-1;
+        ThirdStop = SecondStop*Self->XLevel->BlockMapWidth+BlockX;
+        SecondStop = SecondStop*Self->XLevel->BlockMapWidth+FirstStop;
+        FirstStop += BlockY*Self->XLevel->BlockMapWidth;
+        FinalStop = BlockIndex;
+        ++Count;
+        CurrentEdge = 0;
+        break;
     }
   }
   return false;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Script natives
 //
 //==========================================================================
-
-IMPLEMENT_FUNCTION(VEntity, CheckWater)
-{
+IMPLEMENT_FUNCTION(VEntity, CheckWater) {
   P_GET_SELF;
   RET_INT(Self->CheckWater());
 }
 
-IMPLEMENT_FUNCTION(VEntity, CheckDropOff)
-{
+IMPLEMENT_FUNCTION(VEntity, CheckDropOff) {
   P_GET_PTR(float, DeltaX);
   P_GET_PTR(float, DeltaY);
   P_GET_SELF;
   Self->CheckDropOff(*DeltaX, *DeltaY);
 }
 
-IMPLEMENT_FUNCTION(VEntity, CheckPosition)
-{
+IMPLEMENT_FUNCTION(VEntity, CheckPosition) {
   P_GET_VEC(Pos);
   P_GET_SELF;
   RET_BOOL(Self->CheckPosition(Pos));
 }
 
-IMPLEMENT_FUNCTION(VEntity, CheckRelPosition)
-{
+IMPLEMENT_FUNCTION(VEntity, CheckRelPosition) {
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
   P_GET_SELF;
   RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos));
 }
 
-IMPLEMENT_FUNCTION(VEntity, CheckSides)
-{
+IMPLEMENT_FUNCTION(VEntity, CheckSides) {
   P_GET_VEC(lsPos);
   P_GET_SELF;
   RET_BOOL(Self->CheckSides(lsPos));
 }
 
-IMPLEMENT_FUNCTION(VEntity, TryMove)
-{
+IMPLEMENT_FUNCTION(VEntity, TryMove) {
   P_GET_BOOL(AllowDropOff);
   P_GET_VEC(Pos);
   P_GET_SELF;
@@ -2469,8 +1905,7 @@ IMPLEMENT_FUNCTION(VEntity, TryMove)
   RET_BOOL(Self->TryMove(tmtrace, Pos, AllowDropOff));
 }
 
-IMPLEMENT_FUNCTION(VEntity, TryMoveEx)
-{
+IMPLEMENT_FUNCTION(VEntity, TryMoveEx) {
   P_GET_BOOL(AllowDropOff);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
@@ -2478,60 +1913,51 @@ IMPLEMENT_FUNCTION(VEntity, TryMoveEx)
   RET_BOOL(Self->TryMove(*tmtrace, Pos, AllowDropOff));
 }
 
-IMPLEMENT_FUNCTION(VEntity, TestMobjZ)
-{
+IMPLEMENT_FUNCTION(VEntity, TestMobjZ) {
   P_GET_SELF;
   RET_BOOL(!Self->TestMobjZ(Self->Origin));
 }
 
-IMPLEMENT_FUNCTION(VEntity, SlideMove)
-{
+IMPLEMENT_FUNCTION(VEntity, SlideMove) {
   P_GET_FLOAT(StepVelScale);
   P_GET_SELF;
   Self->SlideMove(StepVelScale);
 }
 
-IMPLEMENT_FUNCTION(VEntity, BounceWall)
-{
+IMPLEMENT_FUNCTION(VEntity, BounceWall) {
   P_GET_FLOAT(overbounce);
   P_GET_FLOAT(bouncefactor);
   P_GET_SELF;
   Self->BounceWall(overbounce, bouncefactor);
 }
 
-IMPLEMENT_FUNCTION(VEntity, UpdateVelocity)
-{
+IMPLEMENT_FUNCTION(VEntity, UpdateVelocity) {
   P_GET_SELF;
   Self->UpdateVelocity();
 }
 
-IMPLEMENT_FUNCTION(VEntity, CheckOnmobj)
-{
+IMPLEMENT_FUNCTION(VEntity, CheckOnmobj) {
   P_GET_SELF;
   RET_REF(Self->CheckOnmobj());
 }
 
-IMPLEMENT_FUNCTION(VEntity, LinkToWorld)
-{
+IMPLEMENT_FUNCTION(VEntity, LinkToWorld) {
   P_GET_SELF;
   Self->LinkToWorld();
 }
 
-IMPLEMENT_FUNCTION(VEntity, UnlinkFromWorld)
-{
+IMPLEMENT_FUNCTION(VEntity, UnlinkFromWorld) {
   P_GET_SELF;
   Self->UnlinkFromWorld();
 }
 
-IMPLEMENT_FUNCTION(VEntity, CanSee)
-{
+IMPLEMENT_FUNCTION(VEntity, CanSee) {
   P_GET_REF(VEntity, Other);
   P_GET_SELF;
   RET_BOOL(Self->CanSee(Other));
 }
 
-IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch)
-{
+IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
   P_GET_INT(Distance);
   P_GET_PTR(VEntity*, EntPtr);
   P_GET_SELF;
