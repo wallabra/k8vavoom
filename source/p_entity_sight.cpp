@@ -389,7 +389,6 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
 //  Rechecks Trace.Intercepts with different ending z value.
 //
 //==========================================================================
-
 static bool SightPathTraverse2 (sight_trace_t &Trace, VThinker *Self, sector_t *EndSector) {
   Trace.Delta = Trace.End-Trace.Start;
   Trace.LineStart = Trace.Start;

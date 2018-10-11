@@ -481,7 +481,8 @@ bool VEntity::CheckPosition (TVec Pos) {
       for (by = yl; by <= yh; ++by) {
         line_t *ld;
         for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
-          good &= CheckLine(cptrace, ld);
+          //good &= CheckLine(cptrace, ld);
+          if (!CheckLine(cptrace, ld)) good = false; // no early exit!
         }
       }
     }
@@ -736,6 +737,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
     yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY);
 
     line_t *fuckhit = nullptr;
+    float lastFrac = 1e7f;
     for (bx = xl; bx <= xh; ++bx) {
       for (by = yl; by <= yh; ++by) {
         line_t *ld;
@@ -743,7 +745,20 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
           //good &= CheckRelLine(tmtrace, ld);
           if (!CheckRelLine(tmtrace, ld)) {
             good = false;
-            if (!fuckhit) {/* printf("*** fuckhit!\n");*/ fuckhit = ld; }
+            // find the fractional intercept point along the trace line
+            const float den = DotProduct(ld->normal, tmtrace.End-Pos);
+            if (den == 0) {
+              fuckhit = ld;
+              lastFrac = 0;
+            } else {
+              const float num = ld->dist-DotProduct(Pos, ld->normal);
+              const float frac = num/den;
+              if (fabs(frac) < lastFrac) {
+                fuckhit = ld;
+                lastFrac = fabs(frac);
+              }
+            }
+            //if (!fuckhit) {/* printf("*** fuckhit!\n");*/ fuckhit = ld; }
           }
         }
       }
