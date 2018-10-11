@@ -22,26 +22,24 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuControlKey : MenuChoice;
 
 string Text;
 string CommandOn;
 string CommandOff;
 
+
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-override void SetOrigin(int x, int y)
-{
-  SetPos(x - 160, y);
+override void SetOrigin (int x, int y) {
+  SetPos(x-160, y);
 }
 
-override void OnDraw()
-{
+
+override void OnDraw () {
   int key1;
   int key2;
 
@@ -53,70 +51,56 @@ override void OnDraw()
 
   SetTextAlign(hleft, vtop);
   Col = IsFocus() ? CR_YELLOW : CR_OLIVE;
-  if (key1 >= 0)
-  {
-    DrawText(160 + 10, 0, KeyNameForNum(key1), Col);
+  if (key1 >= 0) {
+    DrawText(160+10, 0, KeyNameForNum(key1), Col);
+  } else {
+    DrawText(160+10, 0, "---", Col);
   }
-  else
-  {
-    DrawText(160 + 10, 0, "---", Col);
-  }
-  if (key2 >= 0)
-  {
-    DrawText(160 + 100, 0, KeyNameForNum(key2), Col);
-  }
-  else
-  {
-    DrawText(160 + 100, 0, "---", Col);
+  if (key2 >= 0) {
+    DrawText(160+100, 0, KeyNameForNum(key2), Col);
+  } else {
+    DrawText(160+100, 0, "---", Col);
   }
 }
 
-override bool OnKeyDown(int key)
-{
+
+override bool OnKeyDown (int key) {
   int key1;
   int key2;
 
-  switch (key)
-  {
-  case K_LEFTARROW:
-    GetClGame().ControlColumn = 0;
-    MenuScreen(Parent).CursorMoved();
-    return true;
-
-  case K_RIGHTARROW:
-    GetClGame().ControlColumn = 1;
-    MenuScreen(Parent).CursorMoved();
-    return true;
-
-  case K_ENTER:
-  case K_PADENTER:
-  case K_MOUSE1:
-    GetClGame().CurrentCtl = self;
-    GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel",
-      ClientGameShared::MB_Control, false);
-    return true;
-
-  case K_BACKSPACE:
-  case K_MOUSE2:
-    IN_GetBindingKeys(CommandOn, &key1, &key2);
-    if (GetClGame().ControlColumn == 0)
-      IN_SetBinding(key1, "", "");
-    if (GetClGame().ControlColumn == 1)
-      IN_SetBinding(key2, "", "");
-    return true;
+  switch (key) {
+    case K_LEFTARROW:
+      GetClGame().ControlColumn = 0;
+      MenuScreen(Parent).CursorMoved();
+      return true;
+    case K_RIGHTARROW:
+      GetClGame().ControlColumn = 1;
+      MenuScreen(Parent).CursorMoved();
+      return true;
+    case K_ENTER:
+    case K_PADENTER:
+    case K_MOUSE1:
+      GetClGame().CurrentCtl = self;
+      GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel", ClientGameShared::MB_Control, false);
+      return true;
+    case K_BACKSPACE:
+    case K_MOUSE2:
+      IN_GetBindingKeys(CommandOn, &key1, &key2);
+      if (GetClGame().ControlColumn == 0) IN_SetBinding(key1, "", "");
+      if (GetClGame().ControlColumn == 1) IN_SetBinding(key2, "", "");
+      return true;
   }
   return false;
 }
 
-override void OnMouseClick(int X, int Y)
-{
+
+override void OnMouseClick (int X, int Y) {
   SetFocus();
   GetClGame().CurrentCtl = self;
-  GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel",
-    ClientGameShared::MB_Control, false);
+  GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel", ClientGameShared::MB_Control, false);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   CursorXOffs = 160;
 }

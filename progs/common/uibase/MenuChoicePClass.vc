@@ -22,11 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoicePClass : MenuBigTextButton;
 
-int       Index;
+int Index;
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -22,32 +22,27 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoiceSkill : MenuBigTextButton;
 
-int       PicHandle;
-int       SkillIndex;
-bool      bMustConfirm;
-string      ConfirmationText;
+int PicHandle;
+int SkillIndex;
+bool bMustConfirm;
+string ConfirmationText;
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
-  if (PicHandle > 0)
-  {
+override void OnDraw () {
+  if (PicHandle > 0) {
     DrawPic(0, 0, PicHandle);
-  }
-  else
-  {
+  } else {
     ::OnDraw();
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

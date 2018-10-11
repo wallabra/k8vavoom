@@ -22,30 +22,25 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoiceEpisode : MenuBigTextButton;
 
-int       PicHandle;
+int PicHandle;
 EpisodeDef *EDef;
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
-  if (PicHandle > 0)
-  {
+override void OnDraw () {
+  if (PicHandle > 0) {
     DrawPic(0, 0, PicHandle);
-  }
-  else
-  {
+  } else{
     ::OnDraw();
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

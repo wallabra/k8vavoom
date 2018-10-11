@@ -22,39 +22,36 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuSpriteAnim : Widget;
 
-int   SprDef;
-int   Speed;
-int   NumFrames;
-int   TranslStart;
-int   TranslEnd;
-int   Colour;
+int SprDef;
+int Speed;
+int NumFrames;
+int TranslStart;
+int TranslEnd;
+int Colour;
 float Time;
 
-override void OnCreate()
-{
+
+override void OnCreate () {
   ::OnCreate();
   bTickEnabled = true;
   Disable();
 }
 
-override void Tick(float DeltaTime)
-{
+
+override void Tick (float DeltaTime) {
   Time += DeltaTime;
 }
 
-override void OnDraw()
-{
-  int frame = ftoi(Time * itof(Speed)) % NumFrames;
 
-  R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart,
-    TranslEnd, Colour);
+override void OnDraw () {
+  int frame = int(Time*float(Speed))%NumFrames;
+  R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart, TranslEnd, Colour);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Width = 320;
   Height = 200;
 }

@@ -22,65 +22,60 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuStaticBitmap : Widget;
 
-int     Handle;
+int Handle;
 
-int     OffsetX;
-int     OffsetY;
+int OffsetX;
+int OffsetY;
 
-int     OriginX;
-int     OriginY;
+int OriginX;
+int OriginY;
 
-bool    bAutoSize;
+bool bAutoSize;
+
 
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-override void SetOrigin(int OrgX, int OrgY)
-{
+override void SetOrigin (int OrgX, int OrgY) {
   OriginX = OrgX;
   OriginY = OrgY;
-  SetPos(OriginX - OffsetX, OriginY - OffsetY);
+  SetPos(OriginX-OffsetX, OriginY-OffsetY);
 }
+
 
 //==========================================================================
 //
 //  SetPic
 //
 //==========================================================================
-
-void SetPic(name Name)
-{
+void SetPic (name Name) {
   picinfo_t Info;
-
   Handle = R_RegisterPic(Name);
-  if (bAutoSize)
-  {
+  if (bAutoSize) {
     R_GetPicInfo(Handle, &Info);
     OffsetX = Info.xoffset;
     OffsetY = Info.yoffset;
-    SetPos(OriginX - OffsetX, OriginY - OffsetY);
+    SetPos(OriginX-OffsetX, OriginY-OffsetY);
     SetSize(Info.width, Info.height);
+    //writeln(Info.width, "x", Info.height);
   }
 }
+
 
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
+override void OnDraw () {
   DrawPic(OffsetX, OffsetY, Handle);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bAutoSize = true;
 }

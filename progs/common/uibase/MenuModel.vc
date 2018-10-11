@@ -22,33 +22,31 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuModel : Widget;
 
-TVec  Origin;
+TVec Origin;
 float Angle;
 void *Model;
-int   Frame;
-int   NextFrame;
-string  Skin;
-int   TranslStart;
-int   TranslEnd;
-int   Colour;
+int Frame;
+int NextFrame;
+string Skin;
+int TranslStart;
+int TranslEnd;
+int Colour;
 
-override void OnCreate()
-{
+
+override void OnCreate () {
   ::OnCreate();
   Disable();
 }
 
-override void OnDraw()
-{
-  R_DrawModelFrame(Origin, Angle, Model, Frame, NextFrame, Skin,
-    TranslStart, TranslEnd, Colour);
+
+override void OnDraw () {
+  R_DrawModelFrame(Origin, Angle, Model, Frame, NextFrame, Skin, TranslStart, TranslEnd, Colour);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Skin = "";
   Width = 320;
   Height = 200;
