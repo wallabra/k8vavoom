@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenGameplayOptions : MenuScreen;
 
 
@@ -97,8 +96,7 @@ override void CreateChoices () {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   ChoicesStartX = 160;
   ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;

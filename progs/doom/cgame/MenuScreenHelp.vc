@@ -22,21 +22,19 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenHelp : MenuScreen;
 
 MenuStaticBitmap Pic;
 int NumPages;
 int CurPage;
 
+
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
+override void CreateChoices () {
   if (!IsAnyDoom2) {
     NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
   } else {
@@ -48,14 +46,13 @@ override void CreateChoices()
   if (IsAnyDoom2) Pic.SetPic('help'); else Pic.SetPic('help1');
 }
 
+
 //==========================================================================
 //
 //  Key
 //
 //==========================================================================
-
-override bool OnKeyDown(int key)
-{
+override bool OnKeyDown (int key) {
   LocalSound('menu/clear');
   //ClGame.ForceMenuOff(); // for one page
   ++CurPage;
@@ -67,8 +64,8 @@ override bool OnKeyDown(int key)
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   X = 0;
   Y = 0;
   ScaleX = 2.0;

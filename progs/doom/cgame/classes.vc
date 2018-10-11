@@ -26,7 +26,6 @@
 //**    DOOM and DOOM II client progs
 //**
 //**************************************************************************
-
 import 'game';
 import 'uibase';
 

@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenMultiplayer : MenuScreen;
 
 
@@ -54,8 +53,7 @@ void ActivateNewGame (Object Sender) {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   ChoicesStartX = 97;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;

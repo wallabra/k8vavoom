@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenNewNetGame : MenuScreen;
 
 MenuChoiceEnum Players;
@@ -198,8 +197,7 @@ void ActivateStartNewGame (Object Sender) {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   ChoicesStartX = 128;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_SmallRight;

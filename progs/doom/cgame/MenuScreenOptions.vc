@@ -22,17 +22,15 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenOptions : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
+override void CreateChoices () {
   MenuTextButton Btn;
   bool found = false;
 
@@ -85,8 +83,7 @@ void ActivateConsole (Object Sender) {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   ChoicesStartX = 160;
   ChoicesStartY = 32;
   SelectorType = MenuSelector_SmallRight;
