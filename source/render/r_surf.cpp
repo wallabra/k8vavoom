@@ -1698,6 +1698,8 @@ void VRenderLevelShared::UpdateDeepWater (sector_t *sec) {
   ff->floorplane.normal = s->floor.normal;
   ff->floorplane.dist = s->floor.dist;
 
+  //sec->heightsec = sec->deepref;
+
   unguard;
 }
 

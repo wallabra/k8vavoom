@@ -436,17 +436,21 @@ bool VEntity::CanSee (VEntity *Other) {
   if ((Sector->heightsec &&
        ((Origin.z+Height <= Sector->heightsec->floor.GetPointZ(Origin.x, Origin.y) &&
          Other->Origin.z >= Sector->heightsec->floor.GetPointZ(Other->Origin.x, Other->Origin.y)) ||
-        (Origin.z >= Sector->heightsec->ceiling.GetPointZ (Origin.x, Origin.y) &&
-         Other->Origin.z+Height <= Sector->heightsec->ceiling.GetPointZ (Other->Origin.x, Other->Origin.y))))
+        (Origin.z >= Sector->heightsec->ceiling.GetPointZ(Origin.x, Origin.y) &&
+         Other->Origin.z+Height <= Sector->heightsec->ceiling.GetPointZ(Other->Origin.x, Other->Origin.y))))
      ||
       (Other->Sector->heightsec &&
-       ((Other->Origin.z+Other->Height <= Other->Sector->heightsec->floor.GetPointZ (Other->Origin.x, Other->Origin.y) &&
-         Origin.z >= Other->Sector->heightsec->floor.GetPointZ (Origin.x, Origin.y)) ||
-        (Other->Origin.z >= Other->Sector->heightsec->ceiling.GetPointZ (Other->Origin.x, Other->Origin.y) &&
-         Origin.z+Other->Height <= Other->Sector->heightsec->ceiling.GetPointZ (Origin.x, Origin.y)))))
+       ((Other->Origin.z+Other->Height <= Other->Sector->heightsec->floor.GetPointZ(Other->Origin.x, Other->Origin.y) &&
+         Origin.z >= Other->Sector->heightsec->floor.GetPointZ(Origin.x, Origin.y)) ||
+        (Other->Origin.z >= Other->Sector->heightsec->ceiling.GetPointZ(Other->Origin.x, Other->Origin.y) &&
+         Origin.z+Other->Height <= Other->Sector->heightsec->ceiling.GetPointZ(Origin.x, Origin.y)))))
   {
     return false;
   }
+
+  // killough 11/98: shortcut for melee situations.
+  // same subsector? obviously visible
+  if (SubSector == Other->SubSector) return true;
 
   static const float xmult[3] = { 0.0f, -1.0f, 1.0f };
   const float xofs = Other->Radius*0.73f;
