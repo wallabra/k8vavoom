@@ -42,6 +42,8 @@ static VCvarI save_compression_level("save_compression_level", "1", "Save file c
 
 static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore list of loaded wads in savegame when hash mated?", 0/*CVAR_Archive*/);
 
+static VCvarB sv_new_map_autosave("sv_new_map_autosave", true, "Autosave when entering new map (except first one)?", 0/*CVAR_Archive*/);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define QUICKSAVE_SLOT  (-666)
@@ -1365,7 +1367,7 @@ void SV_MapTeleport (VName mapname) {
       GGameInfo->NetMode == NM_ListenServer)
   {
     CL_SetUpStandaloneClient();
-    doSaveGame = true;
+    doSaveGame = sv_new_map_autosave;
   }
 #else
   const bool doSaveGame = false;
