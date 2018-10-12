@@ -718,3 +718,31 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius) const 
 
   return false;
 }
+
+
+//==========================================================================
+//
+//  VLevel::HasAny2SLinesAtRadius
+//
+//==========================================================================
+bool VLevel::HasAny2SLinesAtRadius (const TVec &org, float radius) {
+  if (radius < 2) return false; // nobody cares
+
+  const int xl = MapBlock(org.x-radius-BlockMapOrgX);
+  const int xh = MapBlock(org.x+radius-BlockMapOrgX);
+  const int yl = MapBlock(org.y-radius-BlockMapOrgY);
+  const int yh = MapBlock(org.y+radius-BlockMapOrgY);
+
+  ++validcount; // used to make sure we only process a line once
+
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
+      line_t *ld;
+      for (VBlockLinesIterator It(this, bx, by, &ld); It.GetNext(); ) {
+        if (ld->backsector) return true; // don't check flags, check sector link
+      }
+    }
+  }
+
+  return false;
+}

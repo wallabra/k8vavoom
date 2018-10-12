@@ -30,6 +30,7 @@
 #include "r_local.h"
 
 static VCvarB r_reg_disable_world("r_reg_disable_world", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
+static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "Show number of properly traced dynlights per frame.", 0/*CVAR_Archive*/);
 
 
 //==========================================================================
@@ -62,8 +63,15 @@ extern vuint32 glWDPolyTotal;
 extern vuint32 glWDVertexTotal;
 extern vuint32 glWDTextureChangesTotal;
 
+extern vuint32 gf_dynlights_processed;
+extern vuint32 gf_dynlights_traced;
+
+
 void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   guard(VRenderLevel::RenderWorld);
+
+  gf_dynlights_processed = 0;
+  gf_dynlights_traced = 0;
 
   double stt = -Sys_Time();
   RenderBspWorld(rd, Range);
@@ -84,6 +92,8 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   RenderPortals();
   stt += Sys_Time();
   if (times_render_lowlevel && stt > 0.01) GCon->Logf("   RenderPortals: %f", stt);
+
+  if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 
   unguard;
 }

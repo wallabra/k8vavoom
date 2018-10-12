@@ -34,6 +34,9 @@ extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_allow_subtractive_lights;
 
+vuint32 gf_dynlights_processed = 0;
+vuint32 gf_dynlights_traced = 0;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_extrasamples("r_extrasamples", false, "Do static lightmap filtering?", CVAR_Archive);
@@ -734,7 +737,16 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     local.x -= starts;
     local.y -= startt;
 
-    if (!pointsCalced && r_dynamic_clip && r_dynamic_clip_more) {
+    // check if we have some blocking lines
+    // to make proper shadows, we have to check if we have any 2-sided lines
+    // around our light. if not, we can skip raycasting
+    // bleeding to nearest sectors will be prevented by PVS
+    bool needProperTrace = (r_dynamic_clip && r_dynamic_clip_more) && Level->HasAny2SLinesAtRadius(dl.origin, dl.radius);
+
+    ++gf_dynlights_processed;
+    if (needProperTrace) ++gf_dynlights_traced;
+
+    if (!pointsCalced && /*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
       pointsCalced = true;
       CalcFaceVectors(surf);
       mids = starts+surf->extents[0]/2.0f;
@@ -747,7 +759,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       if (td < 0) td = -td;
       for (int s = 0; s < smax; ++s) {
         // do more dynlight clipping
-        if (r_dynamic_clip && r_dynamic_clip_more) {
+        if (/*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
           float us = starts+s*step;
           float ut = startt+t*step;
           TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
