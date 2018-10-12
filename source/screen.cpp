@@ -357,9 +357,10 @@ static void ChangeResolution (int InWidth, int InHeight) {
   screen_width = ScreenWidth;
   screen_height = ScreenHeight;
 
-  if (ScreenWidth >= 1280) VirtualWidth = ScreenWidth/2;
-  if (ScreenHeight >= 960) VirtualHeight = ScreenHeight/2;
-  VirtualWidth = 640;
+  VirtualWidth = (ScreenWidth >= 1280 ? ScreenWidth/2 : 640);
+  VirtualHeight = (ScreenHeight >= 960 ? ScreenHeight/2 : 480);
+  //VirtualWidth = 640;
+  //VirtualWidth = 800;
 
   fScaleX = (float)ScreenWidth / (float)VirtualWidth;
   fScaleY = (float)ScreenHeight / (float)VirtualHeight;
