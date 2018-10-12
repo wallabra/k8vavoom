@@ -703,24 +703,21 @@ override bool Touch(Entity InOther)
 
   Other = EntityEx(InOther);
 
-  //  For Korax Arena
-  if (Other.IsTouched(self))
-  {
-    return !Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) &&
-        !Other.bBlockedBySolidActors;
+  // for Korax Arena
+  if (Other.IsTouched(self)) {
+    return (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors);
   }
 
-  if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) &&
-    !Other.bBlockedBySolidActors)
-  {
-    return true;
+  //k8: missile should hit shootable object even if it is non-solid
+  if (bMissile) {
+    if (!(Other.bSolid || Other.bShootable) && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return true;
+  } else {
+    if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return true;
   }
 
-  if (bThruActors || Other.bThruActors)
-    return true;
+  if (bThruActors || Other.bThruActors) return true;
 
-  if (bThruSpecies && (Other.GetSpecies() == GetSpecies()))
-    return true;
+  if (bThruSpecies && (Other.GetSpecies() == GetSpecies())) return true;
 
   // touchy object is alive, toucher is solid
   if (Other.bTouchy && bSolid && Other.Health > 0 &&
