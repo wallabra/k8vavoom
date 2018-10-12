@@ -277,6 +277,7 @@ VStr PF_FormatString () {
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
+          ++pi;
           break;
         case 'v':
           if (count-pi < 3) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
@@ -301,6 +302,16 @@ VStr PF_FormatString () {
             //TODO
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
+          ++pi;
+          break;
+        case 'C': // class name
+          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          switch (ptypes[pi].Type) {
+            case TYPE_Class: pbuf.putStr(VStr(params[pi].p ? ((VClass *)params[pi].p)->GetName() : "<none>"), width, toRight, zeroFill); break;
+            case TYPE_Reference: pbuf.putStr(VStr(params[pi].p ? ((VObject *)params[pi].p)->GetClass()->GetName() : "<none>"), width, toRight, zeroFill); break;
+            default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
+          }
+          ++pi;
           break;
         case 's': // this can convert most of the types to string
           if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
