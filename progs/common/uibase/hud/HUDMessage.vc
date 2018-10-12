@@ -69,6 +69,13 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   MsgX = AMsgX;
   MsgY = AMsgY;
   if (AHudWidth == 0 || AHudHeight == 0) {
+    /*
+    writeln("HUD0: ", AHudWidth, "x", AHudHeight, "; msgx=", AMsgX, "; msgy=", AMsgY);
+    SetSize(GetVirtualWidth(), GetVirtualHeight());
+    Width = GetVirtualWidth();
+    Height = GetVirtualHeight();
+    writeln("  size: ", Width, "x", Height);
+    */
     if (fabs(MsgX) > 2.0) {
       bCentreX = true;
       MsgX = 0.5;
@@ -77,6 +84,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
       MsgX = (MsgX > 1.0 ? MsgX-1.0 : MsgX < -1.0 ? MsgX+1.0 : MsgX);
     }
   } else {
+    //writeln("HUD1: ", AHudWidth, "x", AHudHeight);
     HudWidth = AHudWidth;
     HudHeight = AHudHeight;
     Width = abs(HudWidth);
@@ -113,6 +121,10 @@ override void OnDraw () {
   int x, y;
 
   if (HudWidth == 0) {
+    //writeln("HUD0: ", HudWidth, "x", HudHeight, "; msgx=", MsgX, "; msgy=", MsgY);
+    SetSize(GetVirtualWidth(), GetVirtualHeight());
+    //writeln("  size: ", Width, "x", Height);
+
     if (MsgX > 0.0) {
       x = int(float(Width-MsgWidth)*MsgX);
     } else {
@@ -124,6 +136,8 @@ override void OnDraw () {
       y = int(float(Height)*(-MsgY));
     }
   } else {
+    SetSize(GetVirtualWidth(), GetVirtualHeight());
+
     int IntPart = int(MsgX);
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
     x = IntPart;

@@ -205,11 +205,15 @@ void AddCentreMessage (string Msg) {
 //==========================================================================
 void DrawCentreMessage () {
   if (CentreTime && CentreMessageLines.length) {
-    int LineH = CentreMessageHeight/CentreMessageLines.Num;
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    int LineH = CentreMessageHeight/CentreMessageLines.length;
     SetFont('smallfont');
     SetTextAlign(hleft, vtop);
+    int tx = ovw/2;
+    int ty = (ovh-CentreMessageLines.length*LineH)/2;
     foreach (auto i; 0..CentreMessageLines.length) {
-      DrawText(320-CentreMessageLines[i].Width/2, 360+i*LineH, CentreMessageLines[i].Text, GetCvar('font_colour2'), CR_YELLOW);
+      DrawText(tx-CentreMessageLines[i].Width/2, ty+i*LineH, CentreMessageLines[i].Text, GetCvar('font_colour2'), CR_YELLOW);
     }
   }
 }

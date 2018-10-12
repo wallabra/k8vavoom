@@ -476,7 +476,7 @@ void SetDefaultVirtualScreenSize () {
   int rh = GetRealHeight();
   int vw = (rw >= 1280 ? rw/2 : 640);
   int vh = (rh >= 960 ? rh/2 : 480);
-  vw = 640;
+  //vw = 640;
   SetVirtualScreen(vw, vh);
 }
 
