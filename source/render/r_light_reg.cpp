@@ -674,6 +674,26 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
 }
 
 
+/*
+NOTES:
+we should do several things to speed it up:
+first, cache all dynlights, so we'd be able to reuse info from previous tracing
+second, store all dynlights affecting a surface, and calculated traceinfo for them
+
+by storing traceinfo, we can reuse it when light radius changed, instead of
+tracing again and again.
+
+actually, what we are interested in is not a light per se, but light origin.
+if we have a light with the same origin, we can reuse it's traceinfo (and possibly
+extend it if new light has bigger radius).
+
+thus, we can go with "light cachemap" instead, and store all relevant info there.
+also, keep info in cache for several seconds, as player is likely to move around
+the light. do cachemap housekeeping once in 2-3 seconds, for example. it doesn't
+really matter if we'll accumulate alot of lights there.
+*/
+
+
 //==========================================================================
 //
 // VRenderLevel::AddDynamicLights
@@ -758,19 +778,6 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       int td = (int)local.y-t*16;
       if (td < 0) td = -td;
       for (int s = 0; s < smax; ++s) {
-        // do more dynlight clipping
-        if (/*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
-          float us = starts+s*step;
-          float ut = startt+t*step;
-          TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-          if (length2DSquared(spt-dl.origin) > 1) {
-            //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
-            //linetrace_t Trace;
-            //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
-            if (!Level->CastCanSee(dl.origin, spt, 0)) continue;
-          }
-        }
-        //
         int sd = (int)local.x-s*16;
         if (sd < 0) sd = -sd;
         if (sd > td) {
@@ -779,6 +786,18 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           dist = td+(sd>>1);
         }
         if (dist < minlight) {
+          // do more dynlight clipping
+          if (needProperTrace) {
+            float us = starts+s*step;
+            float ut = startt+t*step;
+            TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
+            if (length2DSquared(spt-dl.origin) > 1) {
+              //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
+              //linetrace_t Trace;
+              //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
+              if (!Level->CastCanSee(dl.origin, spt, 0)) continue;
+            }
+          }
           int i = t*smax+s;
           if (dl.type == DLTYPE_Subtractive) {
             //blocklightsS[i] += (rad-dist)*256.0;
