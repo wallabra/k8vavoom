@@ -99,7 +99,7 @@ void VPlayerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values
   if (Class->GetSuperClass()) EvalCondValues(Obj, Class->GetSuperClass(), Values);
   for (int i = 0; i < Class->RepInfos.Num(); ++i) {
     P_PASS_REF(Obj);
-    bool Val = !!VObject::ExecuteFunction(Class->RepInfos[i].Cond).i;
+    bool Val = !!VObject::ExecuteFunctionNoArgs(Class->RepInfos[i].Cond).i;
     for (int j = 0; j < Class->RepInfos[i].RepFields.Num(); ++j) {
       if (Class->RepInfos[i].RepFields[j].Member->MemberType != MEMBER_Field) continue;
       Values[((VField *)Class->RepInfos[i].RepFields[j].Member)->NetIndex] = Val;

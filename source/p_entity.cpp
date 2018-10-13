@@ -223,7 +223,7 @@ bool VEntity::SetState (VState *InState) {
     if (st->Function) {
       XLevel->CallingState = State;
       P_PASS_SELF;
-      ExecuteFunction(st->Function);
+      ExecuteFunctionNoArgs(st->Function);
     }
 
     if (!State) return false;
@@ -361,7 +361,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
       XLevel->CallingState = S;
       Call.Result = true;
       P_PASS_REF(Actor);
-      ExecuteFunction(S->Function);
+      ExecuteFunctionNoArgs(S->Function);
       // at least one success means overal success
       if (Call.Result) Ret = true;
     }

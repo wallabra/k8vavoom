@@ -79,7 +79,7 @@ bool VBasePlayer::ExecuteNetMethod(VMethod *Func)
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
     bool ShouldSend = false;
-    if (VObject::ExecuteFunction(Base->ReplCond).i)
+    if (VObject::ExecuteFunctionNoArgs(Base->ReplCond).i)
     {
       ShouldSend = true;
     }
@@ -111,7 +111,7 @@ bool VBasePlayer::ExecuteNetMethod(VMethod *Func)
   //  Execute it's replication condition method.
   check(Base->ReplCond);
   P_PASS_REF(this);
-  if (!VObject::ExecuteFunction(Base->ReplCond).i)
+  if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).i)
   {
     return false;
   }
@@ -283,7 +283,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     if (state->Function) {
       Level->XLevel->CallingState = state;
       P_PASS_REF(MO);
-      ExecuteFunction(state->Function);
+      ExecuteFunctionNoArgs(state->Function);
       if (!VSt.State) break;
     }
     state = VSt.State->NextState;

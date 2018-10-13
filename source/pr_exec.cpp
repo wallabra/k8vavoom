@@ -2449,6 +2449,8 @@ func_loop:
 //
 //  VObject::ExecuteFunction
 //
+//  ALL arguments must be pushed
+//
 //==========================================================================
 VStack VObject::ExecuteFunction (VMethod *func) {
   guard(VObject::ExecuteFunction);
@@ -2503,7 +2505,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
   // check if stack wasn't overflowed
   if (pr_stack[MAX_PROG_STACK-1].i != STACK_ID) {
     cstDump(nullptr);
-    Sys_Error("ExecuteFunction: Stack overflow in %s", *func->Name);
+    Sys_Error("ExecuteFunction: Stack overflow in `%s`", *func->Name);
     #ifdef VMEXEC_RUNDUMP
     *(int *)0 = 0;
     #endif
@@ -2513,6 +2515,127 @@ VStack VObject::ExecuteFunction (VMethod *func) {
   // all done
   return ret;
   unguardf(("(%s)", *func->GetFullName()));
+}
+
+
+//==========================================================================
+//
+//  VObject::ExecuteFunctionNoArgs
+//
+//  `self` must be pushed
+//
+//==========================================================================
+VStack VObject::ExecuteFunctionNoArgs (VMethod *func) {
+  if (!func) Sys_Error("ExecuteFunctionNoArgs: null func!");
+
+  // placeholders for "ref" args
+  int rints[VMethod::MAX_PARAMS];
+  float rfloats[VMethod::MAX_PARAMS*3]; // for vectors too
+  VStr rstrs[VMethod::MAX_PARAMS];
+  //VScriptArray *rdarrays[VMethod::MAX_PARAMS];
+  VName rnames[VMethod::MAX_PARAMS];
+  void *rptrs[VMethod::MAX_PARAMS*2]; // various pointers (including delegates)
+  int rintUsed = 0;
+  int rfloatUsed = 0;
+  int rstrUsed = 0;
+  //int rdarrayUsed = 0;
+  int rnameUsed = 0;
+  int rptrUsed = 0;
+
+  memset(rints, 0, sizeof(rints));
+  memset(rfloats, 0, sizeof(rfloats));
+  memset((void *)(&rstrs[0]), 0, sizeof(rstrs));
+  //memset((void *)(&rdarrays[0]), 0, sizeof(rdarrays));
+  memset((void *)(&rnames[0]), 0, sizeof(rnames));
+  memset(rptrs, 0, sizeof(rptrs));
+
+  if (func->NumParams > VMethod::MAX_PARAMS) Sys_Error("ExecuteFunctionNoArgs: function `%s` has too many parameters (%d)", *func->Name, func->NumParams); // sanity check
+  // push default values
+  for (int f = 0; f < func->NumParams; ++f) {
+    // out/ref arg
+    if ((func->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) != 0) {
+      if (func->ParamTypes[f].IsAnyArray()) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array, this is not supported yet", *func->Name, f+1);
+      switch (func->ParamTypes[f].Type) {
+        case TYPE_Int:
+        case TYPE_Byte:
+        case TYPE_Bool:
+          P_PASS_PTR(&rints[rintUsed]);
+          ++rintUsed;
+          break;
+        case TYPE_Float:
+          P_PASS_PTR(&rfloats[rfloatUsed]);
+          ++rfloatUsed;
+          break;
+        case TYPE_Name:
+          P_PASS_PTR(&rnames[rnameUsed]);
+          ++rnameUsed;
+          break;
+        case TYPE_String:
+          P_PASS_PTR(&rstrs[rstrUsed]);
+          ++rstrUsed;
+          break;
+        case TYPE_Pointer:
+        case TYPE_Reference:
+        case TYPE_Class:
+        case TYPE_State:
+          P_PASS_PTR(&rptrs[rptrUsed]);
+          ++rptrUsed;
+          break;
+        case TYPE_Vector:
+          P_PASS_PTR(&rfloats[rfloatUsed]);
+          rfloatUsed += 3;
+          break;
+        case TYPE_Delegate:
+          P_PASS_PTR(&rptrs[rptrUsed]);
+          rptrUsed += 2;
+          break;
+        default:
+          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->Name, f+1, *func->ParamTypes[f].GetName()));
+          break;
+      }
+      if ((func->ParamFlags[f]&FPARM_Optional) != 0) P_PASS_BOOL(false); // "specified" flag
+    } else {
+      if ((func->ParamFlags[f]&FPARM_Optional) == 0) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is not optional!", *func->Name, f+1);
+      // push empty values
+      switch (func->ParamTypes[f].Type) {
+        case TYPE_Int:
+        case TYPE_Byte:
+        case TYPE_Bool:
+          P_PASS_INT(0);
+          break;
+        case TYPE_Float:
+          P_PASS_FLOAT(0);
+          break;
+        case TYPE_Name:
+          P_PASS_NAME(NAME_None);
+          break;
+        case TYPE_String:
+          P_PASS_STR(VStr());
+          break;
+        case TYPE_Pointer:
+        case TYPE_Reference:
+        case TYPE_Class:
+        case TYPE_State:
+          P_PASS_PTR(nullptr);
+          break;
+        case TYPE_Vector:
+          P_PASS_VEC(TVec(0, 0, 0));
+          break;
+        case TYPE_Delegate:
+          P_PASS_PTR(nullptr);
+          P_PASS_PTR(nullptr);
+          break;
+        default:
+          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->Name, f+1, *func->ParamTypes[f].GetName()));
+          break;
+      }
+      P_PASS_BOOL(false); // "specified" flag
+    }
+  }
+
+  VStack res = ExecuteFunction(func);
+  for (int f = rstrUsed-1; f >= 0; --f) rstrs[f].clear();
+  return res;
 }
 
 

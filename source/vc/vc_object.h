@@ -171,6 +171,7 @@ public:
   static int GetObjectsCount ();
 
   static VStack ExecuteFunction (VMethod *);
+  static VStack ExecuteFunctionNoArgs (VMethod *); // `self` should be on the stack
   static void VMDumpCallStack ();
   static void DumpProfile ();
   static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
