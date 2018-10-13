@@ -183,6 +183,8 @@ void R_InitSkyBoxes()
   unguard;
 }
 
+
+#ifdef CLIENT
 //==========================================================================
 //
 //  CheckSkyboxNumForName
@@ -215,6 +217,7 @@ void R_FreeSkyboxData()
   skyboxinfo.Clear();
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -601,3 +604,5 @@ void VRenderLevelShared::AnimateSky(float frametime)
   }
   unguard;
 }
+#endif
+

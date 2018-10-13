@@ -31,6 +31,10 @@
 #include "ui/ui.h"
 //#include "svnrev.h"
 #include <time.h>
+#ifdef SERVER
+# include "render/r_local.h"
+#endif
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -193,6 +197,10 @@ void Host_Init()
   MN_Init();
   AM_Init();
   SB_Init();
+#endif
+
+#ifdef SERVER
+  R_InitSkyBoxes();
 #endif
 
   VCommand::ProcessKeyConf();

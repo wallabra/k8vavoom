@@ -375,6 +375,7 @@ static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
 }
 
 
+#ifdef CLIENT
 //==========================================================================
 //
 //  SV_DeleteSlotFile
@@ -400,6 +401,7 @@ static bool SV_DeleteSlotFile (int slot) {
   for (int f = 0; f < tokill.length(); ++f) Sys_FileDelete(tokill[f]);
   return true;
 }
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -553,7 +555,6 @@ static VStr LoadDateStrExtData (VStream *Strm) {
 }
 
 
-#ifdef CLIENT
 //==========================================================================
 //
 //  LoadDateTValExtData
@@ -580,7 +581,6 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
   }
   return false;
 }
-#endif
 
 
 //==========================================================================
@@ -857,7 +857,6 @@ void SV_GetSaveDateString (int Slot, VStr &datestr) {
 }
 
 
-#ifdef CLIENT
 //==========================================================================
 //
 //  SV_GetSaveDateTVal
@@ -915,7 +914,6 @@ static int SV_FindAutosaveSlot () {
   }
   return bestslot;
 }
-#endif
 
 
 //==========================================================================
@@ -1387,6 +1385,17 @@ void Draw_SaveIcon ();
 void Draw_LoadIcon ();
 
 
+static bool CheckIfLoadIsAllowed () {
+  if (deathmatch) {
+    GCon->Log("Can't load in deathmatch game");
+    return false;
+  }
+
+  return true;
+}
+#endif
+
+
 static bool CheckIfSaveIsAllowed () {
   if (deathmatch) {
     GCon->Log("Can't save in deathmatch game");
@@ -1407,16 +1416,30 @@ static bool CheckIfSaveIsAllowed () {
 }
 
 
-static bool CheckIfLoadIsAllowed () {
-  if (deathmatch) {
-    GCon->Log("Can't load in deathmatch game");
-    return false;
+void SV_AutoSave () {
+  if (!CheckIfSaveIsAllowed()) return;
+
+  int aslot = SV_FindAutosaveSlot();
+  if (!aslot) {
+    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    return;
   }
 
-  return true;
+#ifdef CLIENT
+  Draw_SaveIcon();
+#endif
+
+  TTimeVal tv;
+  GetTimeOfDay(&tv);
+  VStr svname = TimeVal2Str(&tv, true)+": "+VStr("AUTO: ")+(*GLevel->MapName);
+
+  SV_SaveGame(aslot, svname);
+
+  GCon->Logf("Game autosaved to slot #%d", -aslot);
 }
 
 
+#ifdef CLIENT
 void SV_AutoSaveOnLevelExit () {
   if (!r_dbg_save_on_level_exit) return;
 
@@ -1433,27 +1456,6 @@ void SV_AutoSaveOnLevelExit () {
   TTimeVal tv;
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
-
-  SV_SaveGame(aslot, svname);
-
-  GCon->Logf("Game autosaved to slot #%d", -aslot);
-}
-
-
-void SV_AutoSave () {
-  if (!CheckIfSaveIsAllowed()) return;
-
-  int aslot = SV_FindAutosaveSlot();
-  if (!aslot) {
-    GCon->Logf("Cannot find autosave slot (this should not happen!");
-    return;
-  }
-
-  Draw_SaveIcon();
-
-  TTimeVal tv;
-  GetTimeOfDay(&tv);
-  VStr svname = TimeVal2Str(&tv, true)+": "+VStr("AUTO: ")+(*GLevel->MapName);
 
   SV_SaveGame(aslot, svname);
 

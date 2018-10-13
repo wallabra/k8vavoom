@@ -375,7 +375,6 @@ set(SERVER_COMMON_SOURCES
   level.cpp
   lockdefs.cpp
   mapinfo.cpp
-  maths.cpp
   misc.cpp
   ${NETSUB_SOURCES}
   p_acs.cpp
@@ -412,6 +411,9 @@ set(SERVER_COMMON_SOURCES
   sv_save.cpp
   sv_world.cpp
   ${VCCLIB_SOURCES}
+  ${AJBSP_SOURCES}
+  # for skybox parsing
+  render/r_sky.cpp
 )
 
 

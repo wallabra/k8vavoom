@@ -26,7 +26,6 @@
 //**  OpenGL driver, main module
 //**
 //**************************************************************************
-
 #include "gl_local.h"
 #include "../r_local.h"
 

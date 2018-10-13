@@ -29,17 +29,6 @@
 
 #include "core.h"
 
-#ifndef WIN32
-// normal OS
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
-
 // k8: ah, let it be here, why not...
 int zone_malloc_call_count = 0;
 int zone_realloc_call_count = 0;
@@ -65,6 +54,17 @@ void operator delete [] (void *p) throw () {
   Z_Free(p);
 }
 
+
+#ifndef WIN32
+// normal OS
+#include <signal.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
 
 struct DirInfo {
   DIR *dh;
@@ -408,8 +408,7 @@ VStr Sys_ReadDir (void *adir) {
     }
     sd->gotName = false;
     auto res = VStr(sd->dir_buf.cFileName);
-    if (res != "." && res != "..") return res;
-
+    if (res == "." || res == "..") continue;
     VStr diskName = sd->path+res;
     bool isRegFile = isRegularFile(diskName);
     if (!isRegFile && !sd->wantDirs) continue; // skip directories

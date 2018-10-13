@@ -1113,7 +1113,9 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   }
   mythread_mutex_unlock(&pvsPingLock);
 
+#ifdef CLIENT
   if (wasProgress && Drawer && Drawer->IsInited()) pvsDrawPBar(42, 42);
+#endif
 
   // wait for all threads to complete
   for (int f = 0; f < pvsThreadsToUse; ++f) {
