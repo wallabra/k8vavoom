@@ -744,10 +744,45 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
       line_t *ld;
       for (VBlockLinesIterator It(this, bx, by, &ld); It.GetNext(); ) {
         // don't check flags, check sector link
-        if (ld->backsector) {
-          // not a 2-sided line -- allow it to bleed
-          return true;
+        if (ld->backsector && ld->frontsector != ld->backsector) {
+          // if one of sectors is slope, should check
+          if (ld->frontsector->floor.minz != ld->frontsector->floor.maxz || ld->frontsector->ceiling.minz != ld->frontsector->ceiling.maxz) return true;
+          if (ld->backsector->floor.minz != ld->backsector->floor.maxz || ld->backsector->ceiling.minz != ld->backsector->ceiling.maxz) return true;
+          // if both sectors has the same floor and ceiling height, don't bother tracing
+          if (ld->frontsector->floor.minz == ld->backsector->floor.minz && ld->frontsector->ceiling.minz == ld->backsector->ceiling.minz) continue;
+          // check distance
+          TVec ab = (*ld->v2)-(*ld->v1);
+          // squared distance from a to b
+          const float absq = DotProduct(ab, ab);
+          if (fabs(absq) > 0.01) {
+            TVec ap = org-(*ld->v1);
+            const float t = DotProduct(ap, ab)/absq;
+            if (t <= 0 || t >= 1) continue; // ignore line ends too
+          }
+          // check for noticeable height difference
+          // can reach floor or ceiling of sectors?
+          bool fsReachFloor = (org.z > ld->frontsector->floor.minz-radius && org.z < ld->frontsector->floor.minz+radius);
+          bool fsReachCeil = (org.z > ld->frontsector->ceiling.minz-radius && org.z < ld->frontsector->ceiling.minz+radius);
+          bool bsReachFloor = (org.z > ld->backsector->floor.minz-radius && org.z < ld->backsector->floor.minz+radius);
+          bool bsReachCeil = (org.z > ld->backsector->ceiling.minz-radius && org.z < ld->backsector->ceiling.minz+radius);
+          if (!fsReachFloor && !fsReachCeil && !bsReachFloor && !bsReachCeil) continue; // come along, nothing to see here
+          // if can reach both floor and ceiling, it looks like a door
+          if (fsReachFloor && fsReachCeil) return true;
+          if (bsReachFloor && bsReachCeil) return true;
+          // check for transparent midtexture
+          if (Sides[ld->sidenum[0]].MidTexture || (ld->sidenum[1] >= 0 && Sides[ld->sidenum[1]].MidTexture)) {
+            for (seg_t *ss = ld->firstseg; ss; ss = ss->lsnext) {
+              for (drawseg_t *ds = ss->drawsegs; ds; ds = ds->next) {
+                for (segpart_t *mid = ds->mid; mid; mid = mid->next) {
+                  if (mid->texinfo.Alpha > 1.0) return true;
+                  //fprintf(stderr, "lindedef #%d, mdalpha=%f\n", (int)(ptrdiff_t)(ld-Lines), mid->texinfo.Alpha);
+                }
+              }
+            }
+          }
+          //return true;
           /*
+          // not a 2-sided line -- allow it to bleed
           //FIXME: or do a proper check?
           if (!(ld->flags&ML_TWOSIDED)) continue;
           //return true;
