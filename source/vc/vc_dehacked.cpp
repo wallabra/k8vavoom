@@ -152,6 +152,9 @@ static const VDehFlag DehFlags[] = {
 };
 
 
+static int dehCurrLine = 0;
+
+
 //==========================================================================
 //
 //  GetLine
@@ -160,6 +163,8 @@ static const VDehFlag DehFlags[] = {
 static bool GetLine () {
   guard(GetLine);
   do {
+    ++dehCurrLine;
+
     if (!*PatchPtr) {
       String = nullptr;
       return false;
@@ -854,7 +859,7 @@ static void ReadCodePtr (int) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
       int Index = atoi(String+5);
       if (Index < 0 || Index >= States.Num()) {
-        GCon->Logf(NAME_Init, "Bad frame index %d", Index);
+        GCon->Logf(NAME_Init, "Bad frame index %d at line %d", Index, dehCurrLine);
         continue;
       }
 
@@ -869,9 +874,9 @@ static void ReadCodePtr (int) {
           break;
         }
       }
-      if (!Found) GCon->Logf(NAME_Init, "WARNING! Invalid code pointer '%s'", ValueString);
+      if (!Found) GCon->Logf(NAME_Init, "WARNING! Invalid code pointer '%s' at line %d", ValueString, dehCurrLine);
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid code pointer param '%s'", String);
+      GCon->Logf(NAME_Init, "WARNING! Invalid code pointer param '%s' at line %d", String, dehCurrLine);
     }
   }
   unguard;
@@ -1243,6 +1248,7 @@ static void ReadStrings (int) {
 //==========================================================================
 static void LoadDehackedFile (VStream *Strm) {
   guard(LoadDehackedFile);
+  dehCurrLine = 0;
   Patch = new char[Strm->TotalSize()+1];
   Strm->Serialise(Patch, Strm->TotalSize());
   Patch[Strm->TotalSize()] = 0;
@@ -1408,7 +1414,7 @@ void ProcessDehackedFiles () {
   sc->Expect("code_pointers");
   sc->Expect("{");
   VCodePtrInfo &ANull = CodePtrs.Alloc();
-  ANull.Name = "nullptr";
+  ANull.Name = "NULL";
   ANull.Method = nullptr;
   while (!sc->Check("}")) {
     sc->ExpectString();
