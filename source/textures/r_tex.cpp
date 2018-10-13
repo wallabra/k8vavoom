@@ -833,13 +833,27 @@ void P_InitAnimated () {
     char TmpName2[9];
     vint32 BaseTime;
 
+    memset(TmpName1, 0, sizeof(TmpName1));
+    memset(TmpName2, 0, sizeof(TmpName2));
+
     *Strm << Type;
+    if (Type == 255) break; // terminator marker
+
+    if (Type != 0 && Type != 1 && Type != 3) Sys_Error("P_InitPicAnims: bad type %u (ofs:0x%08x)", (vuint32)Type, (vuint32)(Strm->Tell()-1));
+
     Strm->Serialise(TmpName1, 9);
     Strm->Serialise(TmpName2, 9);
     *Strm << BaseTime;
 
-    if (Type == -1) break; // terminator marker
+    if (!TmpName1[0] && !TmpName2[0]) {
+      GCon->Log(NAME_Init, "ANIMATED: skipping empty entry");
+      continue;
+    }
 
+    if (!TmpName1[0]) Sys_Error("P_InitPicAnims: empty first texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
+    if (!TmpName2[0]) Sys_Error("P_InitPicAnims: empty second texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
+
+    // 0 is flat, 1 is texture, 3 is texture with decals allowed
     if (Type&1) {
       pic1 = GTextureManager.CheckNumForName(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false);
       pic2 = GTextureManager.CheckNumForName(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false);
@@ -867,7 +881,7 @@ void P_InitAnimated () {
       ad.Type = ANIM_Backward;
     }
 
-    if (fd.Index-ad.Index < 1) Sys_Error("P_InitPicAnims: bad cycle from %s to %s", TmpName2, TmpName1);
+    if (fd.Index-ad.Index < 1) Sys_Error("P_InitPicAnims: bad cycle from '%s' to '%s' (ofs:0x%08x)", TmpName2, TmpName1, (vuint32)(Strm->Tell()-4-9*2-1));
 
     fd.BaseTime = BaseTime;
     fd.RandomRange = 0;
@@ -876,6 +890,7 @@ void P_InitAnimated () {
     ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
     ad.CurrentFrame = ad.NumFrames-1;
     ad.Time = 0.01; // Force 1st game tic to animate
+    ad.allowDecals = (Type == 3);
     AnimDefs.Append(ad);
   }
   delete Strm;
