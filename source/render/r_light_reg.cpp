@@ -741,7 +741,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     // to make proper shadows, we have to check if we have any 2-sided lines
     // around our light. if not, we can skip raycasting
     // bleeding to nearest sectors will be prevented by PVS
-    bool needProperTrace = (r_dynamic_clip && r_dynamic_clip_more) && Level->HasAny2SLinesAtRadius(dl.origin, dl.radius);
+    bool needProperTrace = (r_dynamic_clip && r_dynamic_clip_more) && Level->NeedProperLightTraceAt(dl.origin, dl.radius);
 
     ++gf_dynlights_processed;
     if (needProperTrace) ++gf_dynlights_traced;

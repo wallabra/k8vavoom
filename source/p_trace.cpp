@@ -720,12 +720,16 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius) const 
 }
 
 
+#include "render/r_local.h"
+
 //==========================================================================
 //
-//  VLevel::HasAny2SLinesAtRadius
+//  VLevel::NeedProperLightTraceAt
+//
+//  we should have 2S lines around
 //
 //==========================================================================
-bool VLevel::HasAny2SLinesAtRadius (const TVec &org, float radius) {
+bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
   if (radius < 2) return false; // nobody cares
 
   const int xl = MapBlock(org.x-radius-BlockMapOrgX);
@@ -739,7 +743,36 @@ bool VLevel::HasAny2SLinesAtRadius (const TVec &org, float radius) {
     for (int by = yl; by <= yh; ++by) {
       line_t *ld;
       for (VBlockLinesIterator It(this, bx, by, &ld); It.GetNext(); ) {
-        if (ld->backsector) return true; // don't check flags, check sector link
+        // don't check flags, check sector link
+        if (ld->backsector) {
+          // not a 2-sided line -- allow it to bleed
+          return true;
+          /*
+          //FIXME: or do a proper check?
+          if (!(ld->flags&ML_TWOSIDED)) continue;
+          //return true;
+          // if one of sectors is slope, should check
+          if (ld->frontsector->floor.minz != ld->frontsector->floor.maxz || ld->frontsector->ceiling.minz != ld->frontsector->ceiling.maxz) return true;
+          if (ld->backsector->floor.minz != ld->backsector->floor.maxz || ld->backsector->ceiling.minz != ld->backsector->ceiling.maxz) return true;
+          // if one of sectors is closed door, should check
+          if (ld->frontsector->floor.minz == ld->frontsector->ceiling.minz) return true;
+          if (ld->backsector->floor.minz == ld->backsector->ceiling.minz) return true;
+          // check for midtexture
+          if (Sides[ld->sidenum[0]].MidTexture || (ld->sidenum[1] >= 0 && Sides[ld->sidenum[1]].MidTexture)) {
+            for (seg_t *ss = ld->firstseg; ss; ss = ss->lsnext) {
+              for (drawseg_t *ds = ss->drawsegs; ds; ds = ds->next) {
+                for (segpart_t *mid = ds->mid; mid; mid = mid->next) {
+                  if (mid->texinfo.Alpha > 1.0) return true;
+                  //fprintf(stderr, "lindedef #%d, mdalpha=%f\n", (int)(ptrdiff_t)(ld-Lines), mid->texinfo.Alpha);
+                }
+              }
+            }
+          } else {
+            //FIXME
+            return true;
+          }
+          */
+        }
       }
     }
   }
