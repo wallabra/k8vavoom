@@ -722,6 +722,19 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius) const 
 
 #include "render/r_local.h"
 
+static inline bool isCircleTouchingLine (const TVec &corg, const float radius, const TVec &v0, const TVec &v1) {
+  const float x1 = v0.x-corg.x;
+  const float x2 = v1.x-corg.x;
+  const float y1 = v0.y-corg.y;
+  const float y2 = v1.y-corg.y;
+  const float dx = x2-x1;
+  const float dy = y2-y1;
+  const float dr_squared = dx*dx+dy*dy;
+  const float D = x1*y2-x2*y1;
+  return (radius*radius*dr_squared > D*D);
+}
+
+
 //==========================================================================
 //
 //  VLevel::NeedProperLightTraceAt
@@ -739,6 +752,9 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
 
   ++validcount; // used to make sure we only process a line once
 
+  static TMapNC<int, int> seen; // linedef side for each sector; key is sector number, value is side
+  seen.reset();
+
   for (int bx = xl; bx <= xh; ++bx) {
     for (int by = yl; by <= yh; ++by) {
       line_t *ld;
@@ -751,6 +767,7 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
           // if both sectors has the same floor and ceiling height, don't bother tracing
           if (ld->frontsector->floor.minz == ld->backsector->floor.minz && ld->frontsector->ceiling.minz == ld->backsector->ceiling.minz) continue;
           // check distance
+          /*
           TVec ab = (*ld->v2)-(*ld->v1);
           // squared distance from a to b
           const float absq = DotProduct(ab, ab);
@@ -759,6 +776,8 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
             const float t = DotProduct(ap, ab)/absq;
             if (t <= 0 || t >= 1) continue; // ignore line ends too
           }
+          */
+          if (!isCircleTouchingLine(org, radius, *ld->v1, *ld->v2)) continue;
           // check for noticeable height difference
           // can reach floor or ceiling of sectors?
           bool fsReachFloor = (org.z > ld->frontsector->floor.minz-radius && org.z < ld->frontsector->floor.minz+radius);
@@ -783,6 +802,29 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
           }
           */
           //return true;
+        } else {
+          // check distance
+          /*
+          TVec ab = (*ld->v2)-(*ld->v1);
+          // squared distance from a to b
+          const float absq = DotProduct(ab, ab);
+          if (fabs(absq) > 0.01) {
+            TVec ap = org-(*ld->v1);
+            const float t = DotProduct(ap, ab)/absq;
+            if (t <= 0 || t >= 1) continue; // ignore line ends too
+          }
+          */
+          if (!isCircleTouchingLine(org, radius, *ld->v1, *ld->v2)) continue;
+          int snum = (int)(ptrdiff_t)(ld->frontsector-Sectors);
+          int ps = ld->PointOnSide2(org);
+          if (ps > 1) continue; // on a line
+          // check sector
+          int *mpsp = seen.find(snum);
+          if (mpsp) {
+            if (*mpsp != ps) return true; // different sides, better do tracing
+          } else {
+            seen.put(snum, ps);
+          }
         }
       }
     }
