@@ -211,7 +211,7 @@ void DrawCentreMessage () {
     SetFont('smallfont');
     SetTextAlign(hleft, vtop);
     int tx = ovw/2;
-    int ty = (ovh-CentreMessageLines.length*LineH)/2;
+    int ty = (ovh-CentreMessageLines.length*LineH)/2-32;
     foreach (auto i; 0..CentreMessageLines.length) {
       DrawText(tx-CentreMessageLines[i].Width/2, ty+i*LineH, CentreMessageLines[i].Text, GetCvar('font_colour2'), CR_YELLOW);
     }

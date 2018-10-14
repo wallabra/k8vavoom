@@ -83,6 +83,9 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
       if (fabs(MsgX) > 1.0) bCentreX = true;
       MsgX = (MsgX > 1.0 ? MsgX-1.0 : MsgX < -1.0 ? MsgX+1.0 : MsgX);
     }
+    if (fabs(MsgY-0.5) <= 0.1) {
+      if (MsgY <= 0.5) MsgY -= 0.1; else MsgY += 0.1;
+    }
   } else {
     //writeln("HUD1: ", AHudWidth, "x", AHudHeight);
     HudWidth = AHudWidth;
