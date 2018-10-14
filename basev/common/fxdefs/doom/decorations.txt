@@ -159,27 +159,33 @@ pointlight BurningBarrel_LX2
 
 particleeffect BurningBarrelFlameParts
 {
-  type explode
+  type explode2
   type2 explode2
   colour 1 1 0
   count 16
   offset 0 0 44
   originrandom 8
   //velocity 512 512 512
-  velocity 32 32 48
+  velocity 26 26 48
   velocityrandom 0.5
   gravity 30
-  duration 15
-  ramp 4
+  duration 2
+  ramp 2
 }
+
 
 class BurningBarrel
 {
   //static_light BurningBarrel
   //frame FCAN { light BurningBarrel }
+
   frame FCANA { light BurningBarrel_LX0 particles BurningBarrelFlameParts }
   frame FCANB { light BurningBarrel_LX1 particles BurningBarrelFlameParts }
   frame FCANC { light BurningBarrel_LX2 particles BurningBarrelFlameParts }
+
+  //frame FCANA { light BurningBarrel_LX0 }
+  //frame FCANB { light BurningBarrel_LX1 }
+  //frame FCANC { light BurningBarrel_LX2 }
 }
 
 //------------------------------------------------------------------------------
