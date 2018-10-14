@@ -769,6 +769,7 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
           // if can reach both floor and ceiling, it looks like a door
           if (fsReachFloor && fsReachCeil) return true;
           if (bsReachFloor && bsReachCeil) return true;
+          /*
           // check for transparent midtexture
           if (Sides[ld->sidenum[0]].MidTexture || (ld->sidenum[1] >= 0 && Sides[ld->sidenum[1]].MidTexture)) {
             for (seg_t *ss = ld->firstseg; ss; ss = ss->lsnext) {
@@ -780,33 +781,8 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
               }
             }
           }
-          //return true;
-          /*
-          // not a 2-sided line -- allow it to bleed
-          //FIXME: or do a proper check?
-          if (!(ld->flags&ML_TWOSIDED)) continue;
-          //return true;
-          // if one of sectors is slope, should check
-          if (ld->frontsector->floor.minz != ld->frontsector->floor.maxz || ld->frontsector->ceiling.minz != ld->frontsector->ceiling.maxz) return true;
-          if (ld->backsector->floor.minz != ld->backsector->floor.maxz || ld->backsector->ceiling.minz != ld->backsector->ceiling.maxz) return true;
-          // if one of sectors is closed door, should check
-          if (ld->frontsector->floor.minz == ld->frontsector->ceiling.minz) return true;
-          if (ld->backsector->floor.minz == ld->backsector->ceiling.minz) return true;
-          // check for midtexture
-          if (Sides[ld->sidenum[0]].MidTexture || (ld->sidenum[1] >= 0 && Sides[ld->sidenum[1]].MidTexture)) {
-            for (seg_t *ss = ld->firstseg; ss; ss = ss->lsnext) {
-              for (drawseg_t *ds = ss->drawsegs; ds; ds = ds->next) {
-                for (segpart_t *mid = ds->mid; mid; mid = mid->next) {
-                  if (mid->texinfo.Alpha > 1.0) return true;
-                  //fprintf(stderr, "lindedef #%d, mdalpha=%f\n", (int)(ptrdiff_t)(ld-Lines), mid->texinfo.Alpha);
-                }
-              }
-            }
-          } else {
-            //FIXME
-            return true;
-          }
           */
+          //return true;
         }
       }
     }
