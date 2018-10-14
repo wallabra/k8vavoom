@@ -266,7 +266,15 @@ override void Cheat_Gimme()
   if (Cmd_CheckParm("Armor2")) i1 |= GIMME_ARMOR2;
 
   // Weapons
-  if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All")) {
+  if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
+    /*
+    LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
+    foreach (auto sidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS+1) {
+      foreach (auto widx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+        if (GI.WeaponSlots[sidx].Weapons[widx]) print("slot #%d, weapon #%d: '%C'", sidx, widx, GI.WeaponSlots[sidx].Weapons[widx]);
+      }
+    }
+    */
     class!Weapon WpnCls;
     foreach AllClasses(Weapon, WpnCls) {
       if (WpnCls.default.bCheatNotWeapon) continue;
@@ -281,7 +289,7 @@ override void Cheat_Gimme()
       if (!Wpn.TryPickup(EntityEx(MO))) {
         Wpn.Destroy();
       } else {
-        //print("CHEAT: got '%n'!", GetClassName(WpnCls));
+        print("CHEAT: got '%C'!", WpnCls);
       }
     }
   }
@@ -294,7 +302,7 @@ override void Cheat_Gimme()
   }
 
   // Ammo
-  if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All")) {
+  if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
     foreach AllClasses(Ammo, Cls) {
       // Only direct descendants.
       if (GetClassParent(Cls) != Ammo) continue;

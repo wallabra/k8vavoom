@@ -110,7 +110,11 @@ float     GibsHealthFactor;
 int       ramp1[16];
 int       ramp2[16];
 
-WeaponSlot    WeaponSlots[NUM_WEAPON_SLOTS+1];
+// decorate weapon slot processing needs this
+int WeaponSlotDefined[NUM_WEAPON_SLOTS+1];
+class!Weapon WeaponSlotClasses[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
+
+WeaponSlot WeaponSlots[NUM_WEAPON_SLOTS+1];
 
 float     RespawnTime;
 
@@ -118,6 +122,23 @@ int       GOD_HEALTH;
 
 int       DehExplosionStyle;
 float     DehExplosionAlpha;
+
+
+
+//==========================================================================
+//
+//  SetupDecorateWeaponSlots
+//
+//==========================================================================
+void SetupDecorateWeaponSlots () {
+  // weapon slot overrides
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    if (!default.WeaponSlotDefined[sidx]) continue;
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      WeaponSlots[sidx].Weapons[widx] = default.WeaponSlotClasses[sidx*MAX_WEAPONS_PER_SLOT+widx];
+    }
+  }
+}
 
 
 //==========================================================================
@@ -255,6 +276,8 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
 //
 //==========================================================================
 void InitializeWeaponSlots () {
+  //writeln("*** InitializeWeaponSlots ***");
+  SetupDecorateWeaponSlots();
   class!Weapon wcls;
   foreach AllClasses(Weapon, wcls) {
     //if (GetClassName(wcls) == 'AssaultGun') GI.WeaponSlots[4].Weapons[0] = wcls;

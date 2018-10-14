@@ -35,6 +35,9 @@ VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unkn
 enum {
   PROPS_HASH_SIZE = 256,
   FLAGS_HASH_SIZE = 256,
+  //WARNING! keep in sync with script code (LineSpecialGameInfo.vc)
+  NUM_WEAPON_SLOTS = 10,
+  MAX_WEAPONS_PER_SLOT = 8,
 };
 
 enum {
@@ -103,6 +106,7 @@ enum {
   PROP_StartItem,
   PROP_MorphStyle,
   PROP_SkipLineUnsupported,
+  PROP_PawnWeaponSlot,
 };
 
 enum {
@@ -120,6 +124,49 @@ struct VClassFixup {
   VStr Name;
   VClass *ReqParent;
   VClass *Class;
+};
+
+struct VWeaponSlotFixups {
+  bool defined[NUM_WEAPON_SLOTS+1]; // [1..10]
+  VName names[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
+
+  VWeaponSlotFixups () {
+    for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) defined[f] = false;
+    for (int f = 0; f < (NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT; ++f) names[f] = NAME_None;
+  }
+
+  inline bool isValidSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS); }
+
+  bool hasAnyDefinedSlot () const {
+    for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) if (defined[f]) return true;
+    return false;
+  }
+
+  inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? defined[idx] : false); }
+
+  VName getSlotName (int sidx, int nidx) const {
+    if (sidx < 0 || sidx > NUM_WEAPON_SLOTS) return NAME_None;
+    if (!defined[sidx]) return NAME_None;
+    if (nidx < 0 || nidx >= MAX_WEAPONS_PER_SLOT) return NAME_None;
+    return names[sidx*MAX_WEAPONS_PER_SLOT+nidx];
+  }
+
+  void clearSlot (int idx) {
+    if (idx < 0 || idx > NUM_WEAPON_SLOTS) return;
+    defined[idx] = true;
+    for (int f = 0; f < MAX_WEAPONS_PER_SLOT; ++f) names[idx*MAX_WEAPONS_PER_SLOT+f] = NAME_None;
+  }
+
+  void addToSlot (int idx, VName aname) {
+    if (idx < 0 || idx > NUM_WEAPON_SLOTS) return;
+    defined[idx] = true;
+    for (int f = 0; f < MAX_WEAPONS_PER_SLOT; ++f) {
+      if (names[idx*MAX_WEAPONS_PER_SLOT+f] == NAME_None) {
+        names[idx*MAX_WEAPONS_PER_SLOT+f] = aname;
+        return;
+      }
+    }
+  }
 };
 
 
@@ -405,6 +452,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_morph_style") {
         VPropDef &P = Lst.NewProp(PROP_MorphStyle, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "prop_pawn_weapon_slot") {
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_PawnWeaponSlot, PN);
+        //P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "flag") {
         VFlagDef &F = Lst.NewFlag(FLAG_Bool, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -1966,7 +2016,7 @@ static void ParseParentState (VScriptParser *sc, VClass *Class, const char *LblN
 //  ParseActor
 //
 //==========================================================================
-static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
+static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWeaponSlotFixups &newWSlots) {
   guard(ParseActor);
   // parse actor name
   // in order to allow dots in actor names, this is done in non-C mode,
@@ -2661,6 +2711,19 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
               P.Field->SetInt(DefObj, Val);
             }
             break;
+          case PROP_PawnWeaponSlot: // Player.WeaponSlot 1, XFist, XChainsaw
+            {
+              // get slot number
+              sc->ExpectNumber();
+              int sidx = sc->Number;
+              if (!newWSlots.isValidSlot(sidx)) GCon->Logf("WARNING: invalid weapon slot number %d", sidx);
+              newWSlots.clearSlot(sidx);
+              while (sc->Check(",")) {
+                sc->ExpectString();
+                newWSlots.addToSlot(sidx, VName(*sc->String));
+              }
+            }
+            break;
           case PROP_SkipLineUnsupported:
             {
               if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
@@ -3158,7 +3221,7 @@ static void ParseDamageType (VScriptParser *sc) {
 //  ParseDecorate
 //
 //==========================================================================
-static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) {
+static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWeaponSlotFixups &newWSlots) {
   guard(ParseDecorate);
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
@@ -3169,7 +3232,7 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) 
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
-      ParseDecorate(new VScriptParser(sc->String, W_CreateLumpReaderNum(Lump)), ClassFixups);
+      ParseDecorate(new VScriptParser(sc->String, W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
     } else if (sc->Check("const")) {
       ParseConst(sc);
     } else if (sc->Check("enum")) {
@@ -3177,7 +3240,7 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups) 
     } else if (sc->Check("class")) {
       ParseClass(sc);
     } else if (sc->Check("actor")) {
-      ParseActor(sc, ClassFixups);
+      ParseActor(sc, ClassFixups, newWSlots);
     } else if (sc->Check("breakable")) {
       ParseOldDecoration(sc, OLDDEC_Breakable);
     } else if (sc->Check("pickup")) {
@@ -3270,17 +3333,18 @@ void ProcessDecorateScripts () {
 
   // parse scripts
   TArray<VClassFixup> ClassFixups;
+  VWeaponSlotFixups newWSlots;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_decorate) {
       GCon->Logf("Parsing decorate script '%s'...", *W_FullLumpName(Lump));
-      ParseDecorate(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups);
+      ParseDecorate(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
     }
   }
 
   // make sure all import classes were defined
   if (VMemberBase::GDecorateClassImports.Num()) {
     for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); ++i) {
-      GCon->Logf("Undefined DECORATE class %s", VMemberBase::GDecorateClassImports[i]->GetName());
+      GCon->Logf("Undefined DECORATE class `%s`", VMemberBase::GDecorateClassImports[i]->GetName());
     }
     Sys_Error("Not all DECORATE class imports were defined");
   }
@@ -3296,11 +3360,11 @@ void ProcessDecorateScripts () {
     } else {
       VClass *C = VClass::FindClassLowerCase(*CF.Name.ToLower());
       if (!C) {
-        if (dbg_show_missing_class) GCon->Logf("WARNING: No such class %s", *CF.Name);
+        if (dbg_show_missing_class) GCon->Logf("WARNING: No such class `%s`", *CF.Name);
       } else if (!C->IsChildOf(CF.ReqParent)) {
-        GCon->Logf("WARNING: Class %s is not a descendant of %s", *CF.Name, CF.ReqParent->GetName());
+        GCon->Logf("WARNING: Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
       } else {
-        *(VClass**)(CF.Class->Defaults + CF.Offset) = C;
+        *(VClass**)(CF.Class->Defaults+CF.Offset) = C;
       }
     }
   }
@@ -3315,6 +3379,44 @@ void ProcessDecorateScripts () {
            if (!C) { if (dbg_show_missing_class) GCon->Logf("WARNING: No such class %s", *DI.TypeName); }
       else if (!C->IsChildOf(ActorClass)) GCon->Logf("WARNING: Class %s is not an actor class", *DI.TypeName);
       else DI.Type = C;
+    }
+  }
+
+  // fix weapon slots
+  if (newWSlots.hasAnyDefinedSlot()) {
+    //VName getSlotName (int sidx, int nidx) const
+    VClass *gi = VClass::FindClass("MainGameInfo");
+    VClass *wpnbase = VClass::FindClass("Weapon");
+    if (!gi || !wpnbase) {
+      if (!gi) GCon->Logf("WARNING: `MainGameInfo` class not found, cannot set weapon slots");
+      if (!wpnbase) GCon->Logf("WARNING: `Weapon` class not found, cannot set weapon slots");
+    } else {
+      //WARNING: keep this in sync with script code!
+      VField *fldFlags = gi->FindFieldChecked(VName("WeaponSlotDefined"));
+      VField *fldList = gi->FindFieldChecked(VName("WeaponSlotClasses"));
+      if (!fldFlags || !fldList) {
+        GCon->Logf("WARNING: some fields not found, cannot set weapon slots");
+      } else {
+        vint32 *wsflag = (vint32 *)fldFlags->GetFieldPtr((VObject *)gi->Defaults);
+        VClass **wslist = (VClass **)fldList->GetFieldPtr((VObject *)gi->Defaults);
+        for (int sidx = 0; sidx <= NUM_WEAPON_SLOTS; ++sidx) {
+          wsflag[sidx] = 0;
+          if (!newWSlots.isDefinedSlot(sidx)) continue;
+          wsflag[sidx] = 1; // redefined
+          VClass **sarr = wslist+MAX_WEAPONS_PER_SLOT*sidx;
+          for (int widx = 0; widx < MAX_WEAPONS_PER_SLOT; ++widx) {
+            sarr[widx] = nullptr;
+            VName cn = newWSlots.getSlotName(sidx, widx);
+            if (cn == NAME_None) continue;
+            VStr lcn = VStr(*cn).toLowerCase();
+            VClass *wc = VClass::FindClassLowerCase(*lcn);
+            if (!wc) { GCon->Logf("WARNING: unknown weapon class '%s'", *cn); continue; }
+            if (!wc->IsChildOf(wpnbase)) { GCon->Logf("WARNING: class '%s' is not a weapon", *cn); continue; }
+            //GCon->Log(va("DECORATE: slot #%d, weapon #%d set to '%s'", sidx, widx, *wc->GetFullName()));
+            sarr[widx] = wc;
+          }
+        }
+      }
     }
   }
 
