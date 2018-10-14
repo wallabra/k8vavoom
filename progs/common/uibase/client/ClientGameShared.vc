@@ -226,8 +226,8 @@ final void MessageBoxStartMessage (string text, int type, bool input) {
   GRoot.SetFont('smallfont');
   msgBoxW = min(304, (GRoot.TextWidth(messageString)+16)&~15);
   msgBoxH = min(184, (GRoot.TextHeight(messageString)+16)&~15);
-  msgBoxX = (640-msgBoxW)/2;
-  msgBoxY = (480-msgBoxH)/2;
+  msgBoxX = (GetVirtualWidth()-msgBoxW)/2;
+  msgBoxY = (GetVirtualHeight()-msgBoxH)/2;
 
   CmdBuf_AddText("HideConsole\n");
 }
@@ -245,7 +245,7 @@ final override void MessageBoxDrawer () {
     DrawBorder(msgBoxX, msgBoxY, msgBoxW, msgBoxH);
     GRoot.SetFont('smallfont');
     GRoot.SetTextAlign(hcentre, vcentre);
-    GRoot.DrawText(320, 240, messageString);
+    GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, messageString);
   }
 
   if (WaitForQuit && !IsLocalSoundPlaying(QuitSound)) {
