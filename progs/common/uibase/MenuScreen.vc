@@ -62,6 +62,10 @@ void CreateMenu () {
   CreateChoices();
   CreateSelector();
   SetDefaultChoice();
+  // center menu
+  int vw = GetVirtualWidth();
+  int vh = GetVirtualHeight();
+  SetPos((vw-Width)/2, (vh-Height)/2);
 }
 
 
