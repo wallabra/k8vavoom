@@ -333,7 +333,7 @@ void ControlResponse (int key) {
 //
 //  VerifyNightmare
 //
-//  Realy mightmare skill?
+//  Realy nightmare skill?
 //
 //==========================================================================
 final void VerifyNightmare (int ch) {
