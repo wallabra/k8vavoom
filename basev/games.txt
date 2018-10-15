@@ -1,6 +1,15 @@
 // Default game detection configuration file
 //NOTE Games are detected in backwards order
 
+// Doom II: Hell On Earth
+game basev/doom2
+base basev/doom
+iwad doom2.wad
+altiwad doom2f.wad
+param -doom2
+warp MAP##
+end
+
 // Doom / Ultimate Doom
 game basev/doom1
 base basev/doom
@@ -12,15 +21,6 @@ altiwad doom.wad
 altiwad doom1.wad
 param -doom
 warp E#M#
-end
-
-// Doom II: Hell On Earth
-game basev/doom2
-base basev/doom
-iwad doom2.wad
-altiwad doom2f.wad
-param -doom2
-warp MAP##
 end
 
 // FreeDoom 1
