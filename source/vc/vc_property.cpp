@@ -127,7 +127,7 @@ bool VProperty::Define () {
   VProperty *BaseProp = nullptr;
   if (((VClass *)Outer)->ParentClass) BaseProp = ((VClass*)Outer)->ParentClass->FindProperty(Name);
   if (BaseProp) {
-    if (BaseProp->Flags&PROP_Final) ParseError(Loc, "Property alaready has been declared final and cannot be overriden");
+    if (BaseProp->Flags&PROP_Final) ParseError(Loc, "Property alaready has been declared final and cannot be overridden");
     if (!Type.Equals(BaseProp->Type)) ParseError(Loc, "Property redeclared with a different type");
   }
 

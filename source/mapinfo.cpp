@@ -906,109 +906,109 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     //  These are stubs for now.
     else if (sc->Check("cdid"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand cdid");
+      GCon->Logf("Unimplemented MAPINFO command cdid");
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
     }
     else if (sc->Check("noinventorybar"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand noinventorybar");
+      GCon->Logf("Unimplemented MAPINFO command noinventorybar");
     }
     else if (sc->Check("airsupply"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand airsupply");
+      GCon->Logf("Unimplemented MAPINFO command airsupply");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
     }
     else if (sc->Check("sndseq"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand sndseq");
+      GCon->Logf("Unimplemented MAPINFO command sndseq");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
     }
     else if (sc->Check("sndinfo"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand sndinfo");
+      GCon->Logf("Unimplemented MAPINFO command sndinfo");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
     }
     else if (sc->Check("soundinfo"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand soundinfo");
+      GCon->Logf("Unimplemented MAPINFO command soundinfo");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
     }
     else if (sc->Check("allowcrouch"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand allowcrouch");
+      GCon->Logf("Unimplemented MAPINFO command allowcrouch");
     }
     else if (sc->Check("nocrouch"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand nocrouch");
+      GCon->Logf("Unimplemented MAPINFO command nocrouch");
     }
     else if (sc->Check("pausemusicinmenus"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand pausemusicinmenus");
+      GCon->Logf("Unimplemented MAPINFO command pausemusicinmenus");
     }
     else if (sc->Check("bordertexture"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand bordertexture");
+      GCon->Logf("Unimplemented MAPINFO command bordertexture");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
     }
     else if (sc->Check("f1"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand f1");
+      GCon->Logf("Unimplemented MAPINFO command f1");
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
     }
     else if (sc->Check("allowrespawn"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand allowrespawn");
+      GCon->Logf("Unimplemented MAPINFO command allowrespawn");
     }
     else if (sc->Check("teamdamage"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand teamdamage");
+      GCon->Logf("Unimplemented MAPINFO command teamdamage");
       if (newFormat) sc->Expect("=");
       sc->ExpectFloat();
     }
     else if (sc->Check("fogdensity"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand fogdensity");
+      GCon->Logf("Unimplemented MAPINFO command fogdensity");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
     }
     else if (sc->Check("outsidefogdensity"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand outsidefogdensity");
+      GCon->Logf("Unimplemented MAPINFO command outsidefogdensity");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
     }
     else if (sc->Check("skyfog"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand skyfog");
+      GCon->Logf("Unimplemented MAPINFO command skyfog");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
     }
     else if (sc->Check("teamplayon"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand teamplayon");
+      GCon->Logf("Unimplemented MAPINFO command teamplayon");
     }
     else if (sc->Check("teamplayoff"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand teamplayoff");
+      GCon->Logf("Unimplemented MAPINFO command teamplayoff");
     }
     else if (sc->Check("checkswitchrange"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand checkswitchrange");
+      GCon->Logf("Unimplemented MAPINFO command checkswitchrange");
     }
     else if (sc->Check("nocheckswitchrange"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand nocheckswitchrange");
+      GCon->Logf("Unimplemented MAPINFO command nocheckswitchrange");
     }
     else if (sc->Check("translator"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand translator");
+      GCon->Logf("Unimplemented MAPINFO command translator");
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
     }
@@ -1022,21 +1022,21 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     }
     else if (sc->Check("unfreezesingleplayerconversations"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand unfreezesingleplayerconversations");
+      GCon->Logf("Unimplemented MAPINFO command unfreezesingleplayerconversations");
     }
     else if (sc->Check("smoothlighting"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand SmoothLighting");
+      GCon->Logf("Unimplemented MAPINFO command SmoothLighting");
     }
     else if (sc->Check("lightmode"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand 'LightMode'");
+      GCon->Logf("Unimplemented MAPINFO command 'LightMode'");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
     }
     else if (sc->Check("Grinding_PolyObj"))
     {
-      GCon->Logf("Unimplemented MAPINFO comand 'Grinding_PolyObj'");
+      GCon->Logf("Unimplemented MAPINFO command 'Grinding_PolyObj'");
     }
     else
     {
@@ -1378,7 +1378,7 @@ static void ParseClusterDef(VScriptParser *sc)
         if (newFormat) sc->Expect(",");
       }
       sc->ExpectString();
-      GCon->Logf("Unimplemented MAPINFO cluster comand name");
+      GCon->Logf("Unimplemented MAPINFO cluster command name");
     }
     else
     {
@@ -1777,7 +1777,7 @@ static void ParseMapInfo(VScriptParser *sc)
         }
       }
       else if (sc->Check("intermission")) {
-        GCon->Logf("Unimplemented MAPINFO comand Intermission");
+        GCon->Logf("Unimplemented MAPINFO command Intermission");
         sc->SkipBracketed();
       }
       else

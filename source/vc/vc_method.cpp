@@ -228,7 +228,7 @@ bool VMethod::Define () {
     if (ParamFlags[i]&FPARM_Optional) ++ParamsSize;
   }
 
-  // if this is a overriden method, verify that return type and argument types match
+  // if this is a overridden method, verify that return type and argument types match
   SuperMethod = nullptr;
   if (Outer->MemberType == MEMBER_Class && Name != NAME_None && ((VClass *)Outer)->ParentClass) {
     SuperMethod = ((VClass *)Outer)->ParentClass->FindMethod(Name);
@@ -258,7 +258,7 @@ bool VMethod::Define () {
       }
     }
     if (Ret && (SuperMethod->Flags&FUNC_Final)) {
-      ParseError(Loc, "Method `%s` already has been declared as final and cannot be overriden", *GetFullName());
+      ParseError(Loc, "Method `%s` already has been declared as final and cannot be overridden", *GetFullName());
       Ret = false;
     }
     if (!SuperMethod->ReturnType.Equals(ReturnType)) {
