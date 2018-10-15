@@ -589,42 +589,6 @@ static void RenameSprites () {
 }
 
 
-#ifndef _WIN32
-# include <sys/types.h>
-# include <unistd.h>
-#else
-# include <windows.h>
-#endif
-
-static VStr getBinaryDir () {
-  static char mydir[8192];
-#ifndef _WIN32
-  char buf[128];
-  pid_t pid = getpid();
-  snprintf(buf, sizeof(buf), "/proc/%u/exe", (unsigned int)pid);
-  if (readlink(buf, mydir, sizeof(mydir)-1) < 0) {
-    mydir[0] = '.';
-    mydir[1] = '\0';
-  } else {
-    char *p = (char *)strrchr(mydir, '/');
-    if (!p) {
-      mydir[0] = '.';
-      mydir[1] = '\0';
-    } else {
-      *p = '\0';
-    }
-  }
-#else
-  char *p;
-  memset(mydir, 0, sizeof(mydir));
-  GetModuleFileName(GetModuleHandle(NULL), mydir, sizeof(mydir)-1);
-  p = strrchr(mydir, '\\');
-  if (!p) strcpy(mydir, "."); else *p = '\0';
-#endif
-  return VStr(mydir);
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarB respawnparm;
 extern VCvarB fastparm;
@@ -724,8 +688,11 @@ void FL_Init () {
       "/usr/local/share/vavoom",
       "/usr/share/vavoom",
       "!/../share/vavoom",
+      ".",
 #else
       "!/share",
+      "!/.",
+      ".",
 #endif
       nullptr,
     };
@@ -733,7 +700,7 @@ void FL_Init () {
       VStr dir = VStr(*tbd);
       if (dir[0] == '!') {
         dir.chopLeft(1);
-        dir = getBinaryDir()+dir;
+        dir = GArgs[0]+dir;
       } else if (dir[0] == '~') {
         dir.chopLeft(1);
         const char *hdir = getenv("HOME");
@@ -771,21 +738,29 @@ void FL_Init () {
       IWadDirs.Append(GArgs[iwp]);
     }
   } else {
-#ifndef _WIN32
     static const char *defaultIwadDirs[] = {
+      ".",
+      "!/.",
+#ifndef _WIN32
       "~/.vavoom/iwads",
+      "~/.vavoom/iwad",
       "~/.vavoom",
       "/opt/vavoom/share/vavoom",
       "/usr/local/share/vavoom",
       "/usr/share/vavoom",
       "!/../share/vavoom",
+#else
+      "~",
+      "!/iwads",
+      "!/iwad",
+#endif
       nullptr,
     };
     for (const char **tbd = defaultIwadDirs; *tbd; ++tbd) {
       VStr dir = VStr(*tbd);
       if (dir[0] == '!') {
         dir.chopLeft(1);
-        dir = getBinaryDir()+dir;
+        dir = GArgs[0]+dir;
       } else if (dir[0] == '~') {
         dir.chopLeft(1);
         const char *hdir = getenv("HOME");
@@ -795,11 +770,8 @@ void FL_Init () {
           continue;
         }
       }
-      if (Sys_DirExists(dir)) {
-        IWadDirs.Append(dir);
-      }
+      if (Sys_DirExists(dir)) IWadDirs.Append(dir);
     }
-#endif
   }
   // envvar
   {
@@ -808,13 +780,15 @@ void FL_Init () {
   }
 #ifdef _WIN32
   // home dir (if any)
+  /*
   {
     const char *hd = getenv("HOME");
     if (hd && hd[0]) IWadDirs.Append(hd);
   }
+  */
 #endif
   // and current dir
-  IWadDirs.Append(".");
+  //IWadDirs.Append(".");
 
   AddGameDir("basev/common");
 
