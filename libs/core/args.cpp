@@ -22,13 +22,67 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "core.h"
 
-#define MAXARGVS  (100)
+#define MAXARGVS  (512)
 
 
 VArgs GArgs;
+
+
+#ifndef _WIN32
+# include <sys/types.h>
+# include <unistd.h>
+#else
+# include <windows.h>
+#endif
+
+//==========================================================================
+//
+//  getBinaryDir
+//
+//==========================================================================
+static char *getBinaryDir () {
+  static char mydir[8192];
+  memset(mydir, 0, sizeof(mydir));
+#ifndef _WIN32
+  char buf[128];
+  pid_t pid = getpid();
+  snprintf(buf, sizeof(buf), "/proc/%u/exe", (unsigned int)pid);
+  if (readlink(buf, mydir, sizeof(mydir)-1) < 0) {
+    mydir[0] = '.';
+    mydir[1] = '\0';
+  } else {
+    char *p = (char *)strrchr(mydir, '/');
+    if (!p) {
+      mydir[0] = '.';
+      mydir[1] = '\0';
+    } else {
+      *p = '\0';
+    }
+  }
+#else
+  char *p;
+  GetModuleFileName(GetModuleHandle(NULL), mydir, sizeof(mydir)-1);
+  p = strrchr(mydir, '\\');
+  if (!p) strcpy(mydir, "."); else *p = '\0';
+  for (p = mydir; *p; ++p) if (*p == '\\') *p = '/';
+#endif
+  return mydir;
+}
+
+
+//==========================================================================
+//
+//  xstrdup
+//
+//==========================================================================
+static char *xstrdup (const char *s) {
+  if (!s) s = "";
+  char *res = (char *)Z_Malloc(strlen(s)+1);
+  strcpy(res, s);
+  return res;
+}
 
 
 //==========================================================================
@@ -39,8 +93,12 @@ VArgs GArgs;
 void VArgs::Init (int argc, char **argv) {
   guard(VArgs::Init);
   // save args
+  if (argc < 0) argc = 0; else if (argc > MAXARGVS) argc = MAXARGVS;
   Argc = argc;
-  Argv = argv;
+  Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS); // memleak, but nobody cares
+  memset(Argv, 0, sizeof(char*)*MAXARGVS);
+  Argv[0] = xstrdup(getBinaryDir());
+  for (int f = 1; f < argc; ++f) Argv[f] = xstrdup(argv[f]);
   FindResponseFile();
   unguard;
 }
@@ -55,7 +113,7 @@ void VArgs::Init (int argc, char **argv) {
 //
 //==========================================================================
 void VArgs::FindResponseFile () {
-  for (int i = 1;i < Argc; ++i) {
+  for (int i = 1; i < Argc; ++i) {
     if (Argv[i][0] != '@') continue;
 
     // read the response file into memory
@@ -68,13 +126,13 @@ void VArgs::FindResponseFile () {
     fseek(handle, 0, SEEK_END);
     int size = ftell(handle);
     fseek(handle, 0, SEEK_SET);
-    char *file = (char*)Z_Malloc(size + 1);
+    char *file = (char *)Z_Malloc(size+1);
     fread(file, size, 1, handle);
     fclose(handle);
     file[size] = 0;
 
     // keep all other cmdline args
-    char **oldargv = Argv;
+    char **oldargv = Argv; // memleak, but nobody cares
 
     Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS);
     memset(Argv, 0, sizeof(char*)*MAXARGVS);
@@ -144,10 +202,12 @@ void VArgs::FindResponseFile () {
 //  Returns the argument number (1 to argc - 1) or 0 if not present
 //
 //==========================================================================
-int VArgs::CheckParm (const char *check) const {
+int VArgs::CheckParm (const char *check, bool takeFirst) const {
   guard(VArgs::CheckParm);
-  for (int i = 1; i < Argc; ++i) {
-    if (!VStr::ICmp(check, Argv[i])) return i;
+  if (takeFirst) {
+    for (int i = 1; i < Argc; ++i) if (!VStr::ICmp(check, Argv[i])) return i;
+  } else {
+    for (int i = Argc-1; i > 0; --i) if (!VStr::ICmp(check, Argv[i])) return i;
   }
   return 0;
   unguard;
@@ -159,10 +219,21 @@ int VArgs::CheckParm (const char *check) const {
 //  VArgs::CheckValue
 //
 //==========================================================================
-const char *VArgs::CheckValue (const char *check) const {
+const char *VArgs::CheckValue (const char *check, bool takeFirst) const {
   guard(VArgs::CheckValue);
-  int a = CheckParm(check);
+  int a = CheckParm(check, takeFirst);
   if (a && a < Argc-1 && Argv[a+1][0] != '-' && Argv[a+1][0] != '+') return Argv[a+1];
   return nullptr;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VArgs::IsCommand
+//
+//==========================================================================
+bool VArgs::IsCommand (int idx) const {
+  if (idx < 1 || idx >= Argc) return false;
+  return (Argv[idx][0] == '-' || Argv[idx][0] == '+');
 }
