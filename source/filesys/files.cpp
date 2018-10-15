@@ -25,6 +25,7 @@
 #include "gamedefs.h"
 #include "fs_local.h"
 
+extern VCvarB game_release_mode;
 
 static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", 0);
 
@@ -672,7 +673,11 @@ void FL_Init () {
   //fl_devmode = true;
 #endif
 
-  if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
+  if (game_release_mode) {
+    if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");
+  } else {
+    if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
+  }
 
   int fp = GArgs.CheckParm("-file");
   if (fp) {

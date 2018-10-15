@@ -300,9 +300,7 @@ void InitializeWeaponSlots () {
 //  Init
 //
 //==========================================================================
-
-override void Init()
-{
+override void Init () {
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
 
   CreateCvar('movebob', "0.1", "Player movement bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
@@ -313,11 +311,10 @@ override void Init()
   CreateCvar('addrocketexplosion', "0", "Use additive visuals for explosions?", CVAR_ARCHIVE);
   CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE);
   CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
-  CreateCvar('monster_dropoff', "0", "Should monsters move away from dropoffs?", CVAR_ARCHIVE);
-  // This one is only used in Hexen for now, but it could come in
-  // handy for other games if needed
+  CreateCvar('monster_dropoff', (IsReleaseMode ? "0" : "1"), "Should monsters move away from dropoffs?", CVAR_ARCHIVE);
+  // This one is only used in Hexen for now, but it could come in handy for other games if needed
   CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
-  CreateCvar('wpn_autoswitch', "0", "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
+  CreateCvar('wpn_autoswitch', (IsReleaseMode ? "1" : "0"), "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
 
   // debug headshots?
   CreateCvar('k8HSDEBUG', "0", "Show headshots debug messages?", 0);
@@ -338,11 +335,11 @@ override void Init()
   CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE);
 
   // fastkill/instakill some annoying monsters?
-  CreateCvar('k8HSFastKillAnnoyingMonsters', "1", "Fastkill some annoying monsters?", CVAR_ARCHIVE);
+  CreateCvar('k8HSFastKillAnnoyingMonsters', (IsReleaseMode ? "0" : "1"), "Fastkill some annoying monsters?", CVAR_ARCHIVE);
   // instakill Pain Elementals?
-  CreateCvar('k8HSInstaKillPainElementals', "1", "Instakill Pain Elementals?", CVAR_ARCHIVE);
+  CreateCvar('k8HSInstaKillPainElementals', (IsReleaseMode ? "0" : "1"), "Instakill Pain Elementals?", CVAR_ARCHIVE);
   // instakill Lost Souls?
-  CreateCvar('k8HSInstaKillLostSouls', "1", "Instakill Lost Souls?", CVAR_ARCHIVE);
+  CreateCvar('k8HSInstaKillLostSouls', (IsReleaseMode ? "0" : "1"), "Instakill Lost Souls?", CVAR_ARCHIVE);
   // how mush damage should be inflicted to Arch-Vile?
   CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE);
 
@@ -350,11 +347,11 @@ override void Init()
   CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
   CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
 
-  CreateCvar('k8AmmoKing', "1", "Enable Ammo King mode?", CVAR_ARCHIVE);
+  CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE);
 
-  CreateCvar('k8ElvenGift', "1", "Start game with some Elven Gifts", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts", CVAR_ARCHIVE);
 
-  CreateCvar('k8ElvenPaine', "0", "Allow Pain Elemental attacks", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenPaine', (IsReleaseMode ? "1" : "0"), "Allow Pain Elemental attacks", CVAR_ARCHIVE);
 
   CreateCvar('k8BerserkSwitch', "1", "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
 
@@ -383,7 +380,7 @@ override WorldInfo CreateWorldInfo()
 void SetSkill(int NewSkill)
 {
   WorldInfo.SetSkill(NewSkill);
-  fastparm = WorldInfo.bSkillFastMonsters || GetCvar('Fast');
+  fastparm = WorldInfo.bSkillFastMonsters || GetCvar('g_fast_monsters');
   RespawnTime = WorldInfo.SkillRespawnTime;
   if (!RespawnTime && GetCvar('RespawnMonsters'))
   {

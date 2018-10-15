@@ -91,14 +91,19 @@ static VDedLog  DedLog;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+#ifdef _WIN32
+VCvarB game_release_mode("_release_mode", true, "Affects some default settings.", CVAR_Rom);
+#else
+VCvarB game_release_mode("_release_mode", false, "Affects some default settings.", CVAR_Rom);
+#endif
 
 static VCvarF host_framerate("framerate", "0", "Framerate limit.");
 
 static double last_time;
 
 static VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?"); // checkparm of -respawn
-static VCvarB randomclass("RandomClass", false, "Random player class?");    // checkparm of -randclass
-static VCvarB fastparm("Fast", false, "Fast monsters?");          // checkparm of -fast
+static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
+static VCvarB fastparm("g_fast_monsters", false, "Fast monsters?"); // checkparm of -fast
 
 static VCvarB show_time("show_time", false, "Show current time?");
 

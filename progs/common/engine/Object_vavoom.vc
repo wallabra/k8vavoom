@@ -243,6 +243,8 @@ final bool IsPlutonia { get { return (GetCvarS('game_name') == "plutonia"); } }
 final bool IsTnt { get { return (GetCvarS('game_name') == "tnt"); } }
 final bool IsNerve { get { return (GetCvarS('game_name') == "nerve"); } }
 
+final bool IsReleaseMode { get { return GetCvarB('_release_mode'); } }
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // texture / flat number retrieval
