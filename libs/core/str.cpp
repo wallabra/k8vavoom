@@ -930,7 +930,7 @@ VStr VStr::ExtractFileBase () const {
   // back up until a \ or the start
   while (i && data[i-1] != '/') --i;
 #else
-  while (i && data[i-1] != '/' && data[i-1] != '\\') --i;
+  while (i && data[i-1] != '/' && data[i-1] != '\\' && data[i-1] != ':') --i;
 #endif
 
   // copy up to eight characters
@@ -941,6 +941,24 @@ VStr VStr::ExtractFileBase () const {
     ++i;
   }
   return VStr(*this, start, length);
+  unguard;
+}
+
+
+VStr VStr::ExtractFileBaseName () const {
+  guard(VStr::ExtractFileBaseName);
+  int i = int(length());
+
+  if (i == 0) return VStr();
+
+#if !defined(_WIN32)
+  // back up until a \ or the start
+  while (i && data[i-1] != '/') --i;
+#else
+  while (i && data[i-1] != '/' && data[i-1] != '\\' && data[i-1] != ':') --i;
+#endif
+
+  return VStr(*this, i, length()-i);
   unguard;
 }
 
@@ -1171,6 +1189,89 @@ VStr VStr::buf2hex (const void *buf, int buflen) {
     *str++ = hexd[(*b)&0x0f];
   }
   return res;
+}
+
+
+//==========================================================================
+//
+//  VStr::convertInt
+//
+//==========================================================================
+bool VStr::convertInt (const char *s, int *outv) {
+  bool neg = false;
+  int dummy = 0;
+  if (!outv) outv = &dummy;
+  *outv = 0;
+  if (!s || !s[0]) return false;
+  while (*s && *s <= ' ') ++s;
+  if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
+  if (!s[0]) return false;
+  if (s[0] < '0' || s[0] > '9') return false;
+  while (*s) {
+    char ch = *s++;
+    if (ch < '0' || ch > '9') { *outv = 0; return false; }
+    *outv = (*outv)*10+ch-'0';
+  }
+  while (*s && *s <= ' ') ++s;
+  if (*s) { *outv = 0; return false; }
+  if (neg) *outv = -(*outv);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VStr::convertFloat
+//
+//==========================================================================
+bool VStr::convertFloat (const char *s, float *outv) {
+  float dummy = 0;
+  if (!outv) outv = &dummy;
+  *outv = 0.0f;
+  if (!s || !s[0]) return false;
+  while (*s && *s <= ' ') ++s;
+  bool neg = (s[0] == '-');
+  if (s[0] == '+' || s[0] == '-') ++s;
+  if (!s[0]) return false;
+  // int part
+  bool wasNum = false;
+  if (s[0] >= '0' && s[0] <= '9') {
+    wasNum = true;
+    while (s[0] >= '0' && s[0] <= '9') *outv = (*outv)*10+(*s++)-'0';
+  }
+  // fractional part
+  if (s[0] == '.') {
+    ++s;
+    if (s[0] >= '0' && s[0] <= '9') {
+      wasNum = true;
+      float v = 0, div = 1.0f;
+      while (s[0] >= '0' && s[0] <= '9') {
+        div *= 10.0f;
+        v = v*10+(*s++)-'0';
+      }
+      *outv += v/div;
+    }
+  }
+  // 'e' part
+  if (wasNum && (s[0] == 'e' || s[0] == 'E')) {
+    ++s;
+    bool negexp = (s[0] == '-');
+    if (s[0] == '-' || s[0] == '+') ++s;
+    if (s[0] < '0' || s[0] > '9') { *outv = 0; return false; }
+    int exp = 0;
+    while (s[0] >= '0' && s[0] <= '9') exp = exp*10+(*s++)-'0';
+    while (exp != 0) {
+      if (negexp) *outv /= 10.0f; else *outv *= 10.0f;
+      --exp;
+    }
+  }
+  // skip trailing 'f', if any
+  if (wasNum && s[0] == 'f') ++s;
+  // trailing spaces
+  while (*s && *s <= ' ') ++s;
+  if (*s || !wasNum) { *outv = 0; return false; }
+  if (neg) *outv = -(*outv);
+  return true;
 }
 
 

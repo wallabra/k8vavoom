@@ -131,6 +131,7 @@ public:
 
   // returns C string
   inline const char *operator * () const { return (data ? data : ""); }
+  inline const char *getCStr () const { return (data ? data : ""); }
 
   //inline bool isUnuqie () const { return (!data || *refp() == 1); }
 
@@ -320,6 +321,7 @@ public:
   VStr ExtractFilePath () const;
   VStr ExtractFileName () const;
   VStr ExtractFileBase () const;
+  VStr ExtractFileBaseName () const;
   VStr ExtractFileExtension () const;
   VStr StripExtension () const;
   VStr DefaultPath (const VStr &basepath) const;
@@ -329,6 +331,7 @@ public:
   inline VStr extractFilePath () const { return ExtractFilePath(); }
   inline VStr extractFileName () const { return ExtractFileName(); }
   inline VStr extractFileBase () const { return ExtractFileBase(); }
+  inline VStr extractFileBaseName () const { return ExtractFileBaseName(); }
   inline VStr extractFileExtension () const { return ExtractFileExtension(); }
   inline VStr stripExtension () const { return StripExtension(); }
   inline VStr defaultPath (const VStr &basepath) const { return DefaultPath(basepath); }
@@ -430,6 +433,12 @@ public:
   bool fnameEqu1251CI (const char *s) const;
 
   static VStr buf2hex (const void *buf, int buflen);
+
+  static bool convertInt (const char *s, int *outv);
+  static bool convertFloat (const char *s, float *outv);
+
+  inline bool convertInt (int *outv) const { return convertInt(getCStr(), outv); }
+  inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }
 
 public:
   static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
