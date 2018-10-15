@@ -203,6 +203,7 @@ VStr P_GetMapName(int);
 VName P_GetMapLumpName(int);
 int P_GetMapIndexByLevelNum(int);
 VName P_TranslateMap(int);
+VName P_TranslateMapEx(int); // returns `NAME_None` if not found
 VName P_GetMapLumpNameByLevelNum(int);
 void P_PutMapSongLump(int, VName);
 const VClusterDef *P_GetClusterDef(int);

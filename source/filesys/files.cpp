@@ -33,11 +33,14 @@ bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
 bool fsys_skipDehacked = false;
 
+int fsys_warp_n0 = -1;
+int fsys_warp_n1 = -1;
+VStr fsys_warp_cmd;
+
 static bool fsys_onlyOneBaseFile = false;
 
 
 struct version_t {
-  //VStr MainWad;
   VStr param;
   TArray<VStr> MainWads;
   VStr GameDir;
@@ -45,6 +48,7 @@ struct version_t {
   TArray<VStr> BaseDirs;
   int ParmFound;
   bool FixVoices;
+  VStr warp;
 };
 
 
@@ -61,6 +65,7 @@ TArray<VStr> wadfiles;
 //static bool bIwadAdded;
 static TArray<VStr> IWadDirs;
 static int IWadIndex;
+static VStr warpTpl;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -306,6 +311,25 @@ static void AddGameDir (const VStr &dir) {
 //
 //==========================================================================
 static VStr FindMainWad (const VStr &MainWad) {
+  if (MainWad.length() == 0) return VStr();
+
+  // if we have path separators, try relative path first
+  bool hasSep = false;
+  for (const char *s = *MainWad; *s; ++s) {
+#ifdef _WIN32
+    if (*s == '/' || *s == '\\') { hasSep = true; break; }
+#else
+    if (*s == '/') { hasSep = true; break; }
+#endif
+  }
+#ifdef _WIN32
+  if (!hasSep && MainWad.length() >= 2 && MainWad[1] == ':') hasSep = true;
+#endif
+
+  if (hasSep) {
+    if (Sys_FileExists(MainWad)) return MainWad;
+  }
+
   // first check in IWAD directories
   for (int i = 0; i < IWadDirs.length(); ++i) {
     if (Sys_FileExists(IWadDirs[i]+"/"+MainWad)) return IWadDirs[i]+"/"+MainWad;
@@ -316,6 +340,9 @@ static VStr FindMainWad (const VStr &MainWad) {
 
   // finally in base directory
   if (Sys_FileExists(fl_basedir+"/"+MainWad)) return fl_basedir+"/"+MainWad;
+
+  // just in case, check it as-is
+  if (Sys_FileExists(MainWad)) return MainWad;
 
   return VStr();
 }
@@ -338,7 +365,7 @@ static void SetupGameDir (const VStr &dirname) {
 //  ParseBase
 //
 //==========================================================================
-static void ParseBase (const VStr &name) {
+static void ParseBase (const VStr &name, const VStr &mainiwad) {
   guard(ParseBase);
   TArray<version_t> games;
   int selectedGame = -1;
@@ -407,12 +434,19 @@ static void ParseBase (const VStr &name) {
         if (dbg_dump_gameinfo) GCon->Logf("  fix voices: tan");
         continue;
       }
+      if (sc->Check("warp")) {
+        sc->ExpectString();
+        dst.warp = VStr(sc->String);
+        continue;
+      }
       break;
     }
     sc->Expect("end");
   }
   delete sc;
   if (dbg_dump_gameinfo) GCon->Logf("Done parsing game definition file \"%s\"...", *UseName);
+
+  if (games.length() == 0) Sys_Error("No game definitions found!");
 
   int bestPIdx = -1;
   for (int gi = 0; gi < games.length(); ++gi) {
@@ -428,20 +462,55 @@ static void ParseBase (const VStr &name) {
     game_name = *games[selectedGame].param;
     if (dbg_dump_gameinfo) GCon->Logf("SELECTED GAME: \"%s\"", *games[selectedGame].param);
   } else {
-    if (games.length() != 1) Sys_Error("please, select game!");
-    selectedGame = 0;
+    if (games.length() != 1) {
+      // try to detect game
+      if (mainiwad.length() > 0) {
+        for (int gi = 0; gi < games.length(); ++gi) {
+          version_t &gmi = games[gi];
+          bool okwad = false;
+          VStr mw = mainiwad.extractFileBaseName();
+          for (int f = 0; f < gmi.MainWads.length(); ++f) {
+            VStr gw = gmi.MainWads[f].extractFileBaseName();
+            if (mw.ICmp(gw) == 0) { okwad = true; break; }
+          }
+          if (okwad) { selectedGame = gi; break; }
+        }
+      }
+      if (selectedGame < 0) {
+        for (int gi = 0; gi < games.length(); ++gi) {
+          version_t &gmi = games[gi];
+          VStr mainWadPath;
+          for (int f = 0; f < gmi.MainWads.length(); ++f) {
+            mainWadPath = FindMainWad(gmi.MainWads[f]);
+            if (!mainWadPath.isEmpty()) { selectedGame = gi; break; }
+          }
+          if (selectedGame >= 0) break;
+        }
+      }
+    } else {
+      selectedGame = 0;
+    }
+    if (selectedGame < 0) Sys_Error("please, select game!");
   }
 
   version_t &gmi = games[selectedGame];
 
   // look for the main wad file
   VStr mainWadPath;
-  for (int f = 0; f < gmi.MainWads.length(); ++f) {
-    mainWadPath = FindMainWad(gmi.MainWads[f]);
-    if (!mainWadPath.isEmpty()) break;
+
+  // try user-specified iwad
+  if (mainiwad.length() > 0) mainWadPath = FindMainWad(mainiwad);
+
+  if (mainWadPath.length() == 0) {
+    for (int f = 0; f < gmi.MainWads.length(); ++f) {
+      mainWadPath = FindMainWad(gmi.MainWads[f]);
+      if (!mainWadPath.isEmpty()) break;
+    }
   }
 
   if (mainWadPath.isEmpty()) Sys_Error("Main wad file \"%s\" not found.", (gmi.MainWads.length() ? *gmi.MainWads[0] : "<none>"));
+
+  warpTpl = gmi.warp;
 
   IWadIndex = SearchPaths.length();
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
@@ -556,6 +625,34 @@ static VStr getBinaryDir () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+extern VCvarB respawnparm;
+extern VCvarB fastparm;
+extern VCvarB NoMonsters;
+extern VCvarI Skill;
+
+
+//==========================================================================
+//
+//  countFmtHash
+//
+//==========================================================================
+static int countFmtHash (const VStr &str) {
+  if (str.length() == 0) return 0;
+  int count = 0;
+  bool inHash = false;
+  for (const char *s = *str; *s; ++s) {
+    if (*s == '#') {
+      if (!inHash) ++count;
+      inHash = true;
+    } else {
+      inHash = false;
+    }
+  }
+  return count;
+}
+
+
 //==========================================================================
 //
 //  FL_Init
@@ -564,8 +661,48 @@ static VStr getBinaryDir () {
 void FL_Init () {
   guard(FL_Init);
   const char *p;
+  VStr mainIWad = VStr();
+  int wmap1 = -1, wmap2 = -1; // warp
 
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
+
+  if (GArgs.CheckParm("-fast") != 0) fastparm = true;
+  if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
+  if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
+
+  {
+    auto v = GArgs.CheckValue("-skill");
+    if (v) {
+      int skn = -1;
+      if (!VStr::convertInt(v, &skn)) skn = 3;
+      if (skn < 1) skn = 1; else if (skn > 5) skn = 5;
+      Skill = skn-1;
+    }
+  }
+
+  {
+    auto v = GArgs.CheckValue("-iwad");
+    if (v) mainIWad = VStr(v);
+  }
+
+  fsys_warp_n0 = -1;
+  fsys_warp_n1 = -1;
+  fsys_warp_cmd = VStr();
+
+  {
+    int wp = GArgs.CheckParm("-warp");
+    if (wp && wp+1 < GArgs.Count()) {
+      bool mapok = VStr::convertInt(GArgs[wp+1], &wmap1);
+      bool epiok = VStr::convertInt(GArgs[wp+2], &wmap2);
+      if (!mapok) wmap1 = -1;
+      if (!epiok) wmap2 = -1;
+    }
+    if (wmap1 < 0) wmap1 = -1;
+    if (wmap2 < 0) wmap2 = -1;
+    fsys_warp_n0 = wmap1;
+    fsys_warp_n1 = wmap2;
+  }
+
 
   bool reportIWads = (GArgs.CheckParm("-reportiwad") || GArgs.CheckParm("-reportiwads"));
   bool reportPWads = (GArgs.CheckParm("-silentpwad") || GArgs.CheckParm("-silencepwad") || GArgs.CheckParm("-silentpwads") || GArgs.CheckParm("-silencepwads") ? false : true);
@@ -574,7 +711,7 @@ void FL_Init () {
 
   fsys_onlyOneBaseFile = GArgs.CheckParm("-nakedbase");
 
-  //  Set up base directory (main data files).
+  // set up base directory (main data files)
   fl_basedir = ".";
   p = GArgs.CheckValue("-basedir");
   if (p) {
@@ -614,7 +751,7 @@ void FL_Init () {
     if (fl_basedir.isEmpty()) Sys_Error("cannot find basedir; use \"-basedir dir\" to set it");
   }
 
-  //  Set up save directory (files written by engine).
+  // set up save directory (files written by engine)
   p = GArgs.CheckValue("-savedir");
   if (p && p[0]) {
     fl_savedir = p;
@@ -664,14 +801,57 @@ void FL_Init () {
     }
 #endif
   }
+  // envvar
+  {
+    const char *dwd = getenv("DOOMWADDIR");
+    if (dwd && dwd[0]) IWadDirs.Append(dwd);
+  }
+#ifdef _WIN32
+  // home dir (if any)
+  {
+    const char *hd = getenv("HOME");
+    if (hd && hd[0]) IWadDirs.Append(hd);
+  }
+#endif
+  // and current dir
+  IWadDirs.Append(".");
 
   AddGameDir("basev/common");
 
-  ParseBase("basev/games.txt");
+  ParseBase("basev/games.txt", mainIWad);
 #ifdef DEVELOPER
   // i need progs to be loaded from files
   //fl_devmode = true;
 #endif
+
+  // process "warp", do it here, so "+var" will be processed after "map nnn"
+  // postpone, and use `P_TranslateMapEx()` in host initialization
+  if (warpTpl.length() > 0 && wmap1 >= 0) {
+    int fmtc = countFmtHash(warpTpl);
+    if (fmtc >= 1 && fmtc <= 2) {
+      if (fmtc == 2 && wmap2 == -1) { wmap2 = wmap1; wmap1 = 1; } // "-warp n" is "-warp 1 n" for ExMx
+      VStr cmd = "map ";
+      int spos = 0;
+      int numidx = 0;
+      while (spos < warpTpl.length()) {
+        if (warpTpl[spos] == '#') {
+          int len = 0;
+          while (spos < warpTpl.length() && warpTpl[spos] == '#') { ++len; ++spos; }
+          char tbuf[64];
+          snprintf(tbuf, sizeof(tbuf), "%d", (numidx == 0 ? wmap1 : wmap2));
+          VStr n = VStr(tbuf);
+          while (n.length() < len) n = VStr("0")+n;
+          cmd += n;
+          ++numidx;
+        } else {
+          cmd += warpTpl[spos++];
+        }
+      }
+      cmd += "\n";
+      //GCmdBuf.Insert(cmd);
+      fsys_warp_cmd = cmd;
+    }
+  }
 
   if (game_release_mode) {
     if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");

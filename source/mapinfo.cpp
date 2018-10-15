@@ -1877,28 +1877,42 @@ VName P_GetMapLumpName(int map)
   return MapInfo[QualifyMap(map)].LumpName;
 }
 
-//==========================================================================
-//
-// P_TranslateMap
-//
-// Returns the map lump name given a warp map number.
-//
-//==========================================================================
 
-VName P_TranslateMap(int map)
-{
+//==========================================================================
+//
+//  P_TranslateMap
+//
+//  Returns the map lump name given a warp map number.
+//
+//==========================================================================
+VName P_TranslateMap (int map) {
   guard(P_TranslateMap);
-  for (int i = MapInfo.Num() - 1; i >= 0; i--)
-  {
-    if (MapInfo[i].WarpTrans == map)
-    {
-      return MapInfo[i].LumpName;
-    }
+  for (int i = MapInfo.length()-1; i >= 0; --i) {
+    if (MapInfo[i].WarpTrans == map) return MapInfo[i].LumpName;
   }
-  // Not found
-  return MapInfo[0].LumpName;
+  // not found
+  return (MapInfo.length() > 0 ? MapInfo[0].LumpName : NAME_None);
   unguard;
 }
+
+
+//==========================================================================
+//
+//  P_TranslateMapEx
+//
+//  Returns the map lump name given a warp map number.
+//
+//==========================================================================
+VName P_TranslateMapEx (int map) {
+  guard(P_TranslateMap);
+  for (int i = MapInfo.length()-1; i >= 0; --i) {
+    if (MapInfo[i].WarpTrans == map) return MapInfo[i].LumpName;
+  }
+  // not found
+  return NAME_None;
+  unguard;
+}
+
 
 //==========================================================================
 //

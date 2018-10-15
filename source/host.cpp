@@ -35,6 +35,10 @@
 # include "render/r_local.h"
 #endif
 
+extern int fsys_warp_n0;
+extern int fsys_warp_n1;
+extern VStr fsys_warp_cmd;
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -101,28 +105,27 @@ static VCvarF host_framerate("framerate", "0", "Framerate limit.");
 
 static double last_time;
 
-static VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?"); // checkparm of -respawn
 static VCvarB randomclass("RandomClass", false, "Random player class?"); // checkparm of -randclass
-static VCvarB fastparm("g_fast_monsters", false, "Fast monsters?"); // checkparm of -fast
+VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?"); // checkparm of -respawn
+VCvarB fastparm("g_fast_monsters", false, "Fast monsters?"); // checkparm of -fast
 
 static VCvarB show_time("show_time", false, "Show current time?");
 
 static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive);
 
-static char   CurrentLanguage[4];
+static char CurrentLanguage[4];
 static VCvarS Language("language", "en", "Game language.", CVAR_Archive);
 
-// CODE --------------------------------------------------------------------
+
 
 //==========================================================================
 //
 //  Host_Init
 //
 //==========================================================================
-
-void Host_Init()
-{
+void Host_Init () {
   guard(Host_Init);
+
 #ifdef CLIENT
   C_Init();
 #else
@@ -213,6 +216,25 @@ void Host_Init()
   R_ParseEffectDefs();
 
   InitMapInfo();
+
+  //GCon->Logf("WARP: n0=%d; n1=%d; cmd=<%s>", fsys_warp_n0, fsys_warp_n1, *fsys_warp_cmd);
+
+  if (fsys_warp_n0 >= 0 && fsys_warp_n1 < 0) {
+    VName maplump = P_TranslateMapEx(fsys_warp_n0);
+    if (maplump != NAME_None) {
+      GCon->Logf("WARP: %d translated to '%s'", fsys_warp_n0, *maplump);
+      fsys_warp_n0 = -1;
+      VStr mcmd = "map ";
+      mcmd += *maplump;
+      mcmd += "\n";
+      GCmdBuf.Insert(mcmd);
+      fsys_warp_cmd = VStr();
+    }
+  }
+
+  if (fsys_warp_n0 >= 0 && fsys_warp_cmd.length()) {
+    GCmdBuf.Insert(fsys_warp_cmd);
+  }
 
   GCmdBuf.Exec();
 
