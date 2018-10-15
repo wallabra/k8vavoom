@@ -402,6 +402,7 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     {
       if (newFormat) sc->Expect("=");
       auto ocm = sc->IsCMode();
+      sc->SetCMode(true); // we need this to properly parse commas
       sc->ExpectName8();
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
       VName skbname = R_HasNamedSkybox(sc->String);
@@ -419,7 +420,6 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
           if (sc->Float != 0) GCon->Logf("MSG: ignoring sky scroll for skybox (this is mostly harmless)");
         }
       } else {
-        sc->SetCMode(true);
         info->SkyBox = NAME_None;
         info->Sky1Texture = loadSkyTexture(sc->Name8);
         info->Sky1ScrollDelta = 0;
@@ -438,15 +438,15 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
             info->Sky1ScrollDelta = sc->Float * 35.0;
           }
         }
-        sc->SetCMode(ocm);
       }
+      sc->SetCMode(ocm);
     }
     else if (sc->Check("sky2"))
     {
       if (newFormat) sc->Expect("=");
       auto ocm = sc->IsCMode();
+      sc->SetCMode(true); // we need this to properly parse commas
       sc->ExpectName8();
-      sc->SetCMode(true);
       //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
       //info->SkyBox = NAME_None; //k8:required or not???
       info->Sky2Texture = loadSkyTexture(sc->Name8);
@@ -769,6 +769,13 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     else if (sc->Check("compat_sectorsounds"))
     {
       GCon->Logf("WARNING: %s: mapdef 'compat_sectorsounds' is not supported yet", *sc->GetLoc().toStringNoCol());
+      //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
+      sc->Check("=");
+      sc->CheckNumber();
+    }
+    else if (sc->Check("compat_missileclip"))
+    {
+      GCon->Logf("WARNING: %s: mapdef 'compat_missileclip' is not supported yet", *sc->GetLoc().toStringNoCol());
       //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
       sc->Check("=");
       sc->CheckNumber();
