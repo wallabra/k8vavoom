@@ -96,6 +96,13 @@ override void CreateChoices () {
   VSync.SetInitialValue(GetCvar('r_vsync'));
   currentY += VSync.Height;
 
+  CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
+    "Normal",
+    "Original (4:3)",
+    "Wide Screen 1 (16:9)",
+    "Wide Screen 2 (16:10)"
+  );
+
   MenuTextButton Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Set Resolution";

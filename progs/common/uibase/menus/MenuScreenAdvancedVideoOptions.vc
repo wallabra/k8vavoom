@@ -43,12 +43,6 @@ override void CreateChoices () {
   CreateOnOffCvar("Dynamic lights", 'r_dynamic');
   CreateOnOffCvar("Clip Dynamic Lights", 'r_dynamic_clip');
   CreateOnOffCvar("Properly Clip DynLights", 'r_dynamic_clip_more');
-  CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
-    "Normal",
-    "Original (4:3)",
-    "Wide Screen 1 (16:9)",
-    "Wide Screen 2 (16:10)"
-  );
   CreateOnOffCvar("Model Dynamic lighting", 'r_model_light');
   CreateOnOffCvar("Model shadows", 'r_model_shadows');
   CreateOnOffCvar("Additive Static Lights", 'r_static_add');
