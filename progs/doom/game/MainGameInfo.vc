@@ -59,8 +59,7 @@ override void Init () {
   InitTranslationTables();
   InitBotTypes();
 
-  writeln("*******************************************");
-
+  //writeln("*******************************************");
   KBCheatClearAll();
   if (IsAnyDoom2) {
     KBCheatAppend("idclev##", "map map##");
