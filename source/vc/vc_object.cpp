@@ -581,6 +581,7 @@ VStr VObject::NameFromVKey (int vkey) {
     case K_JOY15: return "JOY15";
     case K_JOY16: return "JOY16";
   }
+  if (vkey > 32 && vkey < 127) return VStr(char(vkey));
   return VStr();
 }
 
@@ -594,7 +595,7 @@ int VObject::VKeyFromName (const VStr &kn) {
   if (kn.isEmpty()) return 0;
 
   if (kn.length() == 1) {
-    char ch = kn[0];
+    vuint8 ch = (vuint8)kn[0];
     if (ch >= '0' && ch <= '9') return K_N0+(ch-'0');
     if (ch >= 'A' && ch <= 'Z') return K_a+(ch-'A');
     if (ch >= 'a' && ch <= 'z') return K_a+(ch-'a');
