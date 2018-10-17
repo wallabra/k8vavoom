@@ -23,7 +23,7 @@ param -doom
 warp E#M#
 end
 
-// FreeDoom 1
+// Freedoom 1
 game basev/doom1
 base basev/doom
 iwad freedoom1.wad
@@ -31,7 +31,7 @@ param -freedoom
 warp E#M#
 end
 
-// FreeDoom 2
+// Freedoom 2
 game basev/doom2
 base basev/doom
 iwad freedoom2.wad
