@@ -687,3 +687,16 @@ COMMAND(WhatIs) {
   }
   unguard;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VCvarI &VCvarI::operator = (const VCvarB &v) { Set(v.asBool() ? 1 : 0); return *this; }
+VCvarI &VCvarI::operator = (const VCvarI &v) { Set(v.IntValue); return *this; }
+
+VCvarF &VCvarF::operator = (const VCvarB &v) { Set(v.asBool() ? 1.0f : 0.0f); return *this; }
+VCvarF &VCvarF::operator = (const VCvarI &v) { Set((float)v.asInt()); return *this; }
+VCvarF &VCvarF::operator = (const VCvarF &v) { Set(v.FloatValue); return *this; }
+
+VCvarB &VCvarB::operator = (const VCvarB &v) { Set(v.BoolValue ? 1 : 0); return *this; }
+VCvarB &VCvarB::operator = (const VCvarI &v) { Set(v.asInt() ? 1 : 0); return *this; }
+VCvarB &VCvarB::operator = (const VCvarF &v) { Set(v.asFloat() ? 1 : 0); return *this; }

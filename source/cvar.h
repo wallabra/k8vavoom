@@ -60,6 +60,11 @@ public:
   void Set (const VStr &value);
   bool IsModified ();
 
+  inline bool asBool () const { return BoolValue; }
+  inline int asInt () const { return IntValue; }
+  inline float asFloat () const { return FloatValue; }
+  inline const VStr &asStr () const { return StringValue; }
+
   inline const char *GetName () const { return Name; }
   inline const char *GetHelp () const { return (HelpString ? HelpString : "no help yet."); }
 
@@ -91,6 +96,9 @@ public:
   friend class TCmdCvarList;
 
 private:
+  VCvar (const VCvar &);
+  void operator = (const VCvar &);
+
   static void dumpHashStats ();
   static vuint32 countCVars ();
   static VCvar **getSortedList (); // contains `countCVars()` elements, must be `delete[]`d
@@ -104,31 +112,48 @@ private:
 };
 
 
+class VCvarI;
+class VCvarF;
+class VCvarS;
+class VCvarB;
+
+
 // Cvar, that can be used as int variable
 class VCvarI : public VCvar {
 public:
   VCvarI (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarI (const VCvar &);
 
   inline operator int () const { return IntValue; }
   inline VCvarI &operator = (int AValue) { Set(AValue); return *this; }
+  VCvarI &operator = (const VCvar &v);
+  VCvarI &operator = (const VCvarB &v);
+  VCvarI &operator = (const VCvarI &v);
 };
 
 //  Cvar, that can be used as float variable
 class VCvarF : public VCvar {
 public:
   VCvarF (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarF (const VCvar &);
 
   inline operator float () const { return FloatValue; }
   inline VCvarF &operator = (float AValue) { Set(AValue); return *this; }
+  VCvarF &operator = (const VCvar &v);
+  VCvarF &operator = (const VCvarB &v);
+  VCvarF &operator = (const VCvarI &v);
+  VCvarF &operator = (const VCvarF &v);
 };
 
 // Cvar, that can be used as char *variable
 class VCvarS : public VCvar {
 public:
   VCvarS (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarS (const VCvar &);
 
   inline operator const char *() const { return *StringValue; }
   inline VCvarS &operator = (const char *AValue) { Set(AValue); return *this; }
+  VCvarS &operator = (const VCvar &v);
 };
 
 // Cvar, that can be used as bool variable
@@ -137,5 +162,9 @@ public:
   VCvarB (const char *AName, bool ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, (ADefault ? "1" : "0"), AHelp, AFlags) {}
 
   inline operator bool () const { return BoolValue; }
+  VCvarB &operator = (const VCvar &v);
   inline VCvarB &operator = (bool v) { Set(v ? 1 : 0); return *this; }
+  VCvarB &operator = (const VCvarB &v);
+  VCvarB &operator = (const VCvarI &v);
+  VCvarB &operator = (const VCvarF &v);
 };
