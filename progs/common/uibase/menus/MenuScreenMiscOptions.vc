@@ -31,7 +31,8 @@ override void CreateChoices () {
   //ChoicesStartX = 10;
 
   CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');
-  CreateOnOffCvar("Autoaim for rockets/plasma", 'autoaim');
+  CreateOnOffCvar("Autoaim for all weapons", 'autoaim');
+  CreateOnOffCvar("Autoaim for hitscan weapon", 'k8HitscanAutoAim');
   CreateOnOffCvar("Overlay automap", 'am_overlay');
   CreateOnOffCvar("Show stats on automap", 'am_show_stats');
   CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');

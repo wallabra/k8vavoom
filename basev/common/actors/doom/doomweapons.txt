@@ -82,7 +82,7 @@ actor Pistol : DoomWeapon 5010
   Weapon.BotCombatDist 256
   Weapon.PlayerModelVersion 2
   +Weapon.Wimpy_Weapon
-  +Weapon.NoAutoAim
+  +Weapon.HitscanWeapon
   states
   {
   Ready:
@@ -122,7 +122,7 @@ actor Shotgun : DoomWeapon 2001
   Weapon.AmmoGive1 8
   Weapon.PlayerModelVersion 3
   Weapon.BotCombatDist 192
-  +Weapon.NoAutoAim
+  +Weapon.HitscanWeapon
   states
   {
   Ready:
@@ -166,7 +166,7 @@ actor SuperShotgun : DoomWeapon 82
   Weapon.AmmoGive1 8
   Weapon.PlayerModelVersion 9
   Weapon.BotCombatDist 128
-  +Weapon.NoAutoAim
+  +Weapon.HitscanWeapon
   states
   {
   Ready:
@@ -217,7 +217,7 @@ actor Chaingun : DoomWeapon 2002
   Weapon.AmmoGive1 20
   Weapon.PlayerModelVersion 4
   Weapon.BotCombatDist 256
-  +Weapon.NoAutoAim
+  +Weapon.HitscanWeapon
   states
   {
   Ready:

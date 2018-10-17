@@ -347,6 +347,7 @@
     <flag name="IgnoreSkill" property="bIgnoreSkill" />
     <flag name="AdditiveTime" property="bAdditiveTime" />
     <flag name="NoAutoAim" property="bNoAutoaim" />
+    <flag name="HitscanWeapon" property="bIsHitscanWeapon" />
     <flag_unsupported name="AlwaysActivate" /> <!-- From SkulTag ? -->
   </class>
 
@@ -431,6 +432,7 @@
     <flag name="CheatNotWeapon" property="bCheatNotWeapon" />
     <flag name="No_Auto_Switch" property="bNoAutoSwitch" />
     <flag name="NoAutoAim" property="bNoAutoaim" />
+    <flag name="HitscanWeapon" property="bIsHitscanWeapon" />
 
     <prop_string_unsupported name="Weapon.BobStyle" />
     <prop_float_unsupported name="Weapon.BobRangeX" />

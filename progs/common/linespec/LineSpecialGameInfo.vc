@@ -311,6 +311,7 @@ override void Init () {
   CreateCvar('addrocketexplosion', "0", "Use additive visuals for explosions?", CVAR_ARCHIVE);
   CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE);
   CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
+  CreateCvar('k8HitscanAutoAim', (IsReleaseMode ? "1" : "0"), "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE);
   CreateCvar('monster_dropoff', (IsReleaseMode ? "0" : "1"), "Should monsters move away from dropoffs?", CVAR_ARCHIVE);
   // This one is only used in Hexen for now, but it could come in handy for other games if needed
   CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
@@ -326,7 +327,7 @@ override void Init () {
   CreateCvar('k8HSDebugCrits', "1", "Show headshows criticals debug?", 0);
 
   // enable headshots?
-  CreateCvar('k8HSEnabled', "1", "Is headshots enabled?", CVAR_ARCHIVE);
+  CreateCvar('k8HSEnabled', (IsReleaseMode ? "0" : "1"), "Is headshots enabled?", CVAR_ARCHIVE);
   // distance multiplier (the more -- the less headshot chance on big distances)
   CreateCvar('k8HSDistMult', "1.1", "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE);
   // announce critical messages

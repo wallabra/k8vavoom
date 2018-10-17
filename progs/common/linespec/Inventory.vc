@@ -85,7 +85,8 @@ bool        bCreateCopyMoved;
 //  Powerup failed to activate.
 bool        bInitEffectFailed;
 
-bool        bNoAutoaim;
+bool bNoAutoaim;
+bool bIsHitscanWeapon;
 
 replication
 {
@@ -153,12 +154,24 @@ override void Tick(float DeltaTime)
   }
 }
 
+
+//==========================================================================
+//
+//  IsAutoaimDisabled
+//
+//==========================================================================
+final bool IsAutoaimDisabled () {
+  if (bNoAutoaim) return true;
+  if (bIsHitscanWeapon && !GetCvarB('k8HitscanAutoAim')) return true;
+  return false;
+}
+
+
 //==========================================================================
 //
 //  BecomeItem
 //
 //==========================================================================
-
 final void BecomeItem()
 {
   UnlinkFromWorld();
@@ -1297,7 +1310,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   if (Wpn)
   {
     PlaySound(Wpn.AttackSound, CHAN_WEAPON);
-    noAAim = Wpn.bNoAutoaim;
+    noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     decal = Wpn.DecalName;
   }
 
@@ -1475,7 +1488,7 @@ final void A_FirePistol()
 
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
       decal = Wpn.DecalName;
-      noAAim = Wpn.bNoAutoaim;
+      noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     }
     SetState(MeleeState);
     Accurate = !PlayerEx(Player).Refire;
@@ -1522,7 +1535,7 @@ final void A_FireShotgun()
 
     Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
-    noAAim = Wpn.bNoAutoaim;
+    noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
   }
 
   Aim(dir, 16.0 * 64.0, default, noAAim);
@@ -1566,7 +1579,7 @@ final void A_FireShotgun2()
 
     Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
-    noAAim = Wpn.bNoAutoaim;
+    noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
   }
 
   Aim(aimDir, 16.0 * 64.0, default, noAAim);
@@ -1651,7 +1664,7 @@ final void A_FireCGun()
       Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
     decal = Wpn.DecalName;
-    noAAim = Wpn.bNoAutoaim;
+    noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
   }
 
   SetState(MeleeState);
@@ -1912,4 +1925,5 @@ defaultproperties
   PickupSound = 'misc/i_pkup';
   UseSound = 'misc/invuse';
   bNoAutoaim = false;
+  bIsHitscanWeapon = false;
 }
