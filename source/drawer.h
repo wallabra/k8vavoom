@@ -212,6 +212,8 @@ public:
   virtual void DrawAliasModelFog(const TVec&, const TAVec&, const TVec&,
     const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
     bool) = 0;
+
+  virtual void GetRealWindowSize (int *rw, int *rh) = 0;
 };
 
 //  Drawer types, menu system uses these numbers.

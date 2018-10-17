@@ -925,6 +925,13 @@ bool VOpenGLDrawer::SupportsAdvancedRendering () {
 //==========================================================================
 void VOpenGLDrawer::Setup2D () {
   guard(VOpenGLDrawer::Setup2D);
+
+  /*
+  int realw, realh;
+  GetRealWindowSize(&realw, &realh);
+  glViewport(0, 0, realw, realh);
+  */
+
   glViewport(0, 0, ScreenWidth, ScreenHeight);
 
   glMatrixMode(GL_PROJECTION);
@@ -1085,7 +1092,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
 
   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
-  glViewport(rd->x, ScreenHeight - rd->height - rd->y, rd->width, rd->height);
+  glViewport(rd->x, ScreenHeight-rd->height-rd->y, rd->width, rd->height);
 
   glMatrixMode(GL_PROJECTION);    // Select The Projection Matrix
   glLoadMatrixf(ProjMat[0]);

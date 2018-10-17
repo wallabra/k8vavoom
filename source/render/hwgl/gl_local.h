@@ -497,6 +497,8 @@ public:
 
   static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
 
+  //virtual void GetRealWindowSize (int *rw, int *rh) override;
+
 private:
   vuint8 decalStcVal;
   bool decalUsedStencil;
