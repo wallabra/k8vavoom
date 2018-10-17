@@ -350,11 +350,11 @@ override void Init () {
 
   CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE);
 
-  CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts?", CVAR_ARCHIVE);
 
-  CreateCvar('k8ElvenPaine', (IsReleaseMode ? "1" : "0"), "Allow Pain Elemental attacks", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE);
 
-  CreateCvar('k8BerserkSwitch', "1", "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
+  CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
 
   CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 

@@ -33,8 +33,6 @@ import 'uibase';
 #include "MenuScreenMultiplayer.vc"
 #include "MenuScreenNewNetGame.vc"
 #include "MenuScreenPlayerSetup.vc"
-#include "MenuScreenOptions.vc"
-#include "MenuScreenGameplayOptions.vc"
 #include "MenuScreenHelp.vc"
 #include "TitleScreen.vc"
 #include "StatusBarScreen.vc"

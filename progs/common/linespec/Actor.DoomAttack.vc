@@ -422,12 +422,8 @@ final void A_PainAttack()
 
 final void decorate_A_PainAttack(optional class!Actor SpawnType)
 {
-  if (!GetCvarB('k8ElvenPaine')) return;
-
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
+  if (GetCvarB('k8ElvenPaineless')) return;
 
   A_FaceTarget();
   PainShootSkull(SpawnType, Angles.yaw);
@@ -441,10 +437,8 @@ final void decorate_A_PainAttack(optional class!Actor SpawnType)
 
 final void A_DualPainAttack(optional class!Actor SpawnType)
 {
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
+  if (GetCvarB('k8ElvenPaineless')) return;
 
   A_FaceTarget();
   PainShootSkull(SpawnType, Angles.yaw + 45.0);

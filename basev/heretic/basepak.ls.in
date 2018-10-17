@@ -10,25 +10,9 @@ graphics/fonta30.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta30.lmp
 graphics/fonta63.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta63.lmp
 
 //  Client progs
-progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/heretic/cgame/classes.vc
-progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/heretic/cgame/ClientGame.vc
-progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/heretic/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenGameplayOptions.vc
-progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenHelp.vc
-progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenMain.vc
-progs/cgame/MenuScreenMultiplayer.vc    @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenMultiplayer.vc
-progs/cgame/MenuScreenNewNetGame.vc     @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenNewNetGame.vc
-progs/cgame/MenuScreenOptions.vc      @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenOptions.vc
-progs/cgame/MenuScreenPlayerSetup.vc    @CMAKE_SOURCE_DIR@/progs/heretic/cgame/MenuScreenPlayerSetup.vc
-progs/cgame/StatusBarScreen.vc        @CMAKE_SOURCE_DIR@/progs/heretic/cgame/StatusBarScreen.vc
-progs/cgame/TitleScreen.vc          @CMAKE_SOURCE_DIR@/progs/heretic/cgame/TitleScreen.vc
-
+$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/heretic/cgame/  .vc
 //  Server progs
-progs/game/classes.vc     @CMAKE_SOURCE_DIR@/progs/heretic/game/classes.vc
-progs/game/BotPlayer.vc     @CMAKE_SOURCE_DIR@/progs/heretic/game/BotPlayer.vc
-progs/game/HereticLevelInfo.vc  @CMAKE_SOURCE_DIR@/progs/heretic/game/HereticLevelInfo.vc
-progs/game/MainGameInfo.vc    @CMAKE_SOURCE_DIR@/progs/heretic/game/MainGameInfo.vc
-progs/game/Player.vc      @CMAKE_SOURCE_DIR@/progs/heretic/game/Player.vc
+$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/heretic/game/  .vc
 
 //  Scripts
 animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt

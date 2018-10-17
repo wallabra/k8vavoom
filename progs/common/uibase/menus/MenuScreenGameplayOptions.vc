@@ -1,0 +1,128 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class MenuScreenGameplayOptions : MenuScreen;
+
+
+//==========================================================================
+//
+//  CreateChoices
+//
+//==========================================================================
+override void CreateChoices () {
+  MenuChoiceEnum Enum;
+
+  CreateEnumCvar("Message Colour", 'font_colour',
+    "Brick",
+    "Tan",
+    "Gray",
+    "Green",
+    "Brown",
+    "Gold",
+    "Red",
+    "Blue",
+    "Orange",
+    "White",
+    "Yellow",
+    "Normal",
+    "Black",
+    "Light Blue",
+    "Cream",
+    "Olive",
+    "Dark Green",
+    "Dark Red",
+    "Dark Brown",
+    "Purple",
+    "Dark Gray");
+
+  CreateEnumCvar("Center Message Colour", 'font_colour2',
+    "Brick",
+    "Tan",
+    "Gray",
+    "Green",
+    "Brown",
+    "Gold",
+    "Red",
+    "Blue",
+    "Orange",
+    "White",
+    "Yellow",
+    "Normal",
+    "Black",
+    "Light Blue",
+    "Cream",
+    "Olive",
+    "Dark Green",
+    "Dark Red",
+    "Dark Brown",
+    "Purple",
+    "Dark Gray");
+
+  CreateOnOffCvar("Monsters Backing Off", 'monster_backing');
+  CreateOnOffCvar("Damage Thrust", 'damage_thrust');
+  CreateOnOffCvar("Monsters can drop off", 'monster_dropoff');
+  CreateOnOffCvar("Optional Fuzzy Effect", 'r_drawfuzz');
+
+  CreateFloatSliderCvar("Optional Translucency", 'transsouls', 0.05);
+
+  if (GameName == "hexen") {
+    CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');
+  }
+
+
+  CreateChoiceSubHeader("Headshots Options");
+  CreateOnOffCvar("Headshots", 'k8HSEnabled');
+  CreateOnOffCvar("Criticals", 'k8HSCriticals');
+  CreateOnOffCvar("Announce criticals", 'k8HSShowCriticals');
+  CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
+
+
+  CreateChoiceSubHeader("Headshots Fastkill");
+  CreateOnOffCvar("Fastkills", 'k8HSFastKillAnnoyingMonsters');
+  CreateOnOffCvar("FK Pain Elementals", 'k8HSInstaKillPainElementals');
+  CreateOnOffCvar("FK Lost Souls", 'k8HSInstaKillLostSouls');
+  CreateFloatSliderCvar("Arch-Vile FK Damage", 'k8HSFastKillArchVileDamage', 10, 10, 400);
+
+  //TODO: CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
+  //TODO: CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
+  //TODO: CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
+
+
+  CreateChoiceSubHeader("Elven Gifts");
+  CreateOnOffCvar("Ammo King", 'k8AmmoKing');
+  CreateOnOffCvar("Elven Gift", 'k8ElvenGift');
+  CreateOnOffCvar("No Pain Elemental Attacks", 'k8ElvenPaineless');
+
+  Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
+}
+
+
+defaultproperties {
+  Width = 400;
+  ChoicesStartX = 160;
+  ChoicesStartY = 26;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "GAMEPLAY OPTIONS";
+  MenuScrollable = true;
+}

@@ -134,7 +134,11 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
   optional string item3, optional string item4, optional string item5,
   optional string item6, optional string item7, optional string item8,
   optional string item9, optional string item10, optional string item11,
-  optional string item12, optional string item13, optional string item14)
+  optional string item12, optional string item13, optional string item14,
+  optional string item15, optional string item16, optional string item17,
+  optional string item18, optional string item19, optional string item20,
+  optional string item21, optional string item22, optional string item23,
+  optional string item24, optional string item25, optional string item26)
 {
   auto en = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   if (Width > WidthThreshold) {
@@ -162,6 +166,18 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
   if (specified_item12) en.AddItem(item12);
   if (specified_item13) en.AddItem(item13);
   if (specified_item14) en.AddItem(item14);
+  if (specified_item15) en.AddItem(item15);
+  if (specified_item16) en.AddItem(item16);
+  if (specified_item17) en.AddItem(item17);
+  if (specified_item18) en.AddItem(item18);
+  if (specified_item19) en.AddItem(item19);
+  if (specified_item20) en.AddItem(item20);
+  if (specified_item21) en.AddItem(item21);
+  if (specified_item22) en.AddItem(item22);
+  if (specified_item23) en.AddItem(item23);
+  if (specified_item24) en.AddItem(item24);
+  if (specified_item25) en.AddItem(item25);
+  if (specified_item26) en.AddItem(item26);
   en.SetSessionCvar(cvname);
   currentY += en.Height;
   return en;

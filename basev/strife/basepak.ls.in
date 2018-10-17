@@ -9,27 +9,9 @@ graphics/croshai2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai2.lmp
 graphics/croshai3.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/croshai3.lmp
 
 //  Client progs
-progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/strife/cgame/classes.vc
-progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/strife/cgame/ClientGame.vc
-progs/cgame/ConSlideshow1.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow1.vc
-progs/cgame/ConSlideshow2.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/ConSlideshow2.vc
-progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/strife/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenGameplayOptions.vc
-progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenHelp.vc
-progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMain.vc
-progs/cgame/MenuScreenMultiplayer.vc    @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenMultiplayer.vc
-progs/cgame/MenuScreenNewNetGame.vc     @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenNewNetGame.vc
-progs/cgame/MenuScreenOptions.vc      @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenOptions.vc
-progs/cgame/MenuScreenPlayerSetup.vc    @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenPlayerSetup.vc
-progs/cgame/MenuScreenQuit.vc       @CMAKE_SOURCE_DIR@/progs/strife/cgame/MenuScreenQuit.vc
-progs/cgame/StatusBarScreen.vc        @CMAKE_SOURCE_DIR@/progs/strife/cgame/StatusBarScreen.vc
-progs/cgame/TitleScreen.vc          @CMAKE_SOURCE_DIR@/progs/strife/cgame/TitleScreen.vc
-
+$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/strife/cgame/  .vc
 //  Server progs
-progs/game/classes.vc         @CMAKE_SOURCE_DIR@/progs/strife/game/classes.vc
-progs/game/MainGameInfo.vc        @CMAKE_SOURCE_DIR@/progs/strife/game/MainGameInfo.vc
-progs/game/Player.vc          @CMAKE_SOURCE_DIR@/progs/strife/game/Player.vc
-progs/game/StrifeLevelInfo.vc     @CMAKE_SOURCE_DIR@/progs/strife/game/StrifeLevelInfo.vc
+$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/strife/game/  .vc
 
 //  ACS helper
 acs/strfhelp.o      strfhelp.o

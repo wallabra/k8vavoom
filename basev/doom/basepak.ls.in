@@ -20,25 +20,9 @@ graphics/invgemr2.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/invgemr2.lmp
 graphics/selectbo.lmp @CMAKE_CURRENT_SOURCE_DIR@/graphics/selectbo.lmp
 
 //  Client progs
-progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/doom/cgame/classes.vc
-progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/doom/cgame/ClientGame.vc
-progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/doom/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenGameplayOptions.vc
-progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenHelp.vc
-progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenMain.vc
-progs/cgame/MenuScreenMultiplayer.vc    @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenMultiplayer.vc
-progs/cgame/MenuScreenNewNetGame.vc     @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenNewNetGame.vc
-progs/cgame/MenuScreenOptions.vc      @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenOptions.vc
-progs/cgame/MenuScreenPlayerSetup.vc    @CMAKE_SOURCE_DIR@/progs/doom/cgame/MenuScreenPlayerSetup.vc
-progs/cgame/StatusBarScreen.vc        @CMAKE_SOURCE_DIR@/progs/doom/cgame/StatusBarScreen.vc
-progs/cgame/TitleScreen.vc          @CMAKE_SOURCE_DIR@/progs/doom/cgame/TitleScreen.vc
-
+$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/doom/cgame/  .vc
 //  Server progs
-progs/game/classes.vc           @CMAKE_SOURCE_DIR@/progs/doom/game/classes.vc
-progs/game/BotPlayer.vc           @CMAKE_SOURCE_DIR@/progs/doom/game/BotPlayer.vc
-progs/game/DoomLevelInfo.vc         @CMAKE_SOURCE_DIR@/progs/doom/game/DoomLevelInfo.vc
-progs/game/MainGameInfo.vc          @CMAKE_SOURCE_DIR@/progs/doom/game/MainGameInfo.vc
-progs/game/Player.vc            @CMAKE_SOURCE_DIR@/progs/doom/game/Player.vc
+$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/doom/game/  .vc
 
 //  Binary data lumps
 animated.lmp      @CMAKE_CURRENT_SOURCE_DIR@/animated.lmp

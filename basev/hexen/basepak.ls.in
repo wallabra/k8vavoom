@@ -10,27 +10,9 @@ graphics/fonta30.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta30.lmp
 graphics/fonta63.lmp  @CMAKE_CURRENT_SOURCE_DIR@/graphics/fonta63.lmp
 
 //  Client progs
-progs/cgame/classes.vc            @CMAKE_SOURCE_DIR@/progs/hexen/cgame/classes.vc
-progs/cgame/ClientGame.vc         @CMAKE_SOURCE_DIR@/progs/hexen/cgame/ClientGame.vc
-progs/cgame/IntermissionScreen.vc     @CMAKE_SOURCE_DIR@/progs/hexen/cgame/IntermissionScreen.vc
-progs/cgame/MenuScreenGameplayOptions.vc  @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenGameplayOptions.vc
-progs/cgame/MenuScreenHelp.vc       @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenHelp.vc
-progs/cgame/MenuScreenMain.vc       @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenMain.vc
-progs/cgame/MenuScreenMultiplayer.vc    @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenMultiplayer.vc
-progs/cgame/MenuScreenNewNetGame.vc     @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenNewNetGame.vc
-progs/cgame/MenuScreenOptions.vc      @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenOptions.vc
-progs/cgame/MenuScreenPlayerSetup.vc    @CMAKE_SOURCE_DIR@/progs/hexen/cgame/MenuScreenPlayerSetup.vc
-progs/cgame/StatusBarScreen.vc        @CMAKE_SOURCE_DIR@/progs/hexen/cgame/StatusBarScreen.vc
-progs/cgame/TitleScreen.vc          @CMAKE_SOURCE_DIR@/progs/hexen/cgame/TitleScreen.vc
-
-//  Progs
-progs/game/classes.vc       @CMAKE_SOURCE_DIR@/progs/hexen/game/classes.vc
-progs/game/BotPlayer.vc       @CMAKE_SOURCE_DIR@/progs/hexen/game/BotPlayer.vc
-progs/game/HexenDefs.vc       @CMAKE_SOURCE_DIR@/progs/hexen/game/HexenDefs.vc
-progs/game/HexenLevelInfo.vc    @CMAKE_SOURCE_DIR@/progs/hexen/game/HexenLevelInfo.vc
-progs/game/MainGameInfo.vc      @CMAKE_SOURCE_DIR@/progs/hexen/game/MainGameInfo.vc
-progs/game/Player.vc        @CMAKE_SOURCE_DIR@/progs/hexen/game/Player.vc
-progs/game/PlayerSpeed.vc     @CMAKE_SOURCE_DIR@/progs/hexen/game/PlayerSpeed.vc
+$recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/hexen/cgame/  .vc
+//  Server progs
+$recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/hexen/game/  .vc
 
 //  Scripts
 animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt
