@@ -869,6 +869,27 @@ VStr VStr::EvalEscapeSequences () const {
 }
 
 
+bool VStr::MustBeSanitized () const {
+  int len = (int)length();
+  if (len < 1) return false;
+  for (const vuint8 *s = (const vuint8 *)data; *s; ++s) {
+    if (*s < ' ' || *s == 127) return true;
+  }
+  return false;
+}
+
+
+bool VStr::MustBeSanitized (const char *str) {
+  if (!str) return false;
+  for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
+    if (*s != '\n' && *s != '\t') {
+      if (*s < ' ' || *s == 127) return true;
+    }
+  }
+  return false;
+}
+
+
 VStr VStr::RemoveColours () const {
   guard(VStr::RemoveColours);
   if (!data) return VStr();
@@ -886,6 +907,9 @@ VStr VStr::RemoveColours () const {
       }
     } else {
       if (!c) break;
+      if (c != '\n' && c != '\t') {
+        if ((vuint8)c < ' ' || c == 127) continue;
+      }
       ++newlen;
     }
   }
@@ -906,6 +930,9 @@ VStr VStr::RemoveColours () const {
     } else {
       if (!c) break;
       if (newlen >= res.length()) break; // oops
+      if (c != '\n' && c != '\t') {
+        if ((vuint8)c < ' ' || c == 127) continue;
+      }
       res.data[newlen++] = c;
     }
   }

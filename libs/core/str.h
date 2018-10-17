@@ -319,6 +319,8 @@ public:
   VStr EvalEscapeSequences () const;
 
   VStr RemoveColours () const;
+  bool MustBeSanitized () const;
+  static bool MustBeSanitized (const char *str);
 
   VStr ExtractFilePath () const;
   VStr ExtractFileName () const;
