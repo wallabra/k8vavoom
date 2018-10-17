@@ -38,10 +38,15 @@ struct ParTimeInfo {
   int par;
 };
 
+struct SpawnEdFixup {
+  VStr ClassName;
+  int num;
+};
+
 
 VName P_TranslateMap (int map);
+static void ParseMapInfo (VScriptParser *sc);
 
-static void ParseMapInfo(VScriptParser *sc);
 
 static mapInfo_t DefaultMap;
 static TArray<mapInfo_t> MapInfo;
@@ -55,6 +60,65 @@ static bool mapinfoParsed = false;
 static TArray<ParTimeInfo> partimes; // not a hashmap, so i can use `ICmp`
 
 static TArray<VName> MapInfoPlayerClasses;
+
+static TMapDtor<int, SpawnEdFixup> SpawnNumFixups; // keyed by num
+static TMapDtor<int, SpawnEdFixup> DoomEdNumFixups; // keyed by num
+
+
+//==========================================================================
+//
+//  appendNumFixup
+//
+//==========================================================================
+static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, int num) {
+  SpawnEdFixup *fxp = arr.find(num);
+  if (fxp) {
+    fxp->ClassName = className;
+    return;
+  }
+  SpawnEdFixup fx;
+  fx.num = num;
+  fx.ClassName = className;
+  arr.put(num, fx);
+}
+
+
+static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMapDtor<int, SpawnEdFixup> &fixups) {
+  int f = 0;
+  while (f < list.length()) {
+    mobjinfo_t &nfo = list[f];
+    SpawnEdFixup *fxp = fixups.find(nfo.DoomEdNum);
+    if (fxp) {
+      VStr cname = fxp->ClassName;
+      fixups.del(nfo.DoomEdNum);
+      if (cname.length() == 0 || cname.ICmp("none")) {
+        // remove it
+        list.removeAt(f);
+        continue;
+      }
+      // set it
+      VClass *cls = VClass::FindClassNoCase(*cname);
+      if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
+      nfo.Class = cls;
+      nfo.GameFilter = GAME_Any;
+    }
+    ++f;
+  }
+  // append new
+  for (auto it = fixups.first(); it; ++it) {
+    SpawnEdFixup *fxp = &it.getValue();
+    VStr cname = fxp->ClassName;
+    if (cname.length() == 0 || cname.ICmp("none")) continue; // skip it
+    // set it
+    VClass *cls = VClass::FindClassNoCase(*cname);
+    if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
+    mobjinfo_t &nfo = list.Alloc();
+    nfo.Class = cls;
+    nfo.DoomEdNum = fxp->num;
+    nfo.GameFilter = GAME_Any;
+  }
+  fixups.clear();
+}
 
 
 //==========================================================================
@@ -131,6 +195,8 @@ void InitMapInfo () {
       GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
       ParseMapInfo(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
+    processNumFixups("DoomEdNum", VClass::GMobjInfos, DoomEdNumFixups);
+    processNumFixups("SpawnNum", VClass::GScriptIds, SpawnNumFixups);
   }
   mapinfoParsed = true;
 
@@ -1288,8 +1354,32 @@ static void ParseMapInfo (VScriptParser *sc) {
         GCon->Logf("WARNING: Unimplemented MAPINFO command Intermission");
         sc->SkipBracketed();
       } else if (sc->Check("DoomEdNums")) {
-        GCon->Logf("WARNING: Unimplemented MAPINFO command DoomEdNums");
-        sc->SkipBracketed();
+        auto cmode = sc->IsCMode();
+        sc->SetCMode(true);
+        sc->Expect("{");
+        for (;;) {
+          if (sc->Check("}")) break;
+          sc->ExpectNumber();
+          int num = sc->Number;
+          sc->Expect("=");
+          sc->ExpectString();
+          if (sc->Check(",")) sc->Error("comples DoomEdNums aren't supported yet");
+          appendNumFixup(DoomEdNumFixups, VStr(sc->String), num);
+        }
+        sc->SetCMode(cmode);
+      } else if (sc->Check("SpawnNums")) {
+        auto cmode = sc->IsCMode();
+        sc->SetCMode(true);
+        sc->Expect("{");
+        for (;;) {
+          if (sc->Check("}")) break;
+          sc->ExpectNumber();
+          int num = sc->Number;
+          sc->Expect("=");
+          sc->ExpectString();
+          appendNumFixup(SpawnNumFixups, VStr(sc->String), num);
+        }
+        sc->SetCMode(cmode);
       } else {
         sc->Error(va("Invalid command %s", *sc->String));
         error = true;
