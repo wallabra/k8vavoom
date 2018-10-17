@@ -54,6 +54,8 @@ static TArray<VSkillDef> SkillDefs;
 static bool mapinfoParsed = false;
 static TArray<ParTimeInfo> partimes; // not a hashmap, so i can use `ICmp`
 
+static TArray<VName> MapInfoPlayerClasses;
+
 
 //==========================================================================
 //
@@ -1249,14 +1251,44 @@ static void ParseMapInfo (VScriptParser *sc) {
       }
       // hack for "complete"
       else if (sc->Check("gameinfo")) {
+        auto cmode = sc->IsCMode();
+        sc->SetCMode(true);
         sc->Expect("{");
+        //sc->SkipBracketed(true);
         for (;;) {
           if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
           if (sc->Check("}")) break;
-          sc->GetString();
+          if (sc->Check("PlayerClasses")) {
+            MapInfoPlayerClasses.clear();
+            //SDef->PlayerClassNames.Clear();
+            for (;;) {
+              sc->ExpectString();
+              /*
+              VSkillPlayerClassName &CN = SDef->PlayerClassNames.Alloc();
+              CN.ClassName = sc->String;
+              CN.MenuName = sc->String;
+              */
+              if (sc->String.length()) MapInfoPlayerClasses.append(VName(*sc->String));
+              if (!sc->Check(",")) break;
+            }
+          } else {
+            sc->ExpectString();
+            sc->ResetCrossed();
+            sc->ResetQuoted();
+            if (sc->Check("=")) {
+              while (!sc->AtEnd()) {
+                sc->GetString();
+                if (sc->Crossed) { sc->UnGet(); break; }
+              }
+            }
+          }
         }
+        sc->SetCMode(cmode);
       } else if (sc->Check("intermission")) {
-        GCon->Logf("Unimplemented MAPINFO command Intermission");
+        GCon->Logf("WARNING: Unimplemented MAPINFO command Intermission");
+        sc->SkipBracketed();
+      } else if (sc->Check("DoomEdNums")) {
+        GCon->Logf("WARNING: Unimplemented MAPINFO command DoomEdNums");
         sc->SkipBracketed();
       } else {
         sc->Error(va("Invalid command %s", *sc->String));
