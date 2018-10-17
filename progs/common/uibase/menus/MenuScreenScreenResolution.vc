@@ -26,16 +26,16 @@
 class MenuScreenScreenResolution : MenuScreen;
 
 struct mode_t {
-  int   width;
-  int   height;
+  int width;
+  int height;
 };
 
 mode_t modes[6];
-int depths[3];
+//int depths[3];
 
 MenuChoiceEnum Mode;
-MenuInputLine Width;
-MenuInputLine Height;
+MenuInputLine EdWidth;
+MenuInputLine EdHeight;
 MenuChoiceEnum Depth;
 MenuChoiceEnum Windowed;
 MenuChoiceEnum VSync;
@@ -50,31 +50,42 @@ override void CreateChoices () {
   Mode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Mode.SetOrigin(ChoicesStartX, currentY);
   Mode.Text = "Resolution";
+  /*
   Mode.AddItem("640x480");
   Mode.AddItem("800x600");
   Mode.AddItem("1024x768");
   Mode.AddItem("1152x864");
   Mode.AddItem("1280x1024");
   Mode.AddItem("1600x1200");
+  */
+  foreach (ref auto mi; modes) Mode.AddItem(va("%dx%d", mi.width, mi.height));
   Mode.SetInitialValue(GetModeValue());
+  Mode.ValueChanging = delegate bool (Object Sender, int NewValue) {
+    EdWidth.Value = va("%d", modes[NewValue].width);
+    EdHeight.Value = va("%d", modes[NewValue].height);
+    return true;
+  };
   currentY += Mode.Height;
 
-  Width = MenuInputLine(NewChild(MenuInputLine));
-  Width.SetOrigin(ChoicesStartX+10, currentY);
-  Width.CursorXOffs = -10;
-  Width.Text = "Width";
-  Width.Value = GetCvarS('screen_width');
-  Width.DisableSlotRendering();
-  currentY += Width.Height;
 
-  Height = MenuInputLine(NewChild(MenuInputLine));
-  Height.SetOrigin(ChoicesStartX+10, currentY);
-  Height.CursorXOffs = -10;
-  Height.Text = "Height";
-  Height.Value = GetCvarS('screen_height');
-  Height.DisableSlotRendering();
-  currentY += Height.Height;
 
+  EdWidth = MenuInputLine(NewChild(MenuInputLine));
+  EdWidth.SetOrigin(ChoicesStartX+10, currentY);
+  EdWidth.CursorXOffs = -10;
+  EdWidth.Text = "Width";
+  EdWidth.Value = GetCvarS('screen_width');
+  EdWidth.DisableSlotRendering();
+  currentY += EdWidth.Height;
+
+  EdHeight = MenuInputLine(NewChild(MenuInputLine));
+  EdHeight.SetOrigin(ChoicesStartX+10, currentY);
+  EdHeight.CursorXOffs = -10;
+  EdHeight.Text = "Height";
+  EdHeight.Value = GetCvarS('screen_height');
+  EdHeight.DisableSlotRendering();
+  currentY += EdHeight.Height;
+
+  /*
   Depth = MenuChoiceEnum(NewChild(MenuChoiceEnum));
   Depth.SetOrigin(ChoicesStartX, currentY);
   Depth.Text = "Bit depth";
@@ -83,6 +94,7 @@ override void CreateChoices () {
   Depth.AddItem("32");
   Depth.SetInitialValue(GetDepthValue());
   currentY += Depth.Height;
+  */
 
   Windowed = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   Windowed.SetOrigin(ChoicesStartX, currentY);
@@ -130,11 +142,13 @@ final int GetModeValue () {
 //  GetDepthValue
 //
 //==========================================================================
+/*
 final int GetDepthValue () {
   int b = GetCvar('screen_bpp');
   foreach (auto bi; 0..3) if (depths[bi] == b) return bi;
   return 0;
 }
+*/
 
 
 //==========================================================================
@@ -145,8 +159,8 @@ final int GetDepthValue () {
 void ActivateSetMode (Object Sender) {
   SetCvar('screen_windowed', Windowed.Value);
   SetCvar('r_vsync', VSync.Value);
-  CmdBuf_AddText("SetResolution %d %d\n", atoi(Width.Value) ? atoi(Width.Value) : modes[Mode.Value].width,
-    atoi(Height.Value) ? atoi(Height.Value) : modes[Mode.Value].height);
+  CmdBuf_AddText("SetResolution %d %d\n", atoi(EdWidth.Value) ? atoi(EdWidth.Value) : modes[Mode.Value].width,
+    atoi(EdHeight.Value) ? atoi(EdHeight.Value) : modes[Mode.Value].height);
 }
 
 
@@ -161,7 +175,9 @@ defaultproperties {
   modes[3].width = 1152; modes[3].height = 864;
   modes[4].width = 1280; modes[4].height = 1024;
   modes[5].width = 1600; modes[5].height = 1200;
+  /*
   depths[0] = 16;
   depths[1] = 24;
   depths[2] = 32;
+  */
 }
