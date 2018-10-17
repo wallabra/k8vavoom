@@ -1122,13 +1122,12 @@ final void NewChaseDir()
 
     dist = DistTo(Target);
 
-    if (Target.Health > 0)
-      {
+    if (Target.Health > 0) {
       // Enemy target is alive
       if (GetCvar('monster_backing') && MissileState &&
         /*actor->type != MT_SKULL &&*/
         ((!Target.MissileState && dist < MELEERANGE * 2.0) ||
-        (Target.Player && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
+        (Target.Player && PlayerEx(Target.Player).ReadyWeapon && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
         dist < MELEERANGE * 3.0)))
       {
         // Back away from melee attacker
