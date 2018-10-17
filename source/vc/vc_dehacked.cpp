@@ -1013,25 +1013,34 @@ static void ReadPars (int) {
       GCon->Logf(NAME_Init, "WARNING! Unknown key in Pars section (%s).", String);
       continue;
     }
-    if (VStr::NICmp(String, "par", 3) || (vuint8)String[3] > ' ') return;
-    strtok(String, " ");
-    char *Num1 = strtok(nullptr, " ");
-    char *Num2 = strtok(nullptr, " ");
-    char *Num3 = strtok(nullptr, " ");
-    if (!Num1 || !Num2) {
-      GCon->Logf(NAME_Init, "WARNING! Bad par time");
+    TArray<VStr> cmda;
+    VStr line = VStr(String);
+    line.splitOnBlanks(cmda);
+    //GCon->Logf(":::<%s>\n=== len: %d", *line, cmda.length()); for (int f = 0; f < cmda.length(); ++f) GCon->Logf("  %d: <%s>", f, *cmda[f]);
+    if (cmda.length() < 1) return;
+    if (cmda[0].ICmp("par") != 0) return;
+    if (cmda.length() < 3 || cmda.length() > 4) {
+      GCon->Logf(NAME_Init, "WARNING! Bad par time around line %d", dehCurrLine);
       continue;
     }
-    VName MapName;
-    int Par;
-    if (Num3) {
-      MapName = va("e%cm%c", Num1[0], Num2[0]);
-      Par = atoi(Num3);
-    } else {
-      MapName = va("map%02d", atoi(Num1)%100);
-      Par = atoi(Num2);
+    int nums[4];
+    bool ok = true;
+    memset(nums, 0, sizeof(nums));
+    for (int f = 1; f < cmda.length(); ++f) {
+      if (!cmda[f].convertInt(&nums[f]) || nums[f] < 0) {
+        GCon->Logf(NAME_Init, "WARNING! Bad par time around line %d", dehCurrLine);
+        ok = false;
+        break;
+      }
     }
-    P_SetParTime(MapName, Par);
+    if (!ok) continue;
+    if (cmda.length() == 4) {
+      VName MapName = va("e%dm%d", nums[1], nums[2]);
+      P_SetParTime(MapName, nums[3]);
+    } else {
+      VName MapName = va("map%02d", nums[1]%100);
+      P_SetParTime(MapName, nums[2]);
+    }
   }
   unguard;
 }
@@ -1503,6 +1512,10 @@ void ProcessDehackedFiles () {
   EngStrings->LoadStrings("en");
 
   // parse dehacked patches
+  if (LumpNum >= 0) {
+    GCon->Logf(NAME_Init, "Processing dehacked patch lump: %s", *W_FullLumpName(LumpNum));
+    LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
+  }
   if (p) {
     while (++p != GArgs.Count() && GArgs[p][0] != '-') {
       GCon->Logf(NAME_Init, "Processing dehacked patch '%s'", GArgs[p]);
@@ -1510,10 +1523,6 @@ void ProcessDehackedFiles () {
       if (!AStrm) { GCon->Logf(NAME_Init, "No dehacked file '%s'", GArgs[p]); continue; }
       LoadDehackedFile(AStrm);
     }
-  }
-  if (LumpNum >= 0) {
-    GCon->Logf(NAME_Init, "Processing dehacked patch lump");
-    LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
   }
 
   for (int i = 0; i < EntClasses.Num(); ++i) {
