@@ -640,8 +640,7 @@ void IM_DrawCooperativeStats () {
   // draw stats
   y = NG_STATSY+TextHeight("kills");
 
-  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-  {
+  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
     i = RepInfo.PlayerNum;
     x = NG_STATSX;
     R_GetPicInfo(p[i], &info);
@@ -665,25 +664,21 @@ void IM_DrawCooperativeStats () {
   }
 }
 
+
 //==========================================================================
 //
 //  IM_UpdateCooperativeStats
 //
 //==========================================================================
-
-void IM_UpdateCooperativeStats(float DeltaTime)
-{
+void IM_UpdateCooperativeStats (float DeltaTime) {
   int fsum;
   PlayerReplicationInfo RepInfo;
 
   bool stillticking;
 
-  if (ClGame.skipintermission && ng_state != 10)
-  {
+  if (ClGame.skipintermission && ng_state != 10) {
     ClGame.skipintermission = 0;
-
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount*100)/TotalKills;
       cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount*100)/TotalItems;
       cnt_secret[RepInfo.PlayerNum] = (RepInfo.SecretCount*100)/TotalSecret;
@@ -693,100 +688,79 @@ void IM_UpdateCooperativeStats(float DeltaTime)
     ng_state = 10;
   }
 
-  if (ng_state == 2)
-  {
-    if (!(int(btime*35.0)&3))
-      LocalSound('weapons/pistol');
+  if (ng_state == 2) {
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
     stillticking = false;
 
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_kills[RepInfo.PlayerNum] += 2;
-
-      if (cnt_kills[RepInfo.PlayerNum] >= (RepInfo.KillCount*100)/TotalKills)
+      if (cnt_kills[RepInfo.PlayerNum] >= (RepInfo.KillCount*100)/TotalKills) {
         cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount*100)/TotalKills;
-      else
+      } else {
         stillticking = true;
+      }
     }
 
-    if (!stillticking)
-    {
+    if (!stillticking) {
       LocalSound('weapons/rocklx');
-      ng_state++;
+      ++ng_state;
     }
-  }
-  else if (ng_state == 4)
-  {
-    if (!(int(btime*35.0)&3))
-      LocalSound('weapons/pistol');
+  } else if (ng_state == 4) {
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
     stillticking = false;
 
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_items[RepInfo.PlayerNum] += 2;
-      if (cnt_items[RepInfo.PlayerNum] >= (RepInfo.ItemCount*100)/TotalItems)
+      if (cnt_items[RepInfo.PlayerNum] >= (RepInfo.ItemCount*100)/TotalItems) {
         cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount*100)/TotalItems;
-      else
+      } else {
         stillticking = true;
+      }
     }
-    if (!stillticking)
-    {
+    if (!stillticking) {
       LocalSound('weapons/rocklx');
-      ng_state++;
+      ++ng_state;
     }
-  }
-  else if (ng_state == 6)
-  {
-    if (!(int(btime*35.0)&3))
-      LocalSound('weapons/pistol');
+  } else if (ng_state == 6) {
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
     stillticking = false;
 
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_secret[RepInfo.PlayerNum] += 2;
-
-      if (cnt_secret[RepInfo.PlayerNum] >= RepInfo.SecretCount*100/TotalSecret)
+      if (cnt_secret[RepInfo.PlayerNum] >= RepInfo.SecretCount*100/TotalSecret) {
         cnt_secret[RepInfo.PlayerNum] = RepInfo.SecretCount*100/TotalSecret;
-      else
+      } else {
         stillticking = true;
+      }
     }
 
-    if (!stillticking)
-    {
+    if (!stillticking) {
       LocalSound('weapons/rocklx');
-      ng_state += 1;
+      ++ng_state;
     }
-  }
-  else if (ng_state == 8)
-  {
-    if (!(int(btime*35.0)&3))
-      LocalSound('weapons/pistol');
+  } else if (ng_state == 8) {
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
     stillticking = false;
 
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_frags[RepInfo.PlayerNum] += 1;
-
-      if (cnt_frags[RepInfo.PlayerNum] >= RepInfo.Frags)
+      if (cnt_frags[RepInfo.PlayerNum] >= RepInfo.Frags) {
         cnt_frags[RepInfo.PlayerNum] = RepInfo.Frags;
-      else
+      } else {
         stillticking = true;
+      }
     }
 
-    if (!stillticking)
-    {
+    if (!stillticking) {
       LocalSound('*death');
-      ng_state++;
+      ++ng_state;
     }
-  }
-  else if (ng_state == 10)
-  {
-    if (ClGame.skipintermission)
-    {
+  } else if (ng_state == 10) {
+    if (ClGame.skipintermission) {
       LocalSound('weapons/shotgr');
       if (checkForDoom2()) {
         IM_InitNoState();
@@ -794,28 +768,24 @@ void IM_UpdateCooperativeStats(float DeltaTime)
         IM_InitNextLoc();
       }
     }
-  }
-  else if (ng_state&1)
-  {
+  } else if (ng_state&1) {
     cnt_pause -= DeltaTime;
-    if (cnt_pause <= 0.0)
-    {
-      ng_state++;
+    if (cnt_pause <= 0.0) {
+      ++ng_state;
       cnt_pause = 1.0;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  IM_InitDeathmatchStats
 //
 //==========================================================================
-
-void IM_InitDeathmatchStats()
-{
-  int           i;
-  int           j;
+void IM_InitDeathmatchStats () {
+  int i;
+  int j;
   PlayerReplicationInfo RepInfo;
 
   interstate = IMS_Stats;
@@ -824,22 +794,20 @@ void IM_InitDeathmatchStats()
 
   cnt_pause = 1.0;
 
-  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-  {
+  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
     i = RepInfo.PlayerNum;
     dm_Frags[i] = 0;
     dm_Deaths[i] = 0;
   }
 }
 
+
 //==========================================================================
 //
 //  IM_DrawDeathmatchStats
 //
 //==========================================================================
-
-void IM_DrawDeathmatchStats()
-{
+void IM_DrawDeathmatchStats () {
   int y;
   picinfo_t info;
   PlayerReplicationInfo RepInfo;
@@ -854,10 +822,8 @@ void IM_DrawDeathmatchStats()
   // draw stats
   y = DM_MATRIXY;
 
-  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-  {
-    if (RepInfo.PlayerNum == ClGame.cl.ClientNum)
-    {
+  foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
+    if (RepInfo.PlayerNum == ClGame.cl.ClientNum) {
       R_GetPicInfo(star, &info);
       DrawPic(DM_MATRIXX-info.width-5, y-8, star);
     }
@@ -872,45 +838,36 @@ void IM_DrawDeathmatchStats()
   }
 }
 
+
 //==========================================================================
 //
 //  IM_UpdateDeathmatchStats
 //
 //==========================================================================
-
-void IM_UpdateDeathmatchStats(float DeltaTime)
-{
+void IM_UpdateDeathmatchStats (float DeltaTime) {
   int i;
 
   bool stillticking;
   PlayerReplicationInfo RepInfo;
 
-  if (ClGame.skipintermission && dm_state != 4)
-  {
+  if (ClGame.skipintermission && dm_state != 4) {
     ClGame.skipintermission = 0;
-
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       dm_Frags[RepInfo.PlayerNum] = RepInfo.Frags;
       dm_Deaths[RepInfo.PlayerNum] = RepInfo.Deaths;
     }
-
     LocalSound('weapons/rocklx');
     dm_state = 4;
   }
 
-  if (dm_state == 2)
-  {
-    if (!(int(btime*35.0)&3))
-      LocalSound('weapons/pistol');
+  if (dm_state == 2) {
+    if (!(int(btime*35.0)&3)) LocalSound('weapons/pistol');
 
     stillticking = false;
 
-    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
-    {
+    foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       i = RepInfo.PlayerNum;
-      if (dm_Frags[i] != RepInfo.Frags)
-      {
+      if (dm_Frags[i] != RepInfo.Frags) {
         if (RepInfo.Frags < 0)
           dm_Frags[i]--;
         else
@@ -918,8 +875,7 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
 
         stillticking = true;
       }
-      if (dm_Deaths[i] != RepInfo.Deaths)
-      {
+      if (dm_Deaths[i] != RepInfo.Deaths) {
         if (RepInfo.Deaths < 0)
           dm_Deaths[i]--;
         else
@@ -928,32 +884,23 @@ void IM_UpdateDeathmatchStats(float DeltaTime)
         stillticking = true;
       }
     }
-    if (!stillticking)
-    {
+    if (!stillticking) {
       LocalSound('weapons/rocklx');
-      dm_state++;
+      ++dm_state;
     }
-
-  }
-  else if (dm_state == 4)
-  {
-    if (ClGame.skipintermission)
-    {
+  } else if (dm_state == 4) {
+    if (ClGame.skipintermission) {
       LocalSound('misc/gibbed');
-
       if (checkForDoom2()) {
         IM_InitNoState();
       } else {
         IM_InitNextLoc();
       }
     }
-  }
-  else if (dm_state&1)
-  {
+  } else if (dm_state&1) {
     cnt_pause -= DeltaTime;
-    if (cnt_pause <= 0.0)
-    {
-      dm_state++;
+    if (cnt_pause <= 0.0) {
+      ++dm_state;
       cnt_pause = 1.0;
     }
   }
@@ -1052,6 +999,8 @@ name TextFlat;
 int TextPic;
 
 bool imDrawWholeText;
+int hubTextHeight;
+int hubTextWidth;
 
 
 //==========================================================================
@@ -1075,6 +1024,8 @@ void IM_InitText () {
     HubText = ClGame.im.Text;
   }
   HubCount = float(strlen(HubText))*TEXTSPEED+TEXTWAIT;
+
+  hubTextHeight = -1; // later
 
   TextFlat = '';
   TextPic = 0;
@@ -1119,10 +1070,11 @@ final int IM_GetCurrTextLength () {
 //
 //==========================================================================
 void IM_DrawText () {
+  SetSize(GetVirtualWidth(), GetVirtualHeight());
   // erase the entire screen to a tiled background
        if (TextPic) DrawFullScreenPic(TextPic);
-  else if (TextFlat) FillRectWithFlat(0, 0, 640, 480, TextFlat);
-  else R_FillRect(0, 0, 640, 480, 0);
+  else if (TextFlat) FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
+  else R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0);
 
   // draw some of the text onto the screen
   //int count = clamp(int((intertime-0.3)/TEXTSPEED), 0, HubText.length);
@@ -1130,7 +1082,13 @@ void IM_DrawText () {
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(170, 150, HubText[0..count]);
+  if (hubTextHeight < 0) {
+    hubTextHeight = max(8, TextHeight(HubText));
+    hubTextWidth = max(8, TextWidth(HubText));
+    //writeln(HubText);
+    //writeln("text size: ", hubTextWidth, "x", hubTextHeight);
+  }
+  DrawText((GetVirtualWidth()-hubTextWidth)/2, (GetVirtualHeight()-hubTextHeight)/2, HubText[0..count]);
 }
 
 
