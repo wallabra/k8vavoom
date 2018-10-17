@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenControls : MenuScreen;
 
 int NumControls;
@@ -54,7 +53,7 @@ array!bind dbinds_list;
 array!bind binds_list;
 array!menukey menukeys_list;
 
-string AltTitle;      // Alternate Title for the screen (if any)
+string AltTitle; // alternate title for the screen (if any)
 
 
 //==========================================================================
@@ -157,7 +156,7 @@ void AddText (string Text) {
 //
 //==========================================================================
 void CreateControlKeyChoices () {
-  print("=== CreateControlKeyChoices ===");
+  //print("=== CreateControlKeyChoices ===");
 
   AddControl("Move foward", "+Forward", "-Forward");
   AddControl("Move backward", "+Backward", "-Backward");
@@ -165,15 +164,18 @@ void CreateControlKeyChoices () {
   AddControl("Turn right", "+Right", "-Right");
   AddControl("Move left", "+MoveLeft", "-MoveLeft");
   AddControl("Move right", "+MoveRight", "-MoveRight");
+  AddControl("Fire", "+Attack", "-Attack");
+  AddControl("Use", "+Use", "-Use");
+  AddControl("Run", "+Speed", "-Speed");
+  AddControl("Strafe", "+Strafe", "-Strafe");
+
+  AddText("");
+
   AddControl("Look up", "+LookUp", "-LookUp");
   AddControl("Look down", "+LookDown", "-LookDown");
   AddControl("Centre look", "+LookCentre", "-LookCentre");
   AddControl("Jump", "+Jump", "-Jump");
-  AddControl("Fire", "+Attack", "-Attack");
   AddControl("Alt Fire", "+AltAttack", "-AltAttack");
-  AddControl("Use", "+Use", "-Use");
-  AddControl("Strafe", "+Strafe", "-Strafe");
-  AddControl("Run", "+Speed", "-Speed");
   AddControl("Mouse look", "+MouseLook", "-MouseLook");
 
   AddText("");
@@ -190,6 +192,8 @@ void CreateControlKeyChoices () {
   AddControl("Previous weapon", "impulse 17", "");
   AddControl("Next weapon", "impulse 18", "");
   AddControl("Toggle Console", "ToggleConsole", "");
+  AddControl("Smaller view", "SizeDown", "");
+  AddControl("Larger view", "SizeUp", "");
 
   AddText("");
   AddControl("Quick Save", "QuickSave", "");
@@ -204,6 +208,8 @@ void CreateControlKeyChoices () {
     AddControl("Show keys", "sb_show_keys 1", "sb_show_keys 0");
     AddControl("Show objectives", "sb_show_objectives 1", "sb_show_objectives 0");
   }
+
+  Height = ChoicesStartY+NumControls*10;
 }
 
 
@@ -213,7 +219,7 @@ void CreateControlKeyChoices () {
 //
 //==========================================================================
 override void CreateChoices () {
-  print("=== CreateChoices (%n) ===", GetClassName(Class));
+  //print("=== CreateChoices (%n) ===", GetClassName(Class));
   CreateControlKeyChoices();
 }
 
