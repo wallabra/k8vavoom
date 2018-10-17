@@ -116,13 +116,17 @@ IMPLEMENT_FUNCTION(VObject, CmdBuf_AddText) {
 
 
 IMPLEMENT_FUNCTION(VObject, KBCheatClearAll) {
+#ifdef CLIENT
   VInputPublic::KBCheatClearAll();
+#endif
 }
 
 IMPLEMENT_FUNCTION(VObject, KBCheatAppend) {
   P_GET_STR(concmd);
   P_GET_STR(keys);
+#ifdef CLIENT
   VInputPublic::KBCheatAppend(keys, concmd);
+#endif
 }
 
 

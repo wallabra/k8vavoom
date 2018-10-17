@@ -82,10 +82,10 @@
   DECLARE_FUNCTION(StopLocalSounds)
 
   DECLARE_FUNCTION(TranslateKey)
+#endif // CLIENT
 
   DECLARE_FUNCTION(KBCheatClearAll)
   DECLARE_FUNCTION(KBCheatAppend)
-#endif // CLIENT
 
 #ifdef SERVER
   // map utilites

@@ -763,5 +763,7 @@ void Host_Shutdown () {
   //SAFE_SHUTDOWN(Z_Shutdown, ())
   //GCon->Log("VaVoom: shutdown complete");
 
+#ifdef CLIENT
   C_Shutdown(); // save log
+#endif
 }

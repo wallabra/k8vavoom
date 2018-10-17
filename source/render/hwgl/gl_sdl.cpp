@@ -110,8 +110,8 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
   int Height = AHeight;
   if (!Width || !Height) {
     // set defaults
-    Width = 640;
-    Height = 480;
+    Width = 800;
+    Height = 600;
   }
 
   // shut down current mode
