@@ -958,7 +958,7 @@ void VOpenGLDrawer::Setup2D () {
 //==========================================================================
 void VOpenGLDrawer::StartUpdate (bool allowClear) {
   guard(VOpenGLDrawer::StartUpdate);
-  glFinish();
+  //glFinish();
 
   VRenderLevelShared::ResetPortalPool();
 
@@ -1015,7 +1015,7 @@ void VOpenGLDrawer::FinishUpdate () {
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glFlush();
+    //glFlush();
   }
 }
 
@@ -1025,6 +1025,7 @@ void VOpenGLDrawer::FinishUpdate () {
 //  VOpenGLDrawer::BeginDirectUpdate
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::BeginDirectUpdate () {
   guard(VOpenGLDrawer::BeginDirectUpdate);
   glFinish();
@@ -1032,6 +1033,7 @@ void VOpenGLDrawer::BeginDirectUpdate () {
   if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, 0);
   unguard;
 }
+*/
 
 
 //==========================================================================
@@ -1039,12 +1041,14 @@ void VOpenGLDrawer::BeginDirectUpdate () {
 //  VOpenGLDrawer::EndDirectUpdate
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::EndDirectUpdate () {
   guard(VOpenGLDrawer::EndDirectUpdate);
   glDrawBuffer(GL_BACK);
   if (mainFBO) glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
   unguard;
 }
+*/
 
 
 //==========================================================================

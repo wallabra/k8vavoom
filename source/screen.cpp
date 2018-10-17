@@ -509,6 +509,7 @@ void SCR_Update () {
 //
 //==========================================================================
 void Draw_TeleportIcon () {
+  /*
   guard(Draw_TeleportIcon);
   if (W_CheckNumForName(NAME_teleicon) >= 0) {
     Drawer->BeginDirectUpdate();
@@ -516,6 +517,7 @@ void Draw_TeleportIcon () {
     Drawer->EndDirectUpdate();
   }
   unguard;
+  */
 }
 
 
@@ -525,6 +527,7 @@ void Draw_TeleportIcon () {
 //
 //==========================================================================
 void Draw_SaveIcon () {
+  /*
   guard(Draw_SaveIcon);
   if (W_CheckNumForName(NAME_saveicon) >= 0) {
     Drawer->BeginDirectUpdate();
@@ -532,6 +535,7 @@ void Draw_SaveIcon () {
     Drawer->EndDirectUpdate();
   }
   unguard;
+  */
 }
 
 
@@ -541,6 +545,7 @@ void Draw_SaveIcon () {
 //
 //==========================================================================
 void Draw_LoadIcon () {
+  /*
   guard(Draw_LoadIcon);
   if (W_CheckNumForName(NAME_loadicon) >= 0) {
     Drawer->BeginDirectUpdate();
@@ -548,6 +553,7 @@ void Draw_LoadIcon () {
     Drawer->EndDirectUpdate();
   }
   unguard;
+  */
 }
 
 

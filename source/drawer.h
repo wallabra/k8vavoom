@@ -132,8 +132,8 @@ public:
   virtual void StartUpdate (bool allowClear=true) = 0;
   virtual void Setup2D () = 0;
   virtual void Update() = 0;
-  virtual void BeginDirectUpdate() = 0;
-  virtual void EndDirectUpdate() = 0;
+  //virtual void BeginDirectUpdate() = 0;
+  //virtual void EndDirectUpdate() = 0;
   virtual void Shutdown() = 0;
   virtual void *ReadScreen(int*, bool*) = 0;
   virtual void ReadBackScreen(int, int, rgba_t*) = 0;
