@@ -1413,3 +1413,8 @@ void AM_Drawer () {
     //glColor4f(1, 1, 1, 1);
   }
 }
+
+
+COMMAND(Iddt) {
+  am_cheating = (am_cheating+1)%3;
+}

@@ -40,6 +40,7 @@ override void CreateChoices () {
   CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
   CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
   CreateOnOffCvar("Better sight for monsters", 'compat_better_sight');
+  CreateOnOffCvar("Allow vanilla cheatcodes", 'allow_vanilla_cheats');
   CreateFloatSliderCvar("Bobbing", 'movebob', 0.1, 0, 1);
   CreateFloatSliderCvar("Save compression", 'save_compression_level', 1, 0, 9);
 

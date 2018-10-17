@@ -115,6 +115,17 @@ IMPLEMENT_FUNCTION(VObject, CmdBuf_AddText) {
 }
 
 
+IMPLEMENT_FUNCTION(VObject, KBCheatClearAll) {
+  VInputPublic::KBCheatClearAll();
+}
+
+IMPLEMENT_FUNCTION(VObject, KBCheatAppend) {
+  P_GET_STR(concmd);
+  P_GET_STR(keys);
+  VInputPublic::KBCheatAppend(keys, concmd);
+}
+
+
 IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
   P_GET_PTR(VState, State);
   RET_BOOL(State ? R_AreSpritesPresent(State->SpriteIndex) : false);

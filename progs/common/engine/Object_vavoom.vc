@@ -268,6 +268,13 @@ native static final void CmdBuf_AddText (string format, ...) [printf,1];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// keyboard cheats
+
+native static final void KBCheatClearAll ();
+native static final void KBCheatAppend (string keys, string concmd);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // state methods
 
 native static final bool AreStateSpritesPresent (state State);

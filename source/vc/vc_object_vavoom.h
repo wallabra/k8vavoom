@@ -82,6 +82,9 @@
   DECLARE_FUNCTION(StopLocalSounds)
 
   DECLARE_FUNCTION(TranslateKey)
+
+  DECLARE_FUNCTION(KBCheatClearAll)
+  DECLARE_FUNCTION(KBCheatAppend)
 #endif // CLIENT
 
 #ifdef SERVER

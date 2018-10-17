@@ -54,21 +54,41 @@ int INITIAL_HEALTH;
 //
 //==========================================================================
 
-override void Init()
-{
+override void Init () {
   ::Init();
   InitTranslationTables();
   InitBotTypes();
+
+  writeln("*******************************************");
+
+  KBCheatClearAll();
+  if (IsAnyDoom2) {
+    KBCheatAppend("idclev##", "map map##");
+  } else {
+    KBCheatAppend("idclev##", "map e#m#");
+  }
+  KBCheatAppend("idkfa", "gimme backpack; gimme weapons; gimme ammo; gimme armor; gimme keys");
+  KBCheatAppend("idfa", "gimme backpack; gimme weapons; gimme ammo; gimme armor");
+  KBCheatAppend("idchoppers", "gimme choppers");
+  KBCheatAppend("idspispopd", "noclip");
+  KBCheatAppend("idclip", "noclip");
+  KBCheatAppend("iddqd", "god");
+  KBCheatAppend("iddt", "iddt");
+  KBCheatAppend("idbeholdv", "gimme Invulnerability");
+  KBCheatAppend("idbeholdb", "gimme Berserk");
+  KBCheatAppend("idbeholdi", "gimme Invisibility");
+  KBCheatAppend("idbeholdr", "gimme Suit");
+  KBCheatAppend("idbeholda", "gimme AllMap");
+  KBCheatAppend("idbeholdl", "gimme LightAmp");
 }
+
 
 //==========================================================================
 //
 //  InitNewGame
 //
 //==========================================================================
-
-override void InitNewGame(int skill)
-{
+override void InitNewGame(int skill) {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');
   bRespawnItems = GetCvar('deathmatch') >= 2;

@@ -255,7 +255,7 @@ override void Cheat_Gimme()
   if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis")) i1 |= GIMME_INVISIBILITY;
   if (Cmd_CheckParm("Suit")) i1 |= GIMME_IRONFEET;
   if (Cmd_CheckParm("AllMap")) i1 |= GIMME_ALLMAP;
-  if (Cmd_CheckParm("LiteAmp")) i1 |= GIMME_INFRARED;
+  if (Cmd_CheckParm("LiteAmp") || Cmd_CheckParm("LightAmp")) i1 |= GIMME_INFRARED;
 
   // Health
   if (Cmd_CheckParm("Health")) i1 |= GIMME_HEALTH;
@@ -290,6 +290,35 @@ override void Cheat_Gimme()
         Wpn.Destroy();
       } else {
         print("CHEAT: got '%C'!", WpnCls);
+      }
+    }
+  }
+
+  // Choppers
+  if (Cmd_CheckParm("Choppers")) {
+    class!Weapon WpnCls;
+    foreach AllClasses(Weapon, WpnCls) {
+      if (WpnCls.default.bCheatNotWeapon) continue;
+      class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
+      if (repl && repl != WpnCls) continue;
+      auto st = FindClassState(WpnCls, 'Ready');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
+      //print("WPN: <%C>", WpnCls);
+      bool csfound = false;
+      for (class wcc = WpnCls; wcc; wcc = GetClassParent(wcc)) if (GetClassName(wcc) == 'Chainsaw') { csfound = true; break; }
+      //if (!csfound) for (class wcc = WpnCls; wcc; wcc = GetClassReplacee(wcc)) if (GetClassName(wcc) == 'Chainsaw') { csfound = true; break; }
+      if (!csfound) continue;
+      //print("WPN IS CHAINSAW!");
+      Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, false));
+      Wpn.AmmoGive1 = 0;
+      Wpn.AmmoGive2 = 0;
+      if (!Wpn.TryPickup(EntityEx(MO))) {
+        Wpn.Destroy();
+      } else {
+        print("CHEAT: got '%C'!", WpnCls);
+        ChangeWeapon(1);
+        break;
       }
     }
   }

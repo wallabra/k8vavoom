@@ -24,13 +24,10 @@
 //**************************************************************************
 
 
-//
-//  Input device class, handles actual reading of the input.
-//
-class VInputDevice : public VInterface
-{
+// input device class, handles actual reading of the input
+class VInputDevice : public VInterface {
 public:
-  //  VInputDevice interface.
+  // VInputDevice interface
   virtual void ReadInput() = 0;
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
@@ -38,47 +35,55 @@ public:
   static VInputDevice *CreateDevice();
 };
 
-//
-//  Input subsystem, handles all input events.
-//
-class VInputPublic : public VInterface
-{
+
+// input subsystem, handles all input events
+class VInputPublic : public VInterface {
 public:
-  int       ShiftDown;
-  int       CtrlDown;
-  int       AltDown;
+  enum { MAX_KBCHEAT_LENGTH = 128 };
 
-  VInputPublic()
-  : ShiftDown(0)
-  , CtrlDown(0)
-  , AltDown(0)
-  {}
+  struct CheatCode {
+    VStr keys;
+    VStr concmd;
+  };
 
-  //  System device related functions.
-  virtual void Init() = 0;
-  virtual void Shutdown() = 0;
+public:
+  int ShiftDown;
+  int CtrlDown;
+  int AltDown;
+  static TArray<CheatCode> kbcheats;
+  static char currkbcheat[MAX_KBCHEAT_LENGTH+1];
 
-  //  Input event handling.
-  virtual void PostEvent(event_t*) = 0;
-  virtual void KeyEvent(int, int) = 0;
-  virtual void ProcessEvents() = 0;
-  virtual int ReadKey() = 0;
+  VInputPublic () : ShiftDown(0), CtrlDown(0), AltDown(0) { currkbcheat[0] = 0; }
 
-  //  Handling of key bindings.
-  virtual void GetBindingKeys(const VStr&, int&, int&) = 0;
-  virtual void GetBinding(int, VStr&, VStr&) = 0;
-  virtual void SetBinding(int, const VStr&, const VStr&, bool = true) = 0;
-  virtual void WriteBindings(FILE*) = 0;
+  // system device related functions
+  virtual void Init () = 0;
+  virtual void Shutdown () = 0;
 
-  virtual int TranslateKey(int) = 0;
+  // input event handling
+  virtual void PostEvent (event_t *) = 0;
+  virtual void KeyEvent (int, int) = 0;
+  virtual void ProcessEvents () = 0;
+  virtual int ReadKey () = 0;
 
-  virtual int KeyNumForName(const VStr &Name) = 0;
-  virtual VStr KeyNameForNum(int KeyNr) = 0;
+  // handling of key bindings
+  virtual void GetBindingKeys (const VStr &, int &, int &) = 0;
+  virtual void GetBinding (int, VStr &, VStr &) = 0;
+  virtual void SetBinding (int, const VStr &, const VStr &, bool = true) = 0;
+  virtual void WriteBindings (FILE *) = 0;
+
+  virtual int TranslateKey (int) = 0;
+
+  virtual int KeyNumForName (const VStr &Name) = 0;
+  virtual VStr KeyNameForNum (int KeyNr) = 0;
 
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
-  static VInputPublic *Create();
+  static void KBCheatClearAll ();
+  static void KBCheatAppend (VStr keys, VStr concmd);
+  static bool KBCheatProcessor (event_t *);
+
+  static VInputPublic *Create ();
 };
 
-//  Global input handler.
+// global input handler
 extern VInputPublic *GInput;

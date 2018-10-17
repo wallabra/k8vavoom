@@ -34,6 +34,9 @@
 #include "ui/ui.h"
 
 
+static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);
+
+
 // input subsystem, handles all input events
 class VInput : public VInputPublic {
 public:
@@ -124,6 +127,10 @@ const char VInput::ShiftXForm[] = {
 };
 
 
+TArray<VInputPublic::CheatCode> VInputPublic::kbcheats;
+char VInputPublic::currkbcheat[VInputPublic::MAX_KBCHEAT_LENGTH+1];
+
+
 //==========================================================================
 //
 //  VInputPublic::Create
@@ -131,6 +138,118 @@ const char VInput::ShiftXForm[] = {
 //==========================================================================
 VInputPublic *VInputPublic::Create () {
   return new VInput();
+}
+
+
+//==========================================================================
+//
+//  VInputPublic::KBCheatClearAll
+//
+//==========================================================================
+void VInputPublic::KBCheatClearAll () {
+  kbcheats.clear();
+}
+
+
+//==========================================================================
+//
+//  VInputPublic::KBCheatAppend
+//
+//==========================================================================
+void VInputPublic::KBCheatAppend (VStr keys, VStr concmd) {
+  if (keys.length() == 0) return;
+  for (int f = 0; f < kbcheats.length(); ++f) {
+    if (kbcheats[f].keys.ICmp(keys) == 0) {
+      if (concmd.length() == 0) {
+        kbcheats.removeAt(f);
+      } else {
+        kbcheats[f].concmd = concmd;
+      }
+      return;
+    }
+  }
+  // reset cheat
+  currkbcheat[0] = 0;
+  CheatCode &cc = kbcheats.alloc();
+  cc.keys = keys;
+  cc.concmd = concmd;
+  //GCon->Logf("added cheat code '%s' (command: '%s')", *keys, *concmd);
+}
+
+
+//==========================================================================
+//
+//  VInputPublic::KBCheatProcessor
+//
+//==========================================================================
+bool VInputPublic::KBCheatProcessor (event_t *ev) {
+  if (!allow_vanilla_cheats) { currkbcheat[0] = 0; return false; }
+  if (ev->type != ev_keydown) return false;
+  if (ev->data1 < ' ' || ev->data1 >= 127) { currkbcheat[0] = 0; return false; }
+  int slen = (int)strlen(currkbcheat);
+  if (slen >= MAX_KBCHEAT_LENGTH) { currkbcheat[0] = 0; return false; }
+  currkbcheat[slen] = (char)ev->data1;
+  currkbcheat[slen+1] = 0;
+  ++slen;
+  int clen = kbcheats.length();
+  //GCon->Logf("C:<%s> (clen=%d)", currkbcheat, clen);
+  char digits[MAX_KBCHEAT_LENGTH+1];
+  for (int f = 0; f <= MAX_KBCHEAT_LENGTH; ++f) digits[f] = '0';
+  int digcount = 0;
+  bool wasCheat = false;
+  for (int cnum = 0; cnum < clen; ++cnum) {
+    CheatCode &cc = kbcheats[cnum];
+    //GCon->Logf("  check00:<%s> (with <%s>)", *cc.keys, currkbcheat);
+    if (cc.keys.length() < slen) continue; // too short
+    bool ok = true;
+    for (int f = 0; f < slen; ++f) {
+      char c1 = currkbcheat[f];
+      if (c1 >= 'A' && c1 <= 'Z') c1 = c1-'A'+'a';
+      char c2 = cc.keys[f];
+      if (c2 >= 'A' && c2 <= 'Z') c2 = c2-'A'+'a';
+      if (c1 == c2) continue;
+      if (c2 == '#' && (c1 >= '0' && c1 <= '9')) {
+        digits[digcount++] = c1;
+        continue;
+      }
+      ok = false;
+      break;
+    }
+    //GCon->Logf("  check01:<%s> (with <%s>): ok=%d", *cc.keys, currkbcheat, (ok ? 1 : 0));
+    if (!ok) continue;
+    if (cc.keys.length() == slen) {
+      // cheat complete
+      VStr concmd;
+      if (digcount > 0) {
+        // preprocess console command
+        int dignum = 0;
+        for (int f = 0; f < cc.concmd.length(); ++f) {
+          if (cc.concmd[f] == '#') {
+            if (dignum < digcount) {
+              concmd += digits[dignum++];
+            } else {
+              concmd += '0';
+            }
+          } else {
+            concmd += cc.concmd[f];
+          }
+        }
+      } else {
+        concmd = cc.concmd;
+      }
+      if (concmd.length()) {
+        if (concmd[concmd.length()-1] != '\n') concmd += "\n";
+        GCmdBuf << concmd;
+      }
+      // reset cheat
+      currkbcheat[0] = 0;
+      return true;
+    }
+    wasCheat = true;
+  }
+  // nothing was found, reset
+  if (!wasCheat) currkbcheat[0] = 0;
+  return false;
 }
 
 
@@ -259,17 +378,18 @@ void VInput::ProcessEvents () {
       if (ev->type == ev_keydown) AltDown |= 2;;
     }
 
-    if (C_Responder(ev)) continue;
-    if (CT_Responder(ev)) continue;
-    if (MN_Responder(ev)) continue;
-    if (GRoot->Responder(ev)) continue;
+    if (C_Responder(ev)) continue; // console
+    if (CT_Responder(ev)) continue; // chat
+    if (MN_Responder(ev)) continue; // menu
+    if (GRoot->Responder(ev)) continue; // root widget
 
     if (cl && !GClGame->intermission) {
+      if (KBCheatProcessor(ev)) continue; // cheatcode typed
       if (SB_Responder(ev)) continue; // status window ate it
       if (AM_Responder(ev)) continue; // automap ate it
     }
 
-    if (F_Responder(ev)) continue;
+    if (F_Responder(ev)) continue; // finale
 
     // key bindings
     if (ev->type == ev_keydown) {
