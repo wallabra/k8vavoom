@@ -1117,19 +1117,15 @@ vuint32 VRenderLevelShared::GetFade(sec_region_t *Reg)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  R_DrawPic
 //
 //==========================================================================
-
-void R_DrawPic(int x, int y, int handle, float Alpha)
-{
+void R_DrawPic (int x, int y, int handle, float Alpha) {
   guard(R_DrawPic);
-  if (handle < 0)
-  {
-    return;
-  }
+  if (handle < 0) return;
 
   VTexture *Tex = GTextureManager(handle);
   x -= Tex->GetScaledSOffset();

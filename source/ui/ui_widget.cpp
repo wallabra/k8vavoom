@@ -27,6 +27,9 @@
 #include "drawer.h"
 #include "ui.h"
 
+extern VCvarB gl_pic_filtering;
+extern VCvarB gl_font_filtering;
+
 
 IMPLEMENT_CLASS(V, Widget);
 
@@ -892,6 +895,9 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, in
   if (HAlign == hcentre) cx -= Font->StringWidth(String)/2;
   if (HAlign == hright) cx -= Font->StringWidth(String);
 
+  bool oldflt = gl_pic_filtering;
+  gl_pic_filtering = gl_font_filtering;
+
   for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::GetChar(SPtr);
 
@@ -908,6 +914,9 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, in
     }
     cx += w+Kerning;
   }
+
+  gl_pic_filtering = oldflt;
+
   LastX = cx;
   LastY = cy;
   unguard;
@@ -966,7 +975,10 @@ void VWidget::DrawCursorAt (int x, int y) {
   guard(VWidget::DrawCursorAt);
   if ((int)(host_time*4)&1) {
     int w;
+    bool oldflt = gl_pic_filtering;
+    gl_pic_filtering = gl_font_filtering;
     DrawPic(x, y, Font->GetChar('_', &w, CR_UNTRANSLATED));
+    gl_pic_filtering = oldflt;
   }
   unguard;
 }

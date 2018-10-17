@@ -838,7 +838,6 @@ protected:
   static VCvarI texture_filter;
   static VCvarI sprite_filter;
   static VCvarI model_filter;
-  static VCvarB gl_2d_filtering;
   static VCvarI gl_texture_filter_anisotropic;
   static VCvarB clear;
   static VCvarB blend_sprites;

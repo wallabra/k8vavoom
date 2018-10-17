@@ -25,6 +25,7 @@
 #include "gl_local.h"
 
 
+extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 
 
@@ -268,7 +269,7 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
   */
 
   SetSpriteLump(Tex, Trans, CMap);
-  int flt = (gl_2d_filtering ? GL_LINEAR : GL_NEAREST);
+  int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
   if (max_anisotropy > 1.0) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);

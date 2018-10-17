@@ -31,6 +31,9 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VCvarB gl_pic_filtering("gl_pic_filtering", true, "Filter interface pictures.", CVAR_Archive);
+VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
+
 static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive);
 static VCvarB gl_disable_reverse_z("gl_disable_reverse_z", false, "Completely disable reverse z, even if it is available? (not permanent)", 0);
 VCvarB VOpenGLDrawer::gl_dbg_adv_reverse_z("gl_dbg_adv_reverse_z", false, "Don't do this.", 0); // force-enable reverse z for advanced renderer
@@ -38,7 +41,6 @@ VCvarB VOpenGLDrawer::gl_dbg_adv_reverse_z("gl_dbg_adv_reverse_z", false, "Don't
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite interpolation mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::model_filter("gl_model_filter", "3", "Model interpolation mode.", CVAR_Archive);
-VCvarB VOpenGLDrawer::gl_2d_filtering("gl_2d_filtering", false, "Filter 2D interface.", CVAR_Archive);
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "1", "Texture anisotropic filtering.", CVAR_Archive);
 VCvarB VOpenGLDrawer::clear("gl_clear", true, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
