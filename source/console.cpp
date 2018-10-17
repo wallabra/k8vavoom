@@ -83,6 +83,8 @@ static int c_autocompleteIndex = -1;
 static VStr c_autocompleteString;
 static FConsoleLog ConsoleLog;
 
+static FILE *logfout = nullptr;
+
 
 //==========================================================================
 //
@@ -92,6 +94,15 @@ static FConsoleLog ConsoleLog;
 //
 //==========================================================================
 void C_Init () {
+  {
+    auto v = GArgs.CheckValue("-logfile");
+    if (v) logfout = fopen(v, "w");
+  }
+
+#ifdef _WIN32
+  if (!logfout) logfout = fopen("conlog.log", "w");
+#endif
+
   memset(clines, 0, sizeof(clines));
   /*
   c_history_last = 0;
@@ -110,6 +121,8 @@ void C_Init () {
 //
 //==========================================================================
 void C_Shutdown () {
+  if (logfout) fclose(logfout);
+  logfout = nullptr;
   c_autocompleteString.Clean();
 }
 
@@ -500,31 +513,21 @@ static void DoPrint (const char *buf) {
 //
 //==========================================================================
 void FConsoleDevice::Serialise (const char *V, EName Event) {
-  VStr rc = VStr(V).RemoveColours();
-  dprintf("%s: %s\n", VName::SafeString(Event), *rc);
+  //dprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
-  bool badSeedFound = false;
-  for (const char *s = *rc; *s; ++s) {
-    if ((vuint8)*s < ' ') {
-      if (*s != '\n' && *s != '\t') {
-        badSeedFound = true;
-        break;
-      }
-    } else if ((vuint8)*s == 127) {
-      badSeedFound = true;
-      break;
-    }
+  if (!V) V = "";
+  if (VStr::MustBeSanitized(V)) {
+    VStr rc = VStr(V).RemoveColours();
+    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), *rc);
+#ifndef _WIN32
+    printf("%s: %s\n", VName::SafeString(Event), *rc);
+#endif
+  } else {
+    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), V);
+#ifndef _WIN32
+    printf("%s: %s\n", VName::SafeString(Event), V);
+#endif
   }
-  if (badSeedFound) {
-    for (char *s = rc.GetMutableCharPointer(0); *s; ++s) {
-      if ((vuint8)*s < ' ') {
-        if (*s != '\n' && *s != '\t') *s = ' ';
-      } else if ((vuint8)*s == 127) {
-        *s = ' ';
-      }
-    }
-  }
-  printf("%s: %s\n", VName::SafeString(Event), *rc);
   DoPrint(V);
   DoPrint("\n");
 }
@@ -537,5 +540,18 @@ void FConsoleDevice::Serialise (const char *V, EName Event) {
 //==========================================================================
 void FConsoleLog::Serialise (const char *Text, EName Event) {
   if (Event == NAME_Dev && !developer) return;
+  if (!Text) return;
   DoPrint(Text);
+  if (VStr::MustBeSanitized(Text)) {
+    VStr rc = VStr(Text).RemoveColours();
+    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), *rc);
+#ifndef _WIN32
+    printf("%s: %s\n", VName::SafeString(Event), *rc);
+#endif
+  } else {
+    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), Text);
+#ifndef _WIN32
+    printf("%s: %s\n", VName::SafeString(Event), Text);
+#endif
+  }
 }

@@ -762,4 +762,6 @@ void Host_Shutdown () {
   //k8:no need to do this:SAFE_SHUTDOWN(VName::StaticExit, ())
   //SAFE_SHUTDOWN(Z_Shutdown, ())
   //GCon->Log("VaVoom: shutdown complete");
+
+  C_Shutdown(); // save log
 }

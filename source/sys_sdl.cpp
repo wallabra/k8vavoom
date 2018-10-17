@@ -368,15 +368,17 @@ int main (int argc, char **argv) {
       }
     }
   } catch (VavoomError &e) {
+    //printf("\n%s\n", e.message);
+    //dprintf("\n\nERROR: %s\n", e.message);
+    GCon->Logf("\n\nERROR: %s", e.message);
     Host_Shutdown();
-    printf("\n%s\n", e.message);
-    dprintf("\n\nERROR: %s\n", e.message);
     SDL_Quit();
     exit(1);
   } catch (...) {
+    //dprintf("\n\nExiting due to external exception\n");
+    //fprintf(stderr, "\nExiting due to external exception\n");
+    GCon->Logf("\nExiting due to external exception");
     Host_Shutdown();
-    dprintf("\n\nExiting due to external exception\n");
-    fprintf(stderr, "\nExiting due to external exception\n");
     throw;
   }
 #ifdef _WIN32
