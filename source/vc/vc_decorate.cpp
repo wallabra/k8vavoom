@@ -1014,6 +1014,7 @@ __attribute__((unused)) static void SetFieldClass (VObject *Obj, VName FieldName
 static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName, TArray<VClassFixup> &ClassFixups) {
   guard(AddClassFixup);
   VField *F = Class->FindFieldChecked(FieldName);
+  //fprintf(stderr, "AddClassFixup0: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *FieldName, *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
   CF.Offset = F->Ofs;
   CF.Name = ClassName;
@@ -1030,6 +1031,7 @@ static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName
 //==========================================================================
 static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, TArray<VClassFixup> &ClassFixups) {
   guard(AddClassFixup);
+  //fprintf(stderr, "AddClassFixup1: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *Field->GetFullName(), *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
   CF.Offset = Field->Ofs;
   CF.Name = ClassName;
@@ -2074,12 +2076,13 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   if (Class) {
     // copy class fixups of the parent class
     for (int i = 0; i < ClassFixups.Num(); ++i) {
-      VClassFixup &CF = ClassFixups[i];
-      if (CF.Class == ParentClass) {
+      VClassFixup *CF = &ClassFixups[i];
+      if (CF->Class == ParentClass) {
         VClassFixup &NewCF = ClassFixups.Alloc();
-        NewCF.Offset = CF.Offset;
-        NewCF.Name = CF.Name;
-        NewCF.ReqParent = CF.ReqParent;
+        CF = &ClassFixups[i]; // array can be resized, so update cache
+        NewCF.Offset = CF->Offset;
+        NewCF.Name = CF->Name;
+        NewCF.ReqParent = CF->ReqParent;
         NewCF.Class = Class;
       }
     }
@@ -3354,9 +3357,10 @@ void ProcessDecorateScripts () {
   // set class properties
   for (int i = 0; i < ClassFixups.Num(); ++i) {
     VClassFixup &CF = ClassFixups[i];
+    if (!CF.ReqParent) Sys_Error("Invalid decorate class fixup (no parent); class is '%s', offset is %d, name is '%s'", (CF.Class ? *CF.Class->GetFullName() : "None"), CF.Offset, *CF.Name);
     check(CF.ReqParent);
     if (CF.Name.ICmp("None") == 0) {
-      *(VClass**)(CF.Class->Defaults+CF.Offset) = nullptr;
+      *(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
     } else {
       VClass *C = VClass::FindClassLowerCase(*CF.Name.ToLower());
       if (!C) {
