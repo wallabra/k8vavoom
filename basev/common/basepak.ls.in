@@ -52,6 +52,7 @@ sprites/iceca0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/iceca0.png
 sprites/icecb0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecb0.png
 sprites/icecc0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecc0.png
 sprites/icecd0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecd0.png
+sprites/pista0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/pista0.png
 sprites/tnt1a0.lmp    @CMAKE_CURRENT_SOURCE_DIR@/sprites/tnt1a0.lmp
 sprites/unkna0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/unkna0.png
 
