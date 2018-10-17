@@ -90,6 +90,14 @@ override void CreateChoices () {
     CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');
   }
 
+  CreateOnOffCvar("Global Autoaim", 'autoaim');
+  CreateOnOffCvar("Autoaim for hitscan weapon", 'k8HitscanAutoAim');
+  CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');
+  CreateOnOffCvar("Berserk autoswitch", 'k8BerserkSwitch');
+  CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
+  CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
+  CreateOnOffCvar("Better sight for monsters", 'compat_better_sight');
+
 
   CreateChoiceSubHeader("Headshots Options");
   CreateOnOffCvar("Headshots", 'k8HSEnabled');
