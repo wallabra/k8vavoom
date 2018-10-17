@@ -22,49 +22,54 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
 #include "render/r_shared.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-struct FMapSongInfo
-{
+struct FMapSongInfo {
   VName MapName;
   VName SongName;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+struct ParTimeInfo {
+  VName MapName;
+  int par;
+};
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-VName P_TranslateMap(int map);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+VName P_TranslateMap (int map);
 
 static void ParseMapInfo(VScriptParser *sc);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static mapInfo_t      DefaultMap;
-static TArray<mapInfo_t>  MapInfo;
+static mapInfo_t DefaultMap;
+static TArray<mapInfo_t> MapInfo;
 static TArray<FMapSongInfo> MapSongList;
-static VClusterDef      DefaultClusterDef;
-static TArray<VClusterDef>  ClusterDefs;
-static TArray<VEpisodeDef>  EpisodeDefs;
-static TArray<VSkillDef>  SkillDefs;
+static VClusterDef DefaultClusterDef;
+static TArray<VClusterDef> ClusterDefs;
+static TArray<VEpisodeDef> EpisodeDefs;
+static TArray<VSkillDef> SkillDefs;
 
-// CODE --------------------------------------------------------------------
+static bool mapinfoParsed = false;
+static TArray<ParTimeInfo> partimes; // not a hashmap, so i can use `ICmp`
+
+
+//==========================================================================
+//
+//  findSavedPar
+//
+//  returns -1 if not found
+//
+//==========================================================================
+static int findSavedPar (VName map) {
+  if (map == NAME_None) return -1;
+  for (int f = partimes.length()-1; f >= 0; --f) {
+    if (VStr::ICmp(*partimes[f].MapName, *map) == 0) return partimes[f].par;
+  }
+  return -1;
+}
+
 
 //==========================================================================
 //
@@ -117,58 +122,35 @@ static int loadSkyTexture (VName name) {
 //  InitMapInfo
 //
 //==========================================================================
-
-void InitMapInfo()
-{
+void InitMapInfo () {
   guard(InitMapInfo);
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Global))
-  {
-    if (W_LumpName(Lump) == NAME_mapinfo)
-    {
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) == NAME_mapinfo) {
       GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
-      ParseMapInfo(new VScriptParser(*W_LumpName(Lump),
-        W_CreateLumpReaderNum(Lump)));
+      ParseMapInfo(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
-  //  Optionally parse script file.
-  /*
-  if (fl_devmode && FL_FileExists("scripts/mapinfo.txt"))
-  {
-    ParseMapInfo(new VScriptParser("scripts/mapinfo.txt",
-      FL_OpenFileRead("scripts/mapinfo.txt")));
-  }
-  */
+  mapinfoParsed = true;
 
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (VStr(MapInfo[i].NextMap).StartsWith("&wt@"))
-    {
-      MapInfo[i].NextMap = P_TranslateMap(atoi(
-        *MapInfo[i].NextMap + 4));
+  for (int i = 0; i < MapInfo.Num(); ++i) {
+    if (VStr(MapInfo[i].NextMap).StartsWith("&wt@")) {
+      MapInfo[i].NextMap = P_TranslateMap(atoi(*MapInfo[i].NextMap+4));
     }
-    if (VStr(MapInfo[i].SecretMap).StartsWith("&wt@"))
-    {
-      MapInfo[i].SecretMap = P_TranslateMap(atoi(
-        *MapInfo[i].SecretMap + 4));
-    }
-  }
-  for (int i = 0; i < EpisodeDefs.Num(); i++)
-  {
-    if (VStr(EpisodeDefs[i].Name).StartsWith("&wt@"))
-    {
-      EpisodeDefs[i].Name = P_TranslateMap(atoi(
-        *EpisodeDefs[i].Name + 4));
-    }
-    if (VStr(EpisodeDefs[i].TeaserName).StartsWith("&wt@"))
-    {
-      EpisodeDefs[i].TeaserName = P_TranslateMap(atoi(
-        *EpisodeDefs[i].TeaserName + 4));
+    if (VStr(MapInfo[i].SecretMap).StartsWith("&wt@")) {
+      MapInfo[i].SecretMap = P_TranslateMap(atoi(*MapInfo[i].SecretMap+4));
     }
   }
 
-  //  Set up default map info returned for maps that have not defined in
-  // MAPINFO
+  for (int i = 0; i < EpisodeDefs.Num(); ++i) {
+    if (VStr(EpisodeDefs[i].Name).StartsWith("&wt@")) {
+      EpisodeDefs[i].Name = P_TranslateMap(atoi(*EpisodeDefs[i].Name+4));
+    }
+    if (VStr(EpisodeDefs[i].TeaserName).StartsWith("&wt@")) {
+      EpisodeDefs[i].TeaserName = P_TranslateMap(atoi(*EpisodeDefs[i].TeaserName+4));
+    }
+  }
+
+  // set up default map info returned for maps that have not defined in MAPINFO
   DefaultMap.Name = "Unnamed";
   DefaultMap.Sky1Texture = loadSkyTexture("sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
   DefaultMap.Sky2Texture = DefaultMap.Sky1Texture;
@@ -179,14 +161,13 @@ void InitMapInfo()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  SetMapDefaults
 //
 //==========================================================================
-
-static void SetMapDefaults(mapInfo_t &Info)
-{
+static void SetMapDefaults (mapInfo_t &Info) {
   guard(SetMapDefaults);
   Info.LumpName = NAME_None;
   Info.Name = VStr();
@@ -224,89 +205,47 @@ static void SetMapDefaults(mapInfo_t &Info)
   Info.EnterPic = NAME_None;
   Info.InterMusic = NAME_None;
 
-  if (GGameInfo->Flags & VGameInfo::GIF_DefaultLaxMonsterActivation)
-  {
+  if (GGameInfo->Flags & VGameInfo::GIF_DefaultLaxMonsterActivation) {
     Info.Flags2 |= MAPINFOF2_LaxMonsterActivation;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  ParseNextMapName
 //
 //==========================================================================
-
-static VName ParseNextMapName(VScriptParser *sc, bool HexenMode)
-{
+static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
   guard(ParseNextMapName);
-  if (sc->CheckNumber())
-  {
-    if (HexenMode)
-      return va("&wt@%02d", sc->Number);
-    else
-      return va("map%02d", sc->Number);
+  if (sc->CheckNumber()) {
+    if (HexenMode) return va("&wt@%02d", sc->Number);
+    return va("map%02d", sc->Number);
   }
-  else if (sc->Check("endbunny"))
-  {
-    return "EndGameBunny";
-  }
-  else if (sc->Check("endcast"))
-  {
-    return "EndGameCast";
-  }
-  else if (sc->Check("enddemon"))
-  {
-    return "EndGameDemon";
-  }
-  else if (sc->Check("endchess"))
-  {
-    return "EndGameChess";
-  }
-  else if (sc->Check("endunderwater"))
-  {
-    return "EndGameUnderwater";
-  }
-  else if (sc->Check("endbuystrife"))
-  {
-    return "EndGameBuyStrife";
-  }
-  else if (sc->Check("endpic"))
-  {
+  if (sc->Check("endbunny")) return "EndGameBunny";
+  if (sc->Check("endcast")) return "EndGameCast";
+  if (sc->Check("enddemon")) return "EndGameDemon";
+  if (sc->Check("endchess")) return "EndGameChess";
+  if (sc->Check("endunderwater")) return "EndGameUnderwater";
+  if (sc->Check("endbuystrife")) return "EndGameBuyStrife";
+  if (sc->Check("endpic")) {
     sc->ExpectName8();
     return va("EndGameCustomPic%s", *sc->Name8);
   }
-  else
-  {
-    sc->ExpectString();
-    if (sc->String.ToLower().StartsWith("endgame"))
-    {
-      switch (sc->String[7])
-      {
-      case '1':
-        return "EndGamePic1";
-      case '2':
-        return "EndGamePic2";
-      case '3':
-        return "EndGameBunny";
-      case 'c':
-      case 'C':
-        return "EndGameCast";
-      case 'w':
-      case 'W':
-        return "EndGameUnderwater";
-      case 's':
-      case 'S':
-        return "EndGameStrife";
-      default:
-        return "EndGamePic3";
-      }
-    }
-    else
-    {
-      return VName(*sc->String, VName::AddLower8);
+  sc->ExpectString();
+  if (sc->String.ToLower().StartsWith("endgame")) {
+    switch (sc->String[7]) {
+      case '1': return "EndGamePic1";
+      case '2': return "EndGamePic2";
+      case '3': return "EndGameBunny";
+      case 'c': case 'C': return "EndGameCast";
+      case 'w': case 'W': return "EndGameUnderwater";
+      case 's': case 'S': return "EndGameStrife";
+      default: return "EndGamePic3";
     }
   }
+  return VName(*sc->String, VName::AddLower8);
   unguard;
 }
 
@@ -335,22 +274,17 @@ static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
 //  ParseMapCommon
 //
 //==========================================================================
-static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
-{
+static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode) {
   guard(ParseMapCommon);
   bool newFormat = sc->Check("{");
   if (newFormat) sc->SetCMode(true);
-  // Process optional tokens
-  while (1)
-  {
-    if (sc->Check("levelnum"))
-    {
+  // process optional tokens
+  while (1) {
+    if (sc->Check("levelnum")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->LevelNum = sc->Number;
-    }
-    else if (sc->Check("cluster"))
-    {
+    } else if (sc->Check("cluster")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->Cluster = sc->Number;
@@ -364,20 +298,13 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         C.ExitText = VStr();
         C.Flat = NAME_None;
         C.Music = NAME_None;
-        if (HexenMode)
-        {
-          C.Flags |= CLUSTERF_Hub;
-        }
+        if (HexenMode) C.Flags |= CLUSTERF_Hub;
       }
-    }
-    else if (sc->Check("warptrans"))
-    {
+    } else if (sc->Check("warptrans")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->WarpTrans = sc->Number;
-    }
-    else if (sc->Check("next"))
-    {
+    } else if (sc->Check("next")) {
       if (newFormat) sc->Expect("=");
       info->NextMap = ParseNextMapName(sc, HexenMode);
       // hack for "complete"
@@ -392,14 +319,10 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         sc->ExpectString();
         // check for more commas?
       }
-    }
-    else if (sc->Check("secret") || sc->Check("secretnext"))
-    {
+    } else if (sc->Check("secret") || sc->Check("secretnext")) {
       if (newFormat) sc->Expect("=");
       info->SecretMap = ParseNextMapName(sc, HexenMode);
-    }
-    else if (sc->Check("sky1"))
-    {
+    } else if (sc->Check("sky1")) {
       if (newFormat) sc->Expect("=");
       auto ocm = sc->IsCMode();
       sc->SetCMode(true); // we need this to properly parse commas
@@ -440,9 +363,7 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         }
       }
       sc->SetCMode(ocm);
-    }
-    else if (sc->Check("sky2"))
-    {
+    } else if (sc->Check("sky2")) {
       if (newFormat) sc->Expect("=");
       auto ocm = sc->IsCMode();
       sc->SetCMode(true); // we need this to properly parse commas
@@ -467,350 +388,196 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         }
       }
       sc->SetCMode(ocm);
-    }
-    else if (sc->Check("skybox"))
-    {
+    } else if (sc->Check("skybox")){
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->SkyBox = *sc->String;
-    }
-    else if (sc->Check("doublesky"))
-    {
+    } else if (sc->Check("doublesky")) {
       info->Flags |= MAPINFOF_DoubleSky;
-    }
-    else if (sc->Check("lightning"))
-    {
+    } else if (sc->Check("lightning")) {
       info->Flags |= MAPINFOF_Lightning;
-    }
-    else if (sc->Check("forcenoskystretch"))
-    {
+    } else if (sc->Check("forcenoskystretch")) {
       info->Flags |= MAPINFOF_ForceNoSkyStretch;
-    }
-    else if (sc->Check("skystretch"))
-    {
+    } else if (sc->Check("skystretch")) {
       info->Flags &= ~MAPINFOF_ForceNoSkyStretch;
-    }
-    else if (sc->Check("fadetable"))
-    {
+    } else if (sc->Check("fadetable")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       info->FadeTable = sc->Name8;
-    }
-    else if (sc->Check("fade"))
-    {
+    } else if (sc->Check("fade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->Fade = M_ParseColour(sc->String);
-    }
-    else if (sc->Check("outsidefog"))
-    {
+    } else if (sc->Check("outsidefog")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->OutsideFog = M_ParseColour(sc->String);
-    }
-    else if (sc->Check("music"))
-    {
+    } else if (sc->Check("music")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       info->SongLump = sc->Name8;
-    }
-    else if (sc->Check("cdtrack"))
-    {
+    } else if (sc->Check("cdtrack")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //info->CDTrack = sc->Number;
-    }
-    else if (sc->Check("gravity"))
-    {
+    } else if (sc->Check("gravity")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->Gravity = (float)sc->Number;
-    }
-    else if (sc->Check("aircontrol"))
-    {
+    } else if (sc->Check("aircontrol")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectFloat();
       info->AirControl = sc->Float;
-    }
-    else if (sc->Check("map07special"))
-    {
+    } else if (sc->Check("map07special")) {
       info->Flags |= MAPINFOF_Map07Special;
-    }
-    else if (sc->Check("baronspecial"))
-    {
+    } else if (sc->Check("baronspecial")) {
       info->Flags |= MAPINFOF_BaronSpecial;
-    }
-    else if (sc->Check("cyberdemonspecial"))
-    {
+    } else if (sc->Check("cyberdemonspecial")) {
       info->Flags |= MAPINFOF_CyberDemonSpecial;
-    }
-    else if (sc->Check("spidermastermindspecial"))
-    {
+    } else if (sc->Check("spidermastermindspecial")) {
       info->Flags |= MAPINFOF_SpiderMastermindSpecial;
-    }
-    else if (sc->Check("minotaurspecial"))
-    {
+    } else if (sc->Check("minotaurspecial")) {
       info->Flags |= MAPINFOF_MinotaurSpecial;
-    }
-    else if (sc->Check("dsparilspecial"))
-    {
+    } else if (sc->Check("dsparilspecial")) {
       info->Flags |= MAPINFOF_DSparilSpecial;
-    }
-    else if (sc->Check("ironlichspecial"))
-    {
+    } else if (sc->Check("ironlichspecial")) {
       info->Flags |= MAPINFOF_IronLichSpecial;
-    }
-    else if (sc->Check("specialaction_exitlevel"))
-    {
-      info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor | MAPINFOF_SpecialActionLowerFloor);
-    }
-    else if (sc->Check("specialaction_opendoor"))
-    {
+    } else if (sc->Check("specialaction_exitlevel")) {
+      info->Flags &= ~(MAPINFOF_SpecialActionOpenDoor|MAPINFOF_SpecialActionLowerFloor);
+    } else if (sc->Check("specialaction_opendoor")) {
       info->Flags &= ~MAPINFOF_SpecialActionLowerFloor;
       info->Flags |= MAPINFOF_SpecialActionOpenDoor;
-    }
-    else if (sc->Check("specialaction_lowerfloor"))
-    {
+    } else if (sc->Check("specialaction_lowerfloor")) {
       info->Flags |= MAPINFOF_SpecialActionLowerFloor;
       info->Flags &= ~MAPINFOF_SpecialActionOpenDoor;
-    }
-    else if (sc->Check("specialaction_killmonsters"))
-    {
+    } else if (sc->Check("specialaction_killmonsters")) {
       info->Flags |= MAPINFOF_SpecialActionKillMonsters;
-    }
-    else if (sc->Check("intermission"))
-    {
+    } else if (sc->Check("intermission")) {
       info->Flags &= ~MAPINFOF_NoIntermission;
-    }
-    else if (sc->Check("nointermission"))
-    {
+    } else if (sc->Check("nointermission")) {
       info->Flags |= MAPINFOF_NoIntermission;
-    }
-    else if (sc->Check("titlepatch"))
-    {
+    } else if (sc->Check("titlepatch")) {
       //FIXME: quoted string is a textual level name
       if (newFormat) sc->Expect("=");
       sc->ExpectName8Def(NAME_None);
       info->TitlePatch = sc->Name8;
-    }
-    else if (sc->Check("par"))
-    {
+    } else if (sc->Check("par")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->ParTime = sc->Number;
-    }
-    else if (sc->Check("sucktime"))
-    {
+    } else if (sc->Check("sucktime")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->SuckTime = sc->Number;
-    }
-    else if (sc->Check("nosoundclipping"))
-    {
-      //  Ignored
-    }
-    else if (sc->Check("allowmonstertelefrags"))
-    {
+    } else if (sc->Check("nosoundclipping")) {
+      // ignored
+    } else if (sc->Check("allowmonstertelefrags")) {
       info->Flags |= MAPINFOF_AllowMonsterTelefrags;
-    }
-    else if (sc->Check("noallies"))
-    {
+    } else if (sc->Check("noallies")) {
       info->Flags |= MAPINFOF_NoAllies;
-    }
-    else if (sc->Check("fallingdamage"))
-    {
-      info->Flags &= ~(MAPINFOF_OldFallingDamage | MAPINFOF_StrifeFallingDamage);
+    } else if (sc->Check("fallingdamage")) {
+      info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage);
       info->Flags |= MAPINFOF_FallingDamage;
-    }
-    else if (sc->Check("oldfallingdamage") ||
-      sc->Check("forcefallingdamage"))
-    {
-      info->Flags &= ~(MAPINFOF_FallingDamage | MAPINFOF_StrifeFallingDamage);
+    } else if (sc->Check("oldfallingdamage") || sc->Check("forcefallingdamage")) {
+      info->Flags &= ~(MAPINFOF_FallingDamage|MAPINFOF_StrifeFallingDamage);
       info->Flags |= MAPINFOF_OldFallingDamage;
-    }
-    else if (sc->Check("strifefallingdamage"))
-    {
-      info->Flags &= ~(MAPINFOF_OldFallingDamage | MAPINFOF_FallingDamage);
+    } else if (sc->Check("strifefallingdamage")) {
+      info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_FallingDamage);
       info->Flags |= MAPINFOF_StrifeFallingDamage;
-    }
-    else if (sc->Check("nofallingdamage"))
-    {
-      info->Flags &= ~(MAPINFOF_OldFallingDamage | MAPINFOF_StrifeFallingDamage | MAPINFOF_FallingDamage);
-    }
-    else if (sc->Check("monsterfallingdamage"))
-    {
+    } else if (sc->Check("nofallingdamage")) {
+      info->Flags &= ~(MAPINFOF_OldFallingDamage|MAPINFOF_StrifeFallingDamage|MAPINFOF_FallingDamage);
+    } else if (sc->Check("monsterfallingdamage")) {
       info->Flags |= MAPINFOF_MonsterFallingDamage;
-    }
-    else if (sc->Check("nomonsterfallingdamage"))
-    {
+    } else if (sc->Check("nomonsterfallingdamage")) {
       info->Flags &= ~MAPINFOF_MonsterFallingDamage;
-    }
-    else if (sc->Check("deathslideshow"))
-    {
+    } else if (sc->Check("deathslideshow")) {
       info->Flags |= MAPINFOF_DeathSlideShow;
-    }
-    else if (sc->Check("allowfreelook"))
-    {
+    } else if (sc->Check("allowfreelook")) {
       info->Flags &= ~MAPINFOF_NoFreelook;
-    }
-    else if (sc->Check("nofreelook"))
-    {
+    } else if (sc->Check("nofreelook")) {
       info->Flags |= MAPINFOF_NoFreelook;
-    }
-    else if (sc->Check("allowjump"))
-    {
+    } else if (sc->Check("allowjump")) {
       info->Flags &= ~MAPINFOF_NoJump;
-    }
-    else if (sc->Check("nojump"))
-    {
+    } else if (sc->Check("nojump")) {
       info->Flags |= MAPINFOF_NoJump;
-    }
-    else if (sc->Check("noautosequences"))
-    {
+    } else if (sc->Check("noautosequences")) {
       info->Flags |= MAPINFOF_NoAutoSndSeq;
-    }
-    else if (sc->Check("activateowndeathspecials"))
-    {
+    } else if (sc->Check("activateowndeathspecials")) {
       info->Flags |= MAPINFOF_ActivateOwnSpecial;
-    }
-    else if (sc->Check("killeractivatesdeathspecials"))
-    {
+    } else if (sc->Check("killeractivatesdeathspecials")) {
       info->Flags &= ~MAPINFOF_ActivateOwnSpecial;
-    }
-    else if (sc->Check("missilesactivateimpactlines"))
-    {
+    } else if (sc->Check("missilesactivateimpactlines")) {
       info->Flags |= MAPINFOF_MissilesActivateImpact;
-    }
-    else if (sc->Check("missileshootersactivetimpactlines"))
-    {
+    } else if (sc->Check("missileshootersactivetimpactlines")) {
       info->Flags &= ~MAPINFOF_MissilesActivateImpact;
-    }
-    else if (sc->Check("filterstarts"))
-    {
+    } else if (sc->Check("filterstarts")) {
       info->Flags |= MAPINFOF_FilterStarts;
-    }
-    else if (sc->Check("infiniteflightpowerup"))
-    {
+    } else if (sc->Check("infiniteflightpowerup")) {
       info->Flags |= MAPINFOF_InfiniteFlightPowerup;
-    }
-    else if (sc->Check("noinfiniteflightpowerup"))
-    {
+    } else if (sc->Check("noinfiniteflightpowerup")) {
       info->Flags &= ~MAPINFOF_InfiniteFlightPowerup;
-    }
-    else if (sc->Check("clipmidtextures"))
-    {
+    } else if (sc->Check("clipmidtextures")) {
       info->Flags |= MAPINFOF_ClipMidTex;
-    }
-    else if (sc->Check("wrapmidtextures"))
-    {
+    } else if (sc->Check("wrapmidtextures")) {
       info->Flags |= MAPINFOF_WrapMidTex;
-    }
-    else if (sc->Check("keepfullinventory"))
-    {
+    } else if (sc->Check("keepfullinventory")) {
       info->Flags |= MAPINFOF_KeepFullInventory;
-    }
-    else if (sc->Check("compat_shorttex"))
-    {
+    } else if (sc->Check("compat_shorttex")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatShortTex);
-    }
-    else if (sc->Check("compat_stairs"))
-    {
+    } else if (sc->Check("compat_stairs")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatStairs);
-    }
-    else if (sc->Check("compat_limitpain"))
-    {
+    } else if (sc->Check("compat_limitpain")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatLimitPain);
-    }
-    else if (sc->Check("compat_nopassover"))
-    {
+    } else if (sc->Check("compat_nopassover")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatNoPassOver);
-    }
-    else if (sc->Check("compat_notossdrops"))
-    {
+    } else if (sc->Check("compat_notossdrops")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatNoTossDrops);
-    }
-    else if (sc->Check("compat_useblocking"))
-    {
+    } else if (sc->Check("compat_useblocking")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatUseBlocking);
-    }
-    else if (sc->Check("compat_nodoorlight"))
-    {
+    } else if (sc->Check("compat_nodoorlight")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatNoDoorLight);
-    }
-    else if (sc->Check("compat_ravenscroll"))
-    {
+    } else if (sc->Check("compat_ravenscroll")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatRavenScroll);
-    }
-    else if (sc->Check("compat_soundtarget"))
-    {
+    } else if (sc->Check("compat_soundtarget")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatSoundTarget);
-    }
-    else if (sc->Check("compat_dehhealth"))
-    {
+    } else if (sc->Check("compat_dehhealth")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatDehHealth);
-    }
-    else if (sc->Check("compat_trace"))
-    {
+    } else if (sc->Check("compat_trace")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatTrace);
-    }
-    else if (sc->Check("compat_dropoff"))
-    {
+    } else if (sc->Check("compat_dropoff")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatDropOff);
-    }
-    else if (sc->Check("compat_boomscroll") ||
-      sc->Check("additive_scrollers"))
-    {
+    } else if (sc->Check("compat_boomscroll") || sc->Check("additive_scrollers")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatBoomScroll);
-    }
-    else if (sc->Check("compat_invisibility"))
-    {
+    } else if (sc->Check("compat_invisibility")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
-    }
-    else if (sc->Check("compat_sectorsounds"))
-    {
+    } else if (sc->Check("compat_sectorsounds")) {
       GCon->Logf("WARNING: %s: mapdef 'compat_sectorsounds' is not supported yet", *sc->GetLoc().toStringNoCol());
       //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
       sc->Check("=");
       sc->CheckNumber();
-    }
-    else if (sc->Check("compat_missileclip"))
-    {
+    } else if (sc->Check("compat_missileclip")) {
       GCon->Logf("WARNING: %s: mapdef 'compat_missileclip' is not supported yet", *sc->GetLoc().toStringNoCol());
       //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
       sc->Check("=");
       sc->CheckNumber();
-    }
-    else if (sc->Check("evenlighting"))
-    {
+    } else if (sc->Check("evenlighting")) {
       info->HorizWallShade = 0;
       info->VertWallShade = 0;
-    }
-    else if (sc->Check("vertwallshade"))
-    {
+    } else if (sc->Check("vertwallshade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->VertWallShade = MID(-128, sc->Number, 127);
-    }
-    else if (sc->Check("horizwallshade"))
-    {
+    } else if (sc->Check("horizwallshade")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       info->HorizWallShade = MID(-128, sc->Number, 127);
-    }
-    else if (sc->Check("noinfighting"))
-    {
+    } else if (sc->Check("noinfighting")) {
       info->Infighting = -1;
-    }
-    else if (sc->Check("normalinfighting"))
-    {
+    } else if (sc->Check("normalinfighting")) {
       info->Infighting = 0;
-    }
-    else if (sc->Check("totalinfighting"))
-    {
+    } else if (sc->Check("totalinfighting")) {
       info->Infighting = 1;
-    }
-    else if (sc->Check("specialaction"))
-    {
+    } else if (sc->Check("specialaction")) {
       if (newFormat) sc->Expect("=");
       VMapSpecialAction &A = info->SpecialActions.Alloc();
       sc->SetCMode(true);
@@ -819,234 +586,149 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->Expect(",");
       sc->ExpectString();
       A.Special = 0;
-      for (int i = 0; i < LineSpecialInfos.Num(); i++)
-      {
-        if (!LineSpecialInfos[i].Name.ICmp(sc->String))
-        {
+      for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
+        if (!LineSpecialInfos[i].Name.ICmp(sc->String)) {
           A.Special = LineSpecialInfos[i].Number;
           break;
         }
       }
-      if (!A.Special)
-      {
-        GCon->Logf("Unknown action special %s", *sc->String);
-      }
+      if (!A.Special) GCon->Logf("Unknown action special '%s'", *sc->String);
       memset(A.Args, 0, sizeof(A.Args));
-      for (int i = 0; i < 5 && sc->Check(","); i++)
-      {
+      for (int i = 0; i < 5 && sc->Check(","); ++i) {
         sc->ExpectNumber();
         A.Args[i] = sc->Number;
       }
       if (!newFormat) sc->SetCMode(false);
-    }
-    else if (sc->Check("redirect"))
-    {
+    } else if (sc->Check("redirect")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->RedirectType = *sc->String.ToLower();
       info->RedirectMap = ParseNextMapName(sc, HexenMode);
-    }
-    else if (sc->Check("strictmonsteractivation"))
-    {
+    } else if (sc->Check("strictmonsteractivation")) {
       info->Flags2 &= ~MAPINFOF2_LaxMonsterActivation;
       info->Flags2 |= MAPINFOF2_HaveMonsterActivation;
-    }
-    else if (sc->Check("laxmonsteractivation"))
-    {
+    } else if (sc->Check("laxmonsteractivation")) {
       info->Flags2 |= MAPINFOF2_LaxMonsterActivation;
       info->Flags2 |= MAPINFOF2_HaveMonsterActivation;
-    }
-    else if (sc->Check("interpic") || sc->Check("exitpic"))
-    {
+    } else if (sc->Check("interpic") || sc->Check("exitpic")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       info->ExitPic = *sc->String.ToLower();
-    }
-    else if (sc->Check("enterpic"))
-    {
+    } else if (sc->Check("enterpic")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       info->EnterPic = *sc->String.ToLower();
-    }
-    else if (sc->Check("intermusic"))
-    {
+    } else if (sc->Check("intermusic")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->InterMusic = *sc->String.ToLower();
-    }
-    else if (sc->Check("cd_start_track"))
-    {
+    } else if (sc->Check("cd_start_track")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
-    }
-    else if (sc->Check("cd_end1_track"))
-    {
+    } else if (sc->Check("cd_end1_track")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
-    }
-    else if (sc->Check("cd_end2_track"))
-    {
+    } else if (sc->Check("cd_end2_track")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
-    }
-    else if (sc->Check("cd_end3_track"))
-    {
+    } else if (sc->Check("cd_end3_track")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
-    }
-    else if (sc->Check("cd_intermission_track"))
-    {
+    } else if (sc->Check("cd_intermission_track")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
-    }
-    else if (sc->Check("cd_title_track"))
-    {
+    } else if (sc->Check("cd_title_track")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
     }
-    //  These are stubs for now.
-    else if (sc->Check("cdid"))
-    {
+    // these are stubs for now.
+    else if (sc->Check("cdid")) {
       GCon->Logf("Unimplemented MAPINFO command cdid");
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-    }
-    else if (sc->Check("noinventorybar"))
-    {
+    } else if (sc->Check("noinventorybar")) {
       GCon->Logf("Unimplemented MAPINFO command noinventorybar");
-    }
-    else if (sc->Check("airsupply"))
-    {
+    } else if (sc->Check("airsupply")) {
       GCon->Logf("Unimplemented MAPINFO command airsupply");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-    }
-    else if (sc->Check("sndseq"))
-    {
+    } else if (sc->Check("sndseq")) {
       GCon->Logf("Unimplemented MAPINFO command sndseq");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
-    }
-    else if (sc->Check("sndinfo"))
-    {
+    } else if (sc->Check("sndinfo")) {
       GCon->Logf("Unimplemented MAPINFO command sndinfo");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
-    }
-    else if (sc->Check("soundinfo"))
-    {
+    } else if (sc->Check("soundinfo")) {
       GCon->Logf("Unimplemented MAPINFO command soundinfo");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
-    }
-    else if (sc->Check("allowcrouch"))
-    {
+    } else if (sc->Check("allowcrouch")) {
       GCon->Logf("Unimplemented MAPINFO command allowcrouch");
-    }
-    else if (sc->Check("nocrouch"))
-    {
+    } else if (sc->Check("nocrouch")) {
       GCon->Logf("Unimplemented MAPINFO command nocrouch");
-    }
-    else if (sc->Check("pausemusicinmenus"))
-    {
+    } else if (sc->Check("pausemusicinmenus")) {
       GCon->Logf("Unimplemented MAPINFO command pausemusicinmenus");
-    }
-    else if (sc->Check("bordertexture"))
-    {
+    } else if (sc->Check("bordertexture")) {
       GCon->Logf("Unimplemented MAPINFO command bordertexture");
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
-    }
-    else if (sc->Check("f1"))
-    {
+    } else if (sc->Check("f1")) {
       GCon->Logf("Unimplemented MAPINFO command f1");
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-    }
-    else if (sc->Check("allowrespawn"))
-    {
+    } else if (sc->Check("allowrespawn")) {
       GCon->Logf("Unimplemented MAPINFO command allowrespawn");
-    }
-    else if (sc->Check("teamdamage"))
-    {
+    } else if (sc->Check("teamdamage")) {
       GCon->Logf("Unimplemented MAPINFO command teamdamage");
       if (newFormat) sc->Expect("=");
       sc->ExpectFloat();
-    }
-    else if (sc->Check("fogdensity"))
-    {
+    } else if (sc->Check("fogdensity")) {
       GCon->Logf("Unimplemented MAPINFO command fogdensity");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-    }
-    else if (sc->Check("outsidefogdensity"))
-    {
+    } else if (sc->Check("outsidefogdensity")) {
       GCon->Logf("Unimplemented MAPINFO command outsidefogdensity");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-    }
-    else if (sc->Check("skyfog"))
-    {
+    } else if (sc->Check("skyfog")) {
       GCon->Logf("Unimplemented MAPINFO command skyfog");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-    }
-    else if (sc->Check("teamplayon"))
-    {
+    } else if (sc->Check("teamplayon")) {
       GCon->Logf("Unimplemented MAPINFO command teamplayon");
-    }
-    else if (sc->Check("teamplayoff"))
-    {
+    } else if (sc->Check("teamplayoff")) {
       GCon->Logf("Unimplemented MAPINFO command teamplayoff");
-    }
-    else if (sc->Check("checkswitchrange"))
-    {
+    } else if (sc->Check("checkswitchrange")) {
       GCon->Logf("Unimplemented MAPINFO command checkswitchrange");
-    }
-    else if (sc->Check("nocheckswitchrange"))
-    {
+    } else if (sc->Check("nocheckswitchrange")) {
       GCon->Logf("Unimplemented MAPINFO command nocheckswitchrange");
-    }
-    else if (sc->Check("translator"))
-    {
+    } else if (sc->Check("translator")) {
       GCon->Logf("Unimplemented MAPINFO command translator");
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
-    }
-    else if (sc->Check("resethealth"))
-    {
+    } else if (sc->Check("resethealth")) {
       //sc->Message("WARNING: ignored ResetHealth");
-    }
-    else if (sc->Check("resetinventory"))
-    {
+    } else if (sc->Check("resetinventory")) {
       //sc->Message("WARNING: ignored ResetInventory");
-    }
-    else if (sc->Check("unfreezesingleplayerconversations"))
-    {
+    } else if (sc->Check("unfreezesingleplayerconversations")) {
       GCon->Logf("Unimplemented MAPINFO command unfreezesingleplayerconversations");
-    }
-    else if (sc->Check("smoothlighting"))
-    {
+    } else if (sc->Check("smoothlighting")) {
       GCon->Logf("Unimplemented MAPINFO command SmoothLighting");
-    }
-    else if (sc->Check("lightmode"))
-    {
+    } else if (sc->Check("lightmode")) {
       GCon->Logf("Unimplemented MAPINFO command 'LightMode'");
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
-    }
-    else if (sc->Check("Grinding_PolyObj"))
-    {
+    } else if (sc->Check("Grinding_PolyObj")) {
       GCon->Logf("Unimplemented MAPINFO command 'Grinding_PolyObj'");
-    }
-    else
-    {
+    } else {
       if (newFormat) {
         if (sc->Check("}")) break;
         sc->Error(va("invalid mapinfo command (%s)", *sc->String));
@@ -1056,14 +738,12 @@ static void ParseMapCommon(VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
   }
   if (newFormat) sc->SetCMode(false);
 
-  //  Second sky defaults to first sky
-  if (info->Sky2Texture == GTextureManager.DefaultTexture)
-  {
+  // second sky defaults to first sky
+  if (info->Sky2Texture == GTextureManager.DefaultTexture) {
     info->Sky2Texture = info->Sky1Texture;
   }
 
-  if (info->Flags & MAPINFOF_DoubleSky)
-  {
+  if (info->Flags&MAPINFOF_DoubleSky) {
     GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
   }
   unguard;
@@ -1118,7 +798,6 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 //  ParseMap
 //
 //==========================================================================
-
 static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   guard(ParseMap);
   mapInfo_t *info = nullptr;
@@ -1136,7 +815,7 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
 
   // check for replaced map info
   bool replacement = false;
-  for (int i = 0; i < MapInfo.Num(); i++) {
+  for (int i = 0; i < MapInfo.Num(); ++i) {
     if (MapLumpName == MapInfo[i].LumpName) {
       info = &MapInfo[i];
       //GCon->Logf("replaced map '%s' (Sky1Texture=%d; default=%d)", *info->LumpName, info->Sky1Texture, Default.Sky1Texture);
@@ -1187,8 +866,7 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
     info->InterMusic = Default.InterMusic;
   }
 
-  if (HexenMode)
-  {
+  if (HexenMode) {
     info->Flags |= MAPINFOF_NoIntermission |
       MAPINFOF_FallingDamage |
       MAPINFOF_MonsterFallingDamage |
@@ -1198,31 +876,24 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
       MAPINFOF_InfiniteFlightPowerup;
   }
 
-  // Map name must follow the number
-  ParseNameOrLookup(sc, MAPINFOF_LookupName, &info->Name, &info->Flags);
-  /*
-  if (sc->Check("lookup"))
-  {
-    info->Flags |= MAPINFOF_LookupName;
-    sc->ExpectString();
-    info->Name = sc->String.ToLower();
+  // set saved par time
+  int par = findSavedPar(MapLumpName);
+  if (par > 0) {
+    //GCon->Logf(NAME_Init, "found dehacked par time for map '%s' (%d)", *MapLumpName, par);
+    info->ParTime = par;
   }
-  else
-  {
-    info->Flags &= ~MAPINFOF_LookupName;
-    sc->ExpectString();
-    info->Name = sc->String;
-  }
-  */
 
-  //  Set song lump name from SNDINFO script
-  for (int i = 0; i < MapSongList.Num(); i++) {
+  // map name must follow the number
+  ParseNameOrLookup(sc, MAPINFOF_LookupName, &info->Name, &info->Flags);
+
+  // set song lump name from SNDINFO script
+  for (int i = 0; i < MapSongList.Num(); ++i) {
     if (MapSongList[i].MapName == info->LumpName) {
       info->SongLump = MapSongList[i].SongName;
     }
   }
 
-  //  Set default levelnum for this map.
+  // set default levelnum for this map
   const char *mn = *MapLumpName;
   if (mn[0] == 'm' && mn[1] == 'a' && mn[2] == 'p' && mn[5] == 0) {
     int num = atoi(mn+3);
@@ -1235,45 +906,36 @@ static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
 
   ParseMapCommon(sc, info, HexenMode);
 
-  //  Avoid duplicate levelnums, later one takes precedance.
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (MapInfo[i].LevelNum == info->LevelNum &&
-      &MapInfo[i] != info)
-    {
+  // avoid duplicate levelnums, later one takes precedance
+  for (int i = 0; i < MapInfo.Num(); ++i) {
+    if (MapInfo[i].LevelNum == info->LevelNum && &MapInfo[i] != info) {
       MapInfo[i].LevelNum = 0;
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  ParseClusterDef
 //
 //==========================================================================
-
-static void ParseClusterDef(VScriptParser *sc)
-{
+static void ParseClusterDef (VScriptParser *sc) {
   guard(ParseClusterDef);
   VClusterDef *CDef = nullptr;
   sc->ExpectNumber();
 
-  //  Check for replaced cluster def.
-  for (int i = 0; i < ClusterDefs.Num(); i++)
-  {
-    if (sc->Number == ClusterDefs[i].Cluster)
-    {
+  // check for replaced cluster def
+  for (int i = 0; i < ClusterDefs.Num(); ++i) {
+    if (sc->Number == ClusterDefs[i].Cluster) {
       CDef = &ClusterDefs[i];
       break;
     }
   }
-  if (!CDef)
-  {
-    CDef = &ClusterDefs.Alloc();
-  }
+  if (!CDef) CDef = &ClusterDefs.Alloc();
 
-  //  Set defaults.
+  // set defaults
   CDef->Cluster = sc->Number;
   CDef->Flags = 0;
   CDef->EnterText = VStr();
@@ -1283,167 +945,101 @@ static void ParseClusterDef(VScriptParser *sc)
 
   bool newFormat = sc->Check("{");
   if (newFormat) sc->SetCMode(true);
-  while (1)
-  {
+  while (1) {
     /*
     if (sc->GetString()) {
       GCon->Logf("::: CLUSTER: <%s>", *sc->String);
       sc->UnGet();
     }
     */
-    if (sc->Check("hub"))
-    {
+    if (sc->Check("hub")) {
       CDef->Flags |= CLUSTERF_Hub;
-    }
-    else if (sc->Check("entertext"))
-    {
+    } else if (sc->Check("entertext")) {
       if (newFormat) sc->Expect("=");
-      /*
-      if (sc->Check("lookup"))
-      {
-        if (newFormat) sc->Expect(",");
-        CDef->Flags |= CLUSTERF_LookupEnterText;
-        sc->ExpectString();
-        CDef->EnterText = sc->String.ToLower();
-      }
-      else
-      {
-        if (newFormat) sc->Expect(",");
-        CDef->Flags &= ~CLUSTERF_LookupEnterText;
-        sc->ExpectString();
-        CDef->EnterText = sc->String;
-      }
-      */
       ParseNameOrLookup(sc, CLUSTERF_LookupEnterText, &CDef->EnterText, &CDef->Flags);
       //GCon->Logf("::: <%s>", *CDef->EnterText);
-    }
-    else if (sc->Check("entertextislump"))
-    {
+    } else if (sc->Check("entertextislump")) {
       CDef->Flags |= CLUSTERF_EnterTextIsLump;
-    }
-    else if (sc->Check("exittext"))
-    {
+    } else if (sc->Check("exittext")) {
       if (newFormat) sc->Expect("=");
-      /*
-      if (sc->Check("lookup"))
-      {
-        if (newFormat) sc->Expect(",");
-        CDef->Flags |= CLUSTERF_LookupExitText;
-        sc->ExpectString();
-        CDef->ExitText = sc->String.ToLower();
-      }
-      else
-      {
-        if (newFormat) sc->Expect(",");
-        CDef->Flags &= ~CLUSTERF_LookupExitText;
-        sc->ExpectString();
-        CDef->ExitText = sc->String;
-      }
-      */
       ParseNameOrLookup(sc, CLUSTERF_LookupExitText, &CDef->ExitText, &CDef->Flags);
-    }
-    else if (sc->Check("exittextislump"))
-    {
+    } else if (sc->Check("exittextislump")) {
       CDef->Flags |= CLUSTERF_ExitTextIsLump;
-    }
-    else if (sc->Check("flat"))
-    {
+    } else if (sc->Check("flat")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       CDef->Flat = sc->Name8;
       CDef->Flags &= ~CLUSTERF_FinalePic;
-    }
-    else if (sc->Check("pic"))
-    {
+    } else if (sc->Check("pic")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       CDef->Flat = sc->Name8;
       CDef->Flags |= CLUSTERF_FinalePic;
-    }
-    else if (sc->Check("music"))
-    {
+    } else if (sc->Check("music")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       CDef->Music = sc->Name8;
-    }
-    else if (sc->Check("cdtrack"))
-    {
+    } else if (sc->Check("cdtrack")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //CDef->CDTrack = sc->Number;
-    }
-    else if (sc->Check("cdid"))
-    {
+    } else if (sc->Check("cdid")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
       //CDef->CDId = sc->Number;
-    }
-    else if (sc->Check("name"))
-    {
+    } else if (sc->Check("name")) {
       if (newFormat) sc->Expect("=");
       if (sc->Check("lookup")) {
         if (newFormat) sc->Expect(",");
       }
       sc->ExpectString();
       GCon->Logf("Unimplemented MAPINFO cluster command name");
-    }
-    else
-    {
+    } else {
       if (newFormat) sc->Expect("}");
       break;
     }
   }
   if (newFormat) sc->SetCMode(false);
 
-  //  Make sure text lump names are in lower case.
-  if (CDef->Flags & CLUSTERF_EnterTextIsLump)
-  {
-    CDef->EnterText = CDef->EnterText.ToLower();
-  }
-  if (CDef->Flags & CLUSTERF_ExitTextIsLump)
-  {
-    CDef->ExitText = CDef->ExitText.ToLower();
-  }
+  // make sure text lump names are in lower case
+  if (CDef->Flags&CLUSTERF_EnterTextIsLump) CDef->EnterText = CDef->EnterText.ToLower();
+  if (CDef->Flags&CLUSTERF_ExitTextIsLump) CDef->ExitText = CDef->ExitText.ToLower();
+
   unguard;
 }
+
 
 //==========================================================================
 //
 //  ParseEpisodeDef
 //
 //==========================================================================
-
-static void ParseEpisodeDef(VScriptParser *sc)
-{
+static void ParseEpisodeDef (VScriptParser *sc) {
   guard(ParseEpisodeDef);
   VEpisodeDef *EDef = nullptr;
   int EIdx = 0;
   sc->ExpectName8();
 
-  //  Check for replaced episode.
-  for (int i = 0; i < EpisodeDefs.Num(); i++)
-  {
-    if (sc->Name8 == EpisodeDefs[i].Name)
-    {
+  // check for replaced episode
+  for (int i = 0; i < EpisodeDefs.Num(); ++i) {
+    if (sc->Name8 == EpisodeDefs[i].Name) {
       EDef = &EpisodeDefs[i];
       EIdx = i;
       break;
     }
   }
-  if (!EDef)
-  {
+  if (!EDef) {
     EDef = &EpisodeDefs.Alloc();
-    EIdx = EpisodeDefs.Num() - 1;
+    EIdx = EpisodeDefs.Num()-1;
   }
 
-  //  Check for removal of an episode.
-  if (sc->Check("remove"))
-  {
+  // check for removal of an episode
+  if (sc->Check("remove")) {
     EpisodeDefs.RemoveIndex(EIdx);
     return;
   }
 
-  //  Set defaults.
+  // set defaults
   EDef->Name = sc->Name8;
   EDef->TeaserName = NAME_None;
   EDef->Text = VStr();
@@ -1451,63 +1047,30 @@ static void ParseEpisodeDef(VScriptParser *sc)
   EDef->Flags = 0;
   EDef->Key = VStr();
 
-  if (sc->Check("teaser"))
-  {
+  if (sc->Check("teaser")) {
     sc->ExpectName8();
     EDef->TeaserName = sc->Name8;
   }
 
   bool newFormat = sc->Check("{");
   if (newFormat) sc->SetCMode(true);
-  while (1)
-  {
-    if (sc->Check("name"))
-    {
+  while (1) {
+    if (sc->Check("name")) {
       if (newFormat) sc->Expect("=");
-      /*
-      if (sc->Check("lookup"))
-      {
-        if (newFormat) sc->Expect(",");
-        EDef->Flags |= EPISODEF_LookupText;
-        sc->ExpectString();
-        EDef->Text = sc->String.ToLower();
-      }
-      else
-      {
-        sc->ExpectString();
-        if (sc->String.Length() > 0 && sc->String[0] == '$') {
-          EDef->Flags |= EPISODEF_LookupText;
-          EDef->Text = VStr(*sc->String+1);
-        } else {
-          EDef->Flags &= ~EPISODEF_LookupText;
-          EDef->Text = sc->String;
-        }
-      }
-      */
       ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags);
-    }
-    else if (sc->Check("picname"))
-    {
+    } else if (sc->Check("picname")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
       EDef->PicName = sc->Name8;
-    }
-    else if (sc->Check("key"))
-    {
+    } else if (sc->Check("key")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       EDef->Key = sc->String.ToLower();
-    }
-    else if (sc->Check("noskillmenu"))
-    {
+    } else if (sc->Check("noskillmenu")) {
       EDef->Flags |= EPISODEF_NoSkillMenu;
-    }
-    else if (sc->Check("optional"))
-    {
+    } else if (sc->Check("optional")) {
       EDef->Flags |= EPISODEF_Optional;
-    }
-    else
-    {
+    } else {
       if (newFormat) sc->Expect("}");
       break;
     }
@@ -1516,34 +1079,30 @@ static void ParseEpisodeDef(VScriptParser *sc)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  ParseSkillDef
 //
 //==========================================================================
-
-static void ParseSkillDef(VScriptParser *sc)
-{
+static void ParseSkillDef (VScriptParser *sc) {
   guard(ParseSkillDef);
   VSkillDef *SDef = nullptr;
   sc->ExpectString();
 
-  //  Check for replaced skill.
-  for (int i = 0; i < SkillDefs.Num(); i++)
-  {
-    if (!sc->String.ICmp(SkillDefs[i].Name))
-    {
+  // check for replaced skill
+  for (int i = 0; i < SkillDefs.Num(); ++i) {
+    if (!sc->String.ICmp(SkillDefs[i].Name)) {
       SDef = &SkillDefs[i];
       break;
     }
   }
-  if (!SDef)
-  {
+  if (!SDef) {
     SDef = &SkillDefs.Alloc();
     SDef->Name = sc->String;
   }
 
-  //  Set defaults.
+  // set defaults
   SDef->AmmoFactor = 1.0;
   SDef->DoubleAmmoFactor = 2.0;
   SDef->DamageFactor = 1.0;
@@ -1551,7 +1110,7 @@ static void ParseSkillDef(VScriptParser *sc)
   SDef->RespawnLimit = 0;
   SDef->Aggressiveness = 1.0;
   SDef->SpawnFilter = 0;
-  SDef->AcsReturn = SkillDefs.Num() - 1;
+  SDef->AcsReturn = SkillDefs.Num()-1;
   SDef->MenuName.Clean();
   SDef->PlayerClassNames.Clear();
   SDef->ConfirmationText.Clean();
@@ -1559,150 +1118,84 @@ static void ParseSkillDef(VScriptParser *sc)
   SDef->TextColour.Clean();
   SDef->Flags = 0;
 
-  while (1)
-  {
-    if (sc->Check("AmmoFactor"))
-    {
+  while (1) {
+    if (sc->Check("AmmoFactor")) {
       sc->ExpectFloat();
       SDef->AmmoFactor = sc->Float;
-    }
-    else if (sc->Check("DoubleAmmoFactor"))
-    {
+    } else if (sc->Check("DoubleAmmoFactor")) {
       sc->ExpectFloat();
       SDef->DoubleAmmoFactor = sc->Float;
-    }
-    else if (sc->Check("DamageFactor"))
-    {
+    } else if (sc->Check("DamageFactor")) {
       sc->ExpectFloat();
       SDef->DamageFactor = sc->Float;
-    }
-    else if (sc->Check("FastMonsters"))
-    {
+    } else if (sc->Check("FastMonsters")) {
       SDef->Flags |= SKILLF_FastMonsters;
-    }
-    else if (sc->Check("DisableCheats"))
-    {
+    } else if (sc->Check("DisableCheats")) {
       SDef->Flags |= SKILLF_DisableCheats;
-    }
-    else if (sc->Check("EasyBossBrain"))
-    {
+    } else if (sc->Check("EasyBossBrain")) {
       SDef->Flags |= SKILLF_EasyBossBrain;
-    }
-    else if (sc->Check("AutoUseHealth"))
-    {
+    } else if (sc->Check("AutoUseHealth")) {
       SDef->Flags |= SKILLF_AutoUseHealth;
-    }
-    else if (sc->Check("RespawnTime"))
-    {
+    } else if (sc->Check("RespawnTime")) {
       sc->ExpectFloat();
       SDef->RespawnTime = sc->Float;
-    }
-    else if (sc->Check("RespawnLimit"))
-    {
+    } else if (sc->Check("RespawnLimit")) {
       sc->ExpectNumber();
       SDef->RespawnLimit = sc->Number;
-    }
-    else if (sc->Check("Aggressiveness"))
-    {
+    } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloat();
-      SDef->Aggressiveness = 1.0 - MID(0.0, sc->Float, 1.0);
-    }
-    else if (sc->Check("SpawnFilter"))
-    {
-      if (sc->CheckNumber())
-      {
-        if (sc->Number > 0)
-        {
-          SDef->SpawnFilter = 1 << (sc->Number - 1);
-        }
+      SDef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
+    } else if (sc->Check("SpawnFilter")) {
+      if (sc->CheckNumber()) {
+        if (sc->Number > 0 && sc->Number < 31) SDef->SpawnFilter = 1<<(sc->Number-1);
+      } else {
+             if (sc->Check("Baby")) SDef->SpawnFilter = 1;
+        else if (sc->Check("Easy")) SDef->SpawnFilter = 2;
+        else if (sc->Check("Normal")) SDef->SpawnFilter = 4;
+        else if (sc->Check("Hard")) SDef->SpawnFilter = 8;
+        else if (sc->Check("Nightmare")) SDef->SpawnFilter = 16;
+        else sc->ExpectString();
       }
-      else
-      {
-        if (sc->Check("Baby"))
-        {
-          SDef->SpawnFilter = 1;
-        }
-        else if (sc->Check("Easy"))
-        {
-          SDef->SpawnFilter = 2;
-        }
-        else if (sc->Check("Normal"))
-        {
-          SDef->SpawnFilter = 4;
-        }
-        else if (sc->Check("Hard"))
-        {
-          SDef->SpawnFilter = 8;
-        }
-        else if (sc->Check("Nightmare"))
-        {
-          SDef->SpawnFilter = 16;
-        }
-        else
-        {
-          sc->ExpectString();
-        }
-      }
-    }
-    else if (sc->Check("ACSReturn"))
-    {
+    } else if (sc->Check("ACSReturn")) {
       sc->ExpectNumber();
       SDef->AcsReturn = sc->Number;
-    }
-    else if (sc->Check("Name"))
-    {
+    } else if (sc->Check("Name")) {
       sc->ExpectString();
       SDef->MenuName = sc->String;
       SDef->Flags &= ~SKILLF_MenuNameIsPic;
-    }
-    else if (sc->Check("PlayerClassName"))
-    {
+    } else if (sc->Check("PlayerClassName")) {
       VSkillPlayerClassName &CN = SDef->PlayerClassNames.Alloc();
       sc->ExpectString();
       CN.ClassName = sc->String;
       sc->ExpectString();
       CN.MenuName = sc->String;
-    }
-    else if (sc->Check("PicName"))
-    {
+    } else if (sc->Check("PicName")) {
       sc->ExpectString();
       SDef->MenuName = sc->String.ToLower();
       SDef->Flags |= SKILLF_MenuNameIsPic;
-    }
-    else if (sc->Check("MustConfirm"))
-    {
+    } else if (sc->Check("MustConfirm")) {
       SDef->Flags |= SKILLF_MustConfirm;
-      if (sc->CheckQuotedString())
-      {
-        SDef->ConfirmationText = sc->String;
-      }
-    }
-    else if (sc->Check("Key"))
-    {
+      if (sc->CheckQuotedString()) SDef->ConfirmationText = sc->String;
+    } else if (sc->Check("Key")) {
       sc->ExpectString();
       SDef->Key = sc->String;
-    }
-    else if (sc->Check("TextColor"))
-    {
+    } else if (sc->Check("TextColor")) {
       sc->ExpectString();
       SDef->TextColour = sc->String;
-    }
-    else
-    {
+    } else {
       break;
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  ParseMapInfo
 //
 //==========================================================================
-
-static void ParseMapInfo(VScriptParser *sc)
-{
+static void ParseMapInfo (VScriptParser *sc) {
   guard(ParseMapInfo);
   const unsigned int MaxStack = 64;
   bool HexenMode = false;
@@ -1710,52 +1203,32 @@ static void ParseMapInfo(VScriptParser *sc)
   unsigned int scsp = 0;
   bool error = false;
 
-  //  Set up default map info.
+  // set up default map info
   mapInfo_t Default;
   SetMapDefaults(Default);
 
   for (;;) {
-    while (!sc->AtEnd())
-    {
-      if (sc->Check("map"))
-      {
+    while (!sc->AtEnd()) {
+      if (sc->Check("map")) {
         ParseMap(sc, HexenMode, Default);
-      }
-      else if (sc->Check("defaultmap"))
-      {
+      } else if (sc->Check("defaultmap")) {
         SetMapDefaults(Default);
         ParseMapCommon(sc, &Default, HexenMode);
-      }
-      else if (sc->Check("adddefaultmap"))
-      {
+      } else if (sc->Check("adddefaultmap")) {
         ParseMapCommon(sc, &Default, HexenMode);
-      }
-      else if (sc->Check("clusterdef"))
-      {
+      } else if (sc->Check("clusterdef")) {
         ParseClusterDef(sc);
-      }
-      else if (sc->Check("cluster"))
-      {
+      } else if (sc->Check("cluster")) {
         ParseClusterDef(sc);
-      }
-      else if (sc->Check("episode"))
-      {
+      } else if (sc->Check("episode")) {
         ParseEpisodeDef(sc);
-      }
-      else if (sc->Check("clearepisodes"))
-      {
+      } else if (sc->Check("clearepisodes")) {
         EpisodeDefs.Clear();
-      }
-      else if (sc->Check("skill"))
-      {
+      } else if (sc->Check("skill")) {
         ParseSkillDef(sc);
-      }
-      else if (sc->Check("clearskills"))
-      {
+      } else if (sc->Check("clearskills")) {
         SkillDefs.Clear();
-      }
-      else if (sc->Check("include"))
-      {
+      } else if (sc->Check("include")) {
         sc->ExpectString();
         int lmp = W_CheckNumForFileName(sc->String);
         if (lmp >= 0) {
@@ -1782,13 +1255,10 @@ static void ParseMapInfo(VScriptParser *sc)
           if (sc->Check("}")) break;
           sc->GetString();
         }
-      }
-      else if (sc->Check("intermission")) {
+      } else if (sc->Check("intermission")) {
         GCon->Logf("Unimplemented MAPINFO command Intermission");
         sc->SkipBracketed();
-      }
-      else
-      {
+      } else {
         sc->Error(va("Invalid command %s", *sc->String));
         error = true;
         break;
@@ -1808,47 +1278,41 @@ static void ParseMapInfo(VScriptParser *sc)
   unguard;
 }
 
+
 //==========================================================================
 //
 // QualifyMap
 //
 //==========================================================================
-
-static int QualifyMap(int map)
-{
+static int QualifyMap (int map) {
   return (map < 0 || map >= MapInfo.Num()) ? 0 : map;
 }
+
 
 //==========================================================================
 //
 //  P_GetMapInfo
 //
 //==========================================================================
-
-const mapInfo_t &P_GetMapInfo(VName map)
-{
+const mapInfo_t &P_GetMapInfo (VName map) {
   guard(P_GetMapInfo);
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (map == MapInfo[i].LumpName)
-    {
-      return MapInfo[i];
-    }
+  for (int i = 0; i < MapInfo.Num(); ++i) {
+    if (map == MapInfo[i].LumpName) return MapInfo[i];
   }
   return DefaultMap;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_GetMapName
 //
 //==========================================================================
-
-VStr P_GetMapName(int map)
-{
+VStr P_GetMapName (int map) {
   return MapInfo[QualifyMap(map)].GetName();
 }
+
 
 //==========================================================================
 //
@@ -1857,30 +1321,23 @@ VStr P_GetMapName(int map)
 //  Returns map info index given a level number
 //
 //==========================================================================
-
-int P_GetMapIndexByLevelNum(int map)
-{
+int P_GetMapIndexByLevelNum (int map) {
   guard(P_GetMapNameByLevelNum);
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (MapInfo[i].LevelNum == map)
-    {
-      return i;
-    }
+  for (int i = 0; i < MapInfo.Num(); ++i) {
+    if (MapInfo[i].LevelNum == map) return i;
   }
-  // Not found
+  // not found
   return 0;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_GetMapLumpName
 //
 //==========================================================================
-
-VName P_GetMapLumpName(int map)
-{
+VName P_GetMapLumpName (int map) {
   return MapInfo[QualifyMap(map)].LumpName;
 }
 
@@ -1928,30 +1385,23 @@ VName P_TranslateMapEx (int map) {
 //  Returns the map lump name given a level number.
 //
 //==========================================================================
-
-VName P_GetMapLumpNameByLevelNum(int map)
-{
+VName P_GetMapLumpNameByLevelNum (int map) {
   guard(P_GetMapNameByLevelNum);
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (MapInfo[i].LevelNum == map)
-    {
-      return MapInfo[i].LumpName;
-    }
+  for (int i = 0; i < MapInfo.Num(); ++i) {
+    if (MapInfo[i].LevelNum == map) return MapInfo[i].LumpName;
   }
-  // Not found, use map##
+  // not found, use map##
   return va("map%02d", map);
   unguard;
 }
+
 
 //==========================================================================
 //
 // P_PutMapSongLump
 //
 //==========================================================================
-
-void P_PutMapSongLump(int map, VName lumpName)
-{
+void P_PutMapSongLump (int map, VName lumpName) {
   guard(P_PutMapSongLump);
   FMapSongInfo &ms = MapSongList.Alloc();
   ms.MapName = va("map%02d", map);
@@ -1959,211 +1409,185 @@ void P_PutMapSongLump(int map, VName lumpName)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  P_GetClusterDef
 //
 //==========================================================================
-
-const VClusterDef *P_GetClusterDef(int Cluster)
-{
+const VClusterDef *P_GetClusterDef (int Cluster) {
   guard(P_GetClusterDef);
-  for (int i = 0; i < ClusterDefs.Num(); i++)
-  {
-    if (Cluster == ClusterDefs[i].Cluster)
-    {
-      return &ClusterDefs[i];
-    }
+  for (int i = 0; i < ClusterDefs.Num(); ++i) {
+    if (Cluster == ClusterDefs[i].Cluster) return &ClusterDefs[i];
   }
   return &DefaultClusterDef;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_GetNumEpisodes
 //
 //==========================================================================
-
-int P_GetNumEpisodes()
-{
+int P_GetNumEpisodes () {
   return EpisodeDefs.Num();
 }
+
 
 //==========================================================================
 //
 //  P_GetNumMaps
 //
 //==========================================================================
-
-int P_GetNumMaps ()
-{
+int P_GetNumMaps () {
   guard(P_GetNumMaps);
   return MapInfo.Num();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_GetMapInfo
 //
 //==========================================================================
-
-mapInfo_t *P_GetMapInfoPtr (int mapidx)
-{
+mapInfo_t *P_GetMapInfoPtr (int mapidx) {
   guard(P_GetMapInfo);
   return (mapidx >= 0 && mapidx < MapInfo.Num() ? &MapInfo[mapidx] : nullptr);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_GetEpisodeDef
 //
 //==========================================================================
-
-VEpisodeDef *P_GetEpisodeDef(int Index)
-{
+VEpisodeDef *P_GetEpisodeDef (int Index) {
   return &EpisodeDefs[Index];
 }
+
 
 //==========================================================================
 //
 //  P_GetNumSkills
 //
 //==========================================================================
-
-int P_GetNumSkills()
-{
+int P_GetNumSkills () {
   return SkillDefs.Num();
 }
+
 
 //==========================================================================
 //
 //  P_GetSkillDef
 //
 //==========================================================================
-
-const VSkillDef *P_GetSkillDef(int Index)
-{
+const VSkillDef *P_GetSkillDef (int Index) {
   return &SkillDefs[Index];
 }
+
 
 //==========================================================================
 //
 //  P_GetMusicLumpNames
 //
 //==========================================================================
-
-void P_GetMusicLumpNames(TArray<FReplacedString>& List)
-{
+void P_GetMusicLumpNames (TArray<FReplacedString> &List) {
   guard(P_GetMusicLumpNames);
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
+  for (int i = 0; i < MapInfo.Num(); ++i) {
     const char *MName = *MapInfo[i].SongLump;
-    if (MName[0] == 'd' && MName[1] == '_')
-    {
+    if (MName[0] == 'd' && MName[1] == '_') {
       FReplacedString &R = List.Alloc();
       R.Index = i;
       R.Replaced = false;
-      R.Old = MName + 2;
+      R.Old = MName+2;
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_ReplaceMusicLumpNames
 //
 //==========================================================================
-
-void P_ReplaceMusicLumpNames(TArray<FReplacedString>& List)
-{
+void P_ReplaceMusicLumpNames (TArray<FReplacedString> &List) {
   guard(P_ReplaceMusicLumpNames);
-  for (int i = 0; i < List.Num(); i++)
-  {
-    if (List[i].Replaced)
-    {
-      MapInfo[List[i].Index].SongLump = VName(*(VStr("d_") +
-        List[i].New), VName::AddLower8);
+  for (int i = 0; i < List.Num(); ++i) {
+    if (List[i].Replaced) {
+      MapInfo[List[i].Index].SongLump = VName(*(VStr("d_")+List[i].New), VName::AddLower8);
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  P_SetParTime
 //
 //==========================================================================
-
-void P_SetParTime(VName Map, int Par)
-{
+void P_SetParTime (VName Map, int Par) {
   guard(P_SetParTime);
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (MapInfo[i].LumpName == Map)
-    {
-      MapInfo[i].ParTime = Par;
-      return;
+  if (Map == NAME_None || Par < 0) return;
+  if (mapinfoParsed) {
+    for (int i = 0; i < MapInfo.length(); ++i) {
+      if (MapInfo[i].LumpName == NAME_None) continue;
+      if (VStr::ICmp(*MapInfo[i].LumpName, *Map) == 0) {
+        MapInfo[i].ParTime = Par;
+        return;
+      }
     }
+    GCon->Logf("WARNING! No such map '%s'", *Map);
+  } else {
+    ParTimeInfo &pi = partimes.alloc();
+    pi.MapName = Map;
+    pi.par = Par;
   }
-  GCon->Logf("WARNING! No such map %s", *Map);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  IsMapPresent
 //
 //==========================================================================
-
-bool IsMapPresent(VName MapName)
-{
+bool IsMapPresent (VName MapName) {
   guard(IsMapPresent);
-  if (W_CheckNumForName(MapName) >= 0)
-  {
-    return true;
-  }
+  if (W_CheckNumForName(MapName) >= 0) return true;
   VStr FileName = va("maps/%s.wad", *MapName);
-  if (FL_FileExists(FileName))
-  {
-    return true;
-  }
+  if (FL_FileExists(FileName)) return true;
   return false;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND MapList
 //
 //==========================================================================
-
-COMMAND(MapList)
-{
+COMMAND(MapList) {
   guard(COMMAND MapList);
-  for (int i = 0; i < MapInfo.Num(); i++)
-  {
-    if (IsMapPresent(MapInfo[i].LumpName))
-    {
-      GCon->Log(VStr(MapInfo[i].LumpName) + " - " +
-        ((MapInfo[i].Flags & MAPINFOF_LookupName) ?
-        GLanguage[*MapInfo[i].Name] : MapInfo[i].Name));
+  for (int i = 0; i < MapInfo.Num(); ++i) {
+    if (IsMapPresent(MapInfo[i].LumpName)) {
+      GCon->Log(VStr(MapInfo[i].LumpName)+" - "+(MapInfo[i].Flags&MAPINFOF_LookupName ? GLanguage[*MapInfo[i].Name] : MapInfo[i].Name));
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  ShutdownMapInfo
 //
 //==========================================================================
-
-void ShutdownMapInfo()
-{
+void ShutdownMapInfo () {
   guard(ShutdownMapInfo);
   DefaultMap.Name.Clean();
   MapInfo.Clear();
