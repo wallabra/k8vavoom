@@ -683,12 +683,10 @@ VStr VStr::Utf8Substring (int start, int len) const {
 }
 
 
-void VStr::Split (char c, TArray<VStr>& A) const {
+void VStr::Split (char c, TArray<VStr> &A) const {
   guard(VStr::Split);
-
   A.Clear();
   if (!data) return;
-
   int start = 0;
   int len = int(length());
   for (int i = 0; i <= len; ++i) {
@@ -697,17 +695,14 @@ void VStr::Split (char c, TArray<VStr>& A) const {
       start = i+1;
     }
   }
-
   unguard;
 }
 
 
-void VStr::Split (const char *chars, TArray<VStr>& A) const {
+void VStr::Split (const char *chars, TArray<VStr> &A) const {
   guard(VStr::Split);
-
   A.Clear();
   if (!data) return;
-
   int start = 0;
   int len = int(length());
   for (int i = 0; i <= len; ++i) {
@@ -718,7 +713,32 @@ void VStr::Split (const char *chars, TArray<VStr>& A) const {
       start = i+1;
     }
   }
+  unguard;
+}
 
+
+void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const {
+  guard(VStr::SplitOnBlanks);
+  A.Clear();
+  if (!data) return;
+  int len = int(length());
+  int pos = 0;
+  while (pos < len) {
+    vuint8 ch = (vuint8)data[pos++];
+    if (ch <= ' ') continue;
+    int start = pos-1;
+    if (doQuotedStrings && (ch == '\'' || ch == '"')) {
+      vuint8 ech = ch;
+      while (pos < len) {
+        ch = (vuint8)data[pos++];
+        if (ch == ech) break;
+        if (ch == '\\') { if (pos < len) ++pos; }
+      }
+    } else {
+      while (pos < len && (vuint8)data[pos] > ' ') ++pos;
+    }
+    A.append(VStr(*this, start, pos-start));
+  }
   unguard;
 }
 

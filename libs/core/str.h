@@ -279,9 +279,11 @@ public:
 
   void Split (char, TArray<VStr> &) const;
   void Split (const char *, TArray<VStr> &) const;
+  void SplitOnBlanks (TArray<VStr> &, bool doQuotedStrings=false) const;
 
   inline void split (char c, TArray<VStr> &a) const { Split(c, a); }
   inline void split (const char *s, TArray<VStr> &a) const { Split(s, a); }
+  inline void splitOnBlanks (TArray<VStr> &a, bool doQuotedStrings=false) const { SplitOnBlanks(a, doQuotedStrings); }
 
   // split string to path components; first component can be '/', others has no slashes
   void SplitPath (TArray<VStr> &) const;
