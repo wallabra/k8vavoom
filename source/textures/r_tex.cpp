@@ -917,7 +917,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   bool optional = false;
   if (sc->Check("optional")) optional = true;
 
-  //  Name
+  // name
   bool ignore = false;
   sc->ExpectName8();
   ad.Index = GTextureManager.CheckNumForName(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true);
@@ -958,15 +958,14 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture %s", *sc->String));
     }
 
-    if (sc->Check("tics"))
-    {
+    if (sc->Check("tics")) {
       sc->ExpectNumber(true);
       fd.BaseTime = sc->Number;
       fd.RandomRange = 0;
     } else if (sc->Check("rand")) {
-      sc->ExpectNumber();
+      sc->ExpectNumber(true);
       fd.BaseTime = sc->Number;
-      sc->ExpectNumber();
+      sc->ExpectNumber(true);
       fd.RandomRange = sc->Number-fd.BaseTime+1;
     } else {
       sc->Error(va("bad command (%s)", *sc->String));
