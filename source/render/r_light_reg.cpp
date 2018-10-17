@@ -39,7 +39,7 @@ vuint32 gf_dynlights_traced = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB r_extrasamples("r_extrasamples", false, "Do static lightmap filtering?", CVAR_Archive);
+static VCvarB r_extrasamples("r_extrasamples", true, "Do static lightmap filtering?", CVAR_Archive);
 static VCvarB r_static_add("r_static_add", true, "Are static lights additive in regular renderer?", CVAR_Archive);
 static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 

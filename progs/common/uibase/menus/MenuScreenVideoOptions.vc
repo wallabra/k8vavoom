@@ -45,8 +45,8 @@ override void CreateChoices () {
 
   CreateEnumCvar("Level renderer", 'r_level_renderer',
     "Select automatically",
-    "Regular",
-    "Advanced"
+    "Lighmapped (recommended)",
+    "Stencil (experimental)"
   );
 
   CreateOnOffCvar("Smooth particles", 'gl_smooth_particles');
@@ -61,7 +61,7 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Interface filtering", 'gl_2d_filtering');
 
-  CreateOnOffCvar("Allow ambient light?", 'r_allow_ambient');
+  CreateOnOffCvar("Level ambient light", 'r_allow_ambient');
   CreateFloatSliderCvar("Minimum ambient light", 'r_ambient', 16, 0, 255);
 
   CreateSubMenuText("Advanced Video options", MenuScreenAdvancedVideoOptions);
@@ -69,7 +69,7 @@ override void CreateChoices () {
 
 
 defaultproperties {
-  Width = 380;
+  Width = 400;
   Height = 220;
   ChoicesStartX = 200;
   ChoicesStartY = 26;

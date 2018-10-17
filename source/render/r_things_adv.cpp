@@ -69,7 +69,6 @@ extern VCvarB   r_chasecam;
 extern VCvarB     r_draw_mobjs;
 extern VCvarB     r_draw_psprites;
 extern VCvarB     r_models;
-extern VCvarB     r_hide_models;
 extern VCvarB     r_view_models;
 extern VCvarB     r_model_shadows;
 extern VCvarB     r_model_light;
@@ -77,7 +76,7 @@ extern VCvarB     r_sort_sprites;
 extern VCvarB     r_fix_sprite_offsets;
 extern VCvarI     r_sprite_fix_delta;
 extern VCvarB     r_drawfuzz;
-extern VCvarF     transsouls;
+extern VCvarF     r_transsouls;
 extern VCvarI     crosshair;
 extern VCvarF     crosshair_alpha;
 extern VCvarI     r_max_model_lights;
@@ -102,7 +101,7 @@ void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
   if (RendStyle == STYLE_SoulTrans)
   {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   }
   else if (RendStyle == STYLE_OptFuzzy)
   {
@@ -228,7 +227,7 @@ void VAdvancedRenderLevel::RenderThingTextures(VEntity *mobj)
   if (RendStyle == STYLE_SoulTrans)
   {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   }
   else if (RendStyle == STYLE_OptFuzzy)
   {
@@ -372,7 +371,7 @@ void VAdvancedRenderLevel::RenderThingLight(VEntity *mobj)
   if (RendStyle == STYLE_SoulTrans)
   {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   }
   else if (RendStyle == STYLE_OptFuzzy)
   {
@@ -533,7 +532,7 @@ void VAdvancedRenderLevel::RenderThingShadow(VEntity *mobj)
   if (RendStyle == STYLE_SoulTrans)
   {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   }
   else if (RendStyle == STYLE_OptFuzzy)
   {
@@ -640,7 +639,7 @@ void VAdvancedRenderLevel::RenderThingFog(VEntity *mobj)
   if (RendStyle == STYLE_SoulTrans)
   {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   }
   else if (RendStyle == STYLE_OptFuzzy)
   {

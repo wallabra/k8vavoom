@@ -39,6 +39,8 @@ override void CreateChoices () {
   CreateOnOffCvar("Simulate Faded lights", 'r_fade_light');
   CreateFloatSliderCvar("Light Fade Factor", 'r_fade_factor', 1, 1, 10);
   CreateFloatSliderCvar("Sky Brightness Factor", 'r_sky_bright_factor', 0.1, 0.1, 1);
+  CreateFloatSliderCvar("Lost Souls Translucency", 'r_transsouls', 0.05);
+  CreateOnOffCvar("Optional Fuzzy Effect", 'r_drawfuzz');
   CreateOnOffCvar("Extra lighmap samples", 'r_extrasamples');
   CreateOnOffCvar("Dynamic lights", 'r_dynamic');
   CreateOnOffCvar("Clip Dynamic Lights", 'r_dynamic_clip');
@@ -78,6 +80,8 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Model Sector Lightning", 'gl_model_lighting');
   CreateOnOffCvar("Specular Highlights", 'gl_specular_highlights');
+
+  Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
 }
 
 

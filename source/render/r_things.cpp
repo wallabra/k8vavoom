@@ -69,7 +69,6 @@ extern VCvarB   r_chasecam;
 VCvarB      r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
 VCvarB      r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
 VCvarB      r_models("r_models", true, "Allow models?", CVAR_Archive);
-VCvarB      r_hide_models("r_hide_models", false, "Hide models?", CVAR_Archive);
 VCvarB      r_view_models("r_view_models", true, "View models?", CVAR_Archive);
 VCvarB      r_model_shadows("r_model_shadows", false, "Draw model shadows in advanced renderer?", CVAR_Archive);
 VCvarB      r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
@@ -77,7 +76,7 @@ VCvarB      r_sort_sprites("r_sort_sprites", false, "Sprite sorting.");
 VCvarB      r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
 VCvarI      r_sprite_fix_delta("r_sprite_fix_delta", "-3", "Sprite offset amount.", CVAR_Archive);
 VCvarB      r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
-VCvarF      transsouls("transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
+VCvarF      r_transsouls("r_transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
 VCvarI      crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
 VCvarF      crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 
@@ -429,7 +428,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 
   if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   } else if (RendStyle == STYLE_OptFuzzy) {
     RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
@@ -715,7 +714,7 @@ void VRenderLevelShared::DrawPlayerSprites()
   if (RendStyle == STYLE_SoulTrans)
   {
     RendStyle = STYLE_Translucent;
-    Alpha = transsouls;
+    Alpha = r_transsouls;
   }
   else if (RendStyle == STYLE_OptFuzzy)
   {

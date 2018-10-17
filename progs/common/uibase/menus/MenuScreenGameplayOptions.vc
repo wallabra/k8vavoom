@@ -82,9 +82,6 @@ override void CreateChoices () {
   CreateOnOffCvar("Monsters Backing Off", 'monster_backing');
   CreateOnOffCvar("Damage Thrust", 'damage_thrust');
   CreateOnOffCvar("Monsters can drop off", 'monster_dropoff');
-  CreateOnOffCvar("Optional Fuzzy Effect", 'r_drawfuzz');
-
-  CreateFloatSliderCvar("Optional Translucency", 'transsouls', 0.05);
 
   if (GameName == "hexen") {
     CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');

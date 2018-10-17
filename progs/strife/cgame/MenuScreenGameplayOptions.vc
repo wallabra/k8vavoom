@@ -127,7 +127,7 @@ override void CreateChoices()
   Slider.SetOrigin(ChoicesStartX, currentY);
   Slider.Text = "Optional Translucency";
   Slider.ValueDelta = 0.05;
-  Slider.SetInitialValue(GetCvarF('transsouls'));
+  Slider.SetInitialValue(GetCvarF('r_transsouls'));
   Slider.ValueChanging = &ChangeTrans;
   currentY += Slider.Height;
 }
@@ -212,7 +212,7 @@ bool ChangeFuzz(Object Sender, int newValue)
 
 bool ChangeTrans(Object Sender, float newValue)
 {
-  SetCvarF('transsouls', newValue);
+  SetCvarF('r_transsouls', newValue);
   return true;
 }
 
