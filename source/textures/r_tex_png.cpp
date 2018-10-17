@@ -97,14 +97,18 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
       Strm.SerialiseBigEndian(&SOffset, 4);
       Strm.SerialiseBigEndian(&TOffset, 4);
       if (SOffset < -32768 || SOffset > 32767) {
-        GCon->Logf("S-offset for PNG texture %s is bad: %d (0x%08x)", *W_LumpName(LumpNum), SOffset, SOffset);
+        GCon->Logf("S-offset for PNG texture %s is bad: %d (0x%08x)", *W_FullLumpName(LumpNum), SOffset, SOffset);
         SOffset = 0;
       }
       if (TOffset < -32768 || TOffset > 32767) {
-        GCon->Logf("T-offset for PNG texture %s is bad: %d (0x%08x)", *W_LumpName(LumpNum), TOffset, TOffset);
+        GCon->Logf("T-offset for PNG texture %s is bad: %d (0x%08x)", *W_FullLumpName(LumpNum), TOffset, TOffset);
         TOffset = 0;
       }
     } else {
+      if (Len > 0x3fffffff || (int)Len > Strm.TotalSize() || (int)Len > Strm.TotalSize()-Strm.Tell()) {
+        GCon->Logf("INVALID PNG FILE '%s'", *W_FullLumpName(LumpNum));
+        return nullptr;
+      }
       Strm.Seek(Strm.Tell()+Len);
     }
     Strm << CRC;
