@@ -59,7 +59,8 @@ override void CreateChoices () {
 
   CreateOnOffCvar("FPS Counter", 'draw_fps');
 
-  CreateOnOffCvar("Interface filtering", 'gl_2d_filtering');
+  CreateOnOffCvar("Interface font filtering", 'gl_font_filtering');
+  CreateOnOffCvar("Interface pictures filtering", 'gl_pic_filtering');
 
   CreateOnOffCvar("Level ambient light", 'r_allow_ambient');
   CreateFloatSliderCvar("Minimum ambient light", 'r_ambient', 16, 0, 255);
@@ -70,7 +71,7 @@ override void CreateChoices () {
 
 defaultproperties {
   Width = 400;
-  Height = 220;
+  Height = 226;
   ChoicesStartX = 200;
   ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
