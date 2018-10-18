@@ -38,6 +38,8 @@
 #include "r_local.h"
 #include "sv_local.h"
 
+extern VCvarB gl_pic_filtering;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -767,24 +769,25 @@ void VRenderLevelShared::DrawPlayerSprites()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::DrawCrosshair
 //
 //==========================================================================
-
-void VRenderLevelShared::DrawCrosshair()
-{
+void VRenderLevelShared::DrawCrosshair () {
   guard(VRenderLevelShared::DrawCrosshair);
-  if (crosshair)
-  {
+  if (crosshair) {
     if (crosshair_alpha < 0.0)  crosshair_alpha = 0.0;
     if (crosshair_alpha > 1.0)  crosshair_alpha = 1.0;
 
     int cy = (screenblocks < 11 ? (VirtualHeight-sb_height)/2 : VirtualHeight/2);
     cy += r_crosshair_yofs;
     int handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", (int)crosshair), VName::AddLower8), TEXTYPE_Pic);
+    bool oldflt = gl_pic_filtering;
+    gl_pic_filtering = false;
     R_DrawPic(VirtualWidth/2, cy, handle, crosshair_alpha);
+    gl_pic_filtering = oldflt;
   }
   unguard;
 }
