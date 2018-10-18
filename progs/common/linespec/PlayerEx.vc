@@ -922,6 +922,7 @@ final void BringUpWeapon()
   if (ReadyWeapon) {
     SetViewState(ps_weapon, ReadyWeapon.GetUpState());
     MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
+    Refire = 0;
   }
 }
 

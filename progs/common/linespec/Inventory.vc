@@ -909,6 +909,7 @@ final void A_Raise()
   }
 }
 
+
 //===========================================================================
 //
 //  A_ReFire
@@ -916,49 +917,47 @@ final void A_Raise()
 //  The player can re-fire the weapon without lowering it entirely.
 //
 //===========================================================================
-
-final void A_ReFire()
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
+final void A_ReFire () {
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
+  if (!Wpn) {
+    PlayerEx(Player).Refire = 0;
+    return;
+  }
+
   if (Wpn.FireMode == Weapon::FIRE_Primary &&
-    (Player.Buttons & BT_ATTACK) &&
-    !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+      (Player.Buttons&BT_ATTACK) &&
+      !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
   {
-    PlayerEx(Player).Refire++;
+    //writeln("A_ReFire: primary");
+    ++PlayerEx(Player).Refire;
     if (!k8InWeaponReady) PlayerEx(Player).FireWeapon();
   }
   else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
-    (Player.Buttons & BT_ALT_ATTACK) &&
-    !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+           (Player.Buttons&BT_ALT_ATTACK) &&
+           !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
   {
-    PlayerEx(Player).Refire++;
+    //writeln("A_ReFire: secondary");
+    ++PlayerEx(Player).Refire;
     if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon();
-  }
-  else
-  {
+  } else {
+    //writeln("A_ReFire: nothing");
     PlayerEx(Player).Refire = 0;
     Wpn.CheckAmmo(Wpn.FireMode, true);
   }
 }
+
 
 //===========================================================================
 //
 //  A_ClearReFire
 //
 //===========================================================================
-
-final void A_ClearReFire()
-{
-  if (bIsPlayer)
-  {
-    PlayerEx(Player).Refire = 0;
-  }
+final void A_ClearReFire () {
+  if (bIsPlayer) PlayerEx(Player).Refire = 0;
 }
+
 
 //===========================================================================
 //
@@ -1459,6 +1458,7 @@ final void A_RailAttack(int RailDamage, optional float Offset,
     !!(Flags & 1), !!(Flags & 2));
 }
 
+
 //**************************************************************************
 //  Doom weapon atack functions
 //**************************************************************************
@@ -1468,41 +1468,33 @@ final void A_RailAttack(int RailDamage, optional float Offset,
 //  A_FirePistol
 //
 //===========================================================================
-
-final void A_FirePistol()
-{
+final void A_FirePistol () {
   TVec dir;
   bool Accurate;
 
   bool noAAim = false;
   name decal = '';
-  if (bIsPlayer)
-  {
+  if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-    if (Wpn)
-    {
-      if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
-      {
-        return;
-      }
-
+    if (Wpn) {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
       decal = Wpn.DecalName;
       noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     }
     SetState(MeleeState);
     Accurate = !PlayerEx(Player).Refire;
-  }
-  else
-  {
+    //writeln("PISTOL: Accurate=", Accurate, "; refire=", PlayerEx(Player).Refire);
+  } else {
     Accurate = true;
   }
 
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
-  Aim(dir, 16.0 * 64.0, default, noAAim);
+  Aim(dir, 16.0*64.0, default, noAAim);
   GunShot(Accurate, dir, 'Bullet', false, decal);
 }
+
 
 //===========================================================================
 //

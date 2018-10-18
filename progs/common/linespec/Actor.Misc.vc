@@ -713,105 +713,82 @@ final void A_LayToFloorWithYaw (float yaw) {
 // Follows after getting weapon up, or after previous attack/fire sequence.
 //
 //==========================================================================
-
-final void A_WeaponReady(optional int Flags)
-{
+final void A_WeaponReady (optional int Flags) {
   if (k8InWeaponReady) return; // don't recurse
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (!Wpn)
-  {
+  if (!Wpn) {
     Player.bReloadQueued = false;
     PlayerEx(Player).Refire = 0;
     return;
   }
 
   k8InWeaponReady = true;
+  scope(exit) k8InWeaponReady = false;
 
   // get out of attack state
-  if (StateIsInSequence(State, MissileState) ||
-    StateIsInSequence(State, MeleeState))
-  {
+  if (StateIsInSequence(State, MissileState) || StateIsInSequence(State, MeleeState)) {
     SetState(IdleState);
   }
 
   if (Player.ViewStates[ps_weapon].State == Wpn.GetReadyState() &&
-    Wpn.ReadySound && (!Wpn.bReadySndHalf || Random() < 0.5))
+      Wpn.ReadySound && (!Wpn.bReadySndHalf || Random() < 0.5))
   {
     PlaySound(Wpn.ReadySound, CHAN_WEAPON);
   }
 
-  if (!(Flags & WRF_NOSWITCH))
-  {
-    // Put the weapon away if the player has a pending weapon or has died.
-    if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0)
-    {
+  if (!(Flags&WRF_NOSWITCH)) {
+    // put the weapon away if the player has a pending weapon or has died
+    if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
       Player.SetViewState(ps_weapon, Wpn.GetDownState());
-      k8InWeaponReady = false;
       Player.bReloadQueued = false;
+      PlayerEx(Player).Refire = 0;
       return;
     }
   }
 
-  if (!(Flags & WRF_NOFIRE))
-  {
+  if (!(Flags&WRF_NOFIRE)) {
     bool attackDown = ((Player.Buttons&BT_ATTACK) != 0);
     if (attackDown) Player.bReloadQueued = false;
-    // Check for reload.
-    if ((Flags & WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !attackDown && Wpn.FindState('Reload'))
-    {
+    // check for reload
+    if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !attackDown && Wpn.FindState('Reload')) {
       Player.bAttackDown = true;
       Player.bReloadQueued = false;
+      PlayerEx(Player).Refire = 0;
       PlayerEx(Player).ReloadWeapon();
-      k8InWeaponReady = false;
       return;
     }
-    // Check for fire.
-    if (attackDown && (Flags&WRF_NOPRIMARY) == 0)
-    {
-      if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire)
-      {
-        if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
+    // check for fire
+    if (attackDown && (Flags&WRF_NOPRIMARY) == 0) {
+      if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
         PlayerEx(Player).FireWeapon();
-        k8InWeaponReady = false;
+        //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
       }
-    }
-    else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) != 0 && Wpn.FindState('AltFire'))
-    {
-      if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire)
-      {
-        if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
+    } else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) != 0 && Wpn.FindState('AltFire')) {
+      if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
         PlayerEx(Player).AltFireWeapon();
-        k8InWeaponReady = false;
+        //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
       }
-    }
-    else
-    {
+    } else {
       Player.bAttackDown = false;
     }
   }
 
-  if (!(Flags & WRF_NOBOB) || !Wpn.bDontBob)
-  {
+  if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {
     // bob the weapon based on movement speed
-    float angle = AngleMod360(180.0 * XLevel.Time);
+    float angle = AngleMod360(180.0*XLevel.Time);
     Player.ViewStates[ps_weapon].SX = 1.0+PlayerEx(Player).Bob*cos(angle);
     if (angle >= 180.0) angle -= 180.0;
     Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
   }
-
-  k8InWeaponReady = false;
 }
 
 
