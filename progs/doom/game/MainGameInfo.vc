@@ -22,13 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MainGameInfo : LineSpecialGameInfo;
 
 const int NUM_SPECIALS = 394;
 
-struct spec_trans_t
-{
+struct spec_trans_t {
   int special;
   int arg1;
   int arg2;
@@ -48,12 +46,12 @@ BotPlayer::botinfo_t botinfo[12];
 
 int INITIAL_HEALTH;
 
+
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
 override void Init () {
   ::Init();
   InitTranslationTables();
@@ -87,21 +85,20 @@ override void Init () {
 //  InitNewGame
 //
 //==========================================================================
-override void InitNewGame(int skill) {
+override void InitNewGame (int skill) {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');
   bRespawnItems = GetCvar('deathmatch') >= 2;
   bWeaponsStay = netgame && GetCvar('deathmatch') < 2;
 }
 
+
 //==========================================================================
 //
 //  InitBotTypes
 //
 //==========================================================================
-
-void InitBotTypes()
-{
+void InitBotTypes () {
   SetBotType(0,
     "bot1",
     BotPlayer::bsk_medium,
@@ -212,13 +209,13 @@ void InitBotTypes()
   );
 }
 
+
 //==========================================================================
 //
 //  SetBotType
 //
 //==========================================================================
-
-void SetBotType(int i, string Name, int accuracy, int intelect, int evade,
+void SetBotType (int i, string Name, int accuracy, int intelect, int evade,
   int anticip, int reaction, string userinfo)
 {
   botinfo[i].Name = Name;
@@ -230,15 +227,14 @@ void SetBotType(int i, string Name, int accuracy, int intelect, int evade,
   botinfo[i].userinfo = userinfo;
 }
 
+
 //==========================================================================
 //
 //  InitTranslationTables
 //
 //==========================================================================
-
-void InitTranslationTables()
-{
-  //  0
+void InitTranslationTables () {
+  // 0
   SetLineTrans(1, LNSPEC_DoorRaise, 0, 16, 150, 0, 0, SPAC_Use, true, true);
   SetLineTrans(2, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(3, LNSPEC_DoorClose, -1, 16, 0, 0, 0, SPAC_Cross, false);
@@ -266,16 +262,16 @@ void InitTranslationTables()
   SetLineTrans(23, LNSPEC_FloorLowerToLowest, -1, 8, 0, 0, 0, SPAC_Use, false);
   SetLineTrans(24, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Impact, false);
   SetLineTrans(25, LNSPEC_CeilingCrushAndRaiseA, -1, 8, 8, 10, 0, SPAC_Cross, false);
-  SetLineTrans(26, LNSPEC_DoorLockedRaise, 0, 16, 150, 2 | 128, 0, SPAC_Use, true);
-  SetLineTrans(27, LNSPEC_DoorLockedRaise, 0, 16, 150, 3 | 128, 0, SPAC_Use, true);
-  SetLineTrans(28, LNSPEC_DoorLockedRaise, 0, 16, 150, 1 | 128, 0, SPAC_Use, true);
+  SetLineTrans(26, LNSPEC_DoorLockedRaise, 0, 16, 150, 2|128, 0, SPAC_Use, true);
+  SetLineTrans(27, LNSPEC_DoorLockedRaise, 0, 16, 150, 3|128, 0, SPAC_Use, true);
+  SetLineTrans(28, LNSPEC_DoorLockedRaise, 0, 16, 150, 1|128, 0, SPAC_Use, true);
   SetLineTrans(29, LNSPEC_DoorRaise, -1, 16, 150, 0, 0, SPAC_Use, false);
 
   SetLineTrans(30, LNSPEC_FloorRaiseByTexture, -1, 8, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(31, LNSPEC_DoorOpen, 0, 16, 0, 0, 0, SPAC_Use, false);
-  SetLineTrans(32, LNSPEC_DoorLockedRaise, 0, 16, 0, 2 | 128, 0, SPAC_Use, false, true);
-  SetLineTrans(33, LNSPEC_DoorLockedRaise, 0, 16, 0, 1 | 128, 0, SPAC_Use, false, true);
-  SetLineTrans(34, LNSPEC_DoorLockedRaise, 0, 16, 0, 3 | 128, 0, SPAC_Use, false, true);
+  SetLineTrans(32, LNSPEC_DoorLockedRaise, 0, 16, 0, 2|128, 0, SPAC_Use, false, true);
+  SetLineTrans(33, LNSPEC_DoorLockedRaise, 0, 16, 0, 1|128, 0, SPAC_Use, false, true);
+  SetLineTrans(34, LNSPEC_DoorLockedRaise, 0, 16, 0, 3|128, 0, SPAC_Use, false, true);
   SetLineTrans(35, LNSPEC_LightChangeToValue, -1, 35, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(36, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Cross, false);
   SetLineTrans(37, LNSPEC_FloorLowerToLowestChange, -1, 8, 0, 0, 0, SPAC_Cross, false);
@@ -346,7 +342,7 @@ void InitTranslationTables()
   SetLineTrans(96, LNSPEC_FloorRaiseByTexture, -1, 8, 0, 0, 0, SPAC_Cross, true);
   SetLineTrans(97, LNSPEC_Teleport, 0, -1, 0, 0, 0, SPAC_Cross, true, true);
   SetLineTrans(98, LNSPEC_FloorLowerToHighest, -1, 32, 136, 0, 0, SPAC_Cross, true);
-  SetLineTrans(99, LNSPEC_DoorLockedRaise, -1, 64, 0, 2 | 128, 0, SPAC_Use, true);
+  SetLineTrans(99, LNSPEC_DoorLockedRaise, -1, 64, 0, 2|128, 0, SPAC_Use, true);
 
   SetLineTrans(100, LNSPEC_StairsBuildUpDoom, -1, 32, 16, 0, 0, SPAC_Cross, false);
   SetLineTrans(101, LNSPEC_FloorRaiseToLowestCeiling, -1, 8, 0, 0, 0, SPAC_Use, false);
@@ -384,11 +380,11 @@ void InitTranslationTables()
   SetLineTrans(130, LNSPEC_FloorRaiseToNearest, -1, 32, 0, 0, 0, SPAC_Cross, false);
   SetLineTrans(131, LNSPEC_FloorRaiseToNearest, -1, 32, 0, 0, 0, SPAC_Use, false);
   SetLineTrans(132, LNSPEC_FloorRaiseToNearest, -1, 32, 0, 0, 0, SPAC_Use, true);
-  SetLineTrans(133, LNSPEC_DoorLockedRaise, -1, 64, 0, 2 | 128, 0, SPAC_Use, false);
-  SetLineTrans(134, LNSPEC_DoorLockedRaise, -1, 64, 0, 1 | 128, 0, SPAC_Use, true);
-  SetLineTrans(135, LNSPEC_DoorLockedRaise, -1, 64, 0, 1 | 128, 0, SPAC_Use, false);
-  SetLineTrans(136, LNSPEC_DoorLockedRaise, -1, 64, 0, 3 | 128, 0, SPAC_Use, true);
-  SetLineTrans(137, LNSPEC_DoorLockedRaise, -1, 64, 0, 3 | 128, 0, SPAC_Use, false);
+  SetLineTrans(133, LNSPEC_DoorLockedRaise, -1, 64, 0, 2|128, 0, SPAC_Use, false);
+  SetLineTrans(134, LNSPEC_DoorLockedRaise, -1, 64, 0, 1|128, 0, SPAC_Use, true);
+  SetLineTrans(135, LNSPEC_DoorLockedRaise, -1, 64, 0, 1|128, 0, SPAC_Use, false);
+  SetLineTrans(136, LNSPEC_DoorLockedRaise, -1, 64, 0, 3|128, 0, SPAC_Use, true);
+  SetLineTrans(137, LNSPEC_DoorLockedRaise, -1, 64, 0, 3|128, 0, SPAC_Use, false);
   SetLineTrans(138, LNSPEC_LightChangeToValue, -1, 255, 0, 0, 0, SPAC_Use, true);
   SetLineTrans(139, LNSPEC_LightChangeToValue, -1, 35, 0, 0, 0, SPAC_Use, true);
 
@@ -535,7 +531,7 @@ void InitTranslationTables()
   SetLineTrans(268, LNSPEC_TeleportNoFog, 0, 0, -1, 0, 0, SPAC_MCross, false);
   SetLineTrans(269, LNSPEC_TeleportNoFog, 0, 0, -1, 0, 0, SPAC_MCross, true);
 
-  //  270
+  // 270
   SetLineTrans(271, 0, -1, 255, 0, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
   SetLineTrans(272, 0, -1, 255, 1, 0, 0, SPAC_Cross, false); // LNSPEC_StaticInit
 
@@ -563,13 +559,13 @@ void InitTranslationTables()
   SetLineTrans(393, LNSPEC_PlaneAlign, 1, 2, 0, 0, 0, SPAC_Cross, false);
 }
 
+
 //==========================================================================
 //
 //  SetLineTrans
 //
 //==========================================================================
-
-void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
+void SetLineTrans (int i, int special, int arg1, int arg2, int arg3,
   int arg4, int arg5, int spac, int repeat, optional int monst,
   optional int not_destroy)
 {
@@ -585,21 +581,16 @@ void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
   spec_trans_tab[i].not_destroy = not_destroy;
 }
 
+
 //==========================================================================
 //
 //  TranslateLine
 //
 //==========================================================================
-
-void TranslateLine(Level InLevel, line_t *line)
-{
-  int     OldSpec;
-  int     OldTag;
-  int     OldFlags;
-
-  OldSpec = line->special;
-  OldTag = line->arg1;
-  OldFlags = line->flags;
+void TranslateLine (Level InLevel, line_t *line) {
+  int OldSpec = line->special;
+  int OldTag = line->arg1;
+  int OldFlags = line->flags;
 
   if (OldSpec < 0) {
     print("WARNING: TranslateLine: special=%d; tag=%d; flags=%x", OldSpec, OldTag, OldFlags);
@@ -609,604 +600,431 @@ void TranslateLine(Level InLevel, line_t *line)
     line->arg1 = 0;
   }
 
-  //  Clear unknown flags.
+  // clear unknown flags
   line->flags &= 0x01ff;
 
-  //  For BOOM compatibility all lines needs to have it's ID same as tag.
-  if (OldTag)
-  {
-    line->LineTag = OldTag;
-  }
+  // for BOOM compatibility all lines needs to have it's ID same as tag
+  if (OldTag) line->LineTag = OldTag;
 
-  if (!line->special)
-  {
-    return;
-  }
+  if (!line->special) return;
 
-  //  Handle Boom's generalised types.
-  if (OldSpec > 0x2F80)
-  {
-    //  Activation flags.
-    switch (OldSpec & 0x0006)
-    {
-    case 0:
-      line->SpacFlags = SPAC_Cross;
-      break;
-
-    case 2:
-    case 6:
-      if (OldFlags & 0x0200)
-      {
-        line->SpacFlags = SPAC_UseThrough;
-      }
-      else
-      {
-        line->SpacFlags = SPAC_Use;
-      }
-      break;
-
-    case 4:
-      line->SpacFlags = SPAC_Impact;
-      break;
+  // handle Boom's generalised types
+  if (OldSpec > 0x2F80) {
+    // activation flags
+    switch (OldSpec&0x0006) {
+      case 0:
+        line->SpacFlags = SPAC_Cross;
+        break;
+      case 2:
+      case 6:
+        if (OldFlags&0x0200) {
+          line->SpacFlags = SPAC_UseThrough;
+        } else {
+          line->SpacFlags = SPAC_Use;
+        }
+        break;
+      case 4:
+        line->SpacFlags = SPAC_Impact;
+        break;
     }
-    if (OldSpec & 1)
-    {
-      line->flags |= ML_REPEAT_SPECIAL;
-    }
+    if (OldSpec&1) line->flags |= ML_REPEAT_SPECIAL;
 
-    //  We treat push triggers like switch triggers with zero tags.
-    if ((OldSpec & 0x0006) == 6)
-    {
+    // we treat push triggers like switch triggers with zero tags
+    if ((OldSpec&0x0006) == 6) {
       line->arg1 = 0;
-    }
-    else
-    {
+    } else {
       line->arg1 = OldTag;
     }
 
-    if (OldSpec < 0x3000)
-    {
-      //  Generalised crusher (tag, dnspeed, upspeed, silent, damage)
+    if (OldSpec < 0x3000) {
+      // generalised crusher (tag, dnspeed, upspeed, silent, damage)
       line->special = LNSPEC_CeilingGenericCrush;
-      if (OldSpec & 0x0020)
-      {
-        line->flags |= ML_MONSTERSCANACTIVATE;
-      }
-      switch (OldSpec & 0x0018)
-      {
-      case 0x0000:  line->arg2 = 8;   break;
-      case 0x0008:  line->arg2 = 16;  break;
-      case 0x0010:  line->arg2 = 32;  break;
-      case 0x0018:  line->arg2 = 64;  break;
+      if (OldSpec&0x0020) line->flags |= ML_MONSTERSCANACTIVATE;
+      switch (OldSpec&0x0018) {
+        case 0x0000: line->arg2 = 8; break;
+        case 0x0008: line->arg2 = 16; break;
+        case 0x0010: line->arg2 = 32; break;
+        case 0x0018: line->arg2 = 64; break;
       }
       line->arg3 = line->arg2;
-      line->arg4 = (OldSpec & 0x0040) >> 6;
+      line->arg4 = (OldSpec&0x0040)>>6;
       line->arg5 = 10;
-    }
-    else if (OldSpec < 0x3400)
-    {
-      //  Generalised stairs (tag, speed, step, dir/igntxt, reset)
+    } else if (OldSpec < 0x3400) {
+      // generalised stairs (tag, speed, step, dir/igntxt, reset)
       line->special = LNSPEC_StairsGeneric;
-      if (OldSpec & 0x0020)
-      {
-        line->flags |= ML_MONSTERSCANACTIVATE;
+      if (OldSpec&0x0020) line->flags |= ML_MONSTERSCANACTIVATE;
+      switch (OldSpec&0x0018) {
+        case 0x0000: line->arg2 = 2; break;
+        case 0x0008: line->arg2 = 4; break;
+        case 0x0010: line->arg2 = 16; break;
+        case 0x0018: line->arg2 = 32; break;
       }
-      switch (OldSpec & 0x0018)
-      {
-      case 0x0000:  line->arg2 = 2;   break;
-      case 0x0008:  line->arg2 = 4;   break;
-      case 0x0010:  line->arg2 = 16;  break;
-      case 0x0018:  line->arg2 = 32;  break;
+      switch (OldSpec&0x00c0) {
+        case 0x0000: line->arg3 = 4; break;
+        case 0x0040: line->arg3 = 8; break;
+        case 0x0080: line->arg3 = 16; break;
+        case 0x00c0: line->arg3 = 24; break;
       }
-      switch (OldSpec & 0x00c0)
-      {
-      case 0x0000:  line->arg3 = 4;   break;
-      case 0x0040:  line->arg3 = 8;   break;
-      case 0x0080:  line->arg3 = 16;  break;
-      case 0x00c0:  line->arg3 = 24;  break;
-      }
-      line->arg4 = (OldSpec & 0x0300) >> 8;
+      line->arg4 = (OldSpec&0x0300)>>8;
       line->arg5 = 0;
-    }
-    else if (OldSpec < 0x3800)
-    {
-      //  Generalised lift (tag, speed, delay, target, height)
+    } else if (OldSpec < 0x3800) {
+      // generalised lift (tag, speed, delay, target, height)
       line->special = LNSPEC_PlatGeneric;
-      if (OldSpec & 0x0020)
-      {
-        line->flags |= ML_MONSTERSCANACTIVATE;
+      if (OldSpec&0x0020) line->flags |= ML_MONSTERSCANACTIVATE;
+      switch (OldSpec&0x0018) {
+        case 0x0000: line->arg2 = 16; break;
+        case 0x0008: line->arg2 = 32; break;
+        case 0x0010: line->arg2 = 64; break;
+        case 0x0018: line->arg2 = 128; break;
       }
-      switch (OldSpec & 0x0018)
-      {
-      case 0x0000:  line->arg2 = 16;  break;
-      case 0x0008:  line->arg2 = 32;  break;
-      case 0x0010:  line->arg2 = 64;  break;
-      case 0x0018:  line->arg2 = 128; break;
+      switch (OldSpec&0x00c0) {
+        case 0x0000: line->arg3 = 8; break;
+        case 0x0040: line->arg3 = 24; break;
+        case 0x0080: line->arg3 = 40; break;
+        case 0x00c0: line->arg3 = 80; break;
       }
-      switch (OldSpec & 0x00c0)
-      {
-      case 0x0000:  line->arg3 = 8;   break;
-      case 0x0040:  line->arg3 = 24;  break;
-      case 0x0080:  line->arg3 = 40;  break;
-      case 0x00c0:  line->arg3 = 80;  break;
-      }
-      line->arg4 = ((OldSpec & 0x0300) >> 8) + 1;
+      line->arg4 = ((OldSpec&0x0300)>>8)+1;
       line->arg5 = 0;
-    }
-    else if (OldSpec < 0x3c00)
-    {
-      //  Generalised locked door (tag, speed, kind, delay, lock)
+    } else if (OldSpec < 0x3c00) {
+      // generalised locked door (tag, speed, kind, delay, lock)
       line->special = LNSPEC_DoorGeneric;
-      switch (OldSpec & 0x0018)
-      {
-      case 0x0000:  line->arg2 = 16;  break;
-      case 0x0008:  line->arg2 = 32;  break;
-      case 0x0010:  line->arg2 = 64;  break;
-      case 0x0018:  line->arg2 = 128; break;
+      switch (OldSpec&0x0018) {
+        case 0x0000: line->arg2 = 16; break;
+        case 0x0008: line->arg2 = 32; break;
+        case 0x0010: line->arg2 = 64; break;
+        case 0x0018: line->arg2 = 128; break;
       }
-      line->arg3 = (OldSpec & 0x0020) >> 5;
+      line->arg3 = (OldSpec&0x0020)>>5;
       line->arg4 = 0;
-      line->arg5 = (OldSpec & 0x01c0) >> 6;
-      if (line->arg5 == 0)
-      {
-        line->arg5 = 100;
-      }
-      else if (line->arg5 == 7)
-      {
-        line->arg5 = 101;
-      }
-      line->arg5 |= (OldSpec & 0x0200) >> 2;
-    }
-    else if (OldSpec < 0x4000)
-    {
-      //  Generalised door (tag, speed, kind, delay, lock)
+      line->arg5 = (OldSpec&0x01c0)>>6;
+           if (line->arg5 == 0) line->arg5 = 100;
+      else if (line->arg5 == 7) line->arg5 = 101;
+      line->arg5 |= (OldSpec&0x0200)>>2;
+    } else if (OldSpec < 0x4000) {
+      // generalised door (tag, speed, kind, delay, lock)
       line->special = LNSPEC_DoorGeneric;
-      if (OldSpec & 0x0080)
-      {
-        line->flags |= ML_MONSTERSCANACTIVATE;
+      if (OldSpec&0x0080) line->flags |= ML_MONSTERSCANACTIVATE;
+      switch (OldSpec&0x0018) {
+        case 0x0000: line->arg2 = 16; break;
+        case 0x0008: line->arg2 = 32; break;
+        case 0x0010: line->arg2 = 64; break;
+        case 0x0018: line->arg2 = 128; break;
       }
-      switch (OldSpec & 0x0018)
-      {
-      case 0x0000:  line->arg2 = 16;  break;
-      case 0x0008:  line->arg2 = 32;  break;
-      case 0x0010:  line->arg2 = 64;  break;
-      case 0x0018:  line->arg2 = 128; break;
-      }
-      line->arg3 = (OldSpec & 0x0060) >> 5;
-      if ((OldSpec & 0x0006) == 6)
-      {
+      line->arg3 = (OldSpec&0x0060)>>5;
+      if ((OldSpec&0x0006) == 6) {
         line->arg1 = OldTag;
         line->arg3 |= 128;
       }
-      switch (OldSpec & 0x0300)
-      {
-      case 0x0000:  line->arg4 = 8;   break;
-      case 0x0100:  line->arg4 = 32;  break;
-      case 0x0200:  line->arg4 = 72;  break;
-      case 0x0300:  line->arg4 = 240; break;
+      switch (OldSpec&0x0300) {
+        case 0x0000: line->arg4 = 8; break;
+        case 0x0100: line->arg4 = 32; break;
+        case 0x0200: line->arg4 = 72; break;
+        case 0x0300: line->arg4 = 240; break;
       }
       line->arg5 = 0;
-    }
-    else
-    {
-      //  Generalised ceiling (tag, speed, height, target, change/model/direct/crush)
-      //  Generalised floor (tag, speed, height, target, change/model/direct/crush)
-      if (OldSpec < 0x6000)
-      {
+    } else {
+      // generalised ceiling (tag, speed, height, target, change/model/direct/crush)
+      // generalised floor (tag, speed, height, target, change/model/direct/crush)
+      if (OldSpec < 0x6000) {
         line->special = LNSPEC_CeilingGeneric;
-      }
-      else
-      {
+      } else {
         line->special = LNSPEC_FloorGeneric;
       }
-      if ((OldSpec & 0x0c20) == 0x0020)
-      {
-        line->flags |= ML_MONSTERSCANACTIVATE;
+      if ((OldSpec&0x0c20) == 0x0020) line->flags |= ML_MONSTERSCANACTIVATE;
+      switch (OldSpec&0x0018) {
+        case 0x0000: line->arg2 = 8; break;
+        case 0x0008: line->arg2 = 16; break;
+        case 0x0010: line->arg2 = 32; break;
+        case 0x0018: line->arg2 = 64; break;
       }
-
-      switch (OldSpec & 0x0018)
-      {
-      case 0x0000:  line->arg2 = 8;   break;
-      case 0x0008:  line->arg2 = 16;  break;
-      case 0x0010:  line->arg2 = 32;  break;
-      case 0x0018:  line->arg2 = 64;  break;
-      }
-      line->arg4 = ((OldSpec & 0x0380) >> 7) + 1;
-      if (line->arg4 >= 7)
-      {
-        line->arg3 = 24 + (line->arg4 - 7) * 8;
+      line->arg4 = ((OldSpec&0x0380)>>7)+1;
+      if (line->arg4 >= 7) {
+        line->arg3 = 24+(line->arg4-7)*8;
         line->arg4 = 0;
-      }
-      else
-      {
+      } else {
         line->arg3 = 0;
       }
-      line->arg5 =  ((OldSpec & 0x0c00) >> 10) |
-              ((OldSpec & 0x0060) >> 3) |
-              ((OldSpec & 0x1000) >> 8);
+      line->arg5 = ((OldSpec&0x0c00)>>10)|((OldSpec&0x0060)>>3)|((OldSpec&0x1000)>>8);
     }
-    if (line->flags & ML_MONSTERSCANACTIVATE && line->SpacFlags == SPAC_Cross)
-    {
-      // In Boom anything can activate such a line so set the proper type here.
+    if (line->flags&ML_MONSTERSCANACTIVATE && line->SpacFlags == SPAC_Cross) {
+      // in Boom, anything can activate such a line so set the proper type here
       line->SpacFlags = SPAC_AnyCross;
     }
     return;
   }
 
-  switch (OldSpec)
-  {
-  // Doom Legacy 3D floors
-  case 281:
-  case 289:
-  case 300:
-  //case 301:
-  // EDGE 3D floors
-  case 400:
-  case 401:
-  case 402:
-  case 403:
-  case 404:
-  case 405:
-  case 406:
-  case 407:
-  case 408:
-  case 413:
-  case 414:
-  case 415:
-  case 416:
-  case 417:
-    if (line->frontsector) {
-      if (GetPlanePointZ(ref line->frontsector->floor, *line->frontsector->lines[0]->v1) < GetPlanePointZ(ref line->frontsector->ceiling, *line->frontsector->lines[0]->v1))
-      {
-        InLevel.SwapPlanes(line->frontsector);
+  switch (OldSpec) {
+    // Doom Legacy 3D floors
+    case 281:
+    case 289:
+    case 300:
+    //case 301:
+    // EDGE 3D floors
+    case 400:
+    case 401:
+    case 402:
+    case 403:
+    case 404:
+    case 405:
+    case 406:
+    case 407:
+    case 408:
+    case 413:
+    case 414:
+    case 415:
+    case 416:
+    case 417:
+      if (line->frontsector) {
+        if (GetPlanePointZ(ref line->frontsector->floor, *line->frontsector->lines[0]->v1) < GetPlanePointZ(ref line->frontsector->ceiling, *line->frontsector->lines[0]->v1)) {
+          InLevel.SwapPlanes(line->frontsector);
+        }
       }
-    }
-    break;
+      break;
   }
-  switch (OldSpec)
-  {
-  case 281:
-  case 289:
-    line->special = 160;
-    return;
-  case 300:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->floor.Alpha = 0.5;
-      line->frontsector->ceiling.Alpha = 0.5;
-    }
-    return;
-  // Doesn't work
-  /*case 301:
-    line->special = 160;
-    line->frontsector->params.contents = CONTENTS_WATER;
-    line->frontsector->floor.translucency = 50;
-    line->frontsector->ceiling.translucency = 50;
-    line->frontsector->ceiling.flags = 7;
-    line->frontsector->floor.flags = 7;
-    return;*/
-  // EDGE 3D floors
-  case 400:
-    line->special = 160;
-    return;
-  case 401:
-    line->special = 160;
-    return;
-  case 402:
-    line->special = 160;
-    return;
-  case 403:
-    line->special = 160;
-    if (line->frontsector) {
+  switch (OldSpec) {
+    case 281:
+    case 289:
+      line->special = 160;
+      return;
+    case 300:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->floor.Alpha = 0.5;
+        line->frontsector->ceiling.Alpha = 0.5;
+      }
+      return;
+    // Doesn't work
+    /*case 301:
+      line->special = 160;
       line->frontsector->params.contents = CONTENTS_WATER;
+      line->frontsector->floor.translucency = 50;
+      line->frontsector->ceiling.translucency = 50;
       line->frontsector->ceiling.flags = 7;
       line->frontsector->floor.flags = 7;
-    }
-    return;
-  case 404:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->params.contents = CONTENTS_WATER;
-      line->frontsector->floor.Alpha = 0.8;
-      line->frontsector->ceiling.Alpha = 0.8;
-      line->frontsector->ceiling.flags = 7;
-      line->frontsector->floor.flags = 7;
-    }
-    return;
-  case 405:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->params.contents = CONTENTS_WATER;
-      line->frontsector->floor.Alpha = 0.6;
-      line->frontsector->ceiling.Alpha = 0.6;
-      line->frontsector->ceiling.flags = 7;
-      line->frontsector->floor.flags = 7;
-    }
-    return;
-  case 406:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->params.contents = CONTENTS_WATER;
-      line->frontsector->floor.Alpha = 0.4;
-      line->frontsector->ceiling.Alpha = 0.4;
-      line->frontsector->ceiling.flags = 7;
-      line->frontsector->floor.flags = 7;
-    }
-    return;
-  case 407:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->params.contents = CONTENTS_WATER;
-      line->frontsector->floor.Alpha = 0.2;
-      line->frontsector->ceiling.Alpha = 0.2;
-      line->frontsector->ceiling.flags = 7;
-      line->frontsector->floor.flags = 7;
-    }
-    return;
-  case 408:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->params.contents = CONTENTS_WATER;
-      line->frontsector->floor.Alpha = 0.0;
-      line->frontsector->ceiling.Alpha = 0.0;
-      line->frontsector->ceiling.flags = 7;
-      line->frontsector->floor.flags = 7;
-    }
-    return;
-  case 413:
-    line->special = 160;
-    return;
-  case 414:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->floor.Alpha = 0.8;
-      line->frontsector->ceiling.Alpha = 0.8;
-      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
-    }
-    return;
-  case 415:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->floor.Alpha = 0.6;
-      line->frontsector->ceiling.Alpha = 0.6;
-      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
-    }
-    return;
-  case 416:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->floor.Alpha = 0.4;
-      line->frontsector->ceiling.Alpha = 0.4;
-      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
-    }
-    return;
-  case 417:
-    line->special = 160;
-    if (line->frontsector) {
-      line->frontsector->floor.Alpha = 0.2;
-      line->frontsector->ceiling.Alpha = 0.2;
-      line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
-      line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
-    }
-    return;
+      return;*/
+    // EDGE 3D floors
+    case 400:
+      line->special = 160;
+      return;
+    case 401:
+      line->special = 160;
+      return;
+    case 402:
+      line->special = 160;
+      return;
+    case 403:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->ceiling.flags = 7;
+        line->frontsector->floor.flags = 7;
+      }
+      return;
+    case 404:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->floor.Alpha = 0.8;
+        line->frontsector->ceiling.Alpha = 0.8;
+        line->frontsector->ceiling.flags = 7;
+        line->frontsector->floor.flags = 7;
+      }
+      return;
+    case 405:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->floor.Alpha = 0.6;
+        line->frontsector->ceiling.Alpha = 0.6;
+        line->frontsector->ceiling.flags = 7;
+        line->frontsector->floor.flags = 7;
+      }
+      return;
+    case 406:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->floor.Alpha = 0.4;
+        line->frontsector->ceiling.Alpha = 0.4;
+        line->frontsector->ceiling.flags = 7;
+        line->frontsector->floor.flags = 7;
+      }
+      return;
+    case 407:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->floor.Alpha = 0.2;
+        line->frontsector->ceiling.Alpha = 0.2;
+        line->frontsector->ceiling.flags = 7;
+        line->frontsector->floor.flags = 7;
+      }
+      return;
+    case 408:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->params.contents = CONTENTS_WATER;
+        line->frontsector->floor.Alpha = 0.0;
+        line->frontsector->ceiling.Alpha = 0.0;
+        line->frontsector->ceiling.flags = 7;
+        line->frontsector->floor.flags = 7;
+      }
+      return;
+    case 413:
+      line->special = 160;
+      return;
+    case 414:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->floor.Alpha = 0.8;
+        line->frontsector->ceiling.Alpha = 0.8;
+        line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+        line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+      }
+      return;
+    case 415:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->floor.Alpha = 0.6;
+        line->frontsector->ceiling.Alpha = 0.6;
+        line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+        line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+      }
+      return;
+    case 416:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->floor.Alpha = 0.4;
+        line->frontsector->ceiling.Alpha = 0.4;
+        line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+        line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+      }
+      return;
+    case 417:
+      line->special = 160;
+      if (line->frontsector) {
+        line->frontsector->floor.Alpha = 0.2;
+        line->frontsector->ceiling.Alpha = 0.2;
+        line->frontsector->ceiling.flags = SPF_NOBLOCKSIGHT;
+        line->frontsector->floor.flags = SPF_NOBLOCKSIGHT;
+      }
+      return;
 
-  //EDGE plane-copy
-  case 394: // Slope_FrontFloorToTaggedSlope
-    line->special = LNSPEC_PlaneCopy;
-    //line->arg1 = line->tag;
-    line->arg2 = 0;
-    line->arg3 = 0;
-    line->arg4 = 0;
-    line->arg5 = 0;
-    //line->tag = 0;
-    return;
-  case 395: // Slope_FrontCeilingToTaggedSlope
-    line->special = LNSPEC_PlaneCopy;
-    //line->arg2 = line->tag;
-    line->arg2 = line->arg1;
-    line->arg1 = 0;
-    line->arg3 = 0;
-    line->arg4 = 0;
-    line->arg5 = 0;
-    //line->tag = 0;
-    return;
-  case 396: // Slope_FrontFloorAndCeilingToTaggedSlope
-    line->special = LNSPEC_PlaneCopy;
-    //line->arg1 = line->tag;
-    //line->arg2 = line->tag;
-    line->arg2 = line->arg2;
-    line->arg3 = 0;
-    line->arg4 = 0;
-    line->arg5 = 0;
-    //line->tag = 0;
-    return;
+    //EDGE plane-copy
+    case 394: // Slope_FrontFloorToTaggedSlope
+      line->special = LNSPEC_PlaneCopy;
+      //line->arg1 = line->tag;
+      line->arg2 = 0;
+      line->arg3 = 0;
+      line->arg4 = 0;
+      line->arg5 = 0;
+      //line->tag = 0;
+      return;
+    case 395: // Slope_FrontCeilingToTaggedSlope
+      line->special = LNSPEC_PlaneCopy;
+      //line->arg2 = line->tag;
+      line->arg2 = line->arg1;
+      line->arg1 = 0;
+      line->arg3 = 0;
+      line->arg4 = 0;
+      line->arg5 = 0;
+      //line->tag = 0;
+      return;
+    case 396: // Slope_FrontFloorAndCeilingToTaggedSlope
+      line->special = LNSPEC_PlaneCopy;
+      //line->arg1 = line->tag;
+      //line->arg2 = line->tag;
+      line->arg2 = line->arg2;
+      line->arg3 = 0;
+      line->arg4 = 0;
+      line->arg5 = 0;
+      //line->tag = 0;
+      return;
   }
 
-  if (line->special >= NUM_SPECIALS)
-  {
+  if (line->special >= NUM_SPECIALS) {
     line->special = 0;
     line->arg1 = 0;
     return;
   }
 
-  //  Special.
+  // special
   line->special = spec_trans_tab[OldSpec].special;
-  //  Arg 1.
-  if (spec_trans_tab[OldSpec].arg1 == -1)
-  {
-    line->arg1 = OldTag;
-  }
-  else
-  {
-    line->arg1 = spec_trans_tab[OldSpec].arg1;
-  }
-  //  Arg 2.
-  if (spec_trans_tab[OldSpec].arg2 == -1)
-  {
-    line->arg2 = OldTag;
-  }
-  else
-  {
-    line->arg2 = spec_trans_tab[OldSpec].arg2;
-  }
-  //  Arg 3.
-  if (spec_trans_tab[OldSpec].arg3 == -1)
-  {
-    line->arg3 = OldTag;
-  }
-  else
-  {
-    line->arg3 = spec_trans_tab[OldSpec].arg3;
-  }
-  //  Arg 4.
-  if (spec_trans_tab[OldSpec].arg4 == -1)
-  {
-    line->arg4 = OldTag;
-  }
-  else
-  {
-    line->arg4 = spec_trans_tab[OldSpec].arg4;
-  }
-  //  Arg 5.
-  if (spec_trans_tab[OldSpec].arg5 == -1)
-  {
-    line->arg5 = OldTag;
-  }
-  else
-  {
-    line->arg5 = spec_trans_tab[OldSpec].arg5;
-  }
+  // args
+  line->arg1 = (spec_trans_tab[OldSpec].arg1 == -1 ? OldTag : spec_trans_tab[OldSpec].arg1);
+  line->arg2 = (spec_trans_tab[OldSpec].arg2 == -1 ? OldTag : spec_trans_tab[OldSpec].arg2);
+  line->arg3 = (spec_trans_tab[OldSpec].arg3 == -1 ? OldTag : spec_trans_tab[OldSpec].arg3);
+  line->arg4 = (spec_trans_tab[OldSpec].arg4 == -1 ? OldTag : spec_trans_tab[OldSpec].arg4);
+  line->arg5 = (spec_trans_tab[OldSpec].arg5 == -1 ? OldTag : spec_trans_tab[OldSpec].arg5);
 
-  //  Activation flags.
-  if (OldFlags & 0x0200 && spec_trans_tab[OldSpec].spac == SPAC_Use)
-  {
+  // activation flags
+  if ((OldFlags&0x0200) != 0 && spec_trans_tab[OldSpec].spac == SPAC_Use) {
     line->SpacFlags = SPAC_UseThrough;
-  }
-  else
-  {
+  } else {
     line->SpacFlags = spec_trans_tab[OldSpec].spac;
   }
-  if (spec_trans_tab[OldSpec].repeat)
-  {
-    line->flags |= ML_REPEAT_SPECIAL;
-  }
-  if (spec_trans_tab[OldSpec].monst)
-  {
-    line->flags |= ML_MONSTERSCANACTIVATE;
-  }
-  if ((line->flags & ML_SECRET) && line->SpacFlags & (SPAC_Use |
-    SPAC_UseThrough))
-  {
-    line->flags &= ~ML_MONSTERSCANACTIVATE;
-  }
-  // Check to see if we want thinkers destroyed or not
-  if (spec_trans_tab[OldSpec].not_destroy)
-  {
-    line->flags |= ML_KEEPDATA;
-  }
+  if (spec_trans_tab[OldSpec].repeat) line->flags |= ML_REPEAT_SPECIAL;
+  if (spec_trans_tab[OldSpec].monst) line->flags |= ML_MONSTERSCANACTIVATE;
+  if ((line->flags&ML_SECRET) && (line->SpacFlags&(SPAC_Use|SPAC_UseThrough)) != 0) line->flags &= ~ML_MONSTERSCANACTIVATE;
+  // check to see if we want thinkers destroyed or not
+  if (spec_trans_tab[OldSpec].not_destroy) line->flags |= ML_KEEPDATA;
 }
+
 
 //==========================================================================
 //
 //  TranslateSector
 //
 //==========================================================================
-
-void TranslateSector(sector_t *sector)
-{
+void TranslateSector (sector_t *sector) {
   int special;
   int high;
 
   special = sector->special;
-  if (!special)
-  {
-    return;
-  }
-  if (special == 9)
-  {
+  if (!special) return;
+  if (special == 9) {
     sector->special = SECSPEC_SECRET_MASK;
     return;
   }
 
-  //  This supports phased lighting with specials 21-24 and wind specials
-  // 40-51.
-  high = (special & 0xfe0) << 3;
+  // this supports phased lighting with specials 21-24 and wind specials 40-51
+  high = (special&0xfe0)<<3;
   special &= 0x01f;
-  if (special < 21)
-  {
-    sector->special = high | (special + 64);
-  }
-  else if (special < 40)
-  {
-    sector->special = high | (special - 20);
-  }
-  else
-  {
-    sector->special = high | special;
-  }
+       if (special < 21) sector->special = high|(special+64);
+  else if (special < 40) sector->special = high|(special-20);
+  else sector->special = high|special;
 }
+
 
 //==========================================================================
 //
 //  TranslateThing
 //
 //==========================================================================
+void TranslateThing (mthing_t *mthing) {
+  // translate the spawn flags to Hexen format
+  int flags = mthing->options;
+  if (flags&0x100) flags &= 0x1f;
 
-void TranslateThing(mthing_t *mthing)
-{
-  int flags;
-
-  // translate the spawn flags to Hexen format.
-  flags = mthing->options;
-  if (flags & 0x100)
-  {
-    flags &= 0x1f;
-  }
-
-  mthing->options = (flags & 0xf) | 0x7e0;
-  if (flags & 0x10)
-  {
-    mthing->options &= ~LineSpecialLevelInfo::MTF_GSINGLE;
-  }
-  if (flags & 0x80)
-  {
-    //  MBF friendly monsters
-    mthing->options |= LineSpecialLevelInfo::MTF_FRIENDLY;
-  }
+  mthing->options = (flags&0xf)|0x7e0;
+  if (flags&0x10) mthing->options &= ~LineSpecialLevelInfo::MTF_GSINGLE;
+  if (flags&0x80) mthing->options |= LineSpecialLevelInfo::MTF_FRIENDLY; // MBF friendly monsters
 }
+
 
 //==========================================================================
 //
 //  TranslateLevel
 //
 //==========================================================================
-
-override void TranslateLevel(Level InLevel)
-{
-  int i;
-
-  for (i = 0; i < InLevel.Lines.length; i++)
-  {
-    TranslateLine(InLevel, &InLevel.Lines[i]);
-  }
-
-  for (i = 0; i < InLevel.Sectors.length; i++)
-  {
-    //if (i >= 35 && i <= 37) print("sector #%d: special=%d", i, InLevel.Sectors[i].special);
-    TranslateSector(&InLevel.Sectors[i]);
-  }
-
-  for (i = 0; i < InLevel.Things.length; i++)
-  {
-    TranslateThing(&InLevel.Things[i]);
-  }
+override void TranslateLevel (Level InLevel) {
+  foreach (auto i; 0..InLevel.Lines.length) TranslateLine(InLevel, &InLevel.Lines[i]);
+  foreach (auto i; 0..InLevel.Sectors.length) TranslateSector(&InLevel.Sectors[i]);
+  foreach (auto i; 0..InLevel.Things.length) TranslateThing(&InLevel.Things[i]);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   LevelInfoClass = DoomLevelInfo;
   GameFilterFlag = EntityEx::GAME_Doom;
   bDefaultLaxMonsterActivation = true;
