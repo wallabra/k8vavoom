@@ -235,28 +235,28 @@ static VName lastmap;
 //  A line drawing of the player pointing right, starting from the middle.
 #define R  (8.0*PLAYERRADIUS/7.0)
 static const mline_t player_arrow1[] = {
-  { { -R + R / 8.0, 0.0 }, { R, 0.0 } }, // -----
-  { { R, 0.0 }, { R - R / 2.0, R / 4.0 } },  // ----->
-  { { R, 0.0 }, { R - R / 2.0, -R / 4.0 } },
-  { { -R + R / 8.0, 0.0 }, { -R - R / 8.0, R / 4.0 } }, // >---->
-  { { -R + R / 8.0, 0.0 }, { -R - R / 8.0, -R / 4.0 } },
-  { { -R + 3.0 * R / 8.0, 0.0 }, { -R + R / 8.0, R / 4.0 } }, // >>--->
-  { { -R + 3.0 * R / 8.0, 0.0 }, { -R + R / 8.0, -R / 4.0 } }
+  { { -R+R/8.0, 0.0 }, { R, 0.0 } }, // -----
+  { { R, 0.0 }, { R-R/2.0, R/4.0 } },  // ----->
+  { { R, 0.0 }, { R-R/2.0, -R/4.0 } },
+  { { -R+R/8.0, 0.0 }, { -R-R/8.0, R/4.0 } }, // >---->
+  { { -R+R/8.0, 0.0 }, { -R-R/8.0, -R/4.0 } },
+  { { -R+3.0*R/8.0, 0.0 }, { -R+R/8.0, R/4.0 } }, // >>--->
+  { { -R+3.0*R/8.0, 0.0 }, { -R+R/8.0, -R/4.0 } }
 };
 #define NUMPLYRLINES1  (sizeof(player_arrow1)/sizeof(mline_t))
 
 
 static const mline_t player_arrow2[] = {
-  { { -R + R / 4.0, 0.0 }, { 0.0, 0.0} }, // centre line.
-  { { -R + R / 4.0, R / 8.0 }, { R, 0.0} }, // blade
-  { { -R + R / 4.0, -R / 8.0 }, { R, 0.0 } },
-  { { -R + R / 4.0, -R / 4.0 }, { -R + R / 4.0, R / 4.0 } }, // crosspiece
-  { { -R + R / 8.0, -R / 4.0 }, { -R + R / 8.0, R / 4.0 } },
-  { { -R + R / 8.0, -R / 4.0 }, { -R + R / 4.0, -R / 4.0 } }, //crosspiece connectors
-  { { -R + R / 8.0, R / 4.0 }, { -R + R / 4.0, R / 4.0 } },
-  { { -R - R / 4.0, R / 8.0 }, { -R - R / 4.0, -R / 8.0 } }, //pommel
-  { { -R - R / 4.0, R / 8.0 }, { -R + R / 8.0, R / 8.0 } },
-  { { -R - R / 4.0, -R / 8 }, { -R + R / 8.0, -R / 8.0 } }
+  { { -R+R/4.0, 0.0 }, { 0.0, 0.0} }, // centre line.
+  { { -R+R/4.0, R/8.0 }, { R, 0.0} }, // blade
+  { { -R+R/4.0, -R/8.0 }, { R, 0.0 } },
+  { { -R+R/4.0, -R/4.0 }, { -R+R/4.0, R/4.0 } }, // crosspiece
+  { { -R+R/8.0, -R/4.0 }, { -R+R/8.0, R/4.0 } },
+  { { -R+R/8.0, -R/4.0 }, { -R+R/4.0, -R/4.0 } }, //crosspiece connectors
+  { { -R+R/8.0, R/4.0 }, { -R+R/4.0, R/4.0 } },
+  { { -R-R/4.0, R/8.0 }, { -R-R/4.0, -R/8.0 } }, //pommel
+  { { -R-R/4.0, R/8.0 }, { -R+R/8.0, R/8.0 } },
+  { { -R-R/4.0, -R/8 }, { -R+R/8.0, -R/8.0 } }
 };
 #define NUMPLYRLINES2  (sizeof(player_arrow2)/sizeof(mline_t))
 
@@ -265,9 +265,9 @@ static const mline_t player_arrow2[] = {
 #define R (1.0)
 static const mline_t thintriangle_guy[] =
 {
-  { { -0.5 * R, -0.7 * R }, { R, 0.0 } },
-  { { R, 0.0 }, { -0.5 * R, 0.7 * R } },
-  { { -0.5 * R, 0.7 * R }, { -0.5 * R, -0.7 * R } }
+  { { -0.5*R, -0.7*R }, { R, 0.0 } },
+  { { R, 0.0 }, { -0.5*R, 0.7*R } },
+  { { -0.5*R, 0.7*R }, { -0.5*R, -0.7*R } }
 };
 #undef R
 #define NUMTHINTRIANGLEGUYLINES  (sizeof(thintriangle_guy)/sizeof(mline_t))
@@ -288,14 +288,14 @@ void AM_Init () {
 //
 //==========================================================================
 static void AM_activateNewScale () {
-  m_x += m_w / 2.0;
-  m_y += m_h / 2.0;
+  m_x += m_w/2.0;
+  m_y += m_h/2.0;
   m_w = FTOM(f_w);
   m_h = FTOM(f_h);
-  m_x -= m_w / 2.0;
-  m_y -= m_h / 2.0;
-  m_x2 = m_x + m_w;
-  m_y2 = m_y + m_h;
+  m_x -= m_w/2.0;
+  m_y -= m_h/2.0;
+  m_x2 = m_x+m_w;
+  m_y2 = m_y+m_h;
 }
 
 
@@ -327,8 +327,8 @@ static void AM_restoreScaleAndLoc () {
     m_x = cl->ViewOrg.x-m_w/2.0;
     m_y = cl->ViewOrg.y-m_h/2.0;
   }
-  m_x2 = m_x + m_w;
-  m_y2 = m_y + m_h;
+  m_x2 = m_x+m_w;
+  m_y2 = m_y+m_h;
 
   // change the scaling multipliers
   scale_mtof = (float)f_w/m_w;
@@ -356,11 +356,11 @@ static void AM_findMinMaxBoundaries () {
     else if (GClLevel->Vertexes[i].y > max_y) max_y = GClLevel->Vertexes[i].y;
   }
 
-  max_w = max_x - min_x;
-  max_h = max_y - min_y;
+  max_w = max_x-min_x;
+  max_h = max_y-min_y;
 
-  min_w = 2.0 * PLAYERRADIUS; // const? never changed?
-  min_h = 2.0 * PLAYERRADIUS;
+  min_w = 2.0*PLAYERRADIUS; // const? never changed?
+  min_h = 2.0*PLAYERRADIUS;
 
   float a = (float)f_w/max_w;
   float b = (float)f_h/max_h;
@@ -376,8 +376,8 @@ static void AM_findMinMaxBoundaries () {
 //
 //==========================================================================
 static void AM_ScrollParchment (float dmapx, float dmapy) {
-  mapxstart -= (short)(dmapx * scale_mtof / 12) >> 12;
-  mapystart -= (short)(dmapy * scale_mtof / 12) >> 12;
+  mapxstart -= (short)(dmapx*scale_mtof/12)>>12;
+  mapystart -= (short)(dmapy*scale_mtof/12)>>12;
 
   if (mappic > 0) {
     int pwidth = 320;
@@ -407,16 +407,16 @@ static void AM_changeWindowLoc () {
   m_x += m_paninc.x;
   m_y += m_paninc.y;
 
-       if (m_x + m_w / 2.0 > max_x) m_x = max_x - m_w / 2.0;
-  else if (m_x + m_w / 2.0 < min_x) m_x = min_x - m_w / 2.0;
+       if (m_x+m_w/2.0 > max_x) m_x = max_x-m_w/2.0;
+  else if (m_x+m_w/2.0 < min_x) m_x = min_x-m_w/2.0;
 
-       if (m_y + m_h / 2.0 > max_y) m_y = max_y - m_h / 2.0;
-  else if (m_y + m_h / 2.0 < min_y) m_y = min_y - m_h / 2.0;
+       if (m_y+m_h/2.0 > max_y) m_y = max_y-m_h/2.0;
+  else if (m_y+m_h/2.0 < min_y) m_y = min_y-m_h/2.0;
 
-  m_x2 = m_x + m_w;
-  m_y2 = m_y + m_h;
+  m_x2 = m_x+m_w;
+  m_y2 = m_y+m_h;
 
-  AM_ScrollParchment (m_x - oldmx, oldmy - m_y);
+  AM_ScrollParchment (m_x-oldmx, oldmy-m_y);
 }
 
 
@@ -429,9 +429,9 @@ static void AM_changeWindowLoc () {
 //==========================================================================
 static bool AM_addMark () {
   if (marknums[0] != -1) {
-    markpoints[markpointnum].x = m_x + m_w / 2.0;
-    markpoints[markpointnum].y = m_y + m_h / 2.0;
-    markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;
+    markpoints[markpointnum].x = m_x+m_w/2.0;
+    markpoints[markpointnum].y = m_y+m_h/2.0;
+    markpointnum = (markpointnum+1)%AM_NUMMARKPOINTS;
     return true;
   }
   return false;
@@ -444,7 +444,7 @@ static bool AM_addMark () {
 //
 //==========================================================================
 static bool AM_clearMarks () {
-  for (int i = AM_NUMMARKPOINTS - 1; i >= 0; --i) markpoints[i].x = -1.0; //FIXME: means empty
+  for (int i = AM_NUMMARKPOINTS-1; i >= 0; --i) markpoints[i].x = -1.0; //FIXME: means empty
   markpointnum = 0;
   return marknums[0] != -1;
 }
@@ -469,8 +469,8 @@ static void AM_initVariables () {
 
   oldplr.x = cl->ViewOrg.x;
   oldplr.y = cl->ViewOrg.y;
-  m_x = cl->ViewOrg.x - m_w / 2.0;
-  m_y = cl->ViewOrg.y - m_h / 2.0;
+  m_x = cl->ViewOrg.x-m_w/2.0;
+  m_y = cl->ViewOrg.y-m_h/2.0;
   AM_changeWindowLoc();
 
   // for saving & restoring
@@ -511,15 +511,15 @@ static void AM_LevelInit () {
 
   f_x = f_y = 0;
   f_w = ScreenWidth;
-  f_h = ScreenHeight - SB_REALHEIGHT;
+  f_h = ScreenHeight-SB_REALHEIGHT;
 
   AM_clearMarks();
   mapxstart = mapystart = 0;
 
   AM_findMinMaxBoundaries();
-  scale_mtof = min_scale_mtof / 0.7;
+  scale_mtof = min_scale_mtof/0.7;
   if (scale_mtof > max_scale_mtof) scale_mtof = min_scale_mtof;
-  scale_ftom = 1.0 / scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
   start_scale_mtof = scale_mtof;
 }
 
@@ -561,7 +561,7 @@ static void AM_Start () {
 //==========================================================================
 static void AM_minOutWindowScale () {
   scale_mtof = min_scale_mtof;
-  scale_ftom = 1.0 / scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
   AM_activateNewScale();
 }
 
@@ -575,7 +575,7 @@ static void AM_minOutWindowScale () {
 //==========================================================================
 static void AM_maxOutWindowScale () {
   scale_mtof = max_scale_mtof;
-  scale_ftom = 1.0 / scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
   AM_activateNewScale();
 }
 
@@ -600,16 +600,16 @@ bool AM_Responder (event_t *ev) {
     rc = true;
     switch (ev->data1) {
       case AM_PANRIGHTKEY: // pan right
-        if (!am_follow_player) m_paninc.x = FTOM(F_PANINC / 2.0); else rc = false;
+        if (!am_follow_player) m_paninc.x = FTOM(F_PANINC/2.0); else rc = false;
         break;
       case AM_PANLEFTKEY: // pan left
-        if (!am_follow_player) m_paninc.x = -FTOM(F_PANINC / 2.0); else rc = false;
+        if (!am_follow_player) m_paninc.x = -FTOM(F_PANINC/2.0); else rc = false;
         break;
       case AM_PANUPKEY: // pan up
-        if (!am_follow_player) m_paninc.y = FTOM(F_PANINC / 2.0); else rc = false;
+        if (!am_follow_player) m_paninc.y = FTOM(F_PANINC/2.0); else rc = false;
         break;
       case AM_PANDOWNKEY: // pan down
-        if (!am_follow_player) m_paninc.y = -FTOM(F_PANINC / 2.0); else rc = false;
+        if (!am_follow_player) m_paninc.y = -FTOM(F_PANINC/2.0); else rc = false;
         break;
       case AM_ZOOMOUTKEY: // zoom out
         mtof_zoommul = M_ZOOMOUT;
@@ -686,8 +686,8 @@ bool AM_Responder (event_t *ev) {
 //==========================================================================
 static void AM_changeWindowScale () {
   // change the scaling multipliers
-  scale_mtof = scale_mtof * mtof_zoommul;
-  scale_ftom = 1.0 / scale_mtof;
+  scale_mtof = scale_mtof*mtof_zoommul;
+  scale_ftom = 1.0/scale_mtof;
 
        if (scale_mtof < min_scale_mtof) AM_minOutWindowScale();
   else if (scale_mtof > max_scale_mtof) AM_maxOutWindowScale();
@@ -703,8 +703,8 @@ static void AM_changeWindowScale () {
 //
 //==========================================================================
 static void AM_rotate (float *x, float *y, float a) {
-  float tmpx = *x * mcos(a) - *y * msin(a);
-  *y = *x * msin(a) + *y * mcos(a);
+  float tmpx = *x*mcos(a)-*y*msin(a);
+  *y = *x*msin(a)+*y*mcos(a);
   *x = tmpx;
 }
 
@@ -717,7 +717,7 @@ static void AM_rotate (float *x, float *y, float a) {
 void AM_rotatePoint (float *x, float *y) {
   *x -= FTOM(MTOF(cl->ViewOrg.x));
   *y -= FTOM(MTOF(cl->ViewOrg.y));
-  AM_rotate (x, y, 90.0 - cl->ViewAngles.yaw);
+  AM_rotate (x, y, 90.0-cl->ViewAngles.yaw);
   *x += FTOM(MTOF(cl->ViewOrg.x));
   *y += FTOM(MTOF(cl->ViewOrg.y));
 }
@@ -730,14 +730,14 @@ void AM_rotatePoint (float *x, float *y) {
 //==========================================================================
 static void AM_doFollowPlayer () {
   if (f_oldloc.x != cl->ViewOrg.x || f_oldloc.y != cl->ViewOrg.y) {
-    m_x = FTOM(MTOF(cl->ViewOrg.x)) - m_w / 2.0;
-    m_y = FTOM(MTOF(cl->ViewOrg.y)) - m_h / 2.0;
-    m_x2 = m_x + m_w;
-    m_y2 = m_y + m_h;
-    // do the parallax parchment scrolling.
-    float sx = FTOM(MTOF(cl->ViewOrg.x - f_oldloc.x));
-    float sy = FTOM(MTOF(f_oldloc.y - cl->ViewOrg.y));
-    if (am_rotate) AM_rotate(&sx, &sy, cl->ViewAngles.yaw - 90.0);
+    m_x = FTOM(MTOF(cl->ViewOrg.x))-m_w/2.0;
+    m_y = FTOM(MTOF(cl->ViewOrg.y))-m_h/2.0;
+    m_x2 = m_x+m_w;
+    m_y2 = m_y+m_h;
+    // do the parallax parchment scrolling
+    float sx = FTOM(MTOF(cl->ViewOrg.x-f_oldloc.x));
+    float sy = FTOM(MTOF(f_oldloc.y-cl->ViewOrg.y));
+    if (am_rotate) AM_rotate(&sx, &sy, cl->ViewAngles.yaw-90.0);
     AM_ScrollParchment(sx, sy);
     f_oldloc.x = cl->ViewOrg.x;
     f_oldloc.y = cl->ViewOrg.y;
@@ -774,8 +774,8 @@ void AM_Ticker () {
 //==========================================================================
 static void AM_clearFB () {
   if (am_follow_player) {
-    int dmapx = MTOF(cl->ViewOrg.x) - MTOF(oldplr.x);
-    int dmapy = MTOF(oldplr.y) - MTOF(cl->ViewOrg.y);
+    int dmapx = MTOF(cl->ViewOrg.x)-MTOF(oldplr.x);
+    int dmapy = MTOF(oldplr.y)-MTOF(cl->ViewOrg.y);
 
     oldplr.x = cl->ViewOrg.x;
     oldplr.y = cl->ViewOrg.y;
@@ -787,8 +787,8 @@ static void AM_clearFB () {
     while (mapystart >= mapheight) mapystart -= mapheight;
     while (mapystart < 0) mapystart += mapheight;
   } else {
-    mapxstart -= MTOF(m_paninc.x) >> 1;
-    mapystart += MTOF(m_paninc.y) >> 1;
+    mapxstart -= MTOF(m_paninc.x)>>1;
+    mapystart += MTOF(m_paninc.y)>>1;
     if (mapxstart >= AM_W) mapxstart -= AM_W;
     if (mapxstart < 0) mapxstart += AM_W;
     if (mapystart >= mapheight) mapystart -= mapheight;
@@ -797,8 +797,8 @@ static void AM_clearFB () {
 
   // blit the automap background to the screen.
   if (automapactive > 0) {
-    for (int y = mapystart - mapheight; y < AM_H; y += mapheight) {
-      for (int x = mapxstart - AM_W; x < AM_W; x += 320) {
+    for (int y = mapystart-mapheight; y < AM_H; y += mapheight) {
+      for (int x = mapxstart-AM_W; x < AM_W; x += 320) {
         R_DrawPic(x, y, mappic);
       }
     }
@@ -944,26 +944,26 @@ static void AM_drawGrid (vuint32 colour) {
 
   // calculate a minimum for how long the grid lines should be, so they
   // cover the screen at any rotation
-  minlen = sqrtf (m_w*m_w + m_h*m_h);
-  extx = (minlen - m_w) / 2;
-  exty = (minlen - m_h) / 2;
+  minlen = sqrtf (m_w*m_w+m_h*m_h);
+  extx = (minlen-m_w)/2;
+  exty = (minlen-m_h)/2;
 
   minx = m_x;
   miny = m_y;
 
   // figure out start of vertical gridlines
-  start = m_x - extx;
+  start = m_x-extx;
   if ((FX(start-GClLevel->BlockMapOrgX))%(MAPBLOCKUNITS<<FRACBITS)) {
     start += FL((MAPBLOCKUNITS<<FRACBITS)-((FX(start-GClLevel->BlockMapOrgX))%(MAPBLOCKUNITS<<FRACBITS)));
   }
-  end = minx + minlen - extx;
+  end = minx+minlen-extx;
 
   // draw vertical gridlines
   for (x = start; x < end; x += (float)MAPBLOCKUNITS) {
     ml.a.x = x;
     ml.b.x = x;
-    ml.a.y = miny - exty;
-    ml.b.y = ml.a.y + minlen;
+    ml.a.y = miny-exty;
+    ml.b.y = ml.a.y+minlen;
     if (am_rotate) {
       AM_rotatePoint(&ml.a.x, &ml.a.y);
       AM_rotatePoint(&ml.b.x, &ml.b.y);
@@ -972,16 +972,16 @@ static void AM_drawGrid (vuint32 colour) {
   }
 
   // figure out start of horizontal gridlines
-  start = m_y - exty;
-  if ((FX(start - GClLevel->BlockMapOrgY)) % (MAPBLOCKUNITS<<FRACBITS)) {
+  start = m_y-exty;
+  if ((FX(start-GClLevel->BlockMapOrgY))%(MAPBLOCKUNITS<<FRACBITS)) {
     start += FL((MAPBLOCKUNITS<<FRACBITS)-((FX(start-GClLevel->BlockMapOrgY))%(MAPBLOCKUNITS<<FRACBITS)));
   }
-  end = miny + minlen - exty;
+  end = miny+minlen-exty;
 
   // draw horizontal gridlines
   for (y = start; y < end; y += (float)MAPBLOCKUNITS) {
-    ml.a.x = minx - extx;
-    ml.b.x = ml.a.x + minlen;
+    ml.a.x = minx-extx;
+    ml.b.x = ml.a.x+minlen;
     ml.a.y = y;
     ml.b.y = y;
     if (am_rotate) {
@@ -1078,10 +1078,10 @@ static void AM_drawLineCharacter (const mline_t *lineguy, int lineguylines,
       float oldbx = l.b.x;
       float oldby = l.b.y;
 
-      l.a.x = oldax * mcosAngle - olday * msinAngle;
-      l.a.y = oldax * msinAngle + olday * mcosAngle;
-      l.b.x = oldbx * mcosAngle - oldby * msinAngle;
-      l.b.y = oldbx * msinAngle + oldby * mcosAngle;
+      l.a.x = oldax*mcosAngle-olday*msinAngle;
+      l.a.y = oldax*msinAngle+olday*mcosAngle;
+      l.b.x = oldbx*mcosAngle-oldby*msinAngle;
+      l.b.y = oldbx*msinAngle+oldby*mcosAngle;
     }
 
     l.a.x += x;
@@ -1137,7 +1137,7 @@ static void AM_drawThings (vuint32 colour) {
 
     if (am_rotate) {
       AM_rotatePoint (&x, &y);
-      angle += 90.0 - cl->ViewAngles.yaw;
+      angle += 90.0-cl->ViewAngles.yaw;
     }
 
     AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0, angle, colour, x, y);
@@ -1166,7 +1166,7 @@ static void AM_drawMarks () {
     int fy = (int)((CYMTOF(pt.y)-3.0)*fScaleXI);
     //fx = (int)(CXMTOF(markpoints[i].x)*fScaleXI);
     //fy = (int)(CYMTOF(markpoints[i].y)*fScaleXI);
-    if (fx >= f_x && fx <= f_w - w && fy >= f_y && fy <= f_h - h && marknums[i] != -1) {
+    if (fx >= f_x && fx <= f_w-w && fy >= f_y && fy <= f_h-h && marknums[i] != -1) {
       R_DrawPic(fx, fy, marknums[i]);
     }
   }
@@ -1321,10 +1321,10 @@ static vuint32 StringToColour (const char *str) {
   alpha <<= 24;
   //const vuint32 alpha = 0xff000000U;
 
-  r = strtol(str, &p, 16) & 0xff;
-  g = strtol(p, &p, 16) & 0xff;
-  b = strtol(p, &p, 16) & 0xff;
-  return alpha | (r << 16) | (g << 8) | b;
+  r = strtol(str, &p, 16)&0xff;
+  g = strtol(p, &p, 16)&0xff;
+  b = strtol(p, &p, 16)&0xff;
+  return alpha|(r<<16)|(g<<8)|b;
 }
 
 
@@ -1340,7 +1340,7 @@ static void AM_CheckVariables () {
     mtof_zoommul = scale_mtof/start_scale_mtof;
 
     f_w = ScreenWidth;
-    f_h = ScreenHeight - SB_REALHEIGHT;
+    f_h = ScreenHeight-SB_REALHEIGHT;
 
     float a = (float)f_w/max_w;
     float b = (float)f_h/max_h;
@@ -1401,7 +1401,7 @@ void AM_Drawer () {
   DrawWorldTimer();
   T_SetFont(SmallFont);
   T_SetAlign(hleft, vbottom);
-  T_DrawText(20, 480 - sb_height - 7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
+  T_DrawText(20, 480-sb_height-7, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
   if (am_show_stats) AM_DrawLevelStats();
   if (am_show_stats == 2 && GClGame->maxclients > 1 && GClGame->deathmatch) AM_DrawDeathmatchStats();
   if (use_marks) AM_drawMarks();
