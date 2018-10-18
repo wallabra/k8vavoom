@@ -359,6 +359,11 @@ override void Init () {
   CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 
   CreateCvar('k8TraceDebug', "0", "Line trace debug mode", 0);
+
+  CreateCvar('r_particle_effects', "1", "Enable particle effects?", CVAR_ARCHIVE);
+  CreateCvar('r_particle_puffs', "1", "Enable particle sparks?", CVAR_ARCHIVE);
+  CreateCvar('r_particle_blood', "1", "Enable particle blood?", CVAR_ARCHIVE);
+  CreateCvar('r_particle_trails', "1", "Enable particle trails?", CVAR_ARCHIVE);
 }
 
 //==========================================================================

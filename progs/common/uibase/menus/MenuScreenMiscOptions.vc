@@ -68,6 +68,13 @@ override void CreateChoices () {
   dwbuggy.TextNormalColor = CR_PURPLE;
 
 
+  CreateChoiceSubHeader("Experimental particle options");
+  CreateOnOffCvar("Particle effects", 'r_particle_effects');
+  CreateOnOffCvar("Particle puffs", 'r_particle_puffs');
+  CreateOnOffCvar("Particle blood", 'r_particle_blood');
+  CreateOnOffCvar("Particle trails", 'r_particle_trails');
+
+
   /*
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Headshots Options");

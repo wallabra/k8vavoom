@@ -1835,17 +1835,21 @@ override void ClientTick(float DeltaTime)
       r = Random() * 8.0;
       alt = true;
     }
-    LineSpecialLevelInfo(Level).ParticleEffect(ftoi(DeltaTime * 256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
-        0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5,  r);
+    if (GetCvarB('r_particle_trails')) {
+      LineSpecialLevelInfo(Level).ParticleEffect(ftoi(DeltaTime * 256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
+          0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5,  r);
+    }
   }
   if (bLeaveTrail2)
   {
     c = P_Random() >> 1;
-    LineSpecialLevelInfo(Level).ParticleEffect(6,
+    if (GetCvarB('r_particle_trails')) {
+      LineSpecialLevelInfo(Level).ParticleEffect(6,
           LineSpecialLevelInfo::pt_static, 0, vector(Origin.x - (cos(Angles.yaw) * Radius * 2.0),
           Origin.y - (sin(Angles.yaw) * Radius * 2.0),
           Origin.z - (itof(ftoi(Height) >> 3 * ftoi(Velocity.z) >> 16) + 2.0 * Height / 3.0)),
           0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(c, c, c), 0.6, 0.0);
+    }
   }
 }
 
@@ -1957,16 +1961,16 @@ final void DoStateEffects(float DeltaTime)
     }
   }
 
-  if (State != PrevEffectState)
-  {
-    //  Particle effects
-    for (i = 0; i < Particles.Num; i++)
-    {
-      ParticleEffectDef *P = Particles[i];
-      Level.ParticleEffect(P->Count, P->Type, P->Type2, Origin +
-        Forward * P->Offset.x - Right * P->Offset.y +
-        Up * P->Offset.z, P->OrgRnd, P->Velocity, P->VelRnd,
-        P->Accel, P->Grav, P->Colour, P->Duration, P->Ramp);
+  if (State != PrevEffectState) {
+    // particle effects
+    if (Particles.Num > 0 && GetCvarB('r_particle_effects')) {
+      foreach (i; 0..Particles.Num) {
+        ParticleEffectDef *P = Particles[i];
+        Level.ParticleEffect(P->Count, P->Type, P->Type2, Origin +
+          Forward * P->Offset.x - Right * P->Offset.y +
+          Up * P->Offset.z, P->OrgRnd, P->Velocity, P->VelRnd,
+          P->Accel, P->Grav, P->Colour, P->Duration, P->Ramp);
+      }
     }
     PrevEffectState = State;
   }
@@ -2135,9 +2139,11 @@ final void SpawnPuff(TVec Org, float Range, class!EntityEx PuffType,
     for (i = 0; i < MAXPLAYERS; ++i) {
       if (!Level.Game.Players[i]) continue;
       if (!Level.Game.Players[i].bSpawned) continue;
-      PlayerEx(Level.Game.Players[i]).ParticleEffect(20, LineSpecialLevelInfo::pt_static,
-            LineSpecialLevelInfo::pt_explode2, Org, 0.0, vector(32.0, 32.0, 32.0),
-            0.5, 10.0, 40.0, RGB(c, c, c), 0.8, 0.0);
+      if (GetCvarB('r_particle_puffs')) {
+        PlayerEx(Level.Game.Players[i]).ParticleEffect(20, LineSpecialLevelInfo::pt_static,
+                 LineSpecialLevelInfo::pt_explode2, Org, 0.0, vector(32.0, 32.0, 32.0),
+                 0.5, 10.0, 40.0, RGB(c, c, c), 0.8, 0.0);
+      }
     }
   }
 
@@ -2274,10 +2280,12 @@ final void SpawnBlood (TVec Org, int damage, optional TVec org) {
   for (i = 0; i < MAXPLAYERS; ++i) {
     if (!Level.Game.Players[i]) continue;
     if (!Level.Game.Players[i].bSpawned) continue;
-    PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
-      LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
-      vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
-      BloodColour ? BloodColour : RGB(32 + c, c >> 4, c >> 4), 0.6, 0.0);
+    if (GetCvarB('r_particle_blood')) {
+      PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
+        LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
+        vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
+        BloodColour ? BloodColour : RGB(32 + c, c >> 4, c >> 4), 0.6, 0.0);
+    }
   }
 
   if (!BloodType) return;
@@ -2381,13 +2389,13 @@ final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
   c = P_Random() >> 1;
   for (i = 0; i < MAXPLAYERS; i++)
   {
-    if (!Level.Game.Players[i])
-      continue;
-    if (!Level.Game.Players[i].bSpawned)
-      continue;
-    PlayerEx(Level.Game.Players[i]).ParticleEffect(damage, LineSpecialLevelInfo::pt_static,
-        0, org, 0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(32 + c, c >> 4, c >> 4),
-        0.6, 0.0);
+    if (!Level.Game.Players[i]) continue;
+    if (!Level.Game.Players[i].bSpawned) continue;
+    if (GetCvarB('r_particle_blood')) {
+      PlayerEx(Level.Game.Players[i]).ParticleEffect(damage, LineSpecialLevelInfo::pt_static,
+          0, org, 0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(32 + c, c >> 4, c >> 4),
+          0.6, 0.0);
+    }
   }
 
   if (!BloodSplatterType)
