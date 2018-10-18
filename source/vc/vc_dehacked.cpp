@@ -26,7 +26,6 @@
 //**  Dehacked patch parsing
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 
 
@@ -52,6 +51,7 @@ static char *String;
 static char *ValueString;
 static int value;
 
+static TArray<int> VanillaThingHeights;
 static TArray<VName> Sprites;
 static TArray<VClass *> EntClasses;
 static TArray<VClass *> WeaponClasses;
@@ -172,7 +172,11 @@ static bool GetLine () {
 
     String = PatchPtr;
 
-    while (*PatchPtr && *PatchPtr != '\n') ++PatchPtr;
+    while (*PatchPtr && *PatchPtr != '\n') {
+      if (*(vuint8 *)PatchPtr < ' ') *PatchPtr = ' ';
+      ++PatchPtr;
+    }
+
     if (*PatchPtr == '\n') {
       *PatchPtr = 0;
       ++PatchPtr;
@@ -183,9 +187,9 @@ static bool GetLine () {
       continue;
     }
 
-    while (*String && *String <= ' ') ++String;
+    while (*String && *(vuint8 *)String <= ' ') ++String;
     char *End = String+VStr::Length(String);
-    while (End > String && End[-1] <= ' ') {
+    while (End > String && (vuint8)End[-1] <= ' ') {
       End[-1] = 0;
       --End;
     }
@@ -211,13 +215,13 @@ static bool ParseParam () {
   if (!val) return false;
 
   ValueString = val+1;
-  while (*ValueString && (vuint8)*ValueString <= ' ') ++ValueString;
+  while (*ValueString && *(vuint8 *)ValueString <= ' ') ++ValueString;
   value = atoi(ValueString);
 
   do {
     *val = 0;
     --val;
-  } while (val >= String && (vuint8)*val <= ' ');
+  } while (val >= String && *(vuint8 *)val <= ' ');
 
   return true;
   unguard;
@@ -428,10 +432,11 @@ static void ReadThing (int num) {
     while (ParseParam()) {}
     return;
   }
-
+  bool gotHeight = false;
+  bool gotSpawnCeiling = false;
   VClass *Ent = EntClasses[num-1];
   while (ParseParam()) {
-    if (!VStr::ICmp(String ,"ID #")) {
+    if (VStr::ICmp(String, "ID #") == 0) {
       int Idx = -1;
       for (int i = 0; i < VClass::GMobjInfos.Num(); ++i) {
         if (VClass::GMobjInfos[i].Class == Ent) {
@@ -459,6 +464,7 @@ static void ReadThing (int num) {
     } else if (!VStr::ICmp(String, "Width")) {
       SetClassFieldFloat(Ent, "Radius", value/65536.0);
     } else if (!VStr::ICmp(String, "Height")) {
+      gotHeight = true; // height changed
       SetClassFieldFloat(Ent, "Height", value/65536.0);
     } else if (!VStr::ICmp(String, "Mass")) {
       SetClassFieldFloat(Ent, "Mass", (value == 0x7fffffff ? 99999.0 : value));
@@ -490,6 +496,7 @@ static void ReadThing (int num) {
       bool Changed[2] = { false, false };
       for (int i = 0; i < Flags.Num(); ++i) ParseFlag(Flags[i].ToUpper(), Values, Changed);
       if (Changed[0]) {
+        gotSpawnCeiling = ((Values[0]&0x00000100) != 0);
         SetClassFieldBool(Ent, "bSpecial", Values[0]&0x00000001);
         SetClassFieldBool(Ent, "bSolid", Values[0]&0x00000002);
         SetClassFieldBool(Ent, "bShootable", Values[0]&0x00000004);
@@ -611,6 +618,13 @@ static void ReadThing (int num) {
     } else {
       GCon->Logf(NAME_Init, "WARNING! Invalid mobj param '%s'", String);
     }
+  }
+  // reset heights for things hanging from the ceiling that don't specify a new height
+  if (!gotHeight && gotSpawnCeiling) {
+    if (((VEntity *)Ent->Defaults)->Height != VanillaThingHeights[num-1]) {
+      GCon->Logf(NAME_Init, "DEH: forced vanilla thing height for '%s' (our: %d, vanilla: %d)", *Ent->GetFullName(), (int)(((VEntity *)Ent->Defaults)->Height), VanillaThingHeights[num-1]);
+    }
+    ((VEntity *)Ent->Defaults)->Height = VanillaThingHeights[num-1];
   }
   unguard;
 }
@@ -1487,7 +1501,9 @@ void ProcessDehackedFiles () {
   while (!sc->Check("}")) {
     if (HIdx >= EntClasses.Num()) sc->Error("Too many heights");
     sc->ExpectNumber();
-    ((VEntity*)EntClasses[HIdx]->Defaults)->Height = sc->Number;
+    //fprintf(stderr, "HGT FOR '%s' is %d (old is %f)\n", *EntClasses[HIdx]->GetFullName(), sc->Number, ((VEntity *)EntClasses[HIdx]->Defaults)->Height);
+    //((VEntity *)EntClasses[HIdx]->Defaults)->Height = sc->Number;
+    VanillaThingHeights.append(sc->Number);
     ++HIdx;
   }
 
