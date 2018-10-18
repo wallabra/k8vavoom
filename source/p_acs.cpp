@@ -5424,14 +5424,13 @@ void VAcsGlobal::Serialise(VStream &Strm)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Script ACS methods
 //
 //==========================================================================
-
-IMPLEMENT_FUNCTION(VLevel, StartACS)
-{
+IMPLEMENT_FUNCTION(VLevel, StartACS) {
   P_GET_BOOL(WantResult);
   P_GET_BOOL(Always);
   P_GET_INT(side);
@@ -5443,28 +5442,27 @@ IMPLEMENT_FUNCTION(VLevel, StartACS)
   P_GET_INT(map);
   P_GET_INT(num);
   P_GET_SELF;
-  RET_BOOL(Self->Acs->Start(num, map, arg1, arg2, arg3, activator, line,
-    side, Always, WantResult));
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartACS"); }
+  RET_BOOL(Self->Acs->Start(num, map, arg1, arg2, arg3, activator, line, side, Always, WantResult));
 }
 
-IMPLEMENT_FUNCTION(VLevel, SuspendACS)
-{
+IMPLEMENT_FUNCTION(VLevel, SuspendACS) {
   P_GET_INT(map);
   P_GET_INT(number);
   P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::SuspendACS"); }
   RET_BOOL(Self->Acs->Suspend(number, map));
 }
 
-IMPLEMENT_FUNCTION(VLevel, TerminateACS)
-{
+IMPLEMENT_FUNCTION(VLevel, TerminateACS) {
   P_GET_INT(map);
   P_GET_INT(number);
   P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::TerminateACS"); }
   RET_BOOL(Self->Acs->Terminate(number, map));
 }
 
-IMPLEMENT_FUNCTION(VLevel, StartTypedACScripts)
-{
+IMPLEMENT_FUNCTION(VLevel, StartTypedACScripts) {
   P_GET_BOOL(RunNow);
   P_GET_BOOL(Always);
   P_GET_REF(VEntity, Activator);
@@ -5473,8 +5471,24 @@ IMPLEMENT_FUNCTION(VLevel, StartTypedACScripts)
   P_GET_INT(Arg1);
   P_GET_INT(Type);
   P_GET_SELF;
-  Self->Acs->StartTypedACScripts(Type, Arg1, Arg2, Arg3, Activator, Always,
-    RunNow);
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartTypedACScripts"); }
+  Self->Acs->StartTypedACScripts(Type, Arg1, Arg2, Arg3, Activator, Always, RunNow);
+}
+
+// bool RunNamedACS (VEntity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3)
+IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
+  P_GET_INT(Arg3);
+  P_GET_INT(Arg2);
+  P_GET_INT(Arg1);
+  P_GET_INT(Map);
+  P_GET_STR(Name);
+  P_GET_PTR(VEntity, Activator);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACS"); }
+  if (Name.length() == 0) { RET_BOOL(false); return; }
+  VName Script = VName(*Name, VName::AddLower);
+  if (Script == NAME_None) { RET_BOOL(false); return; }
+  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, true/*net*/));
 }
 
 

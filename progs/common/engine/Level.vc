@@ -223,6 +223,7 @@ native final bool SuspendACS(int number, int map);
 native final bool TerminateACS(int number, int map);
 native final void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
   Entity Activator, bool Always, bool RunNow);
+native final bool RunNamedACS (Entity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3);
 
 native final int SetBodyQueueTrans(int Slot, int Transl);
 
@@ -235,11 +236,10 @@ native final void AddDecal (TVec org, name dectype, int side, line_t *li);
 
 final int calcSecIdx (sector_t *sec) {
   if (!sec) return -1;
-  foreach (int f; 0..Sectors.length) {
-    if (&Sectors[f] == sec) return f;
-  }
-  print("WUTAFU(1)?!");
-  return -2;
+  //foreach (int f; 0..Sectors.length) if (&Sectors[f] == sec) return f;
+  //print("WUTAFU(1)?!");
+  //return -2;
+  return sec-&Sectors[0];
 }
 
 

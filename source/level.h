@@ -433,6 +433,8 @@ private:
   DECLARE_FUNCTION(TerminateACS)
   DECLARE_FUNCTION(StartTypedACScripts)
 
+  DECLARE_FUNCTION(RunNamedACS)
+
   DECLARE_FUNCTION(SetBodyQueueTrans)
 
   DECLARE_FUNCTION(AddDecal)

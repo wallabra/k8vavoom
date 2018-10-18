@@ -846,3 +846,13 @@ final int decorate_GetArg (int n) {
 final void A_SetArg (int n, int v) {
   if (n >= 0 && n < 5) Args[n] = v;
 }
+
+
+//==========================================================================
+//
+//  ACS_NamedExecute
+//
+//==========================================================================
+final bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3) {
+  return XLevel.RunNamedACS(self, script, map, s_arg1, s_arg2, s_arg3);
+}

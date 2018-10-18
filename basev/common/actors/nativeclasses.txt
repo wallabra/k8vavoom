@@ -361,4 +361,7 @@ class Inventory extends Actor
   action native A_RailWait();
   action native A_BFGsound();
   action native A_FireBFG();
+
+  // ACS
+  action native ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3);
 }
