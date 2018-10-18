@@ -2451,6 +2451,8 @@ func_loop:
 //
 //  ALL arguments must be pushed
 //
+//  FIXME:TODO: use automatic type object for result, with autoclearing
+//
 //==========================================================================
 VStack VObject::ExecuteFunction (VMethod *func) {
   guard(VObject::ExecuteFunction);
@@ -2472,8 +2474,15 @@ VStack VObject::ExecuteFunction (VMethod *func) {
 
   // get return value
   if (func->ReturnType.Type) {
-    --pr_stackPtr;
-    ret = *pr_stackPtr;
+    const int tsz = func->ReturnType.GetStackSize()/4;
+    if (tsz == 1) {
+      --pr_stackPtr;
+      ret = *pr_stackPtr;
+      //FIXME
+      pr_stackPtr->p = nullptr; // for strings, caller should take care of releasing a string
+    } else {
+      pr_stackPtr -= tsz;
+    }
   }
 #ifdef VMEXEC_RUNDUMP
   printIndent(); fprintf(stderr, "***LEAVING `%s` (RETx); sp=%d, (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
