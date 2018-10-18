@@ -97,8 +97,8 @@ override void CreateChoices () {
 
 
   CreateChoiceSubHeader("Headshots Options");
-  CreateOnOffCvar("Headshots", 'k8HSEnabled');
-  CreateOnOffCvar("Criticals", 'k8HSCriticals');
+  CreateOnOffCvar("Headshots (incl. criticals)", 'k8HSEnabled');
+  CreateOnOffCvar("Critical Headshots", 'k8HSCriticals');
   CreateOnOffCvar("Announce criticals", 'k8HSShowCriticals');
   CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
 
