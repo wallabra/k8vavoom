@@ -1527,8 +1527,11 @@ static void ParseAction (VScriptParser *sc, VClass *Class) {
   sc->ExpectIdentifier();
   VMethod *M = Class->FindMethod(va("decorate_%s", *sc->String));
   if (!M) M = Class->FindMethod(*sc->String);
-  if (!M) sc->Error(va("Method %s not found in class %s", *sc->String, Class->GetName()));
-  if (M && M->ReturnType.Type != TYPE_Void) sc->Error(va("State action %s doesn't return void", *sc->String));
+  if (!M) sc->Error(va("Method `%s` not found in class `%s`", *sc->String, Class->GetName()));
+  if (M && M->ReturnType.Type != TYPE_Void) {
+    //k8: engine is capable of calling non-void methods, why
+    //sc->Error(va("State action %s doesn't return void", *sc->String));
+  }
   VDecorateStateAction &A = Class->DecorateStateActions.Alloc();
   A.Name = *sc->String.ToLower();
   A.Method = M;
