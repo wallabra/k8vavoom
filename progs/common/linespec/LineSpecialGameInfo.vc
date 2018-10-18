@@ -309,7 +309,7 @@ override void Init () {
 
   CreateCvar('monster_backing', "0", "Should monsters back away from melee attacker?", CVAR_ARCHIVE);
   CreateCvar('addrocketexplosion', "0", "Use additive visuals for explosions?", CVAR_ARCHIVE);
-  CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE);
+  CreateCvar('damage_thrust', (IsReleaseMode ? "0" : "1"), "Should big damage do kickbacks?", CVAR_ARCHIVE);
   CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
   CreateCvar('k8HitscanAutoAim', (IsReleaseMode ? "1" : "0"), "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE);
   CreateCvar('monster_dropoff', (IsReleaseMode ? "0" : "1"), "Should monsters move away from dropoffs?", CVAR_ARCHIVE);
