@@ -34,8 +34,10 @@
 #define PLAYERRADIUS   (16.0)
 #define MAPBLOCKUNITS  (128)
 
+/*
 #define AM_W  (640)
 #define AM_H  (480-sb_height)
+*/
 
 // scale on entry
 #define INITSCALEMTOF  (0.2)
@@ -119,6 +121,24 @@ struct mline_t {
 
 int automapactive = 0;
 
+extern VCvarI screen_size;
+
+/*
+#define AM_W  (640)
+#define AM_H  (480-sb_height)
+*/
+static inline int getAMWidth () {
+  if (VirtualWidth < 320) return 320;
+  return VirtualWidth;
+}
+
+static inline int getAMHeight () {
+  int res = VirtualWidth;
+  if (res < 240) res = 240;
+  if (screen_size < 11) res -= sb_height;
+  return res;
+}
+
 
 static VCvarB am_overlay("am_overlay", true, "Show automap in overlay mode?", CVAR_Archive);
 
@@ -154,6 +174,7 @@ static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CV
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
 
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
+static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
 
 static int grid = 0;
 
@@ -220,10 +241,10 @@ static int marknums[10]; // numbers used for marking by the automap
 static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
 static int markpointnum = 0; // next point to be assigned
 
-static int mappic;
-static int mapheight;
-static short mapystart=0; // y-value for the start of the map bitmap...used in the paralax stuff.
-static short mapxstart=0; //x-value for the bitmap.
+static int mappic = 0;
+static int mapheight = 64;
+static short mapystart = 0; // y-value for the start of the map bitmap...used in the paralax stuff.
+static short mapxstart = 0; //x-value for the bitmap.
 
 static bool stopped = true;
 
@@ -380,8 +401,10 @@ static void AM_ScrollParchment (float dmapx, float dmapy) {
   mapystart -= (short)(dmapy*scale_mtof/12)>>12;
 
   if (mappic > 0) {
-    int pwidth = 320;
+    int pwidth = (int)GTextureManager.TextureWidth(mappic); //320;
     int pheight = (int)GTextureManager.TextureHeight(mappic);
+    if (pwidth < 1) pwidth = 1;
+    if (pheight < 1) pheight = 1;
 
     while (mapxstart > 0) mapxstart -= pwidth;
     while (mapxstart <= -pwidth) mapxstart += pwidth;
@@ -494,7 +517,8 @@ static void AM_loadPics () {
     use_marks = true;
   }
   mappic = GTextureManager.AddPatch(NAME_autopage, TEXTYPE_Autopage);
-  mapheight = (int)GTextureManager.TextureHeight(mappic);
+  mapheight = (mappic ? (int)GTextureManager.TextureHeight(mappic) : 64);
+  if (mapheight < 1) mapheight = 1;
 }
 
 
@@ -511,7 +535,7 @@ static void AM_LevelInit () {
 
   f_x = f_y = 0;
   f_w = ScreenWidth;
-  f_h = ScreenHeight-SB_REALHEIGHT;
+  f_h = ScreenHeight-(screen_size < 11 ? SB_REALHEIGHT : 0);
 
   AM_clearMarks();
   mapxstart = mapystart = 0;
@@ -688,7 +712,6 @@ static void AM_changeWindowScale () {
   // change the scaling multipliers
   scale_mtof = scale_mtof*mtof_zoommul;
   scale_ftom = 1.0/scale_mtof;
-
        if (scale_mtof < min_scale_mtof) AM_minOutWindowScale();
   else if (scale_mtof > max_scale_mtof) AM_maxOutWindowScale();
   else AM_activateNewScale();
@@ -782,23 +805,23 @@ static void AM_clearFB () {
     mapxstart -= dmapx>>1;
     mapystart -= dmapy>>1;
 
-    while (mapxstart >= AM_W) mapxstart -= AM_W;
-    while (mapxstart < 0) mapxstart += AM_W;
+    while (mapxstart >= getAMWidth()) mapxstart -= getAMWidth();
+    while (mapxstart < 0) mapxstart += getAMWidth();
     while (mapystart >= mapheight) mapystart -= mapheight;
     while (mapystart < 0) mapystart += mapheight;
   } else {
     mapxstart -= MTOF(m_paninc.x)>>1;
     mapystart += MTOF(m_paninc.y)>>1;
-    if (mapxstart >= AM_W) mapxstart -= AM_W;
-    if (mapxstart < 0) mapxstart += AM_W;
+    if (mapxstart >= getAMWidth()) mapxstart -= getAMWidth();
+    if (mapxstart < 0) mapxstart += getAMWidth();
     if (mapystart >= mapheight) mapystart -= mapheight;
     if (mapystart < 0) mapystart += mapheight;
   }
 
-  // blit the automap background to the screen.
-  if (automapactive > 0) {
-    for (int y = mapystart-mapheight; y < AM_H; y += mapheight) {
-      for (int x = mapxstart-AM_W; x < AM_W; x += 320) {
+  // blit the automap background to the screen
+  if (automapactive > 0 && mappic > 0 && am_show_parchment) {
+    for (int y = mapystart-mapheight; y < getAMHeight(); y += mapheight) {
+      for (int x = mapxstart-getAMWidth(); x < getAMWidth(); x += 320) {
         R_DrawPic(x, y, mappic);
       }
     }
@@ -1340,7 +1363,7 @@ static void AM_CheckVariables () {
     mtof_zoommul = scale_mtof/start_scale_mtof;
 
     f_w = ScreenWidth;
-    f_h = ScreenHeight-SB_REALHEIGHT;
+    f_h = ScreenHeight-(screen_size < 11 ? SB_REALHEIGHT : 0);
 
     float a = (float)f_w/max_w;
     float b = (float)f_h/max_h;
@@ -1349,10 +1372,7 @@ static void AM_CheckVariables () {
     max_scale_mtof = (float)f_h/(2.0f*PLAYERRADIUS);
 
     scale_mtof = min_scale_mtof/0.7f;
-    if (scale_mtof > max_scale_mtof)
-    {
-      scale_mtof = min_scale_mtof;
-    }
+    if (scale_mtof > max_scale_mtof) scale_mtof = min_scale_mtof;
     scale_ftom = 1.0f/scale_mtof;
     start_scale_mtof = scale_mtof;
 
@@ -1390,13 +1410,12 @@ void AM_Drawer () {
 
   AM_CheckVariables();
   AM_clearFB();
+
   Drawer->StartAutomap();
   if (grid) AM_drawGrid(GridColour);
   AM_drawWalls();
   AM_drawPlayers();
-  if (am_cheating == 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) {
-    AM_drawThings(ThingColour);
-  }
+  if (am_cheating == 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) AM_drawThings(ThingColour);
   Drawer->EndAutomap();
   DrawWorldTimer();
   T_SetFont(SmallFont);
