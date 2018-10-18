@@ -6637,6 +6637,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
   }
 }
 
+
 //==========================================================================
 //
 //  SpawnMapThing
@@ -6644,156 +6645,107 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
 //  The fields of the mapthing should already be in host byte order.
 //
 //==========================================================================
+final override void SpawnMapThing (mthing_t *mthing) {
+  int spawnMask;
+  class!EntityEx moClass, oldClass;
 
-final override void SpawnMapThing(mthing_t *mthing)
-{
-  int       spawnMask;
-  class!EntityEx moClass;
+  if (mthing->type <= 0) return;
 
-  if (mthing->type <= 0)
-  {
-    return;
-  }
+  //if (mthing.tid == 54 || mthing.tid == 43) writeln("*** TREE! ***");
+  //writeln("SPAWN MAP THING: ", mthing.tid, "; type=", mthing.type);
 
   // count deathmatch start positions
-  if (mthing->type == 11)
-  {
-    DeathmatchStarts.Num = DeathmatchStarts.Num + 1;
-    CopyMThing(mthing, &DeathmatchStarts[DeathmatchStarts.Num - 1]);
+  if (mthing->type == 11) {
+    DeathmatchStarts.length += 1;
+    CopyMThing(mthing, &DeathmatchStarts[$-1]);
     return;
   }
 
-  if (bCheckStrifeStartSpots && mthing->type >= 118 && mthing->type <= 127)
-  {
-    //  Map start spots, i.e. player starts.
-    mthing->arg1 = mthing->type - 117;
+  if (bCheckStrifeStartSpots && mthing->type >= 118 && mthing->type <= 127) {
+    // map start spots, i.e. player starts
+    mthing->arg1 = mthing->type-117;
     mthing->type = 1;
   }
 
-  // Check for player starts 1 to 4
+  // check for player starts 1 to 4
   bool IsPlayerStart = false;
-  if (mthing->type <= 4)
-  {
-    IsPlayerStart = true;
-  }
+  if (mthing->type >= 1 && mthing->type <= 4) IsPlayerStart = true;
   // Check for player starts 5 to 8
-  if (mthing->type >= ExtPlayersBase && mthing->type < ExtPlayersBase + 4)
-  {
-    //  Change type to range 5-8.
-    mthing->type = 5 + mthing->type - ExtPlayersBase;
+  if (mthing->type >= ExtPlayersBase && mthing->type < ExtPlayersBase+4) {
+    // change type to range 5-8
+    mthing->type = 5+mthing->type-ExtPlayersBase;
     IsPlayerStart = true;
   }
 
-  if (!IsPlayerStart || bFilterStarts)
-  {
-    // Check current game type with spawn flags
-    if (Game.netgame == false)
-    {
-      spawnMask = MTF_GSINGLE;
-    }
-    else if (Game.deathmatch)
-    {
-      spawnMask = MTF_GDEATHMATCH;
-    }
-    else
-    {
-      spawnMask = MTF_GCOOP;
-    }
-    if (!(mthing->options & spawnMask))
-    {
-      return;
-    }
+  if (!IsPlayerStart || bFilterStarts) {
+    // check current game type with spawn flags
+         if (Game.netgame == false) spawnMask = MTF_GSINGLE;
+    else if (Game.deathmatch) spawnMask = MTF_GDEATHMATCH;
+    else spawnMask = MTF_GCOOP;
+    if (!(mthing->options&spawnMask)) return;
 
-    // Check current skill with spawn flags
-    if (!(mthing->SkillClassFilter & World.SkillSpawnFilter))
-    {
-      return;
-    }
+    // check current skill with spawn flags
+    if (!(mthing->SkillClassFilter&World.SkillSpawnFilter)) return;
 
-    // Check current character classes with spawn flags
+    // check current character classes with spawn flags
     spawnMask = GetPClassSpawnFlags();
-    if (spawnMask && !(mthing->SkillClassFilter & spawnMask))
-    {
-      // Not for current class
-      return;
-    }
+    if (spawnMask && !(mthing->SkillClassFilter & spawnMask)) return; // not for current class
   }
 
-  if (IsPlayerStart)
-  {
+  if (IsPlayerStart) {
     // save spots for respawning in network games
-    PlayerStarts.Num = PlayerStarts.Num + 1;
-    CopyMThing(mthing, &PlayerStarts[PlayerStarts.Num - 1]);
+    PlayerStarts.length += 1;
+    CopyMThing(mthing, &PlayerStarts[$-1]);
     return;
   }
 
-  //  Sector's sound sequence types.
-  if (mthing->type >= 1400 && mthing->type < 1410)
-  {
-    XLevel.PointInSector(vector(mthing->x,
-      mthing->y, 0.0))->seqType = mthing->type - 1400;
+  // sector's sound sequence types
+  if (mthing->type >= 1400 && mthing->type < 1410) {
+    XLevel.PointInSector(vector(mthing->x, mthing->y, 0.0))->seqType = mthing->type-1400;
     return;
   }
-  if (mthing->type == 1411)
-  {
-    int     SeqType;
-
-    if (mthing->arg1 == 255)
-      SeqType = -1;
-    else
-      SeqType = mthing->arg1;
-
-    if (SeqType > 63)
-    {
+  if (mthing->type == 1411) {
+    int SeqType = (mthing->arg1 == 255 ? -1 : mthing->arg1);
+    if (SeqType > 63) {
       print("Sound sequence %d out of range", SeqType);
-    }
-    else
-    {
-      XLevel.PointInSector(vector(mthing->x,
-        mthing->y, 0.0))->seqType = SeqType;
+    } else {
+      XLevel.PointInSector(vector(mthing->x, mthing->y, 0.0))->seqType = SeqType;
     }
     return;
   }
 
-  //  Remap old ambient sound types to the generic one.
-  if (mthing->type >= 14001 && mthing->type <= 14064)
-  {
-    mthing->arg1 = mthing->type - 14000;
+  // remap old ambient sound types to the generic one
+  if (mthing->type >= 14001 && mthing->type <= 14064) {
+    mthing->arg1 = mthing->type-14000;
     mthing->type = 14065;
   }
 
   // find which type to spawn
-  moClass = class!EntityEx(FindClassFromEditorId(mthing->type,
-    LineSpecialGameInfo(Game).GameFilterFlag));
-  if (!moClass)
-  {
-    // Can't find thing type
-    dprint("SpawnMapThing: Unknown type %d at (%f, %f)",
-      mthing->type, mthing->x, mthing->y);
+  moClass = class!EntityEx(FindClassFromEditorId(mthing->type, LineSpecialGameInfo(Game).GameFilterFlag));
+  if (!moClass) {
+    // can't find thing type
+    print("SpawnMapThing: Unknown type %d at (%f, %f)", mthing->type, mthing->x, mthing->y);
     moClass = Unknown;
-  }
-  else
-  {
+  } else {
+    oldClass = moClass;
     moClass = class!EntityEx(GetClassReplacement(moClass));
+    //print("SpawnMapThing: type=%d; oldClass='%C'; newClass='%C'; solid=%B", mthing.type, oldClass, moClass, moClass.default.bSolid);
 
-    //  If actor has no sprites, also map it to the unknown thing
-    if (FindClassState(moClass, 'Spawn') &&
-      !AreStateSpritesPresent(FindClassState(moClass, 'Spawn')))
-    {
-      print("%n at (%f, %f), has no frames", GetClassName(moClass),
-        mthing->x, mthing->y);
+    // if actor has no sprites, also map it to the unknown thing
+    if (FindClassState(moClass, 'Spawn') && !AreStateSpritesPresent(FindClassState(moClass, 'Spawn'))) {
+      print("SpawnMapThing: %C of type %d at (%f, %f), has no frames", moClass, mthing.type, mthing->x, mthing->y);
       moClass = Unknown;
     }
   }
 
-  if (Level.Game.nomonsters && moClass.default.bMonster)
-  {
-    return;
-  }
+  if (Level.Game.nomonsters && moClass.default.bMonster) return;
 
   // spawn it
-  Spawn(moClass, default, default, mthing, false);
+  auto thg = Spawn(moClass, default, default, mthing, false);
+  //print("SpawnMapThing: '%C' height=%f (defheight=%f)", thg, thg.Height, moClass.default.Height);
+  //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 }
+
 
 //==========================================================================
 //
