@@ -22,10 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <SDL.h>
 #include "gamedefs.h"
 #include "drawer.h"
+#include "ui/ui.h"
 
 #ifndef MAX_JOYSTICK_BUTTONS
 # define MAX_JOYSTICK_BUTTONS  (100)
@@ -42,10 +42,11 @@ public:
   virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
 private:
-  int mouse;
+  bool mouse;
   bool winactive;
   bool firsttime;
   bool uiwasactive;
+  bool uimouselast;
   bool curHidden;
 
   int mouse_oldx;
@@ -63,6 +64,9 @@ private:
 
   void StartupJoystick ();
   void PostJoystick ();
+
+  void HideRealMouse ();
+  void ShowRealMouse ();
 };
 
 
@@ -72,6 +76,8 @@ static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archi
 static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
 static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", 0);
+
+extern VCvarB screen_windowed;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -174,10 +180,11 @@ static int sdl2TranslateKey (SDL_Scancode scan) {
 //
 //==========================================================================
 VSdlInputDevice::VSdlInputDevice ()
-  : mouse(0)
+  : mouse(false)
   , winactive(false)
   , firsttime(true)
   , uiwasactive(false)
+  , uimouselast(false)
   , curHidden(false)
   , mouse_oldx(0)
   , mouse_oldy(0)
@@ -190,21 +197,23 @@ VSdlInputDevice::VSdlInputDevice ()
   , joy_oldy(0)
 {
   guard(VSdlInputDevice::VSdlInputDevice);
-  // always off
-  if (!m_dbg_cursor) { curHidden = true; SDL_ShowCursor(0); }
+
   // mouse and keyboard are setup using SDL's video interface
-  mouse = 1;
+  mouse = true;
   if (GArgs.CheckParm("-nomouse")) {
     SDL_EventState(SDL_MOUSEMOTION,     SDL_IGNORE);
     SDL_EventState(SDL_MOUSEBUTTONDOWN, SDL_IGNORE);
     SDL_EventState(SDL_MOUSEBUTTONUP,   SDL_IGNORE);
-    mouse = 0;
+    mouse = false;
   } else {
     // ignore mouse motion events in any case...
     SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
     SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
     if (Drawer) Drawer->WarpMouseToWindowCenter();
   }
+
+  // always off
+  HideRealMouse();
 
   // initialise joystick
   StartupJoystick();
@@ -231,6 +240,41 @@ VSdlInputDevice::~VSdlInputDevice () {
 
 //==========================================================================
 //
+//  VSdlInputDevice::HideRealMouse
+//
+//==========================================================================
+void VSdlInputDevice::HideRealMouse () {
+  if (!curHidden) {
+    // real mouse cursor is visible
+    if (m_dbg_cursor || !mouse) return;
+    curHidden = true;
+    SDL_ShowCursor(0);
+  } else {
+    // real mouse cursor is invisible
+    if (m_dbg_cursor || !mouse) {
+      curHidden = false;
+      SDL_ShowCursor(1);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VSdlInputDevice::ShowRealMouse
+//
+//==========================================================================
+void VSdlInputDevice::ShowRealMouse () {
+  if (curHidden) {
+    // real mouse cursor is invisible
+    curHidden = false;
+    SDL_ShowCursor(1);
+  }
+}
+
+
+//==========================================================================
+//
 //  VSdlInputDevice::RegrabMouse
 //
 //  Called by UI when mouse cursor is turned off.
@@ -238,7 +282,7 @@ VSdlInputDevice::~VSdlInputDevice () {
 //==========================================================================
 void VSdlInputDevice::RegrabMouse () {
   //FIXME: ignore winactive here, 'cause when mouse is off-window, it may be `false`
-  if (mouse /*&& winactive*/) {
+  if (mouse) {
     firsttime = true;
     if (Drawer) Drawer->WarpMouseToWindowCenter();
     SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
@@ -350,8 +394,40 @@ void VSdlInputDevice::ReadInput () {
   // read mouse separately
   if (mouse && winactive && Drawer) {
     SDL_GetMouseState(&mouse_x, &mouse_y);
+    // check for UI activity changes
+    if (ui_active != uiwasactive) {
+      // UI activity changed
+      uiwasactive = ui_active;
+      uimouselast = ui_mouse;
+      if (!ui_active) {
+        // ui deactivated
+        if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
+        firsttime = true;
+        HideRealMouse();
+      } else {
+        // ui activted
+        SDL_CaptureMouse(SDL_FALSE);
+        if (!ui_mouse) ShowRealMouse();
+      }
+    }
+    // check for "allow mouse in UI" changes
+    if (ui_mouse != uimouselast) {
+      // "allow mouse in UI" changed
+      if (ui_active) {
+        if (screen_windowed) {
+          if (ui_mouse) HideRealMouse(); else ShowRealMouse();
+        } else {
+          HideRealMouse();
+        }
+        if (GRoot) GRoot->SetMouse(ui_mouse);
+      }
+      uimouselast = ui_mouse;
+    }
+    // hide real mouse in fullscreen mode, show in windowed mode (if necessary)
+    if (!screen_windowed && !curHidden) HideRealMouse();
+    if (screen_windowed && curHidden && ui_active && !ui_mouse) ShowRealMouse();
+    // generate events
     if (!ui_active || ui_mouse) {
-      if (!m_dbg_cursor && !curHidden) { curHidden = true; SDL_ShowCursor(0); }
       if (Drawer) Drawer->WarpMouseToWindowCenter();
       int dx = mouse_x-mouse_oldx;
       int dy = mouse_oldy-mouse_y;
@@ -367,19 +443,7 @@ void VSdlInputDevice::ReadInput () {
         mouse_oldx = ScreenWidth/2;
         mouse_oldy = ScreenHeight/2;
       }
-      uiwasactive = ui_active;
     } else {
-      if (ui_active != uiwasactive) {
-        uiwasactive = ui_active;
-        if (!ui_active) {
-          if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
-          firsttime = true;
-          if (!m_dbg_cursor && !curHidden) { curHidden = true; SDL_ShowCursor(0); }
-        } else {
-          SDL_CaptureMouse(SDL_FALSE);
-          if (!m_dbg_cursor && curHidden) { curHidden = false; SDL_ShowCursor(1); }
-        }
-      }
       mouse_oldx = mouse_x;
       mouse_oldy = mouse_y;
     }
@@ -389,6 +453,7 @@ void VSdlInputDevice::ReadInput () {
 
   unguard;
 }
+
 
 //**************************************************************************
 //**

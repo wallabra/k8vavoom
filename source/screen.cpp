@@ -149,7 +149,7 @@ static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?");
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
 //static VCvarI screen_bpp("screen_bpp", "0", "Custom screen BPP", CVAR_Archive);
-static VCvarB screen_windowed("screen_windowed", true, "Use windowed mode?", CVAR_Archive);
+VCvarB screen_windowed("screen_windowed", true, "Use windowed mode?", CVAR_Archive);
 static VCvarI brightness("brightness", "0", "Brightness.", CVAR_Archive);
 
 static VCvarI draw_fps("draw_fps", "0", "Draw FPS counter?", CVAR_Archive);
