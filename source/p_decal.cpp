@@ -296,7 +296,7 @@ VDecalDef *VDecalGroup::chooseDecal (int reclevel) {
 bool VDecalGroup::parse (VScriptParser *sc) {
   guard(VDecalGroup::parse);
 
-  sc->SetCMode(true);
+  sc->SetCMode(false);
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal group name"); return false; }
   name = VName(*sc->String);
