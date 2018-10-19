@@ -31,6 +31,7 @@
 #include "gamedefs.h"
 
 static VCvarB dbg_use_buggy_thing_traverser("dbg_use_buggy_thing_traverser", false, "Use old and buggy thing traverser (for debug)?", 0);
+static VCvarB dbg_use_vavoom_thing_coldet("dbg_use_vavoom_thing_coldet", false, "Use original VaVoom buggy thing coldet (for debug)?", 0);
 
 
 #define FRACBITS  (16)
@@ -441,6 +442,69 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct divline_t {
+  double x, y;
+  double dx, dy;
+};
+
+#define EQUAL_EPSILON (1.0/65536.0)
+
+
+//==========================================================================
+//
+//  P_PointOnLineSide
+//
+//  Returns 0 (front/on) or 1 (back)
+//
+//==========================================================================
+static inline int P_PointOnDivlineSide (double x, double y, const divline_t *line) {
+  return (y-line->y)*line->dx+(line->x-x)*line->dy > EQUAL_EPSILON;
+}
+
+
+//==========================================================================
+//
+//  P_AproxDistance
+//
+//  Gives an estimation of distance (not exact)
+//
+//==========================================================================
+/*
+static inline int P_AproxDistance (int dx, int dy) {
+  dx = abs(dx);
+  dy = abs(dy);
+  return (dx < dy) ? dx+dy-(dx>>1) : dx+dy-(dy>>1);
+}
+*/
+
+
+//==========================================================================
+//
+// P_InterceptVector
+//
+// Returns the fractional intercept point along the first divline.
+//
+//==========================================================================
+static double P_InterceptVector (const divline_t *v2, const divline_t *v1) {
+  const double v1x = v1->x;
+  const double v1y = v1->y;
+  const double v1dx = v1->dx;
+  const double v1dy = v1->dy;
+  const double v2x = v2->x;
+  const double v2y = v2->y;
+  const double v2dx = v2->dx;
+  const double v2dy = v2->dy;
+
+  const double den = v1dy*v2dx-v1dx*v2dy;
+
+  if (den == 0) return 0; // parallel
+
+  const double num = (v1x-v2x)*v1dy+(v2y-v1y)*v1dx;
+  return num/den;
+}
+
+
 //==========================================================================
 //
 //  VPathTraverse::AddThingIntercepts
@@ -449,6 +513,7 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
   guard(VPathTraverse::AddThingIntercepts);
   if (dbg_use_buggy_thing_traverser) {
+    // original
     for (VBlockThingsIterator It(Self->XLevel, mapx, mapy); Self && It; ++It) {
       const float dot = DotProduct(It->Origin, trace_plane.normal)-trace_plane.dist;
       if (dot >= It->Radius || dot <= -It->Radius) continue; // thing is too far away
@@ -463,8 +528,8 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
       In.line = nullptr;
       In.thing = *It;
     }
-  } else {
-    // "better"
+  } else if (dbg_use_vavoom_thing_coldet) {
+    // better original
     for (int dy = -1; dy < 2; ++dy) {
       for (int dx = -1; dx < 2; ++dx) {
         for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); Self && It; ++It) {
@@ -483,6 +548,104 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
           In.Flags = 0;
           In.line = nullptr;
           In.thing = *It;
+        }
+      }
+    }
+  } else {
+    // better, gz
+    divline_t trace;
+    trace.x = trace_org.x;
+    trace.y = trace_org.y;
+    trace.dx = trace_delta.x;
+    trace.dy = trace_delta.y;
+    divline_t line;
+    for (int dy = -1; dy < 2; ++dy) {
+      for (int dx = -1; dx < 2; ++dx) {
+        for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); Self && It; ++It) {
+          if (vptSeenThings.has(*It)) continue;
+          // [RH] don't check a corner to corner crossection for hit
+          // instead, check against the actual bounding box
+
+          // there's probably a smarter way to determine which two sides
+          // of the thing face the trace than by trying all four sides...
+          int numfronts = 0;
+          for (int i = 0; i < 4; ++i) {
+            switch (i) {
+              case 0: // top edge
+                line.y = It->Origin.y+It->Radius;
+                if (trace_org.y < line.y) continue;
+                line.x = It->Origin.x+It->Radius;
+                line.dx = -It->Radius*2;
+                line.dy = 0;
+                break;
+              case 1: // right edge
+                line.x = It->Origin.x+It->Radius;
+                if (trace_org.x < line.x) continue;
+                line.y = It->Origin.y-It->Radius;
+                line.dx = 0;
+                line.dy = It->Radius*2;
+                break;
+              case 2: // bottom edge
+                line.y = It->Origin.y-It->Radius;
+                if (trace_org.y > line.y) continue;
+                line.x = It->Origin.x-It->Radius;
+                line.dx = It->Radius*2;
+                line.dy = 0;
+                break;
+              case 3: // left edge
+                line.x = It->Origin.x-It->Radius;
+                if (trace_org.x > line.x) continue;
+                line.y = It->Origin.y + It->Radius;
+                line.dx = 0;
+                line.dy = It->Radius*-2;
+                break;
+            }
+            ++numfronts;
+
+            // check if this side is facing the trace origin
+            // if it is, see if the trace crosses it
+            if (P_PointOnDivlineSide(line.x, line.y, &trace) != P_PointOnDivlineSide(line.x+line.dx, line.y+line.dy, &trace)) {
+              // it's a hit
+              double frac = P_InterceptVector(&trace, &line);
+              if (frac < 0 || frac > 1.0f) continue;
+              /*
+              if (frac < 0) {
+                // behind source
+                if (Startfrac > 0) {
+                  // check if the trace starts within this actor
+                  switch (i) {
+                    case 0: line.y -= 2 * It->Radius; break;
+                    case 1: line.x -= 2 * It->Radius; break;
+                    case 2: line.y += 2 * It->Radius; break;
+                    case 3: line.x += 2 * It->Radius; break;
+                  }
+                  double frac2 = P_InterceptVector(&trace, &line);
+                  if (frac2 >= Startfrac) goto addit;
+                }
+                continue;
+              }
+              */
+              vptSeenThings.put(*It, true);
+
+              intercept_t &In = NewIntercept(frac);
+              In.frac = frac;
+              In.Flags = 0;
+              In.line = nullptr;
+              In.thing = *It;
+              break;
+            }
+          }
+          // if none of the sides was facing the trace, then the trace
+          // must have started inside the box, so add it as an intercept
+          if (numfronts == 0) {
+            vptSeenThings.put(*It, true);
+
+            intercept_t &In = NewIntercept(0);
+            In.frac = 0;
+            In.Flags = 0;
+            In.line = nullptr;
+            In.thing = *It;
+          }
         }
       }
     }
