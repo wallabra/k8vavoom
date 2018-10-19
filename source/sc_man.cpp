@@ -387,12 +387,12 @@ bool VScriptParser::GetString () {
         String += *ScriptPtr++;
         if (ScriptPtr == ScriptEndPtr) break;
       }
-    } else if (strchr("`~!@#$%^&*(){}[]/=\\?-+|;:<>,.", *ScriptPtr)) {
+    } else if (strchr("`~!#$%^&*(){}[]/=\\?-+|;:<>,.", *ScriptPtr)) { // was with '@'
       // special single-character token
       String += *ScriptPtr++;
     } else {
       // normal string
-      while (*ScriptPtr > 32 && !strchr("`~!@#$%^&*(){}[]/=\\?-+|;:<>,\".", *ScriptPtr)) {
+      while (*ScriptPtr > 32 && !strchr("`~!#$%^&*(){}[]/=\\?-+|;:<>,\".", *ScriptPtr)) { // was with '@'
         String += *ScriptPtr++;
         if (ScriptPtr == ScriptEndPtr) break;
       }
