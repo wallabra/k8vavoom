@@ -49,6 +49,51 @@ typedef int fixed_t;
 #define MAPBTOFRAC     (MAPBLOCKSHIFT-FRACBITS)
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+#define EQUAL_EPSILON (1.0f/65536.0f)
+
+// used in new thing coldet
+struct divline_t {
+  float x, y;
+  float dx, dy;
+};
+
+
+//==========================================================================
+//
+//  pointOnDLineSide
+//
+//  returns 0 (front/on) or 1 (back)
+//
+//==========================================================================
+static inline int pointOnDLineSide (const float x, const float y, const divline_t &line) {
+  return ((y-line.y)*line.dx+(line.x-x)*line.dy > EQUAL_EPSILON);
+}
+
+
+//==========================================================================
+//
+//  interceptVector
+//
+//  returns the fractional intercept point along the first divline
+//
+//==========================================================================
+static float interceptVector (const divline_t &v2, const divline_t &v1) {
+  const float v1x = v1.x;
+  const float v1y = v1.y;
+  const float v1dx = v1.dx;
+  const float v1dy = v1.dy;
+  const float v2x = v2.x;
+  const float v2y = v2.y;
+  const float v2dx = v2.dx;
+  const float v2dy = v2.dy;
+  const float den = v1dy*v2dx-v1dx*v2dy;
+  if (den == 0) return 0; // parallel
+  const float num = (v1x-v2x)*v1dy+(v2y-v1y)*v1dx;
+  return num/den;
+}
+
+
 //==========================================================================
 //
 //  VBlockLinesIterator::VBlockLinesIterator
@@ -442,69 +487,6 @@ bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool 
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-struct divline_t {
-  double x, y;
-  double dx, dy;
-};
-
-#define EQUAL_EPSILON (1.0/65536.0)
-
-
-//==========================================================================
-//
-//  P_PointOnLineSide
-//
-//  Returns 0 (front/on) or 1 (back)
-//
-//==========================================================================
-static inline int P_PointOnDivlineSide (double x, double y, const divline_t *line) {
-  return (y-line->y)*line->dx+(line->x-x)*line->dy > EQUAL_EPSILON;
-}
-
-
-//==========================================================================
-//
-//  P_AproxDistance
-//
-//  Gives an estimation of distance (not exact)
-//
-//==========================================================================
-/*
-static inline int P_AproxDistance (int dx, int dy) {
-  dx = abs(dx);
-  dy = abs(dy);
-  return (dx < dy) ? dx+dy-(dx>>1) : dx+dy-(dy>>1);
-}
-*/
-
-
-//==========================================================================
-//
-// P_InterceptVector
-//
-// Returns the fractional intercept point along the first divline.
-//
-//==========================================================================
-static double P_InterceptVector (const divline_t *v2, const divline_t *v1) {
-  const double v1x = v1->x;
-  const double v1y = v1->y;
-  const double v1dx = v1->dx;
-  const double v1dy = v1->dy;
-  const double v2x = v2->x;
-  const double v2y = v2->y;
-  const double v2dx = v2->dx;
-  const double v2dy = v2->dy;
-
-  const double den = v1dy*v2dx-v1dx*v2dy;
-
-  if (den == 0) return 0; // parallel
-
-  const double num = (v1x-v2x)*v1dy+(v2y-v1y)*v1dx;
-  return num/den;
-}
-
-
 //==========================================================================
 //
 //  VPathTraverse::AddThingIntercepts
@@ -604,9 +586,9 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
 
             // check if this side is facing the trace origin
             // if it is, see if the trace crosses it
-            if (P_PointOnDivlineSide(line.x, line.y, &trace) != P_PointOnDivlineSide(line.x+line.dx, line.y+line.dy, &trace)) {
+            if (pointOnDLineSide(line.x, line.y, trace) != pointOnDLineSide(line.x+line.dx, line.y+line.dy, trace)) {
               // it's a hit
-              double frac = P_InterceptVector(&trace, &line);
+              float frac = interceptVector(trace, line);
               if (frac < 0 || frac > 1.0f) continue;
               /*
               if (frac < 0) {
@@ -619,7 +601,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
                     case 2: line.y += 2 * It->Radius; break;
                     case 3: line.x += 2 * It->Radius; break;
                   }
-                  double frac2 = P_InterceptVector(&trace, &line);
+                  double frac2 = interceptVector(trace, line);
                   if (frac2 >= Startfrac) goto addit;
                 }
                 continue;
