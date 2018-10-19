@@ -1080,6 +1080,7 @@ final void A_LightInverse()
   }
 }
 
+
 //**************************************************************************
 //  Weapon attack functions
 //**************************************************************************
@@ -1089,94 +1090,71 @@ final void A_LightInverse()
 //  A_Saw
 //
 //===========================================================================
-
-final void A_Saw()
-{
+final void A_Saw () {
   decorate_A_Saw();
 }
+
 
 //===========================================================================
 //
 //  decorate_A_Saw
 //
 //===========================================================================
-
-final void decorate_A_Saw(optional name FullSound, optional name HitSound,
+final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   optional int SawDamage, optional class!Actor PuffType)
 {
-  float   angle;
-  int     damage;
-  TAVec   aimAng;
-  TVec    dir;
-  EntityEx  AimTarget;
+  //float angle;
+  //int damage;
+  //TAVec aimAng;
+  //EntityEx AimTarget;
+  TVec dir;
 
-  if (!specified_FullSound)
-  {
+  if (!bIsPlayer) return;
+
+  if (!specified_FullSound) {
     FullSound = 'weapons/sawfull';
     HitSound = 'weapons/sawhit';
   }
-  if (!SawDamage)
-  {
-    SawDamage = 2;
-  }
-  if (!PuffType)
-  {
-    PuffType = BulletPuff;
-  }
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!SawDamage) SawDamage = 2;
+  if (!PuffType) PuffType = BulletPuff;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (Wpn)
-  {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode))
-    {
-      return;
-    }
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  damage = SawDamage * (P_Random() % 10 + 1);
-  aimAng = Angles;
-  aimAng.yaw = AngleMod360(aimAng.yaw + (Random() -
-    Random()) * 45.0 / 8.0);
+  int damage = SawDamage*(P_Random()%10+1);
+  TAVec aimAng = Angles;
+  aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
-  // use meleerange + 1 se the puff doesn't skip the flash
-  AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-  LineAttack(dir, MELEERANGE + 0.00001, damage, PuffType, default, default, 'Chainsaw');
+  EntityEx AimTarget = AimLineAttack(dir, aimAng, SAWRANGE);
+  LineAttack(dir, SAWRANGE, damage, PuffType, default, default, 'Chainsaw');
 
-  if (!AimTarget)
-  {
+  if (!AimTarget) {
     PlaySound(FullSound, CHAN_WEAPON);
     return;
   }
   PlaySound(HitSound, CHAN_WEAPON);
 
   // turn to face target
-  angle = atan2(AimTarget.Origin.y - Origin.y,
-    AimTarget.Origin.x - Origin.x);
-  if (AngleMod360(angle - Angles.yaw) > 180.0)
-  {
-    if (AngleMod360(angle - Angles.yaw) < -90.0 / 20.0)
-      Angles.yaw = angle + 90.0 / 21.0;
-    else
-      Angles.yaw = Angles.yaw - 90.0 / 20.0;
-  }
-  else
-  {
-    if (AngleMod360(angle - Angles.yaw) > 90.0 / 20.0)
-      Angles.yaw = angle - 90.0 / 21.0;
-    else
-      Angles.yaw += 90.0 / 20.0;
+  float angle = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
+  if (AngleMod360(angle-Angles.yaw) > 180.0) {
+    if (AngleMod360(angle-Angles.yaw) < -90.0/20.0) {
+      Angles.yaw = angle+90.0/21.0;
+    } else {
+      Angles.yaw = Angles.yaw-90.0/20.0;
+    }
+  } else {
+    if (AngleMod360(angle-Angles.yaw) > 90.0/20.0) {
+      Angles.yaw = angle-90.0/21.0;
+    } else {
+      Angles.yaw += 90.0/20.0;
+    }
   }
   Angles.yaw = AngleMod360(Angles.yaw);
   bJustAttacked = true;
-  if (bIsPlayer)
-  {
-    Player.bFixAngle = true;
-  }
+  if (bIsPlayer) Player.bFixAngle = true;
 }
 
 //===========================================================================

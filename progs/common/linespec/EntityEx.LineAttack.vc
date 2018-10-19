@@ -700,6 +700,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     EntityEx th;
 
     //print("LineAttack: isline=%d; frac=%f", (in->bIsALine ? 1 : 0), in->frac);
+    //if (!in->bIsALine) print("LineAttack: frac=%f; thing=%C; dist=%f", in->frac, in->Thing, length2D(in.Thing.Origin-Origin));
 
     if (in->bIsALine) {
       sector_t *sec;
