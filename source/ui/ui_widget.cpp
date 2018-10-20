@@ -709,6 +709,7 @@ void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
   float S2 = Tex->GetWidth();
   float T2 = Tex->GetHeight();
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
     Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
   }
   unguard;
@@ -910,6 +911,7 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColour, in
     int w;
     VTexture *Tex = Font->GetChar(c, &w, Colour);
     if (Tex) {
+      //fprintf(stderr, "*CHAR: %c\n", (c >= 32 && c < 127 ? (char)c : '?'));
       if (WidgetFlags&WF_TextShadowed) DrawShadowedPic(cx, cy, Tex); else DrawPic(cx, cy, Tex, Alpha);
     }
     cx += w+Kerning;

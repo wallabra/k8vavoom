@@ -42,12 +42,6 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
 {
   guard(VOpenGLDrawer::DrawPic);
   SetPic(Tex, Trans, CM_Default);
-  /*
-  int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-  if (max_anisotropy > 1.0) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
-  */
   p_glUseProgramObjectARB(DrawSimpleProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
   p_glUniform1fARB(DrawSimpleAlphaLoc, Alpha);
