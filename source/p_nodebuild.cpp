@@ -785,6 +785,13 @@ void VLevel::BuildNodes () {
     }
 
     // blockmap
+    // k8: ajbsp blockmap builder (or reader) seems to not work on switch; don't use it at all
+    delete [] BlockMapLump;
+    BlockMapLump = nullptr;
+    BlockMapLumpSize = 0;
+    GCon->Logf("AJBSP: creating BLOCKMAP...");
+    CreateBlockMap();
+    /*
     //FIXME: remove pasta (see p_setup.cpp:LoadBlockMap())
     if (ajbsp::cur_info->do_blockmap) {
       // killough 3/1/98: Expand wad blockmap into larger internal one,
@@ -828,6 +835,7 @@ void VLevel::BuildNodes () {
 
       delete xms;
     }
+    */
   }
 
   // free any memory used by glBSP
