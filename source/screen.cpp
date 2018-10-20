@@ -40,6 +40,8 @@ int ScreenHeight = 0;
 int VirtualWidth = 640;
 int VirtualHeight = 480;
 
+static int lastFSMode = -1;
+
 float fScaleX;
 float fScaleY;
 float fScaleXI;
@@ -149,7 +151,7 @@ static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?");
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
 //static VCvarI screen_bpp("screen_bpp", "0", "Custom screen BPP", CVAR_Archive);
-VCvarB screen_windowed("screen_windowed", true, "Use windowed mode?", CVAR_Archive);
+VCvarI screen_fsmode("screen_fsmode", "0", "Video mode: windowed(0), fullscreen scaled(1), fullscreen real(2)", CVAR_Archive);
 static VCvarI brightness("brightness", "0", "Brightness.", CVAR_Archive);
 
 static VCvarI draw_fps("draw_fps", "0", "Draw FPS counter?", CVAR_Archive);
@@ -332,25 +334,28 @@ static void ChangeResolution (int InWidth, int InHeight) {
   guard(ChangeResolution);
   int width = InWidth;
   int height = InHeight;
-  bool win = false;
-  if (screen_windowed > 0) win = true;
+  //bool win = false;
+  //if (screen_fsmode > 0) win = true;
 
   // Changing resolution
-  if (!Drawer->SetResolution(width, height, win)) {
+  if (!Drawer->SetResolution(width, height, screen_fsmode)) {
     GCon->Logf("Failed to set resolution %dx%d", width, height);
-    if (ScreenWidth) {
-      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, win)) {
+    if (ScreenWidth && lastFSMode >= 0) {
+      if (!Drawer->SetResolution(ScreenWidth, ScreenHeight, lastFSMode)) {
         Sys_Error("ChangeResolution: failed to restore resolution");
       } else {
         GCon->Log("Restoring previous resolution");
       }
     } else {
-      if (!Drawer->SetResolution(0, 0, win)) {
+      if (!Drawer->SetResolution(0, 0, 0)) {
         Sys_Error("ChangeResolution: Failed to set default resolution");
       } else {
         GCon->Log("Setting default resolution");
+        lastFSMode = 0;
       }
     }
+  } else {
+    lastFSMode = screen_fsmode;
   }
   //GCon->Logf("%dx%d.", ScreenWidth, ScreenHeight);
 

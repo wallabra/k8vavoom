@@ -125,7 +125,7 @@ public:
   virtual ~VDrawer () {}
 
   virtual void Init() = 0;
-  virtual bool SetResolution(int, int, bool) = 0;
+  virtual bool SetResolution(int, int, int fsmode) = 0;
   virtual void InitResolution() = 0;
   inline bool IsInited () const { return mInitialized; }
 

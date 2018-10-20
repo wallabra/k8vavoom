@@ -36,7 +36,7 @@ public:
   SDL_GLContext hw_glctx;
 
   virtual void Init () override;
-  virtual bool SetResolution (int, int, bool) override;
+  virtual bool SetResolution (int, int, int) override;
   virtual void *GetExtFuncPtr (const char *) override;
   virtual void Update () override;
   virtual void Shutdown () override;
@@ -51,6 +51,8 @@ private:
 
 
 IMPLEMENT_DRAWER(VSdlOpenGLDrawer, DRAWER_OpenGL, "OpenGL", "SDL OpenGL rasteriser device", "-opengl");
+
+VCvarI gl_current_screen_fsmode("gl_current_screen_fsmode", "0", "Video mode: windowed(0), fullscreen scaled(1), fullscreen real(2)", CVAR_Rom);
 
 
 //==========================================================================
@@ -133,31 +135,37 @@ void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
 //
 //  VSdlOpenGLDrawer::SetResolution
 //
-//  Set up the video mode
+//  set up the video mode
+//  fsmode:
+//    0: windowed
+//    1: scaled FS
+//    2: real FS
 //
 //==========================================================================
-bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
+bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   guard(VSdlOpenGLDrawer::SetResolution);
   int Width = AWidth;
   int Height = AHeight;
-  if (!Width || !Height) {
+  if (Width < 320 || Height < 200) {
     // set defaults
     Width = 800;
     Height = 600;
   }
 
+  if (fsmode < 0 || fsmode > 2) fsmode = 0;
+
   // shut down current mode
   Shutdown();
 
   Uint32 flags = SDL_WINDOW_OPENGL;
-  if (!Windowed) flags |= SDL_WINDOW_FULLSCREEN;
+       if (fsmode == 1) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+  else if (fsmode == 2) flags |= SDL_WINDOW_FULLSCREEN;
 
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -169,7 +177,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
 
   hw_window = SDL_CreateWindow("k8VaVoom", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, flags);
   if (!hw_window) {
-    GCon->Logf("ALAS: cannot create SDL2 window.");
+    GCon->Logf("SDL2: cannot create SDL2 window.");
     return false;
   }
 
@@ -177,13 +185,12 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
   if (!hw_glctx) {
     SDL_DestroyWindow(hw_window);
     hw_window = nullptr;
-    GCon->Logf("ALAS: cannot initialize OpenGL 2.1 with stencil buffer.");
+    GCon->Logf("SDL2: cannot initialize OpenGL 2.1 with stencil buffer.");
     return false;
   }
 
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
 
-  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
   SetVSync(false); // second time
   //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
@@ -192,6 +199,8 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
   ScreenHeight = Height;
 
   //SDL_DisableScreenSaver();
+
+  gl_current_screen_fsmode = fsmode;
 
   return true;
   unguard;

@@ -77,7 +77,8 @@ static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse wa
 static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
 static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", 0);
 
-extern VCvarB screen_windowed;
+//extern VCvarB screen_fsmode;
+extern VCvarB gl_current_screen_fsmode;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -414,7 +415,7 @@ void VSdlInputDevice::ReadInput () {
     if (ui_mouse != uimouselast) {
       // "allow mouse in UI" changed
       if (ui_active) {
-        if (screen_windowed) {
+        if (gl_current_screen_fsmode == 0) {
           if (ui_mouse) HideRealMouse(); else ShowRealMouse();
         } else {
           HideRealMouse();
@@ -424,8 +425,8 @@ void VSdlInputDevice::ReadInput () {
       uimouselast = ui_mouse;
     }
     // hide real mouse in fullscreen mode, show in windowed mode (if necessary)
-    if (!screen_windowed && !curHidden) HideRealMouse();
-    if (screen_windowed && curHidden && ui_active && !ui_mouse) ShowRealMouse();
+    if (gl_current_screen_fsmode != 0 && !curHidden) HideRealMouse();
+    if (gl_current_screen_fsmode == 0 && curHidden && ui_active && !ui_mouse) ShowRealMouse();
     // generate events
     if (!ui_active || ui_mouse) {
       if (Drawer) Drawer->WarpMouseToWindowCenter();
