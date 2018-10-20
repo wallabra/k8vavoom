@@ -32,6 +32,9 @@
 #endif
 
 
+VCvarB want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VSdlInputDevice : public VInputDevice {
 public:
@@ -408,7 +411,10 @@ void VSdlInputDevice::ReadInput () {
       } else {
         // ui activted
         SDL_CaptureMouse(SDL_FALSE);
-        if (!ui_mouse) ShowRealMouse();
+        if (!ui_mouse) {
+          if (curHidden && want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
+          ShowRealMouse();
+        }
       }
     }
     // check for "allow mouse in UI" changes

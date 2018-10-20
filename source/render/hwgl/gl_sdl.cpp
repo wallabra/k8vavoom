@@ -22,9 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <SDL.h>
 #include "gl_local.h"
+
+
+extern VCvarB want_mouse_at_zero;
 
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
@@ -254,5 +256,6 @@ void VSdlOpenGLDrawer::Shutdown() {
     hw_window = nullptr;
   }
   mInitialized = false;
+  if (want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
   unguard;
 }
