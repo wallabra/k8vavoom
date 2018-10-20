@@ -31,7 +31,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VCvarB gl_pic_filtering("gl_pic_filtering", true, "Filter interface pictures.", CVAR_Archive);
+VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.", CVAR_Archive);
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
 
 static VCvarB gl_enable_floating_zbuffer("gl_enable_floating_zbuffer", true, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive);
