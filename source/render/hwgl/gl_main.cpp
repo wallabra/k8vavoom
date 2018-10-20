@@ -246,8 +246,7 @@ void VOpenGLDrawer::InitResolution () {
   if (CheckExtension("GL_SGIS_texture_edge_clamp") || CheckExtension("GL_EXT_texture_edge_clamp")) {
     GCon->Log(NAME_Init, "Clamp to edge extension found.");
     ClampToEdge = GL_CLAMP_TO_EDGE_SGIS;
-  }
-  else {
+  } else {
     ClampToEdge = GL_CLAMP;
   }
 

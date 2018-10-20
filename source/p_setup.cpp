@@ -1038,7 +1038,7 @@ load_again:
   int VertexesLump = -1;
   int SectorsLump = -1;
   int RejectLump = -1;
-  int BlockmapLump = -1;
+  int BlockmapLumpNum = -1;
   int BehaviorLump = -1;
   int DialogueLump = -1;
   int CompressedGLNodesLump = -1;
@@ -1070,7 +1070,7 @@ load_again:
       if (LName == NAME_endmap) break;
       if (LName == NAME_None) Host_Error("Map %s is not a valid UDMF map", *MapName);
            if (LName == NAME_behavior) BehaviorLump = lumpnum+i;
-      else if (LName == NAME_blockmap) BlockmapLump = lumpnum+i;
+      else if (LName == NAME_blockmap) BlockmapLumpNum = lumpnum+i;
       else if (LName == NAME_reject) RejectLump = lumpnum+i;
       else if (LName == NAME_dialogue) DialogueLump = lumpnum+i;
       else if (LName == NAME_znodes) {
@@ -1095,7 +1095,7 @@ load_again:
     if (W_LumpName(LIdx) == NAME_nodes) LIdx++;
     if (W_LumpName(LIdx) == NAME_sectors) SectorsLump = LIdx++;
     if (W_LumpName(LIdx) == NAME_reject) RejectLump = LIdx++;
-    if (W_LumpName(LIdx) == NAME_blockmap) BlockmapLump = LIdx++;
+    if (W_LumpName(LIdx) == NAME_blockmap) BlockmapLumpNum = LIdx++;
 
     sha224valid = hashLump(nullptr, &md5ctx, lumpnum); // md5
     if (sha224valid) sha224valid = hashLump(nullptr, &md5ctx, ThingsLump); // md5
@@ -1288,9 +1288,15 @@ load_again:
   NodesTime += Sys_Time();
 
   // load blockmap
+  if (build_blockmap && BlockMapLump) {
+    delete[] BlockMapLump;
+    BlockMapLump = nullptr;
+    BlockMapLumpSize = 0;
+  }
+
   double BlockMapTime = -Sys_Time();
   if (!BlockMapLump) {
-    LoadBlockMap(BlockmapLump);
+    LoadBlockMap(BlockmapLumpNum);
     saveCachedData = true;
   }
   {
@@ -2647,7 +2653,11 @@ void VLevel::LoadBlockMap (int Lump) {
   guard(VLevel::LoadBlockMap);
   VStream *Strm = nullptr;
 
-  if (Lump >= 0 && !build_blockmap) Strm = W_CreateLumpReaderNum(Lump);
+  if (build_blockmap) {
+    Lump = -1;
+  } else {
+    if (Lump >= 0 && !build_blockmap) Strm = W_CreateLumpReaderNum(Lump);
+  }
 
   if (!Strm || Strm->TotalSize() == 0 || Strm->TotalSize()/2 >= 0x10000) {
     GCon->Logf("Creating BLOCKMAP");
