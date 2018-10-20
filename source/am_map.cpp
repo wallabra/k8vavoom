@@ -281,6 +281,27 @@ static const mline_t player_arrow2[] = {
 };
 #define NUMPLYRLINES2  (sizeof(player_arrow2)/sizeof(mline_t))
 
+
+static const mline_t player_arrow_ddt[] = {
+  { { -R+R/8, 0 }, { R, 0 } }, // -----
+  { { R, 0 }, { R-R/2, R/6 } },  // ----->
+  { { R, 0 }, { R-R/2, -R/6 } },
+  { { -R+R/8, 0 }, { -R-R/8, R/6 } }, // >----->
+  { { -R+R/8, 0 }, { -R-R/8, -R/6 } },
+  { { -R+3*R/8, 0 }, { -R+R/8, R/6 } }, // >>----->
+  { { -R+3*R/8, 0 }, { -R+R/8, -R/6 } },
+  { { -R/2, 0 }, { -R/2, -R/6 } }, // >>-d--->
+  { { -R/2, -R/6 }, { -R/2+R/6, -R/6 } },
+  { { -R/2+R/6, -R/6 }, { -R/2+R/6, R/4 } },
+  { { -R/6, 0 }, { -R/6, -R/6 } }, // >>-dd-->
+  { { -R/6, -R/6 }, { 0, -R/6 } },
+  { { 0, -R/6 }, { 0, R/4 } },
+  { { R/6, R/4 }, { R/6, -R/7 } }, // >>-ddt->
+  { { R/6, -R/7 }, { R/6+R/32, -R/7-R/32 } },
+  { { R/6+R/32, -R/7-R/32 }, { R/6+R/10, -R/7 } }
+};
+#define NUMPLYRLINES3  (sizeof(player_arrow_ddt)/sizeof(mline_t))
+
 #undef R
 
 #define R (1.0)
@@ -1127,7 +1148,10 @@ static void AM_drawPlayers () {
   float angle;
   int NUMPLYRLINES;
 
-  if (am_player_arrow == 1) {
+  if (am_cheating) {
+    player_arrow = player_arrow_ddt;
+    NUMPLYRLINES = NUMPLYRLINES3;
+  } else if (am_player_arrow == 1) {
     player_arrow = player_arrow2;
     NUMPLYRLINES = NUMPLYRLINES2;
   } else {
