@@ -60,7 +60,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
   shootOrigin = org;
   //ShootOrigin.z += Height*0.5-FloorClip;
-  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).AttackZOffset : 8.0);
+  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
 
 
   dst = shootOrigin+distance*dir;
@@ -179,7 +179,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   TVec outHitPoint;
 
   shootOrigin = org;
-  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).AttackZOffset : 8.0);
+  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
 
   dst = shootOrigin+distance*dir;
 
@@ -407,7 +407,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
   y2 = Origin.y+distance*aim_dir.y;
   aim_z = Origin.z+Height/2.0-FloorClip;
   if (bIsPlayer) {
-    aim_z += PlayerPawn(Player.MO).AttackZOffset;
+    aim_z += PlayerPawn(Player.MO).GetAttackZOfs;
   } else {
     aim_z += 8.0;
   }
@@ -688,7 +688,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
 
   shootOrigin = Origin;
   shootOrigin.z += Height*0.5-FloorClip;
-  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).AttackZOffset : 8.0);
+  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
 
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
@@ -930,7 +930,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   shootOrigin = Origin;
   shootOrigin.z += Height*0.5-FloorClip;
   if (bIsPlayer) {
-    shootOrigin.z += PlayerPawn(Player.MO).AttackZOffset;
+    shootOrigin.z += PlayerPawn(Player.MO).GetAttackZOfs;
   } else {
     shootOrigin.z += 8.0;
   }

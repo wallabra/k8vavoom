@@ -94,6 +94,7 @@ override void CreateChoices () {
   CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
   CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
   CreateOnOffCvar("Better sight for monsters", 'compat_better_sight');
+  CreateOnOffCvar("Shots go through crosshair", 'gm_fix_attack_offset');
 
 
   CreateChoiceSubHeader("Headshots Options");

@@ -301,6 +301,8 @@ void InitializeWeaponSlots () {
 //
 //==========================================================================
 override void Init () {
+  CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
+
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
 
   CreateCvar('movebob', "0.1", "Player movement bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
