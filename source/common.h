@@ -23,14 +23,15 @@
 //**
 //**************************************************************************
 
-typedef unsigned short    word;
+//typedef unsigned short    word;
+#define word  vuint16
+
 
 //==========================================================================
 //
 //  Forward declarations
 //
 //==========================================================================
-
 class VName;
 class VStr;
 class VStream;
@@ -44,6 +45,6 @@ class VConstant;
 class VStruct;
 class VClass;
 class VNetObjectsMap;
-struct  mobjinfo_t;
+struct mobjinfo_t;
 
 class VObject;
