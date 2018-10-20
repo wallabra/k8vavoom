@@ -462,7 +462,8 @@ extern void mix_voice(MidiSong* song, int32* buf, int v, int32 c);
 extern int recompute_envelope(MidiSong* song, int v);
 extern void apply_envelope_to_amp(MidiSong* song, int v);
 
-extern int Timidity_Init();
+extern void Timidity_Init();
+extern int Timidity_ReadConfig();
 extern void Timidity_SetVolume(MidiSong* song, int volume);
 extern int Timidity_PlaySome(MidiSong* song, void* stream, int samples);
 extern MidiSong *Timidity_LoadSongMem(void* data, int size, DLS_Data* patches, Sf2Data* sf2_font);

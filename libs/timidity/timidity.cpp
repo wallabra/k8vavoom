@@ -430,7 +430,21 @@ static int read_config_file(const char* name)
 	return 0;
 }
 
-int Timidity_Init()
+void Timidity_Init()
+{
+	/* Allocate memory for the standard tonebank and drumset */
+	master_tonebank[0] = (ToneBank*)safe_malloc(sizeof(ToneBank));
+	memset(master_tonebank[0], 0, sizeof(ToneBank));
+	master_tonebank[0]->tone = (ToneBankElement*)safe_malloc(128 * sizeof(ToneBankElement));
+	memset(master_tonebank[0]->tone, 0, 128 * sizeof(ToneBankElement));
+
+	master_drumset[0] = (ToneBank*)safe_malloc(sizeof(ToneBank));
+	memset(master_drumset[0], 0, sizeof(ToneBank));
+	master_drumset[0]->tone = (ToneBankElement*)safe_malloc(128 * sizeof(ToneBankElement));
+	memset(master_drumset[0]->tone, 0, 128 * sizeof(ToneBankElement));
+}
+
+int Timidity_ReadConfig()
 {
 	/* !!! FIXME: This may be ugly, but slightly less so than requiring the
 	*            default search path to have only one element. I think.
@@ -448,18 +462,6 @@ int Timidity_Init()
 	add_to_pathlist("/usr/local/lib/timidity");
 	add_to_pathlist("/etc");
 #endif
-
-	/* Allocate memory for the standard tonebank and drumset */
-	master_tonebank[0] = (ToneBank*)safe_malloc(sizeof(ToneBank));
-	memset(master_tonebank[0], 0, sizeof(ToneBank));
-	master_tonebank[0]->tone = (ToneBankElement*)safe_malloc(128 * sizeof(ToneBankElement));
-	memset(master_tonebank[0]->tone, 0, 128 * sizeof(ToneBankElement));
-
-	master_drumset[0] = (ToneBank*)safe_malloc(sizeof(ToneBank));
-	memset(master_drumset[0], 0, sizeof(ToneBank));
-	master_drumset[0]->tone = (ToneBankElement*)safe_malloc(128 * sizeof(ToneBankElement));
-	memset(master_drumset[0]->tone, 0, 128 * sizeof(ToneBankElement));
-
 	return read_config_file(CONFIG_FILE);
 }
 

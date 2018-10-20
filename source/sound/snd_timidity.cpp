@@ -60,8 +60,10 @@ static VCvarS s_timidity_patches("snd_timidity_patches", "\\TIMIDITY", "Path to 
 #else
 static VCvarS s_timidity_patches("snd_timidity_patches", "/usr/share/timidity", "Path to timidity patches.", CVAR_Archive);
 #endif
-static VCvarI s_timidity_test_sf2("snd_timidity_test_sf2", "0", "Some timidity crap.", CVAR_Archive);
+static VCvarS s_timidity_sf2_file("snd_timidity_sf2_file", "", "Some timidity crap.", CVAR_Archive);
 static VCvarI s_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive);
+
+static VStr lastSF2Used = VStr();
 
 
 //==========================================================================
@@ -168,29 +170,42 @@ VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
   // initialise Timidity
   add_to_pathlist(s_timidity_patches);
   DLS_Data *patches = nullptr;
-  if (Timidity_Init()) {
-#ifdef _WIN32
-    VStr GMPath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
-    FILE *f = fopen(*GMPath, "rb");
-    if (f) {
-      patches = Timidity_LoadDLS(f);
-      fclose(f);
-      if (patches) GCon->Logf("Loaded gm.dls");
+
+  Timidity_Init();
+
+  Sf2Data *sf2_data = nullptr;
+  VStr sf2name = VStr(s_timidity_sf2_file);
+  if (sf2name.length()) {
+    sf2_data = Timidity_LoadSF2(*sf2name);
+    if (lastSF2Used != sf2name) {
+      lastSF2Used = sf2name;
+      if (sf2_data) {
+        GCon->Logf("TIMIDITY: loaded SF2: '%s'", *sf2name);
+      } else {
+        GCon->Logf("TIMIDITY: SF2 loading failed for '%s'", *sf2name);
+      }
     }
-    if (!patches) {
+  }
+
+  if (!sf2_data) {
+    if (Timidity_ReadConfig() != 0) {
+#ifdef _WIN32
+      VStr GMPath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
+      FILE *f = fopen(*GMPath, "rb");
+      if (f) {
+        patches = Timidity_LoadDLS(f);
+        fclose(f);
+        if (patches) GCon->Logf("TIMIDITY: Loaded gm.dls");
+      }
+      if (!patches) {
+        GCon->Logf("Timidity init failed");
+        return nullptr;
+      }
+#else
       GCon->Logf("Timidity init failed");
       return nullptr;
     }
-#else
-    GCon->Logf("Timidity init failed");
-    return nullptr;
 #endif
-  }
-
-  Sf2Data *sf2_data = nullptr;
-  if (s_timidity_test_sf2) {
-    sf2_data = Timidity_LoadSF2("gm.sf2");
-    if (sf2_data) GCon->Logf("Loaded SF2");
   }
 
   // load song
