@@ -26,61 +26,36 @@
 //**  Self registering cheat commands.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  CheatAllowed
 //
 //==========================================================================
-
-static bool CheatAllowed(VBasePlayer *Player)
-{
-  if (sv.intermission)
-  {
+static bool CheatAllowed (VBasePlayer *Player) {
+  if (sv.intermission) {
     Player->Printf("You are not in game!");
     return false;
   }
-  if (GGameInfo->NetMode >= NM_DedicatedServer)
-  {
+  if (GGameInfo->NetMode >= NM_DedicatedServer) {
     Player->Printf("You cannot cheat in a network game!");
     return false;
   }
-  if (GGameInfo->WorldInfo->Flags & VWorldInfo::WIF_SkillDisableCheats)
-  {
+  if (GGameInfo->WorldInfo->Flags & VWorldInfo::WIF_SkillDisableCheats) {
     Player->Printf("You are too good to cheat!");
     return false;
   }
-  if (Player->Health <= 0)
-  {
-    // Dead players can't cheat
+  if (Player->Health <= 0) {
+    // dead players can't cheat
     Player->Printf("You must be alive to cheat");
     return false;
   }
   return true;
 }
+
 
 //==========================================================================
 //
@@ -89,20 +64,14 @@ static bool CheatAllowed(VBasePlayer *Player)
 //  Cheat code GOD
 //
 //==========================================================================
-
-COMMAND(God)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(God) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_God();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_God();
 }
+
 
 //==========================================================================
 //
@@ -111,20 +80,14 @@ COMMAND(God)
 //  Cheat code Buddha
 //
 //==========================================================================
-
-COMMAND(Buddha)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Buddha) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Buddha();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Buddha();
 }
+
 
 //==========================================================================
 //
@@ -133,191 +96,133 @@ COMMAND(Buddha)
 //  Cheat code Summon
 //
 //==========================================================================
-
-COMMAND(Summon)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Summon) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Summon();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Summon();
 }
+
 
 //==========================================================================
 //
 //  NoClip_f
 //
 //==========================================================================
-
-COMMAND(NoClip)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(NoClip) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_NoClip();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_NoClip();
 }
+
 
 //==========================================================================
 //
 //  Gimme_f
 //
 //==========================================================================
-
-COMMAND(Gimme)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Gimme) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Gimme();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Gimme();
 }
+
 
 //==========================================================================
 //
 //  KillAll_f
 //
 //==========================================================================
-
-COMMAND(KillAll)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(KillAll) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_KillAll();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_KillAll();
 }
+
 
 //==========================================================================
 //
 //  Morph_f
 //
 //==========================================================================
-
-COMMAND(Morph)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Morph) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Morph();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Morph();
 }
+
 
 //==========================================================================
 //
 //  NoWeapons_f
 //
 //==========================================================================
-
-COMMAND(NoWeapons)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(NoWeapons) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_NoWeapons();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_NoWeapons();
 }
+
 
 //==========================================================================
 //
 //  Class_f
 //
 //==========================================================================
-
-COMMAND(ChangeClass)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(ChangeClass) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Class();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Class();
 }
+
 
 //==========================================================================
 //
 //  Script_f
 //
 //==========================================================================
-
-COMMAND(Script)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Script) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
 
-  if (CheatAllowed(Player))
-  {
-    int   script;
-
-    if (Args.Num() != 2)
-      return;
-    script = atoi(*Args[1]);
-    if (script < 1)
-      return;
-    if (script > 9999)
-      return;
-
-    if (Player->Level->XLevel->Acs->Start(script, 0, 0, 0, 0, Player->MO,
-      nullptr, 0, false, false))
-    {
+  if (CheatAllowed(Player)) {
+    if (Args.Num() != 2) return;
+    int script = atoi(*Args[1]);
+    if (script < 1) return;
+    if (script > 9999) return;
+    if (Player->Level->XLevel->Acs->Start(script, 0, 0, 0, 0, Player->MO, nullptr, 0, false, false)) {
       GCon->Logf("Running script %d", script);
     }
   }
 }
+
 
 //==========================================================================
 //
 //  MyPos_f
 //
 //==========================================================================
-
-COMMAND(MyPos)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(MyPos) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
+  if (CheatAllowed(Player)) {
     Player->Printf("MAP %s  X:%f  Y:%f  Z:%f  Yaw:%f Pitch:%f",
       *GLevel->MapName, Player->MO->Origin.x,
       Player->MO->Origin.y, Player->MO->Origin.z,
@@ -325,82 +230,58 @@ COMMAND(MyPos)
   }
 }
 
+
 //==========================================================================
 //
 //  Fly_f
 //
 //==========================================================================
-
-COMMAND(Fly)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Fly) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Fly();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Fly();
 }
+
 
 //==========================================================================
 //
 //  NoTarget_f
 //
 //==========================================================================
-
-COMMAND(NoTarget)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(NoTarget) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_NoTarget();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_NoTarget();
 }
+
 
 //==========================================================================
 //
 //  Anubis_f
 //
 //==========================================================================
-
-COMMAND(Anubis)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Anubis) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Anubis();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Anubis();
 }
+
 
 //==========================================================================
 //
 //  Freeze_f
 //
 //==========================================================================
-
-COMMAND(Freeze)
-{
-  if (Source == SRC_Command)
-  {
+COMMAND(Freeze) {
+  if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-
-  if (CheatAllowed(Player))
-  {
-    Player->eventCheat_Freeze();
-  }
+  if (CheatAllowed(Player)) Player->eventCheat_Freeze();
 }
