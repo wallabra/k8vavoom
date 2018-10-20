@@ -166,6 +166,10 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+#ifdef __SWITCH__
+  //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+#endif
 
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -192,6 +196,10 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   }
 
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
+#ifdef USE_GLAD
+  GCon->Logf("Loading GL procs using GLAD");
+  if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) GCon->Logf("GLAD failed to load GL procs!\n");
+#endif
 
   SetVSync(false); // second time
   //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);

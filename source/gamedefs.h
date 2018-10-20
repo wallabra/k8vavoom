@@ -30,7 +30,11 @@
 #ifndef _GAMEDEFS_H
 #define _GAMEDEFS_H
 
+#ifdef USE_GLAD
+#include "glad.h"
+#else
 #include <GL/gl.h>
+#endif
 
 #include "../libs/core/core.h"
 

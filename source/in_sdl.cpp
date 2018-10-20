@@ -461,6 +461,32 @@ void VSdlInputDevice::ReadInput () {
   unguard;
 }
 
+#ifdef __SWITCH__
+//TEMPORARY: maps joystick buttons to keys for fake kb events
+static inline int SwitchJoyToKey(int b) {
+  static const int keymap[] = {
+      /* KEY_A      */ K_ENTER,
+      /* KEY_B      */ K_BACKSPACE,
+      /* KEY_X      */ K_RALT,
+      /* KEY_Y      */ K_LALT,
+      /* KEY_LSTICK */ 0,
+      /* KEY_RSTICK */ 0,
+      /* KEY_L      */ K_LSHIFT,
+      /* KEY_R      */ K_RSHIFT,
+      /* KEY_ZL     */ K_SPACE,
+      /* KEY_ZR     */ K_LCTRL,
+      /* KEY_PLUS   */ K_ESCAPE,
+      /* KEY_MINUS  */ K_TAB,
+      /* KEY_DLEFT  */ K_LEFTARROW,
+      /* KEY_DUP    */ K_UPARROW,
+      /* KEY_DRIGHT */ K_RIGHTARROW,
+      /* KEY_DDOWN  */ K_DOWNARROW,
+  };
+
+  if (b < 8 || b > 15) return 0;
+  return keymap[b];
+}
+#endif
 
 //**************************************************************************
 //**
@@ -477,7 +503,10 @@ void VSdlInputDevice::ReadInput () {
 //==========================================================================
 void VSdlInputDevice::StartupJoystick () {
   guard(VSdlInputDevice::StartupJoystick);
+#ifndef __SWITCH__
+  // always enable joystick on the switch
   if (!GArgs.CheckParm("-joystick")) return;
+#endif
 
   if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
     GCon->Log(NAME_Init, "sdl init joystick failed.");
@@ -522,6 +551,11 @@ void VSdlInputDevice::PostJoystick () {
 
   for (int i = 0; i < joy_num_buttons; ++i) {
     if (joy_newb[i] != joy_oldb[i]) {
+#ifdef __SWITCH__
+      //TEMPORARY: also translate some buttons to keys
+      int key = SwitchJoyToKey(i);
+      if (key) GInput->KeyEvent(key, joy_newb[i]);
+#endif
       GInput->KeyEvent(K_JOY1+i, joy_newb[i]);
       joy_oldb[i] = joy_newb[i];
     }

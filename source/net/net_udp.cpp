@@ -147,6 +147,8 @@ int VUdpDriver::Init () {
 #ifdef WIN32
     myAddr = INADDR_ANY;
     VStr::Cpy(Net->MyIpAddress, "INADDR_ANY");
+#elif defined(__SWITCH__)
+    myAddr = ntohl(gethostid()); // ntohl() is required here, thanks nintendo
 #else
     hostent *local;
     local = gethostbyname(buff);

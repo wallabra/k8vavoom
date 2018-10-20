@@ -45,7 +45,9 @@ VArgs GArgs;
 static char *getBinaryDir () {
   static char mydir[8192];
   memset(mydir, 0, sizeof(mydir));
-#ifndef _WIN32
+#ifdef __SWITCH__
+  strncpy(mydir, "/switch/vavoom", sizeof(mydir)-1);
+#elif !defined(_WIN32)
   char buf[128];
   pid_t pid = getpid();
   snprintf(buf, sizeof(buf), "/proc/%u/exe", (unsigned int)pid);

@@ -31,9 +31,12 @@
 
 #if defined (VCCRUN_HAS_SDL) && defined(VCCRUN_HAS_OPENGL)
 #include <SDL.h>
+#ifdef USE_GLAD
+#include "glad.h"
+#else
 #include <GL/gl.h>
 #include <GL/glext.h>
-
+#endif
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct event_t;

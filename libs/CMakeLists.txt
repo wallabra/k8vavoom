@@ -17,6 +17,13 @@ if(ENABLE_VCCRUN)
   add_subdirectory(imago)
 endif(ENABLE_VCCRUN)
 
+if(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY)
+  if(WITH_GLAD)
+    message(STATUS "GLAD enabled")
+    add_subdirectory(glad)
+  endif(WITH_GLAD)
+endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY)
+
 if(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
   if(WITH_GME)
     message(STATUS "GME enabled")

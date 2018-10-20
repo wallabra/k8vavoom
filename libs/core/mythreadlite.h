@@ -10,7 +10,11 @@
 #define VC_MYTHREAD_H
 
 #ifndef WIN32
-# define MYTHREAD_POSIX
+# ifdef NO_PTHREAD
+#  define MYTHREAD_C11
+# else
+#  define MYTHREAD_POSIX
+# endif
 #endif
 
 #include <inttypes.h>
@@ -205,6 +209,163 @@ static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *co
 // non-zero is returned, otherwise zero is returned.
 static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) {
   /*int ret =*/ return pthread_cond_timedwait(&cond->cond, mutex, condtime);
+  /*
+  assert(ret == 0 || ret == ETIMEDOUT);
+  return ret;
+  */
+}
+
+// Sets condtime to the absolute time that is timeout_ms milliseconds
+// in the future. The type of the clock to use is taken from cond.
+static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout_ms) {
+  condtime->tv_sec = timeout_ms/1000;
+  condtime->tv_nsec = (timeout_ms%1000)*1000000;
+
+  struct timespec now;
+  /*int ret =*/ clock_gettime(cond->clk_id, &now);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+
+  condtime->tv_sec += now.tv_sec;
+  condtime->tv_nsec += now.tv_nsec;
+
+  // tv_nsec must stay in the range [0, 999_999_999].
+  if (condtime->tv_nsec >= 1000000000L) {
+    condtime->tv_nsec -= 1000000000L;
+    ++condtime->tv_sec;
+  }
+}
+
+
+#elif defined(MYTHREAD_C11)
+// ////////////////////////////////////////////////////////////////////////// //
+// weird-ass platforms with no pthreads but with c11 threads, e.g. switch
+
+#include <sys/time.h>
+#include <threads.h>
+#include <signal.h>
+#include <time.h>
+#include <errno.h>
+
+#define MYTHREAD_RET_TYPE   int
+#define MYTHREAD_RET_VALUE  0
+
+typedef thrd_t mythread;
+typedef mtx_t mythread_mutex;
+
+struct mythread_cond {
+  cnd_t cond;
+  // Clock ID (CLOCK_REALTIME or CLOCK_MONOTONIC) associated with
+  // the condition variable.
+  clockid_t clk_id;
+};
+
+typedef struct timespec mythread_condtime;
+
+
+// Calls the given function once in a thread-safe way.
+#define mythread_once(func)  do { \
+  static once_flag once_ = ONCE_FLAG_INIT; \
+  pthread_once(&once_, &func); \
+} while (0)
+
+
+// Use pthread_sigmask() to set the signal mask in multi-threaded programs.
+// Do nothing on OpenVMS or Switch since they lack pthread_sigmask().
+static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) {
+
+}
+
+// Creates a new thread with all signals blocked. Returns zero on success
+// and non-zero on error.
+static __attribute__((unused)) inline int mythread_create (mythread *thread, int (*func) (void *arg), void *arg) {
+  const int ret = thrd_create(thread, func, arg) != thrd_success;
+  return ret;
+}
+
+// Joins a thread. Returns zero on success and non-zero on error.
+static __attribute__((unused)) inline int mythread_join (mythread thread) {
+  return thrd_join(thread, nullptr) != thrd_success;
+}
+
+// Initiatlizes a mutex. Returns zero on success and non-zero on error.
+static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) {
+  return mtx_init(mutex, mtx_plain) != thrd_success;
+}
+
+static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) {
+  /*int ret =*/ mtx_destroy(mutex);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+}
+
+static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) {
+  /*int ret =*/ mtx_lock(mutex);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+}
+
+static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) {
+  /*int ret =*/ mtx_unlock(mutex);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+}
+
+
+// Initializes a condition variable.
+//
+// Using CLOCK_MONOTONIC instead of the default CLOCK_REALTIME makes the
+// timeout in pthread_cond_timedwait() work correctly also if system time
+// is suddenly changed. Unfortunately CLOCK_MONOTONIC isn't available
+// everywhere while the default CLOCK_REALTIME is, so the default is
+// used if CLOCK_MONOTONIC isn't available.
+//
+// If clock_gettime() isn't available at all, gettimeofday() will be used.
+static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *mycond) {
+  // If anything above fails, fall back to the default CLOCK_REALTIME.
+  // POSIX requires that all implementations of clock_gettime() must
+  // support at least CLOCK_REALTIME.
+  mycond->clk_id = CLOCK_REALTIME;
+  return cnd_init(&mycond->cond) != thrd_success;
+}
+
+static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) {
+  /*int ret =*/ cnd_destroy(&cond->cond);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+}
+
+
+static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) {
+  /*int ret =*/ cnd_signal(&cond->cond);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+}
+
+static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) {
+  /*int ret =*/ cnd_wait(&cond->cond, mutex);
+  /*
+  assert(ret == 0);
+  (void)ret;
+  */
+}
+
+// Waits on a condition or until a timeout expires. If the timeout expires,
+// non-zero is returned, otherwise zero is returned.
+static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) {
+  /*int ret =*/ return cnd_timedwait(&cond->cond, mutex, condtime) == thrd_timedout;
   /*
   assert(ret == 0 || ret == ETIMEDOUT);
   return ret;

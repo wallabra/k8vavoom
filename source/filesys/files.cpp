@@ -683,7 +683,10 @@ void FL_Init () {
     if (fl_basedir.isEmpty()) fl_basedir = ".";
   } else {
     static const char *defaultBaseDirs[] = {
-#ifndef _WIN32
+#ifdef __SWITCH__
+      "/switch/vavoom",
+      ".",
+#elif !defined(_WIN32)
       "/opt/vavoom/share/vavoom",
       "/usr/local/share/vavoom",
       "/usr/share/vavoom",
@@ -741,7 +744,10 @@ void FL_Init () {
     static const char *defaultIwadDirs[] = {
       ".",
       "!/.",
-#ifndef _WIN32
+#ifdef __SWITCH__
+      "/switch/vavoom/iwads",
+      "/switch/vavoom",
+#elif !defined(_WIN32)
       "~/.vavoom/iwads",
       "~/.vavoom/iwad",
       "~/.vavoom",
@@ -1183,6 +1189,12 @@ const VStr &VStreamFileReader::GetName () const {
 //
 //==========================================================================
 void VStreamFileReader::Seek (int InPos) {
+#ifdef __SWITCH__
+  // I don't know how or why this works, but unless you seek to 0 first,
+  // fseeking on the Switch seems to set the pointer to an incorrect
+  // position, but only sometimes
+  fseek(File, 0, SEEK_SET);
+#endif
   if (!File || bError || fseek(File, InPos, SEEK_SET)) bError = true;
 }
 

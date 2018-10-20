@@ -441,6 +441,9 @@ int Timidity_Init()
 	*/
 #ifdef WIN32
 	add_to_pathlist("\\TIMIDITY");
+#elif defined(__SWITCH__)
+	add_to_pathlist("/switch/vavoom");
+	add_to_pathlist("/switch");
 #else
 	add_to_pathlist("/usr/local/lib/timidity");
 	add_to_pathlist("/etc");

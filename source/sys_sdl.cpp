@@ -31,8 +31,10 @@
 #include <signal.h>
 #include <dirent.h>
 #include <SDL.h>
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__SWITCH__)
 # include <execinfo.h>
+#elif defined(__SWITCH__)
+# include <switch.h>
 #endif
 
 #include "gamedefs.h"
@@ -323,6 +325,11 @@ static void signal_handler (int s) {
 # include <fenv.h>
 #endif
 int main (int argc, char **argv) {
+#ifdef __SWITCH__
+  socketInitializeDefault();
+  nxlinkStdio();
+#endif
+
   try {
     GArgs.Init(argc, argv);
 
@@ -358,7 +365,11 @@ int main (int argc, char **argv) {
 
     Host_Init();
 
+#ifdef __SWITCH__
+    while (appletMainLoop()) {
+#else
     for (;;) {
+#endif
       Host_Frame();
       if (sigReceived) {
         GCon->Logf("*** SIGNAL RECEIVED ***");
@@ -382,6 +393,9 @@ int main (int argc, char **argv) {
     throw;
   }
 #ifdef _WIN32
+  return 0;
+#elif defined(__SWITCH__)
+  socketExit();
   return 0;
 #endif
 }

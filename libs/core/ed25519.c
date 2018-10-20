@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __SWITCH__
+// for randomGet()
+#include <switch/kernel/random.h>
+#endif
 
 #include <sys/param.h>
 #define DONNA_INLINE inline __attribute__((always_inline))
@@ -223,7 +227,9 @@ ED25519_FN(ed25519_randombytes) (void *p, size_t len) {
 
 	if (!initialized) {
 		memset(&rng, 0, sizeof(rng));
-#ifndef WIN32
+#ifdef __SWITCH__
+		randomGet(rng.state, sizeof(rng.state));
+#elif !defined(WIN32)
 		int fd = open("/dev/urandom", O_RDONLY|O_CLOEXEC);
 		if (fd >= 0) {
 			read(fd, rng.state, sizeof(rng.state));

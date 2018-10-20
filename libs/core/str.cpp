@@ -570,7 +570,7 @@ int VStr::IndexOf (const VStr &s) const {
 int VStr::LastIndexOf (char c) const {
   guard(VStr::LastIndexOf);
   if (data) {
-#ifndef WIN32
+#if !defined(WIN32) && !defined(NO_MEMRCHR)
     const char *pos = (const char *)memrchr(data, c, length());
     return (pos ? (int)(pos-data) : -1);
 #else

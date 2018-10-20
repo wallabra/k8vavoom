@@ -23,7 +23,11 @@
 //**
 //**************************************************************************
 
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
+#if defined(__SWITCH__)
+// we know this for sure
+# define VAVOOM_LITTLE_ENDIAN
+enum { GBigEndian = 0 };
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
     defined(__BIG_ENDIAN__) || \
     defined(__ARMEB__) || \
     defined(__THUMBEB__) || \

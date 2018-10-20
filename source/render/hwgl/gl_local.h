@@ -31,7 +31,11 @@
 #ifdef _WIN32
 # include <windows.h>
 #endif
-#include <GL/gl.h>
+#ifdef USE_GLAD
+# include "glad.h"
+#else
+# include <GL/gl.h>
+#endif
 #ifdef _WIN32
 # include <GL/glext.h>
 #endif
