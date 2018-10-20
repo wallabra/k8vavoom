@@ -144,6 +144,10 @@ override void OnDraw () {
   SetTextAlign(hright, vtop);
   DrawText(CursorXOffs, 2+1, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
 
+  bool oldflt = GetCvarB('gl_pic_filtering');
+  scope(exit) SetCvar('gl_pic_filtering', oldflt ? 1 : 0);
+  SetCvar('gl_pic_filtering', GetCvarB('gl_font_filtering') ? 1 : 0);
+
   if (pic_M_SLDLT != -1) {
     xx = CursorXOffs;
     DrawPic(xx, 0, pic_M_SLDLT);
