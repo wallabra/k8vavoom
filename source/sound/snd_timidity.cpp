@@ -204,8 +204,8 @@ VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
 #else
       GCon->Logf("Timidity init failed");
       return nullptr;
-    }
 #endif
+    }
   }
 
   // load song
