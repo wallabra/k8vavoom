@@ -1193,7 +1193,7 @@ void VStreamFileReader::Seek (int InPos) {
   // I don't know how or why this works, but unless you seek to 0 first,
   // fseeking on the Switch seems to set the pointer to an incorrect
   // position, but only sometimes
-  fseek(File, 0, SEEK_SET);
+  if (File) fseek(File, 0, SEEK_SET);
 #endif
   if (!File || bError || fseek(File, InPos, SEEK_SET)) bError = true;
 }
