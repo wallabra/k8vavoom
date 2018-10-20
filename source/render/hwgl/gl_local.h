@@ -863,10 +863,10 @@ protected:
   void FlushTexture(VTexture*);
   void DeleteTexture(VTexture*);
   void SetTexture(VTexture*, int);
-  void SetSpriteLump(VTexture*, VTextureTranslation*, int);
+  void SetSpriteLump(VTexture*, VTextureTranslation*, int, bool asPicture);
   void SetPic(VTexture*, VTextureTranslation*, int);
   void SetPicModel(VTexture*, VTextureTranslation*, int);
-  void GenerateTexture(VTexture*, GLuint*, VTextureTranslation*, int);
+  void GenerateTexture(VTexture*, GLuint*, VTextureTranslation*, int, bool asPicture);
   void UploadTexture8(int, int, const vuint8*, const rgba_t*);
   void UploadTexture(int, int, const rgba_t*);
 

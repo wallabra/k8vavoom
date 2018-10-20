@@ -508,10 +508,10 @@ void VOpenGLDrawer::UpdateAndUploadSurfaceTexture (surface_t *surf) {
       TData->Handle = 0;
       TData->Trans = nullptr;
       TData->ColourMap = CMap;
-      GenerateTexture(Tex, (GLuint*)&TData->Handle, nullptr, CMap);
+      GenerateTexture(Tex, (GLuint*)&TData->Handle, nullptr, CMap, false);
     }
   } else if (!Tex->DriverHandle) {
-    GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
+    GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, false);
   }
 }
 
@@ -1284,7 +1284,7 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   guard(VOpenGLDrawer::DrawSpritePolygon);
   TVec texpt;
 
-  SetSpriteLump(Tex, Translation, CMap);
+  SetSpriteLump(Tex, Translation, CMap, true);
   SetupTextureFiltering(sprite_filter);
 
   p_glUseProgramObjectARB(SurfMaskedProgram);

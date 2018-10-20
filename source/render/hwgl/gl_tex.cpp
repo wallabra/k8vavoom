@@ -190,7 +190,7 @@ void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
 void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
   guard(VOpenGLDrawer::SetTexture);
   if (!Tex) Sys_Error("cannot set null texture");
-  SetSpriteLump(Tex, nullptr, CMap);
+  SetSpriteLump(Tex, nullptr, CMap, false);
   SetupTextureFiltering(texture_filter);
   /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
@@ -213,7 +213,7 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
 //  VOpenGLDrawer::SetSpriteLump
 //
 //==========================================================================
-void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap) {
+void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture) {
   guard(VOpenGLDrawer::SetSpriteLump);
   if (mInitialized) {
     if (Tex->CheckModified()) FlushTexture(Tex);
@@ -226,7 +226,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
         TData->Handle = 0;
         TData->Trans = Translation;
         TData->ColourMap = CMap;
-        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap);
+        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture);
       }
     } else {
       if (!Tex->DriverHandle) {
@@ -240,7 +240,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
             //fprintf(stderr, "reusing texture %u!\n", Tex->DriverHandle);
           }
         }
-        GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0);
+        GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture);
       } else {
         glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
       }
@@ -270,7 +270,7 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
   }
   */
 
-  SetSpriteLump(Tex, Trans, CMap);
+  SetSpriteLump(Tex, Trans, CMap, true);
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
@@ -288,7 +288,7 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
 void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
   guard(VOpenGLDrawer::SetPicModel);
 
-  SetSpriteLump(Tex, Trans, CMap);
+  SetSpriteLump(Tex, Trans, CMap, false);
   SetupTextureFiltering(model_filter);
   /*
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
@@ -308,7 +308,7 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //  VOpenGLDrawer::GenerateTexture
 //
 //==========================================================================
-void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap) {
+void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture) {
   guard(VOpenGLDrawer::GenerateTexture);
 
   if (!*pHandle) glGenTextures(1, pHandle);
@@ -339,12 +339,17 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
   }
 
   // set up texture wrapping
-  if (Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat || Tex->Type == TEXTYPE_Overload || Tex->Type == TEXTYPE_WallPatch) {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  } else {
+  if (asPicture) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
+  } else {
+    if (Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat || Tex->Type == TEXTYPE_Overload || Tex->Type == TEXTYPE_WallPatch) {
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    } else {
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
+    }
   }
   // other parameters will be set by a caller
   unguard;
