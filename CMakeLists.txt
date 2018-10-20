@@ -39,6 +39,10 @@ if(MINGW)
   option(WITH_STATIC_OPENAL "Use special flags to link with static OpenAL" ON)
 endif(MINGW)
 
+if(SWITCH_LIBNX)
+  option(WITH_NXLINK "Redirect standard output to NXLink" OFF)
+endif(SWITCH_LIBNX)
+
 if(NOT CMAKE_COMPILER_IS_GNUCC)
   message(SEND_ERROR "GNU C/C++ compilers are required to build VaVoom and tools")
   return()
@@ -685,6 +689,10 @@ if(SWITCH_LIBNX)
   set(CMAKE_CXX_COMPILER "aarch64-none-elf-g++")
   set(CMAKE_AR "aarch64-none-elf-gcc-ar")
   set(CMAKE_RANLIB "aarch64-none-elf-gcc-ranlib")
+  # turn on nxlink if necessary
+  if(WITH_NXLINK)
+    add_definitions(-DSWITCH_NXLINK)
+  endif(WITH_NXLINK)
 endif(SWITCH_LIBNX)
 
 

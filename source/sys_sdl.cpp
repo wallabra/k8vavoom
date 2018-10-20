@@ -327,7 +327,9 @@ static void signal_handler (int s) {
 int main (int argc, char **argv) {
 #ifdef __SWITCH__
   socketInitializeDefault();
+# ifdef SWITCH_NXLINK
   nxlinkStdio();
+# endif
 #endif
 
   try {
