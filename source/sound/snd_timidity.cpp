@@ -187,6 +187,18 @@ VAudioCodec *VTimidityAudioCodec::Create (VStream *InStrm) {
     }
   }
 
+#ifdef _WIN32
+  // try "!/gzdoom.sf2"
+  if (!sf2_data) {
+    VStr gzsf2 = VStr(GArgs[0])+"/gzdoom.sf2";
+    sf2_data = Timidity_LoadSF2(*gzsf2);
+    if (sf2_data && lastSF2Used != gzsf2) {
+      GCon->Log("TIMIDITY: loaded SF2: 'gzdoom.sf2'");
+      lastSF2Used = gzsf2;
+    }
+  }
+#endif
+
   if (!sf2_data) {
     if (Timidity_ReadConfig() != 0) {
 #ifdef _WIN32
