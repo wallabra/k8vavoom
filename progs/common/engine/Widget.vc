@@ -492,8 +492,11 @@ void SetDefaultVirtualScreenSize () {
 //
 //==========================================================================
 void DrawEmptyScreen () {
-  SetVirtualScreen(320, 200);
-  R_FillRect(0, 0, 320, 200, 0xff_303030);
+  //SetVirtualScreen(320, 200);
+  //R_FillRect(0, 0, 320, 200, 0xff_303030);
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_303030);
 }
 
 
@@ -503,40 +506,39 @@ void DrawEmptyScreen () {
 //
 //==========================================================================
 void DrawFullScreenPic (int Handle) {
-  auto ovw = GetVirtualWidth();
-  auto ovh = GetVirtualHeight();
-  scope(exit) SetVirtualScreen(ovw, ovh);
   picinfo_t pinf;
   R_GetPicInfo(Handle, &pinf);
   if (pinf.width < 1 || pinf.height < 1) {
     DrawEmptyScreen();
   } else {
-    /*
-    if (pinf.width <= 320 && pinf.height <= 200) {
-      SetVirtualScreen(pinf.width, pinf.height);
+    auto ovw = GetVirtualWidth();
+    auto ovh = GetVirtualHeight();
+    scope(exit) SetVirtualScreen(ovw, ovh);
+    // in case our picture has strange size
+    R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
+#ifdef VC_USE_PROPER_SCALING
+    int rw = GetRealWidth();
+    int rh = GetRealHeight();
+    float scaleX = float(rw)/float(pinf.width);
+    float scaleY = float(rh)/float(pinf.height);
+    if (scaleX <= scaleY) {
+      //int newHeight = int(pinf.height/scaleX);
+      SetVirtualScreen(pinf.width, int(rh/scaleX));
+      R_DrawPic(0, 0, Handle);
     } else {
-      SetVirtualScreen(320, 200);
-      R_FillRect(0, 0, 320, 200, 0xff_000000);
-      if (pinf.width >= pinf.height) {
-        SetVirtualScreen(pinf.width, pinf.height/200*200);
-      } else {
-        SetVirtualScreen(pinf.width/320*320, pinf.height);
-      }
-      //print("title pic: %dx%d", pinf.width, pinf.height);
-      //SetVirtualScreen(pinf.width, pinf.height);
+      //int newWidth = int(pinf.width*scaleY);
+      SetVirtualScreen(int(rw/scaleY), pinf.height);
+      R_DrawPic(0, 0, Handle);
     }
-    */
-    //print("title pic: %dx%d", pinf.width, pinf.height);
+#else
     if (pinf.width >= 320 && pinf.height >= 200) {
       SetVirtualScreen(pinf.width, pinf.height);
     } else {
       SetVirtualScreen(320, 200);
     }
-    //SetVirtualScreen(320, 200);
-    R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
     R_DrawPic(0, 0, Handle);
+#endif
   }
-  //SetDefaultVirtualScreenSize();
 }
 
 
