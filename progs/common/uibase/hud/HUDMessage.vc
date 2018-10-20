@@ -123,9 +123,14 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 override void OnDraw () {
   int x, y;
 
+  auto root = GetRootWidget();
+  if (Width != root.Width || Height != root.Height) {
+    //SetSize(GetVirtualWidth(), GetVirtualHeight());
+    SetSize(root.Width, root.Height);
+  }
+
   if (HudWidth == 0) {
     //writeln("HUD0: ", HudWidth, "x", HudHeight, "; msgx=", MsgX, "; msgy=", MsgY);
-    SetSize(GetVirtualWidth(), GetVirtualHeight());
     //writeln("  size: ", Width, "x", Height);
 
     if (MsgX > 0.0) {
@@ -139,8 +144,6 @@ override void OnDraw () {
       y = int(float(Height)*(-MsgY));
     }
   } else {
-    SetSize(GetVirtualWidth(), GetVirtualHeight());
-
     int IntPart = int(MsgX);
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
     x = IntPart;
