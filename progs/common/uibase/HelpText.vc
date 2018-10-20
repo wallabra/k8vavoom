@@ -1,0 +1,65 @@
+﻿//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class HelpText : Widget;
+
+private string mText;
+bool atTop;
+
+
+final string text {
+  get { return mText; }
+  set { setText(value); }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void setText (string text) {
+  while (text && text[0] <= ' ') text = text[1..$];
+  while (text && text[$-1] <= ' ') text = text[0..$-1];
+  mText = SplitTextWithNewlines(text, GetVirtualWidth()-8);
+
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+  SetSize(TextWidth(text)+8, TextHeight(text)+8);
+}
+
+
+override void OnDraw () {
+  if (!mText || Width < 1 || Height < 1) return;
+  SetOrigin((GetVirtualWidth()-Width)/2, (atTop ? 2 : GetVirtualHeight()-Height-2));
+  SetFont('smallfont');
+  SetTextAlign(hleft, vtop);
+  ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
+  DrawText(4, 4, mText, CR_ORANGE);
+}
+
+
+defaultproperties {
+  X = 0;
+  Y = 0;
+  Width = 0;
+  Height = 0;
+  Focusable = false;
+}

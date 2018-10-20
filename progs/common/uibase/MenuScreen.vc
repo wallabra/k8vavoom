@@ -50,12 +50,21 @@ name ClearMenusSound;
 
 int currentY;
 
+HelpText helpText;
 
 enum WidthThreshold = 380;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+override void OnDestroy () {
+  delete helpText;
+  ::OnDestroy();
+}
+
+
 void CreateMenu () {
+  if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+  helpText.text = "";
   CreateTitle();
   DrawBackButton();
   currentY = ChoicesStartY;
@@ -325,15 +334,19 @@ final int GetItemYH (int idx) {
 
 final void FixTopIndex () {
   if (Items.Num == 0) return;
-  if (Items.Num == 1) { CursorPos = 0; ChildrenOfsY = 0; return; }
-  if (!MenuScrollable) { ChildrenOfsY = 0; return; }
-  if (CursorPos < 0) CursorPos = Items.Num-1; else if (CursorPos >= Items.Num) CursorPos = 0;
+  if (CursorPos < 0) CursorPos = Items.length-1; else if (CursorPos >= Items.length) CursorPos = 0;
+  helpText.text = Items[CursorPos].getHelp();
+  if (Items.Num == 1) { helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
+  if (!MenuScrollable) { helpText.atTop = false; ChildrenOfsY = 0; return; }
   int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
   //print("Menu <%s>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d", NameToStr(GetClassName(Class)), ChildrenOfsY, ys, ye, th, Height);
        if (ys+ChildrenOfsY < ChoicesStartY) ChildrenOfsY = -ys+ChoicesStartY;
   else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
+  if (helpText.Height > 0) {
+    helpText.atTop = (ys >= GetVirtualHeight()-helpText.Height-4);
+  }
 }
 
 
@@ -476,7 +489,7 @@ override bool OnKeyDown (int key) {
 // fade all the screen buffer, so that the menu is more readable,
 // especially now that we use the small hudfont in the menus
 override void OnDraw () {
-  ShadeRect(0, 0, 640, 480, GetCvarF('menu_darkening'));
+  ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
 }
 
 

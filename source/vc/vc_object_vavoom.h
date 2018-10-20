@@ -8,6 +8,7 @@
   DECLARE_FUNCTION(GetCvarS)
   DECLARE_FUNCTION(SetCvarS)
   DECLARE_FUNCTION(GetCvarB)
+  DECLARE_FUNCTION(GetCvarHelp)
 
   // textures
   DECLARE_FUNCTION(CheckTextureNumForName)

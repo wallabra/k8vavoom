@@ -216,6 +216,8 @@ struct SkillDef {
 
 // is cvar exists?
 native static final bool CvarExists(name Name);
+// get cvar help text
+native static final string GetCvarHelp(name Name);
 // create a new cvar
 native static final void CreateCvar(name Name, string default_value, string help_text, int flags);
 // read value

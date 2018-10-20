@@ -54,6 +54,11 @@ IMPLEMENT_FUNCTION(VObject, GetCvarB) {
   RET_BOOL(VCvar::GetBool(*name));
 }
 
+IMPLEMENT_FUNCTION(VObject, GetCvarHelp) {
+  P_GET_NAME(name);
+  RET_STR(VStr(VCvar::GetHelp(*name)));
+}
+
 
 //**************************************************************************
 //

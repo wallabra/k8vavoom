@@ -28,6 +28,19 @@ int CursorXOffs;
 int CursorYOffs;
 int CursorXOffsHR; // for right-aligned text
 name cvarSession; // if not empty, value will be saved in it, and read back on creation
+string customHelpText;
+
+
+//==========================================================================
+//
+//  getHelp
+//
+//==========================================================================
+string getHelp () {
+  if (customHelpText) return customHelpText;
+  if (cvarSession) return GetCvarHelp(cvarSession);
+  return "";
+}
 
 
 //==========================================================================
