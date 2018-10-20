@@ -246,8 +246,10 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
       }
     }
   }
-  tex_iw = 1.0/Tex->GetWidth();
-  tex_ih = 1.0/Tex->GetHeight();
+  tex_w = Tex->GetWidth();
+  tex_h = Tex->GetHeight();
+  tex_iw = 1.0f/tex_w;
+  tex_ih = 1.0f/tex_h;
   unguard;
 }
 
@@ -375,9 +377,17 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
   if (width < 1 || height < 1) Sys_Error("WARNING: fucked texture (w=%d; h=%d)", width, height);
   if (!data) Sys_Error("WARNING: fucked texture (w=%d; h=%d, no data)", width, height);
 
-  int w = ToPowerOf2(width);
+  int w, h;
+
+  if (hasNPOT) {
+    w = width;
+    h = height;
+  } else {
+    w = ToPowerOf2(width);
+    h = ToPowerOf2(height);
+  }
+
   if (w > maxTexSize) w = maxTexSize;
-  int h = ToPowerOf2(height);
   if (h > maxTexSize) h = maxTexSize;
 
   // get two temporary buffers: 0 for resampled image, 1 for premultiplied image

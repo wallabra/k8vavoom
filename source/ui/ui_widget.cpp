@@ -1314,6 +1314,6 @@ IMPLEMENT_FUNCTION(VWidget, TranslateXY) {
   P_GET_PTR(float, py);
   P_GET_PTR(float, px);
   P_GET_SELF;
-  if (px) *px = (Self->ClipRect.ScaleX*(*px)+Self->ClipRect.OriginX)*fScaleXI;
-  if (py) *py = (Self->ClipRect.ScaleY*(*py)+Self->ClipRect.OriginY)*fScaleYI;
+  if (px) *px = (Self->ClipRect.ScaleX*(*px)+Self->ClipRect.OriginX)/fScaleX;
+  if (py) *py = (Self->ClipRect.ScaleY*(*py)+Self->ClipRect.OriginY)/fScaleY;
 }

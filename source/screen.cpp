@@ -44,8 +44,8 @@ static int lastFSMode = -1;
 
 float fScaleX;
 float fScaleY;
-float fScaleXI;
-float fScaleYI;
+//float fScaleXI;
+//float fScaleYI;
 
 int usegamma = 0;
 
@@ -368,14 +368,15 @@ static void ChangeResolution (int InWidth, int InHeight) {
     VirtualWidth = ScreenWidth/3;
     VirtualHeight = ScreenHeight/3;
   }
-  //VirtualWidth = 640;
-  //VirtualWidth = 800;
 
-  fScaleX = (float)ScreenWidth / (float)VirtualWidth;
-  fScaleY = (float)ScreenHeight / (float)VirtualHeight;
+  //VirtualWidth = ScreenWidth;
+  //VirtualHeight = ScreenHeight;
 
-  fScaleXI = (float)VirtualWidth / (float)ScreenWidth;
-  fScaleYI = (float)VirtualHeight / (float)ScreenHeight;
+  fScaleX = (float)ScreenWidth/(float)VirtualWidth;
+  fScaleY = (float)ScreenHeight/(float)VirtualHeight;
+
+  //fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
+  //fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
 
   //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
   if (GRoot) GRoot->RefreshScale();
@@ -482,7 +483,10 @@ void SCR_Update () {
   if (cl && cls.signon && cl->MO) {
     switch (GClGame->intermission) {
       case 0:
-        if (automapactive <= 0) R_RenderPlayerView();
+        if (automapactive <= 0) {
+          R_RenderPlayerView();
+          Drawer->Setup2D(); // restore 2D projection
+        }
         if (automapactive) AM_Drawer();
         if (GGameInfo->NetMode != NM_TitleMap) {
           CT_Drawer();
@@ -574,8 +578,8 @@ void SCR_SetVirtualScreen (int Width, int Height) {
   VirtualHeight = Height;
   fScaleX = (float)ScreenWidth/(float)VirtualWidth;
   fScaleY = (float)ScreenHeight/(float)VirtualHeight;
-  fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
-  fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
+  //fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
+  //fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
   if (GRoot) GRoot->RefreshScale();
   //GCon->Logf("***SCALE1: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
   unguard;

@@ -73,6 +73,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
 {
   MaxTextureUnits = 1;
   useReverseZ = false;
+  hasNPOT = false;
 
   mainFBO = 0;
   mainFBOColorTid = 0;
@@ -190,11 +191,7 @@ void VOpenGLDrawer::InitResolution () {
   GCon->Logf(NAME_Init, "Maximum texture size: %d", maxTexSize);
   if (maxTexSize < 1024) maxTexSize = 1024; // 'cmon!
 
-  /*
-  if (CheckExtension("ARB_get_proc_address")) {
-    GCon->Logf("OpenGL \"ARB_get_proc_address\" extension found");
-  }
-  */
+  hasNPOT = CheckExtension("GL_ARB_texture_non_power_of_two") || CheckExtension("GL_OES_texture_npot");
 
 #define _(x)  p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) found = false
 
@@ -882,18 +879,11 @@ bool VOpenGLDrawer::SupportsAdvancedRendering () {
 //==========================================================================
 void VOpenGLDrawer::Setup2D () {
   guard(VOpenGLDrawer::Setup2D);
-
-  /*
-  int realw, realh;
-  GetRealWindowSize(&realw, &realh);
-  glViewport(0, 0, realw, realh);
-  */
-
   glViewport(0, 0, ScreenWidth, ScreenHeight);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, ScreenWidth, ScreenHeight, 0, -99999, 99999);
+  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -949,10 +939,10 @@ void VOpenGLDrawer::FinishUpdate () {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
 
-    glMatrixMode(GL_PROJECTION);
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glMatrixMode(GL_MODELVIEW);
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -971,7 +961,7 @@ void VOpenGLDrawer::FinishUpdate () {
     if (realw == ScreenWidth && realh == ScreenHeight) {
       // copy texture by drawing full quad
       //glViewport(0, 0, ScreenWidth, ScreenHeight);
-      glOrtho(0, ScreenWidth, ScreenHeight, 0, -99999, 99999);
+      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glBegin(GL_QUADS);
@@ -983,6 +973,7 @@ void VOpenGLDrawer::FinishUpdate () {
     } else {
       glViewport(0, 0, realw, realh);
       glOrtho(0, realw, realh, 0, -99999, 99999);
+      glClear(GL_COLOR_BUFFER_BIT); // just in case
 
       if (texture_filter > 0) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1011,7 +1002,7 @@ void VOpenGLDrawer::FinishUpdate () {
       glEnd();
 
       glViewport(0, 0, ScreenWidth, ScreenHeight);
-      glOrtho(0, ScreenWidth, ScreenHeight, 0, -99999, 99999);
+      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
     }
 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

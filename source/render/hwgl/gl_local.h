@@ -556,6 +556,7 @@ protected:
   int tmpImgBufSize;
 
   bool useReverseZ;
+  bool hasNPOT;
 
   GLuint mainFBO;
   GLuint mainFBOColorTid;
@@ -569,8 +570,8 @@ protected:
   GLuint lmap_id[NUM_BLOCK_SURFS];
   GLuint addmap_id[NUM_BLOCK_SURFS];
 
-  float tex_iw;
-  float tex_ih;
+  float tex_iw, tex_ih;
+  int tex_w, tex_h;
 
   //GLenum maxfilter;
   //GLenum minfilter;

@@ -290,8 +290,8 @@ extern int          VirtualHeight;
 
 extern float        fScaleX;
 extern float        fScaleY;
-extern float        fScaleXI;
-extern float        fScaleYI;
+//extern float        fScaleXI;
+//extern float        fScaleYI;
 
 extern bool         UserInfoSent;
 

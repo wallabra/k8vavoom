@@ -1185,8 +1185,8 @@ static void AM_drawMarks () {
 
     if (am_rotate) AM_rotatePoint(&pt.x, &pt.y);
 
-    int fx = (int)(CXMTOF(pt.x)*fScaleXI);
-    int fy = (int)((CYMTOF(pt.y)-3.0)*fScaleXI);
+    int fx = (int)(CXMTOF(pt.x)/fScaleX);
+    int fy = (int)((CYMTOF(pt.y)-3.0)/fScaleX);
     //fx = (int)(CXMTOF(markpoints[i].x)*fScaleXI);
     //fy = (int)(CYMTOF(markpoints[i].y)*fScaleXI);
     if (fx >= f_x && fx <= f_w-w && fy >= f_y && fy <= f_h-h && marknums[i] != -1) {
