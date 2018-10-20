@@ -28,6 +28,9 @@
 
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
+private:
+  bool skipAdaptiveVSync;
+
 public:
   SDL_Window *hw_window;
   SDL_GLContext hw_glctx;
@@ -35,13 +38,15 @@ public:
   virtual void Init () override;
   virtual bool SetResolution (int, int, bool) override;
   virtual void *GetExtFuncPtr (const char *) override;
-  virtual bool SetAdaptiveSwap () override;
   virtual void Update () override;
   virtual void Shutdown () override;
 
   virtual void WarpMouseToWindowCenter () override;
 
   virtual void GetRealWindowSize (int *rw, int *rh) override;
+
+private:
+  void SetVSync (bool firstTime);
 };
 
 
@@ -59,6 +64,7 @@ void VSdlOpenGLDrawer::Init () {
   hw_window = nullptr;
   hw_glctx = nullptr;
   mInitialized = false; // just in case
+  skipAdaptiveVSync = false;
 }
 
 
@@ -99,6 +105,32 @@ void VSdlOpenGLDrawer::GetRealWindowSize (int *rw, int *rh) {
 
 //==========================================================================
 //
+//  VSdlOpenGLDrawer::SetVSync
+//
+//==========================================================================
+void VSdlOpenGLDrawer::SetVSync (bool firstTime) {
+  if (r_vsync) {
+    if (r_vsync_adaptive && !skipAdaptiveVSync) {
+      if (SDL_GL_SetSwapInterval(-1) == -1) {
+        if (!firstTime) {
+          GCon->Log("OpenGL: adaptive vsync failed, falling back to normal vsync");
+          skipAdaptiveVSync = true;
+        }
+        SDL_GL_SetSwapInterval(1);
+      } else {
+        GCon->Log("OpenGL: using adaptive vsync");
+      }
+    } else {
+      SDL_GL_SetSwapInterval(1);
+    }
+  } else {
+    SDL_GL_SetSwapInterval(0);
+  }
+}
+
+
+//==========================================================================
+//
 //  VSdlOpenGLDrawer::SetResolution
 //
 //  Set up the video mode
@@ -132,11 +164,8 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  if (r_vsync) {
-    if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);
-  } else {
-    SDL_GL_SetSwapInterval(0);
-  }
+  // doing it twice is required for some broken setups. oops.
+  SetVSync(true); // first time
 
   hw_window = SDL_CreateWindow("k8VaVoom", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, flags);
   if (!hw_window) {
@@ -155,11 +184,7 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
   SDL_GL_MakeCurrent(hw_window, hw_glctx);
 
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, r_vsync);
-  if (r_vsync) {
-    if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);
-  } else {
-    SDL_GL_SetSwapInterval(0);
-  }
+  SetVSync(false); // second time
   //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   // Everything is fine, set some globals and finish
@@ -181,38 +206,6 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, bool Windowed) {
 void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
   guard(VSdlOpenGLDrawer::GetExtFuncPtr);
   return SDL_GL_GetProcAddress(name);
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VSdlOpenGLDrawer::SetAdaptiveSwap
-//
-//==========================================================================
-enum { GLX_LATE_SWAPS_TEAR_EXT = 0x20F3 };
-
-typedef const char *(APIENTRY *glXQueryExtensionsString)(void *dpy, int screen);
-typedef void (APIENTRY *glXSwapIntervalEXT) (void *dpy, /*GLXDrawable*/long drawable, int interval); //64bit?
-typedef void *(APIENTRY *glXGetCurrentDisplay) ();
-typedef long (APIENTRY *glXGetCurrentDrawable) ();
-
-bool VSdlOpenGLDrawer::SetAdaptiveSwap () {
-  guard(VSdlOpenGLDrawer::SetAdaptiveSwap);
-
-  if (!HaveTearControl) return false;
-
-  glXGetCurrentDisplay getdpy = (glXGetCurrentDisplay)GetExtFuncPtr("glXGetCurrentDisplay");
-  if (!getdpy) return false;
-  glXGetCurrentDrawable getdrw = (glXGetCurrentDrawable)GetExtFuncPtr("glXGetCurrentDrawable");
-  if (!getdrw) return false;
-
-  glXSwapIntervalEXT swapie = (glXSwapIntervalEXT)GetExtFuncPtr("glXSwapIntervalEXT");
-  if (!swapie) return false;
-
-  swapie(getdpy(), getdrw(), -1);
-  return true;
-
   unguard;
 }
 

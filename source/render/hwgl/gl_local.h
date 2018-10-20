@@ -587,7 +587,6 @@ protected:
   bool HaveDepthClamp;
   bool HaveStencilWrap;
   bool HaveDrawRangeElements;
-  bool HaveTearControl;
 
   int MaxTextureUnits;
 
@@ -853,9 +852,7 @@ protected:
 
   //  extensions
   bool CheckExtension(const char*);
-  bool CheckGLXExtension(const char*);
   virtual void *GetExtFuncPtr(const char*) = 0;
-  virtual bool SetAdaptiveSwap () = 0;
 
   void SetFade(vuint32 NewFade);
 

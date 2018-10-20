@@ -219,6 +219,7 @@ extern VCvarF     r_fog_end;
 extern VCvarF     r_fog_density;
 
 extern VCvarB     r_vsync;
+extern VCvarB     r_vsync_adaptive;
 
 extern VCvarB     r_fade_light;
 extern VCvarF     r_fade_factor;
