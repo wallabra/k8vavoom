@@ -309,10 +309,10 @@ private:
   vuint16         TrackCnt;
   vint32          Mus2MidChannel[16];
 
-  static const vuint8   Mus2MidControl[15];
-  static const vuint8   TrackEnd[];
-  static const vuint8   MidiKey[];
-  static const vuint8   MidiTempo[];
+  static const vuint8 Mus2MidControl[15];
+  static const vuint8 TrackEnd[];
+  static const vuint8 MidiKey[];
+  static const vuint8 MidiTempo[];
 
   int FirstChannelAvailable();
   void TWriteByte(int, vuint8);
