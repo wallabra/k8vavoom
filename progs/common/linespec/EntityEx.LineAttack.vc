@@ -28,7 +28,6 @@
 //  AIMING
 //
 //**************************************************************************
-
 struct trsplat_t {
   TVec org;
   TVec hit;
@@ -38,6 +37,39 @@ struct trsplat_t {
   bool didhit; // can be true even if `line` is empty (it means floor/ceiling hit)
   Entity mobj; // for other tracers
 };
+
+
+//==========================================================================
+//
+//  CalcProperThingHit
+//
+//==========================================================================
+static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec shootOrigin, const TVec dir, const float distance) {
+  if (hit_point.z > th.Origin.z+th.Height) {
+    // trace enters above actor
+    if (dir.z >= 0) return false; // going up: can't hit
+    // does it hit the top of the actor?
+    float dist = (th.Origin.z+th.Height-shootOrigin.z)/dir.z;
+    if (dist > distance) return false;
+    //float frac = dist/distance;
+    hit_point = shootOrigin+dir*dist;
+    // calculated coordinate is outside the actor's bounding box
+    if (fabs(hit_point.x-th.Origin.x) > th.Radius ||
+        fabs(hit_point.y-th.Origin.y) > th.Radius) return false;
+  } else if (hit_point.z < th.Origin.z) {
+    // trace enters below actor
+    if (dir.z <= 0) return false; // going down: can't hit
+    // does it hit the bottom of the actor?
+    float dist = (th.Origin.z-shootOrigin.z)/dir.z;
+    if (dist > distance) return false;
+    //frac = dist/distance;
+    hit_point = shootOrigin+dir*dist;
+    // calculated coordinate is outside the actor's bounding box
+    if (fabs(hit_point.x-th.Origin.x) > th.Radius ||
+        fabs(hit_point.y-th.Origin.y) > th.Radius) return false;
+  }
+  return true;
+}
 
 
 //==========================================================================
@@ -61,7 +93,6 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   shootOrigin = org;
   //ShootOrigin.z += Height*0.5-FloorClip;
   shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
-
 
   dst = shootOrigin+distance*dir;
 
@@ -269,7 +300,8 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
     } else if (in->Thing && !in->Thing.IsA('DoomPlayer')) {
       // thing
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if (hit_point.z >= in->Thing.Origin.z && hit_point.z < in->Thing.Origin.z +in->Thing.Height) {
+      if (!CalcProperThingHit(hit_point, in->Thing, shootOrigin, dir, distance)) continue;
+      if (hit_point.z >= in->Thing.Origin.z && hit_point.z < in->Thing.Origin.z+in->Thing.Height) {
         tr->hit = hit_point;
         tr->mobj = in->Thing;
         return false;
@@ -778,13 +810,16 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     // check angles to see if the thing can be aimed at
     hit_point = shootOrigin+(distance*in->frac)*dir;
 
-    if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
+    if (!CalcProperThingHit(hit_point, th, shootOrigin, dir, distance)) continue;
+    //print("  thing: %C (over:%B; under:%B; tz=(%f,%f); hpz=%f)", th, (th.Origin.z+th.Height < hit_point.z), (th.Origin.z > hit_point.z), th.Origin.z, th.Origin.z+th.Height, hit_point.z);
 
+    if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
     if (th.Origin.z > hit_point.z) continue; // shot under the thing
 
     // hit thing
     // position a bit closer
-    hit_point -= 10.0*dir;
+    //hit_point -= 10.0*dir;
+    hit_point -= 2.0*dir;
 
     // check for physical attacks on a ghost
     if (th.bGhost && NoAttackGhosts) continue;
