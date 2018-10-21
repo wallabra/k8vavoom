@@ -32,6 +32,7 @@
 #endif
 
 
+static VCvarB ui_control_waiting("ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
 VCvarB want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
 
 
@@ -338,7 +339,7 @@ void VSdlInputDevice::ReadInput () {
         else break;
         vev.data2 = 0;
         vev.data3 = 0;
-        if (ui_mouse || !ui_active) GInput->PostEvent(&vev);
+        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(&vev);
         break;
       case SDL_MOUSEWHEEL:
         vev.type = ev_keydown;
@@ -347,7 +348,7 @@ void VSdlInputDevice::ReadInput () {
         else break;
         vev.data2 = 0;
         vev.data3 = 0;
-        if (ui_mouse || !ui_active) GInput->PostEvent(&vev);
+        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(&vev);
         break;
       case SDL_JOYAXISMOTION:
         normal_value = ev.jaxis.value*127/32767;
