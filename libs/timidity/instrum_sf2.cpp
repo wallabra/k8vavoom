@@ -1041,8 +1041,8 @@ static Instrument* LoadPreset(MidiSong* song, Sf2Data* font, int PresetIndex, bo
 	Instrument* ip = (Instrument*)safe_malloc(sizeof(Instrument));
 	ip->type = INST_SF2;
 	ip->samples = NumSamples;
-	ip->sample = (Sample*)safe_malloc(sizeof(Sample) * ip->samples);
-	memset(ip->sample, 0, ip->samples * sizeof(*ip->sample));
+	ip->sample = (Sample*)safe_malloc(sizeof(Sample) * ip->samples+16384); //k8: hack for "chaos_bank_v1_9_12mb.sf2"
+	memset(ip->sample, 0, ip->samples * sizeof(*ip->sample)+16384);
 
 	int16 PresetDefaultGenData[SFGEN_EndOper];
 	memset(PresetDefaultGenData, 0, sizeof(PresetDefaultGenData));

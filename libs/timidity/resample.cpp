@@ -21,6 +21,7 @@
 */
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "timidity.h"
 
@@ -52,6 +53,8 @@ static sample_t* rs_plain(MidiSong* song, int v, int32* countptr)
 		count = *countptr;
 
 	int32 i;
+
+	if (incr == 0) return song->resample_buffer; //k8: hack for "chaos_bank_v1_9_12mb.sf2"
 
 	if (incr < 0)
 	{
@@ -102,6 +105,8 @@ static sample_t* rs_loop(MidiSong* song, Voice* vp, int32 count)
 
 	int32 i;
 
+	if (incr == 0) return song->resample_buffer; //k8: hack for "chaos_bank_v1_9_12mb.sf2"
+
 	while (count)
 	{
 		if (ofs >= le)
@@ -148,6 +153,8 @@ static sample_t* rs_bidir(MidiSong* song, Voice* vp, int32 count)
 		le2 = le << 1, 
 		ls2 = ls << 1,
 		i;
+
+	if (incr == 0) return song->resample_buffer; //k8: hack for "chaos_bank_v1_9_12mb.sf2"
 
 	/* Play normally until inside the loop region */
 	if (ofs <= ls)
@@ -329,22 +336,35 @@ static sample_t* rs_vib_plain(MidiSong* song, int v, int32* countptr)
 		incr = -incr; /* In case we're coming out of a bidir loop */
 	}
 
-	while (count--)
+	//k8: hack for "chaos_bank_v1_9_12mb.sf2"
+	if ((uintptr_t)src <= 65536)
 	{
-		if (!cc--)
+		while (count--) *dest++ = 0;
+		vp->status = VOICE_FREE;
+		*countptr -= count + 1;
+		ofs = 0;
+		if (incr > 0) incr = 1;
+		cc = 0;
+	}
+	else
+	{
+		while (count--)
 		{
-			cc = vp->vibrato_control_ratio;
-			incr = update_vibrato(vp, 0);
-		}
-		RESAMPLATION;
-		ofs += incr;
+			if (!cc--)
+			{
+				cc = vp->vibrato_control_ratio;
+				incr = update_vibrato(vp, 0);
+			}
+			RESAMPLATION;
+			ofs += incr;
 
-		if (ofs >= le)
-		{
-			FINALINTERP;
-			vp->status = VOICE_FREE;
-			*countptr -= count + 1;
-			break;
+			if (ofs >= le)
+			{
+				FINALINTERP;
+				vp->status = VOICE_FREE;
+				*countptr -= count + 1;
+				break;
+			}
 		}
 	}
 	vp->vibrato_control_counter = cc;
@@ -369,6 +389,8 @@ static sample_t* rs_vib_loop(MidiSong* song, Voice* vp, int32 count)
 
 	int32 i;
 	int vibflag = 0;
+
+	if (incr == 0) return song->resample_buffer; //k8: hack for "chaos_bank_v1_9_12mb.sf2"
 
 	while (count)
 	{
@@ -434,6 +456,8 @@ static sample_t* rs_vib_bidir(MidiSong* song, Voice* vp, int32 count)
 		ls2 = ls << 1,
 		i;
 	int vibflag = 0;
+
+	if (incr == 0) return song->resample_buffer; //k8: hack for "chaos_bank_v1_9_12mb.sf2"
 
 	/* Play normally until inside the loop region */
 	while (count && (ofs <= ls))
@@ -618,6 +642,20 @@ void pre_resample(Sample* sp)
 
 	count = (newlen >> FRACTION_BITS) - 1;
 	ofs = incr = (sp->data_length - (1 << FRACTION_BITS)) / count;
+
+	if (newlen <= 0 || count <= 0 || incr <= 0)
+	{
+		// k8: i absolutely don't know what i am doing here
+		fprintf(stderr, "TIMIDITY FUCKED!\n");
+		*newdata = 0;
+		sp->data_length = 1;
+		sp->loop_start = 0;
+		sp->loop_end = 1;
+		free(sp->data);
+		sp->data = (sample_t *)newdata;
+		sp->sample_rate = 0;
+		return;
+	}
 
 	if (--count)
 	{
