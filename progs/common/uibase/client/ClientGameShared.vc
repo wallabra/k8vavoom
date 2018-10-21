@@ -229,6 +229,8 @@ final void MessageBoxStartMessage (string text, int type, bool input) {
   msgBoxX = (GetVirtualWidth()-msgBoxW)/2;
   msgBoxY = (GetVirtualHeight()-msgBoxH)/2;
 
+  if (type == MB_Control) SetCvar('ui_control_waiting', 1);
+
   CmdBuf_AddText("HideConsole\n");
 }
 
@@ -278,7 +280,7 @@ final override bool MessageBoxResponder (event_t *event) {
     switch (messageType) {
       case MB_None: break;
       case MB_Quit: QuitResponse(event->data1); break;
-      case MB_Control: ControlResponse(event->data1); break;
+      case MB_Control: SetCvar('ui_control_waiting', 0); ControlResponse(event->data1); break;
       case MB_Shareware: SharewareResponse(event->data1); break;
       case MB_Nightmare: VerifyNightmare(event->data1); break;
       case MB_EndGame: EndGameResponse(event->data1); break;
