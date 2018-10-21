@@ -370,7 +370,7 @@ void VSdlInputDevice::ReadInput () {
             //fprintf(stderr, "***FOCUS GAIN; wa=%d; first=%d; drawer=%p\n", (int)winactive, (int)firsttime, Drawer);
             if (!winactive && mouse) {
               if (Drawer) {
-                Drawer->WarpMouseToWindowCenter();
+                if (!ui_active || ui_mouse) Drawer->WarpMouseToWindowCenter();
                 SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
               }
             }
