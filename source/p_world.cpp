@@ -579,7 +579,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
                 if (trace_org.x > line.x) continue;
                 line.y = It->Origin.y + It->Radius;
                 line.dx = 0;
-                line.dy = It->Radius*-2;
+                line.dy = -It->Radius*2;
                 break;
             }
             ++numfronts;
@@ -590,23 +590,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
               // it's a hit
               float frac = interceptVector(trace, line);
               if (frac < 0 || frac > 1.0f) continue;
-              /*
-              if (frac < 0) {
-                // behind source
-                if (Startfrac > 0) {
-                  // check if the trace starts within this actor
-                  switch (i) {
-                    case 0: line.y -= 2 * It->Radius; break;
-                    case 1: line.x -= 2 * It->Radius; break;
-                    case 2: line.y += 2 * It->Radius; break;
-                    case 3: line.x += 2 * It->Radius; break;
-                  }
-                  double frac2 = interceptVector(trace, line);
-                  if (frac2 >= Startfrac) goto addit;
-                }
-                continue;
-              }
-              */
+
               vptSeenThings.put(*It, true);
 
               intercept_t &In = NewIntercept(frac);
