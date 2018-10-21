@@ -81,6 +81,7 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Monsters Backing Off", 'monster_backing');
   CreateOnOffCvar("Damage Thrust", 'damage_thrust');
+    SetLastHelp("Knockback monsters from shotgun shots.");
   CreateOnOffCvar("Monsters can drop off", 'monster_dropoff');
 
   if (GameName == "hexen") {
@@ -89,26 +90,37 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Global Autoaim", 'autoaim');
   CreateOnOffCvar("Autoaim for hitscan weapon", 'k8HitscanAutoAim');
+    SetLastHelp("Controls autoaim for pistol, shotgun, and minigun.\nIf you will turn Global Autoaim off, this will not have any effect.");
   CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');
   CreateOnOffCvar("Berserk autoswitch", 'k8BerserkSwitch');
   CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
   CreateOnOffCvar("Ignore 'nofreelook'", 'sv_ignore_nomlook');
   CreateOnOffCvar("Better sight for monsters", 'compat_better_sight');
+    SetLastHelp("Do slightly better line-of-sight checking for monsters.");
   CreateOnOffCvar("Shots go through crosshair", 'gm_fix_attack_offset');
+    SetLastHelp("Raise shooting point a little, so hitscan shots will go through your crosshair.");
 
 
   CreateChoiceSubHeader("Headshots Options");
   CreateOnOffCvar("Headshots (incl. criticals)", 'k8HSEnabled');
+    SetLastHelp("Allow headshots.");
   CreateOnOffCvar("Critical Headshots", 'k8HSCriticals');
+    SetLastHelp("If headshots turned on, sometimes you can deliver a critical\nheadshot, with x2, x3, or even x10 damage.\nHas no effect if headshots turned off.");
   CreateOnOffCvar("Announce criticals", 'k8HSShowCriticals');
+    SetLastHelp("Show message on critical headshot.");
   CreateFloatSliderCvar("Distance multiplier", 'k8HSDistMult', 0.1, 0.8, 4.0);
+    SetLastHelp("Controls critical headshot distance.");
 
 
   CreateChoiceSubHeader("Headshots Fastkill");
   CreateOnOffCvar("Fastkills", 'k8HSFastKillAnnoyingMonsters');
+    SetLastHelp("Some \"annoying\" mosters will get additional damage.\nUse following options to tune this.");
   CreateOnOffCvar("FK Pain Elementals", 'k8HSInstaKillPainElementals');
+    SetLastHelp("Kill Pain Elementals with one shot.");
   CreateOnOffCvar("FK Lost Souls", 'k8HSInstaKillLostSouls');
+    SetLastHelp("Kill Lost Souls with one shot.");
   CreateFloatSliderCvar("Arch-Vile FK Damage", 'k8HSFastKillArchVileDamage', 10, 10, 400);
+    SetLastHelp("Amount of damage dealt to Arch-Vile.");
 
   //TODO: CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
   //TODO: CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
@@ -117,8 +129,11 @@ override void CreateChoices () {
 
   CreateChoiceSubHeader("Elven Gifts");
   CreateOnOffCvar("Ammo King", 'k8AmmoKing');
+    SetLastHelp("MORE AMMO! EVEN MORE AMMO!");
   CreateOnOffCvar("Elven Gift", 'k8ElvenGift');
+    SetLastHelp("Give some weapons and ammo on game start.");
   CreateOnOffCvar("No Pain Elemental Attacks", 'k8ElvenPaineless');
+    SetLastHelp("Disable Pain Elemental attacks.\nTurn on, and Pain Elementals won't spit any Lost Souls.");
 
   Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
 }

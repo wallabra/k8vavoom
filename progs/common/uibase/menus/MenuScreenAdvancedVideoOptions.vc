@@ -35,6 +35,7 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Decals", 'r_decals_enabled');
   CreateOnOffCvar("Sort textures", 'gl_sort_textures');
+    SetLastHelp("Sort textures, so renderer will do less texture switches.\nThis can win several FPS on huge levels.");
   CreateOnOffCvar("Darken lights", 'r_darken');
   CreateOnOffCvar("Simulate Faded lights", 'r_fade_light');
   CreateFloatSliderCvar("Light Fade Factor", 'r_fade_factor', 1, 1, 10);
@@ -42,14 +43,17 @@ override void CreateChoices () {
   CreateFloatSliderCvar("Lost Souls Translucency", 'r_transsouls', 0.05);
   CreateOnOffCvar("Optional Fuzzy Effect", 'r_drawfuzz');
   CreateOnOffCvar("Extra lighmap samples", 'r_extrasamples');
+    SetLastHelp("Do better lightmap tracing for static lights in lightmapped renderer.");
   CreateOnOffCvar("Dynamic lights", 'r_dynamic');
   CreateOnOffCvar("Clip Dynamic Lights", 'r_dynamic_clip');
   CreateOnOffCvar("Properly Clip DynLights", 'r_dynamic_clip_more');
+    SetLastHelp("Trace dynamic light sources to produce proper shadows, and\nto prevent bonuses shining through secret walls.");
   CreateOnOffCvar("Model Dynamic lighting", 'r_model_light');
-  CreateOnOffCvar("Model shadows", 'r_model_shadows');
+  CreateOnOffCvar("Model Shadows", 'r_model_shadows');
   CreateOnOffCvar("Additive Static Lights", 'r_static_add');
   CreateFloatSliderCvar("Specular Level", 'r_specular', 0.1, 0, 2);
   CreateOnOffCvar("Blend sprites", 'gl_blend_sprites');
+    SetLastHelp("May make rendering faster or slower. Who knows?");
 
   auto maxaniso = GetCvarF('gl_max_anisotropy');
   if (maxaniso > 1) CreateFloatNumericCvar("Anisotropy level", 'gl_texture_filter_anisotropic', 1, 1, maxaniso);

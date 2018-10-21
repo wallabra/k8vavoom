@@ -31,9 +31,12 @@ override void CreateChoices () {
   //ChoicesStartX = 10;
 
   CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');
+    SetLastHelp("Show quit promt on exit?");
   CreateOnOffCvar("Overlay automap", 'am_overlay');
+    SetLastHelp("Draw automap as overlay instead of separate screen?");
   CreateOnOffCvar("Show stats on automap", 'am_show_stats');
   CreateOnOffCvar("Allow vanilla cheatcodes", 'allow_vanilla_cheats');
+    SetLastHelp("Turn this on to allow IDXXX cheatcodes from Vanilla DooM.");
   CreateFloatSliderCvar("Bobbing", 'movebob', 0.1, 0, 1);
   CreateFloatSliderCvar("Save compression", 'save_compression_level', 1, 0, 9);
 
@@ -44,28 +47,42 @@ override void CreateChoices () {
   CreateOnOffCvar("Fast mode (suboptimal)", 'nodes_fast_mode');
   CreateOnOffCvar("Show builder warnings", 'nodes_show_warnings');
   CreateOnOffCvar("Allow PWAD z-nodes", 'nodes_allow_compressed');
+    SetLastHelp("Load prebuild GL Nodes?\nGL Node loader is buggy, and may not work.\nIf turned off, the engine will use internal node builder.");
   CreateOnOffCvar("Build (rough) PVS", 'loader_build_pvs');
+    SetLastHelp("Build simple PVS set.\nThis rarely speeds up rendering, but can take alot of time to build.");
   //CreateFloatSliderCvar("PVS threads", 'loader_pvs_builder_threads', 1, 1, 16);
   CreateFloatNumericCvar("PVS threads", 'loader_pvs_builder_threads', 1, 1, 16);
+    SetLastHelp("How many CPU cores can be used to build PVS set?");
 
 
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Cache options");
   CreateOnOffCvar("Cache built data", 'loader_cache_data');
+    SetLastHelp("If level loading takes too much time, the engine can cache level data,\nso next loads will be MUCH faster.");
   auto aurccoo = CreateOnOffCvar("(autoreset) Kill cache for next map", 'loader_cache_ignore_one');
   aurccoo.TextNormalColor = CR_BRICK;
+    SetLastHelp("Ignore cache for next loaded map.\nThis option will be automatically reset after map loading.");
   /*CreateFloatSliderCvar*/CreateFloatNumericCvar("Cache timeout (seconds)", 'loader_cache_time_limit', 0.5, 0.5, 16);
+    SetLastHelp("How long level loading should take to make engine cache data?");
   /*CreateFloatSliderCvar*/CreateFloatNumericCvar("Cache max age (days)", 'loader_cache_max_age_days', 1, 1, 32);
+    SetLastHelp("Engine will automatically delete old caches.\nThis options controls cache data age.\nCache data older than this will be deleted.");
   CreateFloatSliderCvar("Cache compression", 'loader_cache_compression_level', 1, 0, 9);
 
 
   //CreateChoiceSubHeader("");
   CreateChoiceSubHeader("Deepwater options");
   CreateOnOffCvar("Classic deepwater", 'deepwater_hacks');
-  auto dwbuggy = CreateOnOffCvar("Deepwater-like bugs (buggy)", 'deepwater_hacks_extra_ex');
+    SetLastHelp("Fix self-referenced Deep Water sectors, so they will be rendered properly.");
+  auto dwbuggy = CreateOnOffCvar("Fix floodfill bugs (unreliable)", 'deepwater_hacks_extra_ex');
   //dwbuggy.TextNormalColor = CR_LIGHTBLUE;
   //dwbuggy.TextNormalColor = CR_DARKRED;
   dwbuggy.TextNormalColor = CR_PURPLE;
+    SetLastHelp(
+      "This tries to fix sectors without low texture.\n"~
+      "You may know it as \"flat floodfill bug\" in Vanilla.\n"~
+      "Currently this fixer is very simple, and can fix only simple cases.\n"~
+      "It may cause rendering glitches, but such cases are rare.\n"~
+      "If in doubt, turn this ON. Yes, \"ON\"!");
 
 
   CreateChoiceSubHeader("Experimental particle options");

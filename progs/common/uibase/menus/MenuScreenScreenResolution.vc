@@ -79,6 +79,12 @@ override void CreateChoices () {
     "Scaled FS",
     "Real FS"
   );
+    SetLastHelp(
+      "There are two fullscreen modes available.\n"~
+      "Scaled Fullscreen mode will not change your desktop resolution,\n"~
+      "it will scale rendered image instead.\n"~
+      "Real Fullscreen mode will change your desktop resolution.\n"~
+      "WARNING: The engine trusts you, and will not check if videomode is valid.");
 
   VSync = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   VSync.SetOrigin(ChoicesStartX, currentY);

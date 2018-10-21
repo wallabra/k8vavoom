@@ -48,6 +48,9 @@ override void CreateChoices () {
     "Lighmapped (recommended)",
     "Stencil (experimental)"
   );
+  SetLastHelp(
+    "Lightmapped renderer is faster, and produces nice soft light.\n"~
+    "Stencil lighting produces DooM3-like sharp volumetric light.");
 
   CreateOnOffCvar("Smooth particles", 'gl_smooth_particles');
   CreateOnOffCvar("High Resolution Textures", 'r_hirestex');
@@ -63,7 +66,9 @@ override void CreateChoices () {
   CreateOnOffCvar("Interface pictures filtering", 'gl_pic_filtering');
 
   CreateOnOffCvar("Level ambient light", 'r_allow_ambient');
+  SetLastHelp("Set to \"OFF\" to turn of sector lighting\n(i.e. level will be lighted only by dynamic lights).");
   CreateFloatSliderCvar("Minimum ambient light", 'r_ambient', 16, 0, 255);
+  SetLastHelp("If level is too dark, you can set minimum light level.");
 
   CreateSubMenuText("Advanced Video options", MenuScreenAdvancedVideoOptions);
 }

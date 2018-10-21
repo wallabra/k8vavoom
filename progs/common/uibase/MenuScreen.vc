@@ -118,6 +118,12 @@ void CreateChoices () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void SetLastHelp (string help) {
+  if (Items.length) Items[$-1].customHelpText = help;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // should be called from `CreateChoices()` (and `currentY` must be set)
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));

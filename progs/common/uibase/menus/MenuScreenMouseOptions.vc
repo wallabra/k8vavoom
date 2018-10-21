@@ -40,6 +40,7 @@ override void CreateChoices () {
   CreateOnOffCvar("Look strafe", 'lookstrafe');
 
   CreateOnOffCvar("Allow mouse in UI", 'ui_mouse');
+    SetLastHelp("If this options turned off, the engine will\nrelease mouse capture when UI is active.");
 }
 
 

@@ -40,6 +40,7 @@ void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
     newChoice.SetOrigin(ChoicesStartX, ChoicesStartY+i*18);
     newChoice.SlotNum = (autosaves ? -1-i : i);
     newChoice.Status = SV_GetSaveString(newChoice.SlotNum, &newChoice.Text);
+    newChoice.customHelpText = "Press \"TAB\" to switch between normal and autosaves.";
   }
 }
 
