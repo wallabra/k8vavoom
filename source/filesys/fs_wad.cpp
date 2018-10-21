@@ -95,7 +95,7 @@ void VWadFile::Open (const VStr &FileName, const VStr &AGwaDir, bool FixVoices, 
   if (VStr::NCmp(header.identification, "IWAD", 4) != 0 &&
       VStr::NCmp(header.identification, "PWAD", 4) != 0)
   {
-    Sys_Error ("Wad file \"%s\" is neither IWAD nor PWAD id\n", *FileName);
+    Sys_Error("Wad file \"%s\" is neither IWAD nor PWAD id\n", *FileName);
   }
 
   header.numlumps = LittleLong(header.numlumps);
