@@ -479,8 +479,7 @@ mythread_cond_timedwait(mythread_cond *cond, mythread_mutex *mutex,
 		const mythread_condtime *condtime)
 {
 	int ret = cnd_timedwait(&cond->cond, mutex, condtime);
-	assert(ret == thrd_success || ret == thrd_timedout);
-	return ret == thrd_timedout;
+	return ret != thrd_success;
 }
 
 // Sets condtime to the absolute time that is timeout_ms milliseconds

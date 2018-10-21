@@ -365,7 +365,7 @@ static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *co
 // Waits on a condition or until a timeout expires. If the timeout expires,
 // non-zero is returned, otherwise zero is returned.
 static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) {
-  /*int ret =*/ return cnd_timedwait(&cond->cond, mutex, condtime) == thrd_timedout;
+  /*int ret =*/ return cnd_timedwait(&cond->cond, mutex, condtime) != thrd_success;
   /*
   assert(ret == 0 || ret == ETIMEDOUT);
   return ret;
