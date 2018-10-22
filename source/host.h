@@ -23,37 +23,23 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void Host_Init(void);
-void Host_Shutdown(void);
-void Host_Frame(void);
-void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn)
-  Host_EndGame(const char *message, ...);
-void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn)
-  Host_Error(const char *error, ...);
-const char *Host_GetCoreDump(void);
-bool Host_StartTitleMap();
-
+void Host_Init ();
+void Host_Shutdown ();
+void Host_Frame ();
+void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn) Host_EndGame (const char *message, ...);
+void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn) Host_Error (const char *error, ...);
+const char *Host_GetCoreDump ();
+bool Host_StartTitleMap ();
 VStr Host_GetConfigDir ();
 
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-extern VCvarB   developer;
+extern VCvarB developer;
 
-extern bool     host_initialised;
-extern bool     host_request_exit;
+extern bool host_initialised;
+extern bool host_request_exit;
 
-extern int      host_frametics;
-extern double   host_frametime;
-extern double   host_time;
-extern double   realtime;
-extern int      host_framecount;
-
-//extern vuint32    host_cycles[16];
+extern int host_frametics;
+extern double host_frametime;
+extern double host_time;
+extern double realtime;
+extern int host_framecount;

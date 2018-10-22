@@ -22,14 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "net/network.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-//#include "svnrev.h"
 #include <time.h>
 #ifdef SERVER
 # include "render/r_local.h"
@@ -40,61 +36,47 @@ extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
 
 
-// MACROS ------------------------------------------------------------------
+// state updates, number of tics/second
+#define TICRATE  (35)
 
-// State updates, number of tics / second.
-#define TICRATE   35
 
-// TYPES -------------------------------------------------------------------
-
-class EndGame : public VavoomError
-{
+class EndGame : public VavoomError {
 public:
-  explicit EndGame(const char *txt) : VavoomError(txt) { }
+  explicit EndGame (const char *txt) : VavoomError(txt) {}
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+void Host_Quit ();
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void Host_Quit();
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifdef DEVELOPER
-VCvarB      developer("developer", true, "Developer (debug) mode?", 0/*CVAR_Archive*/);
+VCvarB developer("developer", true, "Developer (debug) mode?", 0/*CVAR_Archive*/);
 #else
-VCvarB      developer("developer", false, "Developer (debug) mode?", 0/*CVAR_Archive*/);
+VCvarB developer("developer", false, "Developer (debug) mode?", 0/*CVAR_Archive*/);
 #endif
 
-int       host_frametics;
-double      host_frametime;
-double      host_time;
-double      realtime;
-double      oldrealtime;
-int       host_framecount;
+int host_frametics = 0;
+double host_frametime = 0;
+double host_time = 0;
+double realtime = 0;
+double oldrealtime = 0;
+int host_framecount = 0;
 
-bool      host_initialised = false;
-bool      host_request_exit = false;
+bool host_initialised = false;
+bool host_request_exit = false;
 
-//vuint32     host_cycles[16];
+extern VCvarB real_time;
+
 
 #ifndef CLIENT
-class VDedLog : public VLogListener
-{
+class VDedLog : public VLogListener {
 public:
-  virtual void Serialise (const char *Text, EName) override {
-    printf("%s", Text);
-  }
+  virtual void Serialise (const char *Text, EName) override { printf("%s", Text); }
 };
 static VDedLog  DedLog;
 #endif
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
 #ifdef _WIN32
 VCvarB game_release_mode("_release_mode", true, "Affects some default settings.", CVAR_Rom);
 #else
@@ -116,6 +98,7 @@ static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_A
 static char CurrentLanguage[4];
 static VCvarS Language("language", "en", "Game language.", CVAR_Archive);
 
+static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-networking games?", CVAR_Archive);
 
 
 //==========================================================================
@@ -134,21 +117,18 @@ void Host_Init () {
 
 #if !defined(_WIN32)
   const char *HomeDir = getenv("HOME");
-  if (HomeDir)
-  {
+  if (HomeDir) {
     Sys_CreateDirectory(va("%s/.vavoom", HomeDir));
     OpenDebugFile(va("%s/.vavoom/debug.txt", HomeDir));
-  }
-  else
-  {
+  } else {
     OpenDebugFile("basev/debug.txt");
   }
 #else
   OpenDebugFile("basev/debug.txt");
 #endif
 
-  // Seed the random-number generator with the current time so that
-  // the numbers will be different every time we run.
+  // seed the random-number generator with the current time so that
+  // the numbers will be different every time we run
   srand((unsigned)time(nullptr));
 
   // init subsystems
@@ -239,8 +219,7 @@ void Host_Init () {
   GCmdBuf.Exec();
 
 #ifndef CLIENT
-  if (GGameInfo->NetMode == NM_None)
-  {
+  if (GGameInfo->NetMode == NM_None) {
     GCmdBuf << "MaxPlayers 4\n";
     GCmdBuf << "Map " << *P_TranslateMap(1) << "\n";
   }
@@ -250,6 +229,7 @@ void Host_Init () {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Host_GetConsoleCommands
@@ -257,23 +237,20 @@ void Host_Init () {
 //  Add them exactly as if they had been typed at the console
 //
 //==========================================================================
-
-static void Host_GetConsoleCommands()
-{
+static void Host_GetConsoleCommands () {
   guard(Host_GetConsoleCommands);
-  char  *cmd;
+  char *cmd;
 
 #ifdef CLIENT
-  if (GGameInfo->NetMode != NM_DedicatedServer)
-    return;
+  if (GGameInfo->NetMode != NM_DedicatedServer) return;
 #endif
 
-  for (cmd = Sys_ConsoleInput(); cmd; cmd = Sys_ConsoleInput())
-  {
+  for (cmd = Sys_ConsoleInput(); cmd; cmd = Sys_ConsoleInput()) {
     GCmdBuf << cmd << "\n";
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -282,64 +259,44 @@ static void Host_GetConsoleCommands()
 //  Returns false if the time is too short to run a frame
 //
 //==========================================================================
-
-extern VCvarB real_time;
-
-static bool FilterTime()
-{
+static bool FilterTime () {
   guard(FilterTime);
   double curr_time = Sys_Time();
-  double time = curr_time - last_time;
+  double time = curr_time-last_time;
   last_time = curr_time;
 
+  if (time == 0) return false;
   realtime += time;
 
-  if (real_time)
-  {
-    if (realtime - oldrealtime < 1.0 / 90.0)
-    {
-      return false;   // framerate is too high
+  if (real_time) {
+    if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
+      // uncapped fps
+      if (realtime <= oldrealtime) return false;
+    } else {
+      // capped fps
+      if (realtime-oldrealtime < 1.0/90.0) return false; // framerate is too high
     }
-  }
-  else
-  {
-    if (realtime - oldrealtime < 1.0 / 35.0)
-    {
-      return false;   // framerate is too high
-    }
+  } else {
+    if (realtime-oldrealtime < 1.0/35.0) return false; // framerate is too high
   }
 
-  host_frametime = realtime - oldrealtime;
+  host_frametime = realtime-oldrealtime;
 
-  if (host_framerate > 0)
-  {
+  if (host_framerate > 0) {
     host_frametime = host_framerate;
-  }
-  else
-  { // don't allow really long or short frames
-    if (host_frametime > 0.1)
-    {
-      host_frametime = 0.1;
-    }
-    if (host_frametime < 0.001)
-    {
-      host_frametime = 0.001;
-    }
+  } else {
+    // don't allow really long or short frames
+    if (host_frametime > 0.1) host_frametime = 0.1;
+    if (host_frametime < 0.001) host_frametime = 0.001;
   }
 
-  int     thistime;
-  static int  lasttime;
+  int thistime;
+  static int lasttime;
 
-  thistime = (int)(realtime * TICRATE);
-  host_frametics = thistime - lasttime;
-  if (!real_time && host_frametics < 1)
-  {
-    return false;   //  No tics to run
-  }
-  if (host_frametics > 3)
-  {
-    host_frametics = 3; //  Don't run too slow
-  }
+  thistime = (int)(realtime*TICRATE);
+  host_frametics = thistime-lasttime;
+  if (!real_time && host_frametics < 1) return false; //  no tics to run
+  if (host_frametics > 3) host_frametics = 3; // don't run too slow
   oldrealtime = realtime;
   lasttime = thistime;
 
@@ -347,37 +304,30 @@ static bool FilterTime()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Host_UpdateLanguage
 //
 //==========================================================================
-
-static void Host_UpdateLanguage()
-{
+static void Host_UpdateLanguage () {
   guard(Host_UpdateLanguage);
-  if (!Language.IsModified())
-  {
-    return;
-  }
+  if (!Language.IsModified()) return;
 
   VStr NewLang = VStr((const char*)Language).ToLower();
-  if (NewLang.Length() != 2 && NewLang.Length() != 3)
-  {
+  if (NewLang.Length() != 2 && NewLang.Length() != 3) {
     GCon->Log("Language identifier must be 2 or 3 characters long");
     Language = CurrentLanguage;
     return;
   }
 
-  if (Language == CurrentLanguage)
-  {
-    return;
-  }
+  if (Language == CurrentLanguage) return;
 
   GLanguage.LoadStrings(*NewLang);
   VStr::Cpy(CurrentLanguage, *NewLang);
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -386,21 +336,17 @@ static void Host_UpdateLanguage()
 //  Runs all active servers
 //
 //==========================================================================
-
-void Host_Frame()
-{
+void Host_Frame () {
   guard(Host_Frame);
   static double time1 = 0;
   static double time2 = 0;
   static double time3 = 0;
   int pass1, pass2, pass3;
 
-  try
-  {
-    //  Decide the simulation time
-    if (!FilterTime())
-    {
-      //  Don't run too fast, or packets will flood out
+  try {
+    // decide the simulation time
+    if (!FilterTime()) {
+      // don't run too fast, or packets will flood out
 #ifndef CLIENT
       Sys_Yield();
 #endif
@@ -410,96 +356,73 @@ void Host_Frame()
     Host_UpdateLanguage();
 
 #ifdef CLIENT
-    //  Get new key, mice and joystick events
+    // get new key, mice and joystick events
     GInput->ProcessEvents();
 #endif
 
-    //  Check for commands typed to the host
+    // check for commands typed to the host
     Host_GetConsoleCommands();
 
-    //  Process console commands
+    // process console commands
     GCmdBuf.Exec();
-    if (host_request_exit)
-    {
-      Host_Quit();
-    }
+    if (host_request_exit) Host_Quit();
 
     GNet->Poll();
 
 #ifdef CLIENT
-    //  Make intentions
+    // make intentions
     CL_SendMove();
 #endif
 
 #ifdef SERVER
-    if (GGameInfo->NetMode != NM_None &&
-      GGameInfo->NetMode != NM_Client)
-    {
-      //clock_cycle(host_cycles[0]);
-      //  Server operations
+    if (GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
+      // server operations
       ServerFrame(host_frametics);
-      //unclock_cycle(host_cycles[0]);
     }
 #endif
 
     host_time += host_frametime;
 
 #ifdef CLIENT
-    //  Fetch results from server
+    // fetch results from server
     CL_ReadFromServer();
 
-    //  Update user interface.
+    // update user interface
     GRoot->TickWidgets(host_frametime);
 
-    //  Collect all garbage
+    // collect all garbage
     VObject::CollectGarbage();
 
-    //  Update video
-    if (show_time)
-    {
-      time1 = Sys_Time();
-    }
-
+    // update video
+    if (show_time) time1 = Sys_Time();
     SCR_Update();
+    if (show_time) time2 = Sys_Time();
 
-    if (show_time)
-    {
-      time2 = Sys_Time();
-    }
+    if (cls.signon) CL_DecayLights();
 
-    if (cls.signon)
-    {
-      CL_DecayLights();
-    }
-
-    //  Update audio
+    // update audio
     GAudio->UpdateSounds();
 #endif
 
-    if (show_time)
-    {
-      pass1 = (int)((time1 - time3) * 1000);
+    if (show_time) {
+      pass1 = (int)((time1-time3)*1000);
       time3 = Sys_Time();
-      pass2 = (int)((time2 - time1) * 1000);
-      pass3 = (int)((time3 - time2) * 1000);
-      GCon->Logf("%d tot | %d server | %d gfx | %d snd",
-        pass1 + pass2 + pass3, pass1, pass2, pass3);
+      pass2 = (int)((time2-time1)*1000);
+      pass3 = (int)((time3-time2)*1000);
+      GCon->Logf("%d tot | %d server | %d gfx | %d snd", pass1+pass2+pass3, pass1, pass2, pass3);
     }
 
-    host_framecount++;
-  }
-  catch (RecoverableError &e)
-  {
+    ++host_framecount;
+  } catch (RecoverableError &e) {
     GCon->Logf("Host_Error: %s", e.message);
 
-    //  Reset progs virtual machine
+    // reset progs virtual machine
     PR_OnAbort();
-    //  Make sure, that we use primary wad files
+    // make sure, that we use primary wad files
     W_CloseAuxiliary();
 
 #ifdef CLIENT
-    if (GGameInfo->NetMode == NM_DedicatedServer)
-    {
+    if (GGameInfo->NetMode == NM_DedicatedServer) {
       SV_ShutdownGame();
       Sys_Error("Host_Error: %s\n", e.message); // dedicated servers exit
     }
@@ -511,19 +434,16 @@ void Host_Frame()
     SV_ShutdownGame();
     Sys_Error("Host_Error: %s\n", e.message); // dedicated servers exit
 #endif
-  }
-  catch (EndGame &e)
-  {
+  } catch (EndGame &e) {
     GCon->Logf(NAME_Dev, "Host_EndGame: %s", e.message);
 
-    //  Reset progs virtual machine
+    // reset progs virtual machine
     PR_OnAbort();
-    //  Make sure, that we use primary wad files
+    // make sure, that we use primary wad files
     W_CloseAuxiliary();
 
 #ifdef CLIENT
-    if (GGameInfo->NetMode == NM_DedicatedServer)
-    {
+    if (GGameInfo->NetMode == NM_DedicatedServer) {
       SV_ShutdownGame();
       Sys_Error("Host_EndGame: %s\n", e.message); // dedicated servers exit
     }
@@ -538,14 +458,13 @@ void Host_Frame()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Host_EndGame
 //
 //==========================================================================
-
-void Host_EndGame(const char *message, ...)
-{
+void Host_EndGame (const char *message, ...) {
   va_list argptr;
   static char string[4096];
 
@@ -556,6 +475,7 @@ void Host_EndGame(const char *message, ...)
   throw EndGame(string);
 }
 
+
 //==========================================================================
 //
 //  Host_Error
@@ -563,9 +483,7 @@ void Host_EndGame(const char *message, ...)
 //  This shuts down both the client and server
 //
 //==========================================================================
-
-void Host_Error(const char *error, ...)
-{
+void Host_Error (const char *error, ...) {
   va_list argptr;
   static char string[4096];
 
@@ -576,19 +494,23 @@ void Host_Error(const char *error, ...)
   throw RecoverableError(string);
 }
 
+
 //==========================================================================
 //
 //  Version_f
 //
 //==========================================================================
-
-COMMAND(Version)
-{
+COMMAND(Version) {
   GCon->Log("VAVOOM version " VERSION_TEXT ".");
   GCon->Log("Compiled " __DATE__ " " __TIME__ ".");
 }
 
 
+//==========================================================================
+//
+//  Host_GetConfigDir
+//
+//==========================================================================
 VStr Host_GetConfigDir () {
   VStr res;
 #if !defined(_WIN32)
@@ -649,17 +571,16 @@ void Host_SaveConfiguration () {
 # include <stdio.h>
 # include <unistd.h>
 #endif
-void Host_Quit()
-{
+void Host_Quit () {
   guard(Host_Quit);
   SV_ShutdownGame();
 #ifdef CLIENT
-  // Save game configyration
+  // save game configyration
   Host_SaveConfiguration();
 #endif
 
-  //  Get the lump with the end text.
-  //  If option -noendtxt is set, don't print the text.
+  // get the lump with the end text
+  // if option -noendtxt is set, don't print the text
   bool GotEndText = false;
   char EndText[80*25*2];
   if (GArgs.CheckParm("-endtxt")) {
@@ -688,14 +609,13 @@ void Host_Quit()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Quit
 //
 //==========================================================================
-
-COMMAND(Quit)
-{
+COMMAND(Quit) {
   host_request_exit = true;
 }
 
