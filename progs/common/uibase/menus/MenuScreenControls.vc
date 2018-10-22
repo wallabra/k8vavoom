@@ -210,6 +210,10 @@ void CreateControlKeyChoices () {
   }
 
   Height = ChoicesStartY+NumControls*10;
+  if (Height > GetVirtualHeight()) {
+    Height = GetVirtualHeight();
+    MenuScrollable = true;
+  }
 }
 
 

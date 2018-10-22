@@ -369,6 +369,8 @@ static void ChangeResolution (int InWidth, int InHeight) {
     VirtualHeight = ScreenHeight/3;
   }
 
+  if (ScreenHeight > 480 && ScreenHeight < 960) VirtualHeight = ScreenHeight/2;
+
   //VirtualWidth = ScreenWidth;
   //VirtualHeight = ScreenHeight;
 

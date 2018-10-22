@@ -30,6 +30,7 @@ MenuTitleText titleItem;
 array!MenuChoice Items;
 
 bool MenuScrollable;
+bool AllowVerticalResize;
 int OfsYPrev;
 int CursorPos;
 int CursorPrev;
@@ -71,10 +72,16 @@ void CreateMenu () {
   CreateChoices();
   CreateSelector();
   SetDefaultChoice();
+  if (AllowVerticalResize && Items.length > 0) {
+    int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2);
+    if (newHeight > GetVirtualHeight()-8) {
+      newHeight = GetVirtualHeight()-8;
+      MenuScrollable = true;
+    }
+    Height = newHeight;
+  }
   // center menu
-  int vw = GetVirtualWidth();
-  int vh = GetVirtualHeight();
-  SetPos((vw-Width)/2, (vh-Height)/2);
+  SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
 }
 
 
@@ -509,6 +516,7 @@ defaultproperties {
   TitleY = 24;
   Focusable = true;
   MenuScrollable = false;
+  AllowVerticalResize = false;
 
   ActivateSound = 'menu/activate';
   DeactivateSound = 'menu/backup';

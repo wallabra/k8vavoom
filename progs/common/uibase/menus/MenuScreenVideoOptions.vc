@@ -82,5 +82,6 @@ defaultproperties {
   ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;
   MenuScrollable = true;
+  AllowVerticalResize = true;
   Title = "VIDEO OPTIONS";
 }

@@ -97,4 +97,5 @@ defaultproperties {
   TitleX = 180;
   SelectorType = MenuSelector_SmallRight;
   Title = "ADVANCED VIDEO OPTIONS";
+  AllowVerticalResize = true;
 }

@@ -480,6 +480,7 @@ void SetDefaultVirtualScreenSize () {
     vw = rw/3;
     vh = rh/3;
   }
+  if (rh > 480 && rh < 960) vh = rh/2;
   SetVirtualScreen(vw, vh);
 }
 
