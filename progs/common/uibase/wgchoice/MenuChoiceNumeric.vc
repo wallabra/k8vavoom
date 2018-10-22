@@ -61,7 +61,7 @@ float getSavedValue (optional float defval) {
 void SetSessionCvar (name Name, optional float defval) {
   if (!specified_defval) defval = 0;
   cvarSession = Name;
-  if (Name) defval = getSavedFloat(Name, defval);
+  if (Name) defval = fclamp(getSavedFloat(Name, defval), MinValue, MaxValue);
   if (SetNewValue(defval)) Value = defval;
 }
 
