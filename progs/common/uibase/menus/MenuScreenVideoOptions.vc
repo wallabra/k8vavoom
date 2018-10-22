@@ -50,7 +50,8 @@ override void CreateChoices () {
   );
   SetLastHelp(
     "Lightmapped renderer is faster, and produces nice soft light.\n"~
-    "Stencil lighting produces DooM3-like sharp volumetric light.");
+    "Stencil lighting produces DooM3-like sharp volumetric light.\n"~
+    "You have to restart level/game (or load save) to activate new render.\n");
 
   CreateOnOffCvar("Smooth particles", 'gl_smooth_particles');
   CreateOnOffCvar("High Resolution Textures", 'r_hirestex');

@@ -90,6 +90,10 @@ override void CreateChoices () {
   VSync.SetOrigin(ChoicesStartX, currentY);
   VSync.Text = "VSync";
   VSync.SetInitialValue(GetCvar('r_vsync'));
+    SetLastHelp(
+      "The engine will try to use adaptive vsync automatically.\n"~
+      "You have to use \"Set Resolution\" to activate new setting.\n"~
+      "Note that FPS is capped at 90, so don't expect glaring numbers without vsync.");
   currentY += VSync.Height;
 
   CreateEnumCvar("Aspect Ratio", 'r_aspect_ratio',
