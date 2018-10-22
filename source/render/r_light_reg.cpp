@@ -681,7 +681,7 @@ first, cache all dynlights, so we'd be able to reuse info from previous tracing
 second, store all dynlights affecting a surface, and calculated traceinfo for them
 
 by storing traceinfo, we can reuse it when light radius changed, instead of
-tracing again and again.
+tracing a light again and again.
 
 actually, what we are interested in is not a light per se, but light origin.
 if we have a light with the same origin, we can reuse it's traceinfo (and possibly
@@ -691,6 +691,10 @@ thus, we can go with "light cachemap" instead, and store all relevant info there
 also, keep info in cache for several seconds, as player is likely to move around
 the light. do cachemap housekeeping once in 2-3 seconds, for example. it doesn't
 really matter if we'll accumulate alot of lights there.
+
+also, with proper cache implementation, we can drop "static lights" at all.
+just trace and cache "static lights" at level start, and mark 'em as "persistent".
+this way, when level geometry changed, we can re-trace static lights too.
 */
 
 
