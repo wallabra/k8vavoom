@@ -2274,8 +2274,8 @@ void VVideo::runEventLoop () {
                if (ev.button.button == SDL_BUTTON_LEFT) evt.data1 = K_MOUSE1;
           else if (ev.button.button == SDL_BUTTON_RIGHT) evt.data1 = K_MOUSE2;
           else if (ev.button.button == SDL_BUTTON_MIDDLE) evt.data1 = K_MOUSE3;
-          //else if (ev.button.button == SDL_BUTTON_WHEELUP) evt.data1 = K_MWHEELUP;
-          //else if (ev.button.button == SDL_BUTTON_WHEELDOWN) evt.data1 = K_MWHEELDOWN;
+          else if (ev.button.button == SDL_BUTTON_X1) evt.data1 = K_MOUSE4;
+          else if (ev.button.button == SDL_BUTTON_X2) evt.data1 = K_MOUSE5;
           else break;
           evt.data2 = ev.button.x;
           evt.data3 = ev.button.y;

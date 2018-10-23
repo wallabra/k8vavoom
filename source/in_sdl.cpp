@@ -334,8 +334,8 @@ void VSdlInputDevice::ReadInput () {
              if (ev.button.button == SDL_BUTTON_LEFT) vev.data1 = K_MOUSE1;
         else if (ev.button.button == SDL_BUTTON_RIGHT) vev.data1 = K_MOUSE2;
         else if (ev.button.button == SDL_BUTTON_MIDDLE) vev.data1 = K_MOUSE3;
-        //else if (ev.button.button == SDL_BUTTON_WHEELUP) vev.data1 = K_MWHEELUP;
-        //else if (ev.button.button == SDL_BUTTON_WHEELDOWN) vev.data1 = K_MWHEELDOWN;
+        else if (ev.button.button == SDL_BUTTON_X1) vev.data1 = K_MOUSE4;
+        else if (ev.button.button == SDL_BUTTON_X2) vev.data1 = K_MOUSE5;
         else break;
         vev.data2 = 0;
         vev.data3 = 0;
