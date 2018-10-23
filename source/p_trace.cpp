@@ -591,7 +591,7 @@ static bool SightPathTraverse (SightTraceInfo &Trace, const VLevel *level, secto
   mapy = yt1;
 
   //k8: zdoom is using 1000 here; why?
-  for (int count = 0; count < /*64*/100; ++count) {
+  for (int count = 0; count < /*64*/1000; ++count) {
     if (!SightBlockLinesIterator(Trace, level, mapx, mapy)) {
       Trace.EarlyOut = true;
       return false; // early out
