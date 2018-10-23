@@ -523,3 +523,312 @@ void VCvar::WriteVariablesToFile (FILE *f) {
   }
   delete[] list;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VCvarI &VCvarI::operator = (const VCvarB &v) { Set(v.asBool() ? 1 : 0); return *this; }
+VCvarI &VCvarI::operator = (const VCvarI &v) { Set(v.intValue); return *this; }
+
+VCvarF &VCvarF::operator = (const VCvarB &v) { Set(v.asBool() ? 1.0f : 0.0f); return *this; }
+VCvarF &VCvarF::operator = (const VCvarI &v) { Set((float)v.asInt()); return *this; }
+VCvarF &VCvarF::operator = (const VCvarF &v) { Set(v.floatValue); return *this; }
+
+VCvarB &VCvarB::operator = (const VCvarB &v) { Set(v.boolValue ? 1 : 0); return *this; }
+VCvarB &VCvarB::operator = (const VCvarI &v) { Set(v.asInt() ? 1 : 0); return *this; }
+VCvarB &VCvarB::operator = (const VCvarF &v) { Set(v.asFloat() ? 1 : 0); return *this; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static char *ccmdBuf = nullptr;
+static size_t ccmdBufSize = 0;
+static size_t ccmdBufUsed = 0;
+static char snbuf[32768];
+
+#define CCMD_MAX_ARGS  (256)
+
+static VStr ccmdArgv[CCMD_MAX_ARGS];
+static int ccmdArgc = 0; // current argc
+
+
+void ccmdClearText () { ccmdBufUsed = 0; }
+
+void ccmdClearCommand () {
+  for (int f = ccmdArgc-1; f >= 0; --f) ccmdArgv[f].clear();
+  ccmdArgc = 0;
+}
+
+
+int ccmdGetArgc () { return ccmdArgc; }
+const VStr &ccmdGetArgv (int idx) { return (idx >= 0 && idx < ccmdArgc ? ccmdArgv[idx] : VStr::EmptyString); }
+
+// return number of unparsed bytes left in
+int ccmdTextSize () { return (int)ccmdBufUsed; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// parse one command
+/*
+enum CCResult {
+  CCMD_EMPTY = -1, // no more commands (nothing was parsed)
+  CCMD_NORMAL = 0, // one command parsed, line is not complete
+  CCMD_EOL = 1, // one command parsed, line is complete
+};
+*/
+
+static inline void ccmdShrink (size_t cpos) {
+  if (cpos >= ccmdBufUsed) { ccmdBufUsed = 0; return; }
+  if (cpos > 0) {
+    memmove(ccmdBuf, ccmdBuf+cpos, ccmdBufUsed-cpos);
+    ccmdBufUsed -= cpos;
+  }
+}
+
+
+static inline int hdig (char ch) {
+  if (ch >= '0' && ch <= '9') return ch-'0';
+  if (ch >= 'A' && ch <= 'F') return ch-'A'+10;
+  if (ch >= 'a' && ch <= 'f') return ch-'a'+10;
+  return -1;
+}
+
+
+CCResult ccmdParseOne () {
+  ccmdClearCommand();
+  size_t cpos = 0;
+  // find command start
+  while (cpos < ccmdBufUsed) {
+    vuint8 ch = (vuint8)ccmdBuf[cpos];
+    if (ch == '\n') { ++cpos; ccmdShrink(cpos); return CCMD_EOL; }
+    if (ch <= ' ') { ++cpos; continue; }
+    if (ch == '#') {
+      // comment
+      while (cpos < ccmdBufUsed && ccmdBuf[cpos] != '\n') ++cpos;
+      ++cpos;
+      ccmdShrink(cpos);
+      return CCMD_EOL;
+    }
+    if (ch == ';') { ++cpos; continue; }
+    break;
+  }
+  if (cpos >= ccmdBufUsed) { ccmdBufUsed = 0; return CCMD_EMPTY; }
+  // found something; parse it
+  while (cpos < ccmdBufUsed) {
+    vuint8 ch = (vuint8)ccmdBuf[cpos];
+    if (ch == '\n' || ch == '#') break; // end-of-command
+    if (ch == ';') { ++cpos; break; }
+    if (ch <= ' ') { ++cpos; continue; }
+    VStr tk;
+    int n;
+    // found a token
+    if (ch == '\'' || ch == '"') {
+      // quoted token
+      vuint8 qch = ch;
+      ++cpos;
+      while (cpos < ccmdBufUsed) {
+        ch = (vuint8)ccmdBuf[cpos++];
+        if (ch == qch) break;
+        if (ch != '\\') { tk += (char)ch; continue; }
+        if (cpos >= ccmdBufUsed) break;
+        ch = (vuint8)ccmdBuf[cpos++];
+        switch (ch) {
+          case 't': tk += '\t'; break;
+          case 'n': tk += '\n'; break;
+          case 'r': tk += '\r'; break;
+          case 'e': tk += '\x1b'; break;
+          case 'x':
+            if (cpos >= ccmdBufUsed) break;
+            n = hdig(ccmdBuf[cpos]);
+            if (n < 0) break;
+            ++cpos;
+            if (cpos < ccmdBufUsed && hdig(ccmdBuf[cpos]) >= 0) n = n*16+hdig(ccmdBuf[cpos++]);
+            if (n == 0) n = 32;
+            tk += (char)n;
+            break;
+          default:
+            tk += (char)ch;
+            break;
+        }
+      }
+    } else {
+      // space-delimited
+      while (cpos < ccmdBufUsed) {
+        ch = (vuint8)ccmdBuf[cpos];
+        if (ch <= ' ' || ch == '#' || ch == ';') break;
+        tk += (char)ch;
+        ++cpos;
+      }
+    }
+    if (ccmdArgc < CCMD_MAX_ARGS) ccmdArgv[ccmdArgc++] = tk;
+  }
+  ccmdShrink(cpos);
+  return CCMD_NORMAL;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static void ccmdPrependChar (char ch) {
+  if (!ch) return;
+  if (ccmdBufUsed >= 1024*1024*32) Sys_Error("Command buffer overflow!");
+  if (ccmdBufUsed+1 > ccmdBufSize) {
+    size_t newsize = ((ccmdBufUsed+1)|0xffffU)+1;
+    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
+    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBufSize = newsize;
+  }
+  if (ccmdBufUsed) memmove(ccmdBuf+1, ccmdBuf, ccmdBufUsed);
+  ccmdBuf[0] = ch;
+  ++ccmdBufUsed;
+}
+
+
+void ccmdPrependStr (const char *str) {
+  if (!str || !str[0]) return;
+  size_t slen = strlen(str);
+  if (slen > 1024*1024*32 || ccmdBufUsed+slen > 1024*1024*32) Sys_Error("Command buffer overflow!");
+  if (ccmdBufUsed+slen > ccmdBufSize) {
+    size_t newsize = ((ccmdBufUsed+slen)|0xffffU)+1;
+    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
+    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBufSize = newsize;
+  }
+  if (ccmdBufUsed) memmove(ccmdBuf+slen, ccmdBuf, ccmdBufUsed);
+  memcpy(ccmdBuf, str, slen);
+  ccmdBufUsed += slen;
+}
+
+
+void ccmdPrependStr (const VStr &str) {
+  if (str.length()) ccmdPrependStr(*str);
+}
+
+
+__attribute__((format(printf,1,2))) void ccmdPrependStrf (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  snbuf[0] = 0;
+  snbuf[sizeof(snbuf)-1] = 0;
+  vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
+  va_end(ap);
+  ccmdPrependStr(snbuf);
+}
+
+
+void ccmdPrependQuoted (const char *str) {
+  if (!str || !str[0]) return;
+  bool needQuote = false;
+  for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
+    if (*s <= ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) {
+      needQuote = true;
+      break;
+    }
+  }
+  if (!needQuote) { ccmdPrependStr(str); return; }
+  for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
+    if (*s < ' ') {
+      char xbuf[6];
+      snprintf(xbuf, sizeof(xbuf), "\\x%02x", *s);
+      ccmdPrependStr(xbuf);
+      continue;
+    }
+    if (*s == ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) ccmdPrependChar('\\');
+    ccmdPrependChar((char)*s);
+  }
+}
+
+
+void ccmdPrependQuoted (const VStr &str) {
+  if (str.length()) ccmdPrependQuoted(*str);
+}
+
+__attribute__((format(printf,1,2))) void ccmdPrependQuotdedf (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  snbuf[0] = 0;
+  snbuf[sizeof(snbuf)-1] = 0;
+  vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
+  va_end(ap);
+  ccmdPrependQuoted(snbuf);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static inline void ccmdAddChar (char ch) {
+  if (!ch) return;
+  if (ccmdBufUsed >= 1024*1024*32) Sys_Error("Command buffer overflow!");
+  if (ccmdBufUsed+1 > ccmdBufSize) {
+    size_t newsize = ((ccmdBufUsed+1)|0xffffU)+1;
+    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
+    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBufSize = newsize;
+  }
+  ccmdBuf[ccmdBufUsed++] = ch;
+}
+
+
+void ccmdAddStr (const char *str) {
+  if (!str || !str[0]) return;
+  size_t slen = strlen(str);
+  if (slen > 1024*1024*32 || ccmdBufUsed+slen > 1024*1024*32) Sys_Error("Command buffer overflow!");
+  if (ccmdBufUsed+slen > ccmdBufSize) {
+    size_t newsize = ((ccmdBufUsed+slen)|0xffffU)+1;
+    ccmdBuf = (char *)realloc(ccmdBuf, newsize);
+    if (!ccmdBuf) Sys_Error("Out of memory for command buffer!");
+    ccmdBufSize = newsize;
+  }
+  memcpy(ccmdBuf+ccmdBufUsed, str, slen);
+  ccmdBufUsed += slen;
+}
+
+
+void ccmdAddStr (const VStr &str) {
+  if (str.length() > 0) ccmdAddStr(*str);
+}
+
+
+__attribute__((format(printf,1,2))) void ccmdAddStrf (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  snbuf[0] = 0;
+  snbuf[sizeof(snbuf)-1] = 0;
+  vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
+  va_end(ap);
+  ccmdAddStr(snbuf);
+}
+
+
+void ccmdAddQuoted (const char *str) {
+  if (!str || !str[0]) return;
+  bool needQuote = false;
+  for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
+    if (*s <= ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) {
+      needQuote = true;
+      break;
+    }
+  }
+  if (!needQuote) { ccmdAddStr(str); return; }
+  for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
+    if (*s < ' ') {
+      char xbuf[6];
+      snprintf(xbuf, sizeof(xbuf), "\\x%02x", *s);
+      ccmdAddStr(xbuf);
+      continue;
+    }
+    if (*s == ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) ccmdAddChar('\\');
+    ccmdAddChar((char)*s);
+  }
+}
+
+
+void ccmdAddQuoted (const VStr &str) {
+  if (str.length()) ccmdAddQuoted(*str);
+}
+
+__attribute__((format(printf,1,2))) void ccmdAddQuotedf (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  snbuf[0] = 0;
+  snbuf[sizeof(snbuf)-1] = 0;
+  vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
+  va_end(ap);
+  ccmdAddQuoted(snbuf);
+}

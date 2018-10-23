@@ -70,6 +70,11 @@ public:
   void Set (float value);
   void Set (const VStr &value);
 
+  inline bool asBool () const { return boolValue; }
+  inline int asInt () const { return intValue; }
+  inline float asFloat () const { return floatValue; }
+  inline const VStr &asStr () const { return stringValue; }
+
   inline bool IsModifiedNoReset () const { return !!(flags&CVAR_Modified); }
   inline bool IsModified (bool dontReset=false) { bool ret = !!(flags&CVAR_Modified); flags &= ~CVAR_Modified; return ret; }
   inline void ResetModified () { flags &= ~CVAR_Modified; }
@@ -105,6 +110,9 @@ public:
   //friend class TCmdCvarList;
 
 private:
+  VCvar (const VCvar &);
+  void operator = (const VCvar &);
+
   static void dumpHashStats ();
   static vuint32 countCVars ();
   static VCvar **getSortedList (); // contains `countCVars()` elements, must be `delete[]`d
@@ -118,14 +126,24 @@ private:
 };
 
 
+class VCvarI;
+class VCvarF;
+class VCvarS;
+class VCvarB;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // cvar that can be used as `int` variable
 class VCvarI : public VCvar {
 public:
   VCvarI (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarI (const VCvar &);
 
   inline operator int () const { return intValue; }
   inline VCvarI &operator = (int AValue) { Set(AValue); return *this; }
+  VCvarI &operator = (const VCvar &v);
+  VCvarI &operator = (const VCvarB &v);
+  VCvarI &operator = (const VCvarI &v);
 };
 
 // cvar that can be used as `float` variable
@@ -135,6 +153,10 @@ public:
 
   inline operator float () const { return floatValue; }
   inline VCvarF &operator = (float AValue) { Set(AValue); return *this; }
+  VCvarF &operator = (const VCvar &v);
+  VCvarF &operator = (const VCvarB &v);
+  VCvarF &operator = (const VCvarI &v);
+  VCvarF &operator = (const VCvarF &v);
 };
 
 // cvar that can be used as `char *` variable
@@ -144,6 +166,7 @@ public:
 
   inline operator const char *() const { return *stringValue; }
   inline VCvarS &operator = (const char *AValue) { Set(AValue); return *this; }
+  VCvarS &operator = (const VCvar &v);
 };
 
 // cvar that can be used as `bool` variable
@@ -153,7 +176,50 @@ public:
 
   inline operator bool () const { return boolValue; }
   inline VCvarB &operator = (bool v) { Set(v ? 1 : 0); return *this; }
+  VCvarB &operator = (const VCvarB &v);
+  VCvarB &operator = (const VCvarI &v);
+  VCvarB &operator = (const VCvarF &v);
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// WARNING! thread-unsafe!
+
+void ccmdClearText (); // clear command buffer
+void ccmdClearCommand (); // clear current command (only)
+
+// parse one command
+enum CCResult {
+  CCMD_EMPTY = -1, // no more commands (nothing was parsed)
+  CCMD_NORMAL = 0, // one command parsed, line is not complete
+  CCMD_EOL = 1, // no command parsed, line is complete
+};
+
+// this skips empty lines without notice
+CCResult ccmdParseOne ();
+
+int ccmdGetArgc (); // 0: nothing was parsed
+const VStr &ccmdGetArgv (int idx); // 0: command; other: args, parsed and unquoted
+
+// return number of unparsed bytes left in
+int ccmdTextSize ();
+
+
+void ccmdPrependStr (const char *str);
+void ccmdPrependStr (const VStr &str);
+void ccmdPrependStrf (const char *fmt, ...) __attribute__((format(printf,1,2)));
+
+void ccmdPrependQuoted (const char *str);
+void ccmdPrependQuoted (const VStr &str);
+void ccmdPrependQuotdedf (const char *fmt, ...) __attribute__((format(printf,1,2)));
+
+void ccmdAddStr (const char *str);
+void ccmdAddStr (const VStr &str);
+void ccmdAddStrf (const char *fmt, ...) __attribute__((format(printf,1,2)));
+
+void ccmdAddQuoted (const char *str);
+void ccmdAddQuoted (const VStr &str);
+void ccmdAddQuotedf (const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 
 #endif
