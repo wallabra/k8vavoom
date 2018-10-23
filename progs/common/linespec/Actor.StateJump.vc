@@ -266,7 +266,7 @@ final void A_JumpIfCVarTrue (string cvar, state Label) {
 //==========================================================================
 
 final void A_JumpIfCVarFalse (string cvar, state Label) {
-  name cvn = StrToName(cvar);
+  name cvn = name(cvar);
   if (CvarExists(cvn)) {
     //print("A_JumpIfCVarFalse: cvar is '%s', value is %s", cvar, (GetCvarB(cvn) ? "true" : "false"));
     if (!GetCvarB(cvn)) DoJump(Label);
