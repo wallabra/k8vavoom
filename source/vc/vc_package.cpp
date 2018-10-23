@@ -827,6 +827,7 @@ void VPackage::LoadObject (TLocation l) {
   for (int i = 0; i < GPackagePath.Num(); ++i) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
+      dprintf("  <%s>\n", *mainVC);
       VStream *Strm = fsysOpenFile(mainVC);
       if (Strm) { dprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }

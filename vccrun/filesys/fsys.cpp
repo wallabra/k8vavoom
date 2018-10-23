@@ -51,6 +51,46 @@ static mythread_mutex paklock;
 static volatile vint32 paklockInited = 0;
 
 
+//==========================================================================
+//
+//  getBinaryPath
+//
+//==========================================================================
+static char *getBinaryPath () {
+  static char mydir[8192];
+  static bool gotMyDir = false;
+  if (gotMyDir) return mydir;
+  gotMyDir = true;
+  memset(mydir, 0, sizeof(mydir));
+#ifdef __SWITCH__
+  strncpy(mydir, "/switch/vavoom/", sizeof(mydir)-1);
+#elif !defined(_WIN32)
+  char buf[128];
+  pid_t pid = getpid();
+  snprintf(buf, sizeof(buf), "/proc/%u/exe", (unsigned int)pid);
+  if (readlink(buf, mydir, sizeof(mydir)-1) < 0) {
+    mydir[0] = '.';
+    mydir[1] = '\0';
+  } else {
+    char *p = (char *)strrchr(mydir, '/');
+    if (!p) {
+      mydir[0] = '.';
+      mydir[1] = '/';
+      mydir[2] = '\0';
+    } else {
+      p[1] = '\0';
+    }
+  }
+#else
+  char *p;
+  GetModuleFileName(GetModuleHandle(NULL), mydir, sizeof(mydir)-1);
+  p = strrchr(mydir, '\\');
+  if (!p) strcpy(mydir, "./"); else p[1] = '\0';
+  for (p = mydir; *p; ++p) if (*p == '\\') *p = '/';
+#endif
+  return mydir;
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 VStr fsysBaseDir = VStr("./"); // always ends with "/" (fill be fixed by `fsysInit()` if necessary)
@@ -511,7 +551,36 @@ VStr FSysDriverDisk::findFileWithAnyExt (const VStr &fname) {
 VStream *FSysDriverDisk::open (const VStr &fname) {
   if (!isGoodPath(fname)) return nullptr;
   VStr newname = findFileNC(path+fname, false);
-  if (newname.length() == 0) return nullptr;
+  if (newname.length() == 0) {
+    // hack for vccrun
+#ifdef VCCRUN_K8BUILD
+    newname = findFileNC("./"+fname, false);
+    if (newname.length() == 0) {
+      newname = findFileNC("./packages/"+fname, false);
+      if (newname.length() == 0) {
+        VStr mydir = VStr(getBinaryPath());
+        newname = findFileNC(mydir+fname, false);
+        if (newname.length() == 0) {
+          newname = findFileNC(mydir+"packages/"+fname, false);
+          if (newname.length() == 0) {
+            newname = findFileNC("/home/ketmar/back/vavoom_dev/src/vccrun/"+fname, false);
+            if (newname.length() == 0) {
+              newname = findFileNC("/home/ketmar/back/vavoom_dev/src/vccrun/packages/"+fname, false);
+              if (newname.length() == 0) return nullptr;
+            }
+          }
+        }
+      }
+    }
+#else
+    VStr mydir = VStr(getBinaryPath());
+    newname = findFileNC(mydir+fname, false);
+    if (newname.length() == 0) {
+      newname = findFileNC(mydir+"packages/"+fname, false);
+      if (newname.length() == 0) return nullptr;
+    }
+#endif
+  }
   FILE *fl = fopen(*newname, "rb");
   if (!fl) return nullptr;
   return new VStreamDiskFile(fl, fname);

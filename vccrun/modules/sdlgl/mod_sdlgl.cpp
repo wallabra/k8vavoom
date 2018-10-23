@@ -1255,6 +1255,7 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   glBindTexture(GL_TEXTURE_2D, tid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   VVideo::forceGLTexFilter();
 
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
@@ -1300,6 +1301,7 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
   glBindTexture(GL_TEXTURE_2D, tid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   VVideo::forceGLTexFilter();
 
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
@@ -1323,6 +1325,76 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
 }
 
 
+/*
+struct TexQuad {
+  int x0, y0, x1, y1;
+  float tx0, ty0, tx1, ty1;
+}
+*/
+
+void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQuad *t1) const {
+  if (tid) {
+    // bind normal texture
+    glActiveTexture(GL_TEXTURE0_ARB);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, tid);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    VVideo::forceGLTexFilter();
+  }
+
+  // bind lightmap texture
+  if (lmap) {
+    glActiveTexture(GL_TEXTURE1_ARB);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, lmap->tid);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  }
+
+  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
+    if (mOpaque && VVideo::isFullyOpaque()) {
+      glDisable(GL_BLEND);
+    } else {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+  } else {
+    VVideo::setupBlending();
+  }
+
+  const float z = VVideo::currZFloat;
+  glBegin(GL_QUADS);
+    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx0, t0->ty0);
+    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx0, t1->ty0);
+    glVertex3f(t0->x0, t0->y0, z);
+    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx1, t0->ty0);
+    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx1, t1->ty0);
+    glVertex3f(t0->x1, t0->y0, z);
+    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx1, t0->ty1);
+    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx1, t1->ty1);
+    glVertex3f(t0->x1, t0->y1, z);
+    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx0, t0->ty1);
+    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx0, t1->ty1);
+    glVertex3f(t0->x0, t0->y1, z);
+  glEnd();
+
+  // unbund lightmap texture
+  if (lmap) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0_ARB);
+  }
+  // default value
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+}
+
+
 void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
   if (!tid /*|| VVideo::isFullyTransparent() || scale <= 0 || mTransparent*/) return;
   int w = img->width;
@@ -1331,6 +1403,7 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
   glBindTexture(GL_TEXTURE_2D, tid);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   VVideo::forceGLTexFilter();
 
   if (VVideo::getBlendMode() == VVideo::BlendNormal) {
@@ -1525,6 +1598,16 @@ IMPLEMENT_FUNCTION(VGLTexture, blitAt) {
   P_GET_SELF;
   if (!specifiedScale) scale = 1;
   if (Self && Self->tex) Self->tex->blitAt(dx0, dy0, scale, angle);
+}
+
+
+// native final void blitWithLightmap (const ref TexQuad t0, GLTexture lmap, const ref TexQuad t1);
+IMPLEMENT_FUNCTION(VGLTexture, blitWithLightmap) {
+  P_GET_PTR(VOpenGLTexture::TexQuad, t1);
+  P_GET_PTR(VGLTexture, lmap);
+  P_GET_PTR(VOpenGLTexture::TexQuad, t0);
+  P_GET_SELF;
+  if (Self && Self->tex) Self->tex->blitWithLightmap(t0, (lmap ? lmap->tex : nullptr), t1);
 }
 
 
@@ -2015,6 +2098,7 @@ bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
 
   glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   realiseGLColor(); // this will setup blending
   //glEnable(GL_BLEND);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2399,6 +2483,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
   }
 
   glEnable(GL_TEXTURE_2D);
+  //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   if (currFont->singleTexture) glBindTexture(GL_TEXTURE_2D, tex->tid);
   glEnable(GL_BLEND); // font is rarely fully opaque, so don't bother checking
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

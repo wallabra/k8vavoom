@@ -385,6 +385,21 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
     }
   }
 
+/* this is hacked into filesys
+  //VMemberBase::StaticAddIncludePath(".");
+  VMemberBase::StaticAddPackagePath(".");
+  VMemberBase::StaticAddPackagePath("./packages");
+
+  auto mydir = getBinaryDir();
+  //fprintf(stderr, "<%s>\n", mydir);
+  //VMemberBase::StaticAddIncludePath(mydir);
+  VMemberBase::StaticAddPackagePath(mydir);
+
+  VStr mypkg = VStr(mydir)+"/packages";
+  //VMemberBase::StaticAddIncludePath(*mypkg);
+  VMemberBase::StaticAddPackagePath(*mypkg);
+*/
+
   /*
   if (!DebugFile) {
     VStr DbgFileName;
@@ -394,9 +409,11 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
   }
   */
 
+  bool gdatforced = false;
   if (paklist.length() == 0) {
     //fprintf(stderr, "forcing 'game.dat'\n");
     paklist.append(":game.dat");
+    gdatforced = true;
   }
 
   fsysInit();
@@ -410,13 +427,13 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       if (fsysAppendPak(pname)) {
         dprintf("added pak file '%s'...\n", *pname);
       } else {
-        fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
+        if (!gdatforced) fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
       }
     } else if (type == '/') {
       if (fsysAppendDir(pname)) {
         dprintf("added pak directory '%s'...\n", *pname);
       } else {
-        fprintf(stderr, "CAN'T add pak directory '%s'!\n", *pname);
+        if (!gdatforced) fprintf(stderr, "CAN'T add pak directory '%s'!\n", *pname);
       }
     }
   }

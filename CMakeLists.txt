@@ -30,6 +30,7 @@ option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you an
 option(WITH_OLD_CPU "Use pIV CPU instruction set" OFF)
 option(DEBUG_FPU_CHECKS "Use FPU and turn on some checks (GNU/Linux only)" OFF)
 option(VCCRUN_HAXPAK "You cannot turn this on" OFF)
+option(VCCRUN_K8BUILD "Don't touch this" OFF)
 
 if(CMAKE_CROSSCOMPILING AND WIN32)
   #if(MINGW)

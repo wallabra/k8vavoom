@@ -127,6 +127,10 @@ if (ENABLE_VCCRUN)
     )
   endif(VCCRUN_HAXPAK)
 
+  if(VCCRUN_K8BUILD)
+    add_definitions(-DVCCRUN_K8BUILD=1)
+  endif(VCCRUN_K8BUILD)
+
 
   set(VCCRUN_SOUND_VORBIS_SOURCES )
   if(VORBIS_FOUND)

@@ -18,9 +18,10 @@ enum BlendMode {
   Blend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
   Filter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
   Invert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
-  Particle, // glBlendFunc(GL_DST_COLOR, GL_ZERO)
+  Modulate /*Particle*/, // glBlendFunc(GL_DST_COLOR, GL_ZERO)
   Highlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
   DstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
+  InvModulate, // glBlendFunc(GL_ZERO, GL_SRC_COLOR)
 }
 
 enum BlendFunc {

@@ -38,6 +38,14 @@ native final void blitAt (int dx0, int dy0, optional float scale, optional float
 native final void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
 
 
+struct TexQuad {
+  int x0, y0, x1, y1;
+  float tx0, ty0, tx1, ty1;
+}
+
+native final void blitWithLightmap (const ref TexQuad t0, GLTexture lmap, const ref TexQuad t1);
+
+
 // `txname` can be used in `Load()`
 native final static GLTexture CreateEmpty (int wdt, int hgt, optional name txname);
 native final void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque

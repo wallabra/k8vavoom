@@ -61,6 +61,7 @@ public:
     BlendParticle, // glBlendFunc(GL_DST_COLOR, GL_ZERO)
     BlendHighlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
     BlendDstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
+    InvModulate, // glBlendFunc(GL_ZERO, GL_SRC_COLOR)
     //
     BlendMax,
   };
@@ -237,6 +238,7 @@ private:
       else if (mBlendMode == BlendParticle) glBlendFunc(GL_DST_COLOR, GL_ZERO);
       else if (mBlendMode == BlendHighlight) glBlendFunc(GL_DST_COLOR, GL_ONE);
       else if (mBlendMode == BlendDstMulDstAlpha) glBlendFunc(GL_ZERO, GL_DST_ALPHA);
+      else if (mBlendMode == InvModulate) glBlendFunc(GL_ZERO, GL_SRC_COLOR);
       return ((colorARGB&0xff000000u) != 0xff000000u);
     }
   }
@@ -421,6 +423,11 @@ private:
   VStr mPath;
 
 public:
+  struct TexQuad {
+    int x0, y0, x1, y1;
+    float tx0, ty0, tx1, ty1;
+  };
+
   const VStr &getPath () const { return mPath; }
   int getRC () const { return rc; }
 
@@ -478,6 +485,8 @@ public:
 
   // this uses integer texture coords
   void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const;
+
+  void blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQuad *t1) const;
 };
 
 
@@ -506,6 +515,8 @@ public:
   DECLARE_FUNCTION(blitExt)
   DECLARE_FUNCTION(blitExtRep)
   DECLARE_FUNCTION(blitAt)
+
+  DECLARE_FUNCTION(blitWithLightmap)
 
   DECLARE_FUNCTION(CreateEmpty) // native final static GLTexture CreateEmpty (int wdt, int hgt, optional name txname);
   DECLARE_FUNCTION(setPixel) // native final static void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
