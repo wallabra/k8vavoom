@@ -116,6 +116,7 @@
     <flag name="NoTrigger" property="bNoTrigger" />
     <flag name="BlockedBySolidActors" property="bBlockedBySolidActors" />
     <flag name="AvoidsDropOffs" property="bAvoidsDropOffs" />
+    <flag name="NotAutoAimed" property="bCantAutoAim" />
     <!-- Behavior -->
     <flag name="Ambush" property="bAmbush" />
     <flag name="Boss" property="bBoss" />
