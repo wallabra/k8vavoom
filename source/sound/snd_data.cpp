@@ -274,6 +274,13 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       sc->ExpectString();
       //if (S_sfx[sfxfrom].bPlayerCompat) sfxfrom = S_sfx[sfxfrom].link;
       S_sfx[sfxfrom].Link = FindOrAddSound(*sc->String);
+    } else if (sc->Check("$attenuation")) {
+      // $attenuation <name of alias> value
+      sc->ExpectString();
+      int sfx = FindOrAddSound(*sc->String);
+      sc->ExpectFloat();
+      if (sc->Float < 0) sc->Float = 0;
+      S_sfx[sfx].Attenuation = sc->Float;
     } else if (sc->Check("$random")) {
       // $random <logical name> { <logical name> ... }
       list.Clear();
