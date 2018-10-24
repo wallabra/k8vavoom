@@ -210,9 +210,9 @@ void VViewClipper::ClipInitFrustrumRange(const TAVec &viewangles,
 
   for (int i = 0; i < 4; i++)
   {
-    TransPts[i].x = Pts[i].y * viewright.x + Pts[i].z * viewup.x + Pts[i].x * viewforward.x;
-    TransPts[i].y = Pts[i].y * viewright.y + Pts[i].z * viewup.y + Pts[i].x * viewforward.y;
-    TransPts[i].z = Pts[i].y * viewright.z + Pts[i].z * viewup.z + Pts[i].x * viewforward.z;
+    TransPts[i].x = Pts[i].y*viewright.x+Pts[i].z*viewup.x+Pts[i].x*viewforward.x;
+    TransPts[i].y = Pts[i].y*viewright.y+Pts[i].z*viewup.y+Pts[i].x*viewforward.y;
+    TransPts[i].z = Pts[i].y*viewright.z+Pts[i].z*viewup.z+Pts[i].x*viewforward.z;
 
     if (DotProduct(TransPts[i], clipforward) <= 0)
     {
@@ -223,7 +223,7 @@ void VViewClipper::ClipInitFrustrumRange(const TAVec &viewangles,
 
     if (a < 0.0)
       a += 360.0;
-    float d = AngleMod180(a - viewangles.yaw);
+    float d = AngleMod180(a-viewangles.yaw);
 
     if (d1 > d)
       d1 = d;
@@ -231,8 +231,8 @@ void VViewClipper::ClipInitFrustrumRange(const TAVec &viewangles,
     if (d2 < d)
       d2 = d;
   }
-  float a1 = AngleMod(viewangles.yaw + d1);
-  float a2 = AngleMod(viewangles.yaw + d2);
+  float a1 = AngleMod(viewangles.yaw+d1);
+  float a2 = AngleMod(viewangles.yaw+d2);
 
   if (a1 > a2)
   {
@@ -473,7 +473,7 @@ bool VViewClipper::ClipIsFull()
 
 float VViewClipper::PointToClipAngle(const TVec &Pt)
 {
-  float Ret = matan(Pt.y - Origin.y, Pt.x - Origin.x);
+  float Ret = matan(Pt.y-Origin.y, Pt.x-Origin.x);
 
   if (Ret < 0.0)
     Ret += 360.0;
@@ -659,21 +659,21 @@ bool VViewClipper::ClipIsBBoxVisible(const float *BBox, bool shadowslight, const
   }
 
   // Clip sectors that are behind rendered segs
-  TVec r1 = Origin - v1;
-  TVec r2 = Origin - v2;
+  TVec r1 = Origin-v1;
+  TVec r2 = Origin-v2;
   float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
   float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
 #ifdef CLIENT
   if (shadowslight)
   {
-    TVec rLight1 = CurrLightPos - v1;
-    TVec rLight2 = CurrLightPos - v2;
+    TVec rLight1 = CurrLightPos-v1;
+    TVec rLight2 = CurrLightPos-v2;
     float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
     float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-    TVec rView1 = Origin-v1 - CurrLightPos;
-    TVec rView2 = Origin-v2 - CurrLightPos;
+    TVec rView1 = Origin-v1-CurrLightPos;
+    TVec rView2 = Origin-v2-CurrLightPos;
     float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
     float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -698,11 +698,11 @@ bool VViewClipper::ClipIsBBoxVisible(const float *BBox, bool shadowslight, const
     // this one works for now...
     if (DLight1 > 0.0 && DLight2 <= 0.0)
     {
-      v2 += (v2 - v1) * D1 / (D1 - D2);
+      v2 += (v2-v1)*D1/(D1-D2);
     }
     else if (DLight2 > 0.0 && DLight1 <= 0.0)
     {
-      v1 += (v1 - v2) * D2 / (D2 - D1);
+      v1 += (v1-v2)*D2/(D2-D1);
     }
   }
   else
@@ -715,11 +715,11 @@ bool VViewClipper::ClipIsBBoxVisible(const float *BBox, bool shadowslight, const
     // this one works for now...
     if (D1 > 0.0 && D2 <= 0.0)
     {
-      v2 += (v2 - v1) * D1 / (D1 - D2);
+      v2 += (v2-v1)*D1/(D1-D2);
     }
     else if (D2 > 0.0 && D1 <= 0.0)
     {
-      v1 += (v1 - v2) * D2 / (D2 - D1);
+      v1 += (v1-v2)*D2/(D2-D1);
     }
   }
 
@@ -767,8 +767,8 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
     // Clip sectors that are behind rendered segs
     TVec rLight1;
     TVec rLight2;
-    TVec r1 = Origin - v1;
-    TVec r2 = Origin - v2;
+    TVec r1 = Origin-v1;
+    TVec r2 = Origin-v2;
     float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
     float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
@@ -778,13 +778,13 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
 
     if (shadowslight)
     {
-      rLight1 = CurrLightPos - v1;
-      rLight2 = CurrLightPos - v2;
+      rLight1 = CurrLightPos-v1;
+      rLight2 = CurrLightPos-v2;
       DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
       DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-      TVec rView1 = Origin-v1 - CurrLightPos;
-      TVec rView2 = Origin-v2 - CurrLightPos;
+      TVec rView1 = Origin-v1-CurrLightPos;
+      TVec rView2 = Origin-v2-CurrLightPos;
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -827,11 +827,11 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
         {
-          v2 += (v2 - v1) * DLight1 / (DLight1 - DLight2);
+          v2 += (v2-v1)*DLight1/(DLight1-DLight2);
         }
         else if (DLight2 > CurrLightRadius && DLight1 < -CurrLightRadius)
         {
-          v1 += (v1 - v2) * DLight2 / (DLight2 - DLight1);
+          v1 += (v1-v2)*DLight2/(DLight2-DLight1);
         }
       }
       else
@@ -839,11 +839,11 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       {
         if (D1 > 0.0 && D2 <= 0.0)
         {
-          v2 += (v2 - v1) * D1 / (D1 - D2);
+          v2 += (v2-v1)*D1/(D1-D2);
         }
         else if (D2 > 0.0 && D1 <= 0.0)
         {
-          v1 += (v1 - v2) * D2 / (D2 - D1);
+          v1 += (v1-v2)*D2/(D2-D1);
         }
       }
 
@@ -964,8 +964,8 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       }
 
       // Clip sectors that are behind rendered segs
-      TVec rr1 = Origin - vv1;
-      TVec rr2 = Origin - vv2;
+      TVec rr1 = Origin-vv1;
+      TVec rr2 = Origin-vv2;
       float DD1 = DotProduct(Normalise(CrossProduct(rr1, rr2)), Origin);
       float DD2 = DotProduct(Normalise(CrossProduct(rr2, rr1)), Origin);
 
@@ -976,13 +976,13 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       //float DLight2;
 
       if (shadowslight) {
-        rLight1 = CurrLightPos - vv1;
-        rLight2 = CurrLightPos - vv2;
+        rLight1 = CurrLightPos-vv1;
+        rLight2 = CurrLightPos-vv2;
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-        TVec rView1 = Origin-v1 - CurrLightPos;
-        TVec rView2 = Origin-v2 - CurrLightPos;
+        TVec rView1 = Origin-v1-CurrLightPos;
+        TVec rView2 = Origin-v2-CurrLightPos;
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1023,11 +1023,11 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
         {
-          vv2 += (vv2 - vv1) * DLight1 / (DLight1 - DLight2);
+          vv2 += (vv2-vv1)*DLight1/(DLight1-DLight2);
         }
         else if (DLight2 > CurrLightRadius && DLight1 < -CurrLightRadius)
         {
-          vv1 += (vv1 - vv2) * DLight2 / (DLight2 - DLight1);
+          vv1 += (vv1-vv2)*DLight2/(DLight2-DLight1);
         }
       }
       else
@@ -1035,11 +1035,11 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
       {
         if (DD1 > 0.0 && DD2 <= 0.0)
         {
-          vv2 += (vv2 - vv1) * DD1 / (DD1 - DD2);
+          vv2 += (vv2-vv1)*DD1/(DD1-DD2);
         }
         else if (DD2 > 0.0 && DD1 <= 0.0)
         {
-          vv1 += (vv1 - vv2) * DD2 / (DD2 - DD1);
+          vv1 += (vv1-vv2)*DD2/(DD2-DD1);
         }
       }
 
@@ -1082,7 +1082,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
 
   for (int i = 0; i < Sub->numlines; i++)
   {
-    seg_t *line = &Level->Segs[Sub->firstline + i];
+    seg_t *line = &Level->Segs[Sub->firstline+i];
 
     TVec v1 = *line->v1;
     TVec v2 = *line->v2;
@@ -1105,21 +1105,21 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
     float DLight2;
 #endif
 
-    TVec r1 = Origin - v1;
-    TVec r2 = Origin - v2;
+    TVec r1 = Origin-v1;
+    TVec r2 = Origin-v2;
     float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
     float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
 #ifdef CLIENT
     if (shadowslight)
     {
-      rLight1 = CurrLightPos - v1;
-      rLight2 = CurrLightPos - v2;
+      rLight1 = CurrLightPos-v1;
+      rLight2 = CurrLightPos-v2;
       DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
       DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-      TVec rView1 = Origin-v1 - CurrLightPos;
-      TVec rView2 = Origin-v2 - CurrLightPos;
+      TVec rView1 = Origin-v1-CurrLightPos;
+      TVec rView2 = Origin-v2-CurrLightPos;
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1167,11 +1167,11 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
         {
-          v2 += (v2 - v1) * DLight1 / (DLight1 - DLight2);
+          v2 += (v2-v1)*DLight1/(DLight1-DLight2);
         }
         else if (DLight2 > CurrLightRadius && DLight1 < -CurrLightRadius)
         {
-          v1 += (v1 - v2) * DLight2 / (DLight2 - DLight1);
+          v1 += (v1-v2)*DLight2/(DLight2-DLight1);
         }
       }
       else
@@ -1179,11 +1179,11 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       {
         if (D1 > 0.0 && D2 < 0.0)
         {
-          v2 += (v2 - v1) * D1 / (D1 - D2);
+          v2 += (v2-v1)*D1/(D1-D2);
         }
-        else if (D2 > 00 && D1 < 0.0)
+        else if (D2 > 0.0 && D1 < 0.0)
         {
-          v1 += (v1 - v2) * D2 / (D2 - D1);
+          v1 += (v1-v2)*D2/(D2-D1);
         }
       }
 
@@ -1306,8 +1306,8 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       //TVec rLight1;
       //TVec rLight2;
 
-      /*TVec*/ r1 = Origin - vv1;
-      /*TVec*/ r2 = Origin - vv2;
+      /*TVec*/ r1 = Origin-vv1;
+      /*TVec*/ r2 = Origin-vv2;
       /*float*/ D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
       /*float*/ D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
@@ -1317,13 +1317,13 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
 
       if (shadowslight)
       {
-        rLight1 = CurrLightPos - vv1;
-        rLight2 = CurrLightPos - vv2;
+        rLight1 = CurrLightPos-vv1;
+        rLight2 = CurrLightPos-vv2;
         DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
         DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-        TVec rView1 = Origin-v1 - CurrLightPos;
-        TVec rView2 = Origin-v2 - CurrLightPos;
+        TVec rView1 = Origin-v1-CurrLightPos;
+        TVec rView2 = Origin-v2-CurrLightPos;
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1361,11 +1361,11 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
         // this one works for now...
         if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius)
         {
-          vv2 += (vv2 - vv1) * DLight1 / (DLight1 - DLight2);
+          vv2 += (vv2-vv1)*DLight1/(DLight1-DLight2);
         }
         else if (DLight2 > CurrLightRadius && DLight1 < -CurrLightRadius)
         {
-          vv1 += (vv1 - vv2) * DLight2 / (DLight2 - DLight1);
+          vv1 += (vv1-vv2)*DLight2/(DLight2-DLight1);
         }
       }
       else
@@ -1373,11 +1373,11 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       {
         if (D1 > 0.0 && D2 < 0.0)
         {
-          vv2 += (vv2 - vv1) * D1 / (D1 - D2);
+          vv2 += (vv2-vv1)*D1/(D1-D2);
         }
         else if (D2 > 0.0 && D1 < 0.0)
         {
-          vv1 += (vv1 - vv2) * D2 / (D2 - D1);
+          vv1 += (vv1-vv2)*D2/(D2-D1);
         }
       }
 
@@ -1415,7 +1415,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
 
   for (int i = 0; i < Sub->numlines; i++)
   {
-    seg_t *line = &Level->Segs[Sub->firstline + i];
+    seg_t *line = &Level->Segs[Sub->firstline+i];
 
     TVec v1 = *line->v1;
     TVec v2 = *line->v2;
@@ -1432,21 +1432,21 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
       continue;
     }
 
-    TVec r1 = Origin - v1;
-    TVec r2 = Origin - v2;
+    TVec r1 = Origin-v1;
+    TVec r2 = Origin-v2;
     float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
     float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
 #ifdef CLIENT
     if (shadowslight)
     {
-      TVec rLight1 = CurrLightPos - v1;
-      TVec rLight2 = CurrLightPos - v2;
+      TVec rLight1 = CurrLightPos-v1;
+      TVec rLight2 = CurrLightPos-v2;
       float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
       float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-      TVec rView1 = Origin-v1 - CurrLightPos;
-      TVec rView2 = Origin-v2 - CurrLightPos;
+      TVec rView1 = Origin-v1-CurrLightPos;
+      TVec rView2 = Origin-v2-CurrLightPos;
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
@@ -1479,8 +1479,8 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
     if (Mirror)
     {
       //  Clip seg with mirror plane.
-      float Dist1 = DotProduct(v1, Mirror->normal) - Mirror->dist;
-      float Dist2 = DotProduct(v2, Mirror->normal) - Mirror->dist;
+      float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
+      float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
 
       if (Dist1 <= 0.0 && Dist2 <= 0.0)
       {
@@ -1588,16 +1588,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
     if (Mirror)
     {
       //  Clip seg with mirror plane.
-      float Dist1 = DotProduct(v1, Mirror->normal) - Mirror->dist;
-      float Dist2 = DotProduct(v2, Mirror->normal) - Mirror->dist;
+      float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
+      float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
 
       if (Dist1 > 0.0 && Dist2 <= 0.0)
       {
-        v2 = v1 + (v2 - v1) * Dist1 / (Dist1 - Dist2);
+        v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
       }
       else if (Dist2 > 0.0 && Dist1 <= 0.0)
       {
-        v1 = v2 + (v1 - v2) * Dist2 / (Dist2 - Dist1);
+        v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
       }
     }
     //k8: this is hack for boom translucency
@@ -1648,20 +1648,20 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
 
       // Just apply this to sectors without slopes
       if (line->frontsector->floor.normal.z == 1.0 && line->frontsector->ceiling.normal.z == -1.0) { //k8: first was `10`; a typo?
-        TVec r1 = Origin - v1;
-        TVec r2 = Origin - v2;
+        TVec r1 = Origin-v1;
+        TVec r2 = Origin-v2;
         float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
         float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
 
 #ifdef CLIENT
         if (shadowslight) {
-          TVec rLight1 = CurrLightPos - v1;
-          TVec rLight2 = CurrLightPos - v2;
+          TVec rLight1 = CurrLightPos-v1;
+          TVec rLight2 = CurrLightPos-v2;
           float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
           float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
 
-          TVec rView1 = Origin-v1 - CurrLightPos;
-          TVec rView2 = Origin-v2 - CurrLightPos;
+          TVec rView1 = Origin-v1-CurrLightPos;
+          TVec rView2 = Origin-v2-CurrLightPos;
           float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
           float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
