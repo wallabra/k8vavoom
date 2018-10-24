@@ -31,31 +31,34 @@ private:
   VClipNode *FreeClipNodes;
   VClipNode *ClipHead;
   VClipNode *ClipTail;
-  TVec      Origin;
+  TVec Origin;
   VLevel *Level;
 
-  VClipNode *NewClipNode();
-  void RemoveClipNode(VClipNode*);
-  void DoAddClipRange(float, float);
-  bool DoIsRangeVisible(float, float);
+  VClipNode *NewClipNode ();
+  void RemoveClipNode (VClipNode *Node);
+  void DoAddClipRange (float From, float To);
+  bool DoIsRangeVisible (float From, float To);
 
 public:
-  VViewClipper();
-  ~VViewClipper();
-  void ClearClipNodes(const TVec&, VLevel*);
-  void ClipInitFrustrumRange(const TAVec&, const TVec&, const TVec&,
-    const TVec&, float, float);
-  void ClipToRanges(const VViewClipper&);
-  void AddClipRange(float, float);
-  bool IsRangeVisible(float, float);
-  bool ClipIsFull();
-  float PointToClipAngle(const TVec&);
-  bool ClipIsBBoxVisible(const float*, bool, const TVec& = TVec(0, 0, 0), float = 0);
-  bool ClipCheckRegion(subregion_t*, subsector_t*, bool, const TVec& = TVec(0, 0, 0), float = 0);
-  bool ClipCheckSubsector(subsector_t*, bool, const TVec& = TVec(0, 0, 0), float = 0);
-  void ClipAddSubsectorSegs(subsector_t*, bool, TPlane* = nullptr, const TVec& = TVec(0, 0, 0), float = 0);
+  VViewClipper ();
+  ~VViewClipper ();
+  void ClearClipNodes (const TVec &AOrigin, VLevel *ALevel);
+  void ClipInitFrustrumRange (const TAVec &viewangles, const TVec &viewforward,
+                              const TVec &viewright, const TVec &viewup,
+                              float fovx, float fovy);
+  void ClipToRanges (const VViewClipper &Range);
+  void AddClipRange (float From, float To);
+  bool IsRangeVisible (float From, float To);
+  bool ClipIsFull ();
+  inline float PointToClipAngle (const TVec &Pt) const { float Ret = matan(Pt.y-Origin.y, Pt.x-Origin.x); if (Ret < 0.0) Ret += 360.0; return Ret; }
+  bool ClipIsBBoxVisible (const float *BBox, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
+  bool ClipCheckRegion (subregion_t *region, subsector_t *sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
+  bool ClipCheckSubsector (subsector_t *Sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
+  void ClipAddSubsectorSegs (subsector_t *Sub, bool shadowslight, TPlane *Mirror=nullptr, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
 
 private:
+  void CheckAddClipSeg (const seg_t *line, bool shadowslight, TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius);
+
   static inline bool IsSegAClosedSomething (const seg_t *line) {
     auto fsec = line->linedef->frontsector;
     auto bsec = line->linedef->backsector;
