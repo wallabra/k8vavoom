@@ -1850,6 +1850,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
 
       // get function name and parse arguments
+      auto actionLoc = sc->GetLoc();
       VStr FuncName = sc->String;
       VStr FuncNameLower = sc->String.ToLower();
       VExpression *Args[VMethod::MAX_PARAMS+1];
@@ -1890,7 +1891,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       //fprintf(stderr, "<%s>\n", *FuncNameLower);
       if (!Func) {
-        GCon->Logf("ERROR: Unknown state action %s in %s", *FuncName, Class->GetName());
+        GCon->Logf("ERROR: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
       } else if (Func->NumParams || NumArgs || FuncNameLower == "a_explode") {
         VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
         Expr->CallerState = State;
