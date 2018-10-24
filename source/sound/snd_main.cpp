@@ -322,7 +322,9 @@ void VAudio::Shutdown()
 //  VAudio::PlaySound
 //
 //  This function adds a sound to the list of currently active sounds, which
-// is maintained as a given number of internal channels.
+//  is maintained as a given number of internal channels.
+//
+//  channel 0 is "CHAN_AUTO"
 //
 //==========================================================================
 
@@ -410,39 +412,43 @@ void VAudio::PlaySound(int InSoundId, const TVec &origin,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAudio::GetChannel
 //
+//  channel 0 is "CHAN_AUTO"
+//
 //==========================================================================
-
-int VAudio::GetChannel(int sound_id, int origin_id, int channel, int priority)
-{
+int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) {
   guard(VAudio::GetChannel);
-  int     chan;
-  int     i;
-  int     lp; //least priority
-  int     found;
-  int     prior;
+  int lp; // least priority
+  int found;
+  int prior;
   int numchannels = GSoundManager->S_sfx[sound_id].NumChannels;
 
-  if (numchannels > 0)
-  {
+  // first, look if we want to replace sound on some channel
+  if (channel != 0) {
+    for (int i = 0; i < NumChannels; ++i) {
+      if (Channel[i].origin_id == origin_id && Channel[i].channel == channel) {
+        StopChannel(i);
+        return i;
+      }
+    }
+  }
+
+  if (numchannels > 0) {
     lp = -1; //denote the argument sound_id
     found = 0;
     prior = priority;
-    for (i = 0; i < NumChannels; i++)
-    {
-      if (Channel[i].sound_id == sound_id)
-      {
-        if (GSoundManager->S_sfx[sound_id].bSingular)
-        {
+    for (int i = 0; i < NumChannels; ++i) {
+      if (Channel[i].sound_id == sound_id) {
+        if (GSoundManager->S_sfx[sound_id].bSingular) {
           // This sound is already playing, so don't start it again.
           return -1;
         }
-        found++; //found one.  Now, should we replace it??
-        if (prior >= Channel[i].priority)
-        {
+        ++found; //found one; now, should we replace it??
+        if (prior >= Channel[i].priority) {
           // if we're gonna kill one, then this'll be it
           lp = i;
           prior = Channel[i].priority;
@@ -450,10 +456,9 @@ int VAudio::GetChannel(int sound_id, int origin_id, int channel, int priority)
       }
     }
 
-    if (found >= numchannels)
-    {
-      if (lp == -1)
-      {// other sounds have greater priority
+    if (found >= numchannels) {
+      if (lp == -1) {
+        // other sounds have greater priority
         return -1; // don't replace any sounds
       }
       StopChannel(lp);
@@ -461,48 +466,41 @@ int VAudio::GetChannel(int sound_id, int origin_id, int channel, int priority)
   }
 
   //  Mobjs can have only one sound
-/*  if (origin_id && channel)
-    {
-    for (i = 0; i < NumChannels; i++)
-    {
-      if (Channel[i].origin_id == origin_id &&
-        Channel[i].channel == channel)
-      {
+  /*
+  if (origin_id && channel) {
+    for (i = 0; i < NumChannels; i++) {
+      if (Channel[i].origin_id == origin_id && Channel[i].channel == channel) {
         // only allow other mobjs one sound
         StopChannel(i);
         return i;
       }
     }
-  }*/
+  }
+  */
 
-  //  Look for a free channel
-  for (i = 0; i < NumChannels; i++)
-  {
-    if (!Channel[i].sound_id)
-    {
+  // look for a free channel
+  for (int i = 0; i < NumChannels; ++i) {
+    if (!Channel[i].sound_id) {
       return i;
     }
   }
 
-  //  Look for a lower priority sound to replace.
-  SndCount++;
-  if (SndCount >= NumChannels)
-  {
-    SndCount = 0;
-  }
+  if (NumChannels < 1) return -1;
 
-  for (chan = 0; chan < NumChannels; chan++)
-  {
-    i = (SndCount + chan) % NumChannels;
-    if (priority >= Channel[i].priority)
-    {
-      //replace the lower priority sound.
+  // look for a lower priority sound to replace
+  ++SndCount;
+  if (SndCount >= NumChannels) SndCount = 0;
+
+  for (int chan = 0; chan < NumChannels; ++chan) {
+    int i = (SndCount+chan)%NumChannels;
+    if (priority >= Channel[i].priority) {
+      // replace the lower priority sound.
       StopChannel(i);
       return i;
     }
   }
 
-    //  no free channels.
+  // no free channels
   return -1;
   unguard;
 }
