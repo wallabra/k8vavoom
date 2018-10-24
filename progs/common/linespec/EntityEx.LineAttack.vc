@@ -417,7 +417,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 //  Sets linetaget and aim_slope when a target is aimed at.
 //
 //==========================================================================
-final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
+final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, optional bool noVertAutoAim) {
   float x2, y2;
   float topangle, botangle;
   TVec dir;
@@ -528,7 +528,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
     break;  // don't go any farther
   }
 
-  if (linetarget) angles.pitch = -atan(aim_slope);
+  if (linetarget && !noVertAutoAim) angles.pitch = -atan(aim_slope);
   AngleVector(angles, out dir);
   OutDir = dir;
   return linetarget;
@@ -540,10 +540,10 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance) {
 //  Aim
 //
 //  Sets a slope so a near miss is at aproximately the height of the
-// intended target
+//  intended target
 //
 //===========================================================================
-final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optional bool noAutoaim) {
+final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optional bool noAutoaim, optional bool noVertAutoAim) {
   TAVec ang;
   TVec dir;
   EntityEx LineTarget;
@@ -567,13 +567,15 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
   // this is done even when autoaim is off so that we get a LineTarget that is needed for seeker missiles
   LineTarget = AimLineAttack(dir, ang, distance);
   if (!LineTarget) {
+    auto origYaw = ang.yaw;
     ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
-    LineTarget = AimLineAttack(dir, ang, distance);
+    LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional);
     if (!LineTarget) {
       ang.yaw = AngleMod360(ang.yaw-45.0/4.0);
-      LineTarget = AimLineAttack(dir, ang, distance);
+      LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional);
       if (!LineTarget) {
-        ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
+        //ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
+        ang.yaw = origYaw;
         AngleVector(ang, out dir);
       }
     }

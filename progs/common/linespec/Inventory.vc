@@ -1236,6 +1236,14 @@ final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
   }
 }
 
+const int FBF_USEAMMO = 1;
+const int FBF_NORANDOM = 2;
+const int FBF_EXPLICITANGLE = 4;
+const int FBF_NOPITCH = 8;
+const int FBF_NOFLASH = 16;
+const int FBF_NORANDOMPUFFZ = 32;
+
+
 //===========================================================================
 //
 //  A_FireBullets
@@ -1246,87 +1254,66 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   int DamagePerBullet, optional class!Actor PuffType, optional int Flags,
   optional float Range)
 {
-  TVec    dir;
-  int     i;
-  int     damage;
-  TAVec   rot;
-  TVec    aimDir;
-  bool    UseAmmo = false;
+  TVec dir;
+  int damage;
+  TAVec rot;
+  TVec aimDir;
+  bool UseAmmo = false;
+  bool randDamage = true;
+  bool randSpread = true;
+  bool noAimPitch = false;
+  bool doFlash = false; // not implemented yet
+  bool doRandPuffZ = false; // not implemented yet
 
-  if (!PuffType || !specified_PuffType)
-  {
-    PuffType = BulletPuff;
-  }
-  if (!Range)
-  {
-    Range = MISSILERANGE;
-  }
+  if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
+  if (!specified_Range || !Range) Range = MISSILERANGE;
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-  if (!specified_Flags)
-  {
+  if (!specified_Flags) {
     UseAmmo = true;
-  }
-  if (((specified_Flags && (Flags & 1)) || UseAmmo) && Wpn)
-  {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode))
-    {
-      return;
+  } else {
+    if (((Flags&FBF_USEAMMO) != 0 || UseAmmo) && Wpn) {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
     }
+    randDamage = !(Flags&FBF_NORANDOM);
+    randSpread = !(Flags&FBF_EXPLICITANGLE);
+    noAimPitch = !!(Flags&FBF_NOPITCH);
+    doFlash = !(Flags&FBF_NOFLASH);
+    doRandPuffZ = !(Flags&FBF_NORANDOMPUFFZ);
   }
 
   SetState(MeleeState);
 
   bool noAAim = false;
   name decal = '';
-  if (Wpn)
-  {
+  if (Wpn) {
     PlaySound(Wpn.AttackSound, CHAN_WEAPON);
     noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     decal = Wpn.DecalName;
   }
 
-  Aim(aimDir, 16.0 * 64.0, default, noAAim);
+  Aim(aimDir, 16.0 * 64.0, default, noAAim, noAimPitch);
 
-  if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0)
-  {
+  if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0) {
     damage = DamagePerBullet;
-    if (!(Flags & 2))
-    {
-      damage *= (P_Random() % 3 + 1);
-    }
+    if (randDamage) damage *= (P_Random()%3+1);
     LineAttack(aimDir, Range, damage, PuffType, default, default, PuffType.default.DamageType, false, decal);
-  }
-  else
-  {
-    if (NumBullets == -1)
-    {
-      NumBullets = 1;
-    }
-    for (i = 0; i < NumBullets; i++)
-    {
-      if (Flags & 4)
-      {
-        rot.pitch = SpreadVert;
-        rot.yaw = SpreadHoriz;
-      }
-      else
-      {
+  } else {
+    if (NumBullets == -1) NumBullets = 1;
+    foreach (auto i; 0..NumBullets) {
+      if (randSpread) {
         rot.pitch = (Random() - Random()) * SpreadVert;
         rot.yaw = (Random() - Random()) * SpreadHoriz;
+      } else {
+        rot.pitch = SpreadVert;
+        rot.yaw = SpreadHoriz;
       }
       rot.roll = 0.0;
       dir = RotateDirectionVector(aimDir, rot);
       damage = DamagePerBullet;
-      if (!(Flags & 2))
-      {
-        damage *= (P_Random() % 3 + 1);
-      }
+      if (randDamage) damage *= (P_Random()%3+1);
       LineAttack(dir, Range, damage, PuffType, default, default, PuffType.default.DamageType, (i != 0), decal);
     }
   }
