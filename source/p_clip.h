@@ -54,4 +54,8 @@ public:
   bool ClipCheckRegion(subregion_t*, subsector_t*, bool, const TVec& = TVec(0, 0, 0), float = 0);
   bool ClipCheckSubsector(subsector_t*, bool, const TVec& = TVec(0, 0, 0), float = 0);
   void ClipAddSubsectorSegs(subsector_t*, bool, TPlane* = nullptr, const TVec& = TVec(0, 0, 0), float = 0);
+
+private:
+  bool IsSegAClosedSomething (const seg_t *line) const;
+  bool IsSegAnOpenedSomething (const seg_t *line) const;
 };

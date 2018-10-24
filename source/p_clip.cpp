@@ -727,6 +727,193 @@ bool VViewClipper::ClipIsBBoxVisible(const float *BBox, bool shadowslight, const
   unguard;
 }
 
+
+
+//==========================================================================
+//
+//  VViewClipper::IsSegAClosedSomething
+//
+//==========================================================================
+bool VViewClipper::IsSegAClosedSomething (const seg_t *line) const {
+  //seg_t *line = &Level->Segs[Sub->firstline+i];
+  auto fsec = line->linedef->frontsector;
+  auto bsec = line->linedef->backsector;
+
+  if (!fsec || !bsec) return false;
+
+  // only apply this to sectors without slopes
+  if (fsec->floor.normal.z == 1.0 && bsec->floor.normal.z == 1.0 &&
+      fsec->ceiling.normal.z == -1.0 && bsec->ceiling.normal.z == -1.0)
+  {
+    const TVec vv1 = *line->linedef->v1;
+    const TVec vv2 = *line->linedef->v2;
+
+    // a line without top texture isn't a door
+    if (line->sidedef->TopTexture != -1) {
+      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontfz1 = fsec->floor.GetPointZ(vv1);
+      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backfz1 = bsec->floor.GetPointZ(vv1);
+      const float backfz2 = bsec->floor.GetPointZ(vv2);
+
+      if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
+          (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
+      {
+        // it's a closed door
+        return true;
+      }
+    }
+
+    // a line without bottom texture isn't an elevator/plat
+    if (line->sidedef->BottomTexture != -1) {
+      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontfz1 = fsec->floor.GetPointZ(vv1);
+      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backfz1 = bsec->floor.GetPointZ(vv1);
+      const float backfz2 = bsec->floor.GetPointZ(vv2);
+
+      if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
+          (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
+      {
+        // it's an enclosed elevator/plat
+        return true;
+      }
+    }
+
+    // a line without mid texture isn't a polyobj door
+    if (line->sidedef->MidTexture != -1) {
+      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontfz1 = fsec->floor.GetPointZ(vv1);
+      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backfz1 = bsec->floor.GetPointZ(vv1);
+      const float backfz2 = bsec->floor.GetPointZ(vv2);
+
+      if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
+          (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
+      {
+        // it's a closed polyobj door
+        return true;
+      }
+    }
+  } else {
+    // sloped
+    if (((fsec->floor.maxz > bsec->ceiling.minz && fsec->ceiling.maxz < bsec->floor.minz) ||
+         (fsec->floor.minz > bsec->ceiling.maxz && fsec->ceiling.minz < bsec->floor.maxz)) ||
+        ((bsec->floor.maxz > fsec->ceiling.minz && bsec->ceiling.maxz < fsec->floor.minz) ||
+         (bsec->floor.minz > fsec->ceiling.maxz && bsec->ceiling.minz < fsec->floor.maxz)))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::IsSegAnOpenedSomething
+//
+//==========================================================================
+bool VViewClipper::IsSegAnOpenedSomething (const seg_t *line) const {
+  //seg_t *line = &Level->Segs[Sub->firstline+i];
+  auto fsec = line->linedef->frontsector;
+  auto bsec = line->linedef->backsector;
+
+  if (!fsec || !bsec) return false;
+
+  // Just apply this to sectors without slopes
+  if (fsec->floor.normal.z == 1.0 && bsec->floor.normal.z == 1.0 &&
+      fsec->ceiling.normal.z == -1.0 && bsec->ceiling.normal.z == -1.0)
+  {
+    const TVec vv1 = *line->linedef->v1;
+    const TVec vv2 = *line->linedef->v2;
+
+    // a line without top texture isn't a door
+    if (line->sidedef->TopTexture != -1) {
+      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontfz1 = fsec->floor.GetPointZ(vv1);
+      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backfz1 = bsec->floor.GetPointZ(vv1);
+      const float backfz2 = bsec->floor.GetPointZ(vv2);
+
+      if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
+          (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
+      {
+        // it's an opened door
+        return true;
+      }
+    }
+
+    // a line without bottom texture isn't an elevator/plat
+    if (line->sidedef->BottomTexture != -1) {
+      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontfz1 = fsec->floor.GetPointZ(vv1);
+      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backfz1 = bsec->floor.GetPointZ(vv1);
+      const float backfz2 = bsec->floor.GetPointZ(vv2);
+
+      if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
+          (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
+      {
+        // it's a lowered elevator/plat
+        return true;
+      }
+    }
+
+    // a line without mid texture isn't a polyobj door
+    if (line->sidedef->MidTexture != -1 && clip_bsp) {
+      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
+      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontfz1 = fsec->floor.GetPointZ(vv1);
+      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+
+      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
+      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backfz1 = bsec->floor.GetPointZ(vv1);
+      const float backfz2 = bsec->floor.GetPointZ(vv2);
+
+      if ((backcz2 > frontfz2 && backcz2 > frontfz1 && backcz1 > frontfz2 && backcz1 > frontfz1) &&
+          (frontcz2 > backfz2 && frontcz2 > backfz1 && frontcz1 > backfz2 && frontcz1 > backfz1))
+      {
+        // it's an opened polyobj door
+        return true;
+      }
+    }
+  } else {
+    if (((fsec->floor.maxz <= bsec->ceiling.minz && fsec->ceiling.maxz >= bsec->floor.minz) ||
+         (fsec->floor.minz <= bsec->ceiling.maxz && fsec->ceiling.minz >= bsec->floor.maxz)) ||
+        ((bsec->floor.maxz <= fsec->ceiling.minz && bsec->ceiling.maxz >= fsec->floor.minz) ||
+         (bsec->floor.minz <= fsec->ceiling.maxz && bsec->ceiling.minz >= fsec->floor.maxz)))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 //==========================================================================
 //
 //  VViewClipper::ClipCheckRegion
@@ -756,9 +943,7 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
     if (!ds->seg->linedef)
     {
       //  Miniseg.
-      if (!IsRangeVisible(PointToClipAngle(v2),
-        PointToClipAngle(v1)))
-      {
+      if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) {
         ds++;
         continue;
       }
@@ -863,9 +1048,14 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
         // 2-sided line, determine if it can be skipped
         if (ds->seg->linedef->backsector)
         {
-          // Just apply this to sectors without slopes
+          if (IsSegAClosedSomething(ds->seg)) {
+            ++ds;
+            continue;
+          }
+          /*
+          // only apply this to sectors without slopes
           if (ds->seg->linedef->frontsector->floor.normal.z == 1.0 && ds->seg->linedef->backsector->floor.normal.z == 1.0 &&
-            ds->seg->linedef->frontsector->ceiling.normal.z == -1.0 && ds->seg->linedef->backsector->ceiling.normal.z == -1.0)
+              ds->seg->linedef->frontsector->ceiling.normal.z == -1.0 && ds->seg->linedef->backsector->ceiling.normal.z == -1.0)
           {
             //
             // Check for doors
@@ -948,18 +1138,19 @@ bool VViewClipper::ClipCheckRegion(subregion_t *region, subsector_t *sub, bool s
           else
           {
             if (((ds->seg->linedef->frontsector->floor.maxz > ds->seg->linedef->backsector->ceiling.minz &&
-              ds->seg->linedef->frontsector->ceiling.maxz < ds->seg->linedef->backsector->floor.minz) ||
-              (ds->seg->linedef->frontsector->floor.minz > ds->seg->linedef->backsector->ceiling.maxz &&
-                ds->seg->linedef->frontsector->ceiling.minz < ds->seg->linedef->backsector->floor.maxz)) ||
+                  ds->seg->linedef->frontsector->ceiling.maxz < ds->seg->linedef->backsector->floor.minz) ||
+                 (ds->seg->linedef->frontsector->floor.minz > ds->seg->linedef->backsector->ceiling.maxz &&
+                  ds->seg->linedef->frontsector->ceiling.minz < ds->seg->linedef->backsector->floor.maxz)) ||
                 ((ds->seg->linedef->backsector->floor.maxz > ds->seg->linedef->frontsector->ceiling.minz &&
                   ds->seg->linedef->backsector->ceiling.maxz < ds->seg->linedef->frontsector->floor.minz) ||
                   (ds->seg->linedef->backsector->floor.minz > ds->seg->linedef->frontsector->ceiling.maxz &&
-                    ds->seg->linedef->backsector->ceiling.minz < ds->seg->linedef->frontsector->floor.maxz)))
+                   ds->seg->linedef->backsector->ceiling.minz < ds->seg->linedef->frontsector->floor.maxz)))
             {
-              ds++;
+              ++ds;
               continue;
             }
           }
+          */
         }
       }
 
@@ -1207,9 +1398,13 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
       // 2-sided line, determine if it can be skipped
       if (line->backsector)
       {
+        if (IsSegAClosedSomething(line)) {
+          continue;
+        }
+        /*
         // Just apply this to sectors without slopes
         if (line->linedef->frontsector->floor.normal.z == 1.0 && line->linedef->backsector->floor.normal.z == 1.0 &&
-          line->linedef->frontsector->ceiling.normal.z == -1.0 && line->linedef->backsector->ceiling.normal.z == -1.0)
+            line->linedef->frontsector->ceiling.normal.z == -1.0 && line->linedef->backsector->ceiling.normal.z == -1.0)
         {
           //
           // Check for doors
@@ -1300,6 +1495,7 @@ bool VViewClipper::ClipCheckSubsector(subsector_t *Sub, bool shadowslight, const
             continue;
           }
         }
+        */
       }
 
       // Clip sectors that are behind rendered segs
@@ -1491,12 +1687,16 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
     if (clip_trans_hack && line->linedef->alpha < 1.0) continue; //k8: skip translucent walls (for now)
     // 2-sided line, determine if it can be skipped
     if (line->backsector) {
+      if (IsSegAnOpenedSomething(line)) {
+        continue;
+      }
+      /*
       const TVec vv1 = *line->linedef->v1;
       const TVec vv2 = *line->linedef->v2;
 
       // Just apply this to sectors without slopes
       if (line->linedef->frontsector->floor.normal.z == 1.0 && line->linedef->backsector->floor.normal.z == 1.0 &&
-        line->linedef->frontsector->ceiling.normal.z == -1.0 && line->linedef->backsector->ceiling.normal.z == -1.0)
+          line->linedef->frontsector->ceiling.normal.z == -1.0 && line->linedef->backsector->ceiling.normal.z == -1.0)
       {
         //
         // Check for doors
@@ -1583,6 +1783,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
           continue;
         }
       }
+      */
     }
 
     if (Mirror)
@@ -1691,6 +1892,10 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
 
       // 2-sided line, determine if it can be skipped
       if (line->backsector) {
+        if (IsSegAnOpenedSomething(line)) {
+          continue;
+        }
+        /*
         const TVec vv1 = *line->linedef->v1;
         const TVec vv2 = *line->linedef->v2;
 
@@ -1783,6 +1988,7 @@ void VViewClipper::ClipAddSubsectorSegs(subsector_t *Sub, bool shadowslight, TPl
             continue;
           }
         }
+        */
       }
 
       AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
