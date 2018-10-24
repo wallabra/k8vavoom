@@ -237,12 +237,19 @@ final void A_Look2()
 //
 //==========================================================================
 
-final void A_LookEx (int flags, float minseedist, float maxseedist, float maxheardist,
-      float fov, name wakestate)
+final void A_LookEx (int flags, optional float minseedist, optional float maxseedist, optional float maxheardist,
+      optional float fov, optional name wakestate)
 {
   EntityEx  targ;
   Entity    Ent;
   float   dist;
+
+  // fix optional args
+  //if (!specified_minseedist) minseedist = 0; // this is default
+  //if (!specified_maxseedist) maxseedist = 0; // this is default
+  //if (!specified_maxheardist) maxheardist = 0; // this is default
+  //if (!specified_fov) fov = 0; // this is default
+  if (!specified_wakestate) wakestate = 'See';
 
   //  Set goal now if appropriate.
   if (Special == LNSPEC_ThingSetGoal && Args[0] == 0)
