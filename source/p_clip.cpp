@@ -53,6 +53,10 @@ struct VViewClipper::VClipNode
 
 #ifdef CLIENT
 extern VCvarF r_lights_radius;
+#else
+// light tracing is not used in dedicated server, but we still need this var
+// it is better than throwing more ifdefs all over the source
+static float r_lights_radius;
 #endif
 
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
