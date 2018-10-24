@@ -163,9 +163,8 @@ final void A_FLoopActiveSound()
 //  A_StopSound
 //
 //==========================================================================
-
-final void A_StopSound()
-{
+final void A_StopSound(optional int channel) {
+  if (!specified_channel) channel = CHAN_VOICE;
   StopSound(CHAN_VOICE);
 }
 

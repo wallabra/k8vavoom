@@ -80,7 +80,7 @@ class Actor extends Thinker
   action native A_ActiveSound();
   action native A_LoopActiveSound();
   action native A_FLoopActiveSound();
-  action native A_StopSound();
+  action native A_StopSound(optional int channel);
   action native A_StopSoundEx(string channel);
   action native A_Pain();
   action native A_Scream();
