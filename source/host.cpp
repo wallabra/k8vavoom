@@ -77,7 +77,7 @@ static VDedLog  DedLog;
 #endif
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__SWITCH__)
 VCvarB game_release_mode("_release_mode", true, "Affects some default settings.", CVAR_Rom);
 #else
 VCvarB game_release_mode("_release_mode", false, "Affects some default settings.", CVAR_Rom);
