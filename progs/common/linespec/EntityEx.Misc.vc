@@ -899,7 +899,7 @@ override bool Touch(Entity InOther)
           // Ok to spawn some blood
           SpawnRipperBlood();
         }
-        PlaySound('misc/ripslop', CHAN_BODY);
+        PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
         damage = GetMissileDamage(3, 2);
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, Target, damage, DamageType);
@@ -1724,7 +1724,7 @@ final override bool SectorChanged(int CrushChange)
         {
           Gib.Translation = BloodTranslation;
         }
-        Gib.PlaySound('misc/fallingsplat', CHAN_BODY);
+        Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
         CanDestroy = true;
       }
       else
@@ -4005,7 +4005,7 @@ final bool DoThingRaise()
     return false; // doesn't fit here
   }
 
-  PlaySound('vile/raise', CHAN_BODY);
+  PlaySound('vile/raise', /*CHAN_BODY*/CHAN_AUTO);
 
   SetState(RaiseState);
   bShootable = true;

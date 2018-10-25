@@ -6403,7 +6403,7 @@ final override void PolyCrushMobj(Entity Other, polyobj_t *po)
           {
             Gib.Translation = EntityEx(Other).BloodTranslation;
           }
-          Gib.PlaySound('misc/fallingsplat', CHAN_BODY);
+          Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
           CanDestroy = true;
         }
         else

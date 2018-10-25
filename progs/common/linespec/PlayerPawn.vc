@@ -195,7 +195,7 @@ override bool UseInventory(Inventory Item)
     }
     return false;
   }
-  PlaySound(Item.UseSound, CHAN_BODY);
+  PlaySound(Item.UseSound, /*CHAN_BODY*/CHAN_AUTO);
   PlayerEx(Player).ArtifactFlash = 4;
   return true;
 }

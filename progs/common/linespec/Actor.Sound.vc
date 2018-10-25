@@ -52,54 +52,26 @@ final void A_PlaySound(string Sound, optional int chan, optional float volume,
 //
 //==========================================================================
 
-final void A_PlaySoundEx(string Sound, string Channel, optional bool Loop,
-  optional int Attenuation)
-{
-  //  Channel
-  int Chan;
-  if (!stricmp(Channel, "Auto"))
-  {
-    Chan = CHAN_AUTO;
-  }
-  else if (!stricmp(Channel, "Weapon"))
-  {
-    Chan = CHAN_WEAPON;
-  }
-  else if (!stricmp(Channel, "Voice"))
-  {
-    Chan = CHAN_VOICE;
-  }
-  else if (!stricmp(Channel, "Item"))
-  {
-    Chan = CHAN_ITEM;
-  }
-  else if (!stricmp(Channel, "Body"))
-  {
-    Chan = CHAN_BODY;
-  }
-  else if (!stricmp(Channel, "SoundSlot5"))
-  {
-    Chan = 5;
-  }
-  else if (!stricmp(Channel, "SoundSlot6"))
-  {
-    Chan = 6;
-  }
-  else if (!stricmp(Channel, "SoundSlot7"))
-  {
-    Chan = 7;
-  }
+final void A_PlaySoundEx (string Sound, string Channel, optional bool Loop, optional int Attenuation) {
+  int Chan = CHAN_AUTO;
+       if (!stricmp(Channel, "Auto")) Chan = CHAN_AUTO;
+  else if (!stricmp(Channel, "Weapon")) Chan = CHAN_WEAPON;
+  else if (!stricmp(Channel, "Voice")) Chan = CHAN_VOICE;
+  else if (!stricmp(Channel, "Item")) Chan = CHAN_ITEM;
+  else if (!stricmp(Channel, "Body")) Chan = CHAN_BODY;
+  else if (!stricmp(Channel, "SoundSlot5")) Chan = 5;
+  else if (!stricmp(Channel, "SoundSlot6")) Chan = 6;
+  else if (!stricmp(Channel, "SoundSlot7")) Chan = 7;
 
-  //  Attenuation
+  // attenuation
   float Atten = ATTN_NORMAL;
-  switch (Attenuation)
-  {
-  case -1:
-    Atten = ATTN_STATIC;
-    break;
-  case 1:
-    Atten = ATTN_NONE;
-    break;
+  switch (Attenuation) {
+    case -1:
+      Atten = ATTN_STATIC;
+      break;
+    case 1:
+      Atten = ATTN_NONE;
+      break;
   }
 
   PlaySound(StrToName(Sound), Chan, default, Atten, Loop);

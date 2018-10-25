@@ -160,7 +160,7 @@ override void PlayPickupSound(EntityEx Toucher)
   if (gaveWeapon)
   {
     // Play the build-sound full volume for all players
-    Toucher.PlaySound('WeaponBuild', CHAN_BODY, 1.0, ATTN_NONE);
+    Toucher.PlaySound('WeaponBuild', /*CHAN_BODY*/CHAN_AUTO, 1.0, ATTN_NONE);
   }
   else
   {

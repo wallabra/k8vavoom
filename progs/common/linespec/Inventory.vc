@@ -612,7 +612,7 @@ void PlayPickupSound(EntityEx Toucher)
 {
   if (PickupSound)
   {
-    Toucher.PlaySound(PickupSound, CHAN_BODY, 1.0,
+    Toucher.PlaySound(PickupSound, /*CHAN_BODY*/CHAN_AUTO, 1.0,
       bFullVolPickupSound ? ATTN_NONE : ATTN_NORMAL);
   }
 }
