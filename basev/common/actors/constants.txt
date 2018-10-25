@@ -158,3 +158,21 @@ const int AAPTR_PLAYER8 = 0x2000;
 const int AAPTR_FRIENDPLAYER = 0x4000;
 const int AAPTR_LINETARGET = 0x8000;
 //};
+
+
+// Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
+//enum EJumpFlags
+const int JLOSF_PROJECTILE =    1;
+//!NOT_IMPLEMENTED!const int JLOSF_NOSIGHT =     1 << 1;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOFOV =    1 << 2;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOSIGHT =  1 << 3;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOJUMP =   1 << 4;
+const int JLOSF_DEADNOJUMP =    1 << 5;
+//!NOT_IMPLEMENTED!const int JLOSF_CHECKMASTER =   1 << 6;
+//!NOT_IMPLEMENTED!const int JLOSF_TARGETLOS =   1 << 7;
+//!NOT_IMPLEMENTED!const int JLOSF_FLIPFOV =     1 << 8;
+//!NOT_IMPLEMENTED!const int JLOSF_ALLYNOJUMP =    1 << 9;
+//!NOT_IMPLEMENTED!const int JLOSF_COMBATANTONLY = 1 << 10;
+//!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM =   1 << 11;
+//!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER =   1 << 12;
+//};
