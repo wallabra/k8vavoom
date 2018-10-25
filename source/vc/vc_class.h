@@ -262,7 +262,7 @@ public:
   TMap<VName, AliasInfo> AliasList; // key: alias
   int AliasFrameNum;
 
-  VName ResolveAlias (VName aname); // returns `aname` for unknown alias, or `NAME_None` for alias loop
+  VName ResolveAlias (VName aname, bool nocase=false); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
   TMap<VName, bool> KnownEnums;
 
@@ -299,6 +299,7 @@ public:
   VField *FindFieldChecked (VName);
   VProperty *FindProperty (VName);
   VMethod *FindMethod (VName Name, bool bRecursive=true);
+  VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr);
   int GetMethodIndex (VName);

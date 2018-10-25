@@ -299,6 +299,37 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
 
 //==========================================================================
 //
+//  VMemberBase::StaticFindMemberNoCase
+//
+//==========================================================================
+VMemberBase *VMemberBase::StaticFindMemberNoCase (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
+  guard(VMemberBase::StaticFindMemberNoCase);
+  //VName realName = AName;
+  if (AType == MEMBER_Const && EnumName != NAME_None) {
+    // rewrite name
+    VStr nn(*EnumName);
+    nn += " ";
+    nn += *AName;
+    AName = VName(*nn);
+  }
+  //FIXME: make this faster
+  int len = GMembers.length();
+  for (int f = 0; f < len; ++f) {
+    VMemberBase *m = GMembers[f];
+    if (VStr::ICmp(*m->Name, *AName) == 0 && (m->Outer == AOuter ||
+        (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
+        (AType == ANY_MEMBER || m->MemberType == AType))
+    {
+      return m;
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::StaticFindType
 //
 //==========================================================================

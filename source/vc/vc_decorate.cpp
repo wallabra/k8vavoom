@@ -751,13 +751,14 @@ void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   guard(VDecorateInvocation::DoResolve);
+  //if (VStr::ICmp(*Name, "acs_executewithresult") == 0) Name = VName("ACS_ExecuteWithResult");
   if (ec.SelfClass) {
     // first try with decorate_ prefix, then without.
-    VMethod *M = ec.SelfClass->FindMethod(va("decorate_%s", *Name));
-    if (!M) M = ec.SelfClass->FindMethod(Name);
+    VMethod *M = ec.SelfClass->FindMethodNoCase(va("decorate_%s", *Name));
+    if (!M) M = ec.SelfClass->FindMethodNoCase(Name);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
-        ParseError(Loc, "Iterator methods can only be used in foreach statements");
+        ParseError(Loc, "Iterator methods can only be used in foreach statements (method '%s', class '%s')", *Name, *ec.SelfClass->GetFullName());
         delete this;
         return nullptr;
       }
@@ -768,7 +769,12 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
     }
   }
 
-  ParseError(Loc, "Unknown method %s", *Name);
+  if (ec.SelfClass) {
+    ParseError(Loc, "Unknown decorate action `%s` in class `%s`", *Name, *ec.SelfClass->GetFullName());
+  } else {
+    ParseError(Loc, "Unknown decorate action `%s`", *Name);
+  }
+  //*(int *)0 = 0;
   delete this;
   return nullptr;
   unguard;

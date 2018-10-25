@@ -213,7 +213,7 @@ void VClass::CompilerShutdown () {
 //  returns `aname` for unknown alias, or `NAME_None` for alias loop
 //
 //==========================================================================
-VName VClass::ResolveAlias (VName aname) {
+VName VClass::ResolveAlias (VName aname, bool nocase) {
   if (aname == NAME_None) return NAME_None;
   if (++AliasFrameNum == 0x7fffffff) {
     for (auto it = AliasList.first(); it; ++it) it.getValue().aframe = 0;
@@ -221,15 +221,33 @@ VName VClass::ResolveAlias (VName aname) {
   }
   VName res = aname;
   for (;;) {
-    auto ai = AliasList.get(aname);
-    if (!ai) {
-      if (!ParentClass) return res;
-      return ParentClass->ResolveAlias(res);
+    if (nocase) {
+      bool found = false;
+      for (auto it = AliasList.first(); it; ++it) {
+        if (VStr::ICmp(*it.getKey(), *aname) == 0) {
+          if (it.getValue().aframe == AliasFrameNum) return NAME_None; // loop
+          res = it.getValue().origName;
+          it.getValue().aframe = AliasFrameNum;
+          aname = res;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        if (!ParentClass) return res;
+        return ParentClass->ResolveAlias(res, nocase);
+      }
+    } else {
+      auto ai = AliasList.get(aname);
+      if (!ai) {
+        if (!ParentClass) return res;
+        return ParentClass->ResolveAlias(res);
+      }
+      if (ai->aframe == AliasFrameNum) return NAME_None; // loop
+      res = ai->origName;
+      ai->aframe = AliasFrameNum;
+      aname = res;
     }
-    if (ai->aframe == AliasFrameNum) return NAME_None; // loop
-    res = ai->origName;
-    ai->aframe = AliasFrameNum;
-    aname = res;
   }
 }
 
@@ -648,7 +666,24 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
   Name = ResolveAlias(Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) return M;
-  if (bRecursive && ParentClass) return ParentClass->FindMethod(Name);
+  if (bRecursive && ParentClass) return ParentClass->FindMethod(Name, bRecursive);
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindMethodNoCase
+//
+//==========================================================================
+VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
+  guard(VClass::FindMethodNoCase);
+  if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name, true); // nocase
+  VMethod *M = (VMethod *)StaticFindMemberNoCase(Name, this, MEMBER_Method);
+  if (M) return M;
+  if (bRecursive && ParentClass) return ParentClass->FindMethodNoCase(Name, bRecursive);
   return nullptr;
   unguard;
 }
