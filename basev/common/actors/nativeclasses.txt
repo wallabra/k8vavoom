@@ -365,6 +365,6 @@ class Inventory extends Actor
   action native A_FireBFG();
 
   // ACS
-  action native ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3);
-  action native ACS_ExecuteWithResult (int script, int s_arg1, int s_arg2, int s_arg3);
+  action native ACS_NamedExecute (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+  action native ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
 }
