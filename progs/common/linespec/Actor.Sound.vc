@@ -165,7 +165,7 @@ final void A_FLoopActiveSound()
 //==========================================================================
 final void A_StopSound(optional int channel) {
   if (!specified_channel) channel = CHAN_VOICE;
-  StopSound(CHAN_VOICE);
+  StopSound(channel);
 }
 
 //==========================================================================
@@ -176,41 +176,15 @@ final void A_StopSound(optional int channel) {
 
 final void A_StopSoundEx(string Channel)
 {
-  //  Channel
-  int Chan;
-  if (!stricmp(Channel, "Auto"))
-  {
-    Chan = CHAN_AUTO;
-  }
-  else if (!stricmp(Channel, "Weapon"))
-  {
-    Chan = CHAN_WEAPON;
-  }
-  else if (!stricmp(Channel, "Voice"))
-  {
-    Chan = CHAN_VOICE;
-  }
-  else if (!stricmp(Channel, "Item"))
-  {
-    Chan = CHAN_ITEM;
-  }
-  else if (!stricmp(Channel, "Body"))
-  {
-    Chan = CHAN_BODY;
-  }
-  else if (!stricmp(Channel, "SoundSlot5"))
-  {
-    Chan = 5;
-  }
-  else if (!stricmp(Channel, "SoundSlot6"))
-  {
-    Chan = 6;
-  }
-  else if (!stricmp(Channel, "SoundSlot7"))
-  {
-    Chan = 7;
-  }
-
+  int Chan = 0;
+       if (!stricmp(Channel, "Auto")) Chan = CHAN_AUTO;
+  else if (!stricmp(Channel, "Weapon")) Chan = CHAN_WEAPON;
+  else if (!stricmp(Channel, "Voice")) Chan = CHAN_VOICE;
+  else if (!stricmp(Channel, "Item")) Chan = CHAN_ITEM;
+  else if (!stricmp(Channel, "Body")) Chan = CHAN_BODY;
+  else if (!stricmp(Channel, "SoundSlot5")) Chan = 5;
+  else if (!stricmp(Channel, "SoundSlot6")) Chan = 6;
+  else if (!stricmp(Channel, "SoundSlot7")) Chan = 7;
   StopSound(Chan);
 }
 
