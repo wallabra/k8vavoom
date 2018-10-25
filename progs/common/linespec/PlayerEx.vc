@@ -984,14 +984,14 @@ void MovePsprites(float deltaTime)
 //
 //===========================================================================
 
-void FireWeapon()
+void FireWeapon(optional state firestate)
 {
   bReloadQueued = false;
 
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
 
   MO.SetState(EntityEx(MO).MissileState);
-  SetViewState(ps_weapon, ReadyWeapon.GetAttackState(Refire));
+  SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
@@ -1004,14 +1004,14 @@ void FireWeapon()
 //
 //===========================================================================
 
-void AltFireWeapon()
+void AltFireWeapon(optional state firestate)
 {
   bReloadQueued = false;
 
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
   MO.SetState(EntityEx(MO).MissileState);
-  SetViewState(ps_weapon, ReadyWeapon.GetAltAttackState(Refire));
+  SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));

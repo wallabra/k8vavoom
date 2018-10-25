@@ -917,7 +917,7 @@ final void A_Raise()
 //  The player can re-fire the weapon without lowering it entirely.
 //
 //===========================================================================
-final void A_ReFire () {
+private final void do_A_ReFire (optional state refirestate) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -932,7 +932,7 @@ final void A_ReFire () {
   {
     //writeln("A_ReFire: primary");
     ++PlayerEx(Player).Refire;
-    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon();
+    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon(refirestate!optional);
   }
   else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
            (Player.Buttons&BT_ALT_ATTACK) &&
@@ -940,12 +940,34 @@ final void A_ReFire () {
   {
     //writeln("A_ReFire: secondary");
     ++PlayerEx(Player).Refire;
-    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon();
+    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon(refirestate!optional);
   } else {
     //writeln("A_ReFire: nothing");
     PlayerEx(Player).Refire = 0;
     Wpn.CheckAmmo(Wpn.FireMode, true);
   }
+}
+
+
+//===========================================================================
+//
+//  A_ReFire
+//
+//  VC state function cannot have arguments yet
+//
+//===========================================================================
+final void A_ReFire () {
+  do_A_ReFire();
+}
+
+
+//===========================================================================
+//
+//  A_ReFire
+//
+//===========================================================================
+final void decorate_A_ReFire (optional state refirestate) {
+  do_A_ReFire(refirestate!optional);
 }
 
 
