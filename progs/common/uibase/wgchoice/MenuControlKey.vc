@@ -80,6 +80,7 @@ override bool OnKeyDown (int key) {
     case K_ENTER:
     case K_PADENTER:
     case K_MOUSE1:
+    case K_JOY1:
       GetClGame().CurrentCtl = self;
       GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel", ClientGameShared::MB_Control, false);
       return true;
