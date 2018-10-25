@@ -434,6 +434,7 @@ private:
   DECLARE_FUNCTION(StartTypedACScripts)
 
   DECLARE_FUNCTION(RunNamedACS)
+  DECLARE_FUNCTION(RunACSWithResult)
 
   DECLARE_FUNCTION(SetBodyQueueTrans)
 

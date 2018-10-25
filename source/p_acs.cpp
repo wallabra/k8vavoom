@@ -1657,25 +1657,23 @@ void VAcsLevel::CheckAcsStore()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::Start
 //
 //==========================================================================
-
-bool VAcsLevel::Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3,
+bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3,
   VEntity *Activator, line_t *Line, int Side, bool Always, bool WantResult,
-  bool Net)
+  bool Net, int *realres)
 {
   guard(VAcsLevel::Start);
-  if (MapNum)
-  {
+  if (MapNum) {
     VName Map = P_GetMapLumpNameByLevelNum(MapNum);
-    if (Map != NAME_None && Map != XLevel->MapName)
-    {
-      // Add to the script store
-      return AddToACSStore(Always ? VAcsStore::StartAlways :
-        VAcsStore::Start, Map, Number, Arg1, Arg2, Arg3, Activator);
+    if (Map != NAME_None && Map != XLevel->MapName) {
+      // add to the script store
+      if (realres) *realres = 0;
+      return AddToACSStore((Always ? VAcsStore::StartAlways : VAcsStore::Start), Map, Number, Arg1, Arg2, Arg3, Activator);
     }
   }
 
@@ -1689,25 +1687,24 @@ bool VAcsLevel::Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3,
     GCon->Logf("VAcsLevel::Start: by direct index (%d)", -(Number+100000));
     Info = FindScript(Number, Object);
   }
-  if (!Info)
-  {
-    //  Script not found
+  if (!Info) {
+    // script not found
     GCon->Logf(NAME_Dev, "Start ACS ERROR: Unknown script %d", Number);
+    if (realres) *realres = 0;
     return false;
   }
-  if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) &&
-    !(Info->Flags & SCRIPTF_Net))
-  {
-    GCon->Logf("%s tried to puke script %d",
-      *Activator->Player->PlayerName, Number);
+  if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) && !(Info->Flags & SCRIPTF_Net)) {
+    GCon->Logf("%s tried to puke script %d", *Activator->Player->PlayerName, Number);
+    if (realres) *realres = 0;
     return false;
   }
-  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1,
-    Arg2, Arg3, Always, false);
-  if (WantResult)
-  {
-    return !!script->RunScript(host_frametime);
+  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Always, false);
+  if (WantResult) {
+    int res = script->RunScript(host_frametime);
+    if (realres) *realres = res;
+    return !!res;
   }
+  if (realres) *realres = 0;
   return true;
   unguard;
 }
@@ -5489,6 +5486,22 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
   RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, true/*net*/));
+}
+
+
+// int RunACSWithResult (VEntity activator, int script, int s_arg1, int s_arg2, int s_arg3)
+IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
+  P_GET_INT(Arg3);
+  P_GET_INT(Arg2);
+  P_GET_INT(Arg1);
+  P_GET_INT(Script);
+  P_GET_PTR(VEntity, Activator);
+  P_GET_SELF;
+  if (Script < 0) { RET_INT(0); return; }
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACS"); }
+  int res = 0;
+  Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  RET_INT(res);
 }
 
 

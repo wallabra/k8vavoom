@@ -863,3 +863,13 @@ final void A_SetArg (int n, int v) {
 final bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3) {
   return XLevel.RunNamedACS(self, script, map, s_arg1, s_arg2, s_arg3);
 }
+
+
+//==========================================================================
+//
+//  ACS_ExecuteWithResult
+//
+//==========================================================================
+final int ACS_ExecuteWithResult (int script, int s_arg1, int s_arg2, int s_arg3) {
+  return XLevel.RunACSWithResult(self, script, s_arg1, s_arg2, s_arg3);
+}
