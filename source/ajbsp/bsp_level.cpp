@@ -963,6 +963,18 @@ subsec_t *LookupSubsec(int index)
 node_t *LookupNode(int index)
 	LOOKERUPPER(nodes, num_nodes, "node")
 
+int GetVertexIndex (const vertex_t *v) {
+  if (!v) return -1;
+  for (int f = 0; f < num_vertices; ++f) if (v == lev_vertices[f]) return f;
+  return -666;
+}
+
+int GetLinedefIndex (const linedef_t *ld) {
+  if (!ld) return -1;
+  for (int f = 0; f < num_linedefs; ++f) if (ld == lev_linedefs[f]) return f;
+  return -666;
+}
+
 
 
 /*

@@ -560,6 +560,9 @@ seg_t *LookupSeg(int index);
 subsec_t *LookupSubsec(int index);
 node_t *LookupNode(int index);
 
+int GetVertexIndex (const vertex_t *v);
+int GetLinedefIndex (const linedef_t *);
+
 
 /* limit flags, to show what went wrong */
 #define LIMIT_VERTEXES     0x000001

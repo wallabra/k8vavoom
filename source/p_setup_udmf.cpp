@@ -1219,16 +1219,18 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
       Host_Error("Bad vertex index %d (08)", Parser.ParsedLines[i].V2Index);
     }
 
-    auto ip = vremap.find(Parser.ParsedLines[i].V1Index);
-    if (!ip || *ip < 0 || *ip >= NumVertexes) Sys_Error("UDMF: internal error (v0)");
-    Lines[i].v1 = &Vertexes[*ip];
+    auto ip0 = vremap.find(Parser.ParsedLines[i].V1Index);
+    if (!ip0 || *ip0 < 0 || *ip0 >= NumVertexes) Sys_Error("UDMF: internal error (v0)");
+    Lines[i].v1 = &Vertexes[*ip0];
 
-    ip = vremap.find(Parser.ParsedLines[i].V2Index);
-    if (!ip || *ip < 0 || *ip >= NumVertexes) Sys_Error("UDMF: internal error (v1)");
-    Lines[i].v2 = &Vertexes[*ip];
+    auto ip1 = vremap.find(Parser.ParsedLines[i].V2Index);
+    if (!ip1 || *ip1 < 0 || *ip1 >= NumVertexes) Sys_Error("UDMF: internal error (v1)");
+    Lines[i].v2 = &Vertexes[*ip1];
 
     //Lines[i].v1 = &Vertexes[Parser.ParsedLines[i].V1Index];
     //Lines[i].v2 = &Vertexes[Parser.ParsedLines[i].V2Index];
+
+    //if (i == 1018) GCon->Logf("LD1018: v0=%d; v1=%d; v0=(%f,%f); v1=(%f,%f)", *ip0, *ip1, Vertexes[*ip0].x, Vertexes[*ip0].y, Vertexes[*ip1].x, Vertexes[*ip1].y);
   }
 
   if (!(LevelFlags&LF_Extended)) {

@@ -133,7 +133,10 @@ void RecomputeSeg(seg_t *seg)
 	seg->p_length = UtilComputeDist(seg->pdx, seg->pdy);
 
 	if (seg->p_length <= 0)
-		ajbsp_BugError("Seg %p has zero p_length.\n", seg);
+		ajbsp_BugError("Seg of linedef %d has zero p_length ld:%d:(%f,%f)-%d:(%f,%f); seg:(%f,%f)-(%f,%f).\n", GetLinedefIndex(seg->linedef),
+			GetVertexIndex(seg->linedef->start), seg->linedef->start->x, seg->linedef->start->y,
+			GetVertexIndex(seg->linedef->end), seg->linedef->end->x, seg->linedef->end->y,
+			seg->start->x, seg->start->y, seg->end->x, seg->end->y);
 
 	seg->p_perp =  seg->psy * seg->pdx - seg->psx * seg->pdy;
 	seg->p_para = -seg->psx * seg->pdx - seg->psy * seg->pdy;

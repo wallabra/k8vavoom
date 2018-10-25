@@ -491,10 +491,21 @@ static int VertexCompare(const void *p1, const void *p2)
 	if (vert1 == vert2)
 		return 0;
 
+	//k8: no way, we're using fractional coords
+	/*
 	if ((int)A->x != (int)B->x)
 		return (int)A->x - (int)B->x;
 
 	return (int)A->y - (int)B->y;
+	*/
+
+	if (A->x < B->x) return -1;
+	if (A->x > B->x) return 1;
+
+	if (A->y < B->y) return -1;
+	if (A->y > B->y) return 1;
+
+	return 0;
 }
 
 
@@ -608,10 +619,21 @@ static int LineStartCompare(const void *p1, const void *p2)
 	C = LineVertexLowest(A) ? A->end : A->start;
 	D = LineVertexLowest(B) ? B->end : B->start;
 
+	//k8: no way, we're using fractional coords
+	/*
 	if ((int)C->x != (int)D->x)
 		return (int)C->x - (int)D->x;
 
 	return (int)C->y - (int)D->y;
+	*/
+
+	if (C->x < D->x) return -1;
+	if (C->x > D->x) return 1;
+
+	if (C->y < D->y) return -1;
+	if (C->y > D->y) return 1;
+
+	return 0;
 }
 
 static int LineEndCompare(const void *p1, const void *p2)
@@ -632,10 +654,21 @@ static int LineEndCompare(const void *p1, const void *p2)
 	C = LineVertexLowest(A) ? A->start : A->end;
 	D = LineVertexLowest(B) ? B->start : B->end;
 
+	//k8: no way, we're using fractional coords
+	/*
 	if ((int)C->x != (int)D->x)
 		return (int)C->x - (int)D->x;
 
 	return (int)C->y - (int)D->y;
+	*/
+
+	if (C->x < D->x) return -1;
+	if (C->x > D->x) return 1;
+
+	if (C->y < D->y) return -1;
+	if (C->y > D->y) return 1;
+
+	return 0;
 }
 
 
