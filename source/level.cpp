@@ -1091,6 +1091,13 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
 
   // find segs for this decal (there may be several segs)
   for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
+    // don't spawn decals at sliding linedefs
+    //if (seg->linedef) fprintf(stderr, "ldef(%p): special=%d\n", seg->linedef, seg->linedef->special);
+    if (seg->linedef && (seg->linedef->flags&ML_NODECAL) != 0)
+    {
+      continue;
+    }
+
     if (/*seg->linedef == li &&*/ seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) {
         //fprintf(stderr, "* SKIP seg: (segd=%f:%f; seg=%f:%f)\n", segd0, segd1, seg->offset, seg->offset+seg->length);
@@ -1183,6 +1190,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
           }
         }
       }
+
       // create decal
       decal_t *decal = new decal_t;
       memset((void *)decal, 0, sizeof(decal_t));
@@ -1326,7 +1334,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     decanimuid = 1;
     for (int f = 0; f < NumLines; ++f) {
       line_t *ld = Lines+f;
-      ld->decalMark = 0;
+      if (ld->decalMark != -1) ld->decalMark = 0;
     }
   }
 

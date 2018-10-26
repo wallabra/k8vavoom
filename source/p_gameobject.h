@@ -68,6 +68,11 @@ enum {
   LNSPEC_LineTranslucent      = 208,
   LNSPEC_TransferHeights      = 209,
 
+  LNSPEC_ScrollTextureLeft = 100,// 100
+  LNSPEC_ScrollTextureRight,
+  LNSPEC_ScrollTextureUp,
+  LNSPEC_ScrollTextureDown,
+
   LNSPEC_PlaneCopy = 118,
   LNSPEC_PlaneAlign = 181,
 
@@ -159,6 +164,7 @@ enum {
   ML_FIRSTSIDEONLY        = 0x00800000, // actiavte only when crossed from front side
   ML_KEEPDATA             = 0x01000000, // keep FloorData or CeilingData after activating them
                                         // used to simulate original Heretic behaviour
+  ML_NODECAL              = 0x02000000, // don't spawn decals on this linedef
   ML_SPAC_SHIFT = 10,
   ML_SPAC_MASK = 0x00001c00,
 };
