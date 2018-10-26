@@ -153,6 +153,8 @@ static const VDehFlag DehFlags[] = {
 
 
 static int dehCurrLine = 0;
+static bool strEOL = false;
+static bool bexMode = false;
 
 
 //==========================================================================
@@ -167,6 +169,7 @@ static bool GetLine () {
 
     if (!*PatchPtr) {
       String = nullptr;
+      strEOL = true;
       return false;
     }
 
@@ -182,22 +185,62 @@ static bool GetLine () {
       ++PatchPtr;
     }
 
-    if (*String == '#') {
-      *String = 0;
-      continue;
-    }
-
     while (*String && *(vuint8 *)String <= ' ') ++String;
+
+    // comments
+    if (*String == '#') { *String = 0; continue; }
+    if (bexMode && String[0] == '/' && String[1] == '/') { *String = 0; continue; }
+
     char *End = String+VStr::Length(String);
     while (End > String && (vuint8)End[-1] <= ' ') {
       End[-1] = 0;
       --End;
     }
+
+    // strip comments
+    if (bexMode) {
+      char *s = String;
+      char qch = 0;
+      while (*s) {
+        if (qch) {
+          if (s[0] == '\\') {
+            ++s;
+            if (*s) ++s;
+            continue;
+          }
+          if (s[0] == qch) qch = 0;
+          ++s;
+          continue;
+        }
+        // not in string
+        if ((vuint8)s[0] <= ' ') { ++s; continue; }
+        if (s[0] == '/' && s[1] == '/') { *s = 0; break; }
+        ++s;
+      }
+    }
   } while (!*String);
 
+  strEOL = false;
   return true;
   unguard;
 }
+
+
+//==========================================================================
+//
+//  GetToken
+//
+//==========================================================================
+/*
+static VStr GetToken () {
+  if (strEOL) return VStr();
+  while (*String && *(vuint8 *)String <= ' ') ++String;
+  if (!String[0]) { strEOL = true; return VStr(); }
+  VStr res;
+  while (*String && *(vuint8 *)String <= ' ') res += *String++;
+  return res;
+}
+*/
 
 
 //==========================================================================
@@ -1124,7 +1167,7 @@ static void ReadText (int oldSize) {
   char *newStr;
   int len;
 
-  lenPtr = strtok(nullptr, " ");
+  lenPtr = strtok(nullptr, " \t");
   if (!lenPtr) return;
   newSize = atoi(lenPtr);
 
@@ -1302,14 +1345,15 @@ static void LoadDehackedFile (VStream *Strm) {
     }
   } else {
     GCon->Logf(NAME_Init, "Missing DeHackEd header, assuming BEX file");
+    bexMode = true;
     GetLine();
   }
 
   while (String) {
-    char *Section = strtok(String, " ");
+    char *Section = strtok(String, " \t");
     if (!Section) { GetLine(); continue; }
 
-    char *numStr = strtok(nullptr, " ");
+    char *numStr = strtok(nullptr, " \t");
     int i = 0;
     if (numStr) i = atoi(numStr);
 
