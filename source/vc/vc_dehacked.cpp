@@ -198,9 +198,10 @@ static bool GetLine () {
     }
 
     // strip comments
+    /*
     if (bexMode) {
       char *s = String;
-      char qch = 0;
+      //char qch = 0;
       while (*s) {
         if (qch) {
           if (s[0] == '\\') {
@@ -214,10 +215,12 @@ static bool GetLine () {
         }
         // not in string
         if ((vuint8)s[0] <= ' ') { ++s; continue; }
+        if (s[0] == '\'' || s[0] == '"') { qch = *s++; continue; }
         if (s[0] == '/' && s[1] == '/') { *s = 0; break; }
         ++s;
       }
     }
+    */
   } while (!*String);
 
   strEOL = false;
