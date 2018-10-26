@@ -1855,6 +1855,11 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         continue;
       }
 
+      if (sc->String == "{") {
+        sc->Error(va("%s: complex state actions in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
+        return false;
+      }
+
       // get function name and parse arguments
       auto actionLoc = sc->GetLoc();
       VStr FuncName = sc->String;
@@ -2145,6 +2150,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     // get full name of the property
     auto prloc = sc->GetLoc(); // for error messages
     sc->ExpectIdentifier();
+
+    if (sc->String == "var") {
+      sc->Error(va("%s: user variables in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
+    }
+
     VStr Prop = sc->String;
     while (sc->Check(".")) {
       sc->ExpectIdentifier();
@@ -2152,7 +2162,6 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
       Prop += sc->String;
     }
     VName PropName = *Prop.ToLower();
-
     bool FoundProp = false;
     for (int j = 0; j < FlagList.Num() && !FoundProp; ++j) {
       VFlagList &ClassDef = FlagList[j];
