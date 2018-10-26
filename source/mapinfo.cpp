@@ -1380,8 +1380,10 @@ static void ParseMapInfo (VScriptParser *sc) {
           appendNumFixup(SpawnNumFixups, VStr(sc->String), num);
         }
         sc->SetCMode(cmode);
+      } else if (sc->Check("author")) {
+        sc->ExpectString();
       } else {
-        sc->Error(va("Invalid command %s", *sc->String));
+        sc->Error(va("Invalid command '%s'", *sc->String));
         error = true;
         break;
       }
