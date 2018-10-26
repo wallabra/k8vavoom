@@ -882,7 +882,7 @@ void VRenderLevelShared::RenderPlayerView () {
   if (times_render_highlevel) GCon->Logf("render scene time: %f", stt);
 
   // draw the psprites on top of everything
-  if (fov <= 90.0 && cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
+  if (/*fov <= 90.0 &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
 
   Drawer->EndView();
 

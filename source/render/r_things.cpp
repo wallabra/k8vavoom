@@ -39,6 +39,8 @@
 #include "sv_local.h"
 
 extern VCvarB gl_pic_filtering;
+extern VCvarF fov;
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -542,36 +544,34 @@ void VRenderLevelShared::DrawTranslucentPolys () {
 }
 
 
+extern TVec clip_base[4];
+extern refdef_t refdef;
+
 //==========================================================================
 //
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
-
-void VRenderLevelShared::RenderPSprite(VViewState *VSt, float PSP_DIST,
+void VRenderLevelShared::RenderPSprite (VViewState *VSt, float PSP_DIST,
   vuint32 light, vuint32 Fade, float Alpha, bool Additive)
 {
   guard(VRenderLevelShared::RenderPSprite);
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
-  int         lump;
-  bool        flip;
+  int lump;
+  bool flip;
 
   // decide which patch to use
-  if ((vuint32)VSt->State->SpriteIndex >= MAX_SPRITE_MODELS)
-  {
+  if ((vuint32)VSt->State->SpriteIndex >= MAX_SPRITE_MODELS) {
 #ifdef PARANOID
-    GCon->Logf("R_ProjectSprite: invalid sprite number %d",
-      VSt->State->SpriteIndex);
+    GCon->Logf("R_ProjectSprite: invalid sprite number %d", VSt->State->SpriteIndex);
 #endif
     return;
   }
   sprdef = &sprites[VSt->State->SpriteIndex];
-  if ((VSt->State->Frame & VState::FF_FRAMEMASK) >= sprdef->numframes)
-  {
+  if ((VSt->State->Frame & VState::FF_FRAMEMASK) >= sprdef->numframes) {
 #ifdef PARANOID
-    GCon->Logf("R_ProjectSprite: invalid sprite frame %d : %d",
-      VSt->State->SpriteIndex, VSt->State->Frame);
+    GCon->Logf("R_ProjectSprite: invalid sprite frame %d : %d", VSt->State->SpriteIndex, VSt->State->Frame);
 #endif
     return;
   }
@@ -586,63 +586,49 @@ void VRenderLevelShared::RenderPSprite(VViewState *VSt, float PSP_DIST,
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
 
-  TVec  dv[4];
+  TVec dv[4];
 
-  float PSP_DISTI = 1.0 / PSP_DIST;
-  TVec sprorigin = vieworg + PSP_DIST * viewforward;
+  float PSP_DISTI = 1.0/PSP_DIST;
+  TVec sprorigin = vieworg+PSP_DIST*viewforward;
 
-  float sprx = 160.0 - VSt->SX + TexSOffset;
-  float spry = 100.0 - VSt->SY + TexTOffset;
+  float sprx = 160.0-VSt->SX+TexSOffset;
+  float spry = 100.0-VSt->SY+TexTOffset;
 
   spry -= cl->PSpriteSY;
+  //k8: this is not right, but meh...
+  if (fov > 90) spry -= (refdef.fovx-1.0f)*100.0f;
 
   //  1 / 160 = 0.00625
-  TVec start = sprorigin - (sprx * PSP_DIST * 0.00625) * viewright;
-  TVec end = start + (TexWidth * PSP_DIST * 0.00625) * viewright;
+  TVec start = sprorigin-(sprx*PSP_DIST*0.00625)*viewright;
+  TVec end = start+(TexWidth*PSP_DIST*0.00625)*viewright;
 
   //  1 / 160.0 * 120 / 100 = 0.0075
-  TVec topdelta = (spry * PSP_DIST * 0.0075) * viewup;
-  TVec botdelta = topdelta - (TexHeight * PSP_DIST * 0.0075) * viewup;
-  if (aspect_ratio > 1)
-  {
-    topdelta *= 100.0 / 120.0;
-    botdelta *= 100.0 / 120.0;
+  TVec topdelta = (spry*PSP_DIST*0.0075)*viewup;
+  TVec botdelta = topdelta-(TexHeight*PSP_DIST*0.0075)*viewup;
+  if (aspect_ratio > 1) {
+    topdelta *= 100.0/120.0;
+    botdelta *= 100.0/120.0;
   }
 
-  dv[0] = start + botdelta;
-  dv[1] = start + topdelta;
-  dv[2] = end + topdelta;
-  dv[3] = end + botdelta;
+  dv[0] = start+botdelta;
+  dv[1] = start+topdelta;
+  dv[2] = end+topdelta;
+  dv[3] = end+botdelta;
 
   TVec saxis;
   TVec taxis;
   TVec texorg;
-  if (flip)
-  {
-    saxis = -(viewright * 160 * PSP_DISTI);
+  if (flip) {
+    saxis = -(viewright*160*PSP_DISTI);
     texorg = dv[2];
-  }
-  else
-  {
-    saxis = viewright * 160 * PSP_DISTI;
+  } else {
+    saxis = viewright*160*PSP_DISTI;
     texorg = dv[1];
   }
-  if (aspect_ratio == 0)
-  {
-    taxis = -(viewup * 160 * PSP_DISTI);
-  }
-  else if (aspect_ratio == 1)
-  {
-    taxis = -(viewup * 100 * 4 / 3 * PSP_DISTI);
-  }
-  else if (aspect_ratio == 2)
-  {
-    taxis = -(viewup * 100 * 16 / 9 * PSP_DISTI);
-  }
-  else if (aspect_ratio > 2)
-  {
-    taxis = -(viewup * 100 * 16 / 10 * PSP_DISTI);
-  }
+       if (aspect_ratio == 0) taxis = -(viewup*160*PSP_DISTI);
+  else if (aspect_ratio == 1) taxis = -(viewup*100*4/3*PSP_DISTI);
+  else if (aspect_ratio == 2) taxis = -(viewup*100*16/9*PSP_DISTI);
+  else if (aspect_ratio > 2) taxis = -(viewup*100*16/10*PSP_DISTI);
 
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
     0, ColourMap, light, Fade, -viewforward,
@@ -693,19 +679,15 @@ bool VRenderLevelShared::RenderViewModel(VViewState *VSt, vuint32 light,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VRenderLevelShared::DrawPlayerSprites
 //
 //==========================================================================
-
-void VRenderLevelShared::DrawPlayerSprites()
-{
+void VRenderLevelShared::DrawPlayerSprites () {
   guard(VRenderLevelShared::DrawPlayerSprites);
-  if (!r_draw_psprites || r_chasecam)
-  {
-    return;
-  }
+  if (!r_draw_psprites || r_chasecam) return;
 
   int RendStyle = STYLE_Normal;
   float Alpha = 1.0;
@@ -713,13 +695,10 @@ void VRenderLevelShared::DrawPlayerSprites()
 
   cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
+  } else if (RendStyle == STYLE_OptFuzzy) {
     RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
   }
 
@@ -734,26 +713,13 @@ void VRenderLevelShared::DrawPlayerSprites()
   Alpha = MID(0.0, Alpha, 1.0);
 
   // add all active psprites
-  for (int i = 0; i < NUMPSPRITES; i++)
-  {
-    if (!cl->ViewStates[i].State)
-    {
-      continue;
-    }
+  for (int i = 0; i < NUMPSPRITES; ++i) {
+    if (!cl->ViewStates[i].State) continue;
 
     vuint32 light;
-    if (RendStyle == STYLE_Fuzzy)
-    {
-      light = 0;
-    }
-    else if (cl->ViewStates[i].State->Frame & VState::FF_FULLBRIGHT)
-    {
-      light = 0xffffffff;
-    }
-    else
-    {
-      light = LightPoint(vieworg, cl->MO);
-    }
+         if (RendStyle == STYLE_Fuzzy) light = 0;
+    else if (cl->ViewStates[i].State->Frame & VState::FF_FULLBRIGHT) light = 0xffffffff;
+    else light = LightPoint(vieworg, cl->MO);
 
     //FIXME: fake "solid color" with colored light for now
     if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
@@ -763,7 +729,7 @@ void VRenderLevelShared::DrawPlayerSprites()
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
 
     if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
-      RenderPSprite(&cl->ViewStates[i], 3 - i, light, Fade, Alpha, Additive);
+      RenderPSprite(&cl->ViewStates[i], 3-i, light, Fade, Alpha, Additive);
     }
   }
   unguard;
