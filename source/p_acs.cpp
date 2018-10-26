@@ -5497,10 +5497,28 @@ IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
   P_GET_INT(Script);
   P_GET_PTR(VEntity, Activator);
   P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSWithResult"); }
   if (Script < 0) { RET_INT(0); return; }
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACS"); }
   int res = 0;
   Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  RET_INT(res);
+}
+
+
+// int RunNamedACSWithResult (VEntity activator, string script, int s_arg1, int s_arg2, int s_arg3)
+IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
+  P_GET_INT(Arg3);
+  P_GET_INT(Arg2);
+  P_GET_INT(Arg1);
+  P_GET_STR(Name);
+  P_GET_PTR(VEntity, Activator);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACSWithResult"); }
+  if (Name.length() == 0) { RET_INT(0); return; }
+  VName Script = VName(*Name, VName::AddLower);
+  if (Script == NAME_None) { RET_INT(0); return; }
+  int res = 0;
+  Self->Acs->Start(-Script.GetIndex(), 0/*Map*/, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
   RET_INT(res);
 }
 

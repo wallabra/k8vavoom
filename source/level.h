@@ -435,6 +435,7 @@ private:
 
   DECLARE_FUNCTION(RunNamedACS)
   DECLARE_FUNCTION(RunACSWithResult)
+  DECLARE_FUNCTION(RunNamedACSWithResult)
 
   DECLARE_FUNCTION(SetBodyQueueTrans)
 

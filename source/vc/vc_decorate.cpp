@@ -751,7 +751,7 @@ void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   guard(VDecorateInvocation::DoResolve);
-  //if (VStr::ICmp(*Name, "acs_executewithresult") == 0) Name = VName("ACS_ExecuteWithResult");
+  if (VStr::ICmp(*Name, "CallACS") == 0) Name = VName("ACS_NamedExecuteWithResult"); // decorate hack
   if (ec.SelfClass) {
     // first try with decorate_ prefix, then without.
     VMethod *M = ec.SelfClass->FindMethodNoCase(va("decorate_%s", *Name));

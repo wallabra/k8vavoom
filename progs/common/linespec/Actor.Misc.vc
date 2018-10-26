@@ -873,3 +873,13 @@ final bool ACS_NamedExecute (string script, int map, optional int s_arg1, option
 final int ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
   return XLevel.RunACSWithResult(self, script, s_arg1, s_arg2, s_arg3);
 }
+
+
+//==========================================================================
+//
+//  ACS_NamedExecuteWithResult
+//
+//==========================================================================
+final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
+  return XLevel.RunNamedACSWithResult(self, script, s_arg1, s_arg2, s_arg3);
+}
