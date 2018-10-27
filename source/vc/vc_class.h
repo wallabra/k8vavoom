@@ -241,6 +241,7 @@ public:
   VClass *Replacee;
 
   TArray<VDecorateStateAction> DecorateStateActions;
+  TMapNC<VName, VName> DecorateStateFieldTrans; // field translation; key is decorate name (lowercased), value is real field name
 
   TArray<VSpriteEffect> SpriteEffects;
 
@@ -310,6 +311,7 @@ public:
   VStateLabel *FindStateLabelChecked (VName, VName = NAME_None, bool=false);
   VStateLabel *FindStateLabelChecked (TArray<VName> &, bool);
   VDecorateStateAction *FindDecorateStateAction (VName);
+  VName FindDecorateStateFieldTrans (VName dcname);
 
   // WARNING! method with such name should exist, or return value will be invalid
   bool isRealFinalMethod (VName Name);
@@ -317,6 +319,7 @@ public:
   bool Define ();
   bool DefineMembers ();
   void Emit ();
+  bool DecorateDefine ();
   void DecorateEmit ();
   void DecoratePostLoad ();
   void EmitStateLabels ();

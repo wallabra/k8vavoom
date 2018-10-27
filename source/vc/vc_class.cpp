@@ -887,6 +887,21 @@ VDecorateStateAction *VClass::FindDecorateStateAction (VName ActName) {
 
 //==========================================================================
 //
+//  VClass::FindDecorateStateFieldTrans
+//
+//==========================================================================
+VName VClass::FindDecorateStateFieldTrans (VName dcname) {
+  guard(VClass::FindDecorateStateFieldTrans);
+  auto vp = DecorateStateFieldTrans.find(dcname);
+  if (vp) return *vp;
+  if (ParentClass) return ParentClass->FindDecorateStateFieldTrans(dcname);
+  return NAME_None;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VClass::isRealFinalMethod
 //
 //==========================================================================
@@ -1070,6 +1085,31 @@ bool VClass::DefineMembers () {
 
       ParseError(RepFields[i].Loc, "No such field or method %s", *RepFields[i].Name);
     }
+  }
+
+  return Ret;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::DecorateDefine
+//
+//==========================================================================
+bool VClass::DecorateDefine () {
+  guard(VClass::DecorateDefine);
+  bool Ret = true;
+
+  //for (int i = 0; i < Structs.Num(); ++i) Structs[i]->DefineMembers();
+
+  VField *PrevBool = nullptr;
+  for (VField *fi = Fields; fi; fi = fi->Next) {
+    if (!fi->Define()) Ret = false;
+    if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
+      fi->Type.BitMask = PrevBool->Type.BitMask<<1;
+    }
+    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
   }
 
   return Ret;

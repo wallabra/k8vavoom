@@ -296,6 +296,8 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool IsDecorateSingleName () const override;
 
+  virtual VStr toString () const override;
+
 protected:
   VDecorateSingleName ();
   virtual void DoSyntaxCopyTo (VExpression *e) override;
