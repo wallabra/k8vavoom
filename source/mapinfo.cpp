@@ -84,14 +84,16 @@ static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, in
 
 
 static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMapDtor<int, SpawnEdFixup> &fixups) {
+  //GCon->Logf("fixing '%s'... (%d)", errname, fixups.count());
   int f = 0;
   while (f < list.length()) {
     mobjinfo_t &nfo = list[f];
     SpawnEdFixup *fxp = fixups.find(nfo.DoomEdNum);
     if (fxp) {
       VStr cname = fxp->ClassName;
+      //GCon->Logf("    MAPINFO: class '%s' for %s got doomed num %d (got %d)", *cname, errname, fxp->num, nfo.DoomEdNum);
       fixups.del(nfo.DoomEdNum);
-      if (cname.length() == 0 || cname.ICmp("none")) {
+      if (cname.length() == 0 || cname.ICmp("none") == 0) {
         // remove it
         list.removeAt(f);
         continue;
@@ -104,14 +106,17 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
     }
     ++f;
   }
+  //GCon->Logf("  appending '%s'... (%d)", errname, fixups.count());
   // append new
   for (auto it = fixups.first(); it; ++it) {
     SpawnEdFixup *fxp = &it.getValue();
     VStr cname = fxp->ClassName;
-    if (cname.length() == 0 || cname.ICmp("none")) continue; // skip it
+    //GCon->Logf("    MAPINFO0: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
+    if (cname.length() == 0 || cname.ICmp("none") == 0) continue; // skip it
     // set it
     VClass *cls = VClass::FindClassNoCase(*cname);
     if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
+    //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
     mobjinfo_t &nfo = list.Alloc();
     nfo.Class = cls;
     nfo.DoomEdNum = fxp->num;
@@ -1354,6 +1359,7 @@ static void ParseMapInfo (VScriptParser *sc) {
         GCon->Logf("WARNING: Unimplemented MAPINFO command Intermission");
         sc->SkipBracketed();
       } else if (sc->Check("DoomEdNums")) {
+        //GCon->Logf("*** <%s> ***", *sc->String);
         auto cmode = sc->IsCMode();
         sc->SetCMode(true);
         sc->Expect("{");
@@ -1363,8 +1369,8 @@ static void ParseMapInfo (VScriptParser *sc) {
           int num = sc->Number;
           sc->Expect("=");
           sc->ExpectString();
-          if (sc->Check(",")) sc->Error("comples DoomEdNums aren't supported yet");
           appendNumFixup(DoomEdNumFixups, VStr(sc->String), num);
+          if (sc->Check(",")) sc->Error("comples DoomEdNums aren't supported yet");
         }
         sc->SetCMode(cmode);
       } else if (sc->Check("SpawnNums")) {
