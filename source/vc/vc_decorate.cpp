@@ -249,7 +249,7 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VExpression *ParseExpressionPriority13 (VScriptParser *sc);
+static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -257,6 +257,8 @@ TArray<VLineSpecInfo> LineSpecialInfos;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static VClass *decoClass = nullptr;
+
 static VPackage *DecPkg;
 
 static VClass *ActorClass;
@@ -1072,12 +1074,42 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VName Name, TLocation Lo
   int NumArgs = 0;
   if (!sc->Check(")")) {
     do {
-      Args[NumArgs] = ParseExpressionPriority13(sc);
+      Args[NumArgs] = ParseExpressionPriority13(sc, decoClass);
       if (NumArgs == VMethod::MAX_PARAMS) ParseError(sc->GetLoc(), "Too many arguments"); else ++NumArgs;
     } while (sc->Check(","));
     sc->Expect(")");
   }
-  return new VDecorateInvocation(Name, Loc, NumArgs, Args);
+
+  // find the state action method: first check action specials, then state actions
+  VMethod *Func = nullptr;
+  if (decoClass) {
+    VStr FuncNameLower = VStr(*Name).toLowerCase();
+    for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
+      if (LineSpecialInfos[i].Name == FuncNameLower) {
+        Func = decoClass->FindMethodChecked("A_ExecActionSpecial");
+        if (NumArgs > 5) {
+          sc->Error("Too many arguments");
+        } else {
+          // add missing arguments
+          while (NumArgs < 5) {
+            Args[NumArgs] = new VIntLiteral(0, sc->GetLoc());
+            ++NumArgs;
+          }
+          // add action special number argument
+          Args[5] = new VIntLiteral(LineSpecialInfos[i].Number, sc->GetLoc());
+          ++NumArgs;
+        }
+        break;
+      }
+    }
+
+    if (!Func) {
+      VDecorateStateAction *Act = decoClass->FindDecorateStateAction(*FuncNameLower);
+      Func = (Act ? Act->Method : nullptr);
+    }
+  }
+
+  return new VDecorateInvocation((Func ? Func->GetVName() : Name), Loc, NumArgs, Args);
   unguard;
 }
 
@@ -1111,7 +1143,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
   if (sc->Check("true")) return new VIntLiteral(1, l);
 
   if (sc->Check("(")) {
-    VExpression *op = ParseExpressionPriority13(sc);
+    VExpression *op = ParseExpressionPriority13(sc, decoClass);
     if (!op) ParseError(l, "Expression expected");
     sc->Expect(")");
     return op;
@@ -1125,7 +1157,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
           Name = VStr("GetArg");
           //fprintf(stderr, "*** ARGS ***\n");
           VExpression *Args[1];
-          Args[0] = ParseExpressionPriority13(sc);
+          Args[0] = ParseExpressionPriority13(sc, decoClass);
           if (!Args[0]) ParseError(l, "`args` index expression expected");
           sc->Expect("]");
           return new VDecorateInvocation(VName(*Name), l, 1, Args);
@@ -1160,7 +1192,7 @@ static VExpression *ParseExpressionPriority1 (VScriptParser *sc) {
   bool done = false;
   do {
     if (sc->Check("[")) {
-      VExpression *ind = ParseExpressionPriority13(sc);
+      VExpression *ind = ParseExpressionPriority13(sc, decoClass);
       sc->Expect("]");
       op = new VArrayElement(op, ind, l);
     } else {
@@ -1456,17 +1488,20 @@ static VExpression *ParseExpressionPriority12 (VScriptParser *sc) {
 //  VParser::ParseExpressionPriority13
 //
 //==========================================================================
-static VExpression *ParseExpressionPriority13 (VScriptParser *sc) {
+static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class) {
   guard(ParseExpressionPriority13);
+  VClass *olddc = decoClass;
+  decoClass = Class;
   VExpression *op = ParseExpressionPriority12(sc);
-  if (!op) return nullptr;
+  if (!op) { decoClass = olddc; return nullptr; }
   TLocation l = sc->GetLoc();
   if (sc->Check("?")) {
-    VExpression *op1 = ParseExpressionPriority13(sc);
+    VExpression *op1 = ParseExpressionPriority13(sc, Class);
     sc->Expect(":");
-    VExpression *op2 = ParseExpressionPriority13(sc);
+    VExpression *op2 = ParseExpressionPriority13(sc, Class);
     op = new VConditional(op, op1, op2, l);
   }
+  decoClass = olddc;
   return op;
   unguard;
 }
@@ -1477,9 +1512,9 @@ static VExpression *ParseExpressionPriority13 (VScriptParser *sc) {
 //  ParseExpression
 //
 //==========================================================================
-static VExpression *ParseExpression (VScriptParser *sc) {
+static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
   guard(ParseExpression);
-  return ParseExpressionPriority13(sc);
+  return ParseExpressionPriority13(sc, Class);
   unguard;
 }
 
@@ -1500,7 +1535,7 @@ static VStatement *CheckParseSetUserVar (VScriptParser *sc, VClass *Class, VStat
   if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
   VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
   sc->Expect(",");
-  VExpression *op2 = ParseExpressionPriority13(sc);
+  VExpression *op2 = ParseExpressionPriority13(sc, Class);
   sc->Expect(")");
   // create assignment
   op1 = new VAssignment(VAssignment::Assign, op1, op2, stloc);
@@ -1528,7 +1563,7 @@ static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VE
   if (sc->Check("(")) {
     if (!sc->Check(")")) {
       do {
-        Args[NumArgs] = ParseExpressionPriority13(sc);
+        Args[NumArgs] = ParseExpressionPriority13(sc, Class);
         if (NumArgs == VMethod::MAX_PARAMS) ParseError(sc->GetLoc(), "Too many arguments"); else ++NumArgs;
       } while (sc->Check(","));
       sc->Expect(")");
@@ -1564,7 +1599,7 @@ static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VE
 
   //fprintf(stderr, "<%s>\n", *FuncNameLower);
   if (!Func) {
-    fprintf(stderr, "***8:<%s> %s\n", *FuncName, *sc->GetLoc().toStringNoCol());
+    //fprintf(stderr, "***8:<%s> %s\n", *FuncName, *sc->GetLoc().toStringNoCol());
     // if function is not found, it means something is wrong
     // in that case we need to free argument expressions
     for (int i = 0; i < NumArgs; ++i) {
@@ -1733,7 +1768,7 @@ static void ParseConst (VScriptParser *sc) {
   VStr Name = sc->String.ToLower();
   sc->Expect("=");
 
-  VExpression *Expr = ParseExpression(sc);
+  VExpression *Expr = ParseExpression(sc, nullptr);
   if (!Expr) {
     sc->Error("Constant value expected");
   } else {
@@ -2594,7 +2629,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             break;
           case PROP_MissileDamage:
             if (sc->Check("(")) {
-              VExpression *Expr = ParseExpression(sc);
+              VExpression *Expr = ParseExpression(sc, Class);
               if (!Expr) {
                 ParseError(sc->GetLoc(), "Damage expression expected");
               } else {
