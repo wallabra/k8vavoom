@@ -2,6 +2,8 @@
 class Actor extends Thinker
   native
 {
+  field radius = Radius;
+
   //
   //  Monster AI
   //
@@ -306,6 +308,8 @@ class Actor extends Thinker
   action native ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
 
   alias CallACS = ACS_NamedExecuteWithResult;
+
+  alias GetCVar = GetCvarF;
 }
 
 //------------------------------------------------------------------------------

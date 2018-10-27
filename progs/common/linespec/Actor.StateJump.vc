@@ -86,25 +86,33 @@ final void A_Jump(int Chance, state Label1, optional state Label2,
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
+
 //==========================================================================
 //
 //  A_JumpIf
 //
 //==========================================================================
+final void A_JumpIf (bool Expr, state Label) {
+  if (Expr) DoJump(Label);
 
-final void A_JumpIf(bool Expr, state Label)
-{
-  if (Expr)
-  {
-    DoJump(Label);
-  }
-
-  //  State jumps should not affect state chain results.
-  if (XLevel.StateCall)
-  {
-    XLevel.StateCall->Result = false;
-  }
+  // state jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
+
+//==========================================================================
+//
+//  A_JumpIf
+//
+//  use `float` instead of bool, so decorate will work as expected
+//
+//==========================================================================
+final void decorate_A_JumpIf (float Expr, state Label) {
+  if (Expr) DoJump(Label);
+
+  // state jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+}
+
 
 //==========================================================================
 //
