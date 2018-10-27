@@ -90,6 +90,8 @@ const int WRF_NOPRIMARY       = 4;
 const int WRF_NOSECONDARY     = 8;
 const int WRF_ALLOWREFIRE     = 32;
 const int WRF_ALLOWRELOAD     = 64;
+//const int WRF_ALLOWZOOM = 128;
+const int WRF_ALLOWZOOM = 0; //k8: not implemented yet
 
 // Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT        = 1;
@@ -176,3 +178,20 @@ const int JLOSF_DEADNOJUMP =    1 << 5;
 //!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM =   1 << 11;
 //!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER =   1 << 12;
 //};
+
+
+// constants for `SetPlayerProperty()`
+const int PROP_FROZEN = 0;
+const int PROP_NOTARGET = 1;
+const int PROP_INSTANTWEAPONSWITCH = 2;
+const int PROP_FLY = 3;
+const int PROP_TOTALLYFROZEN = 4;
+const int PROP_INVULNERABILITY = 5;
+const int PROP_STRENGTH = 6;
+const int PROP_INVISIBILITY = 7;
+const int PROP_RADIATIONSUIT = 8;
+const int PROP_ALLMAP = 9;
+const int PROP_INFRARED = 10;
+const int PROP_WEAPONLEVEL2 = 11;
+const int PROP_FLIGHT = 12;
+const int PROP_SPEED = 15;

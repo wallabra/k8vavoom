@@ -38,7 +38,9 @@ enum {
   WRF_NOSECONDARY = 8,
   WRF_NOFIRE = 12,
   WRF_ALLOWREFIRE = 32,
-  WRF_ALLOWRELOAD = 64
+  WRF_ALLOWRELOAD = 64,
+  //WRF_ALLOWZOOM = 128,
+  WRF_ALLOWZOOM = 0, //k8: not implemented yet
 };
 
 
