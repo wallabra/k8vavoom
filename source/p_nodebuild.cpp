@@ -526,6 +526,7 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   for (int i = firstPartner; i <= lastPartner; ++i) {
     if (partners[i] == -1) continue; // no partner for this seg
     seg_t *destseg = &Level->Segs[i];
+    if (partners[i] >= nfo.ajseg2vv.length()) { GCon->Logf("ERROR: cannot find partner!"); continue; }
     int psidx = nfo.ajseg2vv[partners[i]];
     if (psidx < 0) Host_Error("GLBSP: invalid partner seg index");
     destseg->partner = &Level->Segs[psidx];
@@ -741,10 +742,8 @@ void VLevel::BuildNodes () {
     ajbsp::CheckLimits();
     ajbsp::SortSegs();
 
-    GCon->Logf("AJBSP: built with %d nodes, %d subsectors, %d segs, %d vertexes",
-      ajbsp::num_nodes, ajbsp::num_subsecs, ajbsp::num_segs, ajbsp::num_vertices);
-    GCon->Logf("AJBSP: heights of subtrees: %d/%d",
-      ajbsp::ComputeBspHeight(root_node->r.node), ajbsp::ComputeBspHeight(root_node->l.node));
+    GCon->Logf("AJBSP: built with %d nodes, %d subsectors, %d segs, %d vertexes", ajbsp::num_nodes, ajbsp::num_subsecs, ajbsp::num_segs, ajbsp::num_vertices);
+    if (root_node && root_node->r.node && root_node->l.node) GCon->Logf("AJBSP: heights of subtrees: %d/%d", ajbsp::ComputeBspHeight(root_node->r.node), ajbsp::ComputeBspHeight(root_node->l.node));
     GCon->Logf("AJBSP: copying built data");
     // copy nodes into internal structures
     CopyInfo nfo;
