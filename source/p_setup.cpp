@@ -2957,8 +2957,18 @@ void VLevel::LoadACScripts (int Lump) {
 
     VScriptParser *sc = new VScriptParser(*W_LumpName(ScLump), W_CreateLumpReaderNum(ScLump));
     while (!sc->AtEnd()) {
-      sc->ExpectName8();
-      int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
+      //sc->ExpectName8();
+      //int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
+      sc->ExpectName();
+      int AcsLump = W_CheckNumForName(sc->Name, WADNS_ACSLibrary);
+      if (AcsLump < 0) {
+        VStr ss = VStr(*sc->Name);
+        if (ss.length() > 8) {
+          ss = ss.mid(0, 8);
+          AcsLump = W_CheckNumForName(VName(*ss), WADNS_ACSLibrary);
+          if (AcsLump >= 0) GCon->Logf("ACS: '%s' found as '%s'", *sc->Name, *ss);
+        }
+      }
       if (AcsLump >= 0) {
         Acs->LoadObject(AcsLump);
       } else {
