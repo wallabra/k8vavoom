@@ -345,9 +345,14 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
   }
 
   VTexture *Tex = GTextureManager[lumpnr];
-  if ((vuint32)frame >= 30 || (vuint32)rotation > 16)
-  {
-    Sys_Error("InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
+  if ((vuint32)frame >= 30 || (vuint32)rotation > 16) {
+    //Sys_Error("InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
+    GCon->Logf("ERROR:InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
+    for (r = 0; r < 16; ++r) {
+      sprtemp[frame].lump[r] = -1;
+      sprtemp[frame].flip[r] = false;
+    }
+    return;
   }
 
   if (frame > maxframe)
