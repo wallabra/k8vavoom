@@ -271,7 +271,7 @@ static void DrawFPS () {
     ++fps_frames;
 
     if (time-fps_start > 1.0) {
-      show_fps = (int)(fps_frames/(time-fps_start));
+      show_fps = (int)(fps_frames/(time-fps_start)+0.5);
       if (draw_fps == 2) ms = 1000.0/fps_frames/(time-fps_start);
       fps_start = time;
       fps_frames = 0;
