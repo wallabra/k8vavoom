@@ -1932,6 +1932,12 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       NeedsUnget = false;
       break;
     }
+
+    if (sc->String == "{") {
+      sc->Error(va("%s: complex state actions in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
+      return false;
+    }
+
     if (NeedsUnget) sc->UnGet();
 
     // link previous state
