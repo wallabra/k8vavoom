@@ -108,7 +108,7 @@ if (ENABLE_VCCRUN)
     ../source/pr_cmds.cpp
     ../source/pr_exec.cpp
     ../source/scripts.h
-    ../source/sc_man.cpp
+    ../source/scripts.cpp
   )
 
   set(VCCRUN_FSYS_SOURCES

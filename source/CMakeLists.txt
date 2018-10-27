@@ -321,9 +321,9 @@ set(MAIN_COMMON_SOURCES
   save.h
   sbar.cpp
   sbar.h
-  sc_man.cpp
   screen.cpp
   screen.h
+  scripts.cpp
   scripts.h
   server.h
   ${SOUNDSYS_SOURCES}
@@ -406,7 +406,7 @@ set(SERVER_COMMON_SOURCES
   ${TEXTURELIB_SOURCES}
   render/r_data.cpp
   sound/snd_data.cpp
-  sc_man.cpp
+  scripts.cpp
   sv_main.cpp
   sv_save.cpp
   sv_world.cpp
