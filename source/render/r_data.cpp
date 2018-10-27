@@ -1815,7 +1815,7 @@ void R_ParseEffectDefs()
       //  Sprite name must be either 4 or 5 chars.
       if (SprDef.Sprite.Length() != 4 && SprDef.Sprite.Length() != 5)
       {
-        GCon->Logf(NAME_Init, "Bad sprite name length");
+        GCon->Logf(NAME_Init, "Bad sprite name length '%s'", *SprDef.Sprite);
         continue;
       }
 
@@ -1829,7 +1829,7 @@ void R_ParseEffectDefs()
       int SprIdx = VClass::FindSprite(SprName, false);
       if (SprIdx == -1)
       {
-        GCon->Logf(NAME_Init, "No such sprite %s", SprName);
+        GCon->Logf(NAME_Init, "No such sprite '%s'", SprName);
         continue;
       }
 
