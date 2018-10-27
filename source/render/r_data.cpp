@@ -445,7 +445,7 @@ void R_InstallSprite(const char *name, int index)
       {
         //fprintf(stderr, "!!<%s> [4]=%c; [6]=%c; [7]=%c\n", lumpname, lumpname[4], lumpname[6], (lumpname[6] ? lumpname[7] : 0));
         InstallSpriteLump(l, VStr::ToUpper(lumpname[4])-'A', lumpname[5], false);
-        if (lumpname[6]) {
+        if (lumpname && strlen(lumpname) >= 6 && lumpname[6]) {
           InstallSpriteLump(l, VStr::ToUpper(lumpname[6])-'A', lumpname[7], true);
         }
       }
