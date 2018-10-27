@@ -641,7 +641,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     VProperty *Prop = ec.SelfClass->FindProperty(CheckName);
     if (Prop) {
       if (!Prop->GetFunc) {
-        ParseError(Loc, "Property %s cannot be read", *Name);
+        ParseError(Loc, "Property `%s` cannot be read", *Name);
         delete this;
         return nullptr;
       }
@@ -660,7 +660,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  ParseError(Loc, "Illegal expression identifier %s", *Name);
+  ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
   return nullptr;
   unguard;
@@ -751,11 +751,11 @@ void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   guard(VDecorateInvocation::DoResolve);
-  if (VStr::ICmp(*Name, "CallACS") == 0) Name = VName("ACS_NamedExecuteWithResult"); // decorate hack
+  //if (VStr::ICmp(*Name, "CallACS") == 0) Name = VName("ACS_NamedExecuteWithResult"); // decorate hack
   if (ec.SelfClass) {
-    // first try with decorate_ prefix, then without.
-    VMethod *M = ec.SelfClass->FindMethodNoCase(va("decorate_%s", *Name));
-    if (!M) M = ec.SelfClass->FindMethodNoCase(Name);
+    // first try with decorate_ prefix, then without
+    VMethod *M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *Name));
+    if (!M) M = ec.SelfClass->FindMethod/*NoCase*/(Name);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements (method '%s', class '%s')", *Name, *ec.SelfClass->GetFullName());
@@ -1498,7 +1498,7 @@ static VStatement *CheckParseSetUserVar (VScriptParser *sc, VClass *Class, VStat
   VStr varName = sc->String;
   VStr uvname = sc->String.toLowerCase();
   if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-  VExpression *op1 = new VSingleName(VName(*sc->String), sc->GetLoc());
+  VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
   sc->Expect(",");
   VExpression *op2 = ParseExpressionPriority13(sc);
   sc->Expect(")");
@@ -1564,6 +1564,7 @@ static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VE
 
   //fprintf(stderr, "<%s>\n", *FuncNameLower);
   if (!Func) {
+    fprintf(stderr, "***8:<%s> %s\n", *FuncName, *sc->GetLoc().toStringNoCol());
     // if function is not found, it means something is wrong
     // in that case we need to free argument expressions
     for (int i = 0; i < NumArgs; ++i) {
@@ -1756,13 +1757,14 @@ static void ParseConst (VScriptParser *sc) {
 
 //==========================================================================
 //
-//  ParseAction
+//  ParseActionDef
 //
 //==========================================================================
-static void ParseAction (VScriptParser *sc, VClass *Class) {
-  guard(ParseAction);
+static void ParseActionDef (VScriptParser *sc, VClass *Class) {
+  guard(ParseActionDef);
+  // parse definition
   sc->Expect("native");
-  // find the method. First try with decorate_ prefix, then without
+  // find the method: first try with decorate_ prefix, then without
   sc->ExpectIdentifier();
   VMethod *M = Class->FindMethod(va("decorate_%s", *sc->String));
   if (!M) M = Class->FindMethod(*sc->String);
@@ -1771,12 +1773,38 @@ static void ParseAction (VScriptParser *sc, VClass *Class) {
     //k8: engine is capable of calling non-void methods, why
     //sc->Error(va("State action %s doesn't return void", *sc->String));
   }
+  //GCon->Logf("***: <%s> -> <%s>", *sc->String, *sc->String.ToLower());
   VDecorateStateAction &A = Class->DecorateStateActions.Alloc();
   A.Name = *sc->String.ToLower();
   A.Method = M;
   // skip arguments, right now I don't care bout them
   sc->Expect("(");
   while (!sc->Check(")")) sc->ExpectString();
+  sc->Expect(";");
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  ParseActionAlias
+//
+//==========================================================================
+static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
+  guard(ParseActionAlias);
+  // parse alias
+  sc->ExpectIdentifier();
+  VStr newname = sc->String;
+  sc->Expect("=");
+  sc->ExpectIdentifier();
+  VStr oldname = sc->String;
+  VMethod *M = Class->FindMethod(va("decorate_%s", *oldname));
+  if (!M) M = Class->FindMethod(*oldname);
+  if (!M) sc->Error(va("Method `%s` not found in class `%s`", *oldname, Class->GetName()));
+  //GCon->Logf("***ALIAS: <%s> -> <%s>", *newname, *oldname);
+  VDecorateStateAction &A = Class->DecorateStateActions.Alloc();
+  A.Name = *newname.ToLower();
+  A.Method = M;
   sc->Expect(";");
   unguard;
 }
@@ -1800,11 +1828,9 @@ static void ParseClass (VScriptParser *sc) {
   sc->Expect("native");
   sc->Expect("{");
   while (!sc->Check("}")) {
-    if (sc->Check("action")) {
-      ParseAction(sc, Class);
-    } else {
-      sc->Error("Unknown class property");
-    }
+         if (sc->Check("action")) ParseActionDef(sc, Class);
+    else if (sc->Check("alias")) ParseActionAlias(sc, Class);
+    else sc->Error(va("Unknown class property '%s'", *sc->String));
   }
   sc->SetCMode(false);
   unguard;
@@ -2323,7 +2349,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     }
 
     if (sc->Check("action")) {
-      ParseAction(sc, Class);
+      ParseActionDef(sc, Class);
+      continue;
+    }
+
+    if (sc->Check("alias")) {
+      ParseActionAlias(sc, Class);
       continue;
     }
 
