@@ -295,6 +295,17 @@ class Actor extends Thinker
   action native A_RemoveForceField();
   action native A_PigPain();
   action native A_ClassBossHealth();
+
+
+  // ACS
+  action native ACS_Execute (int script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+  action native ACS_ExecuteAlways (int script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+  action native ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+  action native ACS_NamedExecute (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+  action native ACS_NamedExecuteAlways (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+  action native ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
+
+  alias CallACS = ACS_NamedExecuteWithResult;
 }
 
 //------------------------------------------------------------------------------
@@ -363,12 +374,4 @@ class Inventory extends Actor
   action native A_RailWait();
   action native A_BFGsound();
   action native A_FireBFG();
-
-  // ACS
-  action native ACS_Execute (int script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
-  action native ACS_ExecuteAlways (int script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
-  action native ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
-  action native ACS_NamedExecute (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
-  action native ACS_NamedExecuteAlways (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
-  action native ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
 }
