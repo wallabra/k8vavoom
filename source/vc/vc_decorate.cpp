@@ -2340,7 +2340,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
         VStr uvname = sc->String.toLowerCase();
         if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
 
-        VField *fi = new VField(VName(*sc->String), Class, fnloc);
+        VName fldname = VName(*sc->String);
+        if (Class->FindField(fldname) || Class->FindMethod(fldname)) ParseError(sc->GetLoc(), "Redeclared field `%s`", *fldname);
+
+        VField *fi = new VField(fldname, Class, fnloc);
         VTypeExpr *te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), fnloc);
         fi->TypeExpr = te;
         fi->Flags = 0;
