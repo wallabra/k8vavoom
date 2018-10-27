@@ -46,10 +46,14 @@ private:
   bool CMode;
   bool Escape;
 
+  VScriptParser () {}
+
 public:
   VScriptParser (const VStr &name, VStream *Strm);
   VScriptParser (const VStr &name, const char *atext);
   ~VScriptParser ();
+
+  VScriptParser *clone () const;
 
   bool IsText ();
   bool IsAtEol ();

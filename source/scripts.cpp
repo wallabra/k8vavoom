@@ -22,9 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 # include "gamedefs.h"
 #else
@@ -39,10 +36,8 @@
 static VCvarB dbg_show_name_remap("dbg_show_name_remap", false, "Show hacky name remapping", 0);
 #endif
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
+// ////////////////////////////////////////////////////////////////////////// //
 class VScriptsParser : public VObject {
   DECLARE_CLASS(VScriptsParser, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VScriptsParser)
@@ -84,21 +79,7 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(ScriptMessage)
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 IMPLEMENT_CLASS(V, ScriptsParser)
-
-// CODE --------------------------------------------------------------------
 
 
 //==========================================================================
@@ -117,8 +98,6 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
   , CMode(false)
   , Escape(true)
 {
-  //guard(VScriptParser::VScriptParser);
-
   ScriptSize = Strm->TotalSize();
   ScriptBuffer = new char[ScriptSize+1];
   Strm->Serialise(ScriptBuffer, ScriptSize);
@@ -130,8 +109,6 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
 
   // skip garbage some editors add in the begining of UTF-8 files
   if ((vuint8)ScriptPtr[0] == 0xef && (vuint8)ScriptPtr[1] == 0xbb && (vuint8)ScriptPtr[2] == 0xbf) ScriptPtr += 3;
-
-  //unguard;
 }
 
 
@@ -151,8 +128,6 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
   , CMode(false)
   , Escape(true)
 {
-  //guard(VScriptParser::VScriptParser);
-
   if (atext && atext[0]) {
     ScriptSize = (int)strlen(atext);
     ScriptBuffer = new char[ScriptSize+1];
@@ -168,8 +143,6 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
 
   // skip garbage some editors add in the begining of UTF-8 files
   if ((vuint8)ScriptPtr[0] == 0xef && (vuint8)ScriptPtr[1] == 0xbb && (vuint8)ScriptPtr[2] == 0xbf) ScriptPtr += 3;
-
-  //unguard;
 }
 
 
@@ -179,10 +152,44 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
 //
 //==========================================================================
 VScriptParser::~VScriptParser () {
-  //guard(VScriptParser::~VScriptParser);
   delete[] ScriptBuffer;
   ScriptBuffer = nullptr;
-  //unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::clone
+//
+//==========================================================================
+VScriptParser *VScriptParser::clone () const {
+  VScriptParser *res = new VScriptParser();
+
+  res->ScriptBuffer = new char[ScriptSize+1];
+  if (ScriptSize) memcpy(res->ScriptBuffer, ScriptBuffer, ScriptSize);
+  res->ScriptBuffer[ScriptSize] = 0;
+
+  res->ScriptPtr = res->ScriptBuffer+(ScriptPtr-ScriptBuffer);
+  res->ScriptEndPtr = res->ScriptBuffer+(ScriptEndPtr-ScriptBuffer);
+
+  res->Line = Line;
+  res->End = End;
+  res->Crossed = Crossed;
+  res->QuotedString = QuotedString;
+  res->String = String;
+  res->Name8 = Name8;
+  res->Name = Name;
+  res->Number = Number;
+  res->Float = Float;
+
+  res->ScriptName = ScriptName;
+  res->ScriptSize = ScriptSize;
+  res->SrcIdx = SrcIdx;
+  res->AlreadyGot = AlreadyGot;
+  res->CMode = CMode;
+  res->Escape = Escape;
+
+  return res;
 }
 
 
@@ -874,6 +881,11 @@ TLocation VScriptParser::GetLoc () {
 }
 
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+//  VScriptsParser
+// ////////////////////////////////////////////////////////////////////////// //
+
 //==========================================================================
 //
 //  VScriptsParser::Destroy
@@ -900,6 +912,7 @@ void VScriptsParser::CheckInterface () {
   if (!Int) Sys_Error("No script currently open");
   unguard;
 }
+
 
 
 //==========================================================================
