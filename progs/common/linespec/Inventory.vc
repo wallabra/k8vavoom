@@ -815,96 +815,91 @@ final void A_JumpIfNoAmmo(state Label)
 //  Lowers current weapon, and changes weapon at bottom.
 //
 //==========================================================================
+final void A_Lower () {
+  decorate_A_Lower();
+}
 
-final void A_Lower()
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
 
-  if (PlayerEx(Player).MorphTime ||
-    PlayerEx(Player).bInstantWeaponSwitch)
-  {
+//==========================================================================
+//
+//  A_Lower
+//
+//  Lowers current weapon, and changes weapon at bottom.
+//
+//==========================================================================
+final void decorate_A_Lower (optional float lowerspeed) {
+  if (!bIsPlayer) return;
+
+  if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
+  if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
+
+  if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
     Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
-  }
-  else
-  {
-    //  FIXME!!
-    if (Level.Game.frametime < 1.0 / 35.0)
-    {
-      Player.ViewStates[ps_weapon].SY += Weapon::LOWERSPEED;
-    }
-    else
-    {
-      Player.ViewStates[ps_weapon].SY += Weapon::LOWERSPEED * 35.0 *
-        Level.Game.frametime;
+  } else {
+    // FIXME!!
+    if (Level.Game.frametime < 1.0/35.0) {
+      Player.ViewStates[ps_weapon].SY += lowerspeed;
+    } else {
+      Player.ViewStates[ps_weapon].SY += lowerspeed*35.0*Level.Game.frametime;
     }
   }
 
-  if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM)
-  {
-    // Not lowered all the way yet
-    return;
-  }
+  if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM) return; // not lowered all the way yet
 
-  if (Player.PlayerState == PST_DEAD)
-  {
+  if (Player.PlayerState == PST_DEAD) {
     // Player is dead, so don't bring up a pending weapon
     Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
     return;
   }
 
-  if (Player.MO.Health <= 0)
-  {
+  if (Player.MO.Health <= 0) {
     // Player is dead, so keep the weapon off screen.
     Player.SetViewState(ps_weapon, none);
     return;
   }
 
-  //  Clear flash state, needed for Strife.
+  // clear flash state, needed for Strife
   Player.SetViewState(ps_flash, none);
 
   PlayerEx(Player).SetWeapon(PlayerEx(Player).PendingWeapon);
   PlayerEx(Player).BringUpWeapon();
 }
 
+
 //==========================================================================
 //
 //  A_Raise
 //
 //==========================================================================
+final void A_Raise () {
+  decorate_A_Raise();
+}
 
-final void A_Raise()
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
+
+//==========================================================================
+//
+//  A_Raise
+//
+//==========================================================================
+final void decorate_A_Raise (optional float raisespeed) {
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-  //  FIXME!!
-  if (Level.Game.frametime < 1.0 / 35.0)
-  {
-    Player.ViewStates[ps_weapon].SY -= Weapon::RAISESPEED;
+  if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
+  if (raisespeed <= 0) raisespeed = Weapon::RAISESPEED; //k8: sanity guard
+
+  // FIXME!!
+  if (Level.Game.frametime < 1.0/35.0) {
+    Player.ViewStates[ps_weapon].SY -= raisespeed;
+  } else {
+    Player.ViewStates[ps_weapon].SY -= raisespeed*35.0*Level.Game.frametime;
   }
-  else
-  {
-    Player.ViewStates[ps_weapon].SY -= Weapon::RAISESPEED * 35.0 *
-      Level.Game.frametime;
-  }
-  if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP)
-  {
-    // Not raised all the way yet
-    return;
-  }
+
+  if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP) return; // not raised all the way yet
   Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
-  if (Wpn)
-  {
+  if (Wpn) {
     Player.SetViewState(ps_weapon, Wpn.GetReadyState());
-  }
-  else
-  {
+  } else {
     Player.SetViewState(ps_weapon, none);
   }
 }

@@ -322,8 +322,8 @@ class Inventory extends Actor
   //
   action native A_WeaponReady(optional eval int flags);
   action native A_SetPitch(float newpitch);
-  action native A_Lower();
-  action native A_Raise();
+  action native A_Lower(optional float lowerspeed=6);
+  action native A_Raise(optional float raisespeed=6);
   action native A_ReFire();
   action native A_ClearReFire();
   action native A_GunFlash();
