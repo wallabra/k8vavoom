@@ -1101,8 +1101,6 @@ bool VClass::DecorateDefine () {
   guard(VClass::DecorateDefine);
   bool Ret = true;
 
-  //for (int i = 0; i < Structs.Num(); ++i) Structs[i]->DefineMembers();
-
   VField *PrevBool = nullptr;
   for (VField *fi = Fields; fi; fi = fi->Next) {
     if (!fi->Define()) Ret = false;
@@ -1382,6 +1380,14 @@ void VClass::DecoratePostLoad () {
 
   // calculate indexes of virtual methods
   CalcFieldOffsets();
+
+  /*
+  // initialise reference fields
+  InitReferences();
+
+  // initialise destructor fields
+  InitDestructorFields();
+  */
 
   // recreate virtual table
   CreateVTable();

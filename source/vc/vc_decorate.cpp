@@ -1745,6 +1745,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
     M->Statement = suvst;
     M->ParamsSize = 1;
     Class->AddMethod(M);
+    M->Define();
     Func = M;
   } else {
     Func = ParseFunCall(sc, Class, NumArgs, Args);
@@ -1763,6 +1764,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
       M->Statement = Stmt;
       M->ParamsSize = 1;
       Class->AddMethod(M);
+      M->Define();
       Func = M;
     }
   }
@@ -1825,6 +1827,7 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, c
     M->Statement = stmt;
     M->ParamsSize = 1;
     Class->AddMethod(M);
+    M->Define();
     State->Function = M;
   } else {
     delete stmt;
@@ -2518,7 +2521,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
         break;
       }
       sc->Expect(";");
-      //sc->Error(va("%s: user variables in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
+      sc->Error(va("%s: user variables in DECORATE aren't supported yet", *sc->GetLoc().toStringNoCol()));
       continue;
     }
 
@@ -3740,10 +3743,12 @@ void ProcessDecorateScripts () {
 
   GCon->Logf(NAME_Init, "Post-procesing");
 
+  /*k8: not yet
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
     if (GArgs.CheckParm("-debug_decorate")) GCon->Logf("Defining Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
     if (!DecPkg->ParsedClasses[i]->DecorateDefine()) Sys_Error("DECORATE ERROR: cannot define class '%s'", *DecPkg->ParsedClasses[i]->GetFullName());
   }
+  */
 
   // set class properties
   for (int i = 0; i < ClassFixups.Num(); ++i) {
