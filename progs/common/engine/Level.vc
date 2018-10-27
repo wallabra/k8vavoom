@@ -223,8 +223,13 @@ native final bool SuspendACS(int number, int map);
 native final bool TerminateACS(int number, int map);
 native final void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
   Entity Activator, bool Always, bool RunNow);
-native final bool RunNamedACS (Entity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3);
+
+native final bool RunACS (Entity activator, int script, int map, int s_arg1, int s_arg2, int s_arg3);
+native final bool RunACSAlways (Entity activator, int script, int map, int s_arg1, int s_arg2, int s_arg3);
 native final int RunACSWithResult (Entity activator, int script, int s_arg1, int s_arg2, int s_arg3);
+
+native final bool RunNamedACS (Entity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3);
+native final bool RunNamedACSAlways (Entity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3);
 native final int RunNamedACSWithResult (Entity activator, string script, int s_arg1, int s_arg2, int s_arg3);
 
 native final int SetBodyQueueTrans(int Slot, int Transl);

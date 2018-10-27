@@ -857,11 +857,21 @@ final void A_SetArg (int n, int v) {
 
 //==========================================================================
 //
-//  ACS_NamedExecute
+//  ACS_Execute
 //
 //==========================================================================
-final bool ACS_NamedExecute (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
-  return XLevel.RunNamedACS(self, script, map, s_arg1, s_arg2, s_arg3);
+final bool ACS_Execute (int script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
+  return XLevel.RunACS(self, script, map, s_arg1, s_arg2, s_arg3);
+}
+
+
+//==========================================================================
+//
+//  ACS_ExecuteAlways
+//
+//==========================================================================
+final bool ACS_ExecuteAlways (int script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
+  return XLevel.RunACSAlways(self, script, map, s_arg1, s_arg2, s_arg3);
 }
 
 
@@ -872,6 +882,26 @@ final bool ACS_NamedExecute (string script, int map, optional int s_arg1, option
 //==========================================================================
 final int ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
   return XLevel.RunACSWithResult(self, script, s_arg1, s_arg2, s_arg3);
+}
+
+
+//==========================================================================
+//
+//  ACS_NamedExecute
+//
+//==========================================================================
+final bool ACS_NamedExecute (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
+  return XLevel.RunNamedACS(self, script, map, s_arg1, s_arg2, s_arg3);
+}
+
+
+//==========================================================================
+//
+//  ACS_NamedExecuteAlways
+//
+//==========================================================================
+final bool ACS_NamedExecuteAlways (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3) {
+  return XLevel.RunNamedACSAlways(self, script, map, s_arg1, s_arg2, s_arg3);
 }
 
 
