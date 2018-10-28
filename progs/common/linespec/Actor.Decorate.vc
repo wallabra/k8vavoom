@@ -49,6 +49,95 @@ final void A_SetArg (int n, int v) {
 
 //==========================================================================
 //
+//  A_SetAngle
+//
+//==========================================================================
+final void A_SetAngle (float newyaw, optional int flags, optional int ptr) {
+  Entity tgt = self;
+  if (specified_ptr && ptr != AAPTR_DEFAULT) {
+    if (ptr == AAPTR_NULL) return;
+    if (ptr == AAPTR_TARGET) {
+      tgt = Target;
+    } else {
+      FatalError("A_SetAngle: unsupported ptr (0x%x)", ptr);
+    }
+  }
+  if (!tgt) return;
+  Angles.yaw = AngleMod360(newyaw);
+  //dprint("A_SetAngle: not implemented!");
+}
+
+
+/*
+const int SPF_FORCECLAMP = 0x01;
+const int SPF_INTERPOLATE = 0x00;
+*/
+
+//==========================================================================
+//
+//  clampPitch
+//
+//==========================================================================
+private final float clampPitch (float newpitch) {
+  // hack, so player head won't be clamped down
+  //print("  A_SetPitch00: newpitch=%f", newpitch);
+  if (newpitch >= 360) {
+    newpitch = AngleMod360(newpitch);
+    //print("  A_SetPitch01: newpitch=%f", newpitch);
+  }
+  if (newpitch > 180) newpitch = AngleMod360(newpitch)-360; // [-90..]
+  //print("  A_SetPitch02: newpitch=%f", newpitch);
+  //return fclamp(newpitch, -90.0, 90.0);
+  return fclamp(newpitch, -80.0, 80.0); // actual engine limits
+}
+
+
+//==========================================================================
+//
+//  A_SetPitch
+//
+//  should be always clamped on player
+//
+//==========================================================================
+final void A_SetPitch (float newpitch, optional int flags, optional int ptr) {
+  Entity tgt = self;
+  if (specified_ptr && ptr != AAPTR_DEFAULT) {
+    if (ptr == AAPTR_NULL) return;
+    if (ptr == AAPTR_TARGET) {
+      tgt = Target;
+    } else {
+      FatalError("A_SetPitch: unsupported ptr (0x%x)", ptr);
+    }
+  }
+  if (!tgt) return;
+  if (tgt.bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
+  tgt.Angles.pitch = /*AngleMod360*/(newpitch);
+}
+
+
+//==========================================================================
+//
+//  A_SetRoll
+//
+//==========================================================================
+final void A_SetRoll (float newroll, optional int flags, optional int ptr) {
+  Entity tgt = self;
+  if (specified_ptr && ptr != AAPTR_DEFAULT) {
+    if (ptr == AAPTR_NULL) return;
+    if (ptr == AAPTR_TARGET) {
+      tgt = Target;
+    } else {
+      FatalError("A_SetPitch: unsupported ptr (0x%x)", ptr);
+    }
+  }
+  if (!tgt) return;
+  tgt.Angles.roll = AngleMod360(newroll);
+}
+
+
+
+//==========================================================================
+//
 //  ACS_Execute
 //
 //==========================================================================

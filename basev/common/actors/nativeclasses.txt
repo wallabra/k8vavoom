@@ -6,6 +6,10 @@ class Actor extends Thinker
   field scalex = ScaleX;
   field scaley = ScaleY;
 
+  field yaw = Angles.yaw;
+  field pitch = Angles.pitch;
+  field roll = Angles.roll;
+
   //
   //  Monster AI
   //
@@ -268,6 +272,7 @@ class Actor extends Thinker
 
   action native A_SetAngle(float newyaw);
   action native A_SetPitch(float newa, optional int flags, optional int ptr);
+  action native A_SetRoll(float newa, optional int flags, optional int ptr);
 
   action native A_SetRollExt(float newa);
   action native A_SetYawExt(float newa);
