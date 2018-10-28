@@ -625,7 +625,7 @@ class LightningFloor
   frame MLF2K { light LightningFloor_X3 }
   frame MLF2L { light LightningFloor_X4 }
   frame MLF2M { light LightningFloor_X4 }
-  frame ALCO { light LightningFloor_X5 }
+  //frame ALCO { light LightningFloor_X5 }
   frame MLF2N { light LightningFloor_X5 }
   frame MLF2O { light LightningFloor_X6 }
   frame MLF2P { light LightningFloor_X6 }
@@ -642,7 +642,7 @@ class LightningCeiling
   frame MLF2K { light LightningFloor_X3 }
   frame MLF2L { light LightningFloor_X4 }
   frame MLF2M { light LightningFloor_X4 }
-  frame ALCO { light LightningFloor_X5 }
+  //frame ALCO { light LightningFloor_X5 }
   frame MLF2N { light LightningFloor_X5 }
   frame MLF2O { light LightningFloor_X6 }
   frame MLF2P { light LightningFloor_X6 }
