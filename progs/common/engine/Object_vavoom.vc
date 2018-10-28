@@ -27,19 +27,6 @@
 //
 //==========================================================================
 
-
-enum {
-  CVAR_ARCHIVE    = 1,  // Set to cause it to be saved to vavoom.cfg
-  CVAR_USERINFO   = 2,  // Added to userinfo  when changed
-  CVAR_SERVERINFO = 4,  // Added to serverinfo when changed
-  CVAR_INIT       = 8,  // Don't allow change from console at all,
-                        // but can be set from the command line
-  CVAR_LATCH      = 16, // Save changes until server restart
-  CVAR_ROM        = 32, // Display only, cannot be set by user at all
-  CVAR_CHEAT      = 64, // Can not be changed if cheats are disabled
-  CVAR_MODIFIED   = 128 // Set each time the cvar is changed
-};
-
 const int MAXPLAYERS = 8;
 
 
@@ -210,30 +197,6 @@ struct SkillDef {
 //              COMMON BUILTINS
 //
 //==========================================================================
-
-// ////////////////////////////////////////////////////////////////////////// //
-// cvar functions
-
-// is cvar exists?
-native static final bool CvarExists(name Name);
-// get cvar help text
-native static final string GetCvarHelp(name Name);
-// create a new cvar
-native static final void CreateCvar(name Name, string default_value, string help_text, int flags);
-// read value
-native static final int GetCvar(name Name);
-// set cvar value
-native static final void SetCvar(name Name, int value);
-// read float value
-native static final float GetCvarF(name Name);
-// set cvar float value
-native static final void SetCvarF(name Name, float value);
-// read string value
-native static final string GetCvarS(name Name);
-// set cvar string value
-native static final void SetCvarS(name Name, string value);
-// read boolean value (k8 TODO: this is more reliable than `GetCvar()`; i should fix codebase to use this)
-native static final bool GetCvarB(name Name);
 
 // "doom", "doom2", "tnt", "plutonia" -- you got the idea
 final string GameName { get { return GetCvarS('game_name'); } }

@@ -557,3 +557,32 @@ native static final bool EncodeTimeVal (out TTimeVal tv, ref TDateTime tm, optio
 native final static class FindMObjId (int id, optional name pkgname);
 native final static class FindScriptId (int id, optional name pkgname);
 native final static class FindClassByGameObjName (name aname, optional name pkgname);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// cvar functions
+
+bitenum {
+  CVAR_ARCHIVE, // set to cause it to be saved to config file
+  CVAR_USERINFO, // added to userinfo  when changed
+  CVAR_SERVERINFO, // added to serverinfo when changed
+  CVAR_INIT,  // don't allow change from console at all, but can be set from the command line
+  CVAR_LATCH, // save changes until server restart
+  CVAR_ROM, // display only, cannot be set by user at all
+  CVAR_CHEAT, // can not be changed if cheats are disabled
+  CVAR_MODIFIED, // set each time the cvar is changed
+};
+
+native static final bool CvarExists (name Name); // is cvar exists?
+native static final string GetCvarHelp (name Name); // get cvar help text
+native static final void CreateCvar (name Name, string defaultValue, string helpText, optional int flags); // create a new cvar
+native static final int GetCvar (name Name); // read int value
+native static final void SetCvar (name Name, int value); // set cvar int value
+alias GetCvarI = GetCvar; // read int value
+alias SetCvarI = SetCvar; // set cvar int value
+native static final float GetCvarF (name Name); // read float value
+native static final void SetCvarF (name Name, float value); // set cvar float value
+native static final string GetCvarS (name Name); // read string value
+native static final void SetCvarS (name Name, string value); // set cvar string value
+native static final bool GetCvarB (name Name); // read boolean value
+native static final void SetCvarB (name Name, bool value); // set cvar boolean value

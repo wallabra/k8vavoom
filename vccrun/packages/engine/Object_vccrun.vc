@@ -122,3 +122,34 @@ native final static bool appSaveOptions (Object optobj, optional string optfile,
 // load options: this will load all non-trainsient POD object fields
 // returns `true` if options was succesfully loaded
 native final static spawner Object appLoadOptions (class cls, optional string optfile);
+
+
+//==========================================================================
+//
+//             console command buffer functions
+//
+//==========================================================================
+native static final void ccmdClearText (); // clear command buffer
+native static final void ccmdClearCommand (); // clear current command (only)
+
+// parse one command
+enum CCResult {
+  Empty = -1, // no more commands (nothing was parsed)
+  Normal = 0, // one command parsed, line is not complete
+  EOL = 1, // no command parsed, line is complete
+};
+
+// this skips empty lines without notice
+native static final CCResult ccmdParseOne ();
+
+native static final int ccmdGetArgc (); // 0: nothing was parsed
+native static final string ccmdGetArgv (int idx); // 0: command; other: args, parsed and unquoted
+
+// return number of unparsed bytes left
+native static final int ccmdTextSize ();
+
+native static final void ccmdPrepend (string str); // use `va()` for formatting
+native static final void ccmdPrependQuoted (string str); // use `va()` for formatting
+
+native static final void ccmdAppend (string str); // use `va()` for formatting
+native static final void ccmdAppendQuoted (string str); // use `va()` for formatting

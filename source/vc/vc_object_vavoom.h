@@ -1,15 +1,3 @@
-  // cvar functions
-  DECLARE_FUNCTION(CvarExists)
-  DECLARE_FUNCTION(CreateCvar)
-  DECLARE_FUNCTION(GetCvar)
-  DECLARE_FUNCTION(SetCvar)
-  DECLARE_FUNCTION(GetCvarF)
-  DECLARE_FUNCTION(SetCvarF)
-  DECLARE_FUNCTION(GetCvarS)
-  DECLARE_FUNCTION(SetCvarS)
-  DECLARE_FUNCTION(GetCvarB)
-  DECLARE_FUNCTION(GetCvarHelp)
-
   // textures
   DECLARE_FUNCTION(CheckTextureNumForName)
   DECLARE_FUNCTION(TextureNumForName)

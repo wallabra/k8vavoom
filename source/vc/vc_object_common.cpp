@@ -930,3 +930,71 @@ IMPLEMENT_FUNCTION(VObject, GetInputKeyCode) {
   P_GET_STR(kname);
   RET_INT(VObject::VKeyFromName(kname));
 }
+
+
+//**************************************************************************
+//
+//  Cvar functions
+//
+//**************************************************************************
+IMPLEMENT_FUNCTION(VObject, CvarExists) {
+  P_GET_NAME(name);
+  RET_BOOL(VCvar::HasVar(*name));
+}
+
+IMPLEMENT_FUNCTION(VObject, CreateCvar) {
+  P_GET_INT_OPT(flags, 0);
+  P_GET_STR(help);
+  P_GET_STR(def);
+  P_GET_NAME(name);
+  VCvar::CreateNew(*name, def, help, flags);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetCvar) {
+  P_GET_NAME(name);
+  RET_INT(VCvar::GetInt(*name));
+}
+
+IMPLEMENT_FUNCTION(VObject, SetCvar) {
+  P_GET_INT(value);
+  P_GET_NAME(name);
+  VCvar::Set(*name, value);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetCvarF) {
+  P_GET_NAME(name);
+  RET_FLOAT(VCvar::GetFloat(*name));
+}
+
+IMPLEMENT_FUNCTION(VObject, SetCvarF) {
+  P_GET_FLOAT(value);
+  P_GET_NAME(name);
+  VCvar::Set(*name, value);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetCvarS) {
+  P_GET_NAME(name);
+  RET_STR(VCvar::GetString(*name));
+}
+
+IMPLEMENT_FUNCTION(VObject, SetCvarS) {
+  P_GET_STR(value);
+  P_GET_NAME(name);
+  VCvar::Set(*name, value);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetCvarB) {
+  P_GET_NAME(name);
+  RET_BOOL(VCvar::GetBool(*name));
+}
+
+IMPLEMENT_FUNCTION(VObject, SetCvarB) {
+  P_GET_BOOL(value);
+  P_GET_NAME(name);
+  VCvar::Set(*name, value ? 1 : 0);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetCvarHelp) {
+  P_GET_NAME(name);
+  RET_STR(VStr(VCvar::GetHelp(*name)));
+}

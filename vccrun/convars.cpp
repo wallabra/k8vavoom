@@ -681,7 +681,7 @@ static void ccmdPrependChar (char ch) {
 }
 
 
-void ccmdPrependStr (const char *str) {
+void ccmdPrepend (const char *str) {
   if (!str || !str[0]) return;
   size_t slen = strlen(str);
   if (slen > 1024*1024*32 || ccmdBufUsed+slen > 1024*1024*32) Sys_Error("Command buffer overflow!");
@@ -697,19 +697,19 @@ void ccmdPrependStr (const char *str) {
 }
 
 
-void ccmdPrependStr (const VStr &str) {
-  if (str.length()) ccmdPrependStr(*str);
+void ccmdPrepend (const VStr &str) {
+  if (str.length()) ccmdPrepend(*str);
 }
 
 
-__attribute__((format(printf,1,2))) void ccmdPrependStrf (const char *fmt, ...) {
+__attribute__((format(printf,1,2))) void ccmdPrependf (const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   snbuf[0] = 0;
   snbuf[sizeof(snbuf)-1] = 0;
   vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
   va_end(ap);
-  ccmdPrependStr(snbuf);
+  ccmdPrepend(snbuf);
 }
 
 
@@ -722,12 +722,12 @@ void ccmdPrependQuoted (const char *str) {
       break;
     }
   }
-  if (!needQuote) { ccmdPrependStr(str); return; }
+  if (!needQuote) { ccmdPrepend(str); return; }
   for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
     if (*s < ' ') {
       char xbuf[6];
       snprintf(xbuf, sizeof(xbuf), "\\x%02x", *s);
-      ccmdPrependStr(xbuf);
+      ccmdPrepend(xbuf);
       continue;
     }
     if (*s == ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) ccmdPrependChar('\\');
@@ -752,7 +752,7 @@ __attribute__((format(printf,1,2))) void ccmdPrependQuotdedf (const char *fmt, .
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static inline void ccmdAddChar (char ch) {
+static inline void ccmdAppendChar (char ch) {
   if (!ch) return;
   if (ccmdBufUsed >= 1024*1024*32) Sys_Error("Command buffer overflow!");
   if (ccmdBufUsed+1 > ccmdBufSize) {
@@ -765,7 +765,7 @@ static inline void ccmdAddChar (char ch) {
 }
 
 
-void ccmdAddStr (const char *str) {
+void ccmdAppend (const char *str) {
   if (!str || !str[0]) return;
   size_t slen = strlen(str);
   if (slen > 1024*1024*32 || ccmdBufUsed+slen > 1024*1024*32) Sys_Error("Command buffer overflow!");
@@ -780,55 +780,61 @@ void ccmdAddStr (const char *str) {
 }
 
 
-void ccmdAddStr (const VStr &str) {
-  if (str.length() > 0) ccmdAddStr(*str);
+void ccmdAppend (const VStr &str) {
+  if (str.length() > 0) ccmdAppend(*str);
 }
 
 
-__attribute__((format(printf,1,2))) void ccmdAddStrf (const char *fmt, ...) {
+__attribute__((format(printf,1,2))) void ccmdAppendf (const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   snbuf[0] = 0;
   snbuf[sizeof(snbuf)-1] = 0;
   vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
   va_end(ap);
-  ccmdAddStr(snbuf);
+  ccmdAppend(snbuf);
 }
 
 
-void ccmdAddQuoted (const char *str) {
+void ccmdAppendQuoted (const char *str) {
   if (!str || !str[0]) return;
   bool needQuote = false;
   for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
-    if (*s <= ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) {
+    if (*s < ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) {
       needQuote = true;
       break;
     }
   }
-  if (!needQuote) { ccmdAddStr(str); return; }
+  if (!needQuote) { ccmdAppend(str); return; }
+  ccmdAppendChar('"');
   for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
-    if (*s < ' ') {
+    if (*s == '\t') { ccmdAppend("\\t"); continue; }
+    if (*s == '\n') { ccmdAppend("\\n"); continue; }
+    if (*s == '\r') { ccmdAppend("\\r"); continue; }
+    if (*s == 0x1b) { ccmdAppend("\\e"); continue; }
+    if (*s < ' ' || *s == 127) {
       char xbuf[6];
       snprintf(xbuf, sizeof(xbuf), "\\x%02x", *s);
-      ccmdAddStr(xbuf);
+      ccmdAppend(xbuf);
       continue;
     }
-    if (*s == ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) ccmdAddChar('\\');
-    ccmdAddChar((char)*s);
+    if (*s == '\'' || *s == '"' || *s == '\\') ccmdAppendChar('\\');
+    ccmdAppendChar((char)*s);
   }
+  ccmdAppendChar('"');
 }
 
 
-void ccmdAddQuoted (const VStr &str) {
-  if (str.length()) ccmdAddQuoted(*str);
+void ccmdAppendQuoted (const VStr &str) {
+  if (str.length()) ccmdAppendQuoted(*str);
 }
 
-__attribute__((format(printf,1,2))) void ccmdAddQuotedf (const char *fmt, ...) {
+__attribute__((format(printf,1,2))) void ccmdAppendQuotedf (const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   snbuf[0] = 0;
   snbuf[sizeof(snbuf)-1] = 0;
   vsnprintf(snbuf, sizeof(snbuf), fmt, ap);
   va_end(ap);
-  ccmdAddQuoted(snbuf);
+  ccmdAppendQuoted(snbuf);
 }

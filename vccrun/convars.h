@@ -201,25 +201,25 @@ CCResult ccmdParseOne ();
 int ccmdGetArgc (); // 0: nothing was parsed
 const VStr &ccmdGetArgv (int idx); // 0: command; other: args, parsed and unquoted
 
-// return number of unparsed bytes left in
+// return number of unparsed bytes left
 int ccmdTextSize ();
 
 
-void ccmdPrependStr (const char *str);
-void ccmdPrependStr (const VStr &str);
-void ccmdPrependStrf (const char *fmt, ...) __attribute__((format(printf,1,2)));
+void ccmdPrepend (const char *str);
+void ccmdPrepend (const VStr &str);
+void ccmdPrependf (const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 void ccmdPrependQuoted (const char *str);
 void ccmdPrependQuoted (const VStr &str);
 void ccmdPrependQuotdedf (const char *fmt, ...) __attribute__((format(printf,1,2)));
 
-void ccmdAddStr (const char *str);
-void ccmdAddStr (const VStr &str);
-void ccmdAddStrf (const char *fmt, ...) __attribute__((format(printf,1,2)));
+void ccmdAppend (const char *str);
+void ccmdAppend (const VStr &str);
+void ccmdAppendf (const char *fmt, ...) __attribute__((format(printf,1,2)));
 
-void ccmdAddQuoted (const char *str);
-void ccmdAddQuoted (const VStr &str);
-void ccmdAddQuotedf (const char *fmt, ...) __attribute__((format(printf,1,2)));
+void ccmdAppendQuoted (const char *str);
+void ccmdAppendQuoted (const VStr &str);
+void ccmdAppendQuotedf (const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 
 #endif
