@@ -800,7 +800,7 @@ void ccmdAppendQuoted (const char *str) {
   if (!str || !str[0]) return;
   bool needQuote = false;
   for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
-    if (*s < ' ' || *s == '\'' || *s == '"' || *s == '\\' || *s == 127) {
+    if (*s < ' ' || *s == '"' || *s == '\\' || *s == 127) {
       needQuote = true;
       break;
     }
@@ -818,7 +818,7 @@ void ccmdAppendQuoted (const char *str) {
       ccmdAppend(xbuf);
       continue;
     }
-    if (*s == '\'' || *s == '"' || *s == '\\') ccmdAppendChar('\\');
+    if (*s == '"' || *s == '\\') ccmdAppendChar('\\');
     ccmdAppendChar((char)*s);
   }
   ccmdAppendChar('"');
