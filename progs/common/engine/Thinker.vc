@@ -144,3 +144,41 @@ defaultproperties
   Role = ROLE_Authority;
   RemoteRole = ROLE_DumbProxy;
 }
+
+
+//==========================================================================
+//
+//  Hidden Acs class
+//
+//==========================================================================
+class Acs : Thinker native abstract;
+
+private Entity Activator;
+private line_t *line;
+private int side;
+private int number;
+private /*VAcsInfo*/void *info;
+private ubyte State;
+private float DelayTime;
+private int WaitValue;
+private int *LocalVars;
+private ubyte *InstructionPointer;
+private /*VAcsObject*/void *ActiveObject;
+private int HudWidth;
+private int HudHeight;
+private name Font;
+
+
+//==========================================================================
+//
+//  Hidden Button class
+//
+//==========================================================================
+class Button : Thinker native abstract;
+private int Side;
+private ubyte Where;
+private int SwitchDef;
+private int Frame;
+private float Timer;
+private name DefaultSound;
+private /*bool*/int UseAgain;
