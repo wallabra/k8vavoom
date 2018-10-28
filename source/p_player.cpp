@@ -218,7 +218,7 @@ void VBasePlayer::SpawnClient()
 //
 //==========================================================================
 
-void VBasePlayer::Printf(const char *s, ...)
+__attribute__((format(printf,2,3))) void VBasePlayer::Printf(const char *s, ...)
 {
   guard(VBasePlayer::Printf);
   va_list v;
@@ -238,7 +238,7 @@ void VBasePlayer::Printf(const char *s, ...)
 //
 //==========================================================================
 
-void VBasePlayer::CentrePrintf(const char *s, ...)
+__attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf(const char *s, ...)
 {
   guard(VBasePlayer::CentrePrintf);
   va_list v;

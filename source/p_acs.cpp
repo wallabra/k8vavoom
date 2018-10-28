@@ -2873,7 +2873,7 @@ int VAcs::RunScript(float DeltaTime)
       PrintStr = PrintStr.EvalEscapeSequences();
       if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer)
       {
-        Activator->Player->CentrePrintf(*PrintStr);
+        Activator->Player->CentrePrintf("%s", *PrintStr);
       }
       else
       {

@@ -195,8 +195,8 @@ class VBasePlayer : public VGameObject
 
   void SpawnClient();
 
-  void Printf(const char*, ...);
-  void CentrePrintf(const char*, ...);
+  void Printf(const char*, ...) __attribute__((format(printf,2,3)));
+  void CentrePrintf(const char*, ...) __attribute__((format(printf,2,3)));
 
   void SetViewState(int, VState*);
   void AdvanceViewStates(float);
