@@ -873,7 +873,7 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth)
       L.Width = CurW;
     }
   }
-  return Lines.Num() * FontHeight;
+  return Lines.Num()*FontHeight;
   unguard;
 }
 
@@ -888,7 +888,10 @@ VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth) const {
   TArray<VSplitLine> Lines;
   SplitText(Text, Lines, MaxWidth);
   VStr Ret;
-  for (int i = 0; i < Lines.Num(); ++i) Ret += Lines[i].Text+"\n";
+  for (int i = 0; i < Lines.Num(); ++i) {
+    if (i != 0) Ret += "\n";
+    Ret += Lines[i].Text;
+  }
   return Ret;
   unguard;
 }
