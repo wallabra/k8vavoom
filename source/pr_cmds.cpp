@@ -94,29 +94,82 @@ public:
     return buf;
   }
 
-  void putStrInternal (const VStr &s) {
+  void putStrInternal (const VStr &s, bool doQuote=false) {
     if (s.isEmpty()) return;
-    reserve((size_t)s.length());
-    memcpy(buf+bufused, *s, (size_t)s.length());
-    bufused += (size_t)s.length();
+    int qlen = 0;
+    if (doQuote) {
+      // check if we need to quote string
+      doQuote = false;
+      qlen = s.length();
+      for (int f = 0; f < s.length(); ++f) {
+        vuint8 ch = (vuint8)s[f];
+        if (ch == '\t' || ch == '\r' || ch == '\n') {
+          doQuote = true;
+          ++qlen;
+        } else if (ch < ' ' || ch == 127) {
+          doQuote = true;
+          qlen += 3;
+        } else if (ch == '"' || ch == '\\') {
+          doQuote = true;
+          ++qlen;
+        }
+      }
+    }
+    if (doQuote) {
+      reserve((size_t)qlen);
+      vuint8 *d = (vuint8 *)(buf+bufused);
+      bufused += (size_t)qlen;
+      for (int f = 0; f < s.length(); ++f) {
+        vuint8 ch = (vuint8)s[f];
+        if (ch == '\t') {
+          *d++ = '\\';
+          *d++ = 't';
+        } else if (ch == '\r') {
+          *d++ = '\\';
+          *d++ = 'n';
+        } else if (ch == '\n') {
+          *d++ = '\\';
+          *d++ = 'r';
+        } else if (ch < ' ' || ch == 127) {
+          snprintf((char *)d, 6, "\\x%02x", ch);
+          d += 4;
+        } else if (ch == '"' || ch == '\\') {
+          *d++ = '\\';
+          *d++ = ch;
+        } else {
+          *d++ = ch;
+        }
+      }
+    } else {
+      reserve((size_t)s.length());
+      memcpy(buf+bufused, *s, (size_t)s.length());
+      bufused += (size_t)s.length();
+    }
   }
 
-  void putStr (const VStr &s, int width, bool toRight, bool zeroFill) {
+  void putStr (const VStr &s, int width, bool toRight, bool zeroFill, bool doQuote=false) {
+    //if (doQuote) putChar('"');
     if (width > s.length() && toRight) {
       while (width-- > s.length()) putChar(' ');
     }
-    putStrInternal(s);
+    putStrInternal(s, doQuote);
     if (width > s.length() && !toRight) {
       while (width-- > s.length()) putChar(' ');
     }
+    //if (doQuote) putChar('"');
   }
 
-  void putStr (const char *s, int sslen=-1) {
+  void putStr (const char *s, int sslen=-1, bool doQuote=false) {
     if (!s || !s[0]) return;
-    size_t slen = (sslen < 0 ? strlen(s) : (size_t)sslen);
-    reserve(slen);
-    memcpy(buf+bufused, s, slen);
-    bufused += slen;
+    if (doQuote) {
+      VStr ss = VStr(s, sslen);
+      putStrInternal(ss, doQuote);
+    } else {
+      size_t slen = (sslen < 0 ? strlen(s) : (size_t)sslen);
+      reserve(slen);
+      memcpy(buf+bufused, s, slen);
+      bufused += slen;
+    }
   }
 
   void putChar (char ch) {
@@ -314,6 +367,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 's': // this can convert most of the types to string
+        case 'q': // this can convert most of the types to string
           if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Void: pbuf.putStr(VStr("<void>"), width, toRight, zeroFill); break;
@@ -322,11 +376,11 @@ VStr PF_FormatString () {
             case TYPE_Name:
               {
                 VName n = *(VName*)&params[pi].i;
-                if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill);
+                if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill, (fspec == 'q'));
               }
               break;
             case TYPE_String:
-              pbuf.putStr(*(VStr*)&params[pi].p, width, toRight, zeroFill);
+              pbuf.putStr(*(VStr*)&params[pi].p, width, toRight, zeroFill, (fspec == 'q'));
               ((VStr*)&params[pi].p)->Clean();
               break;
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
@@ -335,7 +389,7 @@ VStr PF_FormatString () {
                 VStr ss = "(";
                 ss += (ptypes[pi].Class ? *ptypes[pi].Class->Name : "none");
                 ss += ")";
-                pbuf.putStr(ss, width, toRight, zeroFill);
+                pbuf.putStr(ss, width, toRight, zeroFill, (fspec == 'q'));
                 /*
                 pbuf.putChar(':');
                 pbuf.putPtr(params[pi].p);
@@ -353,7 +407,7 @@ VStr PF_FormatString () {
             case TYPE_SliceArray:
             //case TYPE_Unknown:
             //case TYPE_Automatic:
-              pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill);
+              pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
               break;
             case TYPE_Vector:
               pbuf.putChar('(');
