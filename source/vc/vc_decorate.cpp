@@ -1101,6 +1101,7 @@ static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, 
 //  SkipBlock
 //
 //==========================================================================
+/*
 static void SkipBlock (VScriptParser *sc, int Level) {
   while (!sc->AtEnd() && Level > 0) {
          if (sc->Check("{")) ++Level;
@@ -1108,6 +1109,7 @@ static void SkipBlock (VScriptParser *sc, int Level) {
     else sc->GetString();
   }
 }
+*/
 
 
 //==========================================================================
@@ -1799,6 +1801,24 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
   }
 
   if (sc->Check(";")) return nullptr;
+
+  auto stloc = sc->GetLoc();
+
+  // if
+  if (sc->Check("if")) {
+    sc->Expect("(");
+    VExpression *cond = ParseExpression(sc, Class);
+    sc->Expect(")");
+    if (!cond) return nullptr;
+    VStatement *ts = ParseActionStatement(sc, Class, State, FramesString);
+    if (!ts) return nullptr;
+    if (sc->Check("else")) {
+      VStatement *fs = ParseActionStatement(sc, Class, State, FramesString);
+      if (fs) return new VIf(cond, ts, fs, stloc);
+    }
+    return new VIf(cond, ts, stloc);
+  }
+
   VStatement *res = ParseFunCallAsStmt(sc, Class, State, FramesString);
   sc->Expect(";");
   return res;
@@ -1856,6 +1876,7 @@ static void ParseConst (VScriptParser *sc) {
   } else {
     VEmitContext ec(DecPkg);
     Expr = Expr->Resolve(ec);
+    if (Expr && !Expr->IsIntConst()) sc->Error(va("%s: DECORATE: expected integer literal", *sc->GetLoc().toStringNoCol()));
     if (Expr) {
       int Val = Expr->GetIntConst();
       delete Expr;
@@ -1981,9 +2002,44 @@ static void ParseClass (VScriptParser *sc) {
 //==========================================================================
 static void ParseEnum (VScriptParser *sc) {
   guard(ParseEnum);
-  GCon->Logf("Enum");
-  sc->Expect("{");
-  SkipBlock(sc, 1);
+
+  sc->SetCMode(true);
+  //GCon->Logf("Enum");
+  if (!sc->Check("{")) {
+    sc->ExpectIdentifier();
+    sc->Expect("{");
+  }
+
+  int currValue = 0;
+  while (!sc->Check("}")) {
+    sc->ExpectIdentifier();
+    TLocation Loc = sc->GetLoc();
+    VStr Name = sc->String.ToLower();
+    VExpression *eval;
+    if (sc->Check("=")) {
+      eval = ParseExpression(sc, nullptr);
+      if (eval) {
+        VEmitContext ec(DecPkg);
+        eval = eval->Resolve(ec);
+        if (eval && !eval->IsIntConst()) sc->Error(va("%s: DECORATE: expected integer literal", *sc->GetLoc().toStringNoCol()));
+        if (eval) {
+          currValue = eval->GetIntConst();
+          delete eval;
+        }
+      }
+    }
+    // create constant
+    VConstant *C = new VConstant(*Name, DecPkg, Loc);
+    C->Type = TYPE_Int;
+    C->Value = currValue;
+    ++currValue;
+    if (!sc->Check(",")) {
+      sc->Expect("}");
+      break;
+    }
+  }
+  sc->Check(";");
+  sc->SetCMode(false);
   unguard;
 }
 
