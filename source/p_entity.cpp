@@ -211,7 +211,7 @@ bool VEntity::SetState (VState *InState) {
         EntityFlags |= EF_UseDispState;
       }
       if (st->SpriteIndex != 1) DispState->SpriteIndex = st->SpriteIndex;
-      if ((st->Frame&VState::FF_DONTCHANGE) != 0) DispState->Frame = st->Frame;
+      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispState->Frame = st->Frame;
     } else {
       EntityFlags &= ~EF_UseDispState;
     }

@@ -2158,8 +2158,9 @@ static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
 {
   VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
   States.Append(State);
-  State->SpriteName = "tnt1";
-  State->Frame = VState::FF_SKIPOFFS;
+  //State->SpriteName = "tnt1";
+  State->SpriteName = NAME_None;
+  State->Frame = VState::FF_SKIPOFFS|VState::FF_DONTCHANGE;
   State->Time = 0;
   // link previous state
   if (PrevState) PrevState->NextState = State;
