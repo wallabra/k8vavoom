@@ -38,11 +38,11 @@ final string text {
 void setText (string text) {
   while (text && text[0] <= ' ') text = text[1..$];
   while (text && text[$-1] <= ' ') text = text[0..$-1];
-  mText = SplitTextWithNewlines(text, GetVirtualWidth()-8);
+  mText = SplitTextWithNewlines(text, GetVirtualWidth()-16);
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  SetSize(TextWidth(text)+8, TextHeight(text)+8);
+  SetSize(TextWidth(mText)+8, TextHeight(mText)+8);
 }
 
 

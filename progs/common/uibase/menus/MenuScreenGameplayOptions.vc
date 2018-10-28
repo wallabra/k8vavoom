@@ -89,8 +89,13 @@ override void CreateChoices () {
   }
 
   CreateOnOffCvar("Global Autoaim", 'autoaim');
+    SetLastHelp("Controls global autoaim. Note that if autoaim is turned on,\nheadshots will not work properly.");
   CreateOnOffCvar("Autoaim for hitscan weapon", 'k8HitscanAutoAim');
-    SetLastHelp("Controls autoaim for pistol, shotgun, and minigun.\nIf you will turn Global Autoaim off, this will not have any effect.");
+    SetLastHelp(
+      "Controls autoaim for standard pistol, shotgun, and minigun.\n"~
+      "If you will turn Global Autoaim off, this will not have any effect.\n"~
+      "You can turn this off to perform headshots, but still use autoaiming\n"~
+      "for rockets and plasma.");
   CreateOnOffCvar("Weapon autoswitch", 'wpn_autoswitch');
   CreateOnOffCvar("Berserk autoswitch", 'k8BerserkSwitch');
   CreateOnOffCvar("Ignore 'nojump'", 'sv_ignore_nojump');
