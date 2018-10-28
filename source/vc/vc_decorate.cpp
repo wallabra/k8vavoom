@@ -1607,7 +1607,7 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class) 
   VExpression *op2 = ParseExpressionPriority13(sc, Class);
   sc->Expect(")");
   // create assignment
-  GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
+  //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
   return new VAssignment(VAssignment::Assign, op1, op2, stloc);
 }
 
@@ -2373,6 +2373,65 @@ static void ParseParentState (VScriptParser *sc, VClass *Class, const char *LblN
 
 //==========================================================================
 //
+//  ScanActorDefForUserVars
+//
+//==========================================================================
+static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarDef> &uvars) {
+  if (sc->Check("replaces")) sc->ExpectString();
+
+  // time to switch to the C mode
+  sc->SetCMode(true);
+  sc->SetEscape(false);
+
+  sc->CheckNumber();
+  sc->Expect("{");
+  sc->ResetCrossed();
+
+  while (!sc->Check("}")) {
+    if (!sc->Check("var")) {
+      // not a var, skip whole line
+      //sc->SkipLine();
+      //while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
+      //sc->UnGet();
+      //sc->ResetCrossed();
+      //GCon->Logf("<%s>", *sc->String);
+      sc->GetString();
+      continue;
+    }
+
+    if (sc->Check("{")) {
+      sc->SkipBracketed(true); // bracket eaten
+      continue;
+    }
+
+    sc->ExpectIdentifier();
+    if (sc->String != "int") sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
+
+    for (;;) {
+      auto fnloc = sc->GetLoc(); // for error messages
+      sc->ExpectIdentifier();
+      VStr uvname = sc->String.toLowerCase();
+      if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
+      uvname = uvname.toLowerCase();
+      VName fldname = VName(*uvname);
+      for (int f = 0; f < uvars.length(); ++f) {
+        if (fldname == uvars[f].name) sc->Error(va("%s: duplicate DECORATE user variable `%s`", *sc->GetLoc().toStringNoCol(), *uvname));
+      }
+      VDecorateUserVarDef &vd = uvars.alloc();
+      vd.name = fldname;
+      vd.loc = fnloc;
+      if (sc->Check(",")) continue;
+      break;
+    }
+    sc->Expect(";");
+  }
+
+  //if (uvars.length()) for (int f = 0; f < uvars.length(); ++f) GCon->Logf("DC: <%s>", *uvars[f]);
+}
+
+
+//==========================================================================
+//
 //  ParseActor
 //
 //==========================================================================
@@ -2428,7 +2487,23 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     }
   }
 
-  VClass *Class = ParentClass->CreateDerivedClass(*NameStr, DecPkg, sc->GetLoc());
+  //!HACK ZONE!
+  // here i will clone `sc`, and will scan actor definition for any uservars.
+  // this is 'cause `CreateDerivedClass` wants to finalize object fields, and
+  // we need it to do that, so we can change defaults.
+  // of course, i can collect changed defaults, and put 'em into default object
+  // later, but meh... i want something easier as a starting point.
+
+  TArray<VDecorateUserVarDef> uvars;
+  {
+    //GCon->Logf("*: '%s'", *NameStr);
+    auto sc2 = sc->clone();
+    ScanActorDefForUserVars(sc2, uvars);
+    delete sc2;
+  }
+
+  VClass *Class = ParentClass->CreateDerivedClass(*NameStr, DecPkg, uvars, sc->GetLoc());
+  uvars.clear(); // we don't need it anymore
   DecPkg->ParsedClasses.Append(Class);
 
   if (Class) {
@@ -2503,11 +2578,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
       sc->ExpectIdentifier();
       if (sc->String != "int") sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
       for (;;) {
-        auto fnloc = sc->GetLoc(); // for error messages
+        //auto fnloc = sc->GetLoc(); // for error messages
         sc->ExpectIdentifier();
         VStr uvname = sc->String.toLowerCase();
         if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-
+        /*
         VName fldname = VName(*sc->String);
         if (Class->FindField(fldname) || Class->FindMethod(fldname)) ParseError(sc->GetLoc(), "Redeclared field `%s`", *fldname);
 
@@ -2516,12 +2591,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
         fi->TypeExpr = te;
         fi->Flags = 0;
         Class->AddField(fi);
-
+        */
         if (sc->Check(",")) continue;
         break;
       }
       sc->Expect(";");
-      sc->Error(va("%s: user variables in DECORATE aren't supported yet", *sc->GetLoc().toStringNoCol()));
+      //sc->Error(va("%s: user variables in DECORATE aren't supported yet", *sc->GetLoc().toStringNoCol()));
       continue;
     }
 
@@ -3236,9 +3311,10 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
   VName ClassName = *sc->String;
 
   // create class
+  TArray<VDecorateUserVarDef> uvars;
   VClass *Class = Type == OLDDEC_Pickup ?
-    FakeInventoryClass->CreateDerivedClass(ClassName, DecPkg, sc->GetLoc()) :
-    ActorClass->CreateDerivedClass(ClassName, DecPkg, sc->GetLoc());
+    FakeInventoryClass->CreateDerivedClass(ClassName, DecPkg, uvars, sc->GetLoc()) :
+    ActorClass->CreateDerivedClass(ClassName, DecPkg, uvars, sc->GetLoc());
   DecPkg->ParsedClasses.Append(Class);
   if (Type == OLDDEC_Breakable) SetClassFieldBool(Class, "bShootable", true);
   if (Type == OLDDEC_Projectile) {

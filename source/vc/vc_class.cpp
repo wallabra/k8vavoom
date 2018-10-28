@@ -1100,7 +1100,6 @@ bool VClass::DefineMembers () {
 bool VClass::DecorateDefine () {
   guard(VClass::DecorateDefine);
   bool Ret = true;
-
   VField *PrevBool = nullptr;
   for (VField *fi = Fields; fi; fi = fi->Next) {
     if (!fi->Define()) Ret = false;
@@ -1109,7 +1108,6 @@ bool VClass::DecorateDefine () {
     }
     PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
   }
-
   return Ret;
   unguard;
 }
@@ -1437,6 +1435,7 @@ void VClass::CalcFieldOffsets () {
       size = ParentClass->ClassSize;
     }
   }
+  //if (VStr::ICmp(GetName(), "BdHellBaron") == 0) fprintf(stderr, "!!!: %d %p\n", size, Fields);
   for (VField *fi = Fields; fi; fi = fi->Next) {
     if (fi->Type.Type == TYPE_Bool && PrevField &&
         PrevField->Type.Type == TYPE_Bool &&
@@ -1446,16 +1445,19 @@ void VClass::CalcFieldOffsets () {
       if (fi->Type.BitMask != bit_mask) Sys_Error("Wrong bit mask");
       fi->Type.BitMask = bit_mask;
       fi->Ofs = PrevField->Ofs;
+      //if (VStr::ICmp(GetName(), "BdHellBaron") == 0) abort();
     } else {
       if (fi->Type.Type == TYPE_Struct || (fi->Type.IsAnyArray() && fi->Type.ArrayInnerType == TYPE_Struct)) {
         // make sure struct size has been calculated
         fi->Type.Struct->PostLoad();
       }
       int FldAlign = fi->Type.GetAlignment();
+      //fprintf(stderr, " fldalign for '%s' is %d (%s)\n", fi->GetName(), FldAlign, *fi->Type.GetName());
       size = (size+FldAlign-1)&~(FldAlign-1);
       fi->Ofs = size;
       size += fi->Type.GetSize();
     }
+    //if (VStr::ICmp(GetName(), "BdHellBaron") == 0) fprintf(stderr, "  *'%s': %d\n", fi->GetName(), fi->Ofs);
     PrevField = fi;
   }
   ClassUnalignedSize = size;
@@ -1651,7 +1653,10 @@ void VClass::CreateDefaults () {
   memset(Defaults, 0, ClassSize);
 
   // copy default properties from the parent class
-  if (ParentClass) ParentClass->CopyObject(ParentClass->Defaults, Defaults);
+  if (ParentClass) {
+    //fprintf(stderr, "COPYING `%s` to `%s`\n", ParentClass->GetName(), GetName());
+    ParentClass->CopyObject(ParentClass->Defaults, Defaults);
+  }
 
   // call default properties method
   if (DefaultProperties) {
@@ -1672,7 +1677,11 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
   // copy parent class fields
   if (GetSuperClass()) GetSuperClass()->CopyObject(Src, Dst);
   // copy fields
-  for (VField *F = Fields; F; F = F->Next) VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
+  //fprintf(stderr, "COPYING fields of `%s`...\n", GetName());
+  for (VField *F = Fields; F; F = F->Next) {
+    //fprintf(stderr, "  COPYING field '%s' of `%s`...\n", F->GetName(), GetName());
+    VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
+  }
   unguardf(("(%s)", GetName()));
 }
 
@@ -1729,7 +1738,7 @@ void VClass::DestructObject (VObject *Obj) {
 //  VClass::CreateDerivedClass
 //
 //==========================================================================
-VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc) {
+VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDecorateUserVarDef> &uvlist, const TLocation &ALoc) {
   guard(VClass::CreateDerivedClass);
   VClass *NewClass = nullptr;
   for (int i = 0; i < GDecorateClassImports.Num(); ++i) {
@@ -1741,15 +1750,34 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, const TLoc
       NewClass->Loc = ALoc;
       // make sure parent class is correct
       VClass *Check = FindClass(*NewClass->ParentClassName);
-      if (!Check) Sys_Error("No such class %s", *NewClass->ParentClassName);
-      if (!IsChildOf(Check)) Sys_Error("%s must be a child of %s", *AName, *Check->Name);
+      if (!Check) Sys_Error("No such class `%s`", *NewClass->ParentClassName);
+      if (!IsChildOf(Check)) Sys_Error("`%s` must be a child of `%s`", *AName, *Check->Name);
       GDecorateClassImports.RemoveIndex(i);
       break;
     }
   }
   if (!NewClass) NewClass = new VClass(AName, AOuter, ALoc);
   NewClass->ParentClass = this;
+  //TODO: for booleans, we need to call a real definer
+  for (int f = 0; f < uvlist.length(); ++f) {
+    VField *fi = new VField(uvlist[f].name, NewClass, uvlist[f].loc);
+    VTypeExpr *te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), uvlist[f].loc);
+    fi->TypeExpr = te;
+    fi->Type = VFieldType(TYPE_Int);
+    fi->Flags = 0;
+    NewClass->AddField(fi);
+    NewClass->DecorateStateFieldTrans.put(uvlist[f].name, uvlist[f].name); // so field name will be case-insensitive
+  }
+  //!DecorateDefine();
+  //fprintf(stderr, "*** '%s' : '%s' (%d) ***\n", NewClass->GetName(), GetName(), (NewClass->ObjectFlags&CLASSOF_PostLoaded ? 1 : 0));
+  //fprintf(stderr, " class size 0: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
   NewClass->PostLoad();
+  /*
+  fprintf(stderr, " class size 1: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
+  if (NewClass->Fields) {
+    for (VField *fi = NewClass->Fields; fi; fi = fi->Next) fprintf(stderr, "  %s: %d\n", fi->GetName(), fi->Ofs);
+  }
+  */
   NewClass->CreateDefaults();
   return NewClass;
   unguard;

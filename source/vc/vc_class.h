@@ -116,6 +116,17 @@ struct VDecorateStateAction {
 
 //==========================================================================
 //
+//  VDecorateUserVarDef
+//
+//==========================================================================
+struct VDecorateUserVarDef {
+  VName name;
+  TLocation loc;
+};
+
+
+//==========================================================================
+//
 //  VLightEffectDef
 //
 //==========================================================================
@@ -340,7 +351,7 @@ public:
   void SerialiseObject (VStream &, VObject *);
   void CleanObject (VObject *);
   void DestructObject (VObject *);
-  VClass *CreateDerivedClass (VName, VMemberBase *, const TLocation &);
+  VClass *CreateDerivedClass (VName, VMemberBase *, TArray<VDecorateUserVarDef> &, const TLocation &);
 #endif
   VClass *GetReplacement ();
   VClass *GetReplacee ();
