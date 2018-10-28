@@ -202,6 +202,7 @@ final void A_LowGravity()
   Gravity = 0.125;
 }
 
+
 //==========================================================================
 //
 //  A_NoBlocking
@@ -209,17 +210,27 @@ final void A_LowGravity()
 //  Unset blocking.
 //
 //==========================================================================
+final void A_NoBlocking () {
+  decorate_A_NoBlocking(true);
+}
 
-final void A_NoBlocking()
-{
-  int         SpeechNum;
+
+//==========================================================================
+//
+//  A_NoBlocking
+//
+//  Unset blocking.
+//
+//==========================================================================
+final void decorate_A_NoBlocking (optional bool drop) {
+  int SpeechNum;
   RogueConSpeech *Speech;
-  class!EntityEx   DropItemType;
-  int         i;
+  class!EntityEx DropItemType;
 
-  //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
+  if (!specified_drop) drop = true;
+
+  // Andy Baker's stealth monsters
+  if (bStealth) {
     Alpha = 1.0;
     VisDir = 0;
   }
@@ -228,41 +239,29 @@ final void A_NoBlocking()
   bSolid = false;
 
   SpeechNum = GetSpeech();
-  if (SpeechNum)
-  {
-    //  Drop stuff as determined by conversation.
-    if (SpeechNum < 0)
-    {
+  if (SpeechNum) {
+    // drop stuff as determined by conversation
+    if (SpeechNum < 0) {
       Speech = &XLevel.GenericSpeeches[-SpeechNum - 1];
-    }
-    else
-    {
+    } else {
       Speech = &XLevel.LevelSpeeches[SpeechNum - 1];
     }
     DropItemType = LineSpecialLevelInfo(Level).GetClassFromID(Speech->DropItem);
-    if (DropItemType)
-    {
+    if (DropItemType && drop) {
       DropItem(DropItemType, 0, 1.0);
       return;
     }
   }
 
-  // Check for monsters dropping things
-  if (ShouldDropItems())
-  {
-    if (DropItemList.Num)
-    {
-      for (i = 0; i < DropItemList.Num; i++)
-      {
-        if (DropItemList[i].Type)
-        {
-          DropItem(class!EntityEx(DropItemList[i].Type),
-            DropItemList[i].Amount, DropItemList[i].Chance);
+  // check for monsters dropping things
+  if (drop && ShouldDropItems()) {
+    if (DropItemList.Num) {
+      foreach (auto i; 0..DropItemList.length) {
+        if (DropItemList[i].Type) {
+          DropItem(class!EntityEx(DropItemList[i].Type), DropItemList[i].Amount, DropItemList[i].Chance);
         }
       }
-    }
-    else
-    {
+    } else {
       NoBlockingSet();
     }
   }
@@ -404,46 +403,42 @@ final void A_SetTranslucent(float AlphaVal, optional int Mode)
     STYLE_Fuzzy : STYLE_Add;
 }
 
+
+enum {
+  FTF_REMOVE = 1 << 0,
+  FTF_CLAMP =  1 << 1,
+};
+
+
 //==========================================================================
 //
 //  A_FadeIn
 //
 //==========================================================================
-
-final void A_FadeIn(optional float Val)
-{
-  if (RenderStyle == Entity::STYLE_Normal)
-  {
-    RenderStyle = Entity::STYLE_Translucent;
-  }
-  if (!Val)
-  {
-    Val = 0.1;
-  }
+final void A_FadeIn(optional float Val, optional int flags) {
+  if (RenderStyle == Entity::STYLE_Normal) RenderStyle = Entity::STYLE_Translucent;
+  if (!Val) Val = 0.1;
   Alpha += Val;
+  if (specified_flags) {
+    if ((flags&FTF_CLAMP) && Alpha > 1) Alpha = 1;
+    if ((flags&FTF_REMOVE) && Alpha >= 1) { Destroy(); return; }
+  }
 }
+
 
 //==========================================================================
 //
 //  A_FadeOut
 //
 //==========================================================================
-
-final void A_FadeOut(optional float Val)
-{
-  if (RenderStyle == Entity::STYLE_Normal)
-  {
-    RenderStyle = Entity::STYLE_Translucent;
-  }
-  if (!Val)
-  {
-    Val = 0.1;
-  }
+final void A_FadeOut (optional float Val, optional int flags) {
+  if (RenderStyle == Entity::STYLE_Normal) RenderStyle = Entity::STYLE_Translucent;
+  if (!Val) Val = 0.1;
   Alpha -= Val;
-  if (Alpha <= 0.0)
-  {
-    Destroy();
-  }
+  if (!specified_flags) flags = FTF_REMOVE;
+
+  if ((flags&FTF_CLAMP) && Alpha < 0) Alpha = 0;
+  if ((flags&FTF_REMOVE) && Alpha <= 0) { Destroy(); return; }
 }
 
 //==========================================================================

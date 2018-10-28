@@ -69,6 +69,7 @@ enum
 #include "EntityEx.Decal.vc"
 #include "EntityEx.Defaults.vc"
 #include "Actor.Misc.vc"
+#include "Actor.Decorate.vc"
 #include "Actor.MonsterAi.vc"
 #include "Actor.GenericAttacks.vc"
 #include "Actor.FreezeDeath.vc"
