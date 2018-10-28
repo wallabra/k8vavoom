@@ -2333,29 +2333,14 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     bool wasAction = false;
     while (sc->GetString() && !sc->Crossed) {
       // check for bright parameter
-      if (!sc->String.ICmp("Bright")) {
+      if (sc->String.ICmp("Bright") == 0) {
         State->Frame |= VState::FF_FULLBRIGHT;
         continue;
       }
       // check for canrise parameter
-      if (!sc->String.ICmp("CanRaise")) {
+      if (sc->String.ICmp("CanRaise") == 0) {
         //GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
         State->Frame |= VState::FF_CANRAISE;
-        continue;
-      }
-
-      //FIXME: check for light parameter (unsupported for now)
-      if (!sc->String.ICmp("Light")) {
-        //LIGHT(UNMNRALR)
-        GCon->Logf("%s: unsupported DECORATE 'Light' attribute", *sc->GetLoc().toStringNoCol());
-        if (!sc->Crossed) {
-          if (sc->Check("(")) {
-            while (!sc->IsAtEol()) {
-              if (sc->Check(")")) break;
-              sc->GetString();
-            }
-          }
-        }
         continue;
       }
 
@@ -2371,14 +2356,29 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         continue;
       }
 
+      //FIXME: check for light parameter (unsupported for now)
+      if (sc->String.ICmp("Light") == 0) {
+        //LIGHT(UNMNRALR)
+        GCon->Logf("%s: unsupported DECORATE 'Light' attribute", *sc->GetLoc().toStringNoCol());
+        if (!sc->Crossed) {
+          if (sc->Check("(")) {
+            while (!sc->IsAtEol()) {
+              if (sc->Check(")")) break;
+              sc->GetString();
+            }
+          }
+        }
+        continue;
+      }
+
       // check for other parameters
-      if (!sc->String.ICmp("Fast") || !sc->String.ICmp("CanRaise") || !sc->String.ICmp("Slow")) {
+      if (sc->String.ICmp("Fast") == 0 || sc->String.ICmp("Slow") == 0) {
         GCon->Logf("%s: unsupported DECORATE state keyword: '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         continue;
       }
 
       // check for offsets
-      if (!sc->String.ICmp("Offset")) {
+      if (sc->String.ICmp("Offset") == 0) {
         sc->Expect("(");
         sc->ExpectNumberWithSign();
         State->Misc1 = sc->Number;
