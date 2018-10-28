@@ -2339,7 +2339,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       // check for canrise parameter
       if (!sc->String.ICmp("CanRaise")) {
-        GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
+        //GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
         State->Frame |= VState::FF_CANRAISE;
         continue;
       }

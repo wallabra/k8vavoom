@@ -3980,9 +3980,10 @@ final bool DoThingRaise()
     return false; // not a monster
   }
 
-  if (StateTime != -1.0)
-  {
-    return false; // not lying still yet
+  if (StateTime != -1.0) {
+    // not lying still yet; check frame flag
+    if (!State) return false;
+    if ((GetStateSpriteFrame(State)&FF_CANRAISE) == 0) return false;
   }
 
   state RaiseState = FindState('Raise');

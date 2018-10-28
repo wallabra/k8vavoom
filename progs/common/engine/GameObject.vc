@@ -56,6 +56,9 @@ enum {
 //
 enum {
   FF_FULLBRIGHT = 0x80, // flag in thing->frame
+  FF_CANRAISE = 0x100, // flag in Frame; currently does nothing
+  FF_DONTCHANGE = 0x200, // this frame is ignored in offset calculations
+  FF_SKIPOFFS = 0x400, // skip this state in offset calculation
   FF_FRAMEMASK  = 0x7f
 };
 
