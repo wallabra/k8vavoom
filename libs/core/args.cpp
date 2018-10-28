@@ -101,6 +101,14 @@ void VArgs::Init (int argc, char **argv) {
   memset(Argv, 0, sizeof(char*)*MAXARGVS);
   Argv[0] = xstrdup(getBinaryDir());
   for (int f = 1; f < argc; ++f) Argv[f] = xstrdup(argv[f]);
+#ifdef __SWITCH__
+  // add static response file if it exists
+  FILE *rf = fopen("/switch/vavoom/args.txt", "rb");
+  if (rf) {
+    fclose(rf);
+    Argv[Argc++] = xstrdup("@/switch/vavoom/args.txt");
+  }
+#endif
   FindResponseFile();
   unguard;
 }
