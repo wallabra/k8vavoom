@@ -678,9 +678,21 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   if (ec.SelfClass) {
     VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
     if (fldn != NAME_None) {
-      VSingleName *sn = new VSingleName(fldn, Loc);
-      delete this;
-      return sn->Resolve(ec);
+      VStr fns = VStr(*fldn);
+      int dotpos = fns.IndexOf('.');
+      if (dotpos > 0 && dotpos < fns.length()-1) {
+        VStr n0 = fns.mid(0, dotpos);
+        VStr n1 = fns.mid(dotpos+1, fns.length()-dotpos);
+        //fprintf(stderr, "::: <%s> <%s>\n", *n0, *n1);
+        VSingleName *sn0 = new VSingleName(VName(*n0), Loc);
+        VDotField *fa = new VDotField(sn0, VName(*n1), Loc);
+        delete this;
+        return fa->Resolve(ec);
+      } else {
+        VSingleName *sn = new VSingleName(fldn, Loc);
+        delete this;
+        return sn->Resolve(ec);
+      }
     }
   }
 
@@ -1961,6 +1973,11 @@ static void ParseFieldAlias (VScriptParser *sc, VClass *Class) {
   sc->Expect("=");
   sc->ExpectIdentifier();
   VStr oldname = sc->String;
+  if (sc->Check(".")) {
+    oldname += ".";
+    sc->ExpectIdentifier();
+    oldname += sc->String;
+  }
   Class->DecorateStateFieldTrans.put(VName(*newname.toLowerCase()), VName(*oldname));
   sc->Expect(";");
   unguard;
