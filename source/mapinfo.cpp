@@ -399,7 +399,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       auto ocm = sc->IsCMode();
       sc->SetCMode(true); // we need this to properly parse commas
-      sc->ExpectName8();
+      sc->ExpectName();
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
       VName skbname = R_HasNamedSkybox(sc->String);
       if (skbname != NAME_None) {
