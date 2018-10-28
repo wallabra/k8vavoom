@@ -44,6 +44,8 @@ static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore 
 
 static VCvarB sv_new_map_autosave("sv_new_map_autosave", true, "Autosave when entering new map (except first one)?", 0/*CVAR_Archive*/);
 
+static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/load?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define QUICKSAVE_SLOT  (-666)
@@ -1416,12 +1418,27 @@ static bool CheckIfSaveIsAllowed () {
 }
 
 
+static void BroadcastSaveText (const char *msg) {
+  if (!msg || !msg[0]) return;
+  if (sv_save_messages) {
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      VBasePlayer *plr = GGameInfo->Players[i];
+      if (!plr) continue;
+      if ((plr->PlayerFlags&VBasePlayer::PF_Spawned) == 0) continue;
+      plr->eventClientPrint(msg);
+    }
+  } else {
+    GCon->Log(msg);
+  }
+}
+
+
 void SV_AutoSave () {
   if (!CheckIfSaveIsAllowed()) return;
 
   int aslot = SV_FindAutosaveSlot();
   if (!aslot) {
-    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    BroadcastSaveText("Cannot find autosave slot (this should not happen)!");
     return;
   }
 
@@ -1435,7 +1452,7 @@ void SV_AutoSave () {
 
   SV_SaveGame(aslot, svname);
 
-  GCon->Logf("Game autosaved to slot #%d", -aslot);
+  BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
 }
 
 
@@ -1447,7 +1464,7 @@ void SV_AutoSaveOnLevelExit () {
 
   int aslot = SV_FindAutosaveSlot();
   if (!aslot) {
-    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    BroadcastSaveText("Cannot find autosave slot (this should not happen)!");
     return;
   }
 
@@ -1459,7 +1476,7 @@ void SV_AutoSaveOnLevelExit () {
 
   SV_SaveGame(aslot, svname);
 
-  GCon->Logf("Game autosaved to slot #%d", -aslot);
+  BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
 }
 
 
@@ -1477,7 +1494,7 @@ COMMAND(Save) {
   if (!CheckIfSaveIsAllowed()) return;
 
   if (Args[2].Length() >= 32) {
-    GCon->Log("Description too long");
+    BroadcastSaveText("Description too long!");
     return;
   }
 
@@ -1485,7 +1502,7 @@ COMMAND(Save) {
 
   SV_SaveGame(atoi(*Args[1]), Args[2]);
 
-  GCon->Log("Game saved");
+  BroadcastSaveText("Game saved.");
   unguard;
 }
 
@@ -1509,7 +1526,7 @@ COMMAND(DeleteSavedGame) {
   //GCon->Logf("DeleteSavedGame: <%s>", *numstr);
 
   if (numstr.ICmp("quick") == 0) {
-    if (SV_DeleteSlotFile(QUICKSAVE_SLOT)) GCon->Log("quicksave deleted");
+    if (SV_DeleteSlotFile(QUICKSAVE_SLOT)) BroadcastSaveText("Quicksave deleted.");
     return;
   }
 
@@ -1535,7 +1552,7 @@ COMMAND(DeleteSavedGame) {
   if (neg) slot = -slot;
 
   if (SV_DeleteSlotFile(slot)) {
-    if (slot < 0) GCon->Logf("autosave #%d deleted", -slot); else GCon->Logf("savegame #%d deleted", slot);
+    if (slot < 0) BroadcastSaveText(va("Autosave #%d deleted", -slot)); else BroadcastSaveText(va("Savegame #%d deleted", slot));
   }
 
   unguard;
@@ -1556,14 +1573,15 @@ COMMAND(Load) {
   int slot = atoi(*Args[1]);
   VStr desc;
   if (!SV_GetSaveString(slot, desc)) {
-    GCon->Log("Empty slot");
+    BroadcastSaveText("Empty slot!");
     return;
   }
-  GCon->Logf("Loading \"%s\"", *desc);
+  GCon->Logf("Loading \"%s\"...", *desc);
 
   Draw_LoadIcon();
   SV_LoadGame(slot);
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
+  BroadcastSaveText(va("Loaded save \"%s\".", *desc));
   unguard;
 }
 
@@ -1582,7 +1600,7 @@ COMMAND(QuickSave) {
 
   SV_SaveGame(QUICKSAVE_SLOT, "quicksave");
 
-  GCon->Log("Game quicksaved");
+  BroadcastSaveText("Game quicksaved.");
   unguard;
 }
 
@@ -1599,15 +1617,16 @@ COMMAND(QuickLoad) {
 
   VStr desc;
   if (!SV_GetSaveString(QUICKSAVE_SLOT, desc)) {
-    GCon->Log("Empty quicksave slot");
+    BroadcastSaveText("Empty quicksave slot");
     return;
   }
-  GCon->Logf("Loading quicksave...");
+  GCon->Log("Loading quicksave...");
 
   Draw_LoadIcon();
   SV_LoadGame(QUICKSAVE_SLOT);
   // don't copy to reborn slot -- this is quickload after all!
 
+  BroadcastSaveText("Quicksave loaded.");
   unguard;
 }
 
@@ -1624,7 +1643,7 @@ COMMAND(AutoSaveEnter) {
 
   int aslot = SV_FindAutosaveSlot();
   if (!aslot) {
-    GCon->Logf("Cannot find autosave slot (this should not happen!");
+    BroadcastSaveText("Cannot find autosave slot (this should not happen)!");
     return;
   }
 
@@ -1636,7 +1655,7 @@ COMMAND(AutoSaveEnter) {
 
   SV_SaveGame(aslot, svname);
 
-  GCon->Logf("Game autosaved to slot #%d", -aslot);
+  BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
   unguard;
 }
 
