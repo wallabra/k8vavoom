@@ -99,8 +99,10 @@ void C_Init () {
     if (v) logfout = fopen(v, "w");
   }
 
-#ifdef _WIN32
+#if defined(_WIN32)
   if (!logfout) logfout = fopen("conlog.log", "w");
+#elif defined(__SWITCH__) && !defined(SWITCH_NXLINK)
+  if (!logfout) logfout = fopen("/switch/vavoom/conlog.log", "w");
 #endif
 
   memset(clines, 0, sizeof(clines));
