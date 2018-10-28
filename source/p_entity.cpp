@@ -196,6 +196,7 @@ bool VEntity::SetState (VState *InState) {
       break;
     }
     if (!st) {
+      //if (VStr::ICmp(GetClass()->GetName(), "BdZombieMan") == 0) GCon->Logf("***(000): ZOMBIEMAN %p IS DEAD", this);
       // remove mobj
       State = nullptr;
       StateTime = -1;
@@ -214,6 +215,7 @@ bool VEntity::SetState (VState *InState) {
     } else {
       EntityFlags &= ~EF_UseDispState;
     }
+
     State = st;
     StateTime = eventGetStateTime(st, st->Time);
     EntityFlags &= ~EF_FullBright;
@@ -221,10 +223,21 @@ bool VEntity::SetState (VState *InState) {
     // modified handling
     // call action functions when the state is set
     if (st->Function) {
+      //if (VStr::ICmp(GetClass()->GetName(), "BdZombieMan") == 0) GCon->Logf("***(001):%s: ZOMBIEMAN %p STATE ACTION: %p '%s'", *st->Loc.toStringNoCol(), this, st, st->Function->GetName());
       XLevel->CallingState = State;
       P_PASS_SELF;
       ExecuteFunctionNoArgs(st->Function);
     }
+
+    /*
+    if (VStr::ICmp(GetClass()->GetName(), "BdZombieMan") == 0) {
+      if (State != st) {
+        GCon->Logf("***(001):%s: ZOMBIEMAN %p STATE CHANGE: st=%p; State=%p", *st->Loc.toStringNoCol(), this, st, State);
+      } else {
+        GCon->Logf("***(002):%s: ZOMBIEMAN %p STATE OK: State=%p", *st->Loc.toStringNoCol(), this, State);
+      }
+    }
+    */
 
     if (!State) return false;
     st = State->NextState;

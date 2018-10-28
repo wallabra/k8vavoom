@@ -2149,6 +2149,33 @@ static VStr ParseStateString (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  AppendDummyActionState
+//
+//==========================================================================
+static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
+  VState *&PrevState, VState *&LastState, VState *&LoopStart, int &NewLabelsStart,
+  const TLocation &TmpLoc)
+{
+  VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
+  States.Append(State);
+  State->SpriteName = "tnt1";
+  State->Frame = VState::FF_SKIPOFFS;
+  State->Time = 0;
+  // link previous state
+  if (PrevState) PrevState->NextState = State;
+  // assign state to the labels
+  for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+    Class->StateLabelDefs[i].State = State;
+    LoopStart = State;
+  }
+  NewLabelsStart = Class->StateLabelDefs.Num();
+  PrevState = State;
+  LastState = State;
+}
+
+
+//==========================================================================
+//
 //  ParseStates
 //
 //==========================================================================
@@ -2162,12 +2189,17 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   sc->Expect("{");
   // disable escape sequences in states
   sc->SetEscape(false);
+  bool wasActionAfterLabel = false;
   while (!sc->Check("}")) {
     TLocation TmpLoc = sc->GetLoc();
     VStr TmpName = ParseStateString(sc);
 
     // goto command
     if (!TmpName.ICmp("Goto")) {
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc);
+      }
       VName GotoLabel = *ParseStateString(sc);
       int GotoOffset = 0;
       if (sc->Check("+")) {
@@ -2194,6 +2226,10 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         sc->Error("Stop before first state");
         continue;
       }
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc);
+      }
       if (LastState) LastState->NextState = nullptr;
       for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) Class->StateLabelDefs[i].State = nullptr;
       NewLabelsStart = Class->StateLabelDefs.Num();
@@ -2207,6 +2243,10 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         sc->Error(va("%s before first state", *TmpName));
         continue;
       }
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc);
+      }
       LastState->NextState = LastState;
       PrevState = nullptr;
       continue;
@@ -2217,6 +2257,10 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (!LastState) {
         sc->Error("Loop before first state");
         continue;
+      }
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc);
       }
       LastState->NextState = LoopStart;
       PrevState = nullptr;
@@ -2229,9 +2273,11 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
       Lbl.Loc = TmpLoc;
       Lbl.Name = TmpName;
+      wasActionAfterLabel = false;
       continue;
     }
 
+    wasActionAfterLabel = true;
     VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
     States.Append(State);
 

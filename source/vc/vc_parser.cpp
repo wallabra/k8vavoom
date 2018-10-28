@@ -2256,6 +2256,35 @@ VName VParser::ParseStateString () {
 
 //==========================================================================
 //
+//  AppendDummyActionState
+//
+//==========================================================================
+static void AppendDummyActionState (VClass *Class,
+  VState *&PrevState, VState *&LoopStart, int &NewLabelsStart,
+  int &StateIdx, const TLocation &TmpLoc)
+{
+  char StateName[16];
+  snprintf(StateName, sizeof(StateName), "S_%d", StateIdx);
+  VState *s = new VState(StateName, Class, TmpLoc);
+  Class->AddState(s);
+  s->SpriteName = "tnt1";
+  s->Frame = VState::FF_SKIPOFFS;
+  s->Time = 0;
+  // link previous state
+  if (PrevState) PrevState->NextState = s;
+  // assign state to the labels
+  for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+    Class->StateLabelDefs[i].State = s;
+    LoopStart = s;
+  }
+  NewLabelsStart = Class->StateLabelDefs.Num();
+  PrevState = s;
+  ++StateIdx;
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseStates
 //
 //==========================================================================
@@ -2271,12 +2300,17 @@ void VParser::ParseStates (VClass *InClass) {
   VState *PrevState = nullptr;
   VState *LoopStart = nullptr;
   int NewLabelsStart = InClass->StateLabelDefs.Num();
+  bool wasActionAfterLabel = false;
   while (!Lex.Check(TK_RBrace)) {
     TLocation TmpLoc = Lex.Location;
     VName TmpName = ParseStateString();
 
     // goto command
     if (TmpName == NAME_Goto) {
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc);
+      }
       VName GotoLabel = ParseStateString();
       int GotoOffset = 0;
       if (Lex.Check(TK_Plus)) {
@@ -2310,6 +2344,10 @@ void VParser::ParseStates (VClass *InClass) {
         ParseError(Lex.Location, "Stop before first state");
         continue;
       }
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc);
+      }
       if (PrevState) PrevState->NextState = nullptr;
       for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
         InClass->StateLabelDefs[i].State = nullptr;
@@ -2325,6 +2363,10 @@ void VParser::ParseStates (VClass *InClass) {
         ParseError(Lex.Location, "%s before first state", *TmpName);
         continue;
       }
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc);
+      }
       PrevState->NextState = PrevState;
       PrevState = nullptr;
       continue;
@@ -2336,6 +2378,10 @@ void VParser::ParseStates (VClass *InClass) {
         ParseError(Lex.Location, "Loop before first state");
         continue;
       }
+      if (!wasActionAfterLabel) {
+        wasActionAfterLabel = true;
+        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc);
+      }
       PrevState->NextState = LoopStart;
       PrevState = nullptr;
       continue;
@@ -2343,6 +2389,7 @@ void VParser::ParseStates (VClass *InClass) {
 
     // check for label
     if (Lex.Check(TK_Colon)) {
+      wasActionAfterLabel = false;
       VStateLabelDef &Lbl = InClass->StateLabelDefs.Alloc();
       Lbl.Loc = TmpLoc;
       Lbl.Name = *TmpName;
@@ -2353,6 +2400,7 @@ void VParser::ParseStates (VClass *InClass) {
     snprintf(StateName, sizeof(StateName), "S_%d", StateIdx);
     VState *s = new VState(StateName, InClass, TmpLoc);
     InClass->AddState(s);
+    wasActionAfterLabel = true;
 
     // sprite name
     char SprName[8];

@@ -31,6 +31,7 @@ public:
   enum { FF_FULLBRIGHT = 0x80 }; // flag in Frame
   enum { FF_CANRAISE = 0x100 }; //FIXME: flag in Frame; currently does nothing
   enum { FF_DONTCHANGE = 0x200 };
+  enum { FF_SKIPOFFS = 0x400 }; // skip this state in offset calculation
   enum { FF_FRAMEMASK  = 0x7f };
   enum { VaVoom, D2DF };
 

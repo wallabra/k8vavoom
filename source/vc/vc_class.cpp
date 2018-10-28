@@ -1266,6 +1266,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
       ParseError(Loc, "Bad jump offset (%d, but only %d is allowed); in `ResolveStateLabel` for label '%s'", Offset, Offset-(Count+1), *LabelName);
       return nullptr;
     }
+    if (State->Frame&VState::FF_SKIPOFFS) ++Count;
     State = State->Next;
   }
   return State;
