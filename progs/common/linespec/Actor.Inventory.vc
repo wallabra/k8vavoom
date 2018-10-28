@@ -318,5 +318,5 @@ final void A_FireAssaultGun()
   }
 
   damage = 4 * (P_Random() % 3 + 1);
-  LineAttack(dir, MISSILERANGE, damage, StrifePuff, default, default, 'Bullet');
+  LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, StrifePuff, default, default, 'Bullet');
 }

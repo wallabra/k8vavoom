@@ -52,7 +52,7 @@ override void CreateChoices () {
   calcHeight = clamp(calcHeight, 200, 440);
   if (calcHeight > Height) {
     Height = calcHeight;
-    Y = (480-calcHeight)/2;
+    Y = (GetVirtualHeight()-calcHeight)/2;
     Width = 370; // for "the plutonia experiment"
   }
 }

@@ -86,7 +86,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
 
   // split speach text
   SetFont('smallfont');
-  SpeechText = SplitTextWithNewlines(SpeechText, 640 - 128);
+  SpeechText = SplitTextWithNewlines(SpeechText, GetVirtualWidth() - 128);
 
   foreach (auto i; 0..5) {
     if (!Speech->Choices[i].Text) continue;

@@ -223,7 +223,7 @@ final void A_CustomRailgun(int RailDamage, optional float Offset,
   }
 
   TVec Dir;
-  AimLineAttack(Dir, Angles, MISSILERANGE);
+  AimLineAttack(Dir, Angles, (bIsPlayer ? 8192.0 : MISSILERANGE));
   TAVec Ang;
   VectorAngles(Dir, out Ang);
 

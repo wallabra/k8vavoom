@@ -121,7 +121,7 @@ void AddNotifyMessage (string Str) {
   array!SplitLine Lines;
 
   SetFont('smallfont');
-  SplitText(Str, Lines, 640);
+  SplitText(Str, Lines, GetVirtualWidth()-32);
 
   foreach (auto i; 0..Lines.length) {
     if (num_notify >= NUM_NOTIFY_LINES) {

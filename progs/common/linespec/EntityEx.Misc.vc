@@ -3416,9 +3416,11 @@ final void SpawnDirt(float radius)
 //
 //===========================================================================
 
-final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optional name DecalName)
+final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optional name DecalName, optional float range)
 {
   int damage;
+
+  if (!specified_range || range <= 0) range = MISSILERANGE;
 
   //  Make a copy of angles because inacurate shoot will modify them
   if (!accurate)
@@ -3433,7 +3435,7 @@ final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optiona
 
   damage = 5 * (P_Random() % 3 + 1);
 
-  LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, DmgType, secondary, DecalName);
+  LineAttack(dir, range, damage, BulletPuff, default, default, DmgType, secondary, DecalName);
 }
 
 //===========================================================================

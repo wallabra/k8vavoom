@@ -1283,7 +1283,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   bool doRandPuffZ = false; // not implemented yet
 
   if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
-  if (!specified_Range || !Range) Range = MISSILERANGE;
+  if (!specified_Range || !Range) Range = 8192; //MISSILERANGE;
 
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -1474,7 +1474,7 @@ final void A_FirePistol () {
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0, default, noAAim);
-  GunShot(Accurate, dir, 'Bullet', false, decal);
+  GunShot(Accurate, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
 }
 
 
@@ -1515,7 +1515,7 @@ final void A_FireShotgun()
   Aim(dir, 16.0 * 64.0, default, noAAim);
   for (i = 0; i < 7; i++)
   {
-    GunShot(false, dir, 'Shell', (i != 0), decal);
+    GunShot(false, dir, 'Shell', (i != 0), decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
   }
 }
 
@@ -1564,7 +1564,7 @@ final void A_FireShotgun2()
     rot.roll = 0.0;
     dir = RotateDirectionVector(aimDir, rot);
     damage = 5 * (P_Random() % 3 + 1);
-    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Shell', (i != 0), decal);
+    LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, BulletPuff, default, default, 'Shell', (i != 0), decal);
   }
 }
 
@@ -1644,7 +1644,7 @@ final void A_FireCGun()
   SetState(MeleeState);
 
   Aim(dir, 16.0 * 64.0, default, noAAim);
-  GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal);
+  GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
 }
 
 //===========================================================================
