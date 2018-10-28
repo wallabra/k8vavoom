@@ -2284,7 +2284,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     }
 
     wasActionAfterLabel = true;
-    firstFrame = false;
 
     VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
     States.Append(State);
@@ -2360,8 +2359,20 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         continue;
       }
 
+      // simulate "nodelay" by inserting one dummy state
+      if (sc->String.ICmp("NoDelay") == 0) {
+        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
+        firstFrame = false; // we have at least one frame now
+        VState *s0 = States[States.length()-2]; // current
+        check(s0 == State);
+        VState *s1 = States[States.length()-1]; // new
+        States[States.length()-2] = s1;
+        States[States.length()-1] = s0;
+        continue;
+      }
+
       // check for other parameters
-      if (!sc->String.ICmp("Fast") || !sc->String.ICmp("CanRaise") || !sc->String.ICmp("NoDelay") || !sc->String.ICmp("Slow")) {
+      if (!sc->String.ICmp("Fast") || !sc->String.ICmp("CanRaise") || !sc->String.ICmp("Slow")) {
         GCon->Logf("%s: unsupported DECORATE state keyword: '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         continue;
       }
@@ -2415,6 +2426,9 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     NewLabelsStart = Class->StateLabelDefs.Num();
     PrevState = State;
     LastState = State;
+
+    // moved here, so "nodelay" dummy state will be correctly initialized with "TNT1"
+    firstFrame = false;
 
     for (int i = 1; i < FramesString.Length(); ++i) {
       char FSChar = VStr::ToUpper(FramesString[i]);
