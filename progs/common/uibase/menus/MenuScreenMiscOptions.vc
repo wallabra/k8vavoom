@@ -32,6 +32,8 @@ override void CreateChoices () {
 
   CreateOnOffCvar("Quit prompt", 'menu_quit_prompt');
     SetLastHelp("Show quit promt on exit?");
+  CreateOnOffCvar("Autosave messages", 'sv_save_messages');
+    SetLastHelp("Show save/load messages in HUD?");
   CreateOnOffCvar("Overlay automap", 'am_overlay');
     SetLastHelp("Draw automap as overlay instead of separate screen?");
   CreateOnOffCvar("Show stats on automap", 'am_show_stats');
