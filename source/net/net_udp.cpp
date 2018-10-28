@@ -148,7 +148,12 @@ int VUdpDriver::Init () {
     myAddr = INADDR_ANY;
     VStr::Cpy(Net->MyIpAddress, "INADDR_ANY");
 #elif defined(__SWITCH__)
-    myAddr = ntohl(gethostid()); // ntohl() is required here, thanks nintendo
+    myAddr = gethostid();
+    // if wireless is currently down and/or the nifm service is not up,
+    // gethostid() will return 127.0.0.1 in network order
+    // thanks nintendo (?)
+    if (myAddr == 0x7f000001)
+      myAddr = ntohl(myAddr);
 #else
     hostent *local;
     local = gethostbyname(buff);
