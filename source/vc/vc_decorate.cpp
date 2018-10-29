@@ -2876,6 +2876,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             else if (sc->Check("Strife")) GameFilter |= GAME_Strife;
             else if (sc->Check("Raven")) GameFilter |= GAME_Raven;
             else if (sc->Check("Any")) GameFilter |= GAME_Any;
+            else if (sc->Check("Chex")) GameFilter |= GAME_Chex;
             else if (GameFilter) sc->Error("Unknown game filter");
             break;
           case PROP_SpawnId:
@@ -3472,6 +3473,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     else if (sc->Check("Strife")) GameFilter |= GAME_Strife;
     else if (sc->Check("Raven")) GameFilter |= GAME_Raven;
     else if (sc->Check("Any")) GameFilter |= GAME_Any;
+    else if (sc->Check("Chex")) GameFilter |= GAME_Chex;
     else if (GameFilter) sc->Error("Unknown game filter");
     else sc->Error("Unknown identifier");
   }

@@ -93,6 +93,8 @@ void SV_Init () {
   ProcessDecalDefs();
   ProcessDehackedFiles();
 
+  GGameInfo->eventPostDecorateInit();
+
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 
   ServerNetContext = new VServerNetContext();

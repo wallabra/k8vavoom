@@ -93,6 +93,11 @@ class VGameInfo : public VGameObject
     P_PASS_SELF;
     EV_RET_VOID("Init");
   }
+  void eventPostDecorateInit()
+  {
+    P_PASS_SELF;
+    EV_RET_VOID("PostDecorateInit");
+  }
   void eventInitNewGame(int skill)
   {
     P_PASS_SELF;

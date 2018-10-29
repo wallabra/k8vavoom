@@ -29,7 +29,8 @@ enum {
   GAME_Hexen   = 0x04,
   GAME_Strife  = 0x08,
   GAME_Raven   = GAME_Heretic|GAME_Hexen,
-  GAME_Any     = 0x0f,
+  GAME_Chex    = 0x10,
+  GAME_Any     = 0xff,
 };
 
 enum { MAX_DECORATE_TRANSLATIONS = 0xffff };

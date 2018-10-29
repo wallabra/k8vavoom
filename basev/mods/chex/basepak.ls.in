@@ -1,0 +1,6 @@
+$dest chex.pk3
+
+$recursedirext actors/chex/  @CMAKE_CURRENT_SOURCE_DIR@/actors/chex/  .txt
+
+// scripts
+decorate.txt    @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
