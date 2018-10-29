@@ -84,7 +84,7 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 #endif
 
 // for chex quest support
-VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
+//VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
 
 static VCvarF host_framerate("framerate", "0", "Framerate limit.");
 

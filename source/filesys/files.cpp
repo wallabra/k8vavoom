@@ -26,7 +26,7 @@
 #include "fs_local.h"
 
 extern VCvarB game_release_mode;
-extern VCvarI game_override_mode;
+//extern VCvarI game_override_mode;
 
 static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", 0);
 
@@ -635,7 +635,7 @@ void FL_Init () {
   if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
   if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
 
-  if (GArgs.CheckParm("-chex") != 0) game_override_mode = GAME_Chex;
+  //if (GArgs.CheckParm("-chex") != 0) game_override_mode = GAME_Chex;
 
   {
     auto v = GArgs.CheckValue("-skill");

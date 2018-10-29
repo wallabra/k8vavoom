@@ -957,9 +957,29 @@ bool VClass::Define () {
     // first get actual replacement
     ParentClass = ParentClass->GetReplacement();
     if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
+    if (!ParentClass->Defined) {
+      bool xdres = ParentClass->Define();
+      ParentClass->DefinedAsDependency = true;
+      if (!xdres) return false;
+    }
     //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
     // now set replacemente for the actual replacement (if necessary)
     if (DoesReplacement) {
+      //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
+      if (!ParentClass->SetReplacement(this)) {
+        ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
+      }
+    }
+#else
+    if (DoesReplacement) {
+      ParentClass = ParentClass->GetReplacement();
+      if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
+      //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
+      if (!ParentClass->Defined) {
+        bool xdres = ParentClass->Define();
+        ParentClass->DefinedAsDependency = true;
+        if (!xdres) return false;
+      }
       //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
       if (!ParentClass->SetReplacement(this)) {
         ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);

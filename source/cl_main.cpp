@@ -63,9 +63,24 @@ static VName CurrentSongLump;
 void CL_Init () {
   guard(CL_Init);
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
+  // load user-specified VaVoom C script files
+  VName loadvcc = VName("loadvcc");
+  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
+    if (W_LumpName(ScLump) != loadvcc) continue;
+    VScriptParser *sc = new VScriptParser(*W_LumpName(ScLump), W_CreateLumpReaderNum(ScLump));
+    while (!sc->AtEnd()) {
+      sc->ExpectString();
+      while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
+      while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
+      if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
+      GCon->Logf(NAME_Init, "loading client VaVoom C mod '%s'...", *sc->String);
+      VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
+    }
+    delete sc;
+  }
   //!TLocation::ClearSourceFiles();
   ClientNetContext = new VClientNetContext();
-  GClGame = (VClientGameBase*)VObject::StaticSpawnObject(VClass::FindClass("ClientGame"));
+  GClGame = (VClientGameBase *)VObject::StaticSpawnObject(VClass::FindClass("ClientGame"), false); // don't skip replacement
   GClGame->Game = GGameInfo;
   unguard;
 }
@@ -418,7 +433,7 @@ VLevel *VClientNetContext::GetLevel () {
 void CL_SetUpNetClient (VSocketPublic *Sock) {
   guard(CL_SetUpNetClient);
   // create player structure
-  cl = (VBasePlayer*)VObject::StaticSpawnObject(VClass::FindClass("Player"));
+  cl = (VBasePlayer *)VObject::StaticSpawnObject(VClass::FindClass("Player"), false); // don't skip replacement
   cl->PlayerFlags |= VBasePlayer::PF_IsClient;
   cl->ClGame = GClGame;
   GClGame->cl = cl;
@@ -494,7 +509,7 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
   cls.demoplayback = true;
 
   // create player structure
-  cl = (VBasePlayer *)VObject::StaticSpawnObject(VClass::FindClass("Player"));
+  cl = (VBasePlayer *)VObject::StaticSpawnObject(VClass::FindClass("Player"), false); // don't skip replacement
   cl->PlayerFlags |= VBasePlayer::PF_IsClient;
   cl->ClGame = GClGame;
   GClGame->cl = cl;

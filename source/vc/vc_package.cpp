@@ -853,16 +853,21 @@ void VPackage::LoadObject (TLocation l) {
   BailOut();
 
 #else
+  //fprintf(stderr, "Loading package '%s'...\n", *Name);
 
   // load PROGS from a specified file
+  /*
   VStr mainVC = va("progs/%s.dat", *Name);
   VStream *Strm = FL_OpenFileRead(*mainVC);
-  if (!Strm) {
+  if (!Strm)
+  */
+  {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
-      mainVC = va("progs/%s/%s", *Name, *pif);
+      VStr mainVC = va("progs/%s/%s", *Name, *pif);
       if (FL_FileExists(*mainVC)) {
         // compile package
-        Strm = FL_OpenFileRead(*mainVC);
+        //fprintf(stderr, "Loading package '%s' (%s)...\n", *Name, *mainVC);
+        VStream *Strm = FL_OpenFileRead(*mainVC);
         LoadSourceObject(Strm, mainVC, l);
         return;
       }
@@ -870,7 +875,7 @@ void VPackage::LoadObject (TLocation l) {
     Sys_Error("Progs package %s not found", *Name);
   }
 
-  LoadBinaryObject(Strm, mainVC, l);
+  //LoadBinaryObject(Strm, mainVC, l);
 
 #endif
 

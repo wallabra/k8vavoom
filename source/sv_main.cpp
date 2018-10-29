@@ -86,7 +86,24 @@ void SV_Init () {
 
   VMemberBase::StaticLoadPackage(NAME_game, TLocation());
 
-  GGameInfo = (VGameInfo *)VObject::StaticSpawnObject(VClass::FindClass("MainGameInfo"));
+  // load user-specified VaVoom C script files
+  VName loadvcs = VName("loadvcs");
+  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
+    if (W_LumpName(ScLump) != loadvcs) continue;
+    VScriptParser *sc = new VScriptParser(*W_LumpName(ScLump), W_CreateLumpReaderNum(ScLump));
+    while (!sc->AtEnd()) {
+      sc->ExpectString();
+      while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
+      while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
+      if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
+      GCon->Logf(NAME_Init, "loading server VaVoom C mod '%s'...", *sc->String);
+      VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
+    }
+    delete sc;
+  }
+
+  GGameInfo = (VGameInfo *)VObject::StaticSpawnObject(VClass::FindClass("MainGameInfo"), false); // don't skip replacement
+  GCon->Logf("Spawned game info object of class '%s'", *GGameInfo->GetClass()->GetFullName());
   GGameInfo->eventInit();
 
   ProcessDecorateScripts();
@@ -100,7 +117,7 @@ void SV_Init () {
   ServerNetContext = new VServerNetContext();
 
   VClass *PlayerClass = VClass::FindClass("Player");
-  for (int i = 0; i < MAXPLAYERS; ++i) GPlayersBase[i] = (VBasePlayer*)VObject::StaticSpawnObject(PlayerClass);
+  for (int i = 0; i < MAXPLAYERS; ++i) GPlayersBase[i] = (VBasePlayer *)VObject::StaticSpawnObject(PlayerClass, false); // don't skip replacement
 
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum;
