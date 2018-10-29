@@ -5,7 +5,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chex.pk3
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     basepak.ls.in
     decorate.txt
+    loadvcs.txt
     actors/chex/*
+    progs/chex/*
   )
 add_custom_target(chex_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chex.pk3)
 

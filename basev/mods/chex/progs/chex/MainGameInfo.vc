@@ -1,0 +1,58 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class ChexMainGameInfo : replaces(MainGameInfo);
+
+
+override void PostDecorateInit () {
+  ::PostDecorateInit();
+  writeln("=================== ************ ===================");
+  if (GameFilterFlag == EntityEx::GAME_Chex) {
+    print("*** CHEX QUEST ***");
+    class!PlayerPawn ppc = class!PlayerPawn(FindClass('ChexPlayer'));
+    if (ppc) {
+      print("***CHEX: Chex Quest player class found");
+      PlayerClasses[0] = ppc;
+    }
+  }
+}
+
+
+defaultproperties {
+  GameFilterFlag = EntityEx::GAME_Chex;
+
+  /*
+  PlayerClasses.Num = 1;
+  PlayerClasses[0] = DoomPlayer;
+  WeaponSlots[1].Weapons[0] = Fist;
+  WeaponSlots[1].Weapons[1] = Chainsaw;
+  WeaponSlots[2].Weapons[0] = Pistol;
+  WeaponSlots[3].Weapons[0] = Shotgun;
+  WeaponSlots[3].Weapons[1] = SuperShotgun;
+  WeaponSlots[4].Weapons[0] = Chaingun;
+  WeaponSlots[5].Weapons[0] = RocketLauncher;
+  WeaponSlots[6].Weapons[0] = PlasmaRifle;
+  WeaponSlots[7].Weapons[0] = BFG9000;
+  */
+}

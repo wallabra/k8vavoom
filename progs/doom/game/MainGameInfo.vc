@@ -80,18 +80,6 @@ override void Init () {
 }
 
 
-override void PostDecorateInit () {
-  if (GameFilterFlag == EntityEx::GAME_Chex) {
-    print("*** CHEX QUEST ***");
-    class!PlayerPawn ppc = class!PlayerPawn(FindClass('ChexPlayer'));
-    if (ppc) {
-      print("***CHEX: Chex Quest player class found");
-      PlayerClasses[0] = ppc;
-    }
-  }
-}
-
-
 //==========================================================================
 //
 //  InitNewGame
@@ -1038,11 +1026,14 @@ override void TranslateLevel (Level InLevel) {
 
 defaultproperties {
   LevelInfoClass = DoomLevelInfo;
+  /*
   if (GetCvarI('_game_override')) {
     GameFilterFlag = GetCvarI('_game_override');
   } else {
     GameFilterFlag = EntityEx::GAME_Doom;
   }
+  */
+  GameFilterFlag = EntityEx::GAME_Doom;
   bDefaultLaxMonsterActivation = true;
   bNoClipIgnoreFloor = true;
   bAlwaysSwitchNewWeapon = true;
