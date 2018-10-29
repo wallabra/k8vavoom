@@ -400,7 +400,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       auto ocm = sc->IsCMode();
       sc->SetCMode(true); // we need this to properly parse commas
       sc->ExpectName();
-      //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, true, false);
       VName skbname = R_HasNamedSkybox(sc->String);
       if (skbname != NAME_None) {
         info->SkyBox = skbname;
@@ -417,7 +417,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         }
       } else {
         info->SkyBox = NAME_None;
-        info->Sky1Texture = loadSkyTexture(sc->Name8);
+        info->Sky1Texture = loadSkyTexture(sc->Name);
         info->Sky1ScrollDelta = 0;
         if (newFormat) {
           if (!sc->IsAtEol()) {
