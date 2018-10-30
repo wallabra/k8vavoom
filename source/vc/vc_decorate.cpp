@@ -2715,29 +2715,15 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     auto prloc = sc->GetLoc(); // for error messages
     sc->ExpectIdentifier();
 
-    if (sc->String == "var") {
-      sc->ExpectIdentifier();
-      if (sc->String != "int") sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
+    // skip uservars (they are already scanned)
+    if (sc->String.ICmp("var") == 0) {
+      sc->Expect("int");
       for (;;) {
-        //auto fnloc = sc->GetLoc(); // for error messages
         sc->ExpectIdentifier();
-        VStr uvname = sc->String.toLowerCase();
-        if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-        /*
-        VName fldname = VName(*sc->String);
-        if (Class->FindField(fldname) || Class->FindMethod(fldname)) ParseError(sc->GetLoc(), "Redeclared field `%s`", *fldname);
-
-        VField *fi = new VField(fldname, Class, fnloc);
-        VTypeExpr *te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), fnloc);
-        fi->TypeExpr = te;
-        fi->Flags = 0;
-        Class->AddField(fi);
-        */
         if (sc->Check(",")) continue;
         break;
       }
       sc->Expect(";");
-      //sc->Error(va("%s: user variables in DECORATE aren't supported yet", *sc->GetLoc().toStringNoCol()));
       continue;
     }
 
