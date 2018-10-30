@@ -12,25 +12,23 @@ void main () {
   vec4 FinalColour_1;
   vec4 TexColour;
 
-  if (SplatAlpha <= 0.05) discard;
+  if (SplatAlpha <= 0.01) discard;
 
   TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.a < 0.05) discard;
+  if (TexColour.a < 0.01) discard;
 
   if (SplatColour.a != 0.0) {
-    FinalColour_1.r = SplatColour.r*TexColour.r;
-    FinalColour_1.g = SplatColour.g*TexColour.r;
-    FinalColour_1.b = SplatColour.b*TexColour.r;
+    FinalColour_1.r = SplatColour.r*TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.g = SplatColour.g*TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.b = SplatColour.b*TexColour.r*SplatAlpha; // convert to premultiplied
     FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
   } else {
-    FinalColour_1.r = TexColour.r;
-    FinalColour_1.g = TexColour.g;
-    FinalColour_1.b = TexColour.b;
+    FinalColour_1.r = TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.g = TexColour.g*SplatAlpha; // convert to premultiplied
+    FinalColour_1.b = TexColour.b*SplatAlpha; // convert to premultiplied
     FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   }
-  if (FinalColour_1.a < 0.05) discard;
-
-  if (SplatAlpha <= 0.0) discard;
+  if (FinalColour_1.a < 0.01) discard;
 
   // normal
   FinalColour_1.r = clamp((FinalColour_1.r*Light.r)*Light.a, 0.0, 1.0);
