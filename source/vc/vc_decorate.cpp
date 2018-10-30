@@ -2547,14 +2547,13 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
     }
 
     sc->ExpectIdentifier();
-    if (sc->String != "int") sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
+    if (sc->String.ICmp("int") != 0) sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
 
     for (;;) {
       auto fnloc = sc->GetLoc(); // for error messages
       sc->ExpectIdentifier();
       VStr uvname = sc->String.toLowerCase();
       if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-      uvname = uvname.toLowerCase();
       VName fldname = VName(*uvname);
       for (int f = 0; f < uvars.length(); ++f) {
         if (fldname == uvars[f].name) sc->Error(va("%s: duplicate DECORATE user variable `%s`", *sc->GetLoc().toStringNoCol(), *uvname));
