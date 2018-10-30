@@ -438,8 +438,8 @@ bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
 bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &Other, bool raiseError) const {
   guard(VFieldType::CheckMatch);
   if (!asRef) {
-    if (!CheckPassable(l)) return false;
-    if (!Other.CheckPassable(l)) return false;
+    if (!CheckPassable(l, raiseError)) return false;
+    if (!Other.CheckPassable(l, raiseError)) return false;
   } else {
     // check if `this` is a substruct of `Other`
     if (Type == TYPE_Struct && Other.Type == TYPE_Struct) {

@@ -1161,6 +1161,7 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VName Name, TLocation Lo
           Args[5] = new VIntLiteral(LineSpecialInfos[i].Number, sc->GetLoc());
           ++NumArgs;
         }
+        //GCon->Logf("DECORATE: converted `%s` to action special %d", *Name, LineSpecialInfos[i].Number);
         break;
       }
     }

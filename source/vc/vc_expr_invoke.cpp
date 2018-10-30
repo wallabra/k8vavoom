@@ -2329,7 +2329,10 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               if (!Args[i]) ParseError(erloc, "Cannot convert argument to float for arg #%d", i+1);
             }
           }
-          Args[i]->Type.CheckMatch(false, Args[i]->Loc, Func->ParamTypes[i]);
+          if (!Args[i]->Type.CheckMatch(false, Args[i]->Loc, Func->ParamTypes[i], false)) {
+            ParseError(Args[i]->Loc, "Invalid argument #%d type '%s' in method '%s'", i+1, *Args[i]->Type.GetName(), *Func->GetFullName());
+            //fprintf(stderr, "  <%s>\n", *Args[i]->toString());
+          }
         }
         argsize += Args[i]->Type.GetStackSize();
       }

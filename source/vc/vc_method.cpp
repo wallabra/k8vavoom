@@ -222,7 +222,7 @@ bool VMethod::Define () {
     if (ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
       ++ParamsSize;
     } else {
-      type.CheckPassable(P.TypeExpr->Loc);
+      if (!type.CheckPassable(P.TypeExpr->Loc, false)) ParseError(P.TypeExpr->Loc, "Invalid parameter #%d type '%s' in method '%s'", i+1, *type.GetName(), *GetFullName());
       ParamsSize += type.GetStackSize()/4;
     }
     if (ParamFlags[i]&FPARM_Optional) ++ParamsSize;

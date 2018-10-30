@@ -5449,7 +5449,10 @@ IMPLEMENT_FUNCTION(VLevel, StartACS) {
   P_GET_INT(num);
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartACS"); }
-  RET_BOOL(Self->Acs->Start(num, map, arg1, arg2, arg3, activator, line, side, Always, WantResult));
+  int res = 0;
+  //fprintf(stderr, "000: activator=<%s>; line=%p; side=%d\n", (activator ? activator->GetClass()->GetName() : "???"), line, side);
+  bool br = Self->Acs->Start(num, map, arg1, arg2, arg3, activator, line, side, Always, WantResult, false, &res);
+  if (WantResult) RET_INT(res); else RET_INT(br ? 1 : 0);
 }
 
 IMPLEMENT_FUNCTION(VLevel, SuspendACS) {
@@ -5493,7 +5496,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACS) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACS"); }
   if (Script < 0) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, true/*net;k8:notsure*/));
+  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
 
@@ -5508,7 +5511,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACSAlways) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSAlways"); }
   if (Script < 0) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, true/*net;k8:notsure*/));
+  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
 
@@ -5522,6 +5525,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSWithResult"); }
   if (Script < 0) { RET_INT(0); return; }
+  //fprintf(stderr, "001: activator=<%s>\n", (Activator ? Activator->GetClass()->GetName() : "???"));
   int res = 0;
   Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
   RET_INT(res);
@@ -5558,7 +5562,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSAlways) {
   if (Name.length() == 0) { RET_BOOL(false); return; }
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, true/*net*/));
+  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
 
