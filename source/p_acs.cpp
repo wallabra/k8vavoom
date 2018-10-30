@@ -52,6 +52,7 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "sv_local.h"
+#include "cl_local.h"
 #include "p_acs.h"
 
 enum { ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX = 0xfffeu };
@@ -4219,13 +4220,13 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetScreenWidth)
-      *sp = 640;
-      sp++;
+      //*sp++ = 640;
+      *sp++ = VirtualWidth;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetScreenHeight)
-      *sp = 480;
-      sp++;
+      //*sp++ = 480;
+      *sp++ = VirtualHeight;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ThingProjectile2)

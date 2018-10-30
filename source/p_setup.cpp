@@ -1025,7 +1025,7 @@ load_again:
     Drawer->StartUpdate(false); // don't clear
     T_SetAlign(hcentre, vcentre);
     // slightly off vcenter
-    T_DrawText(320, 320, "LOADING...", CR_GOLD);
+    T_DrawText(VirtualWidth/2, VirtualHeight/2+64, "LOADING...", CR_GOLD);
     Drawer->Update();
   }
 #endif

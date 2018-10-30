@@ -672,9 +672,9 @@ void VRenderLevelShared::ExecuteSetViewSize () {
 void R_DrawViewBorder () {
   guard(R_DrawViewBorder);
   if (GGameInfo->NetMode == NM_TitleMap) {
-    GClGame->eventDrawViewBorder(320-screenblocks*32, (480-screenblocks*480/10)/2, screenblocks*64, screenblocks*480/10);
+    GClGame->eventDrawViewBorder(VirtualWidth/2-screenblocks*32, (VirtualHeight-screenblocks*480/10)/2, screenblocks*64, screenblocks*VirtualHeight/10);
   } else {
-    GClGame->eventDrawViewBorder(320-screenblocks*32, (480-sb_height-screenblocks*(480-sb_height)/10)/2, screenblocks*64, screenblocks*(480-sb_height)/10);
+    GClGame->eventDrawViewBorder(VirtualWidth/2-screenblocks*32, (VirtualHeight-sb_height-screenblocks*(VirtualHeight-sb_height)/10)/2, screenblocks*64, screenblocks*(VirtualHeight-sb_height)/10);
   }
   unguard;
 }
