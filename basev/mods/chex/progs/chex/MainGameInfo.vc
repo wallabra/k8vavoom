@@ -27,9 +27,9 @@ class ChexMainGameInfo : replaces(MainGameInfo);
 
 override void PostDecorateInit () {
   ::PostDecorateInit();
-  writeln("=================== ************ ===================");
+  //writeln("=================== ************ ===================");
   if (GameFilterFlag == EntityEx::GAME_Chex) {
-    print("*** CHEX QUEST ***");
+    //print("*** CHEX QUEST ***");
     class!PlayerPawn ppc = class!PlayerPawn(FindClass('ChexPlayer'));
     if (ppc) {
       print("***CHEX: Chex Quest player class found");
