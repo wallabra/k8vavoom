@@ -217,7 +217,7 @@ native final bool MovePolyobj(int num, float x, float y);
 //  ACS functions
 //
 
-native final bool StartACS(int number, int map, int arg1, int arg2, int arg3,
+native final int StartACS(int number, int map, int arg1, int arg2, int arg3,
   Entity activator, line_t *line, int side, bool Always, bool WantResult);
 native final bool SuspendACS(int number, int map);
 native final bool TerminateACS(int number, int map);
