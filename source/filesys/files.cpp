@@ -258,7 +258,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   if (dirit) {
     for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
       //fprintf(stderr, "  <%s>\n", *test);
-      if (test[0] == '_' || test[0] =='.') continue; // skip it
+      if (test[0] == '_' || test[0] == '.') continue; // skip it
       VStr ext = test.ExtractFileExtension().ToLower();
            if (ext == "wad") WadFiles.Append(test);
       else if (ext == "pk3") ZipFiles.Append(test);
@@ -272,17 +272,40 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   if (ZipFiles.length() || WadFiles.length()) wpkAppend(dir+"/", true); // don't strip path
 
   // now add wads, then pk3s
-  if (!fsys_onlyOneBaseFile) {
-    for (int i = 0; i < WadFiles.length(); ++i) {
-      //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
-      W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
-    }
+  for (int i = 0; i < WadFiles.length(); ++i) {
+    //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
+    W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     AddZipFile(bdx+"/"+ZipFiles[i]);
-    if (fsys_onlyOneBaseFile) break;
+  }
+
+  // add "autoload/*"
+  if (!fsys_onlyOneBaseFile) {
+    WadFiles.clear();
+    ZipFiles.clear();
+    if (bdx[bdx.length()-1] != '/') bdx += "/";
+    bdx += "autoload";
+    // find all .wad/.pk3 files in that directory
+    dirit = Sys_OpenDir(bdx);
+    if (dirit) {
+      for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
+        //fprintf(stderr, "  <%s>\n", *test);
+        if (test[0] == '_' || test[0] == '.') continue; // skip it
+        VStr ext = test.ExtractFileExtension().ToLower();
+             if (ext == "wad") WadFiles.Append(test);
+        else if (ext == "pk3") ZipFiles.Append(test);
+      }
+      Sys_CloseDir(dirit);
+      qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+      qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+    }
+
+    // now add wads, then pk3s
+    for (int i = 0; i < WadFiles.length(); ++i) W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
+    for (int i = 0; i < ZipFiles.length(); ++i) AddZipFile(bdx+"/"+ZipFiles[i]);
   }
 
   // finally add directory itself
@@ -635,7 +658,13 @@ void FL_Init () {
   if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
   if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
 
-  //if (GArgs.CheckParm("-chex") != 0) game_override_mode = GAME_Chex;
+  bool isChex = false;
+
+  if (GArgs.CheckParm("-chex") != 0) {
+    //game_override_mode = GAME_Chex;
+    fsys_onlyOneBaseFile = true; // disable autoloads
+    isChex = true;
+  }
 
   {
     auto v = GArgs.CheckValue("-skill");
@@ -676,7 +705,9 @@ void FL_Init () {
 
   fsys_report_added_paks = reportIWads;
 
-  fsys_onlyOneBaseFile = GArgs.CheckParm("-nakedbase");
+  if (!isChex) {
+    fsys_onlyOneBaseFile = GArgs.CheckParm("-nakedbase");
+  }
 
   // set up base directory (main data files)
   fl_basedir = ".";
@@ -836,13 +867,13 @@ void FL_Init () {
     }
   }
 
-  if (game_release_mode) {
+  if (game_release_mode || isChex) {
     if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");
   } else {
     if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
   }
 
-  if (GArgs.CheckParm("-chex") != 0) AddGameDir("basev/mods/chex");
+  if (isChex) AddGameDir("basev/mods/chex");
 
   int fp = GArgs.CheckParm("-file");
   if (fp) {
