@@ -4052,10 +4052,11 @@ final void ClampSecPlaneOffsets(sec_plane_t *Plane)
 //==========================================================================
 
 final override bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, bool gravity, int newtid, name TypeName, Entity Activator)
+  int Arg5, int gravity, int newtid, name TypeName, Entity Activator)
 {
-  return DoThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, gravity, newtid,
-    TypeName, Activator, 0, none, false);
+  return DoThingProjectile(
+    tid:Arg1, TypeID:Arg2, AAngle:Arg3, ASpeed:Arg4, AVSpeed:Arg5,
+    gravity, newtid, TypeName, Activator, DestTID:0, ForceDest:none, Intercept:false);
 }
 
 //==========================================================================
@@ -4067,8 +4068,9 @@ final override bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_ThingProjectileAimed(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, Entity Activator)
 {
-  return DoThingProjectile(Arg1, Arg2, 0, Arg3, 0, 0, Arg5, '', Activator,
-    Arg4, Activator, false);
+  return DoThingProjectile(tid:Arg1, TypeID:Arg2, AAngle:0, ASpeed:Arg3, AVSpeed:0,
+    gravity:0, newtid:Arg5, TypeName:'', Activator, DestTID:Arg4,
+    ForceDest:Activator, Intercept:false);
 }
 
 //==========================================================================
@@ -4080,8 +4082,9 @@ final bool EV_ThingProjectileAimed(int Arg1, int Arg2, int Arg3, int Arg4,
 final bool EV_ThingProjectileIntercept(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, Entity Activator)
 {
-  return DoThingProjectile(Arg1, Arg2, 0, Arg3, 0, 0, Arg5, '', Activator,
-    Arg4, Activator, true);
+  return DoThingProjectile(tid:Arg1, TypeID:Arg2, AAngle:0, ASpeed:Arg3, AVSpeed:0,
+    gravity:0, newtid:Arg5, TypeName:'', Activator, DestTID:Arg4,
+    ForceDest:Activator, Intercept:true);
 }
 
 //==========================================================================
@@ -4091,7 +4094,7 @@ final bool EV_ThingProjectileIntercept(int Arg1, int Arg2, int Arg3, int Arg4,
 //==========================================================================
 
 final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
-  int AVSpeed, bool gravity, int newtid, name TypeName, Entity Activator,
+  int AVSpeed, int gravity, int newtid, name TypeName, Entity Activator,
   int DestTID, Entity ForceDest, bool Intercept)
 {
   float   angle;
@@ -4124,32 +4127,26 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   angle = itof(AAngle) * (360.0 / 256.0);
   speed = itof(ASpeed) / 8.0;
   vspeed = itof(AVSpeed) / 8.0;
-  for (A = tid ? FindMobjFromTID(tid, none) : Activator; A;
-    A = FindMobjFromTID(tid, A))
-  {
+
+  //print("projectile '%C', vspeed=%f (%f); intercept=%B", moType, AVSpeed, vspeed, Intercept);
+  for (A = tid ? FindMobjFromTID(tid, none) : Activator; A; A = FindMobjFromTID(tid, A)) {
     Entity Targ = ForceDest;
-    if (DestTID)
-    {
+    if (DestTID) {
       Targ = FindMobjFromTID(DestTID, none);
-      if (!Targ)
-      {
-        continue;
-      }
+      if (!Targ) continue;
     }
 
     newA = Spawn(moType, A.Origin);
-    if (newA.SightSound)
-    {
-      newA.PlaySound(newA.SightSound, CHAN_VOICE);
-    }
+    //print("%C: *** special:%B; gravity:%B, nogravity:%B; grav=%f", newA, newA.bSpecial, gravity, newA.bNoGravity, newA.Gravity);
+    if (newA.SightSound) newA.PlaySound(newA.SightSound, CHAN_VOICE);
+
     newA.Target = EntityEx(A);  // Originator
-    if (Targ)
-    {
+    if (Targ) {
       TVec TargOrg = Targ.Origin + vector(0.0, 0.0, Targ.Height / 2.0);
       TVec Delta = TargOrg - newA.Origin;
       TVec TargVel = Targ.Velocity;
-      if (!Targ.bNoGravity && Targ.WaterLevel < 3)
-      {
+
+      if (!Targ.bNoGravity && Targ.WaterLevel < 3) {
         // If the target is subject to gravity and not underwater,
         // assume that it isn't moving vertically. Thanks to gravity,
         // even if we did consider the vertical component of the target's
@@ -4157,8 +4154,7 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
         TargVel.z = 0.0;
       }
 
-      if (Intercept && speed > 0.0 && (TargVel.x || TargVel.y || TargVel.z))
-      {
+      if (Intercept && speed > 0.0 && (TargVel.x || TargVel.y || TargVel.z)) {
         // Aiming at the target's position some time in the future
         // is basically just an application of the law of sines:
         //     a/sin(A) = b/sin(B)
@@ -4170,74 +4166,50 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
         float Multiplier = (Random() - Random()) * 0.1 + 1.1;
         float SinB = FClamp(TargSpeed * Multiplier * sin(a) / speed, -1.0, 1.0);
 
-        //  Use the cross product of two of the triangle's sides to
-        // get a rotation vector.
+        // use the cross product of two of the triangle's sides to get a rotation vector
         TVec rv = CrossProduct(TargVel, Delta);
-        //  The vector must be normalized.
+        // the vector must be normalized
         rv = Normalise(rv);
-        //  Rotate around this vector.
+        // rotate around this vector
         TVec AimVec = RotateVectorAroundVector(Delta, rv, asin(SinB));
-        // And make the projectile follow that vector at the desired speed.
+        // and make the projectile follow that vector at the desired speed
         float AimScale = speed / Dist * 35.0;
         newA.Velocity = AimVec * AimScale;
         newA.Angles.yaw = atan2(newA.Velocity.y, newA.Velocity.x);
-      }
-      else
-      {
+      } else {
         newA.Angles.yaw = atan2(Delta.y, Delta.x);
         newA.Velocity = Normalise(Delta) * speed * 35.0;
       }
-      if (newA.bSeekerMissile)
-      {
-        newA.Tracer = EntityEx(Targ);
-      }
-    }
-    else
-    {
+      if (newA.bSeekerMissile) newA.Tracer = EntityEx(Targ);
+    } else {
       newA.Angles.yaw = angle;
       newA.Velocity.x = speed * cos(angle) * 35.0;
       newA.Velocity.y = speed * sin(angle) * 35.0;
       newA.Velocity.z = vspeed * 35.0;
     }
-    if (newA.bSpecial)
-    {
-      newA.bDropped = true; // Don't respawn
-    }
-    if (gravity)
-    {
+
+    if (newA.bSpecial) newA.bDropped = true; // Don't respawn
+    if (gravity) {
       newA.bNoGravity = false;
-      newA.Gravity = 0.125;
+      //if (!(mobj->flags3 & MF3_ISMONSTER) && gravity == 1) // gozzo checks this, VaVoom did no checks
+      if (gravity == 1 && !newA.bMonster) newA.Gravity = 0.125; // 1.0/8.0
+    } else {
+      newA.bNoGravity = true;
     }
     newA.SetTID(newtid);
-    if (newA.bMissile)
-    {
-      if (newA.CheckMissileSpawn())
-      {
-        success = true;
-      }
-    }
-    else if (!newA.TestLocation())
-    {
+
+    if (newA.bMissile) {
+      if (newA.CheckMissileSpawn()) success = true;
+    } else if (!newA.TestLocation()) {
       //  If it counts as kill, adjust total kills count
-      if (newA.CountsAsKill())
-      {
-        TotalKills--;
-      }
+      if (newA.CountsAsKill()) --TotalKills;
       //  Same for items.
-      if (newA.bCountItem)
-      {
-        TotalItems--;
-      }
+      if (newA.bCountItem) --TotalItems;
       newA.Destroy();
-    }
-    else
-    {
+    } else {
       success = true;
     }
-    if (!tid)
-    {
-      break;
-    }
+    if (!tid) break;
   }
   return success;
 }

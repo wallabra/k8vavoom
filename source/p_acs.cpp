@@ -4237,6 +4237,7 @@ int VAcs::RunScript(float DeltaTime)
 #endif
       ACSVM_BREAK;
 
+    // Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
     ACSVM_CASE(PCD_ThingProjectile2)
       Level->eventEV_ThingProjectile(sp[-7], sp[-6], sp[-5], sp[-4],
         sp[-3], sp[-2], sp[-1], NAME_None, Activator);

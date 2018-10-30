@@ -294,7 +294,7 @@ int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 bool EV_ThingProjectile (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-                         bool gravity, int newtid, name TypeName, Entity Activator)
+                         int gravity, int newtid, name TypeName, Entity Activator)
 {
   return false;
 }
