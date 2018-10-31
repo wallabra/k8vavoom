@@ -247,56 +247,35 @@ native static final int lerp (int a, int b, float delta) [builtin IntLerp];
 native static final float smoothstep (float edge0, float edge1, float x) [builtin FloatSmoothStep];
 native static final float smoothstepPerlin (float edge0, float edge1, float x) [builtin FloatSmoothStepPerlin];
 
-// normalises angle in range 0..360
-native static final float AngleMod360 (float angle);
-// normalises angle in range -180..180
-native static final float AngleMod180 (float angle);
-// degrees --> radians
-native static final float deg2rad (float angle) [builtin DegToRad];
-// radians -> degrees
-native static final float rad2deg (float angle) [builtin RadToDeg];
-// absolute value
-native static final int abs (int val) [builtin IntAbs];
-native static final float fabs (float val) [builtin FloatAbs];
-// sign (-1, 0, 1)
-native static final int sign (int val) [builtin IntSign];
-native static final float fsign (float val) [builtin FloatSign];
-// minimal value
-native static final int Min (int v1, int v2) [builtin IntMin];
-native static final int min (int v1, int v2) [builtin IntMin];
-// minimal value
-native static final float FMin (float v1, float v2) [builtin FloatMin];
-native static final float fmin (float v1, float v2) [builtin FloatMin];
-// maximal value
-native static final int Max (int v1, int v2) [builtin IntMax];
-native static final int max (int v1, int v2) [builtin IntMax];
-// maximal value
-native static final float FMax (float v1, float v2) [builtin FloatMax];
-native static final float fmax (float v1, float v2) [builtin FloatMax];
-// clamped value
-native static final int Clamp (int Val, int Min, int Max) [builtin IntClamp];
-native static final int clamp (int Val, int Min, int Max) [builtin IntClamp];
-// clamped value
-native static final float FClamp (float Val, float Min, float Max) [builtin FloatClamp];
-native static final float fclamp (float Val, float Min, float Max) [builtin FloatClamp];
-// sine
-native static final float sin (float angle) [builtin Sin];
-// cosine
-native static final float cos (float angle) [builtin Cos];
-// tangent
-native static final float tan (float angle) [builtin Tan];
-// arcsine
-native static final float asin (float x) [builtin ASin];
-// arccosine
-native static final float acos (float x) [builtin ACos];
-// arctangent
-native static final float atan (float slope) [builtin ATan];
-// arctangent
-native static final float atan2 (float y, float x) [builtin ATan2];
-// square root
-native static final float sqrt (float x) [builtin Sqrt];
-// vector length
-native static final float length (const TVec vec) [builtin VecLength];
+native static final float AngleMod360 (float angle); // normalises angle in range 0..360
+native static final float AngleMod180 (float angle); // normalises angle in range -180..180
+native static final float deg2rad (float angle) [builtin DegToRad]; // degrees --> radians
+native static final float rad2deg (float angle) [builtin RadToDeg]; // radians -> degrees
+native static final int abs (int val) [builtin IntAbs]; // absolute value
+native static final float fabs (float val) [builtin FloatAbs]; // absolute value
+native static final int sign (int val) [builtin IntSign]; // sign (-1, 0, 1)
+native static final float fsign (float val) [builtin FloatSign]; // sign (-1, 0, 1)
+native static final int Min (int v1, int v2) [builtin IntMin]; // minimal value
+native static final int min (int v1, int v2) [builtin IntMin]; // minimal value
+native static final float FMin (float v1, float v2) [builtin FloatMin]; // minimal value
+native static final float fmin (float v1, float v2) [builtin FloatMin]; // minimal value
+native static final int Max (int v1, int v2) [builtin IntMax]; // maximal value
+native static final int max (int v1, int v2) [builtin IntMax]; // maximal value
+native static final float FMax (float v1, float v2) [builtin FloatMax]; // maximal value
+native static final float fmax (float v1, float v2) [builtin FloatMax]; // maximal value
+native static final int Clamp (int Val, int Min, int Max) [builtin IntClamp]; // clamped value
+native static final int clamp (int Val, int Min, int Max) [builtin IntClamp]; // clamped value
+native static final float FClamp (float Val, float Min, float Max) [builtin FloatClamp]; // clamped value
+native static final float fclamp (float Val, float Min, float Max) [builtin FloatClamp]; // clamped value
+native static final float sin (float angle) [builtin Sin]; // sine
+native static final float cos (float angle) [builtin Cos]; // cosine
+native static final float tan (float angle) [builtin Tan]; // tangent
+native static final float asin (float x) [builtin ASin]; // arcsine
+native static final float acos (float x) [builtin ACos]; // arccosine
+native static final float atan (float slope) [builtin ATan]; // arctangent
+native static final float atan2 (float y, float x) [builtin ATan2]; // arctangent
+native static final float sqrt (float x) [builtin Sqrt]; // square root
+native static final float length (const TVec vec) [builtin VecLength]; // vector length
 alias Length = length;
 // vector length without z component
 native static final float length2D (const TVec vec) [builtin VecLength2D];
