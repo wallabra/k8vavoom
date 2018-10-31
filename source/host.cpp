@@ -172,7 +172,14 @@ void Host_Init () {
 
 #ifdef CLIENT
   CL_Init();
+#endif
 
+  // "compile only"
+  if (GArgs.CheckParm("-c") != 0) {
+    exit(0);
+  }
+
+#ifdef CLIENT
   GInput = VInputPublic::Create();
   GInput->Init();
   GAudio = VAudioPublic::Create();

@@ -4134,11 +4134,13 @@ static const char *comatoze (vuint32 n) {
 //
 //==========================================================================
 void CompilerReportMemory () {
-  //GCon->Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
-  GCon->Logf(NAME_Init, "Peak compiler memory usage: %s bytes.", comatoze(VExpression::PeakMemoryUsed));
-  GCon->Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));
-  if (VExpression::CurrMemoryUsed != 0) {
-    GCon->Logf(NAME_Init, "Compiler leaks %s bytes (this is harmless).", comatoze(VExpression::CurrMemoryUsed));
-    VExpression::ReportLeaks();
+  if (GArgs.CheckParm("-compiler") != 0 || GArgs.CheckParm("-c") != 0) {
+    //GCon->Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
+    GCon->Logf(NAME_Init, "Peak compiler memory usage: %s bytes.", comatoze(VExpression::PeakMemoryUsed));
+    GCon->Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));
+    if (VExpression::CurrMemoryUsed != 0) {
+      GCon->Logf(NAME_Init, "Compiler leaks %s bytes (this is harmless).", comatoze(VExpression::CurrMemoryUsed));
+      VExpression::ReportLeaks();
+    }
   }
 }
