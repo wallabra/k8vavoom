@@ -40,7 +40,7 @@ public:
   void FreeData ();
   void LoadStrings (const char *LangId);
 
-  VStr Find (VName) const;
+  VStr Find (VName, bool *found=nullptr) const;
   VStr operator [] (VName) const;
 
   bool HasTranslation (VName s) const;

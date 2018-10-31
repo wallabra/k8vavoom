@@ -249,10 +249,31 @@ VStr VLanguage::HandleEscapes (const VStr &Src) {
 //  VLanguage::Find
 //
 //==========================================================================
-VStr VLanguage::Find (VName Key) const {
+VStr VLanguage::Find (VName Key, bool *found) const {
   guard(VLanguage::Find);
+  if (Key == NAME_None) {
+    if (found) *found = true;
+    return VStr();
+  }
   VLangEntry *Found = table->Find(Key);
-  return (Found ? Found->Value : VStr());
+  if (Found) {
+    if (found) *found = true;
+    return Found->Value;
+  }
+  // try lowercase
+  for (const char *s = *Key; *s; ++s) {
+    if (*s >= 'A' && *s <= 'Z') {
+      // found uppercase letter, try lowercase name
+      VName loname = VName(*VStr(*Key).toLowerCase());
+      Found = table->Find(loname);
+      if (Found) {
+        if (found) *found = true;
+        return Found->Value;
+      }
+    }
+  }
+  if (found) *found = false;
+  return VStr();
   unguard;
 }
 
@@ -264,8 +285,10 @@ VStr VLanguage::Find (VName Key) const {
 //==========================================================================
 VStr VLanguage::operator [] (VName Key) const {
   guard(VLanguage::operator[]);
-  VLangEntry *Found = table->Find(Key);
-  return (Found ? Found->Value : VStr(Key));
+  bool found = false;
+  VStr res = Find(Key, &found);
+  if (found) return res;
+  return VStr(Key);
   unguard;
 }
 
@@ -276,8 +299,9 @@ VStr VLanguage::operator [] (VName Key) const {
 //
 //==========================================================================
 bool VLanguage::HasTranslation (VName s) const {
-  VLangEntry *Found = table->Find(s);
-  return !!Found;
+  bool found = false;
+  VStr res = Find(s, &found);
+  return found;
 }
 
 
