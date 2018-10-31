@@ -6,6 +6,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chex.pk3
     basepak.ls.in
     decorate.txt
     loadvcs.txt
+    language.en
     actors/chex/*
     progs/chex/*
   )

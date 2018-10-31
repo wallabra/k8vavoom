@@ -8,3 +8,5 @@ decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 // VaVoom C
 $recursedirext progs/chex/  @CMAKE_CURRENT_SOURCE_DIR@/progs/chex/  .vc
 loadvcs.txt  @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt
+
+language.en  @CMAKE_CURRENT_SOURCE_DIR@/language.en

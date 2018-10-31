@@ -1,0 +1,51 @@
+[en default]
+
+GOTCHEXARMOR = "Picked up the Chex(R) Armor.";
+GOTSUPERCHEXARMOR = "Picked up the Super Chex(R) Armor!";
+GOTWATER = "Picked up a glass of water.";
+GOTREPELLENT = "Picked up slime repellent.";
+GOTBREAKFAST = "Supercharge Breakfast!";
+GOTCBLUEKEY = "Picked up a blue key.";
+GOTCYELLOWKEY = "Picked up a yellow key.";
+GOTCREDKEY = "Picked up a red key.";
+GOTFRUIT = "Picked up a bowl of fruit.";
+GOTVEGETABLESNEED = "Vegetables are REALLY good for you!";
+GOTVEGETABLES = "Picked up a bowl of vegetables.";
+GOTSLIMESUIT = "Found a Slime-Proof Suit";
+GOTCHEXMAP = "Found a Computer Area Map";
+
+GOTZORCHRECHARGE = "Picked up a mini zorch recharge.";
+GOTMINIZORCHPACK = "Picked up a mini zorch pack.";
+GOTPROPULSORRECHARGE = "Picked up a zorch propulsor recharge.";
+GOTPROPULSORPACK = "Picked up a zorch propulsor pack.";
+GOTPHASINGZORCHERRECHARGE = "Picked up a phasing zorcher recharge";
+GOTPHASINGZORCHERPACK = "Picked up a phasing zorcher pack.";
+GOTLARGEZORCHERRECHARGE = "Picked up a large zorcher recharge.";
+GOTLARGEZORCHERPACK = "Picked up a large zorcher pack.";
+GOTZORCHPACK = "Picked up a Zorchpak!";
+
+GOTLAZDEVICE = "You got the LAZ Device! Woot!";
+GOTRAPIDZORCHER = "You got the Rapid Zorcher!";
+GOTSUPERBOOTSPORK = "You got the Super Bootspork!";
+GOTZORCHPROPULSOR = "You got the Zorch Propulsor!";
+GOTPHASINGZORCHER = "You got the Phasing Zorcher!";
+GOTLARGEZORCHER = "You got the Large Zorcher!";
+GOTSUPERLARGEZORCHER = "You got the Mega Zorcher!";
+GOTMINIZORCHER = "Picked up a Mini Zorcher.";
+
+OB_COMMONUS = "%o was slimed by a flemoid.";
+OB_BIPEDICUS = "%o was slimed by a bipedicus.";
+OB_BIPEDICUS2 = "%o was slimed by an armored bipedicus.";
+OB_CYCLOPTIS = "%o was slimed by a cycloptis.";
+OB_FLEMBRANE = "%o was defeated by the Flembrane.";
+
+OB_MPSPOON = "%o was spoon fed by %k.";
+OB_MPBOOTSPORK = "%o was thouroughly mixed with %k's bootspork.";
+OB_MPZORCH = "%o was zorched by %k.";
+OB_MPMEGAZORCH = "%o was hit by %k's mega-zorcher.";
+OB_MPRAPIDZORCH = "%o was rapid zorched by %k.";
+OB_MPPROPULSOR = "%o was zorched by %k's propulsor.";
+OB_MPP_SPLASH = "%o was hit by %k's propulsor.";
+OB_MPPHASEZORCH = "%o was phase zorched by %k.";
+OB_MPLAZ_BOOM = "%o fell prey to %k's LAZ device.";
+OB_MPLAZ_SPLASH = "%o was lazzed by %k.";
