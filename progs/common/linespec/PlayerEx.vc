@@ -1915,10 +1915,7 @@ void DisplayObituary(EntityEx inflictor, EntityEx source, name DmgType)
   }
 
   //  Look up string in language lump is necesary.
-  if (StrStartsWith(Msg, "$"))
-  {
-    Msg = GetLangString(StrToName(substr(Msg, 1, strlen(Msg) - 1)));
-  }
+  if (StrStartsWith(Msg, "$")) Msg = GetLangString(name(Msg[1..$]));
 
   //  Do replacements.
   Msg = StrReplace(Msg, "%g", "he");
