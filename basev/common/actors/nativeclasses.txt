@@ -2,13 +2,46 @@
 class Actor extends Thinker
   native
 {
+  field x = Origin.x;
+  field y = Origin.y;
+  field z = Origin.z;
+
+  field velx = Velocity.x;
+  field vely = Velocity.y;
+  field velz = Velocity.z;
+
+  // "momentum", deprecated
+  field momx = Velocity.x;
+  field momy = Velocity.y;
+  field momz = Velocity.z;
+
   field radius = Radius;
   field scalex = ScaleX;
   field scaley = ScaleY;
 
+  field angle = Angles.yaw;
   field yaw = Angles.yaw;
   field pitch = Angles.pitch;
   field roll = Angles.roll;
+
+  field ceilingz = CeilingZ;
+  field floorz = FloorZ;
+
+  field alpha = Alpha;
+  field health = Health;
+  field mass = Mass;
+  field MeleeRange = MeleeRange;
+
+  field reactiontime = ReactionTime;
+  field speed = speed;
+
+  field waterlevel = WaterLevel;
+  field watertype = WaterType;
+
+  field TID = TID;
+  field TIDToHate = TIDToHate;
+
+  field Threshold = Threshold;
 
   //
   //  Monster AI
