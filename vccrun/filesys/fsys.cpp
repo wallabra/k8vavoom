@@ -92,6 +92,16 @@ static char *getBinaryPath () {
 }
 
 
+//==========================================================================
+//
+//  fsysGetBinaryPath
+//
+//==========================================================================
+VStr fsysGetBinaryPath () {
+  return VStr(getBinaryPath());
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 VStr fsysBaseDir = VStr("./"); // always ends with "/" (fill be fixed by `fsysInit()` if necessary)
 bool fsysDiskFirst = true; // default is true

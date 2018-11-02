@@ -58,11 +58,19 @@ static VStr buildConfigName (const VStr &optfile) {
     if (ch == '_' || ch == ' ' || ch == '.') continue;
     return VStr();
   }
+#ifdef _WIN32
+  if (optfile.length()) {
+    return fsysGetBinaryPath()+VStr(".")+optfile+".cfg";
+  } else {
+    return fsysGetBinaryPath()+VStr(".options.cfg");
+  }
+#else
   if (optfile.length()) {
     return VStr(".")+optfile+".cfg";
   } else {
     return VStr(".options.cfg");
   }
+#endif
 }
 
 

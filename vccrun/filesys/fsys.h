@@ -40,6 +40,10 @@ enum { fsysAnyPak = -666 };
 void fsysInit ();
 void fsysShutdown ();
 
+// WARNING! NOT THREAD-SAFE!
+VStr fsysGetBinaryPath ();
+
+
 // append disk directory to the list of archives
 int fsysAppendDir (const VStr &path, const VStr &apfx=VStr());
 
