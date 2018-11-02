@@ -266,9 +266,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
       p_glUniform4fARB(SurfAdvDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
 #else
-      glActiveTexture(GL_TEXTURE0+1);
+      p_glActiveTextureARB(GL_TEXTURE0+1);
       glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
-      glActiveTexture(GL_TEXTURE0);
+      p_glActiveTextureARB(GL_TEXTURE0);
       p_glUniform4fARB(SurfAdvDecalLightLoc, 0, 0, 0, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
       p_glUniform1iARB(SurfAdvDecalAmbLightTextureLoc, 1);
       p_glUniform2fARB(SurfAdvDecalScreenSize, (float)ScreenWidth, (float)ScreenHeight);
@@ -336,9 +336,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
   glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   if (advanced) {
-    glActiveTexture(GL_TEXTURE0+1);
+    p_glActiveTextureARB(GL_TEXTURE0+1);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE0);
+    p_glActiveTextureARB(GL_TEXTURE0);
   } else {
     glDisable(GL_BLEND);
   }
