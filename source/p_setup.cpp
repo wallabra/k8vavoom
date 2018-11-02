@@ -1794,12 +1794,9 @@ void VLevel::CreateSides () {
   line_t *Line = Lines;
   for (int i = 0; i < NumLines; ++i, ++Line) {
     if (Line->sidenum[0] == -1) {
-      /*
-      if (strict_level_errors) Host_Error("Bad WAD: Line %d has no front side", i);
       GCon->Logf("Bad WAD: Line %d has no front side", i);
+      // let it glitch...
       Line->sidenum[0] = 0;
-      */
-      Host_Error("Bad WAD: Line %d has no front side", i);
     }
     if (Line->sidenum[0] < 0 || Line->sidenum[0] >= NumSides) Host_Error("Bad side-def index %d", Line->sidenum[0]);
     ++NumNewSides;
