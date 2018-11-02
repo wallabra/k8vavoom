@@ -79,6 +79,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   mainFBOColorTid = 0;
   mainFBODepthStencilTid = 0;
 
+  ambLightFBO = 0;
+  ambLightFBOColorTid = 0;
+
   tmpImgBuf0 = nullptr;
   tmpImgBuf1 = nullptr;
   tmpImgBufSize = 0;
@@ -461,12 +464,23 @@ void VOpenGLDrawer::InitResolution () {
     mainFBODepthStencilTid = 0;
   }
 
-  // allocate FBO object
+  if (ambLightFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (mainFBOColorTid) glDeleteTextures(1, &ambLightFBOColorTid);
+    glDeleteFramebuffers(1, &ambLightFBO);
+    ambLightFBO = 0;
+    ambLightFBOColorTid = 0;
+  }
+
+
+  // allocate main FBO object
   glGenFramebuffers(1, &mainFBO);
   if (mainFBO == 0) Sys_Error("OpenGL: cannot create main FBO");
   glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
 
-  // attach 2D texture to this mainFBO
+  // attach 2D texture to this FBO
   glGenTextures(1, &mainFBOColorTid);
   if (mainFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
   glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
@@ -524,6 +538,33 @@ void VOpenGLDrawer::InitResolution () {
   glClearStencil(0);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
+
+  // allocate ambient FBO object
+  glGenFramebuffers(1, &ambLightFBO);
+  if (ambLightFBO == 0) Sys_Error("OpenGL: cannot create ambient FBO");
+  glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
+
+  // attach 2D texture to this FBO
+  glGenTextures(1, &ambLightFBOColorTid);
+  if (ambLightFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
+  glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  // empty texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ambLightFBOColorTid, 0);
+
+
+
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -580,9 +621,11 @@ void VOpenGLDrawer::InitResolution () {
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_adv.fs");
   SurfAdvDecalProgram = CreateProgram(VertexShader, FragmentShader);
   SurfAdvDecalTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Texture");
+  SurfAdvDecalAmbLightTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "AmbLightTexture");
   SurfAdvDecalSplatColourLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatColour");
   SurfAdvDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatAlpha");
   SurfAdvDecalLightLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Light");
+  SurfAdvDecalScreenSize = p_glGetUniformLocationARB(SurfAdvDecalProgram, "ScreenSize");
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_nolmap.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_nolmap.fs");

@@ -261,9 +261,18 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
     if (advanced) {
       p_glUniform4fARB(SurfAdvDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
       p_glUniform1fARB(SurfAdvDecalSplatAlphaLoc, dc->alpha);
+#if 0
       //FIXME: fullbright doesn't work here yet
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
       p_glUniform4fARB(SurfAdvDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
+#else
+      glActiveTexture(GL_TEXTURE0+1);
+      glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
+      glActiveTexture(GL_TEXTURE0);
+      p_glUniform4fARB(SurfAdvDecalLightLoc, 0, 0, 0, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
+      p_glUniform1iARB(SurfAdvDecalAmbLightTextureLoc, 1);
+      p_glUniform2fARB(SurfAdvDecalScreenSize, (float)ScreenWidth, (float)ScreenHeight);
+#endif
     } else {
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
       if (lmap) {
@@ -326,7 +335,13 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
 
   glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
-  if (!advanced) glDisable(GL_BLEND);
+  if (advanced) {
+    glActiveTexture(GL_TEXTURE0+1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
+  } else {
+    glDisable(GL_BLEND);
+  }
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_TRUE);
 
@@ -943,6 +958,53 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   guard(VOpenGLDrawer::DrawWorldTexturesPass);
   // stop stenciling now
   glDisable(GL_STENCIL_TEST);
+
+  // copy ambient light texture to FBO, so we can use it to light decals
+  /*if (1)*/ {
+    glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
+    glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+    //glDisable(GL_STENCIL_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE/*GL_TRUE*/);
+    p_glUseProgramObjectARB(0);
+
+    glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBegin(GL_QUADS);
+      glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+      glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
+      glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
+      glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+    glPopAttrib();
+  }
+
 
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
   glEnable(GL_BLEND);

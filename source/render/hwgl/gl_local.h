@@ -566,6 +566,10 @@ protected:
   GLuint mainFBOColorTid;
   GLuint mainFBODepthStencilTid;
 
+  // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
+  GLuint ambLightFBO;
+  GLuint ambLightFBOColorTid;
+
   GLint maxTexSize;
   bool texturesGenerated;
 
@@ -615,9 +619,11 @@ protected:
 
   GLhandleARB SurfAdvDecalProgram;
   GLint SurfAdvDecalTextureLoc;
+  GLint SurfAdvDecalAmbLightTextureLoc;
   GLint SurfAdvDecalSplatColourLoc;
   GLint SurfAdvDecalSplatAlphaLoc;
   GLint SurfAdvDecalLightLoc;
+  GLint SurfAdvDecalScreenSize;
 
   GLhandleARB SurfDecalNoLMapProgram;
   GLint SurfDecalNoLMapTextureLoc;
