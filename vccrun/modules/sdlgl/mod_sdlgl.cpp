@@ -54,7 +54,7 @@ static const float zFar = 42.0f;
 
 //static PFNGLBLENDEQUATIONPROC glBlendEquation;
 typedef void (APIENTRY *glBlendEquationFn) (GLenum mode);
-static glBlendEquationFn glBlendEquationFunc;
+static glBlendEquationFn glBlendEquationFunc = nullptr;
 /*
 #else
 # define glBlendEquationFunc glBlendEquation
@@ -72,6 +72,14 @@ static glBlendEquationFn glBlendEquationFunc;
 # endif
 #endif
 */
+
+#ifndef _WIN32
+typedef void (APIENTRY *glMultiTexCoord2fARB_t) (GLenum, GLfloat, GLfloat);
+static glMultiTexCoord2fARB_t p_glMultiTexCoord2fARB = nullptr;
+
+typedef void (APIENTRY *glActiveTextureARB_t) (GLenum);
+static glActiveTextureARB_t p_glActiveTextureARB = nullptr;
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1333,9 +1341,10 @@ struct TexQuad {
 */
 
 void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQuad *t1) const {
+#ifndef _WIN32
   if (tid) {
     // bind normal texture
-    glActiveTexture(GL_TEXTURE0_ARB);
+    p_glActiveTextureARB(GL_TEXTURE0_ARB);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, tid);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1347,7 +1356,7 @@ void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQua
 
   // bind lightmap texture
   if (lmap) {
-    glActiveTexture(GL_TEXTURE1_ARB);
+    p_glActiveTextureARB(GL_TEXTURE1_ARB);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, lmap->tid);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1370,17 +1379,17 @@ void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQua
 
   const float z = VVideo::currZFloat;
   glBegin(GL_QUADS);
-    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx0, t0->ty0);
-    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx0, t1->ty0);
+    p_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, t0->tx0, t0->ty0);
+    p_glMultiTexCoord2fARB(GL_TEXTURE1_ARB, t1->tx0, t1->ty0);
     glVertex3f(t0->x0, t0->y0, z);
-    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx1, t0->ty0);
-    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx1, t1->ty0);
+    p_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, t0->tx1, t0->ty0);
+    p_glMultiTexCoord2fARB(GL_TEXTURE1_ARB, t1->tx1, t1->ty0);
     glVertex3f(t0->x1, t0->y0, z);
-    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx1, t0->ty1);
-    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx1, t1->ty1);
+    p_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, t0->tx1, t0->ty1);
+    p_glMultiTexCoord2fARB(GL_TEXTURE1_ARB, t1->tx1, t1->ty1);
     glVertex3f(t0->x1, t0->y1, z);
-    glMultiTexCoord2f(GL_TEXTURE0_ARB, t0->tx0, t0->ty1);
-    glMultiTexCoord2f(GL_TEXTURE1_ARB, t1->tx0, t1->ty1);
+    p_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, t0->tx0, t0->ty1);
+    p_glMultiTexCoord2fARB(GL_TEXTURE1_ARB, t1->tx0, t1->ty1);
     glVertex3f(t0->x0, t0->y1, z);
   glEnd();
 
@@ -1388,10 +1397,11 @@ void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQua
   if (lmap) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0_ARB);
+    p_glActiveTextureARB(GL_TEXTURE0_ARB);
   }
   // default value
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+#endif
 }
 
 
@@ -2151,6 +2161,14 @@ bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
 
   glBlendEquationFunc = (/*PFNGLBLENDEQUATIONPROC*/glBlendEquationFn)SDL_GL_GetProcAddress("glBlendEquation");
   if (!glBlendEquationFunc) abort();
+
+#ifndef _WIN32
+  p_glMultiTexCoord2fARB = (glMultiTexCoord2fARB_t)SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
+  if (!p_glMultiTexCoord2fARB) abort();
+
+  p_glActiveTextureARB = (glActiveTextureARB_t)SDL_GL_GetProcAddress("glActiveTextureARB");
+  if (!p_glActiveTextureARB) abort();
+#endif
 
   clear();
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
