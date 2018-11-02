@@ -492,15 +492,19 @@ static VStr findFileNC (VStr fname, bool ignoreExt) {
 }
 #else
 static VStr findFileNC (VStr fname, bool ignoreExt) {
-  if (!ignoreExt) return fname;
+  if (fname.length() == 0) return VStr();
+  //if (!ignoreExt) return fname;
   VStr path = fname.extractFilePath();
-  VStr name = fname.extractFileName().stripExtension();
+  VStr name = fname.extractFileName();
+  if (ignoreExt) name = name.stripExtension();
+  //fprintf(stderr, "SCAN: <%s> <%s>\n", *path, *name);
   void *dir = fsysOpenDir(path);
   if (!dir) return VStr();
   for (;;) {
     VStr dn = fsysReadDir(dir);
     if (dn.length() == 0) break;
-    if (dn.stripExtension().equ1251CI(name)) {
+    //fprintf(stderr, "  GOT: <%s> <%s>\n", *dn, *dn.stripExtension());
+    if ((ignoreExt && dn.stripExtension().equ1251CI(name)) || (!ignoreExt && dn.equ1251CI(name))) {
       fsysCloseDir(dir);
       if (path.length() && !path.endsWith("/") && !path.endsWith("\\")) path += "/";
       path += dn;
@@ -549,8 +553,11 @@ VStr FSysDriverDisk::findFileWithAnyExt (const VStr &fname) {
 }
 
 VStream *FSysDriverDisk::open (const VStr &fname) {
+  //fprintf(stderr, "000: <%s>\n", *fname);
   if (!isGoodPath(fname)) return nullptr;
+  //fprintf(stderr, "001: <%s><%s>\n", *path, *fname);
   VStr newname = findFileNC(path+fname, false);
+  //fprintf(stderr, "002: <%s> <%s>\n", *fname, *newname);
   if (newname.length() == 0) {
     // hack for vccrun
 #ifdef VCCRUN_K8BUILD
@@ -575,6 +582,7 @@ VStream *FSysDriverDisk::open (const VStr &fname) {
 #else
     VStr mydir = VStr(getBinaryPath());
     newname = findFileNC(mydir+fname, false);
+    //fprintf(stderr, "<%s><%s>\n", *mydir, *fname);
     if (newname.length() == 0) {
       newname = findFileNC(mydir+"packages/"+fname, false);
       if (newname.length() == 0) return nullptr;

@@ -411,7 +411,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   bool gdatforced = false;
   if (paklist.length() == 0) {
-    //fprintf(stderr, "forcing 'game.dat'\n");
+    fprintf(stderr, "forcing 'game.dat'\n");
     paklist.append(":game.dat");
     gdatforced = true;
   }
@@ -424,10 +424,21 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
     pname.chopLeft(1);
     //fprintf(stderr, "!%c! <%s>\n", type, *pname);
     if (type == ':') {
-      if (fsysAppendPak(pname)) {
-        dprintf("added pak file '%s'...\n", *pname);
+      if (gdatforced) {
+        //fprintf(stderr, "!!!000\n");
+        VStream *pstm = fsysOpenFile(pname);
+        if (pstm && fsysAppendPak(pstm)) {
+          //fprintf(stderr, "!!!001\n");
+          dprintf("added pak file '%s'...\n", *pname);
+        } else {
+          fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
+        }
       } else {
-        if (!gdatforced) fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
+        if (fsysAppendPak(pname)) {
+          dprintf("added pak file '%s'...\n", *pname);
+        } else {
+          if (!gdatforced) fprintf(stderr, "CAN'T add pak file '%s'!\n", *pname);
+        }
       }
     } else if (type == '/') {
       if (fsysAppendDir(pname)) {
