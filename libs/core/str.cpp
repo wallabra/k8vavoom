@@ -1187,7 +1187,7 @@ VStr VStr::quote () const {
   char hexb[6];
   for (int f = 0; f < len; ++f) {
     vuint8 ch = (vuint8)data[f];
-    if (ch < ' ' || ch == '\\' || ch == '\'' || ch == '"' || ch >= 127) {
+    if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) {
       // need to quote it
       VStr res;
       for (int c = 0; c < len; ++c) {
@@ -1201,7 +1201,7 @@ VStr VStr::quote () const {
               res += hexb;
               break;
           }
-        } else if (ch == '\\' || ch == '\'' || ch == '"') {
+        } else if (ch == '\\' || ch == '"') {
           res += "\\";
           res += (char)ch;
         } else if (ch >= 127) {
