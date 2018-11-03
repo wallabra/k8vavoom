@@ -505,7 +505,7 @@ void VInput::WriteBindings (FILE *f) {
   fprintf(f, "UnbindAll\n");
   for (int i = 0; i < 256; ++i) {
     if ((KeyBindingsDown[i].IsNotEmpty() || KeyBindingsUp[i].IsNotEmpty()) && KeyBindingsSave[i]) {
-      fprintf(f, "bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i), *KeyBindingsDown[i], *KeyBindingsUp[i]);
+      fprintf(f, "bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsDown[i].quote(), *KeyBindingsUp[i].quote());
     }
   }
   unguard;

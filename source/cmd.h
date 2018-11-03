@@ -23,65 +23,60 @@
 //**
 //**************************************************************************
 
-//
-//  A console command.
-//
-class VCommand
-{
+// a console command
+class VCommand {
 public:
-  enum ECmdSource
-  {
+  enum ECmdSource {
     SRC_Command,
-    SRC_Client
+    SRC_Client,
   };
 
 private:
-  //  Console command alias.
-  struct VAlias
-  {
-    VStr    Name;
-    VStr    CmdLine;
+  // console command alias
+  struct VAlias {
+    VStr Name;
+    VStr CmdLine;
     VAlias *Next;
-    bool    Save;
+    bool Save;
   };
 
   const char *Name;
   VCommand *Next;
 
-  static bool         Initialised;
-  static VStr         Original;
+  static bool Initialised;
+  static VStr Original;
 
-  static TArray<const char*>  AutoCompleteTable;
+  static TArray<const char *> AutoCompleteTable;
 
   static VCommand *Cmds;
   static VAlias *Alias;
 
-  static void TokeniseString(const VStr&);
+  static void TokeniseString (const VStr &);
 
 protected:
-  static TArray<VStr>     Args;
-  static ECmdSource     Source;
-  static VBasePlayer *Player; //  For SRC_Client
+  static TArray<VStr> Args;
+  static ECmdSource Source;
+  static VBasePlayer *Player; // for SRC_Client
 
 public:
-  static bool         ParsingKeyConf;
+  static bool ParsingKeyConf;
 
-  VCommand(const char*);
-  virtual ~VCommand();
+  VCommand (const char *);
+  virtual ~VCommand ();
 
-  virtual void Run() = 0;
+  virtual void Run () = 0;
 
-  static void Init();
-  static void WriteAlias(FILE*);
-  static void Shutdown();
-  static void ProcessKeyConf();
+  static void Init ();
+  static void WriteAlias (FILE *);
+  static void Shutdown ();
+  static void ProcessKeyConf ();
 
-  static void AddToAutoComplete(const char*);
-  static VStr GetAutoComplete(const VStr&, int&, bool);
+  static void AddToAutoComplete (const char*);
+  static VStr GetAutoComplete (const VStr &, int &, bool);
 
-  static void ExecuteString(const VStr&, ECmdSource, VBasePlayer*);
-  static void ForwardToServer();
-  static int CheckParm(const char*);
+  static void ExecuteString (const VStr &, ECmdSource, VBasePlayer *);
+  static void ForwardToServer ();
+  static int CheckParm (const char *);
 
   static int GetArgC ();
   static VStr GetArgV (int idx);
@@ -91,9 +86,9 @@ public:
   friend class TCmdAlias;
 };
 
-//
-//  Macro for declaring a console command.
-//
+
+// ////////////////////////////////////////////////////////////////////////// //
+// macro for declaring a console command
 #define COMMAND(name) \
 static class TCmd ## name : public VCommand \
 { \
@@ -104,33 +99,28 @@ public: \
 \
 void TCmd ## name::Run()
 
-//
-//  A command buffer.
-//
-class VCmdBuf
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+// a command buffer
+class VCmdBuf {
 private:
-  VStr    Buffer;
-  bool    Wait;
+  VStr Buffer;
+  bool Wait;
 
 public:
-  VCmdBuf()
-  : Wait(false)
-  {}
-  void Insert(const char*);
-  void Insert(const VStr&);
-  void Print(const char*);
-  void Print(const VStr&);
-  void Exec();
+  VCmdBuf () : Wait(false) {}
+  void Insert (const char *);
+  void Insert (const VStr &);
+  void Print (const char *);
+  void Print (const VStr &);
+  void Exec ();
 
-  VCmdBuf &operator << (const char *data)
-  {
+  inline VCmdBuf &operator << (const char *data) {
     Print(data);
     return *this;
   }
 
-  VCmdBuf &operator << (const VStr &data)
-  {
+  inline VCmdBuf &operator << (const VStr &data) {
     Print(data);
     return *this;
   }
@@ -138,5 +128,5 @@ public:
   friend class TCmdWait;
 };
 
-//  Main command buffer.
-extern VCmdBuf    GCmdBuf;
+// main command buffer
+extern VCmdBuf GCmdBuf;

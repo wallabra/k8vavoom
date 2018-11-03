@@ -22,46 +22,27 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "net/network.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
+VCmdBuf GCmdBuf;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+bool VCommand::ParsingKeyConf;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+bool VCommand::Initialised = false;
+VStr VCommand::Original;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-VCmdBuf         GCmdBuf;
-
-bool          VCommand::ParsingKeyConf;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-bool          VCommand::Initialised = false;
-VStr          VCommand::Original;
-
-TArray<VStr>      VCommand::Args;
-VCommand::ECmdSource  VCommand::Source;
+TArray<VStr> VCommand::Args;
+VCommand::ECmdSource VCommand::Source;
 VBasePlayer *VCommand::Player;
 
-TArray<const char*>   VCommand::AutoCompleteTable;
+TArray<const char *> VCommand::AutoCompleteTable;
 
 VCommand *VCommand::Cmds = nullptr;
 VCommand::VAlias *VCommand::Alias = nullptr;
 
-static const char *KeyConfCommands[] =
-{
+static const char *KeyConfCommands[] = {
   "alias",
   "bind",
   "defaultbind",
@@ -74,7 +55,6 @@ static const char *KeyConfCommands[] =
   "clearplayerclasses"
 };
 
-// CODE --------------------------------------------------------------------
 
 //**************************************************************************
 //
@@ -87,119 +67,88 @@ static const char *KeyConfCommands[] =
 //  VCommand::VCommand
 //
 //==========================================================================
-
-VCommand::VCommand(const char *name)
-{
+VCommand::VCommand (const char *name) {
   guard(VCommand::VCommand);
   Next = Cmds;
   Name = name;
   Cmds = this;
-  if (Initialised)
-  {
-    AddToAutoComplete(Name);
-  }
+  if (Initialised) AddToAutoComplete(Name);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCommand::~VCommand
 //
 //==========================================================================
-
-VCommand::~VCommand()
-{
+VCommand::~VCommand () {
 }
+
 
 //==========================================================================
 //
 //  VCommand::Init
 //
 //==========================================================================
-
-void VCommand::Init()
-{
+void VCommand::Init () {
   guard(VCommand::Init);
-  bool    in_cmd = false;
+  bool in_cmd = false;
 
-  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next)
-  {
-    AddToAutoComplete(cmd->Name);
-  }
+  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) AddToAutoComplete(cmd->Name);
 
-  //  Add configuration file execution
+  // add configuration file execution
   GCmdBuf << "exec startup.vs\n";
 
-  //  Add console commands from command line
-  // These are params, that start with + and continue until the end
-  // or until next param that starts with - or +
-  for (int i = 1; i < GArgs.Count(); i++)
-  {
-    if (in_cmd)
-    {
-      if (!GArgs[i] || GArgs[i][0] == '-' || GArgs[i][0] == '+')
-      {
+  // add console commands from command line
+  // these are params, that start with + and continue until the end or until next param that starts with - or +
+  for (int i = 1; i < GArgs.Count(); ++i) {
+    if (in_cmd) {
+      if (!GArgs[i] || GArgs[i][0] == '-' || GArgs[i][0] == '+') {
         in_cmd = false;
         GCmdBuf << "\n";
-      }
-      else
-      {
-        GCmdBuf << " " << GArgs[i];
+      } else {
+        GCmdBuf << " \"" << VStr(GArgs[i]).quote() << "\"";
         continue;
       }
     }
-    if (GArgs[i][0] == '+')
-    {
+    if (GArgs[i][0] == '+') {
       in_cmd = true;
-      GCmdBuf << (GArgs[i] + 1);
+      GCmdBuf << (GArgs[i]+1);
     }
   }
-  if (in_cmd)
-  {
-    GCmdBuf << "\n";
-  }
+  if (in_cmd) GCmdBuf << "\n";
 
   Initialised = true;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCommand::WriteAlias
 //
 //==========================================================================
-
-void VCommand::WriteAlias(FILE *f)
-{
+void VCommand::WriteAlias (FILE *f) {
   guard(VCommand::WriteAlias);
-  for (VAlias *a = Alias; a; a = a->Next)
-  {
-    fprintf(f, "alias %s \"%s\"\n", *a->Name, *a->CmdLine);
+  for (VAlias *a = Alias; a; a = a->Next) {
+    fprintf(f, "alias %s \"%s\"\n", *a->Name, *a->CmdLine.quote());
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCommand::Shutdown
 //
 //==========================================================================
-
-void VCommand::Shutdown()
-{
+void VCommand::Shutdown () {
   guard(VCommand::Shutdown);
-  for (VAlias *a = Alias; a;)
-  {
+  for (VAlias *a = Alias; a;) {
     VAlias *Next = a->Next;
     delete a;
-    if (Next)
-    {
-      a = Next;
-    }
-    else
-    {
-      a = nullptr;
-    }
+    a = Next;
   }
   AutoCompleteTable.Clear();
   Args.Clear();
@@ -207,32 +156,28 @@ void VCommand::Shutdown()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VCommand::ProcessKeyConf
 //
 //==========================================================================
-
-void VCommand::ProcessKeyConf()
-{
+void VCommand::ProcessKeyConf () {
   guard(VCommand::ProcessKeyConf);
-  //  Enable special mode for console commands.
+  // enable special mode for console commands
   ParsingKeyConf = true;
 
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Global))
-  {
-    if (W_LumpName(Lump) == NAME_keyconf)
-    {
-      //  Read it.
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) == NAME_keyconf) {
+      // read it
       VStream *Strm = W_CreateLumpReaderNum(Lump);
-      char *Buf = new char[Strm->TotalSize() + 1];
+      char *Buf = new char[Strm->TotalSize()+1];
       Strm->Serialise(Buf, Strm->TotalSize());
       Buf[Strm->TotalSize()] = 0;
       delete Strm;
       Strm = nullptr;
 
-      //  Parse it
+      // parse it
       VCmdBuf CmdBuf;
       CmdBuf << Buf;
       CmdBuf.Exec();
@@ -241,7 +186,7 @@ void VCommand::ProcessKeyConf()
     }
   }
 
-  //  Back to normal console command execution.
+  // back to normal console command execution
   ParsingKeyConf = false;
   unguard;
 }
@@ -279,7 +224,6 @@ void VCommand::AddToAutoComplete (const char *string) {
 //  VCommand::GetAutoComplete
 //
 //==========================================================================
-
 VStr VCommand::GetAutoComplete (const VStr &String, int &Index, bool Backward) {
   guard(VCommand::GetAutoComplete);
   int i;
@@ -302,6 +246,7 @@ VStr VCommand::GetAutoComplete (const VStr &String, int &Index, bool Backward) {
   unguard;
 }
 
+
 //**************************************************************************
 //
 //  Parsing of a command, command arg handling
@@ -313,66 +258,83 @@ VStr VCommand::GetAutoComplete (const VStr &String, int &Index, bool Backward) {
 //  VCommand::TokeniseString
 //
 //==========================================================================
-
-void VCommand::TokeniseString(const VStr &str)
-{
+void VCommand::TokeniseString (const VStr &str) {
   guard(VCommand::TokeniseString);
   Args.Clear();
   //fprintf(stderr, "+++ TKSS(0): orig=<%s>; str=<%s>\n", *Original, *str);
   Original = str;
   //fprintf(stderr, "+++ TKSS(1): orig=<%s>; str=<%s>\n", *Original, *str);
   int i = 0;
-  while (i < str.Length())
-  {
-    //  Whitespace
-    if (str[i] <= ' ')
-    {
-      i++;
+  while (i < str.Length()) {
+    // whitespace
+    if ((vuint8)str[i] <= ' ') {
+      ++i;
       continue;
     }
 
-    // String
-    if (str[i] == '\"')
-    {
-      i++;
-      int Start = i;
-      // Checks for end of string
-      while (i < str.Length() && str[i] != '\"')
-      {
-        i++;
+    // string
+    if (str[i] == '\"') {
+      int cc, d;
+      ++i;
+      //int Start = i;
+      // checks for end of string
+      VStr ss;
+      while (i < str.length() && str[i] != '\"') {
+        if (str[i] == '\\' && str.length()-i > 1) {
+          i += 2;
+          switch (str[i-1]) {
+            case '\t': ss += '\t'; break;
+            case '\n': ss += '\n'; break;
+            case '\r': ss += '\r'; break;
+            case '\e': ss += '\e'; break;
+            case '\\': case '"': ss += str[i-1]; break;
+            case 'x':
+              cc = 0;
+              d = (i < str.length() ? VStr::digitInBase(str[i], 16) : -1);
+              if (d >= 0) {
+                cc = d;
+                ++i;
+                d = (i < str.length() ? VStr::digitInBase(str[i], 16) : -1);
+                if (d >= 0) { cc = cc*16+d; ++i; }
+              }
+              break;
+            default: // ignore other quotes
+              --i;
+              ss += str[i-1];
+              break;
+          }
+        } else {
+          ss += str[i];
+          ++i;
+        }
       }
-      if (i == str.Length())
-      {
+      /*
+      if (i == str.Length()) {
         GCon->Log("ERROR: Missing closing quote!");
         return;
       }
-      Args.Append(VStr(str, Start, i - Start));
-      //  Skip closing quote
-      i++;
-    }
-    else
-    {
-      // Simple arg
+      Args.Append(VStr(str, Start, i-Start));
+      */
+      Args.Append(ss);
+      // skip closing quote
+      ++i;
+    } else {
+      // simple arg
       int Start = i;
-      while (str[i] > ' ')
-      {
-        i++;
-      }
-      Args.Append(VStr(str, Start, i - Start));
+      while ((vuint8)str[i] > ' ') ++i;
+      Args.Append(VStr(str, Start, i-Start));
     }
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCommand::ExecuteString
 //
 //==========================================================================
-
-void VCommand::ExecuteString(const VStr &Acmd, ECmdSource src,
-  VBasePlayer *APlayer)
-{
+void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APlayer) {
   guard(VCommand::ExecuteString);
 
   //fprintf(stderr, "+++ command BEFORE tokenizing: <%s>\n", *Acmd);
@@ -383,33 +345,25 @@ void VCommand::ExecuteString(const VStr &Acmd, ECmdSource src,
   //fprintf(stderr, "+++ command argc=%d (<%s>)\n", Args.length(), *Acmd);
   //for (int f = 0; f < Args.length(); ++f) fprintf(stderr, "  #%d: <%s>\n", f, *Args[f]);
 
-  if (!Args.Num())
-    return;
+  if (!Args.Num()) return;
 
-  if (ParsingKeyConf)
-  {
-    //  Verify that it's a valid keyconf command.
+  if (ParsingKeyConf) {
+    // verify that it's a valid keyconf command
     bool Found = false;
-    for (unsigned i = 0; i < ARRAY_COUNT(KeyConfCommands); i++)
-    {
-      if (!Args[0].ICmp(KeyConfCommands[i]))
-      {
+    for (unsigned i = 0; i < ARRAY_COUNT(KeyConfCommands); ++i) {
+      if (!Args[0].ICmp(KeyConfCommands[i])) {
         Found = true;
         break;
       }
     }
-    if (!Found)
-    {
-      GCon->Logf("%s is not a valid KeyConf command!", *Args[0]);
+    if (!Found) {
+      GCon->Logf("'%s' is not a valid KeyConf command!", *Args[0]);
       return;
     }
   }
 
-  //
-  //  Check for command
-  //
-  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next)
-  {
+  // check for command
+  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) {
     if (Args[0].ICmp(cmd->Name) == 0) {
       //fprintf(stderr, "+++ COMMAND FOUND: [%s] [%s] +++\n", *Args[0], cmd->Name);
       cmd->Run();
@@ -417,32 +371,23 @@ void VCommand::ExecuteString(const VStr &Acmd, ECmdSource src,
     }
   }
 
-  //
-  //  Cvar
-  //
-  if (VCvar::Command(Args))
-    return;
+  // Cvar
+  if (VCvar::Command(Args)) return;
 
-  //
-  // Command defined with ALIAS.
-  //
-  for (VAlias *a = Alias; a; a = a->Next)
-  {
-    if (!Args[0].ICmp(a->Name))
-    {
+  // command defined with ALIAS
+  for (VAlias *a = Alias; a; a = a->Next) {
+    if (!Args[0].ICmp(a->Name)) {
       GCmdBuf.Insert("\n");
       GCmdBuf.Insert(a->CmdLine);
       return;
     }
   }
 
-  //
-  // Unknown command.
-  //
+  // unknown command
 #ifndef CLIENT
   if (host_initialised)
 #endif
-    GCon->Log(VStr("Unknown command ") + Args[0]);
+    GCon->Logf("Unknown command '%s'", *Args[0]);
   unguard;
 }
 
@@ -452,23 +397,17 @@ void VCommand::ExecuteString(const VStr &Acmd, ECmdSource src,
 //  VCommand::ForwardToServer
 //
 //==========================================================================
-
-void VCommand::ForwardToServer()
-{
+void VCommand::ForwardToServer () {
   guard(VCommand::ForwardToServer);
 #ifdef CLIENT
-  if (!cl)
-  {
+  if (!cl) {
     GCon->Log("You must be in a game to execute this command");
     return;
   }
-  if (cl->Net)
-  {
+  if (cl->Net) {
     //fprintf(stderr, "*** sending over the network: <%s>\n", *Original);
     cl->Net->SendCommand(Original);
-  }
-  else
-  {
+  } else {
     //fprintf(stderr, "*** local executing: <%s>\n", *Original);
     VCommand::ExecuteString(Original, VCommand::SRC_Client, cl);
   }
@@ -482,30 +421,25 @@ void VCommand::ForwardToServer()
 //  VCommand::CheckParm
 //
 //==========================================================================
-
-int VCommand::CheckParm(const char *check)
-{
+int VCommand::CheckParm (const char *check) {
   guard(VCommand::CheckParm);
-  for (int i = 1; i < Args.Num(); i++)
-  {
-    if (!Args[i].ICmp(check))
-    {
-      return i;
-    }
+  for (int i = 1; i < Args.Num(); ++i) {
+    if (!Args[i].ICmp(check)) return i;
   }
   return 0;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCommand::GetArgC
 //
 //==========================================================================
-
 int VCommand::GetArgC () {
   return Args.Num();
 }
+
 
 //==========================================================================
 //
@@ -516,6 +450,7 @@ VStr VCommand::GetArgV (int idx) {
   if (idx < 0 || idx >= Args.Num()) return VStr();
   return Args[idx];
 }
+
 
 //**************************************************************************
 //
@@ -528,116 +463,101 @@ VStr VCommand::GetArgV (int idx) {
 //  VCmdBuf::Insert
 //
 //==========================================================================
-
-void VCmdBuf::Insert(const char *text)
-{
+void VCmdBuf::Insert (const char *text) {
   guard(VCmdBuf::Insert);
-  Buffer = VStr(text) + Buffer;
+  Buffer = VStr(text)+Buffer;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCmdBuf::Insert
 //
 //==========================================================================
-
-void VCmdBuf::Insert(const VStr &text)
-{
+void VCmdBuf::Insert (const VStr &text) {
   guard(VCmdBuf::Insert);
-  Buffer = text + Buffer;
+  Buffer = text+Buffer;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCmdBuf::Print
 //
 //==========================================================================
-
-void VCmdBuf::Print(const char *data)
-{
+void VCmdBuf::Print (const char *data) {
   guard(VCmdBuf::Print);
   Buffer += data;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCmdBuf::Print
 //
 //==========================================================================
-
-void VCmdBuf::Print(const VStr &data)
-{
+void VCmdBuf::Print (const VStr &data) {
   guard(VCmdBuf::Print);
   Buffer += data;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VCmdBuf::Exec
 //
 //==========================================================================
-
-void VCmdBuf::Exec()
-{
+void VCmdBuf::Exec () {
   guard(VCmdBuf::Exec);
-  int    len;
-  int     quotes;
-  bool    comment;
-  VStr    ParsedCmd;
+  int len;
+  int quotes;
+  bool comment;
+  VStr ParsedCmd;
 
-  do
-  {
+  do {
     quotes = 0;
     comment = false;
     ParsedCmd.Clean();
 
-    for (len = 0; len < Buffer.Length(); len++)
-    {
-      if (Buffer[len] == '\n')
-        break;
-      if (comment)
-        continue;
-      if (Buffer[len] == ';' && !(quotes & 1))
-        break;
-      if (Buffer[len] == '/' && Buffer[len + 1] == '/' && !(quotes & 1))
-      {
-        // Comment, all till end is ignored
+    for (len = 0; len < Buffer.length(); ++len) {
+      if (Buffer[len] == '\n') break;
+      if (comment) continue;
+      if (Buffer[len] == ';' && !(quotes&1)) break;
+      if (Buffer[len] == '/' && Buffer[len+1] == '/' && !(quotes&1)) {
+        // comment, all till end is ignored
         comment = true;
         continue;
       }
-      if (Buffer[len] == '\"')
-        quotes++;
+      // screened char in string?
+      if ((quotes&1) && Buffer[len] == '\\' && Buffer.length()-len > 1 && (Buffer[len+1] == '"' || Buffer[len+1] == '\\')) {
+        ParsedCmd += Buffer[len++];
+      } else {
+        if (Buffer[len] == '\"') ++quotes;
+      }
       ParsedCmd += Buffer[len];
     }
 
-    if (len < Buffer.Length())
-    {
-      len++;  //  Skip seperator symbol
-    }
+    if (len < Buffer.Length()) ++len; // skip seperator symbol
 
-    Buffer = VStr(Buffer, len, Buffer.Length() - len);
+    Buffer = VStr(Buffer, len, Buffer.Length()-len);
 
     VCommand::ExecuteString(ParsedCmd, VCommand::SRC_Command, nullptr);
 
-    if (host_request_exit)
-    {
-      return;
-    }
+    if (host_request_exit) return;
 
-    if (Wait)
-    {
-      //  Skip out while text still remains in buffer, leaving it
-      // for next frame
+    if (Wait) {
+      // skip out while text still remains in buffer, leaving it for next frame
       Wait = false;
       break;
     }
   } while (len);
   unguard;
 }
+
 
 //**************************************************************************
 //
@@ -650,68 +570,50 @@ void VCmdBuf::Exec()
 //  COMMAND CmdList
 //
 //==========================================================================
-
-COMMAND(CmdList)
-{
+COMMAND(CmdList) {
   guard(COMMAND CmdList);
-  const char *prefix = Args.Num() > 1 ? *Args[1] : "";
+  const char *prefix = (Args.Num() > 1 ? *Args[1] : "");
   int pref_len = VStr::Length(prefix);
   int count = 0;
-  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next)
-  {
-    if (pref_len && VStr::NICmp(cmd->Name, prefix, pref_len))
-      continue;
+  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) {
+    if (pref_len && VStr::NICmp(cmd->Name, prefix, pref_len)) continue;
     GCon->Logf(" %s", cmd->Name);
-    count++;
+    ++count;
   }
   GCon->Logf("%d commands.", count);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  Alias_f
 //
 //==========================================================================
-
-COMMAND(Alias)
-{
+COMMAND(Alias) {
   guard(COMMAND Alias);
   VCommand::VAlias *a;
-  VStr    tmp;
-  int     i;
-  int     c;
+  VStr tmp;
+  int i;
+  int c;
 
-  if (Args.Num() == 1)
-  {
+  if (Args.Num() == 1) {
     GCon->Log("Current alias:");
-    for (a = VCommand::Alias; a; a = a->Next)
-    {
-      GCon->Log(a->Name + ": " + a->CmdLine);
-    }
+    for (a = VCommand::Alias; a; a = a->Next) GCon->Log(a->Name+": "+a->CmdLine);
     return;
   }
 
   c = Args.Num();
-  for (i = 2; i < c; i++)
-  {
-    if (i != 2)
-    {
-      tmp += " ";
-    }
+  for (i = 2; i < c; ++i) {
+    if (i != 2) tmp += " ";
     tmp += Args[i];
   }
 
-  for (a = VCommand::Alias; a; a = a->Next)
-  {
-    if (!a->Name.ICmp(Args[1]))
-    {
-      break;
-    }
+  for (a = VCommand::Alias; a; a = a->Next) {
+    if (!a->Name.ICmp(Args[1])) break;
   }
 
-  if (!a)
-  {
+  if (!a) {
     a = new VAlias;
     a->Name = Args[1];
     a->Next = VCommand::Alias;
@@ -722,28 +624,24 @@ COMMAND(Alias)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Echo_f
 //
 //==========================================================================
-
-COMMAND(Echo)
-{
+COMMAND(Echo) {
   guard(COMMAND Echo);
-  if (Args.Num() < 2)
-    return;
+  if (Args.Num() < 2) return;
 
   VStr Text = Args[1];
-  for (int i = 2; i < Args.Num(); i++)
-  {
+  for (int i = 2; i < Args.Num(); ++i) {
     Text += " ";
     Text += Args[i];
   }
   Text = Text.EvalEscapeSequences();
 #ifdef CLIENT
-  if (cl)
-  {
+  if (cl) {
     cl->Printf("%s", *Text);
   }
   else
@@ -814,13 +712,12 @@ COMMAND(Exec) {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  COMMAND Wait
 //
 //==========================================================================
-
-COMMAND(Wait)
-{
+COMMAND(Wait) {
   GCmdBuf.Wait = true;
 }

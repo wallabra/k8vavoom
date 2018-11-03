@@ -564,7 +564,7 @@ bool VCvar::Command (const TArray<VStr> &Args) {
   } else if (needHelp) {
     GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
   } else {
-    if (cvar->Flags & CVAR_Rom) {
+    if (cvar->Flags&CVAR_Rom) {
       GCon->Logf("%s is read-only", cvar->Name);
     } else if (cvar->Flags & CVAR_Init && host_initialised) {
       GCon->Logf("%s can be set only from command-line", cvar->Name);
@@ -642,7 +642,7 @@ void VCvar::WriteVariablesToFile (FILE *f) {
   VCvar **list = getSortedList();
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
-    if (cvar->Flags&CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue);
+    if (cvar->Flags&CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue.quote());
   }
   delete[] list;
   unguard;
