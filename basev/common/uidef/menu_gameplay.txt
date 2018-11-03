@@ -1,0 +1,232 @@
+// gameplay options menu
+menudef Gameplay {
+  //selector = MenuSelector_SmallRight;
+  Title = "GAMEPLAY OPTIONS";
+
+  header "Colors";
+
+  option enum {
+    title = "Message Colour";
+    cvar = font_colour;
+    list {
+      "Brick",
+      "Tan",
+      "Gray",
+      "Green",
+      "Brown",
+      "Gold",
+      "Red",
+      "Blue",
+      "Orange",
+      "White",
+      "Yellow",
+      "Normal",
+      "Black",
+      "Light Blue",
+      "Cream",
+      "Olive",
+      "Dark Green",
+      "Dark Red",
+      "Dark Brown",
+      "Purple",
+      "Dark Gray"
+    }
+  }
+
+  option enum {
+    title = "Center Message Colour";
+    cvar = font_colour2;
+    list {
+      "Brick",
+      "Tan",
+      "Gray",
+      "Green",
+      "Brown",
+      "Gold",
+      "Red",
+      "Blue",
+      "Orange",
+      "White",
+      "Yellow",
+      "Normal",
+      "Black",
+      "Light Blue",
+      "Cream",
+      "Olive",
+      "Dark Green",
+      "Dark Red",
+      "Dark Brown",
+      "Purple",
+      "Dark Gray"
+    }
+  }
+
+  header "Monster AI";
+
+  option bool {
+    title = "Monsters Backing Off";
+    cvar = monster_backing;
+  }
+
+  option bool {
+    title = "Damage Thrust";
+    cvar = damage_thrust;
+    help = "Knockback monsters from shotgun shots.";
+  }
+
+  option bool {
+    title = "Monsters can drop off";
+    cvar = monster_dropoff;
+  }
+
+  option bool {
+    title = "Better sight for monsters";
+    cvar = compat_better_sight;
+    help = "Do slightly better line-of-sight checking for monsters.";
+  }
+
+  //TODO
+  //if (GameName == "hexen") CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');
+
+
+  header "Misc. Options";
+
+  option bool {
+    title = "Global Autoaim";
+    cvar = autoaim;
+    help =
+      "Controls global autoaim. Note that if autoaim is turned on,"
+      "headshots will not work properly.";
+  }
+
+  option bool {
+    title = "Autoaim for hitscan weapon";
+    cvar = k8HitscanAutoAim;
+    help =
+      "Controls autoaim for standard pistol, shotgun, and minigun."
+      "If you will turn Global Autoaim off, this will not have any effect."
+      "You can turn this off to perform headshots, but still use autoaiming"
+      "for rockets and plasma.";
+  }
+
+  option bool {
+    title = "Weapon autoswitch";
+    cvar = wpn_autoswitch;
+  }
+
+  option bool {
+    title = "Berserk autoswitch";
+    cvar = k8BerserkSwitch;
+    help = "WARNING: This may not work for custom weapon packs.";
+  }
+
+  option bool {
+    title = "Ignore 'nojump'";
+    cvar = sv_ignore_nojump;
+    help = "Ignore 'NOJUMP' MAPINFO option.";
+  }
+
+  option bool {
+    title = "Ignore 'nofreelook'";
+    cvar = sv_ignore_nomlook;
+    help = "Ignore 'NOFREELOOK' MAPINFO option.";
+  }
+
+  option bool {
+    title = "Shots go through crosshair";
+    cvar = gm_fix_attack_offset;
+    help = "Raise shooting point a little, so hitscan shots will go through your crosshair.";
+  }
+
+
+  header "Headshots Options";
+
+  option bool {
+    title = "Headshots (incl. criticals)";
+    cvar = k8HSEnabled;
+    help = "Allow headshots.";
+  }
+
+  option bool {
+    title = "Critical Headshots";
+    cvar = k8HSCriticals;
+    help =
+      "If headshots turned on, sometimes you can deliver a critical"
+      "headshot, with x2, x3, or even x10 damage."
+      "Has no effect if headshots turned off.";
+  }
+
+  option bool {
+    title = "Announce criticals";
+    cvar = k8HSShowCriticals;
+    help = "Show message on critical headshot.";
+  }
+
+  option slider {
+    title = "Distance multiplier";
+    cvar = k8HSDistMult;
+    step = 0.1;
+    min = 0.8;
+    max = 4.0;
+    help = "Controls critical headshot distance.";
+  }
+
+
+  header "Headshots Fastkill";
+
+  option bool {
+    title = "Fastkills";
+    cvar = k8HSFastKillAnnoyingMonsters;
+    help =
+      "Some 'annoying' mosters will get additional damage."
+      "Use following options to tune this.";
+  }
+
+  option bool {
+    title = "FK Pain Elementals";
+    cvar = k8HSInstaKillPainElementals;
+    help = "Kill Pain Elementals with one shot.";
+  }
+
+  option bool {
+    title = "FK Lost Souls";
+    cvar = k8HSInstaKillLostSouls;
+    help = "Kill Lost Souls with one shot.";
+  }
+
+  option slider {
+    title = "Arch-Vile FK Damage";
+    cvar = k8HSFastKillArchVileDamage;
+    step = 10;
+    min = 10;
+    max = 400;
+    help = "Amount of damage dealt to Arch-Vile.";
+  }
+
+  //TODO: CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
+  //TODO: CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
+  //TODO: CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
+
+
+  header "Elven Gifts";
+
+  option bool {
+    title = "Ammo King";
+    cvar = k8AmmoKing;
+    help = "MORE AMMO! EVEN MORE AMMO!";
+  }
+
+  option bool {
+    title = "Elven Gift";
+    cvar = k8ElvenGift;
+    help = "Give some weapons and ammo on game start.";
+  }
+
+  option bool {
+    title = "No Pain Elemental Attacks";
+    cvar = k8ElvenPaineless;
+    help =
+      "Disable Pain Elemental attacks."
+      "Turn on, and Pain Elementals won't spit any Lost Souls.";
+  }
+}

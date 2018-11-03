@@ -69,6 +69,8 @@ void parse (ScriptsParser par) {
       options[$] = hdr;
       continue;
     }
+
+    par.ScriptError("invalid menudef command '%s'", par.String);
   }
 }
 
@@ -183,6 +185,7 @@ bool parseOne (ScriptsParser par) {
     par.ExpectString();
     title = par.String;
     par.Expect(";");
+    //writeln("TITLE: <", title, ">");
     return true;
   }
 

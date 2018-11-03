@@ -125,7 +125,7 @@ menudef Video {
     title = "Level ambient light";
     cvar = r_allow_ambient;
     help =
-      "Set to \"OFF\" to turn off sector lighting"
+      "Set to 'OFF' to turn off sector lighting"
       "(i.e. level will be lighted only by dynamic lights).";
   }
 

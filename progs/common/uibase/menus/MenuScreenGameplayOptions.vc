@@ -22,6 +22,14 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MenuScreenGameplayOptions : MenuScreenTextDef;
+
+defaultproperties {
+  defFileName = "uidef/menu_gameplay.txt";
+  Width = 400;
+}
+
+/*
 class MenuScreenGameplayOptions : MenuScreen;
 
 
@@ -153,3 +161,4 @@ defaultproperties {
   MenuScrollable = true;
   AllowVerticalResize = true;
 }
+*/

@@ -142,7 +142,7 @@ menudef AdvVideo {
     cvar = gl_blend_sprites;
     help =
       "May make rendering faster or slower. Who knows?"
-      "If in doubt, leave this \"OFF\".";
+      "If in doubt, leave this 'OFF'.";
   }
 
 
