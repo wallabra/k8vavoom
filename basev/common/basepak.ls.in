@@ -7,6 +7,8 @@ startup.vs        @CMAKE_CURRENT_SOURCE_DIR@/startup.vs
 //  Native engine classes, common engine classes, UI
 $recursedirext progs/  @CMAKE_SOURCE_DIR@/progs/common/  .vc
 
+$recursedirext uidef/  @CMAKE_CURRENT_SOURCE_DIR@/uidef/  .txt
+
 
 //  Graphics
 graphics/bal7scr1.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bal7scr1.png

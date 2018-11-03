@@ -1,0 +1,487 @@
+﻿//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefinition : Object;
+
+name menuName;
+name seltype = 'MenuSelector_SmallRight';
+string title;
+
+array!MenuDefOptionBase options;
+
+
+// "menudef" eaten
+void parse (ScriptsParser par) {
+  par.ExpectIdentifier();
+  menuName = name(par.String);
+  par.Expect("{");
+  while (!par.Check("}")) {
+    if (par.Check("selector")) {
+      par.Expect("=");
+      par.ExpectIdentifier();
+      seltype = name(par.String);
+      par.Expect(";");
+      continue;
+    }
+
+    if (par.Check("title")) {
+      par.Expect("=");
+      par.ExpectString();
+      title = par.String;
+      par.Expect(";");
+      continue;
+    }
+
+    if (par.Check("option")) {
+      auto opt = MenuDefOptionBase.parse(par);
+      if (opt) options[$] = opt;
+      continue;
+    }
+
+    if (par.Check("header")) {
+      par.ExpectString();
+      string title = par.String;
+      par.Expect(";");
+      auto hdr = SpawnObject(MenuDefOptionSubHeader);
+      hdr.title = title;
+      options[$] = hdr;
+      continue;
+    }
+  }
+}
+
+
+final void dump () {
+  writeln("==== MENU:", menuName, " ==== (", seltype, ")");
+  if (title) writeln("TITLE: <", title, ">");
+  foreach (auto idx, auto opt; options) {
+    write("  #", idx, ": ");
+    opt.dump();
+    writeln;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefConditionBase : Object;
+
+string cond;
+name cvar;
+float val;
+
+bool test () {
+  if (!cvar || !CvarExists(cvar)) return false;
+  float var = GetCvarF(cvar);
+  if (cond == "=" || cond == "==") return (var == val);
+  if (cond == "!=" || cond == "<>") return (var != val);
+  if (cond == "<") return (var < val);
+  if (cond == "<=") return (var <= val);
+  if (cond == ">") return (var > val);
+  if (cond == ">=") return (var >= val);
+  return false;
+}
+
+
+// '[' eaten
+void parse (ScriptsParser par) {
+  par.ExpectIdentifier();
+  cvar = name(par.String);
+       if (par.Check("=") || par.Check("==")) cond = "==";
+  else if (par.Check("!=")) cond = "!=";
+  else if (par.Check("<")) cond = "<";
+  else if (par.Check("<=")) cond = "<=";
+  else if (par.Check(">")) cond = ">";
+  else if (par.Check(">=")) cond = ">=";
+  else par.ScriptError("invalid condition '%s'", par.String);
+  par.ExpectFloat(withSign:true);
+  val = par.Float;
+  par.Expect("]");
+}
+
+
+void dump () {
+  write("[", cvar, " ", cond, " ", val, "]");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionBase : Object;
+
+MenuDefConditionBase cond;
+string title;
+name cvar;
+string help;
+
+
+override void Destroy () {
+  delete cond;
+  ::Destroy();
+}
+
+
+void CreateOption (MenuScreen menu) {
+}
+
+
+bool test () {
+  if (!cond) return true;
+  return cond.test();
+}
+
+
+// "option" skipped
+final static MenuDefOptionBase parse (ScriptsParser par) {
+  MenuDefOptionBase res;
+  par.SetCMode(true);
+  par.SetEscape(true);
+       if (par.Check("bool")) res = SpawnObject(MenuDefOptionBool);
+  else if (par.Check("enum")) res = SpawnObject(MenuDefOptionEnum);
+  else if (par.Check("slider")) res = SpawnObject(MenuDefOptionSlider);
+  else if (par.Check("numeric")) res = SpawnObject(MenuDefOptionNumeric);
+  else par.ScriptError("invalid option type '%s'", par.String);
+  // condition?
+  if (par.Check("[")) {
+    res.cond = SpawnObject(MenuDefConditionBase);
+    res.cond.parse(par);
+  }
+  par.Expect("{");
+  while (!par.Check("}")) {
+    if (par.Check(";")) continue;
+    if (!res.parseOne(par)) par.ScriptError("invalid menu definition keyword '%s'", par.String);
+  }
+  return res;
+}
+
+
+bool parseOne (ScriptsParser par) {
+  if (par.Check("title")) {
+    par.Expect("=");
+    par.ExpectString();
+    title = par.String;
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("cvar")) {
+    par.Expect("=");
+    par.ExpectIdentifier();
+    cvar = name(par.String);
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("help")) {
+    par.Expect("=");
+    while (!par.Check(";")) {
+      par.ExpectString();
+      if (help) help ~= "\n";
+      help ~= par.String;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+
+void dump () {
+  if (title) write(" title:<", title, ">");
+  if (cvar) write(" cvar:<", cvar, ">");
+  if (cond) { write(" "); cond.dump(); }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSubHeader : MenuDefOptionBase;
+
+override void CreateOption (MenuScreen menu) {
+  auto opt = MenuSmallTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.TextHAlign = hcenter;
+  opt.TextVAlign = vbottom;
+  opt.Text = title;
+  opt.Focusable = false;
+  /*
+  if (specified_color) {
+    btn.TextColour = color;
+    btn.TextColourFocus = color;
+  } else {
+    btn.TextColour = CR_ORANGE;
+    btn.TextColourFocus = CR_ORANGE;
+  }
+  */
+  opt.TextColour = CR_ORANGE;
+  opt.TextColourFocus = CR_ORANGE;
+  opt.Height = 12;
+}
+
+
+override void dump () {
+  write("header");
+  ::dump();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionBool : MenuDefOptionBase;
+
+override void CreateOption (MenuScreen menu) {
+  auto opt = MenuChoice_OnOff(menu.NewChild(MenuChoice_OnOff));
+  opt.Text = title;
+  if (cvar) opt.SetSessionCvar(cvar);
+}
+
+
+override void dump () {
+  write("bool");
+  ::dump();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionEnum : MenuDefOptionBase;
+
+array!string list;
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  if (par.Check("list")) {
+    par.Expect("{");
+    while (!par.Check("}")) {
+      par.ExpectString();
+      list[$] = par.String;
+      while (par.Check(",")) {}
+    }
+    return true;
+  }
+
+  return false;
+}
+
+
+override void CreateOption (MenuScreen menu) {
+  auto opt = MenuChoiceEnum(menu.NewChild(MenuChoiceEnum));
+  opt.Text = title;
+  foreach (string s; list) opt.AddItem(s);
+  if (cvar) opt.SetSessionCvar(cvar);
+}
+
+
+override void dump () {
+  write("enum");
+  ::dump();
+  foreach (string s; list) write(" <", s, ">");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSlider : MenuDefOptionBase;
+
+float step = 0.1;
+float minv = 0.0;
+float maxv = 1.0;
+name maxcvar;
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  if (par.Check("step")) {
+    par.Expect("=");
+    par.ExpectFloat();
+    step = par.Float;
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("min")) {
+    par.Expect("=");
+    par.ExpectFloat(withSign:true);
+    minv = par.Float;
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("max")) {
+    par.Expect("=");
+    if (par.Check("[")) {
+      par.ExpectIdentifier();
+      maxcvar = name(par.String);
+      par.Expect("]");
+      //writeln("MAXCVAR: <", maxcvar, ">");
+    } else {
+      par.ExpectFloat(withSign:true);
+      maxv = par.Float;
+      maxcvar = '';
+    }
+    par.Expect(";");
+    return true;
+  }
+
+  return false;
+}
+
+
+override void CreateOption (MenuScreen menu) {
+  //FIXME: move this out of here!
+  if (menu.Items.length > 0 && menu.Items[$-1] !isa MenuChoiceSlider && menu.Items[$-1].Height == 10) {
+    menu.Items[$-1].Height = 8;
+    menu.currentY -= 2;
+  }
+  auto opt = MenuChoiceSlider(menu.NewChild(MenuChoiceSlider));
+  opt.Text = title;
+  opt.ValueDelta = step;
+  opt.MinValue = minv;
+  if (maxcvar) opt.MaxValue = GetCvarF(maxcvar); else opt.MaxValue = maxv;
+  if (cvar) opt.SetSessionCvar(cvar);
+}
+
+
+override void dump () {
+  write("slider");
+  ::dump();
+  write(" step=", step, "; min=", minv, "; max=");
+  if (maxcvar) write("[", maxcvar, "]"); else write(maxv);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionNumeric : MenuDefOptionSlider;
+
+override void CreateOption (MenuScreen menu) {
+  auto opt = MenuChoiceNumeric(menu.NewChild(MenuChoiceNumeric));
+  opt.Text = title;
+  opt.ValueDelta = step;
+  opt.MinValue = minv;
+  if (maxcvar) opt.MaxValue = GetCvarF(maxcvar); else opt.MaxValue = maxv;
+  if (cvar) opt.SetSessionCvar(cvar);
+  //writeln("maxcvar=<", maxcvar, ">: ", opt.MaxValue);
+}
+
+
+override void dump () {
+  write("numeric");
+  ::dump();
+  write(" step=", step, "; min=", minv, "; max=");
+  if (maxcvar) write("[", maxcvar, "]"); else write(maxv);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuScreenTextDef : MenuScreen;
+
+string defFileName;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+static final string readText (string fname) {
+  auto fl = TextReader.Open(fname);
+  if (!fl) return "";
+  scope(exit) delete fl;
+  if (fl.size > 1024*1024) return "" ;
+  return fl.readBuf(fl.size, exact:true);
+}
+*/
+
+
+static final ScriptsParser openParser (string fname) {
+  auto par = SpawnObject(ScriptsParser);
+  //par.OpenString('menudef', readText(fname));
+  par.OpenLumpFullName(fname);
+  par.SetCMode(true);
+  return par;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+override void CreateMenu () {
+  auto par = openParser(defFileName);
+  scope(exit) delete par;
+  par.Expect("menudef");
+  auto mdef = SpawnObject(MenuDefinition);
+  scope(exit) delete mdef;
+  mdef.parse(par);
+  //mdef.dump();
+
+  Title = mdef.title;
+
+  if (mdef.seltype) {
+    class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
+    if (cc) SelectorType = cc;
+  }
+
+  if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+  helpText.text = "";
+  CreateTitle();
+  DrawBackButton();
+  currentY = ChoicesStartY;
+
+  foreach (auto opt; mdef.options) {
+    if (!opt.test()) continue;
+    auto xlen = Items.length;
+    opt.CreateOption(self);
+    if (xlen < Items.length) {
+      auto mc = Items[$-1];
+      mc.Width = Width;
+      mc.CursorXOffs = Width/2;
+      if (opt isa MenuDefOptionSubHeader) {
+        mc.SetOrigin(0, currentY);
+      } else {
+        mc.CursorXOffsHR = Width/2;
+        mc.SetOrigin(Width/2, currentY);
+      }
+      currentY += mc.Height;
+    }
+  }
+
+  Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
+
+  CreateSelector();
+  SetDefaultChoice();
+  if (AllowVerticalResize && Items.length > 0) {
+    int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2);
+    if (newHeight > GetVirtualHeight()-8) {
+      newHeight = GetVirtualHeight()-8;
+      MenuScrollable = true;
+    }
+    Height = newHeight;
+  }
+  // center menu
+  SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+}
+
+
+defaultproperties {
+  Focusable = true;
+  MenuScrollable = true;
+  AllowVerticalResize = true;
+
+  Width = 380;
+  Height = 260;
+  ChoicesStartX = 200;
+  ChoicesStartY = 26;
+  TitleX = 180;
+  SelectorType = MenuSelector_SmallRight;
+}

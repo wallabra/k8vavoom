@@ -1,0 +1,189 @@
+// use "extend" to extend menu
+
+// advanced video options menu
+menudef AdvVideo {
+  //selector = MenuSelector_SmallRight;
+  Title = "ADVANCED VIDEO OPTIONS";
+
+  option bool {
+    title = "Decals";
+    cvar = r_decals_enabled;
+  }
+
+  option bool {
+    title = "Sort textures";
+    cvar = gl_sort_textures;
+    help =
+      "Sort textures, so renderer will do less texture switches."
+      "This can win several FPS on huge levels.";
+  }
+
+
+  header "Lighting";
+
+  option bool {
+    title = "Darken lights";
+    cvar = r_darken;
+  }
+
+  option bool {
+    title = "Simulate Faded lights";
+    cvar = r_fade_light;
+  }
+
+  option bool {
+    title = "Extra lighmap samples";
+    cvar = r_extrasamples;
+    help = "Do better lightmap tracing for static lights in lightmapped renderer.";
+  }
+
+  option slider {
+    title = "Light Fade Factor";
+    cvar = r_fade_factor;
+    step = 1;
+    min = 1;
+    max = 10;
+  }
+
+  option slider {
+    title = "Sky Brightness Factor";
+    cvar = r_sky_bright_factor;
+    step = 0.1;
+    min = 0.1;
+    max = 1;
+  }
+
+
+  header "Translucency";
+
+  option slider {
+    title = "Lost Souls Translucency";
+    cvar = r_transsouls;
+    step = 0.05;
+    min = 0;
+    max = 1;
+  }
+
+  option bool {
+    title = "Optional Fuzzy Effect";
+    cvar = r_drawfuzz;
+  }
+
+
+  header "Dynamic Lighting";
+
+  option bool {
+    title = "Dynamic lights";
+    cvar = r_dynamic;
+  }
+
+  option bool {
+    title = "Clip Dynamic Lights";
+    cvar = r_dynamic_clip;
+  }
+
+  option bool {
+    title = "Properly Clip DynLights";
+    cvar = r_dynamic_clip_more;
+    help =
+      "Trace dynamic light sources to produce proper shadows, and"
+      "to prevent bonuses shining through secret walls."
+      "This may slow down rendering a little, but most of the time"
+      "it is OK to have this turned on."
+      "Note that slowdown doesn't depend on level size, only on geometry complexity.";
+  }
+
+  option bool {
+    title = "Model Dynamic lighting";
+    cvar = r_model_light;
+  }
+
+  option bool {
+    title = "Model Sector Lightning";
+    cvar = gl_model_lighting;
+  }
+
+  option bool {
+    title = "Model Shadows";
+    cvar = r_model_shadows;
+  }
+
+
+  header "Other Lightmap Lighting";
+
+  option bool {
+    title = "Additive Static Lights";
+    cvar = r_static_add;
+  }
+
+  option bool {
+    title = "Specular Highlights";
+    cvar = gl_specular_highlights;
+  }
+
+  option slider {
+    title = "Specular Level";
+    cvar = r_specular;
+    step = 0.1;
+    min = 0;
+    max = 2;
+  }
+
+
+  header "Miscellaneous";
+
+  option bool {
+    title = "Blend sprites";
+    cvar = gl_blend_sprites;
+    help =
+      "May make rendering faster or slower. Who knows?"
+      "If in doubt, leave this \"OFF\".";
+  }
+
+
+  header "Texture Filtering";
+
+  option numeric [gl_max_anisotropy > 1] {
+    title = "Anisotropy level";
+    cvar = gl_texture_filter_anisotropic;
+    step = 1;
+    min = 1;
+    max = [gl_max_anisotropy];
+  }
+
+  option enum {
+    title = "Texture Filter";
+    cvar = gl_texture_filter;
+    list {
+      "Nearest",
+      "Nearest Mipmap",
+      "Linear Nearest",
+      "Bilinear",
+      "Trilinear"
+    }
+  }
+
+  option enum {
+    title = "Sprites Filter";
+    cvar = gl_sprite_filter;
+    list {
+      "Nearest",
+      "Nearest Mipmap",
+      "Linear Nearest",
+      "Bilinear",
+      "Trilinear"
+    }
+  }
+
+  option enum {
+    title = "Models Filter";
+    cvar = gl_model_filter;
+    list {
+      "Nearest",
+      "Nearest Mipmap",
+      "Linear Nearest",
+      "Bilinear",
+      "Trilinear"
+    }
+  }
+}

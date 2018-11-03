@@ -239,7 +239,6 @@ MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta,
   auto slider = MenuChoiceNumeric(NewChild(MenuChoiceNumeric));
   if (Width > WidthThreshold) {
     slider.Width = Width;
-    slider.Width = Width;
     slider.CursorXOffs = Width/2;
     slider.CursorXOffsHR = Width/2;
     slider.SetOrigin(Width/2, currentY);

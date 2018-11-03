@@ -198,6 +198,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     sprites/tnt1a0.lmp
     sprites/unkna0.png
     textures/-noflat-.png
+    uidef/*.txt
     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/*.vc

@@ -22,8 +22,14 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class MenuScreenAdvancedVideoOptions : MenuScreen;
+class MenuScreenAdvancedVideoOptions : MenuScreenTextDef;
 
+defaultproperties {
+  defFileName = "uidef/menu_advvideo.txt";
+}
+
+/*
+class MenuScreenAdvancedVideoOptions : MenuScreen;
 
 //==========================================================================
 //
@@ -104,3 +110,4 @@ defaultproperties {
   Title = "ADVANCED VIDEO OPTIONS";
   AllowVerticalResize = true;
 }
+*/

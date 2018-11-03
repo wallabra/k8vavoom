@@ -26,6 +26,7 @@
 import 'linespec';
 
 #include "MenuScreen.vc"
+#include "MenuScreenTextDef.vc"
 
 
 #include "wgselector/MenuSelectorBase.vc"
