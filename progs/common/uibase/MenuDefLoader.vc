@@ -1,0 +1,494 @@
+﻿//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefConditionBase : Object;
+
+string cond;
+name cvar;
+float fval;
+string sval;
+bool isfloat;
+
+
+bool test () {
+  if (!cvar || !CvarExists(cvar)) return false;
+  if (isfloat) {
+    float var = GetCvarF(cvar);
+    if (cond == "=" || cond == "==") return (var == fval);
+    if (cond == "!=" || cond == "<>") return (var != fval);
+    if (cond == "<") return (var < fval);
+    if (cond == "<=") return (var <= fval);
+    if (cond == ">") return (var > fval);
+    if (cond == ">=") return (var >= fval);
+  } else {
+    string var = GetCvarS(cvar);
+    if (cond == "=" || cond == "==") return (var == sval);
+    if (cond == "!=" || cond == "<>") return (var != sval);
+    if (cond == "<") return (var < sval);
+    if (cond == "<=") return (var <= sval);
+    if (cond == ">") return (var > sval);
+    if (cond == ">=") return (var >= sval);
+  }
+  return false;
+}
+
+
+// '[' eaten
+void parse (ScriptsParser par) {
+  par.ExpectIdentifier();
+  cvar = name(par.String);
+       if (par.Check("=") || par.Check("==")) cond = "==";
+  else if (par.Check("!=")) cond = "!=";
+  else if (par.Check("<")) cond = "<";
+  else if (par.Check("<=")) cond = "<=";
+  else if (par.Check(">")) cond = ">";
+  else if (par.Check(">=")) cond = ">=";
+  else par.ScriptError("invalid condition '%s'", par.String);
+  if (par.CheckFloat(withSign:true)) {
+    fval = par.Float;
+    isfloat = true;
+  } else {
+    sval = par.String;
+    isfloat = false;
+  }
+  par.Expect("]");
+}
+
+
+void dump () {
+  write("[", cvar, " ", cond, " ");
+  if (isfloat) write(fval); else write("<", sval, ">");
+  write("]");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefinition : Object;
+
+name menuName;
+name seltype = 'MenuSelector_SmallRight';
+string title;
+
+array!MenuDefOptionBase options;
+
+
+/*
+static final string readText (string fname) {
+  auto fl = TextReader.Open(fname);
+  if (!fl) return "";
+  scope(exit) delete fl;
+  if (fl.size > 1024*1024) return "" ;
+  return fl.readBuf(fl.size, exact:true);
+}
+*/
+
+
+static final ScriptsParser openParser (string fname) {
+  auto par = SpawnObject(ScriptsParser);
+  //par.OpenString('menudef', readText(fname));
+  par.OpenLumpFullName(fname);
+  par.SetCMode(true);
+  return par;
+}
+
+
+// "menudef" eaten
+void parse (ScriptsParser par) {
+  par.ExpectIdentifier();
+  menuName = name(par.String);
+  par.Expect("{");
+  while (!par.Check("}")) {
+    if (par.Check("selector")) {
+      par.Expect("=");
+      par.ExpectIdentifier();
+      seltype = name(par.String);
+      par.Expect(";");
+      continue;
+    }
+
+    if (par.Check("title")) {
+      par.Expect("=");
+      par.ExpectString();
+      title = par.String;
+      par.Expect(";");
+      continue;
+    }
+
+    if (par.Check("option")) {
+      auto opt = MenuDefOptionBase.parse(par);
+      if (opt) options[$] = opt;
+      continue;
+    }
+
+    if (par.Check("header")) {
+      par.ExpectString();
+      string title = par.String;
+      par.Expect(";");
+      auto hdr = SpawnObject(MenuDefOptionSubHeader);
+      hdr.title = title;
+      options[$] = hdr;
+      continue;
+    }
+
+    par.ScriptError("invalid menudef command '%s'", par.String);
+  }
+}
+
+
+final void dump () {
+  writeln("==== MENU:", menuName, " ==== (", seltype, ")");
+  if (title) writeln("TITLE: <", title, ">");
+  foreach (auto idx, auto opt; options) {
+    write("  #", idx, ": ");
+    opt.dump();
+    writeln;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionBase : Object;
+
+MenuDefConditionBase cond;
+string title;
+name cvar;
+string help;
+
+
+override void Destroy () {
+  delete cond;
+  ::Destroy();
+}
+
+
+MenuChoice CreateOption (MenuScreen menu) {
+  return none;
+}
+
+
+bool test () {
+  if (!cond) return true;
+  return cond.test();
+}
+
+
+// "option" skipped
+final static MenuDefOptionBase parse (ScriptsParser par) {
+  MenuDefOptionBase res;
+  par.SetCMode(true);
+  par.SetEscape(true);
+       if (par.Check("bool")) res = SpawnObject(MenuDefOptionBool);
+  else if (par.Check("enum")) res = SpawnObject(MenuDefOptionEnum);
+  else if (par.Check("slider")) res = SpawnObject(MenuDefOptionSlider);
+  else if (par.Check("numeric")) res = SpawnObject(MenuDefOptionNumeric);
+  else if (par.Check("submenu")) res = SpawnObject(MenuDefOptionSubMenu);
+  else if (par.Check("submenubig") || par.Check("submenu_big")) res = SpawnObject(MenuDefOptionSubMenuBig);
+  else par.ScriptError("invalid option type '%s'", par.String);
+  // condition?
+  if (par.Check("[")) {
+    res.cond = SpawnObject(MenuDefConditionBase);
+    res.cond.parse(par);
+  }
+  par.Expect("{");
+  while (!par.Check("}")) {
+    if (par.Check(";")) continue;
+    if (!res.parseOne(par)) par.ScriptError("invalid menu definition keyword '%s'", par.String);
+  }
+  return res;
+}
+
+
+bool parseOne (ScriptsParser par) {
+  if (par.Check("title")) {
+    par.Expect("=");
+    par.ExpectString();
+    title = par.String;
+    par.Expect(";");
+    //writeln("TITLE: <", title, ">");
+    return true;
+  }
+
+  if (par.Check("cvar")) {
+    par.Expect("=");
+    par.ExpectIdentifier();
+    cvar = name(par.String);
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("help")) {
+    par.Expect("=");
+    while (!par.Check(";")) {
+      par.ExpectString();
+      if (help) help ~= "\n";
+      help ~= par.String;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+
+void dump () {
+  if (title) write(" title:<", title, ">");
+  if (cvar) write(" cvar:<", cvar, ">");
+  if (cond) { write(" "); cond.dump(); }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSubHeader : MenuDefOptionBase;
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuSmallTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.TextHAlign = hcenter;
+  opt.TextVAlign = vbottom;
+  opt.Text = title;
+  opt.Focusable = false;
+  /*
+  if (specified_color) {
+    btn.TextColour = color;
+    btn.TextColourFocus = color;
+  } else {
+    btn.TextColour = CR_ORANGE;
+    btn.TextColourFocus = CR_ORANGE;
+  }
+  */
+  opt.TextColour = CR_ORANGE;
+  opt.TextColourFocus = CR_ORANGE;
+  opt.Height = 12;
+  return opt;
+}
+
+
+override void dump () {
+  write("header");
+  ::dump();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionBool : MenuDefOptionBase;
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuChoice_OnOff(menu.NewChild(MenuChoice_OnOff));
+  opt.Text = title;
+  if (cvar) opt.SetSessionCvar(cvar);
+  return opt;
+}
+
+
+override void dump () {
+  write("bool");
+  ::dump();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionEnum : MenuDefOptionBase;
+
+array!string list;
+
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  if (par.Check("list")) {
+    par.Expect("{");
+    while (!par.Check("}")) {
+      par.ExpectString();
+      list[$] = par.String;
+      while (par.Check(",")) {}
+    }
+    return true;
+  }
+
+  return false;
+}
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuChoiceEnum(menu.NewChild(MenuChoiceEnum));
+  opt.Text = title;
+  foreach (string s; list) opt.AddItem(s);
+  if (cvar) opt.SetSessionCvar(cvar);
+  return opt;
+}
+
+
+override void dump () {
+  write("enum");
+  ::dump();
+  foreach (string s; list) write(" <", s, ">");
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSlider : MenuDefOptionBase;
+
+float step = 0.1;
+float minv = 0.0;
+float maxv = 1.0;
+name maxcvar;
+
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  if (par.Check("step")) {
+    par.Expect("=");
+    par.ExpectFloat();
+    step = par.Float;
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("min")) {
+    par.Expect("=");
+    par.ExpectFloat(withSign:true);
+    minv = par.Float;
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("max")) {
+    par.Expect("=");
+    if (par.Check("[")) {
+      par.ExpectIdentifier();
+      maxcvar = name(par.String);
+      par.Expect("]");
+      //writeln("MAXCVAR: <", maxcvar, ">");
+    } else {
+      par.ExpectFloat(withSign:true);
+      maxv = par.Float;
+      maxcvar = '';
+    }
+    par.Expect(";");
+    return true;
+  }
+
+  return false;
+}
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuChoiceSlider(menu.NewChild(MenuChoiceSlider));
+  opt.Text = title;
+  opt.ValueDelta = step;
+  opt.MinValue = minv;
+  if (maxcvar) opt.MaxValue = GetCvarF(maxcvar); else opt.MaxValue = maxv;
+  if (cvar) opt.SetSessionCvar(cvar);
+  return opt;
+}
+
+
+override void dump () {
+  write("slider");
+  ::dump();
+  write(" step=", step, "; min=", minv, "; max=");
+  if (maxcvar) write("[", maxcvar, "]"); else write(maxv);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionNumeric : MenuDefOptionSlider;
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuChoiceNumeric(menu.NewChild(MenuChoiceNumeric));
+  opt.Text = title;
+  opt.ValueDelta = step;
+  opt.MinValue = minv;
+  if (maxcvar) opt.MaxValue = GetCvarF(maxcvar); else opt.MaxValue = maxv;
+  if (cvar) opt.SetSessionCvar(cvar);
+  //writeln("maxcvar=<", maxcvar, ">: ", opt.MaxValue);
+  return opt;
+}
+
+
+override void dump () {
+  write("numeric");
+  ::dump();
+  write(" step=", step, "; min=", minv, "; max=");
+  if (maxcvar) write("[", maxcvar, "]"); else write(maxv);
+}
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSubMenu : MenuDefOptionBase;
+
+class!MenuScreen smclass;
+
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  // temporary
+  if (par.Check("smclass")) {
+    par.Expect("=");
+    par.ExpectIdentifier();
+    smclass = class!MenuScreen(FindClass(name(par.String)));
+    if (!smclass) par.ScriptError("invalid submenu class '%s'", par.String);
+    par.Expect(";");
+    return true;
+  }
+
+  return false;
+}
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  if (!smclass) return none;
+  auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.Text = title;
+  opt.SetSubMenuClass(smclass);
+  return opt;
+}
+
+
+override void dump () {
+  write("submenu<", (smclass ? GetClassName(smclass) : 'none'), ">");
+  ::dump();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSubMenuBig : MenuDefOptionSubMenu;
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  if (!smclass) return none;
+  auto opt = MenuTextButton(menu.NewChild(MenuBigTextButton));
+  opt.Text = title;
+  opt.SetSubMenuClass(smclass);
+  return opt;
+}
+
+
+override void dump () {
+  write("submenubig<", (smclass ? GetClassName(smclass) : 'none'), ">");
+  ::dump();
+}

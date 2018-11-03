@@ -26,6 +26,7 @@
 import 'linespec';
 
 #include "MenuScreen.vc"
+#include "MenuDefLoader.vc"
 #include "MenuScreenTextDef.vc"
 
 
