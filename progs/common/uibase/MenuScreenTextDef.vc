@@ -88,6 +88,7 @@ override void CreateMenu () {
     }
     Height = newHeight;
   }
+
   // center menu
   SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
 }
