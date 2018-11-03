@@ -47,30 +47,33 @@ class VScriptsParser : public VObject {
   virtual void Destroy () override;
   void CheckInterface ();
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
   DECLARE_FUNCTION(OpenLumpName)
+  DECLARE_FUNCTION(OpenLumpFullName)
 #endif
   DECLARE_FUNCTION(OpenString)
   DECLARE_FUNCTION(get_String)
   DECLARE_FUNCTION(get_Number)
   DECLARE_FUNCTION(get_Float)
   DECLARE_FUNCTION(get_Crossed)
+  DECLARE_FUNCTION(get_Quoted)
   DECLARE_FUNCTION(IsText)
+  DECLARE_FUNCTION(IsAtEol)
   DECLARE_FUNCTION(IsCMode)
   DECLARE_FUNCTION(SetCMode)
+  DECLARE_FUNCTION(IsEscape)
+  DECLARE_FUNCTION(SetEscape)
   DECLARE_FUNCTION(AtEnd)
   DECLARE_FUNCTION(GetString)
   DECLARE_FUNCTION(ExpectString)
   DECLARE_FUNCTION(Check)
   DECLARE_FUNCTION(Expect)
+  DECLARE_FUNCTION(CheckIdentifier)
+  DECLARE_FUNCTION(ExpectIdentifier)
   DECLARE_FUNCTION(CheckNumber)
   DECLARE_FUNCTION(ExpectNumber)
   DECLARE_FUNCTION(CheckFloat)
   DECLARE_FUNCTION(ExpectFloat)
-  DECLARE_FUNCTION(CheckNumberWithSign)
-  DECLARE_FUNCTION(ExpectNumberWithSign)
-  DECLARE_FUNCTION(CheckFloatWithSign)
-  DECLARE_FUNCTION(ExpectFloatWithSign)
   DECLARE_FUNCTION(ResetQuoted)
   DECLARE_FUNCTION(ResetCrossed)
   DECLARE_FUNCTION(SkipBracketed)
@@ -921,16 +924,32 @@ void VScriptsParser::CheckInterface () {
 //
 //==========================================================================
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+#if !defined(VCC_STANDALONE_EXECUTOR)
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpName) {
   P_GET_NAME(Name);
   P_GET_SELF;
-  if (Self->Int)
-  {
+#if !defined(IN_VCC)
+  if (Self->Int) {
     delete Self->Int;
     Self->Int = nullptr;
   }
   Self->Int = new VScriptParser(*Name, W_CreateLumpReaderName(Name));
+#endif
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
+  P_GET_STR(Name);
+  P_GET_SELF;
+#if !defined(IN_VCC)
+  if (Self->Int) {
+    delete Self->Int;
+    Self->Int = nullptr;
+  }
+  int num = W_GetNumForFileName(Name);
+  //int num = W_IterateFile(-1, *Name);
+  if (num < 0) Sys_Error("file '%s' not found", *Name);
+  Self->Int = new VScriptParser(*Name, W_CreateLumpReaderNum(num));
+#endif
 }
 #endif
 
@@ -969,6 +988,24 @@ IMPLEMENT_FUNCTION(VScriptsParser, get_Crossed) {
   RET_BOOL(Self->Int->Crossed);
 }
 
+IMPLEMENT_FUNCTION(VScriptsParser, get_Quoted) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(Self->Int->QuotedString);
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, IsText) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(Self->Int->IsText());
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, IsAtEol) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(Self->Int->IsAtEol());
+}
+
 IMPLEMENT_FUNCTION(VScriptsParser, IsCMode) {
   P_GET_SELF;
   Self->CheckInterface();
@@ -980,6 +1017,19 @@ IMPLEMENT_FUNCTION(VScriptsParser, SetCMode) {
   P_GET_SELF;
   Self->CheckInterface();
   Self->Int->SetCMode(On);
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, IsEscape) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(Self->Int->IsEscape());
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, SetEscape) {
+  P_GET_BOOL(On);
+  P_GET_SELF;
+  Self->CheckInterface();
+  Self->Int->SetEscape(On);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, AtEnd) {
@@ -1014,52 +1064,44 @@ IMPLEMENT_FUNCTION(VScriptsParser, Expect) {
   Self->Int->Expect(*Text);
 }
 
-IMPLEMENT_FUNCTION(VScriptsParser, CheckNumber) {
+IMPLEMENT_FUNCTION(VScriptsParser, CheckIdentifier) {
   P_GET_SELF;
   Self->CheckInterface();
-  RET_BOOL(Self->Int->CheckNumber());
+  RET_BOOL(Self->Int->CheckIdentifier());
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, ExpectIdentifier) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  Self->Int->ExpectIdentifier();
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, CheckNumber) {
+  P_GET_BOOL_OPT(withSign, false);
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(withSign ? Self->Int->CheckNumberWithSign() : Self->Int->CheckNumber());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectNumber) {
+  P_GET_BOOL_OPT(withSign, false);
   P_GET_SELF;
   Self->CheckInterface();
-  Self->Int->ExpectNumber();
+  if (withSign) Self->Int->ExpectNumberWithSign(); else Self->Int->ExpectNumber();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, CheckFloat) {
+  P_GET_BOOL_OPT(withSign, false);
   P_GET_SELF;
   Self->CheckInterface();
-  RET_BOOL(Self->Int->CheckFloat());
+  RET_BOOL(withSign ? Self->Int->CheckFloatWithSign() : Self->Int->CheckFloat());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectFloat) {
+  P_GET_BOOL_OPT(withSign, false);
   P_GET_SELF;
   Self->CheckInterface();
-  Self->Int->ExpectFloat();
-}
-
-IMPLEMENT_FUNCTION(VScriptsParser, CheckNumberWithSign) {
-  P_GET_SELF;
-  Self->CheckInterface();
-  RET_BOOL(Self->Int->CheckNumberWithSign());
-}
-
-IMPLEMENT_FUNCTION(VScriptsParser, ExpectNumberWithSign) {
-  P_GET_SELF;
-  Self->CheckInterface();
-  Self->Int->ExpectNumberWithSign();
-}
-
-IMPLEMENT_FUNCTION(VScriptsParser, CheckFloatWithSign) {
-  P_GET_SELF;
-  Self->CheckInterface();
-  RET_BOOL(Self->Int->CheckFloatWithSign());
-}
-
-IMPLEMENT_FUNCTION(VScriptsParser, ExpectFloatWithSign) {
-  P_GET_SELF;
-  Self->CheckInterface();
-  Self->Int->ExpectFloatWithSign();
+  if (withSign) Self->Int->ExpectFloatWithSign(); else Self->Int->ExpectFloat();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ResetQuoted) {
