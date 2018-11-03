@@ -519,7 +519,7 @@ void VCvar::WriteVariablesToFile (FILE *f) {
   VCvar **list = getSortedList();
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
-    if (cvar->flags&CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->cvname, *cvar->stringValue);
+    if (cvar->flags&CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->cvname, *cvar->stringValue.quote());
   }
   delete[] list;
 }
