@@ -1,0 +1,148 @@
+// video options menu
+menudef Video {
+  //selector = MenuSelector_SmallRight;
+  Title = "VIDEO OPTIONS";
+
+  option slider {
+    title = "Screen size";
+    cvar = screen_size;
+    step = 1;
+    min = 1;
+    max = 11;
+  }
+
+  option slider {
+    title = "Brightness";
+    cvar = brightness;
+    step = 1;
+    min = 0;
+    max = 4;
+  }
+
+  option slider {
+    title = "Menu darkness";
+    cvar = menu_darkening;
+    step = 0.1;
+    min = 0;
+    max = 1;
+  }
+
+
+  header "Crosshair";
+
+  option enum {
+    title = "Crosshair";
+    cvar = crosshair;
+    list {
+      "None",
+      "Cross",
+      "Angle",
+      "Dot"
+    }
+  }
+
+  option slider {
+    title = "Crosshair Transparency";
+    cvar = crosshair_alpha;
+    step = 0.1;
+    min = 0;
+    max = 1;
+  }
+
+
+  header "Renderer";
+
+  option enum {
+    title = "Level renderer";
+    cvar = r_level_renderer;
+    help =
+      "Lightmapped renderer is faster, and produces nice soft light."
+      "Stencil lighting produces DooM3-like sharp volumetric light."
+      "You have to restart level/game (or load save) to activate new renderer.";
+    list {
+      "Select automatically",
+      "Lighmapped (recommended)",
+      "Stencil (experimental)"
+    }
+  }
+
+
+  header "Visual Options";
+
+  option bool {
+    title = "Smooth particles";
+    cvar = gl_smooth_particles;
+  }
+
+  option bool {
+    title = "High Resolution Textures";
+    cvar = r_hirestex;
+  }
+
+  option bool {
+    title = "Render Monster Models";
+    cvar = r_models;
+  }
+
+  option bool {
+    title = "Render Hand Weapon Models";
+    cvar = r_view_models;
+  }
+
+
+  header "Visual Hacks";
+
+  option bool {
+    title = "Fix Sprites Offset";
+    cvar = r_fix_sprite_offsets;
+  }
+
+  option slider {
+    title = "Sprites Delta";
+    cvar = r_sprite_fix_delta;
+    step = 0.1;
+    min = -255;
+    max = 255;
+  }
+
+
+  header "UI Graphics Filtering";
+
+  option bool {
+    title = "Font filtering";
+    cvar = gl_font_filtering;
+  }
+
+  option bool {
+    title = "Pictures filtering";
+    cvar = gl_pic_filtering;
+  }
+
+
+  header "Ambient Light";
+
+  option bool {
+    title = "Level ambient light";
+    cvar = r_allow_ambient;
+    help =
+      "Set to \"OFF\" to turn off sector lighting"
+      "(i.e. level will be lighted only by dynamic lights).";
+  }
+
+  option slider {
+    title = "Minimum ambient light";
+    cvar = r_ambient;
+    help = "If level is too dark, you can set minimum light level.";
+    step = 16;
+    min = 0;
+    max = 255;
+  }
+
+
+  header "More Options";
+
+  option submenu {
+    title = "Advanced Video options";
+    smclass = MenuScreenAdvancedVideoOptions;
+  }
+}

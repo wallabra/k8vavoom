@@ -6,6 +6,11 @@ menudef AdvVideo {
   Title = "ADVANCED VIDEO OPTIONS";
 
   option bool {
+    title = "FPS Counter";
+    cvar = draw_fps;
+  }
+
+  option bool {
     title = "Decals";
     cvar = r_decals_enabled;
   }

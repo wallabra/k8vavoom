@@ -160,6 +160,8 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("enum")) res = SpawnObject(MenuDefOptionEnum);
   else if (par.Check("slider")) res = SpawnObject(MenuDefOptionSlider);
   else if (par.Check("numeric")) res = SpawnObject(MenuDefOptionNumeric);
+  else if (par.Check("submenu")) res = SpawnObject(MenuDefOptionSubMenu);
+  else if (par.Check("submenubig") || par.Check("submenu_big")) res = SpawnObject(MenuDefOptionSubMenuBig);
   else par.ScriptError("invalid option type '%s'", par.String);
   // condition?
   if (par.Check("[")) {
@@ -388,6 +390,61 @@ override void dump () {
 }
 
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSubMenu : MenuDefOptionBase;
+
+class!MenuScreen smclass;
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  // temporary
+  if (par.Check("smclass")) {
+    par.Expect("=");
+    par.ExpectIdentifier();
+    smclass = class!MenuScreen(FindClass(name(par.String)));
+    if (!smclass) par.ScriptError("invalid submenu class '%s'", par.String);
+    par.Expect(";");
+    return true;
+  }
+
+  return false;
+}
+
+
+override void CreateOption (MenuScreen menu) {
+  if (!smclass) return;
+  auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.Text = title;
+  opt.SetSubMenuClass(smclass);
+}
+
+
+override void dump () {
+  write("submenu<", (smclass ? GetClassName(smclass) : 'none'), ">");
+  ::dump();
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionSubMenuBig : MenuDefOptionSubMenu;
+
+
+override void CreateOption (MenuScreen menu) {
+  if (!smclass) return;
+  auto opt = MenuTextButton(menu.NewChild(MenuBigTextButton));
+  opt.Text = title;
+  opt.SetSubMenuClass(smclass);
+}
+
+
+override void dump () {
+  write("submenubig<", (smclass ? GetClassName(smclass) : 'none'), ">");
+  ::dump();
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuScreenTextDef : MenuScreen;
 
@@ -444,6 +501,7 @@ override void CreateMenu () {
     opt.CreateOption(self);
     if (xlen < Items.length) {
       auto mc = Items[$-1];
+      if (opt.help) mc.customHelpText = opt.help;
       mc.Width = Width;
       mc.CursorXOffs = Width/2;
       if (opt isa MenuDefOptionSubHeader) {

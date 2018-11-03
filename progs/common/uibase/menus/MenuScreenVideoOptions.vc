@@ -22,6 +22,15 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MenuScreenVideoOptions : MenuScreenTextDef;
+
+defaultproperties {
+  defFileName = "uidef/menu_video.txt";
+  Width = 400;
+}
+
+
+/*
 class MenuScreenVideoOptions : MenuScreen;
 
 
@@ -85,3 +94,4 @@ defaultproperties {
   AllowVerticalResize = true;
   Title = "VIDEO OPTIONS";
 }
+*/
