@@ -1,5 +1,5 @@
 // video options menu
-menudef Video {
+menudef VideoOptions {
   //selector = MenuSelector_SmallRight;
   Title = "VIDEO OPTIONS";
 
@@ -143,6 +143,7 @@ menudef Video {
 
   option submenu {
     title = "Advanced Video Options";
-    smclass = MenuScreenAdvancedVideoOptions;
+    //smclass = MenuScreenAdvancedVideoOptions;
+    submenu = "AdvVideoOptions";
   }
 }

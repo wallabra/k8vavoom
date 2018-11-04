@@ -22,9 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class ClientGameShared : LineSpecialClientGame
-  abstract;
-
+class ClientGameShared : LineSpecialClientGame abstract;
 
 enum {
   MB_None,
@@ -43,7 +41,7 @@ const int MAX_MENU_STACK = 64;
 
 StatusBarShared GSBar;
 
-array!MenuScreen menu_stack;
+array!MenuScreen menuStack;
 
 MenuScreen CurrentMenuScreen;
 
@@ -79,6 +77,76 @@ name DefaultFinaleMusic;
 name DefaultFinaleType;
 
 
+array!MenuDefinition menudefs;
+
+
+//==========================================================================
+//
+//  PostSpawn
+//
+//  called after the engine spawned the object
+//
+//==========================================================================
+void PostSpawn () {
+  LoadMenuDefs();
+}
+
+
+//==========================================================================
+//
+//  LoadMenuDefs
+//
+//==========================================================================
+final void LoadMenuDefs () {
+  auto par = MenuDefinition.openParser("uidef/menu_list.txt");
+  scope(exit) delete par;
+  par.Expect("menus");
+  par.Expect("{");
+  while (!par.Check("}")) {
+    if (par.Check(",")) continue;
+    par.ExpectString();
+    string fname = va("uidef/%s", par.String);
+    MenuDefinition mdef = MenuScreenTextDef.LoadMenu(fname);
+    if (mdef && mdef.menuName) {
+      //print("menu '%n' loaded from \"%s\"...", mdef.menuName, fname);
+      bool found = false;
+      foreach (auto idx, MenuDefinition md; menudefs) {
+        if (md.menuName == mdef.menuName) {
+          delete menudefs[idx];
+          menudefs[idx] = mdef;
+          found = true;
+          break;
+        }
+      }
+      if (!found) menudefs[$] = mdef;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetCommonMenu
+//
+//==========================================================================
+bool SetCommonMenu (string Name) {
+  //if (!stricmp(Name, "Main")) { PushMenuScreen(SpawnMenu(MenuScreenMain)); return true; }
+  if (!stricmp(Name, "Save")) { PushMenuScreen(SpawnMenu(MenuScreenSaveGame)); return true; }
+  if (!stricmp(Name, "Load")) { PushMenuScreen(SpawnMenu(MenuScreenLoadGame)); return true; }
+  //if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return true; }
+  if (!stricmp(Name, "Options")) { PushMenuScreen(SpawnMenu(MenuScreenOptions)); return true; }
+  if (!stricmp(Name, "Controls")) { PushMenuScreen(SpawnMenu(MenuScreenControls)); return true; }
+  if (!stricmp(Name, "Mouse")) { PushMenuScreen(SpawnNamedMenu('MouseOptions')); return true; }
+  if (!stricmp(Name, "Resolution")) { PushMenuScreen(SpawnMenu(MenuScreenScreenResolution)); return true; }
+  if (!stricmp(Name, "Video")) { PushMenuScreen(SpawnNamedMenu('VideoOptions')); return true; }
+  if (!stricmp(Name, "Sound")) { PushMenuScreen(SpawnNamedMenu('SoundOptions')); return true; }
+  //if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return true; }
+  //if (!stricmp(Name, "Quit")) { menu_quit(); return true; }
+  //PushMenuScreen(SpawnMenu(MenuScreenMain));
+  return false;
+}
+
+
 //==========================================================================
 //
 //  SpawnMenu
@@ -98,6 +166,31 @@ final MenuScreen SpawnMenu (class!MenuScreen CID) {
 }
 
 
+//==========================================================================
+//
+//  SpawnNamedMenu
+//
+//==========================================================================
+final MenuScreen SpawnNamedMenu (name menuName) {
+  foreach (MenuDefinition mdef; menudefs) {
+    if (mdef.menuName == menuName) {
+      auto m = MenuScreenTextDef(GRoot.NewChild(MenuScreenTextDef));
+      m.ClGame = self;
+      m.CreateMenuFromDef(mdef);
+      foreach (auto i, auto scc; savedChoices) {
+        if (scc == menuName) {
+          m.SetSavedChoice(savedChoicesIdx[i]);
+          break;
+        }
+      }
+      return m;
+    }
+  }
+  FatalError("Menu '%n' not found", menuName);
+  return none;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // menu stack handling
 // ////////////////////////////////////////////////////////////////////////// //
@@ -109,20 +202,25 @@ final MenuScreen SpawnMenu (class!MenuScreen CID) {
 //==========================================================================
 final void PushMenuScreen (MenuScreen menu) {
   // avoid stacking menus invoked by hotkeys
-  foreach (auto i, auto msc; menu_stack) {
-    if (msc && msc.Class == menu.Class) {
-      while (menu_stack.length > i) {
-        delete menu_stack[$-1];
-        menu_stack.remove(menu_stack.length-1);
-      }
-      CurrentMenuScreen = none;
-      break;
+  foreach (auto i, auto msc; menuStack) {
+    if (!msc) continue;
+    if (menu isa MenuScreenTextDef) {
+      if (msc !isa MenuScreenTextDef) continue;
+      if (MenuScreenTextDef(msc).menuName != MenuScreenTextDef(menu).menuName) continue;
+    } else {
+      if (msc.Class != menu.Class) continue;
     }
+    while (menuStack.length > i) {
+      delete menuStack[$-1];
+      menuStack.remove(menuStack.length-1);
+    }
+    CurrentMenuScreen = none;
+    break;
   }
 
-  if (menu_stack.length >= MAX_MENU_STACK) FatalError("PushMenu: menu stack overflow");
+  if (menuStack.length >= MAX_MENU_STACK) FatalError("PushMenu: menu stack overflow");
 
-  menu_stack[$] = menu;
+  menuStack[$] = menu;
 
   SetCvar('ui_active', 1);
   if (!CurrentMenuScreen) {
@@ -149,19 +247,39 @@ final void PushMenuScreen (MenuScreen menu) {
 //==========================================================================
 final void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
-  // save choice
-  bool found = false;
-  foreach (auto i, ref auto scc; savedChoices) {
-    if (savedChoices[i] == GetClassName(menu.Class)) {
-      savedChoicesIdx[i] = menu.GetChoiceForSaving();
-      found = true;
-      break;
+  if (menu isa MenuScreenTextDef) {
+    auto md = MenuScreenTextDef(menu);
+    name menuName = md.menuName;
+    if (!menuName) return; // just in case
+    // save choice
+    bool found = false;
+    foreach (auto i, ref auto scc; savedChoices) {
+      if (savedChoices[i] == menuName) {
+        savedChoicesIdx[i] = menu.GetChoiceForSaving();
+        found = true;
+        break;
+      }
     }
-  }
-  // if not found, append it
-  if (!found) {
-    savedChoices[$] = GetClassName(menu.Class);
-    savedChoicesIdx[$] = menu.GetChoiceForSaving();
+    // if not found, append it
+    if (!found) {
+      savedChoices[$] = menuName;
+      savedChoicesIdx[$] = menu.GetChoiceForSaving();
+    }
+  } else {
+    // save choice
+    bool found = false;
+    foreach (auto i, ref auto scc; savedChoices) {
+      if (savedChoices[i] == GetClassName(menu.Class)) {
+        savedChoicesIdx[i] = menu.GetChoiceForSaving();
+        found = true;
+        break;
+      }
+    }
+    // if not found, append it
+    if (!found) {
+      savedChoices[$] = GetClassName(menu.Class);
+      savedChoicesIdx[$] = menu.GetChoiceForSaving();
+    }
   }
 }
 
@@ -172,15 +290,15 @@ final void SaveMenuChoice (MenuScreen menu) {
 //
 //==========================================================================
 final void PopMenu () {
-  if (menu_stack.length == 0) FatalError("PopMenu: menu stack underflow");
-  MenuScreen menu = menu_stack[$-1];
-  menu_stack.length -= 1;
+  if (menuStack.length == 0) FatalError("PopMenu: menu stack underflow");
+  MenuScreen menu = menuStack[$-1];
+  menuStack.length -= 1;
 
   SaveMenuChoice(menu);
 
-  if (menu_stack.length) {
+  if (menuStack.length) {
     if (menu) LocalSound(menu.DeactivateSound);
-    CurrentMenuScreen = menu_stack[$-1];
+    CurrentMenuScreen = menuStack[$-1];
     CurrentMenuScreen.Show();
     CurrentMenuScreen.Raise();
     CurrentMenuScreen.SetFocus();
@@ -201,11 +319,11 @@ final void PopMenu () {
 //
 //==========================================================================
 final void ForceMenuOff () {
-  foreach (ref auto msc; menu_stack) {
+  foreach (ref auto msc; menuStack) {
     SaveMenuChoice(msc);
     delete msc;
   }
-  menu_stack.clear();
+  menuStack.clear();
   CurrentMenuScreen = none;
   SetCvar('ui_active', 0);
   GRoot.SetMouse(false);

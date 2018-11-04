@@ -110,6 +110,7 @@ static final ScriptsParser openParser (string fname) {
   //par.OpenString('menudef', readText(fname));
   par.OpenLumpFullName(fname);
   par.SetCMode(true);
+  par.SetEscape(true);
   return par;
 }
 
@@ -496,6 +497,7 @@ override void dump () {
 class MenuDefOptionSubMenu : MenuDefOptionBase;
 
 class!MenuScreen smclass;
+name subname;
 
 
 override bool parseOne (ScriptsParser par) {
@@ -508,6 +510,17 @@ override bool parseOne (ScriptsParser par) {
     smclass = class!MenuScreen(FindClass(name(par.String)));
     if (!smclass) par.ScriptError("invalid submenu class '%s'", par.String);
     par.Expect(";");
+    subname = '';
+    return true;
+  }
+
+  if (par.Check("submenu")) {
+    par.Expect("=");
+    par.ExpectString();
+    subname = name(par.String);
+    if (!subname) par.ScriptError("invalid submenu class '%s'", par.String);
+    par.Expect(";");
+    smclass = none;
     return true;
   }
 
@@ -516,12 +529,12 @@ override bool parseOne (ScriptsParser par) {
 
 
 override MenuChoice CreateOption (MenuScreen menu) {
-  if (!smclass) return none;
+  if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
   opt.Text = title;
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
-  opt.SetSubMenuClass(smclass);
+  if (smclass) opt.SetSubMenuClass(smclass); else opt.SetSubMenuName(subname);
   return opt;
 }
 
@@ -537,12 +550,12 @@ class MenuDefOptionSubMenuBig : MenuDefOptionSubMenu;
 
 
 override MenuChoice CreateOption (MenuScreen menu) {
-  if (!smclass) return none;
+  if (!smclass && !subname) return none;
   auto opt = MenuTextButton(menu.NewChild(MenuBigTextButton));
   opt.Text = title;
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
-  opt.SetSubMenuClass(smclass);
+  if (smclass) opt.SetSubMenuClass(smclass); else opt.SetSubMenuName(subname);
   return opt;
 }
 

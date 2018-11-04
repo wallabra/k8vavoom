@@ -1,5 +1,5 @@
 // gameplay options menu
-menudef Gameplay {
+menudef GameplayOptions {
   //selector = MenuSelector_SmallRight;
   Title = "GAMEPLAY OPTIONS";
 

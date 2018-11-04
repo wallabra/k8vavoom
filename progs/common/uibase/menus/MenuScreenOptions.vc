@@ -58,12 +58,12 @@ override void CreateChoices () {
     CreateSubMenuText("Special Controls", MenuScreenSpecialControls);
   }
 
-  CreateSubMenuText("Mouse Options", MenuScreenMouseOptions);
+  CreateSubMenuTextNamed("Mouse Options", 'MouseOptions');
   CreateSubMenuText("Screen Resolution", MenuScreenScreenResolution);
-  CreateSubMenuText("Video Options", MenuScreenVideoOptions);
-  CreateSubMenuText("Sound Options", MenuScreenSoundOptions);
-  CreateSubMenuText("Gameplay Options", MenuScreenGameplayOptions);
-  CreateSubMenuText("Misc Options", MenuScreenMiscOptions);
+  CreateSubMenuTextNamed("Video Options", 'VideoOptions');
+  CreateSubMenuTextNamed("Sound Options", 'SoundOptions');
+  CreateSubMenuTextNamed("Gameplay Options", 'GameplayOptions');
+  CreateSubMenuTextNamed("Misc Options", 'MiscOptions');
 
   Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.SetOrigin(ChoicesStartX, currentY);

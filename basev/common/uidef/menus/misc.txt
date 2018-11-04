@@ -1,5 +1,5 @@
 // miscelaneous options menu
-menudef MiscOpts {
+menudef MiscOptions {
   //selector = MenuSelector_SmallRight;
   Title = "MISC OPTIONS";
 

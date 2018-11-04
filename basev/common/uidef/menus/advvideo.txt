@@ -1,7 +1,7 @@
 // use "extend" to extend menu
 
 // advanced video options menu
-menudef AdvVideo {
+menudef AdvVideoOptions {
   //selector = MenuSelector_SmallRight;
   Title = "ADVANCED VIDEO OPTIONS";
 

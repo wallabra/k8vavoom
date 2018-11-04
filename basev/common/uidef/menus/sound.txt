@@ -1,5 +1,5 @@
 // sound options menu
-menudef Sound {
+menudef SoundOptions {
   //selector = MenuSelector_SmallRight;
   Title = "SOUND SETTINGS";
 
@@ -19,7 +19,8 @@ menudef Sound {
 
   option submenu {
     title = "Module Decoder Options";
-    smclass = MenuScreenMODOptions;
+    //smclass = MenuScreenMODOptions;
+    submenu = "ModPlayerOptions";
   }
 
   header ""; // empty line

@@ -306,6 +306,28 @@ MenuTextButton CreateSubMenuBigText (string text, class!MenuScreen asubmenuClass
 }
 
 
+MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
+  auto btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  btn.SetOrigin(ChoicesStartX, currentY);
+  if (Width > WidthThreshold) btn.Width = Width;
+  btn.Text = text;
+  btn.SetSubMenuName(menuName);
+  currentY += btn.Height;
+  return btn;
+}
+
+
+MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
+  auto btn = MenuTextButton(NewChild(MenuBigTextButton));
+  btn.SetOrigin(ChoicesStartX, currentY);
+  if (Width > WidthThreshold) btn.Width = Width;
+  btn.Text = text;
+  btn.SetSubMenuName(menuName);
+  currentY += btn.Height;
+  return btn;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 void CreateSelector () {
   if (SelectorType) Selector = NewChild(SelectorType);

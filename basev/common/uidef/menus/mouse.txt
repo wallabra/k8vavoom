@@ -1,5 +1,5 @@
 // mouse options menu
-menudef Mouse {
+menudef MouseOptions {
   //selector = MenuSelector_SmallRight;
   Title = "MOUSE OPTIONS";
 

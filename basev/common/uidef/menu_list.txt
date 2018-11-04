@@ -1,0 +1,9 @@
+menus {
+  "menus/advvideo.txt",
+  "menus/gameplay.txt",
+  "menus/misc.txt",
+  "menus/mouse.txt",
+  "menus/sound.txt",
+  "menus/video.txt",
+  "menus/xmp.txt",
+}

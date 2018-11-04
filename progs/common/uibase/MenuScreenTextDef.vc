@@ -25,18 +25,31 @@
 class MenuScreenTextDef : MenuScreen;
 
 string defFileName;
+name menuName;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-override void CreateMenu () {
+final static MenuDefinition LoadMenu (string defFileName) {
+  if (!defFileName) FatalError("undefined menudef");
   auto par = MenuDefinition.openParser(defFileName);
   scope(exit) delete par;
   par.Expect("menudef");
   auto mdef = SpawnObject(MenuDefinition);
-  scope(exit) delete mdef;
   mdef.parse(par);
-  //mdef.dump();
+  return mdef;
+}
 
+
+override void CreateMenu () {
+  auto mdef = LoadMenu(defFileName);
+  scope(exit) delete mdef;
+  //mdef.dump();
+  CreateMenuFromDef(mdef);
+}
+
+
+void CreateMenuFromDef (MenuDefinition mdef) {
+  menuName = mdef.menuName;
   Title = mdef.title;
 
   if (mdef.seltype) {
@@ -99,7 +112,8 @@ defaultproperties {
   MenuScrollable = true;
   AllowVerticalResize = true;
 
-  Width = 380;
+  //Width = 380;
+  Width = 520;
   Height = 260;
   ChoicesStartX = 200;
   ChoicesStartY = 26;
