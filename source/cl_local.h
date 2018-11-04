@@ -115,6 +115,11 @@ class VClientGameBase : public VObject
   : serverinfo(E_NoInit)
   {}
 
+  void eventPostSpawn()
+  {
+    P_PASS_SELF;
+    EV_RET_VOID(VName("PostSpawn"));
+  }
   void eventRootWindowCreated()
   {
     P_PASS_SELF;

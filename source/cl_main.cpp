@@ -82,6 +82,7 @@ void CL_Init () {
   ClientNetContext = new VClientNetContext();
   GClGame = (VClientGameBase *)VObject::StaticSpawnObject(VClass::FindClass("ClientGame"), false); // don't skip replacement
   GClGame->Game = GGameInfo;
+  GClGame->eventPostSpawn();
   unguard;
 }
 
