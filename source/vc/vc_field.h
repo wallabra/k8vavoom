@@ -74,7 +74,9 @@ public:
 
 #if !defined(IN_VCC)
   static void CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &);
-  static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &);
+  static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &, VStr fullname);
+  static void SkipSerialisedType (VStream &);
+  static void SkipSerialisedValue (VStream &);
   static void CleanField (vuint8 *, const VFieldType &);
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);
   static bool NeedToDestructField (const VFieldType &);

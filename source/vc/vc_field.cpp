@@ -197,13 +197,86 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
 
 //==========================================================================
 //
+//  VField::SkipSerialisedType
+//
+//==========================================================================
+void VField::SkipSerialisedType (VStream &Strm) {
+  vuint8 tp = 0;
+  Strm << tp;
+  vint32 tmpi32, n, InnerSize;
+  vuint8 tmpu8;
+  float tmpf32;
+  TVec tmpvec;
+  VName tmpname, tmpname2;
+  VStr tmpstr;
+  VObject *tmpobj;
+  switch (tp) {
+    case TYPE_Int: Strm << tmpi32; break;
+    case TYPE_Byte: Strm << tmpu8; break;
+    case TYPE_Bool: Strm << tmpu8; break;
+    case TYPE_Float: Strm << tmpf32; break;
+    case TYPE_Vector: Strm << tmpvec; break;
+    case TYPE_Name: Strm << tmpname; break;
+    case TYPE_String: Strm << tmpstr; break;
+    case TYPE_Pointer: // WARNING! keep in sync with sv_save.cpp!
+      Strm << tp; // inner type
+      if (tp != TYPE_Struct) Host_Error("I/O Error: don't know how to skip non-struct pointer type");
+      Strm << STRM_INDEX(tmpi32);
+      break;
+    case TYPE_Reference: Strm << tmpobj; break;
+    case TYPE_Class: Strm << tmpname; break;
+    case TYPE_State: Strm << tmpname << tmpname2; break;
+    case TYPE_Delegate: Strm << tmpobj; Strm << tmpname; break;
+    case TYPE_Struct: Strm << tmpname; VStruct::SkipSerialisedObject(Strm); break;
+    case TYPE_Array:
+      Strm << tp; // inner type
+      Strm << STRM_INDEX(n);
+      Strm << STRM_INDEX(InnerSize);
+      if (n < 0 || InnerSize < 0) Host_Error("I/O Error: invalid array size");
+      if (n || InnerSize) Strm.Seek(Strm.Tell()+n*InnerSize);
+      break;
+    case TYPE_DynamicArray:
+      Strm << tp; // inner type
+      Strm << STRM_INDEX(n);
+      Strm << STRM_INDEX(InnerSize);
+      if (n < 0 || InnerSize < 0) Host_Error("I/O Error: invalid dynamic array size");
+      if (n || InnerSize) Strm.Seek(Strm.Tell()+n*InnerSize);
+      break;
+    case TYPE_SliceArray:
+      //FIXME:SLICE
+      break;
+    default:
+      Host_Error("I/O Error: unknown data type");
+  }
+}
+
+
+//==========================================================================
+//
+//  VField::SkipSerialisedValue
+//
+//==========================================================================
+void VField::SkipSerialisedValue (VStream &Strm) {
+  SkipSerialisedType(Strm);
+}
+
+
+//==========================================================================
+//
 //  VField::SerialiseFieldValue
 //
 //==========================================================================
-void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType &Type) {
+void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType &Type, VStr fullname) {
   guard(VField::SerialiseFieldValue);
+  vuint8 tp = Type.Type;
+  Strm << tp;
+  if (Strm.IsLoading()) {
+    // check type
+    if (tp != Type.Type) Host_Error("I/O Error: field '%s' should be of type '%s', but it is of type '%s'", *fullname, *Type.GetName(), *VFieldType(EType(tp)).GetName());
+  }
   VFieldType IntType;
-  int InnerSize;
+  vint32 InnerSize;
+  vint32 n;
   switch (Type.Type) {
     case TYPE_Int: Strm << *(vint32 *)Data; break;
     case TYPE_Byte: Strm << *Data; break;
@@ -227,10 +300,19 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
     case TYPE_String: Strm << *(VStr *)Data; break;
     case TYPE_Pointer:
       if (Type.InnerType == TYPE_Struct) {
+        tp = Type.InnerType;
+        Strm << tp;
         Strm.SerialiseStructPointer(*(void **)Data, Type.Struct);
       } else {
-        dprintf("Don't know how to serialise pointer type `%s`\n", *Type.GetName());
-        Strm << *(int *)Data;
+        Host_Error("I/O Error: don't know how to serialise pointer type `%s`", *Type.GetName());
+        /*
+        if (Strm.IsLoading()) {
+          //Strm << *(int *)Data;
+          *(void **)Data = nullptr;
+        } else {
+          dprintf("I/O Error: don't know how to serialise pointer type `%s`\n", *Type.GetName());
+        }
+        */
       }
       break;
     case TYPE_Reference: Strm << *(VObject **)Data; break;
@@ -270,11 +352,11 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       }
       break;
     case TYPE_Delegate:
-      Strm << ((VObjectDelegate*)Data)->Obj;
+      Strm << ((VObjectDelegate *)Data)->Obj;
       if (Strm.IsLoading()) {
         VName FuncName;
         Strm << FuncName;
-        if (((VObjectDelegate*)Data)->Obj) ((VObjectDelegate *)Data)->Func = ((VObjectDelegate *)Data)->Obj->GetVFunction(FuncName);
+        if (((VObjectDelegate *)Data)->Obj) ((VObjectDelegate *)Data)->Func = ((VObjectDelegate *)Data)->Obj->GetVFunction(FuncName);
       } else {
         VName FuncName = NAME_None;
         if (((VObjectDelegate *)Data)->Obj) FuncName = ((VObjectDelegate *)Data)->Func->Name;
@@ -282,13 +364,43 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       }
       break;
     case TYPE_Struct:
+      if (Strm.IsLoading()) {
+        // check struct name
+        VName stname = NAME_None;
+        Strm << stname;
+        if (Type.Struct->Name != stname) Host_Error("I/O Error: expected struct `%s`, but got struct '%s'", *Type.Struct->Name, *stname);
+      } else {
+        // save struct name
+        VName stname = Type.Struct->Name;
+        Strm << stname;
+      }
       Type.Struct->SerialiseObject(Strm, Data);
       break;
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       InnerSize = IntType.GetSize();
-      for (int i = 0; i < Type.GetArrayDim(); ++i) SerialiseFieldValue(Strm, Data+i*InnerSize, IntType);
+      n = Type.GetArrayDim();
+      tp = IntType.Type;
+      Strm << tp;
+      Strm << STRM_INDEX(n);
+      if (Strm.IsLoading()) {
+        // check inner size
+        vint32 isz = -1;
+        Strm << STRM_INDEX(isz);
+        if (tp != IntType.Type) Host_Error("I/O Error: invalid array element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
+        if (isz != InnerSize) Host_Error("I/O Error: invalid array element size, expected %d, got %d", InnerSize, isz);
+        for (int i = 0; i < Type.GetArrayDim(); ++i) {
+          if (i < n) {
+            SerialiseFieldValue(Strm, Data+i*InnerSize, IntType, fullname);
+          } else {
+            SkipSerialisedValue(Strm);
+          }
+        }
+      } else {
+        Strm << STRM_INDEX(InnerSize);
+        for (int i = 0; i < n; ++i) SerialiseFieldValue(Strm, Data+i*InnerSize, IntType, fullname);
+      }
       break;
     case TYPE_DynamicArray:
       {
@@ -297,15 +409,28 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         IntType.Type = Type.ArrayInnerType;
         InnerSize = IntType.GetSize();
         vint32 ArrNum = A.Num();
+        tp = IntType.Type;
+        Strm << tp;
         Strm << STRM_INDEX(ArrNum);
+        if (Strm.IsLoading()) {
+          // check inner size
+          vint32 isz = -1;
+          Strm << STRM_INDEX(isz);
+          if (tp != IntType.Type) Host_Error("I/O Error: invalid dynarray element type, expected '%s', got '%s'", *IntType.GetName(), *VFieldType(EType(tp)).GetName());
+          if (isz != InnerSize) Host_Error("I/O Error: invalid dynarray element size, expected %d, got %d", InnerSize, isz);
+        } else {
+          Strm << STRM_INDEX(InnerSize);
+        }
         if (Strm.IsLoading()) A.SetNum(ArrNum, IntType);
-        for (int i = 0; i < A.Num(); ++i) SerialiseFieldValue(Strm, A.Ptr()+i*InnerSize, IntType);
+        for (int i = 0; i < A.Num(); ++i) SerialiseFieldValue(Strm, A.Ptr()+i*InnerSize, IntType, fullname);
       }
       break;
     case TYPE_SliceArray:
       //FIXME:SLICE
       dprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
       break;
+    default:
+      Host_Error("I/O Error: unknown data type");
   }
   unguard;
 }

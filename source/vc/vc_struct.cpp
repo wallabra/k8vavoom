@@ -479,18 +479,109 @@ void VStruct::CopyObject (const vuint8 *Src, vuint8 *Dst) {
 
 //==========================================================================
 //
+//  VStruct::SkipSerialisedObject
+//
+//==========================================================================
+void VStruct::SkipSerialisedObject (VStream &Strm) {
+  VName psname = NAME_None;
+  Strm << psname;
+  if (psname != NAME_None) SkipSerialisedObject(Strm); // skip parent struct
+  vint32 fldcount = 0;
+  Strm << STRM_INDEX(fldcount);
+  while (fldcount--) {
+    VName fname = NAME_None;
+    Strm << fname;
+    VField::SkipSerialisedValue(Strm);
+  }
+}
+
+
+//==========================================================================
+//
 //  VStruct::SerialiseObject
 //
 //==========================================================================
 void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
   guard(VStruct::SerialiseObject);
   // serialise parent struct's fields
-  if (ParentStruct) ParentStruct->SerialiseObject(Strm, Data);
+  if (Strm.IsLoading()) {
+    // load parent struct
+    VName psname = NAME_None;
+    Strm << psname;
+    if (ParentStruct) {
+      if (ParentStruct->Name != psname) Host_Error("I/O ERROR: expected parent struct '%s', got '%s'", *ParentStruct->Name, *psname);
+      ParentStruct->SerialiseObject(Strm, Data);
+    } else {
+      if (psname != NAME_None) Host_Error("I/O ERROR: expected no parent struct, got '%s'", *psname);
+    }
+  } else {
+    // save parent struct
+    VName psname = (ParentStruct ? ParentStruct->Name : NAME_None);
+    Strm << psname;
+    if (ParentStruct) ParentStruct->SerialiseObject(Strm, Data);
+  }
+/*
   // serialise fields
   for (VField *F = Fields; F; F = F->Next) {
     // skip native and transient fields
     if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
     VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type);
+  }
+*/
+  // serialise fields
+  vint32 fldcount = 0;
+  if (Strm.IsLoading()) {
+    // load fields
+    TMap<VName, VField *> flist;
+    for (VField *F = Fields; F; F = F->Next) {
+      // skip native and transient fields
+      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
+      flist.put(F->Name, F);
+    }
+    // number of fields
+    Strm << STRM_INDEX(fldcount);
+    while (fldcount--) {
+      VName fname = NAME_None;
+      Strm << fname;
+      auto ffp = flist.find(fname);
+      if (!ffp) {
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+        fprintf(stderr, "I/O WARNING: field '%s' not found\n", *fname);
+#else
+        GCon->Logf("I/O WARNING: field '%s' not found\n", *fname);
+#endif
+        VField::SkipSerialisedValue(Strm);
+      } else {
+        VField *F = *ffp;
+        flist.remove(fname);
+        VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type, F->GetFullName());
+      }
+    }
+    // show missing fields
+    while (flist.count()) {
+      auto it = flist.first();
+      VName fname = it.getKey();
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+      fprintf(stderr, "I/O WARNING: field '%s' is missing\n", *fname);
+#else
+      GCon->Logf("I/O WARNING: field '%s' is missing\n", *fname);
+#endif
+      flist.remove(fname);
+    }
+  } else {
+    // save fields
+    for (VField *F = Fields; F; F = F->Next) {
+      // skip native and transient fields
+      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
+      ++fldcount;
+    }
+    Strm << STRM_INDEX(fldcount);
+    for (VField *F = Fields; F; F = F->Next) {
+      // skip native and transient fields
+      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
+      Strm << F->Name;
+      VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type, F->GetFullName());
+    }
   }
   unguardf(("(%s)", *Name));
 }

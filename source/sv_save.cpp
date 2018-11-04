@@ -60,7 +60,7 @@ static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
 //#define SAVE_VERSION_TEXT          "Version 1.34.5"
-#define SAVE_VERSION_TEXT          "Version 1.34.6.1"
+#define SAVE_VERSION_TEXT          "Version 1.34.6.2"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
 
 static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");
@@ -974,7 +974,7 @@ static void UnarchiveNames (VSaveLoaderStream *Loader) {
 
 //==========================================================================
 //
-// ArchiveThinkers
+//  ArchiveThinkers
 //
 //==========================================================================
 static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
@@ -1015,7 +1015,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     Saver->ObjectsMap[Th->GetIndex()] = Saver->Exports.Num();
   }
 
-  vint32 NumObjects = Saver->Exports.Num() - ThinkersStart;
+  vint32 NumObjects = Saver->Exports.Num()-ThinkersStart;
   *Saver << STRM_INDEX(NumObjects);
   for (int i = ThinkersStart; i < Saver->Exports.Num(); ++i) {
     VName CName = Saver->Exports[i]->GetClass()->GetVName();
@@ -1093,7 +1093,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 
 //==========================================================================
 //
-// ArchiveSounds
+//  ArchiveSounds
 //
 //==========================================================================
 static void ArchiveSounds (VStream &Strm) {
@@ -1110,7 +1110,7 @@ static void ArchiveSounds (VStream &Strm) {
 
 //==========================================================================
 //
-// UnarchiveSounds
+//  UnarchiveSounds
 //
 //==========================================================================
 static void UnarchiveSounds (VStream &Strm) {

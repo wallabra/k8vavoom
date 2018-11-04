@@ -84,6 +84,7 @@ public:
   void InitReferences ();
   void InitDestructorFields ();
 #if !defined(IN_VCC)
+  static void SkipSerialisedObject (VStream &);
   void CopyObject (const vuint8 *, vuint8 *);
   void SerialiseObject (VStream &, vuint8 *);
   bool NeedToCleanObject ();

@@ -1715,12 +1715,73 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
 void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
   guard(SerialiseObject);
   // serialise parent class fields
-  if (GetSuperClass()) GetSuperClass()->SerialiseObject(Strm, Obj);
+  VClass *super = GetSuperClass();
+  VName supname = (super ? super->Name : NAME_None);
+  Strm << supname;
+  if (Strm.IsLoading()) {
+    // check superclass name
+    if (super) {
+      if (super->Name != supname) Host_Error("I/O ERROR: expected superclass '%s', got superclass '%s'", *super->Name, *supname);
+    } else {
+      if (supname != NAME_None) Host_Error("I/O ERROR: expected no superclass, got superclass '%s'", *supname);
+    }
+  }
+  if (super) GetSuperClass()->SerialiseObject(Strm, Obj);
   // serialise fields
-  for (VField *F = Fields; F; F = F->Next) {
-    // skip native and transient fields
-    if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
-    VField::SerialiseFieldValue(Strm, (vuint8 *)Obj+F->Ofs, F->Type);
+  vint32 fldcount = 0;
+  if (Strm.IsLoading()) {
+    // load fields
+    TMap<VName, VField *> flist;
+    for (VField *F = Fields; F; F = F->Next) {
+      // skip native and transient fields
+      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
+      flist.put(F->Name, F);
+      //VField::SerialiseFieldValue(Strm, (vuint8 *)Obj+F->Ofs, F->Type);
+    }
+    // number of fields
+    Strm << STRM_INDEX(fldcount);
+    while (fldcount--) {
+      VName fname = NAME_None;
+      Strm << fname;
+      auto ffp = flist.find(fname);
+      if (!ffp) {
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+        fprintf(stderr, "I/O WARNING: field '%s' not found\n", *fname);
+#else
+        GCon->Logf("I/O WARNING: field '%s' not found\n", *fname);
+#endif
+        VField::SkipSerialisedValue(Strm);
+      } else {
+        VField *F = *ffp;
+        flist.remove(fname);
+        VField::SerialiseFieldValue(Strm, (vuint8 *)Obj+F->Ofs, F->Type, F->GetFullName());
+      }
+    }
+    // show missing fields
+    while (flist.count()) {
+      auto it = flist.first();
+      VName fname = it.getKey();
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+      fprintf(stderr, "I/O WARNING: field '%s' is missing\n", *fname);
+#else
+      GCon->Logf("I/O WARNING: field '%s' is missing\n", *fname);
+#endif
+      flist.remove(fname);
+    }
+  } else {
+    // save fields
+    for (VField *F = Fields; F; F = F->Next) {
+      // skip native and transient fields
+      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
+      ++fldcount;
+    }
+    Strm << STRM_INDEX(fldcount);
+    for (VField *F = Fields; F; F = F->Next) {
+      // skip native and transient fields
+      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
+      Strm << F->Name;
+      VField::SerialiseFieldValue(Strm, (vuint8 *)Obj+F->Ofs, F->Type, F->GetFullName());
+    }
   }
   unguardf(("(%s)", GetName()));
 }
