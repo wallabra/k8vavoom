@@ -22,96 +22,61 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "render/r_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 extern VCvarB r_decals_enabled;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VLevel::AddThinker
 //
 //==========================================================================
-
-void VLevel::AddThinker(VThinker *Th)
-{
+void VLevel::AddThinker (VThinker *Th) {
   guard(VLevel::AddThinker);
   Th->XLevel = this;
   Th->Level = LevelInfo;
   Th->Prev = ThinkerTail;
   Th->Next = nullptr;
-  if (ThinkerTail)
-    ThinkerTail->Next = Th;
-  else
-    ThinkerHead = Th;
+  if (ThinkerTail) ThinkerTail->Next = Th; else ThinkerHead = Th;
   ThinkerTail = Th;
-
-  //  Notify thinker that is was just added to a level.
+  // notify thinker that is was just added to a level
   Th->AddedToLevel();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLevel::RemoveThinker
 //
 //==========================================================================
-
-void VLevel::RemoveThinker(VThinker *Th)
-{
+void VLevel::RemoveThinker (VThinker *Th) {
   guard(VLevel::RemoveThinker);
-  //  Notify that thinker is being removed from level.
+  // notify that thinker is being removed from level
   Th->RemovedFromLevel();
-
-  if (Th == ThinkerHead)
-    ThinkerHead = Th->Next;
-  else
-    Th->Prev->Next = Th->Next;
-  if (Th == ThinkerTail)
-    ThinkerTail = Th->Prev;
-  else
-    Th->Next->Prev = Th->Prev;
+  if (Th == ThinkerHead) ThinkerHead = Th->Next; else Th->Prev->Next = Th->Next;
+  if (Th == ThinkerTail) ThinkerTail = Th->Prev; else Th->Next->Prev = Th->Prev;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLevel::DestroyAllThinkers
 //
 //==========================================================================
-
-void VLevel::DestroyAllThinkers()
-{
+void VLevel::DestroyAllThinkers () {
   guard(VLevel::DestroyAllThinkers);
-  for (VThinker *Th = ThinkerHead; Th; Th = Th->Next)
-  {
-    if (!(Th->GetFlags() & _OF_DelayedDestroy))
-    {
-      Th->DestroyThinker();
-    }
+  VThinker *Th = ThinkerHead;
+  while (Th) {
+    VThinker *c = Th;
+    Th = c->Next;
+    if (!(c->GetFlags()&_OF_DelayedDestroy)) c->DestroyThinker();
   }
-  for (VThinker *Th = ThinkerHead; Th;)
-  {
+  Th = ThinkerHead;
+  while (Th) {
     VThinker *Next = Th->Next;
     Th->ConditionalDestroy();
     Th = Next;
@@ -121,17 +86,16 @@ void VLevel::DestroyAllThinkers()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VLevel::TickWorld
 //
 //==========================================================================
-
-void VLevel::TickWorld(float DeltaTime)
-{
+void VLevel::TickWorld (float DeltaTime) {
   guard(VLevel::TickWorld);
 
-  // Run decal thinkers
+  // run decal thinkers
   if (DeltaTime > 0 && r_decals_enabled) {
     decal_t *dc = decanimlist;
     while (dc) {
@@ -143,64 +107,53 @@ void VLevel::TickWorld(float DeltaTime)
     }
   }
 
-  // Run thinkers
-  for (VThinker *Th = ThinkerHead; Th; Th = Th->Next)
-  {
-    if (!(Th->GetFlags() & _OF_DelayedDestroy))
-    {
-      Th->Tick(DeltaTime);
-    }
-    else
-    {
-      RemoveThinker(Th);
-      Th->ConditionalDestroy();
+  // run thinkers
+  VThinker *Th = ThinkerHead;
+  while (Th) {
+    VThinker *c = Th;
+    Th = c->Next;
+    if (!(c->GetFlags()&_OF_DelayedDestroy)) {
+      c->Tick(DeltaTime);
+    } else {
+      RemoveThinker(c);
+      c->ConditionalDestroy();
     }
   }
 
-  // Don't update specials if the level is frozen
-  if (!(LevelInfo->LevelInfoFlags2 & VLevelInfo::LIF2_Frozen))
-  {
-    LevelInfo->eventUpdateSpecials();
-  }
+  // don't update specials if the level is frozen
+  if (!(LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) LevelInfo->eventUpdateSpecials();
 
-  for (int i = 0; i < MAXPLAYERS; i++)
-  {
-    if (LevelInfo->Game->Players[i] &&
-      LevelInfo->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
-    {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (LevelInfo->Game->Players[i] && (LevelInfo->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned) != 0) {
       LevelInfo->Game->Players[i]->eventSetViewPos();
     }
   }
 
   Time += DeltaTime;
-  TicTime++;
+  ++TicTime;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VLevel::SpawnThinker
 //
 //==========================================================================
-
-VThinker *VLevel::SpawnThinker(VClass *AClass, const TVec &AOrigin,
-  const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
+VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
+                                const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
 {
   guard(VLevel::SpawnThinker);
   check(AClass);
-  VClass *Class = AllowReplace ? AClass->GetReplacement() : AClass;
-  VThinker *Ret = (VThinker*)StaticSpawnObject(Class);
+  VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
+  VThinker *Ret = (VThinker *)StaticSpawnObject(Class);
   AddThinker(Ret);
 
-  if (IsForServer() && Class->IsChildOf(VEntity::StaticClass()))
-  {
-    ((VEntity*)Ret)->Origin = AOrigin;
-    ((VEntity*)Ret)->Angles = AAngles;
-    ((VEntity*)Ret)->eventOnMapSpawn(mthing);
-    if (LevelInfo->LevelInfoFlags2 & VLevelInfo::LIF2_BegunPlay)
-    {
-      ((VEntity*)Ret)->eventBeginPlay();
-    }
+  if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {
+    ((VEntity *)Ret)->Origin = AOrigin;
+    ((VEntity *)Ret)->Angles = AAngles;
+    ((VEntity *)Ret)->eventOnMapSpawn(mthing);
+    if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) ((VEntity *)Ret)->eventBeginPlay();
   }
   return Ret;
   unguard;
