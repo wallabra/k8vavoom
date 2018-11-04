@@ -22,29 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class MenuScreenMODOptions : MenuScreen;
-
-
-//==========================================================================
-//
-//  CreateChoices
-//
-//==========================================================================
-override void CreateChoices () {
-  CreateFloatSliderCvar("Amplification", 'snd_xmp_amp', 1, 0, 3);
-  CreateOnOffCvar("All DSP effects", 'snd_xmp_full_dsp');
-
-  CreateEnumCvar("Interpolator", 'snd_xmp_interpolator',
-    "Nearest",
-    "Linear",
-    "Spline");
-}
-
+class MenuScreenMODOptions : MenuScreenTextDef;
 
 defaultproperties {
-  Width = 350;
-  ChoicesStartX = 200;
-  ChoicesStartY = 37;
-  SelectorType = MenuSelector_SmallRight;
-  Title = "XMPLITE CONFIG";
+  defFileName = "uidef/menu_xmp.txt";
+  Width = 370;
 }

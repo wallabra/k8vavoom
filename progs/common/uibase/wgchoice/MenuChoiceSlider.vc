@@ -22,9 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoiceSlider : MenuChoice;
 
+//int TextColour = CR_WHITE;
+int TextColour = CR_RED;
+int TextColourFocus = CR_YELLOW;
 string Text;
 
 float Value;
@@ -142,7 +144,7 @@ override void OnDraw () {
   //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
 
   SetTextAlign(hright, vtop);
-  DrawText(CursorXOffs, 2+1, Text, IsFocus() ? CR_YELLOW : CR_WHITE);
+  DrawText(CursorXOffs, 2+1, Text, IsFocus() ? TextColourFocus : TextColour);
 
   bool oldflt = GetCvarB('gl_pic_filtering');
   scope(exit) SetCvar('gl_pic_filtering', oldflt ? 1 : 0);

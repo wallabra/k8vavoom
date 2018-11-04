@@ -1,0 +1,28 @@
+// module player options menu
+menudef ModPlayer {
+  //selector = MenuSelector_SmallRight;
+  Title = "XMPLITE CONFIG";
+
+  option slider {
+    title = "Amplification";
+    cvar = snd_xmp_amp;
+    step = 1;
+    min = 0;
+    max = 3;
+  }
+
+  option bool {
+    title = "All DSP effects";
+    cvar = snd_xmp_full_dsp;
+  }
+
+  option enum {
+    title = "Interpolator";
+    cvar = snd_xmp_interpolator;
+    list {
+      "Nearest",
+      "Linear",
+      "Spline"
+    }
+  }
+}

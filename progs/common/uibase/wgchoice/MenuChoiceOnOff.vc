@@ -22,11 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoice_OnOff : MenuChoiceEnum;
 
+//int TextNormalColor = CR_WHITE;
+int TextNormalColor = CR_RED;
 int TextFocusedColor = CR_YELLOW;
-int TextNormalColor = CR_WHITE;
 
 
 //==========================================================================

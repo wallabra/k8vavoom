@@ -22,9 +22,13 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoiceNumeric : MenuChoice;
 
+//int TextColour = CR_WHITE;
+int TextColour = CR_RED;
+int TextColourFocus = CR_YELLOW;
+int ValueColour = CR_DARKGREEN; //CR_RED;
+int ValueColourFocus = CR_GREEN; //CR_YELLOW;
 string Text;
 
 float Value;
@@ -32,11 +36,6 @@ float ValueDelta;
 float MinValue;
 float MaxValue;
 
-int TextFocusedColor = CR_YELLOW;
-int TextNormalColor = CR_WHITE;
-
-int ValueFocusedColor = CR_GREEN; //CR_YELLOW;
-int ValueNormalColor = CR_RED;
 
 delegate bool ValueChanging (Object Sender, float NewValue);
 
@@ -109,7 +108,7 @@ void SetInitialValue (float AValue) {
 //
 //==========================================================================
 override void OnDraw () {
-  int Col = (IsFocus() ? TextFocusedColor : TextNormalColor);
+  int Col = (IsFocus() ? TextColourFocus : TextColour);
 
   /*
   if (bLeftAlign) {
@@ -124,7 +123,7 @@ override void OnDraw () {
 
   //int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   int xx = CursorXOffs+10;
-  int Col2 = (IsFocus() ? ValueFocusedColor : ValueNormalColor);
+  int Col2 = (IsFocus() ? ValueColourFocus : ValueColour);
   SetTextAlign(hleft, vtop);
   // integer?
   if (fabs(Value)-int(fabs(Value)) == 0 && fabs(ValueDelta)-int(fabs(ValueDelta)) == 0) {

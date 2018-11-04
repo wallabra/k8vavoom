@@ -22,9 +22,13 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuChoiceEnum : MenuChoice;
 
+//int TextColour = CR_WHITE;
+int TextColour = CR_RED;
+int TextColourFocus = CR_YELLOW;
+int ValueColour = CR_TAN;
+int ValueColourFocus = CR_YELLOW;
 string Text;
 bool bLeftAlign;
 
@@ -120,7 +124,7 @@ void SetInitialValue (int AValue) {
 //==========================================================================
 override void OnDraw () {
   //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
-  int Col = (IsFocus() ? CR_YELLOW : CR_WHITE);
+  int Col = (IsFocus() ? TextColourFocus : TextColour);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
     DrawText(0, 0, Text, Col);
@@ -130,7 +134,7 @@ override void OnDraw () {
   }
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   SetTextAlign(hleft, vtop);
-  if (Value >= 0 && Value < EnumNames.length) DrawText(xx, 0, EnumNames[Value], (IsFocus() ? CR_YELLOW : CR_TAN));
+  if (Value >= 0 && Value < EnumNames.length) DrawText(xx, 0, EnumNames[Value], (IsFocus() ? ValueColourFocus : ValueColour));
 }
 
 
@@ -175,8 +179,7 @@ override void OnRMouseClick (int X, int Y) {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   Width = 360;
   Height = 10;
   cvarSession = '';

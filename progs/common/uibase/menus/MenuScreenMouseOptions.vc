@@ -22,31 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class MenuScreenMouseOptions : MenuScreen;
-
-
-//==========================================================================
-//
-//  CreateChoices
-//
-//==========================================================================
-override void CreateChoices () {
-  CreateFloatSliderCvar("Mouse X sensitivity", 'mouse_x_sensitivity', delta:0.25, min:0, max:10.0);
-  CreateFloatSliderCvar("Mouse Y sensitivity", 'mouse_y_sensitivity', delta:0.25, min:0, max:10.0);
-
-  CreateOnOffCvar("Mouse look", 'mouse_look');
-  CreateOnOffCvar("Invert mouse", 'invert_mouse');
-  CreateOnOffCvar("Look spring", 'lookspring');
-  CreateOnOffCvar("Look strafe", 'lookstrafe');
-
-  CreateOnOffCvar("Allow mouse in UI", 'ui_mouse');
-    SetLastHelp("If this options turned off, the engine will\nrelease mouse capture when UI is active.");
-}
-
+class MenuScreenMouseOptions : MenuScreenTextDef;
 
 defaultproperties {
+  defFileName = "uidef/menu_mouse.txt";
   ChoicesStartX = 160;
   ChoicesStartY = 32;
-  SelectorType = MenuSelector_SmallRight;
-  Title = "MOUSE OPTIONS";
 }

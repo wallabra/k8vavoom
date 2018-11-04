@@ -1,0 +1,190 @@
+// miscelaneous options menu
+menudef MiscOpts {
+  //selector = MenuSelector_SmallRight;
+  Title = "MISC OPTIONS";
+
+  option bool {
+    title = "Quit prompt";
+    cvar = menu_quit_prompt;
+    help = "Show quit promt on exit?";
+  }
+
+  option bool {
+    title = "Autosave messages";
+    cvar = sv_save_messages;
+    help = "Show save/load messages in HUD?";
+  }
+
+  option bool {
+    title = "Overlay automap";
+    cvar = am_overlay;
+    help = "Draw automap as overlay instead of separate screen?";
+  }
+
+  option bool {
+    title = "Show stats on automap";
+    cvar = am_show_stats;
+  }
+
+  option bool {
+    title = "Allow vanilla cheatcodes";
+    cvar = allow_vanilla_cheats;
+    help = "Turn this on to allow IDXXX cheatcodes from Vanilla DooM.";
+  }
+
+  option slider {
+    title = "Bobbing";
+    cvar = movebob;
+    step = 0.1;
+    min = 0;
+    max = 1;
+  }
+
+  option slider {
+    title = "Save compression";
+    cvar = save_compression_level;
+    step = 1;
+    min = 0;
+    max = 9;
+  }
+
+
+  header "Internal Node Builder";
+
+  option bool {
+    title = "Force node rebuilding";
+    cvar = loader_force_nodes_rebuild;
+  }
+
+  option bool {
+    title = "Fast mode (suboptimal)";
+    cvar = nodes_fast_mode;
+  }
+
+  option bool {
+    title = "Show builder warnings";
+    cvar = nodes_show_warnings;
+  }
+
+  option bool {
+    title = "Allow PWAD z-nodes";
+    cvar = nodes_allow_compressed;
+    help =
+      "Load prebuild GL Nodes?"
+      "GL Node loader is buggy, and may not work."
+      "If turned off, the engine will use internal node builder."
+      "If in doubt, set this to 'OFF'";
+  }
+
+  option bool {
+    title = "Build (rough) PVS";
+    cvar = loader_build_pvs;
+    help =
+      "Build simple PVS set."
+      "This rarely speeds up rendering, but can take alot of time to build.";
+  }
+
+  option numeric {
+    title = "PVS threads";
+    cvar = loader_pvs_builder_threads;
+    step = 1;
+    min = 1;
+    max = 16;
+    help = "How many CPU cores can be used to build PVS set?";
+  }
+
+
+  header "Cache options";
+
+  option bool {
+    title = "Cache built data";
+    cvar = loader_cache_data;
+    help =
+      "If level loading takes too much time, the engine can cache level data,"
+      "so next loads will be MUCH faster.";
+  }
+
+  option bool {
+    title = "(autoreset) Kill cache for next map";
+    cvar = loader_cache_ignore_one;
+    textColor = BRICK;
+    help =
+      "Ignore cache for next loaded map."
+      "This option will be automatically reset after map loading.";
+  }
+
+  option numeric {
+    title = "Cache timeout (seconds)";
+    cvar = loader_cache_time_limit;
+    step = 0.5;
+    min = 0.5;
+    max = 16;
+    help = "How long level loading should take to make engine cache data?";
+  }
+
+  option numeric {
+    title = "Cache max age (days)";
+    cvar = loader_cache_max_age_days;
+    step = 1;
+    min = 1;
+    max = 32;
+    help =
+      "Engine will automatically delete old caches."
+      "This options controls cache data age."
+      "Cache data older than this will be deleted.";
+  }
+
+  option slider {
+    title = "Cache compression";
+    cvar = loader_cache_compression_level;
+    step = 1;
+    min = 0;
+    max = 9;
+  }
+
+
+  header "Deepwater options";
+
+  option bool {
+    title = "Classic deepwater";
+    cvar = deepwater_hacks;
+    help = "Fix self-referenced Deep Water sectors, so they will be rendered properly.";
+  }
+
+  option bool {
+    title = "Fix floodfill bugs (unreliable)";
+    cvar = deepwater_hacks_extra_ex;
+    //textColor = LIGHTBLUE;
+    //textColor = DARKRED;
+    textColor = PURPLE;
+    help =
+      "This tries to fix sectors without low texture."
+      "You may know it as 'flat floodfill bug' in Vanilla."
+      "Currently this fixer is very simple, and can fix only simple cases."
+      "It may cause rendering glitches, but such cases are rare."
+      "If in doubt, turn this ON. Yes, 'ON'!";
+  }
+
+
+  header "Particle FX options";
+
+  option bool {
+    title = "Particle effects";
+    cvar = r_particle_effects;
+  }
+
+  option bool {
+    title = "Particle puffs";
+    cvar = r_particle_puffs;
+  }
+
+  option bool {
+    title = "Particle blood";
+    cvar = r_particle_blood;
+  }
+
+  option bool {
+    title = "Particle trails";
+    cvar = r_particle_trails;
+  }
+}

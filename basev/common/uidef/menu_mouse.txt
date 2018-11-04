@@ -1,0 +1,49 @@
+// mouse options menu
+menudef Mouse {
+  //selector = MenuSelector_SmallRight;
+  Title = "MOUSE OPTIONS";
+
+  option slider {
+    title = "Mouse X sensitivity";
+    cvar = mouse_x_sensitivity;
+    step = 0.25;
+    min = 0;
+    max = 10.0;
+  }
+
+  option slider {
+    title = "Mouse Y sensitivity";
+    cvar = mouse_y_sensitivity;
+    step = 0.25;
+    min = 0;
+    max = 10.0;
+  }
+
+  option bool {
+    title = "Mouse look";
+    cvar = mouse_look;
+  }
+
+  option bool {
+    title = "Invert mouse";
+    cvar = invert_mouse;
+  }
+
+  option bool {
+    title = "Look spring";
+    cvar = lookspring;
+  }
+
+  option bool {
+    title = "Look strafe";
+    cvar = lookstrafe;
+  }
+
+  option bool {
+    title = "Allow mouse in UI";
+    cvar = ui_mouse;
+    help =
+      "If this options turned off, the engine will"
+      "release mouse capture when UI is active.";
+  }
+}

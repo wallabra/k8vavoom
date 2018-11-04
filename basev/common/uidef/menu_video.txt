@@ -142,7 +142,7 @@ menudef Video {
   header "More Options";
 
   option submenu {
-    title = "Advanced Video options";
+    title = "Advanced Video Options";
     smclass = MenuScreenAdvancedVideoOptions;
   }
 }

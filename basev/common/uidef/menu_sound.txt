@@ -1,0 +1,71 @@
+// sound options menu
+menudef Sound {
+  //selector = MenuSelector_SmallRight;
+  Title = "SOUND SETTINGS";
+
+  option bool {
+    title = "External Music Remap";
+    cvar = snd_external_music;
+    help = "Allow music remapping with external xml file?";
+  }
+
+  option enum {
+    title = "MIDI Decoder";
+    cvar = snd_mid_player;
+    list {
+      "Timidity",
+    }
+  }
+
+  option submenu {
+    title = "Module Decoder Options";
+    smclass = MenuScreenMODOptions;
+  }
+
+  header ""; // empty line
+
+  option slider {
+    title = "Music Volume";
+    cvar = snd_music_volume;
+    step = 0.1;
+    min = 0;
+    max = 1;
+  }
+
+  option slider {
+    title = "Sound Volume";
+    cvar = snd_sfx_volume;
+    step = 0.1;
+    min = 0;
+    max = 1;
+  }
+
+  option numeric {
+    title = "Sound Channels";
+    cvar = snd_channels;
+    step = 8;
+    min = 8;
+    max = 248;
+  }
+
+  // this doesn't work yet
+  //CreateOnOffCvar("Swap stereo", 'snd_swap_stereo');
+
+  header ""; // empty line
+
+  option slider {
+    title = "Random sound pitch";
+    cvar = snd_random_pitch;
+    step = 0.05;
+    min = 0;
+    max = 1;
+  }
+
+  option slider {
+    title = "Random pitch boost";
+    cvar = snd_random_pitch_boost;
+    step = 0.1;
+    min = 1;
+    max = 4;
+  }
+}
