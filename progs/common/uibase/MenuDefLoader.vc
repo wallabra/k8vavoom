@@ -77,13 +77,6 @@ void parse (ScriptsParser par) {
 }
 
 
-void dump () {
-  write("[", cvar, " ", cond, " ");
-  if (isfloat) write(fval); else write("<", sval, ">");
-  write("]");
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefinition : Object;
 
@@ -164,17 +157,6 @@ void parse (ScriptsParser par) {
 }
 
 
-final void dump () {
-  writeln("==== MENU:", menuName, " ==== (", seltype, ")");
-  if (title) writeln("TITLE: <", title, ">");
-  foreach (auto idx, auto opt; options) {
-    write("  #", idx, ": ");
-    opt.dump();
-    writeln;
-  }
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefOptionBase : Object;
 
@@ -242,6 +224,8 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("numeric")) res = SpawnObject(MenuDefOptionNumeric);
   else if (par.Check("submenu")) res = SpawnObject(MenuDefOptionSubMenu);
   else if (par.Check("submenubig") || par.Check("submenu_big")) res = SpawnObject(MenuDefOptionSubMenuBig);
+  else if (par.Check("mod_controls")) res = SpawnObject(MenuDefOptionControls);
+  else if (par.Check("console")) res = SpawnObject(MenuDefOptionConsole);
   else par.ScriptError("invalid option type '%s'", par.String);
   // condition?
   if (par.Check("[")) {
@@ -303,13 +287,6 @@ bool parseOne (ScriptsParser par) {
 }
 
 
-void dump () {
-  if (title) write(" title:<", title, ">");
-  if (cvar) write(" cvar:<", cvar, ">");
-  if (cond) { write(" "); cond.dump(); }
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefOptionSubHeader : MenuDefOptionBase;
 
@@ -323,12 +300,6 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   opt.Height = (title ? 12 : 10);
   return opt;
-}
-
-
-override void dump () {
-  write("header");
-  ::dump();
 }
 
 
@@ -348,12 +319,6 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColorFocus != CR_UNDEFINED) opt.TextFocusedColor = textColorFocus;
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
-}
-
-
-override void dump () {
-  write("bool");
-  ::dump();
 }
 
 
@@ -388,13 +353,6 @@ override MenuChoice CreateOption (MenuScreen menu) {
   foreach (string s; list) opt.AddItem(s);
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
-}
-
-
-override void dump () {
-  write("enum");
-  ::dump();
-  foreach (string s; list) write(" <", s, ">");
 }
 
 
@@ -459,14 +417,6 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-override void dump () {
-  write("slider");
-  ::dump();
-  write(" step=", step, "; min=", minv, "; max=");
-  if (maxcvar) write("[", maxcvar, "]"); else write(maxv);
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefOptionNumeric : MenuDefOptionSlider;
 
@@ -482,15 +432,6 @@ override MenuChoice CreateOption (MenuScreen menu) {
   //writeln("maxcvar=<", maxcvar, ">: ", opt.MaxValue);
   return opt;
 }
-
-
-override void dump () {
-  write("numeric");
-  ::dump();
-  write(" step=", step, "; min=", minv, "; max=");
-  if (maxcvar) write("[", maxcvar, "]"); else write(maxv);
-}
-
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -539,12 +480,6 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-override void dump () {
-  write("submenu<", (smclass ? GetClassName(smclass) : 'none'), ">");
-  ::dump();
-}
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefOptionSubMenuBig : MenuDefOptionSubMenu;
 
@@ -560,7 +495,51 @@ override MenuChoice CreateOption (MenuScreen menu) {
 }
 
 
-override void dump () {
-  write("submenubig<", (smclass ? GetClassName(smclass) : 'none'), ">");
-  ::dump();
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionControls : MenuDefOptionBase;
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  // add "Special Controls" for MODs if keyconf lump is present,
+  // and it has an "addkeysection" command
+  bool found = false;
+  if (WadLumpPresent('keyconf')) {
+    ScriptsParser kc = ScriptsParser(SpawnObject(ScriptsParser));
+    scope(exit) delete kc;
+    kc.OpenLumpName('keyconf');
+    // lump is present, scan it until we find an 'addkeysection'
+    while (!kc.AtEnd()) {
+      if (kc.Check("addkeysection")) {
+        kc.ExpectString();
+        kc.ExpectString();
+        found = true;
+      }
+      kc.GetString();
+    }
+  }
+  if (!found) return none;
+
+  // surely a MOD that contains KEYCONF bindings,
+  // so we'll show the special controls option
+  //CreateSubMenuText("Special Controls", MenuScreenSpecialControls);
+  auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.Text = title;
+  opt.SetSubMenuClass(MenuScreenSpecialControls);
+  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  return opt;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionConsole : MenuDefOptionBase;
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuTextButton(menu.NewChild(MenuSmallTextButton));
+  opt.Text = title;
+  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
+  opt.Activated = delegate void (Object Sender) { CmdBuf_AddText("ToggleConsole\n"); };
+  return opt;
 }

@@ -100,13 +100,15 @@ void CreateTitle () {
     titleItem.Text = Title;
     titleItem.SetOrigin(TitleX, TitleY);
     //titleItem.FixSize();
+  } else {
+    delete titleItem;
   }
 }
 
 
 void ChangeTitle (string newtitle) {
-  if (!titleItem) return; // no title, cannot insert it now
-  if (!newtitle) newtitle = " "; //FIXME
+  //if (!titleItem) return; // no title, cannot insert it now
+  //if (!newtitle) newtitle = " "; //FIXME
   if (Title == newtitle) return;
   Title = newtitle;
   CreateTitle();

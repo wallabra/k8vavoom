@@ -153,7 +153,7 @@ void ActivateMP(Object Sender)
 
 void ActivateOpt(Object Sender)
 {
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenOptions));
+  ClGame.PushMenuScreen(ClGame.SpawnNamedMenu('Options'));
 }
 
 //==========================================================================

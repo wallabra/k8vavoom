@@ -76,7 +76,6 @@ import 'linespec';
 #include "menus/MenuScreenMasterList.vc"
 #include "menus/MenuScreenSList.vc"
 #include "menus/MenuScreenControls.vc"
-#include "menus/MenuScreenOptions.vc"
 #include "menus/MenuScreenScreenResolution.vc"
 #include "menus/MenuScreenSpecialControls.vc"
 

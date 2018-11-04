@@ -107,6 +107,20 @@ void CreateMenuFromDef (MenuDefinition mdef) {
 }
 
 
+override void CreateTitle () {
+  if (Title) {
+    if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));
+    titleItem.Text = Title;
+    //titleItem.SetOrigin(TitleX, TitleY);
+    titleItem.SetOrigin(0, TitleY);
+    titleItem.centerText = true;
+    //titleItem.FixSize();
+  } else {
+    delete titleItem;
+  }
+}
+
+
 defaultproperties {
   Focusable = true;
   MenuScrollable = true;

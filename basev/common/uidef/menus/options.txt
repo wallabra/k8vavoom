@@ -1,0 +1,50 @@
+// module player options menu
+menudef Options {
+  //selector = MenuSelector_SmallRight;
+  Title = "OPTIONS";
+
+  option submenu {
+    title = "Controls";
+    smclass = MenuScreenControls;
+  }
+
+  option mod_controls {
+    title = "Special Controls";
+  }
+
+  option submenu {
+    title = "Mouse Options";
+    submenu = MouseOptions;
+  }
+
+  option submenu {
+    title = "Screen Resolution";
+    smclass = MenuScreenScreenResolution;
+  }
+
+  option submenu {
+    title = "Video Options";
+    submenu = VideoOptions;
+  }
+
+  option submenu {
+    title = "Sound Options";
+    submenu = SoundOptions;
+  }
+
+  option submenu {
+    title = "Gameplay Options";
+    submenu = GameplayOptions;
+  }
+
+  option submenu {
+    title = "Misc Options";
+    submenu = MiscOptions;
+  }
+
+  header "";
+
+  option console {
+    title = "Go to console";
+  }
+}

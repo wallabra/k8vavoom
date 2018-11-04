@@ -3,6 +3,7 @@ menus {
   "menus/gameplay.txt",
   "menus/misc.txt",
   "menus/mouse.txt",
+  "menus/options.txt",
   "menus/sound.txt",
   "menus/video.txt",
   "menus/xmp.txt",

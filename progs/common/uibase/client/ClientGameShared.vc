@@ -134,7 +134,7 @@ bool SetCommonMenu (string Name) {
   if (!stricmp(Name, "Save")) { PushMenuScreen(SpawnMenu(MenuScreenSaveGame)); return true; }
   if (!stricmp(Name, "Load")) { PushMenuScreen(SpawnMenu(MenuScreenLoadGame)); return true; }
   //if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return true; }
-  if (!stricmp(Name, "Options")) { PushMenuScreen(SpawnMenu(MenuScreenOptions)); return true; }
+  if (!stricmp(Name, "Options")) { PushMenuScreen(SpawnNamedMenu('Options')); return true; }
   if (!stricmp(Name, "Controls")) { PushMenuScreen(SpawnMenu(MenuScreenControls)); return true; }
   if (!stricmp(Name, "Mouse")) { PushMenuScreen(SpawnNamedMenu('MouseOptions')); return true; }
   if (!stricmp(Name, "Resolution")) { PushMenuScreen(SpawnMenu(MenuScreenScreenResolution)); return true; }
