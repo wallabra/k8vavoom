@@ -1065,10 +1065,10 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
     VName CName;
     *Loader << CName;
     VClass *Class = VClass::FindClass(*CName);
-    if (!Class) Sys_Error("No such class %s", *CName);
+    if (!Class) Sys_Error("No such class '%s'", *CName);
 
     // allocate object and copy data
-    Obj = VObject::StaticSpawnObject(Class);
+    Obj = VObject::StaticSpawnObject(Class, true); // skip replacement
 
     // handle level info
     if (Obj->IsA(VLevelInfo::StaticClass())) {

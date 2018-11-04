@@ -245,7 +245,7 @@ public:
 
 // object creation template
 template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
-template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), true); }
+template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), false); } // don't skip replacement
 
 inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
 
