@@ -158,3 +158,18 @@ IMPLEMENT_FUNCTION(VObject, HasDecal) {
   P_GET_NAME(name);
   RET_BOOL(VDecalDef::hasDecal(name));
 }
+
+
+// native static final int W_IterateNS (int Prev, EWadNamespace NS);
+IMPLEMENT_FUNCTION(VObject, W_IterateNS) {
+  P_GET_INT(wadns);
+  P_GET_INT(prev);
+  RET_INT(W_IterateNS(prev, EWadNamespace(wadns)));
+}
+
+// native static final int W_IterateFile (int Prev, string Name);
+IMPLEMENT_FUNCTION(VObject, W_IterateFile) {
+  P_GET_STR(name);
+  P_GET_INT(prev);
+  RET_INT(W_IterateFile(prev, name));
+}

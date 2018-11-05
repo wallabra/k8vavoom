@@ -103,3 +103,6 @@
 
   DECLARE_FUNCTION(HasDecal)
 #endif // SERVER
+
+  DECLARE_FUNCTION(W_IterateNS)
+  DECLARE_FUNCTION(W_IterateFile)
