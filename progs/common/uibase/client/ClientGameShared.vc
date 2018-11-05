@@ -33,6 +33,19 @@ enum {
   MB_EndGame,
 }
 
+// for gzdoom
+struct OptionValueDef {
+  string caption;
+  float value;
+}
+
+struct OptionValue {
+  string Name;
+  array!OptionValueDef list;
+}
+
+array!OptionValue optvals;
+
 
 array!name savedChoices;
 array!int savedChoicesIdx;
@@ -89,6 +102,7 @@ array!MenuDefinition menudefs;
 //==========================================================================
 void PostSpawn () {
   LoadMenuDefs();
+  LoadGZMenuDefs();
 }
 
 
@@ -119,6 +133,110 @@ final void LoadMenuDefs () {
         }
       }
       if (!found) menudefs[$] = mdef;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  ParseGZOptionMenu
+//
+//==========================================================================
+final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
+  par.ExpectString();
+  string mname = par.String;
+  MenuDefinition mdef;
+  if (extend) {
+    if (stricmp(mname, "OptionsMenu") == 0) mname = "Options";
+    foreach (auto md2; menudefs) {
+      if (stricmp(string(md2.menuName), mname) == 0) {
+        // i found her!
+        mdef = md2;
+        break;
+      }
+    }
+    if (!mdef) par.ScriptError("cannot extend unknown menu '%s'", mname);
+  } else {
+    mdef = SpawnObject(MenuDefinition);
+    mdef.menuName = name(mname);
+  }
+  //print("MENUDEF: %soptions menu '%s'...", (extend ? "extending " : ""), mdef.menuName);
+  par.Expect("{");
+  while (!par.Check("}")) {
+    if (par.Check("Title")) {
+      par.ExpectString();
+      if (!extend) mdef.title = par.String;
+      continue;
+    }
+    auto opt = MenuDefOptionBase.parseGZ(par, optvals);
+    if (opt) mdef.options[$] = opt;
+  }
+  if (!extend) menudefs[$] = mdef;
+}
+
+
+//==========================================================================
+//
+//  LoadGZMenuDef
+//
+//  parse GZDoom menudef
+//
+//==========================================================================
+final void LoadGZMenuDef (ScriptsParser par) {
+  for (;;) {
+    if (par.Check("AddOptionMenu")) {
+      ParseGZOptionMenu(par, extend:true);
+    } else if (par.Check("OptionMenu")) {
+      ParseGZOptionMenu(par, extend:false);
+    } else if (par.Check("OptionValue")) {
+      par.ExpectString();
+      int f = 0;
+      while (f < optvals.length) {
+        if (stricmp(optvals[f].Name, par.String) == 0) {
+          optvals[f].list.length = 0;
+          optvals.remove(f);
+        } else {
+          ++f;
+        }
+      }
+      optvals.length += 1;
+      optvals[$-1].Name = par.String;
+      par.Expect("{");
+      while (!par.Check("}")) {
+        par.ExpectFloat(withSign:true);
+        float val = par.Float;
+        par.Expect(",");
+        par.ExpectString();
+        string cap = par.String;
+        optvals[$-1].list.length += 1;
+        optvals[$-1].list[$-1].caption = cap;
+        optvals[$-1].list[$-1].value = val;
+      }
+    } else {
+      if (!par.GetString()) break;
+      par.ScriptError("unknown gz menudef command '%s'", par.String);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  LoadGZMenuDefs
+//
+//  parse GZDoom menudef
+//
+//==========================================================================
+final void LoadGZMenuDefs () {
+  foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
+    if (W_LumpName(lump) == 'menudef') {
+      auto par = SpawnObject(ScriptsParser);
+      scope(exit) delete par;
+      par.OpenLumpIndex(lump);
+      par.SetCMode(true);
+      par.SetEscape(true);
+      LoadGZMenuDef(par);
     }
   }
 }
@@ -186,7 +304,32 @@ final MenuScreen SpawnNamedMenu (name menuName) {
       return m;
     }
   }
-  FatalError("Menu '%n' not found", menuName);
+  FatalError("Menu '%n' not found (name)", menuName);
+  return none;
+}
+
+
+//==========================================================================
+//
+//  SpawnNamedMenuStr
+//
+//==========================================================================
+final MenuScreen SpawnNamedMenuStr (string menuName) {
+  foreach (MenuDefinition mdef; menudefs) {
+    if (stricmp(string(mdef.menuName), menuName) == 0) {
+      auto m = MenuScreenTextDef(GRoot.NewChild(MenuScreenTextDef));
+      m.ClGame = self;
+      m.CreateMenuFromDef(mdef);
+      foreach (auto i, auto scc; savedChoices) {
+        if (scc == m.menuName) {
+          m.SetSavedChoice(savedChoicesIdx[i]);
+          break;
+        }
+      }
+      return m;
+    }
+  }
+  FatalError("Menu '%s' not found (string)", menuName);
   return none;
 }
 

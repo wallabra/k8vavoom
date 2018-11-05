@@ -51,7 +51,8 @@ override void CreateChoices () {
   Mode.Text = "Resolution";
   foreach (ref auto mi; modes) Mode.AddItem(va("%dx%d", mi.width, mi.height));
   Mode.SetInitialValue(GetModeValue());
-  Mode.ValueChanging = delegate bool (Object Sender, int NewValue) {
+  Mode.ValueChanging = delegate bool (Object Sender, float NewValueF) {
+    int NewValue = int(NewValueF);
     EdWidth.Value = va("%d", modes[NewValue].width);
     EdHeight.Value = va("%d", modes[NewValue].height);
     return true;
@@ -131,10 +132,10 @@ final int GetModeValue () {
 //
 //==========================================================================
 void ActivateSetMode (Object Sender) {
-  SetCvar('screen_fsmode', Windowed.Value);
-  SetCvar('r_vsync', VSync.Value);
-  CmdBuf_AddText("SetResolution %d %d\n", atoi(EdWidth.Value) ? atoi(EdWidth.Value) : modes[Mode.Value].width,
-    atoi(EdHeight.Value) ? atoi(EdHeight.Value) : modes[Mode.Value].height);
+  SetCvar('screen_fsmode', int(Windowed.Value));
+  SetCvar('r_vsync', int(VSync.Value));
+  CmdBuf_AddText("SetResolution %d %d\n", atoi(EdWidth.Value) ? atoi(EdWidth.Value) : modes[int(Mode.Value)].width,
+    atoi(EdHeight.Value) ? atoi(EdHeight.Value) : modes[int(Mode.Value)].height);
 }
 
 

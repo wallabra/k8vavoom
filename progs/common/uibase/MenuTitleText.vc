@@ -62,7 +62,7 @@ override void OnDraw () {
   if (centerText) {
     //SetTextAlign(hcenter, vbottom);
     SetTextAlign(0, 0);
-    DrawText(Width/2, 0, Text);
+    DrawText(Width/2-16, 0, Text);
   } else {
     SetTextAlign(0, 0);
     DrawText(0, 0, Text);

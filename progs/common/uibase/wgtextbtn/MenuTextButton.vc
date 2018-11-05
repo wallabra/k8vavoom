@@ -33,7 +33,7 @@ int TextColourFocus;
 int TextHAlign;
 int TextVAlign;
 class!MenuScreen submenuClass;
-name submenuName;
+string submenuName;
 
 
 delegate void Activated (Object Sender);
@@ -44,7 +44,7 @@ void SetSubMenuClass (class!MenuScreen asubmenuClass) {
 }
 
 
-void SetSubMenuName (name menuName) {
+void SetSubMenuName (string menuName) {
   submenuName = menuName;
 }
 
@@ -65,7 +65,7 @@ void ActivateEvent () {
   if (Parent && GetClGame()) {
     MenuScreen newMenu = none;
          if (submenuClass) newMenu = GetClGame().SpawnMenu(submenuClass);
-    else if (submenuName) newMenu = GetClGame().SpawnNamedMenu(submenuName);
+    else if (submenuName) newMenu = GetClGame().SpawnNamedMenuStr(submenuName);
     if (newMenu) GetClGame().PushMenuScreen(newMenu);
   }
 }

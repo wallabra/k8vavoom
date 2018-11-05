@@ -313,7 +313,7 @@ MenuTextButton CreateSubMenuTextNamed (string text, name menuName) {
   btn.SetOrigin(ChoicesStartX, currentY);
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
-  btn.SetSubMenuName(menuName);
+  btn.SetSubMenuName(string(menuName));
   currentY += btn.Height;
   return btn;
 }
@@ -324,7 +324,7 @@ MenuTextButton CreateSubMenuBigTextNamed (string text, name menuName) {
   btn.SetOrigin(ChoicesStartX, currentY);
   if (Width > WidthThreshold) btn.Width = Width;
   btn.Text = text;
-  btn.SetSubMenuName(menuName);
+  btn.SetSubMenuName(string(menuName));
   currentY += btn.Height;
   return btn;
 }

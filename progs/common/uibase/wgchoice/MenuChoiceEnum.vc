@@ -24,6 +24,11 @@
 //**************************************************************************
 class MenuChoiceEnum : MenuChoice;
 
+struct EnumValue {
+  string caption;
+  float value;
+}
+
 //int TextColour = CR_WHITE;
 int TextColour = CR_RED;
 int TextColourFocus = CR_YELLOW;
@@ -32,10 +37,24 @@ int ValueColourFocus = CR_YELLOW;
 string Text;
 bool bLeftAlign;
 
-int Value;
-array!string EnumNames;
+float Value;
+array!EnumValue vallist;
 
-delegate bool ValueChanging (Object Sender, int NewValue);
+delegate bool ValueChanging (Object Sender, float NewValue);
+
+
+//==========================================================================
+//
+//  findValue
+//
+//==========================================================================
+final int findValue (float val) {
+  foreach (auto idx, ref EnumValue v; vallist) {
+    if (v.value == val) return idx;
+  }
+  return -1;
+}
+
 
 
 //==========================================================================
@@ -43,9 +62,9 @@ delegate bool ValueChanging (Object Sender, int NewValue);
 //  getSavedValue
 //
 //==========================================================================
-int getSavedValue (optional int defval) {
+float getSavedValue (optional float defval) {
   if (!specified_defval) defval = Value;
-  if (cvarSession) return getSavedInt(cvarSession, defval);
+  if (cvarSession) return getSavedFloat(cvarSession, defval);
   return defval;
 }
 
@@ -55,10 +74,10 @@ int getSavedValue (optional int defval) {
 //  SetSessionCvar
 //
 //==========================================================================
-void SetSessionCvar (name Name, optional int defval) {
-  if (!specified_defval) defval = 0;
+void SetSessionCvar (name Name, optional float defval) {
+  //if (!specified_defval) defval = 0;
   cvarSession = Name;
-  if (Name) defval = getSavedInt(Name, defval);
+  if (Name) defval = getSavedFloat(Name, defval);
   if (SetNewValue(defval)) Value = defval;
 }
 
@@ -82,12 +101,13 @@ override void SetOrigin (int x, int y) {
 //  SetNewValue
 //
 //==========================================================================
-bool SetNewValue (int newValue) {
-  if (newValue < 0 || newValue >= EnumNames.length) return false;
+bool SetNewValue (float newValue) {
+  //int idx = findValue(newValue);
+  //if (idx < 0) return false;
   if (ValueChanging) {
     if (!ValueChanging(self, newValue)) return false;
   }
-  if (cvarSession) setSavedInt(cvarSession, newValue);
+  if (cvarSession) setSavedFloat(cvarSession, newValue);
   Value = newValue;
   return true;
 }
@@ -98,9 +118,11 @@ bool SetNewValue (int newValue) {
 //  AddItem
 //
 //==========================================================================
-void AddItem (string AValue) {
-  EnumNames.Num = EnumNames.Num+1;
-  EnumNames[EnumNames.Num-1] = AValue;
+void AddItem (string AValue, optional float val) {
+  if (!specified_val && vallist.length) val = int(vallist[$-1].value)+1;
+  vallist.length += 1;
+  vallist[$-1].caption = AValue;
+  vallist[$-1].value = val;
 }
 
 
@@ -109,11 +131,10 @@ void AddItem (string AValue) {
 //  SetInitialValue
 //
 //==========================================================================
-void SetInitialValue (int AValue) {
+void SetInitialValue (float AValue) {
   Value = AValue;
-  if (Value >= EnumNames.Num) Value = EnumNames.Num-1;
-  if (Value < 0) Value = 0;
-  if (cvarSession) setSavedInt(cvarSession, Value);
+  int idx = findValue(AValue);
+  if (cvarSession) setSavedFloat(cvarSession, AValue);
 }
 
 
@@ -124,6 +145,13 @@ void SetInitialValue (int AValue) {
 //==========================================================================
 override void OnDraw () {
   //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
+  string caption;
+  int idx = findValue(Value);
+  if (idx < 0) {
+    caption = (float(int(Value)) == Value ? va("i:%d", int(Value)) : va("f:%f", Value));
+  } else {
+    caption = vallist[idx].caption;
+  }
   int Col = (IsFocus() ? TextColourFocus : TextColour);
   if (bLeftAlign) {
     SetTextAlign(hleft, vtop);
@@ -134,7 +162,7 @@ override void OnDraw () {
   }
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
   SetTextAlign(hleft, vtop);
-  if (Value >= 0 && Value < EnumNames.length) DrawText(xx, 0, EnumNames[Value], (IsFocus() ? ValueColourFocus : ValueColour));
+  DrawText(xx, 0, caption, (IsFocus() ? ValueColourFocus : ValueColour));
 }
 
 
@@ -144,21 +172,24 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnKeyDown (int key) {
-  int newValue;
+  if (vallist.length == 0) return false;
+  int idx;
   switch (key) {
     case K_LEFTARROW:
     case K_MOUSE2:
     case K_MWHEELUP:
-      if (Value > 0) newValue = Value-1; else newValue = EnumNames.Num-1;
-      if (SetNewValue(newValue)) LocalSound('menu/change');
+      idx = findValue(Value);
+      if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
+      if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
       return true;
     case K_RIGHTARROW:
     case K_ENTER:
     case K_PADENTER:
     case K_MOUSE1:
     case K_MWHEELDOWN:
-      if (Value < EnumNames.Num-1) newValue = Value+1; else newValue = 0;
-      if (SetNewValue(newValue)) LocalSound('menu/change');
+      idx = findValue(Value);
+      if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+      if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
       return true;
   }
   return false;
@@ -167,15 +198,19 @@ override bool OnKeyDown (int key) {
 
 override void OnMouseClick (int X, int Y) {
   SetFocus();
-  int newValue = (Value < EnumNames.Num-1 ? Value+1 : 0);
-  if (SetNewValue(newValue)) LocalSound('menu/change');
+  if (vallist.length == 0) return;
+  int idx = findValue(Value);
+  if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
+  if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
 }
 
 
 override void OnRMouseClick (int X, int Y) {
   SetFocus();
-  int newValue = (Value > 0 ? Value-1 : EnumNames.Num-1);
-  if (SetNewValue(newValue)) LocalSound('menu/change');
+  if (vallist.length == 0) return;
+  int idx = findValue(Value);
+  if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+  if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
 }
 
 

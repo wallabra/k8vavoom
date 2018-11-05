@@ -138,7 +138,8 @@ void InitMapList()
 #else
   for (i = 0; i < 32; i++)
   {
-    Level.EnumNames[i] = P_GetMapName(i);
+    //Level.EnumNames[i] = P_GetMapName(i);
+    Level.AddItem(P_GetMapName(i));
   }
 #endif
   Level.Value = 0;
@@ -157,8 +158,8 @@ void ActivateStartNewGame(Object Sender)
   CmdBuf_AddText("NoMonsters %d\n", !Monsters.Value);
   CmdBuf_AddText("DeathMatch %d\n", DeathMatch.Value);
   CmdBuf_AddText("TimeLimit %d\n", TimeLimit.Value * 5);
-  CmdBuf_AddText("Skill %d\n", Skill.Value);
-  CmdBuf_AddText("Map %n\n", P_GetMapLumpName(Level.Value));
+  CmdBuf_AddText("Skill %d\n", int(Skill.Value));
+  CmdBuf_AddText("Map %n\n", P_GetMapLumpName(int(Level.Value)));
 }
 
 defaultproperties

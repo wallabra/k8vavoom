@@ -83,6 +83,7 @@ class MenuDefinition : Object;
 name menuName;
 name seltype = 'MenuSelector_SmallRight';
 string title;
+//bool extension; // true: extend `menuName`
 
 array!MenuDefOptionBase options;
 
@@ -241,6 +242,78 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
 }
 
 
+// parse GZDoom-style menudef
+final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGameShared::OptionValue) ovals) {
+  par.SetCMode(true);
+  par.SetEscape(true);
+
+  if (par.Check("StaticText")) {
+    par.ExpectString();
+    auto opt = SpawnObject(MenuDefOptionSubHeader);
+    opt.title = par.String;
+    if (par.Check(",")) {
+      // dunno, probably color or something
+      par.GetString();
+    }
+    return opt;
+  }
+
+  if (par.Check("Submenu")) {
+    // title
+    par.ExpectString();
+    string title = par.String;
+    par.Expect(",");
+    // submenu name
+    par.ExpectString();
+    string subname = par.String;
+    if (stricmp(subname, "OptionsMenu") == 0) subname = "Options";
+    auto opt = SpawnObject(MenuDefOptionSubMenu);
+    opt.title = title;
+    opt.subname = subname;
+    return opt;
+  }
+
+  //option "'Marine Helmet' Armor Bonus", "botoggle", "onoff"
+  if (par.Check("option")) {
+    // title
+    par.ExpectString();
+    string title = par.String;
+    par.Expect(",");
+    // cvar
+    par.ExpectString();
+    name cvar = name(par.String);
+    par.Expect(",");
+    // type
+    if (par.Check("onoff")) {
+      auto opt = SpawnObject(MenuDefOptionBool);
+      opt.title = title;
+      opt.cvar = cvar;
+      return opt;
+    }
+    // this should be "OptionValue"
+    par.ExpectString();
+    foreach (ref auto oval; ovals) {
+      if (stricmp(oval.Name, par.String) == 0) {
+        // i found her!
+        auto opt = SpawnObject(MenuDefOptionEnum);
+        opt.title = title;
+        opt.cvar = cvar;
+        foreach (ref auto v; oval.list) {
+          opt.list.length += 1;
+          opt.list[$-1].caption = v.caption;
+          opt.list[$-1].value = v.value;
+        }
+        return opt;
+      }
+    }
+    par.ScriptError("unknown GZDoom MenuDef OptionValue '%s'", par.String);
+  }
+
+  par.ScriptError("invalid gz command '%s'", par.String);
+  return none;
+}
+
+
 bool parseOne (ScriptsParser par) {
   if (par.Check("title")) {
     par.Expect("=");
@@ -325,7 +398,7 @@ override MenuChoice CreateOption (MenuScreen menu) {
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefOptionEnum : MenuDefOptionBase;
 
-array!string list;
+array!(ClientGameShared::OptionValueDef) list;
 
 
 override bool parseOne (ScriptsParser par) {
@@ -333,9 +406,12 @@ override bool parseOne (ScriptsParser par) {
 
   if (par.Check("list")) {
     par.Expect("{");
+    int val = 0;
     while (!par.Check("}")) {
       par.ExpectString();
-      list[$] = par.String;
+      list.length += 1;
+      list[$-1].caption = par.String;
+      list[$-1].value = float(val++);
       while (par.Check(",")) {}
     }
     return true;
@@ -350,7 +426,7 @@ override MenuChoice CreateOption (MenuScreen menu) {
   opt.Text = title;
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
-  foreach (string s; list) opt.AddItem(s);
+  foreach (ref auto s; list) opt.AddItem(s.caption, s.value);
   if (cvar) opt.SetSessionCvar(cvar);
   return opt;
 }
@@ -438,7 +514,7 @@ override MenuChoice CreateOption (MenuScreen menu) {
 class MenuDefOptionSubMenu : MenuDefOptionBase;
 
 class!MenuScreen smclass;
-name subname;
+string subname;
 
 
 override bool parseOne (ScriptsParser par) {
@@ -451,14 +527,14 @@ override bool parseOne (ScriptsParser par) {
     smclass = class!MenuScreen(FindClass(name(par.String)));
     if (!smclass) par.ScriptError("invalid submenu class '%s'", par.String);
     par.Expect(";");
-    subname = '';
+    subname = "";
     return true;
   }
 
   if (par.Check("submenu")) {
     par.Expect("=");
     par.ExpectString();
-    subname = name(par.String);
+    subname = par.String;
     if (!subname) par.ScriptError("invalid submenu class '%s'", par.String);
     par.Expect(";");
     smclass = none;

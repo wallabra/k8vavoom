@@ -100,7 +100,7 @@ override void CreateChoices()
   Anim.NumFrames = 4;
   Anim.Colour = Col;
 
-  PClass = EPClass.Value;
+  PClass = int(EPClass.Value);
   SetPClass();
 }
 
@@ -140,10 +140,10 @@ bool ChangeColour(Object Sender, float newValue)
 //
 //==========================================================================
 
-bool ChangeClass(Object Sender, int newValue)
+bool ChangeClass(Object Sender, float newValue)
 {
-  SetCvar('class', newValue);
-  PClass = newValue;
+  SetCvar('class', int(newValue));
+  PClass = int(newValue);
   SetPClass();
   return true;
 }

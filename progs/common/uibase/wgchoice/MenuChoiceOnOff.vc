@@ -46,14 +46,18 @@ override void OnDraw () {
   }
 
   int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10);
-  int Col2 = IsFocus() ? CR_YELLOW : Value ? CR_GREEN : CR_RED;
+  int Col2 = (IsFocus() ? CR_YELLOW : Value ? CR_GREEN : CR_RED);
   SetTextAlign(hleft, vtop);
-  DrawText(xx, 0, EnumNames[Value], Col2);
+  DrawText(xx, 0, (Value ? "On" : "Off"), Col2);
 }
 
 
-defaultproperties
-{
-  EnumNames[0] = "Off";
-  EnumNames[1] = "On";
+defaultproperties {
+  //EnumNames[0] = "Off";
+  //EnumNames[1] = "On";
+  vallist.length = 2;
+  vallist[0].caption = "Off";
+  vallist[0].value = 0;
+  vallist[1].caption = "On";
+  vallist[1].value = 1;
 }

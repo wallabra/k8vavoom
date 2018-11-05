@@ -94,7 +94,7 @@ bool netgame
 void ParseCVarInfo () {
   foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
     if (W_LumpName(lump) == 'cvarinfo') {
-      print("CVARINFO: found in '%s'", W_FullLumpName(lump));
+      //print("CVARINFO: found in '%s'", W_FullLumpName(lump));
       auto par = SpawnObject(ScriptsParser);
       scope(exit) delete par;
       par.OpenLumpIndex(lump);

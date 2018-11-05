@@ -142,7 +142,8 @@ void InitMapList(int epi)
 
   for (i = 0; i < 9; i++)
   {
-    Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
+    //Level.EnumNames[i] = P_GetMapName(epi * 9 + i);
+    Level.AddItem(P_GetMapName(epi*9+i));
   }
   Level.Value = 0;
 }
@@ -153,9 +154,9 @@ void InitMapList(int epi)
 //
 //==========================================================================
 
-bool ChangeEpisode(Object Sender, int newValue)
+bool ChangeEpisode(Object Sender, float newValue)
 {
-  InitMapList(newValue);
+  InitMapList(int(newValue));
   return true;
 }
 
