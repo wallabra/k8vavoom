@@ -374,7 +374,7 @@ class Inventory extends Actor
   action native A_Raise(optional float raisespeed=6);
   action native A_ReFire();
   action native A_ClearReFire();
-  action native A_GunFlash();
+  action native A_GunFlash(optional name newstate, optional int flags);
   action native A_CheckReload();
   action native A_CheckForReload(eval int Count, state Jump, optional eval bool DoIncrement);
   action native A_ResetReloadCounter();

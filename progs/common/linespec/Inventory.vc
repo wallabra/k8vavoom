@@ -981,18 +981,31 @@ final void A_ClearReFire () {
 //  A_GunFlash
 //
 //===========================================================================
+final void A_GunFlash () {
+  decorate_A_GunFlash();
+}
 
-final void A_GunFlash()
+
+//===========================================================================
+//
+//  A_GunFlash
+//
+//  GFF_NOEXTCHANGE is 1
+//
+//===========================================================================
+final void decorate_A_GunFlash (optional name newstate, optional int flags)
 {
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
+
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return; // just in case
+
+  if (!specified_newstate) newstate = 'Flash';
 
   SetState(MeleeState);
-  Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+  if (newstate && !(flags&1)) Player.SetViewState(ps_flash, Wpn.FindState(newstate));
 }
+
 
 //===========================================================================
 //

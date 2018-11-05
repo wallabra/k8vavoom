@@ -202,3 +202,13 @@ enum EFadeFlags {
   FTF_REMOVE = 1 << 0,
   FTF_CLAMP =  1 << 1,
 };
+
+
+const int GFF_NOEXTCHANGE = 1;
+
+
+// sound attenuation values
+const float ATTN_NONE = 0;
+const float ATTN_NORM = 1;
+const float ATTN_IDLE = 1.001;
+const float ATTN_STATIC = 3;
