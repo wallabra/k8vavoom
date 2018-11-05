@@ -119,12 +119,28 @@ enum {
   FLAG_NoClip,
 };
 
+
+// this is used to introduce temporary labels for `A_JumpIf(n, +x)`
+struct VTmpLabelOfsFixup {
+  VStr ltname;
+  int skipLeft; // how much frames left to skip
+};
+
+static VStr genTempLabelName () {
+  static int tmpLabelCount = 0; // to generate names
+  char buf[64];
+  snprintf(buf, sizeof(buf), "_k8tmp_%d", tmpLabelCount++);
+  return VStr(buf);
+}
+
+
 struct VClassFixup {
   int Offset;
   VStr Name;
   VClass *ReqParent;
   VClass *Class;
 };
+
 
 struct VWeaponSlotFixups {
   bool defined[NUM_WEAPON_SLOTS+1]; // [1..10]
@@ -1744,7 +1760,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
 //  ParseActionCall
 //
 //==========================================================================
-static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString, TArray<VTmpLabelOfsFixup> &tmpLabels) {
   // get function name and parse arguments
   auto actionLoc = sc->GetLoc();
   VExpression *Args[VMethod::MAX_PARAMS+1];
@@ -1768,6 +1784,23 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
     if (!Func) {
       GCon->Logf("ERROR: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
     } else if (Func->NumParams || NumArgs || FuncName.ICmp("a_explode") == 0) {
+      // HACK: `A_JumpIf(cond, +n)` (for SmoothDoom)
+      if (FuncName.ICmp("A_JumpIf") == 0 && NumArgs == 2 && Args[1] && Args[1]->IsUnaryMath() &&
+          ((VUnary *)Args[1])->Oper == VUnary::Plus && ((VUnary *)Args[1])->op && ((VUnary *)Args[1])->op->IsIntConst())
+      {
+        int ofs = ((VUnary *)Args[1])->op->GetIntConst();
+        //Args[1]->IsIntConst()
+        //GCon->Logf("*** JUMPIF: %d", ofs);
+        //GCon->Logf("*** JUMPIF: %d [%s] [%s]", NumArgs, *Args[0]->toString(), *Args[1]->toString());
+        VTmpLabelOfsFixup &tlbl = tmpLabels.alloc();
+        tlbl.ltname = genTempLabelName();
+        tlbl.skipLeft = ofs;
+        // replace argument
+        auto aloc = Args[1]->Loc;
+        delete Args[1];
+        int sval = DecPkg->FindString(*tlbl.ltname);
+        Args[1] = new VStringLiteral(tlbl.ltname, sval, aloc);
+      }
       VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
       Expr->CallerState = State;
       Expr->MultiFrameState = (FramesString.Length() > 1);
@@ -1876,8 +1909,13 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, c
 static void ParseConst (VScriptParser *sc) {
   guard(ParseConst);
 
+  bool isInt = false;
+
   sc->SetCMode(true);
-  sc->Expect("int");
+       if (sc->Check("int")) isInt = true;
+  else if (sc->Check("float")) isInt = false;
+  else sc->Error(va("%s: DECORATE: expected 'int' or 'float'", *sc->GetLoc().toStringNoCol()));
+  //sc->Expect("int");
   sc->ExpectString();
   TLocation Loc = sc->GetLoc();
   VStr Name = sc->String.ToLower();
@@ -1889,14 +1927,26 @@ static void ParseConst (VScriptParser *sc) {
   } else {
     VEmitContext ec(DecPkg);
     Expr = Expr->Resolve(ec);
-    if (Expr && !Expr->IsIntConst()) sc->Error(va("%s: DECORATE: expected integer literal", *sc->GetLoc().toStringNoCol()));
-    if (Expr) {
-      int Val = Expr->GetIntConst();
-      delete Expr;
-      Expr = nullptr;
-      VConstant *C = new VConstant(*Name, DecPkg, Loc);
-      C->Type = TYPE_Int;
-      C->Value = Val;
+    if (isInt) {
+      if (Expr && !Expr->IsIntConst()) sc->Error(va("%s: DECORATE: expected integer literal", *sc->GetLoc().toStringNoCol()));
+      if (Expr) {
+        int Val = Expr->GetIntConst();
+        delete Expr;
+        Expr = nullptr;
+        VConstant *C = new VConstant(*Name, DecPkg, Loc);
+        C->Type = TYPE_Int;
+        C->Value = Val;
+      }
+    } else {
+      if (Expr && !Expr->IsFloatConst() && !Expr->IsIntConst()) sc->Error(va("%s: DECORATE: expected float literal", *sc->GetLoc().toStringNoCol()));
+      if (Expr) {
+        float Val = (Expr->IsFloatConst() ? Expr->GetFloatConst() : (float)Expr->GetIntConst());
+        delete Expr;
+        Expr = nullptr;
+        VConstant *C = new VConstant(*Name, DecPkg, Loc);
+        C->Type = TYPE_Float;
+        C->Value = Val;
+      }
     }
   }
   sc->Expect(";");
@@ -2182,6 +2232,25 @@ static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
 
 //==========================================================================
 //
+//  ProcessTempLabels
+//
+//==========================================================================
+static void ProcessTempLabels (VClass *Class, const TLocation &loc, TArray<VTmpLabelOfsFixup> &tmpLabels) {
+  int f = 0;
+  while (f < tmpLabels.length()) {
+    VTmpLabelOfsFixup &t = tmpLabels[f];
+    if (t.skipLeft-- > 0) { ++f; continue; }
+    //fprintf(stderr, "*** created label '%s' at %s\n", *t.ltname, *loc.toStringNoCol());
+    VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
+    Lbl.Loc = loc;
+    Lbl.Name = t.ltname;
+    tmpLabels.removeAt(f);
+  }
+}
+
+
+//==========================================================================
+//
 //  ParseStates
 //
 //==========================================================================
@@ -2190,6 +2259,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   VState *PrevState = nullptr;
   VState *LastState = nullptr;
   VState *LoopStart = nullptr;
+  TArray<VTmpLabelOfsFixup> tmpLabels;
   int NewLabelsStart = Class->StateLabelDefs.Num();
 
   sc->Expect("{");
@@ -2285,6 +2355,9 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     }
 
     wasActionAfterLabel = true;
+
+    // add temporary labels
+    ProcessTempLabels(Class, TmpLoc, tmpLabels);
 
     VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
     States.Append(State);
@@ -2396,7 +2469,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         sc->Check("{");
         ParseActionBlock(sc, Class, State, FramesString);
       } else {
-        ParseActionCall(sc, Class, State, FramesString);
+        ParseActionCall(sc, Class, State, FramesString, tmpLabels);
         //State->Function = Func;
       }
 
@@ -2441,6 +2514,8 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         frm = FSChar-'A';
       }
 
+      // add temporary labels
+      ProcessTempLabels(Class, TmpLoc, tmpLabels);
       // create a new state
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
