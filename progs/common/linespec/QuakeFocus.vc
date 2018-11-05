@@ -35,11 +35,11 @@ float TremorRadius; // Radius for tremor
 
 //==========================================================================
 //
-//  A_Quake
+//  A_FocusQuake
 //
 //==========================================================================
 
-final void A_Quake()
+final void A_FocusQuake()
 {
   float   an;
   PlayerEx  pl;
@@ -106,9 +106,9 @@ final void A_ContMobjSound()
 states
 {
 Spawn:
-  TNT1 A 2 A_Quake
+  TNT1 A 2 A_FocusQuake
   TNT1 A 1 A_ContMobjSound
-  TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 2 A_Quake
+  TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 2 A_FocusQuake
   Loop
 }
 

@@ -274,3 +274,30 @@ final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, 
     if (SeeState) SetState(SeeState);
   }
 }
+
+
+//===========================================================================
+//
+//  A_Quake
+//
+//===========================================================================
+final bool A_Quake (float intensity, float ticduation, float damrad, float tremrad, optional name soundname) {
+  if (ticduation < 1) return false;
+  if (damrad < 1 && tremrad < 1) return false;
+  damrad = fmax(0, damrad);
+  tremrad = fmax(0, tremrad);
+  if (intensity < 1) return false;
+  if (intensity > 9) intensity = 9;
+  QuakeFocus focus = Spawn(QuakeFocus, Origin);
+  if (focus) {
+    focus.Richters = int(intensity);
+    focus.QuakeDuration = int(ticduation)>>1; // decremented every 2 tics
+    focus.DamageRadius = damrad;
+    focus.TremorRadius = tremrad;
+    if (soundname) PlaySound(soundname, CHAN_AUTO);
+    return true;
+  }
+  return false;
+}
+
+

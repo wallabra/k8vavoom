@@ -1803,6 +1803,12 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
         int sval = DecPkg->FindString(*tlbl.ltname);
         Args[1] = new VStringLiteral(tlbl.ltname, sval, aloc);
       }
+      // idiotic SmoothDoom got it wrong
+      if (FuncName.ICmp("A_Quake") == 0 && NumArgs == 5 && Args[4] && Args[4]->IsIntConst()) {
+        GCon->Logf("ERROR:%s: A_Quake 5th argument must be `string`; FIX YOUR BROKEN CODE!", *Args[4]->Loc.toStringNoCol());
+        delete Args[4];
+        --NumArgs;
+      }
       VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
       Expr->CallerState = State;
       Expr->MultiFrameState = (FramesString.Length() > 1);
