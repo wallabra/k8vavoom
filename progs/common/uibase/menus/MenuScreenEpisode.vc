@@ -41,7 +41,7 @@ override void CreateChoices () {
     if (EDef->bOptional && !IsMapPresent(EDef->Name)) continue;
     Epi = MenuChoiceEpisode(NewChild(MenuChoiceEpisode));
     Epi.SetPos(ChoicesStartX, currentY);
-           if (EDef->PicName) Epi.PicHandle = R_RegisterPic(EDef->PicName);
+         if (EDef->PicName) Epi.PicHandle = R_RegisterPic(EDef->PicName);
     else if (EDef->bLookupText) Epi.Text = GetLangString(StrToName(EDef->Text));
     else Epi.Text = EDef->Text;
     Epi.EDef = EDef;

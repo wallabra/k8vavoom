@@ -59,8 +59,10 @@ void SetText (string AText) {
 
 
 void ActivateEvent () {
+  // there was(?) the bug: parent can be destroyed before activation event comes (wtf?!)
+  if (!Parent) print("*** WARNING: button '%s' (%C) has no parent! pos=(%d,%d)", Text, self, X, Y);
   if (Activated) Activated(self);
-  if (GetClGame()) {
+  if (Parent && GetClGame()) {
     MenuScreen newMenu = none;
          if (submenuClass) newMenu = GetClGame().SpawnMenu(submenuClass);
     else if (submenuName) newMenu = GetClGame().SpawnNamedMenu(submenuName);

@@ -99,7 +99,7 @@ final static float getSavedFloat (name Name, float defval) {
 //
 //==========================================================================
 ClientGameShared GetClGame () {
-  return MenuScreen(Parent).ClGame;
+  return (Parent ? MenuScreen(Parent).ClGame : none);
 }
 
 
