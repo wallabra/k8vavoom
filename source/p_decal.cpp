@@ -47,13 +47,13 @@ static bool parseHexRGB (const VStr &str, float clr[]) {
     while (pos < str.Length() && str[pos] <= ' ') ++pos;
     int n = 0;
     int digCount = 0;
-    for (int dnum = 0; dnum < 2; ++dnum) {
+    for (int dnum = 0; ; ++dnum) {
       if (pos >= str.Length()) {
         if (dnum == 0) return false;
         break;
       }
       char ch = str[pos++];
-      if (ch <= ' ') break;
+      if ((vuint8)ch <= ' ') break;
       int d = VStr::digitInBase(ch, 16);
       if (d < 0) return false; // alas
       n = n*16+d;
@@ -63,7 +63,7 @@ static bool parseHexRGB (const VStr &str, float clr[]) {
     if (n < 0) n = 0; else if (n > 255) n = 255;
     clr[f] = n/255.0f;
   }
-  while (pos < str.Length() && str[pos] <= ' ') ++pos;
+  while (pos < str.Length() && (vuint8)str[pos] <= ' ') ++pos;
   return (pos >= str.Length());
 }
 
