@@ -69,16 +69,21 @@ extern VCvarB r_dynamic_clip_more;
 void VAdvancedRenderLevel::RefilterStaticLights () {
   staticLightsFiltered = true;
 
+  float coeff = r_light_filter_static_coeff;
+
   int llen = Lights.length();
   int actlights = 0;
   for (int currlidx = 0; currlidx < llen; ++currlidx) {
     light_t &cl = Lights[currlidx];
-    cl.active = (cl.radius > 6); // arbitrary limit
+    if (coeff > 0) {
+      cl.active = (cl.radius > 6); // arbitrary limit
+    } else {
+      cl.active = true;
+    }
     if (cl.active) ++actlights;
   }
   if (actlights < 6) return; // arbitrary limit
 
-  float coeff = r_light_filter_static_coeff;
   if (coeff <= 0) return; // no filtering
   if (coeff > 8) coeff = 8;
 
