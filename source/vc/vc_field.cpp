@@ -220,8 +220,11 @@ void VField::SkipSerialisedType (VStream &Strm) {
     case TYPE_String: Strm << tmpstr; break;
     case TYPE_Pointer: // WARNING! keep in sync with sv_save.cpp!
       Strm << tp; // inner type
-      if (tp != TYPE_Struct) Host_Error("I/O Error: don't know how to skip non-struct pointer type");
-      Strm << STRM_INDEX(tmpi32);
+      if (tp != TYPE_Struct) {
+        //Host_Error("I/O Error: don't know how to skip non-struct pointer type");
+      } else {
+        Strm << STRM_INDEX(tmpi32);
+      }
       break;
     case TYPE_Reference: Strm << tmpobj; break;
     case TYPE_Class: Strm << tmpname; break;
@@ -299,12 +302,14 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
     case TYPE_Name: Strm << *(VName *)Data; break;
     case TYPE_String: Strm << *(VStr *)Data; break;
     case TYPE_Pointer:
+      tp = Type.InnerType;
+      Strm << tp;
       if (Type.InnerType == TYPE_Struct) {
-        tp = Type.InnerType;
-        Strm << tp;
         Strm.SerialiseStructPointer(*(void **)Data, Type.Struct);
       } else {
-        Host_Error("I/O Error: don't know how to serialise pointer type `%s`", *Type.GetName());
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+        GCon->Logf("I/O WARNING: don't know how to serialise pointer type `%s` for field '%s'", *Type.GetName(), *fullname);
+#endif
         /*
         if (Strm.IsLoading()) {
           //Strm << *(int *)Data;
