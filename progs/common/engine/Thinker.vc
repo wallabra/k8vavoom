@@ -153,20 +153,20 @@ defaultproperties
 //==========================================================================
 class Acs : Thinker native abstract;
 
-private Entity Activator;
-private line_t *line;
-private int side;
-private int number;
-private /*VAcsInfo*/void *info;
-private ubyte State;
-private float DelayTime;
-private int WaitValue;
-private int *LocalVars;
-private ubyte *InstructionPointer;
-private /*VAcsObject*/void *ActiveObject;
-private int HudWidth;
-private int HudHeight;
-private name Font;
+transient private Entity Activator;
+transient private line_t *line;
+transient private int side;
+transient private int number;
+transient private /*VAcsInfo*/void *info;
+transient private ubyte State;
+transient private float DelayTime;
+transient private int WaitValue;
+transient private int *LocalVars;
+transient private ubyte *InstructionPointer;
+transient private /*VAcsObject*/void *ActiveObject;
+transient private int HudWidth;
+transient private int HudHeight;
+transient private name Font;
 
 
 //==========================================================================
@@ -175,10 +175,10 @@ private name Font;
 //
 //==========================================================================
 class Button : Thinker native abstract;
-private int Side;
-private ubyte Where;
-private int SwitchDef;
-private int Frame;
-private float Timer;
-private name DefaultSound;
-private /*bool*/int UseAgain;
+transient private int Side;
+transient private ubyte Where;
+transient private int SwitchDef;
+transient private int Frame;
+transient private float Timer;
+transient private name DefaultSound;
+transient private /*bool*/int UseAgain;
