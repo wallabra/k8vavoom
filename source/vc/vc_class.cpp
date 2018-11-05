@@ -1228,6 +1228,7 @@ void VClass::EmitStateLabels () {
   for (int i = 0; i < StateLabelDefs.Num(); ++i) {
     VStateLabelDef &Lbl = StateLabelDefs[i];
     TArray<VName> Names;
+    //if (Lbl.Name[0] == '_') fprintf(stderr, "+++  <%s> -> <%s>\n", *Lbl.Name, Lbl.State->GetName());
     StaticSplitStateLabel(Lbl.Name, Names);
     SetStateLabel(Names, Lbl.State);
   }
@@ -1264,7 +1265,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
     } else {
       CheckClass = StaticFindClass(ClassName);
       if (!CheckClass) {
-        ParseError(Loc, "No such class %s", *ClassName);
+        ParseError(Loc, "No such superclass '%s' for class '%s'", *ClassName, *GetFullName());
         return nullptr;
       }
     }
@@ -1275,7 +1276,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
   StaticSplitStateLabel(CheckName, Names);
   VStateLabel *Lbl = CheckClass->FindStateLabel(Names, true);
   if (!Lbl) {
-    ParseError(Loc, "No such state %s", *LabelName);
+    ParseError(Loc, "No such state '%s' in class '%s'", *LabelName, *GetFullName());
     return nullptr;
   }
 
@@ -1283,7 +1284,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
   int Count = Offset;
   while (Count--) {
     if (!State || !State->Next) {
-      ParseError(Loc, "Bad jump offset (%d, but only %d is allowed); in `ResolveStateLabel` for label '%s'", Offset, Offset-(Count+1), *LabelName);
+      ParseError(Loc, "Bad jump offset (%d, but only %d is allowed); in `ResolveStateLabel` for label '%s' in class '%s'", Offset, Offset-(Count+1), *LabelName, *GetFullName());
       return nullptr;
     }
     if (State->Frame&VState::FF_SKIPOFFS) ++Count;
@@ -1337,7 +1338,10 @@ void VClass::SetStateLabel (const TArray<VName> &Names, VState *State) {
     }
     List = &Lbl->SubLabels;
   }
-  if (Lbl != nullptr) Lbl->State = State;
+  if (Lbl != nullptr) {
+    //if ((*Names[0])[0] == '_') fprintf(stderr, "*** <%s> is <%s>\n", *Names[0], State->GetName());
+    Lbl->State = State;
+  }
   unguard;
 }
 

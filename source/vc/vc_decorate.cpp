@@ -123,7 +123,9 @@ enum {
 // this is used to introduce temporary labels for `A_JumpIf(n, +x)`
 struct VTmpLabelOfsFixup {
   VStr ltname;
+  TLocation loc;
   int skipLeft; // how much frames left to skip
+  VState *state;
 };
 
 static VStr genTempLabelName () {
@@ -2235,16 +2237,33 @@ static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
 //  ProcessTempLabels
 //
 //==========================================================================
-static void ProcessTempLabels (VClass *Class, const TLocation &loc, TArray<VTmpLabelOfsFixup> &tmpLabels) {
-  int f = 0;
-  while (f < tmpLabels.length()) {
+static void ProcessTempLabels (VClass *Class, VState *State, const TLocation &loc, TArray<VTmpLabelOfsFixup> &tmpLabels) {
+  for (int f = 0; f < tmpLabels.length(); ++f) {
     VTmpLabelOfsFixup &t = tmpLabels[f];
-    if (t.skipLeft-- > 0) { ++f; continue; }
-    //fprintf(stderr, "*** created label '%s' at %s\n", *t.ltname, *loc.toStringNoCol());
-    VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
-    Lbl.Loc = loc;
-    Lbl.Name = t.ltname;
-    tmpLabels.removeAt(f);
+    if (t.state) continue;
+    if (--t.skipLeft > 0) continue;
+    t.state = State;
+    t.loc = loc;
+    //fprintf(stderr, "*** created label '%s' at %s (%s)\n", *t.ltname, *loc.toStringNoCol(), t.state->GetName());
+  }
+}
+
+
+//==========================================================================
+//
+//  EmitTempLabels
+//
+//==========================================================================
+static void EmitTempLabels (VScriptParser *sc, VClass *Class, TArray<VTmpLabelOfsFixup> &tmpLabels) {
+  for (int f = 0; f < tmpLabels.length(); ++f) {
+    VTmpLabelOfsFixup &t = tmpLabels[f];
+    if (!t.state) sc->Error(va("undefined A_JumpIf label '%s'", *t.ltname));
+    VStateLabelDef *Lbl = &Class->StateLabelDefs.Alloc();
+    Lbl->Loc = t.loc;
+    Lbl->Name = t.ltname;
+    Lbl->State = t.state;
+    Lbl->GotoLabel = NAME_None;
+    Lbl->GotoOffset = 0;
   }
 }
 
@@ -2357,10 +2376,9 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     wasActionAfterLabel = true;
 
     // add temporary labels
-    ProcessTempLabels(Class, TmpLoc, tmpLabels);
-
     VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
     States.Append(State);
+    ProcessTempLabels(Class, State, TmpLoc, tmpLabels);
 
     // sprite name
     if (TmpName.Length() != 4) sc->Error("Invalid sprite name");
@@ -2514,11 +2532,11 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         frm = FSChar-'A';
       }
 
-      // add temporary labels
-      ProcessTempLabels(Class, TmpLoc, tmpLabels);
       // create a new state
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
+      // add temporary labels
+      ProcessTempLabels(Class, s2, TmpLoc, tmpLabels);
       s2->SpriteName = State->SpriteName;
       s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|frm;
       s2->Time = State->Time;
@@ -2532,6 +2550,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       LastState = s2;
     }
   }
+  EmitTempLabels(sc, Class, tmpLabels);
   // re-enable escape sequences
   sc->SetEscape(true);
   return true;
