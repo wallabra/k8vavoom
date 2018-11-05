@@ -449,6 +449,19 @@ enum EWadNamespace {
 native static final int W_IterateNS (int Prev, EWadNamespace NS);
 native static final int W_IterateFile (int Prev, string Name);
 
+//WARNING! UNSAFE!
+// only use lump number from iterator here!
+native static final int W_LumpLength (int lump);
+native static final name W_LumpName (int lump);
+native static final string W_FullLumpName (int lump);
+native static final int W_LumpFile (int lump);
+
+native static final int W_CheckNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
+native static final int W_GetNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
+
+// you can use result of `W_LumpFile()` with the following
+native static final int W_CheckNumForNameInFile (name Name, int File, optional EWadNamespace NS /*= WADNS_Global*/);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct WadLumpIteratorInfoNS {

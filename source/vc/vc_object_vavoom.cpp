@@ -173,3 +173,49 @@ IMPLEMENT_FUNCTION(VObject, W_IterateFile) {
   P_GET_INT(prev);
   RET_INT(W_IterateFile(prev, name));
 }
+
+// native static final int W_LumpLength (int lump);
+IMPLEMENT_FUNCTION(VObject, W_LumpLength) {
+  P_GET_INT(lump);
+  RET_INT(W_LumpLength(lump));
+}
+
+// native static final name W_LumpName (int lump);
+IMPLEMENT_FUNCTION(VObject, W_LumpName) {
+  P_GET_INT(lump);
+  RET_NAME(W_LumpName(lump));
+}
+
+// native static final string W_FullLumpName (int lump);
+IMPLEMENT_FUNCTION(VObject, W_FullLumpName) {
+  P_GET_INT(lump);
+  RET_STR(W_FullLumpName(lump));
+}
+
+// native static final int W_LumpFile (int lump);
+IMPLEMENT_FUNCTION(VObject, W_LumpFile) {
+  P_GET_INT(lump);
+  RET_INT(W_LumpFile(lump));
+}
+
+// native static final int W_CheckNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
+IMPLEMENT_FUNCTION(VObject, W_CheckNumForName) {
+  P_GET_INT_OPT(ns, WADNS_Global);
+  P_GET_NAME(Name);
+  RET_INT(W_CheckNumForName(Name, EWadNamespace(ns)));
+}
+
+// native static final int W_GetNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
+IMPLEMENT_FUNCTION(VObject, W_GetNumForName) {
+  P_GET_INT_OPT(ns, WADNS_Global);
+  P_GET_NAME(Name);
+  RET_INT(W_GetNumForName(Name, EWadNamespace(ns)));
+}
+
+// native static final int W_CheckNumForNameInFile (name Name, int File, optional EWadNamespace NS /*= WADNS_Global*/);
+IMPLEMENT_FUNCTION(VObject, W_CheckNumForNameInFile) {
+  P_GET_INT_OPT(ns, WADNS_Global);
+  P_GET_INT(File);
+  P_GET_NAME(Name);
+  RET_INT(W_CheckNumForNameInFile(Name, File, EWadNamespace(ns)));
+}
