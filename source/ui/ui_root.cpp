@@ -109,6 +109,7 @@ void VRootWidget::TickWidgets (float DeltaTime) {
 bool VRootWidget::Responder (event_t *Event) {
   guard(VRootWidget::Responder);
   if (GetFlags()&_OF_Destroyed) return false;
+
   if (RootFlags&RWF_MouseEnabled) {
     // handle mouse movement
     if (Event->type == ev_mouse) {
@@ -127,9 +128,13 @@ bool VRootWidget::Responder (event_t *Event) {
   if (Event->type == ev_keydown || Event->type == ev_keyup) {
     // find the top-most focused widget
     VWidget *W = CurrentFocusChild;
-    while (W && W->CurrentFocusChild) W = W->CurrentFocusChild;
+    while (W && W->CurrentFocusChild) {
+      if (W->GetFlags()&_OF_Destroyed) return false;
+      W = W->CurrentFocusChild;
+    }
     // call event handlers
     while (W) {
+      if (W->GetFlags()&_OF_Destroyed) return false;
       if (Event->type == ev_keydown) {
         if (W->OnKeyDown(Event->data1)) return true;
       } else {
@@ -167,6 +172,9 @@ void VRootWidget::SetMouse (bool MouseOn) {
 //==========================================================================
 void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
   guard(VRootWidget::MouseMoveEvent);
+
+  if (GetFlags()&_OF_Destroyed) return;
+
   // remember old mouse coordinates
   int OldMouseX = MouseX;
   int OldMouseY = MouseY;
@@ -215,6 +223,9 @@ void VRootWidget::MouseMoveEvent (int NewX, int NewY) {
 //==========================================================================
 bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
   guard(VRootWidget::MouseButtonEvent);
+
+  if (GetFlags()&_OF_Destroyed) return false;
+
   // find widget under mouse
   float ScaledX = MouseX*SizeScaleX;
   float ScaledY = MouseY*SizeScaleY;
