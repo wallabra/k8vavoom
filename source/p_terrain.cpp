@@ -159,6 +159,7 @@ static void ParseTerrainScript(VScriptParser *sc)
   guard(ParseTerrainScript);
   while (!sc->AtEnd())
   {
+    auto loc = sc->GetLoc();
     if (sc->Check("splash"))
     {
       sc->ExpectString();
@@ -374,9 +375,9 @@ static void ParseTerrainScript(VScriptParser *sc)
       }
     }
     else if (sc->Check("ifdoom") || sc->Check("ifheretic") ||
-      sc->Check("ifhexen") || sc->Check("ifstrife") || sc->Check("endif"))
+             sc->Check("ifhexen") || sc->Check("ifstrife") || sc->Check("endif"))
     {
-      GCon->Log("Vavoom doesn't support conditional game commands");
+      GCon->Logf("WARNING: %s: Vavoom doesn't support conditional game commands in terrain script", *loc.toStringNoCol());
     }
     else
     {
