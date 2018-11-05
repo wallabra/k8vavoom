@@ -109,6 +109,21 @@ static final ScriptsParser openParser (string fname) {
 }
 
 
+void filterOptions (int stidx) {
+  if (stidx < 0) stidx = 0;
+  while (stidx < options.length) {
+    if (options[stidx] !isa MenuDefOptionSubHeader) { ++stidx; continue; }
+    if (stidx > 0 && options[stidx-1] isa MenuDefOptionSubHeader && !options[stidx-1].title) {
+      delete options[stidx-1];
+      options.remove(stidx-1);
+      --stidx;
+    } else {
+      ++stidx;
+    }
+  }
+}
+
+
 // "menudef" eaten
 void parse (ScriptsParser par) {
   par.ExpectIdentifier();
@@ -251,6 +266,7 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     par.ExpectString();
     auto opt = SpawnObject(MenuDefOptionSubHeader);
     opt.title = par.String;
+    while (opt.title && opt.title[$-1] <= 32) opt.title = opt.title[0..$-1];
     if (par.Check(",")) {
       // dunno, probably color or something
       par.GetString();
