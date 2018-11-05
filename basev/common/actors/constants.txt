@@ -79,8 +79,8 @@ const int RSF_KEEPTARGET      = 2;
 const int RSF_TELEFRAG        = 4;
 
 // Flags for A_ChangeVelocity
-const int CVF_RELATIVE        = 1;
-const int CVF_REPLACE       = 2;
+const int CVF_RELATIVE = 1;
+const int CVF_REPLACE = 2;
 
 // Flags for A_WeaponReady
 const int WRF_NOBOB         = 1;

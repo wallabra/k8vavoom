@@ -29,6 +29,32 @@
 
 //==========================================================================
 //
+//  DecorDoAAPtr
+//
+//==========================================================================
+final Entity DecorDoAAPtr (string methodname, optional int ptr) {
+  if (!specified_ptr || ptr == AAPTR_DEFAULT) return self;
+  // category 1
+  // AAPTR_PLAYER_GETTARGET // do LOS check (but only for players)
+  // AAPTR_PLAYER_GETCONVERSATION // no strife dialogues, so skip
+  // category 2
+  if (ptr&AAPTR_MASTER) return Master;
+  if (ptr&AAPTR_TARGET) return Target;
+  if (ptr&AAPTR_TRACER) return Tracer;
+  //if (ptr&AAPTR_FRIENDPLAYER) return Tracer;
+  //if (ptr&AAPTR_LINETARGET) // to LOS checks
+  // category 3
+  if (ptr&AAPTR_NULL) return none;
+  //if (ptr&AAPTR_PLAYER1) return none;
+  // ...
+  //if (ptr&AAPTR_PLAYER8) return none;
+  FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
+  return none;
+}
+
+
+//==========================================================================
+//
 //  decorate_GetArg
 //
 //==========================================================================
@@ -52,18 +78,10 @@ final void A_SetArg (int n, int v) {
 //  A_SetAngle
 //
 //==========================================================================
-final void A_SetAngle (float newyaw, optional int flags, optional int ptr) {
-  Entity tgt = self;
-  if (specified_ptr && ptr != AAPTR_DEFAULT) {
-    if (ptr == AAPTR_NULL) return;
-    if (ptr == AAPTR_TARGET) {
-      tgt = Target;
-    } else {
-      FatalError("A_SetAngle: unsupported ptr (0x%x)", ptr);
-    }
-  }
+final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
+  Entity tgt = DecorDoAAPtr("A_SetAngle", aptr!optional);
   if (!tgt) return;
-  Angles.yaw = AngleMod360(newyaw);
+  tgt.Angles.yaw = AngleMod360(newyaw);
   //dprint("A_SetAngle: not implemented!");
 }
 
@@ -99,16 +117,8 @@ private final float clampPitch (float newpitch) {
 //  should be always clamped on player
 //
 //==========================================================================
-final void A_SetPitch (float newpitch, optional int flags, optional int ptr) {
-  Entity tgt = self;
-  if (specified_ptr && ptr != AAPTR_DEFAULT) {
-    if (ptr == AAPTR_NULL) return;
-    if (ptr == AAPTR_TARGET) {
-      tgt = Target;
-    } else {
-      FatalError("A_SetPitch: unsupported ptr (0x%x)", ptr);
-    }
-  }
+final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
+  Entity tgt = DecorDoAAPtr("A_SetPitch", aptr!optional);
   if (!tgt) return;
   if (tgt.bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
   tgt.Angles.pitch = /*AngleMod360*/(newpitch);
@@ -120,20 +130,11 @@ final void A_SetPitch (float newpitch, optional int flags, optional int ptr) {
 //  A_SetRoll
 //
 //==========================================================================
-final void A_SetRoll (float newroll, optional int flags, optional int ptr) {
-  Entity tgt = self;
-  if (specified_ptr && ptr != AAPTR_DEFAULT) {
-    if (ptr == AAPTR_NULL) return;
-    if (ptr == AAPTR_TARGET) {
-      tgt = Target;
-    } else {
-      FatalError("A_SetPitch: unsupported ptr (0x%x)", ptr);
-    }
-  }
+final void A_SetRoll (float newroll, optional int flags, optional int aptr) {
+  Entity tgt = DecorDoAAPtr("A_SetRoll", aptr!optional);
   if (!tgt) return;
   tgt.Angles.roll = AngleMod360(newroll);
 }
-
 
 
 //==========================================================================
@@ -201,16 +202,8 @@ final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, option
 //  decorate_CountInv
 //
 //==========================================================================
-final int decorate_CountInv (name ItemName, optional int ptr) {
-  Entity tgt = self;
-  if (specified_ptr && ptr != AAPTR_DEFAULT) {
-    if (ptr == AAPTR_NULL) return 0;
-    if (ptr == AAPTR_TARGET) {
-      tgt = Target;
-    } else {
-      FatalError("CountInv: unsupported ptr (0x%x)", ptr);
-    }
-  }
+final int decorate_CountInv (name ItemName, optional int aptr) {
+  Entity tgt = DecorDoAAPtr("decorate_CountInv", aptr!optional);
   if (!tgt) return 0;
   return tgt.CheckInventory(ItemName);
 }

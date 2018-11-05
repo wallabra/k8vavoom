@@ -97,28 +97,31 @@ final void A_LogInt(int num)
 //
 //===========================================================================
 
-final void A_ChangeVelocity(float x, float y, float z, int flags)
+final void A_ChangeVelocity(float x, float y, float z, optional int flags, optional int aptr)
 {
+  Entity tgt = DecorDoAAPtr("A_ChangeVelocity", aptr!optional);
+  if (!tgt) return;
+
   float vx = x, vy = y, vz = z;
 
-  if (flags & 1)  // relative axes - make x, y relative to actor's current angle
-  {
-    vx = x * -y * cos(Angles.yaw) * sin(Angles.yaw);
+  if (flags&1) {
+    // relative axes - make x, y relative to actor's current angle
+    vx = x * -y * cos(tgt.Angles.yaw) * sin(tgt.Angles.yaw);
     vx /= 4.0 * 35.0;
-    vy = x * sin(Angles.yaw) * y * cos(Angles.yaw);
+    vy = x * sin(tgt.Angles.yaw) * y * cos(tgt.Angles.yaw);
     vy /= 4.0 * 35.0;
   }
-  if (flags & 2)  // discard old velocity - replace old velocity with new velocity
-  {
-    Velocity.x = vx;
-    Velocity.y = vy;
-    Velocity.z = vz;
-  }
-  else  // add new velocity to old velocity
-  {
-    Velocity.x += vx;
-    Velocity.y += vy;
-    Velocity.z += vz;
+
+  if (flags&2) {
+    // discard old velocity - replace old velocity with new velocity
+    tgt.Velocity.x = vx;
+    tgt.Velocity.y = vy;
+    tgt.Velocity.z = vz;
+  } else {
+    // add new velocity to old velocity
+    tgt.Velocity.x += vx;
+    tgt.Velocity.y += vy;
+    tgt.Velocity.z += vz;
   }
 }
 
@@ -128,11 +131,12 @@ final void A_ChangeVelocity(float x, float y, float z, int flags)
 //
 //===========================================================================
 
-final void A_ScaleVelocity(float scale)
-{
-  Velocity.x *= scale;
-  Velocity.y *= scale;
-  Velocity.z *= scale;
+final void A_ScaleVelocity(float scale, optional int aptr) {
+  Entity tgt = DecorDoAAPtr("A_ScaleVelocity", aptr!optional);
+  if (!tgt) return;
+  tgt.Velocity.x *= scale;
+  tgt.Velocity.y *= scale;
+  tgt.Velocity.z *= scale;
 }
 
 //===========================================================================
@@ -585,21 +589,12 @@ final void A_SetPitchExt (float newa) {
 // scaleY: the actor's new vertical scale. If this parameter is not given, or
 //         is set to 0, scaleX is used as well. Default is 0.
 // ptr: The actor to change its scale. This is an actor pointer.
-//      Default is AAPTR_DEFAULT, which corresponds to the calling actor.
 // usezero: If this is false and scaleY is 0, scaleY uses the same value
 //          passed to scaleX, otherwise if it is true, the value of scaleY
 //          is used, instead. Default is false.
 //==========================================================================
-final void A_SetScale (float scaleX, optional float scaleY, optional int ptr, optional bool usezero) {
-  Entity tgt = self;
-  if (specified_ptr && ptr != AAPTR_DEFAULT) {
-    if (ptr == AAPTR_NULL) return;
-    if (ptr == AAPTR_TARGET) {
-      tgt = Target;
-    } else {
-      FatalError("A_SetScale: unsupported ptr (0x%x)", ptr);
-    }
-  }
+final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, optional bool usezero) {
+  Entity tgt = DecorDoAAPtr("A_SetScale", aptr!optional);
   if (!tgt) return;
   tgt.ScaleX = scaleX;
   tgt.ScaleY = (usezero || scaleY != 0 ? scaleY : scaleX);
