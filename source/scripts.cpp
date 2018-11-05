@@ -50,6 +50,7 @@ class VScriptsParser : public VObject {
 #if !defined(VCC_STANDALONE_EXECUTOR)
   DECLARE_FUNCTION(OpenLumpName)
   DECLARE_FUNCTION(OpenLumpFullName)
+  DECLARE_FUNCTION(OpenLumpIndex)
 #endif
   DECLARE_FUNCTION(OpenString)
   DECLARE_FUNCTION(get_String)
@@ -949,6 +950,19 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
   //int num = W_IterateFile(-1, *Name);
   if (num < 0) Sys_Error("file '%s' not found", *Name);
   Self->Int = new VScriptParser(*Name, W_CreateLumpReaderNum(num));
+#endif
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpIndex) {
+  P_GET_INT(lump);
+  P_GET_SELF;
+#if !defined(IN_VCC)
+  if (Self->Int) {
+    delete Self->Int;
+    Self->Int = nullptr;
+  }
+  if (lump < 0) Sys_Error("cannot open non-existing lump");
+  Self->Int = new VScriptParser(W_FullLumpName(lump), W_CreateLumpReaderNum(lump));
 #endif
 }
 #endif

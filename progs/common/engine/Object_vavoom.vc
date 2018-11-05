@@ -429,21 +429,21 @@ native static final class FindClassFromScriptId (int Id, int GameFilter);
 // wad lump iteration
 // boom namespaces
 enum EWadNamespace {
-  WADNS_Global,
-  WADNS_Sprites,
-  WADNS_Flats,
-  WADNS_ColourMaps,
-  WADNS_ACSLibrary,
-  WADNS_NewTextures,
-  WADNS_Voices,
-  WADNS_HiResTextures,
+  Global,
+  Sprites,
+  Flats,
+  ColourMaps,
+  ACSLibrary,
+  NewTextures,
+  Voices,
+  HiResTextures,
 
   // special namespaces for zip files, in wad file they will be searched in global namespace
-  WADNS_ZipSpecial,
-  WADNS_Patches,
-  WADNS_Graphics,
-  WADNS_Sounds,
-  WADNS_Music,
+  ZipSpecial,
+  Patches,
+  Graphics,
+  Sounds,
+  Music,
 };
 
 native static final int W_IterateNS (int Prev, EWadNamespace NS);

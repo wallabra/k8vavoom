@@ -85,15 +85,100 @@ bool netgame
   get { return NetMode > NM_Standalone; }
 }
 
+
+//==========================================================================
+//
+//  ParseCVarInfo
+//
+//==========================================================================
+void ParseCVarInfo () {
+  foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
+    if (W_LumpName(lump) == 'cvarinfo') {
+      print("CVARINFO: found in '%s'", W_FullLumpName(lump));
+      auto par = SpawnObject(ScriptsParser);
+      scope(exit) delete par;
+      par.OpenLumpIndex(lump);
+      par.SetCMode(true);
+      par.SetEscape(true);
+      for (;;) {
+        int flags = CVAR_ARCHIVE;
+        if (par.Check("server")) {
+          //writeln("*** CVAR: SERVER");
+          flags |= CVAR_SERVERINFO;
+        } else if (par.Check("user")) {
+          //writeln("*** CVAR: USER");
+        } else {
+          if (!par.GetString()) break;
+          par.ScriptError("CVARINFO ERROR: unknown command '%s'", par.String);
+        }
+        // flags
+        for (;;) {
+               if (par.Check("noarchive")) flags &= ~CVAR_ARCHIVE;
+          else if (par.Check("cheat")) flags |= CVAR_CHEAT;
+          else if (par.Check("latch")) flags |= CVAR_LATCH;
+          else break;
+        }
+        // value
+        float fval = 0;
+        string sval = "";
+        bool isfloat = false;
+        bool isstr = false;
+        bool isbool = false;
+        bool iscolor = false;
+        // type
+             if (par.Check("int") || par.Check("float")) isfloat = true;
+        else if (par.Check("bool")) isbool = true;
+        else if (par.Check("string")) isstr = true;
+        else if (par.Check("color")) { iscolor = true; sval = "00 00 00"; }
+        else par.ScriptError("CVARINFO ERROR: unknown cvar type '%s'", par.String);
+        // name
+        par.ExpectIdentifier();
+        name vname = name(par.String);
+        // default value
+        if (par.Check("=")) {
+          //writeln("*** <", vname, "> ***");
+          if (isfloat) {
+            par.ExpectFloat(withSign:true);
+            fval = par.Float;
+          } else if (isstr || iscolor) {
+            par.ExpectString();
+            sval = par.String;
+          } else if (isbool) {
+                 if (par.Check("true")) fval = 1;
+            else if (par.Check("false")) fval = 0;
+            else par.ScriptError("CVARINFO ERROR: invalid boolean value '%s'", par.String);
+          } else {
+            par.ScriptError("CVARINFO ERROR: cvar type?");
+          }
+        }
+        par.Expect(";");
+        //print("CVAR: '%s'; fval=%s; sval=%s", vname, fval, sval);
+        /*if (!CvarExists(vname))*/
+        {
+          //print("NEW CVAR: '%s'", vname);
+          if (isstr || iscolor) {
+            CreateCvar(vname, sval, "cvarinfo string variable", flags);
+          } else if (isbool) {
+            CreateCvar(vname, (fval ? "1" : "0"), "cvarinfo bool variable", flags);
+          } else {
+            CreateCvar(vname, va("%s", fval), "cvarinfo numeric variable", flags);
+          }
+        }
+      }
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-void Init()
-{
+void Init () {
+  ParseCVarInfo();
 }
+
 
 //==========================================================================
 //

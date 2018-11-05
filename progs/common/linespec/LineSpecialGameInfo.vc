@@ -301,6 +301,8 @@ void InitializeWeaponSlots () {
 //
 //==========================================================================
 override void Init () {
+  ::Init(); // parse cvarinfo and such
+
   CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
 
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
@@ -367,6 +369,7 @@ override void Init () {
   CreateCvar('r_particle_blood', "1", "Enable particle blood?", CVAR_ARCHIVE);
   CreateCvar('r_particle_trails', "1", "Enable particle trails?", CVAR_ARCHIVE);
 }
+
 
 //==========================================================================
 //
