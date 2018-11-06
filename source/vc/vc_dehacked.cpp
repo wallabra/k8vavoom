@@ -526,11 +526,11 @@ static void ReadThing (int num) {
       SetClassFieldFloat(Ent, "Alpha", value/65536.0);
       SetClassFieldByte(Ent, "RenderStyle", STYLE_Translucent);
     } else if (!VStr::ICmp(String, "Alpha")) {
-      SetClassFieldFloat(Ent, "Alpha", atof(ValueString));
+      SetClassFieldFloat(Ent, "Alpha", VStr::atof(ValueString, 1));
     } else if (!VStr::ICmp(String, "Render Style")) {
       SetClassFieldByte(Ent, "RenderStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Scale")) {
-      float Scale = atof(ValueString);
+      float Scale = VStr::atof(ValueString, 1);
       Scale = MID(0.0001, Scale, 256.0);
       SetClassFieldFloat(Ent, "ScaleX", Scale);
       SetClassFieldFloat(Ent, "ScaleY", Scale);
@@ -1048,7 +1048,7 @@ static void ReadMisc (int) {
     } else if (!VStr::ICmp(String, "Rocket Explosion Style")) {
       SetClassFieldInt(GameInfoClass, "DehExplosionStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Rocket Explosion Alpha")) {
-      SetClassFieldFloat(GameInfoClass, "DehExplosionAlpha", atof(ValueString));
+      SetClassFieldFloat(GameInfoClass, "DehExplosionAlpha", VStr::atof(ValueString, 1));
     } else {
       GCon->Logf(NAME_Init, "WARNING! Invalid misc '%s'", String);
     }

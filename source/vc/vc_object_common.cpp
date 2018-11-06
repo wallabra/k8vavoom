@@ -330,7 +330,7 @@ IMPLEMENT_FUNCTION(VObject, atoi) {
 
 IMPLEMENT_FUNCTION(VObject, atof) {
   P_GET_STR(str);
-  RET_FLOAT(atof(*str));
+  RET_FLOAT(VStr::atof(*str, 0));
 }
 
 IMPLEMENT_FUNCTION(VObject, StrStartsWith) {

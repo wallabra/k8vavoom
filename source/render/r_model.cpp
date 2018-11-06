@@ -258,20 +258,20 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
       // base offset
       TVec Offset(0.0, 0.0, 0.0);
-      if (SN->HasAttribute("offset_x")) Offset.x = atof(*SN->GetAttribute("offset_x"));
-      if (SN->HasAttribute("offset_y")) Offset.y = atof(*SN->GetAttribute("offset_y"));
-      if (SN->HasAttribute("offset_z")) Offset.z = atof(*SN->GetAttribute("offset_z"));
+      if (SN->HasAttribute("offset_x")) Offset.x = VStr::atof(*SN->GetAttribute("offset_x"));
+      if (SN->HasAttribute("offset_y")) Offset.y = VStr::atof(*SN->GetAttribute("offset_y"));
+      if (SN->HasAttribute("offset_z")) Offset.z = VStr::atof(*SN->GetAttribute("offset_z"));
 
       // base scaling
       TVec Scale(1.0, 1.0, 1.0);
       if (SN->HasAttribute("scale")) {
-        Scale.x = atof(*SN->GetAttribute("scale"));
+        Scale.x = VStr::atof(*SN->GetAttribute("scale"), 1);
         Scale.y = Scale.x;
         Scale.z = Scale.x;
       }
-      if (SN->HasAttribute("scale_x")) Scale.x = atof(*SN->GetAttribute("scale_x"));
-      if (SN->HasAttribute("scale_y")) Scale.y = atof(*SN->GetAttribute("scale_y"));
-      if (SN->HasAttribute("scale_z")) Scale.z = atof(*SN->GetAttribute("scale_z"));
+      if (SN->HasAttribute("scale_x")) Scale.x = VStr::atof(*SN->GetAttribute("scale_x"), 1);
+      if (SN->HasAttribute("scale_y")) Scale.y = VStr::atof(*SN->GetAttribute("scale_y"), 1);
+      if (SN->HasAttribute("scale_z")) Scale.z = VStr::atof(*SN->GetAttribute("scale_z"), 1);
 
       // fullbright flag
       Md2.FullBright = false;
@@ -303,26 +303,26 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
         // offset
         F.Offset = Offset;
-        if (FN->HasAttribute("offset_x")) F.Offset.x = atof(*FN->GetAttribute("offset_x"));
-        if (FN->HasAttribute("offset_y")) F.Offset.y = atof(*FN->GetAttribute("offset_y"));
-        if (FN->HasAttribute("offset_z")) F.Offset.z = atof(*FN->GetAttribute("offset_z"));
+        if (FN->HasAttribute("offset_x")) F.Offset.x = VStr::atof(*FN->GetAttribute("offset_x"));
+        if (FN->HasAttribute("offset_y")) F.Offset.y = VStr::atof(*FN->GetAttribute("offset_y"));
+        if (FN->HasAttribute("offset_z")) F.Offset.z = VStr::atof(*FN->GetAttribute("offset_z"));
 
         // scale
         F.Scale = Scale;
         if (FN->HasAttribute("scale")) {
-          F.Scale.x = atof(*FN->GetAttribute("scale"));
+          F.Scale.x = VStr::atof(*FN->GetAttribute("scale"), 1);
           F.Scale.y = F.Scale.x;
           F.Scale.z = F.Scale.x;
         }
-        if (FN->HasAttribute("scale_x")) F.Scale.x = atof(*FN->GetAttribute("scale_x"));
-        if (FN->HasAttribute("scale_y")) F.Scale.y = atof(*FN->GetAttribute("scale_y"));
-        if (FN->HasAttribute("scale_z")) F.Scale.z = atof(*FN->GetAttribute("scale_z"));
+        if (FN->HasAttribute("scale_x")) F.Scale.x = VStr::atof(*FN->GetAttribute("scale_x"), 1);
+        if (FN->HasAttribute("scale_y")) F.Scale.y = VStr::atof(*FN->GetAttribute("scale_y"), 1);
+        if (FN->HasAttribute("scale_z")) F.Scale.z = VStr::atof(*FN->GetAttribute("scale_z"), 1);
 
         // alpha
         F.AlphaStart = 1.0;
         F.AlphaEnd = 1.0;
-        if (FN->HasAttribute("alpha_start")) F.AlphaStart = atof(*FN->GetAttribute("alpha_start"));
-        if (FN->HasAttribute("alpha_end")) F.AlphaEnd = atof(*FN->GetAttribute("alpha_end"));
+        if (FN->HasAttribute("alpha_start")) F.AlphaStart = VStr::atof(*FN->GetAttribute("alpha_start"));
+        if (FN->HasAttribute("alpha_end")) F.AlphaEnd = VStr::atof(*FN->GetAttribute("alpha_end"), 1);
 
         // skin index
         F.SkinIndex = -1;
@@ -354,11 +354,11 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       F.hasPitch = N->HasAttribute("angle_pitch");
       F.hasRoll = N->HasAttribute("angle_roll");
       if (F.hasYaw && N->GetAttribute("angle_yaw") == "random") F.angleYaw = AngleMod(360.0f*Random());
-      else F.angleYaw = AngleMod(F.hasYaw ? atof(*N->GetAttribute("angle_yaw")) : 0.0f);
+      else F.angleYaw = AngleMod(F.hasYaw ? VStr::atof(*N->GetAttribute("angle_yaw")) : 0.0f);
       if (F.hasPitch && N->GetAttribute("angle_pitch") == "random") F.anglePitch = AngleMod(360.0f*Random());
-      else F.anglePitch = AngleMod(F.hasPitch ? atof(*N->GetAttribute("angle_pitch")) : 0.0f);
+      else F.anglePitch = AngleMod(F.hasPitch ? VStr::atof(*N->GetAttribute("angle_pitch")) : 0.0f);
       if (F.hasRoll && N->GetAttribute("angle_roll") == "random") F.angleRoll = AngleMod(360.0f*Random());
-      else F.angleRoll = AngleMod(F.hasRoll ? atof(*N->GetAttribute("angle_roll")) : 0.0f);
+      else F.angleRoll = AngleMod(F.hasRoll ? VStr::atof(*N->GetAttribute("angle_roll")) : 0.0f);
 
       F.Number = atoi(*N->GetAttribute("index"));
       int lastIndex = -666;
@@ -375,17 +375,17 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       if (F.ModelIndex == -1) Sys_Error("%s has no model %s", *Mdl->Name, *MdlName);
 
       F.Inter = 0.0;
-      if (N->HasAttribute("inter")) F.Inter = atof(*N->GetAttribute("inter"));
+      if (N->HasAttribute("inter")) F.Inter = VStr::atof(*N->GetAttribute("inter"));
 
       F.AngleStart = 0.0;
       F.AngleEnd = 0.0;
-      if (N->HasAttribute("angle_start")) F.AngleStart = atof(*N->GetAttribute("angle_start"));
-      if (N->HasAttribute("angle_end")) F.AngleEnd = atof(*N->GetAttribute("angle_end"));
+      if (N->HasAttribute("angle_start")) F.AngleStart = VStr::atof(*N->GetAttribute("angle_start"));
+      if (N->HasAttribute("angle_end")) F.AngleEnd = VStr::atof(*N->GetAttribute("angle_end"));
 
       F.AlphaStart = 1.0;
       F.AlphaEnd = 1.0;
-      if (N->HasAttribute("alpha_start")) F.AlphaStart = atof(*N->GetAttribute("alpha_start"));
-      if (N->HasAttribute("alpha_end")) F.AlphaEnd = atof(*N->GetAttribute("alpha_end"));
+      if (N->HasAttribute("alpha_start")) F.AlphaStart = VStr::atof(*N->GetAttribute("alpha_start"));
+      if (N->HasAttribute("alpha_end")) F.AlphaEnd = VStr::atof(*N->GetAttribute("alpha_end"), 1);
 
       if (F.Number >= 0 && lastIndex > 0) {
         for (int cfidx = F.Number+1; cfidx <= lastIndex; ++cfidx) {

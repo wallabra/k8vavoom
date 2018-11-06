@@ -346,14 +346,14 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_float_clamped") {
         VPropDef &P = Lst.NewProp(PROP_FloatClamped, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
-        P.FMin = atof(*PN->GetAttribute("min")); //FIXME
-        P.FMax = atof(*PN->GetAttribute("max")); //FIXME
+        P.FMin = VStr::atof(*PN->GetAttribute("min"), 0); //FIXME
+        P.FMax = VStr::atof(*PN->GetAttribute("max"), 1); //FIXME
       } else if (PN->Name == "prop_float_clamped_2") {
         VPropDef &P = Lst.NewProp(PROP_FloatClamped2, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
         P.SetField2(Lst.Class, *PN->GetAttribute("property2"));
-        P.FMin = atof(*PN->GetAttribute("min")); //FIXME
-        P.FMax = atof(*PN->GetAttribute("max")); //FIXME
+        P.FMin = VStr::atof(*PN->GetAttribute("min"), 0); //FIXME
+        P.FMax = VStr::atof(*PN->GetAttribute("max"), 1); //FIXME
       } else if (PN->Name == "prop_float_optional_2") {
         VPropDef &P = Lst.NewProp(PROP_FloatOpt2, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -476,8 +476,8 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "flag_float") {
         VFlagDef &F = Lst.NewFlag(FLAG_Float, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
-        F.FTrue = atof(*PN->GetAttribute("true_value")); //FIXME
-        F.FFalse = atof(*PN->GetAttribute("false_value")); //FIXME
+        F.FTrue = VStr::atof(*PN->GetAttribute("true_value"), 0); //FIXME
+        F.FFalse = VStr::atof(*PN->GetAttribute("false_value"), 1); //FIXME
       } else if (PN->Name == "flag_name") {
         VFlagDef &F = Lst.NewFlag(FLAG_Name, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
