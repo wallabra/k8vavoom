@@ -202,6 +202,7 @@ void VSoundManager::Init () {
   // load SNDINFO script
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndinfo) {
+      GCon->Logf("loading SNDINFO from '%s'...", *W_FullLumpName(Lump));
       ParseSndinfo(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
@@ -474,7 +475,11 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       if (**sc->String == '$') sc->Error(va("Unknown command (%s)", *sc->String));
       VName TagName = *sc->String;
       sc->ExpectName();
-      AddSound(TagName, W_CheckNumForName(sc->Name, WADNS_Sounds));
+      int lump = W_CheckNumForName(sc->Name, WADNS_Sounds);
+      if (lump < 0) lump = W_CheckNumForName(sc->Name, WADNS_Global);
+      if (lump < 0) lump = W_CheckNumForFileName(VStr(*sc->Name));
+      //GCon->Logf("SND: tag=<%s>; name=<%s>; lump=%d", *TagName, *sc->Name, lump);
+      AddSound(TagName, lump);
     }
   }
   delete sc;
