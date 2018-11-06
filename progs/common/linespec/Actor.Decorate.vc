@@ -362,3 +362,19 @@ final void decorate_A_ChangeFlag (string flagname, int value) {
   //print("  nopain1=%s", bNoPain);
 }
 */
+
+
+//==========================================================================
+//
+//  decorate_A_DamageSelf
+//
+//==========================================================================
+final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  if (flags) { print("DECORATE: A_DamageSelf with `flags` is not supported yet!"); }
+  if (specified_filter) { print("DECORATE: A_DamageSelf with `filter` is not supported yet!"); }
+  if (specified_species) { print("DECORATE: A_DamageSelf with `species` is not supported yet!"); }
+  if (specified_src) { print("DECORATE: A_DamageSelf with `src` is not supported yet!"); }
+  if (specified_inflict) { print("DECORATE: A_DamageSelf with `inflict` is not supported yet!"); }
+  if (amount == 0) return;
+  Damage(inflictor:self, source:self, amount, DmgType:damagetype!optional);
+}
