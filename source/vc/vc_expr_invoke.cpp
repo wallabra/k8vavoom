@@ -2511,14 +2511,15 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             // jump to a specific parent class state, resolve it and pass value directly
             VStr ClassName(Lbl, 0, DCol);
             VClass *CheckClass;
-            if (ClassName.ICmp("Super")) {
+            if (ClassName.ICmp("Super") == 0) {
               CheckClass = ec.SelfClass->ParentClass;
+              if (!CheckClass) ParseWarning(ALoc, "DECORATE: `%s` argument #%d wants `Super` without superclass!", Func->GetName(), i+1);
             } else {
               CheckClass = VClass::FindClassNoCase(*ClassName);
               if (!CheckClass) {
-                ParseError(ALoc, "No such class %s", *ClassName);
+                ParseError(ALoc, "No such class `%s`", *ClassName);
               } else if (!ec.SelfClass->IsChildOf(CheckClass)) {
-                ParseError(ALoc, "%s is not a subclass of %s", ec.SelfClass->GetName(), CheckClass->GetName());
+                ParseError(ALoc, "`%s` is not a subclass of `%s`", ec.SelfClass->GetName(), CheckClass->GetName());
                 CheckClass = nullptr;
               }
             }
