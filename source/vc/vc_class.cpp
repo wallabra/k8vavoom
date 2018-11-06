@@ -780,8 +780,17 @@ VState *VClass::FindStateChecked (VName AName) {
 //==========================================================================
 VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
   guard(VClass::FindStateLabel);
+
+  if (SubLabel == NAME_None && AName != NAME_None) {
+    // remap old death state labels to proper names
+         if (VStr::ICmp(*AName, "XDeath") == 0) { AName = VName("Death"); SubLabel = VName("Extreme"); }
+    else if (VStr::ICmp(*AName, "Burn") == 0) { AName = VName("Death"); SubLabel = VName("Fire"); }
+    else if (VStr::ICmp(*AName, "Ice") == 0) { AName = VName("Death"); SubLabel = VName("Ice"); }
+    else if (VStr::ICmp(*AName, "Disintegrate") == 0) { AName = VName("Death"); SubLabel = VName("Disintegrate"); }
+  }
+
   for (int i = 0; i < StateLabels.Num(); ++i) {
-    if (!VStr::ICmp(*StateLabels[i].Name, *AName)) {
+    if (VStr::ICmp(*StateLabels[i].Name, *AName) == 0) {
       if (SubLabel != NAME_None) {
         TArray<VStateLabel>& SubList = StateLabels[i].SubLabels;
         for (int j = 0; j < SubList.Num(); ++j) {
@@ -1227,6 +1236,7 @@ void VClass::EmitStateLabels () {
   // first add all labels
   for (int i = 0; i < StateLabelDefs.Num(); ++i) {
     VStateLabelDef &Lbl = StateLabelDefs[i];
+    //if (VStr::ICmp(GetName(), "SmoothZombieman") == 0) fprintf(stderr, "SMZ: label '%s' at '%s'\n", *Lbl.Name, (Lbl.State ? *Lbl.State->GetFullName() : "???"));
     TArray<VName> Names;
     //if (Lbl.Name[0] == '_') fprintf(stderr, "+++  <%s> -> <%s>\n", *Lbl.Name, Lbl.State->GetName());
     StaticSplitStateLabel(Lbl.Name, Names);
