@@ -380,6 +380,11 @@ final void Damage(EntityEx inflictor, EntityEx source, int damage,
     return;
   }
 
+  if (DmgType == 'None' || DmgType == 'none') {
+    //print("DAMAGE TYPE: NONE");
+    DmgType = '';
+  }
+
   if (Health <= 0)
   {
     if (inflictor && DmgType == 'Ice')
@@ -487,7 +492,8 @@ final void Damage(EntityEx inflictor, EntityEx source, int damage,
   {
     for (i = 0; i < DamageFactors.Num; i++)
     {
-      if (DamageFactors[i].DamageType == DmgType)
+      if (DamageFactors[i].DamageType == DmgType ||
+          (!DmgType && (DamageFactors[i].DamageType == 'None' || DamageFactors[i].DamageType == 'none')))
       {
         damage = ftoi(itof(damage) * DamageFactors[i].Factor);
         if (damage <= 0)
@@ -679,7 +685,8 @@ final void Damage(EntityEx inflictor, EntityEx source, int damage,
   float PChance = PainChance;
   for (i = 0; i < PainChances.Num; i++)
   {
-    if (PainChances[i].DamageType == DmgType)
+    if (PainChances[i].DamageType == DmgType ||
+        (!DmgType && (PainChances[i].DamageType == 'None' || PainChances[i].DamageType == 'none')))
     {
       PChance = PainChances[i].Chance;
       break;

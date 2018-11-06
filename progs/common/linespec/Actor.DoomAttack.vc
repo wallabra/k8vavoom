@@ -693,24 +693,32 @@ final void decorate_A_FatAttack3(optional class!EntityEx SpawnType)
 //
 //==========================================================================
 
-final void A_VileTarget()
-{
-  EntityEx fog;
-
-  if (!Target)
-  {
-    return;
-  }
+final void A_VileTarget(optional name firetype) {
+  if (!Target) return;
 
   A_FaceTarget();
 
-  fog = Spawn(ArchvileFire, Target.Origin);
+  class!EntityEx fireClass = ArchvileFire;
+  if (specified_firetype) {
+    if (firetype) {
+      fireClass = class!EntityEx(FindClassNoCase(firetype));
+    } else {
+      fireClass = none;
+    }
+  }
 
-  Tracer = fog;
-  fog.Target = self;
-  fog.Tracer = Target;
-  fog.SetState(fog.IdleState);
+  if (fireClass) fireClass = class!EntityEx(GetClassReplacement(fireClass));
+  if (fireClass) {
+    EntityEx fog = Spawn(/*ArchvileFire*/fireClass, Target.Origin);
+    Tracer = fog;
+    fog.Target = self;
+    fog.Tracer = Target;
+    fog.SetState(fog.IdleState);
+  } else {
+    Tracer = none;
+  }
 }
+
 
 //==========================================================================
 //
@@ -720,21 +728,18 @@ final void A_VileTarget()
 //
 //==========================================================================
 
-final void A_VileAttack(optional string sound, optional int initialdamage, optional int blastdamage, optional int blastradius, optional float thrustfactor, optional string damagetype, optional int flags)
+final void A_VileAttack(optional string sound, optional int initialdamage, optional int blastdamage, optional int blastradius, optional float thrustfactor, optional name damagetype, optional int flags)
 {
   EntityEx fire;
 
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
 
   A_FaceTarget();
 
-  if (!CanSee(Target))
-  {
-    return;
-  }
+  if (!CanSee(Target)) return;
+
+  if (!specified_damagetype) damagetype = 'Fire';
+  if (!damagetype) damagetype = 'None';
 
   if (specified_sound) {
     if (sound.length > 0) {
@@ -745,14 +750,11 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
   }
   if (!specified_initialdamage) initialdamage = 20;
   if (initialdamage < 0) initialdamage = 0;
-  Target.Damage(self, self, /*20*/initialdamage);
+  Target.Damage(self, self, /*20*/initialdamage, (flags&1 ? damagetype : 'None'));
 
   fire = Tracer;
 
-  if (!fire)
-  {
-    return;
-  }
+  if (!fire) return;
 
   // move the fire between the vile and the player
   fire.UnlinkFromWorld();
@@ -766,7 +768,7 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
   if (!specified_blastradius) blastradius = 70;
   if (blastradius < 0) blastradius = 0;
   if (blastradius > 0) {
-    fire.RadiusAttack(self, blastdamage, float(blastradius), true);
+    fire.RadiusAttack(self, blastdamage, float(blastradius), true, damagetype);
   }
 
   // change velocity Z component before doing RadiusAttack

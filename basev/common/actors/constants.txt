@@ -31,6 +31,7 @@ const int SXF_SETMASTER       = 16;
 const int SXF_NOCHECKPOSITION   = 32;
 const int SXF_TELEFRAG        = 64;
 const int SXF_CLIENTSPAWN     = 128;  // only used by Skulltag
+const int SXF_CLIENTSIDE      = 128;  // only used by Skulltag
 const int SXF_TRANSFERAMBUSHFLAG  = 256;
 const int SXF_TRANSFERPITCH     = 512;
 const int SXF_TRANSFERPOINTERS    = 1024;
@@ -212,3 +213,9 @@ const float ATTN_NONE = 0;
 const float ATTN_NORM = 1;
 const float ATTN_IDLE = 1.001;
 const float ATTN_STATIC = 3;
+
+
+// Flags for A_VileAttack
+enum EVileAttackFlags {
+  VAF_DMGTYPEAPPLYTODIRECT = 1,
+};

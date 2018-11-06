@@ -504,6 +504,11 @@ IMPLEMENT_FUNCTION(VObject, FindClass) {
   RET_PTR(VClass::FindClass(*Name));
 }
 
+IMPLEMENT_FUNCTION(VObject, FindClassNoCase) {
+  P_GET_NAME(Name);
+  RET_PTR(VClass::FindClassNoCase(*Name));
+}
+
 IMPLEMENT_FUNCTION(VObject, FindClassLowerCase) {
   P_GET_NAME(Name);
   RET_PTR(VClass::FindClassLowerCase(Name));

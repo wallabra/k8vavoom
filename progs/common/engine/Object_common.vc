@@ -432,6 +432,7 @@ native static final int NameToInt (name Name) [builtin NameToInt];
 // class methods
 
 native static final class FindClass (name Name);
+native static final class FindClassNoCase (name Name);
 native static final class FindClassLowerCase (name Name);
 native static final bool ClassIsChildOf (class SomeClass, class BaseClass);
 native static final name GetClassName (class C);

@@ -278,7 +278,7 @@ class Actor extends Thinker
   action native A_FatAttack1(optional class<Actor> spawntype);
   action native A_FatAttack2(optional class<Actor> spawntype);
   action native A_FatAttack3(optional class<Actor> spawntype);
-  action native A_VileTarget();
+  action native A_VileTarget(optional name firetype);
   action native A_VileAttack(optional string sound, optional int initialdamage, optional int blastdamage, optional int blastradius, optional float thrustfactor, optional string damagetype, optional int flags);
   action native A_BrainSpit();
   action native A_SpawnFly();
