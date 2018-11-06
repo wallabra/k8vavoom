@@ -2529,7 +2529,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
               VMemberBase::StaticSplitStateLabel(LblName, Names);
               VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
               if (!StLbl) {
-                ParseError(ALoc, "No such state %s", *Lbl);
+                ParseError(ALoc, "No such state '%s'", *Lbl);
               } else {
                 delete Args[i];
                 Args[i] = nullptr;
@@ -2538,6 +2538,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             }
           } else {
             // it's a virtual state jump
+            //ParseWarning(Args[i]->Loc, "***VSJMP `%s`: <%s>", Func->GetName(), *Lbl);
             VExpression *TmpArgs[1];
             TmpArgs[0] = Args[i];
             Args[i] = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Args[i]->Loc, 1, TmpArgs);
