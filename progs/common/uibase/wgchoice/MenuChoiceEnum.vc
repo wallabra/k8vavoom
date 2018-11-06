@@ -56,7 +56,6 @@ final int findValue (float val) {
 }
 
 
-
 //==========================================================================
 //
 //  getSavedValue
@@ -96,6 +95,7 @@ override void SetOrigin (int x, int y) {
   }
 }
 
+
 //==========================================================================
 //
 //  SetNewValue
@@ -133,7 +133,7 @@ void AddItem (string AValue, optional float val) {
 //==========================================================================
 void SetInitialValue (float AValue) {
   Value = AValue;
-  int idx = findValue(AValue);
+  //int idx = findValue(AValue);
   if (cvarSession) setSavedFloat(cvarSession, AValue);
 }
 
@@ -179,7 +179,7 @@ override bool OnKeyDown (int key) {
     case K_MOUSE2:
     case K_MWHEELUP:
       idx = findValue(Value);
-      if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
+      if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
       if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
       return true;
     case K_RIGHTARROW:
@@ -188,7 +188,7 @@ override bool OnKeyDown (int key) {
     case K_MOUSE1:
     case K_MWHEELDOWN:
       idx = findValue(Value);
-      if (idx < 0) idx = 0; else idx = (idx+vallist.length-1)%vallist.length;
+      if (idx < 0) idx = 0; else idx = (idx+1)%vallist.length;
       if (SetNewValue(vallist[idx].value)) LocalSound('menu/change');
       return true;
   }
