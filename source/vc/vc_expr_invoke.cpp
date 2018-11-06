@@ -2386,6 +2386,33 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
   for (int i = 0; i < NumArgs; ++i) {
     if (i >= requiredParams) continue;
     if (!Args[i]) continue;
+
+    //FIXME: move this to separate method
+    // simplify a little:
+    //   replace `+number` with `number`
+    {
+      VExpression *e = Args[i];
+      Args[i] = nullptr;
+      for (;;) {
+        if (e->IsUnaryMath()) {
+          VUnary *un = (VUnary *)e;
+          if (un->op) {
+            if (un->Oper == VUnary::Plus && (un->op->IsIntConst() || un->op->IsFloatConst())) {
+              VExpression *etmp = un->op;
+              //fprintf(stderr, "SIMPLIFIED! <%s> -> <%s>\n", *un->toString(), *etmp->toString());
+              un->op = nullptr;
+              delete e;
+              e = etmp;
+              continue;
+            }
+          }
+        }
+        break;
+      }
+      Args[i] = e;
+      if (!e) continue;
+    }
+
     switch (Func->ParamTypes[i].Type) {
       case TYPE_Name:
         if (Args[i]->IsDecorateSingleName()) {
@@ -2397,8 +2424,13 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           const char *Val = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
           delete Args[i];
-          Args[i] = nullptr;
           Args[i] = new VNameLiteral(Val, ALoc);
+        } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
+          // "false" or "0" means "empty"
+          TLocation ALoc = Args[i]->Loc;
+          ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          delete Args[i];
+          Args[i] = new VNameLiteral(NAME_None, ALoc);
         }
         break;
       case TYPE_String:
@@ -2407,6 +2439,12 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           Args[i] = new VStringLiteral(VStr(*E->Name), ec.Package->FindString(*E->Name), E->Loc);
           delete E;
           E = nullptr;
+        } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
+          // "false" or "0" means "empty"
+          TLocation ALoc = Args[i]->Loc;
+          ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          delete Args[i];
+          Args[i] = new VStringLiteral(VStr(), ec.Package->FindString(""), ALoc);
         }
         break;
       case TYPE_Class:
@@ -2435,6 +2473,12 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             Args[i] = nullptr;
             Args[i] = new VClassConstant(Cls, ALoc);
           }
+        } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
+          // "false" or "0" means "empty"
+          TLocation ALoc = Args[i]->Loc;
+          ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be class; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          delete Args[i];
+          Args[i] = new VNoneLiteral(ALoc);
         }
         break;
       case TYPE_State:

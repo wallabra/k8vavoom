@@ -120,22 +120,6 @@ enum {
 };
 
 
-// this is used to introduce temporary labels for `A_JumpIf(n, +x)`
-struct VTmpLabelOfsFixup {
-  VStr ltname;
-  TLocation loc;
-  int skipLeft; // how much frames left to skip
-  VState *state;
-};
-
-static VStr genTempLabelName () {
-  static int tmpLabelCount = 0; // to generate names
-  char buf[64];
-  snprintf(buf, sizeof(buf), "_k8tmp_%d", tmpLabelCount++);
-  return VStr(buf);
-}
-
-
 struct VClassFixup {
   int Offset;
   VStr Name;
@@ -1762,7 +1746,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
 //  ParseActionCall
 //
 //==========================================================================
-static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString, TArray<VTmpLabelOfsFixup> &tmpLabels) {
+static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
   // get function name and parse arguments
   auto actionLoc = sc->GetLoc();
   VExpression *Args[VMethod::MAX_PARAMS+1];
@@ -1786,29 +1770,6 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
     if (!Func) {
       GCon->Logf("ERROR: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
     } else if (Func->NumParams || NumArgs || FuncName.ICmp("a_explode") == 0) {
-      // HACK: `A_JumpIf(cond, +n)` (for SmoothDoom)
-      if (FuncName.ICmp("A_JumpIf") == 0 && NumArgs == 2 && Args[1] && Args[1]->IsUnaryMath() &&
-          ((VUnary *)Args[1])->Oper == VUnary::Plus && ((VUnary *)Args[1])->op && ((VUnary *)Args[1])->op->IsIntConst())
-      {
-        int ofs = ((VUnary *)Args[1])->op->GetIntConst();
-        //Args[1]->IsIntConst()
-        //GCon->Logf("*** JUMPIF: %d", ofs);
-        //GCon->Logf("*** JUMPIF: %d [%s] [%s]", NumArgs, *Args[0]->toString(), *Args[1]->toString());
-        VTmpLabelOfsFixup &tlbl = tmpLabels.alloc();
-        tlbl.ltname = genTempLabelName();
-        tlbl.skipLeft = ofs;
-        // replace argument
-        auto aloc = Args[1]->Loc;
-        delete Args[1];
-        int sval = DecPkg->FindString(*tlbl.ltname);
-        Args[1] = new VStringLiteral(tlbl.ltname, sval, aloc);
-      }
-      // idiotic SmoothDoom got it wrong
-      if (FuncName.ICmp("A_Quake") == 0 && NumArgs == 5 && Args[4] && Args[4]->IsIntConst()) {
-        GCon->Logf("ERROR:%s: A_Quake 5th argument must be `string`; FIX YOUR BROKEN CODE!", *Args[4]->Loc.toStringNoCol());
-        delete Args[4];
-        --NumArgs;
-      }
       VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
       Expr->CallerState = State;
       Expr->MultiFrameState = (FramesString.Length() > 1);
@@ -2240,42 +2201,6 @@ static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
 
 //==========================================================================
 //
-//  ProcessTempLabels
-//
-//==========================================================================
-static void ProcessTempLabels (VClass *Class, VState *State, const TLocation &loc, TArray<VTmpLabelOfsFixup> &tmpLabels) {
-  for (int f = 0; f < tmpLabels.length(); ++f) {
-    VTmpLabelOfsFixup &t = tmpLabels[f];
-    if (t.state) continue;
-    if (--t.skipLeft > 0) continue;
-    t.state = State;
-    t.loc = loc;
-    //fprintf(stderr, "*** created label '%s' at %s (%s)\n", *t.ltname, *loc.toStringNoCol(), t.state->GetName());
-  }
-}
-
-
-//==========================================================================
-//
-//  EmitTempLabels
-//
-//==========================================================================
-static void EmitTempLabels (VScriptParser *sc, VClass *Class, TArray<VTmpLabelOfsFixup> &tmpLabels) {
-  for (int f = 0; f < tmpLabels.length(); ++f) {
-    VTmpLabelOfsFixup &t = tmpLabels[f];
-    if (!t.state) sc->Error(va("undefined A_JumpIf label '%s'", *t.ltname));
-    VStateLabelDef *Lbl = &Class->StateLabelDefs.Alloc();
-    Lbl->Loc = t.loc;
-    Lbl->Name = t.ltname;
-    Lbl->State = t.state;
-    Lbl->GotoLabel = NAME_None;
-    Lbl->GotoOffset = 0;
-  }
-}
-
-
-//==========================================================================
-//
 //  ParseStates
 //
 //==========================================================================
@@ -2284,7 +2209,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   VState *PrevState = nullptr;
   VState *LastState = nullptr;
   VState *LoopStart = nullptr;
-  TArray<VTmpLabelOfsFixup> tmpLabels;
   int NewLabelsStart = Class->StateLabelDefs.Num();
 
   sc->Expect("{");
@@ -2384,7 +2308,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     // add temporary labels
     VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
     States.Append(State);
-    ProcessTempLabels(Class, State, TmpLoc, tmpLabels);
 
     // sprite name
     if (TmpName.Length() != 4) sc->Error("Invalid sprite name");
@@ -2493,7 +2416,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         sc->Check("{");
         ParseActionBlock(sc, Class, State, FramesString);
       } else {
-        ParseActionCall(sc, Class, State, FramesString, tmpLabels);
+        ParseActionCall(sc, Class, State, FramesString);
         //State->Function = Func;
       }
 
@@ -2542,7 +2465,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
       // add temporary labels
-      ProcessTempLabels(Class, s2, TmpLoc, tmpLabels);
       s2->SpriteName = State->SpriteName;
       s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|frm;
       s2->Time = State->Time;
@@ -2556,7 +2478,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       LastState = s2;
     }
   }
-  EmitTempLabels(sc, Class, tmpLabels);
   // re-enable escape sequences
   sc->SetEscape(true);
   return true;
