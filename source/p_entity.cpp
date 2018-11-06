@@ -189,14 +189,23 @@ bool VEntity::SetState (VState *InState) {
   guard(VEntity::SetState);
   VState *st = InState;
   int watchcatCount = 1024;
+  //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(000): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
   do {
     if (--watchcatCount <= 0) {
       //k8: FIXME!
       GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
       break;
     }
+
+    //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("   (010): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
+
     if (!st) {
-      //if (VStr::ICmp(GetClass()->GetName(), "BdZombieMan") == 0) GCon->Logf("***(000): ZOMBIEMAN %p IS DEAD", this);
+      /*
+      if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) {
+        GCon->Logf("***(666): Doomer %p IS DEAD", this);
+        { VObject::VMDumpCallStack(); Sys_Error("PlayerPawn is dead"); }
+      }
+      */
       // remove mobj
       State = nullptr;
       StateTime = -1;
@@ -223,23 +232,26 @@ bool VEntity::SetState (VState *InState) {
     // modified handling
     // call action functions when the state is set
     if (st->Function) {
-      //if (VStr::ICmp(GetClass()->GetName(), "BdZombieMan") == 0) GCon->Logf("***(001):%s: ZOMBIEMAN %p STATE ACTION: %p '%s'", *st->Loc.toStringNoCol(), this, st, st->Function->GetName());
+      //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("   (011):%s: Doomer %p STATE ACTION: %p '%s'", *st->Loc.toStringNoCol(), this, st, st->Function->GetName());
       XLevel->CallingState = State;
       P_PASS_SELF;
       ExecuteFunctionNoArgs(st->Function);
     }
 
     /*
-    if (VStr::ICmp(GetClass()->GetName(), "BdZombieMan") == 0) {
+    if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) {
       if (State != st) {
-        GCon->Logf("***(001):%s: ZOMBIEMAN %p STATE CHANGE: st=%p; State=%p", *st->Loc.toStringNoCol(), this, st, State);
+        GCon->Logf("   (012):%s: Doomer %p STATE CHANGE: st=%p; State=%p", *st->Loc.toStringNoCol(), this, st, State);
       } else {
-        GCon->Logf("***(002):%s: ZOMBIEMAN %p STATE OK: State=%p", *st->Loc.toStringNoCol(), this, State);
+        GCon->Logf("   (013):%s: Doomer %p STATE OK: State=%p", *st->Loc.toStringNoCol(), this, State);
       }
     }
     */
 
-    if (!State) return false;
+    if (!State) {
+      //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(660): Doomer %p IS DEAD", this);
+      return false;
+    }
     st = State->NextState;
   } while (!StateTime);
   return true;
@@ -277,6 +289,7 @@ bool VEntity::AdvanceState (float deltaTime) {
     StateTime -= deltaTime;
     // you can cycle through multiple states in a tic
     if (StateTime <= 0.0) {
+      //if (!State->NextState && VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(669): Doomer %p: EMPTY NEXT on state=%s (%s)", this, (State ? *State->GetFullName() : "<none>"), (State ? *State->Loc.toStringNoCol() : ""));
       if (!SetState(State->NextState)) return false; // freed itself
     }
   }
