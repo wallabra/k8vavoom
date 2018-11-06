@@ -67,7 +67,7 @@ static TMapDtor<int, SpawnEdFixup> DoomEdNumFixups; // keyed by num
 
 void P_SetupMapinfoPlayerClasses () {
   if (GArgs.CheckParm("-nomapinfoplayerclasses") != 0) return;
-  if (GArgs.CheckParm("-mapinfoplayerclasses") == 0) return;
+  //if (GArgs.CheckParm("-mapinfoplayerclasses") == 0) return;
   if (MapInfoPlayerClasses.length() == 0) return;
   GCon->Logf("setting up %d player class%s from mapinfo...", MapInfoPlayerClasses.length(), (MapInfoPlayerClasses.length() != 1 ? "es" : ""));
   GGameInfo->PlayerClasses.Clear();
