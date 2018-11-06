@@ -22,21 +22,19 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-struct VLockGroup
-{
-  TArray<VClass*>   AnyKeyList;
+struct VLockGroup {
+  TArray<VClass *> AnyKeyList;
 };
 
-struct VLockDef
-{
-  TArray<VLockGroup>  Locks;
-  VStr        Message;
-  VStr        RemoteMessage;
-  int         MapColour;
-  VName       LockedSound;
+
+struct VLockDef {
+  TArray<VLockGroup> Locks;
+  VStr Message;
+  VStr RemoteMessage;
+  int MapColour;
+  VName LockedSound;
 };
 
-void InitLockDefs();
-void ShutdownLockDefs();
-VLockDef *GetLockDef(int Lock);
+void InitLockDefs ();
+void ShutdownLockDefs ();
+VLockDef *GetLockDef (int Lock);
