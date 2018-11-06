@@ -2179,6 +2179,48 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         }
         return count;
       }
+
+    case ACSF_PlayActorSound:
+      GCon->Logf("ERROR: unimplemented ACSF function 'PlayActorSound'");
+      return 0;
+
+    // void PlaySound (int tid, str sound [, int channel [, fixed volume [, bool looping [, fixed attenuation [, bool local]]]]])
+    case ACSF_PlaySound:
+      {
+        //GCon->Logf("ERROR: unimplemented ACSF function 'PlaySound'");
+        VEntity *Ent = (args[0] ? EntityFromTID(args[0], Activator) : Activator);
+        if (Ent) {
+          VName name = GetName(args[1]);
+          if (name != NAME_None) {
+            int chan = (argCount > 2 ? args[2] : 4)&7;
+            float volume = (argCount > 3 ? (double)args[3]/(double)0x10000 : 1.0);
+            if (volume <= 0) return 0;
+            if (volume > 1) volume = 1;
+            bool looping = (argCount > 4 ? !!args[4] : false);
+            float attenuation = (argCount > 5 ? (double)args[5]/(double)0x10000 : 1.0);
+            bool local = (argCount > 6 ? !!args[6] : false);
+            if (local) attenuation = 0;
+            Ent->StartSound(name, chan, volume, attenuation, looping, local);
+          }
+        }
+        return 0;
+      }
+
+    // void StopSound (int tid, int channel);
+    case ACSF_StopSound:
+      {
+        VEntity *Ent = (args[0] ? EntityFromTID(args[0], Activator) : Activator);
+        if (Ent) {
+          int chan = (argCount > 1 ? args[1] : 4)&7;
+          Ent->StopSound(chan);
+        }
+        //GCon->Logf("ERROR: unimplemented ACSF function 'StopSound'");
+        return 0;
+      }
+
+    case ACSF_SoundVolume:
+      GCon->Logf("ERROR: unimplemented ACSF function 'SoundVolume'");
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -3845,7 +3887,6 @@ int VAcs::RunScript(float DeltaTime)
       {
         int argCount = *ip++;
         int funcIndex = READ_INT16(ip); ip += 2;
-
         int retval = CallFunction(argCount, funcIndex, sp-argCount);
         sp -= argCount-1;
         sp[-1] = retval;
