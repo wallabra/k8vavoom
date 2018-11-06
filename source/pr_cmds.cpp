@@ -400,15 +400,21 @@ VStr PF_FormatString () {
               break;
             case TYPE_Class:
             case TYPE_State:
-            case TYPE_Delegate:
+              if (params[pi].p) {
+                pbuf.putStr(((VMemberBase *)params[pi].p)->GetFullName(), width, toRight, zeroFill, (fspec == 'q'));
+              } else {
+                pbuf.putStr(VStr("(none)"), width, toRight, zeroFill);
+              }
+              break;
+            //case TYPE_Delegate:
             //case TYPE_Struct:
-            case TYPE_Array:
-            case TYPE_DynamicArray:
-            case TYPE_SliceArray:
+            //case TYPE_Array:
+            //case TYPE_DynamicArray:
+            //case TYPE_SliceArray:
             //case TYPE_Unknown:
             //case TYPE_Automatic:
-              pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
-              break;
+            //  pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
+            //  break;
             case TYPE_Vector:
               pbuf.putChar('(');
               pbuf.putFloat(params[pi].f);
