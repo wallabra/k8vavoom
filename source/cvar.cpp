@@ -413,10 +413,11 @@ void VCvar::SetCheating (bool new_state) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VCvar::CreateNew (const char *var_name, const VStr &ADefault, const VStr &AHelp, int AFlags) {
-  VCvar *cvar = FindVariable(var_name);
+void VCvar::CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags) {
+  if (var_name == NAME_None) return;
+  VCvar *cvar = FindVariable(*var_name);
   if (!cvar) {
-    new VCvar(var_name, ADefault, AHelp, AFlags);
+    new VCvar(*var_name, ADefault, AHelp, AFlags);
   } else {
     // delete old default value if necessary
     if (cvar->defstrOwned) delete[] const_cast<char*>(cvar->DefaultString);
@@ -592,6 +593,22 @@ vuint32 VCvar::countCVars () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+static int vcvcmp (const void *aa, const void *bb) {
+  const VCvar *a = *(const VCvar **)aa;
+  const VCvar *b = *(const VCvar **)bb;
+  if (a == b) return 0;
+  // mod vars should came last
+  if (a->isModVar()) {
+    if (!b->isModVar()) return 1;
+  } else if (b->isModVar()) {
+    if (!a->isModVar()) return -1;
+  }
+  return VStr::ICmp(a->GetName(), b->GetName());
+}
+}
+
+
 // contains `countCVars()` elements, must be `delete[]`d.
 // can return `nullptr`.
 VCvar **VCvar::getSortedList () {
@@ -614,6 +631,7 @@ VCvar **VCvar::getSortedList () {
   // sort it (yes, i know, bubble sort sux. idc.)
   if (count > 1) {
     // straight from wikipedia, lol
+    /*
     vuint32 n = count;
     do {
       vuint32 newn = 0;
@@ -627,6 +645,8 @@ VCvar **VCvar::getSortedList () {
       }
       n = newn;
     } while (n != 0);
+    */
+    qsort(list, count, sizeof(list[0]), &vcvcmp);
   }
 
   return list;
@@ -642,7 +662,17 @@ void VCvar::WriteVariablesToFile (FILE *f) {
   VCvar **list = getSortedList();
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
-    if (cvar->Flags&CVAR_Archive) fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue.quote());
+    if (cvar->Flags&CVAR_Archive) {
+      if (cvar->Flags&CVAR_FromMod) {
+        fprintf(f, "cvarinfovar");
+        if (cvar->Flags&CVAR_ServerInfo) fprintf(f, " server"); else fprintf(f, " user");
+        if (cvar->Flags&CVAR_Cheat) fprintf(f, " cheat");
+        if (cvar->Flags&CVAR_Latch) fprintf(f, " latch");
+        fprintf(f, " %s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
+      } else {
+        fprintf(f, "%s\t\t\"%s\"\n", cvar->Name, *cvar->StringValue.quote());
+      }
+    }
   }
   delete[] list;
   unguard;
@@ -684,6 +714,40 @@ COMMAND(WhatIs) {
     } else {
       GCon->Logf("Unknown cvar: '%s'", *(Args[1]));
     }
+  }
+  unguard;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// COMMAND cvarinfovar
+//
+// create temp variable from user mod
+COMMAND(CvarInfoVar) {
+  guard(COMMAND CvarInfoVar);
+  if (Args.Num() < 3) {
+    GCon->Logf("usage: cvarinfovar varname varvalue");
+  } else {
+    VStr vname = Args[Args.length()-2];
+    VStr vvalue = Args[Args.length()-1];
+    if (vname.length() == 0) return;
+    VCvar *cvar = VCvar::FindVariable(*vname);
+    if (cvar) {
+      // just set value
+      cvar->Set(vvalue);
+      return;
+    }
+    int flags = CVAR_FromMod|CVAR_Archive;
+    for (int f = 1; f < Args.length()-2; ++f) {
+           if (Args[f].ICmp("noarchive") == 0) flags &= ~CVAR_Archive;
+      else if (Args[f].ICmp("cheat") == 0) flags |= CVAR_Cheat;
+      else if (Args[f].ICmp("latch") == 0) flags |= CVAR_Latch;
+      else if (Args[f].ICmp("server") == 0) flags |= CVAR_ServerInfo;
+      else if (Args[f].ICmp("user") == 0) {}
+      else { GCon->Logf("invalid cvarinfo flag '%s'", *Args[f]); return; }
+    }
+    GCon->Logf("cvarinfo var '%s' (flags=0x%04x) val=\"%s\"", *vname, flags, *(vvalue.quote()));
+    VCvar::CreateNew(*vname, vvalue, "cvarinfo variable", flags);
   }
   unguard;
 }

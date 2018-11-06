@@ -550,6 +550,7 @@ bitenum {
   CVAR_ROM, // display only, cannot be set by user at all
   CVAR_CHEAT, // can not be changed if cheats are disabled
   CVAR_MODIFIED, // set each time the cvar is changed
+  CVAR_FROMMOD, // came from cvarinfo
 };
 
 native static final bool CvarExists (name Name); // is cvar exists?

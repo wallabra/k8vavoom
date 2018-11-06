@@ -32,6 +32,7 @@ enum {
   CVAR_Rom        = 0x0020, // Display only, cannot be set by user at all
   CVAR_Cheat      = 0x0040, // Can not be changed if cheats are disabled
   CVAR_Modified   = 0x0080, // Set each time the cvar is changed
+  CVAR_FromMod    = 0x0100, // This cvar came from cvarinfo
 };
 
 
@@ -60,6 +61,10 @@ public:
   void Set (const VStr &value);
   bool IsModified ();
 
+  inline int getFlags () const { return Flags; }
+
+  inline bool isModVar () const { return ((Flags&CVAR_FromMod) != 0); }
+
   inline bool asBool () const { return BoolValue; }
   inline int asInt () const { return IntValue; }
   inline float asFloat () const { return FloatValue; }
@@ -72,7 +77,7 @@ public:
   static void Shutdown ();
 
   static bool HasVar (const char *var_name);
-  static void CreateNew (const char *var_name, const VStr &ADefault, const VStr &AHelp, int AFlags);
+  static void CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags);
 
   static int GetInt (const char *var_name);
   static float GetFloat (const char *var_name);

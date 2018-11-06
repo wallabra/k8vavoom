@@ -101,7 +101,7 @@ void ParseCVarInfo () {
       par.SetCMode(true);
       par.SetEscape(true);
       for (;;) {
-        int flags = CVAR_ARCHIVE;
+        int flags = CVAR_FROMMOD|CVAR_ARCHIVE;
         if (par.Check("server")) {
           //writeln("*** CVAR: SERVER");
           flags |= CVAR_SERVERINFO;
@@ -153,8 +153,7 @@ void ParseCVarInfo () {
         }
         par.Expect(";");
         //print("CVAR: '%s'; fval=%s; sval=%s", vname, fval, sval);
-        /*if (!CvarExists(vname))*/
-        {
+        /*if (!CvarExists(vname))*/ {
           //print("NEW CVAR: '%s'", vname);
           if (isstr || iscolor) {
             CreateCvar(vname, sval, "cvarinfo string variable", flags);
