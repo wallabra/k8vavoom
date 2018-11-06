@@ -288,7 +288,7 @@ override void SetMenu(string Name)
     PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
     return;
   }
-  if (!stricmp(Name, "Options"))
+  if (!stricmp(Name, "Options") || !stricmp(Name, "OptionsMenu"))
   {
     PushMenuScreen(SpawnMenu(MenuScreenOptions));
     return;

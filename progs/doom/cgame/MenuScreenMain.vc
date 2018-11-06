@@ -51,7 +51,7 @@ override void CreateTitle () {
 override void CreateChoices () {
   CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
   CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer);
-  CreateSubMenuBigTextNamed("Options", 'Options');
+  CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText((!IsAnyDoom2 && !WadLumpPresent('e2m1') ? "Read This!" : "Help"), MenuScreenHelp);
 
   MenuBigTextButton btn = MenuBigTextButton(NewChild(MenuBigTextButton));
