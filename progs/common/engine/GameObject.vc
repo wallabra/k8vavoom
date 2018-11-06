@@ -364,6 +364,7 @@ enum {
   LNSPEC_CeilingMoveToValue,
 
   LNSPEC_GlassBreak = 49,
+  LNSPEC_ExtraFloorLightOnly = 50,
 
   LNSPEC_ScrollWall = 52,
   LNSPEC_LineSetTextureOffset,

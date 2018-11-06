@@ -1230,6 +1230,10 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
       CeilingMover::CEILEV_CrushRaiseAndStaySilA, Line);
     break;
 
+  case LNSPEC_ExtraFloorLightOnly:
+    print("Unknown action special %d aka 'ExtraFloor_LightOnly' (tag=%d; type=%d) not implemented", Special, Arg1, Arg2);
+    break;
+
   // Line specials only processed during level initialization
   // LNSPEC_ScrollTextureLeft:
   // LNSPEC_ScrollTextureRight:
@@ -1247,8 +1251,7 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
 
   default:
     //  Log everything else to know what needs to be implemented.
-    print("Unknown action special %d(%d, %d, %d, %d, %d)", Special,
-      Arg1, Arg2, Arg3, Arg4, Arg5);
+    print("Unknown action special %d(%d, %d, %d, %d, %d)", Special, Arg1, Arg2, Arg3, Arg4, Arg5);
     break;
   }
   return buttonSuccess;

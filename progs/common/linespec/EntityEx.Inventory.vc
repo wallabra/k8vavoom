@@ -58,11 +58,20 @@ void AddInventory(Inventory Item)
 
 void RemoveInventory(Inventory Item)
 {
+  if (!Item) return;
+
   //  Find previous item or owner itself, if it's the first item.
   EntityEx Prev = self;
-  while (Prev && Prev.Inventory != Item)
-  {
-    Prev = Prev.Inventory;
+  while (Prev && Prev.Inventory != Item) Prev = Prev.Inventory;
+
+  if (!Prev) {
+    print("Cannot remove '%C' from inventory of '%C': it is not there!", Item, self);
+    if (Item.Owner) {
+      if (Item.Owner != self) print(" OWNER: '%C'", Item.Owner); else print(" OWNER: SELF");
+      Item.DetachedFromOwner();
+      Item.Owner = none;
+    }
+    return;
   }
 
   //  Unlink and remove owner.
