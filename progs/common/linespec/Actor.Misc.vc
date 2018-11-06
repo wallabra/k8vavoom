@@ -99,7 +99,7 @@ final void A_LogInt(int num)
 
 final void A_ChangeVelocity(float x, float y, float z, optional int flags, optional int aptr)
 {
-  Entity tgt = DecorDoAAPtr("A_ChangeVelocity", aptr!optional);
+  Entity tgt = DecorDoAAPtr('A_ChangeVelocity', aptr!optional);
   if (!tgt) return;
 
   float vx = x, vy = y, vz = z;
@@ -132,7 +132,7 @@ final void A_ChangeVelocity(float x, float y, float z, optional int flags, optio
 //===========================================================================
 
 final void A_ScaleVelocity(float scale, optional int aptr) {
-  Entity tgt = DecorDoAAPtr("A_ScaleVelocity", aptr!optional);
+  Entity tgt = DecorDoAAPtr('A_ScaleVelocity', aptr!optional);
   if (!tgt) return;
   tgt.Velocity.x *= scale;
   tgt.Velocity.y *= scale;
@@ -594,7 +594,7 @@ final void A_SetPitchExt (float newa) {
 //          is used, instead. Default is false.
 //==========================================================================
 final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, optional bool usezero) {
-  Entity tgt = DecorDoAAPtr("A_SetScale", aptr!optional);
+  Entity tgt = DecorDoAAPtr('A_SetScale', aptr!optional);
   if (!tgt) return;
   tgt.ScaleX = scaleX;
   tgt.ScaleY = (usezero || scaleY != 0 ? scaleY : scaleX);

@@ -836,6 +836,7 @@ final float DistTo2(Entity Other)
   return Length(dir);
 }
 
+
 //==========================================================================
 //
 //  GetCentre
@@ -845,6 +846,105 @@ final float DistTo2(Entity Other)
 final TVec GetCentre()
 {
   return Origin + vector(0.0, 0.0, Height * 0.5 - FloorClip);
+}
+
+
+//==========================================================================
+//
+//  decoDoFlagActionSpecific
+//
+//  returns `true` if processed
+//
+//==========================================================================
+bool decoDoFlagActionSpecific (string flagname, out bool resvalue, optional bool newvalue) {
+  if (flagname) {
+    auto tgt = self;
+    if (stricmp(flagname, "Solid") == 0) { resvalue = tgt.bSolid; if (specified_newvalue) tgt.bSolid = newvalue; return true; }
+    if (stricmp(flagname, "NoSector") == 0) { resvalue = tgt.bNoSector; /*if (specified_newvalue) tgt.bNoSector = newvalue;*/ return true; }
+    if (stricmp(flagname, "NoBlockmap") == 0) { resvalue = tgt.bNoBlockmap; /*if (specified_newvalue) tgt.bNoBlockmap = newvalue;*/ return true; }
+    if (stricmp(flagname, "NoGravity") == 0) { resvalue = tgt.bNoGravity; if (specified_newvalue) tgt.bNoGravity = newvalue; return true; }
+    if (stricmp(flagname, "CanPass") == 0) { resvalue = tgt.bPassMobj; if (specified_newvalue) tgt.bPassMobj = newvalue; return true; }
+    //<flag_noclip name="NoClip" />
+    if (stricmp(flagname, "NoClip") == 0) { resvalue = !(tgt.bColideWithThings || tgt.bColideWithWorld); if (specified_newvalue) { tgt.bColideWithThings = newvalue; tgt.bColideWithWorld = newvalue; } return true; } //FIXME
+    if (stricmp(flagname, "DropOff") == 0) { resvalue = tgt.bDropOff; if (specified_newvalue) tgt.bDropOff = newvalue; return true; }
+    if (stricmp(flagname, "Float") == 0) { resvalue = tgt.bFloat; if (specified_newvalue) tgt.bFloat = newvalue; return true; }
+    if (stricmp(flagname, "Fly") == 0) { resvalue = tgt.bFly; if (specified_newvalue) tgt.bFly = newvalue; return true; }
+    if (stricmp(flagname, "Blasted") == 0) { resvalue = tgt.bBlasted; if (specified_newvalue) tgt.bBlasted = newvalue; return true; }
+    if (stricmp(flagname, "CantLeaveFloorPic") == 0) { resvalue = tgt.bCantLeaveFloorpic; if (specified_newvalue) tgt.bCantLeaveFloorpic = newvalue; return true; }
+    if (stricmp(flagname, "FloorClip") == 0) { resvalue = tgt.bFloorClip; if (specified_newvalue) tgt.bFloorClip = newvalue; return true; }
+    if (stricmp(flagname, "CeilingHugger") == 0) { resvalue = tgt.bIgnoreCeilingStep; if (specified_newvalue) tgt.bIgnoreCeilingStep = newvalue; return true; }
+    if (stricmp(flagname, "FloorHugger") == 0) { resvalue = tgt.bIgnoreFloorStep; if (specified_newvalue) tgt.bIgnoreFloorStep = newvalue; return true; }
+    if (stricmp(flagname, "Corpse") == 0) { resvalue = tgt.bCorpse; if (specified_newvalue) tgt.bCorpse = newvalue; return true; }
+    if (stricmp(flagname, "Invisible") == 0) { resvalue = tgt.bInvisible; if (specified_newvalue) tgt.bInvisible = newvalue; return true; }
+    if (stricmp(flagname, "Missile") == 0) { resvalue = tgt.bMissile; if (specified_newvalue) tgt.bMissile = newvalue; return true; }
+    if (stricmp(flagname, "DontOverlap") == 0) { resvalue = tgt.bDontOverlap; if (specified_newvalue) tgt.bDontOverlap = newvalue; return true; }
+    if (stricmp(flagname, "ActLikeBridge") == 0) { resvalue = tgt.bActLikeBridge; if (specified_newvalue) tgt.bActLikeBridge = newvalue; return true; }
+    if (stricmp(flagname, "NoDropOff") == 0) { resvalue = tgt.bNoDropOff; if (specified_newvalue) tgt.bNoDropOff = newvalue; return true; }
+    if (stricmp(flagname, "Bright") == 0) { resvalue = tgt.bBright; if (specified_newvalue) tgt.bBright = newvalue; return true; }
+    if (stricmp(flagname, "StepMissile") == 0) { resvalue = tgt.bStepMissile; if (specified_newvalue) tgt.bStepMissile = newvalue; return true; }
+    // VaVoom flags
+    if (stricmp(flagname, "CanJump") == 0) { resvalue = tgt.bCanJump; if (specified_newvalue) tgt.bCanJump = newvalue; return true; }
+
+    //bool bCheckLineBlocking;
+    //bool bCheckLineBlockMonsters;
+    //bool bAvoidingDropoff;  // used to move monsters away from dropoffs
+    //bool bOnMobj;     // mobj is resting on top of another mobj
+    //bool bFullBright;   // make current state full bright
+  }
+  resvalue = false;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  decoDoFlagAction
+//
+//==========================================================================
+/*
+static final bool decoDoFlagAction (string flagname, Entity tgt, optional bool newvalue) {
+  if (!tgt || !flagname) return false;
+
+  bool res = false;
+  if (tgt.decoDoFlagActionSpecific(flagname, out res, newvalue!optional)) return res;
+
+  print("DECORATE: checking unknown flag '%s'", flagname);
+  return 0;
+}
+*/
+
+
+//==========================================================================
+//
+//  decoDoCheckFlag
+//
+//==========================================================================
+static final bool decoDoCheckFlag (string flagname, Entity tgt) {
+  //return decoDoFlagAction(flagname, tgt);
+  if (!tgt || !flagname) return false;
+
+  bool res = false;
+  if (tgt.decoDoFlagActionSpecific(flagname, out res)) return res;
+
+  print("DECORATE: checking unknown flag '%s'", flagname);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  decoDoSetFlag
+//
+//==========================================================================
+static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue) {
+  //decoDoFlagAction(flagname, tgt, newvalue);
+  if (!tgt || !flagname) return false;
+
+  bool res = false;
+  if (tgt.decoDoFlagActionSpecific(flagname, out res, newvalue)) return true;
+
+  print("DECORATE: setting unknown flag '%s'", flagname);
+  return false;
 }
 
 

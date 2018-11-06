@@ -1,0 +1,287 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+//==========================================================================
+//
+//  decoDoFlagActionSpecific
+//
+//  returns `true` if processed
+//
+//==========================================================================
+override bool decoDoFlagActionSpecific (string flagname, out bool resvalue, optional bool newvalue) {
+  if (::decoDoFlagActionSpecific(flagname, resvalue, newvalue!optional)) return true;
+
+  if (flagname) {
+    EntityEx etgt = self;
+    /*if (etgt)*/ {
+      if (stricmp(flagname, "Shootable") == 0) { resvalue = etgt.bShootable; if (specified_newvalue) etgt.bShootable = newvalue; return true; }
+      if (stricmp(flagname, "WindThrust") == 0) { resvalue = etgt.bWindThrust; if (specified_newvalue) etgt.bWindThrust = newvalue; return true; }
+      if (stricmp(flagname, "Pushable") == 0) { resvalue = etgt.bPushable; if (specified_newvalue) etgt.bPushable = newvalue; return true; }
+      if (stricmp(flagname, "DontFall") == 0) { resvalue = etgt.bNoGravKill; if (specified_newvalue) etgt.bNoGravKill = newvalue; return true; }
+      if (stricmp(flagname, "MoveWithSector") == 0) { resvalue = etgt.bMoveWithSector; if (specified_newvalue) etgt.bMoveWithSector = newvalue; return true; }
+      if (stricmp(flagname, "NoLiftDrop") == 0) { resvalue = etgt.bNoLiftDrop; if (specified_newvalue) etgt.bNoLiftDrop = newvalue; return true; }
+      if (stricmp(flagname, "SlidesOnWalls") == 0) { resvalue = etgt.bSlide; if (specified_newvalue) etgt.bSlide = newvalue; return true; }
+      if (stricmp(flagname, "NoTrigger") == 0) { resvalue = etgt.bNoTrigger; if (specified_newvalue) etgt.bNoTrigger = newvalue; return true; }
+      if (stricmp(flagname, "BlockedBySolidActors") == 0) { resvalue = etgt.bBlockedBySolidActors; if (specified_newvalue) etgt.bBlockedBySolidActors = newvalue; return true; }
+      if (stricmp(flagname, "AvoidsDropOffs") == 0) { resvalue = etgt.bAvoidsDropOffs; if (specified_newvalue) etgt.bAvoidsDropOffs = newvalue; return true; }
+      if (stricmp(flagname, "NotAutoAimed") == 0) { resvalue = etgt.bCantAutoAim; if (specified_newvalue) etgt.bCantAutoAim = newvalue; return true; }
+      // Behavior
+      if (stricmp(flagname, "Ambush") == 0) { resvalue = etgt.bAmbush; if (specified_newvalue) etgt.bAmbush = newvalue; return true; }
+      if (stricmp(flagname, "Boss") == 0) { resvalue = etgt.bBoss; if (specified_newvalue) etgt.bBoss = newvalue; return true; }
+      if (stricmp(flagname, "NoSplashAlert") == 0) { resvalue = etgt.bNoSplashAlert; if (specified_newvalue) etgt.bNoSplashAlert = newvalue; return true; }
+      if (stricmp(flagname, "LookAllAround") == 0) { resvalue = etgt.bLookAllAround; if (specified_newvalue) etgt.bLookAllAround = newvalue; return true; }
+      if (stricmp(flagname, "StandStill") == 0) { resvalue = etgt.bStanding; if (specified_newvalue) etgt.bStanding = newvalue; return true; }
+      if (stricmp(flagname, "QuickToRetaliate") == 0) { resvalue = etgt.bNoGrudge; if (specified_newvalue) etgt.bNoGrudge = newvalue; return true; }
+      if (stricmp(flagname, "Dormant") == 0) { resvalue = etgt.bDormant; if (specified_newvalue) etgt.bDormant = newvalue; return true; }
+      if (stricmp(flagname, "Friendly") == 0) { resvalue = etgt.bFriendly; if (specified_newvalue) etgt.bFriendly = newvalue; return true; }
+      if (stricmp(flagname, "MissileMore") == 0) { resvalue = etgt.bTriggerHappy; if (specified_newvalue) etgt.bTriggerHappy = newvalue; return true; }
+      if (stricmp(flagname, "MissileEvenMore") == 0) { resvalue = etgt.bMissileEvenMore; if (specified_newvalue) etgt.bMissileEvenMore = newvalue; return true; }
+      if (stricmp(flagname, "NoTargetSwitch") == 0) { resvalue = etgt.bNoTargetSwitch; if (specified_newvalue) etgt.bNoTargetSwitch = newvalue; return true; }
+      if (stricmp(flagname, "NoVerticalMeleeRange") == 0) { resvalue = etgt.bNoVerticalMeleeRange; if (specified_newvalue) etgt.bNoVerticalMeleeRange = newvalue; return true; }
+      if (stricmp(flagname, "AlwaysRespawn") == 0) { resvalue = etgt.bAlwaysRespawn; if (specified_newvalue) etgt.bAlwaysRespawn = newvalue; return true; }
+      if (stricmp(flagname, "NeverRespawn") == 0) { resvalue = etgt.bNeverRespawn; if (specified_newvalue) etgt.bNeverRespawn = newvalue; return true; }
+      // (In)Abilities
+      if (stricmp(flagname, "CannotPush") == 0) { resvalue = etgt.bCannotPush; if (specified_newvalue) etgt.bCannotPush = newvalue; return true; }
+      if (stricmp(flagname, "NoTeleport") == 0) { resvalue = etgt.bNoTeleport; if (specified_newvalue) etgt.bNoTeleport = newvalue; return true; }
+      if (stricmp(flagname, "ActivateImpact") == 0) { resvalue = etgt.bActivateImpact; if (specified_newvalue) etgt.bActivateImpact = newvalue; return true; }
+      if (stricmp(flagname, "CanPushWalls") == 0) { resvalue = etgt.bActivatePushWall; if (specified_newvalue) etgt.bActivatePushWall = newvalue; return true; }
+      if (stricmp(flagname, "CanUseWalls") == 0) { resvalue = etgt.bCanUseWalls; if (specified_newvalue) etgt.bCanUseWalls = newvalue; return true; }
+      if (stricmp(flagname, "ActivateMCross") == 0) { resvalue = etgt.bActivateMCross; if (specified_newvalue) etgt.bActivateMCross = newvalue; return true; }
+      if (stricmp(flagname, "ActivatePCross") == 0) { resvalue = etgt.bActivatePCross; if (specified_newvalue) etgt.bActivatePCross = newvalue; return true; }
+      if (stricmp(flagname, "ThruGhost") == 0) { resvalue = etgt.bThruGhost; if (specified_newvalue) etgt.bThruGhost = newvalue; return true; }
+      if (stricmp(flagname, "ThruActors") == 0) { resvalue = etgt.bThruActors; if (specified_newvalue) etgt.bThruActors = newvalue; return true; }
+      if (stricmp(flagname, "ThruSpecies") == 0) { resvalue = etgt.bThruSpecies; if (specified_newvalue) etgt.bThruSpecies = newvalue; return true; }
+      if (stricmp(flagname, "MThruSpecies") == 0) { resvalue = etgt.bMThruSpecies; if (specified_newvalue) etgt.bMThruSpecies = newvalue; return true; }
+      if (stricmp(flagname, "Spectral") == 0) { resvalue = etgt.bSpectral; if (specified_newvalue) etgt.bSpectral = newvalue; return true; }
+      if (stricmp(flagname, "Frightened") == 0) { resvalue = etgt.bFrightened; if (specified_newvalue) etgt.bFrightened = newvalue; return true; }
+      if (stricmp(flagname, "NoTarget") == 0) { resvalue = etgt.bNeverTarget; if (specified_newvalue) etgt.bNeverTarget = newvalue; return true; }
+      if (stricmp(flagname, "NoInfighting") == 0) { resvalue = etgt.bNoInfighting; if (specified_newvalue) etgt.bNoInfighting = newvalue; return true; }
+      //<flag_unsupported name="NoTimeFreeze" />
+      if (stricmp(flagname, "NoFear") == 0) { resvalue = etgt.bNoFear; if (specified_newvalue) etgt.bNoFear = newvalue; return true; }
+      if (stricmp(flagname, "CantSeek") == 0) { resvalue = etgt.bCantSeek; if (specified_newvalue) etgt.bCantSeek = newvalue; return true; }
+      if (stricmp(flagname, "Telestomp") == 0) { resvalue = etgt.bTelestomp; if (specified_newvalue) etgt.bTelestomp = newvalue; return true; }
+      if (stricmp(flagname, "StayMorphed") == 0) { resvalue = etgt.bStayMorphed; if (specified_newvalue) etgt.bStayMorphed = newvalue; return true; }
+      if (stricmp(flagname, "CanBlast") == 0) { resvalue = etgt.bCanBlast; if (specified_newvalue) etgt.bCanBlast = newvalue; return true; }
+      if (stricmp(flagname, "NoBlockMonst") == 0) { resvalue = etgt.bNoBlockMonst; if (specified_newvalue) etgt.bNoBlockMonst = newvalue; return true; }
+      if (stricmp(flagname, "CanBounceWater") == 0) { resvalue = etgt.bCanBounceWater; if (specified_newvalue) etgt.bCanBounceWater = newvalue; return true; }
+      // Defenses
+      if (stricmp(flagname, "Invulnerable") == 0) { resvalue = etgt.bInvulnerable; if (specified_newvalue) etgt.bInvulnerable = newvalue; return true; }
+      if (stricmp(flagname, "Reflective") == 0) { resvalue = etgt.bReflective; if (specified_newvalue) etgt.bReflective = newvalue; return true; }
+      if (stricmp(flagname, "ShieldReflect") == 0) { resvalue = etgt.bShieldReflect; if (specified_newvalue) etgt.bShieldReflect = newvalue; return true; }
+      if (stricmp(flagname, "Deflect") == 0) { resvalue = etgt.bDeflect; if (specified_newvalue) etgt.bDeflect = newvalue; return true; }
+      if (stricmp(flagname, "NoRadiusDmg") == 0) { resvalue = etgt.bNoRadiusDamage; if (specified_newvalue) etgt.bNoRadiusDamage = newvalue; return true; }
+      if (stricmp(flagname, "DontBlast") == 0) { resvalue = etgt.bDontBlast; if (specified_newvalue) etgt.bDontBlast = newvalue; return true; }
+      if (stricmp(flagname, "Ghost") == 0) { resvalue = etgt.bGhost; if (specified_newvalue) etgt.bGhost = newvalue; return true; }
+      if (stricmp(flagname, "DontMorph") == 0) { resvalue = etgt.bNoMorph; if (specified_newvalue) etgt.bNoMorph = newvalue; return true; }
+      if (stricmp(flagname, "DontSquash") == 0) { resvalue = etgt.bDontSquash; if (specified_newvalue) etgt.bDontSquash = newvalue; return true; }
+      if (stricmp(flagname, "NoTeleOther") == 0) { resvalue = etgt.bNoTeleOther; if (specified_newvalue) etgt.bNoTeleOther = newvalue; return true; }
+      if (stricmp(flagname, "DontHarmClass") == 0) { resvalue = etgt.bDontHurtClass; if (specified_newvalue) etgt.bDontHurtClass = newvalue; return true; }
+      if (stricmp(flagname, "DontHarmSpecies") == 0) { resvalue = etgt.bDontHurtSpecies; if (specified_newvalue) etgt.bDontHurtSpecies = newvalue; return true; }
+      if (stricmp(flagname, "NoDamage") == 0) { resvalue = etgt.bNoDamage; if (specified_newvalue) etgt.bNoDamage = newvalue; return true; }
+      if (stricmp(flagname, "DontRip") == 0) { resvalue = etgt.bDontRip; if (specified_newvalue) etgt.bDontRip = newvalue; return true; }
+      if (stricmp(flagname, "NoTelefrag") == 0) { resvalue = etgt.bNoTeleFrag; if (specified_newvalue) etgt.bNoTeleFrag = newvalue; return true; }
+      if (stricmp(flagname, "NoTimeFreeze") == 0) { resvalue = etgt.bNoTimeFreeze; if (specified_newvalue) etgt.bNoTimeFreeze = newvalue; return true; }
+      // Appearance and sound
+      if (stricmp(flagname, "Shadow") == 0) { resvalue = etgt.bShadow; if (specified_newvalue) etgt.bShadow = newvalue; return true; }
+      if (stricmp(flagname, "NoBlood") == 0) { resvalue = etgt.bNoBlood; if (specified_newvalue) etgt.bNoBlood = newvalue; return true; }
+      if (stricmp(flagname, "NoBloodDecals") == 0) { resvalue = etgt.bNoBloodDecals; if (specified_newvalue) etgt.bNoBloodDecals = newvalue; return true; }
+      if (stricmp(flagname, "Stealth") == 0) { resvalue = etgt.bStealth; if (specified_newvalue) etgt.bStealth = newvalue; return true; }
+      if (stricmp(flagname, "SpawnFloat") == 0) { resvalue = etgt.bSpawnFloat; if (specified_newvalue) etgt.bSpawnFloat = newvalue; return true; }
+      if (stricmp(flagname, "SpawnCeiling") == 0) { resvalue = etgt.bSpawnCeiling; if (specified_newvalue) etgt.bSpawnCeiling = newvalue; return true; }
+      if (stricmp(flagname, "FloatBob") == 0) { resvalue = etgt.bFloatBob; if (specified_newvalue) etgt.bFloatBob = newvalue; return true; }
+      if (stricmp(flagname, "NoIceDeath") == 0) { resvalue = etgt.bNoIceDeath; if (specified_newvalue) etgt.bNoIceDeath = newvalue; return true; }
+      if (stricmp(flagname, "DontGib") == 0) { resvalue = etgt.bDontGib; if (specified_newvalue) etgt.bDontGib = newvalue; return true; }
+      if (stricmp(flagname, "DontSplash") == 0) { resvalue = etgt.bNoSplash; if (specified_newvalue) etgt.bNoSplash = newvalue; return true; }
+      //<flag_unsupported name="FixMapThingPos" />
+      if (stricmp(flagname, "FullVolActive") == 0) { resvalue = etgt.bFullVolActive; if (specified_newvalue) etgt.bFullVolActive = newvalue; return true; }
+      if (stricmp(flagname, "FullVolDeath") == 0) { resvalue = etgt.bFullVolDeath; if (specified_newvalue) etgt.bFullVolDeath = newvalue; return true; }
+      if (stricmp(flagname, "NoWallBounceSnd") == 0) { resvalue = etgt.bNoWallBounceSnd; if (specified_newvalue) etgt.bNoWallBounceSnd = newvalue; return true; }
+      if (stricmp(flagname, "VisibilityPulse") == 0) { resvalue = etgt.bVisibilityPulse; if (specified_newvalue) etgt.bVisibilityPulse = newvalue; return true; }
+      if (stricmp(flagname, "RocketTrail") == 0) { resvalue = etgt.bLeaveTrail; if (specified_newvalue) etgt.bLeaveTrail = newvalue; return true; }
+      if (stricmp(flagname, "GrenadeTrail") == 0) { resvalue = etgt.bLeaveTrail2; if (specified_newvalue) etgt.bLeaveTrail2 = newvalue; return true; }
+      //<flag_unsupported name="NoSkin" />
+      if (stricmp(flagname, "DontTranslate") == 0) { resvalue = etgt.bDontTranslate; if (specified_newvalue) etgt.bDontTranslate = newvalue; return true; }
+      if (stricmp(flagname, "NoPain") == 0) { resvalue = etgt.bNoPain; if (specified_newvalue) etgt.bNoPain = newvalue; return true; }
+      //<flag_unsupported name="ForceYBillboard" />
+      //<flag_unsupported name="ForceXYBillboard" />
+      // Projectile
+      if (stricmp(flagname, "Ripper") == 0) { resvalue = etgt.bRip; if (specified_newvalue) etgt.bRip = newvalue; return true; }
+      if (stricmp(flagname, "NoBossRip") == 0) { resvalue = etgt.bNoBossRip; if (specified_newvalue) etgt.bNoBossRip = newvalue; return true; }
+      if (stricmp(flagname, "NoDamageThrust") == 0) { resvalue = etgt.bNoDamageThrust; if (specified_newvalue) etgt.bNoDamageThrust = newvalue; return true; }
+      if (stricmp(flagname, "DontReflect") == 0) { resvalue = etgt.bDontReflect; if (specified_newvalue) etgt.bDontReflect = newvalue; return true; }
+      if (stricmp(flagname, "BloodlessImpact") == 0) { resvalue = etgt.bBloodlessImpact; if (specified_newvalue) etgt.bBloodlessImpact = newvalue; return true; }
+      if (stricmp(flagname, "BloodSplatter") == 0) { resvalue = etgt.bBloodSplatter; if (specified_newvalue) etgt.bBloodSplatter = newvalue; return true; }
+      if (stricmp(flagname, "FoilInvul") == 0) { resvalue = etgt.bDamageInvulnerable; if (specified_newvalue) etgt.bDamageInvulnerable = newvalue; return true; }
+      if (stricmp(flagname, "SeekerMissile") == 0) { resvalue = etgt.bSeekerMissile; if (specified_newvalue) etgt.bSeekerMissile = newvalue; return true; }
+      if (stricmp(flagname, "ScreenSeeker") == 0) { resvalue = etgt.bScreenSeeker; if (specified_newvalue) etgt.bScreenSeeker = newvalue; return true; }
+      if (stricmp(flagname, "SkyExplode") == 0) { resvalue = etgt.bExplodeOnSky; if (specified_newvalue) etgt.bExplodeOnSky = newvalue; return true; }
+      if (stricmp(flagname, "NoExplodeFloor") == 0) { resvalue = etgt.bNoExplodeFloor; if (specified_newvalue) etgt.bNoExplodeFloor = newvalue; return true; }
+      if (stricmp(flagname, "StrifeDamage") == 0) { resvalue = etgt.bStrifeDamage; if (specified_newvalue) etgt.bStrifeDamage = newvalue; return true; }
+      if (stricmp(flagname, "ExtremeDeath") == 0) { resvalue = etgt.bExtremeDeath; if (specified_newvalue) etgt.bExtremeDeath = newvalue; return true; }
+      if (stricmp(flagname, "NoExtremeDeath") == 0) { resvalue = etgt.bNoExtremeDeath; if (specified_newvalue) etgt.bNoExtremeDeath = newvalue; return true; }
+      if (stricmp(flagname, "DehExplosion") == 0) { resvalue = etgt.bDehExplosion; if (specified_newvalue) etgt.bDehExplosion = newvalue; return true; }
+      if (stricmp(flagname, "PierceArmor") == 0) { resvalue = etgt.bPierceArmor; if (specified_newvalue) etgt.bPierceArmor = newvalue; return true; }
+      if (stricmp(flagname, "ForceRadiusDmg") == 0) { resvalue = etgt.bForceRadiusDmg; if (specified_newvalue) etgt.bForceRadiusDmg = newvalue; return true; }
+      if (stricmp(flagname, "SpawnSoundSource") == 0) { resvalue = etgt.bSpawnSoundSource; if (specified_newvalue) etgt.bSpawnSoundSource = newvalue; return true; }
+      if (stricmp(flagname, "Painless") == 0) { resvalue = etgt.bPainless; if (specified_newvalue) etgt.bPainless = newvalue; return true; }
+      if (stricmp(flagname, "ForcePain") == 0) { resvalue = etgt.bForcePain; if (specified_newvalue) etgt.bForcePain = newvalue; return true; }
+      if (stricmp(flagname, "DontSeekInvisible") == 0) { resvalue = etgt.bDontSeekInvisible; if (specified_newvalue) etgt.bDontSeekInvisible = newvalue; return true; }
+      if (stricmp(flagname, "Randomize") == 0) { resvalue = etgt.bRandomise; if (specified_newvalue) etgt.bRandomise = newvalue; return true; }
+      // Bouncing
+      if (stricmp(flagname, "BounceOnWalls") == 0) { resvalue = etgt.bBounceWalls; if (specified_newvalue) etgt.bBounceWalls = newvalue; return true; }
+      if (stricmp(flagname, "BounceOnFloors") == 0) { resvalue = etgt.bBounceFloors; if (specified_newvalue) etgt.bBounceFloors = newvalue; return true; }
+      if (stricmp(flagname, "BounceOnCeilings") == 0) { resvalue = etgt.bBounceCeilings; if (specified_newvalue) etgt.bBounceCeilings = newvalue; return true; }
+      if (stricmp(flagname, "AllowBounceOnActors") == 0) { resvalue = etgt.bBounceOnAllActors; if (specified_newvalue) etgt.bBounceOnAllActors = newvalue; return true; }
+      if (stricmp(flagname, "BounceAutoOff") == 0) { resvalue = etgt.bBounceAutoOff; if (specified_newvalue) etgt.bBounceAutoOff = newvalue; return true; }
+      if (stricmp(flagname, "BounceLikeHeretic") == 0) { resvalue = etgt.bBounceLikeHeretic; if (specified_newvalue) etgt.bBounceLikeHeretic = newvalue; return true; }
+      if (stricmp(flagname, "BounceOnActors") == 0) { resvalue = etgt.bBounceOnActors; if (specified_newvalue) etgt.bBounceOnActors = newvalue; return true; }
+      if (stricmp(flagname, "NoWallBounceSnd") == 0) { resvalue = etgt.bNoWallBounceSnd; if (specified_newvalue) etgt.bNoWallBounceSnd = newvalue; return true; }
+      if (stricmp(flagname, "NoBounceSound") == 0) { resvalue = etgt.bNoBounceSound; if (specified_newvalue) etgt.bNoBounceSound = newvalue; return true; }
+      if (stricmp(flagname, "ExplodeOnWater") == 0) { resvalue = etgt.bExplodeOnWater; if (specified_newvalue) etgt.bExplodeOnWater = newvalue; return true; }
+      if (stricmp(flagname, "CanBounceOnWater") == 0) { resvalue = etgt.bCanBounceWater; if (specified_newvalue) etgt.bCanBounceWater = newvalue; return true; }
+      //<flag_unsupported name="MBFBouncer" />
+      // Miscellaneous
+      if (stricmp(flagname, "Dropped") == 0) { resvalue = etgt.bDropped; if (specified_newvalue) etgt.bDropped = newvalue; return true; }
+      if (stricmp(flagname, "IsMonster") == 0) { resvalue = etgt.bMonster; if (specified_newvalue) etgt.bMonster = newvalue; return true; }
+      if (stricmp(flagname, "CountKill") == 0) { resvalue = etgt.bCountKill; if (specified_newvalue) etgt.bCountKill = newvalue; return true; }
+      if (stricmp(flagname, "CountItem") == 0) { resvalue = etgt.bCountItem; if (specified_newvalue) etgt.bCountItem = newvalue; return true; }
+      if (stricmp(flagname, "NotDMatch") == 0) { resvalue = etgt.bNoDeathmatch; if (specified_newvalue) etgt.bNoDeathmatch = newvalue; return true; }
+      if (stricmp(flagname, "NonShootable") == 0) { resvalue = etgt.bNonShootable; if (specified_newvalue) etgt.bNonShootable = newvalue; return true; }
+      if (stricmp(flagname, "PuffOnActors") == 0) { resvalue = etgt.bPuffOnActors; if (specified_newvalue) etgt.bPuffOnActors = newvalue; return true; }
+      if (stricmp(flagname, "AllowParticles") == 0) { resvalue = etgt.bPuffParticles; if (specified_newvalue) etgt.bPuffParticles = newvalue; return true; }
+      if (stricmp(flagname, "AlwaysPuff") == 0) { resvalue = etgt.bAlwaysPuff; if (specified_newvalue) etgt.bAlwaysPuff = newvalue; return true; }
+      if (stricmp(flagname, "PuffGetsOwner") == 0) { resvalue = etgt.bPuffGetsOwner; if (specified_newvalue) etgt.bPuffGetsOwner = newvalue; return true; }
+      if (stricmp(flagname, "Synchronized") == 0) { resvalue = etgt.bSynchronised; if (specified_newvalue) etgt.bSynchronised = newvalue; return true; }
+      if (stricmp(flagname, "Faster") == 0) { resvalue = etgt.bFaster; if (specified_newvalue) etgt.bFaster = newvalue; return true; }
+      if (stricmp(flagname, "AlwaysFast") == 0) { resvalue = etgt.bAlwaysFast; if (specified_newvalue) etgt.bAlwaysFast = newvalue; return true; }
+      if (stricmp(flagname, "NeverFast") == 0) { resvalue = etgt.bNeverFast; if (specified_newvalue) etgt.bNeverFast = newvalue; return true; }
+      if (stricmp(flagname, "FastMelee") == 0) { resvalue = etgt.bFastMelee; if (specified_newvalue) etgt.bFastMelee = newvalue; return true; }
+      //<flag_unsupported name="OldRadiusDmg" />
+      if (stricmp(flagname, "UseSpecial") == 0) { resvalue = etgt.bUseSpecial; if (specified_newvalue) etgt.bUseSpecial = newvalue; return true; }
+      //<flag_unsupported name="BumpSpecial" />
+      if (stricmp(flagname, "BossDeath") == 0) { resvalue = etgt.bBossDeath; if (specified_newvalue) etgt.bBossDeath = newvalue; return true; }
+      if (stricmp(flagname, "NoInteraction") == 0) { resvalue = etgt.bNoInteraction; if (specified_newvalue) etgt.bNoInteraction = newvalue; return true; }
+      if (stricmp(flagname, "PickUp") == 0) { resvalue = etgt.bPickUp; if (specified_newvalue) etgt.bPickUp = newvalue; return true; }
+      if (stricmp(flagname, "Touchy") == 0) { resvalue = etgt.bTouchy; if (specified_newvalue) etgt.bTouchy = newvalue; return true; }
+      //<flag_unsupported name="Vulnerable" />
+      // Limited use
+      if (stricmp(flagname, "SeesDaggers") == 0) { resvalue = etgt.bSeesDaggers; if (specified_newvalue) etgt.bSeesDaggers = newvalue; return true; }
+      if (stricmp(flagname, "InCombat") == 0) { resvalue = etgt.bInCombat; if (specified_newvalue) etgt.bInCombat = newvalue; return true; }
+      if (stricmp(flagname, "IceCorpse") == 0) { resvalue = etgt.bIceCorpse; if (specified_newvalue) etgt.bIceCorpse = newvalue; return true; }
+      if (stricmp(flagname, "JustHit") == 0) { resvalue = etgt.bJustHit; if (specified_newvalue) etgt.bJustHit = newvalue; return true; }
+      if (stricmp(flagname, "JustAttacked") == 0) { resvalue = etgt.bJustAttacked; if (specified_newvalue) etgt.bJustAttacked = newvalue; return true; }
+      if (stricmp(flagname, "Teleport") == 0) { resvalue = etgt.bTeleport; if (specified_newvalue) etgt.bTeleport = newvalue; return true; }
+      if (stricmp(flagname, "NeverRespawn") == 0) { resvalue = etgt.bNeverRespawn; if (specified_newvalue) etgt.bNeverRespawn = newvalue; return true; }
+      if (stricmp(flagname, "ExploCount") == 0) { resvalue = etgt.bExploCount; if (specified_newvalue) etgt.bExploCount = newvalue; return true; }
+    /*
+      <!-- Deprecated Flags -->
+      <flag_float name="LowGravity" property="Gravity" true_value="0.125" false_value="1.0" />
+      <flag_float name="QuarterGravity" property="Gravity" true_value="0.25" false_value="1.0" />
+      <flag_float name="LongMeleeRange" property="MissileMinRange" true_value="192.0" false_value="0.0" />
+      <flag_float name="ShortMissileRange" property="MissileMaxRange" true_value="1000.0" false_value="0.0" />
+    */
+      if (stricmp(flagname, "FireResist") == 0) { resvalue = etgt.bFireResist; if (specified_newvalue) etgt.bFireResist = newvalue; return true; }
+      if (stricmp(flagname, "DontHurtSpecies") == 0) { resvalue = etgt.bDontHurtClass; if (specified_newvalue) etgt.bDontHurtClass = newvalue; return true; } //<!-- Old flag name -->
+    /*
+      <flag_name name="FireDamage" property="DamageType" true_value="Fire" false_value="None" />
+      <flag_name name="IceDamage" property="DamageType" true_value="Ice" false_value="None" />
+      <flag_byte name="DoomBounce" property="BounceType" true_value="1" false_value="0" />
+      <flag_byte name="HereticBounce" property="BounceType" true_value="2" false_value="0" />
+      <flag_byte name="HexenBounce" property="BounceType" true_value="3" false_value="0" />
+      <!-- Vavoom specific -->
+      if (stricmp(flagname, "InFloat") == 0) { if (specified_newvalue) etgt.bInFloat = newvalue; return etgt.bInFloat; }
+      if (stricmp(flagname, "SkullFly") == 0) { if (specified_newvalue) etgt.bSkullFly = newvalue; return etgt.bSkullFly; }
+      if (stricmp(flagname, "LowSpectralResist") == 0) { if (specified_newvalue) etgt.bLowSpectralResist = newvalue; return etgt.bLowSpectralResist; }
+      <flag_name name="SpectralLow" property="DamageType" true_value="SpectralLow" false_value="None" />
+      if (stricmp(flagname, "FallingFriction") == 0) { if (specified_newvalue) etgt.bFallingFriction = newvalue; return etgt.bFallingFriction; }
+      if (stricmp(flagname, "CantAutoAim") == 0) { if (specified_newvalue) etgt.bCantAutoAim = newvalue; return etgt.bCantAutoAim; }
+      if (stricmp(flagname, "JumpDown") == 0) { if (specified_newvalue) etgt.bJumpDown = newvalue; return etgt.bJumpDown; }
+      <!-- SkullTag Specific flags (useless) -->
+      <flag_unsupported name="ScorePillar" />
+      <flag_unsupported name="AllowClientSpawn" />
+      <flag_unsupported name="ClientSideOnly" />
+      <flag_unsupported name="NoNetID" />
+      <flag_unsupported name="BlueTeam" />
+      <flag_unsupported name="RedTeam" />
+      <flag_unsupported name="Node" />
+      <flag_unsupported name="BaseHealth" />
+      <flag_unsupported name="SuperHealth" />
+      <flag_unsupported name="BaseArmor" />
+      <flag_unsupported name="SuperArmor" />
+      <flag_unsupported name="ExplodeOnDeath" />
+      <prop_int_unsupported name="LimitedToTeam" />
+      <prop_int_unsupported name="VisibleToTeam" />
+      <prop_int_unsupported name="LimitedToPlayerClass" />
+      <flag_unsupported name="RelativeToFloor" />
+    */
+    }
+
+    auto itgt = Inventory(/*tgt*/self);
+    if (itgt) {
+      if (stricmp(flagname, "Quiet") == 0) { resvalue = itgt.bQuiet; if (specified_newvalue) itgt.bQuiet = newvalue; return true; }
+      if (stricmp(flagname, "AutoActivate") == 0) { resvalue = itgt.bAutoActivate; if (specified_newvalue) itgt.bAutoActivate = newvalue; return true; }
+      if (stricmp(flagname, "Undroppable") == 0) { resvalue = itgt.bUndroppable; if (specified_newvalue) itgt.bUndroppable = newvalue; return true; }
+      if (stricmp(flagname, "InvBar") == 0) { resvalue = itgt.bInvBar; if (specified_newvalue) itgt.bInvBar = newvalue; return true; }
+      if (stricmp(flagname, "HubPower") == 0) { resvalue = itgt.bHubPower; if (specified_newvalue) itgt.bHubPower = newvalue; return true; }
+      //<flag_unsupported name="PersistentPower" />
+      if (stricmp(flagname, "InterHubStrip") == 0) { resvalue = itgt.bInterHubStrip; if (specified_newvalue) itgt.bInterHubStrip = newvalue; return true; }
+      //<flag_class name="PickupFlash" property="PickupFlashType" true_value="PickupFlash" false_value="None" />
+      if (stricmp(flagname, "AlwaysPickup") == 0) { resvalue = itgt.bAlwaysPickup; if (specified_newvalue) itgt.bAlwaysPickup = newvalue; return true; }
+      if (stricmp(flagname, "FancyPickupSound") == 0) { resvalue = itgt.bFullVolPickupSound; if (specified_newvalue) itgt.bFullVolPickupSound = newvalue; return true; }
+      if (stricmp(flagname, "BigPowerup") == 0) { resvalue = itgt.bBigPowerup; if (specified_newvalue) itgt.bBigPowerup = newvalue; return true; }
+      if (stricmp(flagname, "KeepDepleted") == 0) { resvalue = itgt.bKeepDepleted; if (specified_newvalue) itgt.bKeepDepleted = newvalue; return true; }
+      if (stricmp(flagname, "IgnoreSkill") == 0) { resvalue = itgt.bIgnoreSkill; if (specified_newvalue) itgt.bIgnoreSkill = newvalue; return true; }
+      if (stricmp(flagname, "AdditiveTime") == 0) { resvalue = itgt.bAdditiveTime; if (specified_newvalue) itgt.bAdditiveTime = newvalue; return true; }
+      if (stricmp(flagname, "NoAutoAim") == 0) { resvalue = itgt.bNoAutoaim; if (specified_newvalue) itgt.bNoAutoaim = newvalue; return true; }
+      if (stricmp(flagname, "HitscanWeapon") == 0) { resvalue = itgt.bIsHitscanWeapon; if (specified_newvalue) itgt.bIsHitscanWeapon = newvalue; return true; }
+      //<flag_unsupported name="AlwaysActivate" /> <!-- From SkulTag ? -->
+    }
+
+    auto wtgt = Weapon(self/*tgt*/);
+    if (wtgt) {
+      if (stricmp(flagname, "NoAutoFire") == 0) { resvalue = wtgt.bNoAutoFire; if (specified_newvalue) wtgt.bNoAutoFire = newvalue; return true; }
+      if (stricmp(flagname, "ReadySndHalf") == 0) { resvalue = wtgt.bReadySndHalf; if (specified_newvalue) wtgt.bReadySndHalf = newvalue; return true; }
+      if (stricmp(flagname, "DontBob") == 0) { resvalue = wtgt.bDontBob; if (specified_newvalue) wtgt.bDontBob = newvalue; return true; }
+      if (stricmp(flagname, "AxeBlood") == 0) { resvalue = wtgt.bAxeBlood; if (specified_newvalue) wtgt.bAxeBlood = newvalue; return true; }
+      if (stricmp(flagname, "NoAlert") == 0) { resvalue = wtgt.bNoAlert; if (specified_newvalue) wtgt.bNoAlert = newvalue; return true; }
+      if (stricmp(flagname, "Ammo_Optional") == 0) { resvalue = wtgt.bAmmoOptional; if (specified_newvalue) wtgt.bAmmoOptional = newvalue; return true; }
+      if (stricmp(flagname, "Alt_Ammo_Optional") == 0) { resvalue = wtgt.bAltAmmoOptional; if (specified_newvalue) wtgt.bAltAmmoOptional = newvalue; return true; }
+      //<flag_unsupported name="AmmoCheckBoth" />
+      if (stricmp(flagname, "Primary_Uses_Both") == 0) { resvalue = wtgt.bPrimaryUsesBoth; if (specified_newvalue) wtgt.bPrimaryUsesBoth = newvalue; return true; }
+      if (stricmp(flagname, "Wimpy_Weapon") == 0) { resvalue = wtgt.bWimpyWeapon; if (specified_newvalue) wtgt.bWimpyWeapon = newvalue; return true; }
+      if (stricmp(flagname, "Powered_Up") == 0) { resvalue = wtgt.bPoweredUp; if (specified_newvalue) wtgt.bPoweredUp = newvalue; return true; }
+      if (stricmp(flagname, "Staff2_Kickback") == 0) { resvalue = wtgt.bStaff2Kickback; if (specified_newvalue) wtgt.bStaff2Kickback = newvalue; return true; }
+      if (stricmp(flagname, "Explosive") == 0) { resvalue = wtgt.bBotProjectile; if (specified_newvalue) wtgt.bBotProjectile = newvalue; return true; }
+      if (stricmp(flagname, "MeleeWeapon") == 0) { resvalue = wtgt.bBotMelee; if (specified_newvalue) wtgt.bBotMelee = newvalue; return true; }
+      if (stricmp(flagname, "BFG") == 0) { resvalue = wtgt.bBotBfg; if (specified_newvalue) wtgt.bBotBfg = newvalue; return true; }
+      if (stricmp(flagname, "CheatNotWeapon") == 0) { resvalue = wtgt.bCheatNotWeapon; if (specified_newvalue) wtgt.bCheatNotWeapon = newvalue; return true; }
+      if (stricmp(flagname, "No_Auto_Switch") == 0) { resvalue = wtgt.bNoAutoSwitch; if (specified_newvalue) wtgt.bNoAutoSwitch = newvalue; return true; }
+      if (stricmp(flagname, "NoAutoAim") == 0) { resvalue = wtgt.bNoAutoaim; if (specified_newvalue) wtgt.bNoAutoaim = newvalue; return true; }
+      if (stricmp(flagname, "HitscanWeapon") == 0) { resvalue = wtgt.bIsHitscanWeapon; if (specified_newvalue) wtgt.bIsHitscanWeapon = newvalue; return true; }
+    }
+  }
+
+  resvalue = false;
+  return false;
+}

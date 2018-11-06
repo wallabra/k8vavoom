@@ -2153,6 +2153,30 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], Activator, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
       }
+
+    // bool CheckFlag (int tid, str flag)
+    case ACSF_CheckFlag:
+      {
+        VName name = GetNameLowerCase(args[1]);
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (!Ent) return 0;
+        //sp[-1] = vint32(Ent->Origin.x * 0x10000);
+        return (Ent->eventCheckFlag(*name) ? 1 : 0);
+      }
+
+    // int SetActorFlag (int tid, str flagname, bool value);
+    case ACSF_SetActorFlag:
+      {
+        VStr name = VStr(*GetNameLowerCase(args[1]));
+        int count = 0;
+        if (name.length()) {
+          for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
+            //mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
+            if (mobj->eventSetFlag(name, !!args[2])) ++count;
+          }
+        }
+        return count;
+      }
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {

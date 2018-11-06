@@ -32,7 +32,7 @@
 //  DecorDoAAPtr
 //
 //==========================================================================
-final Entity DecorDoAAPtr (string methodname, /*optional*/ int ptr) {
+final Entity DecorDoAAPtr (name methodname, /*optional*/ int ptr) {
   if (/*!specified_ptr ||*/ ptr == AAPTR_DEFAULT) return self;
   // category 1
   if (bIsPlayer) {
@@ -106,7 +106,7 @@ final void A_SetArg (int n, int v) {
 //
 //==========================================================================
 final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
-  Entity tgt = DecorDoAAPtr("A_SetAngle", aptr!optional);
+  Entity tgt = DecorDoAAPtr('A_SetAngle', aptr!optional);
   if (!tgt) return;
   tgt.Angles.yaw = AngleMod360(newyaw);
   //dprint("A_SetAngle: not implemented!");
@@ -145,7 +145,7 @@ private final float clampPitch (float newpitch) {
 //
 //==========================================================================
 final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
-  Entity tgt = DecorDoAAPtr("A_SetPitch", aptr!optional);
+  Entity tgt = DecorDoAAPtr('A_SetPitch', aptr!optional);
   if (!tgt) return;
   if (tgt.bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
   tgt.Angles.pitch = /*AngleMod360*/(newpitch);
@@ -158,7 +158,7 @@ final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
 //
 //==========================================================================
 final void A_SetRoll (float newroll, optional int flags, optional int aptr) {
-  Entity tgt = DecorDoAAPtr("A_SetRoll", aptr!optional);
+  Entity tgt = DecorDoAAPtr('A_SetRoll', aptr!optional);
   if (!tgt) return;
   tgt.Angles.roll = AngleMod360(newroll);
 }
@@ -230,7 +230,7 @@ final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, option
 //
 //==========================================================================
 final int decorate_CountInv (name ItemName, optional int aptr) {
-  Entity tgt = DecorDoAAPtr("decorate_CountInv", aptr!optional);
+  Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
   if (!tgt) return 0;
   return tgt.CheckInventory(ItemName);
 }
@@ -321,3 +321,27 @@ final bool A_Quake (float intensity, float ticduation, float damrad, float tremr
 }
 
 
+//==========================================================================
+//
+//  decorate_A_CheckFlag
+//
+//==========================================================================
+final void decorate_A_CheckFlag (string flagname, state label, optional int aptr) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFlag', aptr!optional));
+  if (!tgt) return;
+  if (!decoDoCheckFlag(flagname, tgt)) return;
+  if (label) DoJump(label);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_ChangeFlag
+//
+//==========================================================================
+final void decorate_A_ChangeFlag (string flagname, int value) {
+  //decoDoFlagAction(flagname, self, !!value);
+  decoDoSetFlag(flagname, self, !!value);
+}
