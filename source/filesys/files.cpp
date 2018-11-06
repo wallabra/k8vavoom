@@ -29,6 +29,7 @@ extern VCvarB game_release_mode;
 //extern VCvarI game_override_mode;
 
 static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", 0);
+static VCvarB gz_skip_menudef("_gz_skip_menudef", false, "Skip gzdoom menudef parsing?", 0);
 
 bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
@@ -657,6 +658,8 @@ void FL_Init () {
   if (GArgs.CheckParm("-fast") != 0) fastparm = true;
   if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
   if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
+
+  if (GArgs.CheckParm("-nomenudef") != 0) gz_skip_menudef = true;
 
   bool isChex = false;
 
