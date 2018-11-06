@@ -128,6 +128,9 @@ const int CHAN_VOICE = 1;
 const int CHAN_WEAPON = 2;
 const int CHAN_ITEM = 3;
 const int CHAN_BODY = 4;
+const int CHAN_5 = 5;
+const int CHAN_6 = 6;
+const int CHAN_7 = 7;
 
 
 const int XF_HURTSOURCE = 0x01; // Hurts the source: if set, the source can be damaged by the explosion. Note that the source is not necessarily the calling actor. This flag is set by default.
