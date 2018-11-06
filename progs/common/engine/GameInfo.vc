@@ -189,7 +189,7 @@ void PostDecorateInit () {
   foreach (auto idx; 0..PlayerClasses.length) {
     class/*!PlayerPawn*/ realplrclass = /*class!PlayerPawn*/(GetClassReplacement(PlayerClasses[idx]));
     if (realplrclass && realplrclass != PlayerClasses[idx]) {
-      print("replaced player class '%C' with '%C'", PlayerClasses[idx], realplrclass);
+      print("replacement player class for '%C' is '%C' (ignored for now)", PlayerClasses[idx], realplrclass);
       //PlayerClasses[idx] = realplrclass;
     }
   }
