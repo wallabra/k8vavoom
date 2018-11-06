@@ -746,7 +746,7 @@ COMMAND(CvarInfoVar) {
       else if (Args[f].ICmp("user") == 0) {}
       else { GCon->Logf("invalid cvarinfo flag '%s'", *Args[f]); return; }
     }
-    GCon->Logf("cvarinfo var '%s' (flags=0x%04x) val=\"%s\"", *vname, flags, *(vvalue.quote()));
+    //GCon->Logf("cvarinfo var '%s' (flags=0x%04x) val=\"%s\"", *vname, flags, *(vvalue.quote()));
     VCvar::CreateNew(*vname, vvalue, "cvarinfo variable", flags);
   }
   unguard;
