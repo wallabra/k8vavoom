@@ -282,7 +282,7 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     // submenu name
     par.ExpectString();
     string subname = par.String;
-    if (stricmp(subname, "OptionsMenu") == 0) subname = "Options";
+    //if (stricmp(subname, "OptionsMenu") == 0) subname = "Options";
     auto opt = SpawnObject(MenuDefOptionSubMenu);
     opt.title = title;
     opt.subname = subname;
@@ -322,7 +322,9 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
         return opt;
       }
     }
-    par.ScriptError("unknown GZDoom MenuDef OptionValue '%s'", par.String);
+    //par.ScriptError("unknown GZDoom MenuDef OptionValue '%s'", par.String);
+    print("MENUDEF: unknown GZDoom MenuDef OptionValue '%s'", par.String);
+    return none;
   }
 
   par.ScriptError("invalid gz command '%s'", par.String);

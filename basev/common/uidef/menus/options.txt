@@ -1,5 +1,5 @@
 // module player options menu
-menudef Options {
+menudef OptionsMenu {
   //selector = MenuSelector_SmallRight;
   Title = "OPTIONS";
 
