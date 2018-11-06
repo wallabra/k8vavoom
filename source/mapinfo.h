@@ -217,3 +217,5 @@ void P_GetMusicLumpNames(TArray<FReplacedString>&);
 void P_ReplaceMusicLumpNames(TArray<FReplacedString>&);
 void P_SetParTime(VName, int);
 bool IsMapPresent(VName);
+
+void P_SetupMapinfoPlayerClasses ();

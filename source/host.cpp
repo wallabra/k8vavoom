@@ -206,6 +206,7 @@ void Host_Init () {
   R_ParseEffectDefs();
 
   InitMapInfo();
+  P_SetupMapinfoPlayerClasses();
 
   //GCon->Logf("WARP: n0=%d; n1=%d; cmd=<%s>", fsys_warp_n0, fsys_warp_n1, *fsys_warp_cmd);
 
