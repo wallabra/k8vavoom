@@ -359,6 +359,8 @@ class Actor extends Thinker
 
   action native A_CheckFlag (string flagname, state label, optional int aptr);
   action native A_ChangeFlag (string flagname, int value);
+
+  action native A_k8ConLog (string msg);
 }
 
 //------------------------------------------------------------------------------

@@ -367,8 +367,7 @@ native final void SetTID(int tid);
 native final bool SetState(state State);
 native final void SetInitialState(state State);
 native final bool AdvanceState(float deltaTime);
-native final state FindState(name StateName, optional name SubLabel,
-  optional bool Exact);
+native final state FindState(name StateName, optional name SubLabel, optional bool Exact);
 native final state FindStateEx(string StateName, optional bool Exact);
 native final state HasSpecialStates(name StateName);
 native final void GetStateEffects(out array!(LightEffectDef *) Lights,

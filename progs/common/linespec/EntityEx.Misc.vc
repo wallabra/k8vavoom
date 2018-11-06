@@ -3449,31 +3449,27 @@ final bool IsMissile(bool Precise)
   return bMissile || (Precise && default.bMissile);
 }
 
+
 //===========================================================================
 //
 //  FindJumpState
 //
 //===========================================================================
-
-final state FindJumpState(name Label)
-{
-  if (XLevel.StateCall)
-  {
-    return XLevel.StateCall->Item.FindState(Label);
+final state FindJumpState (name Label) {
+  if (XLevel.StateCall) return XLevel.StateCall->Item.FindState(Label);
+  if (bIsPlayer) {
+    if (XLevel.CallingState == Player.ViewStates[ps_weapon].State) {
+      if (!PlayerEx(Player).ReadyWeapon) return none;
+      return PlayerEx(Player).ReadyWeapon.FindState(Label);
+    }
+    if (XLevel.CallingState == Player.ViewStates[ps_flash].State) {
+      if (!PlayerEx(Player).ReadyWeapon) return none;
+      return PlayerEx(Player).ReadyWeapon.FindState(Label);
+    }
   }
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_weapon].State)
-  {
-    return PlayerEx(Player).ReadyWeapon.FindState(Label);
-  }
-  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_flash].State)
-  {
-    return PlayerEx(Player).ReadyWeapon.FindState(Label);
-  }
-  else
-  {
-    return FindState(Label);
-  }
+  return FindState(Label);
 }
+
 
 //===========================================================================
 //

@@ -32,6 +32,16 @@
 //  DecorDoAAPtr
 //
 //==========================================================================
+final void decorate_A_k8ConLog (string msg) {
+  if (msg) print("DECORATE LOG: %s", msg);
+}
+
+
+//==========================================================================
+//
+//  DecorDoAAPtr
+//
+//==========================================================================
 final Entity DecorDoAAPtr (name methodname, /*optional*/ int ptr) {
   if (/*!specified_ptr ||*/ ptr == AAPTR_DEFAULT) return self;
   // category 1

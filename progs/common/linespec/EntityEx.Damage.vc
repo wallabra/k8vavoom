@@ -384,6 +384,7 @@ final void Damage(EntityEx inflictor, EntityEx source, int damage,
     //print("DAMAGE TYPE: NONE");
     DmgType = '';
   }
+  //if (!DmgType) DmgType = 'None';
 
   if (Health <= 0)
   {

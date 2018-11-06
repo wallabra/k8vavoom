@@ -119,35 +119,27 @@ final void decorate_A_JumpIf (float Expr, state Label) {
 //  A_JumpIfCloser
 //
 //==========================================================================
-
-final void A_JumpIfCloser(float Dist, state Label)
-{
+final void A_JumpIfCloser (float Dist, state Label) {
   EntityEx Targ;
 
-  if (!bIsPlayer)
-  {
+  if (!bIsPlayer) {
     Targ = Target;
-  }
-  else
-  {
+  } else {
     TVec Dir;
     Targ = Aim(Dir, 16.0 * 64.0);
   }
 
-  if (Targ && DistTo2(Targ) < Dist && ((Origin.z > Targ.Origin.z &&
-    Origin.z - Target.Origin.z - Target.Height < Dist) ||
-    (Origin.z <= Targ.Origin.z &&
-    Target.Origin.z - Origin.z - Height < Dist)))
+  if (Targ && DistTo2(Targ) < Dist &&
+      ((Origin.z > Targ.Origin.z && Origin.z-Target.Origin.z-Target.Height < Dist) ||
+       (Origin.z <= Targ.Origin.z && Target.Origin.z-Origin.z-Height < Dist)))
   {
     DoJump(Label);
   }
 
-  //  State jumps should not affect state chain results.
-  if (XLevel.StateCall)
-  {
-    XLevel.StateCall->Result = false;
-  }
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
+
 
 //==========================================================================
 //
