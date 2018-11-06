@@ -6729,82 +6729,53 @@ final override void SpawnMapThing (mthing_t *mthing) {
 //  CheckLock
 //
 //==========================================================================
-
-final bool CheckLock(Entity user, int lock, bool door)
-{
-  if (!user.bIsPlayer)
-  {
-    return false;
-  }
-  if (!lock)
-  {
-    return true;
-  }
+final bool CheckLock (Entity user, int lock, bool door) {
+  if (!user.bIsPlayer) return false;
+  if (!lock) return true;
   LockDef *Lock = GetLockDef(lock);
-  if (!Lock)
-  {
-    if (lock == 103)
-    {
+  if (!Lock) {
+    if (lock == 103) {
       user.Player.centreprint(Lock103Message);
-    }
-    else
-    {
+    } else {
       user.Player.centreprint("That doesn't seem to work");
     }
     user.PlaySound('misc/keytry', CHAN_VOICE);
     return false;
   }
-  if (CheckLockDef(Lock, EntityEx(user)))
-  {
-    return true;
-  }
+  if (CheckLockDef(Lock, EntityEx(user))) return true;
   user.Player.centreprint(door ? Lock->Message : Lock->RemoteMessage);
   user.PlaySound(Lock->LockedSound, CHAN_VOICE);
   return false;
 }
 
+
 //==========================================================================
 //
-//  GetDefaultDoorSound
+//  CheckLockDef
 //
 //==========================================================================
+final bool CheckLockDef (LockDef *Lock, EntityEx User) {
+  if (!Lock) return false; // just in case
 
-final bool CheckLockDef(LockDef *Lock, EntityEx User)
-{
-  int     i;
-  int     j;
-  Inventory Item;
-
-  //  Empty lock list means check for any key.
-  if (!Lock->Locks.Num)
-  {
-    for (Item = User.Inventory; Item; Item = Item.Inventory)
-    {
-      if (Key(Item))
-      {
-        return true;
-      }
+  // empty lock list means check for any key
+  if (!Lock->Locks.Num) {
+    for (Inventory Item = User.Inventory; Item; Item = Item.Inventory) {
+      if (Key(Item)) return true;
     }
     return false;
   }
 
-  for (i = 0; i < Lock->Locks.Num; i++)
-  {
-    bool Good = false;
-    for (j = 0; j < Lock->Locks[i].AnyKeyList.Num; j++)
-    {
-      if (User.FindInventory(class!Inventory(
-        Lock->Locks[i].AnyKeyList[j])))
-      {
-        Good = true;
+  foreach (auto i; 0..Lock->Locks.length) {
+    bool good = false;
+    foreach (auto j; 0..Lock->Locks[i].AnyKeyList.length) {
+      if (User.FindInventory(class!Inventory(Lock->Locks[i].AnyKeyList[j]))) {
+        good = true;
         break;
       }
     }
-    if (!Good)
-    {
-      return false;
-    }
+    if (!good) return false;
   }
+
   return true;
 }
 

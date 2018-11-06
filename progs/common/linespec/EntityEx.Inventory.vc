@@ -80,26 +80,28 @@ void RemoveInventory(Inventory Item)
   Item.Owner = none;
 }
 
+
 //==========================================================================
 //
 //  FindInventory
 //
 //==========================================================================
-
-final Inventory FindInventory(class!Inventory ItemClass)
-{
-  Inventory Check;
+final Inventory FindInventory (class!Inventory ItemClass) {
   if (!ItemClass) return none;
+  class!Inventory repl = class!Inventory(GetClassReplacement(ItemClass));
 
-  for (Check = Inventory; Check; Check = Check.Inventory)
-  {
-    if (Check.Class == ItemClass)
-    {
+  for (Inventory Check = Inventory; Check; Check = Check.Inventory) {
+    if (Check.Class == ItemClass) return Check;
+    // consider replacements too
+    if (GetClassReplacement(Check.Class) == repl) {
+      //print("FOUND REPLACEMENT INVENTORY: ItemClass=<%C>; repl=<%C>; Check=<%C>", ItemClass, repl, Check);
       return Check;
     }
   }
+
   return none;
 }
+
 
 //==========================================================================
 //
