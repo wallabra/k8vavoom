@@ -368,6 +368,9 @@ REGISTER_NAME(DFMap)
 
 REGISTER_NAME(Console)
 
+REGISTER_NAME(decoDoCheckFlag)
+REGISTER_NAME(decoDoSetFlag)
+
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM
