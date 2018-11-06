@@ -382,6 +382,7 @@ IMPLEMENT_FUNCTION(VThinker, Spawn) {
     if (!specified_AOrigin) AOrigin = SelfEnt->Origin;
     if (!specified_AAngles) AAngles = SelfEnt->Angles;
   }
+  if (!Class) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
   RET_REF(Self->XLevel->SpawnThinker(Class, AOrigin, AAngles, mthing, AllowReplace));
 }
 

@@ -260,6 +260,7 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf(const char *s
 //===========================================================================
 void VBasePlayer::SetViewState (int position, VState *stnum) {
   guard(VBasePlayer::SetViewState);
+  //fprintf(stderr, "  VBasePlayer::SetViewState: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
   VViewState &VSt = ViewStates[position];
   VState *state = stnum;
   int watchcatCount = 1024;
@@ -281,6 +282,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     if (state->Misc2) VSt.SY = state->Misc2;
     // call action routine
     if (state->Function) {
+      //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s': position=%d; stnum=%s\n", *state->Function->GetFullName(), position, (stnum ? *stnum->GetFullName() : "<none>"));
       Level->XLevel->CallingState = state;
       P_PASS_REF(MO);
       ExecuteFunctionNoArgs(state->Function);
@@ -288,6 +290,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     }
     state = VSt.State->NextState;
   } while (!VSt.StateTime); // an initial state of 0 could cycle through
+  //fprintf(stderr, "  VBasePlayer::SetViewState: DONE: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
   unguard;
 }
 
@@ -818,6 +821,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewState)
 {
+  //fprintf(stderr, "*** SVS ***\n");
   P_GET_PTR(VState, stnum);
   P_GET_INT(position);
   P_GET_SELF;
