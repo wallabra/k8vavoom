@@ -607,3 +607,10 @@ IMPLEMENT_FUNCTION(VEntity, SetDecorateFlag) {
   P_GET_SELF;
   Self->SetDecorateFlag(Name, Value);
 }
+
+
+IMPLEMENT_FUNCTION(VEntity, GetDecorateFlag) {
+  P_GET_STR(Name);
+  P_GET_SELF;
+  RET_BOOL(Self->GetDecorateFlag(Name));
+}

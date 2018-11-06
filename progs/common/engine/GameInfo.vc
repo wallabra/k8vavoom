@@ -186,7 +186,6 @@ void Init () {
 //==========================================================================
 
 void PostDecorateInit () {
-/+
   foreach (auto idx; 0..PlayerClasses.length) {
     class/*!PlayerPawn*/ realplrclass = /*class!PlayerPawn*/(GetClassReplacement(PlayerClasses[idx]));
     if (realplrclass && realplrclass != PlayerClasses[idx]) {
@@ -194,7 +193,6 @@ void PostDecorateInit () {
       //PlayerClasses[idx] = realplrclass;
     }
   }
-+/
 }
 
 //==========================================================================

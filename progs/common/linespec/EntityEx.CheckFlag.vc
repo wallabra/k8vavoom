@@ -29,6 +29,7 @@
 //  returns `true` if processed
 //
 //==========================================================================
+/+
 override bool decoDoFlagActionSpecific (string flagname, out bool resvalue, optional bool newvalue) {
   if (::decoDoFlagActionSpecific(flagname, resvalue, newvalue!optional)) return true;
 
@@ -285,3 +286,4 @@ override bool decoDoFlagActionSpecific (string flagname, out bool resvalue, opti
   resvalue = false;
   return false;
 }
++/

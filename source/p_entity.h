@@ -488,14 +488,17 @@ class VEntity : public VThinker {
   }
 
   //static final bool decoDoCheckFlag (string flagname, Entity tgt)
+  /*
   bool eventCheckFlag (const VStr &flagname) {
     if (flagname.length() == 0) return false;
     P_PASS_STR(flagname);
     P_PASS_PTR(this);
     EV_RET_BOOL(NAME_decoDoCheckFlag);
   }
+  */
 
   //static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue)
+  /*
   bool eventSetFlag (const VStr &flagname, bool newvalue) {
     if (flagname.length() == 0) return false;
     P_PASS_STR(flagname);
@@ -503,6 +506,7 @@ class VEntity : public VThinker {
     P_PASS_BOOL(newvalue);
     EV_RET_BOOL(NAME_decoDoSetFlag);
   }
+  */
 
   bool SetState (VState *);
   void SetInitialState (VState *);
@@ -539,7 +543,9 @@ private:
 
   void CreateSecNodeList ();
 
-  void SetDecorateFlag (const VStr &, bool);
+public:
+  bool SetDecorateFlag (const VStr &, bool); // true: flag was found and set
+  bool GetDecorateFlag (const VStr &);
 
 public:
   void LinkToWorld ();
@@ -586,4 +592,5 @@ public:
   DECLARE_FUNCTION(CanSee)
   DECLARE_FUNCTION(RoughBlockSearch)
   DECLARE_FUNCTION(SetDecorateFlag)
+  DECLARE_FUNCTION(GetDecorateFlag)
 };

@@ -4087,7 +4087,7 @@ void ShutdownDecorate () {
 //  VEntity::SetDecorateFlag
 //
 //==========================================================================
-void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
+bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
   guard(VEntity::SetDecorateFlag);
   VName FlagName;
   VName ClassFilter(NAME_None);
@@ -4105,6 +4105,7 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
       const VFlagDef &F = ClassDef.Flags[i];
       if (FlagName == F.Name) {
+        bool didset = true;
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
           case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
@@ -4120,12 +4121,56 @@ void VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
             F.Field->SetBool(this, !Value);
             F.Field2->SetBool(this, !Value);
             break;
+          default: didset = false;
         }
-        return;
+        return didset;
       }
     }
   }
   GCon->Logf("Unknown flag '%s'", *Flag);
+  return false;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VEntity::GetDecorateFlag
+//
+//==========================================================================
+bool VEntity::GetDecorateFlag (const VStr &Flag) {
+  guard(VEntity::GetDecorateFlag);
+  VName FlagName;
+  VName ClassFilter(NAME_None);
+  int DotPos = Flag.IndexOf('.');
+  if (DotPos >= 0) {
+    ClassFilter = *VStr(Flag, 0, DotPos).ToLower();
+    FlagName = *VStr(Flag, DotPos+1, Flag.Length()-DotPos-1).ToLower();
+  } else {
+    FlagName = *Flag.ToLower();
+  }
+  for (int j = 0; j < FlagList.Num(); ++j) {
+    VFlagList &ClassDef = FlagList[j];
+    if (ClassFilter != NAME_None && ClassDef.Class->LowerCaseName != ClassFilter) continue;
+    if (!IsA(ClassDef.Class)) continue;
+    for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
+      const VFlagDef &F = ClassDef.Flags[i];
+      if (FlagName == F.Name) {
+        switch (F.Type) {
+          case FLAG_Bool: return F.Field->GetBool(this);
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
+          case FLAG_Byte: return !!F.Field->GetByte(this);
+          case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
+          case FLAG_Name: return (F.Field->GetName(this) != NAME_None);
+          case FLAG_Class: return !!F.Field->GetClass(this);
+          case FLAG_NoClip: return (!F.Field->GetBool(this) && !F.Field2->GetBool(this)); //FIXME??
+        }
+        return false;
+      }
+    }
+  }
+  GCon->Logf("Unknown flag '%s'", *Flag);
+  return false;
   unguard;
 }
 

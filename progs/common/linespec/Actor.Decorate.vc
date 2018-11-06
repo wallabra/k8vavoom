@@ -338,11 +338,13 @@ final bool A_Quake (float intensity, float ticduation, float damrad, float tremr
 //==========================================================================
 final void decorate_A_CheckFlag (string flagname, state label, optional int aptr) {
   // state jumps should not affect state chain results
+  //print("A_CheckFlag: name=<%s>; label=<%s>; aptr=%s", flagname, label, aptr);
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFlag', aptr!optional));
   if (!tgt) return;
-  if (!decoDoCheckFlag(flagname, tgt)) return;
-  if (label) DoJump(label);
+  //if (!decoDoCheckFlag(flagname, tgt)) return;
+  if (!tgt.GetDecorateFlag(flagname)) return;
+  DoJump(label);
 }
 
 
@@ -351,7 +353,12 @@ final void decorate_A_CheckFlag (string flagname, state label, optional int aptr
 //  decorate_A_ChangeFlag
 //
 //==========================================================================
+/*
 final void decorate_A_ChangeFlag (string flagname, int value) {
   //decoDoFlagAction(flagname, self, !!value);
+  print("A_ChangeFlag: name=<%s>; value=%s", flagname, value);
+  //print("  nopain0=%s", bNoPain);
   decoDoSetFlag(flagname, self, !!value);
+  //print("  nopain1=%s", bNoPain);
 }
+*/

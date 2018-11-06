@@ -2161,7 +2161,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (!Ent) return 0;
         //sp[-1] = vint32(Ent->Origin.x * 0x10000);
-        return (Ent->eventCheckFlag(*name) ? 1 : 0);
+        //return (Ent->eventCheckFlag(*name) ? 1 : 0);
+        return Ent->GetDecorateFlag(*name);
       }
 
     // int SetActorFlag (int tid, str flagname, bool value);
@@ -2172,7 +2173,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (name.length()) {
           for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
             //mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
-            if (mobj->eventSetFlag(name, !!args[2])) ++count;
+            //if (mobj->eventSetFlag(name, !!args[2])) ++count;
+            if (mobj->SetDecorateFlag(name, !!args[2])) ++count;
           }
         }
         return count;

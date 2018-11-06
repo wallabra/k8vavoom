@@ -409,6 +409,7 @@ native final bool CanSee(Entity Other);
 native final iterator RoughBlockSearch(out Entity EntPtr, int Distance);
 
 native final void SetDecorateFlag(string Name, bool Value);
+native final bool GetDecorateFlag(string Name);
 
 //===========================================================================
 //
@@ -855,6 +856,7 @@ final TVec GetCentre()
 //  returns `true` if processed
 //
 //==========================================================================
+/+
 bool decoDoFlagActionSpecific (string flagname, out bool resvalue, optional bool newvalue) {
   if (flagname) {
     auto tgt = self;
@@ -893,6 +895,7 @@ bool decoDoFlagActionSpecific (string flagname, out bool resvalue, optional bool
   resvalue = false;
   return false;
 }
++/
 
 
 //==========================================================================
@@ -918,6 +921,7 @@ static final bool decoDoFlagAction (string flagname, Entity tgt, optional bool n
 //  decoDoCheckFlag
 //
 //==========================================================================
+/*
 static final bool decoDoCheckFlag (string flagname, Entity tgt) {
   //return decoDoFlagAction(flagname, tgt);
   if (!tgt || !flagname) return false;
@@ -928,6 +932,7 @@ static final bool decoDoCheckFlag (string flagname, Entity tgt) {
   print("DECORATE: checking unknown flag '%s'", flagname);
   return false;
 }
+*/
 
 
 //==========================================================================
@@ -935,6 +940,7 @@ static final bool decoDoCheckFlag (string flagname, Entity tgt) {
 //  decoDoSetFlag
 //
 //==========================================================================
+/*
 static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue) {
   //decoDoFlagAction(flagname, tgt, newvalue);
   if (!tgt || !flagname) return false;
@@ -945,6 +951,7 @@ static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue) {
   print("DECORATE: setting unknown flag '%s'", flagname);
   return false;
 }
+*/
 
 
 defaultproperties
