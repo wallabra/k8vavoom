@@ -667,7 +667,7 @@ override void AddHudMessage (string Message, name Font, int Type, int Id, int Co
 final void SetPClass (int PClass) {
   MenuPClass = PClass;
   SkillClassName = va("%n", class!PlayerPawn(Game.PlayerClasses[PClass]).default.SpawnClass);
-  print("EPISODES: %d", P_GetNumEpisodes());
+  //print("EPISODES: %d", P_GetNumEpisodes());
   if (P_GetNumEpisodes() > 1) {
     PushMenuScreen(SpawnMenu(MenuScreenEpisode));
   } else {

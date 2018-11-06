@@ -990,6 +990,9 @@ void FireWeapon(optional state firestate)
 
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
 
+  //print("FireWeapon: self=`%C`; MO=`%C`; ps_weapon=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, ps_weapon, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
+  //print("  Refire=%s", Refire);
+
   MO.SetState(EntityEx(MO).MissileState);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
@@ -2489,6 +2492,7 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
     Error("Player::SpawnPlayer : Unknown class type");
   }
   PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
+  //print("spawned player with class <%C>...", PP);
   PP.Origin.z += mthing->height;
   PP.LinkToWorld();
   PP.FriendPlayer = GetPlayerNum() + 1; //  Players are their own friends.
@@ -2637,31 +2641,29 @@ void AddDefaultInventory()
   BArmor.Amount = 0;
   BArmor.AttachToOwner(EntityEx(MO));
 
-  int i;
-  for (i = 0; i < EntityEx(MO).DropItemList.Num; i++)
-  {
-    Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type, default, default, default, false));
+  //print("AddDefaultInventory: MO=`%C`", MO);
+  foreach (auto i; 0..EntityEx(MO).DropItemList.length) {
+    class!Entity tp = EntityEx(MO).DropItemList[i].Type;
+    class!Entity tprepl = none;
+    if (tp) tprepl = class!Entity(GetClassReplacement(tp));
+    //print("  i=%d; type=`%C`(%C); name=`%s`; amount=%s; chance=%s", i, tp, tprepl, EntityEx(MO).DropItemList[i].TypeName, EntityEx(MO).DropItemList[i].Amount, EntityEx(MO).DropItemList[i].Chance);
+    if (!tp) continue;
+    Inventory Item = Inventory(Level.Spawn(tprepl, default, default, default, false));
     Item.bIgnoreSkill = true;
-    if (EntityEx(MO).DropItemList[i].Amount > 0)
-    {
-      Item.Amount = EntityEx(MO).DropItemList[i].Amount;
-    }
-    if (Weapon(Item))
-    {
-      //  For better control empty weapon's ammo.
+    if (EntityEx(MO).DropItemList[i].Amount > 0) Item.Amount = EntityEx(MO).DropItemList[i].Amount;
+    if (Weapon(Item)) {
+      // for better control empty weapon's ammo
       Weapon(Item).AmmoGive1 = 0;
       Weapon(Item).AmmoGive2 = 0;
     }
-    if (!Item.TryPickup(EntityEx(MO)))
-    {
+    if (!Item.TryPickup(EntityEx(MO))) {
       Item.Destroy();
-    }
-    else if (Weapon(Item) && Weapon(Item).CheckAmmo(Weapon::FIRE_Either, false))
-    {
+    } else if (Weapon(Item) && Weapon(Item).CheckAmmo(Weapon::FIRE_Either, false)) {
       SetWeapon(Weapon(Item));
     }
   }
 }
+
 
 //==========================================================================
 //
