@@ -1002,7 +1002,7 @@ final void decorate_A_GunFlash (optional name newstate, optional int flags)
 
   if (!specified_newstate) newstate = 'Flash';
 
-  SetState(MeleeState);
+  if (MeleeState) SetState(MeleeState);
   if (newstate && !(flags&1)) Player.SetViewState(ps_flash, Wpn.FindState(newstate));
 }
 
@@ -1314,7 +1314,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
     doRandPuffZ = !(Flags&FBF_NORANDOMPUFFZ);
   }
 
-  SetState(MeleeState);
+  if (MeleeState) SetState(MeleeState);
 
   bool noAAim = false;
   name decal = '';
@@ -1477,7 +1477,7 @@ final void A_FirePistol () {
       decal = Wpn.DecalName;
       noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     }
-    SetState(MeleeState);
+    if (MeleeState) SetState(MeleeState);
     Accurate = !PlayerEx(Player).Refire;
     //writeln("PISTOL: Accurate=", Accurate, "; refire=", PlayerEx(Player).Refire);
   } else {
@@ -1509,7 +1509,7 @@ final void A_FireShotgun()
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
   PlaySound('weapons/shotgf', CHAN_WEAPON);
-  SetState(MeleeState);
+  if (MeleeState) SetState(MeleeState);
 
   bool noAAim = false;
   name decal = '';
@@ -1553,7 +1553,7 @@ final void A_FireShotgun2()
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
   PlaySound('weapons/sshotf', CHAN_WEAPON);
-  SetState(MeleeState);
+  if (MeleeState) SetState(MeleeState);
 
   bool noAAim = false;
   name decal = '';
@@ -1654,7 +1654,7 @@ final void A_FireCGun()
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
   }
 
-  SetState(MeleeState);
+  if (MeleeState) SetState(MeleeState);
 
   Aim(dir, 16.0 * 64.0, default, noAAim);
   GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));

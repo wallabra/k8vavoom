@@ -869,19 +869,18 @@ final void PlayerInContents(float deltaTime)
   }
 }
 
+
 //==========================================================================
 //
 //  SetPlayerRunState
 //
 //==========================================================================
-
-final void SetPlayerRunState()
-{
-  if (MO.State == EntityEx(MO).IdleState)
-  {
+final void SetPlayerRunState () {
+  if (MO.State == EntityEx(MO).IdleState && EntityEx(MO).SeeState) {
     MO.SetState(EntityEx(MO).SeeState);
   }
 }
+
 
 //***************************************************************************
 //
@@ -992,8 +991,9 @@ void FireWeapon(optional state firestate)
 
   //print("FireWeapon: self=`%C`; MO=`%C`; ps_weapon=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, ps_weapon, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
   //print("  Refire=%s", Refire);
+  //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
 
-  MO.SetState(EntityEx(MO).MissileState);
+  if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (!ReadyWeapon.bNoAlert) {
@@ -1013,7 +1013,7 @@ void AltFireWeapon(optional state firestate)
 
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
-  MO.SetState(EntityEx(MO).MissileState);
+  if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (!ReadyWeapon.bNoAlert) {
@@ -3151,6 +3151,12 @@ override void PlayerTick(float deltaTime)
     }
   }
 
+  if (!MO) {
+    print("playertick(%C): %f", self, deltaTime);
+    print("  playertick(%C): MO=%C", self, MO);
+    print("  playertick(%C): MO.XLevel=%C", self, MO.XLevel);
+  }
+
   if ((MO.XLevel.TicTime % (3 * 35) == 0) && Cheats & CF_REGENERATION && Health > 0)
   {
     if (EntityEx(MO).GiveBody(5) &&
@@ -3427,7 +3433,12 @@ final override void SetViewPos()
 
   ClientSetViewOrg(ViewOrg.x, ViewOrg.y, ViewOrg.z);
 
-  SoundEnvironment = Level.XLevel.Zones[Camera.Sector->Zone];
+  if (Level.XLevel.Zones.length && Camera.Sector) {
+    SoundEnvironment = Level.XLevel.Zones[Camera.Sector->Zone];
+  } else {
+    SoundEnvironment = 0;
+  }
+
   if (!SoundEnvironment)
   {
     if (Camera.WaterLevel >= 3)

@@ -1548,6 +1548,8 @@ void NoBlockingSet()
 
 override void Tick(float deltaTime)
 {
+  //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK!", self);
+
   if (bIsPlayer && GetCvarB('k8TraceDebug')) {
     auto plr = PlayerEx(Player);
     trsplat_t tr;
@@ -1562,17 +1564,16 @@ override void Tick(float deltaTime)
     }
   }
 
-  Inventory   Item;
+  Inventory Item;
 
   if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
-    (bIsPlayer && !(PlayerEx(Player).Cheats & PlayerEx::CF_TIMEFREEZE))))
+      (bIsPlayer && !(PlayerEx(Player).Cheats & PlayerEx::CF_TIMEFREEZE))))
   {
     return;
   }
 
-  //  Handle powerup effects.
-  for (Item = Inventory; Item && Item.Owner == self; Item = Item.Inventory)
-  {
+  // handle powerup effects
+  for (Item = Inventory; Item && Item.Owner == self; Item = Item.Inventory) {
     Item.DoEffect();
   }
 
@@ -1638,9 +1639,11 @@ override void Tick(float deltaTime)
   // Cycle through states, calling action functions at transitions
   if (StateTime != -1.0)
   {
+    //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK! 000", self);
     if (!AdvanceState(deltaTime))
     {
       // freed itself
+      //if (self isa PlayerPawn) print("*** *** PLAYERPAWN(%C): TICK! 001", self);
       return;
     }
   }

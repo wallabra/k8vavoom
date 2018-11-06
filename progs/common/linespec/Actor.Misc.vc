@@ -681,7 +681,11 @@ final void A_LayToFloorWithYaw (float yaw) {
 //
 //==========================================================================
 final void A_WeaponReady (optional int Flags) {
-  if (k8InWeaponReady) return; // don't recurse
+  // don't recurse
+  if (k8InWeaponReady) {
+    //print("A_WeaponReady: recursive call!");
+    return;
+  }
 
   if (!bIsPlayer) return;
 
