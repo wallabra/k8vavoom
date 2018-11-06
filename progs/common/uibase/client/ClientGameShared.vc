@@ -140,6 +140,34 @@ final void LoadMenuDefs () {
 
 //==========================================================================
 //
+//  SkipGZIdiocity
+//
+//  section name skipped
+//
+//==========================================================================
+final void SkipGZIdiocity (ScriptsParser par) {
+  if (!par.Check("{")) {
+    par.ExpectString();
+    par.Expect("{");
+  }
+  int level = 1;
+  for (;;) {
+    if (par.Check("{")) {
+      ++level;
+      continue;
+    }
+    if (par.Check("}")) {
+      --level;
+      if (level == 0) break;
+      continue;
+    }
+    if (!par.GetString()) return;
+  }
+}
+
+
+//==========================================================================
+//
 //  ParseGZOptionMenu
 //
 //==========================================================================
@@ -224,7 +252,9 @@ final void LoadGZMenuDef (ScriptsParser par) {
       }
     } else {
       if (!par.GetString()) break;
-      par.ScriptError("unknown gz menudef command '%s'", par.String);
+      //par.ScriptError("unknown gz menudef command '%s'", par.String);
+      print("GZMENU: skipping unimplemented section '%s'", par.String);
+      SkipGZIdiocity(par);
     }
   }
 }
