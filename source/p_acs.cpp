@@ -2125,8 +2125,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
 
     case ACSF_CheckActorClass:
       {
-        VEntity *Ent = EntityFromTID(args[0], nullptr);
-        VName name = GetNameLowerCase(args[1]);
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        VName name = GetName(args[1]);
         if (name == NAME_None) return 0;
         return (Ent ? (VStr::ICmp(*Ent->GetClass()->Name, *name) == 0 ? 1 : 0) : 0);
       }
@@ -2188,7 +2188,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     case ACSF_PlaySound:
       {
         //GCon->Logf("ERROR: unimplemented ACSF function 'PlaySound'");
-        VEntity *Ent = (args[0] ? EntityFromTID(args[0], Activator) : Activator);
+        VEntity *Ent = EntityFromTID(args[0], Activator);
         if (Ent) {
           VName name = GetName(args[1]);
           if (name != NAME_None) {
@@ -2209,7 +2209,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     // void StopSound (int tid, int channel);
     case ACSF_StopSound:
       {
-        VEntity *Ent = (args[0] ? EntityFromTID(args[0], Activator) : Activator);
+        VEntity *Ent = EntityFromTID(args[0], Activator);
         if (Ent) {
           int chan = (argCount > 1 ? args[1] : 4)&7;
           Ent->StopSound(chan);
