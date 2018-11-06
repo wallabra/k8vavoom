@@ -300,7 +300,7 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     name cvar = name(par.String);
     par.Expect(",");
     // type
-    if (par.Check("onoff")) {
+    if (par.Check("onoff") || par.Check("yesno")) {
       auto opt = SpawnObject(MenuDefOptionBool);
       opt.title = title;
       opt.cvar = cvar;

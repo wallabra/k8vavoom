@@ -157,8 +157,12 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
         break;
       }
     }
-    if (!mdef) par.ScriptError("cannot extend unknown menu '%s'", mname);
-    stidx = mdef.options.length;
+    if (!mdef) {
+      //par.ScriptError("cannot extend unknown menu '%s'", mname);
+      print("GZ-MENUDEF ERROR: cannot extend unknown menu '%s'", mname);
+    } else {
+      stidx = mdef.options.length;
+    }
   } else {
     mdef = SpawnObject(MenuDefinition);
     mdef.menuName = name(mname);
@@ -168,14 +172,16 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
   while (!par.Check("}")) {
     if (par.Check("Title")) {
       par.ExpectString();
-      if (!extend) mdef.title = par.String;
+      if (mdef && !extend) mdef.title = par.String;
       continue;
     }
     auto opt = MenuDefOptionBase.parseGZ(par, optvals);
-    if (opt) mdef.options[$] = opt;
+    if (mdef && opt) mdef.options[$] = opt;
   }
-  mdef.filterOptions(stidx);
-  if (!extend) menudefs[$] = mdef;
+  if (mdef) {
+    mdef.filterOptions(stidx);
+    if (!extend) menudefs[$] = mdef;
+  }
 }
 
 
