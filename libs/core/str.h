@@ -439,7 +439,10 @@ public:
   static VStr buf2hex (const void *buf, int buflen);
 
   static bool convertInt (const char *s, int *outv);
-  static bool convertFloat (const char *s, float *outv);
+  static bool convertFloat (const char *s, float *outv, const float *defval=nullptr);
+
+  static float atof (const char *s) { float res = 0; convertFloat(s, &res, nullptr); return res; }
+  static float atof (const char *s, float defval) { float res = 0; convertFloat(s, &res, &defval); return res; }
 
   inline bool convertInt (int *outv) const { return convertInt(getCStr(), outv); }
   inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }

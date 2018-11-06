@@ -1250,7 +1250,7 @@ bool VStr::convertInt (const char *s, int *outv) {
   if (!outv) outv = &dummy;
   *outv = 0;
   if (!s || !s[0]) return false;
-  while (*s && *s <= ' ') ++s;
+  while (*s && (vuint8)*s <= ' ') ++s;
   if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
   if (!s[0]) return false;
   if (s[0] < '0' || s[0] > '9') return false;
@@ -1259,7 +1259,7 @@ bool VStr::convertInt (const char *s, int *outv) {
     if (ch < '0' || ch > '9') { *outv = 0; return false; }
     *outv = (*outv)*10+ch-'0';
   }
-  while (*s && *s <= ' ') ++s;
+  while (*s && (vuint8)*s <= ' ') ++s;
   if (*s) { *outv = 0; return false; }
   if (neg) *outv = -(*outv);
   return true;
@@ -1271,15 +1271,15 @@ bool VStr::convertInt (const char *s, int *outv) {
 //  VStr::convertFloat
 //
 //==========================================================================
-bool VStr::convertFloat (const char *s, float *outv) {
+bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
   float dummy = 0;
   if (!outv) outv = &dummy;
   *outv = 0.0f;
-  if (!s || !s[0]) return false;
-  while (*s && *s <= ' ') ++s;
+  if (!s || !s[0]) { if (defval) *outv = *defval; return false; }
+  while (*s && (vuint8)*s <= ' ') ++s;
   bool neg = (s[0] == '-');
   if (s[0] == '+' || s[0] == '-') ++s;
-  if (!s[0]) return false;
+  if (!s[0]) { if (defval) *outv = *defval; return false; }
   // int part
   bool wasNum = false;
   if (s[0] >= '0' && s[0] <= '9') {
@@ -1304,7 +1304,7 @@ bool VStr::convertFloat (const char *s, float *outv) {
     ++s;
     bool negexp = (s[0] == '-');
     if (s[0] == '-' || s[0] == '+') ++s;
-    if (s[0] < '0' || s[0] > '9') { *outv = 0; return false; }
+    if (s[0] < '0' || s[0] > '9') { if (neg) *outv = -(*outv); if (defval) *outv = *defval; return false; }
     int exp = 0;
     while (s[0] >= '0' && s[0] <= '9') exp = exp*10+(*s++)-'0';
     while (exp != 0) {
@@ -1312,12 +1312,15 @@ bool VStr::convertFloat (const char *s, float *outv) {
       --exp;
     }
   }
-  // skip trailing 'f', if any
-  if (wasNum && s[0] == 'f') ++s;
-  // trailing spaces
-  while (*s && *s <= ' ') ++s;
-  if (*s || !wasNum) { *outv = 0; return false; }
   if (neg) *outv = -(*outv);
+  // skip trailing 'f' or 'l', if any
+  if (wasNum && (s[0] == 'f' || s[0] == 'l')) ++s;
+  // trailing spaces
+  while (*s && (vuint8)*s <= ' ') ++s;
+  if (*s || !wasNum) {
+    if (defval) *outv = *defval; //else *outv = 0;
+    return false;
+  }
   return true;
 }
 
