@@ -22,157 +22,105 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
 #include "cl_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 IMPLEMENT_CLASS(V, BasePlayer)
 
-static VCvarF     notify_time("notify_time", "5", "Notification timeout.", CVAR_Archive);
-static VCvarF     centre_msg_time("centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
-static VCvarB     msg_echo("msg_echo", true, "Echo messages?", CVAR_Archive);
-static VCvarI     font_colour("font_colour", "11", "Font color.", CVAR_Archive);
-static VCvarI     font_colour2("font_colour2", "11", "Secondary font color.", CVAR_Archive);
+static VCvarF notify_time("notify_time", "5", "Notification timeout.", CVAR_Archive);
+static VCvarF centre_msg_time("centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
+static VCvarB msg_echo("msg_echo", true, "Echo messages?", CVAR_Archive);
+static VCvarI font_colour("font_colour", "11", "Font color.", CVAR_Archive);
+static VCvarI font_colour2("font_colour2", "11", "Secondary font color.", CVAR_Archive);
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VBasePlayer::ExecuteNetMethod
 //
 //==========================================================================
-
-bool VBasePlayer::ExecuteNetMethod(VMethod *Func)
-{
+bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
   guard(VBasePlayer::ExecuteNetMethod);
-  if (GDemoRecordingContext)
-  {
-    //  Find initial version of the method.
+  if (GDemoRecordingContext) {
+    // find initial version of the method
     VMethod *Base = Func;
-    while (Base->SuperMethod)
-    {
-      Base = Base->SuperMethod;
-    }
-    //  Execute it's replication condition method.
+    while (Base->SuperMethod) Base = Base->SuperMethod;
+    // execute it's replication condition method
     check(Base->ReplCond);
     P_PASS_REF(this);
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
     bool ShouldSend = false;
-    if (VObject::ExecuteFunctionNoArgs(Base->ReplCond).i)
-    {
-      ShouldSend = true;
-    }
+    if (VObject::ExecuteFunctionNoArgs(Base->ReplCond).i) ShouldSend = true;
     PlayerFlags = SavedFlags;
 
-    if (ShouldSend)
-    {
-      //  Replication condition is true, the method must be replicated.
-      GDemoRecordingContext->ClientConnections[0]->Channels[
-        CHANIDX_Player]->SendRpc(Func, this);
+    if (ShouldSend) {
+      // replication condition is true, the method must be replicated
+      GDemoRecordingContext->ClientConnections[0]->Channels[CHANIDX_Player]->SendRpc(Func, this);
     }
   }
 
 #ifdef CLIENT
   if (GGameInfo->NetMode == NM_TitleMap ||
-    GGameInfo->NetMode == NM_Standalone ||
-    (GGameInfo->NetMode == NM_ListenServer && this == cl))
+      GGameInfo->NetMode == NM_Standalone ||
+      (GGameInfo->NetMode == NM_ListenServer && this == cl))
   {
     return false;
   }
 #endif
 
-  //  Find initial version of the method.
+  // find initial version of the method
   VMethod *Base = Func;
-  while (Base->SuperMethod)
-  {
-    Base = Base->SuperMethod;
-  }
-  //  Execute it's replication condition method.
+  while (Base->SuperMethod) Base = Base->SuperMethod;
+  // execute it's replication condition method
   check(Base->ReplCond);
   P_PASS_REF(this);
-  if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).i)
-  {
-    return false;
-  }
+  if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).i) return false;
 
-  if (Net)
-  {
-    //  Replication condition is true, the method must be replicated.
+  if (Net) {
+    // replication condition is true, the method must be replicated
     Net->Channels[CHANIDX_Player]->SendRpc(Func, this);
   }
 
-  //  Clean up parameters
+  // clean up parameters
   guard(VBasePlayer::ExecuteNetMethod::CleanUp);
   Func->CleanupParams();
   unguard;
 
-  //  It's been handled here.
+  // it's been handled here
   return true;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::SpawnClient
 //
 //==========================================================================
-
-void VBasePlayer::SpawnClient()
-{
+void VBasePlayer::SpawnClient () {
   guard(VBasePlayer::SpawnClient);
-  if (!sv_loading)
-  {
-    if (PlayerFlags & PF_Spawned)
-    {
-      GCon->Log(NAME_Dev, "Already spawned");
-    }
-    if (MO)
-    {
-      GCon->Log(NAME_Dev, "Mobj already spawned");
-    }
+  if (!sv_loading) {
+    if (PlayerFlags & PF_Spawned) GCon->Log(NAME_Dev, "Already spawned");
+    if (MO) GCon->Log(NAME_Dev, "Mobj already spawned");
     eventSpawnClient();
-    for (int i = 0; i < Level->XLevel->ActiveSequences.Num(); i++)
-    {
+    for (int i = 0; i < Level->XLevel->ActiveSequences.Num(); ++i) {
       eventClientStartSequence(
         Level->XLevel->ActiveSequences[i].Origin,
         Level->XLevel->ActiveSequences[i].OriginId,
         Level->XLevel->ActiveSequences[i].Name,
         Level->XLevel->ActiveSequences[i].ModeNum);
-      for (int j = 0; j < Level->XLevel->ActiveSequences[i].Choices.Num(); j++)
-      {
+      for (int j = 0; j < Level->XLevel->ActiveSequences[i].Choices.Num(); ++j) {
         eventClientAddSequenceChoice(
           Level->XLevel->ActiveSequences[i].OriginId,
           Level->XLevel->ActiveSequences[i].Choices[j]);
       }
     }
-  }
-  else
-  {
-    if (!MO)
-    {
-      Host_Error("Player without Mobj\n");
-    }
+  } else {
+    if (!MO) Host_Error("Player without Mobj\n");
   }
 
   ViewAngles.roll = 0;
@@ -181,28 +129,18 @@ void VBasePlayer::SpawnClient()
 
   PlayerFlags |= PF_Spawned;
 
-  if ((GGameInfo->NetMode == NM_TitleMap ||
-    GGameInfo->NetMode == NM_Standalone) && run_open_scripts)
-  {
-    //  Start open scripts.
-    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr,
-      false, false);
+  if ((GGameInfo->NetMode == NM_TitleMap || GGameInfo->NetMode == NM_Standalone) && run_open_scripts) {
+    // start open scripts
+    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
   }
 
-  if (!sv_loading)
-  {
-    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Enter, 0, 0, 0, MO,
-      true, false);
-  }
-  else if (sv_map_travel)
-  {
-    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Return, 0, 0, 0, MO,
-      true, false);
+  if (!sv_loading) {
+    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Enter, 0, 0, 0, MO, true, false);
+  } else if (sv_map_travel) {
+    Level->XLevel->Acs->StartTypedACScripts(SCRIPT_Return, 0, 0, 0, MO, true, false);
   }
 
-  if (GGameInfo->NetMode < NM_DedicatedServer ||
-    svs.num_connected == sv_load_num_players)
-  {
+  if (GGameInfo->NetMode < NM_DedicatedServer || svs.num_connected == sv_load_num_players) {
     sv_loading = false;
     sv_map_travel = false;
   }
@@ -212,14 +150,13 @@ void VBasePlayer::SpawnClient()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::Printf
 //
 //==========================================================================
-
-__attribute__((format(printf,2,3))) void VBasePlayer::Printf(const char *s, ...)
-{
+__attribute__((format(printf,2,3))) void VBasePlayer::Printf (const char *s, ...) {
   guard(VBasePlayer::Printf);
   va_list v;
   static char buf[4096];
@@ -232,17 +169,16 @@ __attribute__((format(printf,2,3))) void VBasePlayer::Printf(const char *s, ...)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::CentrePrintf
 //
 //==========================================================================
-
-__attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf(const char *s, ...)
-{
+__attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *s, ...) {
   guard(VBasePlayer::CentrePrintf);
   va_list v;
-  static char  buf[4096];
+  static char buf[4096];
 
   va_start(v, s);
   vsnprintf(buf, sizeof(buf), s, v);
@@ -328,62 +264,53 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
 //  VBasePlayer::SetUserInfo
 //
 //==========================================================================
-
-void VBasePlayer::SetUserInfo(const VStr &info)
-{
+void VBasePlayer::SetUserInfo (const VStr &info) {
   guard(VBasePlayer::SetUserInfo);
-  if (!sv_loading)
-  {
+  if (!sv_loading) {
     UserInfo = info;
     ReadFromUserInfo();
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::ReadFromUserInfo
 //
 //==========================================================================
-
-void VBasePlayer::ReadFromUserInfo()
-{
+void VBasePlayer::ReadFromUserInfo () {
   guard(VBasePlayer::ReadFromUserInfo);
-  if (!sv_loading)
-  {
-    BaseClass = atoi(*Info_ValueForKey(UserInfo, "class"));
-  }
+  if (!sv_loading) BaseClass = atoi(*Info_ValueForKey(UserInfo, "class"));
   PlayerName = Info_ValueForKey(UserInfo, "name");
   Colour = M_ParseColour(Info_ValueForKey(UserInfo, "colour"));
   eventUserinfoChanged();
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientStartSound
 //
 //==========================================================================
-
-void VBasePlayer::DoClientStartSound(int SoundId, TVec Org, int OriginId,
+void VBasePlayer::DoClientStartSound (int SoundId, TVec Org, int OriginId,
   int Channel, float Volume, float Attenuation, bool Loop)
 {
 #ifdef CLIENT
   guard(VBasePlayer::DoClientStartSound);
-  GAudio->PlaySound(SoundId, Org, TVec(0, 0, 0), OriginId, Channel, Volume,
-    Attenuation, Loop);
+  GAudio->PlaySound(SoundId, Org, TVec(0, 0, 0), OriginId, Channel, Volume, Attenuation, Loop);
   unguard;
 #endif
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::DoClientStopSound
 //
 //==========================================================================
-
-void VBasePlayer::DoClientStopSound(int OriginId, int Channel)
-{
+void VBasePlayer::DoClientStopSound (int OriginId, int Channel) {
 #ifdef CLIENT
   guard(VBasePlayer::DoClientStopSound);
   GAudio->StopSound(OriginId, Channel);
@@ -391,15 +318,13 @@ void VBasePlayer::DoClientStopSound(int OriginId, int Channel)
 #endif
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientStartSequence
 //
 //==========================================================================
-
-void VBasePlayer::DoClientStartSequence(TVec Origin, int OriginId, VName Name,
-  int ModeNum)
-{
+void VBasePlayer::DoClientStartSequence (TVec Origin, int OriginId, VName Name, int ModeNum) {
 #ifdef CLIENT
   guard(VBasePlayer::DoClientStartSequence);
   GAudio->StartSequence(OriginId, Origin, Name, ModeNum);
@@ -407,14 +332,13 @@ void VBasePlayer::DoClientStartSequence(TVec Origin, int OriginId, VName Name,
 #endif
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientAddSequenceChoice
 //
 //==========================================================================
-
-void VBasePlayer::DoClientAddSequenceChoice(int OriginId, VName Choice)
-{
+void VBasePlayer::DoClientAddSequenceChoice (int OriginId, VName Choice) {
 #ifdef CLIENT
   guard(VBasePlayer::DoClientAddSequenceChoice);
   GAudio->AddSeqChoice(OriginId, Choice);
@@ -422,14 +346,13 @@ void VBasePlayer::DoClientAddSequenceChoice(int OriginId, VName Choice)
 #endif
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientStopSequence
 //
 //==========================================================================
-
-void VBasePlayer::DoClientStopSequence(int OriginId)
-{
+void VBasePlayer::DoClientStopSequence (int OriginId) {
 #ifdef CLIENT
   guard(VBasePlayer::DoClientStopSequence);
   GAudio->StopSequence(OriginId);
@@ -437,59 +360,37 @@ void VBasePlayer::DoClientStopSequence(int OriginId)
 #endif
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientPrint
 //
 //==========================================================================
-
-void VBasePlayer::DoClientPrint(VStr AStr)
-{
+void VBasePlayer::DoClientPrint (VStr AStr) {
   guard(VBasePlayer::DoClientPrint);
   VStr Str(AStr);
 
-  if (Str.IsEmpty())
-  {
-    return;
-  }
-
-  if (Str[0] == '$')
-  {
-    Str = GLanguage[*VStr(Str.ToLower(), 1, Str.Length() - 1)];
-  }
-
-  if (msg_echo)
-  {
-    GCon->Log(Str);
-  }
+  if (Str.IsEmpty()) return;
+  if (Str[0] == '$') Str = GLanguage[*VStr(Str.ToLower(), 1, Str.Length()-1)];
+  if (msg_echo) GCon->Log(Str);
 
   ClGame->eventAddNotifyMessage(Str);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::DoClientCentrePrint
 //
 //==========================================================================
-
-void VBasePlayer::DoClientCentrePrint(VStr Str)
-{
+void VBasePlayer::DoClientCentrePrint (VStr Str) {
   guard(VBasePlayer::DoClientCentrePrint);
   VStr Msg(Str);
 
-  if (Msg.IsEmpty())
-  {
-    return;
-  }
-
-  if (Msg[0] == '$')
-  {
-    Msg = GLanguage[*VStr(Msg.ToLower(), 1, Msg.Length() - 1)];
-  }
-
-  if (msg_echo)
-  {
+  if (Msg.IsEmpty()) return;
+  if (Msg[0] == '$') Msg = GLanguage[*VStr(Msg.ToLower(), 1, Msg.Length()-1)];
+  if (msg_echo) {
     GCon->Log("<-------------------------------->");
     GCon->Log(Msg);
     GCon->Log("<-------------------------------->");
@@ -499,28 +400,26 @@ void VBasePlayer::DoClientCentrePrint(VStr Str)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientSetAngles
 //
 //==========================================================================
-
-void VBasePlayer::DoClientSetAngles(TAVec Angles)
-{
+void VBasePlayer::DoClientSetAngles (TAVec Angles) {
   guard(VBasePlayer::DoClientSetAngles);
   ViewAngles = Angles;
   ViewAngles.pitch = AngleMod180(ViewAngles.pitch);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientIntermission
 //
 //==========================================================================
-
-void VBasePlayer::DoClientIntermission(VName NextMap)
-{
+void VBasePlayer::DoClientIntermission (VName NextMap) {
   guard(VBasePlayer::DoClientIntermission);
   im_t &im = ClGame->im;
 
@@ -542,62 +441,39 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
   im.EnterTitlePatch = einfo.TitlePatch;
   im.EnterPic = einfo.EnterPic;
 
-  if (linfo.Cluster != einfo.Cluster)
-  {
-    if (einfo.Cluster)
-    {
+  if (linfo.Cluster != einfo.Cluster) {
+    if (einfo.Cluster) {
       const VClusterDef *CDef = P_GetClusterDef(einfo.Cluster);
-      if (CDef->EnterText.Length())
-      {
-        if (CDef->Flags & CLUSTERF_LookupEnterText)
-        {
+      if (CDef->EnterText.Length()) {
+        if (CDef->Flags & CLUSTERF_LookupEnterText) {
           im.Text = GLanguage[*CDef->EnterText];
-        }
-        else
-        {
+        } else {
           im.Text = CDef->EnterText;
         }
-        if (CDef->Flags & CLUSTERF_EnterTextIsLump)
-        {
-          im.IMFlags |= im_t::IMF_TextIsLump;
-        }
-        if (CDef->Flags & CLUSTERF_FinalePic)
-        {
+        if (CDef->Flags & CLUSTERF_EnterTextIsLump) im.IMFlags |= im_t::IMF_TextIsLump;
+        if (CDef->Flags & CLUSTERF_FinalePic) {
           im.TextFlat = NAME_None;
           im.TextPic = CDef->Flat;
-        }
-        else
-        {
+        } else {
           im.TextFlat = CDef->Flat;
           im.TextPic = NAME_None;
         }
         im.TextMusic = CDef->Music;
       }
     }
-    if (im.Text.Length() == 0 && linfo.Cluster)
-    {
+    if (im.Text.Length() == 0 && linfo.Cluster) {
       const VClusterDef *CDef = P_GetClusterDef(linfo.Cluster);
-      if (CDef->ExitText.Length())
-      {
-        if (CDef->Flags & CLUSTERF_LookupExitText)
-        {
+      if (CDef->ExitText.Length()) {
+        if (CDef->Flags & CLUSTERF_LookupExitText) {
           im.Text = GLanguage[*CDef->ExitText];
-        }
-        else
-        {
+        } else {
           im.Text = CDef->ExitText;
         }
-        if (CDef->Flags & CLUSTERF_ExitTextIsLump)
-        {
-          im.IMFlags |= im_t::IMF_TextIsLump;
-        }
-        if (CDef->Flags & CLUSTERF_FinalePic)
-        {
+        if (CDef->Flags & CLUSTERF_ExitTextIsLump) im.IMFlags |= im_t::IMF_TextIsLump;
+        if (CDef->Flags & CLUSTERF_FinalePic) {
           im.TextFlat = NAME_None;
           im.TextPic = CDef->Flat;
-        }
-        else
-        {
+        } else {
           im.TextFlat = CDef->Flat;
           im.TextPic = NAME_None;
         }
@@ -616,23 +492,19 @@ void VBasePlayer::DoClientIntermission(VName NextMap)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientPause
 //
 //==========================================================================
-
-void VBasePlayer::DoClientPause(bool Paused)
-{
+void VBasePlayer::DoClientPause (bool Paused) {
 #ifdef CLIENT
   guard(VBasePlayer::DoClientPause);
-  if (Paused)
-  {
+  if (Paused) {
     GGameInfo->Flags |= VGameInfo::GIF_Paused;
     GAudio->PauseSound();
-  }
-  else
-  {
+  } else {
     GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
     GAudio->ResumeSound();
   }
@@ -640,45 +512,41 @@ void VBasePlayer::DoClientPause(bool Paused)
 #endif
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientSkipIntermission
 //
 //==========================================================================
-
-void VBasePlayer::DoClientSkipIntermission()
-{
+void VBasePlayer::DoClientSkipIntermission () {
   guard(VBasePlayer::DoClientSkipIntermission);
   ClGame->ClientFlags |= VClientGameBase::CF_SkipIntermission;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::DoClientFinale
 //
 //==========================================================================
-
-void VBasePlayer::DoClientFinale(VStr Type)
-{
+void VBasePlayer::DoClientFinale (VStr Type) {
   guard(VBasePlayer::DoClientFinale);
   ClGame->intermission = 2;
 #ifdef CLIENT
   AM_Stop();
 #endif
-
   ClGame->eventStartFinale(*Type);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::DoClientChangeMusic
 //
 //==========================================================================
-
-void VBasePlayer::DoClientChangeMusic(VName Song)
-{
+void VBasePlayer::DoClientChangeMusic (VName Song) {
   guard(VBasePlayer::DoClientChangeMusic);
   Level->SongLump = Song;
 #ifdef CLIENT
@@ -687,14 +555,13 @@ void VBasePlayer::DoClientChangeMusic(VName Song)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientSetServerInfo
 //
 //==========================================================================
-
-void VBasePlayer::DoClientSetServerInfo(VStr Key, VStr Value)
-{
+void VBasePlayer::DoClientSetServerInfo (VStr Key, VStr Value) {
   guard(VBasePlayer::DoClientSetServerInfo);
   Info_SetValueForKey(ClGame->serverinfo, Key, Value);
 #ifdef CLIENT
@@ -703,13 +570,13 @@ void VBasePlayer::DoClientSetServerInfo(VStr Key, VStr Value)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientHudMessage
 //
 //==========================================================================
-
-void VBasePlayer::DoClientHudMessage(const VStr &Message, VName Font, int Type,
+void VBasePlayer::DoClientHudMessage (const VStr &Message, VName Font, int Type,
   int Id, int Colour, const VStr &ColourName, float x, float y,
   int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
 {
@@ -719,55 +586,48 @@ void VBasePlayer::DoClientHudMessage(const VStr &Message, VName Font, int Type,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::WriteViewData
 //
 //==========================================================================
-
-void VBasePlayer::WriteViewData()
-{
+void VBasePlayer::WriteViewData () {
   guard(VBasePlayer::WriteViewData);
-  //  Update bam_angles (after teleportation)
-  if (PlayerFlags & PF_FixAngle)
-  {
+  // update bam_angles (after teleportation)
+  if (PlayerFlags&PF_FixAngle) {
     PlayerFlags &= ~PF_FixAngle;
     eventClientSetAngles(ViewAngles);
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  COMMAND SetInfo
 //
 //==========================================================================
-
-COMMAND(SetInfo)
-{
+COMMAND(SetInfo) {
   guard(COMMAND SetInfo);
-  if (Source != SRC_Client)
-  {
+  if (Source != SRC_Client) {
     GCon->Log("SetInfo is not valid from console");
     return;
   }
 
-  if (Args.Num() != 3)
-  {
-    return;
-  }
+  if (Args.Num() != 3) return;
 
   Info_SetValueForKey(Player->UserInfo, *Args[1], *Args[2]);
   Player->ReadFromUserInfo();
   unguard;
 }
 
+
 //==========================================================================
 //
 //  Natives
 //
 //==========================================================================
-
 IMPLEMENT_FUNCTION(VBasePlayer, cprint)
 {
   VStr msg = PF_FormatString();

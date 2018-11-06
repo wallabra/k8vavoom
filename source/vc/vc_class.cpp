@@ -801,6 +801,8 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
       return &StateLabels[i];
     }
   }
+
+  //if (AName == VName("Missile")) fprintf(stderr, "ERROR: '%s' state for '%s' not found! (parentclass=%s)\n", *AName, *GetFullName(), (ParentClass ? *ParentClass->GetFullName() : "<none>"));
   return nullptr;
   unguard;
 }
