@@ -28,6 +28,29 @@
 #include "render/r_shared.h"
 
 
+// switches to C mode
+struct SCParseModeSaver {
+  VScriptParser *sc;
+  bool oldCMode;
+  bool oldEscape;
+
+  SCParseModeSaver (VScriptParser *asc) : sc(asc) {
+    oldCMode = sc->IsCMode();
+    oldEscape = sc->IsEscape();
+    sc->SetCMode(true);
+    sc->SetEscape(true);
+  }
+
+  ~SCParseModeSaver () {
+    sc->SetCMode(oldCMode);
+    sc->SetEscape(oldEscape);
+  }
+
+  SCParseModeSaver (const SCParseModeSaver &);
+  void operator = (const SCParseModeSaver &) const;
+};
+
+
 struct FMapSongInfo {
   VName MapName;
   VName SongName;
@@ -1181,107 +1204,254 @@ static void ParseEpisodeDef (VScriptParser *sc) {
 
 //==========================================================================
 //
-//  ParseSkillDef
+//  ParseSkillDefOld
 //
 //==========================================================================
-static void ParseSkillDef (VScriptParser *sc) {
-  guard(ParseSkillDef);
-  VSkillDef *SDef = nullptr;
-  sc->ExpectString();
-
-  // check for replaced skill
-  for (int i = 0; i < SkillDefs.Num(); ++i) {
-    if (!sc->String.ICmp(SkillDefs[i].Name)) {
-      SDef = &SkillDefs[i];
-      break;
-    }
-  }
-  if (!SDef) {
-    SDef = &SkillDefs.Alloc();
-    SDef->Name = sc->String;
-  }
-
-  // set defaults
-  SDef->AmmoFactor = 1.0;
-  SDef->DoubleAmmoFactor = 2.0;
-  SDef->DamageFactor = 1.0;
-  SDef->RespawnTime = 0.0;
-  SDef->RespawnLimit = 0;
-  SDef->Aggressiveness = 1.0;
-  SDef->SpawnFilter = 0;
-  SDef->AcsReturn = SkillDefs.Num()-1;
-  SDef->MenuName.Clean();
-  SDef->PlayerClassNames.Clear();
-  SDef->ConfirmationText.Clean();
-  SDef->Key.Clean();
-  SDef->TextColour.Clean();
-  SDef->Flags = 0;
-
-  while (1) {
+static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
+  guard(ParseSkillDefOld);
+  for (;;) {
     if (sc->Check("AmmoFactor")) {
       sc->ExpectFloat();
-      SDef->AmmoFactor = sc->Float;
+      sdef->AmmoFactor = sc->Float;
     } else if (sc->Check("DoubleAmmoFactor")) {
       sc->ExpectFloat();
-      SDef->DoubleAmmoFactor = sc->Float;
+      sdef->DoubleAmmoFactor = sc->Float;
     } else if (sc->Check("DamageFactor")) {
       sc->ExpectFloat();
-      SDef->DamageFactor = sc->Float;
+      sdef->DamageFactor = sc->Float;
     } else if (sc->Check("FastMonsters")) {
-      SDef->Flags |= SKILLF_FastMonsters;
+      sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("DisableCheats")) {
-      SDef->Flags |= SKILLF_DisableCheats;
+      sdef->Flags |= SKILLF_DisableCheats;
     } else if (sc->Check("EasyBossBrain")) {
-      SDef->Flags |= SKILLF_EasyBossBrain;
+      sdef->Flags |= SKILLF_EasyBossBrain;
     } else if (sc->Check("AutoUseHealth")) {
-      SDef->Flags |= SKILLF_AutoUseHealth;
+      sdef->Flags |= SKILLF_AutoUseHealth;
     } else if (sc->Check("RespawnTime")) {
       sc->ExpectFloat();
-      SDef->RespawnTime = sc->Float;
+      sdef->RespawnTime = sc->Float;
     } else if (sc->Check("RespawnLimit")) {
       sc->ExpectNumber();
-      SDef->RespawnLimit = sc->Number;
+      sdef->RespawnLimit = sc->Number;
     } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloat();
-      SDef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
+      sdef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
     } else if (sc->Check("SpawnFilter")) {
       if (sc->CheckNumber()) {
-        if (sc->Number > 0 && sc->Number < 31) SDef->SpawnFilter = 1<<(sc->Number-1);
+        if (sc->Number > 0 && sc->Number < 31) sdef->SpawnFilter = 1<<(sc->Number-1);
       } else {
-             if (sc->Check("Baby")) SDef->SpawnFilter = 1;
-        else if (sc->Check("Easy")) SDef->SpawnFilter = 2;
-        else if (sc->Check("Normal")) SDef->SpawnFilter = 4;
-        else if (sc->Check("Hard")) SDef->SpawnFilter = 8;
-        else if (sc->Check("Nightmare")) SDef->SpawnFilter = 16;
+             if (sc->Check("Baby")) sdef->SpawnFilter = 1;
+        else if (sc->Check("Easy")) sdef->SpawnFilter = 2;
+        else if (sc->Check("Normal")) sdef->SpawnFilter = 4;
+        else if (sc->Check("Hard")) sdef->SpawnFilter = 8;
+        else if (sc->Check("Nightmare")) sdef->SpawnFilter = 16;
         else sc->ExpectString();
       }
     } else if (sc->Check("ACSReturn")) {
       sc->ExpectNumber();
-      SDef->AcsReturn = sc->Number;
+      sdef->AcsReturn = sc->Number;
     } else if (sc->Check("Name")) {
       sc->ExpectString();
-      SDef->MenuName = sc->String;
-      SDef->Flags &= ~SKILLF_MenuNameIsPic;
+      sdef->MenuName = sc->String;
+      sdef->Flags &= ~SKILLF_MenuNameIsPic;
     } else if (sc->Check("PlayerClassName")) {
-      VSkillPlayerClassName &CN = SDef->PlayerClassNames.Alloc();
+      VSkillPlayerClassName &CN = sdef->PlayerClassNames.Alloc();
       sc->ExpectString();
       CN.ClassName = sc->String;
       sc->ExpectString();
       CN.MenuName = sc->String;
     } else if (sc->Check("PicName")) {
       sc->ExpectString();
-      SDef->MenuName = sc->String.ToLower();
-      SDef->Flags |= SKILLF_MenuNameIsPic;
+      sdef->MenuName = sc->String.ToLower();
+      sdef->Flags |= SKILLF_MenuNameIsPic;
     } else if (sc->Check("MustConfirm")) {
-      SDef->Flags |= SKILLF_MustConfirm;
-      if (sc->CheckQuotedString()) SDef->ConfirmationText = sc->String;
+      sdef->Flags |= SKILLF_MustConfirm;
+      if (sc->CheckQuotedString()) sdef->ConfirmationText = sc->String;
     } else if (sc->Check("Key")) {
       sc->ExpectString();
-      SDef->Key = sc->String;
+      sdef->Key = sc->String;
     } else if (sc->Check("TextColor")) {
       sc->ExpectString();
-      SDef->TextColour = sc->String;
+      sdef->TextColour = sc->String;
     } else {
+      break;
+    }
+  }
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  ParseSkillDef
+//
+//==========================================================================
+static void ParseSkillDef (VScriptParser *sc) {
+  guard(ParseSkillDef);
+  VSkillDef *sdef = nullptr;
+  sc->ExpectString();
+
+  // check for replaced skill
+  for (int i = 0; i < SkillDefs.Num(); ++i) {
+    if (sc->String.ICmp(SkillDefs[i].Name) == 0) {
+      sdef = &SkillDefs[i];
+      break;
+    }
+  }
+  if (!sdef) {
+    sdef = &SkillDefs.Alloc();
+    sdef->Name = sc->String;
+  }
+
+  // set defaults
+  sdef->AmmoFactor = 1.0;
+  sdef->DoubleAmmoFactor = 2.0;
+  sdef->DamageFactor = 1.0;
+  sdef->RespawnTime = 0.0;
+  sdef->RespawnLimit = 0;
+  sdef->Aggressiveness = 1.0;
+  sdef->SpawnFilter = 0;
+  sdef->AcsReturn = SkillDefs.Num()-1;
+  sdef->MenuName.Clean();
+  sdef->PlayerClassNames.Clear();
+  sdef->ConfirmationText.Clean();
+  sdef->Key.Clean();
+  sdef->TextColour.Clean();
+  sdef->Flags = 0;
+
+  if (!sc->Check("{")) { ParseSkillDefOld(sc, sdef); return; }
+  SCParseModeSaver msave(sc);
+
+  while (!sc->Check("}")) {
+    if (sc->Check("AmmoFactor")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      sdef->AmmoFactor = sc->Float;
+    } else if (sc->Check("DoubleAmmoFactor")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      sdef->DoubleAmmoFactor = sc->Float;
+    } else if (sc->Check("DropAmmoFactor")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      GCon->Logf("MAPINFO:%s: skill setting 'DropAmmoFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("DamageFactor")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      sdef->DamageFactor = sc->Float;
+    } else if (sc->Check("RespawnTime")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      sdef->RespawnTime = sc->Float;
+    } else if (sc->Check("RespawnLimit")) {
+      sc->Expect("=");
+      sc->ExpectNumber();
+      sdef->RespawnLimit = sc->Number;
+    } else if (sc->Check("Aggressiveness")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      sdef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
+    } else if (sc->Check("SpawnFilter")) {
+      sc->Expect("=");
+      if (sc->CheckNumber()) {
+        if (sc->Number > 0 && sc->Number < 31) sdef->SpawnFilter = 1<<(sc->Number-1);
+      } else {
+             if (sc->Check("Baby")) sdef->SpawnFilter = 1;
+        else if (sc->Check("Easy")) sdef->SpawnFilter = 2;
+        else if (sc->Check("Normal")) sdef->SpawnFilter = 4;
+        else if (sc->Check("Hard")) sdef->SpawnFilter = 8;
+        else if (sc->Check("Nightmare")) sdef->SpawnFilter = 16;
+        else { sc->ExpectString(); GCon->Logf("MAPINFO:%s: unknown spawnfilter '%s'", *sc->GetLoc().toStringNoCol(), *sc->String); }
+      }
+    } else if (sc->Check("ACSReturn")) {
+      sc->Expect("=");
+      sc->ExpectNumber();
+      sdef->AcsReturn = sc->Number;
+    } else if (sc->Check("Key")) {
+      sc->Expect("=");
+      sc->ExpectString();
+      sdef->Key = sc->String;
+    } else if (sc->Check("MustConfirm")) {
+      sdef->Flags |= SKILLF_MustConfirm;
+      if (sc->Check("=")) {
+        sc->ExpectString();
+        sdef->ConfirmationText = sc->String;
+      }
+    } else if (sc->Check("Name")) {
+      sc->Expect("=");
+      sc->ExpectString();
+      sdef->MenuName = sc->String;
+      sdef->Flags &= ~SKILLF_MenuNameIsPic;
+    } else if (sc->Check("PlayerClassName")) {
+      sc->Expect("=");
+      VSkillPlayerClassName &CN = sdef->PlayerClassNames.Alloc();
+      sc->ExpectString();
+      CN.ClassName = sc->String;
+      sc->Expect(",");
+      sc->ExpectString();
+      CN.MenuName = sc->String;
+    } else if (sc->Check("PicName")) {
+      sc->Expect("=");
+      sc->ExpectString();
+      sdef->MenuName = sc->String.ToLower();
+      sdef->Flags |= SKILLF_MenuNameIsPic;
+    } else if (sc->Check("TextColor")) {
+      sc->Expect("=");
+      sc->ExpectString();
+      sdef->TextColour = sc->String;
+    } else if (sc->Check("EasyBossBrain")) {
+      sdef->Flags |= SKILLF_EasyBossBrain;
+    } else if (sc->Check("EasyKey")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'EasyKey' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("FastMonsters")) {
+      sdef->Flags |= SKILLF_FastMonsters;
+    } else if (sc->Check("SlowMonsters")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'SlowMonsters' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("DisableCheats")) {
+      sdef->Flags |= SKILLF_DisableCheats;
+    } else if (sc->Check("AutoUseHealth")) {
+      sdef->Flags |= SKILLF_AutoUseHealth;
+    } else if (sc->Check("ReplaceActor")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      sc->ExpectString();
+      sc->Expect(",");
+      sc->ExpectString();
+    } else if (sc->Check("MonsterHealth")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'MonsterHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      sc->ExpectFloat();
+    } else if (sc->Check("FriendlyHealth")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'FriendlyHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      sc->ExpectFloat();
+    } else if (sc->Check("NoPain")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("DefaultSkill")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'DefaultSkill' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("ArmorFactor")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'ArmorFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      sc->ExpectFloat();
+    } else if (sc->Check("NoInfighting")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'NoInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("TotalInfighting")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'TotalInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("HealthFactor")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'HealthFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      sc->ExpectFloat();
+    } else if (sc->Check("KickbackFactor")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'KickbackFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      sc->ExpectFloat();
+    } else if (sc->Check("NoMenu")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'NoMenu' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("PlayerRespawn")) {
+      GCon->Logf("MAPINFO:%s: skill setting 'PlayerRespawn' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else {
+      sc->ExpectString();
+      sc->Error(va("unknown MAPINFO skill command '%s'", *sc->String));
       break;
     }
   }
