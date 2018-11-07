@@ -24,9 +24,46 @@
 //**************************************************************************
 class MenuScreenHelp : MenuScreen;
 
-MenuStaticBitmap Pic;
+int PicHandle = -1;
 int NumPages;
 int CurPage;
+
+
+//==========================================================================
+//
+//  SetPic
+//
+//==========================================================================
+void SetPic (name picname) {
+  if (!picname) { PicHandle = -1; return; }
+  PicHandle = R_RegisterPic(picname);
+}
+
+
+//==========================================================================
+//
+//  DrawBackButton
+//
+//==========================================================================
+override void DrawBackButton () {
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (PicHandle < 0) return;
+  picinfo_t Info;
+  R_GetPicInfo(PicHandle, &Info);
+  if (Info.width < 1 || Info.height < 1) {
+    ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
+  } else {
+    DrawFullScreenPic(PicHandle);
+  }
+}
 
 
 //==========================================================================
@@ -42,8 +79,7 @@ override void CreateChoices () {
   }
   CurPage = 0;
 
-  Pic = NewChild(MenuStaticBitmap);
-  if (IsAnyDoom2) Pic.SetPic('help'); else Pic.SetPic('help1');
+  if (IsAnyDoom2) SetPic('help'); else SetPic('help1');
 }
 
 
@@ -54,12 +90,11 @@ override void CreateChoices () {
 //==========================================================================
 override bool OnKeyDown (int key) {
   LocalSound('menu/clear');
-  //ClGame.ForceMenuOff(); // for one page
   ++CurPage;
   if (key == K_ESCAPE || CurPage >= NumPages) {
     ClGame.ForceMenuOff();
   } else {
-    Pic.SetPic('help2');
+    SetPic('help2');
   }
   return true;
 }
@@ -68,6 +103,6 @@ override bool OnKeyDown (int key) {
 defaultproperties {
   X = 0;
   Y = 0;
-  ScaleX = 2.0;
-  ScaleY = 2.4;
+  //ScaleX = 2.0;
+  //ScaleY = 2.4;
 }
