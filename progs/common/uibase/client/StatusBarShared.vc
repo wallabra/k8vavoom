@@ -263,6 +263,22 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
     print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
+  /*
+  print("<%s>", Message);
+  print("font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f", Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  */
+  /*
+  if (Font == 'confont' && (HudWidth > 0 || HudHeight > 0)) {
+    int w = GetVirtualWidth();
+    int h = GetVirtualHeight();
+    //print("font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f", Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+    //if (HudWidth > 0) { x = round(x*float(w)/float(HudWidth)); HudWidth = 0; }
+    //if (HudHeight > 0) { y = round(y*float(h)/float(HudHeight)); HudHeight = 0; }
+    if (HudWidth > 0) { x = -(x/float(HudWidth)); HudWidth = 0; }
+    if (HudHeight > 0) { y = -(y/float(HudHeight)); HudHeight = 0; }
+    //print(" newx=%f; newy=%f", x, y);
+  }
+  */
 
   // handle colours specified by name
   if (Type&HUDMSG_COLOURSTRING) Colour = FindTextColour(ColourName);

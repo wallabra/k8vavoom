@@ -90,10 +90,10 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
     //writeln("HUD1: ", AHudWidth, "x", AHudHeight);
     HudWidth = AHudWidth;
     HudHeight = AHudHeight;
-    Width = abs(HudWidth);
-    Height = abs(HudHeight);
-    ScaleX = float(Parent.Width)/float(Width);
-    ScaleY = float(Parent.Height)/float(Height);
+    //Width = abs(HudWidth);
+    //Height = abs(HudHeight);
+    //ScaleX = float(Parent.Width)/float(Width);
+    //ScaleY = float(Parent.Height)/float(Height);
 
     int IntPart = int(MsgX);
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
@@ -107,7 +107,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 
   // calculate width and height of the text
   SetFont(MsgFont);
-  MsgHeight = SplitText(Message, MsgLines, Width);
+  MsgHeight = SplitText(Message, MsgLines, /*Width*/GetVirtualWidth()-32);
   MsgWidth = 0;
   foreach (auto i; 0..MsgLines.length) {
     if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
@@ -167,6 +167,12 @@ override void OnDraw () {
       case 0: y -= MsgHeight/2; break;
       case 2: y -= MsgHeight; break;
     }
+
+    //FIXME: make big scales work as expected
+    float sx = float(Parent.Width)/float(GetVirtualWidth());
+    float sy = float(Parent.Height)/float(GetVirtualHeight());
+    x = round(x*sx);
+    y = round(y*sy);
   }
 
   foreach (auto i; 0..MsgLines.length) {
