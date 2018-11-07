@@ -109,17 +109,16 @@ public:
 };
 
 
-class VAcsGrowingArray
-{
+class VAcsGrowingArray {
 private:
-  vint32    Size;
+  vint32 Size;
   vint32 *Data;
 public:
-  VAcsGrowingArray();
-  void Redim(int NewSize);
-  void SetElemVal(int Index, int Value);
-  int GetElemVal(int Index);
-  void Serialise(VStream &Strm);
+  VAcsGrowingArray ();
+  void Redim (int NewSize);
+  void SetElemVal (int Index, int Value);
+  int GetElemVal (int Index);
+  void Serialise (VStream &Strm);
 };
 
 

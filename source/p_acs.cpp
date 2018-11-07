@@ -1111,8 +1111,7 @@ void VAcsObject::Serialise(VStream &Strm)
 
 vuint8 *VAcsObject::OffsetToPtr(int Offs)
 {
-  if (Offs < 0 || Offs >= DataSize)
-    Host_Error("Bad offset in ACS file");
+  if (Offs < 0 || Offs >= DataSize) Host_Error("Bad offset in ACS file");
   return Data + Offs;
 }
 
@@ -1836,109 +1835,95 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsGrowingArray::VAcsGrowingArray
 //
 //==========================================================================
-
-VAcsGrowingArray::VAcsGrowingArray()
-: Size(0)
-, Data(nullptr)
+VAcsGrowingArray::VAcsGrowingArray ()
+  : Size(0)
+  , Data(nullptr)
 {
 }
+
 
 //==========================================================================
 //
 //  VAcsGrowingArray::Redim
 //
 //==========================================================================
-
-void VAcsGrowingArray::Redim(int NewSize)
-{
+void VAcsGrowingArray::Redim (int NewSize) {
   guard(VAcsGrowingArray::Redim);
-  if (!NewSize && Data)
-  {
+  //check(NewSize >= 0);
+  //fprintf(stderr, "VAcsGrowingArray::Redim: Size=%d; NewSize=%d; Data=%p\n", Size, NewSize, Data);
+  if (!NewSize && Data) {
     delete[] Data;
     Data = nullptr;
-  }
-  else if (NewSize)
-  {
+  } else if (NewSize) {
     int *Temp = Data;
     Data = new int[NewSize];
-    if (Temp)
-    {
-      memcpy(Data, Temp, Min(Size, NewSize) * sizeof(int));
+    if (Temp) {
+      memcpy(Data, Temp, Min(Size, NewSize)*sizeof(int));
       delete[] Temp;
       Temp = nullptr;
     }
-    //  Clear newly allocated elements.
-    if (NewSize > Size)
-    {
-      memset((void *)(Data+Size), 0, (NewSize - Size) * sizeof(int));
-    }
+    // clear newly allocated elements
+    if (NewSize > Size) memset((void *)(Data+Size), 0, (NewSize-Size)*sizeof(int));
   }
   Size = NewSize;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcsGrowingArray::SetElemVal
 //
 //==========================================================================
-
-void VAcsGrowingArray::SetElemVal(int Index, int Value)
-{
+void VAcsGrowingArray::SetElemVal (int Index, int Value) {
   guard(VAcsGrowingArray::SetElemVal);
-  if (Index >= Size)
-  {
-    Redim(Index + 1);
-  }
+  //fprintf(stderr, "VAcsGrowingArray::SetElemVal: Index=%d; Value=%d; Size=%d\n", Index, Value, Size);
+  if (Index < 0) Host_Error("ACS: invalid index %d (value=%d)", Index, Value);
+  if (Index > 1024*1024*32) Host_Error("ACS: index %d too big (value=%d)", Index, Value);
+  //if (Index > 1024*1024*32) { GCon->Logf("ACS: index %d too big (value=%d)", Index, Value); return; }
+  if (Index >= Size) Redim(Index+1);
   Data[Index] = Value;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcsGrowingArray::GetElemVal
 //
 //==========================================================================
-
-int VAcsGrowingArray::GetElemVal(int Index)
-{
+int VAcsGrowingArray::GetElemVal (int Index) {
   guard(VAcsGrowingArray::GetElemVal);
-  if ((unsigned)Index >= (unsigned)Size)
-    return 0;
+  if ((unsigned)Index >= (unsigned)Size) return 0;
   return Data[Index];
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcsGrowingArray::Serialise
 //
 //==========================================================================
-
-void VAcsGrowingArray::Serialise(VStream &Strm)
-{
+void VAcsGrowingArray::Serialise (VStream &Strm) {
   guard(VAcsGrowingArray::Serialise);
-  if (Strm.IsLoading())
-  {
+  if (Strm.IsLoading()) {
     int NewSize;
     Strm << STRM_INDEX(NewSize);
     Redim(NewSize);
-  }
-  else
-  {
+  } else {
     Strm << STRM_INDEX(Size);
   }
-  for (int i = 0; i < Size; i++)
-  {
-    Strm << STRM_INDEX(Data[i]);
-  }
+  for (int i = 0; i < Size; ++i) Strm << STRM_INDEX(Data[i]);
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -2467,11 +2452,13 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Divide)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `Divide`");
       sp[-2] /= sp[-1];
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Modulus)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `Modulus`");
       sp[-2] %= sp[-1];
       sp--;
       ACSVM_BREAK;
@@ -2597,36 +2584,42 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivScriptVar)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivScriptVar`");
       locals[READ_BYTE_OR_INT32] /= sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivMapVar)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivMapVar`");
       *ActiveObject->MapVars[READ_BYTE_OR_INT32] /= sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivWorldVar)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivWorldVar`");
       WorldVars[READ_BYTE_OR_INT32] /= sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModScriptVar)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModScriptVar`");
       locals[READ_BYTE_OR_INT32] %= sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModMapVar)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModMapVar`");
       *ActiveObject->MapVars[READ_BYTE_OR_INT32] %= sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModWorldVar)
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModWorldVar`");
       WorldVars[READ_BYTE_OR_INT32] %= sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
@@ -2695,13 +2688,12 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_Random)
-      sp[-2] = sp[-2] + (vint32)(Random() * (sp[-1] - sp[-2] + 1));
+      sp[-2] = sp[-2] + (vint32)(Random()*(sp[-1]-sp[-2]+1));
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_RandomDirect)
-      *sp = READ_INT32(ip) + (vint32)(Random() * (READ_INT32(ip + 4) -
-        READ_INT32(ip) + 1));
+      *sp = READ_INT32(ip) + (vint32)(Random()*(READ_INT32(ip+4)-READ_INT32(ip)+1));
       ip += 8;
       sp++;
       ACSVM_BREAK;
@@ -2712,8 +2704,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ThingCountDirect)
-      *sp = Level->eventThingCount(READ_INT32(ip), NAME_None,
-        READ_INT32(ip + 4), -1);
+      *sp = Level->eventThingCount(READ_INT32(ip), NAME_None, READ_INT32(ip+4), -1);
       ip += 8;
       sp++;
       ACSVM_BREAK;
@@ -2748,11 +2739,8 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_ChangeFloor)
       {
-        int Flat = GTextureManager.NumForName(GetName8(sp[-1]),
-          TEXTYPE_Flat, true, true);
-        for  (int Idx = FindSectorFromTag(sp[-2], -1); Idx >= 0;
-          Idx = FindSectorFromTag(sp[-2], Idx))
-        {
+        int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true, true);
+        for (int Idx = FindSectorFromTag(sp[-2], -1); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
           XLevel->Sectors[Idx].floor.pic = Flat;
         }
         sp -= 2;
@@ -2762,12 +2750,9 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ChangeFloorDirect)
       {
         int Tag = READ_INT32(ip);
-        int Flat = GTextureManager.NumForName(GetName8(
-          READ_INT32(ip + 4)), TEXTYPE_Flat, true, true);
+        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
         ip += 8;
-        for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0;
-          Idx = FindSectorFromTag(Tag, Idx))
-        {
+        for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
           XLevel->Sectors[Idx].floor.pic = Flat;
         }
       }
@@ -2775,11 +2760,8 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_ChangeCeiling)
       {
-        int Flat = GTextureManager.NumForName(GetName8(sp[-1]),
-          TEXTYPE_Flat, true, true);
-        for  (int Idx = FindSectorFromTag(sp[-2], -1); Idx >= 0;
-          Idx = FindSectorFromTag(sp[-2], Idx))
-        {
+        int Flat = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Flat, true, true);
+        for (int Idx = FindSectorFromTag(sp[-2], -1); Idx >= 0; Idx = FindSectorFromTag(sp[-2], Idx)) {
           XLevel->Sectors[Idx].ceiling.pic = Flat;
         }
         sp -= 2;
@@ -2789,12 +2771,9 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ChangeCeilingDirect)
       {
         int Tag = READ_INT32(ip);
-        int Flat = GTextureManager.NumForName(GetName8(
-          READ_INT32(ip + 4)), TEXTYPE_Flat, true, true);
+        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
         ip += 8;
-        for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0;
-          Idx = FindSectorFromTag(Tag, Idx))
-        {
+        for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
           XLevel->Sectors[Idx].ceiling.pic = Flat;
         }
       }
@@ -2918,10 +2897,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_ClearLineSpecial)
-      if (line)
-      {
-        line->special = 0;
-      }
+      if (line) line->special = 0;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_CaseGoto)
@@ -4166,8 +4142,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AddGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) + sp[-1]);
+        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])+sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4176,8 +4151,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_SubGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) - sp[-1]);
+        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])-sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4186,8 +4160,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_MulGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) * sp[-1]);
+        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])*sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4196,8 +4169,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_DivGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) / sp[-1]);
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivGlobalArray`");
+        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])/sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4206,8 +4179,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ModGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) % sp[-1]);
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModGlobalArray`");
+        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])%sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4216,8 +4189,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_IncGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-1],
-          GlobalArrays[ANum].GetElemVal(sp[-1]) + 1);
+        GlobalArrays[ANum].SetElemVal(sp[-1], GlobalArrays[ANum].GetElemVal(sp[-1])+1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -4226,8 +4198,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_DecGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-1],
-          GlobalArrays[ANum].GetElemVal(sp[-1]) - 1);
+        GlobalArrays[ANum].SetElemVal(sp[-1], GlobalArrays[ANum].GetElemVal(sp[-1])-1);
         INC_BYTE_OR_INT32;
         sp--;
       }
