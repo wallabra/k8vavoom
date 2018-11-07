@@ -59,6 +59,8 @@ native void ResetQuoted ();
 native void ResetCrossed ();
 native void SkipBracketed (optional bool bracketEaten); // default is `false`
 native void UnGet ();
+native string FileName ();
+native int CurrLine ();
 native void ScriptError (string Text, ...) [printf,1];
 native void ScriptMessage (string Text, ...) [printf,1];
 

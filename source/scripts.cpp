@@ -79,6 +79,8 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(ResetCrossed)
   DECLARE_FUNCTION(SkipBracketed)
   DECLARE_FUNCTION(UnGet)
+  DECLARE_FUNCTION(FileName)
+  DECLARE_FUNCTION(CurrLine)
   DECLARE_FUNCTION(ScriptError)
   DECLARE_FUNCTION(ScriptMessage)
 };
@@ -93,6 +95,7 @@ IMPLEMENT_CLASS(V, ScriptsParser)
 //==========================================================================
 VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
   : Line(1)
+  , TokLine(1)
   , End(false)
   , Crossed(false)
   , QuotedString(false)
@@ -123,6 +126,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
 //==========================================================================
 VScriptParser::VScriptParser (const VStr &name, const char *atext)
   : Line(1)
+  , TokLine(1)
   , End(false)
   , Crossed(false)
   , QuotedString(false)
@@ -177,6 +181,7 @@ VScriptParser *VScriptParser::clone () const {
   res->ScriptEndPtr = res->ScriptBuffer+(ScriptEndPtr-ScriptBuffer);
 
   res->Line = Line;
+  res->TokLine = TokLine;
   res->End = End;
   res->Crossed = Crossed;
   res->QuotedString = QuotedString;
@@ -293,6 +298,7 @@ bool VScriptParser::GetString () {
     return false;
   }
 
+  TokLine = Line;
   Crossed = false;
   QuotedString = false;
   bool foundToken = false;
@@ -851,9 +857,9 @@ void VScriptParser::Message (const char *message) {
   guard(VScriptParser::Message)
   const char *Msg = (message ? message : "Bad syntax.");
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf("\"%s\" line %d: %s", *ScriptName, Line, Msg);
+  GCon->Logf("\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
 #else
-  printf("\"%s\" line %d: %s\n", *ScriptName, Line, Msg);
+  printf("\"%s\" line %d: %s\n", *ScriptName, TokLine, Msg);
 #endif
   unguard;
 }
@@ -867,7 +873,7 @@ void VScriptParser::Message (const char *message) {
 void VScriptParser::Error (const char *message) {
   guard(VScriptParser::Error)
   const char *Msg = (message ? message : "Bad syntax.");
-  Sys_Error("Script error, \"%s\" line %d: %s", *ScriptName, Line, Msg);
+  Sys_Error("Script error, \"%s\" line %d: %s", *ScriptName, TokLine, Msg);
   unguard;
 }
 
@@ -880,7 +886,7 @@ void VScriptParser::Error (const char *message) {
 TLocation VScriptParser::GetLoc () {
   guardSlow(VScriptParser::GetLoc);
   if (SrcIdx == -1) SrcIdx = TLocation::AddSourceFile(ScriptName);
-  return TLocation(SrcIdx, Line, 1);
+  return TLocation(SrcIdx, TokLine, 1);
   unguardSlow;
 }
 
@@ -1141,6 +1147,18 @@ IMPLEMENT_FUNCTION(VScriptsParser, UnGet) {
   P_GET_SELF;
   Self->CheckInterface();
   Self->Int->UnGet();
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, FileName) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_STR(Self->Int->GetScriptName());
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, CurrLine) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_INT(Self->Int->TokLine);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ScriptError) {

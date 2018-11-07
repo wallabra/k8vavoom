@@ -26,6 +26,7 @@
 class VScriptParser {
 public:
   int Line;
+  int TokLine;
   bool End;
   bool Crossed;
   bool QuotedString;
