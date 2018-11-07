@@ -154,16 +154,16 @@ defaultproperties
 class Acs : Thinker native abstract;
 
 transient private Entity Activator;
-transient private line_t *line;
+transient native private line_t *line;
 transient private int side;
 transient private int number;
-transient private /*VAcsInfo*/void *info;
+transient native private /*VAcsInfo*/void *info;
 transient private ubyte State;
 transient private float DelayTime;
 transient private int WaitValue;
-transient private int *LocalVars;
-transient private ubyte *InstructionPointer;
-transient private /*VAcsObject*/void *ActiveObject;
+transient native private int *LocalVars;
+transient native private ubyte *InstructionPointer;
+transient native private /*VAcsObject*/void *ActiveObject;
 transient private int HudWidth;
 transient private int HudHeight;
 transient private name Font;
