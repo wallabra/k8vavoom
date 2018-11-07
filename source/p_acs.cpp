@@ -4289,10 +4289,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_SetHudSize)
       HudWidth = abs(sp[-3]);
       HudHeight = abs(sp[-2]);
-      if (sp[-1])
-      {
-        HudHeight = -HudHeight;
-      }
+      //GCon->Logf("ACS: SetHudSize: (%d,%d)", HudWidth, HudHeight);
+      if (sp[-1]) HudHeight = -HudHeight;
       sp -= 3;
       ACSVM_BREAK;
 
