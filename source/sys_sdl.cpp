@@ -316,22 +316,10 @@ static void signal_handler (int s) {
 
 //==========================================================================
 //
-//  main
-//
-//  Main program
+//  mainloop
 //
 //==========================================================================
-#if defined(USE_FPU_MATH)
-# include <fenv.h>
-#endif
-int main (int argc, char **argv) {
-#ifdef __SWITCH__
-  socketInitializeDefault();
-# ifdef SWITCH_NXLINK
-  nxlinkStdio();
-# endif
-#endif
-
+static void mainloop (int argc, char **argv) {
   try {
     GArgs.Init(argc, argv);
 
@@ -387,12 +375,50 @@ int main (int argc, char **argv) {
     Host_Shutdown();
     SDL_Quit();
     exit(1);
-  } catch (...) {
-    //dprintf("\n\nExiting due to external exception\n");
-    //fprintf(stderr, "\nExiting due to external exception\n");
-    GCon->Logf("\nExiting due to external exception");
-    Host_Shutdown();
-    throw;
+  }
+}
+
+
+//==========================================================================
+//
+//  main
+//
+//  Main program
+//
+//==========================================================================
+#if defined(USE_FPU_MATH)
+# include <fenv.h>
+#endif
+int main (int argc, char **argv) {
+#ifdef __SWITCH__
+  socketInitializeDefault();
+# ifdef SWITCH_NXLINK
+  nxlinkStdio();
+# endif
+#endif
+
+  bool inGDB = false;
+  for (int f = 1; f < argc; ++f) {
+    if (strcmp(argv[f], "-gdb") == 0) {
+      inGDB = true;
+      for (int c = f+1; c < argc; ++c) argv[c-1] = argv[c];
+      --argc;
+      --f;
+    }
+  }
+
+  if (inGDB) {
+    mainloop(argc, argv);
+  } else {
+    try {
+      mainloop(argc, argv);
+    } catch (...) {
+      //dprintf("\n\nExiting due to external exception\n");
+      //fprintf(stderr, "\nExiting due to external exception\n");
+      GCon->Logf("\nExiting due to external exception");
+      Host_Shutdown();
+      throw;
+    }
   }
 #ifdef _WIN32
   return 0;
