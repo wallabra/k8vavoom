@@ -85,6 +85,15 @@ menudef GameplayOptions {
     help = "Do slightly better line-of-sight checking for monsters.";
   }
 
+  option bool {
+    title = "Pushable barrels";
+    cvar = sv_pushablebarrels;
+    help =
+      "Can barrels be pushed?"
+      "Don't worry, this option is latched (I should explain this)."
+      "Requires game restart.";
+  }
+
   //TODO
   //if (GameName == "hexen") CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');
 
