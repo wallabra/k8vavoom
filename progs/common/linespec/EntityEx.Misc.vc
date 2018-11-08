@@ -2887,61 +2887,98 @@ final bool SetPlayerProperty(int Prop, int Set)
   return true;
 }
 
+
 //==========================================================================
 //
 //  decorate_random
 //
 //==========================================================================
-
-final int decorate_random(int From, int To)
-{
-  if (From > To)
-  {
+final int decorate_random (int From, int To) {
+  if (From > To) {
     int Tmp = From;
     From = To;
     To = Tmp;
   }
   int RVal;
-  if (To - From > 255)
-  {
-    RVal = (P_Random() << 24) | (P_Random() << 16) | (P_Random() << 8) |
-      P_Random();
-  }
-  else
-  {
+  if (To-From > 255) {
+    RVal = (P_Random()<<24)|(P_Random()<<16)|(P_Random()<<8)|P_Random();
+  } else {
     RVal = P_Random();
   }
-  return From + RVal % (To - From + 1);
+  return From+RVal%(To-From+1);
 }
+
 
 //==========================================================================
 //
 //  decorate_random2
 //
 //==========================================================================
-
-final int decorate_random2(optional int Mask)
-{
-  if (specified_Mask)
-  {
-    return (P_Random() & Mask) - (P_Random() & Mask);
-  }
-  else
-  {
-    return P_Random() - P_Random();
-  }
+final int decorate_random2 (optional int Mask) {
+  if (specified_Mask) return (P_Random()&Mask)-(P_Random()&Mask);
+  return P_Random()-P_Random();
 }
+
 
 //==========================================================================
 //
 //  decorate_frandom
 //
 //==========================================================================
-
-final float decorate_frandom(float From, float To)
-{
+final float decorate_frandom (float From, float To) {
   return From+FRandomFull()*(To-From);
 }
+
+
+//==========================================================================
+//
+//  decorate_randompick
+//
+//==========================================================================
+final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
+                               optional int v4, optional int v5, optional int v6,
+                               optional int v7, optional int v8, optional int v9)
+{
+  int[12] values;
+  int vcount = 1;
+  values[0] = v0;
+  if (specified_v1) values[vcount++] = v1;
+  if (specified_v2) values[vcount++] = v2;
+  if (specified_v3) values[vcount++] = v3;
+  if (specified_v4) values[vcount++] = v4;
+  if (specified_v5) values[vcount++] = v5;
+  if (specified_v6) values[vcount++] = v6;
+  if (specified_v7) values[vcount++] = v7;
+  if (specified_v8) values[vcount++] = v8;
+  if (specified_v9) values[vcount++] = v9;
+  return values[P_Random()%vcount];
+}
+
+
+//==========================================================================
+//
+//  decorate_frandompick
+//
+//==========================================================================
+final float decorate_frandompick (float v0, optional float v1, optional float v2, optional float v3,
+                                  optional float v4, optional float v5, optional float v6,
+                                  optional float v7, optional float v8, optional float v9)
+{
+  float[12] values;
+  int vcount = 1;
+  values[0] = v0;
+  if (specified_v1) values[vcount++] = v1;
+  if (specified_v2) values[vcount++] = v2;
+  if (specified_v3) values[vcount++] = v3;
+  if (specified_v4) values[vcount++] = v4;
+  if (specified_v5) values[vcount++] = v5;
+  if (specified_v6) values[vcount++] = v6;
+  if (specified_v7) values[vcount++] = v7;
+  if (specified_v8) values[vcount++] = v8;
+  if (specified_v9) values[vcount++] = v9;
+  return values[P_Random()%vcount];
+}
+
 
 //==========================================================================
 //

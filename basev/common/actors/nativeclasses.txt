@@ -43,6 +43,12 @@ class Actor extends Thinker
 
   field Threshold = Threshold;
 
+  alias random = random;
+  alias frandom = frandom;
+  alias random2 = random2;
+  alias randompick = randompick;
+  alias frandompick = frandompick;
+
   //
   //  Monster AI
   //

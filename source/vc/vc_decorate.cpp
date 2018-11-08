@@ -1231,7 +1231,9 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
       }
     }
     // skip random generator ID
-    if ((Name.ICmp("random") == 0 || Name.ICmp("random2") == 0 || Name.ICmp("frandom") == 0) && sc->Check("[")) {
+    if ((Name.ICmp("random") == 0 || Name.ICmp("random2") == 0 || Name.ICmp("frandom") == 0 ||
+         Name.ICmp("randompick") == 0 || Name.ICmp("frandompick") == 0) && sc->Check("["))
+    {
       sc->ExpectString();
       sc->Expect("]");
     }

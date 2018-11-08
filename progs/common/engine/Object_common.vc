@@ -333,7 +333,7 @@ native static final bool IsSlopedFlat (const ref TPlane plane);
 native static final float Random ();
 // floating random number 0.0 ... 1.0
 native static final float FRandomFull ();
-// integer random number 1 .. 255
+// integer random number 0 .. 255
 native static final int P_Random ();
 // generates a random seen in range [1..0xffff_ffff]
 native static final int GenRandomSeedU32 ();
