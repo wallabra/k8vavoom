@@ -3157,6 +3157,8 @@ override void PlayerTick(float deltaTime)
     print("  playertick(%C): MO.XLevel=%C", self, MO.XLevel);
   }
 
+  //print("***000: BUTTONS: 0x%08x; old=0x%08x", Buttons, OldButtons);
+
   if ((MO.XLevel.TicTime % (3 * 35) == 0) && Cheats & CF_REGENERATION && Health > 0)
   {
     if (EntityEx(MO).GiveBody(5) &&
@@ -3174,8 +3176,7 @@ override void PlayerTick(float deltaTime)
   }
 
   //  You can only press use while totally frozen
-  if (bTotallyFrozen || (Level.bFrozen && !(Cheats & CF_TIMEFREEZE)))
-  {
+  if (bTotallyFrozen || (Level.bFrozen && !(Cheats&CF_TIMEFREEZE))) {
     Buttons &= BT_USE;
     Impulse = 0;
     ViewAngles = MO.Angles;

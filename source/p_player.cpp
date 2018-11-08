@@ -658,6 +658,8 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
   Self->FlyMove = 0;
   Self->Buttons = 0;
   Self->Impulse = 0;
+  Self->AcsButtons = 0;
+  Self->OldButtons = 0;
   Self->MO = nullptr;
   Self->PlayerState = 0;
   Self->ViewOrg = TVec(0, 0, 0);

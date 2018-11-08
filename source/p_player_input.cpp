@@ -51,6 +51,33 @@ static TKButton   Key ## name; \
 static TCmdKeyDown  name ## Down_f("+" #name, Key ## name); \
 static TCmdKeyUp  name ## Up_f("-" #name, Key ## name);
 
+
+#define ACS_BT_ATTACK     0x00000001
+#define ACS_BT_USE        0x00000002
+#define ACS_BT_JUMP       0x00000004
+#define ACS_BT_CROUCH     0x00000008
+#define ACS_BT_TURN180    0x00000010
+#define ACS_BT_ALTATTACK  0x00000020
+#define ACS_BT_RELOAD     0x00000040
+#define ACS_BT_ZOOM       0x00000080
+#define ACS_BT_SPEED      0x00000100
+#define ACS_BT_STRAFE     0x00000200
+#define ACS_BT_MOVERIGHT  0x00000400
+#define ACS_BT_MOVELEFT   0x00000800
+#define ACS_BT_BACK       0x00001000
+#define ACS_BT_FORWARD    0x00002000
+#define ACS_BT_RIGHT      0x00004000
+#define ACS_BT_LEFT       0x00008000
+#define ACS_BT_LOOKUP     0x00010000
+#define ACS_BT_LOOKDOWN   0x00020000
+#define ACS_BT_MOVEUP     0x00040000
+#define ACS_BT_MOVEDOWN   0x00080000
+#define ACS_BT_SHOWSCORES 0x00100000
+#define ACS_BT_USER1      0x00200000
+#define ACS_BT_USER2      0x00400000
+#define ACS_BT_USER3      0x00800000
+#define ACS_BT_USER4      0x01000000
+
 // TYPES -------------------------------------------------------------------
 
 class TKButton
@@ -567,18 +594,11 @@ void VBasePlayer::HandleInput()
   forward = side = flyheight = 0;
 
   // let movement keys cancel each other out
-  if (KeyStrafe.state & 1)
-  {
+  if (KeyStrafe.state&1) {
     side += KeyRight.KeyState() * cl_sidespeed;
     side -= KeyLeft.KeyState() * cl_sidespeed;
-    if (joyxmove > 0)
-    {
-      side += cl_sidespeed;
-    }
-    if (joyxmove < 0)
-    {
-      side -= cl_sidespeed;
-    }
+    if (joyxmove > 0) side += cl_sidespeed;
+    if (joyxmove < 0) side -= cl_sidespeed;
   }
 
   forward += KeyForward.KeyState() * cl_forwardspeed;
@@ -587,45 +607,32 @@ void VBasePlayer::HandleInput()
   side += KeyMoveRight.KeyState() * cl_sidespeed;
   side -= KeyMoveLeft.KeyState() * cl_sidespeed;
 
-  if (joyymove < 0)
-  {
-    forward += cl_forwardspeed;
-  }
-  if (joyymove > 0)
-  {
-    forward -= cl_backspeed;
-  }
+  if (joyymove < 0) forward += cl_forwardspeed;
+  if (joyymove > 0) forward -= cl_backspeed;
 
   // Fly up/down/drop keys
   flyheight += KeyFlyUp.KeyState() * cl_flyspeed; // note that the actual flyheight will be twice this
   flyheight -= KeyFlyDown.KeyState() * cl_flyspeed;
 
-  if ((!mouse_look && !(KeyMouseLook.state & 1)) || (KeyStrafe.state & 1))
-  {
-    forward += m_forward * mousey;
+  if ((!mouse_look && !(KeyMouseLook.state&1)) || (KeyStrafe.state&1)) {
+    forward += m_forward*mousey;
   }
 
-  if ((KeyStrafe.state & 1) ||
-    (lookstrafe && (mouse_look || (KeyMouseLook.state & 1))))
-  {
-    side += m_side * mousex;
+  if ((KeyStrafe.state & 1) || (lookstrafe && (mouse_look || (KeyMouseLook.state&1)))) {
+    side += m_side*mousex;
   }
 
   forward = MID(forward, -cl_backspeed, cl_forwardspeed);
   side = MID(side, -cl_sidespeed, cl_sidespeed);
 
-  if (allways_run || (KeySpeed.state & 1))
-  {
+  if (allways_run || (KeySpeed.state&1)) {
     forward *= cl_movespeedkey;
     side *= cl_movespeedkey;
     flyheight *= cl_movespeedkey;
   }
 
   flyheight = MID(flyheight, -127, 127);
-  if (KeyFlyCentre.KeyState())
-  {
-    flyheight = TOCENTRE;
-  }
+  if (KeyFlyCentre.KeyState()) flyheight = TOCENTRE;
 
   //
   //  BUTTONS
@@ -633,48 +640,26 @@ void VBasePlayer::HandleInput()
 
   Buttons = 0;
 
-  // Fire buttons
-  if (KeyAttack.KeyState())
-  {
-    Buttons |= BT_ATTACK;
-  }
+  if (KeyAttack.KeyState()) Buttons |= BT_ATTACK;
+  if (KeyUse.KeyState()) Buttons |= BT_USE;
+  if (KeyJump.KeyState()) Buttons |= BT_JUMP;
+  if (KeyAltAttack.KeyState()) Buttons |= BT_ALT_ATTACK;
+  if (KeyButton5.KeyState()) Buttons |= 0x10;
+  if (KeyButton6.KeyState()) Buttons |= 0x20;
+  if (KeyButton7.KeyState()) Buttons |= 0x40;
+  if (KeyButton8.KeyState()) Buttons |= 0x80;
 
-  // Use buttons
-  if (KeyUse.KeyState())
-  {
-    Buttons |= BT_USE;
-  }
+  if (KeyForward.KeyState()) Buttons |= BT_FORWARD;
+  if (KeyBackward.KeyState()) Buttons |= BT_BACKWARD;
+  if (KeyLeft.KeyState()) Buttons |= BT_LEFT;
+  if (KeyRight.KeyState()) Buttons |= BT_RIGHT;
+  if (KeyMoveLeft.KeyState()) Buttons |= BT_MOVELEFT;
+  if (KeyMoveRight.KeyState()) Buttons |= BT_MOVERIGHT;
+  if (KeyStrafe.KeyState()) Buttons |= BT_STRAFE;
+  if (KeySpeed.KeyState()) Buttons |= BT_SPEED;
 
-  // Jumping
-  if (KeyJump.KeyState())
-  {
-    Buttons |= BT_JUMP;
-  }
-
-  if (KeyAltAttack.KeyState())
-  {
-    Buttons |= BT_ALT_ATTACK;
-  }
-
-  if (KeyButton5.KeyState())
-  {
-    Buttons |= 0x10;
-  }
-
-  if (KeyButton6.KeyState())
-  {
-    Buttons |= 0x20;
-  }
-
-  if (KeyButton7.KeyState())
-  {
-    Buttons |= 0x40;
-  }
-
-  if (KeyButton8.KeyState())
-  {
-    Buttons |= 0x80;
-  }
+  AcsButtons = Buttons;
+  //GCon->Logf("VBasePlayer::HandleInput(%p): %d; Buttons=0x%08x; OldButtons=0x%08x", this, (KeyJump.KeyState() ? 1 : 0), Buttons, OldButtons);
 
   //
   //  IMPULSE
@@ -744,86 +729,64 @@ void VBasePlayer::ClearInput()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::AcsGetInput
 //
 //==========================================================================
-
 int VBasePlayer::AcsGetInput(int InputType)
 {
   guard(VBasePlayer::AcsGetInput);
   int Btn;
   int Ret = 0;
-  switch (InputType)
-  {
-  case INPUT_OLDBUTTONS:
-  case MODINPUT_OLDBUTTONS:
-  case INPUT_BUTTONS:
-  case MODINPUT_BUTTONS:
-    if (InputType == INPUT_OLDBUTTONS ||
-      InputType == MODINPUT_OLDBUTTONS)
-    {
-      Btn = OldButtons;
-      //k8: hack for DooM:ONE
-      Btn &= ~BT_USE;
-    }
-    else
-    {
-      Btn = Buttons;
-    }
-    //  Convert buttons to what ACS expects.
-    if (Btn & BT_ATTACK)
-    {
-      Ret |= 1;
-    }
-    if (Btn & BT_USE)
-    {
-      Ret |= 2;
-    }
-    if (Btn & BT_JUMP)
-    {
-      Ret |= 4;
-    }
-    if (Btn & BT_ALT_ATTACK)
-    {
-      Ret |= 32;
-    }
-    return Ret;
+  //static int n = 0;
+  switch (InputType) {
+    case INPUT_OLDBUTTONS:
+    case MODINPUT_OLDBUTTONS:
+    case INPUT_BUTTONS:
+    case MODINPUT_BUTTONS:
+      if (InputType == INPUT_OLDBUTTONS || InputType == MODINPUT_OLDBUTTONS) {
+        Btn = OldButtons;
+        //k8: hack for DooM:ONE
+        Btn &= ~BT_USE;
+      } else {
+        Btn = AcsButtons;
+      }
+      // convert buttons to what ACS expects
+      // /*if (Btn)*/ GCon->Logf("(%d) Buttons(%p): %08x; curr=%08x; old=%08x", n++, this, (unsigned)Btn, Buttons, OldButtons);
+      if (Btn&BT_ATTACK) Ret |= ACS_BT_ATTACK;
+      if (Btn&BT_USE) Ret |= ACS_BT_USE;
+      if (Btn&BT_JUMP) Ret |= ACS_BT_JUMP;
+      if (Btn&BT_ALT_ATTACK) Ret |= ACS_BT_ALTATTACK;
+      if (Btn&BT_FORWARD) Ret |= ACS_BT_FORWARD;
+      if (Btn&BT_BACKWARD) Ret |= ACS_BT_BACK;
+      if (Btn&BT_LEFT) Ret |= ACS_BT_LEFT;
+      if (Btn&BT_RIGHT) Ret |= ACS_BT_RIGHT;
+      if (Btn&BT_MOVELEFT) Ret |= ACS_BT_MOVELEFT;
+      if (Btn&BT_MOVERIGHT) Ret |= ACS_BT_MOVERIGHT;
+      if (Btn&BT_STRAFE) Ret |= ACS_BT_STRAFE;
+      if (Btn&BT_SPEED) Ret |= ACS_BT_SPEED;
+      return Ret;
 
-  case INPUT_PITCH:
-    return (int)(AngleMod(OldViewAngles.pitch) * 0x10000 / 360);
+    case INPUT_PITCH: return (int)(AngleMod(OldViewAngles.pitch) * 0x10000 / 360);
+    case MODINPUT_PITCH: return (int)(AngleMod(ViewAngles.pitch) * 0x10000 / 360);
 
-  case MODINPUT_PITCH:
-    return (int)(AngleMod(ViewAngles.pitch) * 0x10000 / 360);
+    case INPUT_YAW: return (int)(AngleMod(OldViewAngles.yaw) * 0x10000 / 360);
+    case MODINPUT_YAW: return (int)(AngleMod(ViewAngles.yaw) * 0x10000 / 360);
 
-  case INPUT_YAW:
-    return (int)(AngleMod(OldViewAngles.yaw) * 0x10000 / 360);
+    case INPUT_ROLL: return (int)(AngleMod(OldViewAngles.roll) * 0x10000 / 360);
+    case MODINPUT_ROLL: return (int)(AngleMod(ViewAngles.roll) * 0x10000 / 360);
 
-  case MODINPUT_YAW:
-    return (int)(AngleMod(ViewAngles.yaw) * 0x10000 / 360);
+    case INPUT_FORWARDMOVE: return (int)(ClientForwardMove * 0x32 / 400);
+    case MODINPUT_FORWARDMOVE: return (int)(ForwardMove * 0x32 / 400);
 
-  case INPUT_ROLL:
-    return (int)(AngleMod(OldViewAngles.roll) * 0x10000 / 360);
+    case INPUT_SIDEMOVE: return (int)(ClientSideMove * 0x32 / 400);
+    case MODINPUT_SIDEMOVE: return (int)(SideMove * 0x32 / 400);
 
-  case MODINPUT_ROLL:
-    return (int)(AngleMod(ViewAngles.roll) * 0x10000 / 360);
-
-  case INPUT_FORWARDMOVE:
-    return (int)(ClientForwardMove * 0x32 / 400);
-
-  case MODINPUT_FORWARDMOVE:
-    return (int)(ForwardMove * 0x32 / 400);
-
-  case INPUT_SIDEMOVE:
-    return (int)(ClientSideMove * 0x32 / 400);
-
-  case MODINPUT_SIDEMOVE:
-    return (int)(SideMove * 0x32 / 400);
-
-  case INPUT_UPMOVE:
-  case MODINPUT_UPMOVE:
-    return (int)(FlyMove * 3 * 256 / 80);
+    case INPUT_UPMOVE:
+    case MODINPUT_UPMOVE:
+      return (int)(FlyMove * 3 * 256 / 80);
   }
   return 0;
   unguard;

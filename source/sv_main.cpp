@@ -319,9 +319,7 @@ void SV_RunClients () {
     }
 
     // pause if in menu or console and at least one tic has been run
-    if (Player->PlayerFlags & VBasePlayer::PF_Spawned &&
-        !sv.intermission && !GGameInfo->IsPaused())
-    {
+    if ((Player->PlayerFlags&VBasePlayer::PF_Spawned) && !sv.intermission && !GGameInfo->IsPaused()) {
       Player->ForwardMove = Player->ClientForwardMove;
       Player->SideMove = Player->ClientSideMove;
       // don't move faster than maxmove
@@ -332,9 +330,11 @@ void SV_RunClients () {
       // check for disabled freelook and jumping
       if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) Player->ViewAngles.pitch = 0;
       if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) Player->Buttons &= ~BT_JUMP;
+      //GCon->Logf("*** 000: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
       Player->OldViewAngles = Player->ViewAngles;
       Player->eventPlayerTick(host_frametime);
-      Player->OldButtons = Player->Buttons;
+      //GCon->Logf("*** 001: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
+      Player->OldButtons = Player->AcsButtons;
     }
   }
 

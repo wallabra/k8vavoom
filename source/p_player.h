@@ -74,10 +74,21 @@ enum playerstate_t
 //
 enum
 {
-  BT_ATTACK   = 1,    // Press "Fire".
-  BT_USE      = 2,    // Use button, to open doors, activate switches.
-  BT_JUMP     = 4,
+  BT_ATTACK     = 1,    // Press "Fire".
+  BT_USE        = 2,    // Use button, to open doors, activate switches.
+  BT_JUMP       = 4,
   BT_ALT_ATTACK = 8,
+
+  BT_RELOAD     = 0x00000100,
+  BT_SPEED      = 0x00000200,
+  BT_STRAFE     = 0x00000400,
+  BT_CROUCH     = 0x00000800,
+  BT_MOVELEFT   = 0x00001000,
+  BT_MOVERIGHT  = 0x00002000,
+  BT_LEFT       = 0x00004000,
+  BT_RIGHT      = 0x00008000,
+  BT_FORWARD    = 0x00010000,
+  BT_BACKWARD   = 0x00020000,
 };
 
 struct VViewState
@@ -99,87 +110,86 @@ class VBasePlayer : public VGameObject
 
   VLevelInfo *Level;
 
-  enum
-  {
-    PF_Active       = 0x0001,
-    PF_Spawned        = 0x0002,
-    PF_IsBot        = 0x0004,
-    PF_FixAngle       = 0x0008,
-    PF_AttackDown     = 0x0010, // True if button down last tic.
-    PF_UseDown        = 0x0020,
-    PF_DidSecret      = 0x0040, // True if secret level has been done.
-    PF_Centreing      = 0x0080,
-    PF_IsClient       = 0x0100, // Player on client side
-    PF_AutomapRevealed    = 0x0200,
-    PF_AutomapShowThings  = 0x0400,
-    PF_ReloadQueued = 0x0800,
+  enum {
+    PF_Active            = 0x0001,
+    PF_Spawned           = 0x0002,
+    PF_IsBot             = 0x0004,
+    PF_FixAngle          = 0x0008,
+    PF_AttackDown        = 0x0010, // True if button down last tic.
+    PF_UseDown           = 0x0020,
+    PF_DidSecret         = 0x0040, // True if secret level has been done.
+    PF_Centreing         = 0x0080,
+    PF_IsClient          = 0x0100, // Player on client side
+    PF_AutomapRevealed   = 0x0200,
+    PF_AutomapShowThings = 0x0400,
+    PF_ReloadQueued      = 0x0800,
   };
-  vuint32     PlayerFlags;
+  vuint32 PlayerFlags;
 
   VNetConnection *Net;
 
-  VStr      UserInfo;
+  VStr UserInfo;
 
-  VStr      PlayerName;
-  vuint8      BaseClass;
-  vuint8      PClass;     // player class type
-  vuint8      TranslStart;
-  vuint8      TranslEnd;
-  vint32      Colour;
+  VStr PlayerName;
+  vuint8 BaseClass;
+  vuint8 PClass; // player class type
+  vuint8 TranslStart;
+  vuint8 TranslEnd;
+  vint32 Colour;
 
-  float     ClientForwardMove;  // *2048 for move
-  float     ClientSideMove;   // *2048 for move
-  float     ForwardMove;  // *2048 for move
-  float     SideMove;   // *2048 for move
-  float     FlyMove;    // fly up/down/centreing
-  vuint8      Buttons;    // fire, use
-  vuint8      Impulse;    // weapon changes, inventory, etc
+  float ClientForwardMove;  // *2048 for move
+  float ClientSideMove;   // *2048 for move
+  float ForwardMove;  // *2048 for move
+  float SideMove;   // *2048 for move
+  float FlyMove;    // fly up/down/centreing
+  /*vuint8*/vuint32 Buttons;    // fire, use
+  /*vuint8*/vuint32 Impulse;    // weapon changes, inventory, etc
   //  For ACS
-  vuint8      OldButtons;
-  TAVec     OldViewAngles;
+  vuint32 AcsButtons;
+  /*vuint8*/vuint32 OldButtons;
+  TAVec OldViewAngles;
 
   VEntity *MO;
   VEntity *Camera;
-  vint32      PlayerState;
+  vint32 PlayerState;
 
-  // Determine POV,
-  //  including viewpoint bobbing during movement.
-  // Focal origin above r.z
-  TVec      ViewOrg;
+  // determine POV, including viewpoint bobbing during movement
+  // focal origin above r.z
+  TVec ViewOrg;
 
-  TAVec     ViewAngles;
+  TAVec ViewAngles;
 
   // This is only used between levels,
   // mo->health is used during levels.
-  vint32      Health;
+  vint32 Health;
 
   // Frags, kills of other players.
-  vint32      Frags;
-  vint32      Deaths;
+  vint32 Frags;
+  vint32 Deaths;
 
   // For intermission stats.
-  vint32      KillCount;
-  vint32      ItemCount;
-  vint32      SecretCount;
+  vint32 KillCount;
+  vint32 ItemCount;
+  vint32 SecretCount;
 
   // So gun flashes light up areas.
-  vuint8      ExtraLight;
+  vuint8 ExtraLight;
 
   // For lite-amp and invulnarability powers
-  vuint8      FixedColourmap;
+  vuint8 FixedColourmap;
 
   // Colour shifts for damage, powerups and content types
-  vuint32     CShift;
+  vuint32 CShift;
 
   // Overlay view sprites (gun, etc).
-  VViewState    ViewStates[NUMPSPRITES];
-  float     PSpriteSY;
+  VViewState ViewStates[NUMPSPRITES];
+  float PSpriteSY;
 
-  float     WorldTimer;       // total time the player's been playing
+  float WorldTimer;       // total time the player's been playing
 
-  vuint8      ClientNum;
+  vuint8 ClientNum;
 
-  vint32      SoundEnvironment;
+  vint32 SoundEnvironment;
 
   VClientGameBase *ClGame;
 
