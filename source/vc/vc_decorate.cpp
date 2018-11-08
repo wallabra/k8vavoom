@@ -2352,6 +2352,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       State->Arg2 = sc->Number;
       sc->Expect(")");
       State->Time = float(State->Arg1)/35.0f;
+      State->TicType = VState::TCK_Random;
     } else {
       // number
       sc->UnGet();
