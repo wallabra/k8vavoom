@@ -2,10 +2,10 @@
 <vavoom_model_definition>
 	<model name="base_red">
 		<md2 file="models/blood/blood.md2" skin_anim_speed="1" skin_anim_range="1" noshadow="true" allowtransparency="true">
-			<frame index="0" skin_index="0" scale="1.2" />
-			<frame index="0" skin_index="1" scale="1.2" />
-			<frame index="0" skin_index="2" scale="1.2" />
-			<frame index="0" skin_index="3" scale="1.2" />
+			<frame index="0" skin_index="0" scale="1.0" />
+			<frame index="0" skin_index="1" scale="1.0" />
+			<frame index="0" skin_index="2" scale="1.0" />
+			<frame index="0" skin_index="3" scale="1.0" />
 			<skin file="models/blood/blood1.png" shade="6c 00 00" />
 			<skin file="models/blood/blood2.png" shade="6c 00 00" />
 			<skin file="models/blood/blood3.png" shade="6c 00 00" />
@@ -15,10 +15,10 @@
 
 	<model name="base_blue">
 		<md2 file="models/blood/blood.md2" skin_anim_speed="1" skin_anim_range="1" noshadow="true" allowtransparency="true">
-			<frame index="0" skin_index="0" scale="1.2" />
-			<frame index="0" skin_index="1" scale="1.2" />
-			<frame index="0" skin_index="2" scale="1.2" />
-			<frame index="0" skin_index="3" scale="1.2" />
+			<frame index="0" skin_index="0" scale="1.0" />
+			<frame index="0" skin_index="1" scale="1.0" />
+			<frame index="0" skin_index="2" scale="1.0" />
+			<frame index="0" skin_index="3" scale="1.0" />
 			<skin file="models/blood/blood1.png" shade="00 00 6c" />
 			<skin file="models/blood/blood2.png" shade="00 00 6c" />
 			<skin file="models/blood/blood3.png" shade="00 00 6c" />
@@ -28,10 +28,10 @@
 
 	<model name="base_green">
 		<md2 file="models/blood/blood.md2" skin_anim_speed="1" skin_anim_range="1" noshadow="true" allowtransparency="true">
-			<frame index="0" skin_index="0" scale="1.2" />
-			<frame index="0" skin_index="1" scale="1.2" />
-			<frame index="0" skin_index="2" scale="1.2" />
-			<frame index="0" skin_index="3" scale="1.2" />
+			<frame index="0" skin_index="0" scale="1.0" />
+			<frame index="0" skin_index="1" scale="1.0" />
+			<frame index="0" skin_index="2" scale="1.0" />
+			<frame index="0" skin_index="3" scale="1.0" />
 			<skin file="models/blood/blood1.png" shade="00 6c 00" />
 			<skin file="models/blood/blood2.png" shade="00 6c 00" />
 			<skin file="models/blood/blood3.png" shade="00 6c 00" />
