@@ -105,7 +105,7 @@ void SV_Init () {
   }
 
   GGameInfo = (VGameInfo *)VObject::StaticSpawnObject(VClass::FindClass("MainGameInfo"), false); // don't skip replacement
-  GCon->Logf("Spawned game info object of class '%s'", *GGameInfo->GetClass()->GetFullName());
+  GCon->Logf(NAME_Init, "Spawned game info object of class '%s'", *GGameInfo->GetClass()->GetFullName());
   GGameInfo->eventInit();
 
   ProcessDecorateScripts();

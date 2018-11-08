@@ -20,9 +20,15 @@ void main () {
   //vec4 FinalColour_1 = TexColour;
   // premultiply
   vec4 FinalColour_1;
+/*
   FinalColour_1.r = TexColour.r*Light.a;
   FinalColour_1.g = TexColour.g*Light.a;
   FinalColour_1.b = TexColour.b*Light.a;
+  FinalColour_1.a = TexColour.a;
+*/
+  FinalColour_1.r = TexColour.r*TexColour.a*Light.a;
+  FinalColour_1.g = TexColour.g*TexColour.a*Light.a;
+  FinalColour_1.b = TexColour.b*TexColour.a*Light.a;
   FinalColour_1.a = TexColour.a;
   $include "common_fog.fs"
 

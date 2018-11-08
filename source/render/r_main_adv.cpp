@@ -49,6 +49,7 @@ VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
 {
   guard(VAdvancedRenderLevel::VAdvancedRenderLevel);
   NeedsInfiniteFarClip = true;
+  mIsAdvancedRenderer = true;
 
   memset(DLights, 0, sizeof(DLights));
 

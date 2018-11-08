@@ -347,6 +347,8 @@ vuint8 *VJpegTexture::GetPixels () {
 
   // free memory
   delete Strm;
+
+  if (shadeColor > 0) shadePixelsRGBA(Pixels, Width, Height, shadeColor);
   return Pixels;
 
 #else

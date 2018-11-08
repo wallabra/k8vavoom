@@ -89,6 +89,9 @@ struct surfcache_t
 
 class VRenderLevelDrawer : public VRenderLevelPublic
 {
+protected:
+  bool mIsAdvancedRenderer;
+
 public:
   bool NeedsInfiniteFarClip;
 
@@ -112,6 +115,8 @@ public:
   int PortalDepth;
 
   virtual void BuildLightMap(surface_t *) = 0;
+
+  inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 };
 
 class VDrawer {

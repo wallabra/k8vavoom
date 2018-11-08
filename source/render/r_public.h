@@ -235,6 +235,7 @@ protected:
   vuint8 *Pixels8Bit;
   VTexture *HiResTexture;
   bool Pixels8BitValid;
+  int shadeColor;
 
 protected:
   static void checkerFill8 (vuint8 *dest, int width, int height);
@@ -243,6 +244,9 @@ protected:
 
   // `dest` points at column, `x` is used only to build checker
   static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);
+
+  // pitch is 4
+  static void shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor);
 
 public:
   VTexture ();
@@ -264,6 +268,7 @@ public:
 
   virtual void SetFrontSkyLayer ();
   virtual bool CheckModified ();
+  virtual void Shade (int shade); // should be called before any `GetPixels()` call!
   virtual vuint8 *GetPixels () = 0;
   vuint8 *GetPixels8 ();
   virtual rgba_t *GetPalette ();
@@ -307,6 +312,7 @@ public:
   int AddPatch(VName Name, int Type, bool Silent = false);
   int AddRawWithPal(VName Name, VName PalName);
   int AddFileTexture(VName Name, int Type);
+  int AddFileTextureShaded(VName Name, int Type, int shade); // shade==-1: don't shade
 
   // get unanimated texture
   inline VTexture *operator [] (int TexNum) {

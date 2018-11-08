@@ -563,6 +563,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     }
   }
 
+  if (Format == TEXFMT_RGBA && shadeColor > 0) shadePixelsRGBA(Pixels, Width, Height, shadeColor);
   return Pixels;
   unguard;
 }

@@ -798,6 +798,8 @@ protected:
   GLint ShadowsModelTexturesTexCoordLoc;
   GLint ShadowsModelTexturesViewOrigin;
   GLint ShadowsModelTexturesAllowTransparency;
+  GLint ShadowsModelTexturesAmbLightTextureLoc;
+  GLint ShadowsModelTexturesScreenSize;
 
   GLhandleARB ShadowsModelLightProgram;
   GLint ShadowsModelLightInterLoc;

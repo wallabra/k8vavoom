@@ -37,6 +37,8 @@ static VCvarB gl_decal_reset_max("gl_decal_reset_max", false, "Don't touch this!
 
 static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their textures (slightly faster on huge levels)?", CVAR_Archive);
 
+static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", 0);
+
 
 //==========================================================================
 //
@@ -1008,6 +1010,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
   glEnable(GL_BLEND);
+
+  if (!gl_dbg_adv_render_textures_surface) return;
 
   p_glUseProgramObjectARB(ShadowsTextureProgram);
   p_glUniform1iARB(ShadowsTextureTextureLoc, 0);

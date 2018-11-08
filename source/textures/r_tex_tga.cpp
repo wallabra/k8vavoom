@@ -384,6 +384,7 @@ vuint8 *VTgaTexture::GetPixels () {
 
   // for 8-bit textures remap colour 0
   if (Format == TEXFMT_8Pal) FixupPalette(Pixels, Palette);
+  if (Format == TEXFMT_RGBA && shadeColor > 0) shadePixelsRGBA(Pixels, Width, Height, shadeColor);
   return Pixels;
 
   unguard;

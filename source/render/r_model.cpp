@@ -39,6 +39,38 @@ static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias mod
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// RR GG BB or -1
+static int parseHexRGB (const VStr &str) {
+  int clr[3];
+  clr[0] = clr[1] = clr[2] = 0;
+  int pos = 0;
+  for (int f = 0; f < 3; ++f) {
+    while (pos < str.Length() && str[pos] <= ' ') ++pos;
+    int n = 0;
+    int digCount = 0;
+    for (int dnum = 0; ; ++dnum) {
+      if (pos >= str.Length()) {
+        if (dnum == 0) return -1;
+        break;
+      }
+      char ch = str[pos++];
+      if ((vuint8)ch <= ' ') break;
+      int d = VStr::digitInBase(ch, 16);
+      if (d < 0) return -1; // alas
+      n = n*16+d;
+      ++digCount;
+    }
+    if (digCount == 1) n = n*16+n;
+    if (n < 0) n = 0; else if (n > 255) n = 255;
+    clr[f] = n;
+  }
+  while (pos < str.Length() && (vuint8)str[pos] <= ' ') ++pos;
+  if (pos < str.Length()) return -1;
+  return (clr[0]<<16)|(clr[1]<<8)|clr[2];
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct VScriptSubModel {
   struct VFrame {
     int Index;
@@ -57,6 +89,7 @@ struct VScriptSubModel {
   int Version;
   TArray<VFrame> Frames;
   TArray<VName> Skins;
+  TArray<int> SkinShades;
   bool FullBright;
   bool NoShadow;
   bool UseDepth;
@@ -145,8 +178,8 @@ void R_InitModels () {
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
-    if (mdl_verbose_loading) {
-      GCon->Logf("parsing model definition '%s'", *W_FullLumpName(Lump));
+    /*if (mdl_verbose_loading)*/ {
+      GCon->Logf(NAME_Init, "parsing model definition '%s'", *W_FullLumpName(Lump));
     }
     // parse the file
     VXmlDocument *Doc = new VXmlDocument();
@@ -331,7 +364,17 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
 
       // process skins
       for (VXmlNode *SkN = SN->FindChild("skin"); SkN; SkN = SkN->FindNext()) {
-        Md2.Skins.Append(*SkN->GetAttribute("file").ToLower().FixFileSlashes());
+        VStr sfl = SkN->GetAttribute("file").ToLower().FixFileSlashes();
+        if (sfl.length()) {
+          GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
+          Md2.Skins.Append(*sfl);
+          int shade = -1;
+          if (SkN->HasAttribute("shade")) {
+            sfl = SkN->GetAttribute("shade");
+            shade = parseHexRGB(sfl);
+          }
+          Md2.SkinShades.Append(shade);
+        }
       }
     }
   }
@@ -439,7 +482,8 @@ VModel *Mod_FindName (const VStr &name) {
 
   // load the file
   VStream *Strm = FL_OpenFileRead(mod->Name);
-  if (!Strm) Sys_Error("Couldn't load %s", *mod->Name);
+  if (!Strm) Sys_Error("Couldn't load `%s`", *mod->Name);
+  GCon->Logf(NAME_Init, "parsing model script '%s'...", *mod->Name);
   ParseModelScript(mod, *Strm);
   delete Strm;
 
@@ -454,8 +498,7 @@ VModel *Mod_FindName (const VStr &name) {
 //
 //==========================================================================
 //static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int OrigVert1, int Vert2, int OrigVert2, int Tri)
-static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri)
-{
+static void AddEdge(TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
   guard(AddEdge);
   // check for a match
   // compare original vertex indices since texture coordinates are not important here
@@ -779,7 +822,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
   VTextureTranslation *Trans, int ColourMap, int Version, vuint32 Light,
   vuint32 Fade, float Alpha, bool Additive, bool IsViewModel, float Inter,
-  bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass)
+  bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isAdvanced)
 {
   guard(DrawModel);
   VScriptedModelFrame &FDef = Cls.Frames[FIdx];
@@ -818,9 +861,9 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     if (SubMdl.Skins.Num()) {
       // skins defined in definition file override all skins in MD2 file
       if (Md2SkinIdx < 0 || Md2SkinIdx >= SubMdl.Skins.Num()) {
-        SkinID = GTextureManager.AddFileTexture(SubMdl.Skins[0], TEXTYPE_Skin);
+        SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[0], TEXTYPE_Skin, SubMdl.SkinShades[0]);
       } else {
-        SkinID = GTextureManager.AddFileTexture(SubMdl.Skins[Md2SkinIdx], TEXTYPE_Skin);
+        SkinID = GTextureManager.AddFileTextureShaded(SubMdl.Skins[Md2SkinIdx], TEXTYPE_Skin, SubMdl.SkinShades[Md2SkinIdx]);
       }
     } else {
       if (Md2SkinIdx < 0 || Md2SkinIdx >= pmdl->numskins) {
@@ -929,18 +972,20 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     switch (Pass) {
       case RPASS_Normal:
       case RPASS_NonShadow:
-        Drawer->DrawAliasModel(Md2Org, Md2Angle, Offset, Scale,
-          SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-          Trans, ColourMap, Md2Light, Fade, Md2Alpha, Additive,
-          IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
-          SubMdl.AllowTransparency);
+        if (IsViewModel || !isAdvanced)
+          Drawer->DrawAliasModel(Md2Org, Md2Angle, Offset, Scale,
+            SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+            Trans, ColourMap, Md2Light, Fade, Md2Alpha, Additive,
+            IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
+            SubMdl.AllowTransparency);
         break;
 
       case RPASS_Ambient:
-        Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Offset, Scale,
-          SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-          Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
-          SubMdl.AllowTransparency);
+        if (!SubMdl.AllowTransparency)
+          Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Offset, Scale,
+            SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
+            Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
+            SubMdl.AllowTransparency);
         break;
 
       case RPASS_ShadowVolumes:
@@ -996,7 +1041,7 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
   DrawModel(Level, Org, Angles, ScaleX, ScaleY, *Mdl->DefaultClass, FIdx,
     NFIdx, Trans, ColourMap, Version, Light, Fade, Alpha, Additive,
     IsViewModel, InterpFrac, Interpolate, CurrLightPos, CurrLightRadius,
-    Pass);
+    Pass, IsAdvancedRenderer());
   return true;
   unguard;
 }
@@ -1032,7 +1077,7 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
 
   DrawModel(Level, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
     ColourMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
-    InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass);
+    InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsAdvancedRenderer());
   return true;
   unguard;
 }
@@ -1148,7 +1193,7 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   DrawModel(nullptr, Origin, Angles, 1.0, 1.0, *Model->DefaultClass, FIdx,
     NFIdx, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart,
     TranslEnd, Colour), nullptr), 0, 0, 0xffffffff, 0, 1.0, false, false,
-    InterpFrac, Interpolate, TVec(), 0, RPASS_Normal);
+    InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();
   unguard;
@@ -1205,7 +1250,7 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
 
   DrawModel(nullptr, Origin, Angles, 1.0, 1.0, *Cls, FIdx, NFIdx, nullptr, 0, 0,
     0xffffffff, 0, 1.0, false, false, InterpFrac, Interpolate,
-    TVec(), 0, RPASS_Normal);
+    TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();
   return true;

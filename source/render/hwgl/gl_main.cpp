@@ -828,6 +828,8 @@ void VOpenGLDrawer::InitResolution () {
   ShadowsModelTexturesAlphaLoc = p_glGetUniformLocationARB(ShadowsModelTexturesProgram, "InAlpha");
   ShadowsModelTexturesViewOrigin = p_glGetUniformLocationARB(ShadowsModelTexturesProgram, "ViewOrigin");
   ShadowsModelTexturesAllowTransparency = p_glGetUniformLocationARB(ShadowsModelTexturesProgram, "AllowTransparency");
+  ShadowsModelTexturesAmbLightTextureLoc = p_glGetUniformLocationARB(ShadowsModelTexturesProgram, "AmbLightTexture");
+  ShadowsModelTexturesScreenSize = p_glGetUniformLocationARB(ShadowsModelTexturesProgram, "ScreenSize");
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/shadows_model_light.vs");
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/shadows_model_light.fs");

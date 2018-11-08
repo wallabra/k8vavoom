@@ -45,6 +45,7 @@ VRenderLevel::VRenderLevel (VLevel *ALevel)
   , freeblocks(nullptr)
 {
   NeedsInfiniteFarClip = false;
+  mIsAdvancedRenderer = false;
 
   memset(cacheblocks, 0, sizeof(cacheblocks));
   memset(blockbuf, 0, sizeof(blockbuf));

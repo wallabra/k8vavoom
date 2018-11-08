@@ -47,6 +47,9 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static VCvarB gl_dbg_adv_render_textures_models("gl_dbg_adv_render_textures_models", true, "Render model textures in advanced renderer?", 0);
+static VCvarB gl_dbg_adv_render_ambient_models("gl_dbg_adv_render_ambient_models", true, "Render model ambient light in advanced renderer?", 0);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -276,6 +279,9 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   if (Additive)
   {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  } else {
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   {
@@ -350,6 +356,8 @@ void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angle
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
   SetPicModel(Skin, nullptr, CM_Default);
+
+  if (!gl_dbg_adv_render_ambient_models) return;
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
@@ -451,6 +459,8 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
 
   SetPicModel(Skin, Trans, CMap);
 
+  if (!gl_dbg_adv_render_textures_models) return;
+
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Offset, Scale, RotationMatrix);
   VMatrix4 normalmatrix;
@@ -505,9 +515,12 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   {
     p_glUniform1iARB(ShadowsModelTexturesAllowTransparency, GL_FALSE);
   }
+
+  /* original
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
   glAlphaFunc(GL_GREATER, 0.0);
+  */
 
   //glEnable(GL_BLEND);
   //glShadeModel(GL_FLAT);
@@ -516,9 +529,31 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   //glBlendFunc(GL_DST_COLOR, GL_ZERO);
 
+  /*
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+  //glCullFace(GL_BACK);
+  glEnable(GL_DEPTH_TEST);
+  */
+
+  glEnable(GL_BLEND);
+  //glShadeModel(GL_SMOOTH);
+  glDisable(GL_ALPHA_TEST);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  //glDisable(GL_BLEND);
+
+  p_glActiveTextureARB(GL_TEXTURE0+1);
+  glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
+  p_glActiveTextureARB(GL_TEXTURE0);
+  //p_glUniform4fARB(SurfAdvDecalLightLoc, 0, 0, 0, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
+  p_glUniform1iARB(ShadowsModelTexturesAmbLightTextureLoc, 1);
+  p_glUniform2fARB(ShadowsModelTexturesScreenSize, (float)ScreenWidth, (float)ScreenHeight);
+
+
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
   glDepthMask(GL_FALSE);
-  p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.Num() - 1, Mdl->Tris.Num() * 3, GL_UNSIGNED_SHORT, 0);
+  p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.Num()-1, Mdl->Tris.Num()*3, GL_UNSIGNED_SHORT, 0);
   glDepthMask(GL_TRUE);
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
@@ -529,9 +564,13 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   p_glDisableVertexAttribArrayARB(ShadowsModelTexturesTexCoordLoc);
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
-  glShadeModel(GL_FLAT);
-  glAlphaFunc(GL_GREATER, getAlphaThreshold());
-  glDisable(GL_ALPHA_TEST);
+  p_glActiveTextureARB(GL_TEXTURE0+1);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  p_glActiveTextureARB(GL_TEXTURE0);
+
+  //glShadeModel(GL_FLAT);
+  //glAlphaFunc(GL_GREATER, getAlphaThreshold());
+  //glDisable(GL_ALPHA_TEST);
   //glEnable(GL_BLEND); // it is already enabled
   unguard;
 }

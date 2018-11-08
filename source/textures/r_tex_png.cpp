@@ -281,7 +281,7 @@ vuint8 *VPngTexture::GetPixels () {
 
   // free memory
   delete Strm;
-  //Strm = nullptr;
+  if (shadeColor > 0) shadePixelsRGBA(Pixels, Width, Height, shadeColor);
   return Pixels;
 
 #else

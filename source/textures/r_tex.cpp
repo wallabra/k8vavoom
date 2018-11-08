@@ -513,7 +513,35 @@ int VTextureManager::AddFileTexture (VName Name, int Type) {
     }
   }
 
-  GCon->Logf("Couldn\'t create texture %s.", *Name);
+  GCon->Logf("Couldn\'t create texture \"%s\".", *Name);
+  return DefaultTexture;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::AddFileTextureShaded
+//
+//  shade==-1: don't shade
+//
+//==========================================================================
+int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
+  guard(VTextureManager::AddFileTexture)
+  int i = CheckNumForName(Name, Type);
+  if (i >= 0) return i;
+
+  i = W_CheckNumForFileName(*Name);
+  if (i >= 0) {
+    VTexture *Tex = VTexture::CreateTexture(Type, i);
+    if (Tex) {
+      Tex->Name = Name;
+      if (shade > 0) Tex->Shade(shade);
+      return AddTexture(Tex);
+    }
+  }
+
+  GCon->Logf("Couldn\'t create shaded texture \"%s\".", *Name);
   return DefaultTexture;
   unguard;
 }
