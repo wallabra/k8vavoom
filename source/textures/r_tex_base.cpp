@@ -661,20 +661,20 @@ rgba_t VTexture::getPixel (int x, int y) {
 void VTexture::shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor) {
   if (!pic || wdt < 1 || hgt < 1 || shadeColor < 1) return;
   //vuint8 *picbuf = pic;
-  int shadeR = (shadeColor>>16)&0xff;
-  int shadeG = (shadeColor>>8)&0xff;
-  int shadeB = (shadeColor)&0xff;
+  float shadeR = (shadeColor>>16)&0xff;
+  float shadeG = (shadeColor>>8)&0xff;
+  float shadeB = (shadeColor)&0xff;
   for (int f = wdt*hgt; f > 0; --f, pic += 4) {
     int intensity = pic[0]; // use red as intensity
     if (intensity < 2 || pic[3] < 2) {
-      pic[0] = 0;
-      pic[1] = 0;
-      pic[2] = 0;
+      pic[0] = clampToByte((float)intensity*shadeR/255.0f);
+      pic[1] = clampToByte((float)intensity*shadeG/255.0f);
+      pic[2] = clampToByte((float)intensity*shadeB/255.0f);
       pic[3] = 0;
     } else {
-      pic[0] = clampToByte(intensity*shadeR/* *pic[3]/255*/);
-      pic[1] = clampToByte(intensity*shadeG/* *pic[3]/255*/);
-      pic[2] = clampToByte(intensity*shadeB/* *pic[3]/255*/);
+      pic[0] = clampToByte((float)intensity*shadeR/255.0f);
+      pic[1] = clampToByte((float)intensity*shadeG/255.0f);
+      pic[2] = clampToByte((float)intensity*shadeB/255.0f);
       //pic[3] = 255;
     }
   }

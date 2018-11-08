@@ -528,16 +528,29 @@ int VTextureManager::AddFileTexture (VName Name, int Type) {
 //==========================================================================
 int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
   guard(VTextureManager::AddFileTexture)
-  int i = CheckNumForName(Name, Type);
+  if (shade < 1) return AddFileTexture(Name, Type);
+
+  VName shName = VName(va("%s %06x", *Name, (vuint32)shade));
+
+  /*
+  static TMapNC<VName, int> shadeMap;
+  auto txf = shadeMap.find(shName);
+  if (txf) return *txf;
+  */
+
+  int i = CheckNumForName(shName, Type);
   if (i >= 0) return i;
 
   i = W_CheckNumForFileName(*Name);
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
-      Tex->Name = Name;
+      //shadeMap.put(shName, Tex);
+      Tex->Name = shName;
       if (shade > 0) Tex->Shade(shade);
-      return AddTexture(Tex);
+      int res = AddTexture(Tex);
+      //GCon->Logf("TEXMAN: loaded shaded texture '%s' (named '%s'; id=%d)", *Name, *shName, res);
+      return res;
     }
   }
 
