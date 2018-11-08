@@ -378,3 +378,14 @@ final void decorate_A_DamageSelf (int amount, optional name damagetype, optional
   if (amount == 0) return;
   Damage(inflictor:self, source:self, amount, DmgType:damagetype!optional);
 }
+
+
+//==========================================================================
+//
+//  decorate_A_SetTics
+//
+//==========================================================================
+final void decorate_A_SetTics (int tics) {
+  tics = max(tics, 0);
+  StateTime = float(tics)/35.0;
+}

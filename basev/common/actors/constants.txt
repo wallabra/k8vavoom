@@ -27,6 +27,7 @@ const int SXF_TRANSFERTRANSLATION = 1;
 const int SXF_ABSOLUTEPOSITION    = 2;
 const int SXF_ABSOLUTEANGLE     = 4;
 const int SXF_ABSOLUTEMOMENTUM    = 8;
+const int SXF_ABSOLUTEVELOCITY    = 8; // "momentum" is deprecated by gozzo
 const int SXF_SETMASTER       = 16;
 const int SXF_NOCHECKPOSITION   = 32;
 const int SXF_TELEFRAG        = 64;
@@ -35,6 +36,26 @@ const int SXF_CLIENTSIDE      = 128;  // only used by Skulltag
 const int SXF_TRANSFERAMBUSHFLAG  = 256;
 const int SXF_TRANSFERPITCH     = 512;
 const int SXF_TRANSFERPOINTERS    = 1024;
+/*
+	SXF_USEBLOODCOLOR =			1 << 11,
+	SXF_CLEARCALLERTID =			1 << 12,
+	SXF_MULTIPLYSPEED =			1 << 13,
+	SXF_TRANSFERSCALE =			1 << 14,
+	SXF_TRANSFERSPECIAL =			1 << 15,
+	SXF_CLEARCALLERSPECIAL =		1 << 16,
+	SXF_TRANSFERSTENCILCOL =		1 << 17,
+	SXF_TRANSFERALPHA =			1 << 18,
+	SXF_TRANSFERRENDERSTYLE =		1 << 19,
+	SXF_SETTARGET =				1 << 20,
+	SXF_SETTRACER =				1 << 21,
+	SXF_NOPOINTERS =				1 << 22,
+	SXF_ORIGINATOR =				1 << 23,
+	SXF_TRANSFERSPRITEFRAME	=	1 << 24,
+	SXF_TRANSFERROLL =			1 << 25,
+	SXF_ISTARGET				=	1 << 26,
+	SXF_ISMASTER				=	1 << 27,
+	SXF_ISTRACER				=	1 << 28,
+*/
 
 //  Morph constants
 const int MRF_ADDSTAMINA      = 1;
