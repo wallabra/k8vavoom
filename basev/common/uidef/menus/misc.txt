@@ -10,6 +10,14 @@ menudef MiscOptions {
   }
 
   option bool {
+    title = "Draw StatusBar";
+    cvar = r_statusbar_draw;
+    help =
+      "You can turn off statusbar if some mod does it's own,"
+      "and k8VaVoom is not able to detect it.";
+  }
+
+  option bool {
     title = "Autosave messages";
     cvar = sv_save_messages;
     help = "Show save/load messages in HUD?";

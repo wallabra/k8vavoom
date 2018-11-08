@@ -556,16 +556,11 @@ void SB_DrawPause()
 override void SB_Drawer(int sb_view)
 {
   SB_Housekeeping(sb_view);
-  if (!cl || !cl.MO)
-  {
-    return;
-  }
-  if (sb_view == SB_VIEW_FULLSCREEN)
-  {
+  if (!cl || !cl.MO) return;
+  if (!GetCvarB('r_statusbar_draw')) return;
+  if (sb_view == SB_VIEW_FULLSCREEN) {
     SB_DrawFullscreenStats();
-  }
-  else
-  {
+  } else {
     SB_DrawMainBar();
   }
   SB_DrawIcons();
