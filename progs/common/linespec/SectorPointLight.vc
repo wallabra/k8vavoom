@@ -30,3 +30,9 @@ defaultproperties
 {
   LightType = DLTYPE_Sector;
 }
+
+class SectorPointLightSubtractive : DynamicLight   __mobjinfo__(9823);
+
+defaultproperties {
+  LightType = DLTYPE_SectorSubtractive;
+}

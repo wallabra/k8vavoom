@@ -1939,21 +1939,14 @@ final void DoStateEffects(float DeltaTime)
           }
           break;
         case DynamicLight::DLTYPE_Sector:
+        case DynamicLight::DLTYPE_SectorSubtractive:
         {
           float Scale = L->Scale * 0.125;
-          if (!Scale)
-          {
-            Scale = 1.0;
-          }
+          if (!Scale) Scale = 1.0;
           dl->radius = itof(Sector->params.lightlevel) * Scale;
-          if (dl->radius < 0.0)
-          {
-            dl->radius = 0.0;
-          }
-          if (dl->radius > 255.0)
-          {
-            dl->radius = 255.0;
-          }
+          if (dl->radius < 0.0) dl->radius = 0.0;
+          if (dl->radius > 255.0) dl->radius = 255.0;
+          dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
           break;
         }
       }

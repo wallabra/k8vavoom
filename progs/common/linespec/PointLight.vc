@@ -37,4 +37,3 @@ class PointLightSubtractive : DynamicLight   __mobjinfo__(9820);
 defaultproperties {
   LightType = DLTYPE_Subtractive;
 }
-

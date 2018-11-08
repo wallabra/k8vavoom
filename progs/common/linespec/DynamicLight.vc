@@ -34,6 +34,7 @@ enum
   DLTYPE_FlickerRandom,
   DLTYPE_Sector,
   DLTYPE_Subtractive, // not supported yet
+  DLTYPE_SectorSubtractive, // not supported yet
 };
 
 ubyte     LightType;
@@ -137,6 +138,8 @@ override void ClientTick(float DeltaTime)
     return;
   }
 
+  int realLightType = LightType;
+
   switch (LightType) {
     case DLTYPE_Point:
       Intensity = itof(Args[3]);
@@ -175,6 +178,17 @@ override void ClientTick(float DeltaTime)
       break;
     }
 
+    case DLTYPE_SectorSubtractive:
+    {
+      float Scale = itof(Args[3]) * 0.125;
+      if (!Scale) Scale = 1.0;
+      Intensity = itof(Sector->params.lightlevel) * Scale;
+      if (Intensity < 0.0) Intensity = 0.0;
+      if (Intensity > 255.0) Intensity = 255.0;
+      realLightType = DLTYPE_Subtractive;
+      break;
+    }
+
     case DLTYPE_Subtractive:
       Intensity = itof(Args[3]);
       //if (RGB(Args[0], Args[1], Args[2]) == 0) return;
@@ -187,7 +201,7 @@ override void ClientTick(float DeltaTime)
     dl->colour = RGB(Args[0], Args[1], Args[2]);
     //dl->radius = IntensityToRadius(Intensity);
     dl->die = XLevel.Time + 0.01;
-    dl->type = LightType;
+    dl->type = /*LightType*/realLightType;
   }
 }
 

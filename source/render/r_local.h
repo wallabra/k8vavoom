@@ -49,6 +49,7 @@ enum DLType {
   DLTYPE_FlickerRandom,
   DLTYPE_Sector,
   DLTYPE_Subtractive, // partially supported
+  DLTYPE_SectorSubtractive, // not supported
 };
 
 //
