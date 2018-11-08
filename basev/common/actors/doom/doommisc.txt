@@ -11,12 +11,15 @@ actor ExplosiveBarrel 2035
   +NoBlood
   +ActivateMCross
   +DontGib
-  +Pushable
+  //+Pushable
   DeathSound "world/barrelx"
   Obituary "$ob_barrel"
   states
   {
   Spawn:
+    TNT1 A 0 MdlSkip
+    TNT1 A 0 MdlSkip A_JumpIf(!GetCvar(sv_pushablebarrels), +2)
+    TNT1 A 0 MdlSkip A_ChangeFlag("Pushable", true)
     BAR1 AB 6
     Loop
   Death:
