@@ -1391,7 +1391,10 @@ void VClass::PostLoad () {
 
   // set state in-class indexes
   int CurrIndex = 0;
-  for (VState *S = States; S; S = S->Next) S->InClassIndex = CurrIndex++;
+  for (VState *S = States; S; S = S->Next) {
+    S->InClassIndex = CurrIndex;
+    if ((S->Frame&(VState::FF_SKIPMODEL|VState::FF_SKIPOFFS)) == 0) ++CurrIndex;
+  }
 
   ObjectFlags |= CLASSOF_PostLoaded;
 }
@@ -1411,7 +1414,10 @@ void VClass::DecoratePostLoad () {
 
   // set state in-class indexes
   int CurrIndex = 0;
-  for (VState *S = States; S; S = S->Next) S->InClassIndex = CurrIndex++;
+  for (VState *S = States; S; S = S->Next) {
+    S->InClassIndex = CurrIndex;
+    if ((S->Frame&(VState::FF_SKIPMODEL|VState::FF_SKIPOFFS)) == 0) ++CurrIndex;
+  }
 
   // calculate indexes of virtual methods
   CalcFieldOffsets();

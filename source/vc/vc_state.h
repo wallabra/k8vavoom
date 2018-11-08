@@ -22,8 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-
 class VState : public VMemberBase {
 public:
   // frame flags:
@@ -32,6 +30,7 @@ public:
   enum { FF_CANRAISE = 0x100 }; //FIXME: flag in Frame; currently does nothing
   enum { FF_DONTCHANGE = 0x200 }; // this frame is ignored in offset calculations
   enum { FF_SKIPOFFS = 0x400 }; // skip this state in offset calculation
+  enum { FF_SKIPMODEL = 0x800 }; // skip this state in model frame numbering
   enum { FF_FRAMEMASK  = 0x7f };
   enum { VaVoom, D2DF };
 
@@ -69,7 +68,7 @@ public:
 
   // run-time fields
   vint32 SpriteIndex; // 1: don't change
-  vint32 InClassIndex;
+  vint32 InClassIndex; // used by model rendering code (only)
   vint32 NetId;
   VState *NetNext;
 

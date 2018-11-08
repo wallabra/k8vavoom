@@ -1235,6 +1235,18 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
       sc->ExpectString();
       sc->Expect("]");
     }
+    // special argument parsing
+    if (Name.ICmp("GetCvar") == 0) {
+      sc->Expect("(");
+      auto vnloc = sc->GetLoc();
+      sc->ExpectString();
+      VStr vname = sc->String;
+      sc->Expect(")");
+      // create expression
+      VExpression *Args[1];
+      Args[0] = new VNameLiteral(VName(*vname), vnloc);
+      return new VCastOrInvocation(VName("GetCvarF"), l, 1, Args);
+    }
     if (sc->Check("(")) {
       /*
       if (VStr::ICmp(*Name, "A_SetUserVar") == 0) {
@@ -2362,6 +2374,11 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (sc->String.ICmp("CanRaise") == 0) {
         //GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
         State->Frame |= VState::FF_CANRAISE;
+        continue;
+      }
+      // check for "mdlskip" parameter
+      if (sc->String.ICmp("MdlSkip") == 0) {
+        State->Frame |= VState::FF_SKIPMODEL;
         continue;
       }
 
