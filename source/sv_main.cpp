@@ -34,8 +34,8 @@ static void G_DoCompleted ();
 
 VCvarB real_time("real_time", true, "Run server in real time?");
 
-static VCvarB sv_ignore_nojump("sv_ignore_nojump", true, "Ignore \"nojump\" flag in MAPINFO?");
-static VCvarB sv_ignore_nomlook("sv_ignore_nomlook", true, "Ignore \"nofreelook\" flag in MAPINFO?");
+static VCvarB sv_ignore_nojump("sv_ignore_nojump", true, "Ignore \"nojump\" flag in MAPINFO?", CVAR_ServerInfo);
+static VCvarB sv_ignore_nomlook("sv_ignore_nomlook", true, "Ignore \"nofreelook\" flag in MAPINFO?", CVAR_ServerInfo);
 
 server_t sv;
 server_static_t svs;
@@ -64,7 +64,8 @@ static VCvarB TimeLimit("TimeLimit", false, "TimeLimit mode?");
 static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
 VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?");
 VCvarI Skill("Skill", "3", "Skill level.");
-static VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo | CVAR_Latch);
+static VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|CVAR_Latch);
+static VCvarB sv_barrelrespawn("sv_barrelrespawn", false, "Respawn barrels in network game?", CVAR_ServerInfo|CVAR_Latch);
 static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive);
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive);

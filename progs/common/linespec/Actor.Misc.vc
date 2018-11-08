@@ -442,7 +442,24 @@ final void A_BarrelDestroy()
   // In ZDoom this method is used to preserve barrels because of
   // deathmatch flags... here the only relevant function for it
   // would be to make things invisible.
-  RenderStyle = STYLE_None;
+  // k8: no, Janis, this method should destroy object
+  //bRespawnItems = !!GetCvar('deathmatch');
+  //bWeaponsStay = netgame && !GetCvar('deathmatch');
+  if (Level.Game.netgame && Level.Game.deathmatch && GetCvarB('sv_barrelrespawn')) {
+    //print("*** BARREL HIDDEN!");
+    RenderStyle = STYLE_None;
+    bSolid = false;
+    bShootable = false;
+    bPickUp = false;
+    bNoBlood = true;
+    bCorpse = true; // just in case
+    bMonster = false;
+    //bNoGravity = true; // don't bother
+    //bInvulnerable = true; // for now
+  } else {
+    //print("*** BARREL DEAD!");
+    DoJump(none); // stop
+  }
 }
 
 //============================================================================

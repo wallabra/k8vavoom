@@ -80,8 +80,7 @@ bool        bDefaultLaxMonsterActivation;
 bool        bDefaultBloodSplatter;
 readonly bool   bPaused;
 
-bool netgame
-{
+final bool netgame {
   get { return NetMode > NM_Standalone; }
 }
 

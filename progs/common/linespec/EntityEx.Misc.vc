@@ -3806,6 +3806,15 @@ final bool IsFast()
 
 void RespawnResetFlags()
 {
+  //k8: restore these too
+  RenderStyle = default.RenderStyle;
+  Alpha = default.Alpha;
+  Translation = default.Translation;
+  StencilColour = default.StencilColour;
+  FloorClip = default.FloorClip;
+  ScaleX = default.ScaleX;
+  ScaleY = default.ScaleY;
+
   bSpecial = default.bSpecial;
   bSolid = default.bSolid;
   bShootable = default.bShootable;
