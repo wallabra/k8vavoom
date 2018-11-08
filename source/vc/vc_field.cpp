@@ -275,7 +275,85 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
   Strm << tp;
   if (Strm.IsLoading()) {
     // check type
-    if (tp != Type.Type) Host_Error("I/O Error: field '%s' should be of type '%s', but it is of type '%s'", *fullname, *Type.GetName(), *VFieldType(EType(tp)).GetName());
+    if (tp != Type.Type) {
+      // tolerate some type changes
+      switch (tp) {
+        case TYPE_Int:
+          {
+            vint32 v;
+            Strm << v;
+            switch (Type.Type) {
+              case TYPE_Int: *(vint32 *)Data = v; return;
+              case TYPE_Byte: *(vuint8 *)Data = v; return;
+              case TYPE_Bool:
+                if (v) {
+                  *(int *)Data |= Type.BitMask;
+                } else {
+                  *(int *)Data &= ~Type.BitMask;
+                }
+                return;
+              case TYPE_Float: *(float *)Data = v; return;
+            }
+            break;
+          }
+        case TYPE_Byte:
+          {
+            vuint8 v;
+            Strm << v;
+            switch (Type.Type) {
+              case TYPE_Int: *(vint32 *)Data = v; return;
+              case TYPE_Byte: *(vuint8 *)Data = v; return;
+              case TYPE_Bool:
+                if (v) {
+                  *(int *)Data |= Type.BitMask;
+                } else {
+                  *(int *)Data &= ~Type.BitMask;
+                }
+                return;
+              case TYPE_Float: *(float *)Data = v; return;
+            }
+            break;
+          }
+        case TYPE_Float:
+          {
+            float v;
+            Strm << v;
+            switch (Type.Type) {
+              case TYPE_Int: *(vint32 *)Data = (vuint32)v; return;
+              case TYPE_Byte: *(vuint8 *)Data = (vuint8)v; return;
+              case TYPE_Bool:
+                if (v) {
+                  *(int *)Data |= Type.BitMask;
+                } else {
+                  *(int *)Data &= ~Type.BitMask;
+                }
+                return;
+              case TYPE_Float: *(float *)Data = v; return;
+            }
+            break;
+          }
+        case TYPE_Bool:
+          {
+            vuint8 v;
+            Strm << v;
+            v = (v ? 1 : 0);
+            switch (Type.Type) {
+              case TYPE_Int: *(vint32 *)Data = (vuint32)v; return;
+              case TYPE_Byte: *(vuint8 *)Data = (vuint8)v; return;
+              case TYPE_Bool:
+                if (v) {
+                  *(int *)Data |= Type.BitMask;
+                } else {
+                  *(int *)Data &= ~Type.BitMask;
+                }
+                return;
+              case TYPE_Float: *(float *)Data = v; return;
+            }
+            break;
+          }
+      }
+      Host_Error("I/O Error: field '%s' should be of type '%s', but it is of type '%s'", *fullname, *Type.GetName(), *VFieldType(EType(tp)).GetName());
+    }
   }
   VFieldType IntType;
   vint32 InnerSize;
