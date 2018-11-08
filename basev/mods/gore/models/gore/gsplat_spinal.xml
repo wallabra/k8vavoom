@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<vavoom_model_definition>
+	<model name="bloodspinal">
+		<md2 file="models/gore/blood.md2" noshadow="true" allowtransparency="true">
+			<frame index="0" />
+		</md2>
+	</model>
+	<model name="bloodbrain">
+		<md2 file="models/gore/brain.md2" noshadow="true" allowtransparency="true">
+			<frame index="0" />
+		</md2>
+	</model>
+	<model name="bloodgibs">
+		<md2 file="models/gore/gibs.md2" noshadow="true" allowtransparency="true">
+			<frame index="0" />
+		</md2>
+	</model>
+
+	<class name="K8Gore_GrowingBloodPool">
+		<!-- Spawn -->
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
+	</class>
+
+	<class name="K8Gore_GrowingBloodPoolBlue">
+		<!-- Spawn -->
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2Blue">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
+	</class>
+
+	<class name="K8Gore_GrowingBloodPoolGreen">
+		<!-- Spawn -->
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2Green">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
+	</class>
+</vavoom_model_definition>

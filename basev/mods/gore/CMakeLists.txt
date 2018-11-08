@@ -9,6 +9,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3
     sndinfo.txt
     models/models.xml
     models/gore/*
+    models/blood/*
   )
 add_custom_target(gore_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3)
 

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <vavoom_models_list>
-  <include file="models/gore/gsplat.xml" />
+  <!--include file="models/gore/gsplat.xml" /-->
+  <include file="models/gore/gsplat_spinal.xml" />
+  <include file="models/blood/blood.xml" />
 </vavoom_models_list>

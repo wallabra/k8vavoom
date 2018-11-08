@@ -169,12 +169,14 @@ sndinfo.txt     @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
 
 
 // models
-models/models.xml       @CMAKE_CURRENT_SOURCE_DIR@/models/models.xml
-models/gore/blood.md2   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood.md2
-models/gore/blood.pcx   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood.pcx
-models/gore/blood2.md2  @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood2.md2
-models/gore/brain.md2   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/brain.md2
-models/gore/brain.pcx   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/brain.pcx
-models/gore/gibs.md2    @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gibs.md2
-models/gore/gibs.pcx    @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gibs.pcx
-models/gore/gsplat.xml  @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gsplat.xml
+//models/models.xml       @CMAKE_CURRENT_SOURCE_DIR@/models/models.xml
+//models/gore/blood.md2   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood.md2
+//models/gore/blood.pcx   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood.pcx
+//models/gore/blood2.md2  @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood2.md2
+//models/gore/brain.md2   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/brain.md2
+//models/gore/brain.pcx   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/brain.pcx
+//models/gore/gibs.md2    @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gibs.md2
+//models/gore/gibs.pcx    @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gibs.pcx
+//models/gore/gsplat.xml  @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gsplat.xml
+
+$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
