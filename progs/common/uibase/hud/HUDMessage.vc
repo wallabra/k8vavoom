@@ -42,6 +42,7 @@ float MsgY;
 
 int HudWidth;
 int HudHeight;
+bool isTextFont;
 
 // true if text lines should be centred
 bool bCentreX;
@@ -64,6 +65,14 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   if (!MsgFont) MsgFont = 'smallfont';
   MsgColour = Colour;
   HoldTime = AHoldTime;
+
+  //print("HUDMSG: font=<%s>; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
+
+  auto root = GetRootWidget();
+  if (Width != root.Width || Height != root.Height) {
+    //SetSize(GetVirtualWidth(), GetVirtualHeight());
+    SetSize(root.Width, root.Height);
+  }
 
   // position of the message
   MsgX = AMsgX;
@@ -90,10 +99,36 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
     //writeln("HUD1: ", AHudWidth, "x", AHudHeight);
     HudWidth = AHudWidth;
     HudHeight = AHudHeight;
-    //Width = abs(HudWidth);
-    //Height = abs(HudHeight);
-    //ScaleX = float(Parent.Width)/float(Width);
-    //ScaleY = float(Parent.Height)/float(Height);
+
+    isTextFont = (AFont == 'confont' || AFont == 'smallfont' || AFont == 'smallfont2' || AFont == 'bigfont');
+
+    /*
+    auto root = GetRootWidget();
+    if (root) {
+      if (Width != root.Width || Height != root.Height) {
+        //SetSize(GetVirtualWidth(), GetVirtualHeight());
+        SetSize(root.Width, root.Height);
+      }
+    }
+    */
+    if (!isTextFont) {
+      float sx = float(root.Width)/float(abs(HudWidth));
+      float sy = float(root.Height)/float(abs(HudHeight));
+      ScaleX = sx;
+      ScaleY = sy;
+      SetSize(round(root.Width/sx), round(root.Height/sy));
+      //dumpClipRect();
+    }
+
+    /*
+    SetFont(MsgFont);
+    int tw = TextHeight(va("%q", Message));
+    if (tw > TextHeight("AW")+4) {
+      // this must be a picture
+      isTextFont = false;
+    }
+    print("%n:<%q>", AFont, Message);
+    */
 
     int IntPart = int(MsgX);
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
@@ -107,7 +142,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 
   // calculate width and height of the text
   SetFont(MsgFont);
-  MsgHeight = SplitText(Message, MsgLines, /*Width*/GetVirtualWidth()-32);
+  MsgHeight = SplitText(Message, MsgLines, /*Width*/(HudWidth > 0 ? HudWidth : GetVirtualWidth()-32));
   MsgWidth = 0;
   foreach (auto i; 0..MsgLines.length) {
     if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
@@ -123,11 +158,16 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 override void OnDraw () {
   int x, y;
 
+  SetFont(MsgFont);
+
   auto root = GetRootWidget();
+  /*
   if (Width != root.Width || Height != root.Height) {
     //SetSize(GetVirtualWidth(), GetVirtualHeight());
     SetSize(root.Width, root.Height);
   }
+  */
+  //print("rhgt=%d; hgt=%d; vhgt=%d", root.Height, Height, GetVirtualHeight());
 
   if (HudWidth == 0) {
     //writeln("HUD0: ", HudWidth, "x", HudHeight, "; msgx=", MsgX, "; msgy=", MsgY);
@@ -144,9 +184,35 @@ override void OnDraw () {
       y = int(float(Height)*(-MsgY));
     }
   } else {
+    int msgwdt = MsgWidth;
+    int msghgt = MsgHeight;
+    x = int(MsgX);
+    y = int(MsgY);
+
+    //float sx = float(GetVirtualWidth())/float(abs(HudWidth));
+    //float sy = float(GetVirtualHeight())/float(abs(HudHeight));
+    if (isTextFont) {
+      //FIXME: make big scales work as expected
+      float sx = float(root.Width)/float(abs(HudWidth));
+      float sy = float(root.Height)/float(abs(HudHeight));
+      /*
+      print("HUDMSG: msg=<%q>; pos=(%d,%d); fixedpos=(%d,%d); scale=(%f,%f); size=(%d,%d); hudsize=(%d,%d)", MsgLines[0].Text, x, y, round(x*sx), round(y*sy), sx, sy, Width, Height, HudWidth, HudHeight);
+      dumpClipRect("self");
+      root.dumpClipRect("root");
+      */
+      x = round(x*sx);
+      y = round(y*sy);
+      // scale this, so center will work properly
+      //msgwdt = round(msgwdt*sx);
+      //msghgt = round(msghgt*sx);
+      //ScaleX = 1;
+      //ScaleY = 1;
+    }
+
+    //print("msg=<%q>", MsgLines[0].Text);
     int IntPart = int(MsgX);
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
-    x = IntPart;
+    //print("  x=%d; frac=%d", x, FracPart);
     // fractional part specifies alignment:
     //   0 - centre
     //   1 - left
@@ -158,7 +224,7 @@ override void OnDraw () {
 
     IntPart = int(MsgY);
     FracPart = int(fabs(MsgY-float(IntPart))*10.0+0.5);
-    y = IntPart;
+    //print("  y=%d; frac=%d", y, FracPart);
     // fractional part specifies alignment:
     //   0 - centre
     //   1 - top
@@ -168,11 +234,6 @@ override void OnDraw () {
       case 2: y -= MsgHeight; break;
     }
 
-    //FIXME: make big scales work as expected
-    float sx = float(Parent.Width)/float(GetVirtualWidth());
-    float sy = float(Parent.Height)/float(GetVirtualHeight());
-    x = round(x*sx);
-    y = round(y*sy);
   }
 
   foreach (auto i; 0..MsgLines.length) {
@@ -192,7 +253,8 @@ override void OnDraw () {
 //
 //==========================================================================
 void DrawLine (int LineIdx, int x, int y, string Text) {
-  DrawText(x, y, Text, MsgColour, CR_YELLOW, MsgAlpha);
+  float alpha = (isTextFont ? MsgAlpha : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
+  DrawText(x, y, Text, MsgColour, CR_YELLOW, alpha);
 }
 
 

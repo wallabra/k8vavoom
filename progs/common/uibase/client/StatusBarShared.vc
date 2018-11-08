@@ -49,6 +49,8 @@ enum {
 const int HUDMSG_LOG          = 0x80000000;
 const int HUDMSG_COLOURSTRING = 0x40000000;
 
+bool lastWasFullscreen;
+
 
 //==========================================================================
 //
@@ -58,8 +60,11 @@ const int HUDMSG_COLOURSTRING = 0x40000000;
 override void OnCreate () {
   ::OnCreate();
   HudMsgWin = NewChild(Widget);
+  Width = GetVirtualWidth();
+  Height = GetVirtualHeight();
   HudMsgWin.Width = Width;
   HudMsgWin.Height = Height;
+  lastWasFullscreen = false;
 }
 
 
@@ -92,6 +97,11 @@ override void OnDraw () {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
+  auto root = GetRootWidget();
+  if (root && (Width != root.Width || Height != root.Height)) {
+    SetSize(root.Width, root.Height);
+    HudMsgWin.SetSize(root.Width, root.Height);
+  }
   UpdateNotify(DeltaTime);
   UpdateCentreMessage(DeltaTime);
 }
@@ -308,20 +318,30 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
       Msg = HudMsgWin.NewChild(HUDMessageFadeInOut);
       break;
   }
+  //Msg.dumpClipRect("MSG00");
   Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  //Msg.dumpClipRect("MSG01");
 
   // insert in the list in the proper location
   Probe = HudMsgWin.FirstChild;
   while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
   if (Probe) Msg.MoveBefore(Probe);
+  //Msg.dumpClipRect("MSG02");
 }
 
 
 void SB_Drawer (int sb_view) {
+  SB_Housekeeping(sb_view);
 }
 
 
 void SB_UpdateWidgets () {
+}
+
+
+void SB_Housekeeping (int sb_view) {
+  bool fs = (sb_view == SB_VIEW_FULLSCREEN);
+  lastWasFullscreen = fs;
 }
 
 

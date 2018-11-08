@@ -555,6 +555,7 @@ void SB_DrawPause()
 
 override void SB_Drawer(int sb_view)
 {
+  SB_Housekeeping(sb_view);
   if (!cl || !cl.MO)
   {
     return;

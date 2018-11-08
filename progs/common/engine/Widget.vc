@@ -120,7 +120,15 @@ final bool Enabled { get { return IsEnabled(); } set { SetEnabled(value); } defa
 final bool Focusable { get { return IsFocusable(); } set { SetFocusable(value); } default bIsFocusable; }
 
 final int OldOriginX { get { return int(ClipRect.OriginX/ClipRect.ScaleX); } }
-final int OldOriginY { get { return int(ClipRect.OriginY / ClipRect.ScaleY); } }
+final int OldOriginY { get { return int(ClipRect.OriginY/ClipRect.ScaleY); } }
+
+final void dumpClipRect (optional string msg) {
+  print("CR: %s%ssize=(%d,%d); orig=(%f,%f); scale=(%f,%f); cr=(%f,%f)-(%f,%f)",
+    msg, (msg ? "; " : ""),
+    SizeWidth, SizeHeight,
+    ClipRect.OriginX, ClipRect.OriginY, ClipRect.ScaleX, ClipRect.ScaleY,
+    ClipRect.ClipX1, ClipRect.ClipY1, ClipRect.ClipX2, ClipRect.ClipY2);
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
