@@ -354,10 +354,11 @@ void VCvar::SetCheating (bool new_state) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VCvar::CreateNew (const char *var_name, const VStr &ADefault, const VStr &AHelp, int AFlags) {
-  VCvar *cvar = FindVariable(var_name);
+void VCvar::CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags) {
+  if (var_name == NAME_None) return;
+  VCvar *cvar = FindVariable(*var_name);
   if (!cvar) {
-    new VCvar(var_name, ADefault, AHelp, AFlags);
+    new VCvar(*var_name, ADefault, AHelp, AFlags);
   } else {
     // delete old default value if necessary
     if (cvar->defstrOwned) delete[] const_cast<char*>(cvar->defaultString);
