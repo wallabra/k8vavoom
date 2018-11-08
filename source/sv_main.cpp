@@ -66,6 +66,7 @@ VCvarB NoMonsters("NoMonsters", false, "NoMonsters mode?");
 VCvarI Skill("Skill", "3", "Skill level.");
 static VCvarB sv_cheats("sv_cheats", false, "Allow cheats in network game?", CVAR_ServerInfo|CVAR_Latch);
 static VCvarB sv_barrelrespawn("sv_barrelrespawn", false, "Respawn barrels in network game?", CVAR_ServerInfo|CVAR_Latch);
+static VCvarB sv_pushablebarrels("sv_pushablebarrels", true, "Pusheable barrels?", CVAR_ServerInfo|CVAR_Latch);
 static VCvarB split_frame("split_frame", true, "Splitframe mode?", CVAR_Archive);
 static VCvarI sv_maxmove("sv_maxmove", "400", "Maximum allowed network movement.", CVAR_Archive);
 static VCvarF master_heartbeat_time("master_heartbeat_time", "300", "Master server heartbit interval.", CVAR_Archive);
