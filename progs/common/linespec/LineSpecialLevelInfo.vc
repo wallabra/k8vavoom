@@ -6701,6 +6701,26 @@ final override void SpawnMapThing (mthing_t *mthing) {
   moClass = class!EntityEx(FindClassFromEditorId(mthing->type, LineSpecialGameInfo(Game).GameFilterFlag));
   if (!moClass) {
     // can't find thing type
+    if (mthing->type == 9200) {
+      auto dcs = Spawn(Unknown, default, default, mthing, false);
+      dcs.bSolid = false;
+      TAVec agl;
+      agl.yaw = AngleMod360(mthing->angle+180); // turn it to the wall
+      TVec dir;
+      AngleVector(agl, dir);
+      //print("  dir0=%v (a=%f)", dir, agl.yaw);
+      dir = Normalise(dir);
+      //print("  dir1=%v", dir);
+      EntityEx::trsplat_t tr;
+      if (dcs.TraceSplat(dcs.Origin-dir*2, dir, 64.0+4, &tr)) {
+        //print("  spawning!");
+        dcs.SpawnDecalById(tr.hit, mthing->arg1+mthing->arg2*256, tr.side, tr.line);
+      } else {
+        print("(INFO): cannot spawn decal at (%f,%f); angle=%d; id=%d", mthing->x, mthing->y, mthing->angle, mthing->arg1+mthing->arg2*256);
+      }
+      dcs.Destroy();
+      return;
+    }
     print("SpawnMapThing: Unknown type %d at (%f, %f)", mthing->type, mthing->x, mthing->y);
     moClass = Unknown;
   } else {

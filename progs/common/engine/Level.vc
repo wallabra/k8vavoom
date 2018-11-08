@@ -239,6 +239,7 @@ native final int SetBodyQueueTrans(int Slot, int Transl);
 //
 
 native final void AddDecal (TVec org, name dectype, int side, line_t *li);
+native final void AddDecalById (TVec org, int id, int side, line_t *li);
 
 
 final int calcSecIdx (sector_t *sec) {

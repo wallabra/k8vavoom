@@ -110,6 +110,15 @@ VDecalDef *VDecalDef::find (const VName &aname) {
 }
 
 
+VDecalDef *VDecalDef::findById (int id) {
+  if (id < 0) return nullptr;
+  for (auto it = listHead; it; it = it->next) {
+    if (it->id == id) return it;
+  }
+  return nullptr;
+}
+
+
 bool VDecalDef::hasDecal (const VName &aname) {
   if (VDecalDef::find(aname)) return true;
   if (VDecalGroup::find(aname)) return true;
@@ -134,6 +143,11 @@ VDecalDef *VDecalDef::getDecal (const VName &aname) {
 }
 
 
+VDecalDef *VDecalDef::getDecalById (int id) {
+  return VDecalDef::findById(id);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 VDecalDef::~VDecalDef () {
   removeFromList(this);
@@ -155,7 +169,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal name"); return false; }
   name = VName(*sc->String);
-  sc->CheckNumber(); //TODO: this is thing id
+  if (sc->CheckNumber()) id = sc->Number; // this is decal id
   sc->Expect("{");
 
   while (!sc->AtEnd()) {

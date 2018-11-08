@@ -391,6 +391,7 @@ private:
   int SetBodyQueueTrans (int, int);
 
   void AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level);
+  void AddDecalById (TVec org, int id, int side, line_t *li, int level);
   // called by `AddDecal()`
   void AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, line_t *li);
   void PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips);
@@ -444,6 +445,7 @@ private:
   DECLARE_FUNCTION(SetBodyQueueTrans)
 
   DECLARE_FUNCTION(AddDecal)
+  DECLARE_FUNCTION(AddDecalById)
 };
 
 void CalcLine (line_t *line);

@@ -43,3 +43,19 @@ final void SpawnDecal (TVec org, name dectype, int side, line_t *li) {
     PlayerEx(Level.Game.Players[i]).DecalEffect(org, dectype, side, lidx);
   }
 }
+
+
+//==========================================================================
+//
+//  SpawnDecalById
+//
+//  Used in player loader
+//
+//==========================================================================
+final void SpawnDecalById (TVec org, int id, int side, line_t *li) {
+  if (id < 0 || !li || !XLevel) return; // just in case
+  if (!GetCvarB('r_decals_enabled')) return;
+  int lidx = XLevel.GetLineIndex(li);
+  if (lidx < 0 || lidx >= XLevel.Lines.length) return;
+  XLevel.AddDecalById(org, id, side, li);
+}

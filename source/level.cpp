@@ -1470,6 +1470,47 @@ void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int
 
 //==========================================================================
 //
+// VLevel::AddDecalById
+//
+//==========================================================================
+void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
+  guard(VLevel::AddDecalById);
+
+  if (!r_decals_enabled) return;
+  if (!li || id < 0) return; // just in case
+
+  sector_t *sec = (side ? li->backsector : li->frontsector);
+  if (!sec) return; // just in case
+
+  // ignore slopes
+  if (sec->floor.minz != sec->floor.maxz || sec->ceiling.minz != sec->ceiling.maxz) return;
+
+  //TVec oorg = org;
+  org = P_SectorClosestPoint(sec, org);
+  //org.z = oorg.z;
+  //GCon->Logf("DECAL %d: oorg:(%f,%f,%f); org:(%f,%f,%f)", id, oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
+
+  int sidenum = (int)(li->backsector == sec);
+  if (li->sidenum[sidenum] < 0) Sys_Error("decal engine: invalid linedef (0)!");
+
+  //VDecalDef *dec = VDecalDef::getDecal(dectype);
+  //VDecalDef *dec = VDecalDef::getDecal(VName("K8GoreBloodSplat01"));
+  //VDecalDef *dec = VDecalDef::getDecal(VName("PlasmaScorchLower1"));
+  //VDecalDef *dec = VDecalDef::getDecal(VName("BigScorch"));
+  VDecalDef *dec = VDecalDef::getDecalById(id);
+  if (dec) {
+    //GCon->Logf("DECAL %d: oorg:(%f,%f,%f); org:(%f,%f,%f)", id, oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
+    AddOneDecal(level, org, dec, sec, li);
+  } else {
+    //if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
+  }
+
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  CalcLine
 //
 //==========================================================================
@@ -1859,4 +1900,14 @@ IMPLEMENT_FUNCTION(VLevel, AddDecal) {
   P_GET_VEC(org);
   P_GET_SELF;
   Self->AddDecal(org, dectype, side, li, 0);
+}
+
+//native final void AddDecalById (TVec org, int id, int side, line_t *li);
+IMPLEMENT_FUNCTION(VLevel, AddDecalById) {
+  P_GET_PTR(line_t, li);
+  P_GET_INT(side);
+  P_GET_INT(id);
+  P_GET_VEC(org);
+  P_GET_SELF;
+  Self->AddDecalById(org, id, side, li, 0);
 }

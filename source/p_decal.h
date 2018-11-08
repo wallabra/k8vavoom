@@ -60,6 +60,7 @@ public:
   // decaldef properties
   VName name;
   VName pic;
+  int id;
   float shade[4]; // [3]: mix coeff [0..1]; 0 means "original color", 1 means "use shade color"
   float scaleX, scaleY;
   int flipX, flipY; // FlipXXX constant
@@ -73,15 +74,17 @@ public:
   //float ofsX, ofsY;
 
 public:
-  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), pic(NAME_None), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
+  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), pic(NAME_None), id(-1), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
   ~VDecalDef ();
 
 public:
   static VDecalDef *find (const VStr &aname);
   static VDecalDef *find (const VName &aname);
+  static VDecalDef *findById (int id);
 
   static VDecalDef *getDecal (const VStr &aname);
   static VDecalDef *getDecal (const VName &aname);
+  static VDecalDef *getDecalById (int id);
 
   static bool hasDecal (const VName &aname);
 
