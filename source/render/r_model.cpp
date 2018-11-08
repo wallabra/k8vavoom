@@ -66,6 +66,7 @@ static int parseHexRGB (const VStr &str) {
   }
   while (pos < str.Length() && (vuint8)str[pos] <= ' ') ++pos;
   if (pos < str.Length()) return -1;
+  //fprintf(stderr, "str=<%s>; r=%d; g=%d; b=%d\n", *str, clr[0], clr[1], clr[2]);
   return (clr[0]<<16)|(clr[1]<<8)|clr[2];
 }
 
@@ -118,6 +119,9 @@ struct VScriptedModelFrame {
   float angleRoll;
   bool hasPitch;
   float anglePitch;
+  //
+  VName sprite;
+  int frame; // sprite frame
 };
 
 
@@ -178,7 +182,7 @@ void R_InitModels () {
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
-    /*if (mdl_verbose_loading)*/ {
+    if (mdl_verbose_loading) {
       GCon->Logf(NAME_Init, "parsing model definition '%s'", *W_FullLumpName(Lump));
     }
     // parse the file
@@ -366,7 +370,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       for (VXmlNode *SkN = SN->FindChild("skin"); SkN; SkN = SkN->FindNext()) {
         VStr sfl = SkN->GetAttribute("file").ToLower().FixFileSlashes();
         if (sfl.length()) {
-          GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
+          if (mdl_verbose_loading > 2) GCon->Logf("model '%s': skin file '%s'", *SMdl.Name, *sfl);
           Md2.Skins.Append(*sfl);
           int shade = -1;
           if (SkN->HasAttribute("shade")) {
@@ -403,10 +407,30 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       if (F.hasRoll && N->GetAttribute("angle_roll") == "random") F.angleRoll = AngleMod(360.0f*Random());
       else F.angleRoll = AngleMod(F.hasRoll ? VStr::atof(*N->GetAttribute("angle_roll")) : 0.0f);
 
-      F.Number = atoi(*N->GetAttribute("index"));
       int lastIndex = -666;
-      if (N->HasAttribute("last_index")) lastIndex = atoi(*N->GetAttribute("last_index"));
+      if (N->HasAttribute("index")) {
+        F.Number = atoi(*N->GetAttribute("index"));
+        if (N->HasAttribute("last_index")) lastIndex = atoi(*N->GetAttribute("last_index"));
+        F.sprite = NAME_None;
+        F.frame = -1;
+      } else if (N->HasAttribute("sprite") && N->HasAttribute("sprite_frame")) {
+        VName sprname = VName(*VStr(N->GetAttribute("sprite")).toLowerCase());
+        if (sprname == NAME_None) Sys_Error("Model '%s' has invalid state (empty sprite name)", *Mdl->Name);
+        VStr sprframe = N->GetAttribute("sprite_frame");
+        if (sprframe.length() != 1) Sys_Error("Model '%s' has invalid state (invalid sprite frame '%s')", *Mdl->Name, *sprframe);
+        int sfr = sprframe[0];
+             if (sfr >= 'A' && sfr <= 'Z') sfr -= 'A';
+        else if (sfr >= 'a' && sfr <= 'z') sfr -= 'a';
+        else Sys_Error("Model '%s' has invalid state (invalid sprite frame '%s')", *Mdl->Name, *sprframe);
+        F.Number = -1;
+        F.sprite = sprname;
+        F.frame = sfr;
+      } else {
+        Sys_Error("Model '%s' has invalid state", *Mdl->Name);
+      }
+
       F.FrameIndex = atoi(*N->GetAttribute("frame_index"));
+
       F.ModelIndex = -1;
       VStr MdlName = N->GetAttribute("model");
       for (int i = 0; i < Mdl->Models.Num(); ++i) {
@@ -449,7 +473,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
           ffr.angleRoll = F.angleRoll;
         }
       } else {
-        if (F.Number < 0) F.Number = -666;
+        if (F.Number < 0 && F.sprite != NAME_None) F.Number = -666;
       }
     }
     if (!Cls->Frames.Num()) Sys_Error("%s class %s has no states defined", *Mdl->Name, *Cls->Name);
@@ -483,7 +507,7 @@ VModel *Mod_FindName (const VStr &name) {
   // load the file
   VStream *Strm = FL_OpenFileRead(mod->Name);
   if (!Strm) Sys_Error("Couldn't load `%s`", *mod->Name);
-  GCon->Logf(NAME_Init, "parsing model script '%s'...", *mod->Name);
+  if (mdl_verbose_loading > 1) GCon->Logf(NAME_Init, "parsing model script '%s'...", *mod->Name);
   ParseModelScript(mod, *Strm);
   delete Strm;
 
@@ -777,17 +801,27 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
 //  FindFrame
 //
 //==========================================================================
-static int FindFrame (const VClassModelScript &Cls, int Frame, float Inter) {
+static int FindFrame (const VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
   guard(FindFrame);
   int Ret = -1;
   int frameAny = -1;
   for (int i = 0; i < Cls.Frames.Num(); ++i) {
-    if (Cls.Frames[i].Number == Frame && Cls.Frames[i].Inter <= Inter) {
-      Ret = i;
-      // k8: no `break` here, 'cause we may find better frame (with better "inter")
+    const VScriptedModelFrame &frm = Cls.Frames[i];
+    if (frm.Inter <= Inter) {
+      if (frm.sprite != NAME_None) {
+        //GCon->Logf("*** CHECKING '%s' [%c]  ('%s' [%c])", *frm.sprite, 'A'+frm.frame, *Frame.sprite, 'A'+Frame.frame);
+        if (frm.sprite == Frame.sprite && frm.frame == Frame.frame) {
+          Ret = i;
+          // k8: no `break` here, 'cause we may find better frame (with better "inter")
+          //GCon->Logf("+++ ALIASMDL: found frame '%s' [%c]", *Frame.sprite, 'A'+Frame.frame);
+        }
+      } else if (frm.Number == Frame.index) {
+        Ret = i;
+        // k8: no `break` here, 'cause we may find better frame (with better "inter")
+      }
     }
     //k8: frame "-666" means "any"
-    if (frameAny < 0 && Ret < 0 && Cls.Frames[i].Number == -666) frameAny = i;
+    if (frameAny < 0 && Ret < 0 && frm.Number == -666) frameAny = i;
   }
   if (Ret == -1 && frameAny >= 0) return frameAny;
   return Ret;
@@ -800,12 +834,20 @@ static int FindFrame (const VClassModelScript &Cls, int Frame, float Inter) {
 //  FindNextFrame
 //
 //==========================================================================
-static int FindNextFrame (const VClassModelScript &Cls, int FIdx, int Frame, float Inter, float &InterpFrac) {
+static int FindNextFrame (const VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
   guard(FindNextFrame);
   const VScriptedModelFrame &FDef = Cls.Frames[FIdx];
-  if (FIdx < Cls.Frames.Num()-1 && Cls.Frames[FIdx+1].Number == FDef.Number) {
-    InterpFrac = (Inter-FDef.Inter)/(Cls.Frames[FIdx+1].Inter-FDef.Inter);
-    return FIdx+1;
+  if (FIdx < Cls.Frames.Num()-1) {
+    const VScriptedModelFrame &frm = Cls.Frames[FIdx+1];
+    if (FDef.sprite != NAME_None) {
+      if (frm.sprite == FDef.sprite && frm.frame == FDef.frame) {
+        InterpFrac = (Inter-FDef.Inter)/(frm.Inter-FDef.Inter);
+        return FIdx+1;
+      }
+    } else if (frm.Number == FDef.Number) {
+      InterpFrac = (Inter-FDef.Inter)/(Cls.Frames[FIdx+1].Inter-FDef.Inter);
+      return FIdx+1;
+    }
   }
   InterpFrac = (Inter-FDef.Inter)/(1.0-FDef.Inter);
   return FindFrame(Cls, Frame, 0);
@@ -1024,7 +1066,8 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 //
 //==========================================================================
 bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
-  float ScaleX, float ScaleY, VModel *Mdl, int Frame, int NextFrame,
+  float ScaleX, float ScaleY, VModel *Mdl,
+  const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
   VTextureTranslation *Trans, int Version, vuint32 Light, vuint32 Fade,
   float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
@@ -1065,11 +1108,11 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
   }
   if (!Cls) return false;
 
-  int FIdx = FindFrame(*Cls, State->InClassIndex, Inter);
+  int FIdx = FindFrame(*Cls, State->getMFI(), Inter);
   if (FIdx == -1) return false;
 
   float InterpFrac;
-  int NFIdx = FindNextFrame(*Cls, FIdx, NextState->InClassIndex, Inter, InterpFrac);
+  int NFIdx = FindNextFrame(*Cls, FIdx, NextState->getMFI(), Inter, InterpFrac);
   if (NFIdx == -1) {
     NFIdx = FIdx;
     Interpolate = false;
@@ -1104,9 +1147,9 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
     if (!Mdl) return false;
     return DrawAliasModel(Ent->Origin-TVec(0, 0, Ent->FloorClip),
       Ent->Angles, Ent->ScaleX, Ent->ScaleY, Mdl,
-      DispState->InClassIndex,
-      DispState->NextState ? DispState->NextState->InClassIndex :
-      DispState->InClassIndex, GetTranslation(Ent->Translation),
+      DispState->getMFI(),
+      (DispState->NextState ? DispState->NextState->getMFI() : DispState->getMFI()),
+      GetTranslation(Ent->Translation),
       Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
       Interpolate, Pass);
   } else {
@@ -1127,18 +1170,19 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
 //==========================================================================
 bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
   guard(VRenderLevelShared::CheckAliasModelFrame);
-  if (Ent->EntityFlags & VEntity::EF_FixedModel) {
+  if (!Ent->State) return false;
+  if (Ent->EntityFlags&VEntity::EF_FixedModel) {
     if (!FL_FileExists(VStr("models/")+Ent->FixedModelName)) return false;
     VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
     if (!Mdl) return false;
-    return FindFrame(*Mdl->DefaultClass, Ent->State->InClassIndex, Inter) != -1;
+    return FindFrame(*Mdl->DefaultClass, Ent->State->getMFI(), Inter) != -1;
   } else {
     VClassModelScript *Cls = nullptr;
     for (int i = 0; i < ClassModels.Num(); ++i) {
       if (ClassModels[i]->Name == Ent->State->Outer->Name) Cls = ClassModels[i];
     }
     if (!Cls) return false;
-    return FindFrame(*Cls, Ent->State->InClassIndex, Inter) != -1;
+    return FindFrame(*Cls, Ent->State->getMFI(), Inter) != -1;
   }
   unguard;
 }
@@ -1150,10 +1194,14 @@ bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
 //
 //==========================================================================
 void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
-  int Frame, int NextFrame, const char *Skin, int TranslStart,
+  int Frame, int NextFrame,
+  //const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
+  const char *Skin, int TranslStart,
   int TranslEnd, int Colour, float Inter)
 {
+  //FIXME!
   guard(R_DrawModelFrame);
+  /*
   bool Interpolate = true;
   int FIdx = FindFrame(*Model->DefaultClass, Frame, Inter);
   if (FIdx == -1) return;
@@ -1196,6 +1244,7 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
     InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();
+  */
   unguard;
 }
 
@@ -1214,10 +1263,11 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
     if (ClassModels[i]->Name == State->Outer->Name) Cls = ClassModels[i];
   }
   if (!Cls) return false;
-  int FIdx = FindFrame(*Cls, State->InClassIndex, Inter);
+  if (!State) return false;
+  int FIdx = FindFrame(*Cls, State->getMFI(), Inter);
   if (FIdx == -1) return false;
   float InterpFrac;
-  int NFIdx = FindNextFrame(*Cls, FIdx, NextState->InClassIndex, Inter, InterpFrac);
+  int NFIdx = FindNextFrame(*Cls, FIdx, (NextState ? NextState->getMFI() : State->getMFI()), Inter, InterpFrac);
   if (NFIdx == -1) {
     NFIdx = 0;
     Interpolate = false;

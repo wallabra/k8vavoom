@@ -1391,7 +1391,10 @@ void VClass::PostLoad () {
 
   // set state in-class indexes
   int CurrIndex = 0;
-  for (VState *S = States; S; S = S->Next) {
+  //VState *prevS = nullptr;
+  for (VState *S = States; S; /*prevS = S,*/ S = S->Next) {
+    //if (!prevS || (prevS->Frame&(VState::FF_SKIPMODEL|VState::FF_SKIPOFFS)) == 0) ++CurrIndex;
+    //fprintf(stderr, "state <%s>: sprite name is '%s', frame is %04x\n", *S->GetFullName(), *S->SpriteName, S->Frame);
     S->InClassIndex = CurrIndex;
     if ((S->Frame&(VState::FF_SKIPMODEL|VState::FF_SKIPOFFS)) == 0) ++CurrIndex;
   }

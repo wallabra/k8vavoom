@@ -464,7 +464,9 @@ protected:
 
   //  Models
   bool DrawAliasModel(const TVec&, const TAVec&, float, float, VModel*,
-    int, int, VTextureTranslation*, int, vuint32, vuint32, float, bool,
+    //int, int,
+    const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
+    VTextureTranslation*, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
   bool DrawAliasModel(const TVec&, const TAVec&, float, float, VState*,
     VState*, VTextureTranslation*, int, vuint32, vuint32, float, bool,

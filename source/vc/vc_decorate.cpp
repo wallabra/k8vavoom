@@ -2194,10 +2194,10 @@ static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
   States.Append(State);
   if (firstFrame) {
     State->SpriteName = "tnt1";
-    State->Frame = VState::FF_SKIPOFFS;
+    State->Frame = VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
   } else {
     State->SpriteName = NAME_None;
-    State->Frame = VState::FF_SKIPOFFS|VState::FF_DONTCHANGE;
+    State->Frame = VState::FF_SKIPOFFS|VState::FF_DONTCHANGE|VState::FF_SKIPMODEL;
   }
   State->Time = 0;
   // link previous state

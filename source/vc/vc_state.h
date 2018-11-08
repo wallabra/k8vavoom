@@ -22,6 +22,15 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+struct VAliasModelFrameInfo {
+  VName sprite;
+  int frame; // sprite frame
+  int index; // monotonicaly increasing index
+
+  VAliasModelFrameInfo () : sprite(NAME_None), frame(-69), index(-69) {}
+};
+
+
 class VState : public VMemberBase {
 public:
   // frame flags:
@@ -83,6 +92,14 @@ public:
   bool IsInRange (VState *Start, VState *End, int MaxDepth);
   bool IsInSequence (VState *Start);
   VState *GetPlus (int Offset, bool IgnoreJump);
+
+  inline VAliasModelFrameInfo getMFI () const {
+    VAliasModelFrameInfo res;
+    res.sprite = SpriteName;
+    res.frame = Frame&FF_FRAMEMASK;
+    res.index = InClassIndex;
+    return res;
+  }
 
   friend inline VStream &operator << (VStream &Strm, VState *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };
