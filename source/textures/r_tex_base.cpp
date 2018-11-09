@@ -661,23 +661,44 @@ rgba_t VTexture::getPixel (int x, int y) {
 void VTexture::shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor) {
   if (!pic || wdt < 1 || hgt < 1 || shadeColor < 1) return;
   //vuint8 *picbuf = pic;
+  vuint8 *oldpic = new vuint8[wdt*hgt*4];
+  memcpy(oldpic, pic, wdt*hgt*4);
   float shadeR = (shadeColor>>16)&0xff;
   float shadeG = (shadeColor>>8)&0xff;
   float shadeB = (shadeColor)&0xff;
-  for (int f = wdt*hgt; f > 0; --f, pic += 4) {
-    int intensity = pic[0]; // use red as intensity
-    if (intensity < 2 || pic[3] < 2) {
-      pic[0] = clampToByte((float)intensity*shadeR/255.0f);
-      pic[1] = clampToByte((float)intensity*shadeG/255.0f);
-      pic[2] = clampToByte((float)intensity*shadeB/255.0f);
-      pic[3] = 0;
-    } else {
-      pic[0] = clampToByte((float)intensity*shadeR/255.0f);
-      pic[1] = clampToByte((float)intensity*shadeG/255.0f);
-      pic[2] = clampToByte((float)intensity*shadeB/255.0f);
-      //pic[3] = 255;
+  for (int y = 0; y < hgt; ++y) {
+    for (int x = 0; x < wdt; ++x) {
+      int addr = y*(wdt*4)+x*4;
+      int intensity = pic[addr]; // use red as intensity
+      if (intensity < 2 || pic[addr+3] < 2) {
+        int r = 0;
+        int count = 0;
+        for (int dy = -1; dy < 2; ++dy) {
+          for (int dx = -1; dx < 2; ++dx) {
+            int px = x+dx, py = y+dy;
+            if (px >= 0 && py >= 0 && px < wdt && py < hgt) {
+              ++count;
+              r += oldpic[py*(wdt*4)+px*4+0];
+            }
+          }
+        }
+        pic[addr+0] = clampToByte(((float)r/float(count))*shadeR/255.0f);
+        pic[addr+1] = clampToByte(((float)r/float(count))*shadeG/255.0f);
+        pic[addr+2] = clampToByte(((float)r/float(count))*shadeB/255.0f);
+        /*
+        pic[addr+0] = clampToByte((float)intensity*shadeR/255.0f);
+        pic[addr+1] = clampToByte((float)intensity*shadeG/255.0f);
+        pic[addr+2] = clampToByte((float)intensity*shadeB/255.0f);
+        */
+        pic[addr+3] = 0;
+      } else {
+        pic[addr+0] = clampToByte((float)intensity*shadeR/255.0f);
+        pic[addr+1] = clampToByte((float)intensity*shadeG/255.0f);
+        pic[addr+2] = clampToByte((float)intensity*shadeB/255.0f);
+      }
     }
   }
+  delete oldpic;
   //SmoothEdges(picbuf, wdt, hgt);
 }
 
