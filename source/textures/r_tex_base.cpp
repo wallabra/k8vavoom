@@ -670,7 +670,7 @@ void VTexture::shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor) {
     for (int x = 0; x < wdt; ++x) {
       int addr = y*(wdt*4)+x*4;
       int intensity = pic[addr]; // use red as intensity
-      if (intensity < 2 || pic[addr+3] < 2) {
+      if (intensity < 3 || pic[addr+3] < 3) {
         int r = 0;
         int count = 0;
         for (int dy = -1; dy < 2; ++dy) {
@@ -682,15 +682,17 @@ void VTexture::shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor) {
             }
           }
         }
-        pic[addr+0] = clampToByte(((float)r/float(count))*shadeR/255.0f);
-        pic[addr+1] = clampToByte(((float)r/float(count))*shadeG/255.0f);
-        pic[addr+2] = clampToByte(((float)r/float(count))*shadeB/255.0f);
+        float v = (float)r/float(count);
+        if (v < intensity) v = intensity;
+        pic[addr+0] = clampToByte(v*shadeR/255.0f);
+        pic[addr+1] = clampToByte(v*shadeG/255.0f);
+        pic[addr+2] = clampToByte(v*shadeB/255.0f);
         /*
         pic[addr+0] = clampToByte((float)intensity*shadeR/255.0f);
         pic[addr+1] = clampToByte((float)intensity*shadeG/255.0f);
         pic[addr+2] = clampToByte((float)intensity*shadeB/255.0f);
         */
-        pic[addr+3] = 0;
+        //pic[addr+3] = 0;
       } else {
         pic[addr+0] = clampToByte((float)intensity*shadeR/255.0f);
         pic[addr+1] = clampToByte((float)intensity*shadeG/255.0f);
