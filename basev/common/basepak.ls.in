@@ -50,23 +50,17 @@ graphics/wislash.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/wislash.png
 textures/-noflat-.png @CMAKE_CURRENT_SOURCE_DIR@/textures/-noflat-.png
 
 //  Common sprites
-sprites/iceca0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/iceca0.png
-sprites/icecb0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecb0.png
-sprites/icecc0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecc0.png
-sprites/icecd0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecd0.png
-sprites/pista0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/pista0.png
-sprites/tnt1a0.lmp    @CMAKE_CURRENT_SOURCE_DIR@/sprites/tnt1a0.lmp
-sprites/unkna0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/unkna0.png
+//sprites/iceca0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/iceca0.png
+//sprites/icecb0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecb0.png
+//sprites/icecc0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecc0.png
+//sprites/icecd0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/icecd0.png
+//sprites/pista0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/pista0.png
+//sprites/tnt1a0.lmp    @CMAKE_CURRENT_SOURCE_DIR@/sprites/tnt1a0.lmp
+//sprites/unkna0.png    @CMAKE_CURRENT_SOURCE_DIR@/sprites/unkna0.png
+$recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 
 //  Sounds
-sounds/dsempty.lmp    @CMAKE_CURRENT_SOURCE_DIR@/sounds/dsempty.lmp
-sounds/dsquake.flac   @CMAKE_CURRENT_SOURCE_DIR@/sounds/dsquake.flac
-sounds/icebrk1a.flac  @CMAKE_CURRENT_SOURCE_DIR@/sounds/icebrk1a.flac
-sounds/icedth1.flac   @CMAKE_CURRENT_SOURCE_DIR@/sounds/icedth1.flac
-sounds/railgf1.flac   @CMAKE_CURRENT_SOURCE_DIR@/sounds/railgf1.flac
-sounds/spark1.flac    @CMAKE_CURRENT_SOURCE_DIR@/sounds/spark1.flac
-sounds/spark2.flac    @CMAKE_CURRENT_SOURCE_DIR@/sounds/spark2.flac
-sounds/spark3.flac    @CMAKE_CURRENT_SOURCE_DIR@/sounds/spark3.flac
+$recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 
 //  Colour names
 x11r6rgb.txt      @CMAKE_CURRENT_SOURCE_DIR@/x11r6rgb.txt
@@ -101,33 +95,7 @@ decaldef.txt              @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 decorate.txt              @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 actors/constants.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/constants.txt
 actors/nativeclasses.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/nativeclasses.txt
-actors/doom/arachnotron.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/arachnotron.txt
-actors/doom/archvile.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/archvile.txt
-actors/doom/bossbrain.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/bossbrain.txt
-actors/doom/bruiser.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/bruiser.txt
-actors/doom/cacodemon.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/cacodemon.txt
-actors/doom/cyberdemon.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/cyberdemon.txt
-actors/doom/deadthings.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/deadthings.txt
-actors/doom/demon.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/demon.txt
-actors/doom/doomammo.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomammo.txt
-actors/doom/doomarmor.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomarmor.txt
-actors/doom/doomartifacts.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomartifacts.txt
-actors/doom/doomdecorations.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomdecorations.txt
-actors/doom/doomhealth.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomhealth.txt
-actors/doom/doomimp.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomimp.txt
-actors/doom/doomkeys.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomkeys.txt
-actors/doom/doommisc.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doommisc.txt
-actors/doom/doomplayer.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomplayer.txt
-actors/doom/doomweapons.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/doomweapons.txt
-actors/doom/fatso.txt         @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/fatso.txt
-actors/doom/keen.txt          @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/keen.txt
-actors/doom/lostsoul.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/lostsoul.txt
-actors/doom/painelemental.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/painelemental.txt
-actors/doom/possessed.txt       @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/possessed.txt
-actors/doom/revenant.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/revenant.txt
-actors/doom/scriptedmarine.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/scriptedmarine.txt
-actors/doom/spidermaster.txt      @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/spidermaster.txt
-actors/doom/stealthmonsters.txt     @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/stealthmonsters.txt
+$recursedirext actors/doom/  @CMAKE_CURRENT_SOURCE_DIR@/actors/doom/  .txt
 actors/heretic/beast.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/beast.txt
 actors/heretic/chicken.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/chicken.txt
 actors/heretic/clink.txt        @CMAKE_CURRENT_SOURCE_DIR@/actors/heretic/clink.txt

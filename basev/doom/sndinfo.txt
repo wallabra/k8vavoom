@@ -351,3 +351,11 @@ menu/clear            dsswtchx
 menu/invalid          dsoof
 menu/prompt           dsswtchn
 menu/dismiss          dsswtchx
+
+
+// Marine's Best Friend -- not just for marines anymore!
+dog/active  dsdgact
+dog/attack  dsdgatk
+dog/death   dsdgdth
+dog/pain    dsdgpain
+dog/sight   dsdgsit

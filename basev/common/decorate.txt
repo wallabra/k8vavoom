@@ -37,6 +37,8 @@
 #include "actors/doom/doommisc.txt"
 #include "actors/doom/doomdecorations.txt"
 
+#include "actors/doom/dog.txt"
+
 #include "actors/raven/ravenhealth.txt"
 #include "actors/raven/ravenartifacts.txt"
 #include "actors/raven/artiegg.txt"

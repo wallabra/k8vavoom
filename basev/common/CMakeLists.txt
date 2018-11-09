@@ -26,33 +26,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     x11r6rgb.txt
     actors/constants.txt
     actors/nativeclasses.txt
-    actors/doom/arachnotron.txt
-    actors/doom/archvile.txt
-    actors/doom/bossbrain.txt
-    actors/doom/bruiser.txt
-    actors/doom/cacodemon.txt
-    actors/doom/cyberdemon.txt
-    actors/doom/deadthings.txt
-    actors/doom/demon.txt
-    actors/doom/doomammo.txt
-    actors/doom/doomarmor.txt
-    actors/doom/doomartifacts.txt
-    actors/doom/doomdecorations.txt
-    actors/doom/doomhealth.txt
-    actors/doom/doomimp.txt
-    actors/doom/doomkeys.txt
-    actors/doom/doommisc.txt
-    actors/doom/doomplayer.txt
-    actors/doom/doomweapons.txt
-    actors/doom/fatso.txt
-    actors/doom/keen.txt
-    actors/doom/lostsoul.txt
-    actors/doom/painelemental.txt
-    actors/doom/possessed.txt
-    actors/doom/revenant.txt
-    actors/doom/scriptedmarine.txt
-    actors/doom/spidermaster.txt
-    actors/doom/stealthmonsters.txt
+    actors/doom/*
     actors/heretic/beast.txt
     actors/heretic/chicken.txt
     actors/heretic/clink.txt
@@ -183,20 +157,14 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     fxdefs/strife/monsters.txt
     fxdefs/strife/weapons.txt
     graphics/*.png
-    sounds/dsempty.lmp
-    sounds/dsquake.flac
-    sounds/icebrk1a.flac
-    sounds/icedth1.flac
-    sounds/railgf1.flac
-    sounds/spark1.flac
-    sounds/spark2.flac
-    sounds/spark3.flac
+    sounds/*
     sprites/iceca0.png
     sprites/icecb0.png
     sprites/icecc0.png
     sprites/icecd0.png
     sprites/tnt1a0.lmp
     sprites/unkna0.png
+    sprites/dogs/*
     textures/-noflat-.png
     uidef/*.txt
     uidef/menus/*.txt
