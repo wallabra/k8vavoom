@@ -31,9 +31,9 @@ void main () {
   if (TexColour.a < 0.01) discard;
 
   if (SplatColour.a != 0.0) {
-    FinalColour_1.r = SplatColour.r*TexColour.r*SplatAlpha; // convert to premultiplied
-    FinalColour_1.g = SplatColour.g*TexColour.r*SplatAlpha; // convert to premultiplied
-    FinalColour_1.b = SplatColour.b*TexColour.r*SplatAlpha; // convert to premultiplied
+    FinalColour_1.r = SplatColour.r*TexColour.a*SplatAlpha; // convert to premultiplied
+    FinalColour_1.g = SplatColour.g*TexColour.a*SplatAlpha; // convert to premultiplied
+    FinalColour_1.b = SplatColour.b*TexColour.a*SplatAlpha; // convert to premultiplied
     FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
   } else {
     FinalColour_1.r = TexColour.r*SplatAlpha; // convert to premultiplied
@@ -42,6 +42,10 @@ void main () {
     FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   }
   if (FinalColour_1.a < 0.01) discard;
+
+  FinalColour_1.r *= FinalColour_1.a;
+  FinalColour_1.g *= FinalColour_1.a;
+  FinalColour_1.b *= FinalColour_1.a;
 
 #ifdef REG_LIGHTMAP
   // lightmapped
