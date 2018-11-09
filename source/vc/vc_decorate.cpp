@@ -292,6 +292,8 @@ static VMethod *FuncA_FreezeDeathChunks;
 
 static TArray<VFlagList> FlagList;
 
+static TMapNC<VName, bool> IgnoredDecorateActions; // lowercased
+
 
 //==========================================================================
 //
@@ -1680,30 +1682,34 @@ static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VE
   }
   //fprintf(stderr, "***9:<%s> %s\n", *sc->String, *sc->GetLoc().toStringNoCol());
 
-  // find the state action method: first check action specials, then state actions
   VMethod *Func = nullptr;
-  for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
-    if (LineSpecialInfos[i].Name == FuncNameLower) {
-      Func = Class->FindMethodChecked("A_ExecActionSpecial");
-      if (NumArgs > 5) {
-        sc->Error("Too many arguments");
-      } else {
-        // add missing arguments
-        while (NumArgs < 5) {
-          Args[NumArgs] = new VIntLiteral(0, sc->GetLoc());
+
+  // check ignores
+  if (!IgnoredDecorateActions.find(VName(*FuncNameLower))) {
+    // find the state action method: first check action specials, then state actions
+    for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
+      if (LineSpecialInfos[i].Name == FuncNameLower) {
+        Func = Class->FindMethodChecked("A_ExecActionSpecial");
+        if (NumArgs > 5) {
+          sc->Error("Too many arguments");
+        } else {
+          // add missing arguments
+          while (NumArgs < 5) {
+            Args[NumArgs] = new VIntLiteral(0, sc->GetLoc());
+            ++NumArgs;
+          }
+          // add action special number argument
+          Args[5] = new VIntLiteral(LineSpecialInfos[i].Number, sc->GetLoc());
           ++NumArgs;
         }
-        // add action special number argument
-        Args[5] = new VIntLiteral(LineSpecialInfos[i].Number, sc->GetLoc());
-        ++NumArgs;
+        break;
       }
-      break;
     }
-  }
 
-  if (!Func) {
-    VDecorateStateAction *Act = Class->FindDecorateStateAction(*FuncNameLower);
-    Func = (Act ? Act->Method : nullptr);
+    if (!Func) {
+      VDecorateStateAction *Act = Class->FindDecorateStateAction(*FuncNameLower);
+      Func = (Act ? Act->Method : nullptr);
+    }
   }
 
   //fprintf(stderr, "<%s>\n", *FuncNameLower);
@@ -3927,6 +3933,54 @@ void ReadLineSpecialInfos () {
 //==========================================================================
 void ProcessDecorateScripts () {
   guard(ProcessDecorateScripts);
+
+  for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
+    GCon->Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
+    check(Strm);
+    VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), Strm);
+    while (sc->GetString()) {
+      if (sc->String.length() == 0) continue;
+      VName nl = VName(*sc->String.toLowerCase());
+      IgnoredDecorateActions.put(nl, true);
+    }
+    delete sc;
+    delete Strm;
+  }
+
+  int fp = GArgs.CheckParm("-decignore");
+  if (fp) {
+    while (++fp != GArgs.Count()) {
+      if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
+      VStr fname = VStr(GArgs[fp]);
+      if (Sys_FileExists(fname)) {
+        VStream *Strm = FL_OpenSysFileRead(fname);
+        GCon->Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *fname);
+        check(Strm);
+        VScriptParser *sc = new VScriptParser(fname, Strm);
+        while (sc->GetString()) {
+          if (sc->String.length() == 0) continue;
+          VName nl = VName(*sc->String.toLowerCase());
+          IgnoredDecorateActions.put(nl, true);
+        }
+        delete sc;
+        delete Strm;
+      }
+    }
+  }
+
+  fp = GArgs.CheckParm("-decignoreaction");
+  if (fp) {
+    while (++fp != GArgs.Count()) {
+      if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
+      VStr actname = VStr(GArgs[fp]);
+      if (actname.length()) {
+        actname = actname.toLowerCase();
+        IgnoredDecorateActions.put(VName(*actname), true);
+      }
+    }
+  }
+
   GCon->Logf(NAME_Init, "Parsing DECORATE definition files");
   for (int Lump = W_IterateFile(-1, "vavoom_decorate_defs.xml"); Lump != -1; Lump = W_IterateFile(Lump, "vavoom_decorate_defs.xml")) {
     VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -3934,10 +3988,8 @@ void ProcessDecorateScripts () {
     VXmlDocument *Doc = new VXmlDocument();
     Doc->Parse(*Strm, "vavoom_decorate_defs.xml");
     delete Strm;
-    Strm = nullptr;
     ParseDecorateDef(*Doc);
     delete Doc;
-    Doc = nullptr;
   }
 
   GCon->Logf(NAME_Init, "Processing DECORATE scripts");
