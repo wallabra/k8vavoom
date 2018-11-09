@@ -69,6 +69,7 @@ enum {
   ANIM_Backward,
   ANIM_OscillateUp,
   ANIM_OscillateDown,
+  ANIM_Random,
 };
 
 
@@ -964,8 +965,9 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   ad.Index = GTextureManager.CheckNumForName(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true);
   if (ad.Index == -1) {
     ignore = true;
-    if (!optional) GCon->Logf("ANIMDEFS: Can't find %s", *sc->String);
+    if (!optional) GCon->Logf("ANIMDEFS: Can't find '%s'", *sc->Name8);
   }
+  VName adefname = sc->Name8;
   bool missing = ignore && optional;
 
   int CurType = 0;
@@ -978,6 +980,11 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       continue;
     }
 
+    if (sc->Check("random")) {
+      ad.Type = ANIM_Random;
+      continue;
+    }
+
     if (sc->Check("pic")) {
       if (CurType == 2) sc->Error("You cannot use pic together with range.");
       CurType = 1;
@@ -985,7 +992,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       if (CurType == 2) sc->Error("You can only use range once in a single animation.");
       if (CurType == 1) sc->Error("You cannot use range together with pic.");
       CurType = 2;
-      ad.Type = ANIM_Forward;
+      if (ad.Type != ANIM_Random) ad.Type = ANIM_Forward;
     } else {
       break;
     }
@@ -1012,7 +1019,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       sc->Error(va("bad command (%s)", *sc->String));
     }
 
-    if (ad.Type != ANIM_Normal) {
+    if (ad.Type != ANIM_Normal && ad.Type != ANIM_Random) {
       if (fd.Index < ad.Index) {
         int tmp = ad.Index;
         ad.Index = fd.Index;
@@ -1025,7 +1032,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   }
 
   if (!ignore && ad.Type == ANIM_Normal && FrameDefs.Num()-ad.StartFrameDef < 2) {
-    sc->Error("AnimDef has framecount < 2.");
+    sc->Error(va("AnimDef '%s' has framecount < 2", *adefname));
   }
 
   if (!ignore) {
@@ -1034,7 +1041,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       ad.CurrentFrame = ad.NumFrames-1;
     } else {
       ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
-      ad.CurrentFrame = 0;
+      if (ad.Type != ANIM_Random) ad.CurrentFrame = 0; else ad.CurrentFrame = (int)(Random()*ad.NumFrames);
     }
     ad.Time = 0.01; // Force 1st game tic to animate
     AnimDefs.Append(ad);
@@ -1512,6 +1519,9 @@ void R_AnimateSurfaces () {
             ad.Type = ANIM_OscillateUp;
             ad.CurrentFrame = 0;
           }
+          break;
+        case ANIM_Random:
+          if (ad.NumFrames > 1) ad.CurrentFrame = (int)(Random()*ad.NumFrames);
           break;
         default:
           fprintf(stderr, "unknown animation type for texture %d (%s): %d\n", ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type);
