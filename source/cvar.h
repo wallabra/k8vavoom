@@ -62,7 +62,6 @@ public:
   bool IsModified ();
 
   inline int getFlags () const { return Flags; }
-
   inline bool isModVar () const { return ((Flags&CVAR_FromMod) != 0); }
 
   inline bool asBool () const { return BoolValue; }
@@ -85,6 +84,7 @@ public:
   static const char *GetCharp (const char *var_name);
   static VStr GetString (const char *var_name);
   static const char *GetHelp (const char *var_name); // returns nullptr if there is no such cvar
+  static int GetVarFlags (const char *var_name); // -1: not found
 
   static void Set (const char *var_name, int value);
   static void Set (const char *var_name, float value);

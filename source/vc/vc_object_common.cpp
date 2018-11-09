@@ -956,6 +956,11 @@ IMPLEMENT_FUNCTION(VObject, CvarExists) {
   RET_BOOL(VCvar::HasVar(*name));
 }
 
+IMPLEMENT_FUNCTION(VObject, CvarGetFlags) {
+  P_GET_NAME(name);
+  RET_INT(VCvar::GetVarFlags(*name));
+}
+
 IMPLEMENT_FUNCTION(VObject, CreateCvar) {
   P_GET_INT_OPT(flags, 0);
   P_GET_STR(help);
