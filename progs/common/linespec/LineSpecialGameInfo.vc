@@ -301,8 +301,6 @@ void InitializeWeaponSlots () {
 //
 //==========================================================================
 override void Init () {
-  ::Init(); // parse cvarinfo and such
-
   CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
 
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
@@ -372,6 +370,8 @@ override void Init () {
   CreateCvar('r_statusbar_draw', "1", "Draw statusbar?", CVAR_ARCHIVE);
 
   CreateCvar('fuck_stealth_monsters', "0", "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE);
+
+  ::Init(); // parse cvarinfo and such
 }
 
 
