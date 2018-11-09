@@ -352,6 +352,7 @@ static VName ParseNextMapName (VScriptParser *sc, bool HexenMode) {
   if (sc->Check("endunderwater")) return "EndGameUnderwater";
   if (sc->Check("endbuystrife")) return "EndGameBuyStrife";
   if (sc->Check("endpic")) {
+    sc->Check(",");
     sc->ExpectName8();
     return va("EndGameCustomPic%s", *sc->Name8);
   }
@@ -432,11 +433,14 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       // hack for "complete"
       if (sc->Check("{")) {
         info->NextMap = "endgamec";
+        sc->SkipBracketed(true); // bracket eaten
+        /*
         for (;;) {
           if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
           if (sc->Check("}")) break;
           sc->GetString();
         }
+        */
       } else if (newFormat && sc->Check(",")) {
         sc->ExpectString();
         // check for more commas?
