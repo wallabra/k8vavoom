@@ -359,6 +359,41 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     return res;
   }
 
+  //NumberField "<label>", "<CVAR>", <minimum>, <maximum>, <inc> [, decimal places]
+  if (par.Check("NumberField")) {
+    // title
+    par.ExpectString();
+    string title = par.String;
+    par.Expect(",");
+    // cvar
+    par.ExpectString();
+    name cvar = name(par.String);
+    float minv = 0;
+    float maxv = 100;
+    float step = 1;
+    if (par.Check(",")) {
+      par.ExpectFloat(withSign:true);
+      minv = par.Float;
+      if (par.Check(",")) {
+        par.ExpectFloat(withSign:true);
+        maxv = par.Float;
+        if (par.Check(",")) {
+          par.ExpectFloat(withSign:false);
+          step = par.Float;
+          // skip decimals
+          if (par.Check(",")) par.ExpectNumber();
+        }
+      }
+    }
+    auto res = SpawnObject(MenuDefOptionNumeric);
+    res.title = title;
+    res.step = step;
+    res.minv = minv;
+    res.maxv = maxv;
+    res.cvar = cvar;
+    return res;
+  }
+
   if (par.Check("Position")) {
     print("MENUDEF: skipped gz command '%s'", par.String);
     par.ExpectNumber(withSign:true);
