@@ -28,10 +28,13 @@
 
 #define BLOCK_WIDTH         (128)
 #define BLOCK_HEIGHT        (128)
-//#define NUM_BLOCK_SURFS     (32)
-//#define NUM_CACHE_BLOCKS    (8*1024)
-#define NUM_BLOCK_SURFS     (64)
-#define NUM_CACHE_BLOCKS    (32*1024)
+#if 1
+# define NUM_BLOCK_SURFS     (64)
+# define NUM_CACHE_BLOCKS    (32*1024)
+#else
+# define NUM_BLOCK_SURFS     (32)
+# define NUM_CACHE_BLOCKS    (8*1024)
+#endif
 
 struct surface_t;
 struct surfcache_t;

@@ -32,6 +32,8 @@
 
 static VCvarB r_reg_disable_things("r_reg_disable_things", false, "Disable rendering of things (regular renderer).", 0/*CVAR_Archive*/);
 
+extern int light_reset_surface_cache; // in r_light_reg.cpp
+
 
 //==========================================================================
 //
@@ -85,6 +87,7 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
 
   stt = -Sys_Time();
   RenderWorld(RD, Range);
+  if (light_reset_surface_cache != 0) return;
   stt += Sys_Time();
   if (times_render_highlevel) GCon->Logf("RenderWorld: %f", stt);
 

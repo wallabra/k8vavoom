@@ -32,6 +32,8 @@
 static VCvarB r_reg_disable_world("r_reg_disable_world", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
 static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "Show number of properly traced dynlights per frame.", 0/*CVAR_Archive*/);
 
+extern int light_reset_surface_cache; // in r_light_reg.cpp
+
 
 //==========================================================================
 //
@@ -77,6 +79,7 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   RenderBspWorld(rd, Range);
   stt += Sys_Time();
   if (times_render_lowlevel) GCon->Logf("RenderBspWorld: %f", stt);
+  if (light_reset_surface_cache != 0) return;
 
   glWDPolyTotal = 0;
   glWDVertexTotal = 0;

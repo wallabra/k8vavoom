@@ -34,6 +34,8 @@
 
 //#define VAVOOM_DEBUG_PORTAL_POOL
 
+extern int light_reset_surface_cache; // in r_light_reg.cpp
+
 
 void R_FreeSkyboxData ();
 
@@ -857,6 +859,9 @@ void VRenderLevelShared::RenderPlayerView () {
   guard(VRenderLevelShared::RenderPlayerView);
   if (!Level->LevelInfo) return;
 
+  int renderattempts = 2;
+
+again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
 
@@ -880,6 +885,13 @@ void VRenderLevelShared::RenderPlayerView () {
   RenderScene(&refdef, nullptr);
   stt += Sys_Time();
   if (times_render_highlevel) GCon->Logf("render scene time: %f", stt);
+  if (light_reset_surface_cache != 0) {
+    light_reset_surface_cache = 0;
+    if (--renderattempts <= 0) Host_Error("*** Surface cache overflow, cannot repair");
+    GCon->Logf("*** Surface cache overflow, starting it all again, %d attempt%s left", renderattempts, (renderattempts != 1 ? "s" : ""));
+    GentlyFlushAllCaches();
+    goto again;
+  }
 
   // draw the psprites on top of everything
   if (/*fov <= 90.0 &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
