@@ -1602,20 +1602,17 @@ override void Tick(float deltaTime)
   else if (bStealth)
   {
     //  Fade a stealth monster in and out of visibility
-    if (VisDir > 0)
-    {
+    if (GetCvarB('fuck_stealth_monsters')) {
+      Alpha = 1.0;
+    } else if (VisDir > 0) {
       Alpha += 2.0 * deltaTime;
-      if (Alpha > 1.0)
-      {
+      if (Alpha > 1.0) {
         Alpha = 1.0;
         VisDir = 0;
       }
-    }
-    else if (VisDir < 0)
-    {
+    } else if (VisDir < 0) {
       Alpha -= 3.0 * deltaTime / 2.0;
-      if (Alpha < 0.0)
-      {
+      if (Alpha < 0.0) {
         Alpha = 0.0;
         VisDir = 0;
       }
