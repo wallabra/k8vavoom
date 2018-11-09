@@ -447,6 +447,8 @@ public:
   inline bool convertInt (int *outv) const { return convertInt(getCStr(), outv); }
   inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }
 
+  static bool globmatch (const char *pat, const char *str, bool caseSensitive=true);
+
 public:
   static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
 

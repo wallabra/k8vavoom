@@ -1327,6 +1327,66 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
 
 //==========================================================================
 //
+//  VStr::globmatch
+//
+//==========================================================================
+bool VStr::globmatch (const char *pat, const char *str, bool caseSensitive) {
+  bool star = false;
+  if (!pat) pat = "";
+  if (!str) str = "";
+loopStart:
+  size_t patpos = 0;
+  for (size_t i = 0; str[i]; ++i) {
+    char sch = str[i];
+    //if (patpos == pat.length) goto starCheck;
+    if (!pat[patpos]) goto starCheck;
+    switch (pat[patpos++]) {
+      case '\\':
+        //if (patpos == pat.length) return false; // malformed pattern
+        if (!pat[patpos]) return false; // malformed pattern
+        ++patpos;
+        goto defcheck;
+      case '?': // match anything //except '.'
+        //if (sch == '.') goto starCheck;
+        break;
+      case '*':
+        star = true;
+        //str = str[i..$];
+        str += i;
+        //pat = pat[patpos..$];
+        pat += patpos;
+        //while (pat.length && pat.ptr[0] == '*') pat = pat[1..$];
+        while (*pat == '*') ++pat;
+        //if (pat.length == 0) return true;
+        if (*pat == 0) return true;
+        goto loopStart;
+      default:
+      defcheck:
+        if (caseSensitive) {
+          if (sch != pat[patpos-1]) goto starCheck;
+        } else {
+          if (upcase1251(sch) != upcase1251(pat[patpos-1])) goto starCheck;
+        }
+        break;
+    }
+  }
+  //pat = pat[patpos..$];
+  pat += patpos;
+  //while (pat.length && pat.ptr[0] == '*') pat = pat[1..$];
+  while (*pat == '*') ++pat;
+  //return (pat.length == 0);
+  return (*pat == 0);
+
+starCheck:
+   if (!star) return false;
+   //if (str.length) str = str[1..$];
+   if (*str) ++str;
+   goto loopStart;
+}
+
+
+//==========================================================================
+//
 // va
 //
 // Very useful function from Quake.
