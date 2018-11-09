@@ -384,6 +384,8 @@ native static final string strrepeat (int len, optional int ch);
 native static final string strFromInt (int v);
 // creates string from a number
 native static final string strFromFloat (float v);
+// do glob matching (knows '*' and '?')
+native static final bool globmatch (const string pat, const string str, optional bool caseSensitive/*=true*/);
 
 // does varargs print into a temporary buffer
 native static final string va (string format, ...) [printf,1];
