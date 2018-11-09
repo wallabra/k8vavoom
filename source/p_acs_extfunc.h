@@ -6,9 +6,9 @@
   ACS_EXTFUNC(GetSectorUDMFFixed)
   ACS_EXTFUNC(GetSideUDMFInt)
   ACS_EXTFUNC(GetSideUDMFFixed)
-  ACS_EXTFUNC(GetActorVelX)
-  ACS_EXTFUNC(GetActorVelY)
-  ACS_EXTFUNC(GetActorVelZ)
+  ACS_EXTFUNC(GetActorVelX) // implemented
+  ACS_EXTFUNC(GetActorVelY) // implemented
+  ACS_EXTFUNC(GetActorVelZ) // implemented
   ACS_EXTFUNC(SetActivator)
   ACS_EXTFUNC(SetActivatorToTarget)
   ACS_EXTFUNC(GetActorViewHeight)

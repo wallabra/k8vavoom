@@ -2206,6 +2206,25 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     case ACSF_SoundVolume:
       GCon->Logf("ERROR: unimplemented ACSF function 'SoundVolume'");
       return 0;
+
+    case ACSF_GetActorVelX:
+      {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (!Ent) return 0;
+        return (int)(Ent->Velocity.x*65536.0f);
+      }
+    case ACSF_GetActorVelY:
+      {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (!Ent) return 0;
+        return (int)(Ent->Velocity.y*65536.0f);
+      }
+    case ACSF_GetActorVelZ:
+      {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (!Ent) return 0;
+        return (int)(Ent->Velocity.z*65536.0f);
+      }
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
