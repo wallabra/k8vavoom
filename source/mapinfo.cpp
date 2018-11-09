@@ -1549,6 +1549,9 @@ static void ParseMapInfo (VScriptParser *sc) {
       } else if (sc->Check("intermission")) {
         GCon->Logf("WARNING: Unimplemented MAPINFO command Intermission");
         sc->SkipBracketed();
+      } else if (sc->Check("automap")) {
+        GCon->Logf("WARNING: Unimplemented MAPINFO command Automap");
+        sc->SkipBracketed();
       } else if (sc->Check("DoomEdNums")) {
         //GCon->Logf("*** <%s> ***", *sc->String);
         auto cmode = sc->IsCMode();
