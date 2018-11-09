@@ -407,3 +407,32 @@ final void decorate_A_CheckFloorTextureGlob (string txname, state label, optiona
   if (!globmatch(txname, string(tname), caseSensitive:false)) return;
   DoJump(label);
 }
+
+
+//==========================================================================
+//
+//  A_DropItem
+//
+//==========================================================================
+final void A_DropItem (name item, optional int dropamount, optional int chance) {
+  if (!item) return;
+
+  float dropChance = 1;
+  if (specified_chance) {
+    if (chance <= 0) return;
+    if (chance < 256) dropChance = float(chance)/256.0;
+  }
+
+  class!EntityEx dip = class!EntityEx(FindClassNoCase(item));
+  if (!dip) return;
+  dip = class!EntityEx(GetClassReplacement(dip));
+  if (!dip) return;
+
+  if (specified_dropamount) {
+    if (dip !isa Inventory) dropamount = 1;
+  } else {
+    dropamount = 1;
+  }
+
+  DropItem(dip, dropamount, dropChance);
+}

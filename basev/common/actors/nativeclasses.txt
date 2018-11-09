@@ -328,6 +328,8 @@ class Actor extends Thinker
   action native A_ChangeScaleXExt(float delta);
   action native A_ChangeScaleYExt(float delta);
 
+  action native A_DropItem (name item, optional int dropamount, optional int chance);
+
   //
   //  Not documented
   //
