@@ -289,7 +289,7 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     return opt;
   }
 
-  //option "'Marine Helmet' Armor Bonus", "botoggle", "onoff"
+  //option "'Marine Helmet' Armor Bonus", "botoggle", "onoff"  [, "cvar-enable-check" [, Center]]
   if (par.Check("option")) {
     // title
     par.ExpectString();
@@ -311,6 +311,8 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     foreach (ref auto oval; ovals) {
       if (stricmp(oval.Name, par.String) == 0) {
         // i found her!
+        if (par.Check(",")) par.ExpectString(); // cvar-enable
+        if (par.Check(",")) par.ExpectString(); // center
         auto opt = SpawnObject(MenuDefOptionEnum);
         opt.title = title;
         opt.cvar = cvar;
@@ -324,6 +326,42 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     }
     //par.ScriptError("unknown GZDoom MenuDef OptionValue '%s'", par.String);
     print("MENUDEF: unknown GZDoom MenuDef OptionValue '%s'", par.String);
+    return none;
+  }
+
+  //Slider "<label>", "<CVAR>", <minimum>, <maximum>, <inc> [, decimal places]
+  if (par.Check("Slider")) {
+    // title
+    par.ExpectString();
+    string title = par.String;
+    par.Expect(",");
+    // cvar
+    par.ExpectString();
+    name cvar = name(par.String);
+    par.Expect(",");
+    // min, max, step
+    par.ExpectFloat(withSign:true);
+    float minv = par.Float;
+    par.Expect(",");
+    par.ExpectFloat(withSign:true);
+    float maxv = par.Float;
+    par.Expect(",");
+    par.ExpectFloat(withSign:false);
+    float step = par.Float;
+    // skip decimals
+    if (par.Check(",")) par.ExpectNumber();
+    auto res = SpawnObject(MenuDefOptionSlider);
+    res.title = title;
+    res.step = step;
+    res.minv = minv;
+    res.maxv = maxv;
+    res.cvar = cvar;
+    return res;
+  }
+
+  if (par.Check("Position")) {
+    print("MENUDEF: skipped gz command '%s'", par.String);
+    par.ExpectNumber(withSign:true);
     return none;
   }
 
