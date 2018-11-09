@@ -350,6 +350,8 @@ enum
 #include "ForceFieldGuard.vc"
 #include "PowerCoupling.vc"
 
+#include "FadeSetterColorSetter.vc"
+
 #include "z_MapMarker.vc"
 
 class Blood : Actor decorate;
