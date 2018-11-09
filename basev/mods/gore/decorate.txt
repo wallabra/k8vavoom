@@ -202,22 +202,21 @@ Actor K8Gore_BloodSpot {
 
   States {
     Spawn:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_JumpIf(waterlevel > 1, "Splash")
-
-      TNT1 A 1 MdlSkip
-      TNT1 A 0 MdlSkip A_CheckFloor("SpawnNormally")
-      Goto Splash
+      TNT1 A 0
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      TNT1 A 0 A_CheckFloorTextureGlob("*water*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*nukage*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
+      //TNT1 A 0 A_CheckFloor("SpawnNormally")
+      //Goto Splash
 
     SpawnNormally:
-      //TNT1 A MdlSkip 0 A_SpawnItem("GibRemoving")
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_LayToFloorWithYaw(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetRollExt(0)
-      //TNT1 A MdlSkip 0 A_SetYawExt(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetPitchExt(0)
-      TNT1 A 0 MdlSkip A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 MdlSkip A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
+      //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
       BPDL A 800 //duration
@@ -236,96 +235,147 @@ Actor K8Gore_BloodSpot {
       Loop
 
     FadeA:
-      TNT1 A 0
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeB:
-      TNT1 A 0
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeC:
-      TNT1 A 0
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeD:
-      TNT1 A 0
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     Splash:
-      BLOD A 0
-      Stop
+      TNT1 A 0 //A_k8ConLog("SPLASH SLPASH!")
+      //BLOD A 0
+      //Stop
+      Goto SpawnNormally
+
+    SplashWater:
+      //TNT1 A 0 A_k8ConLog("SPLASH SLPASH IN WATER!")
+      TNT1 A 0 A_FadeOut(0.3)
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
+
+    SpawnAFrameOnlyWater:
+      BPDL A random(50, 100) //duration
+      Goto FadeAWater
+
+    SpawnBFrameOnlyWater:
+      BPDL B random(50, 100) //duration
+      Goto FadeBWater
+
+    SpawnCFrameOnlyWater:
+      BPDL C random(50, 100) //duration
+      Goto FadeCWater
+
+    SpawnDFrameOnlyWater:
+      BPDL D random(50, 100) //duration
+      Goto FadeDWater
+
+    FadeAWater:
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeBWater:
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeCWater:
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeDWater:
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
 
     Death:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_NoBlocking
+      TNT1 A 0
+      TNT1 A 0 A_NoBlocking
       Stop
   }
 }
@@ -1815,130 +1865,180 @@ Actor K8Gore_BloodSpotTransient {
 
   States {
     Spawn:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_JumpIf(waterlevel > 1, "Splash")
-
-      TNT1 A 1 MdlSkip
-      TNT1 A 0 MdlSkip A_CheckFloor("SpawnNormally")
-      Goto Splash
+      TNT1 A 0
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      TNT1 A 0 A_CheckFloorTextureGlob("*water*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*nukage*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
+      //TNT1 A 0 A_CheckFloor("SpawnNormally")
+      //Goto Splash
 
     SpawnNormally:
-      //TNT1 A MdlSkip 0 A_SpawnItem("GibRemoving")
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_LayToFloorWithYaw(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetRollExt(0)
-      //TNT1 A MdlSkip 0 A_SetYawExt(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetPitchExt(0)
-      TNT1 A 0 MdlSkip A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 MdlSkip A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
+      //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
-      BPDL A 500 //duration
+      BPDL A random(100,850) //duration
       Goto FadeA
 
     SpawnBFrameOnly:
-      BPDL B 850 //duration
+      BPDL B random(100,850) //duration
       Goto FadeB
 
     SpawnCFrameOnly:
-      BPDL C 380 //duration
+      BPDL C random(100,850) //duration
       Goto FadeC
 
     SpawnDFrameOnly:
-      BPDL D 920 //duration
+      BPDL D random(100,850) //duration
       Goto FadeD
 
     FadeA:
-      TNT1 A 0
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeB:
-      TNT1 A 0
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeC:
-      TNT1 A 0
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeD:
-      TNT1 A 0
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     Splash:
-      BLOD A 0
-      Stop
+      TNT1 A 0 //A_k8ConLog("SPLASH SLPASH!")
+      //BLOD A 0
+      //Stop
+      Goto SpawnNormally
+
+    SplashWater:
+      //TNT1 A 0 A_k8ConLog("SPLASH SLPASH IN WATER!")
+      TNT1 A 0 A_FadeOut(0.3)
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
+
+    SpawnAFrameOnlyWater:
+      BPDL A random(50, 100) //duration
+      Goto FadeAWater
+
+    SpawnBFrameOnlyWater:
+      BPDL B random(50, 100) //duration
+      Goto FadeBWater
+
+    SpawnCFrameOnlyWater:
+      BPDL C random(50, 100) //duration
+      Goto FadeCWater
+
+    SpawnDFrameOnlyWater:
+      BPDL D random(50, 100) //duration
+      Goto FadeDWater
+
+    FadeAWater:
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeBWater:
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeCWater:
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeDWater:
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
 
     Death:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_NoBlocking
+      TNT1 A 0
+      TNT1 A 0 A_NoBlocking
       Stop
   }
 }
@@ -3425,22 +3525,21 @@ Actor K8Gore_BloodSpotGreen {
 
   States {
     Spawn:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_JumpIf(waterlevel > 1, "Splash")
-
-      TNT1 A 1 MdlSkip
-      TNT1 A 0 MdlSkip A_CheckFloor("SpawnNormally")
-      Goto Splash
+      TNT1 A 0
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      TNT1 A 0 A_CheckFloorTextureGlob("*water*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*nukage*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
+      //TNT1 A 0 A_CheckFloor("SpawnNormally")
+      //Goto Splash
 
     SpawnNormally:
-      //TNT1 A MdlSkip 0 A_SpawnItem("GibRemoving")
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_LayToFloorWithYaw(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetRollExt(0)
-      //TNT1 A MdlSkip 0 A_SetYawExt(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetPitchExt(0)
-      TNT1 A 0 MdlSkip A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 MdlSkip A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
+      //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
       BPDL A 800 //duration
@@ -3459,96 +3558,147 @@ Actor K8Gore_BloodSpotGreen {
       Loop
 
     FadeA:
-      TNT1 A 0
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeB:
-      TNT1 A 0
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeC:
-      TNT1 A 0
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeD:
-      TNT1 A 0
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     Splash:
-      BLOD A 0
-      Stop
+      TNT1 A 0 //A_k8ConLog("SPLASH SLPASH!")
+      //BLOD A 0
+      //Stop
+      Goto SpawnNormally
+
+    SplashWater:
+      //TNT1 A 0 A_k8ConLog("SPLASH SLPASH IN WATER!")
+      TNT1 A 0 A_FadeOut(0.3)
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
+
+    SpawnAFrameOnlyWater:
+      BPDL A random(50, 100) //duration
+      Goto FadeAWater
+
+    SpawnBFrameOnlyWater:
+      BPDL B random(50, 100) //duration
+      Goto FadeBWater
+
+    SpawnCFrameOnlyWater:
+      BPDL C random(50, 100) //duration
+      Goto FadeCWater
+
+    SpawnDFrameOnlyWater:
+      BPDL D random(50, 100) //duration
+      Goto FadeDWater
+
+    FadeAWater:
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeBWater:
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeCWater:
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeDWater:
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
 
     Death:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_NoBlocking
+      TNT1 A 0
+      TNT1 A 0 A_NoBlocking
       Stop
   }
 }
@@ -5105,130 +5255,180 @@ Actor K8Gore_BloodSpotTransient_Green {
 
   States {
     Spawn:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_JumpIf(waterlevel > 1, "Splash")
-
-      TNT1 A 1 MdlSkip
-      TNT1 A 0 MdlSkip A_CheckFloor("SpawnNormally")
-      Goto Splash
+      TNT1 A 0
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      TNT1 A 0 A_CheckFloorTextureGlob("*water*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*nukage*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
+      //TNT1 A 0 A_CheckFloor("SpawnNormally")
+      //Goto Splash
 
     SpawnNormally:
-      //TNT1 A MdlSkip 0 A_SpawnItem("GibRemoving")
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_LayToFloorWithYaw(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetRollExt(0)
-      //TNT1 A MdlSkip 0 A_SetYawExt(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetPitchExt(0)
-      TNT1 A 0 MdlSkip A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 MdlSkip A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
+      //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
-      BPDL A 500 //duration
+      BPDL A random(100,850) //duration
       Goto FadeA
 
     SpawnBFrameOnly:
-      BPDL B 850 //duration
+      BPDL B random(100,850) //duration
       Goto FadeB
 
     SpawnCFrameOnly:
-      BPDL C 380 //duration
+      BPDL C random(100,850) //duration
       Goto FadeC
 
     SpawnDFrameOnly:
-      BPDL D 920 //duration
+      BPDL D random(100,850) //duration
       Goto FadeD
 
     FadeA:
-      TNT1 A 0
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeB:
-      TNT1 A 0
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeC:
-      TNT1 A 0
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeD:
-      TNT1 A 0
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     Splash:
-      BLOD A 0
-      Stop
+      TNT1 A 0 //A_k8ConLog("SPLASH SLPASH!")
+      //BLOD A 0
+      //Stop
+      Goto SpawnNormally
+
+    SplashWater:
+      //TNT1 A 0 A_k8ConLog("SPLASH SLPASH IN WATER!")
+      TNT1 A 0 A_FadeOut(0.3)
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
+
+    SpawnAFrameOnlyWater:
+      BPDL A random(50, 100) //duration
+      Goto FadeAWater
+
+    SpawnBFrameOnlyWater:
+      BPDL B random(50, 100) //duration
+      Goto FadeBWater
+
+    SpawnCFrameOnlyWater:
+      BPDL C random(50, 100) //duration
+      Goto FadeCWater
+
+    SpawnDFrameOnlyWater:
+      BPDL D random(50, 100) //duration
+      Goto FadeDWater
+
+    FadeAWater:
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeBWater:
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeCWater:
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeDWater:
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
 
     Death:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_NoBlocking
+      TNT1 A 0
+      TNT1 A 0 A_NoBlocking
       Stop
   }
 }
@@ -6774,22 +6974,21 @@ Actor K8Gore_BloodSpotBlue {
 
   States {
     Spawn:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_JumpIf(waterlevel > 1, "Splash")
-
-      TNT1 A 1 MdlSkip
-      TNT1 A 0 MdlSkip A_CheckFloor("SpawnNormally")
-      Goto Splash
+      TNT1 A 0
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      TNT1 A 0 A_CheckFloorTextureGlob("*water*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*nukage*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
+      //TNT1 A 0 A_CheckFloor("SpawnNormally")
+      //Goto Splash
 
     SpawnNormally:
-      //TNT1 A MdlSkip 0 A_SpawnItem("GibRemoving")
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_LayToFloorWithYaw(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetRollExt(0)
-      //TNT1 A MdlSkip 0 A_SetYawExt(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetPitchExt(0)
-      TNT1 A 0 MdlSkip A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 MdlSkip A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
+      //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
       BPDL A 800 //duration
@@ -6808,96 +7007,147 @@ Actor K8Gore_BloodSpotBlue {
       Loop
 
     FadeA:
-      TNT1 A 0
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeB:
-      TNT1 A 0
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeC:
-      TNT1 A 0
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeD:
-      TNT1 A 0
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     Splash:
-      BLOD A 0
-      Stop
+      TNT1 A 0 //A_k8ConLog("SPLASH SLPASH!")
+      //BLOD A 0
+      //Stop
+      Goto SpawnNormally
+
+    SplashWater:
+      //TNT1 A 0 A_k8ConLog("SPLASH SLPASH IN WATER!")
+      TNT1 A 0 A_FadeOut(0.3)
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
+
+    SpawnAFrameOnlyWater:
+      BPDL A random(50, 100) //duration
+      Goto FadeAWater
+
+    SpawnBFrameOnlyWater:
+      BPDL B random(50, 100) //duration
+      Goto FadeBWater
+
+    SpawnCFrameOnlyWater:
+      BPDL C random(50, 100) //duration
+      Goto FadeCWater
+
+    SpawnDFrameOnlyWater:
+      BPDL D random(50, 100) //duration
+      Goto FadeDWater
+
+    FadeAWater:
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeBWater:
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeCWater:
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeDWater:
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
 
     Death:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_NoBlocking
+      TNT1 A 0
+      TNT1 A 0 A_NoBlocking
       Stop
   }
 }
@@ -8454,130 +8704,180 @@ Actor K8Gore_BloodSpotTransient_Blue {
 
   States {
     Spawn:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_JumpIf(waterlevel > 1, "Splash")
-
-      TNT1 A 1 MdlSkip
-      TNT1 A 0 MdlSkip A_CheckFloor("SpawnNormally")
-      Goto Splash
+      TNT1 A 0
+      TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
+      //TNT1 A 0 A_SetRollExt(0)
+      //TNT1 A 0 A_SetYawExt(Random(0, 360))
+      //TNT1 A 0 A_SetPitchExt(0)
+      TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      TNT1 A 0 A_CheckFloorTextureGlob("*water*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*nukage*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
+      //TNT1 A 0 A_CheckFloor("SpawnNormally")
+      //Goto Splash
 
     SpawnNormally:
-      //TNT1 A MdlSkip 0 A_SpawnItem("GibRemoving")
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_LayToFloorWithYaw(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetRollExt(0)
-      //TNT1 A MdlSkip 0 A_SetYawExt(Random(0, 360))
-      //TNT1 A MdlSkip 0 A_SetPitchExt(0)
-      TNT1 A 0 MdlSkip A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 MdlSkip A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
+      //TNT1 A 0 A_SpawnItem("GibRemoving")
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
 
     SpawnAFrameOnly:
-      BPDL A 500 //duration
+      BPDL A random(100,850) //duration
       Goto FadeA
 
     SpawnBFrameOnly:
-      BPDL B 850 //duration
+      BPDL B random(100,850) //duration
       Goto FadeB
 
     SpawnCFrameOnly:
-      BPDL C 380 //duration
+      BPDL C random(100,850) //duration
       Goto FadeC
 
     SpawnDFrameOnly:
-      BPDL D 920 //duration
+      BPDL D random(100,850) //duration
       Goto FadeD
 
     FadeA:
-      TNT1 A 0
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL AAAA 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeB:
-      TNT1 A 0
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL BBBB 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeC:
-      TNT1 A 0
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL CCCC 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     FadeD:
-      TNT1 A 0
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      BPDL DDDD 1 MdlSkip A_ChangeScaleXExt(-0.001, 0.05)
-      TNT1 A 0 MdlSkip A_FadeOut(0.01)
+      //TNT1 A 0
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.01)
       Loop
 
     Splash:
-      BLOD A 0
-      Stop
+      TNT1 A 0 //A_k8ConLog("SPLASH SLPASH!")
+      //BLOD A 0
+      //Stop
+      Goto SpawnNormally
+
+    SplashWater:
+      //TNT1 A 0 A_k8ConLog("SPLASH SLPASH IN WATER!")
+      TNT1 A 0 A_FadeOut(0.3)
+      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
+
+    SpawnAFrameOnlyWater:
+      BPDL A random(50, 100) //duration
+      Goto FadeAWater
+
+    SpawnBFrameOnlyWater:
+      BPDL B random(50, 100) //duration
+      Goto FadeBWater
+
+    SpawnCFrameOnlyWater:
+      BPDL C random(50, 100) //duration
+      Goto FadeCWater
+
+    SpawnDFrameOnlyWater:
+      BPDL D random(50, 100) //duration
+      Goto FadeDWater
+
+    FadeAWater:
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL AAAA 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeBWater:
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL BBBB 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeCWater:
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL CCCC 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
+
+    FadeDWater:
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      BPDL DDDD 1 //A_ChangeScaleXExt(-0.001, 0.05)
+      TNT1 A 0 A_FadeOut(0.05)
+      Loop
 
     Death:
-      TNT1 A 0 MdlSkip
-      TNT1 A 0 MdlSkip A_NoBlocking
+      TNT1 A 0
+      TNT1 A 0 A_NoBlocking
       Stop
   }
 }
