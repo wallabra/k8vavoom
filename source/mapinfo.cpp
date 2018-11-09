@@ -676,6 +676,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       DoCompatFlag(sc, info, MAPINFOF2_CompatBoomScroll);
     } else if (sc->Check("compat_invisibility")) {
       DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
+    /*
     } else if (sc->Check("compat_sectorsounds")) {
       GCon->Logf("WARNING: %s: mapdef 'compat_sectorsounds' is not supported yet", *sc->GetLoc().toStringNoCol());
       //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
@@ -683,6 +684,12 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->CheckNumber();
     } else if (sc->Check("compat_missileclip")) {
       GCon->Logf("WARNING: %s: mapdef 'compat_missileclip' is not supported yet", *sc->GetLoc().toStringNoCol());
+      //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
+      sc->Check("=");
+      sc->CheckNumber();
+    */
+    } else if (sc->CheckStartsWith("compat_")) {
+      GCon->Logf("WARNING: %s: mapdef '%s' is not supported yet", *sc->GetLoc().toStringNoCol(), *sc->String);
       //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
       sc->Check("=");
       sc->CheckNumber();
