@@ -152,7 +152,8 @@ void ParseCVarInfo () {
         }
         par.Expect(";");
         //print("CVAR: '%s'; fval=%s; sval=%s", vname, fval, sval);
-        /*if (!CvarExists(vname))*/ {
+        int oldcvflags = CvarGetFlags(vname);
+        if (oldcvflags == -1 /*|| (oldcvflags&CVAR_FROMMOD) != 0*/) {
           //print("NEW CVAR: '%s'", vname);
           if (isstr || iscolor) {
             CreateCvar(vname, sval, "cvarinfo string variable", flags);
