@@ -68,6 +68,7 @@ public:
   void ExpectName ();
   void ExpectIdentifier ();
   bool Check (const char *);
+  bool CheckStartsWith (const char *);
   void Expect (const char *);
   bool CheckQuotedString ();
   bool CheckIdentifier ();

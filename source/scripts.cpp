@@ -68,6 +68,7 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(GetString)
   DECLARE_FUNCTION(ExpectString)
   DECLARE_FUNCTION(Check)
+  DECLARE_FUNCTION(CheckStartsWith)
   DECLARE_FUNCTION(Expect)
   DECLARE_FUNCTION(CheckIdentifier)
   DECLARE_FUNCTION(ExpectIdentifier)
@@ -537,6 +538,25 @@ bool VScriptParser::Check (const char *str) {
   if (GetString()) {
     if (!String.ICmp(str)) return true;
     UnGet();
+  }
+  return false;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::CheckStartsWith
+//
+//==========================================================================
+bool VScriptParser::CheckStartsWith (const char *str) {
+  guard(VScriptParser::CheckStartsWith);
+  if (GetString()) {
+    VStr s = VStr(str);
+    if (String.length() < s.length()) { UnGet(); return false; }
+    VStr s2 = String.left(s.length());
+    if (s2.ICmp(s) != 0) { UnGet(); return false; }
+    return true;
   }
   return false;
   unguard;
@@ -1075,6 +1095,13 @@ IMPLEMENT_FUNCTION(VScriptsParser, Check) {
   P_GET_SELF;
   Self->CheckInterface();
   RET_BOOL(Self->Int->Check(*Text));
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, CheckStartsWith) {
+  P_GET_STR(Text);
+  P_GET_SELF;
+  Self->CheckInterface();
+  RET_BOOL(Self->Int->CheckStartsWith(*Text));
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, Expect) {

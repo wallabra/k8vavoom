@@ -48,6 +48,7 @@ native bool AtEnd ();
 native bool GetString ();
 native void ExpectString ();
 native bool Check (string Text);
+native bool CheckStartsWith (string Text);
 native void Expect (string Text);
 native bool CheckIdentifier ();
 native void ExpectIdentifier ();
