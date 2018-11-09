@@ -20,7 +20,7 @@
   ACS_EXTFUNC(SpawnSpotForced) // implemented
   ACS_EXTFUNC(SpawnSpotFacingForced)
   ACS_EXTFUNC(CheckActorProperty)
-  ACS_EXTFUNC(SetActorVelocity)
+  ACS_EXTFUNC(SetActorVelocity) // implemented
   ACS_EXTFUNC(SetUserVariable)
   ACS_EXTFUNC(GetUserVariable)
   ACS_EXTFUNC(Radius_Quake2)

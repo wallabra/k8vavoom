@@ -2156,10 +2156,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         VStr name = VStr(*GetNameLowerCase(args[1]));
         int count = 0;
         if (name.length()) {
-          for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
-            //mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
-            //if (mobj->eventSetFlag(name, !!args[2])) ++count;
-            if (mobj->SetDecorateFlag(name, !!args[2])) ++count;
+          if (args[0] == 0) {
+            // activator
+            if (Activator && Activator->SetDecorateFlag(name, !!args[2])) ++count;
+          } else {
+            for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
+              //mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
+              //if (mobj->eventSetFlag(name, !!args[2])) ++count;
+              if (mobj->SetDecorateFlag(name, !!args[2])) ++count;
+            }
           }
         }
         return count;
@@ -2224,6 +2229,45 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (!Ent) return 0;
         return (int)(Ent->Velocity.z*65536.0f);
+      }
+
+    //bool SetActorVelocity (int tid, fixed velx, fixed vely, fixed velz, bool add, bool setbob)
+    //TODO: bob
+    case ACSF_SetActorVelocity:
+      //k8: all or one?
+      {
+        int count = 0;
+        if (args[0] == 0) {
+          // activator
+          if (Activator) {
+            ++count;
+            if (args[4]) {
+              // add
+              Activator->Velocity.x += float(args[1])/65536.0f;
+              Activator->Velocity.y += float(args[2])/65536.0f;
+              Activator->Velocity.z += float(args[3])/65536.0f;
+            } else {
+              Activator->Velocity.x = float(args[1])/65536.0f;
+              Activator->Velocity.y = float(args[2])/65536.0f;
+              Activator->Velocity.z = float(args[3])/65536.0f;
+            }
+          }
+        } else {
+          for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
+            ++count;
+            if (args[4]) {
+              // add
+              mobj->Velocity.x += float(args[1])/65536.0f;
+              mobj->Velocity.y += float(args[2])/65536.0f;
+              mobj->Velocity.z += float(args[3])/65536.0f;
+            } else {
+              mobj->Velocity.x = float(args[1])/65536.0f;
+              mobj->Velocity.y = float(args[2])/65536.0f;
+              mobj->Velocity.z = float(args[3])/65536.0f;
+            }
+          }
+        }
+        return (count > 0 ? 1 : 0);
       }
   }
 
