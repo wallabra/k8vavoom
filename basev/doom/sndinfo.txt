@@ -359,3 +359,9 @@ dog/attack  dsdgatk
 dog/death   dsdgdth
 dog/pain    dsdgpain
 dog/sight   dsdgsit
+
+
+// grenade
+weapons/grbnce  dsbounce
+weapons/grenlx  dsgrnexp
+weapons/grenlf  dsglaunc

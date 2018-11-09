@@ -1,0 +1,47 @@
+// --------------------------------------------------------------------------
+//
+// Grenade -- Taken and adapted from Skulltag, with MBF stuff added to it
+//
+// --------------------------------------------------------------------------
+
+actor Grenade
+{
+	Radius 8
+	Height 8
+	Speed 25
+	Damage 20
+	Projectile
+	-NOGRAVITY
+	+RANDOMIZE
+	+DEHEXPLOSION
+	+GRENADETRAIL
+	BounceType "Doom"
+	Gravity 0.25
+	SeeSound "weapons/grenlf"
+	DeathSound "weapons/grenlx"
+	BounceSound "weapons/grbnce"
+	Obituary "$OB_GRENADE"
+	DamageType "Grenade"
+	States
+	{
+	Spawn:
+		SGRN A 1 Bright
+		Loop
+	Death:
+		MISL B 8 Bright A_Explode
+		MISL C 6 Bright
+		MISL D 4 Bright
+		Stop
+	Grenade:
+		MISL A 1000 A_Die
+		Wait
+	Detonate:
+		MISL B 4 A_Scream
+		MISL C 6 A_Detonate
+		MISL D 10
+		Stop
+	Mushroom:
+		MISL B 8 A_Mushroom
+		Goto Death+1
+	}
+}
