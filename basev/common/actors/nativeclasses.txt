@@ -369,6 +369,10 @@ class Actor extends Thinker
   action native A_k8ConLog (string msg);
 
   action native A_SetTics (int tics);
+
+  // k8 extensions
+  // does shell-like glob matching
+  action native A_CheckFloorTextureGlob (string txname, state label, optional int aptr);
 }
 
 //------------------------------------------------------------------------------

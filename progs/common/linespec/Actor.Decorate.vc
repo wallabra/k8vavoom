@@ -389,3 +389,21 @@ final void decorate_A_SetTics (int tics) {
   tics = max(tics, 0);
   StateTime = float(tics)/35.0;
 }
+
+
+//==========================================================================
+//
+//  decorate_A_CheckFloorTextureGlob
+//
+//==========================================================================
+final void decorate_A_CheckFloorTextureGlob (string txname, state label, optional int aptr, optional bool dumpTexture) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
+  if (!tgt) return;
+  if (!tgt.Sector) return; // just in case
+  auto tname = GetTextureName(tgt.Sector.floor.pic);
+  if (dumpTexture) print("TEXTURE NAME: <%s> gmatch <%s>: res=%B", tname, txname, globmatch(txname, string(tname), caseSensitive:false));
+  if (!globmatch(txname, string(tname), caseSensitive:false)) return;
+  DoJump(label);
+}
