@@ -68,11 +68,25 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 
   //print("HUDMSG: font=<%s>; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
 
+  isTextFont = (AFont == 'confont' || AFont == 'smallfont' || AFont == 'smallfont2' || AFont == 'bigfont');
+  // check for spaces
+  /*
+  if (isTextFont) {
+    bool allSpaces = true;
+    foreach (auto f; 0..Message.length) if (Message[f] > 32) { allSpaces = false; break; }
+    if (!allSpaces) {
+      print("HUDMSG: font=<%s>; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
+    }
+  }
+  */
+
   auto root = GetRootWidget();
   if (Width != root.Width || Height != root.Height) {
     //SetSize(GetVirtualWidth(), GetVirtualHeight());
     SetSize(root.Width, root.Height);
   }
+
+  int wrapWidth = GetVirtualWidth()-32;
 
   // position of the message
   MsgX = AMsgX;
@@ -95,12 +109,18 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
     if (fabs(MsgY-0.5) <= 0.1) {
       if (MsgY <= 0.5) MsgY -= 0.1; else MsgY += 0.1;
     }
+
+    int wx = GetVirtualWidth()-int(GetVirtualWidth()*(fabs(MsgX)*2))-32;
+    if (wx < 32) {
+      wrapWidth = 640-32;
+    } else {
+      wrapWidth = max(320, min(wrapWidth, wx));
+    }
   } else {
     //writeln("HUD1: ", AHudWidth, "x", AHudHeight);
     HudWidth = AHudWidth;
     HudHeight = AHudHeight;
-
-    isTextFont = (AFont == 'confont' || AFont == 'smallfont' || AFont == 'smallfont2' || AFont == 'bigfont');
+    wrapWidth = abs(HudWidth);
 
     /*
     auto root = GetRootWidget();
@@ -111,14 +131,6 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
       }
     }
     */
-    if (!isTextFont) {
-      float sx = float(root.Width)/float(abs(HudWidth));
-      float sy = float(root.Height)/float(abs(HudHeight));
-      ScaleX = sx;
-      ScaleY = sy;
-      SetSize(round(root.Width/sx), round(root.Height/sy));
-      //dumpClipRect();
-    }
 
     /*
     SetFont(MsgFont);
@@ -138,11 +150,29 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
     } else {
       MsgX = float(IntPart)-float(FracPart&3)/10.0;
     }
+
+    if (!isTextFont) {
+      float sx = float(root.Width)/float(abs(HudWidth));
+      float sy = float(root.Height)/float(abs(HudHeight));
+      ScaleX = sx;
+      ScaleY = sy;
+      SetSize(round(root.Width/sx), round(root.Height/sy));
+      //dumpClipRect();
+    } else {
+      float sx = float(root.Width)/float(abs(HudWidth));
+      int wx = GetVirtualWidth()-round(MsgX*sx)*2-32;
+      //print("*** wx=%d", wx);
+      if (wx < 32) {
+        wrapWidth = GetVirtualWidth()-32;
+      } else {
+        wrapWidth = max(320, min(wrapWidth, wx));
+      }
+    }
   }
 
   // calculate width and height of the text
   SetFont(MsgFont);
-  MsgHeight = SplitText(Message, MsgLines, /*Width*/(HudWidth > 0 ? HudWidth : GetVirtualWidth()-32));
+  MsgHeight = SplitText(Message, MsgLines, /*Width*/wrapWidth);
   MsgWidth = 0;
   foreach (auto i; 0..MsgLines.length) {
     if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
