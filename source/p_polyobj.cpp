@@ -22,32 +22,18 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
 
 #define PO_LINE_START     1 // polyobj line start special
 #define PO_LINE_EXPLICIT  5
 
 #define PO_MAXPOLYSEGS    64
 
-// TYPES -------------------------------------------------------------------
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+static VCvarB pobj_allow_several_in_subsector("pobj_allow_several_in_subsector", false, "Allow several polyobjs in one subsector (WARNING! THE ENGINE MAY CRASH!)?", CVAR_Archive);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -377,9 +363,15 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
   subsector_t *sub = PointInSubsector(avg);
-  if (sub->poly != nullptr)
+  if (sub->poly != nullptr && sub->poly != po)
   {
-    Sys_Error("Multiple polyobjs in a single subsector.\n");
+    if (pobj_allow_several_in_subsector) {
+      GCon->Logf("Multiple polyobjs in a single subsector.");
+    } else {
+      Sys_Error("Multiple polyobjs in a single subsector.");
+    }
+    //FIXME!
+    sub->poly->subsector = nullptr;
   }
   sub->poly = po;
   po->subsector = sub;
