@@ -496,6 +496,7 @@ void VLevel::FixKnownMapErrors () {
   // Winter's Fury
   if (MapHashMD5 == "369034113c5315b17cadfb11f730a571" ||
       MapHashMD5 == "355695fadf065955f62ea993e942c35d" ||
+      MapHashMD5 == "253c286d243fdd6fae882b657b9ffc99" ||
       MapHashMD5 == "2842ece024c5c7905f637c616fefc36e" ||
       MapHashMD5 == "c3cd90a4d470b5413849e6341f245737")
   {
