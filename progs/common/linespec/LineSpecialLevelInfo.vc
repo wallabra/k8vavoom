@@ -48,6 +48,38 @@ const int
   MTF2_CLERIC   = 0x000020000,
   MTF2_MAGE   = 0x000040000;
 
+
+bitenum {
+  BLOCKF_CREATURES, // (1): Blocks walking things (players and enemies)
+  BLOCKF_MONSTERS, // (2): Blocks monsters (but not players)
+  BLOCKF_PLAYERS, // (4): Blocks players
+  BLOCKF_FLOATERS, // (8): Blocks floating creatures
+  BLOCKF_PROJECTILES, // (16): Blocks projectiles
+  BLOCKF_EVERYTHING, // (32): Blocks all of the above
+  BLOCKF_RAILING, // (64): Emulates Strife's railing behavior (blocks actors under 32 units of the line)
+  BLOCKF_USE, // (128): Blocks switches from being used across the line
+  BLOCKF_SIGHT, // (256): Blocks monster line of sight
+  BLOCKF_HITSCAN, // (512): Blocks hitscan attacks
+  BLOCKF_SOUND, // (1024): Blocks sound
+}
+
+static final int ConvertLineBlockingFlags (int Arg2) {
+  int setFlags = 0;
+  if (Arg2&BLOCKF_CREATURES) setFlags |= ML_BLOCKING;
+  if (Arg2&BLOCKF_MONSTERS) setFlags |= ML_BLOCKMONSTERS;
+  if (Arg2&BLOCKF_PLAYERS) setFlags |= ML_BLOCKPLAYERS;
+  if (Arg2&BLOCKF_FLOATERS) setFlags |= ML_BLOCK_FLOATERS;
+  if (Arg2&BLOCKF_PROJECTILES) { print("WARNING: BLOCKF_PROJECTILES is not implemented!"); setFlags |= ML_BLOCKPROJECTILE; }
+  if (Arg2&BLOCKF_EVERYTHING) setFlags |= ML_BLOCKEVERYTHING;
+  if (Arg2&BLOCKF_RAILING) setFlags |= ML_RAILING;
+  if (Arg2&BLOCKF_USE) { print("WARNING: BLOCKF_USE is not implemented!"); setFlags |= ML_BLOCKUSE; }
+  if (Arg2&BLOCKF_SIGHT) { print("WARNING: BLOCKF_SIGHT is not implemented!"); setFlags |= ML_BLOCKSIGHT; }
+  if (Arg2&BLOCKF_HITSCAN) { print("WARNING: BLOCKF_SIGHT is not implemented!"); setFlags |= ML_BLOCKHITSCAN; }
+  if (Arg2&ML_SOUNDBLOCK) setFlags |= ML_SOUNDBLOCK;
+  return setFlags;
+}
+
+
 enum
 {
   pt_static,
@@ -1232,6 +1264,18 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
 
   case LNSPEC_ExtraFloorLightOnly:
     print("Unknown action special %d aka 'ExtraFloor_LightOnly' (tag=%d; type=%d) not implemented", Special, Arg1, Arg2);
+    break;
+
+  case LNSPEC_LineSetBlocking:
+    {
+      //print("LNSPEC_LineSetBlocking: (%d, 0x%04x, 0x%04x)", Arg1, Arg2, Arg3);
+      int setFlags = ConvertLineBlockingFlags(Arg2), clearFlags = ~ConvertLineBlockingFlags(Arg3);
+      int searcher = -1;
+      for (line_t *line = XLevel.FindLine(Arg1, &searcher); line; line = XLevel.FindLine(Arg1, &searcher)) {
+        line->flags |= setFlags;
+        line->flags &= clearFlags;
+      }
+    }
     break;
 
   // Line specials only processed during level initialization

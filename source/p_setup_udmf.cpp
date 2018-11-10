@@ -560,38 +560,20 @@ void VUdmfParser::ParseLineDef(const mapInfo_t &MInfo)
           sc.Message("Bad render style");
         }
       }
-      else if (!Key.ICmp("anycross"))
-      {
-        Flag(L.L.SpacFlags, SPAC_AnyCross);
-      }
-      else if (!Key.ICmp("monsteractivate"))
-      {
-        Flag(L.L.flags, ML_MONSTERSCANACTIVATE);
-      }
-      else if (!Key.ICmp("blockplayers"))
-      {
-        Flag(L.L.flags, ML_BLOCKPLAYERS);
-      }
-      else if (!Key.ICmp("blockeverything"))
-      {
-        Flag(L.L.flags, ML_BLOCKEVERYTHING);
-      }
-      else if (!Key.ICmp("firstsideonly"))
-      {
-        Flag(L.L.flags, ML_FIRSTSIDEONLY);
-      }
-      else if (!Key.ICmp("zoneboundary"))
-      {
-        Flag(L.L.flags, ML_ZONEBOUNDARY);
-      }
-      else if (!Key.ICmp("clipmidtex"))
-      {
-        Flag(L.L.flags, ML_CLIP_MIDTEX);
-      }
-      else if (!Key.ICmp("wrapmidtex"))
-      {
-        Flag(L.L.flags, ML_WRAP_MIDTEX);
-      }
+      else if (!Key.ICmp("anycross")) Flag(L.L.SpacFlags, SPAC_AnyCross);
+      else if (!Key.ICmp("monsteractivate")) Flag(L.L.flags, ML_MONSTERSCANACTIVATE);
+      else if (!Key.ICmp("blockplayers")) Flag(L.L.flags, ML_BLOCKPLAYERS);
+      else if (!Key.ICmp("blockeverything")) Flag(L.L.flags, ML_BLOCKEVERYTHING);
+      else if (!Key.ICmp("firstsideonly")) Flag(L.L.flags, ML_FIRSTSIDEONLY);
+      else if (!Key.ICmp("zoneboundary")) Flag(L.L.flags, ML_ZONEBOUNDARY);
+      else if (!Key.ICmp("clipmidtex")) Flag(L.L.flags, ML_CLIP_MIDTEX);
+      else if (!Key.ICmp("wrapmidtex")) Flag(L.L.flags, ML_WRAP_MIDTEX);
+      //TODO
+      else if (!Key.ICmp("Checkswitchrange")) Flag(L.L.flags, ML_CHECKSWITCHRANGE);
+      else if (!Key.ICmp("blockprojectiles")) Flag(L.L.flags, ML_BLOCKPROJECTILE);
+      else if (!Key.ICmp("blockuse")) Flag(L.L.flags, ML_BLOCKUSE);
+      else if (!Key.ICmp("blocksight")) Flag(L.L.flags, ML_BLOCKSIGHT);
+      else if (!Key.ICmp("blockhitscan")) Flag(L.L.flags, ML_BLOCKHITSCAN);
     }
   }
 

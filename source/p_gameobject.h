@@ -142,29 +142,37 @@ enum {
 
 // LineDef attributes
 enum {
-  ML_BLOCKING             = 0x00000001, // solid, is an obstacle
-  ML_BLOCKMONSTERS        = 0x00000002, // blocks monsters only
-  ML_TWOSIDED             = 0x00000004, // backside will not be present at all
-  ML_DONTPEGTOP           = 0x00000008, // upper texture unpegged
-  ML_DONTPEGBOTTOM        = 0x00000010, // lower texture unpegged
-  ML_SECRET               = 0x00000020, // don't map as two sided: IT'S A SECRET!
-  ML_SOUNDBLOCK           = 0x00000040, // don't let sound cross two of these
-  ML_DONTDRAW             = 0x00000080, // don't draw on the automap
-  ML_MAPPED               = 0x00000100, // set if already drawn in automap
-  ML_REPEAT_SPECIAL       = 0x00000200, // special is repeatable
-  ML_ADDITIVE             = 0x00000400, // additive translucency
-  ML_MONSTERSCANACTIVATE  = 0x00002000, // monsters (as well as players) can activate the line
-  ML_BLOCKPLAYERS         = 0x00004000, // blocks players only
-  ML_BLOCKEVERYTHING      = 0x00008000, // line blocks everything
-  ML_ZONEBOUNDARY         = 0x00010000, // boundary of reverb zones
-  ML_RAILING              = 0x00020000,
-  ML_BLOCK_FLOATERS       = 0x00040000,
-  ML_CLIP_MIDTEX          = 0x00080000, // automatic for every Strife line
-  ML_WRAP_MIDTEX          = 0x00100000,
-  ML_FIRSTSIDEONLY        = 0x00800000, // actiavte only when crossed from front side
-  ML_KEEPDATA             = 0x01000000, // keep FloorData or CeilingData after activating them
-                                        // used to simulate original Heretic behaviour
-  ML_NODECAL              = 0x02000000, // don't spawn decals on this linedef
+  ML_BLOCKING            = 0x00000001, // solid, is an obstacle
+  ML_BLOCKMONSTERS       = 0x00000002, // blocks monsters only
+  ML_TWOSIDED            = 0x00000004, // backside will not be present at all
+  ML_DONTPEGTOP          = 0x00000008, // upper texture unpegged
+  ML_DONTPEGBOTTOM       = 0x00000010, // lower texture unpegged
+  ML_SECRET              = 0x00000020, // don't map as two sided: IT'S A SECRET!
+  ML_SOUNDBLOCK          = 0x00000040, // don't let sound cross two of these
+  ML_DONTDRAW            = 0x00000080, // don't draw on the automap
+  ML_MAPPED              = 0x00000100, // set if already drawn in automap
+  ML_REPEAT_SPECIAL      = 0x00000200, // special is repeatable
+  ML_ADDITIVE            = 0x00000400, // additive translucency
+  ML_MONSTERSCANACTIVATE = 0x00002000, // monsters (as well as players) can activate the line
+  ML_BLOCKPLAYERS        = 0x00004000, // blocks players only
+  ML_BLOCKEVERYTHING     = 0x00008000, // line blocks everything
+  ML_ZONEBOUNDARY        = 0x00010000, // boundary of reverb zones
+  ML_RAILING             = 0x00020000,
+  ML_BLOCK_FLOATERS      = 0x00040000,
+  ML_CLIP_MIDTEX         = 0x00080000, // automatic for every Strife line
+  ML_WRAP_MIDTEX         = 0x00100000,
+  ML_3DMIDTEX            = 0x00200000, // not implemented
+  ML_CHECKSWITCHRANGE    = 0x00400000, // not implemented
+  ML_FIRSTSIDEONLY       = 0x00800000, // actiavte only when crossed from front side
+  ML_BLOCKPROJECTILE     = 0x01000000, // not implemented
+  ML_BLOCKUSE            = 0x02000000, // (not implemented) blocks all use actions through this line
+  ML_BLOCKSIGHT          = 0x04000000, // (not implemented) blocks monster line of sight
+  ML_BLOCKHITSCAN        = 0x08000000, // (not implemented) blocks hitscan attacks
+  ML_3DMIDTEX_IMPASS     = 0x10000000, // (not implemented) [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
+  ML_KEEPDATA            = 0x20000000, // keep FloorData or CeilingData after activating them
+                                       // used to simulate original Heretic behaviour
+  ML_NODECAL             = 0x40000000, // don't spawn decals on this linedef
+
   ML_SPAC_SHIFT = 10,
   ML_SPAC_MASK = 0x00001c00,
 };
