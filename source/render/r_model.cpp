@@ -41,6 +41,9 @@ static VCvarI mdl_verbose_loading("mdl_verbose_loading", "0", "Verbose alias mod
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
 static int parseHexRGB (const VStr &str) {
+  vuint32 ppc = M_ParseColour(str);
+  return (ppc&0xffffff);
+/*
   int clr[3];
   clr[0] = clr[1] = clr[2] = 0;
   int pos = 0;
@@ -68,6 +71,7 @@ static int parseHexRGB (const VStr &str) {
   if (pos < str.Length()) return -1;
   //fprintf(stderr, "str=<%s>; r=%d; g=%d; b=%d\n", *str, clr[0], clr[1], clr[2]);
   return (clr[0]<<16)|(clr[1]<<8)|clr[2];
+*/
 }
 
 

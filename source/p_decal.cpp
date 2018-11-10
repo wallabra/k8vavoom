@@ -41,6 +41,12 @@ VDecalGroup *VDecalGroup::listHead = nullptr;
 
 // ////////////////////////////////////////////////////////////////////////// //
 static bool parseHexRGB (const VStr &str, float clr[]) {
+  vuint32 ppc = M_ParseColour(str);
+  clr[0] = ((ppc>>16)&0xff)/255.0f;
+  clr[1] = ((ppc>>8)&0xff)/255.0f;
+  clr[2] = (ppc&0xff)/255.0f;
+  return true;
+/*
   clr[0] = clr[1] = clr[2] = 0;
   int pos = 0;
   for (int f = 0; f < 3; ++f) {
@@ -65,6 +71,7 @@ static bool parseHexRGB (const VStr &str, float clr[]) {
   }
   while (pos < str.Length() && (vuint8)str[pos] <= ' ') ++pos;
   return (pos >= str.Length());
+*/
 }
 
 
