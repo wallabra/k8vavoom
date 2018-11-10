@@ -145,6 +145,8 @@ const int
   ML_BLOCK_FLOATERS      = 0x00040000,
   ML_CLIP_MIDTEX         = 0x00080000, // Automatic for every Strife line
   ML_WRAP_MIDTEX         = 0x00100000,
+  ML_3DMIDTEX            = 0x00200000, // not implemented
+  ML_CHECKSWITCHRANGE    = 0x00400000, // not implemented: if a switch is completely above or below the player and this option is on, the switch won't activate
   ML_FIRSTSIDEONLY       = 0x00800000, // Actiavte only when crossed from front side.
   ML_BLOCKPROJECTILE     = 0x01000000,
   ML_BLOCKUSE            = 0x02000000, // blocks all use actions through this line
