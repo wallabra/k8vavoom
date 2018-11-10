@@ -2482,6 +2482,22 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         }
         break;
       case TYPE_State:
+        // dumbfucks in harddoom does this: `A_JumpIfTargetInLOS("1")` -- brilliant! idiots.
+        if (Args[i]->IsStrConst()) {
+          const char *str = Args[i]->GetStrConst(ec.Package);
+          int lbl = -1;
+          if (VStr::convertInt(str, &lbl)) {
+            TLocation ALoc = Args[i]->Loc;
+            if (lbl < 0) {
+              ParseError(ALoc, "DECORATE: `%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, str);
+            } else {
+              ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU IDIOTS!", Func->GetName(), i+1);
+              delete Args[i];
+              Args[i] = new VIntLiteral(lbl, ALoc);
+            }
+          }
+        }
+
         if (Args[i]->IsIntConst()) {
           int Offs = Args[i]->GetIntConst();
           TLocation ALoc = Args[i]->Loc;
