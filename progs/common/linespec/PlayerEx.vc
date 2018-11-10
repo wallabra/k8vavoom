@@ -2209,6 +2209,13 @@ override void SpawnClient()
     }
   }
 
+  /* ResetPlayerOnSpawn() should take care of this
+  if (!playerWasReborn && LocalQuakeHappening) {
+    print("*** RESETTING QUAKING!");
+    LocalQuakeHappening = 0;
+  }
+  */
+
   if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn)
   {
     OnNetReborn(OldMO);
@@ -2433,7 +2440,32 @@ void ResetPlayerOnSpawn()
   LastHazardTime = 0.0;
   Rain1 = none;
   Rain2 = none;
+
+  JumpTime = 0;
+  LocalQuakeHappening = 0;
+  MoveDir = vector(0, 0, 0);
+  HazardTime = 0;
+  //Weapon ReadyWeapon;
+  //Weapon PendingWeapon;  // Is none if not changing.
+  //FlyHeight = 0;
+  /*
+  bFrozen = false; // just in case
+  bTotallyFrozen = false; // just in case
+  bFly = false; // just in case
+  PoisonCount = 0; // screen flash for poison damage
+  LastPoisonTime = 0;
+  Poisoner = none; // none for non-player mobjs
+  PoisonerPlayer = none; // for KArena
+  */
+  MorphTime = 0;  // player is morphed into something if > 0
+  MorphStyle = 0;
+  BlendR = 0;
+  BlendG = 0;
+  BlendB = 0;
+  BlendA = 0;
+  ChickenPeck = 0; // chicken peck countdown
 }
+
 
 //==========================================================================
 //
