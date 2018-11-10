@@ -949,7 +949,8 @@ final bool RailCheckPlanes (sector_t *sec, TVec linestart, out TVec lineend,
 final void RailAttack (TVec dir, float Offset, int RailDamage,
                        optional int Col1, optional int Col2, optional float MaxDiff,
                        optional class!EntityEx PuffType, optional bool Silent,
-                       optional bool DontPierce)
+                       optional bool DontPierce, optional float distance,
+                       optional float spawnofs_z, optional int pierceLimit)
 {
   TVec dst;
   intercept_t *in;
@@ -961,6 +962,8 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
 
   if (!specified_PuffType) PuffType = BulletPuff;
 
+  if (!specified_pierceLimit) pierceLimit = int.max;
+
   name DmgType = 'Railgun';
   if (PuffType && PuffType.default.DamageType) DmgType = PuffType.default.DamageType;
 
@@ -971,10 +974,12 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   } else {
     shootOrigin.z += 8.0;
   }
+  shootOrigin.z += spawnofs_z;
   shootOrigin.x += Offset*cos(Angles.yaw-90.0);
   shootOrigin.y += Offset*sin(Angles.yaw-90.0);
 
-  float distance = 8192.0;
+  //float distance = 8192.0;
+  if (!specified_distance || !distance) distance = 8192.0;
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
   bool DidHit = false;
@@ -1056,7 +1061,6 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     hit_point = shootOrigin+(distance*in->frac)*dir;
 
     if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
-
     if (th.Origin.z > hit_point.z) continue; // shot under the thing
 
     // invulnerable things completely block the shot
@@ -1076,7 +1080,11 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     } else {
       th.SpawnBlood(hit_point, RailDamage, shootOrigin);
     }
+
     th.Damage(self, self, RailDamage, DmgType);
+
+    if (--pierceLimit < 1) DontPierce = true;
+
     if (th && DontPierce) {
       // we did hit a thing and we can't pierce so we can stop now...
       DidHit = true;

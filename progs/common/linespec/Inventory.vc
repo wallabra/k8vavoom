@@ -1416,33 +1416,34 @@ final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
   }
 }
 
+
 //===========================================================================
 //
 //  A_RailAttack
 //
+//  TODO: process other arguments
+//
 //===========================================================================
-
-final void A_RailAttack(int RailDamage, optional float Offset,
+final void A_RailAttack (int RailDamage, optional float Offset,
   optional bool UseAmmo, optional string Colour1, optional string Colour2,
-  optional int Flags, optional float MaxDiff,
-  optional class!Actor PuffType)
+  optional int Flags, optional float MaxDiff, optional class!Actor PuffType,
+  optional float spread_xy, optional float spread_z,
+  optional float range,
+  optional int duration, optional float sparsity, optional float driftspeed, // for particles
+  optional class!Actor spawnclass, // for particles
+  optional float spawnofs_z, optional int spiraloffset, optional int limit)
 {
   if (!specified_UseAmmo)
   {
     UseAmmo = true;
   }
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if ((specified_Flags && (Flags & 1)) || UseAmmo)
-  {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1))
-    {
-      return;
-    }
+  if (!Wpn) return;
+
+  if ((specified_Flags && (Flags&1)) || UseAmmo) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
   }
 
   int Col1 = ParseColour(Colour1);
@@ -1450,7 +1451,8 @@ final void A_RailAttack(int RailDamage, optional float Offset,
   TVec Dir;
   AngleVector(Angles, out Dir);
   RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
-    !!(Flags & 1), !!(Flags & 2));
+    !!(Flags & 1), !!(Flags & 2), distance:range!optional, spawnofs_z:spawnofs_z!optional,
+    pierceLimit:limit!optional);
 }
 
 
