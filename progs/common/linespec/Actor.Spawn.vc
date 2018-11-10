@@ -27,6 +27,40 @@
 //  Spawn functions
 //**************************************************************************
 
+//  Flags for A_SpawnItemEx
+const int SXF_TRANSFERTRANSLATION = 1;
+const int SXF_ABSOLUTEPOSITION    = 2;
+const int SXF_ABSOLUTEANGLE     = 4;
+const int SXF_ABSOLUTEMOMENTUM    = 8;
+const int SXF_ABSOLUTEVELOCITY    = 8; // "momentum" is deprecated by gozzo
+const int SXF_SETMASTER       = 16;
+const int SXF_NOCHECKPOSITION   = 32;
+const int SXF_TELEFRAG        = 64;
+const int SXF_CLIENTSPAWN     = 128;  // only used by Skulltag
+const int SXF_CLIENTSIDE      = 128;  // only used by Skulltag
+const int SXF_TRANSFERAMBUSHFLAG  = 256;
+const int SXF_TRANSFERPITCH     = 512;
+const int SXF_TRANSFERPOINTERS    = 1024;
+const int SXF_USEBLOODCOLOR = 1 << 11;
+const int SXF_CLEARCALLERTID = 1 << 12;
+const int SXF_MULTIPLYSPEED = 1 << 13;
+const int SXF_TRANSFERSCALE = 1 << 14;
+const int SXF_TRANSFERSPECIAL = 1 << 15;
+const int SXF_CLEARCALLERSPECIAL = 1 << 16;
+const int SXF_TRANSFERSTENCILCOL = 1 << 17;
+const int SXF_TRANSFERALPHA = 1 << 18;
+const int SXF_TRANSFERRENDERSTYLE = 1 << 19;
+const int SXF_SETTARGET = 1 << 20;
+const int SXF_SETTRACER = 1 << 21;
+const int SXF_NOPOINTERS = 1 << 22;
+const int SXF_ORIGINATOR = 1 << 23;
+const int SXF_TRANSFERSPRITEFRAME = 1 << 24;
+const int SXF_TRANSFERROLL = 1 << 25;
+const int SXF_ISTARGET = 1 << 26;
+const int SXF_ISMASTER = 1 << 27;
+const int SXF_ISTRACER = 1 << 28;
+
+
 //==========================================================================
 //
 //  A_TossGib
@@ -111,7 +145,8 @@ final void A_SpawnDebris(class!Actor SpawnType, optional bool TransTransl,
 //==========================================================================
 
 final void InitSpawnedItem(EntityEx A, bool TransTransl, bool SetMaster,
-  bool NoCheckPos, bool Telestomp, bool TransPitch, bool TransPointers)
+  bool NoCheckPos, bool Telestomp, bool TransPitch, bool TransPointers,
+  optional bool Originator)
 {
   if (!A)
   {
@@ -137,9 +172,8 @@ final void InitSpawnedItem(EntityEx A, bool TransTransl, bool SetMaster,
 
   //  Find instigator for missiles.
   EntityEx Instig = self;
-  while (Instig && Instig.IsMissile(true))
-  {
-    Instig = Instig.Target;
+  if (!Originator) {
+    while (Instig && Instig.IsMissile(true)) Instig = Instig.Target;
   }
 
   if (Telestomp)
@@ -267,37 +301,25 @@ final void A_SpawnItem(class!Actor ItemType, optional float Distance,
 final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
   optional float YOffs, optional float ZOffs, optional float XVel,
   optional float YVel, optional float ZVel, optional float Angle,
-  optional int Flags, optional int Chance, optional bool ApplyTranslation)
+  optional int Flags, optional int Chance,
+  //k8:old:optional bool ApplyTranslation
+  optional int newtid)
 {
-  if (!ItemType)
-  {
-    if (XLevel.StateCall)
-    {
-      XLevel.StateCall->Result = false;
-    }
+  if (!ItemType) {
+    if (XLevel.StateCall) XLevel.StateCall->Result = false;
     return;
   }
 
-  if (Chance > 0 && P_Random() < Chance)
-  {
-    return;
-  }
+  if (Chance > 0 && P_Random() < Chance) return;
 
   //  Don't spawn monsters if this actor has been massacred
-  if (DamageType == 'Massacre' && ItemType.default.bMonster)
-  {
-    return;
-  }
+  if (DamageType == 'Massacre' && ItemType.default.bMonster) return;
 
-  if (!(Flags & 4))
-  {
-    Angle += Angles.yaw;
-  }
+  if (!(Flags & SXF_ABSOLUTEANGLE)) Angle += Angles.yaw;
 
   TVec Org = vector(XOffs, YOffs, ZOffs - FloorClip);
-  if (!(Flags & 2))
-  {
-    //  In relative mode negative y values mean 'left' and positive ones
+  if (!(Flags&SXF_ABSOLUTEPOSITION)) {
+    // in relative mode negative y values mean 'left' and positive ones
     // mean 'right'. This is the inverse orientation of the absolute mode!
     Org.y = -Org.y;
     VectorRotateAroundZ(ref Org, Angle);
@@ -305,27 +327,41 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
   Org += Origin;
 
   EntityEx A = Spawn(ItemType, Org);
-  InitSpawnedItem(A, !!(Flags & 1), !!(Flags & 16), !!(Flags & 32),
-    !!(Flags & 64), !!(Flags & 512), !!(Flags & 1024));
-  if (A)
-  {
-    if (ApplyTranslation)
-    {
-      A.Translation = Translation;
-    }
+  InitSpawnedItem(A,
+    !!(Flags&SXF_TRANSFERTRANSLATION),
+    !!(Flags&SXF_SETMASTER),
+    !!(Flags&SXF_NOCHECKPOSITION),
+    !!(Flags&SXF_TELEFRAG),
+    !!(Flags&SXF_TRANSFERPITCH),
+    !!(Flags&SXF_TRANSFERPOINTERS),
+    Originator:!!(Flags&SXF_ORIGINATOR));
+
+  if (A) {
+    //k8:removed:if (ApplyTranslation) A.Translation = Translation;
     A.Velocity.x = XVel * 35.0;
     A.Velocity.y = YVel * 35.0;
     A.Velocity.z = ZVel * 35.0;
     A.Angles.yaw = Angle;
-    if (!(Flags & 8))
-    {
-      //  The same issue as with offsets.
+    if (!(Flags & SXF_ABSOLUTEVELOCITY)) {
+      // the same issue as with offsets
       A.Velocity.y = -A.Velocity.y;
       VectorRotateAroundZ(ref A.Velocity, Angle);
     }
-    if (Flags & 256)
-    {
-      A.bAmbush = bAmbush;
-    }
+
+    if (Flags&SXF_NOPOINTERS) { A.Master = none; A.Target = none; A.Tracer = none; }
+
+    if (Flags&SXF_TRANSFERAMBUSHFLAG) A.bAmbush = bAmbush;
+    if (Flags&SXF_CLEARCALLERTID) SetTID(0);
+    if (Flags&SXF_MULTIPLYSPEED) { A.Velocity.x *= A.Speed; A.Velocity.y *= A.Speed; A.Velocity.z *= A.Speed; }
+    if (Flags&SXF_TRANSFERSCALE) { A.ScaleX = ScaleX; A.ScaleY = ScaleY; }
+    if (Flags&SXF_TRANSFERALPHA) A.Alpha = Alpha;
+    if (Flags&SXF_TRANSFERRENDERSTYLE) A.RenderStyle = RenderStyle;
+    if (Flags&SXF_SETTARGET) A.Target = self;
+    if (Flags&SXF_SETTRACER) A.Tracer = self;
+    if (Flags&SXF_TRANSFERROLL) A.Angles.roll = Angles.roll;
+    if (Flags&SXF_ISTARGET) Target = A;
+    if (Flags&SXF_ISMASTER) Master = A;
+    if (Flags&SXF_ISTRACER) Tracer = A;
+    if (specified_newtid) A.SetTID(newtid);
   }
 }

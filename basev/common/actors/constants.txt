@@ -36,26 +36,25 @@ const int SXF_CLIENTSIDE      = 128;  // only used by Skulltag
 const int SXF_TRANSFERAMBUSHFLAG  = 256;
 const int SXF_TRANSFERPITCH     = 512;
 const int SXF_TRANSFERPOINTERS    = 1024;
-/*
-	SXF_USEBLOODCOLOR =			1 << 11,
-	SXF_CLEARCALLERTID =			1 << 12,
-	SXF_MULTIPLYSPEED =			1 << 13,
-	SXF_TRANSFERSCALE =			1 << 14,
-	SXF_TRANSFERSPECIAL =			1 << 15,
-	SXF_CLEARCALLERSPECIAL =		1 << 16,
-	SXF_TRANSFERSTENCILCOL =		1 << 17,
-	SXF_TRANSFERALPHA =			1 << 18,
-	SXF_TRANSFERRENDERSTYLE =		1 << 19,
-	SXF_SETTARGET =				1 << 20,
-	SXF_SETTRACER =				1 << 21,
-	SXF_NOPOINTERS =				1 << 22,
-	SXF_ORIGINATOR =				1 << 23,
-	SXF_TRANSFERSPRITEFRAME	=	1 << 24,
-	SXF_TRANSFERROLL =			1 << 25,
-	SXF_ISTARGET				=	1 << 26,
-	SXF_ISMASTER				=	1 << 27,
-	SXF_ISTRACER				=	1 << 28,
-*/
+
+const int SXF_USEBLOODCOLOR = 1 << 11; // not implemented
+const int SXF_CLEARCALLERTID = 1 << 12;
+const int SXF_MULTIPLYSPEED = 1 << 13;
+const int SXF_TRANSFERSCALE = 1 << 14;
+//const int SXF_TRANSFERSPECIAL = 1 << 15; // not implemented
+//const int SXF_CLEARCALLERSPECIAL = 1 << 16; // not implemented
+const int SXF_TRANSFERSTENCILCOL = 1 << 17; // not implemented
+const int SXF_TRANSFERALPHA = 1 << 18;
+const int SXF_TRANSFERRENDERSTYLE = 1 << 19;
+const int SXF_SETTARGET = 1 << 20;
+const int SXF_SETTRACER = 1 << 21;
+const int SXF_NOPOINTERS = 1 << 22;
+const int SXF_ORIGINATOR = 1 << 23;
+const int SXF_TRANSFERSPRITEFRAME = 1 << 24; // not implemented
+const int SXF_TRANSFERROLL = 1 << 25;
+const int SXF_ISTARGET = 1 << 26;
+const int SXF_ISMASTER = 1 << 27;
+const int SXF_ISTRACER = 1 << 28;
 
 //  Morph constants
 const int MRF_ADDSTAMINA      = 1;
