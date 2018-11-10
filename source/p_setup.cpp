@@ -72,6 +72,7 @@ static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix inval
 
 
 extern VCvarI r_max_portal_depth;
+extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
 
 
 // lump order in a map WAD: each map needs a couple of lumps
@@ -163,7 +164,7 @@ void VLevel::FixKnownMapErrors () {
     SectorOffsetFloor(&Sectors[105], 8);
     SectorOffsetFloor(&Sectors[132], 8);
     SectorOffsetFloor(&Sectors[137], 8);
-    GCon->Logf("MAPFIX: Doom: E1M4 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E1M4 detected and fixed");
     return;
   }
 
@@ -172,7 +173,7 @@ void VLevel::FixKnownMapErrors () {
     // missing textures
     Sides[Lines[947].sidenum[1]].TopTexture = TexNumForName("BROWN1", TEXTYPE_Wall);
     Sides[Lines[1596].sidenum[1]].TopTexture = TexNumForName("WOOD1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E2M2 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M2 detected and fixed");
     return;
   }
 
@@ -183,7 +184,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[865].sidenum[1]].BottomTexture = TexNumForName("STEP5", TEXTYPE_Wall);
     Sides[Lines[1062].sidenum[0]].TopTexture = TexNumForName("GSTVINE1", TEXTYPE_Wall);
     Sides[Lines[1071].sidenum[0]].TopTexture = TexNumForName("MARBLE1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E2M4 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M4 detected and fixed");
     return;
   }
 
@@ -192,7 +193,7 @@ void VLevel::FixKnownMapErrors () {
     // missing textures
     Sides[Lines[590].sidenum[1]].TopTexture = TexNumForName("GRAYBIG", TEXTYPE_Wall);
     Sides[Lines[590].sidenum[0]].BottomTexture = TexNumForName("BROWN1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E2M5 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M5 detected and fixed");
     return;
   }
 
@@ -200,7 +201,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "3838ab29292587a7ee3ca71e7040868d") {
     // missing textures
     Sides[Lines[1091].sidenum[1]].TopTexture = TexNumForName("COMPSPAN", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E2M6 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M6 detected and fixed");
     return;
   }
 
@@ -208,7 +209,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "8590f489879870c098cd7029c3187159") {
     // missing textures
     Sides[Lines[1286].sidenum[0]].BottomTexture = TexNumForName("SHAWN2", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E2M7 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M7 detected and fixed");
     return;
   }
 
@@ -218,7 +219,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[121].sidenum[1]].TopTexture = TexNumForName("SW1LION", TEXTYPE_Wall);
     Sides[Lines[123].sidenum[1]].TopTexture = TexNumForName("GSTONE1", TEXTYPE_Wall);
     Sides[Lines[140].sidenum[1]].TopTexture = TexNumForName("GSTONE1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E2M9 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M9 detected and fixed");
     return;
   }
 
@@ -226,7 +227,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "5ac51ca9f1b57d4538049422a5e37291") {
     // missing textures
     Sides[Lines[971].sidenum[1]].TopTexture = TexNumForName("SP_HOT1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E3M7 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E3M7 detected and fixed");
     return;
   }
 
@@ -234,7 +235,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "da0c8281ac70eec31127c228bcd7fe2c") {
     // missing textures
     Sides[Lines[470].sidenum[0]].TopTexture = TexNumForName("GSTONE1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E4M1 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E4M1 detected and fixed");
     return;
   }
 
@@ -245,7 +246,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[558].sidenum[1]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
     Sides[Lines[567].sidenum[0]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
     Sides[Lines[572].sidenum[0]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom: E4M4 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E4M4 detected and fixed");
     return;
   }
 
@@ -256,7 +257,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[328].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
     Sides[Lines[338].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
     Sides[Lines[339].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom II: MAP02 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP02 detected and fixed");
     return;
   }
 
@@ -280,7 +281,7 @@ void VLevel::FixKnownMapErrors () {
     Sectors[83].tag = 0;
     Sectors[85].tag = 0;
     HashSectors();
-    GCon->Logf("MAPFIX: Doom II: MAP04 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP04 detected and fixed");
     return;
   }
 
@@ -290,7 +291,7 @@ void VLevel::FixKnownMapErrors () {
     Sectors[4].tag = 0;
     Sectors[153].tag = 0;
     HashSectors();
-    GCon->Logf("MAPFIX: Doom II: MAP05 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP05 detected and fixed");
     return;
   }
 
@@ -298,7 +299,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "66c46385eb1a23d60839d1532522076b") {
     // missing texture
     Sides[Lines[101].sidenum[1]].TopTexture = TexNumForName("BRICK7", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom II: MAP08 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP08 detected and fixed");
     return;
   }
 
@@ -307,7 +308,7 @@ void VLevel::FixKnownMapErrors () {
     // missing texture
     Sides[Lines[1259].sidenum[1]].TopTexture = TexNumForName("BSTONE2", TEXTYPE_Wall);
     Sides[Lines[1305].sidenum[1]].TopTexture = TexNumForName("BSTONE2", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom II: MAP14 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP14 detected and fixed");
     return;
   }
 
@@ -315,7 +316,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "1a540ba717bf9ec85f8522594c352f2a") {
     Sectors[147].special = 0; // this secret is possible, but meh...
     HashSectors();
-    GCon->Logf("MAPFIX: Doom II: MAP15 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP15 detected and fixed");
     return;
   }
 
@@ -324,7 +325,7 @@ void VLevel::FixKnownMapErrors () {
     // missing texture
     Sides[Lines[451].sidenum[0]].MidTexture = TexNumForName("METAL", TEXTYPE_Wall);
     Sides[Lines[459].sidenum[0]].MidTexture = TexNumForName("METAL", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom II: MAP18 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP18 detected and fixed");
     return;
   }
 
@@ -333,7 +334,7 @@ void VLevel::FixKnownMapErrors () {
     // missing texture
     Sides[Lines[355].sidenum[1]].TopTexture = TexNumForName("STONE2", TEXTYPE_Wall);
     Sides[Lines[736].sidenum[0]].TopTexture = TexNumForName("SLADWALL", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Doom II: MAP19 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP19 detected and fixed");
     return;
   }
 
@@ -342,7 +343,7 @@ void VLevel::FixKnownMapErrors () {
     // push ceiling down in glitchy sectors above the stair switches
     SectorOffsetCeiling(&Sectors[50], -56);
     SectorOffsetCeiling(&Sectors[54], -56);
-    GCon->Logf("MAPFIX: Doom II: MAP21 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP21 detected and fixed");
     return;
   }
 
@@ -352,7 +353,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[582].sidenum[1]].TopTexture = TexNumForName("ZIMMER3", TEXTYPE_Wall);
     Sectors[93].special = 0; // this secret is possible, but meh...
     HashSectors();
-    GCon->Logf("MAPFIX: Doom II: MAP27 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP27 detected and fixed");
     return;
   }
 
@@ -366,7 +367,7 @@ void VLevel::FixKnownMapErrors () {
       Sides[Lines[1146+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
       Sides[Lines[1138+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
     }
-    GCon->Logf("MAPFIX: Doom II: MAP29 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP29 detected and fixed");
     return;
   }
 
@@ -375,7 +376,7 @@ void VLevel::FixKnownMapErrors () {
     // raise up sector with its counterpart so 100% kills becomes possible
     Sectors[330].tag = 11;
     HashSectors();
-    GCon->Logf("MAPFIX: TNT:Evilution: MAP15 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: TNT:Evilution: MAP15 detected and fixed");
     return;
   }
 
@@ -384,7 +385,7 @@ void VLevel::FixKnownMapErrors () {
     // remove mancubus who always gets stuck in teleport tunnel, preventing 100% kills on HMP
     Things[405].options = 0;
     Things[17].SkillClassFilter &= ~(0x03|0x04|0x18);
-    GCon->Logf("MAPFIX: TNT:Evilution: MAP29 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: TNT:Evilution: MAP29 detected and fixed");
     return;
   }
 
@@ -393,7 +394,7 @@ void VLevel::FixKnownMapErrors () {
     // the famous missing yellow key...
     Things[470].options |= 0x07;
     Things[470].SkillClassFilter |= 0x03|0x04|0x18;
-    GCon->Logf("MAPFIX: TNT:Evilution: MAP31 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: TNT:Evilution: MAP31 detected and fixed");
     return;
   }
 
@@ -401,7 +402,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "abc4eb5a1535eccd0061ad14f3547908") {
     Sectors[156].special = 0;
     HashSectors();
-    GCon->Logf("MAPFIX: Plutonia: MAP26 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Plutonia: MAP26 detected and fixed");
     return;
   }
 
@@ -409,7 +410,7 @@ void VLevel::FixKnownMapErrors () {
   if (MapHashMD5 == "ff635fb9a2f076566299910f8c78f707") {
     Sectors[868].special = 0;
     HashSectors();
-    GCon->Logf("MAPFIX: Nerve: MAP04 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Nerve: MAP04 detected and fixed");
     return;
   }
 
@@ -420,7 +421,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[478].sidenum[1]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
     Sides[Lines[479].sidenum[1]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
     Sides[Lines[1057].sidenum[0]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Heretic: E1M2 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E1M2 detected and fixed");
     return;
   }
 
@@ -430,7 +431,7 @@ void VLevel::FixKnownMapErrors () {
     // and the passage that has a Bag of Holding at its end
     SectorOffsetFloor(&Sectors[86], -128);
     SectorOffsetCeiling(&Sectors[86], -128);
-    GCon->Logf("MAPFIX: Heretic: E1M3 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E1M3 detected and fixed");
     return;
   }
 
@@ -453,7 +454,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[722].sidenum[0]].BottomTexture = TexNumForName("WOODWL", TEXTYPE_Wall);
     Sides[Lines[911].sidenum[0]].BottomTexture = TexNumForName("WOODWL", TEXTYPE_Wall);
     Sides[Lines[1296].sidenum[0]].BottomTexture = TexNumForName("WOODWL", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Heretic: E1M4 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E1M4 detected and fixed");
     return;
   }
 
@@ -464,7 +465,7 @@ void VLevel::FixKnownMapErrors () {
     Things[17].SkillClassFilter |= 0x03|0x04|0x18;
     Things[18].options |= 0x07;
     Things[18].SkillClassFilter |= 0x03|0x04|0x18;
-    GCon->Logf("MAPFIX: Heretic: E2M2 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E2M2 detected and fixed");
     return;
   }
 
@@ -479,7 +480,7 @@ void VLevel::FixKnownMapErrors () {
     // missing textures
     Sides[Lines[343].sidenum[0]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
     Sides[Lines[370].sidenum[0]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Heretic: E2M2 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E2M2 detected and fixed");
     return;
   }
 
@@ -489,7 +490,7 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[1274].sidenum[0]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
     Sides[Lines[1277].sidenum[1]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
     Sides[Lines[1278].sidenum[0]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
-    GCon->Logf("MAPFIX: Heretic: E4M7 detected and fixed");
+    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E4M7 detected and fixed");
     return;
   }
 
@@ -501,7 +502,8 @@ void VLevel::FixKnownMapErrors () {
       MapHashMD5 == "c3cd90a4d470b5413849e6341f245737")
   {
     r_max_portal_depth = 1;
-    GCon->Logf("Winter's Fury: reduced portals to 1");
+    pobj_allow_several_in_subsector_override = 1;
+    GCon->Logf(NAME_Warning, "MAPFIX: Winter's Fury: reduced portals to 1, enabled pobj hack");
     return;
   }
 }
@@ -1010,6 +1012,8 @@ void VLevel::LoadMap (VName AMapName) {
   decanimuid = 0;
 
 load_again:
+  pobj_allow_several_in_subsector_override = 0;
+
   double TotalTime = -Sys_Time();
   double InitTime = -Sys_Time();
   MapName = AMapName;

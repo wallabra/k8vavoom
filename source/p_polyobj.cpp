@@ -33,6 +33,7 @@
 
 
 static VCvarB pobj_allow_several_in_subsector("pobj_allow_several_in_subsector", false, "Allow several polyobjs in one subsector (WARNING! THE ENGINE MAY CRASH!)?", CVAR_Archive);
+int pobj_allow_several_in_subsector_override = 0; // <0: disable; >0: enable
 
 
 //==========================================================================
@@ -365,8 +366,11 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
   subsector_t *sub = PointInSubsector(avg);
   if (sub->poly != nullptr && sub->poly != po)
   {
-    if (pobj_allow_several_in_subsector) {
-      GCon->Logf("Multiple polyobjs in a single subsector.");
+    bool allowed = false;
+         if (pobj_allow_several_in_subsector_override) allowed = (pobj_allow_several_in_subsector_override > 0); // <0: disable; >0: enable
+    else allowed = pobj_allow_several_in_subsector;
+    if (allowed) {
+      GCon->Logf(NAME_Error, "Multiple polyobjs in a single subsector.");
     } else {
       Sys_Error("Multiple polyobjs in a single subsector.");
     }
