@@ -164,7 +164,7 @@ enum {
   ML_3DMIDTEX            = 0x00200000, // not implemented
   ML_CHECKSWITCHRANGE    = 0x00400000, // not implemented
   ML_FIRSTSIDEONLY       = 0x00800000, // actiavte only when crossed from front side
-  ML_BLOCKPROJECTILE     = 0x01000000, // not implemented
+  ML_BLOCKPROJECTILE     = 0x01000000,
   ML_BLOCKUSE            = 0x02000000, // blocks all use actions through this line
   ML_BLOCKSIGHT          = 0x04000000, // blocks monster line of sight
   ML_BLOCKHITSCAN        = 0x08000000, // blocks hitscan attacks

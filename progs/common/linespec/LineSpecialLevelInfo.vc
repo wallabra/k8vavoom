@@ -69,10 +69,10 @@ static final int ConvertLineBlockingFlags (int Arg2) {
   if (Arg2&BLOCKF_MONSTERS) setFlags |= ML_BLOCKMONSTERS;
   if (Arg2&BLOCKF_PLAYERS) setFlags |= ML_BLOCKPLAYERS;
   if (Arg2&BLOCKF_FLOATERS) setFlags |= ML_BLOCK_FLOATERS;
-  if (Arg2&BLOCKF_PROJECTILES) { print("WARNING: BLOCKF_PROJECTILES is not implemented!"); setFlags |= ML_BLOCKPROJECTILE; }
+  if (Arg2&BLOCKF_PROJECTILES) setFlags |= ML_BLOCKPROJECTILE;
   if (Arg2&BLOCKF_EVERYTHING) setFlags |= ML_BLOCKEVERYTHING;
   if (Arg2&BLOCKF_RAILING) setFlags |= ML_RAILING;
-  if (Arg2&BLOCKF_USE) { print("WARNING: BLOCKF_USE is not implemented!"); setFlags |= ML_BLOCKUSE; }
+  if (Arg2&BLOCKF_USE) setFlags |= ML_BLOCKUSE;
   if (Arg2&BLOCKF_SIGHT) setFlags |= ML_BLOCKSIGHT;
   if (Arg2&BLOCKF_HITSCAN) setFlags |= ML_BLOCKHITSCAN;
   if (Arg2&ML_SOUNDBLOCK) setFlags |= ML_SOUNDBLOCK;

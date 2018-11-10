@@ -556,6 +556,7 @@ bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
 
   if (!(ld->flags&ML_RAILING)) {
     if (ld->flags&ML_BLOCKEVERYTHING) return false; // explicitly blocking everything
+    if ((EntityFlags&VEntity::EF_Missile) && (ld->flags&ML_BLOCKPROJECTILE)) return false; // blocks projectile
     if ((EntityFlags&VEntity::EF_CheckLineBlocking) && (ld->flags&ML_BLOCKING)) return false; // explicitly blocking everything
     if ((EntityFlags&VEntity::EF_CheckLineBlockMonsters) && (ld->flags&ML_BLOCKMONSTERS)) return false; // block monsters only
     if ((EntityFlags&VEntity::EF_IsPlayer) && (ld->flags&ML_BLOCKPLAYERS)) return false; // block players only
@@ -889,6 +890,14 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
   if (!(ld->flags&ML_RAILING)) {
     if (ld->flags&ML_BLOCKEVERYTHING) {
       // explicitly blocking everything
+      BlockedByLine(ld);
+      tmtrace.AnyBlockingLine = ld;
+      //printf("*** 000000\n");
+      return false;
+    }
+
+    if ((EntityFlags&VEntity::EF_Missile) && (ld->flags&ML_BLOCKPROJECTILE)) {
+      // blocks projectile
       BlockedByLine(ld);
       tmtrace.AnyBlockingLine = ld;
       //printf("*** 000000\n");
@@ -1635,6 +1644,9 @@ bool VEntity::CheckSides (TVec lsPos) {
   yl = MapBlock(tmbbox[BOXBOTTOM]-XLevel->BlockMapOrgY);
   yh = MapBlock(tmbbox[BOXTOP]-XLevel->BlockMapOrgY);
 
+  //k8: is this right?
+  int projblk = (EntityFlags&VEntity::EF_Missile ? ML_BLOCKPROJECTILE : 0);
+
   // xl->xh, yl->yh determine the mapblock set to search
   ++validcount; // prevents checking same line twice
   for (bx = xl; bx <= xh; ++bx) {
@@ -1655,7 +1667,7 @@ bool VEntity::CheckSides (TVec lsPos) {
         // intersection of the trajectory and the line, but that takes
         // longer and probably really isn't worth the effort.
 
-        if (ld->flags&(ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)) {
+        if (ld->flags&(ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING|projblk)) {
           if (tmbbox[BOXLEFT] <= ld->bbox[BOXRIGHT] &&
               tmbbox[BOXRIGHT] >= ld->bbox[BOXLEFT] &&
               tmbbox[BOXTOP] >= ld->bbox[BOXBOTTOM] &&
