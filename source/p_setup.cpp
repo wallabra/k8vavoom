@@ -571,6 +571,7 @@ static void doCacheCleanup () {
   for (;;) {
     VStr fname = Sys_ReadDir(dh);
     if (fname.length() == 0) break;
+    if (fname.extractFileExtension().ICmp("cache") != 0) continue;
     VStr shortname = fname;
     fname = cpath+"/"+fname;
     int ftime = Sys_FileTime(fname);
