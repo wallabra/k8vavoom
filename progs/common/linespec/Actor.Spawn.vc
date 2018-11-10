@@ -358,6 +358,7 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
     if (Flags&SXF_TRANSFERRENDERSTYLE) A.RenderStyle = RenderStyle;
     if (Flags&SXF_SETTARGET) A.Target = self;
     if (Flags&SXF_SETTRACER) A.Tracer = self;
+    if (Flags&SXF_SETMASTER) A.Master = self;
     if (Flags&SXF_TRANSFERROLL) A.Angles.roll = Angles.roll;
     if (Flags&SXF_ISTARGET) Target = A;
     if (Flags&SXF_ISMASTER) Master = A;
