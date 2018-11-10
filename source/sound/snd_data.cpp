@@ -725,7 +725,7 @@ int VSoundManager::GetSoundID (VName Name) {
 //==========================================================================
 int VSoundManager::GetSoundID (const char *name) {
   guard(VSoundManager::GetSoundID);
-  if (!name || !name[0] || VStr::ICmp(name, "None") == 0 || VStr::ICmp(name, "Null") == 0) return 0;
+  if (!name || !name[0] || VStr::ICmp(name, "None") == 0 || VStr::ICmp(name, "Null") == 0 || VStr::ICmp(name, "nil") == 0) return 0;
   for (int i = 0; i < S_sfx.Num(); ++i) {
     if (VStr::ICmp(*S_sfx[i].TagName, name) == 0) return i;
   }
