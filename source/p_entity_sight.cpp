@@ -199,7 +199,9 @@ static bool SightCheckLine (sight_trace_t &Trace, line_t *ld) {
   if (dot1*dot2 >= 0) return true; // line isn't crossed
 
   // try to early out the check
-  if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&ML_BLOCKEVERYTHING)) return false; // stop checking
+  if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&(ML_BLOCKEVERYTHING|ML_BLOCKSIGHT))) {
+    return false; // stop checking
+  }
 
   // store the line for later intersection testing
   intercept_t &In = Trace.Intercepts.Alloc();
