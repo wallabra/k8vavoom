@@ -1433,10 +1433,7 @@ final void A_RailAttack (int RailDamage, optional float Offset,
   optional class!Actor spawnclass, // for particles
   optional float spawnofs_z, optional int spiraloffset, optional int limit)
 {
-  if (!specified_UseAmmo)
-  {
-    UseAmmo = true;
-  }
+  if (!specified_UseAmmo) UseAmmo = true;
 
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -1450,9 +1447,8 @@ final void A_RailAttack (int RailDamage, optional float Offset,
   int Col2 = ParseColour(Colour2);
   TVec Dir;
   AngleVector(Angles, out Dir);
-  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
-    !!(Flags & 1), !!(Flags & 2), distance:range!optional, spawnofs_z:spawnofs_z!optional,
-    pierceLimit:limit!optional);
+  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType, !!(Flags & 1), !!(Flags & 2),
+    distance:range!optional, spawnofs_z:spawnofs_z!optional, pierceLimit:limit!optional);
 }
 
 

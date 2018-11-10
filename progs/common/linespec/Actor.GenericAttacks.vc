@@ -201,25 +201,26 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
 final void A_CustomRailgun(int RailDamage, optional float Offset,
   optional string Colour1, optional string Colour2, optional int Flags,
   optional bool DoAim, optional float MaxDiff,
-  optional class!Actor PuffType)
+  optional class!Actor PuffType,
+  optional float spread_xy, optional float spread_z, // not implemented
+  optional float range,
+  optional int duration, optional float sparsity, optional float driftspeed, optional class!Actor spawnclass, // not implemented
+  optional float spawnofs_z,
+  optional int spiraloffset, // not implemented
+  optional int limit,
+  optional float veleffect)
 {
-  if (DoAim && !Target)
-  {
-    return;
-  }
+  if (DoAim && !Target) return;
 
-  //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
-    VisDir = 1;
-  }
+  // Andy Baker's stealth monsters
+  if (bStealth) VisDir = 1;
+
+  if (!specified_veleffect) veleffect = 3.0;
 
   bAmbush = false;
 
-  if (DoAim)
-  {
-    Angles.yaw = atan2(Target.Origin.y - Origin.y,
-      Target.Origin.x - Origin.x);
+  if (DoAim) {
+    Angles.yaw = atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x);
   }
 
   TVec Dir;
@@ -227,25 +228,21 @@ final void A_CustomRailgun(int RailDamage, optional float Offset,
   TAVec Ang;
   VectorAngles(Dir, out Ang);
 
-  if (DoAim)
-  {
-    //  Trail a little bit behind the target
+  if (DoAim) {
+    // trail a little bit behind the target
     Ang.yaw = atan2(
-      Target.Origin.y - Target.Velocity.y * 3.0 / 35.0 - Origin.y,
-      Target.Origin.x - Target.Velocity.y * 3.0 / 35.0 - Origin.x);
+      Target.Origin.y-Target.Velocity.y*veleffect/35.0-Origin.y,
+      Target.Origin.x-Target.Velocity.y*veleffect/35.0-Origin.x);
 
-    if (Target.bShadow)
-    {
-      Ang.yaw = AngleMod360(Angles.yaw + (Random() - Random()) * 45.0);
-    }
+    if (Target.bShadow) Ang.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
     Angles.yaw = Ang.yaw;
   }
 
   AngleVector(Ang, out Dir);
   int Col1 = ParseColour(Colour1);
   int Col2 = ParseColour(Colour2);
-  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType,
-    !!(Flags & 1), !!(Flags & 2));
+  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType, !!(Flags & 1), !!(Flags & 2),
+    distance:range!optional, spawnofs_z:spawnofs_z!optional, pierceLimit:limit!optional);
 }
 
 //==========================================================================
