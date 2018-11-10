@@ -38,7 +38,8 @@ static sec_region_t *r_region;
 static bool MirrorClipSegs;
 
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
-static VCvarI r_max_portal_depth("r_max_portal_depth", "-1", "Maximum allowed portal depth (-1: infinite)", 0/*CVAR_Archive*/);
+VCvarI r_max_portal_depth("r_max_portal_depth", "-1", "Maximum allowed portal depth (-1: infinite)", 0/*CVAR_Archive*/);
+static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
@@ -792,7 +793,7 @@ void VRenderLevelShared::RenderPortals () {
     }
     r_decals_enabled = oldDecalsEnabled;
   } else {
-    GCon->Logf("WARNING: portal level too deep (%d)", PortalLevel);
+    if (dbg_max_portal_depth_warning) GCon->Logf("WARNING: portal level too deep (%d)", PortalLevel);
   }
 
   for (int i = 0; i < Portals.Num(); ++i) {

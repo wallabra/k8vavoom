@@ -71,6 +71,9 @@ static VCvarI loader_cache_compression_level("loader_cache_compression_level", "
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", 0/*CVAR_Archive*/);
 
 
+extern VCvarI r_max_portal_depth;
+
+
 // lump order in a map WAD: each map needs a couple of lumps
 // to provide a complete scene geometry description
 enum {
@@ -487,6 +490,17 @@ void VLevel::FixKnownMapErrors () {
     Sides[Lines[1277].sidenum[1]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
     Sides[Lines[1278].sidenum[0]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
     GCon->Logf("MAPFIX: Heretic: E4M7 detected and fixed");
+    return;
+  }
+
+  // Winter's Fury
+  if (MapHashMD5 == "369034113c5315b17cadfb11f730a571" ||
+      MapHashMD5 == "355695fadf065955f62ea993e942c35d" ||
+      MapHashMD5 == "2842ece024c5c7905f637c616fefc36e" ||
+      MapHashMD5 == "c3cd90a4d470b5413849e6341f245737")
+  {
+    r_max_portal_depth = 1;
+    GCon->Logf("Winter's Fury: reduced portals to 1");
     return;
   }
 }
