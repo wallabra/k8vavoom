@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "vc_local.h"
 #include "sv_local.h"
 
@@ -1138,10 +1137,18 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VName Name, TLocation Lo
 
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = 0;
+  int totalCount = 0;
   if (!sc->Check(")")) {
     do {
+      ++totalCount;
       Args[NumArgs] = ParseExpressionPriority13(sc, decoClass);
-      if (NumArgs == VMethod::MAX_PARAMS) ParseError(sc->GetLoc(), "Too many arguments"); else ++NumArgs;
+      if (NumArgs == VMethod::MAX_PARAMS) {
+        delete Args[NumArgs];
+        Args[NumArgs] = nullptr;
+        if (VStr::ICmp(*Name, "A_Jump") != 0) ParseError(sc->GetLoc(), "Too many arguments to `%s`", *Name);
+      } else {
+        ++NumArgs;
+      }
     } while (sc->Check(","));
     sc->Expect(")");
   }
@@ -1154,7 +1161,7 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VName Name, TLocation Lo
       if (LineSpecialInfos[i].Name == FuncNameLower) {
         Func = decoClass->FindMethodChecked("A_ExecActionSpecial");
         if (NumArgs > 5) {
-          sc->Error("Too many arguments");
+          sc->Error(va("Too many arguments to translated action special `%s`", *Name));
         } else {
           // add missing arguments
           while (NumArgs < 5) {
@@ -1174,6 +1181,12 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VName Name, TLocation Lo
       VDecorateStateAction *Act = decoClass->FindDecorateStateAction(*FuncNameLower);
       Func = (Act ? Act->Method : nullptr);
     }
+  }
+
+  if (Func && NumArgs > Func->NumParams && VStr::ICmp(*Name, "A_Jump") == 0) {
+    ParseWarning(sc->GetLoc(), "Too many arguments to `%s` (%d -- are you nuts?!)", *Name, totalCount);
+    for (int f = Func->NumParams; f < NumArgs; ++f) { delete Args[f]; Args[f] = nullptr; }
+    NumArgs = Func->NumParams;
   }
 
   return new VDecorateInvocation((Func ? Func->GetVName() : Name), Loc, NumArgs, Args);
@@ -1669,13 +1682,21 @@ static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VE
   //VExpression *Args[VMethod::MAX_PARAMS+1];
   //int NumArgs = 0;
   NumArgs = 0;
+  int totalCount = 0;
 
   //fprintf(stderr, "***8:<%s> %s\n", *sc->String, *sc->GetLoc().toStringNoCol());
   if (sc->Check("(")) {
     if (!sc->Check(")")) {
       do {
+        ++totalCount;
         Args[NumArgs] = ParseExpressionPriority13(sc, Class);
-        if (NumArgs == VMethod::MAX_PARAMS) ParseError(sc->GetLoc(), "Too many arguments"); else ++NumArgs;
+        if (NumArgs == VMethod::MAX_PARAMS) {
+          delete Args[NumArgs];
+          Args[NumArgs] = nullptr;
+          if (VStr::ICmp(*FuncName, "A_Jump") != 0) ParseError(sc->GetLoc(), "Too many arguments to `%s`", *FuncName);
+        } else {
+          ++NumArgs;
+        }
       } while (sc->Check(","));
       sc->Expect(")");
     }
@@ -1722,6 +1743,12 @@ static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VE
         delete Args[i];
         Args[i] = nullptr;
       }
+    }
+  } else {
+    if (Func && NumArgs > Func->NumParams && VStr::ICmp(*FuncName, "A_Jump") == 0) {
+      ParseWarning(sc->GetLoc(), "Too many arguments to `%s` (%d -- are you nuts?!)", *FuncName, totalCount);
+      for (int f = Func->NumParams; f < NumArgs; ++f) { delete Args[f]; Args[f] = nullptr; }
+      NumArgs = Func->NumParams;
     }
   }
 
