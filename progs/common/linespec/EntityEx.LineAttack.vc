@@ -470,7 +470,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, opt
 
       li = in->line;
 
-      if (!(li->flags&ML_TWOSIDED) || (li->flags&ML_BLOCKEVERYTHING)) break; // stop
+      if (!(li->flags&ML_TWOSIDED) || (li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // stop
 
       // crosses a two sided line
       // a two sided line will restrict the possible target ranges
@@ -768,7 +768,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
+            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
           }
           open = open->next;
         }

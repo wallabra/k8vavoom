@@ -167,7 +167,7 @@ enum {
   ML_BLOCKPROJECTILE     = 0x01000000, // not implemented
   ML_BLOCKUSE            = 0x02000000, // (not implemented) blocks all use actions through this line
   ML_BLOCKSIGHT          = 0x04000000, // blocks monster line of sight
-  ML_BLOCKHITSCAN        = 0x08000000, // (not implemented) blocks hitscan attacks
+  ML_BLOCKHITSCAN        = 0x08000000, // blocks hitscan attacks
   ML_3DMIDTEX_IMPASS     = 0x10000000, // (not implemented) [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
   ML_KEEPDATA            = 0x20000000, // keep FloorData or CeilingData after activating them
                                        // used to simulate original Heretic behaviour

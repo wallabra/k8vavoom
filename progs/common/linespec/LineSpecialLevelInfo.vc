@@ -73,8 +73,8 @@ static final int ConvertLineBlockingFlags (int Arg2) {
   if (Arg2&BLOCKF_EVERYTHING) setFlags |= ML_BLOCKEVERYTHING;
   if (Arg2&BLOCKF_RAILING) setFlags |= ML_RAILING;
   if (Arg2&BLOCKF_USE) { print("WARNING: BLOCKF_USE is not implemented!"); setFlags |= ML_BLOCKUSE; }
-  if (Arg2&BLOCKF_SIGHT) { print("WARNING: BLOCKF_SIGHT is not implemented!"); setFlags |= ML_BLOCKSIGHT; }
-  if (Arg2&BLOCKF_HITSCAN) { print("WARNING: BLOCKF_SIGHT is not implemented!"); setFlags |= ML_BLOCKHITSCAN; }
+  if (Arg2&BLOCKF_SIGHT) setFlags |= ML_BLOCKSIGHT;
+  if (Arg2&BLOCKF_HITSCAN) setFlags |= ML_BLOCKHITSCAN;
   if (Arg2&ML_SOUNDBLOCK) setFlags |= ML_SOUNDBLOCK;
   return setFlags;
 }
