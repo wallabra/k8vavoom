@@ -33,7 +33,7 @@ class ForceFieldGuard : Actor
 //
 //==========================================================================
 
-override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType)
+override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced)
 {
   if (!DegninOre(inflictor))
   {

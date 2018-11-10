@@ -1005,23 +1005,20 @@ final void A_FaceTarget()
   }
 }
 
+
 //==========================================================================
 //
 //  A_Die
 //
 //==========================================================================
-
-final void A_Die(optional name DamageType)
-{
-  if (!specified_DamageType)
-  {
-    Damage(none, none, Health);
-  }
-  else
-  {
-    Damage(none, none, Health, DamageType);
+final void A_Die (optional name DamageType) {
+  if (!specified_DamageType) {
+    Damage(none, none, Health, forced:true);
+  } else {
+    Damage(none, none, Health, DamageType, forced:true);
   }
 }
+
 
 //==========================================================================
 //

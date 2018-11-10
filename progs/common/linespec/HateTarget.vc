@@ -58,10 +58,9 @@ override void BeginPlay()
 //
 //==========================================================================
 
-override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage,
-  name DmgType)
+override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced)
 {
-  if (Special2)
+  if (Special2 && !forced)
   {
     return 0;
   }

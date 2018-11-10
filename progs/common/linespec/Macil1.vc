@@ -35,14 +35,13 @@ class Macil1 : Actor
 //
 //============================================================================
 
-override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage,
-  name DmgType)
+override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced)
 {
-  if (inflictor.IsA('SpectralLightningV1'))
+  if (!forced && inflictor.IsA('SpectralLightningV1'))
   {
     return -1;
   }
-  return ::TakeSpecialDamage(inflictor, source, damage, DmgType);
+  return ::TakeSpecialDamage(inflictor, source, damage, DmgType, forced!optional);
 }
 
 states
