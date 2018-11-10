@@ -3711,10 +3711,15 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
     float pheight;
 
     line = in->line;
-    if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough)))) {
+    if (!line->special || (!(line->SpacFlags&(SPAC_Use|SPAC_UseThrough|SPAC_UseBack)))) {
       hit_point = Origin+(UseRange*in->frac)*useDir;
-      open = LineOpenings(line, hit_point);
-      open = FindOpening(open, hit_point.z, hit_point.z+Height);
+      if (line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
+        // gozzo does this
+        open = nullptr;
+      } else {
+        open = LineOpenings(line, hit_point);
+        open = FindOpening(open, hit_point.z, hit_point.z+Height);
+      }
       if (!open || open->range <= 0.0 || (line->special && Level.CompatUseBlocking)) {
         DoSecAct = false;
 
@@ -3741,13 +3746,17 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
     }
 
     if (PointOnPlaneSide(Origin, line) == 1) {
+      if (!(line->SpacFlags&SPAC_UseBack)) continue;
+      //k8: gozzo doesn't check this, but we'll do
       // don't use back side unless it's a two-sided line
       if (line->backsector != nullptr) continue;
-      break;
+      LineSpecialLevelInfo(Level).ActivateLine(line, self, 1, SPAC_UseBack);
+      action = true;
+    } else {
+      if (line->SpacFlags&(SPAC_UseBack|SPAC_Use|SPAC_UseThrough) == SPAC_UseBack) continue; // can't be used from front, skip it
+      LineSpecialLevelInfo(Level).ActivateLine(line, self, 0, SPAC_Use);
+      action = true;
     }
-
-    LineSpecialLevelInfo(Level).ActivateLine(line, self, 0, SPAC_Use);
-    action = true;
 
     //WAS can't use more than one special line in a row
     //jff 3/21/98 NOW multiple use allowed with enabling line flag

@@ -147,7 +147,7 @@ const int
   ML_WRAP_MIDTEX         = 0x00100000,
   ML_FIRSTSIDEONLY       = 0x00800000, // Actiavte only when crossed from front side.
   ML_BLOCKPROJECTILE     = 0x01000000, // not implemented
-  ML_BLOCKUSE            = 0x02000000, // (not implemented) blocks all use actions through this line
+  ML_BLOCKUSE            = 0x02000000, // blocks all use actions through this line
   ML_BLOCKSIGHT          = 0x04000000, // blocks monster line of sight
   ML_BLOCKHITSCAN        = 0x08000000, // blocks hitscan attacks
   ML_3DMIDTEX_IMPASS     = 0x10000000, // (not implemented) [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
@@ -178,6 +178,7 @@ enum {
   SPAC_AnyCross   = 0x0080,
   SPAC_MUse       = 0x0100, // when monster uses line
   SPAC_MPush      = 0x0200, // when monster pushes line
+  SPAC_UseBack    = 0x0400, // can be used from the backside
 };
 
 //

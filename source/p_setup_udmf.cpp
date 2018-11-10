@@ -498,42 +498,16 @@ void VUdmfParser::ParseLineDef(const mapInfo_t &MInfo)
     //  Hexen's extensions.
     if (NS & (NS_Hexen | NS_Vavoom | NS_ZDoom | NS_ZDoomTranslated))
     {
-      if (!Key.ICmp("playercross"))
-      {
-        Flag(L.L.SpacFlags, SPAC_Cross);
-      }
-      else if (!Key.ICmp("playeruse"))
-      {
-        Flag(L.L.SpacFlags, SPAC_Use);
-      }
-      else if (!Key.ICmp("monstercross"))
-      {
-        Flag(L.L.SpacFlags, SPAC_MCross);
-      }
-      else if (!Key.ICmp("monsteruse"))
-      {
-        Flag(L.L.SpacFlags, SPAC_MUse);
-      }
-      else if (!Key.ICmp("impact"))
-      {
-        Flag(L.L.SpacFlags, SPAC_Impact);
-      }
-      else if (!Key.ICmp("playerpush"))
-      {
-        Flag(L.L.SpacFlags, SPAC_Push);
-      }
-      else if (!Key.ICmp("monsterpush"))
-      {
-        Flag(L.L.SpacFlags, SPAC_MPush);
-      }
-      else if (!Key.ICmp("missilecross"))
-      {
-        Flag(L.L.SpacFlags, SPAC_PCross);
-      }
-      else if (!Key.ICmp("repeatspecial"))
-      {
-        Flag(L.L.flags, ML_REPEAT_SPECIAL);
-      }
+           if (!Key.ICmp("playercross")) Flag(L.L.SpacFlags, SPAC_Cross);
+      else if (!Key.ICmp("playeruse")) Flag(L.L.SpacFlags, SPAC_Use);
+      else if (!Key.ICmp("playeruseback")) Flag(L.L.SpacFlags, SPAC_UseBack);
+      else if (!Key.ICmp("monstercross")) Flag(L.L.SpacFlags, SPAC_MCross);
+      else if (!Key.ICmp("monsteruse")) Flag(L.L.SpacFlags, SPAC_MUse);
+      else if (!Key.ICmp("impact")) Flag(L.L.SpacFlags, SPAC_Impact);
+      else if (!Key.ICmp("playerpush")) Flag(L.L.SpacFlags, SPAC_Push);
+      else if (!Key.ICmp("monsterpush")) Flag(L.L.SpacFlags, SPAC_MPush);
+      else if (!Key.ICmp("missilecross")) Flag(L.L.SpacFlags, SPAC_PCross);
+      else if (!Key.ICmp("repeatspecial")) Flag(L.L.flags, ML_REPEAT_SPECIAL);
     }
 
     //  Extensions.

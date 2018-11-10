@@ -1278,7 +1278,12 @@ final bool UsePuzzleItem(int PuzzleItemType)
       hit_point = MO.Origin + (USERANGE * in->frac) * PuzzleUseDir;
       if (in->line->special != LNSPEC_UsePuzzleItem)
       {
-        open = LineOpenings(in->line, hit_point);
+        if (in->line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
+          // gozzo does this
+          open = nullptr;
+        } else {
+          open = LineOpenings(in->line, hit_point);
+        }
         if (!open || open->range <= 0.0)
         {
           if (MO.bIsPlayer)
