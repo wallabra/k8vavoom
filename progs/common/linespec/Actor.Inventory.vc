@@ -153,9 +153,21 @@ final void DoTakeInventory(class!Inventory ItemType, int Amount,
 //
 //==========================================================================
 
-final void A_TakeInventory(class!Inventory ItemType, optional int Amount)
+final void A_TakeInventory(class!Inventory ItemType, optional int Amount, optional int flags, optional int giveto)
 {
-  DoTakeInventory(ItemType, Amount, self);
+  EntityEx dest = EntityEx(DecorDoAAPtr('A_TakeInventory', giveto!optional));
+  if (!dest) return;
+  // process TIF_NOTAKEINFINITE
+  if (flags&1) {
+    if (ItemType isa Ammo) {
+      Inventory InfiniteAmmo = dest.Inventory;
+      while (InfiniteAmmo) {
+        if (PowerInfiniteAmmo(InfiniteAmmo)) return;
+        InfiniteAmmo = InfiniteAmmo.Inventory;
+      }
+    }
+  }
+  DoTakeInventory(ItemType, Amount, dest);
 }
 
 //==========================================================================

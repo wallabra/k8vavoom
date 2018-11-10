@@ -29,7 +29,7 @@
 
 //==========================================================================
 //
-//  DecorDoAAPtr
+//  A_k8ConLog
 //
 //==========================================================================
 final void decorate_A_k8ConLog (string msg) {
@@ -42,8 +42,8 @@ final void decorate_A_k8ConLog (string msg) {
 //  DecorDoAAPtr
 //
 //==========================================================================
-final Entity DecorDoAAPtr (name methodname, /*optional*/ int ptr) {
-  if (/*!specified_ptr ||*/ ptr == AAPTR_DEFAULT) return self;
+final Entity DecorDoAAPtr (name methodname, optional int ptr) {
+  if (!specified_ptr || ptr == AAPTR_DEFAULT) return self;
   // category 1
   if (bIsPlayer) {
     if (ptr&AAPTR_PLAYER_GETTARGET) {

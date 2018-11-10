@@ -245,7 +245,7 @@ class Actor extends Thinker
   //
   action native A_GiveInventory(class<Inventory> itemtype, optional eval int amount);
   action native A_GiveToTarget(class<Inventory> itemtype, optional eval int amount);
-  action native A_TakeInventory(class<Inventory> itemtype, optional eval int amount);
+  action native A_TakeInventory(class<Inventory> itemtype, optional eval int amount, optional int flags, optional int giveto);
   action native A_TakeFromTarget(class<Inventory> itemtype, optional eval int amount);
   action native A_DropInventory(class<Inventory> itemtype);
   action native A_SelectWeapon(class<Weapon> weapontype);

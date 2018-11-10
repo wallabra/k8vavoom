@@ -243,3 +243,10 @@ const float ATTN_STATIC = 3;
 enum EVileAttackFlags {
   VAF_DMGTYPEAPPLYTODIRECT = 1,
 };
+
+
+// Flags for A_TakeInventory and A_TakeFromTarget
+enum ETakeFlags
+{
+  TIF_NOTAKEINFINITE = 1,
+};
