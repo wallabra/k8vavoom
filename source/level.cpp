@@ -1689,7 +1689,7 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
     }
 
     // check for sloped ceiling
-    else if (inregion->ceiling->normal.z != -1.0) {
+    if (inregion->ceiling->normal.z != -1.0) {
       if (inregion->floor->minz <= src->ceiling.maxz && inregion->ceiling->minz >= src->floor.maxz) {
         region = new sec_region_t;
         memset((void *)region, 0, sizeof(*region));
