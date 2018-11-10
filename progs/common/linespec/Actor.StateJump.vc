@@ -33,7 +33,7 @@
 //
 //==========================================================================
 
-final void A_Jump(int Chance, state Label1, optional state Label2,
+final void A_Jump (int Chance, state Label1, optional state Label2,
   optional state Label3, optional state Label4, optional state Label5,
   optional state Label6, optional state Label7, optional state Label8,
   optional state Label9, optional state Label10, optional state Label11,
@@ -44,45 +44,47 @@ final void A_Jump(int Chance, state Label1, optional state Label2,
   optional state Label24, optional state Label25, optional state Label26,
   optional state Label27, optional state Label28, optional state Label29)
 {
-  if (P_Random() < Chance) {
-    if (!specified_Label2) {
-      DoJump(Label1);
-    } else {
-      array!state List;
-      List[0] = Label1;
-      List[1] = Label2;
-      if (specified_Label3) List[$] = Label3;
-      if (specified_Label4) List[$] = Label4;
-      if (specified_Label5) List[$] = Label5;
-      if (specified_Label6) List[$] = Label6;
-      if (specified_Label7) List[$] = Label7;
-      if (specified_Label8) List[$] = Label8;
-      if (specified_Label9) List[$] = Label9;
-      if (specified_Label10) List[$] = Label10;
-      if (specified_Label11) List[$] = Label11;
-      if (specified_Label12) List[$] = Label12;
-      if (specified_Label13) List[$] = Label13;
-      if (specified_Label14) List[$] = Label14;
-      if (specified_Label15) List[$] = Label15;
-      if (specified_Label16) List[$] = Label16;
-      if (specified_Label17) List[$] = Label17;
-      if (specified_Label18) List[$] = Label18;
-      if (specified_Label19) List[$] = Label19;
-      if (specified_Label20) List[$] = Label20;
-      if (specified_Label21) List[$] = Label21;
-      if (specified_Label22) List[$] = Label22;
-      if (specified_Label23) List[$] = Label23;
-      if (specified_Label24) List[$] = Label24;
-      if (specified_Label25) List[$] = Label25;
-      if (specified_Label26) List[$] = Label26;
-      if (specified_Label27) List[$] = Label27;
-      if (specified_Label28) List[$] = Label28;
-      if (specified_Label29) List[$] = Label29;
-      DoJump(List[P_Random()%List.Num]);
+  if (Chance > 0) {
+    state[32] List;
+    List[0] = Label1;
+    int count = 1;
+    if (specified_Label2) List[count++] = Label2;
+    if (specified_Label3) List[count++] = Label3;
+    if (specified_Label4) List[count++] = Label4;
+    if (specified_Label5) List[count++] = Label5;
+    if (specified_Label6) List[count++] = Label6;
+    if (specified_Label7) List[count++] = Label7;
+    if (specified_Label8) List[count++] = Label8;
+    if (specified_Label9) List[count++] = Label9;
+    if (specified_Label10) List[count++] = Label10;
+    if (specified_Label11) List[count++] = Label11;
+    if (specified_Label12) List[count++] = Label12;
+    if (specified_Label13) List[count++] = Label13;
+    if (specified_Label14) List[count++] = Label14;
+    if (specified_Label15) List[count++] = Label15;
+    if (specified_Label16) List[count++] = Label16;
+    if (specified_Label17) List[count++] = Label17;
+    if (specified_Label18) List[count++] = Label18;
+    if (specified_Label19) List[count++] = Label19;
+    if (specified_Label20) List[count++] = Label20;
+    if (specified_Label21) List[count++] = Label21;
+    if (specified_Label22) List[count++] = Label22;
+    if (specified_Label23) List[count++] = Label23;
+    if (specified_Label24) List[count++] = Label24;
+    if (specified_Label25) List[count++] = Label25;
+    if (specified_Label26) List[count++] = Label26;
+    if (specified_Label27) List[count++] = Label27;
+    if (specified_Label28) List[count++] = Label28;
+    if (specified_Label29) List[count++] = Label29;
+
+    if (Chance > 255 || P_Random() < Chance) {
+      int n = 0;
+      if (count > 1) n = P_Random()%count;
+      DoJump(List[n]);
     }
   }
 
-  //  State jumps should not affect state chain results.
+  // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
