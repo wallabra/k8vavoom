@@ -909,11 +909,26 @@ void VAcsObject::LoadEnhancedObject()
         sbuf[f] = ((char *)buffer)+ofs;
       }
       if (valid) {
-        //GCon->Logf("ACS SNAM: %d names found", count);
-        for (int f = 0; f < count; ++f) {
-          //GCon->Logf("  #%d: <%s>", f, sbuf[f]);
-          if (f < NumScripts) Scripts[f].Name = VName(sbuf[f], VName::AddLower);
-          //else GCon->Logf("    OOPS!");
+        GCon->Logf("ACS SNAM: %d names found", count);
+        //for (int scnum = 0; scnum < NumScripts; ++scnum) GCon->Logf("ACS: script #%d has index #%d (%d)", scnum, Scripts[scnum].Number, (vint16)Scripts[scnum].Number);
+        for (int nameidx = 0; nameidx < count; ++nameidx) {
+          //GCon->Logf("  #%d: <%s>", nameidx, sbuf[nameidx]);
+          // ACC stores script names as an index into the SNAM chunk,
+          // with the first index as -1 and counting down from there.
+          // note that script number is 16 bit.
+          // let's find a script and assign name to it
+          int scnum;
+          for (scnum = 0; scnum < NumScripts; ++scnum) {
+            int num = (vint16)Scripts[scnum].Number;
+            //GCon->Logf("ACS: is %d == %d? %d", -(nameidx+1), num, (num == -(nameidx+1) ? 1 : 0));
+            if (num == -(nameidx+1)) break;
+          }
+          if (scnum >= NumScripts) {
+            GCon->Logf("ACS: cannot assign name '%s' to script %d", sbuf[nameidx], -(nameidx+1));
+          } else {
+            //GCon->Logf("ACS: assigned name '%s' to script %d (%d; index=%d (%d))", sbuf[nameidx], -(nameidx+1), scnum, Scripts[scnum].Number, (vint16)Scripts[scnum].Number);
+            Scripts[scnum].Name = VName(sbuf[nameidx], VName::AddLower);
+          }
         }
       } else {
         GCon->Logf("ACS ERROR: invalid `SNAM` chunk!");
@@ -1164,6 +1179,7 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const
     nameidx = -nameidx;
     if (nameidx < 0) return nullptr;
   }
+  //for (int i = 0; i < NumScripts; i++) fprintf(stderr, "#%d: index=%d; name=<%s>\n", i, Scripts[i].Number, *Scripts[i].Name); abort();
   for (int i = 0; i < NumScripts; i++) {
     if (Scripts[i].Name.GetIndex() == nameidx) return Scripts + i;
   }
@@ -1685,6 +1701,8 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3,
     Info = FindScript(Number, Object);
   } else if (Number > -100000) {
     Info = FindScriptByName(Number, Object);
+    //if (Info) GCon->Logf("ACS: Start: script=<%d>; found '%s'", Number, *Info->Name);
+    //else GCon->Logf("ACS: Start: script=<%d> -- OOPS", Number);
   } else {
     GCon->Logf("VAcsLevel::Start: by direct index (%d)", -(Number+100000));
     Info = FindScript(Number, Object);
@@ -2128,7 +2146,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       {
         //VAcsObject *ao = nullptr;
         VName name = GetNameLowerCase(args[0]);
-        GCon->Logf("WARNING: UNTESTED ACSF function 'ACS_NamedExecute' (script '%s')", *name);
+        //GCon->Logf("WARNING: UNTESTED ACSF function 'ACS_NamedExecute' (script '%s')", *name);
         if (name == NAME_None) return 0;
         //if (!ActiveObject->Level->FindScriptByNameStr(*name, ao)) return 0;
         int ScArgs[3];
@@ -2285,6 +2303,10 @@ int VAcs::RunScript(float DeltaTime)
 {
   guard(VAcs::RunScript);
   VAcsObject *WaitObject;
+
+  //fprintf(stderr, "VAcs::RunScript:000: self name is '%s' (number is %d)\n", *info->Name, info->Number);
+  //if (info->RunningScript) fprintf(stderr, "VAcs::RunScript:001: rs name is '%s' (number is %d)\n", *info->RunningScript->info->Name, info->RunningScript->info->Number);
+
   if (State == ASTE_Terminating)
   {
     if (info->RunningScript == this)
@@ -2327,6 +2349,7 @@ int VAcs::RunScript(float DeltaTime)
     return 1;
   }
 
+  //fprintf(stderr, "VAcs::RunScript:002: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //  Shortcuts
   int *WorldVars = Level->World->Acs->WorldVars;
   int *GlobalVars = Level->World->Acs->GlobalVars;
@@ -2409,8 +2432,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, sp[-2], sp[-1], 0,
-          0, 0, line, side, Activator);
+        //fprintf(stderr, "***ACS LSPEC2: special=%d; args=(%d,%d)\n", special, sp[-2], sp[-1]);
+        Level->eventExecuteActionSpecial(special, sp[-2], sp[-1], 0, 0, 0, line, side, Activator);
         sp -= 2;
       }
       ACSVM_BREAK;
@@ -2419,8 +2442,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, sp[-3], sp[-2],
-          sp[-1], 0, 0, line, side, Activator);
+        //fprintf(stderr, "***ACS LSPEC3: special=%d; args=(%d,%d,%d)\n", special, sp[-3], sp[-2], sp[-1]);
+        Level->eventExecuteActionSpecial(special, sp[-3], sp[-2], sp[-1], 0, 0, line, side, Activator);
         sp -= 3;
       }
       ACSVM_BREAK;
@@ -5439,6 +5462,7 @@ int VAcs::RunScript(float DeltaTime)
 #if USE_COMPUTED_GOTO
 LblFuncStop:
 #endif
+  //fprintf(stderr, "VAcs::RunScript:003: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   InstructionPointer = ip;
   if (action == SCRIPT_Terminate)
   {
@@ -5642,9 +5666,11 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
   P_GET_PTR(VEntity, Activator);
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACS"); }
+  //GCon->Logf("ACS: RunNamedACS000: script=<%s>; map=%d", *Name, Map);
   if (Name.length() == 0) { RET_BOOL(false); return; }
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
+  //GCon->Logf("ACS: RunNamedACS001: script=<%s>; map=%d", *Script, Map);
   RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, true/*net*/));
 }
 
