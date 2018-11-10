@@ -542,12 +542,16 @@ void VUdmfParser::ParseLineDef(const mapInfo_t &MInfo)
       else if (!Key.ICmp("zoneboundary")) Flag(L.L.flags, ML_ZONEBOUNDARY);
       else if (!Key.ICmp("clipmidtex")) Flag(L.L.flags, ML_CLIP_MIDTEX);
       else if (!Key.ICmp("wrapmidtex")) Flag(L.L.flags, ML_WRAP_MIDTEX);
-      //TODO
-      else if (!Key.ICmp("Checkswitchrange")) Flag(L.L.flags, ML_CHECKSWITCHRANGE);
       else if (!Key.ICmp("blockprojectiles")) Flag(L.L.flags, ML_BLOCKPROJECTILE);
       else if (!Key.ICmp("blockuse")) Flag(L.L.flags, ML_BLOCKUSE);
       else if (!Key.ICmp("blocksight")) Flag(L.L.flags, ML_BLOCKSIGHT);
       else if (!Key.ICmp("blockhitscan")) Flag(L.L.flags, ML_BLOCKHITSCAN);
+      //TODO
+      else if (!Key.ICmp("Checkswitchrange")) Flag(L.L.flags, ML_CHECKSWITCHRANGE);
+      else if (!Key.ICmp("midtex3d")) {
+        GCon->Logf("UDMF WARNING:%s: `midtex3d` is not implemented", *sc.GetLoc().toStringNoCol());
+        Flag(L.L.flags, ML_3DMIDTEX); // won't work at all
+      }
     }
   }
 
