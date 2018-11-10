@@ -38,11 +38,11 @@ static sec_region_t *r_region;
 static bool MirrorClipSegs;
 
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
+static VCvarI r_max_portal_depth("r_max_portal_depth", "-1", "Maximum allowed portal depth (-1: infinite)", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::times_render_lowlevel("times_render_lowlevel", false, "Show low-level render times.", 0/*CVAR_Archive*/);
 VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
-
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
@@ -781,15 +781,19 @@ void VRenderLevelShared::RenderPortals () {
   guard(VRenderLevelShared::RenderPortals);
   ++PortalLevel;
 
-  //FIXME: disable decals for portals
-  //       i should rewrite decal rendering, so we can skip stencil buffer
-  //       (or emulate stencil buffer with texture and shaders)
-  bool oldDecalsEnabled = r_decals_enabled;
-  r_decals_enabled = false;
-  for (int i = 0; i < Portals.Num(); ++i) {
-    if (Portals[i] && Portals[i]->Level == PortalLevel) Portals[i]->Draw(true);
+  if (r_max_portal_depth < 0 || PortalLevel <= r_max_portal_depth) {
+    //FIXME: disable decals for portals
+    //       i should rewrite decal rendering, so we can skip stencil buffer
+    //       (or emulate stencil buffer with texture and shaders)
+    bool oldDecalsEnabled = r_decals_enabled;
+    r_decals_enabled = false;
+    for (int i = 0; i < Portals.Num(); ++i) {
+      if (Portals[i] && Portals[i]->Level == PortalLevel) Portals[i]->Draw(true);
+    }
+    r_decals_enabled = oldDecalsEnabled;
+  } else {
+    GCon->Logf("WARNING: portal level too deep (%d)", PortalLevel);
   }
-  r_decals_enabled = oldDecalsEnabled;
 
   for (int i = 0; i < Portals.Num(); ++i) {
     if (Portals[i] && Portals[i]->Level == PortalLevel) {
@@ -797,6 +801,7 @@ void VRenderLevelShared::RenderPortals () {
       Portals[i] = nullptr;
     }
   }
+
   --PortalLevel;
   if (PortalLevel == 0) Portals.Clear();
   unguard;
