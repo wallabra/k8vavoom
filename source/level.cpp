@@ -518,6 +518,29 @@ void VLevel::Serialise (VStream &Strm) {
   }
   unguard;
 
+  // subversion
+  vuint8 xver = 0;
+  Strm << STRM_INDEX(xver);
+
+  // sector links
+  vint32 slscount = sectorlinkStart.length();
+  Strm << STRM_INDEX(slscount);
+  if (Strm.IsLoading()) sectorlinkStart.setLength(slscount);
+  for (int f = 0; f < slscount; ++f) {
+    vint32 sv = 0;
+    Strm << STRM_INDEX(sv);
+    sectorlinkStart[f] = sv;
+  }
+  slscount = sectorlinks.length();
+  Strm << STRM_INDEX(slscount);
+  if (Strm.IsLoading()) sectorlinks.setLength(slscount);
+  for (int f = 0; f < slscount; ++f) {
+    SectorLink *sl = &sectorlinks[f];
+    Strm << STRM_INDEX(sl->index);
+    Strm << STRM_INDEX(sl->mts);
+    Strm << STRM_INDEX(sl->next);
+  }
+
   unguard;
 }
 
@@ -949,6 +972,48 @@ line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
   *searchPosition = -1;
   return nullptr;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VLevel::SectorSetLink
+//
+//==========================================================================
+void VLevel::SectorSetLink (int controltag, int tag, int surface, int movetype) {
+  if (controltag <= 0) return;
+  if (tag <= 0) return;
+  if (tag == controltag) return;
+  //FIXME: just enough to let annie working
+  if (surface != 0 || movetype != 1) {
+    GCon->Logf("WARNING: UNIMPLEMENTED: setting sector link: controltag=%d; tag=%d; surface=%d; movetype=%d", controltag, tag, surface, movetype);
+    return;
+  }
+  for (int csi = FindSectorFromTag(controltag, -1); csi >= 0; csi = FindSectorFromTag(controltag, csi)) {
+    for (int lsi = FindSectorFromTag(tag, -1); lsi >= 0; lsi = FindSectorFromTag(tag, lsi)) {
+      if (lsi == csi) continue;
+      if (csi < sectorlinkStart.length()) {
+        int f = sectorlinkStart[csi];
+        while (f >= 0) {
+          if (sectorlinks[f].index == lsi) break;
+          f = sectorlinks[f].next;
+        }
+        if (f >= 0) continue;
+      }
+      // add it
+      //GCon->Logf("linking sector #%d (tag=%d) to sector #%d (controltag=%d)", lsi, tag, csi, controltag);
+      while (csi >= sectorlinkStart.length()) sectorlinkStart.append(-1);
+      //GCon->Logf("  csi=%d; len=%d", csi, sectorlinkStart.length());
+      //GCon->Logf("  csi=%d; sl=%d", csi, sectorlinkStart[csi]);
+      // allocate sectorlink
+      int slidx = sectorlinks.length();
+      SectorLink &sl = sectorlinks.alloc();
+      sl.index = lsi;
+      sl.mts = (movetype&0x0f)|(surface ? 1<<30 : 0);
+      sl.next = sectorlinkStart[csi];
+      sectorlinkStart[csi] = slidx;
+    }
+  }
 }
 
 
@@ -1883,6 +1948,16 @@ IMPLEMENT_FUNCTION(VLevel, FindLine) {
   P_GET_INT(lineTag);
   P_GET_SELF;
   RET_PTR(Self->FindLine(lineTag, searchPosition));
+}
+
+//native final void SectorSetLink (int controltag, int tag, int surface, int movetype);
+IMPLEMENT_FUNCTION(VLevel, SectorSetLink) {
+  P_GET_INT(movetype);
+  P_GET_INT(surface);
+  P_GET_INT(tag);
+  P_GET_INT(controltag);
+  P_GET_SELF;
+  Self->SectorSetLink(controltag, tag, surface, movetype);
 }
 
 IMPLEMENT_FUNCTION(VLevel, SetBodyQueueTrans) {

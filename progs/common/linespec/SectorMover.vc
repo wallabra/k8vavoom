@@ -48,6 +48,23 @@ void Finished () {
 //  MOVE FLOOR/CEILING
 //
 //**************************************************************************
+//TODO: do movement blocking
+final void MoveLinkedSectorsFloor (sector_t *sector, float floordelta, float texdelta, int crush) {
+  if (!sector) return;
+  if (!floordelta) return;
+  int sidx = sector-&XLevel.Sectors[0];
+  if (sidx >= XLevel.sectorlinkStart.length) return;
+  int snum = XLevel.sectorlinkStart[sidx];
+  while (snum >= 0) {
+    //print("moving linked sector #%d (control is #%d)", XLevel.sectorlinks[snum].index, sidx);
+    sector_t *sc = &XLevel.Sectors[XLevel.sectorlinks[snum].index];
+    sc->floor.dist += floordelta;
+    sc->floor.TexZ += texdelta;
+    XLevel.ChangeSector(sc, crush);
+    snum = XLevel.sectorlinks[snum].next;
+  }
+}
+
 
 //==========================================================================
 //
@@ -59,9 +76,11 @@ void Finished () {
 int MovePlane (sector_t *sector, float amount, float dest, int crush,
                int floorOrCeiling, int direction, bool StopOnCrush)
 {
-  bool    flag;
-  float   lastpos;
-  float   LastTexZ;
+  bool flag;
+  float lastpos;
+  float LastTexZ;
+
+  if (!sector) return RES_OK;
 
   switch (floorOrCeiling) {
     case 0:
@@ -82,9 +101,11 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
               sector->floor.TexZ = LastTexZ;
               XLevel.ChangeSector(sector, crush);
             }
+            MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
             return RES_PASTDEST;
           } else {
             flag = XLevel.ChangeSector(sector, crush);
+            MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
             // this is completely illogical and aparently in Strife they fixed this one
             /*if (flag) {
               sector->floor.dist = lastpos;
@@ -107,8 +128,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
           }
           sector->floor.dist += amount*sector->floor.normal.z;
           sector->floor.TexZ += amount;
-          if (sector->floor.dist > dest)
-          {
+          if (sector->floor.dist > dest) {
             sector->floor.TexZ += (dest-sector->floor.dist)/sector->floor.normal.z;
             sector->floor.dist = dest;
             flag = XLevel.ChangeSector(sector, crush);
@@ -117,6 +137,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
               sector->floor.TexZ = LastTexZ;
               XLevel.ChangeSector(sector, crush);
             }
+            MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
             return RES_PASTDEST;
           } else {
             // COULD GET CRUSHED
@@ -127,9 +148,11 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
                 sector->floor.TexZ = LastTexZ;
                 XLevel.ChangeSector(sector, crush);
               }
+              MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
               return RES_CRUSHED;
             }
           }
+          MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
           break;
       }
       break;

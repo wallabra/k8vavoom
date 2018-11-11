@@ -473,6 +473,7 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
         } else {
           // move thing with a sector anyway
           n->Thing->eventSectorChanged(crunch);
+          //GCon->Logf("moved noblockmap item '%s'", n->Thing->GetClass()->GetName());
         }
         // exit and start over
         break;

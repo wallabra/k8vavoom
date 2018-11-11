@@ -134,6 +134,12 @@ class VLevel : public VGameObject {
 
   friend class VUdmfParser;
 
+  struct SectorLink {
+    int index;
+    int mts; // bit 30: set if ceiling; low byte: movetype
+    int next; // index, or -1
+  };
+
   VName MapName;
   VStr MapHash;
   VStr MapHashMD5;
@@ -261,6 +267,9 @@ class VLevel : public VGameObject {
   decal_t *decanimlist;
   int decanimuid;
 
+  TArray<vint32> sectorlinkStart;
+  TArray<SectorLink> sectorlinks;
+
   virtual void Serialise (VStream &Strm) override;
   virtual void ClearReferences () override;
   virtual void Destroy () override;
@@ -305,6 +314,7 @@ class VLevel : public VGameObject {
 
   int FindSectorFromTag (int, int);
   line_t *FindLine (int, int *);
+  void SectorSetLink (int controltag, int tag, int surface, int movetype);
 
   inline bool IsForServer () const { return !!(LevelFlags&LF_ForServer); }
   inline bool IsForClient () const { return !(LevelFlags&LF_ForServer); }
@@ -419,6 +429,7 @@ private:
 
   DECLARE_FUNCTION(FindSectorFromTag)
   DECLARE_FUNCTION(FindLine)
+  DECLARE_FUNCTION(SectorSetLink)
 
   //  Polyobj functions
   DECLARE_FUNCTION(SpawnPolyobj)

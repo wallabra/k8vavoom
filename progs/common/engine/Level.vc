@@ -52,6 +52,12 @@ struct StateCall
   ubyte    Result;
 };
 
+struct SectorLink {
+  int index;
+  int mts; // bit 30: set if ceiling; low byte: movetype
+  int next; // index, or -1
+};
+
 native readonly name MapName;
 native readonly string MapHash;
 native readonly string MapHashMD5;
@@ -178,6 +184,9 @@ native readonly private int NextSoundOriginID;
 native readonly private void *__decanimlist;
 native readonly private int __decanimuid;
 
+native array!int sectorlinkStart; // can be less than sectors; indexed by sector index
+native array!SectorLink sectorlinks;
+
 //
 //  Natives
 //
@@ -200,6 +209,8 @@ native final void SetHeightSector(sector_t *Sector, sector_t *SrcSector, int Fla
 //  Return next sector # that line tag refers to
 native final int FindSectorFromTag(int tag, int start);
 native final line_t *FindLine(int lineTag, int *searchPosition);
+
+native final void SectorSetLink (int controltag, int tag, int surface, int movetype);
 
 //
 //  Polyobj functions

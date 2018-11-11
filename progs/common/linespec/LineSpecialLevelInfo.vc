@@ -1275,7 +1275,18 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
         line->flags |= setFlags;
         line->flags &= clearFlags;
       }
+      buttonSuccess = true;
     }
+    break;
+
+  // Sector_SetLink (controltag, tag, surface, movetype)
+  case LNSPEC_SectorSetLink:
+    if (Arg1 == 0) {
+      print("LNSPEC_SectorSetLink: (controltag=%d, tag=%d, surface=%d, movetype=%d)", Arg1, Arg2, Arg3, Arg4);
+    } else {
+      XLevel.SectorSetLink(Arg1, Arg2, Arg3, Arg4);
+    }
+    buttonSuccess = true;
     break;
 
   // Line specials only processed during level initialization
