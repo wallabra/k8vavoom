@@ -384,6 +384,8 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
     if (Flags&SXF_ISTARGET) Target = A;
     if (Flags&SXF_ISMASTER) Master = A;
     if (Flags&SXF_ISTRACER) Tracer = A;
+    if (Flags&SXF_TRANSFERSPECIAL) { A.Special = Special; foreach (auto f; 0..Args.length) A.Args[f] = Args[f]; }
+    if (Flags&SXF_CLEARCALLERSPECIAL) { Special = 0; foreach (auto f; 0..Args.length) Args[f] = 0; }
     if (specified_newtid) A.SetTID(newtid);
   }
 }
