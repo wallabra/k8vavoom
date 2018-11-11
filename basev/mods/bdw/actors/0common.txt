@@ -1,2 +1,2 @@
-Actor BDW_Unloading : Inventory { inventory.maxamount 1 }
-Actor BDW_HasUnloaded : Inventory { inventory.maxamount 1 }
+//Actor BDW_Unloading : Inventory { inventory.maxamount 1 }
+//Actor BDW_HasUnloaded : Inventory { inventory.maxamount 1 }
