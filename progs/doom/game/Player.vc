@@ -226,29 +226,28 @@ override void BotTick(float deltaTime)
 
 const int
   GIMME_INVULNERABILITY = 0x00040000,
-  GIMME_STRENGTH      = 0x00080000,
+  GIMME_STRENGTH        = 0x00080000,
   GIMME_INVISIBILITY    = 0x00100000,
-  GIMME_IRONFEET      = 0x00200000,
-  GIMME_ALLMAP      = 0x00400000,
-  GIMME_INFRARED      = 0x00800000,
-  GIMME_HEALTH      = 0x01000000,
-  GIMME_HEALTH2     = 0x02000000,
-  GIMME_ARMOR       = 0x04000000,
-  GIMME_ARMOR2      = 0x08000000,
-  GIMME_KEYS        = 0x0003f000,
-  GIMME_POWERS      = 0x00fc0000,
-  GIMME_ALL       = 0xffffffff;
+  GIMME_IRONFEET        = 0x00200000,
+  GIMME_ALLMAP          = 0x00400000,
+  GIMME_INFRARED        = 0x00800000,
+  GIMME_HEALTH          = 0x01000000,
+  GIMME_HEALTH2         = 0x02000000,
+  GIMME_ARMOR           = 0x04000000,
+  GIMME_ARMOR2          = 0x08000000,
 
-override void Cheat_Gimme()
-{
-  int i = 0;
+  //GIMME_KEYS            = 0x0003f000,
+  GIMME_POWERS          = 0x00fc0000,
+  GIMME_ALL             = 0xffffffff;
+
+override void Cheat_Gimme () {
   int i1 = 0;
   class!Inventory Cls;
 
-  // All
+  // all
   if (Cmd_CheckParm("All")) i1 |= GIMME_ALL;
 
-  // Powers
+  // powers
   if (Cmd_CheckParm("Powers")) i1 |= GIMME_POWERS;
   if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul")) i1 |= GIMME_INVULNERABILITY;
   if (Cmd_CheckParm("Bersek")) i1 |= GIMME_STRENGTH;
@@ -257,15 +256,15 @@ override void Cheat_Gimme()
   if (Cmd_CheckParm("AllMap")) i1 |= GIMME_ALLMAP;
   if (Cmd_CheckParm("LiteAmp") || Cmd_CheckParm("LightAmp")) i1 |= GIMME_INFRARED;
 
-  // Health
+  // health
   if (Cmd_CheckParm("Health")) i1 |= GIMME_HEALTH;
   if (Cmd_CheckParm("Health2")) i1 |= GIMME_HEALTH2;
 
-  // Armor
+  // armor
   if (Cmd_CheckParm("Armor")) i1 |= GIMME_ARMOR;
   if (Cmd_CheckParm("Armor2")) i1 |= GIMME_ARMOR2;
 
-  // Weapons
+  // weapons
   if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
     /*
     LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
@@ -275,6 +274,7 @@ override void Cheat_Gimme()
       }
     }
     */
+    bool gotit = false;
     class!Weapon WpnCls;
     foreach AllClasses(Weapon, WpnCls) {
       if (WpnCls.default.bCheatNotWeapon) continue;
@@ -290,11 +290,13 @@ override void Cheat_Gimme()
         Wpn.Destroy();
       } else {
         print("CHEAT: got '%C'!", WpnCls);
+        gotit = true;
       }
     }
+    if (gotit) cprint("You got weapons!");
   }
 
-  // Choppers
+  // choppers
   if (Cmd_CheckParm("Choppers")) {
     class!Weapon WpnCls;
     foreach AllClasses(Weapon, WpnCls) {
@@ -318,20 +320,26 @@ override void Cheat_Gimme()
       } else {
         print("CHEAT: got '%C'!", WpnCls);
         ChangeWeapon(1);
+        cprint("You got Chainsaw!");
         break;
       }
     }
   }
 
-  // Backpack
+  // backpack
   if (Cmd_CheckParm("Backpack") || Cmd_CheckParm("All")) {
     BackpackItem Pack = Level.Spawn(Backpack, default, default, default, false);
     Pack.bDropped = true;
-    if (!Pack.TryPickup(EntityEx(MO))) Pack.Destroy();
+    if (!Pack.TryPickup(EntityEx(MO))) {
+      Pack.Destroy();
+    } else {
+      cprint("You got Backpack!");
+    }
   }
 
   // Ammo
   if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
+    bool gotit = false;
     foreach AllClasses(Ammo, Cls) {
       // Only direct descendants.
       if (GetClassParent(Cls) != Ammo) continue;
@@ -341,14 +349,18 @@ override void Cheat_Gimme()
         if (!AmmoItem.TryPickup(EntityEx(MO))) {
           AmmoItem.Destroy();
           AmmoItem = none;
+        } else {
+          gotit = true;
         }
       }
-      if (AmmoItem) AmmoItem.Amount = AmmoItem.MaxAmount;
+      if (AmmoItem) { AmmoItem.Amount = AmmoItem.MaxAmount; gotit = true; }
     }
+    if (gotit) cprint("You got ammo!");
   }
 
   // Keys
   if (Cmd_CheckParm("Keys") || Cmd_CheckParm("All")) {
+    bool gotit = false;
     foreach AllClasses(Key, Cls) {
       class!Key repl = class!Key(GetClassReplacement(Cls));
       if (repl && repl != Cls) continue;
@@ -356,35 +368,40 @@ override void Cheat_Gimme()
       if (!st) continue; // an abstract base class
       if (!AreStateSpritesPresent(st)) continue; // no sprites
       EntityEx(MO).GiveInventoryType(Cls);
+      gotit = true;
     }
+    cprint("You got keys!");
   }
 
-  // Powers
-  if (i1 & GIMME_INVULNERABILITY) EntityEx(MO).GiveInventoryType(InvulnerabilitySphere);
-  if (i1 & GIMME_STRENGTH) EntityEx(MO).GiveInventoryType(PowerStrength);
-  if (i1 & GIMME_INVISIBILITY) EntityEx(MO).GiveInventoryType(PowerInvisibility);
-  if (i1 & GIMME_IRONFEET) EntityEx(MO).GiveInventoryType(PowerIronFeet);
-  if (i1 & GIMME_INFRARED) EntityEx(MO).GiveInventoryType(PowerLightAmp);
+  // powers
+  if (i1&GIMME_INVULNERABILITY) { EntityEx(MO).GiveInventoryType(InvulnerabilitySphere); cprint("You got Invulnerability!"); }
+  if (i1&GIMME_STRENGTH) { EntityEx(MO).GiveInventoryType(PowerStrength); cprint("You got Strength!"); }
+  if (i1&GIMME_INVISIBILITY) { EntityEx(MO).GiveInventoryType(PowerInvisibility); cprint("You got Invisibility!"); }
+  if (i1&GIMME_IRONFEET) { EntityEx(MO).GiveInventoryType(PowerIronFeet); cprint("You got EnviroSuit!"); }
+  if (i1&GIMME_INFRARED) { EntityEx(MO).GiveInventoryType(PowerLightAmp); cprint("You got Light Amplifier!"); }
 
-  //  Items
-  if (i1 & GIMME_ALLMAP) EntityEx(MO).GiveInventoryType(Allmap);
+  // items
+  if (i1&GIMME_ALLMAP) { EntityEx(MO).GiveInventoryType(Allmap); cprint("You got Computer Map!"); }
 
-  // Health
-  if ((i1 & GIMME_HEALTH) && (Health < 100)) {
+  // health
+  if ((i1&GIMME_HEALTH) && Health < 100) {
     Health = 100;
     MO.Health = 100;
   }
-  if (i1 & GIMME_HEALTH2) {
+  if (i1&GIMME_HEALTH2) {
     Health = 200;
     MO.Health = 200;
   }
 
-  // Armor
-  if (i1 & GIMME_ARMOR) EntityEx(MO).GiveInventoryType(GreenArmor);
-  if (i1 & GIMME_ARMOR2) EntityEx(MO).GiveInventoryType(BlueArmor);
+  if (i1&(GIMME_HEALTH|GIMME_HEALTH2)) cprint("You got health!");
 
-  cprint("YOU GOT IT");
+  // armor
+  if (i1&GIMME_ARMOR) { EntityEx(MO).GiveInventoryType(GreenArmor); cprint("You got Green Armor!"); }
+  if (i1&GIMME_ARMOR2) { EntityEx(MO).GiveInventoryType(BlueArmor); cprint("You got Blue Armor!"); }
+
+  //cprint("YOU GOT IT");
 }
+
 
 //==========================================================================
 //
