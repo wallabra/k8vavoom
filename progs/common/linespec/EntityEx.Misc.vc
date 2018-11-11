@@ -610,25 +610,35 @@ final bool HeightClip()
   return true;
 }
 
+
 //==========================================================================
 //
 //  GetStateTime
 //
 //==========================================================================
-
-final override float GetStateTime(state AState, float AStateTime)
-{
-  switch (GetStateTicKind(AState)) {
-    //case StateTicKind.Normal: return AStateTime;
-    case StateTicKind.Random: AStateTime = float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
-    //default: return AStateTime;
-  }
-  if (IsFast()) {
-    if (bFaster && StateIsInRange(AState, SeeState, none, 8)) AStateTime /= 2.0;
-    if (bFastMelee && StateIsInRange(AState, MeleeState, none, 3)) AStateTime /= 2.0;
+final override float GetStateTime (state AState, float AStateTime) {
+  if (AState) {
+    switch (GetStateTicKind(AState)) {
+      //case StateTicKind.Normal: return AStateTime;
+      case StateTicKind.Random: AStateTime = float(GetStateArgN(AState, 0)+trunc(Random()*(GetStateArgN(AState, 1)-GetStateArgN(AState, 0)+1)))/35.0f; break;
+      //default: return AStateTime;
+    }
+    if (IsFast()) {
+           if (bFaster && StateIsInRange(AState, SeeState, none, 8)) AStateTime /= 2.0;
+      else if (bFastMelee && StateIsInRange(AState, MeleeState, none, 3)) AStateTime /= 2.0;
+      else {
+        auto fff = GetStateSpriteFrame(AState);
+        if (fff&FF_FAST) AStateTime /= 2.0;
+      }
+    } else if (Level.Game.fastparm == 2) {
+      // slow monsters
+      auto fff = GetStateSpriteFrame(AState);
+      if (fff&FF_SLOW) AStateTime *= 2.0;
+    }
   }
   return AStateTime;
 }
+
 
 //==========================================================================
 //
@@ -1239,7 +1249,7 @@ override void OnMapSpawn (mthing_t *mthing) {
   if (!MeleeState) MeleeState = FindState('Melee');
   if (!MissileState) MissileState = FindState('Missile');
 
-  if (Level.Game.fastparm && FastSpeed) Speed = FastSpeed;
+  if (Level.Game.fastparm == 1 && FastSpeed) Speed = FastSpeed;
 
   if (CountsAsKill()) ++Level.TotalKills;
   if (bCountItem) ++Level.TotalItems;
@@ -3813,24 +3823,18 @@ final bool IsSentient()
   return Health > 0 && SeeState;
 }
 
+
 //==========================================================================
 //
 //  IsFast
 //
 //==========================================================================
-
-final bool IsFast()
-{
-  if (bAlwaysFast)
-  {
-    return true;
-  }
-  if (bNeverFast)
-  {
-    return false;
-  }
-  return Level.Game.fastparm;
+final bool IsFast() {
+  if (bAlwaysFast) return true;
+  if (bNeverFast) return false;
+  return (Level.Game.fastparm == 1);
 }
+
 
 //==========================================================================
 //

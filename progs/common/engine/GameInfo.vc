@@ -53,7 +53,7 @@ readonly ubyte   NetMode;
 readonly ubyte   deathmatch;
 ubyte        respawn;
 ubyte        nomonsters;
-ubyte        fastparm;
+ubyte        fastparm; // 0:normal; 1:fast; 2:slow
 
 readonly int *validcount;
 readonly int    skyflatnum;

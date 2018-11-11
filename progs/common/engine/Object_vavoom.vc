@@ -189,6 +189,7 @@ struct SkillDef {
   bool bAutoUseHealth;
   bool bMenuNameIsPic;
   bool bMustConfirm;
+  bool bSlowMonsters;
 };
 
 

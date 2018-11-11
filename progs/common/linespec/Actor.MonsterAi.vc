@@ -540,7 +540,7 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
     }
   }
 
-  if (NightmareFast && Level.Game.fastparm)
+  if (NightmareFast && Level.Game.fastparm == 1)
   {
     //  Monsters move faster in nightmare mode.
     StateTime *= 0.5;
