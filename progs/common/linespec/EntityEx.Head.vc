@@ -474,7 +474,11 @@ float     JumpTime;
 
 bool k8InWeaponReady; // otherwise recursive calls to it may overflow stack
 
+#ifdef VC_SCRIPT_USE_SPAWNED_CHILDREN_ARRAY
+//array!EntityEx SpawnedChildren; // set in `A_SpawnItemEx()`, used in `A_RemoveChildren()`
+#else
 EntityEx SpawnParent; // set in `A_SpawnItemEx()`, used in `A_RemoveChildren()`
+#endif
 
 
 replication

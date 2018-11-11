@@ -176,7 +176,25 @@ final void InitSpawnedItem(EntityEx A, bool TransTransl, bool SetMaster,
     while (Instig && Instig.IsMissile(true)) Instig = Instig.Target;
   }
 
-  if (RememberParent) A.SpawnParent = Instig; //(Instig ? Instig : self);
+  if (RememberParent && Instig) {
+    //??? (Instig ? Instig : self);
+#ifdef VC_SCRIPT_USE_SPAWNED_CHILDREN_ARRAY
+    bool found = false;
+    foreach (auto idx; 0..Instig.SpawnedChildren.length) {
+      if (!Instig.SpawnedChildren[idx]) {
+        Instig.SpawnedChildren[idx] = A;
+        found = true;
+        break;
+      }
+    }
+    if (!found) Instig.SpawnedChildren[$] = A;
+    //print("SPAWN: `%C` is registered as parent of `%C`", Instig, A);
+    foreach (auto idx; 0..Instig.SpawnedChildren.length) print("  child #%d: `%C`", idx, Instig.SpawnedChildren[idx]);
+#else
+    //print("SPAWN: `%C` is registered as parent of `%C`", Instig, A);
+    A.SpawnParent = Instig;
+#endif
+  }
 
   if (Telestomp)
   {

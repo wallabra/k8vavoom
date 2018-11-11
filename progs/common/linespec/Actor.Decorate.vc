@@ -37,6 +37,18 @@ final void decorate_A_k8ConLog (string msg) {
 }
 
 
+// Flags for A_Remove*
+enum /*ERemoveFlags*/ {
+  RMVF_MISSILES   = 0x00000001,
+  RMVF_NOMONSTERS = 0x00000002,
+  RMVF_MISC       = 0x00000004,
+  RMVF_EVERYTHING = 0x00000008,
+  RMVF_EXFILTER   = 0x00000010,
+  RMVF_EXSPECIES  = 0x00000020,
+  RMVF_EITHER     = 0x00000040,
+};
+
+
 //==========================================================================
 //
 //  DecorDoAAPtr
@@ -435,4 +447,95 @@ final void A_DropItem (name item, optional int dropamount, optional int chance) 
   }
 
   DropItem(dip, dropamount, dropChance);
+}
+
+
+//==========================================================================
+//
+//  a_removechildren_checkIfChildShouldBeRemoved
+//
+//==========================================================================
+final private bool a_removechildren_checkIfChildShouldBeRemoved (Actor child, bool all, int flags, string filter, string species) {
+  if (!all && child.Health > 0) return false; // it is still alive
+  bool filterHit = true, speciesHit = true;
+  if (filter) {
+    filterHit = (stricmp(filter, string(GetClassName(child.Class))) != 0);
+    if (flags&RMVF_EXFILTER) filterHit = !filterHit; // filter inverted
+  }
+  if (species) {
+    speciesHit = (stricmp(species, string(child.GetSpecies())) != 0);
+    if (flags&RMVF_EXSPECIES) speciesHit = !speciesHit; // species inverted
+  }
+  if (flags&RMVF_EITHER) {
+    if (!filterHit && !speciesHit) return false;
+  } else {
+    if (!filterHit || !speciesHit) return false;
+  }
+  // check other flags
+  if (!(flags&RMVF_EVERYTHING)) {
+    if (child.bMonster) {
+      // monster?
+      if (flags&RMVF_NOMONSTERS) return false;
+    } else if (child.IsMissile(false)) { // or precise?
+      // missile?
+      if (!(flags&RMVF_MISSILES)) return false;
+    } else {
+      // other?
+      if (!(flags&RMVF_MISC)) return false;
+    }
+  }
+  return true;
+}
+
+
+#ifdef VC_SCRIPT_USE_SPAWNED_CHILDREN_ARRAY
+#else
+// this is trick so `delete` will clear the array for us
+transient private array!Actor A_RC_KillList;
+#endif
+
+//==========================================================================
+//
+//  A_RemoveChildren
+//
+//==========================================================================
+final void A_RemoveChildren (optional bool all, optional int flags, optional string filter, optional string species) {
+  if (stricmp(filter, "none") == 0) filter = "";
+  if (stricmp(species, "none") == 0) species = "";
+
+#ifdef VC_SCRIPT_USE_SPAWNED_CHILDREN_ARRAY
+  foreach (auto idx; 0..SpawnedChildren.length) {
+    Actor child = Actor(SpawnedChildren[idx]);
+    if (!child) continue;
+    if (!a_removechildren_checkIfChildShouldBeRemoved(child, all, flags, filter, species)) continue;
+    // kill it!
+    //print("%C: removing children #%d (%C)", self, idx, SpawnedChildren[idx]);
+    delete SpawnedChildren[idx];
+  }
+
+  // shrink array
+  /*
+  foreach (auto idx; 0..SpawnedChildren.length; reverse) {
+    if (SpawnedChildren[idx]) {
+      if (idx+1 < SpawnedChildren.length) SpawnedChildren.length = idx+1;
+      break;
+    }
+  }
+  */
+#else
+  //array!Actor A_RC_KillList;
+  A_RC_KillList.clear(); // clear, but don't reallocate
+  Actor th;
+  foreach AllThinkers(Actor, th) {
+    if (th && a_removechildren_checkIfChildShouldBeRemoved(th, all, flags, filter, species)) A_RC_KillList[$] = th;
+  }
+  foreach (auto idx; 0..A_RC_KillList.length) {
+    th = A_RC_KillList[idx];
+    if (th) {
+      //print("%C: removing children #%d (%C)", self, idx, th);
+      delete th;
+    }
+  }
+  A_RC_KillList.clear(); // clear, but don't reallocate
+#endif
 }
