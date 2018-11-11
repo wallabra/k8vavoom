@@ -301,6 +301,48 @@ void VLevelInfo::ChangeMusic (VName SongName) {
 
 //==========================================================================
 //
+//  VLevelInfo::FindFreeTID
+//
+//  see `UniqueTID`
+//
+//==========================================================================
+int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
+  if (tidstart <= 0) tidstart = 0;
+  if (limit < 1) return 0;
+  if (limit == 0) limit = 0x7fffffff;
+  if (tidstart == 0) tidstart = 666; // arbitrary number
+  while (limit-- > 0) {
+    VEntity *E = Level->TIDHash[tidstart&(TID_HASH_SIZE-1)];
+    while (E) {
+      if (E->TID == tidstart) break;
+      E = E->TIDHashNext;
+    }
+    if (!E) return tidstart;
+    if (tidstart == 0x1fffffff) return 0;
+    ++tidstart;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  VLevelInfo::FindFreeTID
+//
+//==========================================================================
+bool VLevelInfo::IsTIDUsed (int tid) const {
+  if (tid == 0) return true; // this is "self"
+  VEntity *E = Level->TIDHash[tid&(TID_HASH_SIZE-1)];
+  while (E) {
+    if (E->TID == tid) return true;
+    E = E->TIDHashNext;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VLevelInfo natives
 //
 //==========================================================================
@@ -417,4 +459,17 @@ IMPLEMENT_FUNCTION(VLevelInfo, ChangeMusic) {
   P_GET_NAME(SongName);
   P_GET_SELF;
   Self->ChangeMusic(SongName);
+}
+
+IMPLEMENT_FUNCTION(VLevelInfo, FindFreeTID) {
+  P_GET_INT_OPT(limit, 0);
+  P_GET_INT_OPT(tidstart, 0);
+  P_GET_SELF;
+  RET_INT(Self->FindFreeTID(tidstart, limit));
+}
+
+IMPLEMENT_FUNCTION(VLevelInfo, IsTIDUsed) {
+  P_GET_INT(tid);
+  P_GET_SELF;
+  RET_BOOL(Self->IsTIDUsed(tid));
 }

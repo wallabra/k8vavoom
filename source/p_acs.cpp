@@ -57,6 +57,24 @@
 #endif
 #include "p_acs.h"
 
+#define AAPTR_DEFAULT                0x00000000
+#define AAPTR_NULL                   0x00000001
+#define AAPTR_TARGET                 0x00000002
+#define AAPTR_MASTER                 0x00000004
+#define AAPTR_TRACER                 0x00000008
+#define AAPTR_PLAYER_GETTARGET       0x00000010
+#define AAPTR_PLAYER_GETCONVERSATION 0x00000020
+#define AAPTR_PLAYER1                0x00000040
+#define AAPTR_PLAYER2                0x00000080
+#define AAPTR_PLAYER3                0x00000100
+#define AAPTR_PLAYER4                0x00000200
+#define AAPTR_PLAYER5                0x00000400
+#define AAPTR_PLAYER6                0x00000800
+#define AAPTR_PLAYER7                0x00001000
+#define AAPTR_PLAYER8                0x00002000
+#define AAPTR_FRIENDPLAYER           0x00004000
+#define AAPTR_GET_LINETARGET         0x00008000
+
 enum { ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX = 0xfffeu };
 
 //
@@ -2287,6 +2305,39 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         }
         return (count > 0 ? 1 : 0);
       }
+
+      // int UniqueTID ([int tid[, int limit]])
+      case ACSF_UniqueTID:
+        {
+          int tidstart = (argCount > 0 ? args[0] : 0);
+          int limit = (argCount > 1 ? args[1] : 0);
+          return Level->FindFreeTID(tidstart, limit);
+        }
+
+      // bool IsTIDUsed (int tid)
+      case ACSF_IsTIDUsed:
+        return Level->IsTIDUsed(argCount ? args[0] : 0);
+
+      case ACSF_GetActorPowerupTics:
+        {
+          VEntity *Ent = EntityFromTID(args[0], Activator);
+          if (Ent) {
+            VName name = GetName(args[1]);
+            float ptime = Ent->eventFindActivePowerupTime(name);
+            if (ptime == 0) return 0;
+            return int(ptime/35.0);
+          }
+          return 0;
+        }
+
+      case ACSF_SetActivator:
+        if (args[0] == 0 && argCount > 1 && args[1] == 1) {
+          // to world
+          Activator = nullptr;
+          return 0; //???
+        }
+        break;
+        //GCon->Logf("ACSF_SetActivator: tid=%d; ptr=%d", args[0], (argCount > 1 ? args[1] : 0));
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {

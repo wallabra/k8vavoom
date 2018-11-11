@@ -487,6 +487,12 @@ class VEntity : public VThinker {
     EV_RET_VOID(NAME_GetViewEntRenderParams);
   }
 
+  float eventFindActivePowerupTime (VName pname) {
+    P_PASS_SELF;
+    P_PASS_NAME(pname);
+    EV_RET_FLOAT(VName("FindActivePowerupTime"));
+  }
+
   //static final bool decoDoCheckFlag (string flagname, Entity tgt)
   /*
   bool eventCheckFlag (const VStr &flagname) {

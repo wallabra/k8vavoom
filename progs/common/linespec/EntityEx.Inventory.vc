@@ -560,3 +560,31 @@ final override void SetAmmoCapacity(name Name, int Amount)
     Item.Amount = Item.MaxAmount;
   }
 }
+
+
+//===========================================================================
+//
+//  FindActivePowerupTime
+//
+//===========================================================================
+override float FindActivePowerupTime (name className) {
+  //EntityEx tgt = EntityEx(DecorDoAAPtr('FindActivePowerupTime', aptr!optional));
+  //if (!tgt) return 0;
+
+  if (!className) return 0;
+  class!Powerup ptype = class!Powerup(FindClassLowerCase(className));
+  if (!ptype) return 0;
+  class!Powerup ptyperepl = class!Powerup(GetClassReplacement(ptype));
+
+  for (auto Item = self.Inventory; Item; ) {
+    Inventory Next = Item.Inventory;
+    Powerup pup = Powerup(Item);
+    if (pup) {
+      if (ptyperepl && pup.Class == ptyperepl) return fmax(0, pup.EffectTime);
+      if (pup.Class == ptype) return fmax(0, pup.EffectTime);
+    }
+    Item = Next;
+  }
+
+  return 0;
+}

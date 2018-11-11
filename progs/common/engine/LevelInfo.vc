@@ -191,6 +191,9 @@ native final void AutoSave ();
 
 native final void ChangeMusic (name SongName);
 
+native final int FindFreeTID (optional int tidstart, optional int limit);
+native final bool IsTIDUsed (int tid);
+
 
 //==========================================================================
 //

@@ -486,3 +486,56 @@ replication
   reliable if (Role == ROLE_Authority && bNetOwner)
     Inventory, bInvulnerable;
 }
+
+
+//==========================================================================
+//
+//  DecorDoAAPtr
+//
+//==========================================================================
+final Entity DecorDoAAPtr (name methodname, optional int ptr) {
+  if (!specified_ptr || ptr == AAPTR_DEFAULT) return self;
+  // category 1
+  if (bIsPlayer) {
+    if (ptr&AAPTR_PLAYER_GETTARGET) {
+      //EntityEx targ = AimLineAttack(nullptr, Angles, 8192, noVertAutoAim:true);
+      bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = true;
+      Weapon Wpn = PlayerEx(self).ReadyWeapon;
+      if (Wpn) noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+      EntityEx targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
+      if (targ) return targ;
+    }
+    // AAPTR_PLAYER_GETCONVERSATION // no strife dialogues, so skip
+  }
+  // category 2
+  if (ptr&AAPTR_TARGET) return Target;
+  if (ptr&AAPTR_MASTER) return Master;
+  if (ptr&AAPTR_TRACER) return Tracer;
+  if (ptr&AAPTR_FRIENDPLAYER) {
+    if (FriendPlayer > 0 && FriendPlayer <= MAXPLAYERS) {
+      auto plr = Level.Game.Players[FriendPlayer-1];
+      if (plr && plr.bSpawned && plr.MO) return plr.MO;
+    }
+  }
+  if (ptr&AAPTR_LINETARGET) {
+    EntityEx targ = Aim(nullptr, 2048/*16*64*/, Angles.yaw);
+    if (targ) return targ;
+  }
+  // category 3
+  int plridx = -1;
+       if (ptr&AAPTR_PLAYER1) plridx = 0;
+  else if (ptr&AAPTR_PLAYER2) plridx = 1;
+  else if (ptr&AAPTR_PLAYER3) plridx = 2;
+  else if (ptr&AAPTR_PLAYER4) plridx = 3;
+  else if (ptr&AAPTR_PLAYER5) plridx = 4;
+  else if (ptr&AAPTR_PLAYER6) plridx = 5;
+  else if (ptr&AAPTR_PLAYER7) plridx = 6;
+  else if (ptr&AAPTR_PLAYER8) plridx = 7;
+  if (plridx >= 0 && plridx < MAXPLAYERS) {
+    auto plr = Level.Game.Players[plridx];
+    if (plr && plr.bSpawned && plr.MO) return plr.MO;
+  }
+  if (ptr&AAPTR_NULL) return none;
+  FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
+  return none;
+}

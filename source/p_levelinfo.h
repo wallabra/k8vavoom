@@ -154,6 +154,9 @@ class VLevelInfo : public VThinker {
 
   inline VStr GetLevelName() const { return (LevelInfoFlags & LIF_LookupName ? GLanguage[*LevelName] : LevelName); }
 
+  int FindFreeTID (int tidstart, int limit=0) const;
+  bool IsTIDUsed (int tid) const;
+
   // static lights
   DECLARE_FUNCTION(AddStaticLight)
   DECLARE_FUNCTION(AddStaticLightRGB)
@@ -175,6 +178,9 @@ class VLevelInfo : public VThinker {
   DECLARE_FUNCTION(AutoSave)
 
   DECLARE_FUNCTION(ChangeMusic)
+
+  DECLARE_FUNCTION(FindFreeTID)
+  DECLARE_FUNCTION(IsTIDUsed)
 
   void eventSpawnSpecials () {
     P_PASS_SELF;

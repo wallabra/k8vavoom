@@ -43,8 +43,8 @@
   ACS_EXTFUNC(ACS_NamedLockedExecuteDoor)
   ACS_EXTFUNC(ACS_NamedExecuteWithResult)
   ACS_EXTFUNC(ACS_NamedExecuteAlways)
-  ACS_EXTFUNC(UniqueTID)
-  ACS_EXTFUNC(IsTIDUsed)
+  ACS_EXTFUNC(UniqueTID) // implemented
+  ACS_EXTFUNC(IsTIDUsed) // implemented
   ACS_EXTFUNC(Sqrt)
   ACS_EXTFUNC(FixedSqrt)
   ACS_EXTFUNC(VectorLength)
