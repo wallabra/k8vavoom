@@ -3,6 +3,7 @@ Actor BDW_EmptyClipSpawn {
   Speed 20
   PROJECTILE
   +NOCLIP
+  +NOBLOCKMAP
   States {
     Spawn:
       TNT1 AA 1 A_CustomMissile("BDW_EmptyClip", random(0, -5), 0, random(85, 95), 2, 1)
@@ -12,6 +13,7 @@ Actor BDW_EmptyClipSpawn {
 
 
 // alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
+// fixed
 Actor BDW_EmptyClip {
   Height 12
   Radius 9
@@ -23,13 +25,13 @@ Actor BDW_EmptyClip {
   +CLIENTSIDEONLY
   +MOVEWITHSECTOR
   +MISSILE
-  -NOBLOCKMAP
   -DROPOFF
   +NOTELEPORT
   +FORCEXYBILLBOARD
   +NOTDMATCH
   +GHOST
   -NoLiftDrop
+  +NOBLOCKMAP
   Mass 1
   //k8: not yet:SeeSound "weapons/largemagdrop"
   SeeSound "weapons/largemagdrop1"
@@ -59,6 +61,7 @@ Actor BDW_RifleCaseSpawn {
   PROJECTILE
   +NOCLIP
   +CLIENTSIDEONLY
+  +NOBLOCKMAP
   States {
   Spawn:
     TNT1 A 0
@@ -69,6 +72,7 @@ Actor BDW_RifleCaseSpawn {
 
 
 // alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
+// fixed
 Actor BDW_EmptyBrass {
   Height 2
   Radius 2
@@ -80,7 +84,6 @@ Actor BDW_EmptyBrass {
   +CLIENTSIDEONLY
   +MOVEWITHSECTOR
   +MISSILE
-  -NOBLOCKMAP
   -DROPOFF
   +NOTELEPORT
   +FORCEXYBILLBOARD
@@ -91,6 +94,7 @@ Actor BDW_EmptyBrass {
   +FLOORCLIP
   +THRUACTORS
   -NoLiftDrop
+  +NOBLOCKMAP
   Mass 4
   BounceFactor 0.3
   //k8: not yet:SeeSound "weapons/casing"
@@ -191,6 +195,7 @@ Actor BDW_ShotCaseSpawn : BDW_RifleCaseSpawn {
 
 
 // alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
+// fixed
 Actor BDW_ShotgunCasing {
   Height 12
   Radius 9
@@ -202,7 +207,6 @@ Actor BDW_ShotgunCasing {
   +CLIENTSIDEONLY
   +MOVEWITHSECTOR
   +MISSILE
-  -NOBLOCKMAP
   -DROPOFF
   +NOTELEPORT
   +FORCEXYBILLBOARD
@@ -211,6 +215,7 @@ Actor BDW_ShotgunCasing {
   //+CANBOUNCEWATER
   //+DONTSPLASH
   -NoLiftDrop
+  +NOBLOCKMAP
   Mass 1
   BounceFactor 0.3
   SeeSound "weapons/shell"
