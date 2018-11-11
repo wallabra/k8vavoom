@@ -36,6 +36,7 @@
 //
 //==========================================================================
 static bool CheatAllowed (VBasePlayer *Player) {
+  if (!Player) return false;
   if (sv.intermission) {
     Player->Printf("You are not in game!");
     return false;
@@ -44,7 +45,7 @@ static bool CheatAllowed (VBasePlayer *Player) {
     Player->Printf("You cannot cheat in a network game!");
     return false;
   }
-  if (GGameInfo->WorldInfo->Flags & VWorldInfo::WIF_SkillDisableCheats) {
+  if (GGameInfo->WorldInfo->Flags&VWorldInfo::WIF_SkillDisableCheats) {
     Player->Printf("You are too good to cheat!");
     return false;
   }
@@ -69,6 +70,7 @@ COMMAND(God) {
     ForwardToServer();
     return;
   }
+  if (!Player) return;
   if (CheatAllowed(Player)) Player->eventCheat_God();
 }
 
@@ -284,4 +286,28 @@ COMMAND(Freeze) {
     return;
   }
   if (CheatAllowed(Player)) Player->eventCheat_Freeze();
+}
+
+
+//==========================================================================
+//
+//  my_sector_info
+//
+//==========================================================================
+COMMAND(my_sector_info) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  if (!Player) { GCon->Log("NO PLAYER!"); return; }
+  if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
+  if (!Player->MO->Sector) { GCon->Log("PLAYER MOBJ SECTOR IS UNKNOWN!"); return; }
+  //if (!Player || !Player->MO || !Player->MO->Sector) return;
+  sector_t *sec = Player->MO->Sector;
+  GCon->Logf("Sector #%d; tag=%d; special=%d; damage=%d; seqtype=%d; sndtrav=%d; sky=%d",
+    (int)(intptr_t)(sec-Player->Level->XLevel->Sectors),
+    sec->tag, sec->special, sec->seqType, sec->soundtraversed, sec->Damage, sec->Sky
+  );
+  GCon->Logf("  floor texture  : %s", *GTextureManager.GetTextureName(sec->floor.pic));
+  GCon->Logf("  ceiling texture: %s", *GTextureManager.GetTextureName(sec->ceiling.pic));
 }
