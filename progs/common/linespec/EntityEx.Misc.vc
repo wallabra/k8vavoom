@@ -1691,115 +1691,89 @@ override void Tick(float deltaTime)
   }
 }
 
+
 //==========================================================================
 //
 //  SectorChanged
 //
 //==========================================================================
+final override bool SectorChanged (int CrushChange) {
+  EntityEx A;
 
-final override bool SectorChanged(int CrushChange)
-{
-  EntityEx  A;
+  if (HeightClip()) return true;
 
-  if (HeightClip())
-  {
-    return true;
-  }
-
-  //  Crunch bodies to giblets
-  if (bCorpse && !bDontGib && Health <= 0)
-  {
+  // crunch bodies to giblets
+  if (bCorpse && !bDontGib && Health <= 0) {
     bool CanDestroy = false;
-    if (!bNoBlood)
-    {
+    if (!bNoBlood) {
       class c = FindClass('RealGibs');
-
-      if (c)
-      {
+      if (c) {
         if (!FindClassState(GetClassReplacement(c), 'Spawn') ||
-          !AreStateSpritesPresent(FindClassState(GetClassReplacement(c), 'Spawn')))
+            !AreStateSpritesPresent(FindClassState(GetClassReplacement(c), 'Spawn')))
         {
           c = none;
         }
       }
 
-      if (c)
-      {
+      if (c) {
         Actor Gib = Spawn(RealGibs);
         Gib.RenderStyle = RenderStyle;
         Gib.Alpha = Alpha;
         Gib.Height = 0.0;
         Gib.Radius = 0.0;
-        if (BloodTranslation && !Gib.bDontTranslate)
-        {
-          Gib.Translation = BloodTranslation;
-        }
+        if (BloodTranslation && !Gib.bDontTranslate) Gib.Translation = BloodTranslation;
         Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
         CanDestroy = true;
-      }
-      else
-      {
+      } else {
         bDontGib = true;
       }
     }
-    if (bIsPlayer)
-    {
+    if (bIsPlayer) {
       bColideWithWorld = false;
       bColideWithThings = false;
       bDontGib = true;
       bInvisible = true;
-    }
-    else
-    {
-      if (CanDestroy)
-        Destroy();
+    } else {
+      if (CanDestroy) Destroy();
     }
     return true;
   }
 
-  //  Crunch dropped items
-  if (bDropped)
-  {
+  // crunch dropped items
+  if (bDropped) {
     Destroy();
     return true;
   }
 
   // killough 11/98: kill touchy things immediately
-  if (bTouchy && (bArmed || IsSentient()))
-    {
-    bArmed = false; // Disarm
-    Damage(none, none, default.Health);  // kill object
-    return true;
-    }
-
-  if (!bShootable)
-  {
-    //  Assume it is bloody gibs or something
+  if (bTouchy && (bArmed || IsSentient())) {
+    bArmed = false; // disarm
+    Damage(none, none, default.Health); // kill object
     return true;
   }
 
-  if (CrushChange && !(XLevel.TicTime & 3))
-  {
+  if (!bShootable) {
+    // assume it is bloody gibs or something
+    return true;
+  }
+
+  if (CrushChange && !(XLevel.TicTime&3)) {
     Damage(none, none, CrushChange);
 
-    //  Spray blood in a random direction
-    if (!bNoBlood && !bInvulnerable && BloodType)
-    {
-      A = Spawn(BloodType, Origin + vector(0.0, 0.0, Height / 2.0));
-      A.Velocity.x = (Random() - Random()) * 16.0 * 35.0;
-      A.Velocity.y = (Random() - Random()) * 16.0 * 35.0;
-      if (BloodTranslation && !A.bDontTranslate)
-      {
-        A.Translation = BloodTranslation;
-      }
+    // spray blood in a random direction
+    if (!bNoBlood && !bInvulnerable && BloodType) {
+      A = Spawn(BloodType, Origin+vector(0.0, 0.0, Height/2.0));
+      A.Velocity.x = (Random()-Random())*16.0*35.0;
+      A.Velocity.y = (Random()-Random())*16.0*35.0;
+      if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
     }
-    if (!bInvulnerable && CrushPainSound && !GetSoundPlayingInfo(self, GetSoundID(CrushPainSound)))
-    {
+    if (!bInvulnerable && CrushPainSound && !GetSoundPlayingInfo(self, GetSoundID(CrushPainSound))) {
       PlaySound(CrushPainSound, CHAN_VOICE);
     }
   }
   return false; //  Don't fit
 }
+
 
 //==========================================================================
 //

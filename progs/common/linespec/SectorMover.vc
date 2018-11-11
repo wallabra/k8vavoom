@@ -22,31 +22,26 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class SectorMover : SectorThinker;
 
-bool Not_Keep;  // This flag let's us know if we can destroy FloorData
+bool Not_Keep; // this flag let's us know if we can destroy FloorData
+
 
 //==========================================================================
 //
 //  Finished
 //
 //==========================================================================
-
-void Finished()
-{
-  if (Not_Keep)
-  {
-    if (Sector->FloorData == self)
-      Sector->FloorData = none;
-    if (Sector->CeilingData == self)
-      Sector->CeilingData = none;
-    if (Sector->LightingData == self)
-      Sector->LightingData = none;
+void Finished () {
+  if (Not_Keep) {
+    if (Sector->FloorData == self) Sector->FloorData = none;
+    if (Sector->CeilingData == self) Sector->CeilingData = none;
+    if (Sector->LightingData == self) Sector->LightingData = none;
     RemoveAffector();
     Destroy();
   }
 }
+
 
 //**************************************************************************
 //
@@ -61,177 +56,146 @@ void Finished()
 //  Move a plane (floor or ceiling) and check for crushing
 //
 //==========================================================================
-
-int MovePlane(sector_t *sector, float amount, float dest, int crush,
-  int floorOrCeiling, int direction, bool StopOnCrush)
+int MovePlane (sector_t *sector, float amount, float dest, int crush,
+               int floorOrCeiling, int direction, bool StopOnCrush)
 {
   bool    flag;
   float   lastpos;
   float   LastTexZ;
 
-  switch (floorOrCeiling)
-  {
-  case 0:
-    // FLOOR
-    lastpos = sector->floor.dist;
-    LastTexZ = sector->floor.TexZ;
-    switch (direction)
-    {
-    case -1:
-      // DOWN
-      sector->floor.dist -= amount * sector->floor.normal.z;
-      sector->floor.TexZ -= amount;
-      if (sector->floor.dist <= dest)
-      {
-        sector->floor.TexZ += (dest - sector->floor.dist) /
-          sector->floor.normal.z;
-        sector->floor.dist = dest;
-        flag = XLevel.ChangeSector(sector, crush);
-        if (flag)
-        {
-          sector->floor.dist = lastpos;
-          sector->floor.TexZ = LastTexZ;
-          XLevel.ChangeSector(sector, crush);
-        }
-        return RES_PASTDEST;
-      }
-      else
-      {
-        flag = XLevel.ChangeSector(sector, crush);
-        //  This is completely illogical and aparently in Strife they
-        // fixed this one.
-        /*if (flag)
-        {
-          sector->floor.dist = lastpos;
-          XLevel.ChangeSector(sector, crush);
-          return RES_CRUSHED;
-        }*/
+  switch (floorOrCeiling) {
+    case 0:
+      // FLOOR
+      lastpos = sector->floor.dist;
+      LastTexZ = sector->floor.TexZ;
+      switch (direction) {
+        case -1:
+          // DOWN
+          sector->floor.dist -= amount*sector->floor.normal.z;
+          sector->floor.TexZ -= amount;
+          if (sector->floor.dist <= dest) {
+            sector->floor.TexZ += (dest-sector->floor.dist)/sector->floor.normal.z;
+            sector->floor.dist = dest;
+            flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              sector->floor.dist = lastpos;
+              sector->floor.TexZ = LastTexZ;
+              XLevel.ChangeSector(sector, crush);
+            }
+            return RES_PASTDEST;
+          } else {
+            flag = XLevel.ChangeSector(sector, crush);
+            // this is completely illogical and aparently in Strife they fixed this one
+            /*if (flag) {
+              sector->floor.dist = lastpos;
+              XLevel.ChangeSector(sector, crush);
+              return RES_CRUSHED;
+            }*/
+          }
+          break;
+
+        case 1:
+          // UP
+          // jff 02/04/98 keep floor from moving thru ceilings
+          // [RH] not so easy with arbitrary planes
+          if (!sector->bExtrafloorSource &&
+              !sector->ceiling.normal.x && !sector->ceiling.normal.y &&
+              !sector->floor.normal.x && !sector->floor.normal.y &&
+              dest > -sector->ceiling.dist)
+          {
+            dest = -sector->ceiling.dist;
+          }
+          sector->floor.dist += amount*sector->floor.normal.z;
+          sector->floor.TexZ += amount;
+          if (sector->floor.dist > dest)
+          {
+            sector->floor.TexZ += (dest-sector->floor.dist)/sector->floor.normal.z;
+            sector->floor.dist = dest;
+            flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              sector->floor.dist = lastpos;
+              sector->floor.TexZ = LastTexZ;
+              XLevel.ChangeSector(sector, crush);
+            }
+            return RES_PASTDEST;
+          } else {
+            // COULD GET CRUSHED
+            flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              if (!crush || StopOnCrush) {
+                sector->floor.dist = lastpos;
+                sector->floor.TexZ = LastTexZ;
+                XLevel.ChangeSector(sector, crush);
+              }
+              return RES_CRUSHED;
+            }
+          }
+          break;
       }
       break;
 
     case 1:
-      // UP
-      // jff 02/04/98 keep floor from moving thru ceilings
-      // [RH] not so easy with arbitrary planes
-      if (!sector->bExtrafloorSource &&
-        !sector->ceiling.normal.x && !sector->ceiling.normal.y &&
-        !sector->floor.normal.x && !sector->floor.normal.y &&
-        dest > -sector->ceiling.dist)
-      {
-        dest = -sector->ceiling.dist;
-      }
-      sector->floor.dist += amount * sector->floor.normal.z;
-      sector->floor.TexZ += amount;
-      if (sector->floor.dist > dest)
-      {
-        sector->floor.TexZ += (dest - sector->floor.dist) /
-          sector->floor.normal.z;
-        sector->floor.dist = dest;
-        flag = XLevel.ChangeSector(sector, crush);
-        if (flag)
-        {
-          sector->floor.dist = lastpos;
-          sector->floor.TexZ = LastTexZ;
-          XLevel.ChangeSector(sector, crush);
-        }
-        return RES_PASTDEST;
-      }
-      else
-      {
-        // COULD GET CRUSHED
-        flag = XLevel.ChangeSector(sector, crush);
-        if (flag)
-        {
-          if (!crush || StopOnCrush)
+      // CEILING
+      lastpos = sector->ceiling.dist;
+      LastTexZ = sector->ceiling.TexZ;
+      switch (direction) {
+        case -1:
+          // DOWN
+          // jff 02/04/98 keep ceiling from moving thru floors
+          // [RH] not so easy with arbitrary planes
+          if (!sector->bExtrafloorSource &&
+              !sector->ceiling.normal.x && !sector->ceiling.normal.y &&
+              sector->floor.normal.x && !sector->floor.normal.y &&
+              -dest < sector->floor.dist)
           {
-            sector->floor.dist = lastpos;
-            sector->floor.TexZ = LastTexZ;
-            XLevel.ChangeSector(sector, crush);
+            dest = -sector->floor.dist;
           }
-          return RES_CRUSHED;
-        }
-      }
-      break;
-    }
-    break;
-
-  case 1:
-    // CEILING
-    lastpos = sector->ceiling.dist;
-    LastTexZ = sector->ceiling.TexZ;
-    switch (direction)
-    {
-    case -1:
-      // DOWN
-      // jff 02/04/98 keep ceiling from moving thru floors
-      // [RH] not so easy with arbitrary planes
-      if (!sector->bExtrafloorSource &&
-        !sector->ceiling.normal.x && !sector->ceiling.normal.y &&
-        sector->floor.normal.x && !sector->floor.normal.y &&
-        -dest < sector->floor.dist)
-      {
-        dest = -sector->floor.dist;
-      }
-      sector->ceiling.dist -= amount * sector->ceiling.normal.z;
-      sector->ceiling.TexZ -= amount;
-      if (sector->ceiling.dist > dest)
-      {
-        sector->ceiling.TexZ += (dest - sector->ceiling.dist) /
-          sector->ceiling.normal.z;
-        sector->ceiling.dist = dest;
-        flag = XLevel.ChangeSector(sector, crush);
-
-        if (flag)
-        {
-          sector->ceiling.dist = lastpos;
-          sector->ceiling.TexZ = LastTexZ;
-          XLevel.ChangeSector(sector, crush);
-        }
-        return RES_PASTDEST;
-      }
-      else
-      {
-        // COULD GET CRUSHED
-        flag = XLevel.ChangeSector(sector, crush);
-
-        if (flag)
-        {
-          if (!crush || StopOnCrush)
-          {
-            sector->ceiling.dist = lastpos;
-            sector->ceiling.TexZ = LastTexZ;
-            XLevel.ChangeSector(sector, crush);
+          sector->ceiling.dist -= amount*sector->ceiling.normal.z;
+          sector->ceiling.TexZ -= amount;
+          if (sector->ceiling.dist > dest) {
+            sector->ceiling.TexZ += (dest-sector->ceiling.dist)/sector->ceiling.normal.z;
+            sector->ceiling.dist = dest;
+            flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              sector->ceiling.dist = lastpos;
+              sector->ceiling.TexZ = LastTexZ;
+              XLevel.ChangeSector(sector, crush);
+            }
+            return RES_PASTDEST;
+          } else {
+            // COULD GET CRUSHED
+            flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              if (!crush || StopOnCrush) {
+                sector->ceiling.dist = lastpos;
+                sector->ceiling.TexZ = LastTexZ;
+                XLevel.ChangeSector(sector, crush);
+              }
+              return RES_CRUSHED;
+            }
           }
-          return RES_CRUSHED;
-        }
-      }
-      break;
+          break;
 
-    case 1:
-      // UP
-      sector->ceiling.dist += amount * sector->ceiling.normal.z;
-      sector->ceiling.TexZ += amount;
-      if (sector->ceiling.dist < dest)
-      {
-        sector->ceiling.TexZ += (dest - sector->ceiling.dist) /
-          sector->ceiling.normal.z;
-        sector->ceiling.dist = dest;
-        flag = XLevel.ChangeSector(sector, crush);
-        if (flag)
-        {
-          sector->ceiling.dist = lastpos;
-          sector->ceiling.TexZ = LastTexZ;
-          XLevel.ChangeSector(sector, crush);
-        }
-        return RES_PASTDEST;
-      }
-      else
-      {
-        flag = XLevel.ChangeSector(sector, crush);
+        case 1:
+          // UP
+          sector->ceiling.dist += amount*sector->ceiling.normal.z;
+          sector->ceiling.TexZ += amount;
+          if (sector->ceiling.dist < dest) {
+            sector->ceiling.TexZ += (dest-sector->ceiling.dist)/sector->ceiling.normal.z;
+            sector->ceiling.dist = dest;
+            flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              sector->ceiling.dist = lastpos;
+              sector->ceiling.TexZ = LastTexZ;
+              XLevel.ChangeSector(sector, crush);
+            }
+            return RES_PASTDEST;
+          } else {
+            flag = XLevel.ChangeSector(sector, crush);
+          }
+          break;
       }
       break;
-    }
-    break;
   }
   return RES_OK;
 }
