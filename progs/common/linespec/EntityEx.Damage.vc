@@ -476,20 +476,23 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     }
     if (kickback) {
       TVec dir;
-      float thrust;
-
-      thrust = kickback / 8.0 * itof(damage) / Mass;
+      float thrust = kickback/8.0*float(damage)/Mass;
       if (thrust < 0.0 || thrust > 10.0) thrust = 10.0;
       // make fall forwards sometimes
-      if ((damage < 40) && (damage > Health) &&
-          (Origin.z - inflictor.Origin.z > 64.0) &&
-          (P_Random()&1) &&
-          // [RH] but only if not too fast and not flying
-          thrust < 10.0 &&
-          !bNoGravity)
-      {
-        Angles.yaw += 180.0;
-        thrust *= 4.0;
+      //k8: but not if player is cheating
+      if (!bIsPlayer || !(PlayerEx(Player).Cheats&(PlayerEx::CF_BUDDHA|PlayerEx::CF_NOCLIP|PlayerEx::CF_GODMODE))) {
+        if (damage < 40 && damage > Health &&
+            Origin.z-inflictor.Origin.z > 64.0 &&
+            (P_Random()&1) &&
+            // [RH] but only if not too fast and not flying
+            thrust < 10.0 &&
+            !bNoGravity)
+        {
+          //print("!!!!!!!!!!! damage=%s; Health=%s; distz=%s; thrust=%s; nograv=%B", damage, Health, Origin.z-inflictor.Origin.z, thrust, bNoGravity);
+          Angles.yaw += 180.0;
+          Angles.yaw = AngleMod360(Angles.yaw);
+          thrust *= 4.0;
+        }
       }
       dir = GetCentre()-inflictor.GetCentre();
       if (Length(dir) < 0.001) {
