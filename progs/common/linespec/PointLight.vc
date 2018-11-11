@@ -30,6 +30,7 @@ defaultproperties {
 
 
 class PointLightAttenuated : PointLight  __mobjinfo__(9830);
+class PointLightAdditive : PointLight  __mobjinfo__(9810);
 
 
 class PointLightSubtractive : DynamicLight   __mobjinfo__(9820);
