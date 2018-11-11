@@ -53,7 +53,7 @@ class VGameInfo : public VGameObject
   vuint8      deathmatch;
   vuint8      respawn;
   vuint8      nomonsters;
-  vuint8      fastparm;
+  vuint8      fastparm; // 0:normal; 1:fast; 2:slow
 
   vint32 *validcount;
   vint32      skyflatnum;

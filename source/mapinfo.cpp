@@ -1423,7 +1423,7 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("FastMonsters")) {
       sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("SlowMonsters")) {
-      GCon->Logf("MAPINFO:%s: skill param 'SlowMonsters' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("DisableCheats")) {
       sdef->Flags |= SKILLF_DisableCheats;
     } else if (sc->Check("AutoUseHealth")) {

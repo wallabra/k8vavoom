@@ -655,7 +655,7 @@ void FL_Init () {
 
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
 
-  if (GArgs.CheckParm("-fast") != 0) fastparm = true;
+  if (GArgs.CheckParm("-fast") != 0) fastparm = 1;
   if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
   if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
 

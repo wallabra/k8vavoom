@@ -43,10 +43,11 @@ class VWorldInfo : public VGameObject
 
   enum
   {
-    WIF_SkillFastMonsters   = 0x00000001,
-    WIF_SkillDisableCheats    = 0x00000002,
-    WIF_SkillEasyBossBrain    = 0x00000004,
-    WIF_SkillAutoUseHealth    = 0x00000008,
+    WIF_SkillFastMonsters  = 0x00000001,
+    WIF_SkillDisableCheats = 0x00000002,
+    WIF_SkillEasyBossBrain = 0x00000004,
+    WIF_SkillAutoUseHealth = 0x00000008,
+    WIF_SkillSlowMonsters  = 0x00000010,
   };
   vuint32     Flags;
 
