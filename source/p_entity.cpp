@@ -45,6 +45,14 @@ int VEntity::FIndex_MoveThing;
 int VEntity::FIndex_GetStateTime;
 
 
+struct SavedVObjectPtr {
+  VObject **ptr;
+  VObject *saved;
+  SavedVObjectPtr (VObject **aptr) : ptr(aptr), saved(*aptr) {}
+  ~SavedVObjectPtr() { *ptr = saved; }
+};
+
+
 //==========================================================================
 //
 //  VEntity::InitFuncIndexes
@@ -234,8 +242,12 @@ bool VEntity::SetState (VState *InState) {
     if (st->Function) {
       //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("   (011):%s: Doomer %p STATE ACTION: %p '%s'", *st->Loc.toStringNoCol(), this, st, st->Function->GetName());
       XLevel->CallingState = State;
-      P_PASS_SELF;
-      ExecuteFunctionNoArgs(st->Function);
+      {
+        SavedVObjectPtr svp(&_stateRouteSelf);
+        _stateRouteSelf = nullptr;
+        P_PASS_SELF;
+        ExecuteFunctionNoArgs(st->Function);
+      }
     }
 
     /*
