@@ -2527,6 +2527,16 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         State->Frame |= VState::FF_SKIPMODEL;
         continue;
       }
+      // check for "fast" parameter
+      if (sc->String.ICmp("Fast") == 0) {
+        State->Frame |= VState::FF_FAST;
+        continue;
+      }
+      // check for "slow" parameter
+      if (sc->String.ICmp("Slow") == 0) {
+        State->Frame |= VState::FF_SLOW;
+        continue;
+      }
 
       // simulate "nodelay" by inserting one dummy state
       if (sc->String.ICmp("NoDelay") == 0) {
@@ -2552,12 +2562,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
             }
           }
         }
-        continue;
-      }
-
-      // check for other parameters
-      if (sc->String.ICmp("Fast") == 0 || sc->String.ICmp("Slow") == 0) {
-        GCon->Logf("%s: unsupported DECORATE state keyword: '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         continue;
       }
 

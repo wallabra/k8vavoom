@@ -35,12 +35,18 @@ class VState : public VMemberBase {
 public:
   // frame flags:
   // handles maximum brightness (torches, muzzle flare, light sources)
-  enum { FF_FULLBRIGHT = 0x80 }; // flag in Frame
-  enum { FF_CANRAISE = 0x100 }; //FIXME: flag in Frame; currently does nothing
-  enum { FF_DONTCHANGE = 0x200 }; // this frame is ignored in offset calculations
-  enum { FF_SKIPOFFS = 0x400 }; // skip this state in offset calculation
-  enum { FF_SKIPMODEL = 0x800 }; // skip this state in model frame numbering
-  enum { FF_FRAMEMASK  = 0x7f };
+  enum {
+    FF_FRAMEMASK = 0x7f,
+
+    FF_FULLBRIGHT = 0x00080, // flag in Frame
+    FF_CANRAISE   = 0x00100, // flag in Frame
+    FF_DONTCHANGE = 0x00200, // this frame is ignored in offset calculations
+    FF_SKIPOFFS   = 0x00400, // skip this state in offset calculation
+    FF_SKIPMODEL  = 0x00800, // skip this state in model frame numbering
+    FF_FAST       = 0x01000, // flag in Frame
+    FF_SLOW       = 0x02000, // flag in Frame
+  };
+
   enum { VaVoom, D2DF };
 
   enum TicKind {
