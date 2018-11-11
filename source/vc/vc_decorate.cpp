@@ -293,6 +293,8 @@ static TArray<VFlagList> FlagList;
 
 static TMapNC<VName, bool> IgnoredDecorateActions; // lowercased
 
+static bool inCodeBlock = false;
+
 
 //==========================================================================
 //
@@ -1589,6 +1591,12 @@ static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class)
   VExpression *op = ParseExpressionPriority12(sc);
   if (!op) { decoClass = olddc; return nullptr; }
   TLocation l = sc->GetLoc();
+  /*
+  if (inCodeBlock && sc->Check("=")) {
+    //return new VAssignment(VAssignment::Assign, op1, op2, stloc);
+    abort();
+  }
+  */
   if (sc->Check("?")) {
     VExpression *op1 = ParseExpressionPriority13(sc, Class);
     sc->Expect(":");
@@ -1896,12 +1904,15 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
 //
 //==========================================================================
 static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+  bool oldicb = inCodeBlock;
+  inCodeBlock = true;
   VCompound *stmt = new VCompound(sc->GetLoc());
   while (!sc->Check("}")) {
     VStatement *st = ParseActionStatement(sc, Class, State, FramesString);
     if (!st) continue;
     stmt->Statements.append(st);
   }
+  inCodeBlock = oldicb;
 
   if (stmt->Statements.length()) {
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
