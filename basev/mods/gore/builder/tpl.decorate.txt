@@ -265,6 +265,9 @@ Actor K8Gore_BloodSpot$(Color) {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
 #ifdef TRANSIENT
   //Alpha 0.6

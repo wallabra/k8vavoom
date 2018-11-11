@@ -193,6 +193,9 @@ Actor K8Gore_BloodSpot {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
   Alpha 0.9
   Mass 99999999
@@ -1858,6 +1861,9 @@ Actor K8Gore_BloodSpotTransient {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
   //Alpha 0.6
   Alpha 0.7
@@ -3522,6 +3528,9 @@ Actor K8Gore_BloodSpotGreen {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
   Alpha 0.9
   Mass 99999999
@@ -5254,6 +5263,9 @@ Actor K8Gore_BloodSpotTransient_Green {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
   //Alpha 0.6
   Alpha 0.7
@@ -6977,6 +6989,9 @@ Actor K8Gore_BloodSpotBlue {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
   Alpha 0.9
   Mass 99999999
@@ -8709,6 +8724,9 @@ Actor K8Gore_BloodSpotTransient_Blue {
   -DONTSPLASH
   -SOLID
   +THRUACTORS
+  -NOGRAVITY
+  -NoLiftDrop
+  +NOBLOCKMAP
   Renderstyle Translucent
   //Alpha 0.6
   Alpha 0.7
