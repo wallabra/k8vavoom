@@ -1139,13 +1139,17 @@ int VStr::GetChar (const char *&s) {
     val = *s&0x07;
     cnt = 3;
   } else {
-    Sys_Error("Not a valid UTF-8");
-    return 0;
+    //Sys_Error("Not a valid UTF-8");
+    ++s;
+    return '?';
   }
   ++s;
 
   do {
-    if ((*s&0xc0) != 0x80) Sys_Error("Not a valid UTF-8");
+    if ((*s&0xc0) != 0x80) {
+      //Sys_Error("Not a valid UTF-8");
+      return '?';
+    }
     val = (val<<6)|(*s&0x3f);
     ++s;
   } while (--cnt);
