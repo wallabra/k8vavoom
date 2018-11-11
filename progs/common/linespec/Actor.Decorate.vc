@@ -48,6 +48,28 @@ enum /*ERemoveFlags*/ {
   RMVF_EITHER     = 0x00000040,
 };
 
+// Flags for A_RadiusGive
+enum /*ERadiusGiveFlags*/ {
+  RGF_GIVESELF  = 1,
+  RGF_PLAYERS   = 1 << 1,
+  RGF_MONSTERS  = 1 << 2,
+  RGF_OBJECTS   = 1 << 3,
+  RGF_VOODOO    = 1 << 4,
+  RGF_CORPSES   = 1 << 5,
+  RGF_NOTARGET  = 1 << 6,
+  RGF_NOTRACER  = 1 << 7,
+  RGF_NOMASTER  = 1 << 8,
+  RGF_CUBE      = 1 << 9,
+  RGF_NOSIGHT   = 1 << 10,
+  RGF_MISSILES  = 1 << 11,
+  RGF_INCLUSIVE = 1 << 12,
+  RGF_ITEMS     = 1 << 13,
+  RGF_KILLED    = 1 << 14,
+  RGF_EXFILTER  = 1 << 15,
+  RGF_EXSPECIES = 1 << 16,
+  RGF_EITHER    = 1 << 17,
+};
+
 
 //==========================================================================
 //
@@ -538,4 +560,126 @@ final void A_RemoveChildren (optional bool all, optional int flags, optional str
   }
   A_RC_KillList.clear(); // clear, but don't reallocate
 #endif
+}
+
+
+//==========================================================================
+//
+//  A_RadiusGive
+//
+//==========================================================================
+final int A_RadiusGive (name itemname, float distance, int flags, optional int amount, optional string filter, optional string species, optional float mindist, optional int limit) {
+  if (!specified_limit) limit = int.max;
+  if (limit < 1) return 0;
+
+  if (amount < 0) return 0;
+  amount = max(1, amount); // 0 is 1 anyway
+
+  if (distance <= 0) return 0; // as per docs
+  if (mindist > distance) return 0;
+
+  // find item class
+  if (!itemname) return 0;
+  class!Inventory itemtype = class!Inventory(FindClassNoCase(itemname));
+  if (!itemtype) return 0;
+  itemtype = class!Inventory(GetClassReplacement(itemtype));
+  if (!itemtype) return 0;
+
+  // fix filters
+  if (stricmp(filter, "none") == 0) filter = "";
+  if (stricmp(species, "none") == 0) species = "";
+
+  bool giveCube = (flags&RGF_CUBE);
+  int count = 0;
+  Entity enti;
+  foreach RadiusThings(enti, Origin, distance*(giveCube ? 2.0 : 1.0)) {
+    EntityEx ent = EntityEx(enti);
+    if (!ent) continue;
+    if (ent == self) {
+      if (!(flags&RGF_GIVESELF)) continue;
+    } else {
+      // check distance
+      if (mindist > 0 && length2d(ent.Origin-Origin) > mindist) continue;
+      if (giveCube) {
+        // additional check for cube giver
+        if (fabs(Origin.x-ent.Origin.x) > distance || fabs(Origin.y-ent.Origin.y) > distance) continue;
+      }
+
+      // check filters
+      bool filterHit = true, speciesHit = true;
+      if (filter) {
+        filterHit = (stricmp(filter, string(GetClassName(ent.Class))) != 0);
+        if (flags&RGF_EXFILTER) filterHit = !filterHit; // filter inverted
+      }
+      if (species) {
+        speciesHit = (stricmp(species, string(ent.GetSpecies())) != 0);
+        if (flags&RGF_EXSPECIES) speciesHit = !speciesHit; // species inverted
+      }
+      if (flags&RGF_EITHER) {
+        if (!filterHit && !speciesHit) continue;
+      } else {
+        if (!filterHit || !speciesHit) continue;
+      }
+
+      if (ent.bCorpse && (flags&RGF_CORPSES)) {
+        // do nothing, really
+      } else {
+        // check allowed flags
+        if (ent.bIsPlayer) {
+          // player
+          if (ent.Player.PlayerState == PST_DEAD) continue;
+          //if (ent.Player.bIsBot)
+          if (ent.Player.MO != self) {
+            // voodoo doll
+            if (!(flags&RGF_VOODOO)) continue;
+          } else {
+            if (!(flags&RGF_PLAYERS)) continue;
+          }
+        } else if (ent.bMonster) {
+          // monster
+          if (!(flags&RGF_MONSTERS)) continue;
+          if (ent.Health <= 0 && !(flags&RGF_KILLED)) continue;
+        } else if (ent.bMissile) {
+          // missile
+          if (!(flags&RGF_MISSILES)) continue;
+        } else {
+          // other
+          if (ent isa Inventory) {
+            if (!(flags&RGF_ITEMS)) continue;
+          } else {
+            if (!(flags&RGF_OBJECTS)) continue;
+            // should be either shootable or vulnerable
+            if (!ent.bShootable && !ent.bNoDamage) continue;
+          }
+        }
+      }
+
+      // check NOxxx
+      if (flags&(RGF_NOTARGET|RGF_NOTRACER|RGF_NOMASTER)) {
+        if (flags&RGF_INCLUSIVE) {
+          // should satisfy all
+          bool isTarget = (flags&RGF_NOTARGET ? (Target == ent) : true);
+          bool isTracer = (flags&RGF_NOTRACER ? (Tracer == ent) : true);
+          bool isMaster = (flags&RGF_NOMASTER ? (Master == ent) : true);
+          if (isTarget && isTracer && isMaster) continue;
+        } else {
+          bool isTarget = (flags&RGF_NOTARGET ? (Target == ent) : false);
+          bool isTracer = (flags&RGF_NOTRACER ? (Tracer == ent) : false);
+          bool isMaster = (flags&RGF_NOMASTER ? (Master == ent) : false);
+          if (isTarget || isTracer || isMaster) continue;
+        }
+      }
+
+      // sight check
+      if (!(flags&RGF_NOSIGHT) && !CanSee(ent)) continue;
+    }
+
+    // it is ok to give an item
+    if (DoGiveInventory(itemtype, amount, ent)) {
+      ++count;
+      if (count >= limit) break;
+    }
+  }
+
+  return count;
 }

@@ -261,3 +261,26 @@ enum ERemoveFlags {
   RMVF_EXSPECIES  = 0x00000020,
   RMVF_EITHER     = 0x00000040,
 };
+
+
+// Flags for A_RadiusGive
+enum ERadiusGiveFlags {
+  RGF_GIVESELF  = 1,
+  RGF_PLAYERS   = 1 << 1,
+  RGF_MONSTERS  = 1 << 2,
+  RGF_OBJECTS   = 1 << 3,
+  RGF_VOODOO    = 1 << 4,
+  RGF_CORPSES   = 1 << 5,
+  RGF_NOTARGET  = 1 << 6,
+  RGF_NOTRACER  = 1 << 7,
+  RGF_NOMASTER  = 1 << 8,
+  RGF_CUBE      = 1 << 9,
+  RGF_NOSIGHT   = 1 << 10,
+  RGF_MISSILES  = 1 << 11,
+  RGF_INCLUSIVE = 1 << 12,
+  RGF_ITEMS     = 1 << 13,
+  RGF_KILLED    = 1 << 14,
+  RGF_EXFILTER  = 1 << 15,
+  RGF_EXSPECIES = 1 << 16,
+  RGF_EITHER    = 1 << 17,
+};

@@ -27,58 +27,42 @@
 //  Inventory functions
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  DoGiveInventory
 //
 //==========================================================================
+final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Receiver) {
+  if (!Receiver) return false;
 
-final void DoGiveInventory(class!Inventory ItemType, int Amount,
-  EntityEx Receiver)
-{
-  if (!Receiver)
-  {
-    return;
-  }
+  if (!Amount) Amount = 1;
 
-  if (!Amount)
-  {
-    Amount = 1;
-  }
   bool Ret = true;
-  if (ItemType)
-  {
+  if (ItemType) {
     Inventory Item = Spawn(ItemType, default, default, default, false);
-    if (Health(Item))
-    {
+    if (Health(Item)) {
       Item.Amount *= Amount;
-    }
-    else
-    {
+    } else {
       Item.Amount = Amount;
     }
     Item.bDropped = true;
-    //  This shouldn't count for the item statistics
-    if (Item.bCountItem)
-    {
+    // this shouldn't count for the item statistics
+    if (Item.bCountItem) {
       Item.bCountItem = false;
-      Level.TotalItems--;
+      --Level.TotalItems;
     }
-    if (!Item.TryPickup(Receiver))
-    {
+    if (!Item.TryPickup(Receiver)) {
       Item.Destroy();
       Ret = false;
     }
-  }
-  else
-  {
+  } else {
     Ret = false;
   }
 
-  if (XLevel.StateCall)
-  {
-    XLevel.StateCall->Result = Ret;
-  }
+  if (XLevel.StateCall) XLevel.StateCall->Result = Ret;
+
+  return Ret;
 }
 
 //==========================================================================
