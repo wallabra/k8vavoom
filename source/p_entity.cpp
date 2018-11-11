@@ -359,6 +359,12 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
     if (SprFx.LightDef) Lights.Append(SprFx.LightDef);
     if (SprFx.PartDef) Part.Append(SprFx.PartDef);
   }
+  if (!State->LightInited) {
+    State->LightInited = true;
+    State->LightDef = nullptr;
+    if (State->LightName.length()) State->LightDef = R_FindLightEffect(State->LightName);
+  }
+  if (State->LightDef) Lights.Append(State->LightDef);
   unguard;
 }
 

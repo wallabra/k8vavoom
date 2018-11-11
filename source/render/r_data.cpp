@@ -1090,19 +1090,14 @@ int R_GetBloodTranslation(int Col)
 
 //==========================================================================
 //
-//  FindLightEffect
+//  R_FindLightEffect
 //
 //==========================================================================
 
-static VLightEffectDef *FindLightEffect(const VStr &Name)
-{
-  guard(FindLightEffect);
-  for (int i = 0; i < GLightEffectDefs.Num(); i++)
-  {
-    if (GLightEffectDefs[i].Name == *Name)
-    {
-      return &GLightEffectDefs[i];
-    }
+VLightEffectDef *R_FindLightEffect(const VStr &Name) {
+  guard(R_FindLightEffect);
+  for (int i = 0; i < GLightEffectDefs.Num(); i++) {
+    if (Name.ICmp(*GLightEffectDefs[i].Name) == 0) return &GLightEffectDefs[i];
   }
   return nullptr;
   unguard;
@@ -1119,7 +1114,7 @@ static void ParseLightDef(VScriptParser *sc, int LightType)
   guard(ParseLightDef);
   //  Get name, find it in the list or add it if it's not there yet.
   sc->ExpectString();
-  VLightEffectDef *L = FindLightEffect(sc->String);
+  VLightEffectDef *L = R_FindLightEffect(sc->String);
   if (!L)
   {
     L = &GLightEffectDefs.Alloc();
@@ -1222,7 +1217,7 @@ static void ParseGZLightDef(VScriptParser *sc, int LightType)
   guard(ParseGZLightDef);
   //  Get name, find it in the list or add it if it's not there yet.
   sc->ExpectString();
-  VLightEffectDef *L = FindLightEffect(sc->String);
+  VLightEffectDef *L = R_FindLightEffect(sc->String);
   if (!L)
   {
     L = &GLightEffectDefs.Alloc();
@@ -1795,7 +1790,7 @@ void R_ParseEffectDefs()
 
     if (CD.StaticLight.IsNotEmpty())
     {
-      VLightEffectDef *SLight = FindLightEffect(CD.StaticLight);
+      VLightEffectDef *SLight = R_FindLightEffect(CD.StaticLight);
       if (SLight)
       {
         SetClassFieldBool(Cls, "bStaticLight", true);
@@ -1840,7 +1835,7 @@ void R_ParseEffectDefs()
       SprFx.LightDef = nullptr;
       if (SprDef.Light.IsNotEmpty())
       {
-        SprFx.LightDef = FindLightEffect(SprDef.Light);
+        SprFx.LightDef = R_FindLightEffect(SprDef.Light);
         if (!SprFx.LightDef)
         {
           GCon->Logf("Light \"%s\" not found", *SprDef.Light);

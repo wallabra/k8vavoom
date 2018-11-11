@@ -2550,9 +2550,14 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         continue;
       }
 
-      //FIXME: check for light parameter (unsupported for now)
+      // check for light parameter
       if (sc->String.ICmp("Light") == 0) {
         //LIGHT(UNMNRALR)
+        sc->Expect("(");
+        sc->ExpectString();
+        State->LightName = sc->String;
+        sc->Expect(")");
+        /*
         GCon->Logf("%s: unsupported DECORATE 'Light' attribute", *sc->GetLoc().toStringNoCol());
         if (!sc->Crossed) {
           if (sc->Check("(")) {
@@ -2562,6 +2567,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
             }
           }
         }
+        */
         continue;
       }
 
@@ -2638,6 +2644,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;
       s2->Function = State->Function;
+      s2->LightName = State->LightName;
 
       // link previous state
       PrevState->NextState = s2;

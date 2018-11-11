@@ -57,6 +57,9 @@ VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , InClassIndex(-1)
   , NetId(-1)
   , NetNext(nullptr)
+  , LightInited(false)
+  , LightDef(nullptr)
+  , LightName(VStr())
 {
 }
 
@@ -78,6 +81,9 @@ VState::~VState () {
 void VState::Serialise (VStream &Strm) {
   guard(VState::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint8 ver = 0; // current version is 0
+  Strm << ver;
+  //if (!Strm.IsLoading()) ver = 0; // just in case
   Strm
     << STRM_INDEX(Type)
     << STRM_INDEX(TicType)
@@ -93,9 +99,14 @@ void VState::Serialise (VStream &Strm) {
     << STRM_INDEX(frameOfsX)
     << STRM_INDEX(frameOfsY)
     << STRM_INDEX(frameAction)
+    << LightName
     << NextState
     << Function
     << Next;
+  if (Strm.IsLoading()) {
+    LightInited = false;
+    LightDef = nullptr;
+  }
   unguard;
 }
 

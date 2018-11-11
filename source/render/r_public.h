@@ -367,6 +367,7 @@ bool R_AreSpritesPresent(int);
 int R_ParseDecorateTranslation(VScriptParser*, int);
 int R_GetBloodTranslation(int);
 void R_ParseEffectDefs();
+VLightEffectDef *R_FindLightEffect (const VStr &Name);
 
 // r_main
 void R_Init(); // Called by startup code.

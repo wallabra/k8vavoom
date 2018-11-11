@@ -59,8 +59,7 @@ static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
-//#define SAVE_VERSION_TEXT          "Version 1.34.5"
-#define SAVE_VERSION_TEXT          "Version 1.34.6.2"
+#define SAVE_VERSION_TEXT          "Version 1.34.7"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
 
 static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");

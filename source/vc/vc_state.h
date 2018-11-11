@@ -31,6 +31,8 @@ struct VAliasModelFrameInfo {
 };
 
 
+struct VLightEffectDef;
+
 class VState : public VMemberBase {
 public:
   // frame flags:
@@ -86,6 +88,11 @@ public:
   vint32 InClassIndex; // used by model rendering code (only)
   vint32 NetId;
   VState *NetNext;
+
+  // inline light effect for state
+  bool LightInited;
+  VLightEffectDef *LightDef;
+  VStr LightName;
 
   VState (VName AName, VMemberBase *AOuter, TLocation ALoc);
   virtual ~VState () override;
