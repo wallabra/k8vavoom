@@ -146,7 +146,7 @@ final void A_SpawnDebris(class!Actor SpawnType, optional bool TransTransl,
 
 final void InitSpawnedItem(EntityEx A, bool TransTransl, bool SetMaster,
   bool NoCheckPos, bool Telestomp, bool TransPitch, bool TransPointers,
-  optional bool Originator)
+  optional bool Originator, optional bool RememberParent)
 {
   if (!A)
   {
@@ -175,6 +175,8 @@ final void InitSpawnedItem(EntityEx A, bool TransTransl, bool SetMaster,
   if (!Originator) {
     while (Instig && Instig.IsMissile(true)) Instig = Instig.Target;
   }
+
+  if (RememberParent) A.SpawnParent = Instig; //(Instig ? Instig : self);
 
   if (Telestomp)
   {
@@ -334,7 +336,8 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
     !!(Flags&SXF_TELEFRAG),
     !!(Flags&SXF_TRANSFERPITCH),
     !!(Flags&SXF_TRANSFERPOINTERS),
-    Originator:!!(Flags&SXF_ORIGINATOR));
+    Originator:!!(Flags&SXF_ORIGINATOR),
+    RememberParent:true);
 
   if (A) {
     //k8:removed:if (ApplyTranslation) A.Translation = Translation;

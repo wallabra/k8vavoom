@@ -474,6 +474,9 @@ float     JumpTime;
 
 bool k8InWeaponReady; // otherwise recursive calls to it may overflow stack
 
+EntityEx SpawnParent; // set in `A_SpawnItemEx()`, used in `A_RemoveChildren()`
+
+
 replication
 {
   reliable if (Role == ROLE_Authority && bNetOwner)
