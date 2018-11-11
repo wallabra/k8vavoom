@@ -470,6 +470,9 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
             // doesn't fit, keep checking (crush other things)
             ret = true;
           }
+        } else {
+          // move thing with a sector anyway
+          n->Thing->eventSectorChanged(crunch);
         }
         // exit and start over
         break;
