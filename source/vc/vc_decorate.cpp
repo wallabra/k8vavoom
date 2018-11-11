@@ -819,6 +819,7 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   guard(VDecorateInvocation::DoResolve);
   //if (VStr::ICmp(*Name, "CallACS") == 0) Name = VName("ACS_NamedExecuteWithResult"); // decorate hack
   if (ec.SelfClass) {
+    //FIXME: sanitize this!
     // first try with decorate_ prefix, then without
     VMethod *M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *Name));
     if (!M) M = ec.SelfClass->FindMethod/*NoCase*/(Name);
@@ -826,6 +827,11 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
       VStr loname = VStr(*Name).toLowerCase();
       M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *loname));
       if (!M) M = ec.SelfClass->FindMethod(VName(*loname));
+      if (!M && ec.SelfClass) {
+        // just in case
+        VDecorateStateAction *Act = ec.SelfClass->FindDecorateStateAction(*loname);
+        if (Act) M = Act->Method;
+      }
       if (M) Name = VName(*loname);
     }
     if (M) {
