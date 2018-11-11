@@ -311,3 +311,45 @@ COMMAND(my_sector_info) {
   GCon->Logf("  floor texture  : %s", *GTextureManager.GetTextureName(sec->floor.pic));
   GCon->Logf("  ceiling texture: %s", *GTextureManager.GetTextureName(sec->ceiling.pic));
 }
+
+
+//==========================================================================
+//
+//  Jumper
+//
+//==========================================================================
+COMMAND(Jumper) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  if (CheatAllowed(Player)) Player->eventCheat_Jumper();
+}
+
+
+//==========================================================================
+//
+//  ShooterKing
+//
+//==========================================================================
+COMMAND(ShooterKing) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  if (CheatAllowed(Player)) Player->eventCheat_ShooterKing();
+}
+
+
+//==========================================================================
+//
+//  Regeneration
+//
+//==========================================================================
+COMMAND(Regeneration) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  if (CheatAllowed(Player)) Player->eventCheat_Regeneration();
+}

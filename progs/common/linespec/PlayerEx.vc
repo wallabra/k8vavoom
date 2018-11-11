@@ -3749,13 +3749,47 @@ int GetMaxHealth()
   return Max;
 }
 
+
+//==========================================================================
+//
+//  Cheat_Jumper
+//
+//==========================================================================
+override void Cheat_Jumper () {
+  Cheats ^= CF_HIGHJUMP;
+  if (Cheats&CF_HIGHJUMP) cprint("High Jump Cheat is On"); else cprint("High Jump Cheat is Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_ShooterKing
+//
+//==========================================================================
+override void Cheat_ShooterKing () {
+  Cheats ^= CF_DOUBLEFIRINGSPEED;
+  if (Cheats&CF_DOUBLEFIRINGSPEED) cprint("Double Firing Speed Cheat is On"); else cprint("Double Firing Speed Cheat is Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_Regeneration
+//
+//==========================================================================
+override void Cheat_Regeneration () {
+  Cheats ^= CF_REGENERATION;
+  if (Cheats&CF_REGENERATION) cprint("Regeneration Cheat is On"); else cprint("Regeneration Cheat is Off");
+}
+
+
 //==========================================================================
 //
 //  Cheat_God
 //
 //==========================================================================
 
-final override void Cheat_God()
+override void Cheat_God()
 {
   Cheats ^= CF_GODMODE;
   if (Cheats & CF_GODMODE)
@@ -3793,7 +3827,7 @@ final override void Cheat_God()
 //
 //==========================================================================
 
-final override void Cheat_Buddha () {
+override void Cheat_Buddha () {
   Cheats ^= CF_BUDDHA;
   if (Cheats&CF_BUDDHA) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
 }
@@ -3804,7 +3838,7 @@ final override void Cheat_Buddha () {
 //
 //==========================================================================
 
-final override void Cheat_Summon () {
+override void Cheat_Summon () {
   //print("SUMMON: argc=%d", Cmd_GetArgC());
   if (!MO.bIsPlayer || !Level) return;
   auto plr = PlayerEx(MO.Player);
@@ -3856,7 +3890,7 @@ final override void Cheat_Summon () {
 //
 //==========================================================================
 
-final override void Cheat_NoClip()
+override void Cheat_NoClip()
 {
   Cheats ^= CF_NOCLIP;
   if (Cheats & CF_NOCLIP)
@@ -3879,7 +3913,7 @@ final override void Cheat_NoClip()
 //
 //==========================================================================
 
-final override void Cheat_KillAll()
+override void Cheat_KillAll()
 {
   cprint("%d MONSTERS KILLED", LineSpecialLevelInfo(Level).P_Massacre());
 }
@@ -3890,7 +3924,7 @@ final override void Cheat_KillAll()
 //
 //==========================================================================
 
-final override void Cheat_NoWeapons()
+override void Cheat_NoWeapons()
 {
   if (MorphTime)
   {
@@ -3928,7 +3962,7 @@ final override void Cheat_NoWeapons()
 //
 //==========================================================================
 
-final override void Cheat_Fly()
+override void Cheat_Fly()
 {
   if (!bFly)
   {
@@ -3966,7 +4000,7 @@ final override void Cheat_Fly()
 //
 //==========================================================================
 
-final override void Cheat_NoTarget()
+override void Cheat_NoTarget()
 {
   bNoTarget = !bNoTarget;
   if (bNoTarget)
@@ -3985,7 +4019,7 @@ final override void Cheat_NoTarget()
 //
 //==========================================================================
 
-final override void Cheat_Anubis()
+override void Cheat_Anubis()
 {
   Cheats ^= CF_FRIGHTENING;
   if (Cheats & CF_FRIGHTENING)
@@ -4004,7 +4038,7 @@ final override void Cheat_Anubis()
 //
 //==========================================================================
 
-final override void Cheat_Freeze()
+override void Cheat_Freeze()
 {
   Cheats ^= CF_TIMEFREEZE;
   if (Cheats & CF_TIMEFREEZE)

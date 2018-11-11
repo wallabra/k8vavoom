@@ -343,72 +343,23 @@ class VBasePlayer : public VGameObject
     EV_RET_BOOL(NAME_CheckDoubleFiringSpeed);
   }
 
-  //  Cheats.
-  void eventCheat_God()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_God);
-  }
-  void eventCheat_Buddha()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Buddha);
-  }
-  void eventCheat_Summon()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Summon);
-  }
-  void eventCheat_NoClip()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_NoClip);
-  }
-  void eventCheat_Gimme()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Gimme);
-  }
-  void eventCheat_KillAll()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_KillAll);
-  }
-  void eventCheat_Morph()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Morph);
-  }
-  void eventCheat_NoWeapons()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_NoWeapons);
-  }
-  void eventCheat_Class()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Class);
-  }
-  void eventCheat_Fly()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Fly);
-  }
-  void eventCheat_NoTarget()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_NoTarget);
-  }
-  void eventCheat_Anubis()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Anubis);
-  }
-  void eventCheat_Freeze()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_Cheat_Freeze);
-  }
+  // cheats
+  void eventCheat_God () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_God); }
+  void eventCheat_Buddha () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Buddha); }
+  void eventCheat_Summon () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Summon); }
+  void eventCheat_NoClip () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_NoClip); }
+  void eventCheat_Gimme () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Gimme); }
+  void eventCheat_KillAll () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_KillAll); }
+  void eventCheat_Morph () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Morph); }
+  void eventCheat_NoWeapons () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_NoWeapons); }
+  void eventCheat_Class () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Class); }
+  void eventCheat_Fly () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Fly); }
+  void eventCheat_NoTarget () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_NoTarget); }
+  void eventCheat_Anubis () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Anubis); }
+  void eventCheat_Freeze () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Freeze); }
+  void eventCheat_Jumper () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Jumper")); }
+  void eventCheat_ShooterKing () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_ShooterKing")); }
+  void eventCheat_Regeneration () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Regeneration")); }
 
   //  Server to client events.
   void eventClientStartSound(int SoundId, TVec Org, int OriginId,
