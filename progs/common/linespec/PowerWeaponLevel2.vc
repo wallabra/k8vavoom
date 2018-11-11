@@ -39,25 +39,16 @@ override void InitEffect()
   }
 
   Weapon Wpn = PlayerEx(Owner.Player).ReadyWeapon;
-  if (!Wpn)
-  {
-    return;
-  }
+  if (!Wpn) return;
 
   Weapon Sist = PlayerEx(Owner.Player).ReadyWeapon.SisterWeapon;
-  if (!Sist)
-  {
-    return;
-  }
+  if (!Sist) return;
 
-  if (!Sist.bPoweredUp)
-  {
-    return;
-  }
+  if (!Sist.bPoweredUp) return;
 
   PlayerEx(Owner.Player).SetWeapon(Sist);
-  if (Sist.GetReadyState() != Wpn.GetReadyState())
-  {
+  if (Sist.GetReadyState() != Wpn.GetReadyState()) {
+    Player.SetViewObject(Sist);
     PlayerEx(Owner.Player).SetViewState(ps_weapon, Sist.GetReadyState());
   }
 }

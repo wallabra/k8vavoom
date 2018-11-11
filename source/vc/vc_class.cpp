@@ -1698,14 +1698,45 @@ void VClass::CreateDefaults () {
   Defaults = new vuint8[ClassSize];
   memset(Defaults, 0, ClassSize);
 
+  /*
+  if (Fields) {
+    fprintf(stderr, "=== FIELDS OF '%s' (before:%p) ===\n", GetName());
+    for (VField *fi = Fields; fi; fi = fi->Next) {
+      if (fi->Type.Type == TYPE_Int) {
+        fprintf(stderr, "  %s: %d v=%d\n", fi->GetName(), fi->Ofs, *(vint32 *)(Defaults+fi->Ofs));
+      } else if (fi->Type.Type == TYPE_Float) {
+        fprintf(stderr, "  %s: %d v=%f\n", fi->GetName(), fi->Ofs, *(float *)(Defaults+fi->Ofs));
+      } else {
+        //fprintf(stderr, "  %s: %d\n", fi->GetName(), fi->Ofs);
+      }
+    }
+  }
+  */
+
   // copy default properties from the parent class
   if (ParentClass) {
     //fprintf(stderr, "COPYING `%s` to `%s`\n", ParentClass->GetName(), GetName());
     ParentClass->CopyObject(ParentClass->Defaults, Defaults);
   }
 
+  /*
+  if (Fields) {
+    fprintf(stderr, "=== FIELDS OF '%s' (after) ===\n", GetName());
+    for (VField *fi = Fields; fi; fi = fi->Next) {
+      if (fi->Type.Type == TYPE_Int) {
+        fprintf(stderr, "  %s: %d v=%d\n", fi->GetName(), fi->Ofs, *(vint32 *)(Defaults+fi->Ofs));
+      } else if (fi->Type.Type == TYPE_Float) {
+        fprintf(stderr, "  %s: %d v=%f\n", fi->GetName(), fi->Ofs, *(float *)(Defaults+fi->Ofs));
+      } else {
+        //fprintf(stderr, "  %s: %d\n", fi->GetName(), fi->Ofs);
+      }
+    }
+  }
+  */
+
   // call default properties method
   if (DefaultProperties) {
+    //fprintf(stderr, "CALLING defprops on `%s`\n", GetName());
     P_PASS_REF((VObject *)Defaults);
     VObject::ExecuteFunction(DefaultProperties);
   }
@@ -1780,6 +1811,11 @@ void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
         VField *F = *ffp;
         flist.remove(fname);
         VField::SerialiseFieldValue(Strm, (vuint8 *)Obj+F->Ofs, F->Type, F->GetFullName());
+        /*
+        if (VStr::Cmp(F->GetName(), "user_hasunloaded") == 0) {
+          GCon->Logf("!!!!!!!!!!! `%s` %d %d", *GetFullName(), *(vint32 *)(Obj+F->Ofs), *(vint32 *)(Defaults+F->Ofs));
+        }
+        */
       }
     }
     // show missing fields
@@ -1884,17 +1920,28 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
     }
     PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
   }
+
   //!DecorateDefine();
   //fprintf(stderr, "*** '%s' : '%s' (%d) ***\n", NewClass->GetName(), GetName(), (NewClass->ObjectFlags&CLASSOF_PostLoaded ? 1 : 0));
   //fprintf(stderr, " class size 0: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
   NewClass->PostLoad();
+  //fprintf(stderr, " class size 1: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
+  NewClass->CreateDefaults();
+
   /*
-  fprintf(stderr, " class size 1: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
   if (NewClass->Fields) {
-    for (VField *fi = NewClass->Fields; fi; fi = fi->Next) fprintf(stderr, "  %s: %d\n", fi->GetName(), fi->Ofs);
+    for (VField *fi = NewClass->Fields; fi; fi = fi->Next) {
+      if (fi->Type.Type == TYPE_Int) {
+        fprintf(stderr, "  %s: %d v=%d\n", fi->GetName(), fi->Ofs, *(vint32 *)(NewClass->Defaults+fi->Ofs));
+      } else if (fi->Type.Type == TYPE_Float) {
+        fprintf(stderr, "  %s: %d v=%f\n", fi->GetName(), fi->Ofs, *(float *)(NewClass->Defaults+fi->Ofs));
+      } else {
+        fprintf(stderr, "  %s: %d\n", fi->GetName(), fi->Ofs);
+      }
+    }
   }
   */
-  NewClass->CreateDefaults();
+
   return NewClass;
   unguard;
 }

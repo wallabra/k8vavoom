@@ -39,6 +39,8 @@ native final bool IsDestroyed ();
 native static final void CollectGarbage (optional bool destroyDelayed);
 native static final bool GCMessagesAllowed { get; set; }
 
+native final bool HasFieldByName (name fldname);
+native final int GetIntFieldByName (name fldname, optional bool default_value);
 
 
 //**************************************************************************

@@ -1169,12 +1169,11 @@ final void A_SpawnMace()
 
 final void A_BeakRaise() self(Actor)
 {
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
+  Player.SetViewObject(Wpn);
   Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
   Player.SetViewState(ps_weapon, Wpn.GetReadyState());
 }

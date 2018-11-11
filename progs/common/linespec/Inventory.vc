@@ -414,11 +414,20 @@ Inventory CreateCopy(EntityEx Toucher)
     Copy = Spawn(class!Inventory(Class), default, default, default, false);
     Copy.Amount = Amount;
     Copy.MaxAmount = MaxAmount;
+    //print("COPIED %C (%C)", Copy, self);
   }
   else
   {
     //  Use this one
     Copy = self;
+    /*
+    print("USED AS COPY %C", self);
+    if (HasFieldByName('user_unloading')) {
+      print("GRS: %C; user_unloading=%d:%d; spread=%d:%d", self,
+        GetIntFieldByName('user_unloading'), GetIntFieldByName('user_unloading', default_value:true),
+        GetIntFieldByName('user_spread'), GetIntFieldByName('user_spread', default_value:true));
+    }
+    */
   }
   return Copy;
 }
@@ -854,6 +863,7 @@ final void decorate_A_Lower (optional float lowerspeed) {
 
   if (Player.MO.Health <= 0) {
     // Player is dead, so keep the weapon off screen.
+    Player.SetViewObject(none);
     Player.SetViewState(ps_weapon, none);
     return;
   }
@@ -897,6 +907,7 @@ final void decorate_A_Raise (optional float raisespeed) {
 
   if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP) return; // not raised all the way yet
   Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
+  Player.SetViewObject(Wpn);
   if (Wpn) {
     Player.SetViewState(ps_weapon, Wpn.GetReadyState());
   } else {
@@ -1003,7 +1014,10 @@ final void decorate_A_GunFlash (optional name newstate, optional int flags)
   if (!specified_newstate) newstate = 'Flash';
 
   if (MeleeState) SetState(MeleeState);
-  if (newstate && !(flags&1)) Player.SetViewState(ps_flash, Wpn.FindState(newstate));
+  if (newstate && !(flags&1)) {
+    Player.SetViewObject(Wpn);
+    Player.SetViewState(ps_flash, Wpn.FindState(newstate));
+  }
 }
 
 
@@ -1471,6 +1485,7 @@ final void A_FirePistol () {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn) {
       if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+      Player.SetViewObject(Wpn);
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
       decal = Wpn.DecalName;
       noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
@@ -1517,7 +1532,7 @@ final void A_FireShotgun()
     {
       return;
     }
-
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
@@ -1561,7 +1576,7 @@ final void A_FireShotgun2()
     {
       return;
     }
-
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
@@ -1639,7 +1654,7 @@ final void A_FireCGun()
     {
       return;
     }
-
+    Player.SetViewObject(Wpn);
     if (Player.ViewStates[ps_weapon].State == Wpn.GetAttackState(false))
     {
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
@@ -1703,6 +1718,7 @@ final void A_FirePlasma()
     {
       return;
     }
+    Player.SetViewObject(Wpn);
     if (!(P_Random() & 1))
     {
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
@@ -1735,6 +1751,7 @@ final void DoFireRailgun(float Offset)
     {
       return;
     }
+    Player.SetViewObject(Wpn);
     if (!(P_Random() & 1))
     {
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));

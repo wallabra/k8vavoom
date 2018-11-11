@@ -2,6 +2,26 @@
 class Actor extends Thinker
   native
 {
+  /*
+  field x = _GetOriginX;
+  field y = _GetOriginY;
+  field z = _GetOriginZ;
+
+  field velx = _GetVelocityX;
+  field vely = _GetVelocityY;
+  field velz = _GetVelocityZ;
+
+  // "momentum", deprecated
+  field momx = _GetVelocityX;
+  field momy = _GetVelocityY;
+  field momz = _GetVelocityZ;
+
+  field angle = _GetAnglesYaw;
+  field yaw = _GetAnglesYaw;
+  field pitch = _GetAnglesPitch;
+  field roll = _GetAnglesRoll;
+  */
+
   field x = Origin.x;
   field y = Origin.y;
   field z = Origin.z;
@@ -15,14 +35,14 @@ class Actor extends Thinker
   field momy = Velocity.y;
   field momz = Velocity.z;
 
-  field radius = Radius;
-  field scalex = ScaleX;
-  field scaley = ScaleY;
-
   field angle = Angles.yaw;
   field yaw = Angles.yaw;
   field pitch = Angles.pitch;
   field roll = Angles.roll;
+
+  field radius = Radius;
+  field scalex = ScaleX;
+  field scaley = ScaleY;
 
   field ceilingz = CeilingZ;
   field floorz = FloorZ;
@@ -48,6 +68,10 @@ class Actor extends Thinker
   alias random2 = random2;
   alias randompick = randompick;
   alias frandompick = frandompick;
+
+  alias GetIntFieldByName = GetIntFieldByName;
+  alias GetSelf = _GetSelf;
+  alias GetSSR = _GetSSR;
 
   //
   //  Monster AI

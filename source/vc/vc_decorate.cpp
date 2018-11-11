@@ -674,29 +674,55 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
 
   CheckName = *Name.ToLower();
 
+  /*
   if (VStr(*CheckName).startsWith("user_")) {
     VSingleName *sn = new VSingleName(CheckName, Loc);
     delete this;
     return sn->Resolve(ec);
   }
+  */
 
   if (ec.SelfClass) {
     VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
     if (fldn != NAME_None) {
       VStr fns = VStr(*fldn);
-      int dotpos = fns.IndexOf('.');
-      if (dotpos > 0 && dotpos < fns.length()-1) {
-        VStr n0 = fns.mid(0, dotpos);
-        VStr n1 = fns.mid(dotpos+1, fns.length()-dotpos);
-        //fprintf(stderr, "::: <%s> <%s>\n", *n0, *n1);
-        VSingleName *sn0 = new VSingleName(VName(*n0), Loc);
-        VDotField *fa = new VDotField(sn0, VName(*n1), Loc);
+      if (fns.startsWith("user_")) {
+        // method call
+        /*
+        VField *xfld = ec.SelfClass->FindFieldChecked(fldn);
+        VFieldType ftype = xfld->Type;
+        if (ftype.Type == TYPE_Array) ftype = ftype.GetArrayInnerType();
+        VName mtname = NAME_None;
+        if (ftype.Type == TYPE_Int) mtname = VName(
+        VMethod *M = ec.SelfClass->FindMethod("
+        VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
+        */
+        // create ternary: (_stateRouteSelf ? _stateRouteSelf : self)
+        VField *fldsrf = ec.SelfClass->FindFieldChecked("_stateRouteSelf");
+        VField *xfld = ec.SelfClass->FindFieldChecked(fldn);
+        VExpression *cond = new VFieldAccess(new VSelf(Loc), fldsrf, Loc, 0);
+        VExpression *srf = new VFieldAccess(new VSelf(Loc), fldsrf, Loc, 0);
+        VExpression *eself = new VConditional(cond, srf, new VSelf(Loc), Loc);
+        VExpression *e = new VFieldAccess(eself, xfld, Loc, 0/*FIELD_ReadOnly*/);
         delete this;
-        return fa->Resolve(ec);
+        //fprintf(stderr, "REROUTE FOR '%s'(%s): %s\n", *CheckName, *fldn, *e->toString());
+        return e->Resolve(ec);
       } else {
-        VSingleName *sn = new VSingleName(fldn, Loc);
-        delete this;
-        return sn->Resolve(ec);
+        int dotpos = fns.IndexOf('.');
+        if (dotpos > 0 && dotpos < fns.length()-1) {
+          VStr n0 = fns.mid(0, dotpos);
+          VStr n1 = fns.mid(dotpos+1, fns.length()-dotpos);
+          //fprintf(stderr, "::: <%s> <%s>\n", *n0, *n1);
+          VSingleName *sn0 = new VSingleName(VName(*n0), Loc);
+          VDotField *fa = new VDotField(sn0, VName(*n1), Loc);
+          delete this;
+          return fa->Resolve(ec);
+        } else {
+          //fprintf(stderr, "[%s] -> [%s]\n", *CheckName, *fldn);
+          VSingleName *sn = new VSingleName(fldn, Loc);
+          delete this;
+          return sn->Resolve(ec);
+        }
       }
     }
   }
@@ -4085,6 +4111,23 @@ void ReadLineSpecialInfos () {
 }
 
 
+/*
+static void dumpFieldDefs (VClass *cls) {
+  if (!cls || !cls->Fields) return;
+  GCon->Logf("=== CLASS:%s ===", cls->GetName());
+  for (VField *fi = cls->Fields; fi; fi = fi->Next) {
+    if (fi->Type.Type == TYPE_Int) {
+      GCon->Logf("  %s: %d v=%d", fi->GetName(), fi->Ofs, *(vint32 *)(cls->Defaults+fi->Ofs));
+    } else if (fi->Type.Type == TYPE_Float) {
+      GCon->Logf("  %s: %d v=%f", fi->GetName(), fi->Ofs, *(float *)(cls->Defaults+fi->Ofs));
+    } else {
+      GCon->Logf("  %s: %d", fi->GetName(), fi->Ofs);
+    }
+  }
+}
+*/
+
+
 //==========================================================================
 //
 //  ProcessDecorateScripts
@@ -4212,6 +4255,7 @@ void ProcessDecorateScripts () {
     VClassFixup &CF = ClassFixups[i];
     if (!CF.ReqParent) Sys_Error("Invalid decorate class fixup (no parent); class is '%s', offset is %d, name is '%s'", (CF.Class ? *CF.Class->GetFullName() : "None"), CF.Offset, *CF.Name);
     check(CF.ReqParent);
+    //GCon->Logf("*** FIXUP (class='%s'; name='%s'; ofs=%d)", CF.Class->GetName(), *CF.Name, CF.Offset);
     if (CF.Name.ICmp("None") == 0) {
       *(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
     } else {
@@ -4233,8 +4277,8 @@ void ProcessDecorateScripts () {
       VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) continue;
       VClass *C = VClass::FindClassLowerCase(DI.TypeName);
-           if (!C) { if (dbg_show_missing_class) GCon->Logf("WARNING: No such class %s", *DI.TypeName); }
-      else if (!C->IsChildOf(ActorClass)) GCon->Logf("WARNING: Class %s is not an actor class", *DI.TypeName);
+           if (!C) { if (dbg_show_missing_class) GCon->Logf("WARNING: No such class `%s`", *DI.TypeName); }
+      else if (!C->IsChildOf(ActorClass)) GCon->Logf("WARNING: Class `%s` is not an actor class", *DI.TypeName);
       else DI.Type = C;
     }
   }
@@ -4280,15 +4324,16 @@ void ProcessDecorateScripts () {
   // emit code
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
     if (GArgs.CheckParm("-debug_decorate")) GCon->Logf("Emiting Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+    //dumpFieldDefs(DecPkg->ParsedClasses[i]);
     DecPkg->ParsedClasses[i]->DecorateEmit();
   }
 
   // compile and set up for execution
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (GArgs.CheckParm("-debug_decorate")) {
-      GCon->Logf("Compiling Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
-    }
+    if (GArgs.CheckParm("-debug_decorate")) GCon->Logf("Compiling Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+    //dumpFieldDefs(DecPkg->ParsedClasses[i]);
     DecPkg->ParsedClasses[i]->DecoratePostLoad();
+    //dumpFieldDefs(DecPkg->ParsedClasses[i]);
   }
 
   if (vcErrorCount) BailOut();
@@ -4392,8 +4437,8 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
           case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
           case FLAG_Byte: return !!F.Field->GetByte(this);
           case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
-          case FLAG_Name: return (F.Field->GetName(this) != NAME_None);
-          case FLAG_Class: return !!F.Field->GetClass(this);
+          case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
+          case FLAG_Class: return !!F.Field->GetClassValue(this);
           case FLAG_NoClip: return (!F.Field->GetBool(this) && !F.Field2->GetBool(this)); //FIXME??
         }
         return false;

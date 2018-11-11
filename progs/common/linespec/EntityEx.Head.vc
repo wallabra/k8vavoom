@@ -539,3 +539,21 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
   FatalError("%s: unsupported ptr (0x%x)", methodname, ptr);
   return none;
 }
+
+
+/*
+final float GetOriginX () { return Origin.x; }
+final float GetOriginY () { return Origin.y; }
+final float GetOriginZ () { return Origin.z; }
+
+final float GetVelocityX () { return Velocity.x; }
+final float GetVelocityY () { return Velocity.y; }
+final float GetVelocityZ () { return Velocity.z; }
+
+final float GetAnglesYaw () { return Angles.yaw; }
+final float GetAnglesPitch () { return Angles.pitch; }
+final float GetAnglesRoll () { return Angles.roll; }
+*/
+
+final Object _GetSelf () { return self; }
+final Object _GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }

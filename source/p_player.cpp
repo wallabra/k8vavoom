@@ -36,6 +36,16 @@ static VCvarB msg_echo("msg_echo", true, "Echo messages?", CVAR_Archive);
 static VCvarI font_colour("font_colour", "11", "Font color.", CVAR_Archive);
 static VCvarI font_colour2("font_colour2", "11", "Secondary font color.", CVAR_Archive);
 
+VField *VBasePlayer::fldPendingWeapon = nullptr;
+
+
+struct SavedVObjectPtr {
+  VObject **ptr;
+  VObject *saved;
+  SavedVObjectPtr (VObject **aptr) : ptr(aptr), saved(*aptr) {}
+  ~SavedVObjectPtr() { *ptr = saved; }
+};
+
 
 //==========================================================================
 //
@@ -196,6 +206,17 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *
 //===========================================================================
 void VBasePlayer::SetViewState (int position, VState *stnum) {
   guard(VBasePlayer::SetViewState);
+  /*
+  if (!fldPendingWeapon) {
+    fldPendingWeapon = GetClass()->FindFieldChecked("PendingWeapon");
+    if (fldPendingWeapon->Type.Type != TYPE_Reference) Sys_Error("'PendingWeapon' in playerpawn should be a reference");
+    //fprintf(stderr, "*** TP=<%s>\n", *fldPendingWeapon->Type.GetName());
+  }
+  SavedVObjectPtr svp(&_stateRouteSelf);
+  _stateRouteSelf = fldPendingWeapon->GetObjectValue(this);
+  */
+  //fprintf(stderr, "VBasePlayer::SetViewState(%s): route=<%s>\n", GetClass()->GetName(), (_stateRouteSelf ? _stateRouteSelf->GetClass()->GetName() : "<fuck>"));
+  //VField *VBasePlayer::fldPendingWeapon = nullptr;
   //fprintf(stderr, "  VBasePlayer::SetViewState: position=%d; stnum=%s\n", position, (stnum ? *stnum->GetFullName() : "<none>"));
   VViewState &VSt = ViewStates[position];
   VState *state = stnum;
@@ -208,6 +229,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     }
     if (!state) {
       // object removed itself
+      _stateRouteSelf = nullptr; // why not?
       VSt.State = nullptr;
       VSt.StateTime = -1;
       break;
@@ -220,8 +242,14 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     if (state->Function) {
       //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s': position=%d; stnum=%s\n", *state->Function->GetFullName(), position, (stnum ? *stnum->GetFullName() : "<none>"));
       Level->XLevel->CallingState = state;
-      P_PASS_REF(MO);
-      ExecuteFunctionNoArgs(state->Function);
+      if (!MO) Sys_Error("PlayerPawn is dead (wtf?!");
+      {
+        SavedVObjectPtr svp(&MO->_stateRouteSelf);
+        MO->_stateRouteSelf = _stateRouteSelf;
+        if (!_stateRouteSelf) GCon->Logf("Player: viewobject is not set!");
+        P_PASS_REF(MO);
+        ExecuteFunctionNoArgs(state->Function);
+      }
       if (!VSt.State) break;
     }
     state = VSt.State->NextState;
@@ -679,6 +707,13 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
   {
     VField::CopyFieldValue(Def + F->Ofs, (vuint8*)Self + F->Ofs, F->Type);
   }
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject)
+{
+  P_GET_PTR(VObject, vobj);
+  P_GET_SELF;
+  if (Self) Self->_stateRouteSelf = vobj;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewState)

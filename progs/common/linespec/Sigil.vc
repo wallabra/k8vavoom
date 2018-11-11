@@ -191,18 +191,23 @@ final void A_SelectSigilReady() self(Actor)
   switch (Sigil(Wpn).NumPieces)
   {
   case 1:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Ready1'));
     break;
   case 2:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Ready2'));
     break;
   case 3:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Ready3'));
     break;
   case 4:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Ready4'));
     break;
   case 5:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Ready5'));
     break;
   }
@@ -231,18 +236,23 @@ final void A_SelectSigilDown() self(Actor)
   switch (Pieces)
   {
   case 1:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Deselect1'));
     break;
   case 2:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Deselect2'));
     break;
   case 3:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Deselect3'));
     break;
   case 4:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Deselect4'));
     break;
   case 5:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Deselect5'));
     break;
   }
@@ -265,18 +275,23 @@ final void A_SelectSigilUp() self(Actor)
   switch (Sigil(Wpn).NumPieces)
   {
   case 1:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Select1'));
     break;
   case 2:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Select2'));
     break;
   case 3:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Select3'));
     break;
   case 4:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Select4'));
     break;
   case 5:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Select5'));
     break;
   }
@@ -299,18 +314,23 @@ final void A_SelectSigilAttack() self(Actor)
   switch (Sigil(Wpn).NumPieces)
   {
   case 1:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Fire1'));
     break;
   case 2:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Fire2'));
     break;
   case 3:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Fire3'));
     break;
   case 4:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Fire4'));
     break;
   case 5:
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Fire5'));
     break;
   }

@@ -86,9 +86,11 @@ final void A_FAxeCheckReady()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   if (Wpn.Ammo1.Amount > 0)
   {
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('GlowReady'));
   }
   else
@@ -110,9 +112,11 @@ final void A_FAxeCheckReadyG()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   if (Wpn.Ammo1.Amount <= 0)
   {
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Ready'));
   }
   else
@@ -134,9 +138,11 @@ final void A_FAxeCheckUp()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   if (Wpn.Ammo1.Amount > 0)
   {
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('GlowSelect'));
   }
   else
@@ -158,9 +164,11 @@ final void A_FAxeCheckUpG()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   if (Wpn.Ammo1.Amount <= 0)
   {
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Select'));
   }
   else

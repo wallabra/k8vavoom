@@ -742,4 +742,18 @@ struct VStateCall {
 class VGameObject : public VObject {
   DECLARE_CLASS(VGameObject, VObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VGameObject)
+
+public:
+  VObject *_stateRouteSelf; // used to replace state self for uservars if not none
+
+  int _get_user_var_int (VName fldname, int index=-1);
+  float _get_user_var_float (VName fldname, int index=-1);
+
+  void _set_user_var_int (VName fldname, int value, int index=-1);
+  void _set_user_var_float (VName fldname, float value, int index=-1);
+
+  DECLARE_FUNCTION(_get_user_var_int)
+  DECLARE_FUNCTION(_get_user_var_float)
+  DECLARE_FUNCTION(_set_user_var_int)
+  DECLARE_FUNCTION(_set_user_var_float)
 };

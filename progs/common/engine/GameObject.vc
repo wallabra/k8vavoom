@@ -1121,5 +1121,16 @@ struct particle_t {
 };
 
 
+
+// this field MUST be serialized
+readonly Object _stateRouteSelf; // used to replace state self for uservars if not none
+
+native final int _get_user_var_int (name fldname, optional int index);
+native final float _get_user_var_float (name fldname, optional int index);
+
+native final void _set_user_var_int (name fldname, int value, optional int index);
+native final void _set_user_var_float (name fldname, float value, optional int index);
+
+
 defaultproperties {
 }

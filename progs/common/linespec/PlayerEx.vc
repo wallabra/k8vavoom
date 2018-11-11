@@ -919,6 +919,7 @@ final void BringUpWeapon()
   PendingWeapon = none;
   ViewStates[ps_weapon].SY = (bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
   if (ReadyWeapon) {
+    SetViewObject(ReadyWeapon);
     SetViewState(ps_weapon, ReadyWeapon.GetUpState());
     MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
     Refire = 0;
@@ -936,6 +937,7 @@ final void BringUpWeapon()
 final void DropWeapon()
 {
   if (ReadyWeapon) {
+    SetViewObject(ReadyWeapon);
     SetViewState(ps_weapon, ReadyWeapon.GetDownState());
   }
 }
@@ -955,6 +957,7 @@ final void SetupPsprites()
   // remove all psprites
   for (i = 0; i < NUMPSPRITES; i++)
   {
+    SetViewObject(none);
     SetViewState(i, none);
   }
 
@@ -994,6 +997,7 @@ void FireWeapon(optional state firestate)
   //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
 
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
+  SetViewObject(ReadyWeapon);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (!ReadyWeapon.bNoAlert) {
@@ -1014,6 +1018,7 @@ void AltFireWeapon(optional state firestate)
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
+  SetViewObject(ReadyWeapon);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
   ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (!ReadyWeapon.bNoAlert) {
@@ -1033,6 +1038,7 @@ void ReloadWeapon()
   if (ReadyWeapon) {
     state rst = ReadyWeapon.GetReloadState();
     if (!rst) return;
+    SetViewObject(ReadyWeapon);
     SetViewState(ps_weapon, rst);
   }
 }
@@ -3671,7 +3677,12 @@ final void ActivateMorphWeapon()
   }
 
   SetWeapon(Weapon(EntityEx(MO).FindInventory(WpnClass)));
-  SetViewState(ps_weapon, ReadyWeapon.GetReadyState());
+  SetViewObject(ReadyWeapon);
+  if (ReadyWeapon) {
+    SetViewState(ps_weapon, ReadyWeapon.GetReadyState());
+  } else {
+    SetViewState(ps_weapon, none);
+  }
   ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
 }
 
@@ -3685,7 +3696,12 @@ final void PostMorphWeapon(Weapon weapon)
 {
   SetWeapon(weapon);
   ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
-  SetViewState(ps_weapon, ReadyWeapon.GetUpState());
+  SetViewObject(ReadyWeapon);
+  if (ReadyWeapon) {
+    SetViewState(ps_weapon, ReadyWeapon.GetUpState());
+  } else {
+    SetViewState(ps_weapon, none);
+  }
 }
 
 //==========================================================================

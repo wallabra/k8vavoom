@@ -61,10 +61,12 @@ final void A_FirePhoenixPL2() self(Actor)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   if (--PhoenixRod(Wpn).FlameCount == 0)
   {
     // Out of flame
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Shutdown'));
     PlayerEx(Player).Refire = 0;
     return;

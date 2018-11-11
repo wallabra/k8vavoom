@@ -95,9 +95,10 @@ public:
   inline bool GetBool (VObject *Obj) const { return !!(*(vuint32*)((vuint8*)Obj+Ofs)&Type.BitMask); }
   inline vint32 GetInt (VObject *Obj) const { return *(vint32*)((vuint8*)Obj+Ofs); }
   inline vuint8 GetByte (VObject *Obj) const { return *(vuint8*)((vuint8*)Obj+Ofs); }
-  inline VName GetName (VObject *Obj) const { return *(VName*)((vuint8*)Obj+Ofs); }
+  inline VName GetNameValue (VObject *Obj) const { return *(VName*)((vuint8*)Obj+Ofs); }
   inline VStr GetStr (VObject *Obj) const { return *(VStr*)((vuint8*)Obj+Ofs); }
-  inline VClass *GetClass (VObject *Obj) const { return *(VClass**)((vuint8*)Obj+Ofs); }
+  inline VClass *GetClassValue (VObject *Obj) const { return *(VClass**)((vuint8*)Obj+Ofs); }
+  inline VObject *GetObjectValue (VObject *Obj) const { return *(VObject**)((vuint8*)Obj+Ofs); }
 
   inline void SetByte (VObject *Obj, vuint8 Value) const { *((vuint8*)Obj+Ofs) = Value; }
   inline void SetInt (VObject *Obj, int Value) const { *(vint32*)((vuint8*)Obj+Ofs) = Value; }

@@ -294,6 +294,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
 
     VField *field = ec.SelfClass->FindField(Name, Loc, ec.SelfClass);
     if (field) {
+      //if (VStr(*Name).startsWith("user_")) fprintf(stderr, "***ROUTED TO FIELD: '%s' (class:%s)\n", *Name, ec.SelfClass->GetName());
       VExpression *e;
       // "normal" access: call delegate (if it is operand-less)
       /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {

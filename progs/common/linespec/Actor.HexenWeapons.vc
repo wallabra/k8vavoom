@@ -43,6 +43,7 @@ final void A_FPunchAttack() self(Actor)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   damage = 40 + (P_Random() & 15);
   power = 2.0;
@@ -83,6 +84,7 @@ final void A_FPunchAttack() self(Actor)
   if (Special1 == 3)
   {
     Special1 = 0;
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Fire2'));
     PlaySound('*fistgrunt', CHAN_VOICE);
   }
@@ -111,6 +113,7 @@ final void A_FAxeAttack() self(Actor)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   damage = 40 + (P_Random() & 15) + (P_Random() & 7);
   power = 0.0;
@@ -155,6 +158,7 @@ final void A_FAxeAttack() self(Actor)
     Wpn.DepleteAmmo(Wpn.FireMode, false);
     if (!Wpn.CheckAmmo(Wpn.FireMode, false, true))
     {
+      Player.SetViewObject(Wpn);
       Player.SetViewState(ps_weapon, Wpn.FindState('NoMoreMana'));
     }
   }
@@ -342,9 +346,11 @@ final void A_CStaffCheckBlink() self(Actor)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   if (!--Special1)
   {
+    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_weapon, Wpn.FindState('Blink'));
     Special1 = (P_Random() + 50) >> 2;
   }
@@ -370,6 +376,7 @@ final void A_CStaffCheck() self(Actor)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
   damage = 20 + (P_Random() & 15);
   AimTarget = AimEx(vforward, 3.0 * MELEERANGE / 2.0, 45.0 / 16.0, 3);
@@ -386,6 +393,7 @@ final void A_CStaffCheck() self(Actor)
       newLife = newLife > 100 ? 100 : newLife;
       Health = newLife;
       Player.Health = newLife;
+      Player.SetViewObject(Wpn);
       Player.SetViewState(ps_weapon, Wpn.FindState('Fire2'));
     }
     Wpn.DepleteAmmo(Wpn.FireMode, false);

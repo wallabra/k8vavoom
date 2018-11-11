@@ -402,6 +402,13 @@ state GetDownState () {
 //
 //==========================================================================
 state GetReadyState () {
+  /*
+  if (HasFieldByName('user_unloading')) {
+    print("GRS: %C; user_unloading=%d:%d; spread=%d:%d", self,
+      GetIntFieldByName('user_unloading'), GetIntFieldByName('user_unloading', default_value:true),
+      GetIntFieldByName('user_spread'), GetIntFieldByName('user_spread', default_value:true));
+  }
+  */
   return FindState('Ready');
 }
 
@@ -485,6 +492,7 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
   Weapon Best = PlayerEx(Owner.Player).BestWeapon();
 
   PlayerEx(Owner.Player).PendingWeapon = Best;
+  Owner.Player.SetViewObject(self);
   Owner.Player.SetViewState(ps_weapon, GetDownState());
   return false;
 }
@@ -540,6 +548,7 @@ final void EndPowerup () {
   if (SisterWeapon) {
     PlayerEx(Owner.Player).SetWeapon(SisterWeapon);
     if (SisterWeapon.GetReadyState() != GetReadyState()) {
+      PlayerEx(Owner.Player).SetViewObject(SisterWeapon);
       PlayerEx(Owner.Player).SetViewState(ps_weapon, SisterWeapon.GetReadyState());
     }
   }

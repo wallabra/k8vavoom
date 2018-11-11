@@ -179,6 +179,23 @@ void VObject::StaticExit () {
 }
 
 
+/*
+static void dumpFieldDefs (VClass *cls, const vuint8 *data) {
+  if (!cls || !cls->Fields) return;
+  GCon->Logf("=== CLASS:%s ===", cls->GetName());
+  for (VField *fi = cls->Fields; fi; fi = fi->Next) {
+    if (fi->Type.Type == TYPE_Int) {
+      GCon->Logf("  %s: %d v=%d", fi->GetName(), fi->Ofs, *(const vint32 *)(data+fi->Ofs));
+    } else if (fi->Type.Type == TYPE_Float) {
+      GCon->Logf("  %s: %d v=%f", fi->GetName(), fi->Ofs, *(const float *)(data+fi->Ofs));
+    } else {
+      GCon->Logf("  %s: %d", fi->GetName(), fi->Ofs);
+    }
+  }
+}
+*/
+
+
 //==========================================================================
 //
 //  VObject::StaticSpawnObject
@@ -214,6 +231,14 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
   Obj->Class = AClass;
   Obj->vtable = AClass->ClassVTable;
   Obj->Register();
+
+  /*
+  if (AClass && VStr::Cmp(AClass->GetName(), "BDW_Rifle") == 0) {
+    //fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    dumpFieldDefs(AClass, AClass->Defaults);
+    dumpFieldDefs(AClass, (vuint8 *)Obj);
+  }
+  */
 
   // we're done
   return Obj;

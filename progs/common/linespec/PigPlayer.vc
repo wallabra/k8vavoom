@@ -41,8 +41,10 @@ override void MorphPlayerThink()
   if (!(Velocity.x + Velocity.y) && P_Random() < 64)
   {
     // Snout sniff
-    Player.SetViewState(ps_weapon,
-      PlayerEx(Player).ReadyWeapon.FindState('Flash'));
+    Weapon wpn = PlayerEx(Player).ReadyWeapon;
+    state flashState = none;
+    if (wpn) flashState = wpn.FindState('Flash');
+    Player.SetViewState(ps_weapon, flashState);
     PlaySound('PigActive1', CHAN_VOICE);  // snort
     return;
   }

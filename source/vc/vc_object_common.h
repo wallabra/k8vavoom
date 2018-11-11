@@ -29,6 +29,9 @@
   DECLARE_FUNCTION(get_GCMessagesAllowed)
   DECLARE_FUNCTION(set_GCMessagesAllowed)
 
+  DECLARE_FUNCTION(HasFieldByName)
+  DECLARE_FUNCTION(GetIntFieldByName)
+
   // error functions
   DECLARE_FUNCTION(Error)
   DECLARE_FUNCTION(FatalError)

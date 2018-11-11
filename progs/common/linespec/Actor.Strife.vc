@@ -1005,7 +1005,9 @@ final void A_ShowElectricFlash() self(Actor)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
 
+  Player.SetViewObject(Wpn);
   Player.SetViewState(ps_flash, Wpn.FindState('ElectricFlash'));
 }
 

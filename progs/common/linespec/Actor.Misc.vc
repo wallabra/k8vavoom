@@ -557,9 +557,12 @@ final void A_ItBurnsItBurns()
   A_Scream();
   if (bIsPlayer)
   {
-    state WaveState = PlayerEx(Player).ReadyWeapon.FindState('BurnWave');
+    Weapon wpn = PlayerEx(Player).ReadyWeapon;
+    if (!wpn) return;
+    state WaveState = wpn.FindState('BurnWave');
     if (WaveState)
     {
+      Player.SetViewObject(wpn);
       Player.SetViewState(ps_weapon, WaveState);
       Player.SetViewState(ps_flash, none);
     }
@@ -730,6 +733,7 @@ final void A_WeaponReady (optional int Flags) {
   if (!(Flags&WRF_NOSWITCH)) {
     // put the weapon away if the player has a pending weapon or has died
     if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
+      Player.SetViewObject(Wpn);
       Player.SetViewState(ps_weapon, Wpn.GetDownState());
       Player.bReloadQueued = false;
       PlayerEx(Player).Refire = 0;
