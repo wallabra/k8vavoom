@@ -1419,53 +1419,60 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("EasyBossBrain")) {
       sdef->Flags |= SKILLF_EasyBossBrain;
     } else if (sc->Check("EasyKey")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'EasyKey' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'EasyKey' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("FastMonsters")) {
       sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("SlowMonsters")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'SlowMonsters' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'SlowMonsters' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("DisableCheats")) {
       sdef->Flags |= SKILLF_DisableCheats;
     } else if (sc->Check("AutoUseHealth")) {
       sdef->Flags |= SKILLF_AutoUseHealth;
     } else if (sc->Check("ReplaceActor")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectString();
       sc->Expect(",");
       sc->ExpectString();
     } else if (sc->Check("MonsterHealth")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'MonsterHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'MonsterHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("FriendlyHealth")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'FriendlyHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'FriendlyHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("NoPain")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("DefaultSkill")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'DefaultSkill' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'DefaultSkill' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("ArmorFactor")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'ArmorFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'ArmorFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("NoInfighting")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'NoInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'NoInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("TotalInfighting")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'TotalInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'TotalInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("HealthFactor")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'HealthFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'HealthFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("KickbackFactor")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'KickbackFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'KickbackFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("NoMenu")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'NoMenu' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'NoMenu' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("PlayerRespawn")) {
-      GCon->Logf("MAPINFO:%s: skill setting 'PlayerRespawn' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf("MAPINFO:%s: skill param 'PlayerRespawn' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+    } else if (sc->Check("ReplaceActor")) {
+      GCon->Logf("MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      sc->Expect("=");
+      for (;;) {
+        sc->ExpectString();
+        if (!sc->Check(",")) break;
+      }
     } else {
       sc->ExpectString();
       sc->Error(va("unknown MAPINFO skill command '%s'", *sc->String));
@@ -1565,10 +1572,19 @@ static void ParseMapInfo (VScriptParser *sc) {
         sc->SetCMode(cmode);
       } else if (sc->Check("intermission")) {
         GCon->Logf("WARNING: Unimplemented MAPINFO command Intermission");
+        if (!sc->Check("{")) sc->ExpectString();
+        sc->SkipBracketed();
+      /*
+      } else if (sc->Check("gamedefaults")) {
+        GCon->Logf("WARNING: Unimplemented MAPINFO section gamedefaults");
         sc->SkipBracketed();
       } else if (sc->Check("automap")) {
         GCon->Logf("WARNING: Unimplemented MAPINFO command Automap");
         sc->SkipBracketed();
+      } else if (sc->Check("automap_overlay")) {
+        GCon->Logf("WARNING: Unimplemented MAPINFO command automap_overlay");
+        sc->SkipBracketed();
+      */
       } else if (sc->Check("DoomEdNums")) {
         //GCon->Logf("*** <%s> ***", *sc->String);
         auto cmode = sc->IsCMode();
@@ -1600,9 +1616,16 @@ static void ParseMapInfo (VScriptParser *sc) {
       } else if (sc->Check("author")) {
         sc->ExpectString();
       } else {
-        sc->Error(va("Invalid command '%s'", *sc->String));
-        error = true;
-        break;
+        VStr cmdname = sc->String;
+        sc->ExpectString();
+        if (sc->Check("{")) {
+          GCon->Logf("WARNING: Unimplemented MAPINFO command '%s'", *cmdname);
+          sc->SkipBracketed(true); // bracket eaten
+        } else {
+          sc->Error(va("Invalid command '%s'", *sc->String));
+          error = true;
+          break;
+        }
       }
     }
     if (error) {
