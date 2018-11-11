@@ -1865,15 +1865,24 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
   }
   if (!NewClass) NewClass = new VClass(AName, AOuter, ALoc);
   NewClass->ParentClass = this;
-  //TODO: for booleans, we need to call a real definer
+
+  // define user fields
+  VField *PrevBool = nullptr;
   for (int f = 0; f < uvlist.length(); ++f) {
     VField *fi = new VField(uvlist[f].name, NewClass, uvlist[f].loc);
-    VTypeExpr *te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), uvlist[f].loc);
+    VTypeExpr *te = VTypeExpr::NewTypeExpr(uvlist[f].type, uvlist[f].loc);
     fi->TypeExpr = te;
-    fi->Type = VFieldType(TYPE_Int);
+    fi->Type = uvlist[f].type;
     fi->Flags = 0;
     NewClass->AddField(fi);
     NewClass->DecorateStateFieldTrans.put(uvlist[f].name, uvlist[f].name); // so field name will be case-insensitive
+    // process boolean field
+    if (!fi->Define()) Sys_Error("cannot define field '%s' in class '%s'", *uvlist[f].name, *AName);
+    //fprintf(stderr, "FI: <%s> (%s)\n", *fi->GetFullName(), *fi->Type.GetName());
+    if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
+      fi->Type.BitMask = PrevBool->Type.BitMask<<1;
+    }
+    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
   }
   //!DecorateDefine();
   //fprintf(stderr, "*** '%s' : '%s' (%d) ***\n", NewClass->GetName(), GetName(), (NewClass->ObjectFlags&CLASSOF_PostLoaded ? 1 : 0));

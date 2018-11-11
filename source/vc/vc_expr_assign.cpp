@@ -190,8 +190,8 @@ void VAssignment::Emit (VEmitContext &ec) {
         ec.AddStatement(OPC_PushNull, Loc);
         ec.AddStatement(OPC_AssignDelegate, Loc);
       } else {
-        fprintf(stderr, "***OP1: %s\n", *op1->toString());
-        fprintf(stderr, "***OP2: %s\n", *op2->toString());
+        //fprintf(stderr, "***OP1: %s\n", *op1->toString());
+        //fprintf(stderr, "***OP2: %s\n", *op2->toString());
         ParseError(Loc, "Expression type mismatch (%s : %s)", *op1->RealType.GetName(), *op2->RealType.GetName());
       }
       break;

@@ -1264,28 +1264,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
       Args[0] = new VNameLiteral(VName(*vname), vnloc);
       return new VCastOrInvocation(VName("GetCvarF"), l, 1, Args);
     }
-    if (sc->Check("(")) {
-      /*
-      if (VStr::ICmp(*Name, "A_SetUserVar") == 0) {
-        fprintf(stderr, "PMC: <%s>\n", *Name);
-        abort();
-        sc->CheckIdentifier();
-        auto stloc = sc->GetLoc();
-        sc->Expect("(");
-        sc->ExpectString();
-        VStr varName = sc->String;
-        VStr uvname = sc->String.toLowerCase();
-        if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-        VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
-        sc->Expect(",");
-        VExpression *op2 = ParseExpressionPriority13(sc, decoClass);
-        sc->Expect(")");
-        // create assignment
-        return new VAssignment(VAssignment::Assign, op1, op2, stloc);
-      }
-      */
-      return ParseMethodCall(sc, *Name.ToLower(), l);
-    }
+    if (sc->Check("(")) return ParseMethodCall(sc, *Name.ToLower(), l);
     return new VDecorateSingleName(Name, l);
   }
 
@@ -1640,21 +1619,43 @@ static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
 //
 //==========================================================================
 static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class) {
-  if (sc->String.ICmp("A_SetUserVar") != 0) return nullptr;
-  sc->CheckIdentifier();
-  auto stloc = sc->GetLoc();
-  sc->Expect("(");
-  sc->ExpectString();
-  VStr varName = sc->String;
-  VStr uvname = sc->String.toLowerCase();
-  if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-  VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
-  sc->Expect(",");
-  VExpression *op2 = ParseExpressionPriority13(sc, Class);
-  sc->Expect(")");
-  // create assignment
-  //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
-  return new VAssignment(VAssignment::Assign, op1, op2, stloc);
+  if (sc->String.ICmp("A_SetUserVar") == 0 || sc->String.ICmp("A_SetUserVarFloat") == 0) {
+    sc->CheckIdentifier();
+    auto stloc = sc->GetLoc();
+    sc->Expect("(");
+    sc->ExpectString();
+    VStr varName = sc->String;
+    VStr uvname = sc->String.toLowerCase();
+    if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
+    VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
+    sc->Expect(",");
+    VExpression *op2 = ParseExpressionPriority13(sc, Class);
+    sc->Expect(")");
+    // create assignment
+    //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
+    return new VAssignment(VAssignment::Assign, op1, op2, stloc);
+  } else if (sc->String.ICmp("A_SetUserArray") == 0 || sc->String.ICmp("A_SetUserArrayFloat") == 0) {
+    sc->CheckIdentifier();
+    auto stloc = sc->GetLoc();
+    sc->Expect("(");
+    sc->ExpectString();
+    VStr varName = sc->String;
+    VStr uvname = sc->String.toLowerCase();
+    if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
+    VExpression *uvar = new VDecorateSingleName(*sc->String, sc->GetLoc());
+    sc->Expect(",");
+    // index
+    VExpression *idx = ParseExpressionPriority13(sc, Class);
+    sc->Expect(",");
+    // value
+    VExpression *val = ParseExpressionPriority13(sc, Class);
+    sc->Expect(")");
+    VArrayElement *ael = new VArrayElement(uvar, idx, stloc);
+    // create assignment
+    //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
+    return new VAssignment(VAssignment::Assign, ael, val, stloc);
+  }
+  return nullptr;
 }
 
 
@@ -2264,6 +2265,8 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   bool wasActionAfterLabel = false;
   bool firstFrame = true;
   while (!sc->Check("}")) {
+    if (sc->Check(";")) continue;
+
     TLocation TmpLoc = sc->GetLoc();
     VStr TmpName = ParseStateString(sc);
 
@@ -2621,20 +2624,35 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
     }
 
     sc->ExpectIdentifier();
-    if (sc->String.ICmp("int") != 0) sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
+
+    VFieldType vtype;
+         if (sc->String.ICmp("int") == 0) vtype = VFieldType(TYPE_Int);
+    else if (sc->String.ICmp("bool") == 0) vtype = VFieldType(TYPE_Int);
+    else if (sc->String.ICmp("float") == 0) vtype = VFieldType(TYPE_Float);
+    else sc->Error(va("%s: user variables in DECORATE must be `int`", *sc->GetLoc().toStringNoCol()));
 
     for (;;) {
       auto fnloc = sc->GetLoc(); // for error messages
       sc->ExpectIdentifier();
-      VStr uvname = sc->String.toLowerCase();
-      if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-      VName fldname = VName(*uvname);
+      VName fldname = VName(*sc->String, VName::AddLower);
+      VStr uvname = VStr(*fldname);
+      if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name '%s' in DECORATE must start with `user_`", *sc->String, *sc->GetLoc().toStringNoCol()));
       for (int f = 0; f < uvars.length(); ++f) {
-        if (fldname == uvars[f].name) sc->Error(va("%s: duplicate DECORATE user variable `%s`", *sc->GetLoc().toStringNoCol(), *uvname));
+        if (fldname == uvars[f].name) sc->Error(va("%s: duplicate DECORATE user variable `%s`", *sc->GetLoc().toStringNoCol(), *sc->String));
       }
+      uvname = sc->String;
+      VFieldType realtype = vtype;
+      if (sc->Check("[")) {
+        sc->ExpectNumber();
+        if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("%s: duplicate DECORATE user array `%s` has invalid size %d", *sc->GetLoc().toStringNoCol(), *uvname, sc->Number));
+        sc->Expect("]");
+        realtype = realtype.MakeArrayType(sc->Number, fnloc);
+      }
+      //fprintf(stderr, "VTYPE=<%s>; realtype=<%s>\n", *vtype.GetName(), *realtype.GetName());
       VDecorateUserVarDef &vd = uvars.alloc();
       vd.name = fldname;
       vd.loc = fnloc;
+      vd.type = realtype;
       if (sc->Check(",")) continue;
       break;
     }
@@ -2791,13 +2809,9 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
 
     // skip uservars (they are already scanned)
     if (sc->String.ICmp("var") == 0) {
-      sc->Expect("int");
-      for (;;) {
-        sc->ExpectIdentifier();
-        if (sc->Check(",")) continue;
-        break;
+      while (!sc->Check(";")) {
+        if (!sc->GetString()) break;
       }
-      sc->Expect(";");
       continue;
     }
 

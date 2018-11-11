@@ -122,6 +122,7 @@ struct VDecorateStateAction {
 struct VDecorateUserVarDef {
   VName name;
   TLocation loc;
+  VFieldType type; // can be array too
 };
 
 
