@@ -1,4 +1,4 @@
-Actor BDW_RifleSpread : Inventory { inventory.maxamount 6 }
+//Actor BDW_RifleSpread : Inventory { inventory.maxamount 6 }
 
 
 Actor BDW_RifleAmmo : Ammo {
@@ -62,6 +62,7 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
 
   var int user_Unloading;
   var int user_HasUnloaded;
+  var int user_spread;
 
   States {
     PickUp:
@@ -79,11 +80,13 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       TNT1 A 0 A_SetUserVar("user_Unloading", 0);
       TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, 2)
       TNT1 A 0 A_SetUserVar("user_HasUnloaded", 0);
+      TNT1 A 0 A_SetUserVar("user_spread", 0);
       RIFS ABC 1
 
     OkToFire:
       TNT1 A 0 A_JumpIf(user_Unloading, "StartUnload")
-      TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
       RIFG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
       Goto OkToFire
 
@@ -109,9 +112,12 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       Goto StartReload
 
     FireDo0:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleSpread", 5, "FireHighSpread")
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleSpread", 3, "FireMidSpread")
-      TNT1 A 0 A_GiveInventory("BDW_RifleSpread", 1)
+      //!TNT1 A 0 A_JumpIfInventory("BDW_RifleSpread", 5, "FireHighSpread")
+      //!TNT1 A 0 A_JumpIfInventory("BDW_RifleSpread", 3, "FireMidSpread")
+      TNT1 A 0 A_JumpIf(user_spread >= 5, "FireHighSpread");
+      TNT1 A 0 A_JumpIf(user_spread >= 3, "FireMidSpread");
+      //!TNT1 A 0 A_GiveInventory("BDW_RifleSpread", 1)
+      TNT1 A 0 A_SetUserVar("user_spread", min(6, user_spread+1));
       TNT1 A 0 A_PlaySound("weapons/bdw_rifle/shot")
       RIFF A 1 BRIGHT A_AlertMonsters
       TNT1 A 0 A_SpawnItemEx("BDW_PlayerMuzzle", 30, 5, 30)
@@ -132,7 +138,8 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       Goto StartReload
 
     FireMidSpreadDo0:
-      TNT1 A 0 A_GiveInventory("BDW_RifleSpread", 1)
+      //!TNT1 A 0 A_GiveInventory("BDW_RifleSpread", 1)
+      TNT1 A 0 A_SetUserVar("user_spread", min(6, user_spread+1));
       TNT1 A 0 A_PlaySound("weapons/bdw_rifle/shotfast")
       RIFF A 1 BRIGHT A_AlertMonsters
       TNT1 A 0 A_SpawnItemEx("BDW_PlayerMuzzle", 30, 5, 30)
@@ -169,13 +176,15 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       Goto OkToFire
 
     NoAmmo:
-      TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
       RIFG A 1 A_PlaySoundEx("weapons/bdw_rifle/empty", "Weapon")
       Goto OkToFire
 
 
     StartReload:
-      TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
       RIFG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
       TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "OkToFire")
       TNT1 A 0 A_JumpIfInventory("BDW_RifleClip", 1, "ReloadDoIt0")
@@ -215,7 +224,8 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
 
 
     StartUnload:
-      TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
+      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
       RIFG A 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
       TNT1 A 0 A_SetUserVar("user_Unloading", 0)
       TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "StartUnloadDo0")
