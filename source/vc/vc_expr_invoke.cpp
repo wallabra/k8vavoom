@@ -2248,7 +2248,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
         if ((Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
           argsize += 4; // pointer
         } else {
-          if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument #%d", i+1);
+          if (!(Func->ParamFlags[i]&FPARM_Optional)) ParseError(Loc, "Cannot omit non-optional argument #%d to `%s`", i+1, *Func->GetFullName());
           argsize += Func->ParamTypes[i].GetStackSize();
         }
       } else if ((Args[i]->IsNoneLiteral() || Args[i]->IsNullLiteral()) && (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
