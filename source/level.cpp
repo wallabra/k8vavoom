@@ -527,9 +527,9 @@ void VLevel::Serialise (VStream &Strm) {
   Strm << STRM_INDEX(slscount);
   if (Strm.IsLoading()) sectorlinkStart.setLength(slscount);
   for (int f = 0; f < slscount; ++f) {
-    vint32 sv = 0;
+    vint32 sv = sectorlinkStart[f];
     Strm << STRM_INDEX(sv);
-    sectorlinkStart[f] = sv;
+    if (Strm.IsLoading()) sectorlinkStart[f] = sv;
   }
   slscount = sectorlinks.length();
   Strm << STRM_INDEX(slscount);
