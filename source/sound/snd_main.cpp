@@ -1026,8 +1026,10 @@ void VAudio::PlaySong(const char *Song, bool Loop)
   if (Lump < 0)
   {
     int FileIdx = W_FindLumpByFileNameWithExts(va("music/%s", Song), Exts);
-    int LumpIdx = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
-    Lump = MAX(FileIdx, LumpIdx);
+    if (FileIdx < 0) FileIdx = W_CheckNumForFileName(Song);
+    if (FileIdx < 0) FileIdx = W_CheckNumForName(VName(Song, VName::AddLower8), WADNS_Music);
+    //if (FileIdx >= 0) GCon->Logf("loaded music file '%s'", *W_FullLumpName(FileIdx));
+    Lump = FileIdx;
   }
   if (Lump < 0)
   {

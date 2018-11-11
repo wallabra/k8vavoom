@@ -540,8 +540,10 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       info->OutsideFog = M_ParseColour(sc->String);
     } else if (sc->Check("music")) {
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
-      info->SongLump = sc->Name8;
+      //sc->ExpectName8();
+      //info->SongLump = sc->Name8;
+      sc->ExpectName();
+      info->SongLump = sc->Name;
     } else if (sc->Check("cdtrack")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
@@ -745,11 +747,13 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       info->Flags2 |= MAPINFOF2_HaveMonsterActivation;
     } else if (sc->Check("interpic") || sc->Check("exitpic")) {
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      //sc->ExpectName8();
+      sc->ExpectString();
       info->ExitPic = *sc->String.ToLower();
     } else if (sc->Check("enterpic")) {
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      //sc->ExpectName8();
+      sc->ExpectString();
       info->EnterPic = *sc->String.ToLower();
     } else if (sc->Check("intermusic")) {
       if (newFormat) sc->Expect("=");
@@ -794,15 +798,15 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("sndseq")) {
       GCon->Logf("Unimplemented MAPINFO command sndseq");
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      sc->ExpectString();
     } else if (sc->Check("sndinfo")) {
       GCon->Logf("Unimplemented MAPINFO command sndinfo");
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      sc->ExpectString();
     } else if (sc->Check("soundinfo")) {
       GCon->Logf("Unimplemented MAPINFO command soundinfo");
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      sc->ExpectString();
     } else if (sc->Check("allowcrouch")) {
       GCon->Logf("Unimplemented MAPINFO command allowcrouch");
     } else if (sc->Check("nocrouch")) {
@@ -812,7 +816,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("bordertexture")) {
       GCon->Logf("Unimplemented MAPINFO command bordertexture");
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
+      sc->ExpectString();
     } else if (sc->Check("f1")) {
       GCon->Logf("Unimplemented MAPINFO command f1");
       if (newFormat) sc->Expect("=");
@@ -931,7 +935,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 //  ParseMap
 //
 //==========================================================================
-static void ParseMap(VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
+static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   guard(ParseMap);
   mapInfo_t *info = nullptr;
   VName MapLumpName;
@@ -1105,13 +1109,15 @@ static void ParseClusterDef (VScriptParser *sc) {
       CDef->Flags &= ~CLUSTERF_FinalePic;
     } else if (sc->Check("pic")) {
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
-      CDef->Flat = sc->Name8;
+      //sc->ExpectName8();
+      sc->ExpectName();
+      CDef->Flat = sc->Name;
       CDef->Flags |= CLUSTERF_FinalePic;
     } else if (sc->Check("music")) {
       if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
-      CDef->Music = sc->Name8;
+      //sc->ExpectName8();
+      sc->ExpectName();
+      CDef->Music = sc->Name;
     } else if (sc->Check("cdtrack")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
