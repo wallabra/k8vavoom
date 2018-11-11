@@ -27,16 +27,6 @@
 //**
 //**************************************************************************
 
-//==========================================================================
-//
-//  A_k8ConLog
-//
-//==========================================================================
-final void decorate_A_k8ConLog (string msg) {
-  if (msg) print("DECORATE LOG: %s", msg);
-}
-
-
 // Flags for A_Remove*
 enum /*ERemoveFlags*/ {
   RMVF_MISSILES   = 0x00000001,
@@ -69,6 +59,31 @@ enum /*ERadiusGiveFlags*/ {
   RGF_EXSPECIES = 1 << 16,
   RGF_EITHER    = 1 << 17,
 };
+
+
+//==========================================================================
+//
+//  A_k8ConLog
+//
+//==========================================================================
+final void decorate_A_k8ConLog (string msg) {
+  if (msg) print("DECORATE LOG: %s", msg);
+}
+
+
+//==========================================================================
+//
+//  A_RetDoJump
+//
+//==========================================================================
+final void decorate_A_RetDoJump (state State) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+       if (XLevel.StateCall) XLevel.StateCall->State = State;
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_weapon].State) Player.SetViewState(ps_weapon, State);
+  else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_flash].State) Player.SetViewState(ps_flash, State);
+  else SetState(State);
+}
 
 
 //==========================================================================
@@ -373,6 +388,7 @@ final bool A_Quake (float intensity, float ticduation, float damrad, float tremr
 final void decorate_A_CheckFlag (string flagname, state label, optional int aptr) {
   // state jumps should not affect state chain results
   //print("A_CheckFlag: name=<%s>; label=<%s>; aptr=%s", flagname, label, aptr);
+  // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFlag', aptr!optional));
   if (!tgt) return;

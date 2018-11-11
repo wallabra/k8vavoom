@@ -1894,6 +1894,86 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     return new VIf(cond, ts, stloc);
   }
 
+  // return
+  if (sc->Check("return")) {
+    if (sc->Check("state")) {
+      // return state("name");
+      // specials: `state()`, `state(0)`, `state("")`
+      sc->Expect("(");
+      if (sc->Check(")")) {
+        sc->Expect(";");
+        return new VReturn(nullptr, stloc);
+      }
+      VExpression *ste = ParseExpression(sc, Class);
+      if (!ste) sc->Error("invalid `return`");
+      sc->Expect(")");
+      sc->Expect(";");
+      // check for specials
+      // replace `+number` with `number`
+      for (;;) {
+        if (ste->IsUnaryMath()) {
+          VUnary *un = (VUnary *)ste;
+          if (un->op) {
+            if (un->Oper == VUnary::Plus && (un->op->IsIntConst() || un->op->IsFloatConst())) {
+              VExpression *etmp = un->op;
+              un->op = nullptr;
+              delete ste;
+              ste = etmp;
+              continue;
+            }
+          }
+        }
+        break;
+      }
+      if (!ste) sc->Error("invalid `return`"); // just in case
+      // `state(0)`?
+      if ((ste->IsIntConst() && ste->GetIntConst() == 0) ||
+          (ste->IsFloatConst() && ste->GetFloatConst() == 0))
+      {
+        delete ste;
+        return new VReturn(nullptr, stloc);
+      }
+      // `state("")`?
+      if (ste->IsStrConst()) {
+        const char *lbl = ste->GetStrConst(DecPkg);
+        while (*lbl && *(const vuint8 *)lbl <= 32) ++lbl;
+        if (!lbl[0]) {
+          delete ste;
+          return new VReturn(nullptr, stloc);
+        }
+      }
+      if (ste->IsDecorateSingleName()) {
+        VDecorateSingleName *e = (VDecorateSingleName *)ste;
+        if (e->Name.length() == 0) {
+          delete ste;
+          return new VReturn(nullptr, stloc);
+        }
+      }
+      // call `decorate_A_RetDoJump`
+      VExpression *Args[1];
+      Args[0] = ste;
+      VExpression *einv = new VDecorateInvocation(VName("decorate_A_RetDoJump"), stloc, 1, Args);
+      VStatement *stinv = new VExpressionStatement(new VDropResult(einv));
+      VCompound *cst = new VCompound(stloc);
+      cst->Statements.append(stinv);
+      cst->Statements.append(new VReturn(nullptr, stloc));
+      return cst;
+    } else if (sc->Check(";")) {
+      // return;
+      return new VReturn(nullptr, stloc);
+    } else {
+      // return expr;
+      // just call `expr`, and do normal return
+      VStatement *fs = ParseActionStatement(sc, Class, State, FramesString);
+      if (!fs) return new VReturn(nullptr, stloc);
+      // create compound
+      VCompound *cst = new VCompound(stloc);
+      cst->Statements.append(fs);
+      cst->Statements.append(new VReturn(nullptr, stloc));
+      return cst;
+    }
+  }
+
   VStatement *res = ParseFunCallAsStmt(sc, Class, State, FramesString);
   sc->Expect(";");
   if (!res) sc->Error("invalid action statement");
