@@ -2972,7 +2972,11 @@ bool VCompound::Resolve (VEmitContext &ec) {
   auto cidx = ec.EnterCompound();
   //fprintf(stderr, "ENTERING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
   for (int i = 0; i < Statements.length(); ++i) {
-    if (!Statements[i]->Resolve(ec)) Ret = false;
+    if (!Statements[i]->Resolve(ec)) {
+      //fprintf(stderr, "=== %s ===\n", *shitppTypeNameObj(*Statements[i]));
+      //ParseError(Statements[i]->Loc, "error resolving statement");
+      Ret = false;
+    }
   }
   //fprintf(stderr, "EXITING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
   ec.ExitCompound(cidx);

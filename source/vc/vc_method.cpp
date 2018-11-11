@@ -339,6 +339,8 @@ void VMethod::Emit () {
   }
   */
 
+  //fprintf(stderr, "*** EMIT000: <%s> (%s); ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *GetFullName(), *Loc.toStringNoCol(), ParamsSize, NumLocals, NumParams);
+
   VEmitContext ec(this);
 
   ec.ClearLocalDefs();
@@ -383,7 +385,11 @@ void VMethod::Emit () {
     }
   }
 
-  if (!Statement->Resolve(ec)) return;
+  if (!Statement->Resolve(ec)) {
+    //ParseError(Loc, "Cannot resolve statements in `%s`", *GetFullName());
+    //fprintf(stderr, "===\n%s\n===\n", /*Statement->toString()*/*shitppTypeNameObj(*Statement));
+    return;
+  }
 
   Statement->Emit(ec);
 
@@ -407,6 +413,7 @@ void VMethod::Emit () {
   delete Statement;
   Statement = nullptr;
   */
+  //fprintf(stderr, "*** EMIT001: <%s> (%s); ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *GetFullName(), *Loc.toStringNoCol(), ParamsSize, NumLocals, NumParams);
 
   unguard;
 }

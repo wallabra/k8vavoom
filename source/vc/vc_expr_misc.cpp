@@ -1047,6 +1047,13 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
+  if (op->Type.Type == TYPE_Void) {
+    VExpression *e = op;
+    op = nullptr;
+    delete this;
+    return e;
+  }
+
   if (op->Type.Type != TYPE_String && op->Type.GetStackSize() != 4 &&
       op->Type.Type != TYPE_Vector && op->Type.Type != TYPE_Void)
   {

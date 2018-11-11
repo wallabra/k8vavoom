@@ -1636,8 +1636,10 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class) 
     VStr uvname = sc->String.toLowerCase();
     if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
     VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
+    if (!op1) sc->Error("decorate parsing error");
     sc->Expect(",");
     VExpression *op2 = ParseExpressionPriority13(sc, Class);
+    if (!op2) sc->Error("decorate parsing error");
     sc->Expect(")");
     // create assignment
     //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
@@ -1654,9 +1656,11 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class) 
     sc->Expect(",");
     // index
     VExpression *idx = ParseExpressionPriority13(sc, Class);
+    if (!idx) sc->Error("decorate parsing error");
     sc->Expect(",");
     // value
     VExpression *val = ParseExpressionPriority13(sc, Class);
+    if (!val) sc->Error("decorate parsing error");
     sc->Expect(")");
     VArrayElement *ael = new VArrayElement(uvar, idx, stloc);
     // create assignment
@@ -1777,11 +1781,36 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
   int NumArgs = 0;
   VStr FuncName = sc->String;
 
+  auto stloc = sc->GetLoc();
+
   VStatement *suvst = CheckParseSetUserVar(sc, Class);
   if (suvst) return suvst;
   //fprintf(stderr, "***1:<%s>\n", *sc->String);
 
   sc->ExpectIdentifier();
+
+  // assign?
+  if (inCodeBlock) {
+    VExpression *dest = nullptr;
+    if (sc->Check("[")) {
+      dest = new VDecorateSingleName(FuncName, stloc);
+      VExpression *ind = ParseExpressionPriority13(sc, Class);
+      if (!ind) sc->Error("decorate parsing error");
+      sc->Expect("]");
+      dest = new VArrayElement(dest, ind, stloc);
+      sc->Expect("=");
+    } else if (sc->Check("=")) {
+      dest = new VDecorateSingleName(FuncName, stloc);
+      //GCon->Logf("ASS to '%s'...", *FuncName);
+    }
+    if (dest) {
+      VExpression *val = ParseExpression(sc, Class);
+      if (!val) sc->Error("decorate parsing error");
+      VExpression *ass = new VAssignment(VAssignment::Assign, dest, val, stloc);
+      return new VExpressionStatement(new VDropResult(ass));
+    }
+  }
+
   VMethod *Func = ParseFunCall(sc, Class, NumArgs, Args);
   //fprintf(stderr, "***2:<%s>\n", *sc->String);
 
@@ -1814,9 +1843,11 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
   if (suvst) {
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
     M->Flags = FUNC_Final;
-    M->ReturnType = TYPE_Void;
+    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
+    M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = suvst;
-    M->ParamsSize = 1;
+    M->NumParams = 0;
+    //M->ParamsSize = 1;
     Class->AddMethod(M);
     M->Define();
     Func = M;
@@ -1835,7 +1866,8 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
       M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
       M->ReturnType = VFieldType(TYPE_Void);
       M->Statement = Stmt;
-      M->ParamsSize = 1;
+      //M->ParamsSize = 1;
+      M->NumParams = 0;
       Class->AddMethod(M);
       M->Define();
       Func = M;
@@ -1917,14 +1949,19 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, c
   if (stmt->Statements.length()) {
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
     M->Flags = FUNC_Final;
-    M->ReturnType = TYPE_Void;
+    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
+    M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = stmt;
-    M->ParamsSize = 1;
+    //M->ParamsSize = 1;
+    M->NumParams = 0;
     Class->AddMethod(M);
+    //fprintf(stderr, "000: PS=%d\n", M->ParamsSize);
     M->Define();
+    //fprintf(stderr, "001: PS=%d\n", M->ParamsSize);
     State->Function = M;
   } else {
     delete stmt;
+    State->Function = nullptr;
   }
 }
 

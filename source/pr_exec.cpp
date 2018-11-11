@@ -289,8 +289,10 @@ static void RunFunction (VMethod *func) {
   sp = pr_stackPtr;
 
   // setup local vars
+  //fprintf(stderr, "FUNC: <%s> (%s) ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *func->GetFullName(), *func->Loc.toStringNoCol(), func->ParamsSize, func->NumLocals, func->NumParams);
+  if (func->NumLocals < func->ParamsSize) { cstDump(nullptr); Sys_Error("Miscompiled function (locals=%d, params=%d)", func->NumLocals, func->ParamsSize); }
   local_vars = sp-func->ParamsSize;
-  memset(sp, 0, (func->NumLocals-func->ParamsSize)*sizeof(VStack));
+  if (func->NumLocals-func->ParamsSize != 0) memset(sp, 0, (func->NumLocals-func->ParamsSize)*sizeof(VStack));
   sp += func->NumLocals-func->ParamsSize;
 
   ip = func->Statements.Ptr();
