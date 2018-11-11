@@ -2633,7 +2633,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       States.Append(s2);
       // add temporary labels
       s2->SpriteName = State->SpriteName;
-      s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|frm;
+      s2->Frame = (State->Frame&~VState::FF_FRAMEMASK)|frm;
       s2->Time = State->Time;
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;
