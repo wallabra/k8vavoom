@@ -442,11 +442,13 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
 int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   guard(VTextureManager::AddPatch);
   // find the lump number
+  //GCon->Logf("VTextureManager::AddPatch: '%s' (%d)", *Name, Type);
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
+  if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
   if (LumpNum < 0) {
-    if (!Silent) {
+    /*if (!Silent)*/ {
       if (!patchesWarned.put(*Name)) {
         GCon->Logf("VTextureManager::AddPatch: Pic %s not found", *Name);
       }
@@ -477,6 +479,7 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
+  if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
   if (LumpNum < 0) {
     GCon->Logf("VTextureManager::AddRawWithPal: %s not found", *Name);
     return -1;
@@ -497,11 +500,13 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
 
 //==========================================================================
 //
-//  VTextureManager::AddFileTexture
+//  VTextureManager::AddFileTextureChecked
+//
+//  returns -1 if no file texture found
 //
 //==========================================================================
-int VTextureManager::AddFileTexture (VName Name, int Type) {
-  guard(VTextureManager::AddFileTexture)
+int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
+  guard(VTextureManager::AddFileTextureChecked)
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
 
@@ -514,8 +519,24 @@ int VTextureManager::AddFileTexture (VName Name, int Type) {
     }
   }
 
-  GCon->Logf("Couldn\'t create texture \"%s\".", *Name);
-  return DefaultTexture;
+  return -1;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::AddFileTexture
+//
+//==========================================================================
+int VTextureManager::AddFileTexture (VName Name, int Type) {
+  guard(VTextureManager::AddFileTexture)
+  int i = AddFileTextureChecked(Name, Type);
+  if (i == -1) {
+    GCon->Logf("Couldn\'t create texture \"%s\".", *Name);
+    return DefaultTexture;
+  }
+  return i;
   unguard;
 }
 

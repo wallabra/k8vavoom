@@ -3007,13 +3007,32 @@ void VLevel::LoadACScripts (int Lump) {
 //==========================================================================
 int VLevel::TexNumForName (const char *name, int Type, bool CMap) const {
   guard(VLevel::TexNumForName);
+  if (!name || !name[0]) return GTextureManager.DefaultTexture; // just in case
+  int i = -1;
+  // try filename if slash is found
+  const char *slash = strchr(name, '/');
+  if (slash && slash[1]) {
+    VName loname = VName(name, VName::AddLower);
+    i = GTextureManager.AddFileTextureChecked(loname, Type);
+    if (i != -1) return i;
+  } else if (strchr(name, '.')) {
+    VName loname = VName(name, VName::AddLower);
+    i = GTextureManager.AddFileTextureChecked(loname, Type);
+    if (i != -1) return i;
+  }
   VName Name(name, VName::AddLower8);
-  int i = GTextureManager.CheckNumForName(Name, Type, true, true);
+  i = GTextureManager.CheckNumForName(Name, Type, true, true);
+  //if (i == -1) i = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, true, true);
+  //if (i == -1 && VStr::length(name) > 8) i = GTextureManager.AddFileTexture(VName(name, VName::AddLower), Type);
   if (i == -1) {
     static TStrSet texNumForNameWarned;
     if (CMap) return 0;
-    if (!texNumForNameWarned.put(*Name)) GCon->Logf("FTNumForName: %s not found", *Name);
+    VName loname = VName(name, VName::AddLower);
+    if (!texNumForNameWarned.put(*loname)) GCon->Logf("VLevel::TexNumForName: '%s' not found", *loname);
     return GTextureManager.DefaultTexture;
+  } else {
+    //static TStrSet texReported;
+    //if (!texReported.put(name)) GCon->Logf("TEXTURE: '%s' (%s) is %d", name, *Name, i);
   }
   return i;
   unguard;

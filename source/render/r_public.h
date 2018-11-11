@@ -313,6 +313,7 @@ public:
   int AddRawWithPal(VName Name, VName PalName);
   int AddFileTexture(VName Name, int Type);
   int AddFileTextureShaded(VName Name, int Type, int shade); // shade==-1: don't shade
+  int AddFileTextureChecked(VName Name, int Type); // returns -1 if no texture found
 
   // get unanimated texture
   inline VTexture *operator [] (int TexNum) {
