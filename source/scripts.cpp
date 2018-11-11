@@ -357,12 +357,13 @@ bool VScriptParser::GetString () {
   }
 
   String.Clean();
-  if (*ScriptPtr == '\"') {
+  if (*ScriptPtr == '\"' || *ScriptPtr == '\'') {
     // quoted string
+    char qch = *ScriptPtr;
     QuotedString = true;
     ++ScriptPtr;
-    while (ScriptPtr < ScriptEndPtr && *ScriptPtr != '\"') {
-      if (Escape && ScriptPtr[0] == '\\' && (ScriptPtr[1] == '\\' || ScriptPtr[1] == '\"')) {
+    while (ScriptPtr < ScriptEndPtr && *ScriptPtr != qch) {
+      if (Escape && ScriptPtr[0] == '\\' && (ScriptPtr[1] == '\\' || ScriptPtr[1] == '\"' || ScriptPtr[1] == '\'')) {
         ++ScriptPtr;
       } else if (ScriptPtr[0] == '\r' && ScriptPtr[1] == '\n') {
         // convert from DOS format to UNIX format
