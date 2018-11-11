@@ -548,7 +548,7 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
 #if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
         fprintf(stderr, "I/O WARNING: field '%s' not found\n", *fname);
 #else
-        GCon->Logf("I/O WARNING: field '%s' not found\n", *fname);
+        GCon->Logf("I/O WARNING: field '%s' not found", *fname);
 #endif
         VField::SkipSerialisedValue(Strm);
       } else {
@@ -564,7 +564,7 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
 #if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
       fprintf(stderr, "I/O WARNING: field '%s' is missing\n", *fname);
 #else
-      GCon->Logf("I/O WARNING: field '%s' is missing\n", *fname);
+      GCon->Logf("I/O WARNING: field '%s' is missing", *fname);
 #endif
       flist.remove(fname);
     }
