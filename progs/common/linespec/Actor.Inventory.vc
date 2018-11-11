@@ -71,9 +71,10 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //
 //==========================================================================
 
-final void A_GiveInventory(class!Inventory ItemType, optional int Amount)
+final void A_GiveInventory(class!Inventory ItemType, optional int Amount, optional int giveto)
 {
-  DoGiveInventory(ItemType, Amount, self);
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_GiveInventory', giveto!optional));
+  DoGiveInventory(ItemType, Amount, /*self*/tgt);
 }
 
 //==========================================================================
