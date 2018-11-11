@@ -1,2 +1,0 @@
-SetSlot 2 BDW_Rifle
-SetSlot 3 SuperShotgun BDW_Shotgun

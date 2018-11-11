@@ -7,19 +7,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
     decaldef.txt
     decorate.txt
     gldefs.txt
-    keyconf.txt
     sndinfo.txt
-    actors/0common.txt
-    actors/casing.txt
-    actors/lights.gl
-    actors/muzzle.gl
-    actors/muzzle.txt
-    actors/puffs.gl
-    actors/puffs.txt
-    actors/rifle.txt
-    actors/shotgun.txt
-    actors/tracers.txt
-    actors/water.txt
+    actors/*.txt
+    actors/*.gl
   )
 add_custom_target(bdw_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3)
 
