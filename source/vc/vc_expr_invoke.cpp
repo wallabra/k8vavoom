@@ -2414,6 +2414,21 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     }
 
     switch (Func->ParamTypes[i].Type) {
+      case TYPE_Int:
+      case TYPE_Float:
+      case TYPE_Bool:
+        if (Args[i]->IsStrConst()) {
+          const char *str = Args[i]->GetStrConst(ec.Package);
+          if (!str || !str[0] || VStr::ICmp(str, "none") == 0 || VStr::ICmp(str, "null") == 0 ||
+              VStr::ICmp(str, "nil") == 0 || VStr::ICmp(str, "false") == 0)
+          {
+            TLocation ALoc = Args[i]->Loc;
+            delete Args[i];
+            Args[i] = new VIntLiteral(0, ALoc);
+            ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
+          }
+        }
+        break;
       case TYPE_Name:
         if (Args[i]->IsDecorateSingleName()) {
           VDecorateSingleName *E = (VDecorateSingleName *)Args[i];

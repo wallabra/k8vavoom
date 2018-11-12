@@ -1188,7 +1188,11 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
         if (NumArgs == VMethod::MAX_PARAMS) {
           delete Args[NumArgs];
           Args[NumArgs] = nullptr;
-          if (VStr::ICmp(*FuncName, "A_Jump") != 0) ParseError(sc->GetLoc(), "Too many arguments to `%s`", *FuncName);
+          if (VStr::ICmp(*FuncName, "A_Jump") != 0 && VStr::ICmp(*FuncName, "randompick") != 0 &&
+              VStr::ICmp(*FuncName, "decorate_randompick") != 0)
+          {
+            ParseError(sc->GetLoc(), "Too many arguments to `%s`", *FuncName);
+          }
         } else {
           ++NumArgs;
         }
@@ -1232,7 +1236,10 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
   if (!Func) {
     //fprintf(stderr, "***8:<%s> %s\n", *FuncName, *sc->GetLoc().toStringNoCol());
   } else {
-    if (Func && NumArgs > Func->NumParams && VStr::ICmp(*FuncName, "A_Jump") == 0) {
+    if (Func && NumArgs > Func->NumParams &&
+        (VStr::ICmp(*FuncName, "A_Jump") == 0 || VStr::ICmp(*FuncName, "randompick") == 0 ||
+         VStr::ICmp(*FuncName, "decorate_randompick") == 0))
+    {
       ParseWarning(sc->GetLoc(), "Too many arguments to `%s` (%d -- are you nuts?!)", *FuncName, totalCount);
       for (int f = Func->NumParams; f < NumArgs; ++f) { delete Args[f]; Args[f] = nullptr; }
       NumArgs = Func->NumParams;
