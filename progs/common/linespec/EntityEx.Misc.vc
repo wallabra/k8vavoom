@@ -2918,9 +2918,15 @@ final float decorate_frandom (float From, float To) {
 //==========================================================================
 final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
                                optional int v4, optional int v5, optional int v6,
-                               optional int v7, optional int v8, optional int v9)
+                               optional int v7, optional int v8, optional int v9,
+                               optional int v10, optional int v11, optional int v12,
+                               optional int v13, optional int v14, optional int v15,
+                               optional int v16, optional int v17, optional int v18,
+                               optional int v19, optional int v20, optional int v21,
+                               optional int v22, optional int v23, optional int v24,
+                               optional int v25, optional int v26, optional int v27)
 {
-  int[12] values;
+  int[22] values;
   int vcount = 1;
   values[0] = v0;
   if (specified_v1) values[vcount++] = v1;
@@ -2932,6 +2938,24 @@ final int decorate_randompick (int v0, optional int v1, optional int v2, optiona
   if (specified_v7) values[vcount++] = v7;
   if (specified_v8) values[vcount++] = v8;
   if (specified_v9) values[vcount++] = v9;
+  if (specified_v10) values[vcount++] = v10;
+  if (specified_v11) values[vcount++] = v11;
+  if (specified_v12) values[vcount++] = v12;
+  if (specified_v13) values[vcount++] = v13;
+  if (specified_v14) values[vcount++] = v14;
+  if (specified_v15) values[vcount++] = v15;
+  if (specified_v16) values[vcount++] = v16;
+  if (specified_v17) values[vcount++] = v17;
+  if (specified_v18) values[vcount++] = v18;
+  if (specified_v19) values[vcount++] = v19;
+  if (specified_v20) values[vcount++] = v20;
+  if (specified_v21) values[vcount++] = v21;
+  if (specified_v22) values[vcount++] = v22;
+  if (specified_v23) values[vcount++] = v23;
+  if (specified_v24) values[vcount++] = v24;
+  if (specified_v25) values[vcount++] = v25;
+  if (specified_v26) values[vcount++] = v26;
+  if (specified_v27) values[vcount++] = v27;
   return values[P_Random()%vcount];
 }
 
