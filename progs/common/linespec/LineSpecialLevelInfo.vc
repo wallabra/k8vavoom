@@ -4997,48 +4997,28 @@ final bool EV_ThingSetSpecial(int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //  EV_ThrustThingZ
 //
+//  (tid, force, up/down, set/add)
+//
 //===========================================================================
+final bool EV_ThrustThingZ (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
+  float Force = float(Arg2)*35.0/4.0;
+  if (Arg3) Force = -Force;
 
-final bool EV_ThrustThingZ(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
-  float Force = itof(Arg2) * 35.0 / 4.0;
-  if (Arg3)
-  {
-    Force = -Force;
-  }
-
-  if (Arg1)
-  {
-    Entity Ent;
-    for (Ent = FindMobjFromTID(Arg1, none); Ent;
-      Ent = FindMobjFromTID(Arg1, Ent))
-    {
-      if (!Arg4)
-      {
-        Ent.Velocity.z = Force;
-      }
-      else
-      {
-        Ent.Velocity.z += Force;
-      }
+  if (Arg1) {
+    for (Entity Ent = FindMobjFromTID(Arg1, none); Ent; Ent = FindMobjFromTID(Arg1, Ent)) {
+      if (!Arg4) Ent.Velocity.z = Force; else Ent.Velocity.z += Force;
     }
     return true;
   }
-  if (A)
-  {
-    if (!Arg4)
-    {
-      A.Velocity.z = Force;
-    }
-    else
-    {
-      A.Velocity.z += Force;
-    }
+
+  if (A) {
+    if (!Arg4) A.Velocity.z = Force; else A.Velocity.z += Force;
     return true;
   }
+
   return false;
 }
+
 
 //===========================================================================
 //
