@@ -730,6 +730,8 @@ int VSoundManager::GetSoundID (const char *name) {
     if (VStr::ICmp(*S_sfx[i].TagName, name) == 0) return i;
   }
 
+#if 0
+  //k8: i added this, and i will remove this -- this is wrong, and will glitch in network/demos
   if (strchr(name, '/') != nullptr) {
     VStr vs = VStr(name);
     int lump = W_CheckNumForFileName(vs+".flac");
@@ -740,6 +742,9 @@ int VSoundManager::GetSoundID (const char *name) {
     if (lump < 0) lump = W_CheckNumForFileName(vs);
     if (lump >= 0) {
       //GCon->Logf("sound '%s' is %s", name, *W_FullLumpName(lump));
+      //FIXME: this is totally wrong for network/demo!
+      //       new sounds won't be loaded on playback (or loaded in wrong order),
+      //       so it will all be broken. alas.
       int id = AddSoundLump(VName(name), lump);
       S_sfx[id].Data = nullptr;
       if (LoadSound(id)) {
@@ -748,6 +753,7 @@ int VSoundManager::GetSoundID (const char *name) {
       }
     }
   }
+#endif
 
   static TMap<VName, bool> reportMap;
   VName sname = VName(name);
@@ -798,10 +804,15 @@ int VSoundManager::ResolveEntitySound (VName ClassName, VName GenderName, VName 
 int VSoundManager::ResolveSound (int ClassID, int GenderID, int InSoundId) {
   guard(VSoundManager::ResolveSound);
   int sound_id = InSoundId;
-  while (S_sfx[sound_id].Link != -1) {
+  while (sound_id >= 0 && sound_id < S_sfx.length() && S_sfx[sound_id].Link != -1) {
          if (S_sfx[sound_id].bPlayerReserve) sound_id = LookupPlayerSound(ClassID, GenderID, sound_id);
     else if (S_sfx[sound_id].bRandomHeader) sound_id = S_sfx[sound_id].Sounds[rand()%S_sfx[sound_id].Link];
     else sound_id = S_sfx[sound_id].Link;
+  }
+  // this is network/demo hack (see above)
+  if (sound_id < 0 || sound_id >= S_sfx.length()) {
+    GCon->Logf("SOUND: cannot resolve sound %d...", InSoundId);
+    return InSoundId;
   }
   return sound_id;
   unguard;
