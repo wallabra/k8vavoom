@@ -229,7 +229,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     }
     if (!state) {
       // object removed itself
-      _stateRouteSelf = nullptr; // why not?
+      //_stateRouteSelf = nullptr; // why not?
       VSt.State = nullptr;
       VSt.StateTime = -1;
       break;
@@ -240,13 +240,17 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     if (state->Misc2) VSt.SY = state->Misc2;
     // call action routine
     if (state->Function) {
-      //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s': position=%d; stnum=%s\n", *state->Function->GetFullName(), position, (stnum ? *stnum->GetFullName() : "<none>"));
+      //fprintf(stderr, "    VBasePlayer::SetViewState: CALLING '%s'(%s): position=%d; stnum=%s\n", *state->Function->GetFullName(), *state->Function->Loc.toStringNoCol(), position, (stnum ? *stnum->GetFullName() : "<none>"));
       Level->XLevel->CallingState = state;
-      if (!MO) Sys_Error("PlayerPawn is dead (wtf?!");
+      if (!MO) Sys_Error("PlayerPawn is dead (wtf?!)");
       {
         SavedVObjectPtr svp(&MO->_stateRouteSelf);
-        MO->_stateRouteSelf = _stateRouteSelf;
-        if (!_stateRouteSelf) GCon->Logf("Player: viewobject is not set!");
+        if (!MO->_stateRouteSelf) {
+          MO->_stateRouteSelf = _stateRouteSelf;
+        } else {
+          //GCon->Logf("MO-viewobject: %s", MO->_stateRouteSelf->GetClass()->GetName());
+        }
+        if (!MO->_stateRouteSelf /*&& position == 0*/) GCon->Logf("Player: viewobject is not set!");
         P_PASS_REF(MO);
         ExecuteFunctionNoArgs(state->Function);
       }
@@ -713,7 +717,15 @@ IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject)
 {
   P_GET_PTR(VObject, vobj);
   P_GET_SELF;
+  if (!vobj) GCon->Logf("RESET VIEW OBJECT; WTF?!");
   if (Self) Self->_stateRouteSelf = vobj;
+}
+
+IMPLEMENT_FUNCTION(VBasePlayer, SetViewObjectIfNone)
+{
+  P_GET_PTR(VObject, vobj);
+  P_GET_SELF;
+  if (Self && !Self->_stateRouteSelf) Self->_stateRouteSelf = vobj;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewState)

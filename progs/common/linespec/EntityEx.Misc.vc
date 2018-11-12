@@ -3499,10 +3499,12 @@ final void DoJump(state State)
   }
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_weapon].State)
   {
+    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
     Player.SetViewState(ps_weapon, State);
   }
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[ps_flash].State)
   {
+    PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
     Player.SetViewState(ps_flash, State);
   }
   else

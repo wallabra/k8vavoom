@@ -812,9 +812,9 @@ void A_CheckForReload(int Count, state Jump, optional bool DoIncrement)
     return;
   }
 
-  if (bIsPlayer)
-  {
+  if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
 
     int ReloadCounter = Wpn.ReloadCounter;
     if (!specified_DoIncrement)
@@ -835,6 +835,7 @@ void A_CheckForReload(int Count, state Jump, optional bool DoIncrement)
     if (ReloadCounter != 0)
     {
       // Go back to the refire frames, instead of continuing on to the reload frames.
+      PlayerEx(Player).SetViewObject(Wpn);
       DoJump(Jump);
     }
     else

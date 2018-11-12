@@ -171,6 +171,7 @@ native final int GetPlayerNum();
 native final void ClearPlayer();
 
 native final void SetViewObject(Object vobj);
+native final void SetViewObjectIfNone(Object vobj);
 native final void SetViewState(int position, state stnum);
 native final void AdvanceViewStates(float deltaTime);
 native final void DisconnectBot();

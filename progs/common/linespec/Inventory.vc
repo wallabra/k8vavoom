@@ -809,6 +809,7 @@ final void A_JumpIfNoAmmo(state Label)
 
   if (!Wpn.CheckAmmo(Wpn.FireMode, false, true))
   {
+    PlayerEx(Player).SetViewObject(Wpn);
     DoJump(Label);
   }
 }
@@ -1010,12 +1011,12 @@ final void decorate_A_GunFlash (optional name newstate, optional int flags)
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return; // just in case
+  Player.SetViewObject(Wpn);
 
   if (!specified_newstate) newstate = 'Flash';
 
   if (MeleeState) SetState(MeleeState);
   if (newstate && !(flags&1)) {
-    Player.SetViewObject(Wpn);
     Player.SetViewState(ps_flash, Wpn.FindState(newstate));
   }
 }

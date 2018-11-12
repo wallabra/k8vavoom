@@ -250,6 +250,7 @@ class VBasePlayer : public VGameObject
   DECLARE_FUNCTION(GetPlayerNum)
   DECLARE_FUNCTION(ClearPlayer)
   DECLARE_FUNCTION(SetViewObject)
+  DECLARE_FUNCTION(SetViewObjectIfNone)
   DECLARE_FUNCTION(SetViewState)
   DECLARE_FUNCTION(AdvanceViewStates)
   DECLARE_FUNCTION(DisconnectBot)
