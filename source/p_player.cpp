@@ -717,7 +717,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject)
 {
   P_GET_PTR(VObject, vobj);
   P_GET_SELF;
-  if (!vobj) GCon->Logf("RESET VIEW OBJECT; WTF?!");
+  //if (!vobj) GCon->Logf("RESET VIEW OBJECT; WTF?!");
   if (Self) Self->_stateRouteSelf = vobj;
 }
 
