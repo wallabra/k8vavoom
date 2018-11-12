@@ -113,11 +113,13 @@ final void SetOrigin2(TVec origin)
 
 final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
   bool DamageSource, optional name BombDmgType, optional bool DoDamage,
-  optional int damagedistance)
+  optional int damagedistance, optional bool thrustZ)
 {
   EntityEx  Other;
   float   dist;
   int     damage;
+
+  if (!specified_thrustZ) thrustZ = DoDamage; //k8: see below
 
   if (!specified_DoDamage)
   {
@@ -203,14 +205,7 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
       {
         float Thrust = itof(damage)*0.5;
         float VelZ = ((Other.Origin.z+(Other.Height*0.5))-Origin.z)*Thrust;
-        if (Source != Other)
-        {
-          VelZ *= 0.5;
-        }
-        else
-        {
-          VelZ *= 0.8;
-        }
+        if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
         TVec Dir = Other.Origin - Origin;
         Dir.z = 0.0;
         if (Length(Dir) < 0.001)
@@ -221,10 +216,8 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
         TVec Vel = Normalise(Dir) * Thrust;
         Other.Velocity.x += (Vel.x / Other.Mass) * 35.0;
         Other.Velocity.y += (Vel.y / Other.Mass) * 35.0;
-        if (DoDamage)
-        {
-          Other.Velocity.z += (VelZ / Other.Mass) * 35.0;
-        }
+        if (thrustZ) Other.Velocity.z += (VelZ / Other.Mass) * 35.0;
+        //old:if (DoDamage) Other.Velocity.z += (VelZ / Other.Mass) * 35.0;
       }
     }
   }

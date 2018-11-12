@@ -35,6 +35,15 @@ const float ChargeSpeed = 455.0;
 
 float StartTime;      //  minotaur start time
 
+
+enum /*ERadiusThrustFlags*/ {
+  RTF_AFFECTSOURCE = 1,
+  RTF_NOIMPACTDAMAGE = 2,
+  RTF_NOTMISSILE = 4,
+  RTF_THRUSTZ = 16,
+};
+
+
 //**************************************************************************
 //  Generic monster attacks
 //**************************************************************************
@@ -704,23 +713,17 @@ final void decorate_A_Explode(optional int damage, optional int distance,
 //
 //==========================================================================
 
-final void A_RadiusThrust(optional int Force, optional int Distance,
-  optional bool AffectSelf)
-{
-  if (!Force)
-  {
-    Force = 128;
-  }
-  if (!Distance)
-  {
-    Distance = Force;
-  }
-  if (!specified_AffectSelf)
-  {
-    AffectSelf = true;
-  }
+final void A_RadiusThrust(optional int Force, optional int Distance, optional int flags) {
 
-  RadiusAttack(Target, Force, itof(Distance), AffectSelf, DamageType, false);
+  if (!Force) Force = 128;
+  if (!Distance) Distance = Force;
+
+  if (!specified_flags) flags = RTF_AFFECTSOURCE; //???
+  bool AffectSelf = !!(flags&RTF_AFFECTSOURCE);
+  //???if (!specified_AffectSelf) AffectSelf = true;
+
+  RadiusAttack((flags&RTF_NOTMISSILE ? self : Target), Force, itof(Distance), AffectSelf, DamageType,
+    /*false*/!(flags&RTF_NOIMPACTDAMAGE), thrustZ:!!(flags&RTF_THRUSTZ));
   if (Origin.z <= FloorZ + itof(Distance))
   {
     HitFloorType();
