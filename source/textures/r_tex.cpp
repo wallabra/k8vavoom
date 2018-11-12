@@ -803,9 +803,18 @@ void VTextureManager::AddHiResTextures () {
         delete OldTex;
         OldTex = nullptr;
       } else if (sc->Check("define")) {
-        sc->ExpectName8();
-        VName Name = sc->Name8;
-        int LumpIdx = W_CheckNumForName(sc->Name8, WADNS_Graphics);
+        sc->ExpectName();
+        VName Name = sc->Name;
+        int LumpIdx = W_CheckNumForName(sc->Name, WADNS_Graphics);
+        if (LumpIdx < 0 && sc->String.length() > 8) {
+          VName Name8 = VName(*sc->String, VName::AddLower8);
+          LumpIdx = W_CheckNumForName(Name8, WADNS_Graphics);
+          //FIXME: fix name?
+          if (LumpIdx >= 0) {
+            GCon->Logf("WARNING: found short texture '%s' for long texture '%s'", *Name8, *Name);
+            Name = Name8;
+          }
+        }
         sc->Check("force32bit");
 
         //  Dimensions
