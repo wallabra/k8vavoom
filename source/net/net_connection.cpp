@@ -535,6 +535,7 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
 //==========================================================================
 int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
   guardSlow(VNetConnection::CheckFatPVS);
+  //return true; //k8: this returns "always visible" for sector: more data, no door glitches
   int ss = Subsector - Context->GetLevel()->Subsectors;
   return UpdatePvs[ss / 8] & (1 << (ss & 7));
   unguardSlow;

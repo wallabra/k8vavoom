@@ -59,6 +59,7 @@ VNetContext::~VNetContext () {
 //==========================================================================
 void VNetContext::ThinkerDestroyed (VThinker *Th) {
   guard(VNetContext::ThinkerDestroyed);
+  //GCon->Logf("NET:%p: destroyed thinker with class `%s`", Th, Th->GetClass()->GetName());
   if (ServerConnection) {
     VThinkerChannel *Chan = ServerConnection->ThinkerChannels.FindPtr(Th);
     if (Chan) Chan->Close();

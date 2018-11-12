@@ -237,6 +237,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 
     VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false);
 #ifdef CLIENT
+    //GCon->Logf("NET:%p: spawned thinker with class `%s`", Th, Th->GetClass()->GetName());
     if (Th->IsA(VLevelInfo::StaticClass())) {
       VLevelInfo *LInfo = (VLevelInfo *)Th;
       LInfo->Level = LInfo;
