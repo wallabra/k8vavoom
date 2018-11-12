@@ -698,9 +698,14 @@ COMMAND(CvarList) {
   guard(COMMAND CvarList);
   vuint32 count = VCvar::countCVars();
   VCvar **list = VCvar::getSortedList();
+  bool showValues = (Args.length() > 1 && (Args[1].ICmp("values") == 0 || Args[1].ICmp("value") == 0));
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
-    GCon->Log(VStr(cvar->Name) + " - \"" + cvar->StringValue + "\"");
+    if (showValues) {
+      GCon->Logf("%s = \"%s\"", cvar->Name, *VStr(cvar->StringValue).quote());
+    } else {
+      GCon->Logf("%s: %s", cvar->Name, cvar->HelpString);
+    }
   }
   GCon->Logf("%u variables.", count);
   delete[] list;
