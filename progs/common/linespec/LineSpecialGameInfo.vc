@@ -371,6 +371,8 @@ override void Init () {
 
   CreateCvar('fuck_stealth_monsters', "0", "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE);
 
+  CreateCvar('vid_renderer', "1", "Tell some idiotic mod authors that we're GZDoom in OpenGL mode (1).", 0);
+
   ::Init(); // parse cvarinfo and such
 }
 
