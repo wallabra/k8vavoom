@@ -1026,6 +1026,8 @@ load_again:
   // Find map and GL nodes.
   lumpnum = W_CheckNumForName(MapName);
   MapLumpName = MapName;
+  int wadlumpnum = W_CheckNumForFileName(va("maps/%s.wad", *MapName));
+  if (wadlumpnum > lumpnum) lumpnum = -1;
   // If there is no map lump, try map wad.
   if (lumpnum < 0) {
     // Check if map wad is here.
