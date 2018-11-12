@@ -122,6 +122,12 @@ int VDemoPlaybackNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 
   if (!Strm->AtEnd()) *Strm << NextPacketTime;
 
+  /*
+  static float ptt = 0;
+  GCon->Logf("demo packet: size=%d; pktime=%f; msdiff=%d", MsgSize, NextPacketTime, (int)((NextPacketTime-ptt)*1000));
+  ptt = NextPacketTime;
+  */
+
   return 1;
   unguard;
 }
