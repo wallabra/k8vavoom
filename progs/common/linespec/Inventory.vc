@@ -1376,14 +1376,12 @@ final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
 
   name decal = '';
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (UseAmmo && Wpn)
+  if (UseAmmo)
   {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode))
-    {
-      return;
-    }
-    decal = Wpn.DecalName;
+    if (!Wpn) return;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
+  if (Wpn) decal = Wpn.DecalName;
 
   TVec ShootOrg = Origin;
   if (SpawnXY)
