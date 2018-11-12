@@ -19,7 +19,11 @@ menudef AdvRenderOptions {
       "Note that portal rendering in k8VaVoom is *VERY* slow."
       "You may want to disable this altogether."
       "Please note that you have to restart/reload level after changing this,"
-      "or visual glitches will occur.";
+      "or visual glitches will occur."
+      ""
+      "Currently many mirrors are rendered incorrectly, and often levels"
+      "looks better without mirrors. But this will turn off some transparent"
+      "water pools too. It is up to you to try and decide. Sorry.";
   }
 
   option numeric {
@@ -45,7 +49,7 @@ menudef AdvRenderOptions {
       "If you suddenly see FSP below 30 in some level places,"
       "this is porbably due portals. Try to decrease this, or"
       "turn mirrors, or turn this off."
-      "-1 means 'no portals'."
+      "-1 means 'infinite portal depth'."
       "THIS VAR IS TRANSIENT (i.e. not saved in config)!";
   }
 }
