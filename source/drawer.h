@@ -165,7 +165,7 @@ public:
     const TVec&, const TVec&, const TVec&) = 0;
   virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&,
     const TVec&, VMeshModel*, int, int, VTexture*, VTextureTranslation*, int,
-    vuint32, vuint32, float, bool, bool, float, bool, bool, bool) = 0;
+    vuint32, vuint32, float, bool, bool, float, bool, bool, bool, bool) = 0;
   virtual bool StartPortal(VPortal*, bool) = 0;
   virtual void EndPortal(VPortal*, bool) = 0;
 

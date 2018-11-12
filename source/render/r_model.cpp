@@ -1018,12 +1018,14 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
     switch (Pass) {
       case RPASS_Normal:
       case RPASS_NonShadow:
-        if (IsViewModel || !isAdvanced)
+        if (true /*IsViewModel || !isAdvanced*/) {
           Drawer->DrawAliasModel(Md2Org, Md2Angle, Offset, Scale,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Trans, ColourMap, Md2Light, Fade, Md2Alpha, Additive,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
-            SubMdl.AllowTransparency);
+            SubMdl.AllowTransparency,
+            !IsViewModel && isAdvanced); // for advanced renderer, we need to fill z-buffer, but not color buffer
+        }
         break;
 
       case RPASS_Ambient:

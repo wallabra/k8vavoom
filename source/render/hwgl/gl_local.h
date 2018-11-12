@@ -455,7 +455,7 @@ public:
                           const TVec &, const TVec &, const TVec &) override;
   virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&, const TVec&,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, vuint32,
-    vuint32, float, bool, bool, float, bool, bool, bool) override;
+    vuint32, float, bool, bool, float, bool, bool, bool, bool) override;
   virtual void DrawAliasModelAmbient(const TVec&, const TAVec&, const TVec&,
     const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
     bool, bool) override;

@@ -204,14 +204,17 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   VTexture *Skin, VTextureTranslation *Trans, int CMap, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, bool is_view_model, float Inter,
-  bool Interpolate, bool ForceDepthUse, bool AllowTransparency)
+  bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
+  bool onlyDepth)
 {
   guard(VOpenGLDrawer::DrawAliasModel);
-  if (is_view_model)
-  {
+  if (is_view_model) {
     // hack the depth range to prevent view model from poking into walls
     if (CanUseRevZ()) glDepthRange(0.7, 1.0); else glDepthRange(0.0, 0.3);
   }
+
+  //if (onlyDepth) glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  //if (onlyDepth) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   //
   // draw all the triangles
@@ -241,17 +244,9 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   p_glUniform1iARB(SurfModelTextureLoc, 0);
   p_glUniform1iARB(SurfModelFogTypeLoc, r_fog & 3);
 
-  if (Alpha < 1.0)
-  {
-    p_glUniform1fARB(ShadowsModelAlphaLoc, Alpha);
-  }
-  else
-  {
-    p_glUniform1fARB(ShadowsModelAlphaLoc, 1.0);
-  }
+  p_glUniform1fARB(ShadowsModelAlphaLoc, (Alpha < 1.0 ? Alpha : 1.0));
 
-  if (Fade)
-  {
+  if (Fade) {
     p_glUniform1iARB(SurfModelFogEnabledLoc, GL_TRUE);
     p_glUniform4fARB(SurfModelFogColourLoc,
       ((Fade >> 16) & 255) / 255.0,
@@ -260,24 +255,14 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
     p_glUniform1fARB(SurfModelFogDensityLoc, Fade == FADE_LIGHT ? 0.3 : r_fog_density);
     p_glUniform1fARB(SurfModelFogStartLoc, Fade == FADE_LIGHT ? 1.0 : r_fog_start);
     p_glUniform1fARB(SurfModelFogEndLoc, Fade == FADE_LIGHT ? 1024.0 * r_fade_factor : r_fog_end);
-  }
-  else
-  {
+  } else {
     p_glUniform1iARB(SurfModelFogEnabledLoc, GL_FALSE);
   }
 
-  if (AllowTransparency)
-  {
-    p_glUniform1iARB(SurfModelAllowTransparency, GL_TRUE);
-  }
-  else
-  {
-    p_glUniform1iARB(SurfModelAllowTransparency, GL_FALSE);
-  }
+  p_glUniform1iARB(SurfModelAllowTransparency, (AllowTransparency ? GL_TRUE : GL_FALSE));
   p_glUniform1fARB(SurfModelInterLoc, Inter);
 
-  if (Additive)
-  {
+  if (Additive) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
@@ -304,16 +289,22 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
       (light & 255) / 255.0, Alpha);
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
-    if ((Alpha < 1.0 && !ForceDepthUse) || AllowTransparency) //k8: dunno. really.
-    {
+    bool turnOnDepthMask = false;
+    if ((Alpha < 1.0 && !ForceDepthUse) || AllowTransparency) { //k8: dunno. really.
       glDepthMask(GL_FALSE);
+      turnOnDepthMask = true;
     }
-    p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.Num() - 1,
-      Mdl->Tris.Num() * 3, GL_UNSIGNED_SHORT, 0);
-    if ((Alpha < 1.0 && !ForceDepthUse) || AllowTransparency) //k8: dunno. really.
-    {
+
+    /*
+    if (onlyDepth) {
       glDepthMask(GL_TRUE);
+      glDepthMask(GL_FALSE);
+      glDisable(GL_BLEND);
     }
+    */
+    p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.Num()-1, Mdl->Tris.Num()*3, GL_UNSIGNED_SHORT, 0);
+
+    if (turnOnDepthMask) glDepthMask(GL_TRUE);
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
     p_glDisableVertexAttribArrayARB(0);
@@ -321,21 +312,26 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
     p_glDisableVertexAttribArrayARB(SurfModelTexCoordLoc);
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   }
+
   glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glDisable(GL_ALPHA_TEST);
-  if (Additive)
-  {
+  if (Additive) {
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
 
   glPopMatrix();
-  if (is_view_model)
-  {
-    glDepthRange(0.0, 1.0);
+  if (is_view_model) glDepthRange(0.0, 1.0);
+
+  if (onlyDepth) glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  /*
+  if (onlyDepth) {
+    glDepthMask(GL_TRUE);
+    glEnable(GL_BLEND);
   }
+  */
   unguard;
 }
 
