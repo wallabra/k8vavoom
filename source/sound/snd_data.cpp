@@ -937,7 +937,7 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
   while (!sc->AtEnd()) {
     sc->ExpectString();
     if (**sc->String == ':' || **sc->String == '[') {
-      if (inSequence) sc->Error("SN_InitSequenceScript:  Nested Script Error");
+      if (inSequence) sc->Error("SN_InitSequenceScript: Nested Script Error");
       for (SeqId = 0; SeqId < SeqInfo.Num(); ++SeqId) {
         if (SeqInfo[SeqId].Name == *sc->String+1) {
           Z_Free(SeqInfo[SeqId].Data);
