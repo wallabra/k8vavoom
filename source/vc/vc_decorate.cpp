@@ -684,6 +684,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
 
   if (ec.SelfClass) {
     VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
+    //FIXME: this is ALL WRONG! we should introduce new field accessor with run-time field checking
     if (fldn != NAME_None) {
       VStr fns = VStr(*fldn);
       if (fns.startsWith("user_")) {
