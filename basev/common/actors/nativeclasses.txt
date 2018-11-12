@@ -69,6 +69,8 @@ class Actor extends Thinker
   alias randompick = randompick;
   alias frandompick = frandompick;
 
+  alias CheckClass = CheckClass;
+
   alias GetIntFieldByName = GetIntFieldByName;
   alias GetSelf = _GetSelf;
   alias GetSSR = _GetSSR;
