@@ -1,0 +1,2 @@
+server int k8GoreOpt_CeilBlood = 1;
+server int k8GoreOpt_BloodAmount = 3;

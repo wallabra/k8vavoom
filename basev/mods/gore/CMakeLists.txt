@@ -7,6 +7,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gore.pk3
     decorate.txt
     decaldef.txt
     sndinfo.txt
+    cvarinfo.txt
+    menudef.txt
     models/models.xml
     models/gore/*
     models/blood/*

@@ -1,0 +1,20 @@
+AddOptionMenu "OptionsMenu" {
+  StaticText "Gore Mod"
+  Submenu "Gode Mod Options","GoreModMenu"
+}
+
+
+OptionValue k8GoreOpt_BloodAmountEnum {
+  0, "Some"
+  1, "Normal"
+  2, "Alot"
+  3, "Bloodbath"
+}
+
+
+OptionMenu "GoreModMenu" {
+  Title "Gore Mod Options"
+
+  option "Ceiling blood", "k8GoreOpt_CeilBlood", "onoff"
+  option "Blood amount", "k8GoreOpt_BloodAmount", "k8GoreOpt_BloodAmountEnum"
+}

@@ -163,9 +163,11 @@ sounds/gore/lqdrip9.ogg       @CMAKE_CURRENT_SOURCE_DIR@/sounds/gore/lqdrip9.ogg
 
 
 // scripts
-decorate.txt    @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
-decaldef.txt    @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
-sndinfo.txt     @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
+decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
+sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
+menudef.txt   @CMAKE_CURRENT_SOURCE_DIR@/menudef.txt
 
 
 // models
