@@ -50,14 +50,24 @@ static bool doTick (VStreamMusicPlayer *strm) {
   for (int Len = strm->SoundDevice->GetStreamAvailable(); Len; Len = strm->SoundDevice->GetStreamAvailable()) {
     short *Data = strm->SoundDevice->GetStreamBuffer();
     int StartPos = 0;
+    int decodedFromLoop = 0, loopCount = 0;
     while (!strm->Stopping && StartPos < Len) {
       int SamplesDecoded = strm->Codec->Decode(Data+StartPos*2, Len-StartPos);
       StartPos += SamplesDecoded;
+      decodedFromLoop += SamplesDecoded;
       if (strm->Codec->Finished()) {
         // stream ended
         if (strm->CurrLoop) {
           // restart stream
           strm->Codec->Restart();
+          ++loopCount;
+          if (loopCount == 1) decodedFromLoop = 0;
+          if (loopCount == 3 && decodedFromLoop < 256) {
+            fprintf(stderr, "Looped music stream is too short, aborting it...\n");
+            strm->CurrLoop = false;
+            strm->Stopping = true;
+            strm->FinishTime = Sys_Time();
+          }
         } else {
           // we'll wait for 1 second to finish playing
           strm->Stopping = true;
