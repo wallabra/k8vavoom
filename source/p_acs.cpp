@@ -57,6 +57,9 @@
 #endif
 #include "p_acs.h"
 
+static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Override 'screenblocks' variable for acs scripts (-1: don't).", 0);
+
+
 #define AAPTR_DEFAULT                0x00000000
 #define AAPTR_NULL                   0x00000001
 #define AAPTR_TARGET                 0x00000002
@@ -4432,7 +4435,17 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetCvar)
-      sp[-1] = VCvar::GetInt(*GetStr(sp[-1]));
+      {
+        VStr cvname = GetStr(sp[-1]);
+        int val;
+        if (cvname.ICmp("screenblocks") == 0) {
+          val = acs_screenblocks_override;
+          if (val < 0) val = VCvar::GetInt(*cvname);
+        } else {
+          val = VCvar::GetInt(*cvname);
+        }
+        sp[-1] = val;
+      }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_CaseGotoSorted)
