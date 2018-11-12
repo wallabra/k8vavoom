@@ -39,6 +39,9 @@ static bool MirrorClipSegs;
 
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
 VCvarI r_max_portal_depth("r_max_portal_depth", "-1", "Maximum allowed portal depth (-1: infinite)", 0/*CVAR_Archive*/);
+static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
+static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering (SLOW)?", CVAR_Archive);
+
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
@@ -47,6 +50,12 @@ VCvarB VRenderLevelShared::r_disable_world_update("r_disable_world_update", fals
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_decals_enabled;
+
+// to clear portals
+static bool oldMirrors = true;
+static bool oldHorizons = true;
+static int oldMaxMirrors = -666;
+static int oldPortalDepth = -666;
 
 
 //==========================================================================
@@ -378,7 +387,7 @@ void VRenderLevelShared::RenderMirror (drawseg_t *dseg) {
   guard(VRenderLevelShared::RenderMirror);
   seg_t *Seg = dseg->seg;
 
-  if (MirrorLevel < r_maxmirrors) {
+  if (MirrorLevel < r_maxmirrors && r_allow_mirrors) {
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(Seg)) {
@@ -469,7 +478,7 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 
   if (!line->backsector) {
     // single sided line
-    if (line->linedef->special == LNSPEC_LineHorizon) {
+    if (line->linedef->special == LNSPEC_LineHorizon && r_allow_horizons) {
       RenderHorizon(dseg);
     } else if (line->linedef->special == LNSPEC_LineMirror) {
       RenderMirror(dseg);
@@ -517,7 +526,7 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
 
   if (plane.PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  if (plane.MirrorAlpha < 1.0 && MirrorLevel < r_maxmirrors) {
+  if (plane.MirrorAlpha < 1.0 && MirrorLevel < r_maxmirrors && r_allow_mirrors) {
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(&plane)) {
@@ -537,7 +546,26 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
     } while (surfs);
 
     if (plane.MirrorAlpha <= 0.0) return;
+    // k8: is this right?
     ssurf->texinfo.Alpha = plane.MirrorAlpha;
+  } else {
+    // this is NOT right!
+    //ssurf->texinfo.Alpha = 1.0;
+    if (plane.MirrorAlpha < 1.0) {
+      if (ssurf->texinfo.Alpha >= 1.0) {
+        //GCon->Logf("MALPHA=%f", plane.MirrorAlpha);
+        // darken it a little to simulate mirror
+        sec_params_t *oldRegionLightParams = r_region->params;
+        sec_params_t newLight = (plane.LightSourceSector >= 0 ? Level->Sectors[plane.LightSourceSector].params : *oldRegionLightParams);
+        newLight.lightlevel = (int)((float)newLight.lightlevel*plane.MirrorAlpha);
+        r_region->params = &newLight;
+        // take light from `r_region->params`
+        DrawSurfaces(nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, -1, 0, false, true);
+        // and resore rregion
+        r_region->params = oldRegionLightParams;
+        return;
+      }
+    }
   }
 
   DrawSurfaces(nullptr, ssurf->surfs, &ssurf->texinfo, SkyBox, plane.LightSourceSector, 0, false, true);
@@ -780,6 +808,28 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 //==========================================================================
 void VRenderLevelShared::RenderPortals () {
   guard(VRenderLevelShared::RenderPortals);
+
+  if (PortalLevel == 0) {
+    if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != r_max_portal_depth ||
+        oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
+    {
+      GCon->Logf("portal settings changed, resetting portal info...");
+      for (int i = 0; i < Portals.Num(); ++i) {
+        if (Portals[i]) {
+          delete Portals[i];
+          Portals[i] = nullptr;
+        }
+      }
+      Portals.Clear();
+      // save cvars
+      oldMaxMirrors = r_maxmirrors;
+      oldPortalDepth = r_max_portal_depth;
+      oldHorizons = r_allow_horizons;
+      oldMirrors = r_allow_mirrors;
+      return;
+    }
+  }
+
   ++PortalLevel;
 
   if (r_max_portal_depth < 0 || PortalLevel <= r_max_portal_depth) {
