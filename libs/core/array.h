@@ -26,6 +26,7 @@
 //**  Dynamic array template.
 //**
 //**************************************************************************
+//#define VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
 
 enum EArrayNew { E_ArrayNew };
 
@@ -146,7 +147,13 @@ public:
 
   void SetNumWithReserve (int NewNum) {
     check(NewNum >= 0);
-    if (NewNum > ArrSize) Resize(NewNum+NewNum*3/8+32);
+    if (NewNum > ArrSize) {
+#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
+      Resize(NewNum+64);
+#else
+      Resize(NewNum+NewNum*3/8+32);
+#endif
+    }
     ArrNum = NewNum;
   }
   inline void setLengthReserve (int NewNum) { SetNumWithReserve(NewNum); }
@@ -180,7 +187,13 @@ public:
   }
 
   void Insert (int Index, const T &Item) {
-    if (ArrNum == ArrSize) Resize(ArrSize+ArrSize*3/8+32);
+    if (ArrNum == ArrSize) {
+#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
+      Resize(ArrSize+64);
+#else
+      Resize(ArrSize+ArrSize*3/8+32);
+#endif
+    }
     ++ArrNum;
     for (int i = ArrNum-1; i > Index; --i) ArrData[i] = ArrData[i-1];
     ArrData[Index] = Item;
@@ -188,7 +201,13 @@ public:
   void insert (int Index, const T &Item) { Insert(Index, Item); }
 
   inline int Append (const T &Item) {
-    if (ArrNum == ArrSize) Resize(ArrSize+ArrSize*3/8+32);
+    if (ArrNum == ArrSize) {
+#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
+      Resize(ArrSize+64);
+#else
+      Resize(ArrSize+ArrSize*3/8+32);
+#endif
+    }
     ArrData[ArrNum] = Item;
     ++ArrNum;
     return ArrNum-1;
@@ -197,12 +216,24 @@ public:
   inline int append (const T &Item) { return Append(Item); }
 
   inline T &Alloc () {
-    if (ArrNum == ArrSize) Resize(ArrSize+ArrSize*3/8+32);
+    if (ArrNum == ArrSize) {
+#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
+      Resize(ArrSize+64);
+#else
+      Resize(ArrSize+ArrSize*3/8+32);
+#endif
+    }
     return ArrData[ArrNum++];
   }
 
   inline T &alloc () {
-    if (ArrNum == ArrSize) Resize(ArrSize+ArrSize*3/8+32);
+    if (ArrNum == ArrSize) {
+#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
+      Resize(ArrSize+64);
+#else
+      Resize(ArrSize+ArrSize*3/8+32);
+#endif
+    }
     return ArrData[ArrNum++];
   }
 
