@@ -1042,32 +1042,11 @@ bool VClass::Define () {
 
 //==========================================================================
 //
-//  VClass::DefineMembers
+//  VClass::DefineRepInfos
 //
 //==========================================================================
-bool VClass::DefineMembers () {
-  guard(VClass::DefineMembers);
+bool VClass::DefineRepInfos () {
   bool Ret = true;
-
-  // moved to `Define()`
-  //for (int i = 0; i < Constants.Num(); ++i) if (!Constants[i]->Define()) Ret = false;
-  for (int i = 0; i < Structs.Num(); ++i) Structs[i]->DefineMembers();
-
-  VField *PrevBool = nullptr;
-  for (VField *fi = Fields; fi; fi = fi->Next) {
-    if (!fi->Define()) Ret = false;
-    if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
-      fi->Type.BitMask = PrevBool->Type.BitMask<<1;
-    }
-    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
-  }
-
-  for (int i = 0; i < Properties.Num(); ++i) if (!Properties[i]->Define()) Ret = false;
-  for (int i = 0; i < Methods.Num(); ++i) if (!Methods[i]->Define()) Ret = false;
-
-  if (!DefaultProperties->Define()) Ret = false;
-
-  for (VState *s = States; s; s = s->Next) if (!s->Define()) Ret = false;
 
   for (int ri = 0; ri < RepInfos.Num(); ++ri) {
     if (!RepInfos[ri].Cond->Define()) Ret = false;
@@ -1117,6 +1096,40 @@ bool VClass::DefineMembers () {
       ParseError(RepFields[i].Loc, "No such field or method %s", *RepFields[i].Name);
     }
   }
+  return Ret;
+}
+
+
+//==========================================================================
+//
+//  VClass::DefineMembers
+//
+//==========================================================================
+bool VClass::DefineMembers () {
+  guard(VClass::DefineMembers);
+  bool Ret = true;
+
+  // moved to `Define()`
+  //for (int i = 0; i < Constants.Num(); ++i) if (!Constants[i]->Define()) Ret = false;
+  for (int i = 0; i < Structs.Num(); ++i) Structs[i]->DefineMembers();
+
+  VField *PrevBool = nullptr;
+  for (VField *fi = Fields; fi; fi = fi->Next) {
+    if (!fi->Define()) Ret = false;
+    if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
+      fi->Type.BitMask = PrevBool->Type.BitMask<<1;
+    }
+    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
+  }
+
+  for (int i = 0; i < Properties.Num(); ++i) if (!Properties[i]->Define()) Ret = false;
+  for (int i = 0; i < Methods.Num(); ++i) if (!Methods[i]->Define()) Ret = false;
+
+  if (!DefaultProperties->Define()) Ret = false;
+
+  for (VState *s = States; s; s = s->Next) if (!s->Define()) Ret = false;
+
+  if (!DefineRepInfos()) Ret = false;
 
   return Ret;
   unguard;
@@ -1902,24 +1915,61 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
   if (!NewClass) NewClass = new VClass(AName, AOuter, ALoc);
   NewClass->ParentClass = this;
 
-  // define user fields
-  VField *PrevBool = nullptr;
-  for (int f = 0; f < uvlist.length(); ++f) {
-    VField *fi = new VField(uvlist[f].name, NewClass, uvlist[f].loc);
-    VTypeExpr *te = VTypeExpr::NewTypeExpr(uvlist[f].type, uvlist[f].loc);
-    fi->TypeExpr = te;
-    fi->Type = uvlist[f].type;
-    fi->Flags = 0;
-    NewClass->AddField(fi);
-    NewClass->DecorateStateFieldTrans.put(uvlist[f].name, uvlist[f].name); // so field name will be case-insensitive
-    // process boolean field
-    if (!fi->Define()) Sys_Error("cannot define field '%s' in class '%s'", *uvlist[f].name, *AName);
-    //fprintf(stderr, "FI: <%s> (%s)\n", *fi->GetFullName(), *fi->Type.GetName());
-    if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
-      fi->Type.BitMask = PrevBool->Type.BitMask<<1;
+  if (uvlist.length()) {
+    // create replication:
+    //   replication {
+    //     reliable if (Role == ROLE_Authority && bNetOwner)
+    //       <fields>;
+    //   }
+
+    VRepInfo &RI = NewClass->RepInfos.Alloc();
+    RI.Reliable = true;
+
+    // replication condition
+    RI.Cond = new VMethod(NAME_None, NewClass, ALoc);
+    RI.Cond->ReturnType = VFieldType(TYPE_Bool);
+    RI.Cond->ReturnType.BitMask = 1;
+    RI.Cond->ReturnTypeExpr = new VTypeExprSimple(RI.Cond->ReturnType, ALoc);
+    {
+      VExpression *eOwnerField = new VSingleName("bNetOwner", ALoc);
+      VExpression *eRoleConst = new VSingleName("ROLE_Authority", ALoc);
+      VExpression *eRoleFld = new VSingleName("Role", ALoc);
+      VExpression *eCmp = new VBinary(VBinary::EBinOp::Equals, eRoleFld, eRoleConst, ALoc);
+      VExpression *eCond = new VBinaryLogical(VBinaryLogical::ELogOp::And, eOwnerField, eCmp, ALoc);
+      RI.Cond->Statement = new VReturn(eCond, ALoc);
     }
-    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
+    NewClass->AddMethod(RI.Cond);
+
+    // replication fields
+    for (int f = 0; f < uvlist.length(); ++f) {
+      VRepField &F = RI.RepFields.Alloc();
+      F.Name = uvlist[f].name;
+      F.Loc = ALoc;
+      F.Member = nullptr;
+    }
+
+    // define user fields
+    VField *PrevBool = nullptr;
+    for (int f = 0; f < uvlist.length(); ++f) {
+      VField *fi = new VField(uvlist[f].name, NewClass, uvlist[f].loc);
+      VTypeExpr *te = VTypeExpr::NewTypeExpr(uvlist[f].type, uvlist[f].loc);
+      fi->TypeExpr = te;
+      fi->Type = uvlist[f].type;
+      fi->Flags = 0;
+      NewClass->AddField(fi);
+      NewClass->DecorateStateFieldTrans.put(uvlist[f].name, uvlist[f].name); // so field name will be case-insensitive
+      // process boolean field
+      if (!fi->Define()) Sys_Error("cannot define field '%s' in class '%s'", *uvlist[f].name, *AName);
+      //fprintf(stderr, "FI: <%s> (%s)\n", *fi->GetFullName(), *fi->Type.GetName());
+      if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
+        fi->Type.BitMask = PrevBool->Type.BitMask<<1;
+      }
+      PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
+    }
+
   }
+
+  if (!NewClass->DefineRepInfos()) Sys_Error("cannot post-process replication info for class '%s'", *AName);
 
   //!DecorateDefine();
   //fprintf(stderr, "*** '%s' : '%s' (%d) ***\n", NewClass->GetName(), GetName(), (NewClass->ObjectFlags&CLASSOF_PostLoaded ? 1 : 0));

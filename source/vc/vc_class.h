@@ -331,6 +331,7 @@ public:
   bool Define ();
   bool DefineMembers ();
   void Emit ();
+  bool DefineRepInfos ();
   bool DecorateDefine ();
   void DecorateEmit ();
   void DecoratePostLoad ();
