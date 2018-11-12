@@ -158,15 +158,11 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
     PuffType = BulletPuff;
   }
 
-  if (!Target && !(Flags & 1))
-  {
-    return;
-  }
+  // CBAF_AIMFACING
+  if (!Target && !(Flags & 1)) return;
 
-  if (!(Flags & 1))
-  {
-    A_FaceTarget();
-  }
+  // CBAF_AIMFACING
+  if (!(Flags & 1)) A_FaceTarget();
 
   if (AttackSound)
   {
@@ -175,12 +171,20 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
 
   TVec aimDir;
   AimLineAttack(aimDir, Angles, MISSILERANGE);
-  int i;
-  for (i = 0; i < NumBullets; i++)
+
+  //FIXME: CBAF_NOPITCH
+  //if (flags&8) {}
+
+  foreach (auto i; 0..NumBullets)
   {
     TAVec rot;
-    rot.pitch = (Random() - Random()) * SpreadVert;
-    rot.yaw = (Random() - Random()) * SpreadHoriz;
+    if (Flags&4/*CBAF_EXPLICITANGLE*/) {
+      rot.pitch = SpreadVert;
+      rot.yaw = SpreadHoriz;
+    } else {
+      rot.pitch = (Random() - Random()) * SpreadVert;
+      rot.yaw = (Random() - Random()) * SpreadHoriz;
+    }
     rot.roll = 0.0;
     TVec dir = RotateDirectionVector(aimDir, rot);
     int damage = DamagePerBullet;
