@@ -131,8 +131,9 @@ enum
 //  Constants for A_SeekerMissile
 enum
 {
-  SMF_LOOK        = 1,
-  SMF_PRECISE       = 2
+  SMF_LOOK     = 1,
+  SMF_PRECISE  = 2,
+  SMF_CURSPEED = 4,
 };
 
 //  States

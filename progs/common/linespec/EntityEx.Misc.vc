@@ -1367,7 +1367,7 @@ bool CanSeek(EntityEx Targ)
 //
 //==========================================================================
 
-final bool SeekerMissile(float thresh, float turnMax, optional bool precise)
+final bool SeekerMissile(float thresh, float turnMax, optional bool precise, optional bool curspeed)
 {
   int dir;
   float dist;
@@ -1404,42 +1404,45 @@ final bool SeekerMissile(float thresh, float turnMax, optional bool precise)
     Angles.yaw = AngleMod360(Angles.yaw - delta);
   }
   angle = Angles.yaw;
-  if (!precise)
-  {
-    Velocity.x = Speed * cos(angle);
-    Velocity.y = Speed * sin(angle);
-    if (Origin.z + Height < Tracer.Origin.z ||
-      Tracer.Origin.z + Tracer.Height < Origin.z)
+  //k8: is this right?
+  if (!curspeed) {
+    if (!precise)
+    {
+      Velocity.x = Speed * cos(angle);
+      Velocity.y = Speed * sin(angle);
+      if (Origin.z + Height < Tracer.Origin.z ||
+        Tracer.Origin.z + Tracer.Height < Origin.z)
+      {
+        // Need to seek vertically
+        dist = DistTo2(Tracer);
+        dist = dist / Speed;
+        if (dist < 1.0)
+        {
+          dist = 1.0;
+        }
+        Velocity.z = (Tracer.Origin.z + Tracer.Height / 2.0 -
+          Origin.z - Height / 2.0) / dist;
+      }
+    }
+    else
     {
       // Need to seek vertically
-      dist = DistTo2(Tracer);
-      dist = dist / Speed;
-      if (dist < 1.0)
+      TVec d = vector(Tracer.Origin.x - Origin.x, Tracer.Origin.y - Origin.y, 0.0);
+      dist = Length(d) > 1.0 ? Length(d) : 1.0;
+
+      // Aim at a player's eyes and at the middle of the actor for everything else.
+      float aimheight = Tracer.Height / 2.0;
+      if (Tracer.bIsPlayer)
       {
-        dist = 1.0;
+        aimheight = PlayerEx(Tracer.Player).ViewHeight;
       }
-      Velocity.z = (Tracer.Origin.z + Tracer.Height / 2.0 -
-        Origin.z - Height / 2.0) / dist;
-    }
-  }
-  else
-  {
-    // Need to seek vertically
-    TVec d = vector(Tracer.Origin.x - Origin.x, Tracer.Origin.y - Origin.y, 0.0);
-    dist = Length(d) > 1.0 ? Length(d) : 1.0;
+      float pitch = atan2((Tracer.Origin.z + aimheight) - (Origin.z + Height / 2.0), fabs(dist));
 
-    // Aim at a player's eyes and at the middle of the actor for everything else.
-    float aimheight = Tracer.Height / 2.0;
-    if (Tracer.bIsPlayer)
-    {
-      aimheight = PlayerEx(Tracer.Player).ViewHeight;
+      float xyscale = Speed * cos(pitch);
+      Velocity.x = xyscale * cos(angle);
+      Velocity.y = xyscale * sin(angle);
+      Velocity.z = Speed * sin(pitch);
     }
-    float pitch = atan2((Tracer.Origin.z + aimheight) - (Origin.z + Height / 2.0), fabs(dist));
-
-    float xyscale = Speed * cos(pitch);
-    Velocity.x = xyscale * cos(angle);
-    Velocity.y = xyscale * sin(angle);
-    Velocity.z = Speed * sin(pitch);
   }
   return true;
 }

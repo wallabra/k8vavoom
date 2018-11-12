@@ -100,7 +100,7 @@ final void A_SeekerMissile(int Threshold, int TurnMax, optional int flags,
       break;
     }
   }
-  SeekerMissile(itof(Threshold), itof(TurnMax), !!(flags & SMF_PRECISE));
+  SeekerMissile(itof(Threshold), itof(TurnMax), !!(flags & SMF_PRECISE), !!(flags&SMF_CURSPEED));
 }
 
 //==========================================================================
