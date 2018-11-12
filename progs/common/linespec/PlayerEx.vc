@@ -2126,12 +2126,9 @@ override void PutClientIntoServer()
 //  SpawnClient
 //
 //==========================================================================
-
-override void SpawnClient()
-{
+override void SpawnClient () {
   bool playerWasReborn;
   EntityEx OldMO = EntityEx(MO);
-
 
   // setup weapon slots
   if (Level) {

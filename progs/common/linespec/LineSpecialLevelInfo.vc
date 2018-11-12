@@ -7538,6 +7538,44 @@ class!Inventory GetDehackedItemType(EntityEx Ent)
   return none;
 }
 
+
+//==========================================================================
+//
+//  AfterUnarchiveThinkers
+//
+//  Called after game was loaded
+//
+//==========================================================================
+override void AfterUnarchiveThinkers () {
+  ::AfterUnarchiveThinkers();
+  // setup weapon slots
+  if (Level) {
+    LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
+    if (GI) {
+      /*
+      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
+        print("=== weapon slot #%d", wsidx);
+        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
+          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
+        }
+      }
+      */
+      GI.InitializeWeaponSlots();
+      /*
+      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
+        print("=== weapon slot #%d", wsidx);
+        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
+          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
+        }
+      }
+      */
+    }
+  }
+}
+
+
 defaultproperties
 {
   ExtPlayersBase = 4001;
