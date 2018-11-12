@@ -790,25 +790,15 @@ float GetSpeedFactor()
 
 final void A_JumpIfNoAmmo(state Label)
 {
-  //  State jumps should not affect state chain results.
-  if (XLevel.StateCall)
-  {
-    XLevel.StateCall->Result = false;
-  }
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
-  //  Only for weapons.
-  if (!bIsPlayer || XLevel.StateCall)
-  {
-    return;
-  }
+  // inly for weapons
+  if (!bIsPlayer || XLevel.StateCall) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (!Wpn)
-  {
-    return;
-  }
+  if (!Wpn) return;
 
-  if (!Wpn.CheckAmmo(Wpn.FireMode, false, true))
-  {
+  if (!Wpn.CheckAmmo(Wpn.FireMode, false, true)) {
     PlayerEx(Player).SetViewObject(Wpn);
     DoJump(Label);
   }
@@ -1303,7 +1293,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   int damage;
   TAVec rot;
   TVec aimDir;
-  bool UseAmmo = false;
+  bool UseAmmo = (specified_Flags ? !!(Flags&FBF_USEAMMO) : true);
   bool randDamage = true;
   bool randSpread = true;
   bool noAimPitch = false;
@@ -1316,12 +1306,12 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
-  if (!specified_Flags) {
-    UseAmmo = true;
-  } else {
-    if (((Flags&FBF_USEAMMO) != 0 || UseAmmo) && Wpn) {
-      if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
-    }
+  if (UseAmmo) {
+    if (!Wpn) return;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+  }
+
+  if (specified_Flags) {
     randDamage = !(Flags&FBF_NORANDOM);
     randSpread = !(Flags&FBF_EXPLICITANGLE);
     noAimPitch = !!(Flags&FBF_NOPITCH);
