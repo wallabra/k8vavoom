@@ -1,4 +1,5 @@
 menus {
+  "menus/advrender.txt",
   "menus/advvideo.txt",
   "menus/gameplay.txt",
   "menus/misc.txt",

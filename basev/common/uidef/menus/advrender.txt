@@ -1,0 +1,51 @@
+// advanced video options menu
+menudef AdvRenderOptions {
+  Title = "ADVANCED RENDER OPTIONS";
+
+  option bool {
+    title = "Allow horizons";
+    cvar = r_allow_horizons;
+    help =
+      "Allow rendering horizon portals?"
+      "Please note that you have to restart/reload level after changing this,"
+      "or visual glitches will occur.";
+  }
+
+  option bool {
+    title = "Allow mirrors";
+    cvar = r_allow_mirrors;
+    help =
+      "Allow rendering mirror portals?"
+      "Note that portal rendering in k8VaVoom is *VERY* slow."
+      "You may want to disable this altogether."
+      "Please note that you have to restart/reload level after changing this,"
+      "or visual glitches will occur.";
+  }
+
+  option numeric {
+    title = "Maximum mirror depth";
+    cvar = r_maxmirrors;
+    step = 1;
+    min = 0;
+    max = 6;
+    help =
+      "Maximum allowed mirror depth."
+      "Usually has little effect.";
+  }
+
+  option numeric {
+    title = "Maximum portal depth";
+    cvar = r_max_portal_depth;
+    step = 1;
+    min = -1;
+    max = 16;
+    help =
+      "Maximum allowed portal depth."
+      "Usually has huge effect on levels with mirrors."
+      "If you suddenly see FSP below 30 in some level places,"
+      "this is porbably due portals. Try to decrease this, or"
+      "turn mirrors, or turn this off."
+      "-1 means 'no portals'."
+      "THIS VAR IS TRANSIENT (i.e. not saved in config)!";
+  }
+}

@@ -146,4 +146,9 @@ menudef VideoOptions {
     //smclass = MenuScreenAdvancedVideoOptions;
     submenu = "AdvVideoOptions";
   }
+
+  option submenu {
+    title = "Advanced Rendeing Options";
+    submenu = "AdvRenderOptions";
+  }
 }
