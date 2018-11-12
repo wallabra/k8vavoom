@@ -809,7 +809,20 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
 //
 //==========================================================================
 
-final void A_BrainSpit()
+final void A_BrainSpit() {
+  decorate_A_BrainSpit();
+}
+
+
+//==========================================================================
+//
+//  decorate_A_BrainSpit
+//
+//  Spawn a cube.
+//
+//==========================================================================
+
+final void decorate_A_BrainSpit(optional name actname)
 {
   BrainState    BState;
   EntityEx    targ;
@@ -844,8 +857,17 @@ final void A_BrainSpit()
   targ = BState.Targets[BState.TargetOn];
   BState.TargetOn = (BState.TargetOn + 1) % BState.Targets.Num;
 
+  class!Actor brnmiss = SpawnShot;
+  if (specified_actname) {
+    if (!actname) return;
+    brnmiss = class!Actor(FindClassNoCase(actname));
+    if (!brnmiss) return;
+    brnmiss = class!Actor(GetClassReplacement(brnmiss));
+    if (!brnmiss) return;
+  }
+
   // spawn brain missile
-  A = SpawnMissile(targ, SpawnShot);
+  A = SpawnMissile(targ, /*SpawnShot*/brnmiss);
   if (A)
   {
     A.Target = targ;
