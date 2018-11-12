@@ -242,6 +242,7 @@ bool VScriptParser::IsText () {
 bool VScriptParser::AtEnd () {
   guard(VScriptParser::AtEnd);
   if (GetString()) {
+    //fprintf(stderr, "<%s>\n", *String);
     UnGet();
     return false;
   }
@@ -261,6 +262,7 @@ bool VScriptParser::IsAtEol () {
     if (*s == '\n' || *s == '\r') return true;
     if (!inComment) {
       if (s[0] == '/' && s[1] == '/') return true; // this is single-line comment, it always ends with EOL
+      if (!CMode && s[0] == ';') return true; // this is single-line comment, it always ends with EOL
       if (s[0] == '/' && s[1] == '*') {
         // multiline comment
         ++s; // skip slash
@@ -303,9 +305,9 @@ bool VScriptParser::GetString () {
   Crossed = false;
   QuotedString = false;
   bool foundToken = false;
-  while (foundToken == false) {
+  while (!foundToken) {
     // skip whitespace
-    while (*ScriptPtr <= 32) {
+    while ((vuint8)*ScriptPtr <= 32) {
       if (ScriptPtr >= ScriptEndPtr) {
         End = true;
         return false;
