@@ -103,9 +103,11 @@ static int FindRiffChunk(VStream &Strm, const char *ID)
 {
   guard(VWavAudioCodec::FindChunk);
   Strm.Seek(12);
+  if (Strm.IsError()) return -1;
   int EndPos = Strm.TotalSize();
   while (Strm.Tell() + 8 <= EndPos)
   {
+    if (Strm.IsError()) return -1;
     FRiffChunkHeader ChunkHdr;
     Strm.Serialise(&ChunkHdr, 8);
     int ChunkSize = LittleLong(ChunkHdr.Size);
@@ -120,6 +122,7 @@ static int FindRiffChunk(VStream &Strm, const char *ID)
       break;
     }
     Strm.Seek(Strm.Tell() + ChunkSize);
+    if (Strm.IsError()) return -1;
   }
   return -1;
   unguard;
