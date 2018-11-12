@@ -601,7 +601,12 @@ COMMAND(Record) {
     return;
   }
 
-  if (strstr(*Args[1], "..")) {
+  if (Args[1] == "?" || Args[1].ICmp("-h") == 0 || Args[1].ICmp("-help") == 0  || Args[1].ICmp("--help") == 0) {
+    GCon->Log("record <demoname> [<map>]");
+    return;
+  }
+
+  if (strstr(*Args[1], "..") || strstr(*Args[1], "/") || strstr(*Args[1], "\\")) {
     GCon->Log("Relative pathnames are not allowed.");
     return;
   }
