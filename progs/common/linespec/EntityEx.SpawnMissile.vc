@@ -640,7 +640,8 @@ final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class!EntityEx type,
 //==========================================================================
 
 final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
-  out EntityEx AimTarget, optional float angle, optional TVec SpawnOrg, optional name decalType)
+  out EntityEx AimTarget, optional float angle, optional TVec SpawnOrg, optional name decalType,
+  optional bool noAutoAim)
 {
   EntityEx  A;
   TVec    dir;
@@ -649,11 +650,11 @@ final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
   // Try to find a target
   if (specified_angle)
   {
-    AimTarget = Aim(dir, 16.0 * 64.0, angle);
+    AimTarget = Aim(dir, 16.0 * 64.0, angle, noAutoaim:noAutoAim!optional);
   }
   else
   {
-    AimTarget = Aim(dir, 16.0 * 64.0);
+    AimTarget = Aim(dir, 16.0 * 64.0, noAutoaim:noAutoAim!optional);
   }
 
   org = specified_SpawnOrg ? SpawnOrg : Origin;

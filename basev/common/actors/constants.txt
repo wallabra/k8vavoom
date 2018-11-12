@@ -329,3 +329,10 @@ enum EDamageFlags {
   DMSS_INFLICTORDMGTYPE = 0x00000200,
 };
 */
+
+
+enum EFireCustomMissileFlags {
+  FPF_AIMATANGLE = 1,
+  FPF_TRANSFERTRANSLATION = 2,
+  FPF_NOAUTOAIM = 4,
+};

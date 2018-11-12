@@ -94,6 +94,14 @@ replication
     Amount, MaxAmount;
 }
 
+
+enum /*EFireCustomMissileFlags*/ {
+  FPF_AIMATANGLE = 1,
+  FPF_TRANSFERTRANSLATION = 2,
+  FPF_NOAUTOAIM = 4,
+};
+
+
 //==========================================================================
 //
 //  OnMapSpawn
@@ -1362,7 +1370,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
 
 final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
-  optional int AimAtAngle, optional float Pitch)
+  optional int Flags, optional float Pitch)
 {
   if (!MissileType || !bIsPlayer)
   {
@@ -1392,30 +1400,20 @@ final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
   ShootOrg.x += SpawnZ;
 
   float ShootAngle = Angles.yaw;
-  if (AimAtAngle)
-  {
-    ShootAngle += Angle;
-  }
+  if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
   // Temporarily adjusts the pitch
   float SavedPitch = Angles.pitch;
   Angles.pitch -= Pitch;
 
   EntityEx AimTarget;
-  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal);
+  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
   Angles.pitch = SavedPitch;
 
-  if (A)
-  {
-    //  Handle seeker missiles.
-    if (A.bSeekerMissile)
-    {
-      A.Tracer = AimTarget;
-    }
-
-    if (!AimAtAngle)
-    {
-      VectorRotateAroundZ(ref A.Velocity, Angle);
-    }
+  if (A) {
+    if (Flags&FPF_TRANSFERTRANSLATION) A.Translation = self.Translation;
+    // handle seeker missiles
+    if (A.bSeekerMissile) A.Tracer = AimTarget;
+    if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);
   }
 }
 
