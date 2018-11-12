@@ -1561,19 +1561,23 @@ void R_AnimateSurfaces () {
     if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
 
     VTexture *atx = GTextureManager[ad.Index];
-    atx->noDecals = (ad.allowDecals == 0);
-    atx->animNoDecals = (ad.allowDecals == 0);
-    atx->animated = true;
+    if (atx) {
+      atx->noDecals = (ad.allowDecals == 0);
+      atx->animNoDecals = (ad.allowDecals == 0);
+      atx->animated = true;
+    }
 
     if (ad.Type == ANIM_Normal || !validAnimation) {
-      atx->TextureTranslation = fd.Index;
+      if (atx) atx->TextureTranslation = fd.Index;
     } else {
       for (int fn = 0; fn < ad.NumFrames; ++fn) {
         atx = GTextureManager[ad.Index+fn];
-        atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
-        atx->noDecals = (ad.allowDecals == 0);
-        atx->animNoDecals = (ad.allowDecals == 0);
-        atx->animated = true;
+        if (atx) {
+          atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+          atx->noDecals = (ad.allowDecals == 0);
+          atx->animNoDecals = (ad.allowDecals == 0);
+          atx->animated = true;
+        }
       }
     }
   }
