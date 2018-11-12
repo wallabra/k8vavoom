@@ -975,33 +975,46 @@ final void A_ExtChase(bool UseMelee, bool UseMissile,
   DoChase(false, Melee, Missile, NightmareFast, PlayActive, false);
 }
 
+
 //==========================================================================
 //
 //  A_FaceTarget
 //
 //==========================================================================
+final void A_FaceTarget() {
+  decorate_A_FaceTarget();
+}
 
-final void A_FaceTarget()
+
+//==========================================================================
+//
+//  decorate_A_FaceTarget
+//
+//==========================================================================
+
+final void decorate_A_FaceTarget(optional float max_turn)
 {
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
 
   //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
-    VisDir = 1;
-  }
+  if (bStealth) VisDir = 1;
 
   bAmbush = false;
 
-  Angles.yaw = atan2(Target.Origin.y - Origin.y,
-    Target.Origin.x - Origin.x);
+  float oldyaw = AngleMod360(Angles.yaw);
+  Angles.yaw = AngleMod360(atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x));
 
-  if (Target.bShadow)
-  {
-    Angles.yaw = AngleMod360(Angles.yaw + (Random() - Random()) * 45.0);
+  //FIXME: this is wrong!
+  if (specified_max_turn && max_turn != 0) {
+    max_turn = fabs(max_turn);
+    if (fabs(oldyaw-Angles.yaw) > max_turn && fabs(Angles.yaw-oldyaw) > max_turn) {
+      Angles.yaw = oldyaw;
+    }
+    return;
+  }
+
+  if (Target.bShadow) {
+    Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   }
 }
 
