@@ -3029,37 +3029,24 @@ bool ShouldDropItems()
 //
 //==========================================================================
 
-final void PainShootSkull(class!Actor SpawnType, float angle)
+final void PainShootSkull(class!Actor SpawnType, float angle, optional bool noattack, optional bool notarget)
 {
   EntityEx mo;
   Actor newSkull;
   float prestep;
-  int count;
 
-  if (!SpawnType)
-  {
-    SpawnType = LostSoul;
-  }
-  if (DamageType == 'Massacre')
-  {
-    return;
-  }
+  if (!SpawnType) SpawnType = LostSoul;
+  if (DamageType == 'Massacre') return;
 
-  if (Level.CompatLimitPain)
-  {
+  if (Level.CompatLimitPain) {
     // count total number of skull currently on the level
-    count = 0;
-    foreach AllThinkers(SpawnType, mo)
-    {
-      count++;
+    //FIXME: decorate_A_PainAttack can override this
+    int count = 0;
+    foreach AllThinkers(SpawnType, mo) {
+      ++count;
     }
-
-    // if there are allready 20 skulls on the level,
-    // don't spit another one
-    if (count > 20)
-    {
-      return;
-    }
+    // if there are allready 20 skulls on the level, don't spit another one
+    if (count > 20) return;
   }
 
   // okay, there's place for another one
@@ -3068,9 +3055,7 @@ final void PainShootSkull(class!Actor SpawnType, float angle)
   // Check whether the Lost Soul is being fired through a 1-sided
   // wall or an impassible line, or a "monsters can't cross" line.
   // If it is, then we don't allow the spawn.
-  if (CheckSides(Origin + vector(
-      prestep * cos(angle), prestep * sin(angle), 8.0)))
-  {
+  if (CheckSides(Origin + vector(prestep * cos(angle), prestep * sin(angle), 8.0))) {
     return;
   }
 
@@ -3079,7 +3064,7 @@ final void PainShootSkull(class!Actor SpawnType, float angle)
   // Check to see if the new Lost Soul's z value is above the
   // ceiling of its new sector, or below the floor. If so, kill it.
   if ((newSkull.Origin.z > (newSkull.CeilingZ - newSkull.Height)) ||
-        (newSkull.Origin.z < newSkull.FloorZ))
+      (newSkull.Origin.z < newSkull.FloorZ))
   {
     // kill it immediately
     newSkull.Damage(self, self, 10000);
@@ -3095,10 +3080,10 @@ final void PainShootSkull(class!Actor SpawnType, float angle)
     return;
   }
 
-  //  Spawned skulls hate same things as master.
-  newSkull.CopyFriendliness(self, true);
+  // spawned skulls hate same things as master
+  newSkull.CopyFriendliness(self, !notarget);
 
-  newSkull.A_SkullAttack();
+  if (!noattack) newSkull.A_SkullAttack();
 }
 
 //==========================================================================

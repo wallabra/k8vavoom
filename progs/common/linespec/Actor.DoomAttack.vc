@@ -27,6 +27,14 @@
 //  Original Doom/Strife monster attacks
 //**************************************************************************
 
+// Flags for A_PainAttack
+enum /*EPainAttackFlags*/ {
+  PAF_NOSKULLATTACK = 1,
+  PAF_AIMFACING = 2,
+  PAF_NOTARGET = 4,
+};
+
+
 //==========================================================================
 //
 //  A_PosAttack
@@ -420,13 +428,28 @@ final void A_PainAttack()
 //
 //==========================================================================
 
-final void decorate_A_PainAttack(optional class!Actor SpawnType)
+final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float angle,
+                                  optional int flags, optional int limit)
 {
   if (!Target) return;
   if (GetCvarB('k8ElvenPaineless')) return;
 
-  A_FaceTarget();
-  PainShootSkull(SpawnType, Angles.yaw);
+  if (!SpawnType) SpawnType = LostSoul;
+
+  if (limit > 0) {
+    int count = 0;
+    Thinker th;
+    foreach AllThinkers(SpawnType, out th) {
+      if (th) {
+        ++count;
+        if (count >= limit) return;
+      }
+    }
+  }
+
+  if (!(flags&PAF_AIMFACING)) A_FaceTarget();
+  if (!specified_angle) angle = Angles.yaw;
+  PainShootSkull(SpawnType, angle, !!(flags&PAF_NOSKULLATTACK), !!(flags&PAF_NOTARGET));
 }
 
 //==========================================================================
