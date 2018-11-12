@@ -352,6 +352,8 @@ menu/invalid          dsoof
 menu/prompt           dsswtchn
 menu/dismiss          dsswtchx
 
+misc/secret           dssecret
+
 
 // Marine's Best Friend -- not just for marines anymore!
 dog/active  dsdgact
