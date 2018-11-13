@@ -28,13 +28,26 @@ private:
   int Argc;
   char **Argv;
 
+  char **fopts;
+  int foptsCount;
+
+private:
   void FindResponseFile ();
+  void InsertFileArg (const char *filearg);
+
+  void InsertArgAt (int idx, const char *arg);
 
 public:
-  void Init (int argc, char **argv);
+  VArgs () : Argc(0), Argv(nullptr), fopts(nullptr), foptsCount(0) {}
+
+  // specify `filearg` to insert before disk files without one
+  void Init (int argc, char **argv, const char *filearg=nullptr);
 
   inline int Count () const { return Argc; }
   inline const char *operator [] (int i) const { return (i >= 0 && i < Argc ? Argv[i] : ""); }
+
+  // add options which doesn't interrupt "-file"
+  void AddFileOption (const char *optname);
 
   // returns the position of the given parameter in the arg list (0 if not found)
   // if `takeFirst` is true, take first found, otherwise take last found

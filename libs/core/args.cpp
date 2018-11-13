@@ -92,7 +92,7 @@ static char *xstrdup (const char *s) {
 //  VArgs::Init
 //
 //==========================================================================
-void VArgs::Init (int argc, char **argv) {
+void VArgs::Init (int argc, char **argv, const char *filearg) {
   guard(VArgs::Init);
   // save args
   if (argc < 0) argc = 0; else if (argc > MAXARGVS) argc = MAXARGVS;
@@ -100,7 +100,7 @@ void VArgs::Init (int argc, char **argv) {
   Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS); // memleak, but nobody cares
   memset(Argv, 0, sizeof(char*)*MAXARGVS);
   Argv[0] = xstrdup(getBinaryDir());
-  for (int f = 1; f < argc; ++f) Argv[f] = xstrdup(argv[f]);
+  for (int f = 1; f < argc; ++f) if (argv[f] && argv[f][0]) Argv[f] = xstrdup(argv[f]);
 #ifdef __SWITCH__
   // add static response file if it exists
   FILE *rf = fopen("/switch/vavoom/args.txt", "rb");
@@ -110,16 +110,124 @@ void VArgs::Init (int argc, char **argv) {
   }
 #endif
   FindResponseFile();
+  InsertFileArg(filearg);
   unguard;
 }
 
 
 //==========================================================================
 //
-// VArgs::FindResponseFile
+//  VArgs::AddFileOption
 //
-// Find a Response File. We don't do this in DJGPP because it does this
-// in startup code.
+//  "!1-game": '!' means "has args, and breaking" (number is argc)
+//
+//==========================================================================
+void VArgs::AddFileOption (const char *optname) {
+  if (!optname || !optname[0]) return;
+  fopts = (char **)Z_Realloc(fopts, (foptsCount+1)*sizeof(fopts[0]));
+  fopts[foptsCount++] = xstrdup(optname);
+}
+
+
+//==========================================================================
+//
+//  VArgs::InsertArgAt
+//
+//==========================================================================
+void VArgs::InsertArgAt (int idx, const char *arg) {
+  if (Argc >= MAXARGVS) return;
+  if (idx < 0) idx = 0;
+  if (idx >= Argc) {
+    Argv[Argc++] = xstrdup(arg);
+    return;
+  }
+  for (int c = Argc-1; c >= idx; --c) Argv[c+1] = Argv[c];
+  Argv[idx] = xstrdup(arg);
+  ++Argc;
+}
+
+
+//==========================================================================
+//
+//  VArgs::InsertFileArg
+//
+//==========================================================================
+void VArgs::InsertFileArg (const char *filearg) {
+  if (!filearg || !filearg[0]) return;
+  int pos = 1;
+  bool inFile = false;
+  while (pos < Argc) {
+    const char *arg = Argv[pos++];
+    // check for in-file options
+    bool isOpt = false;
+    for (int f = 0; f < foptsCount; ++f) {
+      const char *fo = fopts[f];
+      //fprintf(stderr, ":<%s>\n", fo);
+      if (fo[0] == '!') {
+        ++fo;
+        int ac = 0;
+        if (fo[0] >= '0' && fo[0] <= '9') { ac = fo[0]-'0'; ++fo; }
+        if (!fo[0]) continue;
+        if (strcmp(arg, fo) == 0) {
+          //fprintf(stderr, "!! ac=%d; <%s>\n", ac, fo);
+          isOpt = true;
+          inFile = false;
+          // skip args
+          while (ac-- > 0 && pos < Argc) {
+            arg = Argv[pos];
+            if (arg[0] == '+' || arg[0] == '-') break;
+            ++pos;
+          }
+          break;
+        }
+      } else {
+        if (strcmp(arg, fo) == 0) { isOpt = true; break; }
+      }
+    }
+    if (isOpt) continue;
+    // file option?
+    if (strcmp(arg, filearg) == 0) { inFile = true; continue; }
+    // other options
+    if (arg[0] == '-') { inFile = false; continue; }
+    // console commands
+    if (arg[0] == '+') {
+      inFile = false;
+      // skip console command
+      while (pos < Argc) {
+        arg = Argv[pos];
+        if (arg[0] == '+' || arg[0] == '-') break;
+        ++pos;
+      }
+      continue;
+    }
+    // non-option arg
+    if (inFile) continue;
+    // check if this is a disk file
+    if (!Sys_FileExists(arg)) {
+      //fprintf(stderr, "NO FILE: <%s>\n", arg);
+      continue;
+    }
+    // disk file, insert file option (and check other plain options too, so we won't insert alot of fileopts)
+    InsertArgAt(pos-1, filearg);
+    ++pos; // skip filename
+    inFile = true;
+    while (pos < Argc) {
+      arg = Argv[pos];
+      if (arg[0] == '+' || arg[0] == '-') break;
+      if (!Sys_FileExists(arg)) break;
+      ++pos;
+    }
+  }
+  //fprintf(stderr, "========\n"); for (int f = 0; f < Argc; ++f) fprintf(stderr, "  #%d: <%s>\n", f, Argv[f]);
+}
+
+
+//==========================================================================
+//
+//  VArgs::FindResponseFile
+//
+//  Find a Response File. We don't do this in DJGPP because it does this
+//  in startup code.
 //
 //==========================================================================
 void VArgs::FindResponseFile () {
@@ -171,8 +279,8 @@ void VArgs::FindResponseFile () {
         char *OutBuf = infile+k;
         do {
           CurChar = infile[k];
-          if (CurChar == '\\' && infile[k + 1] == '\"') {
-            CurChar = '\"';
+          if (CurChar == '\\' && (infile[k+1] == '\"' || infile[k+1] == '\'' || infile[k+1] == '\\')) {
+            CurChar = infile[k+1];
             ++k;
           } else if (CurChar == '\"') {
             CurChar = 0;
@@ -195,6 +303,18 @@ void VArgs::FindResponseFile () {
     // keep args following response file
     for (k = i+1; k < Argc; ++k) Argv[indexinfile++] = oldargv[k];
     Argc = indexinfile;
+
+    // remove empty args
+    for (int f = 1; f < Argc; ) {
+      const char *arg = Argv[f];
+      if (!arg[0]) {
+        //memleak!
+        for (int c = f+1; c < Argc; ++c) Argv[c-1] = Argv[c];
+        --Argc;
+      } else {
+        ++f;
+      }
+    }
 
     // display args
     GLog.WriteLine("%d command-line args:", Argc);
