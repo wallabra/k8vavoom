@@ -161,15 +161,22 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
       VStr cname = fxp->ClassName;
       //GCon->Logf("    MAPINFO: class '%s' for %s got doomed num %d (got %d)", *cname, errname, fxp->num, nfo.DoomEdNum);
       fixups.del(nfo.DoomEdNum);
+      /*
       if (cname.length() == 0 || cname.ICmp("none") == 0) {
         // remove it
         list.removeAt(f);
         continue;
       }
+      */
       // set it
-      VClass *cls = VClass::FindClassNoCase(*cname);
-      if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
-      if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
+      VClass *cls;
+      if (cname.length() == 0 || cname.ICmp("none") == 0) {
+        cls = nullptr;
+      } else {
+        cls = VClass::FindClassNoCase(*cname);
+        if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
+        if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
+      }
       nfo.Class = cls;
       nfo.GameFilter = GAME_Any;
       nfo.flags = fix.flags;
@@ -190,8 +197,14 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
     //GCon->Logf("    MAPINFO0: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
     if (cname.length() == 0 || cname.ICmp("none") == 0) continue; // skip it
     // set it
-    VClass *cls = VClass::FindClassNoCase(*cname);
-    if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
+    VClass *cls;
+    if (cname.length() == 0 || cname.ICmp("none") == 0) {
+      cls = nullptr;
+    } else {
+      cls = VClass::FindClassNoCase(*cname);
+      if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
+      if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
+    }
     //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
     SpawnEdFixup fix = *fxp;
     mobjinfo_t &nfo = list.Alloc();
