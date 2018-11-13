@@ -22,7 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
+//FIXME: FIX AND UNIFY WITH DOOM CODE
 class IntermissionScreen : Widget;
 
 //  Intermission states
@@ -812,18 +812,9 @@ void IM_DrawText()
   int count;
 
   // erase the entire screen to a tiled background
-  if (TextPic)
-  {
-    DrawFullScreenPic(TextPic);
-  }
-  else if (TextFlat)
-  {
-    FillRectWithFlat(0, 0, 640, 480, TextFlat);
-  }
-  else
-  {
-    R_FillRect(0, 0, 640, 480, 0);
-  }
+       if (TextPic) DrawFullScreenPic(TextPic);
+  else if (TextFlat) FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
+  else R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0);
 
   // draw some of the text onto the screen
   count = ftoi((intertime - 0.3) / TEXTSPEED);
@@ -834,7 +825,14 @@ void IM_DrawText()
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(180, 145, substr(HubText, 0, count));
+  //if (hubTextHeight < 0) {
+    int hubTextHeight = max(8, TextHeight(HubText));
+    int hubTextWidth = max(8, TextWidth(HubText));
+    //writeln(HubText);
+    //writeln("text size: ", hubTextWidth, "x", hubTextHeight);
+  //}
+  //DrawText(180, 145, substr(HubText, 0, count));
+  DrawText((GetVirtualWidth()-hubTextWidth)/2, (GetVirtualHeight()-hubTextHeight)/2, substr(HubText, 0, count));
 }
 
 //==========================================================================

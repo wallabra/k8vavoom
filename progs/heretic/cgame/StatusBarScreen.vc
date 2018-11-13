@@ -382,103 +382,75 @@ void SB_DrawMainBar()
   }
 }
 
+
+private final int xfix (int x) { return GetVirtualWidth()-(640-x); }
+private final int yfix (int y) { return GetVirtualHeight()-(480-y); }
+
+
 //==========================================================================
 //
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
+void SB_DrawFullscreenStats () {
+  if (!cl || !cl.MO) return;
 
-void SB_DrawFullscreenStats()
-{
-  int i;
+  // health
+  SB_DrawNumber9(50, yfix(456), cl.Health);
+  DrawPic(30, yfix(494), pic_health, 0.6);
 
-  if (!cl || !cl.MO)
-  {
-    return;
-  }
-
-  //  Health
-  SB_DrawNumber9(50, 456, cl.Health);
-  DrawPic(30, 494, pic_health, 0.6);
-
-  //  Armorpoints
+  // armorpoints
   BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
-  if (Armor && Armor.Amount)
-  {
-    i = Armor.SavePercent > 0.5 ? 1 : 0;
-    SB_DrawNumber9(140, 456, Armor.Amount);
-    DrawPic(120, 490, pic_armor[i], 0.6);
+  if (Armor && Armor.Amount) {
+    int i = (Armor.SavePercent > 0.5 ? 1 : 0);
+    SB_DrawNumber9(140, yfix(456), Armor.Amount);
+    DrawPic(120, yfix(490), pic_armor[i], 0.6);
   }
 
-  //  Frags
-  if (ClGame.deathmatch)
-  {
-    SB_DrawNumber9(200, 450, cl.Frags);
+  // frags
+  if (ClGame.deathmatch) SB_DrawNumber9(200, yfix(450), cl.Frags);
+
+  // ammo
+  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1) {
+    SB_DrawNumber9(xfix(610), yfix(456), cl.ReadyWeapon.Ammo1.Amount);
+    DrawPic(xfix(590), yfix(454), R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.6);
+  }
+  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo2 && cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1) {
+    SB_DrawNumber9(xfix(610), yfix(424), cl.ReadyWeapon.Ammo2.Amount);
+    DrawPic(xfix(590), yfix(422), R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.6);
   }
 
-  //  Ammo
-  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1)
-  {
-    SB_DrawNumber9(610, 456, cl.ReadyWeapon.Ammo1.Amount);
-    DrawPic(590, 454, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.6);
-  }
-  if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo2 &&
-    cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1)
-  {
-    SB_DrawNumber9(610, 424, cl.ReadyWeapon.Ammo2.Amount);
-    DrawPic(590, 422, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.6);
-  }
-
-  //  Keys
-  int KeyX = 320;
-  Inventory Item;
-  for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory)
-  {
-    if (Key(Item))
-    {
+  // keys
+  int KeyX = GetVirtualWidth()/2;
+  for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+    if (Key(Item)) {
       int Pic = R_RegisterPic(Item.IconName);
-      if (Pic >= 0)
-      {
-        DrawPic(KeyX, 460, Pic, 0.6);
+      if (Pic >= 0) {
+        DrawPic(KeyX, yfix(460), Pic, 0.6);
         KeyX += 20;
       }
     }
   }
 
-  if (cl.InventoryTime)
-  {
-    //  Inventory
-    Item = cl.InvFirst;
-    for (i = 0; i < 7; i++)
-    {
-      DrawPic(210 + i * 31, 448, pic_artibox, 0.6);
-      if (Item)
-      {
-        DrawShadowedPic(210 + i * 31, 448,
-          R_RegisterPic(Item.IconName));
-        SB_DrawINumber(229 + i * 31, 470, Item.Amount);
-        if (Item == cl.InvPtr)
-        {
-          DrawPic(210 + i * 31, 477, pic_selectbox, 0.6);
-        }
+  if (cl.InventoryTime) {
+    // inventory
+    Inventory Item = cl.InvFirst;
+    foreach (auto i; 0..7) {
+      DrawPic(210+i*31, yfix(448), pic_artibox, 0.6);
+      if (Item) {
+        DrawShadowedPic(210+i*31, yfix(448), R_RegisterPic(Item.IconName));
+        SB_DrawINumber(229+i*31, yfix(470), Item.Amount);
+        if (Item == cl.InvPtr) DrawPic(210+i*31, yfix(477), pic_selectbox, 0.6);
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv())
-    {
-      DrawPic(198, 447, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
-    }
-    if (Item)
-    {
-      DrawPic(429, 447, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
-    }
-  }
-  else if (cl.InvPtr)
-  {
-    //  Ready artifact
-    DrawPic(546, 440, pic_artibox, 0.6);
-    DrawShadowedPic(546, 440, R_RegisterPic(cl.InvPtr.IconName));
-    SB_DrawINumber(567, 462, cl.InvPtr.Amount);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, yfix(447), pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
+    if (Item) DrawPic(xfix(429), yfix(447), pic_invgemr[!(int(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
+  } else if (cl.InvPtr) {
+    // ready artifact
+    DrawPic(xfix(546), yfix(440), pic_artibox, 0.6);
+    DrawShadowedPic(xfix(546), yfix(440), R_RegisterPic(cl.InvPtr.IconName));
+    SB_DrawINumber(xfix(567), yfix(462), cl.InvPtr.Amount);
   }
 }
 
@@ -543,7 +515,7 @@ void SB_DrawPause()
 {
   if (ClGame.Game.bPaused && GetCvar('draw_pause'))
   {
-    DrawPic(320, ClGame.maxclients > 1 ? 140 : 40, pic_paused);
+    DrawPic(GetVirtualWidth()/2, ClGame.maxclients > 1 ? 140 : 40, pic_paused);
   }
 }
 
@@ -553,15 +525,23 @@ void SB_DrawPause()
 //
 //==========================================================================
 
-override void SB_Drawer(int sb_view)
-{
+override void SB_Drawer(int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
   if (sb_view == SB_VIEW_FULLSCREEN) {
+    if (Width != ovw) Width = ovw;
+    if (Height != ovh) Height = ovh;
     SB_DrawFullscreenStats();
   } else {
+    // this is broken for now
+    SetVirtualScreen(640, 480);
+    if (Width != 640) Width = 640;
+    if (Height != 480) Height = 480;
     SB_DrawMainBar();
+    SetVirtualScreen(ovw, ovh);
   }
   SB_DrawIcons();
   SB_DrawPause();
