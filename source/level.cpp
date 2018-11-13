@@ -1052,8 +1052,8 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
     if (Ent == soundtarget) continue; // skip target
     //FIXME: skip some entities that cannot (possibly) react
     //       this can break some code, but... meh
-    //       maybe omit corpses?
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_NoBlockmap/*|VEntity::EF_Corpse*/)) continue;
+    //       maybe don't omit corpses?
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_NoBlockmap|VEntity::EF_Corpse)) continue;
     // check max distance
     if (maxdist > 0 && length2D(sndorigin-Ent->Origin) > maxdist) continue;
     // register for processing
