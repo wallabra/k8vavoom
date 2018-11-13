@@ -644,6 +644,23 @@ static int countFmtHash (const VStr &str) {
 
 //==========================================================================
 //
+//  FL_InitOptions
+//
+//==========================================================================
+void FL_InitOptions () {
+  GArgs.AddFileOption("!1-game"); // '!' means "has args, and breaking" (number is argc)
+  GArgs.AddFileOption("-skipsounds");
+  GArgs.AddFileOption("-allowsounds");
+  GArgs.AddFileOption("-skipsprites");
+  GArgs.AddFileOption("-allowsprites");
+  GArgs.AddFileOption("-skipdehacked");
+  GArgs.AddFileOption("-allowdehacked");
+  GArgs.AddFileOption("-cosmetic");
+}
+
+
+//==========================================================================
+//
 //  FL_Init
 //
 //==========================================================================
@@ -890,7 +907,7 @@ void FL_Init () {
       else if (VStr::Cmp(GArgs[f], "-skipsprites") == 0) fsys_skipSprites = true;
       else if (VStr::Cmp(GArgs[f], "-allowsprites") == 0) fsys_skipSprites = false;
       else if (VStr::Cmp(GArgs[f], "-skipdehacked") == 0) fsys_skipDehacked = true;
-      else if (VStr::Cmp(GArgs[f], "-allodehacked") == 0) fsys_skipDehacked = false;
+      else if (VStr::Cmp(GArgs[f], "-allowdehacked") == 0) fsys_skipDehacked = false;
     }
     bool inFile = true;
     while (++fp != GArgs.Count()) {

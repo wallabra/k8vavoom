@@ -196,7 +196,8 @@ int main (int argc, char **argv) {
   try {
     printf("Vavoom dedicated server " VERSION_TEXT "\n");
 
-    GArgs.Init(argc, argv);
+    FL_InitOptions();
+    GArgs.Init(argc, argv, "-file");
 
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers

@@ -321,7 +321,8 @@ static void signal_handler (int s) {
 //==========================================================================
 static void mainloop (int argc, char **argv) {
   try {
-    GArgs.Init(argc, argv);
+    FL_InitOptions();
+    GArgs.Init(argc, argv, "-file");
 
     // if( SDL_InitSubSystem(SDL_INIT_VIDEO) < 0 )
     if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
