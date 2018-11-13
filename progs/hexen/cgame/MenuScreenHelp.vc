@@ -22,48 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MenuScreenHelp : MenuScreenHelpBase;
 
-class MenuScreenHelp : MenuScreen;
 
-MenuStaticBitmap  Page;
-name        PageNames[3];
-int         NumPages;
-int         CurPage;
-
-override void CreateChoices()
-{
-  Page = NewChild(MenuStaticBitmap);
-  Page.SetPic(PageNames[CurPage]);
-
-  ::CreateChoices();
-}
-
-override bool OnKeyDown(int key)
-{
-  CurPage++;
-  LocalSound('menu/clear');
-
-  if (key == K_ESCAPE || CurPage >= NumPages)
-  {
-    ClGame.ForceMenuOff();
-  }
-  else
-  {
-    Page.SetPic(PageNames[CurPage]);
-  }
-
-  return true;
-}
-
-defaultproperties
-{
-  X = 0;
-  Y = 0;
-  ScaleX = 2.0;
-  ScaleY = 2.4;
-  PageNames[0] = 'help1';
-  PageNames[1] = 'help2';
-  PageNames[2] = 'credit';
-  NumPages = 3;
-  CurPage = 0;
+override void CreateChoices () {
+  pages[$] = 'help1';
+  pages[$] = 'help2';
+  pages[$] = 'credit';
 }

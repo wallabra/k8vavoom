@@ -22,25 +22,23 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenMain : MenuScreen;
+
 
 //==========================================================================
 //
 //  CreateTitle
 //
 //==========================================================================
-
-override void CreateTitle()
-{
-  MenuStaticBitmap  Img;
-  MenuStaticAnim    Anim;
+override void CreateTitle () {
+  MenuStaticBitmap Img;
+  MenuStaticAnim Anim;
 
   Img = NewChild(MenuStaticBitmap);
   Img.SetOrigin(88, 0);
   Img.SetPic('m_htic');
 
-  //  Left one starts at frame 2
+  // left one starts at frame 2
   Anim = NewChild(MenuStaticAnim);
   Anim.SetOrigin(37, 80);
   Anim.Speed = 7;
@@ -64,106 +62,26 @@ override void CreateTitle()
   Anim.AddFrame('fbulg0');
 }
 
+
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
+override void CreateChoices () {
+  CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
+  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer);
+  CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
+  CreateSubMenuBigText("Help", MenuScreenHelp);
 
-override void CreateChoices()
-{
-  MenuBigTextButton btn;
-  int         currentY;
-
-  currentY = ChoicesStartY;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Single Player";
-  btn.Activated = &ActivateSP;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Multiplayer";
-  btn.Activated = &ActivateMP;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Options";
-  btn.Activated = &ActivateOpt;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
-  btn.SetPos(ChoicesStartX, currentY);
-  btn.Text = "Help";
-  btn.Activated = &ActivateHelp;
-  currentY += btn.Height;
-
-  btn = MenuBigTextButton(NewChild(MenuBigTextButton));
+  auto btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
-  btn.Activated = &ActivateQuit;
+  btn.Activated = delegate void (Object Sender) { ClGame.menu_quit(); };
 }
 
-//==========================================================================
-//
-//  ActivateSP
-//
-//==========================================================================
 
-void ActivateSP(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenSinglePlayer));
-}
-
-//==========================================================================
-//
-//  ActivateMP
-//
-//==========================================================================
-
-void ActivateMP(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenMultiplayer));
-}
-
-//==========================================================================
-//
-//  ActivateOpt
-//
-//==========================================================================
-
-void ActivateOpt(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnNamedMenu('OptionsMenu'));
-}
-
-//==========================================================================
-//
-//  ActivateHelp
-//
-//==========================================================================
-
-void ActivateHelp(Object Sender)
-{
-  ClGame.PushMenuScreen(ClGame.SpawnMenu(MenuScreenHelp));
-}
-
-//==========================================================================
-//
-//  ActivateQuit
-//
-//==========================================================================
-
-void ActivateQuit(Object Sender)
-{
-  ClGame.menu_quit();
-}
-
-defaultproperties
-{
+defaultproperties {
   ChoicesStartX = 110;
   ChoicesStartY = 56;
   SelectorType = MenuSelector_Big;
