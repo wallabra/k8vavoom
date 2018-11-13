@@ -68,7 +68,7 @@
 81  ACS_Suspend
 82  ACS_Terminate
 83  ACS_LockedExecute
-//84  ACS_ExecuteWithResult
+84  ACS_ExecuteWithResult
 85  ACS_LockedExecuteDoor
 90  Polyobj_OR_RotateLeft
 91  Polyobj_OR_RotateRight
