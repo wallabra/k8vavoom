@@ -2316,7 +2316,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
     sc->Error(va("Unknown flag \"%s\"", *FlagName));
     return false;
   }
-  GCon->Logf("WARNING: %s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
+  GCon->Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
   /*
   if (!sc->IsAtEol()) {
     sc->Crossed = false;
@@ -2835,6 +2835,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   // in order to allow dots in actor names, this is done in non-C mode,
   // so we have to do a little bit more complex parsing
   sc->ExpectString();
+  auto cstloc = sc->GetLoc();
   VStr NameStr;
   VStr ParentStr;
   int ColonPos = sc->String.IndexOf(':');
@@ -2850,7 +2851,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
 
   VClass *DupCheck = VClass::FindClassLowerCase(*NameStr.ToLower());
   if (DupCheck != nullptr && DupCheck->MemberType == MEMBER_Class) {
-    sc->Message(va("Warning: Redeclared class %s", *NameStr));
+    GCon->Logf(NAME_Warning, "%s: Redeclared class `%s`", *cstloc.toStringNoCol(), *NameStr);
   }
 
   if (ColonPos < 0) {
@@ -3562,7 +3563,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
               // get slot number
               sc->ExpectNumber();
               int sidx = sc->Number;
-              if (!newWSlots.isValidSlot(sidx)) GCon->Logf("WARNING: invalid weapon slot number %d", sidx);
+              if (!newWSlots.isValidSlot(sidx)) GCon->Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
               newWSlots.clearSlot(sidx);
               while (sc->Check(",")) {
                 sc->ExpectString();
@@ -3572,7 +3573,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             break;
           case PROP_SkipLineUnsupported:
             {
-              if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
               sc->ResetCrossed();
               while (sc->GetString()) {
                 if (sc->Crossed) { sc->UnGet(); break; }
@@ -3590,7 +3591,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     if (decorate_fail_on_unknown) {
       sc->Error(va("Unknown property \"%s\"", *Prop));
     } else {
-      GCon->Logf("WARNING: %s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
+      GCon->Logf(NAME_Warning, "%s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
     }
     // skip this line
     if (!sc->IsAtEol()) {
@@ -3934,7 +3935,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       if (decorate_fail_on_unknown) {
         Sys_Error("Unknown property '%s'", *sc->String);
       } else {
-        GCon->Logf("WARNING: Unknown property '%s'", *sc->String);
+        GCon->Logf(NAME_Warning, "Unknown property '%s'", *sc->String);
       }
       if (!sc->IsAtEol()) {
         sc->Crossed = false;
@@ -4064,7 +4065,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 //
 //==========================================================================
 static void ParseDamageType (VScriptParser *sc) {
-  GCon->Logf("WARNING: %s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
+  GCon->Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
   sc->SkipBracketed();
 }
 
@@ -4285,9 +4286,9 @@ void ProcessDecorateScripts () {
     } else {
       VClass *C = VClass::FindClassLowerCase(*CF.Name.ToLower());
       if (!C) {
-        if (dbg_show_missing_class) GCon->Logf("WARNING: No such class `%s`", *CF.Name);
+        if (dbg_show_missing_class) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
       } else if (!C->IsChildOf(CF.ReqParent)) {
-        GCon->Logf("WARNING: Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
+        GCon->Logf(NAME_Warning, "Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
       } else {
         *(VClass**)(CF.Class->Defaults+CF.Offset) = C;
       }
@@ -4301,8 +4302,8 @@ void ProcessDecorateScripts () {
       VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) continue;
       VClass *C = VClass::FindClassLowerCase(DI.TypeName);
-           if (!C) { if (dbg_show_missing_class) GCon->Logf("WARNING: No such class `%s`", *DI.TypeName); }
-      else if (!C->IsChildOf(ActorClass)) GCon->Logf("WARNING: Class `%s` is not an actor class", *DI.TypeName);
+           if (!C) { if (dbg_show_missing_class) GCon->Logf(NAME_Warning, "No such class `%s`", *DI.TypeName); }
+      else if (!C->IsChildOf(ActorClass)) GCon->Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
       else DI.Type = C;
     }
   }
@@ -4313,14 +4314,14 @@ void ProcessDecorateScripts () {
     VClass *gi = VClass::FindClass("MainGameInfo");
     VClass *wpnbase = VClass::FindClass("Weapon");
     if (!gi || !wpnbase) {
-      if (!gi) GCon->Logf("WARNING: `MainGameInfo` class not found, cannot set weapon slots");
-      if (!wpnbase) GCon->Logf("WARNING: `Weapon` class not found, cannot set weapon slots");
+      if (!gi) GCon->Logf(NAME_Warning, "`MainGameInfo` class not found, cannot set weapon slots");
+      if (!wpnbase) GCon->Logf(NAME_Warning, "`Weapon` class not found, cannot set weapon slots");
     } else {
       //WARNING: keep this in sync with script code!
       VField *fldFlags = gi->FindFieldChecked(VName("WeaponSlotDefined"));
       VField *fldList = gi->FindFieldChecked(VName("WeaponSlotClasses"));
       if (!fldFlags || !fldList) {
-        GCon->Logf("WARNING: some fields not found, cannot set weapon slots");
+        GCon->Logf(NAME_Warning, "some fields not found, cannot set weapon slots");
       } else {
         vint32 *wsflag = (vint32 *)fldFlags->GetFieldPtr((VObject *)gi->Defaults);
         VClass **wslist = (VClass **)fldList->GetFieldPtr((VObject *)gi->Defaults);
@@ -4335,8 +4336,8 @@ void ProcessDecorateScripts () {
             if (cn == NAME_None) continue;
             VStr lcn = VStr(*cn).toLowerCase();
             VClass *wc = VClass::FindClassLowerCase(*lcn);
-            if (!wc) { GCon->Logf("WARNING: unknown weapon class '%s'", *cn); continue; }
-            if (!wc->IsChildOf(wpnbase)) { GCon->Logf("WARNING: class '%s' is not a weapon", *cn); continue; }
+            if (!wc) { GCon->Logf(NAME_Warning, "unknown weapon class '%s'", *cn); continue; }
+            if (!wc->IsChildOf(wpnbase)) { GCon->Logf(NAME_Warning, "class '%s' is not a weapon", *cn); continue; }
             //GCon->Log(va("DECORATE: slot #%d, weapon #%d set to '%s'", sidx, widx, *wc->GetFullName()));
             sarr[widx] = wc;
           }
