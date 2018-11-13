@@ -1054,21 +1054,13 @@ final void A_CentaurDefend()
 //  A_AlertMonsters
 //
 //==========================================================================
-//k8: this is FUCKIN' BUGGY! and i don't fuckin' know how it works at all
-//    `self` should be a weapon(?), and `Target` should be a player pawn
-//    for now, `self` is a player pawn, and `Target` is nothing
-//    this has to be fixed, but for now, let's just hack around it for BDW
-final void A_AlertMonsters()
-{
-/*
-  if (Target) print("A_AlertMonsters(%s): tgt=%s; plr=%s", NameToStr(GetClassName(Class)), NameToStr(GetClassName(Target.Class)), (Target.bIsPlayer ? "tan" : "ona"));
-  else print("A_AlertMonsters(%s): tgt=<nothing>", NameToStr(GetClassName(Class)));
-*/
-  if (Target && Target.bIsPlayer)
-  {
-    LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
+final void A_AlertMonsters (optional float maxrange/*, optional int flags*/) {
+  //print("A_AlertMonsters(%C): tgt=%C; plr=%s", self, Target, (Target && Target.bIsPlayer ? "tan" : "ona"));
+  if (Target && Target.bIsPlayer) {
+    LineSpecialLevelInfo(Level).NoiseAlert(Target, self, maxdist:maxrange!optional);
   } else {
-    if (self.bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+    // for weapons
+    if (self.bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(self, self, maxdist:maxrange!optional);
   }
 }
 
