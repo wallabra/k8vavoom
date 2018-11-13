@@ -248,56 +248,60 @@ final int decorate_CountInv (name ItemName, optional int aptr) {
 //
 //==========================================================================
 final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, optional float SpawnXYOffset,
-                              optional float Angle, optional int AimMode, optional float Pitch/*, optional int ptr*/)
+                              optional float Angle, optional int AimMode, optional float Pitch, optional int aptr)
 {
   if (!MissileTypeName) return;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SpawnProjectile', aptr!optional));
+  if (!tgt) return;
 
-  int Flags = AimMode & ~3;
+  int Flags = AimMode&~3;
   AimMode &= 3;
 
-  class!EntityEx MissileType = class!EntityEx(FindClassLowerCase(MissileTypeName));
+  class!EntityEx MissileType = class!EntityEx(FindClassNoCase(MissileTypeName));
   if (!MissileType) return;
   MissileType = class!EntityEx(GetClassReplacement(MissileType));
+  if (!MissileType) return;
   //if (Level.Game.nomonsters && MissileType.default.bMonster) return;
 
-  if (Target || AimMode == 2) {
+  if (tgt.Target || AimMode == 2) {
     if (MissileType) {
       if (!specified_SpawnHeight) SpawnHeight = 32.0;
       if (!specified_SpawnXYOffset) SpawnXYOffset = 0; // was 1, why?
-      TVec Offs = float(SpawnXYOffset)*vector(cos(Angles.yaw-90.0), sin(Angles.yaw-90.0), 0.0);
+      TVec Offs = float(SpawnXYOffset)*vector(cos(tgt.Angles.yaw-90.0), sin(tgt.Angles.yaw-90.0), 0.0);
       EntityEx A;
 
       switch (AimMode) {
         default:
-          Origin += Offs;
-          A = SpawnMissile(Target, MissileType, SpawnHeight);
-          Origin -= Offs;
+          tgt.Origin += Offs;
+          A = tgt.SpawnMissile(tgt.Target, MissileType, SpawnHeight);
+          tgt.Origin -= Offs;
           break;
         case 1:
           Offs.z = SpawnHeight;
-          A = SpawnMissileXYZ(Origin+Offs, Target, MissileType);
+          A = tgt.SpawnMissileXYZ(tgt.Origin+Offs, tgt.Target, MissileType);
           break;
         case 2:
-          Origin += Offs;
-          A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch, SpawnHeight);
-          Origin -= Offs;
+          tgt.Origin += Offs;
+          A = tgt.SpawnMissileAngles(MissileType, tgt.Angles.yaw, Pitch, SpawnHeight);
+          tgt.Origin -= Offs;
+          break;
       }
 
       if (A) {
         VectorRotateAroundZ(ref A.Velocity, Angle);
         // find correct shooter for projectiles shooting projectiles
-        if (IsMissile(!!(Flags & 4))) {
-          EntityEx Own = self;
+        if (tgt.IsMissile(!!(Flags&4))) {
+          EntityEx Own = tgt/*self*/;
           while (Own.IsMissile(!!(Flags & 4)) && Own.Target) Own = Own.Target;
           A.Target = Own;
-          if (A.bSeekerMissile) A.Tracer = Tracer;
+          if (A.bSeekerMissile) A.Tracer = tgt.Tracer;
         } else if (A.bSeekerMissile) {
-          A.Tracer = Target;
+          A.Tracer = tgt.Target;
         }
       }
     }
-  } else if (Flags & 8) {
-    if (SeeState) SetState(SeeState);
+  } else if (Flags&8) {
+    if (tgt.SeeState) tgt.SetState(tgt.SeeState);
   }
 }
 
