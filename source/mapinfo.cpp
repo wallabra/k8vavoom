@@ -988,7 +988,12 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
         if (sc->String != ",") { sc->UnGet(); break; }
         sc->ResetQuoted();
         if (!sc->GetString()) { sc->Error("unexpected EOF"); return; }
-        if (!sc->QuotedString) { sc->UnGet(); sc->Error("quoted string expected"); break; }
+        if (!sc->QuotedString) {
+          if (sc->String == "}") { sc->UnGet(); break; }
+          sc->UnGet();
+          sc->Error("quoted string expected");
+          break;
+        }
         //fprintf(stderr, "  :::<%s>\n", *sc->String);
         *name += "\n";
         *name += sc->String;
@@ -1156,12 +1161,13 @@ static void ParseClusterDef (VScriptParser *sc) {
   CDef->Flat = NAME_None;
   CDef->Music = NAME_None;
 
+  //GCon->Logf("=== NEW CLUSTER %d ===", CDef->Cluster);
   bool newFormat = sc->Check("{");
   if (newFormat) sc->SetCMode(true);
   while (1) {
     /*
     if (sc->GetString()) {
-      GCon->Logf("::: CLUSTER: <%s>", *sc->String);
+      GCon->Logf("::: CLUSTER(%d): <%s>", (newFormat ? 1 : 0), *sc->String);
       sc->UnGet();
     }
     */
@@ -1203,15 +1209,35 @@ static void ParseClusterDef (VScriptParser *sc) {
       sc->ExpectNumber();
       //CDef->CDId = sc->Number;
     } else if (sc->Check("name")) {
+      auto loc = sc->GetLoc();
       if (newFormat) sc->Expect("=");
       if (sc->Check("lookup")) {
         if (newFormat) sc->Expect(",");
       }
       sc->ExpectString();
-      GCon->Logf("Unimplemented MAPINFO cluster command name");
+      miWarning(loc, "Unimplemented cluster command 'name'");
     } else {
-      if (newFormat) sc->Expect("}");
-      break;
+      if (newFormat) {
+        if (!sc->Check("}")) {
+          auto loc = sc->GetLoc();
+          sc->ExpectString();
+          VStr cmd = sc->String;
+          fprintf(stderr, "!!!!!!\n");
+          if (sc->Check("=")) {
+            fprintf(stderr, "******\n");
+            for (;;) {
+              sc->ExpectString();
+              if (!sc->Check(",")) break;
+            }
+          }
+          miWarning(loc, "unknown clusterdef command '%s'", *cmd);
+        } else {
+          break;
+          //sc->Error(va("'}' expected in clusterdef, but got \"%s\"", *sc->String));
+        }
+      } else {
+        break;
+      }
     }
   }
   if (newFormat) sc->SetCMode(false);
