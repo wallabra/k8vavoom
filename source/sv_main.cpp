@@ -1101,9 +1101,22 @@ COMMAND(Map) {
 //==========================================================================
 bool Host_StartTitleMap () {
   guard(Host_StartTitleMap);
+  static bool loadingTitlemap = false;
+
   if (GArgs.CheckParm("-notitlemap") != 0) return false;
+  if (loadingTitlemap) {
+    // it is completely fucked, ignore it
+    static bool titlemapWarned = false;
+    if (!titlemapWarned) {
+      titlemapWarned = true;
+      GCon->Log(NAME_Warning, "Your titlemap is fucked, I won't try to load it anymore.");
+    }
+    return false;
+  }
+
   if (!FL_FileExists("maps/titlemap.wad") && W_CheckNumForName(NAME_titlemap) < 0) return false;
 
+  loadingTitlemap = true;
   // default the player start spot group to 0
   RebornPosition = 0;
   GGameInfo->RebornPosition = RebornPosition;
@@ -1112,6 +1125,7 @@ bool Host_StartTitleMap () {
 #ifdef CLIENT
   CL_SetUpLocalPlayer();
 #endif
+  loadingTitlemap = false;
   return true;
   unguard;
 }
