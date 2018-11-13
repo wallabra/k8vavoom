@@ -96,7 +96,7 @@ __attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarn
   va_start(argptr, fmt);
   vsnprintf(miWarningBuf, sizeof(miWarningBuf), fmt, argptr);
   va_end(argptr);
-  GCon->Logf(NAME_Warning, "MAPINFO:%s:%s", *loc.toStringNoCol(), miWarningBuf);
+  GCon->Logf(NAME_Warning, "MAPINFO:%s: %s", *loc.toStringNoCol(), miWarningBuf);
 }
 
 
