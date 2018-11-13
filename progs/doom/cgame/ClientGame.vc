@@ -340,14 +340,12 @@ void InitBorder () {
 //
 //==========================================================================
 override void DrawBorder (int x, int y, int w, int h) {
-  int i;
-
   if (!pic_brdr_b) InitBorder();
 
-  for (i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y-8, pic_brdr_t);
-  for (i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y+h, pic_brdr_b);
-  for (i = 0; i < h; i += 8) GRoot.DrawPic(x-8, y+i, pic_brdr_l);
-  for (i = 0; i < h; i += 8) GRoot.DrawPic(x+w, y+i, pic_brdr_r);
+  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y-8, pic_brdr_t);
+  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y+h, pic_brdr_b);
+  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x-8, y+i, pic_brdr_l);
+  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x+w, y+i, pic_brdr_r);
 
   // draw beveled edge
   GRoot.DrawPic(x-8, y-8, pic_brdr_tl);
@@ -363,11 +361,9 @@ override void DrawBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void DrawViewBorder (int x, int y, int w, int h) {
-  if (checkForDoom2()) {
-    GRoot.FillRectWithFlat(0, 0, 640, 480/*-32*/, 'grnrock');
-  } else {
-    GRoot.FillRectWithFlat(0, 0, 640, 480/*-32*/, 'floor7_2');
-  }
+  name flatname = (checkForDoom2() ? 'grnrock' : 'floor7_2');
+  //GRoot.FillRectWithFlat(0, 0, 640, 480/*-32*/, 'grnrock');
+  GRoot.FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), flatname);
   DrawBorder(x, y, w, h);
 }
 

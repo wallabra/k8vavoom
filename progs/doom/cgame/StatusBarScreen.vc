@@ -540,16 +540,18 @@ override void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
+  //SetVirtualScreen(640, 480);
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();
-  if (Width != ovw) Width = ovw;
-  if (Height != ovh) Height = ovh;
-  //SetVirtualScreen(640, 480);
   if (sb_view == SB_VIEW_FULLSCREEN) {
+    if (Width != ovw) Width = ovw;
+    if (Height != ovh) Height = ovh;
     SB_DrawFullscreenStats();
   } else {
     // this is broken for now
     SetVirtualScreen(640, 480);
+    if (Width != 640) Width = 640;
+    if (Height != 480) Height = 480;
     SB_DrawMainBar();
     SetVirtualScreen(ovw, ovh);
   }
