@@ -1,0 +1,146 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class MenuScreenHelpBase : MenuScreen;
+
+array!name pages;
+
+int currPic = -1; // current page
+int currPage;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+void SetPic (name picname) {
+  if (!picname) { currPic = -1; return; }
+  currPic = R_RegisterPic(picname);
+}
+*/
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+bool prevPage () {
+  if (currPage > 0) {
+    --currPage;
+    currPic = -1;
+    return true;
+  }
+  return false;
+}
+
+
+bool nextPage () {
+  if (currPage+1 < pages.length) {
+    ++currPage;
+    currPic = -1;
+    return true;
+  }
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+override void DrawBackButton () {
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (currPic < 0) {
+    if (currPage < 0 || currPage >= pages.length) return;
+    currPic = R_RegisterPic(pages[currPage]);
+    if (currPic < 0) return;
+  }
+  picinfo_t pnfo;
+  R_GetPicInfo(currPic, &pnfo);
+  if (pnfo.width < 1 || pnfo.height < 1) {
+    ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
+  } else {
+    DrawFullScreenPic(currPic);
+  }
+}
+
+
+//==========================================================================
+//
+//  CreateChoices
+//
+//==========================================================================
+/*
+override void CreateChoices () {
+  if (!IsAnyDoom2) {
+    NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
+  } else {
+    NumPages = 1;
+  }
+  currPage = 0;
+
+  if (IsAnyDoom2) SetPic('help'); else SetPic('help1');
+}
+*/
+
+
+//==========================================================================
+//
+//  Key
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
+  switch (key) {
+    case K_ESCAPE:
+    case K_BACKSPACE:
+    case K_F1:
+      LocalSound('menu/clear');
+      ClGame.ForceMenuOff();
+      return true;
+
+    case K_LEFTARROW: case K_PAD4:
+      if (prevPage()) LocalSound('menu/clear');
+      return true;
+
+    case K_RIGHTARROW: case K_PAD6:
+      if (nextPage()) LocalSound('menu/clear');
+      return true;
+
+    case K_ENTER: case K_PADENTER:
+    case K_SPACE:
+      LocalSound('menu/clear');
+      if (!nextPage()) ClGame.ForceMenuOff();
+      return true;
+  }
+
+  return true;
+}
+
+
+defaultproperties {
+  X = 0;
+  Y = 0;
+  //ScaleX = 2.0;
+  //ScaleY = 2.4;
+}
