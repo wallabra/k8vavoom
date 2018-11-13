@@ -22,87 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class MenuScreenHelp : MenuScreen;
-
-int PicHandle = -1;
-int NumPages;
-int CurPage;
+class MenuScreenHelp : MenuScreenHelpBase;
 
 
-//==========================================================================
-//
-//  SetPic
-//
-//==========================================================================
-void SetPic (name picname) {
-  if (!picname) { PicHandle = -1; return; }
-  PicHandle = R_RegisterPic(picname);
-}
-
-
-//==========================================================================
-//
-//  DrawBackButton
-//
-//==========================================================================
-override void DrawBackButton () {
-}
-
-
-//==========================================================================
-//
-//  OnDraw
-//
-//==========================================================================
-override void OnDraw () {
-  if (PicHandle < 0) return;
-  picinfo_t Info;
-  R_GetPicInfo(PicHandle, &Info);
-  if (Info.width < 1 || Info.height < 1) {
-    ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
-  } else {
-    DrawFullScreenPic(PicHandle);
-  }
-}
-
-
-//==========================================================================
-//
-//  CreateChoices
-//
-//==========================================================================
 override void CreateChoices () {
-  if (!IsAnyDoom2) {
-    NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
-  } else {
-    NumPages = 1;
-  }
-  CurPage = 0;
-
-  if (IsAnyDoom2) SetPic('help'); else SetPic('help1');
-}
-
-
-//==========================================================================
-//
-//  Key
-//
-//==========================================================================
-override bool OnKeyDown (int key) {
-  LocalSound('menu/clear');
-  ++CurPage;
-  if (key == K_ESCAPE || CurPage >= NumPages) {
-    ClGame.ForceMenuOff();
-  } else {
-    SetPic('help2');
-  }
-  return true;
-}
-
-
-defaultproperties {
-  X = 0;
-  Y = 0;
-  //ScaleX = 2.0;
-  //ScaleY = 2.4;
+  pages[$] = (IsAnyDoom2 ? 'help' : 'help1');
+  if (!IsAnyDoom2 && !WadLumpPresent('e4m1')) pages[$] = 'help2';
 }

@@ -54,20 +54,10 @@ override void CreateChoices () {
   CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText((!IsAnyDoom2 && !WadLumpPresent('e2m1') ? "Read This!" : "Help"), MenuScreenHelp);
 
-  MenuBigTextButton btn = MenuBigTextButton(NewChild(MenuBigTextButton));
+  auto btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
-  btn.Activated = &ActivateQuit;
-}
-
-
-//==========================================================================
-//
-//  ActivateQuit
-//
-//==========================================================================
-void ActivateQuit (Object Sender) {
-  ClGame.menu_quit();
+  btn.Activated = delegate void (Object Sender) { ClGame.menu_quit(); };
 }
 
 
