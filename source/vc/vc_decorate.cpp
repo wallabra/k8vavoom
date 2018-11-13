@@ -2409,7 +2409,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   bool wasActionAfterLabel = false;
   bool firstFrame = true;
   while (!sc->Check("}")) {
-    if (sc->Check(";")) continue;
+    //if (sc->Check(";")) continue;
 
     TLocation TmpLoc = sc->GetLoc();
     VStr TmpName = ParseStateString(sc);
@@ -2437,6 +2437,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       NewLabelsStart = Class->StateLabelDefs.Num();
       PrevState = nullptr;
+      if (sc->Check(";")) {}
       continue;
     }
 
@@ -2454,6 +2455,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) Class->StateLabelDefs[i].State = nullptr;
       NewLabelsStart = Class->StateLabelDefs.Num();
       PrevState = nullptr;
+      if (sc->Check(";")) {}
       continue;
     }
 
@@ -2469,6 +2471,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       LastState->NextState = LastState;
       PrevState = nullptr;
+      if (sc->Check(";")) {}
       continue;
     }
 
@@ -2484,6 +2487,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       LastState->NextState = LoopStart;
       PrevState = nullptr;
+      if (sc->Check(";")) {}
       continue;
     }
 
@@ -2494,6 +2498,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       Lbl.Loc = TmpLoc;
       Lbl.Name = TmpName;
       wasActionAfterLabel = false;
+      if (sc->Check(";")) {}
       continue;
     }
 
@@ -2628,6 +2633,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       } else {
         ParseActionCall(sc, Class, State, FramesString);
         //State->Function = Func;
+        if (sc->Check(";")) {}
       }
 
       wasAction = true;
@@ -2940,11 +2946,13 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   while (!sc->Check("}")) {
     if (sc->Check("+")) {
       if (!ParseFlag(sc, Class, true, ClassFixups)) return;
+      //while (sc->Check(";")) {}
       continue;
     }
 
     if (sc->Check("-")) {
       if (!ParseFlag(sc, Class, false, ClassFixups)) return;
+      //while (sc->Check(";")) {}
       continue;
     }
 
@@ -3576,6 +3584,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
         break;
       }
     }
+    //while (sc->Check(";")) {}
     if (FoundProp) continue;
 
     if (decorate_fail_on_unknown) {
