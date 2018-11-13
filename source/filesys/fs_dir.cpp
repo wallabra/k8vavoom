@@ -137,6 +137,7 @@ VStream *VFilesDir::OpenFileRead (const VStr &Name) {
   VStr tmpName = path+"/"+storedName;
   FILE *File = fopen(*tmpName, "rb");
   if (!File) return nullptr;
+  //fprintf(stderr, "***DISK: <%s:%s>\n", *GetPrefix(), *Name);
   return new VStreamFileReader(File, GCon, tmpName);
   unguard;
 }

@@ -519,6 +519,7 @@ VStream *VZipFile::OpenFileRead (const VStr &FName) {
   VStr CheckName = FName.ToLower();
   for (int i = NumFiles-1; i >= 0; --i) {
     if (Files[i].Name == CheckName) {
+      //fprintf(stderr, "***ZIP: <%s:%s>\n", *GetPrefix(), *FName);
       return new VZipFileReader(ZipFileName+":"+FName, FileStream, BytesBeforeZipFile, Files[i], GCon, &rdlock);
     }
   }
