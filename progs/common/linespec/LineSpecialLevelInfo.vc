@@ -5647,117 +5647,178 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
 //
 //**************************************************************************
 
+// huge levels can overflow stack, so use this array instead of recursive calls
+struct SoundSectorListItem {
+  sector_t *sec;
+  int sblock;
+}
+
+private transient array!SoundSectorListItem recSoundSectorList;
+
+
+//==========================================================================
+//
+//  processRecursiveSoundSectorList
+//
+//==========================================================================
+final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarget, bool Splash, optional float maxdist, optional Entity emmiter) {
+  if (!sec) return;
+
+  // `validcount` and other things were already checked in caller
+  // also, caller already set `soundtraversed` and `SoundTarget`
+
+  for (Entity Ent = sec->ThingList; Ent; Ent = Ent.SNext) {
+    if (Ent != soundtarget && (!Splash || !EntityEx(Ent).bNoSplashAlert)) {
+      // check max distance
+      if (emmiter && specified_maxdist && maxdist > 0 && length2d(emmiter.Origin-Ent.Origin) > maxdist) continue;
+      EntityEx(Ent).LastHeard = EntityEx(soundtarget);
+    }
+  }
+
+  foreach (auto i; 0..sec.lines.length) {
+    line_t *check = sec->lines[i];
+    if (check->sidenum[1] == -1 || !(check->flags&ML_TWOSIDED)) continue;
+
+    // early out for intra-sector lines
+    if (check->frontsector == check->backsector) continue;
+
+    if (!LineOpenings(check, *check->v1)) {
+      if (!LineOpenings(check, *check->v2)) {
+        // closed door
+        continue;
+      }
+    }
+
+    sector_t *other = (check->frontsector == sec ? check->backsector : check->frontsector);
+    if (!other) continue; // just in case
+
+    bool addIt = false;
+    int sblock;
+
+    if (check->flags&ML_SOUNDBLOCK) {
+      if (!soundblocks) {
+        //RecursiveSound(other, 1, soundtarget, Splash, maxdist!optional, emmiter!optional);
+        addIt = true;
+        sblock = 1;
+      }
+    } else {
+      //RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
+      addIt = true;
+      sblock = soundblocks;
+    }
+
+    if (addIt) {
+      // don't add one sector several times
+      if (other->validcount == *Game.validcount && other->soundtraversed <= sblock+1) continue; // already flooded
+      // set flags
+      other->validcount = *Game.validcount;
+      other->soundtraversed = sblock+1;
+      other->SoundTarget = soundtarget;
+      // add to processing list
+      recSoundSectorList.length += 1;
+      recSoundSectorList[$-1].sec = other;
+      recSoundSectorList[$-1].sblock = sblock;
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  RecursiveSound
 //
 //  Called by NoiseAlert. Recursively traverse adjacent sectors, sound
-// blocking lines cut off traversal.
+//  blocking lines cut off traversal.
 //
 //==========================================================================
-
-final void RecursiveSound(sector_t *sec, int soundblocks, Entity soundtarget,
-      bool Splash)
+final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
+      bool Splash, optional float maxdist, optional Entity emmiter)
 {
-  int     i;
   line_t *check;
   sector_t *other;
-  Entity    Ent;
 
   // wake up all monsters in this sector
-  if (sec->validcount == *Game.validcount &&
-    sec->soundtraversed <= soundblocks + 1)
-  {
-    return; // already flooded
-  }
+  if (!sec || sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1) return; // already flooded
 
   sec->validcount = *Game.validcount;
-  sec->soundtraversed = soundblocks + 1;
+  sec->soundtraversed = soundblocks+1;
   sec->SoundTarget = soundtarget;
 
-  for (Ent = sec->ThingList; Ent; Ent = Ent.SNext)
-  {
-    if (Ent != soundtarget && (!Splash || !EntityEx(Ent).bNoSplashAlert))
-    {
+  recSoundSectorList.clear();
+  processSoundSector(sec, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
+
+  // don't use `foreach` here!
+  int rspos = 0;
+  while (rspos < recSoundSectorList.length) {
+    processSoundSector(recSoundSectorList[rspos].sec, recSoundSectorList[rspos].sblock, soundtarget, Splash, maxdist!optional, emmiter!optional);
+    ++rspos;
+  }
+
+  //if (recSoundSectorList.length > 1) print("RECSOUND: len=%d", recSoundSectorList.length);
+  recSoundSectorList.clear();
+
+  /*
+  sec->validcount = *Game.validcount;
+  sec->soundtraversed = soundblocks+1;
+  sec->SoundTarget = soundtarget;
+
+  for (Entity Ent = sec->ThingList; Ent; Ent = Ent.SNext) {
+    if (Ent != soundtarget && (!Splash || !EntityEx(Ent).bNoSplashAlert)) {
+      // check max distance
+      if (emmiter && specified_maxdist && maxdist > 0 && length2d(emmiter.Origin-Ent.Origin) > maxdist) continue;
       EntityEx(Ent).LastHeard = EntityEx(soundtarget);
     }
   }
 
-  for (i = 0; i < sec.lines.length; i++)
-  {
+  foreach (auto i; 0..sec.lines.length) {
     check = sec->lines[i];
-    if (check->sidenum[1] == -1 || !(check->flags & ML_TWOSIDED))
-    {
-      continue;
-    }
+    if (check->sidenum[1] == -1 || !(check->flags&ML_TWOSIDED)) continue;
 
-    // Early out for intra-sector lines
-    if (check->frontsector == check->backsector)
-    {
-      continue;
-    }
+    // early out for intra-sector lines
+    if (check->frontsector == check->backsector) continue;
 
-    if (!LineOpenings(check, *check->v1))
-    {
-      if (!LineOpenings(check, *check->v2))
-      {
-        //  Closed door
+    if (!LineOpenings(check, *check->v1)) {
+      if (!LineOpenings(check, *check->v2)) {
+        // closed door
         continue;
       }
     }
 
-    if (check->frontsector == sec)
-    {
-      other = check->backsector;
-    }
-    else
-    {
-      other = check->frontsector;
-    }
+    other = (check->frontsector == sec ? check->backsector : check->frontsector);
 
-    if (check->flags & ML_SOUNDBLOCK)
-    {
-      if (!soundblocks)
-      {
-        RecursiveSound(other, 1, soundtarget, Splash);
+    if (check->flags&ML_SOUNDBLOCK) {
+      if (!soundblocks) {
+        RecursiveSound(other, 1, soundtarget, Splash, maxdist!optional, emmiter!optional);
       }
-    }
-    else
-    {
-      RecursiveSound(other, soundblocks, soundtarget, Splash);
+    } else {
+      RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
     }
   }
+  */
 }
+
 
 //==========================================================================
 //
 //  NoiseAlert
 //
 //  If a monster yells at a player, it will alert other monsters to the
-// player.
+//  player.
 //
 //==========================================================================
-
-final void NoiseAlert(Entity target, Entity emmiter, optional bool Splash)
+final void NoiseAlert (Entity target, Entity emmiter, optional bool Splash,
+                       optional float maxdist)
 {
-  if (!emmiter)
-  {
-    return;
-  }
+  if (!emmiter) return;
 
-  if (target && target.bIsPlayer && PlayerEx(target.Player).bNoTarget)
-  {
-    return;
-  }
+  if (target && target.bIsPlayer && PlayerEx(target.Player).bNoTarget) return;
 
-  if (!specified_Splash)
-  {
-    Splash = false;
-  }
+  if (!specified_Splash) Splash = false;
 
   (*Game.validcount)++;
-  RecursiveSound(emmiter.Sector, 0, target, Splash);
+  RecursiveSound(emmiter.Sector, 0, target, Splash, maxdist!optional, emmiter);
 }
+
 
 //==========================================================================
 //
