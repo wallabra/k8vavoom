@@ -75,6 +75,31 @@ VName P_TranslateMap (int map);
 static void ParseMapInfo (VScriptParser *sc);
 
 
+static char miWarningBuf[16384];
+
+__attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarning (VScriptParser *sc, const char *fmt, ...) {
+  va_list argptr;
+  static char miWarningBuf[16384];
+  va_start(argptr, fmt);
+  vsnprintf(miWarningBuf, sizeof(miWarningBuf), fmt, argptr);
+  va_end(argptr);
+  if (sc) {
+    GCon->Logf(NAME_Warning, "MAPINFO:%s: %s", *sc->GetLoc().toStringNoCol(), miWarningBuf);
+  } else {
+    GCon->Logf(NAME_Warning, "MAPINFO: %s", miWarningBuf);
+  }
+}
+
+
+__attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarning (const TLocation &loc, const char *fmt, ...) {
+  va_list argptr;
+  va_start(argptr, fmt);
+  vsnprintf(miWarningBuf, sizeof(miWarningBuf), fmt, argptr);
+  va_end(argptr);
+  GCon->Logf(NAME_Warning, "MAPINFO:%s:%s", *loc.toStringNoCol(), miWarningBuf);
+}
+
+
 static mapInfo_t DefaultMap;
 static TArray<mapInfo_t> MapInfo;
 static TArray<FMapSongInfo> MapSongList;
@@ -244,12 +269,23 @@ static int findSavedPar (VName map) {
 //  loadSkyTexture
 //
 //==========================================================================
-static int loadSkyTexture (VName name) {
+static int loadSkyTexture (VScriptParser *sc, VName name) {
+  static TMapNC<VName, int> forceList;
+
   if (name == NAME_None) return GTextureManager.DefaultTexture;
+
+  VName loname = VName(*name, VName::AddLower);
+  auto tidp = forceList.find(loname);
+  if (tidp) return *tidp;
+
   //int Tex = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
   //info->Sky1Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
   int Tex = GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true, false);
-  if (Tex >= 0) return Tex;
+  if (Tex >= 0) {
+    forceList.put(loname, Tex);
+    return Tex;
+  }
+
   Tex = GTextureManager.CheckNumForName(name, TEXTYPE_WallPatch, false, false);
   if (Tex < 0) {
     int LumpNum = W_CheckNumForTextureFileName(*name);
@@ -276,11 +312,14 @@ static int loadSkyTexture (VName name) {
     }
   }
   if (Tex < 0) {
-    GCon->Logf("WARNING: sky '%s' not found; replaced with 'sky1'", *name);
-    return GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+    miWarning(sc, "sky '%s' not found; replaced with 'sky1'", *name);
+    Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+    forceList.put(loname, Tex);
+    return Tex;
     //return GTextureManager.DefaultTexture;
   }
-  GCon->Logf("WARNING: force-loaded sky '%s'", *name);
+  forceList.put(loname, Tex);
+  miWarning(sc, "force-loaded sky '%s'", *name);
   return Tex;
 }
 
@@ -322,7 +361,7 @@ void InitMapInfo () {
 
   // set up default map info returned for maps that have not defined in MAPINFO
   DefaultMap.Name = "Unnamed";
-  DefaultMap.Sky1Texture = loadSkyTexture("sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+  DefaultMap.Sky1Texture = loadSkyTexture(nullptr, "sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
   DefaultMap.Sky2Texture = DefaultMap.Sky1Texture;
   DefaultMap.FadeTable = NAME_colormap;
   DefaultMap.HorizWallShade = -8;
@@ -349,7 +388,7 @@ static void SetMapDefaults (mapInfo_t &Info) {
   Info.SongLump = NAME_None;
   //Info.Sky1Texture = GTextureManager.DefaultTexture;
   //Info.Sky2Texture = GTextureManager.DefaultTexture;
-  Info.Sky1Texture = loadSkyTexture("sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
+  Info.Sky1Texture = loadSkyTexture(nullptr, "sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
   Info.Sky2Texture = Info.Sky1Texture;
   //Info.Sky2Texture = GTextureManager.DefaultTexture;
   Info.Sky1ScrollDelta = 0;
@@ -442,6 +481,21 @@ static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
 
 //==========================================================================
 //
+//  skipUnimplementedCommand
+//
+//==========================================================================
+static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
+  miWarning(sc, "Unimplemented command '%s'", *sc->String);
+  if (sc->Check("=")) {
+    sc->ExpectString();
+  } else if (wantArg) {
+    sc->ExpectString();
+  }
+}
+
+
+//==========================================================================
+//
 //  ParseMapCommon
 //
 //==========================================================================
@@ -518,7 +572,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         }
       } else {
         info->SkyBox = NAME_None;
-        info->Sky1Texture = loadSkyTexture(sc->Name);
+        info->Sky1Texture = loadSkyTexture(sc, sc->Name);
         info->Sky1ScrollDelta = 0;
         if (newFormat) {
           if (!sc->IsAtEol()) {
@@ -544,7 +598,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->ExpectName8();
       //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
       //info->SkyBox = NAME_None; //k8:required or not???
-      info->Sky2Texture = loadSkyTexture(sc->Name8);
+      info->Sky2Texture = loadSkyTexture(sc, sc->Name8);
       info->Sky2ScrollDelta = 0;
       if (newFormat) {
         if (!sc->IsAtEol()) {
@@ -834,85 +888,59 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     }
     // these are stubs for now.
     else if (sc->Check("cdid")) {
-      GCon->Logf("Unimplemented MAPINFO command cdid");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("noinventorybar")) {
-      GCon->Logf("Unimplemented MAPINFO command noinventorybar");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("airsupply")) {
-      GCon->Logf("Unimplemented MAPINFO command airsupply");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("sndseq")) {
-      GCon->Logf("Unimplemented MAPINFO command sndseq");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("sndinfo")) {
-      GCon->Logf("Unimplemented MAPINFO command sndinfo");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("soundinfo")) {
-      GCon->Logf("Unimplemented MAPINFO command soundinfo");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("allowcrouch")) {
-      GCon->Logf("Unimplemented MAPINFO command allowcrouch");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("nocrouch")) {
-      GCon->Logf("Unimplemented MAPINFO command nocrouch");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("pausemusicinmenus")) {
-      GCon->Logf("Unimplemented MAPINFO command pausemusicinmenus");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("bordertexture")) {
-      GCon->Logf("Unimplemented MAPINFO command bordertexture");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("f1")) {
-      GCon->Logf("Unimplemented MAPINFO command f1");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("allowrespawn")) {
-      GCon->Logf("Unimplemented MAPINFO command allowrespawn");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("teamdamage")) {
-      GCon->Logf("Unimplemented MAPINFO command teamdamage");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectFloat();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("fogdensity")) {
-      GCon->Logf("Unimplemented MAPINFO command fogdensity");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("outsidefogdensity")) {
-      GCon->Logf("Unimplemented MAPINFO command outsidefogdensity");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("skyfog")) {
-      GCon->Logf("Unimplemented MAPINFO command skyfog");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("teamplayon")) {
-      GCon->Logf("Unimplemented MAPINFO command teamplayon");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("teamplayoff")) {
-      GCon->Logf("Unimplemented MAPINFO command teamplayoff");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("checkswitchrange")) {
-      GCon->Logf("Unimplemented MAPINFO command checkswitchrange");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("nocheckswitchrange")) {
-      GCon->Logf("Unimplemented MAPINFO command nocheckswitchrange");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("translator")) {
-      GCon->Logf("Unimplemented MAPINFO command translator");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("resethealth")) {
-      //sc->Message("WARNING: ignored ResetHealth");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("resetinventory")) {
-      //sc->Message("WARNING: ignored ResetInventory");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("unfreezesingleplayerconversations")) {
-      GCon->Logf("Unimplemented MAPINFO command unfreezesingleplayerconversations");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("smoothlighting")) {
-      GCon->Logf("Unimplemented MAPINFO command SmoothLighting");
+      skipUnimplementedCommand(sc, false);
     } else if (sc->Check("lightmode")) {
-      GCon->Logf("Unimplemented MAPINFO command 'LightMode'");
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
+      skipUnimplementedCommand(sc, true);
     } else if (sc->Check("Grinding_PolyObj")) {
-      GCon->Logf("Unimplemented MAPINFO command 'Grinding_PolyObj'");
+      skipUnimplementedCommand(sc, false);
     } else {
       if (newFormat) {
         if (sc->Check("}")) break;
