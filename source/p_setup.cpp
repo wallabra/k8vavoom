@@ -501,7 +501,9 @@ void VLevel::FixKnownMapErrors () {
       MapHashMD5 == "2842ece024c5c7905f637c616fefc36e" ||
       MapHashMD5 == "c3cd90a4d470b5413849e6341f245737")
   {
+#ifdef CLIENT
     r_max_portal_depth = 1;
+#endif
     pobj_allow_several_in_subsector_override = 1;
     GCon->Logf(NAME_Warning, "MAPFIX: Winter's Fury: reduced portals to 1, enabled pobj hack");
     return;
