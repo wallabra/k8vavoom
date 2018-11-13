@@ -1101,6 +1101,7 @@ COMMAND(Map) {
 //==========================================================================
 bool Host_StartTitleMap () {
   guard(Host_StartTitleMap);
+  if (GArgs.CheckParm("-notitlemap") != 0) return false;
   if (!FL_FileExists("maps/titlemap.wad") && W_CheckNumForName(NAME_titlemap) < 0) return false;
 
   // default the player start spot group to 0
