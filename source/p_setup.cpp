@@ -1140,7 +1140,13 @@ load_again:
     if (ThingsLump == -1 || LinesLump == -1 || SidesLump == -1 ||
         VertexesLump == -1 || SectorsLump == -1)
     {
-      Host_Error("Map %s is not a valid map", *MapName);
+      VStr nf = "missing lumps:";
+      if (ThingsLump == -1) nf += " things";
+      if (LinesLump == -1) nf += " lines";
+      if (SidesLump == -1) nf += " sides";
+      if (VertexesLump == -1) nf += " vertexes";
+      if (SectorsLump == -1) nf += " sectors";
+      Host_Error("Map '%s' is not a valid map (%s), %s", *MapName, *W_FullLumpName(lumpnum), *nf);
     }
 
     if (SubsectorsLump != -1) {
