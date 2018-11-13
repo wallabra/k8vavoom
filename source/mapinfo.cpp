@@ -1222,9 +1222,9 @@ static void ParseClusterDef (VScriptParser *sc) {
           auto loc = sc->GetLoc();
           sc->ExpectString();
           VStr cmd = sc->String;
-          fprintf(stderr, "!!!!!!\n");
+          //fprintf(stderr, "!!!!!!\n");
           if (sc->Check("=")) {
-            fprintf(stderr, "******\n");
+            //fprintf(stderr, "******\n");
             for (;;) {
               sc->ExpectString();
               if (!sc->Check(",")) break;
