@@ -660,51 +660,51 @@ COMMAND(Echo) {
 //==========================================================================
 COMMAND(Exec) {
   guard(COMMAND Exec);
-  if (Args.Num() < 2 || Args.Num() > 3) {
+  if (Args.length() < 2 || Args.length() > 3) {
     GCon->Log("Exec <filename> : execute script file");
     return;
   }
 
-  VStr dskname = Host_GetConfigDir()+"/"+Args[1];
-  bool ondisk = true;
+  VStream *Strm = nullptr;
 
-  if (!Sys_FileExists(dskname)) {
-    if (!FL_FileExists(Args[1])) {
-      if (Args.Num() == 2) GCon->Log(VStr("Can't find ")+Args[1]);
-      return;
-    } else {
-      dskname = Args[1];
-      ondisk = false;
+  // try disk file
+  VStr dskname = Host_GetConfigDir()+"/"+Args[1];
+  if (Sys_FileExists(dskname)) {
+    Strm = FL_OpenSysFileRead(dskname);
+    if (Strm) GCon->Logf("Executing '%s'...", *dskname);
+  }
+
+  // try wad file
+  if (!Strm && FL_FileExists(Args[1])) {
+    Strm = FL_OpenFileRead(Args[1]);
+    if (Strm) {
+      GCon->Logf("Executing '%s'...", *Args[1]);
+      //GCon->Logf("<%s>", *Strm->GetName());
     }
   }
 
-  GCon->Log(VStr("Executing ")+Args[1]);
-
-  VStream *Strm = (ondisk ? FL_OpenSysFileRead(dskname) : FL_OpenFileRead(dskname));
   if (!Strm) {
-    if (Args.Num() == 2) GCon->Log(VStr("Can't find ")+Args[1]);
+    if (Args.length() == 2) GCon->Logf("Can't find '%s'...", *Args[1]);
     return;
   }
 
-  int Len = Strm->TotalSize();
-  if (Len == 0) { delete Strm; return; }
+  //GCon->Logf("Executing '%s'...", *Args[1]);
 
-  char *buf = new char[Len+2];
-  Strm->Serialise(buf, Len);
+  int flsize = Strm->TotalSize();
+  if (flsize == 0) { delete Strm; return; }
+
+  char *buf = new char[flsize+2];
+  Strm->Serialise(buf, flsize);
   if (Strm->IsError()) {
     delete Strm;
     delete[] buf;
-    GCon->Log(VStr("Error reading ")+Args[1]);
+    GCon->Logf("Error reading '%s'!", *Args[1]);
     return;
   }
   delete Strm;
 
-  if (buf[Len-1] != '\n') {
-    buf[Len] = '\n';
-    buf[Len+1] = 0;
-  } else {
-    buf[Len] = 0;
-  }
+  if (buf[flsize-1] != '\n') buf[flsize++] = '\n';
+  buf[flsize] = 0;
 
   GCmdBuf.Insert(buf);
 
