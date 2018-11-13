@@ -38,7 +38,11 @@ IMPLEMENT_CLASS(V, Level);
 VLevel *GLevel;
 VLevel *GClLevel;
 
-static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment", CVAR_Archive);
+static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment.", CVAR_Archive);
+
+static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "Can corpses hear sound propagation?", CVAR_Archive);
+static VCvarB gm_compat_everything_can_hear("gm_compat_everything_can_hear", false, "Can everything hear sound propagation?", CVAR_Archive);
+static VCvarF gm_compat_max_hearing_distance("gm_compat_max_hearing_distance", "0", "Maximum hearing distance (0 means unlimited)?", CVAR_Archive);
 
 
 //==========================================================================
@@ -1046,6 +1050,12 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
   // `validcount` and other things were already checked in caller
   // also, caller already set `soundtraversed` and `SoundTarget`
 
+  int hmask = 0;
+  if (!gm_compat_everything_can_hear) {
+    hmask = VEntity::EF_NoSector|VEntity::EF_NoBlockmap;
+    if (!gm_compat_corpses_can_hear) hmask |= VEntity::EF_Corpse;
+  }
+
   for (VEntity *Ent = sec->ThingList; Ent; Ent = Ent->SNext) {
     if (recSoundSectorSeenEnts.has(Ent)) continue;
     recSoundSectorSeenEnts.put(Ent, true);
@@ -1053,7 +1063,7 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
     //FIXME: skip some entities that cannot (possibly) react
     //       this can break some code, but... meh
     //       maybe don't omit corpses?
-    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_NoBlockmap|VEntity::EF_Corpse)) continue;
+    if (Ent->EntityFlags&hmask) continue;
     // check max distance
     if (maxdist > 0 && length2D(sndorigin-Ent->Origin) > maxdist) continue;
     // register for processing
@@ -1127,6 +1137,9 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   recSoundSectorList.clear();
   recSoundSectorSeenEnts.reset();
   processSoundSector(validcount, elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
+
+  if (maxdist < 0) maxdist = 0;
+  if (gm_compat_max_hearing_distance > 0 && (maxdist == 0 || maxdist > gm_compat_max_hearing_distance)) maxdist = gm_compat_max_hearing_distance;
 
   // don't use `foreach` here!
   int rspos = 0;
