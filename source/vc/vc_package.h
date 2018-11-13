@@ -22,15 +22,23 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class VProgsReader;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct mobjinfo_t {
+  // for `flags`
+  enum {
+    FlagNoSkill = 0x0001,
+    FlagSpecial = 0x0002,
+  };
+
   int DoomEdNum;
   vint32 GameFilter;
   VClass *Class;
+  vint32 flags; // bit0: anyskill; bit1: special is set
+  vint32 special;
+  vint32 args[5];
 
   friend VStream &operator << (VStream &, mobjinfo_t &);
 };
@@ -105,6 +113,7 @@ public:
   // will delete `Strm`
   void LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation l);
 
+  mobjinfo_t *FindMObjInfo (vint32 id); // nullptr: not found
   VClass *FindMObj (vint32 id) const;
   VClass *FindScriptId (vint32 id) const;
 

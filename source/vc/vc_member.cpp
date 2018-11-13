@@ -412,6 +412,31 @@ VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
 
 //==========================================================================
 //
+//  VMemberBase::StaticFindMObjInfo
+//
+//==========================================================================
+mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id, VName pkgname) {
+  guard(VMemberBase::StaticFindMObjExtraFlags);
+  if (pkgname != NAME_None) {
+    VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
+    if (!pkg) return 0;
+    return ((VPackage *)pkg)->FindMObjInfo(id);
+  } else {
+    int len = GMembers.length();
+    for (int f = 0; f < len; ++f) {
+      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
+        mobjinfo_t *nfo = ((VPackage *)GMembers[f])->FindMObjInfo(id);
+        if (nfo) return nfo;
+      }
+    }
+  }
+  return nullptr;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::StaticFindScriptId
 //
 //==========================================================================

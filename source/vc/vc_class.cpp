@@ -1188,6 +1188,7 @@ void VClass::Emit () {
         mi.DoomEdNum = MobjInfoExpr->GetIntConst();
         mi.GameFilter = GameFilter;
         mi.Class = this;
+        mi.flags = 0;
       }
     }
   }
@@ -1203,6 +1204,7 @@ void VClass::Emit () {
         mi.DoomEdNum = ScriptIdExpr->GetIntConst();
         mi.GameFilter = GameFilter;
         mi.Class = this;
+        mi.flags = 0;
       }
     }
   }

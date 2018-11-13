@@ -1272,6 +1272,41 @@ load_again:
   FinaliseLines();
   Lines2Time += Sys_Time();
 
+  //HACK! fix things skill settings
+  {
+    // use hashmap to avoid schlemiel's lookups
+    TMapNC<int, mobjinfo_t *> id2nfo;
+    for (int tidx = 0; tidx < NumThings; ++tidx) {
+      mthing_t *th = &Things[tidx];
+      mobjinfo_t *nfo = nullptr;
+      auto fp = id2nfo.find(th->type);
+      if (fp) {
+        nfo = *fp;
+      } else {
+        nfo = VMemberBase::StaticFindMObjInfo(th->type);
+        id2nfo.put(th->type, nfo);
+      }
+      if (nfo) {
+        // allskills
+        if (nfo->flags&mobjinfo_t::FlagNoSkill) {
+          //GCon->Logf("*** THING %d got ALLSKILLS", th->type);
+          th->SkillClassFilter |= 0x03;
+          th->SkillClassFilter |= 0x04;
+          th->SkillClassFilter |= 0x18;
+        }
+        // special
+        if (nfo->flags&mobjinfo_t::FlagSpecial) {
+          th->special = nfo->special;
+          th->arg1 = nfo->args[0];
+          th->arg2 = nfo->args[1];
+          th->arg3 = nfo->args[2];
+          th->arg4 = nfo->args[3];
+          th->arg5 = nfo->args[4];
+        }
+      }
+    }
+  }
+
   if (hasCacheFile) {
     //GCon->Logf("using cache file: %s", *cacheFileName);
     VStream *strm = FL_OpenSysFileRead(cacheFileName);

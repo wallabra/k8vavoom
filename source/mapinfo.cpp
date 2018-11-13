@@ -61,9 +61,13 @@ struct ParTimeInfo {
   int par;
 };
 
+
 struct SpawnEdFixup {
   VStr ClassName;
   int num;
+  int flags;
+  int special;
+  int args[5];
 };
 
 
@@ -119,14 +123,28 @@ void P_SetupMapinfoPlayerClasses () {
 //  appendNumFixup
 //
 //==========================================================================
-static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, int num) {
+static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, int num, int flags=0, int special=0, int arg1=0, int arg2=0, int arg3=0, int arg4=0, int arg5=0) {
   SpawnEdFixup *fxp = arr.find(num);
   if (fxp) {
     fxp->ClassName = className;
+    fxp->flags = flags;
+    fxp->special = special;
+    fxp->args[0] = arg1;
+    fxp->args[1] = arg2;
+    fxp->args[2] = arg3;
+    fxp->args[3] = arg4;
+    fxp->args[4] = arg5;
     return;
   }
   SpawnEdFixup fx;
   fx.num = num;
+  fx.flags = flags;
+  fx.special = special;
+  fx.args[0] = arg1;
+  fx.args[1] = arg2;
+  fx.args[2] = arg3;
+  fx.args[3] = arg4;
+  fx.args[4] = arg5;
   fx.ClassName = className;
   arr.put(num, fx);
 }
@@ -139,6 +157,7 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
     mobjinfo_t &nfo = list[f];
     SpawnEdFixup *fxp = fixups.find(nfo.DoomEdNum);
     if (fxp) {
+      SpawnEdFixup fix = *fxp;
       VStr cname = fxp->ClassName;
       //GCon->Logf("    MAPINFO: class '%s' for %s got doomed num %d (got %d)", *cname, errname, fxp->num, nfo.DoomEdNum);
       fixups.del(nfo.DoomEdNum);
@@ -149,9 +168,17 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
       }
       // set it
       VClass *cls = VClass::FindClassNoCase(*cname);
+      if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
       if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
       nfo.Class = cls;
       nfo.GameFilter = GAME_Any;
+      nfo.flags = fix.flags;
+      nfo.special = fix.special;
+      nfo.args[0] = fix.args[0];
+      nfo.args[1] = fix.args[1];
+      nfo.args[2] = fix.args[2];
+      nfo.args[3] = fix.args[3];
+      nfo.args[4] = fix.args[4];
     }
     ++f;
   }
@@ -166,10 +193,18 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
     VClass *cls = VClass::FindClassNoCase(*cname);
     if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
     //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
+    SpawnEdFixup fix = *fxp;
     mobjinfo_t &nfo = list.Alloc();
     nfo.Class = cls;
     nfo.DoomEdNum = fxp->num;
     nfo.GameFilter = GAME_Any;
+    nfo.flags = fix.flags;
+    nfo.special = fix.special;
+    nfo.args[0] = fix.args[0];
+    nfo.args[1] = fix.args[1];
+    nfo.args[2] = fix.args[2];
+    nfo.args[3] = fix.args[3];
+    nfo.args[4] = fix.args[4];
   }
   fixups.clear();
 }
@@ -1596,8 +1631,40 @@ static void ParseMapInfo (VScriptParser *sc) {
           int num = sc->Number;
           sc->Expect("=");
           sc->ExpectString();
-          appendNumFixup(DoomEdNumFixups, VStr(sc->String), num);
-          if (sc->Check(",")) sc->Error("comples DoomEdNums aren't supported yet");
+          VStr clsname = sc->String;
+          int flags = 0;
+          int special = 0;
+          int args[5] = {0, 0, 0, 0, 0};
+          if (sc->Check(",")) {
+            auto loc = sc->GetLoc();
+            bool doit = true;
+            if (sc->Check("noskillflags")) { flags |= mobjinfo_t::FlagNoSkill; doit = sc->Check(","); }
+            if (doit) {
+              flags |= mobjinfo_t::FlagSpecial;
+              sc->ExpectString();
+              VStr spcname = sc->String;
+              int argn = 0;
+              while (sc->Check(",")) {
+                sc->ExpectNumber(true); // with sign, why not
+                if (argn < 5) args[argn] = sc->Number;
+                ++argn;
+              }
+              if (argn > 5) GCon->Logf(NAME_Warning, "MAPINFO:%s: too many arguments (%d) to special '%s'", *loc.toStringNoCol(), argn, *spcname);
+              // find special number
+              for (int sdx = 0; sdx < LineSpecialInfos.length(); ++sdx) {
+                if (LineSpecialInfos[sdx].Name.ICmp(spcname) == 0) {
+                  special = LineSpecialInfos[sdx].Number;
+                  break;
+                }
+              }
+              if (!special) {
+                flags &= ~mobjinfo_t::FlagSpecial;
+                GCon->Logf(NAME_Warning, "MAPINFO:%s: special '%s' not found", *loc.toStringNoCol(), *spcname);
+              }
+            }
+          }
+          //GCon->Logf("MAPINFO: DOOMED: '%s', %d (%d)", *clsname, num, flags);
+          appendNumFixup(DoomEdNumFixups, clsname, num, flags, special, args[0], args[1], args[2], args[3], args[4]);
         }
         sc->SetCMode(cmode);
       } else if (sc->Check("SpawnNums")) {

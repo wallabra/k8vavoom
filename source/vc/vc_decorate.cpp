@@ -1175,7 +1175,7 @@ static void SkipBlock (VScriptParser *sc, int Level) {
 //==========================================================================
 static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *Class, int &NumArgs, VExpression **Args, bool gotParen) {
   // get function name and parse arguments
-  VStr FuncNameLower = sc->String.ToLower();
+  VStr FuncNameLower = FuncName.ToLower();
   NumArgs = 0;
   int totalCount = 0;
 
@@ -1208,22 +1208,25 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
   // check ignores
   if (!IgnoredDecorateActions.find(VName(*FuncNameLower))) {
     // find the state action method: first check action specials, then state actions
-    for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
-      if (LineSpecialInfos[i].Name == FuncNameLower) {
-        Func = Class->FindMethodChecked("A_ExecActionSpecial");
-        if (NumArgs > 5) {
-          sc->Error(va("Too many arguments to translated action special `%s`", *FuncName));
-        } else {
-          // add missing arguments
-          while (NumArgs < 5) {
-            Args[NumArgs] = new VIntLiteral(0, sc->GetLoc());
+    // hack: `ACS_ExecuteWithResult` has its own method, but it still should be in line specials
+    if (FuncName.ICmp("ACS_ExecuteWithResult") != 0) {
+      for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
+        if (LineSpecialInfos[i].Name == FuncNameLower) {
+          Func = Class->FindMethodChecked("A_ExecActionSpecial");
+          if (NumArgs > 5) {
+            sc->Error(va("Too many arguments to translated action special `%s`", *FuncName));
+          } else {
+            // add missing arguments
+            while (NumArgs < 5) {
+              Args[NumArgs] = new VIntLiteral(0, sc->GetLoc());
+              ++NumArgs;
+            }
+            // add action special number argument
+            Args[5] = new VIntLiteral(LineSpecialInfos[i].Number, sc->GetLoc());
             ++NumArgs;
           }
-          // add action special number argument
-          Args[5] = new VIntLiteral(LineSpecialInfos[i].Number, sc->GetLoc());
-          ++NumArgs;
+          break;
         }
-        break;
       }
     }
 
@@ -3609,12 +3612,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     MI.Class = Class;
     MI.DoomEdNum = DoomEdNum;
     MI.GameFilter = GameFilter;
+    MI.flags = 0;
   }
   if (SpawnNum > 0) {
     mobjinfo_t &SI = VClass::GScriptIds.Alloc();
     SI.Class = Class;
     SI.DoomEdNum = SpawnNum;
     SI.GameFilter = GameFilter;
+    SI.flags = 0;
   }
   if (ReplaceeClass) {
     ReplaceeClass->Replacement = Class;
@@ -3940,14 +3945,16 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     mobjinfo_t &MI = VClass::GMobjInfos.Alloc();
     MI.Class = Class;
     MI.DoomEdNum = DoomEdNum;
-    MI.GameFilter = GameFilter ? GameFilter : GAME_Any;
+    MI.GameFilter = (GameFilter ? GameFilter : GAME_Any);
+    MI.flags = 0;
   }
 
   if (SpawnNum > 0) {
     mobjinfo_t &SI = VClass::GScriptIds.Alloc();
     SI.Class = Class;
     SI.DoomEdNum = SpawnNum;
-    SI.GameFilter = GameFilter ? GameFilter : GAME_Any;
+    SI.GameFilter = (GameFilter ? GameFilter : GAME_Any);
+    SI.flags = 0;
   }
 
   // set up linked list of states

@@ -495,6 +495,7 @@ static void ReadThing (int num) {
           Idx = VClass::GMobjInfos.Num();
           VClass::GMobjInfos.Alloc().Class = Ent;
           VClass::GMobjInfos[Idx].GameFilter = 0;
+          VClass::GMobjInfos[Idx].flags = 0;
         }
         VClass::GMobjInfos[Idx].DoomEdNum = value;
       } else if (Idx) {

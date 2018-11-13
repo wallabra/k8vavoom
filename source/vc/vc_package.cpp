@@ -222,6 +222,8 @@ public:
 VStream &operator << (VStream &Strm, mobjinfo_t &MI) {
   return Strm << STRM_INDEX(MI.DoomEdNum)
     << STRM_INDEX(MI.GameFilter)
+    << MI.flags
+    << MI.special << MI.args[0] << MI.args[1] << MI.args[2] << MI.args[3] << MI.args[4]
     << MI.Class;
 }
 
@@ -891,6 +893,18 @@ void VPackage::LoadObject (TLocation l) {
 VClass *VPackage::FindMObj (vint32 id) const {
   int len = MobjInfo.length();
   for (int f = 0; f < len; ++f) if (MobjInfo[f].DoomEdNum == id) return MobjInfo[f].Class;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+// VPackage::FindMObjInfo
+//
+//==========================================================================
+mobjinfo_t *VPackage::FindMObjInfo (vint32 id) {
+  int len = MobjInfo.length();
+  for (int f = 0; f < len; ++f) if (MobjInfo[f].DoomEdNum == id) return &MobjInfo[f];
   return nullptr;
 }
 
