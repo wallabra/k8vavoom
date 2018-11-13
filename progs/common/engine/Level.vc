@@ -253,6 +253,9 @@ native final void AddDecal (TVec org, name dectype, int side, line_t *li);
 native final void AddDecalById (TVec org, int id, int side, line_t *li);
 
 
+native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec, int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
+
+
 final int calcSecIdx (sector_t *sec) {
   if (!sec) return -1;
   //foreach (int f; 0..Sectors.length) if (&Sectors[f] == sec) return f;

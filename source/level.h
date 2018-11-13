@@ -411,6 +411,9 @@ private:
 
   void PostProcessForDecals ();
 
+  void processSoundSector (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
+  void doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
+
   DECLARE_FUNCTION(GetLineIndex)
 
   DECLARE_FUNCTION(PointInSector)
@@ -457,6 +460,8 @@ private:
 
   DECLARE_FUNCTION(AddDecal)
   DECLARE_FUNCTION(AddDecalById)
+
+  DECLARE_FUNCTION(doRecursiveSound)
 };
 
 void CalcLine (line_t *line);

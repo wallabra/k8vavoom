@@ -5648,14 +5648,18 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
 //**************************************************************************
 
 // huge levels can overflow stack, so use this array instead of recursive calls
+/*
 struct SoundSectorListItem {
   sector_t *sec;
   int sblock;
 }
 
 private transient array!SoundSectorListItem recSoundSectorList;
+*/
+private transient array!Entity recSoundSectorEntities; // will be collected in native code
 
 
+/*
 //==========================================================================
 //
 //  processRecursiveSoundSectorList
@@ -5734,11 +5738,11 @@ final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarge
 final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
       bool Splash, optional float maxdist, optional Entity emmiter)
 {
-  line_t *check;
-  sector_t *other;
+  //line_t *check;
+  //sector_t *other;
 
   // wake up all monsters in this sector
-  if (!sec || sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1) return; // already flooded
+  if (!sec || (sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1)) return; // already flooded
 
   sec->validcount = *Game.validcount;
   sec->soundtraversed = soundblocks+1;
@@ -5757,7 +5761,7 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
   //if (recSoundSectorList.length > 1) print("RECSOUND: len=%d", recSoundSectorList.length);
   recSoundSectorList.clear();
 
-  /*
+  /+
   sec->validcount = *Game.validcount;
   sec->soundtraversed = soundblocks+1;
   sec->SoundTarget = soundtarget;
@@ -5794,7 +5798,43 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
       RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
     }
   }
+  +/
+}
+*/
+
+final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
+      bool Splash, optional float maxdist, optional Entity emmiter)
+{
+  // wake up all monsters in this sector
+  if (!sec || sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1) return; // already flooded
+
+  recSoundSectorEntities.clear();
+  XLevel.doRecursiveSound(*Game.validcount, ref recSoundSectorEntities, sec, soundblocks, soundtarget, maxdist, (emmiter ? emmiter.Origin : vector(0, 0, 0)));
+
+  // process entities
+  //print("entities for sound processing: %d", recSoundSectorEntities.length);
+  // `Ent != soundtarget` already checked, and maxdist too
+  EntityEx stt = EntityEx(soundtarget);
+  if (Splash) {
+    foreach (Entity Ent; recSoundSectorEntities) {
+      EntityEx e = EntityEx(Ent);
+      if (e && !e.bNoSplashAlert) e.LastHeard = stt;
+    }
+  } else {
+    // slightly faster
+    foreach (Entity Ent; recSoundSectorEntities) {
+      EntityEx e = EntityEx(Ent);
+      e.LastHeard = stt;
+    }
+  }
+  /*
+  foreach (Entity Ent; recSoundSectorEntities) {
+    if (Ent != soundtarget && (!Splash || !EntityEx(Ent).bNoSplashAlert)) {
+      EntityEx(Ent).LastHeard = EntityEx(soundtarget);
+    }
+  }
   */
+  recSoundSectorEntities.clear();
 }
 
 
