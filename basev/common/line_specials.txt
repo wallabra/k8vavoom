@@ -42,6 +42,8 @@
 46  Floor_CrushStop
 47  Ceiling_MoveToValue
 49  GlassBreak
+50  ExtraFloor_LightOnly
+51  Sector_SetLink
 52  Scroll_Wall
 53  Line_SetTextureOffset
 54  Sector_ChangeFlags
