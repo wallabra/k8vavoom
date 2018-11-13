@@ -35,10 +35,15 @@ override void CreateTitle () {
   Img.bAutoSize = true;
   Img.SetOrigin(94, 2);
   Img.SetPic('m_doom');
-  auto ah = Img.Height-60;
+  //print("w=%d; iw=%d; h=%d; ih=%d; iy=%d; iey=%d", Width, Img.Width, Height, Img.Height, Img.Y, Img.Y+Img.Height);
+  //Img.SetOrigin((Width-Img.Width)/2, 2);
+  auto ah = Img.Height-default.ChoicesStartY;
   if (ah > 0) {
-    ChoicesStartY += ah;
-    Height = Height+ah;
+    ah = min(42, ah);
+    Img.Height = default.ChoicesStartY+ah;
+    ChoicesStartY = Img.Height+2;
+    Height = default.Height+ah+2;
+    //print("2:w=%d; iw=%d; h=%d; ih=%d; iy=%d; iey=%d; ah=%d", Width, Img.Width, Height, Img.Height, Img.Y, Img.Y+Img.Height, ah);
   }
 }
 
