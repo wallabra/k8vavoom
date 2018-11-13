@@ -598,186 +598,115 @@ void SB_DrawInventoryBar()
   }
 }
 
+
+private final int xfix (int x) { return (x == 640/2 ? GetVirtualWidth()/2 : x < 640/2 ? x : GetVirtualWidth()-(640-x)); }
+private final int yfix (int y) { return (y == 480/2 ? GetVirtualHeight()/2 : y < 480/2 ? y: GetVirtualHeight()-(480-y)); }
+
+
 //==========================================================================
 //
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
-
-void SB_DrawFullscreenStats()
-{
-  int i;
+void SB_DrawFullscreenStats () {
   int sb_mana1;
   int sb_mana2;
   int readyweapon;
 
-  if (!cl || !cl.MO)
-  {
-    return;
-  }
+  if (!cl || !cl.MO) return;
 
-  //  Health
-  if (cl.Health >= 25)
-  {
-    SB_DrawNumber9(50, 450, cl.Health, 0);
-  }
-  else
-  {
-    SB_DrawNumber9(50, 450, cl.Health, 1);
-  }
-  DrawPic(30, 490, pic_health, 0.6);
+  // health
+  SB_DrawNumber9(50, yfix(450), cl.Health, (cl.Health >= 25 ? 0 : 1));
+  DrawPic(30, yfix(490), pic_health, 0.6);
 
-  // Armor
-  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(
-    HexenArmor));
-  int TotalArmorPoints = !HArmor ? 0 :
-    ftoi((HArmor.Slots[0] + HArmor.Slots[1] + HArmor.Slots[2] +
-    HArmor.Slots[3] + HArmor.Slots[4]) / 5.0);
-  for (i = 0; i < 4; i++)
-  {
+  // armor
+  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(HexenArmor));
+  int TotalArmorPoints = (!HArmor ? 0 : int((HArmor.Slots[0]+HArmor.Slots[1]+HArmor.Slots[2]+HArmor.Slots[3]+HArmor.Slots[4])/5.0));
+  foreach (auto i; 0..4) {
     float ArmorPerc;
-    if (!HArmor || !HArmor.Slots[i])
-    {
-      continue;
-    }
-    else if (HArmor.Slots[i] <= (HArmor.SlotsIncrement[i] / 4.0))
-    {
-      ArmorPerc = 0.1998;
-    }
-    else if (HArmor.Slots[i] <= (HArmor.SlotsIncrement[i] / 2.0))
-    {
-      ArmorPerc = 0.3996;
-    }
-    else
-    {
-      ArmorPerc = 0.6;
-    }
-    DrawPic(120 + 31 * i, 490, pic_armor2[i], ArmorPerc);
+    if (!HArmor || !HArmor.Slots[i]) continue;
+         if (HArmor.Slots[i] <= HArmor.SlotsIncrement[i]/4.0) ArmorPerc = 0.1998;
+    else if (HArmor.Slots[i] <= HArmor.SlotsIncrement[i]/2.0) ArmorPerc = 0.3996;
+    else ArmorPerc = 0.6;
+    DrawPic(120+31*i, yfix(490), pic_armor2[i], ArmorPerc);
   }
-  SB_DrawNumber9(100 + 31 * i, 450, TotalArmorPoints, 0);
+  SB_DrawNumber9(100+31*4, yfix(450), TotalArmorPoints, 0);
 
-  //  Frags
-  if (ClGame.deathmatch)
-  {
-    SB_DrawNumber9(200, 450, cl.Frags, 0);
-  }
+  // frags
+  if (ClGame.deathmatch) SB_DrawNumber9(xfix(200), yfix(450), cl.Frags, 0);
 
-  if (cl.InventoryTime)
-  {
-    //  Inventory
+  if (cl.InventoryTime) {
+    // Inventory
     Inventory Item = cl.InvFirst;
-    for (i = 0; i < 7; i++)
-    {
-      DrawPic(210 + i * 31, 448, pic_artibox, 0.6);
-      if (Item)
-      {
-        DrawShadowedPic(209 + i * 31, 447,
-          R_RegisterPic(Item.IconName));
-        SB_DrawINumber(229 + i * 31, 468, Item.Amount);
-        if (Item == cl.InvPtr)
-        {
-          DrawPic(210 + i * 31, 447, pic_selectbox, 0.6);
-        }
+    foreach (auto i; 0..7) {
+      DrawPic(xfix(210)+i*31, yfix(448), pic_artibox, 0.6);
+      if (Item) {
+        DrawShadowedPic(xfix(209)+i*31, yfix(447), R_RegisterPic(Item.IconName));
+        SB_DrawINumber(xfix(229)+i*31, yfix(468), Item.Amount);
+        if (Item == cl.InvPtr) DrawPic(xfix(210)+i*31, yfix(447), pic_selectbox, 0.6);
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv())
-    {
-      DrawPic(200, 447, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
-    }
-    if (Item)
-    {
-      DrawPic(428, 447, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
-    }
-  }
-  else if (cl.InvPtr)
-  {
-    //  Ready artifact
-    DrawPic(546, 440, pic_artibox, 0.6);
-    DrawShadowedPic(544, 440, R_RegisterPic(cl.InvPtr.IconName));
-    SB_DrawINumber(567, 462, cl.InvPtr.Amount);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(xfix(200), yfix(447), pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
+    if (Item) DrawPic(xfix(428), yfix(447), pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
+  } else if (cl.InvPtr) {
+    // ready artifact
+    DrawPic(xfix(546), yfix(440), pic_artibox, 0.6);
+    DrawShadowedPic(xfix(544), yfix(440), R_RegisterPic(cl.InvPtr.IconName));
+    SB_DrawINumber(xfix(567), yfix(462), cl.InvPtr.Amount);
   }
 
-  //  Mana
-  Inventory ManaItem1 = cl.MO ? EntityEx(cl.MO).FindInventory(Mana1) : none;
-  Inventory ManaItem2 = cl.MO ? EntityEx(cl.MO).FindInventory(Mana2) : none;
-  if (!ManaItem1 || ManaItem1.Amount == 0)
-  {
-    // Draw Dim Mana icon
+  // mana
+  Inventory ManaItem1 = (cl.MO ? EntityEx(cl.MO).FindInventory(Mana1) : none);
+  Inventory ManaItem2 = (cl.MO ? EntityEx(cl.MO).FindInventory(Mana2) : none);
+  if (!ManaItem1 || ManaItem1.Amount == 0) {
+    // draw dim mana icon
     sb_mana1 = 0;
-  }
-  else
-  {
+  } else {
     sb_mana1 = 1;
   }
-  if (!ManaItem2 || ManaItem2.Amount == 0)
-  {
-    // Draw Dim Mana icon
+  if (!ManaItem2 || ManaItem2.Amount == 0) {
+    // draw dim mana icon
     sb_mana2 = 0;
-  }
-  else
-  {
+  } else {
     sb_mana2 = 1;
   }
 
-  // Update mana graphics based upon mana count/weapon type
-  if (cl.ReadyWeapon.AmmoType1 != Mana1 && cl.ReadyWeapon.AmmoType2 != Mana1)
-  {
-    sb_mana1 = 0;
-  }
-  if (cl.ReadyWeapon.AmmoType1 != Mana2 && cl.ReadyWeapon.AmmoType2 != Mana2)
-  {
-    sb_mana2 = 0;
-  }
+  // update mana graphics based upon mana count/weapon type
+  if (cl.ReadyWeapon.AmmoType1 != Mana1 && cl.ReadyWeapon.AmmoType2 != Mana1) sb_mana1 = 0;
+  if (cl.ReadyWeapon.AmmoType1 != Mana2 && cl.ReadyWeapon.AmmoType2 != Mana2) sb_mana2 = 0;
 
-  if (ManaItem1 && ManaItem1.Amount)
-  {
-    DrawPic(581, 442, pic_manadim1[sb_mana1], sb_mana1 ? 1.0 : 0.6);
-    SB_DrawNumber9(600, 442, ManaItem1.Amount, ManaItem1.Amount >= 25 ? 0 : 1, sb_mana1 ? 1.0 : 0.6);
+  if (ManaItem1 && ManaItem1.Amount) {
+    DrawPic(xfix(581), yfix(442), pic_manadim1[sb_mana1], (sb_mana1 ? 1.0 : 0.6));
+    SB_DrawNumber9(xfix(600), yfix(442), ManaItem1.Amount, (ManaItem1.Amount >= 25 ? 0 : 1), (sb_mana1 ? 1.0 : 0.6));
   }
-  if (ManaItem2 && ManaItem2.Amount)
-  {
-    DrawPic(581, 456, pic_manadim2[sb_mana2], sb_mana2 ? 1.0 : 0.6);
-    SB_DrawNumber9(600, 456, ManaItem2.Amount, ManaItem2.Amount >= 25 ? 0 : 1, sb_mana2 ? 1.0 : 0.6);
+  if (ManaItem2 && ManaItem2.Amount) {
+    DrawPic(xfix(581), yfix(456), pic_manadim2[sb_mana2], (sb_mana2 ? 1.0 : 0.6));
+    SB_DrawNumber9(xfix(600), yfix(456), ManaItem2.Amount, (ManaItem2.Amount >= 25 ? 0 : 1), (sb_mana2 ? 1.0 : 0.6));
   }
 }
+
 
 //==========================================================================
 //
 //  SB_DrawIcons
 //
 //==========================================================================
+void SB_DrawIcons () {
+  if (!cl.MO) return;
 
-void SB_DrawIcons()
-{
-  int frame;
-
-  if (!cl.MO)
-  {
-    return;
-  }
-
-  // Wings of wrath
+  // wings of wrath
   Powerup Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerFlight));
-  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-    !(ftoi(Pw.EffectTime * 35.0) & 16)))
-  {
-    frame = (ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15;
-    if (cl.MO.bFly)
-    {
-      if (hitCentreFrame && frame != 15 && frame != 0)
-      {
+  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
+    int frame = (ftoi(cl.MO.Level.XLevel.Time*35.0)/3)&15;
+    if (cl.MO.bFly) {
+      if (hitCentreFrame && frame != 15 && frame != 0) {
         frame = 15;
-      }
-      else
-      {
+      } else {
         hitCentreFrame = false;
       }
-    }
-    else
-    {
-      if (hitCentreFrame || frame == 15 || frame == 0)
-      {
+    } else {
+      if (hitCentreFrame || frame == 15 || frame == 0) {
         frame = 15;
         hitCentreFrame = true;
       }
@@ -785,71 +714,80 @@ void SB_DrawIcons()
     DrawPic(20, 19, pic_fly[frame]);
   }
 
-  // Speed Boots
+  // speed boots
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerSpeed));
-  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-    !(ftoi(Pw.EffectTime * 35.0) & 16)))
-  {
-    DrawPic(60, 19, pic_boot[(ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15]);
+  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
+    DrawPic(60, 19, pic_boot[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 
-  // Defensive power
+  // defensive power
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerInvulnerable));
-  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-    !(ftoi(Pw.EffectTime * 35.0) & 16)))
-  {
-    DrawPic(580, 19, pic_shld[(ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15]);
+  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
+    DrawPic(xfix(580), 19, pic_shld[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 
-  // Minotaur Active
+  // minotaur active
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerMinotaur));
-  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-    !(ftoi(Pw.EffectTime * 35.0) & 16)))
-  {
-    DrawPic(620, 19, pic_mino[(ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15]);
+  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
+    DrawPic(xfix(620), 19, pic_mino[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 }
+
 
 //==========================================================================
 //
 //  SB_DrawPause
 //
 //==========================================================================
-
-void SB_DrawPause()
-{
-  if (ClGame.Game.bPaused && GetCvar('draw_pause'))
-  {
-    DrawPic(320, ClGame.maxclients > 1 ? 140 : 40, pic_paused);
+void SB_DrawPause () {
+  if (ClGame.Game.bPaused && GetCvar('draw_pause')) {
+    DrawPic(GetVirtualWidth()/2, (ClGame.maxclients > 1 ? 140 : 40), pic_paused);
   }
 }
+
 
 //==========================================================================
 //
 //  SB_Drawer
 //
 //==========================================================================
-
-override void SB_Drawer(int sb_view)
-{
+override void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
   if (sb_view == SB_VIEW_FULLSCREEN) {
+    if (Width != ovw) Width = ovw;
+    if (Height != ovh) Height = ovh;
     SB_DrawFullscreenStats();
   } else if (cl.InventoryTime) {
+    // this is broken for now
+    SetVirtualScreen(640, 480);
+    if (Width != 640) Width = 640;
+    if (Height != 480) Height = 480;
     SB_DrawInventoryBar();
   } else if (sb_view == SB_VIEW_AUTOMAP) {
+    // this is broken for now
+    SetVirtualScreen(640, 480);
+    if (Width != 640) Width = 640;
+    if (Height != 480) Height = 480;
     SB_DrawKeyBar();
+    SetVirtualScreen(ovw, ovh);
   } else {
+    // this is broken for now
+    SetVirtualScreen(640, 480);
+    if (Width != 640) Width = 640;
+    if (Height != 480) Height = 480;
     SB_DrawMainBar();
+    SetVirtualScreen(ovw, ovh);
   }
 
-  //  Animated icons
+  // animated icons
   SB_DrawIcons();
-
   SB_DrawPause();
 }
+
 
 //==========================================================================
 //

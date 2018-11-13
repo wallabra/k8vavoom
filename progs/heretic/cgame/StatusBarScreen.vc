@@ -383,8 +383,8 @@ void SB_DrawMainBar()
 }
 
 
-private final int xfix (int x) { return GetVirtualWidth()-(640-x); }
-private final int yfix (int y) { return GetVirtualHeight()-(480-y); }
+private final int xfix (int x) { return (x == 640/2 ? GetVirtualWidth()/2 : x < 640/2 ? x : GetVirtualWidth()-(640-x)); }
+private final int yfix (int y) { return (y == 480/2 ? GetVirtualHeight()/2 : y < 480/2 ? y: GetVirtualHeight()-(480-y)); }
 
 
 //==========================================================================
@@ -408,7 +408,7 @@ void SB_DrawFullscreenStats () {
   }
 
   // frags
-  if (ClGame.deathmatch) SB_DrawNumber9(200, yfix(450), cl.Frags);
+  if (ClGame.deathmatch) SB_DrawNumber9(xfix(200), yfix(450), cl.Frags);
 
   // ammo
   if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1) {
@@ -438,13 +438,13 @@ void SB_DrawFullscreenStats () {
     foreach (auto i; 0..7) {
       DrawPic(210+i*31, yfix(448), pic_artibox, 0.6);
       if (Item) {
-        DrawShadowedPic(210+i*31, yfix(448), R_RegisterPic(Item.IconName));
-        SB_DrawINumber(229+i*31, yfix(470), Item.Amount);
-        if (Item == cl.InvPtr) DrawPic(210+i*31, yfix(477), pic_selectbox, 0.6);
+        DrawShadowedPic(xfix(210)+i*31, yfix(448), R_RegisterPic(Item.IconName));
+        SB_DrawINumber(xfix(229)+i*31, yfix(470), Item.Amount);
+        if (Item == cl.InvPtr) DrawPic(xfix(210)+i*31, yfix(477), pic_selectbox, 0.6);
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(198, yfix(447), pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1], 0.6);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(xfix(198), yfix(447), pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
     if (Item) DrawPic(xfix(429), yfix(447), pic_invgemr[!(int(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
   } else if (cl.InvPtr) {
     // ready artifact
@@ -454,42 +454,27 @@ void SB_DrawFullscreenStats () {
   }
 }
 
+
 //==========================================================================
 //
 //  SB_DrawIcons
 //
 //==========================================================================
+void SB_DrawIcons () {
+  if (!cl.MO) return;
 
-void SB_DrawIcons()
-{
-  int frame;
-
-  if (!cl.MO)
-  {
-    return;
-  }
-
-  //  Artifact rotating icons
+  // artifact rotating icons
   Powerup Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerFlight));
-  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-    !(ftoi(2.0 * Pw.EffectTime) & 1)))
-  {
-    frame = (ftoi(cl.MO.Level.XLevel.Time * 35.0) /* ClGame.GLevel.TicTime */ / 3) & 15;
-    if (cl.MO.bFly)
-    {
-      if (hitCentreFrame && frame != 15 && frame != 0)
-      {
+  if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(2.0*Pw.EffectTime)&1))) {
+    int frame = (int(cl.MO.Level.XLevel.Time*35.0) /* ClGame.GLevel.TicTime */ / 3)&15;
+    if (cl.MO.bFly) {
+      if (hitCentreFrame && frame != 15 && frame != 0) {
         frame = 15;
-      }
-      else
-      {
+      } else {
         hitCentreFrame = false;
       }
-    }
-    else
-    {
-      if (hitCentreFrame || frame == 15 || frame == 0)
-      {
+    } else {
+      if (hitCentreFrame || frame == 15 || frame == 0) {
         frame = 15;
         hitCentreFrame = true;
       }
@@ -498,33 +483,29 @@ void SB_DrawIcons()
   }
 
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerWeaponLevel2));
-  if (Pw && !cl.MorphTime && (Pw.EffectTime > Player::BLINKTHRESHOLD ||
-    !(ftoi(2.0 * Pw.EffectTime) & 1)))
-  {
-    DrawPic(620, 17, pic_book[(ftoi(cl.MO.Level.XLevel.Time * 35.0) / 3) & 15]);
+  if (Pw && !cl.MorphTime && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(2.0*Pw.EffectTime)&1))) {
+    DrawPic(xfix(620), 17, pic_book[(ftoi(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 }
+
 
 //==========================================================================
 //
 //  SB_DrawPause
 //
 //==========================================================================
-
-void SB_DrawPause()
-{
-  if (ClGame.Game.bPaused && GetCvar('draw_pause'))
-  {
-    DrawPic(GetVirtualWidth()/2, ClGame.maxclients > 1 ? 140 : 40, pic_paused);
+void SB_DrawPause () {
+  if (ClGame.Game.bPaused && GetCvar('draw_pause')) {
+    DrawPic(GetVirtualWidth()/2, (ClGame.maxclients > 1 ? 140 : 40), pic_paused);
   }
 }
+
 
 //==========================================================================
 //
 //  SB_Drawer
 //
 //==========================================================================
-
 override void SB_Drawer(int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
