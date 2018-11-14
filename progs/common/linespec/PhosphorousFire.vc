@@ -94,10 +94,11 @@ final void A_Burnination()
   }
 }
 
+//???k8: first spawn state is a noop; dunno if this is intended; i put "nodelay" there
 states
 {
 Spawn:
-  BNG3 B 2 Bright A_Explode
+  BNG3 B 2 Bright NoDelay A_Explode
   BNG3 C 2 Bright A_Countdown
   FLBE A 2 Bright A_Burnination
   FLBE B 2 Bright A_Countdown
