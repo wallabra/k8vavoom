@@ -167,7 +167,7 @@ decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
 cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
-menudef.txt   @CMAKE_CURRENT_SOURCE_DIR@/menudef.txt
+modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
 
 
 // models

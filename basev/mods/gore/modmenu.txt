@@ -1,0 +1,32 @@
+menudef GoreModMenu {
+  title = "Gore Mod Options";
+
+  option bool {
+    title = "Ceiling blood";
+    cvar = k8GoreOpt_CeilBlood;
+    help = "Spawn blood drops on ceiling?";
+  }
+
+  option enum {
+    title = "Blood amount";
+    cvar = k8GoreOpt_BloodAmount;
+    list {
+      "Some",
+      "Normal",
+      "Alot",
+      "Bloodbath",
+    }
+    help = "Amount of blood to spawn.";
+  }
+}
+
+
+// advanced video options menu
+menudef OptionsMenu extend {
+  header "Gore Mod";
+
+  option submenu {
+    title = "Gore Mod Options";
+    submenu = GoreModMenu;
+  }
+}
