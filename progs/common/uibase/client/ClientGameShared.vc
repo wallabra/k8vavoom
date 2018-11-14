@@ -519,14 +519,18 @@ final void ForceMenuOff () {
 //
 //==========================================================================
 final void MessageBoxStartMessage (string text, int type, bool input) {
+  // split too long text
+  GRoot.SetFont('smallfont');
+  msgBoxW = GRoot.TextWidth(text);
+  if (msgBoxW > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
+
   messageToPrint = true;
   messageString = text;
   messageType = type;
   messageNeedsInput = input;
 
-  GRoot.SetFont('smallfont');
-  msgBoxW = min(304, (GRoot.TextWidth(messageString)+16)&~15);
-  msgBoxH = min(184, (GRoot.TextHeight(messageString)+16)&~15);
+  msgBoxW = min(/*304*/GetVirtualWidth()-16, (GRoot.TextWidth(messageString)+16)&~15);
+  msgBoxH = min(/*184*/GetVirtualHeight()-16, (GRoot.TextHeight(messageString)+16)&~15);
   msgBoxX = (GetVirtualWidth()-msgBoxW)/2;
   msgBoxY = (GetVirtualHeight()-msgBoxH)/2;
 
