@@ -2480,9 +2480,14 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     States.Append(State);
 
     // sprite name
+    bool totalKeepSprite = false; // remember "----" for other frames of this state
+    bool keepSpriteBase = false; // remember "----" or "####" for other frames of this state
+
     if (TmpName.Length() != 4) sc->Error(va("Invalid sprite name '%s'", *TmpName));
     if (TmpName == "####" || TmpName == "----") {
       State->SpriteName = NAME_None; // don't change
+      keepSpriteBase = true;
+      if (TmpName == "----") totalKeepSprite = true;
     } else {
       State->SpriteName = *TmpName.toLowerCase();
     }
@@ -2494,18 +2499,19 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // check first frame
     char FChar = VStr::ToUpper(sc->String[0]);
-    if (FChar == '#' || FChar == '-') {
+    if (totalKeepSprite || FChar == '#') {
+      // frame letter is irrelevant
       State->Frame = VState::FF_DONTCHANGE;
-    } else {
-      if (FChar < 'A' || FChar > ']') {
-        if (FChar < 33 || FChar > 127) {
-          sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FChar&0xff)));
-        } else {
-          sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
-        }
+    } else if (FChar < 'A' || FChar > ']') {
+      if (FChar < 33 || FChar > 127) {
+        sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FChar&0xff)));
+      } else {
+        sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
       }
+    } else {
       State->Frame = FChar-'A';
     }
+    if (keepSpriteBase) State->Frame |= VState::FF_KEEPSPRITE;
 
     sc->ResetCrossed();
     // tics
@@ -2647,27 +2653,29 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
 
     for (int i = 1; i < FramesString.Length(); ++i) {
+      vint32 frm = (State->Frame&~(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE));
+
       char FSChar = VStr::ToUpper(FramesString[i]);
-      vint32 frm;
-      if (FSChar == '#' || FSChar == '-') {
+      if (totalKeepSprite || FSChar == '#') {
+        // frame letter is irrelevant
         frm = VState::FF_DONTCHANGE;
-      } else {
-        if (FSChar < 'A' || FSChar > ']') {
-          if (FSChar < 33 || FSChar > 127) {
-            sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FSChar&0xff)));
-          } else {
-            sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FSChar));
-          }
+      } else if (FSChar < 'A' || FSChar > ']') {
+        if (FSChar < 33 || FSChar > 127) {
+          sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FSChar&0xff)));
+        } else {
+          sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FSChar));
         }
-        frm = FSChar-'A';
+      } else {
+        frm |= FSChar-'A';
       }
+      if (keepSpriteBase) frm |= VState::FF_KEEPSPRITE;
 
       // create a new state
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
       // add temporary labels
       s2->SpriteName = State->SpriteName;
-      s2->Frame = (State->Frame&~VState::FF_FRAMEMASK)|frm;
+      s2->Frame = frm;
       s2->Time = State->Time;
       s2->TicType = State->TicType;
       s2->Arg1 = State->Arg1;

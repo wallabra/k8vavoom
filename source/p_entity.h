@@ -144,6 +144,7 @@ class VEntity : public VThinker {
 
   VState *State;
   VState *DispState;
+  vint32 DispSpriteFrame; // high 8 bits is frame
   float StateTime; // state tic counter
 
   // more drawing info

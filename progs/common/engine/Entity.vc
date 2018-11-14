@@ -214,9 +214,10 @@ TVec      Velocity;
 
 TAVec     Angles;       // orientation
 
-readonly state  State;
-readonly state  DispState;
-float     StateTime;      // state tic counter
+readonly state State;
+readonly state DispState;
+readonly int DispSpriteFrame; // high 8 bits is frame
+float StateTime; // state tic counter
 
 //More drawing info.
 ubyte      SpriteType;       //  How to draw sprite

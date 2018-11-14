@@ -185,6 +185,7 @@ class VBasePlayer : public VGameObject
 
   // Overlay view sprites (gun, etc).
   VViewState ViewStates[NUMPSPRITES];
+  vint32 DispSpriteFrame; // see entity code for explanation
   float PSpriteSY;
 
   float WorldTimer;       // total time the player's been playing

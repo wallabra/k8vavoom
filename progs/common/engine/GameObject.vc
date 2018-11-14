@@ -59,11 +59,12 @@ enum {
 
   FF_FULLBRIGHT = 0x00080, // flag in Frame
   FF_CANRAISE   = 0x00100, // flag in Frame
-  FF_DONTCHANGE = 0x00200, // this frame is ignored in offset calculations
+  FF_DONTCHANGE = 0x00200, // keep old frame
   FF_SKIPOFFS   = 0x00400, // skip this state in offset calculation
   FF_SKIPMODEL  = 0x00800, // skip this state in model frame numbering
   FF_FAST       = 0x01000, // flag in Frame
   FF_SLOW       = 0x02000, // flag in Frame
+  FF_KEEPSPRITE = 0x04000, // sprite number can be replaced, so we need to store this flag
 };
 
 enum {

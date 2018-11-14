@@ -299,7 +299,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
     return;
   }
 
-  sprframe = &sprdef->spriteframes[DispState->Frame & VState::FF_FRAMEMASK];
+  sprframe = &sprdef->spriteframes[DispState->Frame&VState::FF_FRAMEMASK];
 
   int lump;
   bool flip;

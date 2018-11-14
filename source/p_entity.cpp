@@ -221,14 +221,25 @@ bool VEntity::SetState (VState *InState) {
       return false;
     }
 
-    if (st->SpriteIndex == 1 || (st->Frame&VState::FF_DONTCHANGE) != 0) {
-      // 1 is ----, which is "do not change sprite"
-      if ((EntityFlags&EF_UseDispState) == 0) {
-        DispState = State;
-        EntityFlags |= EF_UseDispState;
-      }
-      if (st->SpriteIndex != 1) DispState->SpriteIndex = st->SpriteIndex;
-      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispState->Frame = st->Frame;
+    // remember current sprite and frame
+    if ((st->Frame&VState::FF_KEEPSPRITE) == 0) DispSpriteFrame = (DispSpriteFrame&~0x00ffffff)|st->SpriteIndex;
+    if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame = (DispSpriteFrame&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
+
+    if (st->SpriteIndex == 1 || (st->Frame&(VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE)) != 0) {
+      // 1 is "----" or "####", which is "do not change sprite" (it won't last long, though)
+      //if ((EntityFlags&EF_UseDispState) == 0)
+      DispState = st;
+      EntityFlags |= EF_UseDispState;
+      // setup new sprite and frame
+      /*
+      fprintf(stderr, "KEEP FLAGS: keepsprite=%d; keepframe=%d; oldsprite=%d; oldframe=%d\n",
+        (st->Frame&VState::FF_DONTCHANGE ? 1 : 0),
+        (st->Frame&VState::FF_KEEPSPRITE ? 1 : 0),
+        DispSpriteFrame&0x00ffffff,
+        ((DispSpriteFrame>>24)&VState::FF_FRAMEMASK));
+      */
+      DispState->SpriteIndex = DispSpriteFrame&0x00ffffff;
+      DispState->Frame = (DispState->Frame&~VState::FF_FRAMEMASK)|((DispSpriteFrame>>24)&VState::FF_FRAMEMASK);
     } else {
       EntityFlags &= ~EF_UseDispState;
     }
