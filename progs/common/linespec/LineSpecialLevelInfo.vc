@@ -916,7 +916,7 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
     buttonSuccess = EV_ThingDamage(Arg1, Arg2, Arg3, Arg4, Arg5, A);
     break;
   case LNSPEC_QuakeTremor:
-    buttonSuccess = A_LocalQuake(Arg1, Arg2, Arg3, Arg4, Arg5);
+    buttonSuccess = A_LocalQuake(Arg1, Arg2, Arg3, Arg4, Arg5, A);
     break;
   case LNSPEC_ThingMove:
     buttonSuccess = EV_ThingMove(Arg1, Arg2, Arg3, Arg4, Arg5, A);
@@ -6324,15 +6324,33 @@ final bool EV_StartConversation(int Arg1, int Arg2, int Arg3, int Arg4,
 //  A_LocalQuake
 //
 //===========================================================================
-final bool A_LocalQuake(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
+final bool A_LocalQuake(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entity Activator) {
   QuakeFocus focus;
   EntityEx target;
   int success = false;
 
+  //print("A_LocalQuake: intensity=%s; dur=%s; dmgradius=%s; tremorradius=%s; tid=%s", Arg1, Arg2, Arg3, Arg4, Arg5);
+
+  if (Arg5 == 0 && Activator) {
+    // activator
+    //print(" (a)spawning quaker for '%C'", Activator);
+    focus = Spawn(QuakeFocus, Activator.Origin);
+    if (focus) {
+      //print("  (a)spawned quaker for '%C'", Activator);
+      focus.Richters = Arg1;
+      focus.QuakeDuration = Arg2 >> 1;  // decremented every 2 tics
+      focus.DamageRadius = itof(Arg3) * 64.0;
+      focus.TremorRadius = itof(Arg4) * 64.0;
+      success = true;
+    }
+  }
+
   // Find all quake foci
   for (target = EntityEx(FindMobjFromTID(Arg5, none)); target; target = EntityEx(FindMobjFromTID(Arg5, target))) {
+    //print(" spawning quaker for '%C'", target);
     focus = Spawn(QuakeFocus, target.Origin);
     if (focus) {
+      //print("  spawned quaker for '%C'", target);
       focus.Richters = Arg1;
       focus.QuakeDuration = Arg2 >> 1;  // decremented every 2 tics
       focus.DamageRadius = itof(Arg3) * 64.0;
