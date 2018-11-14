@@ -2486,6 +2486,49 @@ void VParser::ParseStates (VClass *InClass) {
         Lex.Expect(TK_RParen);
         continue;
       }
+      if (VStr::ICmp(*Lex.Name, "NoDelay") == 0) {
+        Lex.NextToken();
+        if (needDummySpawnState) {
+          // there were no states after the label, insert dummy one
+          VState *dupState = new VState(va("S_%d", StateIdx++), InClass, TmpLoc);
+          InClass->AddState(dupState);
+          // copy real state data to duplicate one (it will be used as new "real" state)
+          dupState->SpriteName = s->SpriteName;
+          dupState->Frame = s->Frame;
+          dupState->Time = s->Time;
+          dupState->TicType = s->TicType;
+          dupState->Arg1 = s->Arg1;
+          dupState->Arg2 = s->Arg2;
+          dupState->Misc1 = s->Misc1;
+          dupState->Misc2 = s->Misc2;
+          dupState->LightName = s->LightName;
+          dupState->Function = s->Function;
+          dupState->FunctionName = s->FunctionName;
+          // dummy out "real" state (we copied all necessary data to duplicate one here)
+          s->Frame = (s->Frame&(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE))|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+          s->Time = 0;
+          s->TicType = VState::TCK_Normal;
+          s->Arg1 = 0;
+          s->Arg2 = 0;
+          s->LightName = VStr();
+          s->Function = nullptr;
+          s->FunctionName = NAME_None;
+          // link previous state
+          if (PrevState) PrevState->NextState = s;
+          // assign state to the labels
+          for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
+            InClass->StateLabelDefs[i].State = s;
+            LoopStart = s;
+          }
+          NewLabelsStart = InClass->StateLabelDefs.Num(); // no current label
+          PrevState = s;
+          // and use duplicate state as a new state
+          s = dupState;
+          //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
+          needDummySpawnState = false;
+        }
+        continue;
+      }
       break;
     }
 
@@ -2524,45 +2567,7 @@ void VParser::ParseStates (VClass *InClass) {
       }
     }
 
-    if (needDummySpawnState && (s->Function && s->FunctionName != NAME_None)) {
-      // there were no states after the label, insert dummy one
-      VState *dupState = new VState(va("S_%d", StateIdx++), InClass, TmpLoc);
-      InClass->AddState(dupState);
-      // copy real state data to duplicate one (it will be used as new "real" state)
-      dupState->SpriteName = s->SpriteName;
-      dupState->Frame = s->Frame;
-      dupState->Time = s->Time;
-      dupState->TicType = s->TicType;
-      dupState->Arg1 = s->Arg1;
-      dupState->Arg2 = s->Arg2;
-      dupState->Misc1 = s->Misc1;
-      dupState->Misc2 = s->Misc2;
-      dupState->LightName = s->LightName;
-      dupState->Function = s->Function;
-      dupState->FunctionName = s->FunctionName;
-      // dummy out "real" state (we copied all necessary data to duplicate one here)
-      s->Frame = (s->Frame&(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE))|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
-      s->Time = 0;
-      s->TicType = VState::TCK_Normal;
-      s->Arg1 = 0;
-      s->Arg2 = 0;
-      s->LightName = VStr();
-      s->Function = nullptr;
-      s->FunctionName = NAME_None;
-      // link previous state
-      if (PrevState) PrevState->NextState = s;
-      // assign state to the labels
-      for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
-        InClass->StateLabelDefs[i].State = s;
-        LoopStart = s;
-      }
-      NewLabelsStart = InClass->StateLabelDefs.Num(); // no current label
-      PrevState = s;
-      // and use duplicate state as a new state
-      s = dupState;
-      //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
-    }
-    needDummySpawnState = false;
+    needDummySpawnState = false; // anyway
 
     // link previous state
     if (PrevState) PrevState->NextState = s;
