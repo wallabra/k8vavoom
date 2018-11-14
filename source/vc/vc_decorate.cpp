@@ -253,8 +253,6 @@ protected:
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VExpression *ParseExpressionPriority13 (VScriptParser *sc, VClass *Class);
-static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class);
-static VStatement *CheckParseSetUserVar (VScriptParser *sc, VClass *Class);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1170,6 +1168,66 @@ static void SkipBlock (VScriptParser *sc, int Level) {
 
 //==========================================================================
 //
+//  CheckParseSetUserVarExpr
+//
+//==========================================================================
+static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, VStr FuncName) {
+  if (FuncName.ICmp("A_SetUserVar") == 0 || FuncName.ICmp("A_SetUserVarFloat") == 0) {
+    auto stloc = sc->GetLoc();
+    sc->Expect("(");
+    sc->ExpectString();
+    VStr varName = sc->String;
+    VStr uvname = sc->String.toLowerCase();
+    if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
+    VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
+    if (!op1) sc->Error("decorate parsing error");
+    sc->Expect(",");
+    VExpression *op2 = ParseExpressionPriority13(sc, Class);
+    if (!op2) sc->Error("decorate parsing error");
+    sc->Expect(")");
+    // create assignment
+    //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
+    return new VAssignment(VAssignment::Assign, op1, op2, stloc);
+  } else if (FuncName.ICmp("A_SetUserArray") == 0 || FuncName.ICmp("A_SetUserArrayFloat") == 0) {
+    auto stloc = sc->GetLoc();
+    sc->Expect("(");
+    sc->ExpectString();
+    VStr varName = sc->String;
+    VStr uvname = sc->String.toLowerCase();
+    if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
+    VExpression *uvar = new VDecorateSingleName(*sc->String, sc->GetLoc());
+    sc->Expect(",");
+    // index
+    VExpression *idx = ParseExpressionPriority13(sc, Class);
+    if (!idx) sc->Error("decorate parsing error");
+    sc->Expect(",");
+    // value
+    VExpression *val = ParseExpressionPriority13(sc, Class);
+    if (!val) sc->Error("decorate parsing error");
+    sc->Expect(")");
+    VArrayElement *ael = new VArrayElement(uvar, idx, stloc);
+    // create assignment
+    //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
+    return new VAssignment(VAssignment::Assign, ael, val, stloc);
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  CheckParseSetUserVarStmt
+//
+//==========================================================================
+static VStatement *CheckParseSetUserVarStmt (VScriptParser *sc, VClass *Class, VStr FuncName) {
+  VExpression *asse = CheckParseSetUserVarExpr(sc, Class, FuncName);
+  if (!asse) return nullptr;
+  return new VExpressionStatement(asse);
+}
+
+
+//==========================================================================
+//
 //  ParseFunCallWithName
 //
 //==========================================================================
@@ -1256,25 +1314,13 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
 
 //==========================================================================
 //
-//  ParseFunCall
-//
-//==========================================================================
-static VMethod *ParseFunCall (VScriptParser *sc, VClass *Class, int &NumArgs, VExpression **Args, bool gotParen=false) {
-  // get function name and parse arguments
-  VStr FuncName = sc->String;
-  return ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, gotParen);
-}
-
-
-//==========================================================================
-//
 //  ParseMethodCall
 //
 //==========================================================================
-static VExpression *ParseMethodCall (VScriptParser *sc, VStr Name, TLocation Loc) {
+static VExpression *ParseMethodCall (VScriptParser *sc, VStr Name, TLocation Loc, bool parenEaten=true) {
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = 0;
-  VMethod *Func = ParseFunCallWithName(sc, Name, decoClass, NumArgs, Args, true); // got paren
+  VMethod *Func = ParseFunCallWithName(sc, Name, decoClass, NumArgs, Args, parenEaten); // got paren
   /*
   if (Name.ICmp("random") == 0) {
     fprintf(stderr, "*** RANDOM; NumArgs=%d (%s); func=%p (%s, %s)\n", NumArgs, *sc->GetLoc().toStringNoCol(), Func, *Args[0]->toString(), *Args[1]->toString());
@@ -1343,6 +1389,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
       sc->Expect("]");
     }
     // special argument parsing
+    /*
     if (Name.ICmp("GetCvar") == 0) {
       sc->Expect("(");
       auto vnloc = sc->GetLoc();
@@ -1354,7 +1401,11 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
       Args[0] = new VNameLiteral(VName(*vname), vnloc);
       return new VCastOrInvocation(VName("GetCvarF"), l, 1, Args);
     }
-    if (sc->Check("(")) return ParseMethodCall(sc, Name, l);
+    */
+    if (sc->Check("(")) return ParseMethodCall(sc, Name, l, true); // paren eaten
+    if (sc->String.length() > 2 && sc->String[1] == '_' && (sc->String[0] == 'A' || sc->String[0] == 'a')) {
+      return ParseMethodCall(sc, Name, l, false); // paren not eaten
+    }
     return new VDecorateSingleName(Name, l);
   }
 
@@ -1711,68 +1762,6 @@ static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
 
 //==========================================================================
 //
-//  CheckParseSetUserVarExpr
-//
-//==========================================================================
-static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class) {
-  if (sc->String.ICmp("A_SetUserVar") == 0 || sc->String.ICmp("A_SetUserVarFloat") == 0) {
-    sc->CheckIdentifier();
-    auto stloc = sc->GetLoc();
-    sc->Expect("(");
-    sc->ExpectString();
-    VStr varName = sc->String;
-    VStr uvname = sc->String.toLowerCase();
-    if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-    VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
-    if (!op1) sc->Error("decorate parsing error");
-    sc->Expect(",");
-    VExpression *op2 = ParseExpressionPriority13(sc, Class);
-    if (!op2) sc->Error("decorate parsing error");
-    sc->Expect(")");
-    // create assignment
-    //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
-    return new VAssignment(VAssignment::Assign, op1, op2, stloc);
-  } else if (sc->String.ICmp("A_SetUserArray") == 0 || sc->String.ICmp("A_SetUserArrayFloat") == 0) {
-    sc->CheckIdentifier();
-    auto stloc = sc->GetLoc();
-    sc->Expect("(");
-    sc->ExpectString();
-    VStr varName = sc->String;
-    VStr uvname = sc->String.toLowerCase();
-    if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-    VExpression *uvar = new VDecorateSingleName(*sc->String, sc->GetLoc());
-    sc->Expect(",");
-    // index
-    VExpression *idx = ParseExpressionPriority13(sc, Class);
-    if (!idx) sc->Error("decorate parsing error");
-    sc->Expect(",");
-    // value
-    VExpression *val = ParseExpressionPriority13(sc, Class);
-    if (!val) sc->Error("decorate parsing error");
-    sc->Expect(")");
-    VArrayElement *ael = new VArrayElement(uvar, idx, stloc);
-    // create assignment
-    //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
-    return new VAssignment(VAssignment::Assign, ael, val, stloc);
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  CheckParseSetUserVar
-//
-//==========================================================================
-static VStatement *CheckParseSetUserVar (VScriptParser *sc, VClass *Class) {
-  VExpression *asse = CheckParseSetUserVarExpr(sc, Class);
-  if (!asse) return nullptr;
-  return new VExpressionStatement(asse);
-}
-
-
-//==========================================================================
-//
 //  ParseFunCallAsStmt
 //
 //==========================================================================
@@ -1781,15 +1770,14 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
   //auto actionLoc = sc->GetLoc();
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = 0;
-  VStr FuncName = sc->String;
-
-  auto stloc = sc->GetLoc();
-
-  VStatement *suvst = CheckParseSetUserVar(sc, Class);
-  if (suvst) return suvst;
-  //fprintf(stderr, "***1:<%s>\n", *sc->String);
 
   sc->ExpectIdentifier();
+  VStr FuncName = sc->String;
+  auto stloc = sc->GetLoc();
+
+  VStatement *suvst = CheckParseSetUserVarStmt(sc, Class, FuncName);
+  if (suvst) return suvst;
+  //fprintf(stderr, "***1:<%s>\n", *sc->String);
 
   // assign?
   if (inCodeBlock) {
@@ -1813,7 +1801,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     }
   }
 
-  VMethod *Func = ParseFunCall(sc, Class, NumArgs, Args);
+  VMethod *Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
   //fprintf(stderr, "***2:<%s>\n", *sc->String);
 
   VExpression *callExpr = nullptr;
@@ -1828,68 +1816,6 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     callExpr = Expr;
   }
   return new VExpressionStatement(new VDropResult(callExpr));
-}
-
-
-//==========================================================================
-//
-//  ParseActionCall
-//
-//  parse single decorate action
-//
-//==========================================================================
-static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
-  // get function name and parse arguments
-  auto actionLoc = sc->GetLoc();
-  VExpression *Args[VMethod::MAX_PARAMS+1];
-  int NumArgs = 0;
-  VStr FuncName = sc->String;
-  VMethod *Func = nullptr;
-
-  VStatement *suvst = CheckParseSetUserVar(sc, Class);
-  if (suvst) {
-    VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-    M->Flags = FUNC_Final;
-    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-    M->ReturnType = VFieldType(TYPE_Void);
-    M->Statement = suvst;
-    M->NumParams = 0;
-    //M->ParamsSize = 1;
-    Class->AddMethod(M);
-    M->Define();
-    Func = M;
-  } else {
-    Func = ParseFunCall(sc, Class, NumArgs, Args);
-    //fprintf(stderr, "<%s>\n", *FuncNameLower);
-    if (!Func) {
-      GCon->Logf("ERROR: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
-      // if function is not found, it means something is wrong
-      // in that case we need to free argument expressions
-      for (int i = 0; i < NumArgs; ++i) {
-        if (Args[i]) {
-          delete Args[i];
-          Args[i] = nullptr;
-        }
-      }
-    } else if (Func->NumParams || NumArgs || FuncName.ICmp("a_explode") == 0) {
-      VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
-      Expr->CallerState = State;
-      Expr->MultiFrameState = (FramesString.Length() > 1);
-      VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
-      VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-      M->Flags = FUNC_Final;
-      M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-      M->ReturnType = VFieldType(TYPE_Void);
-      M->Statement = Stmt;
-      //M->ParamsSize = 1;
-      M->NumParams = 0;
-      Class->AddMethod(M);
-      M->Define();
-      Func = M;
-    }
-  }
-
-  State->Function = Func;
 }
 
 
@@ -2048,17 +1974,81 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, c
     M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
     M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = stmt;
-    //M->ParamsSize = 1;
     M->NumParams = 0;
     Class->AddMethod(M);
-    //fprintf(stderr, "000: PS=%d\n", M->ParamsSize);
     M->Define();
-    //fprintf(stderr, "001: PS=%d\n", M->ParamsSize);
     State->Function = M;
   } else {
     delete stmt;
     State->Function = nullptr;
   }
+}
+
+
+//==========================================================================
+//
+//  ParseActionCall
+//
+//  parse single decorate action
+//
+//==========================================================================
+static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+  // get function name and parse arguments
+  //fprintf(stderr, "!!!***000: <%s> (%s)\n", *sc->String, *FuncName);
+  //fprintf(stderr, "!!!***000: <%s>\n", *sc->String);
+  sc->ExpectIdentifier();
+  //fprintf(stderr, "!!!***001: <%s>\n", *sc->String);
+
+  VExpression *Args[VMethod::MAX_PARAMS+1];
+  int NumArgs = 0;
+  auto actionLoc = sc->GetLoc();
+  VStr FuncName = sc->String;
+  VMethod *Func = nullptr;
+
+  VStatement *suvst = CheckParseSetUserVarStmt(sc, Class, FuncName);
+  if (suvst) {
+    VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+    M->Flags = FUNC_Final;
+    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
+    M->ReturnType = VFieldType(TYPE_Void);
+    M->Statement = suvst;
+    M->NumParams = 0;
+    //M->ParamsSize = 1;
+    Class->AddMethod(M);
+    M->Define();
+    Func = M;
+  } else {
+    Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
+    //fprintf(stderr, "<%s>\n", *FuncNameLower);
+    if (!Func) {
+      GCon->Logf("ERROR: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+      // if function is not found, it means something is wrong
+      // in that case we need to free argument expressions
+      for (int i = 0; i < NumArgs; ++i) {
+        if (Args[i]) {
+          delete Args[i];
+          Args[i] = nullptr;
+        }
+      }
+    } else if (Func->NumParams || NumArgs /*|| FuncName.ICmp("a_explode") == 0*/) {
+      VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
+      Expr->CallerState = State;
+      Expr->MultiFrameState = (FramesString.Length() > 1);
+      VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
+      VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+      M->Flags = FUNC_Final;
+      M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
+      M->ReturnType = VFieldType(TYPE_Void);
+      M->Statement = Stmt;
+      M->NumParams = 0;
+      Class->AddMethod(M);
+      M->Define();
+      Func = M;
+    }
+  }
+
+  State->Function = Func;
+  if (sc->Check(";")) {}
 }
 
 
@@ -2075,7 +2065,7 @@ static void ParseConst (VScriptParser *sc) {
   sc->SetCMode(true);
        if (sc->Check("int")) isInt = true;
   else if (sc->Check("float")) isInt = false;
-  else sc->Error(va("%s: DECORATE: expected 'int' or 'float'", *sc->GetLoc().toStringNoCol()));
+  else sc->Error(va("%s: expected 'int' or 'float'", *sc->GetLoc().toStringNoCol()));
   //sc->Expect("int");
   sc->ExpectString();
   TLocation Loc = sc->GetLoc();
@@ -2089,7 +2079,7 @@ static void ParseConst (VScriptParser *sc) {
     VEmitContext ec(DecPkg);
     Expr = Expr->Resolve(ec);
     if (isInt) {
-      if (Expr && !Expr->IsIntConst()) sc->Error(va("%s: DECORATE: expected integer literal", *sc->GetLoc().toStringNoCol()));
+      if (Expr && !Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
       if (Expr) {
         int Val = Expr->GetIntConst();
         delete Expr;
@@ -2099,7 +2089,7 @@ static void ParseConst (VScriptParser *sc) {
         C->Value = Val;
       }
     } else {
-      if (Expr && !Expr->IsFloatConst() && !Expr->IsIntConst()) sc->Error(va("%s: DECORATE: expected float literal", *sc->GetLoc().toStringNoCol()));
+      if (Expr && !Expr->IsFloatConst() && !Expr->IsIntConst()) sc->Error(va("%s: expected float literal", *sc->GetLoc().toStringNoCol()));
       if (Expr) {
         float Val = (Expr->IsFloatConst() ? Expr->GetFloatConst() : (float)Expr->GetIntConst());
         delete Expr;
@@ -2250,7 +2240,7 @@ static void ParseEnum (VScriptParser *sc) {
       if (eval) {
         VEmitContext ec(DecPkg);
         eval = eval->Resolve(ec);
-        if (eval && !eval->IsIntConst()) sc->Error(va("%s: DECORATE: expected integer literal", *sc->GetLoc().toStringNoCol()));
+        if (eval && !eval->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
         if (eval) {
           currValue = eval->GetIntConst();
           delete eval;
@@ -2509,7 +2499,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     States.Append(State);
 
     // sprite name
-    if (TmpName.Length() != 4) sc->Error("Invalid sprite name");
+    if (TmpName.Length() != 4) sc->Error(va("Invalid sprite name '%s'", *TmpName));
     if (TmpName == "####" || TmpName == "----") {
       State->SpriteName = NAME_None; // don't change
     } else {
@@ -2527,6 +2517,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     }
     VStr FramesString = sc->String;
 
+    sc->ResetCrossed();
     // tics
     if (!sc->GetString()) sc->Error("decorate: tics expected");
     // `random(a, b)`?
@@ -2550,38 +2541,44 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         State->Time = float(sc->Number)/35.0f;
       }
     }
+    //fprintf(stderr, "**0:%s: <%s> (%d)\n", *sc->GetLoc().toStringNoCol(), *sc->String, (sc->Crossed ? 1 : 0));
 
     bool wasAction = false;
-    while (sc->GetString() && !sc->Crossed) {
+    for (;;) {
+      if (!sc->GetString()) break;
+      if (sc->Crossed) { sc->UnGet(); break; }
+      //fprintf(stderr, "**1:%s: <%s>\n", *sc->GetLoc().toStringNoCol(), *sc->String);
+      sc->UnGet();
+
       // check for bright parameter
-      if (sc->String.ICmp("Bright") == 0) {
+      if (sc->Check("Bright")) {
         State->Frame |= VState::FF_FULLBRIGHT;
         continue;
       }
       // check for canrise parameter
-      if (sc->String.ICmp("CanRaise") == 0) {
+      if (sc->Check("CanRaise")) {
         //GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
         State->Frame |= VState::FF_CANRAISE;
         continue;
       }
       // check for "mdlskip" parameter
-      if (sc->String.ICmp("MdlSkip") == 0) {
+      if (sc->Check("MdlSkip")) {
         State->Frame |= VState::FF_SKIPMODEL;
         continue;
       }
       // check for "fast" parameter
-      if (sc->String.ICmp("Fast") == 0) {
+      if (sc->Check("Fast")) {
         State->Frame |= VState::FF_FAST;
         continue;
       }
       // check for "slow" parameter
-      if (sc->String.ICmp("Slow") == 0) {
+      if (sc->Check("Slow")) {
         State->Frame |= VState::FF_SLOW;
         continue;
       }
 
       // simulate "nodelay" by inserting one dummy state
-      if (sc->String.ICmp("NoDelay") == 0) {
+      if (sc->Check("NoDelay")) {
         AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
         firstFrame = false; // we have at least one frame now
         VState *s0 = States[States.length()-2]; // current
@@ -2593,7 +2590,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
 
       // check for light parameter
-      if (sc->String.ICmp("Light") == 0) {
+      if (sc->Check("Light")) {
         //LIGHT(UNMNRALR)
         sc->Expect("(");
         sc->ExpectString();
@@ -2614,7 +2611,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
 
       // check for offsets
-      if (sc->String.ICmp("Offset") == 0) {
+      if (sc->Check("Offset")) {
         sc->Expect("(");
         sc->ExpectNumberWithSign();
         State->Misc1 = sc->Number;
@@ -2625,32 +2622,31 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         continue;
       }
 
-      if (sc->String == "{") {
+      if (sc->Check("{")) {
         //sc->Error(va("%s: complex state actions in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
         //return false;
-        sc->Check("{");
         ParseActionBlock(sc, Class, State, FramesString);
       } else {
         ParseActionCall(sc, Class, State, FramesString);
         //State->Function = Func;
-        if (sc->Check(";")) {}
+        //if (sc->Check(";")) {}
       }
 
       wasAction = true;
       break;
     }
 
-    if (sc->String == "{") {
+    if (sc->Check("{")) {
       if (wasAction) {
         sc->Error(va("%s: duplicate complex state actions in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
         return false;
       }
-      sc->Check("{");
       ParseActionBlock(sc, Class, State, FramesString);
       wasAction = true;
     }
+    sc->ResetCrossed();
 
-    if (!wasAction) sc->UnGet();
+    //if (!wasAction) sc->UnGet();
 
     // link previous state
     if (PrevState) PrevState->NextState = State;
@@ -4076,7 +4072,7 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
-      ParseDecorate(new VScriptParser(sc->String, W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
+      ParseDecorate(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
     } else if (sc->Check("const")) {
       ParseConst(sc);
     } else if (sc->Check("enum")) {
@@ -4244,7 +4240,7 @@ void ProcessDecorateScripts () {
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_decorate) {
       GCon->Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
-      ParseDecorate(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
+      ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
     }
   }
 
