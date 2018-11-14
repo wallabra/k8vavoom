@@ -48,23 +48,14 @@ override void CreateMenu () {
 }
 
 
-void CreateMenuFromDef (MenuDefinition mdef) {
-  menuName = mdef.menuName;
-  Title = mdef.title;
-
-  if (mdef.seltype) {
-    class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
-    if (cc) SelectorType = cc;
-  }
-
-  if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
-  helpText.text = "";
-  CreateTitle();
-  DrawBackButton();
-  currentY = ChoicesStartY;
-
-  foreach (auto opt; mdef.options) {
+void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
+  foreach (auto opt; options) {
     if (!opt.test()) continue;
+    if (opt isa MenuDefOptionModSubMenus) {
+      auto smm = MenuDefOptionModSubMenus(opt);
+      CreateMenuItemsFromList(smm.options);
+      continue;
+    }
     auto xlen = Items.length;
     auto mc = opt.CreateOption(self);
     if (mc) {
@@ -88,7 +79,29 @@ void CreateMenuFromDef (MenuDefinition mdef) {
       currentY += mc.Height;
     }
   }
+}
 
+
+void CreateMenuFromDef (MenuDefinition mdef) {
+  menuName = name(mdef.menuName.toLowerCase());
+  Title = mdef.title;
+
+  if (mdef.seltype) {
+    class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
+    if (cc) SelectorType = cc;
+  }
+
+  if (!helpText) helpText = GetRootWidget().NewChild(HelpText);
+  helpText.text = "";
+  CreateTitle();
+  DrawBackButton();
+  currentY = ChoicesStartY;
+
+  CreateMenuItemsFromList(mdef.options);
+}
+
+
+void FinishCreatingMenu () {
   Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
 
   CreateSelector();

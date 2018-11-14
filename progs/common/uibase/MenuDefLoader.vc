@@ -80,10 +80,10 @@ void parse (ScriptsParser par) {
 // ////////////////////////////////////////////////////////////////////////// //
 class MenuDefinition : Object;
 
-name menuName;
+string menuName;
 name seltype = 'MenuSelector_SmallRight';
 string title;
-//bool extension; // true: extend `menuName`
+bool extension; // true: extend `menuName`
 
 array!MenuDefOptionBase options;
 
@@ -109,6 +109,27 @@ static final ScriptsParser openParser (string fname) {
 }
 
 
+static final ScriptsParser openParserFromLump (int lump) {
+  auto par = SpawnObject(ScriptsParser);
+  //par.OpenString('menudef', readText(fname));
+  par.OpenLumpIndex(lump);
+  par.SetCMode(true);
+  par.SetEscape(true);
+  return par;
+}
+
+
+MenuDefOptionModSubMenus findModSubMenuOption () {
+  foreach (MenuDefOptionBase opt; options) {
+    if (opt isa MenuDefOptionModSubMenus) return MenuDefOptionModSubMenus(opt);
+  }
+  // add one
+  auto opt = SpawnObject(MenuDefOptionModSubMenus);
+  options[$] = opt;
+  return opt;
+}
+
+
 void filterOptions (int stidx) {
   if (stidx < 0) stidx = 0;
   while (stidx < options.length) {
@@ -127,7 +148,9 @@ void filterOptions (int stidx) {
 // "menudef" eaten
 void parse (ScriptsParser par) {
   par.ExpectIdentifier();
-  menuName = name(par.String);
+  menuName = par.String.toLowerCase();
+  if (par.Check("extend")) extension = true;
+
   par.Expect("{");
   while (!par.Check("}")) {
     if (par.Check("selector")) {
@@ -165,6 +188,13 @@ void parse (ScriptsParser par) {
         hdr.title = title;
       }
       options[$] = hdr;
+      continue;
+    }
+
+    if (par.Check("modsubmenus")) {
+      par.Expect(";");
+      auto subplace = SpawnObject(MenuDefOptionModSubMenus);
+      options[$] = subplace;
       continue;
     }
 
@@ -448,6 +478,18 @@ bool parseOne (ScriptsParser par) {
   }
 
   return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionModSubMenus : MenuDefOptionBase;
+
+array!MenuDefOptionBase options;
+
+
+defaultproperties {
+  textColor = CR_ORANGE;
+  textColorFocus = CR_ORANGE;
 }
 
 

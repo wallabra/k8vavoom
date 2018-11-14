@@ -112,27 +112,53 @@ void PostSpawn () {
 //
 //==========================================================================
 final void LoadMenuDefs () {
-  auto par = MenuDefinition.openParser("uidef/menu_list.txt");
-  scope(exit) delete par;
-  par.Expect("menus");
-  par.Expect("{");
-  while (!par.Check("}")) {
-    if (par.Check(",")) continue;
-    par.ExpectString();
-    string fname = va("uidef/%s", par.String);
-    MenuDefinition mdef = MenuScreenTextDef.LoadMenu(fname);
-    if (mdef && mdef.menuName) {
-      //print("menu '%n' loaded from \"%s\"...", mdef.menuName, fname);
-      bool found = false;
-      foreach (auto idx, MenuDefinition md; menudefs) {
-        if (md.menuName == mdef.menuName) {
-          delete menudefs[idx];
-          menudefs[idx] = mdef;
-          found = true;
-          break;
+  {
+    auto par = MenuDefinition.openParser("uidef/menu_list.txt");
+    scope(exit) delete par;
+    par.Expect("menus");
+    par.Expect("{");
+    while (!par.Check("}")) {
+      if (par.Check(",")) continue;
+      par.ExpectString();
+      string fname = va("uidef/%s", par.String);
+      MenuDefinition mdef = MenuScreenTextDef.LoadMenu(fname);
+      if (!mdef) continue;
+      if (!mdef.menuName) { delete mdef; continue; }
+      menudefs[$] = mdef;
+    }
+  }
+
+  // load mod menus
+  foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
+    if (W_LumpName(lump) == 'modmenu') {
+      auto par = MenuDefinition.openParserFromLump(lump);
+      scope(exit) delete par;
+      while (par.Check("menudef")) {
+        auto mdef = SpawnObject(MenuDefinition);
+        mdef.parse(par);
+        if (!mdef) continue;
+        if (!mdef.menuName) { delete mdef; continue; }
+        // try to extend menu
+        if (mdef.extension) {
+          MenuDefinition mtoext = none;
+          foreach (MenuDefinition m; menudefs) {
+            if (stricmp(m.menuName, mdef.menuName) == 0) {
+              mtoext = m;
+              break;
+            }
+          }
+          if (mtoext) {
+            // extend it
+            auto modext = mtoext.findModSubMenuOption();
+            foreach (MenuDefOptionBase opt; mdef.options) modext.options[$] = opt;
+            mdef.options.clear();
+            delete mdef;
+            continue;
+          }
         }
+        // either no menu to extend found, or a brand new menu
+        menudefs[$] = mdef;
       }
-      if (!found) menudefs[$] = mdef;
     }
   }
 }
@@ -173,7 +199,7 @@ final void SkipGZIdiocity (ScriptsParser par) {
 //==========================================================================
 final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
   par.ExpectString();
-  string mname = par.String;
+  string mname = par.String.toLowerCase();
   MenuDefinition mdef;
   int stidx = 0;
   if (extend) {
@@ -193,7 +219,7 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
     }
   } else {
     mdef = SpawnObject(MenuDefinition);
-    mdef.menuName = name(mname);
+    mdef.menuName = mname;
   }
   //print("MENUDEF: %soptions menu '%s'...", (extend ? "extending " : ""), mdef.menuName);
   par.Expect("{");
@@ -326,51 +352,52 @@ final MenuScreen SpawnMenu (class!MenuScreen CID) {
 
 //==========================================================================
 //
-//  SpawnNamedMenu
+//  SpawnNamedMenuStr
 //
 //==========================================================================
-final MenuScreen SpawnNamedMenu (name menuName) {
+final MenuScreen SpawnNamedMenuStr (string menuName) {
+  if (!menuName) {
+    FatalError("Cannot spawn unnamed menu");
+    return none;
+  }
+
+  MenuDefinition mdefmain = none;
   foreach (MenuDefinition mdef; menudefs) {
-    if (mdef.menuName == menuName) {
-      auto m = MenuScreenTextDef(GRoot.NewChild(MenuScreenTextDef));
-      m.ClGame = self;
-      m.CreateMenuFromDef(mdef);
-      foreach (auto i, auto scc; savedChoices) {
-        if (scc == menuName) {
-          m.SetSavedChoice(savedChoicesIdx[i]);
-          break;
-        }
-      }
-      return m;
+    if (stricmp(mdef.menuName, menuName) == 0) {
+      mdefmain = mdef;
+      break;
     }
   }
-  FatalError("Menu '%n' not found (name)", menuName);
-  return none;
+  if (!mdefmain) {
+    FatalError("Menu '%n' not found (name)", menuName);
+    return none;
+  }
+
+  // create menu
+  auto m = MenuScreenTextDef(GRoot.NewChild(MenuScreenTextDef));
+  m.ClGame = self;
+  m.CreateMenuFromDef(mdefmain);
+  m.FinishCreatingMenu();
+  // set saved choice
+  name mnm = name(mdefmain.menuName);
+  foreach (auto i, auto scc; savedChoices) {
+    if (scc == mnm) {
+      m.SetSavedChoice(savedChoicesIdx[i]);
+      break;
+    }
+  }
+
+  return m;
 }
 
 
 //==========================================================================
 //
-//  SpawnNamedMenuStr
+//  SpawnNamedMenu
 //
 //==========================================================================
-final MenuScreen SpawnNamedMenuStr (string menuName) {
-  foreach (MenuDefinition mdef; menudefs) {
-    if (stricmp(string(mdef.menuName), menuName) == 0) {
-      auto m = MenuScreenTextDef(GRoot.NewChild(MenuScreenTextDef));
-      m.ClGame = self;
-      m.CreateMenuFromDef(mdef);
-      foreach (auto i, auto scc; savedChoices) {
-        if (scc == m.menuName) {
-          m.SetSavedChoice(savedChoicesIdx[i]);
-          break;
-        }
-      }
-      return m;
-    }
-  }
-  FatalError("Menu '%s' not found (string)", menuName);
-  return none;
+final MenuScreen SpawnNamedMenu (name menuName) {
+  return SpawnNamedMenuStr(string(menuName));
 }
 
 
