@@ -42,6 +42,8 @@ menudef OptionsMenu {
     submenu = MiscOptions;
   }
 
+  modsubmenus; // place mod submenus here
+
   header "";
 
   option console {
