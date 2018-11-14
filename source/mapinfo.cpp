@@ -233,18 +233,24 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
       if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
     }
     //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
-    mobjinfo_t *nfo = (ismobj ? VClass::AllocMObjId(fxp->num, GAME_Any) : VClass::AllocScriptId(fxp->num, GAME_Any));
-    if (nfo) {
-      nfo->Class = cls;
-      //nfo->DoomEdNum = fxp->num;
-      //nfo->GameFilter = GAME_Any;
-      nfo->flags = fxp->flags;
-      nfo->special = fxp->special;
-      nfo->args[0] = fxp->args[0];
-      nfo->args[1] = fxp->args[1];
-      nfo->args[2] = fxp->args[2];
-      nfo->args[3] = fxp->args[3];
-      nfo->args[4] = fxp->args[4];
+    if (!cls) {
+      if (ismobj) {
+        VClass::RemoveMObjId(fxp->num, GGameInfo->GameFilterFlag);
+      } else {
+        VClass::RemoveScriptId(fxp->num, GGameInfo->GameFilterFlag);
+      }
+    } else {
+      mobjinfo_t *nfo = (ismobj ? VClass::AllocMObjId(fxp->num, GGameInfo->GameFilterFlag) : VClass::AllocScriptId(fxp->num, GGameInfo->GameFilterFlag));
+      if (nfo) {
+        nfo->Class = cls;
+        nfo->flags = fxp->flags;
+        nfo->special = fxp->special;
+        nfo->args[0] = fxp->args[0];
+        nfo->args[1] = fxp->args[1];
+        nfo->args[2] = fxp->args[2];
+        nfo->args[3] = fxp->args[3];
+        nfo->args[4] = fxp->args[4];
+      }
     }
   }
   fixups.clear();

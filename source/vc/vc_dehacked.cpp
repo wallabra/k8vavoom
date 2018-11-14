@@ -493,20 +493,18 @@ static void ReadThing (int num) {
       }
       */
       if (value) {
-        mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent);
+        mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
         if (!nfo) {
-          nfo = VClass::AllocMObjId(value, 0); // gamefilter is zero here for some reason
+          nfo = VClass::AllocMObjId(value, GGameInfo->GameFilterFlag); // gamefilter is zero here for some reason
           if (nfo) nfo->Class = Ent;
         }
-        if (nfo) nfo->DoomEdNum = value;
+        if (nfo) {
+          nfo->DoomEdNum = value;
+          nfo->flags = 0;
+        }
       } else {
         //if (Idx) VClass::GMobjInfos.RemoveIndex(Idx);
-        // this removes it
-        for (;;) {
-          mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent);
-          if (!nfo) break;
-          nfo->Class = nullptr;
-        }
+        VClass::RemoveMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
       }
     } else if (!VStr::ICmp(String, "Hit points")) {
       SetClassFieldInt(Ent, "Health", value);
