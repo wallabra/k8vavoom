@@ -575,17 +575,19 @@ IMPLEMENT_FUNCTION(VObject, GetClassGameObjName) {
 
 
 //native final static class FindMObjId (int id, optional name pkgname);
-IMPLEMENT_FUNCTION(VObject, FindMObjId) {
+/*
+IMPLEMENT_FUNCTION(VObject, FindPkgMObjId) {
   P_GET_NAME_OPT(pkgname, NAME_None);
   P_GET_INT(id);
   RET_REF(VMemberBase::StaticFindMObj(id, pkgname));
 }
 
-IMPLEMENT_FUNCTION(VObject, FindScriptId) {
+IMPLEMENT_FUNCTION(VObject, FindPkgScriptId) {
   P_GET_NAME_OPT(pkgname, NAME_None);
   P_GET_INT(id);
   RET_REF(VMemberBase::StaticFindScriptId(id, pkgname));
 }
+*/
 
 IMPLEMENT_FUNCTION(VObject, FindClassByGameObjName) {
   P_GET_NAME_OPT(pkgname, NAME_None);

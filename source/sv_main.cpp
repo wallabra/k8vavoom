@@ -114,6 +114,9 @@ void SV_Init () {
 
   GGameInfo->eventPostDecorateInit();
 
+  if (GArgs.CheckParam("-dbg-dump-doomed")) VMemberBase::StaticDumpMObjInfo();
+  if (GArgs.CheckParam("-dbg-dump-scriptid")) VMemberBase::StaticDumpScriptIds();
+
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 
   ServerNetContext = new VServerNetContext();
@@ -1204,6 +1207,7 @@ void ServerFrame (int realtics) {
 //==========================================================================
 VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
   guard(SV_FindClassFromEditorId);
+  /*
   for (int i = VClass::GMobjInfos.length()-1; i >= 0; --i) {
     if ((!VClass::GMobjInfos[i].GameFilter ||
          (VClass::GMobjInfos[i].GameFilter & GameFilter)) &&
@@ -1212,6 +1216,9 @@ VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
       return VClass::GMobjInfos[i].Class;
     }
   }
+  */
+  mobjinfo_t *nfo = VClass::FindMObjId(Id, GameFilter);
+  if (nfo) return nfo->Class;
   return nullptr;
   unguard;
 }
@@ -1224,6 +1231,7 @@ VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
 //==========================================================================
 VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
   guard(SV_FindClassFromScriptId);
+  /*
   for (int i = VClass::GScriptIds.length()-1; i >= 0; --i) {
     if ((!VClass::GScriptIds[i].GameFilter ||
          (VClass::GScriptIds[i].GameFilter & GameFilter)) &&
@@ -1232,6 +1240,9 @@ VClass *SV_FindClassFromScriptId (int Id, int GameFilter) {
       return VClass::GScriptIds[i].Class;
     }
   }
+  */
+  mobjinfo_t *nfo = VClass::FindScriptId(Id, GameFilter);
+  if (nfo) return nfo->Class;
   return nullptr;
   unguard;
 }

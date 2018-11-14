@@ -151,8 +151,8 @@
   DECLARE_FUNCTION(DecodeTimeVal);
   DECLARE_FUNCTION(EncodeTimeVal);
 
-  DECLARE_FUNCTION(FindMObjId)
-  DECLARE_FUNCTION(FindScriptId)
+  //DECLARE_FUNCTION(FindMObjId)
+  //DECLARE_FUNCTION(FindScriptId)
   DECLARE_FUNCTION(FindClassByGameObjName)
 
   // cvar functions

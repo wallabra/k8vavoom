@@ -385,6 +385,7 @@ VClass *VMemberBase::StaticFindClass (VName Name) {
 }
 
 
+/*
 //==========================================================================
 //
 //  VMemberBase::StaticFindMObj
@@ -415,26 +416,55 @@ VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
 //  VMemberBase::StaticFindMObjInfo
 //
 //==========================================================================
-mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id, VName pkgname) {
-  guard(VMemberBase::StaticFindMObjExtraFlags);
-  if (pkgname != NAME_None) {
-    VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
-    if (!pkg) return 0;
-    return ((VPackage *)pkg)->FindMObjInfo(id);
-  } else {
-    int len = GMembers.length();
-    for (int f = 0; f < len; ++f) {
-      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
-        mobjinfo_t *nfo = ((VPackage *)GMembers[f])->FindMObjInfo(id);
-        if (nfo) return nfo;
-      }
-    }
+mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id) {
+  if (id == 0) return nullptr;
+  guard(VMemberBase::StaticFindMObjInfo);
+  int len = VClass::GMobjInfos.length();
+  for (int f = 0; f < len; ++f) {
+    mobjinfo_t *nfo = &VClass::GMobjInfos[f];
+    if (nfo->DoomEdNum == id) return nfo;
   }
   return nullptr;
   unguard;
 }
+*/
 
 
+//==========================================================================
+//
+//  VMemberBase::StaticDumpMObjInfo
+//
+//==========================================================================
+void VMemberBase::StaticDumpMObjInfo () {
+  guard(VMemberBase::StaticDumpMObjInfo);
+  int len = VClass::GMobjInfos.length();
+  fprintf(stderr, "=== DOOMED ===\n");
+  for (int f = 0; f < len; ++f) {
+    mobjinfo_t *nfo = &VClass::GMobjInfos[f];
+    fprintf(stderr, "  %4d: '%s'; flags:0x%02x; filter:0x%04x\n", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+  }
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticDumpScriptIds
+//
+//==========================================================================
+void VMemberBase::StaticDumpScriptIds () {
+  guard(VMemberBase::StaticDumpMObjInfo);
+  int len = VClass::GScriptIds.length();
+  fprintf(stderr, "=== SCRIPTID ===\n");
+  for (int f = 0; f < len; ++f) {
+    mobjinfo_t *nfo = &VClass::GScriptIds[f];
+    fprintf(stderr, "  %4d: '%s'; flags:0x%02x; filter:0x%04x\n", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+  }
+  unguard;
+}
+
+
+/*
 //==========================================================================
 //
 //  VMemberBase::StaticFindScriptId
@@ -458,6 +488,7 @@ VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
   return nullptr;
   unguard;
 }
+*/
 
 
 //==========================================================================

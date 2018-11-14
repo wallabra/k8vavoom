@@ -345,6 +345,8 @@ private:
   void LoadThings2 (int);
   void LoadACScripts (int);
   void LoadTextMap (int, const mapInfo_t &);
+  // call this after loading things
+  void SetupThingsFromMapinfo ();
 
   void FixDeepWaters ();
   void FixSelfRefDeepWater (); // called from `FixDeepWaters`

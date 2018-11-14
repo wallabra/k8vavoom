@@ -483,6 +483,7 @@ static void ReadThing (int num) {
   VClass *Ent = EntClasses[num-1];
   while (ParseParam()) {
     if (VStr::ICmp(String, "ID #") == 0) {
+      /*
       int Idx = -1;
       for (int i = 0; i < VClass::GMobjInfos.Num(); ++i) {
         if (VClass::GMobjInfos[i].Class == Ent) {
@@ -490,16 +491,22 @@ static void ReadThing (int num) {
           break;
         }
       }
+      */
       if (value) {
-        if (Idx < 0) {
-          Idx = VClass::GMobjInfos.Num();
-          VClass::GMobjInfos.Alloc().Class = Ent;
-          VClass::GMobjInfos[Idx].GameFilter = 0;
-          VClass::GMobjInfos[Idx].flags = 0;
+        mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent);
+        if (!nfo) {
+          nfo = VClass::AllocMObjId(value, 0); // gamefilter is zero here for some reason
+          if (nfo) nfo->Class = Ent;
         }
-        VClass::GMobjInfos[Idx].DoomEdNum = value;
-      } else if (Idx) {
-        VClass::GMobjInfos.RemoveIndex(Idx);
+        if (nfo) nfo->DoomEdNum = value;
+      } else {
+        //if (Idx) VClass::GMobjInfos.RemoveIndex(Idx);
+        // this removes it
+        for (;;) {
+          mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent);
+          if (!nfo) break;
+          nfo->Class = nullptr;
+        }
       }
     } else if (!VStr::ICmp(String, "Hit points")) {
       SetClassFieldInt(Ent, "Health", value);

@@ -22,10 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "vc_local.h"
 
 
+#if defined(IN_VCC)
 //==========================================================================
 //
 //  VProgsWriter
@@ -226,6 +226,7 @@ VStream &operator << (VStream &Strm, mobjinfo_t &MI) {
     << MI.special << MI.args[0] << MI.args[1] << MI.args[2] << MI.args[3] << MI.args[4]
     << MI.Class;
 }
+#endif
 
 
 //==========================================================================
@@ -237,8 +238,8 @@ VPackage::VPackage()
   : VMemberBase(MEMBER_Package, NAME_None, nullptr, TLocation())
   , KnownEnums()
   , NumBuiltins(0)
-  , Checksum(0)
-  , Reader(nullptr)
+  //, Checksum(0)
+  //, Reader(nullptr)
 {
   // strings
   memset(StringLookup, 0, 256 * 4);
@@ -260,8 +261,8 @@ VPackage::VPackage(VName AName)
   : VMemberBase(MEMBER_Package, AName, nullptr, TLocation())
   , KnownEnums()
   , NumBuiltins(0)
-  , Checksum(0)
-  , Reader(nullptr)
+  //, Checksum(0)
+  //, Reader(nullptr)
 {
   // strings
   memset(StringLookup, 0, 256 * 4);
@@ -486,6 +487,7 @@ void VPackage::Emit () {
 }
 
 
+#if defined(IN_VCC)
 //==========================================================================
 //
 //  VPackage::WriteObject
@@ -533,13 +535,14 @@ void VPackage::WriteObject (const VStr &name) {
   progs.num_strings = Strings.Num();
   Writer.Serialise(&Strings[0], Strings.Num());
 
-  progs.ofs_mobjinfo = Writer.Tell();
-  progs.num_mobjinfo = MobjInfo.Num();
-  for (int i = 0; i < MobjInfo.Num(); ++i) Writer << MobjInfo[i];
+  //FIXME
+  //progs.ofs_mobjinfo = Writer.Tell();
+  //progs.num_mobjinfo = VClass::GMobjInfos.Num();
+  //for (int i = 0; i < VClass::GMobjInfos.Num(); ++i) Writer << VClass::GMobjInfos[i];
 
-  progs.ofs_scriptids = Writer.Tell();
-  progs.num_scriptids = ScriptIds.Num();
-  for (int i = 0; i < ScriptIds.Num(); ++i) Writer << ScriptIds[i];
+  //progs.ofs_scriptids = Writer.Tell();
+  //progs.num_scriptids = VClass::GScriptIds.Num();
+  //for (int i = 0; i < VClass::GScriptIds.Num(); ++i) Writer << VClass::GScriptIds[i];
 
   // serialise imports
   progs.num_imports = Writer.Imports.Num();
@@ -563,8 +566,8 @@ void VPackage::WriteObject (const VStr &name) {
   dprintf("Names      %6d %6d\n", Writer.Names.Num(), progs.ofs_strings - progs.ofs_names);
   dprintf("Strings    %6d %6d\n", StringInfo.Num(), Strings.Num());
   dprintf("Builtins   %6d\n", NumBuiltins);
-  dprintf("Mobj info  %6d %6d\n", MobjInfo.Num(), progs.ofs_scriptids - progs.ofs_mobjinfo);
-  dprintf("Script Ids %6d %6d\n", ScriptIds.Num(), progs.ofs_imports - progs.ofs_scriptids);
+  //dprintf("Mobj info  %6d %6d\n", VClass::GMobjInfos.Num(), progs.ofs_scriptids - progs.ofs_mobjinfo);
+  //dprintf("Script Ids %6d %6d\n", VClass::GScriptIds.Num(), progs.ofs_imports - progs.ofs_scriptids);
   dprintf("Imports    %6d %6d\n", Writer.Imports.Num(), progs.ofs_exportinfo - progs.ofs_imports);
   dprintf("Exports    %6d %6d\n", Writer.Exports.Num(), progs.ofs_exportdata - progs.ofs_exportinfo);
   dprintf("Type data  %6d %6d\n", Writer.Exports.Num(), Writer.Tell() - progs.ofs_exportdata);
@@ -589,6 +592,7 @@ void VPackage::WriteObject (const VStr &name) {
   fclose(f);
   unguard;
 }
+#endif
 
 
 //==========================================================================
@@ -613,8 +617,8 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
 #if !defined(IN_VCC)
   //fprintf(stderr, "*** PACKAGE: %s\n", *Name);
   // copy mobj infos and spawn IDs
-  for (int i = 0; i < MobjInfo.Num(); ++i) VClass::GMobjInfos.Alloc() = MobjInfo[i];
-  for (int i = 0; i < ScriptIds.Num(); ++i) VClass::GScriptIds.Alloc() = ScriptIds[i];
+  //for (int i = 0; i < MobjInfo.Num(); ++i) VClass::GMobjInfos.Alloc() = MobjInfo[i];
+  //for (int i = 0; i < ScriptIds.Num(); ++i) VClass::GScriptIds.Alloc() = ScriptIds[i];
   for (int i = 0; i < GMembers.Num(); ++i) {
     if (GMembers[i]->IsIn(this)) {
       //fprintf(stderr, "  *** postload for '%s'...\n", *GMembers[i]->Name);
@@ -651,6 +655,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
 }
 
 
+#if defined(IN_VCC)
 //==========================================================================
 //
 // VPackage::LoadBinaryObject
@@ -750,11 +755,11 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 
 #if !defined(IN_VCC)
   // set up info tables
-  Reader->Seek(Progs.ofs_mobjinfo);
-  for (int i = 0; i < Progs.num_mobjinfo; ++i) *Reader << VClass::GMobjInfos.Alloc();
+  //Reader->Seek(Progs.ofs_mobjinfo);
+  //for (int i = 0; i < Progs.num_mobjinfo; ++i) *Reader << VClass::GMobjInfos.Alloc();
 
-  Reader->Seek(Progs.ofs_scriptids);
-  for (int i = 0; i < Progs.num_scriptids; ++i) *Reader << VClass::GScriptIds.Alloc();
+  //Reader->Seek(Progs.ofs_scriptids);
+  //for (int i = 0; i < Progs.num_scriptids; ++i) *Reader << VClass::GScriptIds.Alloc();
 
   for (int i = 0; i < Progs.num_exports; ++i) Exports[i].Obj->PostLoad();
 
@@ -787,6 +792,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 
   unguard;
 }
+#endif
 
 
 //==========================================================================
@@ -885,6 +891,7 @@ void VPackage::LoadObject (TLocation l) {
 }
 
 
+/*
 //==========================================================================
 //
 // VPackage::FindMObj
@@ -919,3 +926,4 @@ VClass *VPackage::FindScriptId (vint32 id) const {
   for (int f = 0; f < len; ++f) if (ScriptIds[f].DoomEdNum == id) return ScriptIds[f].Class;
   return nullptr;
 }
+*/

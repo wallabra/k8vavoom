@@ -1159,6 +1159,112 @@ bool VClass::DecorateDefine () {
 
 //==========================================================================
 //
+//  VClass::AllocMObjId
+//
+//==========================================================================
+mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter) {
+  mobjinfo_t *mi = nullptr;
+  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &GMobjInfos[midx];
+    if (nfo->DoomEdNum == id && nfo->GameFilter == GameFilter) {
+      mi = nfo;
+      break;
+    }
+  }
+  if (mi == nullptr) mi = &GMobjInfos.alloc();
+  memset(mi, 0, sizeof(*mi));
+  mi->DoomEdNum = id;
+  mi->GameFilter = GameFilter;
+  return mi;
+}
+
+
+//==========================================================================
+//
+//  VClass::AllocScriptId
+//
+//==========================================================================
+mobjinfo_t *VClass::AllocScriptId (vint32 id, int GameFilter) {
+  mobjinfo_t *mi = nullptr;
+  for (int midx = GScriptIds.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &GScriptIds[midx];
+    if (nfo->DoomEdNum == id && nfo->GameFilter == GameFilter) {
+      mi = nfo;
+      break;
+    }
+  }
+  if (mi == nullptr) mi = &GScriptIds.alloc();
+  memset(mi, 0, sizeof(*mi));
+  mi->DoomEdNum = id;
+  mi->GameFilter = GameFilter;
+  return mi;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindMObjId
+//
+//==========================================================================
+mobjinfo_t *VClass::FindMObjId (vint32 id, int GameFilter) {
+  if (id == 0) return nullptr;
+  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &GMobjInfos[midx];
+    if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+      return nfo;
+    }
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindAllMObjId
+//
+//==========================================================================
+void VClass::FindAllMObjId (TArray<mobjinfo_t *> &list, vint32 id) {
+  if (id == 0) return;
+  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &GMobjInfos[midx];
+    if (nfo->DoomEdNum == id) list.append(nfo);
+  }
+}
+
+
+//==========================================================================
+//
+//  VClass::FindMObjIdByClass
+//
+//==========================================================================
+mobjinfo_t *VClass::FindMObjIdByClass (const VClass *cls) {
+  if (!cls) return nullptr;
+  for (int midx = 0; midx < GMobjInfos.length(); ++midx) {
+    if (GMobjInfos[midx].Class == cls) return &GMobjInfos[midx];
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindScriptId
+//
+//==========================================================================
+mobjinfo_t *VClass::FindScriptId (vint32 id, int GameFilter) {
+  if (id == 0) return nullptr;
+  for (int midx = GScriptIds.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &GScriptIds[midx];
+    if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+      return nfo;
+    }
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VClass::Emit
 //
 //==========================================================================
@@ -1184,11 +1290,18 @@ void VClass::Emit () {
       if (!MobjInfoExpr->IsIntConst()) {
         ParseError(MobjInfoExpr->Loc, "Integer constant expected");
       } else {
+        int id = MobjInfoExpr->GetIntConst();
+        if (id != 0) {
+          mobjinfo_t *mi = AllocMObjId(id, GameFilter);
+          if (mi) mi->Class = this;
+        }
+        /*
         mobjinfo_t &mi = ec.Package->MobjInfo.Alloc();
         mi.DoomEdNum = MobjInfoExpr->GetIntConst();
         mi.GameFilter = GameFilter;
         mi.Class = this;
         mi.flags = 0;
+        */
       }
     }
   }
@@ -1200,11 +1313,18 @@ void VClass::Emit () {
       if (!ScriptIdExpr->IsIntConst()) {
         ParseError(ScriptIdExpr->Loc, "Integer constant expected");
       } else {
+        int id = ScriptIdExpr->GetIntConst();
+        if (id != 0) {
+          mobjinfo_t *mi = AllocScriptId(id, GameFilter);
+          if (mi) mi->Class = this;
+        }
+        /*
         mobjinfo_t &mi = ec.Package->ScriptIds.Alloc();
         mi.DoomEdNum = ScriptIdExpr->GetIntConst();
         mi.GameFilter = GameFilter;
         mi.Class = this;
         mi.flags = 0;
+        */
       }
     }
   }

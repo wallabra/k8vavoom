@@ -175,8 +175,9 @@ static void appendNumFixup (TMapDtor<int, SpawnEdFixup> &arr, VStr className, in
 }
 
 
-static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMapDtor<int, SpawnEdFixup> &fixups) {
+static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, SpawnEdFixup> &fixups) {
   //GCon->Logf("fixing '%s'... (%d)", errname, fixups.count());
+#if 0
   int f = 0;
   while (f < list.length()) {
     mobjinfo_t &nfo = list[f];
@@ -214,13 +215,14 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
     }
     ++f;
   }
+#endif
   //GCon->Logf("  appending '%s'... (%d)", errname, fixups.count());
   // append new
   for (auto it = fixups.first(); it; ++it) {
     SpawnEdFixup *fxp = &it.getValue();
+    if (fxp->num <= 0) continue;
     VStr cname = fxp->ClassName;
     //GCon->Logf("    MAPINFO0: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
-    if (cname.length() == 0 || cname.ICmp("none") == 0) continue; // skip it
     // set it
     VClass *cls;
     if (cname.length() == 0 || cname.ICmp("none") == 0) {
@@ -231,18 +233,19 @@ static void processNumFixups (const char *errname, TArray<mobjinfo_t> &list, TMa
       if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
     }
     //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
-    SpawnEdFixup fix = *fxp;
-    mobjinfo_t &nfo = list.Alloc();
-    nfo.Class = cls;
-    nfo.DoomEdNum = fxp->num;
-    nfo.GameFilter = GAME_Any;
-    nfo.flags = fix.flags;
-    nfo.special = fix.special;
-    nfo.args[0] = fix.args[0];
-    nfo.args[1] = fix.args[1];
-    nfo.args[2] = fix.args[2];
-    nfo.args[3] = fix.args[3];
-    nfo.args[4] = fix.args[4];
+    mobjinfo_t *nfo = (ismobj ? VClass::AllocMObjId(fxp->num, GAME_Any) : VClass::AllocScriptId(fxp->num, GAME_Any));
+    if (nfo) {
+      nfo->Class = cls;
+      //nfo->DoomEdNum = fxp->num;
+      //nfo->GameFilter = GAME_Any;
+      nfo->flags = fxp->flags;
+      nfo->special = fxp->special;
+      nfo->args[0] = fxp->args[0];
+      nfo->args[1] = fxp->args[1];
+      nfo->args[2] = fxp->args[2];
+      nfo->args[3] = fxp->args[3];
+      nfo->args[4] = fxp->args[4];
+    }
   }
   fixups.clear();
 }
@@ -336,8 +339,8 @@ void InitMapInfo () {
       GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
       ParseMapInfo(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
-    processNumFixups("DoomEdNum", VClass::GMobjInfos, DoomEdNumFixups);
-    processNumFixups("SpawnNum", VClass::GScriptIds, SpawnNumFixups);
+    processNumFixups("DoomEdNum", true, DoomEdNumFixups);
+    processNumFixups("SpawnNum", false, SpawnNumFixups);
   }
   mapinfoParsed = true;
 

@@ -3618,19 +3618,15 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   }
 
   if (DoomEdNum > 0) {
-    mobjinfo_t &MI = VClass::GMobjInfos.Alloc();
-    MI.Class = Class;
-    MI.DoomEdNum = DoomEdNum;
-    MI.GameFilter = GameFilter;
-    MI.flags = 0;
+    mobjinfo_t *nfo = VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any));
+    if (nfo) nfo->Class = Class;
   }
+
   if (SpawnNum > 0) {
-    mobjinfo_t &SI = VClass::GScriptIds.Alloc();
-    SI.Class = Class;
-    SI.DoomEdNum = SpawnNum;
-    SI.GameFilter = GameFilter;
-    SI.flags = 0;
+    mobjinfo_t *nfo = VClass::AllocScriptId(SpawnNum, (GameFilter ? GameFilter : GAME_Any));
+    if (nfo) nfo->Class = Class;
   }
+
   if (ReplaceeClass) {
     ReplaceeClass->Replacement = Class;
     Class->Replacee = ReplaceeClass;
@@ -3952,19 +3948,13 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
   if (GenericIceDeath && IceEnd != 0) sc->Error("IceDeathFrames and GenericIceDeath are mutually exclusive");
 
   if (DoomEdNum > 0) {
-    mobjinfo_t &MI = VClass::GMobjInfos.Alloc();
-    MI.Class = Class;
-    MI.DoomEdNum = DoomEdNum;
-    MI.GameFilter = (GameFilter ? GameFilter : GAME_Any);
-    MI.flags = 0;
+    mobjinfo_t *nfo = VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any));
+    if (nfo) nfo->Class = Class;
   }
 
   if (SpawnNum > 0) {
-    mobjinfo_t &SI = VClass::GScriptIds.Alloc();
-    SI.Class = Class;
-    SI.DoomEdNum = SpawnNum;
-    SI.GameFilter = (GameFilter ? GameFilter : GAME_Any);
-    SI.flags = 0;
+    mobjinfo_t *nfo = VClass::AllocScriptId(SpawnNum, (GameFilter ? GameFilter : GAME_Any));
+    if (nfo) nfo->Class = Class;
   }
 
   // set up linked list of states

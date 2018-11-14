@@ -260,8 +260,12 @@ public:
   VName LowerCaseName;
   VClass *LowerCaseHashNext;
 
+private:
+  friend class VMemberBase;
   static TArray<mobjinfo_t> GMobjInfos;
   static TArray<mobjinfo_t> GScriptIds;
+
+public:
   static TArray<VName> GSpriteNames;
   static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
 
@@ -293,6 +297,15 @@ public:
   static void GetSpriteNames (TArray<FReplacedString> &);
   static void ReplaceSpriteNames (TArray<FReplacedString> &);
   static void StaticReinitStatesLookup ();
+
+  static mobjinfo_t *AllocMObjId (vint32 id, int GameFilter);
+  static mobjinfo_t *AllocScriptId (vint32 id, int GameFilter);
+
+  static mobjinfo_t *FindMObjId (vint32 id, int GameFilter);
+  static mobjinfo_t *FindMObjIdByClass (const VClass *cls);
+  static mobjinfo_t *FindScriptId (vint32 id, int GameFilter);
+
+  static void FindAllMObjIds (TArray<mobjinfo_t *> &list, vint32 id);
 
   virtual void Serialise (VStream &) override;
   virtual void PostLoad () override;

@@ -106,10 +106,14 @@ public:
   static VFieldType StaticFindType (VClass *, VName);
   static VClass *StaticFindClass (VName);
 
+  static void StaticDumpMObjInfo ();
+  static void StaticDumpScriptIds ();
+  /*
+  static mobjinfo_t *StaticFindMObjInfo (vint32 id);
   static VClass *StaticFindMObj (vint32 id, VName pkgname=NAME_None);
-  static mobjinfo_t *StaticFindMObjInfo (vint32 id, VName pkgname=NAME_None);
   static VClass *StaticFindScriptId (vint32 id, VName pkgname=NAME_None);
-  static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname=NAME_None);
+  */
+  static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname);
 
   static void StaticSplitStateLabel (const VStr &, TArray<VName> &);
 

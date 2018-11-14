@@ -538,8 +538,8 @@ native static final bool EncodeTimeVal (out TTimeVal tv, ref TDateTime tm, optio
 //              MISC BUILTINS
 //
 //==========================================================================
-native final static class FindMObjId (int id, optional name pkgname);
-native final static class FindScriptId (int id, optional name pkgname);
+//native final static class FindPkgMObjId (int id, optional name pkgname);
+//native final static class FindPkgScriptId (int id, optional name pkgname);
 native final static class FindClassByGameObjName (name aname, optional name pkgname);
 
 
