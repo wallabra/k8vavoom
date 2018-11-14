@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-// ////////////////////////////////////////////////////////////////////////// //
 class MenuDefConditionBase : Object;
 
 string cond;
@@ -130,7 +129,38 @@ MenuDefOptionModSubMenus findModSubMenuOption () {
 }
 
 
-void filterOptions (int stidx) {
+// fix GZDoom-style menudefs
+private final static void fixGZList (ref array!MenuDefOptionBase options, ref array!(ClientGameShared::OptionValue) ovals) {
+  foreach (MenuDefOptionBase opt; options) {
+    if (opt isa MenuDefOptionModSubMenus) {
+      fixGZList(MenuDefOptionModSubMenus(opt).options, ovals);
+    } else if (opt isa MenuDefOptionEnum) {
+      auto eopt = MenuDefOptionEnum(opt);
+      if (!eopt.gzOptValName) continue;
+      foreach (ref auto oval; ovals) {
+        if (stricmp(oval.Name, eopt.gzOptValName) == 0) {
+          // i found her!
+          foreach (ref auto v; oval.list) {
+            eopt.list.length += 1;
+            eopt.list[$-1].caption = v.caption;
+            eopt.list[$-1].value = v.value;
+          }
+          eopt.gzOptValName = "";
+          break;
+        }
+      }
+      if (eopt.gzOptValName) FatalError("GZ option value '%s' not found", eopt.gzOptValName);
+    }
+  }
+}
+
+
+final void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals) {
+  fixGZList(options, ovals);
+}
+
+
+static final void filterOptionList (ref array!MenuDefOptionBase options, optional int stidx) {
   if (stidx < 0) stidx = 0;
   while (stidx < options.length) {
     if (options[stidx] !isa MenuDefOptionSubHeader) { ++stidx; continue; }
@@ -288,7 +318,7 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
 
 
 // parse GZDoom-style menudef
-final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGameShared::OptionValue) ovals) {
+final static MenuDefOptionBase parseGZ (ScriptsParser par/*, ref array!(ClientGameShared::OptionValue) ovals*/) {
   par.SetCMode(true);
   par.SetEscape(true);
 
@@ -338,6 +368,14 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     }
     // this should be "OptionValue"
     par.ExpectString();
+    auto opt = SpawnObject(MenuDefOptionEnum);
+    opt.title = title;
+    opt.cvar = cvar;
+    opt.gzOptValName = par.String;
+    if (par.Check(",")) par.ExpectString(); // cvar-enable
+    if (par.Check(",")) par.ExpectString(); // center
+    return opt;
+    /*
     foreach (ref auto oval; ovals) {
       if (stricmp(oval.Name, par.String) == 0) {
         // i found her!
@@ -357,6 +395,7 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     //par.ScriptError("unknown GZDoom MenuDef OptionValue '%s'", par.String);
     print("MENUDEF: unknown GZDoom MenuDef OptionValue '%s'", par.String);
     return none;
+    */
   }
 
   //Slider "<label>", "<CVAR>", <minimum>, <maximum>, <inc> [, decimal places]
@@ -424,13 +463,13 @@ final static MenuDefOptionBase parseGZ (ScriptsParser par, ref array!(ClientGame
     return res;
   }
 
-  if (par.Check("Position")) {
-    print("MENUDEF: skipped gz command '%s'", par.String);
-    par.ExpectNumber(withSign:true);
-    return none;
+  par.ExpectString();
+  print("MENUDEF: skipping gz command '%s'", par.String);
+  for (;;) {
+    par.ExpectString();
+    if (!par.Check(",")) break;
   }
-
-  par.ScriptError("invalid gz command '%s'", par.String);
+  //par.ScriptError("invalid gz command '%s'", par.String);
   return none;
 }
 
@@ -532,6 +571,7 @@ override MenuChoice CreateOption (MenuScreen menu) {
 class MenuDefOptionEnum : MenuDefOptionBase;
 
 array!(ClientGameShared::OptionValueDef) list;
+string gzOptValName;
 
 
 override bool parseOne (ScriptsParser par) {

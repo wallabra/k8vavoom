@@ -202,8 +202,8 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
   string mname = par.String.toLowerCase();
   MenuDefinition mdef;
   int stidx = 0;
+  MenuDefOptionModSubMenus suboption = none;
   if (extend) {
-    //if (stricmp(mname, "OptionsMenu") == 0) mname = "Options";
     foreach (auto md2; menudefs) {
       if (stricmp(string(md2.menuName), mname) == 0) {
         // i found her!
@@ -216,6 +216,7 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
       print("GZ-MENUDEF ERROR: cannot extend unknown menu '%s'", mname);
     } else {
       stidx = mdef.options.length;
+      suboption = mdef.findModSubMenuOption();
     }
   } else {
     mdef = SpawnObject(MenuDefinition);
@@ -229,12 +230,29 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
       if (mdef && !extend) mdef.title = par.String;
       continue;
     }
-    auto opt = MenuDefOptionBase.parseGZ(par, optvals);
-    if (mdef && opt) mdef.options[$] = opt;
+    auto opt = MenuDefOptionBase.parseGZ(par);
+    if (!opt) continue;
+    if (!mdef) { delete opt; continue; }
+    if (suboption) suboption.options[$] = opt; else  mdef.options[$] = opt;
   }
   if (mdef) {
-    mdef.filterOptions(stidx);
+    MenuDefinition.filterOptionList(mdef.options, stidx);
+    if (suboption) MenuDefinition.filterOptionList(suboption.options);
     if (!extend) menudefs[$] = mdef;
+  }
+  // hack for some idiotic mods
+  if (!extend && mdef && stricmp(mdef.menuName, "KetchupOptionsGZDoom") == 0) {
+    foreach (auto md2; menudefs) {
+      if (stricmp(string(md2.menuName), "OptionsMenu") == 0) {
+        print("GZ: hacking in ketchup options (%s)", mdef.title);
+        // i found her!
+        suboption = md2.findModSubMenuOption();
+        auto optsub = SpawnObject(MenuDefOptionSubMenu);
+        optsub.title = mdef.title;
+        optsub.subname = mdef.menuName;
+        suboption.options[$] = optsub;
+      }
+    }
   }
 }
 
@@ -305,6 +323,8 @@ final void LoadGZMenuDefs () {
       LoadGZMenuDef(par);
     }
   }
+  // fix optionvalue forwards
+  foreach (MenuDefinition mdef; menudefs) mdef.fixGZOptionValues(optvals);
 }
 
 
