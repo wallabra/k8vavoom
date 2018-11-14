@@ -930,7 +930,7 @@ void VAcsObject::LoadEnhancedObject()
         sbuf[f] = ((char *)buffer)+ofs;
       }
       if (valid) {
-        GCon->Logf("ACS SNAM: %d names found", count);
+        //GCon->Logf("ACS SNAM: %d names found", count);
         //for (int scnum = 0; scnum < NumScripts; ++scnum) GCon->Logf("ACS: script #%d has index #%d (%d)", scnum, Scripts[scnum].Number, (vint16)Scripts[scnum].Number);
         for (int nameidx = 0; nameidx < count; ++nameidx) {
           //GCon->Logf("  #%d: <%s>", nameidx, sbuf[nameidx]);
