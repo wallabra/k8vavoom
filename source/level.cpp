@@ -250,6 +250,11 @@ void VLevel::Serialise (VStream &Strm) {
   writeOrCheckFloat(Strm, BlockMapOrgX, "blockmap x origin", false);
   writeOrCheckFloat(Strm, BlockMapOrgY, "blockmap y origin", false);
 
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
+
   // decals
   if (Strm.IsLoading()) decanimlist = nullptr;
 
@@ -336,6 +341,10 @@ void VLevel::Serialise (VStream &Strm) {
 
   // sectors
   guard(VLevel::Serialise::Sectors);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   for (i = 0, sec = Sectors; i < NumSectors; ++i, ++sec) {
     Strm << sec->floor.dist
       << sec->floor.TexZ
@@ -396,6 +405,10 @@ void VLevel::Serialise (VStream &Strm) {
 
   // lines
   guard(VLevel::Serialise::Lines);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   for (i = 0, li = Lines; i < NumLines; ++i, ++li) {
     Strm << li->flags
       << li->SpacFlags
@@ -428,6 +441,10 @@ void VLevel::Serialise (VStream &Strm) {
 
   // polyobjs
   guard(VLevel::Serialise::Polyobjs);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   for (i = 0; i < NumPolyObjs; ++i) {
     if (Strm.IsLoading()) {
       float angle, polyX, polyY;
@@ -445,6 +462,10 @@ void VLevel::Serialise (VStream &Strm) {
 
   // static lights
   guard(VLevel::Serialise::StaticLights);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   Strm << STRM_INDEX(NumStaticLights);
   if (Strm.IsLoading()) {
     if (StaticLights) {
@@ -462,11 +483,19 @@ void VLevel::Serialise (VStream &Strm) {
 
   // ACS
   guard(VLevel::Serialise::ACS);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   Acs->Serialise(Strm);
   unguard;
 
   // camera textures
   guard(VLevel::Serialise::CameraTextures);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   int NumCamTex = CameraTextures.Num();
   Strm << STRM_INDEX(NumCamTex);
   if (Strm.IsLoading()) CameraTextures.SetNum(NumCamTex);
@@ -479,6 +508,10 @@ void VLevel::Serialise (VStream &Strm) {
 
   // translation tables
   guard(VLevel::Serialise::Translations);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   int NumTrans = Translations.Num();
   Strm << STRM_INDEX(NumTrans);
   if (Strm.IsLoading()) Translations.SetNum(NumTrans);
@@ -498,6 +531,10 @@ void VLevel::Serialise (VStream &Strm) {
 
   // body queue translation tables
   guard(VLevel::Serialise::BodyQueueTranslations);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   int NumTrans = BodyQueueTrans.Num();
   Strm << STRM_INDEX(NumTrans);
   if (Strm.IsLoading()) BodyQueueTrans.SetNum(NumTrans);
@@ -517,14 +554,20 @@ void VLevel::Serialise (VStream &Strm) {
 
   // zones
   guard(VLevel::Serialise::Zones);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
   for (i = 0; i < NumZones; ++i) {
     Strm << STRM_INDEX(Zones[i]);
   }
   unguard;
 
   // subversion
-  vuint8 xver = 0;
-  Strm << STRM_INDEX(xver);
+  {
+    vuint8 xver = 0;
+    Strm << xver;
+  }
 
   // sector links
   vint32 slscount = sectorlinkStart.length();

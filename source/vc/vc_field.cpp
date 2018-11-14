@@ -97,6 +97,8 @@ void VField::CompilerShutdown () {
 void VField::Serialise (VStream &Strm) {
   guard(VField::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   Strm << Next
     << Type
     << Func

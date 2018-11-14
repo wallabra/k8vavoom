@@ -417,6 +417,8 @@ int VObject::GetObjectsCount () {
 //==========================================================================
 void VObject::Serialise (VStream &Strm) {
   guard(VObject::Serialise);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   GetClass()->SerialiseObject(Strm, this);
   unguard;
 }

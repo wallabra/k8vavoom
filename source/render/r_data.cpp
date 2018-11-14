@@ -682,6 +682,8 @@ void VTextureTranslation::CalcCrc()
 void VTextureTranslation::Serialise(VStream &Strm)
 {
   guard(VTextureTranslation::Serialise);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   Strm.Serialise(Table, 256);
   Strm.Serialise(Palette, sizeof(Palette));
   Strm << Crc

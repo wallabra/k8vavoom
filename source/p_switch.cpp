@@ -196,6 +196,8 @@ void VButton::Serialise(VStream &Strm)
 {
   guard(VButton::Serialise);
   Super::Serialise(Strm);
+  vuint8 xver = 0;
+  Strm << xver;
   Strm << STRM_INDEX(Side)
     << Where
     << STRM_INDEX(SwitchDef)

@@ -386,6 +386,8 @@ void VClass::StaticReinitStatesLookup () {
 void VClass::Serialise (VStream &Strm) {
   guard(VClass::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
 #if !defined(IN_VCC)
   VClass *PrevParent = ParentClass;
 #endif

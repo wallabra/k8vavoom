@@ -1112,29 +1112,20 @@ vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsObject::Serialise
 //
 //==========================================================================
-
-void VAcsObject::Serialise(VStream &Strm)
-{
+void VAcsObject::Serialise (VStream &Strm) {
   guard(VAcsObject::Serialise);
-  for (int i = 0; i < NumScripts; i++)
-  {
-    Strm << Scripts[i].RunningScript;
-  }
-  for (int i = 0; i < MAX_ACS_MAP_VARS; i++)
-  {
-    Strm << STRM_INDEX(MapVarStore[i]);
-  }
-  for (int i = 0; i < NumArrays; i++)
-  {
-    for (int j = 0; j < ArrayStore[i].Size; j++)
-    {
-      Strm << STRM_INDEX(ArrayStore[i].Data[j]);
-    }
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
+  for (int i = 0; i < NumScripts; ++i) Strm << Scripts[i].RunningScript;
+  for (int i = 0; i < MAX_ACS_MAP_VARS; ++i) Strm << STRM_INDEX(MapVarStore[i]);
+  for (int i = 0; i < NumArrays; ++i) {
+    for (int j = 0; j < ArrayStore[i].Size; ++j) Strm << STRM_INDEX(ArrayStore[i].Data[j]);
   }
   unguard;
 }
@@ -1580,6 +1571,8 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 
 void VAcsLevel::Serialise(VStream &Strm) {
   guard(VAcsLevel::Serialise);
+  vuint8 xver = 0;
+  Strm << xver;
   for (int i = 0; i < LoadedObjects.Num(); ++i) {
     LoadedObjects[i]->Serialise(Strm);
   }
@@ -1952,6 +1945,8 @@ int VAcsGrowingArray::GetElemVal (int Index) {
 //==========================================================================
 void VAcsGrowingArray::Serialise (VStream &Strm) {
   guard(VAcsGrowingArray::Serialise);
+  vuint8 xver = 0;
+  Strm << xver;
   if (Strm.IsLoading()) {
     int NewSize;
     Strm << STRM_INDEX(NewSize);
@@ -1993,6 +1988,8 @@ void VAcs::Serialise(VStream &Strm)
   vint32 TmpInt;
 
   Super::Serialise(Strm);
+  vuint8 xver = 0;
+  Strm << xver;
   Strm << Activator;
   if (Strm.IsLoading())
   {
@@ -5598,6 +5595,8 @@ VStream &operator << (VStream &Strm, VAcsStore &Store)
 void VAcsGlobal::Serialise(VStream &Strm)
 {
   guard(VAcsGlobal::Serialise);
+  vuint8 xver = 0;
+  Strm << xver;
   for (int i = 0; i < MAX_ACS_WORLD_VARS; i++)
   {
     Strm << STRM_INDEX(WorldVars[i]);

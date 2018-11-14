@@ -772,6 +772,8 @@ bool VDecalAnimCombiner::parse (VScriptParser *sc) {
 
 void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
   guard(VDecalAnim::Serialise);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   // animator
   if (Strm.IsLoading()) {
     // load animator

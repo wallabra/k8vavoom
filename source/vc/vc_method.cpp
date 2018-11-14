@@ -139,7 +139,8 @@ void VMethod::CompilerShutdown () {
 void VMethod::Serialise (VStream &Strm) {
   guard(VMethod::Serialise);
   VMemberBase::Serialise(Strm);
-
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   Strm << SuperMethod
     << STRM_INDEX(NumLocals)
     << STRM_INDEX(Flags)

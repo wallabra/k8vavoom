@@ -71,6 +71,8 @@ void VThinker::Destroy () {
 void VThinker::Serialise (VStream &Strm) {
   guard(VThinker::Serialise);
   Super::Serialise(Strm);
+  vuint8 xver = 0;
+  Strm << xver;
   if (Strm.IsLoading()) XLevel->AddThinker(this);
   unguard;
 }

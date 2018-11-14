@@ -121,8 +121,8 @@ VState::~VState () {
 void VState::Serialise (VStream &Strm) {
   guard(VState::Serialise);
   VMemberBase::Serialise(Strm);
-  vuint8 ver = 0; // current version is 0
-  Strm << ver;
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   //if (!Strm.IsLoading()) ver = 0; // just in case
   Strm
     << STRM_INDEX(Type)

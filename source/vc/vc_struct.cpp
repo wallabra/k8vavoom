@@ -101,6 +101,8 @@ VName VStruct::ResolveAlias (VName aname) {
 void VStruct::Serialise (VStream &Strm) {
   guard(VStruct::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   vuint32 acount = AliasList.count();
   Strm << acount;
   if (Strm.IsLoading()) {

@@ -68,9 +68,10 @@ VWorldInfo::VWorldInfo()
 void VWorldInfo::Serialise(VStream &Strm)
 {
   guard(VWorldInfo::Serialise);
-  //  Serialise global script info.
+  vuint8 xver = 0;
+  Strm << xver;
+  // serialise global script info
   Acs->Serialise(Strm);
-
   Super::Serialise(Strm);
   unguard;
 }

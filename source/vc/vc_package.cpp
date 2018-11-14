@@ -306,6 +306,8 @@ void VPackage::CompilerShutdown () {
 void VPackage::Serialise (VStream &Strm) {
   guard(VPackage::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   // enums
   vint32 acount = (vint32)KnownEnums.count();
   Strm << STRM_INDEX(acount);

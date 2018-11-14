@@ -1482,6 +1482,8 @@ void VSoundSeqNode::Update(float DeltaTime)
 void VSoundSeqNode::Serialise(VStream &Strm)
 {
   guard(VSoundSeqNode::Serialise);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   Strm << STRM_INDEX(Sequence)
     << STRM_INDEX(OriginId)
     << Origin

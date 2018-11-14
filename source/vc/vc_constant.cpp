@@ -89,6 +89,8 @@ void VConstant::CompilerShutdown () {
 void VConstant::Serialise (VStream &Strm) {
   guard(VConstant::Serialise);
   VMemberBase::Serialise(Strm);
+  vuint8 xver = 0; // current version is 0
+  Strm << xver;
   Strm << Type;
   switch (Type) {
     case TYPE_Float: Strm << FloatValue; break;
