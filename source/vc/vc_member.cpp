@@ -430,20 +430,52 @@ mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id) {
 */
 
 
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+struct XXMInfo {
+  int idx;
+  mobjinfo_t nfo;
+};
+
+extern "C" {
+  static int cmpobjnfo (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const XXMInfo *a = (const XXMInfo *)aa;
+    const XXMInfo *b = (const XXMInfo *)bb;
+    /*
+    if (a->nfo->DoomEdNum < b->nfo->DoomEdNum) return -1;
+    if (a->nfo->DoomEdNum > b->nfo->DoomEdNum) return 1;
+    if (a->idx < b->idx) return -1;
+    if (a->idx > b->idx) return 1;
+    return 0;
+    */
+    return (a->nfo.DoomEdNum-b->nfo.DoomEdNum);
+  }
+}
+#endif
+
+
 //==========================================================================
 //
 //  VMemberBase::StaticDumpMObjInfo
 //
 //==========================================================================
 void VMemberBase::StaticDumpMObjInfo () {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   guard(VMemberBase::StaticDumpMObjInfo);
-  int len = VClass::GMobjInfos.length();
-  fprintf(stderr, "=== DOOMED ===\n");
-  for (int f = 0; f < len; ++f) {
-    mobjinfo_t *nfo = &VClass::GMobjInfos[f];
-    fprintf(stderr, "  %4d: '%s'; flags:0x%02x; filter:0x%04x\n", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+  TArray<XXMInfo> list;
+  for (int f = 0; f < VClass::GMobjInfos.length(); ++f) {
+    XXMInfo &xn = list.alloc();
+    xn.idx = f;
+    xn.nfo = VClass::GMobjInfos[f];
+  }
+  timsort_r(list.ptr(), list.length(), sizeof(XXMInfo), &cmpobjnfo, nullptr);
+  GCon->Logf("=== DOOMED ===");
+  for (int f = 0; f < list.length(); ++f) {
+    mobjinfo_t *nfo = &list[f].nfo;
+    GCon->Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
   }
   unguard;
+#endif
 }
 
 
@@ -453,14 +485,22 @@ void VMemberBase::StaticDumpMObjInfo () {
 //
 //==========================================================================
 void VMemberBase::StaticDumpScriptIds () {
-  guard(VMemberBase::StaticDumpMObjInfo);
-  int len = VClass::GScriptIds.length();
-  fprintf(stderr, "=== SCRIPTID ===\n");
-  for (int f = 0; f < len; ++f) {
-    mobjinfo_t *nfo = &VClass::GScriptIds[f];
-    fprintf(stderr, "  %4d: '%s'; flags:0x%02x; filter:0x%04x\n", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  guard(VMemberBase::StaticDumpScriptIds);
+  TArray<XXMInfo> list;
+  for (int f = 0; f < VClass::GScriptIds.length(); ++f) {
+    XXMInfo &xn = list.alloc();
+    xn.idx = f;
+    xn.nfo = VClass::GScriptIds[f];
+  }
+  timsort_r(list.ptr(), list.length(), sizeof(XXMInfo), &cmpobjnfo, nullptr);
+  GCon->Logf("=== SCRIPTID ===");
+  for (int f = 0; f < list.length(); ++f) {
+    mobjinfo_t *nfo = &list[f].nfo;
+    GCon->Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
   }
   unguard;
+#endif
 }
 
 

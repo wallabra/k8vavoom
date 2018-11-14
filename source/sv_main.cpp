@@ -114,8 +114,8 @@ void SV_Init () {
 
   GGameInfo->eventPostDecorateInit();
 
-  if (GArgs.CheckParam("-dbg-dump-doomed")) VMemberBase::StaticDumpMObjInfo();
-  if (GArgs.CheckParam("-dbg-dump-scriptid")) VMemberBase::StaticDumpScriptIds();
+  if (GArgs.CheckParm("-dbg-dump-doomed")) VMemberBase::StaticDumpMObjInfo();
+  if (GArgs.CheckParm("-dbg-dump-scriptid")) VMemberBase::StaticDumpScriptIds();
 
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 

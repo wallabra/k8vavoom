@@ -302,10 +302,12 @@ public:
   static mobjinfo_t *AllocScriptId (vint32 id, int GameFilter);
 
   static mobjinfo_t *FindMObjId (vint32 id, int GameFilter);
-  static mobjinfo_t *FindMObjIdByClass (const VClass *cls);
+  static mobjinfo_t *FindMObjIdByClass (const VClass *cls, int GameFilter);
   static mobjinfo_t *FindScriptId (vint32 id, int GameFilter);
 
-  static void FindAllMObjIds (TArray<mobjinfo_t *> &list, vint32 id);
+  static void RemoveMObjId (vint32 id, int GameFilter);
+  static void RemoveScriptId (vint32 id, int GameFilter);
+  static void RemoveMObjIdByClass (VClass *cls, int GameFilter);
 
   virtual void Serialise (VStream &) override;
   virtual void PostLoad () override;

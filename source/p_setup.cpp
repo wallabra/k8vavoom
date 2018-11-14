@@ -1004,64 +1004,37 @@ bool VLevel::LoadCachedData (VStream *strm) {
 //
 //==========================================================================
 void VLevel::SetupThingsFromMapinfo () {
-  struct MNfo {
-    int tid;
-    mobjinfo_t *nfo;
-    MNfo *next;
-    MNfo *globalnext;
-  };
-  MNfo *head = nullptr;
-
-  //void VClass::FindAllMObjId (TArray<mobjinfo_t *> &list, vint32 id) {
   // use hashmap to avoid schlemiel's lookups
-  TMapNC<int, MNfo *> id2nfo;
+  TMapNC<int, mobjinfo_t *> id2nfo;
   for (int tidx = 0; tidx < NumThings; ++tidx) {
     mthing_t *th = &Things[tidx];
     if (th->type == 0) continue;
-    MNfo *nfo = nullptr;
+    mobjinfo_t *nfo = nullptr;
     auto fp = id2nfo.find(th->type);
     if (fp) {
       nfo = *fp;
     } else {
-      TArray<mobjinfo_t *> mlist;
-      VClass::FindAllMObjIds(mlist, th->type);
-      for (int f = 0; f < mlist.length(); ++f) {
-        MNfo *nn = new MNfo;
-        nn->tid = th->type;
-        nn->nfo = mlist[f];
-        nn->next = nfo;
-        nn->globalnext = head;
-        head = nn;
-        nfo = nn;
-      }
+      nfo = VClass::FindMObjId(th->type, GGameInfo->GameFilterFlag);
       id2nfo.put(th->type, nfo);
     }
-    while (nfo) {
+    if (nfo) {
       // allskills
-      if (nfo->nfo->flags&mobjinfo_t::FlagNoSkill) {
+      if (nfo->flags&mobjinfo_t::FlagNoSkill) {
         //GCon->Logf("*** THING %d got ALLSKILLS", th->type);
         th->SkillClassFilter |= 0x03;
         th->SkillClassFilter |= 0x04;
         th->SkillClassFilter |= 0x18;
       }
       // special
-      if (nfo->nfo->flags&mobjinfo_t::FlagSpecial) {
-        th->special = nfo->nfo->special;
-        th->arg1 = nfo->nfo->args[0];
-        th->arg2 = nfo->nfo->args[1];
-        th->arg3 = nfo->nfo->args[2];
-        th->arg4 = nfo->nfo->args[3];
-        th->arg5 = nfo->nfo->args[4];
+      if (nfo->flags&mobjinfo_t::FlagSpecial) {
+        th->special = nfo->special;
+        th->arg1 = nfo->args[0];
+        th->arg2 = nfo->args[1];
+        th->arg3 = nfo->args[2];
+        th->arg4 = nfo->args[3];
+        th->arg5 = nfo->args[4];
       }
-      nfo = nfo->next;
     }
-  }
-
-  // remove list
-  while (head) {
-    MNfo *c = head;
-    head = head->globalnext;
-    delete c;
   }
 }
 

@@ -1159,23 +1159,70 @@ bool VClass::DecorateDefine () {
 
 //==========================================================================
 //
-//  VClass::AllocMObjId
+//  AllocateIdFromList
 //
 //==========================================================================
-mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter) {
+static mobjinfo_t *AllocateIdFromList (TArray<mobjinfo_t> &list, vint32 id, int GameFilter) {
+  if (id <= 0) return nullptr;
   mobjinfo_t *mi = nullptr;
-  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
-    mobjinfo_t *nfo = &GMobjInfos[midx];
+  for (int midx = list.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &list[midx];
     if (nfo->DoomEdNum == id && nfo->GameFilter == GameFilter) {
       mi = nfo;
       break;
     }
   }
-  if (mi == nullptr) mi = &GMobjInfos.alloc();
+  if (mi == nullptr) mi = &list.alloc();
   memset(mi, 0, sizeof(*mi));
   mi->DoomEdNum = id;
   mi->GameFilter = GameFilter;
   return mi;
+}
+
+
+//==========================================================================
+//
+//  FindIdInList
+//
+//==========================================================================
+static mobjinfo_t *FindIdInList (TArray<mobjinfo_t> &list, vint32 id, int GameFilter) {
+  if (id <= 0) return nullptr;
+  for (int midx = list.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &list[midx];
+    if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+      return nfo;
+    }
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  RemoveIdFromList
+//
+//==========================================================================
+static void RemoveIdFromList (TArray<mobjinfo_t> &list, vint32 id, int GameFilter) {
+  if (id <= 0) return;
+  int midx = 0;
+  while (midx < list.length()) {
+    mobjinfo_t *nfo = &list[midx];
+    if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+      list.removeAt(midx);
+    } else {
+      ++midx;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VClass::AllocMObjId
+//
+//==========================================================================
+mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter) {
+  return AllocateIdFromList(GMobjInfos, id, GameFilter);
 }
 
 
@@ -1185,19 +1232,7 @@ mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter) {
 //
 //==========================================================================
 mobjinfo_t *VClass::AllocScriptId (vint32 id, int GameFilter) {
-  mobjinfo_t *mi = nullptr;
-  for (int midx = GScriptIds.length()-1; midx >= 0; --midx) {
-    mobjinfo_t *nfo = &GScriptIds[midx];
-    if (nfo->DoomEdNum == id && nfo->GameFilter == GameFilter) {
-      mi = nfo;
-      break;
-    }
-  }
-  if (mi == nullptr) mi = &GScriptIds.alloc();
-  memset(mi, 0, sizeof(*mi));
-  mi->DoomEdNum = id;
-  mi->GameFilter = GameFilter;
-  return mi;
+  return AllocateIdFromList(GMobjInfos, id, GameFilter);
 }
 
 
@@ -1207,42 +1242,7 @@ mobjinfo_t *VClass::AllocScriptId (vint32 id, int GameFilter) {
 //
 //==========================================================================
 mobjinfo_t *VClass::FindMObjId (vint32 id, int GameFilter) {
-  if (id == 0) return nullptr;
-  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
-    mobjinfo_t *nfo = &GMobjInfos[midx];
-    if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
-      return nfo;
-    }
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VClass::FindAllMObjId
-//
-//==========================================================================
-void VClass::FindAllMObjId (TArray<mobjinfo_t *> &list, vint32 id) {
-  if (id == 0) return;
-  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
-    mobjinfo_t *nfo = &GMobjInfos[midx];
-    if (nfo->DoomEdNum == id) list.append(nfo);
-  }
-}
-
-
-//==========================================================================
-//
-//  VClass::FindMObjIdByClass
-//
-//==========================================================================
-mobjinfo_t *VClass::FindMObjIdByClass (const VClass *cls) {
-  if (!cls) return nullptr;
-  for (int midx = 0; midx < GMobjInfos.length(); ++midx) {
-    if (GMobjInfos[midx].Class == cls) return &GMobjInfos[midx];
-  }
-  return nullptr;
+  return FindIdInList(GMobjInfos, id, GameFilter);
 }
 
 
@@ -1252,14 +1252,63 @@ mobjinfo_t *VClass::FindMObjIdByClass (const VClass *cls) {
 //
 //==========================================================================
 mobjinfo_t *VClass::FindScriptId (vint32 id, int GameFilter) {
-  if (id == 0) return nullptr;
-  for (int midx = GScriptIds.length()-1; midx >= 0; --midx) {
-    mobjinfo_t *nfo = &GScriptIds[midx];
-    if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
-      return nfo;
+  return FindIdInList(GScriptIds, id, GameFilter);
+}
+
+
+//==========================================================================
+//
+//  VClass::FindMObjIdByClass
+//
+//==========================================================================
+mobjinfo_t *VClass::FindMObjIdByClass (const VClass *cls, int GameFilter) {
+  if (!cls) return nullptr;
+  for (int midx = GMobjInfos.length()-1; midx >= 0; --midx) {
+    mobjinfo_t *nfo = &GMobjInfos[midx];
+    if (nfo->Class == cls && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+      return &GMobjInfos[midx];
     }
   }
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClass::RemoveMObjId
+//
+//==========================================================================
+void VClass::RemoveMObjId (vint32 id, int GameFilter) {
+  RemoveIdFromList(GMobjInfos, id, GameFilter);
+}
+
+
+//==========================================================================
+//
+//  VClass::RemoveScriptId
+//
+//==========================================================================
+void VClass::RemoveScriptId (vint32 id, int GameFilter) {
+  RemoveIdFromList(GScriptIds, id, GameFilter);
+}
+
+
+//==========================================================================
+//
+//  VClass::RemoveMObjIdByClass
+//
+//==========================================================================
+void VClass::RemoveMObjIdByClass (VClass *cls, int GameFilter) {
+  if (!cls) return;
+  int midx = 0;
+  while (midx < GMobjInfos.length()) {
+    mobjinfo_t *nfo = &GMobjInfos[midx];
+    if (nfo->Class == cls && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+      GMobjInfos.removeAt(midx);
+    } else {
+      ++midx;
+    }
+  }
 }
 
 
