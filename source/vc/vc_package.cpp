@@ -212,20 +212,6 @@ public:
     for (int i = 0; i < NumImports; ++i) GetImport(i);
   }
 };
-
-
-//==========================================================================
-//
-//  operator VStream << mobjinfo_t
-//
-//==========================================================================
-VStream &operator << (VStream &Strm, mobjinfo_t &MI) {
-  return Strm << STRM_INDEX(MI.DoomEdNum)
-    << STRM_INDEX(MI.GameFilter)
-    << MI.flags
-    << MI.special << MI.args[0] << MI.args[1] << MI.args[2] << MI.args[3] << MI.args[4]
-    << MI.Class;
-}
 #endif
 
 

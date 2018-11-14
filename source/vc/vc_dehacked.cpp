@@ -495,8 +495,8 @@ static void ReadThing (int num) {
       if (value) {
         mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
         if (!nfo) {
-          nfo = VClass::AllocMObjId(value, GGameInfo->GameFilterFlag); // gamefilter is zero here for some reason
-          if (nfo) nfo->Class = Ent;
+          nfo = VClass::AllocMObjId(value, GGameInfo->GameFilterFlag, Ent); // gamefilter was zero here for some reason
+          //if (nfo) nfo->Class = Ent;
         }
         if (nfo) {
           nfo->DoomEdNum = value;

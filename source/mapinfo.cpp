@@ -240,7 +240,7 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
         VClass::RemoveScriptId(fxp->num, GGameInfo->GameFilterFlag);
       }
     } else {
-      mobjinfo_t *nfo = (ismobj ? VClass::AllocMObjId(fxp->num, GGameInfo->GameFilterFlag) : VClass::AllocScriptId(fxp->num, GGameInfo->GameFilterFlag));
+      mobjinfo_t *nfo = (ismobj ? VClass::AllocMObjId(fxp->num, GGameInfo->GameFilterFlag, cls) : VClass::AllocScriptId(fxp->num, GGameInfo->GameFilterFlag, cls));
       if (nfo) {
         nfo->Class = cls;
         nfo->flags = fxp->flags;

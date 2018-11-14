@@ -42,10 +42,51 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-TArray<mobjinfo_t> VClass::GMobjInfos;
-TArray<mobjinfo_t> VClass::GScriptIds;
 TArray<VName> VClass::GSpriteNames;
 VClass *VClass::GLowerCaseHashTable[VClass::LOWER_CASE_HASH_SIZE];
+
+static TArray<mobjinfo_t> GMobjInfos;
+static TArray<mobjinfo_t> GScriptIds;
+static TMapNC<vint32, vint32> GMobj2Arr; // key: doomedidx, value: index in GMobjInfos
+static TMapNC<vint32, vint32> GSId2Arr; // key: doomedidx, value: index in GScriptIds
+
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+struct XXMInfo {
+  int idx;
+  mobjinfo_t nfo;
+};
+
+extern "C" {
+  static int cmpobjnfo (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const XXMInfo *a = (const XXMInfo *)aa;
+    const XXMInfo *b = (const XXMInfo *)bb;
+    if (a->nfo.DoomEdNum < b->nfo.DoomEdNum) return -1;
+    if (a->nfo.DoomEdNum > b->nfo.DoomEdNum) return 1;
+    if (a->idx < b->idx) return -1;
+    if (a->idx > b->idx) return 1;
+    return 0;
+    //return (a->nfo.DoomEdNum-b->nfo.DoomEdNum);
+  }
+}
+#endif
+
+
+//==========================================================================
+//
+//  operator VStream << mobjinfo_t
+//
+//==========================================================================
+/*
+VStream &operator << (VStream &Strm, mobjinfo_t &MI) {
+  return Strm << STRM_INDEX(MI.DoomEdNum)
+    << STRM_INDEX(MI.GameFilter)
+    << MI.flags
+    << MI.special << MI.args[0] << MI.args[1] << MI.args[2] << MI.args[3] << MI.args[4]
+    << MI.Class;
+}
+*/
 
 
 //==========================================================================
@@ -1161,11 +1202,97 @@ bool VClass::DecorateDefine () {
 
 //==========================================================================
 //
+//  VClass::StaticDumpMObjInfo
+//
+//==========================================================================
+void VClass::StaticDumpMObjInfo () {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  guard(VClass::StaticDumpMObjInfo);
+  TArray<XXMInfo> list;
+  for (int f = 0; f < GMobjInfos.length(); ++f) {
+    XXMInfo &xn = list.alloc();
+    xn.idx = f;
+    xn.nfo = GMobjInfos[f];
+  }
+  timsort_r(list.ptr(), list.length(), sizeof(XXMInfo), &cmpobjnfo, nullptr);
+  GCon->Log("=== DOOMED ===");
+  for (int f = 0; f < list.length(); ++f) {
+    mobjinfo_t *nfo = &list[f].nfo;
+    GCon->Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+  }
+  GCon->Log(" ------");
+  for (auto it = GMobj2Arr.first(); it; ++it) {
+    GCon->Logf("  ..[DOOMED:%d]..", it.getKey());
+    int link = it.getValue();
+    while (link != -1) {
+      mobjinfo_t *nfo = &GMobjInfos[link];
+      GCon->Logf("    #%5d: %5d: '%s'; flags:0x%02x; filter:0x%04x", link, nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+      link = nfo->nextidx;
+    }
+  }
+  unguard;
+#endif
+}
+
+
+//==========================================================================
+//
+//  VClass::StaticDumpScriptIds
+//
+//==========================================================================
+void VClass::StaticDumpScriptIds () {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  guard(VClass::StaticDumpScriptIds);
+  TArray<XXMInfo> list;
+  for (int f = 0; f < GScriptIds.length(); ++f) {
+    XXMInfo &xn = list.alloc();
+    xn.idx = f;
+    xn.nfo = GScriptIds[f];
+  }
+  timsort_r(list.ptr(), list.length(), sizeof(XXMInfo), &cmpobjnfo, nullptr);
+  GCon->Logf("=== SCRIPTID ===");
+  for (int f = 0; f < list.length(); ++f) {
+    mobjinfo_t *nfo = &list[f].nfo;
+    GCon->Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
+  }
+  unguard;
+#endif
+}
+
+
+//==========================================================================
+//
+//  RehashList
+//
+//==========================================================================
+static void RehashList (TArray<mobjinfo_t> &list, TMapNC<vint32, vint32> &map) {
+  map.reset();
+  for (int f = 0; f < list.length(); ++f) list[f].nextidx = -1;
+  for (int idx = 0; idx < list.length(); ++idx) {
+    // link to map
+    mobjinfo_t *mi = &list[idx];
+    int id = mi->DoomEdNum;
+    auto prevp = map.find(id);
+    if (prevp) {
+      mi->nextidx = *prevp;
+      *prevp = idx;
+      //map.del(id);
+      //map.put(id, idx);
+    } else {
+      map.put(id, idx);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  AllocateIdFromList
 //
 //==========================================================================
-static mobjinfo_t *AllocateIdFromList (TArray<mobjinfo_t> &list, vint32 id, int GameFilter) {
+static mobjinfo_t *AllocateIdFromList (TArray<mobjinfo_t> &list, TMapNC<vint32, vint32> &map, vint32 id, int GameFilter, VClass *cls, const char *msg) {
   if (id <= 0) return nullptr;
+#if 0
   mobjinfo_t *mi = nullptr;
   for (int midx = list.length()-1; midx >= 0; --midx) {
     mobjinfo_t *nfo = &list[midx];
@@ -1174,10 +1301,34 @@ static mobjinfo_t *AllocateIdFromList (TArray<mobjinfo_t> &list, vint32 id, int 
       break;
     }
   }
-  if (mi == nullptr) mi = &list.alloc();
+  if (mi == nullptr) {
+    mi = &list.alloc();
+    //fprintf(stderr, "%s: new doomed number #%d, class <%s> (filter=0x%04x)\n", msg, id, *cls->GetFullName(), GameFilter);
+  } else {
+    //fprintf(stderr, "%s: REPLACED doomed number #%d, class <%s> (old class <%s>) (filter=0x%04x)\n", msg, id, *cls->GetFullName(), (mi->Class ? *mi->Class->GetFullName() : "none"), GameFilter);
+  }
   memset(mi, 0, sizeof(*mi));
   mi->DoomEdNum = id;
   mi->GameFilter = GameFilter;
+  mi->Class = cls;
+#else
+  vint32 idx = list.length();
+  mobjinfo_t *mi = &list.alloc();
+  memset(mi, 0, sizeof(*mi));
+  mi->DoomEdNum = id;
+  mi->GameFilter = GameFilter;
+  mi->Class = cls;
+  mi->nextidx = -1;
+  // link to map
+  auto prevp = map.find(id);
+  if (prevp) {
+    mi->nextidx = *prevp;
+    *prevp = idx;
+  } else {
+    map.put(id, idx);
+  }
+  //RehashList(list, map);
+#endif
   return mi;
 }
 
@@ -1187,14 +1338,28 @@ static mobjinfo_t *AllocateIdFromList (TArray<mobjinfo_t> &list, vint32 id, int 
 //  FindIdInList
 //
 //==========================================================================
-static mobjinfo_t *FindIdInList (TArray<mobjinfo_t> &list, vint32 id, int GameFilter) {
+static mobjinfo_t *FindIdInList (TArray<mobjinfo_t> &list, TMapNC<vint32, vint32> &map, vint32 id, int GameFilter) {
   if (id <= 0) return nullptr;
+#if 0
   for (int midx = list.length()-1; midx >= 0; --midx) {
     mobjinfo_t *nfo = &list[midx];
     if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
       return nfo;
     }
   }
+#else
+  auto linkp = map.find(id);
+  if (linkp) {
+    int link = *linkp;
+    while (link != -1) {
+      mobjinfo_t *nfo = &list[link];
+      if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
+        return nfo;
+      }
+      link = nfo->nextidx;
+    }
+  }
+#endif
   return nullptr;
 }
 
@@ -1204,17 +1369,20 @@ static mobjinfo_t *FindIdInList (TArray<mobjinfo_t> &list, vint32 id, int GameFi
 //  RemoveIdFromList
 //
 //==========================================================================
-static void RemoveIdFromList (TArray<mobjinfo_t> &list, vint32 id, int GameFilter) {
+static void RemoveIdFromList (TArray<mobjinfo_t> &list, TMapNC<vint32, vint32> &map, vint32 id, int GameFilter) {
   if (id <= 0) return;
+  bool removed = false;
   int midx = 0;
   while (midx < list.length()) {
     mobjinfo_t *nfo = &list[midx];
     if (nfo->DoomEdNum == id && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
       list.removeAt(midx);
+      removed = true;
     } else {
       ++midx;
     }
   }
+  if (removed) RehashList(list, map);
 }
 
 
@@ -1223,8 +1391,8 @@ static void RemoveIdFromList (TArray<mobjinfo_t> &list, vint32 id, int GameFilte
 //  VClass::AllocMObjId
 //
 //==========================================================================
-mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter) {
-  return AllocateIdFromList(GMobjInfos, id, GameFilter);
+mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter, VClass *cls) {
+  return AllocateIdFromList(GMobjInfos, GMobj2Arr, id, GameFilter, cls, "DOOMED");
 }
 
 
@@ -1233,8 +1401,8 @@ mobjinfo_t *VClass::AllocMObjId (vint32 id, int GameFilter) {
 //  VClass::AllocScriptId
 //
 //==========================================================================
-mobjinfo_t *VClass::AllocScriptId (vint32 id, int GameFilter) {
-  return AllocateIdFromList(GMobjInfos, id, GameFilter);
+mobjinfo_t *VClass::AllocScriptId (vint32 id, int GameFilter, VClass *cls) {
+  return AllocateIdFromList(GScriptIds, GSId2Arr, id, GameFilter, cls, "SCRIPTID");
 }
 
 
@@ -1244,7 +1412,7 @@ mobjinfo_t *VClass::AllocScriptId (vint32 id, int GameFilter) {
 //
 //==========================================================================
 mobjinfo_t *VClass::FindMObjId (vint32 id, int GameFilter) {
-  return FindIdInList(GMobjInfos, id, GameFilter);
+  return FindIdInList(GMobjInfos, GMobj2Arr, id, GameFilter);
 }
 
 
@@ -1254,7 +1422,7 @@ mobjinfo_t *VClass::FindMObjId (vint32 id, int GameFilter) {
 //
 //==========================================================================
 mobjinfo_t *VClass::FindScriptId (vint32 id, int GameFilter) {
-  return FindIdInList(GScriptIds, id, GameFilter);
+  return FindIdInList(GScriptIds, GSId2Arr, id, GameFilter);
 }
 
 
@@ -1281,7 +1449,7 @@ mobjinfo_t *VClass::FindMObjIdByClass (const VClass *cls, int GameFilter) {
 //
 //==========================================================================
 void VClass::RemoveMObjId (vint32 id, int GameFilter) {
-  RemoveIdFromList(GMobjInfos, id, GameFilter);
+  RemoveIdFromList(GMobjInfos, GMobj2Arr, id, GameFilter);
 }
 
 
@@ -1291,7 +1459,7 @@ void VClass::RemoveMObjId (vint32 id, int GameFilter) {
 //
 //==========================================================================
 void VClass::RemoveScriptId (vint32 id, int GameFilter) {
-  RemoveIdFromList(GScriptIds, id, GameFilter);
+  RemoveIdFromList(GScriptIds, GSId2Arr, id, GameFilter);
 }
 
 
@@ -1302,15 +1470,18 @@ void VClass::RemoveScriptId (vint32 id, int GameFilter) {
 //==========================================================================
 void VClass::RemoveMObjIdByClass (VClass *cls, int GameFilter) {
   if (!cls) return;
+  bool removed = false;
   int midx = 0;
   while (midx < GMobjInfos.length()) {
     mobjinfo_t *nfo = &GMobjInfos[midx];
     if (nfo->Class == cls && (nfo->GameFilter == 0 || (nfo->GameFilter&GameFilter) != 0)) {
       GMobjInfos.removeAt(midx);
+      removed = true;
     } else {
       ++midx;
     }
   }
+  if (removed) RehashList(GMobjInfos, GMobj2Arr);
 }
 
 
@@ -1343,8 +1514,8 @@ void VClass::Emit () {
       } else {
         int id = MobjInfoExpr->GetIntConst();
         if (id != 0) {
-          mobjinfo_t *mi = AllocMObjId(id, GameFilter);
-          if (mi) mi->Class = this;
+          /*mobjinfo_t *mi =*/ AllocMObjId(id, GameFilter, this);
+          //if (mi) mi->Class = this;
         }
         /*
         mobjinfo_t &mi = ec.Package->MobjInfo.Alloc();
@@ -1366,8 +1537,8 @@ void VClass::Emit () {
       } else {
         int id = ScriptIdExpr->GetIntConst();
         if (id != 0) {
-          mobjinfo_t *mi = AllocScriptId(id, GameFilter);
-          if (mi) mi->Class = this;
+          /*mobjinfo_t *mi =*/ AllocScriptId(id, GameFilter, this);
+          //if (mi) mi->Class = this;
         }
         /*
         mobjinfo_t &mi = ec.Package->ScriptIds.Alloc();

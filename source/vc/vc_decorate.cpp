@@ -2930,7 +2930,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   int GameFilter = 0;
   int DoomEdNum = -1;
   int SpawnNum = -1;
-  TArray<VState*> States;
+  TArray<VState *> States;
   bool DropItemsDefined = false;
   VObject *DefObj = (VObject*)Class->Defaults;
 
@@ -3614,13 +3614,15 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   }
 
   if (DoomEdNum > 0) {
-    mobjinfo_t *nfo = VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any));
-    if (nfo) nfo->Class = Class;
+    /*mobjinfo_t *nfo =*/ VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any), Class);
+    //if (nfo) nfo->Class = Class;
+    //GCon->Logf("DECORATE: DoomEdNum #%d assigned to '%s'", DoomEdNum, *Class->GetFullName());
+    //VMemberBase::StaticDumpMObjInfo();
   }
 
   if (SpawnNum > 0) {
-    mobjinfo_t *nfo = VClass::AllocScriptId(SpawnNum, (GameFilter ? GameFilter : GAME_Any));
-    if (nfo) nfo->Class = Class;
+    /*mobjinfo_t *nfo =*/ VClass::AllocScriptId(SpawnNum, (GameFilter ? GameFilter : GAME_Any), Class);
+    //if (nfo) nfo->Class = Class;
   }
 
   if (ReplaceeClass) {
@@ -3944,13 +3946,13 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
   if (GenericIceDeath && IceEnd != 0) sc->Error("IceDeathFrames and GenericIceDeath are mutually exclusive");
 
   if (DoomEdNum > 0) {
-    mobjinfo_t *nfo = VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any));
-    if (nfo) nfo->Class = Class;
+    /*mobjinfo_t *nfo =*/ VClass::AllocMObjId(DoomEdNum, (GameFilter ? GameFilter : GAME_Any), Class);
+    //if (nfo) nfo->Class = Class;
   }
 
   if (SpawnNum > 0) {
-    mobjinfo_t *nfo = VClass::AllocScriptId(SpawnNum, (GameFilter ? GameFilter : GAME_Any));
-    if (nfo) nfo->Class = Class;
+    /*mobjinfo_t *nfo =*/ VClass::AllocScriptId(SpawnNum, (GameFilter ? GameFilter : GAME_Any), Class);
+    //if (nfo) nfo->Class = Class;
   }
 
   // set up linked list of states
@@ -4243,6 +4245,7 @@ void ProcessDecorateScripts () {
       ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
     }
   }
+  //VMemberBase::StaticDumpMObjInfo();
 
   // make sure all import classes were defined
   if (VMemberBase::GDecorateClassImports.Num()) {
@@ -4253,6 +4256,7 @@ void ProcessDecorateScripts () {
   }
 
   GCon->Logf(NAME_Init, "Post-procesing");
+  //VMemberBase::StaticDumpMObjInfo();
 
   /*k8: not yet
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
@@ -4348,6 +4352,7 @@ void ProcessDecorateScripts () {
   }
 
   if (vcErrorCount) BailOut();
+  //VMemberBase::StaticDumpMObjInfo();
 
   VClass::StaticReinitStatesLookup();
 

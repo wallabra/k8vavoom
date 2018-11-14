@@ -42,6 +42,29 @@ enum EClassObjectFlags {
 };
 
 
+struct mobjinfo_t {
+public:
+  // for `flags`
+  enum {
+    FlagNoSkill = 0x0001,
+    FlagSpecial = 0x0002,
+  };
+
+  int DoomEdNum;
+  vint32 GameFilter;
+  VClass *Class;
+  vint32 flags; // bit0: anyskill; bit1: special is set
+  vint32 special;
+  vint32 args[5];
+
+//private:
+  vint32 nextidx; // -1, or next info with the same DoomEdNum
+
+//public:
+  //friend VStream &operator << (VStream &, mobjinfo_t &);
+};
+
+
 //==========================================================================
 //
 //  VStateLabel
@@ -260,12 +283,6 @@ public:
   VName LowerCaseName;
   VClass *LowerCaseHashNext;
 
-private:
-  friend class VMemberBase;
-  static TArray<mobjinfo_t> GMobjInfos;
-  static TArray<mobjinfo_t> GScriptIds;
-
-public:
   static TArray<VName> GSpriteNames;
   static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
 
@@ -298,8 +315,8 @@ public:
   static void ReplaceSpriteNames (TArray<FReplacedString> &);
   static void StaticReinitStatesLookup ();
 
-  static mobjinfo_t *AllocMObjId (vint32 id, int GameFilter);
-  static mobjinfo_t *AllocScriptId (vint32 id, int GameFilter);
+  static mobjinfo_t *AllocMObjId (vint32 id, int GameFilter, VClass *cls);
+  static mobjinfo_t *AllocScriptId (vint32 id, int GameFilter, VClass *cls);
 
   static mobjinfo_t *FindMObjId (vint32 id, int GameFilter);
   static mobjinfo_t *FindMObjIdByClass (const VClass *cls, int GameFilter);
@@ -308,6 +325,9 @@ public:
   static void RemoveMObjId (vint32 id, int GameFilter);
   static void RemoveScriptId (vint32 id, int GameFilter);
   static void RemoveMObjIdByClass (VClass *cls, int GameFilter);
+
+  static void StaticDumpMObjInfo ();
+  static void StaticDumpScriptIds ();
 
   virtual void Serialise (VStream &) override;
   virtual void PostLoad () override;

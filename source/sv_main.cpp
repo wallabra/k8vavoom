@@ -114,8 +114,8 @@ void SV_Init () {
 
   GGameInfo->eventPostDecorateInit();
 
-  if (GArgs.CheckParm("-dbg-dump-doomed")) VMemberBase::StaticDumpMObjInfo();
-  if (GArgs.CheckParm("-dbg-dump-scriptid")) VMemberBase::StaticDumpScriptIds();
+  if (GArgs.CheckParm("-dbg-dump-doomed")) VClass::StaticDumpMObjInfo();
+  if (GArgs.CheckParm("-dbg-dump-scriptid")) VClass::StaticDumpScriptIds();
 
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 
@@ -1218,6 +1218,7 @@ VClass *SV_FindClassFromEditorId (int Id, int GameFilter) {
   }
   */
   mobjinfo_t *nfo = VClass::FindMObjId(Id, GameFilter);
+  //GCon->Logf("SV_FindClassFromEditorId: Id=%d; filter=0x%04x; class=<%s>", Id, GameFilter, (nfo && nfo->Class ? *nfo->Class->GetFullName() : "<oops>"));
   if (nfo) return nfo->Class;
   return nullptr;
   unguard;
