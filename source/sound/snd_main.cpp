@@ -628,14 +628,13 @@ void VAudio::AddSeqChoice(int OriginId, VName Name)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAudio::StopSequence
 //
 //==========================================================================
-
-void VAudio::StopSequence(int origin_id)
-{
+void VAudio::StopSequence (int origin_id) {
   guard(VAudio::StopSequence);
   VSoundSeqNode *node = SequenceListHead;
   while (node) {
@@ -646,44 +645,47 @@ void VAudio::StopSequence(int origin_id)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAudio::UpdateActiveSequences
 //
 //==========================================================================
-
-void VAudio::UpdateActiveSequences(float DeltaTime)
-{
+void VAudio::UpdateActiveSequences (float DeltaTime) {
   guard(VAudio::UpdateActiveSequences);
-  if (!ActiveSequences || GGameInfo->IsPaused() || !cl)
-  {
-    //  No sequences currently playing/game is paused
-    //  or there's no player in the map
+  if (!ActiveSequences || GGameInfo->IsPaused() || !cl) {
+    // no sequences currently playing/game is paused or there's no player in the map
     return;
   }
-  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
-  {
+  //k8: no simple loop, 'cause sequence can delete itself
+  VSoundSeqNode *node = SequenceListHead;
+  while (node) {
+    VSoundSeqNode *next = node->Next;
     node->Update(DeltaTime);
+    node = next;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAudio::StopAllSequences
 //
 //==========================================================================
-
-void VAudio::StopAllSequences()
-{
+void VAudio::StopAllSequences () {
   guard(VAudio::StopAllSequences);
-  for (VSoundSeqNode *node = SequenceListHead; node; node = node->Next)
-  {
+  //k8: no simple loop
+  VSoundSeqNode *node = SequenceListHead;
+  while (node) {
+    VSoundSeqNode *next = node->Next;
     node->StopSound = 0; // don't play any stop sounds
     delete node;
+    node = next;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
