@@ -3476,6 +3476,7 @@ final bool IsMissile(bool Precise)
 //===========================================================================
 final bool k8CheckIfSpecialStateLabel (name Label) {
   if (!Label) return true; // why not?
+  if (GetCvarB('_decorate_dont_warn_about_invalid_labels')) return true;
   string lbl = string(Label);
   return (stricmp(lbl, "none") == 0 || stricmp(lbl, "null") == 0 ||
           stricmp(lbl, "nil") == 0 || stricmp(lbl, "empty") == 0);
