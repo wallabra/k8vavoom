@@ -115,6 +115,17 @@ extern VCvarB compat_nopassover;
 //
 //  VEntity::CreateSecNodeList
 //
+//=============================================================================
+void VEntity::Destroy () {
+  UnlinkFromWorld();
+  Super::Destroy();
+}
+
+
+//=============================================================================
+//
+//  VEntity::CreateSecNodeList
+//
 //  phares 3/14/98
 //
 //  Alters/creates the sector_list that shows what sectors the object resides in

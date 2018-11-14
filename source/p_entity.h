@@ -291,6 +291,7 @@ class VEntity : public VThinker {
   static void InitFuncIndexes ();
 
   //  VObject interface.
+  virtual void Destroy () override;
   virtual void Serialise (VStream &) override;
 
   //  VThinker interface.
