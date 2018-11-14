@@ -414,7 +414,7 @@ void P_InitTerrainTypes()
   {
     if (W_LumpName(Lump) == NAME_terrain)
     {
-      ParseTerrainScript(new VScriptParser(*W_LumpName(Lump),
+      ParseTerrainScript(new VScriptParser(W_FullLumpName(Lump),
         W_CreateLumpReaderNum(Lump)));
     }
   }

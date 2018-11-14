@@ -2381,7 +2381,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     maxParams = Func->NumParams;
   }
 
-  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", *Func->GetFullName(), maxParams, NumArgs);
+  if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", Func->GetName(), maxParams, NumArgs);
 
   for (int i = 0; i < NumArgs; ++i) {
     if (i >= requiredParams) continue;
@@ -2425,7 +2425,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             TLocation ALoc = Args[i]->Loc;
             delete Args[i];
             Args[i] = new VIntLiteral(0, ALoc);
-            ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
+            ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
           }
         }
         break;
@@ -2443,7 +2443,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          ParseWarning(ALoc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
           delete Args[i];
           Args[i] = new VNameLiteral(NAME_None, ALoc);
         }
@@ -2457,7 +2457,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          ParseWarning(ALoc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
           delete Args[i];
           Args[i] = new VStringLiteral(VStr(), ec.Package->FindString(""), ALoc);
         }
@@ -2491,7 +2491,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be class; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          ParseWarning(ALoc, "`%s` argument #%d should be class; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
           delete Args[i];
           Args[i] = new VNoneLiteral(ALoc);
         }
@@ -2504,9 +2504,9 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           if (VStr::convertInt(str, &lbl)) {
             TLocation ALoc = Args[i]->Loc;
             if (lbl < 0) {
-              ParseError(ALoc, "DECORATE: `%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, str);
+              ParseError(ALoc, "`%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, str);
             } else {
-              ParseWarning(ALoc, "DECORATE: `%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU IDIOTS!", Func->GetName(), i+1);
+              ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU IDIOTS!", Func->GetName(), i+1);
               delete Args[i];
               Args[i] = new VIntLiteral(lbl, ALoc);
             }
@@ -2544,7 +2544,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             VClass *CheckClass;
             if (ClassName.ICmp("Super") == 0) {
               CheckClass = ec.SelfClass->ParentClass;
-              if (!CheckClass) ParseWarning(ALoc, "DECORATE: `%s` argument #%d wants `Super` without superclass!", Func->GetName(), i+1);
+              if (!CheckClass) ParseWarning(ALoc, "`%s` argument #%d wants `Super` without superclass!", Func->GetName(), i+1);
             } else {
               CheckClass = VClass::FindClassNoCase(*ClassName);
               if (!CheckClass) {

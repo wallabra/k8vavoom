@@ -337,7 +337,7 @@ void InitMapInfo () {
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_mapinfo) {
       GCon->Logf("mapinfo file: '%s'", *W_FullLumpName(Lump));
-      ParseMapInfo(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
+      ParseMapInfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
     processNumFixups("DoomEdNum", true, DoomEdNumFixups);
     processNumFixups("SpawnNum", false, SpawnNumFixups);
@@ -1637,7 +1637,7 @@ static void ParseMapInfo (VScriptParser *sc) {
           }
           GCon->Logf("Including '%s'...", *sc->String);
           scstack[scsp++] = sc;
-          sc = new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp));
+          sc = new VScriptParser(/**sc->String*/W_FullLumpName(lmp), W_CreateLumpReaderNum(lmp));
           //ParseMapInfo(new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp)));
         } else {
           sc->Error(va("mapinfo include '%s' not found", *sc->String));

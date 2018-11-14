@@ -92,7 +92,7 @@ void SV_Init () {
   VName loadvcs = VName("loadvcs");
   for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
     if (W_LumpName(ScLump) != loadvcs) continue;
-    VScriptParser *sc = new VScriptParser(*W_LumpName(ScLump), W_CreateLumpReaderNum(ScLump));
+    VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
     while (!sc->AtEnd()) {
       sc->ExpectString();
       while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);

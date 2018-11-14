@@ -832,7 +832,7 @@ void ParseDecalDef (VScriptParser *sc) {
           }
           GCon->Logf(NAME_Init, "Including '%s'...", *sc->String);
           scstack[scsp++] = sc;
-          sc = new VScriptParser(*sc->String, W_CreateLumpReaderNum(lmp));
+          sc = new VScriptParser(/**sc->String*/W_FullLumpName(lmp), W_CreateLumpReaderNum(lmp));
         } else {
           sc->Error(va("decal include '%s' not found", *sc->String));
           error = true;
@@ -951,7 +951,7 @@ void ProcessDecalDefs () {
     //fprintf(stderr, "<%s>\n", *W_LumpName(Lump));
     if (W_LumpName(Lump) == NAME_decaldef) {
       GCon->Logf(NAME_Init, "Parsing decal definition script '%s'...", *W_FullLumpName(Lump));
-      ParseDecalDef(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
+      ParseDecalDef(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
 

@@ -125,7 +125,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
   Code[2] = (ExactMatch ? VStr::ToLower(InCode[2]) : 0);
   Code[3] = 0;
 
-  VScriptParser *sc = new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump));
+  VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
   sc->SetCMode(true);
 
   bool GotLanguageCode = false;

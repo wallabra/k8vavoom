@@ -168,7 +168,7 @@ void R_InitSkyBoxes()
   {
     if (W_LumpName(Lump) == NAME_skyboxes)
     {
-      ParseSkyBoxesScript(new VScriptParser("skyboxes",
+      ParseSkyBoxesScript(new VScriptParser(/*"skyboxes"*/W_FullLumpName(Lump),
         W_CreateLumpReaderNum(Lump)));
     }
   }

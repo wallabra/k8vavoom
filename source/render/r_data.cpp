@@ -1583,7 +1583,7 @@ static void ParseEffectDefs(VScriptParser *sc,
       {
         sc->Error(va("Lump %s not found", *sc->String));
       }
-      ParseEffectDefs(new VScriptParser(sc->String,
+      ParseEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump),
         W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
@@ -1640,7 +1640,7 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
-      ParseGZDoomEffectDefs(new VScriptParser(sc->String, W_CreateLumpReaderNum(Lump)), ClassDefs);
+      ParseGZDoomEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     } else if (sc->Check("pointlight")) {
       ParseGZLightDef(sc, DLTYPE_Point);
@@ -1760,14 +1760,14 @@ void R_ParseEffectDefs()
   {
     if (W_LumpName(Lump) == NAME_vfxdefs)
     {
-      ParseEffectDefs(new VScriptParser(*W_LumpName(Lump),
+      ParseEffectDefs(new VScriptParser(W_FullLumpName(Lump),
         W_CreateLumpReaderNum(Lump)), ClassDefs);
     }
     if (W_LumpName(Lump) == NAME_gldefs ||
       W_LumpName(Lump) == NAME_doomdefs || W_LumpName(Lump) == NAME_hticdefs ||
       W_LumpName(Lump) == NAME_hexndefs || W_LumpName(Lump) == NAME_strfdefs)
     {
-      ParseGZDoomEffectDefs(new VScriptParser(*W_LumpName(Lump),
+      ParseGZDoomEffectDefs(new VScriptParser(W_FullLumpName(Lump),
         W_CreateLumpReaderNum(Lump)), ClassDefs);
     }
   }

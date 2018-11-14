@@ -203,7 +203,7 @@ void VSoundManager::Init () {
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndinfo) {
       GCon->Logf(NAME_Init, "loading SNDINFO from '%s'...", *W_FullLumpName(Lump));
-      ParseSndinfo(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
+      ParseSndinfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
 
@@ -213,7 +213,7 @@ void VSoundManager::Init () {
   memset(SeqTrans, -1, sizeof(SeqTrans));
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_sndseq) {
-      ParseSequenceScript(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
+      ParseSequenceScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
 
@@ -222,7 +222,7 @@ void VSoundManager::Init () {
   Environments = nullptr;
   for (Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_reverbs) {
-      ParseReverbs(new VScriptParser(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump)));
+      ParseReverbs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
 #endif

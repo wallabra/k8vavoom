@@ -3026,7 +3026,7 @@ void VLevel::LoadACScripts (int Lump) {
   for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
     if (W_LumpName(ScLump) != NAME_loadacs) continue;
 
-    VScriptParser *sc = new VScriptParser(*W_LumpName(ScLump), W_CreateLumpReaderNum(ScLump));
+    VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
     while (!sc->AtEnd()) {
       //sc->ExpectName8();
       //int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
