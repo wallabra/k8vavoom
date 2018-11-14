@@ -63,7 +63,17 @@ override void CreateChoices () {
 //==========================================================================
 override void SetDefaultChoice () {
   ::SetDefaultChoice();
-  foreach (auto i; 0..P_GetNumSkills()-2) CycleNextChoice();
+
+  int goodSkill = max(0, P_GetNumSkills()-2);
+  foreach (auto i; 0..P_GetNumSkills()) {
+    auto sdef = P_GetSkillDef(i);
+    if (sdef->bMustConfirm) {
+      goodSkill = i-1;
+      break;
+    }
+  }
+
+  foreach (auto i; 0..goodSkill) CycleNextChoice();
 }
 
 
