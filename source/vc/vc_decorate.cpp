@@ -2402,6 +2402,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       LastState->GotoLabel = GotoLabel;
       LastState->GotoOffset = GotoOffset;
+      check(NewLabelsStart == Class->StateLabelDefs.Num());
       /*k8: this doesn't work, see above
       for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
         Class->StateLabelDefs[i].GotoLabel = GotoLabel;
@@ -2436,10 +2437,13 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         LastState = dummyState;
         //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
       }
-      /*if (LastState)*/ LastState->NextState = nullptr;
+      LastState->NextState = nullptr;
+      /*
       // if we have no defined states for latest labels, simply redirect labels to nowhere
       for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) Class->StateLabelDefs[i].State = nullptr;
       NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+      */
+      check(NewLabelsStart == Class->StateLabelDefs.Num());
       PrevState = nullptr; // new execution chain
       if (!sc->Crossed && sc->Check(";")) {}
       continue;
@@ -2553,7 +2557,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
           // there were no states after the label, insert dummy one
           VState *dupState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
           States.Append(dupState);
-          // copy real state data to duplicate one
+          // copy real state data to duplicate one (it will be used as new "real" state)
           dupState->SpriteName = State->SpriteName;
           dupState->Frame = State->Frame;
           dupState->Time = State->Time;
@@ -2564,19 +2568,18 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
           dupState->Misc2 = State->Misc2;
           dupState->LightName = State->LightName;
           // dummy out "real" state (we copied all necessary data to duplicate one here)
-          dupState->Frame = (State->Frame&VState::FF_FRAMEMASK)|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
-          dupState->Time = 0;
-          dupState->TicType = VState::TCK_Normal;
-          dupState->Arg1 = 0;
-          dupState->Arg2 = 0;
-          dupState->LightName = VStr();
+          State->Frame = (State->Frame&(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE))|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+          State->Time = 0;
+          State->TicType = VState::TCK_Normal;
+          State->Arg1 = 0;
+          State->Arg2 = 0;
+          State->LightName = VStr();
           // link previous state
           if (PrevState) PrevState->NextState = State;
           // assign state to the labels
           for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
             Class->StateLabelDefs[i].State = State;
-            // no need to mark loop start, it will be done later with the real state, not dummy one
-            //LoopStart = State;
+            LoopStart = State;
           }
           NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
           PrevState = State;
