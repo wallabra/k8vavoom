@@ -2256,40 +2256,6 @@ VName VParser::ParseStateString () {
 
 //==========================================================================
 //
-//  AppendDummyActionState
-//
-//==========================================================================
-static void AppendDummyActionState (VClass *Class,
-  VState *&PrevState, VState *&LoopStart, int &NewLabelsStart,
-  int &StateIdx, const TLocation &TmpLoc, bool firstFrame)
-{
-  char StateName[16];
-  snprintf(StateName, sizeof(StateName), "S_%d", StateIdx);
-  VState *s = new VState(StateName, Class, TmpLoc);
-  Class->AddState(s);
-  if (firstFrame) {
-    s->SpriteName = "tnt1";
-    s->Frame = VState::FF_SKIPOFFS;
-  } else {
-    s->SpriteName = NAME_None;
-    s->Frame = VState::FF_SKIPOFFS|VState::FF_DONTCHANGE;
-  }
-  s->Time = 0;
-  // link previous state
-  if (PrevState) PrevState->NextState = s;
-  // assign state to the labels
-  for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-    Class->StateLabelDefs[i].State = s;
-    LoopStart = s;
-  }
-  NewLabelsStart = Class->StateLabelDefs.Num();
-  PrevState = s;
-  ++StateIdx;
-}
-
-
-//==========================================================================
-//
 //  VParser::ParseStates
 //
 //==========================================================================
@@ -2301,22 +2267,23 @@ void VParser::ParseStates (VClass *InClass) {
     return;
   }
   Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
+
   int StateIdx = 0;
-  VState *PrevState = nullptr;
-  VState *LoopStart = nullptr;
-  int NewLabelsStart = InClass->StateLabelDefs.Num();
-  bool wasActionAfterLabel = false;
-  bool firstFrame = true;
+  VState *PrevState = nullptr; // previous state in current execution chain
+  VState *LoopStart = nullptr; // state with last defined label (used to resolve `loop`)
+  int NewLabelsStart = InClass->StateLabelDefs.Num(); // first defined, but not assigned label index
+  //bool wasActionAfterLabel = false;
+  //bool firstFrame = true;
+  bool needDummySpawnState = false;
+
   while (!Lex.Check(TK_RBrace)) {
     TLocation TmpLoc = Lex.Location;
     VName TmpName = ParseStateString();
 
     // goto command
     if (TmpName == NAME_Goto) {
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc, firstFrame);
-      }
+      needDummySpawnState = false;
+
       VName GotoLabel = ParseStateString();
       int GotoOffset = 0;
       if (Lex.Check(TK_Plus)) {
@@ -2331,47 +2298,89 @@ void VParser::ParseStates (VClass *InClass) {
         ParseError(Lex.Location, "Goto before first state");
         continue;
       }
-      if (PrevState) {
-        PrevState->GotoLabel = GotoLabel;
-        PrevState->GotoOffset = GotoOffset;
+
+      // if we have no defined states for latest labels, create dummy state to attach gotos to it
+      // simple redirection won't work, because this label can be used as `A_JumpXXX()` destination, for example
+      // sigh... k8
+      if (!PrevState) {
+        // yet if we are in spawn label, demand at least one defined state
+        //if (inSpawnLabel) sc->Error("you cannot do immediate jump in spawn state");
+        // ah, screw it, just define TNT1
+        VState *dummyState = new VState(va("S_%d", StateIdx++), InClass, TmpLoc);
+        InClass->AddState(dummyState);
+        dummyState->SpriteName = "tnt1";
+        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+        dummyState->Time = 0;
+        // link previous state
+        if (PrevState) PrevState->NextState = dummyState;
+        // assign state to the labels
+        for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
+          InClass->StateLabelDefs[i].State = dummyState;
+          LoopStart = dummyState; // this will replace loop start only if we have any labels
+        }
+        NewLabelsStart = InClass->StateLabelDefs.Num(); // no current label
+        PrevState = dummyState;
+        //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
       }
+      PrevState->GotoLabel = GotoLabel;
+      PrevState->GotoOffset = GotoOffset;
+      /*k8: this doesn't work, see above
       for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
         InClass->StateLabelDefs[i].GotoLabel = GotoLabel;
         InClass->StateLabelDefs[i].GotoOffset = GotoOffset;
       }
       NewLabelsStart = InClass->StateLabelDefs.Num();
+      */
+      check(NewLabelsStart = InClass->StateLabelDefs.Num());
       PrevState = nullptr;
       continue;
     }
 
     // stop command
     if (TmpName == NAME_Stop) {
+      needDummySpawnState = false;
+
       if (!PrevState && NewLabelsStart == InClass->StateLabelDefs.Num()) {
         ParseError(Lex.Location, "Stop before first state");
         continue;
       }
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc, firstFrame);
+      // see above for the reason to introduce this dummy state
+      if (!PrevState) {
+        VState *dummyState = new VState(va("S_%d", StateIdx++), InClass, TmpLoc);
+        InClass->AddState(dummyState);
+        dummyState->SpriteName = "tnt1";
+        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+        dummyState->Time = 0;
+        // link previous state
+        if (PrevState) PrevState->NextState = dummyState;
+        // assign state to the labels
+        for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
+          InClass->StateLabelDefs[i].State = dummyState;
+          LoopStart = dummyState; // this will replace loop start only if we have any labels
+        }
+        NewLabelsStart = InClass->StateLabelDefs.Num(); // no current label
+        PrevState = dummyState;
+        //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
       }
-      if (PrevState) PrevState->NextState = nullptr;
+      PrevState->NextState = nullptr;
+      /*
       for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
         InClass->StateLabelDefs[i].State = nullptr;
       }
       NewLabelsStart = InClass->StateLabelDefs.Num();
+      */
+      check(NewLabelsStart = InClass->StateLabelDefs.Num());
       PrevState = nullptr;
       continue;
     }
 
     // wait command
     if (TmpName == NAME_Wait || TmpName == NAME_Fail) {
+      needDummySpawnState = false;
+
       if (!PrevState) {
         ParseError(Lex.Location, "%s before first state", *TmpName);
         continue;
-      }
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc, firstFrame);
       }
       PrevState->NextState = PrevState;
       PrevState = nullptr;
@@ -2380,13 +2389,11 @@ void VParser::ParseStates (VClass *InClass) {
 
     // loop command
     if (TmpName == NAME_Loop) {
+      needDummySpawnState = false;
+
       if (!PrevState) {
         ParseError(Lex.Location, "Loop before first state");
         continue;
-      }
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(InClass, PrevState, LoopStart, NewLabelsStart, StateIdx, TmpLoc, firstFrame);
       }
       PrevState->NextState = LoopStart;
       PrevState = nullptr;
@@ -2395,22 +2402,23 @@ void VParser::ParseStates (VClass *InClass) {
 
     // check for label
     if (Lex.Check(TK_Colon)) {
-      wasActionAfterLabel = false;
       VStateLabelDef &Lbl = InClass->StateLabelDefs.Alloc();
       Lbl.Loc = TmpLoc;
       Lbl.Name = *TmpName;
+      // add dummy state for spawn, so actions will work as expected
+      if (VStr::ICmp(*Lbl.Name, "Spawn") == 0) needDummySpawnState = true;
       continue;
     }
 
-    wasActionAfterLabel = true;
-    firstFrame = false;
-
     char StateName[16];
-    snprintf(StateName, sizeof(StateName), "S_%d", StateIdx);
+    snprintf(StateName, sizeof(StateName), "S_%d", StateIdx++);
     VState *s = new VState(StateName, InClass, TmpLoc);
     InClass->AddState(s);
 
     // sprite name
+    //bool totalKeepSprite = false; // remember "----" for other frames of this state
+    //bool keepSpriteBase = false; // remember "----" or "####" for other frames of this state
+
     char SprName[8];
     SprName[0] = 0;
     if (VStr::Length(*TmpName) != 4) {
@@ -2423,11 +2431,20 @@ void VParser::ParseStates (VClass *InClass) {
       SprName[4] = 0;
     }
     s->SpriteName = SprName;
+    /*
+    if (VStr::Cmp(SprName, "####") == 0 || VStr::Cmp(SprName, "----") == 0) {
+      s->SpriteName = NAME_None; // don't change
+      keepSpriteBase = true;
+      if (VStr::Cmp(SprName, "----") == 0) totalKeepSprite = true;
+    }
+    */
 
     // frame
     VName FramesString(NAME_None);
     TLocation FramesLoc;
     if (Lex.Token != TK_Identifier && Lex.Token != TK_StringLiteral) ParseError(Lex.Location, "Identifier expected");
+
+    // check first frame
     char FChar = VStr::ToUpper(Lex.String[0]);
     if (FChar < '0' || FChar < 'A' || FChar > ']') ParseError(Lex.Location, "Frames must be 0-9, A-Z, [, \\ or ]");
     s->Frame = FChar-'A';
@@ -2475,7 +2492,7 @@ void VParser::ParseStates (VClass *InClass) {
     auto stloc = Lex.Location;
     // code
     if (Lex.Check(TK_LBrace)) {
-      if (VStr::Length(*FramesString) > 1) ParseError(Lex.Location, "Only states with single frame can have code block");
+      //if (VStr::Length(*FramesString) > 1) ParseError(Lex.Location, "Only states with single frame can have code block");
       s->Function = new VMethod(NAME_None, s, s->Loc);
       s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       s->Function->ReturnType = VFieldType(TYPE_Void);
@@ -2494,7 +2511,7 @@ void VParser::ParseStates (VClass *InClass) {
           if (Lex.Check(TK_LParen)) NumArgs = ParseArgList(Lex.Location, Args);
           VExpression *e = new VCastOrInvocation(funcName, stloc, NumArgs, Args);
           auto cst = new VCompound(stloc);
-          cst->Statements.Append(new VExpressionStatement(e));
+          cst->Statements.Append(new VExpressionStatement(new VDropResult(e)));
           // create function
           s->Function = new VMethod(NAME_None, s, s->Loc);
           s->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
@@ -2507,7 +2524,47 @@ void VParser::ParseStates (VClass *InClass) {
       }
     }
 
-    // Link previous state
+    if (needDummySpawnState && (s->Function && s->FunctionName != NAME_None)) {
+      // there were no states after the label, insert dummy one
+      VState *dupState = new VState(va("S_%d", StateIdx++), InClass, TmpLoc);
+      InClass->AddState(dupState);
+      // copy real state data to duplicate one (it will be used as new "real" state)
+      dupState->SpriteName = s->SpriteName;
+      dupState->Frame = s->Frame;
+      dupState->Time = s->Time;
+      dupState->TicType = s->TicType;
+      dupState->Arg1 = s->Arg1;
+      dupState->Arg2 = s->Arg2;
+      dupState->Misc1 = s->Misc1;
+      dupState->Misc2 = s->Misc2;
+      dupState->LightName = s->LightName;
+      dupState->Function = s->Function;
+      dupState->FunctionName = s->FunctionName;
+      // dummy out "real" state (we copied all necessary data to duplicate one here)
+      s->Frame = (s->Frame&(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE))|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+      s->Time = 0;
+      s->TicType = VState::TCK_Normal;
+      s->Arg1 = 0;
+      s->Arg2 = 0;
+      s->LightName = VStr();
+      s->Function = nullptr;
+      s->FunctionName = NAME_None;
+      // link previous state
+      if (PrevState) PrevState->NextState = s;
+      // assign state to the labels
+      for (int i = NewLabelsStart; i < InClass->StateLabelDefs.Num(); ++i) {
+        InClass->StateLabelDefs[i].State = s;
+        LoopStart = s;
+      }
+      NewLabelsStart = InClass->StateLabelDefs.Num(); // no current label
+      PrevState = s;
+      // and use duplicate state as a new state
+      s = dupState;
+      //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
+    }
+    needDummySpawnState = false;
+
+    // link previous state
     if (PrevState) PrevState->NextState = s;
 
     // assign state to the labels
@@ -2517,25 +2574,29 @@ void VParser::ParseStates (VClass *InClass) {
     }
     NewLabelsStart = InClass->StateLabelDefs.Num();
     PrevState = s;
-    ++StateIdx;
 
     for (int i = 1; i < VStr::Length(*FramesString); ++i) {
       char FSChar = VStr::ToUpper((*FramesString)[i]);
       if (FSChar < 'A' || FSChar > ']') ParseError(Lex.Location, "Frames must be A-Z, [, \\ or ]");
       // create a new state
-      snprintf(StateName, sizeof(StateName), "S_%d", StateIdx);
+      snprintf(StateName, sizeof(StateName), "S_%d", StateIdx++);
       VState *s2 = new VState(StateName, InClass, TmpLoc);
       InClass->AddState(s2);
       s2->SpriteName = s->SpriteName;
-      s2->Frame = (s->Frame & VState::FF_FULLBRIGHT)|(FSChar-'A');
+      s2->Frame = (s->Frame&VState::FF_FULLBRIGHT)|(FSChar-'A');
       s2->Time = s->Time;
       s2->Misc1 = s->Misc1;
       s2->Misc2 = s->Misc2;
+      if (s->Function) {
+        s2->Function = new VMethod(NAME_None, s2, s2->Loc);
+        s2->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
+        s2->Function->ReturnType = VFieldType(TYPE_Void);
+        s2->Function->Statement = s->Function->Statement->SyntaxCopy();
+      }
       s2->FunctionName = s->FunctionName;
       // link previous state
       PrevState->NextState = s2;
       PrevState = s2;
-      ++StateIdx;
     }
   }
 
