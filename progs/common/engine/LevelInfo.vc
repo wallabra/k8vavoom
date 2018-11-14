@@ -195,6 +195,34 @@ native final int FindFreeTID (optional int tidstart, optional int limit);
 native final bool IsTIDUsed (int tid);
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct MobjByTIDIteratorInfo {
+  Entity prev;
+  int tid; // 0: use activator (it is in prev)
+}
+
+final bool eachTID_opIterInit (out MobjByTIDIteratorInfo it, int tid, optional Entity activator) {
+  if (tid == 0) {
+    // 0 is activator
+    if (!activator) return false;
+    it.prev = activator;
+  } else {
+    // get first entity
+    it.prev = FindMobjFromTID(tid, none);
+    if (!it.prev) return false; // no entities, do not iterate
+  }
+  it.tid = tid;
+  return true;
+}
+
+final bool eachTID_opIterNext (out MobjByTIDIteratorInfo it, out Entity ent) {
+  ent = it.prev;
+  if (!ent) return false; // done
+  it.prev = (it.tid ? FindMobjFromTID(it.tid, ent) : none);
+  return true;
+}
+
+
 //==========================================================================
 //
 //  SpawnSpecials
