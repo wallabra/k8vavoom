@@ -47,6 +47,7 @@ final void A_FocusQuake()
   int     playnum;
   float   dist;
 
+  //print("QuakeFocus: dur=%s; power=%s", QuakeDuration, Richters);
   if (QuakeDuration-- > 0)
   {
     if (Richters > 256 / 9)
@@ -100,9 +101,12 @@ final void A_FocusQuake()
 
 final void A_ContMobjSound()
 {
+  //print("QuakeFocus: SOUND! dur=%s; power=%s", QuakeDuration, Richters);
   PlaySound('world/quake', CHAN_VOICE);
 }
 
+
+//???k8: first quake is ignored; this seems to be intended
 states
 {
 Spawn:
