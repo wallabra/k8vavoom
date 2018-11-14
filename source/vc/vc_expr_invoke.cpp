@@ -1496,7 +1496,6 @@ VInvocation::VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADeleg
   , HaveSelf(AHaveSelf)
   , BaseCall(ABaseCall)
   , CallerState(nullptr)
-  , MultiFrameState(false)
 {
 }
 
@@ -1515,7 +1514,6 @@ VInvocation::VInvocation (VMethod *AFunc, int ADelegateLocal, const TLocation &A
   , HaveSelf(false)
   , BaseCall(false)
   , CallerState(nullptr)
-  , MultiFrameState(false)
 {
 }
 
@@ -1558,7 +1556,6 @@ void VInvocation::DoSyntaxCopyTo (VExpression *e) {
   res->HaveSelf = HaveSelf;
   res->BaseCall = BaseCall;
   res->CallerState = CallerState;
-  res->MultiFrameState = MultiFrameState;
 }
 
 
@@ -2639,7 +2636,6 @@ VStr VInvocation::toString () const {
   //VField *DelegateField;
   //int DelegateLocal;
   //VState *CallerState;
-  //bool MultiFrameState;
   res += args2str();
   return res;
 }

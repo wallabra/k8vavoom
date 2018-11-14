@@ -1433,6 +1433,7 @@ void VClass::EmitStateLabels () {
   for (int i = 0; i < StateLabelDefs.Num(); ++i) {
     VStateLabelDef &Lbl = StateLabelDefs[i];
     if (Lbl.GotoLabel != NAME_None) {
+      //fprintf(stderr, "XXXLABEL:%s: '%s': dest label is '%s', dest offset is %d\n", GetName(), *StateLabelDefs[i].Name, *StateLabelDefs[i].GotoLabel, StateLabelDefs[i].GotoOffset);
       Lbl.State = ResolveStateLabel(Lbl.Loc, Lbl.GotoLabel, Lbl.GotoOffset);
       TArray<VName> Names;
       StaticSplitStateLabel(Lbl.Name, Names);

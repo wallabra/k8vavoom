@@ -1765,7 +1765,7 @@ static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
 //  ParseFunCallAsStmt
 //
 //==========================================================================
-static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState *State) {
   // get function name and parse arguments
   //auto actionLoc = sc->GetLoc();
   VExpression *Args[VMethod::MAX_PARAMS+1];
@@ -1812,7 +1812,6 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
   } else {
     VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, stloc, NumArgs, Args);
     Expr->CallerState = State;
-    Expr->MultiFrameState = (FramesString.Length() > 1);
     callExpr = Expr;
   }
   return new VExpressionStatement(new VDropResult(callExpr));
@@ -1824,7 +1823,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
 //  ParseActionStatement
 //
 //==========================================================================
-static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VState *State) {
   if (sc->Check("{")) {
     VCompound *stmt = new VCompound(sc->GetLoc());
     while (!sc->Check("}")) {
@@ -1832,11 +1831,11 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
       VStatement *st;
       bool wantSemi = true;
       if (sc->Check("{")) {
-        st = ParseActionStatement(sc, Class, State, FramesString);
+        st = ParseActionStatement(sc, Class, State);
         wantSemi = false;
       } else {
         //fprintf(stderr, "***0:<%s>\n", *sc->String);
-        st = ParseFunCallAsStmt(sc, Class, State, FramesString);
+        st = ParseFunCallAsStmt(sc, Class, State);
       }
       if (st) stmt->Statements.append(st);
       if (wantSemi) sc->Expect(";");
@@ -1854,10 +1853,10 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     VExpression *cond = ParseExpression(sc, Class);
     sc->Expect(")");
     if (!cond) sc->Error("invalid `if` expression");
-    VStatement *ts = ParseActionStatement(sc, Class, State, FramesString);
+    VStatement *ts = ParseActionStatement(sc, Class, State);
     if (!ts) sc->Error("invalid `if` true branch");
     if (sc->Check("else")) {
-      VStatement *fs = ParseActionStatement(sc, Class, State, FramesString);
+      VStatement *fs = ParseActionStatement(sc, Class, State);
       if (fs) return new VIf(cond, ts, fs, stloc);
     }
     return new VIf(cond, ts, stloc);
@@ -1933,7 +1932,7 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     } else {
       // return expr;
       // just call `expr`, and do normal return
-      VStatement *fs = ParseActionStatement(sc, Class, State, FramesString);
+      VStatement *fs = ParseActionStatement(sc, Class, State);
       if (!fs) return new VReturn(nullptr, stloc);
       // create compound
       VCompound *cst = new VCompound(stloc);
@@ -1943,7 +1942,7 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     }
   }
 
-  VStatement *res = ParseFunCallAsStmt(sc, Class, State, FramesString);
+  VStatement *res = ParseFunCallAsStmt(sc, Class, State);
   sc->Expect(";");
   if (!res) sc->Error("invalid action statement");
   return res;
@@ -1957,12 +1956,12 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
 //  "{" checked
 //
 //==========================================================================
-static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State) {
   bool oldicb = inCodeBlock;
   inCodeBlock = true;
   VCompound *stmt = new VCompound(sc->GetLoc());
   while (!sc->Check("}")) {
-    VStatement *st = ParseActionStatement(sc, Class, State, FramesString);
+    VStatement *st = ParseActionStatement(sc, Class, State);
     if (!st) continue;
     stmt->Statements.append(st);
   }
@@ -1992,7 +1991,7 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State, c
 //  parse single decorate action
 //
 //==========================================================================
-static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, const VStr &FramesString) {
+static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
   // get function name and parse arguments
   //fprintf(stderr, "!!!***000: <%s> (%s)\n", *sc->String, *FuncName);
   //fprintf(stderr, "!!!***000: <%s>\n", *sc->String);
@@ -2033,7 +2032,6 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State, co
     } else if (Func->NumParams || NumArgs /*|| FuncName.ICmp("a_explode") == 0*/) {
       VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
       Expr->CallerState = State;
-      Expr->MultiFrameState = (FramesString.Length() > 1);
       VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
       VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
       M->Flags = FUNC_Final;
@@ -2351,65 +2349,26 @@ static VStr ParseStateString (VScriptParser *sc) {
 
 //==========================================================================
 //
-//  AppendDummyActionState
-//
-//==========================================================================
-static void AppendDummyActionState (VClass *Class, TArray<VState*> &States,
-  VState *&PrevState, VState *&LastState, VState *&LoopStart, int &NewLabelsStart,
-  const TLocation &TmpLoc, bool firstFrame)
-{
-  VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
-  States.Append(State);
-  if (firstFrame) {
-    State->SpriteName = "tnt1";
-    State->Frame = VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
-  } else {
-    State->SpriteName = NAME_None;
-    State->Frame = VState::FF_SKIPOFFS|VState::FF_DONTCHANGE|VState::FF_SKIPMODEL;
-  }
-  State->Time = 0;
-  // link previous state
-  if (PrevState) PrevState->NextState = State;
-  // assign state to the labels
-  for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-    Class->StateLabelDefs[i].State = State;
-    LoopStart = State;
-  }
-  NewLabelsStart = Class->StateLabelDefs.Num();
-  PrevState = State;
-  LastState = State;
-}
-
-
-//==========================================================================
-//
 //  ParseStates
 //
 //==========================================================================
 static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &States) {
   guard(ParseStates);
-  VState *PrevState = nullptr;
-  VState *LastState = nullptr;
-  VState *LoopStart = nullptr;
-  int NewLabelsStart = Class->StateLabelDefs.Num();
+  VState *PrevState = nullptr; // previous state in current execution chain
+  VState *LastState = nullptr; // last defined state (`nullptr` right after new label)
+  VState *LoopStart = nullptr; // state with last defined label (used to resolve `loop`)
+  int NewLabelsStart = Class->StateLabelDefs.Num(); // first defined, but not assigned label index
+  //bool inSpawnLabel = false;
 
   sc->Expect("{");
   // disable escape sequences in states
   sc->SetEscape(false);
-  bool wasActionAfterLabel = false;
-  bool firstFrame = true;
   while (!sc->Check("}")) {
-    //if (sc->Check(";")) continue;
-
     TLocation TmpLoc = sc->GetLoc();
     VStr TmpName = ParseStateString(sc);
 
     // goto command
-    if (!TmpName.ICmp("Goto")) {
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
-      }
+    if (TmpName.ICmp("Goto") == 0) {
       VName GotoLabel = *ParseStateString(sc);
       int GotoOffset = 0;
       if (sc->Check("+")) {
@@ -2417,84 +2376,106 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         GotoOffset = sc->Number;
       }
       if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) sc->Error("Goto before first state");
-      if (LastState) {
-        LastState->GotoLabel = GotoLabel;
-        LastState->GotoOffset = GotoOffset;
+      // if we have no defined states for latest labels, create dummy state to attach gotos to it
+      // simple redirection won't work, because this label can be used as `A_JumpXXX()` destination, for example
+      // sigh... k8
+      if (!LastState) {
+        // yet if we are in spawn label, demand at least one defined state
+        //if (inSpawnLabel) sc->Error("you cannot do immediate jump in spawn state");
+        // ah, screw it, just define TNT1
+        VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
+        States.Append(dummyState);
+        dummyState->SpriteName = "tnt1";
+        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+        dummyState->Time = 0;
+        // link previous state
+        if (PrevState) PrevState->NextState = dummyState;
+        // assign state to the labels
+        for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+          Class->StateLabelDefs[i].State = dummyState;
+          LoopStart = dummyState; // this will replace loop start only if we have any labels
+        }
+        NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+        PrevState = dummyState;
+        LastState = dummyState;
+        //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
       }
+      LastState->GotoLabel = GotoLabel;
+      LastState->GotoOffset = GotoOffset;
+      /*k8: this doesn't work, see above
       for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
         Class->StateLabelDefs[i].GotoLabel = GotoLabel;
         Class->StateLabelDefs[i].GotoOffset = GotoOffset;
       }
-      NewLabelsStart = Class->StateLabelDefs.Num();
-      PrevState = nullptr;
-      if (sc->Check(";")) {}
+      NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+      */
+      PrevState = nullptr; // new execution chain
+      if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
 
     // stop command
-    if (!TmpName.ICmp("Stop")) {
-      if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) {
-        sc->Error("Stop before first state");
-        continue;
+    if (TmpName.ICmp("Stop") == 0) {
+      if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) sc->Error("Stop before first state");
+      // see above for the reason to introduce this dummy state
+      if (!LastState) {
+        VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
+        States.Append(dummyState);
+        dummyState->SpriteName = "tnt1";
+        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+        dummyState->Time = 0;
+        // link previous state
+        if (PrevState) PrevState->NextState = dummyState;
+        // assign state to the labels
+        for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+          Class->StateLabelDefs[i].State = dummyState;
+          LoopStart = dummyState; // this will replace loop start only if we have any labels
+        }
+        NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+        PrevState = dummyState;
+        LastState = dummyState;
+        //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
       }
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
-      }
-      if (LastState) LastState->NextState = nullptr;
+      /*if (LastState)*/ LastState->NextState = nullptr;
+      // if we have no defined states for latest labels, simply redirect labels to nowhere
       for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) Class->StateLabelDefs[i].State = nullptr;
-      NewLabelsStart = Class->StateLabelDefs.Num();
-      PrevState = nullptr;
-      if (sc->Check(";")) {}
+      NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+      PrevState = nullptr; // new execution chain
+      if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
 
     // wait command
-    if (!TmpName.ICmp("Wait") || !TmpName.ICmp("Fail")) {
-      if (!LastState) {
-        sc->Error(va("%s before first state", *TmpName));
-        continue;
-      }
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
-      }
+    if (TmpName.ICmp("Wait") == 0 || TmpName.ICmp("Fail") == 0) {
+      if (!LastState) sc->Error(va("%s before first state", *TmpName));
       LastState->NextState = LastState;
-      PrevState = nullptr;
-      if (sc->Check(";")) {}
+      PrevState = nullptr; // new execution chain
+      if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
 
     // loop command
-    if (!TmpName.ICmp("Loop")) {
-      if (!LastState) {
-        sc->Error("Loop before first state");
-        continue;
-      }
-      if (!wasActionAfterLabel) {
-        wasActionAfterLabel = true;
-        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
-      }
+    if (TmpName.ICmp("Loop") == 0) {
+      if (!LastState) sc->Error("Loop before first state");
       LastState->NextState = LoopStart;
-      PrevState = nullptr;
-      if (sc->Check(";")) {}
+      PrevState = nullptr; // new execution chain
+      if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
 
     // check for label
     if (sc->Check(":")) {
       LastState = nullptr;
+      // allocate new label (it will be resolved later)
       VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
       Lbl.Loc = TmpLoc;
       Lbl.Name = TmpName;
-      wasActionAfterLabel = false;
-      if (sc->Check(";")) {}
+      //if (TmpName.ICmp("Spawn") == 0) inSpawnLabel = true;
+      if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
 
-    wasActionAfterLabel = true;
-
-    // add temporary labels
+    // create new state
     VState *State = new VState(va("S_%d", States.Num()), Class, TmpLoc);
     States.Append(State);
 
@@ -2503,25 +2484,33 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     if (TmpName == "####" || TmpName == "----") {
       State->SpriteName = NAME_None; // don't change
     } else {
-      State->SpriteName = *TmpName.ToLower();
+      State->SpriteName = *TmpName.toLowerCase();
     }
 
-    // frame
+    // sprite frame
     sc->ExpectString();
+    if (sc->String.length() == 0) sc->Error("Missing sprite frames");
+    VStr FramesString = sc->String;
+
+    // check first frame
     char FChar = VStr::ToUpper(sc->String[0]);
     if (FChar == '#' || FChar == '-') {
       State->Frame = VState::FF_DONTCHANGE;
     } else {
-      if (FChar < 'A' || FChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
-      State->Frame = FChar - 'A';
+      if (FChar < 'A' || FChar > ']') {
+        if (FChar < 33 || FChar > 127) {
+          sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FChar&0xff)));
+        } else {
+          sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FChar));
+        }
+      }
+      State->Frame = FChar-'A';
     }
-    VStr FramesString = sc->String;
 
     sc->ResetCrossed();
     // tics
-    if (!sc->GetString()) sc->Error("decorate: tics expected");
     // `random(a, b)`?
-    if (sc->String.ICmp("random") == 0) {
+    if (sc->Check("random")) {
       sc->Expect("(");
       sc->ExpectNumberWithSign();
       State->Arg1 = sc->Number;
@@ -2533,7 +2522,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       State->TicType = VState::TCK_Random;
     } else {
       // number
-      sc->UnGet();
       sc->ExpectNumberWithSign();
       if (sc->Number < 0) {
         State->Time = sc->Number;
@@ -2543,6 +2531,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     }
     //fprintf(stderr, "**0:%s: <%s> (%d)\n", *sc->GetLoc().toStringNoCol(), *sc->String, (sc->Crossed ? 1 : 0));
 
+    // parse state action
     bool wasAction = false;
     for (;;) {
       if (!sc->GetString()) break;
@@ -2550,67 +2539,67 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       //fprintf(stderr, "**1:%s: <%s>\n", *sc->GetLoc().toStringNoCol(), *sc->String);
       sc->UnGet();
 
-      // check for bright parameter
-      if (sc->Check("Bright")) {
-        State->Frame |= VState::FF_FULLBRIGHT;
-        continue;
-      }
-      // check for canrise parameter
-      if (sc->Check("CanRaise")) {
-        //GCon->Logf("%s: unsupported DECORATE 'CanRaise' attribute", *sc->GetLoc().toStringNoCol());
-        State->Frame |= VState::FF_CANRAISE;
-        continue;
-      }
-      // check for "mdlskip" parameter
-      if (sc->Check("MdlSkip")) {
-        State->Frame |= VState::FF_SKIPMODEL;
-        continue;
-      }
-      // check for "fast" parameter
-      if (sc->Check("Fast")) {
-        State->Frame |= VState::FF_FAST;
-        continue;
-      }
-      // check for "slow" parameter
-      if (sc->Check("Slow")) {
-        State->Frame |= VState::FF_SLOW;
-        continue;
-      }
-
-      // simulate "nodelay" by inserting one dummy state
+      // simulate "nodelay" by inserting one dummy state if necessary
       if (sc->Check("NoDelay")) {
-        AppendDummyActionState(Class, States, PrevState, LastState, LoopStart, NewLabelsStart, TmpLoc, firstFrame);
-        firstFrame = false; // we have at least one frame now
-        VState *s0 = States[States.length()-2]; // current
-        check(s0 == State);
-        VState *s1 = States[States.length()-1]; // new
-        States[States.length()-2] = s1;
-        States[States.length()-1] = s0;
+        // "nodelay" has sense only for "spawn" state
+        // k8: play safe here: add dummy state for any label, just in case
+        if (!LastState /*&& inSpawnLabel*/) {
+          // there were no states after the label, insert dummy one
+          VState *dupState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
+          States.Append(dupState);
+          // copy real state data to duplicate one
+          dupState->SpriteName = State->SpriteName;
+          dupState->Frame = State->Frame;
+          dupState->Time = State->Time;
+          dupState->TicType = State->TicType;
+          dupState->Arg1 = State->Arg1;
+          dupState->Arg2 = State->Arg2;
+          dupState->Misc1 = State->Misc1;
+          dupState->Misc2 = State->Misc2;
+          dupState->LightName = State->LightName;
+          // dummy out "real" state (we copied all necessary data to duplicate one here)
+          dupState->Frame = (State->Frame&VState::FF_FRAMEMASK)|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+          dupState->Time = 0;
+          dupState->TicType = VState::TCK_Normal;
+          dupState->Arg1 = 0;
+          dupState->Arg2 = 0;
+          dupState->LightName = VStr();
+          // link previous state
+          if (PrevState) PrevState->NextState = State;
+          // assign state to the labels
+          for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+            Class->StateLabelDefs[i].State = State;
+            // no need to mark loop start, it will be done later with the real state, not dummy one
+            //LoopStart = State;
+          }
+          NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+          PrevState = State;
+          LastState = State;
+          // and use duplicate state as a new state
+          State = dupState;
+          //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
+          continue;
+        }
         continue;
       }
 
-      // check for light parameter
+      // check various flags
+      if (sc->Check("Bright")) { State->Frame |= VState::FF_FULLBRIGHT; continue; }
+      if (sc->Check("CanRaise")) { State->Frame |= VState::FF_CANRAISE; continue; }
+      if (sc->Check("MdlSkip")) { State->Frame |= VState::FF_SKIPMODEL; continue; }
+      if (sc->Check("Fast")) { State->Frame |= VState::FF_FAST; continue; }
+      if (sc->Check("Slow")) { State->Frame |= VState::FF_SLOW; continue; }
+
+      // process `light() parameter
       if (sc->Check("Light")) {
-        //LIGHT(UNMNRALR)
         sc->Expect("(");
         sc->ExpectString();
         State->LightName = sc->String;
         sc->Expect(")");
-        /*
-        GCon->Logf("%s: unsupported DECORATE 'Light' attribute", *sc->GetLoc().toStringNoCol());
-        if (!sc->Crossed) {
-          if (sc->Check("(")) {
-            while (!sc->IsAtEol()) {
-              if (sc->Check(")")) break;
-              sc->GetString();
-            }
-          }
-        }
-        */
         continue;
       }
 
-      // check for offsets
+      // process `offset` parameter
       if (sc->Check("Offset")) {
         sc->Expect("(");
         sc->ExpectNumberWithSign();
@@ -2623,13 +2612,9 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
 
       if (sc->Check("{")) {
-        //sc->Error(va("%s: complex state actions in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
-        //return false;
-        ParseActionBlock(sc, Class, State, FramesString);
+        ParseActionBlock(sc, Class, State);
       } else {
-        ParseActionCall(sc, Class, State, FramesString);
-        //State->Function = Func;
-        //if (sc->Check(";")) {}
+        ParseActionCall(sc, Class, State);
       }
 
       wasAction = true;
@@ -2641,12 +2626,12 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         sc->Error(va("%s: duplicate complex state actions in DECORATE aren't supported", *sc->GetLoc().toStringNoCol()));
         return false;
       }
-      ParseActionBlock(sc, Class, State, FramesString);
+      ParseActionBlock(sc, Class, State);
       wasAction = true;
+    } else {
+      if (!sc->Crossed && sc->Check(";")) {}
     }
     sc->ResetCrossed();
-
-    //if (!wasAction) sc->UnGet();
 
     // link previous state
     if (PrevState) PrevState->NextState = State;
@@ -2654,14 +2639,12 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     // assign state to the labels
     for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
       Class->StateLabelDefs[i].State = State;
-      LoopStart = State;
+      LoopStart = State; // this will replace loop start only if we have any labels
     }
-    NewLabelsStart = Class->StateLabelDefs.Num();
+    NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
     PrevState = State;
     LastState = State;
-
-    // moved here, so "nodelay" dummy state will be correctly initialized with "TNT1"
-    firstFrame = false;
+    //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
 
     for (int i = 1; i < FramesString.Length(); ++i) {
       char FSChar = VStr::ToUpper(FramesString[i]);
@@ -2669,7 +2652,13 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (FSChar == '#' || FSChar == '-') {
         frm = VState::FF_DONTCHANGE;
       } else {
-        if (FSChar < 'A' || FSChar > ']') sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FSChar));
+        if (FSChar < 'A' || FSChar > ']') {
+          if (FSChar < 33 || FSChar > 127) {
+            sc->Error(va("Frames must be A-Z, [, \\ or ], got <0x%02x>", (vuint32)(FSChar&0xff)));
+          } else {
+            sc->Error(va("Frames must be A-Z, [, \\ or ], got <%c>", FSChar));
+          }
+        }
         frm = FSChar-'A';
       }
 
@@ -2680,6 +2669,9 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       s2->SpriteName = State->SpriteName;
       s2->Frame = (State->Frame&~VState::FF_FRAMEMASK)|frm;
       s2->Time = State->Time;
+      s2->TicType = State->TicType;
+      s2->Arg1 = State->Arg1;
+      s2->Arg2 = State->Arg2;
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;
       s2->Function = State->Function;
