@@ -4385,6 +4385,11 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
   } else {
     FlagName = *Flag.ToLower();
   }
+
+  //if (VStr::ICmp(*FlagName, "noblockmap") == 0) return false; // cannot change it
+  //GCon->Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
+  //return false;
+
   for (int j = 0; j < FlagList.Num(); ++j) {
     VFlagList &ClassDef = FlagList[j];
     if (ClassFilter != NAME_None && ClassDef.Class->LowerCaseName != ClassFilter) continue;
@@ -4392,6 +4397,8 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
       const VFlagDef &F = ClassDef.Flags[i];
       if (FlagName == F.Name) {
+        //GCon->Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
+        UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
         bool didset = true;
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
@@ -4410,6 +4417,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
             break;
           default: didset = false;
         }
+        LinkToWorld(); // ...and link back again
         return didset;
       }
     }
