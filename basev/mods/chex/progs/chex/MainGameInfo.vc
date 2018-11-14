@@ -40,7 +40,8 @@ override void PostDecorateInit () {
 
 
 defaultproperties {
-  GameFilterFlag = EntityEx::GAME_Chex;
+  // k8: ok, allow doom entities too, so splatterhouse will work
+  GameFilterFlag |= EntityEx::GAME_Chex;
 
   /*
   PlayerClasses.Num = 1;
