@@ -6875,7 +6875,7 @@ final override void SpawnMapThing (mthing_t *mthing) {
 
   // spawn it
   auto thg = Spawn(moClass, default, default, mthing, false);
-  //print("SpawnMapThing: '%C' height=%f (defheight=%f)", thg, thg.Height, moClass.default.Height);
+  //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f)", thg, mthing->type, thg.Height, moClass.default.Height);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 }
 
