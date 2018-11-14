@@ -25,6 +25,7 @@
 class ChexMainGameInfo : replaces(MainGameInfo);
 
 
+/*
 override void PostDecorateInit () {
   ::PostDecorateInit();
   //writeln("=================== ************ ===================");
@@ -37,6 +38,7 @@ override void PostDecorateInit () {
     }
   }
 }
+*/
 
 
 defaultproperties {

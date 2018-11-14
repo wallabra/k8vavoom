@@ -1,6 +1,6 @@
 // Chex Warrior
 
-actor ChexPlayer : DoomPlayer /*PlayerPawn*/
+actor ChexPlayer : DoomPlayer /*PlayerPawn*/ replaces DoomPlayer
 {
   player.displayname "Chex Warrior"
   player.crouchsprite ""
