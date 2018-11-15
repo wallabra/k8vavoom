@@ -329,34 +329,34 @@ override void Init () {
   CreateCvar('k8HSDebugCrits', "1", "Show headshows criticals debug?", 0);
 
   // enable headshots?
-  CreateCvar('k8HSEnabled', (IsReleaseMode ? "0" : "1"), "Is headshots enabled?", CVAR_ARCHIVE);
+  CreateCvar('k8HSEnabled', (IsReleaseMode ? "0" : "1"), "Is headshots enabled?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // distance multiplier (the more -- the less headshot chance on big distances)
-  CreateCvar('k8HSDistMult', "1.1", "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE);
+  CreateCvar('k8HSDistMult', "1.1", "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // announce critical messages
-  CreateCvar('k8HSShowCriticals', "1", "Announce critical shots?", CVAR_ARCHIVE);
+  CreateCvar('k8HSShowCriticals', "1", "Announce critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // disable criticals?
-  CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE);
+  CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   // fastkill/instakill some annoying monsters?
-  CreateCvar('k8HSFastKillAnnoyingMonsters', (IsReleaseMode ? "0" : "1"), "Fastkill some annoying monsters?", CVAR_ARCHIVE);
+  CreateCvar('k8HSFastKillAnnoyingMonsters', (IsReleaseMode ? "0" : "1"), "Fastkill some annoying monsters?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // instakill Pain Elementals?
-  CreateCvar('k8HSInstaKillPainElementals', (IsReleaseMode ? "0" : "1"), "Instakill Pain Elementals?", CVAR_ARCHIVE);
+  CreateCvar('k8HSInstaKillPainElementals', (IsReleaseMode ? "0" : "1"), "Instakill Pain Elementals?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // instakill Lost Souls?
-  CreateCvar('k8HSInstaKillLostSouls', (IsReleaseMode ? "0" : "1"), "Instakill Lost Souls?", CVAR_ARCHIVE);
+  CreateCvar('k8HSInstaKillLostSouls', (IsReleaseMode ? "0" : "1"), "Instakill Lost Souls?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // how mush damage should be inflicted to Arch-Vile?
-  CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE);
+  CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
   CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
   CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
 
-  CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE);
+  CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts?", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE);
+  CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE);
+  CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   CreateCvar('k8ExplodeMissleTest', "0", "Missile explosion testing code", 0);
 
@@ -369,9 +369,22 @@ override void Init () {
 
   CreateCvar('r_statusbar_draw', "1", "Draw statusbar?", CVAR_ARCHIVE);
 
-  CreateCvar('fuck_stealth_monsters', "0", "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE);
+  CreateCvar('fuck_stealth_monsters', "0", "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   CreateCvar('vid_renderer', "1", "Tell some idiotic mod authors that we're GZDoom in OpenGL mode (1).", 0);
+
+  CreateCvar('k8HealthAccum_Enabled', "0", "Enable Health Accumulation?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_Max', "666", "How much health Accumulator can hold?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_RegenLow', "70", "When health goes below this, Accummulator will start regenerating your health (0 means always).", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_RegenRate', "2", "Seconds between regenerating health.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_RegenPoints', "1", "How much health points should be regenerated in one step?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_BoostLow', "10", "When health goes below this, Accummulator will boost your health.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_BoostPoints', "-80", "Boost by this number of health points (positive), or up to the given health (negative).", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8HealthAccum_BoostCooldown', "30", "Health boost cooldown, in seconds.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  //TODO: make this network-aware
+  CreateCvar('k8HealthAccum_MessagesRegen', "0", "Report health regeneration.", CVAR_ARCHIVE);
+  CreateCvar('k8HealthAccum_MessagesBoost', "1", "Report health boost.", CVAR_ARCHIVE);
+  CreateCvar('k8HealthAccum_MessagesAccumed', "0", "Report health accumulation.", CVAR_ARCHIVE);
 
   ::Init(); // parse cvarinfo and such
 }

@@ -457,6 +457,11 @@ void SB_DrawFullscreenStats () {
   SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, cl.Health, fsalpha, false);
   DrawPic(ST_TDHEALTHX-60, ST_TDHEALTHY+15, pic_health, fsalpha);
 
+  // Health Accumulation Device
+  if (GetCvarB('k8HealthAccum_Enabled')) {
+    SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY-18, cl.k8HealthAccum_Amount, fsalpha, false);
+  }
+
   // armor
   BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
   if (Armor && Armor.Amount) {
