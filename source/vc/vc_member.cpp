@@ -27,6 +27,10 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+bool VMemberBase::optDeprecatedLaxOverride = false; // true: don't require `override` on overriden methods
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 bool VMemberBase::GObjInitialised;
 TArray<VMemberBase *> VMemberBase::GMembers;
 VMemberBase *VMemberBase::GMembersHash[4096];

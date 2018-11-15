@@ -57,6 +57,10 @@ enum {
 //==========================================================================
 class VMemberBase {
 public:
+  // some global options
+  static bool optDeprecatedLaxOverride; // true: don't require `override` on overriden methods
+
+public:
   // internal variables
   vuint8 MemberType;
   vint32 MemberIndex;
