@@ -124,10 +124,10 @@ public:
         if (ch == '\t') {
           *d++ = '\\';
           *d++ = 't';
-        } else if (ch == '\r') {
+        } else if (ch == '\n') {
           *d++ = '\\';
           *d++ = 'n';
-        } else if (ch == '\n') {
+        } else if (ch == '\r') {
           *d++ = '\\';
           *d++ = 'r';
         } else if (ch < ' ' || ch == 127) {
