@@ -180,6 +180,20 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgslotsl/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgselector/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/wgtextbtn/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/actor/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/armor/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/basic/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/entityex/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/health/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/heretic/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/hexen/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/incomplete/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/player/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/powerup/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/raven/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/strife/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/weapon/*.vc
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.fs
     ${CMAKE_CURRENT_SOURCE_DIR}/glshaders/*.vs
   )

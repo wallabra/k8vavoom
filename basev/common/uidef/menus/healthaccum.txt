@@ -1,0 +1,114 @@
+
+// Health Accumulator options menu
+menudef HealthAccumOptions {
+  //selector = MenuSelector_SmallRight;
+  Title = "HEALTH ACCUM OPTIONS";
+
+  option bool {
+    title = "Health Accumulator Enabled";
+    cvar = k8HealthAccum_Enabled;
+    help =
+      "This enables Health Accumulator Device."
+      "This device will accumulate medikits and stimpacks,"
+      "and will slowly inject medicine when your health is lower"
+      "than some amount."
+      "HAD can also immediately boost your health if it is VERY low,"
+      "but requires a big cooldown after this.";
+  }
+
+  option numeric {
+    title = "Maximum accumulated health";
+    cvar = k8HealthAccum_Max;
+    step = 10;
+    min = 10;
+    max = 666;
+    help =
+      "Maximum amount of health HAD can accumulate."
+      "Yes, in DooM world, medicine is strongly corellated with health.";
+  }
+
+  header "Health Regenerator Options";
+
+  option numeric {
+    title = "Start regen at";
+    cvar = k8HealthAccum_RegenLow;
+    step = 5;
+    min = 5;
+    max = 100;
+    help = "HAD will start health regeneration when your health drops below this limit.";
+  }
+
+  option numeric {
+    title = "Regen step points";
+    cvar = k8HealthAccum_RegenPoints;
+    step = 1;
+    min = 0;
+    max = 5;
+    help = "How many health points HAD should regenerate at one regen tick?";
+  }
+
+  option numeric {
+    title = "Regen tick length";
+    cvar = k8HealthAccum_RegenRate;
+    step = 0.1;
+    min = 0.1;
+    max = 20;
+    help = "How often HAD should perform regeneration tick (in seconds)?";
+  }
+
+
+  header "Health Booster Options";
+
+  option numeric {
+    title = "Boost health at";
+    cvar = k8HealthAccum_BoostLow;
+    step = 5;
+    min = 5;
+    max = 100;
+    help = "HAD will immediately boost your health when it drops below this limit.";
+  }
+
+  option numeric {
+    title = "Boost amount";
+    cvar = k8HealthAccum_BoostPoints;
+    step = 10;
+    min = -100;
+    max = 100;
+    help =
+      "How much health HAD should boost?"
+      "Negative value means 'Boost to this exact value'."
+      "Positive value means 'Boost with this amount'.";
+  }
+
+  option numeric {
+    title = "Booster cooldown";
+    cvar = k8HealthAccum_BoostCooldown;
+    step = 10;
+    min = 10;
+    max = 240;
+    help = "HAD Booster cooldown time, in seconds.";
+  }
+
+
+  header "Interface Options";
+
+  option bool {
+    title = "Show Regeneration Messages";
+    cvar = k8HealthAccum_MessagesRegen;
+    help = "Show HUD messages for regenerated health.";
+  }
+
+  option bool {
+    title = "Show Booster Messages";
+    cvar = k8HealthAccum_MessagesBoost;
+    help = "Show HUD messages for boosted health.";
+  }
+
+  option bool {
+    title = "Show Accumulator Messages";
+    cvar = k8HealthAccum_MessagesAccumed;
+    help =
+      "Show HUD messages for accumulated health."
+      "WARNING: Those messages can be imprecise.";
+  }
+}

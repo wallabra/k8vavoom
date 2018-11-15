@@ -42,6 +42,11 @@ menudef OptionsMenu {
     submenu = MiscOptions;
   }
 
+  option submenu {
+    title = "Health Accumulator Options";
+    submenu = HealthAccumOptions;
+  }
+
   modsubmenus; // place mod submenus here
 
   header "";

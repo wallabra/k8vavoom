@@ -2,6 +2,7 @@ menus {
   "menus/advrender.txt",
   "menus/advvideo.txt",
   "menus/gameplay.txt",
+  "menus/healthaccum.txt",
   "menus/misc.txt",
   "menus/mouse.txt",
   "menus/options.txt",
