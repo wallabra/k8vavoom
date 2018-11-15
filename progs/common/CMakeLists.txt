@@ -9,7 +9,23 @@ add_dependencies(engine vcc)
 
 add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/linespec/classes.vc ${OUTDIR}/linespec.dat
-  DEPENDS vcc linespec/*.vc ${OUTDIR}/engine.dat)
+  DEPENDS
+    vcc
+    linespec/*.vc
+    linespec/actor/*.vc
+    linespec/armor/*.vc
+    linespec/basic/*.vc
+    linespec/entityex/*.vc
+    linespec/health/*.vc
+    linespec/heretic/*.vc
+    linespec/hexen/*.vc
+    linespec/incomplete/*.vc
+    linespec/player/*.vc
+    linespec/powerup/*.vc
+    linespec/raven/*.vc
+    linespec/strife/*.vc
+    linespec/weapon/*.vc
+    ${OUTDIR}/engine.dat)
 add_custom_target(linespec ALL DEPENDS ${OUTDIR}/linespec.dat)
 add_dependencies(linespec vcc engine)
 
