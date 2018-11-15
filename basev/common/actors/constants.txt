@@ -164,6 +164,13 @@ const int CHAN_5 = 5;
 const int CHAN_6 = 6;
 const int CHAN_7 = 7;
 
+const int CHAN_LISTENERZ = 0; //(8): Sound is played from the listener's Z-height. (Needs verifying)
+const int CHAN_MAYBE_LOCAL = 0; //(16): Sound is subject to compat_silentpickup and will not play if the sound is made by an actor other than the local player's camera when compatibility flag is enabled.
+const int CHAN_UI = 0; //(32): Sound is considered an interface sound and is not recorded into savegames.
+const int CHAN_NOPAUSE = 0; //(64): Sound is not paused by menus and will play through time-stopping powerup effects.
+const int CHAN_LOOP = 0; //(256): Sound loops.
+const int CHAN_NOSTOP = 0; //(4096): Do not override the sound that is currently playing on the same channel with this one. This is only the case if both sounds are the same. If they are different, the playing sound is overridden regardless.
+
 
 const int XF_HURTSOURCE = 0x01; // Hurts the source: if set, the source can be damaged by the explosion. Note that the source is not necessarily the calling actor. This flag is set by default.
 const int XF_NOTMISSILE = 0x02; // Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
