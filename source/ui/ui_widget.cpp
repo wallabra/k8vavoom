@@ -1283,7 +1283,7 @@ IMPLEMENT_FUNCTION(VWidget, SplitText) {
   P_GET_PTR(TArray<VSplitLine>, Lines);
   P_GET_STR(Text);
   P_GET_SELF;
-  RET_INT(Self->Font->SplitText(Text, *Lines, MaxWidth));
+  RET_INT(Self->Font->SplitText(Text, *Lines, MaxWidth, trimRight));
 }
 
 IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines) {
