@@ -14,7 +14,6 @@ option(WITH_OPUS "Enable Opus support" ON)
 option(WITH_LIBMAD "Enable MP3 support" ON)
 option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_GME "Enable built-in GME support" OFF)
-option(WITH_SYS_LIBPNG "Use system libpng" OFF)
 option(WITH_SYS_LIBJPG "Use system libjpg" ON)
 option(WITH_SYS_ZLIB "Use system zlib" ON)
 option(WITH_SYS_LZMA "Use system liblzma" ON)
@@ -67,7 +66,6 @@ if(ENABLE_VCCRUN_ONLY)
   #set(WITH_LIBMAD OFF)
   #set(WITH_FLAC OFF)
   set(WITH_GME OFF)
-  set(WITH_SYS_LIBPNG OFF)
   #set(WITH_SYS_LIBJPG OFF)
   #set(WITH_SYS_ZLIB OFF)
   set(ENABLE_CLIENT OFF)
@@ -84,7 +82,6 @@ else(ENABLE_VCCRUN_ONLY)
   if(NOT ENABLE_CLIENT)
     if(NOT ENABLE_SERVER)
       message(STATUS "Neither client, nor server was requested")
-      set(WITH_SYS_LIBPNG OFF)
     else(NOT ENABLE_SERVER)
       message(STATUS "Server-only build, turning off SDL2, OpenGL and OpenAL")
     endif(NOT ENABLE_SERVER)
@@ -310,31 +307,6 @@ else(WITH_SYS_ZLIB)
   set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} z)
 endif(WITH_SYS_ZLIB)
 set(MAIN_LIBS z ${MAIN_LIBS})
-
-
-#
-#  **** Check for libpng ****
-#
-if(ENABLE_CLIENT OR ENABLE_SERVER OR ENABLE_VCCRUN)
-  if(WITH_SYS_LIBPNG)
-    # don't require it, fallback to built-in one, if anything
-    find_package(PNG)
-    if(PNG_FOUND)
-      include_directories(${PNG_INCLUDE_DIR})
-      set(MAIN_LIBS ${PNG_LIBRARY} ${MAIN_LIBS})
-      add_definitions(-DVAVOOM_USE_LIBPNG=1)
-    else(PNG_FOUND)
-      message(STATUS "WARNING: LibPNG not found, using internal png reader")
-      set(WITH_SYS_LIBPNG OFF)
-    endif(PNG_FOUND)
-  endif(WITH_SYS_LIBPNG)
-
-  # it is in corelib, so no need to do anything
-  #if(NOT WITH_SYS_LIBPNG)
-  #  set(MAIN_LIBS png ${MAIN_LIBS})
-  #  set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} png)
-  #endif(NOT WITH_SYS_LIBPNG)
-endif(ENABLE_CLIENT OR ENABLE_SERVER OR ENABLE_VCCRUN)
 
 
 #

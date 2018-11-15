@@ -22,23 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-#if defined(CLIENT) || !defined(SERVER)
-# ifdef VAVOOM_USE_LIBPNG
-#  include <png.h>
-# endif
-#endif
-
 #include "gamedefs.h"
 #include "r_tex.h"
-
-
-//  This one is missing in older versions of libpng
-#ifdef VAVOOM_USE_LIBPNG
-# ifndef png_jmpbuf
-#  define png_jmpbuf(png_ptr)   ((png_ptr)->jmpbuf)
-# endif
-#endif
 
 
 //==========================================================================
@@ -152,23 +137,6 @@ VPngTexture::~VPngTexture () {
 }
 
 
-#ifdef VAVOOM_USE_LIBPNG
-//==========================================================================
-//
-//  ReadFunc
-//
-//==========================================================================
-#ifdef CLIENT
-static void ReadFunc (png_structp png, png_bytep data, png_size_t len) {
-  guard(ReadFunc);
-  VStream *Strm = (VStream *)png_get_io_ptr(png);
-  Strm->Serialise(data, len);
-  unguard;
-}
-#endif
-#endif
-
-
 //==========================================================================
 //
 //  VPngTexture::GetPixels
@@ -180,73 +148,6 @@ vuint8 *VPngTexture::GetPixels () {
 #ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
-
-#ifdef VAVOOM_USE_LIBPNG
-  // create reading structure
-  png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-  if (!png_ptr) Sys_Error("Couldn't create png_ptr");
-
-  // create info structure
-  png_infop info_ptr = png_create_info_struct(png_ptr);
-  if (!info_ptr) Sys_Error("Couldn't create info_ptr");
-
-  // create end info structure
-  png_infop end_info = png_create_info_struct(png_ptr);
-  if (!end_info) Sys_Error("Couldn't create end_info");
-
-  // set up error handling
-  if (setjmp(png_jmpbuf(png_ptr))) Sys_Error("Error reading PNG file");
-
-  // open stream
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-
-  // verify signature
-  png_byte Signature[8];
-  Strm->Seek(0);
-  Strm->Serialise(Signature, 8);
-  if (png_sig_cmp(Signature, 0, 8)) Sys_Error("%s is not a valid PNG file", *Name);
-
-  // set my read function
-  Strm->Seek(0);
-  png_set_read_fn(png_ptr, Strm, ReadFunc);
-
-  // read image info
-  png_read_info(png_ptr, info_ptr);
-  Width = png_get_image_width(png_ptr, info_ptr);
-  Height = png_get_image_height(png_ptr, info_ptr);
-  int BitDepth = png_get_bit_depth(png_ptr, info_ptr);
-  int ColourType = png_get_color_type(png_ptr, info_ptr);
-
-  // set up transformations
-  if (ColourType == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png_ptr);
-  if (ColourType == PNG_COLOR_TYPE_GRAY && BitDepth < 8) png_set_expand_gray_1_2_4_to_8(png_ptr);
-  if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
-  if (BitDepth == 16) png_set_strip_16(png_ptr);
-  if (ColourType == PNG_COLOR_TYPE_PALETTE ||
-      ColourType == PNG_COLOR_TYPE_RGB ||
-      ColourType == PNG_COLOR_TYPE_GRAY)
-  {
-    png_set_filler(png_ptr, 0xff, PNG_FILLER_AFTER);
-  }
-  if (ColourType == PNG_COLOR_TYPE_GRAY || ColourType == PNG_COLOR_TYPE_GRAY_ALPHA) {
-    png_set_gray_to_rgb(png_ptr);
-  }
-
-  // set up unpacking buffer and row pointers
-  Format = TEXFMT_RGBA;
-  Pixels = new vuint8[Width*Height*4];
-  png_bytep *RowPtrs = new png_bytep[Height];
-  for (int i = 0; i < Height; i++) RowPtrs[i] = Pixels+i*Width*4;
-  png_read_image(png_ptr, RowPtrs);
-
-  // finish reading
-  png_read_end(png_ptr, end_info);
-  png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-
-  delete[] RowPtrs;
-  RowPtrs = nullptr;
-
-#else // VAVOOM_USE_LIBPNG
 
   // open stream
   VStream *Strm = W_CreateLumpReaderNum(SourceLump);
@@ -276,8 +177,6 @@ vuint8 *VPngTexture::GetPixels () {
       *dest++ = clr.a;
     }
   }
-
-#endif
 
   // free memory
   delete Strm;
