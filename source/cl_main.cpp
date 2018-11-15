@@ -64,20 +64,7 @@ void CL_Init () {
   guard(CL_Init);
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
   // load user-specified VaVoom C script files
-  VName loadvcc = VName("loadvcc");
-  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
-    if (W_LumpName(ScLump) != loadvcc) continue;
-    VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
-    while (!sc->AtEnd()) {
-      sc->ExpectString();
-      while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
-      while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
-      if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
-      GCon->Logf(NAME_Init, "loading client VaVoom C mod '%s'...", *sc->String);
-      VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
-    }
-    delete sc;
-  }
+  G_LoadVCMods("loadvcc", "server");
   //!TLocation::ClearSourceFiles();
   ClientNetContext = new VClientNetContext();
   GClGame = (VClientGameBase *)VObject::StaticSpawnObject(VClass::FindClass("ClientGame"), false); // don't skip replacement

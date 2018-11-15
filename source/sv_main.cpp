@@ -76,6 +76,64 @@ static VServerNetContext *ServerNetContext;
 static double LastMasterUpdate;
 
 
+struct VCVFSSaver {
+  void *userdata;
+  VStream *(*dgOpenFile) (const VStr &filename, void *userdata);
+
+  VCVFSSaver () : userdata(VMemberBase::userdata), dgOpenFile(VMemberBase::dgOpenFile) {}
+
+  ~VCVFSSaver () {
+    VMemberBase::userdata = userdata;
+    VMemberBase::dgOpenFile = dgOpenFile;
+  }
+};
+
+
+static int vcmodCurrFile = -1;
+
+static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
+  for (int flump = W_IterateFile(-1, filename); flump >= 0; flump = W_IterateFile(flump, filename)) {
+    if (vcmodCurrFile >= 0 && (vcmodCurrFile != W_LumpFile(flump))) continue;
+    //fprintf(stderr, "VC: found <%s> for <%s>\n", *W_FullLumpName(flump), *filename);
+    return W_CreateLumpReaderNum(flump);
+  }
+  //fprintf(stderr, "VC: NOT found <%s>\n", *filename);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  G_LoadVCMods
+//
+//  loading mods, take list from modlistfile
+//  load user-specified VaVoom C script files
+//
+//==========================================================================
+void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
+  if (modlistfile == NAME_None) return;
+  if (!modtypestr && !modtypestr[0]) modtypestr = "common";
+  VCVFSSaver saver;
+  VMemberBase::dgOpenFile = &vcmodOpenFile;
+  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
+    if (W_LumpName(ScLump) != modlistfile) continue;
+    vcmodCurrFile = W_LumpFile(ScLump);
+    VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
+    GCon->Logf(NAME_Init, "parsing VaVoom C mod list from '%s'...", *W_FullLumpName(ScLump));
+    while (!sc->AtEnd()) {
+      sc->ExpectString();
+      //fprintf(stderr, "  <%s>\n", *sc->String.quote());
+      while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
+      while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
+      if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
+      GCon->Logf(NAME_Init, "loading %s VaVoom C mod '%s'...", modtypestr, *sc->String);
+      VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
+    }
+    delete sc;
+  }
+}
+
+
 //==========================================================================
 //
 //  SV_Init
@@ -89,20 +147,7 @@ void SV_Init () {
   VMemberBase::StaticLoadPackage(NAME_game, TLocation());
 
   // load user-specified VaVoom C script files
-  VName loadvcs = VName("loadvcs");
-  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
-    if (W_LumpName(ScLump) != loadvcs) continue;
-    VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
-    while (!sc->AtEnd()) {
-      sc->ExpectString();
-      while (sc->String.length() && (vuint8)sc->String[0] <= ' ') sc->String.chopLeft(1);
-      while (sc->String.length() && (vuint8)sc->String[sc->String.length()-1] <= ' ') sc->String.chopRight(1);
-      if (sc->String.length() == 0 || sc->String[0] == '#' || sc->String[0] == ';') continue;
-      GCon->Logf(NAME_Init, "loading server VaVoom C mod '%s'...", *sc->String);
-      VMemberBase::StaticLoadPackage(VName(*sc->String), TLocation());
-    }
-    delete sc;
-  }
+  G_LoadVCMods("loadvcs", "server");
 
   GGameInfo = (VGameInfo *)VObject::StaticSpawnObject(VClass::FindClass("MainGameInfo"), false); // don't skip replacement
   GCon->Logf(NAME_Init, "Spawned game info object of class '%s'", *GGameInfo->GetClass()->GetFullName());

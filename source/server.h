@@ -22,25 +22,27 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-struct server_t
-{
-  int     intermission;
-  int     intertime;
+struct server_t {
+  int intermission;
+  int intertime;
 };
 
-struct server_static_t
-{
-  int     max_clients;
-  int     num_connected;
+struct server_static_t {
+  int max_clients;
+  int num_connected;
 
-  VStr    serverinfo;
+  VStr serverinfo;
 };
 
-void SV_Init();
-void SV_Shutdown();
-void ServerFrame(int realtics);
-void SV_ShutdownGame();
+void SV_Init ();
+void SV_Shutdown ();
+void ServerFrame (int realtics);
+void SV_ShutdownGame ();
 
-extern server_t     sv;
-extern server_static_t  svs;
+// loading mods, take list from modlistfile
+// `modtypestr` is used to show loading messages
+void G_LoadVCMods (VName modlistfile, const char *modtypestr); // in "sv_main.cpp"
+
+
+extern server_t sv;
+extern server_static_t svs;
