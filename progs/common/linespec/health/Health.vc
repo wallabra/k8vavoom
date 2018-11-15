@@ -22,54 +22,39 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class Health : Inventory;
 
-int       PrevHealth;
-int       LowHealth;
-string      LowHealthMessage;
+int PrevHealth;
+int LowHealth;
+string LowHealthMessage;
+
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  if (Toucher.bIsPlayer)
-  {
+override bool TryPickup (EntityEx Toucher) {
+  if (Toucher.bIsPlayer) {
     PrevHealth = Toucher.Health;
     int max = MaxAmount;
-    if (!max)
-    {
-      max = PlayerEx(Toucher.Player).GetMaxHealth();
-    }
-    if (Toucher.Player.Health >= max)
-    {
-      //  You should be able to pick up health bonuses even at
-      // full health.
-      if (bAlwaysPickup)
-      {
+    if (!max) max = PlayerEx(Toucher.Player).GetMaxHealth();
+    if (Toucher.Player.Health >= max) {
+      // you should be able to pick up health bonuses even at full health
+      if (bAlwaysPickup) {
         GoAwayAndDie();
         return true;
       }
       return false;
     }
     Toucher.Player.Health += Amount;
-    if (Toucher.Player.Health > max)
-    {
-      Toucher.Player.Health = max;
-    }
+    if (Toucher.Player.Health > max) Toucher.Player.Health = max;
     Toucher.Health = Toucher.Player.Health;
     GoAwayAndDie();
     return true;
-  }
-  else
-  {
+  } else {
     PrevHealth = 0x7fffffff;
-    if (Toucher.GiveBody(Amount) || bAlwaysPickup)
-    {
+    if (Toucher.GiveBody(Amount) || bAlwaysPickup) {
       GoAwayAndDie();
       return true;
     }
@@ -77,23 +62,19 @@ override bool TryPickup(EntityEx Toucher)
   }
 }
 
+
 //==========================================================================
 //
 //  GetPickupMessage
 //
 //==========================================================================
-
-override string GetPickupMessage()
-{
-  if (PrevHealth < LowHealth && LowHealthMessage)
-  {
-    return LowHealthMessage;
-  }
+override string GetPickupMessage () {
+  if (PrevHealth < LowHealth && LowHealthMessage) return LowHealthMessage;
   return ::GetPickupMessage();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Amount = 1;
   MaxAmount = 0;
   PickupSound = 'misc/health_pkup';
