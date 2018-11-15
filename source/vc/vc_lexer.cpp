@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "vc_local.h"
 
 
@@ -51,6 +50,8 @@ VLexer::VLexer ()
   , Number(0)
   , Float(0)
   , Name(NAME_None)
+  , userdata(nullptr)
+  , dgOpenFile(nullptr)
 {
   memset(tokenStringBuffer, 0, sizeof(tokenStringBuffer));
   if (!tablesInited) {
@@ -90,6 +91,30 @@ VLexer::~VLexer () {
 
 //==========================================================================
 //
+//  VLexer::doOpenFile
+//
+//  returns `null` if file not found
+//  by default it tries to call `dgOpenFile()`, if it is specified,
+//  otherwise falls back to standard vfs
+//
+//==========================================================================
+VStream *VLexer::doOpenFile (const VStr &filename) {
+  if (filename.length() == 0) return nullptr; // just in case
+  VStr fname = filename;
+#ifdef WIN32
+  fname = fname.fixSlashes();
+#endif
+  if (dgOpenFile) return dgOpenFile(this, fname);
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  return FL_OpenFileRead(fname);
+#else
+  return fsysOpenFile(fname);
+#endif
+}
+
+
+//==========================================================================
+//
 //  VLexer::OpenSource
 //
 //==========================================================================
@@ -120,12 +145,7 @@ void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
 //
 //==========================================================================
 void VLexer::PushSource (const VStr &FileName) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  VStream *Strm = FL_OpenFileRead(FileName);
-#else
-  VStream *Strm = fsysOpenFile(FileName);
-#endif
-  PushSource(Strm, FileName);
+  PushSource(doOpenFile(FileName), FileName);
 }
 
 
@@ -136,7 +156,7 @@ void VLexer::PushSource (const VStr &FileName) {
 //==========================================================================
 void VLexer::PushSource (VStream *Strm, const VStr &FileName) {
   if (!Strm) {
-    FatalError("Couldn't open %s", *FileName);
+    FatalError("VC: Couldn't open '%s'", *FileName);
     return;
   }
 
@@ -158,9 +178,12 @@ void VLexer::PushSource (VStream *Strm, const VStr &FileName) {
 
   // read the file
   int FileSize = Strm->TotalSize();
+  if (Strm->IsError() || FileSize < 0) { delete Strm; FatalError("VC: Couldn't read '%s'", *FileName); return; }
   NewSrc->FileStart = new char[FileSize+1];
   Strm->Serialise(NewSrc->FileStart, FileSize);
+  if (Strm->IsError() || FileSize < 0) { delete Strm; FatalError("VC: Couldn't read '%s'", *FileName); return; }
   Strm->Close();
+  if (Strm->IsError() || FileSize < 0) { delete Strm; FatalError("VC: Couldn't read '%s'", *FileName); return; }
   delete Strm;
 
   NewSrc->FileStart[FileSize] = 0;
@@ -642,24 +665,16 @@ void VLexer::ProcessInclude () {
     // first try relative to the current source file
     if (src->Path.IsNotEmpty()) {
       VStr FileName = src->Path+VStr(tokenStringBuffer);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      VStream *Strm = FL_OpenFileRead(FileName);
-#else
-      VStream *Strm = fsysOpenFile(FileName);
-#endif
+      VStream *Strm = doOpenFile(FileName);
       if (Strm) {
         PushSource(/*Loc,*/ Strm, FileName);
         return;
       }
     }
 
-    for (int i = includePath.Num() - 1; i >= 0; --i) {
+    for (int i = includePath.Num()-1; i >= 0; --i) {
       VStr FileName = includePath[i]+VStr(tokenStringBuffer);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      VStream *Strm = FL_OpenFileRead(FileName);
-#else
-      VStream *Strm = fsysOpenFile(FileName);
-#endif
+      VStream *Strm = doOpenFile(FileName);
       if (Strm) {
         PushSource(/*Loc,*/ Strm, FileName);
         return;
@@ -685,6 +700,7 @@ void VLexer::AddIncludePath (const VStr &DirName) {
   if (!copy.EndsWith("/")) copy += '/';
 #else
   if (!copy.EndsWith("/") && !copy.EndsWith("\\")) copy += '/';
+  copy = copy.fixSlashes();
 #endif
   // check for duplicate pathes
   for (int i = 0; i < includePath.length(); ++i) {

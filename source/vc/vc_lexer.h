@@ -145,8 +145,21 @@ public:
   static inline bool isDigit (char ch) { return (ch >= '0' && ch <= '9'); }
 
 public:
+  // virtual file system callback (can be empty, and is empty by default)
+  void *userdata; // arbitrary pointer, not used by the lexer
+  // should return `null` if file not found
+  // should NOT fail if file not found
+  VStream *(*dgOpenFile) (VLexer *self, const VStr &filename);
+
+public:
   VLexer ();
   ~VLexer ();
+
+  // returns `null` if file not found
+  // by default it tries to call `dgOpenFile()`, if it is specified,
+  // otherwise falls back to standard vfs
+  // should NOT fail if file not found
+  virtual VStream *doOpenFile (const VStr &filename);
 
   void AddDefine (const VStr &CondNam, bool showWarning=true);
   void AddIncludePath (const VStr &DirName);
