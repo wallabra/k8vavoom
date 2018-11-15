@@ -116,7 +116,7 @@ override void CreateChoices () {
 //  GetModeValue
 //
 //==========================================================================
-final int GetModeValue () {
+int GetModeValue () {
   int w = GetCvar('screen_width');
   int h = GetCvar('screen_height');
   foreach (auto mi; 0..modes.length) {

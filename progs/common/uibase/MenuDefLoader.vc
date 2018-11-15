@@ -155,7 +155,7 @@ private final static void fixGZList (ref array!MenuDefOptionBase options, ref ar
 }
 
 
-final void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals) {
+void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals) {
   fixGZList(options, ovals);
 }
 

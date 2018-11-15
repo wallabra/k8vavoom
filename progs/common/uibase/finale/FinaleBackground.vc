@@ -38,7 +38,7 @@ int laststage;
 //  InitPic
 //
 //==========================================================================
-final void InitPic (name PicName) {
+void InitPic (name PicName) {
   fpage1 = R_RegisterPic(PicName);
 }
 
@@ -48,7 +48,7 @@ final void InitPic (name PicName) {
 //  InitPicPal
 //
 //==========================================================================
-final void InitPicPal (name PicName, name PalName) {
+void InitPicPal (name PicName, name PalName) {
   fpage1 = R_RegisterPicPal(PicName, PalName);
 }
 
@@ -58,7 +58,7 @@ final void InitPicPal (name PicName, name PalName) {
 //  InitBunnyScroll
 //
 //==========================================================================
-final void InitBunnyScroll () {
+void InitBunnyScroll () {
   fpage1 = R_RegisterPic('pfub1');
   fpage2 = R_RegisterPic('pfub2');
   fend[0] = R_RegisterPic('end0');
@@ -76,7 +76,7 @@ final void InitBunnyScroll () {
 //  InitDemon
 //
 //==========================================================================
-final void InitDemon () {
+void InitDemon () {
   fpage1 = R_RegisterPic('final1');
   fpage2 = R_RegisterPic('final2');
 }
@@ -87,7 +87,7 @@ final void InitDemon () {
 //  InitChess
 //
 //==========================================================================
-final void InitChess () {
+void InitChess () {
   fpage1 = R_RegisterPic('finale1');
        if (FScreen.ClGame.maxclients > 1) fpage2 = R_RegisterPic('chessall');
   else if (GetCvar('class') == 1) fpage2 = R_RegisterPic('chessc');
@@ -113,7 +113,7 @@ override void OnDraw () {
 //  DrawBunnyScroll
 //
 //==========================================================================
-final void DrawBunnyScroll () {
+void DrawBunnyScroll () {
   int scrolled = int((FScreen.FinaleTime-6.5)*16.0);
   if (scrolled <= 0) {
     DrawPic(0, 0, fpage1);
@@ -146,7 +146,7 @@ final void DrawBunnyScroll () {
 //  DrawDemonScroll
 //
 //==========================================================================
-final void DrawDemonScroll () {
+void DrawDemonScroll () {
   if (FScreen.FinaleTime < 2.0) {
     DrawPic(0, 0, fpage1);
   } else if (FScreen.FinaleTime < 22.0) {
@@ -165,7 +165,7 @@ final void DrawDemonScroll () {
 //  DrawChess
 //
 //===========================================================================
-final void DrawChess () {
+void DrawChess () {
   DrawPic(0, 0, fpage1);
   if (FScreen.FinaleStage == 4 || FScreen.FinaleStage == 5) {
     // chess pic, draw the correct character graphic
@@ -192,7 +192,7 @@ final void DrawChess () {
 //  FadeOut
 //
 //==========================================================================
-final void FadeOut () {
+void FadeOut () {
   float fade = fclamp(FScreen.FinaleTime/FScreen.FinaleEndTime, 0.0, 0.99);
   ShadeRect(0, 0, Width, Height, fade);
 }
@@ -203,7 +203,7 @@ final void FadeOut () {
 //  FadeIn
 //
 //==========================================================================
-final void FadeIn () {
+void FadeIn () {
   float fade = fclamp(1.0-FScreen.FinaleTime/FScreen.FinaleEndTime, 0.0, 0.99);
   ShadeRect(0, 0, Width, Height, fade);
 }

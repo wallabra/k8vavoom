@@ -111,7 +111,7 @@ void PostSpawn () {
 //  LoadMenuDefs
 //
 //==========================================================================
-final void LoadMenuDefs () {
+void LoadMenuDefs () {
   {
     auto par = MenuDefinition.openParser("uidef/menu_list.txt");
     scope(exit) delete par;
@@ -171,7 +171,7 @@ final void LoadMenuDefs () {
 //  section name skipped
 //
 //==========================================================================
-final void SkipGZIdiocity (ScriptsParser par) {
+void SkipGZIdiocity (ScriptsParser par) {
   if (!par.Check("{")) {
     par.ExpectString();
     par.Expect("{");
@@ -197,7 +197,7 @@ final void SkipGZIdiocity (ScriptsParser par) {
 //  ParseGZOptionMenu
 //
 //==========================================================================
-final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
+void ParseGZOptionMenu (ScriptsParser par, bool extend) {
   par.ExpectString();
   string mname = par.String.toLowerCase();
   MenuDefinition mdef;
@@ -264,7 +264,7 @@ final void ParseGZOptionMenu (ScriptsParser par, bool extend) {
 //  parse GZDoom menudef
 //
 //==========================================================================
-final void LoadGZMenuDef (ScriptsParser par) {
+void LoadGZMenuDef (ScriptsParser par) {
   for (;;) {
     if (par.Check("AddOptionMenu")) {
       ParseGZOptionMenu(par, extend:true);
@@ -311,7 +311,7 @@ final void LoadGZMenuDef (ScriptsParser par) {
 //  parse GZDoom menudef
 //
 //==========================================================================
-final void LoadGZMenuDefs () {
+void LoadGZMenuDefs () {
   if (GetCvarB('_gz_skip_menudef')) return;
   foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
     if (W_LumpName(lump) == 'menudef') {
@@ -356,7 +356,7 @@ bool SetCommonMenu (string Name) {
 //  SpawnMenu
 //
 //==========================================================================
-final MenuScreen SpawnMenu (class!MenuScreen CID) {
+MenuScreen SpawnMenu (class!MenuScreen CID) {
   MenuScreen m = MenuScreen(GRoot.NewChild(CID));
   m.ClGame = self;
   m.CreateMenu();
@@ -375,7 +375,7 @@ final MenuScreen SpawnMenu (class!MenuScreen CID) {
 //  SpawnNamedMenuStr
 //
 //==========================================================================
-final MenuScreen SpawnNamedMenuStr (string menuName) {
+MenuScreen SpawnNamedMenuStr (string menuName) {
   if (!menuName) {
     FatalError("Cannot spawn unnamed menu");
     return none;
@@ -416,7 +416,7 @@ final MenuScreen SpawnNamedMenuStr (string menuName) {
 //  SpawnNamedMenu
 //
 //==========================================================================
-final MenuScreen SpawnNamedMenu (name menuName) {
+MenuScreen SpawnNamedMenu (name menuName) {
   return SpawnNamedMenuStr(string(menuName));
 }
 
@@ -430,7 +430,7 @@ final MenuScreen SpawnNamedMenu (name menuName) {
 //  PushMenuScreen
 //
 //==========================================================================
-final void PushMenuScreen (MenuScreen menu) {
+void PushMenuScreen (MenuScreen menu) {
   // avoid stacking menus invoked by hotkeys
   foreach (auto i, auto msc; menuStack) {
     if (!msc) continue;
@@ -475,7 +475,7 @@ final void PushMenuScreen (MenuScreen menu) {
 //  SaveMenuChoice
 //
 //==========================================================================
-final void SaveMenuChoice (MenuScreen menu) {
+void SaveMenuChoice (MenuScreen menu) {
   if (!menu) return;
   if (menu isa MenuScreenTextDef) {
     auto md = MenuScreenTextDef(menu);
@@ -519,7 +519,7 @@ final void SaveMenuChoice (MenuScreen menu) {
 //  PopMenu
 //
 //==========================================================================
-final void PopMenu () {
+void PopMenu () {
   if (menuStack.length == 0) FatalError("PopMenu: menu stack underflow");
   MenuScreen menu = menuStack[$-1];
   menuStack.length -= 1;
@@ -548,7 +548,7 @@ final void PopMenu () {
 //  ForceMenuOff
 //
 //==========================================================================
-final void ForceMenuOff () {
+void ForceMenuOff () {
   foreach (ref auto msc; menuStack) {
     SaveMenuChoice(msc);
     delete msc;
@@ -565,7 +565,7 @@ final void ForceMenuOff () {
 //  MessageBoxStartMessage
 //
 //==========================================================================
-final void MessageBoxStartMessage (string text, int type, bool input) {
+void MessageBoxStartMessage (string text, int type, bool input) {
   float ui_msgxbox_wrap_trigger = GetCvarF('ui_msgxbox_wrap_trigger');
   float ui_msgxbox_wrap_width = GetCvarF('ui_msgxbox_wrap_width');
 
@@ -603,7 +603,7 @@ final void MessageBoxStartMessage (string text, int type, bool input) {
 //  MessageBoxDrawer
 //
 //==========================================================================
-final override void MessageBoxDrawer () {
+override void MessageBoxDrawer () {
   // horiz. & vertically centre string and print it
   if (messageToPrint) {
     GRoot.FillRectWithFlat(msgBoxX, msgBoxY, msgBoxW, msgBoxH, MsgBoxFlat);
@@ -624,7 +624,7 @@ final override void MessageBoxDrawer () {
 //  MessageBoxResponder
 //
 //==========================================================================
-final override bool MessageBoxResponder (event_t *event) {
+override bool MessageBoxResponder (event_t *event) {
   if (WaitForQuit) return true;
 
   // take care of any messages that need input
@@ -662,7 +662,7 @@ final override bool MessageBoxResponder (event_t *event) {
 //  MessageBoxActive
 //
 //==========================================================================
-final override bool MessageBoxActive () {
+override bool MessageBoxActive () {
   return messageToPrint;
 }
 
@@ -701,7 +701,7 @@ void ControlResponse (int key) {
 //  Realy nightmare skill?
 //
 //==========================================================================
-final void VerifyNightmare (int ch) {
+void VerifyNightmare (int ch) {
   if (ch != K_y && ch != K_t) return;
   NewGame(SkillToConfirm);
 }
@@ -712,7 +712,7 @@ final void VerifyNightmare (int ch) {
 //  EndGameResponse
 //
 //==========================================================================
-final void EndGameResponse (int ch) {
+void EndGameResponse (int ch) {
   if (ch != K_y && ch != K_t) return;
   CmdBuf_AddText("Disconnect\n");
 }
@@ -757,7 +757,7 @@ override void AddHudMessage (string Message, name Font, int Type, int Id, int Co
 //  SetPClass
 //
 //==========================================================================
-final void SetPClass (int PClass) {
+void SetPClass (int PClass) {
   MenuPClass = PClass;
   SkillClassName = va("%n", class!PlayerPawn(Game.PlayerClasses[PClass]).default.SpawnClass);
   //print("EPISODES: %d", P_GetNumEpisodes());
@@ -774,7 +774,7 @@ final void SetPClass (int PClass) {
 //  SetEpisode
 //
 //==========================================================================
-final void SetEpisode (EpisodeDef *EDef) {
+void SetEpisode (EpisodeDef *EDef) {
   MenuStartMap = EDef->Name;
   if (EDef->TeaserName && !IsMapPresent(EDef->Name)) MenuStartMap = EDef->TeaserName;
   if (EDef->bNoSkillMenu) {
@@ -790,7 +790,7 @@ final void SetEpisode (EpisodeDef *EDef) {
 //  NewGame
 //
 //==========================================================================
-final void NewGame (int SkillLevel) {
+void NewGame (int SkillLevel) {
   SetCvar('Skill', SkillLevel);
   SetCvar('Class', MenuPClass);
 

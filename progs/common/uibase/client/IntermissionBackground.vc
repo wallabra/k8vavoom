@@ -102,7 +102,7 @@ ubyte State;
 //  Init
 //
 //==========================================================================
-final void Init (name Name, ubyte AState, ClientGameShared AClGame) {
+void Init (name Name, ubyte AState, ClientGameShared AClGame) {
   Clean();
 
   State = AState;
@@ -124,7 +124,7 @@ final void Init (name Name, ubyte AState, ClientGameShared AClGame) {
 //  InitPic
 //
 //==========================================================================
-final void InitPic (name Name, ClientGameShared AClGame) {
+void InitPic (name Name, ClientGameShared AClGame) {
   Clean();
   ClGame = AClGame;
   BackgroundPic = R_RegisterPic(Name);
@@ -136,7 +136,7 @@ final void InitPic (name Name, ClientGameShared AClGame) {
 //  InitFlat
 //
 //==========================================================================
-final void InitFlat (name Name, ClientGameShared AClGame) {
+void InitFlat (name Name, ClientGameShared AClGame) {
   Clean();
   ClGame = AClGame;
   BackgroundFlat = Name;
@@ -148,7 +148,7 @@ final void InitFlat (name Name, ClientGameShared AClGame) {
 //  Clean
 //
 //==========================================================================
-final void Clean () {
+void Clean () {
   BackgroundPic = 0;
   BackgroundFlat = '';
   SplatPic = 0;
@@ -166,7 +166,7 @@ final void Clean () {
 //  ParseScript
 //
 //==========================================================================
-final void ParseScript (name ScriptName) {
+void ParseScript (name ScriptName) {
   if (!WadLumpPresent(ScriptName)) {
     print("Intermission script %n doesn't exist", ScriptName);
     BackgroundPic = R_RegisterPic('interpic');
@@ -381,7 +381,7 @@ override void OnDraw () {
 //  DrawPointer
 //
 //==========================================================================
-final void DrawPointer (int n) {
+void DrawPointer (int n) {
   int i;
   int left;
   int top;
@@ -420,7 +420,7 @@ final void DrawPointer (int n) {
 //  CheckCond
 //
 //==========================================================================
-final bool CheckCond (ubyte Cond, name MapName1, name MapName2) {
+bool CheckCond (ubyte Cond, name MapName1, name MapName2) {
   switch (Cond) {
     case COND_IfLeaving: return (State < STATE_NextLoc && MapName1 == ClGame.im.LeaveMap);
     case COND_IfNotLeaving: return (State >= STATE_NextLoc || MapName1 != ClGame.im.LeaveMap);
@@ -440,7 +440,7 @@ final bool CheckCond (ubyte Cond, name MapName1, name MapName2) {
 //  IsVisited
 //
 //==========================================================================
-final bool IsVisited (name Map) {
+bool IsVisited (name Map) {
   for (int i = 0; i < PlayerEx::MAX_MAPS_VISITED; ++i) {
     if (PlayerEx(ClGame.cl).MapsVisited[i] == Map) return true;
   }
@@ -448,8 +448,7 @@ final bool IsVisited (name Map) {
 }
 
 
-defaultproperties
-{
+defaultproperties {
   Width = 320;
   Height = 200;
   bTickEnabled = true;

@@ -48,7 +48,7 @@ delegate bool ValueChanging (Object Sender, float NewValue);
 //  findValue
 //
 //==========================================================================
-final int findValue (float val) {
+int findValue (float val) {
   foreach (auto idx, ref EnumValue v; vallist) {
     if (v.value == val) return idx;
   }

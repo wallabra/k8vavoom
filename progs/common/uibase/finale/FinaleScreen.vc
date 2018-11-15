@@ -60,7 +60,7 @@ name[CastCount] caststrings;
 //  StartFinale
 //
 //==========================================================================
-final void StartFinale (name AFinaleType) {
+void StartFinale (name AFinaleType) {
   FinaleType = AFinaleType;
   FinaleTime = 0.0;
 
@@ -163,7 +163,7 @@ override void Tick (float DeltaTime) {
 //  InitPic
 //
 //==========================================================================
-final void InitPic (name PicName) {
+void InitPic (name PicName) {
   Background.InitPic(PicName);
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
@@ -178,7 +178,7 @@ final void InitPic (name PicName) {
 //  InitUnderwater
 //
 //==========================================================================
-final void InitUnderwater () {
+void InitUnderwater () {
   Background.InitPicPal('e2end', 'e2pal');
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
@@ -193,7 +193,7 @@ final void InitUnderwater () {
 //  InitBunnyScroll
 //
 //==========================================================================
-final void InitBunnyScroll () {
+void InitBunnyScroll () {
   Background.InitBunnyScroll();
 #ifdef FIXME
   S_StartSong("d_bunny", P_GetCDEnd2Track(), true);
@@ -208,7 +208,7 @@ final void InitBunnyScroll () {
 //  InitDemonScroll
 //
 //==========================================================================
-final void InitDemonScroll () {
+void InitDemonScroll () {
   Background.InitDemon();
 #ifdef FIXME
   S_StartSong(ClGame.DefaultFinaleMusic, P_GetCDEnd1Track(), true);
@@ -223,7 +223,7 @@ final void InitDemonScroll () {
 //  StartCast
 //
 //==========================================================================
-final void StartCast () {
+void StartCast () {
 #ifdef FIXME
   S_StartSong("d_evil", P_GetCDEnd2Track(), true);
 #else
@@ -252,7 +252,7 @@ final void StartCast () {
 //  CastSound
 //
 //==========================================================================
-final void DoCastSound (state CurState, class Cls, name State, int Offset, name Sound) {
+void DoCastSound (state CurState, class Cls, name State, int Offset, name Sound) {
   state S = FindClassState(Cls, State);
   if (S) {
     S = GetStatePlus(S, Offset);
@@ -266,7 +266,7 @@ final void DoCastSound (state CurState, class Cls, name State, int Offset, name 
 //  CastSound
 //
 //==========================================================================
-final void CastSound (state State) {
+void CastSound (state State) {
   // sound hacks....
   DoCastSound(State, DoomPlayer, 'Missile', 0, 'weapons/sshotf');
   DoCastSound(State, ZombieMan, 'Missile', 1, 'grunt/attack');
@@ -302,7 +302,7 @@ final void CastSound (state State) {
 //  CastTicker
 //
 //==========================================================================
-final void CastTicker (float DeltaTime) {
+void CastTicker (float DeltaTime) {
   CastWin.CastTime -= DeltaTime;
   if (CastWin.CastTime > 0.0) return; // not time to change state yet
   SetNextCastState(CastWin.StateTime, CastWin.NextState);
@@ -314,7 +314,7 @@ final void CastTicker (float DeltaTime) {
 //  SetNextCastState
 //
 //==========================================================================
-final void SetNextCastState (float StateTime, state NextState) {
+void SetNextCastState (float StateTime, state NextState) {
   state NewState;
   if (StateTime == -1.0 || !NextState) {
     // switch from deathstate to next monster
@@ -372,7 +372,7 @@ final void SetNextCastState (float StateTime, state NextState) {
 //  CastResponder
 //
 //==========================================================================
-final bool CastResponder (event_t *ev) {
+bool CastResponder (event_t *ev) {
   if (ev->type != ev_keydown) return false;
 
   if (castdeath) return true; // already in dying frames
@@ -394,7 +394,7 @@ final bool CastResponder (event_t *ev) {
 //  CastPostDraw
 //
 //==========================================================================
-final void CastPostDraw () {
+void CastPostDraw () {
   SetFont('smallfont');
   SetTextAlign(hcentre, vtop);
   DrawText(320, 440, GetLangString(caststrings[castnum]));
@@ -406,7 +406,7 @@ final void CastPostDraw () {
 //  InitChess
 //
 //==========================================================================
-final void InitChess () {
+void InitChess () {
   FinaleStage = 0;
   FinaleEndTime = 2.0;
   Background.InitChess();
@@ -424,7 +424,7 @@ final void InitChess () {
 //  ChessTicker
 //
 //==========================================================================
-final void ChessTicker () {
+void ChessTicker () {
   if (FinaleStage < 5 && FinaleTime >= FinaleEndTime) {
     FinaleTime = 0.0;
     ++FinaleStage;
@@ -466,7 +466,7 @@ final void ChessTicker () {
 //  GetFinaleText
 //
 //==========================================================================
-final void GetFinaleText (name msgLumpName) {
+void GetFinaleText (name msgLumpName) {
   FinaleText = LoadTextLump(msgLumpName);
   FinaleEndTime = float(FinaleText.length)*TEXTSPEED+TEXTWAIT;
 }
@@ -477,7 +477,7 @@ final void GetFinaleText (name msgLumpName) {
 //  TextWrite
 //
 //===========================================================================
-final void TextWrite () {
+void TextWrite () {
   // draw some of the text onto the screen
   int count = clamp(int((FinaleTime-0.3)/TEXTSPEED), 0, FinaleText.length);
   SetFont('smallfont');
@@ -491,7 +491,7 @@ final void TextWrite () {
 //  ChessPostDraw
 //
 //==========================================================================
-final void ChessPostDraw () {
+void ChessPostDraw () {
   switch (FinaleStage) {
     case 1:
     case 2:
@@ -507,7 +507,7 @@ final void ChessPostDraw () {
 //  InitStrifeFinale
 //
 //===========================================================================
-final void InitStrifeFinale () {
+void InitStrifeFinale () {
   FinalePage = StrifeFinaleType*10;
   FinaleStage = 0;
   PlayStrifeFinalePage();
@@ -519,7 +519,7 @@ final void InitStrifeFinale () {
 //  PlayStrifeFinalePage
 //
 //===========================================================================
-final void PlayStrifeFinalePage () {
+void PlayStrifeFinalePage () {
   switch (FinalePage) {
     // happy ending
     case 0:
@@ -603,7 +603,7 @@ final void PlayStrifeFinalePage () {
 //  StrifeFinalTicker
 //
 //==========================================================================
-final void StrifeFinalTicker (float DeltaTime) {
+void StrifeFinalTicker (float DeltaTime) {
   if (FinaleStage == 0) {
     FinaleTimer -= DeltaTime;
     if (FinaleTimer <= 0.0) PlayStrifeFinalePage();
