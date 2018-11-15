@@ -1278,6 +1278,7 @@ IMPLEMENT_FUNCTION(VWidget, TextHeight) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, SplitText) {
+  P_GET_BOOL_OPT(trimRight, true);
   P_GET_INT(MaxWidth);
   P_GET_PTR(TArray<VSplitLine>, Lines);
   P_GET_STR(Text);

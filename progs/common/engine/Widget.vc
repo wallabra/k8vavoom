@@ -206,8 +206,8 @@ native final void SetTextShadow (bool on);
 native final int TextWidth (string text);
 // calculates text height
 native final int TextHeight (string text);
-// splits text into lines that fit in specified width
-native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth);
+// splits text into lines that fit in specified width (trimRight default is true)
+native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth, optional bool trimRight);
 // splits text into lines that fit in specified width by inserting newlines (trimRight default is true)
 native final string SplitTextWithNewlines (string Text, int Maxwidth, optional bool trimRight);
 // draws text

@@ -78,8 +78,8 @@ public:
   int StringWidth (const VStr&) const;
   int TextWidth (const VStr&) const;
   int TextHeight (const VStr&) const;
-  int SplitText (const VStr&, TArray<VSplitLine>&, int) const;
-  VStr SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight) const;
+  int SplitText (const VStr&, TArray<VSplitLine>&, int, bool trimRight=true) const;
+  VStr SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight=true) const;
 
   inline int GetSpaceWidth () const { return SpaceWidth; }
   inline int GetHeight () const { return FontHeight; }

@@ -819,7 +819,7 @@ int VFont::TextHeight (const VStr &String) const {
 //  VFont::SplitText
 //
 //==========================================================================
-int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth) const {
+int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth, bool trimRight) const {
   guard(VFont::SplitText);
   Lines.Clear();
   const char *Start = *Text;
@@ -873,6 +873,18 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth)
       L.Width = CurW;
     }
   }
+
+  if (trimRight) {
+    for (int f = 0; f < Lines.length(); ++f) {
+      VStr s = Lines[f].Text;
+      while (s.length() && (vuint8)s[s.length()-1] <= 32) s.chopRight(1);
+      if (Lines[f].Text.length() != s.length()) {
+        Lines[f].Text = s;
+        Lines[f].Width = StringWidth(s);
+      }
+    }
+  }
+
   return Lines.Num()*FontHeight;
   unguard;
 }
@@ -886,17 +898,11 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth)
 VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight) const {
   guard(VFont::SplitTextWithNewlines);
   TArray<VSplitLine> Lines;
-  SplitText(Text, Lines, MaxWidth);
+  SplitText(Text, Lines, MaxWidth, trimRight);
   VStr Ret;
   for (int i = 0; i < Lines.Num(); ++i) {
     if (i != 0) Ret += "\n";
-    if (trimRight) {
-      VStr s = Lines[i].Text;
-      while (s.length() && (vuint8)s[s.length()-1] <= 32) s.chopRight(1);
-      Ret += s;
-    } else {
-      Ret += Lines[i].Text;
-    }
+    Ret += Lines[i].Text;
   }
   return Ret;
   unguard;
