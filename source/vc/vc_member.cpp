@@ -45,6 +45,9 @@ bool VMemberBase::doAsmDump = false;
 bool VMemberBase::unsafeCodeAllowed = true;
 bool VMemberBase::unsafeCodeWarning = true;
 
+void *VMemberBase::userdata; // arbitrary pointer, not used by the lexer
+VStream *(*VMemberBase::dgOpenFile) (const VStr &filename, void *userdata);
+
 
 //==========================================================================
 //
@@ -543,10 +546,26 @@ void VMemberBase::StaticAddDefine (const char *s) {
 
 //==========================================================================
 //
+//  pkgOpenFileDG
+//
+//==========================================================================
+static VStream *pkgOpenFileDG (VLexer *self, const VStr &filename) {
+  if (VMemberBase::dgOpenFile) return VMemberBase::dgOpenFile(filename, VMemberBase::userdata);
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  return FL_OpenFileRead(filename);
+#else
+  return fsysOpenFile(filename);
+#endif
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::InitLexer
 //
 //==========================================================================
 void VMemberBase::InitLexer (VLexer &lex) {
   for (int f = 0; f < incpathlist.length(); ++f) lex.AddIncludePath(*incpathlist[f]);
   for (int f = 0; f < definelist.length(); ++f) lex.AddDefine(*definelist[f], false); // no warnings
+  lex.dgOpenFile = &pkgOpenFileDG;
 }

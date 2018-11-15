@@ -121,6 +121,13 @@ public:
 
   static bool doAsmDump;
 
+public:
+  // virtual file system callback for reading source files (can be empty, and is empty by default)
+  static void *userdata; // arbitrary pointer, not used by the lexer
+  // should return `null` if file not found
+  // should NOT fail if file not found
+  static VStream *(*dgOpenFile) (const VStr &filename, void *userdata);
+
 private:
   static TArray<VStr> incpathlist;
   static TArray<VStr> definelist;
