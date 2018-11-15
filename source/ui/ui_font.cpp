@@ -883,14 +883,20 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth)
 //  VFont::SplitTextWithNewlines
 //
 //==========================================================================
-VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth) const {
+VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight) const {
   guard(VFont::SplitTextWithNewlines);
   TArray<VSplitLine> Lines;
   SplitText(Text, Lines, MaxWidth);
   VStr Ret;
   for (int i = 0; i < Lines.Num(); ++i) {
     if (i != 0) Ret += "\n";
-    Ret += Lines[i].Text;
+    if (trimRight) {
+      VStr s = Lines[i].Text;
+      while (s.length() && (vuint8)s[s.length()-1] <= 32) s.chopRight(1);
+      Ret += s;
+    } else {
+      Ret += Lines[i].Text;
+    }
   }
   return Ret;
   unguard;

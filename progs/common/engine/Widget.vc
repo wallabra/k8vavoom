@@ -208,8 +208,8 @@ native final int TextWidth (string text);
 native final int TextHeight (string text);
 // splits text into lines that fit in specified width
 native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth);
-// splits text into lines that fit in specified width by inserting newlines
-native final string SplitTextWithNewlines (string Text, int Maxwidth);
+// splits text into lines that fit in specified width by inserting newlines (trimRight default is true)
+native final string SplitTextWithNewlines (string Text, int Maxwidth, optional bool trimRight);
 // draws text
 native final void DrawText (int X, int Y, string Text, optional int Colour,
   optional int BoldColour, optional float Alpha);

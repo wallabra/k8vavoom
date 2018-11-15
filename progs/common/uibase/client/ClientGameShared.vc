@@ -566,10 +566,21 @@ final void ForceMenuOff () {
 //
 //==========================================================================
 final void MessageBoxStartMessage (string text, int type, bool input) {
-  // split too long text
-  GRoot.SetFont('smallfont');
-  msgBoxW = GRoot.TextWidth(text);
-  if (msgBoxW > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
+  float ui_msgxbox_wrap_trigger = GetCvarF('ui_msgxbox_wrap_trigger');
+  float ui_msgxbox_wrap_width = GetCvarF('ui_msgxbox_wrap_width');
+
+  if (ui_msgxbox_wrap_trigger > 0 && ui_msgxbox_wrap_width > 0) {
+    // split too long text
+    GRoot.SetFont('smallfont');
+    msgBoxW = GRoot.TextWidth(text);
+    //if (msgBoxW > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
+    if (float(msgBoxW)/float(GetVirtualWidth()) > ui_msgxbox_wrap_trigger) {
+      int newwdt = int(float(GetVirtualWidth())*ui_msgxbox_wrap_width);
+      //print("oldwdt=%s; oldtext=<%q>", msgBoxW, text);
+      text = GRoot.SplitTextWithNewlines(text, newwdt, trimRight:true);
+      //print("newwdt=%s; newtext=<%q>", newwdt, text);
+    }
+  }
 
   messageToPrint = true;
   messageString = text;

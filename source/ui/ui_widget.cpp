@@ -31,6 +31,10 @@ extern VCvarB gl_pic_filtering;
 extern VCvarB gl_font_filtering;
 
 
+static VCvarF ui_msgxbox_wrap_trigger("ui_msgxbox_wrap_trigger", "0.9", "Maximum width (1 means whole screen) before message box will start wrapping; <=0 means \"don't\".", CVAR_Archive);
+static VCvarF ui_msgxbox_wrap_width("ui_msgxbox_wrap_width", "0.7", "Width (1 means whole screen) for message box wrapping; <=0 means \"don't\".", CVAR_Archive);
+
+
 IMPLEMENT_CLASS(V, Widget);
 
 
@@ -1282,10 +1286,11 @@ IMPLEMENT_FUNCTION(VWidget, SplitText) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines) {
+  P_GET_BOOL_OPT(trimRight, true);
   P_GET_INT(MaxWidth);
   P_GET_STR(Text);
   P_GET_SELF;
-  RET_STR(Self->Font->SplitTextWithNewlines(Text, MaxWidth));
+  RET_STR(Self->Font->SplitTextWithNewlines(Text, MaxWidth, trimRight));
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawText) {
