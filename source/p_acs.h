@@ -162,7 +162,7 @@ enum EPCD
   DECLARE_PCD(LSpec6Direct),//130 // be given names like PCD_Dummy.
   DECLARE_PCD(PrintName),
   DECLARE_PCD(MusicChange),
-  DECLARE_PCD(Team2FragPoints),
+  DECLARE_PCD(ConsoleCommandDirect), //DECLARE_PCD(Team2FragPoints),
   DECLARE_PCD(ConsoleCommand),
   DECLARE_PCD(SinglePlayer),    // [RH] End of Skull Tag p-codes
   DECLARE_PCD(FixedMul),

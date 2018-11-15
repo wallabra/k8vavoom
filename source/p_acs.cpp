@@ -2338,6 +2338,30 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         }
         break;
         //GCon->Logf("ACSF_SetActivator: tid=%d; ptr=%d", args[0], (argCount > 1 ? args[1] : 0));
+
+      case ACSF_GetUserCVar:
+        if (argCount == 2) {
+          VName name = GetName(args[1]);
+          if (name == NAME_None) return 0;
+          //GCon->Logf("ACSF: get cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
+          return (int)(VCvar::GetFloat(*name)*65536.0f);
+        }
+        break;
+
+      case ACSF_PlayerIsSpectator_Zadro:
+        return 0;
+
+      // https://zdoom.org/wiki/ConsolePlayerNumber
+      //FIXME: disconnect?
+      case ACSF_ConsolePlayerNumber_Zadro:
+        //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
+        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
+          if (cl && cls.signon && cl->MO) {
+            //GCon->Logf(NAME_Warning, "CONPLRNUM: %d", cl->ClientNum);
+            return cl->ClientNum;
+          }
+        }
+        return -1;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -5468,6 +5492,16 @@ int VAcs::RunScript(float DeltaTime)
       sp--;
       ACSVM_BREAK;
 
+    ACSVM_CASE(PCD_ConsoleCommand)
+      GCon->Logf(NAME_Warning, "no console commands from ACS!");
+      sp -= 3;
+      ACSVM_BREAK;
+
+    //ACSVM_CASE(PCD_Team2FragPoints)
+    ACSVM_CASE(PCD_ConsoleCommandDirect)
+      GCon->Logf(NAME_Warning, "no console commands from ACS!");
+      ip += 3;
+      ACSVM_BREAK;
 
     //  These p-codes are not supported. They will terminate script.
     ACSVM_CASE(PCD_PlayerBlueSkull)
@@ -5493,8 +5527,6 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_IsOneFlagCTF)
     ACSVM_CASE(PCD_LSpec6)
     ACSVM_CASE(PCD_LSpec6Direct)
-    ACSVM_CASE(PCD_Team2FragPoints)
-    ACSVM_CASE(PCD_ConsoleCommand)
     ACSVM_CASE(PCD_SetStyle)
     ACSVM_CASE(PCD_SetStyleDirect)
     ACSVM_CASE(PCD_WriteToIni)
