@@ -149,6 +149,8 @@ void Host_Init () {
   GCon->Log(NAME_Init, "alot of invaluable help and testing (esp. x86_64): id0");
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
 
+  if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;
+
   FL_Init();
 
   PR_Init();
