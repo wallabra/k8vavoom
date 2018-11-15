@@ -46,6 +46,11 @@ graphics/stkeys8.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/stkeys8.png
 graphics/twirl.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/twirl.png
 graphics/wislash.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/wislash.png
 
+graphics/progbar/left.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/left.png
+graphics/progbar/marker.png  @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/marker.png
+graphics/progbar/middle.png  @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/middle.png
+graphics/progbar/right.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/right.png
+
 //  Default texture
 textures/-noflat-.png @CMAKE_CURRENT_SOURCE_DIR@/textures/-noflat-.png
 

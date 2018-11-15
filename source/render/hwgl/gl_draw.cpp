@@ -115,6 +115,38 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
 
 //==========================================================================
 //
+//  VOpenGLDrawer::FillRectWithFlatRepeat
+//
+//  Fills rectangle with flat.
+//
+//==========================================================================
+void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
+  float s1, float t1, float s2, float t2, VTexture *Tex)
+{
+  guard(VOpenGLDrawer::FillRectWithFlat);
+  SetTexture(Tex, CM_Default);
+  p_glUseProgramObjectARB(DrawSimpleProgram);
+  p_glUniform1iARB(DrawSimpleTextureLoc, 0);
+  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
+  float oldWS, oldWT;
+  glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, &oldWS);
+  glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &oldWT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glBegin(GL_QUADS);
+    glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
+    glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
+    glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
+    glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
+  glEnd();
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, oldWS);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, oldWT);
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::FillRect
 //
 //==========================================================================

@@ -181,6 +181,8 @@ public:
     float, float, VTexture*, float) = 0;
   virtual void FillRectWithFlat(float, float, float, float, float, float,
     float, float, VTexture*) = 0;
+  virtual void FillRectWithFlatRepeat(float, float, float, float, float, float,
+    float, float, VTexture*) = 0;
   virtual void FillRect(float, float, float, float, vuint32) = 0;
   virtual void ShadeRect(int, int, int, int, float) = 0;
   virtual void DrawConsoleBackground(int) = 0;

@@ -784,6 +784,30 @@ void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name)
 
 //==========================================================================
 //
+//  VWidget::FillRectWithFlatRepeat
+//
+//==========================================================================
+void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName Name) {
+  guard(VWidget::FillRectWithFlatRepeat);
+  if (Name == NAME_None) return;
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Width;
+  float T2 = Height;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->FillRectWithFlatRepeat(X1, Y1, X2, Y2, S1, T1, S2, T2,
+      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true, true)));
+  }
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VWidget::FillRect
 //
 //==========================================================================
@@ -1224,6 +1248,16 @@ IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat) {
   P_GET_INT(X);
   P_GET_SELF;
   Self->FillRectWithFlat(X, Y, Width, Height, Name);
+}
+
+IMPLEMENT_FUNCTION(VWidget, FillRectWithFlatRepeat) {
+  P_GET_NAME(Name);
+  P_GET_INT(Height);
+  P_GET_INT(Width);
+  P_GET_INT(Y);
+  P_GET_INT(X);
+  P_GET_SELF;
+  Self->FillRectWithFlatRepeat(X, Y, Width, Height, Name);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FillRect) {

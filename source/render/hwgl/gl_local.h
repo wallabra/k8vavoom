@@ -485,6 +485,8 @@ public:
     float, VTexture*, float) override;
   virtual void FillRectWithFlat(float, float, float, float, float, float, float,
     float, VTexture*) override;
+  virtual void FillRectWithFlatRepeat(float, float, float, float, float, float, float,
+    float, VTexture*) override;
   virtual void FillRect(float, float, float, float, vuint32) override;
   virtual void ShadeRect(int, int, int, int, float) override;
   virtual void DrawConsoleBackground(int) override;

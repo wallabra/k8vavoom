@@ -1045,8 +1045,8 @@ static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
 }
 
 enum {
-  PBarHPad = 20,
-  PBarVPad = 20,
+  PBarHPad = 20+16,
+  PBarVPad = 20+16,
   PBarHeight = 20,
 };
 
@@ -1054,6 +1054,7 @@ enum {
 static int lastPBarWdt = -666;
 
 static void pvsDrawPBar (int cur, int max) {
+/*
 #ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
     int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
@@ -1064,6 +1065,61 @@ static void pvsDrawPBar (int cur, int max) {
     Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
     Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
     if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
+    Drawer->Update();
+  } else
+#endif
+  {
+    int prc = cur*100/max;
+    GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, max);
+  }
+*/
+#ifdef CLIENT
+  if (Drawer && Drawer->IsInited()) {
+    int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
+    if (cur < max && wdt == lastPBarWdt) return;
+    lastPBarWdt = wdt;
+    Drawer->StartUpdate(false); // don't clear
+    // load progressbar textures
+    static bool texturesLoaded = false;
+    static int left = -1, right = -1, mid = -1, fill = -1;
+    if (!texturesLoaded) {
+      texturesLoaded = true;
+      left = GTextureManager.AddFileTextureChecked("graphics/progbar/left.png", TEXTYPE_Pic);
+      if (left > 0) right = GTextureManager.AddFileTextureChecked("graphics/progbar/right.png", TEXTYPE_Pic);
+      if (right > 0) mid = GTextureManager.AddFileTextureChecked("graphics/progbar/middle.png", TEXTYPE_Pic);
+      if (mid > 0) fill = GTextureManager.AddFileTextureChecked("graphics/progbar/marker.png", TEXTYPE_Pic);
+    }
+    // which kind of progress bar to draw?
+    if (left > 0) {
+      VTexture *tex;
+      // left end
+      tex = GTextureManager(left);
+      Drawer->DrawPic(
+        PBarHPad-8, ScreenHeight-PBarVPad-PBarHeight, PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
+        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0);
+      // right end
+      tex = GTextureManager(right);
+      Drawer->DrawPic(
+        ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad+8, ScreenHeight-PBarVPad-PBarHeight+32,
+        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0);
+      // middle
+      tex = GTextureManager(mid);
+      Drawer->FillRectWithFlatRepeat(
+        PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
+        0, 0, /*tex->GetWidth()*/(ScreenWidth-PBarHPad)*2, tex->GetHeight(), tex);
+      // fill
+      if (wdt > 0) {
+        tex = GTextureManager(fill);
+        Drawer->FillRectWithFlatRepeat(
+          PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad-PBarHeight+32,
+          0, 0, /*tex->GetWidth()*/wdt, tex->GetHeight(), tex);
+      }
+    } else {
+      Drawer->FillRect(PBarHPad-2, ScreenHeight-PBarVPad-PBarHeight-2, ScreenWidth-PBarHPad+2, ScreenHeight-PBarVPad+2, 0xffffffff);
+      Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
+      Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
+      if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
+    }
     Drawer->Update();
   } else
 #endif

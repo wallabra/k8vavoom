@@ -192,6 +192,7 @@ native final void SetFocus ();
 native final void DrawPic (int X, int Y, int Handle, optional float Alpha, optional int Translation);
 native final void DrawShadowedPic (int X, int Y, int Handle);
 native final void FillRectWithFlat (int x, int y, int width, int height, name Name);
+native final void FillRectWithFlatRepeat (int x, int y, int width, int height, name Name);
 native final void FillRect (int x, int y, int width, int height, int color);
 // darkens a screen region
 native final void ShadeRect (int x, int y, int w, int h, float shade);
