@@ -1393,14 +1393,13 @@ VName VAcsLevel::GetNewLowerName (int idx) {
 //==========================================================================
 int VAcsLevel::PutNewString (VStr str) {
   auto idxp = stringMapByStr.find(str);
-  if (idxp) return *idxp;
+  if (idxp) return (*idxp)|(ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
   // add string
   int idx = stringList.length();
   if (idx == 0xffff) Host_Error("ACS dynamic string storage overflow");
-  idx |= (ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
   stringList.append(str);
   stringMapByStr.put(str, idx);
-  return idx;
+  return idx|(ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
 }
 
 
@@ -1856,7 +1855,7 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
     return Info->RunningScript;
   }
 
-  VAcs *script = (VAcs*)XLevel->SpawnThinker(VAcs::StaticClass());
+  VAcs *script = (VAcs *)XLevel->SpawnThinker(VAcs::StaticClass());
   script->info = Info;
   script->number = Info->Number;
   script->InstructionPointer = Info->Address;
@@ -1866,6 +1865,7 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   script->line = Line;
   script->side = Side;
   script->LocalVars = new vint32[Info->VarCount];
+  //script->Font = VName("smallfont");
   if (Info->VarCount > 0) script->LocalVars[0] = Arg1;
   if (Info->VarCount > 1) script->LocalVars[1] = Arg2;
   if (Info->VarCount > 2) script->LocalVars[2] = Arg3;
@@ -2405,7 +2405,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (name == NAME_None) return 0;
         if (!VCvar::CanBeModified(*name, true, true)) return 0;
         //GCon->Logf("ACSF: set cvar '%s' (%f)", *name, args[1]/65536.0f);
-        VCvar::Set(*name, args[1]/65536.0f);
+        VCvar::Set(*name, args[1] /* /65536.0f */);
         return 1;
       }
       return 0;
@@ -2415,8 +2415,9 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       if (argCount >= 2) {
         VName name = GetName(args[1]);
         if (name == NAME_None) return 0;
-        //GCon->Logf("ACSF: get cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
-        return (int)(VCvar::GetFloat(*name)*65536.0f);
+        GCon->Logf("ACSF: get user cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
+        //FIXME:return (int)(VCvar::GetFloat(*name)*65536.0f);
+        return VCvar::GetInt(*name);
       }
       return 0;
 
@@ -2427,7 +2428,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         if (name == NAME_None) return 0;
         if (!VCvar::CanBeModified(*name, true, true)) return 0;
         //GCon->Logf("ACSF: set user cvar '%s' (%f)", *name, args[2]/65536.0f);
-        VCvar::Set(*name, args[2]/65536.0f);
+        VCvar::Set(*name, args[2] /* /65536.0f */);
         return 1;
       }
       return 0;
@@ -2477,7 +2478,6 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         return 1;
       }
       return 0;
-
 
     case ACSF_PlayerIsSpectator_Zadro:
       return 0;
@@ -3910,10 +3910,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_EndHudMessage)
     ACSVM_CASE(PCD_EndHudMessageBold)
-      if (!optstart)
-      {
-        optstart = sp;
-      }
+      if (!optstart) optstart = sp;
       {
         int Type = optstart[-6];
         int Id = optstart[-5];
