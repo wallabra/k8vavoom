@@ -353,3 +353,17 @@ COMMAND(Regeneration) {
   }
   if (CheatAllowed(Player)) Player->eventCheat_Regeneration();
 }
+
+
+//==========================================================================
+//
+//  Regeneration
+//
+//==========================================================================
+COMMAND(Dump_Inventory) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  Player->eventCheat_DumpInventory();
+}

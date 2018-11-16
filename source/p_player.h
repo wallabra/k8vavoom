@@ -362,6 +362,7 @@ class VBasePlayer : public VGameObject
   void eventCheat_Jumper () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Jumper")); }
   void eventCheat_ShooterKing () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_ShooterKing")); }
   void eventCheat_Regeneration () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Regeneration")); }
+  void eventCheat_DumpInventory () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_DumpInventory")); }
 
   //  Server to client events.
   void eventClientStartSound(int SoundId, TVec Org, int OriginId,

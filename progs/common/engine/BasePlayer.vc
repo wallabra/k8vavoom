@@ -270,6 +270,7 @@ void Cheat_Freeze () {}
 void Cheat_Jumper () {}
 void Cheat_ShooterKing () {}
 void Cheat_Regeneration () {}
+void Cheat_DumpInventory () {}
 
 void ServerImpulse(int AImpulse)
 {

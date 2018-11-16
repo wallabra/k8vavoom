@@ -3940,6 +3940,19 @@ override void Cheat_Regeneration () {
 
 //==========================================================================
 //
+//  Cheat_Regeneration
+//
+//==========================================================================
+override void Cheat_DumpInventory () {
+  print("=== inventory of player (%C : %C) ===", self, self.MO);
+  for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    print("  %C: amount=%s", Item, Item.Amount);
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_God
 //
 //==========================================================================
