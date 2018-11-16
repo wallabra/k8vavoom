@@ -2505,17 +2505,20 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     //FIXME: disconnect?
     case ACSF_ConsolePlayerNumber_Zadro:
       //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
+#ifdef CLIENT
       if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
         if (cl && cls.signon && cl->MO) {
           //GCon->Logf(NAME_Warning, "CONPLRNUM: %d", cl->ClientNum);
           return cl->ClientNum;
         }
       }
+#endif
       return -1;
 
     // int RequestScriptPuke (int script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
     case ACSF_RequestScriptPuke_Zadro:
       {
+#ifdef CLIENT
         if (argCount < 1) return 0;
         if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone) {
           GCon->Log("ACS: Zadro RequestScriptPuke can be executed only by clients.");
@@ -2539,11 +2542,16 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         }
         if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ plr, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
+#else
+        GCon->Log("ACS: Zadro RequestScriptPuke can be executed only by clients.");
+        return 0;
+#endif
       }
 
     // int NamedRequestScriptPuke (str script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
     case ACSF_NamedRequestScriptPuke_Zadro:
       {
+#ifdef CLIENT
         if (argCount < 1) return 0;
         if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone) {
           GCon->Log("ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
@@ -2568,6 +2576,10 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         }
         if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ plr, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
+#else
+        GCon->Log("ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
+        return 0;
+#endif
       }
 
     // int PickActor (int source, fixed angle, fixed pitch, fixed distance, int tid [, int actorMask [, int wallMask [, int flags]]])
