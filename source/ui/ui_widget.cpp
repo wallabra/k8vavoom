@@ -34,6 +34,8 @@ extern VCvarB gl_font_filtering;
 static VCvarF ui_msgxbox_wrap_trigger("ui_msgxbox_wrap_trigger", "0.9", "Maximum width (1 means whole screen) before message box will start wrapping; <=0 means \"don't\".", CVAR_Archive);
 static VCvarF ui_msgxbox_wrap_width("ui_msgxbox_wrap_width", "0.7", "Width (1 means whole screen) for message box wrapping; <=0 means \"don't\".", CVAR_Archive);
 
+static TMapNC<VName, bool> reportedMissingFonts;
+
 
 IMPLEMENT_CLASS(V, Widget);
 
@@ -874,7 +876,10 @@ void VWidget::SetFont(VName FontName) {
   if (F) {
     Font = F;
   } else {
-    GCon->Logf("No such font '%s'", *FontName);
+    if (!reportedMissingFonts.find(FontName)) {
+      reportedMissingFonts.put(FontName, true);
+      GCon->Logf("No such font '%s'", *FontName);
+    }
   }
   unguard;
 }
