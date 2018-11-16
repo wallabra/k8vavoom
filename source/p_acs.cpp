@@ -1394,6 +1394,7 @@ VName VAcsLevel::GetNewLowerName (int idx) {
 //
 //==========================================================================
 int VAcsLevel::PutNewString (VStr str) {
+  //k8:this is wrong!:if (str.length() == 0) return 0; // string 0 is always empty, and scripts rely on this
   auto idxp = stringMapByStr.find(str);
   if (idxp) return (*idxp)|(ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
   // add string
@@ -2451,14 +2452,16 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
       return 0;
 
+    // non-existent vars should return 0 here (yay, another ACS hack!)
     case ACSF_GetCVarString:
       if (argCount >= 1) {
         VName name = GetName(args[0]);
-        if (name == NAME_None) return ActiveObject->Level->PutNewString("");
+        if (name == NAME_None) return 0; //ActiveObject->Level->PutNewString("");
+        if (!VCvar::HasVar(*name)) return 0;
         //GCon->Logf("ACSF_GetCVarString: var=<%s>; value=<%s>", *name, *VCvar::GetString(*name));
         return ActiveObject->Level->PutNewString(VCvar::GetString(*name));
       }
-      return ActiveObject->Level->PutNewString("");
+      return 0; //ActiveObject->Level->PutNewString("");
 
     case ACSF_SetCVarString:
       //GCon->Logf("***ACSF_SetCVarString: var=<%s>", *GetName(args[0]));
@@ -2474,14 +2477,16 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       return 0;
 
     //k8: this should work over network, but meh
+    // non-existent vars should return 0 here (yay, another ACS hack!)
     case ACSF_GetUserCVarString:
       if (argCount >= 2) {
         VName name = GetName(args[1]);
-        if (name == NAME_None) return ActiveObject->Level->PutNewString("");
+        if (name == NAME_None) return 0; //ActiveObject->Level->PutNewString("");
+        if (!VCvar::HasVar(*name)) return 0;
         //GCon->Logf("ACSF_GetUserCVarString: var=<%s>; value=<%s>", *name, *VCvar::GetString(*name));
         return ActiveObject->Level->PutNewString(VCvar::GetString(*name));
       }
-      return ActiveObject->Level->PutNewString("");
+      return 0; //ActiveObject->Level->PutNewString("");
 
     //k8: this should work over network, but meh
     case ACSF_SetUserCVarString:
@@ -4753,13 +4758,17 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_GetActorProperty)
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
-        if (!Ent)
-        {
+        if (!Ent) {
           sp[-2] = 0;
-        }
-        else
-        {
-          sp[-2] = Ent->eventGetActorProperty(sp[-1]);
+        } else {
+          //FIXME
+          //GCon->Logf("GetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), sp[-1]);
+          if (sp[-1] == 21/*APROP_NameTag*/) {
+            //GCon->Logf("GetActorProperty: 21 (%s)", sp[-1], Ent->GetClass()->GetName());
+            sp[-2] = ActiveObject->Level->PutNewString(Ent->GetClass()->GetName());
+          } else {
+            sp[-2] = Ent->eventGetActorProperty(sp[-1]);
+          }
         }
       }
       sp -= 1;
