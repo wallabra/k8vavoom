@@ -3,64 +3,6 @@ menudef GameplayOptions {
   //selector = MenuSelector_SmallRight;
   Title = "GAMEPLAY OPTIONS";
 
-  header "Colors";
-
-  option enum {
-    title = "Message Colour";
-    cvar = font_colour;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray"
-    }
-  }
-
-  option enum {
-    title = "Center Message Colour";
-    cvar = font_colour2;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray"
-    }
-  }
-
   header "Monster AI";
 
   option bool {
