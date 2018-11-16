@@ -1152,23 +1152,20 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
     buttonSuccess = EV_ScrollCeiling(Arg1, Arg2, Arg3, Arg4, Arg5);
     break;
   case LNSPEC_ACSExecuteAlways:
-    buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, Arg5, A,
-      Line, Side, true, false);
+    //print("LNSPEC_ACSExecuteAlways: number=%d; map=%d; arg1=%d; arg2=%d; arg3=%d", Arg1, Arg2, Arg3, Arg4, Arg5);
+    buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, Side, true, false);
     break;
   case LNSPEC_FloorRaiseToNearestChange:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseToNearestChange, Line);
+    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseToNearestChange, Line);
     break;
   case LNSPEC_ThingSetGoal:
     buttonSuccess = EV_ThingSetGoal(Arg1, Arg2, Arg3, Arg4, Arg5);
     break;
   case LNSPEC_FloorRaiseByValueChangeTex:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseByValueChange2, Line);
+    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByValueChange2, Line);
     break;
   case LNSPEC_PlatToggle:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_Toggle, Line);
+    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_Toggle, Line);
     break;
   case LNSPEC_LightStrobeDoom:
     buttonSuccess = EV_StartLightStrobing(Arg1, Arg2, Arg3, Arg4, Arg5);

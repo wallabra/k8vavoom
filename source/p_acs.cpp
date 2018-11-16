@@ -58,6 +58,7 @@
 #include "p_acs.h"
 
 static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Override 'screenblocks' variable for acs scripts (-1: don't).", 0);
+static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode", false, "Halt ACS VM on unimplemented opdode?.", CVAR_Archive);
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
 
@@ -241,6 +242,7 @@ struct VAcsCallReturn {
   int ReturnAddress;
   VAcsFunction *ReturnFunction;
   VAcsObject *ReturnObject;
+  vint32* ReturnLocals;
   vuint8 bDiscardResult;
   vuint8 Pad[3];
 };
@@ -1323,7 +1325,7 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
     {
       // Auto-activate
       VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator,
-        nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow);
+        nullptr, 0, Arg1, Arg2, Arg3, /*0,*/ Always, !RunNow);
       if (RunNow)
       {
         Script->RunScript(host_frametime);
@@ -1624,8 +1626,7 @@ bool VAcsLevel::AddToACSStore(int Type, VName Map, int Number, int Arg1,
   VAcsStore &S = XLevel->WorldInfo->Acs->Store.Alloc();
   S.Map = Map;
   S.Type = Type;
-  S.PlayerNum = Activator && Activator->Player ?
-    SV_GetPlayerNum(Activator->Player) : -1;
+  S.PlayerNum = (Activator && Activator->Player ? SV_GetPlayerNum(Activator->Player) : -1);
   S.Script = Number;
   S.Args[0] = Arg1;
   S.Args[1] = Arg2;
@@ -1672,7 +1673,7 @@ void VAcsLevel::CheckAcsStore()
           (GGameInfo->Players[store->PlayerNum]->PlayerFlags &
           VBasePlayer::PF_Spawned) ?
           GGameInfo->Players[store->PlayerNum]->MO : nullptr, nullptr, 0,
-          store->Args[0], store->Args[1], store->Args[2], 0,
+          store->Args[0], store->Args[1], store->Args[2], /*0,*/
           (store->Type == VAcsStore::StartAlways), true);
         break;
 
@@ -1709,7 +1710,7 @@ void VAcsLevel::CheckAcsStore()
 //  VAcsLevel::Start
 //
 //==========================================================================
-bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int Arg4,
+bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
   VEntity *Activator, line_t *Line, int Side, bool Always, bool WantResult,
   bool Net, int *realres)
 {
@@ -1746,7 +1747,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
     if (realres) *realres = 0;
     return false;
   }
-  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, 0, Always, false);
+  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, /*0,*/ Always, false);
   if (WantResult) {
     int res = script->RunScript(host_frametime);
     if (realres) *realres = res;
@@ -1840,7 +1841,7 @@ bool VAcsLevel::Suspend(int Number, int MapNum)
 //==========================================================================
 
 VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
-  VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
+  VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
   bool Always, bool Delayed)
 {
   guard(VAcsLevel::SpawnScript);
@@ -1869,7 +1870,7 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   if (Info->VarCount > 0) script->LocalVars[0] = Arg1;
   if (Info->VarCount > 1) script->LocalVars[1] = Arg2;
   if (Info->VarCount > 2) script->LocalVars[2] = Arg3;
-  if (Info->VarCount > 3) script->LocalVars[3] = Arg4;
+  //if (Info->VarCount > 3) script->LocalVars[3] = Arg4;
   if (Info->VarCount > Info->ArgCount) memset((void *)(script->LocalVars+Info->ArgCount), 0, (Info->VarCount-Info->ArgCount)*4);
   if (Delayed) {
     //k8: this was commented in the original
@@ -2154,6 +2155,21 @@ static const ACSF_Info ACSF_List[] = {
 #undef ACS_EXTFUNC_NUM
 #undef ACS_EXTFUNC
 
+
+// pcd opcode names
+#define DECLARE_PCD(name) { "" #name "", PCD_ ## name }
+struct PCD_Info {
+  const char *name;
+  int index;
+};
+
+__attribute__((unused)) static const PCD_Info PCD_List[] = {
+#include "p_acs.h"
+  { nullptr, -666 }
+};
+#undef DECLARE_PCD
+
+
 int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
   switch (funcIndex) {
     case ACSF_SpawnSpotForced: // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
@@ -2161,12 +2177,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       return Level->eventAcsSpawnSpot(GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f, true); // forced
 
     case ACSF_CheckActorClass:
-      {
+      if (argCount >= 2) {
         VEntity *Ent = EntityFromTID(args[0], Activator);
-        VName name = GetName(args[1]);
-        if (name == NAME_None) return 0;
-        return (Ent ? (VStr::ICmp(*Ent->GetClass()->Name, *name) == 0 ? 1 : 0) : 0);
+        VStr name = GetStr(args[1]);
+        if (name.length() == 0) return 0;
+        return (Ent ? (name.ICmp(*Ent->GetClass()->Name) == 0 ? 1 : 0) : 0);
       }
+      return 0;
 
     case ACSF_GetActorClass:
       {
@@ -2187,8 +2204,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ScArgs[0] = (argCount > 2 ? args[2] : 0);
         ScArgs[1] = (argCount > 3 ? args[3] : 0);
         ScArgs[2] = (argCount > 4 ? args[4] : 0);
-        ScArgs[3] = (argCount > 5 ? args[5] : 0);
-        if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
+        //ScArgs[3] = (argCount > 5 ? args[5] : 0);
+        if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
         return 1;
       }
 
@@ -2399,6 +2416,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
       return 0;
 
+
     case ACSF_SetCVar:
       if (argCount >= 2) {
         VName name = GetName(args[0]);
@@ -2415,7 +2433,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       if (argCount >= 2) {
         VName name = GetName(args[1]);
         if (name == NAME_None) return 0;
-        GCon->Logf("ACSF: get user cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
+        //GCon->Logf("ACSF: get user cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
         //FIXME:return (int)(VCvar::GetFloat(*name)*65536.0f);
         return VCvar::GetInt(*name);
       }
@@ -2479,6 +2497,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
       return 0;
 
+
     case ACSF_PlayerIsSpectator_Zadro:
       return 0;
 
@@ -2513,8 +2532,12 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ScArgs[0] = (argCount > 1 ? args[1] : 0);
         ScArgs[1] = (argCount > 2 ? args[2] : 0);
         ScArgs[2] = (argCount > 3 ? args[3] : 0);
-        ScArgs[3] = (argCount > 4 ? args[4] : 0);
-        if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
+        //ScArgs[3] = (argCount > 4 ? args[4] : 0);
+        VEntity *plr = nullptr;
+        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
+          if (cl && cls.signon && cl->MO) plr = cl->MO;
+        }
+        if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ plr, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
       }
 
@@ -2538,8 +2561,12 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ScArgs[0] = (argCount > 1 ? args[1] : 0);
         ScArgs[1] = (argCount > 2 ? args[2] : 0);
         ScArgs[2] = (argCount > 3 ? args[3] : 0);
-        ScArgs[3] = (argCount > 4 ? args[4] : 0);
-        if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
+        //ScArgs[3] = (argCount > 4 ? args[4] : 0);
+        VEntity *plr = nullptr;
+        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
+          if (cl && cls.signon && cl->MO) plr = cl->MO;
+        }
+        if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ plr, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
       }
 
@@ -2760,7 +2787,7 @@ int VAcs::RunScript(float DeltaTime)
   vint32 *sp = stack;
   VTextureTranslation *Translation = nullptr;
 #if !USE_COMPUTED_GOTO
-  if (info->Number == 31233) GCon->Logf("VACS 31233: %d,%d,%d", LocalVars[0], LocalVars[1], LocalVars[2]);
+  //if (info->Number == 31233) GCon->Logf("VACS 31233: %d,%d,%d", LocalVars[0], LocalVars[1], LocalVars[2]);
 #endif
   do
   {
@@ -2793,7 +2820,16 @@ int VAcs::RunScript(float DeltaTime)
     }
 
 #if !USE_COMPUTED_GOTO
-    GCon->Logf("ACS: SCRIPT %d; cmd: %d", info->Number, cmd);
+    //GCon->Logf("ACS: SCRIPT %d; cmd: %d", info->Number, cmd);
+    {
+      const PCD_Info *pi;
+      for (pi = PCD_List; pi->name; ++pi) if (pi->index == cmd) break;
+      if (pi->name) {
+        GCon->Logf("ACS: SCRIPT %d; cmd: %d (%s)", info->Number, cmd, pi->name);
+      } else {
+        GCon->Logf("ACS: SCRIPT %d; cmd: %d", info->Number, cmd);
+      }
+    }
 #endif
 
     ACSVM_SWITCH(cmd)
@@ -2803,6 +2839,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Terminate)
+      //GCon->Logf("ACS: SCRIPT %d; TERMINATE REQUESTED", info->Number);
       action = SCRIPT_Terminate;
       ACSVM_BREAK_STOP;
 
@@ -2821,6 +2858,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
+        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC1: special=%d; args=(%d)", info->Number, special, sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-1], 0, 0, 0, 0,
           line, side, Activator);
         sp--;
@@ -2831,7 +2869,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //fprintf(stderr, "***ACS LSPEC2: special=%d; args=(%d,%d)\n", special, sp[-2], sp[-1]);
+        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC2: special=%d; args=(%d,%d)", info->Number, special, sp[-2], sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-2], sp[-1], 0, 0, 0, line, side, Activator);
         sp -= 2;
       }
@@ -2841,7 +2879,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //fprintf(stderr, "***ACS LSPEC3: special=%d; args=(%d,%d,%d)\n", special, sp[-3], sp[-2], sp[-1]);
+        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC3: special=%d; args=(%d,%d,%d)", info->Number, special, sp[-3], sp[-2], sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-3], sp[-2], sp[-1], 0, 0, line, side, Activator);
         sp -= 3;
       }
@@ -2851,8 +2889,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, sp[-4], sp[-3],
-          sp[-2], sp[-1], 0, line, side, Activator);
+        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC4: special=%d; args=(%d,%d,%d,%d)", info->Number, special, sp[-4], sp[-3], sp[-2], sp[-1]);
+        Level->eventExecuteActionSpecial(special, sp[-4], sp[-3], sp[-2], sp[-1], 0, line, side, Activator);
         sp -= 4;
       }
       ACSVM_BREAK;
@@ -2861,8 +2899,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, sp[-5], sp[-4],
-          sp[-3], sp[-2], sp[-1], line, side, Activator);
+        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC5: special=%d; args=(%d,%d,%d,%d,%d)", info->Number, special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1]);
+        Level->eventExecuteActionSpecial(special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1], line, side, Activator);
         sp -= 5;
       }
       ACSVM_BREAK;
@@ -2871,8 +2909,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip), 0,
-          0, 0, 0, line, side, Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), 0, 0, 0, 0, line, side, Activator);
         ip += 4;
       }
       ACSVM_BREAK;
@@ -2881,8 +2918,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip),
-          READ_INT32(ip + 4), 0, 0, 0, line, side, Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), 0, 0, 0, line, side, Activator);
         ip += 8;
       }
       ACSVM_BREAK;
@@ -2891,9 +2927,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip),
-          READ_INT32(ip + 4), READ_INT32(ip + 8), 0, 0, line, side,
-          Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), READ_INT32(ip + 8), 0, 0, line, side, Activator);
         ip += 12;
       }
       ACSVM_BREAK;
@@ -2902,9 +2936,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip),
-          READ_INT32(ip + 4), READ_INT32(ip + 8),
-          READ_INT32(ip + 12), 0, line, side, Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), READ_INT32(ip + 8), READ_INT32(ip + 12), 0, line, side, Activator);
         ip += 16;
       }
       ACSVM_BREAK;
@@ -2913,9 +2945,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip),
-          READ_INT32(ip + 4), READ_INT32(ip + 8),
-          READ_INT32(ip + 12), READ_INT32(ip + 16), line, side,
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip + 4), READ_INT32(ip + 8), READ_INT32(ip + 12), READ_INT32(ip + 16), line, side,
           Activator);
         ip += 20;
       }
@@ -2954,6 +2984,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_NE)
+      //if (info->Number == 31234) GCon->Logf("ACS: %d: NE(%d, %d)", info->Number, sp[-2], sp[-1]);
       sp[-2] = sp[-2] != sp[-1];
       sp--;
       ACSVM_BREAK;
@@ -2979,6 +3010,7 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AssignScriptVar)
+      //GCon->Logf("ACS:%d: PCD_AssignScriptVar(%p:%d): %d (old is %d)", info->Number, locals, READ_BYTE_OR_INT32, sp[-1], locals[READ_BYTE_OR_INT32]);
       locals[READ_BYTE_OR_INT32] = sp[-1];
       INC_BYTE_OR_INT32;
       sp--;
@@ -2998,6 +3030,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_PushScriptVar)
       *sp = locals[READ_BYTE_OR_INT32];
+      //GCon->Logf("ACS:%d: PCD_PushScriptVar(%p:%d): %d", info->Number, locals, READ_BYTE_OR_INT32, *sp);
       INC_BYTE_OR_INT32;
       sp++;
       ACSVM_BREAK;
@@ -4290,11 +4323,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_Call)
     ACSVM_CASE(PCD_CallDiscard)
       {
-        int funcnum;
-        //int i;
         VAcsObject *object = ActiveObject;
-
-        funcnum = READ_BYTE_OR_INT32;
+        int funcnum = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
         VAcsFunction *func = ActiveObject->GetFunction(funcnum, object);
         if (!func) {
@@ -4308,8 +4338,10 @@ int VAcs::RunScript(float DeltaTime)
           action = SCRIPT_Terminate;
           ACSVM_BREAK_STOP;
         }
+        auto oldlocals = locals;
         // the function's first argument is also its first local variable
         locals = sp-func->ArgCount;
+        //!GCon->Logf("  :CALL:%d: oldlocals=%p; locals=%p; argc=%d; locc=%d (mine: argc=%d; locc=%d)", info->Number, oldlocals, locals, func->ArgCount, func->LocalCount, (activeFunction ? activeFunction->LocalCount : -1), (activeFunction ? activeFunction->LocalCount : -1));
         // make space on the stack for any other variables the function uses
         //for (i = 0; i < func->LocalCount; i++) sp[i] = 0;
         //sp += i;
@@ -4320,6 +4352,7 @@ int VAcs::RunScript(float DeltaTime)
         ((VAcsCallReturn *)sp)->ReturnAddress = ActiveObject->PtrToOffset(ip);
         ((VAcsCallReturn *)sp)->ReturnFunction = activeFunction;
         ((VAcsCallReturn *)sp)->ReturnObject = ActiveObject;
+        ((VAcsCallReturn *)sp)->ReturnLocals = oldlocals;
         ((VAcsCallReturn *)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
         sp += sizeof(VAcsCallReturn)/sizeof(vint32);
         ActiveObject = object;
@@ -4344,34 +4377,42 @@ int VAcs::RunScript(float DeltaTime)
         int value;
         VAcsCallReturn *retState;
 
-        if (cmd == PCD_ReturnVal)
-        {
+        // get return value
+        if (cmd == PCD_ReturnVal) {
           value = sp[-1];
           sp--;
-        }
-        else
-        {
+        } else {
           value = 0;
         }
-        sp -= sizeof(VAcsCallReturn) / sizeof(vint32);
-        retState = (VAcsCallReturn*)sp;
-        sp -= activeFunction->ArgCount + activeFunction->LocalCount;
+
+        // get return state
+        sp -= sizeof(VAcsCallReturn)/sizeof(vint32);
+        retState = (VAcsCallReturn *)sp;
+
+        // remove locals and arguments
+        sp -= activeFunction->ArgCount+activeFunction->LocalCount;
+
+        //!auto oldactfunc = activeFunction;
+
         ActiveObject = retState->ReturnObject;
         activeFunction = retState->ReturnFunction;
         ip = ActiveObject->OffsetToPtr(retState->ReturnAddress);
         fmt = ActiveObject->GetFormat();
-        if (!activeFunction)
-        {
+
+        //!auto oldlocals = locals;
+        if (!activeFunction) {
           locals = LocalVars;
+          //!GCon->Logf("  :RET2MAIN:%d: oldlocals=%p (%p); locals=%p (isretval:%d; retval:%d; discard:%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult));
+        } else {
+          //k8: the following is wrong, 'cause caller can has something pushed at its stack
+          //locals = sp-activeFunction->ArgCount-activeFunction->LocalCount-sizeof(VAcsCallReturn)/sizeof(vint32);
+          // sanity check
+          check(sp >= retState->ReturnLocals);
+          locals = retState->ReturnLocals;
+          //!GCon->Logf("  :RET:%d: oldlocals=%p (%p); locals=%p; (isretval:%d; retval:%d; discard:%d); argc=%d; locc=%d (callee: argc=%d; locc=%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult), activeFunction->ArgCount, activeFunction->LocalCount, oldactfunc->ArgCount, oldactfunc->LocalCount);
         }
-        else
-        {
-          locals = sp - activeFunction->ArgCount -
-            activeFunction->LocalCount - sizeof(VAcsCallReturn) /
-            sizeof(vint32);
-        }
-        if (!retState->bDiscardResult)
-        {
+
+        if (!retState->bDiscardResult) {
           *sp = value;
           sp++;
         }
@@ -4713,8 +4754,8 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerNumber)
-      *sp = Activator && (Activator->EntityFlags & VEntity::EF_IsPlayer) ?
-        SV_GetPlayerNum(Activator->Player) : -1;
+      *sp = (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer) ? SV_GetPlayerNum(Activator->Player) : -1);
+      //GCon->Logf("PCD_PlayerNumber: %d", *sp);
       sp++;
       ACSVM_BREAK;
 
@@ -5815,7 +5856,8 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_SaveString)
       //GCon->Logf("PCD_SaveString: <%s>", *PrintStr.quote());
-      *sp++ = ActiveObject->Level->PutNewString(*PrintStr);
+      *sp = ActiveObject->Level->PutNewString(*PrintStr);
+      sp++;
       SB_POP;
       ACSVM_BREAK;
 
@@ -5859,6 +5901,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_PushFunction)
     ACSVM_CASE(PCD_CallStack)
       {
+        if (acs_halt_on_unimplemented_opcode) Host_Error("ACS: Unsupported p-code %d, script %d terminated", cmd, info->Number);
         if (!acsReportedBadOpcodesInited) {
           acsReportedBadOpcodesInited = true;
           memset(acsReportedBadOpcodes, 0, sizeof(acsReportedBadOpcodes));
@@ -5999,7 +6042,8 @@ IMPLEMENT_FUNCTION(VLevel, StartACS) {
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartACS"); }
   int res = 0;
   //fprintf(stderr, "000: activator=<%s>; line=%p; side=%d\n", (activator ? activator->GetClass()->GetName() : "???"), line, side);
-  bool br = Self->Acs->Start(num, map, arg1, arg2, arg3, 0, activator, line, side, Always, WantResult, false, &res);
+  //GCon->Logf("StartACS: num=%d; map=%d; arg1=%d; arg2=%d; arg3=%d", num, map, arg1, arg2, arg3);
+  bool br = Self->Acs->Start(num, map, arg1, arg2, arg3, /*0,*/ activator, line, side, Always, WantResult, false, &res);
   if (WantResult) RET_INT(res); else RET_INT(br ? 1 : 0);
 }
 
@@ -6044,7 +6088,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACS) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACS"); }
   if (Script < 0) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
+  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, /*0,*/ Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
 
@@ -6059,7 +6103,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACSAlways) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSAlways"); }
   if (Script < 0) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
+  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, /*0,*/ Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
 
@@ -6075,7 +6119,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
   if (Script < 0) { RET_INT(0); return; }
   //fprintf(stderr, "001: activator=<%s>\n", (Activator ? Activator->GetClass()->GetName() : "???"));
   int res = 0;
-  Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, /*0,*/ Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
   RET_INT(res);
 }
 
@@ -6095,7 +6139,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
   //GCon->Logf("ACS: RunNamedACS001: script=<%s>; map=%d", *Script, Map);
-  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, false/*net*/));
+  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, /*0,*/ Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
 
@@ -6112,7 +6156,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSAlways) {
   if (Name.length() == 0) { RET_BOOL(false); return; }
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, false/*net*/));
+  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, /*0,*/ Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
 
@@ -6129,7 +6173,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_INT(0); return; }
   int res = 0;
-  Self->Acs->Start(-Script.GetIndex(), 0/*Map*/, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  Self->Acs->Start(-Script.GetIndex(), 0/*Map*/, Arg1, Arg2, Arg3, /*0,*/ Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
   RET_INT(res);
 }
 
@@ -6160,7 +6204,7 @@ COMMAND(Puke) {
     }
   }
 
-  Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3],
+  Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/
     GGameInfo->Players[0]->MO, nullptr, 0, Script < 0, false, true);
   unguard;
 }
@@ -6192,7 +6236,7 @@ COMMAND(PukeName) {
     }
   }
 
-  Player->Level->XLevel->Acs->Start(-Script.GetIndex(), 0, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3],
+  Player->Level->XLevel->Acs->Start(-Script.GetIndex(), 0, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/
     GGameInfo->Players[0]->MO, nullptr, 0, /*Script < 0*/false/*always:wtf?*/, false, true);
   unguard;
 }

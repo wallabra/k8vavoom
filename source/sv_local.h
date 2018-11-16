@@ -94,13 +94,13 @@ public:
     VEntity *Activator, bool Always, bool RunNow);
   void Serialise(VStream &Strm);
   void CheckAcsStore();
-  bool Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3, int Arg4,
+  bool Start(int Number, int MapNum, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
     VEntity *Activator, line_t *Line, int Side, bool Always,
     bool WantResult, bool Net = false, int *realres=nullptr);
   bool Terminate(int Number, int MapNum);
   bool Suspend(int Number, int MapNum);
   VAcs *SpawnScript(VAcsInfo *Info, VAcsObject *Object, VEntity *Activator,
-    line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
+    line_t *Line, int Side, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
     bool Always, bool Delayed);
 
   VStr GetNewString (int idx);
