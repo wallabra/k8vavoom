@@ -860,6 +860,37 @@ float FindActivePowerupTime (name className) {
 }
 
 
+//===========================================================================
+//
+//  PickActor
+//
+//===========================================================================
+Entity PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
+  return none;
+}
+
+
+//===========================================================================
+//
+//  eventDoAAPtr
+//
+//===========================================================================
+Entity eventDoAAPtr (int ptr) {
+  if (ptr == 0) return self;
+  return none;
+}
+
+
+//===========================================================================
+//
+//  eventFindTargetForACS
+//
+//===========================================================================
+Entity eventFindTargetForACS () {
+  return none;
+}
+
+
 //==========================================================================
 //
 //  decoDoFlagActionSpecific

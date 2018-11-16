@@ -495,6 +495,34 @@ class VEntity : public VThinker {
     EV_RET_FLOAT(VName("FindActivePowerupTime"));
   }
 
+  // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
+  VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
+    P_PASS_SELF;
+    if (!specified_orig) orig = TVec(0, 0, 0);
+    P_PASS_VEC(orig);
+    P_PASS_BOOL(specified_orig);
+    P_PASS_VEC(dir);
+    P_PASS_FLOAT(dist);
+    if (!specified_actmask) actmask = 0;
+    P_PASS_INT(actmask);
+    P_PASS_BOOL(specified_actmask);
+    if (!specified_wallmask) wallmask = 0;
+    P_PASS_INT(wallmask);
+    P_PASS_BOOL(specified_wallmask);
+    EV_RET_PTR(VEntity, VName("PickActor"));
+  }
+
+  VEntity *eventDoAAPtr (int aaptr) {
+    P_PASS_SELF;
+    P_PASS_INT(aaptr);
+    EV_RET_PTR(VEntity, VName("eventDoAAPtr"));
+  }
+
+  VEntity *eventFindTargetForACS () {
+    P_PASS_SELF;
+    EV_RET_PTR(VEntity, VName("eventFindTargetForACS"));
+  }
+
   //static final bool decoDoCheckFlag (string flagname, Entity tgt)
   /*
   bool eventCheckFlag (const VStr &flagname) {

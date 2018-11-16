@@ -448,6 +448,29 @@ bool VCvar::HasVar (const char *var_name) {
 }
 
 
+bool VCvar::HasModVar (const char *var_name) {
+  VCvar *var = FindVariable(var_name);
+  return (var && var->isModVar());
+}
+
+
+bool VCvar::HasModUserVar (const char *var_name) {
+  VCvar *var = FindVariable(var_name);
+  return (var && var->isModVar() && (var->Flags&CVAR_ServerInfo) == 0);
+}
+
+
+bool VCvar::CanBeModified (const char *var_name, bool modonly, bool noserver) {
+  VCvar *var = FindVariable(var_name);
+  if (!var) return false;
+  if (modonly && !var->isModVar()) return false;
+  if (noserver && (var->Flags&CVAR_Latch) != 0) return false;
+  if (var->Flags&(CVAR_Rom|CVAR_Init)) return false;
+  if (!Cheating && (var->Flags&CVAR_Cheat) != 0) return false;
+  return true;
+}
+
+
 VCvar *VCvar::FindVariable (const char *name) {
   guard(VCvar::FindVariable);
   if (!name || name[0] == 0) return nullptr;

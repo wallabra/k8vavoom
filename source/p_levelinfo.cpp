@@ -312,7 +312,7 @@ int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
   if (limit == 0) limit = 0x7fffffff;
   if (tidstart == 0) {
     // do several random hits, then linear search
-    for (int rndtry = 128; rndtry; --rndtry) {
+    for (int rndtry = 1024; rndtry; --rndtry) {
       do { tidstart = rand()&0x7fff; } while (tidstart == 0);
       if (!IsTIDUsed(tidstart)) return tidstart;
     }
@@ -325,8 +325,8 @@ int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
   while (limit-- > 0) {
     if (!IsTIDUsed(tidstart)) return tidstart;
     ++tidstart;
-    //if (tidstart == 0x1fffffff) return 0;
-    if (tidstart == 0x8000) return 0; // arbitrary limit
+    if (tidstart == 0x1fffffff) return 0; // arbitrary limit
+    //if (tidstart == 0x8000) return 0; // arbitrary limit
   }
   return 0;
 }

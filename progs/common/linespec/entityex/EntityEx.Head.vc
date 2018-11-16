@@ -489,6 +489,38 @@ replication
 }
 
 
+//===========================================================================
+//
+//  eventFindTargetForACS
+//
+//===========================================================================
+final override Entity eventFindTargetForACS () {
+  // player?
+  if (bIsPlayer) {
+    if (Player.PlayerState == PST_DEAD) return (Target ? Target : self); // target holds a killer
+    // something player is aiming at
+    // create direction vector
+    TAVec ang = Angles;
+    TVec dir;
+    AngleVector(ang, dir);
+    dir = Normalise(dir);
+    return PickActor(default, dir, 8192);
+  }
+  // for other things, `Target` holds what we want
+  return (Target ? Target : self);
+}
+
+
+//===========================================================================
+//
+//  eventDoAAPtr
+//
+//===========================================================================
+final override Entity eventDoAAPtr (int ptr) {
+  return DecorDoAAPtr('eventDoAAPtr', ptr);
+}
+
+
 //==========================================================================
 //
 //  DecorDoAAPtr
@@ -558,3 +590,43 @@ final float GetAnglesRoll () { return Angles.roll; }
 
 final Object _GetSelf () { return self; }
 final Object _GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }
+
+
+// convert bool fields to `MF_XXX` flags
+final int CalcEntityFlags () {
+  int res = 0;
+  if (bSpecial) res |= MF_SPECIAL;
+  if (bSolid) res |= MF_SOLID;
+  if (bShootable) res |= MF_SHOOTABLE;
+  if (bNoSector) res |= MF_NOSECTOR;
+  if (bNoBlockmap) res |= MF_NOBLOCKMAP;
+  if (bAmbush) res |= MF_AMBUSH;
+  if (bJustHit) res |= MF_JUSTHIT;
+  if (bJustAttacked) res |= MF_JUSTATTACKED;
+  if (bSpawnCeiling) res |= MF_SPAWNCEILING;
+  if (bNoGravity) res |= MF_NOGRAVITY;
+  if (bDropOff) res |= MF_DROPOFF;
+  if (bPickUp) res |= MF_PICKUP;
+  if (!bColideWithThings && !bColideWithWorld) res |= MF_NOCLIP;
+  if (bInChase) res |= MF_INCHASE;
+  if (bFloat) res |= MF_FLOAT;
+  if (bTeleport) res |= MF_TELEPORT;
+  if (bMissile) res |= MF_MISSILE;
+  if (bDropped) res |= MF_DROPPED;
+  if (bShadow) res |= MF_SHADOW;
+  if (bNoBlood) res |= MF_NOBLOOD;
+  if (bCorpse) res |= MF_CORPSE;
+  if (bInFloat) res |= MF_INFLOAT;
+  //if (bInBounce) res |= MF_INBOUNCE;
+  if (bCountKill) res |= MF_COUNTKILL;
+  if (bCountItem) res |= MF_COUNTITEM;
+  if (bSkullFly) res |= MF_SKULLFLY;
+  if (bNoDeathmatch) res |= MF_NOTDMATCH;
+  if (bSpawnSoundSource) res |= MF_SPAWNSOUNDSOURCE;
+  if (bFriendly) res |= MF_FRIENDLY;
+  //k8:notyet:const int MF_UNMORPHED = 0x10000000;
+  if (bNoLiftDrop) res |= MF_NOLIFTDROP;
+  if (bStealth) res |= MF_STEALTH;
+  if (bIceCorpse) res |= MF_ICECORPSE;
+  return res;
+}

@@ -36,6 +36,7 @@ VCvarB real_time("real_time", true, "Run server in real time?");
 
 static VCvarB sv_ignore_nojump("sv_ignore_nojump", true, "Ignore \"nojump\" flag in MAPINFO?", CVAR_ServerInfo);
 static VCvarB sv_ignore_nomlook("sv_ignore_nomlook", true, "Ignore \"nofreelook\" flag in MAPINFO?", CVAR_ServerInfo);
+static VCvarB mod_allow_server_cvars("mod_allow_server_cvars", false, "Allow server cvars from CVARINFO?", CVAR_Archive);
 
 server_t sv;
 server_static_t svs;

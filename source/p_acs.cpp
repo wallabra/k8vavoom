@@ -58,6 +58,9 @@
 #include "p_acs.h"
 
 static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Override 'screenblocks' variable for acs scripts (-1: don't).", 0);
+static bool acsReportedBadOpcodesInited = false;
+static bool acsReportedBadOpcodes[65536];
+
 
 
 #define AAPTR_DEFAULT                0x00000000
@@ -77,6 +80,16 @@ static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Over
 #define AAPTR_PLAYER8                0x00002000
 #define AAPTR_FRIENDPLAYER           0x00004000
 #define AAPTR_GET_LINETARGET         0x00008000
+
+#define AAPTR_ANY_PLAYER  (AAPTR_PLAYER1|AAPTR_PLAYER2|AAPTR_PLAYER3|AAPTR_PLAYER4|AAPTR_PLAYER5|AAPTR_PLAYER6|AAPTR_PLAYER7|AAPTR_PLAYER8)
+
+
+enum {
+  // PAF_FORCETID,
+  // PAF_RETURNTID
+  PICKAF_FORCETID = 1,
+  PICKAF_RETURNTID = 2,
+};
 
 enum { ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX = 0xfffeu };
 
@@ -1310,7 +1323,7 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
     {
       // Auto-activate
       VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator,
-        nullptr, 0, Arg1, Arg2, Arg3, Always, !RunNow);
+        nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow);
       if (RunNow)
       {
         Script->RunScript(host_frametime);
@@ -1383,9 +1396,11 @@ int VAcsLevel::PutNewString (VStr str) {
   if (idxp) return *idxp;
   // add string
   int idx = stringList.length();
+  if (idx == 0xffff) Host_Error("ACS dynamic string storage overflow");
+  idx |= (ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
   stringList.append(str);
   stringMapByStr.put(str, idx);
-  return idx|(ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX<<16);
+  return idx;
 }
 
 
@@ -1658,8 +1673,8 @@ void VAcsLevel::CheckAcsStore()
           (GGameInfo->Players[store->PlayerNum]->PlayerFlags &
           VBasePlayer::PF_Spawned) ?
           GGameInfo->Players[store->PlayerNum]->MO : nullptr, nullptr, 0,
-          store->Args[0], store->Args[1], store->Args[2],
-          store->Type == VAcsStore::StartAlways, true);
+          store->Args[0], store->Args[1], store->Args[2], 0,
+          (store->Type == VAcsStore::StartAlways), true);
         break;
 
       case VAcsStore::Terminate:
@@ -1695,7 +1710,7 @@ void VAcsLevel::CheckAcsStore()
 //  VAcsLevel::Start
 //
 //==========================================================================
-bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3,
+bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int Arg4,
   VEntity *Activator, line_t *Line, int Side, bool Always, bool WantResult,
   bool Net, int *realres)
 {
@@ -1732,7 +1747,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3,
     if (realres) *realres = 0;
     return false;
   }
-  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Always, false);
+  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, 0, Always, false);
   if (WantResult) {
     int res = script->RunScript(host_frametime);
     if (realres) *realres = res;
@@ -1818,6 +1833,7 @@ bool VAcsLevel::Suspend(int Number, int MapNum)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::SpawnScript
@@ -1825,7 +1841,7 @@ bool VAcsLevel::Suspend(int Number, int MapNum)
 //==========================================================================
 
 VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
-  VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3,
+  VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
   bool Always, bool Delayed)
 {
   guard(VAcsLevel::SpawnScript);
@@ -1850,17 +1866,17 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   script->line = Line;
   script->side = Side;
   script->LocalVars = new vint32[Info->VarCount];
-  script->LocalVars[0] = Arg1;
-  script->LocalVars[1] = Arg2;
-  script->LocalVars[2] = Arg3;
-  memset((void *)(script->LocalVars+Info->ArgCount), 0, (Info->VarCount-Info->ArgCount)*4);
-  if (Delayed)
-  {
-    //  World objects are allotted 1 second for initialization.
+  if (Info->VarCount > 0) script->LocalVars[0] = Arg1;
+  if (Info->VarCount > 1) script->LocalVars[1] = Arg2;
+  if (Info->VarCount > 2) script->LocalVars[2] = Arg3;
+  if (Info->VarCount > 3) script->LocalVars[3] = Arg4;
+  if (Info->VarCount > Info->ArgCount) memset((void *)(script->LocalVars+Info->ArgCount), 0, (Info->VarCount-Info->ArgCount)*4);
+  if (Delayed) {
+    //k8: this was commented in the original
+    // world objects are allotted 1 second for initialization
     //script->DelayTime = 1.0;
   }
-  if (!Always)
-  {
+  if (!Always) {
     Info->RunningScript = script;
   }
   return script;
@@ -2167,11 +2183,12 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         //GCon->Logf("WARNING: UNTESTED ACSF function 'ACS_NamedExecute' (script '%s')", *name);
         if (name == NAME_None) return 0;
         //if (!ActiveObject->Level->FindScriptByNameStr(*name, ao)) return 0;
-        int ScArgs[3];
+        int ScArgs[4];
         ScArgs[0] = (argCount > 2 ? args[2] : 0);
         ScArgs[1] = (argCount > 3 ? args[3] : 0);
         ScArgs[2] = (argCount > 4 ? args[4] : 0);
-        if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], Activator, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
+        ScArgs[3] = (argCount > 5 ? args[5] : 0);
+        if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
         return 1;
       }
 
@@ -2306,62 +2323,338 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         return (count > 0 ? 1 : 0);
       }
 
-      // int UniqueTID ([int tid[, int limit]])
-      case ACSF_UniqueTID:
-        {
-          int tidstart = (argCount > 0 ? args[0] : 0);
-          int limit = (argCount > 1 ? args[1] : 0);
-          return Level->FindFreeTID(tidstart, limit);
+    // int UniqueTID ([int tid[, int limit]])
+    case ACSF_UniqueTID:
+      {
+        int tidstart = (argCount > 0 ? args[0] : 0);
+        int limit = (argCount > 1 ? args[1] : 0);
+        int res = Level->FindFreeTID(tidstart, limit);
+        //GCon->Logf("UniqueTID: tidstart=%d; limit=%d; res=%d", tidstart, limit, res);
+        return res;
+      }
+
+    // bool IsTIDUsed (int tid)
+    case ACSF_IsTIDUsed:
+      return (argCount > 0 && args[0] ? Level->IsTIDUsed(args[0]) : 1);
+
+    case ACSF_GetActorPowerupTics:
+      {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (Ent) {
+          VName name = GetName(args[1]);
+          float ptime = Ent->eventFindActivePowerupTime(name);
+          if (ptime == 0) return 0;
+          return int(ptime/35.0);
         }
+        return 0;
+      }
 
-      // bool IsTIDUsed (int tid)
-      case ACSF_IsTIDUsed:
-        return Level->IsTIDUsed(argCount ? args[0] : 0);
-
-      case ACSF_GetActorPowerupTics:
-        {
-          VEntity *Ent = EntityFromTID(args[0], Activator);
-          if (Ent) {
-            VName name = GetName(args[1]);
-            float ptime = Ent->eventFindActivePowerupTime(name);
-            if (ptime == 0) return 0;
-            return int(ptime/35.0);
+    case ACSF_SetActivator:
+      //GCon->Logf("ACSF_SetActivator: argc=%d; arg[0]=%d; arg[1]=%d", argCount, (argCount > 0 ? args[0] : 0), (argCount > 1 ? args[1] : 0));
+      if (argCount == 0) { Activator = nullptr; return 0; } // to world
+      // only tid was specified
+      if (argCount == 1) {
+        if (args[0] == 0) return (Activator ? 1 : 0); // to self
+        Activator = EntityFromTID(args[0], Activator);
+        //GCon->Logf("   new activator: <%s>", (Activator ? *Activator->GetClass()->GetFullName() : "none"));
+        return (Activator ? 1 : 0);
+      }
+      // some flags was specified
+      Activator = EntityFromTID(args[0], Activator);
+      if (Activator) {
+        Activator = Activator->eventDoAAPtr(args[1]);
+      } else {
+        if (args[1]&AAPTR_ANY_PLAYER) {
+          for (int f = 0; f < 8; ++f) {
+            if (!(args[1]&(AAPTR_PLAYER1<<f))) continue;
+            if (!GGameInfo->Players[f]) continue;
+            if (!(GGameInfo->Players[f]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
+            if (!GGameInfo->Players[f]->MO) continue; // just in case
+            Activator = GGameInfo->Players[f]->MO;
+            break;
           }
+        }
+      }
+      return (Activator ? 1 : 0);
+      /*
+      if (args[0] == 0 && argCount > 1 && args[1] == 1) {
+        // to world
+        Activator = nullptr;
+        return 0; //???
+      }
+      */
+      //GCon->Logf("ACSF_SetActivator: tid=%d; ptr=%d", args[0], (argCount > 1 ? args[1] : 0));
+
+    // bool SetActivatorToTarget (int tid)
+    case ACSF_SetActivatorToTarget:
+      //GCon->Logf("ACSF_SetActivatorToTarget: argc=%d; arg[0]=%d", argCount, (argCount > 0 ? args[0] : 0));
+      if (argCount > 0) {
+        VEntity *src = EntityFromTID(args[0], Activator);
+        if (!src) return 0; // oops
+        VEntity *tgt = src->eventFindTargetForACS();
+        if (!tgt) return 0;
+        //GCon->Logf("ACSF_SetActivatorToTarget: new target is <%s>; tid=%d", *tgt->GetClass()->GetFullName(), tgt->TID);
+        Activator = tgt;
+        return 1;
+      }
+      return 0;
+
+    case ACSF_SetCVar:
+      if (argCount >= 2) {
+        VName name = GetName(args[0]);
+        if (name == NAME_None) return 0;
+        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        //GCon->Logf("ACSF: set cvar '%s' (%f)", *name, args[1]/65536.0f);
+        VCvar::Set(*name, args[1]/65536.0f);
+        return 1;
+      }
+      return 0;
+
+    //k8: this should work over network, but meh
+    case ACSF_GetUserCVar:
+      if (argCount >= 2) {
+        VName name = GetName(args[1]);
+        if (name == NAME_None) return 0;
+        //GCon->Logf("ACSF: get cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
+        return (int)(VCvar::GetFloat(*name)*65536.0f);
+      }
+      return 0;
+
+    //k8: this should work over network, but meh
+    case ACSF_SetUserCVar:
+      if (argCount >= 3) {
+        VName name = GetName(args[1]);
+        if (name == NAME_None) return 0;
+        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        //GCon->Logf("ACSF: set user cvar '%s' (%f)", *name, args[2]/65536.0f);
+        VCvar::Set(*name, args[2]/65536.0f);
+        return 1;
+      }
+      return 0;
+
+    case ACSF_GetCVarString:
+      if (argCount >= 1) {
+        VName name = GetName(args[0]);
+        if (name == NAME_None) return ActiveObject->Level->PutNewString("");
+        //GCon->Logf("ACSF_GetCVarString: var=<%s>; value=<%s>", *name, *VCvar::GetString(*name));
+        return ActiveObject->Level->PutNewString(VCvar::GetString(*name));
+      }
+      return ActiveObject->Level->PutNewString("");
+
+    case ACSF_SetCVarString:
+      //GCon->Logf("***ACSF_SetCVarString: var=<%s>", *GetName(args[0]));
+      if (argCount >= 2) {
+        VName name = GetName(args[0]);
+        if (name == NAME_None) return 0;
+        //GCon->Logf("ACSF_SetCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[1]), (int)VCvar::CanBeModified(*name, true, true));
+        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        VStr value = GetStr(args[1]);
+        VCvar::Set(*name, value);
+        return 1;
+      }
+      return 0;
+
+    //k8: this should work over network, but meh
+    case ACSF_GetUserCVarString:
+      if (argCount >= 2) {
+        VName name = GetName(args[1]);
+        if (name == NAME_None) return ActiveObject->Level->PutNewString("");
+        //GCon->Logf("ACSF_GetUserCVarString: var=<%s>; value=<%s>", *name, *VCvar::GetString(*name));
+        return ActiveObject->Level->PutNewString(VCvar::GetString(*name));
+      }
+      return ActiveObject->Level->PutNewString("");
+
+    //k8: this should work over network, but meh
+    case ACSF_SetUserCVarString:
+      //GCon->Logf("***ACSF_SetUserCVarString: var=<%s>", *GetName(args[1]));
+      if (argCount >= 3) {
+        VName name = GetName(args[1]);
+        if (name == NAME_None) return 0;
+        //GCon->Logf("ACSF_SetUserCVarString: var=<%s>; value=<%s>; allowed=%d", *name, *GetStr(args[2]), (int)VCvar::CanBeModified(*name, true, true));
+        if (!VCvar::CanBeModified(*name, true, true)) return 0;
+        VStr value = GetStr(args[2]);
+        VCvar::Set(*name, value);
+        return 1;
+      }
+      return 0;
+
+
+    case ACSF_PlayerIsSpectator_Zadro:
+      return 0;
+
+    // https://zdoom.org/wiki/ConsolePlayerNumber
+    //FIXME: disconnect?
+    case ACSF_ConsolePlayerNumber_Zadro:
+      //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
+      if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
+        if (cl && cls.signon && cl->MO) {
+          //GCon->Logf(NAME_Warning, "CONPLRNUM: %d", cl->ClientNum);
+          return cl->ClientNum;
+        }
+      }
+      return -1;
+
+    // int RequestScriptPuke (int script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
+    case ACSF_RequestScriptPuke_Zadro:
+      {
+        if (argCount < 1) return 0;
+        if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone) {
+          GCon->Log("ACS: Zadro RequestScriptPuke can be executed only by clients.");
           return 0;
         }
-
-      case ACSF_SetActivator:
-        if (args[0] == 0 && argCount > 1 && args[1] == 1) {
-          // to world
-          Activator = nullptr;
-          return 0; //???
+        // ignore this in demos
+        //FIXME: check `net` flag first
+        if (cls.demoplayback) {
+          return 1;
         }
-        break;
-        //GCon->Logf("ACSF_SetActivator: tid=%d; ptr=%d", args[0], (argCount > 1 ? args[1] : 0));
+        // do it
+        if (args[0] == 0) return 1;
+        int ScArgs[4];
+        ScArgs[0] = (argCount > 1 ? args[1] : 0);
+        ScArgs[1] = (argCount > 2 ? args[2] : 0);
+        ScArgs[2] = (argCount > 3 ? args[3] : 0);
+        ScArgs[3] = (argCount > 4 ? args[4] : 0);
+        if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
+        return 1;
+      }
 
-      case ACSF_GetUserCVar:
-        if (argCount == 2) {
-          VName name = GetName(args[1]);
-          if (name == NAME_None) return 0;
-          //GCon->Logf("ACSF: get cvar '%s' (%f)", *name, VCvar::GetFloat(*name));
-          return (int)(VCvar::GetFloat(*name)*65536.0f);
+    // int NamedRequestScriptPuke (str script[, int arg0[, int arg1[, int arg2[, int arg3]]]])
+    case ACSF_NamedRequestScriptPuke_Zadro:
+      {
+        if (argCount < 1) return 0;
+        if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone) {
+          GCon->Log("ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
+          return 0;
         }
-        break;
+        // ignore this in demos
+        //FIXME: check `net` flag first
+        if (cls.demoplayback) {
+          return 1;
+        }
+        // do it
+        VName name = GetNameLowerCase(args[0]);
+        if (name == NAME_None) return 0;
+        int ScArgs[4];
+        ScArgs[0] = (argCount > 1 ? args[1] : 0);
+        ScArgs[1] = (argCount > 2 ? args[2] : 0);
+        ScArgs[2] = (argCount > 3 ? args[3] : 0);
+        ScArgs[3] = (argCount > 4 ? args[4] : 0);
+        if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
+        return 1;
+      }
 
-      case ACSF_PlayerIsSpectator_Zadro:
-        return 0;
-
-      // https://zdoom.org/wiki/ConsolePlayerNumber
-      //FIXME: disconnect?
-      case ACSF_ConsolePlayerNumber_Zadro:
-        //GCon->Logf(NAME_Warning, "ERROR: unimplemented ACSF function #%d'", 102);
-        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
-          if (cl && cls.signon && cl->MO) {
-            //GCon->Logf(NAME_Warning, "CONPLRNUM: %d", cl->ClientNum);
-            return cl->ClientNum;
+    // int PickActor (int source, fixed angle, fixed pitch, fixed distance, int tid [, int actorMask [, int wallMask [, int flags]]])
+    case ACSF_PickActor:
+      if (argCount < 5) return 0;
+      {
+        /*
+        GCon->Logf("ACSF_PickActor: argc=%d; arg[0]=%d; arg[1]=%d; arg[2]=%d; arg[3]=%d; arg[4]=%d; arg[5]=%d; arg[6]=%d; arg[7]=%d", argCount,
+          (argCount > 0 ? args[0] : 0), (argCount > 1 ? args[1] : 1),
+          (argCount > 2 ? args[2] : 0), (argCount > 3 ? args[3] : 1),
+          (argCount > 4 ? args[4] : 0), (argCount > 5 ? args[5] : 1),
+          (argCount > 6 ? args[6] : 0), (argCount > 7 ? args[7] : 1));
+        */
+        VEntity *src = EntityFromTID(args[0], Activator);
+        if (!src) return 0; // oops
+        if (args[3] < 0) return 0;
+        // create direction vector
+        TAVec ang;
+        ang.yaw = 360.0f*float(args[1])/65536.0f;
+        ang.pitch = 360.0f*float(args[2])/65536.0f;
+        ang.roll = 0;
+        TVec dir;
+        AngleVector(ang, dir);
+        dir = Normalise(dir);
+        VEntity *hit = src->eventPickActor(
+          false, TVec(0, 0, 0), // origin
+          dir, float(args[3])/65536.0f,
+          argCount > 5, (argCount > 5 ? args[5] : 0), // actormask
+          argCount > 6, (argCount > 6 ? args[6] : 0)); // wallmask
+        if (!hit) return 0;
+        //GCon->Logf("ACSF_PickActor: hit=<%s>; tid=%d", *hit->GetClass()->GetFullName(), hit->TID);
+        // assign tid
+        int flags = (argCount > 7 ? args[7] : 0);
+        int newtid = args[4];
+        if (newtid < 0) { GCon->Logf("ACS: PickActor with negative tid (%d)", newtid); return (flags&PICKAF_RETURNTID ? hit->TID : 1); }
+        // assign new tid
+        if ((flags&PICKAF_FORCETID) != 0 || hit->TID == 0) {
+          if (newtid != 0 || (flags&PICKAF_FORCETID) != 0) {
+            //int oldtid = hit->TID;
+            hit->SetTID(newtid);
+            //GCon->Logf("ACSF_PickActor: TID change: hit=<%s>; oldtid=%d; newtid=%d", *hit->GetClass()->GetFullName(), oldtid, hit->TID);
           }
         }
-        return -1;
+        return (flags&PICKAF_RETURNTID ? hit->TID : 1);
+      }
+
+    case ACSF_GetChar:
+      if (argCount >= 2) {
+        VStr s = GetStr(args[0]);
+        int idx = args[1];
+        if (idx >= 0 && idx < s.length()) return (vuint8)s[idx];
+      }
+      return 0;
+
+    case ACSF_strcmp:
+    case ACSF_stricmp:
+      if (argCount >= 2) {
+        int maxlen = (argCount > 2 ? args[2] : MAX_VINT32);
+        VStr s0 = GetStr(args[0]);
+        VStr s1 = GetStr(args[1]);
+        int curpos = 0;
+        while (curpos < maxlen) {
+          if (curpos >= s0.length() || curpos >= s1.length()) {
+            if (s0.length() == s1.length()) return 0; // equal
+            return (s0.length() < s1.length() ? -1 : 1);
+          }
+          char c0 = s0[curpos];
+          char c1 = s1[curpos];
+          if (funcIndex == ACSF_stricmp) {
+            c0 = VStr::upcase1251(c0);
+            c1 = VStr::upcase1251(c1);
+          }
+          if (c0 < c1) return -1;
+          if (c0 > c1) return 1;
+          ++curpos;
+        }
+      }
+      return 0;
+
+    case ACSF_StrLeft:
+      if (argCount >= 2) {
+        VStr s = GetStr(args[0]);
+        int newlen = args[2];
+        if (newlen <= 0) return ActiveObject->Level->PutNewString("");
+        if (newlen >= s.length()) return args[0];
+        return ActiveObject->Level->PutNewString(s.left(newlen));
+      }
+      return ActiveObject->Level->PutNewString("");
+
+    case ACSF_StrRight:
+      if (argCount >= 2) {
+        VStr s = GetStr(args[0]);
+        int newlen = args[2];
+        if (newlen <= 0) return ActiveObject->Level->PutNewString("");
+        if (newlen >= s.length()) return args[0];
+        return ActiveObject->Level->PutNewString(s.right(newlen));
+      }
+      return ActiveObject->Level->PutNewString("");
+
+    case ACSF_StrMid:
+      if (argCount >= 3) {
+        VStr s = GetStr(args[0]);
+        int pos = args[1];
+        if (pos < 0) pos = 0;
+        int newlen = args[2];
+        if (newlen <= 0) return ActiveObject->Level->PutNewString("");
+        int oldlen = s.length();
+        if (newlen > oldlen) newlen = oldlen;
+        if (pos >= oldlen) return ActiveObject->Level->PutNewString("");
+        if (pos == 0 && newlen >= oldlen) return args[0]; // not changed
+        if (pos+newlen > oldlen) newlen = oldlen-pos;
+        return ActiveObject->Level->PutNewString(s.mid(pos, newlen));
+      }
+      return ActiveObject->Level->PutNewString("");
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -2442,6 +2735,9 @@ int VAcs::RunScript(float DeltaTime)
   vuint8 *ip = InstructionPointer;
   vint32 *sp = stack;
   VTextureTranslation *Translation = nullptr;
+#if !USE_COMPUTED_GOTO
+  if (info->Number == 31233) GCon->Logf("VACS 31233: %d,%d,%d", LocalVars[0], LocalVars[1], LocalVars[2]);
+#endif
   do
   {
     vint32 cmd;
@@ -2471,6 +2767,10 @@ int VAcs::RunScript(float DeltaTime)
       cmd = READ_INT32(ip);
       ip += 4;
     }
+
+#if !USE_COMPUTED_GOTO
+    GCon->Logf("ACS: SCRIPT %d; cmd: %d", info->Number, cmd);
+#endif
 
     ACSVM_SWITCH(cmd)
     {
@@ -4391,7 +4691,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_GetActorProperty)
       {
-        VEntity *Ent = EntityFromTID(sp[-2], nullptr);
+        VEntity *Ent = EntityFromTID(sp[-2], Activator);
         if (!Ent)
         {
           sp[-2] = 0;
@@ -4465,6 +4765,7 @@ int VAcs::RunScript(float DeltaTime)
         } else {
           val = VCvar::GetInt(*cvname);
         }
+        //GCon->Logf("GetCvar(%s)=%d", *cvname, val);
         sp[-1] = val;
       }
       ACSVM_BREAK;
@@ -4781,7 +5082,7 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_CheckActorInventory)
       {
-        VEntity *Ent = EntityFromTID(sp[-2], nullptr);
+        VEntity *Ent = EntityFromTID(sp[-2], Activator);
         if (!Ent)
         {
           sp[-2] = 0;
@@ -5449,7 +5750,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_ClassifyActor)
       if (sp[-1])
       {
-        VEntity *Ent = EntityFromTID(sp[-1], nullptr);
+        VEntity *Ent = EntityFromTID(sp[-1], Activator);
         if (Ent)
         {
           sp[-1] = Ent->eventClassifyActor();
@@ -5503,6 +5804,11 @@ int VAcs::RunScript(float DeltaTime)
       ip += 3;
       ACSVM_BREAK;
 
+    ACSVM_CASE(PCD_SaveString)
+      //GCon->Logf("PCD_SaveString: <%s>", *PrintStr);
+      *sp++ = ActiveObject->Level->PutNewString(*PrintStr);
+      ACSVM_BREAK;
+
     //  These p-codes are not supported. They will terminate script.
     ACSVM_CASE(PCD_PlayerBlueSkull)
     ACSVM_CASE(PCD_PlayerRedSkull)
@@ -5534,7 +5840,6 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_GrabInput)
     ACSVM_CASE(PCD_SetMousePointer)
     ACSVM_CASE(PCD_MoveMousePointer)
-    ACSVM_CASE(PCD_SaveString)
     ACSVM_CASE(PCD_PrintMapChRange)
     ACSVM_CASE(PCD_PrintWorldChRange)
     ACSVM_CASE(PCD_PrintGlobalChRange)
@@ -5543,8 +5848,22 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_StrCpyToGlobalChRange)
     ACSVM_CASE(PCD_PushFunction)
     ACSVM_CASE(PCD_CallStack)
-      GCon->Logf(NAME_Dev, "Unsupported ACS p-code %d", cmd);
-      action = SCRIPT_Terminate;
+      {
+        if (!acsReportedBadOpcodesInited) {
+          acsReportedBadOpcodesInited = true;
+          memset(acsReportedBadOpcodes, 0, sizeof(acsReportedBadOpcodes));
+        }
+        if (cmd >= 0 && cmd <= 65535) {
+          if (!acsReportedBadOpcodes[cmd]) {
+            acsReportedBadOpcodes[cmd] = true;
+            GCon->Logf(NAME_Error, "ACS: Unsupported p-code %d, script %d terminated", cmd, info->Number);
+          }
+        } else {
+          GCon->Logf(NAME_Error, "ACS: Unsupported p-code %d, script %d terminated", cmd, info->Number);
+        }
+        //GCon->Logf(NAME_Dev, "Unsupported ACS p-code %d", cmd);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_DEFAULT
@@ -5670,7 +5989,7 @@ IMPLEMENT_FUNCTION(VLevel, StartACS) {
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartACS"); }
   int res = 0;
   //fprintf(stderr, "000: activator=<%s>; line=%p; side=%d\n", (activator ? activator->GetClass()->GetName() : "???"), line, side);
-  bool br = Self->Acs->Start(num, map, arg1, arg2, arg3, activator, line, side, Always, WantResult, false, &res);
+  bool br = Self->Acs->Start(num, map, arg1, arg2, arg3, 0, activator, line, side, Always, WantResult, false, &res);
   if (WantResult) RET_INT(res); else RET_INT(br ? 1 : 0);
 }
 
@@ -5715,7 +6034,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACS) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACS"); }
   if (Script < 0) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
+  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
 
@@ -5730,7 +6049,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACSAlways) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSAlways"); }
   if (Script < 0) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
+  RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
 
@@ -5746,7 +6065,7 @@ IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
   if (Script < 0) { RET_INT(0); return; }
   //fprintf(stderr, "001: activator=<%s>\n", (Activator ? Activator->GetClass()->GetName() : "???"));
   int res = 0;
-  Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  Self->Acs->Start(Script, 0/*Map*/, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
   RET_INT(res);
 }
 
@@ -5766,7 +6085,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
   //GCon->Logf("ACS: RunNamedACS001: script=<%s>; map=%d", *Script, Map);
-  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, true/*net*/));
+  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
 
@@ -5783,7 +6102,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSAlways) {
   if (Name.length() == 0) { RET_BOOL(false); return; }
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_BOOL(false); return; }
-  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, false/*net*/));
+  RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
 
@@ -5800,7 +6119,7 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
   VName Script = VName(*Name, VName::AddLower);
   if (Script == NAME_None) { RET_INT(0); return; }
   int res = 0;
-  Self->Acs->Start(-Script.GetIndex(), 0/*Map*/, Arg1, Arg2, Arg3, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  Self->Acs->Start(-Script.GetIndex(), 0/*Map*/, Arg1, Arg2, Arg3, 0, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
   RET_INT(res);
 }
 
@@ -5820,22 +6139,19 @@ COMMAND(Puke) {
   if (Args.Num() < 2) return;
 
   int Script = atoi(*Args[1]);
-  if (Script == 0) {
-    //  Script 0 is special
-    return;
-  }
+  if (Script == 0) return; // script 0 is special
 
-  int ScArgs[3];
-  for (int i = 0; i < 3; i++) {
-    if (Args.Num() >= i + 3) {
-      ScArgs[i] = atoi(*Args[i + 2]);
+  int ScArgs[4];
+  for (int i = 0; i < 4; ++i) {
+    if (Args.Num() >= i+3) {
+      ScArgs[i] = atoi(*Args[i+2]);
     } else {
       ScArgs[i] = 0;
     }
   }
 
-  Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1],
-    ScArgs[2], GGameInfo->Players[0]->MO, nullptr, 0, Script < 0, false, true);
+  Player->Level->XLevel->Acs->Start(abs(Script), 0, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3],
+    GGameInfo->Players[0]->MO, nullptr, 0, Script < 0, false, true);
   unguard;
 }
 
@@ -5857,16 +6173,16 @@ COMMAND(PukeName) {
   VName Script = VName(*Args[1], VName::AddLower);
   if (Script == NAME_None) return;
 
-  int ScArgs[3];
-  for (int i = 0; i < 3; i++) {
-    if (Args.Num() >= i + 3) {
-      ScArgs[i] = atoi(*Args[i + 2]);
+  int ScArgs[4];
+  for (int i = 0; i < 4; ++i) {
+    if (Args.Num() >= i+3) {
+      ScArgs[i] = atoi(*Args[i+2]);
     } else {
       ScArgs[i] = 0;
     }
   }
 
-  Player->Level->XLevel->Acs->Start(-Script.GetIndex(), 0, ScArgs[0], ScArgs[1],
-    ScArgs[2], GGameInfo->Players[0]->MO, nullptr, 0, /*Script < 0*/false/*always:wtf?*/, false, true);
+  Player->Level->XLevel->Acs->Start(-Script.GetIndex(), 0, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3],
+    GGameInfo->Players[0]->MO, nullptr, 0, /*Script < 0*/false/*always:wtf?*/, false, true);
   unguard;
 }

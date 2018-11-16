@@ -74,6 +74,123 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
 
 //==========================================================================
 //
+//  PickActor
+//
+//==========================================================================
+final override Entity PickActor (optional TVec org, TVec dir, float distance, optional int actorMask, optional int wallMask) {
+  intercept_t *in;
+  TVec lineEnd, outHitPointDummy;
+
+  if (!specified_actorMask) actorMask = MF_SHOOTABLE;
+  if (!specified_wallMask) wallMask = ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN;
+
+  if (!specified_org) {
+    org = Origin;
+    org.z += Height*0.5-FloorClip;
+    org.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
+  }
+
+  TVec shootOrigin = org;
+  TVec dst = shootOrigin+distance*dir;
+  TVec lineStart = shootOrigin;
+
+  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
+    TVec hit_point, real_hit_point;
+    line_t *li;
+    EntityEx th;
+
+    //print("LineAttack: isline=%d; frac=%f", (in->bIsALine ? 1 : 0), in->frac);
+    //if (!in->bIsALine) print("LineAttack: frac=%f; thing=%C; dist=%f", in->frac, in->Thing, length2D(in.Thing.Origin-org));
+
+    if (in->bIsALine) {
+      sector_t *sec;
+
+      li = in->line;
+      if (!(li->flags&wallMask)) continue;
+
+      hit_point = shootOrigin+(distance*in->frac)*dir;
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
+        sec = li->backsector;
+      } else {
+        sec = li->frontsector;
+      }
+
+      lineEnd = hit_point;
+
+      // check for shooting floor or ceiling
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, /*PuffType*/none, &outHitPointDummy)) return none;
+
+      lineStart = lineEnd;
+
+      if (Level.CompatTrace && li->frontsector == li->backsector) continue;
+
+      if (li->flags&ML_TWOSIDED) {
+        // crosses a two sided line
+        opening_t *open;
+        float opentop = 0.0;
+
+        open = LineOpenings(li, hit_point);
+        if (open) opentop = open->top;
+        while (open) {
+          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
+          }
+          open = open->next;
+        }
+        if (open) continue;
+        if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
+            li->backsector->ceiling.pic == Level.Game.skyflatnum &&
+            hit_point.z > opentop)
+        {
+          // it's a sky hack wall
+          //if (outHitPoint) *outHitPoint = hit_point;
+          return none;
+        }
+      }
+
+      //if (outHitPoint) *outHitPoint = hit_point;
+
+      // hit line
+      return none;
+    }
+
+    // shoot a thing
+    th = EntityEx(in->Thing);
+
+    if (th == self) continue; // can't pick self
+
+    // ignore ghosts
+    if (th.bGhost) continue;
+
+    int myflags = CalcEntityFlags();
+    if (!(myflags&actorMask)) continue; // mask check failed
+
+    // check angles to see if the thing can be aimed at
+    hit_point = shootOrigin+(distance*in->frac)*dir;
+
+    if (!CalcProperThingHit(hit_point, th, shootOrigin, dir, distance)) continue;
+    //print("  thing: %C (over:%B; under:%B; tz=(%f,%f); hpz=%f)", th, (th.Origin.z+th.Height < hit_point.z), (th.Origin.z > hit_point.z), th.Origin.z, th.Origin.z+th.Height, hit_point.z);
+
+    if (th.Origin.z+th.Height < hit_point.z) continue; // shot over the thing
+    if (th.Origin.z > hit_point.z) continue; // shot under the thing
+
+    // hit thing
+    // position a bit closer
+    //hit_point -= 10.0*dir;
+    hit_point -= 2.0*dir;
+
+    //if (outHitPoint) *outHitPoint = hit_point;
+
+    // don't go any farther
+    return th;
+  }
+
+  return none;
+}
+
+
+//==========================================================================
+//
 // TraceSplat
 //
 // Trace line to the wall, so we can spawn decal on it.

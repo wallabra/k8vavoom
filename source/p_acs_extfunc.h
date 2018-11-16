@@ -12,7 +12,7 @@
   ACS_EXTFUNC(SetActivator)
   ACS_EXTFUNC(SetActivatorToTarget)
   ACS_EXTFUNC(GetActorViewHeight)
-  ACS_EXTFUNC(GetChar)
+  ACS_EXTFUNC(GetChar) // implemented
   ACS_EXTFUNC(GetAirSupply)
   ACS_EXTFUNC(SetAirSupply)
   ACS_EXTFUNC(SetSkyScrollSpeed)
@@ -50,21 +50,21 @@
   ACS_EXTFUNC(VectorLength)
   ACS_EXTFUNC(SetHUDClipRect)
   ACS_EXTFUNC(SetHUDWrapWidth)
-  ACS_EXTFUNC(SetCVar)
-  ACS_EXTFUNC(GetUserCVar)
-  ACS_EXTFUNC(SetUserCVar)
-  ACS_EXTFUNC(GetCVarString)
-  ACS_EXTFUNC(SetCVarString)
-  ACS_EXTFUNC(GetUserCVarString)
-  ACS_EXTFUNC(SetUserCVarString)
+  ACS_EXTFUNC(SetCVar) // implemented
+  ACS_EXTFUNC(GetUserCVar) // implemented
+  ACS_EXTFUNC(SetUserCVar) // implemented
+  ACS_EXTFUNC(GetCVarString) // implemented
+  ACS_EXTFUNC(SetCVarString) // implemented
+  ACS_EXTFUNC(GetUserCVarString) // implemented
+  ACS_EXTFUNC(SetUserCVarString) // implemented
   ACS_EXTFUNC(LineAttack)
   ACS_EXTFUNC(PlaySound) // implemented
   ACS_EXTFUNC(StopSound) // implemented
-  ACS_EXTFUNC(strcmp)
-  ACS_EXTFUNC(stricmp)
-  ACS_EXTFUNC(StrLeft)
-  ACS_EXTFUNC(StrRight)
-  ACS_EXTFUNC(StrMid)
+  ACS_EXTFUNC(strcmp) // implemented
+  ACS_EXTFUNC(stricmp) // implemented
+  ACS_EXTFUNC(StrLeft) // implemented
+  ACS_EXTFUNC(StrRight) // implemented
+  ACS_EXTFUNC(StrMid) // implemented
   ACS_EXTFUNC(GetActorClass) // implemented
   ACS_EXTFUNC(GetWeapon)
   ACS_EXTFUNC(SoundVolume)
@@ -80,7 +80,7 @@
   ACS_EXTFUNC(ChangeActorPitch) // 80
   ACS_EXTFUNC(GetArmorInfo)
   ACS_EXTFUNC(DropInventory)
-  ACS_EXTFUNC(PickActor)
+  ACS_EXTFUNC(PickActor) // implemented
   ACS_EXTFUNC(IsPointerEqual)
   ACS_EXTFUNC(CanRaiseActor)
   ACS_EXTFUNC(SetActorTeleFog) // 86
@@ -108,8 +108,8 @@
   */
 
   ACS_EXTFUNC_NUM(ResetMap_Zadro, 100)
-  ACS_EXTFUNC(PlayerIsSpectator_Zadro)
-  ACS_EXTFUNC(ConsolePlayerNumber_Zadro)
+  ACS_EXTFUNC(PlayerIsSpectator_Zadro) // implemented
+  ACS_EXTFUNC(ConsolePlayerNumber_Zadro) // implemented
   ACS_EXTFUNC(GetTeamProperty_Zadro) // [Dusk]
   ACS_EXTFUNC(GetPlayerLivesLeft_Zadro)
   ACS_EXTFUNC(SetPlayerLivesLeft_Zadro)
@@ -129,11 +129,11 @@
   ACS_EXTFUNC(GetDBResultValueString_Zadro)
   ACS_EXTFUNC(GetDBResultValue_Zadro)
   ACS_EXTFUNC(GetDBEntryRank_Zadro)
-  ACS_EXTFUNC(RequestScriptPuke_Zadro)
+  ACS_EXTFUNC(RequestScriptPuke_Zadro) // implemented
   ACS_EXTFUNC(BeginDBTransaction_Zadro)
   ACS_EXTFUNC(EndDBTransaction_Zadro)
   ACS_EXTFUNC(GetDBEntries_Zadro)
-  ACS_EXTFUNC(NamedRequestScriptPuke_Zadro)
+  ACS_EXTFUNC(NamedRequestScriptPuke_Zadro) // implemented
   ACS_EXTFUNC(SystemTime_Zadro)
   ACS_EXTFUNC(GetTimeProperty_Zadro)
   ACS_EXTFUNC(Strftime_Zadro)

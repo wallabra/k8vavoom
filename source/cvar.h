@@ -76,6 +76,11 @@ public:
   static void Shutdown ();
 
   static bool HasVar (const char *var_name);
+  static bool HasModVar (const char *var_name);
+  static bool HasModUserVar (const char *var_name); // non-server
+
+  static bool CanBeModified (const char *var_name, bool modonly=false, bool noserver=true);
+
   static void CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags);
 
   static int GetInt (const char *var_name);

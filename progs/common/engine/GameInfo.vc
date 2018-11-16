@@ -103,7 +103,7 @@ void ParseCVarInfo () {
         int flags = CVAR_FROMMOD|CVAR_ARCHIVE;
         if (par.Check("server")) {
           //writeln("*** CVAR: SERVER");
-          flags |= CVAR_SERVERINFO;
+          if (GetCvarB('mod_allow_server_cvars')) flags |= CVAR_SERVERINFO;
         } else if (par.Check("user")) {
           //writeln("*** CVAR: USER");
         } else {

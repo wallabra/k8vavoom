@@ -2626,240 +2626,92 @@ final EntityEx TossUpObject(class!EntityEx type)
   return A;
 }
 
+
 //==========================================================================
 //
 //  SetActorProperty
 //
 //==========================================================================
-
-final override void SetActorProperty(int Prop, int IntVal, string StrVal)
-{
-  switch (Prop)
-  {
-  case APROP_Health:
-    Health = IntVal;
-    if (bIsPlayer)
-    {
-      Player.Health = IntVal;
-    }
-    break;
-
-  case APROP_Speed:
-    Speed = itof(IntVal) / 65536.0 * 35.0;
-    break;
-
-  case APROP_Damage:
-    MissileDamage = IntVal;
-    break;
-
-  case APROP_Alpha:
-    Alpha = itof(IntVal) / 65536.0;
-    break;
-
-  case APROP_RenderStyle:
-    RenderStyle = IntVal;
-    break;
-
-  case APROP_Ambush:
-    bAmbush = !!IntVal;
-    break;
-
-  case APROP_Invulnerable:
-    bInvulnerable = !!IntVal;
-    break;
-
-  case APROP_JumpZ:
-    if (PlayerPawn(self))
-    {
-      PlayerPawn(self).JumpVelZ = itof(IntVal) / 65536.0 * 35.0;
-    }
-    break;
-
-  case APROP_ChaseGoal:
-    bChaseGoal = !!IntVal;
-    break;
-
-  case APROP_Frightened:
-    print("Frightened property is not implemented");
-    break;
-
-  case APROP_Gravity:
-    Gravity = itof(IntVal) / 65536.0;
-    break;
-
-  case APROP_Friendly:
-    bFriendly = !!IntVal;
-    break;
-
-  case APROP_SeeSound:
-    SightSound = StrToName(StrVal);
-    break;
-
-  case APROP_AttackSound:
-    AttackSound = StrToName(StrVal);
-    break;
-
-  case APROP_PainSound:
-    PainSound = StrToName(StrVal);
-    break;
-
-  case APROP_DeathSound:
-    DeathSound = StrToName(StrVal);
-    break;
-
-  case APROP_ActiveSound:
-    ActiveSound = StrToName(StrVal);
-    break;
-
-  case APROP_SpawnHealth:
-    if (PlayerPawn(self))
-    {
-      PlayerPawn(self).MaxHealth = IntVal;
-    }
-    break;
+final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
+  switch (Prop) {
+    case APROP_Health: Health = IntVal; if (bIsPlayer) Player.Health = IntVal; break;
+    case APROP_Speed: Speed = float(IntVal)/65536.0*35.0; break;
+    case APROP_Damage: MissileDamage = IntVal; break;
+    case APROP_Alpha: Alpha = itof(IntVal)/65536.0; break;
+    case APROP_RenderStyle: RenderStyle = IntVal; break;
+    case APROP_Ambush: bAmbush = !!IntVal; break;
+    case APROP_Invulnerable: bInvulnerable = !!IntVal; break;
+    case APROP_JumpZ: if (PlayerPawn(self)) PlayerPawn(self).JumpVelZ = float(IntVal)/65536.0*35.0; break;
+    case APROP_ChaseGoal: bChaseGoal = !!IntVal; break;
+    case APROP_Frightened: print("Frightened property is not implemented"); break;
+    case APROP_Gravity: Gravity = float(IntVal)/65536.0; break;
+    case APROP_Friendly: bFriendly = !!IntVal; break;
+    case APROP_SeeSound: SightSound = StrToName(StrVal); break;
+    case APROP_AttackSound: AttackSound = StrToName(StrVal); break;
+    case APROP_PainSound: PainSound = StrToName(StrVal); break;
+    case APROP_DeathSound: DeathSound = StrToName(StrVal); break;
+    case APROP_ActiveSound: ActiveSound = StrToName(StrVal); break;
+    case APROP_SpawnHealth: if (PlayerPawn(self)) PlayerPawn(self).MaxHealth = IntVal; break;
   }
 }
+
 
 //==========================================================================
 //
 //  GetActorProperty
 //
 //==========================================================================
-
-final override int GetActorProperty(int Prop)
-{
-  switch (Prop)
-  {
-  case APROP_Health:
-    return Health;
-
-  case APROP_Speed:
-    return ftoi(Speed / 35.0 * 65536.0);
-
-  case APROP_Damage:
-    return MissileDamage;
-
-  case APROP_Alpha:
-    return ftoi(Alpha * 65536.0);
-
-  case APROP_RenderStyle:
-    return RenderStyle;
-
-  case APROP_Ambush:
-    return bAmbush;
-
-  case APROP_Invulnerable:
-    return bInvulnerable;
-
-  case APROP_JumpZ:
-    return ftoi(PlayerPawn(self).JumpVelZ / 35.0 * 65536.0);
-
-  case APROP_ChaseGoal:
-    return bChaseGoal;
-
-  case APROP_Frightened:
-    return 0;
-
-  case APROP_Gravity:
-    return ftoi(Gravity * 65536.0);
-
-  case APROP_Friendly:
-    return bFriendly;
+final override int GetActorProperty (int Prop) {
+  //if (Prop == APROP_SpawnHealth) print("GetActorProperty(%C, APROP_SpawnHealth)=%s", self, self.default.Health);
+  switch (Prop) {
+    case APROP_Health: return Health;
+    case APROP_Speed: return int(Speed/35.0*65536.0);
+    case APROP_Damage: return MissileDamage;
+    case APROP_Alpha: return int(Alpha*65536.0);
+    case APROP_RenderStyle: return RenderStyle;
+    case APROP_Ambush: return bAmbush;
+    case APROP_Invulnerable: return bInvulnerable;
+    case APROP_JumpZ: return int(PlayerPawn(self).JumpVelZ/35.0*65536.0);
+    case APROP_ChaseGoal: return bChaseGoal;
+    case APROP_Frightened: return 0;
+    case APROP_Gravity: return int(Gravity*65536.0);
+    case APROP_Friendly: return bFriendly;
+    case APROP_SpawnHealth: if (PlayerPawn(self)) return PlayerPawn(self).MaxHealth; else return self.default.Health;
   }
   return 0;
 }
+
 
 //==========================================================================
 //
 //  SetPlayerProperty
 //
 //==========================================================================
-
-final bool SetPlayerProperty(int Prop, int Set)
-{
+final bool SetPlayerProperty (int Prop, int Set) {
   class!Inventory InvClass = none;
-  switch (Prop)
-  {
-  case PROP_FROZEN:
-    PlayerEx(Player).bFrozen = !!Set;
-    return true;
-
-  case PROP_NOTARGET:
-    PlayerEx(Player).bNoTarget = !!Set;
-    return true;
-
-  case PROP_INSTANTWEAPONSWITCH:
-    PlayerEx(Player).bInstantWeaponSwitch = !!Set;
-    return true;
-
-  case PROP_FLY:
-    PlayerEx(Player).bFly = !!Set;
-    bFly = !!Set;
-    bNoGravity = !!Set;
-    return true;
-
-  case PROP_TOTALLYFROZEN:
-    PlayerEx(Player).bTotallyFrozen = !!Set;
-    return true;
-
-  case PROP_INVULNERABILITY:
-    InvClass = PowerInvulnerable;
-    break;
-
-  case PROP_STRENGTH:
-    InvClass = PowerStrength;
-    break;
-
-  case PROP_INVISIBILITY:
-    InvClass = PowerInvisibility;
-    break;
-
-  case PROP_RADIATIONSUIT:
-    InvClass = PowerIronFeet;
-    break;
-
-  case PROP_ALLMAP:
-    if (Set)
-    {
-      PlayerEx(Player).AddRevealedMap();
-    }
-    else
-    {
-      PlayerEx(Player).RemoveRevealedMap();
-    }
-    return true;
-
-  case PROP_INFRARED:
-    InvClass = PowerLightAmp;
-    break;
-
-  case PROP_WEAPONLEVEL2:
-    InvClass = PowerWeaponLevel2;
-    break;
-
-  case PROP_FLIGHT:
-    InvClass = PowerFlight;
-    break;
-
-  case PROP_SPEED:
-    InvClass = PowerSpeed;
-    break;
-
-  default:
-    return false;
+  switch (Prop) {
+    case PROP_FROZEN: PlayerEx(Player).bFrozen = !!Set; return true;
+    case PROP_NOTARGET: PlayerEx(Player).bNoTarget = !!Set; return true;
+    case PROP_INSTANTWEAPONSWITCH: PlayerEx(Player).bInstantWeaponSwitch = !!Set; return true;
+    case PROP_FLY: PlayerEx(Player).bFly = !!Set; bFly = !!Set; bNoGravity = !!Set; return true;
+    case PROP_TOTALLYFROZEN: PlayerEx(Player).bTotallyFrozen = !!Set; return true;
+    case PROP_INVULNERABILITY: InvClass = PowerInvulnerable; break;
+    case PROP_STRENGTH: InvClass = PowerStrength; break;
+    case PROP_INVISIBILITY: InvClass = PowerInvisibility; break;
+    case PROP_RADIATIONSUIT: InvClass = PowerIronFeet; break;
+    case PROP_ALLMAP: if (Set) PlayerEx(Player).AddRevealedMap(); else PlayerEx(Player).RemoveRevealedMap(); return true;
+    case PROP_INFRARED: InvClass = PowerLightAmp; break;
+    case PROP_WEAPONLEVEL2: InvClass = PowerWeaponLevel2; break;
+    case PROP_FLIGHT: InvClass = PowerFlight; break;
+    case PROP_SPEED: InvClass = PowerSpeed; break;
+    default: return false;
   }
 
-  if (Set)
-  {
+  if (Set) {
     GiveInventoryType(InvClass);
-  }
-  else
-  {
+  } else {
     Inventory Item = FindInventory(InvClass);
-    if (Item)
-    {
-      Item.Destroy();
-    }
+    if (Item) Item.Destroy();
   }
   return true;
 }

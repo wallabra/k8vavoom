@@ -30,6 +30,42 @@
 const int MAXPLAYERS = 8;
 
 
+// some defines for ACS (and other) flags
+const int MF_SPECIAL = 0x00000001;
+const int MF_SOLID = 0x00000002;
+const int MF_SHOOTABLE = 0x00000004;
+const int MF_NOSECTOR = 0x00000008;
+const int MF_NOBLOCKMAP = 0x00000010;
+const int MF_AMBUSH = 0x00000020;
+const int MF_JUSTHIT = 0x00000040;
+const int MF_JUSTATTACKED = 0x00000080;
+const int MF_SPAWNCEILING = 0x00000100;
+const int MF_NOGRAVITY = 0x00000200;
+const int MF_DROPOFF = 0x00000400;
+const int MF_PICKUP = 0x00000800;
+const int MF_NOCLIP = 0x00001000;
+const int MF_INCHASE = 0x00002000;
+const int MF_FLOAT = 0x00004000;
+const int MF_TELEPORT = 0x00008000;
+const int MF_MISSILE = 0x00010000;
+const int MF_DROPPED = 0x00020000;
+const int MF_SHADOW = 0x00040000;
+const int MF_NOBLOOD = 0x00080000;
+const int MF_CORPSE = 0x00100000;
+const int MF_INFLOAT = 0x00200000;
+const int MF_INBOUNCE = 0x00200000;
+const int MF_COUNTKILL = 0x00400000;
+const int MF_COUNTITEM = 0x00800000;
+const int MF_SKULLFLY = 0x01000000;
+const int MF_NOTDMATCH = 0x02000000;
+const int MF_SPAWNSOUNDSOURCE = 0x04000000;
+const int MF_FRIENDLY = 0x08000000;
+const int MF_UNMORPHED = 0x10000000;
+const int MF_NOLIFTDROP = 0x20000000;
+const int MF_STEALTH = 0x40000000;
+const int MF_ICECORPSE = 0x80000000;
+
+
 //**************************************************************************
 //**
 //**    CLIENT DEFINES
