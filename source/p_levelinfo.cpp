@@ -308,18 +308,25 @@ void VLevelInfo::ChangeMusic (VName SongName) {
 //==========================================================================
 int VLevelInfo::FindFreeTID (int tidstart, int limit) const {
   if (tidstart <= 0) tidstart = 0;
-  if (limit < 1) return 0;
+  if (limit < 0) return 0;
   if (limit == 0) limit = 0x7fffffff;
-  if (tidstart == 0) tidstart = 666; // arbitrary number
-  while (limit-- > 0) {
-    VEntity *E = Level->TIDHash[tidstart&(TID_HASH_SIZE-1)];
-    while (E) {
-      if (E->TID == tidstart) break;
-      E = E->TIDHashNext;
+  if (tidstart == 0) {
+    // do several random hits, then linear search
+    for (int rndtry = 128; rndtry; --rndtry) {
+      do { tidstart = rand()&0x7fff; } while (tidstart == 0);
+      if (!IsTIDUsed(tidstart)) return tidstart;
     }
-    if (!E) return tidstart;
-    if (tidstart == 0x1fffffff) return 0;
+    // fallback to linear search
+    tidstart = 1;
+  } else {
+    tidstart = 1; // 0 is used
+  }
+  // linear search
+  while (limit-- > 0) {
+    if (!IsTIDUsed(tidstart)) return tidstart;
     ++tidstart;
+    //if (tidstart == 0x1fffffff) return 0;
+    if (tidstart == 0x8000) return 0; // arbitrary limit
   }
   return 0;
 }
