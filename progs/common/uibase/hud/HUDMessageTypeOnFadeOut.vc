@@ -54,50 +54,46 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
   LineLen = (MsgLines.length ? MsgLines[0].Text.length : 0);
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  Time += DeltaTime;
-  if (State == 0)
-  {
-    LineChars = ftoi(Time / TypeOnTime);
-    while (LineChars > LineLen && State == 0)
-    {
-      Time -= itof(LineLen) * TypeOnTime;
-      CurrentLine++;
-      if (CurrentLine >= MsgLines.Num)
-      {
-        State = 1;
-      }
-      else
-      {
-        LineChars = ftoi(Time / TypeOnTime);
+override void Tick (float DeltaTime) {
+  switch (State) {
+    case 0:
+      LineChars = int(Time/TypeOnTime);
+      while (LineChars > LineLen && State == 0) {
+        Time -= float(LineLen)*TypeOnTime;
+        ++CurrentLine;
+        if (CurrentLine >= MsgLines.Num) {
+          State = 1;
+          return;
+        }
+        LineChars = ftoi(Time/TypeOnTime);
         LineLen = strlen(MsgLines[CurrentLine].Text);
       }
-    }
+      break;
+    case 1:
+      if (Time > HoldTime) {
+        State = 2;
+        Time -= HoldTime;
+        return;
+      }
+      break;
+    case 2:
+      if (FadeOutTime < Time) {
+        MarkDead(); //Destroy();
+        return;
+      }
+      MsgAlpha = fclamp(1.0-Time/FadeOutTime, 0.0, 1.0);
+      break;
   }
-  if (State == 1 && HoldTime < Time)
-  {
-    State = 2;
-    Time -= HoldTime;
-  }
-  if (State == 2)
-  {
-    if (FadeOutTime < Time)
-    {
-      MarkDead(); //Destroy();
-    }
-    else
-    {
-      MsgAlpha = (1.0 - Time / FadeOutTime);
-    }
-  }
+  // moved here, so messages won't blink
+  Time += DeltaTime;
 }
+
 
 //==========================================================================
 //

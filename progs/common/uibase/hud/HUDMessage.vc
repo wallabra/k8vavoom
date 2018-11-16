@@ -62,13 +62,19 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 {
   Id = AId;
   MsgFont = AFont;
-  if (!MsgFont) MsgFont = 'smallfont';
+  if (!MsgFont) { MsgFont = 'smallfont'; AFont = MsgFont; }
   MsgColour = Colour;
   HoldTime = AHoldTime;
+  //if (HoldTime > 0) HoldTime += 0.5/35.0;
 
-  //print("HUDMSG: font=<%s>; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
+  //print("HUDMSG: font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
 
-  isTextFont = (AFont == 'confont' || AFont == 'smallfont' || AFont == 'smallfont2' || AFont == 'bigfont');
+  string fontnamestr = string(AFont);
+  isTextFont =
+    (stricmp(fontnamestr, "confont") == 0) ||
+    (stricmp(fontnamestr, "smallfont") == 0) ||
+    (stricmp(fontnamestr, "smallfont2") == 0) ||
+    (stricmp(fontnamestr, "bigfont") == 0);
   // check for spaces
   /*
   if (isTextFont) {
@@ -173,8 +179,10 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   // calculate width and height of the text
   SetFont(MsgFont);
   MsgHeight = SplitText(Message, MsgLines, /*Width*/wrapWidth);
+  //print("========= <%q> (%s:%s) =========", Message, MsgLines.length, wrapWidth);
   MsgWidth = 0;
   foreach (auto i; 0..MsgLines.length) {
+    //print("  #%d: <%q>", i, MsgLines[i].Text);
     if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
   }
 }
@@ -294,8 +302,13 @@ void DrawLine (int LineIdx, int x, int y, string Text) {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
+  if (HoldTime && Time > HoldTime) {
+    //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s", Time, HoldTime, Time/35.0, HoldTime/35.0);
+    MarkDead(); //Destroy();
+    return;
+  }
+  // moved here, so messages won't blink
   Time += DeltaTime;
-  if (HoldTime && HoldTime < Time) MarkDead(); //Destroy();
 }
 
 

@@ -45,47 +45,43 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
   FadeOutTime = Time2;
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
+  switch (State) {
+    case 0:
+      if (FadeInTime < Time) {
+        State = 1;
+        MsgAlpha = 1.0;
+        Time -= FadeInTime;
+        return;
+      }
+      MsgAlpha = Time/FadeInTime;
+      break;
+    case 1:
+      if (Time > HoldTime) {
+        State = 2;
+        Time -= HoldTime;
+        return;
+      }
+      break;
+    case 2:
+      if (Time > FadeOutTime) {
+        MarkDead(); //Destroy();
+        return;
+      }
+      MsgAlpha = fclamp(1.0-Time/FadeOutTime, 0.0, 1.0);
+      break;
+  }
+  // moved here, so messages won't blink
   Time += DeltaTime;
-  if (State == 0)
-  {
-    if (FadeInTime < Time)
-    {
-      State = 1;
-      MsgAlpha = 1.0;
-      Time -= FadeInTime;
-    }
-    else
-    {
-      MsgAlpha = Time / FadeInTime;
-    }
-  }
-  if (State == 1 && HoldTime < Time)
-  {
-    State = 2;
-    Time -= HoldTime;
-  }
-  if (State == 2)
-  {
-    if (FadeOutTime < Time)
-    {
-      MarkDead(); //Destroy();
-    }
-    else
-    {
-      MsgAlpha = (1.0 - Time / FadeOutTime);
-    }
-  }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MsgAlpha = 0.0;
 }

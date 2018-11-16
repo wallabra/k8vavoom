@@ -273,22 +273,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
     print("\ci<------------------------------->");
     Type &= ~HUDMSG_LOG;
   }
-  /*
-  print("<%s>", Message);
-  print("font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f", Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
-  */
-  /*
-  if (Font == 'confont' && (HudWidth > 0 || HudHeight > 0)) {
-    int w = GetVirtualWidth();
-    int h = GetVirtualHeight();
-    //print("font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f", Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
-    //if (HudWidth > 0) { x = round(x*float(w)/float(HudWidth)); HudWidth = 0; }
-    //if (HudHeight > 0) { y = round(y*float(h)/float(HudHeight)); HudHeight = 0; }
-    if (HudWidth > 0) { x = -(x/float(HudWidth)); HudWidth = 0; }
-    if (HudHeight > 0) { y = -(y/float(HudHeight)); HudHeight = 0; }
-    //print(" newx=%f; newy=%f", x, y);
-  }
-  */
+  //print("id=%s; font=%s; x=%f; y=%f; size=(%dx%d); hold=%f; t1=%f; t2=%f; msg=<%q>", Id, Font, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2, Message);
 
   // handle colours specified by name
   if (Type&HUDMSG_COLOURSTRING) Colour = FindTextColour(ColourName);
@@ -318,9 +303,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
       Msg = HudMsgWin.NewChild(HUDMessageFadeInOut);
       break;
   }
-  //Msg.dumpClipRect("MSG00");
   Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
-  //Msg.dumpClipRect("MSG01");
 
   // insert in the list in the proper location
   Probe = HudMsgWin.FirstChild;

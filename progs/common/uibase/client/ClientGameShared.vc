@@ -747,6 +747,7 @@ override void AddHudMessage (string Message, name Font, int Type, int Id, int Co
   string ColourName, float x, float y, int HudWidth, int HudHeight,
   float HoldTime, float Time1, float Time2)
 {
+  //print("AddHudMessage: id=%s; msg=<%q>", Id, Message);
   GSBar.AddHudMessage(Message, Font, Type, Id, Colour, ColourName, x, y,
     HudWidth, HudHeight, HoldTime, Time1, Time2);
 }

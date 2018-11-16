@@ -25,16 +25,16 @@
 
 class HUDMessageFadeOut : HUDMessage;
 
-int     State;
-float   FadeOutTime;
+int State;
+float FadeOutTime;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-override void Init(string Message, name AFont, int Type, int AId, int Colour,
+override void Init (string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
@@ -43,33 +43,36 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
   FadeOutTime = Time1;
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
+  switch (State) {
+    case 0:
+      if (Time > HoldTime) {
+        State = 1;
+        Time -= HoldTime;
+        //print("FADEOUT(%q): NewTime=%s, fotime=%s", (MsgLines.length ? MsgLines[0].Text : ""), Time, FadeOutTime);
+        return;
+      }
+      break;
+    case 1:
+      if (Time > FadeOutTime) {
+        //print("  DEAD!");
+        MarkDead(); //Destroy();
+        return;
+      }
+      MsgAlpha = fclamp(1.0-Time/FadeOutTime, 0.0, 1.0);
+      //print("  alpha=%s (time=%s; fotime=%s)", MsgAlpha, Time, FadeOutTime);
+      break;
+  }
+  // moved here, so messages won't blink
   Time += DeltaTime;
-  if (State == 0 && HoldTime < Time)
-  {
-    State = 1;
-    Time -= HoldTime;
-  }
-  if (State == 1)
-  {
-    if (FadeOutTime < Time)
-    {
-      MarkDead(); //Destroy();
-    }
-    else
-    {
-      MsgAlpha = (1.0 - Time / FadeOutTime);
-    }
-  }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
