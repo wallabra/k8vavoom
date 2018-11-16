@@ -2591,7 +2591,16 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       if (argCount >= 2) {
         VStr s = GetStr(args[0]);
         int idx = args[1];
-        if (idx >= 0 && idx < s.length()) return (vuint8)s[idx];
+        if (idx >= 0 && idx < s.length()) {
+          /*
+          if ((vuint8)s[idx] > 32) {
+            GCon->Logf("GetChar(%d:%s)=%d (%c)", idx, *s.quote(), s[idx], (vuint8)s[idx]);
+          } else {
+            GCon->Logf("GetChar(%d:%s)=%d", idx, *s.quote(), (vuint8)s[idx]);
+          }
+          */
+          return (vuint8)s[idx];
+        }
       }
       return 0;
 
@@ -2646,12 +2655,9 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         int pos = args[1];
         if (pos < 0) pos = 0;
         int newlen = args[2];
+        //GCon->Logf("***StrMid: <%s> (pos=%d; newlen=%d): <%s>", *s.quote(), pos, newlen, *s.mid(pos, newlen).quote());
         if (newlen <= 0) return ActiveObject->Level->PutNewString("");
-        int oldlen = s.length();
-        if (newlen > oldlen) newlen = oldlen;
-        if (pos >= oldlen) return ActiveObject->Level->PutNewString("");
-        if (pos == 0 && newlen >= oldlen) return args[0]; // not changed
-        if (pos+newlen > oldlen) newlen = oldlen-pos;
+        if (pos == 0 && newlen >= s.length()) return args[0];
         return ActiveObject->Level->PutNewString(s.mid(pos, newlen));
       }
       return ActiveObject->Level->PutNewString("");
@@ -2665,6 +2671,23 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
   }
   Host_Error("unimplemented ACSF function #%d", funcIndex);
 }
+
+
+#define SB_PUSH  do { \
+  if (PrintStr.length() || PrintStrStack.length()) PrintStrStack.append(PrintStr); \
+  PrintStr.clear(); \
+} while (0)
+
+#define SB_POP  do { \
+  if (PrintStrStack.length()) { \
+    int pstlast = PrintStrStack.length()-1; \
+    PrintStr = PrintStrStack[pstlast]; \
+    PrintStrStack[pstlast].clear(); \
+    PrintStrStack.removeAt(pstlast); \
+  } else { \
+    PrintStr.clear(); \
+  } \
+} while (0) \
 
 
 int VAcs::RunScript(float DeltaTime)
@@ -2724,6 +2747,7 @@ int VAcs::RunScript(float DeltaTime)
   VAcsGrowingArray *WorldArrays = Level->World->Acs->WorldArrays;
   VAcsGrowingArray *GlobalArrays = Level->World->Acs->GlobalArrays;
 
+  TArray<VStr> PrintStrStack; // string builders must be stacked
   VStr PrintStr;
   vint32 resultValue = 1;
   vint32 *stack = (vint32 *)Z_Calloc(ACS_STACK_DEPTH);
@@ -3374,42 +3398,42 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_BeginPrint)
-      PrintStr.Clean();
+      //GCon->Logf("ACS: BeginPrint (old=<%s>)", *PrintStr.quote());
+      SB_PUSH;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_EndPrint)
       PrintStr = PrintStr.EvalEscapeSequences();
-      if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer)
-      {
+      if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer) {
         Activator->Player->CentrePrintf("%s", *PrintStr);
-      }
-      else
-      {
+      } else {
         BroadcastCentrePrint(*PrintStr);
       }
+      SB_POP;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintString)
+      //GCon->Logf("ACS: PrintString: <%s> <%s>", *PrintStr.quote(), *GetStr(sp[-1]).quote());
       PrintStr += GetStr(sp[-1]);
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintNumber)
-      PrintStr +=  VStr(sp[-1]);
+      PrintStr += VStr(sp[-1]);
+      //GCon->Logf("ACS: PrintNumber: res=<%s> <%d>", *PrintStr.quote(), sp[-1]);
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintCharacter)
       PrintStr += (char)sp[-1];
+      //GCon->Logf("ACS: PrintCharacter: res=<%s> <%d>", *PrintStr.quote(), sp[-1]);
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerCount)
       sp[0] = 0;
-      for (int i = 0; i < MAXPLAYERS; i++)
-      {
-        if (Level->Game->Players[i])
-          sp[0]++;
+      for (int i = 0; i < MAXPLAYERS; i++) {
+        if (Level->Game->Players[i]) ++sp[0];
       }
       sp++;
       ACSVM_BREAK;
@@ -3558,6 +3582,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_EndPrintBold)
       PrintStr = PrintStr.EvalEscapeSequences();
       BroadcastCentrePrint(*(VStr(TEXT_COLOUR_ESCAPE) + "+" + PrintStr));
+      SB_POP;
       ACSVM_BREAK;
 
     //  Extended P-Code commands.
@@ -3637,30 +3662,15 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_PrintName)
       {
         VBasePlayer *Plr;
-        if (sp[-1] <= 0 || sp[-1] > MAXPLAYERS)
-        {
+        if (sp[-1] <= 0 || sp[-1] > MAXPLAYERS) {
           Plr = Activator ? Activator->Player : nullptr;
-        }
-        else
-        {
+        } else {
           Plr = Level->Game->Players[sp[-1] - 1];
         }
-        if (Plr && (Plr->PlayerFlags & VBasePlayer::PF_Spawned))
-        {
-          PrintStr += Plr->PlayerName;
-        }
-        else if (Plr && !(Plr->PlayerFlags & VBasePlayer::PF_Spawned))
-        {
-          PrintStr += VStr("Player ") + VStr(sp[-1]);
-        }
-        else if (Activator)
-        {
-          PrintStr += Activator->GetClass()->GetName();
-        }
-        else
-        {
-          PrintStr += "Unknown";
-        }
+             if (Plr && (Plr->PlayerFlags & VBasePlayer::PF_Spawned)) PrintStr += Plr->PlayerName;
+        else if (Plr && !(Plr->PlayerFlags & VBasePlayer::PF_Spawned)) PrintStr += VStr("Player ") + VStr(sp[-1]);
+        else if (Activator) PrintStr += Activator->GetClass()->GetName();
+        else PrintStr += "Unknown";
         sp--;
       }
       ACSVM_BREAK;
@@ -3969,6 +3979,7 @@ int VAcs::RunScript(float DeltaTime)
         }
         sp = optstart - 6;
       }
+      SB_POP;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetFont)
@@ -4929,6 +4940,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_EndLog)
       PrintStr = PrintStr.EvalEscapeSequences();
       GCon->Log(PrintStr);
+      SB_POP;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetAmmoCapacity)
@@ -5802,8 +5814,9 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SaveString)
-      //GCon->Logf("PCD_SaveString: <%s>", *PrintStr);
+      //GCon->Logf("PCD_SaveString: <%s>", *PrintStr.quote());
       *sp++ = ActiveObject->Level->PutNewString(*PrintStr);
+      SB_POP;
       ACSVM_BREAK;
 
     //  These p-codes are not supported. They will terminate script.
