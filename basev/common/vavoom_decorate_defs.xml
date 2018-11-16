@@ -381,6 +381,12 @@
     <prop_int name="HealthPickup.AutoUse"  property="AutoUseMode"  />
   </class>
 
+  <class name="Powerup">
+    <prop_powerup_colour name="Powerup.Color" />
+    <prop_tics name="Powerup.Duration" property="EffectTime" />
+    <prop_name name="Powerup.Mode" property="Mode" />
+  </class>
+
   <class name="PowerupGiver">
     <prop_powerup_colour name="Powerup.Color" />
     <prop_tics name="Powerup.Duration" property="EffectTime" />
