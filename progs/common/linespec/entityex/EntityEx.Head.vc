@@ -532,9 +532,10 @@ final Entity DecorDoAAPtr (name methodname, optional int ptr) {
   if (bIsPlayer) {
     if (ptr&AAPTR_PLAYER_GETTARGET) {
       //EntityEx targ = AimLineAttack(nullptr, Angles, 8192, noVertAutoAim:true);
-      bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = true;
+      bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = false/*true*/;
       Weapon Wpn = PlayerEx(self).ReadyWeapon;
-      if (Wpn) noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+      if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
+      noAAVert = noAAim;
       EntityEx targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
       if (targ) return targ;
     }
