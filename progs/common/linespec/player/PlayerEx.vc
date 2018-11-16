@@ -996,17 +996,16 @@ void MovePsprites(float deltaTime)
 void FireWeapon(optional state firestate)
 {
   bReloadQueued = false;
-
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
 
   //print("FireWeapon: self=`%C`; MO=`%C`; ps_weapon=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, ps_weapon, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
   //print("  Refire=%s", Refire);
   //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
 
+  ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewObject(ReadyWeapon);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
-  ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
@@ -1021,13 +1020,16 @@ void FireWeapon(optional state firestate)
 void AltFireWeapon(optional state firestate)
 {
   bReloadQueued = false;
-
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
+  //print("AltFireWeapon: self=`%C`; MO=`%C`; ps_weapon=%s; ReadyWeapon=`%C`; firestate=(%B)%s; ast=%s", self, MO, ps_weapon, ReadyWeapon, specified_firestate, firestate, ReadyWeapon.GetAttackState(Refire));
+  //print("  Refire=%s", Refire);
+  //print("  MissileState=%s; SeeState=%s", EntityEx(MO).MissileState, EntityEx(MO).SeeState);
+
+  ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewObject(ReadyWeapon);
   SetViewState(ps_weapon, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
-  ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (!ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }

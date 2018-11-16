@@ -522,6 +522,13 @@ final bool DepleteAmmo (ubyte Mode, optional bool CheckEnough, optional int Deha
 
   if (CheckEnough && !CheckAmmo(Mode, false)) return false;
 
+  /*
+  print("DepleteAmmo0(%C): primary=%s, secondary=%s, Ammo1=%C(%d), Ammo2=%C(%d)", self,
+    (Mode == FIRE_Primary ? "tan" : "ona"), (Mode == FIRE_Secondary ? "tan" : "ona"),
+    Ammo1, (Ammo1 ? Ammo1.Amount : -666),
+    Ammo2, (Ammo2 ? Ammo2.Amount : -666));
+  */
+
   if ((Mode == FIRE_Primary || bAltUsesBoth) && Ammo1) {
     if (LineSpecialGameInfo(Level.Game).bDehacked) {
       Ammo1.Amount -= DehackedUse;
@@ -534,6 +541,13 @@ final bool DepleteAmmo (ubyte Mode, optional bool CheckEnough, optional int Deha
   // don't let ammo go below zero
   if (Ammo1 && Ammo1.Amount < 0) Ammo1.Amount = 0;
   if (Ammo2 && Ammo2.Amount < 0) Ammo2.Amount = 0;
+
+  /*
+  print("DepleteAmmo1(%C): primary=%s, secondary=%s, Ammo1=%C(%d), Ammo2=%C(%d)", self,
+    (Mode == FIRE_Primary ? "tan" : "ona"), (Mode == FIRE_Secondary ? "tan" : "ona"),
+    Ammo1, (Ammo1 ? Ammo1.Amount : -666),
+    Ammo2, (Ammo2 ? Ammo2.Amount : -666));
+  */
 
   return true;
 }
