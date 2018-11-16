@@ -1179,8 +1179,11 @@ final Weapon GetSlotChangeWeapon(int Slot)
 {
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
 
+  if (Slot < 0 || Slot > LineSpecialGameInfo::NUM_WEAPON_SLOTS) return ReadyWeapon;
+
   if (ReadyWeapon) {
     foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+      //print("i=%s; wpn=%C", i, GI.WeaponSlots[Slot].Weapons[i]);
       if (GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.Class ||
           (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
           GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.SisterWeapon.Class))

@@ -138,6 +138,16 @@ void SetupDecorateWeaponSlots () {
       WeaponSlots[sidx].Weapons[widx] = default.WeaponSlotClasses[sidx*MAX_WEAPONS_PER_SLOT+widx];
     }
   }
+  // fix with replacements
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      class!Weapon oldwpn = WeaponSlots[sidx].Weapons[widx];
+      if (!oldwpn) continue;
+      class!Weapon wpn = class!Weapon(GetClassReplacement(oldwpn));
+      //print("sidx=%s; widx=%s; wpn=%C; repl=%C", sidx, widx, oldwpn, wpn);
+      WeaponSlots[sidx].Weapons[widx] = wpn;
+    }
+  }
 }
 
 
@@ -276,18 +286,19 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
 //
 //==========================================================================
 void InitializeWeaponSlots () {
-  //writeln("*** InitializeWeaponSlots ***");
+  writeln("*** InitializeWeaponSlots ***");
   SetupDecorateWeaponSlots();
   class!Weapon wcls;
   foreach AllClasses(Weapon, wcls) {
     //if (GetClassName(wcls) == 'AssaultGun') GI.WeaponSlots[4].Weapons[0] = wcls;
     if (wcls.default.SlotNumber < 1 || wcls.default.SlotNumber >= NUM_WEAPON_SLOTS) continue;
     class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
+    //print("PLR: weapon '%C'; slot is %d; replacement is %C!", wcls, wcls.default.SlotNumber, repl);
     if (repl && repl != wcls) continue;
     auto st = FindClassState(wcls, 'Ready');
     if (!st) continue; // an abstract base class
     if (!AreStateSpritesPresent(st)) continue;
-    //!print("PLR: weapon '%n'; slot is %d; priority is %d!", GetClassName(wcls), wcls.default.SlotNumber, wcls.default.Position);
+    print("PLR: weapon '%C'; slot is %d; priority is %d!", wcls, wcls.default.SlotNumber, wcls.default.Position);
     repl = class!Weapon(GetClassReplacee(wcls));
     //!if (repl) print("  replacee: '%s'", GetClassName(repl));
     FindAndReplaceWeaponInSlot(repl, wcls);
