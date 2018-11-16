@@ -79,7 +79,7 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
 //==========================================================================
 final override Entity PickActor (optional TVec org, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   intercept_t *in;
-  TVec lineEnd, outHitPointDummy;
+  TVec lineEnd;
 
   if (!specified_actorMask) actorMask = MF_SHOOTABLE;
   if (!specified_wallMask) wallMask = ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN;
@@ -108,7 +108,6 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
       sector_t *sec;
 
       li = in->line;
-
       hit_point = shootOrigin+(distance*in->frac)*dir;
       if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
         sec = li->backsector;
@@ -119,7 +118,7 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
       lineEnd = hit_point;
 
       // check for shooting floor or ceiling
-      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, /*PuffType*/none, &outHitPointDummy)) return none;
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, /*PuffType*/none, nullptr)) return none;
 
       lineStart = lineEnd;
 
@@ -134,7 +133,12 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
         if (open) opentop = open->top;
         while (open) {
           if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
+            //if (!(li->flags&(ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN))) break; // shot continues
+            if (!(li->flags&wallMask)) {
+              // shot continues
+              //print("PickActor: line skipped; flags=0x%08x; mask=0x%08x", li->flags, wallMask);
+              break;
+            }
           }
           open = open->next;
         }
@@ -147,17 +151,10 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
           //if (outHitPoint) *outHitPoint = hit_point;
           return none;
         }
-      }
-
-      //if (outHitPoint) *outHitPoint = hit_point;
-
-      // always stop on one-sided lines
-      if (!(li->flags&ML_TWOSIDED)) return none;
-
-      // hit line, check mask
-      if (!(li->flags&wallMask)) {
-        //print("PickActor: line skipped; flags=0x%08x; mask=0x%08x", li->flags, wallMask);
-        continue;
+      } else {
+        // always stop on one-sided lines
+        //if (outHitPoint) *outHitPoint = hit_point;
+        return none;
       }
 
       // line hit, no thing found
