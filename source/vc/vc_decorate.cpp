@@ -3041,12 +3041,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             break;
           case PROP_Tics:
             sc->ExpectNumberWithSign();
-            P.Field->SetFloat(DefObj, sc->Number / 35.0);
+            P.Field->SetFloat(DefObj, (sc->Number > 0 ? sc->Number/35.0 : -sc->Number));
             break;
           case PROP_TicsSecs:
             sc->ExpectNumberWithSign();
-            P.Field->SetFloat(DefObj, sc->Number >= 0 ?
-              sc->Number / 35.0 : sc->Number);
+            P.Field->SetFloat(DefObj, sc->Number >= 0 ? sc->Number / 35.0 : sc->Number);
             break;
           case PROP_Percent:
             sc->ExpectFloat();
