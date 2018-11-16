@@ -713,7 +713,7 @@ int VFont::ParseColourEscape (const char *&pColour, int NormalColour, int BoldCo
   int Col = *Chr++;
 
        if (Col >= 'A' && Col < 'A'+NUM_TEXT_COLOURS) Col -= 'A'; // standard colors, upper case
-  else if (Col >= 'a' && Col < 'a' + NUM_TEXT_COLOURS) Col -= 'a'; // standard colors, lower case
+  else if (Col >= 'a' && Col < 'a'+NUM_TEXT_COLOURS) Col -= 'a'; // standard colors, lower case
   else if (Col == '-') Col = NormalColour; // normal colour
   else if (Col == '+') Col = BoldColour; // bold colour
   else if (Col == '[') {
@@ -723,7 +723,7 @@ int VFont::ParseColourEscape (const char *&pColour, int NormalColour, int BoldCo
     if (*Chr == ']') Chr++;
     Col = FindTextColour(*CName.ToLower());
   } else {
-    if (!Col) --Chr;
+    /*if (!Col)*/ --Chr;
     Col = CR_UNDEFINED;
   }
 
@@ -832,10 +832,8 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
     // check for colour escape
     if (c == TEXT_COLOUR_ESCAPE) {
       ParseColourEscape(SPtr, CR_UNDEFINED, CR_UNDEFINED);
-      continue;
-    }
-
-    if (c == '\n') {
+      //fprintf(stderr, "!!!!! <%s>\n", *VStr(SPtr).quote());
+    } else if (c == '\n') {
       VSplitLine &L = Lines.Alloc();
       L.Text = VStr(Text, (int)(ptrdiff_t)(Start-(*Text)), (int)(ptrdiff_t)(PChar-Start));
       L.Width = CurW;
@@ -867,6 +865,7 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
     } else {
       CurW += GetCharWidth(c);
     }
+
     if (!*SPtr && Start != SPtr) {
       VSplitLine &L = Lines.Alloc();
       L.Text = Start;
