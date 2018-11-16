@@ -1341,8 +1341,12 @@ static void ParseWarp (VScriptParser *sc, int Type) {
 static void ParseCameraTexture (VScriptParser *sc) {
   guard(ParseCameraTexture);
   // name
-  sc->ExpectName8();
-  VName Name = sc->Name8;
+  sc->ExpectName(); // was 8
+  VName Name = NAME_None;
+  if (VStr::Length(*sc->Name) > 8) {
+    GCon->Logf(NAME_Warning, "cameratexture texture name too long (\"%s\")", *sc->Name);
+  }
+  Name = sc->Name;
   // dimensions
   sc->ExpectNumber();
   int Width = sc->Number;
@@ -1351,19 +1355,22 @@ static void ParseCameraTexture (VScriptParser *sc) {
   int FitWidth = Width;
   int FitHeight = Height;
 
-  // check for replacing an existing texture
-  VCameraTexture *Tex = new VCameraTexture(Name, Width, Height);
-  int TexNum = GTextureManager.CheckNumForName(Name, TEXTYPE_Flat, true, true);
-  if (TexNum != -1) {
-    // by default camera texture will fit in old texture
-    VTexture *OldTex = GTextureManager[TexNum];
-    FitWidth = OldTex->GetScaledWidth();
-    FitHeight = OldTex->GetScaledHeight();
-    GTextureManager.ReplaceTexture(TexNum, Tex);
-    delete OldTex;
-    OldTex = nullptr;
-  } else {
-    GTextureManager.AddTexture(Tex);
+  VCameraTexture *Tex = nullptr;
+  if (Name != NAME_None) {
+    // check for replacing an existing texture
+    Tex = new VCameraTexture(Name, Width, Height);
+    int TexNum = GTextureManager.CheckNumForName(Name, TEXTYPE_Flat, true, true);
+    if (TexNum != -1) {
+      // by default camera texture will fit in old texture
+      VTexture *OldTex = GTextureManager[TexNum];
+      FitWidth = OldTex->GetScaledWidth();
+      FitHeight = OldTex->GetScaledHeight();
+      GTextureManager.ReplaceTexture(TexNum, Tex);
+      delete OldTex;
+      OldTex = nullptr;
+    } else {
+      GTextureManager.AddTexture(Tex);
+    }
   }
 
   // optionally specify desired scaled size
@@ -1373,8 +1380,12 @@ static void ParseCameraTexture (VScriptParser *sc) {
     sc->ExpectNumber();
     FitHeight = sc->Number;
   }
-  Tex->SScale = (float)Width/(float)FitWidth;
-  Tex->TScale = (float)Height/(float)FitHeight;
+
+  if (Tex) {
+    Tex->SScale = (float)Width/(float)FitWidth;
+    Tex->TScale = (float)Height/(float)FitHeight;
+  }
+
   unguard;
 }
 
