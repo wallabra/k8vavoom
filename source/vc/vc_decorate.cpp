@@ -4311,6 +4311,7 @@ void ProcessDecorateScripts () {
       if (!wpnbase) GCon->Logf(NAME_Warning, "`Weapon` class not found, cannot set weapon slots");
     } else {
       //WARNING: keep this in sync with script code!
+      gi = gi->GetReplacement();
       VField *fldFlags = gi->FindFieldChecked(VName("WeaponSlotDefined"));
       VField *fldList = gi->FindFieldChecked(VName("WeaponSlotClasses"));
       if (!fldFlags || !fldList) {
@@ -4331,7 +4332,7 @@ void ProcessDecorateScripts () {
             VClass *wc = VClass::FindClassLowerCase(*lcn);
             if (!wc) { GCon->Logf(NAME_Warning, "unknown weapon class '%s'", *cn); continue; }
             if (!wc->IsChildOf(wpnbase)) { GCon->Logf(NAME_Warning, "class '%s' is not a weapon", *cn); continue; }
-            //GCon->Log(va("DECORATE: slot #%d, weapon #%d set to '%s'", sidx, widx, *wc->GetFullName()));
+            if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GCon->Logf(NAME_Init, "DECORATE: slot #%d, weapon #%d set to '%s'", sidx, widx, *wc->GetFullName());
             sarr[widx] = wc;
           }
         }
