@@ -386,6 +386,8 @@ override void Init () {
   CreateCvar('k8HealthAccum_MessagesBoost', "1", "Report health boost.", CVAR_ARCHIVE);
   CreateCvar('k8HealthAccum_MessagesAccumed', "0", "Report health accumulation.", CVAR_ARCHIVE);
 
+  CreateCvar('hud_scale_messages', "1", "Rescale HUD messages, so message font is less distorted?", CVAR_ARCHIVE);
+
   ::Init(); // parse cvarinfo and such
 }
 

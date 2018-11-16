@@ -69,12 +69,14 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
 
   //print("HUDMSG: font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
 
-  string fontnamestr = string(AFont);
-  isTextFont =
-    (stricmp(fontnamestr, "confont") == 0) ||
-    (stricmp(fontnamestr, "smallfont") == 0) ||
-    (stricmp(fontnamestr, "smallfont2") == 0) ||
-    (stricmp(fontnamestr, "bigfont") == 0);
+  if (GetCvarB('hud_scale_messages')) {
+    string fontnamestr = string(AFont);
+    isTextFont =
+      (stricmp(fontnamestr, "confont") == 0) ||
+      (stricmp(fontnamestr, "smallfont") == 0) ||
+      (stricmp(fontnamestr, "smallfont2") == 0) ||
+      (stricmp(fontnamestr, "bigfont") == 0);
+  }
   // check for spaces
   /*
   if (isTextFont) {
