@@ -84,6 +84,8 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
   if (!specified_actorMask) actorMask = MF_SHOOTABLE;
   if (!specified_wallMask) wallMask = ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN;
 
+  if (actorMask == 0) return none; // cannot realisticaly hit anything at all
+
   if (!specified_org) {
     org = Origin;
     org.z += Height*0.5-FloorClip;
@@ -106,7 +108,6 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
       sector_t *sec;
 
       li = in->line;
-      if (!(li->flags&wallMask)) continue;
 
       hit_point = shootOrigin+(distance*in->frac)*dir;
       if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
@@ -150,11 +151,20 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
 
       //if (outHitPoint) *outHitPoint = hit_point;
 
-      // hit line
+      // always stop on one-sided lines
+      if (!(li->flags&ML_TWOSIDED)) return none;
+
+      // hit line, check mask
+      if (!(li->flags&wallMask)) {
+        //print("PickActor: line skipped; flags=0x%08x; mask=0x%08x", li->flags, wallMask);
+        continue;
+      }
+
+      // line hit, no thing found
       return none;
     }
 
-    // shoot a thing
+    // hit a thing
     th = EntityEx(in->Thing);
 
     if (th == self) continue; // can't pick self
@@ -162,8 +172,8 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
     // ignore ghosts
     if (th.bGhost) continue;
 
-    int myflags = CalcEntityFlags();
-    if (!(myflags&actorMask)) continue; // mask check failed
+    int thflags = th.CalcEntityFlags();
+    if (!(thflags&actorMask)) continue; // mask check failed
 
     // check angles to see if the thing can be aimed at
     hit_point = shootOrigin+(distance*in->frac)*dir;
@@ -181,6 +191,7 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
 
     //if (outHitPoint) *outHitPoint = hit_point;
 
+    //print("PickActor: th=%C (thflags=0x%08x; mask=0x%08x)", th, thflags, actorMask);
     // don't go any farther
     return th;
   }
