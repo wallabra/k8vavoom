@@ -26,143 +26,86 @@
 //**  INFO STRINGS
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "infostr.h"
 
-// MACROS ------------------------------------------------------------------
 
-#define MAX_INFO_STRING   1024
+#define MAX_INFO_STRING  (1024)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  Info_ValueForKey
 //
 //  Searches the string for the given key and returns the associated value,
-// or an empty string.
+//  or an empty string.
 //
 //==========================================================================
-
-VStr Info_ValueForKey(const VStr &s, const VStr &key)
-{
+VStr Info_ValueForKey (const VStr &s, const VStr &key) {
   guard(Info_ValueForKey);
-  if (s.IsEmpty() || key.IsEmpty())
-  {
-    return VStr();
-  }
-
-  if (s.Length() >= MAX_INFO_STRING)
-  {
-    Host_Error("Info_ValueForKey: oversize infostring");
-  }
+  if (s.IsEmpty() || key.IsEmpty()) return VStr();
+  //if (s.Length() >= MAX_INFO_STRING) Host_Error("Info_ValueForKey: oversize infostring");
 
   int i = 0;
-  if (s[i] == '\\')
-    i++;
-  while (1)
-  {
+  if (s[i] == '\\') ++i;
+  for (;;) {
     int Start = i;
-    while (s[i] != '\\')
-    {
-      if (!s[i])
-        return VStr();
-      i++;
+    while (s[i] != '\\') {
+      if (!s[i]) return VStr();
+      ++i;
     }
-    VStr pkey(s, Start, i - Start);
-    i++;
+    VStr pkey(s, Start, i-Start);
+    ++i;
 
     Start = i;
-    while (s[i] != '\\' && s[i])
-    {
-      i++;
-    }
+    while (s[i] != '\\' && s[i]) ++i;
 
-    if (!key.ICmp(pkey))
-      return VStr(s, Start, i - Start);
+    if (!key.ICmp(pkey)) return VStr(s, Start, i-Start);
 
-    if (!s[i])
-      return VStr();
-    i++;
+    if (!s[i]) return VStr();
+    ++i;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  Info_RemoveKey
 //
 //==========================================================================
-
-void Info_RemoveKey(VStr &s, const VStr &key)
-{
+void Info_RemoveKey (VStr &s, const VStr &key) {
   guard(Info_RemoveKey);
-  if (s.IsEmpty())
-  {
-    return;
-  }
-  if (s.Length() >= MAX_INFO_STRING)
-  {
-    Host_Error("Info_RemoveKey: oversize infostring");
-  }
-
-  if (strchr(*key, '\\'))
-  {
-    GCon->Log("Can't use a key with a \\");
-    return;
-  }
+  if (s.IsEmpty()) return;
+  //if (s.Length() >= MAX_INFO_STRING) Host_Error("Info_RemoveKey: oversize infostring");
+  if (strchr(*key, '\\')) { GCon->Logf("Can't use a key with a \\ (%s)", *key.quote()); return; }
 
   int i = 0;
-  while (1)
-  {
+  for (;;) {
     int start = i;
-    if (s[i] == '\\')
-      i++;
+    if (s[i] == '\\') ++i;
     int KeyStart = i;
-    while (s[i] != '\\')
-    {
-      if (!s[i])
-        return;
-      i++;
+    while (s[i] != '\\') {
+      if (!s[i]) return;
+      ++i;
     }
-    VStr pkey(s, KeyStart, i - KeyStart);
-    i++;
+    VStr pkey(s, KeyStart, i-KeyStart);
+    ++i;
 
     int ValStart = i;
-    while (s[i] != '\\' && s[i])
-    {
-      i++;
-    }
-    VStr value(s, ValStart, i - ValStart);
+    while (s[i] != '\\' && s[i]) ++i;
+    VStr value(s, ValStart, i-ValStart);
 
-    if (!key.Cmp(pkey))
-    {
-      s = VStr(s, 0, start) + VStr(s, i, s.Length() - i); // remove this part
+    if (!key.Cmp(pkey)) {
+      s = VStr(s, 0, start)+VStr(s, i, s.Length()-i); // remove this part
       return;
     }
 
-    if (!s[i])
-      return;
+    if (!s[i]) return;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -171,52 +114,35 @@ void Info_RemoveKey(VStr &s, const VStr &key)
 //  Changes or adds a key/value pair
 //
 //==========================================================================
-
-void Info_SetValueForKey(VStr &s, const VStr &key, const VStr &value)
-{
+void Info_SetValueForKey (VStr &s, const VStr &key, const VStr &value) {
   guard(Info_SetValueForKey);
-  if (s.Length() >= MAX_INFO_STRING)
-  {
-    Host_Error("Info_SetValueForKey: oversize infostring");
-  }
+  //if (s.Length() >= MAX_INFO_STRING) Host_Error("Info_SetValueForKey: oversize infostring");
 
-  if (strchr(*key, '\\') || strchr(*value, '\\'))
-  {
-    GCon->Log("Can't use keys or values with a \\");
-    return;
-  }
+  if (strchr(*key, '\\')) { GCon->Logf("Can't use keys with a \\ (%s)", *key.quote()); return;}
+  if (strchr(*value, '\\')) { GCon->Logf("Can't use values with a \\ (%s)", *value.quote()); return; }
 
-  if (strchr(*key, '\"') || strchr(*value, '\"'))
-  {
-    GCon->Log("Can't use keys or values with a \"");
-    return;
-  }
+  if (strchr(*key, '\"')) { GCon->Logf("Can't use keys with a \" (%s)", *key.quote()); return;}
+  if (strchr(*value, '\"')) { GCon->Logf("Can't use values with a \" (%s)", *value.quote()); return; }
 
   // this next line is kinda trippy
   VStr v = Info_ValueForKey(s, key);
-  if (v.IsNotEmpty())
-  {
-    //  Key exists, make sure we have enough room for new value, if we
-    // don't, don't change it!
-    if (value.Length() - v.Length() + s.Length() > MAX_INFO_STRING)
-    {
-      GCon->Log("Info string length exceeded");
+  if (v.IsNotEmpty()) {
+    // key exists, make sure we have enough room for new value, if we don't, don't change it!
+    if (value.Length()-v.Length()+s.Length() > MAX_INFO_STRING) {
+      GCon->Logf("Info string '%s' length exceeded (%s:%s)", *key.quote(), *v.quote(), *value.quote());
       return;
     }
   }
 
   Info_RemoveKey(s, key);
-  if (value.IsEmpty())
-    return;
+  if (value.IsEmpty()) return;
 
-  VStr newi = VStr("\\") + key + "\\" +  value;
-
-  if (newi.Length() + s.Length() > MAX_INFO_STRING)
-  {
-    GCon->Log("Info string length exceeded");
+  VStr newi = VStr("\\")+key+"\\"+value;
+  if (newi.Length()+s.Length() > MAX_INFO_STRING) {
+    GCon->Logf("Info string '%s' length exceeded: (%s:%s)", *key.quote(), *s.quote(), *newi.quote());
     return;
   }
 
-  s = s + newi;
+  s = s+newi;
   unguard;
 }
