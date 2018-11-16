@@ -246,6 +246,8 @@ final void A_JumpIfTargetInLOS(state Label, optional float Fov, optional int fla
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
+  if (distmax == 0) distmax = 8192;
+
   EntityEx Targ;
   if (!bIsPlayer) {
     Targ = (flags&JLOSF_CHECKMASTER ? Master : Target);
@@ -259,7 +261,12 @@ final void A_JumpIfTargetInLOS(state Label, optional float Fov, optional int fla
     }
   } else {
     TVec Dir;
-    Targ = Aim(Dir, 16.0*64.0);
+    //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
+    bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = false;
+    Weapon Wpn = PlayerEx(self).ReadyWeapon;
+    if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
+    noAAVert = noAAim;
+    Targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
   }
 
   if (Targ) {
