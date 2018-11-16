@@ -4763,11 +4763,13 @@ int VAcs::RunScript(float DeltaTime)
         } else {
           //FIXME
           //GCon->Logf("GetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), sp[-1]);
-          if (sp[-1] == 21/*APROP_NameTag*/) {
-            //GCon->Logf("GetActorProperty: 21 (%s)", sp[-1], Ent->GetClass()->GetName());
-            sp[-2] = ActiveObject->Level->PutNewString(Ent->GetClass()->GetName());
-          } else {
-            sp[-2] = Ent->eventGetActorProperty(sp[-1]);
+          sp[-2] = Ent->eventGetActorProperty(sp[-1]);
+          // convert special properties
+          switch (sp[-1]) {
+            case 20: //APROP_Species
+            case 21: //APROP_NameTag
+              sp[-2] = ActiveObject->Level->PutNewString(*VName(EName(sp[-2])));
+              break;
           }
         }
       }

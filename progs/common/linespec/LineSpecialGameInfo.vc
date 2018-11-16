@@ -286,7 +286,7 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
 //
 //==========================================================================
 void InitializeWeaponSlots () {
-  writeln("*** InitializeWeaponSlots ***");
+  //writeln("*** InitializeWeaponSlots ***");
   SetupDecorateWeaponSlots();
   class!Weapon wcls;
   foreach AllClasses(Weapon, wcls) {
@@ -298,7 +298,7 @@ void InitializeWeaponSlots () {
     auto st = FindClassState(wcls, 'Ready');
     if (!st) continue; // an abstract base class
     if (!AreStateSpritesPresent(st)) continue;
-    print("PLR: weapon '%C'; slot is %d; priority is %d!", wcls, wcls.default.SlotNumber, wcls.default.Position);
+    //print("PLR: weapon '%C'; slot is %d; priority is %d!", wcls, wcls.default.SlotNumber, wcls.default.Position);
     repl = class!Weapon(GetClassReplacee(wcls));
     //!if (repl) print("  replacee: '%s'", GetClassName(repl));
     FindAndReplaceWeaponInSlot(repl, wcls);

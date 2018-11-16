@@ -2652,6 +2652,19 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_DeathSound: DeathSound = StrToName(StrVal); break;
     case APROP_ActiveSound: ActiveSound = StrToName(StrVal); break;
     case APROP_SpawnHealth: if (PlayerPawn(self)) PlayerPawn(self).MaxHealth = IntVal; break;
+    case APROP_Dropped: bDropped = !!IntVal; break;
+    //case APROP_Species: return NameToInt(GetSpecies()); //HACK! keep in sync with C++ code!
+    //case APROP_NameTag: return NameToInt(GetClassName(Class)); //HACK! keep in sync with C++ code!
+    case APROP_MasterTID: if (IntVal <= 0) { Master = none; break; } Master = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Master == self) Master = none; break; //k8: allow self?
+    case APROP_TargetTID: if (IntVal <= 0) { Target = none; break; } Target = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Target == self) Target = none; break; //k8: allow self?
+    case APROP_TracerTID: if (IntVal <= 0) { Tracer = none; break; } Tracer = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Tracer == self) Tracer = none; break; //k8: allow self?
+    //case APROP_WaterLevel: return WaterLevel;
+    case APROP_ScaleX: ScaleX = float(IntVal)/65536.0; break;
+    case APROP_ScaleY: ScaleY = float(IntVal)/65536.0; break;
+    case APROP_Dormant: bDormant = !!IntVal; break; //k8: change state for monster?
+    case APROP_Mass: Mass = max(0, IntVal); break; //k8: float?
+    case APROP_Height: Height = fmax(0, float(IntVal)/65536.0); break;
+    case APROP_Radius: Radius = fmax(0, float(IntVal)/65536.0); break;
   }
 }
 
@@ -2677,6 +2690,28 @@ final override int GetActorProperty (int Prop) {
     case APROP_Gravity: return int(Gravity*65536.0);
     case APROP_Friendly: return bFriendly;
     case APROP_SpawnHealth: if (PlayerPawn(self)) return PlayerPawn(self).MaxHealth; else return self.default.Health;
+    case APROP_Dropped: return bDropped;
+    case APROP_Species: return NameToInt(GetSpecies()); //HACK! keep in sync with C++ code!
+    case APROP_NameTag: return NameToInt(GetClassName(Class)); //HACK! keep in sync with C++ code!
+    case APROP_MasterTID: return (Master ? Master.TID : 0);
+    case APROP_TargetTID: return (Target ? Target.TID : 0);
+    case APROP_TracerTID: return (Tracer ? Tracer.TID : 0);
+    case APROP_WaterLevel: return WaterLevel;
+    case APROP_ScaleX: return int(ScaleX*65536.0);
+    case APROP_ScaleY: return int(ScaleY*65536.0);
+    case APROP_Dormant: return bDormant;
+    case APROP_Mass: return int(Mass);
+    case APROP_Height: return int(Height*65536.0);
+    case APROP_Radius: return int(Radius*65536.0);
+/*
+    case APROP_Accuracy      = 33,
+    case APROP_Stamina       = 34,
+    case APROP_ReactionTime  = 37,
+    case APROP_MeleeRange    = 38,
+    case APROP_ViewHeight    = 39,
+    case APROP_AttackZOffset = 40,
+    case APROP_StencilColor  = 41,
+*/
   }
   return 0;
 }
