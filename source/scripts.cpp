@@ -656,9 +656,17 @@ void VScriptParser::ExpectIdentifier () {
 bool VScriptParser::CheckNumber () {
   guard(VScriptParser::CheckNumber);
   if (GetString()) {
-    char *stopper;
-    Number = strtol(*String, &stopper, 0);
-    if (*stopper == 0) return true;
+    if (String.length() > 0) {
+      /*
+      char *stopper;
+      Number = strtol(*String, &stopper, 0);
+      if (*stopper == 0) return true;
+      */
+      if (String.convertInt(&Number)) {
+        //GCon->Logf("VScriptParser::CheckNumber: <%s> is %d", *String, Number);
+        return true;
+      }
+    }
     UnGet();
   }
   return false;
@@ -673,7 +681,7 @@ bool VScriptParser::CheckNumber () {
 //==========================================================================
 void VScriptParser::ExpectNumber (bool allowFloat) {
   guard(VScriptParser::ExpectNumber);
-  if (GetString()) {
+  if (GetString() && String.length() > 0) {
     char *stopper;
     Number = strtol(*String, &stopper, 0);
     if (*stopper != 0) {
@@ -737,9 +745,18 @@ void VScriptParser::ExpectNumberWithSign () {
 bool VScriptParser::CheckFloat () {
   guard(VScriptParser::CheckFloat);
   if (GetString()) {
-    char *stopper;
-    Float = strtod(*String, &stopper);
-    if (*stopper == 0) return true;
+    if (String.length() > 0) {
+      float ff = 0;
+      if (String.convertFloat(&ff)) {
+        Float = ff;
+        return true;
+      }
+      /*
+      char *stopper;
+      Float = strtod(*String, &stopper);
+      if (*stopper == 0) return true;
+      */
+    }
     UnGet();
   }
   return false;
@@ -754,14 +771,22 @@ bool VScriptParser::CheckFloat () {
 //==========================================================================
 void VScriptParser::ExpectFloat () {
   guard(VScriptParser::ExpectFloat);
-  if (GetString()) {
+  if (GetString() && String.length() > 0) {
     //FIXME: detect when we want to use a really big number
-    if (String.ToLower().StartsWith("0x7f") || String.ToLower().StartsWith("0xff")) {
+    VStr sl = String.ToLower();
+    if (sl.StartsWith("0x7f") || sl.StartsWith("0xff")) {
       Float = 99999.0;
     } else {
+      /*
       char *stopper;
       Float = strtod(*String, &stopper);
       if (*stopper != 0) Error(va("Bad floating point constant \"%s\".", *String));
+      */
+      float ff = 0;
+      if (!String.convertFloat(&ff)) {
+        Error(va("Bad floating point constant \"%s\".", *String));
+      }
+      Float = ff;
     }
   } else {
     Error("Missing float.");
