@@ -44,6 +44,18 @@ override void Tick(float DeltaTime)
 
   float Count = 8.0;
 
+  // clamp some values on exit
+  // velocity
+  Velocity.x = fclamp(Velocity.x, -8191, 8191);
+  Velocity.y = fclamp(Velocity.y, -8191, 8191);
+  Velocity.z = fclamp(Velocity.z, -8191, 8191);
+  // position
+  Origin.x = fclamp(Origin.x, -100000, 100000);
+  Origin.y = fclamp(Origin.y, -100000, 100000);
+  Origin.z = fclamp(Origin.z, -100000, 100000);
+  // speed
+  Speed = fclamp(Speed, -4095, 4095);
+
   if (Radius > 0.0)
   {
     while (Velocity.x * DeltaTime / Count > Radius ||

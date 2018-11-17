@@ -431,6 +431,8 @@ final void ZMovement(float DeltaTime, float OldFloorZ)
   float delta;
   float OldZ = Origin.z;
 
+  if (Mass.isinf) Mass = 10000;
+
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.
   // Make objects fall to their own weight.
@@ -438,6 +440,8 @@ final void ZMovement(float DeltaTime, float OldFloorZ)
   {
     float grav = (Gravity * Level.Gravity *
       (WaterLevel < 2 ? Sector->Gravity : Sector->Gravity / 10.0)) / 1.220703125; // 9.8 (1053.52)
+
+    if (grav.isinf) grav = 10000;
 
     if (Velocity.z == 0.0 && OldFloorZ > FloorZ && Origin.z == OldFloorZ)
     {
@@ -462,6 +466,21 @@ final void ZMovement(float DeltaTime, float OldFloorZ)
       }
     }
   }
+
+  // clamp some values on exit
+  scope(exit) {
+    // velocity
+    Velocity.x = fclamp(Velocity.x, -1024, 1024);
+    Velocity.y = fclamp(Velocity.y, -1024, 1024);
+    Velocity.z = fclamp(Velocity.z, -1024, 1024);
+    // position
+    Origin.x = fclamp(Origin.x, -100000, 100000);
+    Origin.y = fclamp(Origin.y, -100000, 100000);
+    Origin.z = fclamp(Origin.z, -100000, 100000);
+    // speed
+    Speed = fclamp(Speed, -4095, 4095);
+  }
+
 
   // check for smooth step up
   if (bIsPlayer && Origin.z < FloorZ)
