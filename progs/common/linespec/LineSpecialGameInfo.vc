@@ -1479,30 +1479,22 @@ override void SpawnWorld(Level InLevel)
 //  FindWeaponSlot
 //
 //==========================================================================
-
-bool FindWeaponSlot(class!Weapon WpnClass, out int Slot, out int Index,
-          optional int Position)
-{
-  int     i;
-  int     j;
-
-  for (i = 0; i < NUM_WEAPON_SLOTS; i++)
-  {
-    for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
-    {
-      if (WeaponSlots[i].Weapons[j] == WpnClass)
-      {
-        Slot = i;
-        // Assign weapon position, if it's already set...
-        if (Position)
+bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position) {
+  if (WpnClass) {
+    class!Weapon wpnrep = GetClassReplacement(WpnClass);
+    foreach (auto i; 0..NUM_WEAPON_SLOTS) {
+      foreach (auto j; 0..MAX_WEAPONS_PER_SLOT) {
+        class!Weapon swc = WeaponSlots[i].Weapons[j];
+        if (!swc) continue;
+        class!Weapon swcrep = GetClassReplacement(swc);
+        if (swc == WpnClass || swcrep == WpnClass ||
+            swc == wpnrep || swcrep == wpnrep)
         {
-          Index = Position;
+          Slot = i;
+          // assign weapon position, if it's already set
+          Index = (specified_Position ? Position : j);
+          return true;
         }
-        else
-        {
-          Index = j;
-        }
-        return true;
       }
     }
   }
