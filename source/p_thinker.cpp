@@ -449,3 +449,106 @@ IMPLEMENT_FUNCTION(VThinker, RadiusThings) {
   P_GET_SELF;
   RET_PTR(new VRadiusThingsIterator(Self, EntPtr, Org, Radius));
 }
+
+
+//==========================================================================
+//
+//  Info_ThinkerCount
+//
+//==========================================================================
+COMMAND(Info_ThinkerCount) {
+  VBasePlayer *plr = GGameInfo->Players[0];
+  if (!plr || !plr->Level || !plr->Level->XLevel) return;
+  int count = 0;
+  for (VThinker *th = plr->Level->XLevel->ThinkerHead; th; th = th->Next) {
+    ++count;
+  }
+  GCon->Logf("%d thinkers on level", count);
+}
+
+
+//==========================================================================
+//
+//  classNameCompare
+//
+//==========================================================================
+extern "C" {
+  static int classNameCompare (const void *aa, const void *bb, void *udata) {
+    if (aa == bb) return 0;
+    VClass *a = *(VClass **)aa;
+    VClass *b = *(VClass **)bb;
+    return VStr::ICmp(a->GetName(), b->GetName());
+  }
+}
+
+
+struct ThinkerListEntry {
+  VClass *cls;
+  int count;
+};
+
+
+//==========================================================================
+//
+//  classTLECompare
+//
+//==========================================================================
+extern "C" {
+  static int classTLECompare (const void *aa, const void *bb, void *udata) {
+    if (aa == bb) return 0;
+    const ThinkerListEntry *a = (const ThinkerListEntry *)aa;
+    const ThinkerListEntry *b = (const ThinkerListEntry *)bb;
+    return (a->count-b->count);
+  }
+}
+
+
+//==========================================================================
+//
+//  Info_ThinkerCountDetail
+//
+//==========================================================================
+COMMAND(Info_ThinkerCountDetail) {
+  VBasePlayer *plr = GGameInfo->Players[0];
+  if (!plr || !plr->Level || !plr->Level->XLevel) return;
+  // collect
+  TMapNC<VClass *, int> thmap;
+  int count = 0;
+  int maxlen = 1;
+  for (VThinker *th = plr->Level->XLevel->ThinkerHead; th; th = th->Next) {
+    int nlen = VStr::length(th->GetClass()->GetName());
+    if (maxlen < nlen) maxlen = nlen;
+    VClass *tc = th->GetClass();
+    auto tcp = thmap.find(tc);
+    if (tcp) {
+      ++(*tcp);
+    } else {
+      thmap.put(tc, 1);
+    }
+    ++count;
+  }
+  GCon->Logf("\034K=== %d thinkers on level ===", count);
+  // sort
+  if (Args.length() > 1 && Args[1].length() && Args[1][0] == 't') {
+    TArray<ThinkerListEntry> list;
+    for (auto it = thmap.first(); it; ++it) {
+      ThinkerListEntry &e = list.alloc();
+      e.cls = it.getKey();
+      e.count = it.getValue();
+    }
+    timsort_r(list.ptr(), list.length(), sizeof(ThinkerListEntry), &classTLECompare, nullptr);
+    // dump
+    for (int f = 0; f < list.length(); ++f) {
+      GCon->Logf("\034K%*s\034-: \034D%d", maxlen, list[f].cls->GetName(), list[f].count);
+    }
+  } else {
+    TArray<VClass *> list;
+    for (auto it = thmap.first(); it; ++it) list.append(it.getKey());
+    timsort_r(list.ptr(), list.length(), sizeof(VClass *), &classNameCompare, nullptr);
+    // dump
+    for (int f = 0; f < list.length(); ++f) {
+      auto tcp = thmap.find(list[f]);
+      GCon->Logf("\034K%*s\034-: \034D%d", maxlen, list[f]->GetName(), *tcp);
+    }
+  }
+}
