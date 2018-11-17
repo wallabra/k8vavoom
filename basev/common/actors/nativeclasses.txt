@@ -2,7 +2,6 @@
 class Actor extends Thinker
   native
 {
-  /*
   field x = _GetOriginX;
   field y = _GetOriginY;
   field z = _GetOriginZ;
@@ -20,8 +19,8 @@ class Actor extends Thinker
   field yaw = _GetAnglesYaw;
   field pitch = _GetAnglesPitch;
   field roll = _GetAnglesRoll;
-  */
 
+  /*
   field x = Origin.x;
   field y = Origin.y;
   field z = Origin.z;
@@ -39,6 +38,7 @@ class Actor extends Thinker
   field yaw = Angles.yaw;
   field pitch = Angles.pitch;
   field roll = Angles.roll;
+  */
 
   field radius = Radius;
   field scalex = ScaleX;
