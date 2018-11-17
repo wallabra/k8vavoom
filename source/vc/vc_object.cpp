@@ -122,6 +122,7 @@ void *VObject::operator new (size_t) {
   return GNewObject;
 }
 
+
 //==========================================================================
 //
 //  VObject::operator new
@@ -286,6 +287,10 @@ bool VObject::ConditionalDestroy () {
 //==========================================================================
 void VObject::Destroy () {
   Class->DestructObject(this);
+  if (!(ObjectFlags&_OF_Destroyed)) {
+    ++GNumDeleted;
+    SetFlags(_OF_Destroyed);
+  }
 }
 
 
@@ -366,17 +371,34 @@ void VObject::CollectGarbage (bool destroyDelayed) {
   }
 
   // now actually delete the objects
+  int lastused = -1;
   int count = 0, left = 0;
   for (int i = 0; i < GObjObjects.Num(); ++i) {
     VObject *Obj = GObjObjects[i];
     if (!Obj) continue;
     if (Obj->GetFlags()&_OF_Destroyed) {
       ++count;
+      //GCon->Logf("deleting object #%d: %p (%s)", i, Obj, Obj->GetClass()->GetName());
       delete Obj;
+      if (i < GObjObjects.length()) {
+        check(!GObjObjects[i]);
+      }
     } else {
       ++left;
+      lastused = i;
     }
   }
+
+  // rebuild free list if we collected too much objects at its end
+  if (lastused+256 < GObjObjects.length()) {
+    GObjAvailable.clear();
+    GObjObjects.setLength(lastused+64);
+    for (int f = lastused; f < GObjObjects.length(); ++f) GObjObjects[f] = nullptr;
+    for (int f = 0; f < GObjObjects.length(); ++f) {
+      if (!GObjObjects[f]) GObjAvailable.append(f);
+    }
+  }
+
 #if !defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
   if (GGCMessagesAllowed) {
 #if defined(VCC_STANDALONE_EXECUTOR)
