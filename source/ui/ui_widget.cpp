@@ -61,15 +61,10 @@ VWidget *VWidget::CreateNewWidget (VClass *AClass, VWidget *AParent) {
 //
 //==========================================================================
 void VWidget::cleanupWidgets () {
-  if ((GetFlags()&_OF_Destroyed) != 0) return;
+  //if ((GetFlags()&_OF_Destroyed) != 0) return;
   // if we're marked as dead, kill us and gtfo
-  if (IsDeadManWalking()) return;
-  /*
-  if (IsDeadManWalking()) {
-    Destroy();
-    return;
-  }
-  */
+  //if (IsDeadManWalking()) return;
+  if (IsDeadManWalking()) { Destroy(); return; }
   // need cleanup?
   if (!IsNeedCleanup()) return;
   // do children cleanup
@@ -88,11 +83,13 @@ void VWidget::cleanupWidgets () {
       // do child cleanup
       w->cleanupWidgets();
       // is child alive?
+      /*
       if ((w->GetFlags()&_OF_Destroyed) != 0) {
         // nope
         w = next;
         continue;
       }
+      */
       // is child marked as dead?
       if (w->IsDeadManWalking()) {
         // destroy it, and go on
@@ -112,10 +109,15 @@ void VWidget::cleanupWidgets () {
 //
 //==========================================================================
 void VWidget::MarkDead () {
-  if ((GetFlags()&_OF_Destroyed) != 0) return;
+  //if ((GetFlags()&_OF_Destroyed) != 0) return;
+#if 1
   WidgetFlags |= WF_DeadManWalking;
   for (VWidget *w = FirstChildWidget; w; w = w->NextWidget) w->MarkDead();
   for (VWidget *w = this; w; w = w->ParentWidget) w->WidgetFlags |= WF_NeedCleanup;
+#else
+  DestroyAllChildren();
+  ConditionalDestroy();
+#endif
 }
 
 
@@ -147,9 +149,9 @@ void VWidget::Destroy () {
   guard(VWidget::Destroy);
   /*
   if (ParentWidget) {
-    GCon->Logf("removing widget `%s` (parent is `%s)", GetClass()->GetName(), ParentWidget->GetClass()->GetName());
+    GCon->Logf("%p: removing widget `%s` (parent is `%s`)", this, GetClass()->GetName(), ParentWidget->GetClass()->GetName());
   } else {
-    GCon->Logf("removing orphan widget `%s`", GetClass()->GetName());
+    GCon->Logf("%p: removing orphan widget `%s`", this, GetClass()->GetName());
   }
   */
   //if ((GetFlags()&_OF_Destroyed) != 0) return;
