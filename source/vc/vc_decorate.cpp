@@ -106,6 +106,7 @@ enum {
   PROP_MorphStyle,
   PROP_SkipLineUnsupported,
   PROP_PawnWeaponSlot,
+  PROP_DefaultAlpha,
 };
 
 enum {
@@ -435,6 +436,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_render_style") {
         VPropDef &P = Lst.NewProp(PROP_RenderStyle, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "prop_default_alpha") {
+        VPropDef &P = Lst.NewProp(PROP_DefaultAlpha, PN);
+        P.SetField(Lst.Class, "Alpha");
       } else if (PN->Name == "prop_translation") {
         VPropDef &P = Lst.NewProp(PROP_Translation, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -3462,12 +3466,16 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
               P.Field->SetByte(DefObj, RenderStyle);
             }
             break;
+          case PROP_DefaultAlpha: // heretic should have 0.6, but meh...
+            P.Field->SetFloat(DefObj, 0.6f);
+            break;
           case PROP_Translation:
             P.Field->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3)));
             break;
           case PROP_BloodColour:
             {
               vuint32 Col;
+              //GCon->Logf("********** <%s>", *sc->String);
               if (sc->CheckNumber()) {
                 int r = MID(0, sc->Number, 255);
                 sc->Check(",");
@@ -3478,8 +3486,13 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
                 int b = MID(0, sc->Number, 255);
                 Col = 0xff000000 | (r << 16) | (g << 8) | b;
               } else {
+                //GCon->Logf("********** <%s>", *sc->String);
                 sc->ExpectString();
-                Col = M_ParseColour(sc->String);
+                if (sc->String.length()) {
+                  Col = M_ParseColour(sc->String);
+                } else {
+                  Col = 0xff000000;
+                }
               }
               P.Field->SetInt(DefObj, Col);
               P.Field2->SetInt(DefObj, R_GetBloodTranslation(Col));

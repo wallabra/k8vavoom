@@ -48,6 +48,7 @@
     <prop_name name="HowlSound" property="HowlSound" />
     <!-- Rendering -->
     <prop_render_style name="RenderStyle" property="RenderStyle" />
+    <prop_default_alpha name="DefaultAlpha" />
     <prop_float_clamped name="Alpha" property="Alpha" min="0" max="1" />
     <prop_float_clamped name="XScale" property="ScaleX" min="0" max="4" />
     <prop_float_clamped name="YScale" property="ScaleY" min="0" max="4" />
