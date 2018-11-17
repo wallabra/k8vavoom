@@ -26,90 +26,69 @@
 //**  Base class for all powerups.
 //**
 //**************************************************************************
+class Powerup : Inventory abstract;
 
-class Powerup : Inventory
-  abstract;
+float EffectTime;
+int BlendColour;
+name Mode;
 
-float     EffectTime;
-int       BlendColour;
-name      Mode;
-
-replication
-{
+replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     EffectTime, Mode;
 }
+
 
 //==========================================================================
 //
 //  Destroyed
 //
 //==========================================================================
-
-override void Destroyed()
-{
+override void Destroyed () {
   EndEffect();
   ::Destroyed();
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  //  Powerup cannot exist without an owner.
-  if (!Owner)
-  {
+override void Tick (float DeltaTime) {
+  // powerup cannot exist without an owner
+  if (!Owner) {
     Destroy();
     return;
   }
 
-  if (EffectTime > 0.0)
-  {
+  if (EffectTime > 0.0) {
     EffectTime -= DeltaTime;
-    if (EffectTime <= 0.0)
-    {
-      Destroy();
-    }
+    if (EffectTime <= 0.0) Destroy();
   }
 }
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Item.Class == Class)
-  {
+override bool HandlePickup (Inventory Item) {
+  if (Item.Class == Class) {
     Powerup Pow = Powerup(Item);
 
-    //  Permanent powerups can be always picked up.
-    if (!Pow.EffectTime)
-    {
+    // permanent powerups can be always picked up
+    if (!Pow.EffectTime) {
       Item.bPickupGood = true;
       return true;
     }
-    //  Don't pick it up if not yet blinking unless it should always be
-    // picked up.
-    if (EffectTime > PlayerEx::BLINKTHRESHOLD && !Item.bAlwaysPickup)
-    {
-      //  Already have it.
-      return true;
-    }
-    //  Only increase effect time.
-    if (Pow.bAdditiveTime)
-    {
+    // don't pick it up if not yet blinking unless it should always be picked up
+    if (EffectTime > PlayerEx::BLINKTHRESHOLD && !Item.bAlwaysPickup) return true; // already have it
+    // only increase effect time
+    if (Pow.bAdditiveTime) {
       EffectTime += Pow.EffectTime;
       BlendColour = Pow.BlendColour;
-    }
-    else if (EffectTime < Pow.EffectTime)
-    {
+    } else if (EffectTime < Pow.EffectTime) {
       EffectTime = Pow.EffectTime;
       BlendColour = Pow.BlendColour;
     }
@@ -117,132 +96,92 @@ override bool HandlePickup(Inventory Item)
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   Owner = Toucher;
   InitEffect();
-  //  Clear the Owner field, unless it was changed by the activation, for
+  // clear the Owner field, unless it was changed by the activation, for
   // example, if this instance is a morph powerup; the flag tells the
   // caller that the ownership has changed so that they can properly handle
-  // the situation.
-  if (!bCreateCopyMoved)
-  {
-    Owner = none;
-  }
+  // the situation
+  if (!bCreateCopyMoved) Owner = none;
   return self;
 }
+
 
 //==========================================================================
 //
 //  OwnerDied
 //
 //==========================================================================
-
-override void OwnerDied()
-{
-  //  Powerups don't last after owner's death.
+override void OwnerDied () {
+  // powerups don't last after owner's death
   Destroy();
 }
+
 
 //==========================================================================
 //
 //  InitEffect
 //
 //==========================================================================
-
-void InitEffect()
-{
+void InitEffect () {
 }
+
 
 //==========================================================================
 //
 //  DoEffect
 //
 //==========================================================================
+override void DoEffect () {
+  if (!Owner) return;
 
-override void DoEffect()
-{
-  if (!Owner)
-  {
-    return;
-  }
-
-  if (EffectTime > 0.0 && Owner.Player)
-  {
-    if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-      (ftoi(4.0 * EffectTime) & 1))
-    {
-      if (BlendColour == INVERSECOLOUR)
-      {
-        Owner.Player.FixedColourmap = PlayerEx::INVERSECOLOURMAP;
-      }
-      else if (BlendColour == GOLDCOLOUR)
-      {
-        Owner.Player.FixedColourmap = PlayerEx::GOLDCOLOURMAP;
-      }
-      else if (BlendColour == REDCOLOUR)
-      {
-        Owner.Player.FixedColourmap = PlayerEx::REDCOLOURMAP;
-      }
-      else if (BlendColour == GREENCOLOUR)
-      {
-        Owner.Player.FixedColourmap = PlayerEx::GREENCOLOURMAP;
-      }
-    }
-    else if ((BlendColour == INVERSECOLOUR || BlendColour == GOLDCOLOUR ||
-      BlendColour == REDCOLOUR || BlendColour == GREENCOLOUR) &&
-      Owner.Player.FixedColourmap >= PlayerEx::NUMCOLOURMAPS)
+  if (EffectTime > 0.0 && Owner.Player) {
+    if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
+           if (BlendColour == INVERSECOLOUR) Owner.Player.FixedColourmap = PlayerEx::INVERSECOLOURMAP;
+      else if (BlendColour == GOLDCOLOUR) Owner.Player.FixedColourmap = PlayerEx::GOLDCOLOURMAP;
+      else if (BlendColour == REDCOLOUR) Owner.Player.FixedColourmap = PlayerEx::REDCOLOURMAP;
+      else if (BlendColour == GREENCOLOUR) Owner.Player.FixedColourmap = PlayerEx::GREENCOLOURMAP;
+    } else if ((BlendColour == INVERSECOLOUR || BlendColour == GOLDCOLOUR ||
+                BlendColour == REDCOLOUR || BlendColour == GREENCOLOUR) &&
+               Owner.Player.FixedColourmap >= PlayerEx::NUMCOLOURMAPS)
     {
       Owner.Player.FixedColourmap = 0;
     }
   }
 }
 
+
 //==========================================================================
 //
 //  EndEffect
 //
 //==========================================================================
-
-void EndEffect()
-{
+void EndEffect () {
 }
+
 
 //==========================================================================
 //
 //  GetBlend
 //
 //==========================================================================
-
-override int GetBlend()
-{
-  if (EffectTime <= PlayerEx::BLINKTHRESHOLD &&
-    !(ftoi(4.0 * EffectTime) & 1))
-  {
-    return 0;
-  }
-
-  if (BlendColour == INVERSECOLOUR || BlendColour == GOLDCOLOUR)
-  {
-    return 0;
-  }
-
+override int GetBlend () {
+  if (EffectTime <= PlayerEx::BLINKTHRESHOLD && !(int(4.0*EffectTime)&1)) return 0;
+  if (BlendColour == INVERSECOLOUR || BlendColour == GOLDCOLOUR) return 0;
   return BlendColour;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
