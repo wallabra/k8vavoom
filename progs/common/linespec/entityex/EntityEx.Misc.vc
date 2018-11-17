@@ -3381,18 +3381,22 @@ final bool k8CheckIfSpecialStateLabel (name Label) {
 //
 //===========================================================================
 final state FindJumpState (name Label) {
-  if (XLevel.StateCall) return XLevel.StateCall->Item.FindState(Label);
+  if (XLevel.StateCall) {
+    state st = XLevel.StateCall->Item.FindState(Label);
+    if (!st && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (statecall) '%s' -- probably broken actor '%C' code!", Label, self);
+    return st;
+  }
   if (bIsPlayer) {
     if (XLevel.CallingState == Player.ViewStates[ps_weapon].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (ps_weapon) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
     if (XLevel.CallingState == Player.ViewStates[ps_flash].State) {
       if (!PlayerEx(Player).ReadyWeapon) return none;
       state res = PlayerEx(Player).ReadyWeapon.FindState(Label);
-      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
+      if (!res && !k8CheckIfSpecialStateLabel(Label)) print("WARNING: unknown decorate label (ps_flash) '%s' -- probably broken actor '%C' code!", Label, PlayerEx(Player).ReadyWeapon);
       return res;
     }
   }
