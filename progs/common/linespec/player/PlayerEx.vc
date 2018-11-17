@@ -24,10 +24,8 @@
 //**************************************************************************
 class PlayerEx : BasePlayer abstract;
 
-//
-// Player internal flags, for cheats and debug.
-//
-enum {
+// player internal flags, for cheats and debug
+enum /*cheat_t*/ {
   CF_NOCLIP            = 1<<0, // No clipping, walk through barriers.
   CF_GODMODE           = 1<<1, // No damage, no health loss.
   CF_REGENERATION      = 1<<2, // Regenerate Health points.
@@ -38,124 +36,115 @@ enum {
   CF_BUDDHA            = 1<<7, // Normal play, but never looses last 1% of health
 };
 
-const float USERANGE    = 64.0;
+const float USERANGE      = 64.0;
 const float USETHINGRANGE = 128.0;
 
-const float BLINKTHRESHOLD  = 4.0;
+const float BLINKTHRESHOLD = 4.0;
 
 // 16 pixels of bob
-const float MAXBOB      = 16.0;
+const float MAXBOB = 16.0;
 
-const int MAXHEALTH     = 100;
-const int MAXMORPHHEALTH  = 30;
+const int MAXHEALTH      = 100;
+const int MAXMORPHHEALTH = 30;
 
-// For screen flashing (red or bright).
-float     DamageFlash;
-float     BonusFlash;
+// for screen flashing (red or bright)
+float DamageFlash;
+float BonusFlash;
 
-// Base height above floor for viewz.
-float     ViewHeight;
-// Bob/squat speed.
-float     DeltaViewHeight;
-// bounded/scaled total momentum.
-float     Bob;
+// base height above floor for viewz
+float ViewHeight;
+// bob/squat speed
+float DeltaViewHeight;
+// bounded/scaled total momentum
+float Bob;
 
-// Who did damage (none for floors/ceilings).
-EntityEx    Attacker;
+// who did damage (none for floors/ceilings)
+EntityEx Attacker;
 
-float     JumpTime;
-int       LocalQuakeHappening;
+float JumpTime;
+int LocalQuakeHappening;
 
-TVec      MoveDir;
+TVec MoveDir;
 
-float     LastSectorDamageTime;
+float LastSectorDamageTime;
 
-float     HazardTime;
-float     LastHazardTime;
+float HazardTime;
+float LastHazardTime;
 
-// Bit flags, for cheats and debug.
-// See cheat_t, above.
-int       Cheats;
+// bit flags, for cheats and debug
+// see cheat_t above
+int Cheats;
 
-Weapon      ReadyWeapon;
-Weapon      PendingWeapon;  // Is none if not changing.
+Weapon ReadyWeapon;
+Weapon PendingWeapon; // is none if not changing
 
-// Refired shots are less accurate.
-int       Refire;
+// refired shots are less accurate (this is counter)
+int Refire;
 
-float     FlyHeight;
+float FlyHeight;
 
-array!name   RevealedMaps;
+array!name RevealedMaps;
 
-Inventory   InvFirst;
-Inventory   InvPtr;
-float     InventoryTime;
-int       ArtifactFlash;
-int       InvSize;
+Inventory InvFirst;
+Inventory InvPtr;
+float InventoryTime;
+int ArtifactFlash;
+int InvSize;
 
-Inventory   SavedInventory;
+Inventory SavedInventory;
 
-bool      onground;
-//  Revert camera if player moves.
-bool      bRevertCamera;
-//  Player cannot move.
-bool      bFrozen;
-//  Player cannot do anything except press use.
-bool      bTotallyFrozen;
-//  Monster don't target
-bool      bNoTarget;
-//  Switch weapons instantly.
-bool      bInstantWeaponSwitch;
-//  Player is flying
-bool      bFly;
-//  Inventory bar is always open
-bool      bInventoryAlwaysOpen;
-//  Auto aiming
-bool      bAutoAim;
+bool onground;
 
-int       PoisonCount;  // screen flash for poison damage
-float     LastPoisonTime;
-EntityEx    Poisoner;   // none for non-player mobjs
-PlayerEx    PoisonerPlayer; // for KArena
+bool bRevertCamera; // revert camera if player moves
+bool bFrozen; // player cannot move
+bool bTotallyFrozen; // player cannot do anything except press use
+bool bNoTarget; // monster don't target
+bool bInstantWeaponSwitch; // switch weapons instantly
+bool bFly; // player is flying
+bool bInventoryAlwaysOpen; // inventory bar is always open
+bool bAutoAim; // auto aiming enabled? (weapon can override this)
 
-int       Objectives;
+int PoisonCount; // screen flash for poison damage
+float LastPoisonTime;
+EntityEx Poisoner; // none for non-player mobjs
+PlayerEx PoisonerPlayer; // for KArena
 
-float     MorphTime;  // player is morphed into something if > 0
-int       MorphStyle;
-class!Actor  UnmorphFlash;
+int Objectives;
 
-int       Accuracy;
-int       Stamina;
+float MorphTime; // player is morphed into something if > 0
+int MorphStyle;
+class!Actor UnmorphFlash;
 
-float     BlendR;
-float     BlendG;
-float     BlendB;
-float     BlendA;
+int Accuracy;
+int Stamina;
 
-int       ChickenPeck;  // chicken peck countdown
+float BlendR;
+float BlendG;
+float BlendB;
+float BlendA;
 
-Actor     Rain1;  // active rain maker 1
-Actor     Rain2;  // active rain maker 2
+int ChickenPeck; // chicken peck countdown
+
+Actor Rain1; // active rain maker 1
+Actor Rain2; // active rain maker 2
 
 const int MAX_MAPS_VISITED = 100;
 
-name      MapsVisited[MAX_MAPS_VISITED];
+name MapsVisited[MAX_MAPS_VISITED];
 
-float     FOV;      // current Field Of Vision
-float     DesiredFOV;   // desired Field Of Vision
+float FOV; // current Field Of Vision
+float DesiredFOV; // desired Field Of Vision
 
 bool k8ElvenGifted;
-
 
 // Health Accumulator
 // if you want to show HA info in UI, replicate those vars
 int k8HealthAccum_Amount; // amount of currently accumulated health
-float k8HealthAccum_LastRegenTime;
-float k8HealthAccum_LastBoostTime;
+float k8HealthAccum_LastRegenTime = -float.max;
+float k8HealthAccum_LastBoostTime = -float.max;
 
 
-replication
-{
+replication {
   reliable if (!bIsClient)
     Cheats, ReadyWeapon, InvFirst, InvPtr, InventoryTime, ArtifactFlash,
     Objectives, MorphTime, Accuracy, Stamina, MapsVisited, DamageFlash,
@@ -183,20 +172,18 @@ replication
 //  Moves the given origin along a given angle.
 //
 //==========================================================================
-
-final void ThrustPlayer(float angle, float move, float deltaTime)
-{
-  if ((!EntityEx(MO).FindInventory(PowerFlight) ||
-    MO.Origin.z <= MO.FloorZ) &&
-    ((EntityEx(MO).GetFloorType()->Friction &&
-    EntityEx(MO).GetFloorType()->Friction < EntityEx::FRICTION_NORMAL) ||
-    (MO.Sector->special & SECSPEC_BASE_MASK) == SECSPEC_FrictionLow))
+final void ThrustPlayer (float angle, float move, float deltaTime) {
+  if ((!EntityEx(MO).FindInventory(PowerFlight) || MO.Origin.z <= MO.FloorZ) &&
+      ((EntityEx(MO).GetFloorType()->Friction &&
+        EntityEx(MO).GetFloorType()->Friction < EntityEx::FRICTION_NORMAL) ||
+      (MO.Sector->special&SECSPEC_BASE_MASK) == SECSPEC_FrictionLow))
   {
     move *= LineSpecialGameInfo(Level.Game).IceMoveFactor;
   }
-  MO.Velocity.x += move * cos(angle) * deltaTime;
-  MO.Velocity.y += move * sin(angle) * deltaTime;
+  MO.Velocity.x += move*cos(angle)*deltaTime;
+  MO.Velocity.y += move*sin(angle)*deltaTime;
 }
+
 
 //==========================================================================
 //
@@ -205,173 +192,130 @@ final void ThrustPlayer(float angle, float move, float deltaTime)
 //  Calculate the walking / running height adjustment
 //
 //==========================================================================
-
-final void CalcHeight(float deltaTime)
-{
-  float angle;
+final void CalcHeight (float deltaTime) {
   float bob = GetCvarF('movebob');
 
   if (bob > 0) {
-    // Regular movement bobbing
+    // regular movement bobbing
     // (needs to be calculated for gun swing even if not on ground)
     if (MO.bFly && !onground) {
       Bob = 0.5;
     } else {
       if (bob > 1) bob = 1;
-      Bob = MO.Velocity.x * MO.Velocity.x + MO.Velocity.y * MO.Velocity.y;
-      Bob /= (1.0/bob) * 35.0 * 35.0;
+      Bob = MO.Velocity.x*MO.Velocity.x+MO.Velocity.y*MO.Velocity.y;
+      Bob /= (1.0/bob)*35.0*35.0;
       if (Bob > MAXBOB) Bob = MAXBOB;
     }
   }
 
-  angle = 180.0 * 35.0 / 10.0 * Level.XLevel.Time;
-  bob = Bob / 2.0 * sin(angle);
+  float angle = 180.0*35.0/10.0*Level.XLevel.Time;
+  bob = Bob/2.0*sin(angle);
 
   // move viewheight
-  if (PlayerState == PST_LIVE)
-  {
-    ViewHeight += DeltaViewHeight * deltaTime;
+  if (PlayerState == PST_LIVE) {
+    ViewHeight += DeltaViewHeight*deltaTime;
 
-    if (ViewHeight > PlayerPawn(MO).ViewHeight)
-    {
+    if (ViewHeight > PlayerPawn(MO).ViewHeight) {
       ViewHeight = PlayerPawn(MO).ViewHeight;
       DeltaViewHeight = 0.0;
     }
 
-    if (ViewHeight < PlayerPawn(MO).ViewHeight / 2.0)
-    {
-      ViewHeight = PlayerPawn(MO).ViewHeight / 2.0;
-      if (DeltaViewHeight <= 0.0)
-        DeltaViewHeight = 0.00001;
+    if (ViewHeight < PlayerPawn(MO).ViewHeight/2.0) {
+      ViewHeight = PlayerPawn(MO).ViewHeight/2.0;
+      if (DeltaViewHeight <= 0.0) DeltaViewHeight = 0.00001;
     }
 
-    if (DeltaViewHeight)
-    {
-      DeltaViewHeight += 256.0 * deltaTime;
-      if (!DeltaViewHeight)
-        DeltaViewHeight = 0.00001;
+    if (DeltaViewHeight) {
+      DeltaViewHeight += 256.0*deltaTime;
+      if (!DeltaViewHeight) DeltaViewHeight = 0.00001;
     }
   }
-  ViewOrg.z = MO.Origin.z + ViewHeight + bob;
+  ViewOrg.z = MO.Origin.z+ViewHeight+bob;
 
-  if (PlayerState != PST_DEAD && MO.Origin.z <= MO.FloorZ)
-  {
-    ViewOrg.z -= MO.FloorClip;
-  }
-  if (ViewOrg.z < MO.FloorZ + 4.0)
-    ViewOrg.z = MO.FloorZ + 4.0;
-
-  if (ViewOrg.z > MO.CeilingZ - 4.0)
-    ViewOrg.z = MO.CeilingZ - 4.0;
+  if (PlayerState != PST_DEAD && MO.Origin.z <= MO.FloorZ) ViewOrg.z -= MO.FloorClip;
+  if (ViewOrg.z < MO.FloorZ+4.0) ViewOrg.z = MO.FloorZ+4.0;
+  if (ViewOrg.z > MO.CeilingZ-4.0) ViewOrg.z = MO.CeilingZ-4.0;
 }
+
 
 //==========================================================================
 //
 //  MovePlayer
 //
 //==========================================================================
-
-final void MovePlayer(float deltaTime)
-{
+final void MovePlayer (float deltaTime) {
   float forward;
   float side;
   float fly;
 
-  // Do not let the player control movement
-  //  if not onground.
-  onground = MO.Origin.z <= MO.FloorZ || EntityEx(MO).bOnMobj;
+  // do not let the player control movement if not onground
+  onground = (MO.Origin.z <= MO.FloorZ || EntityEx(MO).bOnMobj);
 
-  forward = ForwardMove * 5.0;
-  side = SideMove * 5.0;
+  forward = ForwardMove*5.0;
+  side = SideMove*5.0;
 
   PlayerPawn(MO).AdjustSpeed(forward, side);
 
-  if (!onground && !MO.bNoGravity && !MO.WaterLevel)
-  {
-    //  not on ground, so we have little effect on velocity
+  if (!onground && !MO.bNoGravity && !MO.WaterLevel) {
+    // not on ground, so we have little effect on velocity
     forward *= Level.AirControl;
     side *= Level.AirControl;
   }
 
-  if (forward)
-  {
-    ThrustPlayer(MO.Angles.yaw, forward, deltaTime);
-  }
-  if (side)
-  {
-    ThrustPlayer(AngleMod360(MO.Angles.yaw - 90.0), side, deltaTime);
-  }
+  if (forward) ThrustPlayer(MO.Angles.yaw, forward, deltaTime);
+  if (side) ThrustPlayer(AngleMod360(MO.Angles.yaw-90.0), side, deltaTime);
 
-  if (forward || side)
-  {
+  if (forward || side) {
     SetPlayerRunState();
-
-    if (bRevertCamera)
-    {
+    if (bRevertCamera) {
       Camera = MO;
       bRevertCamera = false;
     }
   }
 
-  fly = FlyMove / 16.0;
-  if (fly && (EntityEx(MO).FindInventory(PowerFlight) || bFly))
-  {
-    if (FlyMove != TOCENTRE)
-    {
-      FlyHeight = fly * 2.0;
-      if (!MO.bFly)
-      {
+  fly = FlyMove/16.0;
+  if (fly && (EntityEx(MO).FindInventory(PowerFlight) || bFly)) {
+    if (FlyMove != TOCENTRE) {
+      FlyHeight = fly*2.0;
+      if (!MO.bFly) {
         MO.bFly = true;
         MO.bNoGravity = true;
-        if (MO.Velocity.z <= -39.0 * 35.0)
-        {
+        if (MO.Velocity.z <= -39.0*35.0) {
           // stop falling scream
           MO.StopSound(CHAN_VOICE);
         }
       }
-    }
-    else
-    {
+    } else {
       MO.bFly = false;
       MO.bNoGravity = false;
     }
-  }
-  else if (fly > 0.0)
-  {
+  } else if (fly > 0.0) {
     UseFlyPower();
   }
-  if (MO.bFly)
-  {
-    MO.Velocity.z = FlyHeight * 35.0;
-    if (FlyHeight)
-    {
-      FlyHeight /= 2.0;
-    }
+
+  if (MO.bFly) {
+    MO.Velocity.z = FlyHeight*35.0;
+    if (FlyHeight) FlyHeight /= 2.0;
   }
 
-  if ((Buttons & BT_JUMP) && onground && !JumpTime)
-  {
-    if (Cheats & CF_HIGHJUMP)
-    {
-      MO.Velocity.z = (PlayerPawn(MO).JumpVelZ * 2.0) * 1.1;
-    }
-    else
-    {
-      MO.Velocity.z = PlayerPawn(MO).JumpVelZ * 1.1;
+  if ((Buttons&BT_JUMP) && onground && !JumpTime) {
+    if (Cheats&CF_HIGHJUMP) {
+      MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*2.0)*1.1;
+    } else {
+      MO.Velocity.z = PlayerPawn(MO).JumpVelZ*1.1;
     }
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
   }
 }
 
+
 //==========================================================================
 //
 //  CheckWaterJump
 //
 //==========================================================================
-
-final void CheckWaterJump()
-{
+final void CheckWaterJump () {
   TVec start;
   TVec end;
   TVec vforward;
@@ -381,34 +325,31 @@ final void CheckWaterJump()
   // check for a jump-out-of-water
   AngleVector(MO.Angles, out vforward);
   start = MO.Origin;
-  start.z += MO.Height * 0.5 + 8.0;
+  start.z += MO.Height*0.5+8.0;
   vforward.z = 0.0;
   vforward = Normalise(vforward);
-  end = start + vforward * 24.0;
-  if (!Level.XLevel.TraceLine(start, end, HitPoint, HitNormal))
-  {
+  end = start+vforward*24.0;
+  if (!Level.XLevel.TraceLine(start, end, HitPoint, HitNormal)) {
     // solid at waist
-    start.z = MO.Origin.z + MO.Height;
-    end = start + vforward * 24.0;
-    MoveDir = HitNormal * -50.0;
-    if (Level.XLevel.TraceLine(start, end, HitPoint, HitNormal))
-    {
+    start.z = MO.Origin.z+MO.Height;
+    end = start+vforward*24.0;
+    MoveDir = HitNormal*-50.0;
+    if (Level.XLevel.TraceLine(start, end, HitPoint, HitNormal)) {
       // open at eye level
       EntityEx(MO).bWaterJump = true;
       MO.Velocity.z = 350.0;
-      EntityEx(MO).ReactionTime = 2.0;  // safety net
+      EntityEx(MO).ReactionTime = 2.0; // safety net
     }
   }
 }
+
 
 //==========================================================================
 //
 //  WaterMove
 //
 //==========================================================================
-
-final void WaterMove(float deltaTime)
-{
+final void WaterMove (float deltaTime) {
   float forward;
   float side;
   TVec vforward;
@@ -416,8 +357,7 @@ final void WaterMove(float deltaTime)
   TVec vup;
   TVec wishvel;
 
-  // Do not let the player control movement
-  //  if not onground.
+  // do not let the player control movement if not onground
   onground = (MO.Origin.z <= MO.FloorZ) || EntityEx(MO).bOnMobj;
 
   AngleVectors(MO.Angles, out vforward, out vright, out vup);
@@ -427,48 +367,37 @@ final void WaterMove(float deltaTime)
 
   PlayerPawn(MO).AdjustSpeed(forward, side);
 
-  wishvel = vforward * forward + vright * side;
-  if (!forward && !side /* && !cmd.upmove */ )
-    wishvel.z -= 60.0;  // drift towards bottom
-//  else
-//      wishvel.z += cmd.upmove;
+  wishvel = vforward*forward+vright*side;
+  if (!forward && !side /*&& !cmd.upmove*/) wishvel.z -= 60.0; // drift towards bottom
+  //else wishvel.z += cmd.upmove;
 
-  MO.Velocity += 3.5 * deltaTime * wishvel;
+  MO.Velocity += 3.5*deltaTime*wishvel;
 
-  if (forward || side)
-  {
-    SetPlayerRunState();
-  }
+  if (forward || side) SetPlayerRunState();
 
-  if (Buttons & BT_JUMP)
-  {
-    if (MO.WaterType == CONTENTS_WATER)
-      MO.Velocity.z = 100.0;
-    else if (MO.WaterType == CONTENTS_NUKAGE ||
-      MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE)
-      MO.Velocity.z = 80.0;
-    else
-      MO.Velocity.z = 50.0;
+  if (Buttons&BT_JUMP) {
+         if (MO.WaterType == CONTENTS_WATER) MO.Velocity.z = 100.0;
+    else if (MO.WaterType == CONTENTS_NUKAGE || MO.WaterType == CONTENTS_SLIME || MO.WaterType == CONTENTS_SLUDGE) MO.Velocity.z = 80.0;
+    else MO.Velocity.z = 50.0;
   }
   CheckWaterJump();
 }
+
 
 //==========================================================================
 //
 //  WaterJump
 //
 //==========================================================================
-
-final void WaterJump()
-{
-  if (!EntityEx(MO).ReactionTime || !MO.WaterLevel)
-  {
+final void WaterJump () {
+  if (!EntityEx(MO).ReactionTime || !MO.WaterLevel) {
     EntityEx(MO).bWaterJump = false;
     EntityEx(MO).ReactionTime = 0.0;
   }
   MO.Velocity.x = MoveDir.x;
   MO.Velocity.y = MoveDir.y;
 }
+
 
 //==========================================================================
 //
@@ -477,402 +406,301 @@ final void WaterJump()
 //  Called every tic frame that the player origin is in a special sector.
 //
 //==========================================================================
-
-final void PlayerInSpecialSector(float deltaTime)
-{
+final void PlayerInSpecialSector (float deltaTime) {
   float speed;
   float finean;
 
-  if (MO.Origin.z != GetPlanePointZ(ref MO.Sector->floor, MO.Origin) &&
-    !MO.WaterLevel)
-  {
-    // Player is not touching the floor
+  if (MO.Origin.z != GetPlanePointZ(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
+    // player is not touching the floor
     return;
   }
 
-  if (MO.Sector->special & SECSPEC_SECRET_MASK)
-  {
-    //  Secret area.
-    SecretCount++;
-    Level.CurrentSecret++;
+  if (MO.Sector->special&SECSPEC_SECRET_MASK) {
+    // secret area
+    ++SecretCount;
+    ++Level.CurrentSecret;
     MO.Sector->special &= ~SECSPEC_SECRET_MASK;
     centreprint("You found a secret area");
     MO.PlaySound('misc/secret', CHAN_VOICE);
   }
 
-  //  Search for iron feet power. Any subclass will do.
+  // search for iron feet power: any subclass will do
   Inventory IronFeet = EntityEx(MO).Inventory;
-  while (IronFeet)
-  {
-    if (PowerIronFeet(IronFeet))
-    {
-      break;
-    }
+  while (IronFeet) {
+    if (PowerIronFeet(IronFeet)) break;
     IronFeet = IronFeet.Inventory;
   }
 
-  if (MO.Sector->special >= SECSPEC_LightFlicker &&
-    MO.Sector->special <= 255)
-  {
-    switch (MO.Sector->special)
-    {
-    case SECSPEC_DamageHellslime:
-      if (!IronFeet &&
-        Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 10, 'Slime');
-      }
-      break;
-    case SECSPEC_DamageSludge:
-      if (!IronFeet &&
-        Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 4);
-      }
-      break;
-    case SECSPEC_DamageNukage:
-      if (!IronFeet &&
-        Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 5, 'Slime');
-      }
-      break;
-    case SECSPEC_LightStrobeFastDamage:
-    case SECSPEC_DamageSuperHellslime:
-      if (!IronFeet || (P_Random() < 5 && P_Random() < 5))
-      {
-        if (Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-        {
+  if (MO.Sector->special >= SECSPEC_LightFlicker && MO.Sector->special <= 255) {
+    switch (MO.Sector->special) {
+      case SECSPEC_DamageHellslime:
+        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 20, 'Slime');
+          EntityEx(MO).Damage(none, none, 10, 'Slime');
         }
-      }
-      break;
-    case SECSPEC_DamageSuperHellslimeExit:
-      // EXIT SUPER DAMAGE! (for E1M8 finale)
-      Cheats &= ~CF_GODMODE;
-
-      if (Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 20);
-      }
-
-      if (Health <= 10)
-      {
-        Level.ExitLevel(0);
-      }
-      break;
-    case SECSPEC_DamageLavaWimpy:
-      if (Level.XLevel.Time - LastSectorDamageTime >= 16.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 5, 'Fire');
-        EntityEx(MO).HitFloorType();
-      }
-      break;
-    case SECSPEC_DamageLavaHefty:
-      if (Level.XLevel.Time - LastSectorDamageTime >= 16.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 8, 'Fire');
-        EntityEx(MO).HitFloorType();
-      }
-      break;
-    case SECSPEC_ScrollEastLavaDamage:
-      ThrustPlayer(0.0, 1024.0, deltaTime);
-      if (Level.XLevel.Time - LastSectorDamageTime >= 16.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 5, 'Fire');
-        EntityEx(MO).HitFloorType();
-      }
-      break;
-    case SECSPEC_DamageHazard:
-      if (!IronFeet)
-        HazardTime += 2.0 * deltaTime;
-      break;
-    case SECSPEC_DamageInstantDeath:
-      EntityEx(MO).Damage(none, none, 999, 'InstantDeath');
-      break;
-    case SECSPEC_DamageSuperHazard:
-      if (!IronFeet)
-        HazardTime += 4.0 * deltaTime;
-      break;
+        break;
+      case SECSPEC_DamageSludge:
+        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 4);
+        }
+        break;
+      case SECSPEC_DamageNukage:
+        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 5, 'Slime');
+        }
+        break;
+      case SECSPEC_LightStrobeFastDamage:
+      case SECSPEC_DamageSuperHellslime:
+        if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
+          if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+            LastSectorDamageTime = Level.XLevel.Time;
+            EntityEx(MO).Damage(none, none, 20, 'Slime');
+          }
+        }
+        break;
+      case SECSPEC_DamageSuperHellslimeExit:
+        // EXIT SUPER DAMAGE! (for E1M8 finale)
+        Cheats &= ~CF_GODMODE;
+        if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 20);
+        }
+        if (Health <= 10) Level.ExitLevel(0);
+        break;
+      case SECSPEC_DamageLavaWimpy:
+        if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 5, 'Fire');
+          EntityEx(MO).HitFloorType();
+        }
+        break;
+      case SECSPEC_DamageLavaHefty:
+        if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 8, 'Fire');
+          EntityEx(MO).HitFloorType();
+        }
+        break;
+      case SECSPEC_ScrollEastLavaDamage:
+        ThrustPlayer(0.0, 1024.0, deltaTime);
+        if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 5, 'Fire');
+          EntityEx(MO).HitFloorType();
+        }
+        break;
+      case SECSPEC_DamageHazard:
+        if (!IronFeet) HazardTime += 2.0*deltaTime;
+        break;
+      case SECSPEC_DamageInstantDeath:
+        EntityEx(MO).Damage(none, none, 999, 'InstantDeath');
+        break;
+      case SECSPEC_DamageSuperHazard:
+        if (!IronFeet) HazardTime += 4.0*deltaTime;
+        break;
     }
-  }
-  else
-  {
-    //  Extended sector damage type.
-    switch (MO.Sector->special & SECSPEC_DAMAGE_MASK)
-    {
-    case 0x0100:
-      if (!IronFeet &&
-        Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 5, 'Fire');
-      }
-      break;
-    case 0x0200:
-      if (!IronFeet &&
-        Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
-        LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 10, 'Slime');
-      }
-      break;
-    case 0x0300:
-      if (!IronFeet ||  (P_Random() < 5 && P_Random() < 5))
-      {
-        if (Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-        {
+  } else {
+    // extended sector damage type
+    switch (MO.Sector->special&SECSPEC_DAMAGE_MASK) {
+      case 0x0100:
+        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 20, 'Slime');
+          EntityEx(MO).Damage(none, none, 5, 'Fire');
         }
-      }
-      break;
+        break;
+      case 0x0200:
+        if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+          LastSectorDamageTime = Level.XLevel.Time;
+          EntityEx(MO).Damage(none, none, 10, 'Slime');
+        }
+        break;
+      case 0x0300:
+        if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
+          if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+            LastSectorDamageTime = Level.XLevel.Time;
+            EntityEx(MO).Damage(none, none, 20, 'Slime');
+          }
+        }
+        break;
     }
   }
 
-  //  Apply any customizable damage
-  if (MO.Sector->Damage)
-  {
-    if (MO.Sector->Damage < 20)
-    {
-      if (!IronFeet &&
-        Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-      {
+  // apply any customizable damage
+  if (MO.Sector->Damage) {
+    if (MO.Sector->Damage < 20) {
+      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
         EntityEx(MO).Damage(none, none, MO.Sector->Damage);
       }
-    }
-    else if (MO.Sector->Damage < 50)
-    {
-      if (!IronFeet ||  (P_Random() < 5 && P_Random() < 5))
-      {
-        if (Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-        {
+    } else if (MO.Sector->Damage < 50) {
+      if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
+        if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
           EntityEx(MO).Damage(none, none, MO.Sector->Damage);
         }
       }
-    }
-    else if (Level.XLevel.Time - LastSectorDamageTime >= 1.0 / 35.0)
-    {
+    } else if (Level.XLevel.Time-LastSectorDamageTime >= 1.0/35.0) {
       LastSectorDamageTime = Level.XLevel.Time;
       EntityEx(MO).Damage(none, none, MO.Sector->Damage);
     }
   }
 
-  switch (MO.Sector->special & SECSPEC_BASE_MASK)
-  {
-  case SECSPEC_ScrollCurrent:
-    speed = itof((MO.Sector->tag - 100) % 10) / 16.0 * 35.0;
-    finean = itof((MO.Sector->tag - 100) / 10) * 45.0;
-    MO.Velocity.x += speed * cos(finean);
-    MO.Velocity.y += speed * sin(finean);
-    break;
-  case SECSPEC_ScrollNorthSlow:
-  case SECSPEC_ScrollNorthMedium:
-  case SECSPEC_ScrollNorthFast:
-    ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollNorthSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollEastSlow:
-  case SECSPEC_ScrollEastMedium:
-  case SECSPEC_ScrollEastFast:
-    ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollEastSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollSouthSlow:
-  case SECSPEC_ScrollSouthMedium:
-  case SECSPEC_ScrollSouthFast:
-    ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollSouthSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollWestSlow:
-  case SECSPEC_ScrollWestMedium:
-  case SECSPEC_ScrollWestFast:
-    ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollWestSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollNorthWestSlow:
-  case SECSPEC_ScrollNorthWestMedium:
-  case SECSPEC_ScrollNorthWestFast:
-    ThrustPlayer(135.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollNorthWestSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollNorthEastSlow:
-  case SECSPEC_ScrollNorthEastMedium:
-  case SECSPEC_ScrollNorthEastFast:
-    ThrustPlayer(45.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollNorthEastSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollSouthEastSlow:
-  case SECSPEC_ScrollSouthEastMedium:
-  case SECSPEC_ScrollSouthEastFast:
-    ThrustPlayer(315.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollSouthEastSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollSouthWestSlow:
-  case SECSPEC_ScrollSouthWestMedium:
-  case SECSPEC_ScrollSouthWestFast:
-    ThrustPlayer(225.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollSouthWestSlow], deltaTime);
-    break;
-  case SECSPEC_ScrollEast5:
-  case SECSPEC_ScrollEast10:
-  case SECSPEC_ScrollEast25:
-  case SECSPEC_ScrollEast30:
-  case SECSPEC_ScrollEast35:
-    ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollEast5], deltaTime);
-    break;
-  case SECSPEC_ScrollNorth5:
-  case SECSPEC_ScrollNorth10:
-  case SECSPEC_ScrollNorth25:
-  case SECSPEC_ScrollNorth30:
-  case SECSPEC_ScrollNorth35:
-    ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollNorth5], deltaTime);
-    break;
-  case SECSPEC_ScrollSouth5:
-  case SECSPEC_ScrollSouth10:
-  case SECSPEC_ScrollSouth25:
-  case SECSPEC_ScrollSouth30:
-  case SECSPEC_ScrollSouth35:
-    ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollSouth5], deltaTime);
-    break;
-  case SECSPEC_ScrollWest5:
-  case SECSPEC_ScrollWest10:
-  case SECSPEC_ScrollWest25:
-  case SECSPEC_ScrollWest30:
-  case SECSPEC_ScrollWest35:
-    ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special &
-      SECSPEC_BASE_MASK) - SECSPEC_ScrollWest5], deltaTime);
-    break;
+  switch (MO.Sector->special&SECSPEC_BASE_MASK) {
+    case SECSPEC_ScrollCurrent:
+      speed = float((MO.Sector->tag-100)%10)/16.0*35.0;
+      finean = float((MO.Sector->tag-100)/10)*45.0;
+      MO.Velocity.x += speed*cos(finean);
+      MO.Velocity.y += speed*sin(finean);
+      break;
+    case SECSPEC_ScrollNorthSlow:
+    case SECSPEC_ScrollNorthMedium:
+    case SECSPEC_ScrollNorthFast:
+      ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollEastSlow:
+    case SECSPEC_ScrollEastMedium:
+    case SECSPEC_ScrollEastFast:
+      ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEastSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollSouthSlow:
+    case SECSPEC_ScrollSouthMedium:
+    case SECSPEC_ScrollSouthFast:
+      ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollWestSlow:
+    case SECSPEC_ScrollWestMedium:
+    case SECSPEC_ScrollWestFast:
+      ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWestSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollNorthWestSlow:
+    case SECSPEC_ScrollNorthWestMedium:
+    case SECSPEC_ScrollNorthWestFast:
+      ThrustPlayer(135.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthWestSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollNorthEastSlow:
+    case SECSPEC_ScrollNorthEastMedium:
+    case SECSPEC_ScrollNorthEastFast:
+      ThrustPlayer(45.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthEastSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollSouthEastSlow:
+    case SECSPEC_ScrollSouthEastMedium:
+    case SECSPEC_ScrollSouthEastFast:
+      ThrustPlayer(315.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthEastSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollSouthWestSlow:
+    case SECSPEC_ScrollSouthWestMedium:
+    case SECSPEC_ScrollSouthWestFast:
+      ThrustPlayer(225.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthWestSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollEast5:
+    case SECSPEC_ScrollEast10:
+    case SECSPEC_ScrollEast25:
+    case SECSPEC_ScrollEast30:
+    case SECSPEC_ScrollEast35:
+      ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEast5], deltaTime);
+      break;
+    case SECSPEC_ScrollNorth5:
+    case SECSPEC_ScrollNorth10:
+    case SECSPEC_ScrollNorth25:
+    case SECSPEC_ScrollNorth30:
+    case SECSPEC_ScrollNorth35:
+      ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorth5], deltaTime);
+      break;
+    case SECSPEC_ScrollSouth5:
+    case SECSPEC_ScrollSouth10:
+    case SECSPEC_ScrollSouth25:
+    case SECSPEC_ScrollSouth30:
+    case SECSPEC_ScrollSouth35:
+      ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouth5], deltaTime);
+      break;
+    case SECSPEC_ScrollWest5:
+    case SECSPEC_ScrollWest10:
+    case SECSPEC_ScrollWest25:
+    case SECSPEC_ScrollWest30:
+    case SECSPEC_ScrollWest35:
+      ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWest5], deltaTime);
+      break;
   }
 }
+
 
 //============================================================================
 //
 //  PlayerOnSpecialFlat
 //
 //============================================================================
+final void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
+  if (!floorType) return;
+  if (MO.Origin.z != MO.FloorZ) return; // player is not touching the floor
 
-final void PlayerOnSpecialFlat(VTerrainInfo *floorType)
-{
-  if (MO.Origin.z != MO.FloorZ)
-  {
-    // Player is not touching the floor
-    return;
-  }
-
-  if (floorType->bAllowProtection)
-  {
-    //  Search for iron feet power. Any subclass will do.
+  if (floorType->bAllowProtection) {
+    // search for iron feet power; any subclass will do
     Inventory IronFeet = EntityEx(MO).Inventory;
-    while (IronFeet)
-    {
-      if (PowerIronFeet(IronFeet))
-      {
-        return;
-      }
+    while (IronFeet) {
+      if (PowerIronFeet(IronFeet)) return;
       IronFeet = IronFeet.Inventory;
     }
   }
 
-  if (floorType->DamageAmount && Level.XLevel.Time - LastSectorDamageTime >=
-    itof(floorType->DamageTimeMask + 1) / 35.0)
-  {
+  if (floorType->DamageAmount && Level.XLevel.Time-LastSectorDamageTime >= float(floorType->DamageTimeMask+1)/35.0) {
     LastSectorDamageTime = Level.XLevel.Time;
     EntityEx(MO).Damage(none, none, 10, 'Fire');
     MO.PlaySound('world/lavasizzle', CHAN_BODY);
   }
 }
 
+
 //==========================================================================
 //
 //  PlayerInContents
 //
 //==========================================================================
+final void PlayerInContents (float deltaTime) {
+  if (!MO.WaterLevel) return;
 
-final void PlayerInContents(float deltaTime)
-{
-  if (!MO.WaterLevel)
-  {
-    return;
-  }
-
-  //  Search for iron feet power. Any subclass will do.
+  // search for iron feet power; any subclass will do
   Inventory IronFeet = EntityEx(MO).Inventory;
-  while (IronFeet)
-  {
-    if (PowerIronFeet(IronFeet))
-    {
-      break;
-    }
+  while (IronFeet) {
+    if (PowerIronFeet(IronFeet)) break;
     IronFeet = IronFeet.Inventory;
   }
 
-  switch (MO.WaterType)
-  {
-  case CONTENTS_LAVA:
-    if (!IronFeet &&
-      Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-    {
-      LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, 10, 'Fire');
-    }
-    break;
-
-  case CONTENTS_NUKAGE:
-    if (!IronFeet &&
-      Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-    {
-      LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, 5);
-    }
-    break;
-
-  case CONTENTS_SLIME:
-    if (!IronFeet &&
-      Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-    {
-      LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, 10);
-    }
-    break;
-
-  case CONTENTS_HELLSLIME:
-    if ((!IronFeet || (P_Random() < 5)) &&
-      Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-    {
-      LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, 20);
-    }
-    break;
-
-  case CONTENTS_SLUDGE:
-    if (!IronFeet &&
-      Level.XLevel.Time - LastSectorDamageTime >= 32.0 / 35.0)
-    {
-      LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, 4);
-    }
-    break;
-
-  case CONTENTS_HAZARD:
-    if (!IronFeet)
-    {
-      HazardTime += 2.0 * deltaTime;
-    }
-    break;
+  switch (MO.WaterType) {
+    case CONTENTS_LAVA:
+      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+        LastSectorDamageTime = Level.XLevel.Time;
+        EntityEx(MO).Damage(none, none, 10, 'Fire');
+      }
+      break;
+    case CONTENTS_NUKAGE:
+      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+        LastSectorDamageTime = Level.XLevel.Time;
+        EntityEx(MO).Damage(none, none, 5);
+      }
+      break;
+    case CONTENTS_SLIME:
+      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+        LastSectorDamageTime = Level.XLevel.Time;
+        EntityEx(MO).Damage(none, none, 10);
+      }
+      break;
+    case CONTENTS_HELLSLIME:
+      if ((!IronFeet || (P_Random() < 5)) && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+        LastSectorDamageTime = Level.XLevel.Time;
+        EntityEx(MO).Damage(none, none, 20);
+      }
+      break;
+    case CONTENTS_SLUDGE:
+      if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
+        LastSectorDamageTime = Level.XLevel.Time;
+        EntityEx(MO).Damage(none, none, 4);
+      }
+      break;
+    case CONTENTS_HAZARD:
+      if (!IronFeet) HazardTime += 2.0*deltaTime;
+      break;
   }
 }
 
@@ -900,14 +728,18 @@ final void SetPlayerRunState () {
 //  SetWeapon
 //
 //==========================================================================
-
-final void SetWeapon(Weapon NewWeapon)
-{
+final void SetWeapon (Weapon NewWeapon) {
   ReadyWeapon = NewWeapon;
   PendingWeapon = none;
-  PSpriteSY = ReadyWeapon.PSpriteSY;
-  MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
+  if (NewWeapon) {
+    PSpriteSY = /*ReadyWeapon*/NewWeapon.PSpriteSY;
+    MO.ModelVersion = /*ReadyWeapon*/NewWeapon.PlayerModelVersion;
+  } else {
+    PSpriteSY = 0;
+    MO.ModelVersion = 0;
+  }
 }
+
 
 //===========================================================================
 //
@@ -916,22 +748,22 @@ final void SetWeapon(Weapon NewWeapon)
 //  Starts bringing the pending weapon up from the bottom of the screen.
 //
 //===========================================================================
-
-final void BringUpWeapon()
-{
+final void BringUpWeapon () {
   if (ReadyWeapon && ReadyWeapon.UpSound) {
     MO.PlaySound(ReadyWeapon.UpSound, CHAN_WEAPON);
   }
 
   PendingWeapon = none;
   ViewStates[ps_weapon].SY = (bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
+  Refire = 0;
+  bReloadQueued = false;
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
     SetViewState(ps_weapon, ReadyWeapon.GetUpState());
     MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
-    Refire = 0;
   }
 }
+
 
 //===========================================================================
 //
@@ -940,14 +772,15 @@ final void BringUpWeapon()
 //  Player died, so put the weapon away.
 //
 //===========================================================================
-
-final void DropWeapon()
-{
+final void DropWeapon () {
+  Refire = 0;
+  bReloadQueued = false;
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
     SetViewState(ps_weapon, ReadyWeapon.GetDownState());
   }
 }
+
 
 //===========================================================================
 //
@@ -956,14 +789,9 @@ final void DropWeapon()
 //  Called at start of level for each player.
 //
 //===========================================================================
-
-final void SetupPsprites()
-{
-  int i;
-
+final void SetupPsprites () {
   // remove all psprites
-  for (i = 0; i < NUMPSPRITES; i++)
-  {
+  foreach (auto i; 0..NUMPSPRITES) {
     SetViewObject(none);
     SetViewState(i, none);
   }
@@ -972,6 +800,7 @@ final void SetupPsprites()
   BringUpWeapon();
 }
 
+
 //==========================================================================
 //
 //  MovePsprites
@@ -979,22 +808,19 @@ final void SetupPsprites()
 //  Called every tic by player thinking routine.
 //
 //==========================================================================
-
-void MovePsprites(float deltaTime)
-{
+void MovePsprites (float deltaTime) {
   AdvanceViewStates(deltaTime);
   ViewStates[ps_flash].SX = ViewStates[ps_weapon].SX;
   ViewStates[ps_flash].SY = ViewStates[ps_weapon].SY;
 }
+
 
 //===========================================================================
 //
 //  FireWeapon
 //
 //===========================================================================
-
-void FireWeapon(optional state firestate)
-{
+void FireWeapon (optional state firestate) {
   bReloadQueued = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, true)) return;
 
@@ -1011,14 +837,13 @@ void FireWeapon(optional state firestate)
   }
 }
 
+
 //===========================================================================
 //
 //  AltFireWeapon
 //
 //===========================================================================
-
-void AltFireWeapon(optional state firestate)
-{
+void AltFireWeapon (optional state firestate) {
   bReloadQueued = false;
   if (!ReadyWeapon || !ReadyWeapon.CheckAmmo(Weapon::FIRE_Secondary, true)) return;
 
@@ -1035,14 +860,14 @@ void AltFireWeapon(optional state firestate)
   }
 }
 
+
 //===========================================================================
 //
 //  ReloadWeapon
 //
 //===========================================================================
-
-void ReloadWeapon()
-{
+void ReloadWeapon () {
+  Refire = 0; //k8: reloading weapon resets refire state
   bReloadQueued = false;
   if (ReadyWeapon) {
     state rst = ReadyWeapon.GetReloadState();
@@ -1052,56 +877,56 @@ void ReloadWeapon()
   }
 }
 
+
 //==========================================================================
 //
 //  ChangeWeapon
 //
 //  The actual changing of the weapon is done when the weapon psprite can
-// do it (read: not in the middle of an attack).
+//  do it (read: not in the middle of an attack).
 //
 //==========================================================================
-
-final void ChangeWeapon(int newweapon)
-{
-  bReloadQueued = false;
+final void ChangeWeapon (int newweapon) {
   if (MorphTime) return;
   Weapon NewWpn = GetSlotChangeWeapon(newweapon);
   if (NewWpn && NewWpn != ReadyWeapon &&
       (!NewWpn.bGivenAsMorphWeapon && (!ReadyWeapon || !ReadyWeapon.bGivenAsMorphWeapon)))
   {
+    bReloadQueued = false;
     PendingWeapon = NewWpn;
-  } else {
-    return;
   }
 }
+
 
 //==========================================================================
 //
 //  PrevWeapon
 //
 //==========================================================================
-
-final void PrevWeapon()
-{
-  bReloadQueued = false;
+final void PrevWeapon () {
   if (MorphTime) return;
   Weapon Wpn = GetPrevWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
-  if (Wpn && Wpn != ReadyWeapon) PendingWeapon = Wpn;
+  if (Wpn && Wpn != ReadyWeapon) {
+    bReloadQueued = false;
+    PendingWeapon = Wpn;
+  }
 }
+
 
 //==========================================================================
 //
 //  NextWeapon
 //
 //==========================================================================
-
-final void NextWeapon()
-{
-  bReloadQueued = false;
+final void NextWeapon () {
   if (MorphTime) return;
   Weapon Wpn = GetNextWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
-  if (Wpn && Wpn != ReadyWeapon) PendingWeapon = Wpn;
+  if (Wpn && Wpn != ReadyWeapon) {
+    bReloadQueued = false;
+    PendingWeapon = Wpn;
+  }
 }
+
 
 //==========================================================================
 //
@@ -1110,139 +935,126 @@ final void NextWeapon()
 //  Returns best weapon to use
 //
 //==========================================================================
-
-final Weapon BestWeapon(optional class!Ammo AmmoType)
-{
+final Weapon BestWeapon (optional class!Ammo AmmoType) {
   if (!MO) return none;
   bool Powered = !!EntityEx(MO).FindInventory(PowerWeaponLevel2);
   Weapon Best = none;
-  Inventory Item;
-  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
-  {
-    //  Must be a weapon
+  for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    // must be a weapon
     Weapon Wpn = Weapon(Item);
-    if (!Wpn)
-    {
-      continue;
-    }
-    //  Check if best one is better that this one.
-    if (Best && Wpn.SelectionOrder > Best.SelectionOrder)
-    {
-      continue;
-    }
-    //  Possibly limit to specific ammo type.
-    if (AmmoType && Wpn.AmmoType1 != AmmoType)
-    {
-      continue;
-    }
-    //  Check if it's for the current tome of power state.
-    if (Powered && Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp)
-    {
-      continue;
-    }
-    if (!Powered && Wpn.bPoweredUp)
-    {
-      continue;
-    }
-    //  Make sure it has enough ammo.
-    if (!Wpn.CheckAmmo(Weapon::FIRE_Either, false))
-    {
-      continue;
-    }
-    //  Good one.
+    if (!Wpn) continue;
+    // check if best one is better that this one
+    if (Best && Wpn.SelectionOrder > Best.SelectionOrder) continue;
+    // possibly limit to specific ammo type
+    if (AmmoType && Wpn.AmmoType1 != AmmoType) continue;
+    // check if it's for the current tome of power state
+    if (Powered && Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp) continue;
+    if (!Powered && Wpn.bPoweredUp) continue;
+    // make sure it has enough ammo
+    if (!Wpn.CheckAmmo(Weapon::FIRE_Either, false)) continue;
+    // good one
     Best = Wpn;
   }
   return Best;
 }
+
 
 //==========================================================================
 //
 //  ChoosePowered
 //
 //==========================================================================
-
-final Weapon ChoosePowered(Weapon Wpn)
-{
+final Weapon ChoosePowered (Weapon Wpn) {
+  if (!Wpn) return none;
   bool Powered = !!EntityEx(MO).FindInventory(PowerWeaponLevel2);
-  if (Powered && Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp)
-  {
+  if (Powered && Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp) {
     return Wpn.SisterWeapon;
   }
   return Wpn;
 }
+
 
 //==========================================================================
 //
 //  GetSlotChangeWeapon
 //
 //==========================================================================
-
-final Weapon GetSlotChangeWeapon(int Slot)
-{
+final Weapon GetSlotChangeWeapon (int Slot) {
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
 
   if (Slot < 0 || Slot > LineSpecialGameInfo::NUM_WEAPON_SLOTS) return ReadyWeapon;
 
   if (ReadyWeapon) {
-    foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-      //print("i=%s; wpn=%C", i, GI.WeaponSlots[Slot].Weapons[i]);
-      if (GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.Class ||
-          (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
-          GI.WeaponSlots[Slot].Weapons[i] == ReadyWeapon.SisterWeapon.Class))
-      {
-        for (int j = (i+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-             j != i;
-             j = (j+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)
+    class!Weapon readyWpnClass = class!Weapon(GetClassReplacement(ReadyWeapon.Class));
+    if (readyWpnClass) {
+      foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+        //print("i=%s; wpn=%C", i, GI.WeaponSlots[Slot].Weapons[i]);
+        class!Weapon slotwpn = GetClassReplacement(GI.WeaponSlots[Slot].Weapons[i]);
+        if (!slotwpn) continue;
+        if (GetClassReplacement(slotwpn) == readyWpnClass ||
+            (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
+             slotwpn == GetClassReplacement(ReadyWeapon.SisterWeapon.Class)))
         {
-          Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[j]));
-          if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+          for (int j = (i+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+               j != i;
+               j = (j+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)
+          {
+            class!Weapon swc = GI.WeaponSlots[Slot].Weapons[j];
+            Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
+            if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
+            if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+          }
         }
       }
     }
   }
 
-  for (int i = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1; i >= 0; --i) {
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[i]));
+  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT; reverse) {
+    class!Weapon slotwpn = GI.WeaponSlots[Slot].Weapons[i];
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(slotwpn)));
+    if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn));
     if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
 
   return ReadyWeapon;
 }
 
+
 //==========================================================================
 //
 //  GetPrevWeapon
 //
 //==========================================================================
-
-final Weapon GetPrevWeapon(Weapon Current) {
+final Weapon GetPrevWeapon (Weapon Current) {
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
   int Slot;
   int Index;
   int Start;
 
   if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position)) {
-    Start = Slot * LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
+    Start = Slot*LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
   } else {
     Start = 0;
   }
 
-  for (int i = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS-1; i >= 0; --i) {
+  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS; reverse) {
     Slot = ((Start+i)/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
     Index = (Start+i)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[Index]));
+    class!Weapon swc = GI.WeaponSlots[Slot].Weapons[Index];
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
+    if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
     if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
   return Current;
 }
+
 
 //==========================================================================
 //
 //  GetNextWeapon
 //
 //==========================================================================
-
-final Weapon GetNextWeapon(Weapon Current) {
+final Weapon GetNextWeapon (Weapon Current) {
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
   int Slot;
   int Index;
@@ -1254,14 +1066,17 @@ final Weapon GetNextWeapon(Weapon Current) {
     Start = -1;
   }
 
-  for (int i = 1; i <= LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS; ++i) {
+  foreach (auto i; 1..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS+1) {
     Slot = ((Start+i)/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
     Index = (Start+i)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GI.WeaponSlots[Slot].Weapons[Index]));
+    class!Weapon swc = GI.WeaponSlots[Slot].Weapons[Index];
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
+    if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
     if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
   return Current;
 }
+
 
 //==========================================================================
 //
@@ -1272,167 +1087,137 @@ final Weapon GetNextWeapon(Weapon Current) {
 //  Returns true if the puzzle item was used on a line or a thing.
 //
 //==========================================================================
-
-final bool UsePuzzleItem(int PuzzleItemType)
-{
+final bool UsePuzzleItem (int PuzzleItemType) {
   float x1, y1, x2, y2;
   TVec PuzzleUseDir;
-  intercept_t * in;
+  intercept_t* in;
 
   AngleVector(MO.Angles, out PuzzleUseDir);
   x1 = MO.Origin.x;
   y1 = MO.Origin.y;
-  x2 = x1 + USERANGE * PuzzleUseDir.x;
-  y2 = y1 + USERANGE * PuzzleUseDir.y;
-  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/)
-  {
+  x2 = x1+USERANGE*PuzzleUseDir.x;
+  y2 = y1+USERANGE*PuzzleUseDir.y;
+  foreach MO.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     EntityEx mobj;
     TVec hit_point;
     opening_t *open;
 
-    if (in->bIsALine)
-    {
-      // Check line
-      hit_point = MO.Origin + (USERANGE * in->frac) * PuzzleUseDir;
-      if (in->line->special != LNSPEC_UsePuzzleItem)
-      {
+    if (in->bIsALine) {
+      // check line
+      hit_point = MO.Origin+(USERANGE*in->frac)*PuzzleUseDir;
+      if (in->line->special != LNSPEC_UsePuzzleItem) {
         if (in->line->flags&(ML_BLOCKEVERYTHING|ML_BLOCKUSE)) {
           // gozzo does this
           open = nullptr;
         } else {
           open = LineOpenings(in->line, hit_point);
         }
-        if (!open || open->range <= 0.0)
-        {
-          if (MO.bIsPlayer)
-          {
-            MO.PlaySound('*puzzfail', CHAN_VOICE);
-          }
-          break;  // can't use through a wall
+        if (!open || open->range <= 0.0) {
+          if (MO.bIsPlayer) MO.PlaySound('*puzzfail', CHAN_VOICE);
+          break; // can't use through a wall
         }
-        continue; // Continue searching
+        continue; // continue searching
       }
-      if (PointOnPlaneSide(MO.Origin, in->line) == 1)
-      {
-        // Don't use back sides
+      if (PointOnPlaneSide(MO.Origin, in->line) == 1) {
+        // don't use back sides
         break;
       }
-      if (PuzzleItemType != in->line->arg1)
-      {
-        // Item type doesn't match
+      if (PuzzleItemType != in->line->arg1) {
+        // item type doesn't match
         break;
       }
       MO.XLevel.StartACS(in->line->arg2, 0, in->line->arg3,
         in->line->arg4, in->line->arg5, MO, in->line, 0, false,
         false);
       in->line->special = 0;
-      return true;  // Stop searching
+      return true; // stop searching
     }
-    // Check thing
+    // check thing
     mobj = EntityEx(in->Thing);
-    if (mobj.Special != LNSPEC_UsePuzzleItem)
-    {
-      // Wrong special
+    if (mobj.Special != LNSPEC_UsePuzzleItem) {
+      // wrong special
       continue;
     }
-    if (PuzzleItemType != mobj.Args[0])
-    {
-      // Item type doesn't match
+    if (PuzzleItemType != mobj.Args[0]) {
+      // item type doesn't match
       continue;
     }
     MO.XLevel.StartACS(mobj.Args[1], 0, mobj.Args[2], mobj.Args[3],
       mobj.Args[4], MO, nullptr, 0, false, false);
     mobj.Special = 0;
-    return true;  // Stop searching
+    return true; // Stop searching
   }
   return false;
 }
+
 
 //==========================================================================
 //
 //  AddRevealedMap
 //
 //==========================================================================
-
-final bool AddRevealedMap()
-{
-  int     i;
-
+final bool AddRevealedMap () {
   bAutomapRevealed = true;
-  for (i = 0; i < RevealedMaps.Num; i++)
-  {
-    if (RevealedMaps[i] == Level.XLevel.MapName)
-    {
-      //  Already revealed.
-      return false;
-    }
+  foreach (auto i; 0..RevealedMaps.length) {
+    if (RevealedMaps[i] == Level.XLevel.MapName) return false; // already revealed
   }
-  RevealedMaps.Num = RevealedMaps.Num + 1;
-  RevealedMaps[RevealedMaps.Num - 1] = Level.XLevel.MapName;
+  RevealedMaps.Num = RevealedMaps.Num+1;
+  RevealedMaps[RevealedMaps.Num-1] = Level.XLevel.MapName;
   return true;
 }
+
 
 //==========================================================================
 //
 //  RemoveRevealedMap
 //
 //==========================================================================
-
-final void RemoveRevealedMap()
-{
-  int     i;
-
+final void RemoveRevealedMap () {
   bAutomapRevealed = false;
-  for (i = 0; i < RevealedMaps.Num; i++)
-  {
-    if (RevealedMaps[i] == Level.XLevel.MapName)
-    {
+  foreach (auto i; 0..RevealedMaps.length) {
+    if (RevealedMaps[i] == Level.XLevel.MapName) {
       RevealedMaps.Remove(i);
       return;
     }
   }
 }
 
+
 //==========================================================================
 //
 //  UpdateRevealedMap
 //
 //==========================================================================
-
-final void UpdateRevealedMap()
-{
-  int     i;
-
+final void UpdateRevealedMap () {
   bAutomapRevealed = false;
-  for (i = 0; i < RevealedMaps.Num; i++)
-  {
-    if (RevealedMaps[i] == Level.XLevel.MapName)
-    {
+  foreach (auto i; 0..RevealedMaps.length) {
+    if (RevealedMaps[i] == Level.XLevel.MapName) {
       bAutomapRevealed = true;
       return;
     }
   }
 }
 
+
 //==========================================================================
 //
 //  ParticleEffect
 //
 //==========================================================================
-
-void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
-  TVec velocity, float vrnd, float acceleration, float grav, int colour, float duration, float ramp)
+void ParticleEffect (int count, int type1, int type2, TVec origin, float ornd,
+                     TVec velocity, float vrnd, float acceleration, float grav,
+                     int colour, float duration, float ramp)
 {
   Level.ParticleEffect(count, type1, type2, origin, ornd, velocity, vrnd, acceleration,
         grav, colour, duration, ramp);
 }
+
 
 //==========================================================================
 //
 //  DecalEffect
 //
 //==========================================================================
-
 void DecalEffect (TVec org, name dectype, int side, /*line_t *li*/int lineidx) {
   if (!dectype || lineidx < 0 || !Level.XLevel) return; // just in case
   if (!GetCvarB('r_decals_enabled')) return;
@@ -1440,510 +1225,380 @@ void DecalEffect (TVec org, name dectype, int side, /*line_t *li*/int lineidx) {
   Level.XLevel.AddDecal(org, dectype, side, &Level.XLevel.Lines[lineidx]);
 }
 
+
 //==========================================================================
 //
 //  ClientExplosion
 //
 //==========================================================================
-
-void ClientExplosion(int colour, float rad, TVec org)
-{
-  dlight_t *dl;
-
-  dl = Level.AllocDlight(none, org, rad + 150.0);
+void ClientExplosion (int colour, float rad, TVec org) {
+  dlight_t *dl = Level.AllocDlight(none, org, rad+150.0);
   if (dl) {
     //dl->origin = org;
-    //dl->radius = rad + 150.0;
+    //dl->radius = rad+150.0;
     dl->colour = colour;
-    dl->die = Level.XLevel.Time + 0.5;
+    dl->die = Level.XLevel.Time+0.5;
     dl->decay = 300.0;
   }
 }
+
 
 //==========================================================================
 //
 //  ClientParticleExplosion
 //
 //==========================================================================
-
-void ClientParticleExplosion(int colour, float rad, TVec org)
-{
-  int i;
-  particle_t *p;
-  dlight_t *dl;
-
-  for (i = 0; i < 1024; i++)
-  {
-    p = Level.NewParticle();
-    if (!p)
-      return;
-    p->die = Level.XLevel.Time + 5.0;
+void ClientParticleExplosion (int colour, float rad, TVec org) {
+  foreach (auto i; 0..1024) {
+    particle_t *p = Level.NewParticle();
+    if (!p) break;
+    p->die = Level.XLevel.Time+5.0;
     p->colour = LineSpecialGameInfo.default.ramp1[0];
     p->Size = 1.0;
-    p->ramp = Random() * 4.0;
-    if (i & 1)
-    {
+    p->ramp = Random()*4.0;
+    if (i&1) {
       p->type = LineSpecialLevelInfo::pt_explode;
-    }
-    else
-    {
+    } else {
       p->type = LineSpecialLevelInfo::pt_explode2;
     }
-    p->org.x = org.x + ((Random() * 32.0) - 16.0);
-    p->org.y = org.y + ((Random() * 32.0) - 16.0);
-    p->org.z = org.z + ((Random() * 32.0) - 16.0);
-    p->vel.x = (Random() * 512.0) - 256.0;
-    p->vel.y = (Random() * 512.0) - 256.0;
-    p->vel.z = (Random() * 512.0) - 256.0;
-//    p->accel = (Random() * 512.0) - 256.0;
-    p->gravity = 40.0 + (Random() * 512.0) - 256.0;
+    p->org.x = org.x+((Random()*32.0)-16.0);
+    p->org.y = org.y+((Random()*32.0)-16.0);
+    p->org.z = org.z+((Random()*32.0)-16.0);
+    p->vel.x = (Random()*512.0)-256.0;
+    p->vel.y = (Random()*512.0)-256.0;
+    p->vel.z = (Random()*512.0)-256.0;
+    //p->accel = (Random()*512.0)-256.0;
+    p->gravity = 40.0+(Random()*512.0)-256.0;
   }
 
-  dl = Level.AllocDlight(none, org, rad + 150.0);
+  dlight_t *dl = Level.AllocDlight(none, org, rad+150.0);
   if (dl) {
     //dl->origin = org;
     //dl->radius = rad + 150.0;
     dl->colour = colour;
-    dl->die = Level.XLevel.Time + 0.5;
+    dl->die = Level.XLevel.Time+0.5;
     dl->decay = 300.0;
   }
 }
+
 
 //==========================================================================
 //
 //  ClientSparkParticles
 //
 //==========================================================================
-
-void ClientSparkParticles(int Count, TVec Org, float Angle)
-{
-  int     i;
-
-  for (i = 0; i < Count; i++)
-  {
+void ClientSparkParticles (int Count, TVec Org, float Angle) {
+  foreach (auto i; 0..Count) {
     particle_t *p = Level.NewParticle();
-    if (!p)
-    {
-      break;
-    }
+    if (!p) break;
 
     p->type = LineSpecialLevelInfo::pt_spark;
     p->Size = 0.5;
-    p->colour = Random() < 0.5 ? RGBA(255, 120, 0, 255) :
-      RGBA(255, 170, 0, 255);
-    p->die = Level.XLevel.Time + 10.0 / 35.0;
+    p->colour = Random() < 0.5 ? RGBA(255, 120, 0, 255) : RGBA(255, 170, 0, 255);
+    p->die = Level.XLevel.Time+10.0/35.0;
 
-    float an = Angle + Random() * 45.0;
-    p->org.x = Org.x + (Random () * 15.0) * cos(an);
-    p->org.y = Org.y + (Random () * 15.0) * sin(an);
-    p->org.z = Org.z - Random () * 4.0;
+    float an = Angle+Random()*45.0;
+    p->org.x = Org.x+(Random ()*15.0)*cos(an);
+    p->org.y = Org.y+(Random ()*15.0)*sin(an);
+    p->org.z = Org.z-Random ()*4.0;
 
-    p->vel.x = (Random() - 0.5) * 2.0;
-    p->vel.y = (Random() - 0.5) * 2.0;
-    p->vel.z = (Random() - 0.5) * 2.0 - Random () * 70.0;
+    p->vel.x = (Random()-0.5)*2.0;
+    p->vel.y = (Random()-0.5)*2.0;
+    p->vel.z = (Random()-0.5)*2.0-Random ()*70.0;
 
-    p->accel.x = (Random() - 0.5) * 16.0 + (Random () - 0.5) * 35.0;
-    p->accel.y = (Random() - 0.5) * 16.0 + (Random () - 0.5) * 35.0;
-    p->accel.z = (Random() - 0.5) * 16.0 - 140.0;
+    p->accel.x = (Random()-0.5)*16.0+(Random ()-0.5)*35.0;
+    p->accel.y = (Random()-0.5)*16.0+(Random ()-0.5)*35.0;
+    p->accel.z = (Random()-0.5)*16.0-140.0;
   }
 }
+
 
 //==========================================================================
 //
 //  AddBlend
 //
 //==========================================================================
-
-final void AddBlend(out float r, out float g, out float b, out float a,
-  int Col)
-{
-  if (!(Col & 0xff000000))
-  {
-    //  No alpha
-    return;
-  }
-  float r1 = itof((Col >> 16) & 0xff) / 255.0;
-  float g1 = itof((Col >> 8) & 0xff) / 255.0;
-  float b1 = itof(Col & 0xff) / 255.0;
-  float a1 = itof((Col >> 24) & 0xff) / 255.0;
-  float TmpA = 1.0 - (1.0 - a) * (1.0 - a1);
-  if (!TmpA)
-  {
-    return;
-  }
-  r = (r * a * (1.0 - a1) + r1 * a1) / TmpA;
-  g = (g * a * (1.0 - a1) + g1 * a1) / TmpA;
-  b = (b * a * (1.0 - a1) + b1 * a1) / TmpA;
+final void AddBlend (out float r, out float g, out float b, out float a, int Col) {
+  if (!(Col&0xff000000)) return; // no alpha
+  float r1 = float((Col>>16)&0xff)/255.0;
+  float g1 = float((Col>>8)&0xff)/255.0;
+  float b1 = float(Col&0xff)/255.0;
+  float a1 = float((Col>>24)&0xff)/255.0;
+  float TmpA = fclamp(1.0-(1.0-a)*(1.0-a1), 0.0, 1.0);
+  if (!TmpA) return;
+  r = (r*a*(1.0-a1)+r1*a1)/TmpA;
+  g = (g*a*(1.0-a1)+g1*a1)/TmpA;
+  b = (b*a*(1.0-a1)+b1*a1)/TmpA;
   a = TmpA;
 }
+
+
+//==========================================================================
+//
+//  AddBlendWithAlpha
+//
+//  overrides blend color alpha
+//
+//==========================================================================
+final void AddBlendWithAlpha (out float r, out float g, out float b, out float a, int Col, float alpha) {
+  if (alpha <= 0) return; // no alpha
+  float r1 = float((Col>>16)&0xff)/255.0;
+  float g1 = float((Col>>8)&0xff)/255.0;
+  float b1 = float(Col&0xff)/255.0;
+  float TmpA = fclamp(1.0-(1.0-a)*(1.0-alpha), 0.0, 1.0);
+  if (!TmpA) return;
+  r = (r*a*(1.0-alpha)+r1*alpha)/TmpA;
+  g = (g*a*(1.0-alpha)+g1*alpha)/TmpA;
+  b = (b*a*(1.0-alpha)+b1*alpha)/TmpA;
+  a = TmpA;
+}
+
 
 //==========================================================================
 //
 //  PaletteFlash
 //
 //  Sets the new palette colour shift based upon the current values of
-// Player.DamageFlash and Player.BonusFlash, contents and other inventory
-// items.
+//  Player.DamageFlash and Player.BonusFlash, contents and other inventory
+//  items.
 //
 //==========================================================================
-
-void PaletteFlash()
-{
+void PaletteFlash () {
   float r = 0.0;
   float g = 0.0;
   float b = 0.0;
   float a = 0.0;
 
-  if (MO.WaterLevel == 3)
-  {
-    switch (MO.WaterType)
-    {
-    case CONTENTS_WATER:
-      AddBlend(r, g, b, a, RGBA(130, 80, 50, 128));
-      break;
-
-    case CONTENTS_LAVA:
-      AddBlend(r, g, b, a, RGBA(255, 80, 0, 150));
-      break;
-
-    case CONTENTS_NUKAGE:
-      AddBlend(r, g, b, a, RGBA(50, 255, 50, 150));
-      break;
-
-    case CONTENTS_SLIME:
-      AddBlend(r, g, b, a, RGBA(0, 25, 5, 150));
-      break;
-
-    case CONTENTS_HELLSLIME:
-      AddBlend(r, g, b, a, RGBA(255, 80, 0, 150));
-      break;
-
-    case CONTENTS_BLOOD:
-      AddBlend(r, g, b, a, RGBA(160, 16, 16, 150));
-      break;
-
-    case CONTENTS_SLUDGE:
-      AddBlend(r, g, b, a, RGBA(128, 160, 128, 150));
-      break;
-
-    case CONTENTS_HAZARD:
-      AddBlend(r, g, b, a, RGBA(128, 160, 128, 128));
-      break;
+  if (MO.WaterLevel == 3) {
+    switch (MO.WaterType) {
+      case CONTENTS_WATER: AddBlend(r, g, b, a, RGBA(130, 80, 50, 128)); break;
+      case CONTENTS_LAVA: AddBlend(r, g, b, a, RGBA(255, 80, 0, 150)); break;
+      case CONTENTS_NUKAGE: AddBlend(r, g, b, a, RGBA(50, 255, 50, 150)); break;
+      case CONTENTS_SLIME: AddBlend(r, g, b, a, RGBA(0, 25, 5, 150)); break;
+      case CONTENTS_HELLSLIME: AddBlend(r, g, b, a, RGBA(255, 80, 0, 150)); break;
+      case CONTENTS_BLOOD: AddBlend(r, g, b, a, RGBA(160, 16, 16, 150)); break;
+      case CONTENTS_SLUDGE: AddBlend(r, g, b, a, RGBA(128, 160, 128, 150)); break;
+      case CONTENTS_HAZARD: AddBlend(r, g, b, a, RGBA(128, 160, 128, 128)); break;
     }
   }
 
-  if (EntityEx(MO).DamageType == 'Ice')
-  {
+  if (EntityEx(MO).DamageType == 'Ice') {
     // Frozen player
     AddBlend(r, g, b, a, RGBA(2, 2, 255, 113));
-  }
-  else
-  {
-    if (DamageFlash)
-    {
-      int Amount = ftoi(114.0 * DamageFlash);
-      if (Amount >= 228)
-      {
-        Amount = 228;
-      }
-      AddBlend(r, g, b, a, (Amount << 24) |
-        (PlayerPawn(MO).DamageScreenColour & 0x00ffffff));
+  } else {
+    if (DamageFlash) {
+      int Amount = int(114.0*DamageFlash);
+      if (Amount >= 228) Amount = 228;
+      AddBlend(r, g, b, a, (Amount<<24)|(PlayerPawn(MO).DamageScreenColour&0x00ffffff));
     }
 
-    if (BonusFlash)
-    {
-      int Amount = ftoi(256.0 * BonusFlash);
-      if (Amount >= 128)
-      {
-        Amount = 128;
-      }
+    if (BonusFlash) {
+      int Amount = int(256.0*BonusFlash);
+      if (Amount >= 128) Amount = 128;
       AddBlend(r, g, b, a, RGBA(215, 186, 68, Amount));
     }
 
-    if (PoisonCount)
-    {
-      int Amount = PoisonCount * 160 / 32;
-      if (Amount >= 160)
-      {
-        Amount = 160;
-      }
+    if (PoisonCount) {
+      int Amount = PoisonCount*160/32;
+      if (Amount >= 160) Amount = 160;
       AddBlend(r, g, b, a, RGBA(56, 118, 46, Amount));
     }
 
     //FIXME add hazard flash.
-    if (HazardTime > 16.0 || ftoi(4.0 * HazardTime) & 1)
-    {
+    if (HazardTime > 16.0 || int(4.0*HazardTime)&1) {
       AddBlend(r, g, b, a, RGBA(0, 255, 0, 32));
     }
   }
 
-  Inventory Item;
-  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
-  {
+  // item effects
+  for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
     int Blend = Item.GetBlend();
-    if (Blend)
-    {
-      AddBlend(r, g, b, a, Blend);
+    if (Blend) AddBlend(r, g, b, a, Blend);
+  }
+
+  // Health Accumulation Device effect
+  if (MO && MO.XLevel) {
+    float lvtime = MO.XLevel.Time;
+    //print("lvtime=%f; k8HealthAccum_LastBoostTime=%f; k8HealthAccum_LastRegenTime=%f", lvtime, k8HealthAccum_LastBoostTime, k8HealthAccum_LastRegenTime);
+    bool doRegen = true;
+    if (k8HealthAccum_LastBoostTime > 0) {
+      float diff = lvtime-k8HealthAccum_LastBoostTime;
+      if (diff > 0 && diff < 1) {
+        AddBlendWithAlpha(r, g, b, a, RGBA(255, 127, 0, 0), 0.5-diff/2.0);
+        doRegen = false;
+      }
+    }
+    if (doRegen && k8HealthAccum_LastRegenTime > 0) {
+      float diff = lvtime-k8HealthAccum_LastRegenTime;
+      if (diff > 0 && diff < 0.1) {
+        AddBlendWithAlpha(r, g, b, a, RGBA(0, 128, 0, 0), 0.1-diff*1);
+      }
     }
   }
 
-  if (BlendA)
-  {
-    AddBlend(r, g, b, a, RGBA(ftoi(BlendR * 255.0), ftoi(BlendG * 255.0),
-      ftoi(BlendB * 255.0), ftoi(BlendA * 255.0)));
+  if (BlendA) {
+    AddBlend(r, g, b, a, RGBA(int(BlendR*255.0), int(BlendG*255.0), int(BlendB*255.0), int(BlendA*255.0)));
   }
 
-  if (r > 1.0)
-  {
-    r = 1.0;
-  }
-  if (g > 1.0)
-  {
-    g = 1.0;
-  }
-  if (b > 1.0)
-  {
-    b = 1.0;
-  }
-  CShift = RGBA(ftoi(r * 255.0), ftoi(g * 255.0), ftoi(b * 255.0),
-    ftoi(a * 255.0));
+  r = fclamp(r, 0.0, 1.0);
+  g = fclamp(g, 0.0, 1.0);
+  b = fclamp(b, 0.0, 1.0);
+  CShift = RGBA(int(r*255.0), int(g*255.0), int(b*255.0), int(a*255.0));
 }
+
 
 //==========================================================================
 //
 //  PreTravel
 //
 //==========================================================================
-
-override void PreTravel()
-{
+override void PreTravel () {
   SavedInventory = EntityEx(MO).Inventory;
   EntityEx(MO).Inventory = none;
 }
+
 
 //==========================================================================
 //
 //  UseInventory
 //
 //==========================================================================
+override void UseInventory (string Inv) {
+  if (!Inv) return;
 
-override void UseInventory(string Inv)
-{
-  Inventory item = EntityEx(MO).FindInventory(class!Inventory(FindClass(StrToName(Inv))));
-
-  if (bTotallyFrozen || (Level.bFrozen && !(Cheats & CF_TIMEFREEZE)))
-  { // You can't use items if you're totally frozen
+  if (bTotallyFrozen || (Level.bFrozen && !(Cheats&CF_TIMEFREEZE))) {
+    // you can't use items if you're totally frozen
     return;
   }
-  if (item)
-  {
-    // Use Inventory item
+
+  name invname = name(Inv);
+  Inventory item = EntityEx(MO).FindInventory(class!Inventory(FindClassNoCase(invname)));
+  if (!item) item = EntityEx(MO).FindInventory(class!Inventory(GetClassReplacement(FindClassNoCase(invname))));
+
+  if (item) {
+    // use Inventory item
     EntityEx(MO).UseInventory(item);
   }
 }
+
 
 //==========================================================================
 //
 //  CheckDoubleFiringSpeed
 //
 //==========================================================================
-
-override bool CheckDoubleFiringSpeed()
-{
-  return Cheats & CF_DOUBLEFIRINGSPEED;
+override bool CheckDoubleFiringSpeed () {
+  return !!(Cheats&CF_DOUBLEFIRINGSPEED);
 }
+
 
 //==========================================================================
 //
 //  ClientSpeech
 //
 //==========================================================================
-
-void ClientSpeech(EntityEx Speaker, int SpeechNum)
-{
+void ClientSpeech (EntityEx Speaker, int SpeechNum) {
   LineSpecialClientGame(ClGame).StartSpeech(Speaker, SpeechNum);
 }
+
 
 //==========================================================================
 //
 //  ClientSlideshow1
 //
 //==========================================================================
-
-void ClientSlideshow1()
-{
+void ClientSlideshow1 () {
   LineSpecialClientGame(ClGame).StartConSlideshow1();
 }
+
 
 //==========================================================================
 //
 //  ClientSlideshow2
 //
 //==========================================================================
-
-void ClientSlideshow2()
-{
+void ClientSlideshow2 () {
   LineSpecialClientGame(ClGame).StartConSlideshow2();
 }
+
 
 //==========================================================================
 //
 //  ClientFinaleType
 //
 //==========================================================================
-
-void ClientFinaleType(int Type)
-{
+void ClientFinaleType (int Type) {
   LineSpecialClientGame(ClGame).SetFinaleType(Type);
 }
+
 
 //==========================================================================
 //
 //  SetObjectives
 //
 //==========================================================================
-
-final void SetObjectives(int NewObjectives)
-{
-  if (!NewObjectives)
-  {
-    return;
-  }
-  //  Check if log text lump exists in wad file.
-  if (!WadLumpPresent(StrToName(va("log%d", NewObjectives))))
-  {
-    return;
-  }
+final void SetObjectives (int NewObjectives) {
+  if (!NewObjectives) return;
+  // check if log text lump exists in wad file
+  if (!WadLumpPresent(StrToName(va("log%d", NewObjectives)))) return;
   Objectives = NewObjectives;
 }
+
 
 //==========================================================================
 //
 //  DisplayObituary
 //
 //==========================================================================
+void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
+  string Msg;
 
-void DisplayObituary(EntityEx inflictor, EntityEx source, name DmgType)
-{
-  string    Msg;
-
-  if (DmgType == 'Suicide')
-  {
-    //  Commited a suicide
-    Msg = "$ob_suicide";
-  }
-  else if (DmgType == 'Falling')
-  {
-    //  Fell down
-    Msg = "$ob_falling";
-  }
-  else if (DmgType == 'Crush')
-  {
-    //  Crushed by the environment
-    Msg = "$ob_crush";
-  }
-  else if (DmgType == 'Exit')
-  {
-    //  Tried to exit when it's not allowed
-    Msg = "$ob_exit";
-  }
-  else if (DmgType == 'Drowning')
-  {
-    //  Drowned int the water
-    Msg = "$ob_water";
-  }
-  else if (DmgType == 'Slime')
-  {
-    //  Was standing in the slime
-    Msg = "$ob_slime";
-  }
-  else if (DmgType == 'Fire' && !source)
-  {
-    //  Was standing in the lava
-    Msg = "$ob_lava";
-  }
-  else if (source)
-  {
-    if (source.Player == self)
-    {
-      //  Killed self
+       if (DmgType == 'Suicide') Msg = "$ob_suicide"; // commited a suicide
+  else if (DmgType == 'Falling') Msg = "$ob_falling"; // fell down
+  else if (DmgType == 'Crush') Msg = "$ob_crush"; // crushed by the environment
+  else if (DmgType == 'Exit') Msg = "$ob_exit"; // tried to exit when it's not allowed
+  else if (DmgType == 'Drowning') Msg = "$ob_water"; // drowned int the water
+  else if (DmgType == 'Slime') Msg = "$ob_slime"; // was standing in the slime
+  else if (DmgType == 'Fire' && !source) Msg = "$ob_lava"; // was standing in the lava
+  else if (source) {
+    if (source.Player == self) {
+      // suicide
       Msg = "$ob_killedself";
-    }
-    else if (!source.bIsPlayer)
-    {
-      //  Killed by monster
-      if (DmgType == 'Telefrag')
-      {
-        //  Monster telefrag
-        Msg = "$ob_montelefrag";
-      }
-      else if (DmgType == 'Melee' && source.HitObituary)
-      {
-        Msg = source.HitObituary;
-      }
-      else
-      {
-        Msg = source.Obituary;
-      }
+    } else if (!source.bIsPlayer) {
+      // killed by monster
+           if (DmgType == 'Telefrag') Msg = "$ob_montelefrag"; // monster telefrag
+      else if (DmgType == 'Melee' && source.HitObituary) Msg = source.HitObituary;
+      else Msg = source.Obituary;
     }
   }
 
-  if (!Msg && source && source.bIsPlayer)
-  {
-    if (Level.Game.netgame && !Level.Game.deathmatch)
-    {
-      //  Killed another player in cooperative net game
-      Msg = va("$ob_friendly%d", P_Random() & 3);
-    }
-    else if (DmgType == 'Telefrag')
-    {
-      //  Telefrag
+  if (!Msg && source && source.bIsPlayer) {
+    if (Level.Game.netgame && !Level.Game.deathmatch) {
+      // killed another player in cooperative net game
+      Msg = va("$ob_friendly%d", P_Random()&3);
+    } else if (DmgType == 'Telefrag') {
+      // telefrag
       Msg = "$ob_mptelefrag";
-    }
-    else if (inflictor && inflictor.Obituary)
-    {
-      //  Missile with it's own obituary.
+    } else if (inflictor && inflictor.Obituary) {
+      // missile with it's own obituary
       Msg = inflictor.Obituary;
-    }
-    else
-    {
+    } else {
       Weapon Wpn = PlayerEx(inflictor.Player).ReadyWeapon;
-      if (Wpn && Wpn.Obituary) {
-        //  Weapon obituary message.
-        Msg = Wpn.Obituary;
-      }
-      else if (DmgType == 'BFGSplash')
-      {
-        //  BFG splash damage
-        Msg = "$ob_mpbfg_splash";
-      }
-      else if (DmgType == 'Railgun')
-      {
-        //  Railgun
-        Msg = "$ob_railgun";
-      }
-      else
-      {
-        //  Default multiplayer kill message.
-        Msg = "$ob_mpdefault";
-      }
+           if (Wpn && Wpn.Obituary) Msg = Wpn.Obituary; // weapon obituary message
+      else if (DmgType == 'BFGSplash') Msg = "$ob_mpbfg_splash"; // BFG splash damage
+      else if (DmgType == 'Railgun') Msg = "$ob_railgun"; // railgun
+      else Msg = "$ob_mpdefault"; // default multiplayer kill message
     }
-  }
-  else
-  {
+  } else {
     source = EntityEx(MO);
   }
 
-  if (!Msg)
-  {
-    //  Generic death
-    Msg = "$ob_default";
-  }
+  if (!Msg) Msg = "$ob_default"; // generic death
 
-  //  Look up string in language lump is necesary.
+  // look up string in language lump is necesary
   if (StrStartsWith(Msg, "$")) Msg = GetLangString(name(Msg[1..$]));
 
-  //  Do replacements.
+  // do replacements
   Msg = StrReplace(Msg, "%g", "he");
   Msg = StrReplace(Msg, "%h", "him");
   Msg = StrReplace(Msg, "%p", "his");
@@ -1953,87 +1608,52 @@ void DisplayObituary(EntityEx inflictor, EntityEx source, name DmgType)
   Level.bprint("%s", Msg);
 }
 
+
 //==========================================================================
 //
 //  ClientRailTrail
 //
 //==========================================================================
-
-void ClientRailTrail(TVec From, TVec To, int Col1, int Col2, float MaxDiff)
-{
-  float Len = Length(To - From);
-  TVec Dir = Normalise(To - From);
+void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
+  float Len = Length(To-From);
+  TVec Dir = Normalise(To-From);
   TAVec Ang;
   VectorAngles(Dir, out Ang);
   Ang.roll = 270.0;
 
-  if (!Col1)
-  {
-    Col1 = RGBA(255, 255, 255, 255);
-  }
-  if (!Col2)
-  {
-    Col2 = RGBA(0, 0, 255, 255);
-  }
+  if (!Col1) Col1 = RGBA(255, 255, 255, 255);
+  if (!Col2) Col2 = RGBA(0, 0, 255, 255);
 
   TVec Diff;
   float Offs;
-  for (Offs = 0.0; Offs < Len; Offs += 3.0)
-  {
-    if (MaxDiff > 0.0)
-    {
+  for (Offs = 0.0; Offs < Len; Offs += 3.0) {
+    if (MaxDiff > 0.0) {
       int Rnd = P_Random();
-      if (Rnd & 1)
-      {
-        Diff.x += Rnd & 8 ? 1.0 : -1.0;
-        if (Diff.x > MaxDiff)
-        {
-          Diff.x = MaxDiff;
-        }
-        else if (Diff.x < -MaxDiff)
-        {
-          Diff.x = -MaxDiff;
-        }
+      if (Rnd&1) {
+        Diff.x += (Rnd&8 ? 1.0 : -1.0);
+        Diff.x = fclamp(Diff.x, -MaxDiff, MaxDiff);
       }
-      if (Rnd & 2)
-      {
-        Diff.y += Rnd & 16 ? 1.0 : -1.0;
-        if (Diff.y > MaxDiff)
-        {
-          Diff.y = MaxDiff;
-        }
-        else if (Diff.y < -MaxDiff)
-        {
-          Diff.y = -MaxDiff;
-        }
+      if (Rnd&2) {
+        Diff.y += (Rnd&16 ? 1.0 : -1.0);
+        Diff.y = fclamp(Diff.y, -MaxDiff, MaxDiff);
       }
-      if (Rnd & 4)
-      {
-        Diff.z += Rnd & 32 ? 1.0 : -1.0;
-        if (Diff.z > MaxDiff)
-        {
-          Diff.z = MaxDiff;
-        }
-        else if (Diff.z < -MaxDiff)
-        {
-          Diff.z = -MaxDiff;
-        }
+      if (Rnd&4) {
+        Diff.z += (Rnd&32 ? 1.0 : -1.0);
+        Diff.z = fclamp(Diff.z , -MaxDiff, MaxDiff);
       }
     }
 
     particle_t *p = Level.NewParticle();
-    if (!p)
-    {
-      break;
-    }
+    if (!p) break;
+
     p->type = LineSpecialLevelInfo::pt_rail;
     p->Size = 0.5;
     p->colour = Col1;
-    p->die = Level.XLevel.Time + 1.0;
-    p->org = From + Dir * Offs + Diff;
-    p->vel.x = (Random() - 0.5) * 2.0;
-    p->vel.y = (Random() - 0.5) * 2.0;
-    p->vel.z = (Random() - 0.5) * 2.0;
+    p->die = Level.XLevel.Time+1.0;
+    p->org = From+Dir*Offs+Diff;
+    p->vel.x = (Random()-0.5)*2.0;
+    p->vel.y = (Random()-0.5)*2.0;
+    p->vel.z = (Random()-0.5)*2.0;
     p->accel = vector(0.0, 0.0, 0.0);
 
     Ang.roll += 14.0;
@@ -2043,30 +1663,27 @@ void ClientRailTrail(TVec From, TVec To, int Col1, int Col2, float MaxDiff)
     AngleVectors(Ang, out Forward, out Right, out Up);
 
     p = Level.NewParticle();
-    if (!p)
-    {
-      break;
-    }
+    if (!p) break;
     p->type = LineSpecialLevelInfo::pt_rail;
     p->Size = 0.5;
     p->colour = Col2;
-    p->die = Level.XLevel.Time + 1.0;
-    p->org = From + Dir * Offs + Up * 3.0;
+    p->die = Level.XLevel.Time+1.0;
+    p->org = From+Dir*Offs+Up*3.0;
     p->vel = Up;
     p->accel = vector(0.0, 0.0, 0.0);
   }
 }
+
 
 //==========================================================================
 //
 //  ClientVoice
 //
 //==========================================================================
-
-void ClientVoice(int VoiceNum)
-{
+void ClientVoice (int VoiceNum) {
   LocalSound(StrToName(va("svox/voc%d", VoiceNum)));
 }
+
 
 //==========================================================================
 //
@@ -2075,61 +1692,44 @@ void ClientVoice(int VoiceNum)
 //  Returns false if the ammo can't be picked up at all
 //
 //==========================================================================
-
-final bool GiveAmmo(class!Ammo ammo, int count)
-{
+final bool GiveAmmo (class!Ammo ammo, int count) {
   int oldammo;
 
-  if (!ammo)
-  {
-    return false;
-  }
+  if (!ammo) return false;
 
   Ammo AmmoItem = Ammo(EntityEx(MO).FindInventory(ammo));
-  if (!AmmoItem)
-  {
-    AmmoItem = Level.Spawn(ammo, default, default, default, false);
+  if (!AmmoItem) AmmoItem = Ammo(EntityEx(MO).FindInventory(GetClassReplacement(ammo)));
+
+  if (!AmmoItem) {
+    AmmoItem = Level.Spawn(GetClassReplacement(ammo), default, default, default, false);
     AmmoItem.AttachToOwner(EntityEx(MO));
     AmmoItem.Amount = 0;
   }
-  if (!count)
-  {
-    return false;
-  }
-  if (AmmoItem.Amount == AmmoItem.MaxAmount)
-  {
-    return false;
-  }
 
-  //  Extra ammo in baby mode and nightmare mode
-  count = ftoi(itof(count) * Level.World.SkillAmmoFactor);
+  if (!count) return false;
+
+  if (AmmoItem.Amount == AmmoItem.MaxAmount) return false;
+
+  // extra ammo in baby mode and nightmare mode
+  count = int(float(count)*Level.World.SkillAmmoFactor);
 
   oldammo = AmmoItem.Amount;
   AmmoItem.Amount += count;
-  if (AmmoItem.Amount > AmmoItem.MaxAmount)
-  {
-    AmmoItem.Amount = AmmoItem.MaxAmount;
-  }
+  if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
 
-  if (oldammo <= 0)
-  {
-    GotAmmo(AmmoItem);
-  }
+  if (oldammo <= 0) GotAmmo(AmmoItem);
+
   return true;
 }
+
 
 //==========================================================================
 //
 //  PutClientIntoServer
 //
 //==========================================================================
-
-override void PutClientIntoServer()
-{
-  if (bIsBot)
-  {
-    CreateBot();
-  }
+override void PutClientIntoServer () {
+  if (bIsBot) CreateBot();
 }
 
 
@@ -2174,52 +1774,31 @@ override void SpawnClient () {
 
   AddVisitedMap(Level.XLevel.MapName);
 
-  if (Level.Game.netgame && !Level.Game.deathmatch)
-  {
-    // Cooperative net-play, retain keys and weapons
+  if (Level.Game.netgame && !Level.Game.deathmatch) {
+    // cooperative net-play, retain keys and weapons
     playerWasReborn = (PlayerState == PST_REBORN);
   }
 
-  //  Spawn player
-  if (Level.Game.deathmatch)
-  {
+  // spawn player
+  if (Level.Game.deathmatch) {
     DeathMatchSpawnPlayer();
-  }
-  else if (Level.Game.netgame || Level.bClusterHub)
-  {
-    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(),
-      Level.Game.RebornPosition), false);
-  }
-  else
-  {
+  } else if (Level.Game.netgame || Level.bClusterHub) {
+    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
+  } else {
     mthing_t *Best = nullptr;
     bool Spawned = false;
-    int i;
-    for (i = 0; i < Level.PlayerStarts.Num; i++)
-    {
-      if (Level.PlayerStarts[i].type != GetPlayerNum() + 1)
-      {
-        continue;
-      }
-      if (Level.PlayerStarts[i].arg1 == Level.Game.RebornPosition)
-      {
+    foreach (auto i; 0..Level.PlayerStarts.length) {
+      if (Level.PlayerStarts[i].type != GetPlayerNum()+1) continue;
+      if (Level.PlayerStarts[i].arg1 == Level.Game.RebornPosition) {
         SpawnPlayer(&Level.PlayerStarts[i], Spawned);
         Spawned = true;
         continue;
       }
-      if (!Best)
-      {
-        Best = &Level.PlayerStarts[i];
-      }
+      if (!Best) Best = &Level.PlayerStarts[i];
     }
-    if (!Spawned)
-    {
-      if (!Best)
-      {
-        Error("Player %d has no start spots", GetPlayerNum() + 1);
-      }
-      print("Player %d has no start spot for position %d",
-        GetPlayerNum() + 1, Level.Game.RebornPosition);
+    if (!Spawned) {
+      if (!Best) Error("Player %d has no start spots", GetPlayerNum()+1);
+      print("Player %d has no start spot for position %d", GetPlayerNum()+1, Level.Game.RebornPosition);
       SpawnPlayer(Best, false);
     }
   }
@@ -2231,14 +1810,14 @@ override void SpawnClient () {
   }
   */
 
-  if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn)
-  {
+  if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn) {
     OnNetReborn(OldMO);
   }
 
-  // Destroy all things touching players
+  // destroy all things touching players
   Actor(MO).TeleportMove(MO.Origin);
 }
+
 
 //==========================================================================
 //
@@ -2247,11 +1826,7 @@ override void SpawnClient () {
 //  Respawn at the start
 //
 //==========================================================================
-
-override void NetGameReborn()
-{
-  int i;
-  bool foundSpot;
+override void NetGameReborn () {
   EntityEx OldMO = EntityEx(MO);
 
   // remove pitch and roll angles from corpse
@@ -2263,59 +1838,46 @@ override void NetGameReborn()
   MO.bIsPlayer = false;
 
   // spawn at random spot if in death match
-  if (Level.Game.deathmatch)
-  {
+  if (Level.Game.deathmatch) {
     OldMO.DestroyAllInventory();
     DeathMatchSpawnPlayer();
     return;
   }
 
-  foundSpot = false;
-  if (CheckSpot(Level.GetPlayerStart(GetPlayerNum(),
-    Level.Game.RebornPosition)))
-  {
-    // Appropriate player start spot is open
-    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(),
-      Level.Game.RebornPosition), false);
+  bool foundSpot = false;
+  if (CheckSpot(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition))) {
+    // appropriate player start spot is open
+    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
     foundSpot = true;
-  }
-  else
-  {
-    // Try to spawn at one of the other player start spots
-    for (i = 0; i < MAXPLAYERS; i++)
-    {
-      if (CheckSpot(Level.GetPlayerStart(i, Level.Game.RebornPosition)))
-      {
-        // Found an open start spot
-        SpawnPlayer(Level.GetPlayerStart(i, Level.Game.RebornPosition),
-          false);
+  } else {
+    // try to spawn at one of the other player start spots
+    foreach (auto i; 0..MAXPLAYERS) {
+      if (CheckSpot(Level.GetPlayerStart(i, Level.Game.RebornPosition))) {
+        // found an open start spot
+        SpawnPlayer(Level.GetPlayerStart(i, Level.Game.RebornPosition), false);
         foundSpot = true;
         break;
       }
     }
   }
 
-  if (!foundSpot)
-  {
-    // Player's going to be inside something. Too bad.
-    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(),
-      Level.Game.RebornPosition), false);
+  if (!foundSpot) {
+    // player's going to be inside something. too bad.
+    SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
   }
 
   OnNetReborn(OldMO);
 }
+
 
 //==========================================================================
 //
 //  DisconnectClient
 //
 //==========================================================================
-
-override void DisconnectClient()
-{
+override void DisconnectClient () {
   DestroyBot();
-  if (MO)
-  {
+  if (MO) {
     MO.Player = none;
     MO.bIsPlayer = false;
     Actor(MO).Damage(none, none, 10000);
@@ -2324,25 +1886,21 @@ override void DisconnectClient()
   MO.PlaySound('misc/chat', CHAN_AUTO, 1.0, ATTN_NONE);
 }
 
+
 //==========================================================================
 //
 //  DeathMatchSpawnPlayer
 //
 //  Spawns a player at one of the random death match spots called at level
-// load and each death
+//  load and each death
 //
 //==========================================================================
+void DeathMatchSpawnPlayer () {
+  if (!Level.DeathmatchStarts.length) Error("oops! no deathmatch starts where they should be!");
 
-void DeathMatchSpawnPlayer()
-{
-  int i;
-  int j;
-
-  for (j = 0; j < 20; j++)
-  {
-    i = P_Random() % Level.DeathmatchStarts.Num;
-    if (CheckSpot(&Level.DeathmatchStarts[i]))
-    {
+  foreach (auto j; 0..20) {
+    int i = P_Random()%Level.DeathmatchStarts.length;
+    if (CheckSpot(&Level.DeathmatchStarts[i])) {
       SpawnPlayer(&Level.DeathmatchStarts[i], false);
       return;
     }
@@ -2352,31 +1910,27 @@ void DeathMatchSpawnPlayer()
   SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), 0), false);
 }
 
+
 //==========================================================================
 //
 //  CheckSpot
 //
 //  Returns false if the player cannot be respawned at the given mthing_t
-// spot because something is occupying it
+//  spot because something is occupying it
 //
 //==========================================================================
-
-bool CheckSpot(mthing_t * mthing)
-{
+bool CheckSpot (mthing_t *mthing) {
   float x;
   float y;
   sector_t *sec;
   float an;
-  int i;
 
-  if (!MO)
-  {
+  if (!MO) {
     // first spawn of level, before corpses
-    for (i = 0; i < MAXPLAYERS; i++)
-    {
+    foreach (auto i; 0..MAXPLAYERS) {
       if (Level.Game.Players[i] && Level.Game.Players[i].MO &&
-        Level.Game.Players[i].MO.Origin.x == mthing->x &&
-        Level.Game.Players[i].MO.Origin.y == mthing->y)
+          Level.Game.Players[i].MO.Origin.x == mthing->x &&
+          Level.Game.Players[i].MO.Origin.y == mthing->y)
       {
         return false;
       }
@@ -2388,61 +1942,52 @@ bool CheckSpot(mthing_t * mthing)
   y = mthing->y;
 
   MO.bPassMobj = false;
-  if (!MO.CheckPosition(vector(x, y, Actor::ONFLOORZ)))
-  {
+  if (!MO.CheckPosition(vector(x, y, Actor::ONFLOORZ))) {
     MO.bPassMobj = true;
     return false;
   }
   MO.bPassMobj = true;
 
-  if (!PlayerChunk(MO))
-  {
+  if (!PlayerChunk(MO)) {
     LineSpecialLevelInfo(Level).AddPlayerCorpse(EntityEx(MO));
   }
 
   // spawn a teleport fog
   sec = Level.XLevel.PointInSector(vector(x, y, 0.0));
-  an = itof(45 * (mthing->angle / 45));
+  an = float(45*(mthing->angle/45));
 
-  Level.Spawn(TeleportFog, vector(x + 20.0 * cos(an), y + 20.0 * sin(an),
-    sec->floor.TexZ + LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  Level.Spawn(TeleportFog, vector(x+20.0*cos(an), y+20.0*sin(an),
+    sec->floor.TexZ+LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
   return true;
 }
+
 
 //==========================================================================
 //
 //  SetUpPlayerClass
 //
 //==========================================================================
-
-void SetUpPlayerClass()
-{
+void SetUpPlayerClass () {
   if (LineSpecialGameInfo(Level.Game).bRandomClass &&
-    Level.Game.deathmatch && Level.Game.PlayerClasses.Num > 1)
+      Level.Game.deathmatch && Level.Game.PlayerClasses.Num > 1)
   {
-    PClass = P_Random() % Level.Game.PlayerClasses.Num;
-    if (PClass == BaseClass)
-    {
-      PClass = (PClass + 1) % Level.Game.PlayerClasses.Num;
-    }
+    PClass = P_Random()%Level.Game.PlayerClasses.Num;
+    if (PClass == BaseClass) PClass = (PClass+1)%Level.Game.PlayerClasses.Num;
     BaseClass = PClass;
     SB_Start();
-  }
-  else
-  {
+  } else {
     PClass = BaseClass;
   }
 }
+
 
 //==========================================================================
 //
 //  ResetPlayerOnSpawn
 //
 //==========================================================================
-
-void ResetPlayerOnSpawn()
-{
+void ResetPlayerOnSpawn () {
   PlayerState = PST_LIVE;
   Refire = 0;
   DamageFlash = 0.0;
@@ -2466,12 +2011,13 @@ void ResetPlayerOnSpawn()
   /*
   bFrozen = false; // just in case
   bTotallyFrozen = false; // just in case
+  */
   bFly = false; // just in case
   PoisonCount = 0; // screen flash for poison damage
   LastPoisonTime = 0;
   Poisoner = none; // none for non-player mobjs
   PoisonerPlayer = none; // for KArena
-  */
+
   MorphTime = 0;  // player is morphed into something if > 0
   MorphStyle = 0;
   BlendR = 0;
@@ -2479,6 +2025,10 @@ void ResetPlayerOnSpawn()
   BlendB = 0;
   BlendA = 0;
   ChickenPeck = 0; // chicken peck countdown
+
+  //k8: just in case
+  bReloadQueued = false;
+  Refire = 0;
 }
 
 
@@ -2486,83 +2036,64 @@ void ResetPlayerOnSpawn()
 //
 //  GiveDefaultDeathMatchInventory
 //
+//  FIXME: replacements?
+//
 //==========================================================================
-
-void GiveDefaultDeathMatchInventory()
-{
+void GiveDefaultDeathMatchInventory () {
   class!Inventory  Cls;
 
-  //  Give all keys in death match mode.
-  foreach AllClasses(Key, Cls)
-  {
-    if (!FindClassState(Cls, 'Spawn'))
-    {
-      //  Abstract class
-      continue;
-    }
-    if (!AreStateSpritesPresent(FindClassState(Cls, 'Spawn')))
-    {
-      //  From a different game
-      continue;
-    }
+  // give all keys in death match mode
+  foreach AllClasses(Key, Cls) {
+    if (!FindClassState(Cls, 'Spawn')) continue; // abstract class
+    if (!AreStateSpritesPresent(FindClassState(Cls, 'Spawn'))) continue; // from a different game
     EntityEx(MO).GiveInventoryType(Cls);
   }
 }
+
 
 //==========================================================================
 //
 //  SpawnPlayer
 //
 //  Called when a player is spawned on the level. Most of the player
-// structure stays unchanged between levels.
+//  structure stays unchanged between levels.
 //
 //==========================================================================
-
-void SpawnPlayer(mthing_t * mthing, bool Voodoo)
-{
-  float       x;
-  float       y;
-  float       z;
-  PlayerPawn      PP;
-  bool        ResetInventory = false;
-  Inventory     Item;
+void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
+  PlayerPawn PP;
+  bool ResetInventory = false;
+  Inventory Item;
 
   //print("************SpawnPlayer: 000; Voodoo=%b; PST=%d", PlayerState);
-  if (PlayerState == PST_REBORN)
-  {
+  if (PlayerState == PST_REBORN) {
     PlayerReborn();
     ResetInventory = true;
   }
 
   SetUpPlayerClass();
 
-  x = mthing->x;
-  y = mthing->y;
-  z = Actor::ONFLOORZ;
-  if (PClass >= Level.Game.PlayerClasses.Num)
-  {
-    Error("Player::SpawnPlayer : Unknown class type");
-  }
+  float x = mthing->x;
+  float y = mthing->y;
+  float z = Actor::ONFLOORZ;
+  if (PClass >= Level.Game.PlayerClasses.Num) Error("Player::SpawnPlayer : Unknown class type");
+
   PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, false);
   print("spawned player with class <%C>...", PP);
   PP.Origin.z += mthing->height;
   PP.LinkToWorld();
-  PP.FriendPlayer = GetPlayerNum() + 1; //  Players are their own friends.
+  PP.FriendPlayer = GetPlayerNum()+1; // players are their own friends
 
-  //  Set colour translations for player sprites.
+  // set colour translations for player sprites
   TranslStart = PP.TranslStart;
   TranslEnd = PP.TranslEnd;
   PP.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
 
-  //  If a voodoo doll has been spawned, take it's inventory.
-  if (Voodoo)
-  {
-    PP.ObtainInventory(EntityEx(MO));
-  }
+  // if a voodoo doll has been spawned, take it's inventory
+  if (Voodoo) PP.ObtainInventory(EntityEx(MO));
 
   DesiredFOV = 90.0; //itof(GetCvar('FOV'));
   FOV = DesiredFOV;
-  PP.Angles.yaw = itof(45 * (mthing->angle / 45));
+  PP.Angles.yaw = float(45*(mthing->angle/45));
   PP.Player = self;
   PP.bIsPlayer = true;
   PP.Health = Health;
@@ -2576,46 +2107,30 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
 
   ResetPlayerOnSpawn();
 
-  if (!Voodoo)
-  {
+  if (!Voodoo) {
     PP.Inventory = SavedInventory;
-    for (Item = PP.Inventory; Item; Item = Item.Inventory)
-    {
-      Item.Owner = MO;
-    }
-
-    if (ResetInventory)
-    {
-      while (PP.Inventory)
-      {
-        PP.Inventory.Destroy();
-      }
+    for (Item = PP.Inventory; Item; Item = Item.Inventory) Item.Owner = MO;
+    if (ResetInventory) {
+      while (PP.Inventory) PP.Inventory.Destroy();
       AddDefaultInventory();
     }
   }
 
-  //  Set up gun psprite.
+  // set up gun psprite
   SetupPsprites();
 
-  if (Level.Game.deathmatch)
-  {
-    GiveDefaultDeathMatchInventory();
-  }
+  if (Level.Game.deathmatch) GiveDefaultDeathMatchInventory();
 
   // wake up the status bar
   SB_Start();
 
-  if (bIsBot)
-  {
-    BotOnSpawn();
-  }
+  if (bIsBot) BotOnSpawn();
 
   SetClientModel();
 
   UpdateRevealedMap();
 
-  if (ResetInventory)
-  {
+  if (ResetInventory) {
     Level.XLevel.StartTypedACScripts(Level::SCRIPT_Respawn, 0, 0, 0, MO, true, false);
     k8ElvenGifted = false;
   }
@@ -2646,12 +2161,12 @@ void SpawnPlayer(mthing_t * mthing, bool Voodoo)
   }
 }
 
+
 //===========================================================================
 //
 // AddElvenGift
 //
 //===========================================================================
-
 final bool AddElvenGift (name Klass) {
   class!Thinker th = class!Thinker(FindClass(Klass));
   if (th) {
@@ -2673,14 +2188,13 @@ final bool AddElvenGift (name Klass) {
   }
 }
 
+
 //===========================================================================
 //
 //  AddDefaultInventory
 //
 //===========================================================================
-
-void AddDefaultInventory()
-{
+void AddDefaultInventory () {
   HexenArmor HArmor = Level.Spawn(HexenArmor, default, default, default, false);
   HArmor.AttachToOwner(EntityEx(MO));
   HArmor.Slots[4] = PlayerPawn(MO).HexenArmor[0];
@@ -2724,31 +2238,29 @@ void AddDefaultInventory()
 //  Called after a player dies almost everything is cleared and initialised
 //
 //==========================================================================
-
-void PlayerReborn()
-{
-  //  Clear player struct
+void PlayerReborn () {
+  // clear player struct
   DoClearPlayer();
 
   PClass = BaseClass;
 
-  //  Set initial data
-  bUseDown = true;  // don't do anything immediately
+  // set initial data
+  bUseDown = true; // don't do anything immediately
   bAttackDown = true;
   bReloadQueued = false;
+  Refire = 0;
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();
   LocalQuakeHappening = 0;
 }
+
 
 //==========================================================================
 //
 //  DoClearPlayer
 //
 //==========================================================================
-
-void DoClearPlayer()
-{
+void DoClearPlayer () {
   ClearPlayer();
 }
 
@@ -2761,10 +2273,9 @@ void DoClearPlayer()
 //  Not called for intermissions.
 //
 //==========================================================================
-
-override void PlayerBeforeExitMap()
-{
+override void PlayerBeforeExitMap () {
 }
+
 
 //==========================================================================
 //
@@ -2773,52 +2284,40 @@ override void PlayerBeforeExitMap()
 //  Called when a player completes a level.
 //
 //==========================================================================
-
-override void PlayerExitMap(bool clusterChange)
-{
+override void PlayerExitMap (bool clusterChange) {
   Inventory Item;
 
-  if (clusterChange && !Level.bClusterHub && !Level.bKeepFullInventory)
-  {
-    for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
-    {
-      if (Item.bInvBar && Item.Amount > Item.InterHubAmount)
-      {
+  if (clusterChange && !Level.bClusterHub && !Level.bKeepFullInventory) {
+    for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+      if (Item.bInvBar && Item.Amount > Item.InterHubAmount) {
         Item.Amount = Item.InterHubAmount;
       }
     }
   }
 
-  // Strip all current powers
-  for (Item = EntityEx(MO).Inventory; Item;)
-  {
+  // strip all current powers
+  for (Item = EntityEx(MO).Inventory; Item; ) {
     Inventory Next = Item.Inventory;
-    if (Powerup(Item) && (Level.Game.deathmatch || clusterChange ||
-      !Item.bHubPower))
-    {
+    if (Powerup(Item) && (Level.Game.deathmatch || clusterChange || !Item.bHubPower)) {
       Item.Destroy();
     }
     Item = Next;
   }
 
-  if (clusterChange)
-  {
-    // Entering new cluster
-    // Some items are stripped.
-    for (Item = EntityEx(MO).Inventory; Item;)
-    {
+  if (clusterChange) {
+    // entering new cluster
+    // some items are stripped
+    for (Item = EntityEx(MO).Inventory; Item; ) {
       Inventory Next = Item.Inventory;
-      if (Item.bInterHubStrip /*&& Item.InterHubAmount < 1*/)
-      {
+      if (Item.bInterHubStrip /*&& Item.InterHubAmount < 1*/) {
         Item.Destroy();
       }
       Item = Next;
     }
   }
 
-  if (MorphTime)
-  {
-    SetWeapon(Weapon(Actor(MO).Tracer));  // Restore weapon
+  if (MorphTime) {
+    SetWeapon(Weapon(Actor(MO).Tracer)); // restore weapon
     MorphTime = 0.0;
   }
 
@@ -2837,215 +2336,172 @@ override void PlayerExitMap(bool clusterChange)
   BlendA = 0.0;
   Rain1 = none;
   Rain2 = none;
+  //k8: just in case
+  bReloadQueued = false;
+  Refire = 0;
+  LocalQuakeHappening = 0;
 }
+
 
 //==========================================================================
 //
 //  InventoryLeft
 //
 //==========================================================================
-
-final void InventoryLeft()
-{
-  if (!bInventoryAlwaysOpen)
-  {
-    if (!InventoryTime)
-    {
+final void InventoryLeft () {
+  if (!bInventoryAlwaysOpen) {
+    if (!InventoryTime) {
       InventoryTime = 5.0;
       return;
     }
     InventoryTime = 5.0;
   }
-  if (InvPtr)
-  {
+
+  if (InvPtr) {
     Inventory Prev = InvPtr.PrevInv();
-    if (Prev)
-    {
+    if (Prev) {
       InvPtr = Prev;
       AdjustInvFirst();
     }
   }
 }
 
+
 //==========================================================================
 //
 //  InventoryRight
 //
 //==========================================================================
-
-final void InventoryRight()
-{
-  if (!bInventoryAlwaysOpen)
-  {
-    if (!InventoryTime)
-    {
+final void InventoryRight () {
+  if (!bInventoryAlwaysOpen) {
+    if (!InventoryTime) {
       InventoryTime = 5.0;
       return;
     }
     InventoryTime = 5.0;
   }
-  if (InvPtr)
-  {
+
+  if (InvPtr) {
     Inventory Next = InvPtr.NextInv();
-    if (Next)
-    {
+    if (Next) {
       InvPtr = Next;
       AdjustInvFirst();
     }
   }
 }
 
+
 //==========================================================================
 //
 //  InventoryUse
 //
 //==========================================================================
-
-final void InventoryUse()
-{
+final void InventoryUse () {
   // flag to denote that it's okay to use an artifact
-  if (InventoryTime)
-  {
-    InventoryTime = 0.0;
-  }
-  else if (InvPtr)
-  {
-    EntityEx(MO).UseInventory(InvPtr);
-  }
+       if (InventoryTime) InventoryTime = 0.0;
+  else if (InvPtr) EntityEx(MO).UseInventory(InvPtr);
 }
+
 
 //==========================================================================
 //
 //  InventoryTick
 //
 //==========================================================================
-
-final void InventoryTick(float deltaTime)
-{
+final void InventoryTick (float deltaTime) {
   // turn inventory off after a certain amount of time
-  if (InventoryTime)
-  {
+  if (InventoryTime) {
     InventoryTime -= deltaTime;
-    if (InventoryTime <= 0.0)
-    {
-      InventoryTime = 0.0;
-    }
+    if (InventoryTime <= 0.0) InventoryTime = 0.0;
   }
-  if (ArtifactFlash)
-  {
-    ArtifactFlash--;
-  }
+  if (ArtifactFlash) --ArtifactFlash;
 }
+
 
 //==========================================================================
 //
 //  AdjustInvFirst
 //
 //==========================================================================
-
-final void AdjustInvFirst()
-{
+final void AdjustInvFirst () {
   Inventory Item;
 
-  if (!InvPtr)
-  {
+  if (!InvPtr) {
     InvFirst = none;
     return;
   }
 
-  //  Count how many items are following the current one, also make sure
-  // that first is not after this one.
+  // count how many items are following the current one, also make sure
+  // that first is not after this one
   int NumFollowing = 0;
-  for (Item = InvPtr.NextInv(); Item; Item = Item.NextInv())
-  {
-    NumFollowing++;
-    if (InvFirst == Item)
-    {
-      InvFirst = InvPtr;
-    }
+  for (Item = InvPtr.NextInv(); Item; Item = Item.NextInv()) {
+    ++NumFollowing;
+    if (InvFirst == Item) InvFirst = InvPtr;
   }
+
   int FirstOffs = 0;
-  for (Item = InvPtr; Item && Item != InvFirst; Item = Item.PrevInv())
-  {
-    FirstOffs++;
-  }
-  while (FirstOffs > InvSize)
-  {
+  for (Item = InvPtr; Item && Item != InvFirst; Item = Item.PrevInv()) ++FirstOffs;
+
+  while (FirstOffs > InvSize) {
     InvFirst = InvFirst.NextInv();
-    FirstOffs--;
+    --FirstOffs;
   }
-  while (NumFollowing + FirstOffs < InvSize && InvFirst.PrevInv())
-  {
+
+  while (NumFollowing+FirstOffs < InvSize && InvFirst.PrevInv()) {
     InvFirst = InvFirst.PrevInv();
-    FirstOffs++;
+    ++FirstOffs;
   }
 }
+
 
 //==========================================================================
 //
 //  InventoryThrow
 //
 //==========================================================================
-
-final EntityEx InventoryThrow()
-{
-  if (!InvPtr)
-  {
-    return none;
-  }
+final EntityEx InventoryThrow () {
+  if (!InvPtr) return none;
   return EntityEx(MO).DropInventory(InvPtr);
 }
+
 
 //==========================================================================
 //
 //  UseFlyPower
 //
 //==========================================================================
-
-final void UseFlyPower()
-{
+final void UseFlyPower () {
   PlayerUseArtifactType(ArtiFly);
 }
+
 
 //==========================================================================
 //
 //  PlayerUseArtifactType
 //
 //==========================================================================
-
-final void PlayerUseArtifactType(class!Inventory arti)
-{
+final void PlayerUseArtifactType (class!Inventory arti) {
   Inventory Item = EntityEx(MO).FindInventory(arti);
-  if (Item)
-  {
-    EntityEx(MO).UseInventory(Item);
-  }
+  if (Item) EntityEx(MO).UseInventory(Item);
 }
+
 
 //==========================================================================
 //
 //  PlayerNextArtifact
 //
 //==========================================================================
-
-final void PlayerNextArtifact()
-{
-  if (!InvPtr)
-  {
-    return;
-  }
+final void PlayerNextArtifact () {
+  if (!InvPtr) return;
   Inventory NewPtr = InvPtr.PrevInv();
-  if (!NewPtr)
-  {
+  if (!NewPtr) {
     NewPtr = InvPtr;
-    while (NewPtr.NextInv())
-    {
-      NewPtr = NewPtr.NextInv();
-    }
+    while (NewPtr.NextInv()) NewPtr = NewPtr.NextInv();
   }
   InvPtr = NewPtr;
   AdjustInvFirst();
 }
+
 
 //==========================================================================
 //
@@ -3054,137 +2510,83 @@ final void PlayerNextArtifact()
 //  Fall on your face when dying. Decrease POV height to floor height.
 //
 //==========================================================================
-
-final void DeathPlayerTick(float deltaTime)
-{
-  int dir;
-  float delta;
-
+final void DeathPlayerTick (float deltaTime) {
   MovePsprites(deltaTime);
 
-  if (MO.WaterLevel > 1)
-  {
-    MO.Velocity.z = -60.0;  // drift towards bottom
-  }
+  if (MO.WaterLevel > 1) MO.Velocity.z = -60.0; // drift towards bottom
 
   onground = (MO.Origin.z <= MO.FloorZ);
 
-  if (PlayerChunk(MO))
-  {
-    // Flying bloody skull or flying ice chunk
+  if (PlayerChunk(MO)) {
+    // flying bloody skull or flying ice chunk
     ViewHeight = 6.0;
     DeltaViewHeight = 0.0;
     //damagecount = 20;
-    if (onground)
-    {
+    if (onground) {
 #ifdef FIXME
-      if (lookdir < 60)
-      {
-        int lookDelta = (60 - lookdir) / 8;
-        if (lookDelta < 1 && (level->tictime & 1))
-        {
-          lookDelta = 1;
-        }
-        else if (lookDelta > 6)
-        {
-          lookDelta = 6;
-        }
+      if (lookdir < 60) {
+        int lookDelta = (60-lookdir)/8;
+             if (lookDelta < 1 && (level->tictime&1)) lookDelta = 1;
+        else if (lookDelta > 6) lookDelta = 6;
         lookdir += lookDelta;
       }
 #endif
     }
-  }
-  else if (Actor(MO).DamageType != 'Ice')
-  {
-    // Fall to ground (if not frozen)
+  } else if (Actor(MO).DamageType != 'Ice') {
+    // fall to ground (if not frozen)
     DeltaViewHeight = 0.0;
-    if (ViewHeight > 6.0)
-    {
-      ViewHeight -= 35.0 * deltaTime;
-    }
-    if (ViewHeight < 6.0)
-    {
-      ViewHeight = 6.0;
-    }
+    if (ViewHeight > 6.0) ViewHeight -= 35.0*deltaTime;
+    if (ViewHeight < 6.0) ViewHeight = 6.0;
 #ifdef FIXME
-    if (lookdir > 0)
-    {
-      lookdir -= 6;
-    }
-    else if (lookdir < 0)
-    {
-      lookdir += 6;
-    }
-    if (abs(lookdir) < 6)
-    {
-      lookdir = 0;
-    }
+         if (lookdir > 0) lookdir -= 6;
+    else if (lookdir < 0) lookdir += 6;
+    if (abs(lookdir) < 6) lookdir = 0;
 #endif
   }
   CalcHeight(deltaTime);
 
-  if (Attacker && Attacker != MO)
-  {
-    // Watch killer
-    dir = EntityEx(MO).FaceActor(EntityEx(Attacker), delta);
-    if (delta < 10.0)
-    {
-      // Looking at killer, so fade damage and poison counters
-      if (DamageFlash)
-      {
+  if (Attacker && Attacker != MO) {
+    // watch killer
+    float delta;
+    int dir = EntityEx(MO).FaceActor(EntityEx(Attacker), delta);
+    if (delta < 10.0) {
+      // looking at killer, so fade damage and poison counters
+      if (DamageFlash) {
         DamageFlash -= deltaTime;
-        if (DamageFlash <= 0.0)
-          DamageFlash = 0.0;
+        if (DamageFlash <= 0.0) DamageFlash = 0.0;
       }
-      if (PoisonCount)
-      {
-        PoisonCount--;
-      }
+      if (PoisonCount) --PoisonCount;
     }
-    delta = delta / 8.0;
-    if (delta > 5.0)
-    {
-      delta = 5.0;
-    }
-    if (dir)
-    {
-      // Turn clockwise
+    delta = fmin(5.0, delta/8.0);
+    if (dir) {
+      // turn clockwise
       MO.Angles.yaw += delta;
-    }
-    else
-    {
-      // Turn counter clockwise
+    } else {
+      // turn counter clockwise
       MO.Angles.yaw -= delta;
     }
-  }
-  else if (DamageFlash)
-  {
+  } else if (DamageFlash) {
     DamageFlash -= deltaTime;
-    if (DamageFlash <= 0.0)
-      DamageFlash = 0.0;
-  }
-  else if (PoisonCount)
-  {
-    PoisonCount--;
+    if (DamageFlash <= 0.0) DamageFlash = 0.0;
+  } else if (PoisonCount) {
+    --PoisonCount;
   }
 
-  if (CheckForRespawn(deltaTime))
-  {
+  if (CheckForRespawn(deltaTime)) {
     InvPtr = none;
     InvFirst = none;
     PlayerState = PST_REBORN;
   }
 }
 
+
 //==========================================================================
 //
 //  CheckForRespawn
 //
 //==========================================================================
-
-bool CheckForRespawn(float deltaTime)
-{
-  return !!(Buttons & BT_USE);
+bool CheckForRespawn (float deltaTime) {
+  return !!(Buttons&BT_USE);
 }
 
 
@@ -3329,17 +2731,18 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //  PlayerTick
 //
 //==========================================================================
-override void PlayerTick(float deltaTime)
-{
+override void PlayerTick (float deltaTime) {
   if (bIsBot) {
     if (Level.bFrozen && !(Cheats&CF_TIMEFREEZE)) BotTick(deltaTime);
   }
 
+  /*
   if (!MO) {
     print("playertick(%C): %f", self, deltaTime);
     print("  playertick(%C): MO=%C", self, MO);
     print("  playertick(%C): MO.XLevel=%C", self, MO.XLevel);
   }
+  */
 
   //print("***000: BUTTONS: 0x%08x; old=0x%08x", Buttons, OldButtons);
 
@@ -3359,17 +2762,13 @@ override void PlayerTick(float deltaTime)
   }
 
 
-  if ((MO.XLevel.TicTime % (3 * 35) == 0) && (Cheats& CF_REGENERATION) && Health > 0)
-  {
-    if (EntityEx(MO).GiveBody(5) &&
-      !GetSoundPlayingInfo(MO, GetSoundID('*regenerate')))
-    {
+  if ((MO.XLevel.TicTime%(3*35) == 0) && (Cheats& CF_REGENERATION) && Health > 0) {
+    if (EntityEx(MO).GiveBody(5) && !GetSoundPlayingInfo(MO, GetSoundID('*regenerate'))) {
       MO.PlaySound('*regenerate', CHAN_VOICE);
     }
   }
 
-  if (Actor(MO).bJustAttacked)
-  {
+  if (Actor(MO).bJustAttacked) {
     ForwardMove = 100.0;
     SideMove = 0.0;
     Actor(MO).bJustAttacked = false;
@@ -3383,9 +2782,7 @@ override void PlayerTick(float deltaTime)
     ForwardMove = 0.0;
     SideMove = 0.0;
     FlyMove = 0.0;
-  }
-  else if (bFrozen)
-  {
+  } else if (bFrozen) {
     ForwardMove = 0.0;
     SideMove = 0.0;
     FlyMove = 0.0;
@@ -3394,49 +2791,30 @@ override void PlayerTick(float deltaTime)
   WorldTimer += deltaTime;
   InventoryTick(deltaTime);
 
-  if (PlayerState == PST_DEAD)
-  {
+  if (PlayerState == PST_DEAD) {
     DeathPlayerTick(deltaTime);
     return;
   }
 
-  // Copy view angles
-  if (MO == Camera)
-  {
-    MO.Angles = ViewAngles;
+  // copy view angles
+  if (MO == Camera) MO.Angles = ViewAngles;
+
+  if (JumpTime) {
+    JumpTime = fmax(0.0, JumpTime-deltaTime);
   }
 
-  if (JumpTime)
-  {
-    JumpTime -= deltaTime;
-    if (JumpTime <= 0.0)
-    {
-      JumpTime = 0.0;
-    }
-  }
-  if (MorphTime)
-  {
-    PlayerPawn(MO).MorphPlayerThink();
-  }
+  if (MorphTime) PlayerPawn(MO).MorphPlayerThink();
 
-  //  Move around.
-  //  ReactionTime is used to prevent movement for a bit after a teleport.
-  if (Actor(MO).ReactionTime)
-  {
+  // move around
+  // ReactionTime is used to prevent movement for a bit after a teleport
+  if (Actor(MO).ReactionTime) {
     Actor(MO).ReactionTime -= deltaTime;
-    if (Actor(MO).ReactionTime <= 0.0)
-      Actor(MO).ReactionTime = 0.0;
-    if (Actor(MO).bWaterJump)
-      WaterJump();
-  }
-  else
-  {
-    if (MO.WaterLevel > 1)
-      WaterMove(deltaTime);
-    else
-      MovePlayer(deltaTime);
+    if (Actor(MO).ReactionTime <= 0.0) Actor(MO).ReactionTime = 0.0;
+    if (Actor(MO).bWaterJump) WaterJump();
+  } else {
+    if (MO.WaterLevel > 1) WaterMove(deltaTime); else MovePlayer(deltaTime);
     if (EntityEx(MO).FindInventory(PowerSpeed) &&
-      !(Level.XLevel.TicTime & 1) && Length(MO.Velocity) > 12.0 * 35.0)
+        !(Level.XLevel.TicTime&1) && Length(MO.Velocity) > 12.0*35.0)
     {
       SpawnSpeedEffect();
     }
@@ -3444,189 +2822,138 @@ override void PlayerTick(float deltaTime)
 
   CalcHeight(deltaTime);
 
-  if (MO.Sector->special || MO.Sector->Damage)
-  {
-    PlayerInSpecialSector(deltaTime);
-  }
+  if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
+
   PlayerOnSpecialFlat(Actor(MO).GetFloorType());
   PlayerInContents(deltaTime);
 
-  if (MO.Velocity.z <= -35.0 * 35.0 && MO.Velocity.z >= -40.0 * 35.0 &&
-    !MorphTime && MO.WaterLevel == 0 &&
-    !GetSoundPlayingInfo(MO, GetSoundID('*falling')))
+  if (MO.Velocity.z <= -35.0*35.0 && MO.Velocity.z >= -40.0*35.0 &&
+      !MorphTime && MO.WaterLevel == 0 &&
+      !GetSoundPlayingInfo(MO, GetSoundID('*falling')))
   {
     MO.PlaySound('*falling', CHAN_VOICE);
   }
 
-  // Check for weapon change.
-  if (Impulse)
-  {
-    PlayerImpulse();
-  }
+  // check for weapon change (and other impulse commands)
+  if (Impulse) PlayerImpulse();
 
   // check for use
-  if (Buttons & BT_USE)
-  {
-    if (!bUseDown)
-    {
+  if (Buttons&BT_USE) {
+    if (!bUseDown) {
       EntityEx(MO).UseLines(USERANGE, USETHINGRANGE, '*usefail');
       bUseDown = true;
     }
-  }
-  else
-  {
+  } else {
     bUseDown = false;
   }
 
-  if (!ReadyWeapon && PendingWeapon)
-  {
+  if (!ReadyWeapon && PendingWeapon) {
     SetWeapon(PendingWeapon);
     BringUpWeapon();
   }
 
-  // Morph counter
-  if (MorphTime)
-  {
-    if (ChickenPeck)
-    {
-      // Chicken attack counter
+  // morph counter
+  if (MorphTime) {
+    if (ChickenPeck) {
+      // chicken attack counter
       ChickenPeck -= 3;
     }
     MorphTime -= deltaTime;
-    if (MorphTime <= 0.0)
-    {
-      // Attempt to undo the chicken/pig
+    if (MorphTime <= 0.0) {
+      // attempt to undo the chicken/pig
       MorphTime = 0.0;
       UndoPlayerMorph(false, self);
     }
   }
 
-  //  Cycle psprites
+  // cycle psprites
   MovePsprites(deltaTime);
 
-  //  Counters.
-  if (PoisonCount && Level.XLevel.Time - LastPoisonTime >= 0.5)
-  {
+  // counters
+  if (PoisonCount && Level.XLevel.Time-LastPoisonTime >= 0.5) {
     PoisonCount -= 5;
-    if (PoisonCount < 0)
-    {
-      PoisonCount = 0;
-    }
+    if (PoisonCount < 0) PoisonCount = 0;
     LastPoisonTime = Level.XLevel.Time;
     Actor(MO).PoisonDamage(Poisoner, Poisoner, 1, true);
   }
 
-  if (DamageFlash)
-  {
+  if (DamageFlash) {
     DamageFlash -= deltaTime;
-    if (DamageFlash <= 0.0)
-      DamageFlash = 0.0;
+    if (DamageFlash <= 0.0) DamageFlash = 0.0;
   }
 
-  if (BonusFlash)
-  {
+  if (BonusFlash) {
     BonusFlash -= deltaTime;
-    if (BonusFlash <= 0.0)
-      BonusFlash = 0.0;
+    if (BonusFlash <= 0.0) BonusFlash = 0.0;
   }
 
-  if (HazardTime)
-  {
+  if (HazardTime) {
     HazardTime -= deltaTime;
-    if (HazardTime <= 0.0)
-      HazardTime = 0.0;
-    if (Level.XLevel.Time - LastHazardTime >= 32.0 / 35.0 &&
-      HazardTime > 16.0)
-    {
+    if (HazardTime <= 0.0) HazardTime = 0.0;
+    if (Level.XLevel.Time-LastHazardTime >= 32.0/35.0 && HazardTime > 16.0) {
       LastHazardTime = Level.XLevel.Time;
       Actor(MO).Damage(none, none, 5);
     }
   }
 
   // [RH] Zoom the player's FOV
-  float desired = DesiredFOV; // Default player FOV.
-  // Adjust FOV using on the currently held weapon.
-  if (PlayerState != PST_DEAD &&    // No adjustment while dead.
-    ReadyWeapon &&          // No adjustment if no weapon.
-    ReadyWeapon.FOVScale != 0.0)  // No adjustment if the adjustment is zero.
+  float desired = DesiredFOV; // default player FOV
+  // adjust FOV using on the currently held weapon
+  if (PlayerState != PST_DEAD && // no adjustment while dead
+      ReadyWeapon && // no adjustment if no weapon
+      ReadyWeapon.FOVScale != 0.0) // no adjustment if the adjustment is zero
   {
-    // A negative scale is used top prevent G_AddViewAngle/G_AddViewPitch
-    // from scaling with the FOV scale.
+    // a negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
+    // from scaling with the FOV scale
     desired *= fabs(ReadyWeapon.FOVScale);
   }
 
-  if (FOV != desired)
-  {
-    if (fabs(FOV - desired) < 7.0)
-    {
+  if (FOV != desired) {
+    if (fabs(FOV-desired) < 7.0) {
       FOV = desired;
+    } else {
+      float zoom = FMax(7.0, fabs(FOV-desired)*0.025);
+      if (FOV > desired) FOV = FOV-zoom; else FOV = FOV+zoom;
     }
-    else
-    {
-      float zoom = FMax(7.0, fabs(FOV - desired) * 0.025);
-
-      if (FOV > desired)
-      {
-        FOV = FOV - zoom;
-      }
-      else
-      {
-        FOV = FOV + zoom;
-      }
-    }
-    SetFOV(ftoi(FOV));
+    SetFOV(int(FOV));
   }
 }
+
 
 //==========================================================================
 //
 //  SetViewPos
 //
 //==========================================================================
+final override void SetViewPos () {
+  // just in a case camera entity has been destroyed
+  if (!Camera) Camera = MO;
 
-final override void SetViewPos()
-{
-  //  Just in a case camera entity has been destroyed
-  if (!Camera)
-  {
-    Camera = MO;
-  }
-
-  if (MO != Camera)
-  {
+  if (MO != Camera) {
     ViewOrg = Camera.Origin;
     ViewOrg.z += EntityEx(Camera).CameraHeight;
     ViewAngles = Camera.Angles;
-  }
-  else
-  {
+  } else {
     ViewOrg.x = MO.Origin.x;
     ViewOrg.y = MO.Origin.y;
 
-    if (LocalQuakeHappening)
-    {
-      float intensity;
-
-      intensity = itof(LocalQuakeHappening);
-      ViewOrg.x += (Random() - 0.5) * (intensity * 4.0);
-      ViewOrg.y += (Random() - 0.5) * (intensity * 4.0);
+    if (LocalQuakeHappening) {
+      float intensity = float(LocalQuakeHappening);
+      ViewOrg.x += (Random()-0.5)*(intensity*4.0);
+      ViewOrg.y += (Random()-0.5)*(intensity*4.0);
     }
 
-    if (PlayerState != PST_DEAD)
-    {
+    if (PlayerState != PST_DEAD) {
       ViewAngles = MO.Angles;
-    }
-    else
-    {
+    } else {
       ViewAngles.yaw = MO.Angles.yaw;
       ViewAngles.pitch = MO.Angles.pitch;
     }
 
-    if (MorphTime && ChickenPeck)
-    {
-      // Set chicken attack view position
-      ViewOrg.x += itof(ChickenPeck) * cos(MO.Angles.yaw);
-      ViewOrg.y += itof(ChickenPeck) * sin(MO.Angles.yaw);
+    if (MorphTime && ChickenPeck) {
+      // set chicken attack view position
+      ViewOrg.x += float(ChickenPeck)*cos(MO.Angles.yaw);
+      ViewOrg.y += float(ChickenPeck)*sin(MO.Angles.yaw);
     }
   }
 
@@ -3640,152 +2967,120 @@ final override void SetViewPos()
     SoundEnvironment = 0;
   }
 
-  if (!SoundEnvironment)
-  {
-    if (Camera.WaterLevel >= 3)
-    {
-      //  Under water
+  if (!SoundEnvironment) {
+    if (Camera.WaterLevel >= 3) {
+      // under water
       SoundEnvironment = 0x1600;
-    }
-    else
-    {
-      //  Generic
+    } else {
+      // generic
       SoundEnvironment = 1;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  ClientTick
 //
 //==========================================================================
-
-override void ClientTick(float deltaTime)
-{
+override void ClientTick (float deltaTime) {
   bAutoAim = !!GetCvar('autoaim');
 }
+
 
 //==========================================================================
 //
 //  AdjustPlayerAngle
 //
 //==========================================================================
-
-final void AdjustPlayerAngle(EntityEx AimTarget)
-{
+final void AdjustPlayerAngle (EntityEx AimTarget) {
   float angle;
   float difference;
 
-  angle = atan2(AimTarget.Origin.y - MO.Origin.y,
-    AimTarget.Origin.x - MO.Origin.x);
-  difference = AngleMod180(angle - MO.Angles.yaw);
-  if (fabs(difference) > 5.0)
-  {
+  angle = atan2(AimTarget.Origin.y-MO.Origin.y, AimTarget.Origin.x-MO.Origin.x);
+  difference = AngleMod180(angle-MO.Angles.yaw);
+  if (fabs(difference) > 5.0) {
     MO.Angles.yaw += difference > 0.0 ? 5.0 : -5.0;
-  }
-  else
-  {
+  } else {
     MO.Angles.yaw = angle;
   }
   bFixAngle = true;
 }
+
 
 //==========================================================================
 //
 //  UndoPlayerMorph
 //
 //==========================================================================
-
-final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
-{
+final bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   Actor A;
 
-  if (EntityEx(MO).bInvulnerable && (self != Activator ||
-    !(MorphStyle & EntityEx::MORPH_WHENINVULNERABLE)))
-  {
-    // Immune when invulnerable unless this is something we initiated.
-    // If the WORLD is the initiator, the same player should be given
+  if (EntityEx(MO).bInvulnerable && (self != Activator || !(MorphStyle&EntityEx::MORPH_WHENINVULNERABLE))) {
+    // immune when invulnerable unless this is something we initiated.
+    // if the WORLD is the initiator, the same player should be given
     // as the activator; WORLD initiated actions should always succeed.
     return false;
   }
 
-  int CorrectWeapon = MorphStyle & EntityEx::MORPH_LOSEACTUALWEAPON;
+  int CorrectWeapon = MorphStyle&EntityEx::MORPH_LOSEACTUALWEAPON;
 
   MO.UnlinkFromWorld();
-  if (BaseClass >= Level.Game.PlayerClasses.Num)
-  {
-    Error("UndoPlayerMorph: Unknown class type");
-  }
-  A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]),
-    MO.Origin, default, default, false);
-  if (!Force && !A.TestLocation())
-  {
-    // Didn't fit
+  if (BaseClass >= Level.Game.PlayerClasses.Num) Error("UndoPlayerMorph: Unknown class type");
+
+  A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]), MO.Origin, default, default, false);
+  if (!Force && !A.TestLocation()) {
+    // didn't fit
     A.Destroy();
     MO.LinkToWorld();
     MorphTime = 2.0;
     return false;
   }
+
   MO.LinkToWorld();
-  // Set colour translation
-  A.Translation = (Entity::TRANSL_Player << Entity::TRANSL_TYPE_SHIFT) +
-    GetPlayerNum();
+  // set colour translation
+  A.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
   A.Angles = MO.Angles;
   ViewHeight = PlayerPawn(A).ViewHeight;
   DeltaViewHeight = 0.0;
   A.Player = self;
   A.bIsPlayer = true;
   A.ReactionTime = 0.5;
-  if (MO.bFly)
-  {
+  if (MO.bFly) {
     A.bFly = true;
     A.bNoGravity = true;
   }
   A.bShadow = EntityEx(MO).bShadow;
   A.bGhost = EntityEx(MO).bGhost;
   A.ObtainInventory(EntityEx(MO));
-  if (MO.TID && (MorphStyle & EntityEx::MORPH_NEWTIDBEHAVIOUR))
-  {
-    A.SetTID(MO.TID);
-  }
+  if (MO.TID && (MorphStyle&EntityEx::MORPH_NEWTIDBEHAVIOUR)) A.SetTID(MO.TID);
   MorphTime = 0.0;
   MorphStyle = 0;
   Inventory Pw = EntityEx(MO).FindInventory(PowerWeaponLevel2);
-  if (Pw)
-  {
-    Pw.Destroy();
-  }
+  if (Pw) Pw.Destroy();
   A.Health = GetRebornHealth();
   Health = A.Health;
   PClass = BaseClass;
   Weapon OldWeapon = ReadyWeapon;
   PostMorphWeapon(Weapon(Actor(MO).Tracer));
-  if (CorrectWeapon)
-  {
-    // Better "lose morphed weapon" semantics
+  if (CorrectWeapon) {
+    // better "lose morphed weapon" semantics
     class!Weapon MorphWeapon = PlayerPawn(MO).MorphWeapon;
-    if (MorphWeapon)
-    {
+    if (MorphWeapon) {
       Weapon OrigWpn = Weapon(EntityEx(MO).FindInventory(MorphWeapon));
-      if (OrigWpn && OrigWpn.bGivenAsMorphWeapon)
-      {
-        // You don't get to keep your morphed weapon.
+      if (OrigWpn && OrigWpn.bGivenAsMorphWeapon) {
+        // you don't get to keep your morphed weapon
         OrigWpn.Destroy();
       }
     }
-  }
-  else
-  {
-    if (OldWeapon)
-    {
-      OldWeapon.Destroy();
-    }
+  } else {
+    if (OldWeapon) OldWeapon.Destroy();
   }
 
   Level.Spawn(UnmorphFlash ? UnmorphFlash : class!Actor(TeleportFog),
-    MO.Origin + vector(20.0 * cos(MO.Angles.yaw),
-    20.0 * sin(MO.Angles.yaw),
+    MO.Origin+vector(20.0*cos(MO.Angles.yaw),
+    20.0*sin(MO.Angles.yaw),
     LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
   MO.SetState(MO.FindState('FreeTargMobj'));
@@ -3795,43 +3090,32 @@ final bool UndoPlayerMorph(bool Force, PlayerEx Activator)
   return true;
 }
 
+
 //===========================================================================
 //
 //  ActivateMorphWeapon
 //
 //===========================================================================
-
-final void ActivateMorphWeapon()
-{
+final void ActivateMorphWeapon () {
   class!Weapon WpnClass = PlayerPawn(MO).MorphWeapon;
   Weapon Wpn;
-  if (WpnClass)
-  {
+  if (WpnClass) {
     Wpn = Level.Spawn(WpnClass);
     Wpn.bGivenAsMorphWeapon = true;
-  }
-  else
-  {
-    // Couldn't find any weapons, use the default weapon for this player
-    // (from initial inventory)
-    foreach (int i; 0..EntityEx(MO).DropItemList.Num)
-    {
-      Inventory Item = Inventory(Level.Spawn(EntityEx(MO).DropItemList[i].Type, default, default, default, false));
-      if (EntityEx(MO).DropItemList[i].Amount > 0)
-      {
+  } else {
+    // couldn't find any weapons, use the default weapon for this player (from initial inventory)
+    foreach (int i; 0..EntityEx(MO).DropItemList.Num) {
+      Inventory Item = Inventory(Level.Spawn(GetClassReplacement(EntityEx(MO).DropItemList[i].Type), default, default, default, false));
+      if (EntityEx(MO).DropItemList[i].Amount > 0) {
         Item.Amount = EntityEx(MO).DropItemList[i].Amount;
       }
-      if (Weapon(Item))
-      {
+      if (Weapon(Item)) {
         Wpn = Weapon(Item);
         WpnClass = class!Weapon(Weapon(Item).Class);
       }
     }
   }
-  if (!Wpn.TryPickup(EntityEx(MO)))
-  {
-    Wpn.Destroy();
-  }
+  if (!Wpn.TryPickup(EntityEx(MO))) Wpn.Destroy();
 
   SetWeapon(Weapon(EntityEx(MO).FindInventory(WpnClass)));
   SetViewObject(ReadyWeapon);
@@ -3843,14 +3127,13 @@ final void ActivateMorphWeapon()
   ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
 }
 
+
 //===========================================================================
 //
 //  PostMorphWeapon
 //
 //===========================================================================
-
-final void PostMorphWeapon(Weapon weapon)
-{
+final void PostMorphWeapon (Weapon weapon) {
   SetWeapon(weapon);
   ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
   SetViewObject(ReadyWeapon);
@@ -3861,46 +3144,35 @@ final void PostMorphWeapon(Weapon weapon)
   }
 }
 
+
 //==========================================================================
 //
 //  AddVisitedMap
 //
 //==========================================================================
-
-final void AddVisitedMap(name Map) {
+final void AddVisitedMap (name Map) {
   foreach (auto i; 0..MAX_MAPS_VISITED) {
     if (MapsVisited[i] == Map) return;
     if (!MapsVisited[i]) { MapsVisited[i] = Map; return; }
   }
 }
 
+
 //==========================================================================
 //
 //  GetMaxHealth
 //
 //==========================================================================
-
-int GetMaxHealth()
-{
+int GetMaxHealth () {
   int Max = (PlayerPawn(MO).MaxHealth > 0 ? PlayerPawn(MO).MaxHealth :
     Level.CompatDehHealth ? MAXHEALTH :
-    HealthBonus.default.MaxAmount / 2) + Stamina;
-  if (MorphTime)
-  {
-    if (MorphStyle & EntityEx::MORPH_FULLHEALTH)
-    {
-      if (!(MorphStyle & EntityEx::MORPH_ADDSTAMINA))
-      {
-        Max -= Stamina;
-      }
-    }
-    else
-    {
+    HealthBonus.default.MaxAmount/2)+Stamina;
+  if (MorphTime) {
+    if (MorphStyle&EntityEx::MORPH_FULLHEALTH) {
+      if (!(MorphStyle&EntityEx::MORPH_ADDSTAMINA)) Max -= Stamina;
+    } else {
       Max = MAXMORPHHEALTH;
-      if (MorphStyle & EntityEx::MORPH_ADDSTAMINA)
-      {
-        Max += Stamina;
-      }
+      if (MorphStyle&EntityEx::MORPH_ADDSTAMINA) Max += Stamina;
     }
   }
   return Max;
@@ -3958,56 +3230,42 @@ override void Cheat_DumpInventory () {
 //  Cheat_God
 //
 //==========================================================================
-
-override void Cheat_God()
-{
+override void Cheat_God () {
   Cheats ^= CF_GODMODE;
-  if (Cheats & CF_GODMODE)
-  {
-    if (LineSpecialGameInfo(Level.Game).GOD_HEALTH)
-    {
-      if (MO)
-      {
-        MO.Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
-      }
+  if (Cheats&CF_GODMODE) {
+    if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
+      if (MO) MO.Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
       Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
       cprint("Degreelessness Mode On");
-    }
-    else
-    {
+    } else {
       cprint("GOD MODE ON");
     }
-  }
-  else
-  {
-    if (LineSpecialGameInfo(Level.Game).GOD_HEALTH)
-    {
+  } else {
+    if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
       cprint("Degreelessness Mode Off");
-    }
-    else
-    {
+    } else {
       cprint("GOD MODE OFF");
     }
   }
 }
+
 
 //==========================================================================
 //
 //  Cheat_Buddha
 //
 //==========================================================================
-
 override void Cheat_Buddha () {
   Cheats ^= CF_BUDDHA;
   if (Cheats&CF_BUDDHA) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
 }
+
 
 //==========================================================================
 //
 //  Cheat_Summon
 //
 //==========================================================================
-
 override void Cheat_Summon () {
   //print("SUMMON: argc=%d", Cmd_GetArgC());
   if (!MO.bIsPlayer || !Level) return;
@@ -4028,19 +3286,20 @@ override void Cheat_Summon () {
   }
 
   //writeln("summon 0: ", GetClassName(moClass));
-  moClass = class!EntityEx(GetClassReplacement(moClass));
+  moClass = GetClassReplacement(moClass);
   //writeln("summon 1: ", GetClassName(moClass));
 
   auto spwspate = FindClassState(moClass, 'Spawn');
 
-  // if actor has no sprites, also map it to the unknown thing
-  if (spwspate && !AreStateSpritesPresent(spwspate)) {
-    print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
+  // if actor has no spawn state, we cannot summon it
+  if (!spwspate) {
+    print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
     return;
   }
 
-  if (!spwspate) {
-    print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
+  // if actor has no spawn sprites, we cannot summon it
+  if (!AreStateSpritesPresent(spwspate)) {
+    print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
     return;
   }
 
@@ -4054,108 +3313,90 @@ override void Cheat_Summon () {
   Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
 }
 
+
 //==========================================================================
 //
 //  Cheat_NoClip
 //
 //==========================================================================
-
-override void Cheat_NoClip()
-{
+override void Cheat_NoClip () {
   Cheats ^= CF_NOCLIP;
-  if (Cheats & CF_NOCLIP)
-  {
+  if (Cheats&CF_NOCLIP) {
     MO.bColideWithThings = false;
     MO.bColideWithWorld = false;
     cprint("No Clipping Mode ON");
-  }
-  else
-  {
+  } else {
     MO.bColideWithThings = true;
     MO.bColideWithWorld = true;
     cprint("No Clipping Mode OFF");
   }
 }
 
+
 //==========================================================================
 //
 //  Cheat_KillAll
 //
 //==========================================================================
-
-override void Cheat_KillAll()
-{
+override void Cheat_KillAll () {
   cprint("%d MONSTERS KILLED", LineSpecialLevelInfo(Level).P_Massacre());
 }
+
 
 //==========================================================================
 //
 //  Cheat_NoWeapons
 //
 //==========================================================================
+override void Cheat_NoWeapons () {
+  if (MorphTime) return;
 
-override void Cheat_NoWeapons()
-{
-  if (MorphTime)
-  {
-    return;
-  }
-  //  Find weakest weapon.
+  // find weakest weapon
   Inventory Item;
   Weapon Weakest = none;
-  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory)
-  {
-    if (Weapon(Item) && (!Weakest ||
-      Weakest.SelectionOrder < Weapon(Item).SelectionOrder))
-    {
+  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    if (Weapon(Item) && (!Weakest || Weakest.SelectionOrder < Weapon(Item).SelectionOrder)) {
       Weakest = Weapon(Item);
     }
   }
-  //  Removed all others.
-  for (Item = EntityEx(MO).Inventory; Item; )
-  {
+
+  // removed all others
+  for (Item = EntityEx(MO).Inventory; Item; ) {
     Inventory Next = Item.Inventory;
-    if ((Weapon(Item) && Item != Weakest) || FourthWeaponHolder(Item))
-    {
+    if ((Weapon(Item) && Item != Weakest) || FourthWeaponHolder(Item)) {
       Item.Destroy();
     }
     Item = Next;
   }
   SetWeapon(Weakest);
   PendingWeapon = Weakest;
-  cprint("CHEATER - YOU DON'T DESERVE WEAPONS");
+
+  cprint("CHEATER-YOU DON'T DESERVE WEAPONS");
 }
+
 
 //==========================================================================
 //
 //  Cheat_Fly
 //
 //==========================================================================
-
-override void Cheat_Fly()
-{
-  if (!bFly)
-  {
+override void Cheat_Fly () {
+  if (!bFly) {
     bFly = true;
     MO.bFly = true;
     MO.bNoGravity = true;
-    if (MO.Origin.z <= MO.FloorZ)
-    {
+    if (MO.Origin.z <= MO.FloorZ) {
       // thrust the player in the air a bit
       FlyHeight = 10.0;
     }
-    if (MO.Velocity.z <= -35.0 * 35.0)
-    {
+    if (MO.Velocity.z <= -35.0*35.0) {
       // stop falling scream
       MO.StopSound(CHAN_VOICE);
     }
     cprint("You feel lighter");
-  }
-  else
-  {
-    if (MO.Origin.z != MO.FloorZ)
-    {
-//FIXME     player->centreing = true;
+  } else {
+    if (MO.Origin.z != MO.FloorZ) {
+      //FIXME: player->centreing = true;
     }
     bFly = false;
     MO.bFly = false;
@@ -4164,74 +3405,77 @@ override void Cheat_Fly()
   }
 }
 
+
 //==========================================================================
 //
 //  Cheat_NoTarget
 //
 //==========================================================================
-
-override void Cheat_NoTarget()
-{
+override void Cheat_NoTarget () {
   bNoTarget = !bNoTarget;
-  if (bNoTarget)
-  {
+  if (bNoTarget) {
     cprint("No Target Mode ON");
-  }
-  else
-  {
+  } else {
     cprint("No Target Mode OFF");
   }
 }
+
 
 //==========================================================================
 //
 //  Cheat_Anubis
 //
 //==========================================================================
-
-override void Cheat_Anubis()
-{
+override void Cheat_Anubis () {
   Cheats ^= CF_FRIGHTENING;
-  if (Cheats & CF_FRIGHTENING)
-  {
+  if (Cheats&CF_FRIGHTENING) {
     cprint("\"Quake with fear!\"");
-  }
-  else
-  {
+  } else {
     cprint("No more ogre armor");
   }
 }
+
 
 //==========================================================================
 //
 //  Cheat_Freeze
 //
 //==========================================================================
-
-override void Cheat_Freeze()
-{
+override void Cheat_Freeze () {
   Cheats ^= CF_TIMEFREEZE;
-  if (Cheats & CF_TIMEFREEZE)
-  {
+  if (Cheats&CF_TIMEFREEZE) {
     cprint("Freeze mode on");
     Level.bFrozen = true;
-  }
-  else
-  {
+  } else {
     cprint("Freeze mode off");
     Level.bFrozen = false;
   }
 }
 
-bool CheckFriendlyFire(EntityEx source, int damage)
-{
+
+//==========================================================================
+//
+//  CheckFriendlyFire
+//
+//  TODO
+//
+//==========================================================================
+bool CheckFriendlyFire (EntityEx source, int damage) {
   return false;
 }
 
-bool IsWeaponAlwaysExtremeDeath()
-{
+
+//==========================================================================
+//
+//  IsWeaponAlwaysExtremeDeath
+//
+//  TODO
+//
+//==========================================================================
+bool IsWeaponAlwaysExtremeDeath () {
   return false;
 }
+
 
 //==========================================================================
 //
@@ -4240,84 +3484,166 @@ bool IsWeaponAlwaysExtremeDeath()
 //  Zoom the player's FOV
 //
 //==========================================================================
-
-final void SetFOV(int New_FOV)
-{
+final void SetFOV (int New_FOV) {
   SetCvar('FOV', New_FOV);
 }
 
-void StartDeathSlideShow()
-{
+
+//==========================================================================
+//
+//  StartDeathSlideShow
+//
+//==========================================================================
+void StartDeathSlideShow () {
 }
 
-void GotAmmo(Ammo NewAmmo)
-{
+
+//==========================================================================
+//
+//  GotAmmo
+//
+//==========================================================================
+void GotAmmo (Ammo NewAmmo) {
 }
 
-void Damaged(EntityEx inflictor)
-{
+
+//==========================================================================
+//
+//  Damaged
+//
+//==========================================================================
+void Damaged (EntityEx inflictor) {
 }
 
-void KilledActor(EntityEx Victim)
-{
+
+//==========================================================================
+//
+//  KilledActor
+//
+//==========================================================================
+void KilledActor (EntityEx Victim) {
 }
 
-void Killed(EntityEx source, EntityEx inflictor)
-{
+
+//==========================================================================
+//
+//  Killed
+//
+//==========================================================================
+void Killed (EntityEx source, EntityEx inflictor) {
 }
 
-int GetSigilPieces()
-{
+
+//==========================================================================
+//
+//  GetSigilPieces
+//
+//==========================================================================
+int GetSigilPieces () {
   return 0;
 }
 
-void PlayerMorphed(EntityEx OldMO)
-{
+
+//==========================================================================
+//
+//  PlayerMorphed
+//
+//==========================================================================
+void PlayerMorphed (EntityEx OldMO) {
 }
 
-void CreateBot()
-{
+
+//==========================================================================
+//
+//  CreateBot
+//
+//==========================================================================
+void CreateBot () {
 }
 
-void OnNetReborn(EntityEx OldMO)
-{
+
+//==========================================================================
+//
+//  OnNetReborn
+//
+//==========================================================================
+void OnNetReborn (EntityEx OldMO) {
 }
 
-void DestroyBot()
-{
+
+//==========================================================================
+//
+//  DestroyBot
+//
+//==========================================================================
+void DestroyBot () {
 }
 
-void BotOnSpawn()
-{
+
+//==========================================================================
+//
+//  BotOnSpawn
+//
+//==========================================================================
+void BotOnSpawn () {
 }
 
-void SetClientModel()
-{
+
+//==========================================================================
+//
+//  SetClientModel
+//
+//==========================================================================
+void SetClientModel () {
 }
 
-int GetRebornHealth()
-{
+
+//==========================================================================
+//
+//  GetRebornHealth
+//
+//==========================================================================
+int GetRebornHealth () {
   return 0;
 }
 
-void BotTick(float deltaTime)
-{
+
+//==========================================================================
+//
+//  BotTick
+//
+//==========================================================================
+void BotTick (float deltaTime) {
 }
 
-void SpawnSpeedEffect()
-{
+
+//==========================================================================
+//
+//  SpawnSpeedEffect
+//
+//==========================================================================
+void SpawnSpeedEffect () {
 }
 
-void PlayerImpulse()
-{
+
+//==========================================================================
+//
+//  PlayerImpulse
+//
+//==========================================================================
+void PlayerImpulse () {
 }
 
-void PlayerUnmorphed()
-{
+
+//==========================================================================
+//
+//  PlayerUnmorphed
+//
+//==========================================================================
+void PlayerUnmorphed () {
 }
 
-defaultproperties
-{
+
+defaultproperties {
   InvSize = 6;
-  k8ElvenGifted = false;
 }

@@ -22,12 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PlayerChunk : PlayerPawn abstract;
 
-class PlayerChunk : PlayerPawn
-  abstract;
 
-defaultproperties
-{
+defaultproperties {
   ReactionCount = 8;
   bSolid = false;
   bShootable = false;

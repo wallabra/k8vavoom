@@ -22,61 +22,60 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PlayerPawn : Actor abstract;
 
-class PlayerPawn : Actor
-  abstract;
+// default view height
+float ViewHeight;
 
-//  Default view height.
-float     ViewHeight;
+// player is unable to run if health is lower than this
+int RunHealth;
 
-//  Player is unable to run if health is lower than this.
-int       RunHealth;
+// movement speed modifiers
+float ForwardMove1;
+float ForwardMove2;
+float SideMove1;
+float SideMove2;
 
-//  Movement speed modifiers.
-float     ForwardMove1;
-float     ForwardMove2;
-float     SideMove1;
-float     SideMove2;
+// colour translation range
+int TranslStart;
+int TranslEnd;
 
-//  Colour translation range.
-int       TranslStart;
-int       TranslEnd;
+// values for Hexen armor
+float HexenArmor[5];
 
-//  Values for Hexen armor.
-float     HexenArmor[5];
+// jump velocity
+// MO `JumpVelZ` is used instead
+//!float JumpVelZ;
 
-//  Jump velocity.
-//!float     JumpVelZ;
+// name displayed in menu
+string DisplayName;
 
-//  Name displayed in menu.
-string      DisplayName;
+// for ArtiHealRadius
+name HealRadiusType;
 
-//  For ArtiHealRadius
-name      HealRadiusType;
+// special mode of the invulnerability powerup
+name InvulnerabilityMode;
 
-//  Special mode of the invulnerability powerup.
-name      InvulnerabilityMode;
+// which class filter to use
+name SpawnClass;
 
-//  Which class filter to use.
-name      SpawnClass;
+// icon for intermission screen
+name ScoreIcon;
 
-//  Icon for intermission screen.
-name      ScoreIcon;
-
-//  For morphed player classes
+// for morphed player classes
 class!Weapon MorphWeapon;
 
-//  Attack offset, relative to the centre of the player.
-float     AttackZOffset;
+// attack offset, relative to the centre of the player
+float AttackZOffset;
 
-//  Damage flash colour.
-int       DamageScreenColour;
+// damage flash colour
+int DamageScreenColour;
 
-//  Maximal health.
-int       MaxHealth;
+// maximal health
+int MaxHealth;
 
 // K8 Headshots Variables
-int k8hsCount; //k8
+int k8hsCount;
 
 
 //==========================================================================
@@ -94,206 +93,163 @@ float GetAttackZOfs () {
 //  ShouldDropItems
 //
 //==========================================================================
-
-override bool ShouldDropItems()
-{
+override bool ShouldDropItems () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  AddInventory
 //
 //==========================================================================
-
-override void AddInventory(Inventory Item)
-{
+override void AddInventory (Inventory Item) {
+  if (!Item) return; //k8: just in case
   ::AddInventory(Item);
-  if (bIsPlayer && Item.bInvBar && !PlayerEx(Player).InvPtr)
-  {
+  if (bIsPlayer && Item.bInvBar && !PlayerEx(Player).InvPtr) {
     PlayerEx(Player).InvPtr = Item;
     PlayerEx(Player).InvFirst = Item;
   }
 }
+
 
 //==========================================================================
 //
 //  RemoveInventory
 //
 //==========================================================================
-
-override void RemoveInventory(Inventory Item)
-{
+override void RemoveInventory (Inventory Item) {
+  if (!Item) return; //k8: just in case
   bool SelectNewWeap = false;
-  if (bIsPlayer)
-  {
-    if (PlayerEx(Player).InvPtr == Item)
-    {
+  if (bIsPlayer) {
+    if (PlayerEx(Player).InvPtr == Item) {
       PlayerEx(Player).InvPtr = Item.PrevInv();
-      if (!PlayerEx(Player).InvPtr)
-      {
-        PlayerEx(Player).InvPtr = Item.NextInv();
-      }
+      if (!PlayerEx(Player).InvPtr) PlayerEx(Player).InvPtr = Item.NextInv();
     }
-    if (PlayerEx(Player).InvFirst == Item)
-    {
+    if (PlayerEx(Player).InvFirst == Item) {
       PlayerEx(Player).InvFirst = Item.PrevInv();
-      if (!PlayerEx(Player).InvFirst)
-      {
-        PlayerEx(Player).InvFirst = Item.NextInv();
-      }
+      if (!PlayerEx(Player).InvFirst) PlayerEx(Player).InvFirst = Item.NextInv();
     }
-    if (PlayerEx(Player).PendingWeapon == Item)
-    {
-      PlayerEx(Player).PendingWeapon = none;
-    }
-    if (PlayerEx(Player).ReadyWeapon == Item)
-    {
+    if (PlayerEx(Player).PendingWeapon == Item) PlayerEx(Player).PendingWeapon = none;
+    if (PlayerEx(Player).ReadyWeapon == Item) {
       PlayerEx(Player).ReadyWeapon = none;
       PlayerEx(Player).Refire = 0;
       SelectNewWeap = true;
     }
   }
+
   ::RemoveInventory(Item);
-  if (bIsPlayer && Item.bInvBar)
-  {
-    PlayerEx(Player).AdjustInvFirst();
-  }
-  if (SelectNewWeap && !PlayerEx(Player).PendingWeapon)
-  {
+
+  if (bIsPlayer && Item.bInvBar) PlayerEx(Player).AdjustInvFirst();
+
+  if (SelectNewWeap && !PlayerEx(Player).PendingWeapon) {
     Weapon Best = PlayerEx(Player).BestWeapon();
-    if (Best)
-    {
+    if (Best) {
       PlayerEx(Player).SetWeapon(Best);
       PlayerEx(Player).BringUpWeapon();
     }
   }
 }
 
+
 //==========================================================================
 //
 //  UseInventory
 //
 //==========================================================================
-
-override bool UseInventory(Inventory Item)
-{
-  //  Can't use anything while totally frozen
+override bool UseInventory (Inventory Item) {
+  if (!Item) return false; //k8: just in case
+  // can't use anything while totally frozen
   if (PlayerEx(Player).bTotallyFrozen ||
-    (Level.bFrozen &&
-    !(PlayerEx(Player).Cheats & PlayerEx::CF_TIMEFREEZE)))
+      (Level.bFrozen &&
+      !(PlayerEx(Player).Cheats & PlayerEx::CF_TIMEFREEZE)))
   {
     return false;
   }
-  // Found match - try to use
-  if (!::UseInventory(Item))
-  {
-    if (!PuzzleItem(Item))
-    {
-      // Unable to use artifact, advance pointer
+
+  // found match -- try to use
+  if (!::UseInventory(Item)) {
+    if (!PuzzleItem(Item)) {
+      // unable to use artifact, advance pointer
       PlayerEx(Player).PlayerNextArtifact();
     }
     return false;
   }
+
   PlaySound(Item.UseSound, /*CHAN_BODY*/CHAN_AUTO);
   PlayerEx(Player).ArtifactFlash = 4;
   return true;
 }
+
 
 //==========================================================================
 //
 //  AdjustSpeed
 //
 //==========================================================================
-
-final void AdjustSpeed(out float forward, out float side)
-{
-  // When the player has less than 25 health points, he's unable to run
-  if (Health < RunHealth)
-  {
-    if (forward > 1000.0)
-    {
-      forward = 1000.0;
-    }
-    else if (forward < -1000.0)
-    {
-      forward = -1000.0;
-    }
-    if (side > 1000.0)
-    {
-      side = 1000.0;
-    }
-    else if (side < -1000.0)
-    {
-      side = -1000.0;
-    }
+final void AdjustSpeed (out float forward, out float side) {
+  // when the player has less than 25 health points, he's unable to run
+  if (Health < RunHealth) {
+    //if (forward > 1000.0) forward = 1000.0; else if (forward < -1000.0) forward = -1000.0;
+    forward = fclamp(forward, -1000.0, 1000.0);
+    //if (side > 1000.0) side = 1000.0; else if (side < -1000.0) side = -1000.0;
+    side = fclamp(side, -1000.0, 1000.0);
   }
 
-  if (forward >= -1000.0 && forward < 1000.0)
-  {
+  if (forward >= -1000.0 && forward < 1000.0) {
     forward *= ForwardMove1;
-  }
-  else
-  {
+  } else {
     forward *= ForwardMove2;
   }
-  if (side >= -1000.0 && side < 1000.0)
-  {
+
+  if (side >= -1000.0 && side < 1000.0) {
     side *= SideMove1;
-  }
-  else
-  {
+  } else {
     side *= SideMove2;
   }
 
-  if (Inventory && !PlayerEx(Player).MorphTime)
-  {
-    // Adjust for a player with a speed artifact
+  if (Inventory && !PlayerEx(Player).MorphTime) {
+    // adjust for a player with a speed artifact
     float SpeedFactor = Inventory.GetSpeedFactor();
     forward *= SpeedFactor;
     side *= SpeedFactor;
   }
 }
 
+
 //==========================================================================
 //
 //  MorphPlayerThink
 //
 //==========================================================================
-
-void MorphPlayerThink()
-{
+void MorphPlayerThink () {
 }
+
 
 //===========================================================================
 //
 //  GetSigilPieces
 //
 //===========================================================================
-
-override int GetSigilPieces()
-{
+override int GetSigilPieces () {
   return PlayerEx(Player).GetSigilPieces();
 }
+
 
 //==========================================================================
 //
 //  UnmorphActor
 //
 //==========================================================================
-
-override int UnmorphActor(Entity Activator, int Force)
-{
-  if (PlayerEx(Player).MorphTime)
-  {
-    return PlayerEx(Player).UndoPlayerMorph(Force, Activator ?
-      PlayerEx(Activator.Player) : none);
+override int UnmorphActor (Entity Activator, int Force) {
+  if (PlayerEx(Player).MorphTime) {
+    return PlayerEx(Player).UndoPlayerMorph(Force, (Activator ? PlayerEx(Activator.Player) : none));
   }
   return 0;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Health = 100;
   Radius = 16.0;
   Height = 56.0;
