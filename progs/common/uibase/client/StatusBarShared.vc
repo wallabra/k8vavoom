@@ -282,7 +282,8 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   if (Id && Id != 0xffffffff) {
     for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
       if (HUDMessage(Probe).Id == Id) {
-        Probe.Destroy();
+        //print("*** found and destroyed old HUD message with id %d", Id);
+        delete Probe;
         break;
       }
     }
