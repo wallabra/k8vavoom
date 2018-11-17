@@ -2847,6 +2847,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         return doGetUserVarOrArray(mobj, fldname, true, args[2]);
       }
       return 0;
+
+
+    // void SetSkyScrollSpeed (int sky, fixed skyspeed);
+    case ACSF_SetSkyScrollSpeed: return 0;
+    // int GetAirSupply (int playernum) -- in tics
+    case ACSF_GetAirSupply: return 35; // always one second
+    case ACSF_SetAirSupply: return 1; // say that we did it
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
