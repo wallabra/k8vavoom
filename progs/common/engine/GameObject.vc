@@ -1133,6 +1133,17 @@ native final float _get_user_var_float (name fldname, optional int index);
 native final void _set_user_var_int (name fldname, int value, optional int index);
 native final void _set_user_var_float (name fldname, float value, optional int index);
 
+enum UserVarFieldType {
+  None, // field is missing, or type is invalid
+  Int,
+  Float,
+  IntArray,
+  FloatArray,
+}
+
+native final UserVarFieldType _get_user_var_type (name fldname);
+native final int _get_user_var_dim (name fldname); // array dimension; -1: not an array, or absent
+
 
 defaultproperties {
 }

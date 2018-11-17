@@ -37,9 +37,9 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
   if (!obj) {
     VObject::VMDumpCallStack();
     if (Self) {
-      Sys_Error("cannot find field '%s' in null object, redirected from `%s`", *fldname, *Self->GetClass()->GetFullName());
+      Host_Error("cannot find field '%s' in null object, redirected from `%s`", *fldname, *Self->GetClass()->GetFullName());
     } else {
-      Sys_Error("cannot find field '%s' in null object", *fldname);
+      Host_Error("cannot find field '%s' in null object", *fldname);
     }
   }
   VField *fld = obj->GetClass()->FindField(fldname);
@@ -67,9 +67,9 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
     if (index != 0) {
       VObject::VMDumpCallStack();
       if (Self == obj) {
-        Sys_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d)", *fldname, *obj->GetClass()->GetFullName(), index);
+        Host_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d)", *fldname, *obj->GetClass()->GetFullName(), index);
       } else {
-        Sys_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d), redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), index, *Self->GetClass()->GetFullName());
+        Host_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d), redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), index, *Self->GetClass()->GetFullName());
       }
     }
     if (fldtype) *fldtype = fld->Type;
@@ -80,17 +80,41 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
 
 //==========================================================================
 //
+//  VGameObject::getRedirection
+//
+//==========================================================================
+static VObject *getRedirection (VName fldname, VGameObject *gobj) {
+  if (!gobj) {
+    VObject::VMDumpCallStack();
+    Host_Error("cannot redirect field '%s' in none object", *fldname);
+  }
+  if (gobj->GetFlags()&(_OF_Destroyed/*|_OF_DelayedDestroy*/)) {
+    VObject::VMDumpCallStack();
+    Host_Error("cannot redirect field '%s' in dead object", *fldname);
+  }
+  if (!gobj->_stateRouteSelf) return gobj;
+  if (gobj->_stateRouteSelf->GetFlags()&(_OF_Destroyed/*|_OF_DelayedDestroy*/)) {
+    VObject::VMDumpCallStack();
+    Host_Error("cannot redirect field '%s' in dead object, from '%s'", *fldname, *gobj->GetClass()->GetFullName());
+  }
+  return gobj->_stateRouteSelf;
+}
+
+
+//==========================================================================
+//
 //  VGameObject::_get_user_var_int
 //
 //==========================================================================
 int VGameObject::_get_user_var_int (VName fldname, int index) {
+  VObject *xobj = getRedirection(fldname, this);
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
+  vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: return *(const vint32 *)dptr;
     case TYPE_Float: return *(const float *)dptr;
   }
-  Sys_Error("cannot get non-int uservar '%s'", *fldname);
+  Host_Error("cannot get non-int uservar '%s'", *fldname);
   return 0;
 }
 
@@ -101,13 +125,14 @@ int VGameObject::_get_user_var_int (VName fldname, int index) {
 //
 //==========================================================================
 float VGameObject::_get_user_var_float (VName fldname, int index) {
+  VObject *xobj = getRedirection(fldname, this);
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
+  vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: return *(const vint32 *)dptr;
     case TYPE_Float: return *(const float *)dptr;
   }
-  Sys_Error("cannot get non-float uservar '%s'", *fldname);
+  Host_Error("cannot get non-float uservar '%s'", *fldname);
   return 0;
 }
 
@@ -118,13 +143,15 @@ float VGameObject::_get_user_var_float (VName fldname, int index) {
 //
 //==========================================================================
 void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
+  VObject *xobj = getRedirection(fldname, this);
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
+  vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: *(vint32 *)dptr = value; return;
     case TYPE_Float: *(float *)dptr = value; return;
   }
-  Sys_Error("cannot set non-int uservar '%s'", *fldname);
+  VObject::VMDumpCallStack();
+  Host_Error("cannot set non-int uservar '%s'", *fldname);
 }
 
 
@@ -134,13 +161,60 @@ void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
 //
 //==========================================================================
 void VGameObject::_set_user_var_float (VName fldname, float value, int index) {
+  VObject *xobj = getRedirection(fldname, this);
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
+  vuint8 *dptr = getFieldPtr(&type, xobj, fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: *(vint32 *)dptr = value; return;
     case TYPE_Float: *(float *)dptr = value; return;
   }
-  Sys_Error("cannot set non-float uservar '%s'", *fldname);
+  Host_Error("cannot set non-float uservar '%s'", *fldname);
+}
+
+
+//==========================================================================
+//
+//  VGameObject::_get_user_var_type
+//
+//==========================================================================
+VGameObject::UserVarFieldType VGameObject::_get_user_var_type (VName fldname) {
+  VObject *xobj = getRedirection(fldname, this);
+  VField *fld = xobj->GetClass()->FindField(fldname);
+  if (!fld) return UserVarFieldType::None;
+  if (fld->Type.Type == TYPE_Array) {
+    if (fld->Type.IsArray2D()) return UserVarFieldType::None; // invalid
+    switch (fld->Type.GetArrayInnerType().Type) {
+      case TYPE_Int: return UserVarFieldType::IntArray;
+      case TYPE_Float: return UserVarFieldType::FloatArray;
+    }
+  } else {
+    switch (fld->Type.Type) {
+      case TYPE_Int: return UserVarFieldType::Int;
+      case TYPE_Float: return UserVarFieldType::Float;
+    }
+  }
+  return UserVarFieldType::None; // invalid
+}
+
+
+//==========================================================================
+//
+//  VGameObject::_get_user_var_dim
+//
+//  array dimension; -1: not an array, or absent
+//
+//==========================================================================
+int VGameObject::_get_user_var_dim (VName fldname) {
+  VObject *xobj = getRedirection(fldname, this);
+  VField *fld = xobj->GetClass()->FindField(fldname);
+  if (!fld) return -1;
+  if (fld->Type.Type == TYPE_Array) {
+    if (fld->Type.IsArray2D()) return -1; // invalid
+    int dim = fld->Type.ArrayDimInternal;
+    if (dim < 0) return -1;
+    return dim;
+  }
+  return -1; // invalid
 }
 
 
@@ -150,7 +224,7 @@ IMPLEMENT_FUNCTION(VGameObject, _get_user_var_int) {
   P_GET_INT_OPT(index, 0);
   P_GET_NAME(fldname);
   P_GET_SELF;
-  if (!Self) Sys_Error("cannot get field '%s' from null object", *fldname);
+  if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot get field '%s' from null object", *fldname); }
   RET_INT(Self->_get_user_var_int(fldname, index));
 }
 
@@ -159,7 +233,7 @@ IMPLEMENT_FUNCTION(VGameObject, _get_user_var_float) {
   P_GET_INT_OPT(index, 0);
   P_GET_NAME(fldname);
   P_GET_SELF;
-  if (!Self) Sys_Error("cannot get field '%s' from null object", *fldname);
+  if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot get field '%s' from null object", *fldname); }
   RET_FLOAT(Self->_get_user_var_float(fldname, index));
 }
 
@@ -169,7 +243,7 @@ IMPLEMENT_FUNCTION(VGameObject, _set_user_var_int) {
   P_GET_INT(value);
   P_GET_NAME(fldname);
   P_GET_SELF;
-  if (!Self) Sys_Error("cannot set field '%s' in null object", *fldname);
+  if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot set field '%s' in null object", *fldname); }
   Self->_set_user_var_int(fldname, value, index);
 }
 
@@ -179,6 +253,22 @@ IMPLEMENT_FUNCTION(VGameObject, _set_user_var_float) {
   P_GET_FLOAT(value);
   P_GET_NAME(fldname);
   P_GET_SELF;
-  if (!Self) Sys_Error("cannot set field '%s' in null object", *fldname);
+  if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot set field '%s' in null object", *fldname); }
   Self->_set_user_var_float(fldname, value, index);
+}
+
+// native final UserVarFieldType _get_user_var_type (name fldname);
+IMPLEMENT_FUNCTION(VGameObject, _get_user_var_type) {
+  P_GET_NAME(fldname);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot check field '%s' in null object", *fldname); }
+  RET_INT(Self->_get_user_var_type(fldname));
+}
+
+// native final int _get_user_var_dim (name fldname); // array dimension; -1: not an array, or absent
+IMPLEMENT_FUNCTION(VGameObject, _get_user_var_dim) {
+  P_GET_NAME(fldname);
+  P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Host_Error("cannot check field '%s' in null object", *fldname); }
+  RET_INT(Self->_get_user_var_dim(fldname));
 }
