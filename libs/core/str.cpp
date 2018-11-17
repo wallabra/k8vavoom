@@ -904,6 +904,8 @@ VStr VStr::RemoveColours () const {
         ++pos;
         while (pos < oldlen && data[pos] != ']') ++pos;
         ++pos;
+      } else {
+        ++pos;
       }
     } else {
       if (!c) break;
@@ -925,6 +927,8 @@ VStr VStr::RemoveColours () const {
       if (data[pos] == '[') {
         ++pos;
         while (pos < oldlen && data[pos] != ']') ++pos;
+        ++pos;
+      } else {
         ++pos;
       }
     } else {
