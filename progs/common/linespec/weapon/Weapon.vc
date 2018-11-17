@@ -235,9 +235,9 @@ override void AttachToOwner (EntityEx NewOwner) {
     if (PlayerEx(Owner.Player).ReadyWeapon) {
       LineSpecialGameInfo(Level.Game).FindWeaponSlot(
         class!Weapon(PlayerEx(Owner.Player).ReadyWeapon.Class),
-        ReadySlot, ReadyIndex, PlayerEx(Owner.Player).ReadyWeapon.Position);
+        ReadySlot, ReadyIndex, PlayerEx(Owner.Player).ReadyWeapon.Position, exact:true);
     }
-    LineSpecialGameInfo(Level.Game).FindWeaponSlot(class!Weapon(Class), NewSlot, NewIndex, Position);
+    LineSpecialGameInfo(Level.Game).FindWeaponSlot(class!Weapon(Class), NewSlot, NewIndex, Position, exact:true);
     if (CheckAmmo(FIRE_Either, false) &&
         (LineSpecialGameInfo(Level.Game).bAlwaysSwitchNewWeapon ||
         !PlayerEx(Owner.Player).ReadyWeapon || NewSlot > ReadySlot) ||

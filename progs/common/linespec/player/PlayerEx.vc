@@ -1031,20 +1031,34 @@ final Weapon GetPrevWeapon (Weapon Current) {
   int Index;
   int Start;
 
-  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position)) {
+  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index/*, Current.Position*/, exact:true)) {
+    //print("PREVWEAPON: found slot for current weapon: slot=%d; index=%d", Slot, Index);
     Start = Slot*LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
   } else {
-    Start = 0;
+    //print("PREVWEAPON: slot not found");
+    Start = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS;
   }
 
-  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS; reverse) {
-    Slot = ((Start+i)/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-    Index = (Start+i)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
+    --Start;
+    if (Start < 0) break;
+    Slot = (Start/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT); //%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
+    Index = Start%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
     class!Weapon swc = GI.WeaponSlots[Slot].Weapons[Index];
+    if (!swc) continue;
+    //print("PREVWEAPON:  checking weapon at (%d:%d); desired class is '%C'", Slot, Index, swc);
+    if (Current && GetClassReplacement(swc) == GetClassReplacement(Current.Class)) {
+      //print("PREVWEAPON:   skip current");
+      continue;
+    }
     Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
     if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+    if (Wpn) {
+      //print("PREVWEAPON:   found weapon at (%d:%d); desired class is '%C', real class is '%C'", Slot, Index, swc, Wpn);
+      if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+    }
   }
+
   return Current;
 }
 
@@ -1060,20 +1074,36 @@ final Weapon GetNextWeapon (Weapon Current) {
   int Index;
   int Start;
 
-  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index, Current.Position)) {
+  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), out Slot, out Index/*, Current.Position*/, exact:true)) {
+    //print("NEXTWEAPON: found slot for current weapon: slot=%d; index=%d", Slot, Index);
     Start = Slot*LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
   } else {
+    //print("NEXTWEAPON: slot not found");
     Start = -1;
   }
 
-  foreach (auto i; 1..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS+1) {
-    Slot = ((Start+i)/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-    Index = (Start+i)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
+    ++Start;
+    //if (Start >= LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS) break;
+    Slot = (Start/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT); //%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
+    if (Slot >= LineSpecialGameInfo::NUM_WEAPON_SLOTS) break;
+    Index = Start%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
+    //print("  Slot=%d; Index=%d; class=%C", Slot, Index, GI.WeaponSlots[Slot].Weapons[Index]);
     class!Weapon swc = GI.WeaponSlots[Slot].Weapons[Index];
+    if (!swc) continue;
+    //print("NEXTWEAPON:  checking weapon at (%d:%d); desired class is '%C'", Slot, Index, swc);
+    if (Current && GetClassReplacement(swc) == GetClassReplacement(Current.Class)) {
+      //print("NEXTWEAPON:   skip current");
+      continue;
+    }
     Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
     if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-    if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+    if (Wpn) {
+      //print("NEXTWEAPON:   found weapon at (%d:%d); desired class is '%C', real class is '%C'", Slot, Index, swc, Wpn);
+      if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+    }
   }
+
   return Current;
 }
 

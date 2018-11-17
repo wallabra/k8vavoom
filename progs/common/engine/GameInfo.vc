@@ -264,7 +264,7 @@ void CmdWeaponSection(string Section)
 //
 //==========================================================================
 
-void CmdSetSlot(out array!string Args)
+void CmdSetSlot(ref array!string Args)
 {
 }
 
@@ -274,7 +274,7 @@ void CmdSetSlot(out array!string Args)
 //
 //==========================================================================
 
-void CmdAddSlotDefault(out array!string Args)
+void CmdAddSlotDefault(ref array!string Args)
 {
 }
 

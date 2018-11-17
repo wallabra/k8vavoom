@@ -1479,22 +1479,23 @@ override void SpawnWorld(Level InLevel)
 //  FindWeaponSlot
 //
 //==========================================================================
-bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position) {
+final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position, bool exact) {
   if (WpnClass) {
     class!Weapon wpnrep = GetClassReplacement(WpnClass);
     foreach (auto i; 0..NUM_WEAPON_SLOTS) {
       foreach (auto j; 0..MAX_WEAPONS_PER_SLOT) {
         class!Weapon swc = WeaponSlots[i].Weapons[j];
         if (!swc) continue;
-        class!Weapon swcrep = GetClassReplacement(swc);
-        if (swc == WpnClass || swcrep == WpnClass ||
-            swc == wpnrep || swcrep == wpnrep)
-        {
-          Slot = i;
-          // assign weapon position, if it's already set
-          Index = (specified_Position ? Position : j);
-          return true;
+        if (swc != WpnClass) {
+          if (exact) continue;
+          class!Weapon swcrep = GetClassReplacement(swc);
+          if (swcrep != WpnClass && swc != wpnrep && swcrep != wpnrep) continue;
         }
+        //print("***FOUND '%C' as '%C' (exact:%B) at (%d:%d) (Position(%B)=%d)", WpnClass, swc, exact, i, j, specified_Position, Position);
+        Slot = i;
+        // assign weapon position, if it's already set
+        Index = clamp((Position ? Position : j), 0, MAX_WEAPONS_PER_SLOT-1);
+        return true;
       }
     }
   }
@@ -1503,149 +1504,126 @@ bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optiona
   return false;
 }
 
+
 //==========================================================================
 //
 //  AddWeaponToSlot
 //
 //==========================================================================
-
-bool AddWeaponToSlot(int Slot, class!Weapon WeaponClass)
-{
-  int i;
-
-  for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
-  {
-    if (WeaponSlots[Slot].Weapons[i] == WeaponClass)
-    {
-      //  Already there.
-      return true;
+bool AddWeaponToSlot (int Slot, class!Weapon WeaponClass) {
+  if (!WeaponClass) return false;
+  foreach (auto i; 0..MAX_WEAPONS_PER_SLOT) {
+    class!Weapon swc = WeaponSlots[Slot].Weapons[i];
+    if (swc) {
+      if (swc == WeaponClass || GetClassReplacement(swc) == GetClassReplacement(WeaponClass)) {
+        // already there
+        return true;
+      }
     }
-    if (!WeaponSlots[Slot].Weapons[i])
-    {
-      WeaponSlots[Slot].Weapons[i] = WeaponClass;
+  }
+  foreach (auto i; 0..MAX_WEAPONS_PER_SLOT) {
+    if (!WeaponSlots[Slot].Weapons[i]) {
+      WeaponSlots[Slot].Weapons[i] = GetClassReplacement(WeaponClass);
       return true;
     }
   }
   return false;
 }
 
+
 //==========================================================================
 //
 //  CmdWeaponSection
 //
 //==========================================================================
-
-override void CmdWeaponSection(string Section)
-{
-  if (!strlen(Section))
-  {
+override void CmdWeaponSection (string Section) {
+  if (!strlen(Section)) {
     print("Usage: WeaponSection <section name>");
     return;
   }
-  //  Unused right now.
+  // unused right now
 }
+
 
 //==========================================================================
 //
 //  CmdSetSlot
 //
 //==========================================================================
-
-override void CmdSetSlot(out array!string Args)
-{
-  if (Args.Num < 2)
-  {
+override void CmdSetSlot (ref array!string Args) {
+  if (Args.Num < 2) {
     print("Usage: SetSlot <slot> <weapon> ...");
     return;
   }
 
-  //  Get slot number.
+  // get slot number
   int Slot = atoi(Args[1]);
-  if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS)
-  {
+  if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS) {
     print("Bad weapon slot number");
     return;
   }
-  if (Slot == 0)
-  {
-    //  Slot '0' means '10'
-    Slot = 10;
-  }
 
-  //  Clear slot.
-  int i;
-  for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
-  {
-    WeaponSlots[Slot].Weapons[i] = none;
-  }
+  // slot '0' means '10'
+  if (Slot == 0) Slot = 10;
 
-  if (Args.Num == 2)
-  {
+  // clear slot
+  foreach (auto i; 0..MAX_WEAPONS_PER_SLOT) WeaponSlots[Slot].Weapons[i] = none;
+
+  if (Args.Num == 2) {
     print("Slot cleared");
-  }
-  else
-  {
-    for (i = 2; i < Args.Num; i++)
-    {
-      // Standarize class name here, since I've found people writing in all types of
-      // mixed cases...
-      class!Weapon Cls = class!Weapon(FindClassLowerCase(StrToName(strlwr(Args[i]))));
-      if (!Cls)
-      {
-        print("%s is not a weapon", Args[i]);
-      }
-      else if (!AddWeaponToSlot(Slot, Cls))
-      {
-        print("Couldn\'t add %s to slot %d", Args[i], Slot);
+  } else {
+    foreach (auto i; 2..Args.length) {
+      // standarize class name here, since I've found people writing in all types of mixed cases...
+      class!Weapon Cls = class!Weapon(FindClassLowerCase(name(strlwr(Args[i]))));
+      if (!Cls) {
+        print("`%s` is not a weapon", Args[i]);
+      } else if (!AddWeaponToSlot(Slot, Cls)) {
+        print("Couldn't add `%s` to slot `%d`", Args[i], Slot);
       }
     }
   }
 }
+
 
 //==========================================================================
 //
 //  CmdAddSlotDefault
 //
 //==========================================================================
-
-override void CmdAddSlotDefault(out array!string Args)
-{
-  if (Args.Num != 3)
-  {
-    print("Usage: SetSlot <slot> <weapon>");
+override void CmdAddSlotDefault (ref array!string Args) {
+  if (Args.Num != 3) {
+    print("Usage: AddSlotDefault <slot> <weapon>");
     return;
   }
 
-  //  Get slot number.
+  // get slot number
   int Slot = atoi(Args[1]);
-  if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS)
-  {
+  if (Slot < 0 || Slot >= NUM_WEAPON_SLOTS) {
     print("Bad weapon slot number");
     return;
   }
 
-  // Standarize class name here, since I've found people writing in all types of
-  // mixed cases...
-  class!Weapon Cls = class!Weapon(FindClassLowerCase(StrToName(strlwr(Args[2]))));
-  if (!Cls)
-  {
-    print("%s is not a weapon", Args[2]);
+  // slot '0' means '10'
+  if (Slot == 0) Slot = 10;
+
+  // standarize class name here, since I've found people writing in all types of mixed cases...
+  class!Weapon Cls = class!Weapon(FindClassLowerCase(name(strlwr(Args[2]))));
+  if (!Cls) {
+    print("`%s` is not a weapon", Args[2]);
     return;
   }
 
   int TmpSlot;
   int TmpIndex;
-  if (!FindWeaponSlot(Cls, TmpSlot, TmpIndex))
-  {
-    if (!AddWeaponToSlot(Slot, Cls))
-    {
-      print("Couldn\'t add %s to slot %d", Args[2], Slot);
+  if (!FindWeaponSlot(Cls, TmpSlot, TmpIndex, exact:false)) {
+    if (!AddWeaponToSlot(Slot, Cls)) {
+      print("Couldn\'t add `%s` to slot `%d`", Args[2], Slot);
     }
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   contents_alpha[0] = 1.0;
   contents_alpha[1] = 0.5;
   contents_alpha[2] = 0.8;
