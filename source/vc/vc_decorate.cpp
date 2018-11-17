@@ -2850,7 +2850,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
 
   VClass *DupCheck = VClass::FindClassLowerCase(*NameStr.ToLower());
   if (DupCheck != nullptr && DupCheck->MemberType == MEMBER_Class) {
-    GCon->Logf(NAME_Warning, "%s: Redeclared class `%s`", *cstloc.toStringNoCol(), *NameStr);
+    GCon->Logf(NAME_Warning, "%s: Redeclared class `%s` (old at %s)", *cstloc.toStringNoCol(), *NameStr, *DupCheck->Loc.toStringNoCol());
   }
 
   if (ColonPos < 0) {
