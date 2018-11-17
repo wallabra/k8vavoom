@@ -2245,7 +2245,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
     Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
     //fprintf(stderr, "<%s>\n", *FuncNameLower);
     if (!Func) {
-      GCon->Logf("ERROR: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+      GCon->Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
       // if function is not found, it means something is wrong
       // in that case we need to free argument expressions
       for (int i = 0; i < NumArgs; ++i) {
