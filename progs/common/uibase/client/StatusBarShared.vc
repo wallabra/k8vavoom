@@ -287,6 +287,7 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
         break;
       }
     }
+    //print("*** new HUD message with id %d", Id);
   }
 
   switch (Type&0xffff) {
@@ -311,6 +312,15 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
   if (Probe) Msg.MoveBefore(Probe);
   //Msg.dumpClipRect("MSG02");
+
+  /*
+  int count = 0;
+  for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) ++count;
+  if (count) {
+    print("=== HUD MESSAGES: %d", count);
+    for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) print("  %C (%d)", Probe, HUDMessage(Probe).Id);
+  }
+  */
 }
 
 
