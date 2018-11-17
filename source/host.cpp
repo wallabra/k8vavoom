@@ -150,6 +150,7 @@ void Host_Init () {
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
 
   if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;
+  if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
 
   FL_Init();
 

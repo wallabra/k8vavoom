@@ -27,7 +27,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-bool VMemberBase::optDeprecatedLaxOverride = false; // true: don't require `override` on overriden methods
+bool VMemberBase::optDeprecatedLaxOverride = false;
+bool VMemberBase::optDeprecatedLaxStates = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //

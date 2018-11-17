@@ -2557,7 +2557,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
               VMemberBase::StaticSplitStateLabel(LblName, Names);
               VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
               if (!StLbl) {
-                ParseError(ALoc, "No such state '%s'", *Lbl);
+                ParseError(ALoc, "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
               } else {
                 delete Args[i];
                 Args[i] = nullptr;

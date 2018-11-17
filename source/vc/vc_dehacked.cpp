@@ -1456,7 +1456,7 @@ void ProcessDehackedFiles () {
     } else {
       sc->ExpectString();
       VStateLabel *Lbl = StatesClass->FindStateLabel(*sc->String);
-      if (!Lbl) sc->Error(va("No such state %s in class %s", *sc->String, StatesClass->GetName()));
+      if (!Lbl) sc->Error(va("No such state `%s` in class `%s`", *sc->String, StatesClass->GetName()));
       S = Lbl->State;
       pState = &StatesClass->NetStates;
       while (*pState && *pState != S) pState = &(*pState)->NetNext;

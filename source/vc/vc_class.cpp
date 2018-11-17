@@ -1646,7 +1646,11 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
   StaticSplitStateLabel(CheckName, Names);
   VStateLabel *Lbl = CheckClass->FindStateLabel(Names, true);
   if (!Lbl) {
-    ParseError(Loc, "No such state '%s' in class '%s'", *LabelName, *GetFullName());
+    if (optDeprecatedLaxStates) {
+      ParseWarning(Loc, "No such state '%s' in class '%s'", *LabelName, *GetFullName());
+    } else {
+      ParseError(Loc, "No such state '%s' in class '%s'", *LabelName, *GetFullName());
+    }
     return nullptr;
   }
 

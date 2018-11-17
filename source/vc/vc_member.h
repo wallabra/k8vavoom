@@ -59,6 +59,7 @@ class VMemberBase {
 public:
   // some global options
   static bool optDeprecatedLaxOverride; // true: don't require `override` on overriden methods
+  static bool optDeprecatedLaxStates; // true: ignore missing states in state resolver
 
 public:
   // internal variables
