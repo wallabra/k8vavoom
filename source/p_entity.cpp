@@ -334,6 +334,13 @@ bool VEntity::AdvanceState (float deltaTime) {
 VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
   guard(VEntity::FindState);
   VStateLabel *Lbl = GetClass()->FindStateLabel(StateName, SubLabel, Exact);
+  if (!Lbl && !Exact && SubLabel == NAME_None && StateName != NAME_None && strchr(*StateName, '.')) {
+    // try to split, if not exact
+    TArray<VName> Names;
+    VMemberBase::StaticSplitStateLabel(*StateName, Names);
+    //GCon->Logf("VEntity::FindState: splitted '%s' to %d parts", *StateName, Names.length());
+    if (Names.length() > 1) Lbl = GetClass()->FindStateLabel(Names, true);
+  }
   return (Lbl ? Lbl->State : nullptr);
   unguard;
 }
