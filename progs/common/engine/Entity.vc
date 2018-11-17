@@ -996,6 +996,21 @@ static final bool decoDoSetFlag (string flagname, Entity tgt, bool newvalue) {
 */
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// for decorate
+final float _GetOriginX () { return Origin.x; }
+final float _GetOriginY () { return Origin.y; }
+final float _GetOriginZ () { return Origin.z; }
+
+final float _GetVelocityX () { return Velocity.x; }
+final float _GetVelocityY () { return Velocity.y; }
+final float _GetVelocityZ () { return Velocity.z; }
+
+final float _GetAnglesYaw () { return Angles.yaw; }
+final float _GetAnglesPitch () { return Angles.pitch; }
+final float _GetAnglesRoll () { return Angles.roll; }
+
+
 defaultproperties
 {
   RenderStyle = STYLE_Normal;
