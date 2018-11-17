@@ -1262,10 +1262,17 @@ bool VStr::convertInt (const char *s, int *outv) {
   if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
   if (!s[0]) return false;
   if (s[0] < '0' || s[0] > '9') return false;
+  int base = 10;
+  if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+    if (!s[2] || digitInBase(s[2], 16) < 0) return false;
+    base = 16;
+    s += 2;
+  }
   while (*s) {
     char ch = *s++;
-    if (ch < '0' || ch > '9') { *outv = 0; return false; }
-    *outv = (*outv)*10+ch-'0';
+    int d = digitInBase(ch, base);
+    if (d < 0) { *outv = 0; return false; }
+    *outv = (*outv)*base+d;
   }
   while (*s && (vuint8)*s <= ' ') ++s;
   if (*s) { *outv = 0; return false; }
