@@ -46,7 +46,7 @@ private:
   static bool Initialised;
   static VStr Original;
 
-  static TArray<const char *> AutoCompleteTable;
+  static TArray<VStr> AutoCompleteTable;
 
   static VCommand *Cmds;
   static VAlias *Alias;
@@ -60,7 +60,9 @@ protected:
 
 public:
   static bool ParsingKeyConf;
+  static void (*onShowCompletionMatch) (bool isheader, const VStr &s);
 
+public:
   VCommand (const char *);
   virtual ~VCommand ();
 
@@ -71,8 +73,8 @@ public:
   static void Shutdown ();
   static void ProcessKeyConf ();
 
-  static void AddToAutoComplete (const char*);
-  static VStr GetAutoComplete (const VStr &, int &, bool);
+  static void AddToAutoComplete (const char *);
+  static VStr GetAutoComplete (const VStr &prefix);
 
   static void ExecuteString (const VStr &, ECmdSource, VBasePlayer *);
   static void ForwardToServer ();

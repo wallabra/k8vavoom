@@ -37,10 +37,12 @@ TArray<VStr> VCommand::Args;
 VCommand::ECmdSource VCommand::Source;
 VBasePlayer *VCommand::Player;
 
-TArray<const char *> VCommand::AutoCompleteTable;
+TArray<VStr> VCommand::AutoCompleteTable;
 
 VCommand *VCommand::Cmds = nullptr;
 VCommand::VAlias *VCommand::Alias = nullptr;
+
+void (*VCommand::onShowCompletionMatch) (bool isheader, const VStr &s);
 
 static const char *KeyConfCommands[] = {
   "alias",
@@ -202,17 +204,17 @@ void VCommand::AddToAutoComplete (const char *string) {
 
   if (!string || !string[0] || string[0] == '_') return;
 
-  for (int i = 0; i < AutoCompleteTable.Num(); ++i) {
-    if (VStr::ICmp(AutoCompleteTable[i], string) == 0) return; //Sys_Error("C_AddToAutoComplete: %s is allready registered.", string);
+  for (int i = 0; i < AutoCompleteTable.length(); ++i) {
+    if (AutoCompleteTable[i].ICmp(string) == 0) return; //Sys_Error("C_AddToAutoComplete: %s is allready registered.", string);
   }
 
-  AutoCompleteTable.Append(string);
+  AutoCompleteTable.Append(VStr(string));
 
   // alphabetic sort
-  for (int i = AutoCompleteTable.Num()-1; i && VStr::ICmp(AutoCompleteTable[i-1], AutoCompleteTable[i]) > 0; --i) {
-    const char *Swap = AutoCompleteTable[i];
+  for (int i = AutoCompleteTable.Num()-1; i && AutoCompleteTable[i-1].ICmp(AutoCompleteTable[i]) > 0; --i) {
+    VStr swap = AutoCompleteTable[i];
     AutoCompleteTable[i] = AutoCompleteTable[i-1];
-    AutoCompleteTable[i-1] = Swap;
+    AutoCompleteTable[i-1] = swap;
   }
 
   unguard;
@@ -223,26 +225,65 @@ void VCommand::AddToAutoComplete (const char *string) {
 //
 //  VCommand::GetAutoComplete
 //
+//  if returned string ends with space, this is the only match
+//
 //==========================================================================
-VStr VCommand::GetAutoComplete (const VStr &String, int &Index, bool Backward) {
+VStr VCommand::GetAutoComplete (const VStr &prefix) {
   guard(VCommand::GetAutoComplete);
-  int i;
 
-  if (Index == -1) {
-    i = (Backward ? AutoCompleteTable.Num()-1 : 0);
-  } else {
-    if (Backward) i = Index-1; else i = Index+1;
+  if (prefix.length() == 0) return prefix; // oops
+  if ((vuint8)prefix[prefix.length()-1] <= ' ') return prefix;
+
+  VStr bestmatch;
+  int matchcount = 0;
+
+  // first, get longest match
+  for (int f = 0; f < AutoCompleteTable.length(); ++f) {
+    VStr mt = AutoCompleteTable[f];
+    if (mt.length() < prefix.length()) continue;
+    if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
+    ++matchcount;
+    if (bestmatch.length() < mt.length()) bestmatch = mt;
   }
 
-  while (i < AutoCompleteTable.Num() && i >= 0) {
-    if (String.Length() <= VStr::Length(AutoCompleteTable[i]) && VStr::NICmp(*String, AutoCompleteTable[i], String.Length()) == 0) {
-      Index = i;
-      return AutoCompleteTable[i];
+  if (matchcount == 0) return prefix; // alas
+  if (matchcount == 1) { bestmatch += " "; return bestmatch; } // done
+
+  // trim match
+  for (int f = 0; f < AutoCompleteTable.length(); ++f) {
+    VStr mt = AutoCompleteTable[f];
+    if (mt.length() < prefix.length()) continue;
+    if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
+    // cannot be longer than this
+    if (bestmatch.length() > mt.length()) bestmatch = bestmatch.left(mt.length());
+    int mlpos = 0;
+    while (mlpos < bestmatch.length()) {
+      if (VStr::upcase1251(bestmatch[mlpos]) != VStr::upcase1251(mt[mlpos])) {
+        bestmatch = bestmatch.left(mlpos);
+        break;
+      }
+      ++mlpos;
     }
-    if (Backward) --i; else ++i;
   }
 
-  return VStr();
+  // if match equals to prefix, this is second tab tap, so show all possible matches
+  if (bestmatch == prefix) {
+    // show all possible matches
+    if (onShowCompletionMatch) {
+      onShowCompletionMatch(true, "=== possible matches ===");
+      for (int f = 0; f < AutoCompleteTable.length(); ++f) {
+        VStr mt = AutoCompleteTable[f];
+        if (mt.length() < prefix.length()) continue;
+        if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
+        onShowCompletionMatch(false, mt);
+      }
+    }
+    return prefix;
+  }
+
+  // found extended match
+  return bestmatch;
+
   unguard;
 }
 

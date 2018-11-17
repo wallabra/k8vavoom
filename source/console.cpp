@@ -78,12 +78,23 @@ static float cons_h = 0;
 static VCvarF con_height("con_height", "240", "Console height.", CVAR_Archive);
 static VCvarF con_speed("con_speed", "6666", "Console sliding speed.", CVAR_Archive);
 
-// autocomplete
-static int c_autocompleteIndex = -1;
-static VStr c_autocompleteString;
 static FConsoleLog ConsoleLog;
 
 static FILE *logfout = nullptr;
+
+
+//==========================================================================
+//
+//  onShowCompletionMatchCB
+//
+//==========================================================================
+static void onShowCompletionMatchCB (bool isheader, const VStr &s) {
+  if (isheader) {
+    GCon->Logf("\034K%s", *s);
+  } else {
+    GCon->Logf("\034D  %s", *s);
+  }
+}
 
 
 //==========================================================================
@@ -94,6 +105,8 @@ static FILE *logfout = nullptr;
 //
 //==========================================================================
 void C_Init () {
+  VCommand::onShowCompletionMatch = &onShowCompletionMatchCB;
+
   {
     auto v = GArgs.CheckValue("-logfile");
     if (v) logfout = fopen(v, "w");
@@ -125,7 +138,6 @@ void C_Init () {
 void C_Shutdown () {
   if (logfout) fclose(logfout);
   logfout = nullptr;
-  c_autocompleteString.Clean();
 }
 
 
@@ -144,7 +156,6 @@ void C_Start () {
   }
   consolestate = cons_opening;
   c_history_current = -1;
-  c_autocompleteIndex = -1;
 }
 
 
@@ -159,7 +170,6 @@ void C_StartFull () {
   last_line = num_lines;
   consolestate = cons_open;
   c_history_current = -1;
-  c_autocompleteIndex = -1;
   cons_h = 480.0;
 }
 
@@ -256,7 +266,11 @@ void C_Drawer () {
   // lines
   i = last_line;
   while ((y+9 > 0) && i--) {
-    T_DrawText(4, y, clines[(i+first_line)%MAX_LINES], CR_UNTRANSLATED);
+    int lidx = (i+first_line)%MAX_LINES;
+    const char *line = clines[lidx];
+    int trans = CR_UNTRANSLATED;
+    //if (line[0] == 1) { trans = line[1]; line += 2; }
+    T_DrawText(4, y, line, trans);
     y -= 9;
   }
 }
@@ -340,7 +354,6 @@ bool C_Responder (event_t *ev) {
 
       // clear line
       c_iline.Init();
-      c_autocompleteIndex = -1;
       return true;
 
     // scroll lines up
@@ -374,7 +387,6 @@ bool C_Responder (event_t *ev) {
         c_iline.Init();
         cp = c_history[c_history_size-c_history_current-1];
         while (*cp) c_iline.AddChar(*cp++);
-        c_autocompleteIndex = -1;
       }
       return true;
 
@@ -387,27 +399,24 @@ bool C_Responder (event_t *ev) {
           cp = c_history[c_history_size-c_history_current-1];
           while (*cp) c_iline.AddChar(*cp++);
         }
-        c_autocompleteIndex = -1;
       }
       return true;
 
     // auto complete
     case K_TAB:
-      if (!c_iline.Data[0]) return true;
-
-      if (c_autocompleteIndex == -1) c_autocompleteString = c_iline.Data;
-      str = VCommand::GetAutoComplete(c_autocompleteString, c_autocompleteIndex, (GInput->ShiftDown ? true : false));
-      if (str.length() != 0) {
-        c_iline.Init();
-        for (int i = 0; i < (int)str.Length(); ++i) c_iline.AddChar(str[i]);
-        c_iline.AddChar(' ');
+      if (c_iline.Data[0]) {
+        VStr oldpfx = c_iline.Data;
+        VStr newpfx = VCommand::GetAutoComplete(oldpfx);
+        if (oldpfx != newpfx) {
+          c_iline.Init();
+          for (int i = 0; i < (int)newpfx.length(); ++i) c_iline.AddChar(newpfx[i]);
+        }
       }
       return true;
 
     // add character to input line
     default:
       eat = c_iline.Key((byte)ev->data1);
-      if (eat) c_autocompleteIndex = -1;
       return eat;
   }
 }
