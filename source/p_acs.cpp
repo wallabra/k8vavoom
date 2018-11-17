@@ -60,6 +60,7 @@
 static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Overrides 'screenblocks' variable for acs scripts (-1: don't).", 0);
 static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode", false, "Halt ACS VM on unimplemented opdode?", CVAR_Archive);
 static VCvarB acs_warning_console_commands("acs_warning_console_commands", true, "Show warning when ACS script tries to execute console command?", CVAR_Archive);
+static VCvarB acs_dump_uservar_access("acs_dump_uservar_access", false, "Dump ACS uservar access?", CVAR_Archive);
 
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
@@ -2052,39 +2053,106 @@ void VAcs::Serialise(VStream &Strm)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcs::ClearReferences
 //
 //==========================================================================
-
-void VAcs::ClearReferences()
-{
+void VAcs::ClearReferences () {
   guard(VAcs::ClearReferences);
   Super::ClearReferences();
-  if (Activator && Activator->GetFlags() & _OF_CleanupRef)
-  {
+  if (Activator && (Activator->GetFlags()&_OF_CleanupRef)) {
     Activator = nullptr;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcs::Tick
 //
 //==========================================================================
-
-void VAcs::Tick(float DeltaTime)
-{
+void VAcs::Tick (float DeltaTime) {
   guard(VAcs::Tick);
   RunScript(DeltaTime);
   unguard;
 }
 
+
 //==========================================================================
 //
-//  VAcs::RunScript
+//  doSetUserVarOrArray
+//
+//==========================================================================
+static bool doSetUserVarOrArray (VEntity *ent, VName fldname, int value, bool isArray, int index=0) {
+  if (!ent || fldname == NAME_None) return false;
+  auto vtype = ent->_get_user_var_type(fldname);
+  if (vtype == VGameObject::UserVarFieldType::Int || vtype == VGameObject::UserVarFieldType::IntArray) {
+    if (acs_dump_uservar_access) {
+      if (isArray) {
+        GCon->Logf("ACS: setting `%s` int userarray[%d] '%s' to %d", *ent->GetClass()->GetFullName(), index, *fldname, value);
+      } else {
+        GCon->Logf("ACS: setting `%s` int uservar '%s' to %d", *ent->GetClass()->GetFullName(), *fldname, value);
+      }
+    }
+    ent->_set_user_var_int(fldname, value, index);
+    return true;
+  }
+  if (vtype == VGameObject::UserVarFieldType::Float || vtype == VGameObject::UserVarFieldType::FloatArray) {
+    if (acs_dump_uservar_access) {
+      if (isArray) {
+        GCon->Logf("ACS: setting `%s` float userarray[%d] '%s' to %f", *ent->GetClass()->GetFullName(), index, *fldname, float(value)/65536.0f);
+      } else {
+        GCon->Logf("ACS: setting `%s` float uservar '%s' to %f", *ent->GetClass()->GetFullName(), *fldname, float(value)/65536.0f);
+      }
+    }
+    ent->_set_user_var_float(fldname, float(value)/65536.0f, index);
+    return true;
+  }
+  if (acs_dump_uservar_access) GCon->Logf("ACS: missing `%s` uservar '%s'", *ent->GetClass()->GetFullName(), *fldname);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  doGetUserVarOrArray
+//
+//==========================================================================
+static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int index=0) {
+  if (!ent) Host_Error("ACS: cannot get user variable with name \"%s\" from nothing", *fldname);
+  auto vtype = ent->_get_user_var_type(fldname);
+  if (vtype == VGameObject::UserVarFieldType::Int || vtype == VGameObject::UserVarFieldType::IntArray) {
+    if (acs_dump_uservar_access) {
+      if (isArray) {
+        GCon->Logf("ACS: getting `%s` int userarray[%d] '%s' (%d)", *ent->GetClass()->GetFullName(), index, *fldname, ent->_get_user_var_int(fldname, index));
+      } else {
+        GCon->Logf("ACS: getting `%s` int uservar '%s' (%d)", *ent->GetClass()->GetFullName(), *fldname, ent->_get_user_var_int(fldname));
+      }
+    }
+    return ent->_get_user_var_int(fldname);
+  }
+  if (vtype == VGameObject::UserVarFieldType::Float || vtype == VGameObject::UserVarFieldType::FloatArray) {
+    if (acs_dump_uservar_access) {
+      if (isArray) {
+        GCon->Logf("ACS: getting `%s` float userarray[%d] '%s' (%f)", *ent->GetClass()->GetFullName(), index, *fldname, ent->_get_user_var_float(fldname, index));
+      } else {
+        GCon->Logf("ACS: getting `%s` float uservar '%s' (%f)", *ent->GetClass()->GetFullName(), *fldname, ent->_get_user_var_float(fldname));
+      }
+    }
+    return (int)(ent->_get_user_var_float(fldname)*65536.0f);
+  }
+  Host_Error("ACS: missing `%s` uservar '%s'", *ent->GetClass()->GetFullName(), *fldname);
+  return 0;
+}
+
+
+
+//==========================================================================
+//
+//  RunScript
 //
 //==========================================================================
 
@@ -2173,6 +2241,11 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
 #undef DECLARE_PCD
 
 
+//==========================================================================
+//
+//  VAcs::CallFunction
+//
+//==========================================================================
 int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
   switch (funcIndex) {
     case ACSF_SpawnSpotForced: // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
@@ -2707,6 +2780,73 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         return ActiveObject->Level->PutNewString(s.mid(pos, newlen));
       }
       return ActiveObject->Level->PutNewString("");
+
+
+    // int SetUserVariable (int tid, str name, value)
+    case ACSF_SetUserVariable:
+      if (argCount >= 3) {
+        VStr s = GetStr(args[1]).toLowerCase();
+        if (!s.startsWith("user_")) {
+          if (acs_dump_uservar_access) GCon->Logf(NAME_Warning, "ACS: cannot set user variable with name \"%s\"", *GetStr(args[1]));
+          return 0;
+        }
+        VName fldname = VName(*s);
+        int count = 0;
+        if (args[0] == 0) {
+          if (doSetUserVarOrArray(Activator, fldname, args[2], false)) ++count;
+        } else {
+          for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
+            if (doSetUserVarOrArray(mobj, fldname, args[2], false)) ++count;
+          }
+        }
+        return count;
+      }
+      return 0;
+
+    // GetUserVariable (int tid, str name)
+    case ACSF_GetUserVariable:
+      if (argCount >= 2) {
+        VStr s = GetStr(args[1]).toLowerCase();
+        if (!s.startsWith("user_")) Host_Error("ACS: cannot get user variable with name \"%s\"", *GetStr(args[1]));
+        VEntity *mobj = EntityFromTID(args[0], Activator);
+        if (!mobj) Host_Error("ACS: cannot get user variable with name \"%s\" from nothing", *GetStr(args[1]));
+        VName fldname = VName(*s);
+        return doGetUserVarOrArray(mobj, fldname, false);
+      }
+      return 0;
+
+    // int SetUserArray (int tid, str name, int pos, int value)
+    case ACSF_SetUserArray:
+      if (argCount >= 4) {
+        VStr s = GetStr(args[1]).toLowerCase();
+        if (!s.startsWith("user_")) {
+          GCon->Logf(NAME_Warning, "ACS: cannot set user array with name \"%s\"", *GetStr(args[1]));
+          return 0;
+        }
+        VName fldname = VName(*s);
+        int count = 0;
+        if (args[0] == 0) {
+          if (doSetUserVarOrArray(Activator, fldname, args[3], true, args[2])) ++count;
+        } else {
+          for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
+            if (doSetUserVarOrArray(mobj, fldname, args[3], true, args[2])) ++count;
+          }
+        }
+        return count;
+      }
+      return 0;
+
+    // GetUserArray (int tid, str name, int pos)
+    case ACSF_GetUserArray:
+      if (argCount >= 3) {
+        VStr s = GetStr(args[1]).toLowerCase();
+        if (!s.startsWith("user_")) Host_Error("ACS: cannot get user array with name \"%s\"", *GetStr(args[1]));
+        VEntity *mobj = EntityFromTID(args[0], Activator);
+        if (!mobj) Host_Error("ACS: cannot get user array with name \"%s\" from nothing", *GetStr(args[1]));
+        VName fldname = VName(*s);
+        return doGetUserVarOrArray(mobj, fldname, true, args[2]);
+      }
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -2736,6 +2876,11 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
 } while (0) \
 
 
+//==========================================================================
+//
+//  VAcs::RunScript
+//
+//==========================================================================
 int VAcs::RunScript(float DeltaTime)
 {
   guard(VAcs::RunScript);

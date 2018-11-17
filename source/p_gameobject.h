@@ -756,11 +756,11 @@ public:
   };
 
   // -0 index is ok for non-arrays
-  int _get_user_var_int (VName fldname, int index=-1);
-  float _get_user_var_float (VName fldname, int index=-1);
+  int _get_user_var_int (VName fldname, int index=0);
+  float _get_user_var_float (VName fldname, int index=0);
 
-  void _set_user_var_int (VName fldname, int value, int index=-1);
-  void _set_user_var_float (VName fldname, float value, int index=-1);
+  void _set_user_var_int (VName fldname, int value, int index=0);
+  void _set_user_var_float (VName fldname, float value, int index=0);
 
   UserVarFieldType _get_user_var_type (VName fldname);
   int _get_user_var_dim (VName fldname); // array dimension; -1: not an array, or absent

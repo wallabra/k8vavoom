@@ -21,12 +21,12 @@
   ACS_EXTFUNC(SpawnSpotFacingForced)
   ACS_EXTFUNC(CheckActorProperty)
   ACS_EXTFUNC(SetActorVelocity) // implemented
-  ACS_EXTFUNC(SetUserVariable)
-  ACS_EXTFUNC(GetUserVariable)
+  ACS_EXTFUNC(SetUserVariable) // implemented
+  ACS_EXTFUNC(GetUserVariable) // implemented
   ACS_EXTFUNC(Radius_Quake2)
   ACS_EXTFUNC(CheckActorClass) // implemented
-  ACS_EXTFUNC(SetUserArray)
-  ACS_EXTFUNC(GetUserArray)
+  ACS_EXTFUNC(SetUserArray) // implemented
+  ACS_EXTFUNC(GetUserArray) // implemented
   ACS_EXTFUNC(SoundSequenceOnActor)
   ACS_EXTFUNC(SoundSequenceOnSector)
   ACS_EXTFUNC(SoundSequenceOnPolyobj)
