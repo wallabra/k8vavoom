@@ -1322,6 +1322,35 @@ COMMAND(Say) {
 
 //==========================================================================
 //
+//  COMMAND gc_toggle_stats
+//
+//==========================================================================
+COMMAND(gc_toggle_stats) {
+  VObject::GGCMessagesAllowed = !VObject::GGCMessagesAllowed;
+}
+
+
+//==========================================================================
+//
+//  COMMAND gc_show_all_objects
+//
+//==========================================================================
+COMMAND(gc_show_all_objects) {
+  int total = VObject::GetObjectsCount();
+  GCon->Log("===============");
+  GCon->Logf("total array size: %d", total);
+  for (int f = 0; f < total; ++f) {
+    VObject *o = VObject::GetIndexObject(f);
+    if (!o) continue;
+         if (o->GetFlags()&_OF_Destroyed) GCon->Logf("  #%5d: DESTROYED! (%s)", f, o->GetClass()->GetName());
+    else if (o->GetFlags()&_OF_DelayedDestroy) GCon->Logf("  #%5d: DELAYED! (%s)", f, o->GetClass()->GetName());
+    else GCon->Logf("  #%5d: `%s`", f, o->GetClass()->GetName());
+  }
+}
+
+
+//==========================================================================
+//
 //  VServerNetContext::GetLevel
 //
 //==========================================================================

@@ -366,21 +366,23 @@ void VObject::CollectGarbage (bool destroyDelayed) {
   }
 
   // now actually delete the objects
-  int count = 0;
+  int count = 0, left = 0;
   for (int i = 0; i < GObjObjects.Num(); ++i) {
     VObject *Obj = GObjObjects[i];
     if (!Obj) continue;
     if (Obj->GetFlags()&_OF_Destroyed) {
       ++count;
       delete Obj;
+    } else {
+      ++left;
     }
   }
 #if !defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
   if (GGCMessagesAllowed) {
 #if defined(VCC_STANDALONE_EXECUTOR)
-    fprintf(stderr, "GC: %d objects deleted\n", count);
+    fprintf(stderr, "GC: %d objects deleted (%d objects left, array size is %d)\n", count, left, GObjObjects.length());
 #else
-    GCon->Logf("GC: %d objects deleted", count);
+    GCon->Logf("GC: %d objects deleted (%d objects left, array size is %d)", count, left, GObjObjects.length());
 #endif
   }
 #endif

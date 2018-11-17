@@ -145,6 +145,13 @@ void VWidget::Init (VWidget *AParent) {
 //==========================================================================
 void VWidget::Destroy () {
   guard(VWidget::Destroy);
+  /*
+  if (ParentWidget) {
+    GCon->Logf("removing widget `%s` (parent is `%s)", GetClass()->GetName(), ParentWidget->GetClass()->GetName());
+  } else {
+    GCon->Logf("removing orphan widget `%s`", GetClass()->GetName());
+  }
+  */
   //if ((GetFlags()&_OF_Destroyed) != 0) return;
   OnDestroy();
   if (ParentWidget) ParentWidget->RemoveChild(this);
