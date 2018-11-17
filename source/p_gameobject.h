@@ -746,6 +746,7 @@ class VGameObject : public VObject {
 public:
   VObject *_stateRouteSelf; // used to replace state self for uservars if not none
 
+  // -0 index is ok for non-arrays
   int _get_user_var_int (VName fldname, int index=-1);
   float _get_user_var_float (VName fldname, int index=-1);
 

@@ -394,6 +394,7 @@ bool VExpression::IsDefaultObject () const { return false; }
 bool VExpression::IsPropertyAssign () const { return false; }
 bool VExpression::IsDynArraySetNum () const { return false; }
 bool VExpression::IsDecorateSingleName () const { return false; }
+bool VExpression::IsDecorateUserVar () const { return false; }
 bool VExpression::IsLocalVarDecl () const { return false; }
 bool VExpression::IsLocalVarExpr () const { return false; }
 bool VExpression::IsAssignExpr () const { return false; }

@@ -117,6 +117,7 @@ public:
   virtual bool IsPropertyAssign () const;
   virtual bool IsDynArraySetNum () const;
   virtual bool IsDecorateSingleName () const;
+  virtual bool IsDecorateUserVar () const;
   virtual bool IsLocalVarDecl () const;
   virtual bool IsLocalVarExpr () const;
   virtual bool IsAssignExpr () const;

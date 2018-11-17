@@ -33,17 +33,45 @@ IMPLEMENT_CLASS(V, GameObject)
 //  getFieldPtr
 //
 //==========================================================================
-static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, int index) {
-  if (!obj) Sys_Error("cannot find field '%s' in null object", *fldname);
-  VField *fld = obj->GetClass()->FindFieldChecked(fldname);
+static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, int index, VObject *Self) {
+  if (!obj) {
+    VObject::VMDumpCallStack();
+    if (Self) {
+      Sys_Error("cannot find field '%s' in null object, redirected from `%s`", *fldname, *Self->GetClass()->GetFullName());
+    } else {
+      Sys_Error("cannot find field '%s' in null object", *fldname);
+    }
+  }
+  VField *fld = obj->GetClass()->FindField(fldname);
+  if (!fld) {
+    VObject::VMDumpCallStack();
+    if (Self == obj) {
+      Host_Error("uservar '%s' not found in object of class `%s`", *fldname, *obj->GetClass()->GetFullName());
+    } else {
+      Host_Error("uservar '%s' not found in object of class `%s`, redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), *Self->GetClass()->GetFullName());
+    }
+  }
   if (fld->Type.Type == TYPE_Array) {
-    if (index == -1) index = 0;
-    if (fld->Type.ArrayDimInternal < 0 || index >= fld->Type.ArrayDimInternal) Sys_Error("uservar '%s' array index out of bounds (%d)", *fldname, index);
+    if (index < 0 || fld->Type.ArrayDimInternal < 0 || index >= fld->Type.ArrayDimInternal) {
+      VObject::VMDumpCallStack();
+      if (Self == obj) {
+        Host_Error("uservar '%s' array index out of bounds (%d) in object of class `%s`", *fldname, index, *obj->GetClass()->GetFullName());
+      } else {
+        Host_Error("uservar '%s' array index out of bounds (%d) in object of class `%s`, redirected from `%s`", *fldname, index, *obj->GetClass()->GetFullName(), *Self->GetClass()->GetFullName());
+      }
+    }
     VFieldType itt = fld->Type.GetArrayInnerType();
     if (fldtype) *fldtype = itt;
     return ((vuint8 *)obj)+fld->Ofs+itt.GetSize()*index;
   } else {
-    if (index != -1 && index != 0) Sys_Error("cannot index non-array uservar '%s'", *fldname);
+    if (index != 0) {
+      VObject::VMDumpCallStack();
+      if (Self == obj) {
+        Sys_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d)", *fldname, *obj->GetClass()->GetFullName(), index);
+      } else {
+        Sys_Error("cannot index non-array uservar '%s' in object of class `%s` (index is %d), redirected from `%s`", *fldname, *obj->GetClass()->GetFullName(), index, *Self->GetClass()->GetFullName());
+      }
+    }
     if (fldtype) *fldtype = fld->Type;
     return ((vuint8 *)obj)+fld->Ofs;
   }
@@ -57,7 +85,7 @@ static vuint8 *getFieldPtr (VFieldType *fldtype, VObject *obj, VName fldname, in
 //==========================================================================
 int VGameObject::_get_user_var_int (VName fldname, int index) {
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index);
+  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: return *(const vint32 *)dptr;
     case TYPE_Float: return *(const float *)dptr;
@@ -74,7 +102,7 @@ int VGameObject::_get_user_var_int (VName fldname, int index) {
 //==========================================================================
 float VGameObject::_get_user_var_float (VName fldname, int index) {
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index);
+  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: return *(const vint32 *)dptr;
     case TYPE_Float: return *(const float *)dptr;
@@ -91,7 +119,7 @@ float VGameObject::_get_user_var_float (VName fldname, int index) {
 //==========================================================================
 void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index);
+  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: *(vint32 *)dptr = value; return;
     case TYPE_Float: *(float *)dptr = value; return;
@@ -107,7 +135,7 @@ void VGameObject::_set_user_var_int (VName fldname, int value, int index) {
 //==========================================================================
 void VGameObject::_set_user_var_float (VName fldname, float value, int index) {
   VFieldType type;
-  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index);
+  vuint8 *dptr = getFieldPtr(&type, (_stateRouteSelf ? _stateRouteSelf : this), fldname, index, this);
   switch (type.Type) {
     case TYPE_Int: *(vint32 *)dptr = value; return;
     case TYPE_Float: *(float *)dptr = value; return;
@@ -119,7 +147,7 @@ void VGameObject::_set_user_var_float (VName fldname, float value, int index) {
 // ////////////////////////////////////////////////////////////////////////// //
 //native final int _get_user_var_int (name fldname, optional int index);
 IMPLEMENT_FUNCTION(VGameObject, _get_user_var_int) {
-  P_GET_INT_OPT(index, -1);
+  P_GET_INT_OPT(index, 0);
   P_GET_NAME(fldname);
   P_GET_SELF;
   if (!Self) Sys_Error("cannot get field '%s' from null object", *fldname);
@@ -128,7 +156,7 @@ IMPLEMENT_FUNCTION(VGameObject, _get_user_var_int) {
 
 //native final float _get_user_var_float (name fldname, optional int index);
 IMPLEMENT_FUNCTION(VGameObject, _get_user_var_float) {
-  P_GET_INT_OPT(index, -1);
+  P_GET_INT_OPT(index, 0);
   P_GET_NAME(fldname);
   P_GET_SELF;
   if (!Self) Sys_Error("cannot get field '%s' from null object", *fldname);
@@ -137,7 +165,7 @@ IMPLEMENT_FUNCTION(VGameObject, _get_user_var_float) {
 
 //native final void _set_user_var_int (name fldname, int value, optional int index);
 IMPLEMENT_FUNCTION(VGameObject, _set_user_var_int) {
-  P_GET_INT_OPT(index, -1);
+  P_GET_INT_OPT(index, 0);
   P_GET_INT(value);
   P_GET_NAME(fldname);
   P_GET_SELF;
@@ -147,7 +175,7 @@ IMPLEMENT_FUNCTION(VGameObject, _set_user_var_int) {
 
 //native final void _set_user_var_float (name fldname, float value, optional int index);
 IMPLEMENT_FUNCTION(VGameObject, _set_user_var_float) {
-  P_GET_INT_OPT(index, -1);
+  P_GET_INT_OPT(index, 0);
   P_GET_FLOAT(value);
   P_GET_NAME(fldname);
   P_GET_SELF;

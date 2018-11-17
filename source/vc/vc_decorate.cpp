@@ -246,7 +246,36 @@ public:
   virtual VStr toString () const override;
 
 protected:
-  VDecorateInvocation () : Name(NAME_None), NumArgs(0) {}
+  VDecorateInvocation () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDecorateUserVar
+//
+//  this generates call to _get/_set uservar methods
+//
+//==========================================================================
+class VDecorateUserVar : public VExpression {
+public:
+  VName fldname;
+  VExpression *index; // array index, if not nullptr
+
+  VDecorateUserVar (VName afldname, const TLocation &aloc);
+  VDecorateUserVar (VName afldname, VExpression *aindex, const TLocation &aloc);
+  virtual ~VDecorateUserVar () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+  //virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec) override;
+  virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) override;
+  virtual void Emit (VEmitContext &ec) override;
+  virtual bool IsDecorateUserVar () const override;
+  virtual VStr toString () const override;
+
+protected:
+  VDecorateUserVar () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
@@ -672,43 +701,18 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
 
   CheckName = *Name.ToLower();
 
-  /*
-  if (VStr(*CheckName).startsWith("user_")) {
-    VSingleName *sn = new VSingleName(CheckName, Loc);
-    delete this;
-    return sn->Resolve(ec);
-  }
-  */
-
   if (ec.SelfClass) {
     VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
     //FIXME: this is ALL WRONG! we should introduce new field accessor with run-time field checking
     if (fldn != NAME_None) {
+      // checked field access
+      VExpression *e = new VDecorateUserVar(VName(*Name), Loc);
+      delete this;
+      return e->Resolve(ec);
+      /*
       VStr fns = VStr(*fldn);
-      if (fns.startsWith("user_")) {
-        // method call
-        /*
-        VField *xfld = ec.SelfClass->FindFieldChecked(fldn);
-        VFieldType ftype = xfld->Type;
-        if (ftype.Type == TYPE_Array) ftype = ftype.GetArrayInnerType();
-        VName mtname = NAME_None;
-        if (ftype.Type == TYPE_Int) mtname = VName(
-        VMethod *M = ec.SelfClass->FindMethod("
-        VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
-        */
-        // create ternary: (_stateRouteSelf ? _stateRouteSelf : self)
-        VField *fldsrf = ec.SelfClass->FindFieldChecked("_stateRouteSelf");
-        VField *xfld = ec.SelfClass->FindFieldChecked(fldn);
-        VExpression *cond = new VFieldAccess(new VSelf(Loc), fldsrf, Loc, 0);
-        VExpression *srf = new VFieldAccess(new VSelf(Loc), fldsrf, Loc, 0);
-        VExpression *eself = new VConditional(cond, srf, new VSelf(Loc), Loc);
-        VExpression *e = new VFieldAccess(eself, xfld, Loc, 0/*FIELD_ReadOnly*/);
-        delete this;
-        //fprintf(stderr, "REROUTE FOR '%s'(%s): %s\n", *CheckName, *fldn, *e->toString());
-        return e->Resolve(ec);
-      } else {
-        int dotpos = fns.IndexOf('.');
-        if (dotpos > 0 && dotpos < fns.length()-1) {
+      int dotpos = fns.IndexOf('.');
+      if (dotpos > 0 && dotpos < fns.length()-1) {
           VStr n0 = fns.mid(0, dotpos);
           VStr n1 = fns.mid(dotpos+1, fns.length()-dotpos);
           //fprintf(stderr, "::: <%s> <%s>\n", *n0, *n1);
@@ -723,6 +727,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
           return sn->Resolve(ec);
         }
       }
+      */
     }
   }
 
@@ -757,6 +762,201 @@ void VDecorateSingleName::Emit (VEmitContext &) {
 //
 //==========================================================================
 bool VDecorateSingleName::IsDecorateSingleName () const {
+  return true;
+}
+
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::VDecorateUserVar
+//
+//==========================================================================
+VDecorateUserVar::VDecorateUserVar (VName afldname, const TLocation &aloc)
+  : VExpression(aloc)
+  , fldname(afldname)
+  , index(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::VDecorateUserVar
+//
+//==========================================================================
+VDecorateUserVar::VDecorateUserVar (VName afldname, VExpression *aindex, const TLocation &aloc)
+  : VExpression(aloc)
+  , fldname(afldname)
+  , index(aindex)
+{
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::~VDecorateUserVar
+//
+//==========================================================================
+VDecorateUserVar::~VDecorateUserVar () {
+  delete index; index = nullptr;
+  fldname = NAME_None; // just4fun
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDecorateUserVar::SyntaxCopy () {
+  auto res = new VDecorateUserVar();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDecorateUserVar::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDecorateUserVar *)e;
+  res->fldname = fldname;
+  res->index = (index ? index->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::DoResolve
+//
+//==========================================================================
+VExpression *VDecorateUserVar::DoResolve (VEmitContext &ec) {
+  if (!ec.SelfClass) Sys_Error("VDecorateUserVar::DoResolve: internal compiler error");
+  VName fldnamelo = (fldname == NAME_None ? fldname : VName(*fldname, VName::AddLower));
+  VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(fldnamelo);
+  if (fldn == NAME_None) {
+    ParseError(Loc, "field `%s` is not found in class `%s`", *fldname, *ec.SelfClass->GetFullName());
+    delete this;
+    return nullptr;
+  }
+  // first try to find the corresponding non-array method
+  if (!index) {
+    VMethod *mt = ec.SelfClass->FindMethod(fldn);
+    if (mt) {
+      // use found method
+      VExpression *e = new VInvocation(nullptr, mt, nullptr, false, false, Loc, 0, nullptr);
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+  // no method, use checked field access
+  VField *fld = ec.SelfClass->FindField(fldn);
+  if (!fld) {
+    ParseError(Loc, "field `%s` => `%s` is not found in class `%s`", *fldname, *fldn, *ec.SelfClass->GetFullName());
+    delete this;
+    return nullptr;
+  }
+  VFieldType ftype = fld->Type;
+  if (ftype.Type == TYPE_Array) ftype = ftype.GetArrayInnerType();
+  VName mtname = (ftype.Type == TYPE_Int ? "_get_user_var_int" : "_get_user_var_float");
+  VMethod *mt = ec.SelfClass->FindMethod(mtname);
+  if (!mt) {
+    ParseError(Loc, "internal method `%s` not found in class `%s`", *mtname, *ec.SelfClass->GetFullName());
+    delete this;
+    return nullptr;
+  }
+  VExpression *args[2];
+  args[0] = new VNameLiteral(fldn, Loc);
+  args[1] = index;
+  VExpression *e = new VInvocation(nullptr, mt, nullptr, false, false, Loc, 2, args);
+  index = nullptr;
+  delete this;
+  return e->Resolve(ec);
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::ResolveCompleteAssign
+//
+//  this will be called before actual assign resolving
+//  return `nullptr` to indicate error, or consume `val` and set `resolved`
+//  to `true` if resolved
+//  if `nullptr` is returned, both `this` and `val` should be destroyed
+//
+//==========================================================================
+VExpression *VDecorateUserVar::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
+  if (!ec.SelfClass) Sys_Error("VDecorateUserVar::DoResolve: internal compiler error");
+  if (!val) { delete this; return nullptr; }
+  resolved = true; // anyway
+  VName fldnamelo = (fldname == NAME_None ? fldname : VName(*fldname, VName::AddLower));
+  VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(fldnamelo);
+  if (fldn == NAME_None) {
+    ParseError(Loc, "field `%s` is not found in class `%s`", *fldname, *ec.SelfClass->GetFullName());
+    delete val;
+    delete this;
+    return nullptr;
+  }
+  VField *fld = ec.SelfClass->FindField(fldn);
+  if (!fld) {
+    ParseError(Loc, "field `%s` => `%s` is not found in class `%s`", *fldname, *fldn, *ec.SelfClass->GetFullName());
+    delete val;
+    delete this;
+    return nullptr;
+  }
+  VFieldType ftype = fld->Type;
+  if (ftype.Type == TYPE_Array) ftype = ftype.GetArrayInnerType();
+  VName mtname = (ftype.Type == TYPE_Int ? "_set_user_var_int" : "_set_user_var_float");
+  VMethod *mt = ec.SelfClass->FindMethod(mtname);
+  if (!mt) {
+    ParseError(Loc, "internal method `%s` not found in class `%s`", *mtname, *ec.SelfClass->GetFullName());
+    delete val;
+    delete this;
+    return nullptr;
+  }
+  VExpression *args[3];
+  args[0] = new VNameLiteral(fldn, Loc);
+  args[1] = val;
+  args[2] = index;
+  VExpression *e = new VInvocation(nullptr, mt, nullptr, false, false, Loc, 3, args);
+  index = nullptr;
+  delete this;
+  return e->Resolve(ec);
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::Emit
+//
+//==========================================================================
+void VDecorateUserVar::Emit (VEmitContext &ec) {
+  Sys_Error("VDecorateUserVar::Emit: the thing that should not be!");
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::toString
+//
+//==========================================================================
+VStr VDecorateUserVar::toString () const {
+  VStr res = VStr(*fldname);
+  if (index) { res += "["; res += index->toString(); res += "]"; }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDecorateUserVar::IsDecorateUserVar
+//
+//==========================================================================
+bool VDecorateUserVar::IsDecorateUserVar () const {
   return true;
 }
 
@@ -1179,6 +1379,13 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, 
     VStr varName = sc->String;
     VStr uvname = sc->String.toLowerCase();
     if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
+    sc->Expect(",");
+    VExpression *val = ParseExpressionPriority13(sc, Class);
+    sc->Expect(")");
+    if (!val) sc->Error("invalid assignment");
+    VExpression *dest = new VDecorateUserVar(VName(*varName), stloc);
+    return new VAssignment(VAssignment::Assign, dest, val, stloc);
+    /*
     VExpression *op1 = new VDecorateSingleName(*sc->String, sc->GetLoc());
     if (!op1) sc->Error("decorate parsing error");
     sc->Expect(",");
@@ -1188,6 +1395,7 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, 
     // create assignment
     //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
     return new VAssignment(VAssignment::Assign, op1, op2, stloc);
+    */
   } else if (FuncName.ICmp("A_SetUserArray") == 0 || FuncName.ICmp("A_SetUserArrayFloat") == 0) {
     auto stloc = sc->GetLoc();
     sc->Expect("(");
@@ -1195,7 +1403,7 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, 
     VStr varName = sc->String;
     VStr uvname = sc->String.toLowerCase();
     if (!uvname.startsWith("user_")) sc->Error(va("%s: user variable name in DECORATE must start with `user_`", *sc->GetLoc().toStringNoCol()));
-    VExpression *uvar = new VDecorateSingleName(*sc->String, sc->GetLoc());
+    //VExpression *uvar = new VDecorateSingleName(*sc->String, sc->GetLoc());
     sc->Expect(",");
     // index
     VExpression *idx = ParseExpressionPriority13(sc, Class);
@@ -1205,10 +1413,14 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, 
     VExpression *val = ParseExpressionPriority13(sc, Class);
     if (!val) sc->Error("decorate parsing error");
     sc->Expect(")");
+    VExpression *dest = new VDecorateUserVar(VName(*varName), idx, stloc);
+    return new VAssignment(VAssignment::Assign, dest, val, stloc);
+    /*
     VArrayElement *ael = new VArrayElement(uvar, idx, stloc);
     // create assignment
     //GCon->Logf("SFU:%s: %s : %s", *sc->GetLoc().toStringNoCol(), *varName, *op2->toString());
     return new VAssignment(VAssignment::Assign, ael, val, stloc);
+    */
   }
   return nullptr;
 }
@@ -1422,14 +1634,19 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
 static VExpression *ParseExpressionPriority1 (VScriptParser *sc) {
   guard(ParseExpressionPriority1);
   VExpression *op = ParseExpressionPriority0(sc);
-  TLocation l = sc->GetLoc();
+  //TLocation l = sc->GetLoc();
   if (!op) return nullptr;
   bool done = false;
   do {
     if (sc->Check("[")) {
       VExpression *ind = ParseExpressionPriority13(sc, decoClass);
+      if (!ind) sc->Error("index expression error");
       sc->Expect("]");
-      op = new VArrayElement(op, ind, l);
+      //op = new VArrayElement(op, ind, l);
+      if (!op->IsDecorateSingleName()) sc->Error("cannot index non-array");
+      VExpression *e = new VDecorateUserVar(*((VDecorateSingleName *)op)->Name, ind, op->Loc);
+      delete op;
+      op = e;
     } else {
       done = true;
     }
@@ -1794,6 +2011,14 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
       //GCon->Logf("ASS to '%s'...", *FuncName);
     }
     if (dest) {
+      // we're supporting assign to array element or simple names
+      // convert "single name" to uservar access
+      if (dest->IsDecorateSingleName()) {
+        VExpression *e = new VDecorateUserVar(*((VDecorateSingleName *)dest)->Name, dest->Loc);
+        delete dest;
+        dest = e;
+      }
+      if (!dest->IsDecorateUserVar()) sc->Error("cannot assign to non-field");
       VExpression *val = ParseExpression(sc, Class);
       if (!val) sc->Error("decorate parsing error");
       VExpression *ass = new VAssignment(VAssignment::Assign, dest, val, stloc);
