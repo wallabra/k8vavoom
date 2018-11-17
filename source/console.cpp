@@ -520,27 +520,40 @@ static void DoPrint (const char *buf) {
 
 //==========================================================================
 //
-//  FConsoleDevice::Serialise
+//  ConSerialise
 //
 //==========================================================================
-void FConsoleDevice::Serialise (const char *V, EName Event) {
+static void ConSerialise (const char *str, EName Event, bool asConLog) {
   //dprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
-  if (!V) V = "";
-  if (VStr::MustBeSanitized(V)) {
-    VStr rc = VStr(V).RemoveColours();
+  if (!str) str = "";
+  if (asConLog) DoPrint(str);
+  if (VStr::MustBeSanitized(str)) {
+    VStr rc = VStr(str).RemoveColours();
     if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), *rc);
 #ifndef _WIN32
     printf("%s: %s\n", VName::SafeString(Event), *rc);
 #endif
   } else {
-    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), V);
+    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), str);
 #ifndef _WIN32
-    printf("%s: %s\n", VName::SafeString(Event), V);
+    printf("%s: %s\n", VName::SafeString(Event), str);
 #endif
   }
-  DoPrint(V);
-  DoPrint("\n");
+  if (!asConLog) {
+    DoPrint(str);
+    DoPrint("\n");
+  }
+}
+
+
+//==========================================================================
+//
+//  FConsoleDevice::Serialise
+//
+//==========================================================================
+void FConsoleDevice::Serialise (const char *V, EName Event) {
+  ConSerialise(V, Event, false);
 }
 
 
@@ -550,19 +563,5 @@ void FConsoleDevice::Serialise (const char *V, EName Event) {
 //
 //==========================================================================
 void FConsoleLog::Serialise (const char *Text, EName Event) {
-  if (Event == NAME_Dev && !developer) return;
-  if (!Text) return;
-  DoPrint(Text);
-  if (VStr::MustBeSanitized(Text)) {
-    VStr rc = VStr(Text).RemoveColours();
-    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), *rc);
-#ifndef _WIN32
-    printf("%s: %s\n", VName::SafeString(Event), *rc);
-#endif
-  } else {
-    if (logfout) fprintf(logfout, "%s: %s\n", VName::SafeString(Event), Text);
-#ifndef _WIN32
-    printf("%s: %s\n", VName::SafeString(Event), Text);
-#endif
-  }
+  ConSerialise(Text, Event, true);
 }
