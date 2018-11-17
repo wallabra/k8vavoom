@@ -300,8 +300,8 @@ bool VMethod::Define () {
       ParseError(Loc, "Spawner method must have at least 1 argument");
     } else if (ParamTypes[0].Type != TYPE_Class) {
       ParseError(Loc, "Spawner method must have class as first argument");
-    } else if (ReturnType.Type != TYPE_Reference) {
-      ParseError(Loc, "Spawner method must return an object reference");
+    } else if (ReturnType.Type != TYPE_Reference && ReturnType.Type != TYPE_Class) {
+      ParseError(Loc, "Spawner method must return an object reference or class");
     } else if (ReturnType.Class != ParamTypes[0].Class) {
       // hack for `SpawnObject (class)`
       if (ParamTypes[0].Class || ReturnType.Class->Name != "Object") {
