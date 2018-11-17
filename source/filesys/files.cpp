@@ -649,6 +649,7 @@ static int countFmtHash (const VStr &str) {
 //==========================================================================
 void FL_InitOptions () {
   GArgs.AddFileOption("!1-game"); // '!' means "has args, and breaking" (number is argc)
+  GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
   GArgs.AddFileOption("-skipsounds");
   GArgs.AddFileOption("-allowsounds");
   GArgs.AddFileOption("-skipsprites");
