@@ -265,12 +265,19 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
       if (!MO) Sys_Error("PlayerPawn is dead (wtf?!)");
       {
         SavedVObjectPtr svp(&MO->_stateRouteSelf);
+        MO->_stateRouteSelf = _stateRouteSelf; // always, 'cause player is The Authority
+        /*
         if (!MO->_stateRouteSelf) {
           MO->_stateRouteSelf = _stateRouteSelf;
         } else {
-          //GCon->Logf("MO-viewobject: %s", MO->_stateRouteSelf->GetClass()->GetName());
+          //GCon->Logf("player(%s), MO(%s)-viewobject: `%s`, state `%s` (at %s)", *GetClass()->GetFullName(), *MO->GetClass()->GetFullName(), MO->_stateRouteSelf->GetClass()->GetName(), *state->GetFullName(), *state->Loc.toStringNoCol());
         }
+        */
         if (!MO->_stateRouteSelf /*&& position == 0*/) GCon->Logf("Player: viewobject is not set!");
+        /*
+        VObject::VMDumpCallStack();
+        GCon->Logf("player(%s), MO(%s)-viewobject: `%s`, state `%s` (at %s)", *GetClass()->GetFullName(), *MO->GetClass()->GetFullName(), MO->_stateRouteSelf->GetClass()->GetName(), *state->GetFullName(), *state->Loc.toStringNoCol());
+        */
         P_PASS_REF(MO);
         ExecuteFunctionNoArgs(state->Function);
       }
