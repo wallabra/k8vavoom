@@ -204,6 +204,7 @@ class Actor extends Thinker
   action native A_JumpIfInventory(class<Actor> itemtype, eval int amount, state label);
   action native A_JumpIfInTargetInventory(class<Actor> itemtype, eval int amount, state label);
   action native A_JumpIfTargetInLOS(state label, optional float fov, optional int flags, optional float distmax, optional float distclose);
+  action native A_JumpIfInTargetLOS(state label, optional float fov, optional int flags, optional float distmax, optional float distclose);
   action native A_JumpIfCVarTrue(string cvar, state label);
   action native A_JumpIfCVarFalse(string cvar, state label);
 
@@ -400,6 +401,7 @@ class Actor extends Thinker
 
   action native A_RemoveChildren (optional bool all, optional int flags, optional string filter, optional string species);
   action native A_RadiusGive (name item, float distance, int flags, optional int amount, optional string filter, optional string species, optional float mindist, optional int limit);
+
 
   // k8 extensions
   // does shell-like glob matching

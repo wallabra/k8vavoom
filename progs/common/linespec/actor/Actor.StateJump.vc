@@ -219,64 +219,32 @@ final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Lab
 }
 
 
-// Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
-//enum EJumpFlags
-//!NOT_IMPLEMENTED!const int JLOSF_PROJECTILE =    1;
-const int JLOSF_NOSIGHT =     1 << 1;
-//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOFOV =    1 << 2;
-//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOSIGHT =  1 << 3;
-//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOJUMP =   1 << 4;
-const int JLOSF_DEADNOJUMP = 1<<5;
-const int JLOSF_CHECKMASTER = 1<<6;
-//!NOT_IMPLEMENTED!const int JLOSF_TARGETLOS =   1 << 7;
-//!NOT_IMPLEMENTED!const int JLOSF_FLIPFOV =     1 << 8;
-const int JLOSF_ALLYNOJUMP =    1 << 9;
-//!NOT_IMPLEMENTED!const int JLOSF_COMBATANTONLY = 1 << 10;
-//!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM =   1 << 11;
-//!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER =   1 << 12;
-//};
-
-
 //==========================================================================
 //
 //  A_JumpIfTargetInLOS
 //
 //==========================================================================
-final void A_JumpIfTargetInLOS(state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+final void A_JumpIfTargetInLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (checkIfTargetInLOS(Fov!optional, flags!optional, distmax!optional, distclose!optional)) DoJump(Label);
+}
 
-  if (distmax == 0) distmax = 8192;
 
-  EntityEx Targ;
-  if (!bIsPlayer) {
-    Targ = (flags&JLOSF_CHECKMASTER ? Master : Target);
-    if (!Targ) return;
-    if (!(flags&JLOSF_NOSIGHT)) {
-      if (!CanSee(Targ)) return;
-    }
-    if (Fov && Fov < 360.0) {
-      float Ang = AngleMod180(atan2(Targ.Origin.y-Origin.y, Targ.Origin.x-Origin.x)-Angles.yaw);
-      if (fabs(Ang) > Fov/2.0) return;
-    }
-  } else {
-    TVec Dir;
-    //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
-    bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = false;
-    Weapon Wpn = PlayerEx(self).ReadyWeapon;
-    if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
-    noAAVert = noAAim;
-    Targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
-  }
-
-  if (Targ) {
-    if ((flags&JLOSF_DEADNOJUMP) && Targ.Health <= 0) return;
-    if (flags&JLOSF_ALLYNOJUMP) {
-      //FIXME: incomplete
-      if (Targ == self || (bIsPlayer && Targ.bFriendly)) return;
-    }
-    DoJump(Label);
-  }
+//==========================================================================
+//
+//  A_JumpIfInTargetLOS
+//
+//  https://zdoom.org/wiki/A_JumpIfInTargetLOS
+//  wutafuck? it seems to simply call `A_JumpIfTargetInLOS()` on target object
+//
+//==========================================================================
+final void A_JumpIfInTargetLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  EntityEx obj = Target;
+  if (!obj) return;
+  if (obj.checkIfTargetInLOS(Fov!optional, flags!optional, distmax!optional, distclose!optional)) DoJump(Label);
 }
 
 
@@ -285,7 +253,6 @@ final void A_JumpIfTargetInLOS(state Label, optional float Fov, optional int fla
 //  A_JumpIfCVarTrue
 //
 //==========================================================================
-
 final void A_JumpIfCVarTrue (string cvar, state Label) {
   name cvn = StrToName(cvar);
   if (CvarExists(cvn)) {
@@ -295,12 +262,12 @@ final void A_JumpIfCVarTrue (string cvar, state Label) {
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
+
 //==========================================================================
 //
 //  A_JumpIfCVarFalse
 //
 //==========================================================================
-
 final void A_JumpIfCVarFalse (string cvar, state Label) {
   name cvn = name(cvar);
   if (CvarExists(cvn)) {

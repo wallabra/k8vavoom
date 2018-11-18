@@ -4257,3 +4257,67 @@ float decorate_momz
 {
   get { return Velocity.z / 35.0; }
 }
+
+
+//==========================================================================
+// Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
+//enum EJumpFlags
+//!NOT_IMPLEMENTED!const int JLOSF_PROJECTILE =    1;
+const int JLOSF_NOSIGHT =     1 << 1;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOFOV =    1 << 2;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOSIGHT =  1 << 3;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOJUMP =   1 << 4;
+const int JLOSF_DEADNOJUMP = 1<<5;
+const int JLOSF_CHECKMASTER = 1<<6;
+//!NOT_IMPLEMENTED!const int JLOSF_TARGETLOS =   1 << 7;
+//!NOT_IMPLEMENTED!const int JLOSF_FLIPFOV =     1 << 8;
+const int JLOSF_ALLYNOJUMP =    1 << 9;
+//!NOT_IMPLEMENTED!const int JLOSF_COMBATANTONLY = 1 << 10;
+//!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM =   1 << 11;
+//!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER =   1 << 12;
+//};
+
+
+//==========================================================================
+//
+//  checkIfTargetInLOS
+//
+//  workhorse for following decorate LOS checks
+//
+//==========================================================================
+final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+  if (distmax == 0) distmax = 8192;
+  Fov = fabs(Fov);
+
+  EntityEx Targ;
+  if (!bIsPlayer) {
+    Targ = (flags&JLOSF_CHECKMASTER ? Master : Target);
+    if (!Targ) return false;
+    if (!(flags&JLOSF_NOSIGHT)) {
+      if (!CanSee(Targ)) return false;
+    }
+    if (Fov && Fov < 360.0) {
+      float Ang = AngleMod180(atan2(Targ.Origin.y-Origin.y, Targ.Origin.x-Origin.x)-Angles.yaw);
+      if (fabs(Ang) > Fov/2.0) return false;
+    }
+  } else {
+    TVec Dir;
+    //Targ = Aim(Dir, distmax/*16.0*64.0*/); // old code
+    bool noAAim = !PlayerEx(self).bAutoAim, noAAVert = false;
+    Weapon Wpn = PlayerEx(self).ReadyWeapon;
+    if (Wpn && Wpn.IsAutoaimDisabled()) noAAim = true; //bNoAutoaim;
+    noAAVert = noAAim;
+    Targ = Aim(nullptr, 8192/*16*64*/, Angles.yaw, noAutoaim:noAAim, noVertAutoAim:noAAVert);
+  }
+
+  if (Targ) {
+    if ((flags&JLOSF_DEADNOJUMP) && Targ.Health <= 0) return false;
+    if (flags&JLOSF_ALLYNOJUMP) {
+      //FIXME: incomplete
+      if (Targ == self || (bIsPlayer && Targ.bFriendly)) return false;
+    }
+    return true;
+  }
+
+  return false;
+}
