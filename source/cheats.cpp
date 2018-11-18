@@ -207,7 +207,7 @@ COMMAND(Script) {
     int script = atoi(*Args[1]);
     if (script < 1) return;
     if (script > 9999) return;
-    if (Player->Level->XLevel->Acs->Start(script, 0, 0, 0, 0, Player->MO, nullptr, 0, false, false)) {
+    if (Player->Level->XLevel->Acs->Start(script, 0, 0, 0, 0, 0, Player->MO, nullptr, 0, false, false)) {
       GCon->Logf("Running script %d", script);
     }
   }
