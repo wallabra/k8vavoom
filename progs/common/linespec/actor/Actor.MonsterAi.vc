@@ -229,6 +229,7 @@ final void A_Look2()
   }
 }
 
+
 //==========================================================================
 //
 // A_LookEx
@@ -236,13 +237,12 @@ final void A_Look2()
 // [KS] Borrowed the A_Look code to make a parameterized version.
 //
 //==========================================================================
-
 final void A_LookEx (int flags, optional float minseedist, optional float maxseedist, optional float maxheardist,
-      optional float fov, optional name wakestate)
+                     optional float fov, optional name wakestate)
 {
-  EntityEx  targ;
-  Entity    Ent;
-  float   dist;
+  EntityEx targ;
+  Entity Ent;
+  float dist;
 
   // fix optional args
   //if (!specified_minseedist) minseedist = 0; // this is default
@@ -251,167 +251,100 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
   //if (!specified_fov) fov = 0; // this is default
   if (!specified_wakestate) wakestate = 'See';
 
-  //  Set goal now if appropriate.
-  if (Special == LNSPEC_ThingSetGoal && Args[0] == 0)
-  {
+  // set goal now if appropriate
+  if (Special == LNSPEC_ThingSetGoal && Args[0] == 0) {
     Goal = none;
-    for (Ent = Level.FindMobjFromTID(Args[1], none); Ent;
-      Ent = Level.FindMobjFromTID(Args[1], Ent))
-    {
-      if (!Ent.IsA('PatrolPoint'))
-      {
-        continue;
-      }
+    for (Ent = Level.FindMobjFromTID(Args[1], none); Ent; Ent = Level.FindMobjFromTID(Args[1], Ent)) {
+      if (!Ent.IsA('PatrolPoint')) continue;
       Goal = EntityEx(Ent);
       break;
     }
     Special = 0;
-    ReactionTime = itof(Args[2]) + XLevel.Time;
+    ReactionTime = itof(Args[2])+XLevel.Time;
     bChaseGoal = !!Args[3];
   }
 
-  Threshold = 0;  // any shot will wake up
-  if (TIDToHate)
-  {
+  Threshold = 0; // any shot will wake up
+  if (TIDToHate) {
     targ = Target;
-  }
-  else
-  {
-    if (!(flags & Entity::LOF_NOSOUNDCHECK))
-    {
-      targ = Level.CompatSoundTarget || bNoSector ?
-        EntityEx(Sector->SoundTarget) : LastHeard;
-      //  If it's dead, don't chase it.
-      if (targ && targ.Health <= 0)
-      {
-        targ = none;
-      }
+  } else {
+    if (!(flags&Entity::LOF_NOSOUNDCHECK)) {
+      targ = (Level.CompatSoundTarget || bNoSector ? EntityEx(Sector->SoundTarget) : LastHeard);
+      // if it's dead, don't chase it
+      if (targ && targ.Health <= 0) targ = none;
 
       // [KS] If the target is too far away, don't respond to the sound.
-      if (maxheardist && DistTo(targ) > maxheardist)
-      {
-        targ = none;
-      }
+      if (targ && maxheardist && DistTo(targ) > maxheardist) targ = none;
     }
 
-    if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget)
-    {
-      return;
-    }
+    if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget) return;
   }
 
-  //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
-    VisDir = -1;
-  }
+  // Andy Baker's stealth monsters
+  if (bStealth) VisDir = -1;
 
-  if (targ && targ.bShootable)
-  {
-    if (bFriendly && targ.bFriendly)
-    {
-      if (!(flags & Entity::LOF_NOSIGHTCHECK))
-      {
-        //  If we find a valid target here, the wandering logic should
-        // *not* be activated! If would cause the seestate to be set twice.
-        if (!LookForPlayers(bLookAllAround))
-        {
-          // Let the actor wander around aimlessly looking for a fight
-          if (FindState(wakestate))
-          {
-            if (!bInChase)
-            {
-              SetState(FindState(wakestate));
-            }
-          }
-          else
-          {
+  if (targ && targ.bShootable) {
+    if (bFriendly && targ.bFriendly) {
+      if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
+        // if we find a valid target here, the wandering logic should *not* be activated!
+        // if would cause the seestate to be set twice
+        if (!LookForPlayers(bLookAllAround)) {
+          // let the actor wander around aimlessly looking for a fight
+          if (FindState(wakestate)) {
+            if (!bInChase) SetState(FindState(wakestate));
+          } else {
             A_Wander();
           }
         }
-      }
-      else
-      {
-        // Let the actor wander around aimlessly looking for a fight
-        if (FindState(wakestate))
-        {
-          if (!bInChase)
-          {
-            SetState(FindState(wakestate));
-          }
-        }
-        else
-        {
+      } else {
+        // let the actor wander around aimlessly looking for a fight
+        if (FindState(wakestate)) {
+          if (!bInChase) SetState(FindState(wakestate));
+        } else {
           A_Wander();
         }
       }
-    }
-    else
-    {
+    } else {
       Target = targ;
-
-      if (bAmbush)
-      {
+      if (bAmbush && targ) {
         if (!CanSee(Target) && (!minseedist || DistTo(Target) < minseedist) &&
-          (!maxseedist || DistTo(Target) > maxseedist))
+            (!maxseedist || DistTo(Target) > maxseedist))
         {
-          if (!LookForPlayers(bLookAllAround))
-          {
-            return;
-          }
+          if (!LookForPlayers(bLookAllAround)) return;
         }
       }
     }
-  }
-  else
-  {
-    if (!(flags & Entity::LOF_NOSIGHTCHECK))
-    {
-      if (!LookForPlayers(bLookAllAround))
-      {
-        return;
-      }
-    }
-    else
-    {
+  } else {
+    if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
+      if (!LookForPlayers(bLookAllAround)) return;
+    } else {
       return;
     }
   }
 
-  //  Go into chase state
-  //  Don't start chasing after a goal if it isn't time yet.
-  if (Target == Goal)
-  {
-    if (ReactionTime > XLevel.Time)
-    {
-      Target = none;
-    }
-  }
-  else if (SightSound && !(flags & Entity::LOF_NOSEESOUND))
-  {
-    if (flags & Entity::LOF_FULLVOLSEESOUND)
-    {
-      // Full volume
+  // go into chase state
+  // don't start chasing after a goal if it isn't time yet
+  if (Target == Goal) {
+    if (ReactionTime > XLevel.Time) Target = none;
+  } else if (SightSound && !(flags&Entity::LOF_NOSEESOUND)) {
+    if (flags&Entity::LOF_FULLVOLSEESOUND) {
+      // full volume
       PlaySound(SightSound, CHAN_VOICE, 1.0, ATTN_NONE);
-    }
-    else
-    {
+    } else {
       PlaySound(SightSound, CHAN_VOICE);
     }
   }
 
-  if (Target)
-  {
-    if (FindState(wakestate))
-    {
+  if (Target) {
+    state wkst = FindState(wakestate);
+    if (wkst) {
       SetState(FindState(wakestate));
-    }
-    else
-    {
+    } else {
       SetState(SeeState);
     }
   }
 }
+
 
 //==========================================================================
 //
