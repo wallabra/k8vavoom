@@ -65,6 +65,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   if (!MsgFont) { MsgFont = 'smallfont'; AFont = MsgFont; }
   MsgColour = Colour;
   HoldTime = AHoldTime;
+  HoldTime = fclamp(HoldTime, 0.01, 100000);
   //if (HoldTime > 0) HoldTime += 0.5/35.0;
 
   //print("HUDMSG: font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);

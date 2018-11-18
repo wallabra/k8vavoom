@@ -45,9 +45,11 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
   ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
     AHudHeight, AHoldTime, Time1, Time2);
 
+  Time1 = fclamp(Time1, 0.1, 100000);
+  Time2 = fclamp(Time2, 0.01, 100000);
+  HoldTime = fclamp(HoldTime, 0.01, 100000);
   TypeOnTime = Time1;
-  if (TypeOnTime == 0.0)
-    TypeOnTime = 0.1;
+  if (Time1 == 0.0) TypeOnTime = 0.1;
   FadeOutTime = Time2;
   CurrentLine = 0;
   LineChars = 0;
