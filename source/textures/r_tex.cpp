@@ -1012,6 +1012,38 @@ void P_InitAnimated () {
 
 //==========================================================================
 //
+//  CheckNumForNameAndForce
+//
+//  find or force-load texture
+//
+//==========================================================================
+static int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent) {
+  int tidx = GTextureManager.CheckNumForName(Name, Type, bOverload, bCheckAny);
+  if (tidx >= 0) return tidx;
+  VName PatchName(*Name, VName::AddLower8);
+  // get wad lump number
+  int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
+  // sprites also can be used as patches
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
+  // add it to textures
+  if (LNum >= 0) {
+    VTexture *tex = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
+    if (tex) {
+      GCon->Logf(NAME_Init, "Textures: force-loaded texture \"%s\"", *Name);
+      GTextureManager.AddTexture(tex);
+      tidx = GTextureManager.CheckNumForName(Name, Type, bOverload, bCheckAny);
+      check(tidx >= 0);
+      return tidx;
+    }
+  }
+  if (!silent) GCon->Logf(NAME_Init, "Textures: missing texture \"%s\"", *Name);
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  ParseFTAnim
 //
 //  Parse flat or texture animation.
@@ -1031,7 +1063,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   // name
   bool ignore = false;
   sc->ExpectName8();
-  ad.Index = GTextureManager.CheckNumForName(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true);
+  ad.Index = CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, !optional);
   if (ad.Index == -1) {
     ignore = true;
     if (!optional) GCon->Logf("ANIMDEFS: Can't find '%s'", *sc->Name8);
@@ -1071,18 +1103,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       fd.Index = ad.Index+sc->Number-1;
     } else {
       sc->ExpectName8();
-      fd.Index = GTextureManager.CheckNumForName(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true);
-      if (fd.Index == -1 && !missing) {
-        sc->Message(va("Unknown texture \"%s\"", *sc->String));
-        //for (int f = 0; f < GTextureManager.GetNumTextures(); ++f) GCon->Logf("  #%5d: <%s> type=%d", f, *GTextureManager[f]->Name, GTextureManager[f]->Type);
-      }
-      /*
-      if (fd.Index == -1) {
-        GCon->Logf("NOT found texture for pic '%s' (%s)", *sc->Name8, *sc->String);
-      } else {
-        GCon->Logf("found texture #%d as '%s' for pic '%s' (%s)", fd.Index, *GTextureManager[fd.Index]->Name, *sc->Name8, *sc->String);
-      }
-      */
+      fd.Index = CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
+      if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
     }
 
     if (sc->Check("tics")) {
@@ -1167,7 +1189,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       Sound = GSoundManager->GetSoundID(*sc->String);
     } else if (sc->Check("pic")) {
       sc->ExpectName8();
-      int Tex = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Wall, true, false);
+      int Tex = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
       if (Tex < 0 && !IgnoreBad) Bad = true;
       TSwitchFrame &F = Frames.Alloc();
       F.Texture = Tex;
@@ -1228,7 +1250,7 @@ static void ParseSwitchDef (VScriptParser *sc) {
 
   //  Switch texture
   sc->ExpectName8();
-  int t1 = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Wall, true, false);
+  int t1 = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
   bool Quest = false;
   TSwitch *Def1 = nullptr;
   TSwitch *Def2 = nullptr;
@@ -1292,7 +1314,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
   // get base texture name
   bool ignore = false;
   sc->ExpectName8();
-  vint32 BaseTex = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Wall, true, true);
+  vint32 BaseTex = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
   if (BaseTex == -1) {
     ignore = true;
     GCon->Logf("ANIMDEFS: Can't find %s", *sc->String);
@@ -1314,7 +1336,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
         v = BaseTex+sc->Number-1;
       } else {
         sc->ExpectName8();
-        v = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Wall, true, true);
+        v = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
         if (v == -1 && !ignore) sc->Message(va("Unknown texture %s", *sc->String));
       }
       Frames.Append(v);
@@ -1349,7 +1371,7 @@ static void ParseWarp (VScriptParser *sc, int Type) {
   else sc->Error("Texture type expected");
 
   sc->ExpectName8();
-  int TexNum = GTextureManager.CheckNumForName(sc->Name8, TexType, true, true);
+  int TexNum = CheckNumForNameAndForce(sc->Name8, TexType, true, true, false);
   if (TexNum < 0) return;
 
   float speed = 1;
@@ -1408,7 +1430,7 @@ static void ParseCameraTexture (VScriptParser *sc) {
   if (Name != NAME_None) {
     // check for replacing an existing texture
     Tex = new VCameraTexture(Name, Width, Height);
-    int TexNum = GTextureManager.CheckNumForName(Name, TEXTYPE_Flat, true, true);
+    int TexNum = CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, true, false);
     if (TexNum != -1) {
       // by default camera texture will fit in old texture
       VTexture *OldTex = GTextureManager[TexNum];
@@ -1527,8 +1549,8 @@ void P_InitSwitchList () {
         GCon->Logf(NAME_Init, "Switch %s in SWITCHES has the same 'on' state", TmpName1);
         continue;
       }
-      int t1 = GTextureManager.CheckNumForName(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false);
-      int t2 = GTextureManager.CheckNumForName(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false);
+      int t1 = CheckNumForNameAndForce(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false, false);
+      int t2 = CheckNumForNameAndForce(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false, false);
       if (t1 < 0 || t2 < 0) continue;
       TSwitch *Def1 = new TSwitch();
       TSwitch *Def2 = new TSwitch();
@@ -1629,6 +1651,8 @@ void R_AnimateSurfaces () {
     ad.Time = fd.BaseTime/35.0;
     if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
 
+    static int wantMissingAnimWarning = -1;
+
     VTexture *atx = GTextureManager[ad.Index];
     if (atx) {
       atx->noDecals = (ad.allowDecals == 0);
@@ -1642,7 +1666,10 @@ void R_AnimateSurfaces () {
         if (atx->TextureTranslation == -1) {
           //k8:dunno
           atx->TextureTranslation = ad.Index;
-          //GCon->Logf("(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
+          if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
+          if (wantMissingAnimWarning) {
+            GCon->Logf("(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
+          }
         }
       }
     } else {
@@ -1652,7 +1679,10 @@ void R_AnimateSurfaces () {
           atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
           if (atx->TextureTranslation == -1) {
             atx->TextureTranslation = ad.Index+fn;
-            //GCon->Logf("(1) animated surface got invalid texture index");
+            if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
+            if (wantMissingAnimWarning) {
+              GCon->Logf("(1) animated surface got invalid texture index");
+            }
           }
           atx->noDecals = (ad.allowDecals == 0);
           atx->animNoDecals = (ad.allowDecals == 0);
