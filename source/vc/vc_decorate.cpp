@@ -40,6 +40,22 @@ enum {
 };
 
 enum {
+  THINGSPEC_Default = 0,
+  THINGSPEC_ThingActs = 1,
+  THINGSPEC_ThingTargets = 2,
+  THINGSPEC_TriggerTargets = 4,
+  THINGSPEC_MonsterTrigger = 8,
+  THINGSPEC_MissileTrigger = 16,
+  THINGSPEC_ClearSpecial = 32,
+  THINGSPEC_NoDeathSpecial = 64,
+  THINGSPEC_TriggerActs = 128,
+  THINGSPEC_Activate = 1<<8, // the thing is activated when triggered
+  THINGSPEC_Deactivate = 1<<9, // the thing is deactivated when triggered
+  THINGSPEC_Switch = 1<<10, // the thing is alternatively activated and deactivated when triggered
+};
+
+
+enum {
   OLDDEC_Decoration,
   OLDDEC_Breakable,
   OLDDEC_Projectile,
@@ -107,6 +123,7 @@ enum {
   PROP_SkipLineUnsupported,
   PROP_PawnWeaponSlot,
   PROP_DefaultAlpha,
+  PROP_Activation,
 };
 
 enum {
@@ -498,6 +515,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_pawn_weapon_slot") {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_PawnWeaponSlot, PN);
         //P.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "prop_activation") {
+        VPropDef &P = Lst.NewProp(PROP_Activation, PN);
+        P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "flag") {
         VFlagDef &F = Lst.NewFlag(FLAG_Bool, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -3818,6 +3838,28 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
                 sc->ExpectString();
                 newWSlots.addToSlot(sidx, VName(*sc->String));
               }
+            }
+            break;
+          case PROP_Activation:
+            {
+              int acttype = 0;
+              for (;;) {
+                     if (sc->Check("THINGSPEC_Default") || sc->Check("AF_Default")) acttype |= THINGSPEC_Default;
+                //else if (sc->Check("THINGSPEC_ThingActs") || sc->Check("AF_ThingActs")) acttype |= THINGSPEC_ThingActs; // unsupported
+                else if (sc->Check("THINGSPEC_ThingTargets") || sc->Check("AF_ThingTargets")) acttype |= THINGSPEC_ThingTargets;
+                else if (sc->Check("THINGSPEC_TriggerTargets") || sc->Check("AF_TriggerTargets")) acttype |= THINGSPEC_TriggerTargets;
+                else if (sc->Check("THINGSPEC_MonsterTrigger") || sc->Check("AF_MonsterTrigger")) acttype |= THINGSPEC_MonsterTrigger;
+                else if (sc->Check("THINGSPEC_MissileTrigger") || sc->Check("AF_MissileTrigger")) acttype |= THINGSPEC_MissileTrigger;
+                else if (sc->Check("THINGSPEC_ClearSpecial") || sc->Check("AF_ClearSpecial")) acttype |= THINGSPEC_ClearSpecial;
+                //else if (sc->Check("THINGSPEC_NoDeathSpecial") || sc->Check("AF_NoDeathSpecial")) acttype |= THINGSPEC_NoDeathSpecial; // unsupported
+                else if (sc->Check("THINGSPEC_TriggerActs") || sc->Check("AF_TriggerActs")) acttype |= THINGSPEC_TriggerActs;
+                else if (sc->Check("THINGSPEC_Activate") || sc->Check("AF_Activate")) acttype |= THINGSPEC_Activate;
+                else if (sc->Check("THINGSPEC_Deactivate") || sc->Check("AF_Deactivate")) acttype |= THINGSPEC_Deactivate;
+                else if (sc->Check("THINGSPEC_Switch") || sc->Check("AF_Switch")) acttype |= THINGSPEC_ThingActs;
+                else sc->Error(va("Bad activaion type \"%s\"", *sc->String));
+                if (!sc->Check("|")) break;
+              }
+              P.Field->SetInt(DefObj, acttype);
             }
             break;
           case PROP_SkipLineUnsupported:

@@ -30,30 +30,125 @@
 class SwitchableDecoration : Actor
   abstract;
 
+// Activation flags
+enum /*EActivationFlags*/ {
+  /*
+  THINGSPEC_Default = 0,
+  THINGSPEC_ThingActs = 1,
+  THINGSPEC_ThingTargets = 2,
+  THINGSPEC_TriggerTargets = 4,
+  THINGSPEC_MonsterTrigger = 8,
+  THINGSPEC_MissileTrigger = 16,
+  THINGSPEC_ClearSpecial = 32,
+  THINGSPEC_NoDeathSpecial = 64,
+  THINGSPEC_TriggerActs = 128,
+  THINGSPEC_Activate = 1<<8, // the thing is activated when triggered
+  THINGSPEC_Deactivate = 1<<9, // the thing is deactivated when triggered
+  THINGSPEC_Switch = 1<<10, // the thing is alternatively activated and deactivated when triggered
+  */
+
+  // shorter aliases for same
+  AF_Default = 0,
+  AF_ThingActs = 1, // the thing is considered the activator
+  AF_ThingTargets = 2, // the thing changes its target field to the trigger when triggered
+  AF_TriggerTargets = 4, // the trigger changes its target field to the thing when it triggers it
+  AF_MonsterTrigger = 8, // monsters are allowed to trigger the thing
+  AF_MissileTrigger = 16, // missiles are allowed to trigger the thing
+  AF_ClearSpecial = 32, // the thing's special is cleared after execution
+  AF_NoDeathSpecial = 64, // the thing's special will not execute on death
+  AF_TriggerActs = 128, // the trigger is considered the activator (this is the default behavior)
+  AF_Activate = 1<<8, // the thing is activated when triggered
+  AF_Deactivate = 1<<9, // the thing is deactivated when triggered
+  AF_Switch = 1<<10, // the thing is alternatively activated and deactivated when triggered
+};
+
+int ActivationType /*= THINGSPEC_Default*/;
+
+
+//==========================================================================
+//
+//  checkActivatorValidity
+//
+//==========================================================================
+final bool checkActivatorValidity (EntityEx Activator) {
+  if (ActivationType) {
+    //if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure
+    if (Activator) {
+      if (!Activator.bIsPlayer) {
+        int act = Activator.ClassifyActor();
+        if ((act&ACTOR_MONSTER) && !(ActivationType&AF_MonsterTrigger)) return false;
+        if ((act&ACTOR_MISSILE) && !(ActivationType&AF_MissileTrigger)) return false;
+      }
+    }
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  performAction
+//
+//  performs action if it is possible, processes activation flags
+//  this is common code for both `Activate()` and `Deactivate()`
+//
+//==========================================================================
+final bool performAction (EntityEx Activator, EntityEx origAct, bool isActivate) {
+  name newStateName = (isActivate ? 'Active' : 'Inactive');
+
+  // check current state for switch
+  if (ActivationType&AF_Switch) {
+    auto actstate = FindState(newStateName);
+    if (actstate && StateIsInSequence(State, actstate)) {
+      // we're active now
+      newStateName = (isActivate ? 'Inactive' : 'Active');
+    }
+  } else if (ActivationType&AF_Activate) {
+    newStateName = 'Active';
+  } else if (ActivationType&AF_Deactivate) {
+    newStateName = 'Inactive';
+  }
+
+  auto newstate = FindState(newStateName);
+  if (!newstate) return false;
+
+  if (ActivationType&AF_ThingTargets) Target = origAct;
+  if (origAct && (ActivationType&AF_TriggerTargets)) origAct.Target = self;
+
+  if (ActivationType&AF_ClearSpecial) { Special = 0; foreach (auto f; 0..Args.length) Args[f] = 0; }
+
+  SetState(newstate);
+  return true;
+}
+
+
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
-  SetState(FindState('Active'));
-  return true;
+override bool Activate (EntityEx Activator) {
+  auto origAct = Activator;
+  if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure
+  if (!checkActivatorValidity(Activator)) return false;
+  return performAction(Activator, origAct, isActivate:true);
 }
+
 
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
-  SetState(FindState('Inactive'));
-  return true;
+override bool Deactivate (EntityEx Activator) {
+  auto origAct = Activator;
+  if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure
+  if (!checkActivatorValidity(Activator)) return false;
+  return performAction(Activator, origAct, isActivate:false);
+  //SetState(FindState('Inactive'));
+  //return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -496,4 +496,8 @@
     <prop_class name="PowerMorph.MorphFlash" property="MorphFlash" />
     <prop_class name="PowerMorph.UnmorphFlash" property="UnmorphFlash" />
   </class>
+
+  <class name="SwitchableDecoration">
+    <prop_activation name="Activation" property="ActivationType" />
+  </class>
 </vavoom_decorate_defs>
