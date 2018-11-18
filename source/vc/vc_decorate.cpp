@@ -2889,7 +2889,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
 
     for (int i = 1; i < FramesString.Length(); ++i) {
-      vint32 frm = (State->Frame&~(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE));
+      vint32 frm = (State->Frame&~(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_SKIPOFFS));
 
       char FSChar = VStr::ToUpper(FramesString[i]);
       if (totalKeepSprite || FSChar == '#') {
