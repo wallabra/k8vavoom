@@ -4298,6 +4298,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   {
     return false;
   }
+  moType = GetClassReplacement(moType);
   angle = itof(Arg3) * 360.0 / 256.0;
   for (A = tid ? FindMobjFromTID(tid, none) : Activator; A;
     A = FindMobjFromTID(tid, A))
@@ -4350,36 +4351,35 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return success;
 }
 
+
 //==========================================================================
 //
 //  AcsSpawnThing
 //
 //==========================================================================
-
-final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle, bool forced)
-{
+final override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forced) {
   class EClass = FindClassLowerCase(Name);
-  if (!EClass)
-  {
-    print("No such class %n", Name);
+  if (!EClass) {
+    print("No such class `%s`", Name);
     return false;
   }
+
   class!EntityEx EntClass = class!EntityEx(EClass);
-  if (!EntClass)
-  {
-    print("%n is not an actor class", Name);
+  if (!EntClass) {
+    print("`%s` is not an actor class", Name);
     return false;
   }
+  EntClass = GetClassReplacement(EntClass);
 
   EntityEx NewAct = Spawn(EntClass, Org);
   bool PrevPassMobj = NewAct.bPassMobj;
   NewAct.bPassMobj = true;
   if (!forced) {
     if (!NewAct.TestLocation()) {
-      // Didn't fit
-      //  If it counts as kill, subtract total.
+      // didn't fit
+      // if it counts as kill, subtract total
       if (NewAct.CountsAsKill()) --Level.TotalKills;
-      //  The same for items.
+      // the same for items
       if (NewAct.bCountItem) --Level.TotalItems;
       NewAct.Destroy();
       return false;
@@ -4389,23 +4389,20 @@ final override int AcsSpawnThing(name Name, TVec Org, int Tid, float Angle, bool
 
   NewAct.Angles.yaw = Angle;
   NewAct.SetTID(Tid);
-  if (NewAct.bSpecial) NewAct.bDropped = true; // Don't respawn
+  if (NewAct.bSpecial) NewAct.bDropped = true; // don't respawn
   return true;
 }
+
 
 //==========================================================================
 //
 //  AcsSpawnSpot
 //
 //==========================================================================
-
-final override int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle, bool forced)
-{
+final override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, bool forced) {
   int NumSpawned = 0;
   Entity A;
-  for (A = FindMobjFromTID(SpotTid, none); A;
-    A = FindMobjFromTID(SpotTid, A))
-  {
+  for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
     NumSpawned += AcsSpawnThing(Name, A.Origin, Tid, Angle, forced);
   }
   return NumSpawned;
@@ -4421,9 +4418,7 @@ final override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
 {
   int NumSpawned = 0;
   Entity A;
-  for (A = FindMobjFromTID(SpotTid, none); A;
-    A = FindMobjFromTID(SpotTid, A))
-  {
+  for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
     NumSpawned += AcsSpawnThing(Name, A.Origin, Tid, A.Angles.yaw, forced:false);
   }
   return NumSpawned;
