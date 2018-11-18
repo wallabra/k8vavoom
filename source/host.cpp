@@ -143,7 +143,7 @@ void Host_Init () {
   VCommand::Init();
 
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
-  GCon->Log(NAME_Init, "      (k8)VaVoom Game Engine, started by Janis Legzdinsh       ");
+  GCon->Log(NAME_Init, "      (k8)VaVoom Game Engine, started by Janis Legzdinsh");
   GCon->Log(NAME_Init, "also starring Francisco Ortega, and others (k8:drop me a note!)");
   GCon->Log(NAME_Init, "Ketmar Dark: improvements, bugfixes, new bugs, segfaults, etc.");
   GCon->Log(NAME_Init, "alot of invaluable help and testing (esp. x86_64): id0");
