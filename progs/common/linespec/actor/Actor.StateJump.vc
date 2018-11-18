@@ -280,3 +280,27 @@ final void A_JumpIfCVarFalse (string cvar, state Label) {
   // State jumps should not affect state chain results.
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
+
+
+//==========================================================================
+//
+//  A_CheckRange
+//
+//==========================================================================
+final void A_CheckRange (float distance, state label, optional bool check2d) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  distance = fmax(0, distance);
+  foreach (auto playnum; 0..MAXPLAYERS) {
+    auto plr = PlayerEx(Level.Game.Players[playnum]);
+    if (!plr || !plr.bSpawned || !plr.MO) continue;
+    // should player be alive? i think so
+    if (plr.PlayerState == PST_DEAD) continue;
+    if (check2d) {
+      if (DistTo2(plr.MO) <= distance) return; // not too far
+    } else {
+      if (DistTo(plr.MO) <= distance) return; // not too far
+    }
+  }
+  DoJump(label);
+}
