@@ -26,50 +26,44 @@
 //**  Base class for items that give owner a powerup when activated.
 //**
 //**************************************************************************
+class PowerupGiver : Inventory abstract;
 
-class PowerupGiver : Inventory
-  abstract;
+class!Powerup PowerupType;
+// non-0 to override powerup's default time
+float EffectTime;
+int BlendColour;
+name Mode;
 
-class!Powerup  PowerupType;
-//  Non-0 to override powerup's default time.
-float     EffectTime;
-int       BlendColour;
-name      Mode;
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
+override bool Use (bool Pickup) {
+  if (!PowerupType) {
+    print("WARNING: tried to use empty powerup (user is '%C')!", self);
+    return false;
+  }
 
-override bool Use(bool Pickup)
-{
   Powerup Pw = Spawn(PowerupType, default, default, default, false);
 
-  if (EffectTime)
-  {
-    Pw.EffectTime = EffectTime > 0.0 ? EffectTime : -EffectTime * 35.0;
-  }
-  if (BlendColour)
-  {
-    Pw.BlendColour = BlendColour;
-  }
-  if (Mode)
-  {
-    Pw.Mode = Mode;
-  }
+  if (EffectTime) Pw.EffectTime = EffectTime > 0.0 ? EffectTime : -EffectTime * 35.0;
+  if (BlendColour) Pw.BlendColour = BlendColour;
+  if (Mode) Pw.Mode = Mode;
   Pw.bAlwaysPickup = bAlwaysPickup;
   Pw.bAdditiveTime = bAdditiveTime;
-  if (!Pw.TryPickup(EntityEx(Owner)))
-  {
+
+  if (!Pw.TryPickup(EntityEx(Owner))) {
     Pw.Destroy();
     return false;
   }
+
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MaxAmount = DefMaxAmount;
   bInvBar = true;
   PickupSound = 'misc/p_pkup';
