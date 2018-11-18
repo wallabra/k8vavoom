@@ -2679,8 +2679,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       {
 #ifdef CLIENT
         if (argCount < 1) return 0;
-        if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone) {
-          GCon->Log("ACS: Zadro RequestScriptPuke can be executed only by clients.");
+        if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone && GGameInfo->NetMode != NM_TitleMap) {
+          GCon->Logf("ACS: Zadro RequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
           return 0;
         }
         // ignore this in demos
@@ -2696,8 +2696,11 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ScArgs[2] = (argCount > 3 ? args[3] : 0);
         ScArgs[3] = (argCount > 4 ? args[4] : 0);
         VEntity *plr = nullptr;
-        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
-          if (cl && cls.signon && cl->MO) plr = cl->MO;
+        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client || GGameInfo->NetMode == NM_TitleMap) {
+          if (cl && cls.signon && cl->MO) {
+            plr = cl->MO;
+            //GCon->Logf("plr: %p", plr);
+          }
         }
         if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], plr, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
@@ -2712,8 +2715,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       {
 #ifdef CLIENT
         if (argCount < 1) return 0;
-        if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone) {
-          GCon->Log("ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
+        if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone && GGameInfo->NetMode != NM_TitleMap) {
+          GCon->Logf("ACS: Zadro NamedRequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
           return 0;
         }
         // ignore this in demos
@@ -2730,7 +2733,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ScArgs[2] = (argCount > 3 ? args[3] : 0);
         ScArgs[3] = (argCount > 4 ? args[4] : 0);
         VEntity *plr = nullptr;
-        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client) {
+        if (GGameInfo->NetMode == NM_Standalone || GGameInfo->NetMode == NM_Client || GGameInfo->NetMode == NM_TitleMap) {
           if (cl && cls.signon && cl->MO) plr = cl->MO;
         }
         if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], plr, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
