@@ -57,6 +57,9 @@
 #endif
 #include "p_acs.h"
 
+//#define ACS_DUMP_EXECUTION
+
+
 static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Overrides 'screenblocks' variable for acs scripts (-1: don't).", 0);
 static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode", false, "Halt ACS VM on unimplemented opdode?", CVAR_Archive);
 static VCvarB acs_warning_console_commands("acs_warning_console_commands", true, "Show warning when ACS script tries to execute console command?", CVAR_Archive);
@@ -2158,7 +2161,11 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
 
 #define STUB(cmd) GCon->Log("Executing unimplemented ACS PCODE " #cmd);
 
-#define USE_COMPUTED_GOTO 1
+#ifdef ACS_DUMP_EXECUTION
+# define USE_COMPUTED_GOTO 0
+#else
+# define USE_COMPUTED_GOTO 1
+#endif
 
 #if USE_COMPUTED_GOTO
 #define ACSVM_SWITCH(op)  goto *vm_labels[op];
@@ -2201,6 +2208,8 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
 #define READ_INT32(p)   ((p)[0] | ((p)[1] << 8) | ((p)[2] << 16) | ((p)[3] << 24))
 #define READ_BYTE_OR_INT32  (fmt == ACS_LittleEnhanced ? *ip : READ_INT32(ip))
 #define INC_BYTE_OR_INT32 if (fmt == ACS_LittleEnhanced) ip++; else ip += 4
+#define READ_SHORT_OR_INT32  (fmt == ACS_LittleEnhanced ? READ_INT16(ip) : READ_INT32(ip))
+#define INC_SHORT_OR_INT32 if (fmt == ACS_LittleEnhanced) ip += 2; else ip += 4
 
 // extfunction enum
 #define ACS_EXTFUNC(fnname)             ACSF_##fnname,
@@ -2227,6 +2236,7 @@ static const ACSF_Info ACSF_List[] = {
 #undef ACS_EXTFUNC
 
 
+#ifdef ACS_DUMP_EXECUTION
 // pcd opcode names
 #define DECLARE_PCD(name) { "" #name "", PCD_ ## name }
 struct PCD_Info {
@@ -2239,6 +2249,7 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
   { nullptr, -666 }
 };
 #undef DECLARE_PCD
+#endif
 
 
 //==========================================================================
@@ -2247,6 +2258,22 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
 //
 //==========================================================================
 int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
+#if !USE_COMPUTED_GOTO
+  {
+    VStr dstr;
+    for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
+      if (nfo->index == funcIndex) {
+        dstr = va("[%d] %s", funcIndex, nfo->name);
+        break;
+      }
+    }
+    if (!dstr.length()) dstr = va("OPC[%d]", funcIndex);
+    dstr += va("; argCount=%d", argCount);
+    for (int f = 0; f < argCount; ++f) dstr += va("; <#%d>:%d", f, args[f]);
+    GCon->Logf("ACS:  ACSF: %s", *dstr);
+  }
+#endif
+
   switch (funcIndex) {
     // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
     case ACSF_SpawnSpotForced:
@@ -2973,7 +3000,7 @@ int VAcs::RunScript(float DeltaTime)
   vint32 *sp = stack;
   VTextureTranslation *Translation = nullptr;
 #if !USE_COMPUTED_GOTO
-  //if (info->Number == 31233) GCon->Logf("VACS 31233: %d,%d,%d", LocalVars[0], LocalVars[1], LocalVars[2]);
+  GCon->Logf("ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
 #endif
   do
   {
@@ -3011,9 +3038,9 @@ int VAcs::RunScript(float DeltaTime)
       const PCD_Info *pi;
       for (pi = PCD_List; pi->name; ++pi) if (pi->index == cmd) break;
       if (pi->name) {
-        GCon->Logf("ACS: SCRIPT %d; cmd: %d (%s)", info->Number, cmd, pi->name);
+        GCon->Logf("ACS: SCRIPT %d; %p: %05d: %3d (%s)", info->Number, ip, (int)(ptrdiff_t)(ip-info->Address), cmd, pi->name);
       } else {
-        GCon->Logf("ACS: SCRIPT %d; cmd: %d", info->Number, cmd);
+        GCon->Logf("ACS: SCRIPT %d; %p: %05d: %3d", info->Number, ip, (int)(ptrdiff_t)(ip-info->Address), cmd);
       }
     }
 #endif
@@ -4549,8 +4576,8 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_CallFunc)
       {
-        int argCount = *ip++;
-        int funcIndex = READ_INT16(ip); ip += 2;
+        int argCount = READ_BYTE_OR_INT32; INC_BYTE_OR_INT32;
+        int funcIndex = READ_SHORT_OR_INT32; INC_SHORT_OR_INT32;
         int retval = CallFunction(argCount, funcIndex, sp-argCount);
         sp -= argCount-1;
         sp[-1] = retval;
