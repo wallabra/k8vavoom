@@ -2304,28 +2304,66 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       return 0;
 
     case ACSF_GetActorClass:
-      {
+      if (argCount > 0) {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (!Ent) return ActiveObject->Level->PutNewString("None");
         return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
       }
+      return ActiveObject->Level->PutNewString("None");
 
-    //bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3)
+
+    // bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3)
     case ACSF_ACS_NamedExecute:
-      {
+      if (argCount > 0) {
         //VAcsObject *ao = nullptr;
         VName name = GetNameLowerCase(args[0]);
-        //GCon->Logf("WARNING: UNTESTED ACSF function 'ACS_NamedExecute' (script '%s')", *name);
         if (name == NAME_None) return 0;
-        //if (!ActiveObject->Level->FindScriptByNameStr(*name, ao)) return 0;
         int ScArgs[4];
         ScArgs[0] = (argCount > 2 ? args[2] : 0);
         ScArgs[1] = (argCount > 3 ? args[3] : 0);
         ScArgs[2] = (argCount > 4 ? args[4] : 0);
         //ScArgs[3] = (argCount > 5 ? args[5] : 0);
-        if (!ActiveObject->Level->Start(-name.GetIndex(), args[1], ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
+        if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ Activator, line, side, false/*always*/, false/*wantresult*/, false/*net*/)) return 0;
         return 1;
       }
+      return 0;
+
+    // int ACS_NamedExecuteWithResult (string script, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
+    case ACSF_ACS_NamedExecuteWithResult:
+      if (argCount > 0) {
+        //VAcsObject *ao = nullptr;
+        VName name = GetNameLowerCase(args[0]);
+        if (argCount > 4) {
+          if (args[4] != 0) Host_Error("ACS_NamedExecuteWithResult(%s): s_arg4=%d", *name, args[4]);
+        }
+        if (name == NAME_None) return 0;
+        int ScArgs[4];
+        ScArgs[0] = (argCount > 1 ? args[1] : 0);
+        ScArgs[1] = (argCount > 2 ? args[2] : 0);
+        ScArgs[2] = (argCount > 3 ? args[3] : 0);
+        //ScArgs[3] = (argCount > 4 ? args[4] : 0);
+        int res = 0;
+        ActiveObject->Level->Start(-name.GetIndex(), 0, ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ Activator, line, side, true/*always*/, true/*wantresult*/, false/*net*/, &res);
+        return res;
+      }
+      return 0;
+
+    // bool ACS_NamedExecuteAlways (string script, int map, int s_arg1, int s_arg2, int s_arg3)
+    case ACSF_ACS_NamedExecuteAlways:
+      if (argCount > 0) {
+        //VAcsObject *ao = nullptr;
+        VName name = GetNameLowerCase(args[0]);
+        if (name == NAME_None) return 0;
+        int ScArgs[4];
+        ScArgs[0] = (argCount > 2 ? args[2] : 0);
+        ScArgs[1] = (argCount > 3 ? args[3] : 0);
+        ScArgs[2] = (argCount > 4 ? args[4] : 0);
+        //ScArgs[3] = (argCount > 5 ? args[5] : 0);
+        if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], /*ScArgs[3],*/ Activator, line, side, true/*always*/, false/*wantresult*/, false/*net*/)) return 0;
+        return 1;
+      }
+      return 0;
+
 
     // bool CheckFlag (int tid, str flag)
     case ACSF_CheckFlag:

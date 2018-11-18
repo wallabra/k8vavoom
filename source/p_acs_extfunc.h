@@ -41,8 +41,8 @@
   ACS_EXTFUNC(ACS_NamedTerminate)
   ACS_EXTFUNC(ACS_NamedLockedExecute)
   ACS_EXTFUNC(ACS_NamedLockedExecuteDoor)
-  ACS_EXTFUNC(ACS_NamedExecuteWithResult)
-  ACS_EXTFUNC(ACS_NamedExecuteAlways)
+  ACS_EXTFUNC(ACS_NamedExecuteWithResult) // implemented
+  ACS_EXTFUNC(ACS_NamedExecuteAlways) // implemented
   ACS_EXTFUNC(UniqueTID) // implemented
   ACS_EXTFUNC(IsTIDUsed) // implemented
   ACS_EXTFUNC(Sqrt)
