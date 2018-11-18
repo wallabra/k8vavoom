@@ -306,10 +306,14 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
       }
     } else {
       Target = targ;
-      if (bAmbush && targ) {
-        if (!CanSee(Target) && (!minseedist || DistTo(Target) < minseedist) &&
-            (!maxseedist || DistTo(Target) > maxseedist))
-        {
+      if (bAmbush) {
+        if (targ) {
+          if (!CanSee(Target) && (!minseedist || DistTo(Target) < minseedist) &&
+              (!maxseedist || DistTo(Target) > maxseedist))
+          {
+            if (!LookForPlayers(bLookAllAround)) return;
+          }
+        } else {
           if (!LookForPlayers(bLookAllAround)) return;
         }
       }
