@@ -364,6 +364,12 @@ class VBasePlayer : public VGameObject
   void eventCheat_Regeneration () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Regeneration")); }
   void eventCheat_DumpInventory () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_DumpInventory")); }
 
+  void eventCheat_VScriptCommand (TArray<VStr> &args) {
+    P_PASS_SELF;
+    P_PASS_PTR((void *)&args);
+    EV_RET_VOID(VName("Cheat_VScriptCommand"));
+  }
+
   //  Server to client events.
   void eventClientStartSound(int SoundId, TVec Org, int OriginId,
     int Channel, float Volume, float Attenuation, bool Loop)

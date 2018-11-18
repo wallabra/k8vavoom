@@ -1461,20 +1461,19 @@ void PlayActiveSound()
 //
 //==========================================================================
 
-final void DropItem(class!EntityEx type, int amount, float chance)
+final EntityEx DropItem(class!EntityEx type, int amount, float chance, optional TVec dropofs)
 {
   EntityEx  A;
 
   if (Random() > chance)
   {
-    return;
+    return none;
   }
   float DropZ = 0.0;
-  if (!Level.CompatNoTossDrops)
-  {
-    DropZ = Height / 2.0;
-  }
-  A = Spawn(type, Origin + vector(0.0, 0.0, DropZ));
+  if (!Level.CompatNoTossDrops) DropZ = Height/2.0;
+  if (!specified_dropofs) dropofs = vector(0.0, 0.0, DropZ);
+  A = Spawn(type, Origin+dropofs);
+  //A = Spawn(type, Origin + vector(0.0, 0.0, DropZ));
   if (A.bSpecial)
   {
     A.bDropped = true;  // special versions of items
@@ -1525,7 +1524,7 @@ final void DropItem(class!EntityEx type, int amount, float chance)
     }
     if (Item.SpecialDropAction(self))
     {
-      return;
+      return none;
     }
   }
   if (!Level.CompatNoTossDrops)
@@ -1534,6 +1533,7 @@ final void DropItem(class!EntityEx type, int amount, float chance)
     A.Velocity.y = (Random() - Random()) * 35.0;
     A.Velocity.z = (5.0 + Random() * 4.0) * 35.0;
   }
+  return A;
 }
 
 //==========================================================================

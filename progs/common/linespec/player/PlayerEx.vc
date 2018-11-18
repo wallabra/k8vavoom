@@ -3676,6 +3676,91 @@ void PlayerUnmorphed () {
 }
 
 
+//==========================================================================
+//
+//  Cheat_VScriptCommand
+//
+//==========================================================================
+override void Cheat_VScriptCommand (ref array!string args) {
+  //print("VScript Command: %s (%d)", args[0], args.length);
+  if (!args.length) return;
+  if (args[0] == "?") {
+    print("give what [amount] -- give inventory item");
+    print("take what [amount] -- take inventory item");
+    return;
+  }
+
+  if (args.length < 2) return;
+
+  // find inventory class
+  class!Inventory icls = class!Inventory(FindClassNoCase(name(args[1])));
+  if (!icls) { print("what is '%s'?", args[1]); return; }
+
+  int amount = 0;
+  if (args.length > 2) amount = atoi(args[2]);
+
+  Inventory invit = EntityEx(MO).FindInventory(icls);
+
+  if (args[0] == "give") {
+    if (!invit) {
+      // no item in inventory, give one
+      invit = Inventory(EntityEx(MO).Spawn(GetClassReplacement(icls), default, default, default, false));
+      // this shouldn't count for the item statistics
+      if (invit.bCountItem) {
+        invit.bCountItem = false;
+        --Level.TotalItems;
+      }
+      auto git = invit.TryPickup(EntityEx(MO));
+      if (!git) {
+        delete invit;
+        print("refused to get '%C'", icls);
+        return;
+      }
+      if (amount <= 0) return;
+      invit = EntityEx(MO).FindInventory(GetClassReplacement(icls));
+      if (!invit) return;
+    }
+    auto oldam = invit.Amount;
+    invit.Amount = min(oldam+amount, invit.MaxAmount);
+    if (invit.Amount != oldam) {
+      print("you got %d of '%C'", invit.Amount-oldam, invit);
+    } else {
+      print("you already have maximum of '%C'", invit);
+    }
+    return;
+  }
+
+  if (args[0] == "take") {
+    if (!invit) { print("you don't have '%C'", icls); return; }
+    if (amount <= 0) amount = 1;
+    auto newam = invit.Amount-amount;
+    if (newam <= 0) {
+      EntityEx(MO).RemoveInventory(invit);
+      print("you lost '%C'", invit);
+    } else {
+      invit.Amount = newam;
+      print("you lost %d of '%C'", amount, invit);
+    }
+    return;
+  }
+
+  if (args[0] == "drop") {
+    if (!invit) { print("you don't have '%C'", icls); return; }
+    TVec dir = vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw))*64;
+    dir.z = MO.Height/2;
+    auto it = Inventory(EntityEx(MO).DropItem(icls, max(0, amount), 1.0, dropofs:dir));
+    if (it) {
+      print("dropped '%C'", icls);
+      it.Velocity = vector(0, 0, 0);
+      it.Amount = invit.Amount;
+      it.MaxAmount = invit.MaxAmount;
+      EntityEx(MO).RemoveInventory(invit);
+    }
+    return;
+  }
+}
+
+
 defaultproperties {
   InvSize = 6;
 }

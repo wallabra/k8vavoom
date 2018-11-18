@@ -357,7 +357,7 @@ COMMAND(Regeneration) {
 
 //==========================================================================
 //
-//  Regeneration
+//  Dump_Inventory
 //
 //==========================================================================
 COMMAND(Dump_Inventory) {
@@ -366,4 +366,25 @@ COMMAND(Dump_Inventory) {
     return;
   }
   Player->eventCheat_DumpInventory();
+}
+
+
+//==========================================================================
+//
+//  COMMAND VScript_Command
+//
+//==========================================================================
+COMMAND(VScript_Command) {
+  if (Args.Num() < 2) return;
+
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (!Player) return;
+  if (CheatAllowed(Player)) {
+    Args.removeAt(0); // remove command name
+    Player->eventCheat_VScriptCommand(Args);
+  }
 }
