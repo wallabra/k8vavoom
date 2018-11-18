@@ -26,9 +26,9 @@
 #include "sv_local.h"
 
 
-static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", 0);
-VCvarB dbg_show_missing_class("dbg_show_missing_class", false, "Show missing classes?", 0);
-VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unknown decorate properties?", 0);
+static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", CVAR_Archive);
+VCvarB dbg_show_missing_classes("dbg_show_missing_classes", false, "Show missing classes?", CVAR_Archive);
+VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unknown decorate properties?", CVAR_Archive);
 
 
 enum {
@@ -4545,7 +4545,7 @@ void ProcessDecorateScripts () {
       }
       if (!C) C = VClass::FindClassNoCase(*CF.Name);
       if (!C) {
-        if (dbg_show_missing_class || CF.PowerPrefix.length() != 0) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
+        if (dbg_show_missing_classes || CF.PowerPrefix.length() != 0) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
         //*(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
       } else if (!C->IsChildOf(CF.ReqParent)) {
         GCon->Logf(NAME_Warning, "Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
@@ -4562,7 +4562,7 @@ void ProcessDecorateScripts () {
       VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) continue;
       VClass *C = VClass::FindClassLowerCase(DI.TypeName);
-           if (!C) { if (dbg_show_missing_class) GCon->Logf(NAME_Warning, "No such class `%s`", *DI.TypeName); }
+           if (!C) { if (dbg_show_missing_classes) GCon->Logf(NAME_Warning, "No such class `%s`", *DI.TypeName); }
       else if (!C->IsChildOf(ActorClass)) GCon->Logf(NAME_Warning, "Class `%s` is not an actor class", *DI.TypeName);
       else DI.Type = C;
     }

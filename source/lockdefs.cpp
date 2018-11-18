@@ -24,8 +24,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 
-extern VCvarB dbg_show_missing_class;
-
 static VLockDef *LockDefs[256];
 
 
@@ -100,7 +98,6 @@ static void ParseLockDefs (VScriptParser *sc) {
             sc->ExpectString();
             VClass *Cls = VClass::FindClassNoCase(*sc->String);
             if (!Cls) {
-              //if (dbg_show_missing_class) GCon->Logf("No such class %s", *sc->String);
               GCon->Logf("WARNING:%s:No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
             } else {
               Grp.AnyKeyList.Append(Cls);
@@ -111,7 +108,6 @@ static void ParseLockDefs (VScriptParser *sc) {
         sc->ExpectString();
         VClass *Cls = VClass::FindClassNoCase(*sc->String);
         if (!Cls) {
-          //if (dbg_show_missing_class) GCon->Logf("No such class %s", *sc->String);
           GCon->Logf("WARNING:%s:No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         } else {
           LDef->Locks.Alloc().AnyKeyList.Append(Cls);

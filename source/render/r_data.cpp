@@ -32,7 +32,7 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-extern VCvarB dbg_show_missing_class;
+extern VCvarB dbg_show_missing_classes;
 
 // MACROS ------------------------------------------------------------------
 
@@ -1786,7 +1786,13 @@ void R_ParseEffectDefs()
     }
     else
     {
-      if (dbg_show_missing_class) GCon->Logf(NAME_Init, "No such class %s", *CD.ClassName);
+      if (dbg_show_missing_classes) {
+        if (CD.StaticLight.IsNotEmpty()) {
+          GCon->Logf(NAME_Init, "No such class `%s` for static light \"%s\"", *CD.ClassName, *CD.StaticLight);
+        } else {
+          GCon->Logf(NAME_Init, "No such class `%s` for effect", *CD.ClassName);
+        }
+      }
       continue;
     }
 
