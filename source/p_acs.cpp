@@ -2248,9 +2248,24 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
 //==========================================================================
 int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
   switch (funcIndex) {
-    case ACSF_SpawnSpotForced: // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
+    // int SpawnSpotForced (str classname, int spottid, int tid, int angle)
+    case ACSF_SpawnSpotForced:
       //GCon->Logf("ACS: SpawnSpotForced: classname=<%s>; spottid=%d; tid=%d; angle=%f", *GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f);
-      return Level->eventAcsSpawnSpot(GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f, true); // forced
+      if (argCount >= 4) {
+        return Level->eventAcsSpawnSpot(GetNameLowerCase(args[0]), args[1], args[2], float(args[3])*45.0f/32.0f, true); // forced
+      }
+      return 0;
+
+    // int SpawnForced (str classname, fixed x, fixed y, fixed z [, int tid [, int angle]])
+    case ACSF_SpawnForced:
+      if (argCount >= 4) {
+        return Level->eventAcsSpawnThing(GetNameLowerCase(args[0]),
+                        TVec(float(args[1])/65536.0f, float(args[2])/65536.0f, float(args[3])/65536.0f), // x, y, z
+                        (argCount >= 4 ? args[4] : 0), // tid
+                        (argCount >= 5 ? float(args[5])*45.0f/32.0f : 0), // angle
+                        true); // forced
+      }
+      return 0;
 
     case ACSF_CheckActorClass:
       if (argCount >= 2) {

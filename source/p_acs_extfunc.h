@@ -33,7 +33,7 @@
   ACS_EXTFUNC(GetPolyobjX)
   ACS_EXTFUNC(GetPolyobjY)
   ACS_EXTFUNC(CheckSight)
-  ACS_EXTFUNC(SpawnForced)
+  ACS_EXTFUNC(SpawnForced) // implemented
   ACS_EXTFUNC(AnnouncerSound) // skulltag
   ACS_EXTFUNC(SetPointer)
   ACS_EXTFUNC(ACS_NamedExecute) // implemented
