@@ -359,9 +359,9 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
 
   if (A) {
     //k8:removed:if (ApplyTranslation) A.Translation = Translation;
-    A.Velocity.x = XVel * 35.0;
-    A.Velocity.y = YVel * 35.0;
-    A.Velocity.z = ZVel * 35.0;
+    A.Velocity.x = fclamp(XVel * 35.0, -1024, 1024);
+    A.Velocity.y = fclamp(YVel * 35.0, -1024, 1024);
+    A.Velocity.z = fclamp(ZVel * 35.0, -1024, 1024);
     A.Angles.yaw = Angle;
     if (!(Flags & SXF_ABSOLUTEVELOCITY)) {
       // the same issue as with offsets
