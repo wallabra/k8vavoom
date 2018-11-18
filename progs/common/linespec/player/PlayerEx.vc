@@ -140,8 +140,8 @@ bool k8ElvenGifted;
 // Health Accumulator
 // if you want to show HA info in UI, replicate those vars
 int k8HealthAccum_Amount; // amount of currently accumulated health
-float k8HealthAccum_LastRegenTime = -float.max;
-float k8HealthAccum_LastBoostTime = -float.max;
+float k8HealthAccum_LastRegenTime = -10000;
+float k8HealthAccum_LastBoostTime = -10000;
 
 
 replication {
@@ -2781,8 +2781,10 @@ override void PlayerTick (float deltaTime) {
     int accMax = GetCvarI('k8HealthAccum_Max');
     int accAmount = 0;
     if (accMax > 0) {
+      //k8HealthAccum_LastRegenTime = 0;
+      //k8HealthAccum_LastBoostTime = 0;
       k8HealthAccum_Amount = max(0, min(k8HealthAccum_Amount, accMax)); // sanitize
-      //print("k8HealthAccum_Amount=%s", k8HealthAccum_Amount);
+      //print("k8HealthAccum_Amount=%s; bt=%s; rt=%s; lt=%s; tb=%s; tr=%s", k8HealthAccum_Amount, MO.XLevel.Time-k8HealthAccum_LastBoostTime, MO.XLevel.Time-k8HealthAccum_LastRegenTime, MO.XLevel.Time, k8HealthAccum_LastBoostTime, k8HealthAccum_LastRegenTime);
       if (!checkDoHealthAccumBoost()) checkDoHealthAccumRegen();
     } else {
       k8HealthAccum_Amount = 0;
