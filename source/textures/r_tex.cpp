@@ -190,7 +190,8 @@ void VTextureManager::Shutdown () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
-  //fprintf(stderr, "AddTexture0: <%s>; i=%d; %p  (%p)\n", *Tex->Name, Textures.length(), Tex, Textures.ptr());
+  //if (Textures.length() > 0 && Tex->Name == NAME_None) *(int*)0 = 0;
+  //GCon->Logf("AddTexture0: <%s>; i=%d; %p  (%p)", *Tex->Name, Textures.length(), Tex, Textures.ptr());
   //if (Textures.length() > 2666) fprintf(stderr, "  [2666]=%p <%s>  (%p)\n", Textures[2666], *Textures[2666]->Name, Textures.ptr());
   Textures.Append(Tex);
   Tex->TextureTranslation = Textures.Num()-1;
@@ -286,6 +287,7 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
     //fprintf(stderr, "CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d\n", *Name, HashIndex, i, Textures.length());
     if (i < 0 || i >= Textures.length()) continue;
     if (Textures[i]->Name != Name) continue;
+    //GCon->Logf("CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d; type=%d", *Name, HashIndex, i, Textures.length(), Textures[i]->Type);
 
     if (Type == TEXTYPE_Any || Textures[i]->Type == Type ||
         (bOverload && Textures[i]->Type == TEXTYPE_Overload))
@@ -450,7 +452,7 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   if (LumpNum < 0) {
     /*if (!Silent)*/ {
       if (!patchesWarned.put(*Name)) {
-        GCon->Logf("VTextureManager::AddPatch: Pic %s not found", *Name);
+        GCon->Logf("VTextureManager::AddPatch: Pic \"%s\" not found", *Name);
       }
     }
     return -1;
@@ -637,9 +639,14 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     char TmpName[12];
     Strm->Serialise(TmpName, 8);
     TmpName[8] = 0;
+
+    if ((vuint8)TmpName[0] < 32 || (vuint8)TmpName[0] >= 127) {
+      Sys_Error("TEXTURES: record #%d, name is <%s>", i, TmpName);
+    }
+
     VName PatchName(TmpName, VName::AddLower8);
 
-    // check if it's already has ben added
+    // check if it's already has been added
     int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
     if (PIdx >= 0) {
       patchtexlookup[i] = Textures[PIdx];
@@ -657,11 +664,43 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
       patchtexlookup[i] = nullptr;
     } else {
       patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
-      AddTexture(patchtexlookup[i]);
+      if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
     }
+
   }
   delete Strm;
   Strm = nullptr;
+
+  //k8: force-load numbered textures
+  for (int i = 0; i < nummappatches; ++i) {
+    VTexture *tex = patchtexlookup[i];
+    if (!tex) continue;
+    const char *txname = *tex->Name;
+    int namelen = VStr::length(txname);
+    if (namelen && txname[namelen-1] == '1') {
+      char nbuf[12];
+      snprintf(nbuf, sizeof(nbuf), "%s", txname);
+      for (int f = 2; f < 10; ++f) {
+        nbuf[namelen-1] = '0'+f;
+        VName PatchName(nbuf, VName::AddLower8);
+        int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
+        if (PIdx >= 0) continue;
+        // get wad lump number
+        int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
+        // sprites also can be used as patches
+        if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+        if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
+        // add it to textures
+        if (LNum >= 0) {
+          tex = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
+          if (tex) {
+            GCon->Logf(NAME_Init, "Textures: force-loaded numbered texture '%s'", nbuf);
+            AddTexture(tex);
+          }
+        }
+      }
+    }
+  }
 
   // load the map texture definitions from textures.lmp
   // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
@@ -1033,7 +1072,17 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     } else {
       sc->ExpectName8();
       fd.Index = GTextureManager.CheckNumForName(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true);
-      if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture %s", *sc->String));
+      if (fd.Index == -1 && !missing) {
+        sc->Message(va("Unknown texture \"%s\"", *sc->String));
+        //for (int f = 0; f < GTextureManager.GetNumTextures(); ++f) GCon->Logf("  #%5d: <%s> type=%d", f, *GTextureManager[f]->Name, GTextureManager[f]->Type);
+      }
+      /*
+      if (fd.Index == -1) {
+        GCon->Logf("NOT found texture for pic '%s' (%s)", *sc->Name8, *sc->String);
+      } else {
+        GCon->Logf("found texture #%d as '%s' for pic '%s' (%s)", fd.Index, *GTextureManager[fd.Index]->Name, *sc->Name8, *sc->String);
+      }
+      */
     }
 
     if (sc->Check("tics")) {
@@ -1588,12 +1637,23 @@ void R_AnimateSurfaces () {
     }
 
     if (ad.Type == ANIM_Normal || !validAnimation) {
-      if (atx) atx->TextureTranslation = fd.Index;
+      if (atx) {
+        atx->TextureTranslation = fd.Index;
+        if (atx->TextureTranslation == -1) {
+          //k8:dunno
+          atx->TextureTranslation = ad.Index;
+          //GCon->Logf("(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
+        }
+      }
     } else {
       for (int fn = 0; fn < ad.NumFrames; ++fn) {
         atx = GTextureManager[ad.Index+fn];
         if (atx) {
           atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+          if (atx->TextureTranslation == -1) {
+            atx->TextureTranslation = ad.Index+fn;
+            //GCon->Logf("(1) animated surface got invalid texture index");
+          }
           atx->noDecals = (ad.allowDecals == 0);
           atx->animNoDecals = (ad.allowDecals == 0);
           atx->animated = true;

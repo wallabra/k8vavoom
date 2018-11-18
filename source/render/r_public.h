@@ -333,7 +333,8 @@ public:
     if ((vuint32)TexNum >= (vuint32)Textures.Num()) return nullptr;
     VTexture *origtex = Textures[TexNum];
     if (!origtex) return nullptr;
-    if (origtex->TextureTranslation != TexNum) {
+    //FIXMEFIXMEFIXME: `origtex->TextureTranslation == -1`? whatisthat?
+    if (origtex->TextureTranslation != TexNum /*&& (vuint32)origtex->TextureTranslation < (vuint32)Textures.length()*/) {
       VTexture *res = Textures[origtex->TextureTranslation];
       if (res) res->noDecals = origtex->animNoDecals || res->staticNoDecals;
       return res;
