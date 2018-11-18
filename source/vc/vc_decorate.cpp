@@ -125,6 +125,7 @@ struct VClassFixup {
   VStr Name;
   VClass *ReqParent;
   VClass *Class;
+  VStr PowerPrefix; // for powerup type
 };
 
 
@@ -1324,7 +1325,7 @@ __attribute__((unused)) static void SetFieldClass (VObject *Obj, VName FieldName
 //  AddClassFixup
 //
 //==========================================================================
-static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName, TArray<VClassFixup> &ClassFixups) {
+static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
   guard(AddClassFixup);
   VField *F = Class->FindFieldChecked(FieldName);
   //fprintf(stderr, "AddClassFixup0: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *FieldName, *ClassName);
@@ -1333,6 +1334,7 @@ static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName
   CF.Name = ClassName;
   CF.ReqParent = F->Type.Class;
   CF.Class = Class;
+  CF.PowerPrefix = powerpfx;
   unguard;
 }
 
@@ -1342,7 +1344,7 @@ static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName
 //  AddClassFixup
 //
 //==========================================================================
-static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, TArray<VClassFixup> &ClassFixups) {
+static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
   guard(AddClassFixup);
   //fprintf(stderr, "AddClassFixup1: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *Field->GetFullName(), *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
@@ -1350,6 +1352,7 @@ static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, 
   CF.Name = ClassName;
   CF.ReqParent = Field->Type.Class;
   CF.Class = Class;
+  CF.PowerPrefix = powerpfx;
   unguard;
 }
 
@@ -3140,6 +3143,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
         NewCF.Name = CF->Name;
         NewCF.ReqParent = CF->ReqParent;
         NewCF.Class = Class;
+        NewCF.PowerPrefix = VStr();
       }
     }
   }
@@ -3325,8 +3329,16 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             // This is a very inconvenient shit!
             // but ZDoom had to prepend "power" to the name...
             sc->ExpectString();
+            /*
+            if (!sc->String.toLowerCase().StartsWith("power")) {
+              GCon->Logf("*** POWERUP TYPE(0): <%s>", *sc->String);
+            } else {
+              GCon->Logf("*** POWERUP TYPE(1): <%s>", *(P.CPrefix+sc->String));
+            }
             AddClassFixup(Class, P.Field, sc->String.StartsWith("Power") || sc->String.StartsWith("power") ?
                 sc->String : P.CPrefix+sc->String, ClassFixups);
+            */
+            AddClassFixup(Class, P.Field, sc->String, ClassFixups, P.CPrefix);
             break;
           case PROP_BoolConst:
             P.Field->SetBool(DefObj, P.IConst);
@@ -4506,21 +4518,36 @@ void ProcessDecorateScripts () {
   */
 
   // set class properties
+  TMap<VStr, bool> powerfixReported;
   for (int i = 0; i < ClassFixups.Num(); ++i) {
     VClassFixup &CF = ClassFixups[i];
     if (!CF.ReqParent) Sys_Error("Invalid decorate class fixup (no parent); class is '%s', offset is %d, name is '%s'", (CF.Class ? *CF.Class->GetFullName() : "None"), CF.Offset, *CF.Name);
     check(CF.ReqParent);
     //GCon->Logf("*** FIXUP (class='%s'; name='%s'; ofs=%d)", CF.Class->GetName(), *CF.Name, CF.Offset);
-    if (CF.Name.ICmp("None") == 0) {
+    if (CF.Name.length() == 0 || CF.Name.ICmp("None") == 0) {
       *(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
     } else {
-      VClass *C = VClass::FindClassLowerCase(*CF.Name.ToLower());
+      //VStr loname = CF.Name.toLowerCase();
+      VClass *C = nullptr;
+      if (CF.PowerPrefix.length() /*&& !loname.startsWith(CF.PowerPrefix.toLowerCase())*/) {
+        // try prepended
+        VStr pwfix = (CF.PowerPrefix+CF.Name).toLowerCase();
+        C = VClass::FindClassNoCase(*pwfix);
+        if (C) {
+          if (!powerfixReported.find(pwfix)) {
+            powerfixReported.put(pwfix, true);
+            GCon->Logf(NAME_Warning, "Decorate powerup fixup in effect: `%s` -> `%s`", *CF.Name, *(CF.PowerPrefix+CF.Name));
+          }
+        }
+      }
+      if (!C) C = VClass::FindClassNoCase(*CF.Name);
       if (!C) {
         if (dbg_show_missing_class) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
+        //*(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
       } else if (!C->IsChildOf(CF.ReqParent)) {
         GCon->Logf(NAME_Warning, "Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
       } else {
-        *(VClass**)(CF.Class->Defaults+CF.Offset) = C;
+        *(VClass **)(CF.Class->Defaults+CF.Offset) = C;
       }
     }
   }
