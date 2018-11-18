@@ -399,9 +399,19 @@ VStr PF_FormatString () {
               }
               break;
             case TYPE_Class:
-            case TYPE_State:
               if (params[pi].p) {
                 pbuf.putStr(((VMemberBase *)params[pi].p)->GetFullName(), width, toRight, zeroFill, (fspec == 'q'));
+              } else {
+                pbuf.putStr(VStr("(none)"), width, toRight, zeroFill);
+              }
+              break;
+            case TYPE_State:
+              if (params[pi].p) {
+                if (fspec == 'q') {
+                  pbuf.putStr(((VMemberBase *)params[pi].p)->GetFullName(), width, toRight, zeroFill, (fspec == 'q'));
+                } else {
+                  pbuf.putStr(((VMemberBase *)params[pi].p)->GetFullName()+"["+((VMemberBase *)params[pi].p)->Loc.toStringNoCol()+"]", width, toRight, zeroFill, (fspec == 'q'));
+                }
               } else {
                 pbuf.putStr(VStr("(none)"), width, toRight, zeroFill);
               }
