@@ -4536,13 +4536,15 @@ void ProcessDecorateScripts () {
         if (C) {
           if (!powerfixReported.find(pwfix)) {
             powerfixReported.put(pwfix, true);
-            GCon->Logf(NAME_Warning, "Decorate powerup fixup in effect: `%s` -> `%s`", *CF.Name, *(CF.PowerPrefix+CF.Name));
+            if (GArgs.CheckParm("-Wdecorate-powerup-rename") || GArgs.CheckParm("-Wall")) {
+              GCon->Logf(NAME_Warning, "Decorate powerup fixup in effect: `%s` -> `%s`", *CF.Name, *(CF.PowerPrefix+CF.Name));
+            }
           }
         }
       }
       if (!C) C = VClass::FindClassNoCase(*CF.Name);
       if (!C) {
-        if (dbg_show_missing_class) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
+        if (dbg_show_missing_class || CF.PowerPrefix.length() != 0) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
         //*(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
       } else if (!C->IsChildOf(CF.ReqParent)) {
         GCon->Logf(NAME_Warning, "Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
