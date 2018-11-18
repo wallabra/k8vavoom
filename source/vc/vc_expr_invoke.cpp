@@ -2489,21 +2489,24 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         if (Args[i]->IsStrConst()) {
           const char *CName = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
-          VClass *Cls = VClass::FindClassNoCase(CName);
-          if (!Cls) {
-            ParseWarning(ALoc, "No such class `%s`", CName);
+          if (VStr::ICmp(CName, "None") == 0 || VStr::ICmp(CName, "nil") == 0 || VStr::ICmp(CName, "null") == 0) {
+            //ParseWarning(ALoc, "NONE CLASS `%s`", CName);
             delete Args[i];
-            Args[i] = nullptr;
-            Args[i] = new VNoneLiteral(ALoc);
-          } else if (Func->ParamTypes[i].Class && !Cls->IsChildOf(Func->ParamTypes[i].Class)) {
-            ParseWarning(ALoc, "Class `%s` is not a descendant of `%s`", CName, Func->ParamTypes[i].Class->GetName());
-            delete Args[i];
-            Args[i] = nullptr;
             Args[i] = new VNoneLiteral(ALoc);
           } else {
-            delete Args[i];
-            Args[i] = nullptr;
-            Args[i] = new VClassConstant(Cls, ALoc);
+            VClass *Cls = VClass::FindClassNoCase(CName);
+            if (!Cls) {
+              ParseWarning(ALoc, "No such class `%s`", CName);
+              delete Args[i];
+              Args[i] = new VNoneLiteral(ALoc);
+            } else if (Func->ParamTypes[i].Class && !Cls->IsChildOf(Func->ParamTypes[i].Class)) {
+              ParseWarning(ALoc, "Class `%s` is not a descendant of `%s`", CName, Func->ParamTypes[i].Class->GetName());
+              delete Args[i];
+              Args[i] = new VNoneLiteral(ALoc);
+            } else {
+              delete Args[i];
+              Args[i] = new VClassConstant(Cls, ALoc);
+            }
           }
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
