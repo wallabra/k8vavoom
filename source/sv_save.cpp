@@ -48,6 +48,10 @@ static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern VCvarI Skill;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 #define QUICKSAVE_SLOT  (-666)
 
 #define EMPTYSTRING  "empty slot"
@@ -67,6 +71,19 @@ static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");
 #define SAVE_EXTDATA_ID_END      (0)
 #define SAVE_EXTDATA_ID_DATEVAL  (1)
 #define SAVE_EXTDATA_ID_DATESTR  (2)
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// flags for SV_MapTeleport
+enum {
+  CHANGELEVEL_KEEPFACING      = 0x00000001,
+  CHANGELEVEL_RESETINVENTORY  = 0x00000002,
+  CHANGELEVEL_NOMONSTERS      = 0x00000004,
+  CHANGELEVEL_CHANGESKILL     = 0x00000008,
+  CHANGELEVEL_NOINTERMISSION  = 0x00000010,
+  CHANGELEVEL_RESETHEALTH     = 0x00000020,
+  CHANGELEVEL_PRERAISEWEAPON  = 0x00000040,
+};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1300,9 +1317,36 @@ void SV_InitBaseSlot () {
 // SV_MapTeleport
 //
 //==========================================================================
-void SV_MapTeleport (VName mapname) {
+/*
+  CHANGELEVEL_KEEPFACING      = 0x00000001,
+  CHANGELEVEL_RESETINVENTORY  = 0x00000002,
+  CHANGELEVEL_NOMONSTERS      = 0x00000004,
+  CHANGELEVEL_CHANGESKILL     = 0x00000008,
+  CHANGELEVEL_NOINTERMISSION  = 0x00000010,
+  CHANGELEVEL_RESETHEALTH     = 0x00000020,
+  CHANGELEVEL_PRERAISEWEAPON  = 0x00000040,
+*/
+void SV_MapTeleport (VName mapname, int flags, int newskill) {
   guard(SV_MapTeleport);
   TArray<VThinker *> TravelObjs;
+
+  if (newskill >= 0 && (flags&CHANGELEVEL_CHANGESKILL) != 0) {
+    GCon->Logf("SV_MapTeleport: new skill is %d", newskill);
+    Skill = newskill;
+    flags &= ~CHANGELEVEL_CHANGESKILL; // clear flag
+  }
+
+  // we won't show intermission anyway, so remove this flag
+  flags &= ~CHANGELEVEL_NOINTERMISSION;
+
+  if (flags) {
+    GCon->Logf("SV_MapTeleport: unimplemented flag set: 0x%04x", flags);
+    if (flags&CHANGELEVEL_KEEPFACING) GCon->Logf("SV_MapTeleport:   KEEPFACING");
+    if (flags&CHANGELEVEL_RESETINVENTORY) GCon->Logf("SV_MapTeleport:   RESETINVENTORY");
+    if (flags&CHANGELEVEL_NOMONSTERS) GCon->Logf("SV_MapTeleport:   NOMONSTERS");
+    if (flags&CHANGELEVEL_NOINTERMISSION) GCon->Logf("SV_MapTeleport:   NOINTERMISSION");
+    if (flags&CHANGELEVEL_PRERAISEWEAPON) GCon->Logf("SV_MapTeleport:   PRERAISEWEAPON");
+  }
 
   // call PreTravel event
   for (int i = 0; i < MAXPLAYERS; ++i) {

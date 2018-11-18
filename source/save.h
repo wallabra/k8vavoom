@@ -25,7 +25,7 @@
 
 
 extern void SV_SaveGame (int Slot, const VStr &Description);
-extern void SV_MapTeleport (VName MapName);
+extern void SV_MapTeleport (VName MapName, int flags=0, int newskill=-1);
 extern void SV_LoadGame (int Slot);
 extern void SV_InitBaseSlot ();
 //extern void SV_UpdateRebornSlot ();

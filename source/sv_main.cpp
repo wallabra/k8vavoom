@@ -59,7 +59,9 @@ VNetContext *GDemoRecordingContext;
 
 static int RebornPosition; // position indicator for cooperative net-play reborn
 
-static bool mapteleport_issued;
+static bool mapteleport_issued = false;
+static int mapteleport_flags = 0;
+static int mapteleport_skill = -1;
 
 static VCvarB TimeLimit("TimeLimit", false, "TimeLimit mode?");
 static VCvarI DeathMatch("DeathMatch", "0", "DeathMatch mode.", CVAR_ServerInfo);
@@ -528,9 +530,12 @@ static void G_DoCompleted () {
 //
 //  COMMAND TeleportNewMap
 //
+//  mapname [leaveposition]
+//
 //==========================================================================
 COMMAND(TeleportNewMap) {
   guard(COMMAND TeleportNewMap);
+
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
@@ -564,6 +569,62 @@ COMMAND(TeleportNewMap) {
   RebornPosition = LeavePosition;
   GGameInfo->RebornPosition = RebornPosition;
   mapteleport_issued = true;
+  mapteleport_flags = 0;
+  mapteleport_skill = -1;
+  //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  COMMAND TeleportNewMapEx
+//
+//  mapname posidx flags [skill]
+//
+//==========================================================================
+COMMAND(TeleportNewMapEx) {
+  guard(COMMAND TeleportNewMap);
+
+  if (Args.length() < 2) return;
+
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+
+  int posidx = 0, flags = 0, skill = -1;
+  if (Args.length() > 2) Args[2].convertInt(&posidx);
+  if (Args.length() > 3) Args[3].convertInt(&flags);
+  if (Args.length() > 4) Args[4].convertInt(&skill);
+
+  //GCon->Logf("TeleportNewMapEx: name=<%s>; posidx=%d; flags=0x%04x; skill=%d", *Args[1], posidx, flags, skill);
+
+  GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
+
+  if (!deathmatch) {
+    if (VStr(GLevelInfo->NextMap).StartsWith("EndGame")) {
+      for (int i = 0; i < svs.max_clients; ++i) {
+        if (GGameInfo->Players[i]) {
+          GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
+        }
+      }
+      sv.intermission = 2;
+      return;
+    }
+  }
+
+#ifdef CLIENT
+  Draw_TeleportIcon();
+#endif
+
+  RebornPosition = posidx;
+  GGameInfo->RebornPosition = RebornPosition;
+  mapteleport_issued = true; // this will actually change the map
+  mapteleport_flags = flags;
+  mapteleport_skill = -1;
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
   unguard;
 }
@@ -674,9 +735,11 @@ void SV_SendServerInfoToClients () {
 void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   guard(SV_SpawnServer);
 
-  GCon->Logf(NAME_Dev, "Spawning server %s", mapname);
+  GCon->Logf(/*NAME_Dev,*/ "Spawning server with \"%s\"", mapname);
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
   mapteleport_issued = false;
+  mapteleport_flags = 0;
+  mapteleport_skill = -1;
   run_open_scripts = spawn_thinkers;
 
   if (GGameInfo->NetMode != NM_None) {
@@ -1239,7 +1302,7 @@ void ServerFrame (int realtics) {
     while (realtics--) SV_Ticker();
   }
 
-  if (mapteleport_issued) SV_MapTeleport(GLevelInfo->NextMap);
+  if (mapteleport_issued) SV_MapTeleport(GLevelInfo->NextMap, mapteleport_flags, mapteleport_skill);
 
   SV_SendClientMessages();
   unguard;

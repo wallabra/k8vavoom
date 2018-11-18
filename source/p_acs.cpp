@@ -2235,7 +2235,6 @@ static const ACSF_Info ACSF_List[] = {
 #undef ACS_EXTFUNC
 
 
-#ifdef ACS_DUMP_EXECUTION
 // pcd opcode names
 #define DECLARE_PCD(name) { "" #name "", PCD_ ## name }
 struct PCD_Info {
@@ -2248,7 +2247,6 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
   { nullptr, -666 }
 };
 #undef DECLARE_PCD
-#endif
 
 
 //==========================================================================
@@ -5708,17 +5706,17 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ChangeLevel)
-      STUB(PCD_ChangeLevel)
+      //STUB(PCD_ChangeLevel)
       //sp[-4] - Level name
       //sp[-3] - Position
-      //sp[-2] - Skill
-      //sp[-1] - Flags
+      //sp[-2] - Flags
+      //sp[-1] - Skill
+      GCmdBuf << va("TeleportNewMapEx \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
       sp -= 4;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SectorDamage)
-      Level->eventSectorDamage(sp[-5], sp[-4], GetName(sp[-3]),
-        GetNameLowerCase(sp[-2]), sp[-1]);
+      Level->eventSectorDamage(sp[-5], sp[-4], GetName(sp[-3]), GetNameLowerCase(sp[-2]), sp[-1]);
       sp -= 5;
       ACSVM_BREAK;
 
@@ -6159,7 +6157,10 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_PushFunction)
     ACSVM_CASE(PCD_CallStack)
       {
-        if (acs_halt_on_unimplemented_opcode) Host_Error("ACS: Unsupported p-code %d, script %d terminated", cmd, info->Number);
+        const PCD_Info *pi;
+        for (pi = PCD_List; pi->name; ++pi) if (pi->index == cmd) break;
+        const char *opcname = (pi->name ? pi->name : "UNKNOWN");
+        if (acs_halt_on_unimplemented_opcode) Host_Error("ACS: Unsupported p-code %s (%d), script %d terminated", opcname, cmd, info->Number);
         if (!acsReportedBadOpcodesInited) {
           acsReportedBadOpcodesInited = true;
           memset(acsReportedBadOpcodes, 0, sizeof(acsReportedBadOpcodes));
@@ -6167,10 +6168,10 @@ int VAcs::RunScript(float DeltaTime)
         if (cmd >= 0 && cmd <= 65535) {
           if (!acsReportedBadOpcodes[cmd]) {
             acsReportedBadOpcodes[cmd] = true;
-            GCon->Logf(NAME_Error, "ACS: Unsupported p-code %d, script %d terminated", cmd, info->Number);
+            GCon->Logf(NAME_Error, "ACS: Unsupported p-code %s %d, script %d terminated", opcname, cmd, info->Number);
           }
         } else {
-          GCon->Logf(NAME_Error, "ACS: Unsupported p-code %d, script %d terminated", cmd, info->Number);
+          GCon->Logf(NAME_Error, "ACS: Unsupported p-code %s %d, script %d terminated", opcname, cmd, info->Number);
         }
         //GCon->Logf(NAME_Dev, "Unsupported ACS p-code %d", cmd);
         action = SCRIPT_Terminate;
