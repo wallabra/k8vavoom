@@ -314,6 +314,8 @@ public:
   int AddFileTexture(VName Name, int Type);
   int AddFileTextureShaded(VName Name, int Type, int shade); // shade==-1: don't shade
   int AddFileTextureChecked(VName Name, int Type); // returns -1 if no texture found
+  // try to force-load texture
+  int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent);
 
   // get unanimated texture
   inline VTexture *operator [] (int TexNum) {

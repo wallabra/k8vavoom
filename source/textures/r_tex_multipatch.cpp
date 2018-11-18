@@ -220,6 +220,8 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
             } else {
               // DooM:Complete has some patches in "sprites/"
               LumpNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+              if (LumpNum < 0) LumpNum = W_CheckNumForName(PatchName, WADNS_Graphics);
+              if (LumpNum < 0) LumpNum = W_CheckNumForName(PatchName, WADNS_Flats); //k8: why not?
               if (LumpNum >= 0) {
                 Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_Any, LumpNum));
               }

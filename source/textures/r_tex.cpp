@@ -586,6 +586,40 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
 
 //==========================================================================
 //
+//  CheckNumForNameAndForce
+//
+//  find or force-load texture
+//
+//==========================================================================
+int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent) {
+  int tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
+  if (tidx >= 0) return tidx;
+  VName PatchName(*Name, VName::AddLower8);
+  // get wad lump number
+  int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
+  // sprites also can be used as patches
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Graphics); // just in case
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Flats); // why not?
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
+  // add it to textures
+  if (LNum >= 0) {
+    VTexture *tex = VTexture::CreateTexture(/*TEXTYPE_WallPatch*/Type, LNum);
+    if (tex) {
+      GCon->Logf(NAME_Init, "Textures: force-loaded texture \"%s\"", *Name);
+      AddTexture(tex);
+      tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
+      check(tidx >= 0);
+      return tidx;
+    }
+  }
+  if (!silent) GCon->Logf(NAME_Init, "Textures: missing texture \"%s\"", *Name);
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::AddTextures
 //
 //  Initialises the texture list with the textures from the world map.
@@ -1012,39 +1046,6 @@ void P_InitAnimated () {
 
 //==========================================================================
 //
-//  CheckNumForNameAndForce
-//
-//  find or force-load texture
-//
-//==========================================================================
-static int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent) {
-  int tidx = GTextureManager.CheckNumForName(Name, Type, bOverload, bCheckAny);
-  if (tidx >= 0) return tidx;
-  VName PatchName(*Name, VName::AddLower8);
-  // get wad lump number
-  int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
-  // sprites also can be used as patches
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Graphics); // just in case
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
-  // add it to textures
-  if (LNum >= 0) {
-    VTexture *tex = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
-    if (tex) {
-      GCon->Logf(NAME_Init, "Textures: force-loaded texture \"%s\"", *Name);
-      GTextureManager.AddTexture(tex);
-      tidx = GTextureManager.CheckNumForName(Name, Type, bOverload, bCheckAny);
-      check(tidx >= 0);
-      return tidx;
-    }
-  }
-  if (!silent) GCon->Logf(NAME_Init, "Textures: missing texture \"%s\"", *Name);
-  return -1;
-}
-
-
-//==========================================================================
-//
 //  ParseFTAnim
 //
 //  Parse flat or texture animation.
@@ -1064,7 +1065,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   // name
   bool ignore = false;
   sc->ExpectName8();
-  ad.Index = CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, !optional);
+  ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, !optional);
   if (ad.Index == -1) {
     ignore = true;
     if (!optional) GCon->Logf("ANIMDEFS: Can't find '%s'", *sc->Name8);
@@ -1104,7 +1105,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       fd.Index = ad.Index+sc->Number-1;
     } else {
       sc->ExpectName8();
-      fd.Index = CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
+      fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
       if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
     }
 
@@ -1190,7 +1191,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       Sound = GSoundManager->GetSoundID(*sc->String);
     } else if (sc->Check("pic")) {
       sc->ExpectName8();
-      int Tex = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
+      int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
       if (Tex < 0 && !IgnoreBad) Bad = true;
       TSwitchFrame &F = Frames.Alloc();
       F.Texture = Tex;
@@ -1251,7 +1252,7 @@ static void ParseSwitchDef (VScriptParser *sc) {
 
   //  Switch texture
   sc->ExpectName8();
-  int t1 = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
+  int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
   bool Quest = false;
   TSwitch *Def1 = nullptr;
   TSwitch *Def2 = nullptr;
@@ -1315,7 +1316,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
   // get base texture name
   bool ignore = false;
   sc->ExpectName8();
-  vint32 BaseTex = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
+  vint32 BaseTex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
   if (BaseTex == -1) {
     ignore = true;
     GCon->Logf("ANIMDEFS: Can't find %s", *sc->String);
@@ -1337,7 +1338,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
         v = BaseTex+sc->Number-1;
       } else {
         sc->ExpectName8();
-        v = CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
+        v = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
         if (v == -1 && !ignore) sc->Message(va("Unknown texture %s", *sc->String));
       }
       Frames.Append(v);
@@ -1372,7 +1373,7 @@ static void ParseWarp (VScriptParser *sc, int Type) {
   else sc->Error("Texture type expected");
 
   sc->ExpectName8();
-  int TexNum = CheckNumForNameAndForce(sc->Name8, TexType, true, true, false);
+  int TexNum = GTextureManager.CheckNumForNameAndForce(sc->Name8, TexType, true, true, false);
   if (TexNum < 0) return;
 
   float speed = 1;
@@ -1431,7 +1432,7 @@ static void ParseCameraTexture (VScriptParser *sc) {
   if (Name != NAME_None) {
     // check for replacing an existing texture
     Tex = new VCameraTexture(Name, Width, Height);
-    int TexNum = CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, true, false);
+    int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, true, false);
     if (TexNum != -1) {
       // by default camera texture will fit in old texture
       VTexture *OldTex = GTextureManager[TexNum];
@@ -1550,8 +1551,8 @@ void P_InitSwitchList () {
         GCon->Logf(NAME_Init, "Switch %s in SWITCHES has the same 'on' state", TmpName1);
         continue;
       }
-      int t1 = CheckNumForNameAndForce(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false, false);
-      int t2 = CheckNumForNameAndForce(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false, false);
+      int t1 = GTextureManager.CheckNumForNameAndForce(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false, false);
+      int t2 = GTextureManager.CheckNumForNameAndForce(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false, false);
       if (t1 < 0 || t2 < 0) continue;
       TSwitch *Def1 = new TSwitch();
       TSwitch *Def2 = new TSwitch();
