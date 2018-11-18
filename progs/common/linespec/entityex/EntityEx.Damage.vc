@@ -877,9 +877,11 @@ void Died(EntityEx source, EntityEx inflictor)
   if (Special && (!bSpecial || bMonster))
   {
     // Initiate monster death actions
-    Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-      Args[3], Args[4], nullptr, 0, Level.bActivateOwnSpecial ? self :
-      source);
+    auto swd = SwitchableDecoration(self);
+    if (!swd || !(swd.ActivationType&SwitchableDecoration::AF_NoDeathSpecial)) {
+      Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
+        Args[3], Args[4], nullptr, 0, Level.bActivateOwnSpecial ? self : source);
+    }
   }
   if (CountsAsKill())
   {

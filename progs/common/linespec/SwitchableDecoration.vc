@@ -55,7 +55,7 @@ enum /*EActivationFlags*/ {
   AF_MonsterTrigger = 8, // monsters are allowed to trigger the thing
   AF_MissileTrigger = 16, // missiles are allowed to trigger the thing
   AF_ClearSpecial = 32, // the thing's special is cleared after execution
-  AF_NoDeathSpecial = 64, // the thing's special will not execute on death
+  AF_NoDeathSpecial = 64, // the thing's special will not execute on death (processed in `EntityEx.Died()`)
   AF_TriggerActs = 128, // the trigger is considered the activator (this is the default behavior)
   AF_Activate = 1<<8, // the thing is activated when triggered
   AF_Deactivate = 1<<9, // the thing is deactivated when triggered

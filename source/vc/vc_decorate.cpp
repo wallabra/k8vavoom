@@ -3851,7 +3851,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
                 else if (sc->Check("THINGSPEC_MonsterTrigger") || sc->Check("AF_MonsterTrigger")) acttype |= THINGSPEC_MonsterTrigger;
                 else if (sc->Check("THINGSPEC_MissileTrigger") || sc->Check("AF_MissileTrigger")) acttype |= THINGSPEC_MissileTrigger;
                 else if (sc->Check("THINGSPEC_ClearSpecial") || sc->Check("AF_ClearSpecial")) acttype |= THINGSPEC_ClearSpecial;
-                //else if (sc->Check("THINGSPEC_NoDeathSpecial") || sc->Check("AF_NoDeathSpecial")) acttype |= THINGSPEC_NoDeathSpecial; // unsupported
+                else if (sc->Check("THINGSPEC_NoDeathSpecial") || sc->Check("AF_NoDeathSpecial")) acttype |= THINGSPEC_NoDeathSpecial;
                 else if (sc->Check("THINGSPEC_TriggerActs") || sc->Check("AF_TriggerActs")) acttype |= THINGSPEC_TriggerActs;
                 else if (sc->Check("THINGSPEC_Activate") || sc->Check("AF_Activate")) acttype |= THINGSPEC_Activate;
                 else if (sc->Check("THINGSPEC_Deactivate") || sc->Check("AF_Deactivate")) acttype |= THINGSPEC_Deactivate;
