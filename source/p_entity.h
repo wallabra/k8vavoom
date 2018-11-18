@@ -143,8 +143,9 @@ class VEntity : public VThinker {
   TAVec Angles; // orientation
 
   VState *State;
-  VState *DispState;
-  vint32 DispSpriteFrame; // high 8 bits is frame
+  //VState *DispState;
+  vint32 DispSpriteFrame; // high 7 bits is frame
+  VName DispSpriteName;
   float StateTime; // state tic counter
 
   // more drawing info
@@ -223,7 +224,7 @@ class VEntity : public VThinker {
     EF_Invisible         = 0x00800000, // don't draw this actor
     EF_Missile           = 0x01000000, // don't hit same species, explode on block
     EF_DontOverlap       = 0x02000000, // prevent some things from overlapping.
-    EF_UseDispState      = 0x04000000, // use DispState for rendering
+    //EF_UseDispState      = 0x04000000, // use DispState for rendering (unused)
     EF_ActLikeBridge     = 0x08000000, // always allow objects to pass.
     EF_NoDropOff         = 0x10000000, // can't drop off under any circumstances
     EF_Bright            = 0x20000000, // always render full bright
@@ -566,6 +567,18 @@ class VEntity : public VThinker {
   bool CheckSides (TVec);
   void CheckDropOff (float &, float &);
 
+  const int GetEffectiveSpriteIndex () const { return DispSpriteFrame&0x00ffffff; }
+  const int GetEffectiveSpriteFrame () const { return ((DispSpriteFrame>>24)&VState::FF_FRAMEMASK); }
+
+  inline VAliasModelFrameInfo getMFI () const {
+    VAliasModelFrameInfo res;
+    res.sprite = DispSpriteName;
+    res.frame = GetEffectiveSpriteFrame();
+    res.index = (State ? State->InClassIndex : -1);
+    res.spriteIndex = GetEffectiveSpriteIndex();
+    return res;
+  }
+
 private:
   // world iterator callbacks
   bool CheckThing (cptrace_t &, VEntity *);
@@ -578,6 +591,16 @@ private:
   void SlidePathTraverse (float &, line_t* &, float, float, float);
 
   void CreateSecNodeList ();
+
+  inline void UpdateDispFrameFrom (const VState *st) {
+    if (st) {
+      if ((st->Frame&VState::FF_KEEPSPRITE) == 0 && st->SpriteIndex != 1) {
+        DispSpriteFrame = (DispSpriteFrame&~0x00ffffff)|(st->SpriteIndex&0x00ffffff);
+        DispSpriteName = st->SpriteName;
+      }
+      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame = (DispSpriteFrame&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
+    }
+  }
 
 public:
   bool SetDecorateFlag (const VStr &, bool); // true: flag was found and set

@@ -185,7 +185,8 @@ class VBasePlayer : public VGameObject
 
   // Overlay view sprites (gun, etc).
   VViewState ViewStates[NUMPSPRITES];
-  vint32 DispSpriteFrame; // see entity code for explanation
+  vint32 DispSpriteFrame[NUMPSPRITES]; // see entity code for explanation
+  VName DispSpriteName[NUMPSPRITES]; // see entity code for explanation
   float PSpriteSY;
 
   float WorldTimer;       // total time the player's been playing
@@ -198,10 +199,34 @@ class VBasePlayer : public VGameObject
 
   VPlayerReplicationInfo *PlayerReplicationInfo;
 
+private:
+  inline void UpdateDispFrameFrom (int idx, const VState *st) {
+    if (st) {
+      if ((st->Frame&VState::FF_KEEPSPRITE) == 0 && st->SpriteIndex != 1) {
+        DispSpriteFrame[idx] = (DispSpriteFrame[idx]&~0x00ffffff)|(st->SpriteIndex&0x00ffffff);
+        DispSpriteName[idx] = st->SpriteName;
+      }
+      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame[idx] = (DispSpriteFrame[idx]&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
+    }
+  }
+
+public:
   VBasePlayer()
   : UserInfo(E_NoInit)
   , PlayerName(E_NoInit)
   {}
+
+  const int GetEffectiveSpriteIndex (int idx) const { return DispSpriteFrame[idx]&0x00ffffff; }
+  const int GetEffectiveSpriteFrame (int idx) const { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }
+
+  inline VAliasModelFrameInfo getMFI (int idx) const {
+    VAliasModelFrameInfo res;
+    res.sprite = DispSpriteName[idx];
+    res.frame = GetEffectiveSpriteFrame(idx);
+    res.index = (ViewStates[idx].State ? ViewStates[idx].State->InClassIndex : -1);
+    res.spriteIndex = GetEffectiveSpriteIndex(idx);
+    return res;
+  }
 
   //  VObject interface
   virtual bool ExecuteNetMethod(VMethod*) override;

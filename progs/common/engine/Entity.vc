@@ -215,8 +215,9 @@ TVec      Velocity;
 TAVec     Angles;       // orientation
 
 readonly state State;
-readonly state DispState;
+//readonly state DispState;
 readonly int DispSpriteFrame; // high 8 bits is frame
+readonly name DispSpriteName;
 float StateTime; // state tic counter
 
 //More drawing info.
@@ -294,7 +295,7 @@ bool bFullBright;   // make current state full bright
 bool bInvisible;    // Don't draw this actor
 bool bMissile;      // don't hit same species, explode on block
 bool bDontOverlap;    // Prevent some things from overlapping.
-readonly bool bUseDispState;  // Use DispState for rendering
+private native readonly bool bUseDispState;  // Use DispState for rendering (unused)
 bool bActLikeBridge;  // Always allow objects to pass.
 bool bNoDropOff;    // Can't drop off under any circumstances
 bool bBright;     // Always render full bright
@@ -347,10 +348,13 @@ replication
     Origin, Angles, FloorClip, State, StateTime, SpriteType,
     FixedSpriteName, ModelVersion, NumTouchingLights, RenderStyle, Alpha,
     Translation, ScaleX, ScaleY, bFly, bNoSector, bInvisible, bFullBright,
-    bFixedModel, SoundOriginID, bUseDispState, bBright;
+    bFixedModel, SoundOriginID/*, bUseDispState*/, bBright,
+    DispSpriteFrame, DispSpriteName;
 
+  /*
   reliable if (Role == ROLE_Authority && bUseDispState)
     DispState;
+  */
 
   reliable if (Role == ROLE_Authority && bFixedModel)
     FixedModelName;

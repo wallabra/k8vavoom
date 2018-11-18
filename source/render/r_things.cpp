@@ -280,8 +280,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
 
-  VState *DispState = (thing->EntityFlags&VEntity::EF_UseDispState ? thing->DispState : thing->State);
-  int SpriteIndex = DispState->SpriteIndex;
+  int SpriteIndex = thing->GetEffectiveSpriteIndex();
+  int FrameIndex = thing->GetEffectiveSpriteFrame();
   if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
 
   // decide which patch to use for sprite relative to player
@@ -292,14 +292,14 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
     return;
   }
   sprdef = &sprites[SpriteIndex];
-  if ((DispState->Frame&VState::FF_FRAMEMASK) >= sprdef->numframes) {
+  if (FrameIndex >= sprdef->numframes) {
 #ifdef PARANOID
-    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, DispState->Frame);
+    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, FrameIndex);
 #endif
     return;
   }
 
-  sprframe = &sprdef->spriteframes[DispState->Frame&VState::FF_FRAMEMASK];
+  sprframe = &sprdef->spriteframes[FrameIndex];
 
   int lump;
   bool flip;
@@ -324,7 +324,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   }
   if (lump <= 0) {
 #ifdef PARANOID
-    GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present", SpriteIndex, DispState->Frame);
+    GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present", SpriteIndex, FrameIndex);
 #endif
     // sprite lump is not present
     return;
@@ -552,8 +552,8 @@ extern refdef_t refdef;
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
-void VRenderLevelShared::RenderPSprite (VViewState *VSt, float PSP_DIST,
-  vuint32 light, vuint32 Fade, float Alpha, bool Additive)
+void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo mfi,
+  float PSP_DIST, vuint32 light, vuint32 Fade, float Alpha, bool Additive)
 {
   guard(VRenderLevelShared::RenderPSprite);
   spritedef_t *sprdef;
@@ -562,20 +562,20 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, float PSP_DIST,
   bool flip;
 
   // decide which patch to use
-  if ((vuint32)VSt->State->SpriteIndex >= MAX_SPRITE_MODELS) {
+  if ((vuint32)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= MAX_SPRITE_MODELS) {
 #ifdef PARANOID
-    GCon->Logf("R_ProjectSprite: invalid sprite number %d", VSt->State->SpriteIndex);
+    GCon->Logf("R_ProjectSprite: invalid sprite number %d", /*VSt->State->SpriteIndex*/mfi.spriteIndex);
 #endif
     return;
   }
-  sprdef = &sprites[VSt->State->SpriteIndex];
-  if ((VSt->State->Frame & VState::FF_FRAMEMASK) >= sprdef->numframes) {
+  sprdef = &sprites[mfi.spriteIndex/*VSt->State->SpriteIndex*/];
+  if (mfi.frame/*(VSt->State->Frame & VState::FF_FRAMEMASK)*/ >= sprdef->numframes) {
 #ifdef PARANOID
-    GCon->Logf("R_ProjectSprite: invalid sprite frame %d : %d", VSt->State->SpriteIndex, VSt->State->Frame);
+    GCon->Logf("R_ProjectSprite: invalid sprite frame %d : %d", mfi.spriteIndex/*VSt->State->SpriteIndex*/, mfi.frame/*VSt->State->Frame*/);
 #endif
     return;
   }
-  sprframe = &sprdef->spriteframes[VSt->State->Frame & VState::FF_FRAMEMASK];
+  sprframe = &sprdef->spriteframes[mfi.frame/*VSt->State->Frame & VState::FF_FRAMEMASK*/];
 
   lump = sprframe->lump[0];
   flip = sprframe->flip[0];
@@ -729,7 +729,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     vuint32 Fade = GetFade(SV_PointInRegion(r_viewleaf->sector, cl->ViewOrg));
 
     if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
-      RenderPSprite(&cl->ViewStates[i], 3-i, light, Fade, Alpha, Additive);
+      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, light, Fade, Alpha, Additive);
     }
   }
   unguard;

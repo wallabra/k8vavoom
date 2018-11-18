@@ -124,7 +124,8 @@ int CShift;
 
 // Overlay view sprites (gun, etc).
 VViewState ViewStates[NUMPSPRITES];
-int DispSpriteFrame;
+int DispSpriteFrame[NUMPSPRITES];
+name DispSpriteName[NUMPSPRITES];
 float PSpriteSY;
 
 float WorldTimer;       // total time the player's been playing
@@ -141,7 +142,8 @@ replication
 {
   reliable if (!bIsClient)
     Health, Frags, Deaths, ExtraLight, FixedColourmap, CShift,
-    PSpriteSY, KillCount, ItemCount, SecretCount, ViewStates,
+    PSpriteSY, KillCount, ItemCount, SecretCount,
+    ViewStates, DispSpriteFrame, DispSpriteName,
     ClientNum, WorldTimer, MO, Camera, bAutomapRevealed,
     bAutomapShowThings, SoundEnvironment, bAttackDown, bReloadQueued;
 

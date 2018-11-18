@@ -26,8 +26,9 @@ struct VAliasModelFrameInfo {
   VName sprite;
   int frame; // sprite frame
   int index; // monotonicaly increasing index
+  int spriteIndex;
 
-  VAliasModelFrameInfo () : sprite(NAME_None), frame(-69), index(-69) {}
+  VAliasModelFrameInfo () : sprite(NAME_None), frame(0), index(0), spriteIndex(0) {}
 };
 
 
@@ -113,6 +114,7 @@ public:
     res.sprite = SpriteName;
     res.frame = Frame&FF_FRAMEMASK;
     res.index = InClassIndex;
+    res.spriteIndex = 1; // unknown
     return res;
   }
 

@@ -2638,7 +2638,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
         States.Append(dummyState);
         dummyState->SpriteName = "tnt1";
-        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
+        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE;
         dummyState->Time = 0;
         // link previous state
         if (PrevState) PrevState->NextState = dummyState;

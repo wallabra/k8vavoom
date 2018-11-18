@@ -1141,7 +1141,8 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
   float Alpha, bool Additive, float Inter, ERenderPass Pass)
 {
   guard(VRenderLevelShared::DrawEntityModel);
-  VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
+  //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
+  VState *DispState = Ent->State; //FIXME: skipframes
   // check if we want to interpolate model frames
   const bool Interpolate = !!r_interpolate_frames;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {

@@ -230,29 +230,15 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     if (!state) {
       // object removed itself
       //_stateRouteSelf = nullptr; // why not?
+      DispSpriteFrame[position] = 0;
+      DispSpriteName[position] = NAME_None;
       VSt.State = nullptr;
       VSt.StateTime = -1;
       break;
     }
 
     // remember current sprite and frame
-    if ((state->Frame&VState::FF_KEEPSPRITE) == 0) DispSpriteFrame = (DispSpriteFrame&~0x00ffffff)|state->SpriteIndex;
-    if ((state->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame = (DispSpriteFrame&0x00ffffff)|((state->Frame&VState::FF_FRAMEMASK)<<24);
-
-    if (state->SpriteIndex == 1 || (state->Frame&(VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE)) != 0) {
-      // 1 is "----" or "####", which is "do not change sprite" (it won't last long, though)
-      //if ((EntityFlags&EF_UseDispState) == 0)
-      // setup new sprite and frame
-      /*
-      fprintf(stderr, "KEEP FLAGS: keepsprite=%d; keepframe=%d; oldsprite=%d; oldframe=%d\n",
-        (state->Frame&VState::FF_DONTCHANGE ? 1 : 0),
-        (state->Frame&VState::FF_KEEPSPRITE ? 1 : 0),
-        DispSpriteFrame&0x00ffffff,
-        ((DispSpriteFrame>>24)&VState::FF_FRAMEMASK));
-      */
-      state->SpriteIndex = DispSpriteFrame&0x00ffffff;
-      state->Frame = (state->Frame&~VState::FF_FRAMEMASK)|((DispSpriteFrame>>24)&VState::FF_FRAMEMASK);
-    }
+    UpdateDispFrameFrom(position, state);
 
     VSt.State = state;
     VSt.StateTime = state->Time; // could be 0
@@ -281,7 +267,11 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
         P_PASS_REF(MO);
         ExecuteFunctionNoArgs(state->Function);
       }
-      if (!VSt.State) break;
+      if (!VSt.State) {
+        DispSpriteFrame[position] = 0;
+        DispSpriteName[position] = NAME_None;
+        break;
+      }
     }
     state = VSt.State->NextState;
   } while (!VSt.StateTime); // an initial state of 0 could cycle through

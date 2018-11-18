@@ -487,7 +487,7 @@ protected:
   void RenderThing(VEntity*, ERenderPass);
   void RenderMobjs(ERenderPass);
   void DrawTranslucentPolys();
-  void RenderPSprite(VViewState*, float, vuint32, vuint32, float, bool);
+  void RenderPSprite(VViewState*, const VAliasModelFrameInfo, float, vuint32, vuint32, float, bool);
   bool RenderViewModel(VViewState*, vuint32, vuint32, float, bool);
   void DrawPlayerSprites();
   void DrawCrosshair();

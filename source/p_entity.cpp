@@ -210,16 +210,10 @@ bool VEntity::SetState (VState *InState) {
       break;
     }
 
-    //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("   (010): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
-
     if (!st) {
-      /*
-      if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) {
-        GCon->Logf("***(666): Doomer %p IS DEAD", this);
-        { VObject::VMDumpCallStack(); Sys_Error("PlayerPawn is dead"); }
-      }
-      */
       // remove mobj
+      DispSpriteFrame = 0;
+      DispSpriteName = NAME_None;
       State = nullptr;
       StateTime = -1;
       DestroyThinker();
@@ -227,27 +221,7 @@ bool VEntity::SetState (VState *InState) {
     }
 
     // remember current sprite and frame
-    if ((st->Frame&VState::FF_KEEPSPRITE) == 0) DispSpriteFrame = (DispSpriteFrame&~0x00ffffff)|st->SpriteIndex;
-    if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame = (DispSpriteFrame&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
-
-    if (st->SpriteIndex == 1 || (st->Frame&(VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE)) != 0) {
-      // 1 is "----" or "####", which is "do not change sprite" (it won't last long, though)
-      //if ((EntityFlags&EF_UseDispState) == 0)
-      DispState = st;
-      EntityFlags |= EF_UseDispState;
-      // setup new sprite and frame
-      /*
-      fprintf(stderr, "KEEP FLAGS: keepsprite=%d; keepframe=%d; oldsprite=%d; oldframe=%d\n",
-        (st->Frame&VState::FF_DONTCHANGE ? 1 : 0),
-        (st->Frame&VState::FF_KEEPSPRITE ? 1 : 0),
-        DispSpriteFrame&0x00ffffff,
-        ((DispSpriteFrame>>24)&VState::FF_FRAMEMASK));
-      */
-      DispState->SpriteIndex = DispSpriteFrame&0x00ffffff;
-      DispState->Frame = (DispState->Frame&~VState::FF_FRAMEMASK)|((DispSpriteFrame>>24)&VState::FF_FRAMEMASK);
-    } else {
-      EntityFlags &= ~EF_UseDispState;
-    }
+    UpdateDispFrameFrom(st);
 
     State = st;
     StateTime = eventGetStateTime(st, st->Time);
@@ -266,18 +240,10 @@ bool VEntity::SetState (VState *InState) {
       }
     }
 
-    /*
-    if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) {
-      if (State != st) {
-        GCon->Logf("   (012):%s: Doomer %p STATE CHANGE: st=%p; State=%p", *st->Loc.toStringNoCol(), this, st, State);
-      } else {
-        GCon->Logf("   (013):%s: Doomer %p STATE OK: State=%p", *st->Loc.toStringNoCol(), this, State);
-      }
-    }
-    */
-
     if (!State) {
       //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(660): Doomer %p IS DEAD", this);
+      DispSpriteFrame = 0;
+      DispSpriteName = NAME_None;
       return false;
     }
     st = State->NextState;
@@ -298,8 +264,11 @@ void VEntity::SetInitialState (VState *InState) {
   guard(VEntity::SetInitialState);
   State = InState;
   if (InState) {
+    UpdateDispFrameFrom(InState);
     StateTime = eventGetStateTime(InState, InState->Time);
   } else {
+    DispSpriteFrame = 0;
+    DispSpriteName = NAME_None;
     StateTime = -1.0;
   }
   unguard;
