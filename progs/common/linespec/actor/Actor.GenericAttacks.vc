@@ -162,14 +162,9 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
   int NumBullets, int DamagePerBullet, optional class!Actor PuffType,
   optional float Range, optional int Flags)
 {
-  if (!Range)
-  {
-    Range = MISSILERANGE;
-  }
-  if (!PuffType || !specified_PuffType)
-  {
-    PuffType = BulletPuff;
-  }
+  if (!Range) Range = (bIsPlayer ? 8192.0 : MISSILERANGE);
+  //FIXME: not specified and none are two different things
+  if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
 
   // CBAF_AIMFACING
   if (!Target && !(Flags & 1)) return;
@@ -183,7 +178,13 @@ final void A_CustomBulletAttack(float SpreadHoriz, float SpreadVert,
   }
 
   TVec aimDir;
-  AimLineAttack(aimDir, Angles, MISSILERANGE);
+  if (bIsPlayer) {
+    bool noAAim = false;
+    if (!GetCvarB('k8HitscanAutoAim')) noAAim = true;
+    AimLineAttack(aimDir, Angles, MISSILERANGE, noAAim);
+  } else {
+    AimLineAttack(aimDir, Angles, MISSILERANGE);
+  }
 
   //FIXME: CBAF_NOPITCH
   //if (flags&8) {}
@@ -241,7 +242,13 @@ final void A_CustomRailgun(int RailDamage, optional float Offset,
   }
 
   TVec Dir;
-  AimLineAttack(Dir, Angles, (bIsPlayer ? 8192.0 : MISSILERANGE));
+  if (bIsPlayer) {
+    bool noAAim = false;
+    if (!GetCvarB('k8HitscanAutoAim')) noAAim = true;
+    AimLineAttack(Dir, Angles, 8192, noAAim);
+  } else {
+    AimLineAttack(Dir, Angles, MISSILERANGE);
+  }
   TAVec Ang;
   VectorAngles(Dir, out Ang);
 

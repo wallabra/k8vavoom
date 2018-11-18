@@ -1329,6 +1329,7 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   if (Wpn) {
     PlaySound(Wpn.AttackSound, CHAN_WEAPON);
     noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
     decal = Wpn.DecalName;
   }
 
@@ -1471,6 +1472,7 @@ final void A_FirePistol () {
       Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
       decal = Wpn.DecalName;
       noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+      if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
     }
     if (MeleeState) SetState(MeleeState);
     Accurate = !PlayerEx(Player).Refire;
@@ -1518,6 +1520,7 @@ final void A_FireShotgun()
     Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
   }
 
   Aim(dir, 16.0 * 64.0, default, noAAim);
@@ -1562,6 +1565,7 @@ final void A_FireShotgun2()
     Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
   }
 
   Aim(aimDir, 16.0 * 64.0, default, noAAim);
@@ -1647,6 +1651,7 @@ final void A_FireCGun()
     }
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
   }
 
   if (MeleeState) SetState(MeleeState);
