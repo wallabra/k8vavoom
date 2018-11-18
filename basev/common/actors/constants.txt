@@ -346,3 +346,8 @@ enum EFireCustomMissileFlags {
   FPF_TRANSFERTRANSLATION = 2,
   FPF_NOAUTOAIM = 4,
 };
+
+
+// A_ZoomFactor flags
+const int ZOOM_INSTANT = 1;
+const int ZOOM_NOSCALETURNING = 2;

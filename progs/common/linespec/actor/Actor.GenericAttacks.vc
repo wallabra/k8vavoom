@@ -43,6 +43,10 @@ enum /*ERadiusThrustFlags*/ {
   RTF_THRUSTZ = 16,
 };
 
+// A_ZoomFactor flags
+const int ZOOM_INSTANT = 1;
+const int ZOOM_NOSCALETURNING = 2;
+
 
 //**************************************************************************
 //  Generic monster attacks
@@ -881,34 +885,25 @@ void A_ResetReloadCounter()
 //  A_ZoomFactor
 //
 //==========================================================================
-
-void A_ZoomFactor(float zoom, optional int flags)
-{
+void A_ZoomFactor (float zoom, optional int flags) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn && bIsPlayer) {
+    if (!zoom) zoom = 1.0;
+    zoom = fclamp(zoom, 0.1, 50);
+    zoom = 1.0/zoom;
 
-  if (bIsPlayer && Wpn)
-  {
-    if (zoom < 0.1)
-    {
-      zoom = 0.1;
+    if (flags&ZOOM_INSTANT) {
+      // make the zoom instant
+      PlayerEx(Player).FOV = PlayerEx(Player).DesiredFOV*zoom;
     }
-    if (zoom > 50.0)
-    {
-      zoom = 50.0;
-    }
-    zoom = 1.0 / zoom;
-
-    if (flags & 1)
-    { // Make the zoom instant.
-      PlayerEx(Player).FOV = PlayerEx(Player).DesiredFOV * zoom;
-    }
-    if (flags & 2)
-    { // Disable pitch/yaw scaling.
+    if (flags&ZOOM_NOSCALETURNING) {
+      // disable pitch/yaw scaling
       zoom = -zoom;
     }
     Wpn.FOVScale = zoom;
   }
 }
+
 
 //==========================================================================
 //
