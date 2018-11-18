@@ -429,7 +429,7 @@
     <flag name="NoAlert" property="bNoAlert" />
     <flag name="Ammo_Optional" property="bAmmoOptional" />
     <flag name="Alt_Ammo_Optional" property="bAltAmmoOptional" />
-    <flag_unsupported name="AmmoCheckBoth" />
+    <flag name="Ammo_CheckBoth" property="bCheckAnyAmmo" />
     <flag name="Primary_Uses_Both" property="bPrimaryUsesBoth" />
     <flag name="Wimpy_Weapon" property="bWimpyWeapon" />
     <flag name="Powered_Up" property="bPoweredUp" />

@@ -85,6 +85,8 @@ bool bStaff2Kickback;
 bool bAmmoOptional;
 // ammo is optional for alternate fire
 bool bAltAmmoOptional;
+// can be selected if have any ammo (either normal, or alt)
+bool bCheckAnyAmmo;
 // half a chance to play the reay sound
 bool bReadySndHalf;
 // don't bob weapon
@@ -471,7 +473,11 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
   }
 
   if (Mode == FIRE_Either) {
-    if (CheckAmmo(FIRE_Primary, false) || CheckAmmo(FIRE_Secondary, false)) return true;
+    if (CheckAmmo(FIRE_Primary, false, RequireAmmo!optional) ||
+        CheckAmmo(FIRE_Secondary, false, RequireAmmo!optional))
+    {
+      return true;
+    }
   } else {
     if (!RequireAmmo && bAmmoOptional) return true;
 
@@ -479,10 +485,16 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
     int Amount2 = (Ammo2 ? Ammo2.Amount : 0);
 
     bool Good = true;
-    if ((Mode == FIRE_Primary || bAltUsesBoth) && Amount1 < AmmoUse1) Good = false;
-    if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Amount2 < AmmoUse2) Good = false;
-    // if weapon has no secondary fire, there's never enough ammo for it
-    if (Mode == FIRE_Secondary && !FindState('AltFire')) Good = false;
+    if (bCheckAnyAmmo) {
+      // for any fire mode, any ammo will do
+      if ((Mode == FIRE_Primary || Mode == Mode == FIRE_Secondary) &&
+          Amount1 < AmmoUse1 && Amount2 < AmmoUse2) Good = false;
+    } else {
+      if ((Mode == FIRE_Primary || bAltUsesBoth) && Amount1 < AmmoUse1) Good = false;
+      if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Amount2 < AmmoUse2) Good = false;
+      // if weapon has no secondary fire, there's never enough ammo for it
+      if (Mode == FIRE_Secondary && !FindState('AltFire')) Good = false;
+    }
     if (Good) return true;
   }
 
