@@ -2830,6 +2830,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (sc->Check("MdlSkip")) { State->Frame |= VState::FF_SKIPMODEL; continue; }
       if (sc->Check("Fast")) { State->Frame |= VState::FF_FAST; continue; }
       if (sc->Check("Slow")) { State->Frame |= VState::FF_SLOW; continue; }
+      if (sc->Check("Debug")) { State->Frame |= VState::FF_SKIPOFFS; continue; } //k8: this state will be ignored in offset calculations
 
       // process `light() parameter
       if (sc->Check("Light")) {
