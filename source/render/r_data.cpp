@@ -1659,7 +1659,7 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
     } else if (sc->Check("skybox")) {
       R_ParseMapDefSkyBoxesScript(sc);
     } else if (sc->Check("brightmap")) {
-      sc->Message("Brightmaps are not supported.");
+      if (GArgs.CheckParm("-Wbrightmaps") || GArgs.CheckParm("-Wall")) sc->Message("Brightmaps are not supported.");
       sc->SkipBracketed();
     } else if (sc->Check("glow")) {
       sc->Message("Glowing textures aren't supported yet.");
