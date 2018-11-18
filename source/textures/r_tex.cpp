@@ -678,7 +678,7 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     const char *txname = *tex->Name;
     int namelen = VStr::length(txname);
     if (namelen && txname[namelen-1] == '1') {
-      char nbuf[12];
+      char nbuf[130];
       snprintf(nbuf, sizeof(nbuf), "%s", txname);
       for (int f = 2; f < 10; ++f) {
         nbuf[namelen-1] = '0'+f;
@@ -1025,6 +1025,7 @@ static int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool b
   int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
   // sprites also can be used as patches
   if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Graphics); // just in case
   if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
   // add it to textures
   if (LNum >= 0) {
