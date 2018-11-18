@@ -741,10 +741,12 @@ final void A_WeaponReady (optional int Flags) {
     }
   }
 
-  if (!(Flags&WRF_NOFIRE)) {
-    bool attackDown = ((Player.Buttons&BT_ATTACK) != 0);
-    if (attackDown) Player.bReloadQueued = false;
+  //print("wpnready: %C; flags=0x%04x; attack=%B", Wpn, Flags, !!(Player.Buttons&BT_ATTACK));
+  if ((Flags&WRF_NOFIRE) != WRF_NOFIRE) {
+    //bool attackDown = (Flags&WRF_NOPRIMARY ? false : !!(Player.Buttons&BT_ATTACK));
+    //if (attackDown) Player.bReloadQueued = false;
     // check for reload
+    /+
     if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !attackDown && Wpn.FindState('Reload')) {
       Player.bAttackDown = true;
       Player.bReloadQueued = false;
@@ -752,8 +754,9 @@ final void A_WeaponReady (optional int Flags) {
       PlayerEx(Player).ReloadWeapon();
       return;
     }
+    +/
     // check for fire
-    if (attackDown && (Flags&WRF_NOPRIMARY) == 0) {
+    if ((Flags&WRF_NOPRIMARY) == 0 && /*attackDown*/(Player.Buttons&BT_ATTACK)) {
       if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
@@ -772,6 +775,15 @@ final void A_WeaponReady (optional int Flags) {
     } else {
       Player.bAttackDown = false;
     }
+  }
+
+  // check for reload
+  if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && Wpn.FindState('Reload')) {
+    Player.bAttackDown = true;
+    Player.bReloadQueued = false;
+    PlayerEx(Player).Refire = 0;
+    PlayerEx(Player).ReloadWeapon();
+    return;
   }
 
   if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {
