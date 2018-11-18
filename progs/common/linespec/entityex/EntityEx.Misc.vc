@@ -2032,6 +2032,7 @@ final void TouchDehackedSpecial(EntityEx Toucher)
   }
 }
 
+
 //==========================================================================
 //
 //  GiveBody
@@ -2039,61 +2040,56 @@ final void TouchDehackedSpecial(EntityEx Toucher)
 //  Returns false if the body isn't needed at all.
 //
 //==========================================================================
+final bool GiveBody (int num) {
+  int max;
 
-final bool GiveBody(int num)
-{
-  int   max;
-
-  if (bIsPlayer)
-  {
+  if (bIsPlayer) {
     max = PlayerEx(Player).GetMaxHealth();
-    if (num < 0)
-    {
-      //  For Strife negative body sets you to the percentage of your
-      // full health
-      num = max * -num / 100;
-      if (Player.Health < num)
-      {
+    if (num < 0) {
+      // for Strife negative body sets you to the percentage of your full health
+      num = max*(-num)/100;
+      if (Player.Health < num) {
         Player.Health = num;
         Health = num;
         return true;
       }
-    }
-    else if (Player.Health < max)
-    {
+    } else if (Player.Health < max) {
       Player.Health += num;
-      if (Player.Health > max)
-      {
-        Player.Health = max;
-      }
+      if (Player.Health > max) Player.Health = max;
       Health = Player.Health;
       return true;
     }
-  }
-  else
-  {
+  } else {
     max = default.Health;
-    if (num < 0)
-    {
-      num = max * -num / 100;
-      if (Health < num)
-      {
+    if (num < 0) {
+      num = max*(-num)/100;
+      if (Health < num) {
         Health = num;
         return true;
       }
-    }
-    else if (Health < max)
-    {
+    } else if (Health < max) {
       Health += num;
-      if (Health > max)
-      {
-        Health = max;
-      }
+      if (Health > max) Health = max;
       return true;
     }
   }
   return false;
 }
+
+
+//==========================================================================
+//
+//  RepairArmorWith
+//
+//  Returns false if the armor weren't repaired.
+//
+//==========================================================================
+final bool RepairArmorWith (int amount, optional class!BasicArmorBonus armorbonustype) {
+  // default armorbonustype: ArmorBonus
+  print("WARNING: `RepairArmorWith()` is not implemeted!");
+  return false;
+}
+
 
 //==========================================================================
 //

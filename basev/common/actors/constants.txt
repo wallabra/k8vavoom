@@ -144,6 +144,9 @@ const int BF_AFFECTBOSSES     = 4;
 const int CPF_USEAMMO       = 1;
 const int CPF_DAGGER        = 2;
 const int CPF_PULLIN        = 4;
+const int CPF_NORANDOMPUFFZ = 8;
+const int CPF_NOTURN        = 16;
+const int CPF_STEALARMOR    = 32; // not implemented yet
 
 // Render Style constants
 const int STYLE_None        = 0;  // Do not draw

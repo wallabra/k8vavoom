@@ -1200,85 +1200,80 @@ final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   if (bIsPlayer) Player.bFixAngle = true;
 }
 
+
+//===========================================================================
+const int CPF_USEAMMO       = 1;
+const int CPF_DAGGER        = 2;
+const int CPF_PULLIN        = 4;
+const int CPF_NORANDOMPUFFZ = 8;
+const int CPF_NOTURN        = 16;
+const int CPF_STEALARMOR    = 32; // not implemented yet
+
+
 //===========================================================================
 //
 //  A_CustomPunch
 //
 //===========================================================================
-
-final void A_CustomPunch(int PunchDamage, optional bool NoRandom,
+final void A_CustomPunch (int PunchDamage, optional bool NoRandom,
   optional int Flags, optional class!Actor PuffType,
-  optional float Range, optional float LifeSteal)
+  optional float Range, optional float LifeSteal,
+  optional float lifestealmax, optional class!BasicArmorBonus armorbonustype,
+  optional name meleesound, optional name misssound)
 {
-  TAVec   aimAngles;
-  TVec    dir;
-  EntityEx  AimTarget;
-  bool    UseAmmo = false;
+  TAVec aimAngles;
+  TVec dir;
+  EntityEx AimTarget;
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
+  if (Range < 0) return; //k8: sanity check
+  if (!Range) Range = MELEERANGE; //SAWRANGE; // use saw range instead of melee range here, for puffs
 
-  if (!specified_Flags)
-  {
-    UseAmmo = true;
-  }
-  if (!PuffType)
-  {
-    PuffType = BulletPuff;
-  }
+  bool UseAmmo = (specified_Flags ? !!(Flags&CPF_USEAMMO) : false);
+  if (!PuffType) PuffType = BulletPuff;
+
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
   aimAngles = Angles;
-  aimAngles.yaw = AngleMod360(aimAngles.yaw + (Random() -
-    Random()) * 45.0 / 8.0);
+  aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
   AimTarget = AimLineAttack(dir, aimAngles, Range);
 
-  //  Use ammo only if hit something.
-  if ((specified_Flags && (Flags & 1) || UseAmmo) && AimTarget && Wpn)
-  {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode))
-    {
-      return;
-    }
+  // use ammo only if hit something
+  if (Wpn && AimTarget && UseAmmo) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  if (!NoRandom)
-  {
-    PunchDamage *= (P_Random() % 8 + 1);
-  }
+  if (!NoRandom) PunchDamage *= (P_Random()%8+1);
 
   LineAttack(dir, Range, PunchDamage, PuffType, default, default, PuffType.default.DamageType);
 
   // turn to face target
-  if (AimTarget)
-  {
-    if (LifeSteal)
-    {
-      GiveBody (ftoi(itof(PunchDamage) * LifeSteal));
+  if (AimTarget) {
+    if (LifeSteal > 0) {
+      float stealed = fmax(0, float(PunchDamage)*LifeSteal);
+      if (stealed > 0 && lifestealmax > 0) stealed = fmin(stealed, lifestealmax);
+      if (stealed > 0) {
+        if (Flags&CPF_STEALARMOR) {
+          RepairArmorWith(int(stealed), armorbonustype!optional);
+        } else {
+          GiveBody(int(stealed));
+        }
+      }
     }
-    if (Wpn)
-    {
-      PlaySound(Wpn.AttackSound, CHAN_WEAPON);
+    if (Wpn) PlaySound((meleesound ? meleesound : Wpn.AttackSound), CHAN_WEAPON);
+    if (!(Flags&CPF_NOTURN)) {
+      Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
+      if (bIsPlayer) Player.bFixAngle = true;
     }
-    Angles.yaw = atan2(AimTarget.Origin.y - Origin.y,
-      AimTarget.Origin.x - Origin.x);
-    if (bIsPlayer)
-    {
-      Player.bFixAngle = true;
-    }
-    if (Flags & 4)
-    {
-      bJustAttacked = true;
-    }
-    if (Flags & 2)
-    {
-      A_AttackAlert(self, AimTarget);
-    }
+    if (Flags&CPF_PULLIN) bJustAttacked = true;
+    if (Flags&CPF_DAGGER) A_AttackAlert(self, AimTarget); // incorrect; see https://zdoom.org/wiki/A_CustomPunch
+  } else {
+    if (misssound) PlaySound(misssound, CHAN_WEAPON);
   }
 }
 
+
+//===========================================================================
 const int FBF_USEAMMO = 1;
 const int FBF_NORANDOM = 2;
 const int FBF_EXPLICITANGLE = 4;
