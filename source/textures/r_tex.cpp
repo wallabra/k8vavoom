@@ -1184,7 +1184,9 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
   TArray<TSwitchFrame>  Frames;
   int Sound = 0;
   bool Bad = false;
+  bool silentTexError = (GArgs.CheckParm("-Wswitch-textures") == 0);
 
+  //GCon->Logf("+============+");
   while (1) {
     if (sc->Check("sound")) {
       if (Sound) sc->Error("Switch state already has a sound");
@@ -1192,7 +1194,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       Sound = GSoundManager->GetSoundID(*sc->String);
     } else if (sc->Check("pic")) {
       sc->ExpectName8();
-      int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
+      int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, /*false*/IgnoreBad || silentTexError);
       if (Tex < 0 && !IgnoreBad) Bad = true;
       TSwitchFrame &F = Frames.Alloc();
       F.Texture = Tex;
@@ -1219,6 +1221,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       break;
     }
   }
+  //GCon->Logf("*============*");
 
   if (!Frames.Num()) sc->Error("Switch state needs at least one frame");
   if (Bad) return nullptr;
@@ -1244,6 +1247,8 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
 //==========================================================================
 static void ParseSwitchDef (VScriptParser *sc) {
   guard(ParseSwitchDef);
+  bool silentTexError = (GArgs.CheckParm("-Wswitch-textures") == 0);
+
   // skip game specifier
        if (sc->Check("doom")) { sc->ExpectNumber(); }
   else if (sc->Check("heretic")) {}
@@ -1251,9 +1256,9 @@ static void ParseSwitchDef (VScriptParser *sc) {
   else if (sc->Check("strife")) {}
   else if (sc->Check("any")) {}
 
-  //  Switch texture
+  // switch texture
   sc->ExpectName8();
-  int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, false);
+  int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, silentTexError);
   bool Quest = false;
   TSwitch *Def1 = nullptr;
   TSwitch *Def2 = nullptr;
