@@ -843,7 +843,7 @@ void VRenderLevelShared::RenderPortals () {
     }
     r_decals_enabled = oldDecalsEnabled;
   } else {
-    if (dbg_max_portal_depth_warning) GCon->Logf("WARNING: portal level too deep (%d)", PortalLevel);
+    if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
   }
 
   for (int i = 0; i < Portals.Num(); ++i) {

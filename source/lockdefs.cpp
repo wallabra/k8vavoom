@@ -98,7 +98,7 @@ static void ParseLockDefs (VScriptParser *sc) {
             sc->ExpectString();
             VClass *Cls = VClass::FindClassNoCase(*sc->String);
             if (!Cls) {
-              GCon->Logf("WARNING:%s:No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
+              GCon->Logf(NAME_Warning, "%s: No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
             } else {
               Grp.AnyKeyList.Append(Cls);
             }
@@ -108,7 +108,7 @@ static void ParseLockDefs (VScriptParser *sc) {
         sc->ExpectString();
         VClass *Cls = VClass::FindClassNoCase(*sc->String);
         if (!Cls) {
-          GCon->Logf("WARNING:%s:No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
+          GCon->Logf(NAME_Warning, "%s: No lockdef class '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         } else {
           LDef->Locks.Alloc().AnyKeyList.Append(Cls);
         }

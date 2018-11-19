@@ -1881,7 +1881,7 @@ void VLevel::CreateSides () {
       // just a warning (and a fix)
       if ((Line->flags&ML_TWOSIDED) == 0) {
         if (loader_force_fix_2s) {
-          GCon->Logf("WARNING: linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
+          GCon->Logf(NAME_Warning, "linedef #%d marked as two-sided but has no TWO-SIDED flag set", i);
           Line->flags |= ML_TWOSIDED; //k8: we need to set this, or clipper will glitch
         }
       }
@@ -1890,7 +1890,7 @@ void VLevel::CreateSides () {
       // no second side, but marked as two-sided
       if (Line->flags&ML_TWOSIDED) {
         //if (strict_level_errors) Host_Error("Bad WAD: Line %d is marked as TWO-SIDED but has only one side", i);
-        GCon->Logf("WARNING: linedef #%d is marked as TWO-SIDED but has only one side", i);
+        GCon->Logf(NAME_Warning, "linedef #%d is marked as TWO-SIDED but has only one side", i);
         Line->flags &= ~ML_TWOSIDED;
       }
     }
@@ -2421,7 +2421,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   BaseStrm->Serialise(hdr, 4);
   if (BaseStrm->IsError()) {
     delete BaseStrm;
-    GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
 
@@ -2432,7 +2432,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     // ok
   } else {
     delete BaseStrm;
-    GCon->Logf("WARNING: invalid GL nodes signature (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "invalid GL nodes signature (VaVoom will use internal node builder)");
     return false;
   }
 
@@ -2441,7 +2441,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   BaseStrm->Serialise(TmpData, BaseStrm->TotalSize()-4);
   if (BaseStrm->IsError()) {
     delete BaseStrm;
-    GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
   VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize()-4);
@@ -2467,7 +2467,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     default:
       delete Strm;
       delete DataStrm;
-      GCon->Logf("WARNING: this obsolete version of GL nodes is disabled (VaVoom will use internal node builder)");
+      GCon->Logf(NAME_Warning, "this obsolete version of GL nodes is disabled (VaVoom will use internal node builder)");
       return false;
   }
 
@@ -2476,7 +2476,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   if (!nodes_allow_compressed) {
     delete Strm;
     delete DataStrm;
-    GCon->Logf("WARNING: this new version of GL nodes is disabled (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "this new version of GL nodes is disabled (VaVoom will use internal node builder)");
     return false;
   }
 
@@ -2488,14 +2488,14 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   if (Strm->IsError()) {
     delete Strm;
     delete DataStrm;
-    GCon->Logf("WARNING: error reading GL nodes (VaVoom will use internal node builder)");
+    GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
 
   if (OrgVerts != (vuint32)NumVertexes) {
     delete Strm;
     delete DataStrm;
-    GCon->Logf("WARNING: error reading GL nodes (got %u vertexes, expected %d vertexes)", OrgVerts, NumVertexes);
+    GCon->Logf(NAME_Warning, "error reading GL nodes (got %u vertexes, expected %d vertexes)", OrgVerts, NumVertexes);
     return false;
   }
 

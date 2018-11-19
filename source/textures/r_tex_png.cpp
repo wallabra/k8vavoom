@@ -82,16 +82,16 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
       Strm.SerialiseBigEndian(&SOffset, 4);
       Strm.SerialiseBigEndian(&TOffset, 4);
       if (SOffset < -32768 || SOffset > 32767) {
-        GCon->Logf("S-offset for PNG texture %s is bad: %d (0x%08x)", *W_FullLumpName(LumpNum), SOffset, SOffset);
+        GCon->Logf(NAME_Warning, "S-offset for PNG texture %s is bad: %d (0x%08x)", *W_FullLumpName(LumpNum), SOffset, SOffset);
         SOffset = 0;
       }
       if (TOffset < -32768 || TOffset > 32767) {
-        GCon->Logf("T-offset for PNG texture %s is bad: %d (0x%08x)", *W_FullLumpName(LumpNum), TOffset, TOffset);
+        GCon->Logf(NAME_Warning, "T-offset for PNG texture %s is bad: %d (0x%08x)", *W_FullLumpName(LumpNum), TOffset, TOffset);
         TOffset = 0;
       }
     } else {
       if (Len > 0x3fffffff || (int)Len > Strm.TotalSize() || (int)Len > Strm.TotalSize()-Strm.Tell()) {
-        GCon->Logf("INVALID PNG FILE '%s'", *W_FullLumpName(LumpNum));
+        GCon->Logf(NAME_Warning, "INVALID PNG FILE '%s'", *W_FullLumpName(LumpNum));
         return nullptr;
       }
       Strm.Seek(Strm.Tell()+Len);
@@ -276,7 +276,7 @@ void WritePNG(const VStr &FileName, const void *Data, int Width, int Height, int
   }
 
   if (!M_CreatePNG(Strm, (const vuint8 *)Data, pal, ptp, Width, (Bot2top ? -Height : Height), Width*(Bpp/8), 1.0f)) {
-    GCon->Log("Error writing png");
+    GCon->Log(NAME_Error, "Error writing png");
   }
 
   Strm->Close();

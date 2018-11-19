@@ -549,7 +549,7 @@ void VUdmfParser::ParseLineDef(const mapInfo_t &MInfo)
       //TODO
       else if (!Key.ICmp("Checkswitchrange")) Flag(L.L.flags, ML_CHECKSWITCHRANGE);
       else if (!Key.ICmp("midtex3d")) {
-        GCon->Logf("UDMF WARNING:%s: `midtex3d` is not implemented", *sc.GetLoc().toStringNoCol());
+        GCon->Logf(NAME_Warning, "%s: UDMF: `midtex3d` is not implemented", *sc.GetLoc().toStringNoCol());
         Flag(L.L.flags, ML_3DMIDTEX); // won't work at all
       }
     }

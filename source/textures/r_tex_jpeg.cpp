@@ -284,7 +284,7 @@ vuint8 *VJpegTexture::GetPixels () {
         (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
         (cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
     {
-      GCon->Log("Unsupported JPEG file format");
+      GCon->Log(NAME_Warning, "Unsupported JPEG file format");
       throw -1;
     }
 
@@ -430,7 +430,7 @@ void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, in
   guard(WriteJPG);
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) {
-    GCon->Log("Couldn't write jpg");
+    GCon->Log(NAME_Warning, "Couldn't write jpg");
     return;
   }
 

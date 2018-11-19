@@ -592,7 +592,7 @@ static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
     }
   }
 
-  if (setcount != Level->NumSegs) GCon->Logf("AJBSP: WARNING: %d of %d segs has no front_sub!", Level->NumSegs-setcount, Level->NumSegs);
+  if (setcount != Level->NumSegs) GCon->Logf(NAME_Warning, "AJBSP: %d of %d segs has no front_sub!", Level->NumSegs-setcount, Level->NumSegs);
   unguard;
 }
 

@@ -802,7 +802,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->CheckNumber();
     */
     } else if (sc->CheckStartsWith("compat_")) {
-      GCon->Logf("WARNING: %s: mapdef '%s' is not supported yet", *sc->GetLoc().toStringNoCol(), *sc->String);
+      GCon->Logf(NAME_Warning, "%s: mapdef '%s' is not supported yet", *sc->GetLoc().toStringNoCol(), *sc->String);
       //DoCompatFlag(sc, info, MAPINFOF2_CompatInvisibility);
       sc->Check("=");
       sc->CheckNumber();
@@ -1682,7 +1682,7 @@ static void ParseMapInfo (VScriptParser *sc) {
         }
         sc->SetCMode(cmode);
       } else if (sc->Check("intermission")) {
-        GCon->Logf("WARNING: Unimplemented MAPINFO command Intermission");
+        GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command Intermission");
         if (!sc->Check("{")) sc->ExpectString();
         sc->SkipBracketed();
       /*
@@ -1772,7 +1772,7 @@ static void ParseMapInfo (VScriptParser *sc) {
         VStr cmdname = sc->String;
         sc->ExpectString();
         if (sc->Check("{")) {
-          GCon->Logf("WARNING: Unimplemented MAPINFO command '%s'", *cmdname);
+          GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command '%s'", *cmdname);
           sc->SkipBracketed(true); // bracket eaten
         } else {
           sc->Error(va("Invalid command '%s'", *sc->String));

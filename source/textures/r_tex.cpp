@@ -333,7 +333,7 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
   int i = CheckNumForName(Name, Type, bOverload, bCheckAny);
   if (i == -1) {
     if (!numForNameWarned.put(*Name)) {
-      GCon->Logf("VTextureManager::NumForName: '%s' not found (type:%d; over:%d; any:%d)", *Name, (int)Type, (int)bOverload, (int)bCheckAny);
+      GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d; any:%d)", *Name, (int)Type, (int)bOverload, (int)bCheckAny);
       /*
       if (VStr::ICmp(*Name, "ml_sky1") == 0) {
         GCon->Logf("!!!!!!!!!!!!!!!!!!");
@@ -452,7 +452,7 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   if (LumpNum < 0) {
     /*if (!Silent)*/ {
       if (!patchesWarned.put(*Name)) {
-        GCon->Logf("VTextureManager::AddPatch: Pic \"%s\" not found", *Name);
+        GCon->Logf(NAME_Warning, "VTextureManager::AddPatch: Pic \"%s\" not found", *Name);
       }
     }
     return -1;
@@ -483,12 +483,12 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
   if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
   if (LumpNum < 0) {
-    GCon->Logf("VTextureManager::AddRawWithPal: %s not found", *Name);
+    GCon->Logf(NAME_Warning, "VTextureManager::AddRawWithPal: \"%s\" not found", *Name);
     return -1;
   }
   // check if lump's size to see if it really is a raw image; if not, load it as regular image
   if (W_LumpLength(LumpNum) != 64000) {
-    GCon->Logf("VTextureManager::AddRawWithPal: %s doesn't appear to be a raw image", *Name);
+    GCon->Logf(NAME_Warning, "VTextureManager::AddRawWithPal: \"%s\" doesn't appear to be a raw image", *Name);
     return AddPatch(Name, TEXTYPE_Pic);
   }
 
@@ -535,7 +535,7 @@ int VTextureManager::AddFileTexture (VName Name, int Type) {
   guard(VTextureManager::AddFileTexture)
   int i = AddFileTextureChecked(Name, Type);
   if (i == -1) {
-    GCon->Logf("Couldn\'t create texture \"%s\".", *Name);
+    GCon->Logf(NAME_Warning, "Couldn\'t create texture \"%s\".", *Name);
     return DefaultTexture;
   }
   return i;
@@ -578,7 +578,7 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
     }
   }
 
-  GCon->Logf("Couldn\'t create shaded texture \"%s\".", *Name);
+  GCon->Logf(NAME_Warning, "Couldn't create shaded texture \"%s\".", *Name);
   return DefaultTexture;
   unguard;
 }
@@ -613,7 +613,7 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
       return tidx;
     }
   }
-  if (!silent) GCon->Logf(NAME_Init, "Textures: missing texture \"%s\"", *Name);
+  if (!silent) GCon->Logf(NAME_Warning, "Textures: missing texture \"%s\"", *Name);
   return -1;
 }
 
@@ -833,7 +833,7 @@ void VTextureManager::AddHiResTextures () {
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != NAME_hirestex && W_LumpName(Lump) != NAME_textures) continue;
 
-    GCon->Logf("parsing textures script \"%s\"...", *W_FullLumpName(Lump));
+    GCon->Logf(NAME_Init, "parsing textures script \"%s\"...", *W_FullLumpName(Lump));
     VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
     while (!sc->AtEnd()) {
       if (sc->Check("remap")) {
@@ -884,7 +884,7 @@ void VTextureManager::AddHiResTextures () {
           LumpIdx = W_CheckNumForName(Name8, WADNS_Graphics);
           //FIXME: fix name?
           if (LumpIdx >= 0) {
-            GCon->Logf("WARNING: found short texture '%s' for long texture '%s'", *Name8, *Name);
+            GCon->Logf(NAME_Warning, "Texture: found short texture '%s' for long texture '%s'", *Name8, *Name);
             Name = Name8;
           }
         }
@@ -1068,7 +1068,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, !optional);
   if (ad.Index == -1) {
     ignore = true;
-    if (!optional) GCon->Logf("ANIMDEFS: Can't find '%s'", *sc->Name8);
+    if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->Name8);
   }
   VName adefname = sc->Name8;
   bool missing = ignore && optional;
@@ -1319,7 +1319,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
   vint32 BaseTex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
   if (BaseTex == -1) {
     ignore = true;
-    GCon->Logf("ANIMDEFS: Can't find %s", *sc->String);
+    GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find animdoor texture \"%s\"", *sc->String);
   }
 
   VName OpenSound(NAME_None);
@@ -1548,7 +1548,7 @@ void P_InitSwitchList () {
 
       // Check for switches that aren't really switches
       if (!VStr::ICmp(TmpName1, TmpName2)) {
-        GCon->Logf(NAME_Init, "Switch %s in SWITCHES has the same 'on' state", TmpName1);
+        GCon->Logf(NAME_Warning, "Switch \"%s\" in SWITCHES has the same 'on' state", TmpName1);
         continue;
       }
       int t1 = GTextureManager.CheckNumForNameAndForce(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false, false);
@@ -1670,7 +1670,7 @@ void R_AnimateSurfaces () {
           atx->TextureTranslation = ad.Index;
           if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
           if (wantMissingAnimWarning) {
-            GCon->Logf("(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
+            GCon->Logf(NAME_Warning, "(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
           }
         }
       }
@@ -1683,7 +1683,7 @@ void R_AnimateSurfaces () {
             atx->TextureTranslation = ad.Index+fn;
             if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
             if (wantMissingAnimWarning) {
-              GCon->Logf("(1) animated surface got invalid texture index");
+              GCon->Logf(NAME_Warning, "(1) animated surface got invalid texture index");
             }
           }
           atx->noDecals = (ad.allowDecals == 0);

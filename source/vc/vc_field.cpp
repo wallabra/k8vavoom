@@ -388,7 +388,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         Strm.SerialiseStructPointer(*(void **)Data, Type.Struct);
       } else {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-        GCon->Logf("I/O WARNING: don't know how to serialise pointer type `%s` for field '%s'", *Type.GetName(), *fullname);
+        GCon->Logf(NAME_Warning, "I/O WARNING: don't know how to serialise pointer type `%s` for field '%s'", *Type.GetName(), *fullname);
 #endif
         /*
         if (Strm.IsLoading()) {

@@ -3651,7 +3651,7 @@ int VAcs::RunScript(float DeltaTime)
       {
         VName name = GetNameLowerCase(sp[-1]);
         --sp;
-        GCon->Logf("WARNING: UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
+        GCon->Logf(NAME_Warning, "UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
         WaitValue = XLevel->Acs->FindScriptNumberByName(*name, WaitObject);
         if (WaitValue <= -100000) {
           if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
@@ -3664,7 +3664,7 @@ int VAcs::RunScript(float DeltaTime)
             State = ASTE_WaitingForScript;
           }
         } else {
-          GCon->Logf("ACS ERROR: PCD_ScriptWaitNamed wanted to wait for unknown script '%s'", *name);
+          GCon->Logf(NAME_Warning, "ACS ERROR: PCD_ScriptWaitNamed wanted to wait for unknown script '%s'", *name);
         }
         action = SCRIPT_Stop;
       }

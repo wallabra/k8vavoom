@@ -1045,7 +1045,7 @@ void VLevel::SectorSetLink (int controltag, int tag, int surface, int movetype) 
   if (tag == controltag) return;
   //FIXME: just enough to let annie working
   if (surface != 0 || movetype != 1) {
-    GCon->Logf("WARNING: UNIMPLEMENTED: setting sector link: controltag=%d; tag=%d; surface=%d; movetype=%d", controltag, tag, surface, movetype);
+    GCon->Logf(NAME_Warning, "UNIMPLEMENTED: setting sector link: controltag=%d; tag=%d; surface=%d; movetype=%d", controltag, tag, surface, movetype);
     return;
   }
   for (int csi = FindSectorFromTag(controltag, -1); csi >= 0; csi = FindSectorFromTag(controltag, csi)) {
@@ -1578,7 +1578,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   if (!dec || !sec || !li) return;
 
   if (level > 16) {
-    GCon->Logf("WARNING: too many lower decals '%s'", *dec->name);
+    GCon->Logf(NAME_Warning, "too many lower decals '%s'", *dec->name);
     return;
   }
 
@@ -1758,6 +1758,7 @@ void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
   VDecalDef *dec = VDecalDef::getDecalById(id);
   if (dec) {
     //GCon->Logf("DECAL %d: oorg:(%f,%f,%f); org:(%f,%f,%f)", id, oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
+    //GCon->Logf("DECAL %d:<%s>: texture=<%s>; org:(%f,%f,%f)", id, *dec->name, *GTextureManager.GetTextureName(dec->texid), org.x, org.y, org.z);
     AddOneDecal(level, org, dec, sec, li);
   } else {
     //if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);

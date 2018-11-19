@@ -103,13 +103,13 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     vint16 PatchIdx = Streamer<vint16>(Strm);
     if (PatchIdx < 0 || PatchIdx >= NumPatchLookup) {
       //Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
-      if (!warned) { warned = true; GCon->Logf("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
+      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index in texture \"%s\" (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
       patch->Tex = nullptr;
     } else {
       patch->Tex = PatchLookup[PatchIdx];
     }
     if (!patch->Tex) {
-      if (!warned) { warned = true; GCon->Logf("InitTextures: Missing patch in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
+      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Missing patch in texture \"%s\" (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
       --i;
       --PatchCount;
       --patch;
@@ -152,7 +152,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
   sc->ExpectString();
   if (!sc->QuotedString && sc->String.ICmp("optional") == 0) {
     //FIXME!
-    GCon->Logf("WARNING: %s: 'optional' is doing the opposite of what it should, lol", *sc->GetLoc().toStringNoCol());
+    GCon->Logf(NAME_Warning, "%s: 'optional' is doing the opposite of what it should, lol", *sc->GetLoc().toStringNoCol());
     sc->ExpectString();
   }
 
@@ -229,7 +229,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
           }
         }
         if (Tex < 0) {
-          GCon->Logf("Unknown patch '%s' in texture '%s'", *sc->String, *Name);
+          GCon->Logf(NAME_Warning, "%s: Unknown patch '%s' in texture '%s'", *sc->GetLoc().toStringNoCol(), *sc->String, *Name);
           //int LumpNum = W_CheckNumForTextureFileName("-noflat-");
           //if (LumpNum >= 0) Tex = GTextureManager.AddTexture(CreateTexture(TEXTYPE_WallPatch, LumpNum));
           P.Tex = nullptr;
@@ -265,7 +265,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               Flip |= 2;
             } else if (sc->Check("useoffsets")) {
               //FIXME!
-              GCon->Logf("WARNING: %s: 'UseOffsets' is not supported yet", *sc->GetLoc().toStringNoCol());
+              GCon->Logf(NAME_Warning, "%s: 'UseOffsets' is not supported yet", *sc->GetLoc().toStringNoCol());
             } else if (sc->Check("rotate")) {
               sc->ExpectNumberWithSign();
               int Rot = ((sc->Number+90)%360)-90;
@@ -348,7 +348,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               // Overlay: This is the same as CopyAlpha, except it only copies the patch's alpha channel where it has a higher alpha than what's underneath.
               else if (sc->Check("overlay")) {
                 //FIXME
-                GCon->Logf("WARNING: %s: unsupported texture style 'Overlay', approximated with 'CopyAlpha'", *sc->GetLoc().toStringNoCol());
+                GCon->Logf(NAME_Warning, "%s: unsupported texture style 'Overlay', approximated with 'CopyAlpha'", *sc->GetLoc().toStringNoCol());
                 P.Style = STYLE_CopyAlpha;
               } else sc->Error(va("Bad style: '%s'", *sc->String));
               if (P.Style != STYLE_Copy) Format = TEXFMT_RGBA;

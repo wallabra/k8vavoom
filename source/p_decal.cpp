@@ -164,7 +164,7 @@ VDecalDef::~VDecalDef () {
 void VDecalDef::fixup () {
   if (animname == NAME_None) return;
   animator = VDecalAnim::find(animname);
-  if (!animator) GCon->Logf("WARNING: decal '%s': animator '%s' not found!", *name, *animname);
+  if (!animator) GCon->Logf(NAME_Warning, "decal '%s': animator '%s' not found!", *name, *animname);
 }
 
 
@@ -316,7 +316,7 @@ void VDecalGroup::fixup () {
       list.AddEntry(li, nameList[f].weight);
       continue;
     }
-    GCon->Logf(NAME_Init, "WARNING: decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
+    GCon->Logf(NAME_Warning, "decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
   }
 }
 
@@ -712,7 +712,7 @@ VDecalAnimCombiner::~VDecalAnimCombiner () {
 void VDecalAnimCombiner::fixup () {
   for (int f = 0; f < nameList.Num(); ++f) {
     auto it = VDecalAnim::find(nameList[f]);
-    if (it) list.Append(it); else GCon->Logf(NAME_Init, "WARNING: animgroup '%s' contains unknown anim '%s'!", *name, *nameList[f]);
+    if (it) list.Append(it); else GCon->Logf(NAME_Warning, "animgroup '%s' contains unknown anim '%s'!", *name, *nameList[f]);
   }
 }
 
@@ -880,7 +880,7 @@ void ParseDecalDef (VScriptParser *sc) {
             SetClassFieldName(k2, VName("DecalName"), VName(*decname));
           }
         } else {
-          sc->Message(va("WARNING: ignored 'generator' definition for class '%s'", *clsname));
+          GCon->Logf(NAME_Warning, "%s: ignored 'generator' definition for class '%s'", *sc->GetLoc().toStringNoCol(), *clsname);
         }
         continue;
       }
