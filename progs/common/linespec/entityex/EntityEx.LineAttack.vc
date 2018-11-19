@@ -205,9 +205,10 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
 // Returns `true` if wall was hit.
 // Returns `false` if floor/ceiling was hit, or nothing was hit.
 // `dir` must be normalized
+// (not anymore) if zofs is not given, use default entity vertical offset
 //
 //==========================================================================
-final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr) {
+final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs) {
   TVec dst;
   intercept_t *in;
   TVec lineStart;
@@ -217,7 +218,11 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
   shootOrigin = org;
   //ShootOrigin.z += Height*0.5-FloorClip;
-  shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
+  if (specified_zofs) {
+    shootOrigin.z += zofs;
+  } else {
+    //shootOrigin.z += (bIsPlayer ? PlayerPawn(Player.MO).GetAttackZOfs : 8.0);
+  }
 
   dst = shootOrigin+distance*dir;
 
@@ -527,7 +532,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
     if (isSmallDamage && !radiusDamage) continue;
 
-    if (TraceSplat(pos, vdir, 172.0, &tr)) {
+    if (TraceSplat(pos, vdir, 172.0, &tr, 0)) {
       //print("*** spawning blood decal '%s'!", NameToStr(bloodType));
       SpawnDecal(tr.hit, bloodType, tr.side, tr.line);
     }

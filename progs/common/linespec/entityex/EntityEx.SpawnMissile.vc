@@ -157,7 +157,8 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
     //TVec v1, v2;
     TVec dir = Normalise(Velocity);
     trsplat_t tr;
-    if (TraceSplat(Origin-dir*2, dir, 64.0, &tr)) {
+    // trace without z offset
+    if (TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0)) {
       if (GetCvarB('k8ExplodeMissleTest')) {
         auto side = PointOnPlaneSide(Origin-Velocity, line); // move out a little, just in case
         sector_t *sec = (side ? line->backsector : line->frontsector);
