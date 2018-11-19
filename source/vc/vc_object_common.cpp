@@ -117,11 +117,13 @@ IMPLEMENT_FUNCTION(VObject, FatalError) {
 //**************************************************************************
 IMPLEMENT_FUNCTION(VObject, AngleMod360) {
   P_GET_FLOAT(an);
+  if (!isFiniteF(an)) { VObject::VMDumpCallStack(); if (isNaNF(an)) Sys_Error("got NAN"); Sys_Error("got INF"); }
   RET_FLOAT(AngleMod(an));
 }
 
 IMPLEMENT_FUNCTION(VObject, AngleMod180) {
   P_GET_FLOAT(an);
+  if (!isFiniteF(an)) { VObject::VMDumpCallStack(); if (isNaNF(an)) Sys_Error("got NAN"); Sys_Error("got INF"); }
   RET_FLOAT(AngleMod180(an));
 }
 
