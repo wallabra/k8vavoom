@@ -497,24 +497,26 @@ VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int Star
 
     if (Lump >= 0) {
       VTexture *Tex = GTextureManager[GTextureManager.AddPatch(LumpName, TEXTYPE_Pic)];
-      FFontChar &FChar = Chars.Alloc();
-      FChar.Char = Char;
-      FChar.TexNum = -1;
-      FChar.BaseTex = Tex;
-      if (Char < 128) AsciiChars[Char] = Chars.Num()-1;
+      if (Tex) {
+        FFontChar &FChar = Chars.Alloc();
+        FChar.Char = Char;
+        FChar.TexNum = -1;
+        FChar.BaseTex = Tex;
+        if (Char < 128) AsciiChars[Char] = Chars.Num()-1;
 
-      // calculate height of font character and adjust font height as needed
-      int Height = Tex->GetScaledHeight();
-      int TOffs = Tex->GetScaledTOffset();
-      Height += abs(TOffs);
-      if (FontHeight < Height) FontHeight = Height;
+        // calculate height of font character and adjust font height as needed
+        int Height = Tex->GetScaledHeight();
+        int TOffs = Tex->GetScaledTOffset();
+        Height += abs(TOffs);
+        if (FontHeight < Height) FontHeight = Height;
 
-      // update first and last characters
-      if (FirstChar == -1) FirstChar = Char;
-      LastChar = Char;
+        // update first and last characters
+        if (FirstChar == -1) FirstChar = Char;
+        LastChar = Char;
 
-      // mark colours that are used by this texture
-      MarkUsedColours(Tex, ColoursUsed);
+        // mark colours that are used by this texture
+        MarkUsedColours(Tex, ColoursUsed);
+      }
     }
   }
 
@@ -936,24 +938,26 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
     VName LumpName = CharLumps[i];
 
     VTexture *Tex = GTextureManager[GTextureManager.AddPatch(LumpName, TEXTYPE_Pic)];
-    FFontChar &FChar = Chars.Alloc();
-    FChar.Char = Char;
-    FChar.TexNum = -1;
-    FChar.BaseTex = Tex;
-    if (Char < 128) AsciiChars[Char] = Chars.Num()-1;
+    if (Tex) {
+      FFontChar &FChar = Chars.Alloc();
+      FChar.Char = Char;
+      FChar.TexNum = -1;
+      FChar.BaseTex = Tex;
+      if (Char < 128) AsciiChars[Char] = Chars.Num()-1;
 
-    // calculate height of font character and adjust font height as needed
-    int Height = Tex->GetScaledHeight();
-    int TOffs = Tex->GetScaledTOffset();
-    Height += abs(TOffs);
-    if (FontHeight < Height) FontHeight = Height;
+      // calculate height of font character and adjust font height as needed
+      int Height = Tex->GetScaledHeight();
+      int TOffs = Tex->GetScaledTOffset();
+      Height += abs(TOffs);
+      if (FontHeight < Height) FontHeight = Height;
 
-    // update first and last characters
-    if (FirstChar == -1) FirstChar = Char;
-    LastChar = Char;
+      // update first and last characters
+      if (FirstChar == -1) FirstChar = Char;
+      LastChar = Char;
 
-    // mark colours that are used by this texture
-    MarkUsedColours(Tex, ColoursUsed);
+      // mark colours that are used by this texture
+      MarkUsedColours(Tex, ColoursUsed);
+    }
   }
 
   // exclude non-translated colours from calculations

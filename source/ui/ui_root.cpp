@@ -50,7 +50,7 @@ void VRootWidget::Init () {
   Super::Init(nullptr);
   SetSize(640, 480);
 
-  MouseCursorPic = GTextureManager.AddPatch("mc_arrow", TEXTYPE_Pic);
+  MouseCursorPic = GTextureManager.AddPatch("mc_arrow", TEXTYPE_Pic, true); // silent
   unguard;
 }
 

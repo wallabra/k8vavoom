@@ -533,12 +533,12 @@ static void AM_initVariables () {
 static void AM_loadPics () {
   if (W_CheckNumForName(NAME_ammnum0) >= 0) {
     for (int i = 0; i < 10; ++i) {
-      marknums[i] = GTextureManager.AddPatch(va("ammnum%d", i), TEXTYPE_Pic);
+      marknums[i] = GTextureManager.AddPatch(va("ammnum%d", i), TEXTYPE_Pic, true); // silent
     }
     use_marks = true;
   }
-  mappic = GTextureManager.AddPatch(NAME_autopage, TEXTYPE_Autopage);
-  mapheight = (mappic ? (int)GTextureManager.TextureHeight(mappic) : 64);
+  mappic = GTextureManager.AddPatch(NAME_autopage, TEXTYPE_Autopage, true); // silent
+  mapheight = (mappic > 0 ? (int)GTextureManager.TextureHeight(mappic) : 64);
   if (mapheight < 1) mapheight = 1;
 }
 
