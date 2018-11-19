@@ -63,6 +63,9 @@ class Actor extends Thinker
 
   field Threshold = Threshold;
 
+  field Damage = MissileDamage; //k8: i think so
+
+
   alias random = random;
   alias frandom = frandom;
   alias random2 = random2;
