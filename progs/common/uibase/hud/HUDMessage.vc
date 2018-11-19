@@ -60,15 +60,15 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
+  //print("HUDMSG: font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>; HoldTime=%s; times=(%s,%s)", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message, AHoldTime, Time1, Time2);
+
   Id = AId;
   MsgFont = AFont;
   if (!MsgFont) { MsgFont = 'smallfont'; AFont = MsgFont; }
   MsgColour = Colour;
   HoldTime = AHoldTime;
-  HoldTime = fclamp(HoldTime, 0.01, 100000);
+  HoldTime = fclamp(HoldTime, 0, 100000); // 0 MEANS ALOT HERE!
   //if (HoldTime > 0) HoldTime += 0.5/35.0;
-
-  //print("HUDMSG: font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message);
 
   if (GetCvarB('hud_scale_messages')) {
     string fontnamestr = string(AFont);
@@ -306,7 +306,7 @@ void DrawLine (int LineIdx, int x, int y, string Text) {
 //==========================================================================
 override void Tick (float DeltaTime) {
   if (HoldTime && Time > HoldTime) {
-    //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s", Time, HoldTime, Time/35.0, HoldTime/35.0);
+    //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
     MarkDead(); //Destroy();
     return;
   }

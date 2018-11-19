@@ -288,6 +288,12 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
       }
     }
     //print("*** new HUD message with id %d", Id);
+  } else {
+    // is this orphaned message with infinite hold time?
+    if (HoldTime <= 0 && (Type&0xffff) == HUDMSG_PLAIN) {
+      // yes, don't allow it, or we may get HUD message spam
+      HoldTime = 0.5;
+    }
   }
 
   switch (Type&0xffff) {
@@ -305,6 +311,8 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
       Msg = HudMsgWin.NewChild(HUDMessageFadeInOut);
       break;
   }
+  if (!Msg) return; // guard for invalid types
+
   Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
   // insert in the list in the proper location
