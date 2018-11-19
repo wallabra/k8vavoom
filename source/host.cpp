@@ -151,6 +151,7 @@ void Host_Init () {
 
   if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;
   if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
+  if (GArgs.CheckParm("-developer")) developer = true;
 
   FL_Init();
 
