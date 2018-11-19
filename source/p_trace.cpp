@@ -91,7 +91,7 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
   float frac;
   float num;
   float den;
-  TVec hit_point;
+  TVec hit_point(0, 0, 0);
 
   line = Seg->linedef;
   if (!line) return true;

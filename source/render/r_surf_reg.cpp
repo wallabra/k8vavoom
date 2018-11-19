@@ -198,7 +198,7 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 
   int count1 = 0;
   int count2 = 0;
-  TVec mid;
+  TVec mid(0, 0, 0);
 
 #if defined(USE_FASTER_SUBDIVIDER)
   for (int i = 0; i < f->count; ++i) {
@@ -359,7 +359,7 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, cons
   TVec verts2[MAXWVERTS];
   int count1 = 0;
   int count2 = 0;
-  TVec mid;
+  TVec mid(0, 0, 0);
 
 #if defined(USE_FASTER_SUBDIVIDER)
   for (int i = 0; i < surf->count; ++i) {

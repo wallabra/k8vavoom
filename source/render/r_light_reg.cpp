@@ -166,7 +166,7 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
 //==========================================================================
 void VRenderLevel::CalcFaceVectors (surface_t *surf) {
   guard(VRenderLevel::CalcFaceVectors);
-  TVec texnormal;
+  TVec texnormal(0, 0, 0);
 
   texinfo_t *tex = surf->texinfo;
 
@@ -230,7 +230,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
   int step;
   float starts, startt, us, ut;
   TVec *spt;
-  TVec facemid;
+  TVec facemid(0, 0, 0);
   linetrace_t Trace;
 
   // fill in surforg
@@ -306,7 +306,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf) {
   guard(VRenderLevel::SingleLightFace);
   float dist;
-  TVec incoming;
+  TVec incoming(0, 0, 0);
   float angle;
   float add;
   TVec *spt;
@@ -706,7 +706,7 @@ this way, when level geometry changed, we can re-trace static lights too.
 void VRenderLevel::AddDynamicLights (surface_t *surf) {
   guard(VRenderLevel::AddDynamicLights);
   float dist, rad, minlight, rmul, gmul, bmul;
-  TVec impact, local;
+  TVec impact(0, 0, 0), local(0, 0, 0);
   int smax, tmax;
   texinfo_t *tex;
   subsector_t *sub;

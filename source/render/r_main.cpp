@@ -42,15 +42,15 @@ void R_FreeSkyboxData ();
 
 int screenblocks = 0;
 
-TVec vieworg;
-TVec viewforward;
-TVec viewright;
-TVec viewup;
-TAVec viewangles;
+TVec vieworg(0, 0, 0);
+TVec viewforward(0, 0, 0);
+TVec viewright(0, 0, 0);
+TVec viewup(0, 0, 0);
+TAVec viewangles(0, 0, 0);
 
 TClipPlane view_clipplanes[5];
 
-int r_visframecount;
+int r_visframecount = 0;
 
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
 VCvarF r_chase_dist("r_chase_dist", "32.0", "Chasecam distance.", CVAR_Archive);

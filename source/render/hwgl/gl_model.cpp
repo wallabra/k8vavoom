@@ -70,7 +70,7 @@ static void AliasSetUpTransform(const TVec &modelorg, const TAVec &angles,
   t3matrix[1][3] = Scale.y * Offset.y;
   t3matrix[2][3] = Scale.z * Offset.z;
 
-  TVec alias_forward, alias_right, alias_up;
+  TVec alias_forward(0, 0, 0), alias_right(0, 0, 0), alias_up(0, 0, 0);
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
   VMatrix4 t2matrix = VMatrix4::Identity;
@@ -97,7 +97,7 @@ static void AliasSetUpTransform(const TVec &modelorg, const TAVec &angles,
 static void AliasSetUpNormalTransform(const TAVec &angles, const TVec &Scale,
   VMatrix4 &RotationMatrix)
 {
-  TVec alias_forward, alias_right, alias_up;
+  TVec alias_forward(0, 0, 0), alias_right(0, 0, 0), alias_up(0, 0, 0);
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
   VMatrix4 t3matrix = VMatrix4::Identity;

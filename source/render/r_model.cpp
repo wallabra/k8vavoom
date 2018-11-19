@@ -788,7 +788,7 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
     p[vi].y = pverts[ptris[0].vertindex[vi]].v[1]*pframe->scale[1]+pframe->scale_origin[1];
     p[vi].z = pverts[ptris[0].vertindex[vi]].v[2]*pframe->scale[2]+pframe->scale_origin[2];
   }
-  TVec md_forward, md_left, md_up;
+  TVec md_forward(0, 0, 0), md_left(0, 0, 0), md_up(0, 0, 0);
   AngleVectors(Angles, md_forward, md_left, md_up);
   md_left = -md_left;
   Origin += md_forward*p[0].x+md_left*p[0].y+md_up*p[0].z;

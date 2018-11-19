@@ -208,7 +208,7 @@ void VField::SkipSerialisedType (VStream &Strm) {
   vint32 tmpi32, n, InnerSize;
   vuint8 tmpu8;
   float tmpf32;
-  TVec tmpvec;
+  TVec tmpvec(0, 0, 0);
   VName tmpname, tmpname2;
   VStr tmpstr;
   VObject *tmpobj;

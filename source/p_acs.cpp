@@ -2763,7 +2763,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ang.yaw = 360.0f*float(args[1])/65536.0f;
         ang.pitch = 360.0f*float(args[2])/65536.0f;
         ang.roll = 0;
-        TVec dir;
+        TVec dir(0, 0, 0);
         AngleVector(ang, dir);
         dir = Normalise(dir);
         VEntity *hit = src->eventPickActor(

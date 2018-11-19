@@ -1348,7 +1348,7 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   const TVec &texorg)
 {
   guard(VOpenGLDrawer::DrawSpritePolygon);
-  TVec texpt;
+  TVec texpt(0, 0, 0);
 
   SetSpriteLump(Tex, Translation, CMap, true);
   SetupTextureFiltering(sprite_filter);

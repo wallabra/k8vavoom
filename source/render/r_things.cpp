@@ -175,12 +175,12 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
 
   TVec sprorigin = thing->Origin;
   sprorigin.z -= thing->FloorClip;
-  TVec sprforward;
-  TVec sprright;
-  TVec sprup;
+  TVec sprforward(0, 0, 0);
+  TVec sprright(0, 0, 0);
+  TVec sprup(0, 0, 0);
 
   float dot;
-  TVec tvec;
+  TVec tvec(0, 0, 0);
   float sr;
   float cr;
 
@@ -615,9 +615,9 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   dv[2] = end+topdelta;
   dv[3] = end+botdelta;
 
-  TVec saxis;
-  TVec taxis;
-  TVec texorg;
+  TVec saxis(0, 0, 0);
+  TVec taxis(0, 0, 0);
+  TVec texorg(0, 0, 0);
   if (flip) {
     saxis = -(viewright*160*PSP_DISTI);
     texorg = dv[2];

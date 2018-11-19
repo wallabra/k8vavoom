@@ -1006,7 +1006,7 @@ void VEntity::BlockedByLine (line_t *ld) {
 bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   guard(VEntity::TryMove);
   bool check;
-  TVec oldorg;
+  TVec oldorg(0, 0, 0);
   line_t *ld;
   sector_t *OldSec = Sector;
 
@@ -1463,7 +1463,7 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
   if (BestSlideLine) {
     TAVec delta_ang;
     TAVec lineang;
-    TVec delta;
+    TVec delta(0, 0, 0);
 
     // convert BesSlideLine normal to an angle
     VectorAngles(BestSlideLine->normal, lineang);
@@ -1596,7 +1596,7 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
 //=============================================================================
 TVec VEntity::FakeZMovement () {
   guard(VEntity::FakeZMovement);
-  TVec Ret;
+  TVec Ret = TVec(0, 0, 0);
   eventCalcFakeZMovement(Ret, host_frametime);
   // clip movement
   if (Ret.z <= FloorZ) Ret.z = FloorZ; // hit the floor

@@ -164,8 +164,8 @@ IMPLEMENT_FUNCTION(VObject, RotateDirectionVector) {
   P_GET_AVEC(rot);
   P_GET_VEC(vec);
 
-  TAVec angles;
-  TVec out;
+  TAVec angles(0, 0, 0);
+  TVec out(0, 0, 0);
 
   VectorAngles(vec, angles);
   angles.pitch += rot.pitch;

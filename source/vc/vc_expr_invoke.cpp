@@ -1770,7 +1770,7 @@ bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
 //==========================================================================
 VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
   if (!Func || Func->builtinOpc < 0) return this; // sanity check
-  TVec v0, v1;
+  TVec v0(0, 0, 0), v1(0, 0, 0);
   VExpression *e = nullptr;
   switch (Func->builtinOpc) {
     case OPC_Builtin_IntAbs:

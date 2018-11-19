@@ -430,7 +430,7 @@ bool VViewClipper::ClipIsBBoxVisible (const float *BBox, bool shadowslight, cons
     return true;
   }
 
-  TVec v1, v2;
+  TVec v1(0, 0, 0), v2(0, 0, 0);
   CreateBBVerts(BBox, (shadowslight ? CurrLightPos : Origin), &v1, &v2);
 
   // clip sectors that are behind rendered segs
