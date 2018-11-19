@@ -63,7 +63,7 @@ extern VCvarI Skill;
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
-#define SAVE_VERSION_TEXT          "Version 1.34.8"
+#define SAVE_VERSION_TEXT          "Version 1.34.9"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
 
 static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");

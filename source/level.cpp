@@ -80,40 +80,52 @@ const vuint8 *VLevel::LeafPVS (const subsector_t *ss) const {
 
 //==========================================================================
 //
+//  OldStringIO
+//
+//==========================================================================
+/*
+static void OldStringIO (VStream &Strm, VStr &str) {
+  vuint32 namelen = 0;
+  if (Strm.IsLoading()) {
+    Strm << namelen;
+    if (namelen > 1024*1024*32) Host_Error("Level load: invalid string length");
+    if (namelen == 0) {
+      str.clear();
+    } else {
+      str.setLength(namelen);
+      Strm.Serialise(str.GetMutableCharPointer(0), (vint32)namelen);
+    }
+  } else {
+    namelen = (vuint32)str.length();
+    Strm << namelen;
+    if (namelen) Strm.Serialise(*str, (vint32)namelen);
+  }
+}
+*/
+
+
+//==========================================================================
+//
 //  DecalIO
 //
 //==========================================================================
 static void DecalIO (VStream &Strm, decal_t *dc) {
   if (!dc) return;
-  char namebuf[64];
-  vuint32 namelen = 0;
   if (Strm.IsLoading()) {
     // load picture name
-    Strm << namelen;
-    if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
-    memset(namebuf, 0, sizeof(namebuf));
-    Strm.Serialise(namebuf, namelen);
-    dc->picname = VName(namebuf);
-    dc->texture = GTextureManager.AddPatch(dc->picname, TEXTYPE_Pic);
-    // load decal type
-    Strm << namelen;
-    if (namelen == 0 || namelen > 63) Host_Error("Level load: invalid decal name length");
-    memset(namebuf, 0, sizeof(namebuf));
-    Strm.Serialise(namebuf, namelen);
-    dc->dectype = VName(namebuf);
+    VName picname, dectype;
+    Strm << picname << dectype;
+    dc->texture = GTextureManager.CheckNumForName(picname, TEXTYPE_Pic, true, false);
+    dc->dectype = dectype;
+    if (dc->texture <= 0) {
+      GCon->Logf(NAME_Warning, "LOAD: decal of type '%s' has missing texture '%s'", *dectype, *picname);
+      dc->texture = 0;
+    }
   } else {
-    // save picture name
-    namelen = (vuint32)strlen(*dc->picname);
-    if (namelen == 0 || namelen > 63) Sys_Error("Level save: invalid decal name length");
-    Strm << namelen;
-    memcpy(namebuf, *dc->picname, namelen);
-    Strm.Serialise(namebuf, namelen);
-    // save decal type
-    namelen = (vuint32)strlen(*dc->dectype);
-    if (namelen == 0 || namelen > 63) Sys_Error("Level save: invalid decal name length");
-    Strm << namelen;
-    memcpy(namebuf, *dc->dectype, namelen);
-    Strm.Serialise(namebuf, namelen);
+    // save picture name and decal type
+    VName picname = GTextureManager.GetTextureName(dc->texture);
+    VName dectype = dc->dectype;
+    Strm << picname << dectype;
   }
   Strm << dc->flags;
   Strm << dc->orgz;
@@ -1449,7 +1461,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       //printf("seg: ofs=%f; end=%f; d0=%f; d1=%f\n", (float)seg->offset, (float)(seg->offset+seg->length), segd0, segd1);
       decal->seg = seg;
       decal->dectype = dec->name;
-      decal->picname = dec->pic;
+      //decal->picname = dec->pic;
       decal->texture = tex;
       decal->orgz = decal->curz = orgz;
       decal->xdist = /*segd0+tw2*/segdist/*-txofs*/; //tinf.width*0.5f;
@@ -1594,11 +1606,12 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
     return;
   }
 
-  int tex = GTextureManager.AddPatch(dec->pic, TEXTYPE_Pic);
+  /*int tex = GTextureManager.AddPatch(dec->pic, TEXTYPE_Pic);*/
+  int tex = dec->texid;
   //if (dec->pic == VName("scorch1")) tex = GTextureManager.AddPatch(VName("bulde1"), TEXTYPE_Pic);
-  if (tex < 0 || tex >= GTextureManager.GetNumTextures()) {
+  if (tex <= 0 || tex >= GTextureManager.GetNumTextures()) {
     // no decal gfx, nothing to do
-    GCon->Logf("Decal '%s' has no pic (%s)", *dec->name, *dec->pic);
+    GCon->Logf("Decal '%s' has no pic", *dec->name);
     return;
   }
 
@@ -1607,7 +1620,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   GTextureManager.GetTextureInfo(tex, &tinf);
   if (tinf.width < 1 || tinf.height < 1) {
     // invisible picture, nothing to do
-    GCon->Logf("Decal '%s' has pic without pixels (%s)", *dec->name, *dec->pic);
+    GCon->Logf("Decal '%s' has pic without pixels", *dec->name);
     return;
   }
 

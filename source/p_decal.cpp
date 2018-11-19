@@ -179,12 +179,31 @@ bool VDecalDef::parse (VScriptParser *sc) {
   if (sc->CheckNumber()) id = sc->Number; // this is decal id
   sc->Expect("{");
 
+  VName pic = NAME_None;
+
   while (!sc->AtEnd()) {
-    if (sc->Check("}")) return true;
+    if (sc->Check("}")) {
+      if (pic == NAME_None) {
+        GCon->Logf(NAME_Warning, "decal '%s' has no pic defined", *name);
+        return false;
+      }
+      texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
+      if (texid < 0 && VStr::length(*pic) > 8) {
+        // try short version
+        VStr pn = VStr(*pic);
+        VName pp = *pn.left(8);
+        texid = GTextureManager.AddPatch(pp, TEXTYPE_Pic, true);
+      }
+      if (texid < 0) {
+        GCon->Logf(NAME_Warning, "decal '%s' has no pic '%s'", *name, *pic);
+        return false;
+      }
+      return true;
+    }
 
     if (sc->Check("pic")) {
-      sc->ExpectName8();
-      pic = sc->Name8;
+      sc->ExpectName();
+      pic = sc->Name;
       continue;
     }
 

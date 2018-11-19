@@ -156,7 +156,7 @@ struct decal_t
   seg_t *seg;
   sector_t *bsec; // backsector for SlideXXX
   VName dectype;
-  VName picname;
+  //VName picname;
   int texture;
   vuint32 flags;
   float orgz; // original z position
