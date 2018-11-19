@@ -34,6 +34,39 @@ VCvarB r_decals_enabled("r_decals_enabled", true, "Enable decal spawning, proces
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// all names are lowercased
+static TMapNC<VName, bool> optionalDecals;
+static TMapNC<VName, bool> optionalDecalGroups;
+
+
+static void addOptionalDecal (VName name) {
+  if (name == NAME_None) return;
+  VName n(*name, VName::AddLower);
+  optionalDecals.put(n, true);
+}
+
+static void addOptionalDecalGroup (VName name) {
+  if (name == NAME_None) return;
+  VName n(*name, VName::AddLower);
+  optionalDecalGroups.put(n, true);
+}
+
+
+static bool isOptionalDecal (VName name) {
+  if (name == NAME_None) return true;
+  VName n(*name, VName::AddLower);
+  return optionalDecals.has(n);
+}
+
+
+static bool isOptionalDecalGroup (VName name) {
+  if (name == NAME_None) return true;
+  VName n(*name, VName::AddLower);
+  return optionalDecalGroups.has(n);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 VDecalDef *VDecalDef::listHead = nullptr;
 VDecalAnim *VDecalAnim::listHead = nullptr;
 VDecalGroup *VDecalGroup::listHead = nullptr;
@@ -177,6 +210,9 @@ bool VDecalDef::parse (VScriptParser *sc) {
   if (sc->String.Length() == 0) { sc->Error("invalid decal name"); return false; }
   name = VName(*sc->String);
   if (sc->CheckNumber()) id = sc->Number; // this is decal id
+
+  if (sc->Check("optional")) addOptionalDecal(name);
+
   sc->Expect("{");
 
   VName pic = NAME_None;
@@ -185,7 +221,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
   while (!sc->AtEnd()) {
     if (sc->Check("}")) {
       if (pic == NAME_None) {
-        GCon->Logf(NAME_Warning, "decal '%s' has no pic defined", *name);
+        if (!isOptionalDecal(name)) GCon->Logf(NAME_Warning, "decal '%s' has no pic defined", *name);
         return true;
       }
       texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
@@ -196,7 +232,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
         texid = GTextureManager.AddPatch(pp, TEXTYPE_Pic, true);
       }
       if (texid < 0) {
-        GCon->Logf(NAME_Warning, "decal '%s' has no pic '%s'", *name, *pic);
+        if (!isOptionalDecal(name)) GCon->Logf(NAME_Warning, "decal '%s' has no pic '%s'", *name, *pic);
         return true;
       }
       return true;
@@ -317,7 +353,9 @@ void VDecalGroup::fixup () {
       list.AddEntry(li, nameList[f].weight);
       continue;
     }
-    GCon->Logf(NAME_Warning, "decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
+    if (!isOptionalDecalGroup(name) && !isOptionalDecal(nameList[f].name)) {
+      GCon->Logf(NAME_Warning, "decalgroup '%s' contains unknown decal '%s'!", *name, *nameList[f].name);
+    }
   }
 }
 
@@ -341,6 +379,9 @@ bool VDecalGroup::parse (VScriptParser *sc) {
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal group name"); return false; }
   name = VName(*sc->String);
+
+  if (sc->Check("optional")) addOptionalDecalGroup(name);
+
   sc->Expect("{");
 
   while (!sc->AtEnd()) {
@@ -983,6 +1024,9 @@ void ProcessDecalDefs () {
   for (auto it = VDecalGroup::listHead; it; it = it->next) it->fixup();
   for (auto it = VDecalAnim::listHead; it; it = it->next) it->fixup();
   for (auto it = VDecalDef::listHead; it; it = it->next) it->fixup();
+
+  optionalDecals.clear();
+  optionalDecalGroups.clear();
 
   //!TLocation::ClearSourceFiles();
   unguard;
