@@ -100,7 +100,7 @@ menudef VideoOptions {
   option slider {
     title = "Sprites Delta";
     cvar = r_sprite_fix_delta;
-    step = 0.1;
+    step = 1;
     min = -255;
     max = 255;
   }
