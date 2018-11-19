@@ -2489,6 +2489,7 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = DotProduct(v1, v2);
+              if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("dotproduct result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecDot2D:
@@ -2498,6 +2499,7 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = DotProduct2D(v1, v2);
+              if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("dotproduct2d result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecCross:
@@ -2509,6 +2511,7 @@ func_loop:
               sp[-1].f = v1.z;
               sp[-2].f = v1.y;
               sp[-3].f = v1.x;
+              if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !!isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("crossproduct result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecCross2D:
@@ -2518,6 +2521,7 @@ func_loop:
               TVec v1(sp[-3].f, sp[-2].f, sp[-1].f);
               sp -= 2;
               sp[-1].f = CrossProduct2D(v1, v2);
+              if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("crossproduct2d result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_RoundF2I: sp[-1].i = (int)(roundf(sp[-1].f)); break;
