@@ -325,7 +325,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                 sc->Expect(",");
                 sc->ExpectNumber();
                 P.Blend.b = MID(0, sc->Number, 255);
-                sc->Expect(",");
+                //sc->Expect(",");
               }
               if (sc->Check(",")) {
                 sc->ExpectFloat();
