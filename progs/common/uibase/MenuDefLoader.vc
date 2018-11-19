@@ -83,6 +83,7 @@ string menuName;
 name seltype = 'MenuSelector_SmallRight';
 string title;
 bool extension; // true: extend `menuName`
+bool gzMenu; // this is gz menu, used for postfiltering
 
 array!MenuDefOptionBase options;
 
@@ -130,10 +131,13 @@ MenuDefOptionModSubMenus findModSubMenuOption () {
 
 
 // fix GZDoom-style menudefs
-private final static void fixGZList (ref array!MenuDefOptionBase options, ref array!(ClientGameShared::OptionValue) ovals) {
-  foreach (MenuDefOptionBase opt; options) {
+private final static void fixGZList (ref array!MenuDefOptionBase options, ref array!(ClientGameShared::OptionValue) ovals,
+                                     bool delegate (string subname) gzCheckSub)
+{
+  for (int f = 0; f < options.length; ++f) {
+    MenuDefOptionBase opt = options[f];
     if (opt isa MenuDefOptionModSubMenus) {
-      fixGZList(MenuDefOptionModSubMenus(opt).options, ovals);
+      fixGZList(MenuDefOptionModSubMenus(opt).options, ovals, gzCheckSub);
     } else if (opt isa MenuDefOptionEnum) {
       auto eopt = MenuDefOptionEnum(opt);
       if (!eopt.gzOptValName) continue;
@@ -150,13 +154,21 @@ private final static void fixGZList (ref array!MenuDefOptionBase options, ref ar
         }
       }
       if (eopt.gzOptValName) FatalError("GZ option value '%s' not found", eopt.gzOptValName);
+    } else {
+      auto sub = MenuDefOptionSubMenu(opt);
+      if (!sub || !sub.gzPostFilter) continue;
+      if (gzCheckSub(sub.subname)) continue;
+      print("removing unknown GZ-defined option in options menu: '%s'", sub.subname);
+      delete options[f];
+      options.remove(f);
+      --f;
     }
   }
 }
 
 
-void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals) {
-  fixGZList(options, ovals);
+void fixGZOptionValues (ref array!(ClientGameShared::OptionValue) ovals, bool delegate (string subname) gzCheckSub) {
+  fixGZList(options, ovals, gzCheckSub);
 }
 
 
@@ -688,6 +700,7 @@ class MenuDefOptionSubMenu : MenuDefOptionBase;
 
 class!MenuScreen smclass;
 string subname;
+bool gzPostFilter; // this is gz "OptionsMenu" submenu, postfilter it
 
 
 override bool parseOne (ScriptsParser par) {

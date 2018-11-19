@@ -200,6 +200,9 @@ void SkipGZIdiocity (ScriptsParser par) {
 void ParseGZOptionMenu (ScriptsParser par, bool extend) {
   par.ExpectString();
   string mname = par.String.toLowerCase();
+  // hack for idiotic mods that overrides the whole options menu
+  bool isOptRedefine = (!extend && stricmp(mname, "OptionsMenu") == 0);
+  if (isOptRedefine) extend = true;
   MenuDefinition mdef;
   int stidx = 0;
   MenuDefOptionModSubMenus suboption = none;
@@ -221,6 +224,7 @@ void ParseGZOptionMenu (ScriptsParser par, bool extend) {
   } else {
     mdef = SpawnObject(MenuDefinition);
     mdef.menuName = mname;
+    mdef.gzMenu = true;
   }
   //print("MENUDEF: %soptions menu '%s'...", (extend ? "extending " : ""), mdef.menuName);
   par.Expect("{");
@@ -233,13 +237,39 @@ void ParseGZOptionMenu (ScriptsParser par, bool extend) {
     auto opt = MenuDefOptionBase.parseGZ(par);
     if (!opt) continue;
     if (!mdef) { delete opt; continue; }
-    if (suboption) suboption.options[$] = opt; else  mdef.options[$] = opt;
+    if (suboption) {
+      // hack for idiotic mods that overrides the whole options menu
+      if (isOptRedefine) {
+        // this should be submenu
+        auto sub = MenuDefOptionSubMenu(opt);
+        if (!sub) { delete opt; continue; }
+        // check if it is known option
+        if (stricmp(sub.subname, "CustomizeControls") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "MouseOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "JoystickOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "PlayerMenu") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "GameplayOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "CompatibilityOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "AutomapOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "HUDOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "MiscOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "SoundOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "VideoOptions") == 0) { delete opt; continue; }
+        if (stricmp(sub.subname, "VideoModeMenu") == 0) { delete opt; continue; }
+        sub.gzPostFilter = true;
+        // other things will be postfiltered
+      }
+      suboption.options[$] = opt;
+    } else {
+      mdef.options[$] = opt;
+    }
   }
   if (mdef) {
     MenuDefinition.filterOptionList(mdef.options, stidx);
     if (suboption) MenuDefinition.filterOptionList(suboption.options);
     if (!extend) menudefs[$] = mdef;
   }
+  /*
   // hack for some idiotic mods
   if (!extend && mdef && stricmp(mdef.menuName, "KetchupOptionsGZDoom") == 0) {
     foreach (auto md2; menudefs) {
@@ -254,6 +284,7 @@ void ParseGZOptionMenu (ScriptsParser par, bool extend) {
       }
     }
   }
+  */
 }
 
 
@@ -324,7 +355,14 @@ void LoadGZMenuDefs () {
     }
   }
   // fix optionvalue forwards
-  foreach (MenuDefinition mdef; menudefs) mdef.fixGZOptionValues(optvals);
+  foreach (MenuDefinition mdef; menudefs) {
+    mdef.fixGZOptionValues(optvals, delegate bool (string subname) {
+      foreach (MenuDefinition m; menudefs) {
+        if (m.gzMenu && stricmp(m.menuName, subname) == 0) return true;
+      }
+      return false;
+    });
+  }
 }
 
 
