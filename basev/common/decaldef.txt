@@ -799,7 +799,7 @@ decal RevenantScorch
 /***** MBF OldBFG plasma scorches ******************************************/
 
 
-decal GreenPlasmaScorch1
+decal GreenPlasmaScorch1 optional
 {
   pic PLS1A0
   add 1.0
@@ -808,7 +808,7 @@ decal GreenPlasmaScorch1
   lowerdecal DoomImpScorch
 }
 
-decal GreenPlasmaScorch2
+decal GreenPlasmaScorch2 optional
 {
   pic PLS1B0
   add 1.0
@@ -817,7 +817,7 @@ decal GreenPlasmaScorch2
   lowerdecal DoomImpScorch
 }
 
-decal GreenPlasmaScorch3
+decal GreenPlasmaScorch3 optional
 {
   pic PLS1C0
   add 1.0
@@ -826,7 +826,7 @@ decal GreenPlasmaScorch3
   lowerdecal DoomImpScorch
 }
 
-decal GreenPlasmaScorch4
+decal GreenPlasmaScorch4 optional
 {
   pic PLS1D0
   add 1.0
@@ -835,7 +835,7 @@ decal GreenPlasmaScorch4
   lowerdecal DoomImpScorch
 }
 
-decalgroup GreenPlasmaScorch
+decalgroup GreenPlasmaScorch optional
 {
   GreenPlasmaScorch1  1
   GreenPlasmaScorch2  1
@@ -843,7 +843,7 @@ decalgroup GreenPlasmaScorch
   GreenPlasmaScorch4  1
 }
 
-decal RedPlasmaScorch1
+decal RedPlasmaScorch1 optional
 {
   pic PLS2A0
   add 1.0
@@ -852,7 +852,7 @@ decal RedPlasmaScorch1
   lowerdecal PlasmaScorchLower1
 }
 
-decal RedPlasmaScorch2
+decal RedPlasmaScorch2 optional
 {
   pic PLS2B0
   add 1.0
@@ -861,7 +861,7 @@ decal RedPlasmaScorch2
   lowerdecal PlasmaScorchLower2
 }
 
-decalgroup RedPlasmaScorch
+decalgroup RedPlasmaScorch optional
 {
   RedPlasmaScorch1  1
   RedPlasmaScorch2  1
@@ -1082,7 +1082,7 @@ decalgroup SorcererScorch
   SorcererScorch2   1
 }
 
-decal SorcererLightning1
+decal SorcererLightning1 optional
 {
   pic FX16J0
   add 1.0
@@ -1091,7 +1091,7 @@ decal SorcererLightning1
   lowerdecal SorcererScorch1
 }
 
-decal SorcererLightning2
+decal SorcererLightning2 optional
 {
   pic FX16K0
   add 1.0
@@ -1100,7 +1100,7 @@ decal SorcererLightning2
   lowerdecal SorcererScorch2
 }
 
-decalgroup SorcererLightning
+decalgroup SorcererLightning optional
 {
   SorcererLightning1  1
   SorcererLightning2  1
@@ -1144,7 +1144,7 @@ decal HornyRainMaker
 
 /***** Centaur Scorches ****************************************************/
 
-decal CentaurScorch
+decal CentaurScorch optional
 {
   pic BLAST02
   shade "00 00 00"
@@ -1156,7 +1156,7 @@ decal CentaurScorch
 
 /***** Demon2 Scorch *******************************************************/
 
-decal Demon2Scorch
+decal Demon2Scorch optional
 {
   pic BLAST02
   shade "00 00 00"
