@@ -60,7 +60,7 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
     double den = a*a+b*b;
     double ix, iy, dist;
 
-    if (den == 0) {
+    if (fabs(den) <= 0.01) {
       // line is actually a point!
       ix = v1->x;
       iy = v1->y;
