@@ -1759,6 +1759,11 @@ void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
   if (dec) {
     //GCon->Logf("DECAL %d: oorg:(%f,%f,%f); org:(%f,%f,%f)", id, oorg.x, oorg.y, oorg.z, org.x, org.y, org.z);
     //GCon->Logf("DECAL %d:<%s>: texture=<%s>; org:(%f,%f,%f)", id, *dec->name, *GTextureManager.GetTextureName(dec->texid), org.x, org.y, org.z);
+    /*
+    picinfo_t nfo;
+    GTextureManager.GetTextureInfo(dec->texid, &nfo);
+    GCon->Logf("DECAL %d:<%s>: texture=<%s>,(%dx%d),ofs(%d,%d); org:(%f,%f,%f)", id, *dec->name, *GTextureManager.GetTextureName(dec->texid), nfo.width, nfo.height, nfo.xoffset, nfo.yoffset, org.x, org.y, org.z);
+    */
     AddOneDecal(level, org, dec, sec, li);
   } else {
     //if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
