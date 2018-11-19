@@ -22,13 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 struct particle_t;
 struct dlight_t;
 
-//  Texture use types.
-enum
-{
+// texture use types
+enum {
   TEXTYPE_Any,
   TEXTYPE_WallPatch,
   TEXTYPE_Wall,
@@ -43,148 +41,123 @@ enum
   TEXTYPE_FontChar,
 };
 
-//  Texture data formats.
-enum
-{
-  TEXFMT_8,   //  Paletised texture in main palette.
-  TEXFMT_8Pal,  //  Paletised texture with custom palette.
-  TEXFMT_RGBA,  //  Truecolour texture.
+// texture data formats
+enum {
+  TEXFMT_8,    // paletised texture in main palette
+  TEXFMT_8Pal, // paletised texture with custom palette
+  TEXFMT_RGBA, // truecolour texture
 };
 
-struct rgb_t
-{
-  byte  r;
-  byte  g;
-  byte  b;
+struct rgb_t {
+  byte r, g, b;
   rgb_t () : r(0), g(0), b(0) {}
   rgb_t (byte ar, byte ag, byte ab) : r(ar), g(ag), b(ab) {}
 };
 
-struct rgba_t
-{
-  byte  r;
-  byte  g;
-  byte  b;
-  byte  a;
-
+struct rgba_t {
+  byte r, g, b, a;
   rgba_t () : r(0), g(0), b(0), a(0) {}
   rgba_t (byte ar, byte ag, byte ab, byte aa=255) : r(ar), g(ag), b(ab), a(aa) {}
 };
 
-struct picinfo_t
-{
-  vint32    width;
-  vint32    height;
-  vint32    xoffset;
-  vint32    yoffset;
+struct picinfo_t {
+  vint32 width;
+  vint32 height;
+  vint32 xoffset;
+  vint32 yoffset;
 };
 
-struct TSwitchFrame
-{
-  vint16    Texture;
-  vint16    BaseTime;
-  vint16    RandomRange;
+struct TSwitchFrame {
+  vint16 Texture;
+  vint16 BaseTime;
+  vint16 RandomRange;
 };
 
-struct TSwitch
-{
-  vint16      Tex;
-  vint16      PairIndex;
-  vint16      Sound;
+struct TSwitch {
+  vint16 Tex;
+  vint16 PairIndex;
+  vint16 Sound;
   TSwitchFrame *Frames;
-  vint16      NumFrames;
-  bool      Quest;
+  vint16 NumFrames;
+  bool Quest;
 
-  TSwitch()
-  : Frames(nullptr)
-  {}
-  ~TSwitch()
-  {
-    if (Frames)
-    {
-      delete[] Frames;
-      Frames = nullptr;
-    }
-  }
+  TSwitch () : Frames(nullptr) {}
+  ~TSwitch () { if (Frames) { delete[] Frames; Frames = nullptr; } }
 };
 
-struct VAnimDoorDef
-{
-  vint32    Texture;
-  VName   OpenSound;
-  VName   CloseSound;
+struct VAnimDoorDef {
+  vint32 Texture;
+  VName OpenSound;
+  VName CloseSound;
   vint32 *Frames;
   vint32 NumFrames;
 };
 
-class VRenderLevelPublic : public VInterface
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VRenderLevelPublic : public VInterface {
 public:
   bool staticLightsFiltered;
 
 public:
   VRenderLevelPublic () : staticLightsFiltered(false) {}
-  virtual void PreRender() = 0;
-  virtual void SegMoved(seg_t*) = 0;
-  virtual void SetupFakeFloors(sector_t*) = 0;
-  virtual void RenderPlayerView() = 0;
+  virtual void PreRender () = 0;
+  virtual void SegMoved (seg_t *) = 0;
+  virtual void SetupFakeFloors (sector_t *) = 0;
+  virtual void RenderPlayerView () = 0;
 
-  virtual void AddStaticLight(const TVec&, float, vuint32) = 0;
-  virtual dlight_t *AllocDlight(VThinker*, const TVec &lorg, float radius) = 0;
-  virtual void DecayLights(float) = 0;
+  virtual void AddStaticLight (const TVec&, float, vuint32) = 0;
+  virtual dlight_t *AllocDlight (VThinker*, const TVec &lorg, float radius) = 0;
+  virtual void DecayLights (float) = 0;
 
-  virtual particle_t *NewParticle() = 0;
+  virtual particle_t *NewParticle () = 0;
 };
 
-class VTextureTranslation
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VTextureTranslation {
 public:
-  vuint8    Table[256];
-  rgba_t    Palette[256];
+  vuint8 Table[256];
+  rgba_t Palette[256];
 
-  vuint16   Crc;
+  vuint16 Crc;
 
-  //  Used to detect changed player translations.
-  vuint8    TranslStart;
-  vuint8    TranslEnd;
-  vint32    Colour;
+  // used to detect changed player translations
+  vuint8 TranslStart;
+  vuint8 TranslEnd;
+  vint32 Colour;
 
-  //  Used to replicate translation tables in more efficient way.
-  struct VTransCmd
-  {
-    vuint8  Type;
-    vuint8  Start;
-    vuint8  End;
-    vuint8  R1;
-    vuint8  G1;
-    vuint8  B1;
-    vuint8  R2;
-    vuint8  G2;
-    vuint8  B2;
+  // used to replicate translation tables in more efficient way
+  struct VTransCmd {
+    vuint8 Type;
+    vuint8 Start;
+    vuint8 End;
+    vuint8 R1;
+    vuint8 G1;
+    vuint8 B1;
+    vuint8 R2;
+    vuint8 G2;
+    vuint8 B2;
   };
   TArray<VTransCmd> Commands;
 
-  VTextureTranslation();
-  void Clear();
-  void CalcCrc();
-  void Serialise(VStream&);
-  void BuildPlayerTrans(int, int, int);
-  void MapToRange(int, int, int, int);
-  void MapToColours(int, int, int, int, int, int, int, int);
-  void BuildBloodTrans(int);
-  void AddTransString(const VStr&);
+  VTextureTranslation ();
 
-  const vuint8 *GetTable() const
-  {
-    return Table;
-  }
-  const rgba_t *GetPalette() const
-  {
-    return Palette;
-  }
+  void Clear ();
+  void CalcCrc ();
+  void Serialise (VStream &);
+  void BuildPlayerTrans (int, int, int);
+  void MapToRange (int, int, int, int);
+  void MapToColours (int, int, int, int, int, int, int, int);
+  void BuildBloodTrans (int);
+  void AddTransString (const VStr &);
+
+  inline const vuint8 *GetTable () const { return Table; }
+  inline const rgba_t *GetPalette () const { return Palette; }
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VTexture {
 public:
   int Type;
@@ -288,32 +261,39 @@ protected:
 };
 
 
-class VTextureManager
-{
-public:
-  vint32        DefaultTexture;
-  float       Time; //  Time value for warp textures
+// ////////////////////////////////////////////////////////////////////////// //
+class VTextureManager {
+private:
+  enum { HASH_SIZE = 1024 };
 
-  VTextureManager();
-  void Init();
-  void Shutdown();
-  int AddTexture(VTexture *Tex);
-  void ReplaceTexture(int Index, VTexture *Tex);
-  int CheckNumForName(VName Name, int Type, bool bOverload = false,
-    bool bCheckAny = false);
-  int NumForName(VName Name, int Type, bool bOverload = false,
-    bool bCheckAny = false);
-  int FindTextureByLumpNum(int);
-  VName GetTextureName(int TexNum);
-  float TextureWidth(int TexNum);
-  float TextureHeight(int TexNum);
-  void SetFrontSkyLayer(int tex);
-  void GetTextureInfo(int TexNum, picinfo_t *info);
-  int AddPatch(VName Name, int Type, bool Silent = false);
-  int AddRawWithPal(VName Name, VName PalName);
-  int AddFileTexture(VName Name, int Type);
-  int AddFileTextureShaded(VName Name, int Type, int shade); // shade==-1: don't shade
-  int AddFileTextureChecked(VName Name, int Type); // returns -1 if no texture found
+  TArray<VTexture *> Textures;
+  int TextureHash[HASH_SIZE];
+
+public:
+  vint32 DefaultTexture;
+  float Time; // time value for warp textures
+
+public:
+  VTextureManager ();
+
+  void Init ();
+  void Shutdown ();
+
+  int AddTexture (VTexture *Tex);
+  void ReplaceTexture (int Index, VTexture *Tex);
+  int CheckNumForName (VName Name, int Type, bool bOverload=false, bool bCheckAny=false);
+  int NumForName (VName Name, int Type, bool bOverload=false, bool bCheckAny=false);
+  int FindTextureByLumpNum (int);
+  VName GetTextureName (int TexNum);
+  float TextureWidth (int TexNum);
+  float TextureHeight (int TexNum);
+  void SetFrontSkyLayer (int tex);
+  void GetTextureInfo (int TexNum, picinfo_t *info);
+  int AddPatch (VName Name, int Type, bool Silent=false);
+  int AddRawWithPal (VName Name, VName PalName);
+  int AddFileTexture (VName Name, int Type);
+  int AddFileTextureShaded (VName Name, int Type, int shade); // shade==-1: don't shade
+  int AddFileTextureChecked (VName Name, int Type); // returns -1 if no texture found
   // try to force-load texture
   int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent);
 
@@ -349,54 +329,50 @@ public:
   inline int GetNumTextures () const { return Textures.Num(); }
 
 private:
-  enum { HASH_SIZE = 1024 };
-
-  TArray<VTexture *> Textures;
-  int TextureHash[HASH_SIZE];
-
-  void AddToHash(int Index);
-  void RemoveFromHash(int Index);
-  void AddTextures();
-  void AddTexturesLump(int, int, int, bool);
-  void AddGroup(int, EWadNamespace);
-  void AddHiResTextures();
+  void AddToHash (int Index);
+  void RemoveFromHash (int Index);
+  void AddTextures ();
+  void AddTexturesLump (int, int, int, bool);
+  void AddGroup (int, EWadNamespace);
+  void AddHiResTextures ();
 };
 
+
 // r_data
-void R_InitData();
-void R_ShutdownData();
-void R_InstallSprite(const char*, int);
-bool R_AreSpritesPresent(int);
-int R_ParseDecorateTranslation(VScriptParser*, int);
-int R_GetBloodTranslation(int);
-void R_ParseEffectDefs();
+void R_InitData ();
+void R_ShutdownData ();
+void R_InstallSprite (const char *, int);
+bool R_AreSpritesPresent (int);
+int R_ParseDecorateTranslation (VScriptParser *, int);
+int R_GetBloodTranslation (int);
+void R_ParseEffectDefs ();
 VLightEffectDef *R_FindLightEffect (const VStr &Name);
 
 // r_main
-void R_Init(); // Called by startup code.
-void R_Start(VLevel*);
-void R_SetViewSize(int blocks);
-void R_RenderPlayerView();
-VTextureTranslation *R_GetCachedTranslation(int, VLevel*);
+void R_Init (); // Called by startup code.
+void R_Start (VLevel *);
+void R_SetViewSize (int blocks);
+void R_RenderPlayerView ();
+VTextureTranslation *R_GetCachedTranslation (int, VLevel *);
 
 // r_tex
-void R_InitTexture();
-void R_ShutdownTexture();
-VAnimDoorDef *R_FindAnimDoor(vint32);
-void R_AnimateSurfaces();
+void R_InitTexture ();
+void R_ShutdownTexture ();
+VAnimDoorDef *R_FindAnimDoor (vint32);
+void R_AnimateSurfaces ();
 
 // r_things
-void R_DrawSpritePatch(int, int, int, int, int, int = 0, int = 0, int = 0);
-void R_InitSprites();
+void R_DrawSpritePatch (int, int, int, int, int, int = 0, int = 0, int = 0);
+void R_InitSprites ();
 
 //  2D graphics
-void R_DrawPic(int x, int y, int handle, float Aplha = 1.0);
+void R_DrawPic (int x, int y, int handle, float Aplha = 1.0);
 
-extern VTextureManager  GTextureManager;
 
-extern int        validcount;
+// ////////////////////////////////////////////////////////////////////////// //
+extern VTextureManager GTextureManager;
+extern int validcount;
+extern int skyflatnum;
 
-extern int        skyflatnum;
-
-//  Switches
-extern TArray<TSwitch*> Switches;
+// switches
+extern TArray<TSwitch *> Switches;
