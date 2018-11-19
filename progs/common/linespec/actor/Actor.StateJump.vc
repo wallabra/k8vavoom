@@ -122,7 +122,7 @@ final void decorate_A_JumpIf (float Expr, state Label) {
 //  A_JumpIfCloser
 //
 //==========================================================================
-final void A_JumpIfCloser (float Dist, state Label) {
+final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
   EntityEx Targ;
 
   if (!bIsPlayer) {
@@ -132,7 +132,7 @@ final void A_JumpIfCloser (float Dist, state Label) {
     Targ = Aim(Dir, 16.0 * 64.0);
   }
 
-  if (Targ && DistTo2(Targ) < Dist &&
+  if (Targ && (noz ? DistTo2(Targ) : DistTo(Targ)) < Dist &&
       ((Origin.z > Targ.Origin.z && Origin.z-Target.Origin.z-Target.Height < Dist) ||
        (Origin.z <= Targ.Origin.z && Target.Origin.z-Origin.z-Height < Dist)))
   {
