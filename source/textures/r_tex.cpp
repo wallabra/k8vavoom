@@ -443,6 +443,11 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
 //==========================================================================
 int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   guard(VTextureManager::AddPatch);
+
+  // check if it's already registered
+  int i = CheckNumForName(Name, Type);
+  if (i >= 0) return i;
+
   // find the lump number
   //GCon->Logf("VTextureManager::AddPatch: '%s' (%d)", *Name, Type);
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
@@ -450,17 +455,13 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
   if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
   if (LumpNum < 0) {
-    /*if (!Silent)*/ {
-      if (!patchesWarned.put(*Name)) {
+    if (!patchesWarned.put(*Name)) {
+      if (!Silent) {
         GCon->Logf(NAME_Warning, "VTextureManager::AddPatch: Pic \"%s\" not found", *Name);
       }
     }
     return -1;
   }
-
-  // check if it's already registered
-  int i = CheckNumForName(Name, Type);
-  if (i >= 0) return i;
 
   // create new patch texture
   return AddTexture(VTexture::CreateTexture(Type, LumpNum));
