@@ -435,114 +435,74 @@ final void A_Wander()
 //  Actor has a melee attack, so it tries to close as fast as possible
 //
 //==========================================================================
-
 void DoChase(bool FastChase, state AMeleeState, state AMissileState,
-  bool NightmareFast, bool PlayActive, bool DontMove)
+  bool NightmareFast, bool PlayActive, bool DontMove,
+  optional bool noRandomTurn, optional bool noDirectionTurn,
+  optional bool noPostAttackTurn, optional bool stopIfBlocked)
 {
-  float   delta;
-  float   dist;
-  float   ang;
-  float   oldX;
-  float   oldY;
-  int     oldFloor;
+  float delta;
+  float dist;
+  float ang;
+  float oldX;
+  float oldY;
+  int oldFloor;
 
-  if (bInChase)
-  {
-    return;
-  }
+  if (bInChase) return;
   bInChase = true;
 
-  //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
-    VisDir = -1;
-  }
+  // Andy Baker's stealth monsters
+  if (bStealth) VisDir = -1;
 
-  if (ReactionCount)
-  {
-    ReactionCount--;
-  }
+  if (ReactionCount) --ReactionCount;
 
   bInCombat = true;
-  //  Modify target threshold.
-  if (Threshold)
-  {
-    if (!Target || Target.Health <= 0)
-    {
+  // modify target threshold
+  if (Threshold) {
+    if (!Target || Target.Health <= 0) {
       Threshold = 0;
-    }
-    else
-    {
-      Threshold--;
+    } else {
+      --Threshold;
     }
   }
 
-  if (NightmareFast && Level.Game.fastparm == 1)
-  {
-    //  Monsters move faster in nightmare mode.
+  if (NightmareFast && Level.Game.fastparm == 1) {
+    // monsters move faster in nightmare mode
     StateTime *= 0.5;
-    if (StateTime < 0.1)
-    {
-      StateTime = 0.1;
-    }
+    if (StateTime < 0.1) StateTime = 0.1;
   }
 
-  //  Turn towards movement direction if not there yet.
+  // turn towards movement direction if not there yet
   // killough 9/7/98: keep facing towards target if strafing or backing out
-  if (strafecount)
-  {
+  if (strafecount) {
     A_FaceTarget();
-  }
-  else
-  {
-    if (MoveDir < 8)
-    {
-      Angles.yaw = itof(ftoi(Angles.yaw / 45.0)) * 45.0;
-      delta = AngleMod180(Angles.yaw - itof(MoveDir) * 45.0);
-
-      if (delta > 0.0)
-      {
-        Angles.yaw = AngleMod360(Angles.yaw - 45.0);
-      }
-      else if (delta < 0.0)
-      {
-        Angles.yaw = AngleMod360(Angles.yaw + 45.0);
-      }
+  } else {
+    if (MoveDir < 8) {
+      Angles.yaw = itof(ftoi(Angles.yaw/45.0))*45.0;
+      delta = AngleMod180(Angles.yaw-itof(MoveDir)*45.0);
+           if (delta > 0.0) Angles.yaw = AngleMod360(Angles.yaw-45.0);
+      else if (delta < 0.0) Angles.yaw = AngleMod360(Angles.yaw+45.0);
     }
   }
 
-  //  If the target is dead and not a goal, stop chasing it.
-  if (Target && Target != Goal && Target.Health <= 0)
-  {
-    Target = none;
-  }
+  // if the target is dead and not a goal, stop chasing it
+  if (Target && Target != Goal && Target.Health <= 0) Target = none;
 
-  if (!Target || !Target.bShootable)
-  {
-    //  Look for a new target.
-    if (LookForPlayers(true) && Target != Goal)
-    {
-      //  Got a new target.
+  if (!Target || !Target.bShootable) {
+    // look for a new target
+    if (LookForPlayers(true) && Target != Goal) {
+      // got a new target
       bInChase = false;
       return;
     }
-    if (!Target)
-    {
-      if (bFriendly)
-      {
+    if (!Target) {
+      if (bFriendly) {
         A_Look();
-        if (!Target)
-        {
-          if (!DontMove)
-          {
-            A_Wander();
-          }
+        if (!Target) {
+          if (!DontMove) A_Wander();
           bInChase = false;
           return;
         }
-      }
-      else
-      {
+      } else {
         SetState(IdleState);
         bInCombat = false;
         bInChase = false;
@@ -551,40 +511,28 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
     }
   }
 
-  //  Do not attack twice in a row.
-  if (bJustAttacked)
-  {
+  // do not attack twice in a row
+  if (bJustAttacked) {
     bJustAttacked = false;
-    if (!IsFast() && !DontMove)
-    {
-      NewChaseDir();
-    }
+    if (!IsFast() && !DontMove) NewChaseDir();
     bInChase = false;
     return;
   }
 
-  //  Don't attack if just moving toward goal
-  if (Target == Goal || (bChaseGoal && Goal))
-  {
+  // don't attack if just moving toward goal
+  if (Target == Goal || (bChaseGoal && Goal)) {
     EntityEx SavedTarget = Target;
     Target = Goal;
     bool Result = CheckMeleeRange();
     Target = SavedTarget;
 
-    if (Result)
-    {
+    if (Result) {
       // reached the goal
 
-      // Execute the specials of any PatrolSpecials with the same TID
-      // as the goal.
+      // execute the specials of any PatrolSpecials with the same TID as the goal
       Entity Ent;
-      for (Ent = Level.FindMobjFromTID(Goal.TID, none); Ent;
-        Ent = Level.FindMobjFromTID(Goal.TID, Ent))
-      {
-        if (Ent.Class != PatrolSpecial)
-        {
-          continue;
-        }
+      for (Ent = Level.FindMobjFromTID(Goal.TID, none); Ent; Ent = Level.FindMobjFromTID(Goal.TID, Ent)) {
+        if (Ent.Class != PatrolSpecial) continue;
         Level.ExecuteActionSpecial(Ent.Special, Ent.Args[0],
           Ent.Args[1], Ent.Args[2], Ent.Args[3], Ent.Args[4],
           nullptr, 0, self);
@@ -593,34 +541,22 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
       float LastGoalAng = Goal.Angles.yaw;
       int Delay;
       EntityEx NewGoal = none;
-      for (Ent = Level.FindMobjFromTID(Goal.Args[0], none); Ent;
-        Ent = Level.FindMobjFromTID(Goal.Args[0], Ent))
-      {
-        if (!Ent.IsA('PatrolPoint'))
-        {
-          continue;
-        }
+      for (Ent = Level.FindMobjFromTID(Goal.Args[0], none); Ent; Ent = Level.FindMobjFromTID(Goal.Args[0], Ent)) {
+        if (!Ent.IsA('PatrolPoint')) continue;
         NewGoal = EntityEx(Ent);
         break;
       }
-      if (NewGoal && Goal == Target)
-      {
+      if (NewGoal && Goal == Target) {
         Delay = NewGoal.Args[1];
-        ReactionTime = itof(Delay) + XLevel.Time;
-      }
-      else
-      {
+        ReactionTime = itof(Delay)+XLevel.Time;
+      } else {
         Delay = 0;
         ReactionTime = default.ReactionTime;
-        Angles.yaw = LastGoalAng;   // Look in direction of last goal
+        Angles.yaw = LastGoalAng; // look in direction of last goal
       }
-      if (Target == Goal)
-      {
-        Target = none;
-      }
+      if (Target == Goal) Target = none;
       bJustAttacked = true;
-      if (NewGoal && Delay != 0)
-      {
+      if (NewGoal && Delay != 0) {
         bInCombat = true;
         SetState(IdleState);
       }
@@ -630,33 +566,22 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
     }
   }
 
-  if (Goal != Target)
-  {
-    if (FastChase && !DontMove)
-    {
-      //  Strafe
-      if (FastChaseStrafeCount > 0)
-      {
-        FastChaseStrafeCount--;
-      }
-      else
-      {
+  if (Goal != Target) {
+    if (FastChase && !DontMove) {
+      // strafe
+      if (FastChaseStrafeCount > 0) {
+        --FastChaseStrafeCount;
+      } else {
         FastChaseStrafeCount = 0;
         Velocity.x = 0.0;
         Velocity.y = 0.0;
         dist = DistTo(Target);
-        if (dist < 640.0)
-        {
-          if (P_Random() < 100)
-          {
-            ang = atan2(Target.Origin.y - Origin.y,
-              Target.Origin.x - Origin.x);
-            if (P_Random() < 128)
-              ang = AngleMod360(ang + 90.0);
-            else
-              ang = AngleMod360(ang - 90.0);
-            Velocity.x = 13.0 * cos(ang) * 35.0;
-            Velocity.y = 13.0 * sin(ang) * 35.0;
+        if (dist < 640.0) {
+          if (P_Random() < 100) {
+            ang = atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x);
+            if (P_Random() < 128) ang = AngleMod360(ang+90.0); else ang = AngleMod360(ang-90.0);
+            Velocity.x = 13.0*cos(ang)*35.0;
+            Velocity.y = 13.0*sin(ang)*35.0;
             FastChaseStrafeCount = 3; // strafe time
           }
         }
@@ -664,30 +589,21 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
     }
 
     // Scared monsters attack less frequently
-    if ((!Target.bIsPlayer ||
-       !(PlayerEx(Target.Player).Cheats & PlayerEx::CF_FRIGHTENING)) &&
-      !bFrightened ||
-      P_Random() < 43)
+    if ((!Target.bIsPlayer || !(PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING)) &&
+         !bFrightened || P_Random() < 43)
     {
-      //  Check for melee attack.
-      if (AMeleeState && CheckMeleeRange())
-      {
-        if (AttackSound)
-        {
-          PlaySound(AttackSound, CHAN_WEAPON);
-        }
+      // check for melee attack
+      if (AMeleeState && CheckMeleeRange()) {
+        if (AttackSound) PlaySound(AttackSound, CHAN_WEAPON);
         SetState(AMeleeState);
         bInChase = false;
         return;
       }
 
-      //  Check for missile attack.
-      if (AMissileState)
-      {
-        if (IsFast() || !MoveCount)
-        {
-          if (CheckMissileRange())
-          {
+      // check for missile attack
+      if (AMissileState) {
+        if (IsFast() || !MoveCount) {
+          if (CheckMissileRange()) {
             SetState(AMissileState);
             bJustAttacked = true;
             bInChase = false;
@@ -698,57 +614,43 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
     }
   }
 
-  //  Possibly choose another target.
-  if ((Level.Game.netgame || TIDToHate) && !Threshold)
-  {
-    if (!CanSee(Target))
-    {
+  // possibly choose another target
+  if ((Level.Game.netgame || TIDToHate) && !Threshold) {
+    if (!CanSee(Target)) {
       bool PrevNoSightCheck = bNoSightCheck;
       bNoSightCheck = false;
       bool GotNew = LookForPlayers(true);
       bNoSightCheck = PrevNoSightCheck;
-      if (GotNew)
-      {
-        //  Got a new target.
+      if (GotNew) {
+        // got a new target
         bInChase = false;
         return;
       }
     }
   }
 
-  if (strafecount)
-  {
-    strafecount--;
-  }
+  if (strafecount) --strafecount;
 
-  //  Chase towards player.
-  if ((!FastChase || !FastChaseStrafeCount) && !DontMove)
-  {
+  // chase towards player
+  if ((!FastChase || !FastChaseStrafeCount) && !DontMove) {
     oldX = Origin.x;
     oldY = Origin.y;
     oldFloor = Sector->floor.pic;
-    if (--MoveCount < 0 || !StepMove())
-    {
-      NewChaseDir();
-    }
-    if (bCantLeaveFloorpic && Sector->floor.pic != oldFloor)
-    {
+    if (--MoveCount < 0 || !StepMove()) NewChaseDir();
+    if (bCantLeaveFloorpic && Sector->floor.pic != oldFloor) {
       TryMove(vector(oldX, oldY, Origin.z), false);
       NewChaseDir();
     }
-  }
-  else if (DontMove && MoveCount > 0)
-  {
+  } else if (DontMove && MoveCount > 0) {
     MoveCount = 0;
   }
 
-  //  Make active sound.
-  if (PlayActive && P_Random() < 3)
-  {
-    PlayActiveSound();
-  }
+  // make active sound
+  if (PlayActive && P_Random() < 3) PlayActiveSound();
+
   bInChase = false;
 }
+
 
 //==========================================================================
 //
@@ -850,8 +752,9 @@ final void decorate_A_Chase(optional state AMeleeState,
     {
       return;
     }
-    DoChase(!!(Flags & 1), AMeleeState, AMissileState, !!(Flags & 4),
-      !(Flags & 2), !!(Flags & 16));
+    DoChase(!!(Flags & 1), AMeleeState, AMissileState,
+      !!(Flags & 4), !(Flags & 2), !!(Flags & 16),
+      !!(Flags&32), !!(Flags&64), !!(Flags&128), !!(Flags&256));
   }
   else
   {

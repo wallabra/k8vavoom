@@ -4,6 +4,12 @@ const int CHF_NOPLAYACTIVE      = 2;
 const int CHF_NIGHTMAREFAST     = 4;
 const int CHF_RESURRECT       = 8;
 const int CHF_DONTMOVE        = 16;
+const int CHF_NORANDOMTURN = 32;
+const int CHF_NODIRECTIONTURN = 64;
+const int CHF_NOPOSTATTACKTURN = 128;
+const int CHF_STOPIFBLOCKED = 256;
+
+const int CHF_DONTTURN = CHF_NORANDOMTURN | CHF_NOPOSTATTACKTURN | CHF_STOPIFBLOCKED;
 
 //  Flags for A_CustomMissile
 const int CMF_AIMOFFSET       = 1;
