@@ -58,14 +58,18 @@ const int ZOOM_NOSCALETURNING = 2;
 //
 //==========================================================================
 
-final void A_CustomMissile(class!Actor MissileType, optional float SpawnHeight,
+final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
   optional int SpawnXYOffset, optional float Angle, optional int AimMode,
-  optional float Pitch)
+  optional float Pitch, optional int aptr)
 {
+  if (!specified_aptr) aptr = AAPTR_TARGET;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CustomMissile', aptr!optional));
+  if (!specified_aptr && tgt != Target) Error("WUTA?! in `A_CustomMissile`");
+
   int Flags = AimMode & ~3;
   AimMode &= 3;
 
-  if (Target || AimMode == 2) {
+  if (tgt || AimMode == 2) {
     if (MissileType) {
       if (!specified_SpawnHeight) SpawnHeight = 32.0;
       if (!specified_SpawnXYOffset) SpawnXYOffset = 1;
@@ -75,12 +79,12 @@ final void A_CustomMissile(class!Actor MissileType, optional float SpawnHeight,
       switch (AimMode) {
         default:
           Origin += Offs;
-          A = SpawnMissile(Target, MissileType, SpawnHeight);
+          A = SpawnMissile(tgt, MissileType, SpawnHeight);
           Origin -= Offs;
           break;
         case 1:
           Offs.z = SpawnHeight;
-          A = SpawnMissileXYZ(Origin + Offs, Target, MissileType);
+          A = SpawnMissileXYZ(Origin + Offs, tgt, MissileType);
           break;
         case 2:
           Origin += Offs;
@@ -100,7 +104,7 @@ final void A_CustomMissile(class!Actor MissileType, optional float SpawnHeight,
           A.Target = Own;
           if (A.bSeekerMissile) A.Tracer = Tracer;
         } else if (A.bSeekerMissile) {
-          A.Tracer = Target;
+          A.Tracer = tgt;
         }
       }
     }
