@@ -78,7 +78,7 @@ VCvarB      r_model_shadows("r_model_shadows", false, "Draw model shadows in adv
 VCvarB      r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
 VCvarB      r_sort_sprites("r_sort_sprites", false, "Sprite sorting.");
 VCvarB      r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
-VCvarI      r_sprite_fix_delta("r_sprite_fix_delta", "-3", "Sprite offset amount.", CVAR_Archive);
+VCvarI      r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
 VCvarB      r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
 VCvarF      r_transsouls("r_transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
 VCvarI      crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
