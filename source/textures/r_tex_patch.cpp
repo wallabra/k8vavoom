@@ -203,7 +203,7 @@ vuint8 *VPatchTexture::GetPixels () {
       }
 
       // make sure unused byte and next post's top offset is there
-      if (Strm->TotalSize()-Strm->Tell() <21) {
+      if (Strm->TotalSize()-Strm->Tell() < 2) {
         GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
         checkerFill8(Pixels, Width, Height);
