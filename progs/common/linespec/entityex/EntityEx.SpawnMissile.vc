@@ -106,49 +106,15 @@ final bool CheckMissileSpawn()
   return true;
 }
 
-//==========================================================================
-//
-//  RayLineIntersection
-//
-//==========================================================================
-
-final TVec RayLineIntersection (TVec rayO, TVec rayE, TVec vv1, TVec vv2) {
-  TVec rayDir = rayE-rayO;
-  rayDir.z = 0; // not interested
-  //rayDir = Normalise(rayDir);
-  float den = (vv2.y-vv1.y)*rayDir.x-(vv2.x-vv1.x)*rayDir.y;
-  if (fabs(den) < 0.01) return rayO;
-  float e = rayO.y-vv1.y;
-  float f = rayO.x-vv1.x;
-  float invden = 1.0/den;
-  float ua = ((vv2.x-vv1.x)*e-(vv2.y-vv1.y)*f)*invden;
-  if (ua >= 0 && ua <= 1) {
-    float ub = (rayDir.x*e-rayDir.y*f)*invden;
-    if (ua != 0 || ub != 0) {
-      TVec res;
-      res.x = rayO.x+ua*rayDir.x;
-      res.y = rayO.y+ua*rayDir.y;
-      res.z = rayO.z;
-      return res;
-    }
-  }
-  return rayO;
-}
 
 //==========================================================================
 //
 //  ExplodeMissile
 //
 //==========================================================================
-
-final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
-{
-  if (bExploCount)
-  {
-    if (++Special2 < Special1)
-    {
-      return false;
-    }
+final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
+  if (bExploCount) {
+    if (++Special2 < Special1) return false;
   }
 
   //k8:TODO: this should be strictly client-side
@@ -184,73 +150,49 @@ final bool ExplodeMissile(EntityEx Victim, optional line_t *line)
   Velocity = vector(0.0, 0.0, 0.0);
 
   state ExplState = none;
-  if (Victim && (Victim.bShootable || Victim.bCorpse))
-  {
-    if (Victim.bNoBlood)
-    {
-      ExplState = FindState('Crash');
-    }
-    if (!ExplState)
-    {
-      ExplState = FindState('Death', 'Extreme');
-    }
+  if (Victim && (Victim.bShootable || Victim.bCorpse)) {
+    if (Victim.bNoBlood) ExplState = FindState('Crash');
+    if (!ExplState) ExplState = FindState('Death', 'Extreme');
   }
-  if (!ExplState)
-  {
-    ExplState = FindState('Death');
-  }
+  if (!ExplState) ExplState = FindState('Death');
 
-  if (!SetState(ExplState))
-  {
-    return false;
-  }
+  if (!SetState(ExplState)) return false;
 
-  if (bDehExplosion)
-  {
-    if (LineSpecialGameInfo(Level.Game).DehExplosionStyle == 255)
-    {
-      //  Explosion style is controlled by a cvar.
-      if (GetCvar('addrocketexplosion'))
-      {
+  if (bDehExplosion) {
+    if (LineSpecialGameInfo(Level.Game).DehExplosionStyle == 255) {
+      // explosion style is controlled by a cvar
+      if (GetCvar('addrocketexplosion')) {
         RenderStyle = STYLE_Add;
         Alpha = 1.0;
-      }
-      else
-      {
+      } else {
         RenderStyle = STYLE_Translucent;
         Alpha = 0.666;
       }
-    }
-    else
-    {
+    } else {
       RenderStyle = LineSpecialGameInfo(Level.Game).DehExplosionStyle;
       Alpha = LineSpecialGameInfo(Level.Game).DehExplosionAlpha;
     }
   }
 
-  if (bRandomise)
-  {
-    StateTime -= Random() * 0.1;
-    if (StateTime < 1.0 / 35.0)
-      StateTime = 1.0 / 35.0;
+  if (bRandomise) {
+    StateTime -= Random()*0.1;
+    if (StateTime < 1.0/35.0) StateTime = 1.0/35.0;
   }
 
   bMissile = false;
 
-  if (DeathSound)
-  {
-    PlaySound(DeathSound, CHAN_VOICE, 1.0, bFullVolDeath ? ATTN_NONE :
-      ATTN_NORMAL);
+  if (DeathSound) {
+    PlaySound(DeathSound, CHAN_VOICE, 1.0, (bFullVolDeath ? ATTN_NONE : ATTN_NORMAL));
   }
 
-  if (!bLeaveTrail && bDynamicLight)
-  {
+  if (!bLeaveTrail && bDynamicLight) {
     SendExplosion(DLightColour, DLightRadius, Origin);
     bDynamicLight = false;
   }
   bLeaveTrail = false;
   return true;
 }
+
 
 //==========================================================================
 //
