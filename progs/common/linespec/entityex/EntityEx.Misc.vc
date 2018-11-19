@@ -1409,10 +1409,7 @@ final bool SeekerMissile(float thresh, float turnMax, optional bool precise, opt
         // Need to seek vertically
         dist = DistTo2(Tracer);
         dist = dist / Speed;
-        if (dist < 1.0)
-        {
-          dist = 1.0;
-        }
+        if (dist < 1.0 || !dist.isfinite) dist = 1.0;
         Velocity.z = (Tracer.Origin.z + Tracer.Height / 2.0 -
           Origin.z - Height / 2.0) / dist;
       }
@@ -1421,14 +1418,13 @@ final bool SeekerMissile(float thresh, float turnMax, optional bool precise, opt
     {
       // Need to seek vertically
       TVec d = vector(Tracer.Origin.x - Origin.x, Tracer.Origin.y - Origin.y, 0.0);
-      dist = Length(d) > 1.0 ? Length(d) : 1.0;
+      //dist = Length(d) > 1.0 ? Length(d) : 1.0;
+      dist = fmax(1.0, Length(d));
+      if (!dist.isfinite) dist = 1.0;
 
       // Aim at a player's eyes and at the middle of the actor for everything else.
       float aimheight = Tracer.Height / 2.0;
-      if (Tracer.bIsPlayer)
-      {
-        aimheight = PlayerEx(Tracer.Player).ViewHeight;
-      }
+      if (Tracer.bIsPlayer) aimheight = PlayerEx(Tracer.Player).ViewHeight;
       float pitch = atan2((Tracer.Origin.z + aimheight) - (Origin.z + Height / 2.0), fabs(dist));
 
       float xyscale = Speed * cos(pitch);

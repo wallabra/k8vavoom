@@ -735,11 +735,8 @@ final void A_InquisitorJump()
     Velocity.y += 6.0 * 35.0 * sin(Angles.yaw);
     dist = DistTo2(Target);
     dist /= 6.0 * 35.0;
-    if (dist < 1.0)
-    {
-      dist = 1.0;
-    }
     Velocity.z = (Target.Origin.z - Origin.z) / dist;
+    if (dist < 1.0 || !dist.isfinite) Velocity.z = 0;
     ReactionCount = 60;
     bNoGravity = true;
     return;
@@ -787,11 +784,8 @@ final void A_InquisitorCheckLand()
     Velocity.y += 6.0 * 35.0 * sin(Angles.yaw);
     dist = DistTo2(Target);
     dist /= 6.0 * 35.0;
-    if (dist < 1.0)
-    {
-      dist = 1.0;
-    }
     Velocity.z = (Target.Origin.z - Origin.z) / dist;
+    if (dist < 1.0 || !dist.isfinite) Velocity.z = 0;
   }
   PlaySound('inquisitor/jump', CHAN_BODY);
 }

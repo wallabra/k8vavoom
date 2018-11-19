@@ -156,8 +156,7 @@ final void A_SorcOffense2()
       dist = Target.Target.DistTo2(mo);
     }
     dist = dist / mo.Speed;
-    if (dist < 1.0)
-      dist = 1.0;
+    if (dist < 1.0 || !dist.isfinite) dist = 1.0;
     mo.Velocity.z = (Target.Target.Origin.z - mo.Origin.z) / dist;
   }
 }

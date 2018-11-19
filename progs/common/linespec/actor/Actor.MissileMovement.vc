@@ -201,21 +201,17 @@ final void A_Tracer2()
   Velocity.y = Speed * sin(exact);
 
   // change slope
-  dist = DistTo2(dest);
-  dist /= Speed;
+  if (Speed) {
+    dist = DistTo2(dest);
+    dist /= Speed;
+    if (dist < 1.0 || !dist.isfinite) dist = 1.0;
 
-  if (dist < 1.0)
-  {
-    dist = 1.0;
-  }
-  slope = (dest.Origin.z + 40.0 - Origin.z) / dist;
-  if (slope < Velocity.z)
-  {
-    Velocity.z -= 1.0 / 8.0 * 35.0;
-  }
-  else
-  {
-    Velocity.z += 1.0 / 8.0 * 35.0;
+    slope = (dest.Origin.z+40.0-Origin.z)/dist;
+    if (slope < Velocity.z) {
+      Velocity.z -= 1.0/8.0*35.0;
+    } else {
+      Velocity.z += 1.0/8.0*35.0;
+    }
   }
 }
 

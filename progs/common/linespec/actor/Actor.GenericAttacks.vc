@@ -65,74 +65,50 @@ final void A_CustomMissile(class!Actor MissileType, optional float SpawnHeight,
   int Flags = AimMode & ~3;
   AimMode &= 3;
 
-  if (Target || AimMode == 2)
-  {
-    if (MissileType)
-    {
-      if (!specified_SpawnHeight)
-      {
-        SpawnHeight = 32.0;
-      }
-      if (!specified_SpawnXYOffset)
-      {
-        SpawnXYOffset = 1;
-      }
-      TVec Offs = itof(SpawnXYOffset) * vector(cos(Angles.yaw - 90.0),
-        sin(Angles.yaw - 90.0), 0.0);
+  if (Target || AimMode == 2) {
+    if (MissileType) {
+      if (!specified_SpawnHeight) SpawnHeight = 32.0;
+      if (!specified_SpawnXYOffset) SpawnXYOffset = 1;
+      TVec Offs = itof(SpawnXYOffset)*vector(cos(Angles.yaw-90.0), sin(Angles.yaw-90.0), 0.0);
+
       EntityEx A;
-
-      switch (AimMode)
-      {
-      default:
-        Origin += Offs;
-        A = SpawnMissile(Target, MissileType, SpawnHeight);
-        Origin -= Offs;
-        break;
-
-      case 1:
-        Offs.z = SpawnHeight;
-        A = SpawnMissileXYZ(Origin + Offs, Target, MissileType);
-        break;
-
-      case 2:
-        Origin += Offs;
-        A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch,
-          SpawnHeight);
-        Origin -= Offs;
+      switch (AimMode) {
+        default:
+          Origin += Offs;
+          A = SpawnMissile(Target, MissileType, SpawnHeight);
+          Origin -= Offs;
+          break;
+        case 1:
+          Offs.z = SpawnHeight;
+          A = SpawnMissileXYZ(Origin + Offs, Target, MissileType);
+          break;
+        case 2:
+          Origin += Offs;
+          A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch, SpawnHeight);
+          Origin -= Offs;
       }
 
-      if (A)
-      {
+      if (A) {
+        //if (GetClassName(A.Class) == 'PentFXTail') print("PFXTAIL from '%C'; org=%s; pfxorg=%s; offs=%s", self, Origin, A.Origin, Offs);
+        //if (GetClassName(Class) == 'Sister5') print("000: %C: summoned %C (aim=%d); orig=%s; A.orig=%s; A.vel=%s; A.Speed=%s; A.Mass=%s", self, A, AimMode, Origin, A.Origin, A.Velocity, A.Speed, A.Mass);
         VectorRotateAroundZ(ref A.Velocity, Angle);
-        //  Find correct shooter for projectiles shooting projectiles.
-        if (IsMissile(!!(Flags & 4)))
-        {
+        //if (GetClassName(Class) == 'Sister5') print("001: %C: summoned %C (aim=%d); orig=%s; A.orig=%s; A.vel=%s; A.Speed=%s; A.Mass=%s", self, A, AimMode, Origin, A.Origin, A.Velocity, A.Speed, A.Mass);
+        // find correct shooter for projectiles shooting projectiles
+        if (IsMissile(!!(Flags&4))) {
           EntityEx Own = self;
-          while (Own.IsMissile(!!(Flags & 4)) && Own.Target)
-          {
-            Own = Own.Target;
-          }
+          while (Own.IsMissile(!!(Flags & 4)) && Own.Target) Own = Own.Target;
           A.Target = Own;
-          if (A.bSeekerMissile)
-          {
-            A.Tracer = Tracer;
-          }
-        }
-        else if (A.bSeekerMissile)
-        {
+          if (A.bSeekerMissile) A.Tracer = Tracer;
+        } else if (A.bSeekerMissile) {
           A.Tracer = Target;
         }
       }
     }
-  }
-  else if (Flags & 8)
-  {
-    if (SeeState)
-    {
-      SetState(SeeState);
-    }
+  } else if (Flags&8) {
+    if (SeeState) SetState(SeeState);
   }
 }
+
 
 //==========================================================================
 //

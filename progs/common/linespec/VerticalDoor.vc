@@ -280,8 +280,9 @@ override void Tick(float deltaTime)
     // killough 10/98: implement gradual lighting effects
     if (LightTag && TopHeight != -Sector->floor.dist)
     {
-      EV_LightTurnOnPartway(LightTag, (Sector->ceiling.dist +
-        Sector->floor.dist) / (TopHeight + Sector->floor.dist));
+      auto dvr = (TopHeight+Sector->floor.dist);
+      if (!dvr || !dvr.isfinite) dvr = 1;
+      EV_LightTurnOnPartway(LightTag, (Sector->ceiling.dist+Sector->floor.dist)/dvr);
     }
 
     if (res == RES_PASTDEST)
@@ -324,8 +325,9 @@ override void Tick(float deltaTime)
     //  killough 10/98: implement gradual lighting effects
     if (LightTag && TopHeight != -Sector->floor.dist)
     {
-      EV_LightTurnOnPartway(LightTag, (Sector->ceiling.dist +
-        Sector->floor.dist) / (TopHeight + Sector->floor.dist));
+      auto dvr = (TopHeight+Sector->floor.dist);
+      if (!dvr || !dvr.isfinite) dvr = 1;
+      EV_LightTurnOnPartway(LightTag, (Sector->ceiling.dist+Sector->floor.dist)/dvr);
     }
 
     if (res == RES_PASTDEST)

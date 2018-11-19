@@ -37,6 +37,17 @@
 
 bool Physics(float DeltaTime)
 {
+  if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
+    print("*** PHYSENTER: FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
+    Velocity = vector(0, 0, 0);
+  }
+  scope(exit) {
+    if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
+      print("*** PHYSEXIT: FUCKED VELOCITY FOR '%C': %s", self, Velocity);
+      Velocity = vector(0, 0, 0);
+    }
+  }
+
   float oldfloorz;
   float CummX = 0.0;
   float CummY = 0.0;

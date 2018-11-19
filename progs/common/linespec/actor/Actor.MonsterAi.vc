@@ -929,17 +929,22 @@ final void A_FaceTarget() {
 //
 //==========================================================================
 
-final void decorate_A_FaceTarget(optional float max_turn)
-{
-  if (!Target) return;
+final void decorate_A_FaceTarget(optional float max_turn) {
+  if (!Target || Target == self) return;
 
-  //  Andy Baker's stealth monsters
+  // Andy Baker's stealth monsters
   if (bStealth) VisDir = 1;
 
   bAmbush = false;
 
   float oldyaw = AngleMod360(Angles.yaw);
-  Angles.yaw = AngleMod360(atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x));
+  // wtf? sometimes i got nan here
+  float newyaw = atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x);
+  if (!newyaw.isfinite) {
+    //print("%C:%s: A_FaceTarget: got nan; Target=%C (%B); mypos=%s; tpos=%s (%f,%f); myvel=%s; myspeed=%s", self, State, Target, (Target == self), Origin, Target.Origin, Target.Origin.y-Origin.y, Target.Origin.x-Origin.x, Velocity, Speed);
+    newyaw = oldyaw;
+  }
+  Angles.yaw = AngleMod360(newyaw);
 
   //FIXME: this is wrong!
   if (specified_max_turn && max_turn != 0) {
@@ -953,6 +958,8 @@ final void decorate_A_FaceTarget(optional float max_turn)
   if (Target.bShadow) {
     Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   }
+
+  //if (GetClassName(Class) == 'Sister5') print("%C: faced; angles=%s", self, Angles);
 }
 
 

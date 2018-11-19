@@ -439,6 +439,7 @@ void InitStair(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   {
     Delay = itof(Arg4) / 35.0;
     StepTime = itof(Arg3) / Speed;
+    if (!Speed) StepTime = Arg3;
     PerStepTime = StepTime;
   }
 

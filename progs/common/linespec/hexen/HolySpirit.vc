@@ -220,10 +220,7 @@ void CHolySeekerMissile(float thresh, float turnMax)
     }
     dist = DistTo2(Tracer);
     dist = dist / Speed;
-    if (dist < 1.0)
-    {
-      dist = 1.0;
-    }
+    if (dist < 1.0 || !dist.isfinite) dist = 1.0;
     Velocity.z = deltaZ / dist;
   }
   return;

@@ -318,8 +318,8 @@ final EntityEx SpawnMissile(EntityEx dest, class!EntityEx type,
   // Adjust the trajectory if the missile will go over the target's head.
   else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z + dest.Height && A.Origin.z >= dest.Origin.z + dest.Height)
   {
-    float dist = A.DistTo(dest);
-
+    float dist = fmax(1.0, A.DistTo(dest));
+    if (!dist.isfinite) dist = 1;
     dir.z += (dest.Origin.z + dest.Height - A.Origin.z) / dist;
     dir = Normalise(dir);
 
@@ -368,7 +368,8 @@ final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class!EntityEx type)
   // Adjust the trajectory if the missile will go over the target's head.
   else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z + dest.Height && A.Origin.z >= dest.Origin.z + dest.Height)
   {
-    float dist = A.DistTo(dest);
+    float dist = fmax(1.0, A.DistTo(dest));
+    if (!dist.isfinite) dist = 1;
     dir.z += (dest.Origin.z + dest.Height - A.Origin.z) / dist;
     dir = Normalise(dir);
 
@@ -400,10 +401,11 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
 
   A.Target = self;  // where it came from
 
-  dist = DistTo2(dest);
+  dist = fmax(1.0, DistTo2(dest));
+  if (!dist.isfinite) dist = 0;
   dir.x = cos(Angles.yaw);
   dir.y = sin(Angles.yaw);
-  dir.z = dist != 0.0 ? (dest.Origin.z - Origin.z) / dist : A.Speed;
+  dir.z = (dist != 0.0 ? (dest.Origin.z - Origin.z) / dist : A.Speed);
   // fuzzy player
   if (dest.bShadow)
   {
@@ -419,7 +421,8 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
   // Adjust the trajectory if the missile will go over the target's head.
   else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z + dest.Height && A.Origin.z >= dest.Origin.z + dest.Height)
   {
-    float dist2 = A.DistTo(dest);
+    float dist2 = fmax(1.0, A.DistTo(dest));
+    if (!dist2.isfinite) dist2 = 1;
     dir.z += (dest.Origin.z + dest.Height - A.Origin.z) / dist2;
     dir = Normalise(dir);
 
@@ -698,7 +701,8 @@ final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
   // Adjust the trajectory if the missile will go over the target's head.
   if (AimTarget && Origin.z >= AimTarget.Origin.z && Origin.z <= AimTarget.Origin.z + AimTarget.Height && A.Origin.z >= AimTarget.Origin.z + AimTarget.Height)
   {
-    float dist = A.DistTo(AimTarget);
+    float dist = fmax(1.0, A.DistTo(AimTarget));
+    if (!dist.isfinite) dist = 1;
     dir.z += (AimTarget.Origin.z + AimTarget.Height - A.Origin.z) / dist;
     dir = Normalise(dir);
 

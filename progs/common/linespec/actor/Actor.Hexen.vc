@@ -494,13 +494,14 @@ final void A_KSpiritSeeker(float thresh, float turnMax)
         deltaZ = -15.0;
       }
     }
-    dist = DistTo2(Tracer);
-    dist = dist / Speed;
-    if (dist < 1.0)
-    {
-      dist = 1.0;
+    if (Speed) {
+      dist = DistTo2(Tracer);
+      dist = dist / Speed;
+      Velocity.z = deltaZ / dist;
+      if (dist < 1.0 || !dist.isfinite) Velocity.z = 0;
+    } else {
+      Velocity.z = 0;
     }
-    Velocity.z = deltaZ / dist;
   }
   return;
 }
@@ -2088,18 +2089,20 @@ final void DragonSeek(float thresh, float turnMax)
   if (Origin.z + Height < tempTarget.Origin.z ||
     tempTarget.Origin.z + tempTarget.Height < Origin.z)
   {
-    dist = DistTo2(tempTarget);
-    dist = dist / Speed;
-    if (dist < 1.0)
-    {
-      dist = 1.0;
+    if (Speed) {
+      dist = DistTo2(tempTarget);
+      dist = dist / Speed;
+      Velocity.z = (tempTarget.Origin.z - Origin.z) / dist;
+      if (dist < 1.0 || !dist.isfinite) Velocity.z = 0;
+    } else {
+      Velocity.z = 0;
     }
-    Velocity.z = (tempTarget.Origin.z - Origin.z) / dist;
   }
   else
   {
     dist = DistTo2(tempTarget);
     dist = dist / Speed;
+    if (dist < 1.0 || !dist.isfinite) dist = 1.0;
   }
   if (tempTarget.bShootable && P_Random() < 64)
   {
