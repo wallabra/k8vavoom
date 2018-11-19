@@ -3696,7 +3696,7 @@ override void Cheat_VScriptCommand (ref array!string args) {
 
   if (args[0] == "fire") {
     class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCase(name(args[1]))));
-    if (!mt) { print("actor '%s' not found", args[1]); }
+    if (!mt) { print("actor '%s' not found", args[1]); return; }
     float ofs = 4;
     if (args.length > 2) ofs = atof(args[2]);
     //Actor(MO).A_CustomMissile(mt, MO.Height/2, 0, AimMode:2);
