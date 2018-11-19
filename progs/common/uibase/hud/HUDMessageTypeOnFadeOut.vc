@@ -63,6 +63,7 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
+  if (!IsActive) return; // do not tick when game is paused
   switch (State) {
     case 0:
       LineChars = int(Time/TypeOnTime);

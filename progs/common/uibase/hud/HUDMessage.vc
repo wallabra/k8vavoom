@@ -50,6 +50,18 @@ bool bCentreX;
 float HoldTime;
 float Time;
 
+/*ClientGameShared*/ClientGameBase ClGame;
+
+
+//==========================================================================
+//
+//  IsActive
+//
+//==========================================================================
+final bool IsActive () {
+  return !(ClGame && ClGame.Game && ClGame.Game.isPaused);
+}
+
 
 //==========================================================================
 //
@@ -305,6 +317,7 @@ void DrawLine (int LineIdx, int x, int y, string Text) {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
+  if (!IsActive) return; // do not tick when game is paused
   if (HoldTime && Time > HoldTime) {
     //print("TIME=%s; HoldTime=%s; tfrm=%s; htfrm=%s; <%q>", Time, HoldTime, Time/35.0, HoldTime/35.0, (MsgLines.length ? MsgLines[0].Text : "<>"));
     MarkDead(); //Destroy();
