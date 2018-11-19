@@ -2464,6 +2464,8 @@ func_loop:
             {
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
               v = normalise(v);
+              // normalizing zero vector should produce zero, not nan/inf
+              if (!isFiniteF(v.x) || !isFiniteF(v.y) || !isFiniteF(v.z)) v = TVec(0, 0, 0);
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
@@ -2473,6 +2475,8 @@ func_loop:
             {
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
               v = normalise2D(v);
+              // normalizing zero vector should produce zero, not nan/inf
+              if (!isFiniteF(v.x) || !isFiniteF(v.y) || !isFiniteF(v.z)) v = TVec(0, 0, 0);
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
