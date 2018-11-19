@@ -2643,6 +2643,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
       vint32 x, y, dx, dy;
       *Strm << x << y << dx << dy;
       if (dx == 0 && dy == 0) {
+        GCon->Log("invalid BSP node (zero direction)");
         no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(0.001f, 0, 0));
       } else {
         no->SetPointDirXY(TVec(x/65536.0f, y/65536.0f, 0), TVec(dx/65536.0f, dy/65536.0f, 0));
