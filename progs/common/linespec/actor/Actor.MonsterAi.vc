@@ -434,6 +434,8 @@ final void A_Wander()
 //
 //  Actor has a melee attack, so it tries to close as fast as possible
 //
+//  FIXME: optional flags are not working
+//
 //==========================================================================
 void DoChase(bool FastChase, state AMeleeState, state AMissileState,
   bool NightmareFast, bool PlayActive, bool DontMove,
@@ -588,7 +590,7 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
       }
     }
 
-    // Scared monsters attack less frequently
+    // scared monsters attack less frequently
     if ((!Target.bIsPlayer || !(PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING)) &&
          !bFrightened || P_Random() < 43)
     {
@@ -636,8 +638,12 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
     oldX = Origin.x;
     oldY = Origin.y;
     oldFloor = Sector->floor.pic;
-    if (--MoveCount < 0 || !StepMove()) NewChaseDir();
-    if (bCantLeaveFloorpic && Sector->floor.pic != oldFloor) {
+    //k8: dunno if this is right
+    bool tryMoveAgain = true;
+         if (--MoveCount < 0) NewChaseDir();
+    else if (!StepMove()) { tryMoveAgain = false; NewChaseDir(); }
+    if (!stopIfBlocked) tryMoveAgain = true;
+    if (tryMoveAgain && bCantLeaveFloorpic && Sector->floor.pic != oldFloor) {
       TryMove(vector(oldX, oldY, Origin.z), false);
       NewChaseDir();
     }
