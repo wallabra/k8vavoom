@@ -2511,7 +2511,7 @@ func_loop:
               sp[-1].f = v1.z;
               sp[-2].f = v1.y;
               sp[-3].f = v1.x;
-              if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !!isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("crossproduct result is INF/NAN"); }
+              if (!isFiniteF(v1.x) || !isFiniteF(v1.y) || !isFiniteF(v1.z)) { cstDump(ip); Sys_Error("crossproduct result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecCross2D:
