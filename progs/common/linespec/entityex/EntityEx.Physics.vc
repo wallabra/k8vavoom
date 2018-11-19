@@ -1023,7 +1023,7 @@ void FloorBounceMissile () {
   //print("%C: bBounceFloors=%B; bBounceAutoOff=%B; bNoGravity=%B; Velocity.z=%s; btype=%s", self, bBounceFloors, bBounceAutoOff, bNoGravity, Velocity.z, BounceType);
   //print("%C: Mass=%s; Gravity=%s; Velocity.z=%s; lim=%s", self, Mass, Gravity, Velocity.z, (Mass*Gravity)/64.0);
   if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
-    if (!bNoGravity && Velocity.z < 1.8/*3.0*/*35.0) {
+    if (!bNoGravity && Velocity.z < 2.5/*3.0*/*35.0) {
       BounceType = BOUNCE_None;
       TurnOffAllBouncingFlags(); // otherwise it will bounce forever
     }
@@ -1076,7 +1076,7 @@ final void CeilingBounceMissile () {
   }
 
   if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
-    if (!bNoGravity && Velocity.z < 1.8/*3.0*/*35.0) {
+    if (!bNoGravity && Velocity.z < 2.5/*3.0*/*35.0) {
       BounceType = BOUNCE_None;
       TurnOffAllBouncingFlags(); // otherwise it will bounce forever
     }
