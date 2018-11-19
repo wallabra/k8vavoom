@@ -180,12 +180,13 @@ bool VDecalDef::parse (VScriptParser *sc) {
   sc->Expect("{");
 
   VName pic = NAME_None;
+  texid = -1;
 
   while (!sc->AtEnd()) {
     if (sc->Check("}")) {
       if (pic == NAME_None) {
         GCon->Logf(NAME_Warning, "decal '%s' has no pic defined", *name);
-        return false;
+        return true;
       }
       texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
       if (texid < 0 && VStr::length(*pic) > 8) {
@@ -196,7 +197,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
       }
       if (texid < 0) {
         GCon->Logf(NAME_Warning, "decal '%s' has no pic '%s'", *name, *pic);
-        return false;
+        return true;
       }
       return true;
     }
@@ -862,9 +863,8 @@ void ParseDecalDef (VScriptParser *sc) {
         continue;
       }
 
+      //GCon->Logf("%s: \"%s\"", *sc->GetLoc().toStringNoCol(), *sc->String);
       if (sc->Check("generator")) {
-        // not here yet
-        //sc->Message("WARNING: ignored 'generator' definition");
         sc->ExpectString();
         VStr clsname = sc->String;
         sc->ExpectString();
@@ -872,7 +872,7 @@ void ParseDecalDef (VScriptParser *sc) {
         // find class
         VClass *klass = VClass::FindClassLowerCase(*clsname.ToLower());
         if (klass) {
-          //GCon->Logf("class '%s': set decal '%s'", klass->GetName(), *decname);
+          //GCon->Logf("%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
           SetClassFieldName(klass, VName("DecalName"), VName(*decname));
           VClass *k2 = klass->GetReplacee();
           if (k2 && k2 != klass) {
@@ -886,10 +886,13 @@ void ParseDecalDef (VScriptParser *sc) {
       }
 
       if (sc->Check("decal")) {
+        //sc->GetString();
+        //GCon->Logf("%s:   DECAL \"%s\"", *sc->GetLoc().toStringNoCol(), *sc->String);
+        //sc->UnGet();
         auto dc = new VDecalDef();
         if ((error = !dc->parse(sc)) == true) { delete dc; break; }
         sc->SetCMode(false);
-        VDecalDef::addToList(dc);
+        if (dc->texid > 0) VDecalDef::addToList(dc); else delete dc;
         continue;
       }
 
@@ -945,6 +948,7 @@ void ParseDecalDef (VScriptParser *sc) {
       error = true;
       break;
     }
+    //GCon->Logf(NAME_Init, "DONE WITH '%s'", *sc->GetLoc().GetSource());
 
     if (error) {
       while (scsp > 0) { delete sc; sc = scstack[--scsp]; }
