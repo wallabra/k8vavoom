@@ -4215,50 +4215,35 @@ int VAcs::RunScript(float DeltaTime)
         int Id = optstart[-5];
         int Colour = optstart[-4];
         VStr ColourName;
-        if (Type & HUDMSG_COLORSTRING)
-        {
+        if (Type&HUDMSG_COLORSTRING) {
           ColourName = GetStr(optstart[-4]);
           Colour = -1;
         }
         float x = (float)optstart[-3] / float(0x10000);
         float y = (float)optstart[-2] / float(0x10000);
-        float HoldTime = (float)optstart[-1] / float(0x10000);
+        float HoldTime = (float)optstart[-1]/float(0x10000);
         float Time1 = 0;
         float Time2 = 0;
-        switch (Type & 0xffff)
-        {
-        case HUDMSG_FADEOUT:
-          Time1 = optstart < sp ?
-            (float)optstart[0] / float(0x10000) : 0.5;
-          break;
-        case HUDMSG_TYPEON:
-          Time1 = optstart < sp ?
-            (float)optstart[0] / float(0x10000) : 0.05;
-          Time2 = optstart < sp - 1 ?
-            (float)optstart[1] / float(0x10000) : 0.5;
-          break;
-        case HUDMSG_FADEINOUT:
-          Time1 = optstart < sp ?
-            (float)optstart[0] / float(0x10000) : 0.5;
-          Time2 = optstart < sp - 1 ?
-            (float)optstart[1] / float(0x10000) : 0.5;
-          break;
+        switch (Type&0xffff) {
+          case HUDMSG_FADEOUT:
+            Time1 = (optstart < sp ? (float)optstart[0]/float(0x10000) : 0.5f);
+            break;
+          case HUDMSG_TYPEON:
+            Time1 = (optstart < sp ? (float)optstart[0] / float(0x10000) : 0.05f);
+            Time2 = (optstart < sp - 1 ? (float)optstart[1] / float(0x10000) : 0.5f);
+            break;
+          case HUDMSG_FADEINOUT:
+            Time1 = (optstart < sp ? (float)optstart[0] / float(0x10000) : 0.5f);
+            Time2 = (optstart < sp - 1 ? (float)optstart[1] / float(0x10000) : 0.5f);
+            break;
         }
-        if (cmd != PCD_EndHudMessageBold && Activator &&
-          (Activator->EntityFlags & VEntity::EF_IsPlayer))
-        {
+        if (cmd != PCD_EndHudMessageBold && Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer)) {
           Activator->Player->eventClientHudMessage(PrintStr, Font,
             Type, Id, Colour, ColourName, x, y, HudWidth,
             HudHeight, HoldTime, Time1, Time2);
-        }
-        else
-        {
-          for (int i = 0; i < MAXPLAYERS; i++)
-          {
-            if (Level->Game->Players[i] &&
-              (Level->Game->Players[i]->PlayerFlags &
-              VBasePlayer::PF_Spawned))
-            {
+        } else {
+          for (int i = 0; i < MAXPLAYERS; ++i) {
+            if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
               Level->Game->Players[i]->eventClientHudMessage(
                 PrintStr, Font, Type, Id, Colour, ColourName,
                 x, y, HudWidth, HudHeight, HoldTime, Time1,
@@ -4266,7 +4251,7 @@ int VAcs::RunScript(float DeltaTime)
             }
           }
         }
-        sp = optstart - 6;
+        sp = optstart-6;
       }
       SB_POP;
       ACSVM_BREAK;
