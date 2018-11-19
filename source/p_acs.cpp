@@ -3103,6 +3103,9 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_PushNumber)
       *sp = READ_INT32(ip);
+#ifdef ACS_DUMP_EXECUTION
+      //GCon->Logf("ACS:    push %d (%u %u %u %u)", *sp, ip[0], ip[1], ip[2], ip[3]);
+#endif
       ip += 4;
       sp++;
       ACSVM_BREAK;
@@ -4897,6 +4900,9 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AssignGlobalArray)
+#ifdef ACS_DUMP_EXECUTION
+      //GCon->Logf("ACS:  AssignGlobalArray[%d] (%d, %d)", READ_BYTE_OR_INT32, sp[-2], sp[-1]);
+#endif
       GlobalArrays[READ_BYTE_OR_INT32].SetElemVal(sp[-2], sp[-1]);
       INC_BYTE_OR_INT32;
       sp -= 2;
