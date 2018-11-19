@@ -3687,10 +3687,26 @@ override void Cheat_VScriptCommand (ref array!string args) {
   if (args[0] == "?") {
     print("give what [amount] -- give inventory item");
     print("take what [amount] -- take inventory item");
+    print("drop what          -- drop inventory item");
+    print("fire mtp [ofs]     -- fire missile");
     return;
   }
 
   if (args.length < 2) return;
+
+  if (args[0] == "fire") {
+    class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCase(name(args[1]))));
+    if (!mt) { print("actor '%s' not found", args[1]); }
+    float ofs = 4;
+    if (args.length > 2) ofs = atof(args[2]);
+    //Actor(MO).A_CustomMissile(mt, MO.Height/2, 0, AimMode:2);
+    float hgt = MO.Height/2;
+    TVec Offs = ofs*vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw), 0.0);
+    MO.Origin += Offs;
+    EntityEx A = Actor(MO).SpawnMissileAngles(mt, MO.Angles.yaw, MO.Angles.pitch, hgt);
+    MO.Origin -= Offs;
+    return;
+  }
 
   // find inventory class
   class!Inventory icls = class!Inventory(FindClassNoCase(name(args[1])));
