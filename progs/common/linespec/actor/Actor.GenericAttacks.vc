@@ -63,7 +63,7 @@ final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
   optional float Pitch, optional int aptr)
 {
   if (!specified_aptr) aptr = AAPTR_TARGET;
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CustomMissile', aptr!optional));
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CustomMissile', aptr));
   if (!specified_aptr && tgt != Target) Error("WUTA?! in `A_CustomMissile`");
 
   int Flags = AimMode & ~3;
