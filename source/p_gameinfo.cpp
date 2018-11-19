@@ -84,6 +84,12 @@ bool VGameInfo::IsPaused()
   unguard;
 }
 
+IMPLEMENT_FUNCTION(VGameInfo, get_isPaused) {
+  P_GET_SELF;
+  RET_BOOL(Self ? Self->IsPaused() : false);
+}
+
+
 //==========================================================================
 //
 //  COMMAND ClearPlayerClasses

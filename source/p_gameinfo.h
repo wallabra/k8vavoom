@@ -145,6 +145,8 @@ class VGameInfo : public VGameObject
     P_PASS_PTR(Args);
     EV_RET_VOID("CmdAddSlotDefault");
   }
+
+  DECLARE_FUNCTION(get_isPaused)
 };
 
 extern VGameInfo *GGameInfo;

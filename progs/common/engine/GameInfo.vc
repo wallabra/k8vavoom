@@ -22,67 +22,68 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class GameInfo : GameObject
   native
   abstract;
 
-//
-//  Network mode.
-//
-enum
-{
-  //  Not running a game.
+// network mode
+enum {
+  // not running a game
   NM_None,
-  //  Playing a titlemap.
+  // playing a titlemap
   NM_TitleMap,
-  //  Standalone single player game.
+  // standalone single player game
   NM_Standalone,
-  //  Dedicated server, no local client.
+  // dedicated server, no local client
   NM_DedicatedServer,
-  //  Server with local client.
+  // server with local client
   NM_ListenServer,
-  //  Client only, no local server.
+  // client only, no local server
   NM_Client
 };
 
-name        AcsHelper;
-name        GenericConScript;
+name AcsHelper;
+name GenericConScript;
 
-readonly ubyte   NetMode;
-readonly ubyte   deathmatch;
-ubyte        respawn;
-ubyte        nomonsters;
-ubyte        fastparm; // 0:normal; 1:fast; 2:slow
+readonly ubyte NetMode;
+readonly ubyte deathmatch;
+ubyte respawn;
+ubyte nomonsters;
+ubyte fastparm; // 0:normal; 1:fast; 2:slow
 
 readonly int *validcount;
-readonly int    skyflatnum;
+readonly int skyflatnum;
 
-readonly WorldInfo  WorldInfo;
+readonly WorldInfo WorldInfo;
 
 readonly BasePlayer Players[MAXPLAYERS]; // Bookkeeping on players - state.
 
-int         RebornPosition;
+int RebornPosition;
 
-readonly float    frametime;
+readonly float frametime;
 
-float       FloatBobOffsets[64];
-int         PhaseTable[64];
+float FloatBobOffsets[64];
+int PhaseTable[64];
 
-class!LevelInfo  LevelInfoClass;
-class!PlayerReplicationInfo  PlayerReplicationInfoClass;
+class!LevelInfo LevelInfoClass;
+class!PlayerReplicationInfo PlayerReplicationInfoClass;
 
-int         GameFilterFlag;
+int GameFilterFlag;
 
-array!class    PlayerClasses;
+array!class PlayerClasses;
 
-bool        bDefaultLaxMonsterActivation;
-bool        bDefaultBloodSplatter;
-readonly bool   bPaused;
+bool bDefaultLaxMonsterActivation;
+bool bDefaultBloodSplatter;
+readonly bool bPaused;
 
 final bool netgame {
   get { return NetMode > NM_Standalone; }
 }
+
+// this is way more reliable than `bPaused`
+// game may be paused when menu active or something
+// and `bPaused` only says that player pressed "pause" key
+final native bool isPaused { get; }
 
 
 //==========================================================================
@@ -184,7 +185,6 @@ void Init () {
 //  PostDecorateInit
 //
 //==========================================================================
-
 void PostDecorateInit () {
   foreach (auto idx; 0..PlayerClasses.length) {
     class/*!PlayerPawn*/ realplrclass = /*class!PlayerPawn*/(GetClassReplacement(PlayerClasses[idx]));
@@ -196,90 +196,82 @@ void PostDecorateInit () {
   }
 }
 
+
 //==========================================================================
 //
 //  InitNewGame
 //
 //==========================================================================
-
-void InitNewGame(int skill)
-{
+void InitNewGame (int skill) {
 }
+
 
 //==========================================================================
 //
 //  CreateWorldInfo
 //
 //==========================================================================
-
-WorldInfo CreateWorldInfo()
-{
+WorldInfo CreateWorldInfo () {
   return none;
 }
+
 
 //==========================================================================
 //
 //  TranslateLevel
 //
 //==========================================================================
-
-void TranslateLevel(Level InLevel)
-{
+void TranslateLevel (Level InLevel) {
 }
+
 
 //==========================================================================
 //
 //  SpawnWorld
 //
 //==========================================================================
-
-void SpawnWorld(Level InLevel)
-{
+void SpawnWorld (Level InLevel) {
 }
+
 
 //==========================================================================
 //
 //  GetConScriptName
 //
 //==========================================================================
-
-name GetConScriptName(name LevelName)
-{
+name GetConScriptName (name LevelName) {
   return '';
 }
+
 
 //==========================================================================
 //
 //  CmdWeaponSection
 //
 //==========================================================================
-
-void CmdWeaponSection(string Section)
-{
+void CmdWeaponSection (string Section) {
 }
+
 
 //==========================================================================
 //
 //  CmdSetSlot
 //
 //==========================================================================
-
-void CmdSetSlot(ref array!string Args)
-{
+void CmdSetSlot (ref array!string Args) {
 }
+
 
 //==========================================================================
 //
 //  CmdAddSlotDefault
 //
 //==========================================================================
-
-void CmdAddSlotDefault(ref array!string Args)
-{
+void CmdAddSlotDefault (ref array!string Args) {
 }
 
-defaultproperties
-{
+
+defaultproperties {
   FloatBobOffsets[0] = 0.0; FloatBobOffsets[1] = 0.7841339111; FloatBobOffsets[2] = 1.560714722; FloatBobOffsets[3] = 2.322265625;
   FloatBobOffsets[4] = 3.061462402; FloatBobOffsets[5] = 3.77116394; FloatBobOffsets[6] = 4.444549561; FloatBobOffsets[7] = 5.075134277;
   FloatBobOffsets[8] = 5.656845093; FloatBobOffsets[9] = 6.184082031; FloatBobOffsets[10] = 6.651748657; FloatBobOffsets[11] = 7.055358887;
