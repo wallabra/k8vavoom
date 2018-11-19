@@ -27,6 +27,16 @@
 //  Monster AI
 //**************************************************************************
 
+enum /*EKillFlags*/ {
+  KILS_FOILINVUL = 0x00000001,
+  KILS_KILLMISSILES = 0x00000002,
+  KILS_NOMONSTERS = 0x00000004,
+  KILS_FOILBUDDHA = 0x00000008,
+  KILS_EXFILTER = 0x00000010,
+  KILS_EXSPECIES = 0x00000020,
+  KILS_EITHER = 0x00000040,
+};
+
 //==========================================================================
 //
 //  A_Look
@@ -966,14 +976,28 @@ final void A_KillMaster()
 //
 //==========================================================================
 
-final void A_KillChildren()
+final void A_KillChildren (optional string damagetype, optional int flags
+             /*, optional string filter, optional string species, optional int src, optional int inflict*/)
 {
   Actor A;
-  foreach AllThinkers(Actor, A)
-  {
-    if (A.Master == self)
-    {
-      A.Damage(self, self, A.Health, default, true);
+  if (specified_damagetype) {
+         if (!damagetype || stricmp(damagetype, "none") == 0) damagetype = "None";
+    //else if (stricmp(damagetype, "NODAMAGE") == 0) damagetype = "None";//FIXME: TODO
+  }
+  foreach AllThinkers(Actor, A) {
+    if (A.Master == self) {
+      if (A.IsMissile(false)) {
+        if (!(flags&KILS_KILLMISSILES)) continue;
+      } else if (A.bMonster) {
+        if (flags&KILS_NOMONSTERS) continue;
+      } else {
+        continue;
+      }
+      if (specified_damagetype) {
+        A.Damage(self, self, A.Health, name(damagetype), true, !!(flags&KILS_FOILINVUL));
+      } else {
+        A.Damage(self, self, A.Health, default, true, !!(flags&KILS_FOILINVUL));
+      }
     }
   }
 }

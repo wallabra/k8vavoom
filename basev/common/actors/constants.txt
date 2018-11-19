@@ -357,3 +357,15 @@ enum EFireCustomMissileFlags {
 // A_ZoomFactor flags
 const int ZOOM_INSTANT = 1;
 const int ZOOM_NOSCALETURNING = 2;
+
+
+// Flags for A_Kill (Master/Target/Tracer/Children/Siblings) series
+enum EKillFlags {
+  KILS_FOILINVUL = 0x00000001,
+  KILS_KILLMISSILES = 0x00000002,
+  KILS_NOMONSTERS = 0x00000004,
+  KILS_FOILBUDDHA = 0x00000008,
+  KILS_EXFILTER = 0x00000010,
+  KILS_EXSPECIES = 0x00000020,
+  KILS_EITHER = 0x00000040,
+};
