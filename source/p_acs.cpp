@@ -434,7 +434,7 @@ VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
 
   // check header
   if (header->Marker[0] != 'A' || header->Marker[1] != 'C' || header->Marker[2] != 'S') {
-    GCon->Log("Behavior lump has invalid signature");
+    GCon->Logf("Behavior lump \"%s\" has invalid signature", *W_FullLumpName(Lump));
     return;
   }
   //  Determine format.
@@ -442,46 +442,41 @@ VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
     case 0: Format = ACS_Old; break;
     case 'E': Format = ACS_Enhanced; break;
     case 'e': Format = ACS_LittleEnhanced; break;
-    default: return;
+    default: GCon->Logf("Behavior lump \"%s\" has invalid signature (format)", *W_FullLumpName(Lump)); return;
   }
+  //if (developer) GCon->Logf(NAME_Dev, "Behavior lump \"%s\" fmt id: %u; fmt=%d", *W_FullLumpName(Lump), (vuint8)header->Marker[3], Format);
 
   DataSize = W_LumpLength(Lump);
 
-  if (Format == ACS_Old)
-  {
+  if (Format == ACS_Old) {
     vuint32 dirofs = LittleLong(header->InfoOffset);
-    vuint8 *pretag = Data + dirofs - 4;
+    vuint8 *pretag = Data+dirofs-4;
 
     Chunks = Data + DataSize;
-    //  Check for redesigned ACSE/ACSe
+    // check for redesigned ACSE/ACSe
     if (dirofs >= 6 * 4 && pretag[0] == 'A' &&
-      pretag[1] == 'C' && pretag[2] == 'S' &&
-      (pretag[3] == 'e' || pretag[3] == 'E'))
+        pretag[1] == 'C' && pretag[2] == 'S' &&
+        (pretag[3] == 'e' || pretag[3] == 'E'))
     {
-      Format = (pretag[3] == 'e') ? ACS_LittleEnhanced : ACS_Enhanced;
-      Chunks = Data + LittleLong(*(int*)(Data + dirofs - 8));
-      //  Forget about the compatibility cruft at the end of the lump
-      DataSize = dirofs - 8;
+      Format = (pretag[3] == 'e' ? ACS_LittleEnhanced : ACS_Enhanced);
+      Chunks = Data+LittleLong(*(int *)(Data+dirofs-8));
+      // forget about the compatibility cruft at the end of the lump
+      DataSize = dirofs-8;
     }
-  }
-  else
-  {
-    Chunks = Data + LittleLong(header->InfoOffset);
+  } else {
+    Chunks = Data+LittleLong(header->InfoOffset);
   }
 
   switch (Format) {
-    case ACS_Old: if (developer) GCon->Log(NAME_Dev, "Behavior lump: standard"); break;
-    case ACS_Enhanced: if (developer) GCon->Log(NAME_Dev, "Behavior lump: enhanced-ext"); break;
-    case ACS_LittleEnhanced: if (developer) GCon->Log(NAME_Dev, "Behavior lump: enhanced-ext"); break;
+    case ACS_Old: if (developer) GCon->Logf(NAME_Dev, "Behavior lump '%s': standard", *W_FullLumpName(Lump)); break;
+    case ACS_Enhanced: if (developer) GCon->Logf(NAME_Dev, "Behavior lump '%s': enhanced", *W_FullLumpName(Lump)); break;
+    case ACS_LittleEnhanced: if (developer) GCon->Logf(NAME_Dev, "Behavior lump '%s': enhanced-little", *W_FullLumpName(Lump)); break;
     default: break;
   }
 
-  if (Format == ACS_Old)
-  {
+  if (Format == ACS_Old) {
     LoadOldObject();
-  }
-  else
-  {
+  } else {
     LoadEnhancedObject();
   }
   unguard;
@@ -588,52 +583,56 @@ void VAcsObject::LoadOldObject()
 //
 //==========================================================================
 
-void VAcsObject::LoadEnhancedObject()
-{
+void VAcsObject::LoadEnhancedObject () {
   guard(VAcsObject::LoadEnhancedObject);
   int i;
   int *buffer;
   VAcsInfo *info;
 
-  //  Load scripts.
-  buffer = (int*)FindChunk("SPTR");
-  if (Data[3] != 0)
-  {
-    NumScripts = LittleLong(buffer[1]) / 12;
-    Scripts = new VAcsInfo[NumScripts];
-    memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
-    buffer += 2;
+  // load scripts
+  buffer = (int *)FindChunk("SPTR");
+  if (buffer) {
+    if (Data[3] != 0) {
+      NumScripts = LittleLong(buffer[1]) / 12;
+      Scripts = new VAcsInfo[NumScripts];
+      memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
+      buffer += 2;
 
-    for (i = 0, info = Scripts; i < NumScripts; i++, info++)
-    {
-      info->Number = LittleShort(*(short*)buffer);
-      info->Type = LittleShort(((short*)buffer)[1]);
-      buffer++;
-      info->Address = OffsetToPtr(LittleLong(*buffer++));
-      info->ArgCount = LittleLong(*buffer++);
-      info->Flags = 0;
-      info->VarCount = MAX_ACS_SCRIPT_VARS;
-      info->Name = NAME_None;
-    }
-  }
-  else
-  {
-    NumScripts = LittleLong(buffer[1]) / 8;
-    Scripts = new VAcsInfo[NumScripts];
-    memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
-    buffer += 2;
+      for (i = 0, info = Scripts; i < NumScripts; i++, info++) {
+        info->Number = LittleShort(*(short*)buffer);
+        info->Type = LittleShort(((short*)buffer)[1]);
+        buffer++;
+        info->Address = OffsetToPtr(LittleLong(*buffer++));
+        info->ArgCount = LittleLong(*buffer++);
+        info->Flags = 0;
+        info->VarCount = MAX_ACS_SCRIPT_VARS;
+        info->Name = NAME_None;
+      }
+    } else {
+      NumScripts = LittleLong(buffer[1]) / 8;
+      Scripts = new VAcsInfo[NumScripts];
+      memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
+      buffer += 2;
 
-    for (i = 0, info = Scripts; i < NumScripts; i++, info++)
-    {
-      info->Number = LittleShort(*(short*)buffer);
-      info->Type = ((vuint8*)buffer)[2];
-      info->ArgCount = ((vuint8*)buffer)[3];
-      buffer++;
-      info->Address = OffsetToPtr(LittleLong(*buffer++));
-      info->Flags = 0;
-      info->VarCount = MAX_ACS_SCRIPT_VARS;
-      info->Name = NAME_None;
+      for (i = 0, info = Scripts; i < NumScripts; i++, info++)
+      {
+        info->Number = LittleShort(*(short*)buffer);
+        info->Type = ((vuint8*)buffer)[2];
+        info->ArgCount = ((vuint8*)buffer)[3];
+        buffer++;
+        info->Address = OffsetToPtr(LittleLong(*buffer++));
+        info->Flags = 0;
+        info->VarCount = MAX_ACS_SCRIPT_VARS;
+        info->Name = NAME_None;
+      }
     }
+  } else {
+    // wutafu? no scripts!
+    //FIXME: better message
+    GCon->Log(NAME_Warning, "one of ACS files has no scripts!");
+    NumScripts = 0;
+    Scripts = new VAcsInfo[1];
+    memset((void *)Scripts, 0, 1*sizeof(VAcsInfo));
   }
 
   //  Load script flags.
