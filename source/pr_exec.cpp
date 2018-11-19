@@ -54,6 +54,10 @@
 
 #define CHECK_FOR_INF_NAN_DIV
 
+// debug feature, nan and inf can be used for various purposes
+// but meh...
+#define CHECK_FOR_NANS_INFS
+
 
 #ifdef VMEXEC_RUNDUMP
 static int k8edIndent = 0;
@@ -456,6 +460,9 @@ func_loop:
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("returning NAN/INF vector"); }
+#endif
         ((VStack *)local_vars)[0] = sp[-3];
         ((VStack *)local_vars)[1] = sp[-2];
         ((VStack *)local_vars)[2] = sp[-1];
@@ -737,6 +744,9 @@ func_loop:
         sp[0].f = ((TVec *)&local_vars[ip[1]])->x;
         sp[1].f = ((TVec *)&local_vars[ip[1]])->y;
         sp[2].f = ((TVec *)&local_vars[ip[1]])->z;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[0].f) || !isFiniteF(sp[1].f) || !isFiniteF(sp[2].f)) { cstDump(ip); Sys_Error("creating NAN/INF vector"); }
+#endif
         ip += 2;
         sp += 3;
         PR_VM_BREAK;
@@ -779,6 +789,9 @@ func_loop:
           sp[1].f = vp->z;
           sp[0].f = vp->y;
           sp[-1].f = vp->x;
+#ifdef CHECK_FOR_NANS_INFS
+          if (!isFiniteF(sp[1].f) || !isFiniteF(sp[0].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("loading NAN/INF vector"); }
+#endif
         }
         sp += 2;
         ip += 5;
@@ -1016,6 +1029,9 @@ func_loop:
         sp[1].f = ((TVec *)sp[-1].p)->z;
         sp[0].f = ((TVec *)sp[-1].p)->y;
         sp[-1].f = ((TVec *)sp[-1].p)->x;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[1].f) || !isFiniteF(sp[0].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("pushing NAN/INF vector"); }
+#endif
         sp += 2;
         PR_VM_BREAK;
 
@@ -1077,14 +1093,34 @@ func_loop:
         ++sp;
         PR_VM_BREAK;
 
+#ifdef CHECK_FOR_NANS_INFS
+    #define BINOP(mem, op) \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' first arg is NAN/INF", #op); } \
+      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); Sys_Error("op '%s' second arg is NAN/INF", #op); } \
+      sp[-2].mem = sp[-2].mem op sp[-1].mem; \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' result is NAN/INF", #op); } \
+      --sp; \
+      ++ip;
+#else
     #define BINOP(mem, op) \
       ++ip; \
       sp[-2].mem = sp[-2].mem op sp[-1].mem; \
       --sp;
+#endif
+#ifdef CHECK_FOR_NANS_INFS
+    #define BINOP_Q(mem, op) \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' first arg is NAN/INF", #op); } \
+      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); Sys_Error("op '%s' second arg is NAN/INF", #op); } \
+      sp[-2].mem op sp[-1].mem; \
+      if (!isFiniteF(sp[-2].mem)) { cstDump(ip); Sys_Error("op '%s' result is NAN/INF", #op); } \
+      --sp; \
+      ++ip;
+#else
     #define BINOP_Q(mem, op) \
       ++ip; \
       sp[-2].mem op sp[-1].mem; \
       --sp;
+#endif
 
       PR_VM_CASE(OPC_Add)
         BINOP_Q(i, +=);
@@ -1226,7 +1262,21 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+#ifdef CHECK_FOR_NANS_INFS
     #define ASSIGNOP(type, mem, op) \
+      if (!isFiniteF(*(type *)sp[-2].p)) { cstDump(ip); Sys_Error("assign '%s' with NAN/INF (0)", #op); } \
+      if (!isFiniteF(sp[-1].mem)) { cstDump(ip); Sys_Error("assign '%s' with NAN/INF (1)", #op); } \
+      *(type *)sp[-2].p op sp[-1].mem; \
+      if (!isFiniteF(*(type *)sp[-2].p)) { cstDump(ip); Sys_Error("assign '%s' with NAN/INF (3)", #op); } \
+      sp -= 2; \
+      ++ip;
+#else
+    #define ASSIGNOP(type, mem, op) \
+      ++ip; \
+      *(type *)sp[-2].p op sp[-1].mem; \
+      sp -= 2;
+#endif
+    #define ASSIGNOPNN(type, mem, op) \
       ++ip; \
       *(type *)sp[-2].p op sp[-1].mem; \
       sp -= 2;
@@ -1430,6 +1480,9 @@ func_loop:
 
       PR_VM_CASE(OPC_FUnaryMinus)
         ++ip;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("unary with NAN/INF"); }
+#endif
         sp[-1].f = -sp[-1].f;
         PR_VM_BREAK;
 
@@ -1454,46 +1507,74 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VAdd)
-        ++ip;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-6].f) || !isFiniteF(sp[-5].f) || !isFiniteF(sp[-4].f)) { cstDump(ip); Sys_Error("vec+ op0 is NAN/INF"); }
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vec+ op1 is NAN/INF"); }
+#endif
         sp[-6].f += sp[-3].f;
         sp[-5].f += sp[-2].f;
         sp[-4].f += sp[-1].f;
         sp -= 3;
+        ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VSubtract)
-        ++ip;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-6].f) || !isFiniteF(sp[-5].f) || !isFiniteF(sp[-4].f)) { cstDump(ip); Sys_Error("vec- op0 is NAN/INF"); }
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vec- op1 is NAN/INF"); }
+#endif
         sp[-6].f -= sp[-3].f;
         sp[-5].f -= sp[-2].f;
         sp[-4].f -= sp[-1].f;
         sp -= 3;
+        ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPreScale)
         {
-          ++ip;
           float scale = sp[-4].f;
+#ifdef CHECK_FOR_NANS_INFS
+          if (!isFiniteF(scale)) { cstDump(ip); Sys_Error("vecprescale scale is NAN/INF"); }
+          if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecprescale vec is NAN/INF"); }
+#endif
           sp[-4].f = scale*sp[-3].f;
           sp[-3].f = scale*sp[-2].f;
           sp[-2].f = scale*sp[-1].f;
           --sp;
+          ++ip;
         }
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPostScale)
-        ++ip;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscale scale is NAN/INF"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecscale vec is NAN/INF"); }
+#endif
         sp[-4].f *= sp[-1].f;
         sp[-3].f *= sp[-1].f;
         sp[-2].f *= sp[-1].f;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscale scale is NAN/INF (exit)"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecscale vec is NAN/INF (exit)"); }
+#endif
         --sp;
+        ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VIScale)
-        ++ip;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("veciscale scale is NAN/INF"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("veciscale vec is NAN/INF"); }
+#endif
         sp[-4].f /= sp[-1].f;
         sp[-3].f /= sp[-1].f;
         sp[-2].f /= sp[-1].f;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("veciscale scale is NAN/INF (exit)"); }
+        if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("veciscale vec is NAN/INF (exit)"); }
+#endif
         --sp;
+        ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VEquals)
@@ -1509,10 +1590,13 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VUnaryMinus)
-        ++ip;
+#ifdef CHECK_FOR_NANS_INFS
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecunary vec is NAN/INF"); }
+#endif
         sp[-3].f = -sp[-3].f;
         sp[-2].f = -sp[-2].f;
         sp[-1].f = -sp[-1].f;
+        ++ip;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VFixParam)
@@ -1525,6 +1609,21 @@ func_loop:
         }
         PR_VM_BREAK;
 
+#ifdef CHECK_FOR_NANS_INFS
+    #define VASSIGNOP(op) \
+      { \
+        TVec *ptr = (TVec *)sp[-4].p; \
+        if (!isFiniteF(ptr->x) || !isFiniteF(ptr->y) || !isFiniteF(ptr->z)) { cstDump(ip); Sys_Error("vassign op '%s' op0 is NAN/INF", #op); } \
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vassign op '%s' op1 is NAN/INF", #op); } \
+        ptr->x op sp[-3].f; \
+        ptr->y op sp[-2].f; \
+        ptr->z op sp[-1].f; \
+        if (!isFiniteF(ptr->x) || !isFiniteF(ptr->y) || !isFiniteF(ptr->z)) { cstDump(ip); Sys_Error("vassign op '%s' op0 is NAN/INF (exit)", #op); } \
+        if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vassign op '%s' op1 is NAN/INF (exit)", #op); } \
+        sp -= 4; \
+        ++ip; \
+      }
+#else
     #define VASSIGNOP(op) \
       { \
         ++ip; \
@@ -1534,6 +1633,7 @@ func_loop:
         ptr->z op sp[-1].f; \
         sp -= 4; \
       }
+#endif
 
       PR_VM_CASE(OPC_VAssignDrop)
         VASSIGNOP(=);
@@ -1852,7 +1952,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_AssignPtrDrop)
-        ASSIGNOP(void *, p, =);
+        ASSIGNOPNN(void *, p, =);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_AssignBool0)
