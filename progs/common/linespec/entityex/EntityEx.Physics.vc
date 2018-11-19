@@ -802,24 +802,19 @@ final bool HitFloor()
     return true;
   }
 
-  if (bMissile && (bColideWithWorld ||
-    !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor))
-  {
+  if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
     Origin.z = FloorZ;
-    if (bBounceFloors || BounceType != BOUNCE_None)
-    {
+    if (bBounceFloors || BounceType != BOUNCE_None) {
       FloorBounceMissile();
       return false;
     }
-    if (bNoExplodeFloor)
-    {
+    if (bNoExplodeFloor) {
       // The spirit struck the ground
       Velocity.z = 0.0;
       HitFloorType();
       return false;
     }
-    if (bIgnoreFloorStep)
-    {
+    if (bIgnoreFloorStep) {
       // Minotaur floor fire can go up steps
       return false;
     }
@@ -949,144 +944,141 @@ final bool HitCeiling()
   return true;
 }
 
+
+//==========================================================================
+//
+//  TurnOffAllBouncingFlags
+//
+//==========================================================================
+void TurnOffAllBouncingFlags () {
+  bBounceWalls = false;
+  bBounceFloors = false;
+  bBounceCeilings = false;
+  bBounceOnActors = false;
+  bBounceOnAllActors = false;
+}
+
+
 //==========================================================================
 //
 //  FloorBounceMissile
 //
 //==========================================================================
-
-void FloorBounceMissile()
-{
+void FloorBounceMissile () {
   float vdot;
 
-  if (HitFloorType())
-  {
-    //  Landed on some kind of liquid.
-    if (bExplodeOnWater)
-    {
+  if (HitFloorType()) {
+    // landed on some kind of liquid
+    if (bExplodeOnWater) {
       ExplodeMissile(none);
       return;
     }
-    if (!bCanBounceWater)
-    {
+    if (!bCanBounceWater) {
       Destroy();
       return;
     }
   }
 
-  //  If number of bounces is limited.
-  if (BounceCount > 0 && --BounceCount <= 0)
-  {
+  // if number of bounces is limited
+  if (BounceCount > 0 && --BounceCount <= 0) {
     ExplodeMissile(none);
     return;
   }
 
   vdot = DotProduct(Velocity, Floor->normal);
 
-  if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic &&
-    !bMBFBounce)
-  {
-    Velocity -= 2.0 * (vdot * Floor->normal);
+  if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic && !bMBFBounce) {
+    Velocity -= 2.0*(vdot*Floor->normal);
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
     return;
   }
 
-  if (bMBFBounce)
-  {
-    Velocity = Velocity - (2.0 * (vdot * Floor->normal));
-    Velocity.z = Velocity.z * BounceFactor;
+  if (bMBFBounce) {
+    Velocity = Velocity-(2.0*(vdot*Floor->normal));
+    Velocity.z = Velocity.z*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
-  }
-  else
-  {
-    Velocity = (Velocity - (2.0 * (vdot * Floor->normal))) * BounceFactor;
+  } else {
+    Velocity = (Velocity-(2.0*(vdot*Floor->normal)))*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
   }
 
-  if (!bNoBounceSound && (BounceSound || SightSound))
-  {
-    PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
+  // put it to rest, or...
+  /*if (fabs(Velocity.z) <= 0.1) {
+    Velocity.z = 0;
+  } else*/ {
+    // ...play bounce sound
+    if (!bNoBounceSound && (BounceSound || SightSound)) {
+      PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
+    }
   }
 
-  if (bMBFBounce)
-  {
-    if (Velocity.z < ((Mass * Gravity) / 64.0))
-    {
+  if (bMBFBounce) {
+    if (Velocity.z < (Mass*Gravity)/64.0) {
       // Bring it to rest below a certain speed
       Velocity.z = 0.0;
     }
   }
 
-  if (bBounceAutoOff || BounceType == BOUNCE_Doom)
-  {
-    if (!bNoGravity && Velocity.z < (3.0 * 35.0))
-    {
+  //print("%C: bBounceFloors=%B; bBounceAutoOff=%B; bNoGravity=%B; Velocity.z=%s; btype=%s", self, bBounceFloors, bBounceAutoOff, bNoGravity, Velocity.z, BounceType);
+  //print("%C: Mass=%s; Gravity=%s; Velocity.z=%s; lim=%s", self, Mass, Gravity, Velocity.z, (Mass*Gravity)/64.0);
+  if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
+    if (!bNoGravity && Velocity.z < 1.8/*3.0*/*35.0) {
       BounceType = BOUNCE_None;
+      TurnOffAllBouncingFlags(); // otherwise it will bounce forever
     }
   }
 }
+
 
 //==========================================================================
 //
 //  CeilingBounceMissile
 //
 //==========================================================================
-
-final void CeilingBounceMissile()
-{
+final void CeilingBounceMissile () {
   float vdot;
 
-  //  If number of bounces is limited.
-  if (BounceCount > 0 && --BounceCount <= 0)
-  {
+  // if number of bounces is limited
+  if (BounceCount > 0 && --BounceCount <= 0) {
     ExplodeMissile(none);
     return;
   }
 
   vdot = DotProduct(Velocity, Ceiling->normal);
 
-  if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic &&
-    !bMBFBounce)
-  {
-    Velocity -= 2.0 * (vdot * Ceiling->normal);
+  if (bBounceLikeHeretic || BounceType == BOUNCE_Heretic && !bMBFBounce) {
+    Velocity -= 2.0*(vdot*Ceiling->normal);
     Angles.yaw = atan2(Velocity.y, Velocity.x);
     SetState(FindState('Death'));
     return;
   }
 
-  // Reverse momentum here for ceiling bounce
-  if (bMBFBounce)
-  {
-    Velocity = Velocity - (2.0 * (vdot * Ceiling->normal));
-    Velocity.z = Velocity.z * BounceFactor;
+  // reverse momentum here for ceiling bounce
+  if (bMBFBounce) {
+    Velocity = Velocity-(2.0*(vdot*Ceiling->normal));
+    Velocity.z = Velocity.z*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
-  }
-  else
-  {
-    Velocity = (Velocity - (2.0 * (vdot * Ceiling->normal))) * BounceFactor;
+  } else {
+    Velocity = (Velocity-(2.0*(vdot*Ceiling->normal)))*BounceFactor;
     Angles.yaw = atan2(Velocity.y, Velocity.x);
   }
 
-  if (!bNoBounceSound && (BounceSound || SightSound))
-  {
+  if (!bNoBounceSound && (BounceSound || SightSound)) {
     PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
   }
 
-  if (bMBFBounce)
-  {
-    if (Velocity.z < (Mass * Gravity / 64.0))
-    {
-      // Bring it to rest below a certain speed
+  if (bMBFBounce) {
+    if (Velocity.z < (Mass * Gravity / 64.0)) {
+      // bring it to rest below a certain speed
       Velocity.z = 0.0;
     }
   }
 
-  if (bBounceAutoOff || BounceType == BOUNCE_Doom)
-  {
-    if (!bNoGravity && Velocity.z < (3.0 * 35.0))
-    {
+  if (bBounceAutoOff || BounceType == BOUNCE_Doom) {
+    if (!bNoGravity && Velocity.z < 1.8/*3.0*/*35.0) {
       BounceType = BOUNCE_None;
+      TurnOffAllBouncingFlags(); // otherwise it will bounce forever
     }
   }
 }
