@@ -1853,6 +1853,10 @@ static VExpression *ParseExpressionPriority7 (VScriptParser *sc) {
     } else if (sc->Check("!=")) {
       VExpression *op2 = ParseExpressionPriority6(sc);
       op1 = new VBinary(VBinary::NotEquals, op1, op2, l);
+    } else if (sc->Check("=")) {
+      GCon->Logf(NAME_Warning, "%s: hey, dumbhead, use `==` for comparisons!", *sc->GetLoc().toStringNoCol());
+      VExpression *op2 = ParseExpressionPriority6(sc);
+      op1 = new VBinary(VBinary::NotEquals, op1, op2, l);
     } else {
       done = true;
     }
