@@ -34,7 +34,8 @@ class PowerInvisibility : Powerup;
 override void InitEffect()
 {
   Owner.RenderStyle = STYLE_OptFuzzy;
-  Owner.Alpha = 0.2;
+  //Owner.Alpha = 0.2;
+  Owner.Alpha = 1.0-fclamp(Strength, 0.0, 100.0)/100.0;
   EntityEx(Owner).bShadow = true;
 }
 
@@ -104,4 +105,5 @@ defaultproperties
 {
   bShadow = true;
   EffectTime = 60.0;
+  Strength = 80;
 }

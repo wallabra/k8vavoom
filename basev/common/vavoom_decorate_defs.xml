@@ -394,6 +394,7 @@
     <prop_tics name="Powerup.Duration" property="EffectTime" />
     <prop_power_class name="Powerup.Type" property="PowerupType" prefix="Power" />
     <prop_name name="Powerup.Mode" property="Mode" />
+    <prop_float name="Powerup.Strength" property="Strength" />
   </class>
 
   <class name="PuzzleItem">

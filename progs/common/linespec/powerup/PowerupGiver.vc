@@ -33,6 +33,7 @@ class!Powerup PowerupType;
 float EffectTime;
 int BlendColour;
 name Mode;
+float Strength = -666; //k8:FIXME, i need a way to know if it is specified
 
 
 //==========================================================================
@@ -47,6 +48,9 @@ override bool Use (bool Pickup) {
   }
 
   Powerup Pw = Spawn(PowerupType, default, default, default, false);
+
+  auto pwi = PowerInvisibility(Pw);
+  if (pwi && Strength != -666) pwi.Strength = Strength;
 
   if (EffectTime) Pw.EffectTime = EffectTime > 0.0 ? EffectTime : -EffectTime * 35.0;
   if (BlendColour) Pw.BlendColour = BlendColour;

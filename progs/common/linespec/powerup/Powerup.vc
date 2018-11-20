@@ -31,6 +31,8 @@ class Powerup : Inventory abstract;
 float EffectTime;
 int BlendColour;
 name Mode;
+float Strength = 0; //k8:FIXME, i need a way to know if it is specified
+
 
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
