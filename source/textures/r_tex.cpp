@@ -282,27 +282,35 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
   // check for "NoTexture" marker
   if ((*Name)[0] == '-' && (*Name)[1] == 0) return 0;
 
-  int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
-  for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext) {
-    //fprintf(stderr, "CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d\n", *Name, HashIndex, i, Textures.length());
-    if (i < 0 || i >= Textures.length()) continue;
-    if (Textures[i]->Name != Name) continue;
-    //GCon->Logf("CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d; type=%d", *Name, HashIndex, i, Textures.length(), Textures[i]->Type);
+  VName currname = VName(*Name, VName::AddLower);
+  for (int trynum = 2; trynum > 0; --trynum) {
+    if (trynum == 1) {
+      // try short name too
+      if (VStr::length(*Name) <= 8) break;
+      currname = VName(*Name, VName::AddLower8);
+    }
+    int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
+    for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext) {
+      //fprintf(stderr, "CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d\n", *currname, HashIndex, i, Textures.length());
+      if (i < 0 || i >= Textures.length()) continue;
+      if (Textures[i]->Name != currname) continue;
+      //GCon->Logf("CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d; type=%d", *currname, HashIndex, i, Textures.length(), Textures[i]->Type);
 
-    if (Type == TEXTYPE_Any || Textures[i]->Type == Type ||
-        (bOverload && Textures[i]->Type == TEXTYPE_Overload))
-    {
-      if (Textures[i]->Type == TEXTYPE_Null) return 0;
-      return i;
+      if (Type == TEXTYPE_Any || Textures[i]->Type == Type ||
+          (bOverload && Textures[i]->Type == TEXTYPE_Overload))
+      {
+        if (Textures[i]->Type == TEXTYPE_Null) return 0;
+        return i;
+      }
+      /*
+      if ((Type == TEXTYPE_Wall && Textures[i]->Type == TEXTYPE_WallPatch) ||
+          (Type == TEXTYPE_WallPatch && Textures[i]->Type == TEXTYPE_Wall))
+      {
+        if (Textures[i]->Type == TEXTYPE_Null) return 0;
+        return i;
+      }
+      */
     }
-    /*
-    if ((Type == TEXTYPE_Wall && Textures[i]->Type == TEXTYPE_WallPatch) ||
-        (Type == TEXTYPE_WallPatch && Textures[i]->Type == TEXTYPE_Wall))
-    {
-      if (Textures[i]->Type == TEXTYPE_Null) return 0;
-      return i;
-    }
-    */
   }
 
   if (bCheckAny) return CheckNumForName(Name, TEXTYPE_Any, bOverload, false);
@@ -438,6 +446,71 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
 
 //==========================================================================
 //
+//  VTextureManager::findAndLoadTexture
+//
+//  FIXME: make this faster!
+//
+//==========================================================================
+static bool findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
+  VName PatchName(*Name, VName::AddLower8);
+  // need to collect 'em to go in backwards order
+  TArray<int> fulllist; // full names
+  TArray<int> shortlist; // short names
+  for (int LNum = W_IterateNS(-1, NS); LNum >= 0; LNum = W_IterateNS(LNum, NS)) {
+    //GCon->Logf("FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
+    VName lmpname = W_LumpName(LNum);
+         if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
+    else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);
+  }
+  // now go with first list (full name)
+  for (int f = fulllist.length()-1; f >= 0; --f) {
+    int LNum = fulllist[f];
+    VTexture *tex = VTexture::CreateTexture(Type, LNum);
+    if (!tex) continue;
+    GTextureManager.AddTexture(tex);
+    // if lump name is not identical to short, add with short name too
+    if (VStr::ICmp(*W_LumpName(LNum), *PatchName) != 0) {
+      tex = VTexture::CreateTexture(Type, LNum);
+      tex->Name = PatchName;
+      GTextureManager.AddTexture(tex);
+    }
+    return true;
+  }
+  // and with second list (short name)
+  for (int f = shortlist.length()-1; f >= 0; --f) {
+    int LNum = shortlist[f];
+    VTexture *tex = VTexture::CreateTexture(Type, LNum);
+    if (!tex) continue;
+    GTextureManager.AddTexture(tex);
+    // if lump name is not identical to long, add with long name too
+    if (VStr::ICmp(*W_LumpName(LNum), *Name) != 0) {
+      tex = VTexture::CreateTexture(Type, LNum);
+      tex->Name = VName(*Name, VName::AddLower);
+      GTextureManager.AddTexture(tex);
+    }
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  warnMissingTexture
+//
+//==========================================================================
+static void warnMissingTexture (VName Name, bool silent) {
+  if (Name == NAME_None) return; // just in case
+  if (!patchesWarned.put(*VName(*Name, VName::AddLower))) {
+    if (!silent) {
+      GCon->Logf(NAME_Warning,"Texture: texture \"%s\" not found", *Name);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::AddPatch
 //
 //==========================================================================
@@ -448,6 +521,22 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
 
+  // load it
+  if (findAndLoadTexture(Name, Type, WADNS_Patches) ||
+      findAndLoadTexture(Name, Type, WADNS_Graphics) ||
+      findAndLoadTexture(Name, Type, WADNS_Sprites) ||
+      findAndLoadTexture(Name, Type, WADNS_Flats) ||
+      findAndLoadTexture(Name, Type, WADNS_Global))
+  {
+    int tidx = CheckNumForName(Name, Type);
+    check(tidx > 0);
+    return tidx;
+  }
+
+  warnMissingTexture(Name, Silent);
+  return -1;
+
+  /*
   // find the lump number
   //GCon->Logf("VTextureManager::AddPatch: '%s' (%d)", *Name, Type);
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
@@ -455,16 +544,17 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
   if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
   if (LumpNum < 0) {
-    if (!patchesWarned.put(*Name)) {
+    if (!patchesWarned.put(*VName(*Name, VName::AddLower))) {
       if (!Silent) {
         GCon->Logf(NAME_Warning, "VTextureManager::AddPatch: Pic \"%s\" not found", *Name);
       }
     }
     return -1;
   }
+  */
 
   // create new patch texture
-  return AddTexture(VTexture::CreateTexture(Type, LumpNum));
+  //return AddTexture(VTexture::CreateTexture(Type, LumpNum));
   unguard;
 }
 
@@ -479,6 +569,7 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
 //==========================================================================
 int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
   guard(VTextureManager::AddRawWithPal);
+  //TODO
   int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
   if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
@@ -595,26 +686,20 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
 int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent) {
   int tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
   if (tidx >= 0) return tidx;
-  VName PatchName(*Name, VName::AddLower8);
-  // get wad lump number
-  int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
-  // sprites also can be used as patches
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Graphics); // just in case
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Flats); // why not?
-  if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
-  // add it to textures
-  if (LNum >= 0) {
-    VTexture *tex = VTexture::CreateTexture(/*TEXTYPE_WallPatch*/Type, LNum);
-    if (tex) {
-      GCon->Logf(NAME_Init, "Textures: force-loaded texture \"%s\"", *Name);
-      AddTexture(tex);
-      tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
-      check(tidx >= 0);
-      return tidx;
-    }
+  // load it
+  if (findAndLoadTexture(Name, Type, WADNS_Patches) ||
+      findAndLoadTexture(Name, Type, WADNS_Sprites) || // sprites also can be used as patches
+      findAndLoadTexture(Name, Type, WADNS_Graphics) || // just in case
+      findAndLoadTexture(Name, Type, WADNS_Flats) || // why not?
+      findAndLoadTexture(Name, Type, WADNS_Global))
+  {
+    tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
+    check(tidx > 0);
+    return tidx;
   }
-  if (!silent) GCon->Logf(NAME_Warning, "Textures: missing texture \"%s\"", *Name);
+  // alas
+  //if (!silent) GCon->Logf(NAME_Warning, "Textures: missing texture \"%s\"", *Name);
+  warnMissingTexture(Name, silent);
   return -1;
 }
 
