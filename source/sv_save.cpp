@@ -221,7 +221,7 @@ public:
     if (!Ref) {
       TmpIdx = 0;
     } else {
-      TmpIdx = ObjectsMap[Ref->GetIndex()];
+      TmpIdx = ObjectsMap[Ref->GetObjectIndex()];
     }
     return *this << STRM_INDEX(TmpIdx);
     unguard;
@@ -1003,14 +1003,14 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
 
   // add level
   Saver->Exports.Append(GLevel);
-  Saver->ObjectsMap[GLevel->GetIndex()] = Saver->Exports.Num();
+  Saver->ObjectsMap[GLevel->GetObjectIndex()] = Saver->Exports.Num();
 
   // add world info
   vuint8 WorldInfoSaved = (byte)SavingPlayers;
   *Saver << WorldInfoSaved;
   if (WorldInfoSaved) {
     Saver->Exports.Append(GGameInfo->WorldInfo);
-    Saver->ObjectsMap[GGameInfo->WorldInfo->GetIndex()] = Saver->Exports.Num();
+    Saver->ObjectsMap[GGameInfo->WorldInfo->GetObjectIndex()] = Saver->Exports.Num();
   }
 
   // add players
@@ -1019,7 +1019,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     *Saver << Active;
     if (!Active) continue;
     Saver->Exports.Append(GGameInfo->Players[i]);
-    Saver->ObjectsMap[GGameInfo->Players[i]->GetIndex()] = Saver->Exports.Num();
+    Saver->ObjectsMap[GGameInfo->Players[i]->GetObjectIndex()] = Saver->Exports.Num();
   }
 
   // add thinkers
@@ -1028,7 +1028,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     VEntity *mobj = Cast<VEntity>(*Th);
     if (mobj != nullptr && mobj->EntityFlags & VEntity::EF_IsPlayer && !SavingPlayers) continue; // skipping player mobjs
     Saver->Exports.Append(*Th);
-    Saver->ObjectsMap[Th->GetIndex()] = Saver->Exports.Num();
+    Saver->ObjectsMap[Th->GetObjectIndex()] = Saver->Exports.Num();
   }
 
   vint32 NumObjects = Saver->Exports.Num()-ThinkersStart;

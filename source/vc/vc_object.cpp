@@ -48,6 +48,7 @@ VClass VObject::PrivateStaticClass (
 );
 VClass *autoclassVObject = VObject::StaticClass();
 
+static vuint32 gLastUsedUniqueId = 0;
 bool VObject::GObjInitialised = false;
 TArray<VObject*> VObject::GObjObjects;
 #ifdef VC_USE_OLD_GC
@@ -85,7 +86,7 @@ void VScriptIterator::Finished () {
 //  VObject::VObject
 //
 //==========================================================================
-VObject::VObject () {
+VObject::VObject () : Index(-1), UniqueId(0) {
 }
 
 
@@ -96,6 +97,9 @@ VObject::VObject () {
 //==========================================================================
 VObject::~VObject () {
   //guard(VObject::~VObject);
+
+  check(Index >= 0);
+  //if (Index == -1) return; // the thing that should not be
 
   ConditionalDestroy();
   --GNumDeleted;
@@ -113,16 +117,25 @@ VObject::~VObject () {
     }
   }
 
+#if 0
   if (Index == GObjObjects.Num()-1) {
     GObjObjects.RemoveIndex(Index);
   } else {
     GObjObjects[Index] = nullptr;
-#ifdef VC_USE_OLD_GC
+# ifdef VC_USE_OLD_GC
     GObjAvailable.Append(Index);
-#else
+# else
     gObjAvailable.put(Index, true);
-#endif
+# endif
   }
+#else
+  GObjObjects[Index] = nullptr;
+# ifdef VC_USE_OLD_GC
+  GObjAvailable.Append(Index);
+# else
+  gObjAvailable.put(Index, true);
+# endif
+#endif
 
   //unguard;
 }
@@ -274,6 +287,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 //==========================================================================
 void VObject::Register () {
   guard(VObject::Register);
+  UniqueId = gLastUsedUniqueId++;
 #ifdef VC_USE_OLD_GC
   if (GObjAvailable.Num()) {
     Index = GObjAvailable[GObjAvailable.Num()-1];
@@ -283,6 +297,7 @@ void VObject::Register () {
     Index = GObjObjects.Append(this);
   }
 #else
+  if (gLastUsedUniqueId == 0) ++gLastUsedUniqueId;
   auto it = gObjAvailable.first();
   if (it) {
     Index = it.getKey();
@@ -515,17 +530,39 @@ void VObject::CollectGarbage (bool destroyDelayed) {
       }
     }
 
-    // rebuild free list if we have too much objects at its end
-    if (GObjObjects.length() >= 1024) {
-      int lastused = GObjObjects.length()-1;
-      while (lastused >= 0 && !GObjObjects[lastused]) --lastused;
-      if (lastused+256 < GObjObjects.length()) {
-        gObjAvailable.clear();
-        GObjObjects.setLength(lastused+64);
-        for (int f = lastused; f < GObjObjects.length(); ++f) GObjObjects[f] = nullptr;
-        for (int f = 0; f < GObjObjects.length(); ++f) {
-          if (!GObjObjects[f]) gObjAvailable.put(f, true);
+    // rebuild free list if we have too much free space there
+    if (alive+512 < GObjObjects.length()) {
+      gObjAvailable.clear();
+      gDelayDeadObjects.clear();
+      gDeadObjects.reset();
+      int currFreeIdx = 0;
+      while (currFreeIdx < GObjObjects.length() && GObjObjects[currFreeIdx]) {
+        check(GObjObjects[currFreeIdx]->Index == currFreeIdx);
+        ++currFreeIdx;
+      }
+      check(currFreeIdx < GObjObjects.length());
+      int currObjIdx = currFreeIdx+1;
+      // move other objects up (and do integrity checks)
+      while (currObjIdx < GObjObjects.length()) {
+        VObject *obj = GObjObjects[currObjIdx];
+        if (obj) {
+          check(currFreeIdx < GObjObjects.length());
+          check(obj->Index == currObjIdx);
+          GObjObjects[currFreeIdx] = obj;
+          obj->Index = currFreeIdx;
+          GObjObjects[currObjIdx] = nullptr;
+          // just in case
+          if ((obj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) gDelayDeadObjects.put(obj->Index, true);
+          while (currFreeIdx < GObjObjects.length() && GObjObjects[currFreeIdx]) ++currFreeIdx;
         }
+        ++currObjIdx;
+      }
+      // ok, we compacted the list, now shrink it
+      check(currFreeIdx < GObjObjects.length());
+      GObjObjects.setLength(currFreeIdx+256, (currFreeIdx*2 < GObjObjects.NumAllocated())); // resize if the array is too big
+      for (int f = currFreeIdx; f < GObjObjects.length(); ++f) {
+        GObjObjects[f] = nullptr;
+        gObjAvailable.put(f, true);
       }
     }
   }
@@ -536,9 +573,9 @@ void VObject::CollectGarbage (bool destroyDelayed) {
 #if !defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
   if (GGCMessagesAllowed && realdead) {
 #if defined(VCC_STANDALONE_EXECUTOR)
-    fprintf(stderr, "GC: %d objects deleted (%d objects left, array size is %d)\n", count, alive, GObjObjects.length());
+    fprintf(stderr, "GC: %d objects deleted (%d objects left, array size is %d (allocated %d))\n", count, alive, GObjObjects.length(), GObjObjects.NumAllocated());
 #else
-    GCon->Logf("GC: %d objects deleted (%d objects left, array size is %d)", count, alive, GObjObjects.length());
+    GCon->Logf("GC: %d objects deleted (%d objects left, array size is %d (allocated %d))", count, alive, GObjObjects.length(), GObjObjects.NumAllocated());
 #endif
   }
 #endif
@@ -556,6 +593,7 @@ void VObject::CollectGarbage (bool destroyDelayed) {
 //
 //==========================================================================
 VObject *VObject::GetIndexObject (int Index) {
+  check(Index >= 0 && Index < GObjObjects.length());
   return GObjObjects[Index];
 }
 
@@ -658,7 +696,7 @@ public:
     while (Index < VObject::GetObjectsCount()) {
       VObject *Check = VObject::GetIndexObject(Index);
       ++Index;
-      if (Check != nullptr && !(Check->GetFlags()&_OF_DelayedDestroy) && Check->IsA(BaseClass)) {
+      if (Check != nullptr && !(Check->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) && Check->IsA(BaseClass)) {
         *Out = Check;
         return true;
       }
@@ -667,6 +705,7 @@ public:
     return false;
   }
 };
+
 
 //==========================================================================
 //

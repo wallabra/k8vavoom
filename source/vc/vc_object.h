@@ -123,6 +123,7 @@ private:
   // internal per-object variables
   VMethod **vtable;
   vint32 Index; // index of object into table
+  vuint32 UniqueId; // monotonically increasing
   vuint32 ObjectFlags; // private EObjectFlags used by object manager
   VClass *Class; // class the object belongs to
 
@@ -186,7 +187,8 @@ public:
   //inline void SetFlags (vuint32 NewFlags) { ObjectFlags |= NewFlags; }
   void SetFlags (vuint32 NewFlags);
   inline void ClearFlags (vuint32 NewFlags) { ObjectFlags &= ~NewFlags; }
-  inline vuint32 GetIndex () const { return Index; }
+  inline vuint32 GetObjectIndex () const { return Index; }
+  inline vuint32 GetUniqueId () const { return UniqueId; }
   inline VMethod *GetVFunctionIdx (int InIndex) const { return vtable[InIndex]; }
 
   VMethod *GetVFunction (VName FuncName) const;
@@ -248,7 +250,8 @@ public:
 template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
 template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), false); } // don't skip replacement
 
-inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
+//inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
+inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetUniqueId() : 0); }
 
 // helper macros for implementing native VavoomC functions and calls to the VavoomC methods:
 // this will make it simpler to port it to 64 bit platforms

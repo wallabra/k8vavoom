@@ -30,6 +30,7 @@
 native readonly private transient void *CxxVTable;
 native readonly private transient void *VTable;
 native readonly private transient int ObjectIndex;
+native readonly private transient int ObjectUniqueId;
 native readonly private transient int ObjectFlags;
 native readonly transient class Class;
 
