@@ -747,6 +747,10 @@ final void A_ThrowGrenade(class!Actor ItemType, optional float SpawnHeight,
     UseAmmo = true;
   }
 
+  //print("bIsPlayer: %B", bIsPlayer);
+  Entity owo = Owner;
+  if (!owo) owo = self;
+
   //  If called from weapon, then use ammo.
   if (bIsPlayer &&
     (XLevel.CallingState == Player.ViewStates[ps_weapon].State ||
@@ -763,8 +767,8 @@ final void A_ThrowGrenade(class!Actor ItemType, optional float SpawnHeight,
     }
   }
 
-  Actor A = Spawn(ItemType, Owner.Origin +
-    vector(0.0, 0.0, SpawnHeight + 35.0 - Owner.FloorClip));
+  Actor A = Spawn(ItemType, owo.Origin +
+    vector(0.0, 0.0, SpawnHeight + 35.0 - owo.FloorClip));
   if (A)
   {
     A.PlayMissileSpawnSound(self);
@@ -772,10 +776,10 @@ final void A_ThrowGrenade(class!Actor ItemType, optional float SpawnHeight,
     {
       A.Speed = XYVel * 35.0;
     }
-    A.Angles.yaw = AngleMod360(Owner.Angles.yaw +
+    A.Angles.yaw = AngleMod360(owo.Angles.yaw +
       (Random() * 2.0 - 1.0) * 45.0 / 8.0);
-    A.Velocity.z = (ZVel + 2.0 * sin(Owner.Angles.pitch)) * 35.0;
-    A.Origin.z += 2.0 * sin(Owner.Angles.pitch);
+    A.Velocity.z = (ZVel + 2.0 * sin(owo.Angles.pitch)) * 35.0;
+    A.Origin.z += 2.0 * sin(owo.Angles.pitch);
     A.Velocity.x += A.Speed * cos(A.Angles.yaw);
     A.Velocity.y += A.Speed * sin(A.Angles.yaw);
     A.Velocity.x += Velocity.x / 2.0;
