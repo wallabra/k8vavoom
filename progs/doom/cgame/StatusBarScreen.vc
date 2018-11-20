@@ -313,6 +313,24 @@ void SB_DrawSmallNum (int x, int y, int num) {
 
 //==========================================================================
 //
+//  SB_DrawMainBarPre
+//
+//==========================================================================
+void SB_DrawMainBarPre () {
+}
+
+
+//==========================================================================
+//
+//  SB_DrawMainBarPost
+//
+//==========================================================================
+void SB_DrawMainBarPost () {
+}
+
+
+//==========================================================================
+//
 //  SB_DrawMainBar
 //
 //==========================================================================
@@ -548,17 +566,21 @@ override void SB_Drawer (int sb_view) {
   //SetVirtualScreen(640, 480);
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();
+  if (Width != ovw) Width = ovw;
+  if (Height != ovh) Height = ovh;
   if (sb_view == SB_VIEW_FULLSCREEN) {
-    if (Width != ovw) Width = ovw;
-    if (Height != ovh) Height = ovh;
     SB_DrawFullscreenStats();
   } else {
     // this is broken for now
+    SB_DrawMainBarPre();
     SetVirtualScreen(640, 480);
     if (Width != 640) Width = 640;
     if (Height != 480) Height = 480;
     SB_DrawMainBar();
     SetVirtualScreen(ovw, ovh);
+    if (Width != ovw) Width = ovw;
+    if (Height != ovh) Height = ovh;
+    SB_DrawMainBarPost();
   }
   SB_DrawPause();
 }
