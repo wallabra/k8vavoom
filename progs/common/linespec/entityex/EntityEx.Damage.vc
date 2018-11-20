@@ -472,7 +472,8 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     } else if (!source || !source.bIsPlayer) {
       kickback = LineSpecialGameInfo(Level.Game).DefaultKickBack;
     } else {
-      kickback = PlayerEx(source.Player).ReadyWeapon.Kickback;
+      auto wpn = PlayerEx(source.Player).ReadyWeapon;
+      kickback = (wpn ? wpn.Kickback : LineSpecialGameInfo(Level.Game).DefaultKickBack);
     }
     if (kickback) {
       TVec dir;
