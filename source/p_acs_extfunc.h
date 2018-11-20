@@ -94,7 +94,7 @@
   ACS_EXTFUNC(SetSectorDamage)
   ACS_EXTFUNC(SetSectorTerrain)
   ACS_EXTFUNC(SpawnParticle)
-  ACS_EXTFUNC(SetMusicVolume)
+  ACS_EXTFUNC(SetMusicVolume) // ignored
   ACS_EXTFUNC(CheckProximity)
   ACS_EXTFUNC(CheckActorState) // 99
   /* Zandronum's - these must be skipped when we reach 99!

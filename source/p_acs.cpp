@@ -2433,7 +2433,11 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
 
     case ACSF_SoundVolume:
-      GCon->Logf("ERROR: unimplemented ACSF function 'SoundVolume'");
+      //GCon->Logf("ERROR: unimplemented ACSF function 'SoundVolume'");
+      return 0;
+
+    case ACSF_SetMusicVolume:
+      //GCon->Logf("ERROR: unimplemented ACSF function 'SetMusicVolume'");
       return 0;
 
     case ACSF_GetActorVelX:
