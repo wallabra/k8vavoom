@@ -101,6 +101,17 @@ enum /*EFireCustomMissileFlags*/ {
   FPF_NOAUTOAIM = 4,
 };
 
+// for `A_Saw`
+const int SF_NORANDOM = 1;
+const int SF_RANDOMLIGHTMISS = 2;
+const int SF_RANDOMLIGHTHIT = 4;
+const int SF_RANDOMLIGHTBOTH = 6;
+const int SF_NOUSEAMMOMISS = 8;
+const int SF_NOUSEAMMO = 16;
+const int SF_NOPULLIN = 32; // not implemented
+const int SF_NOTURN = 64;
+const int SF_STEALARMOR = 128; // not implemented
+
 
 //==========================================================================
 //
@@ -1144,7 +1155,9 @@ final void A_Saw () {
 //
 //===========================================================================
 final void decorate_A_Saw (optional name FullSound, optional name HitSound,
-  optional int SawDamage, optional class!Actor PuffType)
+  optional int SawDamage, optional class!Actor PuffType,
+  optional int flags, optional float range, optional float spread_xy, optional float spread_z
+  /*, optional float lifesteal, optional float lifestealmax, string armorbonustype*/)
 {
   //float angle;
   //int damage;
@@ -1161,43 +1174,79 @@ final void decorate_A_Saw (optional name FullSound, optional name HitSound,
 
   if (!SawDamage) SawDamage = 2;
   if (!PuffType) PuffType = BulletPuff;
+  if (!specified_range || !range) range = SAWRANGE;
+  range = fmax(1.0, range); // just in case
+
+  int oldAmmo1, oldAmmo2;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn) {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+    oldAmmo1 = (Wpn.Ammo1 ? Wpn.Ammo1.Amount : 0);
+    oldAmmo2 = (Wpn.Ammo2 ? Wpn.Ammo2.Amount : 0);
+    if (!(flags&SF_NOUSEAMMO)) {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+    }
   }
 
-  int damage = SawDamage*(P_Random()%10+1);
+  int damage = SawDamage;
+  if (!(flags&SF_NORANDOM)) damage *= P_Random()%10+1;
+
   TAVec aimAng = Angles;
   aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
-  EntityEx AimTarget = AimLineAttack(dir, aimAng, SAWRANGE);
-  LineAttack(dir, SAWRANGE, damage, PuffType, default, default, 'Chainsaw');
+  EntityEx AimTarget = AimLineAttack(dir, aimAng, range/*SAWRANGE*/);
+  LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw');
 
   if (!AimTarget) {
+    // miss
+    if (Wpn && !(flags&SF_NOUSEAMMO) && (flags&SF_NOUSEAMMOMISS)) {
+      // restore ammo
+      if (Wpn.Ammo1) Wpn.Ammo1.Amount = oldAmmo1;
+      if (Wpn.Ammo2) Wpn.Ammo2.Amount = oldAmmo2;
+    }
+    // light
+    if (flags&SF_RANDOMLIGHTMISS) {
+      auto randVal = P_Random();
+           if (randVal < 64) Player.ExtraLight = 0;
+      else if (randVal < 160) Player.ExtraLight = 1;
+      else Player.ExtraLight = 2;
+    }
     PlaySound(FullSound, CHAN_WEAPON);
     return;
   }
+
   PlaySound(HitSound, CHAN_WEAPON);
 
   // turn to face target
-  float angle = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
-  if (AngleMod360(angle-Angles.yaw) > 180.0) {
-    if (AngleMod360(angle-Angles.yaw) < -90.0/20.0) {
-      Angles.yaw = angle+90.0/21.0;
+  if (!(flags&SF_NOTURN)) {
+    float angle = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
+    if (AngleMod360(angle-Angles.yaw) > 180.0) {
+      if (AngleMod360(angle-Angles.yaw) < -90.0/20.0) {
+        Angles.yaw = angle+90.0/21.0;
+      } else {
+        Angles.yaw = Angles.yaw-90.0/20.0;
+      }
     } else {
-      Angles.yaw = Angles.yaw-90.0/20.0;
-    }
-  } else {
-    if (AngleMod360(angle-Angles.yaw) > 90.0/20.0) {
-      Angles.yaw = angle-90.0/21.0;
-    } else {
-      Angles.yaw += 90.0/20.0;
+      if (AngleMod360(angle-Angles.yaw) > 90.0/20.0) {
+        Angles.yaw = angle-90.0/21.0;
+      } else {
+        Angles.yaw += 90.0/20.0;
+      }
     }
   }
   Angles.yaw = AngleMod360(Angles.yaw);
+
   bJustAttacked = true;
-  if (bIsPlayer) Player.bFixAngle = true;
+  if (bIsPlayer) {
+    Player.bFixAngle = true;
+    // light
+    if (flags&SF_RANDOMLIGHTHIT) {
+      auto randVal = P_Random();
+           if (randVal < 64) Player.ExtraLight = 0;
+      else if (randVal < 160) Player.ExtraLight = 1;
+      else Player.ExtraLight = 2;
+    }
+  }
 }
 
 
