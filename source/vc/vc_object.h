@@ -129,7 +129,7 @@ private:
   // private systemwide variables
   static bool GObjInitialised;
   static TArray<VObject*> GObjObjects; // list of all objects.
-  static TArray<int> GObjAvailable; // available object indices
+  //static TArray<int> GObjAvailable; // available object indices (replaced with private map)
   static VObject *GObjHash[4096]; // object hash
   static int GNumDeleted;
   static bool GInGarbageCollection;
@@ -183,7 +183,8 @@ public:
   // accessors
   inline VClass *GetClass () const { return Class; }
   inline vuint32 GetFlags () const { return ObjectFlags; }
-  inline void SetFlags (vuint32 NewFlags) { ObjectFlags |= NewFlags; }
+  //inline void SetFlags (vuint32 NewFlags) { ObjectFlags |= NewFlags; }
+  void SetFlags (vuint32 NewFlags);
   inline void ClearFlags (vuint32 NewFlags) { ObjectFlags &= ~NewFlags; }
   inline vuint32 GetIndex () const { return Index; }
   inline VMethod *GetVFunctionIdx (int InIndex) const { return vtable[InIndex]; }

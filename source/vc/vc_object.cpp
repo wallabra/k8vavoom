@@ -34,6 +34,8 @@
 # endif
 #endif
 
+//#define VC_USE_OLD_GC
+
 
 // register a class at startup time
 VClass VObject::PrivateStaticClass (
@@ -48,7 +50,11 @@ VClass *autoclassVObject = VObject::StaticClass();
 
 bool VObject::GObjInitialised = false;
 TArray<VObject*> VObject::GObjObjects;
-TArray<int> VObject::GObjAvailable;
+#ifdef VC_USE_OLD_GC
+static TArray<int> GObjAvailable;
+#else
+static TMapNC<int, bool> gObjAvailable;
+#endif
 VObject *VObject::GObjHash[4096];
 int VObject::GNumDeleted = 0;
 bool VObject::GInGarbageCollection = false;
@@ -58,6 +64,10 @@ bool VObject::GImmediadeDelete = true;
 #endif
 bool VObject::GGCMessagesAllowed = false;
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
+
+// to speed up garbage collection
+static TMapNC<int, bool> gDeadObjects; // objects marked for deletion
+static TMapNC<int, bool> gDelayDeadObjects; // objects marked for delayed deletion
 
 
 //==========================================================================
@@ -93,6 +103,8 @@ VObject::~VObject () {
 
   if (!GInGarbageCollection) {
     //fprintf(stderr, "Cleaning up for `%s`\n", *this->GetClass()->Name);
+    gDeadObjects.del(Index); // delete us from dead object list (just in case)
+    gDelayDeadObjects.del(Index); // and from here too
     SetFlags(_OF_CleanupRef);
     for (int i = 0; i < GObjObjects.Num(); ++i) {
       VObject *Obj = GObjObjects[i];
@@ -105,7 +117,11 @@ VObject::~VObject () {
     GObjObjects.RemoveIndex(Index);
   } else {
     GObjObjects[Index] = nullptr;
+#ifdef VC_USE_OLD_GC
     GObjAvailable.Append(Index);
+#else
+    gObjAvailable.put(Index, true);
+#endif
   }
 
   //unguard;
@@ -174,7 +190,11 @@ void VObject::StaticExit () {
   for (int i = 0; i < GObjObjects.Num(); ++i) if (GObjObjects[i]) GObjObjects[i]->ConditionalDestroy();
   CollectGarbage();
   GObjObjects.Clear();
+#ifdef VC_USE_OLD_GC
   GObjAvailable.Clear();
+#else
+  gObjAvailable.clear();
+#endif
   GObjInitialised = false;
   VMemberBase::StaticExit();
 }
@@ -254,6 +274,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 //==========================================================================
 void VObject::Register () {
   guard(VObject::Register);
+#ifdef VC_USE_OLD_GC
   if (GObjAvailable.Num()) {
     Index = GObjAvailable[GObjAvailable.Num()-1];
     GObjAvailable.RemoveIndex(GObjAvailable.Num()-1);
@@ -261,7 +282,38 @@ void VObject::Register () {
   } else {
     Index = GObjObjects.Append(this);
   }
+#else
+  auto it = gObjAvailable.first();
+  if (it) {
+    Index = it.getKey();
+    GObjObjects[Index] = this;
+    //gObjAvailable.remove(Index);
+    it.removeCurrent();
+  } else {
+    Index = GObjObjects.Append(this);
+  }
+#endif
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VObject::SetFlags
+//
+//==========================================================================
+void VObject::SetFlags (vuint32 NewFlags) {
+  if ((NewFlags&_OF_Destroyed) && !(ObjectFlags&_OF_Destroyed)) {
+    // new dead object
+    gDeadObjects.put(Index, true);
+    // if we're in GC, chances are we're cleaning this up, so don't remove from delayed list
+    if (!GInGarbageCollection && (ObjectFlags&_OF_DelayedDestroy)) gDelayDeadObjects.del(Index);
+    ++GNumDeleted;
+  } else if ((NewFlags&_OF_DelayedDestroy) && !(ObjectFlags&_OF_DelayedDestroy)) {
+    gDelayDeadObjects.put(Index, true);
+    ++GNumDeleted;
+  }
+  ObjectFlags |= NewFlags;
 }
 
 
@@ -272,7 +324,7 @@ void VObject::Register () {
 //==========================================================================
 bool VObject::ConditionalDestroy () {
   if (!(ObjectFlags&_OF_Destroyed)) {
-    ++GNumDeleted;
+    //++GNumDeleted;
     SetFlags(_OF_Destroyed);
     Destroy();
   }
@@ -288,7 +340,7 @@ bool VObject::ConditionalDestroy () {
 void VObject::Destroy () {
   Class->DestructObject(this);
   if (!(ObjectFlags&_OF_Destroyed)) {
-    ++GNumDeleted;
+    //++GNumDeleted;
     SetFlags(_OF_Destroyed);
   }
 }
@@ -338,11 +390,13 @@ void VObject::CollectGarbage (bool destroyDelayed) {
   guard(VObject::CollectGarbage);
 
   if (!GNumDeleted && !destroyDelayed) return;
+  if (GNumDeleted < 0) GNumDeleted = 0;
 
   GInGarbageCollection = true;
 
   // destroy all delayed-destroy objects
   if (destroyDelayed) {
+#ifdef VC_USE_OLD_GC
     for (int i = 0; i < GObjObjects.length(); ++i) {
       VObject *Obj = GObjObjects[i];
       if (!Obj) continue;
@@ -354,8 +408,21 @@ void VObject::CollectGarbage (bool destroyDelayed) {
       GInGarbageCollection = false;
       return;
     }
+#else
+    for (auto it = gDelayDeadObjects.first(); it; ++it) {
+      int idx = it.getKey();
+      if (idx < 0 || idx >= GObjObjects.length()) continue;
+      VObject *Obj = GObjObjects[idx];
+      if (!Obj) continue;
+      if ((Obj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) {
+        Obj->ConditionalDestroy();
+      }
+    }
+    gDelayDeadObjects.reset();
+#endif
   }
 
+#ifdef VC_USE_OLD_GC
   // mark objects to be cleaned
   for (int i = 0; i < GObjObjects.Num(); ++i) {
     VObject *Obj = GObjObjects[i];
@@ -407,6 +474,75 @@ void VObject::CollectGarbage (bool destroyDelayed) {
     GCon->Logf("GC: %d objects deleted (%d objects left, array size is %d)", count, left, GObjObjects.length());
 #endif
   }
+#endif
+
+#else
+  // mark objects to be cleaned
+  int realdead = 0;
+  for (auto it = gDeadObjects.first(); it; ++it) {
+    int i = it.getKey();
+    if (i < 0 || i >= GObjObjects.length()) continue;
+    VObject *Obj = GObjObjects[i];
+    if (!Obj) continue;
+    if (Obj->GetFlags()&_OF_Destroyed) {
+      ++realdead;
+      Obj->SetFlags(_OF_CleanupRef);
+    }
+  }
+
+  int alive = 0, count = 0;
+
+  if (realdead) {
+    // clean references
+    for (int i = 0; i < GObjObjects.Num(); ++i) {
+      VObject *Obj = GObjObjects[i];
+      if (!Obj || (Obj->GetFlags()&_OF_Destroyed)) continue;
+      Obj->ClearReferences();
+      ++alive;
+    }
+
+    // now actually delete the objects
+    for (auto it = gDeadObjects.first(); it; ++it) {
+      int i = it.getKey();
+      if (i < 0 || i >= GObjObjects.length()) continue;
+      VObject *Obj = GObjObjects[i];
+      if (!Obj) continue;
+      if (Obj->GetFlags()&_OF_Destroyed) {
+        ++count;
+        //GCon->Logf("deleting object #%d: %p (%s)", i, Obj, Obj->GetClass()->GetName());
+        delete Obj;
+        gDelayDeadObjects.del(i);
+      }
+    }
+
+    // rebuild free list if we have too much objects at its end
+    if (GObjObjects.length() >= 1024) {
+      int lastused = GObjObjects.length()-1;
+      while (lastused >= 0 && !GObjObjects[lastused]) --lastused;
+      if (lastused+256 < GObjObjects.length()) {
+        gObjAvailable.clear();
+        GObjObjects.setLength(lastused+64);
+        for (int f = lastused; f < GObjObjects.length(); ++f) GObjObjects[f] = nullptr;
+        for (int f = 0; f < GObjObjects.length(); ++f) {
+          if (!GObjObjects[f]) gObjAvailable.put(f, true);
+        }
+      }
+    }
+  }
+
+  GNumDeleted = 0;
+  gDeadObjects.reset();
+
+#if !defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+  if (GGCMessagesAllowed && realdead) {
+#if defined(VCC_STANDALONE_EXECUTOR)
+    fprintf(stderr, "GC: %d objects deleted (%d objects left, array size is %d)\n", count, alive, GObjObjects.length());
+#else
+    GCon->Logf("GC: %d objects deleted (%d objects left, array size is %d)", count, alive, GObjObjects.length());
+#endif
+  }
+#endif
+
 #endif
 
   GInGarbageCollection = false;
