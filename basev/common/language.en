@@ -1202,3 +1202,22 @@ bgflat30 = "RROCK17";
 bgflat15 = "RROCK13";
 bgflat31 = "RROCK19";
 bgcastcall = "BOSSBACK";
+
+
+SKILL_BABY      = "I'm too young to die";
+SKILL_EASY      = "Hey, not too rough";
+SKILL_NORMAL    = "Hurt me plenty";
+SKILL_HARD      = "Ultra-Violence";
+SKILL_NIGHTMARE = "NIGHTMARE!";
+
+CSKILL_BABY       = "Easy does it";
+CSKILL_EASY       = "Not so sticky";
+CSKILL_NORMAL     = "Gobs of goo";
+CSKILL_HARD       = "Extreme Ooze";
+CSKILL_NIGHTMARE  = "Super Slimey!";
+
+SSKILL_BABY       = "Training";
+SSKILL_EASY       = "Rookie";
+SSKILL_NORMAL     = "Veteran";
+SSKILL_HARD       = "Elite";
+SSKILL_NIGHTMARE  = "Bloodbath";
