@@ -128,15 +128,74 @@ void VWorldInfo::SetSkill(int ASkill)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWorldInfo
 //
 //==========================================================================
-
-IMPLEMENT_FUNCTION(VWorldInfo, SetSkill)
-{
+IMPLEMENT_FUNCTION(VWorldInfo, SetSkill) {
   P_GET_INT(Skill);
   P_GET_SELF;
   Self->SetSkill(Skill);
+}
+
+// native final int GetACSGlobalInt (int index);
+IMPLEMENT_FUNCTION(VWorldInfo, GetACSGlobalInt) {
+  P_GET_INT(index);
+  P_GET_SELF;
+  RET_INT(Self && Self->Acs ? Self->Acs->GetGVarInt(index) : 0);
+}
+
+// native final float GetACSGlobalFloat (int index);
+IMPLEMENT_FUNCTION(VWorldInfo, GetACSGlobalFloat) {
+  P_GET_INT(index);
+  P_GET_SELF;
+  RET_FLOAT(Self && Self->Acs ? Self->Acs->GetGVarFloat(index) : 0.0f);
+}
+
+// native final void SetACSGlobalInt (int index, int value);
+IMPLEMENT_FUNCTION(VWorldInfo, SetACSGlobalInt) {
+  P_GET_INT(value);
+  P_GET_INT(index);
+  P_GET_SELF;
+  if (Self && Self->Acs) Self->Acs->SetGVarInt(index, value);
+}
+
+// native final void SetACSGlobalFloat (int index, float value);
+IMPLEMENT_FUNCTION(VWorldInfo, SetACSGlobalFloat) {
+  P_GET_FLOAT(value);
+  P_GET_INT(index);
+  P_GET_SELF;
+  if (Self && Self->Acs) Self->Acs->SetGVarFloat(index, value);
+}
+
+// native final int GetACSWorldInt (int index);
+IMPLEMENT_FUNCTION(VWorldInfo, GetACSWorldInt) {
+  P_GET_INT(index);
+  P_GET_SELF;
+  RET_INT(Self && Self->Acs ? Self->Acs->GetWVarInt(index) : 0);
+}
+
+// native final float GetACSWorldFloat (int index);
+IMPLEMENT_FUNCTION(VWorldInfo, GetACSWorldFloat) {
+  P_GET_INT(index);
+  P_GET_SELF;
+  RET_FLOAT(Self && Self->Acs ? Self->Acs->GetWVarFloat(index) : 0.0f);
+}
+
+// native final void SetACSWorldInt (int index, int value);
+IMPLEMENT_FUNCTION(VWorldInfo, SetACSWorldInt) {
+  P_GET_INT(value);
+  P_GET_INT(index);
+  P_GET_SELF;
+  if (Self && Self->Acs) Self->Acs->SetWVarInt(index, value);
+}
+
+// native final void SetACSWorldFloat (int index, float value);
+IMPLEMENT_FUNCTION(VWorldInfo, SetACSWorldFloat) {
+  P_GET_FLOAT(value);
+  P_GET_INT(index);
+  P_GET_SELF;
+  if (Self && Self->Acs) Self->Acs->SetWVarFloat(index, value);
 }

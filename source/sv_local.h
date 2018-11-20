@@ -150,15 +150,25 @@ public:
     MAX_ACS_GLOBAL_VARS = 64,
   };
 
-  int         WorldVars[MAX_ACS_WORLD_VARS];
-  int         GlobalVars[MAX_ACS_GLOBAL_VARS];
-  VAcsGrowingArray  WorldArrays[MAX_ACS_WORLD_VARS];
-  VAcsGrowingArray  GlobalArrays[MAX_ACS_GLOBAL_VARS];
+  int WorldVars[MAX_ACS_WORLD_VARS];
+  int GlobalVars[MAX_ACS_GLOBAL_VARS];
+  VAcsGrowingArray WorldArrays[MAX_ACS_WORLD_VARS];
+  VAcsGrowingArray GlobalArrays[MAX_ACS_GLOBAL_VARS];
   TArray<VAcsStore> Store;
 
   VAcsGlobal();
 
   void Serialise(VStream &Strm);
+
+  int GetGVarInt (int index) const;
+  float GetGVarFloat (int index) const;
+  void SetGVarInt (int index, int value);
+  void SetGVarFloat (int index, float value);
+
+  int GetWVarInt (int index) const;
+  float GetWVarFloat (int index) const;
+  void SetWVarInt (int index, int value);
+  void SetWVarFloat (int index, float value);
 };
 
 //==========================================================================

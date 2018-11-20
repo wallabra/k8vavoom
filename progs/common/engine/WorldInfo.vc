@@ -42,8 +42,19 @@ readonly bool bSkillEasyBossBrain;
 readonly bool bSkillAutoUseHealth;
 readonly bool bSkillSlowMonsters;
 
-native final void SetSkill(int Skill);
 
-defaultproperties
-{
+native final void SetSkill (int Skill);
+
+native final int GetACSGlobalInt (int index);
+native final float GetACSGlobalFloat (int index);
+native final void SetACSGlobalInt (int index, int value);
+native final void SetACSGlobalFloat (int index, float value);
+
+native final int GetACSWorldInt (int index);
+native final float GetACSWorldFloat (int index);
+native final void SetACSWorldInt (int index, int value);
+native final void SetACSWorldFloat (int index, float value);
+
+
+defaultproperties {
 }

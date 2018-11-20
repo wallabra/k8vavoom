@@ -6217,26 +6217,104 @@ int VAcs::FindSectorFromTag(int tag, int start)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsGlobal::VAcsGlobal
 //
 //==========================================================================
-
-VAcsGlobal::VAcsGlobal()
-{
+VAcsGlobal::VAcsGlobal () {
   memset((void *)WorldVars, 0, sizeof(WorldVars));
   memset((void *)GlobalVars, 0, sizeof(GlobalVars));
 }
+
+
+//==========================================================================
+//
+//  VAcsGlobal::GetGVarInt
+//
+//==========================================================================
+int VAcsGlobal::GetGVarInt (int index) const {
+  return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? GlobalVars[index] : 0);
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::GetGVarFloat
+//
+//==========================================================================
+float VAcsGlobal::GetGVarFloat (int index) const {
+  return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? (float)GlobalVars[index]/65536.0f : 0.0f);
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::SetGVarInt
+//
+//==========================================================================
+void VAcsGlobal::SetGVarInt (int index, int value) {
+  if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars[index] = value;
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::SetGVarFloat
+//
+//==========================================================================
+void VAcsGlobal::SetGVarFloat (int index, float value) {
+  if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars[index] = (int)(value*65536.0f);
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::GetWVarInt
+//
+//==========================================================================
+int VAcsGlobal::GetWVarInt (int index) const {
+  return (index >= 0 && index < MAX_ACS_WORLD_VARS ? WorldVars[index] : 0);
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::GetWVarFloat
+//
+//==========================================================================
+float VAcsGlobal::GetWVarFloat (int index) const {
+  return (index >= 0 && index < MAX_ACS_WORLD_VARS ? (float)WorldVars[index]/65536.0f : 0.0f);
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::SetWVarInt
+//
+//==========================================================================
+void VAcsGlobal::SetWVarInt (int index, int value) {
+  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = value;
+}
+
+
+//==========================================================================
+//
+//  VAcsGlobal::SetWVarFloat
+//
+//==========================================================================
+void VAcsGlobal::SetWVarFloat (int index, float value) {
+  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = (int)(value*65536.0f);
+}
+
 
 //==========================================================================
 //
 //  operator <<
 //
 //==========================================================================
-
-VStream &operator << (VStream &Strm, VAcsStore &Store)
-{
+VStream &operator << (VStream &Strm, VAcsStore &Store) {
   return Strm << Store.Map
       << Store.Type
       << Store.PlayerNum
