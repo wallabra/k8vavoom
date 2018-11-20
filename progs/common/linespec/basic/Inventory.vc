@@ -1407,40 +1407,35 @@ final void A_FireBullets(float SpreadHoriz, float SpreadVert, int NumBullets,
   }
 }
 
-//===========================================================================
-//
-//  A_FireCustomMissile
-//
-//===========================================================================
 
-final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
+//===========================================================================
+//
+//  doFireMissileProjectile
+//
+//  `A_FireCustomMissile()` and `A_FireProjectile()` are the same thing, so
+//  they'll both will use this code
+//
+//===========================================================================
+final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch)
 {
-  if (!MissileType || !bIsPlayer)
-  {
-    return;
-  }
+  if (!MissileType || !bIsPlayer) return;
 
-  if (!specified_UseAmmo)
-  {
-    UseAmmo = true;
-  }
+  if (!specified_UseAmmo) UseAmmo = true;
 
   name decal = '';
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (UseAmmo)
-  {
+  if (UseAmmo) {
     if (!Wpn) return;
     if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
   if (Wpn) decal = Wpn.DecalName;
 
   TVec ShootOrg = Origin;
-  if (SpawnXY)
-  {
-    ShootOrg.x += itof(SpawnXY) * cos(Angles.yaw - 90.0);
-    ShootOrg.y += itof(SpawnXY) * sin(Angles.yaw - 90.0);
+  if (SpawnXY) {
+    ShootOrg.x += float(SpawnXY)*cos(Angles.yaw-90.0);
+    ShootOrg.y += float(SpawnXY)*sin(Angles.yaw-90.0);
   }
   ShootOrg.x += SpawnZ;
 
@@ -1448,7 +1443,7 @@ final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
   if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
   // Temporarily adjusts the pitch
   float SavedPitch = Angles.pitch;
-  Angles.pitch -= Pitch;
+  if (Flags&FPF_NOAUTOAIM) Angles.pitch += Pitch; // `A_FireCustomMissile()` does this another way
 
   EntityEx AimTarget;
   EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
@@ -1460,6 +1455,33 @@ final void A_FireCustomMissile(class!Actor MissileType, optional float Angle,
     if (A.bSeekerMissile) A.Tracer = AimTarget;
     if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);
   }
+}
+
+
+//===========================================================================
+//
+//  A_FireCustomMissile
+//
+//===========================================================================
+
+final void A_FireCustomMissile (class!Actor MissileType, optional float Angle,
+  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional int Flags, optional float Pitch)
+{
+  Pitch = -Pitch; // this does it this way
+  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
+}
+
+
+//===========================================================================
+//
+//  A_FireProjectile
+//
+//===========================================================================
+final void A_FireProjectile (class!Actor MissileType, optional float Angle, optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+   optional int Flags, optional float Pitch)
+{
+  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
 }
 
 

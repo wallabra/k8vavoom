@@ -459,6 +459,7 @@ class Inventory extends Actor
   action native A_RailAttack(eval int damage, optional eval float offset_xy,
     optional evalnot bool useammo, optional color color1, optional color color2,
     optional eval int flags, optional eval float maxdiff, optional class<Actor> pufftype);
+  action native A_FireProjectile (class!Actor MissileType, optional float angle, optional bool useammo, optional float spawnofs_xy, optional float spawnheight, optional int flags, optional float pitch);
 
   //
   //  Not documented Doom weapon atack functions
