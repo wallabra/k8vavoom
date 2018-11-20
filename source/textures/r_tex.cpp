@@ -116,7 +116,37 @@ static TArray<animDef_t> AnimDefs;
 static TArray<frameDef_t> FrameDefs;
 static TArray<VAnimDoorDef> AnimDoorDefs;
 
-static TStrSet patchesWarned;
+//static TStrSet patchesWarned;
+static TMapNC<VName, bool> patchesWarned;
+
+
+//==========================================================================
+//
+//  warnMissingTexture
+//
+//==========================================================================
+static void warnMissingTexture (VName Name, bool silent) {
+  if (Name == NAME_None) return; // just in case
+  VName xxn = VName(*Name, VName::AddLower);
+  if (!patchesWarned.has(xxn)) {
+    patchesWarned.put(xxn, true);
+    if (!silent) {
+      GCon->Logf(NAME_Warning,"Texture: texture \"%s\" not found", *Name);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  isSeenMissingTexture
+//
+//==========================================================================
+static bool isSeenMissingTexture (VName Name) {
+  if (Name == NAME_None) return true; // just in case
+  VName xxn = VName(*Name, VName::AddLower);
+  return patchesWarned.has(xxn);
+}
 
 
 //==========================================================================
@@ -496,21 +526,6 @@ static bool findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
 
 //==========================================================================
 //
-//  warnMissingTexture
-//
-//==========================================================================
-static void warnMissingTexture (VName Name, bool silent) {
-  if (Name == NAME_None) return; // just in case
-  if (!patchesWarned.put(*VName(*Name, VName::AddLower))) {
-    if (!silent) {
-      GCon->Logf(NAME_Warning,"Texture: texture \"%s\" not found", *Name);
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VTextureManager::AddPatch
 //
 //==========================================================================
@@ -520,6 +535,9 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   // check if it's already registered
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
+
+  // do not try to load already seen missing texture
+  if (isSeenMissingTexture(Name)) return -1; // alas
 
   // load it
   if (findAndLoadTexture(Name, Type, WADNS_Patches) ||
@@ -686,6 +704,8 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
 int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent) {
   int tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
   if (tidx >= 0) return tidx;
+  // do not try to load already seen missing texture
+  if (isSeenMissingTexture(Name)) return -1; // alas
   // load it
   if (findAndLoadTexture(Name, Type, WADNS_Patches) ||
       findAndLoadTexture(Name, Type, WADNS_Sprites) || // sprites also can be used as patches
