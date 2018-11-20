@@ -278,7 +278,7 @@
     <flag name="JustAttacked" property="bJustAttacked" />
     <flag name="Teleport" property="bTeleport" />
     <flag name="Blasted" property="bBlasted" />
-    <flag name="NeverRespawn" property="bNeverRespawn" />
+    <!--flag name="NeverRespawn" property="bNeverRespawn" already defined /-->
     <flag name="ExploCount" property="bExploCount" />
     <!-- Deprecated Flags -->
     <flag_float name="LowGravity" property="Gravity" true_value="0.125" false_value="1.0" />
@@ -351,6 +351,7 @@
     <flag name="NoAutoAim" property="bNoAutoaim" />
     <flag name="HitscanWeapon" property="bIsHitscanWeapon" />
     <flag_unsupported name="AlwaysActivate" /> <!-- From SkulTag ? -->
+    <flag name="NeverRespawn" property="bNeverRespawn" />
   </class>
 
   <class name="Ammo">
