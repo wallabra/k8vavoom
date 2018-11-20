@@ -175,6 +175,7 @@ void CreateControlKeyChoices () {
   AddControl("Look down", "+LookDown", "-LookDown");
   AddControl("Centre look", "+LookCentre", "-LookCentre");
   AddControl("Jump", "+Jump", "-Jump");
+  AddControl("Crouch", "+Crouch", "-Crouch");
   AddControl("Alt Fire", "+AltAttack", "-AltAttack");
   AddControl("Mouse look", "+MouseLook", "-MouseLook");
 

@@ -240,6 +240,42 @@ final void CalcHeight (float deltaTime) {
 
 //==========================================================================
 //
+//  CrouchMove
+//
+//==========================================================================
+void CrouchMove (int direction) {
+  auto plr = EntityEx(MO);
+  if (!plr) return;
+
+  //float defaultheight = FullHeight;
+  float crouchspeed = direction*EntityEx::CROUCHSPEED;
+
+  float newcrf = fclamp(plr.crouchfactor+crouchspeed, 0.5, 1.0);
+  if (newcrf == plr.crouchfactor) return; // nothing to do
+
+  // check whether the move is ok
+  float savedheight = plr.Height;
+  plr.Height = plr.default.Height*newcrf;
+  if (!plr.TryMove(plr.Origin, false)) {
+    // nope, restore player height
+    plr.Height = savedheight;
+    return;
+  }
+
+  // setup new view height, and remember current crouch factor
+  ViewHeight = PlayerPawn(plr).default.ViewHeight*newcrf;
+  plr.crouchfactor = newcrf;
+
+  // check for eyes going above/below fake floor due to crouching motion
+  // this seems to be done in TryMove
+  //FIXME
+  //TODO
+  //CheckFakeFloorTriggers(pos.Z + oldheight, true);
+}
+
+
+//==========================================================================
+//
 //  MovePlayer
 //
 //==========================================================================
@@ -307,6 +343,10 @@ final void MovePlayer (float deltaTime) {
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
   }
+
+  auto ohgt = MO.Height;
+  CrouchMove(Buttons&BT_CROUCH ? -1 : 1);
+  //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
 }
 
 

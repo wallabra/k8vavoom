@@ -65,6 +65,8 @@ const int MONS_LOOK_LIMIT = 64;
 // (This is so scrolling floors and objects on them can move at same speed.)
 const float CARRYFACTOR   = 0.09375;
 
+const float CROUCHSPEED = 1.0/12.0;
+
 enum
 {
   BOUNCE_None,
@@ -494,10 +496,12 @@ array!DropItemInfo DropItemList;
 
 int       SkillRespawnCount;
 
-//  Customiseable Jump Velocity
-float     JumpVelZ;
+// customiseable jump celocity
+float JumpVelZ;
+float JumpTime;
 
-float     JumpTime;
+//float CrouchHeight;
+float crouchfactor = 1.0;
 
 bool k8InWeaponReady; // otherwise recursive calls to it may overflow stack
 
