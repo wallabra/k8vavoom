@@ -264,7 +264,7 @@ VStr PF_FormatString () {
         if (++spos == str.length()) { pbuf.putStr("%-"); break; }
       }
       if (str[spos] >= '0' && str[spos] <= '9') {
-        zeroFill = str[spos];
+        zeroFill = (str[spos] == '0');
         width = 0;
         while (spos <= str.length() && str[spos] >= '0' && str[spos] <= '9') {
           width = width*10+str[spos++]-'0';
