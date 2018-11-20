@@ -147,6 +147,14 @@ IMPLEMENT_FUNCTION(VWorldInfo, GetACSGlobalInt) {
   RET_INT(Self && Self->Acs ? Self->Acs->GetGVarInt(index) : 0);
 }
 
+// native final int GetACSGlobalInt (void *level, int index);
+IMPLEMENT_FUNCTION(VWorldInfo, GetACSGlobalStr) {
+  P_GET_INT(index);
+  P_GET_PTR(VAcsLevel, alvl);
+  P_GET_SELF;
+  RET_STR(Self && Self->Acs ? Self->Acs->GetGVarStr(alvl, index) : VStr());
+}
+
 // native final float GetACSGlobalFloat (int index);
 IMPLEMENT_FUNCTION(VWorldInfo, GetACSGlobalFloat) {
   P_GET_INT(index);

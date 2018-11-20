@@ -6231,6 +6231,16 @@ VAcsGlobal::VAcsGlobal () {
 
 //==========================================================================
 //
+//  VAcsGlobal::GetGVarStr
+//
+//==========================================================================
+VStr VAcsGlobal::GetGVarStr (VAcsLevel *level, int index) const {
+  return (level && index >= 0 && index < MAX_ACS_GLOBAL_VARS ? level->GetString(GlobalVars[index]) : VStr());
+}
+
+
+//==========================================================================
+//
 //  VAcsGlobal::GetGVarInt
 //
 //==========================================================================

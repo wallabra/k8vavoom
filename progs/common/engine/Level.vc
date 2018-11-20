@@ -149,7 +149,7 @@ native readonly private Thinker ThinkerTail;
 native readonly LevelInfo LevelInfo;
 native readonly WorldInfo WorldInfo;
 
-native readonly private void *Acs;
+native readonly void *Acs;
 
 native readonly private void *RenderData;
 native readonly private void *NetContext;

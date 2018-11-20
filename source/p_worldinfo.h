@@ -60,6 +60,8 @@ class VWorldInfo : public VGameObject
 
   DECLARE_FUNCTION(SetSkill)
 
+  DECLARE_FUNCTION(GetACSGlobalStr)
+
   DECLARE_FUNCTION(GetACSGlobalInt)
   DECLARE_FUNCTION(GetACSGlobalFloat)
   DECLARE_FUNCTION(SetACSGlobalInt)

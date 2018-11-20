@@ -160,6 +160,8 @@ public:
 
   void Serialise(VStream &Strm);
 
+  VStr GetGVarStr (VAcsLevel *level, int index) const;
+
   int GetGVarInt (int index) const;
   float GetGVarFloat (int index) const;
   void SetGVarInt (int index, int value);

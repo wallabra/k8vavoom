@@ -45,6 +45,8 @@ readonly bool bSkillSlowMonsters;
 
 native final void SetSkill (int Skill);
 
+native final string GetACSGlobalStr (void *acslevel, int index);
+
 native final int GetACSGlobalInt (int index);
 native final float GetACSGlobalFloat (int index);
 native final void SetACSGlobalInt (int index, int value);
