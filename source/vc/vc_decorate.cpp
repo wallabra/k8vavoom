@@ -2085,16 +2085,9 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
     while (!sc->Check("}")) {
       if (sc->Check(";")) continue;
       VStatement *st;
-      bool wantSemi = true;
-      if (sc->Check("{")) {
-        st = ParseActionStatement(sc, Class, State);
-        wantSemi = false;
-      } else {
-        //fprintf(stderr, "***0:<%s>\n", *sc->String);
-        st = ParseFunCallAsStmt(sc, Class, State);
-      }
+      if (sc->Check("{")) sc->UnGet(); // cheat a little
+      st = ParseActionStatement(sc, Class, State);
       if (st) stmt->Statements.append(st);
-      if (wantSemi) sc->Expect(";");
     }
     return stmt;
   }
@@ -2197,6 +2190,10 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
       return cst;
     }
   }
+
+  if (sc->Check("for")) sc->Error("`for` is not supported");
+  if (sc->Check("while")) sc->Error("`while` is not supported");
+  if (sc->Check("do")) sc->Error("`do` is not supported");
 
   VStatement *res = ParseFunCallAsStmt(sc, Class, State);
   sc->Expect(";");
