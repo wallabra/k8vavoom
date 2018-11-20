@@ -198,6 +198,7 @@ BUTTON(FlyCentre)
 BUTTON(Attack)
 BUTTON(Use)
 BUTTON(Jump)
+BUTTON(Crouch)
 BUTTON(AltAttack)
 BUTTON(Button5)
 BUTTON(Button6)
@@ -643,6 +644,7 @@ void VBasePlayer::HandleInput()
   if (KeyAttack.KeyState()) Buttons |= BT_ATTACK;
   if (KeyUse.KeyState()) Buttons |= BT_USE;
   if (KeyJump.KeyState()) Buttons |= BT_JUMP;
+  if (KeyCrouch.KeyState()) Buttons |= BT_CROUCH;
   if (KeyAltAttack.KeyState()) Buttons |= BT_ALT_ATTACK;
   if (KeyButton5.KeyState()) Buttons |= 0x10;
   if (KeyButton6.KeyState()) Buttons |= 0x20;
@@ -758,6 +760,7 @@ int VBasePlayer::AcsGetInput(int InputType)
       if (Btn&BT_ATTACK) Ret |= ACS_BT_ATTACK;
       if (Btn&BT_USE) Ret |= ACS_BT_USE;
       if (Btn&BT_JUMP) Ret |= ACS_BT_JUMP;
+      if (Btn&BT_CROUCH) Ret |= ACS_BT_CROUCH;
       if (Btn&BT_ALT_ATTACK) Ret |= ACS_BT_ALTATTACK;
       if (Btn&BT_FORWARD) Ret |= ACS_BT_FORWARD;
       if (Btn&BT_BACKWARD) Ret |= ACS_BT_BACK;
