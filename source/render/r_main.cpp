@@ -420,6 +420,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , AllocatedDrawSegs(nullptr)
   , AllocatedSegParts(nullptr)
   , cacheframecount(0)
+  , showCreateWorldSurfProgress(0)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
 
@@ -996,8 +997,17 @@ void VRenderLevelShared::PrecacheLevel () {
     if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
   }
 
+  R_LdrMsgShow("PRECACHING TEXTURES...");
+  R_PBarReset();
+
   // precache textures
-  for (int f = 1; f < maxtex; ++f) if (texturepresent[f]) Drawer->PrecacheTexture(GTextureManager[f]);
+  for (int f = 1; f < maxtex; ++f) {
+    if (texturepresent[f]) {
+      R_PBarUpdate("Textures", f, maxtex);
+      Drawer->PrecacheTexture(GTextureManager[f]);
+    }
+  }
+  R_PBarUpdate("Textures", maxtex, maxtex, true); // final update
 
   unguard;
 }

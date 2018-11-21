@@ -50,6 +50,7 @@ VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
   guard(VAdvancedRenderLevel::VAdvancedRenderLevel);
   NeedsInfiniteFarClip = true;
   mIsAdvancedRenderer = true;
+  showCreateWorldSurfProgress = false; // just in case
 
   memset(DLights, 0, sizeof(DLights));
 

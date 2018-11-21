@@ -37,9 +37,7 @@
 #include "sv_local.h"
 #endif
 
-#ifdef CLIENT
-# include "drawer.h"
-#endif
+#include "drawer.h"
 #include "render/r_local.h"
 
 
@@ -1102,16 +1100,9 @@ load_again:
   }
   if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
 
-#ifdef CLIENT
-  if (Drawer && Drawer->IsInited()) {
-    T_SetFont(SmallFont);
-    Drawer->StartUpdate(false); // don't clear
-    T_SetAlign(hcentre, vcentre);
-    // slightly off vcenter
-    T_DrawText(VirtualWidth/2, VirtualHeight/2+64, "LOADING...", CR_GOLD);
-    Drawer->Update();
-  }
-#endif
+  //FIXME: reload saved background screen from FBO
+  R_LdrMsgReset();
+  R_LdrMsgShow("LOADING...", CR_GOLD);
 
   bool saveCachedData = false;
   int gl_lumpnum = -100;

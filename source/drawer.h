@@ -36,6 +36,7 @@
 # define NUM_CACHE_BLOCKS    (8*1024)
 #endif
 
+
 struct surface_t;
 struct surfcache_t;
 struct mmdl_t;
@@ -254,6 +255,33 @@ static VDrawer *Create##TClass() \
 } \
 FDrawerDesc TClass##Desc(Type, Name, Description, CmdLineArg, Create##TClass);
 
+
+#ifdef CLIENT
 extern VDrawer *Drawer;
+#endif
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// fancyprogress bar
+
+// reset progress bar, setup initial timing and so on
+// returns `false` if graphics is not initialized
+bool R_PBarReset ();
+
+// update progress bar, return `true` if something was displayed.
+// it is safe to call this even if graphics is not initialized.
+// without graphics, it will print occasionally console messages.
+// you can call this as often as you want, it will take care of
+// limiting output to reasonable amounts.
+// `cur` must be zero or positive, `max` must be positive
+bool R_PBarUpdate (const char *message, int cur, int max, bool forced=false);
+
+
+// iniit loader messages system
+void R_LdrMsgReset ();
+
+// show loader message
+void R_LdrMsgShow (const char *msg, int clr=CR_TAN);
+
 
 #endif

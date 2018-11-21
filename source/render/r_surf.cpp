@@ -1314,6 +1314,11 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     }
   }
 
+  if (showCreateWorldSurfProgress) {
+    R_LdrMsgShow("CALCULATING LIGHTS...");
+    R_PBarReset();
+  }
+
   // count regions in all subsectors
   count = 0;
   dscount = 0;
@@ -1389,7 +1394,11 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sub->regions = sreg;
       ++sreg;
     }
+
+    if (showCreateWorldSurfProgress) R_PBarUpdate("Lighting", i, Level->NumSubsectors);
   }
+  if (showCreateWorldSurfProgress) R_PBarUpdate("Lighting", Level->NumSubsectors, Level->NumSubsectors, true);
+
   unguard;
 }
 

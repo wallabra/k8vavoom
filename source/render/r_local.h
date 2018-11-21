@@ -388,6 +388,9 @@ protected:
   TVec lastDLightView;
   subsector_t *lastDLightViewSub;
 
+  bool showCreateWorldSurfProgress;
+
+protected:
   VRenderLevelShared(VLevel *ALevel);
   ~VRenderLevelShared();
 

@@ -251,6 +251,7 @@ set(MAIN_COMMON_SOURCES
   debug.cpp
   debug.h
   drawer.h
+  drawer.cpp
   finale.cpp
   finale.h
   ${FILESYS_SOURCES}
@@ -369,6 +370,8 @@ set(SERVER_COMMON_SOURCES
   cmd.cpp
   cvar.cpp
   debug.cpp
+  drawer.h
+  drawer.cpp
   ${FILESYS_SOURCES}
   host.cpp
   infostr.cpp
