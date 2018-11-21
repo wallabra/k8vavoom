@@ -253,6 +253,23 @@ public:
   inline VStr toLowerCase () const { return ToLower(); }
   inline VStr toUpperCase () const { return ToUpper(); }
 
+  inline bool isLowerCase () const {
+    const char *dp = data;
+    for (int f = length()-1; f >= 0; --f, ++dp) {
+      if (*dp >= 'A' && *dp <= 'Z') return false;
+    }
+    return true;
+  }
+
+  inline static bool isLowerCase (const char *s) {
+    if (!s) return true;
+    while (*s) {
+      if (*s >= 'A' && *s <= 'Z') return false;
+      ++s;
+    }
+    return true;
+  }
+
   int IndexOf (char) const;
   int IndexOf (const char *) const;
   int IndexOf (const VStr &) const;
