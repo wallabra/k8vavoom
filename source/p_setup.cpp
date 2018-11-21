@@ -73,6 +73,9 @@ static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix inval
 
 extern VCvarI r_max_portal_depth;
 extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
+#ifdef CLIENT
+extern int ldr_extrasamples_override; // -1: no override; 0: disable; 1: enable
+#endif
 
 
 // lump order in a map WAD: each map needs a couple of lumps
@@ -508,6 +511,18 @@ void VLevel::FixKnownMapErrors () {
     GCon->Logf(NAME_Warning, "MAPFIX: Winter's Fury: reduced portals to 1, enabled pobj hack");
     return;
   }
+
+  // Skulldash EE first map, too many lights
+  // looks ugly
+  /*
+  if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
+#ifdef CLIENT
+    ldr_extrasamples_override = 0;
+#endif
+    GCon->Logf(NAME_Warning, "MAPFIX: SkullDash EE: disabled lightmap filtering");
+    return;
+  }
+  */
 }
 
 
@@ -1056,6 +1071,9 @@ void VLevel::LoadMap (VName AMapName) {
 
 load_again:
   pobj_allow_several_in_subsector_override = 0;
+#ifdef CLIENT
+  ldr_extrasamples_override = -1;
+#endif
 
   double TotalTime = -Sys_Time();
   double InitTime = -Sys_Time();

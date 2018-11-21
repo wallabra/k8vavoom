@@ -36,6 +36,7 @@ extern VCvarB r_allow_subtractive_lights;
 
 vuint32 gf_dynlights_processed = 0;
 vuint32 gf_dynlights_traced = 0;
+int ldr_extrasamples_override = -1;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -242,7 +243,9 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 
   facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
 
-  if (r_extrasamples) {
+  bool doExtra = r_extrasamples;
+  if (ldr_extrasamples_override >= 0) doExtra = (ldr_extrasamples_override > 0);
+  if (doExtra) {
     // extra filtering
     w = ((surf->extents[0]>>4)+1)*2;
     h = ((surf->extents[1]>>4)+1)*2;
