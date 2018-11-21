@@ -1014,6 +1014,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
   if (!check) {
     VEntity *O = tmtrace.BlockingMobj;
+
     if (!O || !(EntityFlags&EF_IsPlayer) ||
         (O->EntityFlags&EF_IsPlayer) ||
         O->Origin.z+O->Height-Origin.z > MaxStepHeight ||
@@ -1050,6 +1051,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
       //printf("*** WORLD(1)!\n");
       return false;
     }
+
     if (EntityFlags&EF_Fly) {
       // when flying, slide up or down blocking lines until the actor is not blocked
       if (Origin.z+Height > tmtrace.CeilingZ) {
@@ -1078,6 +1080,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         return false;
       }
     }
+
     if (!(EntityFlags&EF_IgnoreFloorStep)) {
       if (tmtrace.FloorZ-Origin.z > MaxStepHeight) {
         // too big a step up
@@ -1118,6 +1121,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         }
       }
     }
+
     // killough 3/15/98: Allow certain objects to drop off
     if ((!AllowDropOff && !(EntityFlags&EF_DropOff) &&
         !(EntityFlags&EF_Float) && !(EntityFlags&EF_Missile)) ||
@@ -1147,6 +1151,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         }
       }
     }
+
     if (EntityFlags&EF_CantLeaveFloorpic &&
         (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z))
     {
