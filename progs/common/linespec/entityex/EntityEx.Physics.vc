@@ -147,12 +147,18 @@ bool Physics (float DeltaTime) {
     }
   }
 
-  if (/*bIsPlayer ||*/ Velocity.z ||
-      (Origin.z != FloorZ && (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
+  // k8: thingy bridges should be checked even if we have zero vertical velocity.
+  //     the following code looks like optimization attempt, and it introduced a bug:
+  //     if player (or monster, i think) moved into step-like thing while standing on
+  //     a floor, that thing will be ignored. meh, just always check things, 'cause
+  //     why not?
+
+  EntityEx onmo = EntityEx(CheckOnmobj());
+  if (onmo || Velocity.z || (Origin.z != FloorZ && (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
   {
     if (bPassMobj && !bMissile && !Level.CompatNoPassOver) {
       // handle Z momentum and gravity
-      EntityEx onmo = EntityEx(CheckOnmobj());
+      //EntityEx onmo = EntityEx(CheckOnmobj());
       if (onmo) {
         if (bIsPlayer) {
           //print("Player is on thing %C", onmo);
