@@ -156,10 +156,23 @@ void Start () {
   cnt = 0.0;
   btime = 0.0;
 
-  if (!Background) {
+  if (!Background && !ClGame.cl.Level.bNoIntermission) {
     Background = NewChild(IntermissionBackground);
     Background.ScaleX = float(Width)/float(Background.Width);
     Background.ScaleY = float(Height)/float(Background.Height);
+  }
+
+  if (ClGame.cl.Level.bNoIntermission && Background) {
+    delete Background; // remove it
+    //Background.Clean();
+    //print("********* NO INTERMISSION! leavemap=%s; entermap=%s", ClGame.im.LeaveMap, ClGame.im.EnterMap);
+  }
+
+  scope(exit) {
+    if (ClGame.cl.Level.bNoIntermission && Background) {
+      delete Background; // remove it
+      interstate = IMS_Done;
+    }
   }
 
   if (!checkForDoom2()) {
@@ -239,7 +252,6 @@ void FindEpisodeAndMap (name Name, int *epi, int *map) {
 override void Tick (float DeltaTime) {
   // counter for general background animation
   btime += DeltaTime;
-
   switch (interstate) {
     case IMS_Stats:
            if (ClGame.deathmatch) IM_UpdateDeathmatchStats(DeltaTime);
@@ -301,6 +313,12 @@ override void OnPostDraw () {
 //
 //==========================================================================
 void IM_InitAnimatedBack () {
+  if (ClGame.cl.Level.bNoIntermission) {
+    if (Background) Background.Clean();
+    return;
+  }
+  if (!Background) return;
+
   /*
   print("IM_InitAnimatedBack: interstate=%d; exitpic=%n; enterpic=%n", interstate, ClGame.im.ExitPic, ClGame.im.EnterPic);
   print("  LeaveMap=%n; LeaveCluster=%d; LeaveName=%s; LeaveTitlePatch=%n; ExitPic=%n", ClGame.im.LeaveMap, ClGame.im.LeaveCluster, ClGame.im.LeaveName, ClGame.im.LeaveTitlePatch, ClGame.im.ExitPic);
@@ -477,14 +495,21 @@ void IM_DrawTime (int x, int y, int t, string BaseText, bool sucks) {
 //==========================================================================
 void IM_InitSingleStats () {
   interstate = IMS_Stats;
-  ClGame.skipintermission = 0;
+  ClGame.skipintermission = false;
   sp_state = 1;
   cnt_kills[0] = -1;
   cnt_items[0] = -1;
   cnt_secret[0] = -1;
   cnt_time = -1;
   cnt_pause = 1.0;
-  if (ClGame.cl.Level.bNoIntermission) interstate = IMS_NoState;
+  if (ClGame.cl.Level.bNoIntermission) {
+    //interstate = IMS_NoState;
+    ClGame.skipintermission = false;
+    CmdBuf_AddText("TeleportNewMap\n");
+    interstate = IMS_Done;
+    //Background.State = IntermissionBackground::STATE_Done;
+    if (Background) Background.Clean(); // don't draw it at all
+  }
 }
 
 
@@ -522,7 +547,7 @@ void IM_DrawSingleStats () {
 //==========================================================================
 void IM_UpdateSingleStats (float DeltaTime) {
   if (ClGame.skipintermission && sp_state != 10) {
-    ClGame.skipintermission = 0;
+    ClGame.skipintermission = false;
     cnt_kills[0] = (ClGame.cl.KillCount*100)/TotalKills;
     cnt_items[0] = (ClGame.cl.ItemCount*100)/TotalItems;
     cnt_secret[0] = (ClGame.cl.SecretCount*100)/TotalSecret;
@@ -597,7 +622,7 @@ void IM_UpdateSingleStats (float DeltaTime) {
 //==========================================================================
 void IM_InitCooperativeStats () {
   interstate = IMS_Stats;
-  ClGame.skipintermission = 0;
+  ClGame.skipintermission = false;
   ng_state = 1;
   cnt_pause = 1.0;
   foreach (auto i; 0..MAXPLAYERS) {
@@ -606,7 +631,14 @@ void IM_InitCooperativeStats () {
     cnt_secret[i] = 0;
     cnt_frags[i] = 0;
   }
-  if (ClGame.cl.Level.bNoIntermission) interstate = IMS_NoState;
+  if (ClGame.cl.Level.bNoIntermission) {
+    interstate = IMS_NoState;
+    ClGame.skipintermission = false;
+    CmdBuf_AddText("TeleportNewMap\n");
+    interstate = IMS_Done;
+    //Background.State = IntermissionBackground::STATE_Done;
+    if (Background) Background.Clean(); // don't draw it at all
+  }
 }
 
 
@@ -677,7 +709,7 @@ void IM_UpdateCooperativeStats (float DeltaTime) {
   bool stillticking;
 
   if (ClGame.skipintermission && ng_state != 10) {
-    ClGame.skipintermission = 0;
+    ClGame.skipintermission = false;
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       cnt_kills[RepInfo.PlayerNum] = (RepInfo.KillCount*100)/TotalKills;
       cnt_items[RepInfo.PlayerNum] = (RepInfo.ItemCount*100)/TotalItems;
@@ -789,7 +821,7 @@ void IM_InitDeathmatchStats () {
   PlayerReplicationInfo RepInfo;
 
   interstate = IMS_Stats;
-  ClGame.skipintermission = 0;
+  ClGame.skipintermission = false;
   dm_state = 1;
 
   cnt_pause = 1.0;
@@ -851,7 +883,7 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
   PlayerReplicationInfo RepInfo;
 
   if (ClGame.skipintermission && dm_state != 4) {
-    ClGame.skipintermission = 0;
+    ClGame.skipintermission = false;
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
       dm_Frags[RepInfo.PlayerNum] = RepInfo.Frags;
       dm_Deaths[RepInfo.PlayerNum] = RepInfo.Deaths;
@@ -914,7 +946,7 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
 //==========================================================================
 void IM_InitNextLoc () {
   interstate = IMS_NextLoc;
-  ClGame.skipintermission = 0;
+  ClGame.skipintermission = false;
   cnt = SHOWNEXTLOCDELAY;
   IM_InitAnimatedBack();
 }
@@ -949,7 +981,7 @@ void IM_UpdateNextLoc (float DeltaTime) {
 //==========================================================================
 void IM_InitNoState () {
   interstate = IMS_NoState;
-  ClGame.skipintermission = 0;
+  ClGame.skipintermission = false;
   cnt = 0.3;
 }
 
@@ -1014,7 +1046,7 @@ void IM_InitText () {
   if (ClGame.deathmatch || !ClGame.im.Text) {
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
-    Background.State = IntermissionBackground::STATE_Done;
+    if (Background) Background.State = IntermissionBackground::STATE_Done;
     return;
   }
 
@@ -1108,7 +1140,7 @@ void IM_UpdateText (float DeltaTime) {
     ClGame.skipintermission = false;
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
-    Background.State = IntermissionBackground::STATE_Done;
+    if (Background) Background.State = IntermissionBackground::STATE_Done;
   }
 }
 

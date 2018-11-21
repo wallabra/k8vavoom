@@ -195,10 +195,16 @@ override void StatusBarUpdateWidgets (float DeltaTime) {
 //
 //==========================================================================
 override void IintermissionStart () {
-  GSBar.Hide();
-  GImission.Show();
-  GImission.Start();
-  GFinale.Hide();
+  if (cl && cl.Level && cl.Level.bNoIntermission) {
+    StopAllSounds();
+    skipintermission = false;
+    CmdBuf_AddText("TeleportNewMap\n");
+  } else {
+    GSBar.Hide();
+    GImission.Show();
+    GImission.Start();
+    GFinale.Hide();
+  }
 }
 
 
