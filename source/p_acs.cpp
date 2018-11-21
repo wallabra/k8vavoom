@@ -1623,9 +1623,8 @@ void VAcsLevel::Serialise(VStream &Strm) {
 //  VAcsLevel::AddToACSStore
 //
 //==========================================================================
-
-bool VAcsLevel::AddToACSStore(int Type, VName Map, int Number, int Arg1,
-  int Arg2, int Arg3, VEntity *Activator)
+bool VAcsLevel::AddToACSStore (int Type, VName Map, int Number, int Arg1,
+                               int Arg2, int Arg3, int Arg4, VEntity *Activator)
 {
   guard(VAcsLevel::AddToACSStore);
   VAcsStore &S = XLevel->WorldInfo->Acs->Store.Alloc();
@@ -1636,73 +1635,63 @@ bool VAcsLevel::AddToACSStore(int Type, VName Map, int Number, int Arg1,
   S.Args[0] = Arg1;
   S.Args[1] = Arg2;
   S.Args[2] = Arg3;
+  S.Args[4] = Arg4;
   return true;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VAcsLevel::CheckAcsStore
 //
 //  Scans the ACS store and executes all scripts belonging to the current
-// map.
+//  map.
 //
 //==========================================================================
-
-void VAcsLevel::CheckAcsStore()
-{
+void VAcsLevel::CheckAcsStore () {
   guard(VAcsLevel::CheckAcsStore);
-  for (int i = XLevel->WorldInfo->Acs->Store.Num() - 1; i >= 0; i--)
-  {
+  for (int i = XLevel->WorldInfo->Acs->Store.length()-1; i >= 0; --i) {
     VAcsStore *store = &XLevel->WorldInfo->Acs->Store[i];
-    if (store->Map != XLevel->MapName)
-    {
-      continue;
-    }
+    if (store->Map != XLevel->MapName) continue;
 
     VAcsObject *Object;
     VAcsInfo *Info = FindScript(store->Script, Object);
-    if (!Info)
-    {
-      //  Script not found
+    if (!Info) {
+      // script not found
       GCon->Logf(NAME_Dev, "Start ACS ERROR: Unknown script %d", store->Script);
-    }
-    else
-    {
-      switch (store->Type)
-      {
-      case VAcsStore::Start:
-      case VAcsStore::StartAlways:
-        SpawnScript(Info, Object, store->PlayerNum >= 0 &&
-          GGameInfo->Players[store->PlayerNum] &&
-          (GGameInfo->Players[store->PlayerNum]->PlayerFlags &
-          VBasePlayer::PF_Spawned) ?
-          GGameInfo->Players[store->PlayerNum]->MO : nullptr, nullptr, 0,
-          store->Args[0], store->Args[1], store->Args[2], 0,
-          (store->Type == VAcsStore::StartAlways), true);
-        break;
+    } else {
+      switch (store->Type) {
+        case VAcsStore::Start:
+        case VAcsStore::StartAlways:
+          SpawnScript(Info, Object, store->PlayerNum >= 0 &&
+            GGameInfo->Players[store->PlayerNum] &&
+            (GGameInfo->Players[store->PlayerNum]->PlayerFlags &
+            VBasePlayer::PF_Spawned) ?
+            GGameInfo->Players[store->PlayerNum]->MO : nullptr, nullptr, 0,
+            store->Args[0], store->Args[1], store->Args[2], store->Args[3],
+            (store->Type == VAcsStore::StartAlways), true);
+          break;
 
-      case VAcsStore::Terminate:
-        if (!Info->RunningScript ||
-          Info->RunningScript->State == VAcs::ASTE_Terminating)
-        {
-          //  States that disallow termination
+        case VAcsStore::Terminate:
+          if (!Info->RunningScript || Info->RunningScript->State == VAcs::ASTE_Terminating) {
+            // states that disallow termination
+            break;
+          }
+          Info->RunningScript->State = VAcs::ASTE_Terminating;
+          break;
+
+        case VAcsStore::Suspend:
+          if (!Info->RunningScript ||
+              Info->RunningScript->State == VAcs::ASTE_Suspended ||
+              Info->RunningScript->State == VAcs::ASTE_Terminating)
+          {
+            // states that disallow suspension
+            break;
+          }
+          Info->RunningScript->State = VAcs::ASTE_Suspended;
           break;
         }
-        Info->RunningScript->State = VAcs::ASTE_Terminating;
-        break;
-
-      case VAcsStore::Suspend:
-        if (!Info->RunningScript ||
-          Info->RunningScript->State == VAcs::ASTE_Suspended ||
-          Info->RunningScript->State == VAcs::ASTE_Terminating)
-        {
-          // States that disallow suspension
-          break;
-        }
-        Info->RunningScript->State = VAcs::ASTE_Suspended;
-        break;
-      }
     }
     XLevel->WorldInfo->Acs->Store.RemoveIndex(i);
   }
@@ -1725,7 +1714,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
     if (Map != NAME_None && Map != XLevel->MapName) {
       // add to the script store
       if (realres) *realres = 0;
-      return AddToACSStore((Always ? VAcsStore::StartAlways : VAcsStore::Start), Map, Number, Arg1, Arg2, Arg3, Activator);
+      return AddToACSStore((Always ? VAcsStore::StartAlways : VAcsStore::Start), Map, Number, Arg1, Arg2, Arg3, Arg4, Activator);
     }
   }
 
@@ -1763,36 +1752,30 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::Terminate
 //
 //==========================================================================
-
-bool VAcsLevel::Terminate(int Number, int MapNum)
-{
+bool VAcsLevel::Terminate (int Number, int MapNum) {
   guard(VAcsLevel::Terminate);
-  if (MapNum)
-  {
+  if (MapNum) {
     VName Map = P_GetMapLumpNameByLevelNum(MapNum);
-    if (Map != NAME_None && Map != XLevel->MapName)
-    {
-      // Add to the script store
-      return AddToACSStore(VAcsStore::Terminate, Map, Number, 0, 0, 0, 0);
+    if (Map != NAME_None && Map != XLevel->MapName) {
+      // add to the script store
+      return AddToACSStore(VAcsStore::Terminate, Map, Number, 0, 0, 0, 0, nullptr);
     }
   }
 
   VAcsObject *Object;
   VAcsInfo *Info = FindScript(Number, Object);
-  if (!Info)
-  {
-    //  Script not found
+  if (!Info) {
+    // script not found
     return false;
   }
-  if (!Info->RunningScript ||
-    Info->RunningScript->State == VAcs::ASTE_Terminating)
-  {
-    //  States that disallow termination
+  if (!Info->RunningScript || Info->RunningScript->State == VAcs::ASTE_Terminating) {
+    // states that disallow termination
     return false;
   }
   Info->RunningScript->State = VAcs::ASTE_Terminating;
@@ -1800,37 +1783,33 @@ bool VAcsLevel::Terminate(int Number, int MapNum)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::Suspend
 //
 //==========================================================================
-
-bool VAcsLevel::Suspend(int Number, int MapNum)
-{
+bool VAcsLevel::Suspend (int Number, int MapNum) {
   guard(VAcsLevel::Suspend);
-  if (MapNum)
-  {
+  if (MapNum) {
     VName Map = P_GetMapLumpNameByLevelNum(MapNum);
-    if (Map != NAME_None && Map != XLevel->MapName)
-    {
-      // Add to the script store
-      return AddToACSStore(VAcsStore::Suspend, Map, Number, 0, 0, 0, 0);
+    if (Map != NAME_None && Map != XLevel->MapName) {
+      // add to the script store
+      return AddToACSStore(VAcsStore::Suspend, Map, Number, 0, 0, 0, 0, nullptr);
     }
   }
 
   VAcsObject *Object;
   VAcsInfo *Info = FindScript(Number, Object);
-  if (!Info)
-  {
-    //  Script not found.
+  if (!Info) {
+    // script not found
     return false;
   }
   if (!Info->RunningScript ||
-    Info->RunningScript->State == VAcs::ASTE_Suspended ||
-    Info->RunningScript->State == VAcs::ASTE_Terminating)
+      Info->RunningScript->State == VAcs::ASTE_Suspended ||
+      Info->RunningScript->State == VAcs::ASTE_Terminating)
   {
-    // States that disallow suspension
+    // states that disallow suspension
     return false;
   }
   Info->RunningScript->State = VAcs::ASTE_Suspended;
@@ -6436,7 +6415,8 @@ VStream &operator << (VStream &Strm, VAcsStore &Store) {
       << STRM_INDEX(Store.Script)
       << STRM_INDEX(Store.Args[0])
       << STRM_INDEX(Store.Args[1])
-      << STRM_INDEX(Store.Args[2]);
+      << STRM_INDEX(Store.Args[2])
+      << STRM_INDEX(Store.Args[3]);
 }
 
 //==========================================================================

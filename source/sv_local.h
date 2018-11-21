@@ -74,7 +74,7 @@ private:
   TArray<VStr> stringList;
 
 private:
-  bool AddToACSStore (int Type, VName Map, int Number, int Arg1, int Arg2, int Arg3, VEntity *Activator);
+  bool AddToACSStore (int Type, VName Map, int Number, int Arg1, int Arg2, int Arg3, int Arg4, VEntity *Activator);
 
 public:
   VLevel *XLevel;
@@ -140,7 +140,7 @@ struct VAcsStore {
   vuint8 Type; // type of action
   vint8 PlayerNum; // player who executes this script
   vint32 Script; // script number on target map
-  vint32 Args[3]; // arguments
+  vint32 Args[4]; // arguments
 
   friend VStream &operator << (VStream &Strm, VAcsStore &Store);
 };
