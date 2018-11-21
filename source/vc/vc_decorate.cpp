@@ -342,6 +342,7 @@ static TMapNC<VName, bool> IgnoredDecorateActions; // lowercased
 static bool inCodeBlock = false;
 
 static int mainDecorateLump = -1;
+static bool thisIsBasePak = false;
 
 
 //==========================================================================
@@ -3155,7 +3156,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   uvars.clear(); // we don't need it anymore
   DecPkg->ParsedClasses.Append(Class);
 
-  if (ParentClass == ActorClass && ParentStr.IsEmpty()) {
+  if (!thisIsBasePak && ParentClass == ActorClass && ParentStr.IsEmpty()) {
     // it seems that actors without parent (or with Actor parent?) has no gravity
     //FIXME: should this be changed in VC side instead?
     //       i don't thing so, this will cause a MAJOR headache;
@@ -4400,6 +4401,19 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
       ParseOldDecoration(sc, OLDDEC_Projectile);
     } else if (sc->Check("damagetype")) {
       ParseDamageType(sc);
+    } else if (sc->Check("k8VaVoom")) {
+      // special k8VaVoom section
+      sc->Expect("{");
+      while (!sc->Check("}")) {
+        if (sc->Check("basepak")) {
+          sc->Expect("=");
+               if (sc->Check("true") || sc->Check("tan")) thisIsBasePak = true;
+          else if (sc->Check("false") || sc->Check("ona")) thisIsBasePak = false;
+          else sc->Error("boolean expected for k8VaVoom command 'basepak'");
+        } else {
+          sc->Error(va("invalid k8VaVoom command '%s'", *sc->String));
+        }
+      }
     } else {
       ParseOldDecoration(sc, OLDDEC_Decoration);
     }
@@ -4552,7 +4566,9 @@ void ProcessDecorateScripts () {
     if (W_LumpName(Lump) == NAME_decorate) {
       mainDecorateLump = Lump;
       GCon->Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
+      thisIsBasePak = false;
       ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
+      thisIsBasePak = false; // reset it
       mainDecorateLump = -1;
     }
   }
