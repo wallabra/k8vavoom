@@ -318,7 +318,7 @@ final void A_SpawnItem(class!Actor ItemType, optional float Distance,
 //
 //==========================================================================
 
-final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
+final bool A_SpawnItemEx (class!Actor ItemType, optional float XOffs,
   optional float YOffs, optional float ZOffs, optional float XVel,
   optional float YVel, optional float ZVel, optional float Angle,
   optional int Flags, optional int Chance,
@@ -327,17 +327,17 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
 {
   if (!ItemType) {
     if (XLevel.StateCall) XLevel.StateCall->Result = false;
-    return;
+    return false;
   }
 
-  if (Chance > 0 && P_Random() < Chance) return;
+  if (Chance > 0 && P_Random() < Chance) return true; // per wiki
 
-  //  Don't spawn monsters if this actor has been massacred
-  if (DamageType == 'Massacre' && ItemType.default.bMonster) return;
+  // don't spawn monsters if this actor has been massacred (???)
+  if (DamageType == 'Massacre' && ItemType.default.bMonster) return false;
 
-  if (!(Flags & SXF_ABSOLUTEANGLE)) Angle += Angles.yaw;
+  if (!(Flags&SXF_ABSOLUTEANGLE)) Angle += Angles.yaw;
 
-  TVec Org = vector(XOffs, YOffs, ZOffs - FloorClip);
+  TVec Org = vector(XOffs, YOffs, ZOffs-FloorClip);
   if (!(Flags&SXF_ABSOLUTEPOSITION)) {
     // in relative mode negative y values mean 'left' and positive ones
     // mean 'right'. This is the inverse orientation of the absolute mode!
@@ -387,5 +387,8 @@ final void A_SpawnItemEx(class!Actor ItemType, optional float XOffs,
     if (Flags&SXF_TRANSFERSPECIAL) { A.Special = Special; foreach (auto f; 0..Args.length) A.Args[f] = Args[f]; }
     if (Flags&SXF_CLEARCALLERSPECIAL) { Special = 0; foreach (auto f; 0..Args.length) Args[f] = 0; }
     if (specified_newtid) A.SetTID(newtid);
+    return true;
   }
+
+  return false;
 }
