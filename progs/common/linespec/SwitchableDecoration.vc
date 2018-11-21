@@ -128,6 +128,7 @@ final bool performAction (EntityEx Activator, EntityEx origAct, bool isActivate)
 //
 //==========================================================================
 override bool Activate (EntityEx Activator) {
+  //print("****:%C: Activate!");
   auto origAct = Activator;
   if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure
   if (!checkActivatorValidity(Activator)) return false;

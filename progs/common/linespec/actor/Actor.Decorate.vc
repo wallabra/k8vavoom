@@ -216,6 +216,7 @@ final bool ACS_NamedExecute (string script, optional int map, optional int s_arg
 //
 //==========================================================================
 final bool ACS_NamedExecuteAlways (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+  //print("ACS_NamedExecuteAlways: script=%s; map=%d; args=(%d,%d,%d,%d)", script, map, s_arg1, s_arg2, s_arg3, s_arg4);
   return XLevel.RunNamedACSAlways(self, script, map, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 

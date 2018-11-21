@@ -26,18 +26,16 @@
 //**  Only Activate changes state.
 //**
 //**************************************************************************
-
 class SwitchingDecoration : SwitchableDecoration
   abstract;
+
 
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
+override bool Deactivate (EntityEx Activator) {
   return false;
 }
 

@@ -3585,7 +3585,8 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
       {
         continue;
       }
-      if (UseThing(EntityEx(in->Thing))) {
+      // don't use self
+      if (in->Thing != self && UseThing(EntityEx(in->Thing))) {
         action = true;
         break;
       }
@@ -3688,12 +3689,28 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
 
 bool UseThing(EntityEx Other)
 {
-  if (Other.bUseSpecial && Other.Special && Level.ExecuteActionSpecial(
-    Other.Special, Other.Args[0], Other.Args[1], Other.Args[2],
-    Other.Args[3], Other.Args[4], nullptr, 0, self))
-  {
-    return true;
+  //print("UseThing000: self=%C; Other=%C; Other.bUseSpecial=%s; Other.Special=%s", self, Other, Other.bUseSpecial, Other.Special);
+  if (Other.bUseSpecial && Other.Special) {
+    auto swd = SwitchableDecoration(Other);
+    if (swd && swd.ActivationType) {
+      print("***WARNING: activation type for thing specials aren't implemented yet! %C:ActivationType=0x%08x", Other, swd.ActivationType);
+    }
+    if (Level.ExecuteActionSpecial(
+      Other.Special, Other.Args[0], Other.Args[1], Other.Args[2],
+      Other.Args[3], Other.Args[4], nullptr, 0, self))
+    {
+      if (swd && (swd.ActivationType&SwitchableDecoration::AF_ClearSpecial)) { Other.Special = 0; foreach (ref auto v; Other.Args) v = 0; }
+      return true;
+    }
   }
+  if (Other.bUseSpecial) {
+    auto swd = SwitchableDecoration(Other);
+    if (swd && swd.ActivationType) {
+      //print("UseThing001: SWD! self=%C; Other=%C", self, Other);
+      if (swd.Activate(self)) return true;
+    }
+  }
+  //print("UseThing002: self=%C; Other=%C", self, Other);
   return LineSpecialLevelInfo(Level).StartConversation(self, Other);
 }
 

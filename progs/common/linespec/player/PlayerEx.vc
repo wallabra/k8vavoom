@@ -2916,6 +2916,7 @@ override void PlayerTick (float deltaTime) {
       bUseDown = true;
     }
   } else {
+    //if (bUseDown) print("***USE GOES UP!");
     bUseDown = false;
   }
 
