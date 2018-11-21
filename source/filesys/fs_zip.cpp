@@ -402,7 +402,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
         // hide wad files, 'cause they may conflict with normal files
         // wads will be correctly added by a separate function
         if (Files[i].Name.EndsWith(".wad") || Files[i].Name.EndsWith(".zip") || Files[i].Name.EndsWith(".7z") ||
-            Files[i].Name.EndsWith(".pk3") || Files[i].Name.EndsWith(".pk7"))
+            Files[i].Name.EndsWith(".pk3") || Files[i].Name.EndsWith(".pk7") || Files[i].Name.EndsWith(".exe"))
         {
           Files[i].LumpNamespace = -1;
           LumpName = VStr();
@@ -438,6 +438,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
   }
 
   // sort files alphabetically (have to do this, or file searching is failing for some reason)
+  if (NumFiles > 65520) Sys_Error("Archive '%s' has too many files", *ZipFileName);
   qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
   unguard;
 }
@@ -546,8 +547,9 @@ void VZipFile::Close () {
 //
 //==========================================================================
 int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
+  if (LumpName == NAME_None) return -1;
   for (int i = NumFiles-1; i >= 0; --i) {
-    if (Files[i].LumpNamespace == NS && Files[i].LumpName == LumpName) return i;
+    if (Files[i].LumpNamespace == NS && VStr::ICmp(*Files[i].LumpName, *LumpName) == 0) return i;
   }
   // not found
   return -1;
@@ -560,9 +562,8 @@ int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
 //
 //==========================================================================
 int VZipFile::CheckNumForFileName (const VStr &Name) {
-  VStr fn = Name.ToLower();
   for (int i = NumFiles-1; i >= 0; --i) {
-    if (Files[i].Name == fn) return i;
+    if (Files[i].Name.ICmp(Name) == 0) return i;
   }
   return -1;
 }
@@ -624,9 +625,10 @@ VStr VZipFile::LumpFileName (int Lump) {
 //
 //==========================================================================
 int VZipFile::IterateNS (int Start, EWadNamespace NS) {
-  if (Start < 0 || Start >= NumFiles) return -1;
+  if (Start < 0) Start = 0;
+  if (Start >= NumFiles) return -1;
   for (int li = Start; li < NumFiles; ++li) {
-    if (Files[li].LumpNamespace == NS) return li;
+    if (Files[li].LumpNamespace == NS && Files[li].LumpName != NAME_None) return li;
   }
   return -1;
 }

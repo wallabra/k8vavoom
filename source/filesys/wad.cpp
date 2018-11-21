@@ -200,6 +200,7 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_GetNumForName (VName Name, EWadNamespace NS) {
   guard(W_GetNumForName);
+  check(Name != NAME_None);
   int i = W_CheckNumForName(Name, NS);
   if (i == -1) Sys_Error("W_GetNumForName: \"%s\" not found!", *Name);
   return i;
@@ -216,8 +217,7 @@ int W_GetNumForName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
   guard(W_CheckNumForNameInFile);
-  check(File >= 0);
-  check(File < SearchPaths.length());
+  if (File < 0 || File >= SearchPaths.length()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS);
   if (i >= 0) return MAKE_HANDLE(File, i);
   // not found
@@ -242,6 +242,25 @@ int W_CheckNumForFileName (const VStr &Name) {
   // not found
   return -1;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  W_CheckNumForFileNameInSameFile
+//
+//  Returns -1 if name not found.
+//
+//==========================================================================
+int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
+  if (filelump < 0) return W_CheckNumForFileName(Name);
+  int fidx = FILE_INDEX(filelump);
+  if (fidx < 0 || fidx >= SearchPaths.length()) return -1;
+  VSearchPath *w = GET_LUMP_FILE(filelump);
+  int i = w->CheckNumForFileName(Name);
+  if (i >= 0) return MAKE_HANDLE(fidx, i);
+  // not found
+  return -1;
 }
 
 

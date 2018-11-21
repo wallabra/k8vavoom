@@ -126,7 +126,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
       // hide wad files, 'cause they may conflict with normal files
       // wads will be correctly added by a separate function
       if (loname.endsWith(".wad") || loname.endsWith(".zip") || loname.endsWith(".7z") ||
-          loname.endsWith(".pk3") || loname.endsWith(".pk7"))
+          loname.endsWith(".pk3") || loname.endsWith(".pk7") || loname.endsWith(".exe"))
       {
         fe.ns = (EWadNamespace)-1;
         lumpname = VStr();
@@ -294,8 +294,8 @@ VStr VDirPakFile::LumpFileName (int lump) {
 //==========================================================================
 int VDirPakFile::IterateNS (int start, EWadNamespace ns) {
   for (; start < files.length(); ++start) {
-    // it is important to not skip "hidden" files here!
-    if (files[start].ns == ns) return start;
+    // it is important to skip "hidden" files here!
+    if (files[start].ns == ns && files[start].lumpname != NAME_None) return start;
   }
   return -1;
 }

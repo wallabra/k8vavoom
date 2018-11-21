@@ -101,6 +101,7 @@ void VWadFile::Open (const VStr &FileName, const VStr &AGwaDir, bool FixVoices, 
   header.numlumps = LittleLong(header.numlumps);
   header.infotableofs = LittleLong(header.infotableofs);
   NumLumps = header.numlumps;
+  if (NumLumps < 0 || NumLumps > 65520) Sys_Error("invalid number of lumps in wad file '%s'", *FileName);
   // moved here to make static data less fragmented
   LumpInfo = new lumpinfo_t[NumLumps];
   length = header.numlumps*(int)sizeof(filelump_t);
@@ -192,11 +193,12 @@ void VWadFile::Close () {
 //==========================================================================
 int VWadFile::CheckNumForName (VName LumpName, EWadNamespace InNS) {
   guard(VWadFile::CheckNumForName);
+  if (LumpName == NAME_None) return -1;
   // special ZIP-file namespaces in WAD file are in global namespace
   EWadNamespace NS = InNS;
   if (NS > WADNS_ZipSpecial) NS = WADNS_Global;
   for (int i = NumLumps-1; i >= 0; --i) {
-    if (LumpInfo[i].Namespace == NS && LumpInfo[i].Name == LumpName) return i;
+    if (LumpInfo[i].Namespace == NS && VStr::ICmp(*LumpInfo[i].Name, *LumpName) == 0) return i;
   }
   // not found
   return -1;
@@ -370,8 +372,9 @@ VStr VWadFile::LumpFileName (int lump) {
 //==========================================================================
 int VWadFile::IterateNS (int Start, EWadNamespace NS) {
   guard(VWadFile::IterateNS);
+  if (Start < 0) Start = 0;
   for (int li = Start; li < NumLumps; ++li) {
-    if (LumpInfo[li].Namespace == NS) return li;
+    if (LumpInfo[li].Namespace == NS && LumpInfo[li].Name != NAME_None) return li;
   }
   return -1;
   unguard;
@@ -447,10 +450,9 @@ void VWadFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
 //==========================================================================
 int VWadFile::CheckNumForFileName (const VStr &fname) {
   //VStr fn = fname.stripExtension();
-  VStr fn = fname;
-  if (fn.isEmpty()) return -1;
+  if (fname.isEmpty()) return -1;
   for (int f = NumLumps-1; f >= 0; --f) {
-    if (fn.ICmp(*LumpInfo[f].Name) == 0) return f;
+    if (fname.ICmp(*LumpInfo[f].Name) == 0) return f;
   }
   return -1;
 }
@@ -462,13 +464,7 @@ int VWadFile::CheckNumForFileName (const VStr &fname) {
 //
 //==========================================================================
 bool VWadFile::FileExists (const VStr &fname) {
-  //VStr fn = fname.stripExtension();
-  VStr fn = fname;
-  if (fn.isEmpty()) return -1;
-  for (int f = NumLumps-1; f >= 0; --f) {
-    if (fn.ICmp(*LumpInfo[f].Name) == 0) return true;
-  }
-  return false;
+  return (CheckNumForFileName(fname) >= 0);
 }
 
 
@@ -478,19 +474,8 @@ bool VWadFile::FileExists (const VStr &fname) {
 //
 //==========================================================================
 VStream *VWadFile::OpenFileRead (const VStr &fname) {
-  /*
-  int lidx = CheckNumForFileName(fname);
-  if (lidx == -1) return nullptr;
-  //fprintf(stderr, "***WAD: <%s:%s>\n", *GetPrefix(), *fname);
-  return CreateLumpReaderNum(lidx);
-  */
   //VStr fn = fname.stripExtension();
-  VStr fn = fname;
-  if (fn.isEmpty()) return nullptr;
-  for (int f = NumLumps-1; f >= 0; --f) {
-    if (fn.ICmp(*LumpInfo[f].Name) == 0) {
-      return CreateLumpReaderNum(f);
-    }
-  }
-  return nullptr;
+  int lump = CheckNumForFileName(fname);
+  if (lump < 0) return nullptr;
+  return CreateLumpReaderNum(lump);
 }

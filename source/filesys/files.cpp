@@ -958,8 +958,9 @@ void FL_Init () {
       }
       if (!inFile) continue;
       if (Sys_DirExists(GArgs[fp])) {
-        // never append dirs to saves, 'cause it is meant to be used by developers
-        GCon->Logf(NAME_Init, "Adding directory '%s' as emulated PK3 file", GArgs[fp]);
+        //REVERTED: never append dirs to saves, 'cause it is meant to be used by developers
+        if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
+        GCon->Logf(NAME_Init, "Adding directory '%s' as emulated PK3 file.", GArgs[fp]);
         AddPakDir(GArgs[fp]);
       } else if (Sys_FileExists(GArgs[fp])) {
         if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak

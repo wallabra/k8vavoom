@@ -58,6 +58,7 @@ int W_GetNumForName (VName Name, EWadNamespace NS = WADNS_Global);
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Global);
 
 int W_CheckNumForFileName (const VStr &Name);
+int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name);
 int W_CheckNumForTextureFileName (const VStr &Name);
 int W_GetNumForFileName (const VStr &Name);
 int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts);

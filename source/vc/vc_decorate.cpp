@@ -341,6 +341,8 @@ static TMapNC<VName, bool> IgnoredDecorateActions; // lowercased
 
 static bool inCodeBlock = false;
 
+static int mainDecorateLump = -1;
+
 
 //==========================================================================
 //
@@ -4364,10 +4366,14 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
-      int Lump = W_CheckNumForFileName(sc->String);
+      int Lump = /*W_CheckNumForFileName*/W_CheckNumForFileNameInSameFile(mainDecorateLump, sc->String);
       // check WAD lump only if it's no longer than 8 characters and has no path separator
       if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
-        Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
+        if (mainDecorateLump < 0) {
+          Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
+        } else {
+          Lump = W_CheckNumForNameInFile(VName(*sc->String, VName::AddLower8), W_LumpFile(mainDecorateLump));
+        }
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
       ParseDecorate(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
@@ -4537,8 +4543,10 @@ void ProcessDecorateScripts () {
   VWeaponSlotFixups newWSlots;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_decorate) {
+      mainDecorateLump = Lump;
       GCon->Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
       ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
+      mainDecorateLump = -1;
     }
   }
   //VMemberBase::StaticDumpMObjInfo();

@@ -96,11 +96,15 @@ struct VCVFSSaver {
 static int vcmodCurrFile = -1;
 
 static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
+  /*
   for (int flump = W_IterateFile(-1, filename); flump >= 0; flump = W_IterateFile(flump, filename)) {
     if (vcmodCurrFile >= 0 && (vcmodCurrFile != W_LumpFile(flump))) continue;
     //fprintf(stderr, "VC: found <%s> for <%s>\n", *W_FullLumpName(flump), *filename);
     return W_CreateLumpReaderNum(flump);
   }
+  */
+  int lmp = W_CheckNumForFileNameInSameFile(vcmodCurrFile, filename);
+  if (lmp >= 0) return W_CreateLumpReaderNum(lmp);
   //fprintf(stderr, "VC: NOT found <%s>\n", *filename);
   return nullptr;
 }
