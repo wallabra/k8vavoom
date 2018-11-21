@@ -136,11 +136,11 @@ struct VAcsStore {
     Suspend
   };
 
-  VName Map;    //  Target map
-  vuint8 Type;   //  Type of action
-  vint8 PlayerNum;  //  Player who executes this script
-  vint32 Script;   //  Script number on target map
-  vint32 Args[3];  //  Arguments
+  VName Map; // target map
+  vuint8 Type; // type of action
+  vint8 PlayerNum; // player who executes this script
+  vint32 Script; // script number on target map
+  vint32 Args[3]; // arguments
 
   friend VStream &operator << (VStream &Strm, VAcsStore &Store);
 };
