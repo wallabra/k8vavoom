@@ -39,6 +39,6 @@ override bool Deactivate (EntityEx Activator) {
   return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
