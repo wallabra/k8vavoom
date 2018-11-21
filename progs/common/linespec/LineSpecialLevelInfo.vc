@@ -4360,13 +4360,13 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 final override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forced) {
   class EClass = FindClassLowerCase(Name);
   if (!EClass) {
-    print("No such class `%s`", Name);
+    print("AcsSpawnThing: No such class `%s`", Name);
     return false;
   }
 
   class!EntityEx EntClass = class!EntityEx(EClass);
   if (!EntClass) {
-    print("`%s` is not an actor class", Name);
+    print("AcsSpawnThing: `%s` is not an actor class", Name);
     return false;
   }
   EntClass = GetClassReplacement(EntClass);

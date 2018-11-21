@@ -105,11 +105,14 @@ void VDirPakFile::ScanAllDirs () {
 //==========================================================================
 void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
   if (!inProgs && relpath.ICmp("progs") == 0) inProgs = true;
+  /*
   if (inProgs) {
     if (depth > 6) return; // too deep
   } else {
     if (depth > 1) return; // too deep
   }
+  */
+  if (depth > 12) return; // too deep
   VStr scanPath = PakFileName;
   if (relpath.length()) scanPath = scanPath+"/"+relpath;
   auto dh = Sys_OpenDir(scanPath, true); // want dirs
