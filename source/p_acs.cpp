@@ -100,61 +100,52 @@ enum {
 
 enum { ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX = 0xfffeu };
 
-//
-//  Internal engine limits
-//
-enum
-{
+// internal engine limits
+enum {
   MAX_ACS_SCRIPT_VARS = 20,
   MAX_ACS_MAP_VARS  = 128,
 };
 
-enum EAcsFormat
-{
+enum EAcsFormat {
   ACS_Old,
   ACS_Enhanced,
   ACS_LittleEnhanced,
   ACS_Unknown
 };
 
-//  Script flags.
-enum
-{
-  SCRIPTF_Net = 0x0001  //  Safe to "puke" in multiplayer.
+// script flags
+enum {
+  SCRIPTF_Net = 0x0001, // safe to "puke" in multiplayer
 };
 
-struct VAcsHeader
-{
-  char    Marker[4];
-  vint32    InfoOffset;
-  vint32    Code;
+struct VAcsHeader {
+  char Marker[4];
+  vint32 InfoOffset;
+  vint32 Code;
 };
 
-struct VAcsInfo
-{
-  vuint16   Number;
-  vuint8    Type;
-  vuint8    ArgCount;
+struct VAcsInfo {
+  vuint16 Number;
+  vuint8 Type;
+  vuint8 ArgCount;
   vuint8 *Address;
-  vuint16   Flags;
-  vuint16   VarCount;
-  VName     Name; // NAME_None for unnamed scripts; lowercased
+  vuint16 Flags;
+  vuint16 VarCount;
+  VName Name; // NAME_None for unnamed scripts; lowercased
   VAcs *RunningScript;
 };
 
-struct VAcsFunction
-{
-  vuint8    ArgCount;
-  vuint8    LocalCount;
-  vuint8    HasReturnValue;
-  vuint8    ImportNum;
-  vuint32   Address;
+struct VAcsFunction {
+  vuint8 ArgCount;
+  vuint8 LocalCount;
+  vuint8 HasReturnValue;
+  vuint8 ImportNum;
+  vuint32 Address;
 };
 
 
-//
-//  A action code scripts object module - level's BEHAVIOR lump or library.
-//
+// ////////////////////////////////////////////////////////////////////////// //
+// an action code scripts object module -- level's BEHAVIOR lump or library
 class VAcsObject {
 private:
   friend class VAcsLevel;
@@ -244,6 +235,7 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct VAcsCallReturn {
   int ReturnAddress;
   VAcsFunction *ReturnFunction;
@@ -254,6 +246,7 @@ struct VAcsCallReturn {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VAcs : public VThinker {
   DECLARE_CLASS(VAcs, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VAcs)
@@ -270,57 +263,50 @@ class VAcs : public VThinker {
 
   VEntity *Activator;
   line_t *line;
-  vint32      side;
-  vint32      number;
+  vint32 side;
+  vint32 number;
   VAcsInfo *info;
-  vuint8      State;
-  float     DelayTime;
-  vint32      WaitValue;
+  vuint8 State;
+  float DelayTime;
+  vint32 WaitValue;
   vint32 *LocalVars;
   vuint8 *InstructionPointer;
   VAcsObject *ActiveObject;
-  int       HudWidth;
-  int       HudHeight;
-  VName     Font;
+  int HudWidth;
+  int HudHeight;
+  VName Font;
 
-  virtual void Destroy() override;
-  virtual void Serialise(VStream&) override;
-  virtual void ClearReferences() override;
-  int RunScript(float);
-  virtual void Tick(float) override;
+  virtual void Destroy () override;
+  virtual void Serialise (VStream &) override;
+  virtual void ClearReferences () override;
+  int RunScript (float);
+  virtual void Tick (float) override;
   int CallFunction (int argCount, int funcIndex, vint32 *args);
 
 private:
-  enum { ACS_STACK_DEPTH    = 4096 };
+  enum { ACS_STACK_DEPTH = 4096 };
 
-  enum EScriptAction
-  {
+  enum EScriptAction {
     SCRIPT_Continue,
     SCRIPT_Stop,
     SCRIPT_Terminate,
   };
 
-  //
-  //  Constants used by scripts.
-  //
-
-  enum EGameMode
-  {
+  // constants used by scripts
+  enum EGameMode {
     GAME_SINGLE_PLAYER,
     GAME_NET_COOPERATIVE,
     GAME_NET_DEATHMATCH,
     GAME_TITLE_MAP
   };
 
-  enum ETexturePosition
-  {
+  enum ETexturePosition {
     TEXTURE_TOP,
     TEXTURE_MIDDLE,
     TEXTURE_BOTTOM
   };
 
-  enum
-  {
+  enum {
     BLOCK_NOTHING,
     BLOCK_CREATURES,
     BLOCK_EVERYTHING,
@@ -328,8 +314,7 @@ private:
     BLOCK_PLAYERS,
   };
 
-  enum
-  {
+  enum {
     LEVELINFO_PAR_TIME,
     LEVELINFO_CLUSTERNUM,
     LEVELINFO_LEVELNUM,
@@ -342,25 +327,23 @@ private:
     LEVELINFO_SUCK_TIME
   };
 
-  //  Flags for ReplaceTextures
-  enum
-  {
-    NOT_BOTTOM      = 1,
-    NOT_MIDDLE      = 2,
-    NOT_TOP       = 4,
-    NOT_FLOOR     = 8,
-    NOT_CEILING     = 16,
+  // flags for ReplaceTextures
+  enum {
+    NOT_BOTTOM  = 1,
+    NOT_MIDDLE  = 2,
+    NOT_TOP     = 4,
+    NOT_FLOOR   = 8,
+    NOT_CEILING = 16,
   };
 
-  enum
-  {
+  enum {
     HUDMSG_PLAIN,
     HUDMSG_FADEOUT,
     HUDMSG_TYPEON,
     HUDMSG_FADEINOUT,
 
-    HUDMSG_LOG      = 0x80000000,
-    HUDMSG_COLORSTRING  = 0x40000000,
+    HUDMSG_LOG         = 0x80000000,
+    HUDMSG_COLORSTRING = 0x40000000,
   };
 
   inline VStr GetStr (int Index) { return ActiveObject->Level->GetString(Index); }
@@ -374,21 +357,45 @@ private:
   int FindSectorFromTag (int, int);
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 IMPLEMENT_CLASS(V, Acs)
 
-// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+//  VAcsGrowingArray::Serialise
+//
+//==========================================================================
+void VAcsGrowingArray::Serialise (VStream &Strm) {
+  guard(VAcsGrowingArray::Serialise);
+  vuint8 xver = 1;
+  Strm << xver;
+  if (xver != 1) Host_Error("invalid ACS growing array version in save file");
+  if (Strm.IsLoading()) {
+    values.clear();
+    int count = 0;
+    Strm << STRM_INDEX(count);
+    while (count-- > 0) {
+      int index = -1, value = 0;
+      Strm << STRM_INDEX(index) << STRM_INDEX(value);
+      values.put(index, value);
+    }
+  } else {
+    int count = 0;
+    // count elements (we can't trust hashtable for now)
+    for (auto it = values.first(); it; ++it) ++count;
+    Strm << STRM_INDEX(count);
+    // write elements
+    for (auto it = values.first(); it; ++it) {
+      int index = it.getKey();
+      int value = it.getValue();
+      Strm << STRM_INDEX(index) << STRM_INDEX(value);
+    }
+  }
+  unguard;
+}
+
+
 
 //==========================================================================
 //
@@ -1139,11 +1146,49 @@ vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
 //==========================================================================
 void VAcsObject::Serialise (VStream &Strm) {
   guard(VAcsObject::Serialise);
-  vuint8 xver = 0; // current version is 0
+  vuint8 xver = 1; // current version is 1 (fuck v0)
   Strm << xver;
-  for (int i = 0; i < NumScripts; ++i) Strm << Scripts[i].RunningScript;
-  for (int i = 0; i < MAX_ACS_MAP_VARS; ++i) Strm << STRM_INDEX(MapVarStore[i]);
+  if (xver != 1) Host_Error("invalid ACS object version in save file");
+
+  // scripts
+  int scriptCount = NumScripts;
+  Strm << STRM_INDEX(scriptCount);
+  if (Strm.IsLoading()) {
+    if (scriptCount != NumScripts) Host_Error("invalid number of ACS scripts in save file");
+  }
+  for (int i = 0; i < scriptCount; ++i) Strm << Scripts[i].RunningScript;
+
+  // map variables
+  int mapvarCount = MAX_ACS_MAP_VARS;
+  Strm << STRM_INDEX(mapvarCount);
+  if (Strm.IsLoading()) {
+    //if (mapvarCount < 0 || mapvarCount > MAX_ACS_MAP_VARS) Host_Error("invalid number of ACS map variables in save file");
+    memset((void *)MapVarStore, 0, sizeof(MapVarStore));
+    while (mapvarCount-- > 0) {
+      int index, value;
+      Strm << STRM_INDEX(index) << STRM_INDEX(value);
+      if (index < 0 || index >= MAX_ACS_MAP_VARS) Host_Error("invalid ACS map variable index in save file");
+      MapVarStore[index] = value;
+    }
+  } else {
+    for (int i = 0; i < MAX_ACS_MAP_VARS; ++i) {
+      int index = i, value = MapVarStore[i];
+      Strm << STRM_INDEX(index) << STRM_INDEX(value);
+    }
+  }
+
+  // arrays
+  int arrCount = NumArrays;
+  Strm << STRM_INDEX(arrCount);
+  if (Strm.IsLoading()) {
+    if (arrCount != NumArrays) Host_Error("invalid number of ACS arrays in save file");
+  }
   for (int i = 0; i < NumArrays; ++i) {
+    int asize = ArrayStore[i].Size;
+    Strm << STRM_INDEX(asize);
+    if (Strm.IsLoading()) {
+      if (asize != ArrayStore[i].Size) Host_Error("invalid ACS script array #%d size in save file", i);
+    }
     for (int j = 0; j < ArrayStore[i].Size; ++j) Strm << STRM_INDEX(ArrayStore[i].Data[j]);
   }
   unguard;
@@ -1584,19 +1629,26 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsLevel::Serialise
 //
 //==========================================================================
-
-void VAcsLevel::Serialise(VStream &Strm) {
+void VAcsLevel::Serialise (VStream &Strm) {
   guard(VAcsLevel::Serialise);
-  vuint8 xver = 0;
+  vuint8 xver = 1;
   Strm << xver;
-  for (int i = 0; i < LoadedObjects.Num(); ++i) {
-    LoadedObjects[i]->Serialise(Strm);
+  if (xver != 1) Host_Error("invalid ACS level version in save file");
+
+  // objects
+  int objCount = LoadedObjects.length();
+  Strm << STRM_INDEX(objCount);
+  if (Strm.IsLoading()) {
+    if (objCount != LoadedObjects.length()) Host_Error("invalid number of ACS loaded objects in save file");
   }
+  for (int i = 0; i < objCount; ++i) LoadedObjects[i]->Serialise(Strm);
+
   // dynamically added strings
   vint32 sllen;
   if (Strm.IsLoading()) {
@@ -1871,97 +1923,6 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
 
 //==========================================================================
 //
-//  VAcsGrowingArray::VAcsGrowingArray
-//
-//==========================================================================
-VAcsGrowingArray::VAcsGrowingArray ()
-  : Size(0)
-  , Data(nullptr)
-{
-}
-
-
-//==========================================================================
-//
-//  VAcsGrowingArray::Redim
-//
-//==========================================================================
-void VAcsGrowingArray::Redim (int NewSize) {
-  guard(VAcsGrowingArray::Redim);
-  //check(NewSize >= 0);
-  //fprintf(stderr, "VAcsGrowingArray::Redim: Size=%d; NewSize=%d; Data=%p\n", Size, NewSize, Data);
-  if (!NewSize && Data) {
-    delete[] Data;
-    Data = nullptr;
-  } else if (NewSize) {
-    int *Temp = Data;
-    Data = new int[NewSize];
-    if (Temp) {
-      memcpy(Data, Temp, Min(Size, NewSize)*sizeof(int));
-      delete[] Temp;
-      Temp = nullptr;
-    }
-    // clear newly allocated elements
-    if (NewSize > Size) memset((void *)(Data+Size), 0, (NewSize-Size)*sizeof(int));
-  }
-  Size = NewSize;
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VAcsGrowingArray::SetElemVal
-//
-//==========================================================================
-void VAcsGrowingArray::SetElemVal (int Index, int Value) {
-  guard(VAcsGrowingArray::SetElemVal);
-  //fprintf(stderr, "VAcsGrowingArray::SetElemVal: Index=%d; Value=%d; Size=%d\n", Index, Value, Size);
-  if (Index < 0) Host_Error("ACS: invalid index %d (value=%d)", Index, Value);
-  if (Index > 1024*1024*32) Host_Error("ACS: index %d too big (value=%d)", Index, Value);
-  //if (Index > 1024*1024*32) { GCon->Logf("ACS: index %d too big (value=%d)", Index, Value); return; }
-  if (Index >= Size) Redim(Index+1);
-  Data[Index] = Value;
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VAcsGrowingArray::GetElemVal
-//
-//==========================================================================
-int VAcsGrowingArray::GetElemVal (int Index) const {
-  guard(VAcsGrowingArray::GetElemVal);
-  if ((unsigned)Index >= (unsigned)Size) return 0;
-  return Data[Index];
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VAcsGrowingArray::Serialise
-//
-//==========================================================================
-void VAcsGrowingArray::Serialise (VStream &Strm) {
-  guard(VAcsGrowingArray::Serialise);
-  vuint8 xver = 0;
-  Strm << xver;
-  if (Strm.IsLoading()) {
-    int NewSize;
-    Strm << STRM_INDEX(NewSize);
-    Redim(NewSize);
-  } else {
-    Strm << STRM_INDEX(Size);
-  }
-  for (int i = 0; i < Size; ++i) Strm << STRM_INDEX(Data[i]);
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  VAcs::Destroy
 //
 //==========================================================================
@@ -1977,56 +1938,59 @@ void VAcs::Destroy()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcs::Serialise
 //
 //==========================================================================
-
-void VAcs::Serialise(VStream &Strm)
-{
+void VAcs::Serialise (VStream &Strm) {
   guard(VAcs::Serialise);
   vint32 TmpInt;
 
   Super::Serialise(Strm);
-  vuint8 xver = 0;
+  vuint8 xver = 1;
   Strm << xver;
+  if (xver != 1) Host_Error("invalid ACS script version in save file");
+
   Strm << Activator;
-  if (Strm.IsLoading())
-  {
+  if (Strm.IsLoading()) {
     Strm << STRM_INDEX(TmpInt);
-    line = TmpInt == -1 ? nullptr : &XLevel->Lines[TmpInt];
-  }
-  else
-  {
-    TmpInt = line ? line - XLevel->Lines : -1;
+    if (TmpInt < -1 || TmpInt >= XLevel->NumLines) Host_Error("invalid ACS linedef index in save file");
+    line = (TmpInt == -1 ? nullptr : &XLevel->Lines[TmpInt]);
+  } else {
+    TmpInt = (line ? (int)(ptrdiff_t)(line-XLevel->Lines) : -1);
     Strm << STRM_INDEX(TmpInt);
   }
+
   Strm << side
     << number
     << State
     << DelayTime
     << STRM_INDEX(WaitValue);
-  if (Strm.IsLoading())
-  {
+
+  if (Strm.IsLoading()) {
     Strm << STRM_INDEX(TmpInt);
     ActiveObject = XLevel->Acs->GetObject(TmpInt);
     Strm << STRM_INDEX(TmpInt);
     InstructionPointer = ActiveObject->OffsetToPtr(TmpInt);
     info = ActiveObject->FindScript(number);
     LocalVars = new vint32[info->VarCount];
-  }
-  else
-  {
+  } else {
     TmpInt = ActiveObject->GetLibraryID() >> 16;
     Strm << STRM_INDEX(TmpInt);
     TmpInt = ActiveObject->PtrToOffset(InstructionPointer);
     Strm << STRM_INDEX(TmpInt);
   }
-  for (int i = 0; i < info->VarCount; i++)
-  {
-    Strm << LocalVars[i];
+
+  // local vars
+  int varCount = info->VarCount;
+  Strm << STRM_INDEX(varCount);
+  if (Strm.IsLoading()) {
+    if (varCount != info->VarCount) Host_Error("invalid number of ACS script locals in save file");
   }
+  for (int i = 0; i < info->VarCount; ++i) Strm << LocalVars[i];
+
   Strm << HudWidth
     << HudHeight
     << Font;
@@ -6309,51 +6273,51 @@ int VAcs::FindSectorFromTag(int tag, int start)
 //
 //==========================================================================
 VAcsGlobal::VAcsGlobal () {
-  memset((void *)WorldVars, 0, sizeof(WorldVars));
-  memset((void *)GlobalVars, 0, sizeof(GlobalVars));
+  //memset((void *)WorldVars, 0, sizeof(WorldVars));
+  //memset((void *)GlobalVars, 0, sizeof(GlobalVars));
 }
 
 // get gvar
 VStr VAcsGlobal::GetGlobalVarStr (VAcsLevel *level, int index) const {
-  return (level && index >= 0 && index < MAX_ACS_GLOBAL_VARS ? level->GetString(GlobalVars[index]) : VStr());
+  return (level && index >= 0 && index < MAX_ACS_GLOBAL_VARS ? level->GetString(GlobalVars.GetElemVal(index)) : VStr());
 }
 
 int VAcsGlobal::GetGlobalVarInt (int index) const {
-  return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? GlobalVars[index] : 0);
+  return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? GlobalVars.GetElemVal(index) : 0);
 }
 
 float VAcsGlobal::GetGlobalVarFloat (int index) const {
-  return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? (float)GlobalVars[index]/65536.0f : 0.0f);
+  return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? (float)GlobalVars.GetElemVal(index)/65536.0f : 0.0f);
 }
 
 // set gvar
 void VAcsGlobal::SetGlobalVarInt (int index, int value) {
-  if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars[index] = value;
+  if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars.SetElemVal(index, value);
   else Sys_Error("invalid ACS global index %d", index);
 }
 
 void VAcsGlobal::SetGlobalVarFloat (int index, float value) {
-  if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars[index] = (int)(value*65536.0f);
+  if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars.SetElemVal(index, (int)(value*65536.0f));
   else Sys_Error("invalid ACS global index %d", index);
 }
 
 // get wvar
 int VAcsGlobal::GetWorldVarInt (int index) const {
-  return (index >= 0 && index < MAX_ACS_WORLD_VARS ? WorldVars[index] : 0);
+  return (index >= 0 && index < MAX_ACS_WORLD_VARS ? WorldVars.GetElemVal(index) : 0);
 }
 
 float VAcsGlobal::GetWorldVarFloat (int index) const {
-  return (index >= 0 && index < MAX_ACS_WORLD_VARS ? (float)WorldVars[index]/65536.0f : 0.0f);
+  return (index >= 0 && index < MAX_ACS_WORLD_VARS ? (float)WorldVars.GetElemVal(index)/65536.0f : 0.0f);
 }
 
 // set wvar
 void VAcsGlobal::SetWorldVarInt (int index, int value) {
-  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = value;
+  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars.SetElemVal(index, value);
   else Sys_Error("invalid ACS world index %d", index);
 }
 
 void VAcsGlobal::SetWorldVarFloat (int index, float value) {
-  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = (int)(value*65536.0f);
+  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars.SetElemVal(index, (int)(value*65536.0f));
   else Sys_Error("invalid ACS world index %d", index);
 }
 
@@ -6409,6 +6373,9 @@ void VAcsGlobal::SetWorldArrayFloat (int aidx, int index, float value) {
 //
 //==========================================================================
 VStream &operator << (VStream &Strm, VAcsStore &Store) {
+  vuint8 xver = 1;
+  Strm << xver;
+  if (xver != 1) Host_Error("invalid ACS store version in save file");
   return Strm << Store.Map
       << Store.Type
       << Store.PlayerNum
@@ -6419,33 +6386,58 @@ VStream &operator << (VStream &Strm, VAcsStore &Store) {
       << STRM_INDEX(Store.Args[3]);
 }
 
+
 //==========================================================================
 //
 //  VAcsGlobal::Serialise
 //
 //==========================================================================
-
-void VAcsGlobal::Serialise(VStream &Strm)
-{
+void VAcsGlobal::Serialise (VStream &Strm) {
   guard(VAcsGlobal::Serialise);
-  vuint8 xver = 0;
+  vuint8 xver = 1;
   Strm << xver;
-  for (int i = 0; i < MAX_ACS_WORLD_VARS; i++)
-  {
-    Strm << STRM_INDEX(WorldVars[i]);
+  if (xver != 1) Host_Error("invalid ACS global store version in save file");
+
+  Strm << WorldVars;
+  Strm << GlobalVars;
+
+  // world arrays
+  int worldArrCount = MAX_ACS_WORLD_VARS;
+  Strm << STRM_INDEX(worldArrCount);
+  if (Strm.IsLoading()) {
+    for (int i = 0; i < MAX_ACS_WORLD_VARS; ++i) WorldArrays[i].clear();
+    while (worldArrCount-- > 0) {
+      int index = -1;
+      Strm << STRM_INDEX(index);
+      if (index < 0 || index >= MAX_ACS_WORLD_VARS) Host_Error("invalid ACS world array number in save file");
+      WorldArrays[index].Serialise(Strm);
+    }
+  } else {
+    for (int i = 0; i < MAX_ACS_WORLD_VARS; ++i) {
+      Strm << STRM_INDEX(i);
+      WorldArrays[i].Serialise(Strm);
+    }
   }
-  for (int i = 0; i < MAX_ACS_GLOBAL_VARS; i++)
-  {
-    Strm << STRM_INDEX(GlobalVars[i]);
+
+  // world arrays
+  int globalArrCount = MAX_ACS_GLOBAL_VARS;
+  Strm << STRM_INDEX(globalArrCount);
+  if (Strm.IsLoading()) {
+    for (int i = 0; i < MAX_ACS_GLOBAL_VARS; ++i) GlobalArrays[i].clear();
+    while (globalArrCount-- > 0) {
+      int index = -1;
+      Strm << STRM_INDEX(index);
+      if (index < 0 || index >= MAX_ACS_GLOBAL_VARS) Host_Error("invalid ACS global array number in save file");
+      GlobalArrays[index].Serialise(Strm);
+    }
+  } else {
+    for (int i = 0; i < MAX_ACS_GLOBAL_VARS; ++i) {
+      Strm << STRM_INDEX(i);
+      GlobalArrays[i].Serialise(Strm);
+    }
   }
-  for (int i = 0; i < MAX_ACS_WORLD_VARS; i++)
-  {
-    WorldArrays[i].Serialise(Strm);
-  }
-  for (int i = 0; i < MAX_ACS_GLOBAL_VARS; i++)
-  {
-    GlobalArrays[i].Serialise(Strm);
-  }
+
+  // store
   Strm << Store;
   unguard;
 }

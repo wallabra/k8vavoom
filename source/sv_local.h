@@ -115,16 +115,20 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VAcsGrowingArray {
 private:
-  vint32 Size;
-  vint32 *Data;
+  TMapNC<int, int> values; // index, value
 
 public:
-  VAcsGrowingArray ();
-  void Redim (int NewSize);
-  void SetElemVal (int Index, int Value);
-  int GetElemVal (int Index) const;
+  VAcsGrowingArray () : values() {}
+
+  inline void clear () { values.clear(); }
+
+  inline void SetElemVal (int index, int value) { values.put(index, value); }
+  inline int GetElemVal (int index) const { auto vp = values.find(index); return (vp ? *vp : 0); }
+
   void Serialise (VStream &Strm);
 };
+
+inline VStream &operator << (VStream &strm, VAcsGrowingArray &arr) { arr.Serialise(strm); return strm; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -153,8 +157,8 @@ private:
     MAX_ACS_GLOBAL_VARS = 64,
   };
 
-  int WorldVars[MAX_ACS_WORLD_VARS];
-  int GlobalVars[MAX_ACS_GLOBAL_VARS];
+  VAcsGrowingArray WorldVars;
+  VAcsGrowingArray GlobalVars;
   VAcsGrowingArray WorldArrays[MAX_ACS_WORLD_VARS];
   VAcsGrowingArray GlobalArrays[MAX_ACS_GLOBAL_VARS];
 
