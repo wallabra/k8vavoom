@@ -117,7 +117,7 @@ public:
   VAcsGrowingArray ();
   void Redim (int NewSize);
   void SetElemVal (int Index, int Value);
-  int GetElemVal (int Index);
+  int GetElemVal (int Index) const;
   void Serialise (VStream &Strm);
 };
 
@@ -141,11 +141,10 @@ struct VAcsStore
   friend VStream &operator << (VStream &Strm, VAcsStore &Store);
 };
 
-class VAcsGlobal
-{
-public:
-  enum
-  {
+
+class VAcsGlobal {
+private:
+  enum {
     MAX_ACS_WORLD_VARS  = 256,
     MAX_ACS_GLOBAL_VARS = 64,
   };
@@ -154,23 +153,36 @@ public:
   int GlobalVars[MAX_ACS_GLOBAL_VARS];
   VAcsGrowingArray WorldArrays[MAX_ACS_WORLD_VARS];
   VAcsGrowingArray GlobalArrays[MAX_ACS_GLOBAL_VARS];
+
+public:
   TArray<VAcsStore> Store;
 
-  VAcsGlobal();
+public:
+  VAcsGlobal ();
 
-  void Serialise(VStream &Strm);
+  void Serialise (VStream &Strm);
 
-  VStr GetGVarStr (VAcsLevel *level, int index) const;
+  VStr GetGlobalVarStr (VAcsLevel *level, int index) const;
 
-  int GetGVarInt (int index) const;
-  float GetGVarFloat (int index) const;
-  void SetGVarInt (int index, int value);
-  void SetGVarFloat (int index, float value);
+  int GetGlobalVarInt (int index) const;
+  float GetGlobalVarFloat (int index) const;
+  void SetGlobalVarInt (int index, int value);
+  void SetGlobalVarFloat (int index, float value);
 
-  int GetWVarInt (int index) const;
-  float GetWVarFloat (int index) const;
-  void SetWVarInt (int index, int value);
-  void SetWVarFloat (int index, float value);
+  int GetWorldVarInt (int index) const;
+  float GetWorldVarFloat (int index) const;
+  void SetWorldVarInt (int index, int value);
+  void SetWorldVarFloat (int index, float value);
+
+  int GetGlobalArrayInt (int aidx, int index) const;
+  float GetGlobalArrayFloat (int aidx, int index) const;
+  void SetGlobalArrayInt (int aidx, int index, int value);
+  void SetGlobalArrayFloat (int aidx, int index, float value);
+
+  int GetWorldArrayInt (int aidx, int index) const;
+  float GetWorldArrayFloat (int aidx, int index) const;
+  void SetWorldArrayInt (int aidx, int index, int value);
+  void SetWorldArrayFloat (int aidx, int index, float value);
 };
 
 //==========================================================================

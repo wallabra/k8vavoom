@@ -1952,7 +1952,7 @@ void VAcsGrowingArray::SetElemVal (int Index, int Value) {
 //  VAcsGrowingArray::GetElemVal
 //
 //==========================================================================
-int VAcsGrowingArray::GetElemVal (int Index) {
+int VAcsGrowingArray::GetElemVal (int Index) const {
   guard(VAcsGrowingArray::GetElemVal);
   if ((unsigned)Index >= (unsigned)Size) return 0;
   return Data[Index];
@@ -3025,10 +3025,11 @@ int VAcs::RunScript(float DeltaTime)
 
   //fprintf(stderr, "VAcs::RunScript:002: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //  Shortcuts
-  int *WorldVars = Level->World->Acs->WorldVars;
-  int *GlobalVars = Level->World->Acs->GlobalVars;
-  VAcsGrowingArray *WorldArrays = Level->World->Acs->WorldArrays;
-  VAcsGrowingArray *GlobalArrays = Level->World->Acs->GlobalArrays;
+  //int *WorldVars = Level->World->Acs->WorldVars;
+  //int *GlobalVars = Level->World->Acs->GlobalVars;
+  //VAcsGrowingArray *WorldArrays = Level->World->Acs->WorldArrays;
+  //VAcsGrowingArray *GlobalArrays = Level->World->Acs->GlobalArrays;
+  VAcsGlobal *globals = Level->World->Acs;
 
   TArray<VStr> PrintStrStack; // string builders must be stacked
   VStr PrintStr;
@@ -3282,7 +3283,8 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AssignWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] = sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] = sp[-1];
+      globals->SetWorldVarInt(READ_BYTE_OR_INT32, sp[-1]);
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -3301,7 +3303,8 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushWorldVar)
-      *sp = WorldVars[READ_BYTE_OR_INT32];
+      //*sp = WorldVars[READ_BYTE_OR_INT32];
+      *sp = globals->GetWorldVarInt(READ_BYTE_OR_INT32);
       INC_BYTE_OR_INT32;
       sp++;
       ACSVM_BREAK;
@@ -3319,7 +3322,11 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AddWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] += sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] += sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)+sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -3337,7 +3344,11 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SubWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] -= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] -= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)-sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -3355,7 +3366,11 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_MulWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] *= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] *= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)*sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -3376,7 +3391,11 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_DivWorldVar)
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivWorldVar`");
-      WorldVars[READ_BYTE_OR_INT32] /= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] /= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)/sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -3397,7 +3416,11 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_ModWorldVar)
       if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModWorldVar`");
-      WorldVars[READ_BYTE_OR_INT32] %= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] %= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)%sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -3413,7 +3436,11 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_IncWorldVar)
-      WorldVars[READ_BYTE_OR_INT32]++;
+      //WorldVars[READ_BYTE_OR_INT32]++;
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)+1);
+      }
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
@@ -3428,7 +3455,11 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DecWorldVar)
-      WorldVars[READ_BYTE_OR_INT32]--;
+      //WorldVars[READ_BYTE_OR_INT32]--;
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)-1);
+      }
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
@@ -4387,54 +4418,86 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AssignGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] = sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] = sp[-1];
+      globals->SetGlobalVarInt(READ_BYTE_OR_INT32, sp[-1]);
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushGlobalVar)
-      *sp = GlobalVars[READ_BYTE_OR_INT32];
+      //*sp = GlobalVars[READ_BYTE_OR_INT32];
+      *sp = globals->GetGlobalVarInt(READ_BYTE_OR_INT32);
       INC_BYTE_OR_INT32;
       sp++;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AddGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] += sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] += sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)+sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SubGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] -= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] -= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)-sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_MulGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] *= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] *= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)*sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DivGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] /= sp[-1];
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in 'DivGlobalVar'");
+      //GlobalVars[READ_BYTE_OR_INT32] /= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)/sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ModGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] %= sp[-1];
+      if (sp[-1] == 0) Host_Error("ACS: division by zero in 'ModGlobalVar'");
+      //GlobalVars[READ_BYTE_OR_INT32] %= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)%sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_IncGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32]++;
+      //GlobalVars[READ_BYTE_OR_INT32]++;
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)+1);
+      }
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DecGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32]--;
+      //GlobalVars[READ_BYTE_OR_INT32]--;
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)-1);
+      }
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
@@ -4679,8 +4742,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AddMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) + sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) + sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4689,8 +4751,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_SubMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) - sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) - sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4699,8 +4760,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_MulMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) * sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) * sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4708,9 +4768,9 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_DivMapArray)
       {
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivMapArray`");
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) / sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) / sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4718,9 +4778,9 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_ModMapArray)
       {
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModMapArray`");
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) % sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) % sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4729,8 +4789,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_IncMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-1],
-          ActiveObject->GetArrayVal(ANum, sp[-1]) + 1);
+        ActiveObject->SetArrayVal(ANum, sp[-1], ActiveObject->GetArrayVal(ANum, sp[-1]) + 1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -4739,8 +4798,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_DecMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-1],
-          ActiveObject->GetArrayVal(ANum, sp[-1]) - 1);
+        ActiveObject->SetArrayVal(ANum, sp[-1], ActiveObject->GetArrayVal(ANum, sp[-1]) - 1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -4802,12 +4860,14 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushWorldArray)
-      sp[-1] = WorldArrays[READ_BYTE_OR_INT32].GetElemVal(sp[-1]);
+      //sp[-1] = WorldArrays[READ_BYTE_OR_INT32].GetElemVal(sp[-1]);
+      sp[-1] = globals->GetWorldArrayInt(READ_BYTE_OR_INT32, sp[-1]);
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AssignWorldArray)
-      WorldArrays[READ_BYTE_OR_INT32].SetElemVal(sp[-2], sp[-1]);
+      //WorldArrays[READ_BYTE_OR_INT32].SetElemVal(sp[-2], sp[-1]);
+      globals->SetWorldArrayInt(READ_BYTE_OR_INT32, sp[-2], sp[-1]);
       INC_BYTE_OR_INT32;
       sp -= 2;
       ACSVM_BREAK;
@@ -4815,8 +4875,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AddWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) + sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) + sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])+sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4825,8 +4885,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_SubWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) - sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) - sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])-sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4835,8 +4895,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_MulWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) * sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) * sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])*sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4844,9 +4904,10 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_DivWorldArray)
       {
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in 'DivWorldArray'");
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) / sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) / sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])/sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4854,9 +4915,10 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_ModWorldArray)
       {
+        if (sp[-1] == 0) Host_Error("ACS: division by zero in 'ModWorldArray'");
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) % sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) % sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])%sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4865,8 +4927,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_IncWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-1],
-          WorldArrays[ANum].GetElemVal(sp[-1]) + 1);
+        //WorldArrays[ANum].SetElemVal(sp[-1], WorldArrays[ANum].GetElemVal(sp[-1]) + 1);
+        globals->SetWorldArrayInt(ANum, sp[-1], globals->GetWorldArrayInt(ANum, sp[-1])+1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -4875,15 +4937,16 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_DecWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-1],
-          WorldArrays[ANum].GetElemVal(sp[-1]) - 1);
+        //WorldArrays[ANum].SetElemVal(sp[-1], WorldArrays[ANum].GetElemVal(sp[-1]) - 1);
+        globals->SetWorldArrayInt(ANum, sp[-1], globals->GetWorldArrayInt(ANum, sp[-1])-1);
         INC_BYTE_OR_INT32;
         sp--;
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushGlobalArray)
-      sp[-1] = GlobalArrays[READ_BYTE_OR_INT32].GetElemVal(sp[-1]);
+      //sp[-1] = GlobalArrays[READ_BYTE_OR_INT32].GetElemVal(sp[-1]);
+      sp[-1] = globals->GetGlobalArrayInt(READ_BYTE_OR_INT32, sp[-1]);
       INC_BYTE_OR_INT32;
       ACSVM_BREAK;
 
@@ -4891,7 +4954,8 @@ int VAcs::RunScript(float DeltaTime)
 #ifdef ACS_DUMP_EXECUTION
       //GCon->Logf("ACS:  AssignGlobalArray[%d] (%d, %d)", READ_BYTE_OR_INT32, sp[-2], sp[-1]);
 #endif
-      GlobalArrays[READ_BYTE_OR_INT32].SetElemVal(sp[-2], sp[-1]);
+      //GlobalArrays[READ_BYTE_OR_INT32].SetElemVal(sp[-2], sp[-1]);
+      globals->SetGlobalArrayInt(READ_BYTE_OR_INT32, sp[-2], sp[-1]);
       INC_BYTE_OR_INT32;
       sp -= 2;
       ACSVM_BREAK;
@@ -4899,7 +4963,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AddGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])+sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])+sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])+sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4908,7 +4973,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_SubGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])-sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])-sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])-sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4917,7 +4983,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_MulGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])*sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])*sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])*sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4927,7 +4994,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int ANum = READ_BYTE_OR_INT32;
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `DivGlobalArray`");
-        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])/sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])/sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])/sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4937,7 +5005,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int ANum = READ_BYTE_OR_INT32;
         if (sp[-1] == 0) Host_Error("ACS: division by zero in `ModGlobalArray`");
-        GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])%sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2])%sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])%sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -4946,7 +5015,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_IncGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-1], GlobalArrays[ANum].GetElemVal(sp[-1])+1);
+        //GlobalArrays[ANum].SetElemVal(sp[-1], GlobalArrays[ANum].GetElemVal(sp[-1])+1);
+        globals->SetGlobalArrayInt(ANum, sp[-1], globals->GetGlobalArrayInt(ANum, sp[-1])+1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -4955,7 +5025,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_DecGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-1], GlobalArrays[ANum].GetElemVal(sp[-1])-1);
+        //GlobalArrays[ANum].SetElemVal(sp[-1], GlobalArrays[ANum].GetElemVal(sp[-1])-1);
+        globals->SetGlobalArrayInt(ANum, sp[-1], globals->GetGlobalArrayInt(ANum, sp[-1])-1);
         INC_BYTE_OR_INT32;
         sp--;
       }
@@ -5275,8 +5346,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int ANum = *ActiveObject->MapVars[sp[-1]];
         int Idx = sp[-2];
-        for (int c = WorldArrays[ANum].GetElemVal(Idx); c;
-          c = WorldArrays[ANum].GetElemVal(Idx))
+        //for (int c = WorldArrays[ANum].GetElemVal(Idx); c; c = WorldArrays[ANum].GetElemVal(Idx))
+        for (int c = globals->GetWorldArrayInt(ANum, Idx); c; c = globals->GetWorldArrayInt(ANum, Idx))
         {
           PrintStr += (char)c;
           Idx++;
@@ -5289,8 +5360,8 @@ int VAcs::RunScript(float DeltaTime)
       {
         int ANum = *ActiveObject->MapVars[sp[-1]];
         int Idx = sp[-2];
-        for (int c = GlobalArrays[ANum].GetElemVal(Idx); c;
-          c = GlobalArrays[ANum].GetElemVal(Idx))
+        //for (int c = GlobalArrays[ANum].GetElemVal(Idx); c; c = GlobalArrays[ANum].GetElemVal(Idx))
+        for (int c = globals->GetGlobalArrayInt(ANum, Idx); c; c = globals->GetGlobalArrayInt(ANum, Idx))
         {
           PrintStr += (char)c;
           Idx++;
@@ -5436,13 +5507,21 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AndWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] &= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] &= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)&sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AndGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] &= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] &= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)&sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -5450,8 +5529,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AndMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) & sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) & sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5460,8 +5538,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AndWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) & sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) & sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])&sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5470,8 +5548,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_AndGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) & sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2]) & sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])&sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5490,13 +5568,21 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_EOrWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] ^= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] ^= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)^sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_EOrGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] ^= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] ^= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)^sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -5504,8 +5590,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_EOrMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) ^ sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) ^ sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5514,8 +5599,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_EOrWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) ^ sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) ^ sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])^sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5524,8 +5609,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_EOrGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) ^ sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2]) ^ sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])^sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5544,13 +5629,21 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_OrWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] |= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] |= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)|sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_OrGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] |= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] |= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)|sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -5558,8 +5651,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_OrMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) | sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) | sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5568,8 +5660,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_OrWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) | sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) | sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])|sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5578,8 +5670,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_OrGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) | sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2]) | sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])|sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5598,13 +5690,21 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] <<= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] <<= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)<<sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] <<= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] <<= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)<<sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -5612,8 +5712,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_LSMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) << sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) << sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5622,8 +5721,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_LSWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) << sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) << sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])<<sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5632,8 +5731,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_LSGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) << sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2]) << sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])<<sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5652,13 +5751,21 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_RSWorldVar)
-      WorldVars[READ_BYTE_OR_INT32] >>= sp[-1];
+      //WorldVars[READ_BYTE_OR_INT32] >>= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetWorldVarInt(vidx, globals->GetWorldVarInt(vidx)>>sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_RSGlobalVar)
-      GlobalVars[READ_BYTE_OR_INT32] >>= sp[-1];
+      //GlobalVars[READ_BYTE_OR_INT32] >>= sp[-1];
+      {
+        int vidx = READ_BYTE_OR_INT32;
+        globals->SetGlobalVarInt(vidx, globals->GetGlobalVarInt(vidx)>>sp[-1]);
+      }
       INC_BYTE_OR_INT32;
       sp--;
       ACSVM_BREAK;
@@ -5666,8 +5773,7 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_RSMapArray)
       {
         int ANum = *ActiveObject->MapVars[READ_BYTE_OR_INT32];
-        ActiveObject->SetArrayVal(ANum, sp[-2],
-          ActiveObject->GetArrayVal(ANum, sp[-2]) >> sp[-1]);
+        ActiveObject->SetArrayVal(ANum, sp[-2], ActiveObject->GetArrayVal(ANum, sp[-2]) >> sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5676,8 +5782,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_RSWorldArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        WorldArrays[ANum].SetElemVal(sp[-2],
-          WorldArrays[ANum].GetElemVal(sp[-2]) >> sp[-1]);
+        //WorldArrays[ANum].SetElemVal(sp[-2], WorldArrays[ANum].GetElemVal(sp[-2]) >> sp[-1]);
+        globals->SetWorldArrayInt(ANum, sp[-2], globals->GetWorldArrayInt(ANum, sp[-2])>>sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -5686,8 +5792,8 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_RSGlobalArray)
       {
         int ANum = READ_BYTE_OR_INT32;
-        GlobalArrays[ANum].SetElemVal(sp[-2],
-          GlobalArrays[ANum].GetElemVal(sp[-2]) >> sp[-1]);
+        //GlobalArrays[ANum].SetElemVal(sp[-2], GlobalArrays[ANum].GetElemVal(sp[-2]) >> sp[-1]);
+        globals->SetGlobalArrayInt(ANum, sp[-2], globals->GetGlobalArrayInt(ANum, sp[-2])>>sp[-1]);
         INC_BYTE_OR_INT32;
         sp -= 2;
       }
@@ -6228,94 +6334,93 @@ VAcsGlobal::VAcsGlobal () {
   memset((void *)GlobalVars, 0, sizeof(GlobalVars));
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::GetGVarStr
-//
-//==========================================================================
-VStr VAcsGlobal::GetGVarStr (VAcsLevel *level, int index) const {
+// get gvar
+VStr VAcsGlobal::GetGlobalVarStr (VAcsLevel *level, int index) const {
   return (level && index >= 0 && index < MAX_ACS_GLOBAL_VARS ? level->GetString(GlobalVars[index]) : VStr());
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::GetGVarInt
-//
-//==========================================================================
-int VAcsGlobal::GetGVarInt (int index) const {
+int VAcsGlobal::GetGlobalVarInt (int index) const {
   return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? GlobalVars[index] : 0);
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::GetGVarFloat
-//
-//==========================================================================
-float VAcsGlobal::GetGVarFloat (int index) const {
+float VAcsGlobal::GetGlobalVarFloat (int index) const {
   return (index >= 0 && index < MAX_ACS_GLOBAL_VARS ? (float)GlobalVars[index]/65536.0f : 0.0f);
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::SetGVarInt
-//
-//==========================================================================
-void VAcsGlobal::SetGVarInt (int index, int value) {
+// set gvar
+void VAcsGlobal::SetGlobalVarInt (int index, int value) {
   if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars[index] = value;
+  else Sys_Error("invalid ACS global index %d", index);
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::SetGVarFloat
-//
-//==========================================================================
-void VAcsGlobal::SetGVarFloat (int index, float value) {
+void VAcsGlobal::SetGlobalVarFloat (int index, float value) {
   if (index >= 0 && index < MAX_ACS_GLOBAL_VARS) GlobalVars[index] = (int)(value*65536.0f);
+  else Sys_Error("invalid ACS global index %d", index);
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::GetWVarInt
-//
-//==========================================================================
-int VAcsGlobal::GetWVarInt (int index) const {
+// get wvar
+int VAcsGlobal::GetWorldVarInt (int index) const {
   return (index >= 0 && index < MAX_ACS_WORLD_VARS ? WorldVars[index] : 0);
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::GetWVarFloat
-//
-//==========================================================================
-float VAcsGlobal::GetWVarFloat (int index) const {
+float VAcsGlobal::GetWorldVarFloat (int index) const {
   return (index >= 0 && index < MAX_ACS_WORLD_VARS ? (float)WorldVars[index]/65536.0f : 0.0f);
 }
 
-
-//==========================================================================
-//
-//  VAcsGlobal::SetWVarInt
-//
-//==========================================================================
-void VAcsGlobal::SetWVarInt (int index, int value) {
+// set wvar
+void VAcsGlobal::SetWorldVarInt (int index, int value) {
   if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = value;
+  else Sys_Error("invalid ACS world index %d", index);
+}
+
+void VAcsGlobal::SetWorldVarFloat (int index, float value) {
+  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = (int)(value*65536.0f);
+  else Sys_Error("invalid ACS world index %d", index);
+}
+
+// get garr
+int VAcsGlobal::GetGlobalArrayInt (int aidx, int index) const {
+  if (aidx >= 0 && aidx < MAX_ACS_GLOBAL_VARS) return GlobalArrays[aidx].GetElemVal(index);
+  return 0;
+}
+
+float VAcsGlobal::GetGlobalArrayFloat (int aidx, int index) const {
+  if (aidx >= 0 && aidx < MAX_ACS_GLOBAL_VARS) return (float)GlobalArrays[aidx].GetElemVal(index)/65536.0f;
+  return 0;
+}
+
+// set garr
+void VAcsGlobal::SetGlobalArrayInt (int aidx, int index, int value) {
+  if (aidx >= 0 && aidx < MAX_ACS_GLOBAL_VARS) GlobalArrays[aidx].SetElemVal(index, value);
+  else Sys_Error("invalid ACS global array index %d", aidx);
+}
+
+void VAcsGlobal::SetGlobalArrayFloat (int aidx, int index, float value) {
+  if (aidx >= 0 && aidx < MAX_ACS_GLOBAL_VARS) GlobalArrays[aidx].SetElemVal(index, (int)(value/65536.0f));
+  else Sys_Error("invalid ACS global array index %d", aidx);
 }
 
 
-//==========================================================================
-//
-//  VAcsGlobal::SetWVarFloat
-//
-//==========================================================================
-void VAcsGlobal::SetWVarFloat (int index, float value) {
-  if (index >= 0 && index < MAX_ACS_WORLD_VARS) WorldVars[index] = (int)(value*65536.0f);
+// get warr
+int VAcsGlobal::GetWorldArrayInt (int aidx, int index) const {
+  if (aidx >= 0 && aidx < MAX_ACS_WORLD_VARS) return WorldArrays[aidx].GetElemVal(index);
+  return 0;
+}
+
+float VAcsGlobal::GetWorldArrayFloat (int aidx, int index) const {
+  if (aidx >= 0 && aidx < MAX_ACS_WORLD_VARS) return (float)WorldArrays[aidx].GetElemVal(index)/65536.0f;
+  return 0;
+}
+
+// set warr
+void VAcsGlobal::SetWorldArrayInt (int aidx, int index, int value) {
+  if (aidx >= 0 && aidx < MAX_ACS_WORLD_VARS) WorldArrays[aidx].SetElemVal(index, value);
+  else Sys_Error("invalid ACS world array index %d", aidx);
+}
+
+void VAcsGlobal::SetWorldArrayFloat (int aidx, int index, float value) {
+  if (aidx >= 0 && aidx < MAX_ACS_WORLD_VARS) WorldArrays[aidx].SetElemVal(index, (int)(value/65536.0f));
+  else Sys_Error("invalid ACS world array index %d", aidx);
 }
 
 
