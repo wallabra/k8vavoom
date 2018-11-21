@@ -64,7 +64,7 @@ static int k8edIndent = 0;
 
 static void printIndent () { for (int f = k8edIndent; f > 0; --f) fputc(' ', stderr); }
 static void enterIndent () { ++k8edIndent; }
-static void leaveIndent () { if (--k8edIndent < 0) *(int *)0 = 0; }
+static void leaveIndent () { if (--k8edIndent < 0) abort(); }
 #endif
 
 enum { MaxDynArrayLength = 1024*1024*512 };
@@ -2604,7 +2604,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     cstDump(nullptr);
     Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack = %p, oldsp = %p", *func->Name, pr_stack, pr_stackPtr);
     #ifdef VMEXEC_RUNDUMP
-    *(int *)0 = 0;
+    abort();
     #endif
   }
 #endif
@@ -2615,7 +2615,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     cstDump(nullptr);
     Sys_Error("ExecuteFunction: Stack underflow in %s", *func->Name);
     #ifdef VMEXEC_RUNDUMP
-    *(int *)0 = 0;
+    abort();
     #endif
   }
 #endif
@@ -2626,7 +2626,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     cstDump(nullptr);
     Sys_Error("ExecuteFunction: Stack overflow in `%s`", *func->Name);
     #ifdef VMEXEC_RUNDUMP
-    *(int *)0 = 0;
+    abort();
     #endif
   }
 #endif

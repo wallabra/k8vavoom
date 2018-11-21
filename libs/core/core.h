@@ -48,11 +48,11 @@
 #include "chacha20.h"
 #include "poly1305-donna.h"
 #include "ed25519.h"
-#include "zone.h" // zone memory allocation
 #include "endian.h" // endianes handling
+#include "exception.h" // exception handling
+#include "zone.h" // zone memory allocation
 #include "names.h" // built-in names
 #include "log.h" // general logging interface
-#include "exception.h" // exception handling
 #include "stream.h" // streams
 #include "array.h" // dynamic arrays
 #include "map.h" // mapping of keys to values

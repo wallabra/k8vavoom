@@ -46,8 +46,7 @@ public:
         delete e;
         e = (ae ? ae->SyntaxCopy() : nullptr);
       } else {
-        fprintf(stderr, "VC: internal compiler error (AutoCopy::assignSyntaxCopy)\n");
-        *(int *)0 = 0;
+        Sys_Error("VC: internal compiler error (AutoCopy::assignSyntaxCopy)");
       }
     }
     inline void assignNoCopy (VExpression *ae) {
@@ -56,8 +55,7 @@ public:
         delete e;
         e = ae;
       } else {
-        fprintf(stderr, "VC: internal compiler error (AutoCopy::assignNoCopy)\n");
-        *(int *)0 = 0;
+        Sys_Error("VC: internal compiler error (AutoCopy::assignNoCopy)");
       }
     }
 

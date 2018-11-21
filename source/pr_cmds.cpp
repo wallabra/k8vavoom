@@ -312,7 +312,7 @@ VStr PF_FormatString () {
             case TYPE_Name:
               {
                 VName n = *(VName *)&params[pi].i;
-                if (!n.isValid()) { VObject::VMDumpCallStack(); /* *(int*)0 = 0;*/ Sys_Error("garbage name"); }
+                if (!n.isValid()) { VObject::VMDumpCallStack(); Sys_Error("garbage name"); }
                 if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill);
               }
               break;

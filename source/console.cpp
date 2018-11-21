@@ -527,6 +527,10 @@ static void ConSerialise (const char *str, EName Event, bool asConLog) {
   //dprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
   if (!str) str = "";
+  //HACK! if string starts with "Sys_Error:", print it, and close log file
+  if (VStr::NCmp(str, "Sys_Error:", 10) == 0) {
+    if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
+  }
   if (asConLog) DoPrint(str);
   if (VStr::MustBeSanitized(str)) {
     VStr rc = VStr(str).RemoveColours();

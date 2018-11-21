@@ -244,7 +244,7 @@ private:
       idx = (idx+1)&bhigh;
       ++pcur;
     }
-    *(int *)0 = 0;
+    abort();
   }
 
   inline int getCapacity () const { return mBucketsUsed; }

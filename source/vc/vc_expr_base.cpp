@@ -441,7 +441,7 @@ bool VExpression::InCompilerCleanup = false;
 
 void *VExpression::operator new (size_t size) {
   size_t *res = (size_t *)AllocMem(size+sizeof(size_t));
-  if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
+  if (!res) Sys_Error("OUT OF MEMORY!");
   *res = size;
   ++res;
   if (size) memset(res, 0, size);
@@ -462,7 +462,7 @@ void *VExpression::operator new (size_t size) {
 
 void *VExpression::operator new[] (size_t size) {
   size_t *res = (size_t *)AllocMem(size+sizeof(size_t));
-  if (!res) { fprintf(stderr, "\nFATAL: OUT OF MEMORY!\n"); *(int *)0 = 0; }
+  if (!res) Sys_Error("OUT OF MEMORY!");
   *res = size;
   ++res;
   if (size) memset(res, 0, size);

@@ -220,7 +220,7 @@ void VTextureManager::Shutdown () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
-  //if (Textures.length() > 0 && Tex->Name == NAME_None) *(int*)0 = 0;
+  //if (Textures.length() > 0 && Tex->Name == NAME_None) abort();
   //GCon->Logf("AddTexture0: <%s>; i=%d; %p  (%p)", *Tex->Name, Textures.length(), Tex, Textures.ptr());
   //if (Textures.length() > 2666) fprintf(stderr, "  [2666]=%p <%s>  (%p)\n", Textures[2666], *Textures[2666]->Name, Textures.ptr());
   Textures.Append(Tex);

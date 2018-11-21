@@ -66,7 +66,7 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
     case TYPE_Delegate:
       /*
       fprintf(stderr, "<%s>\n", *atype.GetName());
-      *(int *)0 = 0;
+      abort();
       FatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
       */
       return new VDelegateType(atype, aloc);
@@ -84,12 +84,11 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
       return new VSliceType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
     case TYPE_Unknown:
     case TYPE_Automatic: // this is valid only for variable declarations, and will be resolved to actual type
-      fprintf(stderr, "VC: VTypeExpr::NewTypeExpr: internal compiler error\n");
-      *(int *)0 = 0;
+      Sys_Error("VC: VTypeExpr::NewTypeExpr: internal compiler error");
+      break;
     default: break;
   }
-  fprintf(stderr, "VC: VTypeExpr::NewTypeExpr: internal compiler error\n");
-  *(int *)0 = 0;
+  Sys_Error("VC: VTypeExpr::NewTypeExpr: internal compiler error");
   return nullptr;
 };
 
@@ -214,15 +213,8 @@ VTypeExpr *VTypeExprSimple::ResolveAsType (VEmitContext &) {
     return nullptr;
   }
 
-  if (Type.Type == TYPE_Automatic) {
-    fprintf(stderr, "VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!\n");
-    *(int*)0 = 0;
-  }
-
-  if (Type.Type == TYPE_Class) {
-    fprintf(stderr, "VC INTERNAL COMPILER ERROR: 19463!\n");
-    *(int*)0 = 0;
-  }
+  if (Type.Type == TYPE_Automatic) Sys_Error("VC INTERNAL COMPILER ERROR: unresolved automatic type (0)!");
+  if (Type.Type == TYPE_Class) Sys_Error("VC INTERNAL COMPILER ERROR: 19463!");
 
   return this;
 }

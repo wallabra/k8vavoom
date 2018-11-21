@@ -1104,7 +1104,6 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   } else {
     ParseError(Loc, "Unknown decorate action `%s`", *Name);
   }
-  //*(int *)0 = 0;
   delete this;
   return nullptr;
   unguard;
