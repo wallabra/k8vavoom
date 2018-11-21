@@ -1544,7 +1544,7 @@ void VEntity::UpdateVelocity () {
 
 //=============================================================================
 //
-// TestMobjZ
+//  TestMobjZ
 //
 //  Checks if the new Z position is legal
 //
