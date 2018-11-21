@@ -1,4 +1,4 @@
-﻿//**************************************************************************
+//**************************************************************************
 //**
 //**    ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -29,377 +29,285 @@
 //
 //**************************************************************************
 
+
+//==========================================================================
+//
+//  FixNormalVelocity
+//
+//==========================================================================
+final void FixNormalVelocity () {
+  if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
+    print("*** FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
+    Velocity = vector(0, 0, 0);
+  }
+  if (!Speed.isfinite) Speed = 0;
+}
+
+
+//==========================================================================
+//
+//  ClampNormalVelocity
+//
+//==========================================================================
+final void ClampNormalVelocity () {
+  if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
+    print("*** FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
+    Velocity = vector(0, 0, 0);
+  } else {
+    // why not?
+    Velocity.x = fclamp(Velocity.x, -MAXMOVE, MAXMOVE);
+    Velocity.y = fclamp(Velocity.y, -MAXMOVE, MAXMOVE);
+    Velocity.z = fclamp(Velocity.z, -MAXMOVE, MAXMOVE);
+  }
+  Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
+}
+
+
 //==========================================================================
 //
 //  Physics
 //
 //==========================================================================
-
-bool Physics(float DeltaTime)
-{
-  if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
-    print("*** PHYSENTER: FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
-    Velocity = vector(0, 0, 0);
-  }
-  scope(exit) {
-    if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
-      print("*** PHYSEXIT: FUCKED VELOCITY FOR '%C': %s", self, Velocity);
-      Velocity = vector(0, 0, 0);
-    }
-  }
+bool Physics (float DeltaTime) {
+  ClampNormalVelocity();
+  scope(exit) ClampNormalVelocity();
 
   float oldfloorz;
   float CummX = 0.0;
   float CummY = 0.0;
-  if (Sector->AffectorData && bColideWithWorld && !bNoSector)
-  {
+
+  if (Sector->AffectorData && bColideWithWorld && !bNoSector) {
     // killough 3/7/98: Carry things on floor
     // killough 3/20/98: use new sector list which reflects true members
     // killough 3/27/98: fix carrier bug
     // killough 4/4/98: Underwater, carry things even w/o gravity
 
-    // Move objects only if on floor or underwater,
-    // non-floating, and clipped.
+    // move objects only if on floor or underwater, non-floating, and clipped
 
     int CountX = 0;
     int CountY = 0;
     SectorThinker SecThink;
-    for (SecThink = SectorThinker(Sector->AffectorData); SecThink;
-      SecThink = SecThink.NextAffector)
-    {
-      if (!Scroller(SecThink))
-      {
-        continue;
-      }
+    for (SecThink = SectorThinker(Sector->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
+      if (!Scroller(SecThink)) continue;
       float scrollx = Scroller(SecThink).CarryScrollX;
       float scrolly = Scroller(SecThink).CarryScrollY;
-      if (!scrollx && !scrolly)
-      {
-        continue;
-      }
-      if (bNoGravity && (!Sector->heightsec ||
-        (Sector->heightsec->bIgnoreHeightSec)))
-      {
-        continue;
-      }
+      if (!scrollx && !scrolly) continue;
+      if (bNoGravity && (!Sector->heightsec || (Sector->heightsec->bIgnoreHeightSec))) continue;
       float height = GetPlanePointZ(ref Sector->floor, Origin);
-      if (Origin.z > height)
-      {
-        if (!Sector->heightsec || (Sector->heightsec->bIgnoreHeightSec))
-        {
-          continue;
-        }
-
+      if (Origin.z > height) {
+        if (!Sector->heightsec || (Sector->heightsec->bIgnoreHeightSec)) continue;
         float waterheight = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
-        if (waterheight > height && Origin.z >= waterheight)
-        {
-          continue;
-        }
+        if (waterheight > height && Origin.z >= waterheight) continue;
       }
 
       CummX += scrollx;
       CummY += scrolly;
-      if (scrollx)
-      {
-        CountX++;
-      }
-      if (scrolly)
-      {
-        CountY++;
-      }
+      if (scrollx) ++CountX;
+      if (scrolly) ++CountY;
     }
 
     // Some levels designed with Boom in mind actually want things to accelerate
     // at neighboring scrolling sector boundaries. But it is only important for
     // non-player objects.
-    if (bIsPlayer || !Level.CompatBoomScroll)
-    {
-      if (CountX > 1)
-      {
-        CummX /= itof(CountX);
-      }
-      if (CountY > 1)
-      {
-        CummY /= itof(CountY);
-      }
+    if (bIsPlayer || !Level.CompatBoomScroll) {
+      if (CountX > 1) CummX /= float(CountX);
+      if (CountY > 1) CummY /= float(CountY);
     }
   }
 
   CheckWater();
-  if (!bFloatBob || !bSpecial)
-  {
-    UpdateVelocity();
-  }
+  if (!bFloatBob || !bSpecial) UpdateVelocity();
 
   // momentum movement
   // Handle X and Y momentums
   oldfloorz = XYMovement(DeltaTime, CummX, CummY);
-  if (IsDestroyed())
-  {
-    // mobj was removed
-    return false;
-  }
+  if (IsDestroyed()) return false; // mobj was removed
 
-  if (bFloatBob)
-  {
-    if (bSpecial)
-    {
-      // Floating item bobbing motion (special1 is height)
-      if (Sector->bHasExtrafloors)
-      {
-        //  Make sure FloorZ is from bottom region.
+  if (bFloatBob) {
+    if (bSpecial) {
+      // floating item bobbing motion (special1 is height)
+      if (Sector->bHasExtrafloors) {
+        // make sure FloorZ is from bottom region
         Origin.z = ONFLOORZ;
         LinkToWorld();
       }
       FloatBobPhase += DeltaTime;
-      Origin.z = GetPlanePointZ(ref Sector->floor, Origin) + Special1f +
-        Level.Game.FloatBobOffsets[ftoi(FloatBobPhase * 35.0) & 63];
-    }
-    else
-    {
-      //  Floating bobbing motion for monsters.
+      Origin.z = GetPlanePointZ(ref Sector->floor, Origin)+Special1f+Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
+    } else {
+      // floating bobbing motion for monsters
       float savedz = Origin.z;
 
-      Origin.z -= Level.Game.FloatBobOffsets[
-        ftoi(FloatBobPhase * 35.0) & 63];
-      if (!TestMobjZ())
-      {
-        Origin.z = savedz;
-      }
+      Origin.z -= Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
+      if (!TestMobjZ()) Origin.z = savedz;
       FloatBobPhase += DeltaTime;
 
       savedz = Origin.z;
-      Origin.z += Level.Game.FloatBobOffsets[
-        ftoi(FloatBobPhase * 35.0) & 63];
-      if (!TestMobjZ())
-      {
-        Origin.z = savedz;
-      }
+      Origin.z += Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
+      if (!TestMobjZ()) Origin.z = savedz;
     }
   }
 
-  if (Velocity.z || (Origin.z != FloorZ && (!bFloatBob || (!bSpecial &&
-    Origin.z - Level.Game.FloatBobOffsets[ftoi(FloatBobPhase * 35.0) & 63] != FloorZ))))
+  if (/*bIsPlayer ||*/ Velocity.z ||
+      (Origin.z != FloorZ && (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
   {
-    if (bPassMobj && !bMissile && !Level.CompatNoPassOver)
-    {
-      // Handle Z momentum and gravity
+    if (bPassMobj && !bMissile && !Level.CompatNoPassOver) {
+      // handle Z momentum and gravity
       EntityEx onmo = EntityEx(CheckOnmobj());
-      if (onmo)
-      {
-        if (bIsPlayer)
-        {
-          if (Velocity.z < -DEFAULT_GRAVITY * 0.25 && !bFly && !bNoGravity)
-          {
-            PlayerLandedOnThing();
-          }
+      if (onmo) {
+        if (bIsPlayer) {
+          //print("Player is on thing %C", onmo);
+          if (Velocity.z < -DEFAULT_GRAVITY*0.25 && !bFly && !bNoGravity) PlayerLandedOnThing();
         }
-        if (onmo.Origin.z + onmo.Height - Origin.z <= MaxStepHeight)
-        {
-          if (bIsPlayer)
-          {
-            PlayerEx(Player).ViewHeight -=
-              onmo.Origin.z + onmo.Height - Origin.z;
-            PlayerEx(Player).DeltaViewHeight =
-              (PlayerPawn(self).ViewHeight -
-              PlayerEx(Player).ViewHeight) * 4.0;
+        if (onmo.Origin.z+onmo.Height-Origin.z <= MaxStepHeight) {
+          if (bIsPlayer) {
+            PlayerEx(Player).ViewHeight -= onmo.Origin.z+onmo.Height-Origin.z;
+            PlayerEx(Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(Player).ViewHeight)*4.0;
           }
-          Origin.z = onmo.Origin.z + onmo.Height;
+          Origin.z = onmo.Origin.z+onmo.Height;
         }
         bOnMobj = true;
         Velocity.z = 0.0;
         Crash();
 
-        if (onmo.bOnmobjCopyVel)
-        {
+        if (onmo.bOnmobjCopyVel) {
           Velocity.x = onmo.Velocity.x;
           Velocity.y = onmo.Velocity.y;
         }
-        if (onmo.Origin.z < onmo.FloorZ)
-        {
-          Origin.z += onmo.FloorZ - onmo.Origin.z;
-          if (onmo.bIsPlayer)
-          {
-            PlayerEx(onmo.Player).ViewHeight -=
-              onmo.FloorZ - onmo.Origin.z;
-            PlayerEx(onmo.Player).DeltaViewHeight =
-              (PlayerPawn(self).ViewHeight -
-              PlayerEx(onmo.Player).ViewHeight) * 4.0;
+        if (onmo.Origin.z < onmo.FloorZ) {
+          Origin.z += onmo.FloorZ-onmo.Origin.z;
+          if (onmo.bIsPlayer) {
+            PlayerEx(onmo.Player).ViewHeight -= onmo.FloorZ-onmo.Origin.z;
+            PlayerEx(onmo.Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(onmo.Player).ViewHeight)*4.0;
           }
           onmo.Origin.z = onmo.FloorZ;
         }
-      }
-      else
-      {
+      } else {
         ZMovement(DeltaTime, oldfloorz);
         bOnMobj = false;
       }
-      if (IsDestroyed())
-      {
-        // entity was removed
-        return false;
-      }
-    }
-    else
-    {
-      // Handle Z momentum and gravity
+      if (IsDestroyed()) return false; // entity was removed
+    } else {
+      // handle Z momentum and gravity
       ZMovement(DeltaTime, oldfloorz);
-      if (IsDestroyed())
-      {
-        // entity was removed
-        return false;
-      }
+      if (IsDestroyed()) return false; // entity was removed
     }
   }
   return true;
 }
+
 
 //==========================================================================
 //
 //  XYMovement
 //
 //==========================================================================
-
-final float XYMovement(float DeltaTime, float ScrollX, float ScrollY)
-{
+final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   float ptryx;
   float ptryy;
   float xmove;
   float ymove;
-  int   special;
-  float   oldfloorz = FloorZ;
+  int special;
+  float oldfloorz = FloorZ;
 
-  if (bWindThrust)
-  {
-    special = Sector->special & SECSPEC_BASE_MASK;
-    switch (special)
-    {
-    case SECSPEC_WindEastSlow:
-    case SECSPEC_WindEastMedium:
-    case SECSPEC_WindEastFast:
-      Thrust(0.0, LineSpecialGameInfo(Level.Game).windTab[special - SECSPEC_WindEastSlow] * DeltaTime * 35.0);
-      break;
-    case SECSPEC_WindNorthSlow:
-    case SECSPEC_WindNorthMedium:
-    case SECSPEC_WindNorthFast:
-      Thrust(90.0, LineSpecialGameInfo(Level.Game).windTab[special - SECSPEC_WindNorthSlow] * DeltaTime * 35.0);
-      break;
-    case SECSPEC_WindSouthSlow:
-    case SECSPEC_WindSouthMedium:
-    case SECSPEC_WindSouthFast:
-      Thrust(270.0, LineSpecialGameInfo(Level.Game).windTab[special - SECSPEC_WindSouthSlow] * DeltaTime * 35.0);
-      break;
-    case SECSPEC_WindWestSlow:
-    case SECSPEC_WindWestMedium:
-    case SECSPEC_WindWestFast:
-      Thrust(180.0, LineSpecialGameInfo(Level.Game).windTab[special - SECSPEC_WindWestSlow] * DeltaTime * 35.0);
-      break;
+  FixNormalVelocity();
+  scope(exit) ClampNormalVelocity();
+
+  if (bWindThrust) {
+    special = Sector->special&SECSPEC_BASE_MASK;
+    switch (special) {
+      case SECSPEC_WindEastSlow:
+      case SECSPEC_WindEastMedium:
+      case SECSPEC_WindEastFast:
+        Thrust(0.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindEastSlow]*DeltaTime*35.0);
+        break;
+      case SECSPEC_WindNorthSlow:
+      case SECSPEC_WindNorthMedium:
+      case SECSPEC_WindNorthFast:
+        Thrust(90.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindNorthSlow]*DeltaTime*35.0);
+        break;
+      case SECSPEC_WindSouthSlow:
+      case SECSPEC_WindSouthMedium:
+      case SECSPEC_WindSouthFast:
+        Thrust(270.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindSouthSlow]*DeltaTime*35.0);
+        break;
+      case SECSPEC_WindWestSlow:
+      case SECSPEC_WindWestMedium:
+      case SECSPEC_WindWestFast:
+        Thrust(180.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindWestSlow]*DeltaTime*35.0);
+        break;
     }
   }
 
-  if (Velocity.x > MAXMOVE)
-  {
-    Velocity.x = MAXMOVE;
-  }
-  else if (Velocity.x < -MAXMOVE)
-  {
-    Velocity.x = -MAXMOVE;
-  }
-  if (Velocity.y > MAXMOVE)
-  {
-    Velocity.y = MAXMOVE;
-  }
-  else if (Velocity.y < -MAXMOVE)
-  {
-    Velocity.y = -MAXMOVE;
-  }
+  Velocity.x = fclamp(Velocity.x, -MAXMOVE, MAXMOVE);
+  Velocity.y = fclamp(Velocity.y, -MAXMOVE, MAXMOVE);
 
-  xmove = Velocity.x * DeltaTime;
-  ymove = Velocity.y * DeltaTime;
+  xmove = Velocity.x*DeltaTime;
+  ymove = Velocity.y*DeltaTime;
 
-  //  Carrying sectors didn't work with low speeds in BOOM. This is because
+  // Carrying sectors didn't work with low speeds in BOOM. This is because
   // BOOM relied on the speed being fast enough to accumulate despite
   // friction. If the speed is too low, then its movement will get
   // cancelled, and it won't accumulate to the desired speed.
-  float CarryStopSpeed = (2.0 / 3.0) * DeltaTime;
-  if (fabs(ScrollX) > CarryStopSpeed)
-  {
+  float CarryStopSpeed = (2.0/3.0)*DeltaTime;
+  if (fabs(ScrollX) > CarryStopSpeed) {
     ScrollX *= CARRYFACTOR;
-    Velocity.x += ScrollX / DeltaTime;
+    Velocity.x += ScrollX/DeltaTime;
   }
-  if (fabs(ScrollY) > CarryStopSpeed)
-  {
+  if (fabs(ScrollY) > CarryStopSpeed) {
     ScrollY *= CARRYFACTOR;
-    Velocity.y += ScrollY / DeltaTime;
+    Velocity.y += ScrollY/DeltaTime;
   }
   xmove += ScrollX;
   ymove += ScrollY;
 
-  if (!xmove && !ymove)
-  {
-    if (bSkullFly)
-    {
-      //  A flying mobj slammed into something
+  if (!xmove && !ymove) {
+    if (bSkullFly) {
+      // a flying mobj slammed into something
       bSkullFly = false;
       Velocity = vector(0.0, 0.0, 0.0);
-      if (Health > 0)
-      {
-        SetState(SeeState ? SeeState : IdleState);
-      }
-    }
-    else if (bBlasted)
-    {
-      // Reset to not blasted when momentums are gone
+      if (Health > 0) SetState(SeeState ? SeeState : IdleState);
+    } else if (bBlasted) {
+      // reset to not blasted when momentums are gone
       ResetBlasted();
     }
-    if (bTouchy && !IsSentient())
-    {
-      // Arm a mine which has come to rest
+    if (bTouchy && !IsSentient()) {
+      // arm a mine which has come to rest
       bArmed = true;
     }
     return oldfloorz;
   }
 
-  //  Split move in multiple steps if moving too fast.
+  // split move in multiple steps if moving too fast
   int Steps = 1;
   float XStep = fabs(xmove);
   float YStep = fabs(ymove);
-  float MaxStep = Radius - 1.0;
-  if (MaxStep <= 0.0)
-  {
-    MaxStep = MAXMOVESTEP;
-  }
-  if (XStep > MaxStep || YStep > MaxStep)
-  {
-    if (XStep > YStep)
-    {
-      Steps = ftoi(XStep / MaxStep) + 1;
-    }
-    else
-    {
-      Steps = ftoi(YStep / MaxStep) + 1;
+  float MaxStep = Radius-1.0;
+
+  if (MaxStep <= 0.0) MaxStep = MAXMOVESTEP;
+
+  if (XStep > MaxStep || YStep > MaxStep) {
+    if (XStep > YStep) {
+      Steps = int(XStep/MaxStep)+1;
+    } else {
+      Steps = int(YStep/MaxStep)+1;
     }
   }
-  float StepXMove = xmove / itof(Steps);
-  float StepYMove = ymove / itof(Steps);
+
+  float StepXMove = xmove/float(Steps);
+  float StepYMove = ymove/float(Steps);
 
   int Step = 1;
-  do
-  {
-    ptryx = Origin.x + StepXMove;
-    ptryy = Origin.y + StepYMove;
+  do {
+    ptryx = Origin.x+StepXMove;
+    ptryy = Origin.y+StepYMove;
 
     tmtrace_t tmtrace;
-    if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), true))
-    {
+    if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), true)) {
       // blocked move
-      if (tmtrace.BlockingMobj)
-      {
+      if (tmtrace.BlockingMobj) {
         if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
         HitMobj(tmtrace.BlockingMobj, ptryx, ptryy);
-      }
-      else
-      {
+      } else {
         if (GetCvarB('k8ExplodeMissleTest')) {
           print("LINE! (%d)", tmtrace.SpecHit.Length);
           if (!tmtrace.BlockingLine) print("*** BUT NO LINE!");
@@ -420,175 +328,118 @@ final float XYMovement(float DeltaTime, float ScrollX, float ScrollY)
           }
         }
         */
-        HitLine(&tmtrace, DeltaTime / itof(Steps));
+        HitLine(&tmtrace, DeltaTime/float(Steps));
       }
       return oldfloorz;
     }
-  }
-  while (Step++ < Steps);
+  } while (Step++ < Steps);
 
   return oldfloorz;
 }
+
 
 //==========================================================================
 //
 //  ZMovement
 //
 //==========================================================================
-
-final void ZMovement(float DeltaTime, float OldFloorZ)
-{
+final void ZMovement (float DeltaTime, float OldFloorZ) {
   float dist;
   float delta;
   float OldZ = Origin.z;
+
+  FixNormalVelocity();
+  scope(exit) ClampNormalVelocity();
 
   if (Mass.isinf) Mass = 10000;
 
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.
   // Make objects fall to their own weight.
-  if (Origin.z > FloorZ && !bNoGravity)
-  {
-    float grav = (Gravity * Level.Gravity *
-      (WaterLevel < 2 ? Sector->Gravity : Sector->Gravity / 10.0)) / 1.220703125; // 9.8 (1053.52)
+  if (Origin.z > FloorZ && !bNoGravity) {
+    float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
+    if (grav.isinf) grav = 1000;
 
-    if (grav.isinf) grav = 10000;
-
-    if (Velocity.z == 0.0 && OldFloorZ > FloorZ && Origin.z == OldFloorZ)
-    {
-      if (WaterLevel < 2)
-      {
-        Velocity.z -= ((grav + grav) / ((Mass > 0.0) ? Mass : 1.0)) * DeltaTime;
+    if (Velocity.z == 0.0 && OldFloorZ > FloorZ && Origin.z == OldFloorZ) {
+      if (WaterLevel < 2) {
+        Velocity.z -= ((grav+grav)/(Mass > 0.0 ? Mass : 1.0))*DeltaTime;
+      } else {
+        Velocity.z -= (((grav+grav)/10.0)/(Mass > 0.0 ? Mass : 1.0))*DeltaTime;
       }
-      else
-      {
-        Velocity.z -= (((grav + grav) / 10.0) / ((Mass > 0.0) ? Mass : 1.0)) * DeltaTime;
-      }
-    }
-    else
-    {
-      if (WaterLevel < 2)
-      {
-        Velocity.z -= (grav / ((Mass > 0.0) ? Mass : 1.0)) * DeltaTime;
-      }
-      else
-      {
-        Velocity.z -= ((grav / 10.0) / ((Mass > 0.0) ? Mass : 1.0)) * DeltaTime;
+    } else {
+      if (WaterLevel < 2) {
+        Velocity.z -= (grav/(Mass > 0.0 ? Mass : 1.0))*DeltaTime;
+      } else {
+        Velocity.z -= ((grav/10.0)/(Mass > 0.0 ? Mass : 1.0))*DeltaTime;
       }
     }
   }
-
-  // clamp some values on exit
-  scope(exit) {
-    // velocity
-    Velocity.x = fclamp(Velocity.x, -1024, 1024);
-    Velocity.y = fclamp(Velocity.y, -1024, 1024);
-    Velocity.z = fclamp(Velocity.z, -1024, 1024);
-    // position
-    Origin.x = fclamp(Origin.x, -100000, 100000);
-    Origin.y = fclamp(Origin.y, -100000, 100000);
-    Origin.z = fclamp(Origin.z, -100000, 100000);
-    // speed
-    Speed = fclamp(Speed, -4095, 4095);
-  }
-
 
   // check for smooth step up
-  if (bIsPlayer && Origin.z < FloorZ)
-  {
-    PlayerEx(Player).ViewHeight -= FloorZ - Origin.z;
-    PlayerEx(Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight -
-      PlayerEx(Player).ViewHeight) * 4.0;
+  if (bIsPlayer && Origin.z < FloorZ) {
+    PlayerEx(Player).ViewHeight -= FloorZ-Origin.z;
+    PlayerEx(Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(Player).ViewHeight)*4.0;
   }
 
   // adjust height
-  if (!bFloatBob)
-  {
-    Origin.z += Velocity.z * DeltaTime;
-  }
+  if (!bFloatBob) Origin.z += Velocity.z*DeltaTime;
 
-  if (bFloat && !bDormant && Target)
-  {
+  if (bFloat && !bDormant && Target) {
     // float down towards enemy if too close
-    if (!bSkullFly && !bInFloat)
-    {
+    if (!bSkullFly && !bInFloat) {
       dist = DistTo2(Target);
-      delta = Target.Origin.z + Height / 2.0 - Origin.z;
-      if (delta < 0.0 && dist < -(delta * 3.0))
-      {
+      delta = Target.Origin.z+Height/2.0-Origin.z;
+      if (delta < 0.0 && dist < -(delta*3.0)) {
         Velocity.z = 0.0;
         EntityEx onmo = EntityEx(CheckOnmobj());
-        if (((onmo && onmo.TestMobjZ()) ||
-          !onmo) && TestMobjZ())
-        {
-          Origin.z -= FloatSpeed * DeltaTime;
-        }
-        else
-        {
+        if (((onmo && onmo.TestMobjZ()) || !onmo) && TestMobjZ()) {
+          Origin.z -= FloatSpeed*DeltaTime;
+        } else {
           return;
         }
-      }
-      else if (delta > 0.0 && dist < (delta * 3.0))
-      {
+      } else if (delta > 0.0 && dist < delta*3.0) {
         Velocity.z = 0.0;
         EntityEx onmo = EntityEx(CheckOnmobj());
-        if (((onmo && onmo.TestMobjZ()) ||
-          !onmo) && TestMobjZ())
-        {
-          Origin.z += FloatSpeed * DeltaTime;
-        }
-        else
-        {
+        if (((onmo && onmo.TestMobjZ()) || !onmo) && TestMobjZ()) {
+          Origin.z += FloatSpeed*DeltaTime;
+        } else {
           return;
         }
       }
     }
   }
-  if (bIsPlayer && bFly && !(Origin.z <= FloorZ) && XLevel.TicTime & 2)
-  {
-    Origin.z += sin(90.0 * 35.0 / 20.0 * XLevel.Time);
+
+  if (bIsPlayer && bFly && !(Origin.z <= FloorZ) && (XLevel.TicTime&2)) {
+    Origin.z += sin(90.0*35.0/20.0*XLevel.Time);
   }
 
   // clip movement
-  if (!bNoInteraction)
-  {
-    if (Origin.z <= FloorZ + 0.1)
-    {
+  if (!bNoInteraction) {
+    if (Origin.z <= FloorZ+0.1) {
       // hit the floor
-      if (!HitFloor())
-      {
-        return;
-      }
+      if (!HitFloor()) return;
     }
 
-    if (Origin.z + Height > CeilingZ)
-    {
+    if (Origin.z+Height > CeilingZ) {
       // hit the ceiling
-      if (!HitCeiling())
-      {
-        return;
-      }
+      if (!HitCeiling()) return;
     }
 
     CheckFakeFloorTriggers(OldZ);
   }
 }
 
+
 //==========================================================================
 //
 //  HitLine
 //
 //==========================================================================
-
-final void HitLine(tmtrace_t *tmtrace, float StepVelScale)
-{
-  if (bMissile)
-  {
-    if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen)
-    {
-      //  If number of bounces is limited.
-      if (BounceCount > 0 && --BounceCount <= 0)
-      {
+final void HitLine (tmtrace_t *tmtrace, float StepVelScale) {
+  if (bMissile) {
+    if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
+      // if number of bounces is limited.
+      if (BounceCount > 0 && --BounceCount <= 0) {
         ExplodeMissile(none);
         return;
       }
@@ -597,37 +448,25 @@ final void HitLine(tmtrace_t *tmtrace, float StepVelScale)
       if (tmtrace->CeilingLine && tmtrace->CeilingLine->backsector &&
           tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
       {
-        // Hack to prevent missiles exploding against the sky.
-        // Does not handle sky floors.
-        if (bBounceSky)
-        {
-          Velocity = vector(0.0, 0.0, -1.0 * 35.0);
-        }
-        else if (bExplodeOnSky)
-        {
-          ExplodeMissile(none);
-        }
-        else
-        {
-          Destroy();
-        }
+        // hack to prevent missiles exploding against the sky
+        // does not handle sky floors
+             if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+        else if (bExplodeOnSky) ExplodeMissile(none);
+        else Destroy();
         return;
       }
 
-      if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon)
-      {
+      if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon) {
         SightSound = '';
         Destroy();
         return;
       }
 
-      // Struck a wall
-      if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen)
-      {
+      // struck a wall
+      if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
         BounceWall(BOUNCE_VAL, WallBounceFactor);
-        if (!bNoBounceSound && !bNoWallBounceSnd && (BounceSound || SightSound))
-        {
-          PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
+        if (!bNoBounceSound && !bNoWallBounceSnd && (BounceSound || SightSound)) {
+          PlaySound((BounceSound ? BounceSound : SightSound), CHAN_VOICE);
         }
       }
       return;
@@ -637,34 +476,19 @@ final void HitLine(tmtrace_t *tmtrace, float StepVelScale)
     if (tmtrace->CeilingLine && tmtrace->CeilingLine->backsector &&
         tmtrace->CeilingLine->backsector->ceiling.pic == Level.Game.skyflatnum)
     {
-      // Hack to prevent missiles exploding against the sky.
-      // Does not handle sky floors.
-      if (bBounceSky)
-      {
-        Velocity = vector(0.0, 0.0, -1.0 * 35.0);
-      }
-      else if (bExplodeOnSky)
-      {
-        ExplodeMissile(none);
-      }
-      else
-      {
-        Destroy();
-      }
+      // hack to prevent missiles exploding against the sky
+      // does not handle sky floors
+           if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+      else if (bExplodeOnSky) ExplodeMissile(none);
+      else Destroy();
       return;
     }
-    if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon)
-    {
-      if (bBounceSky)
-      {
-        Velocity = vector(0.0, 0.0, -1.0 * 35.0);
-      }
-      else
-      {
-        Destroy();
-      }
+
+    if (tmtrace->BlockingLine && tmtrace->BlockingLine->special == LNSPEC_LineHorizon) {
+      if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0); else Destroy();
       return;
     }
+
     line_t *hitline = tmtrace->BlockingLine;
     if (!hitline) hitline = tmtrace->CeilingLine;
     if (!hitline) hitline = tmtrace->FloorLine;
@@ -672,7 +496,7 @@ final void HitLine(tmtrace_t *tmtrace, float StepVelScale)
     if (!hitline && tmtrace->SpecHit.Length) {
       bool wasBlockAll = false;
       line_t *blockall;
-      for (int f = 0; f < tmtrace->SpecHit.Length; ++f) {
+      foreach (int f; 0..tmtrace->SpecHit.Length) {
         line_t *ln = tmtrace->SpecHit[f];
         if (ln->flags&ML_BLOCKING) { hitline = ln; break; }
         if (!wasBlockAll && (ln->flags&ML_BLOCKEVERYTHING) != 0) { blockall = ln; wasBlockAll = true; }
@@ -682,133 +506,98 @@ final void HitLine(tmtrace_t *tmtrace, float StepVelScale)
       }
     }
     ExplodeMissile(none, hitline);
-  }
-  else if (bSlide)
-  {
+  } else if (bSlide) {
     // try to slide along it
     SlideMove(StepVelScale);
-  }
-  else
-  {
+  } else {
     Velocity.x = 0.0;
     Velocity.y = 0.0;
   }
 }
+
 
 //==========================================================================
 //
 //  HitMobj
 //
 //==========================================================================
-
-final void HitMobj(Entity Other, float ptryx, float ptryy)
-{
+final void HitMobj (Entity Other, float ptryx, float ptryy) {
   float angle;
   float speed;
 
-  if (bMissile)
-  {
-    if (bBounceOnActors || bBounceOnAllActors ||
-      BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen)
-    {
-      //  If number of bounces is limited.
-      if (BounceCount > 0 && --BounceCount <= 0)
-      {
+  if (bMissile) {
+    if (bBounceOnActors || bBounceOnAllActors || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
+      // if number of bounces is limited
+      if (BounceCount > 0 && --BounceCount <= 0) {
         ExplodeMissile(none);
         return;
       }
 
-      //  Bounce against walls and non-killable objects
-      if ((bBounceOnActors || EntityEx(Other).bReflective ||
-        (!Other.bIsPlayer && !EntityEx(Other).bMonster)  || !EntityEx(Other).IsSentient()) ||
-        EntityEx(Other).bBounceOnAllActors)
+      // bounce against walls and non-killable objects
+      if ((bBounceOnActors || EntityEx(Other).bReflective || (!Other.bIsPlayer && !EntityEx(Other).bMonster) || !EntityEx(Other).IsSentient()) ||
+          EntityEx(Other).bBounceOnAllActors)
       {
-        angle = AngleMod360(atan2(Origin.y - Other.Origin.y,
-          Origin.x - Other.Origin.x) + (Random() * 16.0 - 8.0));
-        speed = Length(Velocity) * WallBounceFactor;
+        angle = AngleMod360(atan2(Origin.y-Other.Origin.y, Origin.x-Other.Origin.x)+(Random()*16.0-8.0));
+        speed = Length(Velocity)*WallBounceFactor;
         Angles.yaw = angle;
-        Velocity.x = speed * cos(angle);
-        Velocity.y = speed * sin(angle);
-        if (!bNoBounceSound && (BounceSound || SightSound))
-        {
+        Velocity.x = speed*cos(angle);
+        Velocity.y = speed*sin(angle);
+        if (!bNoBounceSound && (BounceSound || SightSound)) {
           PlaySound(BounceSound ? BounceSound : SightSound, CHAN_VOICE);
         }
-      }
-      else
-      {
-        // Struck a player/creature
+      } else {
+        // struck a player/creature
         ExplodeMissile(EntityEx(Other));
       }
       return;
     }
-    if (EntityEx(Other).bReflective)
-    {
+
+    if (EntityEx(Other).bReflective) {
       angle = EntityEx(Other).GetReflectedAngle(self);
-      if (angle != -1.0)
-      {
-        // Reflect the missile along angle
+      if (angle != -1.0) {
+        // reflect the missile along angle
         Angles.yaw = angle;
-        Velocity.x = (Speed / 2.0) * cos(angle);
-        Velocity.y = (Speed / 2.0) * sin(angle);
-        Velocity.z = -Velocity.z * 0.5;
-        if (bSeekerMissile)
-        {
-          Tracer = Target;
-        }
+        Velocity.x = (Speed/2.0)*cos(angle);
+        Velocity.y = (Speed/2.0)*sin(angle);
+        Velocity.z = -Velocity.z*0.5;
+        if (bSeekerMissile) Tracer = Target;
         Target = EntityEx(Other);
         return;
       }
     }
-    // Explode a missile
+
+    // explode a missile
     ExplodeMissile(EntityEx(Other));
-  }
-  else if (bSlide)
-  {
-    // Try to slide along it
-    // Slide against mobj
-    if (TryMove(vector(Origin.x, ptryy, Origin.z), true))
-    {
-      Velocity.x = 0.0;
-    }
-    else if (TryMove(vector(ptryx, Origin.y, Origin.z), true))
-    {
-      Velocity.y = 0.0;
-    }
-    else
-    {
-      Velocity.x = 0.0;
-      Velocity.y = 0.0;
-    }
-  }
-  else
-  {
+  } else if (bSlide) {
+    // try to slide along it
+    // slide against mobj
+         if (TryMove(vector(Origin.x, ptryy, Origin.z), true)) Velocity.x = 0.0;
+    else if (TryMove(vector(ptryx, Origin.y, Origin.z), true)) Velocity.y = 0.0;
+    else { Velocity.x = 0.0; Velocity.y = 0.0; }
+  } else {
     Velocity.x = 0.0;
     Velocity.y = 0.0;
   }
 }
+
 
 //==========================================================================
 //
 //  HitFloor
 //
 //==========================================================================
-
-final bool HitFloor()
-{
+final bool HitFloor () {
   float vdot;
 
-  //  Trigger hit floor sector actions.
-  if (Sector->ActionList && GetPlanePointZ(ref Sector->floor, Origin) == FloorZ)
-  {
-    SectorAction(Sector->ActionList).TriggerAction(self,
-      SectorAction::SECSPAC_HitFloor);
+  // trigger hit floor sector actions
+  if (Sector->ActionList && GetPlanePointZ(ref Sector->floor, Origin) == FloorZ) {
+    SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFloor);
   }
 
   // killough 11/98: touchy objects explode on impact
-  // Allow very short drops to be safe, so that a touchy can be summoned without exploding.
-  if (bTouchy && (bArmed || IsSentient()) && (Velocity.z < -5.0))
-  {
-    bArmed = false; // Disarm
+  // allow very short drops to be safe, so that a touchy can be summoned without exploding
+  if (bTouchy && (bArmed || IsSentient()) && Velocity.z < -5.0) {
+    bArmed = false; // disarm
     Damage(none, none, Health);  // kill object
     return true;
   }
@@ -820,13 +609,13 @@ final bool HitFloor()
       return false;
     }
     if (bNoExplodeFloor) {
-      // The spirit struck the ground
+      // the spirit struck the ground
       Velocity.z = 0.0;
       HitFloorType();
       return false;
     }
     if (bIgnoreFloorStep) {
-      // Minotaur floor fire can go up steps
+      // minotaur floor fire can go up steps
       return false;
     }
     HitFloorType();
@@ -836,102 +625,70 @@ final bool HitFloor()
   }
 
   vdot = DotProduct(Velocity, Floor->normal);
-  if (bMonster) // Blasted mobj falling
-  {
-    if (vdot < -23.0 * 35.0)
-    {
-      MonsterFallingDamage();
-    }
+  if (bMonster) {
+    // blasted mobj falling
+    if (vdot < -23.0*35.0) MonsterFallingDamage();
   }
+
   Origin.z = FloorZ;
-  if (vdot < -0.1)
-  {
-    // Spawn splashes, etc.
+  if (vdot < -0.1) {
+    // spawn splashes, etc
     HitFloorType();
-    if (!Inventory(self) && DamageType == 'Ice' &&
-      vdot < -DEFAULT_GRAVITY * 0.25)
-    {
+    if (!Inventory(self) && DamageType == 'Ice' && vdot < -DEFAULT_GRAVITY*0.25) {
       StateTime = 0.1;
-//      Velocity = vector(0.0, 0.0, 0.0);
+      //Velocity = vector(0.0, 0.0, 0.0);
       Velocity.z = 0.0;
       return false;
     }
-    if (bCanJump)
-    {
-      JumpTime = 0.5; // delay any jumping for a short time
-    }
-    //  Do some special action when hitting the floor.
+    if (bCanJump) JumpTime = 0.5; // delay any jumping for a short time
+    // do some special action when hitting the floor
     OnHitFloor();
-    if (bIsPlayer)
-    {
-      PlayerEx(Player).JumpTime = 0.2;  // delay any jumping for a short time
-      if (vdot < -DEFAULT_GRAVITY * 0.25 && !bNoGravity)
-      {
-        // Squat down.
-        // Decrease ViewHeight for a moment after hitting the ground
-        // (hard), and utter appropriate sound.
+    if (bIsPlayer) {
+      PlayerEx(Player).JumpTime = 0.2; // delay any jumping for a short time
+      if (vdot < -DEFAULT_GRAVITY*0.25 && !bNoGravity) {
+        // squat down
+        // decrease ViewHeight for a moment after hitting the ground (hard), and utter appropriate sound
         PlayerLandedOnThing();
       }
     }
-    TVec Vel = vdot * Floor->normal;
+    TVec Vel = vdot*Floor->normal;
     Velocity.z -= Vel.z;
   }
-  if (bSkullFly)
-  {
-    // The skull slammed into something
+  if (bSkullFly) {
+    // the skull slammed into something
     Velocity.z = -Velocity.z;
   }
   Crash();
   return true;
 }
 
+
 //==========================================================================
 //
 //  HitCeiling
 //
 //==========================================================================
-
-final bool HitCeiling()
-{
+final bool HitCeiling () {
   float vdot;
 
   if (!Sector) return false;
 
-  //  Trigger hit ceiling sector actions.
-  if (Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) ==
-    CeilingZ)
-  {
-    SectorAction(Sector->ActionList).TriggerAction(self,
-      SectorAction::SECSPAC_HitCeiling);
+  // trigger hit ceiling sector actions.
+  if (Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) == CeilingZ) {
+    SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitCeiling);
   }
-  Origin.z = CeilingZ - Height;
+  Origin.z = CeilingZ-Height;
 
-  if (bMissile && (bColideWithWorld ||
-    !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor))
-  {
-    if (bBounceCeilings || BounceType != BOUNCE_None)
-    {
+  if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
+    if (bBounceCeilings || BounceType != BOUNCE_None) {
       CeilingBounceMissile();
       return false;
     }
-    if (bIgnoreCeilingStep)
-    {
-      return false;
-    }
-    if (Ceiling->pic == Level.Game.skyflatnum)
-    {
-      if (bBounceSky)
-      {
-        Velocity = vector(0.0, 0.0, -1.0 * 35.0);
-      }
-      else if (bExplodeOnSky)
-      {
-        ExplodeMissile(none);
-      }
-      else
-      {
-        Destroy();
-      }
+    if (bIgnoreCeilingStep) return false;
+    if (Ceiling->pic == Level.Game.skyflatnum) {
+           if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0);
+      else if (bExplodeOnSky) ExplodeMissile(none);
+      else Destroy();
       return false;
     }
     //!print("CEILING HIT (1)! '%s'", NameToStr(GetClassName(Class)));
@@ -940,14 +697,12 @@ final bool HitCeiling()
   }
   vdot = DotProduct(Velocity, Ceiling->normal);
 
-  if (vdot < 0.0)
-  {
-    TVec Vel = vdot * Ceiling->normal;
+  if (vdot < 0.0) {
+    TVec Vel = vdot*Ceiling->normal;
     Velocity.z -= Vel.z;
   }
 
-  if (bSkullFly)
-  {
+  if (bSkullFly) {
     // the skull slammed into something
     Velocity.z = -Velocity.z;
   }
@@ -1094,183 +849,113 @@ final void CeilingBounceMissile () {
   }
 }
 
+
 //==========================================================================
 //
 //  GetReflectedAngle
 //
 //==========================================================================
+final float GetReflectedAngle (EntityEx Other) {
+  if (Other.bDontReflect) return -1.0;
 
-final float GetReflectedAngle(EntityEx Other)
-{
-  if (Other.bDontReflect)
-  {
-    return -1.0;
-  }
+  float angle = atan2(Other.Origin.y-Origin.y, Other.Origin.x-Origin.x);
 
-  float angle = atan2(Other.Origin.y - Origin.y,
-    Other.Origin.x - Origin.x);
-
-  if (bShieldReflect)
-  {
-    // Change angle for delflection/reflection
-    if (fabs(AngleMod180(angle - Angles.yaw)) > 45.0 * 45.0 / 32.0)
-    {
-      return -1.0;
-    }
-    if (Other.bDontShieldReflect)
-    {
-      return -1.0;
-    }
-    // Deflection
-    if (Random() < 0.5)
-    {
-      angle = AngleMod360(angle + 45.0);
-    }
-    else
-    {
-      angle = AngleMod360(angle - 45.0);
-    }
+  if (bShieldReflect) {
+    // change angle for delflection/reflection
+    if (fabs(AngleMod180(angle-Angles.yaw)) > 45.0*45.0/32.0) return -1.0;
+    if (Other.bDontShieldReflect) return -1.0;
+    // deflection
+         if (Random() < 0.5) angle = AngleMod360(angle+45.0);
+    else angle = AngleMod360(angle-45.0);
     return angle;
   }
 
-  if (bDeflect)
-  {
-    // Change angle for delflection
-    if (Random() < 0.5)
-    {
-      angle = AngleMod360(angle + 45.0);
-    }
-    else
-    {
-      angle = AngleMod360(angle - 45.0);
-    }
+  if (bDeflect) {
+    // change angle for delflection
+         if (Random() < 0.5) angle = AngleMod360(angle+45.0);
+    else angle = AngleMod360(angle-45.0);
     return angle;
   }
 
-  // Change angle for reflection
-  angle = AngleMod360(angle + Random() * 16.0 - 8.0);
+  // change angle for reflection
+  angle = AngleMod360(angle+Random()*16.0-8.0);
   return angle;
 }
+
 
 //==========================================================================
 //
 //  Crash
 //
 //==========================================================================
-
-final void Crash()
-{
+final void Crash () {
   state CrashState = FindState('Crash');
-  if (CrashState && bCorpse && DamageType != 'Ice' && !bCrashed)
-  {
+  if (CrashState && bCorpse && DamageType != 'Ice' && !bCrashed) {
     SetState(CrashState);
     bCrashed = true;
   }
 }
+
 
 //===========================================================================
 //
 //  PlayerLandedOnThing
 //
 //===========================================================================
-
-final void PlayerLandedOnThing()
-{
-  PlayerEx(Player).DeltaViewHeight = Velocity.z / 8.0;
+final void PlayerLandedOnThing () {
+  PlayerEx(Player).DeltaViewHeight = Velocity.z/8.0;
   FallingDamage();
-  if (Health > 0 && !PlayerEx(Player).MorphTime)
-  {
-    if (Velocity.z < -DEFAULT_GRAVITY * 0.375)
-    {
-      PlaySound('*grunt', CHAN_VOICE);
-    }
-    if ((Origin.z > FloorZ || !GetFloorType()->bLiquid) &&
-      !AreSoundsEquivalent('*grunt', '*land'))
-    {
+  if (Health > 0 && !PlayerEx(Player).MorphTime) {
+    if (Velocity.z < -DEFAULT_GRAVITY*0.375) PlaySound('*grunt', CHAN_VOICE);
+    if ((Origin.z > FloorZ || !GetFloorType()->bLiquid) && !AreSoundsEquivalent('*grunt', '*land')) {
       PlaySound('*land', CHAN_BODY);
     }
   }
-//FIXME Player.centreing = true;
+  //FIXME Player.centreing = true;
 }
+
 
 //==========================================================================
 //
 //  FallingDamage
 //
 //==========================================================================
-
-final void FallingDamage()
-{
-  int   damage;
-  float mom;
+final void FallingDamage () {
+  int damage;
   float dist;
 
-  if (Sector->bNoFallingDamage)
-  {
-    return;
-  }
+  if (Sector->bNoFallingDamage) return;
 
-  mom = fabs(Velocity.z);
+  float mom = fabs(Velocity.z);
 
-  if (Level.bFallingDamage)
-  {
-    //  Hexen style falling damage.
-    if (mom <= 23.0 * 35.0)
-    {
-      //  Not fast enough.
-      return;
-    }
-    if (mom >= 63.0 * 35.0)
-    {
-      //  Automatic death.
-      damage = 10000;
-    }
-    else
-    {
-      dist = mom / 35.0 * 16.0 / 23.0;
-      damage = ftoi(dist * dist / 10.0) - 24;
-      if (Velocity.z > -39.0 * 35.0 && damage > Health && Health != 1)
-      {
-        //  No-death threshold.
-        damage = Health - 1;
+  if (Level.bFallingDamage) {
+    // Hexen style falling damage
+    if (mom <= 23.0 * 35.0) return; // not fast enough
+    if (mom >= 63.0 * 35.0) {
+      damage = 10000; // automatic death
+    } else {
+      dist = mom/35.0*16.0/23.0;
+      damage = int(dist*dist/10.0)-24;
+      if (Velocity.z > -39.0*35.0 && damage > Health && Health != 1) {
+        // no-death threshold
+        damage = Health-1;
       }
     }
-  }
-  else if (Level.bOldFallingDamage)
-  {
-    //  ZDoom style falling damage, less damaging.
-    if (mom <= 19.0 * 35.0)
-    {
-      //  Not fast enough.
-      return;
+  } else if (Level.bOldFallingDamage) {
+    // ZDoom style falling damage, less damaging
+    if (mom <= 19.0*35.0) return; // not fast enough
+    if (mom >= 84.0*35.0) {
+      damage = 10000; // automatic death
+    } else {
+      mom = mom/35.0;
+      damage = (int(mom*mom*11.0/128.0)-30)/2;
+      if (damage < 1) damage = 1;
     }
-    if (mom >= 84.0 * 35.0)
-    {
-      //  Automatic death.
-      damage = 10000;
-    }
-    else
-    {
-      mom = mom / 35.0;
-      damage = (ftoi(mom * mom * 11.0 / 128.0) - 30) / 2;
-      if (damage < 1)
-      {
-        damage = 1;
-      }
-    }
-  }
-  else if (Level.bStrifeFallingDamage)
-  {
-    //  Strife style falling damage, very strong.
-    if (mom <= 20.0 * 35.0)
-    {
-      //  Not fast enough.
-      return;
-    }
-    damage = ftoi(mom * (8192.0 / 3125.0 / 35.0));
-  }
-  else
-  {
+  } else if (Level.bStrifeFallingDamage) {
+    // Strife style falling damage, very strong
+    if (mom <= 20.0*35.0) return; // not fast enough
+    damage = int(mom*(8192.0/3125.0/35.0));
+  } else {
     return;
   }
 
@@ -1278,64 +963,50 @@ final void FallingDamage()
   LineSpecialLevelInfo(Level).NoiseAlert(self, self);
 }
 
+
 //==========================================================================
 //
 //  MonsterFallingDamage
 //
 //==========================================================================
-
-final void MonsterFallingDamage()
-{
-  int   damage;
+final void MonsterFallingDamage () {
+  int damage;
   float mom;
 
-  if (!Level.bMonsterFallingDamage)
-  {
-    return;
-  }
-  if (Sector->bNoFallingDamage)
-  {
-    return;
-  }
+  if (!Level.bMonsterFallingDamage) return;
+  if (Sector->bNoFallingDamage) return;
 
-  mom = fabs(Velocity.z) / 35.0;
-  if (mom > 35.0)
-  {
+  mom = fabs(Velocity.z)/35.0;
+  if (mom > 35.0) {
     // automatic death
     damage = 10000;
-  }
-  else
-  {
-    damage = ftoi((mom - 23.0) * 6.0);
+  } else {
+    damage = int((mom-23.0)*6.0);
   }
   damage = 10000; // always kill 'em
   Damage(none, none, damage, 'Falling');
 }
+
 
 //==========================================================================
 //
 //  ResetBlasted
 //
 //==========================================================================
-
-final void ResetBlasted()
-{
+final void ResetBlasted () {
   bBlasted = false;
-  if (!bIceCorpse)
-  {
-    bSlide = false;
-  }
+  if (!bIceCorpse) bSlide = false;
 }
+
 
 //==========================================================================
 //
 //  OnHitFloor
 //
 //==========================================================================
-
-void OnHitFloor()
-{
+void OnHitFloor () {
 }
+
 
 //==========================================================================
 //
@@ -1344,11 +1015,8 @@ void OnHitFloor()
 // Checks for splashes caused by explosions
 //
 //==========================================================================
-
-void CheckSplash(float distance)
-{
-  if (Origin.z <= FloorZ + distance)
-  {
+void CheckSplash (float distance) {
+  if (Origin.z <= FloorZ+distance) {
     // Explosion splashes never alert monsters. This is because A_Explode has
     // a separate parameter for that so this would get in the way of proper
     // behavior.
@@ -1356,163 +1024,116 @@ void CheckSplash(float distance)
   }
 }
 
+
 //==========================================================================
 //
 //  HitFloorType
 //
 //==========================================================================
-
-final bool HitFloorType()
-{
-  EntityEx    A;
-  TVec      org;
-  bool      smallsplash = false;
+final bool HitFloorType () {
+  EntityEx A;
+  TVec org;
+  bool smallsplash = false;
   VTerrainInfo *TInfo;
   VSplashInfo *SInfo;
 
-  if (FloorZ != GetPlanePointZ(ref Sector->floor, Origin))
-  {
+  if (FloorZ != GetPlanePointZ(ref Sector->floor, Origin)) {
     // don't splash if landing on the edge above water/lava/etc....
     return false;
   }
 
-  // Things that don't splash go here
-  if (bFloatBob || bNoSplash)
-  {
-    return false;
-  }
+  // things that don't splash go here
+  if (bFloatBob || bNoSplash) return false;
 
   TInfo = GetFloorType();
 
-  // Small splash for small masses
-  if (Mass < 10.0 || bSmallSplash)
-    smallsplash = true;
+  // small splash for small masses
+  if (Mass < 10.0 || bSmallSplash) smallsplash = true;
 
-  if (TInfo->DamageAmount && bIsPlayer &&
-    XLevel.TicTime & TInfo->DamageTimeMask)
-  {
+  if (TInfo->DamageAmount && bIsPlayer && XLevel.TicTime & TInfo->DamageTimeMask) {
     Damage(none, none, TInfo->DamageAmount, TInfo->DamageType);
   }
 
   SInfo = GetSplashInfo(TInfo->Splash);
-  if (!SInfo)
-  {
-    return TInfo->bLiquid;
-  }
+  if (!SInfo) return TInfo->bLiquid;
 
   org = Origin;
   org.z = FloorZ;
 
-  if (smallsplash)
-  {
-    if (SInfo->SmallClass)
-    {
+  if (smallsplash) {
+    if (SInfo->SmallClass) {
       A = Spawn(class!EntityEx(SInfo->SmallClass), org);
       A.FloorClip += SInfo->SmallClip;
-      if (SInfo->SmallSound)
-      {
-        A.PlaySound(SInfo->SmallSound, CHAN_VOICE);
-      }
+      if (SInfo->SmallSound) A.PlaySound(SInfo->SmallSound, CHAN_VOICE);
     }
-  }
-  else
-  {
-    if (SInfo->BaseClass)
-    {
+  } else {
+    if (SInfo->BaseClass) {
       A = Spawn(class!EntityEx(SInfo->BaseClass), org);
-      if (SInfo->Sound && !SInfo->ChunkClass)
-      {
-        A.PlaySound(SInfo->Sound, CHAN_VOICE);
-      }
+      if (SInfo->Sound && !SInfo->ChunkClass) A.PlaySound(SInfo->Sound, CHAN_VOICE);
     }
-    if (SInfo->ChunkClass)
-    {
+    if (SInfo->ChunkClass) {
       A = Spawn(class!EntityEx(SInfo->ChunkClass), org);
       A.Target = self;
-      A.Velocity.x = (Random() - Random()) * SInfo->ChunkXVelMul * 35.0;
-      A.Velocity.y = (Random() - Random()) * SInfo->ChunkYVelMul * 35.0;
-      A.Velocity.z = (SInfo->ChunkBaseZVel + Random() *
-        SInfo->ChunkZVelMul) * 35.0;
-      if (SInfo->Sound)
-      {
-        A.PlaySound(SInfo->Sound, CHAN_VOICE);
-      }
+      A.Velocity.x = (Random()-Random())*SInfo->ChunkXVelMul*35.0;
+      A.Velocity.y = (Random()-Random())*SInfo->ChunkYVelMul*35.0;
+      A.Velocity.z = (SInfo->ChunkBaseZVel+Random()*SInfo->ChunkZVelMul)*35.0;
+      if (SInfo->Sound) A.PlaySound(SInfo->Sound, CHAN_VOICE);
     }
-    if (SInfo->Sound && !SInfo->BaseClass && !SInfo->ChunkClass)
-    {
-      PlaySound(SInfo->Sound, CHAN_BODY);
-    }
-    if (!SInfo->bNoAlert && bIsPlayer)
-    {
-      LineSpecialLevelInfo(Level).NoiseAlert(self, self, true);
-    }
+    if (SInfo->Sound && !SInfo->BaseClass && !SInfo->ChunkClass) PlaySound(SInfo->Sound, CHAN_BODY);
+    if (!SInfo->bNoAlert && bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(self, self, true);
   }
   return TInfo->bLiquid;
 }
+
 
 //===========================================================================
 //
 //  GetFloorType
 //
 //===========================================================================
-
-final VTerrainInfo *GetFloorType()
-{
+final VTerrainInfo *GetFloorType () {
   return TerrainType(Floor->pic);
 }
+
 
 //==========================================================================
 //
 //  HandleFloorclip
 //
 //==========================================================================
-
-final override void HandleFloorclip()
-{
-  if (bFloorClip)
-  {
+final override void HandleFloorclip () {
+  if (bFloorClip) {
     VTerrainInfo *TInfo = GetFloorType();
-    if (Origin.z == FloorZ && TInfo->bLiquid)
-    {
+    if (Origin.z == FloorZ && TInfo->bLiquid) {
       FloorClip = TInfo->FootClip;
-    }
-    else
-    {
+    } else {
       FloorClip = 0.0;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  ApplyFriction
 //
 //==========================================================================
-
-final override void ApplyFriction()
-{
+final override void ApplyFriction () {
   float dot;
 
-  if (bMissile || bSkullFly)
-  {
-    // no friction for missiles ever
-    return;
-  }
+  if (bMissile || bSkullFly) return; // no friction for missiles ever
 
-  if (Origin.z > FloorZ && !bOnMobj && WaterLevel < 2 && !bFly &&
-    !bFallingFriction)
-  {
+  if (Origin.z > FloorZ && !bOnMobj && WaterLevel < 2 && !bFly && !bFallingFriction) {
     // no friction when airborne
     return;
   }
 
-  //  Clip velocity
-  if (Origin.z <= FloorZ)
-  {
-    dot = DotProduct(Velocity, Floor->normal);
+  FixNormalVelocity();
 
-    if (dot < 0.0)
-    {
+  // clip velocity
+  if (Origin.z <= FloorZ) {
+    dot = DotProduct(Velocity, Floor->normal);
+    if (dot < 0.0) {
       TVec Vel;
       Vel = dot * Floor->normal;
       Velocity.x -= Vel.x;
@@ -1520,71 +1141,46 @@ final override void ApplyFriction()
     }
   }
 
-  if (bCorpse)
-  {
-    // Don't stop sliding if halfway off a step with some momentum
-    if (Velocity.x > 0.25 * 35.0 || Velocity.x < -0.25 * 35.0 ||
-      Velocity.y > 0.25 * 35.0 || Velocity.y < -0.25 * 35.0)
+  if (bCorpse) {
+    // don't stop sliding if halfway off a step with some momentum
+    if (Velocity.x > 0.25*35.0 || Velocity.x < -0.25*35.0 ||
+        Velocity.y > 0.25*35.0 || Velocity.y < -0.25*35.0)
     {
-      if (FloorZ > GetPlanePointZ(ref Sector->floor, Origin) ||
-        DropOffZ != FloorZ)
-      {
+      if (FloorZ > GetPlanePointZ(ref Sector->floor, Origin) || DropOffZ != FloorZ) {
         return;
       }
     }
   }
 
   if (Velocity.x > -STOPSPEED && Velocity.x < STOPSPEED &&
-    Velocity.y > -STOPSPEED && Velocity.y < STOPSPEED &&
-    (!bIsPlayer || (!Player.ForwardMove && !Player.SideMove)))
+      Velocity.y > -STOPSPEED && Velocity.y < STOPSPEED &&
+      (!bIsPlayer || (!Player.ForwardMove && !Player.SideMove)))
   {
-    if (bIsPlayer)
-    {
+    if (bIsPlayer) {
       // if in a walking frame, stop moving
-      if (StateIsInRange(State, SeeState, none, 4))
-      {
-        SetState(IdleState);
-      }
+      if (StateIsInRange(State, SeeState, none, 4)) SetState(IdleState);
     }
     Velocity.x = 0.0;
     Velocity.y = 0.0;
-  }
-  else
-  {
+  } else {
     // slow down
-    Velocity.x -= Velocity.x * (GetFriction() * Level.Game.frametime);
-    Velocity.y -= Velocity.y * (GetFriction() * Level.Game.frametime);
+    Velocity.x -= Velocity.x*(GetFriction()*Level.Game.frametime);
+    Velocity.y -= Velocity.y*(GetFriction()*Level.Game.frametime);
   }
 }
+
 
 //===========================================================================
 //
 //  GetFriction
 //
 //===========================================================================
-
-final float GetFriction()
-{
-  if (WaterLevel > 1)
-  {
-    return FRICTION_WATER;
-  }
-  if (bFly && Origin.z > FloorZ && !bOnMobj)
-  {
-    return FRICTION_FLY;
-  }
-  if ((Sector->special & SECSPEC_BASE_MASK) == SECSPEC_FrictionLow)
-  {
-    return FRICTION_LOW;
-  }
+final float GetFriction () {
+  if (WaterLevel > 1) return FRICTION_WATER;
+  if (bFly && Origin.z > FloorZ && !bOnMobj) return FRICTION_FLY;
+  if (Sector && (Sector->special&SECSPEC_BASE_MASK) == SECSPEC_FrictionLow) return FRICTION_LOW;
   VTerrainInfo *TInfo = GetFloorType();
-  if (TInfo->Friction)
-  {
-    return TInfo->Friction;
-  }
-  if (Sector->special & SECSPEC_FRICTION_MASK)
-  {
-    return Sector->Friction;
-  }
+  if (TInfo && TInfo->Friction) return TInfo->Friction;
+  if (Sector && (Sector->special&SECSPEC_FRICTION_MASK)) return Sector->Friction;
   return FRICTION_NORMAL;
 }
