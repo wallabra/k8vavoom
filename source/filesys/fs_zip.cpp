@@ -141,13 +141,7 @@ extern "C" {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct ResDirInfo {
-  const char *pfx;
-  EWadNamespace wadns;
-};
-
-
-static const ResDirInfo resdirs[] = {
+const VPK3ResDirInfo PK3ResourceDirs[] = {
   { "sprites/", WADNS_Sprites },
   { "flats/", WADNS_Flats },
   { "colormaps/", WADNS_ColourMaps },
@@ -339,7 +333,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
     if (canHasPrefix && Files[i].Name.IndexOf('/') == -1) canHasPrefix = false;
 
     if (canHasPrefix) {
-      for (const ResDirInfo *di = resdirs; di->pfx; ++di) {
+      for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
         if (Files[i].Name.StartsWith(di->pfx)) { canHasPrefix = false; break; }
       }
       if (canHasPrefix) {
@@ -393,7 +387,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
         Files[i].LumpNamespace = WADNS_Global;
       } else {
         Files[i].LumpNamespace = -1;
-        for (const ResDirInfo *di = resdirs; di->pfx; ++di) {
+        for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
           if (Files[i].Name.StartsWith(di->pfx)) {
             Files[i].LumpNamespace = di->wadns;
             break;

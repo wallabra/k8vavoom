@@ -64,7 +64,7 @@ void CL_Init () {
   guard(CL_Init);
   VMemberBase::StaticLoadPackage(NAME_cgame, TLocation());
   // load user-specified VaVoom C script files
-  G_LoadVCMods("loadvcc", "server");
+  G_LoadVCMods("loadvcc", "client");
   //!TLocation::ClearSourceFiles();
   ClientNetContext = new VClientNetContext();
   GClGame = (VClientGameBase *)VObject::StaticSpawnObject(VClass::FindClass("ClientGame"), false); // don't skip replacement

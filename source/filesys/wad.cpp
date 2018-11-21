@@ -410,6 +410,7 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_IterateNS (int Prev, EWadNamespace NS) {
   guard(W_IterateNS);
+  if (Prev < 0) Prev = -1;
   int wi = FILE_INDEX(Prev+1);
   int li = LUMP_INDEX(Prev+1);
   for (; wi < SearchPaths.length(); ++wi, li = 0) {

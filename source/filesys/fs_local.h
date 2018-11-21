@@ -39,6 +39,11 @@ struct VLumpRename {
   VName New;
 };
 
+struct VPK3ResDirInfo {
+  const char *pfx;
+  EWadNamespace wadns;
+};
+
 
 //==========================================================================
 //  VSearchPath
@@ -106,7 +111,7 @@ private:
   VStr Name;
   VStream *Stream;
   int NumLumps;
-  lumpinfo_t *LumpInfo; // Location of each lump on disk.
+  lumpinfo_t *LumpInfo; // location of each lump on disk
   VStr GwaDir;
 
 private:
@@ -140,15 +145,14 @@ public:
 //==========================================================================
 struct VZipFileInfo;
 
-//  A zip file.
 class VZipFile : public VSearchPath {
 private:
   mythread_mutex rdlock;
   VStr ZipFileName;
-  VStream *FileStream;     //  Source stream of the zipfile
+  VStream *FileStream; // source stream of the zipfile
   VZipFileInfo *Files;
-  vuint16 NumFiles;     //  Total number of files
-  vuint32 BytesBeforeZipFile; //  Byte before the zipfile, (>0 for sfx)
+  vuint16 NumFiles; // total number of files
+  vuint32 BytesBeforeZipFile; // byte before the zipfile, (>0 for sfx)
 
   vuint32 SearchCentralDir ();
   //static int FileCmpFunc (const void*, const void*);
@@ -159,7 +163,7 @@ public:
   VZipFile (VStream *fstream); // takes ownership
   VZipFile (VStream *fstream, const VStr &name); // takes ownership
   virtual ~VZipFile () override;
-  virtual bool FileExists (const VStr&) override;
+  virtual bool FileExists (const VStr &) override;
   virtual VStream *OpenFileRead (const VStr &)  override;
   virtual void Close () override;
   virtual int CheckNumForName (VName, EWadNamespace) override;
@@ -176,6 +180,55 @@ public:
   void ListPk3Files (TArray<VStr> &);
 
   virtual VStr GetPrefix () override { return ZipFileName; }
+};
+
+
+//==========================================================================
+//  VDirPakFile
+//==========================================================================
+class VDirPakFile : public VSearchPath {
+public: // fuck you, shitplusplus
+  struct FileEntry {
+    VName pakname;
+    VName lumpname; // without extension
+    VStr diskname;
+    //vint32 size;
+    EWadNamespace ns;
+  };
+
+private:
+  VStr PakFileName; // never ends with slash
+  TArray<FileEntry> files;
+  TMap<VStr, int> filemap; // maps names (with pathes) to file entries; names are lowercased
+
+  // relative to PakFileName
+  void ScanDirectory (VStr relpath, int depth, bool inProgs);
+
+  void ScanAllDirs ();
+
+public:
+  VDirPakFile (const VStr &);
+  virtual ~VDirPakFile () override;
+
+  inline bool hasFiles () const { return (files.length() > 0); }
+
+  virtual bool FileExists (const VStr &) override;
+  virtual VStream *OpenFileRead (const VStr &)  override;
+  virtual void Close () override;
+  virtual int CheckNumForName (VName, EWadNamespace) override;
+  virtual int CheckNumForFileName (const VStr &) override;
+  virtual void ReadFromLump (int, void *, int, int) override;
+  virtual int LumpLength (int) override;
+  virtual VName LumpName (int) override;
+  virtual VStr LumpFileName (int) override;
+  virtual int IterateNS (int, EWadNamespace) override;
+  virtual VStream *CreateLumpReaderNum (int) override;
+  virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
+
+  void ListWadFiles (TArray<VStr> &);
+  void ListPk3Files (TArray<VStr> &);
+
+  virtual VStr GetPrefix () override { return PakFileName; }
 };
 
 
@@ -201,11 +254,15 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaName, VStream *GwaStrm);
 
 bool GLBSP_BuildNodes (const char *name, const char *gwafile);
 void GLVis_BuildPVS (const char *srcfile, const char *gwafile);
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+extern const VPK3ResDirInfo PK3ResourceDirs[];
 extern TArray<VSearchPath *> SearchPaths;
 
 extern bool fsys_report_added_paks;

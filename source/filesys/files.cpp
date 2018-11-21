@@ -238,6 +238,39 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
 
 //==========================================================================
 //
+//  AddPakDir
+//
+//==========================================================================
+static void AddPakDir (const VStr &dirname) {
+  if (dirname.length() == 0) return;
+  VDirPakFile *dpak = new VDirPakFile(dirname);
+  if (!dpak->hasFiles()) { delete dpak; return; }
+
+  SearchPaths.append(dpak);
+
+  // add all WAD files in the root
+  TArray<VStr> wads;
+  dpak->ListWadFiles(wads);
+  for (int i = 0; i < wads.length(); ++i) {
+    VStream *wadst = dpak->OpenFileRead(wads[i]);
+    if (!wadst) continue;
+    W_AddFileFromZip(dpak->GetPrefix()+":"+wads[i], wadst, VStr(), nullptr);
+  }
+
+  // add all pk3 files in the root
+  TArray<VStr> pk3s;
+  dpak->ListPk3Files(pk3s);
+  for (int i = 0; i < pk3s.length(); ++i) {
+    VStream *pk3st = dpak->OpenFileRead(pk3s[i]);
+    if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding nested pk3 '%s:%s'...", *dpak->GetPrefix(), *pk3s[i]);
+    VZipFile *pk3 = new VZipFile(pk3st, dpak->GetPrefix()+":"+pk3s[i]);
+    AddZipFile(dpak->GetPrefix()+":"+pk3s[i], pk3, false);
+  }
+}
+
+
+//==========================================================================
+//
 //  AddGameDir
 //
 //==========================================================================
@@ -924,11 +957,15 @@ void FL_Init () {
         continue;
       }
       if (!inFile) continue;
-      if (!Sys_FileExists(VStr(GArgs[fp]))) {
-        GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
-      } else {
-        if (!noStoreInSave) wpkAppend(VStr(GArgs[fp]), false); // non-system pak
+      if (Sys_DirExists(GArgs[fp])) {
+        // never append dirs to saves, 'cause it is meant to be used by developers
+        GCon->Logf(NAME_Init, "Adding directory '%s' as emulated PK3 file", GArgs[fp]);
+        AddPakDir(GArgs[fp]);
+      } else if (Sys_FileExists(GArgs[fp])) {
+        if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
         AddAnyFile(GArgs[fp], true);
+      } else {
+        GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
       }
       noStoreInSave = false; // autoreset
     }
