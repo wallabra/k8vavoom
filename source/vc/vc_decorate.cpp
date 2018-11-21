@@ -3130,10 +3130,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   if (ParentStr.IsNotEmpty()) {
     ParentClass = VClass::FindClassLowerCase(*ParentStr.ToLower());
     if (ParentClass == nullptr || ParentClass->MemberType != MEMBER_Class) {
-      sc->Error(va("Parent class %s not found", *ParentStr));
+      sc->Error(va("Parent class `%s` not found", *ParentStr));
     }
     if (ParentClass != nullptr && !ParentClass->IsChildOf(ActorClass)) {
-      sc->Error(va("Parent class %s is not an actor class", *ParentStr));
+      sc->Error(va("Parent class `%s` is not an actor class", *ParentStr));
     }
   }
 
@@ -3156,6 +3156,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   uvars.clear(); // we don't need it anymore
   DecPkg->ParsedClasses.Append(Class);
 
+  /*k8: THIS IS WRONG!
   if (!thisIsBasePak && ParentClass == ActorClass && ParentStr.IsEmpty()) {
     // it seems that actors without parent (or with Actor parent?) has no gravity
     //FIXME: should this be changed in VC side instead?
@@ -3163,6 +3164,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     //       i don't want to set it manually everywhere
     SetClassFieldBool(Class, VName("bNoGravity"), true);
   }
+  */
 
   if (Class) {
     // copy class fixups of the parent class
