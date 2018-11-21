@@ -895,6 +895,16 @@ Entity eventFindTargetForACS () {
 }
 
 
+//===========================================================================
+//
+//  eventSetPointerForACS
+//
+//===========================================================================
+bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
+  return 0;
+}
+
+
 //==========================================================================
 //
 //  decoDoFlagActionSpecific

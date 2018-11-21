@@ -524,6 +524,15 @@ class VEntity : public VThinker {
     EV_RET_PTR(VEntity, VName("eventFindTargetForACS"));
   }
 
+  bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
+    P_PASS_SELF;
+    P_PASS_INT(assign_slot);
+    P_PASS_INT(tid);
+    P_PASS_INT(aptr);
+    P_PASS_INT(flags);
+    EV_RET_BOOL(VName("eventSetPointerForACS"));
+  }
+
   //static final bool decoDoCheckFlag (string flagname, Entity tgt)
   /*
   bool eventCheckFlag (const VStr &flagname) {

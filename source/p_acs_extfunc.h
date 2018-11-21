@@ -34,8 +34,8 @@
   ACS_EXTFUNC(GetPolyobjY)
   ACS_EXTFUNC(CheckSight)
   ACS_EXTFUNC(SpawnForced) // implemented
-  ACS_EXTFUNC(AnnouncerSound) // skulltag
-  ACS_EXTFUNC(SetPointer)
+  ACS_EXTFUNC(AnnouncerSound) // skulltag, ignored
+  ACS_EXTFUNC(SetPointer) // partially implemented
   ACS_EXTFUNC(ACS_NamedExecute) // implemented
   ACS_EXTFUNC(ACS_NamedSuspend)
   ACS_EXTFUNC(ACS_NamedTerminate)
@@ -76,8 +76,8 @@
   ACS_EXTFUNC(SetLineActivation)
   ACS_EXTFUNC(GetLineActivation)
   ACS_EXTFUNC(GetActorPowerupTics)
-  ACS_EXTFUNC(ChangeActorAngle)
-  ACS_EXTFUNC(ChangeActorPitch) // 80
+  ACS_EXTFUNC(ChangeActorAngle) // implemented
+  ACS_EXTFUNC(ChangeActorPitch) // 80; implemented
   ACS_EXTFUNC(GetArmorInfo)
   ACS_EXTFUNC(DropInventory)
   ACS_EXTFUNC(PickActor) // implemented
@@ -120,8 +120,8 @@
   ACS_EXTFUNC(SetDBEntryString_Zadro)
   ACS_EXTFUNC(GetDBEntryString_Zadro)
   ACS_EXTFUNC(IncrementDBEntry_Zadro)
-  ACS_EXTFUNC(PlayerIsLoggedIn_Zadro)
-  ACS_EXTFUNC(GetPlayerAccountName_Zadro)
+  ACS_EXTFUNC(PlayerIsLoggedIn_Zadro) // ignored
+  ACS_EXTFUNC(GetPlayerAccountName_Zadro) // ignored
   ACS_EXTFUNC(SortDBEntries_Zadro)
   ACS_EXTFUNC(CountDBResults_Zadro)
   ACS_EXTFUNC(FreeDBResults_Zadro)

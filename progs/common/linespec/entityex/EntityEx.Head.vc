@@ -35,6 +35,9 @@ const int
   GAME_Chex    = 0x10,
   GAME_Any     = 0xff;
 
+const int PTROP_UNSAFETARGET = 1;
+const int PTROP_UNSAFEMASTER = 2;
+
 const float ONFLOORZ    = -99999.0;
 const float ONCEILINGZ    = 99999.0;
 const float FLOATRANDZ    = 99998.0;
@@ -538,6 +541,112 @@ final override Entity eventFindTargetForACS () {
   }
   // for other things, `Target` holds what we want
   return (Target ? Target : self);
+}
+
+
+//==========================================================================
+//
+//  VerifyTargetChain
+//
+//  Checks whether this actor is a missile
+//  Unfortunately this was buggy in older versions of the code and many
+//  released DECORATE monsters rely on this bug so it can only be fixed
+//  with an optional flag
+//
+//  taken directly from Zandronum
+//
+//==========================================================================
+final void VerifyTargetChain (optional bool preciseMissileCheck) {
+  if (!specified_preciseMissileCheck) preciseMissileCheck = true;
+  if (IsMissile(preciseMissileCheck)) return;
+
+  EntityEx origin = self;
+  EntityEx next = origin.Target;
+
+  // origin: the most recent actor that has been verified as appearing only once
+  // next: the next actor to be verified; will be "origin" in the next iteration
+
+  // we only care when there are missiles involved
+  while (next && next.IsMissile(preciseMissileCheck)) {
+    EntityEx compare = self;
+    // every new actor must prove not to be the first actor in the chain, or any subsequent actor
+    // any actor up to and including "origin" has only appeared once
+    for (;;) {
+      if (compare == next) {
+        // if any of the actors from self to (inclusive) origin match the next actor,
+        // self has reached/created a loop
+        self.Target = none;
+        return;
+      }
+      if (compare == origin) break; // when "compare" = origin, we know that the next actor is, and should be "next"
+      compare = compare.Target;
+    }
+
+    origin = next;
+    next = next.Target;
+  }
+}
+
+
+//===========================================================================
+//
+//  VerifyMasterChain
+//
+//  see VerifyTargetChain for detailed comments
+//
+//===========================================================================
+final void VerifyMasterChain () {
+  EntityEx origin = self;
+  EntityEx next = origin.Master;
+  // We always care (See "VerifyTargetChain")
+  while (next) {
+    EntityEx compare = self;
+    for (;;) {
+      if (compare == next) {
+        self.Master = none;
+        return;
+      }
+      if (compare == origin) break;
+      compare = compare.Master;
+    }
+
+    origin = next;
+    next = next.Master;
+  }
+}
+
+
+//===========================================================================
+//
+//  eventSetPointerForACS
+//
+//===========================================================================
+override bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
+  int count = 0;
+  EntityEx tgt = none;
+  foreach (Entity Ent; Level.eachTID(tid, self)) {
+    EntityEx e = EntityEx(Ent);
+    if (!e) continue;
+    e = EntityEx(e.DecorDoAAPtr('eventSetPointerForACS', aptr));
+    if (!e) continue;
+    tgt = e;
+    if (e == self) tgt = none;
+    break;
+  }
+  switch (assign_slot) {
+    case AAPTR_TARGET:
+      Target = tgt;
+      if (!(flags&PTROP_UNSAFETARGET)) VerifyTargetChain();
+      return !!Target;
+    case AAPTR_MASTER:
+      Master = tgt;
+      if (!(flags&PTROP_UNSAFEMASTER)) VerifyMasterChain();
+      return !!Master;
+    case AAPTR_TRACER:
+      Tracer = tgt;
+      return !!Tracer;
+  }
+  return !!tgt; // oops, looks like a bug, but Zandronum does it like this
 }
 
 

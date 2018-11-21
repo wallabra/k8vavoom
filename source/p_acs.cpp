@@ -2467,6 +2467,25 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         return 0;
       }
 
+    case ACSF_ChangeActorAngle:
+    case ACSF_ChangeActorPitch:
+      // ignores interpolation for now (args[2]
+      if (argCount >= 2) {
+        int count = 0;
+        float newAngle = (float)(args[1]&0xffff)*360.0/(float)0x10000;
+        newAngle = (funcIndex == ACSF_ChangeActorAngle ? AngleMod(newAngle) : AngleMod180(newAngle));
+        if (args[0] == 0) {
+          VEntity *ent = EntityFromTID(args[0], Activator);
+          if (ent) { if (funcIndex == ACSF_ChangeActorAngle) ent->Angles.yaw = newAngle; else ent->Angles.pitch = newAngle; ++count; }
+        } else {
+          for (VEntity *ent = Level->FindMobjFromTID(args[0], nullptr); ent; ent = Level->FindMobjFromTID(args[0], ent)) {
+            if (ent) { if (funcIndex == ACSF_ChangeActorAngle) ent->Angles.yaw = newAngle; else ent->Angles.pitch = newAngle; ++count; }
+          }
+        }
+        return count;
+      }
+      return 0;
+
     case ACSF_SetActivator:
       //GCon->Logf("ACSF_SetActivator: argc=%d; arg[0]=%d; arg[1]=%d", argCount, (argCount > 0 ? args[0] : 0), (argCount > 1 ? args[1] : 0));
       if (argCount == 0) { Activator = nullptr; return 0; } // to world
@@ -2882,15 +2901,28 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     // int GetAirSupply (int playernum) -- in tics
     case ACSF_GetAirSupply: return 35; // always one second
     case ACSF_SetAirSupply: return 1; // say that we did it
+
+    case ACSF_AnnouncerSound: // ignored
+      return 0;
+
+    case ACSF_PlayerIsLoggedIn_Zadro: return 0; // player is never logged in
+    case ACSF_GetPlayerAccountName_Zadro: return ActiveObject->Level->PutNewString(""); // always unnamed
+
+    // bool SetPointer(int assign_slot, int tid[, int pointer_selector[, int flags]])
+    case ACSF_SetPointer:
+      if (argCount >= 2 && Activator) {
+        return (Activator->eventSetPointerForACS(args[0], args[1], (argCount > 2 ? args[2] : 0), (argCount > 3 ? args[3] : 0)) ? 1 : 0);
+      }
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
     if (nfo->index == funcIndex) {
-      GCon->Logf("ERROR: unimplemented ACSF function '%s'", nfo->name);
-      Host_Error("unimplemented ACSF function '%s'", nfo->name);
+      GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+      Host_Error("unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
     }
   }
-  Host_Error("unimplemented ACSF function #%d", funcIndex);
+  Host_Error("unimplemented ACSF function #%d (%d args)", funcIndex, argCount);
 }
 
 
@@ -2916,53 +2948,33 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
 //  VAcs::RunScript
 //
 //==========================================================================
-int VAcs::RunScript(float DeltaTime)
-{
+int VAcs::RunScript (float DeltaTime) {
   guard(VAcs::RunScript);
   VAcsObject *WaitObject;
 
   //fprintf(stderr, "VAcs::RunScript:000: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //if (info->RunningScript) fprintf(stderr, "VAcs::RunScript:001: rs name is '%s' (number is %d)\n", *info->RunningScript->info->Name, info->RunningScript->info->Number);
 
-  if (State == ASTE_Terminating)
-  {
-    if (info->RunningScript == this)
-    {
-      info->RunningScript = nullptr;
-    }
+  if (State == ASTE_Terminating) {
+    if (info->RunningScript == this) info->RunningScript = nullptr;
     DestroyThinker();
     return 1;
   }
-  if (State == ASTE_WaitingForTag && !Level->eventTagBusy(WaitValue))
-  {
-    State = ASTE_Running;
-  }
-  if (State == ASTE_WaitingForPoly && !Level->eventPolyBusy(WaitValue))
-  {
-    State = ASTE_Running;
-  }
+  if (State == ASTE_WaitingForTag && !Level->eventTagBusy(WaitValue)) State = ASTE_Running;
+  if (State == ASTE_WaitingForPoly && !Level->eventPolyBusy(WaitValue)) State = ASTE_Running;
   if (State == ASTE_WaitingForScriptStart &&
-    XLevel->Acs->FindScript(WaitValue, WaitObject) &&
-    XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
+      XLevel->Acs->FindScript(WaitValue, WaitObject) &&
+      XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
   {
     State = ASTE_WaitingForScript;
   }
-  if (State == ASTE_WaitingForScript &&
-    !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
-  {
+  if (State == ASTE_WaitingForScript && !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript) {
     State = ASTE_Running;
   }
-  if (State != ASTE_Running)
-  {
-    return 1;
-  }
-  if (DelayTime)
-  {
+  if (State != ASTE_Running) return 1;
+  if (DelayTime) {
     DelayTime -= DeltaTime;
-    if (DelayTime < 0)
-    {
-      DelayTime = 0;
-    }
+    if (DelayTime < 0) DelayTime = 0;
     return 1;
   }
 
@@ -3411,12 +3423,9 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_IfGoto)
-      if (sp[-1])
-      {
+      if (sp[-1]) {
         ip = ActiveObject->OffsetToPtr(READ_INT32(ip));
-      }
-      else
-      {
+      } else {
         ip += 4;
       }
       sp--;
@@ -3578,12 +3587,9 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_IfNotGoto)
-      if (!sp[-1])
-      {
+      if (!sp[-1]) {
         ip = ActiveObject->OffsetToPtr(READ_INT32(ip));
-      }
-      else
-      {
+      } else {
         ip += 4;
       }
       sp--;
@@ -3652,13 +3658,10 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_CaseGoto)
-      if (sp[-1] == READ_INT32(ip))
-      {
+      if (sp[-1] == READ_INT32(ip)) {
         ip = ActiveObject->OffsetToPtr(READ_INT32(ip + 4));
         sp--;
-      }
-      else
-      {
+      } else {
         ip += 8;
       }
       ACSVM_BREAK;
@@ -4572,11 +4575,22 @@ int VAcs::RunScript(float DeltaTime)
 
     ACSVM_CASE(PCD_Call)
     ACSVM_CASE(PCD_CallDiscard)
+    ACSVM_CASE(PCD_CallStack)
       {
         VAcsObject *object = ActiveObject;
-        int funcnum = READ_BYTE_OR_INT32;
-        INC_BYTE_OR_INT32;
-        VAcsFunction *func = ActiveObject->GetFunction(funcnum, object);
+        VAcsFunction *func;
+        int funcnum;
+        if (cmd != PCD_CallStack) {
+          funcnum = READ_BYTE_OR_INT32;
+          INC_BYTE_OR_INT32;
+          if (funcnum < 0 || funcnum > 0xffff) Host_Error("ACS tried to call a function with invalid index");
+        } else {
+          funcnum = sp[-1];
+          --sp;
+          object = ActiveObject->Level->GetObject((funcnum>>16)&0xffff);
+          if (!object) Host_Error("ACS tried to indirectly call a function from inexisting object");
+        }
+        func = ActiveObject->GetFunction(funcnum&0xffff, object);
         if (!func) {
           GCon->Logf("Function %d in script %d out of range", funcnum, number);
           action = SCRIPT_Terminate;
@@ -4606,6 +4620,7 @@ int VAcs::RunScript(float DeltaTime)
         ((VAcsCallReturn *)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
         sp += sizeof(VAcsCallReturn)/sizeof(vint32);
         ActiveObject = object;
+        fmt = ActiveObject->GetFormat();
         ip = ActiveObject->OffsetToPtr(func->Address);
         activeFunction = func;
       }
@@ -5272,60 +5287,81 @@ int VAcs::RunScript(float DeltaTime)
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintMapCharArray)
+    ACSVM_CASE(PCD_PrintMapChRange)
       {
-        int ANum = *ActiveObject->MapVars[sp[-1]];
-        int Idx = sp[-2];
-        for (int c = ActiveObject->GetArrayVal(ANum, Idx); c;
-          c = ActiveObject->GetArrayVal(ANum, Idx))
-        {
-          PrintStr += (char)c;
-          Idx++;
+        int Idx = 0, count = 0x7fffffff;
+        if (cmd == PCD_PrintMapChRange) {
+          count = sp[-1];
+          Idx = sp[-2];
+          sp -= 2;
         }
+        int ANum = *ActiveObject->MapVars[sp[-1]];
+        Idx += sp[-2];
         sp -= 2;
+        if (Idx >= 0 && count > 0) {
+          for (int c = ActiveObject->GetArrayVal(ANum, Idx); c; c = ActiveObject->GetArrayVal(ANum, Idx)) {
+            PrintStr += (char)c;
+            if (Idx == 0x7fffffff) break;
+            if (--count == 0) break;
+            Idx++;
+          }
+        }
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintWorldCharArray)
+    ACSVM_CASE(PCD_PrintWorldChRange)
       {
-        int ANum = *ActiveObject->MapVars[sp[-1]];
-        int Idx = sp[-2];
-        //for (int c = WorldArrays[ANum].GetElemVal(Idx); c; c = WorldArrays[ANum].GetElemVal(Idx))
-        for (int c = globals->GetWorldArrayInt(ANum, Idx); c; c = globals->GetWorldArrayInt(ANum, Idx))
-        {
-          PrintStr += (char)c;
-          Idx++;
+        int Idx = 0, count = 0x7fffffff;
+        if (cmd == PCD_PrintWorldChRange) {
+          count = sp[-1];
+          Idx = sp[-2];
+          sp -= 2;
         }
+        int ANum = *ActiveObject->MapVars[sp[-1]];
+        Idx += sp[-2];
         sp -= 2;
+        if (Idx >= 0 && count > 0) {
+          for (int c = globals->GetWorldArrayInt(ANum, Idx); c; c = globals->GetWorldArrayInt(ANum, Idx)) {
+            PrintStr += (char)c;
+            if (Idx == 0x7fffffff) break;
+            if (--count == 0) break;
+            Idx++;
+          }
+        }
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintGlobalCharArray)
+    ACSVM_CASE(PCD_PrintGlobalChRange)
       {
-        int ANum = *ActiveObject->MapVars[sp[-1]];
-        int Idx = sp[-2];
-        //for (int c = GlobalArrays[ANum].GetElemVal(Idx); c; c = GlobalArrays[ANum].GetElemVal(Idx))
-        for (int c = globals->GetGlobalArrayInt(ANum, Idx); c; c = globals->GetGlobalArrayInt(ANum, Idx))
-        {
-          PrintStr += (char)c;
-          Idx++;
+        int Idx = 0, count = 0x7fffffff;
+        if (cmd == PCD_PrintGlobalChRange) {
+          count = sp[-1];
+          Idx = sp[-2];
+          sp -= 2;
         }
+        int ANum = *ActiveObject->MapVars[sp[-1]];
+        Idx += sp[-2];
         sp -= 2;
+        if (Idx >= 0 && count > 0) {
+          for (int c = globals->GetGlobalArrayInt(ANum, Idx); c; c = globals->GetGlobalArrayInt(ANum, Idx)) {
+            PrintStr += (char)c;
+            if (Idx == 0x7fffffff) break;
+            if (--count == 0) break;
+            Idx++;
+          }
+        }
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetActorAngle)
-      if (!sp[-2])
-      {
-        if (Activator)
-        {
+      if (!sp[-2]) {
+        if (Activator) {
           Activator->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000;
         }
-      }
-      else
-      {
-        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr);
-          Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
-        {
+      } else {
+        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
           Ent->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000;
         }
       }
@@ -6163,7 +6199,19 @@ int VAcs::RunScript(float DeltaTime)
       SB_POP;
       ACSVM_BREAK;
 
-    //  These p-codes are not supported. They will terminate script.
+    ACSVM_CASE(PCD_PushFunction)
+      {
+        int funcnum = READ_BYTE_OR_INT32;
+        if (funcnum < 0 || funcnum > 0xffff) Host_Error("invalid indirect function push in ACS code (%d)", funcnum);
+        // tag it (library id already shifted)
+        funcnum |= ActiveObject->GetLibraryID();
+        *sp = funcnum;
+        ++sp;
+        INC_BYTE_OR_INT32;
+      }
+      ACSVM_BREAK;
+
+    // these p-codes are not supported; they will terminate script
     ACSVM_CASE(PCD_PlayerBlueSkull)
     ACSVM_CASE(PCD_PlayerRedSkull)
     ACSVM_CASE(PCD_PlayerYellowSkull)
@@ -6194,14 +6242,9 @@ int VAcs::RunScript(float DeltaTime)
     ACSVM_CASE(PCD_GrabInput)
     ACSVM_CASE(PCD_SetMousePointer)
     ACSVM_CASE(PCD_MoveMousePointer)
-    ACSVM_CASE(PCD_PrintMapChRange)
-    ACSVM_CASE(PCD_PrintWorldChRange)
-    ACSVM_CASE(PCD_PrintGlobalChRange)
     ACSVM_CASE(PCD_StrCpyToMapChRange)
     ACSVM_CASE(PCD_StrCpyToWorldChRange)
     ACSVM_CASE(PCD_StrCpyToGlobalChRange)
-    ACSVM_CASE(PCD_PushFunction)
-    ACSVM_CASE(PCD_CallStack)
       {
         const PCD_Info *pi;
         for (pi = PCD_List; pi->name; ++pi) if (pi->index == cmd) break;
