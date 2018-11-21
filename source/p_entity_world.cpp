@@ -701,6 +701,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
     xh = MapBlock(tmtrace.BBox[BOXRIGHT]-XLevel->BlockMapOrgX+MAXRADIUS);
     yl = MapBlock(tmtrace.BBox[BOXBOTTOM]-XLevel->BlockMapOrgY-MAXRADIUS);
     yh = MapBlock(tmtrace.BBox[BOXTOP]-XLevel->BlockMapOrgY+MAXRADIUS);
+    //GCon->Logf("========= %s", GetClass()->GetName());
 
     for (bx = xl; bx <= xh; ++bx) {
       for (by = yl; by <= yh; ++by) {
@@ -717,10 +718,15 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
                        !(EntityFlags&VEntity::EF_Missile) &&
                        tmtrace.BlockingMobj->Origin.z+tmtrace.BlockingMobj->Height-tmtrace.End.z <= MaxStepHeight)
             {
+              //GCon->Logf("  thingblocker=%s; BlockingMobj=%s", (thingblocker ? thingblocker->GetClass()->GetName() : "<>"), tmtrace.BlockingMobj->GetClass()->GetName());
               if (!thingblocker || tmtrace.BlockingMobj->Origin.z > thingblocker->Origin.z) thingblocker = tmtrace.BlockingMobj;
               tmtrace.BlockingMobj = nullptr;
             } else if (Player && tmtrace.End.z+Height-tmtrace.BlockingMobj->Origin.z <= MaxStepHeight) {
-              if (thingblocker) return false; // something to step up on, set it as the blocker so that we don't step up
+              if (thingblocker) {
+                // something to step up on, set it as the blocker so that we don't step up
+                //GCon->Logf("  FUCKKY! thingblocker=%s; BlockingMobj=%s", (thingblocker ? thingblocker->GetClass()->GetName() : "<>"), tmtrace.BlockingMobj->GetClass()->GetName());
+                return false;
+              }
               // nothing is blocking, but this object potentially could
               // if there is something else to step on
               //fakedblocker = tmtrace.BlockingMobj;
@@ -794,6 +800,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   tmtrace.BlockingMobj = thingblocker;
   if (tmtrace.BlockingMobj) {
     //printf("*** MOBJ\n");
+    //GCon->Logf("  EXIT! thingblocker=%s; BlockingMobj=%s", (thingblocker ? thingblocker->GetClass()->GetName() : "<>"), (tmtrace.BlockingMobj ? tmtrace.BlockingMobj->GetClass()->GetName() : "<>"));
     return false;
   }
 
@@ -1014,6 +1021,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
   if (!check) {
     VEntity *O = tmtrace.BlockingMobj;
+    //GCon->Logf("HIT! %s", O->GetClass()->GetName());
 
     if (!O || !(EntityFlags&EF_IsPlayer) ||
         (O->EntityFlags&EF_IsPlayer) ||
@@ -1025,6 +1033,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
       PushLine(tmtrace);
       return false;
     }
+
     if (!(EntityFlags&EF_PassMobj) || compat_nopassover ||
         (Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver))
     {
@@ -1043,9 +1052,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
 
     tmtrace.TraceFlags |= tmtrace_t::TF_FloatOk;
 
-    if (tmtrace.CeilingZ-Origin.z < Height && !(EntityFlags&EF_Fly) &&
-        !(EntityFlags&EF_IgnoreCeilingStep))
-    {
+    if (tmtrace.CeilingZ-Origin.z < Height && !(EntityFlags&EF_Fly) && !(EntityFlags&EF_IgnoreCeilingStep)) {
       // mobj must lower itself to fit
       PushLine(tmtrace);
       //printf("*** WORLD(1)!\n");
@@ -1100,13 +1107,13 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
           return false;
         }
       }
-      if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) &&
-          tmtrace.FloorZ > Origin.z)
-      {
+
+      if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) && tmtrace.FloorZ > Origin.z) {
         PushLine(tmtrace);
         //printf("*** WORLD(4)!\n");
         return false;
       }
+
       if (Origin.z < tmtrace.FloorZ) {
         if (EntityFlags&EF_StepMissile) {
           Origin.z = tmtrace.FloorZ;
@@ -1133,28 +1140,22 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         // This is so that it does not walk off of things onto a drop off.
         if (EntityFlags&EF_OnMobj) floorz = MAX(Origin.z, tmtrace.FloorZ);
 
-        if ((floorz-tmtrace.DropOffZ > MaxDropoffHeight) &&
-            !(EntityFlags&EF_Blasted))
-        {
+        if ((floorz-tmtrace.DropOffZ > MaxDropoffHeight) && !(EntityFlags&EF_Blasted)) {
           // Can't move over a dropoff unless it's been blasted
           //printf("*** WORLD(6)!\n");
           return false;
         }
       } else {
         // special logic to move a monster off a dropoff
-        // this intentionally does not check for standing on things.
-        if (FloorZ-tmtrace.FloorZ > MaxDropoffHeight ||
-            DropOffZ-tmtrace.DropOffZ > MaxDropoffHeight)
-        {
+        // this intentionally does not check for standing on things
+        if (FloorZ-tmtrace.FloorZ > MaxDropoffHeight || DropOffZ-tmtrace.DropOffZ > MaxDropoffHeight) {
           //printf("*** WORLD(7)!\n");
           return false;
         }
       }
     }
 
-    if (EntityFlags&EF_CantLeaveFloorpic &&
-        (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z))
-    {
+    if (EntityFlags&EF_CantLeaveFloorpic && (tmtrace.Floor->pic != Floor->pic || tmtrace.FloorZ != Origin.z)) {
       // must stay within a sector of a certain floor type
       //printf("*** WORLD(8)!\n");
       return false;
