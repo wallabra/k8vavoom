@@ -75,7 +75,7 @@ enum {
 
 struct frameDef_t {
   vint16 Index;
-  vint16 BaseTime;
+  float BaseTime;
   vint16 RandomRange;
 };
 
@@ -1216,14 +1216,15 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     }
 
     if (sc->Check("tics")) {
-      sc->ExpectNumber(true);
-      fd.BaseTime = sc->Number;
+      sc->ExpectFloat();
+      fd.BaseTime = sc->Float;
+      if (fd.BaseTime < 0.01) fd.BaseTime = 0.01;
       fd.RandomRange = 0;
     } else if (sc->Check("rand")) {
       sc->ExpectNumber(true);
       fd.BaseTime = sc->Number;
       sc->ExpectNumber(true);
-      fd.RandomRange = sc->Number-fd.BaseTime+1;
+      fd.RandomRange = sc->Number-(int)fd.BaseTime+1;
     } else {
       sc->Error(va("bad command (%s)", *sc->String));
     }
@@ -1286,7 +1287,7 @@ static int AddSwitchDef (TSwitch *Switch) {
 //==========================================================================
 static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
   guard(ParseSwitchState);
-  TArray<TSwitchFrame>  Frames;
+  TArray<TSwitchFrame> Frames;
   int Sound = 0;
   bool Bad = false;
   bool silentTexError = (GArgs.CheckParm("-Wswitch-textures") == 0);
@@ -1721,85 +1722,87 @@ void R_AnimateSurfaces () {
   for (int i = 0; i < AnimDefs.Num(); ++i) {
     animDef_t &ad = AnimDefs[i];
     ad.Time -= host_frametime;
-    if (ad.Time > 0.0) continue;
+    for (int trycount = 128; trycount > 0; --trycount) {
+      if (ad.Time > 0.0) break;
 
-    bool validAnimation = true;
-    if (ad.NumFrames > 1) {
-      switch (ad.Type) {
-        case ANIM_Normal:
-        case ANIM_Forward:
-          ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
-          break;
-        case ANIM_Backward:
-          ad.CurrentFrame = (ad.CurrentFrame+ad.NumFrames-1)%ad.NumFrames;
-          break;
-        case ANIM_OscillateUp:
-          if (++ad.CurrentFrame >= ad.NumFrames-1) {
-            ad.Type = ANIM_OscillateDown;
-            ad.CurrentFrame = ad.NumFrames-1;
-          }
-          break;
-        case ANIM_OscillateDown:
-          if (--ad.CurrentFrame <= 0) {
-            ad.Type = ANIM_OscillateUp;
+      bool validAnimation = true;
+      if (ad.NumFrames > 1) {
+        switch (ad.Type) {
+          case ANIM_Normal:
+          case ANIM_Forward:
+            ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
+            break;
+          case ANIM_Backward:
+            ad.CurrentFrame = (ad.CurrentFrame+ad.NumFrames-1)%ad.NumFrames;
+            break;
+          case ANIM_OscillateUp:
+            if (++ad.CurrentFrame >= ad.NumFrames-1) {
+              ad.Type = ANIM_OscillateDown;
+              ad.CurrentFrame = ad.NumFrames-1;
+            }
+            break;
+          case ANIM_OscillateDown:
+            if (--ad.CurrentFrame <= 0) {
+              ad.Type = ANIM_OscillateUp;
+              ad.CurrentFrame = 0;
+            }
+            break;
+          case ANIM_Random:
+            if (ad.NumFrames > 1) ad.CurrentFrame = (int)(Random()*ad.NumFrames);
+            break;
+          default:
+            fprintf(stderr, "unknown animation type for texture %d (%s): %d\n", ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type);
+            validAnimation = false;
             ad.CurrentFrame = 0;
-          }
-          break;
-        case ANIM_Random:
-          if (ad.NumFrames > 1) ad.CurrentFrame = (int)(Random()*ad.NumFrames);
-          break;
-        default:
-          fprintf(stderr, "unknown animation type for texture %d (%s): %d\n", ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type);
-          validAnimation = false;
-          ad.CurrentFrame = 0;
-          break;
-      }
-    } else {
-      ad.CurrentFrame = 0;
-    }
-
-    //const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
-    //fprintf(stderr, "ANIM #%d: texture %d (%s); type=%d; curframe=%d; framenum=%d; fdefs=%d; stfdef=%d; cfr=%d\n", i, ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type, ad.CurrentFrame, ad.NumFrames, FrameDefs.length(), ad.StartFrameDef, ad.StartFrameDef+ad.CurrentFrame);
-    const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0) : 0)];
-    ad.Time = fd.BaseTime/35.0;
-    if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
-
-    static int wantMissingAnimWarning = -1;
-
-    VTexture *atx = GTextureManager[ad.Index];
-    if (atx) {
-      atx->noDecals = (ad.allowDecals == 0);
-      atx->animNoDecals = (ad.allowDecals == 0);
-      atx->animated = true;
-    }
-
-    if (ad.Type == ANIM_Normal || !validAnimation) {
-      if (atx) {
-        atx->TextureTranslation = fd.Index;
-        if (atx->TextureTranslation == -1) {
-          //k8:dunno
-          atx->TextureTranslation = ad.Index;
-          if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
-          if (wantMissingAnimWarning) {
-            GCon->Logf(NAME_Warning, "(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
-          }
+            break;
         }
+      } else {
+        ad.CurrentFrame = 0;
       }
-    } else {
-      for (int fn = 0; fn < ad.NumFrames; ++fn) {
-        atx = GTextureManager[ad.Index+fn];
+
+      //const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
+      //fprintf(stderr, "ANIM #%d: texture %d (%s); type=%d; curframe=%d; framenum=%d; fdefs=%d; stfdef=%d; cfr=%d\n", i, ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type, ad.CurrentFrame, ad.NumFrames, FrameDefs.length(), ad.StartFrameDef, ad.StartFrameDef+ad.CurrentFrame);
+      const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0) : 0)];
+      ad.Time = fd.BaseTime/35.0;
+      if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
+
+      static int wantMissingAnimWarning = -1;
+
+      VTexture *atx = GTextureManager[ad.Index];
+      if (atx) {
+        atx->noDecals = (ad.allowDecals == 0);
+        atx->animNoDecals = (ad.allowDecals == 0);
+        atx->animated = true;
+      }
+
+      if (ad.Type == ANIM_Normal || !validAnimation) {
         if (atx) {
-          atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+          atx->TextureTranslation = fd.Index;
           if (atx->TextureTranslation == -1) {
-            atx->TextureTranslation = ad.Index+fn;
+            //k8:dunno
+            atx->TextureTranslation = ad.Index;
             if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
             if (wantMissingAnimWarning) {
-              GCon->Logf(NAME_Warning, "(1) animated surface got invalid texture index");
+              GCon->Logf(NAME_Warning, "(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
             }
           }
-          atx->noDecals = (ad.allowDecals == 0);
-          atx->animNoDecals = (ad.allowDecals == 0);
-          atx->animated = true;
+        }
+      } else {
+        for (int fn = 0; fn < ad.NumFrames; ++fn) {
+          atx = GTextureManager[ad.Index+fn];
+          if (atx) {
+            atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+            if (atx->TextureTranslation == -1) {
+              atx->TextureTranslation = ad.Index+fn;
+              if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
+              if (wantMissingAnimWarning) {
+                GCon->Logf(NAME_Warning, "(1) animated surface got invalid texture index");
+              }
+            }
+            atx->noDecals = (ad.allowDecals == 0);
+            atx->animNoDecals = (ad.allowDecals == 0);
+            atx->animated = true;
+          }
         }
       }
     }
