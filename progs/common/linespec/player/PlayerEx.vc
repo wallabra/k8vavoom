@@ -37,7 +37,7 @@ enum /*cheat_t*/ {
 };
 
 const float USERANGE      = 64.0;
-const float USETHINGRANGE = 128.0;
+const float USETHINGRANGE = 64.0; //128.0; //k8:why so far?
 
 const float BLINKTHRESHOLD = 4.0;
 
