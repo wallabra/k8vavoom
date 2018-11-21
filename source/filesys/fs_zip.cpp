@@ -401,7 +401,9 @@ void VZipFile::OpenArchive (VStream *fstream) {
       } else {
         // hide wad files, 'cause they may conflict with normal files
         // wads will be correctly added by a separate function
-        if (Files[i].Name.EndsWith(".wad")) {
+        if (Files[i].Name.EndsWith(".wad") || Files[i].Name.EndsWith(".zip") || Files[i].Name.EndsWith(".7z") ||
+            Files[i].Name.EndsWith(".pk3") || Files[i].Name.EndsWith(".pk7"))
+        {
           Files[i].LumpNamespace = -1;
           LumpName = VStr();
         }

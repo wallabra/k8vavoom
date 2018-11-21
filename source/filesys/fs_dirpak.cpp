@@ -125,7 +125,9 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
       fe.ns = ns;
       // hide wad files, 'cause they may conflict with normal files
       // wads will be correctly added by a separate function
-      if (diskname.toLowerCase().endsWith(".wad")) {
+      if (loname.endsWith(".wad") || loname.endsWith(".zip") || loname.endsWith(".7z") ||
+          loname.endsWith(".pk3") || loname.endsWith(".pk7"))
+      {
         fe.ns = (EWadNamespace)-1;
         lumpname = VStr();
       }
