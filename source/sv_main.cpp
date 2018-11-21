@@ -93,7 +93,7 @@ struct VCVFSSaver {
 };
 
 
-static int vcmodCurrFile = -1;
+static int vcmodCurrFileLump = -1;
 
 static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
   /*
@@ -103,7 +103,7 @@ static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
     return W_CreateLumpReaderNum(flump);
   }
   */
-  int lmp = W_CheckNumForFileNameInSameFile(vcmodCurrFile, filename);
+  int lmp = W_CheckNumForFileNameInSameFile(vcmodCurrFileLump, filename);
   if (lmp >= 0) return W_CreateLumpReaderNum(lmp);
   //fprintf(stderr, "VC: NOT found <%s>\n", *filename);
   return nullptr;
@@ -125,7 +125,8 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
   VMemberBase::dgOpenFile = &vcmodOpenFile;
   for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
     if (W_LumpName(ScLump) != modlistfile) continue;
-    vcmodCurrFile = W_LumpFile(ScLump);
+    //vcmodCurrFile = W_LumpFile(ScLump);
+    vcmodCurrFileLump = ScLump;
     VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
     GCon->Logf(NAME_Init, "parsing VaVoom C mod list from '%s'...", *W_FullLumpName(ScLump));
     while (!sc->AtEnd()) {

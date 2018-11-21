@@ -31,7 +31,7 @@ extern "C" {
     if (aa == bb) return 0;
     const VDirPakFile::FileEntry *a = (const VDirPakFile::FileEntry *)aa;
     const VDirPakFile::FileEntry *b = (const VDirPakFile::FileEntry *)bb;
-    return VStr::Cmp(*a->pakname, *b->pakname);
+    return a->pakname.Cmp(*b->pakname);
   }
 }
 
@@ -72,6 +72,29 @@ void VDirPakFile::ScanAllDirs () {
   // sort files alphabetically (have to do this, or file searching is failing for some reason)
   qsort(files.ptr(), files.length(), sizeof(FileEntry), &FileCmpFunc);
   //for (int f = 0; f < files.length(); ++f) GCon->Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", f, files[f].ns, *files[f].pakname, *files[f].diskname, *files[f].lumpname);
+
+  // create hashmaps, and link lumps
+  filemap.reset(); // indicies may change
+  TMapNC<VName, int> lastSeenLump;
+  for (int f = 0; f < files.length(); ++f) {
+    // link lumps
+    VName lmp = files[f].lumpname;
+    files[f].nextLump = -1; // just in case
+    if (lmp != NAME_None) {
+      if (!lumpmap.has(lmp)) {
+        // new lump
+        lumpmap.put(lmp, f);
+        lastSeenLump.put(lmp, f); // for index chain
+      } else {
+        // we'we seen it before
+        auto lsidp = lastSeenLump.find(lmp); // guaranteed to succeed
+        files[*lsidp].nextLump = f; // link previous to this one
+        *lsidp = f; // update index
+      }
+    }
+    // put files into hashmap
+    filemap.put(files[f].pakname, f);
+  }
 }
 
 
@@ -107,7 +130,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
   for (;;) {
     VStr dsk = Sys_ReadDir(dh);
     if (dsk.length() == 0) break;
-    VStr diskname = (relpath.length() ? relpath+"/"+dsk : dsk);
+    VStr diskname = (relpath.length() ? relpath+"/"+dsk : dsk).fixSlashes();
     //GCon->Logf("...<%s> : <%s>", *dsk, *diskname);
     if (dsk.endsWith("/")) {
       // directory, scan it
@@ -119,7 +142,8 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
       if (filemap.has(loname)) continue;
       filemap.put(loname, files.length());
       FileEntry &fe = files.alloc();
-      fe.pakname = VName(*loname);
+      fe.size = -1; // unknown yet
+      fe.pakname = loname;
       VStr lumpname = (ns != -1 ? loname.extractFileName().stripExtension() : VStr());
       fe.diskname = diskname;
       fe.ns = ns;
@@ -163,9 +187,8 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
 //
 //==========================================================================
 int VDirPakFile::CheckNumForFileName (const VStr &fname) {
-  VStr fn = fname.toLowerCase();
-  auto lp = filemap.find(fn);
-  //GCon->Logf(NAME_Dev, "DPK<%s>: '%s' is %d", *PakFileName, *fn, (lp ? *lp : -1));
+  auto lp = filemap.find(fname.toLowerCase());
+  GCon->Logf(NAME_Dev, "DPK<%s>: '%s' is %d", *PakFileName, *fname, (lp ? *lp : -1));
   return (lp ? *lp : -1);
 }
 
@@ -219,11 +242,13 @@ void VDirPakFile::ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) {
 int VDirPakFile::LumpLength (int LumpNum) {
   check(LumpNum >= 0);
   check(LumpNum < files.length());
-  VStream *Strm = CreateLumpReaderNum(LumpNum);
-  check(Strm);
-  int Ret = Strm->TotalSize();
-  delete Strm;
-  return Ret;
+  if (files[LumpNum].size == -1) {
+    VStream *Strm = CreateLumpReaderNum(LumpNum);
+    check(Strm);
+    files[LumpNum].size = Strm->TotalSize();
+    delete Strm;
+  }
+  return files[LumpNum].size;
 }
 
 
@@ -260,10 +285,13 @@ void VDirPakFile::Close () {
 //==========================================================================
 int VDirPakFile::CheckNumForName (VName lname, EWadNamespace ns) {
   if (lname == NAME_None) return -1;
-  for (int f = files.length()-1; f >= 0; --f) {
-    if (files[f].ns == ns && files[f].lumpname != NAME_None && VStr::ICmp(*files[f].lumpname, *lname) == 0) return f;
-  }
-  return -1;
+  if (!VStr::isLowerCase(*lname)) lname = VName(*lname, VName::AddLower);
+  auto fp = lumpmap.find(lname);
+  if (!fp) return -1;
+  int res = -1; // default: none
+  // find last one
+  for (int f = *fp; f >= 0; f = files[f].nextLump) if (files[f].ns == ns) res = f;
+  return res;
 }
 
 
@@ -317,6 +345,7 @@ void VDirPakFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VL
 //==========================================================================
 void VDirPakFile::ListWadFiles (TArray<VStr> &list) {
   for (int f = 0; f < files.length(); ++f) {
+    if (files[f].diskname.indexOf('/') >= 0) continue; // only top-level
     if (files[f].diskname.toLowerCase().endsWith(".wad")) list.append(files[f].diskname);
   }
 }
@@ -329,6 +358,7 @@ void VDirPakFile::ListWadFiles (TArray<VStr> &list) {
 //==========================================================================
 void VDirPakFile::ListPk3Files (TArray<VStr> &list) {
   for (int f = 0; f < files.length(); ++f) {
+    if (files[f].diskname.indexOf('/') >= 0) continue; // only top-level
     if (files[f].diskname.toLowerCase().endsWith(".pk3")) list.append(files[f].diskname);
   }
 }

@@ -87,9 +87,11 @@ struct VZipFileInfo {
   // for WAD-like access
   VName LumpName;
   vint32 LumpNamespace;
+  int nextLump; // next lump with the same name
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VZipFileReader : public VStream {
 private:
   //enum { UNZ_BUFSIZE = 16384 };
@@ -174,6 +176,8 @@ VZipFile::VZipFile (VStream *fstream)
   : ZipFileName("<memory>")
   , Files(nullptr)
   , NumFiles(0)
+  , filemap()
+  , lumpmap()
 {
   guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
@@ -440,6 +444,29 @@ void VZipFile::OpenArchive (VStream *fstream) {
   // sort files alphabetically (have to do this, or file searching is failing for some reason)
   if (NumFiles > 65520) Sys_Error("Archive '%s' has too many files", *ZipFileName);
   qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
+
+  // now create hashmaps, and link lumps
+  TMapNC<VName, int> lastSeenLump;
+  for (int f = 0; f < NumFiles; ++f) {
+    // link lumps
+    VName lmp = Files[f].LumpName;
+    Files[f].nextLump = -1; // just in case
+    if (lmp != NAME_None) {
+      if (!lumpmap.has(lmp)) {
+        // new lump
+        lumpmap.put(lmp, f);
+        lastSeenLump.put(lmp, f); // for index chain
+      } else {
+        // we'we seen it before
+        auto lsidp = lastSeenLump.find(lmp); // guaranteed to succeed
+        Files[*lsidp].nextLump = f; // link previous to this one
+        *lsidp = f; // update index
+      }
+    }
+    // put files into hashmap
+    filemap.put(Files[f].Name, f);
+  }
+
   unguard;
 }
 
@@ -499,11 +526,7 @@ vuint32 VZipFile::SearchCentralDir () {
 //
 //==========================================================================
 bool VZipFile::FileExists (const VStr &FName) {
-  VStr CheckName = FName.ToLower();
-  for (int i = NumFiles-1; i >= 0; --i) {
-    if (Files[i].Name == CheckName) return true;
-  }
-  return false;
+  return filemap.has(FName.toLowerCase());
 }
 
 
@@ -513,14 +536,9 @@ bool VZipFile::FileExists (const VStr &FName) {
 //
 //==========================================================================
 VStream *VZipFile::OpenFileRead (const VStr &FName) {
-  VStr CheckName = FName.ToLower();
-  for (int i = NumFiles-1; i >= 0; --i) {
-    if (Files[i].Name == CheckName) {
-      //fprintf(stderr, "***ZIP: <%s:%s>\n", *GetPrefix(), *FName);
-      return new VZipFileReader(ZipFileName+":"+FName, FileStream, BytesBeforeZipFile, Files[i], GCon, &rdlock);
-    }
-  }
-  return nullptr;
+  auto fp = filemap.find(FName.toLowerCase());
+  if (!fp) return nullptr;
+  return new VZipFileReader(ZipFileName+":"+FName, FileStream, BytesBeforeZipFile, Files[*fp], GCon, &rdlock);
 }
 
 
@@ -530,14 +548,10 @@ VStream *VZipFile::OpenFileRead (const VStr &FName) {
 //
 //==========================================================================
 void VZipFile::Close () {
-  if (Files) {
-    delete[] Files;
-    Files = nullptr;
-  }
-  if (FileStream) {
-    delete FileStream;
-    FileStream = 0;
-  }
+  if (Files) { delete[] Files; Files = nullptr; }
+  if (FileStream) { delete FileStream; FileStream = 0; }
+  filemap.clear();
+  lumpmap.clear();
 }
 
 
@@ -548,11 +562,13 @@ void VZipFile::Close () {
 //==========================================================================
 int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
   if (LumpName == NAME_None) return -1;
-  for (int i = NumFiles-1; i >= 0; --i) {
-    if (Files[i].LumpNamespace == NS && VStr::ICmp(*Files[i].LumpName, *LumpName) == 0) return i;
-  }
-  // not found
-  return -1;
+  if (!VStr::isLowerCase(*LumpName)) LumpName = VName(*LumpName, VName::AddLower);
+  auto fp = lumpmap.find(LumpName);
+  if (!fp) return -1;
+  int res = -1; // default: none
+  // find last one
+  for (int f = *fp; f >= 0; f = Files[f].nextLump) if (Files[f].LumpNamespace == NS) res = f;
+  return res;
 }
 
 
@@ -562,10 +578,8 @@ int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
 //
 //==========================================================================
 int VZipFile::CheckNumForFileName (const VStr &Name) {
-  for (int i = NumFiles-1; i >= 0; --i) {
-    if (Files[i].Name.ICmp(Name) == 0) return i;
-  }
-  return -1;
+  auto fp = filemap.find(Name.toLowerCase());
+  return (fp ? *fp : -1);
 }
 
 

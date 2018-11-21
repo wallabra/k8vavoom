@@ -153,6 +153,8 @@ private:
   VZipFileInfo *Files;
   vuint16 NumFiles; // total number of files
   vuint32 BytesBeforeZipFile; // byte before the zipfile, (>0 for sfx)
+  TMap<VStr, int> filemap;
+  TMap<VName, int> lumpmap; // internally, this is a linked list
 
   vuint32 SearchCentralDir ();
   //static int FileCmpFunc (const void*, const void*);
@@ -189,17 +191,19 @@ public:
 class VDirPakFile : public VSearchPath {
 public: // fuck you, shitplusplus
   struct FileEntry {
-    VName pakname;
+    VStr pakname; // lowercased
     VName lumpname; // without extension
-    VStr diskname;
-    //vint32 size;
+    VStr diskname; // real
+    vint32 size; // -1: unknown yet; we'll cache it
     EWadNamespace ns;
+    int nextLump; // next lump with the same name or -1
   };
 
 private:
   VStr PakFileName; // never ends with slash
   TArray<FileEntry> files;
   TMap<VStr, int> filemap; // maps names (with pathes) to file entries; names are lowercased
+  TMap<VName, int> lumpmap; // see zip reader
 
   // relative to PakFileName
   void ScanDirectory (VStr relpath, int depth, bool inProgs);
