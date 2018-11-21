@@ -527,6 +527,11 @@ public:
     P_PASS_STR(Info);
     EV_RET_VOID(NAME_ServerSetUserInfo);
   }
+
+  VEntity *eventGetReadyWeapon () {
+    P_PASS_SELF;
+    EV_RET_PTR(VEntity, (VName("eventGetReadyWeapon")));
+  }
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

@@ -3818,6 +3818,16 @@ override void Cheat_VScriptCommand (ref array!string args) {
 }
 
 
+//==========================================================================
+//
+//  eventGetReadyWeapon
+//
+//==========================================================================
+override Entity eventGetReadyWeapon () {
+  return ReadyWeapon;
+}
+
+
 defaultproperties {
   InvSize = 6;
 }

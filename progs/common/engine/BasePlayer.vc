@@ -275,16 +275,21 @@ void Cheat_Regeneration () {}
 void Cheat_DumpInventory () {}
 void Cheat_VScriptCommand (ref array!string args) {}
 
-void ServerImpulse(int AImpulse)
-{
+
+void ServerImpulse (int AImpulse) {
   Impulse = AImpulse;
 }
 
-void ClientSetViewOrg(float x, float y, float z)
-{
+
+void ClientSetViewOrg (float x, float y, float z) {
   ViewOrg = vector(x, y, z);
 }
 
-defaultproperties
-{
+
+Entity eventGetReadyWeapon () {
+  return none;
+}
+
+
+defaultproperties {
 }

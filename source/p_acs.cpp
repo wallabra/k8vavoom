@@ -2245,10 +2245,16 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     case ACSF_GetActorClass:
       if (argCount > 0) {
         VEntity *Ent = EntityFromTID(args[0], Activator);
-        if (!Ent) return ActiveObject->Level->PutNewString("None");
-        return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
+        if (Ent) return ActiveObject->Level->PutNewString(*Ent->GetClass()->Name);
       }
-      return ActiveObject->Level->PutNewString("None");
+      return ActiveObject->Level->PutNewString("");
+
+    case ACSF_GetWeapon:
+      if (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer) != 0 && Activator->Player) {
+        VEntity *wpn = Activator->Player->eventGetReadyWeapon();
+        if (wpn) return ActiveObject->Level->PutNewString(*wpn->GetClass()->Name);
+      }
+      return ActiveObject->Level->PutNewString("");
 
 
     // bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3)
@@ -2300,7 +2306,12 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ScArgs[1] = (argCount > 3 ? args[3] : 0);
         ScArgs[2] = (argCount > 4 ? args[4] : 0);
         ScArgs[3] = (argCount > 5 ? args[5] : 0);
-        if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, true/*always*/, false/*wantresult*/, false/*net*/)) return 0;
+        //GCon->Logf("ACSF_ACS_NamedExecuteAlways: script=<%s>; map=%d; args=(%d,%d,%d,%d)", *name, (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3]);
+        if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, true/*always*/, false/*wantresult*/, false/*net*/)) {
+          //GCon->Logf("   FAILED!");
+          return 0;
+        }
+        //GCon->Logf("   OK!");
         return 1;
       }
       return 0;
@@ -2954,6 +2965,8 @@ int VAcs::RunScript (float DeltaTime) {
 
   //fprintf(stderr, "VAcs::RunScript:000: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   //if (info->RunningScript) fprintf(stderr, "VAcs::RunScript:001: rs name is '%s' (number is %d)\n", *info->RunningScript->info->Name, info->RunningScript->info->Number);
+
+  //if (info->Name != NAME_None) GCon->Logf(NAME_Dev, "ACS: running \"%s\"...", *info->Name);
 
   if (State == ASTE_Terminating) {
     if (info->RunningScript == this) info->RunningScript = nullptr;
