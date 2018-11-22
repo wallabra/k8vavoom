@@ -41,6 +41,8 @@ extern TArray<VStr> wadfiles;
 
 static int AuxiliaryIndex;
 
+static TMap<VStr, int> fullNameTexLumpChecked;
+
 
 //==========================================================================
 //
@@ -289,20 +291,25 @@ static int tryWithExtension (VStr name, const char *ext) {
 int W_CheckNumForTextureFileName (const VStr &Name) {
   guard(W_CheckNumForTextureFileName);
 
+  VStr loname = (Name.isLowerCase() ? Name : Name.toLowerCase());
+  auto ip = fullNameTexLumpChecked.find(loname);
+  if (ip) return *ip;
+
   int res = -1;
 
-  if ((res = tryWithExtension(Name, nullptr)) >= 0) return res;
+  if ((res = tryWithExtension(Name, nullptr)) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
 
   // try "textures/..."
   VStr fname = VStr("textures/")+Name;
-  if ((res = tryWithExtension(fname, nullptr)) >= 0) return res;
+  if ((res = tryWithExtension(fname, nullptr)) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
   // various other image extensions
-  if ((res = tryWithExtension(fname, ".png")) >= 0) return res;
-  if ((res = tryWithExtension(fname, ".jpg")) >= 0) return res;
-  if ((res = tryWithExtension(fname, ".tga")) >= 0) return res;
-  if ((res = tryWithExtension(fname, ".lmp")) >= 0) return res;
-  if ((res = tryWithExtension(fname, ".jpeg")) >= 0) return res;
+  if ((res = tryWithExtension(fname, ".png")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
+  if ((res = tryWithExtension(fname, ".jpg")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
+  if ((res = tryWithExtension(fname, ".tga")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
+  if ((res = tryWithExtension(fname, ".lmp")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
+  if ((res = tryWithExtension(fname, ".jpeg")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
 
+  fullNameTexLumpChecked.put(loname, -1);
   return -1;
   unguard;
 }
