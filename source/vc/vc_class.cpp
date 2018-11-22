@@ -795,8 +795,13 @@ int VClass::GetMethodIndex (VName AName) {
 //==========================================================================
 VState *VClass::FindState (VName AName) {
   guard(VClass::FindState);
-  for (VState *s = States; s; s = s->Next) if (s->Name == AName) return s;
+  if (AName == NAME_None) return nullptr;
+  if (VStr::ICmp(*AName, "none") == 0) return nullptr;
+  for (VState *s = States; s; s = s->Next) {
+    if (VStr::ICmp(*s->Name, *AName) == 0) return s;
+  }
   if (ParentClass) return ParentClass->FindState(AName);
+  if (VStr::ICmp(*AName, "null") == 0) return nullptr;
   return nullptr;
   unguard;
 }
@@ -810,7 +815,11 @@ VState *VClass::FindState (VName AName) {
 VState *VClass::FindStateChecked (VName AName) {
   guard(VClass::FindStateChecked);
   VState *s = FindState(AName);
-  if (!s) Sys_Error("State %s not found", *AName);
+  if (!s) {
+    //HACK!
+    if (VStr::ICmp(*AName, "none") == 0 || VStr::ICmp(*AName, "null") == 0) return nullptr;
+    Sys_Error("State `%s` not found", *AName);
+  }
   return s;
   unguard;
 }

@@ -421,7 +421,7 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         VName CName;
         VName SName;
         Strm << CName << SName;
-        if (SName != NAME_None) {
+        if (SName != NAME_None && VStr::ICmp(*SName, "none") != 0) {
           *(VState **)Data = VClass::FindClass(*CName)->FindStateChecked(SName);
         } else {
           *(VState **)Data = nullptr;
