@@ -151,6 +151,7 @@ defaultproperties
 //  Hidden Acs class
 //
 //==========================================================================
+/+
 class Acs : Thinker native abstract;
 
 transient private Entity Activator;
@@ -159,7 +160,8 @@ transient private int side;
 transient private int number;
 transient native private /*VAcsInfo*/void *info;
 transient private ubyte State;
-transient private float DelayTime;
+//transient private float DelayTime;
+transient private int DelayActivationTick;
 transient private int WaitValue;
 transient native private int *LocalVars;
 transient native private ubyte *InstructionPointer;
@@ -167,6 +169,7 @@ transient native private /*VAcsObject*/void *ActiveObject;
 transient private int HudWidth;
 transient private int HudHeight;
 transient private name Font;
++/
 
 
 //==========================================================================
@@ -174,6 +177,7 @@ transient private name Font;
 //  Hidden Button class
 //
 //==========================================================================
+/+
 class Button : Thinker native abstract;
 transient private int Side;
 transient private ubyte Where;
@@ -182,3 +186,4 @@ transient private int Frame;
 transient private float Timer;
 transient private name DefaultSound;
 transient private /*bool*/int UseAgain;
++/
