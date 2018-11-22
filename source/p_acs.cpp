@@ -1913,6 +1913,7 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
     //k8: this was commented in the original
     // world objects are allotted 1 second for initialization
     //script->DelayTime = 1.0;
+    script->DelayActivationTick = XLevel->TicTime+1; // on next tick
   }
   if (!Always) {
     Info->RunningScript = script;
