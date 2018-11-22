@@ -26,6 +26,7 @@ class HUDMessage : Widget;
 
 // ID, used as a priority or to replace a previous message.
 int Id;
+int ticStart; // do not start message before this tic
 
 array!SplitLine MsgLines;
 name MsgFont;
@@ -59,7 +60,12 @@ float Time;
 //
 //==========================================================================
 final bool IsActive () {
-  return !(ClGame && ClGame.Game && ClGame.Game.isPaused);
+  if (!ClGame || !ClGame.Game) return true; // just in case
+  if (ClGame.Game.isPaused) return false; // paused
+  // check scheduled tic
+  if (!ClGame.GLevel) return true; // just in case
+  if (ClGame.GLevel.TicTime < ticStart) return false; // not active yet
+  return true; // active
 }
 
 
@@ -72,7 +78,8 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
-  //print("HUDMSG: font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>; HoldTime=%s; times=(%s,%s)", AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message, AHoldTime, Time1, Time2);
+  //print("HUDMSG(%d): font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>; HoldTime=%s; times=(%s,%s)", AId, AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message, AHoldTime, Time1, Time2);
+  ticStart = (ClGame && ClGame.GLevel ? ClGame.GLevel.TicTime+1 : 0); // schedule to next tic
 
   Id = AId;
   MsgFont = AFont;
