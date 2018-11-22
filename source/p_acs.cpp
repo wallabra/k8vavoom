@@ -64,6 +64,7 @@ static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Over
 static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode", false, "Halt ACS VM on unimplemented opdode?", CVAR_Archive);
 static VCvarB acs_warning_console_commands("acs_warning_console_commands", true, "Show warning when ACS script tries to execute console command?", CVAR_Archive);
 static VCvarB acs_dump_uservar_access("acs_dump_uservar_access", false, "Dump ACS uservar access?", CVAR_Archive);
+static VCvarB acs_use_doomtic_granularity("acs_use_doomtic_granularity", false, "Should ACS use DooM tic granularity for delays?", CVAR_Archive);
 
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
@@ -267,7 +268,7 @@ class VAcs : public VThinker {
   vint32 number;
   VAcsInfo *info;
   vuint8 State;
-  //float DelayTime;
+  float DelayTime;
   vint32 DelayActivationTick;
   vint32 WaitValue;
   vint32 *LocalVars;
@@ -1909,6 +1910,8 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   if (Info->VarCount > 2) script->LocalVars[2] = Arg3;
   if (Info->VarCount > 3) script->LocalVars[3] = Arg4;
   if (Info->VarCount > Info->ArgCount) memset((void *)(script->LocalVars+Info->ArgCount), 0, (Info->VarCount-Info->ArgCount)*4);
+  script->DelayTime = 0;
+  script->DelayActivationTick = 0;
   if (Delayed) {
     //k8: this was commented in the original
     // world objects are allotted 1 second for initialization
@@ -1968,7 +1971,7 @@ void VAcs::Serialise (VStream &Strm) {
   Strm << side
     << number
     << State
-    //<< DelayTime
+    << DelayTime
     << STRM_INDEX(DelayActivationTick)
     << STRM_INDEX(WaitValue);
 
@@ -3020,17 +3023,29 @@ int VAcs::RunScript (float DeltaTime) {
   }
 
   if (State != ASTE_Running) return 1;
-  /*
+
+  bool doRunItDT = true;
+  bool doRunItVT = true;
+
+  if (DelayActivationTick > XLevel->TicTime) {
+    //GCon->Logf("DELAY: DelayActivationTick=%d; DeltaTime=%f; time=%f; tictime=%d", DelayActivationTick, DeltaTime*1000, (double)XLevel->Time, XLevel->TicTime);
+    doRunItDT = false;
+  }
+
   if (DelayTime) {
     //GCon->Logf("DELAY: DelayTime=%f; DeltaTime=%f; time=%f; tictime=%f", DelayTime*1000, DeltaTime*1000, (double)XLevel->Time, (double)XLevel->TicTime);
     DelayTime -= DeltaTime;
-    if (DelayTime > 0.01) return 1;
-    DelayTime = 0;
+    if (DelayTime > 0) {
+      doRunItVT = false;
+    } else {
+      DelayTime = 0;
+    }
   }
-  */
-  if (DelayActivationTick > XLevel->TicTime) {
-    //GCon->Logf("DELAY: DelayActivationTick=%d; DeltaTime=%f; time=%f; tictime=%d", DelayActivationTick, DeltaTime*1000, (double)XLevel->Time, XLevel->TicTime);
-    return 1;
+
+  if (acs_use_doomtic_granularity) {
+    if (!doRunItDT) return 1;
+  } else {
+    if (!doRunItVT) return 1;
   }
 
   //fprintf(stderr, "VAcs::RunScript:002: self name is '%s' (number is %d)\n", *info->Name, info->Number);
@@ -3491,15 +3506,17 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Delay)
-      //DelayTime = float(sp[-1])/35.0;
+      DelayTime = float(sp[-1])/35.0;
       DelayActivationTick = XLevel->TicTime+sp[-1];
+      if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       sp--;
       action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_DelayDirect)
-      //DelayTime = float(READ_INT32(ip))/35.0;
+      DelayTime = float(READ_INT32(ip))/35.0;
       DelayActivationTick = XLevel->TicTime+READ_INT32(ip);
+      if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       ip += 4;
       action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
@@ -4325,8 +4342,9 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DelayDirectB)
-      //DelayTime = float(*ip)/35.0;
+      DelayTime = float(*ip)/35.0;
       DelayActivationTick = XLevel->TicTime+(*ip);
+      if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       ip++;
       action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
