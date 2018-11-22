@@ -3681,14 +3681,15 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
   return action;
 }
 
+
 //==========================================================================
 //
 //  UseThing
 //
 //==========================================================================
+bool UseThing(EntityEx Other) {
+  if (Other.bNoInteraction) return false; //k8: just in case
 
-bool UseThing(EntityEx Other)
-{
   //print("UseThing000: self=%C; Other=%C; Other.bUseSpecial=%s; Other.Special=%s", self, Other, Other.bUseSpecial, Other.Special);
   if (Other.bUseSpecial && Other.Special) {
     auto swd = SwitchableDecoration(Other);
@@ -3713,6 +3714,7 @@ bool UseThing(EntityEx Other)
   //print("UseThing002: self=%C; Other=%C", self, Other);
   return LineSpecialLevelInfo(Level).StartConversation(self, Other);
 }
+
 
 //==========================================================================
 //
