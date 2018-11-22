@@ -161,6 +161,9 @@ static double ms = 0.0;
 static int fps_frames = 0;
 static int show_fps = 0;
 
+static VCvarB draw_gc_stats("draw_gc_stats", false, "Draw GC stats?", CVAR_Archive);
+static VCvarI draw_gc_stats_posx("draw_gc_stats_posx", "0", "GC stats counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
+
 static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", 0); //NOOP
 
 
@@ -266,7 +269,27 @@ COMMAND(ScreenShot) {
 //==========================================================================
 static void DrawFPS () {
   guard(DrawFPS);
+  if (draw_gc_stats) {
+    enum { ypos = 0 };
+    const VObject::GCStats &stats = VObject::GetGCStats();
+    T_SetFont(ConFont);
+    int xpos;
+    if (draw_gc_stats_posx < 0) {
+      T_SetAlign(hright, vtop);
+      xpos = 7*8;
+    } else if (draw_gc_stats_posx == 0) {
+      T_SetAlign(hcentre, vtop);
+      xpos = VirtualWidth/2;
+    } else {
+      T_SetAlign(hright, vtop);
+      xpos = VirtualWidth-2;
+    }
+    T_DrawText(xpos, ypos, va("obj:[\034U%d\034-/\034U%d\034-]  array:[\034U%d\034-/\034U%d\034-/\034U%d\034-]; \034U%d\034- msec",
+      stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectTime*1000+0.5)), CR_DARKBROWN);
+  }
+
   if (draw_fps) {
+    int ypos = (draw_gc_stats ? 9 : 0);
     double time = Sys_Time();
     ++fps_frames;
 
@@ -278,20 +301,22 @@ static void DrawFPS () {
     }
 
     T_SetFont(SmallFont);
+    int xpos;
     if (draw_fps_posx < 0) {
       T_SetAlign(hright, vtop);
-      T_DrawText(7*8, 0, va("%d fps", show_fps), CR_UNTRANSLATED);
+      xpos = 7*8;
     } else if (draw_fps_posx == 0) {
       T_SetAlign(hcentre, vtop);
-      T_DrawText(VirtualWidth/2, 0, va("%02d fps", show_fps), CR_UNTRANSLATED); //FIXME
+      xpos = VirtualWidth/2;
     } else {
       T_SetAlign(hright, vtop);
-      T_DrawText(VirtualWidth-2, 0, va("%02d fps", show_fps), CR_UNTRANSLATED);
+      xpos = VirtualWidth-2;
     }
+    T_DrawText(xpos, ypos, va("%02d fps", show_fps), CR_DARKBROWN);
 
     if (draw_fps == 2) {
       T_SetAlign(hright, vtop);
-      T_DrawText(VirtualWidth-2, 12, va("%.2f ms ", ms), CR_UNTRANSLATED);
+      T_DrawText(VirtualWidth-2, ypos, va("%.2f ms", ms), CR_DARKBROWN);
     }
   }
   unguard;

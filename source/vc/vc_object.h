@@ -41,28 +41,22 @@ public: \
   /* Identification */ \
   enum {StaticClassFlags = TStaticFlags|CLASS_Native}; \
   private: static VClass PrivateStaticClass; public: \
-  typedef TSuperClass Super;\
-  typedef TClass ThisClass;\
-  static VClass *StaticClass() \
-    { return &PrivateStaticClass; }
+  typedef TSuperClass Super; \
+  typedef TClass ThisClass; \
+  static VClass *StaticClass() { return &PrivateStaticClass; }
 
 // Declare a concrete class.
 #define DECLARE_CLASS(TClass, TSuperClass, TStaticFlags) \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Native) \
-  virtual ~TClass() \
-    { ConditionalDestroy(); } \
-  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) \
-    { return Strm << *(VObject**)&Obj; } \
-  static void InternalConstructor() \
-    { new TClass(); }
+  virtual ~TClass() { ConditionalDestroy(); } \
+  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject**)&Obj; } \
+  static void InternalConstructor() { new TClass(); }
 
 // Declare an abstract class.
 #define DECLARE_ABSTRACT_CLASS(TClass, TSuperClass, TStaticFlags) \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Abstract) \
-  virtual ~TClass() \
-    { ConditionalDestroy(); } \
-  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) \
-    { return Strm << *(VObject**)&Obj; }
+  virtual ~TClass() { ConditionalDestroy(); } \
+  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject**)&Obj; }
 
 // Register a class at startup time.
 #define IMPLEMENT_CLASS(Pre, TClass) \
@@ -82,22 +76,23 @@ public: \
   static void exec##func();
 
 #define IMPLEMENT_FUNCTION(TClass, Func) \
-  FBuiltinInfo TClass::funcinfo##Func(#Func, TClass::StaticClass(), \
-    TClass::exec##Func); \
+  FBuiltinInfo TClass::funcinfo##Func(#Func, TClass::StaticClass(), TClass::exec##Func); \
   void TClass::exec##Func()
 
-// ENUMERATIONS ------------------------------------------------------------
 
-//
-// Flags describing an object instance.
-//
+// flags describing an object instance
 enum EObjectFlags {
-  _OF_Destroyed      = 0x00000001, // object Destroy has already been called
+  // object Destroy has already been called
+  _OF_Destroyed      = 0x00000001,
+  // for VaVoom: this thinker is marked for deletion on a next tick
+  //             tick processor will take care of calling `Destroy()` on it
+  // for VccRun: you can call `CollectGarbage(true)` to destroy that objects
   _OF_DelayedDestroy = 0x00000002,
-  _OF_CleanupRef     = 0x00000004,
+  // this object is going to be destroyed; only GC will set this flag, and
+  // you have to check it in your `ClearReferences()`
+  _OF_CleanupRef     = 0x00000004, // this object is goind to be destroyed
 };
 
-// TYPES -------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -119,6 +114,17 @@ class VObject : public VInterface {
 # define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  true
 #endif
 
+public:
+  struct GCStats {
+    int alive; // number of currently alive objects
+    int markedDead; // number of objects currently marked as dead
+    int lastCollected; // number of objects collected on last non-empty cycle
+    int poolSize; // total number of used (including free) slots in object pool
+    int poolAllocated; // total number of allocated slots in object pool
+    int firstFree; // first free slot in pool
+    double lastCollectTime; // in seconds
+  };
+
 private:
   // internal per-object variables
   VMethod **vtable;
@@ -128,13 +134,12 @@ private:
   VClass *Class; // class the object belongs to
 
   // private systemwide variables
-  static bool GObjInitialised;
+  //static bool GObjInitialised;
   static TArray<VObject*> GObjObjects; // list of all objects.
-  //static TArray<int> GObjAvailable; // available object indices (replaced with private map)
-  static VObject *GObjHash[4096]; // object hash
   static int GNumDeleted;
   static bool GInGarbageCollection;
-  static void *GNewObject; // for internal constructors
+
+  static GCStats gcLastStats;
 
 public:
 #ifdef VCC_STANDALONE_EXECUTOR
@@ -166,9 +171,20 @@ public:
   // system-wide functions
   static void StaticInit ();
   static void StaticExit ();
+
   static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN);
+
+  // note that you CANNOT use `delete` on VObjects, you have to call
+  // either `Destroy()` or (even better) `ConditionalDestroy()`
+  // the difference is that `ConditionalDestroy()` will call `Destroy()`
+  // by itself, and will do it only once
+#if defined(VCC_STANDALONE_EXECUTOR)
   static void CollectGarbage (bool destroyDelayed=false);
+#else
+  static void CollectGarbage ();
+#endif
   static VObject *GetIndexObject (int);
+
   static int GetObjectsCount ();
 
   static VStack ExecuteFunction (VMethod *);
@@ -178,8 +194,12 @@ public:
   static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
 
   // functions
-  bool ConditionalDestroy ();
-  bool IsA (VClass *SomeBaseClass) const;
+  void ConditionalDestroy ();
+
+  inline bool IsA (VClass *SomeBaseClass) const {
+    for (const VClass *c = Class; c; c = c->GetSuperClass()) if (SomeBaseClass == c) return true;
+    return false;
+  }
 
   // accessors
   inline VClass *GetClass () const { return Class; }
@@ -189,12 +209,14 @@ public:
   inline void ClearFlags (vuint32 NewFlags) { ObjectFlags &= ~NewFlags; }
   inline vuint32 GetObjectIndex () const { return Index; }
   inline vuint32 GetUniqueId () const { return UniqueId; }
-  inline VMethod *GetVFunctionIdx (int InIndex) const { return vtable[InIndex]; }
 
-  VMethod *GetVFunction (VName FuncName) const;
+  inline VMethod *GetVFunctionIdx (int InIndex) const { return vtable[InIndex]; }
+  inline VMethod *GetVFunction (VName FuncName) const { return vtable[Class->GetMethodIndex(FuncName)]; }
 
   static VStr NameFromVKey (int vkey);
   static int VKeyFromName (const VStr &kn);
+
+  inline static const GCStats &GetGCStats () { return gcLastStats; }
 
 #include "vc_object_common.h"
 

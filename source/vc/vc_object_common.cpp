@@ -45,11 +45,11 @@ IMPLEMENT_FUNCTION(VObject, Destroy) {
     if (GImmediadeDelete) {
       delete Self;
     } else {
-      //Self->SetFlags(_OF_DelayedDestroy);
       Self->ConditionalDestroy();
     }
 #else
-    delete Self;
+    //delete Self;
+    Self->ConditionalDestroy();
 #endif
   }
 }
@@ -92,7 +92,12 @@ IMPLEMENT_FUNCTION(VObject, IsDestroyed) {
 // static final void CollectGarbage (optional bool destroyDelayed);
 IMPLEMENT_FUNCTION(VObject, CollectGarbage) {
   P_GET_BOOL_OPT(destroyDelayed, false);
+#if defined(VCC_STANDALONE_EXECUTOR)
   CollectGarbage(destroyDelayed);
+#else
+  (void)destroyDelayed;
+  CollectGarbage();
+#endif
 }
 
 
