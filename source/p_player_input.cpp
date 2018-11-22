@@ -744,7 +744,7 @@ int VBasePlayer::AcsGetInput(int InputType)
   guard(VBasePlayer::AcsGetInput);
   int Btn;
   int Ret = 0;
-  float angle0 = 0, angle1 = 0;
+  //float angle0 = 0, angle1 = 0;
   //static int n = 0;
   switch (InputType) {
     case INPUT_OLDBUTTONS: case MODINPUT_OLDBUTTONS:

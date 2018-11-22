@@ -394,8 +394,12 @@ void SV_RunClients () {
       //Player->OldButtons = Player->AcsButtons;
       //Player->OldViewAngles = Player->ViewAngles;
       // latch logic
-      if ((Player->AcsNextButtonUpdate -= host_frametime) <= 0.0f) {
-        Player->AcsNextButtonUpdate = 1.0f/35.0f; // once per standard DooM frame
+      //if ((Player->AcsNextButtonUpdate -= host_frametime) <= 0.0f)
+      if (Player->AcsNextButtonUpdate <= GLevel->TicTime)
+      {
+        //Player->AcsNextButtonUpdate = 1.0f/35.0f; // once per standard DooM frame
+        //!Player->AcsNextButtonUpdate = 1.0f/36.0f; // once per standard DooM frame
+        Player->AcsNextButtonUpdate = GLevel->TicTime+1;
         Player->OldButtons = Player->AcsButtons;
         // now create new acs buttons
         Player->AcsButtons = Player->AcsCurrButtonsPressed;
