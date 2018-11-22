@@ -3913,9 +3913,9 @@ override void CalcFakeZMovement(out TVec Ret, float DeltaTime)
       }
     }
   }
-  if (bIsPlayer && bFly && !(Ret.z <= FloorZ) && XLevel.TicTime & 2)
+  if (bIsPlayer && bFly && !(Ret.z <= FloorZ) /*&& (XLevel.TicTime&2)*/)
   {
-    Ret.z += sin(90.0 * 35.0 / 20.0 * XLevel.Time);
+    Ret.z += sin(90.0*35.0/20.0*AngleMod360(XLevel.Time));
   }
 }
 

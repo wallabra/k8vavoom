@@ -2834,7 +2834,7 @@ override void PlayerTick (float deltaTime) {
   }
 
 
-  if ((MO.XLevel.TicTime%(3*35) == 0) && (Cheats& CF_REGENERATION) && Health > 0) {
+  if ((MO.XLevel.TicTime%(3*35) == 0) && (Cheats&CF_REGENERATION) && Health > 0) {
     if (EntityEx(MO).GiveBody(5) && !GetSoundPlayingInfo(MO, GetSoundID('*regenerate'))) {
       MO.PlaySound('*regenerate', CHAN_VOICE);
     }

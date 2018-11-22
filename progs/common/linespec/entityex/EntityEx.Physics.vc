@@ -432,8 +432,8 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
     }
   }
 
-  if (bIsPlayer && bFly && !(Origin.z <= FloorZ) && (XLevel.TicTime&2)) {
-    Origin.z += sin(90.0*35.0/20.0*XLevel.Time);
+  if (bIsPlayer && bFly && !(Origin.z <= FloorZ) /*&& (XLevel.TicTime&2)*/) {
+    Origin.z += sin(90.0*35.0/20.0*AngleMod360(XLevel.Time));
   }
 
   // clip movement
@@ -1073,7 +1073,7 @@ final bool HitFloorType () {
   // small splash for small masses
   if (Mass < 10.0 || bSmallSplash) smallsplash = true;
 
-  if (TInfo->DamageAmount && bIsPlayer && XLevel.TicTime & TInfo->DamageTimeMask) {
+  if (TInfo->DamageAmount && bIsPlayer && (XLevel.TicTime&TInfo->DamageTimeMask)) {
     Damage(none, none, TInfo->DamageAmount, TInfo->DamageType);
   }
 
