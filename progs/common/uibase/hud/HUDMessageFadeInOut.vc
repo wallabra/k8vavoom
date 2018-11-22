@@ -41,9 +41,9 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
 {
   ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
     AHudHeight, AHoldTime, Time1, Time2);
-  Time1 = fclamp(Time1, 0.01, 100000);
-  Time2 = fclamp(Time2, 0.01, 100000);
-  HoldTime = fclamp(HoldTime, 0.01, 100000);
+  Time1 = fclamp(Time1, 0, 100000);
+  Time2 = fclamp(Time2, 0, 100000);
+  HoldTime = fclamp(HoldTime, 0, 100000);
   FadeInTime = Time1;
   FadeOutTime = Time2;
 }
@@ -56,21 +56,24 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
 //==========================================================================
 override void Tick (float DeltaTime) {
   if (!IsActive) return; // do not tick when game is paused
+  //Time += DeltaTime;
   switch (State) {
     case 0:
-      if (FadeInTime < Time) {
+      if (Time > FadeInTime) {
         State = 1;
         MsgAlpha = 1.0;
         Time -= FadeInTime;
-        return;
+        //return;
+        goto case;
       }
-      MsgAlpha = Time/FadeInTime;
+      MsgAlpha = fclamp((FadeInTime ? Time/FadeInTime : 1.0), 0, 1);
       break;
     case 1:
       if (Time > HoldTime) {
         State = 2;
         Time -= HoldTime;
-        return;
+        //return;
+        goto case;
       }
       break;
     case 2:
@@ -78,7 +81,7 @@ override void Tick (float DeltaTime) {
         MarkDead(); //Destroy();
         return;
       }
-      MsgAlpha = fclamp(1.0-Time/FadeOutTime, 0.0, 1.0);
+      MsgAlpha = fclamp((FadeOutTime ? 1.0-Time/FadeOutTime : 0.0), 0.0, 1.0);
       break;
   }
   // moved here, so messages won't blink

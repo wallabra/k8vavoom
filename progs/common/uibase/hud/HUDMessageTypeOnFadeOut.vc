@@ -42,9 +42,7 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
-  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
-    AHudHeight, AHoldTime, Time1, Time2);
-
+  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth, AHudHeight, AHoldTime, Time1, Time2);
   Time1 = fclamp(Time1, 0.1, 100000);
   Time2 = fclamp(Time2, 0.01, 100000);
   HoldTime = fclamp(HoldTime, 0.01, 100000);
@@ -64,6 +62,7 @@ override void Init(string Message, name AFont, int Type, int AId, int Colour,
 //==========================================================================
 override void Tick (float DeltaTime) {
   if (!IsActive) return; // do not tick when game is paused
+  //Time += DeltaTime;
   switch (State) {
     case 0:
       LineChars = int(Time/TypeOnTime);
@@ -72,7 +71,8 @@ override void Tick (float DeltaTime) {
         ++CurrentLine;
         if (CurrentLine >= MsgLines.Num) {
           State = 1;
-          return;
+          //return;
+          goto case;
         }
         LineChars = ftoi(Time/TypeOnTime);
         LineLen = strlen(MsgLines[CurrentLine].Text);
@@ -82,7 +82,8 @@ override void Tick (float DeltaTime) {
       if (Time > HoldTime) {
         State = 2;
         Time -= HoldTime;
-        return;
+        //return;
+        goto case;
       }
       break;
     case 2:
@@ -103,27 +104,18 @@ override void Tick (float DeltaTime) {
 //  DrawLine
 //
 //==========================================================================
-
-override void DrawLine(int LineIdx, int x, int y, string Text)
-{
-  if (State == 0)
-  {
-    if (LineIdx < CurrentLine)
-    {
+override void DrawLine (int LineIdx, int x, int y, string Text) {
+  if (State == 0) {
+    if (LineIdx < CurrentLine) {
       DrawText(x, y, Text, MsgColour, CR_YELLOW, MsgAlpha);
+    } else if (LineIdx == CurrentLine) {
+      DrawText(x, y, substr(Text, 0, LineChars), MsgColour, CR_YELLOW, MsgAlpha);
     }
-    else if (LineIdx == CurrentLine)
-    {
-      DrawText(x, y, substr(Text, 0, LineChars), MsgColour, CR_YELLOW,
-        MsgAlpha);
-    }
-  }
-  else
-  {
+  } else {
     ::DrawLine(LineIdx, x, y, Text);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

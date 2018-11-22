@@ -177,6 +177,7 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
       float sy = float(root.Height)/float(abs(HudHeight));
       ScaleX = sx;
       ScaleY = sy;
+      //print("  scale:(%f,%f); scaled size:(%s, %s); vsize=(%s,%s); rsize=(%s,%s)", sx, sy, round(root.Width/sx), round(root.Height/sy), GetVirtualWidth(), GetVirtualHeight(), root.Width, root.Height);
       SetSize(round(root.Width/sx), round(root.Height/sy));
       //dumpClipRect();
     } else {

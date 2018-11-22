@@ -38,8 +38,7 @@ override void Init (string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
-  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth,
-    AHudHeight, AHoldTime, Time1, Time2);
+  ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth, AHudHeight, AHoldTime, Time1, Time2);
   Time1 = fclamp(Time1, 0.01, 100000);
   HoldTime = fclamp(HoldTime, 0.01, 100000);
   FadeOutTime = Time1;
@@ -53,13 +52,15 @@ override void Init (string Message, name AFont, int Type, int AId, int Colour,
 //==========================================================================
 override void Tick (float DeltaTime) {
   if (!IsActive) return; // do not tick when game is paused
+  //Time += DeltaTime;
   switch (State) {
     case 0:
       if (Time > HoldTime) {
         State = 1;
         Time -= HoldTime;
         //print("FADEOUT(%q): NewTime=%s, fotime=%s", (MsgLines.length ? MsgLines[0].Text : ""), Time, FadeOutTime);
-        return;
+        //return;
+        goto case;
       }
       break;
     case 1:
