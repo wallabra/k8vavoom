@@ -931,6 +931,7 @@ void FL_Init () {
 
   int fp = GArgs.CheckParm("-file");
   if (fp) {
+    bool wasAnyFile = false;
     fsys_report_added_paks = reportPWads;
     fsys_skipSounds = false;
     fsys_skipSprites = false;
@@ -953,16 +954,22 @@ void FL_Init () {
         else if (VStr::Cmp(GArgs[fp], "-skipdehacked") == 0) fsys_skipDehacked = true;
         else if (VStr::Cmp(GArgs[fp], "-allowdehacked") == 0) fsys_skipDehacked = false;
         else if (VStr::Cmp(GArgs[fp], "-cosmetic") == 0) noStoreInSave = true;
-        else { inFile = (VStr::Cmp(GArgs[fp], "-file") == 0); if (inFile) noStoreInSave = false; }
+        else { inFile = (VStr::Cmp(GArgs[fp], "-file") == 0); if (inFile) { wasAnyFile = false; noStoreInSave = false; } }
         continue;
       }
       if (!inFile) continue;
       if (Sys_DirExists(GArgs[fp])) {
         //REVERTED: never append dirs to saves, 'cause it is meant to be used by developers
-        if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
-        GCon->Logf(NAME_Init, "Adding directory '%s' as emulated PK3 file.", GArgs[fp]);
-        AddPakDir(GArgs[fp]);
+        if (!wasAnyFile) {
+          wasAnyFile = true;
+          if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
+          GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", GArgs[fp]);
+          AddPakDir(GArgs[fp]);
+        } else {
+          GCon->Logf(NAME_Init, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", GArgs[fp]);
+        }
       } else if (Sys_FileExists(GArgs[fp])) {
+        wasAnyFile = true;
         if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
         AddAnyFile(GArgs[fp], true);
       } else {
