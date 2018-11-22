@@ -3552,7 +3552,8 @@ int VAcs::RunScript (float DeltaTime) {
     ACSVM_CASE(PCD_ChangeFloorDirect)
       {
         int Tag = READ_INT32(ip);
-        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
+        //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
+        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true, true);
         ip += 8;
         for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
           XLevel->Sectors[Idx].floor.pic = Flat;
@@ -3573,7 +3574,8 @@ int VAcs::RunScript (float DeltaTime) {
     ACSVM_CASE(PCD_ChangeCeilingDirect)
       {
         int Tag = READ_INT32(ip);
-        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
+        //int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)), TEXTYPE_Flat, true, true);
+        int Flat = GTextureManager.NumForName(GetName8(READ_INT32(ip+4)|ActiveObject->GetLibraryID()), TEXTYPE_Flat, true, true);
         ip += 8;
         for (int Idx = FindSectorFromTag(Tag, -1); Idx >= 0; Idx = FindSectorFromTag(Tag, Idx)) {
           XLevel->Sectors[Idx].ceiling.pic = Flat;
@@ -3676,7 +3678,7 @@ int VAcs::RunScript (float DeltaTime) {
       {
         VName name = GetNameLowerCase(sp[-1]);
         --sp;
-        GCon->Logf(NAME_Warning, "UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
+        //GCon->Logf(NAME_Warning, "UNTESTED ACS OPCODE PCD_ScriptWaitNamed (script '%s')", *name);
         WaitValue = XLevel->Acs->FindScriptNumberByName(*name, WaitObject);
         if (WaitValue <= -100000) {
           if (!XLevel->Acs->FindScript(WaitValue, WaitObject) ||
@@ -4068,19 +4070,13 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GiveInventoryDirect)
-      if (Activator)
-      {
-        Activator->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)),
-          READ_INT32(ip + 4));
-      }
-      else
-      {
-        for (int i = 0; i < MAXPLAYERS; i++)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
-            Level->Game->Players[i]->MO->eventGiveInventory(
-              GetNameLowerCase(READ_INT32(ip)), READ_INT32(ip + 4));
+      if (Activator) {
+        Activator->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+      } else {
+        for (int i = 0; i < MAXPLAYERS; ++i) {
+          if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
+            Level->Game->Players[i]->MO->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+          }
         }
       }
       ip += 8;
@@ -4108,20 +4104,13 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_TakeInventoryDirect)
-      if (Activator)
-      {
-        Activator->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)),
-          READ_INT32(ip + 4));
-      }
-      else
-      {
-        for (int i = 0; i < MAXPLAYERS; i++)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)
-            Level->Game->Players[i]->MO->eventTakeInventory(
-              GetNameLowerCase(READ_INT32(ip)),
-              READ_INT32(ip + 4));
+      if (Activator) {
+        Activator->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+      } else {
+        for (int i = 0; i < MAXPLAYERS; ++i) {
+          if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
+            Level->Game->Players[i]->MO->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
+          }
         }
       }
       ip += 8;
@@ -4134,20 +4123,15 @@ int VAcs::RunScript (float DeltaTime) {
       }
       else
       {
-        sp[-1] = Activator->eventCheckInventory(GetNameLowerCase(
-          sp[-1]));
+        sp[-1] = Activator->eventCheckInventory(GetNameLowerCase(sp[-1]));
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_CheckInventoryDirect)
-      if (!Activator)
-      {
+      if (!Activator) {
         *sp = 0;
-      }
-      else
-      {
-        *sp = Activator->eventCheckInventory(GetNameLowerCase(
-          READ_INT32(ip)));
+      } else {
+        *sp = Activator->eventCheckInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()));
       }
       sp++;
       ip += 4;
@@ -4163,7 +4147,7 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnDirect)
-      *sp = Level->eventAcsSpawnThing(GetNameLowerCase(READ_INT32(ip)),
+      *sp = Level->eventAcsSpawnThing(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()),
         TVec(float(READ_INT32(ip + 4)) / float(0x10000),
         float(READ_INT32(ip + 8)) / float(0x10000),
         float(READ_INT32(ip + 12)) / float(0x10000)),
@@ -4178,7 +4162,7 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpotDirect)
-      *sp = Level->eventAcsSpawnSpot(GetNameLowerCase(READ_INT32(ip)),
+      *sp = Level->eventAcsSpawnSpot(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()),
         READ_INT32(ip + 4), READ_INT32(ip + 8),
         float(READ_INT32(ip + 12)) * 45.0 / 32.0);
       sp++;
@@ -4190,7 +4174,7 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetMusicDirect)
-      Level->ChangeMusic(GetName8(READ_INT32(ip)));
+      Level->ChangeMusic(GetName8(READ_INT32(ip)|ActiveObject->GetLibraryID()));
       ip += 12;
       ACSVM_BREAK;
 
@@ -4203,9 +4187,9 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LocalSetMusicDirect)
-      if (Activator && Activator->EntityFlags & VEntity::EF_IsPlayer)
+      if (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer))
       {
-        Activator->Player->eventClientChangeMusic(GetNameLowerCase(READ_INT32(ip)));
+        Activator->Player->eventClientChangeMusic(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()));
       }
       ip += 12;
       ACSVM_BREAK;
@@ -4279,12 +4263,13 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetFont)
-      Font = *GetStr(sp[-1]).ToLower();
+      Font = GetNameLowerCase(sp[-1]);
+      //GCon->Logf("SETFONTI: '%s'", *Font);
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetFontDirect)
-      Font = *VStr(READ_INT32(ip)).ToLower();
+      Font = GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID());
       ip += 4;
       ACSVM_BREAK;
 
@@ -4844,13 +4829,10 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetWeapon)
-      if (Activator)
-      {
-        sp[-1] = Activator->eventSetNamedWeapon(GetNameLowerCase(
-          sp[-1]));
-      }
-      else
-      {
+      //GCon->Logf("SETWEAPON: '%s'", *GetNameLowerCase(sp[-1]));
+      if (Activator) {
+        sp[-1] = Activator->eventSetNamedWeapon(GetNameLowerCase(sp[-1]));
+      } else {
         sp[-1] = 0;
       }
       ACSVM_BREAK;
@@ -6230,7 +6212,7 @@ int VAcs::RunScript (float DeltaTime) {
 
     //ACSVM_CASE(PCD_Team2FragPoints)
     ACSVM_CASE(PCD_ConsoleCommandDirect)
-      if (acs_warning_console_commands) GCon->Logf(NAME_Warning, "no console commands from ACS (%s)!", *GetStr(ip[0]).quote());
+      if (acs_warning_console_commands) GCon->Logf(NAME_Warning, "no console commands from ACS (%s)!", *GetStr(ip[0]|ActiveObject->GetLibraryID()).quote());
       ip += 3;
       ACSVM_BREAK;
 
