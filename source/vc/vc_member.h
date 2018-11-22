@@ -110,6 +110,7 @@ public:
   //FIXME: this looks ugly
   static VFieldType StaticFindType (VClass *, VName);
   static VClass *StaticFindClass (VName);
+  static VClass *StaticFindClassNoCase (VName);
 
   static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname);
 

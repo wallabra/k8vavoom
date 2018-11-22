@@ -1629,13 +1629,13 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
   int DCol = CheckName.IndexOf("::");
   if (DCol >= 0) {
     VStr ClassNameStr(CheckName, 0, DCol);
-    VName ClassName(*ClassNameStr);
-    if (ClassName == NAME_Super) {
+    if (ClassNameStr.ICmp("Super") == 0) {
       CheckClass = ParentClass;
     } else {
-      CheckClass = StaticFindClass(ClassName);
+      VName ClassName(*ClassNameStr);
+      CheckClass = StaticFindClassNoCase(ClassName);
       if (!CheckClass) {
-        ParseError(Loc, "No such superclass '%s' for class '%s'", *ClassName, *GetFullName());
+        ParseError(Loc, "No such superclass '%s' for class '%s'", *ClassNameStr, *GetFullName());
         return nullptr;
       }
     }

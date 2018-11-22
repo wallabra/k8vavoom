@@ -393,6 +393,20 @@ VClass *VMemberBase::StaticFindClass (VName Name) {
 }
 
 
+//==========================================================================
+//
+//  VMemberBase::StaticFindClassNoCase
+//
+//==========================================================================
+VClass *VMemberBase::StaticFindClassNoCase (VName Name) {
+  guard(VMemberBase::StaticFindClassNoCase);
+  VMemberBase *m = StaticFindMemberNoCase(Name, ANY_PACKAGE, MEMBER_Class);
+  if (m) return (VClass *)m;
+  return nullptr;
+  unguard;
+}
+
+
 /*
 //==========================================================================
 //
