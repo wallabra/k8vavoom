@@ -95,27 +95,32 @@ alias vcenter = vcentre;
 // Text colours.
 enum {
   CR_UNDEFINED = -1,
-  CR_BRICK,
-  CR_TAN,
-  CR_GRAY,
-  CR_GREEN,
-  CR_BROWN,
-  CR_GOLD,
-  CR_RED,
-  CR_BLUE,
-  CR_ORANGE,
-  CR_WHITE,
-  CR_YELLOW,
-  CR_UNTRANSLATED,
-  CR_BLACK,
-  CR_LIGHTBLUE,
-  CR_CREAM,
-  CR_OLIVE,
-  CR_DARKGREEN,
-  CR_DARKRED,
-  CR_DARKBROWN,
-  CR_PURPLE,
-  CR_DARKGRAY,
+  CR_BRICK, //A
+  CR_TAN, //B
+  CR_GRAY, //C
+  CR_GREEN, //D
+  CR_BROWN, //E
+  CR_GOLD, //F
+  CR_RED, //G
+  CR_BLUE, //H
+  CR_ORANGE, //I
+  CR_WHITE, //J
+  CR_YELLOW, //K
+  CR_UNTRANSLATED, //L
+  CR_BLACK, //M
+  CR_LIGHTBLUE, //N
+  CR_CREAM, //O
+  CR_OLIVE, //P
+  CR_DARKGREEN, //Q
+  CR_DARKRED, //R
+  CR_DARKBROWN, //S
+  CR_PURPLE, //T
+  CR_DARKGRAY, //U
+  CR_CYAN, //V
+  CR_ICE, //W
+  CR_FIRE, //X
+  CR_SAPPHIRE, //Y
+  CR_TEAL, //Z
   NUM_TEXT_COLOURS
 };
 
