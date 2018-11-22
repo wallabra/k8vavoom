@@ -129,6 +129,7 @@ void VLevel::TickWorld (float DeltaTime) {
     }
   }
 
+  //GCon->Logf("VLevel::TickWorld: time=%f; tictime=%f; dt=%f : %f", (double)Time, (double)TicTime, DeltaTime, DeltaTime*1000.0);
   Time += DeltaTime;
   ++TicTime;
   unguard;

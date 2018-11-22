@@ -575,6 +575,7 @@ void VBasePlayer::AdjustAngles()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::HandleInput
@@ -582,38 +583,34 @@ void VBasePlayer::AdjustAngles()
 //  Creates movement commands from all of the available inputs.
 //
 //==========================================================================
-
-void VBasePlayer::HandleInput()
-{
+void VBasePlayer::HandleInput () {
   guard(VBasePlayer::HandleInput);
-  float   forward;
-  float   side;
-  float   flyheight;
+  float forward = 0;
+  float side = 0;
+  float flyheight = 0;
 
   AdjustAngles();
 
-  forward = side = flyheight = 0;
-
   // let movement keys cancel each other out
   if (KeyStrafe.state&1) {
-    side += KeyRight.KeyState() * cl_sidespeed;
-    side -= KeyLeft.KeyState() * cl_sidespeed;
+    side += KeyRight.KeyState()*cl_sidespeed;
+    side -= KeyLeft.KeyState()*cl_sidespeed;
     if (joyxmove > 0) side += cl_sidespeed;
     if (joyxmove < 0) side -= cl_sidespeed;
   }
 
-  forward += KeyForward.KeyState() * cl_forwardspeed;
-  forward -= KeyBackward.KeyState() * cl_backspeed;
+  forward += KeyForward.KeyState()*cl_forwardspeed;
+  forward -= KeyBackward.KeyState()*cl_backspeed;
 
-  side += KeyMoveRight.KeyState() * cl_sidespeed;
-  side -= KeyMoveLeft.KeyState() * cl_sidespeed;
+  side += KeyMoveRight.KeyState()*cl_sidespeed;
+  side -= KeyMoveLeft.KeyState()*cl_sidespeed;
 
   if (joyymove < 0) forward += cl_forwardspeed;
   if (joyymove > 0) forward -= cl_backspeed;
 
   // Fly up/down/drop keys
-  flyheight += KeyFlyUp.KeyState() * cl_flyspeed; // note that the actual flyheight will be twice this
-  flyheight -= KeyFlyDown.KeyState() * cl_flyspeed;
+  flyheight += KeyFlyUp.KeyState()*cl_flyspeed; // note that the actual flyheight will be twice this
+  flyheight -= KeyFlyDown.KeyState()*cl_flyspeed;
 
   if ((!mouse_look && !(KeyMouseLook.state&1)) || (KeyStrafe.state&1)) {
     forward += m_forward*mousey;
@@ -659,8 +656,11 @@ void VBasePlayer::HandleInput()
   if (KeyMoveRight.KeyState()) Buttons |= BT_MOVERIGHT;
   if (KeyStrafe.KeyState()) Buttons |= BT_STRAFE;
   if (KeySpeed.KeyState()) Buttons |= BT_SPEED;
+  //GCon->Logf("VBasePlayer::HandleInput(%p): Buttons=0x%08x", this, Buttons);
 
-  AcsButtons = Buttons;
+  AcsCurrButtonsPressed |= Buttons;
+  AcsCurrButtons = Buttons; // scripts can change `Buttons`, but not this
+  //AcsButtons = Buttons; // this logic is handled by `SV_RunClients()`
   //GCon->Logf("VBasePlayer::HandleInput(%p): %d; Buttons=0x%08x; OldButtons=0x%08x", this, (KeyJump.KeyState() ? 1 : 0), Buttons, OldButtons);
 
   //
@@ -744,19 +744,17 @@ int VBasePlayer::AcsGetInput(int InputType)
   int Ret = 0;
   //static int n = 0;
   switch (InputType) {
-    case INPUT_OLDBUTTONS:
-    case MODINPUT_OLDBUTTONS:
-    case INPUT_BUTTONS:
-    case MODINPUT_BUTTONS:
+    case INPUT_OLDBUTTONS: case MODINPUT_OLDBUTTONS:
+    case INPUT_BUTTONS: case MODINPUT_BUTTONS:
       if (InputType == INPUT_OLDBUTTONS || InputType == MODINPUT_OLDBUTTONS) {
         Btn = OldButtons;
         //k8: hack for DooM:ONE
-        Btn &= ~BT_USE;
+        //Btn &= ~BT_USE;
       } else {
         Btn = AcsButtons;
       }
       // convert buttons to what ACS expects
-      // /*if (Btn)*/ GCon->Logf("(%d) Buttons(%p): %08x; curr=%08x; old=%08x", n++, this, (unsigned)Btn, Buttons, OldButtons);
+      // /*if (Btn)*/ GCon->Logf("VBasePlayer::AcsGetInput(%p): Buttons: %08x; curr=%08x; old=%08x; Buttons=%08x; OldButtons=%08x", this, (unsigned)Btn, AcsButtons, OldButtons, Buttons, OldButtons);
       if (Btn&BT_ATTACK) Ret |= ACS_BT_ATTACK;
       if (Btn&BT_USE) Ret |= ACS_BT_USE;
       if (Btn&BT_JUMP) Ret |= ACS_BT_JUMP;

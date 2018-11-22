@@ -147,8 +147,11 @@ class VBasePlayer : public VGameObject
   /*vuint8*/vuint32 Buttons;    // fire, use
   /*vuint8*/vuint32 Impulse;    // weapon changes, inventory, etc
   //  For ACS
-  vuint32 AcsButtons;
-  /*vuint8*/vuint32 OldButtons;
+  vuint32 AcsCurrButtonsPressed; // was pressed after last copy
+  vuint32 AcsCurrButtons; // current state
+  vuint32 AcsButtons; // what ACS will see
+  vuint32 OldButtons; // previous state ACS will see
+  float AcsNextButtonUpdate; // time left before copying AcsCurrButtons to AcsButtons
   TAVec OldViewAngles;
 
   VEntity *MO;

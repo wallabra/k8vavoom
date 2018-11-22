@@ -391,7 +391,16 @@ void SV_RunClients () {
       Player->OldViewAngles = Player->ViewAngles;
       Player->eventPlayerTick(host_frametime);
       //GCon->Logf("*** 001: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
-      Player->OldButtons = Player->AcsButtons;
+      // new logic for client buttons update
+      //Player->OldButtons = Player->AcsButtons;
+      // latch logic
+      if ((Player->AcsNextButtonUpdate -= host_frametime) <= 0.0f) {
+        Player->AcsNextButtonUpdate = 1.0f/35.0f; // once per standard DooM frame
+        Player->OldButtons = Player->AcsButtons;
+        // now create new acs buttons
+        Player->AcsButtons = Player->AcsCurrButtonsPressed;
+        Player->AcsCurrButtonsPressed = Player->AcsCurrButtons;
+      }
     }
   }
 

@@ -85,9 +85,12 @@ float SideMove;       // *2048 for move
 float FlyMove;        // fly up/down/centreing
 /*ubyte*/transient int Buttons;        // fire, use
 /*ubyte*/transient int Impulse;        // weapon changes, inventory, etc
-//  For ACS
-transient int AcsButtons;
-/*ubyte*/transient int OldButtons;
+// for ACS, see C++ code
+transient readonly int AcsCurrButtonsPressed;
+transient readonly int AcsCurrButtons;
+transient readonly int AcsButtons;
+transient readonly int OldButtons;
+transient readonly float AcsNextButtonUpdate;
 transient TAVec OldViewAngles;
 
 Entity MO;
