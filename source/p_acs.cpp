@@ -2945,7 +2945,8 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       return 0;
 
     case ACSF_PlayerIsLoggedIn_Zadro: return 0; // player is never logged in
-    case ACSF_GetPlayerAccountName_Zadro: return 0; // `0` means "not implemented" //ActiveObject->Level->PutNewString(""); // always unnamed
+    //case ACSF_GetPlayerAccountName_Zadro: return 0; // `0` means "not implemented" //ActiveObject->Level->PutNewString(""); // always unnamed
+    case ACSF_GetPlayerAccountName_Zadro: return ActiveObject->Level->PutNewString(""); // always unnamed
 
     // bool SetPointer(int assign_slot, int tid[, int pointer_selector[, int flags]])
     case ACSF_SetPointer:

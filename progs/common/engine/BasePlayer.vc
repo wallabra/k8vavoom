@@ -91,7 +91,8 @@ transient readonly int AcsCurrButtons;
 transient readonly int AcsButtons;
 transient readonly int OldButtons;
 transient readonly float AcsNextButtonUpdate;
-transient TAVec OldViewAngles;
+transient readonly float AcsPrevMouseX, AcsPrevMouseY; // previous ACS mouse movement
+transient readonly float AcsMouseX, AcsMouseY; // current ACS mouse movement
 
 Entity MO;
 Entity Camera;

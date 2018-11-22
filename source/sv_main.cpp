@@ -388,11 +388,11 @@ void SV_RunClients () {
       if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) Player->ViewAngles.pitch = 0;
       if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) Player->Buttons &= ~BT_JUMP;
       //GCon->Logf("*** 000: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
-      Player->OldViewAngles = Player->ViewAngles;
       Player->eventPlayerTick(host_frametime);
       //GCon->Logf("*** 001: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
       // new logic for client buttons update
       //Player->OldButtons = Player->AcsButtons;
+      //Player->OldViewAngles = Player->ViewAngles;
       // latch logic
       if ((Player->AcsNextButtonUpdate -= host_frametime) <= 0.0f) {
         Player->AcsNextButtonUpdate = 1.0f/35.0f; // once per standard DooM frame
@@ -400,6 +400,11 @@ void SV_RunClients () {
         // now create new acs buttons
         Player->AcsButtons = Player->AcsCurrButtonsPressed;
         Player->AcsCurrButtonsPressed = Player->AcsCurrButtons;
+        // mouse movement
+        Player->AcsMouseX = Player->AcsPrevMouseX;
+        Player->AcsMouseY = Player->AcsPrevMouseY;
+        Player->AcsPrevMouseX = 0;
+        Player->AcsPrevMouseY = 0;
       }
     }
   }

@@ -666,8 +666,7 @@ void VBasePlayer::HandleInput () {
   //
   //  IMPULSE
   //
-  if (impulse_cmd)
-  {
+  if (impulse_cmd) {
     eventServerImpulse(impulse_cmd);
     impulse_cmd = 0;
   }
@@ -675,6 +674,9 @@ void VBasePlayer::HandleInput () {
   ClientForwardMove = forward;
   ClientSideMove = side;
   FlyMove = flyheight;
+
+  AcsPrevMouseX += mousex*m_yaw;
+  AcsPrevMouseY += mousey*m_pitch;
 
   mousex = 0;
   mousey = 0;
@@ -742,6 +744,7 @@ int VBasePlayer::AcsGetInput(int InputType)
   guard(VBasePlayer::AcsGetInput);
   int Btn;
   int Ret = 0;
+  float angle0 = 0, angle1 = 0;
   //static int n = 0;
   switch (InputType) {
     case INPUT_OLDBUTTONS: case MODINPUT_OLDBUTTONS:
@@ -770,20 +773,21 @@ int VBasePlayer::AcsGetInput(int InputType)
       if (Btn&BT_SPEED) Ret |= ACS_BT_SPEED;
       return Ret;
 
-    case INPUT_PITCH: return (int)(AngleMod(OldViewAngles.pitch) * 0x10000 / 360);
-    case MODINPUT_PITCH: return (int)(AngleMod(ViewAngles.pitch) * 0x10000 / 360);
+    case INPUT_YAW: case MODINPUT_YAW:
+      return (int)(-AcsMouseX*65536.0f/360.0f);
 
-    case INPUT_YAW: return (int)(AngleMod(OldViewAngles.yaw) * 0x10000 / 360);
-    case MODINPUT_YAW: return (int)(AngleMod(ViewAngles.yaw) * 0x10000 / 360);
+    case INPUT_PITCH: case MODINPUT_PITCH:
+      return (int)(AcsMouseY*65536.0f/360.0f);
 
-    case INPUT_ROLL: return (int)(AngleMod(OldViewAngles.roll) * 0x10000 / 360);
-    case MODINPUT_ROLL: return (int)(AngleMod(ViewAngles.roll) * 0x10000 / 360);
+    case INPUT_ROLL: case MODINPUT_ROLL:
+      // player cannot do it yet
+      return 0;
 
-    case INPUT_FORWARDMOVE: return (int)(ClientForwardMove * 0x32 / 400);
-    case MODINPUT_FORWARDMOVE: return (int)(ForwardMove * 0x32 / 400);
+    case INPUT_FORWARDMOVE: return (int)(ClientForwardMove*0x32/400);
+    case MODINPUT_FORWARDMOVE: return (int)(ForwardMove*0x32/400);
 
-    case INPUT_SIDEMOVE: return (int)(ClientSideMove * 0x32 / 400);
-    case MODINPUT_SIDEMOVE: return (int)(SideMove * 0x32 / 400);
+    case INPUT_SIDEMOVE: return (int)(ClientSideMove*0x32/400);
+    case MODINPUT_SIDEMOVE: return (int)(SideMove*0x32/400);
 
     case INPUT_UPMOVE:
     case MODINPUT_UPMOVE:

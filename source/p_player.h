@@ -152,7 +152,8 @@ class VBasePlayer : public VGameObject
   vuint32 AcsButtons; // what ACS will see
   vuint32 OldButtons; // previous state ACS will see
   float AcsNextButtonUpdate; // time left before copying AcsCurrButtons to AcsButtons
-  TAVec OldViewAngles;
+  float AcsPrevMouseX, AcsPrevMouseY; // previous ACS mouse movement
+  float AcsMouseX, AcsMouseY; // current ACS mouse movement
 
   VEntity *MO;
   VEntity *Camera;
