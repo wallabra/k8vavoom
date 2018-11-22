@@ -179,7 +179,8 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
       ScaleY = sy;
       //print("  scale:(%f,%f); scaled size:(%s, %s); vsize=(%s,%s); rsize=(%s,%s)", sx, sy, round(root.Width/sx), round(root.Height/sy), GetVirtualWidth(), GetVirtualHeight(), root.Width, root.Height);
       SetSize(round(root.Width/sx), round(root.Height/sy));
-      //dumpClipRect();
+      //root.dumpClipRect();
+      //print("============"); for (Widget ww = self; ww; ww = ww.Parent) { print("ww=%C", ww); ww.dumpClipRect(); }
     } else {
       float sx = float(root.Width)/float(abs(HudWidth));
       int wx = GetVirtualWidth()-round(MsgX*sx)*2-32;

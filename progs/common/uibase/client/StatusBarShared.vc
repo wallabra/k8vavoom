@@ -98,8 +98,11 @@ override void OnDraw () {
 //==========================================================================
 override void Tick (float DeltaTime) {
   auto root = GetRootWidget();
+  //print("SBTICK: root=%C; sz=(%d,%d)", root, root.Width, root.Height);
   if (root && (Width != root.Width || Height != root.Height)) {
     SetSize(root.Width, root.Height);
+  }
+  if (HudMsgWin && (HudMsgWin.Width != Width || HudMsgWin.Height != Height)) {
     HudMsgWin.SetSize(root.Width, root.Height);
   }
   UpdateNotify(DeltaTime);
