@@ -267,7 +267,8 @@ class VAcs : public VThinker {
   vint32 number;
   VAcsInfo *info;
   vuint8 State;
-  float DelayTime;
+  //float DelayTime;
+  vint32 DelayActivationTick;
   vint32 WaitValue;
   vint32 *LocalVars;
   vuint8 *InstructionPointer;
@@ -1966,7 +1967,8 @@ void VAcs::Serialise (VStream &Strm) {
   Strm << side
     << number
     << State
-    << DelayTime
+    //<< DelayTime
+    << STRM_INDEX(DelayActivationTick)
     << STRM_INDEX(WaitValue);
 
   if (Strm.IsLoading()) {
@@ -3002,6 +3004,7 @@ int VAcs::RunScript (float DeltaTime) {
     DestroyThinker();
     return 1;
   }
+
   if (State == ASTE_WaitingForTag && !Level->eventTagBusy(WaitValue)) State = ASTE_Running;
   if (State == ASTE_WaitingForPoly && !Level->eventPolyBusy(WaitValue)) State = ASTE_Running;
   if (State == ASTE_WaitingForScriptStart &&
@@ -3010,13 +3013,22 @@ int VAcs::RunScript (float DeltaTime) {
   {
     State = ASTE_WaitingForScript;
   }
+
   if (State == ASTE_WaitingForScript && !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript) {
     State = ASTE_Running;
   }
+
   if (State != ASTE_Running) return 1;
+  /*
   if (DelayTime) {
+    //GCon->Logf("DELAY: DelayTime=%f; DeltaTime=%f; time=%f; tictime=%f", DelayTime*1000, DeltaTime*1000, (double)XLevel->Time, (double)XLevel->TicTime);
     DelayTime -= DeltaTime;
-    if (DelayTime < 0) DelayTime = 0;
+    if (DelayTime > 0.01) return 1;
+    DelayTime = 0;
+  }
+  */
+  if (DelayActivationTick > XLevel->TicTime) {
+    //GCon->Logf("DELAY: DelayActivationTick=%d; DeltaTime=%f; time=%f; tictime=%d", DelayActivationTick, DeltaTime*1000, (double)XLevel->Time, XLevel->TicTime);
     return 1;
   }
 
@@ -3478,13 +3490,15 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Delay)
-      DelayTime = float(sp[-1]) / 35.0;
+      //DelayTime = float(sp[-1])/35.0;
+      DelayActivationTick = XLevel->TicTime+sp[-1];
       sp--;
       action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_DelayDirect)
-      DelayTime = float(READ_INT32(ip)) / 35.0;
+      //DelayTime = float(READ_INT32(ip))/35.0;
+      DelayActivationTick = XLevel->TicTime+READ_INT32(ip);
       ip += 4;
       action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
@@ -4310,7 +4324,8 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DelayDirectB)
-      DelayTime = float(*ip) / 35.0;
+      //DelayTime = float(*ip)/35.0;
+      DelayActivationTick = XLevel->TicTime+(*ip);
       ip++;
       action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
