@@ -72,6 +72,23 @@ bool Physics (float DeltaTime) {
   ClampNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
+  // idiotic gozzo does it like this; fuck!
+  if (bNoInteraction) {
+    // `bNoTimeFreeze` is checked in `Tick()`
+    if (Velocity.x || Velocity.y || Velocity.z || !bNoBlockmap) {
+      // move, and unlink from blockmap
+      UnlinkFromWorld();
+      // it is safe to change this flag here
+      bNoBlockmap = false;
+      // it is safe to change origin here
+      TVec vel = Velocity*DeltaTime;
+      Origin += vel;
+      // link it back
+      LinkToWorld();
+    }
+    return true;
+  }
+
   float oldfloorz;
   float CummX = 0.0;
   float CummY = 0.0;
