@@ -533,6 +533,19 @@ class VEntity : public VThinker {
     EV_RET_BOOL(VName("eventSetPointerForACS"));
   }
 
+  //void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid)
+  void eventLineAttackACS (TVec dir, float distance, int damage, VName pufftype, VName damagetype, int flags, int pufftid) {
+    P_PASS_SELF;
+    P_PASS_VEC(dir);
+    P_PASS_FLOAT(distance);
+    P_PASS_INT(damage);
+    P_PASS_NAME(pufftype);
+    P_PASS_NAME(damagetype);
+    P_PASS_INT(flags);
+    P_PASS_INT(pufftid);
+    EV_RET_VOID(VName("eventLineAttackACS"));
+  }
+
   //static final bool decoDoCheckFlag (string flagname, Entity tgt)
   /*
   bool eventCheckFlag (const VStr &flagname) {

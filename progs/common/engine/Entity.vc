@@ -905,6 +905,15 @@ bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
 }
 
 
+//===========================================================================
+//
+//  eventLineAttackACS
+//
+//===========================================================================
+void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid) {
+}
+
+
 //==========================================================================
 //
 //  decoDoFlagActionSpecific

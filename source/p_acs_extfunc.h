@@ -57,7 +57,7 @@
   ACS_EXTFUNC(SetCVarString) // implemented
   ACS_EXTFUNC(GetUserCVarString) // implemented
   ACS_EXTFUNC(SetUserCVarString) // implemented
-  ACS_EXTFUNC(LineAttack)
+  ACS_EXTFUNC(LineAttack) // implemented
   ACS_EXTFUNC(PlaySound) // implemented
   ACS_EXTFUNC(StopSound) // implemented
   ACS_EXTFUNC(strcmp) // implemented

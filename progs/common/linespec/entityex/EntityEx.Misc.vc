@@ -2092,12 +2092,14 @@ final bool RepairArmorWith (int amount, optional class!BasicArmorBonus armorbonu
 //  SpawnPuff
 //
 //==========================================================================
-
-final void SpawnPuff(TVec Org, float Range, class!EntityEx PuffType,
-  bool HitThing, optional sector_t *sec, optional line_t *li, optional TVec realOrg, optional name decalType)
+final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
+  bool HitThing, optional sector_t *sec, optional line_t *li, optional TVec realOrg,
+  optional name decalType, optional int pufftid, optional bool disableRandomZ)
 {
   int i, c;
   EntityEx puff;
+
+  if (!PuffType) return;
 
   if (PuffType.default.bPuffParticles) {
     c = P_Random() >> 1;
@@ -2112,8 +2114,14 @@ final void SpawnPuff(TVec Org, float Range, class!EntityEx PuffType,
     }
   }
 
-  //k8:TODO: this should be strictly client-side
-  if (sec && li && (PuffType.default.DecalName || (specified_decalType && decalType))) {
+  bool doDecal = true;
+  if (specified_decalType) {
+    if (!decalType) doDecal = false;
+  } else {
+    if (!PuffType.default.DecalName) doDecal = false;
+  }
+  if (doDecal && sec && li) {
+    //k8:TODO: this should be strictly client-side
     if (!specified_realOrg) realOrg = Org;
     if (specified_decalType && decalType) {
       SpawnDecal(realOrg, decalType, (sec == li->backsector ? 1 : 0), li);
@@ -2122,40 +2130,28 @@ final void SpawnPuff(TVec Org, float Range, class!EntityEx PuffType,
     }
   }
 
-  Org.z += (Random() - Random()) * 4.0;
+  if (!disableRandomZ) Org.z += (Random()-Random())*4.0;
 
   puff = Spawn(PuffType, Org);
 
-  // [BB] Set the target of the puff to this actor.
-  if (puff && puff.bPuffGetsOwner)
-  {
-    puff.Target = Target;
-  }
-  if (!HitThing && puff.FindState('Crash'))
-  {
-    puff.SetState(puff.FindState('Crash'));
-  }
-  else if (Range == MELEERANGE && puff.MeleeState)
-  {
-    puff.SetState(puff.MeleeState);
-  }
+  if (puff && pufftid) puff.SetTID(pufftid);
 
-  if (HitThing && puff.SightSound)
-  {
-    // Hit thing sound
+  // [BB] set the target of the puff to this actor
+  if (puff && puff.bPuffGetsOwner) puff.Target = Target;
+       if (!HitThing && puff.FindState('Crash')) puff.SetState(puff.FindState('Crash'));
+  else if (Range == MELEERANGE && puff.MeleeState) puff.SetState(puff.MeleeState);
+
+  if (HitThing && puff.SightSound) {
+    // hit thing sound
     puff.PlaySound(puff.SightSound, CHAN_VOICE);
-  }
-  else if (puff.AttackSound)
-  {
+  } else if (puff.AttackSound) {
     puff.PlaySound(puff.AttackSound, CHAN_VOICE);
   }
 
-  if (puff.ExplodeEffect)
-  {
-    SendExplosion(ExplodeEffect, DLightRadius, Org);
-  }
+  if (puff.ExplodeEffect) SendExplosion(ExplodeEffect, DLightRadius, Org);
   LineSpecialLevelInfo(Level).bPuffSpawned = true;
 }
+
 
 //==========================================================================
 //

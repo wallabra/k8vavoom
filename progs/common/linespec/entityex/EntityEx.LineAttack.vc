@@ -23,6 +23,10 @@
 //**
 //**************************************************************************
 
+const int FHF_NORANDOMPUFFZ = 1;
+const int FHF_NOIMPACTDECAL = 2;
+
+
 //**************************************************************************
 //
 //  AIMING
@@ -834,13 +838,30 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *li,
 
 //==========================================================================
 //
+//  eventLineAttackACS
+//
+//==========================================================================
+override void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid) {
+  class!EntityEx PuffType = none;
+  if (damagetype) PuffType = class!EntityEx(FindClassNoCase(damagetype));
+  if (flags&FHF_NOIMPACTDECAL) {
+    LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:damagetype, decalType:'', pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
+  } else {
+    LineAttack(dir, distance, LADamage, PuffType, NoAttackGhosts:true, DmgType:damagetype, pufftid:pufftid, !!(flags&FHF_NORANDOMPUFFZ));
+  }
+}
+
+
+//==========================================================================
+//
 //  LineAttack
 //
 //==========================================================================
 final int LineAttack (TVec dir, float distance, int LADamage,
                       class!EntityEx PuffType, optional bool NoAttackGhosts,
                       optional TVec *outHitPoint, optional name DmgType,
-                      optional bool secondary, optional name decalType)
+                      optional bool secondary, optional name decalType,
+                      optional int pufftid, optional bool disableRandomZ)
 {
   TVec dst;
   intercept_t *in;
@@ -924,7 +945,9 @@ final int LineAttack (TVec dir, float distance, int LADamage,
       hit_point -= 4.0*dir;
 
       // spawn bullet puffs
-      SpawnPuff(hit_point, distance, PuffType, false, sec, li, real_hit_point, decalType);
+      if (PuffType) {
+        SpawnPuff(hit_point, distance, PuffType, false, sec, li, real_hit_point, decalType, pufftid!optional, disableRandomZ!optional);
+      }
 
       // don't go any farther
       return false;
@@ -962,9 +985,9 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     bool UseBloodSplatter = UseAxeBlood || bBloodSplatter ||
                             (bIsPlayer && PlayerEx(Player).ReadyWeapon && PlayerEx(Player).ReadyWeapon.bBloodSplatter);
 
-    // spawn bullet puffs or blod spots, depending on target type
+    // spawn bullet puffs or blood spots, depending on target type
     if (PuffType.default.bPuffOnActors || th.bNoBlood || th.bInvulnerable || th.bDormant) {
-      SpawnPuff(hit_point, distance, PuffType, true);
+      SpawnPuff(hit_point, distance, PuffType, true, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
     }
     if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
       th.SpawnBlood(hit_point, LADamage, shootOrigin);
@@ -998,8 +1021,10 @@ final int LineAttack (TVec dir, float distance, int LADamage,
     return false;
   }
 
-  if (PuffType.default.ActiveSound) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON); // play miss sound
-  if (PuffType.default.bAlwaysPuff) SpawnPuff(lineEnd, distance, PuffType, false);
+  if (PuffType) {
+    if (PuffType.default.ActiveSound) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON); // play miss sound
+    if (PuffType.default.bAlwaysPuff) SpawnPuff(lineEnd, distance, PuffType, false, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
+  }
 
   return true;
 }

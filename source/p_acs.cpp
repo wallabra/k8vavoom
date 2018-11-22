@@ -2741,7 +2741,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         ang.roll = 0;
         TVec dir(0, 0, 0);
         AngleVector(ang, dir);
-        dir = Normalise(dir);
+        dir = NormaliseSafe(dir);
         VEntity *hit = src->eventPickActor(
           false, TVec(0, 0, 0), // origin
           dir, float(args[3])/65536.0f,
@@ -2763,6 +2763,34 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         }
         return (flags&PICKAF_RETURNTID ? hit->TID : 1);
       }
+
+    // void LineAttack (int tid, fixed angle, fixed pitch, int damage [, str pufftype [, str damagetype [, fixed range [, int flags [, int pufftid]]]]]);
+    case ACSF_LineAttack:
+      if (argCount >= 4) {
+        VEntity *src = EntityFromTID(args[0], Activator);
+        if (!src) return 0; // oops
+        // create direction vector
+        VName pufft = VName("BulletPuff");
+        if (argCount > 4) pufft = GetName(args[4]);
+        VName dmgt = VName("None");
+        if (argCount > 5) dmgt = GetName(args[5]);
+        if (dmgt == NAME_None) dmgt = VName("None");
+        TAVec ang;
+        ang.yaw = 360.0f*float(args[1])/65536.0f;
+        ang.pitch = 360.0f*float(args[2])/65536.0f;
+        ang.roll = 0;
+        TVec dir(0, 0, 0);
+        AngleVector(ang, dir);
+        dir = NormaliseSafe(dir);
+        // dir, range, damage,
+        // pufftype, damagetype,
+        // flags, pufftid
+        src->eventLineAttackACS(
+          dir, (argCount > 6 ? float(args[6])/65536.0f : 2048.0f), float(args[3])/65536.0f,
+          pufft, dmgt,
+          (argCount > 7 ? args[7] : 0), (argCount > 8 ? args[8] : 0));
+      }
+      return 0;
 
     case ACSF_GetChar:
       if (argCount >= 2) {
@@ -2917,7 +2945,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       return 0;
 
     case ACSF_PlayerIsLoggedIn_Zadro: return 0; // player is never logged in
-    case ACSF_GetPlayerAccountName_Zadro: return ActiveObject->Level->PutNewString(""); // always unnamed
+    case ACSF_GetPlayerAccountName_Zadro: return 0; // `0` means "not implemented" //ActiveObject->Level->PutNewString(""); // always unnamed
 
     // bool SetPointer(int assign_slot, int tid[, int pointer_selector[, int flags]])
     case ACSF_SetPointer:
