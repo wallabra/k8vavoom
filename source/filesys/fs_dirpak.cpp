@@ -71,7 +71,7 @@ void VDirPakFile::ScanAllDirs () {
   if (files.length() > 65530) Sys_Error("too many files in '%s'", *PakFileName);
   // sort files alphabetically (have to do this, or file searching is failing for some reason)
   qsort(files.ptr(), files.length(), sizeof(FileEntry), &FileCmpFunc);
-  for (int f = 0; f < files.length(); ++f) GCon->Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", f, files[f].ns, *files[f].pakname, *files[f].diskname, *files[f].lumpname);
+  //for (int f = 0; f < files.length(); ++f) GCon->Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", f, files[f].ns, *files[f].pakname, *files[f].diskname, *files[f].lumpname);
 
   // create hashmaps, and link lumps
   filemap.reset(); // indicies may change
@@ -117,7 +117,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
   if (relpath.length()) scanPath = scanPath+"/"+relpath;
   auto dh = Sys_OpenDir(scanPath, true); // want dirs
   if (!dh) return;
-  GCon->Logf(NAME_Dev, "scanning '%s' (depth=%d)...", *scanPath, depth);
+  //GCon->Logf(NAME_Dev, "scanning '%s' (depth=%d)...", *scanPath, depth);
   EWadNamespace ns = (relpath.length() == 0 ? WADNS_Global : (EWadNamespace)-1);
   // map relpath to known namespaces
   if (relpath.length()) {
@@ -197,7 +197,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
 //==========================================================================
 int VDirPakFile::CheckNumForFileName (const VStr &fname) {
   auto lp = filemap.find(fname.toLowerCase());
-  GCon->Logf(NAME_Dev, "DPK<%s>: '%s' is %d", *PakFileName, *fname, (lp ? *lp : -1));
+  //GCon->Logf(NAME_Dev, "DPK<%s>: '%s' is %d", *PakFileName, *fname, (lp ? *lp : -1));
   return (lp ? *lp : -1);
 }
 

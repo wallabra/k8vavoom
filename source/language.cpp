@@ -165,6 +165,9 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
         if (Code[0] == CurCode[0] && Code[1] == CurCode[1] && Code[2] == CurCode[2]) {
           Skip = false;
         }
+        if (!GotLanguageCode && !Skip) {
+          GCon->Logf(NAME_Dev, "parsing language script '%s' for language '%s'...", *W_FullLumpName(Lump), Code);
+        }
         GotLanguageCode = true;
       }
     } else {
@@ -189,7 +192,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
       }
 
       sc->ExpectString();
-      VName Key = *sc->String.ToLower();
+      VName Key(*sc->String, VName::AddLower);
       sc->Expect("=");
       sc->ExpectString();
       VStr Value = HandleEscapes(sc->String);
@@ -206,6 +209,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
         Entry.PassNum = PassNum;
         table->Set(Key, Entry);
         //fprintf(stderr, "  LNG<%s>=<%s>\n", *Key, *Value);
+        //GCon->Logf(NAME_Dev, "  [%s]=[%s]", *VStr(Key).quote(), *Value.quote());
       }
     }
   }
