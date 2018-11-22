@@ -4275,6 +4275,11 @@ int VAcs::RunScript (float DeltaTime) {
             Time2 = (optstart < sp - 1 ? (float)optstart[1] / float(0x10000) : 0.5f);
             break;
         }
+
+        if (HoldTime < 0) HoldTime = 0; //else if (HoldTime > 0) HoldTime += 1.0f/35.0f*2; // just in case
+        if (Time1 < 0) Time1 = 0; //else if (Time1 > 0) Time1 += 1.0f/35.0f*2; // just in case
+        if (Time2 < 0) Time2 = 0; //else if (Time2 > 0) Time2 += 1.0f/35.0f*2; // just in case
+
         if (cmd != PCD_EndHudMessageBold && Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer)) {
           Activator->Player->eventClientHudMessage(PrintStr, Font,
             Type, Id, Colour, ColourName, x, y, HudWidth,
