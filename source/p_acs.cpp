@@ -5117,6 +5117,18 @@ int VAcs::RunScript (float DeltaTime) {
         if (cvname.ICmp("screenblocks") == 0) {
           val = acs_screenblocks_override;
           if (val < 0) val = VCvar::GetInt(*cvname);
+        } else if (cvname.ICmp("vid_defwidth") == 0) {
+          //val = (int)(VirtualWidth*65536.0f);
+          val = (int)(640.0f*65536.0f);
+        } else if (cvname.ICmp("vid_defheight") == 0) {
+          //val = (int)(VirtualHeight*65536.0f);
+          val = (int)(480.0f*65536.0f);
+        } else if (cvname.ICmp("vid_aspect") == 0) {
+          val = 0;
+        } else if (cvname.ICmp("vid_nowidescreen") == 0) {
+          val = 1;
+        } else if (cvname.ICmp("tft") == 0) {
+          val = 0;
         } else {
           val = VCvar::GetInt(*cvname);
         }
