@@ -3381,8 +3381,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             else if (GameFilter) sc->Error("Unknown game filter");
             break;
           case PROP_SpawnId:
-            sc->ExpectNumber();
-            SpawnNum = sc->Number;
+            if (sc->CheckNumber()) {
+              SpawnNum = sc->Number;
+            } else {
+              sc->ExpectString();
+              if (sc->String.length() != 0) sc->Error("'spawnid' should be a number!");
+              GCon->Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
+              SpawnNum = 0;
+            }
             break;
           case PROP_ConversationId:
             sc->ExpectNumber();
