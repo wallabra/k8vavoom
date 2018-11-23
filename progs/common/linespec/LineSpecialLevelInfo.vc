@@ -5669,7 +5669,7 @@ private transient array!Entity recSoundSectorEntities; // will be collected in n
 //  processRecursiveSoundSectorList
 //
 //==========================================================================
-final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarget, bool Splash, optional float maxdist, optional Entity emmiter) {
+final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarget, bool Splash, optional float maxdist, optional Entity emitter) {
   if (!sec) return;
 
   // `validcount` and other things were already checked in caller
@@ -5678,7 +5678,7 @@ final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarge
   for (Entity Ent = sec->ThingList; Ent; Ent = Ent.SNext) {
     if (Ent != soundtarget && (!Splash || !EntityEx(Ent).bNoSplashAlert)) {
       // check max distance
-      if (emmiter && specified_maxdist && maxdist > 0 && length2d(emmiter.Origin-Ent.Origin) > maxdist) continue;
+      if (emitter && specified_maxdist && maxdist > 0 && length2d(emitter.Origin-Ent.Origin) > maxdist) continue;
       EntityEx(Ent).LastHeard = EntityEx(soundtarget);
     }
   }
@@ -5705,12 +5705,12 @@ final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarge
 
     if (check->flags&ML_SOUNDBLOCK) {
       if (!soundblocks) {
-        //RecursiveSound(other, 1, soundtarget, Splash, maxdist!optional, emmiter!optional);
+        //RecursiveSound(other, 1, soundtarget, Splash, maxdist!optional, emitter!optional);
         addIt = true;
         sblock = 1;
       }
     } else {
-      //RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
+      //RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emitter!optional);
       addIt = true;
       sblock = soundblocks;
     }
@@ -5740,7 +5740,7 @@ final void processSoundSector (sector_t *sec, int soundblocks, Entity soundtarge
 //
 //==========================================================================
 final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
-      bool Splash, optional float maxdist, optional Entity emmiter)
+      bool Splash, optional float maxdist, optional Entity emitter)
 {
   //line_t *check;
   //sector_t *other;
@@ -5753,12 +5753,12 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
   sec->SoundTarget = soundtarget;
 
   recSoundSectorList.clear();
-  processSoundSector(sec, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
+  processSoundSector(sec, soundblocks, soundtarget, Splash, maxdist!optional, emitter!optional);
 
   // don't use `foreach` here!
   int rspos = 0;
   while (rspos < recSoundSectorList.length) {
-    processSoundSector(recSoundSectorList[rspos].sec, recSoundSectorList[rspos].sblock, soundtarget, Splash, maxdist!optional, emmiter!optional);
+    processSoundSector(recSoundSectorList[rspos].sec, recSoundSectorList[rspos].sblock, soundtarget, Splash, maxdist!optional, emitter!optional);
     ++rspos;
   }
 
@@ -5773,7 +5773,7 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
   for (Entity Ent = sec->ThingList; Ent; Ent = Ent.SNext) {
     if (Ent != soundtarget && (!Splash || !EntityEx(Ent).bNoSplashAlert)) {
       // check max distance
-      if (emmiter && specified_maxdist && maxdist > 0 && length2d(emmiter.Origin-Ent.Origin) > maxdist) continue;
+      if (emitter && specified_maxdist && maxdist > 0 && length2d(emitter.Origin-Ent.Origin) > maxdist) continue;
       EntityEx(Ent).LastHeard = EntityEx(soundtarget);
     }
   }
@@ -5796,10 +5796,10 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
 
     if (check->flags&ML_SOUNDBLOCK) {
       if (!soundblocks) {
-        RecursiveSound(other, 1, soundtarget, Splash, maxdist!optional, emmiter!optional);
+        RecursiveSound(other, 1, soundtarget, Splash, maxdist!optional, emitter!optional);
       }
     } else {
-      RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emmiter!optional);
+      RecursiveSound(other, soundblocks, soundtarget, Splash, maxdist!optional, emitter!optional);
     }
   }
   +/
@@ -5807,13 +5807,13 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
 */
 
 final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
-      bool Splash, optional float maxdist, optional Entity emmiter)
+      bool Splash, optional float maxdist, optional Entity emitter)
 {
   // wake up all monsters in this sector
   if (!sec || sec->validcount == *Game.validcount && sec->soundtraversed <= soundblocks+1) return; // already flooded
 
   recSoundSectorEntities.clear();
-  XLevel.doRecursiveSound(*Game.validcount, ref recSoundSectorEntities, sec, soundblocks, soundtarget, maxdist, (emmiter ? emmiter.Origin : vector(0, 0, 0)));
+  XLevel.doRecursiveSound(*Game.validcount, ref recSoundSectorEntities, sec, soundblocks, soundtarget, maxdist, (emitter ? emitter.Origin : vector(0, 0, 0)));
 
   // process entities
   //print("entities for sound processing: %d", recSoundSectorEntities.length);
@@ -5850,16 +5850,18 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
 //  player.
 //
 //==========================================================================
-final void NoiseAlert (Entity target, Entity emmiter, optional bool Splash,
+final void NoiseAlert (Entity target, Entity emitter, optional bool Splash,
                        optional float maxdist,
                        optional bool targetEmitter,
                        optional bool targetNonPlayer,
                        optional bool emitFromTarget)
 {
-  //if (!emmiter) return;
+  //if (!emitter) return;
 
-  Entity tgt = (targetEmitter ? emmiter : target);
-  Entity emt = (emitFromTarget ? target : emmiter);
+  //print("NoiseAlert: target=%C; emitter=%C", target, emitter);
+
+  Entity tgt = (targetEmitter ? emitter : target);
+  Entity emt = (emitFromTarget ? target : emitter);
   if (!emt) return;
 
   if (tgt && tgt.bIsPlayer && PlayerEx(tgt.Player).bNoTarget) return;

@@ -1138,6 +1138,7 @@ final override void CrossSpecialLine(line_t *ld, int side)
 
 bool Activate(EntityEx Activator)
 {
+  //print("*** ACTIVATING THING %C (tid=%s); bMonster=%B; bDormant=%B; Target=%C; Master=%C; Tracer=%C", self, TID, bMonster, bDormant, Target, Master, Tracer);
   if (bMonster)
   {
     // Monster

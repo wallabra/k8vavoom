@@ -929,14 +929,14 @@ final void A_CentaurDefend()
 final void A_AlertMonsters (optional float maxrange, optional int flags) {
   //print("A_AlertMonsters(%C): tgt=%C; plr=%s", self, Target, (Target && Target.bIsPlayer ? "tan" : "ona"));
   if (Target && (Target.bIsPlayer || (flags&(AMF_TARGETEMITTER|AMF_TARGETNONPLAYER)))) {
-    LineSpecialLevelInfo(Level).NoiseAlert(target:Target, emmiter:self, maxdist:maxrange!optional,
+    LineSpecialLevelInfo(Level).NoiseAlert(target:Target, emitter:self, maxdist:maxrange!optional,
                                            targetEmitter:!!(flags&AMF_TARGETEMITTER),
                                            targetNonPlayer:!!(flags&AMF_TARGETNONPLAYER),
                                            emitFromTarget:!!(flags&AMF_EMITFROMTARGET));
   } else {
     // for weapons
     if (self.bIsPlayer || (flags&(AMF_TARGETEMITTER|AMF_TARGETNONPLAYER))) {
-      LineSpecialLevelInfo(Level).NoiseAlert(target:self, emmiter:self, maxdist:maxrange!optional,
+      LineSpecialLevelInfo(Level).NoiseAlert(target:self, emitter:self, maxdist:maxrange!optional,
                                              targetEmitter:!!(flags&AMF_TARGETEMITTER),
                                              targetNonPlayer:!!(flags&AMF_TARGETNONPLAYER),
                                              emitFromTarget:!!(flags&AMF_EMITFROMTARGET));
