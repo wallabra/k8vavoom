@@ -381,3 +381,11 @@ const int SF_NOUSEAMMO = 16;
 const int SF_NOPULLIN = 32;
 const int SF_NOTURN = 64;
 const int SF_STEALARMOR = 128; // not implemented
+
+
+// Flags for A_AlertMonsters
+enum EAlertFlags {
+  AMF_TARGETEMITTER = 1,
+  AMF_TARGETNONPLAYER = 2,
+  AMF_EMITFROMTARGET = 4,
+}
