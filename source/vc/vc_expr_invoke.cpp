@@ -2448,7 +2448,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       case TYPE_String:
         // hack for idiotic mod authors (hello, LCA!)
         if (Func->Params[i].Name == VName("ChannelNameOrNumber") && Args[i]->IsIntConst()) {
-          int chan = (Args[i]->IsIntConst()&7);
+          int chan = (Args[i]->GetIntConst()&7);
           const char *chanName;
           switch (chan) {
             default:
@@ -2461,7 +2461,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             case 6: chanName = "SoundSlot6"; break;
             case 7: chanName = "SoundSlot7"; break;
           }
-          ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE! (replaced %d with \"%s\")", Func->GetName(), i+1, Args[i]->IsIntConst(), chanName);
+          ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE! (replaced %d with \"%s\")", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
           VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
           delete Args[i];
           Args[i] = e;
