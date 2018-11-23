@@ -191,13 +191,6 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         VTexPatch &P = Parts.Alloc();
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
-        /*
-        bool warn = false;
-        if (VStr::ICmp(*PatchName, "BOSFA0") == 0) {
-          fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!\n");
-          warn = true;
-        }
-        */
         int Tex = GTextureManager.CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
         if (Tex < 0) {
           int LumpNum = W_CheckNumForTextureFileName(sc->String);
