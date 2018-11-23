@@ -140,6 +140,7 @@ void P_SetupMapinfoPlayerClasses () {
     }
     GGameInfo->PlayerClasses.Append(Class);
   }
+  if (GGameInfo->PlayerClasses.length() == 0) Sys_Error("no valid classes found in MAPINFO playerclass replacement");
 }
 
 
