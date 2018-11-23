@@ -221,35 +221,36 @@ final void A_CheckTerrain()
   }
 }
 
+
 //============================================================================
 //
 //  A_Print
 //
 //============================================================================
-
-final void A_Print(string Text, optional float Time, optional string FontName)
-{
+final void A_Print (string Text, optional float Time, optional name FontName) {
   BasePlayer Plr;
-  if (bIsPlayer)
-  {
-    Plr = Player;
-  }
-  else if (Target && Target.bIsPlayer)
-  {
-    Plr = Target.Player;
-  }
-  else
-  {
-    return;
-  }
-
-  if (!Time)
-  {
-    Time = 7.0;
-  }
-  Plr.ClientHudMessage(Text, StrToName(FontName), 0, 123456, CR_UNTRANSLATED,
-    "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
+       if (bIsPlayer) Plr = Player;
+  else if (Target && Target.bIsPlayer) Plr = Target.Player;
+  else return;
+  if (!Time) Time = fclamp(GetCvarF('notify_time'), 1.0, 7.0);
+  Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('font_colour')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
 }
+
+
+//============================================================================
+//
+//  A_PrintBold
+//
+//============================================================================
+final void A_PrintBold (string Text, optional float Time, optional name FontName) {
+  BasePlayer Plr;
+       if (bIsPlayer) Plr = Player;
+  else if (Target && Target.bIsPlayer) Plr = Target.Player;
+  else return;
+  if (!Time) Time = fclamp(GetCvarF('notify_time'), 1.0, 7.0);
+  Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('font_colour')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
+}
+
 
 //============================================================================
 //
