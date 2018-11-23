@@ -2654,6 +2654,13 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_Mass: Mass = max(0, IntVal); break; //k8: float?
     case APROP_Height: Height = fmax(0, float(IntVal)/65536.0); break;
     case APROP_Radius: Radius = fmax(0, float(IntVal)/65536.0); break;
+    case APROP_ViewHeight:
+      if (bIsPlayer) PlayerEx(Player).ViewHeight = float(IntVal)/65536.0;
+      //else ViewHeight = float(IntVal)*65536.0;
+      break;
+    case APROP_AttackZOffset:
+      if (bIsPlayer) PlayerPawn(Player.MO).AttackZOffset = float(IntVal)/65536.0;
+      break;
   }
 }
 
@@ -2692,13 +2699,17 @@ final override int GetActorProperty (int Prop) {
     case APROP_Mass: return int(Mass);
     case APROP_Height: return int(Height*65536.0);
     case APROP_Radius: return int(Radius*65536.0);
+    case APROP_MeleeRange: return int(MeleeRange*65536.0);
+    case APROP_ViewHeight:
+      if (bIsPlayer) return int(PlayerEx(Player).ViewHeight*65536.0);
+      //return int(ViewHeight*65536.0);
+      return int(Height/2.0*65536.0);
+    case APROP_AttackZOffset:
+      return int((bIsPlayer ? PlayerPawn(Player.MO).AttackZOffset/*GetAttackZOfs*/ : 8.0)*65536.0);
 /*
     case APROP_Accuracy      = 33,
     case APROP_Stamina       = 34,
     case APROP_ReactionTime  = 37,
-    case APROP_MeleeRange    = 38,
-    case APROP_ViewHeight    = 39,
-    case APROP_AttackZOffset = 40,
     case APROP_StencilColor  = 41,
 */
   }
