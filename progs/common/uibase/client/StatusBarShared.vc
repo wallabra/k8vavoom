@@ -269,6 +269,16 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   Widget Probe;
   HUDMessage Msg;
 
+  class!HUDMessage hudClass = none;
+
+  switch (Type&0xffff) {
+    default: case HUDMSG_PLAIN: hudClass = HUDMessage; break;
+    case HUDMSG_FADEOUT: hudClass = HUDMessageFadeOut; break;
+    case HUDMSG_TYPEON: hudClass = HUDMessageTypeOnFadeOut; break;
+    case HUDMSG_FADEINOUT: hudClass = HUDMessageFadeInOut; break;
+  }
+
+
   // log to console if needed.
   if (Type&HUDMSG_LOG) {
     print("\ci<------------------------------->");
@@ -281,12 +291,18 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
   // handle colours specified by name
   if (Type&HUDMSG_COLOURSTRING) Colour = FindTextColour(ColourName);
 
-  // remove previous message with the same ID
+  HUDMessage hudReuse = none;
+
+  // reuse previous message with the same ID, if possible
   if (Id && Id != 0xffffffff) {
     for (Probe = HudMsgWin.FirstChild; Probe; Probe = Probe.Next) {
       if (HUDMessage(Probe).Id == Id) {
         //print("*** found and destroyed old HUD message with id %d", Id);
-        delete Probe;
+        if (Probe.Class == hudClass) {
+          hudReuse = HUDMessage(Probe);
+        } else {
+          delete Probe;
+        }
         break;
       }
     }
@@ -299,30 +315,21 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
     }
   }
 
-  switch (Type&0xffff) {
-    default:
-    case HUDMSG_PLAIN:
-      Msg = HudMsgWin.NewChild(HUDMessage);
-      break;
-    case HUDMSG_FADEOUT:
-      Msg = HudMsgWin.NewChild(HUDMessageFadeOut);
-      break;
-    case HUDMSG_TYPEON:
-      Msg = HudMsgWin.NewChild(HUDMessageTypeOnFadeOut);
-      break;
-    case HUDMSG_FADEINOUT:
-      Msg = HudMsgWin.NewChild(HUDMessageFadeInOut);
-      break;
+  if (hudReuse) {
+    Msg = hudReuse;
+  } else {
+    Msg = HudMsgWin.NewChild(hudClass);
   }
-  if (!Msg) return; // guard for invalid types
 
   Msg.ClGame = ClGame;
   Msg.Init(Message, Font, Type, Id, Colour, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 
   // insert in the list in the proper location
-  Probe = HudMsgWin.FirstChild;
-  while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
-  if (Probe) Msg.MoveBefore(Probe);
+  if (!hudReuse) {
+    Probe = HudMsgWin.FirstChild;
+    while (Probe && (Probe == Msg || HUDMessage(Probe).Id > Id)) Probe = Probe.Next;
+    if (Probe) Msg.MoveBefore(Probe);
+  }
   //Msg.dumpClipRect("MSG02");
 
   /*

@@ -28,6 +28,9 @@ class HUDMessage : Widget;
 int Id;
 int ticStart; // do not start message before this tic
 
+string oldtext;
+name oldfont;
+
 array!SplitLine MsgLines;
 name MsgFont;
 int MsgColour;
@@ -78,6 +81,8 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
   float Time1, float Time2)
 {
+  Time = 0;
+
   //print("HUDMSG(%d): font=[%s]; pos=(%f,%f); size=(%d,%d); msg=<%q>; HoldTime=%s; times=(%s,%s)", AId, AFont, AMsgX, AMsgY, AHudWidth, AHudHeight, Message, AHoldTime, Time1, Time2);
   ticStart = (ClGame && ClGame.GLevel ? ClGame.GLevel.TicTime+1 : 0); // schedule to next tic
 
@@ -201,13 +206,16 @@ void Init (string Message, name AFont, int Type, int AId, int Colour,
   }
 
   // calculate width and height of the text
-  SetFont(MsgFont);
-  MsgHeight = SplitText(Message, MsgLines, /*Width*/wrapWidth);
-  //print("========= <%q> (%s:%s) =========", Message, MsgLines.length, wrapWidth);
-  MsgWidth = 0;
-  foreach (auto i; 0..MsgLines.length) {
-    //print("  #%d: <%q>", i, MsgLines[i].Text);
-    if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
+  if (Message != oldtext || AFont != oldfont) {
+    MsgLines.length = 0;
+    SetFont(MsgFont);
+    MsgHeight = SplitText(Message, MsgLines, /*Width*/wrapWidth);
+    //print("========= <%q> (%s:%s) =========", Message, MsgLines.length, wrapWidth);
+    MsgWidth = 0;
+    foreach (auto i; 0..MsgLines.length) {
+      //print("  #%d: <%q>", i, MsgLines[i].Text);
+      if (MsgLines[i].Width > MsgWidth) MsgWidth = MsgLines[i].Width;
+    }
   }
 }
 
