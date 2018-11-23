@@ -351,7 +351,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
           }
         }
         */
-        HitLine(&tmtrace, DeltaTime/float(Steps));
+        HitLine(&tmtrace, DeltaTime/float(Steps), (ScrollX || ScrollY ? true : false));
       }
       return oldfloorz;
     }
@@ -457,8 +457,11 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
 //
 //  HitLine
 //
+//  if entity is moving with transported, it should slide along walls
+//  in any case
+//
 //==========================================================================
-final void HitLine (tmtrace_t *tmtrace, float StepVelScale) {
+final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
   if (bMissile) {
     if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
       // if number of bounces is limited.
@@ -529,7 +532,7 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale) {
       }
     }
     ExplodeMissile(none, hitline);
-  } else if (bSlide) {
+  } else if (bSlide || forceSlide) {
     // try to slide along it
     SlideMove(StepVelScale);
   } else {
