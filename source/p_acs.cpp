@@ -6286,6 +6286,11 @@ int VAcs::RunScript (float DeltaTime) {
       }
       ACSVM_BREAK;
 
+    // various gzdoom translations
+    ACSVM_CASE(PCD_TranslationRange3)
+      GCon->Logf(NAME_Dev, "ACS: unimplemented gzdoom opcode 362 (TranslationRange3)");
+      ACSVM_BREAK;
+
     // these p-codes are not supported; they will terminate script
     ACSVM_CASE(PCD_PlayerBlueSkull)
     ACSVM_CASE(PCD_PlayerRedSkull)
