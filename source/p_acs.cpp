@@ -2994,6 +2994,25 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         return (int)(len/65536.0f);
       }
       return 0;
+
+    // bool CheckActorProperty (int tid, int property, int value)
+    case ACSF_CheckActorProperty:
+      if (argCount >= 3) {
+        VEntity *Ent = EntityFromTID(args[0], Activator);
+        if (!Ent) return 0; // never equals
+        if (developer) GCon->Logf(NAME_Dev, "GetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), args[1]);
+        int val = Ent->eventGetActorProperty(args[1]);
+        // convert special properties
+        switch (args[1]) {
+          case 20: //APROP_Species
+          case 21: //APROP_NameTag
+            val = ActiveObject->Level->PutNewString(*VName(EName(val)));
+            break;
+        }
+        return (val == args[2]);
+      }
+      return 0;
+
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
@@ -5098,6 +5117,7 @@ int VAcs::RunScript (float DeltaTime) {
         if (Activator)
         {
           Activator->eventSetActorProperty(sp[-2], sp[-1], GetStr(sp[-1]));
+          if (developer) GCon->Logf(NAME_Dev, "SetActorProperty: ent=<%s>, propid=%d", Activator->GetClass()->GetName(), sp[-2]);
         }
       }
       else
@@ -5106,6 +5126,7 @@ int VAcs::RunScript (float DeltaTime) {
           Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent))
         {
           Ent->eventSetActorProperty(sp[-2], sp[-1], GetStr(sp[-1]));
+          if (developer) GCon->Logf(NAME_Dev, "SetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), sp[-2]);
         }
       }
       sp -= 3;
@@ -5118,7 +5139,7 @@ int VAcs::RunScript (float DeltaTime) {
           sp[-2] = 0;
         } else {
           //FIXME
-          //GCon->Logf("GetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), sp[-1]);
+          if (developer) GCon->Logf(NAME_Dev, "GetActorProperty: ent=<%s>, propid=%d", Ent->GetClass()->GetName(), sp[-1]);
           sp[-2] = Ent->eventGetActorProperty(sp[-1]);
           // convert special properties
           switch (sp[-1]) {

@@ -19,7 +19,7 @@
   ACS_EXTFUNC(GetArmorType)
   ACS_EXTFUNC(SpawnSpotForced) // implemented
   ACS_EXTFUNC(SpawnSpotFacingForced)
-  ACS_EXTFUNC(CheckActorProperty)
+  ACS_EXTFUNC(CheckActorProperty) // implemented
   ACS_EXTFUNC(SetActorVelocity) // implemented
   ACS_EXTFUNC(SetUserVariable) // implemented
   ACS_EXTFUNC(GetUserVariable) // implemented
