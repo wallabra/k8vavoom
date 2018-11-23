@@ -9,8 +9,8 @@
   ACS_EXTFUNC(GetActorVelX) // implemented
   ACS_EXTFUNC(GetActorVelY) // implemented
   ACS_EXTFUNC(GetActorVelZ) // implemented
-  ACS_EXTFUNC(SetActivator)
-  ACS_EXTFUNC(SetActivatorToTarget)
+  ACS_EXTFUNC(SetActivator) // implemented
+  ACS_EXTFUNC(SetActivatorToTarget) // implemented
   ACS_EXTFUNC(GetActorViewHeight)
   ACS_EXTFUNC(GetChar) // implemented
   ACS_EXTFUNC(GetAirSupply) // ignored
@@ -18,12 +18,12 @@
   ACS_EXTFUNC(SetSkyScrollSpeed) // ignored
   ACS_EXTFUNC(GetArmorType)
   ACS_EXTFUNC(SpawnSpotForced) // implemented
-  ACS_EXTFUNC(SpawnSpotFacingForced)
+  ACS_EXTFUNC(SpawnSpotFacingForced) // implemented
   ACS_EXTFUNC(CheckActorProperty) // implemented
   ACS_EXTFUNC(SetActorVelocity) // implemented
   ACS_EXTFUNC(SetUserVariable) // implemented
   ACS_EXTFUNC(GetUserVariable) // implemented
-  ACS_EXTFUNC(Radius_Quake2)
+  ACS_EXTFUNC(Radius_Quake2) // implemented
   ACS_EXTFUNC(CheckActorClass) // implemented
   ACS_EXTFUNC(SetUserArray) // implemented
   ACS_EXTFUNC(GetUserArray) // implemented

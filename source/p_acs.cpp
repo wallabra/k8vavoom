@@ -2228,6 +2228,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
       return 0;
 
+    // int SpawnSpotFacingForced (str classname, int spottid, int tid)
+    case ACSF_SpawnSpotFacingForced:
+      if (argCount >= 3) {
+        return Level->eventAcsSpawnSpotFacing(GetNameLowerCase(args[0]), args[1], args[2], true);
+      }
+      return false;
+
     // int SpawnForced (str classname, fixed x, fixed y, fixed z [, int tid [, int angle]])
     case ACSF_SpawnForced:
       if (argCount >= 4) {
@@ -2238,6 +2245,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
                         true); // forced
       }
       return 0;
+
 
     case ACSF_CheckActorClass:
       if (argCount >= 2) {
@@ -3013,6 +3021,15 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
       return 0;
 
+
+    // void Radius_Quake2 (int tid, int intensity, int duration, int damrad, int tremrad, str sound)
+    case ACSF_Radius_Quake2:
+      if (argCount >= 5) {
+        VName sndname = NAME_None;
+        if (argCount > 5) sndname = GetNameLowerCase(args[5]);
+        Level->eventAcsRadiusQuake2(Activator, args[0], args[1], args[2], args[3], args[4], sndname);
+      }
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {

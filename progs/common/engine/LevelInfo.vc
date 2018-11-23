@@ -1139,7 +1139,7 @@ int AcsSpawnSpot(name Name, int SpotTid, int Tid, float Angle, bool forced)
 //
 //==========================================================================
 
-int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
+int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid, bool forced)
 {
   return false;
 }
@@ -1198,15 +1198,24 @@ void AcsFadeRange(float BlendR1, float BlendG1, float BlendB1, float BlendA1,
 {
 }
 
+
 //==========================================================================
 //
 //  AcsCancelFade
 //
 //==========================================================================
-
-void AcsCancelFade(Entity Activator)
-{
+void AcsCancelFade (Entity Activator) {
 }
+
+
+//==========================================================================
+//
+//  AcsRadiusQuake2
+//
+//==========================================================================
+void AcsRadiusQuake2 (Entity Activator, int tid, int intensity, int duration, int damrad, int tremrad, name sound) {
+}
+
 
 defaultproperties
 {

@@ -305,11 +305,12 @@ class VLevelInfo : public VThinker {
     P_PASS_BOOL(forced);
     EV_RET_INT(NAME_AcsSpawnSpot);
   }
-  int eventAcsSpawnSpotFacing (VName Name, int SpotTid, int Tid) {
+  int eventAcsSpawnSpotFacing (VName Name, int SpotTid, int Tid, bool forced=false) {
     P_PASS_SELF;
     P_PASS_NAME(Name);
     P_PASS_INT(SpotTid);
     P_PASS_INT(Tid);
+    P_PASS_BOOL(forced);
     EV_RET_INT(NAME_AcsSpawnSpotFacing);
   }
   void eventSectorDamage (int Tag, int Amount, VName DamageType, VName ProtectionType, int Flags) {
@@ -364,5 +365,16 @@ class VLevelInfo : public VThinker {
     P_PASS_SELF;
     P_PASS_REF(Activator);
     EV_RET_VOID(NAME_AcsCancelFade);
+  }
+  void eventAcsRadiusQuake2 (VEntity *Activator, int tid, int intensity, int duration, int damrad, int tremrad, VName sound) {
+    P_PASS_SELF;
+    P_PASS_REF(Activator);
+    P_PASS_INT(tid);
+    P_PASS_INT(intensity);
+    P_PASS_INT(duration);
+    P_PASS_INT(damrad);
+    P_PASS_INT(tremrad);
+    P_PASS_NAME(sound);
+    EV_RET_VOID(VName("AcsRadiusQuake2"));
   }
 };

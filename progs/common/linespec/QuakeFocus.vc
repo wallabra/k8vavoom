@@ -32,6 +32,8 @@ int Richters;   // Intensity on richter scale (2..9)
 int QuakeDuration;  // Duration in tics
 float DamageRadius; // Radius for damage
 float TremorRadius; // Radius for tremor
+name SoundName;
+
 
 //==========================================================================
 //
@@ -102,7 +104,7 @@ final void A_FocusQuake()
 final void A_ContMobjSound()
 {
   //print("QuakeFocus: SOUND! dur=%s; power=%s", QuakeDuration, Richters);
-  PlaySound('world/quake', CHAN_VOICE);
+  if (SoundName) PlaySound(/*'world/quake'*/SoundName, CHAN_VOICE);
 }
 
 
@@ -116,8 +118,9 @@ Spawn:
   Loop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
+  SoundName = 'world/quake';
 }

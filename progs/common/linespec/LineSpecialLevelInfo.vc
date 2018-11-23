@@ -4414,12 +4414,12 @@ final override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, b
 //
 //==========================================================================
 
-final override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid)
+final override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid, bool forced)
 {
   int NumSpawned = 0;
   Entity A;
   for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
-    NumSpawned += AcsSpawnThing(Name, A.Origin, Tid, A.Angles.yaw, forced:false);
+    NumSpawned += AcsSpawnThing(Name, A.Origin, Tid, A.Angles.yaw, forced:forced);
   }
   return NumSpawned;
 }
@@ -6321,6 +6321,54 @@ final bool EV_StartConversation(int Arg1, int Arg2, int Arg3, int Arg4,
   return false;
 }
 
+
+//===========================================================================
+//
+//  implLocalQuake
+//
+//===========================================================================
+final int implLocalQuake (int intensity, int duration, float damrad, float tremrad, int tid, Entity Activator, optional name sound) {
+  QuakeFocus focus;
+  EntityEx target;
+  int count = 0;
+
+  //print("A_LocalQuake: intensity=%s; dur=%s; dmgradius=%s; tremorradius=%s; tid=%s", intensity, duration, damrad, tremrad, tid);
+
+  if (tid == 0 && Activator) {
+    // activator
+    //print(" (a)spawning quaker for '%C'", Activator);
+    focus = Spawn(QuakeFocus, Activator.Origin);
+    if (focus) {
+      //print("  (a)spawned quaker for '%C'", Activator);
+      focus.Richters = intensity;
+      focus.QuakeDuration = duration>>1;  // decremented every 2 tics
+      focus.DamageRadius = damrad;
+      focus.TremorRadius = tremrad;
+      if (sound) focus.SoundName = sound;
+      ++count;
+    }
+  }
+
+  // find all quake foci
+  for (target = EntityEx(FindMobjFromTID(tid, none)); target; target = EntityEx(FindMobjFromTID(tid, target))) {
+    //print(" spawning quaker for '%C'", target);
+    focus = Spawn(QuakeFocus, target.Origin);
+    if (focus) {
+      //print("  spawned quaker for '%C'", target);
+      focus.Richters = intensity;
+      focus.QuakeDuration = duration>>1;  // decremented every 2 tics
+      focus.DamageRadius = damrad;
+      focus.TremorRadius = tremrad;
+      if (sound) focus.SoundName = sound;
+      ++count;
+    }
+  }
+
+  return count;
+}
+
+
+
 //===========================================================================
 // Quake variables
 //
@@ -6338,42 +6386,19 @@ final bool EV_StartConversation(int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //===========================================================================
 final bool A_LocalQuake(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entity Activator) {
-  QuakeFocus focus;
-  EntityEx target;
-  int success = false;
-
-  //print("A_LocalQuake: intensity=%s; dur=%s; dmgradius=%s; tremorradius=%s; tid=%s", Arg1, Arg2, Arg3, Arg4, Arg5);
-
-  if (Arg5 == 0 && Activator) {
-    // activator
-    //print(" (a)spawning quaker for '%C'", Activator);
-    focus = Spawn(QuakeFocus, Activator.Origin);
-    if (focus) {
-      //print("  (a)spawned quaker for '%C'", Activator);
-      focus.Richters = Arg1;
-      focus.QuakeDuration = Arg2 >> 1;  // decremented every 2 tics
-      focus.DamageRadius = itof(Arg3) * 64.0;
-      focus.TremorRadius = itof(Arg4) * 64.0;
-      success = true;
-    }
-  }
-
-  // Find all quake foci
-  for (target = EntityEx(FindMobjFromTID(Arg5, none)); target; target = EntityEx(FindMobjFromTID(Arg5, target))) {
-    //print(" spawning quaker for '%C'", target);
-    focus = Spawn(QuakeFocus, target.Origin);
-    if (focus) {
-      //print("  spawned quaker for '%C'", target);
-      focus.Richters = Arg1;
-      focus.QuakeDuration = Arg2 >> 1;  // decremented every 2 tics
-      focus.DamageRadius = itof(Arg3) * 64.0;
-      focus.TremorRadius = itof(Arg4) * 64.0;
-      success = true;
-    }
-  }
-
-  return success;
+  return implLocalQuake(Arg1, Arg2, float(Arg3)*64.0, float(Arg4)*64.0, Arg5, Activator);
 }
+
+
+//==========================================================================
+//
+//  AcsRadiusQuake2
+//
+//==========================================================================
+override void AcsRadiusQuake2 (Entity Activator, int tid, int intensity, int duration, int damrad, int tremrad, name sound) {
+  implLocalQuake(intensity, duration, damrad, tremrad, tid, Activator, sound);
+}
+
 
 //==========================================================================
 //
