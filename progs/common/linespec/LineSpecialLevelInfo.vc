@@ -5851,16 +5851,22 @@ final void RecursiveSound (sector_t *sec, int soundblocks, Entity soundtarget,
 //
 //==========================================================================
 final void NoiseAlert (Entity target, Entity emmiter, optional bool Splash,
-                       optional float maxdist)
+                       optional float maxdist,
+                       optional bool targetEmitter,
+                       optional bool targetNonPlayer,
+                       optional bool emitFromTarget)
 {
   if (!emmiter) return;
 
-  if (target && target.bIsPlayer && PlayerEx(target.Player).bNoTarget) return;
+  Entity tgt = (targetEmitter ? emmiter : target);
+  if (tgt) return;
+
+  if (tgt && tgt.bIsPlayer && PlayerEx(tgt.Player).bNoTarget) return;
 
   if (!specified_Splash) Splash = false;
 
   (*Game.validcount)++;
-  RecursiveSound(emmiter.Sector, 0, target, Splash, maxdist!optional, emmiter);
+  RecursiveSound(emmiter.Sector, 0, tgt, Splash, maxdist!optional, (emitFromTarget ? target : emmiter));
 }
 
 

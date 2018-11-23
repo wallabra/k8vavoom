@@ -37,6 +37,15 @@ enum /*EKillFlags*/ {
   KILS_EITHER = 0x00000040,
 };
 
+
+// Flags for A_AlertMonsters
+enum /*EAlertFlags*/ {
+  AMF_TARGETEMITTER = 1,
+  AMF_TARGETNONPLAYER = 2,
+  AMF_EMITFROMTARGET = 4,
+}
+
+
 //==========================================================================
 //
 //  A_Look
@@ -917,13 +926,21 @@ final void A_CentaurDefend()
 //  A_AlertMonsters
 //
 //==========================================================================
-final void A_AlertMonsters (optional float maxrange/*, optional int flags*/) {
+final void A_AlertMonsters (optional float maxrange, optional int flags) {
   //print("A_AlertMonsters(%C): tgt=%C; plr=%s", self, Target, (Target && Target.bIsPlayer ? "tan" : "ona"));
-  if (Target && Target.bIsPlayer) {
-    LineSpecialLevelInfo(Level).NoiseAlert(Target, self, maxdist:maxrange!optional);
+  if (Target && (Target.bIsPlayer || (flags&(AMF_TARGETEMITTER|AMF_TARGETNONPLAYER)))) {
+    LineSpecialLevelInfo(Level).NoiseAlert(target:Target, emmiter:self, maxdist:maxrange!optional,
+                                           targetEmitter:!!(flags&AMF_TARGETEMITTER),
+                                           targetNonPlayer:!!(flags&AMF_TARGETNONPLAYER),
+                                           emitFromTarget:!!(flags&AMF_EMITFROMTARGET));
   } else {
     // for weapons
-    if (self.bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(self, self, maxdist:maxrange!optional);
+    if (self.bIsPlayer || (flags&(AMF_TARGETEMITTER|AMF_TARGETNONPLAYER))) {
+      LineSpecialLevelInfo(Level).NoiseAlert(target:self, emmiter:self, maxdist:maxrange!optional,
+                                             targetEmitter:!!(flags&AMF_TARGETEMITTER),
+                                             targetNonPlayer:!!(flags&AMF_TARGETNONPLAYER),
+                                             emitFromTarget:!!(flags&AMF_EMITFROMTARGET));
+    }
   }
 }
 
