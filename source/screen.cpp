@@ -284,7 +284,7 @@ static void DrawFPS () {
       T_SetAlign(hright, vtop);
       xpos = VirtualWidth-2;
     }
-    T_DrawText(xpos, ypos, va("obj:[\034U%d\034-/\034U%d\034-]  array:[\034U%d\034-/\034U%d\034-/\034U%d\034-]; \034U%d\034- msec",
+    T_DrawText(xpos, ypos, va("obj:[\034U%3d\034-/\034U%3d\034-]  array:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- msec",
       stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectTime*1000+0.5)), CR_DARKBROWN);
   }
 
