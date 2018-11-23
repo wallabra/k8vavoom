@@ -330,9 +330,17 @@ void VZipFile::OpenArchive (VStream *fstream) {
     char *filename_inzip = new char[file_info.size_filename+1];
     filename_inzip[file_info.size_filename] = '\0';
     FileStream->Serialise(filename_inzip, file_info.size_filename);
-    Files[i].Name = VStr(filename_inzip).ToLower().FixFileSlashes();
+    VStr zfname = VStr(filename_inzip).ToLower().FixFileSlashes();
     delete[] filename_inzip;
     filename_inzip = nullptr;
+    // fix some idiocity introduced by some shitdoze doom tools
+    for (;;) {
+           if (zfname.startsWith("./")) zfname.chopLeft(2);
+      else if (zfname.startsWith("../")) zfname.chopLeft(3);
+      else if (zfname.startsWith("/")) zfname.chopLeft(1);
+      else break;
+    }
+    Files[i].Name = zfname;
 
     if (canHasPrefix && Files[i].Name.IndexOf('/') == -1) canHasPrefix = false;
 
@@ -371,14 +379,16 @@ void VZipFile::OpenArchive (VStream *fstream) {
   }
 
   // remove duplicate files
+  /*
   TMap<VStr, bool> nameset;
   for (int i = NumFiles-1; i >= 0; --i) {
     if (nameset.has(Files[i].Name)) {
-      Files[i].Name = VStr(" ");
+      Files[i].Name = VStr("\x01");
     } else {
       nameset.put(Files[i].Name, true);
     }
   }
+  */
 
   // build lump names
   for (int i = 0; i < NumFiles; ++i) {
@@ -441,9 +451,13 @@ void VZipFile::OpenArchive (VStream *fstream) {
     }
   }
 
-  // sort files alphabetically (have to do this, or file searching is failing for some reason)
   if (NumFiles > 65520) Sys_Error("Archive '%s' has too many files", *ZipFileName);
-  qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
+  // sort files alphabetically (have to do this, or file searching is failing for some reason)
+  // k8: it seems that we don't need to sort files anymore
+  if (GArgs.CheckParm("-pk3sort")) {
+    GCon->Logf(NAME_Init, "sorting files in '%s'...", *fstream->GetName());
+    qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
+  }
 
   // now create hashmaps, and link lumps
   TMapNC<VName, int> lastSeenLump;
