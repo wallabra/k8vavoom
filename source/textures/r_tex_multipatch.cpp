@@ -174,10 +174,10 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         sc->ExpectNumberWithSign();
         TOffset = sc->Number;
       } else if (sc->Check("xscale")) {
-        sc->ExpectFloat();
+        sc->ExpectFloatWithSign();
         SScale = sc->Float;
       } else if (sc->Check("yscale")) {
-        sc->ExpectFloat();
+        sc->ExpectFloatWithSign();
         TScale = sc->Float;
       } else if (sc->Check("worldpanning")) {
         bWorldPanning = true;
@@ -252,6 +252,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
 
         if (sc->Check("{")) {
           while (!sc->Check("}")) {
+            bool expectStyle = false;
             if (sc->Check("flipx")) {
               Flip |= 1;
             } else if (sc->Check("flipy")) {
@@ -330,7 +331,8 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
             else if (sc->Check("alpha")) {
               sc->ExpectFloat();
               P.Alpha = MID(0, sc->Float, 1);
-            } else if (sc->Check("style")) {
+            } else {
+              if (sc->Check("style")) expectStyle = true;
                    if (sc->Check("copy")) P.Style = STYLE_Copy;
               else if (sc->Check("translucent")) P.Style = STYLE_Translucent;
               else if (sc->Check("add")) P.Style = STYLE_Add;
@@ -343,10 +345,14 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                 //FIXME
                 GCon->Logf(NAME_Warning, "%s: unsupported texture style 'Overlay', approximated with 'CopyAlpha'", *sc->GetLoc().toStringNoCol());
                 P.Style = STYLE_CopyAlpha;
-              } else sc->Error(va("Bad style: '%s'", *sc->String));
+              } else {
+                if (expectStyle) {
+                  sc->Error(va("Bad style: '%s'", *sc->String));
+                } else {
+                  sc->Error(va("Bad texture patch command '%s'", *sc->String));
+                }
+              }
               if (P.Style != STYLE_Copy) Format = TEXFMT_RGBA;
-            } else {
-              sc->Error(va("Bad texture patch command '%s'", *sc->String));
             }
           }
         }
