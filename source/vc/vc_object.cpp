@@ -35,7 +35,8 @@
 
 #define VC_GARBAGE_COLLECTOR_CHECKS
 #define VC_GARBAGE_COLLECTOR_LOGS_BASE
-#define VC_GARBAGE_COLLECTOR_LOGS_MODE
+#define VC_GARBAGE_COLLECTOR_LOGS_MORE
+#define VC_GARBAGE_COLLECTOR_LOGS_XTRA
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -153,9 +154,10 @@ public:
   // forget last element
   inline void pop () {
     check(used);
-    if (freeInCurrBlock() == ItemsPerBlock) {
-      // go to previous block
-      currblock = getPrevBlock(currblock);
+    if (freeInCurrBlock() == 1) {
+      // go to previous block (but don't go beyond first one)
+      T *pblk = getPrevBlock(currblock);
+      if (pblk) currblock = pblk;
     }
     --used;
   }
@@ -587,7 +589,7 @@ bool destroyDelayed
   for (int i = ilen-1; i >= 0; --i) {
     VObject *obj = goptr[i];
     if (!obj) {
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_MODE
+#ifdef VC_GARBAGE_COLLECTOR_LOGS_MORE
       if (developer) GCon->Logf(NAME_Dev, "* FREE SLOT #%d", i);
 #endif
       if (registerFree) gObjAvailable.push(i);
@@ -598,7 +600,7 @@ bool destroyDelayed
 #endif
     if (obj->ObjectFlags&_OF_Destroyed) {
       // this will be free
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_MODE
+#ifdef VC_GARBAGE_COLLECTOR_LOGS_MORE
       if (developer) GCon->Logf(NAME_Dev, "* FUTURE FREE SLOT #%d", i);
 #endif
       if (registerFree) gObjAvailable.push(i);
@@ -613,13 +615,13 @@ bool destroyDelayed
     ++alive;
   }
 
-  /*
+#ifdef VC_GARBAGE_COLLECTOR_LOGS_XTRA
   if (developer) {
     GCon->Logf(NAME_Dev, " %d free, %d preys", gObjAvailable.length(), gDeadObjects.length());
     GCon->Logf(NAME_Dev, " === dead ==="); for (int f = 0; f < gDeadObjects.length(); ++f) GCon->Logf(NAME_Dev, "  #%d: %d", f, gDeadObjects[f]);
     GCon->Logf(NAME_Dev, " === free ==="); for (int f = 0; f < gObjAvailable.length(); ++f) GCon->Logf(NAME_Dev, "  #%d: %d", f, gObjAvailable[f]);
   }
-  */
+#endif
 
   goptr = GObjObjects.ptr();
   // now actually delete the objects
@@ -629,6 +631,9 @@ bool destroyDelayed
     VObject *obj = goptr[i];
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
     check(obj);
+    if (developer && !(obj->ObjectFlags&_OF_Destroyed)) {
+      GCon->Logf(NAME_Dev, "deleting non-dead object(%u) #%d: %p (%s); %d left to delete", obj->UniqueId, i, obj, obj->GetClass()->GetName(), gDeadObjects.length());
+    }
     check(obj->ObjectFlags&_OF_Destroyed);
 #endif
     ++bodycount;
@@ -642,7 +647,10 @@ bool destroyDelayed
   }
 
   // compact object storage if we have too big difference between number of free objects and last used index
-  if (alive+341/*512*/ < gObjFirstFree || alive*2 < gObjFirstFree) {
+  if (/*alive+341 < gObjFirstFree ||*/ alive+alive/3 < gObjFirstFree) {
+#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+    if (developer) GCon->Logf(NAME_Dev, "  compacting pool (alive=%d; firstfree=%d)", alive, gObjFirstFree);
+#endif
     goptr = GObjObjects.ptr();
     // find first free slot
     int currFreeIdx = 0;
@@ -684,6 +692,9 @@ bool destroyDelayed
     // we don't need free index list anymore
     gObjAvailable.reset();
     memset((void *)(GObjObjects.ptr()+currFreeIdx), 0, (ilen-currFreeIdx)*sizeof(VObject *));
+#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+    if (developer) GCon->Logf(NAME_Dev, "  pool compaction complete (alive=%d; firstfree=%d)", alive, gObjFirstFree);
+#endif
   }
   lasttime += Sys_Time();
 
@@ -703,7 +714,7 @@ bool destroyDelayed
   gcLastStats.firstFree = gObjFirstFree;
 
 #ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
-  if (developer) GCon->Logf(NAME_Dev, "garbage collection complete in %d msecs; %d objects deleted, %d objects live, %d of %d array slots used; forstfree=%d",
+  if (developer) GCon->Logf(NAME_Dev, "garbage collection complete in %d msecs; %d objects deleted, %d objects live, %d of %d array slots used; firstfree=%d",
     (int)(gcLastStats.lastCollectTime*1000), gcLastStats.lastCollected, gcLastStats.alive, gcLastStats.poolSize, gcLastStats.poolAllocated, gObjFirstFree);
 #endif
 
