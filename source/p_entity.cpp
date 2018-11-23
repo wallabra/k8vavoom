@@ -160,6 +160,7 @@ void VEntity::SetTID (int tid) {
 //==========================================================================
 void VEntity::InsertIntoTIDList (int tid) {
   guard(VEntity::InsertIntoTIDList);
+  check(TID == 0);
   TID = tid;
   int HashIndex = tid&(VLevelInfo::TID_HASH_SIZE-1);
   TIDHashPrev = nullptr;

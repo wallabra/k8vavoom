@@ -118,6 +118,8 @@ extern VCvarB compat_nopassover;
 //=============================================================================
 void VEntity::Destroy () {
   UnlinkFromWorld();
+  if (XLevel) XLevel->DelSectorList();
+  if (TID && Level) RemoveFromTIDList(); // remove from TID list
   Super::Destroy();
 }
 
