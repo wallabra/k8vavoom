@@ -108,6 +108,7 @@ final void A_BossDeath()
   Level.ExitLevel(0);
 }
 
+
 //==========================================================================
 //
 //  A_KeenDie
@@ -115,24 +116,21 @@ final void A_BossDeath()
 //  DOOM II special, map 32. Uses special tag 666.
 //
 //==========================================================================
-
-final void A_KeenDie()
-{
-  EntityEx    Other;
+final void A_KeenDie (optional int tag) {
+  EntityEx Other;
 
   A_Fall();
 
+  if (!tag) tag = 666;
+
   // scan the remaining thinkers to see if all Keens are dead
-  foreach AllThinkers(class!Thinker(Class), Other)
-  {
-    if (Other != self && Other.Health > 0)
-    {
+  foreach AllThinkers(class!Thinker(Class), Other) {
+    if (Other != self && Other.Health > 0) {
       // other mobj of the same Class not dead
       return;
     }
   }
-  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 666, 16, 150, 0, 0, nullptr, 0,
-    none);
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, tag, 16, 150, 0, 0, nullptr, 0, none);
 }
 
 //==========================================================================
