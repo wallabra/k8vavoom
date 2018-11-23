@@ -477,6 +477,10 @@ void VZipFile::OpenArchive (VStream *fstream) {
         *lsidp = f; // update index
       }
     }
+    if (filemap.has(Files[f].Name)) {
+      GCon->Logf("duplicate file \"%s\" in archive \"%s\".", *Files[f].Name, *fstream->GetName());
+      GCon->Log("THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
+    }
     // put files into hashmap
     filemap.put(Files[f].Name, f);
   }
