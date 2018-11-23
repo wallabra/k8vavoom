@@ -23,8 +23,7 @@ menudef GoreModMenu {
 
 // advanced video options menu
 menudef OptionsMenu extend {
-  header "Gore Mod";
-
+  //header "Gore Mod";
   option submenu {
     title = "Gore Mod Options";
     submenu = GoreModMenu;
