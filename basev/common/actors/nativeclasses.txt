@@ -246,6 +246,7 @@ class Actor extends Thinker
   action native A_SetTranslucent(eval float alpha, optional eval int mode);
   action native A_FadeIn(optional eval float increase);
   action native A_FadeOut(optional eval float reduce);
+  action native A_FadeTo(float target, optional float amount, optional int flags);
   action native A_QueueCorpse();
   action native A_DeQueueCorpse();
   action native A_ChangeVelocity(float x, float y, float z, int flags);

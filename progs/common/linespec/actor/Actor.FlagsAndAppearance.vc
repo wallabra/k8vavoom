@@ -415,14 +415,15 @@ enum {
 //  A_FadeIn
 //
 //==========================================================================
-final void A_FadeIn(optional float Val, optional int flags) {
+final void A_FadeIn (optional float Val, optional int flags) {
   if (RenderStyle == Entity::STYLE_Normal) RenderStyle = Entity::STYLE_Translucent;
   if (!Val) Val = 0.1;
   Alpha += Val;
   if (specified_flags) {
-    if ((flags&FTF_CLAMP) && Alpha > 1) Alpha = 1;
+    if (flags&FTF_CLAMP) Alpha = fclamp(Alpha, 0, 1);
     if ((flags&FTF_REMOVE) && Alpha >= 1) { Destroy(); return; }
   }
+  if (Alpha == 1) RenderStyle = Entity::STYLE_Normal;
 }
 
 
@@ -436,10 +437,44 @@ final void A_FadeOut (optional float Val, optional int flags) {
   if (!Val) Val = 0.1;
   Alpha -= Val;
   if (!specified_flags) flags = FTF_REMOVE;
-
-  if ((flags&FTF_CLAMP) && Alpha < 0) Alpha = 0;
+  if (flags&FTF_CLAMP) Alpha = fclamp(Alpha, 0, 1);
   if ((flags&FTF_REMOVE) && Alpha <= 0) { Destroy(); return; }
 }
+
+
+//==========================================================================
+//
+//  A_FadeTo
+//
+//==========================================================================
+final void A_FadeTo (float target, optional float amount, optional int flags) {
+  if (!amount) amount = 0.1;
+  amount = fabs(amount);
+  if (RenderStyle == Entity::STYLE_Normal) RenderStyle = Entity::STYLE_Translucent;
+  if (flags&FTF_CLAMP) {
+    Alpha = fclamp(Alpha, 0, 1);
+    target = fclamp(target, 0, 1);
+  }
+  if (Alpha < target) {
+    Alpha += amount;
+    if (Alpha >= target) {
+      if (flags&FTF_REMOVE) { Destroy(); return; }
+      Alpha = target;
+    }
+  } else if (Alpha > target) {
+    Alpha -= amount;
+    if (Alpha <= target) {
+      if (flags&FTF_REMOVE) { Destroy(); return; }
+      Alpha = target;
+    }
+  } else {
+    // reached
+    if (flags&FTF_REMOVE) { Destroy(); return; }
+  }
+  if (flags&FTF_CLAMP) Alpha = fclamp(Alpha, 0, 1);
+  if (Alpha == 1) RenderStyle = Entity::STYLE_Normal;
+}
+
 
 //==========================================================================
 //
