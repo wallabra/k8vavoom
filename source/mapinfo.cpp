@@ -630,6 +630,12 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
       info->SkyBox = *sc->String;
+    } else if (sc->Check("skyrotate")){
+      GCon->Logf(NAME_Warning, "%s:MAPINFO: \"skyrotate\" command is not supported yet", *sc->GetLoc().toStringNoCol());
+      if (newFormat) sc->Expect("=");
+      sc->ExpectFloatWithSign();
+      if (sc->Check(",")) sc->ExpectFloatWithSign();
+      if (sc->Check(",")) sc->ExpectFloatWithSign();
     } else if (sc->Check("doublesky")) {
       info->Flags |= MAPINFOF_DoubleSky;
     } else if (sc->Check("lightning")) {
@@ -1363,7 +1369,8 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
       sc->ExpectNumber();
       sdef->RespawnLimit = sc->Number;
     } else if (sc->Check("Aggressiveness")) {
-      sc->ExpectFloat();
+      sc->ExpectFloatWithSign();
+      if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
       sdef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
     } else if (sc->Check("SpawnFilter")) {
       if (sc->CheckNumber()) {
@@ -1478,7 +1485,8 @@ static void ParseSkillDef (VScriptParser *sc) {
       sdef->RespawnLimit = sc->Number;
     } else if (sc->Check("Aggressiveness")) {
       sc->Expect("=");
-      sc->ExpectFloat();
+      sc->ExpectFloatWithSign();
+      if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
       sdef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
     } else if (sc->Check("SpawnFilter")) {
       sc->Expect("=");
