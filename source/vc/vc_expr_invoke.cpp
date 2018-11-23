@@ -2526,7 +2526,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             if (lbl < 0) {
               ParseError(ALoc, "`%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, str);
             } else {
-              ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU IDIOTS!", Func->GetName(), i+1);
+              ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
               delete Args[i];
               Args[i] = new VIntLiteral(lbl, ALoc);
             }
