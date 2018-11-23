@@ -436,6 +436,7 @@ void VObject::Register () {
     if (gObjFirstFree < GObjObjects.length()) {
       Index = gObjFirstFree;
       GObjObjects[gObjFirstFree++] = this;
+      gcLastStats.firstFree = gObjFirstFree;
     } else {
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
       check(gObjFirstFree == GObjObjects.length());
@@ -445,6 +446,9 @@ void VObject::Register () {
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
       check(gObjFirstFree == GObjObjects.length());
 #endif
+      gcLastStats.firstFree = gObjFirstFree;
+      gcLastStats.poolSize = gObjFirstFree;
+      gcLastStats.poolAllocated = GObjObjects.NumAllocated();
     }
   }
 #ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
@@ -637,8 +641,8 @@ bool destroyDelayed
 #endif
   }
 
-  // compact object storage if we have too much free space there
-  if (false && alive+512 < ilen) {
+  // compact object storage if we have too big difference between number of free objects and last used index
+  if (alive+341/*512*/ < gObjFirstFree || alive*2 < gObjFirstFree) {
     goptr = GObjObjects.ptr();
     // find first free slot
     int currFreeIdx = 0;
@@ -652,9 +656,11 @@ bool destroyDelayed
     while (currObjIdx < ilen) {
       VObject *obj = goptr[currObjIdx];
       if (obj) {
+#ifdef VC_GARBAGE_COLLECTOR_CHECKS
         check(currFreeIdx < ilen);
         check(currFreeIdx < currObjIdx);
         check(obj->Index == currObjIdx);
+#endif
         goptr[currFreeIdx] = obj;
         obj->Index = currFreeIdx;
         goptr[currObjIdx] = nullptr;
@@ -667,22 +673,24 @@ bool destroyDelayed
       ++currObjIdx;
     }
     // ok, we compacted the list, now shrink it
+#ifdef VC_GARBAGE_COLLECTOR_CHECKS
     check(currFreeIdx < ilen);
-    GObjObjects.setLength(currFreeIdx+256, (currFreeIdx*2 < GObjObjects.NumAllocated())); // resize if the array is too big
-    // update cache and free index list
+    check(goptr[currFreeIdx] == nullptr);
+#endif
+    // new last used index is ready
+    gObjFirstFree = currFreeIdx;
+    // no need to shrink the pool, we have another means of tracking last used index
+    //GObjObjects.setLength(currFreeIdx+256, (currFreeIdx*2 < GObjObjects.NumAllocated())); // resize if the array is too big
+    // we don't need free index list anymore
     gObjAvailable.reset();
-    goptr = GObjObjects.ptr();
-    const int newilen = GObjObjects.length();
-    // do it backwards
-    for (int f = newilen-1; f >= currFreeIdx; --f) {
-      goptr[f] = nullptr;
-      gObjAvailable.push(f);
-    }
+    memset((void *)(GObjObjects.ptr()+currFreeIdx), 0, (ilen-currFreeIdx)*sizeof(VObject *));
   }
   lasttime += Sys_Time();
 
   GNumDeleted = 0;
+#ifdef VC_GARBAGE_COLLECTOR_CHECKS
   check(gDeadObjects.length() == 0);
+#endif
 
   // update GC stats
   gcLastStats.alive = alive;
