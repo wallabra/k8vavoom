@@ -5856,17 +5856,20 @@ final void NoiseAlert (Entity target, Entity emmiter, optional bool Splash,
                        optional bool targetNonPlayer,
                        optional bool emitFromTarget)
 {
-  if (!emmiter) return;
+  //if (!emmiter) return;
 
   Entity tgt = (targetEmitter ? emmiter : target);
   if (tgt) return;
+
+  Entity emt = (emitFromTarget ? target : emmiter);
+  if (tgt || !emt) return;
 
   if (tgt && tgt.bIsPlayer && PlayerEx(tgt.Player).bNoTarget) return;
 
   if (!specified_Splash) Splash = false;
 
   (*Game.validcount)++;
-  RecursiveSound(emmiter.Sector, 0, tgt, Splash, maxdist!optional, (emitFromTarget ? target : emmiter));
+  RecursiveSound(emt.Sector, 0, tgt, Splash, maxdist!optional, emt);
 }
 
 
