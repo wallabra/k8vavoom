@@ -45,9 +45,9 @@
   ACS_EXTFUNC(ACS_NamedExecuteAlways) // implemented
   ACS_EXTFUNC(UniqueTID) // implemented
   ACS_EXTFUNC(IsTIDUsed) // implemented
-  ACS_EXTFUNC(Sqrt)
-  ACS_EXTFUNC(FixedSqrt)
-  ACS_EXTFUNC(VectorLength)
+  ACS_EXTFUNC(Sqrt) // implemented
+  ACS_EXTFUNC(FixedSqrt) // implemented
+  ACS_EXTFUNC(VectorLength) // implemented
   ACS_EXTFUNC(SetHUDClipRect)
   ACS_EXTFUNC(SetHUDWrapWidth)
   ACS_EXTFUNC(SetCVar) // implemented
@@ -85,8 +85,8 @@
   ACS_EXTFUNC(CanRaiseActor)
   ACS_EXTFUNC(SetActorTeleFog) // 86
   ACS_EXTFUNC(SwapActorTeleFog)
-  ACS_EXTFUNC(SetActorRoll)
-  ACS_EXTFUNC(ChangeActorRoll)
+  ACS_EXTFUNC(SetActorRoll) // implemented
+  ACS_EXTFUNC(ChangeActorRoll) // implemented
   ACS_EXTFUNC(GetActorRoll)
   ACS_EXTFUNC(QuakeEx)
   ACS_EXTFUNC(Warp) // 92

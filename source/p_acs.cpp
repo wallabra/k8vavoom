@@ -2486,17 +2486,32 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
 
     case ACSF_ChangeActorAngle:
     case ACSF_ChangeActorPitch:
+    case ACSF_ChangeActorRoll:
+    case ACSF_SetActorRoll:
       // ignores interpolation for now (args[2]
       if (argCount >= 2) {
         int count = 0;
         float newAngle = (float)(args[1]&0xffff)*360.0/(float)0x10000;
-        newAngle = (funcIndex == ACSF_ChangeActorAngle ? AngleMod(newAngle) : AngleMod180(newAngle));
+        newAngle = (funcIndex == ACSF_ChangeActorPitch ? AngleMod180(newAngle) : AngleMod(newAngle));
         if (args[0] == 0) {
           VEntity *ent = EntityFromTID(args[0], Activator);
-          if (ent) { if (funcIndex == ACSF_ChangeActorAngle) ent->Angles.yaw = newAngle; else ent->Angles.pitch = newAngle; ++count; }
+          if (ent) {
+            switch (funcIndex) {
+              case ACSF_ChangeActorAngle: ent->Angles.yaw = newAngle; break;
+              case ACSF_ChangeActorPitch: ent->Angles.pitch = newAngle; break;
+              case ACSF_ChangeActorRoll: case ACSF_SetActorRoll: ent->Angles.roll = newAngle; break;
+            }
+            ++count;
+          }
         } else {
           for (VEntity *ent = Level->FindMobjFromTID(args[0], nullptr); ent; ent = Level->FindMobjFromTID(args[0], ent)) {
-            if (ent) { if (funcIndex == ACSF_ChangeActorAngle) ent->Angles.yaw = newAngle; else ent->Angles.pitch = newAngle; ++count; }
+            if (ent) {
+              switch (funcIndex) {
+                case ACSF_ChangeActorAngle: ent->Angles.yaw = newAngle; break;
+                case ACSF_ChangeActorPitch: ent->Angles.pitch = newAngle; break;
+                case ACSF_ChangeActorRoll: case ACSF_SetActorRoll: ent->Angles.roll = newAngle; break;
+              }
+            }
           }
         }
         return count;
@@ -2958,6 +2973,25 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
     case ACSF_SetPointer:
       if (argCount >= 2 && Activator) {
         return (Activator->eventSetPointerForACS(args[0], args[1], (argCount > 2 ? args[2] : 0), (argCount > 3 ? args[3] : 0)) ? 1 : 0);
+      }
+      return 0;
+
+    // int Sqrt (int number)
+    case ACSF_Sqrt:
+      if (argCount > 0 && args[0] > 0) return (int)sqrtf((float)args[0]);
+      return 0;
+
+    // fixed FixedSqrt (fixed number)
+    case ACSF_FixedSqrt:
+      if (argCount > 0 && args[0] > 0) return (int)(sqrtf((float)args[0]/65536.0f)*65536.0f);
+      return 0;
+
+    // fixed VectorLength (fixed x, fixed y)
+    case ACSF_VectorLength:
+      if (argCount >= 2) {
+        TVec v = TVec((float)args[0]/65536.0f, (float)args[0]/65536.0f);
+        float len = v.length2D();
+        return (int)(len/65536.0f);
       }
       return 0;
   }
@@ -4053,12 +4087,12 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetAirControl)
-      Level->AirControl = float(sp[-1]) / 65536.0;
+      Level->AirControl = float(sp[-1]) / 65536.0f;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetAirControlDirect)
-      Level->AirControl = float(READ_INT32(ip)) / 65535.0;
+      Level->AirControl = float(READ_INT32(ip)) / 65536.0f;
       ip += 4;
       ACSVM_BREAK;
 
