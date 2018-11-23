@@ -78,6 +78,9 @@ class Actor extends Thinker
   alias GetSelf = _GetSelf;
   alias GetSSR = _GetSSR;
 
+
+  action native A_RearrangePointers (pointer target, pointer master, pointer tracer, int flags);
+
   //
   //  Monster AI
   //

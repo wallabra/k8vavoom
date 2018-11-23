@@ -652,6 +652,45 @@ override bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int fla
 
 //===========================================================================
 //
+//  decoRearrangePtrGetPtr
+//
+//===========================================================================
+final EntityEx decoRearrangePtrGetPtr (int aptr, EntityEx defval,
+                  EntityEx oldTarget, EntityEx oldMaster, EntityEx oldTracer)
+{
+  switch (aptr) {
+    case AAPTR_DEFAULT: return defval;
+    case AAPTR_NULL: return none;
+    case AAPTR_TARGET: return oldTarget;
+    case AAPTR_MASTER: return oldMaster;
+    case AAPTR_TRACER: return oldTracer;
+  }
+  return none;
+}
+
+
+//===========================================================================
+//
+//  A_RearrangePointers
+//
+//===========================================================================
+final void A_RearrangePointers (int aptrtarget, int aptrmaster, int aptrtracer, optional int flags) {
+  EntityEx oldTarget = Target;
+  EntityEx oldMaster = Master;
+  EntityEx oldTracer = Tracer;
+
+  Target = decoRearrangePtrGetPtr(aptrtarget, oldTarget, oldTarget, oldMaster, oldTracer);
+  if (!(flags&PTROP_UNSAFETARGET)) VerifyTargetChain();
+
+  Master = decoRearrangePtrGetPtr(aptrmaster, oldMaster, oldTarget, oldMaster, oldTracer);
+  if (!(flags&PTROP_UNSAFEMASTER)) VerifyMasterChain();
+
+  Tracer = decoRearrangePtrGetPtr(aptrtracer, oldTracer, oldTarget, oldMaster, oldTracer);
+}
+
+
+//===========================================================================
+//
 //  eventDoAAPtr
 //
 //===========================================================================
