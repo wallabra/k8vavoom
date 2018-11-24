@@ -109,9 +109,7 @@ TVec clip_base[4];
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
 static TArray<VTextureTranslation*> CachedTranslations;
 
-// if true, load all graphics at start
-VCvarB precache("precache", true, "Load all graphics at startup (instead of on-demand)?", CVAR_Archive);
-
+static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
 
 
@@ -453,7 +451,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   screenblocks = 0;
 
   // preload graphics
-  if (precache) PrecacheLevel();
+  if (r_precache_textures) PrecacheLevel();
   unguard;
 }
 

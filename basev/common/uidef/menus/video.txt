@@ -66,6 +66,15 @@ menudef VideoOptions {
     }
   }
 
+  option bool {
+    title = "Precache Textures";
+    cvar = r_precache_textures;
+    help =
+      "Precache level textures (upload them to GPU) on level loading?"
+      "This has relatively low impact on most level loading times, and"
+      "the game will stutter less on entering new areas.";
+  }
+
 
   header "Visual Options";
 
