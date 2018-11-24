@@ -705,8 +705,8 @@ IMPLEMENT_FUNCTION(VObject, SetVirtualScreen) {
 IMPLEMENT_FUNCTION(VObject, GetVirtualWidth) { RET_INT(VirtualWidth); }
 IMPLEMENT_FUNCTION(VObject, GetVirtualHeight) { RET_INT(VirtualHeight); }
 
-IMPLEMENT_FUNCTION(VObject, GetRealWidth) { RET_INT(ScreenWidth); }
-IMPLEMENT_FUNCTION(VObject, GetRealHeight) { RET_INT(ScreenHeight); }
+IMPLEMENT_FUNCTION(VObject, GetRealScreenWidth) { RET_INT(ScreenWidth); }
+IMPLEMENT_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(ScreenHeight); }
 
 //==========================================================================
 //

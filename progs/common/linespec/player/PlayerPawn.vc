@@ -27,6 +27,9 @@ class PlayerPawn : Actor abstract;
 // default view height
 float ViewHeight;
 
+// real height without crouching; -666 means "not initialized"
+float RealHeight;
+
 // player is unable to run if health is lower than this
 int RunHealth;
 
@@ -76,16 +79,6 @@ int MaxHealth;
 
 // K8 Headshots Variables
 int k8hsCount;
-
-
-//==========================================================================
-//
-//  GetAttackZOfs
-//
-//==========================================================================
-float GetAttackZOfs () {
-  return AttackZOffset+(GetCvarB('gm_fix_attack_offset') ? 4.0 : 0.0);
-}
 
 
 //==========================================================================
@@ -249,6 +242,42 @@ override int UnmorphActor (Entity Activator, int Force) {
 }
 
 
+//==========================================================================
+//
+//  GetRealHeight
+//
+//==========================================================================
+final float GetRealHeight () {
+  float res = RealHeight;
+  if (res == -666) {
+    res = Height;
+    RealHeight = res;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  GetHeight
+//
+//==========================================================================
+override float GetHeight () {
+  return (RealHeight == -666 ? Height : RealHeight);
+}
+
+
+//==========================================================================
+//
+//  SetHeight
+//
+//==========================================================================
+override void SetHeight (float newvalue) {
+  RealHeight = newvalue;
+  Height = newvalue*crouchfactor;
+}
+
+
 defaultproperties {
   Health = 100;
   Radius = 16.0;
@@ -257,6 +286,7 @@ defaultproperties {
   Speed = 1.0;
   ReactionCount = 0;
   ViewHeight = 41.0;
+  RealHeight = -666;
   ForwardMove1 = 1.0;
   ForwardMove2 = 1.0;
   SideMove1 = 1.0;

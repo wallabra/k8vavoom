@@ -625,7 +625,7 @@ final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
     //  Add an extra unit to simulate Doom's original behaviour.
     if (bIsPlayer)
     {
-      org.z += PlayerPawn(Player.MO).AttackZOffset/*GetAttackZOfs*/ - 3.0;
+      org.z += PlayerEx(Player).GetAttackZOfs(missile:true) - 3.0;
     }
     else
     {

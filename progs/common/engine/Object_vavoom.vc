@@ -368,8 +368,8 @@ native static final mapInfo_t *P_GetMapInfo (int map);
 native static final void SetVirtualScreen (int Width, int Height);
 native static final int GetVirtualWidth ();
 native static final int GetVirtualHeight ();
-native static final int GetRealWidth ();
-native static final int GetRealHeight ();
+native static final int GetRealScreenWidth ();
+native static final int GetRealScreenHeight ();
 
 // registers a graphic, returns handle
 native static final int R_RegisterPic (name Name);

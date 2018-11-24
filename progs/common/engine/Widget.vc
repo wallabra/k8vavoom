@@ -481,8 +481,8 @@ void SetOrigin (int x, int y) { SetPos(x, y); }
 //
 //==========================================================================
 void SetDefaultVirtualScreenSize () {
-  int rw = GetRealWidth();
-  int rh = GetRealHeight();
+  int rw = GetRealScreenWidth();
+  int rh = GetRealScreenHeight();
   int vw = (rw >= 1280 ? rw/2 : 640);
   int vh = (rh >= 960 ? rh/2 : 480);
   if (rw/3 >= 640 && rh/3 >= 480) {
@@ -527,8 +527,8 @@ void DrawFullScreenPic (int Handle) {
     // in case our picture has strange size
     R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_000000);
 #ifdef VC_USE_PROPER_SCALING
-    int rw = GetRealWidth();
-    int rh = GetRealHeight();
+    int rw = GetRealScreenWidth();
+    int rh = GetRealScreenHeight();
     float scaleX = float(rw)/float(pinf.width);
     float scaleY = float(rh)/float(pinf.height);
     if (scaleX <= scaleY) {

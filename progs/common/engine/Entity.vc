@@ -306,8 +306,10 @@ int       Health;
 int       InitialHealth;
 
 // For movement checking.
-float     Radius;
-float     Height;
+float Radius;
+// WARNING: for PlayerPawn, you should use `SetHeight()` method
+//          actually, you'd better use this method for all entities
+float Height;
 
 // Additional info record for player avatars only.
 // Only valid if type == MT_PLAYER
@@ -1032,6 +1034,32 @@ final float _GetVelocityZ () { return Velocity.z; }
 final float _GetAnglesYaw () { return Angles.yaw; }
 final float _GetAnglesPitch () { return Angles.pitch; }
 final float _GetAnglesRoll () { return Angles.roll; }
+
+
+//==========================================================================
+//
+//  GetHeight
+//
+//  use this instead of directly reading `Height`
+//  this is required due to height modifications in PlayerPawn
+//
+//==========================================================================
+float GetHeight () {
+  return Height;
+}
+
+
+//==========================================================================
+//
+//  SetHeight
+//
+//  use this instead of directly changing `Height`
+//  this is required due to height modifications in PlayerPawn
+//
+//==========================================================================
+void SetHeight (float newvalue) {
+  Height = newvalue;
+}
 
 
 defaultproperties

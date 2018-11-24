@@ -53,6 +53,7 @@ float BonusFlash;
 
 // base height above floor for viewz
 float ViewHeight;
+float PrevViewHeight; // this is used in crouching cheat (and saved there)
 // bob/squat speed
 float DeltaViewHeight;
 // bounded/scaled total momentum
@@ -167,6 +168,20 @@ replication {
 
 //==========================================================================
 //
+//  GetAttackZOfs
+//
+//==========================================================================
+float GetAttackZOfs (optional bool missile) {
+  auto plrmo = PlayerPawn(MO);
+  if (!plrmo) return 8.0;
+  float res = plrmo.AttackZOffset*plrmo.crouchfactor+(missile ? 0.0 : (GetCvarB('gm_fix_attack_offset') ? 4.0 : 0.0));
+  //if (plrmo.crouchfactor < 1.0) res -= plrmo.RealHeight-plrmo.Height; // crouch fix
+  return res;
+}
+
+
+//==========================================================================
+//
 //  ThrustPlayer
 //
 //  Moves the given origin along a given angle.
@@ -215,13 +230,15 @@ final void CalcHeight (float deltaTime) {
   if (PlayerState == PST_LIVE) {
     ViewHeight += DeltaViewHeight*deltaTime;
 
-    if (ViewHeight > PlayerPawn(MO).ViewHeight) {
-      ViewHeight = PlayerPawn(MO).ViewHeight;
+    float plrVH = PlayerPawn(MO).ViewHeight*PlayerPawn(MO).crouchfactor;
+
+    if (ViewHeight > plrVH) {
+      ViewHeight = plrVH;
       DeltaViewHeight = 0.0;
     }
 
-    if (ViewHeight < PlayerPawn(MO).ViewHeight/2.0) {
-      ViewHeight = PlayerPawn(MO).ViewHeight/2.0;
+    if (ViewHeight < plrVH/2.0) {
+      ViewHeight = plrVH/2.0;
       if (DeltaViewHeight <= 0.0) DeltaViewHeight = 0.00001;
     }
 
@@ -244,27 +261,31 @@ final void CalcHeight (float deltaTime) {
 //
 //==========================================================================
 void CrouchMove (int direction) {
-  auto plr = EntityEx(MO);
-  if (!plr) return;
+  scope(exit) PrevViewHeight = ViewHeight;
+  auto plrmo = PlayerPawn(MO);
+  if (!plrmo) return;
 
-  //float defaultheight = FullHeight;
   float crouchspeed = direction*EntityEx::CROUCHSPEED;
-
-  float newcrf = fclamp(plr.crouchfactor+crouchspeed, 0.5, 1.0);
-  if (newcrf == plr.crouchfactor) return; // nothing to do
+  float newcrf = fclamp(plrmo.crouchfactor+crouchspeed, 0.5, 1.0);
+  if (newcrf == plrmo.crouchfactor) return; // nothing to do
 
   // check whether the move is ok
-  float savedheight = plr.Height;
-  plr.Height = plr.default.Height*newcrf;
-  if (!plr.TryMove(plr.Origin, false)) {
+  float savedheight = plrmo.Height; //HACK! we'd better use `GetHeight()` here, but...
+  float defaultheight = plrmo.GetRealHeight; // ...this saves `Height` to `RealHeight` too
+  plrmo.Height = defaultheight*newcrf; // we'd better use `SetHeight()` here
+  if (!plrmo.TryMove(plrmo.Origin, false)) {
     // nope, restore player height
-    plr.Height = savedheight;
+    plrmo.Height = savedheight;
     return;
   }
 
   // setup new view height, and remember current crouch factor
-  ViewHeight = PlayerPawn(plr).default.ViewHeight*newcrf;
-  plr.crouchfactor = newcrf;
+  // apply view height delta
+  float prevVH = PrevViewHeight;
+  if (prevVH == -666) prevVH = ViewHeight;
+  float vhDelta = ViewHeight-prevVH;
+  ViewHeight = PlayerPawn(plrmo).ViewHeight*newcrf+vhDelta;
+  plrmo.crouchfactor = newcrf;
 
   // check for eyes going above/below fake floor due to crouching motion
   // this seems to be done in TryMove
@@ -3830,4 +3851,5 @@ override Entity eventGetReadyWeapon () {
 
 defaultproperties {
   InvSize = 6;
+  PrevViewHeight = -666;
 }
