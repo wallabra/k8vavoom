@@ -153,6 +153,8 @@ void Host_Init () {
   if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
   if (GArgs.CheckParm("-developer")) developer = true;
 
+  if (GArgs.CheckParm("-gd-debug")) VObject::GCDebugMessagesAllowed = true;
+
   FL_Init();
 
   PR_Init();

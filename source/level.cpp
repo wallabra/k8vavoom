@@ -1717,6 +1717,7 @@ void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int
   VDecalDef *dec = VDecalDef::getDecal(dectype);
 #endif
   if (dec) {
+    //GCon->Logf("DECAL '%s'; name is '%s', texid is %d", *dectype, *dec->name, dec->texid);
     AddOneDecal(level, org, dec, sec, li);
   } else {
     if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);

@@ -914,11 +914,11 @@ void ParseDecalDef (VScriptParser *sc) {
         // find class
         VClass *klass = VClass::FindClassLowerCase(*clsname.ToLower());
         if (klass) {
-          //GCon->Logf("%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
+          if (developer) GCon->Logf(NAME_Dev, "%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
           SetClassFieldName(klass, VName("DecalName"), VName(*decname));
           VClass *k2 = klass->GetReplacee();
           if (k2 && k2 != klass) {
-            //GCon->Logf("  repclass '%s': set decal '%s'", k2->GetName(), *decname);
+            if (developer) GCon->Logf(NAME_Dev, "  repclass '%s': set decal '%s'", k2->GetName(), *decname);
             SetClassFieldName(k2, VName("DecalName"), VName(*decname));
           }
         } else {
