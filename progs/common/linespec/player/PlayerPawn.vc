@@ -207,6 +207,16 @@ final void AdjustSpeed (out float forward, out float side) {
     forward *= SpeedFactor;
     side *= SpeedFactor;
   }
+
+  // when crouching, speed have to be reduced, and player is not allowed to run
+  // normal speed is |1000|, running speed is |2000|
+  if (crouchfactor != 1) {
+    //if (forward) print("old: f=%s; s=%s; nf=%s; ns=%s", forward, side, forward*crouchfactor, side*crouchfactor);
+    forward = fclamp(forward, -1000.0, 1000.0);
+    side = fclamp(side, -1000.0, 1000.0);
+    forward *= crouchfactor;
+    side *= crouchfactor;
+  }
 }
 
 

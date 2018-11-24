@@ -223,6 +223,12 @@ final void CalcHeight (float deltaTime) {
     }
   }
 
+  // when crouching, bobbing have to be reduced
+  if (PlayerPawn(MO)) {
+    auto plrmo = PlayerPawn(MO);
+    Bob *= plrmo.crouchfactor;
+  }
+
   float angle = 180.0*35.0/10.0*Level.XLevel.Time;
   bob = Bob/2.0*sin(angle);
 
@@ -305,6 +311,11 @@ final void MovePlayer (float deltaTime) {
   float side;
   float fly;
 
+  // yeah, we can start crouching mid-air
+  auto ohgt = MO.Height;
+  CrouchMove(Buttons&BT_CROUCH ? -1 : 1);
+  //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
+
   // do not let the player control movement if not onground
   onground = (MO.Origin.z <= MO.FloorZ || EntityEx(MO).bOnMobj);
 
@@ -364,10 +375,6 @@ final void MovePlayer (float deltaTime) {
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
   }
-
-  auto ohgt = MO.Height;
-  CrouchMove(Buttons&BT_CROUCH ? -1 : 1);
-  //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
 }
 
 
