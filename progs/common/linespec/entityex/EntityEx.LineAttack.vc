@@ -856,6 +856,10 @@ override void eventLineAttackACS (TVec dir, float distance, int LADamage, name p
 //
 //  LineAttack
 //
+//  to prevent decal spawning, pass 'none' as `decalType`
+//  (or something else that is non-existing)
+//  decalType of '' means "use default puff decal"
+//
 //==========================================================================
 final int LineAttack (TVec dir, float distance, int LADamage,
                       class!EntityEx PuffType, optional bool NoAttackGhosts,
@@ -870,6 +874,8 @@ final int LineAttack (TVec dir, float distance, int LADamage,
   TVec shootOrigin;
 
   //print("LineAttack: self=<%s>", NameToStr(GetClassName(Class)));
+
+  //Entity e; print("%f", e.Height);
 
   shootOrigin = Origin;
   shootOrigin.z += Height*0.5-FloorClip;
@@ -946,7 +952,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
 
       // spawn bullet puffs
       if (PuffType) {
-        SpawnPuff(hit_point, distance, PuffType, false, sec, li, real_hit_point, decalType, pufftid!optional, disableRandomZ!optional);
+        SpawnPuff(hit_point, distance, PuffType, false, sec, li, real_hit_point, decalType!optional, pufftid!optional, disableRandomZ!optional);
       }
 
       // don't go any farther

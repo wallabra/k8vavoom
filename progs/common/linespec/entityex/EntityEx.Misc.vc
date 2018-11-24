@@ -2092,36 +2092,40 @@ final bool RepairArmorWith (int amount, optional class!BasicArmorBonus armorbonu
 //
 //  SpawnPuff
 //
+//  to prevent decal spawning, pass 'none' as `decalType`
+//  (or something else that is non-existing)
+//  decalType of '' means "use default puff decal"
+//
 //==========================================================================
 final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
   bool HitThing, optional sector_t *sec, optional line_t *li, optional TVec realOrg,
   optional name decalType, optional int pufftid, optional bool disableRandomZ)
 {
-  int i, c;
   EntityEx puff;
 
-  if (!PuffType) return;
-
-  if (PuffType.default.bPuffParticles) {
-    c = P_Random() >> 1;
-    for (i = 0; i < MAXPLAYERS; ++i) {
+  if (PuffType && PuffType.default.bPuffParticles && GetCvarB('r_particle_puffs')) {
+    int c = P_Random()>>1;
+    foreach (int i; 0..MAXPLAYERS) {
       if (!Level.Game.Players[i]) continue;
       if (!Level.Game.Players[i].bSpawned) continue;
-      if (GetCvarB('r_particle_puffs')) {
-        PlayerEx(Level.Game.Players[i]).ParticleEffect(20, LineSpecialLevelInfo::pt_static,
-                 LineSpecialLevelInfo::pt_explode2, Org, 0.0, vector(32.0, 32.0, 32.0),
-                 0.5, 10.0, 40.0, RGB(c, c, c), 0.8, 0.0);
-      }
+      PlayerEx(Level.Game.Players[i]).ParticleEffect(20, LineSpecialLevelInfo::pt_static,
+               LineSpecialLevelInfo::pt_explode2, Org, 0.0, vector(32.0, 32.0, 32.0),
+               0.5, 10.0, 40.0, RGB(c, c, c), 0.8, 0.0);
     }
   }
 
-  bool doDecal = true;
+  if (!decalType && PuffType) decalType = PuffType.default.DecalName;
+  if (decalType == 'none' || decalType == 'None') decalType = ''; // prevent error spam
+  /*
   if (specified_decalType) {
     if (!decalType) doDecal = false;
   } else {
-    if (!PuffType.default.DecalName) doDecal = false;
-  }
-  if (doDecal && sec && li) {
+    if (!PuffType || !PuffType.default.DecalName) doDecal = false;
+  }*/
+
+  //print("SpawnPuff: Range=%s; PuffType=%C; decalType=%s(%B); puffdecal=%s; doDecal=%B", Range, PuffType, decalType, specified_decalType, (PuffType ? PuffType.default.DecalName : '<none>'), doDecal);
+
+  if (decalType && sec && li) {
     //k8:TODO: this should be strictly client-side
     if (!specified_realOrg) realOrg = Org;
     if (specified_decalType && decalType) {
@@ -2131,26 +2135,29 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
     }
   }
 
-  if (!disableRandomZ) Org.z += (Random()-Random())*4.0;
+  if (PuffType) {
+    if (!disableRandomZ) Org.z += (Random()-Random())*4.0;
 
-  puff = Spawn(PuffType, Org);
+    puff = Spawn(PuffType, Org);
+    if (!puff) return; // oops
 
-  if (puff && pufftid) puff.SetTID(pufftid);
+    if (pufftid) puff.SetTID(pufftid);
 
-  // [BB] set the target of the puff to this actor
-  if (puff && puff.bPuffGetsOwner) puff.Target = Target;
-       if (!HitThing && puff.FindState('Crash')) puff.SetState(puff.FindState('Crash'));
-  else if (Range == MELEERANGE && puff.MeleeState) puff.SetState(puff.MeleeState);
+    // [BB] set the target of the puff to this actor
+    if (puff.bPuffGetsOwner) puff.Target = Target;
+         if (!HitThing && puff.FindState('Crash')) puff.SetState(puff.FindState('Crash'));
+    else if (Range == MELEERANGE && puff.MeleeState) puff.SetState(puff.MeleeState);
 
-  if (HitThing && puff.SightSound) {
-    // hit thing sound
-    puff.PlaySound(puff.SightSound, CHAN_VOICE);
-  } else if (puff.AttackSound) {
-    puff.PlaySound(puff.AttackSound, CHAN_VOICE);
+    if (HitThing && puff.SightSound) {
+      // hit thing sound
+      puff.PlaySound(puff.SightSound, CHAN_VOICE);
+    } else if (puff.AttackSound) {
+      puff.PlaySound(puff.AttackSound, CHAN_VOICE);
+    }
+
+    if (puff.ExplodeEffect) SendExplosion(ExplodeEffect, DLightRadius, Org);
+    LineSpecialLevelInfo(Level).bPuffSpawned = true;
   }
-
-  if (puff.ExplodeEffect) SendExplosion(ExplodeEffect, DLightRadius, Org);
-  LineSpecialLevelInfo(Level).bPuffSpawned = true;
 }
 
 
@@ -3341,7 +3348,7 @@ final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optiona
 
   damage = 5 * (P_Random() % 3 + 1);
 
-  LineAttack(dir, range, damage, BulletPuff, default, default, DmgType, secondary, DecalName);
+  LineAttack(dir, range, damage, BulletPuff, default, default, DmgType, secondary, DecalName!optional);
 }
 
 //===========================================================================
