@@ -74,6 +74,7 @@ extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
 #ifdef CLIENT
 extern int ldr_extrasamples_override; // -1: no override; 0: disable; 1: enable
 extern int r_precalc_static_lights_override; // <0: not set
+extern int r_precache_textures_override; // <0: not set
 #endif
 
 
@@ -511,13 +512,18 @@ void VLevel::FixKnownMapErrors () {
     return;
   }
 
-  // Skulldash EE first map, too many static lights, don't precalc
-  if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
+  // Skulldash EE first map and credits map, too many static lights, don't precalc
+  if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16" ||
+      MapHashMD5 == "a8d2a336f0b8e77a84be9460743be70d") {
 #ifdef CLIENT
-    r_precalc_static_lights_override = 0;
+    if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
+      // hub map
+      r_precache_textures_override = 0;
+      r_precalc_static_lights_override = 0;
+    }
     //ldr_extrasamples_override = 0;
 #endif
-    GCon->Logf(NAME_Warning, "MAPFIX: SkullDash EE: disabled precaluclated static lightmaps");
+    GCon->Logf(NAME_Warning, "MAPFIX: SkullDash EE: disabled precalculated static lightmaps and texture precaching");
     return;
   }
 }
@@ -1071,6 +1077,7 @@ load_again:
 #ifdef CLIENT
   ldr_extrasamples_override = -1;
   r_precalc_static_lights_override = -1;
+  r_precache_textures_override = -1;
 #endif
 
   double TotalTime = -Sys_Time();

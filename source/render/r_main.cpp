@@ -112,6 +112,8 @@ static TArray<VTextureTranslation*> CachedTranslations;
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:normal; 2:advanced).", CVAR_Archive);
 
+int r_precache_textures_override = -1;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // pool allocator for portal data
@@ -451,7 +453,9 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   screenblocks = 0;
 
   // preload graphics
-  if (r_precache_textures) PrecacheLevel();
+  if (r_precache_textures_override != 0) {
+    if (r_precache_textures || r_precache_textures_override > 0) PrecacheLevel();
+  }
   unguard;
 }
 
