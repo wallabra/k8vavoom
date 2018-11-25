@@ -739,7 +739,7 @@ void VRenderLevelShared::SetupFrame () {
     vieworg = cl->ViewOrg;
   }
 
-  ExtraLight = (ViewEnt->Player ? ViewEnt->Player->ExtraLight*8 : 0);
+  ExtraLight = (ViewEnt && ViewEnt->Player ? ViewEnt->Player->ExtraLight*8 : 0);
   if (cl->Camera == cl->MO) {
     ColourMap = CM_Default;
          if (cl->FixedColourmap == INVERSECOLOURMAP) { ColourMap = CM_Inverse; FixedLight = 255; }
