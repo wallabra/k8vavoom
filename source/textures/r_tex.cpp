@@ -343,15 +343,7 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
     }
   }
 
-  if (bCheckAny) return CheckNumForName(Name, TEXTYPE_Any, bOverload, false);
-
-#if 0
-  if (VStr::Cmp(*Name, "ml_sky1") == 0 /*|| VStr::Cmp(*Name, "ml_sky2") == 0 || VStr::Cmp(*Name, "ml_sky3") == 0*/) {
-    for (int f = 0; f < Textures.length(); ++f) {
-      fprintf(stderr, "#%d: %d:<%s>\n", f, Textures[f]->Type, *Textures[f]->Name);
-    }
-  }
-#endif
+  if (bCheckAny && Type != TEXTYPE_Any) return CheckNumForName(Name, TEXTYPE_Any, bOverload, false);
 
   return -1;
   unguard;
@@ -631,7 +623,8 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
     }
   }
 
-  return -1;
+  return CheckNumForNameAndForce(Name, Type, true/*bOverload*/, false/*bCheckAny*/, true/*silent*/);
+
   unguard;
 }
 
