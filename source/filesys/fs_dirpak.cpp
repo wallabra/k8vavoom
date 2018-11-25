@@ -180,7 +180,11 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth, bool inProgs) {
       // be in a file name, so we do a little mapping here
       if (fe.ns == WADNS_Sprites) lumpname = lumpname.replace("^", "\\");
       // final lump name
-      fe.lumpname = VName(*lumpname, VName::AddLower8);
+      if (lumpname.length()) {
+        fe.lumpname = VName(*lumpname, VName::AddLower8);
+      } else {
+        fe.lumpname = NAME_None;
+      }
       //GCon->Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", files.length()-1, fe.ns, *fe.pakname, *fe.diskname, *fe.lumpname);
     }
   }

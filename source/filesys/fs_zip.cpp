@@ -445,9 +445,13 @@ void VZipFile::OpenArchive (VStream *fstream) {
       //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
 
       // final lump name
-      Files[i].LumpName = VName(*LumpName, VName::AddLower8);
+      if (LumpName.length()) {
+        Files[i].LumpName = VName(*LumpName, VName::AddLower8);
+      } else {
+        Files[i].LumpName = NAME_None;
+      }
     } else {
-      Files[i].LumpName = VName("", VName::AddLower8);
+      Files[i].LumpName = NAME_None;
     }
   }
 
