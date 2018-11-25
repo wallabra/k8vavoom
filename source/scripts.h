@@ -64,6 +64,7 @@ public:
   bool GetString ();
   void ExpectString ();
   void ExpectName8 ();
+  void ExpectName8Warn (); // this sets both `Name` and `Name8`, with warning
   void ExpectName8Def (VName def);
   void ExpectName ();
   void ExpectIdentifier ();

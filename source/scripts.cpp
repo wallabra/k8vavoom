@@ -473,10 +473,41 @@ void VScriptParser::ExpectName8 () {
 
   if (String.Length() > 8) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    GCon->Logf("Name '%s' is too long", *String);
+    GCon->Logf(NAME_Warning, "%s: Name '%s' is too long", *GetLoc().toStringNoCol(), *String);
 #endif
     Error("Name is too long");
   }
+  Name8 = VName(*String, VName::AddLower8);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::ExpectName8Warn
+//
+//==========================================================================
+void VScriptParser::ExpectName8Warn () {
+  guard(VScriptParser::ExpectName8Warn);
+  ExpectString();
+
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  // translate "$name" strings
+  if (String.Length() > 1 && String[0] == '$') {
+    VStr qs = String.mid(1, String.length()-1).toLowerCase();
+    if (GLanguage.HasTranslation(*qs)) {
+      qs = *GLanguage[*qs];
+      if (dbg_show_name_remap) GCon->Logf("**** <%s>=<%s>\n", *String, *qs);
+      String = qs;
+    }
+  }
+#endif
+
+  if (String.Length() > 8) {
+    GCon->Logf(NAME_Warning, "%s: Name '%s' is too long", *GetLoc().toStringNoCol(), *String);
+  }
+
+  Name = VName(*String, VName::AddLower);
   Name8 = VName(*String, VName::AddLower8);
   unguard;
 }

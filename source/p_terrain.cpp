@@ -353,7 +353,7 @@ static void ParseTerrainScript(VScriptParser *sc)
     }
     else if (sc->Check("floor"))
     {
-      sc->ExpectName8();
+      sc->ExpectName8Warn();
       int Pic = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Flat,
         false, false);
       sc->ExpectString();
