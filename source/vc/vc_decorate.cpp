@@ -3130,10 +3130,25 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
   if (ParentStr.IsNotEmpty()) {
     ParentClass = VClass::FindClassLowerCase(*ParentStr.ToLower());
     if (ParentClass == nullptr || ParentClass->MemberType != MEMBER_Class) {
-      sc->Error(va("Parent class `%s` not found", *ParentStr));
+      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+        sc->Message(va("Parent class `%s` not found", *ParentStr));
+        ParentClass = nullptr; // just in case
+      } else {
+        sc->Error(va("Parent class `%s` not found", *ParentStr));
+      }
     }
     if (ParentClass != nullptr && !ParentClass->IsChildOf(ActorClass)) {
-      sc->Error(va("Parent class `%s` is not an actor class", *ParentStr));
+      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+        sc->Message(va("Parent class `%s` is not an actor class", *ParentStr));
+        ParentClass = nullptr; // just in case
+      } else {
+        sc->Error(va("Parent class `%s` is not an actor class", *ParentStr));
+      }
+    }
+    // skip this actor if it has invalid parent
+    if (ParentClass == nullptr) {
+      sc->SkipBracketed(false); // bracket is not eaten
+      return;
     }
   }
 
@@ -3177,10 +3192,25 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
     sc->ExpectString();
     ReplaceeClass = VClass::FindClassLowerCase(*sc->String.ToLower());
     if (ReplaceeClass == nullptr || ReplaceeClass->MemberType != MEMBER_Class) {
-      sc->Error(va("Replaced class %s not found", *sc->String));
+      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+        ReplaceeClass = nullptr; // just in case
+        sc->Message(va("Replaced class `%s` not found", *sc->String));
+      } else {
+        sc->Error(va("Replaced class `%s` not found", *sc->String));
+      }
     }
     if (ReplaceeClass != nullptr && !ReplaceeClass->IsChildOf(ActorClass)) {
-      sc->Error(va("Replaced class %s is not an actor class", *sc->String));
+      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+        ReplaceeClass = nullptr; // just in case
+        sc->Message(va("Replaced class `%s` is not an actor class", *sc->String));
+      } else {
+        sc->Error(va("Replaced class `%s` is not an actor class", *sc->String));
+      }
+    }
+    // skip this actor if it has invalid replacee
+    if (ReplaceeClass == nullptr) {
+      sc->SkipBracketed(false); // bracket is not eaten
+      return;
     }
   }
 
