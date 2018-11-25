@@ -42,6 +42,13 @@ extern int light_reset_surface_cache; // in r_light_reg.cpp
 //==========================================================================
 void VRenderLevel::QueueWorldSurface (seg_t *seg, surface_t *surf) {
   guard(VRenderLevel::QueueWorldSurface);
+
+  if (surf->lmapflags&Lightmap_Required) {
+    surf->lmapflags &= ~Lightmap_Required;
+    //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
+    if (surf->subsector) LightFace(surf, surf->subsector);
+  }
+
   bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == r_dlightframecount);
   surf->dcseg = seg;
 

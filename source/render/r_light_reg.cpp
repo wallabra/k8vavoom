@@ -79,7 +79,6 @@ static float lightmapr[18*18*4];
 static float lightmapg[18*18*4];
 static float lightmapb[18*18*4];
 static bool light_hit;
-static const vuint8 *facevis;
 static bool is_coloured;
 
 static int c_bad;
@@ -306,7 +305,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 // VRenderLevel::SingleLightFace
 //
 //==========================================================================
-void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf) {
+void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis) {
   guard(VRenderLevel::SingleLightFace);
   float dist;
   TVec incoming(0, 0, 0);
@@ -318,7 +317,9 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf) {
   float rmul, gmul, bmul;
 
   // check potential visibility
-  if (!(facevis[light->leafnum>>3]&(1<<(light->leafnum&7)))) return;
+  if (facevis) {
+    if (!(facevis[light->leafnum>>3]&(1<<(light->leafnum&7)))) return;
+  }
 
   // check bounding box
   if (light->origin.x+light->radius < smins.x ||
@@ -392,7 +393,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
   int i, s, t, w, h;
   float total;
 
-  facevis = Level->LeafPVS(leaf);
+  const vuint8 *facevis = (leaf ? Level->LeafPVS(leaf) : nullptr);
   points_calculated = false;
   light_hit = false;
   is_coloured = false;
@@ -400,7 +401,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
   // cast all lights
   CalcMinMaxs(surf);
   if (r_static_lights) {
-    for (i = 0; i < Lights.Num(); ++i) SingleLightFace(&Lights[i], surf);
+    for (i = 0; i < Lights.Num(); ++i) SingleLightFace(&Lights[i], surf, facevis);
   }
 
   if (!light_hit) {
@@ -614,7 +615,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     int t = (int)(DotProduct(p, reg->floor->texinfo.taxis)+reg->floor->texinfo.toffs);
     int ds, dt;
     for (surf = reg->floor->surfs; surf; surf = surf->next) {
-      if (!surf->lightmap) continue;
+      if (surf->lightmap == nullptr) continue;
       if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
 
       ds = s-surf->texturemins[0];
@@ -855,6 +856,12 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   int i, size;
   byte *lightmap;
   rgb_t *lightmap_rgb;
+
+  if (surf->lmapflags&Lightmap_Required) {
+    surf->lmapflags &= ~Lightmap_Required;
+    //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
+    if (surf->subsector) LightFace(surf, surf->subsector);
+  }
 
   is_coloured = false;
   r_light_add = false;

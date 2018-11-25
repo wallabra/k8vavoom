@@ -418,7 +418,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , AllocatedDrawSegs(nullptr)
   , AllocatedSegParts(nullptr)
   , cacheframecount(0)
-  , showCreateWorldSurfProgress(0)
+  , showCreateWorldSurfProgress(false)
 {
   guard(VRenderLevelShared::VRenderLevelShared);
 

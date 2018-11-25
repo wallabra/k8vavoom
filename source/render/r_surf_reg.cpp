@@ -38,6 +38,11 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
+int r_precalc_static_lights_override = -1; // <0: not set
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 extern int light_mem;
 
 extern subsector_t *r_surf_sub;
@@ -76,6 +81,8 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
   surface_t *surfs = ASurfs;
   //float dot, mins, maxs;
   //int bmins, bmaxs;
+
+  bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
   while (surfs) {
     if (plane) {
@@ -118,7 +125,17 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       surfs->extents[1] = 256;
     }
 
-    LightFace(surfs, sub);
+    //GCon->Logf("***INITSURF***");
+    surfs->subsector = sub;
+    if (!doPrecalc && showCreateWorldSurfProgress && !surfs->lightmap) {
+      surfs->lmapflags |= Lightmap_Required;
+      //GCon->Logf("delayed static lightmap for %p (subsector %p)", surfs, sub);
+      //LightFace(surfs, sub);
+    } else {
+      surfs->lmapflags &= ~Lightmap_Required; // just in case
+      LightFace(surfs, sub);
+    }
+    //LightFace(surfs, sub);
 
     surfs = surfs->next;
   }

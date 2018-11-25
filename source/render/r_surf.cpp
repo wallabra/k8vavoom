@@ -151,17 +151,16 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 sec_surface_t *VRenderLevelShared::CreateSecSurface (subsector_t *sub, sec_plane_t *InSplane) {
   guard(VRenderLevelShared::CreateSecSurface);
   sec_plane_t *splane = InSplane;
-  sec_surface_t *ssurf;
-  surface_t *surf;
 
-  ssurf = new sec_surface_t;
+  sec_surface_t *ssurf = new sec_surface_t;
   memset((void *)ssurf, 0, sizeof(sec_surface_t));
-  surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(sub->numlines-1)*sizeof(TVec));
+  surface_t *surf = (surface_t *)Z_Calloc(sizeof(surface_t)+(sub->numlines-1)*sizeof(TVec));
 
   if (splane->pic == skyflatnum && splane->normal.z < 0.0) splane = &sky_plane;
   ssurf->secplane = splane;
   ssurf->dist = splane->dist;
 
+  // setup texture
   VTexture *Tex = GTextureManager(splane->pic);
   if (fabs(splane->normal.z) > 0.1) {
     ssurf->texinfo.saxis = TVec(mcos(splane->BaseAngle-splane->Angle),
@@ -183,6 +182,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (subsector_t *sub, sec_plane
   ssurf->YScale = splane->YScale;
   ssurf->Angle = splane->BaseAngle-splane->Angle;
 
+  //surf->subsector = sub; // this is required to calculate static lightmaps, and done in `InitSurfs()`
   surf->count = sub->numlines;
   seg_t *line = &Level->Segs[sub->firstline];
   bool vlindex = (splane->normal.z < 0);
@@ -1297,7 +1297,6 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
 //==========================================================================
 void VRenderLevelShared::CreateWorldSurfaces () {
   guard(VRenderLevelShared::CreateWorldSurfaces);
-  //int i, j;
   int count, dscount, spcount;
   subregion_t *sreg;
   subsector_t *sub;
@@ -1362,6 +1361,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     for (reg = sub->sector->botregion; reg; reg = reg->next) {
       r_floor = reg->floor;
       r_ceiling = reg->ceiling;
+
       if (sub->sector->fakefloors) {
         if (r_floor == &sub->sector->floor) r_floor = &sub->sector->fakefloors->floorplane;
         if (r_ceiling == &sub->sector->ceiling) r_ceiling = &sub->sector->fakefloors->ceilplane;
@@ -1398,6 +1398,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     if (showCreateWorldSurfProgress) R_PBarUpdate("Lighting", i, Level->NumSubsectors);
   }
   if (showCreateWorldSurfProgress) R_PBarUpdate("Lighting", Level->NumSubsectors, Level->NumSubsectors, true);
+  showCreateWorldSurfProgress = false;
 
   unguard;
 }

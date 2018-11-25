@@ -75,6 +75,19 @@ menudef VideoOptions {
       "the game will stutter less on entering new areas.";
   }
 
+  option bool {
+    title = "Precalculate Static Lights";
+    cvar = r_precalc_static_lights;
+    help =
+      "Precalculate static lights for lightmapped renderer?"
+      "For most levels this takes a little time, but there can be levels"
+      "with alot of lighting decorations, and preprocessing those can take"
+      "much time. Currently engine cannot cache static lighting, so"
+      "(quick)loading will precalculate lighting each time."
+      "If in doubt, leave this 'ON'."
+      "***WARNING!*** THIS IS EXPERIMENTAL OPTION!";
+  }
+
 
   header "Visual Options";
 

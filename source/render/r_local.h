@@ -577,7 +577,7 @@ private:
   float CastRay(const TVec&, const TVec&, float);
   static void CalcFaceVectors(surface_t*);
   void CalcPoints(surface_t*);
-  void SingleLightFace(light_t*, surface_t*);
+  void SingleLightFace(light_t*, surface_t*, const vuint8 *facevis);
   void LightFace(surface_t*, subsector_t*);
   void MarkLights(dlight_t*, int, int);
   void AddDynamicLights(surface_t*);

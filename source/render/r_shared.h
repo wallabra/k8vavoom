@@ -76,6 +76,10 @@ struct texinfo_t {
   vuint8 ColourMap;
 };
 
+enum {
+  Lightmap_Required = 0x0001u,
+};
+
 struct surface_t {
   surface_t *next;
   surface_t *DrawNext;
@@ -84,7 +88,7 @@ struct surface_t {
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and colour
   vuint32 Fade;
-  vuint8 *lightmap;
+  vuint8 *lightmap; // can be equal to `SURF_NEED_TO_BUILD_LIGHMAP`
   rgb_t *lightmap_rgb;
   int dlightframe;
   int dlightbits;
@@ -93,6 +97,8 @@ struct surface_t {
   short extents[2];
   surfcache_t *CacheSurf;
   seg_t *dcseg; // seg with decals for this surface
+  vuint32 lmapflags; // Lightmap_XXX
+  subsector_t *subsector;
   TVec verts[1]; // dynamic array
 };
 

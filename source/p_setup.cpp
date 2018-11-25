@@ -73,6 +73,7 @@ extern VCvarI r_max_portal_depth;
 extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
 #ifdef CLIENT
 extern int ldr_extrasamples_override; // -1: no override; 0: disable; 1: enable
+extern int r_precalc_static_lights_override; // <0: not set
 #endif
 
 
@@ -1071,6 +1072,7 @@ load_again:
   pobj_allow_several_in_subsector_override = 0;
 #ifdef CLIENT
   ldr_extrasamples_override = -1;
+  r_precalc_static_lights_override = -1;
 #endif
 
   double TotalTime = -Sys_Time();
