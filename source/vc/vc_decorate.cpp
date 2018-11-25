@@ -4617,10 +4617,16 @@ void ProcessDecorateScripts () {
       }
       if (!C) C = VClass::FindClassNoCase(*CF.Name);
       if (!C) {
-        if (dbg_show_missing_classes || CF.PowerPrefix.length() != 0) GCon->Logf(NAME_Warning, "No such class `%s`", *CF.Name);
+        if (dbg_show_missing_classes || CF.PowerPrefix.length() != 0) {
+          if (CF.PowerPrefix.length() != 0) {
+            GCon->Logf(NAME_Warning, "DECORATE: No such powerup class `%s`", *CF.Name);
+          } else {
+            GCon->Logf(NAME_Warning, "DECORATE: No such class `%s`", *CF.Name);
+          }
+        }
         //*(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
       } else if (!C->IsChildOf(CF.ReqParent)) {
-        GCon->Logf(NAME_Warning, "Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
+        GCon->Logf(NAME_Warning, "DECORATE: Class `%s` is not a descendant of `%s`", *CF.Name, CF.ReqParent->GetName());
       } else {
         *(VClass **)(CF.Class->Defaults+CF.Offset) = C;
       }

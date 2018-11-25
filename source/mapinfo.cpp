@@ -573,12 +573,14 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         info->Sky2Texture = GTextureManager.DefaultTexture;
         info->Sky1ScrollDelta = 0;
         info->Sky2ScrollDelta = 0;
-        GCon->Logf("MSG: using gz skybox '%s'", *skbname);
+        //GCon->Logf("MSG: using gz skybox '%s'", *skbname);
         if (!sc->IsAtEol()) {
           sc->Check(",");
           sc->ExpectFloatWithSign();
           if (HexenMode) sc->Float /= 256.0;
-          if (sc->Float != 0) GCon->Logf("MSG: ignoring sky scroll for skybox (this is mostly harmless)");
+          if (sc->Float != 0) {
+            GCon->Logf(NAME_Warning, "%s:MAPINFO: ignoring sky scroll for skybox '%s' (this is mostly harmless)", *sc->GetLoc().toStringNoCol(), *skbname);
+          }
         }
       } else {
         info->SkyBox = NAME_None;

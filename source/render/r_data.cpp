@@ -1743,86 +1743,78 @@ static void SetClassFieldVec(VClass *Class, const char *FieldName,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  R_ParseEffectDefs
 //
 //==========================================================================
-
-void R_ParseEffectDefs()
-{
+void R_ParseEffectDefs () {
   guard(R_ParseEffectDefs);
   GCon->Log(NAME_Init, "Parsing effect defs");
 
   TArray<VTempClassEffects> ClassDefs;
 
-  //  Parse VFXDEFS, GLDEFS, etc. scripts.
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0;
-    Lump = W_IterateNS(Lump, WADNS_Global))
-  {
-    if (W_LumpName(Lump) == NAME_vfxdefs)
-    {
-      ParseEffectDefs(new VScriptParser(W_FullLumpName(Lump),
-        W_CreateLumpReaderNum(Lump)), ClassDefs);
+  // parse VFXDEFS, GLDEFS, etc. scripts
+  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    if (W_LumpName(Lump) == NAME_vfxdefs) {
+      ParseEffectDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
     }
     if (W_LumpName(Lump) == NAME_gldefs ||
-      W_LumpName(Lump) == NAME_doomdefs || W_LumpName(Lump) == NAME_hticdefs ||
-      W_LumpName(Lump) == NAME_hexndefs || W_LumpName(Lump) == NAME_strfdefs)
+        W_LumpName(Lump) == NAME_doomdefs || W_LumpName(Lump) == NAME_hticdefs ||
+        W_LumpName(Lump) == NAME_hexndefs || W_LumpName(Lump) == NAME_strfdefs)
     {
-      ParseGZDoomEffectDefs(new VScriptParser(W_FullLumpName(Lump),
-        W_CreateLumpReaderNum(Lump)), ClassDefs);
+      ParseGZDoomEffectDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
     }
   }
 
-  //  Add effects to the classes.
-  for (int i = 0; i < ClassDefs.Num(); i++)
-  {
+  // add effects to the classes
+  for (int i = 0; i < ClassDefs.Num(); ++i) {
     VTempClassEffects &CD = ClassDefs[i];
     VClass *Cls = VClass::FindClass(*CD.ClassName);
-    if (Cls)
-    {
-      // Get class replacement
+    if (Cls) {
+      // get class replacement
       Cls = Cls->GetReplacement();
-    }
-    else
-    {
+    } else {
       if (dbg_show_missing_classes) {
         if (CD.StaticLight.IsNotEmpty()) {
-          GCon->Logf(NAME_Init, "No such class `%s` for static light \"%s\"", *CD.ClassName, *CD.StaticLight);
+          GCon->Logf(NAME_Warning, "No such class `%s` for static light \"%s\"", *CD.ClassName, *CD.StaticLight);
         } else {
-          GCon->Logf(NAME_Init, "No such class `%s` for effect", *CD.ClassName);
+          GCon->Logf(NAME_Warning, "No such class `%s` for effect", *CD.ClassName);
         }
       }
       continue;
     }
 
-    if (CD.StaticLight.IsNotEmpty())
-    {
+    if (CD.StaticLight.IsNotEmpty()) {
       VLightEffectDef *SLight = R_FindLightEffect(CD.StaticLight);
-      if (SLight)
-      {
+      if (SLight) {
         SetClassFieldBool(Cls, "bStaticLight", true);
         SetClassFieldInt(Cls, "LightColour", SLight->Colour);
         SetClassFieldFloat(Cls, "LightRadius", SLight->Radius);
         SetClassFieldVec(Cls, "LightOffset", SLight->Offset);
-      }
-      else
-      {
-        GCon->Logf("Light \"%s\" not found", *CD.StaticLight);
+      } else {
+        GCon->Logf(NAME_Warning, "Light \"%s\" not found.", *CD.StaticLight);
       }
     }
 
-    for (int j = 0; j < CD.SpriteEffects.Num(); j++)
-    {
+    for (int j = 0; j < CD.SpriteEffects.Num(); j++) {
       VTempSpriteEffectDef &SprDef = CD.SpriteEffects[j];
-      //  Sprite name must be either 4 or 5 chars.
-      if (SprDef.Sprite.Length() != 4 && SprDef.Sprite.Length() != 5)
-      {
-        GCon->Logf(NAME_Init, "Bad sprite name length '%s'", *SprDef.Sprite);
+      // sprite name must be either 4 or 5 chars
+      if (SprDef.Sprite.Length() != 4 && SprDef.Sprite.Length() != 5) {
+        GCon->Logf(NAME_Warning, "Bad sprite name length '%s', sprite effects ignored.", *SprDef.Sprite);
         continue;
       }
 
-      //  Find sprite index.
+      if (SprDef.Sprite.length() == 5) {
+        char ch = VStr::ToUpper(SprDef.Sprite[4]);
+        if (ch < 'A' || ch-'A' > 36) {
+          GCon->Logf(NAME_Warning, "Bad sprite frame in '%s', sprite effects ignored.", *SprDef.Sprite);
+          continue;
+        }
+      }
+
+      // find sprite index
       char SprName[8];
       SprName[0] = VStr::ToLower(SprDef.Sprite[0]);
       SprName[1] = VStr::ToLower(SprDef.Sprite[1]);
@@ -1830,32 +1822,26 @@ void R_ParseEffectDefs()
       SprName[3] = VStr::ToLower(SprDef.Sprite[3]);
       SprName[4] = 0;
       int SprIdx = VClass::FindSprite(SprName, false);
-      if (SprIdx == -1)
-      {
-        GCon->Logf(NAME_Init, "No such sprite '%s'", SprName);
+      if (SprIdx == -1) {
+        GCon->Logf(NAME_Warning, "No such sprite '%s', sprite effects ignored.", SprName);
         continue;
       }
 
       VSpriteEffect &SprFx = Cls->SpriteEffects.Alloc();
       SprFx.SpriteIndex = SprIdx;
-      SprFx.Frame = SprDef.Sprite.Length() == 4 ? -1 :
-        (VStr::ToUpper(SprDef.Sprite[4]) - 'A');
+      SprFx.Frame = (SprDef.Sprite.Length() == 4 ? -1 : VStr::ToUpper(SprDef.Sprite[4])-'A');
       SprFx.LightDef = nullptr;
-      if (SprDef.Light.IsNotEmpty())
-      {
+      if (SprDef.Light.IsNotEmpty()) {
         SprFx.LightDef = R_FindLightEffect(SprDef.Light);
-        if (!SprFx.LightDef)
-        {
-          GCon->Logf("Light \"%s\" not found", *SprDef.Light);
+        if (!SprFx.LightDef) {
+          GCon->Logf(NAME_Warning, "Light \"%s\" not found.", *SprDef.Light);
         }
       }
       SprFx.PartDef = nullptr;
-      if (SprDef.Part.IsNotEmpty())
-      {
+      if (SprDef.Part.IsNotEmpty()) {
         SprFx.PartDef = FindParticleEffect(SprDef.Part);
-        if (!SprFx.PartDef)
-        {
-          GCon->Logf("Particle effect \"%s\" not found", *SprDef.Part);
+        if (!SprFx.PartDef) {
+          GCon->Logf(NAME_Warning, "Particle effect \"%s\" not found.", *SprDef.Part);
         }
       }
     }

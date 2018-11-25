@@ -116,8 +116,8 @@ void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
   memset((void *)&info, 0, sizeof(info));
   sc->ExpectString();
   info.Name = *sc->String;
-  GCon->Logf("MSG: found gz skybox '%s'", *info.Name);
-  if (sc->Check("fliptop")) GCon->Logf("MSG: gz skybox '%s' require fliptop, which is not supported by VaVoom yet", *info.Name);
+  //GCon->Logf("MSG: found gz skybox '%s'", *info.Name);
+  if (sc->Check("fliptop")) GCon->Logf(NAME_Warning, "gz skybox '%s' requires fliptop, which is not supported by k8VaVoom yet", *info.Name);
   VStr txnames[6];
   int txcount = 0;
   bool gotSq = false;
