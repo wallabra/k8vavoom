@@ -176,7 +176,7 @@ bool Physics (float DeltaTime) {
     if (bPassMobj && !bMissile && !Level.CompatNoPassOver) {
       // handle Z momentum and gravity
       //EntityEx onmo = EntityEx(CheckOnmobj());
-      if (onmo) {
+      if (onmo && !onmo.bCorpse) {
         if (bIsPlayer) {
           //print("Player is on thing %C", onmo);
           if (Velocity.z < -DEFAULT_GRAVITY*0.25 && !bFly && !bNoGravity) PlayerLandedOnThing();
