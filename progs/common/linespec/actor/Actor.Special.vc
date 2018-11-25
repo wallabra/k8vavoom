@@ -292,35 +292,30 @@ final void A_SetBlend(string Col1, float A, int Tics, optional string Col2)
     itof(Tics) / 35.0, self);
 }
 
+
 //============================================================================
 //
 //  A_CheckSight
 //
 //============================================================================
+final void A_CheckSight (state Label) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
-final void A_CheckSight(state Label)
-{
-  //  State jumps should not affect state chain results.
-  if (XLevel.StateCall)
-  {
-    XLevel.StateCall->Result = false;
-  }
-
-  int i;
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned)
-    {
+  foreach (auto i; 0..MAXPLAYERS) {
+    if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned) continue;
+    if (!Level.Game.Players[i].Camera) {
+      //k8: this can happens when player is switching cameras (why?)
+      //    we can check it with brutalv20, with "+vscript_command give PowerStrength"
+      dprint("%C: EMPTY CAMERA for player #%d!", self, i);
       continue;
     }
-    if (Level.Game.Players[i].Camera.CanSee(self))
-    {
-      return;
-    }
+    if (Level.Game.Players[i].Camera.CanSee(self)) return;
   }
 
   DoJump(Label);
 }
+
 
 //==========================================================================
 //
