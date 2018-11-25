@@ -22,12 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class ClientGame : ClientGameShared;
 
-TitleScreen     GTitle;
-IntermissionScreen  GImission;
-FinaleScreen    GFinale;
+TitleScreen GTitle;
+IntermissionScreen GImission;
+FinaleScreen GFinale;
 
 int pic_brdr_t;
 int pic_brdr_b;
@@ -38,14 +37,13 @@ int pic_brdr_tr;
 int pic_brdr_bl;
 int pic_brdr_br;
 
+
 //==========================================================================
 //
 //  RootWindowCreated
 //
 //==========================================================================
-
-override void RootWindowCreated()
-{
+override void RootWindowCreated () {
   CreateCvar('sb_show_weapons', "0", "Show Strife Weapons", 0);
   CreateCvar('sb_show_keys', "0", "Show Strife Keys", 0);
   CreateCvar('sb_show_objectives', "0", "Show Strife Objectives", 0);
@@ -63,14 +61,13 @@ override void RootWindowCreated()
   GFinale.Hide();
 }
 
+
 //==========================================================================
 //
 //  Connected
 //
 //==========================================================================
-
-override void Connected()
-{
+override void Connected () {
   GTitle.Hide();
   GTitle.StopDemoLoop();
   GSBar.Hide();
@@ -78,78 +75,72 @@ override void Connected()
   GFinale.Hide();
 }
 
+
 //==========================================================================
 //
 //  Disconnected
 //
 //==========================================================================
-
-override void Disconnected()
-{
+override void Disconnected () {
   GTitle.Show();
   GSBar.Hide();
   GImission.Hide();
   GFinale.Hide();
 }
+
 
 //==========================================================================
 //
 //  DemoPlaybackStarted
 //
 //==========================================================================
-
-override void DemoPlaybackStarted()
-{
+override void DemoPlaybackStarted () {
   GTitle.Hide();
   GSBar.Hide();
   GImission.Hide();
   GFinale.Hide();
 }
 
+
 //==========================================================================
 //
 //  DemoPlaybackStopped
 //
 //==========================================================================
-
-override void DemoPlaybackStopped()
-{
+override void DemoPlaybackStopped () {
   GTitle.Show();
   GSBar.Hide();
   GImission.Hide();
   GFinale.Hide();
 }
 
+
 //==========================================================================
 //
 //  OnHostEndGame
 //
 //==========================================================================
-
-override void OnHostEndGame()
-{
+override void OnHostEndGame () {
   GTitle.OnHostEndGame();
 }
+
 
 //==========================================================================
 //
 //  OnHostError
 //
 //==========================================================================
-
-override void OnHostError()
-{
+override void OnHostError () {
   GTitle.OnHostError();
 }
+
 
 //==========================================================================
 //
 //  StatusBarStartMap
 //
 //==========================================================================
-
-override void StatusBarStartMap()
-{
+override void StatusBarStartMap () {
   StatusBarScreen(GSBar).cl = Player(cl);
   GSBar.Show();
   GSBar.StartMap();
@@ -157,91 +148,82 @@ override void StatusBarStartMap()
   GFinale.Hide();
 }
 
+
 //==========================================================================
 //
 //  StatusBarDrawer
 //
 //==========================================================================
-
-override void StatusBarDrawer(int sb_view)
-{
+override void StatusBarDrawer (int sb_view) {
   GSBar.SB_Drawer(sb_view);
 }
+
 
 //==========================================================================
 //
 //  StatusBarUpdateWidgets
 //
 //==========================================================================
-
-override void StatusBarUpdateWidgets(float DeltaTime)
-{
+override void StatusBarUpdateWidgets (float DeltaTime) {
   GSBar.SB_UpdateWidgets();
 }
+
 
 //==========================================================================
 //
 //  IintermissionStart
 //
 //==========================================================================
-
-override void IintermissionStart()
-{
+override void IintermissionStart () {
   GSBar.Hide();
   GImission.Show();
   GImission.Start();
   GFinale.Hide();
 }
 
+
 //==========================================================================
 //
 //  StartFinale
 //
 //==========================================================================
-
-override void StartFinale(name FinaleType)
-{
+override void StartFinale (name FinaleType) {
   GSBar.Hide();
   GImission.Hide();
   GFinale.Show();
   GFinale.StartFinale(FinaleType);
 }
 
+
 //===========================================================================
 //
 //  FinaleResponder
 //
 //===========================================================================
-
-override bool FinaleResponder(event_t *event)
-{
+override bool FinaleResponder (event_t *event) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  DeactivateMenu
 //
 //==========================================================================
-
-override void DeactivateMenu()
-{
+override void DeactivateMenu () {
   ForceMenuOff();
 }
+
 
 //==========================================================================
 //
 //  MenuResponder
 //
 //==========================================================================
-
-override bool MenuResponder(event_t * event)
-{
-  if (!CurrentMenuScreen)
-  {
-    // Pop-up menu?
-    if (event->type == ev_keydown && event->data1 == K_ESCAPE)
-    {
+override bool MenuResponder(event_t *event) {
+  if (!CurrentMenuScreen) {
+    // pop-up menu?
+    if (event->type == ev_keydown && event->data1 == K_ESCAPE) {
       PushMenuScreen(SpawnMenu(MenuScreenMain));
       return true;
     }
@@ -249,40 +231,33 @@ override bool MenuResponder(event_t * event)
   return false;
 }
 
+
 //==========================================================================
 //
 //  MenuActive
 //
 //==========================================================================
-
-override bool MenuActive()
-{
-  return CurrentMenuScreen != none;
+override bool MenuActive () {
+  return (CurrentMenuScreen != none);
 }
+
 
 //==========================================================================
 //
 //  SetMenu
 //
 //==========================================================================
+override void SetMenu (string Name) {
+  if (SetCommonMenu(Name)) return;
+  if (!stricmp(Name, "Main")) { PushMenuScreen(SpawnMenu(MenuScreenMain)); return; }
+  if (!stricmp(Name, "Save")) { PushMenuScreen(SpawnMenu(MenuScreenSaveGame)); return; }
+  if (!stricmp(Name, "Load")) { PushMenuScreen(SpawnMenu(MenuScreenLoadGame)); return; }
+  if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return; }
+  if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return; }
+  if (!stricmp(Name, "Quit")) { menu_quit(); return; }
+  PushMenuScreen(SpawnMenu(MenuScreenMain));
 
-override void SetMenu(string Name)
-{
-  if (!stricmp(Name, "Main"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenMain));
-    return;
-  }
-  if (!stricmp(Name, "Save"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenSaveGame));
-    return;
-  }
-  if (!stricmp(Name, "Load"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenLoadGame));
-    return;
-  }
+  /*
   if (!stricmp(Name, "PSetup"))
   {
     PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
@@ -298,13 +273,6 @@ override void SetMenu(string Name)
     PushMenuScreen(SpawnMenu(MenuScreenControls));
     return;
   }
-  /*
-  if (!stricmp(Name, "Controls2"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenControls2));
-    return;
-  }
-  */
   if (!stricmp(Name, "Mouse"))
   {
     PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
@@ -336,42 +304,38 @@ override void SetMenu(string Name)
     return;
   }
   PushMenuScreen(SpawnMenu(MenuScreenMain));
+  */
 }
+
 
 //==========================================================================
 //
 //  menu_quit
 //
 //==========================================================================
-
-override void menu_quit()
-{
+override void menu_quit () {
   if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
-  MessageBoxStartMessage("Do you really want to leave?\n\n(press y to quit)",
-    MB_Quit, true);
+  MessageBoxStartMessage("Do you really want to leave?\n\n(press y to quit)", MB_Quit, true);
 }
+
 
 //==========================================================================
 //
 //  QuitResponse
 //
 //==========================================================================
-
-override void QuitResponse(int ch)
-{
-  if (ch != K_y)
-    return;
+override void QuitResponse (int ch) {
+  if (ch != K_y && ch != K_t) return;
   PushMenuScreen(SpawnMenu(MenuScreenQuit));
 }
+
 
 //==========================================================================
 //
 //  InitBorder
 //
 //==========================================================================
-
-void InitBorder()
-{
+void InitBorder () {
   pic_brdr_t = R_RegisterPic('brdr_t');
   pic_brdr_b = R_RegisterPic('brdr_b');
   pic_brdr_l = R_RegisterPic('brdr_l');
@@ -382,6 +346,7 @@ void InitBorder()
   pic_brdr_br = R_RegisterPic('brdr_br');
 }
 
+
 //==========================================================================
 //
 //  DrawBorder
@@ -389,55 +354,39 @@ void InitBorder()
 //  Draws border
 //
 //==========================================================================
+override void DrawBorder (int x, int y, int w, int h) {
+  if (!pic_brdr_b) InitBorder();
 
-override void DrawBorder(int x, int y, int w, int h)
-{
-  int i;
+  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x + i, y - 8, pic_brdr_t);
+  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x + i, y + h, pic_brdr_b);
+  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x - 8, y + i, pic_brdr_l);
+  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x + w, y + i, pic_brdr_r);
 
-  if (!pic_brdr_b)
-  {
-    InitBorder();
-  }
-
-  for (i = 0; i < w; i += 8)
-    GRoot.DrawPic(x + i, y - 8, pic_brdr_t);
-
-  for (i = 0; i < w; i += 8)
-    GRoot.DrawPic(x + i, y + h, pic_brdr_b);
-
-  for (i = 0; i < h; i += 8)
-    GRoot.DrawPic(x - 8, y + i, pic_brdr_l);
-
-  for (i = 0; i < h; i += 8)
-    GRoot.DrawPic(x + w, y + i, pic_brdr_r);
-
-  // Draw beveled edge.
+  // draw beveled edge
   GRoot.DrawPic(x - 8, y - 8, pic_brdr_tl);
   GRoot.DrawPic(x + w, y - 8, pic_brdr_tr);
   GRoot.DrawPic(x - 8, y + h, pic_brdr_bl);
   GRoot.DrawPic(x + w, y + h, pic_brdr_br);
 }
 
+
 //==========================================================================
 //
 //  DrawViewBorder
 //
 //==========================================================================
-
-override void DrawViewBorder(int x, int y, int w, int h)
-{
+override void DrawViewBorder (int x, int y, int w, int h) {
   GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'f_pave01');
   DrawBorder(x, y, w, h);
 }
+
 
 //==========================================================================
 //
 //  StartSpeech
 //
 //==========================================================================
-
-override void StartSpeech(EntityEx Speaker, int SpeechNum)
-{
+override void StartSpeech (EntityEx Speaker, int SpeechNum) {
   ConDialog Dlg;
 
   Dlg = ConDialog(SpawnMenu(ConDialog));
@@ -445,41 +394,38 @@ override void StartSpeech(EntityEx Speaker, int SpeechNum)
   PushMenuScreen(Dlg);
 }
 
+
 //==========================================================================
 //
 //  StartConSlideshow1
 //
 //==========================================================================
-
-override void StartConSlideshow1()
-{
+override void StartConSlideshow1 () {
   PushMenuScreen(SpawnMenu(ConSlideshow1));
 }
+
 
 //==========================================================================
 //
 //  StartConSlideshow2
 //
 //==========================================================================
-
-override void StartConSlideshow2()
-{
+override void StartConSlideshow2 () {
   PushMenuScreen(SpawnMenu(ConSlideshow2));
 }
+
 
 //==========================================================================
 //
 //  SetFinaleType
 //
 //==========================================================================
-
-override void SetFinaleType(int FinaleType)
-{
+override void SetFinaleType (int FinaleType) {
   GFinale.StrifeFinaleType = FinaleType;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   sb_height = 32;
   MsgBoxFlat = 'f_pave01';
   BigSelectorXOffset = -32;

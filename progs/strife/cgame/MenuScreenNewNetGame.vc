@@ -122,26 +122,14 @@ override void CreateChoices()
 
 void InitMapList()
 {
-  int i;
 #ifdef FIXME
-  int count = 0;
-
-  for (i = 1; i <= 99; i++)
-  {
+  foreach (auto i; 1..100) {
     int map = P_TranslateMap(i);
-
-    if (map != -1)
-    {
-      Level.EnumNames[count] = P_GetMapName(map);
-      count++;
-    }
+    if (map != -1) Level.AddItem(P_GetMapName(map));
   }
   Level.MaxValue = count;
 #else
-  for (i = 0; i < 32; i++)
-  {
-    Level.EnumNames[i] = P_GetMapName(i);
-  }
+  foreach (auto i; 0..32) Level.AddItem(P_GetMapName(i));
 #endif
   Level.Value = 0;
 }
