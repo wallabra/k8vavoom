@@ -511,17 +511,15 @@ void VLevel::FixKnownMapErrors () {
     return;
   }
 
-  // Skulldash EE first map, too many lights
-  // looks ugly
-  /*
+  // Skulldash EE first map, too many static lights, don't precalc
   if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
 #ifdef CLIENT
-    ldr_extrasamples_override = 0;
+    r_precalc_static_lights_override = 0;
+    //ldr_extrasamples_override = 0;
 #endif
-    GCon->Logf(NAME_Warning, "MAPFIX: SkullDash EE: disabled lightmap filtering");
+    GCon->Logf(NAME_Warning, "MAPFIX: SkullDash EE: disabled precaluclated static lightmaps");
     return;
   }
-  */
 }
 
 
