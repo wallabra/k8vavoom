@@ -2668,6 +2668,7 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_AttackZOffset:
       if (bIsPlayer) PlayerPawn(Player.MO).AttackZOffset = float(IntVal)/65536.0;
       break;
+    default: dprint("%C: SetActorProperty: unknown property %d", self, Prop);
   }
 }
 
@@ -2720,6 +2721,7 @@ final override int GetActorProperty (int Prop) {
     case APROP_StencilColor  = 41,
 */
   }
+  dprint("%C: GetActorProperty: unknown property %d", self, Prop);
   return 0;
 }
 
@@ -2731,6 +2733,7 @@ final override int GetActorProperty (int Prop) {
 //==========================================================================
 final bool SetPlayerProperty (int Prop, int Set) {
   class!Inventory InvClass = none;
+
   switch (Prop) {
     case PROP_FROZEN: PlayerEx(Player).bFrozen = !!Set; return true;
     case PROP_NOTARGET: PlayerEx(Player).bNoTarget = !!Set; return true;
@@ -2746,7 +2749,9 @@ final bool SetPlayerProperty (int Prop, int Set) {
     case PROP_WEAPONLEVEL2: InvClass = PowerWeaponLevel2; break;
     case PROP_FLIGHT: InvClass = PowerFlight; break;
     case PROP_SPEED: InvClass = PowerSpeed; break;
-    default: return false;
+    default:
+      dprint("%C: SetPlayerProperty: unknown property %d", self, Prop);
+      return false;
   }
 
   if (Set) {
