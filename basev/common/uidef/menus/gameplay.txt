@@ -27,6 +27,8 @@ menudef GameplayOptions {
     help = "Do slightly better line-of-sight checking for monsters.";
   }
 
+  header "Other Options";
+
   option bool {
     title = "Pushable barrels";
     cvar = sv_pushablebarrels;
@@ -34,6 +36,14 @@ menudef GameplayOptions {
       "Can barrels be pushed?"
       "Don't worry, this option is latched (I should explain this)."
       "Requires game restart.";
+  }
+
+  option bool {
+    title = "'Unstealth' monsters";
+    cvar = fuck_stealth_monsters;
+    help =
+      "If you hate stealth monsters as much as I do,"
+      "you can turn them into normal ones with this toggle.";
   }
 
   //TODO
