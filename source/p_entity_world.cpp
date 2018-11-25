@@ -2000,6 +2000,7 @@ IMPLEMENT_FUNCTION(VEntity, UnlinkFromWorld) {
 IMPLEMENT_FUNCTION(VEntity, CanSee) {
   P_GET_REF(VEntity, Other);
   P_GET_SELF;
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty `self`!"); }
   RET_BOOL(Self->CanSee(Other));
 }
 

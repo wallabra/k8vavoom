@@ -416,7 +416,14 @@ bool VEntity::CanSee (VEntity *Other) {
 #endif
 
   if (!Other) return false;
-  if ((GetFlags()&_OF_Destroyed) || (Other->GetFlags()&_OF_Destroyed)) return false;
+  if (GetFlags()&(_OF_Destroyed|_OF_Destroyed)) return false;
+  if (Other->GetFlags()&(_OF_Destroyed|_OF_Destroyed)) return false;
+
+  // if we have no subsector for this object, it cannot see anything
+  if (!SubSector) {
+    if (developer) GCon->Logf(NAME_Dev, "EMPTY SUBSECTOR for '%s'", *GetClass()->GetFullName());
+    return false;
+  }
 
   // determine subsector entries in GL_PVS table
   // first check for trivial rejection

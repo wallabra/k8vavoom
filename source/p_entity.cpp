@@ -204,6 +204,13 @@ bool VEntity::SetState (VState *InState) {
   VState *st = InState;
   int watchcatCount = 1024;
   //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(000): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
+  if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
+    if (developer) GCon->Logf(NAME_Dev, "   (00):%s: dead (0x%04x) before state actions, state is %s", *GetClass()->GetFullName(), GetFlags(), (st ? *st->Loc.toStringNoCol() : "<none>"));
+    State = nullptr;
+    DispSpriteFrame = 0;
+    DispSpriteName = NAME_None;
+    return false;
+  }
   do {
     if (--watchcatCount <= 0) {
       //k8: FIXME!
@@ -238,6 +245,13 @@ bool VEntity::SetState (VState *InState) {
         _stateRouteSelf = nullptr;
         P_PASS_SELF;
         ExecuteFunctionNoArgs(st->Function);
+        if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
+          /*
+          GCon->Logf(NAME_Dev, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
+            (st && st->Next ? *st->Next->Loc.toStringNoCol() : "<none>"), (State ? *State->Loc.toStringNoCol() : "<none>"));
+          */
+          State = nullptr; // just in case
+        }
       }
     }
 

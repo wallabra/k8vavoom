@@ -283,7 +283,9 @@ static void RunFunction (VMethod *func) {
 
   if (func->Flags&FUNC_Native) {
     // native function, first statement is pointer to function
+    if (developer) cstPush(func);
     func->NativeFunc();
+    if (developer) cstPop();
     return;
   }
 
