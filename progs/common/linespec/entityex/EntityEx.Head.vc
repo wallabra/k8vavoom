@@ -80,68 +80,67 @@ enum
 
 enum
 {
-  APROP_Health        = 0,
-  APROP_Speed         = 1,
-  APROP_Damage        = 2,
-  APROP_Alpha         = 3,
-  APROP_RenderStyle   = 4,
-  APROP_SeeSound      = 5,  // Sounds can only be set, not gotten
+  APROP_Health        = 0, // implemented
+  APROP_Speed         = 1, // implemented
+  APROP_Damage        = 2, // implemented
+  APROP_Alpha         = 3, // implemented
+  APROP_RenderStyle   = 4, // implemented
+  APROP_SeeSound      = 5, // Sounds can only be set, not gotten
   APROP_AttackSound   = 6,
   APROP_PainSound     = 7,
   APROP_DeathSound    = 8,
   APROP_ActiveSound   = 9,
-  APROP_Ambush        = 10,
-  APROP_Invulnerable  = 11,
-  APROP_JumpZ         = 12,
-  APROP_ChaseGoal     = 13,
-  APROP_Frightened    = 14,
-  APROP_Gravity       = 15,
-  APROP_Friendly      = 16,
-  APROP_SpawnHealth   = 17,
+  APROP_Ambush        = 10, // implemented
+  APROP_Invulnerable  = 11, // implemented
+  APROP_JumpZ         = 12, // implemented
+  APROP_ChaseGoal     = 13, // implemented
+  APROP_Frightened    = 14, // implemented
+  APROP_Gravity       = 15, // implemented
+  APROP_Friendly      = 16, // implemented
+  APROP_SpawnHealth   = 17, // implemented
   // only getters
-  APROP_Dropped       = 18,
-  // unimplemented
+  APROP_Dropped       = 18, // implemented
   APROP_Notarget      = 19,
-  APROP_Species       = 20,
+  APROP_Species       = 20, // getter only, implemented in C++ code
   APROP_NameTag       = 21, // getter only, implemented in C++ code
   APROP_Score         = 22,
   APROP_Notrigger     = 23,
   APROP_DamageFactor  = 24,
-  APROP_MasterTID     = 25,
-  APROP_TargetTID     = 26,
-  APROP_TracerTID     = 27,
-  APROP_WaterLevel    = 28,
-  APROP_ScaleX        = 29,
-  APROP_ScaleY        = 30,
-  APROP_Dormant       = 31,
-  APROP_Mass          = 32,
+  APROP_MasterTID     = 25, // implemented
+  APROP_TargetTID     = 26, // implemented
+  APROP_TracerTID     = 27, // implemented
+  APROP_WaterLevel    = 28, // implemented
+  APROP_ScaleX        = 29, // implemented
+  APROP_ScaleY        = 30, // implemented
+  APROP_Dormant       = 31, // implemented
+  APROP_Mass          = 32, // implemented
   APROP_Accuracy      = 33,
   APROP_Stamina       = 34,
-  APROP_Height        = 35,
-  APROP_Radius        = 36,
+  APROP_Height        = 35, // implemented
+  APROP_Radius        = 36, // implemented
   APROP_ReactionTime  = 37,
-  APROP_MeleeRange    = 38,
-  APROP_ViewHeight    = 39,
-  APROP_AttackZOffset = 40,
+  APROP_MeleeRange    = 38, // implemented
+  APROP_ViewHeight    = 39, // implemented
+  APROP_AttackZOffset = 40, // implemented
   APROP_StencilColor  = 41,
 };
 
 enum
 {
-  PROP_FROZEN         = 0,
-  PROP_NOTARGET       = 1,
-  PROP_INSTANTWEAPONSWITCH  = 2,
-  PROP_FLY          = 3,
-  PROP_TOTALLYFROZEN      = 4,
-  PROP_INVULNERABILITY    = 5,
-  PROP_STRENGTH       = 6,
-  PROP_INVISIBILITY     = 7,
-  PROP_RADIATIONSUIT      = 8,
-  PROP_ALLMAP         = 9,
-  PROP_INFRARED       = 10,
-  PROP_WEAPONLEVEL2     = 11,
-  PROP_FLIGHT         = 12,
-  PROP_SPEED          = 15
+  PROP_FROZEN          = 0,
+  PROP_NOTARGET        = 1,
+  PROP_INSTANTWEAPONSWITCH = 2,
+  PROP_FLY             = 3,
+  PROP_TOTALLYFROZEN   = 4,
+  PROP_INVULNERABILITY = 5,
+  PROP_STRENGTH        = 6,
+  PROP_INVISIBILITY    = 7,
+  PROP_RADIATIONSUIT   = 8,
+  PROP_ALLMAP          = 9,
+  PROP_INFRARED        = 10,
+  PROP_WEAPONLEVEL2    = 11,
+  PROP_FLIGHT          = 12,
+  PROP_SPEED           = 15
 };
 
 //  Constants for ClassifyActor
@@ -150,8 +149,8 @@ enum
   ACTOR_NONE        = 0x00000000,
   ACTOR_WORLD       = 0x00000001,
   ACTOR_PLAYER      = 0x00000002,
-  ACTOR_BOT       = 0x00000004,
-  ACTOR_VOODOODOLL    = 0x00000008,
+  ACTOR_BOT         = 0x00000004,
+  ACTOR_VOODOODOLL  = 0x00000008,
   ACTOR_MONSTER     = 0x00000010,
   ACTOR_ALIVE       = 0x00000020,
   ACTOR_DEAD        = 0x00000040,

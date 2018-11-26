@@ -2682,12 +2682,6 @@ final override int GetActorProperty (int Prop) {
       return int(Height/2.0*65536.0);
     case APROP_AttackZOffset:
       return int((bIsPlayer ? PlayerEx(Player).GetAttackZOfs(missile:true) : 8.0)*65536.0);
-/*
-    case APROP_Accuracy      = 33,
-    case APROP_Stamina       = 34,
-    case APROP_ReactionTime  = 37,
-    case APROP_StencilColor  = 41,
-*/
   }
   dprint("%C: GetActorProperty: unknown property %d", self, Prop);
   return 0;
