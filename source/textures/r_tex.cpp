@@ -119,6 +119,8 @@ static TArray<VAnimDoorDef> AnimDoorDefs;
 //static TStrSet patchesWarned;
 static TMapNC<VName, bool> patchesWarned;
 
+static TMapNC<VName, bool> animPicSeen; // temporary
+
 
 //==========================================================================
 //
@@ -1133,42 +1135,85 @@ void P_InitAnimated () {
     if (!TmpName2[0]) Sys_Error("P_InitPicAnims: empty second texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
 
     // 0 is flat, 1 is texture, 3 is texture with decals allowed
-    if (Type&1) {
-      pic1 = GTextureManager.CheckNumForName(VName(TmpName2, VName::AddLower8), TEXTYPE_Wall, true, false);
-      pic2 = GTextureManager.CheckNumForName(VName(TmpName1, VName::AddLower8), TEXTYPE_Wall, true, false);
-    } else {
-      pic1 = GTextureManager.CheckNumForName(VName(TmpName2, VName::AddLower8), TEXTYPE_Flat, true, false);
-      pic2 = GTextureManager.CheckNumForName(VName(TmpName1, VName::AddLower8), TEXTYPE_Flat, true, false);
+    int txtype = (Type&1 ? TEXTYPE_Wall : TEXTYPE_Flat);
+
+    VName tn18 = VName(TmpName1, VName::AddLower8);
+    VName tn28 = VName(TmpName2, VName::AddLower8);
+
+    if (animPicSeen.find(tn18) || animPicSeen.find(tn28)) {
+      GCon->Logf(NAME_Warning, "ANIMATED: skipping animation sequence between '%s' and '%s' due to animdef", TmpName1, TmpName2);
+      continue;
     }
+
+    pic1 = GTextureManager.CheckNumForName(tn28, txtype, true, false);
+    pic2 = GTextureManager.CheckNumForName(tn18, txtype, true, false);
 
     // different episode ?
     if (pic1 == -1 || pic2 == -1) continue;
+
+    //if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: t1=<%s>; t2=<%s>; t1pic=%d(%s); t2pic=%d(%s)", TmpName1, TmpName2, pic1, *GTextureManager.GetTextureName(pic1), pic2, *GTextureManager.GetTextureName(pic2));
 
     memset(&ad, 0, sizeof(ad));
     memset(&fd, 0, sizeof(fd));
 
     ad.StartFrameDef = FrameDefs.Num();
-    ad.Type = ANIM_Forward;
 
-    // [RH] Allow for either forward or backward animations
-    if (pic1 < pic2) {
-      ad.Index = pic1;
-      fd.Index = pic2;
+    // lump indicies aren't the best way to make animation frames
+    // let's do some guesswork
+    if (abs(pic1-pic2) <= 32) {
+      // meh, do it like grandpa did
+      ad.Type = ANIM_Forward;
+
+      // [RH] Allow for either forward or backward animations
+      if (pic1 < pic2) {
+        ad.Index = pic1;
+        fd.Index = pic2;
+      } else {
+        ad.Index = pic2;
+        fd.Index = pic1;
+        ad.Type = ANIM_Backward;
+      }
+
+      if (fd.Index-ad.Index < 1) Sys_Error("P_InitPicAnims: bad cycle from '%s' to '%s' (ofs:0x%08x)", TmpName2, TmpName1, (vuint32)(Strm->Tell()-4-9*2-1));
+
+      fd.BaseTime = BaseTime;
+      fd.RandomRange = 0;
+      FrameDefs.Append(fd);
+
+      ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
     } else {
-      ad.Index = pic2;
-      fd.Index = pic1;
-      ad.Type = ANIM_Backward;
+      // try to detect what kind of texture names we have here
+      /*
+      ad.Type = ANIM_Normal;
+
+      int namelen = VStr::length(TmpName1);
+      if (VStr::length(TmpName2) != namelen) {
+        GCon->Logf(NAME_Warning, "ANIMATED: cannot detect animation sequence between '%s' and '%s'", TmpName1, TmpName2);
+        continue;
+      }
+
+      // detect numbered sequence
+      int lastdigpos = namelen;
+      while (lastdigpos > 0 && VStr::digitInBase(TmpName1[lastdigpos-1], 10) >= 0 && VStr::digitInBase(TmpName2[lastdigpos-1], 10) >= 0) --lastdigpos;
+      if (lastdigpos < namelen) {
+        // got numbered sequence, get numbers, so we can find direction
+        int n1 = 0, n2 = 0;
+        for (int f = lastdigpos; f < namelen; ++f) {
+          n1 = n0*10+VStr::digitInBase(TmpName1[f], 10);
+          n2 = n1*10+VStr::digitInBase(TmpName2[f], 10);
+        }
+        int dir = (n1 < n2 ? 1 : -1);
+        GCon->Logf(NAME_Warning, "ANIMATED: detected numbered animation sequence between '%s' and '%s' (n1=%d; n2=%d; dir=%d)", TmpName1, TmpName2, n1, n2, dir);
+        // now create it
+      }
+      */
+      //k8: dunno, wads that override textures should do full override, so ignore this for now
+      GCon->Logf(NAME_Warning, "ANIMATED: cannot detect animation sequence between '%s' and '%s'", TmpName1, TmpName2);
+      continue;
     }
 
-    if (fd.Index-ad.Index < 1) Sys_Error("P_InitPicAnims: bad cycle from '%s' to '%s' (ofs:0x%08x)", TmpName2, TmpName1, (vuint32)(Strm->Tell()-4-9*2-1));
-
-    fd.BaseTime = BaseTime;
-    fd.RandomRange = 0;
-    FrameDefs.Append(fd);
-
-    ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
     ad.CurrentFrame = ad.NumFrames-1;
-    ad.Time = 0.01; // Force 1st game tic to animate
+    ad.Time = 0.0001; // Force 1st game tic to animate
     ad.allowDecals = (Type == 3);
     AnimDefs.Append(ad);
   }
@@ -1203,6 +1248,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   if (ad.Index == -1) {
     ignore = true;
     if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->Name8);
+  } else {
+    animPicSeen.put(sc->Name8, true);
   }
   VName adefname = sc->Name8;
   bool missing = ignore && optional;
@@ -1241,6 +1288,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       sc->ExpectName8Warn();
       fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
       if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
+      animPicSeen.put(sc->Name8, true);
     }
 
     if (sc->Check("tics")) {
@@ -1638,9 +1686,6 @@ static void ParseFTAnims (VScriptParser *sc) {
 static void InitFTAnims () {
   guard(InitFTAnims);
 
-  // read Boom's animated lump if present
-  if (GArgs.CheckParm("-no-boom-animated") == 0) P_InitAnimated();
-
   // process all animdefs lumps
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_animdefs) {
@@ -1654,6 +1699,12 @@ static void InitFTAnims () {
     ParseFTAnims(new VScriptParser("scripts/animdefs.txt", FL_OpenFileRead("scripts/animdefs.txt")));
   }
   */
+
+  // read Boom's animated lump if present
+  // do it here, so we can skip already animated textures
+  if (GArgs.CheckParm("-no-boom-animated") == 0) P_InitAnimated();
+
+  animPicSeen.clear();
 
   FrameDefs.Condense();
   AnimDefs.Condense();
@@ -1792,6 +1843,7 @@ void R_AnimateSurfaces () {
       //const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
       //fprintf(stderr, "ANIM #%d: texture %d (%s); type=%d; curframe=%d; framenum=%d; fdefs=%d; stfdef=%d; cfr=%d\n", i, ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type, ad.CurrentFrame, ad.NumFrames, FrameDefs.length(), ad.StartFrameDef, ad.StartFrameDef+ad.CurrentFrame);
       const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0) : 0)];
+      //const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? ad.CurrentFrame : 0)];
       ad.Time = fd.BaseTime/35.0;
       if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
 
@@ -1802,7 +1854,32 @@ void R_AnimateSurfaces () {
         atx->noDecals = (ad.allowDecals == 0);
         atx->animNoDecals = (ad.allowDecals == 0);
         atx->animated = true;
+        atx->TextureTranslation = ad.Index;
       }
+
+      /*
+      if (!validAnimation) {
+        if (atx) atx->TextureTranslation = -1;
+      } else {
+        // fix all animated textures
+        for (int fn = 0; fn < ad.NumFrames; ++fn) {
+          atx = GTextureManager[FrameDefs[ad.StartFrameDef+fn].Index];
+          if (atx) {
+            atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
+            if (atx->TextureTranslation == -1) {
+              atx->TextureTranslation = ad.Index+fn;
+              if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
+              if (wantMissingAnimWarning) {
+                GCon->Logf(NAME_Warning, "(1) animated surface got invalid texture index");
+              }
+            }
+            atx->noDecals = (ad.allowDecals == 0);
+            atx->animNoDecals = (ad.allowDecals == 0);
+            atx->animated = true;
+          }
+        }
+      }
+      */
 
       if (ad.Type == ANIM_Normal || !validAnimation) {
         if (atx) {
