@@ -497,6 +497,44 @@ bool VStr::EndsWith (const VStr &s) const {
 }
 
 
+bool VStr::startsWithNoCase (const char *s) const {
+  guard(VStr::StartsWith);
+  if (!s || !s[0]) return false;
+  int l = length(s);
+  if (l > length()) return false;
+  return (NICmp(data, s, l) == 0);
+  unguard;
+}
+
+
+bool VStr::startsWithNoCase (const VStr &s) const {
+  guard(VStr::StartsWith);
+  int l = s.length();
+  if (l > length()) return false;
+  return (NICmp(data, *s, l) == 0);
+  unguard;
+}
+
+
+bool VStr::endsWithNoCase (const char *s) const {
+  guard(VStr::EndsWith);
+  if (!s || !s[0]) return false;
+  int l = Length(s);
+  if (l > length()) return false;
+  return (NICmp(data+length()-l, s, l) == 0);
+  unguard;
+}
+
+
+bool VStr::endsWithNoCase (const VStr &s) const {
+  guard(VStr::EndsWith);
+  int l = s.length();
+  if (l > length()) return false;
+  return (NICmp(data+length()-l, *s, l) == 0);
+  unguard;
+}
+
+
 VStr VStr::ToLower () const {
   guard(VStr::ToLower);
   if (!data) return VStr();

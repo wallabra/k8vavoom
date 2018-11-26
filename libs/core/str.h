@@ -247,6 +247,11 @@ public:
   inline bool endsWith (const char *s) const { return EndsWith(s); }
   inline bool endsWith (const VStr &s) const { return EndsWith(s); }
 
+  bool startsWithNoCase (const char *s) const;
+  bool startsWithNoCase (const VStr &s) const;
+  bool endsWithNoCase (const char *s) const;
+  bool endsWithNoCase (const VStr &s) const;
+
   VStr ToLower () const;
   VStr ToUpper () const;
 
