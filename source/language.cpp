@@ -185,13 +185,25 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
       if (Skip) {
         // we are skipping this language
         sc->ExpectString();
-        sc->Expect("=");
-        sc->ExpectString();
+        //sc->Expect("=");
+        //sc->ExpectString();
         while (!sc->Check(";")) sc->ExpectString();
         continue;
       }
 
       sc->ExpectString();
+
+      if (sc->String == "$") {
+        GCon->Logf(NAME_Warning, "%s: conditionals in language script is not supported yet", *sc->GetLoc().toStringNoCol());
+        sc->Expect("ifgame");
+        sc->Expect("(");
+        while (!sc->Check(")")) sc->ExpectString();
+        sc->ExpectString();
+        sc->Expect("=");
+        while (!sc->Check(";")) sc->ExpectString();
+        continue;
+      }
+
       VName Key(*sc->String, VName::AddLower);
       sc->Expect("=");
       sc->ExpectString();
