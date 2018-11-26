@@ -1168,7 +1168,7 @@ static TArray<VDropItemInfo> &GetClassDropItems (VClass *Class) {
 static TArray<VDamageFactor> &GetClassDamageFactors (VClass *Class) {
   guard(GetClassDamageFactors);
   VField *F = Class->FindFieldChecked("DamageFactors");
-  return *(TArray<VDamageFactor>*)F->GetFieldPtr((VObject*)Class->Defaults);
+  return *(TArray<VDamageFactor>*)F->GetFieldPtr((VObject *)Class->Defaults);
   unguard;
 }
 
@@ -3455,7 +3455,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
               P.Field->SetFloat(DefObj, float(sc->Number)/256.0);
             } else {
               sc->ExpectString();
-              VName DamageType = (sc->String.ICmp("Normal") ? NAME_None : VName(*sc->String));
+              VName DamageType = (sc->String.ICmp("Normal") == 0 ? NAME_None : VName(*sc->String));
               sc->Expect(",");
               sc->ExpectNumber();
 
@@ -3477,24 +3477,29 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
             break;
           case PROP_DamageFactor:
             {
+              auto loc = sc->GetLoc();
+
               VName DamageType = NAME_None;
               // Check if we only have a number instead of a string, since
               // there are some custom WAD files that don't specify a DamageType,
               // but specify a DamageFactor
               if (!sc->CheckFloat()) {
                 sc->ExpectString();
-                DamageType = !sc->String.ICmp("Normal") ? NAME_None : VName(*sc->String);
+                DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
                 sc->Expect(",");
                 sc->ExpectFloat();
               }
 
               // check damage factors array for replacements
-              TArray<VDamageFactor> DamageFactors = GetClassDamageFactors(Class);
+              TArray<VDamageFactor> &DamageFactors = GetClassDamageFactors(Class);
               VDamageFactor *DF = nullptr;
               for (i = 0; i < DamageFactors.Num(); ++i) {
                 if (DamageFactors[i].DamageType == DamageType) {
                   DF = &DamageFactors[i];
                   break;
+                }
+                if (VStr::ICmp(*DamageFactors[i].DamageType, *DamageType) == 0) {
+                  ParseWarning(loc, "DamageFactor case mismatch: looking for '%s', got '%s'", *DamageType, *DamageFactors[i].DamageType);
                 }
               }
               if (!DF) {
