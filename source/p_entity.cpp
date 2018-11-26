@@ -322,9 +322,10 @@ VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
     // try to split, if not exact
     TArray<VName> Names;
     VMemberBase::StaticSplitStateLabel(*StateName, Names);
-    //GCon->Logf("VEntity::FindState: splitted '%s' to %d parts", *StateName, Names.length());
+    //GCon->Logf("VEntity::FindState(%s): splitted '%s' to %d parts", GetClass()->GetName(), *StateName, Names.length());
     if (Names.length() > 1) Lbl = GetClass()->FindStateLabel(Names, true);
   }
+  //if (Lbl) GCon->Logf("VEntity::FindState(%s): found '%s' (%s : %s)", GetClass()->GetName(), *StateName, *Lbl->Name, *Lbl->State->Loc.toStringNoCol());
   return (Lbl ? Lbl->State : nullptr);
   unguard;
 }
