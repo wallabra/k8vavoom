@@ -948,11 +948,11 @@ void VTextureManager::AddHiResTextures () {
           Type = TEXTYPE_Sprite;
         }
 
-        sc->ExpectName8();
+        sc->ExpectName8Warn();
         int OldIdx = CheckNumForName(sc->Name8, Type, Overload, false);
         if (OldIdx < 0) OldIdx = AddPatch(sc->Name8, TEXTYPE_Pic, true);
 
-        sc->ExpectName8();
+        sc->ExpectName8Warn();
         int LumpIdx = W_CheckNumForName(sc->Name8, WADNS_Graphics);
         if (OldIdx < 0 || LumpIdx < 0) continue;
 
@@ -1163,7 +1163,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
 
   // name
   bool ignore = false;
-  sc->ExpectName8();
+  sc->ExpectName8Warn();
   ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, !optional);
   if (ad.Index == -1) {
     ignore = true;
@@ -1203,7 +1203,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     if (sc->CheckNumber()) {
       fd.Index = ad.Index+sc->Number-1;
     } else {
-      sc->ExpectName8();
+      sc->ExpectName8Warn();
       fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
       if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
     }
@@ -1292,7 +1292,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       sc->ExpectString();
       Sound = GSoundManager->GetSoundID(*sc->String);
     } else if (sc->Check("pic")) {
-      sc->ExpectName8();
+      sc->ExpectName8Warn();
       int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, /*false*/IgnoreBad || silentTexError);
       if (Tex < 0 && !IgnoreBad) Bad = true;
       TSwitchFrame &F = Frames.Alloc();
@@ -1356,7 +1356,7 @@ static void ParseSwitchDef (VScriptParser *sc) {
   else if (sc->Check("any")) {}
 
   // switch texture
-  sc->ExpectName8();
+  sc->ExpectName8Warn();
   int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false, silentTexError);
   bool Quest = false;
   TSwitch *Def1 = nullptr;
@@ -1420,7 +1420,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
   guard(ParseAnimatedDoor);
   // get base texture name
   bool ignore = false;
-  sc->ExpectName8();
+  sc->ExpectName8Warn();
   vint32 BaseTex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
   if (BaseTex == -1) {
     ignore = true;
@@ -1442,7 +1442,7 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
       if (sc->CheckNumber()) {
         v = BaseTex+sc->Number-1;
       } else {
-        sc->ExpectName8();
+        sc->ExpectName8Warn();
         v = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, true, false);
         if (v == -1 && !ignore) sc->Message(va("Unknown texture %s", *sc->String));
       }
@@ -1477,7 +1477,7 @@ static void ParseWarp (VScriptParser *sc, int Type) {
   else if (sc->Check("flat")) TexType = TEXTYPE_Flat;
   else sc->Error("Texture type expected");
 
-  sc->ExpectName8();
+  sc->ExpectName8Warn();
   int TexNum = GTextureManager.CheckNumForNameAndForce(sc->Name8, TexType, true, true, false);
   if (TexNum < 0) return;
 
