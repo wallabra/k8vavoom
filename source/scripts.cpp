@@ -507,7 +507,7 @@ void VScriptParser::ExpectName8Warn () {
     GCon->Logf(NAME_Warning, "%s: Name '%s' is too long", *GetLoc().toStringNoCol(), *String);
   }
 
-  Name = VName(*String, VName::AddLower);
+  //Name = VName(*String, VName::AddLower);
   Name8 = VName(*String, VName::AddLower8);
   unguard;
 }
