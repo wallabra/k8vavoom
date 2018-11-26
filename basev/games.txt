@@ -82,7 +82,7 @@ end
 // Strife
 game basev/strife
 iwad strife1.wad
-addfile voices.wad
+addfile optional voices.wad
 param -strife
 end
 
