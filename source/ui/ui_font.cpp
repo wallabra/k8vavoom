@@ -330,6 +330,7 @@ void VFont::ParseFontDefs () {
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != NAME_fontdefs) continue;
     VScriptParser sc(*W_LumpName(Lump), W_CreateLumpReaderNum(Lump));
+    GCon->Logf(NAME_Init, "parsing font definition '%s'", *W_FullLumpName(Lump));
     while (!sc.AtEnd()) {
       // name of the font
       sc.ExpectString();
@@ -466,9 +467,6 @@ VFont::VFont () {
 //==========================================================================
 VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int StartIndex) {
   guard(VFont::VFont);
-  Name = AName;
-  Next = Fonts;
-  Fonts = this;
 
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
   FirstChar = -1;
@@ -479,12 +477,18 @@ VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int Star
   bool ColoursUsed[256];
   memset(ColoursUsed, 0, sizeof(ColoursUsed));
 
+  bool wasAnyChar = false;
+
+  //GCon->Logf(NAME_Init, "creating font of type 1; Template=<%s>; First=%d; Count=%d; Start=%d", *FormatStr, First, Count, StartIndex);
   for (int i = 0; i < Count; ++i) {
     int Char = i+First;
     char Buffer[10];
     snprintf(Buffer, sizeof(Buffer), *FormatStr, i+StartIndex);
     VName LumpName(Buffer, VName::AddLower8);
     int Lump = W_CheckNumForName(LumpName, WADNS_Graphics);
+    // our UI cannot support hires fonts without lores templates, and i will not implement that
+    //if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_HiResTextures);
+    //GCon->Logf(NAME_Init, "  char %d: lump=%d (%s)", Char, Lump, (Lump >= 0 ? *W_FullLumpName(Lump) : "<oops>"));
 
     // in Doom, stcfn121 is actually a '|' and not 'y' and many wad
     // authors provide it as such, so put it in correct location
@@ -496,7 +500,7 @@ VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int Star
     }
 
     if (Lump >= 0) {
-      VTexture *Tex = GTextureManager[GTextureManager.AddPatch(LumpName, TEXTYPE_Pic)];
+      VTexture *Tex = GTextureManager[GTextureManager.AddPatchLump(Lump, LumpName, TEXTYPE_Pic)];
       if (Tex) {
         FFontChar &FChar = Chars.Alloc();
         FChar.Char = Char;
@@ -516,9 +520,26 @@ VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int Star
 
         // mark colours that are used by this texture
         MarkUsedColours(Tex, ColoursUsed);
+
+        //if (developer) GCon->Logf(NAME_Dev, "loaded char lump '%s' as '%s' (%d) for char %d of font '%s'", *W_FullLumpName(Lump), *LumpName, Lump, Char, *AName);
+        wasAnyChar = true;
+      } else {
+        GCon->Logf(NAME_Warning, "cannot load char lump for char %d of font '%s'", Char, *AName);
       }
     }
   }
+
+  // if we have no char textures, don't register this font
+  // this way we will have standard fonts visible of override failed
+  if (!wasAnyChar) {
+    delete this;
+    return;
+  }
+
+  // register this font
+  Name = AName;
+  Next = Fonts;
+  Fonts = this;
 
   // set up width of a space character as half width of N character
   // or 4 if character N has no graphic for it

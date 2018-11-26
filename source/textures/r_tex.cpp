@@ -571,6 +571,39 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
 
 //==========================================================================
 //
+//  VTextureManager::AddPatchLump
+//
+//==========================================================================
+int VTextureManager::AddPatchLump (int LumpNum, VName Name, int Type, bool Silent) {
+  guard(VTextureManager::AddPatchLump);
+
+  // check if it's already registered
+  int i = CheckNumForName(Name, Type);
+  if (i >= 0) return i;
+
+  if (LumpNum >= 0) {
+    VTexture *tex = VTexture::CreateTexture(Type, LumpNum);
+    if (tex) {
+      tex->Name = Name;
+      GTextureManager.AddTexture(tex);
+      int tidx = CheckNumForName(Name, Type);
+      check(tidx > 0);
+      return tidx;
+    }
+  }
+
+  // do not try to load already seen missing texture
+  if (isSeenMissingTexture(Name)) return -1; // alas
+
+  warnMissingTexture(Name, Silent);
+  return -1;
+
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::AddRawWithPal
 //
 //  Adds a raw image with custom palette lump. It's here to support

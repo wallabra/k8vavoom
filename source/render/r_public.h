@@ -290,6 +290,7 @@ public:
   void SetFrontSkyLayer (int tex);
   void GetTextureInfo (int TexNum, picinfo_t *info);
   int AddPatch (VName Name, int Type, bool Silent=false);
+  int AddPatchLump (int LumpNum, VName Name, int Type, bool Silent=false);
   int AddRawWithPal (VName Name, VName PalName);
   int AddFileTexture (VName Name, int Type);
   int AddFileTextureShaded (VName Name, int Type, int shade); // shade==-1: don't shade
