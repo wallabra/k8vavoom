@@ -41,12 +41,17 @@ VStr fsys_warp_cmd;
 
 static bool fsys_onlyOneBaseFile = false;
 
+struct AuxFile {
+  VStr name;
+  bool optional;
+};
+
 
 struct version_t {
   VStr param;
   TArray<VStr> MainWads;
   VStr GameDir;
-  TArray<VStr> AddFiles;
+  TArray<AuxFile> AddFiles;
   TArray<VStr> BaseDirs;
   int ParmFound;
   bool FixVoices;
@@ -466,9 +471,12 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
         continue;
       }
       if (sc->Check("addfile")) {
+        bool optional = sc->Check("optional");
         sc->ExpectString();
         if (sc->String.isEmpty()) continue;
-        dst.AddFiles.Append(sc->String);
+        AuxFile &aux = dst.AddFiles.alloc();
+        aux.name = sc->String;
+        aux.optional = optional;
         if (dbg_dump_gameinfo) GCon->Logf("  aux file: \"%s\"", *sc->String);
         continue;
       }
@@ -576,8 +584,11 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
   AddAnyFile(mainWadPath, false, gmi.FixVoices);
 
   for (int j = 0; j < gmi.AddFiles.length(); j++) {
-    VStr FName = FindMainWad(gmi.AddFiles[j]);
-    if (FName.IsEmpty()) Sys_Error("Required file \"%s\" not found", *gmi.AddFiles[j]);
+    VStr FName = FindMainWad(gmi.AddFiles[j].name);
+    if (FName.IsEmpty()) {
+      if (gmi.AddFiles[j].optional) continue;
+      Sys_Error("Required file \"%s\" not found", *gmi.AddFiles[j].name);
+    }
     wpkAppend(FName, false); // mark additional files as "non-system", so path won't be stored in savegame
     AddAnyFile(FName, false);
   }
