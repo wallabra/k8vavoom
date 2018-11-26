@@ -1077,22 +1077,22 @@ void VTextureManager::AddHiResTextures () {
 //  P_InitAnimated
 //
 //  Load the table of animation definitions, checking for existence of
-// the start and end of each frame. If the start doesn't exist the sequence
-// is skipped, if the last doesn't exist, BOOM exits.
+//  the start and end of each frame. If the start doesn't exist the sequence
+//  is skipped, if the last doesn't exist, BOOM exits.
 //
 //  Wall/Flat animation sequences, defined by name of first and last frame,
-// The full animation sequence is given using all lumps between the start
-// and end entry, in the order found in the WAD file.
+//  The full animation sequence is given using all lumps between the start
+//  and end entry, in the order found in the WAD file.
 //
 //  This routine modified to read its data from a predefined lump or
-// PWAD lump called ANIMATED rather than a static table in this module to
-// allow wad designers to insert or modify animation sequences.
+//  PWAD lump called ANIMATED rather than a static table in this module to
+//  allow wad designers to insert or modify animation sequences.
 //
 //  Lump format is an array of byte packed animdef_t structures, terminated
-// by a structure with istexture == -1. The lump can be generated from a
-// text source file using SWANTBLS.EXE, distributed with the BOOM utils.
-// The standard list of switches and animations is contained in the example
-// source text file DEFSWANI.DAT also in the BOOM util distribution.
+//  by a structure with istexture == -1. The lump can be generated from a
+//  text source file using SWANTBLS.EXE, distributed with the BOOM utils.
+//  The standard list of switches and animations is contained in the example
+//  source text file DEFSWANI.DAT also in the BOOM util distribution.
 //
 //==========================================================================
 void P_InitAnimated () {
@@ -1100,7 +1100,9 @@ void P_InitAnimated () {
   animDef_t ad;
   frameDef_t fd;
 
-  if (W_CheckNumForName(NAME_animated) < 0) return;
+  int animlump = W_CheckNumForName(NAME_animated);
+  if (animlump < 0) return;
+  GCon->Logf(NAME_Init, "loading Boom animated lump from '%s'", *W_FullLumpName(animlump));
 
   VStream *Strm = W_CreateLumpReaderName(NAME_animated);
   while (Strm->TotalSize()-Strm->Tell() >= 23) {
@@ -1635,6 +1637,10 @@ static void ParseFTAnims (VScriptParser *sc) {
 //==========================================================================
 static void InitFTAnims () {
   guard(InitFTAnims);
+
+  // read Boom's animated lump if present
+  if (GArgs.CheckParm("-no-boom-animated") == 0) P_InitAnimated();
+
   // process all animdefs lumps
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_animdefs) {
@@ -1648,9 +1654,6 @@ static void InitFTAnims () {
     ParseFTAnims(new VScriptParser("scripts/animdefs.txt", FL_OpenFileRead("scripts/animdefs.txt")));
   }
   */
-
-  // read Boom's animated lump if present
-  P_InitAnimated();
 
   FrameDefs.Condense();
   AnimDefs.Condense();
