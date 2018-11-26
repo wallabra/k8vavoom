@@ -113,7 +113,8 @@ final void SetOrigin2(TVec origin)
 
 final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
   bool DamageSource, optional name BombDmgType, optional bool DoDamage,
-  optional int damagedistance, optional bool thrustZ)
+  optional int damagedistance, optional bool thrustZ,
+  optional float fullthrustdistance)
 {
   EntityEx  Other;
   float   dist;
@@ -121,89 +122,56 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
 
   if (!specified_thrustZ) thrustZ = DoDamage; //k8: see below
 
-  if (!specified_DoDamage)
-  {
-    DoDamage = true;
-  }
-  foreach RadiusThings(Other, Origin, BombDistance)
-  {
-    if (!Other || !Other.bShootable)
-    {
-      continue;
-    }
+  if (!specified_DoDamage) DoDamage = true;
 
-    //  Check for actors that take no damage from concussion.
-    if (Other.bNoRadiusDamage && !bForceRadiusDmg)
-    {
-      continue;
-    }
+  foreach RadiusThings(Other, Origin, BombDistance) {
+    if (!Other || !Other.bShootable) continue;
 
-    if (!DamageSource && Other == Source)
-    {
-      // don't damage the source of the explosion
-      continue;
-    }
+    // check for actors that take no damage from concussion
+    if (Other.bNoRadiusDamage && !bForceRadiusDmg) continue;
 
-    //  Option for monsters that fire explosive projectiles not to hurt
+    if (!DamageSource && Other == Source) continue; // don't damage the source of the explosion
+
+    // Option for monsters that fire explosive projectiles not to hurt
     // monsters of the same class with it's projectiles.
     // Controlled by the bDontHurtClass and bDontHurtSpecies flags.
     if (Source && !Other.bIsPlayer && ((Source.bDontHurtClass &&
-      Other.Class == Source.Class) || (Source.bDontHurtSpecies &&
-      Other.GetSpecies() == Source.GetSpecies())))
+        Other.Class == Source.Class) || (Source.bDontHurtSpecies &&
+        Other.GetSpecies() == Source.GetSpecies())))
     {
       continue;
     }
 
-    dist = Length(Other.GetCentre() - GetCentre()) - Other.Radius;
-    if (dist < 0.0)
-    {
-      dist = 0.0;
-    }
+    dist = Length(Other.GetCentre()-GetCentre())-Other.Radius;
+    if (dist < 0.0) dist = 0.0;
 
-    if (dist >= BombDistance)
-    {
-      // out of range
-      continue;
-    }
+    if (dist >= BombDistance) continue; // out of range
 
-    if (Other.CanSee(self))
-    {
+    if (Other.CanSee(self)) {
       float dist2;
 
       // OK to damage, target is in direct path
-      if (!specified_damagedistance)
-      {
+      if (!specified_damagedistance) {
         dist2 = dist;
+      } else {
+        dist2 = fclamp(dist-itof(damagedistance), 0.0, dist);
       }
-      else
-      {
-        dist2 = dist - itof(damagedistance);
 
-        if (dist2 <= 0.0)
-        {
-          dist2 = 0.0;
-        }
-        else if (dist2 >= dist)
-        {
-          dist2 = dist;
-        }
-      }
       damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
 
       Other.SpawnExploBloodAtHead(damage, Source);
 
-      if (DoDamage)
-      {
+      if (DoDamage) {
         Other.Damage(self, Source, damage, BombDmgType);
-      }
-      else
-      {
+      } else {
         Other.bBlasted = true;
       }
 
-      if (!Other.bIceCorpse && (!DoDamage || !bNoDamageThrust))
-      {
+      if (!Other.bIceCorpse && (!DoDamage || !bNoDamageThrust)) {
         float Thrust = itof(damage)*0.5;
+        if (specified_fullthrustdistance && fullthrustdistance != 0 && dist <= fullthrustdistance) {
+          Thrust = BombDamage*RDFactor*0.5;
+        }
         float VelZ = ((Other.Origin.z+(Other.Height*0.5))-Origin.z)*Thrust;
         if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
         TVec Dir = Other.Origin - Origin;

@@ -698,14 +698,15 @@ final void decorate_A_Explode(optional int damage, optional int distance,
   }
 }
 
+
 //==========================================================================
 //
 //  A_RadiusThrust
 //
 //==========================================================================
-
-final void A_RadiusThrust(optional int Force, optional int Distance, optional int flags) {
-
+final void A_RadiusThrust(optional int Force, optional int Distance, optional int flags,
+                          optional float fullthrustdistance)
+{
   if (!Force) Force = 128;
   if (!Distance) Distance = Force;
 
@@ -714,12 +715,13 @@ final void A_RadiusThrust(optional int Force, optional int Distance, optional in
   //???if (!specified_AffectSelf) AffectSelf = true;
 
   RadiusAttack((flags&RTF_NOTMISSILE ? self : Target), Force, itof(Distance), AffectSelf, DamageType,
-    /*false*/!(flags&RTF_NOIMPACTDAMAGE), thrustZ:!!(flags&RTF_THRUSTZ));
+    /*false*/!(flags&RTF_NOIMPACTDAMAGE), thrustZ:!!(flags&RTF_THRUSTZ), fullthrustdistance:fullthrustdistance!optional);
   if (Origin.z <= FloorZ + itof(Distance))
   {
     HitFloorType();
   }
 }
+
 
 //==========================================================================
 //
