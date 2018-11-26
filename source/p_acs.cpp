@@ -2106,7 +2106,7 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
 //
 //==========================================================================
 
-#define STUB(cmd) GCon->Log("Executing unimplemented ACS PCODE " #cmd);
+#define STUB(cmd) GCon->Log(NAME_Dev, "Executing unimplemented ACS PCODE " #cmd);
 
 #ifdef ACS_DUMP_EXECUTION
 # define USE_COMPUTED_GOTO 0
@@ -5930,7 +5930,7 @@ int VAcs::RunScript (float DeltaTime) {
       //sp[-2] - Player num
       //sp[-1] - Info type
       //Pushes result.
-      sp[-2] = -1;
+      sp[-2] = 0; // "unknown info" should be 0
       sp--;
       ACSVM_BREAK;
 
