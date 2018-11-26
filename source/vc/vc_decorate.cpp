@@ -1547,6 +1547,27 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
       for (int f = Func->NumParams; f < NumArgs; ++f) { delete Args[f]; Args[f] = nullptr; }
       NumArgs = Func->NumParams;
     }
+
+    // check for "user_" argument for non-string parameter
+    for (int f = 0; f < NumArgs; ++f) {
+      if (f >= Func->NumParams) break;
+      if (!Args[f]) continue;
+      if (!Args[f]->IsStrConst()) continue;
+      if (Func->ParamTypes[f].Type == TYPE_String) continue;
+      VStr str = VStr(Args[f]->GetStrConst(DecPkg));
+      if (!str.startsWithNoCase("user_")) continue;
+      auto loc = Args[f]->Loc;
+      ParseWarning(loc, "`user_xxx` should not be a string constant, you moron! FIX YOUR BROKEN CODE!");
+      if (Class) {
+        VName fldn = Class->FindDecorateStateFieldTrans(*str);
+        if (fldn == NAME_None) ParseWarning(loc, "`user_xxx` is not a known uservar");
+        delete Args[f];
+        Args[f] = new VDecorateSingleName(*fldn, loc);
+      } else {
+        delete Args[f];
+        Args[f] = new VDecorateSingleName(str.toLowerCase(), loc);
+      }
+    }
   }
 
   return Func;
