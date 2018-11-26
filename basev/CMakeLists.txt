@@ -11,10 +11,7 @@ add_subdirectory(hexen)
 add_subdirectory(nerve)
 add_subdirectory(plutonia)
 add_subdirectory(tnt)
-# k8: no strife, sorry
-if(NOT CMAKE_CROSSCOMPILING)
-  add_subdirectory(strife)
-endif(NOT CMAKE_CROSSCOMPILING)
+add_subdirectory(strife)
 
 add_subdirectory(mods)
 
