@@ -11,45 +11,7 @@ $recursedirext uidef/  @CMAKE_CURRENT_SOURCE_DIR@/uidef/  .txt
 
 
 //  Graphics
-graphics/bal7scr1.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bal7scr1.png
-graphics/bal7scr2.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bal7scr2.png
-graphics/bfglite1.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bfglite1.png
-graphics/bfglite2.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bfglite2.png
-graphics/bfgscrc1.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bfgscrc1.png
-graphics/bfgscrc2.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/bfgscrc2.png
-graphics/blast1.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/blast1.png
-graphics/bsmear1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsmear1.png
-graphics/bsmear2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsmear2.png
-graphics/bsplat1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat1.png
-graphics/bsplat2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat2.png
-graphics/bsplat3.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat3.png
-graphics/bsplat4.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat4.png
-graphics/bsplat5.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat5.png
-graphics/bsplat6.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat6.png
-graphics/bsplat7.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/bsplat7.png
-graphics/cbalscr1.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/cbalscr1.png
-graphics/cbalscr2.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/cbalscr2.png
-graphics/cbowmark.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/cbowmark.png
-graphics/chip1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/chip1.png
-graphics/chip2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/chip2.png
-graphics/chip3.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/chip3.png
-graphics/chip4.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/chip4.png
-graphics/chip5.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/chip5.png
-graphics/cursor.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/cursor.png
-graphics/mc_arrow.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/mc_arrow.png
-graphics/plasma1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/plasma1.png
-graphics/plasma2.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/plasma2.png
-graphics/scorch1.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/scorch1.png
-graphics/stkeys6.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/stkeys6.png
-graphics/stkeys7.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/stkeys7.png
-graphics/stkeys8.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/stkeys8.png
-graphics/twirl.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/twirl.png
-graphics/wislash.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/wislash.png
-
-graphics/progbar/left.png    @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/left.png
-graphics/progbar/marker.png  @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/marker.png
-graphics/progbar/middle.png  @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/middle.png
-graphics/progbar/right.png   @CMAKE_CURRENT_SOURCE_DIR@/graphics/progbar/right.png
+$recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
 
 //  Default texture
 textures/-noflat-.png @CMAKE_CURRENT_SOURCE_DIR@/textures/-noflat-.png
