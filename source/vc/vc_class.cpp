@@ -842,6 +842,7 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
   }
 
   for (int i = 0; i < StateLabels.Num(); ++i) {
+    //fprintf(stderr, "%s:<%s>: i=%d; lname=%s\n", GetName(), *AName, i, *StateLabels[i].Name);
     if (VStr::ICmp(*StateLabels[i].Name, *AName) == 0) {
       if (SubLabel != NAME_None) {
         TArray<VStateLabel>& SubList = StateLabels[i].SubLabels;
@@ -850,6 +851,7 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
         }
         if (Exact /*&& VStr::ICmp(*SubLabel, "None") != 0*/) return nullptr; //k8:HACK! 'None' is nothing
       }
+      //fprintf(stderr, "FOUND: %s:<%s>: i=%d; lname=%s (%s)\n", GetName(), *AName, i, *StateLabels[i].Name, *StateLabels[i].State->Loc.toStringNoCol());
       return &StateLabels[i];
     }
   }
@@ -1685,7 +1687,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
 void VClass::SetStateLabel (VName AName, VState *State) {
   guard(VClass::SetStateLabel);
   for (int i = 0; i < StateLabels.Num(); ++i) {
-    if (StateLabels[i].Name == AName) {
+    if (VStr::ICmp(*StateLabels[i].Name, *AName) == 0) {
       StateLabels[i].State = State;
       return;
     }
@@ -1710,7 +1712,7 @@ void VClass::SetStateLabel (const TArray<VName> &Names, VState *State) {
   for (int ni = 0; ni < Names.Num(); ++ni) {
     Lbl = nullptr;
     for (int i = 0; i < List->Num(); ++i) {
-      if ((*List)[i].Name == Names[ni]) {
+      if (VStr::ICmp(*(*List)[i].Name, *Names[ni]) == 0) {
         Lbl = &(*List)[i];
         break;
       }
@@ -1852,7 +1854,6 @@ void VClass::CalcFieldOffsets () {
       size = ParentClass->ClassSize;
     }
   }
-  //if (VStr::ICmp(GetName(), "BdHellBaron") == 0) fprintf(stderr, "!!!: %d %p\n", size, Fields);
   for (VField *fi = Fields; fi; fi = fi->Next) {
     if (fi->Type.Type == TYPE_Bool && PrevField &&
         PrevField->Type.Type == TYPE_Bool &&
@@ -1862,7 +1863,6 @@ void VClass::CalcFieldOffsets () {
       if (fi->Type.BitMask != bit_mask) Sys_Error("Wrong bit mask");
       fi->Type.BitMask = bit_mask;
       fi->Ofs = PrevField->Ofs;
-      //if (VStr::ICmp(GetName(), "BdHellBaron") == 0) abort();
     } else {
       if (fi->Type.Type == TYPE_Struct || (fi->Type.IsAnyArray() && fi->Type.ArrayInnerType == TYPE_Struct)) {
         // make sure struct size has been calculated
@@ -1874,7 +1874,6 @@ void VClass::CalcFieldOffsets () {
       fi->Ofs = size;
       size += fi->Type.GetSize();
     }
-    //if (VStr::ICmp(GetName(), "BdHellBaron") == 0) fprintf(stderr, "  *'%s': %d\n", fi->GetName(), fi->Ofs);
     PrevField = fi;
   }
   ClassUnalignedSize = size;
