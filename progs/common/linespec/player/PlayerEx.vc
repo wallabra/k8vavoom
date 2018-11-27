@@ -832,9 +832,9 @@ final void BringUpWeapon () {
   bReloadQueued = false;
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
-    print("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
+    //dprint("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
     SetViewState(ps_weapon, ReadyWeapon.GetUpState());
-    print("MO=%C; RW=%C", MO, ReadyWeapon);
+    //dprint("MO=%C; RW=%C", MO, ReadyWeapon);
     if (!ReadyWeapon) {
       SetViewObject(none);
       print("AUTHOR OF THIS MOD IS IDIOT! (1)");
