@@ -333,7 +333,7 @@ private:
   void AddToHash (int Index);
   void RemoveFromHash (int Index);
   void AddTextures ();
-  void AddTexturesLump (int, int, int, bool);
+  void AddTexturesLump (int, int, int, bool, TArray<VName> &numberedNames);
   void AddGroup (int, EWadNamespace);
   void AddHiResTextures ();
 };

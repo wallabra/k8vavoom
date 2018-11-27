@@ -766,6 +766,10 @@ void VTextureManager::AddTextures () {
   int LumpTex2 = -1;
   int FirstTex;
 
+  // we have to force-load textures after adding textures lump, so
+  // texture numbering for animations won't break
+  TArray<VName> numberedNames;
+
   // for each PNAMES lump load TEXTURE1 and TEXTURE2 from the same wad
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != NAME_pnames) continue;
@@ -773,8 +777,8 @@ void VTextureManager::AddTextures () {
     LumpTex1 = W_CheckNumForNameInFile(NAME_texture1, NamesFile);
     LumpTex2 = W_CheckNumForNameInFile(NAME_texture2, NamesFile);
     FirstTex = Textures.Num();
-    AddTexturesLump(Lump, LumpTex1, FirstTex, true);
-    AddTexturesLump(Lump, LumpTex2, FirstTex, false);
+    AddTexturesLump(Lump, LumpTex1, FirstTex, true, numberedNames);
+    AddTexturesLump(Lump, LumpTex2, FirstTex, false, numberedNames);
   }
 
   // if last TEXTURE1 or TEXTURE2 are in a wad without a PNAMES, they must be loaded too
@@ -783,8 +787,27 @@ void VTextureManager::AddTextures () {
   if (LastTex1 >= 0 && (LastTex1 == LumpTex1 || W_LumpFile(LastTex1) <= NamesFile)) LastTex1 = -1;
   if (LastTex2 >= 0 && (LastTex2 == LumpTex2 || W_LumpFile(LastTex2) <= NamesFile)) LastTex2 = -1;
   FirstTex = Textures.Num();
-  AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex1, FirstTex, true);
-  AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex2, FirstTex, false);
+  AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex1, FirstTex, true, numberedNames);
+  AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex2, FirstTex, false, numberedNames);
+
+  //k8: force-load numbered textures
+  for (int f = 0; f < numberedNames.length(); ++f) {
+    const char *txname = *numberedNames[f];
+    int namelen = VStr::length(txname);
+    if (namelen && txname[namelen-1] == '1') {
+      char nbuf[130];
+      snprintf(nbuf, sizeof(nbuf), "%s", txname);
+      for (int c = 2; c < 10; ++c) {
+        nbuf[namelen-1] = '0'+c;
+        VName PatchName(nbuf, VName::AddLower8);
+        if (CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false) < 0) {
+          int tid = CheckNumForNameAndForce(PatchName, TEXTYPE_WallPatch, false, false, true);
+          if (tid > 0) GCon->Logf(NAME_Init, "Textures: force-loaded numbered texture '%s'", nbuf);
+        }
+      }
+    }
+  }
+
   unguard;
 }
 
@@ -794,14 +817,14 @@ void VTextureManager::AddTextures () {
 //  VTextureManager::AddTexturesLump
 //
 //==========================================================================
-void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex, bool First) {
+void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex, bool First, TArray<VName> &numberedNames) {
   guard(VTextureManager::AddTexturesLump);
   if (TexLump < 0) return;
 
   // load the patch names from pnames.lmp
   VStream *Strm = W_CreateLumpReaderNum(NamesLump);
   vint32 nummappatches = Streamer<vint32>(*Strm);
-  VTexture **patchtexlookup = new VTexture*[nummappatches];
+  VTexture **patchtexlookup = new VTexture *[nummappatches];
   for (int i = 0; i < nummappatches; ++i) {
     // read patch name
     char TmpName[12];
@@ -813,6 +836,12 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     }
 
     VName PatchName(TmpName, VName::AddLower8);
+
+    {
+      const char *txname = *PatchName;
+      int namelen = VStr::length(txname);
+      if (namelen && VStr::digitInBase(txname[namelen-1], 10) >= 0) numberedNames.append(PatchName);
+    }
 
     // check if it's already has been added
     int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
@@ -838,37 +867,6 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
   }
   delete Strm;
   Strm = nullptr;
-
-  //k8: force-load numbered textures
-  for (int i = 0; i < nummappatches; ++i) {
-    VTexture *tex = patchtexlookup[i];
-    if (!tex) continue;
-    const char *txname = *tex->Name;
-    int namelen = VStr::length(txname);
-    if (namelen && txname[namelen-1] == '1') {
-      char nbuf[130];
-      snprintf(nbuf, sizeof(nbuf), "%s", txname);
-      for (int f = 2; f < 10; ++f) {
-        nbuf[namelen-1] = '0'+f;
-        VName PatchName(nbuf, VName::AddLower8);
-        int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
-        if (PIdx >= 0) continue;
-        // get wad lump number
-        int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
-        // sprites also can be used as patches
-        if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
-        if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
-        // add it to textures
-        if (LNum >= 0) {
-          tex = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
-          if (tex) {
-            GCon->Logf(NAME_Init, "Textures: force-loaded numbered texture '%s'", nbuf);
-            AddTexture(tex);
-          }
-        }
-      }
-    }
-  }
 
   // load the map texture definitions from textures.lmp
   // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
@@ -899,9 +897,7 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     }
   }
   delete Strm;
-  Strm = nullptr;
   delete[] patchtexlookup;
-  patchtexlookup = nullptr;
   unguard;
 }
 
