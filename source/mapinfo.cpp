@@ -1359,7 +1359,8 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
     } else if (sc->Check("FastMonsters")) {
       sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("DisableCheats")) {
-      sdef->Flags |= SKILLF_DisableCheats;
+      //k8: no, really?
+      //sdef->Flags |= SKILLF_DisableCheats;
     } else if (sc->Check("EasyBossBrain")) {
       sdef->Flags |= SKILLF_EasyBossBrain;
     } else if (sc->Check("AutoUseHealth")) {
@@ -1547,7 +1548,8 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("SlowMonsters")) {
       sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("DisableCheats")) {
-      sdef->Flags |= SKILLF_DisableCheats;
+      //k8: no, really?
+      //sdef->Flags |= SKILLF_DisableCheats;
     } else if (sc->Check("AutoUseHealth")) {
       sdef->Flags |= SKILLF_AutoUseHealth;
     } else if (sc->Check("ReplaceActor")) {
