@@ -1428,7 +1428,7 @@ static void ParseSwitchDef (VScriptParser *sc) {
   bool silentTexError = (GArgs.CheckParm("-Wswitch-textures") == 0);
 
   // skip game specifier
-       if (sc->Check("doom")) { sc->ExpectNumber(); }
+       if (sc->Check("doom")) { /*sc->ExpectNumber();*/ sc->CheckNumber(); }
   else if (sc->Check("heretic")) {}
   else if (sc->Check("hexen")) {}
   else if (sc->Check("strife")) {}
