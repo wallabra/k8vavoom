@@ -73,6 +73,7 @@
 #include "mapinfo.h"
 #include "lockdefs.h"
 #include "host.h"
+#include "textures/r_tex_public.h"
 #include "render/r_public.h"
 #include "text.h"
 #include "sound/sound.h"
