@@ -33,14 +33,13 @@ class PowerProtection : Powerup;
 
 override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
-  int i;
   float dmg_factor;
 
   if (damage > 0)
   {
-    for (i = 0; i < DamageFactors.Num; i++)
-    {
-      if (DamageFactors[i].DamageType == DmgType)
+    foreach (auto i; 0..DamageFactors.length) {
+      if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
+          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
       {
         dmg_factor = DamageFactors[i].Factor;
         break;

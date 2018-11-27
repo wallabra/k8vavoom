@@ -449,9 +449,9 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   if (DmgType == 'Fire' && bFireResist) {
     damage >>= 1;
   } else {
-    foreach (auto i; 0..DamageFactors.Num) {
-      if (DamageFactors[i].DamageType == DmgType ||
-          (!DmgType && (DamageFactors[i].DamageType == 'None' || DamageFactors[i].DamageType == 'none')))
+    foreach (auto i; 0..DamageFactors.length) {
+      if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
+          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
       {
         damage = int(float(damage)*DamageFactors[i].Factor);
         if (damage <= 0) return;
