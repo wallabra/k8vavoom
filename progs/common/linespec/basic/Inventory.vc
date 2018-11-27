@@ -849,6 +849,19 @@ final void A_Lower () {
 final void decorate_A_Lower (optional float lowerspeed) {
   if (!bIsPlayer) return;
 
+  Weapon ready = PlayerEx(Player).ReadyWeapon;
+  Weapon pending = PlayerEx(Player).PendingWeapon;
+
+  if (!pending) {
+    print("AUTHOR OF THIS MOD IS IDIOT! (2)");
+    return;
+  }
+
+  if (ready && ready == pending) {
+    print("AUTHOR OF THIS MOD IS IDIOT! (3)");
+    return;
+  }
+
   if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
   if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
 
@@ -881,7 +894,7 @@ final void decorate_A_Lower (optional float lowerspeed) {
   // clear flash state, needed for Strife
   Player.SetViewState(ps_flash, none);
 
-  PlayerEx(Player).SetWeapon(PlayerEx(Player).PendingWeapon);
+  PlayerEx(Player).SetWeapon(pending/*PlayerEx(Player).PendingWeapon*/);
   PlayerEx(Player).BringUpWeapon();
 }
 

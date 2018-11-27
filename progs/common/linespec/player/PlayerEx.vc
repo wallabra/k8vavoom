@@ -821,13 +821,25 @@ final void BringUpWeapon () {
     MO.PlaySound(ReadyWeapon.UpSound, CHAN_WEAPON);
   }
 
+  if (PendingWeapon && ReadyWeapon && PendingWeapon == ReadyWeapon) {
+    print("AUTHOR OF THIS MOD IS IDIOT! (0)");
+    return;
+  }
+
   PendingWeapon = none;
   ViewStates[ps_weapon].SY = (bInstantWeaponSwitch ? Weapon::WEAPONTOP : Weapon::WEAPONBOTTOM);
   Refire = 0;
   bReloadQueued = false;
   if (ReadyWeapon) {
     SetViewObject(ReadyWeapon);
+    print("MO=%C; RW=%C; upstate=%s", MO, ReadyWeapon, ReadyWeapon.GetUpState());
     SetViewState(ps_weapon, ReadyWeapon.GetUpState());
+    print("MO=%C; RW=%C", MO, ReadyWeapon);
+    if (!ReadyWeapon) {
+      SetViewObject(none);
+      print("AUTHOR OF THIS MOD IS IDIOT! (1)");
+      return;
+    }
     MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
   }
 }
