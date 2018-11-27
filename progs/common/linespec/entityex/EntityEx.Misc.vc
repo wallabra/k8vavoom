@@ -2636,6 +2636,7 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_AttackZOffset:
       if (bIsPlayer) PlayerPawn(Player.MO).AttackZOffset = float(IntVal)/65536.0;
       break;
+    case APROP_Notarget: break; // no, my dear mod author, you cannot do this
     default: dprint("%C: SetActorProperty: unknown property %d", self, Prop);
   }
 }
@@ -2682,6 +2683,7 @@ final override int GetActorProperty (int Prop) {
       return int(Height/2.0*65536.0);
     case APROP_AttackZOffset:
       return int((bIsPlayer ? PlayerEx(Player).GetAttackZOfs(missile:true) : 8.0)*65536.0);
+    case APROP_Notarget: return (bIsPlayer ? PlayerEx(Player).bNoTarget : 0);
   }
   dprint("%C: GetActorProperty: unknown property %d", self, Prop);
   return 0;
@@ -2711,6 +2713,7 @@ final bool SetPlayerProperty (int Prop, int Set) {
     case PROP_WEAPONLEVEL2: InvClass = PowerWeaponLevel2; break;
     case PROP_FLIGHT: InvClass = PowerFlight; break;
     case PROP_SPEED: InvClass = PowerSpeed; break;
+    case PROP_BUDDHA: break; // no, my dear mod author, you cannot do this
     default:
       dprint("%C: SetPlayerProperty: unknown property %d", self, Prop);
       return false;

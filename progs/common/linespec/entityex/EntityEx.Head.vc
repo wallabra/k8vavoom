@@ -140,7 +140,8 @@ enum
   PROP_INFRARED        = 10,
   PROP_WEAPONLEVEL2    = 11,
   PROP_FLIGHT          = 12,
-  PROP_SPEED           = 15
+  PROP_SPEED           = 15,
+  PROP_BUDDHA          = 16,
 };
 
 //  Constants for ClassifyActor

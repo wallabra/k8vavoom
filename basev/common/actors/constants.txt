@@ -247,8 +247,7 @@ const int PROP_INFRARED = 10;
 const int PROP_WEAPONLEVEL2 = 11;
 const int PROP_FLIGHT = 12;
 const int PROP_SPEED = 15;
-
-const int PROP_BUDDHA = 666; // not supported
+const int PROP_BUDDHA = 16; // not supported
 
 
 // Flags for A_Fade*
