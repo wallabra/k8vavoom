@@ -4750,8 +4750,6 @@ void ProcessDecorateScripts () {
     // store weapon slots into GameInfo class defaults
     VClass *wpnbase = VClass::FindClass("Weapon");
     if (!wpnbase) Sys_Error("`Weapon` class not found, cannot set weapon slots");
-    //VField *fldList = gi->FindFieldChecked(VName("decoplayersWeaponSlots"));
-    //TArray<PlayerClassWeaponSlots> &wsarr = *((TArray<PlayerClassWeaponSlots> *)fldList->GetFieldPtr((VObject *)gi->Defaults));
     for (int wsidx = 0; wsidx < newWSlots.length(); ++wsidx) {
       VClass *pawn = VClass::FindClassNoCase(*newWSlots[wsidx].plrClassName);
       if (!pawn) Sys_Error("`%s` player class not found, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
@@ -4761,15 +4759,12 @@ void ProcessDecorateScripts () {
         GCon->Logf(NAME_Warning, "`%s` is not a player pawn class, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
         continue;
       }
-      //if (!newWSlots[wsidx].hasAnyDefinedSlot()) continue;
-      //PlayerClassWeaponSlots &pss = wsarr.alloc();
-      //pss.playerClass = newWSlots[wsidx].plrClassName;
-      //pss.slotsDefined = newWSlots[wsidx].defined;
+      VField *fldList = pawn->FindFieldChecked(VName("weaponSlotClasses"));
+      //FIXME: type checking!
+      VClass **wsarrbase = (VClass **)(fldList->GetFieldPtr((VObject *)pawn->Defaults));
       for (int sidx = 0; sidx <= NUM_WEAPON_SLOTS; ++sidx) {
         if (!newWSlots[wsidx].isDefinedSlot(sidx)) continue;
-        VField *fldList = pawn->FindFieldChecked(VName("weaponSlotClasses"));
-        //FIXME: type checking!
-        VClass **wsarr = (VClass **)(fldList->GetFieldPtr((VObject *)pawn->Defaults));
+        VClass **wsarr = wsarrbase+sidx*MAX_WEAPONS_PER_SLOT;
         for (int widx = 0; widx < MAX_WEAPONS_PER_SLOT; ++widx) {
           VName cn = newWSlots[wsidx].getSlotName(sidx, widx);
           VClass *wc = nullptr;
