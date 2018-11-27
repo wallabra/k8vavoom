@@ -1371,6 +1371,8 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
     } else if (sc->Check("RespawnLimit")) {
       sc->ExpectNumber();
       sdef->RespawnLimit = sc->Number;
+    } else if (sc->Check("NoPain")) {
+      GCon->Logf("MAPINFO:%s: skill param 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
