@@ -173,4 +173,6 @@ defaultproperties
   SelectorType = MenuSelector_Big;
   Title = "CHOOSE CLASS:";
   // 34, TEXT_BIG
+  MenuScrollable = true;
+  Height = 210;
 }
