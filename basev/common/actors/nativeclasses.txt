@@ -41,6 +41,7 @@ class Actor extends Thinker
   */
 
   field radius = Radius;
+  field height = Height;
   field scalex = ScaleX;
   field scaley = ScaleY;
 
