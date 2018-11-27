@@ -2665,7 +2665,7 @@ final override int GetActorProperty (int Prop) {
     case APROP_SpawnHealth: if (PlayerPawn(self)) return PlayerPawn(self).MaxHealth; else return self.default.Health;
     case APROP_Dropped: return bDropped;
     case APROP_Species: return NameToInt(GetSpecies()); //HACK! keep in sync with C++ code!
-    case APROP_NameTag: return NameToInt(GetClassName(Class)); //HACK! keep in sync with C++ code!
+    case APROP_NameTag: return (StrifeName ? NameToInt(name(StrifeName)) : NameToInt(GetClassName(Class))); //HACK! keep in sync with C++ code!
     case APROP_MasterTID: return (Master ? Master.TID : 0);
     case APROP_TargetTID: return (Target ? Target.TID : 0);
     case APROP_TracerTID: return (Tracer ? Tracer.TID : 0);
