@@ -1292,14 +1292,16 @@ override void SpawnWorld(Level InLevel)
 //==========================================================================
 final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position, bool exact) {
   if (WpnClass) {
-    class!Weapon wpnrep = GetClassReplacement(WpnClass);
+    class!Weapon wpnrep = class!Weapon(GetClassReplacement(WpnClass));
+    if (!wpnrep) wpnrep = WpnClass;
     foreach (auto i; 0..PlayerPawn::NUM_WEAPON_SLOTS) {
       foreach (auto j; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
         class!Weapon swc = WeaponSlots[i].Weapons[j];
         if (!swc) continue;
         if (swc != WpnClass) {
           if (exact) continue;
-          class!Weapon swcrep = GetClassReplacement(swc);
+          class!Weapon swcrep = class!Weapon(GetClassReplacement(swc));
+          if (!swcrep) swcrep = swc;
           if (swcrep != WpnClass && swc != wpnrep && swcrep != wpnrep) continue;
         }
         //print("***FOUND '%C' as '%C' (exact:%B) at (%d:%d) (Position(%B)=%d)", WpnClass, swc, exact, i, j, specified_Position, Position);
@@ -1334,7 +1336,9 @@ bool AddWeaponToSlot (int Slot, class!Weapon WeaponClass) {
   }
   foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
     if (!WeaponSlots[Slot].Weapons[i]) {
-      WeaponSlots[Slot].Weapons[i] = GetClassReplacement(WeaponClass);
+      class!Weapon wwrepl = class!Weapon(GetClassReplacement(WeaponClass));
+      if (!wwrepl) wwrepl = WeaponClass;
+      WeaponSlots[Slot].Weapons[i] = wwrepl;
       return true;
     }
   }

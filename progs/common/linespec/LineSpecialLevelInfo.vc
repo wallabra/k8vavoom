@@ -4298,7 +4298,8 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   {
     return false;
   }
-  moType = GetClassReplacement(moType);
+  auto moRepl = class!EntityEx(GetClassReplacement(moType));
+  if (moRepl) moType = moRepl;
   angle = itof(Arg3) * 360.0 / 256.0;
   for (A = tid ? FindMobjFromTID(tid, none) : Activator; A;
     A = FindMobjFromTID(tid, A))
@@ -4369,7 +4370,8 @@ final override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, boo
     if (!SetNamePutElement('AcsSpawnThing:NotActorClass', Name)) print("AcsSpawnThing: `%s` is not an actor class", Name);
     return false;
   }
-  EntClass = GetClassReplacement(EntClass);
+  auto repl = class!EntityEx(GetClassReplacement(EntClass));
+  if (repl) EntClass = repl;
 
   EntityEx NewAct = Spawn(EntClass, Org);
   bool PrevPassMobj = NewAct.bPassMobj;

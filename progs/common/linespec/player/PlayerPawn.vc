@@ -103,10 +103,10 @@ class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotClasses;
 final class!Weapon GetWeaponInSlot (int slot, int index) {
   if (slot < 0 || slot > NUM_WEAPON_SLOTS) return none;
   if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return none;
-  //if (weaponSlotsDefined&(1<<slot))
-  return GetClassReplacement(weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index]);
-  //if (GI) return GetClassReplacement(WeaponSlots[sidx].Weapons[index]);
-  return none;
+  class!Weapon wpn = weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index];
+  if (!wpn) return none;
+  class!Weapon repl = class!Weapon(GetClassReplacement(wpn));
+  return (repl ? repl : wpn);
 }
 
 
@@ -305,7 +305,12 @@ void InitializeWeaponSlots (LineSpecialGameInfo GI) {
     foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
       if (!GetWeaponInSlot(sidx, 0)) {
         foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
-          SetWeaponInSlot(sidx, widx, GetClassReplacement(GI.WeaponSlots[sidx].Weapons[widx]));
+          class!Weapon wpn = GI.WeaponSlots[sidx].Weapons[widx];
+          if (wpn) {
+            class!Weapon repl = class!Weapon(GetClassReplacement(wpn));
+            if (repl) wpn = repl;
+          }
+          SetWeaponInSlot(sidx, widx, wpn);
         }
       }
     }
