@@ -124,36 +124,57 @@ final void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
 
 //==========================================================================
 //
-//  SetupDecorateWeaponSlots
+//  FindWeaponSlot
 //
 //==========================================================================
-/+
-void SetupDecorateWeaponSlots () {
-  // weapon slot overrides
-  print("*** defined: 0x%04x", default.decoplayersWeaponSlots[pwsidx].slotsDefined);
-  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
-    //if (!default.WeaponSlotDefined[sidx]) continue;
-    if (!(default.decoplayersWeaponSlots[pwsidx].slotsDefined&(1<<sidx))) continue;
-    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
-      //WeaponSlots[sidx].Weapons[widx] = default.WeaponSlotClasses[sidx*MAX_WEAPONS_PER_SLOT+widx];
-      print("  sidx=%s; widx=%s; cls=%C", sidx, widx, default.decoplayersWeaponSlots[pwsidx].classes[sidx*MAX_WEAPONS_PER_SLOT+widx]);
-      WeaponSlots[sidx].Weapons[widx] = default.decoplayersWeaponSlots[pwsidx].classes[sidx*MAX_WEAPONS_PER_SLOT+widx];
+final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index) {
+  if (WpnClass) {
+    class!Weapon wpnrep = class!Weapon(GetClassReplacement(WpnClass));
+    if (!wpnrep) wpnrep = WpnClass;
+    foreach (auto sidx; 0..NUM_WEAPON_SLOTS) {
+      foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+        class!Weapon swc = GetWeaponInSlot(sidx, widx);
+        if (!swc) continue;
+        if (swc != WpnClass) continue;
+        Slot = sidx;
+        Index = widx;
+        return true;
+      }
     }
   }
+  Slot = -1;
+  Index = -1;
+  return false;
+}
 
-  print("=== SetupDecorateWeaponSlots (%C) ===", plrclass);
-  // fix with replacements
-  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
-    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
-      class!Weapon oldwpn = WeaponSlots[sidx].Weapons[widx];
-      if (!oldwpn) continue;
-      class!Weapon wpn = class!Weapon(GetClassReplacement(oldwpn));
-      print("sidx=%s; widx=%s; wpn=%C; repl=%C", sidx, widx, oldwpn, wpn);
-      WeaponSlots[sidx].Weapons[widx] = wpn;
+
+//==========================================================================
+//
+//  NextUsedWeaponSlot
+//
+//==========================================================================
+final void NextUsedWeaponSlot (ref int Slot, ref int Index, bool forward) {
+  if (Slot < 0) Slot = 0;
+  if (Index < 0) Index = (forward ? -1 : 0);
+  Slot %= NUM_WEAPON_SLOTS+1;
+  Index %= MAX_WEAPONS_PER_SLOT;
+
+  foreach (auto i; 0..MAX_WEAPONS_PER_SLOT*(NUM_WEAPON_SLOTS+1)) {
+    if (forward) {
+      if (++Index == MAX_WEAPONS_PER_SLOT) {
+        Index = 0;
+        Slot = (Slot+1)%(NUM_WEAPON_SLOTS+1);
+      }
+    } else {
+      if (--Index == -1) {
+        Index = MAX_WEAPONS_PER_SLOT-1;
+        Slot = (Slot+NUM_WEAPON_SLOTS)%(NUM_WEAPON_SLOTS+1); // this wraps
+      }
     }
+    class!Weapon wpnclass = GetWeaponInSlot(Slot, Index);
+    if (wpnclass) return;
   }
 }
-+/
 
 
 //==========================================================================
@@ -182,6 +203,8 @@ private final int CompareWeaponPosition (class!Weapon a, class!Weapon b) {
 //
 //  SortWeaponSlot
 //
+//  TODO: we have array sorting, but only for dynarrays
+//
 //==========================================================================
 final void SortWeaponSlot (int wsidx) {
   if (wsidx < 0 || wsidx > NUM_WEAPON_SLOTS) return;
@@ -190,11 +213,6 @@ final void SortWeaponSlot (int wsidx) {
   while (i < MAX_WEAPONS_PER_SLOT) {
     int j = i;
     while (j > 0 && CompareWeaponPosition(GetWeaponInSlot(wsidx, j-1), GetWeaponInSlot(wsidx, j)) > 0) {
-      /*
-      class!Weapon tmp = WeaponSlots[wsidx].Weapons[j-1];
-      WeaponSlots[wsidx].Weapons[j-1] = WeaponSlots[wsidx].Weapons[j];
-      WeaponSlots[wsidx].Weapons[j] = tmp;
-      */
       class!Weapon tmp = GetWeaponInSlot(wsidx, j-1);
       SetWeaponInSlot(wsidx, j-1, GetWeaponInSlot(wsidx, j));
       SetWeaponInSlot(wsidx, j, tmp);
@@ -298,7 +316,6 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
 //==========================================================================
 void InitializeWeaponSlots (LineSpecialGameInfo GI) {
   //writeln("*** InitializeWeaponSlots (%C) ***", self);
-  //SetupDecorateWeaponSlots();
   class!Weapon wcls;
 
   if (GI) {

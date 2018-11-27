@@ -359,18 +359,17 @@ void SB_DrawMainBar () {
   if (ClGame.deathmatch) {
     // frags sum
     SB_DrawTallNum(ST_FRAGSX, ST_FRAGSY, cl.Frags, 1.0, false);
-  }
-  else {
+  } else {
     // weapons owned
+    auto pawn = PlayerPawn(cl.MO);
     DrawPic(ST_ARMSBGX, ST_ARMSBGY, pic_arms);
     foreach (auto i; 0..6) {
       bool HaveWeapon = false;
       Inventory Item;
       for (Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
-        if (!Weapon(Item)) continue;
-        int TmpSlot;
-        int TmpIndex;
-        LineSpecialGameInfo(cl.ClGame.Game).FindWeaponSlot(class!Weapon(Item.Class), TmpSlot, TmpIndex, Weapon(Item).Position, exact:true);
+        if (!Weapon(Item) || !pawn) continue;
+        int TmpSlot, TmpIndex;
+        pawn.FindWeaponSlot(class!Weapon(Item.Class), TmpSlot, TmpIndex);
         if (TmpSlot == i+2) {
           HaveWeapon = true;
           break;

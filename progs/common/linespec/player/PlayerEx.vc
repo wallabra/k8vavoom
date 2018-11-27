@@ -1051,7 +1051,6 @@ final Weapon GetSlotChangeWeapon (int Slot) {
   if (Slot < 0 || Slot > PlayerPawn::NUM_WEAPON_SLOTS) return ReadyWeapon;
   auto pawn = PlayerPawn(MO);
   if (!pawn) return ReadyWeapon;
-
   //LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
 
   if (ReadyWeapon) {
@@ -1092,50 +1091,57 @@ final Weapon GetSlotChangeWeapon (int Slot) {
 
 //==========================================================================
 //
+//  CycleWeaponWithDir
+//
+//==========================================================================
+final Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return Current;
+
+  // find current weapon slot and index
+  int currSlot = -1, currIndex = -1;
+  if (!pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
+    if (forward) {
+      currSlot = 0;
+      currIndex = -1;
+    } else {
+      currSlot = PlayerPawn::NUM_WEAPON_SLOTS;
+      currIndex = PlayerPawn::MAX_WEAPONS_PER_SLOT;
+    }
+  }
+
+  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT*(PlayerPawn::NUM_WEAPON_SLOTS+1)) {
+    if (forward) {
+      if (++currIndex == PlayerPawn::MAX_WEAPONS_PER_SLOT) {
+        currIndex = 0;
+        currSlot = (currSlot+1)%(PlayerPawn::NUM_WEAPON_SLOTS+1);
+      }
+    } else {
+      if (--currIndex == -1) {
+        currIndex = PlayerPawn::MAX_WEAPONS_PER_SLOT-1;
+        currSlot = (currSlot+PlayerPawn::NUM_WEAPON_SLOTS)%(PlayerPawn::NUM_WEAPON_SLOTS+1); // this wraps
+      }
+    }
+    class!Weapon swc = pawn.GetWeaponInSlot(currSlot, currIndex);
+    if (!swc) continue;
+    if (Current && Current.Class == swc) continue;
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc));
+    if (Wpn) {
+      if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
+    }
+  }
+
+  return Current;
+}
+
+
+//==========================================================================
+//
 //  GetPrevWeapon
 //
 //==========================================================================
 final Weapon GetPrevWeapon (Weapon Current) {
-  auto pawn = PlayerPawn(MO);
-  if (!pawn) return Current;
-
-  LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-
-/+
-  int Slot;
-  int Index;
-  int Start;
-
-  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), Slot, Index/*, Current.Position*/, exact:true)) {
-    //print("PREVWEAPON: found slot for current weapon: slot=%d; index=%d", Slot, Index);
-    Start = Slot*LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
-  } else {
-    //print("PREVWEAPON: slot not found");
-    Start = LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-  }
-
-  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
-    --Start;
-    if (Start < 0) break;
-    Slot = (Start/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT); //%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-    Index = Start%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-    class!Weapon swc = GI.WeaponSlots[Slot].Weapons[Index];
-    if (!swc) continue;
-    //print("PREVWEAPON:  checking weapon at (%d:%d); desired class is '%C'", Slot, Index, swc);
-    if (Current && GetClassReplacement(swc) == GetClassReplacement(Current.Class)) {
-      //print("PREVWEAPON:   skip current");
-      continue;
-    }
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
-    if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-    if (Wpn) {
-      //print("PREVWEAPON:   found weapon at (%d:%d); desired class is '%C', real class is '%C'", Slot, Index, swc, Wpn);
-      if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
-    }
-  }
-+/
-
-  return Current;
+  return CycleWeaponWithDir(Current, forward:false);
 }
 
 
@@ -1145,48 +1151,7 @@ final Weapon GetPrevWeapon (Weapon Current) {
 //
 //==========================================================================
 final Weapon GetNextWeapon (Weapon Current) {
-  auto pawn = PlayerPawn(MO);
-  if (!pawn) return Current;
-
-  LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-
-/+
-  int Slot;
-  int Index;
-  int Start;
-
-  if (Current && GI.FindWeaponSlot(class!Weapon(Current.Class), out Slot, out Index/*, Current.Position*/, exact:true)) {
-    //print("NEXTWEAPON: found slot for current weapon: slot=%d; index=%d", Slot, Index);
-    Start = Slot*LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT+Index;
-  } else {
-    //print("NEXTWEAPON: slot not found");
-    Start = -1;
-  }
-
-  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
-    ++Start;
-    //if (Start >= LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT*LineSpecialGameInfo::NUM_WEAPON_SLOTS) break;
-    Slot = (Start/LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT); //%LineSpecialGameInfo::NUM_WEAPON_SLOTS;
-    if (Slot >= LineSpecialGameInfo::NUM_WEAPON_SLOTS) break;
-    Index = Start%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-    //print("  Slot=%d; Index=%d; class=%C", Slot, Index, GI.WeaponSlots[Slot].Weapons[Index]);
-    class!Weapon swc = GI.WeaponSlots[Slot].Weapons[Index];
-    if (!swc) continue;
-    //print("NEXTWEAPON:  checking weapon at (%d:%d); desired class is '%C'", Slot, Index, swc);
-    if (Current && GetClassReplacement(swc) == GetClassReplacement(Current.Class)) {
-      //print("NEXTWEAPON:   skip current");
-      continue;
-    }
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
-    if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-    if (Wpn) {
-      //print("NEXTWEAPON:   found weapon at (%d:%d); desired class is '%C', real class is '%C'", Slot, Index, swc, Wpn);
-      if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
-    }
-  }
-+/
-
-  return Current;
+  return CycleWeaponWithDir(Current, forward:true);
 }
 
 

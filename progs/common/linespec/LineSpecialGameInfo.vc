@@ -1290,7 +1290,7 @@ override void SpawnWorld(Level InLevel)
 //  FindWeaponSlot
 //
 //==========================================================================
-final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position, bool exact) {
+private final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position, bool exact) {
   if (WpnClass) {
     class!Weapon wpnrep = class!Weapon(GetClassReplacement(WpnClass));
     if (!wpnrep) wpnrep = WpnClass;

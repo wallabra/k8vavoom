@@ -229,22 +229,27 @@ override void AttachToOwner (EntityEx NewOwner) {
 
   if (Owner.Player && !bNoAutoSwitch && GetCvarB('wpn_autoswitch')) {
     // Doom and Strife always switch to a new weapon, Heretic and Hexen
-    // only switch to more powerful weapons, always check for ammo
-    int ReadySlot = -1;
-    int ReadyIndex = -1;
-    int NewSlot;
-    int NewIndex;
-    if (PlayerEx(Owner.Player).ReadyWeapon) {
-      LineSpecialGameInfo(Level.Game).FindWeaponSlot(
-        class!Weapon(PlayerEx(Owner.Player).ReadyWeapon.Class),
-        ReadySlot, ReadyIndex, PlayerEx(Owner.Player).ReadyWeapon.Position, exact:true);
+    // only switch to more powerful weapons; always check for ammo
+    auto pawn = PlayerPawn(Owner);
+    if (!pawn) return;
+    auto plr = PlayerEx(Owner.Player);
+    if (!plr) return;
+
+    bool doSwitch = LineSpecialGameInfo(Level.Game).bAlwaysSwitchNewWeapon;
+    if (!doSwitch) {
+      doSwitch = true;
+      if (plr.ReadyWeapon) {
+        int ReadySlot = -1, ReadyIndex = -1;
+        if (pawn.FindWeaponSlot(class!Weapon(plr.ReadyWeapon.Class), out ReadySlot, out ReadyIndex)) {
+          int NewSlot = -1, NewIndex = -1;
+          if (pawn.FindWeaponSlot(class!Weapon(Class), out NewSlot, out NewIndex)) {
+            doSwitch = (NewSlot > ReadySlot) || (NewSlot == ReadySlot && NewIndex > ReadyIndex);
+          }
+        }
+      }
     }
-    LineSpecialGameInfo(Level.Game).FindWeaponSlot(class!Weapon(Class), NewSlot, NewIndex, Position, exact:true);
-    if (CheckAmmo(FIRE_Either, false) &&
-        (LineSpecialGameInfo(Level.Game).bAlwaysSwitchNewWeapon ||
-        !PlayerEx(Owner.Player).ReadyWeapon || NewSlot > ReadySlot) ||
-        (NewSlot == ReadySlot && NewIndex < ReadyIndex))
-    {
+
+    if (doSwitch && CheckAmmo(FIRE_Either, false)) {
       PlayerEx(Owner.Player).PendingWeapon = self;
     }
   }
