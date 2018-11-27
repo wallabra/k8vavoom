@@ -336,7 +336,10 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   if (Member != nullptr && Member->MemberType == MEMBER_Method) {
     CurrentFunc = (VMethod *)Member;
     CurrentFunc->Instructions.Clear();
-    CurrentFunc->Instructions.Resize(1024);
+    //k8: nope, don't do this. many (most!) states with actions are creating anonymous functions
+    //    with several statements only. this is ALOT of functions. and each get several kb of RAM.
+    //    hello, OOM on any moderately sized mod. yay.
+    //CurrentFunc->Instructions.Resize(1024);
     FuncRetType = CurrentFunc->ReturnType;
     if (CurrentFunc->SelfTypeName != NAME_None) {
       SelfClass = VMemberBase::StaticFindClass(CurrentFunc->SelfTypeName);
@@ -373,6 +376,9 @@ void VEmitContext::EndCode () {
 
   FInstruction &Dummy = CurrentFunc->Instructions.Alloc();
   Dummy.Opcode = OPC_Done;
+
+  CurrentFunc->Instructions.condense();
+
   //CurrentFunc->DumpAsm();
 }
 

@@ -718,6 +718,7 @@ void VMethod::CompileCode () {
 
   // we don't need instructions anymore
   Instructions.Clear();
+  Statements.condense();
   unguard;
 }
 
