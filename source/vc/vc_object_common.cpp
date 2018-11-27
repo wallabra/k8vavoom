@@ -33,6 +33,31 @@ IMPLEMENT_FUNCTION(VObject, get_GCMessagesAllowed) { RET_BOOL(GGCMessagesAllowed
 IMPLEMENT_FUNCTION(VObject, set_GCMessagesAllowed) { P_GET_BOOL(val); GGCMessagesAllowed = val; }
 
 
+static TMap<VStr, bool> setOfNameSets;
+
+
+//==========================================================================
+//
+//  setNamePut
+//
+//==========================================================================
+static bool setNamePut (VName setName, VName value) {
+  VStr realName = VStr(va("%s \x01\x01\x01 %s", *setName, *value));
+  return setOfNameSets.put(realName, true);
+}
+
+
+//==========================================================================
+//
+//  setNameCheck
+//
+//==========================================================================
+static bool setNameCheck (VName setName, VName value) {
+  VStr realName = VStr(va("%s \x01\x01\x01 %s", *setName, *value));
+  return !!setOfNameSets.find(realName);
+}
+
+
 //==========================================================================
 //
 //  Object.Destroy
@@ -1061,4 +1086,20 @@ IMPLEMENT_FUNCTION(VObject, GetIntFieldByName) {
   if (!fld) Sys_Error("field '%s' not found in class '%s'", *name, Self->Class->GetName());
   if (fld->Type.Type != TYPE_Int) Sys_Error("field '%s' is not int (it is `%s`)", *name, *fld->Type.GetName());
   RET_INT(*(const vint32 *)((defval ? Self->Class->Defaults : (const vuint8 *)Self)+fld->Ofs));
+}
+
+
+// native static final bool SetNamePutElement (name setName, name value);
+IMPLEMENT_FUNCTION(VObject, SetNamePutElement) {
+  P_GET_NAME(value);
+  P_GET_NAME(setName);
+  RET_BOOL(setNamePut(setName, value));
+}
+
+
+// native static final bool SetNameCheckElement (name setName, name value);
+IMPLEMENT_FUNCTION(VObject, SetNameCheckElement) {
+  P_GET_NAME(value);
+  P_GET_NAME(setName);
+  RET_BOOL(setNameCheck(setName, value));
 }
