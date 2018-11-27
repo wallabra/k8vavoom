@@ -239,6 +239,18 @@ IMPLEMENT_FUNCTION(VObject, stricmp) {
   RET_INT(s1.ICmp(s2));
 }
 
+IMPLEMENT_FUNCTION(VObject, nameicmp) {
+  P_GET_NAME(s2);
+  P_GET_NAME(s1);
+  RET_INT(VStr::ICmp(*s1, *s2));
+}
+
+IMPLEMENT_FUNCTION(VObject, namestricmp) {
+  P_GET_STR(s2);
+  P_GET_NAME(s1);
+  RET_INT(s2.ICmp(*s1));
+}
+
 IMPLEMENT_FUNCTION(VObject, strcat) {
   P_GET_STR(s2);
   P_GET_STR(s1);

@@ -393,6 +393,10 @@ native static final int strlen (string s);
 native static final int strcmp (string s1, string s2);
 // compare strings ingnoring case
 native static final int stricmp (string s1, string s2);
+// compare names ingnoring case
+native static final int nameicmp (name s1, name s2);
+// compare string and name ingnoring case
+native static final int namestricmp (name s1, string s2);
 // append string to string
 native static final string strcat (string s1, string s2);
 // convert string to lowercase
