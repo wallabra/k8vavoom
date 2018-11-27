@@ -3492,7 +3492,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
 
               // check damage factors array for replacements
               TArray<VDamageFactor> &DamageFactors = GetClassDamageFactors(Class);
-              VDamageFactor *DF = nullptr;
+              VDamageFactor *DF = nullptr, *ncDF = nullptr;
               for (i = 0; i < DamageFactors.Num(); ++i) {
                 if (DamageFactors[i].DamageType == DamageType) {
                   DF = &DamageFactors[i];
@@ -3500,8 +3500,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
                 }
                 if (VStr::ICmp(*DamageFactors[i].DamageType, *DamageType) == 0) {
                   ParseWarning(loc, "DamageFactor case mismatch: looking for '%s', got '%s'", *DamageType, *DamageFactors[i].DamageType);
+                  if (!ncDF) ncDF = &DamageFactors[i];
                 }
               }
+              if (!DF && ncDF) DF = ncDF;
               if (!DF) {
                 DF = &DamageFactors.Alloc();
                 DF->DamageType = DamageType;
