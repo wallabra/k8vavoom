@@ -225,6 +225,22 @@ final void SortWeaponSlot (int wsidx) {
 
 //==========================================================================
 //
+//  DumpWeaponSlots
+//
+//==========================================================================
+private final void DumpWeaponSlots () {
+  dprint("=== player pawn '%C' ===", self);
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      class!Weapon ww = GetWeaponInSlot(sidx, widx);
+      if (ww) print("  slot #%d, weapon #%d: %C (priority:%d)", sidx, widx, ww, ww.default.Position);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  FindAndReplaceWeaponInSlot
 //
 //==========================================================================
@@ -251,17 +267,17 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
       if (ww == newWpn) {
         // check if it is in a good slot
         if (wsidx == nsidx) {
-          //!print("found new '%n' in slot %d at position %d", GetClassName(ww), wsidx, s2idx);
+          dprint("found new '%C' in slot %d at position %d", ww, wsidx, s2idx);
           ++s2idx;
           foundIt = true;
           needToSort = true;
           continue;
         }
-        //!print("removing new '%n' from slot %d at position %d", GetClassName(ww), wsidx, s2idx);
+        dprint("removing new '%C' from slot %d at position %d", ww, wsidx, s2idx);
         // nope, bad slot, remove it
       } else if (origWpn && ww == origWpn) {
         // ok
-        //!print("removing old '%n' from slot %d at position %d", GetClassName(ww), wsidx, s2idx);
+        dprint("removing old '%C' from slot %d at position %d", ww, wsidx, s2idx);
       } else {
         // wtf?!
         FatalError("something is wrong in `FindAndReplaceWeaponInSlot()`!");
@@ -283,29 +299,15 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
   // insert it into slot, and sort a slot
   foreach (auto s2idx; 0..MAX_WEAPONS_PER_SLOT) {
     if (!GetWeaponInSlot(nsidx, s2idx)) {
-      //!print("added new '%n' to slot %d at position %d", GetClassName(newWpn), nsidx, s2idx);
+      dprint("added new '%C' to slot %d at position %d", newWpn, nsidx, s2idx);
       SetWeaponInSlot(nsidx, s2idx, newWpn);
       break;
     }
   }
 
-  /*
-  print("=== weapon slot #%d (0)", nsidx);
-  foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-    class!Weapon ww = WeaponSlots[nsidx].Weapons[s2idx];
-    if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
-  }
-  */
-
+  //DumpWeaponSlots();
   SortWeaponSlot(nsidx);
-
-  /*
-  print("=== weapon slot #%d (1)", nsidx);
-  foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-    class!Weapon ww = WeaponSlots[nsidx].Weapons[s2idx];
-    if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
-  }
-  */
+  //DumpWeaponSlots();
 }
 
 
@@ -315,7 +317,9 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
 //
 //==========================================================================
 void InitializeWeaponSlots (LineSpecialGameInfo GI) {
-  //writeln("*** InitializeWeaponSlots (%C) ***", self);
+  dprint("*** InitializeWeaponSlots (%C) ***", self);
+  DumpWeaponSlots();
+
   class!Weapon wcls;
 
   if (GI) {
@@ -359,6 +363,8 @@ void InitializeWeaponSlots (LineSpecialGameInfo GI) {
       SetWeaponInSlot(sidx, widx, wpn);
     }
   }
+
+  DumpWeaponSlots();
 }
 
 
