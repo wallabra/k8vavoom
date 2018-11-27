@@ -544,6 +544,7 @@ defaultproperties
 
   PlayerClasses.Num = 1;
   PlayerClasses[0] = HereticPlayer;
+
   WeaponSlots[1].Weapons[0] = Staff;
   WeaponSlots[1].Weapons[1] = Gauntlets;
   WeaponSlots[2].Weapons[0] = GoldWand;

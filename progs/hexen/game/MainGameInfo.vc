@@ -354,6 +354,7 @@ defaultproperties
   PlayerClasses[0] = FighterPlayer;
   PlayerClasses[1] = ClericPlayer;
   PlayerClasses[2] = MagePlayer;
+
   WeaponSlots[1].Weapons[0] = FWeapFist;
   WeaponSlots[1].Weapons[1] = CWeapMace;
   WeaponSlots[1].Weapons[2] = MWeapWand;

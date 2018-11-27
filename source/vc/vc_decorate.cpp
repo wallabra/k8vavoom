@@ -3258,6 +3258,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
         sc->Error(va("Replaced class `%s` is not an actor class", *sc->String));
       }
     }
+    /*
+    if (ReplaceeClass != nullptr && !ReplaceeClass->IsChildOf(ParentClass)) {
+      ReplaceeClass = nullptr; // just in case
+      sc->Message(va("Replaced class `%s` is not a child of `%s`", *sc->String, ParentClass->GetName()));
+    }
+    */
     // skip this actor if it has invalid replacee
     if (ReplaceeClass == nullptr) {
       sc->SkipBracketed(false); // bracket is not eaten
@@ -4742,19 +4748,28 @@ void ProcessDecorateScripts () {
   //WARNING: keep this in sync with script code!
   if (newWSlots.length()) {
     // store weapon slots into GameInfo class defaults
-    VClass *gi = VClass::FindClass("MainGameInfo");
-    gi = gi->GetReplacement();
     VClass *wpnbase = VClass::FindClass("Weapon");
-    if (!gi) Sys_Error("`MainGameInfo` class not found, cannot set weapon slots");
     if (!wpnbase) Sys_Error("`Weapon` class not found, cannot set weapon slots");
-    VField *fldList = gi->FindFieldChecked(VName("decoplayersWeaponSlots"));
-    TArray<PlayerClassWeaponSlots> &wsarr = *((TArray<PlayerClassWeaponSlots> *)fldList->GetFieldPtr((VObject *)gi->Defaults));
+    //VField *fldList = gi->FindFieldChecked(VName("decoplayersWeaponSlots"));
+    //TArray<PlayerClassWeaponSlots> &wsarr = *((TArray<PlayerClassWeaponSlots> *)fldList->GetFieldPtr((VObject *)gi->Defaults));
     for (int wsidx = 0; wsidx < newWSlots.length(); ++wsidx) {
-      if (!newWSlots[wsidx].hasAnyDefinedSlot()) continue;
-      PlayerClassWeaponSlots &pss = wsarr.alloc();
-      pss.playerClass = newWSlots[wsidx].plrClassName;
-      pss.slotsDefined = newWSlots[wsidx].defined;
+      VClass *pawn = VClass::FindClassNoCase(*newWSlots[wsidx].plrClassName);
+      if (!pawn) Sys_Error("`%s` player class not found, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
+      VClass *pawnBase = pawn;
+      while (pawnBase && VStr::Cmp(pawnBase->GetName(), "PlayerPawn") != 0) pawnBase = pawnBase->GetSuperClass();
+      if (!pawnBase) {
+        GCon->Logf(NAME_Warning, "`%s` is not a player pawn class, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
+        continue;
+      }
+      //if (!newWSlots[wsidx].hasAnyDefinedSlot()) continue;
+      //PlayerClassWeaponSlots &pss = wsarr.alloc();
+      //pss.playerClass = newWSlots[wsidx].plrClassName;
+      //pss.slotsDefined = newWSlots[wsidx].defined;
       for (int sidx = 0; sidx <= NUM_WEAPON_SLOTS; ++sidx) {
+        if (!newWSlots[wsidx].isDefinedSlot(sidx)) continue;
+        VField *fldList = pawn->FindFieldChecked(VName("weaponSlotClasses"));
+        //FIXME: type checking!
+        VClass **wsarr = (VClass **)(fldList->GetFieldPtr((VObject *)pawn->Defaults));
         for (int widx = 0; widx < MAX_WEAPONS_PER_SLOT; ++widx) {
           VName cn = newWSlots[wsidx].getSlotName(sidx, widx);
           VClass *wc = nullptr;
@@ -4767,10 +4782,10 @@ void ProcessDecorateScripts () {
               GCon->Logf(NAME_Warning, "class '%s' is not a weapon", *cn);
               wc = nullptr;
             } else {
-              if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GCon->Logf(NAME_Init, "DECORATE: class '%s', slot #%d, weapon #%d set to '%s'", *pss.playerClass, sidx, widx, *wc->GetFullName());
+              if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GCon->Logf(NAME_Init, "DECORATE: class '%s', slot #%d, weapon #%d set to '%s'", pawn->GetName(), sidx, widx, *wc->GetFullName());
             }
           }
-          pss.classes[sidx*MAX_WEAPONS_PER_SLOT+widx] = wc;
+          wsarr[widx] = wc;
         }
       }
     }

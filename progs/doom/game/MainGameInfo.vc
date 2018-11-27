@@ -1048,6 +1048,7 @@ defaultproperties {
 
   PlayerClasses.Num = 1;
   PlayerClasses[0] = DoomPlayer;
+
   WeaponSlots[1].Weapons[0] = Fist;
   WeaponSlots[1].Weapons[1] = Chainsaw;
   WeaponSlots[2].Weapons[0] = Pistol;

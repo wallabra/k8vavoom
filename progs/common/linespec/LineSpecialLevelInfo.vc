@@ -7684,6 +7684,7 @@ class!Inventory GetDehackedItemType(EntityEx Ent)
 //  Called after game was loaded
 //
 //==========================================================================
+/+
 override void AfterUnarchiveThinkers () {
   ::AfterUnarchiveThinkers();
   // setup weapon slots
@@ -7712,6 +7713,7 @@ override void AfterUnarchiveThinkers () {
     }
   }
 }
++/
 
 
 defaultproperties

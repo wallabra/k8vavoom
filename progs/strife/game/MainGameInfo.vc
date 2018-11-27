@@ -630,6 +630,7 @@ defaultproperties
   bBloodSpray = true;
   PlayerClasses.Num = 1;
   PlayerClasses[0] = StrifePlayer;
+
   WeaponSlots[1].Weapons[0] = PunchDagger;
   WeaponSlots[2].Weapons[0] = StrifeCrossbow2;
   WeaponSlots[2].Weapons[1] = StrifeCrossbow;

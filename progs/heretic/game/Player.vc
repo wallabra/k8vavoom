@@ -125,7 +125,7 @@ override void PlayerImpulse()
   Impulse = 0;
   Inventory Arti = none;
 
-  if (impulse <= LineSpecialGameInfo::NUM_WEAPON_SLOTS)
+  if (impulse <= PlayerPawn::NUM_WEAPON_SLOTS)
   {
     ChangeWeapon(impulse);
   }

@@ -19,6 +19,10 @@ actor FighterPlayer : PlayerPawn
   Player.SpawnClass "Fighter"
   Player.ScoreIcon "fiteface"
   Player.StartItem "FWeapFist"
+  Player.WeaponSlot 1, FWeapFist
+  Player.WeaponSlot 2, FWeapAxe
+  Player.WeaponSlot 3, FWeapHammer
+  Player.WeaponSlot 4, FWeapQuietus
   states
   {
   Spawn:

@@ -1048,28 +1048,28 @@ final Weapon ChoosePowered (Weapon Wpn) {
 //
 //==========================================================================
 final Weapon GetSlotChangeWeapon (int Slot) {
-  LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
+  if (Slot < 0 || Slot > PlayerPawn::NUM_WEAPON_SLOTS) return ReadyWeapon;
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return ReadyWeapon;
 
-  if (Slot < 0 || Slot > LineSpecialGameInfo::NUM_WEAPON_SLOTS) return ReadyWeapon;
+  //LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
 
   if (ReadyWeapon) {
     class!Weapon readyWpnClass = class!Weapon(GetClassReplacement(ReadyWeapon.Class));
     if (readyWpnClass) {
-      foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+      foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
         //print("i=%s; wpn=%C", i, GI.WeaponSlots[Slot].Weapons[i]);
-        class!Weapon slotwpn = GetClassReplacement(GI.WeaponSlots[Slot].Weapons[i]);
+        class!Weapon slotwpn = pawn.GetWeaponInSlot(Slot, i);
         if (!slotwpn) continue;
-        if (GetClassReplacement(slotwpn) == readyWpnClass ||
+        if (slotwpn == readyWpnClass ||
             (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
              slotwpn == GetClassReplacement(ReadyWeapon.SisterWeapon.Class)))
         {
-          for (int j = (i+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT;
-               j != i;
-               j = (j+LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT-1)%LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT)
-          {
-            class!Weapon swc = GI.WeaponSlots[Slot].Weapons[j];
-            Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(swc)));
-            if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(swc));
+          foreach (int j; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
+            int nwidx = (i+j+1)%PlayerPawn::MAX_WEAPONS_PER_SLOT;
+            class!Weapon swc = pawn.GetWeaponInSlot(Slot, nwidx);
+            if (!swc) continue;
+            Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc));
             if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
           }
         }
@@ -1077,13 +1077,12 @@ final Weapon GetSlotChangeWeapon (int Slot) {
     }
   }
 
-  print("=== PLAYER '%C' wants slot %d ===", self, Slot);
-  foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT; reverse) {
-    class!Weapon slotwpn = GI.WeaponSlots[Slot].Weapons[i];
+  //print("=== PLAYER '%C' wants slot %d ===", self, Slot);
+  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT; reverse) {
+    class!Weapon slotwpn = pawn.GetWeaponInSlot(Slot, i);
     if (!slotwpn) continue;
-    if (slotwpn) print("   wpn #%d: %C", i, slotwpn);
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(slotwpn)));
-    if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn));
+    //if (slotwpn) print("   wpn #%d: %C", i, slotwpn);
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn));
     if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
   }
 
@@ -1097,7 +1096,12 @@ final Weapon GetSlotChangeWeapon (int Slot) {
 //
 //==========================================================================
 final Weapon GetPrevWeapon (Weapon Current) {
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return Current;
+
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
+
+/+
   int Slot;
   int Index;
   int Start;
@@ -1129,6 +1133,7 @@ final Weapon GetPrevWeapon (Weapon Current) {
       if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
     }
   }
++/
 
   return Current;
 }
@@ -1140,7 +1145,12 @@ final Weapon GetPrevWeapon (Weapon Current) {
 //
 //==========================================================================
 final Weapon GetNextWeapon (Weapon Current) {
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return Current;
+
   LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
+
+/+
   int Slot;
   int Index;
   int Start;
@@ -1174,6 +1184,7 @@ final Weapon GetNextWeapon (Weapon Current) {
       if (Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
     }
   }
++/
 
   return Current;
 }
@@ -1885,6 +1896,7 @@ override void SpawnClient () {
   */
 
   // setup weapon slots
+  /+
   if (Level) {
     LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
     if (GI) {
@@ -1909,6 +1921,9 @@ override void SpawnClient () {
       */
     }
   }
+  +/
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(LineSpecialGameInfo(Level.Game));
+
   if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn) {
     OnNetReborn(OldMO);
   }
@@ -1964,6 +1979,8 @@ override void NetGameReborn () {
     // player's going to be inside something. too bad.
     SpawnPlayer(Level.GetPlayerStart(GetPlayerNum(), Level.Game.RebornPosition), false);
   }
+
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(LineSpecialGameInfo(Level.Game));
 
   OnNetReborn(OldMO);
 }

@@ -20,6 +20,10 @@ actor MagePlayer : PlayerPawn
   Player.SpawnClass "Mage"
   Player.ScoreIcon "mageface"
   Player.StartItem "MWeapWand"
+  Player.WeaponSlot 1, MWeapWand
+  Player.WeaponSlot 2, MWeapFrost
+  Player.WeaponSlot 3, MWeapLightning
+  Player.WeaponSlot 4, MWeapBloodscourge
   states
   {
   Spawn:

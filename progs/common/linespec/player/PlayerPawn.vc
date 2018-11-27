@@ -24,6 +24,17 @@
 //**************************************************************************
 class PlayerPawn : Actor abstract;
 
+const int
+  NUM_WEAPON_SLOTS = 10,
+  MAX_WEAPONS_PER_SLOT = 8;
+
+/*
+struct WeaponSlot {
+  class!Weapon[MAX_WEAPONS_PER_SLOT+1] Weapons;
+};
+*/
+
+
 // default view height
 float ViewHeight;
 
@@ -79,6 +90,254 @@ int MaxHealth;
 
 // K8 Headshots Variables
 int k8hsCount;
+
+// weapon slots
+class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotClasses;
+
+
+//==========================================================================
+//
+//  GetWeaponInSlot
+//
+//==========================================================================
+final class!Weapon GetWeaponInSlot (int slot, int index) {
+  if (slot < 0 || slot > NUM_WEAPON_SLOTS) return none;
+  if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return none;
+  //if (weaponSlotsDefined&(1<<slot))
+  return GetClassReplacement(weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index]);
+  //if (GI) return GetClassReplacement(WeaponSlots[sidx].Weapons[index]);
+  return none;
+}
+
+
+//==========================================================================
+//
+//  SetWeaponInSlot
+//
+//==========================================================================
+final void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
+  if (slot < 0 || slot > NUM_WEAPON_SLOTS) return;
+  if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return;
+  weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index] = wpn;
+}
+
+
+//==========================================================================
+//
+//  SetupDecorateWeaponSlots
+//
+//==========================================================================
+/+
+void SetupDecorateWeaponSlots () {
+  // weapon slot overrides
+  print("*** defined: 0x%04x", default.decoplayersWeaponSlots[pwsidx].slotsDefined);
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    //if (!default.WeaponSlotDefined[sidx]) continue;
+    if (!(default.decoplayersWeaponSlots[pwsidx].slotsDefined&(1<<sidx))) continue;
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      //WeaponSlots[sidx].Weapons[widx] = default.WeaponSlotClasses[sidx*MAX_WEAPONS_PER_SLOT+widx];
+      print("  sidx=%s; widx=%s; cls=%C", sidx, widx, default.decoplayersWeaponSlots[pwsidx].classes[sidx*MAX_WEAPONS_PER_SLOT+widx]);
+      WeaponSlots[sidx].Weapons[widx] = default.decoplayersWeaponSlots[pwsidx].classes[sidx*MAX_WEAPONS_PER_SLOT+widx];
+    }
+  }
+
+  print("=== SetupDecorateWeaponSlots (%C) ===", plrclass);
+  // fix with replacements
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      class!Weapon oldwpn = WeaponSlots[sidx].Weapons[widx];
+      if (!oldwpn) continue;
+      class!Weapon wpn = class!Weapon(GetClassReplacement(oldwpn));
+      print("sidx=%s; widx=%s; wpn=%C; repl=%C", sidx, widx, oldwpn, wpn);
+      WeaponSlots[sidx].Weapons[widx] = wpn;
+    }
+  }
+}
++/
+
+
+//==========================================================================
+//
+//  CompareWeaponPosition
+//
+//==========================================================================
+private final int CompareWeaponPosition (class!Weapon a, class!Weapon b) {
+  if (a) {
+    if (b) {
+      // both a and b is here, compare positions (higher is lower ;-) -- nope
+      if (a.default.Position == b.default.Position) return 0;
+      //if (a.default.Position < b.default.Position) return 1;
+      if (a.default.Position > b.default.Position) return 1;
+      return -1;
+    }
+    // a is here, b is not: a is lesser
+    return -1;
+  }
+  // a is not here
+  return (b ? 1 : 0);
+}
+
+
+//==========================================================================
+//
+//  SortWeaponSlot
+//
+//==========================================================================
+final void SortWeaponSlot (int wsidx) {
+  if (wsidx < 0 || wsidx > NUM_WEAPON_SLOTS) return;
+  // use insertion sort to do the work
+  int i = 1;
+  while (i < MAX_WEAPONS_PER_SLOT) {
+    int j = i;
+    while (j > 0 && CompareWeaponPosition(GetWeaponInSlot(wsidx, j-1), GetWeaponInSlot(wsidx, j)) > 0) {
+      /*
+      class!Weapon tmp = WeaponSlots[wsidx].Weapons[j-1];
+      WeaponSlots[wsidx].Weapons[j-1] = WeaponSlots[wsidx].Weapons[j];
+      WeaponSlots[wsidx].Weapons[j] = tmp;
+      */
+      class!Weapon tmp = GetWeaponInSlot(wsidx, j-1);
+      SetWeaponInSlot(wsidx, j-1, GetWeaponInSlot(wsidx, j));
+      SetWeaponInSlot(wsidx, j, tmp);
+      --j;
+    }
+    ++i;
+  }
+}
+
+
+//==========================================================================
+//
+//  FindAndReplaceWeaponInSlot
+//
+//==========================================================================
+final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn) {
+  if (!newWpn) return;
+  int nsidx = newWpn.default.SlotNumber;
+  if (nsidx < 0 || nsidx > NUM_WEAPON_SLOTS) return;
+
+  if (origWpn == newWpn) origWpn = none;
+
+  bool foundIt = false;
+
+  foreach (auto wsidx; 0..NUM_WEAPON_SLOTS+1) {
+    bool needToSort = false;
+    int s2idx = 0;
+    while (s2idx < MAX_WEAPONS_PER_SLOT) {
+      class!Weapon ww = GetWeaponInSlot(wsidx, s2idx);
+      if (origWpn) {
+        if (ww != origWpn && ww != newWpn) { ++s2idx; continue; }
+      } else {
+        if (ww != newWpn) { ++s2idx; continue; }
+      }
+      // i found her!
+      if (ww == newWpn) {
+        // check if it is in a good slot
+        if (wsidx == nsidx) {
+          //!print("found new '%n' in slot %d at position %d", GetClassName(ww), wsidx, s2idx);
+          ++s2idx;
+          foundIt = true;
+          needToSort = true;
+          continue;
+        }
+        //!print("removing new '%n' from slot %d at position %d", GetClassName(ww), wsidx, s2idx);
+        // nope, bad slot, remove it
+      } else if (origWpn && ww == origWpn) {
+        // ok
+        //!print("removing old '%n' from slot %d at position %d", GetClassName(ww), wsidx, s2idx);
+      } else {
+        // wtf?!
+        FatalError("something is wrong in `FindAndReplaceWeaponInSlot()`!");
+      }
+      // remove weapon from slot (this autoclears last slot)
+      foreach (auto c; s2idx+1..MAX_WEAPONS_PER_SLOT+1) {
+        //WeaponSlots[wsidx].Weapons[c-1] = WeaponSlots[wsidx].Weapons[c];
+        SetWeaponInSlot(wsidx, c-1, GetWeaponInSlot(wsidx, c));
+      }
+      // clear last slot
+      //WeaponSlots[wsidx].Weapons[MAX_WEAPONS_PER_SLOT] = none;
+    }
+    // sort modified slot
+    if (needToSort) SortWeaponSlot(wsidx);
+  }
+
+  if (foundIt) return; // it is already there
+
+  // insert it into slot, and sort a slot
+  foreach (auto s2idx; 0..MAX_WEAPONS_PER_SLOT) {
+    if (!GetWeaponInSlot(nsidx, s2idx)) {
+      //!print("added new '%n' to slot %d at position %d", GetClassName(newWpn), nsidx, s2idx);
+      SetWeaponInSlot(nsidx, s2idx, newWpn);
+      break;
+    }
+  }
+
+  /*
+  print("=== weapon slot #%d (0)", nsidx);
+  foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+    class!Weapon ww = WeaponSlots[nsidx].Weapons[s2idx];
+    if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
+  }
+  */
+
+  SortWeaponSlot(nsidx);
+
+  /*
+  print("=== weapon slot #%d (1)", nsidx);
+  foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+    class!Weapon ww = WeaponSlots[nsidx].Weapons[s2idx];
+    if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
+  }
+  */
+}
+
+
+//==========================================================================
+//
+//  InitializeWeaponSlots
+//
+//==========================================================================
+void InitializeWeaponSlots (LineSpecialGameInfo GI) {
+  //writeln("*** InitializeWeaponSlots (%C) ***", self);
+  //SetupDecorateWeaponSlots();
+  class!Weapon wcls;
+
+  if (GI) {
+    foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+      if (!GetWeaponInSlot(sidx, 0)) {
+        foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+          SetWeaponInSlot(sidx, widx, GetClassReplacement(GI.WeaponSlots[sidx].Weapons[widx]));
+        }
+      }
+    }
+  }
+
+  foreach AllClasses(Weapon, wcls) {
+    //if (GetClassName(wcls) == 'AssaultGun') GI.WeaponSlots[4].Weapons[0] = wcls;
+    if (wcls.default.SlotNumber < 1 || wcls.default.SlotNumber >= NUM_WEAPON_SLOTS) continue;
+    class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
+    //print("PLR: weapon '%C'; slot is %d; replacement is %C!", wcls, wcls.default.SlotNumber, repl);
+    if (repl && repl != wcls) continue;
+    auto st = FindClassState(wcls, 'Ready');
+    if (!st) continue; // an abstract base class
+    if (!AreStateSpritesPresent(st)) continue;
+    //print("PLR: weapon '%C'; slot is %d; priority is %d!", wcls, wcls.default.SlotNumber, wcls.default.Position);
+    repl = class!Weapon(GetClassReplacee(wcls));
+    //!if (repl) print("  replacee: '%s'", GetClassName(repl));
+    FindAndReplaceWeaponInSlot(repl, wcls);
+  }
+
+  //print("=== SetupDecorateWeaponSlots (%C) ===", self);
+  // fix with replacements
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      class!Weapon oldwpn = GetWeaponInSlot(sidx, widx);
+      if (!oldwpn) continue;
+      class!Weapon wpn = class!Weapon(GetClassReplacement(oldwpn));
+      //print("sidx=%s; widx=%s; wpn=%C; repl=%C", sidx, widx, oldwpn, wpn);
+      SetWeaponInSlot(sidx, widx, wpn);
+    }
+  }
+}
 
 
 //==========================================================================
