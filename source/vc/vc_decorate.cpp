@@ -146,40 +146,58 @@ struct VClassFixup {
 };
 
 
+struct PlayerClassWeaponSlots {
+  VName playerClass;
+  int slotsDefined; // one bit for one slot; if set, replace slot with this
+  VClass *classes[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
+};
+
+
 struct VWeaponSlotFixups {
-  bool defined[NUM_WEAPON_SLOTS+1]; // [1..10]
+  VName plrClassName;
+  //bool defined[NUM_WEAPON_SLOTS+1]; // [1..10]
+  int defined; // bitfield
   VName names[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
 
-  VWeaponSlotFixups () {
-    for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) defined[f] = false;
+  VWeaponSlotFixups () : plrClassName(NAME_None), defined(0) {
+    //for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) defined[f] = false;
     for (int f = 0; f < (NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT; ++f) names[f] = NAME_None;
   }
 
-  inline bool isValidSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS); }
-
-  bool hasAnyDefinedSlot () const {
-    for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) if (defined[f]) return true;
-    return false;
+  void clearAllSlots () {
+    defined = 0;
+    for (int f = 0; f < (NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT; ++f) names[f] = NAME_None;
   }
 
-  inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? defined[idx] : false); }
+  inline static bool isValidSlot (int idx) { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS); }
+
+  inline bool hasAnyDefinedSlot () const {
+    //for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) if (defined[f]) return true;
+    //return false;
+    return (defined != 0);
+  }
+
+  //inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? defined[idx] : false); }
+  inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? !!(defined&(1<<idx)) : false); }
 
   VName getSlotName (int sidx, int nidx) const {
     if (sidx < 0 || sidx > NUM_WEAPON_SLOTS) return NAME_None;
-    if (!defined[sidx]) return NAME_None;
+    if (!isDefinedSlot(sidx)) return NAME_None;
     if (nidx < 0 || nidx >= MAX_WEAPONS_PER_SLOT) return NAME_None;
     return names[sidx*MAX_WEAPONS_PER_SLOT+nidx];
   }
 
   void clearSlot (int idx) {
     if (idx < 0 || idx > NUM_WEAPON_SLOTS) return;
-    defined[idx] = true;
+    //defined[idx] = true;
+    defined |= 1<<idx;
     for (int f = 0; f < MAX_WEAPONS_PER_SLOT; ++f) names[idx*MAX_WEAPONS_PER_SLOT+f] = NAME_None;
   }
 
   void addToSlot (int idx, VName aname) {
     if (idx < 0 || idx > NUM_WEAPON_SLOTS) return;
-    defined[idx] = true;
+    //defined[idx] = true;
+    defined |= 1<<idx;
     for (int f = 0; f < MAX_WEAPONS_PER_SLOT; ++f) {
       if (names[idx*MAX_WEAPONS_PER_SLOT+f] == NAME_None) {
         names[idx*MAX_WEAPONS_PER_SLOT+f] = aname;
@@ -188,6 +206,18 @@ struct VWeaponSlotFixups {
     }
   }
 };
+
+
+static VWeaponSlotFixups &allocWeaponSlotsFor (TArray<VWeaponSlotFixups> &list, VClass *klass) {
+  check(klass);
+  for (int f = 0; f < list.length(); ++f) {
+    if (VStr::ICmp(*list[f].plrClassName, klass->GetName()) == 0) return list[f];
+  }
+  VWeaponSlotFixups &fxp = list.alloc();
+  fxp.plrClassName = VName(klass->GetName());
+  fxp.clearAllSlots();
+  return fxp;
+}
 
 
 struct VPropDef {
@@ -3105,7 +3135,7 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
 //  ParseActor
 //
 //==========================================================================
-static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWeaponSlotFixups &newWSlots) {
+static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
   guard(ParseActor);
   // parse actor name
   // in order to allow dots in actor names, this is done in non-C mode,
@@ -3899,11 +3929,16 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWe
               // get slot number
               sc->ExpectNumber();
               int sidx = sc->Number;
-              if (!newWSlots.isValidSlot(sidx)) GCon->Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
-              newWSlots.clearSlot(sidx);
-              while (sc->Check(",")) {
-                sc->ExpectString();
-                newWSlots.addToSlot(sidx, VName(*sc->String));
+              if (!VWeaponSlotFixups::isValidSlot(sidx)) {
+                GCon->Logf(NAME_Warning, "%s: invalid weapon slot number %d", *sc->GetLoc().toStringNoCol(), sidx);
+                while (sc->Check(",")) sc->ExpectString();
+              } else {
+                VWeaponSlotFixups &wst = allocWeaponSlotsFor(newWSlots, Class);
+                wst.clearSlot(sidx);
+                while (sc->Check(",")) {
+                  sc->ExpectString();
+                  wst.addToSlot(sidx, VName(*sc->String));
+                }
               }
             }
             break;
@@ -4425,7 +4460,7 @@ static void ParseDamageType (VScriptParser *sc) {
 //  ParseDecorate
 //
 //==========================================================================
-static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, VWeaponSlotFixups &newWSlots) {
+static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
   guard(ParseDecorate);
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
@@ -4617,7 +4652,7 @@ void ProcessDecorateScripts () {
 
   // parse scripts
   TArray<VClassFixup> ClassFixups;
-  VWeaponSlotFixups newWSlots;
+  TArray<VWeaponSlotFixups> newWSlots;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_decorate) {
       mainDecorateLump = Lump;
@@ -4704,40 +4739,38 @@ void ProcessDecorateScripts () {
     }
   }
 
-  // fix weapon slots
-  if (newWSlots.hasAnyDefinedSlot()) {
-    //VName getSlotName (int sidx, int nidx) const
+  //WARNING: keep this in sync with script code!
+  if (newWSlots.length()) {
+    // store weapon slots into GameInfo class defaults
     VClass *gi = VClass::FindClass("MainGameInfo");
+    gi = gi->GetReplacement();
     VClass *wpnbase = VClass::FindClass("Weapon");
-    if (!gi || !wpnbase) {
-      if (!gi) GCon->Logf(NAME_Warning, "`MainGameInfo` class not found, cannot set weapon slots");
-      if (!wpnbase) GCon->Logf(NAME_Warning, "`Weapon` class not found, cannot set weapon slots");
-    } else {
-      //WARNING: keep this in sync with script code!
-      gi = gi->GetReplacement();
-      VField *fldFlags = gi->FindFieldChecked(VName("WeaponSlotDefined"));
-      VField *fldList = gi->FindFieldChecked(VName("WeaponSlotClasses"));
-      if (!fldFlags || !fldList) {
-        GCon->Logf(NAME_Warning, "some fields not found, cannot set weapon slots");
-      } else {
-        vint32 *wsflag = (vint32 *)fldFlags->GetFieldPtr((VObject *)gi->Defaults);
-        VClass **wslist = (VClass **)fldList->GetFieldPtr((VObject *)gi->Defaults);
-        for (int sidx = 0; sidx <= NUM_WEAPON_SLOTS; ++sidx) {
-          wsflag[sidx] = 0;
-          if (!newWSlots.isDefinedSlot(sidx)) continue;
-          wsflag[sidx] = 1; // redefined
-          VClass **sarr = wslist+MAX_WEAPONS_PER_SLOT*sidx;
-          for (int widx = 0; widx < MAX_WEAPONS_PER_SLOT; ++widx) {
-            sarr[widx] = nullptr;
-            VName cn = newWSlots.getSlotName(sidx, widx);
-            if (cn == NAME_None) continue;
+    if (!gi) Sys_Error("`MainGameInfo` class not found, cannot set weapon slots");
+    if (!wpnbase) Sys_Error("`Weapon` class not found, cannot set weapon slots");
+    VField *fldList = gi->FindFieldChecked(VName("decoplayersWeaponSlots"));
+    TArray<PlayerClassWeaponSlots> &wsarr = *((TArray<PlayerClassWeaponSlots> *)fldList->GetFieldPtr((VObject *)gi->Defaults));
+    for (int wsidx = 0; wsidx < newWSlots.length(); ++wsidx) {
+      if (!newWSlots[wsidx].hasAnyDefinedSlot()) continue;
+      PlayerClassWeaponSlots &pss = wsarr.alloc();
+      pss.playerClass = newWSlots[wsidx].plrClassName;
+      pss.slotsDefined = newWSlots[wsidx].defined;
+      for (int sidx = 0; sidx <= NUM_WEAPON_SLOTS; ++sidx) {
+        for (int widx = 0; widx < MAX_WEAPONS_PER_SLOT; ++widx) {
+          VName cn = newWSlots[wsidx].getSlotName(sidx, widx);
+          VClass *wc = nullptr;
+          if (cn != NAME_None) {
             VStr lcn = VStr(*cn).toLowerCase();
-            VClass *wc = VClass::FindClassLowerCase(*lcn);
-            if (!wc) { GCon->Logf(NAME_Warning, "unknown weapon class '%s'", *cn); continue; }
-            if (!wc->IsChildOf(wpnbase)) { GCon->Logf(NAME_Warning, "class '%s' is not a weapon", *cn); continue; }
-            if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GCon->Logf(NAME_Init, "DECORATE: slot #%d, weapon #%d set to '%s'", sidx, widx, *wc->GetFullName());
-            sarr[widx] = wc;
+            wc = VClass::FindClassLowerCase(*lcn);
+            if (!wc) {
+              GCon->Logf(NAME_Warning, "unknown weapon class '%s'", *cn);
+            } else if (!wc->IsChildOf(wpnbase)) {
+              GCon->Logf(NAME_Warning, "class '%s' is not a weapon", *cn);
+              wc = nullptr;
+            } else {
+              if (GArgs.CheckParm("-debug-decorate-weapon-slots")) GCon->Logf(NAME_Init, "DECORATE: class '%s', slot #%d, weapon #%d set to '%s'", *pss.playerClass, sidx, widx, *wc->GetFullName());
+            }
           }
+          pss.classes[sidx*MAX_WEAPONS_PER_SLOT+widx] = wc;
         }
       }
     }

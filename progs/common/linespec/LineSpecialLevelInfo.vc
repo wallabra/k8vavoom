@@ -7699,7 +7699,7 @@ override void AfterUnarchiveThinkers () {
         }
       }
       */
-      GI.InitializeWeaponSlots();
+      //!!!GI.InitializeWeaponSlots();
       /*
       foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
         print("=== weapon slot #%d", wsidx);

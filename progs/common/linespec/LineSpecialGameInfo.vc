@@ -53,10 +53,20 @@ const int
   NUM_WEAPON_SLOTS = 10,
   MAX_WEAPONS_PER_SLOT = 8;
 
-struct WeaponSlot
-{
-  class!Weapon Weapons[MAX_WEAPONS_PER_SLOT+1];
+
+struct WeaponSlot {
+  class!Weapon[MAX_WEAPONS_PER_SLOT+1] Weapons;
 };
+
+struct PlayerClassWeaponSlots {
+  name playerClass;
+  int slotsDefined; // one bit for one slot; if set, replace slot with this
+  class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] classes;
+};
+
+// this is from decorate
+array!PlayerClassWeaponSlots decoplayersWeaponSlots;
+
 
 float     contents_alpha[9];
 
@@ -111,8 +121,8 @@ int       ramp1[16];
 int       ramp2[16];
 
 // decorate weapon slot processing needs this
-int WeaponSlotDefined[NUM_WEAPON_SLOTS+1];
-class!Weapon WeaponSlotClasses[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
+//int WeaponSlotDefined[NUM_WEAPON_SLOTS+1];
+//class!Weapon WeaponSlotClasses[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
 
 WeaponSlot WeaponSlots[NUM_WEAPON_SLOTS+1];
 
@@ -130,21 +140,59 @@ float     DehExplosionAlpha;
 //  SetupDecorateWeaponSlots
 //
 //==========================================================================
-void SetupDecorateWeaponSlots () {
-  // weapon slot overrides
-  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
-    if (!default.WeaponSlotDefined[sidx]) continue;
-    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
-      WeaponSlots[sidx].Weapons[widx] = default.WeaponSlotClasses[sidx*MAX_WEAPONS_PER_SLOT+widx];
+void SetupDecorateWeaponSlots (class!PlayerPawn plrclass) {
+  if (!plrclass) return; // just in case
+
+  // find decorate info
+  //PlayerClassWeaponSlots *pws = nullptr;
+  int pwsidx = -1;
+  foreach (auto i; 0..default.decoplayersWeaponSlots.length) {
+    print("i=%d; plrclass=%C; pc=%s", i, plrclass, default.decoplayersWeaponSlots[i].playerClass);
+    if (nameicmp(default.decoplayersWeaponSlots[i].playerClass, GetClassName(plrclass)) == 0) {
+      // i found her!
+      //pws = &decoplayersWeaponSlots[i];
+      pwsidx = i;
+      break;
     }
   }
+  if (pwsidx < 0) {
+    // find descendant
+    foreach (auto i; 0..default.decoplayersWeaponSlots.length) {
+      class c = plrclass;
+      while (c && nameicmp(default.decoplayersWeaponSlots[i].playerClass, GetClassName(c)) != 0) {
+        print("  i=%d; plrclass=%C; pc=%s", i, c, default.decoplayersWeaponSlots[i].playerClass);
+        c = GetClassParent(c);
+      }
+      if (c) {
+        // i found her!
+        //pws = &default.decoplayersWeaponSlots[i];
+        pwsidx = i;
+        break;
+      }
+    }
+  }
+  if (pwsidx < 0) return;
+
+  // weapon slot overrides
+  print("*** defined: 0x%04x", default.decoplayersWeaponSlots[pwsidx].slotsDefined);
+  foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
+    //if (!default.WeaponSlotDefined[sidx]) continue;
+    if (!(default.decoplayersWeaponSlots[pwsidx].slotsDefined&(1<<sidx))) continue;
+    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
+      //WeaponSlots[sidx].Weapons[widx] = default.WeaponSlotClasses[sidx*MAX_WEAPONS_PER_SLOT+widx];
+      print("  sidx=%s; widx=%s; cls=%C", sidx, widx, default.decoplayersWeaponSlots[pwsidx].classes[sidx*MAX_WEAPONS_PER_SLOT+widx]);
+      WeaponSlots[sidx].Weapons[widx] = default.decoplayersWeaponSlots[pwsidx].classes[sidx*MAX_WEAPONS_PER_SLOT+widx];
+    }
+  }
+
+  print("=== SetupDecorateWeaponSlots (%C) ===", plrclass);
   // fix with replacements
   foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
     foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
       class!Weapon oldwpn = WeaponSlots[sidx].Weapons[widx];
       if (!oldwpn) continue;
       class!Weapon wpn = class!Weapon(GetClassReplacement(oldwpn));
-      //print("sidx=%s; widx=%s; wpn=%C; repl=%C", sidx, widx, oldwpn, wpn);
+      print("sidx=%s; widx=%s; wpn=%C; repl=%C", sidx, widx, oldwpn, wpn);
       WeaponSlots[sidx].Weapons[widx] = wpn;
     }
   }
@@ -285,9 +333,9 @@ final void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn
 //  InitializeWeaponSlots
 //
 //==========================================================================
-void InitializeWeaponSlots () {
+void InitializeWeaponSlots (class!PlayerPawn plrclass) {
   //writeln("*** InitializeWeaponSlots ***");
-  SetupDecorateWeaponSlots();
+  SetupDecorateWeaponSlots(plrclass);
   class!Weapon wcls;
   foreach AllClasses(Weapon, wcls) {
     //if (GetClassName(wcls) == 'AssaultGun') GI.WeaponSlots[4].Weapons[0] = wcls;

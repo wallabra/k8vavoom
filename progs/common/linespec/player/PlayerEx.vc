@@ -1077,8 +1077,11 @@ final Weapon GetSlotChangeWeapon (int Slot) {
     }
   }
 
+  print("=== PLAYER '%C' wants slot %d ===", self, Slot);
   foreach (auto i; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT; reverse) {
     class!Weapon slotwpn = GI.WeaponSlots[Slot].Weapons[i];
+    if (!slotwpn) continue;
+    if (slotwpn) print("   wpn #%d: %C", i, slotwpn);
     Weapon Wpn = Weapon(EntityEx(MO).FindInventory(GetClassReplacement(slotwpn)));
     if (!Wpn) Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn));
     if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return ChoosePowered(Wpn);
@@ -1840,33 +1843,6 @@ override void SpawnClient () {
   bool playerWasReborn;
   EntityEx OldMO = EntityEx(MO);
 
-  // setup weapon slots
-  if (Level) {
-    LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-    if (GI) {
-      /*
-      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
-        print("=== weapon slot #%d", wsidx);
-        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
-          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
-        }
-      }
-      */
-      GI.InitializeWeaponSlots();
-      /*
-      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
-        print("=== weapon slot #%d", wsidx);
-        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
-          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
-        }
-      }
-      */
-    }
-  }
-
-
   Attacker = none;
   Poisoner = none;
 
@@ -1908,6 +1884,31 @@ override void SpawnClient () {
   }
   */
 
+  // setup weapon slots
+  if (Level) {
+    LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
+    if (GI) {
+      /*
+      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
+        print("=== weapon slot #%d", wsidx);
+        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
+          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
+        }
+      }
+      */
+      GI.InitializeWeaponSlots(class!PlayerPawn(MO.Class));
+      /*
+      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
+        print("=== weapon slot #%d", wsidx);
+        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
+          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
+          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
+        }
+      }
+      */
+    }
+  }
   if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn) {
     OnNetReborn(OldMO);
   }
