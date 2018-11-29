@@ -233,7 +233,7 @@ private final void DumpWeaponSlots () {
   foreach (auto sidx; 0..NUM_WEAPON_SLOTS+1) {
     foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
       class!Weapon ww = GetWeaponInSlot(sidx, widx);
-      if (ww) print("  slot #%d, weapon #%d: %C (priority:%d)", sidx, widx, ww, ww.default.Position);
+      if (ww) dprint("  slot #%d, weapon #%d: %C (priority:%d)", sidx, widx, ww, ww.default.Position);
     }
   }
 }
