@@ -48,6 +48,12 @@ override void RootWindowCreated () {
   CreateCvar('sb_show_keys', "0", "Show Strife Keys", 0);
   CreateCvar('sb_show_objectives', "0", "Show Strife Objectives", 0);
 
+  if (GetRealScreenWidth() <= 800 || GetRealScreenHeight() <= 600) {
+    SetVirtualScreen(640, 480);
+    GRoot.Width = 640;
+    GRoot.Height = 480;
+  }
+
   GTitle = TitleScreen(GRoot.NewChild(TitleScreen));
   GSBar = StatusBarScreen(GRoot.NewChild(StatusBarScreen));
   GImission = IntermissionScreen(GRoot.NewChild(IntermissionScreen));
@@ -387,8 +393,16 @@ override void DrawViewBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void StartSpeech (EntityEx Speaker, int SpeechNum) {
+  if (GetRealScreenWidth() <= 800 || GetRealScreenHeight() <= 600) {
+    print("normalizing screen!");
+    SetVirtualScreen(640, 480);
+    //if (Width != 640) Width = 640;
+    //if (Height != 480) Height = 480;
+  }
+
   ConDialog Dlg = ConDialog(SpawnMenu(ConDialog));
   Dlg.SetSpeech(Speaker, SpeechNum);
+  Dlg.SetSize(GetVirtualWidth(), GetVirtualHeight());
   PushMenuScreen(Dlg);
 }
 

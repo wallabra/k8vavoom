@@ -84,6 +84,7 @@ override void PlayerImpulse () {
   else if (impulse == 16) Actor(MO).Damage(none, none, 10000); // suicide
   else if (impulse == 17) PrevWeapon();
   else if (impulse == 18) NextWeapon();
+  else if (impulse == 43) Actor(MO).FireSuperBullet();
   else if (impulse == 56) bReloadQueued = true;
   else if (impulse >= 200 && impulse <= 205) {
     LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse-200);
