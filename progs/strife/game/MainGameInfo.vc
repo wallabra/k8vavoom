@@ -22,13 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MainGameInfo : LineSpecialGameInfo;
 
-const int NUM_SPECIALS    = 236;
+const int NUM_SPECIALS = 236;
 
-struct spec_trans_t
-{
+struct spec_trans_t {
   int special;
   int arg1;
   int arg2;
@@ -43,40 +41,37 @@ struct spec_trans_t
 
 spec_trans_t spec_trans_tab[NUM_SPECIALS];
 
+
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-override void Init()
-{
+override void Init () {
   ::Init();
   InitTranslationTables();
 }
+
 
 //==========================================================================
 //
 //  InitNewGame
 //
 //==========================================================================
-
-override void InitNewGame(int skill)
-{
+override void InitNewGame (int skill) {
   SetSkill(skill);
   nomonsters = GetCvar('NoMonsters');
   bRespawnItems = !!GetCvar('deathmatch');
   bWeaponsStay = netgame && GetCvar('deathmatch') < 2;
 }
 
+
 //==========================================================================
 //
 //  InitTranslationTables
 //
 //==========================================================================
-
-void InitTranslationTables()
-{
+void InitTranslationTables () {
   //  0
   SetLineTrans(1, LNSPEC_DoorRaise, 0, 16, 150, 0, 0, SPAC_Use, true, true);
   SetLineTrans(2, LNSPEC_DoorOpen, -1, 16, 0, 0, 0, SPAC_Cross, false);
@@ -338,13 +333,13 @@ void InitTranslationTables()
   SetLineTrans(235, LNSPEC_ACSExecuteWithResult, 0, 235, -1, 0, 0, SPAC_Use, false);
 }
 
+
 //==========================================================================
 //
 //  SetLineTrans
 //
 //==========================================================================
-
-void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
+void SetLineTrans (int i, int special, int arg1, int arg2, int arg3,
   int arg4, int arg5, int spac, int repeat, optional int monst,
   optional int not_destroy)
 {
@@ -360,265 +355,131 @@ void SetLineTrans(int i, int special, int arg1, int arg2, int arg3,
   spec_trans_tab[i].not_destroy = not_destroy;
 }
 
+
 //==========================================================================
 //
 //  TranslateLine
 //
 //==========================================================================
-
-void TranslateLine(line_t *line)
-{
-  int     OldSpec;
-  int     OldTag;
-  int     OldFlags;
-
-  OldSpec = line->special;
-  OldTag = line->arg1;
-  OldFlags = line->flags;
+void TranslateLine (line_t *line) {
+  int OldSpec = line->special;
+  int OldTag = line->arg1;
+  int OldFlags = line->flags;
 
   line->flags &= 0x01ff;
-  if (OldFlags & ML_RAILING_STRIFE)
-  {
-    line->flags |= ML_RAILING;
-  }
-  if (OldFlags & ML_BLOCK_FLOATERS_STRIFE)
-  {
-    line->flags |= ML_BLOCK_FLOATERS;
-  }
+  if (OldFlags&ML_RAILING_STRIFE) line->flags |= ML_RAILING;
+  if (OldFlags&ML_BLOCK_FLOATERS_STRIFE) line->flags |= ML_BLOCK_FLOATERS;
 
-  if (!line->special)
-  {
-    if (OldFlags & ML_TRANSLUCENT_STRIFE)
-    {
+  if (!line->special) {
+    if (OldFlags&ML_TRANSLUCENT_STRIFE) {
       line->special = LNSPEC_LineTranslucent;
       line->arg2 = 170;
     }
     return;
   }
 
-  if (line->special >= NUM_SPECIALS)
-  {
+  if (line->special >= NUM_SPECIALS) {
     line->special = 0;
     line->arg1 = 0;
     return;
   }
 
-  //  Special.
+  // special
   line->special = spec_trans_tab[OldSpec].special;
-  //  Arg 1.
-  if (spec_trans_tab[OldSpec].arg1 == -1)
-  {
-    line->arg1 = OldTag;
-  }
-  else
-  {
-    line->arg1 = spec_trans_tab[OldSpec].arg1;
-  }
-  //  Arg 2.
-  if (spec_trans_tab[OldSpec].arg2 == -1)
-  {
-    line->arg2 = OldTag;
-  }
-  else
-  {
-    line->arg2 = spec_trans_tab[OldSpec].arg2;
-  }
-  //  Arg 3.
-  if (spec_trans_tab[OldSpec].arg3 == -1)
-  {
-    line->arg3 = OldTag;
-  }
-  else
-  {
-    line->arg3 = spec_trans_tab[OldSpec].arg3;
-  }
-  //  Arg 4.
-  if (spec_trans_tab[OldSpec].arg4 == -1)
-  {
-    line->arg4 = OldTag;
-  }
-  else
-  {
-    line->arg4 = spec_trans_tab[OldSpec].arg4;
-  }
-  //  Arg 5.
-  if (spec_trans_tab[OldSpec].arg5 == -1)
-  {
-    line->arg5 = OldTag;
-  }
-  else
-  {
-    line->arg5 = spec_trans_tab[OldSpec].arg5;
-  }
-  //  Activation flags.
-  line->SpacFlags = spec_trans_tab[OldSpec].spac;
-  if (spec_trans_tab[OldSpec].repeat)
-  {
-    line->flags |= ML_REPEAT_SPECIAL;
-  }
-  if (spec_trans_tab[OldSpec].monst)
-  {
-    line->flags |= ML_MONSTERSCANACTIVATE;
-  }
-  if ((line->flags & ML_SECRET) && line->SpacFlags & (SPAC_Use |
-    SPAC_UseThrough))
-  {
-    line->flags &= ~ML_MONSTERSCANACTIVATE;
-  }
+  line->arg1 = (spec_trans_tab[OldSpec].arg1 == -1 ? OldTag : spec_trans_tab[OldSpec].arg1);
+  line->arg2 = (spec_trans_tab[OldSpec].arg2 == -1 ? OldTag : spec_trans_tab[OldSpec].arg2);
+  line->arg3 = (spec_trans_tab[OldSpec].arg3 == -1 ? OldTag : spec_trans_tab[OldSpec].arg3);
+  line->arg4 = (spec_trans_tab[OldSpec].arg4 == -1 ? OldTag : spec_trans_tab[OldSpec].arg4);
+  line->arg5 = (spec_trans_tab[OldSpec].arg5 == -1 ? OldTag : spec_trans_tab[OldSpec].arg5);
 
-  if (OldFlags & ML_TRANSLUCENT_STRIFE)
-  {
-    if (line->special == 49)
-    {
+  // activation flags
+  line->SpacFlags = spec_trans_tab[OldSpec].spac;
+  if (spec_trans_tab[OldSpec].repeat) line->flags |= ML_REPEAT_SPECIAL;
+  if (spec_trans_tab[OldSpec].monst) line->flags |= ML_MONSTERSCANACTIVATE;
+  if ((line->flags&ML_SECRET) && (line->SpacFlags&(SPAC_Use|SPAC_UseThrough))) line->flags &= ~ML_MONSTERSCANACTIVATE;
+
+  if (OldFlags&ML_TRANSLUCENT_STRIFE) {
+    if (line->special == 49) {
       line->arg2 = 170;
-    }
-    else
-    {
+    } else {
       print("Translucent flag not compatible with line special");
     }
   }
-  // Check to see if we want thinkers destroyed or not
-  if (spec_trans_tab[OldSpec].not_destroy)
-  {
-    line->flags |= ML_KEEPDATA;
-  }
+
+  // check to see if we want thinkers destroyed or not
+  if (spec_trans_tab[OldSpec].not_destroy) line->flags |= ML_KEEPDATA;
 }
+
 
 //==========================================================================
 //
 //  TranslateSector
 //
 //==========================================================================
-
-void TranslateSector(sector_t *sector)
-{
+void TranslateSector (sector_t *sector) {
   int special;
   int high;
 
   special = sector->special;
-  if (!special)
-  {
-    return;
-  }
-  if (special == 9)
-  {
+  if (!special) return;
+
+  if (special == 9) {
     sector->special = SECSPEC_SECRET_MASK;
     return;
   }
 
-  //  This supports phased lighting with specials 21-24 and wind specials
-  // 40-51.
-  high = (sector->special & 0xfe0) << 3;
+  // this supports phased lighting with specials 21-24 and wind specials 40-51
+  high = (sector->special&0xfe0)<<3;
   special &= 0x01f;
-  if (special == 5 || special == 15 || special == 16 || special == 18)
-  {
-    sector->special = high | (special + 100);
-  }
-  else if (special < 21)
-  {
-    sector->special = high | (special + 64);
-  }
-  else if (special < 40)
-  {
-    sector->special = high | (special - 20);
-  }
-  else
-  {
-    sector->special = high | special;
-  }
+       if (special == 5 || special == 15 || special == 16 || special == 18) sector->special = high|(special+100);
+  else if (special < 21) sector->special = high|(special+64);
+  else if (special < 40) sector->special = high|(special-20);
+  else sector->special = high|special;
 }
+
 
 //==========================================================================
 //
 //  TranslateThing
 //
 //==========================================================================
-
-void TranslateThing(mthing_t *mthing)
-{
-  int flags;
-
-  // translate the spawn flags to Hexen format.
-  flags = mthing->options;
-  mthing->options = (flags & 0x7) | 0x7e0;
-  if (flags & 0x10)
-  {
-    mthing->options &= ~StrifeLevelInfo::MTF_GSINGLE;
-  }
-  if (flags & 0x08)
-  {
-    mthing->options |= LineSpecialLevelInfo::MTF_STANDSTILL;
-  }
-  if (flags & 0x20)
-  {
-    mthing->options |= LineSpecialLevelInfo::MTF_AMBUSH;
-  }
-  if (flags & 0x40)
-  {
-    mthing->options |= LineSpecialLevelInfo::MTF_FRIENDLY;
-  }
-  if (flags & 0x100)
-  {
-    mthing->options |= LineSpecialLevelInfo::MTF_SHADOW;
-  }
-  if (flags & 0x200)
-  {
-    mthing->options |= LineSpecialLevelInfo::MTF_ALTSHADOW;
-  }
+void TranslateThing (mthing_t *mthing) {
+  // translate the spawn flags to Hexen format
+  int flags = mthing->options;
+  mthing->options = (flags&0x7)|0x7e0;
+  if (flags&0x10) mthing->options &= ~StrifeLevelInfo::MTF_GSINGLE;
+  if (flags&0x08) mthing->options |= LineSpecialLevelInfo::MTF_STANDSTILL;
+  if (flags&0x20) mthing->options |= LineSpecialLevelInfo::MTF_AMBUSH;
+  if (flags&0x40) mthing->options |= LineSpecialLevelInfo::MTF_FRIENDLY;
+  if (flags&0x100) mthing->options |= LineSpecialLevelInfo::MTF_SHADOW;
+  if (flags&0x200) mthing->options |= LineSpecialLevelInfo::MTF_ALTSHADOW;
 }
+
 
 //==========================================================================
 //
 //  TranslateLevel
 //
 //==========================================================================
-
-override void TranslateLevel(Level InLevel)
-{
-  int i;
-
-  for (i = 0; i < InLevel.Lines.length; i++)
-  {
-    TranslateLine(&InLevel.Lines[i]);
-  }
-
-  for (i = 0; i < InLevel.Sectors.length; i++)
-  {
-    TranslateSector(&InLevel.Sectors[i]);
-  }
-
-  for (i = 0; i < InLevel.Things.length; i++)
-  {
-    TranslateThing(&InLevel.Things[i]);
-  }
+override void TranslateLevel (Level InLevel) {
+  foreach (auto i; 0..InLevel.Lines.length) TranslateLine(&InLevel.Lines[i]);
+  foreach (auto i; 0..InLevel.Sectors.length) TranslateSector(&InLevel.Sectors[i]);
+  foreach (auto i; 0..InLevel.Things.length) TranslateThing(&InLevel.Things[i]);
 }
+
 
 //==========================================================================
 //
 //  GetConScriptName
 //
 //==========================================================================
-
-override name GetConScriptName(name LevelName)
-{
-  int i;
-
-  //  Since we don't have advanced format specifiers we need two loops.
-  for (i = 1; i < 9; i++)
-  {
-    if (LevelName == StrToName(va("map0%d", i)))
-      return StrToName(va("script0%d", i));
-  }
-  for (i = 10; i < 99; i++)
-  {
-    if (LevelName == StrToName(va("map%d", i)))
-      return StrToName(va("script%d", i));
-  }
+override name GetConScriptName (name LevelName) {
+  foreach (auto i; 1..99) if (LevelName == name(va("map%02d", i))) return name(va("script%02d", i));
   return '';
 }
 
-defaultproperties
-{
+
+defaultproperties {
   LevelInfoClass = StrifeLevelInfo;
   GameFilterFlag = EntityEx::GAME_Strife;
   AcsHelper = 'strfhelp';

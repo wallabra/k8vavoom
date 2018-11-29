@@ -22,54 +22,33 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class StrifeLevelInfo : LineSpecialLevelInfo;
+
 
 //==========================================================================
 //
 //  GetDefaultDoorSound
 //
 //==========================================================================
+override name GetDefaultDoorSound (sector_t *Sector) {
+  name SeqName = DefaultDoorSound;
 
-override name GetDefaultDoorSound(sector_t *Sector)
-{
-  int     i;
-  name    SeqName = DefaultDoorSound;
+  // search the front top textures of 2-sided lines on the door sector for a door sound to use
+  foreach (auto i; 0..Sector.lines.length) {
+    if (!Sector->lines[i]->backsector) continue;
 
-  //  Search the front top textures of 2-sided lines on the door sector
-  // for a door sound to use.
-  for (i = 0; i < Sector.lines.length; i++)
-  {
-    if (!Sector->lines[i]->backsector)
-    {
-      continue;
-    }
-
-    string TexName = va("%n", GetTextureName(XLevel.Sides[
-      Sector->lines[i]->sidenum[0]].TopTexture));
-    if (StrStartsWith(TexName, "dors"))
-    {
-      SeqName = 'DoorStone';
-    }
-    else if (StrStartsWith(TexName, "dorml"))
-    {
-      SeqName = 'DoorLargeMetal';
-    }
-    else if (StrStartsWith(TexName, "dorwl"))
-    {
-      SeqName = 'DoorLargeWood';
-    }
-    else if (StrStartsWith(TexName, "dorw"))
-    {
-      SeqName = 'DoorSmallWood';
-    }
+    string TexName = va("%n", GetTextureName(XLevel.Sides[Sector->lines[i]->sidenum[0]].TopTexture));
+         if (StrStartsWith(TexName, "dors")) SeqName = 'DoorStone';
+    else if (StrStartsWith(TexName, "dorml")) SeqName = 'DoorLargeMetal';
+    else if (StrStartsWith(TexName, "dorwl")) SeqName = 'DoorLargeWood';
+    else if (StrStartsWith(TexName, "dorw")) SeqName = 'DoorSmallWood';
   }
 
   return SeqName;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   DefaultDoorSound = 'DoorSmallMetal';
   bTeleportNewMapBothSides = true;
   bCheckStrifeStartSpots = true;
