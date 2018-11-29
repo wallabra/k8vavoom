@@ -357,16 +357,16 @@ void InitBorder () {
 override void DrawBorder (int x, int y, int w, int h) {
   if (!pic_brdr_b) InitBorder();
 
-  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x + i, y - 8, pic_brdr_t);
-  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x + i, y + h, pic_brdr_b);
-  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x - 8, y + i, pic_brdr_l);
-  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x + w, y + i, pic_brdr_r);
+  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y-8, pic_brdr_t);
+  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y+h, pic_brdr_b);
+  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x-8, y+i, pic_brdr_l);
+  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x+w, y+i, pic_brdr_r);
 
   // draw beveled edge
-  GRoot.DrawPic(x - 8, y - 8, pic_brdr_tl);
-  GRoot.DrawPic(x + w, y - 8, pic_brdr_tr);
-  GRoot.DrawPic(x - 8, y + h, pic_brdr_bl);
-  GRoot.DrawPic(x + w, y + h, pic_brdr_br);
+  GRoot.DrawPic(x-8, y-8, pic_brdr_tl);
+  GRoot.DrawPic(x+w, y-8, pic_brdr_tr);
+  GRoot.DrawPic(x-8, y+h, pic_brdr_bl);
+  GRoot.DrawPic(x+w, y+h, pic_brdr_br);
 }
 
 
@@ -376,7 +376,7 @@ override void DrawBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void DrawViewBorder (int x, int y, int w, int h) {
-  GRoot.FillRectWithFlat(0, 0, 640, 480/* - 32*/, 'f_pave01');
+  GRoot.FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), 'f_pave01');
   DrawBorder(x, y, w, h);
 }
 
@@ -387,9 +387,7 @@ override void DrawViewBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void StartSpeech (EntityEx Speaker, int SpeechNum) {
-  ConDialog Dlg;
-
-  Dlg = ConDialog(SpawnMenu(ConDialog));
+  ConDialog Dlg = ConDialog(SpawnMenu(ConDialog));
   Dlg.SetSpeech(Speaker, SpeechNum);
   PushMenuScreen(Dlg);
 }
