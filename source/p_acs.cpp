@@ -428,25 +428,49 @@ VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
   Arrays = nullptr;
   memset((void *)MapVarStore, 0, sizeof(MapVarStore));
 
+  VAcsHeader *header;
+
   if (Lump < 0) return;
-  if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader)) {
-    GCon->Log("Behavior lump too small");
-    return;
+
+  for (;;) {
+    if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader)) {
+      GCon->Log("Behavior lump too small");
+    } else {
+      VStream *Strm = W_CreateLumpReaderNum(Lump);
+      Data = new vuint8[Strm->TotalSize()];
+      Strm->Serialise(Data, Strm->TotalSize());
+      delete Strm;
+      Strm = nullptr;
+      header = (VAcsHeader *)Data;
+
+      // check header
+      if (header->Marker[0] != 'A' || header->Marker[1] != 'C' || header->Marker[2] != 'S') {
+        // try to find another lump with the same name
+        delete Data;
+        Data = nullptr;
+        int fileid = W_LumpFile(Lump);
+        VName acsobjname = W_LumpName(Lump);
+        int goodLump = -1;
+        for (Lump = W_IterateNS(-1, WADNS_ACSLibrary); Lump >= 0 && Lump < LumpNum; Lump = W_IterateNS(Lump, WADNS_ACSLibrary)) {
+          //GCon->Logf(NAME_Dev, " <%s>", *W_FullLumpName(Lump));
+          if (Lump != LumpNum && W_LumpFile(Lump) == fileid && W_LumpName(Lump) == acsobjname) {
+            goodLump = Lump;
+          }
+        }
+        if (goodLump < 0) {
+          GCon->Logf(NAME_Warning, "Behavior lump \"%s\" has invalid signature", *W_FullLumpName(LumpNum));
+          return;
+        }
+        Lump = goodLump;
+        GCon->Logf(NAME_Dev, "  trying another ACS obeject '%s'", *W_FullLumpName(Lump));
+        LumpNum = Lump;
+      } else {
+        break;
+      }
+    }
   }
 
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
-  Data = new vuint8[Strm->TotalSize()];
-  Strm->Serialise(Data, Strm->TotalSize());
-  delete Strm;
-  Strm = nullptr;
-  VAcsHeader *header = (VAcsHeader*)Data;
-
-  // check header
-  if (header->Marker[0] != 'A' || header->Marker[1] != 'C' || header->Marker[2] != 'S') {
-    GCon->Logf("Behavior lump \"%s\" has invalid signature", *W_FullLumpName(Lump));
-    return;
-  }
-  //  Determine format.
+  // determine format
   switch (header->Marker[3]) {
     case 0: Format = ACS_Old; break;
     case 'E': Format = ACS_Enhanced; break;
@@ -828,8 +852,7 @@ void VAcsObject::LoadEnhancedObject () {
       if (parse[i])
       {
         VAcsObject *Object = nullptr;
-        int Lump = W_CheckNumForName(VName(&parse[i],
-          VName::AddLower8), WADNS_ACSLibrary);
+        int Lump = W_CheckNumForName(VName(&parse[i], VName::AddLower8), WADNS_ACSLibrary);
         if (Lump < 0)
         {
           GCon->Logf("Could not find ACS library %s.", &parse[i]);
