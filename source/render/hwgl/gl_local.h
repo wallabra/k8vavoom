@@ -444,7 +444,6 @@ public:
   virtual void RenderSurfaceShadowVolume (surface_t *, TVec &, float, bool) override;
   virtual void BeginLightPass (TVec &, float, vuint32) override;
   virtual void DrawSurfaceLight (surface_t *, TVec&, float, bool) override;
-  virtual void DrawLightRect (TVec &LightPos, float Radius, bool LightCanCross) override;
   virtual void DrawWorldTexturesPass () override;
   virtual void DrawWorldFogPass () override;
   virtual void EndFogPass () override;

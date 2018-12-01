@@ -914,43 +914,6 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Rad
 
 //==========================================================================
 //
-//  VOpenGLDrawer::DrawLightRect
-//
-//==========================================================================
-void VOpenGLDrawer::DrawLightRect (TVec &LightPos, float Radius, bool LightCanCross) {
-  guard(VOpenGLDrawer::DrawLightRect);
-
-  /*
-  if (Surf->plane->PointOnSide(vieworg)) return; // viewer is in back side or on plane
-  float dist = DotProduct(LightPos, Surf->plane->normal) - Surf->plane->dist;
-  if ((dist <= 0.0 && !LightCanCross) || dist < -Radius || dist > Radius) return; // light is too far away
-  */
-
-  /*
-  p_glUniform1iARB(ShadowsAmbientTextureLoc, 0);
-  texinfo_t *tex = Surf->texinfo;
-  SetTexture(tex->Tex, tex->ColourMap);
-  p_glUniform3fvARB(ShadowsAmbientSAxisLoc, 1, &tex->saxis.x);
-  p_glUniform1fARB(ShadowsAmbientSOffsLoc, tex->soffs);
-  p_glUniform1fARB(ShadowsAmbientTexIWLoc, tex_iw);
-  p_glUniform3fvARB(ShadowsAmbientTAxisLoc, 1, &tex->taxis.x);
-  p_glUniform1fARB(ShadowsAmbientTOffsLoc, tex->toffs);
-  p_glUniform1fARB(ShadowsAmbientTexIHLoc, tex_ih);
-  p_glVertexAttrib3fvARB(ShadowsLightSurfNormalLoc, &Surf->plane->normal.x);
-  p_glVertexAttrib1fvARB(ShadowsLightSurfDistLoc, &Surf->plane->dist);
-  p_glUniform3fARB(ShadowsLightViewOrigin, vieworg.x, vieworg.y, vieworg.z);
-
-  glBegin(GL_POLYGON);
-  for (int i = 0; i < Surf->count; ++i) glVertex(Surf->verts[i]);
-  glEnd();
-  */
-
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  VOpenGLDrawer::DrawWorldTexturesPass
 //
 //  This renders textured level with ambient (aka sector) lighting

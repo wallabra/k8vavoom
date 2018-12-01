@@ -200,7 +200,7 @@ void VOpenGLDrawer::UnloadModels()
 //
 //==========================================================================
 
-void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
+void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   VTexture *Skin, VTextureTranslation *Trans, int CMap, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, bool is_view_model, float Inter,
@@ -335,13 +335,13 @@ void VOpenGLDrawer::DrawAliasModel(const TVec &origin, const TAVec &angles,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawAliasModelAmbient
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angles,
+void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   VTexture *Skin, vuint32 light, float Alpha, float Inter, bool Interpolate,
   bool ForceDepth, bool AllowTransparency)
@@ -437,13 +437,13 @@ void VOpenGLDrawer::DrawAliasModelAmbient(const TVec &origin, const TAVec &angle
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawAliasModelTextures
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angles,
+void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   VTexture *Skin, VTextureTranslation *Trans, int CMap, float Alpha, float Inter,
   bool Interpolate, bool ForceDepth, bool AllowTransparency)
@@ -571,14 +571,13 @@ void VOpenGLDrawer::DrawAliasModelTextures(const TVec &origin, const TAVec &angl
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::BeginModelsLightPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::BeginModelsLightPass(TVec &LightPos, float Radius, vuint32 Colour)
-{
+void VOpenGLDrawer::BeginModelsLightPass (TVec &LightPos, float Radius, vuint32 Colour) {
   guard(VOpenGLDrawer::BeginModelsLightPass);
   p_glUseProgramObjectARB(ShadowsModelLightProgram);
   p_glUniform1iARB(ShadowsModelLightTextureLoc, 0);
@@ -591,13 +590,13 @@ void VOpenGLDrawer::BeginModelsLightPass(TVec &LightPos, float Radius, vuint32 C
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawAliasModelLight
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawAliasModelLight(const TVec &origin, const TAVec &angles,
+void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   VTexture *Skin, float Alpha, float Inter, bool Interpolate, bool AllowTransparency)
 {
@@ -674,27 +673,26 @@ void VOpenGLDrawer::DrawAliasModelLight(const TVec &origin, const TAVec &angles,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::BeginModelsShadowsPass
 //
 //==========================================================================
-
-void VOpenGLDrawer::BeginModelsShadowsPass(TVec &LightPos, float LightRadius)
-{
+void VOpenGLDrawer::BeginModelsShadowsPass (TVec &LightPos, float LightRadius) {
   guard(VOpenGLDrawer::BeginModelsShadowsPass);
   p_glUseProgramObjectARB(ShadowsModelShadowProgram);
   p_glUniform3fARB(ShadowsModelShadowLightPosLoc, LightPos.x, LightPos.y, LightPos.z);
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawAliasModelShadow
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawAliasModelShadow(const TVec &origin, const TAVec &angles,
+void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   float Inter, bool Interpolate, const TVec &LightPos, float LightRadius)
 {
@@ -802,13 +800,13 @@ void VOpenGLDrawer::DrawAliasModelShadow(const TVec &origin, const TAVec &angles
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawAliasModelFog
 //
 //==========================================================================
-
-void VOpenGLDrawer::DrawAliasModelFog(const TVec &origin, const TAVec &angles,
+void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   const TVec &Offset, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
   VTexture *Skin, vuint32 Fade, float Alpha, float Inter, bool Interpolate,
   bool AllowTransparency)

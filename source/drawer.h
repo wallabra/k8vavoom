@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef _DRAWER_H_
 #define _DRAWER_H_
 
@@ -37,62 +36,62 @@
 #endif
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct surface_t;
 struct surfcache_t;
 struct mmdl_t;
 struct VMeshModel;
 class VPortal;
 
-struct particle_t
-{
-  //  Drawing info
-  TVec    org;  //  position
-  vuint32   colour; //  ARGB colour
-  float   Size;
-  //  Handled by refresh
-  particle_t *next; //  next in the list
-  TVec    vel;  //  velocity
-  TVec    accel;  //  acceleration
-  float   die;  //  cl.time when particle will be removed
-  int     type;
-  float   ramp;
-  float   gravity;
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct particle_t {
+  // drawing info
+  TVec org; // position
+  vuint32 colour; // ARGB colour
+  float Size;
+  // handled by refresh
+  particle_t *next; // next in the list
+  TVec vel; // velocity
+  TVec accel; // acceleration
+  float die; // cl.time when particle will be removed
+  int type;
+  float ramp;
+  float gravity;
 };
 
-struct refdef_t
-{
-  int     x;
-  int     y;
-  int     width;
-  int     height;
-  float   fovx;
-  float   fovy;
-  bool    drawworld;
-  bool    DrawCamera;
+
+struct refdef_t {
+  int x, y;
+  int width, height;
+  float fovx, fovy;
+  bool drawworld;
+  bool DrawCamera;
 };
 
-struct surfcache_t
-{
-  int       s;      // position in light surface
-  int       t;
-  int       width;    // size
-  int       height;
-  surfcache_t *bprev;    // line list in block
-  surfcache_t *bnext;
-  surfcache_t *lprev;    // cache list in line
-  surfcache_t *lnext;
-  surfcache_t *chain;    // list of drawable surfaces
+
+struct surfcache_t {
+  // position in light surface
+  int s, t;
+  // size
+  int width, height;
+  // line list in block
+  surfcache_t *bprev, *bnext;
+  // cache list in line
+  surfcache_t *lprev, *lnext;
+  surfcache_t *chain; // list of drawable surfaces
   surfcache_t *addchain; // list of specular surfaces
-  int       blocknum; // light surface index
+  int blocknum; // light surface index
   surfcache_t **owner;
-  vuint32     Light;    // checked for strobe flash
-  int       dlight;
+  vuint32 Light; // checked for strobe flash
+  int dlight;
   surface_t *surf;
-  vuint32     lastframe;
+  vuint32 lastframe;
 };
 
-class VRenderLevelDrawer : public VRenderLevelPublic
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
   bool mIsAdvancedRenderer;
 
@@ -118,11 +117,13 @@ public:
 
   int PortalDepth;
 
-  virtual void BuildLightMap(surface_t *) = 0;
+  virtual void BuildLightMap (surface_t *) = 0;
 
   inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
 };
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VDrawer {
 protected:
   bool mInitialized;
@@ -133,121 +134,143 @@ public:
   VDrawer () : RendLev(nullptr) { mInitialized = false; }
   virtual ~VDrawer () {}
 
-  virtual void Init() = 0;
-  virtual bool SetResolution(int, int, int fsmode) = 0;
-  virtual void InitResolution() = 0;
+  virtual void Init () = 0;
+  // fsmode: 0: windowed; 1: scaled FS; 2: real FS
+  virtual bool SetResolution (int AWidth, int AHeight, int fsmode) = 0;
+  virtual void InitResolution () = 0;
   inline bool IsInited () const { return mInitialized; }
 
   virtual void StartUpdate (bool allowClear=true) = 0;
   virtual void Setup2D () = 0;
-  virtual void Update() = 0;
+  virtual void Update () = 0;
   //virtual void BeginDirectUpdate() = 0;
   //virtual void EndDirectUpdate() = 0;
-  virtual void Shutdown() = 0;
-  virtual void *ReadScreen(int*, bool*) = 0;
-  virtual void ReadBackScreen(int, int, rgba_t*) = 0;
+  virtual void Shutdown () = 0;
+  virtual void *ReadScreen (int *bpp, bool *bot2top) = 0;
+  virtual void ReadBackScreen (int Width, int Height, rgba_t *Dest) = 0;
   virtual void WarpMouseToWindowCenter () = 0;
 
-  //  Rendring stuff
-  virtual void SetupView(VRenderLevelDrawer*, const refdef_t*) = 0;
-  virtual void SetupViewOrg() = 0;
-  virtual void WorldDrawing() = 0;
-  virtual void EndView() = 0;
+  // rendring stuff
+  virtual void SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) = 0;
+  virtual void SetupViewOrg () = 0;
+  virtual void WorldDrawing () = 0;
+  virtual void EndView () = 0;
 
-  //  Texture stuff
-  virtual void PrecacheTexture(VTexture*) = 0;
+  // texture stuff
+  virtual void PrecacheTexture (VTexture *) = 0;
 
-  //  Polygon drawing
-  virtual void DrawSkyPolygon(surface_t*, bool, VTexture*, float, VTexture*,
-    float, int) = 0;
-  virtual void DrawMaskedPolygon(surface_t*, float, bool) = 0;
-  virtual void DrawSpritePolygon(TVec*, VTexture*, float, bool,
-    VTextureTranslation*, int, vuint32, vuint32, const TVec&, float,
-    const TVec&, const TVec&, const TVec&) = 0;
-  virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, VTextureTranslation*, int,
-    vuint32, vuint32, float, bool, bool, float, bool, bool, bool, bool) = 0;
-  virtual bool StartPortal(VPortal*, bool) = 0;
-  virtual void EndPortal(VPortal*, bool) = 0;
+  // polygon drawing
+  virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
+                               float offs1, VTexture *Texture2, float offs2, int CMap) = 0;
+  virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
+  virtual void DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
+                                  bool Additive, VTextureTranslation *Translation, int CMap,
+                                  vuint32 light, vuint32 Fade, const TVec &, float, const TVec &saxis,
+                                  const TVec &taxis, const TVec &texorg) = 0;
+  virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const TVec &Offset,
+                               const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+                               VTexture *Skin, VTextureTranslation *Trans, int CMap, vuint32 light,
+                               vuint32 Fade, float Alpha, bool Additive, bool is_view_model, float Inter,
+                               bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
+                               bool onlyDepth) = 0;
+  virtual bool StartPortal (VPortal *Portal, bool UseStencil) = 0;
+  virtual void EndPortal (VPortal *Portal, bool UseStencil) = 0;
 
-  //  Particles
-  virtual void StartParticles() = 0;
-  virtual void DrawParticle(particle_t *) = 0;
-  virtual void EndParticles() = 0;
+  //  particles
+  virtual void StartParticles () = 0;
+  virtual void DrawParticle (particle_t *) = 0;
+  virtual void EndParticles () = 0;
 
-  //  Drawing
-  virtual void DrawPic(float, float, float, float, float, float, float,
-    float, VTexture*, VTextureTranslation*, float) = 0;
-  virtual void DrawPicShadow(float, float, float, float, float, float,
-    float, float, VTexture*, float) = 0;
-  virtual void FillRectWithFlat(float, float, float, float, float, float,
-    float, float, VTexture*) = 0;
-  virtual void FillRectWithFlatRepeat(float, float, float, float, float, float,
-    float, float, VTexture*) = 0;
-  virtual void FillRect(float, float, float, float, vuint32) = 0;
-  virtual void ShadeRect(int, int, int, int, float) = 0;
-  virtual void DrawConsoleBackground(int) = 0;
-  virtual void DrawSpriteLump(float, float, float, float, VTexture*,
-    VTextureTranslation*, bool) = 0;
+  // drawing
+  virtual void DrawPic (float x1, float y1, float x2, float y2,
+                        float s1, float t1, float s2, float t2,
+                        VTexture *Tex, VTextureTranslation *Trans, float Alpha) = 0;
+  virtual void DrawPicShadow (float x1, float y1, float x2, float y2,
+                              float s1, float t1, float s2, float t2,
+                              VTexture *Tex, float shade) = 0;
+  virtual void FillRectWithFlat (float x1, float y1, float x2, float y2,
+                                 float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
+  virtual void FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
+                                       float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
+  virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 colour) = 0;
+  virtual void ShadeRect (int x, int y, int w, int h, float darkening) = 0;
+  virtual void DrawConsoleBackground (int h) = 0;
+  virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
+                               VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
 
-  //  Automap
-  virtual void StartAutomap() = 0;
-  virtual void DrawLine(int, int, vuint32, int, int, vuint32) = 0;
-  virtual void EndAutomap() = 0;
+  // automap
+  virtual void StartAutomap () = 0;
+  virtual void DrawLine (int x1, int y1, vuint32 c1, int x2, int y2, vuint32 c2) = 0;
+  virtual void EndAutomap () = 0;
 
-  //  Advanced drawing.
-  virtual bool SupportsAdvancedRendering() = 0;
-  virtual void DrawWorldAmbientPass() = 0;
-  virtual void BeginShadowVolumesPass() = 0;
-  virtual void BeginLightShadowVolumes() = 0;
-  virtual void EndLightShadowVolumes() = 0;
-  virtual void RenderSurfaceShadowVolume(surface_t*, TVec&, float, bool) = 0;
-  virtual void BeginLightPass(TVec&, float, vuint32) = 0;
-  virtual void DrawSurfaceLight(surface_t*, TVec&, float, bool) = 0;
-  virtual void DrawLightRect (TVec &LightPos, float Radius, bool LightCanCross) = 0;
-  virtual void DrawWorldTexturesPass() = 0;
-  virtual void DrawWorldFogPass() = 0;
-  virtual void EndFogPass() = 0;
-  virtual void DrawAliasModelAmbient(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
-    bool, bool) = 0;
-  virtual void DrawAliasModelTextures(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, VTextureTranslation*, int,
-    float, float, bool, bool, bool) = 0;
-  virtual void BeginModelsLightPass(TVec&, float, vuint32) = 0;
-  virtual void DrawAliasModelLight(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, float, float, bool, bool) = 0;
-  virtual void BeginModelsShadowsPass(TVec&, float) = 0;
-  virtual void DrawAliasModelShadow(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, float, bool, const TVec&, float) = 0;
-  virtual void DrawAliasModelFog(const TVec&, const TAVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
-    bool) = 0;
-
+  // advanced drawing
+  virtual bool SupportsAdvancedRendering () = 0;
+  virtual void DrawWorldAmbientPass () = 0;
+  virtual void BeginShadowVolumesPass () = 0;
+  virtual void BeginLightShadowVolumes () = 0;
+  virtual void EndLightShadowVolumes () = 0;
+  virtual void RenderSurfaceShadowVolume (surface_t *surf, TVec &LightPos, float Radius, bool LightCanCross) = 0;
+  virtual void BeginLightPass (TVec &LightPos, float Radius, vuint32 Colour) = 0;
+  virtual void DrawSurfaceLight (surface_t *Surf, TVec &LightPos, float Radius, bool LightCanCross) = 0;
+  virtual void DrawWorldTexturesPass () = 0;
+  virtual void DrawWorldFogPass () = 0;
+  virtual void EndFogPass () = 0;
+  virtual void DrawAliasModelAmbient (const TVec &origin, const TAVec &angles,
+                                      const TVec &Offset, const TVec &Scale,
+                                      VMeshModel *Mdl, int frame, int nextframe,
+                                      VTexture *Skin, vuint32 light, float Alpha,
+                                      float Inter, bool Interpolate,
+                                      bool ForceDepth, bool AllowTransparency) = 0;
+  virtual void DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
+                                       const TVec &Offset, const TVec &Scale,
+                                       VMeshModel *Mdl, int frame, int nextframe,
+                                       VTexture *Skin, VTextureTranslation *Trans,
+                                       int CMap, float Alpha, float Inter,
+                                       bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
+  virtual void BeginModelsLightPass (TVec &LightPos, float Radius, vuint32 Colour) = 0;
+  virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
+                                    const TVec &Offset, const TVec &Scale,
+                                    VMeshModel *Mdl, int frame, int nextframe,
+                                    VTexture *Skin, float Alpha, float Inter,
+                                    bool Interpolate, bool AllowTransparency) = 0;
+  virtual void BeginModelsShadowsPass (TVec &LightPos, float LightRadius) = 0;
+  virtual void DrawAliasModelShadow (const TVec &origin, const TAVec &angles,
+                                     const TVec &Offset, const TVec &Scale,
+                                     VMeshModel *Mdl, int frame, int nextframe,
+                                     float Inter, bool Interpolate,
+                                     const TVec &LightPos, float LightRadius) = 0;
+  virtual void DrawAliasModelFog (const TVec &origin, const TAVec &angles,
+                                  const TVec &Offset, const TVec &Scale,
+                                  VMeshModel *Mdl, int frame, int nextframe,
+                                  VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
+                                  bool Interpolate, bool AllowTransparency) = 0;
   virtual void GetRealWindowSize (int *rw, int *rh) = 0;
 };
 
-//  Drawer types, menu system uses these numbers.
-enum
-{
-  DRAWER_OpenGL,
 
+// ////////////////////////////////////////////////////////////////////////// //
+// drawer types, menu system uses these numbers
+enum {
+  DRAWER_OpenGL,
   DRAWER_MAX
 };
 
-//  Drawer description.
-struct FDrawerDesc
-{
+
+// ////////////////////////////////////////////////////////////////////////// //
+// drawer description
+struct FDrawerDesc {
   const char *Name;
   const char *Description;
   const char *CmdLineArg;
-  VDrawer *(*Creator)();
+  VDrawer *(*Creator) ();
 
-  FDrawerDesc(int Type, const char *AName, const char *ADescription,
+  FDrawerDesc (int Type, const char *AName, const char *ADescription,
     const char *ACmdLineArg, VDrawer *(*ACreator)());
 };
 
-//  Drawer driver declaration macro.
+
+// ////////////////////////////////////////////////////////////////////////// //
+// drawer driver declaration macro
 #define IMPLEMENT_DRAWER(TClass, Type, Name, Description, CmdLineArg) \
 static VDrawer *Create##TClass() \
 { \
