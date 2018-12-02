@@ -2642,7 +2642,7 @@ static VStr ParseStateString (VScriptParser *sc) {
     StateStr += sc->String;
   }
 
-  if (sc->Check(".")) {
+  while (sc->Check(".")) {
     sc->ExpectIdentifier();
     StateStr += ".";
     StateStr += sc->String;
