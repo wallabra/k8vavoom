@@ -1,5 +1,5 @@
-#ifdef CLIENT
 #include "../drawer.h"
+#ifdef CLIENT
 extern refdef_t refdef;
 #endif
 
