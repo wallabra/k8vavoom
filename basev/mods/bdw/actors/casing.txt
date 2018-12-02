@@ -35,22 +35,25 @@ Actor BDW_EmptyClip {
   SeeSound "weapons/largemagdrop1"
   States {
     Spawn:
-       TNT1 A 7 A_PlaySound("NULL")
-       ECLI ABCDEFGHABCDEFGHABCDEFGHABCDEFGHABCDEFGH 4
-       Stop
+      TNT1 A 0
+      ECLI ABCDEFGHABCDEFGHABCDEFGHABCDEFGHABCDEFGH 4 A_k8JumpIfOnLiquidFloor("Death")
+      Stop
 
     Death:
-       TNT1 A 0
-       TNT1 A 0 //ACS_ExecuteAlways(798, 0, 0, 0, 0)//Check Effects
-       ECLI G 180
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       ECLI G 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+      TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
+      ECLI G 180
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
+      "####" "#" 600
+      "####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
+      "####" "#" 0 A_FadeOut(0.01)
+      Loop
 
-   Stoping:
-       TNT1 A 0
-       Stop
+   Stopping:
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_ChangeVelocity(0, 0, -14, CVF_REPLACE)
+      "####" "#" 25
+      Stop
   }
 }
 
@@ -99,79 +102,70 @@ Actor BDW_EmptyBrass {
   SeeSound "weapons/casing3"
   States {
     Spawn:
-       CAS3 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3 A_JumpIf(waterlevel > 1, "Splash")
-       STOP
+      CAS3 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3
+        {
+          A_JumpIf(waterlevel > 1, "Splash");
+          A_k8JumpIfOnLiquidFloor("Death");
+        }
+      Stop
 
-      Death:
-       CAS3 I 0
-       TNT1 A 0 //ACS_ExecuteAlways(798, 0, 0, 0, 0)//Check Effects
-       LCPJ A 0 A_Jump(256, "Rest1", "Rest2", "Rest3", "Rest4", "Rest5", "Rest6", "Rest7", "Rest8")
-       Goto Rest1
+    Death:
+      TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
+      //CAS3 I 0
+      TNT1 A 0 A_Jump(256, "Rest1", "Rest2", "Rest3", "Rest4", "Rest5", "Rest6", "Rest7", "Rest8")
+      Goto Rest1
 
-     Rest1:
-       CAS3 I 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 I 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    RestMain:
+      "####" "#" 60
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
+      "####" "#" 600
+      "####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
+      "####" "#" 0 A_FadeOut(0.01)
+      Loop
 
-     Rest2:
-       CAS3 J 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 J 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest1:
+      CAS3 I 1
+      Goto RestMain
 
-     Rest3:
-       CAS3 K 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 K 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest2:
+      CAS3 J 1
+      Goto RestMain
 
-     Rest4:
-       CAS3 L 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 L 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest3:
+      CAS3 K 1
+      Goto RestMain
 
-     Rest5:
-       CAS3 M 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 M 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest4:
+      CAS3 L 1
+      Goto RestMain
 
-     Rest6:
-       CAS3 I 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 I 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest5:
+      CAS3 M 1
+      Goto RestMain
 
-     Rest7:
-       CAS3 J 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 J 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest6:
+      CAS3 I 1
+      Goto RestMain
 
-     Rest8:
-       CAS3 K 60
-       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-       CAS3 K 600
-       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-       Loop
+    Rest7:
+      CAS3 J 1
+      Goto RestMain
 
-     Splash:
-       TNT1 A 0
-       TNT1 A 0 A_SpawnItem("BDW_UnderwaterEmptyBrass")
-       Stop
+    Rest8:
+      CAS3 K 1
+      Goto RestMain
 
-     Stoping:
-       TNT1 A 0
-       Stop
+    Splash:
+      TNT1 A 0
+      TNT1 A 0 A_SpawnItem("BDW_UnderwaterEmptyBrass")
+      Stop
+
+    Stopping:
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_ChangeVelocity(0, 0, -14, CVF_REPLACE)
+      "####" "#" 15
+      Stop
   }
 }
 
@@ -192,7 +186,8 @@ Actor BDW_UnderwaterEmptyBrass : BDW_EmptyBrass {
       TNT1 A 0 ThrustThingZ(0, 7, 1, 0)
       CAS3 EFGH 3
       TNT1 A 0 A_SpawnItem("BDW_Bubbles")
-      Loop
+      //Loop
+      Stop
   }
 }
 
@@ -233,73 +228,59 @@ Actor BDW_ShotgunCasing {
   SeeSound "weapons/shell"
   States {
     Spawn:
-      CAS2 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3
+      CAS2 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3 A_k8JumpIfOnLiquidFloor("Death")
       Stop
 
     Death:
-      TNT1 A 0
-      TNT1 A 0 //ACS_ExecuteAlways(798, 0, 0, 0, 0)//Check Effects
-      LCPJ A 0 A_Jump(256, "Rest1", "Rest2", "Rest3", "Rest4", "Rest5", "Rest6", "Rest7", "Rest8")
+      TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
+      TNT1 A 0 A_Jump(256, "Rest1", "Rest2", "Rest3", "Rest4", "Rest5", "Rest6", "Rest7", "Rest8")
       Goto Rest1
 
-    Rest1:
-      CAS2 I 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 I 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
+    RestMain:
+      "####" "#" 60
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
+      "####" "#" 600
+      "####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
+      "####" "#" 0 A_FadeOut(0.01)
       Loop
+
+    Rest1:
+      CAS2 I 1
+      Goto RestMain
 
     Rest2:
-      CAS2 J 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 J 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 J 1
+      Goto RestMain
 
     Rest3:
-      CAS2 K 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 K 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 K 1
+      Goto RestMain
 
     Rest4:
-      CAS2 L 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 L 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 L 1
+      Goto RestMain
 
     Rest5:
-      CAS2 M 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 M 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 M 1
+      Goto RestMain
 
     Rest6:
-      CAS2 I 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 I 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 I 1
+      Goto RestMain
 
     Rest7:
-      CAS2 J 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 J 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 J 1
+      Goto RestMain
 
     Rest8:
-      CAS2 K 60
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      CAS2 K 600
-      TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
-      Loop
+      CAS2 K 1
+      Goto RestMain
 
-    Stoping:
-      TNT1 A 0
+    Stopping:
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_ChangeVelocity(0, 0, -14, CVF_REPLACE)
+      "####" "#" 15
       Stop
   }
 }
