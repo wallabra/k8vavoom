@@ -180,6 +180,13 @@ static const char *PK3IgnoreExts[] = {
   ".me",
   ".rtf",
   ".rsp",
+  ".now",
+  ".htm",
+  ".html",
+  ".wri",
+  ".nfo",
+  ".diz",
+  ".bbs",
   nullptr
 };
 
