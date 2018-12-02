@@ -76,3 +76,6 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS = WADNS_Global);
 
 int W_IterateNS (int Prev, EWadNamespace NS);
 int W_IterateFile (int Prev, const VStr &Name);
+
+int W_NextMoundFileId ();
+VStr W_FindMapInLastFile (int fileid, int *mapnum);

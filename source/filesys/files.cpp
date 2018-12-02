@@ -715,6 +715,8 @@ void FL_Init () {
   VStr mainIWad = VStr();
   int wmap1 = -1, wmap2 = -1; // warp
 
+  bool doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
+
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
 
   if (GArgs.CheckParm("-fast") != 0) fastparm = 1;
@@ -940,6 +942,10 @@ void FL_Init () {
 
   if (isChex) AddGameDir("basev/mods/chex");
 
+  int mapnum = -1;
+  VStr mapname;
+  bool mapinfoFound = false;
+
   int fp = GArgs.CheckParm("-file");
   if (fp) {
     bool wasAnyFile = false;
@@ -969,6 +975,8 @@ void FL_Init () {
         continue;
       }
       if (!inFile) continue;
+
+      int nextfid = W_NextMoundFileId();
       if (Sys_DirExists(GArgs[fp])) {
         //REVERTED: never append dirs to saves, 'cause it is meant to be used by developers
         if (!wasAnyFile) {
@@ -986,6 +994,25 @@ void FL_Init () {
       } else {
         GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
       }
+
+      //GCon->Log("**************************");
+      if (doStartMap && !mapinfoFound) {
+        //GCon->Logf("::: %d : %d", nextfid, W_NextMoundFileId());
+        for (; nextfid < W_NextMoundFileId(); ++nextfid) {
+          if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
+            GCon->Logf(NAME_Init, "FOUND 'mapinfo'!");
+            mapinfoFound = true;
+            break;
+          }
+          int midx = -1;
+          VStr mname = W_FindMapInLastFile(nextfid, &midx);
+          if (mname.length() && (mapnum < 0 || midx < mapnum)) {
+            mapnum = midx;
+            mapname = mname;
+          }
+        }
+      }
+
       noStoreInSave = false; // autoreset
     }
     fsys_skipSounds = false;
@@ -997,6 +1024,13 @@ void FL_Init () {
   fsys_report_added_paks = reportPWads;
 
   RenameSprites();
+
+  if (doStartMap && !mapinfoFound && mapnum > 0 && mapname.length()) {
+    GCon->Logf(NAME_Init, "FOUND MAP: %s", *mapname);
+    mapname = va("map %s\n", *mapname);
+    GCmdBuf.Insert(mapname);
+  }
+
   unguard;
 }
 

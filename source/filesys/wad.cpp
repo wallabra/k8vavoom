@@ -542,3 +542,66 @@ void W_Shutdown () {
   SearchPaths.Clear();
   unguard;
 }
+
+
+//==========================================================================
+//
+//  W_FindMapInLastFile
+//
+//==========================================================================
+int W_NextMoundFileId () {
+  return SearchPaths.length();
+}
+
+
+//==========================================================================
+//
+//  W_FindMapInLastFile
+//
+//==========================================================================
+VStr W_FindMapInLastFile (int fileid, int *mapnum) {
+  if (mapnum) *mapnum = -1;
+  if (fileid < 0 || fileid >= SearchPaths.length()) return VStr();
+  int found = 0xffff;
+  bool doom1 = false;
+  for (int lump = SearchPaths[fileid]->IterateNS(0, WADNS_Global); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, WADNS_Global)) {
+    VName ln = SearchPaths[fileid]->LumpName(lump);
+    if (ln == NAME_None) continue;
+    const char *name = *ln;
+    //GCon->Logf("*** <%s>", name);
+    // doom1
+    if (name[0] == 'e' && name[1] && name[2] == 'm' && name[3] && !name[4]) {
+      int e = VStr::digitInBase(name[1], 10);
+      int m = VStr::digitInBase(name[3], 10);
+      if (e < 0 || m < 0) continue;
+      if (e >= 1 && e <= 4 && m >= 1 && m <= 9) {
+        int n = e*10+m;
+        if (!doom1 || n < found) {
+          doom1 = true;
+          found = n;
+          if (mapnum) *mapnum = n;
+        }
+      }
+      continue;
+    }
+    // doom2
+    if (name[0] == 'm' && name[1] == 'a' && name[2] == 'p' && name[3] && name[4] && !name[5]) {
+      int m0 = VStr::digitInBase(name[3], 10);
+      int m1 = VStr::digitInBase(name[4], 10);
+      if (m0 < 0 || m1 < 0) continue;
+      int n = m0*10+m1;
+      if (n < 1 || n > 32) continue;
+      if (doom1 || n < found) {
+        doom1 = false;
+        found = n;
+        if (mapnum) *mapnum = n;
+      }
+      continue;
+    }
+  }
+  if (found < 0xffff) {
+    if (doom1) return VStr(va("e%dm%d", found/10, found%10));
+    return VStr(va("map%02d", found));
+  }
+  return VStr();
+}
