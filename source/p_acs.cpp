@@ -3053,6 +3053,10 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
         Level->eventAcsRadiusQuake2(Activator, args[0], args[1], args[2], args[3], args[4], sndname);
       }
       return 0;
+
+    case ACSF_SetHUDClipRect:
+      GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
