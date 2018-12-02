@@ -701,3 +701,86 @@ final void A_RemoveIfRadiusAmountGreater (int radius, int amount, class!Actor ch
   }
   //print("%C: check %C at %s, %s left", self, checkClass, Origin, amount);
 }
+
+
+//==========================================================================
+//
+//  A_k8MoveBy
+//
+//==========================================================================
+final void A_k8MoveBy (optional float dx, optional float dy, optional float dz) {
+  if (!dx.isfinite || !dy.isfinite || !dz.isfinite) return;
+  // so link the thing into its new position
+  if (dx || dy) UnlinkFromWorld();
+  Origin.x += dx;
+  Origin.y += dy;
+  Origin.z += dz;
+  if (dx || dy) LinkToWorld();
+}
+
+
+//==========================================================================
+//
+//  A_k8MoveTo
+//
+//==========================================================================
+final void A_k8MoveTo (optional float nx, optional float ny, optional float nz) {
+  if (!nx.isfinite || !ny.isfinite || !nz.isfinite) return;
+  // so link the thing into its new position
+  if (specified_nx || specified_ny) UnlinkFromWorld();
+  if (specified_nx) Origin.x = nx;
+  if (specified_ny) Origin.y = ny;
+  if (specified_nz) Origin.z = nz;
+  if (specified_nx || specified_ny) LinkToWorld();
+}
+
+
+//==========================================================================
+//
+//  common_k8JumpIfLiquidFloor
+//
+//==========================================================================
+final void common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (!tgt) return;
+  if (!tgt.Sector) return; // just in case
+  auto tname = string(GetTextureName(tgt.Sector.floor.pic));
+  if (globmatch("*water*", tname, caseSensitive:false) ||
+      globmatch("*nukage*", tname, caseSensitive:false) ||
+      globmatch("*lava*", tname, caseSensitive:false) ||
+      globmatch("*blood*", tname, caseSensitive:false) ||
+      globmatch("*slime*", tname, caseSensitive:false) ||
+      globmatch("*slimage*", tname, caseSensitive:false))
+  {
+    DoJump(label);
+  }
+}
+
+
+//==========================================================================
+//
+//  A_k8JumpIfLiquidFloor
+//
+//==========================================================================
+final void A_k8JumpIfLiquidFloor (state label, optional int aptr) {
+  // state jumps should not affect state chain results
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
+  common_k8JumpIfLiquidFloor(tgt, label);
+}
+
+
+//==========================================================================
+//
+//  A_k8JumpIfOnLiquidFloor
+//
+//==========================================================================
+final void A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
+  if (!tgt) return;
+  if (!tgt.Sector) return; // just in case
+  if (tgt.Origin.z > tgt.FloorZ) return;
+  common_k8JumpIfLiquidFloor(tgt, label);
+}
