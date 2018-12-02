@@ -22,6 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+// Strife NPC dialog UI
 class ConDialog : MenuScreen;
 
 struct RandomConversation {
@@ -55,6 +56,10 @@ string[3] CancelTexts;
 void SetSpeech (EntityEx Speaker, int SpeechNum) {
   GameObject::RogueConSpeech *Speech;
 
+  //Width = GetVirtualWidth();
+  //Height = GetVirtualHeight();
+  //SetSize(GetVirtualWidth(), GetVirtualHeight());
+
   if (!SpeechNum) return;
   if (SpeechNum < 0) {
     SpeechNum = -SpeechNum;
@@ -74,19 +79,19 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
   SpeechText = Speech->Text;
 
   // check for random conversation text
-  if (!strcmp(substr(SpeechText, 0, 6), "RANDOM")) {
-    string TempStr = substr(SpeechText, 7, strlen(SpeechText)-7);
-    foreach (auto i; 0..5) {
-      if (!strcmp(TempStr, RandomConversations[i].Name)) {
-        SpeechText = RandomConversations[i].Texts[P_Random()%10];
+  if (stricmp(SpeechText[0..6], "RANDOM") == 0) {
+    string TempStr = SpeechText[7..$];
+    foreach (auto i; 0..RandomConversations.length) {
+      if (stricmp(TempStr, RandomConversations[i].Name) == 0) {
+        SpeechText = RandomConversations[i].Texts[P_Random()%RandomConversations[i].Texts.length];
         break;
       }
     }
   }
 
-  // split speach text
+  // split speech text
   SetFont('smallfont');
-  SpeechText = SplitTextWithNewlines(SpeechText, GetVirtualWidth() - 128);
+  SpeechText = SplitTextWithNewlines(SpeechText, GetVirtualWidth()-128);
 
   foreach (auto i; 0..5) {
     if (!Speech->Choices[i].Text) continue;
@@ -106,7 +111,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
   WinChoices[NumChoices].ImpulseNum = 200;
   ++NumChoices;
 
-  foreach (auto i; 0..NumChoices) WinChoices[i].SetPos(100, 440-NumChoices*18+i*18);
+  foreach (auto i; 0..NumChoices) WinChoices[i].SetPos(100, Height-4*10-NumChoices*18+i*18);
 
   if (Speech->Voice) LocalSound(Speech->Voice);
 
@@ -120,7 +125,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
 //
 //==========================================================================
 override void DrawBackButton () {
-  // don't draw back button on conversation windows...
+  // don't draw back button on conversation windows
 }
 
 
@@ -132,18 +137,22 @@ override void DrawBackButton () {
 override void OnDraw () {
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
+
   if (BackPic != -1) {
     DrawFullScreenPic(BackPic);
   } else {
-    ShadeRect(60, 46, 515, 70, 0.3);
-  }
-  if (bNeedGold) {
-    Inventory Item = EntityEx(StatusBarShared(ClGame.GSBar).ClGame.cl.MO).FindInventory(Coin);
-    DrawPic(480, 510-NumChoices*22,  R_RegisterPic('i_coin'));
-    DrawText(510, 510-NumChoices*22, va("%d", Item ? Item.Amount : 0), CR_WHITE);
+    ShadeRect(60, 46, Width-120, 70, 0.3);
   }
 
-  ShadeRect(60, 438-NumChoices*22, 501, NumChoices*22, 0.3);
+  if (bNeedGold) {
+    Inventory Item = EntityEx(StatusBarShared(ClGame.GSBar).ClGame.cl.MO).FindInventory(Coin);
+    //int ypos = 510-NumChoices*22;
+    int ypos = Height+30-NumChoices*22;
+    DrawPic(/*480*/Width-180, ypos, R_RegisterPic('i_coin'));
+    DrawText(/*510*/Width-180+30, ypos, va("%d", Item ? Item.Amount : 0), CR_WHITE);
+  }
+
+  ShadeRect(60, Height-4*10-NumChoices*22, Width-200, NumChoices*22, 0.3);
   DrawText(64, 48, SpeakerName, CR_GREEN);
   DrawText(64, 72, SpeechText);
 }

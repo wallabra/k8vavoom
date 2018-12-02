@@ -573,8 +573,12 @@ override void SB_Drawer (int sb_view) {
     // this is broken for now
     SB_DrawMainBarPre();
     SetVirtualScreen(640, 480);
-    if (Width != 640) Width = 640;
-    if (Height != 480) Height = 480;
+    // 448
+    //print("rd: (%s,%s)x(%s,%s); hh=%s", rd.x, rd.y, rd.width, rd.height, GetRealScreenHeight());
+    //refdef_t rd;
+    //GetCurrRefDef(out rd);
+    if (Width != GetVirtualWidth()) Width = GetVirtualWidth();
+    if (Height != GetVirtualHeight()) Height = GetVirtualHeight();
     SB_DrawMainBar();
     SetVirtualScreen(ovw, ovh);
     if (Width != ovw) Width = ovw;

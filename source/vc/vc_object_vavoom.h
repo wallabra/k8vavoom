@@ -115,3 +115,5 @@
   DECLARE_FUNCTION(W_CheckNumForName)
   DECLARE_FUNCTION(W_GetNumForName)
   DECLARE_FUNCTION(W_CheckNumForNameInFile)
+
+  DECLARE_FUNCTION(GetCurrRefDef)

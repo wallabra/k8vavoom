@@ -23,23 +23,18 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
 // status bar height at bottom of screen
-#define SB_REALHEIGHT ((int)(sb_height * fScaleY))
+//#define SB_REALHEIGHT ((int)(sb_height * fScaleY))
+#define SB_REALHEIGHT ((int)(ScreenHeight/640.0f*sb_height))
 
-// TYPES -------------------------------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// ////////////////////////////////////////////////////////////////////////// //
+void SB_Init ();
+void SB_Drawer ();
+void SB_Ticker ();
+bool SB_Responder (event_t *ev);
+void SB_Start (); // called when the console player is spawned on each level
 
-void SB_Init();
-void SB_Drawer();
-void SB_Ticker();
-bool SB_Responder(event_t *ev);
-void SB_Start();// Called when the console player is spawned on each level.
 
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
-
-extern int    sb_height;
+// ////////////////////////////////////////////////////////////////////////// //
+extern int sb_height;

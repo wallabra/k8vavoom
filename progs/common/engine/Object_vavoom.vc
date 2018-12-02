@@ -543,3 +543,16 @@ static final bool WadIterateFile_opIterNext (out WadLumpIteratorInfoName it, out
   it.curr = W_IterateFile(it.curr, it.fname);
   return true;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct refdef_t {
+  int x, y;
+  int width, height;
+  float fovx, fovy;
+  bool drawworld;
+  bool DrawCamera;
+};
+
+
+native static final void GetCurrRefDef (out refdef_t rd);

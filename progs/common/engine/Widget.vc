@@ -480,7 +480,7 @@ void SetOrigin (int x, int y) { SetPos(x, y); }
 //  k8: this should be moved elsewhere, but meh...
 //
 //==========================================================================
-void SetDefaultVirtualScreenSize () {
+static void SetDefaultVirtualScreenSize () {
   int rw = GetRealScreenWidth();
   int rh = GetRealScreenHeight();
   int vw = (rw >= 1280 ? rw/2 : 640);
@@ -501,7 +501,7 @@ void SetDefaultVirtualScreenSize () {
 //  called when there is no title pic (not yet)
 //
 //==========================================================================
-void DrawEmptyScreen () {
+static void DrawEmptyScreen () {
   //SetVirtualScreen(320, 200);
   //R_FillRect(0, 0, 320, 200, 0xff_303030);
   auto ovw = GetVirtualWidth();
@@ -515,7 +515,7 @@ void DrawEmptyScreen () {
 //  DrawFullScreenPic
 //
 //==========================================================================
-void DrawFullScreenPic (int Handle) {
+static void DrawFullScreenPic (int Handle) {
   picinfo_t pinf;
   R_GetPicInfo(Handle, &pinf);
   if (pinf.width < 1 || pinf.height < 1) {
