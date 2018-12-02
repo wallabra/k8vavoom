@@ -669,3 +669,35 @@ final bool decorate_CheckClass (string classname, optional int ptr_select, optio
   }
   return false;
 }
+
+
+//==========================================================================
+//
+//  A_RemoveIfRadiusAmountGreater
+//
+//==========================================================================
+final void A_RemoveIfRadiusAmountGreater (int radius, int amount, class!Actor checkClass, optional bool exact) {
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+
+  if (radius < 1) return;
+  if (amount < 1) { DoJump(none); return; }
+  if (!checkClass) return;
+
+  Entity e;
+  if (exact) {
+    foreach RadiusThings(e, Origin, radius) {
+      if (e.Class == checkClass) {
+        if (!(--amount)) { DoJump(none); return; }
+      }
+    }
+  } else {
+    //print("=============");
+    foreach RadiusThings(e, Origin, radius) {
+      print("   %C", e);
+      if (e isa checkClass) {
+        if (!(--amount)) { DoJump(none); return; }
+      }
+    }
+  }
+  //print("%C: check %C at %s, %s left", self, checkClass, Origin, amount);
+}

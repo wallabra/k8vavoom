@@ -80,6 +80,8 @@ class Actor extends Thinker
   alias GetSSR = _GetSSR;
 
 
+  action native A_RemoveIfRadiusAmountGreater (int radius, int amount, name className, optional bool exact);
+
   action native A_RearrangePointers (pointer target, pointer master, pointer tracer, int flags);
 
   //

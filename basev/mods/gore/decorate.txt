@@ -1,8 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 // RED BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+Actor K8Gore_BloodBase {
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBlood {
+Actor K8Gore_TinyBlood : K8Gore_BloodBase {
   game Doom
   scale 0.2
   speed 7
@@ -46,7 +49,7 @@ Actor K8Gore_TinyBlood {
 }
 
 
-Actor K8Gore_Blood Replaces Blood {
+Actor K8Gore_Blood : K8Gore_BloodBase Replaces Blood {
   Decal K8GoreBloodSplat
   game Doom
   +FORCEXYBILLBOARD
@@ -60,6 +63,7 @@ Actor K8Gore_Blood Replaces Blood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 AAAAAAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
@@ -92,7 +96,7 @@ Actor K8Gore_Blood Replaces Blood {
 }
 
 
-Actor K8Gore_BloodHit {
+Actor K8Gore_BloodHit : K8Gore_BloodBase {
   height 8
   radius 4
   +NOBLOCKMAP
@@ -104,6 +108,7 @@ Actor K8Gore_BloodHit {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       BLHT ABCDE 1
       Stop
   }
@@ -111,7 +116,7 @@ Actor K8Gore_BloodHit {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_FlyingBlood {
+Actor K8Gore_FlyingBlood : K8Gore_BloodBase {
   game Doom
   scale 0.5
   speed 4
@@ -140,6 +145,7 @@ Actor K8Gore_FlyingBlood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       //BLOD ABCD 2
       TNT1 A 0
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -183,7 +189,7 @@ Actor K8Gore_FlyingBloodLevel3 : K8Gore_FlyingBlood {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_BloodSpot {
+Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   game Doom
   radius 2
   height 2
@@ -213,6 +219,7 @@ Actor K8Gore_BloodSpot {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
@@ -315,7 +322,7 @@ Actor K8Gore_BloodSpot {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_DetectCeilBloodSimpler {
+Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
   game Doom
   scale 0.4
   speed 0
@@ -339,6 +346,7 @@ Actor K8Gore_DetectCeilBloodSimpler {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -380,6 +388,7 @@ Actor K8Gore_CeilBloodChecker : K8Gore_FlyingBlood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 4
       Stop
@@ -413,6 +422,7 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       BPDL A 1
       TNT1 A 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool")
       TNT1 A 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner")
@@ -438,6 +448,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawner : K8Gore_TinyBlood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling", random(-5, 5), random(-5, 5))
@@ -456,6 +467,7 @@ Actor K8Gore_BloodDripingFromCeiling : K8Gore_TinyBlood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -472,6 +484,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool : K8Gore_TinyBlood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLUX A 4
       Goto Death
@@ -533,6 +546,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 1
       TNT1 A 0 A_CheckFloor("SpawnNormally")
@@ -586,7 +600,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
 
 
 // Blood trails spawned by FlyingBlood
-Actor K8Gore_FlyingBloodTrail {
+Actor K8Gore_FlyingBloodTrail : K8Gore_BloodBase {
   game Doom
   scale 0.70
   mass 1
@@ -607,6 +621,7 @@ Actor K8Gore_FlyingBloodTrail {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BTRL CCCCCCCCCC 4
       Stop
@@ -645,6 +660,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -690,6 +706,7 @@ Actor K8Gore_GrowingBloodPool2 : K8Gore_BloodSpot {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -719,7 +736,7 @@ Actor K8Gore_GrowingBloodPool2 : K8Gore_BloodSpot {
 }
 
 
-Actor K8Gore_FlyingBloodFake {
+Actor K8Gore_FlyingBloodFake : K8Gore_BloodBase {
   game Doom
   scale 0.5
   speed 3
@@ -748,6 +765,7 @@ Actor K8Gore_FlyingBloodFake {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLOD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -791,6 +809,7 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase")
       MSBL ABCDEFGH 1
       MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
       TNT1 A 2
@@ -820,8 +839,11 @@ Actor K8Gore_Blood_SplatterReplacer : K8Gore_Blood Replaces BloodSplatter {
 ////////////////////////////////////////////////////////////////////////////////
 // RED TRANSIENT BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+Actor K8Gore_BloodBaseTransient {
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBloodTransient {
+Actor K8Gore_TinyBloodTransient : K8Gore_BloodBaseTransient {
   game Doom
   scale 0.2
   speed 7
@@ -866,7 +888,7 @@ Actor K8Gore_TinyBloodTransient {
 }
 
 
-Actor K8Gore_BloodTransient {
+Actor K8Gore_BloodTransient : K8Gore_BloodBaseTransient {
   Decal K8GoreBloodSplatTransient
   game Doom
   +FORCEXYBILLBOARD
@@ -880,6 +902,7 @@ Actor K8Gore_BloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 AAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
@@ -910,7 +933,7 @@ Actor K8Gore_BloodTransient {
 }
 
 
-Actor K8Gore_BloodHitTransient {
+Actor K8Gore_BloodHitTransient : K8Gore_BloodBaseTransient {
   height 8
   radius 4
   +NOBLOCKMAP
@@ -922,6 +945,7 @@ Actor K8Gore_BloodHitTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       BLHT ABCDE 1 A_FadeOut(0.1)
       Stop
   }
@@ -929,7 +953,7 @@ Actor K8Gore_BloodHitTransient {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_FlyingBloodTransient {
+Actor K8Gore_FlyingBloodTransient : K8Gore_BloodBaseTransient {
   game Doom
   scale 0.5
   speed 4
@@ -958,6 +982,7 @@ Actor K8Gore_FlyingBloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       //BLOD ABCD 2
       TNT1 A 0
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -1001,7 +1026,7 @@ Actor K8Gore_FlyingBloodLevel3Transient : K8Gore_FlyingBloodTransient {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_BloodSpotTransient {
+Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   game Doom
   radius 2
   height 2
@@ -1032,6 +1057,7 @@ Actor K8Gore_BloodSpotTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
@@ -1134,7 +1160,7 @@ Actor K8Gore_BloodSpotTransient {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_DetectCeilBloodSimplerTransient {
+Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
   game Doom
   scale 0.4
   speed 0
@@ -1158,6 +1184,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -1199,6 +1226,7 @@ Actor K8Gore_CeilBloodCheckerTransient : K8Gore_FlyingBloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 4
       Stop
@@ -1232,6 +1260,7 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       BPDL A 1
       TNT1 A 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient")
       TNT1 A 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerTransient")
@@ -1252,6 +1281,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerTransient : K8Gore_TinyBloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient", random(-5, 5), random(-5, 5))
@@ -1270,6 +1300,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient : K8Gore_TinyBloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -1286,6 +1317,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient : K8Gore_TinyBloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLUX A 4
       Goto Death
@@ -1347,6 +1379,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 1
       TNT1 A 0 A_CheckFloor("SpawnNormally")
@@ -1400,7 +1433,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
 
 
 // Blood trails spawned by FlyingBlood
-Actor K8Gore_FlyingBloodTrailTransient {
+Actor K8Gore_FlyingBloodTrailTransient : K8Gore_BloodBaseTransient {
   game Doom
   scale 0.70
   mass 1
@@ -1421,6 +1454,7 @@ Actor K8Gore_FlyingBloodTrailTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BTRL CCCCCCCCCC 4
       Stop
@@ -1459,6 +1493,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -1504,6 +1539,7 @@ Actor K8Gore_GrowingBloodPool2Transient : K8Gore_BloodSpotTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -1533,7 +1569,7 @@ Actor K8Gore_GrowingBloodPool2Transient : K8Gore_BloodSpotTransient {
 }
 
 
-Actor K8Gore_FlyingBloodFakeTransient {
+Actor K8Gore_FlyingBloodFakeTransient : K8Gore_BloodBaseTransient {
   game Doom
   scale 0.5
   speed 3
@@ -1562,6 +1598,7 @@ Actor K8Gore_FlyingBloodFakeTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLOD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -1605,6 +1642,7 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient")
       MSBL ABCDEFGH 1
       MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
       TNT1 A 2
@@ -1632,8 +1670,11 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
 ////////////////////////////////////////////////////////////////////////////////
 // GREEN BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+Actor K8Gore_BloodBaseGreen {
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBloodGreen {
+Actor K8Gore_TinyBloodGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.2
@@ -1678,7 +1719,7 @@ Actor K8Gore_TinyBloodGreen {
 }
 
 
-Actor K8Gore_BloodGreen Replaces BloodGreen {
+Actor K8Gore_BloodGreen : K8Gore_BloodBaseGreen Replaces BloodGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatGreen
   game Doom
@@ -1693,6 +1734,7 @@ Actor K8Gore_BloodGreen Replaces BloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 AAAAAAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
@@ -1725,7 +1767,7 @@ Actor K8Gore_BloodGreen Replaces BloodGreen {
 }
 
 
-Actor K8Gore_BloodHitGreen {
+Actor K8Gore_BloodHitGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   height 8
   radius 4
@@ -1738,6 +1780,7 @@ Actor K8Gore_BloodHitGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       BLHT ABCDE 1
       Stop
   }
@@ -1745,7 +1788,7 @@ Actor K8Gore_BloodHitGreen {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_FlyingBloodGreen {
+Actor K8Gore_FlyingBloodGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
@@ -1775,6 +1818,7 @@ Actor K8Gore_FlyingBloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       //BLOD ABCD 2
       TNT1 A 0
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -1819,7 +1863,7 @@ Actor K8Gore_FlyingBloodLevel3Green : K8Gore_FlyingBloodGreen {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_BloodSpotGreen {
+Actor K8Gore_BloodSpotGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 2
@@ -1850,6 +1894,7 @@ Actor K8Gore_BloodSpotGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
@@ -1952,7 +1997,7 @@ Actor K8Gore_BloodSpotGreen {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_DetectCeilBloodSimplerGreen {
+Actor K8Gore_DetectCeilBloodSimplerGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.4
@@ -1977,6 +2022,7 @@ Actor K8Gore_DetectCeilBloodSimplerGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -2019,6 +2065,7 @@ Actor K8Gore_CeilBloodCheckerGreen : K8Gore_FlyingBloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 4
       Stop
@@ -2053,6 +2100,7 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       BPDL A 1
       TNT1 A 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolGreen")
       TNT1 A 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerGreen")
@@ -2079,6 +2127,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerGreen : K8Gore_TinyBloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingGreen", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingGreen", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingGreen", random(-5, 5), random(-5, 5))
@@ -2098,6 +2147,7 @@ Actor K8Gore_BloodDripingFromCeilingGreen : K8Gore_TinyBloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -2115,6 +2165,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolGreen : K8Gore_TinyBloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLUX A 4
       Goto Death
@@ -2178,6 +2229,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 1
       TNT1 A 0 A_CheckFloor("SpawnNormally")
@@ -2231,7 +2283,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
 
 
 // Blood trails spawned by FlyingBlood
-Actor K8Gore_FlyingBloodTrailGreen {
+Actor K8Gore_FlyingBloodTrailGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.70
@@ -2253,6 +2305,7 @@ Actor K8Gore_FlyingBloodTrailGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BTRL CCCCCCCCCC 4
       Stop
@@ -2292,6 +2345,7 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -2338,6 +2392,7 @@ Actor K8Gore_GrowingBloodPool2Green : K8Gore_BloodSpotGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -2367,7 +2422,7 @@ Actor K8Gore_GrowingBloodPool2Green : K8Gore_BloodSpotGreen {
 }
 
 
-Actor K8Gore_FlyingBloodFakeGreen {
+Actor K8Gore_FlyingBloodFakeGreen : K8Gore_BloodBaseGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
@@ -2397,6 +2452,7 @@ Actor K8Gore_FlyingBloodFakeGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLOD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -2442,6 +2498,7 @@ Actor K8Gore_BloodmistSmallGreen : K8Gore_FlyingBloodGreen {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseGreen")
       MSBL ABCDEFGH 1
       MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
       TNT1 A 2
@@ -2472,8 +2529,11 @@ Actor K8Gore_Blood_SplatterReplacerGreen : K8Gore_Blood Replaces BloodSplatterGr
 ////////////////////////////////////////////////////////////////////////////////
 // GREEN TRANSIENT BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+Actor K8Gore_BloodBaseTransient_Green {
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBloodTransient_Green {
+Actor K8Gore_TinyBloodTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.2
@@ -2519,7 +2579,7 @@ Actor K8Gore_TinyBloodTransient_Green {
 }
 
 
-Actor K8Gore_BloodTransient_Green {
+Actor K8Gore_BloodTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatTransient_Green
   game Doom
@@ -2534,6 +2594,7 @@ Actor K8Gore_BloodTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 AAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
@@ -2564,7 +2625,7 @@ Actor K8Gore_BloodTransient_Green {
 }
 
 
-Actor K8Gore_BloodHitTransient_Green {
+Actor K8Gore_BloodHitTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   height 8
   radius 4
@@ -2577,6 +2638,7 @@ Actor K8Gore_BloodHitTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       BLHT ABCDE 1 A_FadeOut(0.1)
       Stop
   }
@@ -2584,7 +2646,7 @@ Actor K8Gore_BloodHitTransient_Green {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_FlyingBloodTransient_Green {
+Actor K8Gore_FlyingBloodTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
@@ -2614,6 +2676,7 @@ Actor K8Gore_FlyingBloodTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       //BLOD ABCD 2
       TNT1 A 0
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -2658,7 +2721,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Green : K8Gore_FlyingBloodTransient_Gree
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_BloodSpotTransient_Green {
+Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   radius 2
@@ -2690,6 +2753,7 @@ Actor K8Gore_BloodSpotTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
@@ -2792,7 +2856,7 @@ Actor K8Gore_BloodSpotTransient_Green {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_DetectCeilBloodSimplerTransient_Green {
+Actor K8Gore_DetectCeilBloodSimplerTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.4
@@ -2817,6 +2881,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -2859,6 +2924,7 @@ Actor K8Gore_CeilBloodCheckerTransient_Green : K8Gore_FlyingBloodTransient_Green
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 4
       Stop
@@ -2893,6 +2959,7 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       BPDL A 1
       TNT1 A 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient_Green")
       TNT1 A 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerTransient_Green")
@@ -2914,6 +2981,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerTransient_Green : K8Gore_TinyBloodTransien
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient_Green", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient_Green", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient_Green", random(-5, 5), random(-5, 5))
@@ -2933,6 +3001,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Green : K8Gore_TinyBloodTransient_
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -2950,6 +3019,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Green : K8Gore_TinyBloodTransi
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLUX A 4
       Goto Death
@@ -3013,6 +3083,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 1
       TNT1 A 0 A_CheckFloor("SpawnNormally")
@@ -3066,7 +3137,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
 
 
 // Blood trails spawned by FlyingBlood
-Actor K8Gore_FlyingBloodTrailTransient_Green {
+Actor K8Gore_FlyingBloodTrailTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.70
@@ -3088,6 +3159,7 @@ Actor K8Gore_FlyingBloodTrailTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BTRL CCCCCCCCCC 4
       Stop
@@ -3127,6 +3199,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -3173,6 +3246,7 @@ Actor K8Gore_GrowingBloodPool2Transient_Green : K8Gore_BloodSpotTransient_Green 
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -3202,7 +3276,7 @@ Actor K8Gore_GrowingBloodPool2Transient_Green : K8Gore_BloodSpotTransient_Green 
 }
 
 
-Actor K8Gore_FlyingBloodFakeTransient_Green {
+Actor K8Gore_FlyingBloodFakeTransient_Green : K8Gore_BloodBaseTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
@@ -3232,6 +3306,7 @@ Actor K8Gore_FlyingBloodFakeTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLOD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -3277,6 +3352,7 @@ Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_FlyingBloodTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Green")
       MSBL ABCDEFGH 1
       MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
       TNT1 A 2
@@ -3304,8 +3380,11 @@ Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_FlyingBloodTransient_Green {
 ////////////////////////////////////////////////////////////////////////////////
 // BLUE BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+Actor K8Gore_BloodBaseBlue {
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBloodBlue {
+Actor K8Gore_TinyBloodBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.2
@@ -3350,7 +3429,7 @@ Actor K8Gore_TinyBloodBlue {
 }
 
 
-Actor K8Gore_BloodBlue Replaces BloodBlue {
+Actor K8Gore_BloodBlue : K8Gore_BloodBaseBlue Replaces BloodBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatBlue
   game Doom
@@ -3365,6 +3444,7 @@ Actor K8Gore_BloodBlue Replaces BloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 AAAAAAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
@@ -3397,7 +3477,7 @@ Actor K8Gore_BloodBlue Replaces BloodBlue {
 }
 
 
-Actor K8Gore_BloodHitBlue {
+Actor K8Gore_BloodHitBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   height 8
   radius 4
@@ -3410,6 +3490,7 @@ Actor K8Gore_BloodHitBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       BLHT ABCDE 1
       Stop
   }
@@ -3417,7 +3498,7 @@ Actor K8Gore_BloodHitBlue {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_FlyingBloodBlue {
+Actor K8Gore_FlyingBloodBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
@@ -3447,6 +3528,7 @@ Actor K8Gore_FlyingBloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       //BLOD ABCD 2
       TNT1 A 0
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -3491,7 +3573,7 @@ Actor K8Gore_FlyingBloodLevel3Blue : K8Gore_FlyingBloodBlue {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_BloodSpotBlue {
+Actor K8Gore_BloodSpotBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 2
@@ -3522,6 +3604,7 @@ Actor K8Gore_BloodSpotBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
@@ -3624,7 +3707,7 @@ Actor K8Gore_BloodSpotBlue {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_DetectCeilBloodSimplerBlue {
+Actor K8Gore_DetectCeilBloodSimplerBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.4
@@ -3649,6 +3732,7 @@ Actor K8Gore_DetectCeilBloodSimplerBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -3691,6 +3775,7 @@ Actor K8Gore_CeilBloodCheckerBlue : K8Gore_FlyingBloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 4
       Stop
@@ -3725,6 +3810,7 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       BPDL A 1
       TNT1 A 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolBlue")
       TNT1 A 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerBlue")
@@ -3751,6 +3837,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerBlue : K8Gore_TinyBloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingBlue", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingBlue", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingBlue", random(-5, 5), random(-5, 5))
@@ -3770,6 +3857,7 @@ Actor K8Gore_BloodDripingFromCeilingBlue : K8Gore_TinyBloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -3787,6 +3875,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolBlue : K8Gore_TinyBloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLUX A 4
       Goto Death
@@ -3850,6 +3939,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 1
       TNT1 A 0 A_CheckFloor("SpawnNormally")
@@ -3903,7 +3993,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
 
 
 // Blood trails spawned by FlyingBlood
-Actor K8Gore_FlyingBloodTrailBlue {
+Actor K8Gore_FlyingBloodTrailBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.70
@@ -3925,6 +4015,7 @@ Actor K8Gore_FlyingBloodTrailBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BTRL CCCCCCCCCC 4
       Stop
@@ -3964,6 +4055,7 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -4010,6 +4102,7 @@ Actor K8Gore_GrowingBloodPool2Blue : K8Gore_BloodSpotBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -4039,7 +4132,7 @@ Actor K8Gore_GrowingBloodPool2Blue : K8Gore_BloodSpotBlue {
 }
 
 
-Actor K8Gore_FlyingBloodFakeBlue {
+Actor K8Gore_FlyingBloodFakeBlue : K8Gore_BloodBaseBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
@@ -4069,6 +4162,7 @@ Actor K8Gore_FlyingBloodFakeBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLOD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -4114,6 +4208,7 @@ Actor K8Gore_BloodmistSmallBlue : K8Gore_FlyingBloodBlue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseBlue")
       MSBL ABCDEFGH 1
       MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
       TNT1 A 2
@@ -4144,8 +4239,11 @@ Actor K8Gore_Blood_SplatterReplacerBlue : K8Gore_Blood Replaces BloodSplatterBlu
 ////////////////////////////////////////////////////////////////////////////////
 // BLUE TRANSIENT BLOOD
 ////////////////////////////////////////////////////////////////////////////////
+Actor K8Gore_BloodBaseTransient_Blue {
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBloodTransient_Blue {
+Actor K8Gore_TinyBloodTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.2
@@ -4191,7 +4289,7 @@ Actor K8Gore_TinyBloodTransient_Blue {
 }
 
 
-Actor K8Gore_BloodTransient_Blue {
+Actor K8Gore_BloodTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatTransient_Blue
   game Doom
@@ -4206,6 +4304,7 @@ Actor K8Gore_BloodTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 AAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
@@ -4236,7 +4335,7 @@ Actor K8Gore_BloodTransient_Blue {
 }
 
 
-Actor K8Gore_BloodHitTransient_Blue {
+Actor K8Gore_BloodHitTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   height 8
   radius 4
@@ -4249,6 +4348,7 @@ Actor K8Gore_BloodHitTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       BLHT ABCDE 1 A_FadeOut(0.1)
       Stop
   }
@@ -4256,7 +4356,7 @@ Actor K8Gore_BloodHitTransient_Blue {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_FlyingBloodTransient_Blue {
+Actor K8Gore_FlyingBloodTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
@@ -4286,6 +4386,7 @@ Actor K8Gore_FlyingBloodTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       //BLOD ABCD 2
       TNT1 A 0
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -4330,7 +4431,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Blue : K8Gore_FlyingBloodTransient_Blue 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_BloodSpotTransient_Blue {
+Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   radius 2
@@ -4362,6 +4463,7 @@ Actor K8Gore_BloodSpotTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
@@ -4464,7 +4566,7 @@ Actor K8Gore_BloodSpotTransient_Blue {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-Actor K8Gore_DetectCeilBloodSimplerTransient_Blue {
+Actor K8Gore_DetectCeilBloodSimplerTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.4
@@ -4489,6 +4591,7 @@ Actor K8Gore_DetectCeilBloodSimplerTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -4531,6 +4634,7 @@ Actor K8Gore_CeilBloodCheckerTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 4
       Stop
@@ -4565,6 +4669,7 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       BPDL A 1
       TNT1 A 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPoolTransient_Blue")
       TNT1 A 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawnerTransient_Blue")
@@ -4586,6 +4691,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawnerTransient_Blue : K8Gore_TinyBloodTransient
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient_Blue", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient_Blue", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeilingTransient_Blue", random(-5, 5), random(-5, 5))
@@ -4605,6 +4711,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Blue : K8Gore_TinyBloodTransient_B
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       BPDL A 0 ThrustThingZ(0,300,0,1)
       TNT1 A 0 A_Jump(230, "NoSpawn")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
@@ -4622,6 +4729,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Blue : K8Gore_TinyBloodTransie
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLUX A 4
       Goto Death
@@ -4685,6 +4793,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 1
       TNT1 A 0 A_CheckFloor("SpawnNormally")
@@ -4738,7 +4847,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
 
 
 // Blood trails spawned by FlyingBlood
-Actor K8Gore_FlyingBloodTrailTransient_Blue {
+Actor K8Gore_FlyingBloodTrailTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.70
@@ -4760,6 +4869,7 @@ Actor K8Gore_FlyingBloodTrailTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BTRL CCCCCCCCCC 4
       Stop
@@ -4799,6 +4909,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -4845,6 +4956,7 @@ Actor K8Gore_GrowingBloodPool2Transient_Blue : K8Gore_BloodSpotTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
@@ -4874,7 +4986,7 @@ Actor K8Gore_GrowingBloodPool2Transient_Blue : K8Gore_BloodSpotTransient_Blue {
 }
 
 
-Actor K8Gore_FlyingBloodFakeTransient_Blue {
+Actor K8Gore_FlyingBloodFakeTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
@@ -4904,6 +5016,7 @@ Actor K8Gore_FlyingBloodFakeTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       BLOD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -4949,6 +5062,7 @@ Actor K8Gore_BloodmistSmallTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBaseTransient_Blue")
       MSBL ABCDEFGH 1
       MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
       TNT1 A 2
