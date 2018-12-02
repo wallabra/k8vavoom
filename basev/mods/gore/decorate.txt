@@ -232,6 +232,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -1106,6 +1107,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -1971,6 +1973,7 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBaseGreen {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -2866,6 +2869,7 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient_Green {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -3745,6 +3749,7 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBaseBlue {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -4640,6 +4645,7 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient_Blue {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:

@@ -315,6 +315,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(Color) {
       TNT1 A 0 A_CheckFloorTextureGlob("*lava*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*blood*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_CheckFloorTextureGlob("*slime*", "SplashWater", AAPTR_DEFAULT, false)
+      TNT1 A 0 A_CheckFloorTextureGlob("*slimage*", "SplashWater", AAPTR_DEFAULT, false)
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
