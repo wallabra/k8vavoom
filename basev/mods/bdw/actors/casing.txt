@@ -12,8 +12,6 @@ Actor BDW_EmptyClipSpawn {
 }
 
 
-// alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
-// fixed
 Actor BDW_EmptyClip {
   Height 12
   Radius 9
@@ -44,6 +42,8 @@ Actor BDW_EmptyClip {
     Death:
        TNT1 A 0
        TNT1 A 0 //ACS_ExecuteAlways(798, 0, 0, 0, 0)//Check Effects
+       ECLI G 180
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        ECLI G 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
@@ -71,8 +71,6 @@ Actor BDW_RifleCaseSpawn {
 }
 
 
-// alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
-// fixed
 Actor BDW_EmptyBrass {
   Height 2
   Radius 2
@@ -111,41 +109,57 @@ Actor BDW_EmptyBrass {
        Goto Rest1
 
      Rest1:
+       CAS3 I 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 I 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest2:
+       CAS3 J 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 J 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest3:
+       CAS3 K 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 K 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest4:
+       CAS3 L 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 L 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest5:
+       CAS3 M 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 M 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest6:
+       CAS3 I 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 I 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest7:
+       CAS3 J 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 J 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
 
      Rest8:
+       CAS3 K 60
+       TNT1 A 0 A_ChangeFlag("NoInteraction", true)
        CAS3 K 600
        TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
        Loop
@@ -194,8 +208,6 @@ Actor BDW_ShotCaseSpawn : BDW_RifleCaseSpawn {
 }
 
 
-// alas, we have to put it onto blockmap, or VaVoom won't move the object with lifts
-// fixed
 Actor BDW_ShotgunCasing {
   Height 12
   Radius 9
@@ -231,41 +243,57 @@ Actor BDW_ShotgunCasing {
       Goto Rest1
 
     Rest1:
+      CAS2 I 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 I 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest2:
+      CAS2 J 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 J 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest3:
+      CAS2 K 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 K 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest4:
+      CAS2 L 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 L 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest5:
+      CAS2 M 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 M 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest6:
+      CAS2 I 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 I 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest7:
+      CAS2 J 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 J 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
 
     Rest8:
+      CAS2 K 60
+      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
       CAS2 K 600
       TNT1 A 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stoping")
       Loop
