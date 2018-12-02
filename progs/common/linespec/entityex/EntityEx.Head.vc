@@ -809,3 +809,19 @@ final int CalcEntityFlags () {
   if (bIceCorpse) res |= MF_ICECORPSE;
   return res;
 }
+
+
+//==========================================================================
+//
+//  IsBloodAllowed
+//
+//==========================================================================
+bool IsBloodAllowed () {
+  if (bNoBlood) return false;
+
+  if (bInvisible || bInvulnerable) return false; // don't spawn blood for invulnerable things
+  if (!bMonster && !bIsPlayer) return false; // only mosters and players has blood
+  if (bMonster && Health >= 10_000) return false; // this looks like something stationary, skip it
+
+  return true;
+}

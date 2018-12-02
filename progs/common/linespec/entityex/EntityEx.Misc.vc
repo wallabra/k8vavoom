@@ -1722,7 +1722,7 @@ final override bool SectorChanged (int CrushChange) {
     Damage(none, none, CrushChange);
 
     // spray blood in a random direction
-    if (!bNoBlood && !bInvulnerable && BloodType) {
+    if (!bNoBlood && !bInvulnerable && BloodType && IsBloodAllowed()) {
       A = Spawn(BloodType, Origin+vector(0.0, 0.0, Height/2.0));
       A.Velocity.x = (Random()-Random())*16.0*35.0;
       A.Velocity.y = (Random()-Random())*16.0*35.0;
@@ -2134,7 +2134,6 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
 // GetBloodSplatDecalName
 //
 //==========================================================================
-
 final name GetBloodSplatDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
@@ -2144,12 +2143,12 @@ final name GetBloodSplatDecalName () {
   return 'BloodSplat';
 }
 
+
 //==========================================================================
 //
 // GetBloodSmearDecalName
 //
 //==========================================================================
-
 final name GetBloodSmearDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearGreen';
@@ -2159,12 +2158,12 @@ final name GetBloodSmearDecalName () {
   return 'BloodSmear';
 }
 
+
 //==========================================================================
 //
 // GetBloodSplatRadiusDecalName
 //
 //==========================================================================
-
 final name GetBloodSplatRadiusDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatRadiusGreen';
@@ -2174,12 +2173,12 @@ final name GetBloodSplatRadiusDecalName () {
   return 'BloodSplatRadius';
 }
 
+
 //==========================================================================
 //
 // GetBloodSmearRadiusDecalName
 //
 //==========================================================================
-
 final name GetBloodSmearRadiusDecalName () {
   if (bNoBlood || !self.BloodType) return '';
   if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearRadiusGreen';
@@ -2189,17 +2188,17 @@ final name GetBloodSmearRadiusDecalName () {
   return 'BloodSmearRadius';
 }
 
+
 //==========================================================================
 //
 //  SpawnBlood
 //
 //==========================================================================
-
 final void SpawnBlood (TVec Org, int damage, optional TVec org) {
   EntityEx A;
   int i, c;
 
-  if (bNoBlood) return;
+  if (!IsBloodAllowed()) return;
 
   if (specified_org) {
     TVec goup = Origin;
@@ -2271,7 +2270,7 @@ final void SpawnBloodAtHead (int damage) {
 //==========================================================================
 
 final void SpawnExploBloodAtHead (int damage, EntityEx src) {
-  if (bNoBlood || damage < 1) return;
+  if (bNoBlood || damage < 1 || !IsBloodAllowed()) return;
 
   if (src) {
     TVec goup = Origin;
@@ -2320,7 +2319,7 @@ final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
   EntityEx  mo;
   int     i, c;
 
-  if (bNoBlood) return;
+  if (!IsBloodAllowed()) return;
 
   damage = damage > 255 ? 255 : damage;
   c = P_Random() >> 1;
@@ -2368,7 +2367,7 @@ final void SpawnBloodSplatter2(TVec org, TVec shootOrg)
 {
   EntityEx  mo;
 
-  if (bNoBlood) return;
+  if (!IsBloodAllowed()) return;
 
   if (!AxeBloodType)
   {

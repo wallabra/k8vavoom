@@ -464,7 +464,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 final int pr_tracebleed () { return P_Random(); }
 
 final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radiusDamage) {
-  if (bNoBlood || damage < 1) return;
+  if (damage < 1 || !IsBloodAllowed()) return;
 
   if (bIsPlayer) {
     if ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE)) return;

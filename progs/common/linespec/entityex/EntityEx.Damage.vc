@@ -285,7 +285,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
       // ketchup spawn
       if (instakill) {
-        bool doSpray = !bNoBlood && GetCvarB('k8HSHeadKillBloodSpray');
+        bool doSpray = IsBloodAllowed() && GetCvarB('k8HSHeadKillBloodSpray');
 
         if (doSpray) {
           bool poolType2 = (P_Random() >= 0x80);
