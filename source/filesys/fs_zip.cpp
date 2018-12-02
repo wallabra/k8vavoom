@@ -172,6 +172,14 @@ static const char *PK3IgnoreExts[] = {
   ".pk3",
   ".pk7",
   ".exe",
+  ".bat",
+  ".ini",
+  ".cpp",
+  ".acs",
+  ".doc",
+  ".me",
+  ".rtf",
+  ".rsp",
   nullptr
 };
 
@@ -179,6 +187,7 @@ static const char *PK3IgnoreExts[] = {
 bool VFS_ShouldIgnoreExt (const VStr &fname) {
   if (fname.length() == 0) return false;
   for (const char **s = PK3IgnoreExts; *s; ++s) if (fname.endsWithNoCase(*s)) return true;
+  //if (fname.length() > 12 && fname.endsWithNoCase(".txt")) return true;
   return false;
 }
 
