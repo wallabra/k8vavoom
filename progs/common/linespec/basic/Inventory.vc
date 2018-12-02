@@ -853,12 +853,12 @@ final void decorate_A_Lower (optional float lowerspeed) {
   Weapon pending = PlayerEx(Player).PendingWeapon;
 
   if (!pending) {
-    print("AUTHOR OF THIS MOD IS IDIOT! (2)");
+    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
     return;
   }
 
   if (ready && ready == pending) {
-    print("AUTHOR OF THIS MOD IS IDIOT! (3)");
+    print("%C: LOWERING UNRAISED WEAPON! (3)", self);
     return;
   }
 

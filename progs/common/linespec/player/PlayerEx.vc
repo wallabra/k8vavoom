@@ -822,7 +822,7 @@ final void BringUpWeapon () {
   }
 
   if (PendingWeapon && ReadyWeapon && PendingWeapon == ReadyWeapon) {
-    print("AUTHOR OF THIS MOD IS IDIOT! (0)");
+    print("%C: LOWERING UNRAISED WEAPON! (0)", ReadyWeapon);
     return;
   }
 
@@ -837,7 +837,7 @@ final void BringUpWeapon () {
     //dprint("MO=%C; RW=%C", MO, ReadyWeapon);
     if (!ReadyWeapon) {
       SetViewObject(none);
-      print("AUTHOR OF THIS MOD IS IDIOT! (1)");
+      print("LOWERING UNRAISED WEAPON! (1)");
       return;
     }
     MO.ModelVersion = ReadyWeapon.PlayerModelVersion;
