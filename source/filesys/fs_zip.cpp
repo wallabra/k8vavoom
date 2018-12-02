@@ -165,6 +165,24 @@ static const char *moreresdirs[] = {
 };
 
 
+static const char *PK3IgnoreExts[] = {
+  ".wad",
+  ".zip",
+  ".7z",
+  ".pk3",
+  ".pk7",
+  ".exe",
+  nullptr
+};
+
+
+bool VFS_ShouldIgnoreExt (const VStr &fname) {
+  if (fname.length() == 0) return false;
+  for (const char **s = PK3IgnoreExts; *s; ++s) if (fname.endsWithNoCase(*s)) return true;
+  return false;
+}
+
+
 //==========================================================================
 //
 //  VZipFile::VZipFile
@@ -415,9 +433,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
       } else {
         // hide wad files, 'cause they may conflict with normal files
         // wads will be correctly added by a separate function
-        if (Files[i].Name.EndsWith(".wad") || Files[i].Name.EndsWith(".zip") || Files[i].Name.EndsWith(".7z") ||
-            Files[i].Name.EndsWith(".pk3") || Files[i].Name.EndsWith(".pk7") || Files[i].Name.EndsWith(".exe"))
-        {
+        if (VFS_ShouldIgnoreExt(Files[i].Name)) {
           Files[i].LumpNamespace = -1;
           LumpName = VStr();
         }

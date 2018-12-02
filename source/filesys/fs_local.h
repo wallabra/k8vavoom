@@ -264,6 +264,8 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaNam
 bool GLBSP_BuildNodes (const char *name, const char *gwafile);
 void GLVis_BuildPVS (const char *srcfile, const char *gwafile);
 
+bool VFS_ShouldIgnoreExt (const VStr &fname);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern const VPK3ResDirInfo PK3ResourceDirs[];
