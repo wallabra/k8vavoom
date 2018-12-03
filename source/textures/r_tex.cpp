@@ -470,7 +470,7 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
 
 //==========================================================================
 //
-//  VTextureManager::findAndLoadTexture
+//  findAndLoadTexture
 //
 //  FIXME: make this faster!
 //
@@ -512,6 +512,48 @@ static bool findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
       tex->Name = VName(*Name, VName::AddLower);
       GTextureManager.AddTexture(tex);
     }
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  findAndLoadTextureShaded
+//
+//  FIXME: make this faster!
+//
+//==========================================================================
+static bool findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNamespace NS, int shade) {
+  VName PatchName(*Name, VName::AddLower8);
+  // need to collect 'em to go in backwards order
+  TArray<int> fulllist; // full names
+  TArray<int> shortlist; // short names
+  for (int LNum = W_IterateNS(-1, NS); LNum >= 0; LNum = W_IterateNS(LNum, NS)) {
+    //GCon->Logf("FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
+    VName lmpname = W_LumpName(LNum);
+         if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
+    else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);
+  }
+  // now go with first list (full name)
+  for (int f = fulllist.length()-1; f >= 0; --f) {
+    int LNum = fulllist[f];
+    VTexture *tex = VTexture::CreateTexture(Type, LNum);
+    if (!tex) continue;
+    tex->Name = shName;
+    tex->Shade(shade);
+    GTextureManager.AddTexture(tex);
+    return true;
+  }
+  // and with second list (short name)
+  for (int f = shortlist.length()-1; f >= 0; --f) {
+    int LNum = shortlist[f];
+    VTexture *tex = VTexture::CreateTexture(Type, LNum);
+    if (!tex) continue;
+    tex->Name = shName;
+    tex->Shade(shade);
+    GTextureManager.AddTexture(tex);
     return true;
   }
   return false;
@@ -690,15 +732,9 @@ int VTextureManager::AddFileTexture (VName Name, int Type) {
 //==========================================================================
 int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
   guard(VTextureManager::AddFileTexture)
-  if (shade < 1) return AddFileTexture(Name, Type);
+  if (shade == -1) return AddFileTexture(Name, Type);
 
-  VName shName = VName(va("%s %06x", *Name, (vuint32)shade));
-
-  /*
-  static TMapNC<VName, int> shadeMap;
-  auto txf = shadeMap.find(shName);
-  if (txf) return *txf;
-  */
+  VName shName = VName(va("%s %08x", *Name, (vuint32)shade));
 
   int i = CheckNumForName(shName, Type);
   if (i >= 0) return i;
@@ -707,9 +743,8 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
-      //shadeMap.put(shName, Tex);
       Tex->Name = shName;
-      if (shade > 0) Tex->Shade(shade);
+      Tex->Shade(shade);
       int res = AddTexture(Tex);
       //GCon->Logf("TEXMAN: loaded shaded texture '%s' (named '%s'; id=%d)", *Name, *shName, res);
       return res;
@@ -718,6 +753,42 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
 
   GCon->Logf(NAME_Warning, "Couldn't create shaded texture \"%s\".", *Name);
   return DefaultTexture;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::AddPatchShaded
+//
+//==========================================================================
+int VTextureManager::AddPatchShaded (VName Name, int Type, int shade, bool Silent) {
+  guard(VTextureManager::AddPatchShaded);
+  if (shade == -1) return AddPatch(Name, Type, Silent);
+
+  VName shName = VName(va("%s %08x", *Name, (vuint32)shade));
+
+  // check if it's already registered
+  int i = CheckNumForName(shName, Type);
+  if (i >= 0) return i;
+
+  // do not try to load already seen missing texture
+  if (isSeenMissingTexture(Name)) return -1; // alas
+
+  // load it
+  if (findAndLoadTextureShaded(Name, shName, Type, WADNS_Patches, shade) ||
+      findAndLoadTextureShaded(Name, shName, Type, WADNS_Graphics, shade) ||
+      findAndLoadTextureShaded(Name, shName, Type, WADNS_Sprites, shade) ||
+      findAndLoadTextureShaded(Name, shName, Type, WADNS_Flats, shade) ||
+      findAndLoadTextureShaded(Name, shName, Type, WADNS_Global, shade))
+  {
+    int tidx = CheckNumForName(shName, Type);
+    check(tidx > 0);
+    return tidx;
+  }
+
+  warnMissingTexture(Name, Silent);
+  return -1;
   unguard;
 }
 

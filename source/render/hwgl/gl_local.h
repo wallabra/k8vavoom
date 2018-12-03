@@ -511,7 +511,7 @@ private:
   void RenderShaderDecalsStart ();
   void RenderShaderDecalsEnd ();
   void RenderPrepareShaderDecals (surface_t *surf);
-  bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache);
+  bool RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache, int cmap);
 
   void UpdateAndUploadSurfaceTexture (surface_t *surf);
 

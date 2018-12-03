@@ -40,6 +40,38 @@ static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their
 static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", 0);
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+vuint32 glWDPolyTotal = 0;
+vuint32 glWDVertexTotal = 0;
+vuint32 glWDTextureChangesTotal = 0;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct SurfListItem {
+  surface_t *surf;
+  surfcache_t *cache;
+};
+
+VOpenGLDrawer::SurfListItem *VOpenGLDrawer::surfList = nullptr;
+vuint32 VOpenGLDrawer::surfListUsed = 0;
+vuint32 VOpenGLDrawer::surfListSize = 0;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+static int surfCmp (const void *a, const void *b, void *udata) {
+  surface_t *sa = *(surface_t **)a;
+  surface_t *sb = *(surface_t **)b;
+  if (sa == sb) return 0;
+  texinfo_t *ta = sa->texinfo;
+  texinfo_t *tb = sb->texinfo;
+  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+  return ((int)ta->ColourMap)-((int)tb->ColourMap);
+}
+}
+
+
 //==========================================================================
 //
 //  getSurfLightLevel
@@ -117,7 +149,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
 // VOpenGLDrawer::RenderFinishShaderDecals
 //
 //==========================================================================
-bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache) {
+bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool advanced, surfcache_t *cache, int cmap) {
   if (!r_decals_enabled) return false;
 
   if (!surf->dcseg || !surf->dcseg->decals) return false; // nothing to do
@@ -288,7 +320,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       }
     }
 
-    SetTexture(dtex, tex->ColourMap); // this sets `tex_iw` and `tex_ih`
+    SetTexture(dtex, /*tex->ColourMap*/cmap); // this sets `tex_iw` and `tex_ih`
 
     TVec lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
     TVec lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
@@ -351,35 +383,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
 }
 
 
-vuint32 glWDPolyTotal = 0;
-vuint32 glWDVertexTotal = 0;
-vuint32 glWDTextureChangesTotal = 0;
-
-struct SurfListItem {
-  surface_t *surf;
-  surfcache_t *cache;
-};
-
-
-VOpenGLDrawer::SurfListItem *VOpenGLDrawer::surfList = nullptr;
-vuint32 VOpenGLDrawer::surfListUsed = 0;
-vuint32 VOpenGLDrawer::surfListSize = 0;
-
-
-extern "C" {
-static int surfCmp (const void *a, const void *b, void *udata) {
-  surface_t *sa = *(surface_t **)a;
-  surface_t *sb = *(surface_t **)b;
-  if (sa == sb) return 0;
-  texinfo_t *ta = sa->texinfo;
-  texinfo_t *tb = sb->texinfo;
-  if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
-  if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
-  return ((int)ta->ColourMap)-((int)tb->ColourMap);
-}
-}
-
-
 //==========================================================================
 //
 //  VOpenGLDrawer::RenderSimpleSurface
@@ -432,7 +435,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
   // draw decals
   if (doDecals) {
-    if (RenderFinishShaderDecals(surf, false, false, nullptr)) {
+    if (RenderFinishShaderDecals(surf, false, false, nullptr, textr->ColourMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       p_glUseProgramObjectARB(SurfSimpleProgram);
@@ -494,7 +497,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
   // draw decals
   if (doDecals) {
-    if (RenderFinishShaderDecals(surf, true, false, cache)) {
+    if (RenderFinishShaderDecals(surf, true, false, cache, tex->ColourMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       p_glUseProgramObjectARB(SurfLightmapProgram);
@@ -1002,7 +1005,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
     glEnd();
 
     if (doDecals) {
-      if (RenderFinishShaderDecals(surf, false, true, nullptr)) {
+      if (RenderFinishShaderDecals(surf, false, true, nullptr, tex->ColourMap)) {
         p_glUseProgramObjectARB(ShadowsTextureProgram);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         glEnable(GL_BLEND);

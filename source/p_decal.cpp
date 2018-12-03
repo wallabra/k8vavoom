@@ -220,17 +220,31 @@ bool VDecalDef::parse (VScriptParser *sc) {
 
   while (!sc->AtEnd()) {
     if (sc->Check("}")) {
+      // load texture (and shade it if necessary)
       if (pic == NAME_None) {
         if (!isOptionalDecal(name)) GCon->Logf(NAME_Warning, "decal '%s' has no pic defined", *name);
         return true;
       }
       //texid = GTextureManager./*AddPatch*/CheckNumForNameAndForce(pic, TEXTYPE_Pic, false, false, true);
-      texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
-      if (texid < 0 && VStr::length(*pic) > 8) {
-        // try short version
-        VStr pn = VStr(*pic);
-        VName pp = *pn.left(8);
-        texid = GTextureManager.AddPatch(pp, TEXTYPE_Pic, true);
+      if (shade[3] == 1) {
+        int shadeclr = (((int)(shade[0]*255))<<16)|(((int)(shade[1]*255))<<8)|((int)(shade[2]*255));
+        texid = GTextureManager.AddPatchShaded(pic, TEXTYPE_Pic, shadeclr, true);
+        if (texid < 0 && VStr::length(*pic) > 8) {
+          // try short version
+          VStr pn = VStr(*pic);
+          VName pp = *pn.left(8);
+          texid = GTextureManager.AddPatchShaded(pp, TEXTYPE_Pic, shadeclr, true);
+        }
+        shade[0] = shade[1] = shade[2] = shade[3] = 0;
+        //GCon->Logf(NAME_Init, "SHADED DECAL: texture is '%s', shade is 0x%08x", *pic, (vuint32)shadeclr);
+      } else {
+        texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
+        if (texid < 0 && VStr::length(*pic) > 8) {
+          // try short version
+          VStr pn = VStr(*pic);
+          VName pp = *pn.left(8);
+          texid = GTextureManager.AddPatch(pp, TEXTYPE_Pic, true);
+        }
       }
       if (texid < 0) {
         if (!isOptionalDecal(name)) GCon->Logf(NAME_Warning, "decal '%s' has no pic '%s'", *name, *pic);

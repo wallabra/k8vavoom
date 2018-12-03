@@ -204,6 +204,7 @@ protected:
 
   // pitch is 4
   static void shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor);
+  static void stencilPixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor);
 
 public:
   VTexture ();
@@ -274,6 +275,7 @@ public:
   void SetFrontSkyLayer (int tex);
   void GetTextureInfo (int TexNum, picinfo_t *info);
   int AddPatch (VName Name, int Type, bool Silent=false);
+  int AddPatchShaded (VName Name, int Type, int shade, bool Silent=false); // shade==-1: don't shade
   int AddPatchLump (int LumpNum, VName Name, int Type, bool Silent=false);
   int AddRawWithPal (VName Name, VName PalName);
   int AddFileTexture (VName Name, int Type);
