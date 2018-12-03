@@ -103,7 +103,7 @@ combiner K8GoreBloodSmearer {
 /// +++++++++++++++++////
 decal K8GoreBloodSmear1 {
   pic BSPLNEW4
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -112,7 +112,7 @@ decal K8GoreBloodSmear1 {
 
 decal K8GoreBloodSmear2 {
   pic BSPLNEW5
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -128,7 +128,7 @@ decalgroup K8GoreBloodSmear {
 
 decal K8GoreBloodSmearSmall1 {
   pic BSPLNEW8
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -137,7 +137,7 @@ decal K8GoreBloodSmearSmall1 {
 
 decal K8GoreBloodSmearSmall2 {
   pic BSPLNEW7
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -152,7 +152,7 @@ decalgroup K8GoreBloodSmearSmall {
 
 decal K8GoreBloodSplat01 {
   pic BSPLNEW1
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -162,7 +162,7 @@ decal K8GoreBloodSplat01 {
 
 decal K8GoreBloodSplat02 {
   pic BSPLNEW2
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -178,7 +178,7 @@ decalgroup K8GoreBloodSplat {
 
 decal K8GoreBloodSuper01 {
   pic BSPLBIG1
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.9
   y-scale 0.9
   randomflipx
@@ -188,7 +188,7 @@ decal K8GoreBloodSuper01 {
 
 decal K8GoreBloodSuper02 {
   pic BSPLBIG2
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.9
   y-scale 0.9
   randomflipx
@@ -308,7 +308,7 @@ combiner K8GoreBloodSmearerTransient {
 /// +++++++++++++++++////
 decal K8GoreBloodSmear1Transient {
   pic BSPLNEW4
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -317,7 +317,7 @@ decal K8GoreBloodSmear1Transient {
 
 decal K8GoreBloodSmear2Transient {
   pic BSPLNEW5
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -333,7 +333,7 @@ decalgroup K8GoreBloodSmearTransient {
 
 decal K8GoreBloodSmearSmall1Transient {
   pic BSPLNEW8
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -342,7 +342,7 @@ decal K8GoreBloodSmearSmall1Transient {
 
 decal K8GoreBloodSmearSmall2Transient {
   pic BSPLNEW7
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -357,7 +357,7 @@ decalgroup K8GoreBloodSmearSmallTransient {
 
 decal K8GoreBloodSplat01Transient {
   pic BSPLNEW1
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -368,7 +368,7 @@ decal K8GoreBloodSplat01Transient {
 
 decal K8GoreBloodSplat02Transient {
   pic BSPLNEW2
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -385,7 +385,7 @@ decalgroup K8GoreBloodSplatTransient {
 
 decal K8GoreBloodSuper01Transient {
   pic BSPLBIG1
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.9
   y-scale 0.9
   randomflipx
@@ -396,7 +396,7 @@ decal K8GoreBloodSuper01Transient {
 
 decal K8GoreBloodSuper02Transient {
   pic BSPLBIG2
-  shade "7f 00 00"
+  shade "4f 00 00"
   x-scale 0.9
   y-scale 0.9
   randomflipx
@@ -1134,7 +1134,7 @@ combiner K8GoreBloodSmearerTransient_Blue {
 /// +++++++++++++++++////
 decal K8GoreBloodSmear1Transient_Blue {
   pic BSPLNEW4
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -1143,7 +1143,7 @@ decal K8GoreBloodSmear1Transient_Blue {
 
 decal K8GoreBloodSmear2Transient_Blue {
   pic BSPLNEW5
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -1159,7 +1159,7 @@ decalgroup K8GoreBloodSmearTransient_Blue {
 
 decal K8GoreBloodSmearSmall1Transient_Blue {
   pic BSPLNEW8
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -1168,7 +1168,7 @@ decal K8GoreBloodSmearSmall1Transient_Blue {
 
 decal K8GoreBloodSmearSmall2Transient_Blue {
   pic BSPLNEW7
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -1183,7 +1183,7 @@ decalgroup K8GoreBloodSmearSmallTransient_Blue {
 
 decal K8GoreBloodSplat01Transient_Blue {
   pic BSPLNEW1
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -1194,7 +1194,7 @@ decal K8GoreBloodSplat01Transient_Blue {
 
 decal K8GoreBloodSplat02Transient_Blue {
   pic BSPLNEW2
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.6
   y-scale 0.6
   randomflipx
@@ -1211,7 +1211,7 @@ decalgroup K8GoreBloodSplatTransient_Blue {
 
 decal K8GoreBloodSuper01Transient_Blue {
   pic BSPLBIG1
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.9
   y-scale 0.9
   randomflipx
@@ -1222,7 +1222,7 @@ decal K8GoreBloodSuper01Transient_Blue {
 
 decal K8GoreBloodSuper02Transient_Blue {
   pic BSPLBIG2
-  shade "00 00 9f"
+  shade "00 00 7f"
   x-scale 0.9
   y-scale 0.9
   randomflipx

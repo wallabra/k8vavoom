@@ -126,8 +126,8 @@ Actor K8Gore_FlyingBlood : K8Gore_BloodBase {
   height 1
   Gravity 0.1 //0.8
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuper
   +MISSILE
@@ -211,8 +211,8 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   -NoLiftDrop
   +NOBLOCKMAP
   //+NoInteraction
-  Renderstyle Translucent
-  Alpha 0.9
+  //Renderstyle Translucent
+  //Alpha 0.9
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplat
@@ -554,7 +554,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   +THRUACTORS
   +NOBLOCKMAP
   //+NoInteraction
-  Alpha 0.9
+  //Alpha 0.9
   Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplat
@@ -629,8 +629,8 @@ Actor K8Gore_FlyingBloodTrail : K8Gore_BloodBase {
   game Doom
   scale 0.70
   mass 1
-  renderstyle Translucent
-  alpha 0.7
+  //renderstyle Translucent
+  //alpha 0.7
   Decal K8GoreBloodSplat
   +LOWGRAVITY
   +NOTELEPORT
@@ -670,8 +670,8 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -719,8 +719,8 @@ Actor K8Gore_GrowingBloodPool2 : K8Gore_BloodSpot {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -776,8 +776,8 @@ Actor K8Gore_FlyingBloodFake : K8Gore_BloodBase {
   height 1
   Gravity 0.1
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplat
   +MISSILE
@@ -995,8 +995,8 @@ Actor K8Gore_FlyingBloodTransient : K8Gore_BloodBaseTransient {
   height 1
   Gravity 0.1 //0.8
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuperTransient
   +MISSILE
@@ -1080,9 +1080,9 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   -NoLiftDrop
   +NOBLOCKMAP
   //+NoInteraction
-  Renderstyle Translucent
-  //Alpha 0.6
-  Alpha 0.7
+  //Renderstyle Translucent
+  //!Alpha 0.6
+  //Alpha 0.7
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient
@@ -1411,7 +1411,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   +THRUACTORS
   +NOBLOCKMAP
   //+NoInteraction
-  Alpha 0.9
+  //Alpha 0.9
   Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatTransient
@@ -1486,8 +1486,8 @@ Actor K8Gore_FlyingBloodTrailTransient : K8Gore_BloodBaseTransient {
   game Doom
   scale 0.70
   mass 1
-  renderstyle Translucent
-  alpha 0.7
+  //renderstyle Translucent
+  //alpha 0.7
   Decal K8GoreBloodSplatTransient
   +LOWGRAVITY
   +NOTELEPORT
@@ -1527,8 +1527,8 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -1576,8 +1576,8 @@ Actor K8Gore_GrowingBloodPool2Transient : K8Gore_BloodSpotTransient {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -1633,8 +1633,8 @@ Actor K8Gore_FlyingBloodFakeTransient : K8Gore_BloodBaseTransient {
   height 1
   Gravity 0.1
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplatTransient
   +MISSILE
@@ -1855,8 +1855,8 @@ Actor K8Gore_FlyingBloodGreen : K8Gore_BloodBaseGreen {
   height 1
   Gravity 0.1 //0.8
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuperGreen
   +MISSILE
@@ -1942,8 +1942,8 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBaseGreen {
   -NoLiftDrop
   +NOBLOCKMAP
   //+NoInteraction
-  Renderstyle Translucent
-  Alpha 0.9
+  //Renderstyle Translucent
+  //Alpha 0.9
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatGreen
@@ -2293,7 +2293,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   +THRUACTORS
   +NOBLOCKMAP
   //+NoInteraction
-  Alpha 0.9
+  //Alpha 0.9
   Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatGreen
@@ -2369,8 +2369,8 @@ Actor K8Gore_FlyingBloodTrailGreen : K8Gore_BloodBaseGreen {
   game Doom
   scale 0.70
   mass 1
-  renderstyle Translucent
-  alpha 0.7
+  //renderstyle Translucent
+  //alpha 0.7
   Decal K8GoreBloodSplatGreen
   +LOWGRAVITY
   +NOTELEPORT
@@ -2411,8 +2411,8 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -2461,8 +2461,8 @@ Actor K8Gore_GrowingBloodPool2Green : K8Gore_BloodSpotGreen {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -2519,8 +2519,8 @@ Actor K8Gore_FlyingBloodFakeGreen : K8Gore_BloodBaseGreen {
   height 1
   Gravity 0.1
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplatGreen
   +MISSILE
@@ -2745,8 +2745,8 @@ Actor K8Gore_FlyingBloodTransient_Green : K8Gore_BloodBaseTransient_Green {
   height 1
   Gravity 0.1 //0.8
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuperTransient_Green
   +MISSILE
@@ -2832,9 +2832,9 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient_Green {
   -NoLiftDrop
   +NOBLOCKMAP
   //+NoInteraction
-  Renderstyle Translucent
-  //Alpha 0.6
-  Alpha 0.7
+  //Renderstyle Translucent
+  //!Alpha 0.6
+  //Alpha 0.7
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Green
@@ -3171,7 +3171,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   +THRUACTORS
   +NOBLOCKMAP
   //+NoInteraction
-  Alpha 0.9
+  //Alpha 0.9
   Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatTransient_Green
@@ -3247,8 +3247,8 @@ Actor K8Gore_FlyingBloodTrailTransient_Green : K8Gore_BloodBaseTransient_Green {
   game Doom
   scale 0.70
   mass 1
-  renderstyle Translucent
-  alpha 0.7
+  //renderstyle Translucent
+  //alpha 0.7
   Decal K8GoreBloodSplatTransient_Green
   +LOWGRAVITY
   +NOTELEPORT
@@ -3289,8 +3289,8 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -3339,8 +3339,8 @@ Actor K8Gore_GrowingBloodPool2Transient_Green : K8Gore_BloodSpotTransient_Green 
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -3397,8 +3397,8 @@ Actor K8Gore_FlyingBloodFakeTransient_Green : K8Gore_BloodBaseTransient_Green {
   height 1
   Gravity 0.1
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplatTransient_Green
   +MISSILE
@@ -3621,8 +3621,8 @@ Actor K8Gore_FlyingBloodBlue : K8Gore_BloodBaseBlue {
   height 1
   Gravity 0.1 //0.8
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuperBlue
   +MISSILE
@@ -3708,8 +3708,8 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBaseBlue {
   -NoLiftDrop
   +NOBLOCKMAP
   //+NoInteraction
-  Renderstyle Translucent
-  Alpha 0.9
+  //Renderstyle Translucent
+  //Alpha 0.9
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatBlue
@@ -4059,7 +4059,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   +THRUACTORS
   +NOBLOCKMAP
   //+NoInteraction
-  Alpha 0.9
+  //Alpha 0.9
   Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatBlue
@@ -4135,8 +4135,8 @@ Actor K8Gore_FlyingBloodTrailBlue : K8Gore_BloodBaseBlue {
   game Doom
   scale 0.70
   mass 1
-  renderstyle Translucent
-  alpha 0.7
+  //renderstyle Translucent
+  //alpha 0.7
   Decal K8GoreBloodSplatBlue
   +LOWGRAVITY
   +NOTELEPORT
@@ -4177,8 +4177,8 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -4227,8 +4227,8 @@ Actor K8Gore_GrowingBloodPool2Blue : K8Gore_BloodSpotBlue {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -4285,8 +4285,8 @@ Actor K8Gore_FlyingBloodFakeBlue : K8Gore_BloodBaseBlue {
   height 1
   Gravity 0.1
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplatBlue
   +MISSILE
@@ -4511,8 +4511,8 @@ Actor K8Gore_FlyingBloodTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   height 1
   Gravity 0.1 //0.8
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSuperTransient_Blue
   +MISSILE
@@ -4598,9 +4598,9 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   -NoLiftDrop
   +NOBLOCKMAP
   //+NoInteraction
-  Renderstyle Translucent
-  //Alpha 0.6
-  Alpha 0.7
+  //Renderstyle Translucent
+  //!Alpha 0.6
+  //Alpha 0.7
   Mass 99999999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Blue
@@ -4937,7 +4937,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +THRUACTORS
   +NOBLOCKMAP
   //+NoInteraction
-  Alpha 0.9
+  //Alpha 0.9
   Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatTransient_Blue
@@ -5013,8 +5013,8 @@ Actor K8Gore_FlyingBloodTrailTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   game Doom
   scale 0.70
   mass 1
-  renderstyle Translucent
-  alpha 0.7
+  //renderstyle Translucent
+  //alpha 0.7
   Decal K8GoreBloodSplatTransient_Blue
   +LOWGRAVITY
   +NOTELEPORT
@@ -5055,8 +5055,8 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -5105,8 +5105,8 @@ Actor K8Gore_GrowingBloodPool2Transient_Blue : K8Gore_BloodSpotTransient_Blue {
   mass 1
   Health 600
   //StencilColor "49 00 00"
-  Renderstyle Translucent
-  Alpha 0.8
+  //Renderstyle Translucent
+  //Alpha 0.8
   +NOTELEPORT
   +CLIENTSIDEONLY
   +FORCEXYBILLBOARD
@@ -5163,8 +5163,8 @@ Actor K8Gore_FlyingBloodFakeTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   height 1
   Gravity 0.1
   damage 0
-  Renderstyle Translucent
-  Alpha 0.95
+  //Renderstyle Translucent
+  //Alpha 0.95
   DamageType Blood
   Decal K8GoreBloodSplatTransient_Blue
   +MISSILE
