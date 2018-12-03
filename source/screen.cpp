@@ -275,8 +275,8 @@ static void DrawFPS () {
     T_SetFont(ConFont);
     int xpos;
     if (draw_gc_stats_posx < 0) {
-      T_SetAlign(hright, vtop);
-      xpos = 7*8;
+      T_SetAlign(hleft, vtop);
+      xpos = 4;
     } else if (draw_gc_stats_posx == 0) {
       T_SetAlign(hcentre, vtop);
       xpos = VirtualWidth/2;
@@ -303,8 +303,8 @@ static void DrawFPS () {
     T_SetFont(SmallFont);
     int xpos;
     if (draw_fps_posx < 0) {
-      T_SetAlign(hright, vtop);
-      xpos = 7*8;
+      T_SetAlign(hleft, vtop);
+      xpos = 4;
     } else if (draw_fps_posx == 0) {
       T_SetAlign(hcentre, vtop);
       xpos = VirtualWidth/2;
