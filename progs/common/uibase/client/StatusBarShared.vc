@@ -142,7 +142,7 @@ void AddNotifyMessage (string Str) {
       ++first_notify;
     }
     notify_lines[(num_notify+first_notify)%NUM_NOTIFY_LINES] = Lines[i].Text;
-    notify_times[(num_notify+first_notify)%NUM_NOTIFY_LINES] = GetCvarF('notify_time');
+    notify_times[(num_notify+first_notify)%NUM_NOTIFY_LINES] = GetCvarF('hud_notify_time');
     ++num_notify;
   }
 }
@@ -157,7 +157,7 @@ void DrawNotify () {
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
 
-  int col = GetCvar('font_colour');
+  int col = GetCvar('hud_font_color');
 
   // notify lines
   int y = 0;
@@ -207,7 +207,7 @@ void ClearCentreMessage () {
 void AddCentreMessage (string Msg) {
   SetFont('smallfont');
   CentreMessageHeight = SplitText(Msg, CentreMessageLines, 600);
-  CentreTime = GetCvarF('centre_message_time');
+  CentreTime = GetCvarF('hud_centre_message_time');
 }
 
 
@@ -226,7 +226,7 @@ void DrawCentreMessage () {
     int tx = ovw/2;
     int ty = (ovh-CentreMessageLines.length*LineH)/2-32;
     foreach (auto i; 0..CentreMessageLines.length) {
-      DrawText(tx-CentreMessageLines[i].Width/2, ty+i*LineH, CentreMessageLines[i].Text, GetCvar('font_colour2'), CR_YELLOW);
+      DrawText(tx-CentreMessageLines[i].Width/2, ty+i*LineH, CentreMessageLines[i].Text, GetCvar('hud_font_color_centered'), CR_YELLOW);
     }
   }
 }

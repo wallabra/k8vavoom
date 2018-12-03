@@ -28,6 +28,11 @@ menudef OptionsMenu {
   }
 
   option submenu {
+    title = "HUD Options";
+    submenu = HUDOptions;
+  }
+
+  option submenu {
     title = "Sound Options";
     submenu = SoundOptions;
   }

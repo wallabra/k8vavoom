@@ -28,28 +28,6 @@ menudef VideoOptions {
   }
 
 
-  header "Crosshair";
-
-  option enum {
-    title = "Crosshair";
-    cvar = crosshair;
-    list {
-      "None",
-      "Cross",
-      "Angle",
-      "Dot"
-    }
-  }
-
-  option slider {
-    title = "Crosshair Transparency";
-    cvar = crosshair_alpha;
-    step = 0.1;
-    min = 0;
-    max = 1;
-  }
-
-
   header "Renderer";
 
   option enum {

@@ -232,8 +232,8 @@ final void A_Print (string Text, optional float Time, optional name FontName) {
        if (bIsPlayer) Plr = Player;
   else if (Target && Target.bIsPlayer) Plr = Target.Player;
   else return;
-  if (!Time) Time = fclamp(GetCvarF('notify_time'), 1.0, 7.0);
-  Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('font_colour')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
+  if (!Time) Time = fclamp(GetCvarF('hud_notify_time'), 1.0, 7.0);
+  Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('hud_font_color')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
 }
 
 
@@ -247,8 +247,8 @@ final void A_PrintBold (string Text, optional float Time, optional name FontName
        if (bIsPlayer) Plr = Player;
   else if (Target && Target.bIsPlayer) Plr = Target.Player;
   else return;
-  if (!Time) Time = fclamp(GetCvarF('notify_time'), 1.0, 7.0);
-  Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('font_colour')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
+  if (!Time) Time = fclamp(GetCvarF('hud_notify_time'), 1.0, 7.0);
+  Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('hud_font_color')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
 }
 
 

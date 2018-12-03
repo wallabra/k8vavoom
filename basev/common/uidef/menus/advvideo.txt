@@ -6,11 +6,6 @@ menudef AdvVideoOptions {
   Title = "ADVANCED VIDEO OPTIONS";
 
   option bool {
-    title = "FPS Counter";
-    cvar = draw_fps;
-  }
-
-  option bool {
     title = "Decals";
     cvar = r_decals_enabled;
   }
@@ -21,69 +16,6 @@ menudef AdvVideoOptions {
     help =
       "Sort textures, so renderer will do less texture switches."
       "This can win several FPS on huge levels.";
-  }
-
-  header "HUD";
-
-  option enum {
-    title = "Message Colour";
-    cvar = font_colour;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray"
-    }
-  }
-
-  option enum {
-    title = "Center Message Colour";
-    cvar = font_colour2;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray"
-    }
-  }
-
-  option bool {
-    title = "Scale HUD messages";
-    cvar = hud_scale_messages;
   }
 
 

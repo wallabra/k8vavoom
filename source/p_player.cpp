@@ -30,11 +30,11 @@
 
 IMPLEMENT_CLASS(V, BasePlayer)
 
-static VCvarF notify_time("notify_time", "5", "Notification timeout.", CVAR_Archive);
-static VCvarF centre_msg_time("centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
-static VCvarB msg_echo("msg_echo", true, "Echo messages?", CVAR_Archive);
-static VCvarI font_colour("font_colour", "11", "Font color.", CVAR_Archive);
-static VCvarI font_colour2("font_colour2", "11", "Secondary font color.", CVAR_Archive);
+static VCvarF hud_notify_time("hud_notify_time", "5", "Notification timeout, in seconds.", CVAR_Archive);
+static VCvarF centre_msg_time("hud_centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
+static VCvarB hud_msg_echo("hud_msg_echo", true, "Echo messages?", CVAR_Archive);
+static VCvarI hud_font_color("hud_font_color", "11", "Font color.", CVAR_Archive);
+static VCvarI hud_font_color_centered("hud_font_color_centered", "11", "Secondary font color.", CVAR_Archive);
 
 VField *VBasePlayer::fldPendingWeapon = nullptr;
 
@@ -421,7 +421,7 @@ void VBasePlayer::DoClientPrint (VStr AStr) {
 
   if (Str.IsEmpty()) return;
   if (Str[0] == '$') Str = GLanguage[*VStr(Str.ToLower(), 1, Str.Length()-1)];
-  if (msg_echo) GCon->Log(Str);
+  if (hud_msg_echo) GCon->Log(Str);
 
   ClGame->eventAddNotifyMessage(Str);
   unguard;
@@ -439,7 +439,7 @@ void VBasePlayer::DoClientCentrePrint (VStr Str) {
 
   if (Msg.IsEmpty()) return;
   if (Msg[0] == '$') Msg = GLanguage[*VStr(Msg.ToLower(), 1, Msg.Length()-1)];
-  if (msg_echo) {
+  if (hud_msg_echo) {
     GCon->Log("<-------------------------------->");
     GCon->Log(Msg);
     GCon->Log("<-------------------------------->");
