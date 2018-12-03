@@ -596,6 +596,10 @@ override bool parseOne (ScriptsParser par) {
       par.ExpectString();
       list.length += 1;
       list[$-1].caption = par.String;
+      if (par.Check("=")) {
+        par.ExpectNumber(withSign:true);
+        val = par.Number;
+      }
       list[$-1].value = float(val++);
       while (par.Check(",")) {}
     }
