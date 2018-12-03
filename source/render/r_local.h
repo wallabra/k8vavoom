@@ -145,7 +145,6 @@ struct decal_t {
   float curz; // z position (offset with floor/ceiling TexZ if not midtex, see `flags`)
   float xdist; // in pixels
   float linelen; // so we don't have to recalculate it in renderer
-  float shade[4]; // [3]: mix coeff [0..1]; 0 means "original color", 1 means "use shade color"
   float ofsX, ofsY; // for animators
   float origScaleX, origScaleY; // for animators
   float scaleX, scaleY; // actual

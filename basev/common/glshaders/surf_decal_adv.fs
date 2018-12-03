@@ -2,7 +2,6 @@
 
 uniform sampler2D Texture;
 uniform sampler2D AmbLightTexture;
-uniform vec4 SplatColour; // do recolor if .a is not zero
 uniform float SplatAlpha; // image alpha will be multiplied by this
 uniform vec4 Light;
 uniform vec2 ScreenSize;
@@ -19,17 +18,10 @@ void main () {
   TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard;
 
-  if (SplatColour.a != 0.0) {
-    FinalColour_1.r = SplatColour.r*TexColour.r*SplatAlpha; // convert to premultiplied
-    FinalColour_1.g = SplatColour.g*TexColour.r*SplatAlpha; // convert to premultiplied
-    FinalColour_1.b = SplatColour.b*TexColour.r*SplatAlpha; // convert to premultiplied
-    FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
-  } else {
-    FinalColour_1.r = TexColour.r*SplatAlpha; // convert to premultiplied
-    FinalColour_1.g = TexColour.g*SplatAlpha; // convert to premultiplied
-    FinalColour_1.b = TexColour.b*SplatAlpha; // convert to premultiplied
-    FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
-  }
+  FinalColour_1.r = TexColour.r*SplatAlpha; // convert to premultiplied
+  FinalColour_1.g = TexColour.g*SplatAlpha; // convert to premultiplied
+  FinalColour_1.b = TexColour.b*SplatAlpha; // convert to premultiplied
+  FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   if (FinalColour_1.a < 0.01) discard;
 
 #if 0

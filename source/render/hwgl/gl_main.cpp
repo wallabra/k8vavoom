@@ -622,7 +622,6 @@ void VOpenGLDrawer::InitResolution () {
   SurfAdvDecalProgram = CreateProgram(VertexShader, FragmentShader);
   SurfAdvDecalTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Texture");
   SurfAdvDecalAmbLightTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "AmbLightTexture");
-  SurfAdvDecalSplatColourLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatColour");
   SurfAdvDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatAlpha");
   SurfAdvDecalLightLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Light");
   SurfAdvDecalScreenSize = p_glGetUniformLocationARB(SurfAdvDecalProgram, "ScreenSize");
@@ -631,7 +630,6 @@ void VOpenGLDrawer::InitResolution () {
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_nolmap.fs");
   SurfDecalNoLMapProgram = CreateProgram(VertexShader, FragmentShader);
   SurfDecalNoLMapTextureLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "Texture");
-  SurfDecalNoLMapSplatColourLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "SplatColour");
   SurfDecalNoLMapSplatAlphaLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "SplatAlpha");
   SurfDecalNoLMapLightLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "Light");
   SurfDecalNoLMapFogEnabledLoc = p_glGetUniformLocationARB(SurfDecalNoLMapProgram, "FogEnabled");
@@ -645,7 +643,6 @@ void VOpenGLDrawer::InitResolution () {
   FragmentShader = LoadShader(GL_FRAGMENT_SHADER_ARB, "glshaders/surf_decal_lmap.fs");
   SurfDecalProgram = CreateProgram(VertexShader, FragmentShader);
   SurfDecalTextureLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Texture");
-  SurfDecalSplatColourLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SplatColour");
   SurfDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfDecalProgram, "SplatAlpha");
   SurfDecalLightLoc = p_glGetUniformLocationARB(SurfDecalProgram, "Light");
   SurfDecalFogEnabledLoc = p_glGetUniformLocationARB(SurfDecalProgram, "FogEnabled");

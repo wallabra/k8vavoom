@@ -621,14 +621,12 @@ protected:
   GLhandleARB SurfAdvDecalProgram;
   GLint SurfAdvDecalTextureLoc;
   GLint SurfAdvDecalAmbLightTextureLoc;
-  GLint SurfAdvDecalSplatColourLoc;
   GLint SurfAdvDecalSplatAlphaLoc;
   GLint SurfAdvDecalLightLoc;
   GLint SurfAdvDecalScreenSize;
 
   GLhandleARB SurfDecalNoLMapProgram;
   GLint SurfDecalNoLMapTextureLoc;
-  GLint SurfDecalNoLMapSplatColourLoc;
   GLint SurfDecalNoLMapSplatAlphaLoc;
   GLint SurfDecalNoLMapLightLoc;
   GLint SurfDecalNoLMapFogEnabledLoc;
@@ -640,7 +638,6 @@ protected:
 
   GLhandleARB SurfDecalProgram;
   GLint SurfDecalTextureLoc;
-  GLint SurfDecalSplatColourLoc;
   GLint SurfDecalSplatAlphaLoc;
   GLint SurfDecalLightLoc;
   GLint SurfDecalFogEnabledLoc;

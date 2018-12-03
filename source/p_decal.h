@@ -62,7 +62,6 @@ public:
   //VName pic;
   int texid;
   int id;
-  float shade[4]; // [3]: mix coeff [0..1]; 0 means "original color", 1 means "use shade color"
   float scaleX, scaleY;
   int flipX, flipY; // FlipXXX constant
   float alpha; // decal alpha
@@ -75,7 +74,7 @@ public:
   //float ofsX, ofsY;
 
 public:
-  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), texid(-1)/*pic(NAME_None)*/, id(-1), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr) { shade[0] = shade[1] = shade[2] = shade[3] = 0; }
+  VDecalDef () : next(nullptr), animname(NAME_None), name(NAME_None), texid(-1)/*pic(NAME_None)*/, id(-1), scaleX(1), scaleY(1), flipX(FlipNone), flipY(FlipNone), alpha(1), addAlpha(0), fuzzy(false), fullbright(false), lowername(NAME_None), animator(nullptr) {}
   ~VDecalDef ();
 
 public:

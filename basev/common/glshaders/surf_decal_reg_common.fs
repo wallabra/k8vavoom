@@ -6,7 +6,6 @@ uniform sampler2D LightMap;
 uniform sampler2D SpecularMap;
 #endif
 uniform vec4 Light;
-uniform vec4 SplatColour; // do recolor if .a is not zero
 uniform float SplatAlpha; // image alpha will be multiplied by this
 uniform bool FogEnabled;
 uniform int FogType;
@@ -30,17 +29,10 @@ void main () {
   TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard;
 
-  if (SplatColour.a != 0.0) {
-    FinalColour_1.a = clamp(TexColour.r*SplatAlpha, 0.0, 1.0);
-    FinalColour_1.r = SplatColour.r /* *FinalColour_1.a */; // convert to premultiplied
-    FinalColour_1.g = SplatColour.g /* *FinalColour_1.a */; // convert to premultiplied
-    FinalColour_1.b = SplatColour.b /* *FinalColour_1.a */; // convert to premultiplied
-  } else {
-    FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
-    FinalColour_1.r = TexColour.r /* *FinalColour_1.a */; // convert to premultiplied
-    FinalColour_1.g = TexColour.g /* *FinalColour_1.a */; // convert to premultiplied
-    FinalColour_1.b = TexColour.b /* *FinalColour_1.a */; // convert to premultiplied
-  }
+  FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
+  FinalColour_1.r = TexColour.r /* *FinalColour_1.a */; // convert to premultiplied
+  FinalColour_1.g = TexColour.g /* *FinalColour_1.a */; // convert to premultiplied
+  FinalColour_1.b = TexColour.b /* *FinalColour_1.a */; // convert to premultiplied
   if (FinalColour_1.a < 0.01) discard;
 
 #ifdef REG_LIGHTMAP

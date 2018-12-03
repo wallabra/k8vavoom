@@ -293,7 +293,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
     }
 
     if (advanced) {
-      p_glUniform4fARB(SurfAdvDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
       p_glUniform1fARB(SurfAdvDecalSplatAlphaLoc, dc->alpha);
 #if 0
       //FIXME: fullbright doesn't work here yet
@@ -311,11 +310,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
       if (lmap) {
         p_glUniform4fARB(SurfDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-        p_glUniform4fARB(SurfDecalSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
         p_glUniform1fARB(SurfDecalSplatAlphaLoc, dc->alpha);
       } else {
         p_glUniform4fARB(SurfDecalNoLMapLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-        p_glUniform4fARB(SurfDecalNoLMapSplatColourLoc, dc->shade[0], dc->shade[1], dc->shade[2], dc->shade[3]);
         p_glUniform1fARB(SurfDecalNoLMapSplatAlphaLoc, dc->alpha);
       }
     }

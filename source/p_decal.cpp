@@ -73,38 +73,10 @@ VDecalGroup *VDecalGroup::listHead = nullptr;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool parseHexRGB (const VStr &str, float clr[]) {
+static bool parseHexRGB (const VStr &str, int *clr) {
   vuint32 ppc = M_ParseColour(str);
-  clr[0] = ((ppc>>16)&0xff)/255.0f;
-  clr[1] = ((ppc>>8)&0xff)/255.0f;
-  clr[2] = (ppc&0xff)/255.0f;
+  if (clr) *clr = ppc&0xffffff;
   return true;
-/*
-  clr[0] = clr[1] = clr[2] = 0;
-  int pos = 0;
-  for (int f = 0; f < 3; ++f) {
-    while (pos < str.Length() && str[pos] <= ' ') ++pos;
-    int n = 0;
-    int digCount = 0;
-    for (int dnum = 0; ; ++dnum) {
-      if (pos >= str.Length()) {
-        if (dnum == 0) return false;
-        break;
-      }
-      char ch = str[pos++];
-      if ((vuint8)ch <= ' ') break;
-      int d = VStr::digitInBase(ch, 16);
-      if (d < 0) return false; // alas
-      n = n*16+d;
-      ++digCount;
-    }
-    if (digCount == 1) n = n*16+n;
-    if (n < 0) n = 0; else if (n > 255) n = 255;
-    clr[f] = n/255.0f;
-  }
-  while (pos < str.Length() && (vuint8)str[pos] <= ' ') ++pos;
-  return (pos >= str.Length());
-*/
 }
 
 
@@ -217,6 +189,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
 
   VName pic = NAME_None;
   texid = -1;
+  int shadeclr = -1;
 
   while (!sc->AtEnd()) {
     if (sc->Check("}")) {
@@ -226,8 +199,7 @@ bool VDecalDef::parse (VScriptParser *sc) {
         return true;
       }
       //texid = GTextureManager./*AddPatch*/CheckNumForNameAndForce(pic, TEXTYPE_Pic, false, false, true);
-      if (shade[3] == 1) {
-        int shadeclr = (((int)(shade[0]*255))<<16)|(((int)(shade[1]*255))<<8)|((int)(shade[2]*255));
+      if (shadeclr != -1) {
         texid = GTextureManager.AddPatchShaded(pic, TEXTYPE_Pic, shadeclr, true);
         if (texid < 0 && VStr::length(*pic) > 8) {
           // try short version
@@ -235,7 +207,6 @@ bool VDecalDef::parse (VScriptParser *sc) {
           VName pp = *pn.left(8);
           texid = GTextureManager.AddPatchShaded(pp, TEXTYPE_Pic, shadeclr, true);
         }
-        shade[0] = shade[1] = shade[2] = shade[3] = 0;
         //GCon->Logf(NAME_Init, "SHADED DECAL: texture is '%s', shade is 0x%08x", *pic, (vuint32)shadeclr);
       } else {
         texid = GTextureManager.AddPatch(pic, TEXTYPE_Pic, true);
@@ -262,11 +233,10 @@ bool VDecalDef::parse (VScriptParser *sc) {
     if (sc->Check("shade")) {
       sc->ExpectString();
       if (sc->String.ICmp("BloodDefault") == 0) {
-        if (!parseHexRGB("88 00 00", shade)) { sc->Error("invalid color"); return false; }
+        if (!parseHexRGB("88 00 00", &shadeclr)) { sc->Error("invalid color"); return false; }
       } else {
-        if (!parseHexRGB(sc->String, shade)) { sc->Error("invalid color"); return false; }
+        if (!parseHexRGB(sc->String, &shadeclr)) { sc->Error("invalid color"); return false; }
       }
-      shade[3] = 1; // it colored!
       continue;
     }
 
@@ -724,6 +694,8 @@ void VDecalAnimColorChanger::doIO (VStream &Strm) {
 bool VDecalAnimColorChanger::animate (decal_t *decal, float timeDelta) {
   guard(VDecalAnimColorChanger::animate);
   // not yet, sorry
+  // as we are using pre-translated textures, color changer cannot work
+  // and we need pre-translated textures for working colormaps
   return true;
   unguard;
 }
@@ -743,7 +715,11 @@ bool VDecalAnimColorChanger::parse (VScriptParser *sc) {
 
     if (sc->Check("color")) {
       sc->ExpectString();
-      if (!parseHexRGB(sc->String, dest)) { sc->Error("invalid color"); return false; }
+      int destclr = 0;
+      if (!parseHexRGB(sc->String, &destclr)) { sc->Error("invalid color"); return false; }
+      dest[0] = ((destclr>>16)&0xff)/255.0f;
+      dest[1] = ((destclr>>8)&0xff)/255.0f;
+      dest[2] = (destclr&0xff)/255.0f;
       continue;
     }
     if (sc->Check("fadestart")) { sc->ExpectFloat(); startTime = sc->Float; continue; }

@@ -111,6 +111,7 @@ static void OldStringIO (VStream &Strm, VStr &str) {
 //==========================================================================
 static void DecalIO (VStream &Strm, decal_t *dc) {
   if (!dc) return;
+  float shade[4] = {0, 0, 0, 0};
   if (Strm.IsLoading()) {
     // load picture name
     VName picname, dectype;
@@ -132,10 +133,10 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
   Strm << dc->curz;
   Strm << dc->xdist;
   Strm << dc->linelen;
-  Strm << dc->shade[0];
-  Strm << dc->shade[1];
-  Strm << dc->shade[2];
-  Strm << dc->shade[3];
+  Strm << shade[0]; // this
+  Strm << shade[1]; // is done
+  Strm << shade[2]; // to not
+  Strm << shade[3]; // break saves
   Strm << dc->ofsX;
   Strm << dc->ofsY;
   Strm << dc->origScaleX;
@@ -1466,10 +1467,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       decal->orgz = decal->curz = orgz;
       decal->xdist = /*segd0+tw2*/segdist/*-txofs*/; //tinf.width*0.5f;
       decal->linelen = linelen;
-      decal->shade[0] = dec->shade[0];
-      decal->shade[1] = dec->shade[1];
-      decal->shade[2] = dec->shade[2];
-      decal->shade[3] = dec->shade[3];
       decal->ofsX = decal->ofsY = 0;
       decal->scaleX = decal->origScaleX = dec->scaleX;
       decal->scaleY = decal->origScaleY = dec->scaleY;
