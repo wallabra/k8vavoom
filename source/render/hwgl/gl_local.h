@@ -878,6 +878,7 @@ protected:
   void SetPicModel(VTexture*, VTextureTranslation*, int);
   void GenerateTexture(VTexture*, GLuint*, VTextureTranslation*, int, bool asPicture);
   void UploadTexture8(int, int, const vuint8*, const rgba_t*);
+  void UploadTexture8A(int, int, const vuint8*, const rgba_t*); // 16-bit format: pal, alpha
   void UploadTexture(int, int, const rgba_t*);
 
   void DoHorizonPolygon(surface_t*);

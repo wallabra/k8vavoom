@@ -144,6 +144,7 @@ void VCameraTexture::CopyImage () {
   bNeedsUpdate = false;
   bUpdated = true;
   Pixels8BitValid = false;
+  Pixels8BitAValid = false;
   unguard;
 }
 #endif

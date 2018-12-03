@@ -100,8 +100,10 @@ VTexture::VTexture ()
   , animated(false)
   , DriverData(0)
   , Pixels8Bit(0)
+  , Pixels8BitA(0)
   , HiResTexture(0)
   , Pixels8BitValid(false)
+  , Pixels8BitAValid(false)
   , shadeColor(-1)
 {
   needFBO = false;
@@ -121,6 +123,10 @@ VTexture::~VTexture () {
   if (Pixels8Bit) {
     delete[] Pixels8Bit;
     Pixels8Bit = nullptr;
+  }
+  if (Pixels8BitA) {
+    delete[] Pixels8BitA;
+    Pixels8BitA = nullptr;
   }
   if (HiResTexture) {
     delete HiResTexture;
@@ -190,6 +196,63 @@ vuint8 *VTexture::GetPixels8 () {
     Pixels8BitValid = true;
     return Pixels8Bit;
   }
+  return Pixels;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VTexture::GetPixels8A
+//
+//==========================================================================
+vuint8 *VTexture::GetPixels8A () {
+  guard(VTexture::GetPixels8A);
+  // if already have converted version, then just return it
+  if (Pixels8BitA && Pixels8BitAValid) return Pixels8BitA;
+
+  vuint8 *Pixels = GetPixels();
+  if (Format == TEXFMT_8Pal) {
+    // remap to game palette
+    int NumPixels = Width*Height;
+    rgba_t *Pal = GetPalette();
+    vuint8 Remap[256];
+    Remap[0] = 0;
+    for (int i = 1; i < 256; ++i) Remap[i] = r_rgbtable[((Pal[i].r<<7)&0x7c00)+((Pal[i].g<<2)&0x3e0)+((Pal[i].b>>3)&0x1f)];
+    if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
+    vuint8 *pSrc = Pixels;
+    vuint8 *pDst = Pixels8BitA;
+    for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
+      pDst[0] = Remap[*pSrc];
+      pDst[1] = (pDst[0] ? 255 : 0);
+    }
+    Pixels8BitAValid = true;
+    return Pixels8BitA;
+  } else if (Format == TEXFMT_8) {
+    // use game palette
+    int NumPixels = Width*Height;
+    if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
+    vuint8 *pSrc = Pixels;
+    vuint8 *pDst = Pixels8BitA;
+    for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
+      pDst[0] = *pSrc;
+      pDst[1] = (*pSrc ? 255 : 0);
+    }
+    Pixels8BitAValid = true;
+    return Pixels8BitA;
+  } else if (Format == TEXFMT_RGBA) {
+    int NumPixels = Width*Height;
+    if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
+    rgba_t *pSrc = (rgba_t *)Pixels;
+    vuint8 *pDst = Pixels8BitA;
+    for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
+      pDst[0] = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
+      pDst[1] = pSrc->a;
+    }
+    Pixels8BitAValid = true;
+    return Pixels8BitA;
+  }
+  // just in case
   return Pixels;
   unguard;
 }

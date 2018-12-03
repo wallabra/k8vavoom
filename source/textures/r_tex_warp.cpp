@@ -127,6 +127,7 @@ vuint8 *VWarpTexture::GetPixels () {
 
   GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
+  Pixels8BitAValid = false;
 
   if (!XSin1) {
     XSin1 = new float[Width];
@@ -244,6 +245,7 @@ vuint8 *VWarp2Texture::GetPixels () {
 
   GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
+  Pixels8BitAValid = false;
 
   if (!XSin1) {
     XSin1 = new float[Height];

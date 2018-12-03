@@ -324,11 +324,11 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     const vuint8 *TrTab = Translation->GetTable();
     const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
     for (int i = 0; i < 256; ++i) TmpPal[i] = CMPal[TrTab[i]];
-    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8(), TmpPal);
+    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), TmpPal);
   } else if (Translation) {
-    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8(), Translation->GetPalette());
+    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
   } else if (CMap) {
-    UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8(), ColourMaps[CMap].GetPalette());
+    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColourMaps[CMap].GetPalette());
   } else {
     vuint8 *block = SrcTex->GetPixels();
     if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
@@ -365,6 +365,24 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
   rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
   for (int i = 0; i < Width*Height; ++i) {
     if (Data[i]) NewData[i] = Pal[Data[i]];
+  }
+  UploadTexture(Width, Height, NewData);
+  Z_Free(NewData);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::UploadTexture8A
+//
+//  16-bit format: pal, alpha
+//
+//==========================================================================
+void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const vuint8 *Data, const rgba_t *Pal) {
+  rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
+  for (int i = 0; i < Width*Height; ++i, Data += 2) {
+    NewData[i] = Pal[Data[0]];
+    NewData[i].a = Data[1];
   }
   UploadTexture(Width, Height, NewData);
   Z_Free(NewData);

@@ -190,8 +190,10 @@ public:
 
 protected:
   vuint8 *Pixels8Bit;
+  vuint8 *Pixels8BitA;
   VTexture *HiResTexture;
   bool Pixels8BitValid;
+  bool Pixels8BitAValid;
   int shadeColor;
 
 protected:
@@ -229,6 +231,7 @@ public:
   virtual void Shade (int shade); // should be called before any `GetPixels()` call!
   virtual vuint8 *GetPixels () = 0;
   vuint8 *GetPixels8 ();
+  vuint8 *GetPixels8A (); // 16-bit format: pal, alpha
   virtual rgba_t *GetPalette ();
   virtual void Unload () = 0;
   virtual VTexture *GetHighResolutionTexture ();
