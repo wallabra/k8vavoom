@@ -34,9 +34,9 @@
 #endif
 
 #define VC_GARBAGE_COLLECTOR_CHECKS
-#define VC_GARBAGE_COLLECTOR_LOGS_BASE
-#define VC_GARBAGE_COLLECTOR_LOGS_MORE
-#define VC_GARBAGE_COLLECTOR_LOGS_XTRA
+//#define VC_GARBAGE_COLLECTOR_LOGS_BASE
+//#define VC_GARBAGE_COLLECTOR_LOGS_MORE
+//#define VC_GARBAGE_COLLECTOR_LOGS_XTRA
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -548,10 +548,11 @@ bool destroyDelayed
 
 #ifdef VCC_STANDALONE_EXECUTOR
   if (!GNumDeleted && !destroyDelayed) return;
+  check(GNumDeleted >= 0);
 #else
   if (!GNumDeleted) return;
-#endif
   check(GNumDeleted > 0);
+#endif
 
   GInGarbageCollection = true;
 
