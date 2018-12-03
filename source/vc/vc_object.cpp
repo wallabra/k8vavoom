@@ -271,7 +271,7 @@ VObject::~VObject () {
     --GNumDeleted;
     --gcLastStats.markedDead;
     ObjectFlags |= _OF_CleanupRef;
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 #endif
     //fprintf(stderr, "Cleaning up for `%s`\n", *this->GetClass()->Name);
@@ -429,8 +429,10 @@ void VObject::Register () {
   if (gLastUsedUniqueId == 0) gLastUsedUniqueId = 1;
   if (gObjAvailable.length()) {
     Index = gObjAvailable.popValue();
-#ifdef VC_GARBAGE_COLLECTOR_CHECKS
+#if defined(VC_GARBAGE_COLLECTOR_CHECKS) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (developer && GObjObjects[Index] != nullptr) GCon->Logf(NAME_Dev, "*** trying to allocate non-empty index #%d", Index);
+#endif
+#ifdef VC_GARBAGE_COLLECTOR_CHECKS
     check(GObjObjects[Index] == nullptr);
     check(Index < gObjFirstFree);
 #endif
@@ -454,7 +456,7 @@ void VObject::Register () {
       gcLastStats.poolAllocated = GObjObjects.NumAllocated();
     }
   }
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "created object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 #endif
   ++gcLastStats.alive;
@@ -475,7 +477,7 @@ void VObject::SetFlags (vuint32 NewFlags) {
     NewFlags |= _OF_CleanupRef;
     ++GNumDeleted;
     ++gcLastStats.markedDead;
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 #endif
   }
@@ -511,7 +513,7 @@ void VObject::ConditionalDestroy () {
 void VObject::Destroy () {
   Class->DestructObject(this);
   if (!(ObjectFlags&_OF_Destroyed)) SetFlags(_OF_Destroyed);
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "destroyed object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 #endif
 }
@@ -553,7 +555,7 @@ bool destroyDelayed
 
   GInGarbageCollection = true;
 
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "collecting garbage...");
 #endif
 
@@ -566,7 +568,7 @@ bool destroyDelayed
       VObject *obj = GObjObjects[idx];
       if (!obj) continue;
       if ((obj->ObjectFlags&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) {
-        Obj->ConditionalDestroy();
+        obj->ConditionalDestroy();
       }
     }
   }
@@ -590,7 +592,7 @@ bool destroyDelayed
   for (int i = ilen-1; i >= 0; --i) {
     VObject *obj = goptr[i];
     if (!obj) {
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_MORE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_MORE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "* FREE SLOT #%d", i);
 #endif
       if (registerFree) gObjAvailable.push(i);
@@ -601,7 +603,7 @@ bool destroyDelayed
 #endif
     if (obj->ObjectFlags&_OF_Destroyed) {
       // this will be free
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_MORE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_MORE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "* FUTURE FREE SLOT #%d", i);
 #endif
       if (registerFree) gObjAvailable.push(i);
@@ -616,7 +618,7 @@ bool destroyDelayed
     ++alive;
   }
 
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_XTRA
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_XTRA) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (GCDebugMessagesAllowed && developer) {
     GCon->Logf(NAME_Dev, " %d free, %d preys", gObjAvailable.length(), gDeadObjects.length());
     GCon->Logf(NAME_Dev, " === dead ==="); for (int f = 0; f < gDeadObjects.length(); ++f) GCon->Logf(NAME_Dev, "  #%d: %d", f, gDeadObjects[f]);
@@ -632,13 +634,17 @@ bool destroyDelayed
     VObject *obj = goptr[i];
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
     check(obj);
+#endif
+#if defined(VC_GARBAGE_COLLECTOR_CHECKS) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (developer && !(obj->ObjectFlags&_OF_Destroyed)) {
       GCon->Logf(NAME_Dev, "deleting non-dead object(%u) #%d: %p (%s); %d left to delete", obj->UniqueId, i, obj, obj->GetClass()->GetName(), gDeadObjects.length());
     }
+#endif
+#ifdef VC_GARBAGE_COLLECTOR_CHECKS
     check(obj->ObjectFlags&_OF_Destroyed);
 #endif
     ++bodycount;
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "deleting object(%u) #%d: %p (%s)", obj->UniqueId, i, obj, obj->GetClass()->GetName());
 #endif
     delete obj;
@@ -649,7 +655,7 @@ bool destroyDelayed
 
   // compact object storage if we have too big difference between number of free objects and last used index
   if (/*alive+341 < gObjFirstFree ||*/ alive+alive/3 < gObjFirstFree) {
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "  compacting pool (alive=%d; firstfree=%d)", alive, gObjFirstFree);
 #endif
     goptr = GObjObjects.ptr();
@@ -693,7 +699,7 @@ bool destroyDelayed
     // we don't need free index list anymore
     gObjAvailable.reset();
     memset((void *)(GObjObjects.ptr()+currFreeIdx), 0, (ilen-currFreeIdx)*sizeof(VObject *));
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "  pool compaction complete (alive=%d; firstfree=%d)", alive, gObjFirstFree);
 #endif
   }
@@ -714,7 +720,7 @@ bool destroyDelayed
   gcLastStats.poolAllocated = GObjObjects.NumAllocated();
   gcLastStats.firstFree = gObjFirstFree;
 
-#ifdef VC_GARBAGE_COLLECTOR_LOGS_BASE
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (GCDebugMessagesAllowed && developer) GCon->Logf(NAME_Dev, "garbage collection complete in %d msecs; %d objects deleted, %d objects live, %d of %d array slots used; firstfree=%d",
     (int)(gcLastStats.lastCollectTime*1000), gcLastStats.lastCollected, gcLastStats.alive, gcLastStats.poolSize, gcLastStats.poolAllocated, gObjFirstFree);
 #endif

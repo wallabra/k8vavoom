@@ -283,9 +283,13 @@ static void RunFunction (VMethod *func) {
 
   if (func->Flags&FUNC_Native) {
     // native function, first statement is pointer to function
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (developer) cstPush(func);
+#endif
     func->NativeFunc();
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     if (developer) cstPop();
+#endif
     return;
   }
 
