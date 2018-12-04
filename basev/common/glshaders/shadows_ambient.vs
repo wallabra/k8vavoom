@@ -13,10 +13,10 @@ varying vec2 TextureCoordinate;
 void main () {
   // transforming the vertex
   gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
-
   // calculate texture coordinates
-  vec2 ts;
-  ts.x = (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW;
-  ts.y = (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH;
+  vec2 ts = vec2(
+    (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW,
+    (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH
+  );
   TextureCoordinate = ts;
 }

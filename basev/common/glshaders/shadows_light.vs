@@ -25,17 +25,16 @@ void main () {
   gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
 
   // calculate texture coordinates
-  vec2 ts;
-  ts.x = (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW;
-  ts.y = (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH;
+  vec2 ts = vec2(
+    (dot(gl_Vertex.xyz, SAxis)+SOffs)*TexIW,
+    (dot(gl_Vertex.xyz, TAxis)+TOffs)*TexIH
+  );
   TextureCoordinate = ts;
 
   Normal = SurfNormal;
-  float LightDist;
-  float ViewDist;
 
-  LightDist = dot (LightPos, SurfNormal);
-  ViewDist = dot(ViewOrigin, SurfNormal);
+  float LightDist = dot(LightPos, SurfNormal);
+  float ViewDist = dot(ViewOrigin, SurfNormal);
   Dist = LightDist-SurfDist;
   VDist = ViewDist-SurfDist;
 

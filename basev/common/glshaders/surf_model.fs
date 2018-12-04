@@ -17,44 +17,24 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  float DistVPos = /*sqrt*/(dot(VPos, VPos));
+  float DistVPos = dot(VPos, VPos);
   if (DistVPos < 0.0) discard;
 
-  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  float DistToView = dot(VertToView, VertToView);
   if (DistToView < 0.0) discard;
 
   vec4 TexColour = texture2D(Texture, TextureCoordinate)*Light;
   if (TexColour.a < 0.01) discard;
 
   vec4 FinalColour_1 = TexColour;
-/*
-  // premultiply
-  FinalColour_1.r = TexColour.r*Light.a;
-  FinalColour_1.g = TexColour.g*Light.a;
-  FinalColour_1.b = TexColour.b*Light.a;
-  FinalColour_1.a = TexColour.a;
-*/
-
-#if 0
-  // premultiply
-  vec4 FinalColour_1;
-  FinalColour_1.r = TexColour.r*TexColour.a /* *Light.a*/;
-  FinalColour_1.g = TexColour.g*TexColour.a /* *Light.a*/;
-  FinalColour_1.b = TexColour.b*TexColour.a /* *Light.a*/;
-  FinalColour_1.a = TexColour.a;
-
-  $include "common_fog.fs"
-
-#else
 
   // do fog before premultiply, otherwise it is wrong
   $include "common_fog.fs"
 
   // convert to premultiplied
-  FinalColour_1.r = FinalColour_1.r*FinalColour_1.a /* *Light.a*/;
-  FinalColour_1.g = FinalColour_1.g*FinalColour_1.a /* *Light.a*/;
-  FinalColour_1.b = FinalColour_1.b*FinalColour_1.a /* *Light.a*/;
-#endif
+  FinalColour_1.r = FinalColour_1.r*FinalColour_1.a;
+  FinalColour_1.g = FinalColour_1.g*FinalColour_1.a;
+  FinalColour_1.b = FinalColour_1.b*FinalColour_1.a;
 
   if (!AllowTransparency) {
     if (InAlpha == 1.0 && FinalColour_1.a < 0.666) discard;

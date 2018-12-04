@@ -18,18 +18,13 @@ void main () {
   TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard;
 
-  FinalColour_1.r = TexColour.r*SplatAlpha; // convert to premultiplied
-  FinalColour_1.g = TexColour.g*SplatAlpha; // convert to premultiplied
-  FinalColour_1.b = TexColour.b*SplatAlpha; // convert to premultiplied
+  // convert to premultiplied
+  FinalColour_1.r = TexColour.r*SplatAlpha;
+  FinalColour_1.g = TexColour.g*SplatAlpha;
+  FinalColour_1.b = TexColour.b*SplatAlpha;
   FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
   if (FinalColour_1.a < 0.01) discard;
 
-#if 0
-  // normal
-  FinalColour_1.r = clamp((FinalColour_1.r*Light.r)*Light.a, 0.0, 1.0);
-  FinalColour_1.g = clamp((FinalColour_1.g*Light.g)*Light.a, 0.0, 1.0);
-  FinalColour_1.b = clamp((FinalColour_1.b*Light.b)*Light.a, 0.0, 1.0);
-#else
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
   vec4 ambColor = texture2D(AmbLightTexture, tc2);
@@ -41,29 +36,6 @@ void main () {
     //FinalColour_1 = ambColor;
     //FinalColour_1.a = 1;
   }
-#endif
-
-
-/*
-  const float multer = 1.0;
-  float sa = SplatColour.a;
-  FinalColour_1.r = clamp((FinalColour_1.r*(1.0-sa)+SplatColour.r*sa)*multer, 0.0, 1.0);
-  FinalColour_1.g = clamp((FinalColour_1.g*(1.0-sa)+SplatColour.g*sa)*multer, 0.0, 1.0);
-  FinalColour_1.b = clamp((FinalColour_1.b*(1.0-sa)+SplatColour.b*sa)*multer, 0.0, 1.0);
-  FinalColour_1.a = fina;
-
-#if 1
-  FinalColour_1.r = clamp(FinalColour_1.r*Light.a, 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g*Light.a, 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b*Light.a, 0.0, 1.0);
-#else
-  FinalColour_1.r = clamp(FinalColour_1.r, 0.0, 1.0);
-  FinalColour_1.g = clamp(FinalColour_1.g, 0.0, 1.0);
-  FinalColour_1.b = clamp(FinalColour_1.b, 0.0, 1.0);
-#endif
-*/
-
-  //FinalColour_1.r = 1;
 
   gl_FragColor = FinalColour_1;
 }

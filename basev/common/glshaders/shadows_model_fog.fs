@@ -16,7 +16,7 @@ uniform float InAlpha;
 
 
 void main () {
-  float DistVPos = /*sqrt*/(dot(VPos, VPos));
+  float DistVPos = dot(VPos, VPos);
 
   if (sign(Dist)*sign(DistVPos) < 0) discard;
   /*
@@ -27,8 +27,8 @@ void main () {
   }
   */
 
-  vec4 TexColour = texture2D (Texture, TextureCoordinate);
-  if (TexColour.w < 0.1) discard;
+  vec4 TexColour = texture2D(Texture, TextureCoordinate);
+  if (TexColour.a < 0.01) discard;
 
 #ifdef VAVOOM_REVERSE_Z
   float z = 1.0/gl_FragCoord.w;
@@ -45,7 +45,7 @@ void main () {
     FogFactor = (FogEnd-z)/(FogEnd-FogStart);
   }
 
-  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  float DistToView = dot(VertToView, VertToView);
 
   float ClampTrans = clamp(((TexColour.w-0.1)/0.9), 0.0, 1.0);
 
@@ -54,16 +54,16 @@ void main () {
   float multr = 1.0-0.25*min(1, 1+(sign(Dist)*sign(DistToView)));
   FogFactor = clamp(multr-FogFactor, 0.0, multr)*InAlpha;
 
-  vec4 FinalColour;
-  FinalColour.w = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  vec4 FinalColour_1;
+  FinalColour_1.a = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
 
   if (!AllowTransparency) {
-    if (InAlpha == 1.0 && FinalColour.w < 0.666) discard;
+    if (InAlpha == 1.0 && FinalColour_1.w < 0.666) discard;
   } else {
-    if (FinalColour.w < 0.1) discard;
+    if (FinalColour_1.a < 0.01) discard;
   }
 
-  FinalColour.xyz = FogColour.xyz*multr;
+  FinalColour_1.rgb = FogColour.rgb*multr;
 
   /*
   if ((Dist >= 0.0))
@@ -79,7 +79,7 @@ void main () {
       DarkColour.xyz = FogColour.xyz;
       DarkColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans * (3.0 - (2.0 * ClampTrans))
       )));
-      FinalColour = DarkColour;
+      FinalColour_1 = DarkColour;
     }
     else
     {
@@ -92,7 +92,7 @@ void main () {
       BrightColour.xyz = (FogColour.xyz * 0.75);
       BrightColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans * (3.0 - (2.0 * ClampTrans))
       )));
-      FinalColour = BrightColour;
+      FinalColour_1 = BrightColour;
     };
   }
   else
@@ -109,7 +109,7 @@ void main () {
       DarkColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans *
       (3.0 - (2.0 * ClampTrans))
       )));
-      FinalColour = DarkColour;
+      FinalColour_1 = DarkColour;
     }
     else
     {
@@ -123,25 +123,25 @@ void main () {
       BrighColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans *
       (3.0 - (2.0 * ClampTrans))
       )));
-      FinalColour = BrighColour;
+      FinalColour_1 = BrighColour;
     };
   };
 
   if ((AllowTransparency == bool(0)))
   {
-    if (((InAlpha == 1.0) && (FinalColour.w < 0.666)))
+    if (((InAlpha == 1.0) && (FinalColour_1.w < 0.666)))
     {
       discard;
     };
   }
   else
   {
-    if ((FinalColour.w < 0.1))
+    if ((FinalColour_1.w < 0.1))
     {
       discard;
     };
   };
   */
 
-  gl_FragColor = FinalColour;
+  gl_FragColor = FinalColour_1;
 }

@@ -18,10 +18,10 @@ void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.w < 0.1) discard;
 
-  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  float DistToView = dot(VertToView, VertToView);
   if (DistToView <= 0.0) discard;
 
-  float DistToLight = /*sqrt*/(dot(VertToLight, VertToLight));
+  float DistToLight = dot(VertToLight, VertToLight);
   if (DistToLight <= 0.0) discard;
 
   DistToLight = sqrt(DistToLight);
@@ -36,10 +36,10 @@ void main () {
 
   float Transp = clamp((TexColour.w-0.1)/0.9, 0.0, 1.0);
 
-  vec4 FinalColour;
+  vec4 FinalColour_1;
+  FinalColour_1.rgb = LightColour;
+  FinalColour_1.a = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
+  if (FinalColour_1.a < 0.01) discard;
 
-  FinalColour.xyz = LightColour;
-  FinalColour.w = ClampAdd*(Transp*(Transp*(3.0-(2.0*Transp))));
-
-  gl_FragColor = FinalColour;
+  gl_FragColor = FinalColour_1;
 }

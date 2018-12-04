@@ -22,7 +22,7 @@ void main () {
   vec4 Vert = mix(gl_Vertex, Vert2, Inter)*ModelToWorldMat;
   gl_Position = gl_ModelViewProjectionMatrix*Vert;
 
-  Normal = (NormalToWorldMat * mix (VertNormal, Vert2Normal, Inter));
+  Normal = NormalToWorldMat*mix(VertNormal, Vert2Normal, Inter);
 
   float SurfDist = dot(Normal, Vert.xyz);
   PlaneDist = SurfDist;

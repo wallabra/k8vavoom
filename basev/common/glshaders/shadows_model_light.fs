@@ -18,10 +18,10 @@ varying float VDist;
 
 void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
-  if (TexColour.w < 0.1) discard;
+  if (TexColour.w < 0.01) discard;
 
-  float DistVPosL = /*sqrt*/(dot(VPosL, VPosL));
-  float DistVPos = /*sqrt*/(dot(VPos, VPos));
+  float DistVPosL = dot(VPosL, VPosL);
+  float DistVPos = dot(VPos, VPos);
 
   //-2, -1, 0
   float distSign1 = min(-1.0, sign(Dist)-1.0);
@@ -50,7 +50,7 @@ void main () {
   */
 
 
-  float DistToView = /*sqrt*/(dot(VertToView, VertToView));
+  float DistToView = dot(VertToView, VertToView);
   if (sign(Dist)*sign(VDist) < 0.0 || sign(Dist)*sign(DistToView) < 0.0) discard;
   /*
   if (Dist > 0.0) {
@@ -62,7 +62,7 @@ void main () {
   }
   */
 
-  float DistToLight = /*sqrt*/(dot(VertToLight, VertToLight));
+  float DistToLight = dot(VertToLight, VertToLight);
 
   //  1:  1
   //  0:  1
@@ -95,12 +95,13 @@ void main () {
   if (!AllowTransparency) {
     if (InAlpha == 1.0 && ClampTrans < 0.666) discard;
   } else {
-    if (ClampTrans < 0.1) discard;
+    if (ClampTrans < 0.01) discard;
   }
 
-  vec4 FinalColour;
-  FinalColour.xyz = LightColour;
-  FinalColour.w = (ClampAdd*TexColour.w)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  vec4 FinalColour_1;
+  FinalColour_1.rgb = LightColour;
+  FinalColour_1.a = (ClampAdd*TexColour.w)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  if (FinalColour_1.a < 0.01) discard;
 
-  gl_FragColor = FinalColour;
+  gl_FragColor = FinalColour_1;
 }

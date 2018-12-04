@@ -30,8 +30,9 @@ void main () {
 
   vec4 FinalFogColour;
 
-  FinalFogColour.xyz = FogColour.xyz;
-  FinalFogColour.w = SmoothFactor*(SmoothFactor*(3.0-(2.0*SmoothFactor)));
+  FinalFogColour.rgb = FogColour.rgb;
+  FinalFogColour.a = SmoothFactor*(SmoothFactor*(3.0-(2.0*SmoothFactor)));
+  if (FinalFogColour.a < 0.01) discard;
 
   gl_FragColor = FinalFogColour;
 }

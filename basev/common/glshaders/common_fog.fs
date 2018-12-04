@@ -22,11 +22,5 @@
     float FogFactor = clamp((FogFactor_3-0.1)/0.9, 0.0, 1.0);
     FinalColour_1 = mix(FogColour, FinalColour_1, FogFactor*FogFactor*(3.0-(2.0*FogFactor)));
     FinalColour_1.a = oldAlpha;
-    /*
-    FinalColour_1.r = FogFactor*FogFactor*(3.0-(2.0*FogFactor));
-    FinalColour_1.g = FinalColour_1.r;
-    FinalColour_1.b = FinalColour_1.r;
-    FinalColour_1.a = 1;
-    */
-    //if (FinalColour_1.a < 0.01) discard; //???
+    if (FinalColour_1.a < 0.01) discard; //k8: dunno if it worth it, but meh...
   }
