@@ -93,82 +93,6 @@ TVec P_SectorClosestPoint (sector_t *sec, TVec in) {
 
 //==========================================================================
 //
-//  SV_LineOpenings
-//
-//  sets opentop and openbottom to the window through a two sided line
-//
-//==========================================================================
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags) {
-  guard(SV_LineOpenings);
-  opening_t *op;
-  int opsused;
-  sec_region_t *frontreg;
-  sec_region_t *backreg;
-  sec_plane_t *frontfloor = nullptr;
-  sec_plane_t *backfloor = nullptr;
-  sec_plane_t *frontceil = nullptr;
-  sec_plane_t *backceil = nullptr;
-  float frontfloorz;
-  float backfloorz;
-  float frontceilz;
-  float backceilz;
-
-  if (linedef->sidenum[1] == -1) return nullptr; // single sided line
-
-  op = nullptr;
-  opsused = 0;
-  frontreg = linedef->frontsector->botregion;
-  backreg = linedef->backsector->botregion;
-
-  while (frontreg && backreg) {
-    if (!(frontreg->floor->flags&NoBlockFlags)) frontfloor = frontreg->floor;
-    if (!(backreg->floor->flags&NoBlockFlags)) backfloor = backreg->floor;
-    if (!(frontreg->ceiling->flags&NoBlockFlags)) frontceil = frontreg->ceiling;
-    if (!(backreg->ceiling->flags&NoBlockFlags)) backceil = backreg->ceiling;
-    if (backreg->ceiling->flags&NoBlockFlags) { backreg = backreg->next; continue; }
-    if (frontreg->ceiling->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
-    frontfloorz = frontfloor->GetPointZ(point);
-    backfloorz = backfloor->GetPointZ(point);
-    frontceilz = frontceil->GetPointZ(point);
-    backceilz = backceil->GetPointZ(point);
-    if (frontfloorz >= backceilz) { backreg = backreg->next; continue; }
-    if (backfloorz >= frontceilz) { frontreg = frontreg->next; continue; }
-    openings[opsused].next = op;
-    op = &openings[opsused];
-    ++opsused;
-    if (frontfloorz > backfloorz) {
-      op->bottom = frontfloorz;
-      op->lowfloor = backfloorz;
-      op->floor = frontfloor;
-      op->lowfloorplane = backfloor;
-    } else {
-      op->bottom = backfloorz;
-      op->lowfloor = frontfloorz;
-      op->floor = backfloor;
-      op->lowfloorplane = frontfloor;
-    }
-    if (frontceilz < backceilz) {
-      op->top = frontceilz;
-      op->highceiling = backceilz;
-      op->ceiling = frontceil;
-      op->highceilingplane = backceil;
-      frontreg = frontreg->next;
-    } else {
-      op->top = backceilz;
-      op->highceiling = frontceilz;
-      op->ceiling = backceil;
-      op->highceilingplane = frontceil;
-      backreg = backreg->next;
-    }
-    op->range = op->top-op->bottom;
-  }
-  return op;
-  unguard;
-}
-
-
-//==========================================================================
-//
 //  P_BoxOnLineSide
 //
 //  considers the line to be infinite
@@ -209,6 +133,153 @@ int P_BoxOnLineSide (float *tmbox, line_t *ld) {
 
   if (p1 == p2) return p1;
   return -1;
+  unguard;
+}
+
+
+//============================================================================
+//
+//  P_GetMidTexturePosition
+//
+//  retrieves top and bottom of the current line's mid texture
+//
+//============================================================================
+bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop, float *ptexbot) {
+  if (sideno < 0 || sideno > 1 || !linedef || linedef->sidenum[0] == -1 || linedef->sidenum[1] == -1) {
+    if (ptextop) *ptextop = 0;
+    if (ptexbot) *ptexbot = 0;
+    return false;
+  }
+
+  const side_t *sidedef = &GLevel->Sides[linedef->sidenum[sideno]];
+  if (sidedef->MidTexture <= 0) {
+    if (ptextop) *ptextop = 0;
+    if (ptexbot) *ptexbot = 0;
+    return false;
+  }
+
+  VTexture *MTex = GTextureManager(sidedef->MidTexture);
+  if (!MTex) {
+    if (ptextop) *ptextop = 0;
+    if (ptexbot) *ptexbot = 0;
+    return false;
+  }
+  //FTexture * tex= TexMan(texnum);
+  //if (!tex) return false;
+
+  const sector_t *sec = (sideno ? linedef->backsector : linedef->frontsector);
+
+  //FIXME: use sector regions instead?
+  //       wtf are sector regions at all?!
+
+  float toffs;
+  if (linedef->flags&ML_DONTPEGBOTTOM) {
+    // bottom of texture at bottom
+    toffs = sec->floor.TexZ+MTex->GetScaledHeight();
+  } else if (linedef->flags&ML_DONTPEGTOP) {
+    // top of texture at top of top region
+    toffs = sec->topregion->ceiling->TexZ;
+  } else {
+    // top of texture at top
+    toffs = sec->ceiling.TexZ;
+  }
+  toffs *= MTex->TScale;
+  toffs += sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0);
+
+  if (ptextop) *ptextop = toffs;
+  if (ptexbot) *ptexbot = toffs-MTex->GetScaledHeight();
+
+  /*
+  float totalscale = fabs(sidedef->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
+  float y_offset = sidedef->GetTextureYOffset(side_t::mid);
+  float textureheight = tex->GetHeight() / totalscale;
+  if (totalscale != 1. && !tex->bWorldPanning) y_offset /= totalscale;
+
+  if (linedef->flags & ML_DONTPEGBOTTOM) {
+    *ptexbot = y_offset+MAX(linedef->frontsector->GetPlaneTexZ(sector_t::floor), linedef->backsector->GetPlaneTexZ(sector_t::floor));
+    *ptextop = *ptexbot+textureheight;
+  } else {
+    *ptextop = y_offset+MIN(linedef->frontsector->GetPlaneTexZ(sector_t::ceiling), linedef->backsector->GetPlaneTexZ(sector_t::ceiling));
+    *ptexbot = *ptextop-textureheight;
+  }
+  */
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  SV_LineOpenings
+//
+//  sets opentop and openbottom to the window through a two sided line
+//
+//==========================================================================
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags) {
+  guard(SV_LineOpenings);
+  opening_t *op;
+  int opsused;
+  sec_region_t *frontreg;
+  sec_region_t *backreg;
+  sec_plane_t *frontfloor = nullptr;
+  sec_plane_t *backfloor = nullptr;
+  sec_plane_t *frontceil = nullptr;
+  sec_plane_t *backceil = nullptr;
+
+  if (linedef->sidenum[1] == -1 || linedef->backsector == nullptr) return nullptr; // single sided line
+
+  op = nullptr;
+  opsused = 0;
+  frontreg = linedef->frontsector->botregion;
+  backreg = linedef->backsector->botregion;
+
+  while (frontreg && backreg) {
+    if (!(frontreg->floor->flags&NoBlockFlags)) frontfloor = frontreg->floor;
+    if (!(backreg->floor->flags&NoBlockFlags)) backfloor = backreg->floor;
+    if (!(frontreg->ceiling->flags&NoBlockFlags)) frontceil = frontreg->ceiling;
+    if (!(backreg->ceiling->flags&NoBlockFlags)) backceil = backreg->ceiling;
+
+    if (backreg->ceiling->flags&NoBlockFlags) { backreg = backreg->next; continue; }
+    if (frontreg->ceiling->flags&NoBlockFlags) { frontreg = frontreg->next; continue; }
+
+    float frontfloorz = frontfloor->GetPointZ(point);
+    float backfloorz = backfloor->GetPointZ(point);
+    float frontceilz = frontceil->GetPointZ(point);
+    float backceilz = backceil->GetPointZ(point);
+
+    if (frontfloorz >= backceilz) { backreg = backreg->next; continue; }
+    if (backfloorz >= frontceilz) { frontreg = frontreg->next; continue; }
+
+    openings[opsused].next = op;
+    op = &openings[opsused];
+    ++opsused;
+    if (frontfloorz > backfloorz) {
+      op->bottom = frontfloorz;
+      op->lowfloor = backfloorz;
+      op->floor = frontfloor;
+      op->lowfloorplane = backfloor;
+    } else {
+      op->bottom = backfloorz;
+      op->lowfloor = frontfloorz;
+      op->floor = backfloor;
+      op->lowfloorplane = frontfloor;
+    }
+    if (frontceilz < backceilz) {
+      op->top = frontceilz;
+      op->highceiling = backceilz;
+      op->ceiling = frontceil;
+      op->highceilingplane = backceil;
+      frontreg = frontreg->next;
+    } else {
+      op->top = backceilz;
+      op->highceiling = frontceilz;
+      op->ceiling = backceil;
+      op->highceilingplane = frontceil;
+      backreg = backreg->next;
+    }
+    op->range = op->top-op->bottom;
+  }
+  return op;
   unguard;
 }
 
@@ -393,7 +464,7 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
   guard(SV_PointContents);
   check(sector);
   if (sector->heightsec &&
-      (sector->heightsec->SectorFlags & sector_t::SF_UnderWater) &&
+      (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
       p.z <= sector->heightsec->floor.GetPointZ(p))
   {
     return 9;
@@ -454,7 +525,7 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
   //
   // killough 4/7/98: simplified to avoid using complicated counter
 
-  //  Mark all things invalid.
+  // mark all things invalid
   for (n = sector->TouchingThingList; n; n = n->SNext) n->Visited = 0;
 
   do {

@@ -84,6 +84,7 @@
   DECLARE_FUNCTION(FindThingGap)
   DECLARE_FUNCTION(FindOpening)
   DECLARE_FUNCTION(PointInRegion)
+  DECLARE_FUNCTION(P_GetMidTexturePosition)
 
   // sound functions
   DECLARE_FUNCTION(SectorStopSound)

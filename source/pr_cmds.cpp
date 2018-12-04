@@ -514,6 +514,21 @@ IMPLEMENT_FUNCTION(VObject, P_BoxOnLineSide) {
 
 //==========================================================================
 //
+//  P_GetMidTexturePosition
+//
+// native static final bool P_GetMidTexturePosition (const line_t *line, int sideno, out float ptextop, out float ptexbot);
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, P_GetMidTexturePosition) {
+  P_GET_PTR(float, ptexbot);
+  P_GET_PTR(float, ptextop);
+  P_GET_INT(sideno);
+  P_GET_PTR(line_t, ld);
+  RET_BOOL(P_GetMidTexturePosition(ld, sideno, ptextop, ptexbot));
+}
+
+
+//==========================================================================
+//
 //  PF_FindThingGap
 //
 //==========================================================================
