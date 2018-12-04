@@ -364,6 +364,7 @@ class Actor extends Thinker
   action native A_LayToFloorWithYaw(float yaw);
 
   action native A_SetScale(float scaleX, optional float scaleY, optional int pointer, optional bool usezero);
+  action native A_SetSize(optional float newradius, optional float newheight, optional bool testpos);
 
   action native A_SetScaleXExt(float scale);
   action native A_SetScaleYExt(float scale);

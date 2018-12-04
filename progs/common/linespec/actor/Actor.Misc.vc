@@ -623,6 +623,19 @@ final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, o
 
 //==========================================================================
 //
+//  A_SetSize
+//
+//==========================================================================
+final bool A_SetSize (optional float newradius, optional float newheight, optional bool testpos) {
+  if (specified_newradius && newradius >= 0) Radius = newradius;
+  if (specified_newheight && newheight >= 0) Height = newheight;
+  if (!testpos) return true;
+  return TestLocation();
+}
+
+
+//==========================================================================
+//
 //  A_SetScaleXExt
 //
 //==========================================================================
