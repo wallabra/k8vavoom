@@ -4,8 +4,8 @@ varying vec4 Light;
 varying vec2 TextureCoordinate;
 uniform int SmoothParticle;
 
-void main ()
-{
+
+void main () {
   float Transp;
 
   if (SmoothParticle == 0) {
@@ -13,8 +13,7 @@ void main ()
     if (TextureCoordinate.y <= -0.5 || TextureCoordinate.y >= 0.5) discard;
     Transp = 0.9;
   } else {
-    float a;
-    a = clamp(((1.0-sqrt(dot(TextureCoordinate, TextureCoordinate)))*2.0), 0.0, 1.0);
+    float a = clamp(((1.0-sqrt(dot(TextureCoordinate, TextureCoordinate)))*2.0), 0.0, 1.0);
     if (a < 0.1) discard;
     Transp = clamp(((a-0.1)/0.9), 0.0, 1.0);
   }

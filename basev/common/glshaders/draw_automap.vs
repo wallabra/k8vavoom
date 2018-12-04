@@ -2,11 +2,11 @@
 
 varying vec4 Colour;
 
-void main ()
-{
-  //  Transforming The Vertex
-  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 
-  //  Pass colour.
+void main () {
+  // transforming the vertex
+  gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
+
+  // pass color
   Colour = gl_Color;
 }

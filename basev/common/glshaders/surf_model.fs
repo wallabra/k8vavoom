@@ -15,6 +15,7 @@ varying vec3 VertToView;
 varying vec3 VPos;
 varying vec2 TextureCoordinate;
 
+
 void main () {
   float DistVPos = /*sqrt*/(dot(VPos, VPos));
   if (DistVPos < 0.0) discard;

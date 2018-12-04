@@ -15,8 +15,8 @@ varying vec2 TextureCoordinate;
 varying float Dist;
 varying float VDist;
 
-void main ()
-{
+
+void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.w < 0.1) discard;
 

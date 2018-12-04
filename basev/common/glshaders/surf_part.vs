@@ -6,14 +6,14 @@ attribute vec2 TexCoord;
 varying vec4 Light;
 varying vec2 TextureCoordinate;
 
-void main ()
-{
-  //  Transforming The Vertex
-  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex);
 
-  //  Pass light
+void main () {
+  // transforming the vertex
+  gl_Position = gl_ModelViewProjectionMatrix*gl_Vertex;
+
+  // pass light
   Light = LightVal;
 
-  //  Pass texture coordinates.
+  // pass texture coordinates
   TextureCoordinate = TexCoord;
 }

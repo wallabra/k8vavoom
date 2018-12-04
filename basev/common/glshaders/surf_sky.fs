@@ -5,14 +5,13 @@ uniform float Brightness;
 
 varying vec2 TextureCoordinate;
 
-void main ()
-{
+
+void main () {
   vec4 BrightFactor;
+  BrightFactor.a = 1.0;
+  BrightFactor.r = Brightness;
+  BrightFactor.g = Brightness;
+  BrightFactor.b = Brightness;
 
-  BrightFactor.w = 1.0;
-  BrightFactor.x = Brightness;
-  BrightFactor.y = Brightness;
-  BrightFactor.z = Brightness;
-
-  gl_FragColor = (texture2D (Texture, TextureCoordinate) * BrightFactor);
+  gl_FragColor = texture2D(Texture, TextureCoordinate)*BrightFactor;
 }

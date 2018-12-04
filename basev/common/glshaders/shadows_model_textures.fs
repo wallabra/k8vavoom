@@ -12,6 +12,7 @@ varying float PlaneDist;
 varying float Dist;
 uniform vec2 ScreenSize;
 
+
 void main () {
   float DistVPos = /*sqrt*/(dot(VPos, VPos));
   if (DistVPos < 0.0) discard;

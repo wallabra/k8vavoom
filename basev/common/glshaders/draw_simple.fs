@@ -11,7 +11,7 @@ void main () {
   if (TexColour.a < 0.01) discard;
 
   //vec4 FinalColour = TexColour;
-  // premultiply
+  // we got a non-premultiplied color, convert it
   vec4 FinalColour_1;
   FinalColour_1.r = TexColour.r*Alpha;
   FinalColour_1.g = TexColour.g*Alpha;

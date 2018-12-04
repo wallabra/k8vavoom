@@ -14,8 +14,8 @@ varying vec2 TextureCoordinate;
 varying float Dist;
 uniform float InAlpha;
 
-void main ()
-{
+
+void main () {
   float DistVPos = /*sqrt*/(dot(VPos, VPos));
 
   if (sign(Dist)*sign(DistVPos) < 0) discard;
