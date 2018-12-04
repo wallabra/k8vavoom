@@ -104,6 +104,12 @@ __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *err
 }
 
 
+static void OnSysError (const char *msg) {
+  fprintf(stderr, "FATAL: %s\n", msg);
+  exit(1);
+}
+
+
 static const char *comatoze (vuint32 n) {
   static char buf[128];
   int bpos = (int)sizeof(buf);
@@ -549,6 +555,7 @@ int main (int argc, char **argv) {
   ret.i = 0;
 
   srand(time(nullptr));
+  SysErrorCB = &OnSysError;
 
   try {
     GLog.AddListener(&VccLog);
