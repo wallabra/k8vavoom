@@ -3032,7 +3032,7 @@ void VLevel::LoadACScripts (int Lump) {
   Acs = new VAcsLevel(this);
 
   // load level's BEHAVIOR lump if it has one
-  if (Lump >= 0) Acs->LoadObject(Lump);
+  if (Lump >= 0 && W_LumpLength(Lump) > 0) Acs->LoadObject(Lump);
 
   // load ACS helper scripts if needed (for Strife)
   if (GGameInfo->AcsHelper != NAME_None) {
