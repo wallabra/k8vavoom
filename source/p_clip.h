@@ -60,6 +60,8 @@ private:
   void CheckAddClipSeg (const seg_t *line, bool shadowslight, TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius);
 
   static inline bool IsSegAClosedSomething (const seg_t *line) {
+    if (line->linedef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
+
     auto fsec = line->linedef->frontsector;
     auto bsec = line->linedef->backsector;
 
@@ -108,6 +110,8 @@ private:
   }
 
   static inline bool IsSegAnOpenedSomething (const seg_t *line) {
+    if (line->linedef->flags&ML_3DMIDTEX) return true; // 3dmidtex never blocks anything
+
     auto fsec = line->linedef->frontsector;
     auto bsec = line->linedef->backsector;
 
