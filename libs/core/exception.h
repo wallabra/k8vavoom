@@ -140,6 +140,9 @@ protected:
 void Host_CoreDump (const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void Sys_Error (const char *, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
+// call `abort()` or `exit()` there to stop standard processing
+extern void (*SysErrorCB) (const char *msg);
+
 
 //==========================================================================
 //

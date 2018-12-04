@@ -22,8 +22,12 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "core.h"
+
+#if defined(WIN32)
+# include <windows.h>
+#endif
+
 
 #ifdef USE_GUARD_SIGNAL_CONTEXT
 jmp_buf __Context::Env;
@@ -31,6 +35,9 @@ const char *__Context::ErrToThrow;
 #endif
 
 static char *host_error_string;
+
+// call `abort()` or `exit()` there to stop standard processing
+void (*SysErrorCB) (const char *msg) = nullptr;
 
 
 //==========================================================================
@@ -112,6 +119,17 @@ void Sys_Error (const char *error, ...) {
   vsnprintf(buf, sizeof(buf), error, argptr);
   va_end(argptr);
 
+  if (SysErrorCB) SysErrorCB(buf);
+
+#if defined(WIN32)
+  MessageBox(NULL, buf, "VaVoom Fatal Error", MB_OK);
+/*
+#else //if defined(VCC_STANDALONE_EXECUTOR)
+  fputs("FATAL: ", stderr);
+  fputs(buf, stderr);
+  fputc('\n', stderr);
+*/
+#endif
   GLog.WriteLine("Sys_Error: %s", buf);
   //throw VavoomError(buf);
   abort(); // abort here, so we can drop back to gdb
