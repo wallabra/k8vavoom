@@ -631,12 +631,12 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
   TVec rView1 = TVec(0, 0, 0), rView2 = TVec(0, 0, 0);
 
   for (int i = 0; i < Sub->numlines; ++i) {
-    seg_t *line = &Level->Segs[Sub->firstline+i];
+    seg_t *seg = &Level->Segs[Sub->firstline+i];
 
-    TVec v1 = *line->v1;
-    TVec v2 = *line->v2;
+    TVec v1 = *seg->v1;
+    TVec v2 = *seg->v2;
 
-    if (!line->linedef) {
+    if (!seg->linedef) {
       // miniseg
       if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) continue;
     }
@@ -671,9 +671,9 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
       if (D1 < 0.0 && D2 < 0.0) continue;
     }
 
-    if (!line->backsector) {
+    if (!seg->backsector) {
       // only apply this to sectors without slopes
-      if (line->frontsector && line->frontsector->floor.normal.z == 1.0 && line->frontsector->ceiling.normal.z == -1.0) {
+      if (seg->frontsector && seg->frontsector->floor.normal.z == 1.0 && seg->frontsector->ceiling.normal.z == -1.0) {
         if (shadowslight) {
           // there might be a better method of doing this, but this one works for now...
                if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius) v2 += (v2-v1)*DLight1/(DLight1-DLight2);
@@ -687,10 +687,10 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
         // sloped sector is always visible
         return true;
       }
-    } else if (line->linedef) {
+    } else if (seg->linedef) {
       // 2-sided line, determine if it can be skipped
-      if (line->backsector) {
-        if (IsSegAClosedSomething(line)) continue;
+      if (seg->backsector) {
+        if (IsSegAClosedSomething(seg)) continue;
       }
 
       // clip sectors that are behind rendered segs
@@ -707,7 +707,7 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
         if (D1 < 0.0 && D2 < 0.0) continue;
       }
 
-      if (!line->linedef->backsector) {
+      if (!seg->linedef->backsector) {
         if (shadowslight) {
           // there might be a better method of doing this, but this one works for now...
                if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius) v2 += (v2-v1)*DLight1/(DLight1-DLight2);
@@ -732,16 +732,16 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
 //  VViewClipper::CheckAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *line, bool shadowslight, TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
-  if (!line->linedef) return; // miniseg
-  if (line->PointOnSide(Origin)) return; // viewer is in back side or on plane
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
+  if (!seg->linedef) return; // miniseg
+  if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane
 
-  TVec v1 = *line->v1;
-  TVec v2 = *line->v2;
+  TVec v1 = *seg->v1;
+  TVec v2 = *seg->v2;
 
   // only apply this to sectors without slopes
   // k8: originally, slopes were checked only for polyobjects; wtf?!
-  if (line->frontsector->floor.normal.z == 1.0 && line->frontsector->ceiling.normal.z == -1.0) {
+  if (seg->frontsector->floor.normal.z == 1.0 && seg->frontsector->ceiling.normal.z == -1.0) {
     TVec r1 = Origin-v1;
     TVec r2 = Origin-v2;
     float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
@@ -779,11 +779,11 @@ void VViewClipper::CheckAddClipSeg (const seg_t *line, bool shadowslight, TPlane
     if (Dist1 <= 0.0 && Dist2 <= 0.0) return;
   }
 
-  if (clip_trans_hack && line->linedef->alpha < 1.0) return; //k8: skip translucent walls (for now)
+  if (clip_trans_hack && seg->linedef->alpha < 1.0) return; //k8: skip translucent walls (for now)
 
   // 2-sided line, determine if it can be skipped
-  if (line->backsector) {
-    if (IsSegAnOpenedSomething(line)) return;
+  if (seg->backsector) {
+    if (IsSegAnOpenedSomething(seg)) return;
   }
 
   if (Mirror) {
@@ -797,9 +797,9 @@ void VViewClipper::CheckAddClipSeg (const seg_t *line, bool shadowslight, TPlane
 
   //k8: this is hack for boom translucency
   //    midtexture 0 *SHOULD* mean "transparent", but let's play safe
-  if (clip_trans_hack && line->linedef && line->frontsector && line->backsector && line->sidedef->MidTexture <= 0) {
+  if (clip_trans_hack && seg->linedef && seg->frontsector && seg->backsector && seg->sidedef->MidTexture <= 0) {
     // ok, we can possibly see thru it, now check the OPPOSITE sector ceiling and floor heights
-    const sector_t *ops = (line->side ? line->frontsector : line->backsector);
+    const sector_t *ops = (seg->side ? seg->frontsector : seg->backsector);
     // ceiling is higher than the floor?
     if (ops->ceiling.minz >= ops->floor.maxz) {
       // check if that sector has any translucent walls
@@ -807,14 +807,14 @@ void VViewClipper::CheckAddClipSeg (const seg_t *line, bool shadowslight, TPlane
       int lcount = ops->linecount;
       for (int lidx = 0; lidx < lcount; ++lidx) if (ops->lines[lidx]->alpha < 1.0) { hasTrans = true; break; }
       if (hasTrans) {
-        //fprintf(stderr, "!!! SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
+        //fprintf(stderr, "!!! SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", seg->sidedef->LineNum, seg->side, Origin.z);
         //fprintf(stderr, "  (f,c)=(%f:%f,%f:%f)\n", ops->floor.minz, ops->floor.maxz, ops->ceiling.minz, ops->ceiling.maxz);
         return;
       } else {
-        //fprintf(stderr, "!!! ALLOWED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
+        //fprintf(stderr, "!!! ALLOWED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", seg->sidedef->LineNum, seg->side, Origin.z);
       }
     } else {
-      //fprintf(stderr, "!!! (1) SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", line->sidedef->LineNum, line->side, Origin.z);
+      //fprintf(stderr, "!!! (1) SKIPPED 2-SIDED LINE W/O MIDTEX (%d); side=%d; origz=%f!\n", seg->sidedef->LineNum, seg->side, Origin.z);
       //fprintf(stderr, "  (f,c)=(%f:%f,%f:%f)\n", ops->floor.minz, ops->floor.maxz, ops->ceiling.minz, ops->ceiling.maxz);
     }
     //continue;
@@ -835,15 +835,15 @@ void VViewClipper::ClipAddSubsectorSegs (subsector_t *Sub, bool shadowslight, TP
   if (!clip_enabled) return;
 
   for (int i = 0; i < Sub->numlines; ++i) {
-    const seg_t *line = &Level->Segs[Sub->firstline+i];
-    CheckAddClipSeg(line, shadowslight, Mirror, CurrLightPos, CurrLightRadius);
+    const seg_t *seg = &Level->Segs[Sub->firstline+i];
+    CheckAddClipSeg(seg, shadowslight, Mirror, CurrLightPos, CurrLightRadius);
   }
 
   if (Sub->poly && clip_with_polyobj) {
     seg_t **polySeg = Sub->poly->segs;
     for (int polyCount = Sub->poly->numsegs; --polyCount; ++polySeg) {
-      const seg_t *line = *polySeg;
-      CheckAddClipSeg(line, shadowslight, nullptr, CurrLightPos, CurrLightRadius);
+      const seg_t *seg = *polySeg;
+      CheckAddClipSeg(seg, shadowslight, nullptr, CurrLightPos, CurrLightRadius);
     }
   }
   unguard;
