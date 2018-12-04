@@ -165,7 +165,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       p_glUniform1iARB(SurfDecalTextureLoc, 0);
       p_glUniform1iARB(SurfDecalFogTypeLoc, r_fog&3);
 
-      //SetTexture(tex->Tex, tex->ColourMap);
       p_glUniform1iARB(SurfDecalLightMapLoc, 1);
       p_glUniform1iARB(SurfDecalSpecularMapLoc, 2);
 
@@ -209,26 +208,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-  if (/*!advanced*/true) {
-    glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    if (advanced) {
-      //glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-      //glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-      //TODO: this is wrong: ambient light info is lost here (only texture colors are left)
-      //      we need to store ambient light in another texture, and sample it in shader
-      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    } else {
-      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    }
-  }
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_ALPHA_TEST); // just in case
 
   //glEnable(GL_DEPTH_TEST);
-
   //glDisable(GL_BLEND);
 
   if (gl_decal_debug_nostencil) glDisable(GL_STENCIL_TEST);
@@ -242,8 +229,12 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
   static int maxrdcount = 0;
   if (gl_decal_reset_max) { maxrdcount = 0; gl_decal_reset_max = false; }
 
+  bool tex1set = false;
+  int currTexId = -1; // don't call `SetTexture()` repeatedly
+
   while (dc) {
-    if (dc->texture < 0 || dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0) {
+    // "0" means "no texture found", so remove it too
+    if (dc->texture <= 0 || dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0) {
       // remove it
       decal_t *n = dc->next;
       if (!dc->animator) {
@@ -256,7 +247,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       continue;
     }
 
-    auto dtex = GTextureManager[dc->texture];
+    int dcTexId = dc->texture;
+    auto dtex = GTextureManager[dcTexId];
     if (!dtex || dtex->Width < 1 || dtex->Height < 1) {
       // remove it
       decal_t *n = dc->next;
@@ -294,18 +286,15 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
 
     if (advanced) {
       p_glUniform1fARB(SurfAdvDecalSplatAlphaLoc, dc->alpha);
-#if 0
-      //FIXME: fullbright doesn't work here yet
-      const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
-      p_glUniform4fARB(SurfAdvDecalLightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-#else
-      p_glActiveTextureARB(GL_TEXTURE0+1);
-      glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
-      p_glActiveTextureARB(GL_TEXTURE0);
+      if (!tex1set) {
+        tex1set = true;
+        p_glActiveTextureARB(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, ambLightFBOColorTid);
+        p_glActiveTextureARB(GL_TEXTURE0);
+      }
       p_glUniform4fARB(SurfAdvDecalLightLoc, 0, 0, 0, (dc->flags&decal_t::Fullbright ? 1.0f : 0.0f));
       p_glUniform1iARB(SurfAdvDecalAmbLightTextureLoc, 1);
       p_glUniform2fARB(SurfAdvDecalScreenSize, (float)ScreenWidth, (float)ScreenHeight);
-#endif
     } else {
       const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
       if (lmap) {
@@ -317,7 +306,10 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
       }
     }
 
-    SetTexture(dtex, /*tex->ColourMap*/cmap); // this sets `tex_iw` and `tex_ih`
+    if (currTexId != dcTexId) {
+      currTexId = dcTexId;
+      SetTexture(dtex, /*tex->ColourMap*/cmap); // this sets `tex_iw` and `tex_ih`
+    }
 
     TVec lv1 = *(dc->seg->side ? dc->seg->linedef->v2 : dc->seg->linedef->v1);
     TVec lv2 = *(dc->seg->side ? dc->seg->linedef->v1 : dc->seg->linedef->v2);
@@ -366,13 +358,12 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (surface_t *surf, bool lmap, bool a
 
   glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
-  if (advanced) {
+  if (tex1set) {
     p_glActiveTextureARB(GL_TEXTURE0+1);
     glBindTexture(GL_TEXTURE_2D, 0);
     p_glActiveTextureARB(GL_TEXTURE0);
-  } else {
-    glDisable(GL_BLEND);
   }
+  if (!advanced) glDisable(GL_BLEND);
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_TRUE);
 
