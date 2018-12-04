@@ -112,8 +112,7 @@ vuint8 *VImgzTexture::GetPixels () {
   memset(Pixels, 0, Width*Height);
   if (!Compression) {
     Strm->Serialise(Pixels, Width*Height);
-  }
-  else {
+  } else {
     // IMGZ compression is the same RLE used by IFF ILBM files
     vuint8 *pDst = Pixels;
     int runlen = 0, setlen = 0;
@@ -146,6 +145,11 @@ vuint8 *VImgzTexture::GetPixels () {
   }
   delete Strm;
 
+  if (origFormat != -1) {
+    check(origFormat == TEXFMT_8);
+    Format = origFormat;
+    Pixels = ConvertPixelsToShaded(Pixels);
+  }
   return Pixels;
   unguard;
 }

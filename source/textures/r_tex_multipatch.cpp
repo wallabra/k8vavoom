@@ -564,10 +564,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     }
   }
 
-  if (Format == TEXFMT_RGBA) {
-         if (shadeColor >= 0) shadePixelsRGBA(Pixels, Width, Height, shadeColor);
-    else if (shadeColor != -1) stencilPixelsRGBA(Pixels, Width, Height, shadeColor&0xffffff);
-  }
+  Pixels = ConvertPixelsToShaded(Pixels);
   return Pixels;
   unguard;
 }

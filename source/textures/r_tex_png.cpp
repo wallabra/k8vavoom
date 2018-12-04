@@ -180,12 +180,12 @@ vuint8 *VPngTexture::GetPixels () {
 
   // free memory
   delete Strm;
-       if (shadeColor >= 0) shadePixelsRGBA(Pixels, Width, Height, shadeColor);
-  else if (shadeColor != -1) stencilPixelsRGBA(Pixels, Width, Height, shadeColor&0xffffff);
+
+  Pixels = ConvertPixelsToShaded(Pixels);
   return Pixels;
 
 #else
-  Sys_Error("ReadPixels on dedicated server");
+  Sys_Error("GetPixels on dedicated server");
   return nullptr;
 #endif
 

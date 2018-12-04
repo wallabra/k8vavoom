@@ -148,6 +148,9 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VTexture {
+protected:
+  int origFormat; // shaded/stenciled textures will be created on-demand, and we need this
+
 public:
   int Type;
   int Format;
@@ -209,9 +212,19 @@ protected:
   // `dest` points at column, `x` is used only to build checker
   static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);
 
-  // pitch is 4
-  static void shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor);
-  static void stencilPixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor);
+  // this should be called after `Pixels` were converted to RGBA
+  vuint8 *shadePixelsRGBA (vuint8 *Pixels, int shadeColor);
+  vuint8 *stencilPixelsRGBA (vuint8 *Pixels, int shadeColor);
+
+  // uses `Format` to convert, so it must be valid
+  // `Pixels` must be set
+  // will delete old `Pixels` if necessary
+  vuint8 *ConvertPixelsToRGBA (vuint8 *Pixels);
+
+  // uses `Format` to convert, so it must be valid
+  // `Pixels` must be set
+  // will delete old `Pixels` if necessary
+  vuint8 *ConvertPixelsToShaded (vuint8 *Pixels);
 
 public:
   VTexture ();

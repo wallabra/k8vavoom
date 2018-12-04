@@ -27,6 +27,47 @@
 #include "r_tex.h"
 
 
+//==========================================================================
+//
+//  sRGBungamma
+//
+//  inverse of sRGB "gamma" function. (approx 2.2)
+//
+//==========================================================================
+static double sRGBungamma (int ic) {
+  const double c = ic/255.0;
+  if (c <= 0.04045) return c/12.92;
+  return pow((c+0.055)/1.055, 2.4);
+}
+
+
+//==========================================================================
+//
+//  sRGBungamma
+//
+//  sRGB "gamma" function (approx 2.2)
+//
+//==========================================================================
+static int sRGBgamma (double v) {
+  if (v <= 0.0031308) v *= 12.92; else v = 1.055*pow(v, 1.0/2.4)-0.055;
+  return int(v*255+0.5);
+}
+
+
+//==========================================================================
+//
+//  colorIntensity
+//
+//==========================================================================
+static vuint8 colorIntensity (int r, int g, int b) {
+  // sRGB luminance(Y) values
+  const double rY = 0.212655;
+  const double gY = 0.715158;
+  const double bY = 0.072187;
+  return clampToByte(sRGBgamma(rY*sRGBungamma(r)+gY*sRGBungamma(g)+bY*sRGBungamma(b)));
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 typedef VTexture *(*VTexCreateFunc) (VStream &, int);
 
@@ -79,7 +120,8 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
 //
 //==========================================================================
 VTexture::VTexture ()
-  : Type(TEXTYPE_Any)
+  : origFormat(-1)
+  , Type(TEXTYPE_Any)
   , Format(TEXFMT_8)
   , Name(NAME_None)
   , Width(0)
@@ -696,96 +738,79 @@ rgba_t VTexture::getPixel (int x, int y) {
 
 //==========================================================================
 //
+//  VTexture::ConvertPixelsToRGBA
+//
+//==========================================================================
+vuint8 *VTexture::ConvertPixelsToRGBA (vuint8 *Pixels) {
+  check(Pixels);
+  check(Width > 0);
+  check(Height > 0);
+  if (Format == TEXFMT_RGBA) return Pixels; // nothing to do here
+  check(Format == TEXFMT_8 || Format == TEXFMT_8Pal);
+  rgba_t *newpic = new rgba_t[Width*Height];
+  rgba_t *dest = newpic;
+  const rgba_t *pal = (Format == TEXFMT_8Pal ? GetPalette() : r_palette);
+  const vuint8 *pic = Pixels;
+  if (!pal) pal = r_palette;
+  for (int f = Width*Height; f > 0; --f, ++pic, ++dest) {
+    *dest = pal[*pic];
+    dest->a = (*pic ? 255 : 0); // just in case
+  }
+  delete[] Pixels;
+  Format = TEXFMT_RGBA;
+  return (vuint8 *)newpic;
+}
+
+
+//==========================================================================
+//
+//  VTexture::ConvertPixelsToShaded
+//
+//==========================================================================
+vuint8 *VTexture::ConvertPixelsToShaded (vuint8 *Pixels) {
+  if (shadeColor == -1) return Pixels; // nothing to do
+  Pixels = ConvertPixelsToRGBA(Pixels);
+  if (shadeColor >= 0) Pixels = shadePixelsRGBA(Pixels, shadeColor); else Pixels = stencilPixelsRGBA(Pixels, shadeColor&0xffffff);
+  // no more conversions; just in case
+  shadeColor = -1;
+  origFormat = -1;
+  return Pixels;
+}
+
+
+//==========================================================================
+//
 //  VTexture::shadePixelsRGBA
 //
 //  use image as alpha-map
 //
 //==========================================================================
-void VTexture::shadePixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor) {
-  if (!pic || wdt < 1 || hgt < 1 || shadeColor < 0) return;
-  //vuint8 *picbuf = pic;
-  vuint8 *oldpic = new vuint8[wdt*hgt*4];
-  memcpy(oldpic, pic, wdt*hgt*4);
-  float shadeR = (shadeColor>>16)&0xff;
-  float shadeG = (shadeColor>>8)&0xff;
-  float shadeB = (shadeColor)&0xff;
-  for (int y = 0; y < hgt; ++y) {
-    for (int x = 0; x < wdt; ++x) {
-      int addr = y*(wdt*4)+x*4;
-      int intensity = pic[addr]; // use red as intensity
-      /*
-      if (intensity < 3) {
-        int r = 0;
-        int count = 0;
-        for (int dy = -1; dy < 2; ++dy) {
-          for (int dx = -1; dx < 2; ++dx) {
-            int px = x+dx, py = y+dy;
-            if (px >= 0 && py >= 0 && px < wdt && py < hgt) {
-              ++count;
-              r += oldpic[py*(wdt*4)+px*4+0];
-            }
-          }
-        }
-        float v = (float)r/float(count);
-        if (v < intensity) v = intensity;
-        pic[addr+0] = clampToByte(v*shadeR/255.0f);
-        pic[addr+1] = clampToByte(v*shadeG/255.0f);
-        pic[addr+2] = clampToByte(v*shadeB/255.0f);
-      } else {
-        pic[addr+0] = clampToByte((float)intensity*shadeR/255.0f);
-        pic[addr+1] = clampToByte((float)intensity*shadeG/255.0f);
-        pic[addr+2] = clampToByte((float)intensity*shadeB/255.0f);
-      }
-      */
-      pic[addr+0] = clampToByte(shadeR);
-      pic[addr+1] = clampToByte(shadeG);
-      pic[addr+2] = clampToByte(shadeB);
-      pic[addr+3] = intensity;
+vuint8 *VTexture::shadePixelsRGBA (vuint8 *Pixels, int shadeColor) {
+  check(Pixels);
+  check(Width > 0);
+  check(Height > 0);
+  check(shadeColor >= 0);
+  check(Format == TEXFMT_RGBA);
+  vuint8 shadeR = (shadeColor>>16)&0xff;
+  vuint8 shadeG = (shadeColor>>8)&0xff;
+  vuint8 shadeB = (shadeColor)&0xff;
+  rgba_t *pic = (rgba_t *)Pixels;
+  for (int f = Width*Height; f > 0; --f, ++pic) {
+    // use red as intensity
+    vuint8 intensity = pic->r;
+    /*k8: nope
+    // use any non-zero color as intensity
+    if (!intensity) {
+           if (pic->g) intensity = pic->g;
+      else if (pic->b) intensity = pic->b;
     }
+    */
+    pic->r = shadeR;
+    pic->g = shadeG;
+    pic->b = shadeB;
+    pic->a = intensity;
   }
-  delete oldpic;
-  //SmoothEdges(picbuf, wdt, hgt);
-}
-
-
-//==========================================================================
-//
-//  sRGBungamma
-//
-//  inverse of sRGB "gamma" function. (approx 2.2)
-//
-//==========================================================================
-static double sRGBungamma (int ic) {
-  const double c = ic/255.0;
-  if (c <= 0.04045) return c/12.92;
-  return pow((c+0.055)/1.055, 2.4);
-}
-
-
-//==========================================================================
-//
-//  sRGBungamma
-//
-//  sRGB "gamma" function (approx 2.2)
-//
-//==========================================================================
-static int sRGBgamma (double v) {
-  if (v <= 0.0031308) v *= 12.92; else v = 1.055*pow(v, 1.0/2.4)-0.055;
-  return int(v*255+0.5);
-}
-
-
-//==========================================================================
-//
-//  colorIntensity
-//
-//==========================================================================
-static vuint8 colorIntensity (int r, int g, int b) {
-  // sRGB luminance(Y) values
-  const double rY = 0.212655;
-  const double gY = 0.715158;
-  const double bY = 0.072187;
-  return clampToByte(sRGBgamma(rY*sRGBungamma(r)+gY*sRGBungamma(g)+bY*sRGBungamma(b)));
+  return Pixels;
 }
 
 
@@ -794,25 +819,23 @@ static vuint8 colorIntensity (int r, int g, int b) {
 //  VTexture::stencilPixelsRGBA
 //
 //==========================================================================
-void VTexture::stencilPixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor) {
-  if (!pic || wdt < 1 || hgt < 1 || shadeColor < 0) return;
-  //vuint8 *picbuf = pic;
-  vuint8 *oldpic = new vuint8[wdt*hgt*4];
-  memcpy(oldpic, pic, wdt*hgt*4);
+vuint8 *VTexture::stencilPixelsRGBA (vuint8 *Pixels, int shadeColor) {
+  check(Pixels);
+  check(Width > 0);
+  check(Height > 0);
+  check(shadeColor >= 0);
+  check(Format == TEXFMT_RGBA);
   float shadeR = (shadeColor>>16)&0xff;
   float shadeG = (shadeColor>>8)&0xff;
   float shadeB = (shadeColor)&0xff;
-  for (int y = 0; y < hgt; ++y) {
-    for (int x = 0; x < wdt; ++x) {
-      int addr = y*(wdt*4)+x*4;
-      float intensity = colorIntensity(pic[addr+0], pic[addr+1], pic[addr+2])/255.0f;
-      pic[addr+0] = clampToByte(intensity*shadeR);
-      pic[addr+1] = clampToByte(intensity*shadeG);
-      pic[addr+2] = clampToByte(intensity*shadeB);
-    }
+  rgba_t *pic = (rgba_t *)Pixels;
+  for (int f = Width*Height; f > 0; --f, ++pic) {
+    float intensity = colorIntensity(pic->r, pic->g, pic->b)/255.0f;
+    pic->r = clampToByte(intensity*shadeR);
+    pic->g = clampToByte(intensity*shadeG);
+    pic->b = clampToByte(intensity*shadeB);
   }
-  delete oldpic;
-  //SmoothEdges(picbuf, wdt, hgt);
+  return Pixels;
 }
 
 
@@ -822,7 +845,15 @@ void VTexture::stencilPixelsRGBA (vuint8 *pic, int wdt, int hgt, int shadeColor)
 //
 //==========================================================================
 void VTexture::Shade (int shade) {
+  if (shadeColor == shade) return;
+  check(shadeColor == -1);
+  check(origFormat == -1);
+  // save original format
+  origFormat = Format;
+  // remember shading
   shadeColor = shade;
+  // new format is RGBA
+  Format = TEXFMT_RGBA;
 }
 
 

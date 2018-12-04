@@ -120,6 +120,11 @@ vuint8 *VPatchTexture::GetPixels () {
     TOffset = 0;
     Pixels = new vuint8[1];
     Pixels[0] = 0;
+    if (origFormat != -1) {
+      check(origFormat == TEXFMT_8);
+      Format = origFormat;
+      Pixels = ConvertPixelsToShaded(Pixels);
+    }
     return Pixels;
   }
 
@@ -137,6 +142,11 @@ vuint8 *VPatchTexture::GetPixels () {
   if (Strm->TotalSize() < 8+Width*4) {
     GCon->Logf(NAME_Warning, "Patch \"%s\" is too small", *Name);
     checkerFill8(Pixels, Width, Height);
+    if (origFormat != -1) {
+      check(origFormat == TEXFMT_8);
+      Format = origFormat;
+      Pixels = ConvertPixelsToShaded(Pixels);
+    }
     return Pixels;
   }
 
@@ -219,6 +229,12 @@ vuint8 *VPatchTexture::GetPixels () {
 
   // close stream
   delete Strm;
+
+  if (origFormat != -1) {
+    check(origFormat == TEXFMT_8);
+    Format = origFormat;
+    Pixels = ConvertPixelsToShaded(Pixels);
+  }
 
   return Pixels;
   unguard;

@@ -98,16 +98,21 @@ vuint8 *VFlatTexture::GetPixels () {
   if (W_LumpLength(SourceLump) < 64*64) {
     //memset(Pixels, 0, 64*64);
     checkerFill8(Pixels, Width, Height);
-    return Pixels;
+  } else {
+    // read data
+    VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+    for (int i = 0; i < Width*Height; ++i) {
+      *Strm << Pixels[i];
+      if (!Pixels[i]) Pixels[i] = r_black_colour;
+    }
+    delete Strm;
   }
 
-  // read data
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  for (int i = 0; i < Width*Height; ++i) {
-    *Strm << Pixels[i];
-    if (!Pixels[i]) Pixels[i] = r_black_colour;
+  if (origFormat != -1) {
+    check(origFormat == TEXFMT_8);
+    Format = origFormat;
+    Pixels = ConvertPixelsToShaded(Pixels);
   }
-  delete Strm;
 
   return Pixels;
   unguard;

@@ -201,6 +201,8 @@ vuint8 *VPcxTexture::GetPixels () {
   FixupPalette(Pixels, Palette);
 
   delete Strm;
+
+  Pixels = ConvertPixelsToShaded(Pixels);
   return Pixels;
 
   unguard;

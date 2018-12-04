@@ -158,6 +158,11 @@ vuint8 *VRawPicTexture::GetPixels () {
   }
   delete Strm;
 
+  if (origFormat != -1) {
+    Format = origFormat;
+    Pixels = ConvertPixelsToShaded(Pixels);
+  }
+
   return Pixels;
   unguard;
 }
