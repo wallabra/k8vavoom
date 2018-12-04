@@ -152,7 +152,7 @@ __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, EComp
 //
 //==========================================================================
 __attribute__((noreturn)) void BailOut () {
-  Sys_Error("Confused by previous errors, bailing out\n");
+  Sys_Error("Confused by previous errors, bailing out");
 }
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
@@ -177,14 +177,7 @@ __attribute__((noreturn, format(printf, 1, 2))) void FatalError (const char *tex
   vsnprintf(workString, sizeof(workString), text, argPtr);
   va_end(argPtr);
 
-#if defined(VCC_STANDALONE_EXECUTOR) && defined(WIN32)
-  MessageBox(NULL, workString, "VaVoom/C Runner Fatal Error", MB_OK);
-#else
-  fputs(workString, stderr);
-  fputc('\n', stderr);
-#endif
-
-  exit(1);
+  Sys_Error("%s", workString);
 }
 
 #endif
