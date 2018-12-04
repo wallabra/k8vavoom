@@ -176,7 +176,9 @@ void VLocalDecl::Declare (VEmitContext &ec) {
       L.Visible = true; // and make it visible again
       e.emitClear = false;
     } else {
-      e.emitClear = L.reused;
+      //e.emitClear = L.reused;
+      //TODO: only set this for locals in loop blocks
+      e.emitClear = true; // always clear, so locals in loop won't retain old values, for example
     }
   }
 }
