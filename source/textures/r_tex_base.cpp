@@ -157,7 +157,6 @@ vuint8 *VTexture::GetPixels8 () {
   guard(VTexture::GetPixels8);
   // if already have converted version, then just return it
   if (Pixels8Bit && Pixels8BitValid) return Pixels8Bit;
-
   vuint8 *Pixels = GetPixels();
   if (Format == TEXFMT_8Pal) {
     // remap to game palette
