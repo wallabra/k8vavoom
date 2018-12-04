@@ -1197,8 +1197,7 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
     } else {
       sp->texinfo.Tex = MTex;
       sp->texinfo.noDecals = (sp->texinfo.Tex ? sp->texinfo.Tex->noDecals : true);
-      if (sidedef->MidTexture)
-      {
+      if (sidedef->MidTexture) {
         sp->texinfo.Alpha = linedef->alpha;
         sp->texinfo.Additive = !!(linedef->flags&ML_ADDITIVE);
       }
