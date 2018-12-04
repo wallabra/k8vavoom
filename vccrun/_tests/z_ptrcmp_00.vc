@@ -1,0 +1,14 @@
+class Main : Object;
+
+struct A {
+  int n;
+  string s;
+}
+
+A[4] arr;
+
+void main () {
+  A *a = &arr[0];
+  if (a == nullptr) writeln("wtf?!");
+  if (a != nullptr) writeln("ok");
+}

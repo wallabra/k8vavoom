@@ -1,0 +1,8 @@
+f=0; a.length=0
+  newlen=1
+f=1; a.length=0
+  newlen=1
+f=2; a.length=0
+  newlen=1
+f=3; a.length=0
+  newlen=1

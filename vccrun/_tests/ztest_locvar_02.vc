@@ -1,0 +1,12 @@
+class Main : Object;
+
+
+void main () {
+  writeln("===");
+  foreach (auto f; 0..4) {
+    int c;
+    writeln("c=", c);
+    c += f*10+5;
+    writeln("  newc=", c);
+  }
+}

@@ -1,0 +1,21 @@
+class Main : Object;
+
+struct A {
+  int n;
+}
+
+A[4] arr;
+
+void main () {
+  int diff = &arr[1]-&arr[0];
+  writeln(diff);
+  diff = &arr[3]-&arr[0];
+  writeln(diff);
+  diff = &arr[0]-&arr[2];
+  writeln(diff);
+  /*
+  A *a;
+  diff = a-&arr[0];
+  writeln(diff);
+  */
+}
