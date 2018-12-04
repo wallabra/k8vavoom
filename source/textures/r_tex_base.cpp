@@ -207,54 +207,42 @@ vuint8 *VTexture::GetPixels8 () {
 //
 //==========================================================================
 vuint8 *VTexture::GetPixels8A () {
-  guard(VTexture::GetPixels8A);
   // if already have converted version, then just return it
   if (Pixels8BitA && Pixels8BitAValid) return Pixels8BitA;
 
-  vuint8 *Pixels = GetPixels();
-  if (Format == TEXFMT_8Pal) {
+  int NumPixels = Width*Height;
+  if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
+  vuint8 *pDst = Pixels8BitA;
+
+  if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
     // remap to game palette
-    int NumPixels = Width*Height;
-    rgba_t *Pal = GetPalette();
-    vuint8 Remap[256];
-    Remap[0] = 0;
-    for (int i = 1; i < 256; ++i) Remap[i] = r_rgbtable[((Pal[i].r<<7)&0x7c00)+((Pal[i].g<<2)&0x3e0)+((Pal[i].b>>3)&0x1f)];
-    if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
-    vuint8 *pSrc = Pixels;
-    vuint8 *pDst = Pixels8BitA;
-    for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
-      pDst[0] = Remap[*pSrc];
-      pDst[1] = (pDst[0] ? 255 : 0);
+    vuint8 remap[256];
+    if (Format == TEXFMT_8Pal) {
+      // own palette, remap
+      remap[0] = 0;
+      const rgba_t *pal = GetPalette();
+      for (int i = 1; i < 256; ++i) remap[i] = r_rgbtable[((pal[i].r<<7)&0x7c00)+((pal[i].g<<2)&0x3e0)+((pal[i].b>>3)&0x1f)];
+    } else {
+      // game palette, no remap
+      for (int i = 0; i < 256; ++i) remap[i] = i;
     }
-    Pixels8BitAValid = true;
-    return Pixels8BitA;
-  } else if (Format == TEXFMT_8) {
-    // use game palette
-    int NumPixels = Width*Height;
-    if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
-    vuint8 *pSrc = Pixels;
-    vuint8 *pDst = Pixels8BitA;
+    const vuint8 *pSrc = GetPixels();
     for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
-      pDst[0] = *pSrc;
+      pDst[0] = remap[*pSrc];
       pDst[1] = (*pSrc ? 255 : 0);
     }
-    Pixels8BitAValid = true;
-    return Pixels8BitA;
   } else if (Format == TEXFMT_RGBA) {
-    int NumPixels = Width*Height;
-    if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
-    rgba_t *pSrc = (rgba_t *)Pixels;
-    vuint8 *pDst = Pixels8BitA;
+    const rgba_t *pSrc = (const rgba_t *)GetPixels();
     for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
       pDst[0] = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
       pDst[1] = pSrc->a;
     }
-    Pixels8BitAValid = true;
-    return Pixels8BitA;
+  } else {
+    Sys_Error("invalid texture format in `VTexture::GetPixels8A()`");
   }
-  // just in case
-  return Pixels;
-  unguard;
+
+  Pixels8BitAValid = true;
+  return Pixels8BitA;
 }
 
 

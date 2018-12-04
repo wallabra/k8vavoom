@@ -128,6 +128,10 @@ static void InitPalette()
   for (int i = 0; i < 256; ++i) {
     *Strm << pal[i].r << pal[i].g << pal[i].b;
     if (i == 0) {
+      //k8: force color 0 to black (it doesn't matter, but anyway)
+      pal[i].r = 0;
+      pal[i].g = 0;
+      pal[i].b = 0;
       pal[i].a = 0;
     } else {
       pal[i].a = 255;
