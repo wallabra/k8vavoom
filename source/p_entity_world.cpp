@@ -578,7 +578,7 @@ bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
 
   // set openrange, opentop, openbottom
   TVec hit_point = cptrace.Pos-(DotProduct(cptrace.Pos, ld->normal)-ld->dist)*ld->normal;
-  opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
+  opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
   open = SV_FindOpening(open, cptrace.Pos.z, cptrace.Pos.z+Height);
 
   if (open) {
@@ -959,7 +959,7 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld) {
 
   // set openrange, opentop, openbottom
   TVec hit_point = tmtrace.End-(DotProduct(tmtrace.End, ld->normal)-ld->dist)*ld->normal;
-  opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING);
+  opening_t *open = SV_LineOpenings(ld, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
   open = SV_FindOpening(open, tmtrace.End.z, tmtrace.End.z+Height);
 
   if (open) {
@@ -1292,7 +1292,7 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
     if (!IsBlocked) {
       // set openrange, opentop, openbottom
       TVec hit_point = SlideOrg+in->frac*SlideDir;
-      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
+      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
       open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
       if (open && (open->range >= Height) &&  //  fits
@@ -1451,7 +1451,7 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
 
     if (li->flags&ML_TWOSIDED) {
       // set openrange, opentop, openbottom
-      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING);
+      opening_t *open = SV_LineOpenings(li, hit_point, SPF_NOBLOCKING, true); //!(EntityFlags&EF_Missile)); // missiles ignores 3dmidtex
       open = SV_FindOpening(open, Origin.z, Origin.z+Height);
 
       if (open != nullptr && open->range >= Height &&  // fits

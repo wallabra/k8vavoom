@@ -32,7 +32,7 @@
 #include "sv_local.h"
 
 
-static opening_t openings[32];
+static opening_t openings[65536]; //k8: this should be enough for everyone, lol
 
 
 //==========================================================================
@@ -215,7 +215,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 //  sets opentop and openbottom to the window through a two sided line
 //
 //==========================================================================
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags) {
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex) {
   guard(SV_LineOpenings);
   opening_t *op;
   int opsused;
@@ -232,6 +232,58 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
   opsused = 0;
   frontreg = linedef->frontsector->botregion;
   backreg = linedef->backsector->botregion;
+
+  //FIXME: this is wrong, it should insert opening into full list instead!
+  //       move opening scan to separate function with top/bot limits instead
+  if (do3dmidtex && (linedef->flags&ML_3DMIDTEX)) {
+    // for 3dmidtex, create two gaps:
+    //   from floor to midtex bottom
+    //   from midtex top to ceiling
+    float top, bot;
+    if (P_GetMidTexturePosition(linedef, 0, &top, &bot)) {
+      float floorz = linedef->frontsector->floor.GetPointZ(point);
+      float ceilz = linedef->frontsector->ceiling.GetPointZ(point);
+      if (floorz < ceilz) {
+        // clamp to sector height
+        if (bot <= floorz && top >= ceilz) return nullptr; // it is completely blocked
+        // bottom opening
+        if (bot > floorz) {
+          // from floor to bot
+          openings[opsused].next = op;
+          op = &openings[opsused];
+          ++opsused;
+          // bot
+          op->bottom = floorz;
+          op->lowfloor = floorz;
+          op->floor = &linedef->frontsector->floor;
+          op->lowfloorplane = &linedef->frontsector->floor;
+          // top
+          op->top = bot;
+          op->highceiling = ceilz;
+          op->ceiling = &linedef->frontsector->ceiling;
+          op->highceilingplane = &linedef->frontsector->ceiling;
+        }
+        // top opening
+        if (top < ceilz) {
+          // from top to ceiling
+          openings[opsused].next = op;
+          op = &openings[opsused];
+          ++opsused;
+          // bot
+          op->bottom = top;
+          op->lowfloor = floorz;
+          op->floor = &linedef->frontsector->floor;
+          op->lowfloorplane = &linedef->frontsector->floor;
+          // top
+          op->top = ceilz;
+          op->highceiling = ceilz;
+          op->ceiling = &linedef->frontsector->ceiling;
+          op->highceilingplane = &linedef->frontsector->ceiling;
+        }
+        return op;
+      }
+    }
+  }
 
   while (frontreg && backreg) {
     if (!(frontreg->floor->flags&NoBlockFlags)) frontfloor = frontreg->floor;
@@ -279,6 +331,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBloc
     }
     op->range = op->top-op->bottom;
   }
+
   return op;
   unguard;
 }
@@ -408,6 +461,7 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
   while (gaps) {
     const float f = gaps->bottom;
     const float c = gaps->top;
+
     if (z1 >= f && z2 <= c) return gaps; // [1]
 
     const float dist = fabs(z1-f);

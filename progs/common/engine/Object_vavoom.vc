@@ -433,7 +433,7 @@ native static final string LoadTextLump (name Name);
 // ////////////////////////////////////////////////////////////////////////// //
 // map utilites
 
-native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, TVec point);
+native static final GameObject::opening_t *LineOpenings (GameObject::line_t *linedef, TVec point, optional bool do3dmidtex);
 // returns 0 - front, 1 - back, -1 - on
 native static final int P_BoxOnLineSide (float *tmbox, GameObject::line_t *ld);
 // used for various 3dmidtex calculations

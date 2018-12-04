@@ -424,15 +424,15 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 
       if (Level.CompatTrace && li->frontsector == li->backsector) continue;
 
-      if (stopat3dmidtex && (li->flags&ML_3DMIDTEX)) {
+      /*if (stopat3dmidtex && (li->flags&ML_3DMIDTEX)) {
         // stop right here
         print("!!!!");
-      } else {
+      } else*/ {
         if (li->flags&ML_TWOSIDED) {
           // crosses a two sided line
           float opentop = 0.0;
 
-          opening_t *open = LineOpenings(li, hit_point);
+          opening_t *open = LineOpenings(li, hit_point, stopat3dmidtex);
           if (open) {
             print(":: line #%d ::", li-&XLevel.Lines[0]);
             for (opening_t *o = open; o; o = o->next) {
@@ -442,19 +442,14 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
               print("  open range: %s", o->range);
               print("  open lowfloor: %s", o->lowfloor);
               print("  open highceiling: %s", o->highceiling);
-/*
-  float top;
-  float bottom;
-  float range;
-  float lowfloor;
-  float highceiling;
-  sec_plane_t *floor;
-  sec_plane_t *ceiling;
-  sec_plane_t *lowfloorplane;
-  sec_plane_t *highceilingplane;
-*/
             }
           }
+          if (stopat3dmidtex && (li->flags&ML_3DMIDTEX)) {
+            // stop right here
+            print("!!!!");
+            open = nullptr;
+          }
+
           if (open) opentop = open->top;
           while (open) {
             if (open->bottom <= hit_point.z && open->top >= hit_point.z) {

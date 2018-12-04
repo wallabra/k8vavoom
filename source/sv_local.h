@@ -204,7 +204,7 @@ public:
 struct opening_t {
   float top;
   float bottom;
-  float range;
+  float range; // negatve: this is 3dmidtex
   float lowfloor;
   float highceiling;
   sec_plane_t *floor;
@@ -223,7 +223,7 @@ bool P_GetMidTexturePosition (const line_t *line, int sideno, float *ptextop, fl
 int SV_PointContents (const sector_t *sector, const TVec &p);
 sec_region_t *SV_PointInRegion (sector_t *sector, const TVec &p);
 
-opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags);
+opening_t *SV_LineOpenings (const line_t *linedef, const TVec &point, int NoBlockFlags, bool do3dmidtex=false);
 
 sec_region_t *SV_FindThingGap (sec_region_t *gaps, const TVec &point, float z1, float z2);
 opening_t *SV_FindOpening (opening_t *gaps, float z1, float z2);
