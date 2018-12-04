@@ -328,6 +328,41 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
 //==========================================================================
 //
+//  DebugCheckMidTex
+//
+//==========================================================================
+final void DebugCheckMidTex () {
+  TVec aimDir;
+  //Aim(aimDir, 16.0*64.0, default, /*noAAim*/true);
+  AngleVector(Angles, out aimDir);
+
+  auto shootOrigin = Origin;
+  shootOrigin.z += Height*0.5-FloorClip;
+  shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+
+  trsplat_t tr;
+  TraceLineEx(shootOrigin, aimDir, 8192, allowEntities:false, &tr, stopat3dmidtex:true, nozofs:true);
+  if (tr.didhit && tr.line) {
+    float top, bot;
+    bool ok = P_GetMidTexturePosition(tr.line, tr.side, out top, out bot);
+    print("DebugCheckMidTex(%B): hitpoint=%s; top=%s; bot=%s", ok, tr.hit, top, bot);
+
+    auto real_hit_point = tr.hit;
+    auto hit_point = real_hit_point-(4.0*aimDir);
+    // spawn bullet puff
+    SpawnPuff(hit_point, /*distance*/8192, BulletPuff, false, tr.sec, tr.line, real_hit_point);
+  }
+
+  /+
+  LineAttack(aimDir, /*Range*/10000, /*damage*/10000,
+    BulletPuff, default, default,
+    default, false);
+  +/
+}
+
+
+//==========================================================================
+//
 // TraceLineEx
 //
 // Trace line to the wall or entity.
@@ -335,7 +370,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 // Returns `false` if floor/ceiling was hit, or nothing was hit.
 //
 //==========================================================================
-final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, optional trsplat_t *tr) {
+final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, optional trsplat_t *tr, optional bool stopat3dmidtex, optional bool nozofs) {
   TVec dst;
   intercept_t *in;
   TVec lineStart;
@@ -344,7 +379,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   TVec outHitPoint;
 
   shootOrigin = org;
-  shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+  if (!nozofs) shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
 
   dst = shootOrigin+distance*dir;
 
@@ -389,27 +424,54 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 
       if (Level.CompatTrace && li->frontsector == li->backsector) continue;
 
-      if (li->flags&ML_TWOSIDED) {
-        // crosses a two sided line
-        float opentop = 0.0;
+      if (stopat3dmidtex && (li->flags&ML_3DMIDTEX)) {
+        // stop right here
+        print("!!!!");
+      } else {
+        if (li->flags&ML_TWOSIDED) {
+          // crosses a two sided line
+          float opentop = 0.0;
 
-        opening_t *open = LineOpenings(li, hit_point);
-        if (open) opentop = open->top;
-        while (open) {
-          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
-            if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
+          opening_t *open = LineOpenings(li, hit_point);
+          if (open) {
+            print(":: line #%d ::", li-&XLevel.Lines[0]);
+            for (opening_t *o = open; o; o = o->next) {
+              print(" opening:");
+              print("  open top: %s", o->top);
+              print("  open bot: %s", o->bottom);
+              print("  open range: %s", o->range);
+              print("  open lowfloor: %s", o->lowfloor);
+              print("  open highceiling: %s", o->highceiling);
+/*
+  float top;
+  float bottom;
+  float range;
+  float lowfloor;
+  float highceiling;
+  sec_plane_t *floor;
+  sec_plane_t *ceiling;
+  sec_plane_t *lowfloorplane;
+  sec_plane_t *highceilingplane;
+*/
+            }
           }
-          open = open->next;
-        }
-        if (open) continue;
+          if (open) opentop = open->top;
+          while (open) {
+            if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+              if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
+            }
+            open = open->next;
+          }
+          if (open) continue;
 
-        if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
-            li->backsector->ceiling.pic == Level.Game.skyflatnum &&
-            hit_point.z > opentop)
-        {
-          // it's a sky hack wall
-          if (tr) { tr->hit = hit_point; tr->didhit = true; }
-          return false;
+          if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
+              li->backsector->ceiling.pic == Level.Game.skyflatnum &&
+              hit_point.z > opentop)
+          {
+            // it's a sky hack wall
+            if (tr) { tr->hit = hit_point; tr->didhit = true; }
+            return false;
+          }
         }
       }
 
