@@ -1,4 +1,3 @@
 ztest_prop_02.vc:13: Trying to use non-static property as static
 ztest_prop_02.vc:14: Trying to use non-static property as static
 FATAL: Confused by previous errors, bailing out
-

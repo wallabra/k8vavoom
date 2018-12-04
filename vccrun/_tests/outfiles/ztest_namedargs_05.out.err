@@ -1,3 +1,2 @@
 ztest_namedargs_05.vc:16: Cannot omit non-optional argument #1 to `vccrun.Main.test`
 FATAL: Confused by previous errors, bailing out
-

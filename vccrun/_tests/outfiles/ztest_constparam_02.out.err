@@ -1,3 +1,2 @@
 ztest_constparam_02.vc:17: Tried to assign to a read-only variable
 FATAL: Confused by previous errors, bailing out
-
