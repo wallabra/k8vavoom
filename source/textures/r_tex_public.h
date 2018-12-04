@@ -47,17 +47,22 @@ enum {
 };
 
 
-struct rgb_t {
-  byte r, g, b;
+struct __attribute__((__packed__)) rgb_t {
+  vuint8 r, g, b;
   rgb_t () : r(0), g(0), b(0) {}
-  rgb_t (byte ar, byte ag, byte ab) : r(ar), g(ag), b(ab) {}
+  rgb_t (vuint8 ar, vuint8 ag, vuint8 ab) : r(ar), g(ag), b(ab) {}
 };
 
-
-struct rgba_t {
-  byte r, g, b, a;
+struct __attribute__((__packed__)) rgba_t {
+  vuint8 r, g, b, a;
   rgba_t () : r(0), g(0), b(0), a(0) {}
-  rgba_t (byte ar, byte ag, byte ab, byte aa=255) : r(ar), g(ag), b(ab), a(aa) {}
+  rgba_t (vuint8 ar, vuint8 ag, vuint8 ab, vuint8 aa=255) : r(ar), g(ag), b(ab), a(aa) {}
+};
+
+struct __attribute__((__packed__)) pala_t {
+  vuint8 idx, a;
+  pala_t () : idx(0), a(0) {}
+  pala_t (vuint8 aidx, vuint8 aa=255) : idx(aidx), a(aa) {}
 };
 
 
@@ -190,7 +195,7 @@ public:
 
 protected:
   vuint8 *Pixels8Bit;
-  vuint8 *Pixels8BitA;
+  pala_t *Pixels8BitA;
   VTexture *HiResTexture;
   bool Pixels8BitValid;
   bool Pixels8BitAValid;
@@ -231,7 +236,7 @@ public:
   virtual void Shade (int shade); // should be called before any `GetPixels()` call!
   virtual vuint8 *GetPixels () = 0;
   vuint8 *GetPixels8 ();
-  vuint8 *GetPixels8A (); // 16-bit format: pal, alpha
+  pala_t *GetPixels8A ();
   virtual rgba_t *GetPalette ();
   virtual void Unload () = 0;
   virtual VTexture *GetHighResolutionTexture ();

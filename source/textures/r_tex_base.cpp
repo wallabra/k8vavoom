@@ -93,24 +93,26 @@ VTexture::VTexture ()
   , SScale(1)
   , TScale(1)
   , TextureTranslation(0)
+  , HashNext(-1)
   , SourceLump(-1)
   , noDecals(false)
   , staticNoDecals(false)
   , animNoDecals(false)
   , animated(false)
-  , DriverData(0)
-  , Pixels8Bit(0)
-  , Pixels8BitA(0)
-  , HiResTexture(0)
+  , needFBO(false)
+  , mFBO(0)
+  , mFBOColorTid(0)
+  , mFBODepthStencilTid(0)
+  , DriverData(nullptr)
+  , DriverTranslated()
+  , SavedDriverHandle(0)
+  , Pixels8Bit(nullptr)
+  , Pixels8BitA(nullptr)
+  , HiResTexture(nullptr)
   , Pixels8BitValid(false)
   , Pixels8BitAValid(false)
   , shadeColor(-1)
 {
-  needFBO = false;
-  mFBO = 0;
-  mFBOColorTid = 0;
-  mFBODepthStencilTid = 0;
-  SavedDriverHandle = 0;
 }
 
 
@@ -120,18 +122,9 @@ VTexture::VTexture ()
 //
 //==========================================================================
 VTexture::~VTexture () {
-  if (Pixels8Bit) {
-    delete[] Pixels8Bit;
-    Pixels8Bit = nullptr;
-  }
-  if (Pixels8BitA) {
-    delete[] Pixels8BitA;
-    Pixels8BitA = nullptr;
-  }
-  if (HiResTexture) {
-    delete HiResTexture;
-    HiResTexture = nullptr;
-  }
+  if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
+  if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
+  if (HiResTexture) { delete HiResTexture; HiResTexture = nullptr; }
 }
 
 
@@ -141,9 +134,7 @@ VTexture::~VTexture () {
 //
 //==========================================================================
 void VTexture::SetFrontSkyLayer () {
-  guardSlow(VTexture::SetFrontSkyLayer);
   bNoRemap0 = true;
-  unguardSlow;
 }
 
 
@@ -206,13 +197,13 @@ vuint8 *VTexture::GetPixels8 () {
 //  VTexture::GetPixels8A
 //
 //==========================================================================
-vuint8 *VTexture::GetPixels8A () {
+pala_t *VTexture::GetPixels8A () {
   // if already have converted version, then just return it
   if (Pixels8BitA && Pixels8BitAValid) return Pixels8BitA;
 
   int NumPixels = Width*Height;
-  if (!Pixels8BitA) Pixels8BitA = new vuint8[NumPixels*2];
-  vuint8 *pDst = Pixels8BitA;
+  if (!Pixels8BitA) Pixels8BitA = new pala_t[NumPixels];
+  pala_t *pDst = Pixels8BitA;
 
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
     // remap to game palette
@@ -227,15 +218,15 @@ vuint8 *VTexture::GetPixels8A () {
       for (int i = 0; i < 256; ++i) remap[i] = i;
     }
     const vuint8 *pSrc = GetPixels();
-    for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
-      pDst[0] = remap[*pSrc];
-      pDst[1] = (*pSrc ? 255 : 0);
+    for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
+      pDst->idx = remap[*pSrc];
+      pDst->a = (*pSrc ? 255 : 0);
     }
   } else if (Format == TEXFMT_RGBA) {
     const rgba_t *pSrc = (const rgba_t *)GetPixels();
-    for (int i = 0; i < NumPixels; ++i, ++pSrc, pDst += 2) {
-      pDst[0] = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
-      pDst[1] = pSrc->a;
+    for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
+      pDst->idx = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
+      pDst->a = pSrc->a;
     }
   } else {
     Sys_Error("invalid texture format in `VTexture::GetPixels8A()`");

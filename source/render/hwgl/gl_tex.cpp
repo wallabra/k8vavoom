@@ -320,16 +320,20 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 
   // upload data
   if (Translation && CMap) {
-    rgba_t TmpPal[256];
+    // both colormap and translation
+    rgba_t tmppal[256];
     const vuint8 *TrTab = Translation->GetTable();
     const rgba_t *CMPal = ColourMaps[CMap].GetPalette();
-    for (int i = 0; i < 256; ++i) TmpPal[i] = CMPal[TrTab[i]];
-    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), TmpPal);
+    for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
+    UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
   } else if (Translation) {
+    // only translation
     UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
   } else if (CMap) {
+    // only colormap
     UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColourMaps[CMap].GetPalette());
   } else {
+    // normal uploading
     vuint8 *block = SrcTex->GetPixels();
     if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
       UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette());
@@ -375,14 +379,12 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
 //
 //  VOpenGLDrawer::UploadTexture8A
 //
-//  16-bit format: pal, alpha
-//
 //==========================================================================
-void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const vuint8 *Data, const rgba_t *Pal) {
+void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal) {
   rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
-  for (int i = 0; i < Width*Height; ++i, Data += 2) {
-    NewData[i] = Pal[Data[0]];
-    NewData[i].a = Data[1];
+  for (int i = 0; i < Width*Height; ++i, ++Data) {
+    NewData[i] = Pal[Data->idx];
+    NewData[i].a = Data->a;
   }
   UploadTexture(Width, Height, NewData);
   Z_Free(NewData);
