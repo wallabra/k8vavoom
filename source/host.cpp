@@ -86,7 +86,9 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 // for chex quest support
 //VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
 
-static VCvarF host_framerate("framerate", "0", "Framerate limit.");
+static VCvarF host_framerate("framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
+//k8: this was `3`; why 3? looks like arbitrary number
+static VCvarI host_cap_tics("host_cap_tics", "6", "Process no more than this number of ticks if frame rate is too slow; DEBUG CVAR, DON'T USE!");
 
 static double last_time;
 
@@ -289,6 +291,8 @@ static bool FilterTime () {
     if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
       // uncapped fps
       if (realtime <= oldrealtime) return false;
+      float delta = realtime-oldrealtime;
+      if (delta < 0.004) return false; // no more than 250 FPS
     } else {
       // capped fps
       if (realtime-oldrealtime < 1.0/90.0) return false; // framerate is too high
@@ -304,7 +308,7 @@ static bool FilterTime () {
   } else {
     // don't allow really long or short frames
     if (host_frametime > 0.1) host_frametime = 0.1;
-    if (host_frametime < 0.001) host_frametime = 0.001;
+    if (host_frametime < 0.004) host_frametime = 0.004;
   }
 
   int thistime;
@@ -312,8 +316,10 @@ static bool FilterTime () {
 
   thistime = (int)(realtime*TICRATE);
   host_frametics = thistime-lasttime;
-  if (!real_time && host_frametics < 1) return false; //  no tics to run
-  if (host_frametics > 3) host_frametics = 3; // don't run too slow
+  if (!real_time && host_frametics < 1) return false; // no tics to run
+  int ticlimit = host_cap_tics;
+  if (ticlimit < 1) ticlimit = 3; else if (ticlimit > 42) ticlimit = 42;
+  if (host_frametics > ticlimit) host_frametics = ticlimit; // don't run too slow
   oldrealtime = realtime;
   lasttime = thistime;
 
