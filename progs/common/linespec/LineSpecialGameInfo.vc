@@ -1389,7 +1389,7 @@ override void CmdSetSlot (ref array!string Args) {
   } else {
     foreach (auto i; 2..Args.length) {
       // standarize class name here, since I've found people writing in all types of mixed cases...
-      class!Weapon Cls = class!Weapon(FindClassLowerCase(name(strlwr(Args[i]))));
+      class!Weapon Cls = class!Weapon(FindClassNoCase(name(Args[i])));
       if (!Cls) {
         print("`%s` is not a weapon", Args[i]);
       } else if (!AddWeaponToSlot(Slot, Cls)) {
@@ -1422,7 +1422,7 @@ override void CmdAddSlotDefault (ref array!string Args) {
   if (Slot == 0) Slot = 10;
 
   // standarize class name here, since I've found people writing in all types of mixed cases...
-  class!Weapon Cls = class!Weapon(FindClassLowerCase(name(strlwr(Args[2]))));
+  class!Weapon Cls = class!Weapon(FindClassNoCase(name(Args[2])));
   if (!Cls) {
     print("`%s` is not a weapon", Args[2]);
     return;

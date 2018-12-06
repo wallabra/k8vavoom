@@ -22,17 +22,15 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-//**************************************************************************
 //  State jumps
 //**************************************************************************
+
 
 //==========================================================================
 //
 //  A_Jump
 //
 //==========================================================================
-
 final void A_Jump (int Chance, state Label1, optional state Label2,
   optional state Label3, optional state Label4, optional state Label5,
   optional state Label6, optional state Label7, optional state Label8,
@@ -97,10 +95,10 @@ final void A_Jump (int Chance, state Label1, optional state Label2,
 final void A_JumpIf (bool Expr, state Label) {
   //print("%C: label=%C; expr=%B", self, Label, Expr);
   if (Expr) DoJump(Label);
-
   // state jumps should not affect state chain results.
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
+
 
 //==========================================================================
 //
@@ -111,7 +109,6 @@ final void A_JumpIf (bool Expr, state Label) {
 //==========================================================================
 final void decorate_A_JumpIf (float Expr, state Label) {
   if (Expr) DoJump(Label);
-
   // state jumps should not affect state chain results.
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
@@ -129,7 +126,7 @@ final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
     Targ = Target;
   } else {
     TVec Dir;
-    Targ = Aim(Dir, 16.0 * 64.0);
+    Targ = Aim(Dir, 16.0*64.0);
   }
 
   if (Targ && (noz ? DistTo2(Targ) : DistTo(Targ)) < Dist &&
@@ -149,9 +146,7 @@ final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
 //  A_JumpIfHealthLower
 //
 //==========================================================================
-
-final void A_JumpIfHealthLower(int HealthVal, state Label, optional int aptr)
-{
+final void A_JumpIfHealthLower(int HealthVal, state Label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfHealthLower', aptr!optional));
   if (tgt) {
     if (tgt.Health < HealthVal) DoJump(Label);
@@ -187,14 +182,13 @@ final void A_JumpIfInventory (class!Actor ItemType, int Amount, state Label, opt
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
+
 //==========================================================================
 //
 //  A_JumpIfInTargetInventory
 //
 //==========================================================================
-
-final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Label, optional int aptr)
-{
+final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
   if (!tgt) {
     XLevel.StateCall->Result = false;

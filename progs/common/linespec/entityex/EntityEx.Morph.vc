@@ -235,8 +235,8 @@ final bool MorphPlayer(class!PlayerPawn PlayerClass, float Duration,
 override int MorphActor(name PlayerClass, name MonsterClass, float Duration,
   int Style, name MorphFlash, name UnmorphFlash)
 {
-  return Morph(class!MorphedMonster(FindClassLowerCase(MonsterClass)),
-    class!PlayerPawn(FindClassLowerCase(PlayerClass)), Duration, Style,
-    class!Actor(FindClassLowerCase(MorphFlash)),
-    class!Actor(FindClassLowerCase(UnmorphFlash)));
+  return Morph(class!MorphedMonster(FindClassNoCase(MonsterClass)),
+    class!PlayerPawn(FindClassNoCase(PlayerClass)), Duration, Style,
+    class!Actor(FindClassNoCase(MorphFlash)),
+    class!Actor(FindClassNoCase(UnmorphFlash)));
 }

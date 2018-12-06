@@ -283,7 +283,7 @@ final override void GiveInventory(name ItemName, int Amount)
   }
 
   //  Get class of the item.
-  class EClass = FindClassLowerCase(ItemName);
+  class EClass = FindClassNoCase(ItemName);
   if (!EClass)
   {
     print("Unknown item type %n", ItemName);
@@ -353,8 +353,7 @@ final override void TakeInventory(name ItemName, int Amount)
   }
 
   //  Get class of the item.
-  class!Inventory ItemClass = class!Inventory(FindClassLowerCase(
-    ItemName));
+  class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (!ItemClass)
   {
     return;
@@ -380,32 +379,24 @@ final override void TakeInventory(name ItemName, int Amount)
   }
 }
 
+
 //===========================================================================
 //
 //  CheckInventory
 //
 //===========================================================================
+final override int CheckInventory (name ItemName) {
+       if (ItemName == 'armor') ItemName = 'basicarmor';
+  else if (ItemName == 'health') return Health;
 
-final override int CheckInventory(name ItemName)
-{
-  if (ItemName == 'armor')
-  {
-    ItemName = 'basicarmor';
-  }
-  else if (ItemName == 'health')
-  {
-    return Health;
-  }
-
-  class!Inventory ItemClass = class!Inventory(FindClassLowerCase(
-    ItemName));
-  if (ItemClass)
-  {
+  class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
+  if (ItemClass) {
     Inventory Item = FindInventory(ItemClass);
     return Item ? Item.Amount : 0;
   }
   return 0;
 }
+
 
 //===========================================================================
 //
@@ -415,8 +406,7 @@ final override int CheckInventory(name ItemName)
 
 final override int UseInventoryName(name ItemName)
 {
-  class!Inventory ItemClass = class!Inventory(FindClassLowerCase(
-    ItemName));
+  class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (ItemClass)
   {
     Inventory Item = FindInventory(ItemClass);
@@ -469,8 +459,7 @@ final override int SetNamedWeapon(name Name)
     return false;
   }
 
-  Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassLowerCase(
-    Name))));
+  Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassNoCase(Name))));
   if (!Wpn)
   {
     return false;
@@ -499,7 +488,7 @@ final override int SetNamedWeapon(name Name)
 
 final override int GetAmmoCapacity(name Name)
 {
-  class!Ammo AmmoType = class!Ammo(FindClassLowerCase(Name));
+  class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
   if (!AmmoType)
   {
     return 0;
@@ -530,7 +519,7 @@ final override int GetAmmoCapacity(name Name)
 
 final override void SetAmmoCapacity(name Name, int Amount)
 {
-  class!Ammo AmmoType = class!Ammo(FindClassLowerCase(Name));
+  class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
   if (!AmmoType)
   {
     return;
@@ -573,7 +562,7 @@ override float FindActivePowerupTime (name className) {
   //if (!tgt) return 0;
 
   if (!className) return 0;
-  class!Powerup ptype = class!Powerup(FindClassLowerCase(className));
+  class!Powerup ptype = class!Powerup(FindClassNoCase(className));
   if (!ptype) return 0;
   class!Powerup ptyperepl = class!Powerup(GetClassReplacement(ptype));
 

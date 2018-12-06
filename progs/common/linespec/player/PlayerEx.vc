@@ -3380,7 +3380,7 @@ override void Cheat_Summon () {
   }
 
   // find which type to spawn
-  auto moClass = class!EntityEx(FindClassLowerCase(name(Cmd_GetArgV(1))));
+  auto moClass = class!EntityEx(FindClassNoCase(name(Cmd_GetArgV(1))));
   if (!moClass) {
     // Can't find thing type
     print("Summon: unknown class '%s'", Cmd_GetArgV(1));

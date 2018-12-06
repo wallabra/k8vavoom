@@ -48,7 +48,7 @@ final void A_BossDeath()
   int i;
   for (i = 0; i < Level.SpecialActions.Num; i++)
   {
-    if (Class == FindClassLowerCase(Level.SpecialActions[i].TypeName))
+    if (Class == FindClassNoCase(Level.SpecialActions[i].TypeName))
     {
       Level.ExecuteActionSpecial(Level.SpecialActions[i].Special,
         Level.SpecialActions[i].Args[0],
