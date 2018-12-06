@@ -98,12 +98,58 @@ COMMAND(Buddha) {
 //  Cheat code Summon
 //
 //==========================================================================
-COMMAND(Summon) {
+COMMAND_WITH_AC(Summon) {
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
   if (CheatAllowed(Player)) Player->eventCheat_Summon();
+}
+
+extern "C" {
+  static int sortCmpVStrCI (const void *a, const void *b, void *udata) {
+    if (a == b) return 0;
+    VStr *sa = (VStr *)a;
+    VStr *sb = (VStr *)b;
+    return sa->ICmp(*sb);
+  }
+}
+
+COMMAND_AC(Summon) {
+  if (aidx != 1) return VStr::EmptyString;
+  VClass *actor = VMemberBase::StaticFindClass("Actor");
+  if (!actor) return VStr::EmptyString;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  TArray<VStr> list;
+  VMemberBase::StaticGetClassListNoCase(list, prefix, actor);
+  // replace with replacements ;-)
+  /*
+  for (int f = 0; f < list.length(); ++f) {
+    VClass *cls = VMemberBase::StaticFindClass(*list[f]);
+    if (!cls) { list[f].clear(); continue; }
+    VClass *c1 = cls->GetReplacement();
+    if (!c1 || !c1->IsChildOf(actor)) { list[f].clear(); continue; }
+    list[f] = VStr(c1->GetName());
+  }
+  */
+  if (!list.length()) return VStr::EmptyString;
+  // sort
+  timsort_r(list.ptr(), list.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
+  // drop unspawnable actors
+  TArray<VStr> newlist;
+  for (int f = 0; f < list.length(); ++f) {
+    if (list.length() == 0 || (newlist.length() && newlist[newlist.length()-1] == list[f])) continue;
+    VClass *cls = VMemberBase::StaticFindClass(*list[f]);
+    if (!cls) continue;
+    VClass *c1 = cls->GetReplacement();
+    if (!c1 || !c1->IsChildOf(actor)) continue;
+    // check state
+    VStateLabel *lbl = cls->FindStateLabel("Spawn");
+    if (!lbl || !lbl->State) continue; // no spawn state
+    if (!R_AreSpritesPresent(lbl->State->SpriteIndex)) continue; // no sprite
+    newlist.append(list[f]);
+  }
+  return AutoCompleteFromList(prefix, newlist, true); // return unchanged as empty
 }
 
 

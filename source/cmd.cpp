@@ -235,31 +235,30 @@ void VCommand::AddToAutoComplete (const char *string) {
 
 //==========================================================================
 //
-//  VCommand::acCommand
-//
-//  autocomplete command
-//  prefix should not be empty, and should not end with space
+//  VCommand::AutoCompleteFromList
 //
 //==========================================================================
-VStr VCommand::acCommand (const VStr &prefix) {
+VStr VCommand::AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty) {
+  if (list.length() == 0) return (unchangedAsEmpty ? VStr::EmptyString : prefix);
+
   VStr bestmatch;
   int matchcount = 0;
 
   // first, get longest match
-  for (int f = 0; f < AutoCompleteTable.length(); ++f) {
-    VStr mt = AutoCompleteTable[f];
+  for (int f = 0; f < list.length(); ++f) {
+    VStr mt = list[f];
     if (mt.length() < prefix.length()) continue;
-    if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
+    if (VStr::NICmp(*prefix, *mt, prefix.length()) != 0) continue;
     ++matchcount;
     if (bestmatch.length() < mt.length()) bestmatch = mt;
   }
 
-  if (matchcount == 0) return prefix; // alas
+  if (matchcount == 0) return (unchangedAsEmpty ? VStr::EmptyString : prefix); // alas
   if (matchcount == 1) { bestmatch += " "; return bestmatch; } // done
 
   // trim match
-  for (int f = 0; f < AutoCompleteTable.length(); ++f) {
-    VStr mt = AutoCompleteTable[f];
+  for (int f = 0; f < list.length(); ++f) {
+    VStr mt = list[f];
     if (mt.length() < prefix.length()) continue;
     if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
     // cannot be longer than this
@@ -279,14 +278,14 @@ VStr VCommand::acCommand (const VStr &prefix) {
     // show all possible matches
     if (onShowCompletionMatch) {
       onShowCompletionMatch(true, "=== possible matches ===");
-      for (int f = 0; f < AutoCompleteTable.length(); ++f) {
-        VStr mt = AutoCompleteTable[f];
+      for (int f = 0; f < list.length(); ++f) {
+        VStr mt = list[f];
         if (mt.length() < prefix.length()) continue;
         if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
         onShowCompletionMatch(false, mt);
       }
     }
-    return prefix;
+    return (unchangedAsEmpty ? VStr::EmptyString : prefix);
   }
 
   // found extended match
@@ -313,7 +312,7 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
 
   bool endsWithBlank = ((vuint8)prefix[prefix.length()-1] <= ' ');
 
-  if (aidx == 1 && !endsWithBlank) return acCommand(prefix);
+  if (aidx == 1 && !endsWithBlank) return AutoCompleteFromList(prefix, AutoCompleteTable);
 
   // autocomplete new arg?
   if (aidx > 1 && !endsWithBlank) --aidx; // nope, last arg
@@ -332,8 +331,12 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
           res += args[f].quote(true); // add quote chars if necessary
           res += ' ';
         }
-        res += ac.quote(true);
-        if (addSpace && ac.length()) res += ' ';
+        if (ac.length()) {
+          ac = ac.quote(true);
+          if (!addSpace && ac[ac.length()-1] == '"') ac.chopRight(1);
+        }
+        res += ac;
+        if (addSpace) res += ' ';
         return res;
       }
       // cannot complete, nothing's changed
@@ -344,13 +347,14 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
   // Cvar
   if (aidx == 1) {
     // show cvar help, why not?
-    VCvar *var = VCvar::FindVariable(*args[0]);
-    if (var) {
-      VStr help = var->GetHelp();
-      if (help.length() && !VStr(help).startsWithNoCase("no help yet")) {
-        onShowCompletionMatch(false, args[0]+": "+help);
+    if (onShowCompletionMatch) {
+      VCvar *var = VCvar::FindVariable(*args[0]);
+      if (var) {
+        VStr help = var->GetHelp();
+        if (help.length() && !VStr(help).startsWithNoCase("no help yet")) {
+          onShowCompletionMatch(false, args[0]+": "+help);
+        }
       }
-      return prefix;
     }
   }
 

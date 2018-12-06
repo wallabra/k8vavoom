@@ -58,9 +58,6 @@ protected:
   static ECmdSource Source;
   static VBasePlayer *Player; // for SRC_Client
 
-protected:
-  static VStr acCommand (const VStr &prefix);
-
 public:
   static bool ParsingKeyConf;
   static void (*onShowCompletionMatch) (bool isheader, const VStr &s);
@@ -84,6 +81,14 @@ public:
 
   static void AddToAutoComplete (const char *);
   static VStr GetAutoComplete (const VStr &prefix);
+
+  // returns empty string if no matches found, or list is empty
+  // if there is one exact match, return it with trailing space
+  // otherwise, return longest prefix
+  // if longest prefix is the same as input prefix, show all matches
+  // case-insensitive
+  // if `unchangedAsEmpty` is `true`, return empty string if result is equal to input prefix
+  static VStr AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false);
 
   static void ExecuteString (const VStr &, ECmdSource, VBasePlayer *);
   static void ForwardToServer ();
