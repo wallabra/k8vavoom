@@ -57,32 +57,11 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   Scale 0.9
 
   var int user_ShotgunWasEmpty;
-  var int user_Unloading;
-  //var float user_arr[2];
 
   States {
     Ready:
-      TNT1 A 0 NoDelay A_SetUserVar("user_ShotgunWasEmpty", 0);
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0);
-      //TNT1 A 0 NoDelay A_SetUserArrayFloat("user_arr", 1, 666.69);
-      //TNT1 A 0 NoDelay A_k8ConLog(va("%s", user_arr[1]));
-      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunAmmo", 1, 2)
-      TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 1);
-      //TNT1 A 0 NoDelay A_k8ConLog(va("user_ShotgunWasEmpty: %s", user_ShotgunWasEmpty));
-      /*
-      TNT1 A 0 {
-        A_k8ConLog(va("user_ShotgunWasEmpty000: %s", user_ShotgunWasEmpty));
-        //return state("OkToFire");
-        //return A_k8ConLog("!!!");
-        return A_Jump(256, "OkToFire");
-        user_ShotgunWasEmpty = 69;
-        A_k8ConLog(va("user_ShotgunWasEmpty001: %s", user_ShotgunWasEmpty));
-        user_ShotgunWasEmpty = user_ShotgunWasEmpty+1;
-        A_k8ConLog(va("user_ShotgunWasEmpty002: %s", user_ShotgunWasEmpty));
-        user_ShotgunWasEmpty = 0;
-      }
-      TNT1 A 0 NoDelay A_k8ConLog(va("user_ShotgunWasEmptyXXX: %s", user_ShotgunWasEmpty));
-      */
+      TNT1 A 0
+      TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 1-clamp(CountInv("BDW_ShotgunAmmo"), 0, 1))
       SHSS A 1 A_PlaySound("weapons/bdw_shotgun/sgpump")
       SHSS BCD 1
       Goto ShakeRight
@@ -105,10 +84,6 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
       SHTI GHK 2 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWREFIRE)
       SHTI ABEF 2 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWREFIRE)
       Goto OkToFire
-
-    Steady:
-      TNT1 A 1
-      Goto Ready
 
     Deselect:
       SHSS DCBA 1
@@ -138,34 +113,25 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
       SHTF DE 1 A_SetPitch(+1.0+pitch)
       SHTG A 1 A_SetPitch(+3.0+pitch)
       SHTG AA 1 A_SetPitch(+1.0+pitch)
-      Goto Pump1
-
-    Pump1:
       SHTG BCDEFG 1
       TNT1 A 0 A_FireCustomMissile("BDW_ShotCaseSpawn", 0, 0, -4, -4)
-      SHTG H 1 A_PlaySoundEx("weapons/bdw_shotgun/sgpump", "Item")
-      SHTG IJ 1
-      SHTG KL 1
-      SHTG KJIH 1
-      TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 0)
-      Goto ReadyToFireAgain
+      Goto PumpCommon
 
     Pump2:
       SHTG FG 1
+
+    PumpCommon:
       SHTG H 1 A_PlaySoundEx("weapons/bdw_shotgun/sgpump", "Item")
       SHTG IJ 1
       SHTG KL 1
       SHTG KJIH 1
       TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 0)
-
-    ReadyToFireAgain:
       SHTG A 1 Offset(10, 36) // <-- New frames
       SHTG A 1 Offset(9, 40) //
       SHTG A 1 Offset(4, 40) //
       SHTG A 1 Offset(0, 32) //
       SHTG A 0 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWREFIRE) //A_Refire
       Goto ShakeLeft
-
 
     Reload:
       TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 0)
@@ -176,61 +142,36 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
 
     ReloadNormally:
       TNT1 A 0 A_JumpIfInventory("BDW_ShotgunShell", 1, "ReloadNormallyHasShells")
+      // no ammo
+      SHTG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+      "----" A 0 A_PlaySoundEx("weapons/bdw_rifle/empty", "Weapon")
+      SHTG A 4 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
       Goto OkToFire
 
     ReloadNormallyHasShells:
       SHTG B 1
       SHTG CDE 1
 
-    ReloadNormally18:
-      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunShell", 1, "ReloadNormallyHasShells18")
+    ReloadMainLoop:
+      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunShell", 1, "ReloadDoOneStep")
 
-    ReloadNormally53:
+    ReloadComplete:
+      // no more shells, or reload complete
       TNT1 A 0 A_JumpIf(user_ShotgunWasEmpty, "Pump2")
-      SHTG FEDCB 1 //A_WeaponReady(WRF_ALLOWRELOAD)
-      SHTG A 1 //A_WeaponReady(WRF_ALLOWRELOAD)
+      SHTG FEDCB 1 //A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+      SHTG A 1 //A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
       Goto ShakeLeft
 
-    ReloadNormallyHasShells18:
-      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunAmmo", 8, "ReloadNormally53")
-      TNT1 A 0 A_GiveInventory("BDW_ShotgunAmmo", 1)
-      TNT1 A 0 A_TakeInventory("BDW_ShotgunShell", 1)
+    ReloadDoOneStep:
+      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunAmmo", 8, "ReloadComplete")
+      TNT1 A 0 {
+        A_GiveInventory("BDW_ShotgunAmmo", 1);
+        A_TakeInventory("BDW_ShotgunShell", 1);
+      }
       SSHR ABC 1
       SSHR D 1 A_PlaySound("weapons/bdw_shotgun/shellin")
       SSHR EFG 1
-      SSHR A 2 A_Refire
-      Goto ReloadNormally18
-
-
-    StartUnload:
-      SHTG A 1
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0)
-      TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 1)
-      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunAmmo", 1, "CanPerformStartUnload")
-      Goto OkToFire
-    CanPerformStartUnload:
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0)
-      SHTG ABCDEF 1
-
-    RemoveBullets:
-      TNT1 A 0 A_JumpIfInventory("BDW_ShotgunAmmo", 1, "CanPerformRemoveBullets")
-      Goto FinishUnload
-
-    CanPerformRemoveBullets:
-      TNT1 A 0 A_TakeInventory("BDW_ShotgunAmmo", 1)
-      TNT1 A 0 A_GiveInventory("BDW_ShotgunShell", 1)
-      SHTG G 1
-      SHTG H 1 A_PlaySoundEx("weapons/bdw_shotgun/sgpump", "Item")
-      SHTG IJ 1
-      SHTG KL 1
-      SHTG KJIH 1
-      TNT1 A 0 A_SetUserVar("user_ShotgunWasEmpty", 1)
-      SHTG GF 1
-      Goto RemoveBullets
-
-  FinishUnload:
-      SHTG EDCBA 1
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0)
-      Goto OkToFire
+      SSHR A 2 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWREFIRE) //A_Refire // so we can abort reloading and start firing
+      Goto ReloadMainLoop
   }
 }

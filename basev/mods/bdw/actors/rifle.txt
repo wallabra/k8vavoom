@@ -105,8 +105,8 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       TNT1 A 0 A_Raise(60)
       Goto Ready
 
-    AltFire:
-      Goto Reload
+    //AltFire:
+    //  Goto Reload
 
     Fire:
       //These ones require +1 compared to the ready ones, so that the player sees the indicator just before firing
