@@ -4033,7 +4033,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       ReplaceeClass->Replacement = Class;
       Class->Replacee = ReplaceeClass;
     } else {
-      VClass *repl = (ReplaceeClass->Replacement ?: ReplaceeClass);
+      VClass *repl = ReplaceeClass->GetReplacement();
       if (developer && repl != ReplaceeClass) GCon->Logf(NAME_Dev, "class `%s` replaces `%s` (original requiest is `%s`)", Class->GetName(), repl->GetName(), ReplaceeClass->GetName());
       repl->Replacement = Class;
       Class->Replacee = repl;
