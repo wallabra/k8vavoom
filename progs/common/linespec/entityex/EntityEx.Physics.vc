@@ -79,7 +79,7 @@ bool Physics (float DeltaTime) {
       // move, and unlink from blockmap
       UnlinkFromWorld();
       // it is safe to change this flag here
-      bNoBlockmap = false;
+      bNoBlockmap = true;
       // it is safe to change origin here
       TVec vel = Velocity*DeltaTime;
       Origin += vel;
