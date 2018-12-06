@@ -60,210 +60,143 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
   +FORCEXYBILLBOARD
   Scale 0.8
 
-  var int user_HasUnloaded;
-  var int user_Unloading;
-  var int user_spread;
-  //var int user_fuck[2];
+  var int user_HadAmmo; // this tells if we should drop empty clip
+  var int user_spread; // from 0 to 6
 
   States {
+    Spawn:
+      RIFL A -1
+      Stop
+
     PickUp:
-      //TNT1 A 0 A_k8ConLog(va("p00: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HasUnloaded, user_Unloading, user_spread, scaleX))
       TNT1 A 0
       Stop
 
-    Steady:
-      //TNT1 A 0 A_k8ConLog(va("s00: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HasUnloaded, user_Unloading, user_spread, scaleX))
-      TNT1 A 1
-      Goto Ready
+    //Steady:
+    //  //TNT1 A 0 A_k8ConLog(va("s00: user_HadAmmo:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HadAmmo, user_Unloading, user_spread, scaleX))
+    //  TNT1 A 1
+    //  Goto Ready
 
     Ready:
-      TNT1 A 2
-      //TNT1 A 0 A_k8ConLog(va("000: user_fuck[0]=%d", user_fuck[0]));
-      //TNT1 A 0 A_SetUserArray("user_fuck", 0, user_fuck[0]+1);
-      //TNT1 A 0 A_k8ConLog(va("000: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HasUnloaded, user_Unloading, user_spread, scaleX))
-      //TNT1 A 0 A_k8ConLog(va("000: self=%C; ssr=%C", GetSelf(), GetSSR()))
-      //!TNT1 A 0 A_k8ConLog(va("000: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HasUnloaded, user_Unloading, user_spread, scaleX))
-      //TNT1 A 0 A_JumpIf(user_Unloading, 2)
       TNT1 A 0 A_PlaySoundEx("weapons/bdw_rifle/clipin", "Weapon")
-      TNT1 A 0 A_SetUserVar("user_HasUnloaded", 0);
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0);
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, 2)
-      TNT1 A 0 A_SetUserVar("user_HasUnloaded", 1);
-      TNT1 A 0 A_SetUserVar("user_spread", 0);
-      //TNT1 A 0 A_k8ConLog(va("001: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HasUnloaded, user_Unloading, user_spread, scaleX))
-      RIFS ABC 1
+      RIF4 D 1 Offset(-10, 46)
+      RIF4 D 1 Offset(-5, 38)
+      RIF4 D 1 Offset(-2, 34)
 
-    OkToFire:
-      TNT1 A 0 A_JumpIf(user_Unloading, "StartUnload")
-      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
-      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
-      RIFG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
-      Goto OkToFire
+    ReadyAfterRefire:
+      TNT1 A 0 A_SetUserVar("user_HadAmmo", 0)
+      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "ReadyLoop")
+      TNT1 A 0 A_SetUserVar("user_HadAmmo", 1)
+
+    ReadyLoop:
+      //This is a swanky unnecessary bit of code to power the indicator on top of the gun - select our sprite name based on the amount of ammo that's loaded. Same happens in the Fire state.
+      "----" A 0 A_SetUserVar("user_spread", max(0, user_spread-5))
+      RIF1 D 0 A_JumpIfInventory("BDW_RifleAmmo", 21, "ReadyLoop2")
+      RIF2 D 0 A_JumpIfInventory("BDW_RifleAmmo", 11, "ReadyLoop2")
+      RIF3 D 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "ReadyLoop2")
+      RIF4 D 0
+    ReadyLoop2:
+      "----" D 1 A_WeaponReady(WRF_ALLOWRELOAD)
+      Goto ReadyLoop
 
     Deselect:
-      RIFS CBA 1
+      RIF4 B 1 Offset(-2, 34)
+      RIF4 B 1 Offset(-5, 38)
+      RIF4 B 1 Offset(-10, 46)
       TNT1 AAAAAAAAAAAAAAAAAA 0 A_Lower
       TNT1 A 1
       Wait
 
     Select:
-      TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAA 0 A_Raise
+      TNT1 A 0 A_Raise(60)
       Goto Ready
 
-    Reload:
-      Goto StartReload
-
-    Spawn:
-      RIFL A 0
-      //TNT1 A 0 A_k8ConLog(va("S00: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f (%d)", user_HasUnloaded, user_Unloading, user_spread, scaleX, GetIntFieldByName('user_unloading')))
-      //TNT1 A 0 A_k8ConLog(va("S00: user_HasUnloaded:%s; user_Unloading:%s; spread:%s; scalex=%f", user_HasUnloaded, user_Unloading, user_spread, scaleX))
-      //TNT1 A 0 A_SetUserVar("user_spread", -1)
-      RIFL A -1
-      Stop
-
     Fire:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "FireDo0")
-      Goto StartReload
+      //These ones require +1 compared to the ready ones, so that the player sees the indicator just before firing
+      RIF1 D 0 A_JumpIfInventory("BDW_RifleAmmo", 22, "FireAnimate")
+      RIF2 D 0 A_JumpIfInventory("BDW_RifleAmmo", 12, "FireAnimate")
+      RIF3 D 0 A_JumpIfInventory("BDW_RifleAmmo", 2, "FireAnimate")
+      RIF4 D 0
 
-    FireDo0:
-      //!TNT1 A 0 A_JumpIfInventory("BDW_RifleSpread", 5, "FireHighSpread")
-      //!TNT1 A 0 A_JumpIfInventory("BDW_RifleSpread", 3, "FireMidSpread")
-      TNT1 A 0 A_JumpIf(user_spread >= 5, "FireHighSpread");
-      TNT1 A 0 A_JumpIf(user_spread >= 3, "FireMidSpread");
-      //!TNT1 A 0 A_GiveInventory("BDW_RifleSpread", 1)
-      TNT1 A 0 A_SetUserVar("user_spread", min(6, user_spread+1));
-      TNT1 A 0 A_PlaySound("weapons/bdw_rifle/shot")
-      RIFF A 1 BRIGHT A_AlertMonsters
-      TNT1 A 0 A_SpawnItemEx("BDW_PlayerMuzzle", 30, 5, 30)
-      RIFF B 1 BRIGHT A_FireBullets(2, 2, 1, 9, "BDW_HitPuff")
-      //RIFF A 0 //A_FireCustomMissile("BDW_Tracer", random(-1, 1), 0, -1, -12, 0, random(-1, 1))
-      RIFF B 0 BRIGHT A_SetPitch(-1.3+pitch)
-      TNT1 A 0 A_TakeInventory("BDW_RifleAmmo", 1)
-      RIFF B 1 BRIGHT A_SetPitch(+0.6+pitch)
-      RIFF C 0 A_FireCustomMissile("BDW_RifleCaseSpawn", 5, 0, 6, -6)
-      RIFG A 1 A_SetPitch(+0.5+pitch)
-      RIFG A 1 A_Refire
-      RIFG A 4 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
-      RIFG A 5 A_WeaponReady(WRF_NOBOB|WRF_ALLOWRELOAD)
-      Goto OkToFire
+    FireAnimate:
+      "----" A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "FireDoIt")
+      Goto Reload
 
-    FireMidSpread:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "FireMidSpreadDo0")
-      Goto StartReload
+    FireDoIt:
+      "----" A 0
+        {
+          if (user_spread >= 3) A_PlaySound("weapons/bdw_rifle/shotfast");
+          else A_PlaySound("weapons/bdw_rifle/shot");
+        }
+      "####" A 1 BRIGHT A_AlertMonsters
+      "----" A 0 A_SpawnItemEx("BDW_PlayerMuzzle", 30, 5, 30)
+      "####" A 1 BRIGHT // not B, i don't like that frame
+        {
+               if (user_spread >= 5) A_FireBullets(7, 7, 1, 9, "BDW_HitPuff"); // high
+          else if (user_spread >= 3) A_FireBullets(4, 4, 1, 9, "BDW_HitPuff"); // mid
+          else A_FireBullets(2, 2, 1, 9, "BDW_HitPuff"); // normal
+        }
+      // here we can fire tracer: A_FireCustomMissile("BDW_Tracer", 0, 0, 0, -12, 0, random(-1,1)) -2,-2; -4,-4
+      "----" B 0 BRIGHT
+        {
+               if (user_spread >= 5) A_SetPitch(-0.7+pitch);
+          else if (user_spread >= 3) A_SetPitch(-1.0+pitch);
+          else A_SetPitch(-1.3+pitch);
+        }
+      "----" A 0 BRIGHT A_TakeInventory("BDW_RifleAmmo", 1)
+      "####" A 1 BRIGHT // not B, i don't like that frame
+        {
+               if (user_spread >= 5) A_SetPitch(+0.4+pitch);
+          else if (user_spread >= 3) A_SetPitch(+0.5+pitch);
+          else A_SetPitch(+0.6+pitch);
+        }
+      "####" C 1 Offset(0, 33) A_FireCustomMissile("BDW_RifleCaseSpawn", 5, 0, 6, -6)
+        //"####" C 1 Offset(0, 33) A_SpawnItemEx("BDW_RifleCaseSpawn", 17, 3, 35, 0, random(3,6), random(3,7))
+      "####" D 1
+        {
+               if (user_spread >= 5) A_SetPitch(+0.3+pitch);
+          else if (user_spread >= 3) A_SetPitch(+0.4+pitch);
+          else A_SetPitch(+0.5+pitch);
+          // more spread
+          A_SetUserVar("user_spread", min(6, user_spread+1));
+        }
+      "----" A 1 A_Refire // was 1
+      //"----" A 4 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
+      //"----" A 5 A_WeaponReady(WRF_NOBOB|WRF_ALLOWRELOAD)
+      Goto ReadyLoop
 
-    FireMidSpreadDo0:
-      //!TNT1 A 0 A_GiveInventory("BDW_RifleSpread", 1)
-      TNT1 A 0 A_SetUserVar("user_spread", min(6, user_spread+1));
-      TNT1 A 0 A_PlaySound("weapons/bdw_rifle/shotfast")
-      RIFF A 1 BRIGHT A_AlertMonsters
-      TNT1 A 0 A_SpawnItemEx("BDW_PlayerMuzzle", 30, 5, 30)
-      RIFF B 1 BRIGHT A_FireBullets(4, 4, 1, 9, "BDW_HitPuff")
-      //RIFF A 0 //A_FireCustomMissile("BDW_Tracer", random(-2, 2), 0, -1, -12, 0, random(-2, 2))
-      RIFF B 0 BRIGHT A_SetPitch(-1.0+pitch)
-      TNT1 A 0 A_TakeInventory("BDW_RifleAmmo", 1)
-      RIFF B 1 BRIGHT A_SetPitch(+0.5+pitch)
-      RIFF C 0 A_FireCustomMissile("BDW_RifleCaseSpawn", 5, 0, 6, -6)
-      RIFG A 1 A_SetPitch(+0.4+pitch)
-      RIFG A 1 A_Refire
-      RIFG A 4 A_Refire //A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
-      RIFG A 5 A_WeaponReady(WRF_NOBOB|WRF_ALLOWRELOAD)
-      Goto OkToFire
-
-    FireHighSpread:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "FireHighSpreadDo0")
-      Goto StartReload
-
-    FireHighSpreadDo0:
-      TNT1 A 0 A_PlaySound("weapons/bdw_rifle/shotfast")
-      RIFF A 1 BRIGHT A_AlertMonsters
-      TNT1 A 0 A_SpawnItemEx("BDW_PlayerMuzzle", 30, 5, 30)
-      RIFF B 1 BRIGHT A_FireBullets(7, 7, 1, 9, "BDW_HitPuff")
-      //RIFF A 0 //A_FireCustomMissile("BDW_Tracer", random(-4, 4), 0, -1, -12, 0, random(-4, 4))
-      RIFF B 0 BRIGHT A_SetPitch(-0.7+pitch)
-      TNT1 A 0 A_TakeInventory("BDW_RifleAmmo", 1)
-      RIFF B 1 BRIGHT A_SetPitch(+0.4+pitch)
-      RIFF C 0 A_FireCustomMissile("BDW_RifleCaseSpawn", 5, 0, 6, -6)
-      RIFG A 1 A_SetPitch(+0.3+pitch)
-      RIFG A 1 A_Refire
-      RIFG A 4 A_Refire //A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
-      RIFG A 5 A_WeaponReady(WRF_NOBOB|WRF_ALLOWRELOAD)
-      Goto OkToFire
-
-    NoAmmo:
-      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
-      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
-      RIFG A 1 A_PlaySoundEx("weapons/bdw_rifle/empty", "Weapon")
-      Goto OkToFire
-
-
-    StartReload:
-      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
-      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
+    Reload:
+      "----" A 0 A_SetUserVar("user_spread", max(0, user_spread-5))
+      "----" A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "ReadyLoop")
+      "----" A 0 A_JumpIfInventory("BDW_RifleClip", 1, "ReloadDoIt")
+      // no ammo
+      "----" A 1 A_PlaySoundEx("weapons/bdw_rifle/empty", "Weapon")
       RIFG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "OkToFire")
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleClip", 1, "ReloadDoIt0")
-      Goto NoAmmo
+      Goto ReadyLoop
 
-    ReloadDoIt0:
-      TNT1 A 0 A_PlaySoundEx("weapons/bdw_rifle/reload", "Weapon")
-      TNT1 A 0 A_JumpIf(user_HasUnloaded, "ReloadSkipEmptyClip")
-      RIFR F 1 A_FireCustomMissile("BDW_EmptyClipSpawn", -5, 0, 8, -4)
-
+    ReloadDoIt:
+      "----" A 0 A_PlaySoundEx("weapons/bdw_rifle/reload", "Weapon")
+      RIFR ABCDE 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+      "----" A 0 A_JumpIf(user_HadAmmo == 0, "ReloadSkipEmptyClip")
+      RIFR F 1 A_FireCustomMissile("BDW_EmptyClipSpawn", -5, 0, 8, -4) //A_SpawnItemEx("EmptyClip", 17, 2, 35, 0, random(3,6), 4)
     ReloadSkipEmptyClip:
-      RIFR GGGGGGGG 1
+      RIFR G 8
       RIFR HIKL 1
-      RIFR MMM 1
-      TNT1 A 0 A_SetUserVar("user_HasUnloaded", 0)
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "InsertBullets2") //30+1 effect
-
-    InsertBullets:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "InsertBullets2")
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleClip", 1, "ReallyInsertBullets")
-      Goto OkToFire
-
-    ReallyInsertBullets:
-      TNT1 A 0 A_GiveInventory("BDW_RifleAmmo", 1)
-      TNT1 A 0 A_TakeInventory("BDW_RifleClip", 1)
-      Goto InsertBullets
-
-    InsertBullets2:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "OkToFire")
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleClip", 1, "ReallyInsertBullets2")
-      Goto OkToFire
-
-    ReallyInsertBullets2:
-      TNT1 A 0 A_GiveInventory("BDW_RifleAmmo", 1)
-      TNT1 A 0 A_TakeInventory("BDW_RifleClip", 1)
-      Goto InsertBullets2
-
-
-    StartUnload:
-      //!TNT1 A 0 A_TakeInventory("BDW_RifleSpread", 5)
-      TNT1 A 0 A_SetUserVar("user_spread", max(0, user_spread-5));
-      RIFG A 1 A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0)
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "StartUnloadDo0")
-      Goto NoAmmo
-
-    StartUnloadDo0:
-      RIFR TSRQPO 1
-      TNT1 A 0 A_PlaySoundEx("weapons/bdw_rifle/reload", "Weapon")
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0)
-
-    RemoveBullets:
-      TNT1 A 0 A_JumpIfInventory("BDW_RifleAmmo", 1, "RemoveBulletsDo0")
-      Goto FinishUnload
-
-    RemoveBulletsDo0:
-      TNT1 A 0 A_TakeInventory("BDW_RifleAmmo", 1)
-      TNT1 A 0 A_GiveInventory("BDW_RifleClip", 1)
-      Goto RemoveBullets
-
-    FinishUnload:
-      RIFR NMLKIGHGFEDCBA 1
-      TNT1 A 0 A_PlaySoundEx("weapons/bdw_rifle/empty", "Weapon")
-      TNT1 A 0 A_SetUserVar("user_HasUnloaded", 1)
-      TNT1 A 0 A_SetUserVar("user_Unloading", 0)
-      Goto OkToFire
+      RIFR M 3
+      RIFR NOPQRST 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+      // reload loop
+    ReloadMainLoop:
+      "----" A 0 A_JumpIfInventory("BDW_RifleAmmo", 31, "ReadyAfterRefire")
+      "----" A 0 A_JumpIfInventory("BDW_RifleClip", 1, "ReloadMainLoopOk")
+      // no more ammo
+      RIFG A 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+      Goto ReadyAfterRefire
+    ReloadMainLoopOk:
+      "----" A 0
+        {
+          A_TakeInventory("BDW_RifleClip", 1);
+          A_GiveInventory("BDW_RifleAmmo", 1);
+        }
+      Goto ReloadMainLoop
   }
 }

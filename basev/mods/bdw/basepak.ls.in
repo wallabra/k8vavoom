@@ -14,5 +14,4 @@ $recursedir actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/
 decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 gldefs.txt    @CMAKE_CURRENT_SOURCE_DIR@/gldefs.txt
-//keyconf.txt   @CMAKE_CURRENT_SOURCE_DIR@/keyconf.txt
 sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
