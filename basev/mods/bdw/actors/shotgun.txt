@@ -8,7 +8,8 @@ ACTOR BDW_ShotgunAmmo : Ammo {
 
 
 ACTOR BDW_ShotgunShell : Ammo Replaces Shell {
-  Inventory.PickupMessage "$GOTSHELLS"
+  //Inventory.PickupMessage "$GOTSHELLS"
+  Inventory.PickupMessage "Picked up 4 shotgun shells."
   Inventory.Amount 4
   Inventory.MaxAmount 50
   Ammo.BackpackAmount 8
@@ -23,7 +24,8 @@ ACTOR BDW_ShotgunShell : Ammo Replaces Shell {
 
 
 ACTOR BDW_ShotgunShellBox : BDW_ShotgunShell Replaces ShellBox {
-  Inventory.PickupMessage "$GOTSHELLBOX"
+  //Inventory.PickupMessage "$GOTSHELLBOX"
+  Inventory.PickupMessage "Picked up a box of shotgun shells."
   Inventory.Amount 20
   States {
     Spawn:
@@ -45,9 +47,11 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   Weapon.AmmoGive2 0
   Weapon.AmmoType1 "BDW_ShotgunShell"
   Weapon.AmmoType2 "BDW_ShotgunAmmo"
-  Inventory.PickupMessage "$GOTSHOTGUN"
+  //Inventory.PickupMessage "$GOTSHOTGUN"
+  Inventory.PickupMessage "You got the shotgun!"
   Inventory.PickupSound "weapons/bdw_shotgun/sgpump"
-  Obituary "$OB_MPSHOTGUN"
+  //Obituary "$OB_MPSHOTGUN"
+  Obituary "%o chewed on %k's boomstick."
   AttackSound "None"
   +WEAPON.NOALERT
   +WEAPON.NOAUTOAIM
