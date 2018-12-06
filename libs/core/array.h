@@ -30,7 +30,7 @@
 
 enum EArrayNew { E_ArrayNew };
 
-inline void *operator new (size_t, void *Ptr, EArrayNew, EArrayNew) { return Ptr; }
+inline void *operator new (size_t, void *ptr, EArrayNew, EArrayNew) { return ptr; }
 
 
 template<class T> class TArray {
@@ -43,7 +43,7 @@ private:
 public:
   TArray () : ArrNum(0), ArrSize(0), ArrData(nullptr) {}
   TArray (ENoInit) {}
-  TArray (const TArray<T> &Other) : ArrNum(0), ArrSize(0), ArrData(nullptr) { *this = Other; }
+  TArray (const TArray<T> &other) : ArrNum(0), ArrSize(0), ArrData(nullptr) { *this = other; }
 
   ~TArray () { clear(); }
 
@@ -58,21 +58,21 @@ public:
   inline void clear () {
     if (ArrData) {
       Flatten(); // just in case
-      for (int i = 0; i < ArrSize; ++i) ArrData[i].~T();
+      for (int i = 0; i < ArrNum; ++i) ArrData[i].~T();
       Z_Free(ArrData);
     }
     ArrData = nullptr;
     ArrNum = ArrSize = 0;
   }
 
-  // don't free array data
+  // don't free array itself
   inline void reset () {
     Flatten(); // just in case
     for (int f = 0; f < ArrNum; ++f) ArrData[f].~T();
     ArrNum = 0;
   }
 
-  // don't free array data
+  // don't free array itself
   inline void resetNoDtor () {
     Flatten(); // just in case
     ArrNum = 0;
@@ -84,6 +84,7 @@ public:
 
   inline int NumAllocated () const { return ArrSize; }
   inline int numAllocated () const { return ArrSize; }
+  inline int capacity () const { return ArrSize; }
 
   inline T *Ptr () { return ArrData; }
   inline const T *Ptr () const { return ArrData; }
@@ -91,6 +92,7 @@ public:
   inline T *ptr () { return ArrData; }
   inline const T *ptr () const { return ArrData; }
 
+  // this changes only capacity, length will not be increased (but can be decreased)
   void Resize (int NewSize) {
     check(NewSize >= 0);
 
@@ -99,53 +101,38 @@ public:
     Flatten(); // just in case
     if (NewSize == ArrSize) return;
 
-    //k8: ok, it was fubared anyway, so we'll go with realloc
-    if (NewSize < ArrSize) {
-      // free unused elements
-      for (int i = NewSize; i < ArrSize; ++i) ArrData[i].~T();
-    }
+    // free unused elements
+    for (int i = NewSize; i < ArrNum; ++i) ArrData[i].~T();
+
     // realloc buffer
-    T *newbuf = (T *)Z_Realloc(ArrData, NewSize*sizeof(T));
-    if (!newbuf) { fprintf(stderr, "FATAL: out of memory!\n"); abort(); }
-    ArrData = newbuf;
-    // init new data
-    if (NewSize > ArrSize) {
-      memset((void *)(ArrData+ArrSize), 0, (NewSize-ArrSize)*sizeof(T));
-      for (int i = ArrSize; i < NewSize; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
-    }
+    ArrData = (T *)Z_Realloc(ArrData, NewSize*sizeof(T));
 
+    // no need to init new data, allocator will do it later
     ArrSize = NewSize;
     if (ArrNum > NewSize) ArrNum = NewSize;
-
-    /*
-    T *OldData = ArrData;
-    int OldSize = ArrSize;
-    ArrSize = NewSize;
-    if (ArrNum > NewSize) ArrNum = NewSize;
-
-    ArrData = (T *)Z_Malloc(ArrSize*sizeof(T));
-    memset((void *)ArrData, 0, ArrSize*sizeof(T));
-    for (int i = 0; i < ArrSize; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
-    for (int i = 0; i < ArrNum; ++i) ArrData[i] = OldData[i];
-
-    if (OldData) {
-      for (int i = 0; i < OldSize; ++i) OldData[i].~T();
-      Z_Free(OldData);
-    }
-    */
   }
   inline void resize (int NewSize) { Resize(NewSize); }
 
   void SetNum (int NewNum, bool bResize=true) {
     check(NewNum >= 0);
+    Flatten(); // just in case
     if (bResize || NewNum > ArrSize) Resize(NewNum);
+    check(ArrSize >= NewNum);
+    if (ArrNum > NewNum) {
+      // destroy freed elements
+      for (int i = NewNum; i < ArrNum; ++i) ArrData[i].~T();
+    } else if (ArrNum < NewNum) {
+      // initialize new elements
+      memset((void *)(ArrData+ArrNum), 0, (NewNum-ArrNum)*sizeof(T));
+      for (int i = ArrNum; i < NewNum; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
+    }
     ArrNum = NewNum;
   }
   inline void setNum (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
   inline void setLength (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
   inline void SetLength (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
 
-  void SetNumWithReserve (int NewNum) {
+  inline void SetNumWithReserve (int NewNum) {
     check(NewNum >= 0);
     if (NewNum > ArrSize) {
 #ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
@@ -154,110 +141,113 @@ public:
       Resize(NewNum+NewNum*3/8+32);
 #endif
     }
-    ArrNum = NewNum;
+    SetNum(NewNum, false); // don't resize
   }
   inline void setLengthReserve (int NewNum) { SetNumWithReserve(NewNum); }
 
   inline void Condense () { Resize(ArrNum); }
   inline void condense () { Resize(ArrNum); }
 
-  TArray<T> &operator = (const TArray<T> &Other) {
+  // this won't copy capacity (there is no reason to do it)
+  TArray<T> &operator = (const TArray<T> &other) {
+    if (&other == this) return *this; // oops
+    check(!other.Is2D());
     clear();
-    ArrNum = Other.ArrNum;
-    ArrSize = Other.ArrSize;
-    if (ArrSize) {
-      ArrData = (T *)Z_Malloc(ArrSize*sizeof(T));
-      memset((void *)ArrData, 0, ArrSize*sizeof(T));
-      for (int i = 0; i < ArrSize; ++i) new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
-      for (int i = 0; i < ArrNum; ++i) ArrData[i] = Other.ArrData[i];
+    int newsz = other.ArrNum;
+    if (newsz) {
+      ArrNum = ArrSize = newsz;
+      ArrData = (T *)Z_Malloc(newsz*sizeof(T));
+      memset((void *)ArrData, 0, newsz*sizeof(T));
+      for (int i = 0; i < newsz; ++i) {
+        new(&ArrData[i], E_ArrayNew, E_ArrayNew)T;
+        ArrData[i] = other.ArrData[i];
+      }
     }
     return *this;
   }
 
-  inline T &operator [] (int Index) {
-    check(Index >= 0);
-    check(Index < ArrNum);
-    return ArrData[Index];
+  inline T &operator [] (int index) {
+    check(index >= 0);
+    check(index < ArrNum);
+    return ArrData[index];
   }
 
-  inline const T &operator [] (int Index) const {
-    check(Index >= 0);
-    check(Index < ArrNum);
-    return ArrData[Index];
+  inline const T &operator [] (int index) const {
+    check(index >= 0);
+    check(index < ArrNum);
+    return ArrData[index];
   }
 
-  void Insert (int Index, const T &Item) {
-    if (ArrNum == ArrSize) {
-#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
-      Resize(ArrSize+64);
-#else
-      Resize(ArrSize+ArrSize*3/8+32);
-#endif
+  inline T &last () {
+    check(!Is2D());
+    check(ArrNum > 0);
+    return ArrData[ArrNum-1];
+  }
+
+  inline const T &last () const {
+    check(!Is2D());
+    check(ArrNum > 0);
+    return ArrData[ArrNum-1];
+  }
+
+  inline void drop () {
+    check(!Is2D());
+    if (ArrNum > 0) {
+      --ArrNum;
+      ArrData[ArrNum].~T();
     }
-    ++ArrNum;
-    for (int i = ArrNum-1; i > Index; --i) ArrData[i] = ArrData[i-1];
-    ArrData[Index] = Item;
-  }
-  void insert (int Index, const T &Item) { Insert(Index, Item); }
-
-  inline int Append (const T &Item) {
-    if (ArrNum == ArrSize) {
-#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
-      Resize(ArrSize+64);
-#else
-      Resize(ArrSize+ArrSize*3/8+32);
-#endif
-    }
-    ArrData[ArrNum] = Item;
-    ++ArrNum;
-    return ArrNum-1;
   }
 
-  inline int append (const T &Item) { return Append(Item); }
+  inline void Insert (int index, const T &item) {
+    check(!Is2D());
+    int oldlen = ArrNum;
+    setLengthReserve(oldlen+1);
+    for (int i = oldlen; i > index; --i) ArrData[i] = ArrData[i-1];
+    ArrData[index] = item;
+  }
+  inline void insert (int index, const T &item) { Insert(index, item); }
+
+  inline int Append (const T &item) {
+    check(!Is2D());
+    int oldlen = ArrNum;
+    setLengthReserve(oldlen+1);
+    ArrData[oldlen] = item;
+    return oldlen;
+  }
+  inline int append (const T &item) { return Append(item); }
 
   inline T &Alloc () {
-    if (ArrNum == ArrSize) {
-#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
-      Resize(ArrSize+64);
-#else
-      Resize(ArrSize+ArrSize*3/8+32);
-#endif
-    }
-    return ArrData[ArrNum++];
+    check(!Is2D());
+    int oldlen = ArrNum;
+    setLengthReserve(oldlen+1);
+    return ArrData[oldlen];
   }
+  inline T &alloc () { return Alloc(); }
 
-  inline T &alloc () {
-    if (ArrNum == ArrSize) {
-#ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
-      Resize(ArrSize+64);
-#else
-      Resize(ArrSize+ArrSize*3/8+32);
-#endif
-    }
-    return ArrData[ArrNum++];
-  }
-
-  bool RemoveIndex (int Index) {
+  inline bool RemoveIndex (int index) {
     check(ArrData != nullptr);
-    check(Index >= 0);
-    check(Index < ArrNum);
-    if (Index < 0 || Index >= ArrNum) return false;
+    check(index >= 0);
+    check(index < ArrNum);
+    Flatten(); // just in case
     --ArrNum;
-    for (int i = Index; i < ArrNum; ++i) ArrData[i] = ArrData[i+1];
+    for (int i = index; i < ArrNum; ++i) ArrData[i] = ArrData[i+1];
+    ArrData[ArrNum].~T();
     return true;
   }
+  inline bool removeAt (int index) { return RemoveIndex(index); }
 
-  bool removeAt (int Index) { return RemoveIndex(Index); }
-
-  inline void Remove (const T &Item) {
+  inline int Remove (const T &item) {
+    Flatten(); // just in case
+    int count = 0;
     for (int i = 0; i < ArrNum; ++i) {
-      if (ArrData[i] == Item) RemoveIndex(i--);
+      if (ArrData[i] == item) { ++count; RemoveIndex(i--); }
     }
+    return count;
   }
-
-  inline void remove (const T &Item) { Remove(Item); }
+  inline int remove (const T &item) { return Remove(item); }
 
   friend VStream &operator << (VStream &Strm, TArray<T> &Array) {
+    check(!Array.Is2D());
     int NumElem = Array.Num();
     Strm << STRM_INDEX(NumElem);
     if (Strm.IsLoading()) Array.SetNum(NumElem);
