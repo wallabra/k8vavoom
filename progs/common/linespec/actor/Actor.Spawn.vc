@@ -318,11 +318,10 @@ final void A_SpawnItem(class!Actor ItemType, optional float Distance,
 //
 //==========================================================================
 
-final bool A_SpawnItemEx (class!Actor ItemType, optional float XOffs,
-  optional float YOffs, optional float ZOffs, optional float XVel,
-  optional float YVel, optional float ZVel, optional float Angle,
-  optional int Flags, optional int Chance,
-  //k8:old:optional bool ApplyTranslation
+final bool A_SpawnItemEx (class!Actor ItemType,
+  optional float XOffs, optional float YOffs, optional float ZOffs,
+  optional float XVel, optional float YVel, optional float ZVel,
+  optional float Angle, optional int Flags, optional int Chance,
   optional int newtid)
 {
   if (!ItemType) {
@@ -358,16 +357,16 @@ final bool A_SpawnItemEx (class!Actor ItemType, optional float XOffs,
     RememberParent:true);
 
   if (A) {
-    //k8:removed:if (ApplyTranslation) A.Translation = Translation;
-    A.Velocity.x = fclamp(XVel * 35.0, -1024, 1024);
-    A.Velocity.y = fclamp(YVel * 35.0, -1024, 1024);
-    A.Velocity.z = fclamp(ZVel * 35.0, -1024, 1024);
+    A.Velocity.x = fclamp(XVel*35.0, -1024, 1024);
+    A.Velocity.y = fclamp(YVel*35.0, -1024, 1024);
+    A.Velocity.z = fclamp(ZVel*35.0, -1024, 1024);
     A.Angles.yaw = Angle;
-    if (!(Flags & SXF_ABSOLUTEVELOCITY)) {
+    if (!(Flags&SXF_ABSOLUTEVELOCITY)) {
       // the same issue as with offsets
       A.Velocity.y = -A.Velocity.y;
       VectorRotateAroundZ(ref A.Velocity, Angle);
     }
+    //print("SPAWN '%C': vel=(%s,%s,%s); A.Velocity=%s", A, XVel, YVel, ZVel, A.Velocity);
 
     if (Flags&SXF_NOPOINTERS) { A.Master = none; A.Target = none; A.Tracer = none; }
 
@@ -386,7 +385,7 @@ final bool A_SpawnItemEx (class!Actor ItemType, optional float XOffs,
     if (Flags&SXF_ISTRACER) Tracer = A;
     if (Flags&SXF_TRANSFERSPECIAL) { A.Special = Special; foreach (auto f; 0..Args.length) A.Args[f] = Args[f]; }
     if (Flags&SXF_CLEARCALLERSPECIAL) { Special = 0; foreach (auto f; 0..Args.length) Args[f] = 0; }
-    if (specified_newtid) A.SetTID(newtid);
+    if (specified_newtid && newtid >= 0) A.SetTID(newtid);
     return true;
   }
 
