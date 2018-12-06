@@ -477,7 +477,7 @@ void VCommand::ForwardToServer () {
 int VCommand::CheckParm (const char *check) {
   guard(VCommand::CheckParm);
   for (int i = 1; i < Args.Num(); ++i) {
-    if (!Args[i].ICmp(check) == 0) return i;
+    if (Args[i].ICmp(check) == 0) return i;
   }
   return 0;
   unguard;
