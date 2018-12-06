@@ -442,7 +442,11 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   int chan = GetChannel(sound_id, origin_id, channel, priority);
   if (chan == -1) return; // no free channels
 
-  if (developer) GCon->Logf(NAME_Dev, "PlaySound: sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d", sound_id, *GSoundManager->S_sfx[sound_id].TagName, origin_id, channel, chan);
+  if (developer) {
+    static int checked = -1;
+    if (checked < 0) checked = (GArgs.CheckParm("-debug-sound") ? 1 : 0);
+    if (checked > 0) GCon->Logf(NAME_Dev, "PlaySound: sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d", sound_id, *GSoundManager->S_sfx[sound_id].TagName, origin_id, channel, chan);
+  }
 
   float pitch = 1.0f;
   if (GSoundManager->S_sfx[sound_id].ChangePitch) {
