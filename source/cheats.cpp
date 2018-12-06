@@ -30,6 +30,16 @@
 #include "sv_local.h"
 
 
+extern "C" {
+  static int sortCmpVStrCI (const void *a, const void *b, void *udata) {
+    if (a == b) return 0;
+    VStr *sa = (VStr *)a;
+    VStr *sb = (VStr *)b;
+    return sa->ICmp(*sb);
+  }
+}
+
+
 //==========================================================================
 //
 //  CheatAllowed
@@ -106,15 +116,6 @@ COMMAND_WITH_AC(Summon) {
   if (CheatAllowed(Player)) Player->eventCheat_Summon();
 }
 
-extern "C" {
-  static int sortCmpVStrCI (const void *a, const void *b, void *udata) {
-    if (a == b) return 0;
-    VStr *sa = (VStr *)a;
-    VStr *sb = (VStr *)b;
-    return sa->ICmp(*sb);
-  }
-}
-
 COMMAND_AC(Summon) {
   if (aidx != 1) return VStr::EmptyString;
   VClass *actor = VMemberBase::StaticFindClass("Actor");
@@ -172,12 +173,37 @@ COMMAND(NoClip) {
 //  Gimme_f
 //
 //==========================================================================
-COMMAND(Gimme) {
+COMMAND_WITH_AC(Gimme) {
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
   if (CheatAllowed(Player)) Player->eventCheat_Gimme();
+}
+
+COMMAND_AC(Gimme) {
+  if (aidx != 1) return VStr::EmptyString;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  TArray<VStr> list;
+  list.append(VStr("All"));
+  list.append(VStr("AllMap"));
+  list.append(VStr("Ammo"));
+  list.append(VStr("Armor"));
+  list.append(VStr("Armor2"));
+  list.append(VStr("Arsenal"));
+  list.append(VStr("Backpack"));
+  list.append(VStr("Bersek"));
+  list.append(VStr("Choppers"));
+  list.append(VStr("Health"));
+  list.append(VStr("Health2"));
+  list.append(VStr("Invisibility"));
+  list.append(VStr("Invulnerability"));
+  list.append(VStr("Keys"));
+  list.append(VStr("LiteAmp"));
+  list.append(VStr("Powers"));
+  list.append(VStr("Suit"));
+  list.append(VStr("Weapons"));
+  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
 }
 
 
