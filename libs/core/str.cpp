@@ -1228,7 +1228,17 @@ VStr VStr::FromChar (int c) {
 }
 
 
-VStr VStr::quote () const {
+bool VStr::needQuoting () const {
+  int len = length();
+  for (int f = 0; f < len; ++f) {
+    vuint8 ch = (vuint8)data[f];
+    if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) return true;
+  }
+  return false;
+}
+
+
+VStr VStr::quote (bool addQCh) const {
   int len = length();
   char hexb[6];
   for (int f = 0; f < len; ++f) {
@@ -1236,12 +1246,16 @@ VStr VStr::quote () const {
     if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) {
       // need to quote it
       VStr res;
+      if (addQCh) res += '"';
       for (int c = 0; c < len; ++c) {
         ch = (vuint8)data[c];
         if (ch < ' ') {
           switch (ch) {
             case '\t': res += "\\t"; break;
             case '\n': res += "\\n"; break;
+            case '\r': res += "\\r"; break;
+            case 27: res += "\\e"; break;
+            case TEXT_COLOUR_ESCAPE: res += "\\c"; break;
             default:
               snprintf(hexb, sizeof(hexb), "\\x%02x", ch);
               res += hexb;
@@ -1257,6 +1271,7 @@ VStr VStr::quote () const {
           res += (char)ch;
         }
       }
+      if (addQCh) res += '"';
       return res;
     }
   }
@@ -1435,6 +1450,77 @@ starCheck:
    //if (str.length) str = str[1..$];
    if (*str) ++str;
    goto loopStart;
+}
+
+
+//==========================================================================
+//
+//  VStr::Tokenise
+//
+//==========================================================================
+void VStr::Tokenise (TArray <VStr> &args) const {
+  //args.reset();
+  if (length() == 0) return;
+  const char *str = getCStr();
+  while (*str) {
+    // whitespace
+    if ((vuint8)*str <= ' ') { ++str; continue; }
+
+    // string?
+    if (*str == '"' || *str == '\'') {
+      char qch = *str++;
+      VStr ss;
+      int cc, d;
+      while (*str && *str != qch) {
+        if (str[0] == '\\' && str[1]) {
+          ++str;
+          switch (*str++) {
+            case 't': ss += '\t'; break;
+            case 'n': ss += '\n'; break;
+            case 'r': ss += '\r'; break;
+            case 'e': ss += '\x1b'; break;
+            case 'c': ss += TEXT_COLOUR_ESCAPE; break;
+            case '\\': case '"': case '\'': ss += str[-1]; break;
+            case 'x':
+              cc = 0;
+              d = (*str ? VStr::digitInBase(*str, 16) : -1);
+              if (d >= 0) {
+                cc = d;
+                ++str;
+                d = (*str ? VStr::digitInBase(*str, 16) : -1);
+                if (d >= 0) { cc = cc*16+d; ++str; }
+                ss += (char)cc;
+              } else {
+                ss += str[-1];
+              }
+              break;
+            default: // ignore other quotes
+              //ss += '\\';
+              ss += str[-1];
+              break;
+          }
+        } else {
+          ss += *str++;
+        }
+      }
+      if (*str) { check(*str == qch); ++str; } // skip closing quote
+      //fprintf(stderr, "*#*<%s>\n", *ss);
+      args.append(ss);
+    } else {
+      // simple arg
+      const char *end = str;
+      while ((vuint8)*end > ' ') ++end;
+      args.append(VStr(str, (int)(ptrdiff_t)(end-str)));
+      //fprintf(stderr, "*:*<%s>\n", *args[args.length()-1]);
+      str = end;
+    }
+  }
+  /*
+  {
+    fprintf(stderr, "<%s> : %d\n", getCStr(), args.length());
+    for (int f = 0; f < args.length(); ++f) fprintf(stderr, "  %d: <%s>\n", f, *args[f]);
+  }
+  */
 }
 
 

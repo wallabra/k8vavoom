@@ -336,7 +336,9 @@ public:
     return Strm;
   }
 
-  VStr quote () const;
+  // if `addQCh` is `true`, add '"' if something was quoted
+  VStr quote (bool addQCh=false) const;
+  bool needQuoting () const;
 
   VStr EvalEscapeSequences () const;
 
@@ -470,6 +472,12 @@ public:
   inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }
 
   static bool globmatch (const char *pat, const char *str, bool caseSensitive=true);
+
+  // will not clear `args`
+  void Tokenise (TArray <VStr> &args) const;
+  inline void Tokenize (TArray <VStr> &args) const { Tokenise(args); }
+  inline void tokenise (TArray <VStr> &args) const { Tokenise(args); }
+  inline void tokenize (TArray <VStr> &args) const { Tokenise(args); }
 
 public:
   static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
