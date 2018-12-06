@@ -633,10 +633,10 @@ public:
   void UnlinkFromWorld ();
   bool CanSee (VEntity *);
 
-  void StartSound (VName, vint32, float, float, bool, bool=false);
-  void StartLocalSound (VName, vint32, float, float);
-  void StopSound (vint32);
-  void StartSoundSequence (VName, vint32);
+  void StartSound (VName Sound, vint32 Channel, float Volume, float Attenuation, bool Loop, bool Local=false);
+  void StartLocalSound (VName Sound, vint32 Channel, float Volume, float Attenuation);
+  void StopSound (vint32 Channel);
+  void StartSoundSequence (VName, vint32 Channel);
   void AddSoundSequenceChoice (VName);
   void StopSoundSequence ();
 
