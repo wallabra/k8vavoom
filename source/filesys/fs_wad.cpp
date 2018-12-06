@@ -117,8 +117,10 @@ void VWadFile::Open (const VStr &FileName, const VStr &AGwaDir, bool FixVoices, 
     // set. I don't know the reason for that. We must clear
     // the high bits for such Mac wad files to work in this
     // engine. This shouldn't break other wads.
-    for (int j = 0; j < 8; ++j) fileinfo->name[j] &= 0x7f;
-    lump_p->Name = VName(fileinfo->name, VName::AddLower8);
+    char namebuf[9];
+    for (int j = 0; j < 8; ++j) namebuf[j] = fileinfo->name[j]&0x7f;
+    namebuf[8] = 0;
+    lump_p->Name = VName(namebuf, VName::AddLower8);
     lump_p->Position = LittleLong(fileinfo->filepos);
     lump_p->Size = LittleLong(fileinfo->size);
     lump_p->Namespace = WADNS_Global;
