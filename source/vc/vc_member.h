@@ -112,6 +112,9 @@ public:
   static VClass *StaticFindClass (VName);
   static VClass *StaticFindClassNoCase (VName);
 
+  // will not clear `list`
+  static void StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass=nullptr);
+
   static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname);
 
   static void StaticSplitStateLabel (const VStr &, TArray<VName> &);

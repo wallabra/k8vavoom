@@ -338,6 +338,32 @@ VMemberBase *VMemberBase::StaticFindMemberNoCase (VName AName, VMemberBase *AOut
 
 //==========================================================================
 //
+//  VMemberBase::StaticGetClassListNoCase
+//
+//  will not clear `list`
+//
+//==========================================================================
+void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass) {
+  //FIXME: make this faster
+  int len = GMembers.length();
+  for (int f = 0; f < len; ++f) {
+    VMemberBase *m = GMembers[f];
+    if (m->MemberType == MEMBER_Class && m->Name != NAME_None) {
+      VClass *cls = (VClass *)m;
+      if (isaClass && !cls->IsChildOf(isaClass)) continue;
+      VStr n = *m->Name;
+      if (prefix.length()) {
+        if (n.length() < prefix.length()) continue;
+        if (!n.startsWithNoCase(prefix)) continue;
+      }
+      list.append(n);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::StaticFindType
 //
 //==========================================================================
