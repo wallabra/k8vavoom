@@ -90,6 +90,18 @@ VCommand::~VCommand () {
 
 //==========================================================================
 //
+//  VCommand::AutoCompleteArg
+//
+//  return non-empty string to replace arg
+//
+//==========================================================================
+VStr VCommand::AutoCompleteArg (const TArray<VStr> &args, int aidx) {
+  return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
 //  VCommand::Init
 //
 //==========================================================================
@@ -223,17 +235,13 @@ void VCommand::AddToAutoComplete (const char *string) {
 
 //==========================================================================
 //
-//  VCommand::GetAutoComplete
+//  VCommand::acCommand
 //
-//  if returned string ends with space, this is the only match
+//  autocomplete command
+//  prefix should not be empty, and should not end with space
 //
 //==========================================================================
-VStr VCommand::GetAutoComplete (const VStr &prefix) {
-  guard(VCommand::GetAutoComplete);
-
-  if (prefix.length() == 0) return prefix; // oops
-  if ((vuint8)prefix[prefix.length()-1] <= ' ') return prefix;
-
+VStr VCommand::acCommand (const VStr &prefix) {
   VStr bestmatch;
   int matchcount = 0;
 
@@ -283,7 +291,71 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
 
   // found extended match
   return bestmatch;
+}
 
+
+//==========================================================================
+//
+//  VCommand::GetAutoComplete
+//
+//  if returned string ends with space, this is the only match
+//
+//==========================================================================
+VStr VCommand::GetAutoComplete (const VStr &prefix) {
+  guard(VCommand::GetAutoComplete);
+
+  if (prefix.length() == 0) return prefix; // oops
+
+  TArray<VStr> args;
+  prefix.tokenize(args);
+  int aidx = args.length();
+  if (aidx == 0) return prefix; // wtf?!
+
+  bool endsWithBlank = ((vuint8)prefix[prefix.length()-1] <= ' ');
+
+  if (aidx == 1 && !endsWithBlank) return acCommand(prefix);
+
+  // autocomplete new arg?
+  if (aidx > 1 && !endsWithBlank) --aidx; // nope, last arg
+
+  // check for command
+  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) {
+    if (args[0].ICmp(cmd->Name) == 0) {
+      VStr ac = cmd->AutoCompleteArg(args, aidx);
+      if (ac.length()) {
+        // autocompleted, rebuild string
+        //if (aidx < args.length()) args[aidx] = ac; else args.append(ac);
+        bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
+        if (addSpace) ac.chopRight(1);
+        VStr res;
+        for (int f = 0; f < aidx; ++f) {
+          res += args[f].quote(true); // add quote chars if necessary
+          res += ' ';
+        }
+        res += ac.quote(true);
+        if (addSpace && ac.length()) res += ' ';
+        return res;
+      }
+      // cannot complete, nothing's changed
+      return prefix;
+    }
+  }
+
+  // Cvar
+  if (aidx == 1) {
+    // show cvar help, why not?
+    VCvar *var = VCvar::FindVariable(*args[0]);
+    if (var) {
+      VStr help = var->GetHelp();
+      if (help.length() && !VStr(help).startsWithNoCase("no help yet")) {
+        onShowCompletionMatch(false, args[0]+": "+help);
+      }
+      return prefix;
+    }
+  }
+
+  // nothing's found
+  return prefix;
   unguard;
 }
 
@@ -300,73 +372,9 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
 //
 //==========================================================================
 void VCommand::TokeniseString (const VStr &str) {
-  guard(VCommand::TokeniseString);
-  Args.Clear();
-  //fprintf(stderr, "+++ TKSS(0): orig=<%s>; str=<%s>\n", *Original, *str);
   Original = str;
-  //fprintf(stderr, "+++ TKSS(1): orig=<%s>; str=<%s>\n", *Original, *str);
-  int i = 0;
-  while (i < str.Length()) {
-    // whitespace
-    if ((vuint8)str[i] <= ' ') {
-      ++i;
-      continue;
-    }
-
-    // string
-    if (str[i] == '\"') {
-      int cc, d;
-      ++i;
-      //int Start = i;
-      // checks for end of string
-      VStr ss;
-      while (i < str.length() && str[i] != '\"') {
-        if (str[i] == '\\' && str.length()-i > 1) {
-          i += 2;
-          switch (str[i-1]) {
-            case '\t': ss += '\t'; break;
-            case '\n': ss += '\n'; break;
-            case '\r': ss += '\r'; break;
-            case '\e': ss += '\e'; break;
-            case '\\': case '"': ss += str[i-1]; break;
-            case 'x':
-              cc = 0;
-              d = (i < str.length() ? VStr::digitInBase(str[i], 16) : -1);
-              if (d >= 0) {
-                cc = d;
-                ++i;
-                d = (i < str.length() ? VStr::digitInBase(str[i], 16) : -1);
-                if (d >= 0) { cc = cc*16+d; ++i; }
-              }
-              break;
-            default: // ignore other quotes
-              --i;
-              ss += str[i-1];
-              break;
-          }
-        } else {
-          ss += str[i];
-          ++i;
-        }
-      }
-      /*
-      if (i == str.Length()) {
-        GCon->Log("ERROR: Missing closing quote!");
-        return;
-      }
-      Args.Append(VStr(str, Start, i-Start));
-      */
-      Args.Append(ss);
-      // skip closing quote
-      ++i;
-    } else {
-      // simple arg
-      int Start = i;
-      while ((vuint8)str[i] > ' ') ++i;
-      Args.Append(VStr(str, Start, i-Start));
-    }
-  }
-  unguard;
+  Args.reset();
+  str.tokenize(Args);
 }
 
 
@@ -465,7 +473,7 @@ void VCommand::ForwardToServer () {
 int VCommand::CheckParm (const char *check) {
   guard(VCommand::CheckParm);
   for (int i = 1; i < Args.Num(); ++i) {
-    if (!Args[i].ICmp(check)) return i;
+    if (!Args[i].ICmp(check) == 0) return i;
   }
   return 0;
   unguard;

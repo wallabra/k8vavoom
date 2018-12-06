@@ -58,6 +58,9 @@ protected:
   static ECmdSource Source;
   static VBasePlayer *Player; // for SRC_Client
 
+protected:
+  static VStr acCommand (const VStr &prefix);
+
 public:
   static bool ParsingKeyConf;
   static void (*onShowCompletionMatch) (bool isheader, const VStr &s);
@@ -67,6 +70,12 @@ public:
   virtual ~VCommand ();
 
   virtual void Run () = 0;
+
+  // return non-empty string to replace arg
+  // note that aidx can be equal to `args.length()`, and will never be 0!
+  // args[0] is a command itself
+  // return string ends with space to move to next argument
+  virtual VStr AutoCompleteArg (const TArray<VStr> &args, int aidx);
 
   static void Init ();
   static void WriteAlias (FILE *);
@@ -92,14 +101,27 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 // macro for declaring a console command
 #define COMMAND(name) \
-static class TCmd ## name : public VCommand \
-{ \
+static class TCmd ## name : public VCommand { \
 public: \
-  TCmd ## name() : VCommand(#name) { } \
+  TCmd ## name() : VCommand(#name) {} \
   virtual void Run () override; \
 } name ## _f; \
 \
+void TCmd ## name::Run ()
+
+
+#define COMMAND_WITH_AC(name) \
+static class TCmd ## name : public VCommand { \
+public: \
+  TCmd ## name() : VCommand(#name) {} \
+  virtual void Run () override; \
+  virtual VStr AutoCompleteArg (const TArray<VStr> &args, int aidx) override; \
+} name ## _f; \
+\
 void TCmd ## name::Run()
+
+#define COMMAND_AC(name) \
+VStr TCmd ## name::AutoCompleteArg (const TArray<VStr> &args, int aidx)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
