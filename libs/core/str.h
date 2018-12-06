@@ -43,39 +43,42 @@ private:
     // actual string data starts after this struct; and this is where `data` points
   };
 
-  char *data; // string, 0-terminated (0 is not in length); can be null
+  char *dataptr; // string, 0-terminated (0 is not in length); can be null
 
 private:
-  inline Store *store () { return (data ? (Store *)(data-sizeof(Store)) : nullptr); }
-  inline Store *store () const { return (data ? (Store *)(data-sizeof(Store)) : nullptr); }
+  inline Store *store () { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
+  inline Store *store () const { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
+
+  inline char *getData () { return dataptr; }
+  inline const char *getData () const { return dataptr; }
 
   inline void incref () const {
-    if (data) ++store()->rc;
+    if (dataptr) ++store()->rc;
   }
 
   // WARNING! may free `data` contents!
   // this also clears `data`
   inline void decref () {
-    if (data) {
+    if (dataptr) {
       if (--store()->rc == 0) {
         #ifdef VAVOOM_TEST_VSTR
-        fprintf(stderr, "VStr: freeing %p\n", data);
+        fprintf(stderr, "VStr: freeing %p\n", dataptr);
         #endif
         Z_Free(store());
       }
-      data = nullptr;
+      dataptr = nullptr;
     }
   }
 
-  inline bool isMyData (const char *buf, int len) const { return (data && buf && buf < data+length() && buf+len >= data); }
+  inline bool isMyData (const char *buf, int len) const { return (dataptr && buf && buf < dataptr+length() && buf+len >= dataptr); }
 
   inline void assign (const VStr &instr) {
     if (&instr != this) {
-      if (instr.data) {
-        if (instr.data != data) {
+      if (instr.dataptr) {
+        if (instr.dataptr != dataptr) {
           instr.incref();
           decref();
-          data = (char *)instr.data;
+          dataptr = (char *)instr.dataptr;
         }
       } else {
         clear();
@@ -89,15 +92,15 @@ private:
 
 public:
   VStr (ENoInit) {}
-  VStr () : data(nullptr) {}
-  VStr (const VStr &instr) : data(nullptr) { data = instr.data; incref(); }
-  VStr (const char *instr, int len=-1) : data(nullptr) { setContent(instr, len); }
-  VStr (const VStr &instr, int start, int len) : data(nullptr) { assign(instr.mid(start, len)); }
+  VStr () : dataptr(nullptr) {}
+  VStr (const VStr &instr) : dataptr(nullptr) { dataptr = instr.dataptr; incref(); }
+  VStr (const char *instr, int len=-1) : dataptr(nullptr) { setContent(instr, len); }
+  VStr (const VStr &instr, int start, int len) : dataptr(nullptr) { assign(instr.mid(start, len)); }
 
-  explicit VStr (const VName &InName) : data(nullptr) { setContent(*InName); }
+  explicit VStr (const VName &InName) : dataptr(nullptr) { setContent(*InName); }
 
-  explicit VStr (char v) : data(nullptr) { setContent(&v, 1); }
-  explicit VStr (bool v) : data(nullptr) { setContent(v ? "true" : "false"); }
+  explicit VStr (char v) : dataptr(nullptr) { setContent(&v, 1); }
+  explicit VStr (bool v) : dataptr(nullptr) { setContent(v ? "true" : "false"); }
   explicit VStr (int v);
   explicit VStr (unsigned v);
   explicit VStr (float v);
@@ -111,39 +114,37 @@ public:
   inline void clear () { decref(); }
 
   // returns length of the string
-  inline int Length () const { return (data ? store()->length : 0); }
-  inline int length () const { return (data ? store()->length : 0); }
+  inline int Length () const { return (dataptr ? store()->length : 0); }
+  inline int length () const { return (dataptr ? store()->length : 0); }
 
   inline void setLength (int len, char fillChar=' ') {
     if (len < 0) len = 0;
     resize(len);
-    if (len > 0) memset(data, fillChar&0xff, len);
+    if (len > 0) memset(getData(), fillChar&0xff, len);
   }
   inline void SetLength (int len, char fillChar=' ') { setLength(len, fillChar); }
 
-  inline int getRC () const { return (data ? store()->rc : 0); }
-  inline int getReserved () const { return (data ? store()->alloted : 0); }
+  inline int getRC () const { return (dataptr ? store()->rc : 0); }
+  inline int getReserved () const { return (dataptr ? store()->alloted : 0); }
 
   // returns number of characters in a UTF-8 string
-  inline int Utf8Length () const { return (data ? Utf8Length(data, store()->length) : 0); }
-  inline int utf8Length () const { return (data ? Utf8Length(data, store()->length) : 0); }
-  inline int utf8length () const { return (data ? Utf8Length(data, store()->length) : 0); }
+  inline int Utf8Length () const { return Utf8Length(getCStr(), length()); }
+  inline int utf8Length () const { return Utf8Length(getCStr(), length()); }
+  inline int utf8length () const { return Utf8Length(getCStr(), length()); }
 
   // returns C string
-  inline const char *operator * () const { return (data ? data : ""); }
-  inline const char *getCStr () const { return (data ? data : ""); }
-
-  //inline bool isUnuqie () const { return (!data || *refp() == 1); }
+  inline const char *operator * () const { return (dataptr ? getData() : ""); }
+  inline const char *getCStr () const { return (dataptr ? getData() : ""); }
 
   // checks if string is empty
-  inline bool IsEmpty () const { return !data; }
-  inline bool isEmpty () const { return !data; }
-  inline bool IsNotEmpty () const { return !!data; }
-  inline bool isNotEmpty () const { return !!data; }
+  inline bool IsEmpty () const { return !dataptr; }
+  inline bool isEmpty () const { return !dataptr; }
+  inline bool IsNotEmpty () const { return !!dataptr; }
+  inline bool isNotEmpty () const { return !!dataptr; }
 
   // character accessors
-  inline char operator [] (int idx) const { return data[idx]; }
-  inline char *GetMutableCharPointer (int idx) { makeMutable(); return &data[idx]; }
+  inline char operator [] (int idx) const { return getData()[idx]; }
+  inline char *GetMutableCharPointer (int idx) { makeMutable(); return &dataptr[idx]; }
 
   VStr mid (int start, int len) const;
   VStr left (int len) const;
@@ -164,7 +165,7 @@ public:
       } else {
         int l = length();
         resize(l+len);
-        memcpy(data+l, instr, len+1);
+        memcpy(dataptr+l, instr, len+1);
       }
     }
     return *this;
@@ -180,7 +181,7 @@ public:
       if (l) {
         VStr s(instr); // this is cheap
         resize(l+inl);
-        memcpy(data+l, s.data, inl+1);
+        memcpy(dataptr+l, s.getData(), inl+1);
       } else {
         assign(instr);
       }
@@ -191,7 +192,7 @@ public:
   VStr &operator += (char inchr) {
     int l = length();
     resize(l+1);
-    data[l] = inchr;
+    dataptr[l] = inchr;
     return *this;
   }
 
@@ -214,28 +215,28 @@ public:
 
   // comparison operators
   friend bool operator == (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) == 0); }
-  friend bool operator == (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) == 0)); }
+  friend bool operator == (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) == 0)); }
   friend bool operator != (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) != 0); }
-  friend bool operator != (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) != 0)); }
+  friend bool operator != (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) != 0)); }
   friend bool operator < (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) < 0); }
-  friend bool operator < (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) < 0)); }
+  friend bool operator < (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) < 0)); }
   friend bool operator > (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) > 0); }
-  friend bool operator > (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? false : (Cmp(*S1, *S2) > 0)); }
+  friend bool operator > (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) > 0)); }
   friend bool operator <= (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) <= 0); }
-  friend bool operator <= (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) <= 0)); }
+  friend bool operator <= (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) <= 0)); }
   friend bool operator >= (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) >= 0); }
-  friend bool operator >= (const VStr &S1, const VStr &S2) { return (S1.data == S2.data ? true : (Cmp(*S1, *S2) >= 0)); }
+  friend bool operator >= (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) >= 0)); }
 
   // comparison functions
-  inline int Cmp (const char *S2) const { return Cmp(data, S2); }
-  inline int Cmp (const VStr &S2) const { return Cmp(data, *S2); }
-  inline int ICmp (const char *S2) const { return ICmp(data, S2); }
-  inline int ICmp (const VStr &S2) const { return ICmp(data, *S2); }
+  inline int Cmp (const char *S2) const { return Cmp(getData(), S2); }
+  inline int Cmp (const VStr &S2) const { return Cmp(getData(), *S2); }
+  inline int ICmp (const char *S2) const { return ICmp(getData(), S2); }
+  inline int ICmp (const VStr &S2) const { return ICmp(getData(), *S2); }
 
-  inline int cmp (const char *S2) const { return Cmp(data, S2); }
-  inline int cmp (const VStr &S2) const { return Cmp(data, *S2); }
-  inline int icmp (const char *S2) const { return ICmp(data, S2); }
-  inline int icmp (const VStr &S2) const { return ICmp(data, *S2); }
+  inline int cmp (const char *S2) const { return Cmp(getData(), S2); }
+  inline int cmp (const VStr &S2) const { return Cmp(getData(), *S2); }
+  inline int icmp (const char *S2) const { return ICmp(getData(), S2); }
+  inline int icmp (const VStr &S2) const { return ICmp(getData(), *S2); }
 
   bool StartsWith (const char *) const;
   bool StartsWith (const VStr &) const;
@@ -259,7 +260,7 @@ public:
   inline VStr toUpperCase () const { return ToUpper(); }
 
   inline bool isLowerCase () const {
-    const char *dp = data;
+    const char *dp = getData();
     for (int f = length()-1; f >= 0; --f, ++dp) {
       if (*dp >= 'A' && *dp <= 'Z') return false;
     }
@@ -325,13 +326,13 @@ public:
       if (len < 0) len = 0;
       S.resize(len);
       if (len) {
-        Strm.Serialise(S.data, len+1);
-        S.data[len] = 0; // just in case
+        Strm.Serialise(S.dataptr, len+1);
+        S.dataptr[len] = 0; // just in case
       }
     } else {
       vint32 len = vint32(S.Length());
       Strm << STRM_INDEX(len);
-      if (len) Strm.Serialise(S.data, len+1);
+      if (len) Strm.Serialise(S.getData(), len+1);
     }
     return Strm;
   }
@@ -445,7 +446,7 @@ public:
   inline bool equ1251CI (const VStr &s) const {
     size_t slen = (size_t)length();
     if (slen != (size_t)s.length()) return false;
-    for (size_t f = 0; f < slen; ++f) if (locase1251(data[f]) != locase1251(s.data[f])) return false;
+    for (size_t f = 0; f < slen; ++f) if (locase1251(getData()[f]) != locase1251(s[f])) return false;
     return true;
   }
 
@@ -453,11 +454,11 @@ public:
     size_t slen = length();
     if (!s || !s[0]) return (slen == 0);
     if (slen != strlen(s)) return false;
-    for (size_t f = 0; f < slen; ++f) if (locase1251(data[f]) != locase1251(s[f])) return false;
+    for (size_t f = 0; f < slen; ++f) if (locase1251(getData()[f]) != locase1251(s[f])) return false;
     return true;
   }
 
-  inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.data); }
+  inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.getData()); }
   bool fnameEqu1251CI (const char *s) const;
 
   static VStr buf2hex (const void *buf, int buflen);

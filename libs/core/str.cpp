@@ -99,25 +99,25 @@ const vuint8 VUtf8DecoderFast::utf8dfa[0x16c] = {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStr::VStr (int v) : data(nullptr) {
+VStr::VStr (int v) : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%d", v);
   setContent(buf, len);
 }
 
-VStr::VStr (unsigned v) : data(nullptr) {
+VStr::VStr (unsigned v) : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%u", v);
   setContent(buf, len);
 }
 
-VStr::VStr (float v) : data(nullptr) {
+VStr::VStr (float v) : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%f", v);
   setContent(buf, len);
 }
 
-VStr::VStr (double v) : data(nullptr) {
+VStr::VStr (double v) : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%f", v);
   setContent(buf, len);
@@ -151,6 +151,7 @@ bool VStr::isUtf8Valid () const {
   int slen = length();
   if (slen < 1) return true;
   int pos = 0;
+  const char *data = getData();
   while (pos < slen) {
     int len = utf8CodeLen(data[pos]);
     if (len < 1) return false; // invalid sequence start
@@ -172,11 +173,12 @@ bool VStr::isUtf8Valid () const {
 VStr VStr::toLowerCase1251 () const {
   int slen = length();
   if (slen < 1) return VStr();
+  const char *data = getData();
   for (int f = 0; f < slen; ++f) {
     if (locase1251(data[f]) != data[f]) {
       VStr res(*this);
       res.makeMutable();
-      for (int c = 0; c < slen; ++c) res.data[c] = locase1251(res.data[c]);
+      for (int c = 0; c < slen; ++c) res.dataptr[c] = locase1251(res.dataptr[c]);
       return res;
     }
   }
@@ -187,11 +189,12 @@ VStr VStr::toLowerCase1251 () const {
 VStr VStr::toUpperCase1251 () const {
   int slen = length();
   if (slen < 1) return VStr();
+  const char *data = getData();
   for (int f = 0; f < slen; ++f) {
     if (upcase1251(data[f]) != data[f]) {
       VStr res(*this);
       res.makeMutable();
-      for (int c = 0; c < slen; ++c) res.data[c] = upcase1251(res.data[c]);
+      for (int c = 0; c < slen; ++c) res.dataptr[c] = upcase1251(res.dataptr[c]);
       return res;
     }
   }
@@ -204,6 +207,7 @@ VStr VStr::utf2win () const {
   VStr res;
   if (length()) {
     VUtf8DecoderFast dc;
+    const char *data = getData();
     for (int f = 0; f < length(); ++f) {
       if (dc.put(data[f])) res += wchar2win(dc.codepoint);
     }
@@ -215,6 +219,7 @@ VStr VStr::utf2win () const {
 VStr VStr::win2utf () const {
   VStr res;
   if (length()) {
+    const char *data = getData();
     for (int f = 0; f < length(); ++f) {
       vuint8 ch = (vuint8)data[f];
       if (ch > 127) res.utf8Append(cp1251[ch-128]); else res += (char)ch;
@@ -229,6 +234,7 @@ bool VStr::fnameEqu1251CI (const char *s) const {
   size_t slen = length();
   if (!s || !s[0]) return (slen == 0);
   size_t pos = 0;
+  const char *data = getData();
   while (pos < slen && *s) {
     if (data[pos] == '/') {
       if (*s != '/') return false;
@@ -259,7 +265,7 @@ VStr VStr::mid (int start, int len) const {
     if ((len = mylen-start) < 1) return VStr();
   }
   if (start == 0 && len == mylen) return VStr(*this);
-  return VStr(data+start, len);
+  return VStr(getData()+start, len);
   unguard;
 }
 
@@ -281,7 +287,8 @@ VStr VStr::right (int len) const {
 void VStr::chopLeft (int len) {
   if (len < 1) return;
   if (len >= length()) { clear(); return; }
-  memmove(data, data+len, length()-len);
+  makeMutable();
+  memmove(dataptr, dataptr+len, length()-len);
   resize(length()-len);
 }
 
@@ -296,10 +303,10 @@ void VStr::chopRight (int len) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VStr::makeMutable () {
   guard(VStr::makeMutable);
-  if (!data || store()->rc == 1) return; // nothing to do
+  if (!dataptr || store()->rc == 1) return; // nothing to do
   // allocate new string
   Store *oldstore = store();
-  const char *olddata = data;
+  const char *olddata = dataptr;
   size_t olen = (size_t)oldstore->length;
   size_t newsz = olen+64; // overallocate a little
   Store *newdata = (Store *)Z_Malloc(sizeof(Store)+newsz+1);
@@ -307,12 +314,12 @@ void VStr::makeMutable () {
   newdata->length = (int)olen;
   newdata->alloted = (int)newsz;
   newdata->rc = 1;
-  data = ((char *)newdata)+sizeof(Store);
+  dataptr = ((char *)newdata)+sizeof(Store);
   // copy old data
-  memcpy(data, olddata, olen+1);
+  memcpy(dataptr, olddata, olen+1);
   --oldstore->rc; // decrement old refcounter
 #ifdef VAVOOM_TEST_VSTR
-  fprintf(stderr, "VStr: makeMutable: old=%p(%d); new=%p(%d)\n", oldstore+1, oldstore->rc, data, newdata->rc);
+  fprintf(stderr, "VStr: makeMutable: old=%p(%d); new=%p(%d)\n", oldstore+1, oldstore->rc, dataptr, newdata->rc);
 #endif
   unguard;
 }
@@ -336,7 +343,7 @@ void VStr::resize (int newlen) {
   }
 
   // new allocation?
-  if (!data) {
+  if (!dataptr) {
     size_t newsz = (size_t)(newlen+64);
     Store *ns = (Store *)Z_Malloc(sizeof(Store)+newsz+1);
     if (!ns) Sys_Error("Out of memory");
@@ -344,10 +351,10 @@ void VStr::resize (int newlen) {
     ns->alloted = newsz;
     ns->rc = 1;
     #ifdef VAVOOM_TEST_VSTR
-    fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", data, 0, ns+1, ns->rc);
+    fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", dataptr, 0, ns+1, ns->rc);
     #endif
-    data = ((char *)ns)+sizeof(Store);
-    data[newlen] = 0;
+    dataptr = ((char *)ns)+sizeof(Store);
+    dataptr[newlen] = 0;
     return;
   }
 
@@ -362,9 +369,9 @@ void VStr::resize (int newlen) {
         Store *ns = (Store *)Z_Realloc(store(), sizeof(Store)+(size_t)store()->alloted+1);
         if (!ns) Sys_Error("Out of memory");
         #ifdef VAVOOM_TEST_VSTR
-        fprintf(stderr, "VStr: realloced(shrink): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
+        fprintf(stderr, "VStr: realloced(shrink): old=%p(%d); new=%p(%d)\n", dataptr, store()->rc, ns+1, ns->rc);
         #endif
-        data = ((char *)ns)+sizeof(Store);
+        dataptr = ((char *)ns)+sizeof(Store);
       }
     } else {
       // grow
@@ -380,9 +387,9 @@ void VStr::resize (int newlen) {
         }
         ns->alloted = newsz;
         #ifdef VAVOOM_TEST_VSTR
-        fprintf(stderr, "VStr: realloced(grow): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
+        fprintf(stderr, "VStr: realloced(grow): old=%p(%d); new=%p(%d)\n", dataptr, store()->rc, ns+1, ns->rc);
         #endif
-        data = ((char *)ns)+sizeof(Store);
+        dataptr = ((char *)ns)+sizeof(Store);
       }
     }
     store()->length = newlen;
@@ -409,9 +416,9 @@ void VStr::resize (int newlen) {
 
     // copy data
     if (newlen > oldlen) {
-      memcpy(((char *)ns)+sizeof(Store), data, oldlen+1);
+      memcpy(((char *)ns)+sizeof(Store), dataptr, oldlen+1);
     } else {
-      memcpy(((char *)ns)+sizeof(Store), data, newlen+1);
+      memcpy(((char *)ns)+sizeof(Store), dataptr, newlen+1);
     }
     // setup info
     ns->length = newlen;
@@ -420,14 +427,14 @@ void VStr::resize (int newlen) {
     // decrement old rc
     --store()->rc;
     #ifdef VAVOOM_TEST_VSTR
-    fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", data, store()->rc, ns+1, ns->rc);
+    fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", dataptr, store()->rc, ns+1, ns->rc);
     #endif
     // use new data
-    data = ((char *)ns)+sizeof(Store);
+    dataptr = ((char *)ns)+sizeof(Store);
   }
 
   // some functions expects this
-  data[newlen] = 0;
+  dataptr[newlen] = 0;
 
   unguard;
 }
@@ -447,10 +454,10 @@ void VStr::setContent (const char *s, int len) {
     // free this string
     clear();
     // use new data
-    data = ((char *)ns)+sizeof(Store);
-    data[len] = 0;
+    dataptr = ((char *)ns)+sizeof(Store);
+    dataptr[len] = 0;
     #ifdef VAVOOM_TEST_VSTR
-    fprintf(stderr, "VStr: setContent: new=%p(%d)\n", data, store()->rc);
+    fprintf(stderr, "VStr: setContent: new=%p(%d)\n", dataptr, store()->rc);
     #endif
   } else {
     clear();
@@ -464,7 +471,7 @@ bool VStr::StartsWith (const char *s) const {
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
-  return (NCmp(data, s, l) == 0);
+  return (NCmp(getData(), s, l) == 0);
   unguard;
 }
 
@@ -473,7 +480,7 @@ bool VStr::StartsWith (const VStr &s) const {
   guard(VStr::StartsWith);
   int l = s.length();
   if (l > length()) return false;
-  return (NCmp(data, *s, l) == 0);
+  return (NCmp(getData(), *s, l) == 0);
   unguard;
 }
 
@@ -483,7 +490,7 @@ bool VStr::EndsWith (const char *s) const {
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
-  return (NCmp(data+length()-l, s, l) == 0);
+  return (NCmp(getData()+length()-l, s, l) == 0);
   unguard;
 }
 
@@ -492,7 +499,7 @@ bool VStr::EndsWith (const VStr &s) const {
   guard(VStr::EndsWith);
   int l = s.length();
   if (l > length()) return false;
-  return (NCmp(data+length()-l, *s, l) == 0);
+  return (NCmp(getData()+length()-l, *s, l) == 0);
   unguard;
 }
 
@@ -502,7 +509,7 @@ bool VStr::startsWithNoCase (const char *s) const {
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
-  return (NICmp(data, s, l) == 0);
+  return (NICmp(getData(), s, l) == 0);
   unguard;
 }
 
@@ -511,7 +518,7 @@ bool VStr::startsWithNoCase (const VStr &s) const {
   guard(VStr::StartsWith);
   int l = s.length();
   if (l > length()) return false;
-  return (NICmp(data, *s, l) == 0);
+  return (NICmp(getData(), *s, l) == 0);
   unguard;
 }
 
@@ -521,7 +528,7 @@ bool VStr::endsWithNoCase (const char *s) const {
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
-  return (NICmp(data+length()-l, s, l) == 0);
+  return (NICmp(getData()+length()-l, s, l) == 0);
   unguard;
 }
 
@@ -530,21 +537,22 @@ bool VStr::endsWithNoCase (const VStr &s) const {
   guard(VStr::EndsWith);
   int l = s.length();
   if (l > length()) return false;
-  return (NICmp(data+length()-l, *s, l) == 0);
+  return (NICmp(getData()+length()-l, *s, l) == 0);
   unguard;
 }
 
 
 VStr VStr::ToLower () const {
   guard(VStr::ToLower);
-  if (!data) return VStr();
+  if (!dataptr) return VStr();
   bool hasWork = false;
   int l = length();
+  const char *data = getData();
   for (int i = 0; i < l; ++i) if (data[i] >= 'A' && data[i] <= 'Z') { hasWork = true; break; }
   if (hasWork) {
     VStr res(*this);
     res.makeMutable();
-    for (int i = 0; i < l; ++i) if (res.data[i] >= 'A' && res.data[i] <= 'Z') res.data[i] += 32; // poor man's tolower()
+    for (int i = 0; i < l; ++i) if (res.dataptr[i] >= 'A' && res.dataptr[i] <= 'Z') res.dataptr[i] += 32; // poor man's tolower()
     return res;
   } else {
     return VStr(*this);
@@ -555,6 +563,7 @@ VStr VStr::ToLower () const {
 
 VStr VStr::ToUpper () const {
   guard(VStr::ToUpper);
+  const char *data = getData();
   if (!data) return VStr();
   bool hasWork = false;
   int l = length();
@@ -562,7 +571,7 @@ VStr VStr::ToUpper () const {
   if (hasWork) {
     VStr res(*this);
     res.makeMutable();
-    for (int i = 0; i < l; ++i) if (res.data[i] >= 'a' && res.data[i] <= 'z') res.data[i] -= 32; // poor man's toupper()
+    for (int i = 0; i < l; ++i) if (res.dataptr[i] >= 'a' && res.dataptr[i] <= 'z') res.dataptr[i] -= 32; // poor man's toupper()
     return res;
   } else {
     return VStr(*this);
@@ -573,7 +582,8 @@ VStr VStr::ToUpper () const {
 
 int VStr::IndexOf (char c) const {
   guard(VStr::IndexOf);
-  if (data) {
+  const char *data = getData();
+  if (data && length()) {
     const char *pos = (const char *)memchr(data, c, length());
     return (pos ? (int)(pos-data) : -1);
   } else {
@@ -588,6 +598,8 @@ int VStr::IndexOf (const char *s) const {
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
+  if (l == 0 || sl == 0) return -1;
+  const char *data = getData();
   for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, s, sl) == 0) return i;
   return -1;
   unguard;
@@ -599,6 +611,8 @@ int VStr::IndexOf (const VStr &s) const {
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
+  if (l == 0) return -1;
+  const char *data = getData();
   for (int i = 0; i <= l-sl; ++i) if (NCmp(data+i, *s, sl) == 0) return i;
   return -1;
   unguard;
@@ -607,7 +621,8 @@ int VStr::IndexOf (const VStr &s) const {
 
 int VStr::LastIndexOf (char c) const {
   guard(VStr::LastIndexOf);
-  if (data) {
+  const char *data = getData();
+  if (data && length()) {
 #if !defined(WIN32) && !defined(NO_MEMRCHR)
     const char *pos = (const char *)memrchr(data, c, length());
     return (pos ? (int)(pos-data) : -1);
@@ -628,6 +643,8 @@ int VStr::LastIndexOf (const char *s) const {
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
+  if (l == 0 || sl == 0) return -1;
+  const char *data = getData();
   for (int i = l-sl; i >= 0; --i) if (NCmp(data+i, s, sl) == 0) return i;
   return -1;
   unguard;
@@ -639,6 +656,8 @@ int VStr::LastIndexOf (const VStr &s) const {
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
+  if (l == 0) return -1;
+  const char *data = getData();
   for (int i = l-sl; i >= 0; --i) if (NCmp(data + i, *s, sl) == 0) return i;
   return -1;
   unguard;
@@ -656,12 +675,12 @@ VStr VStr::Replace (const char *Search, const char *Replacement) const {
   VStr res = VStr(*this);
   size_t i = 0;
   while (i <= res.length()-SLen) {
-    if (NCmp(res.data+i, Search, SLen) == 0) {
+    if (NCmp(res.getData()+i, Search, SLen) == 0) {
       // if search and replace strings are of the same size,
       // we can just copy the data and avoid memory allocations
       if (SLen == RLen) {
         res.makeMutable();
-        memcpy(res.data+i, Replacement, RLen);
+        memcpy(res.dataptr+i, Replacement, RLen);
       } else {
         //FIXME: optimize this!
         res = VStr(res, 0, int(i))+Replacement+VStr(res, int(i+SLen), int(res.length()-i-SLen));
@@ -688,12 +707,12 @@ VStr VStr::Replace (const VStr &Search, const VStr &Replacement) const {
   VStr res(*this);
   size_t i = 0;
   while (i <= res.length()-SLen) {
-    if (NCmp(res.data+i, *Search, SLen) == 0) {
+    if (NCmp(res.getData()+i, *Search, SLen) == 0) {
       // if search and replace strings are of the same size,
       // we can just copy the data and avoid memory allocations
       if (SLen == RLen) {
         res.makeMutable();
-        memcpy(res.data+i, *Replacement, RLen);
+        memcpy(res.dataptr+i, *Replacement, RLen);
       } else {
         //FIXME: optimize this!
         res = VStr(res, 0, int(i))+Replacement+VStr(res, int(i+SLen), int(res.length()-i-SLen));
@@ -715,8 +734,8 @@ VStr VStr::Utf8Substring (int start, int len) const {
   check(len >= 0);
   check(start+len <= (int)Utf8Length());
   if (!len) return VStr();
-  int RealStart = int(ByteLengthForUtf8(data, start));
-  int RealLen = int(ByteLengthForUtf8(data, start+len)-RealStart);
+  int RealStart = int(ByteLengthForUtf8(getData(), start));
+  int RealLen = int(ByteLengthForUtf8(getData(), start+len)-RealStart);
   return VStr(*this, RealStart, RealLen);
 }
 
@@ -724,6 +743,7 @@ VStr VStr::Utf8Substring (int start, int len) const {
 void VStr::Split (char c, TArray<VStr> &A) const {
   guard(VStr::Split);
   A.Clear();
+  const char *data = getData();
   if (!data) return;
   int start = 0;
   int len = int(length());
@@ -740,12 +760,18 @@ void VStr::Split (char c, TArray<VStr> &A) const {
 void VStr::Split (const char *chars, TArray<VStr> &A) const {
   guard(VStr::Split);
   A.Clear();
+  const char *data = getData();
   if (!data) return;
   int start = 0;
   int len = int(length());
   for (int i = 0; i <= len; ++i) {
     bool DoSplit = (i == len);
-    for (const char *pChar = chars; !DoSplit && *pChar; ++pChar) DoSplit = (data[i] == *pChar);
+    if (!DoSplit) {
+      for (const char *pChar = chars; !DoSplit && *pChar; ++pChar) {
+        DoSplit = (data[i] == *pChar);
+        if (DoSplit) break;
+      }
+    }
     if (DoSplit) {
       if (start != i) A.Append(VStr(*this, start, i-start));
       start = i+1;
@@ -758,6 +784,7 @@ void VStr::Split (const char *chars, TArray<VStr> &A) const {
 void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const {
   guard(VStr::SplitOnBlanks);
   A.Clear();
+  const char *data = getData();
   if (!data) return;
   int len = int(length());
   int pos = 0;
@@ -786,6 +813,7 @@ void VStr::SplitPath (TArray<VStr>& arr) const {
   guard(VStr::SplitPath);
 
   arr.Clear();
+  const char *data = getData();
   if (!data) return;
 
   int pos = 0;
@@ -822,6 +850,7 @@ void VStr::SplitPath (TArray<VStr>& arr) const {
 
 bool VStr::IsValidUtf8 () const {
   guard(VStr::IsValidUtf8);
+  const char *data = getData();
   if (!data) return true;
   for (const char *c = data; *c;) {
     if ((*c&0x80) == 0) {
@@ -846,6 +875,7 @@ bool VStr::IsValidUtf8 () const {
 
 VStr VStr::Latin1ToUtf8 () const {
   guard(VStr::Latin1ToUtf8);
+  const char *data = getData();
   VStr res;
   for (int i = 0; i < length(); ++i) res += FromChar((vuint8)data[i]);
   return res;
@@ -856,50 +886,54 @@ VStr VStr::Latin1ToUtf8 () const {
 VStr VStr::EvalEscapeSequences () const {
   guard(VStr::EvalEscapeSequences);
   VStr res;
-  if (!data || !data[0]) return res;
-  char val;
-  for (const char *c = data; *c; ++c) {
-    if (*c == '\\') {
+  const char *c = getData();
+  if (!c || !c[0]) return res;
+  int val;
+  while (*c) {
+    if (c[0] == '\\' && c[1]) {
       ++c;
-      switch (*c) {
+      switch (*c++) {
         case 't': res += '\t'; break;
         case 'n': res += '\n'; break;
         case 'r': res += '\r'; break;
+        case 'e': res += '\x1b'; break;
         case 'c': res += TEXT_COLOUR_ESCAPE; break;
         case 'x':
-          val = 0;
-          ++c;
-          for (int i = 0; i < 2; ++i) {
-                 if (*c >= '0' && *c <= '9') val = (val<<4)+*c-'0';
-            else if (*c >= 'a' && *c <= 'f') val = (val<<4)+10+*c-'a';
-            else if (*c >= 'A' && *c <= 'F') val = (val<<4)+10+*c-'A';
-            else break;
+          val = digitInBase(*c, 16);
+          if (val >= 0) {
             ++c;
+            int d = digitInBase(*c, 16);
+            if (d >= 0) {
+              ++c;
+              val = val*16+d;
+            }
+            if (val == 0) val = ' ';
+            res += (char)val;
           }
-          --c;
-          res += val;
           break;
         case '0': case '1': case '2': case '3':
         case '4': case '5': case '6': case '7':
           val = 0;
           for (int i = 0; i < 3; ++i) {
-            if (*c >= '0' && *c <= '7') val = (val<<3)+*c-'0'; else break;
+            int d = digitInBase(*c, 8);
+            if (d < 0) break;
+            val = val*8+d;
             ++c;
           }
-          --c;
-          res += val;
+          if (val == 0) val = ' ';
+          res += (char)val;
           break;
         case '\n':
           break;
-        case 0:
-          --c;
+        case '\r':
+          if (*c == '\n') ++c;
           break;
         default:
-          res += *c;
+          res += c[-1];
           break;
       }
     } else {
-      res += *c;
+      res += *c++;
     }
   }
   return res;
@@ -910,7 +944,7 @@ VStr VStr::EvalEscapeSequences () const {
 bool VStr::MustBeSanitized () const {
   int len = (int)length();
   if (len < 1) return false;
-  for (const vuint8 *s = (const vuint8 *)data; *s; ++s) {
+  for (const vuint8 *s = (const vuint8 *)getData(); *s; ++s) {
     if (*s < ' ' || *s == 127) return true;
   }
   return false;
@@ -918,7 +952,7 @@ bool VStr::MustBeSanitized () const {
 
 
 bool VStr::MustBeSanitized (const char *str) {
-  if (!str) return false;
+  if (!str || !str[0]) return false;
   for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
     if (*s != '\n' && *s != '\t') {
       if (*s < ' ' || *s == 127) return true;
@@ -930,6 +964,7 @@ bool VStr::MustBeSanitized (const char *str) {
 
 VStr VStr::RemoveColours () const {
   guard(VStr::RemoveColours);
+  const char *data = getData();
   if (!data) return VStr();
   const int oldlen = (int)length();
   // calculate new length
@@ -975,7 +1010,7 @@ VStr VStr::RemoveColours () const {
       if (c != '\n' && c != '\t') {
         if ((vuint8)c < ' ' || c == 127) continue;
       }
-      res.data[newlen++] = c;
+      res.dataptr[newlen++] = c;
     }
   }
   return res;
@@ -985,19 +1020,20 @@ VStr VStr::RemoveColours () const {
 
 VStr VStr::ExtractFilePath () const {
   guard(FL_ExtractFilePath);
-  const char *src = data+length();
+  const char *src = getData()+length();
 #if !defined(_WIN32)
-  while (src != data && src[-1] != '/') --src;
+  while (src != getData() && src[-1] != '/') --src;
 #else
-  while (src != data && src[-1] != '/' && src[-1] != '\\') --src;
+  while (src != getData() && src[-1] != '/' && src[-1] != '\\') --src;
 #endif
-  return VStr(*this, 0, src-data);
+  return VStr(*this, 0, src-getData());
   unguard;
 }
 
 
 VStr VStr::ExtractFileName() const {
   guard(VStr:ExtractFileName);
+  const char *data = getData();
   const char *src = data+length();
 #if !defined(_WIN32)
   while (src != data && src[-1] != '/') --src;
@@ -1015,6 +1051,7 @@ VStr VStr::ExtractFileBase () const {
 
   if (i == 0) return VStr();
 
+  const char *data = getData();
 #if !defined(_WIN32)
   // back up until a \ or the start
   while (i && data[i-1] != '/') --i;
@@ -1040,6 +1077,7 @@ VStr VStr::ExtractFileBaseName () const {
 
   if (i == 0) return VStr();
 
+  const char *data = getData();
 #if !defined(_WIN32)
   // back up until a \ or the start
   while (i && data[i-1] != '/') --i;
@@ -1054,6 +1092,7 @@ VStr VStr::ExtractFileBaseName () const {
 
 VStr VStr::ExtractFileExtension () const {
   guard(VStr::ExtractFileExtension);
+  const char *data = getData();
   const char *src = data+length();
   while (src != data) {
     char ch = src[-1];
@@ -1072,6 +1111,7 @@ VStr VStr::ExtractFileExtension () const {
 
 VStr VStr::StripExtension () const {
   guard(VStr::StripExtension);
+  const char *data = getData();
   const char *src = data+length();
   while (src != data) {
     char ch = src[-1];
@@ -1090,6 +1130,7 @@ VStr VStr::StripExtension () const {
 
 VStr VStr::DefaultPath (const VStr &basepath) const {
   guard(VStr::DefaultPath);
+  const char *data = getData();
 #if !defined(_WIN32)
   if (data && data[0] == '/') return *this; // absolute path location
 #else
@@ -1105,6 +1146,7 @@ VStr VStr::DefaultPath (const VStr &basepath) const {
 // if path doesn't have a .EXT, append extension (extension should include the leading dot)
 VStr VStr::DefaultExtension (const VStr &extension) const {
   guard(VStr::DefaultExtension);
+  const char *data = getData();
   const char *src = data+length();
   while (src != data) {
     char ch = src[-1];
@@ -1123,12 +1165,13 @@ VStr VStr::DefaultExtension (const VStr &extension) const {
 
 VStr VStr::FixFileSlashes () const {
   guard(VStr::FixFileSlashes);
+  const char *data = getData();
   bool hasWork = false;
   for (const char *c = data; *c; ++c) if (*c == '\\') { hasWork = true; break; }
   if (hasWork) {
     VStr res(*this);
     res.makeMutable();
-    for (char *c = res.data; *c; ++c) if (*c == '\\') *c = '/';
+    for (char *c = res.dataptr; *c; ++c) if (*c == '\\') *c = '/';
     return res;
   } else {
     return VStr(*this);
@@ -1230,6 +1273,7 @@ VStr VStr::FromChar (int c) {
 
 bool VStr::needQuoting () const {
   int len = length();
+  const char *data = getData();
   for (int f = 0; f < len; ++f) {
     vuint8 ch = (vuint8)data[f];
     if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) return true;
@@ -1241,6 +1285,7 @@ bool VStr::needQuoting () const {
 VStr VStr::quote (bool addQCh) const {
   int len = length();
   char hexb[6];
+  const char *data = getData();
   for (int f = 0; f < len; ++f) {
     vuint8 ch = (vuint8)data[f];
     if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) {
@@ -1291,7 +1336,7 @@ VStr VStr::buf2hex (const void *buf, int buflen) {
   const vuint8 *b = (const vuint8 *)buf;
   buflen *= 2;
   res.resize(buflen);
-  char *str = res.data;
+  char *str = res.dataptr;
   for (int f = 0; f < buflen; f += 2, ++b) {
     *str++ = hexd[((*b)>>4)&0x0f];
     *str++ = hexd[(*b)&0x0f];
