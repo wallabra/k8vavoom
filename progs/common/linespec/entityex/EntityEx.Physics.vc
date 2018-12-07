@@ -75,7 +75,7 @@ bool Physics (float DeltaTime) {
   // idiotic gozzo does it like this; fuck!
   if (bNoInteraction) {
     // `bNoTimeFreeze` is checked in `Tick()`
-    if (Velocity.x || Velocity.y || Velocity.z || !bNoBlockmap) {
+    if (Velocity || !bNoBlockmap) {
       // move, and unlink from blockmap
       UnlinkFromWorld();
       // it is safe to change this flag here
