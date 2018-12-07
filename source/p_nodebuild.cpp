@@ -523,13 +523,22 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   GCon->Logf("AJBSP: copied %d of %d used segs", Level->NumSegs, ajbsp::num_segs);
 
   // setup partners (we need 'em for self-referencing deep water)
-  for (int i = firstPartner; i <= lastPartner; ++i) {
-    if (partners[i] == -1) continue; // no partner for this seg
-    seg_t *destseg = &Level->Segs[i];
-    if (partners[i] >= nfo.ajseg2vv.length()) { GCon->Logf("ERROR: cannot find partner!"); continue; }
-    int psidx = nfo.ajseg2vv[partners[i]];
-    if (psidx < 0) Host_Error("GLBSP: invalid partner seg index");
-    destseg->partner = &Level->Segs[psidx];
+  if (firstPartner == -1) {
+    check(lastPartner == -1);
+    GCon->Logf(NAME_Dev, "AJBSP: no partner segs found");
+  } else {
+    check(firstPartner >= 0 && firstPartner < Level->NumSegs);
+    check(lastPartner >= 0 && lastPartner < Level->NumSegs);
+    GCon->Logf(NAME_Dev, "AJBSP: partner segs range: [%d..%d] of %d", firstPartner, lastPartner, Level->NumSegs);
+    for (int i = firstPartner; i <= lastPartner; ++i) {
+      if (partners[i] == -1) continue; // no partner for this seg
+      seg_t *destseg = &Level->Segs[i];
+      if (partners[i] >= nfo.ajseg2vv.length()) { GCon->Logf("ERROR: cannot find partner! (%d, max is %d)", partners[i], nfo.ajseg2vv.length()-1); continue; }
+      if (partners[i] < 0) Host_Error("ERROR: cannot find partner! (%d)", partners[i]);
+      int psidx = nfo.ajseg2vv[partners[i]];
+      if (psidx < 0 || psidx >= Level->NumSegs) Host_Error("GLBSP: invalid partner seg index %d (max is %d)", psidx, Level->NumSegs);
+      destseg->partner = &Level->Segs[psidx];
+    }
   }
 
   delete[] partners;
