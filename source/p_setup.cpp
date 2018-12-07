@@ -3036,7 +3036,11 @@ void VLevel::LoadACScripts (int Lump) {
 
   // load ACS helper scripts if needed (for Strife)
   if (GGameInfo->AcsHelper != NAME_None) {
-    Acs->LoadObject(W_GetNumForName(GGameInfo->AcsHelper, WADNS_ACSLibrary));
+    int hlump = W_GetNumForName(GGameInfo->AcsHelper, WADNS_ACSLibrary);
+    if (hlump >= 0) {
+      GCon->Logf(NAME_Dev, "ACS: loading helper script from '%s'", *W_FullLumpName(hlump));
+      Acs->LoadObject(hlump);
+    }
   }
 
   // load user-specified default ACS libraries
@@ -3049,18 +3053,16 @@ void VLevel::LoadACScripts (int Lump) {
       //int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
       sc->ExpectName();
       int AcsLump = W_CheckNumForName(sc->Name, WADNS_ACSLibrary);
-      if (AcsLump < 0) {
-        VStr ss = VStr(*sc->Name);
-        if (ss.length() > 8) {
-          ss = ss.mid(0, 8);
-          AcsLump = W_CheckNumForName(VName(*ss), WADNS_ACSLibrary);
-          if (AcsLump >= 0) GCon->Logf("ACS: '%s' found as '%s'", *sc->Name, *ss);
-        }
+      if (AcsLump < 0 && VStr::length(*sc->Name) > 8) {
+        VName n8 = VName(*sc->Name, VName::AddLower8);
+        AcsLump = W_CheckNumForName(n8, WADNS_ACSLibrary);
+        if (AcsLump >= 0) GCon->Logf(NAME_Dev, "ACS: '%s' found as '%s'", *sc->Name, *n8);
       }
       if (AcsLump >= 0) {
+        GCon->Logf(NAME_Dev, "ACS: loading script from '%s'", *W_FullLumpName(AcsLump));
         Acs->LoadObject(AcsLump);
       } else {
-        GCon->Logf("No such autoloaded ACS library %s", *sc->String);
+        GCon->Logf(NAME_Warning, "No such autoloaded ACS library %s", *sc->String);
       }
     }
     delete sc;
