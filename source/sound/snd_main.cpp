@@ -237,7 +237,7 @@ VAudio::VAudio ()
 {
   ActiveSequences = 0;
   SequenceListHead = nullptr;
-  ChanBitmap = (vuint32 *)Z_Calloc((MAX_CHANNELS+31)/32);
+  ChanBitmap = (vuint32 *)Z_Calloc(((MAX_CHANNELS+31)/32)*4);
   ResetAllChannels();
 }
 
@@ -261,7 +261,7 @@ void VAudio::ResetAllChannels () {
   memset(Channel, 0, sizeof(Channel));
   ChanUsed = 0;
   for (int f = 0; f < MAX_CHANNELS; ++f) Channel[f].handle = -1;
-  memset(ChanBitmap, 0, (MAX_CHANNELS+31)/32);
+  memset(ChanBitmap, 0, ((MAX_CHANNELS+31)/32)*4);
 }
 
 
