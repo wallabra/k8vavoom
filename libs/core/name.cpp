@@ -68,8 +68,6 @@ VNameEntry *AllocateNameEntry (const char *Name, vint32 Index, VNameEntry *HashN
 VName::VName (const char *Name, ENameFindType FindType) {
   guard(VName::VName);
 
-  char NameBuf[NAME_SIZE+1];
-
   Index = NAME_None;
   // make sure name is valid
   if (!Name || !Name[0]) return;
@@ -78,19 +76,27 @@ VName::VName (const char *Name, ENameFindType FindType) {
   // 'None' is not the same as 'none`!
   //if (VStr::Cmp(Name, "none") == 0) return;
 
-  memset(NameBuf, 0, sizeof(NameBuf));
-  size_t nlen = strlen(Name);
-  if (nlen >= NAME_SIZE) nlen = NAME_SIZE-1;
+  char NameBuf[NAME_SIZE+1];
+  //memset(NameBuf, 0, sizeof(NameBuf));
 
   // copy name localy, make sure it's not longer than 64 characters
   if (FindType == AddLower8) {
-    if (nlen > 8) nlen = 8;
-    for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
+    for (size_t i = 0; i < 8; ++i) {
+      char ch = Name[i];
+      NameBuf[i] = VStr::ToLower(ch);
+      if (!ch) break;
+    }
     NameBuf[8] = 0;
-  } else if (FindType == AddLower) {
-    for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
   } else {
-    memcpy(NameBuf, Name, nlen);
+    size_t nlen = strlen(Name);
+    check(nlen > 0);
+    if (nlen >= NAME_SIZE) nlen = NAME_SIZE-1;
+    if (FindType == AddLower) {
+      for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
+    } else {
+      memcpy(NameBuf, Name, nlen);
+    }
+    NameBuf[nlen] = 0;
   }
 
   // search in cache
