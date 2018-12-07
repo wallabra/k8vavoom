@@ -2306,9 +2306,9 @@ void AddDefaultInventory () {
   foreach (auto i; 0..EntityEx(MO).DropItemList.length) {
     class!Entity tp = EntityEx(MO).DropItemList[i].Type;
     class!Entity tprepl = none;
-    if (tp) tprepl = class!Entity(GetClassReplacement(tp));
+    if (tp) tprepl = class!Inventory(GetClassReplacement(tp));
     //print("  i=%d; type=`%C`(%C); name=`%s`; amount=%s; chance=%s", i, tp, tprepl, EntityEx(MO).DropItemList[i].TypeName, EntityEx(MO).DropItemList[i].Amount, EntityEx(MO).DropItemList[i].Chance);
-    if (!tp) continue;
+    if (!tprepl) continue;
     Inventory Item = Inventory(Level.Spawn(tprepl, default, default, default, false));
     Item.bIgnoreSkill = true;
     if (EntityEx(MO).DropItemList[i].Amount > 0) Item.Amount = EntityEx(MO).DropItemList[i].Amount;
