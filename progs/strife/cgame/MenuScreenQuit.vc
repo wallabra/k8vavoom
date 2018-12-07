@@ -22,45 +22,75 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MenuScreenQuit : MenuScreen;
 
-MenuStaticBitmap  Page;
-name        QuitSound;
+//MenuStaticBitmap Page;
+int currPic = -1;
+name QuitSound;
 
 name TeaserQuitSounds[5];
 name QuitSounds[8];
 
-override void CreateChoices()
-{
+
+override void CreateChoices () {
   ::CreateChoices();
+  /*
   Page = NewChild(MenuStaticBitmap);
   Page.SetPic('panel7');
+  */
+  currPic = R_RegisterPic('panel7');
 
-  if (!WadLumpPresent('map01'))
-    QuitSound = TeaserQuitSounds[P_Random() % 5];
-  else
-    QuitSound = QuitSounds[P_Random() % 8];
+  if (!WadLumpPresent('map01')) {
+    QuitSound = TeaserQuitSounds[P_Random()%5];
+  } else {
+    QuitSound = QuitSounds[P_Random()%8];
+  }
   StopLocalSounds();
   LocalSound(QuitSound);
   CmdBuf_AddText("music play d_fast\n");
 }
 
-override bool OnKeyDown(int key)
-{
+
+//==========================================================================
+//
+//  DrawBackButton
+//
+//==========================================================================
+override void DrawBackButton () {
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  if (currPic > 0) {
+    picinfo_t pnfo;
+    R_GetPicInfo(currPic, &pnfo);
+    if (pnfo.width < 1 || pnfo.height < 1) {
+      ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
+    } else {
+      DrawFullScreenPic(currPic);
+    }
+  }
+}
+
+
+override bool OnKeyDown (int key) {
   return true;
 }
 
-override void Tick(float DeltaTime)
-{
-  if (!IsLocalSoundPlaying(QuitSound))
-  {
+
+override void Tick (float DeltaTime) {
+  if (!IsLocalSoundPlaying(QuitSound)) {
     CmdBuf_AddText("Quit\n");
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   X = 0;
   Y = 0;
   ScaleX = 2.0;
