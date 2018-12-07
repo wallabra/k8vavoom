@@ -951,7 +951,7 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     vint32 Offset = Streamer<vint32>(*Strm);
     if (Offset-PrevOffset == 24) {
       IsStrife = true;
-      GCon->Log(NAME_Init, "Strife textures detected");
+      GCon->Logf(NAME_Init, "Strife textures detected in lump '%s'", *W_FullLumpName(TexLump));
       break;
     }
     PrevOffset = Offset;
@@ -982,7 +982,11 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
   guard(VTextureManager::AddGroup);
   for (int Lump = W_IterateNS(-1, Namespace); Lump >= 0; Lump = W_IterateNS(Lump, Namespace)) {
     // to avoid duplicates, add only the last one
-    if (W_GetNumForName(W_LumpName(Lump), Namespace) != Lump) continue;
+    if (W_GetNumForName(W_LumpName(Lump), Namespace) != Lump) {
+      //GCon->Logf(NAME_Dev, "VTextureManager::AddGroup(%d:%d): skipped lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
+      continue;
+    }
+    //GCon->Logf(NAME_Dev, "VTextureManager::AddGroup(%d:%d): loading lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
     AddTexture(VTexture::CreateTexture(Type, Lump));
   }
   unguard;

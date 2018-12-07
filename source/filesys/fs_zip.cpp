@@ -745,6 +745,7 @@ void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
       newname[1] = A[j].New[1];
       newname[2] = A[j].New[2];
       newname[3] = A[j].New[3];
+      GCon->Logf(NAME_Dev, "renaming ZIP sprite '%s' to '%s'", *L.Name, newname);
       L.LumpName = newname;
     }
     for (int j = 0; j < LA.Num(); ++j) {
