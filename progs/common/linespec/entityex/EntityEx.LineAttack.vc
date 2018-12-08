@@ -122,7 +122,7 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
       lineEnd = hit_point;
 
       // check for shooting floor or ceiling
-      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, /*PuffType*/none, nullptr)) return none;
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType:none, outHitPoint:nullptr)) return none;
 
       lineStart = lineEnd;
 
@@ -261,7 +261,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       lineEnd = hit_point;
 
       // check for shooting floor or ceiling
-      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
         // process floor and ceiling here
         if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
         return false;
@@ -317,7 +317,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
   }
 
   lineEnd = dst;
-  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), line:default, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
     // process floor and ceiling here
     if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
   }
@@ -414,7 +414,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
       lineEnd = hit_point;
 
       // check for shooting floor or ceiling
-      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
         // process floor and ceiling here
         if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
         return false;
@@ -501,7 +501,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
   }
 
   lineEnd = dst;
-  if (!ShootCheckPlanes(XLevel.PointInSector(dst), default, lineStart, lineEnd, distance, none/*PuffType*/, &outHitPoint)) {
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), line:default, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
     // process floor and ceiling here
     if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
   }
@@ -870,7 +870,7 @@ final bool ShootHitPlane (sector_t *sec, line_t *li, sec_plane_t *plane,
 //  ShootCheckPlanes
 //
 //==========================================================================
-final bool ShootCheckPlanes (sector_t *sec, optional line_t *li,
+final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
                              TVec linestart, TVec lineend, float range,
                              class!EntityEx PuffType, TVec *outHitPoint)
 {
@@ -880,13 +880,13 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *li,
   startreg = PointInRegion(sec, linestart);
 
   for (reg = startreg; reg; reg = reg->next) {
-    if (!ShootHitPlane(sec, li, reg->floor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
-    if (!ShootHitPlane(sec, li, reg->ceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
+    if (!ShootHitPlane(sec, line, reg->floor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
+    if (!ShootHitPlane(sec, line, reg->ceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
   }
 
   for (reg = startreg->prev; reg; reg = reg->prev) {
-    if (!ShootHitPlane(sec, li, reg->floor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
-    if (!ShootHitPlane(sec, li, reg->ceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
+    if (!ShootHitPlane(sec, line, reg->floor, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit floor
+    if (!ShootHitPlane(sec, line, reg->ceiling, linestart, lineend, range, PuffType, outHitPoint)) return false; // hit ceiling
   }
 
   return true;
