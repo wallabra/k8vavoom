@@ -26,7 +26,6 @@
 //**  Archiving: SaveGame I/O.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
@@ -34,6 +33,9 @@
 
 #include <time.h>
 #include <sys/time.h>
+
+
+//#define VAVOOM_LOADER_CAN_SKIP_CLASSES
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1053,7 +1055,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
 //==========================================================================
 static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   guard(UnarchiveThinkers);
-  VObject *Obj;
+  VObject *Obj = nullptr;
 
   AssertSegment(*Loader, ASEG_WORLD);
 
@@ -1077,6 +1079,9 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   }
 
   TArray<VEntity *> elist;
+#ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
+  TMapNC<VObject *, bool> deadThinkers;
+#endif
 
   vint32 NumObjects;
   *Loader << STRM_INDEX(NumObjects);
@@ -1085,10 +1090,21 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
     VName CName;
     *Loader << CName;
     VClass *Class = VClass::FindClass(*CName);
-    if (!Class) Sys_Error("No such class '%s'", *CName);
-
-    // allocate object and copy data
-    Obj = VObject::StaticSpawnObject(Class, true); // skip replacement
+    if (!Class) {
+#ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
+      GCon->Logf("I/O WARNING: No such class '%s'", *CName);
+      //Loader->Exports.Append(nullptr);
+      Class = VThinker::StaticClass();
+      Obj = VObject::StaticSpawnObject(Class, true); // skip replacement
+      //deadThinkers.append((VThinker *)Obj);
+      deadThinkers.put(Obj, false);
+#else
+      Sys_Error("I/O ERROR: No such class '%s'", *CName);
+#endif
+    } else {
+      // allocate object and copy data
+      Obj = VObject::StaticSpawnObject(Class, true); // skip replacement
+    }
 
     // handle level info
     if (Obj->IsA(VLevelInfo::StaticClass())) {
@@ -1106,7 +1122,23 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   GLevelInfo->Game = GGameInfo;
   GLevelInfo->World = GGameInfo->WorldInfo;
 
-  for (int i = 0; i < Loader->Exports.Num(); ++i) Loader->Exports[i]->Serialise(*Loader);
+  for (int i = 0; i < Loader->Exports.Num(); ++i) {
+    check(Loader->Exports[i]);
+#ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
+    auto dpp = deadThinkers.find(Loader->Exports[i]);
+    if (dpp) {
+      //GCon->Logf("!!! %d: %s", i, Loader->Exports[i]->GetClass()->GetName());
+      Loader->Exports[i]->Serialise(*Loader);
+    } else
+#endif
+    {
+      Loader->Exports[i]->Serialise(*Loader);
+    }
+  }
+#ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
+  //for (int i = 0; i < deadThinkers.length(); ++i) deadThinkers[i]->DestroyThinker();
+  for (auto it = deadThinkers.first(); it; ++it) ((VThinker *)it.getValue())->DestroyThinker();
+#endif
 
   // this will fix thinker positions
   if (loader_recalc_z) for (int i = 0; i < elist.length(); ++i) elist[i]->callSectorChanged(-666);

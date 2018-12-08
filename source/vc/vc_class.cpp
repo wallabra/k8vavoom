@@ -2141,6 +2141,30 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
 //==========================================================================
 void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
   guard(SerialiseObject);
+  if (Strm.IsLoading() && !Obj) {
+    // skip this object
+    VName tmpname = NAME_None;
+    Strm << tmpname;
+    if (tmpname != NAME_None) {
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+      fprintf(stderr, "I/O WARNING: skipping parent class '%s' is missing\n", *tmpname);
+#else
+      GCon->Logf("I/O WARNING: skipping parent class '%s' is missing", *tmpname);
+#endif
+      SerialiseObject(Strm, nullptr);
+    }
+    // skip fields
+    vint32 fldcount = 0;
+    Strm << STRM_INDEX(fldcount);
+    while (fldcount--) {
+      VName fname = NAME_None;
+      Strm << fname;
+      VField::SkipSerialisedValue(Strm);
+    }
+    return;
+  } else {
+    check(Obj);
+  }
   // serialise parent class fields
   VClass *super = GetSuperClass();
   VName supname = (super ? super->Name : NAME_None);
@@ -2148,9 +2172,9 @@ void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
   if (Strm.IsLoading()) {
     // check superclass name
     if (super) {
-      if (super->Name != supname) Sys_Error("I/O ERROR: expected superclass '%s', got superclass '%s'", *super->Name, *supname);
+      if (super->Name != supname) Sys_Error("I/O ERROR: expected superclass '%s', got superclass '%s' for '%s'", *super->Name, *supname, Obj->GetClass()->GetName());
     } else {
-      if (supname != NAME_None) Sys_Error("I/O ERROR: expected no superclass, got superclass '%s'", *supname);
+      if (supname != NAME_None) Sys_Error("I/O ERROR: expected no superclass, got superclass '%s' for '%s'", *supname, Obj->GetClass()->GetName());
     }
   }
   if (super) GetSuperClass()->SerialiseObject(Strm, Obj);
