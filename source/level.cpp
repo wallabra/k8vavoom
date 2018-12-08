@@ -1842,7 +1842,7 @@ void SV_LoadLevel (VName MapName) {
     GLevel = nullptr;
   }
 
-  GLevel = Spawn<VLevel>();
+  GLevel = SpawnWithReplace<VLevel>();
   GLevel->LevelFlags |= VLevel::LF_ForServer;
 
   GLevel->LoadMap(MapName);
@@ -1864,7 +1864,7 @@ void CL_LoadLevel (VName MapName) {
     GClLevel = nullptr;
   }
 
-  GClLevel = Spawn<VLevel>();
+  GClLevel = SpawnWithReplace<VLevel>();
   GClGame->GLevel = GClLevel;
 
   GClLevel->LoadMap(MapName);

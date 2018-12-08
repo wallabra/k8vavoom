@@ -273,7 +273,7 @@ bool VRootWidget::MouseButtonEvent (int Button, bool Down) {
 //==========================================================================
 void VRootWidget::StaticInit () {
   guard(VRootWidget::StaticInit);
-  GRoot = Spawn<VRootWidget>();
+  GRoot = SpawnWithReplace<VRootWidget>();
   GRoot->Init();
   GClGame->GRoot = GRoot;
   unguard;
