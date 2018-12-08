@@ -588,17 +588,11 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
       if (!n->Visited) {
         // unprocessed thing found, mark thing as processed
         n->Visited = 1;
-        // jff 4/7/98 -- don't do these
-        if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap)) {
-          // process it
-          if (!n->Thing->eventSectorChanged(crunch)) {
-            // doesn't fit, keep checking (crush other things)
-            ret = true;
-          }
-        } else {
-          // move thing with a sector anyway
-          n->Thing->eventSectorChanged(crunch);
-          //GCon->Logf("moved noblockmap item '%s'", n->Thing->GetClass()->GetName());
+        // process it
+        if (!n->Thing->eventSectorChanged(crunch)) {
+          // doesn't fit, keep checking (crush other things)
+          // k8: no need to check flags, VC code does this for us
+          /*if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap))*/ ret = true;
         }
         // exit and start over
         break;
