@@ -489,25 +489,54 @@ int FaceActor(EntityEx target, out float delta)
   }
 }
 
+
 //==========================================================================
 //
 //  HeightClip
+//  called from `SectorChanged()`
 //
 //  Takes a valid thing and adjusts the thing->FloorZ, thing->CeilingZ, and
-// possibly thing->z. This is called for all nearby monsters whenever a
-// sector changes height. If the thing doesn't fit, the z will be set to the
-// lowest value and false will be returned.
+//  possibly thing->z. This is called for all nearby monsters whenever a
+//  sector changes height. If the thing doesn't fit, the z will be set to
+//  the lowest value and false will be returned.
 //
 //==========================================================================
-
-final bool HeightClip()
-{
-  bool onfloor;
-  float OldZ = Origin.z;
-
-  onfloor = (Origin.z == FloorZ);
-
+final bool HeightClip () {
   tmtrace_t tmtrace;
+  float OldZ = Origin.z;
+  bool onfloor = (Origin.z == FloorZ);
+
+  // "no interaction" and "no blockmap" just moving
+  if (bNoInteraction || bNoBlockmap) {
+    //k8: always move?
+    if (bMoveWithSector && !bNoSector) {
+      // faster checking
+      bool oldWithThings = bColideWithThings;
+      bool oldWithWorld = bColideWithWorld;
+      bColideWithThings = false;
+      bColideWithWorld = false;
+      // find new position
+      CheckRelPosition(&tmtrace, Origin);
+      bColideWithThings = bColideWithThings;
+      bColideWithWorld = bColideWithWorld;
+      // update position
+      Floor = tmtrace.Floor;
+      Ceiling = tmtrace.Ceiling;
+      FloorZ = tmtrace.FloorZ;
+      CeilingZ = tmtrace.CeilingZ;
+      if (onfloor) {
+        if (bNoInteraction || !bNoGravity || Origin.z < FloorZ) {
+          Origin.z = FloorZ;
+        }
+      } else {
+        // don't adjust a floating thing unless forced to
+        if (Origin.z+Height > CeilingZ) Origin.z = CeilingZ-Height;
+      }
+    }
+    // never blocks
+    return true;
+  }
+
   CheckRelPosition(&tmtrace, Origin);
   // what about stranding a monster partially off an edge?
 
@@ -516,54 +545,40 @@ final bool HeightClip()
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
 
-  if (onfloor && (!bNoGravity || !bNoLiftDrop || bMoveWithSector))
-  {
+  if (onfloor && (!bNoGravity || !bNoLiftDrop || bMoveWithSector)) {
     // walking monsters rise and fall with the floor
-    if ((Origin.z - FloorZ < 9.0) || bNoGravity || !XLevel.bExtended)
-    {
+    if ((Origin.z-FloorZ < 9.0) || bNoGravity || !XLevel.bExtended) {
       EntityEx onmo = EntityEx(CheckOnmobj());
-
-      // Do we have something over us?
-      if (bSolid && onmo && onmo.bSolid)
-      {
-        // Adjust height for the thing over us...
-        onmo.Origin.z += FloorZ - Origin.z;
-
-        // don't adjust a floating monster unless forced to...
-        if (onmo.Origin.z + onmo.Height > CeilingZ)
-        {
-          onmo.Origin.z = CeilingZ - onmo.Height;
+      // do we have something over us?
+      if (bSolid && onmo && onmo.bSolid) {
+        // adjust height for the thing over us
+        onmo.Origin.z += FloorZ-Origin.z;
+        // don't adjust a floating monster unless forced to
+        if (onmo.Origin.z+onmo.Height > CeilingZ) {
+          onmo.Origin.z = CeilingZ-onmo.Height;
         }
-        if (CeilingZ - (FloorZ + Height) < onmo.Height)
-        {
-          // Things don't fit, stop...
+        if (CeilingZ-(FloorZ+Height) < onmo.Height) {
+          // things don't fit, stop
           return false;
         }
       }
       Origin.z = FloorZ;
     }
-  }
-  else
-  {
+  } else {
     // don't adjust a floating monster unless forced to
-    if (Origin.z + Height > CeilingZ)
-    {
-      Origin.z = CeilingZ - Height;
+    if (Origin.z+Height > CeilingZ) {
+      Origin.z = CeilingZ-Height;
     }
   }
 
   CheckFakeFloorTriggers(OldZ);
 
-  if (CeilingZ - FloorZ < Height)
-  {
-    if (bIceCorpse && bSolid)
-    {
+  if (CeilingZ-FloorZ < Height) {
+    if (bIceCorpse && bSolid) {
       Actor(self).A_FreezeDeathChunks();
       return true;
-    }
-    else
-    {
-      // Doesn't fit, stop...
+    } else {
+      // doesn't fit, stop
       return false;
     }
   }
@@ -1732,7 +1747,8 @@ final override bool SectorChanged (int CrushChange) {
       PlaySound(CrushPainSound, CHAN_VOICE);
     }
   }
-  return false; //  Don't fit
+
+  return false; // don't fit
 }
 
 
