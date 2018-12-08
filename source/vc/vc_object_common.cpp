@@ -714,7 +714,7 @@ IMPLEMENT_FUNCTION(VObject, CallStateAction) {
   P_GET_PTR(VObject, obj);
   if (State && State->Function) {
     P_PASS_REF(obj);
-    ExecuteFunction(State->Function);
+    (void)ExecuteFunction(State->Function);
   }
 }
 

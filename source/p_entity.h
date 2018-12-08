@@ -511,18 +511,18 @@ public:
     if (!specified_wallmask) wallmask = 0;
     P_PASS_INT(wallmask);
     P_PASS_BOOL(specified_wallmask);
-    EV_RET_PTR(VEntity, VName("PickActor"));
+    EV_RET_REF(VEntity, VName("PickActor"));
   }
 
   VEntity *eventDoAAPtr (int aaptr) {
     P_PASS_SELF;
     P_PASS_INT(aaptr);
-    EV_RET_PTR(VEntity, VName("eventDoAAPtr"));
+    EV_RET_REF(VEntity, VName("eventDoAAPtr"));
   }
 
   VEntity *eventFindTargetForACS () {
     P_PASS_SELF;
-    EV_RET_PTR(VEntity, VName("eventFindTargetForACS"));
+    EV_RET_REF(VEntity, VName("eventFindTargetForACS"));
   }
 
   bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {

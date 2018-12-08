@@ -172,3 +172,98 @@ struct FReplacedString {
   VStr Old;
   VStr New;
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// `ExecuteFunction()` returns this
+// we cannot return arrays
+// returning pointers is not implemented yet (except VClass and VObject)
+struct VFuncRes {
+private:
+  EType type;
+  bool pointer;
+  /*const*/ void *ptr;
+  int ival; // and bool
+  float fval;
+  TVec vval;
+  VStr sval;
+  VName nval;
+
+public:
+  VFuncRes () : type(TYPE_Void), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(), nval(NAME_None) {}
+  VFuncRes (const VFuncRes &b) : type(TYPE_Void), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(), nval(NAME_None) { *this = b; }
+
+  VFuncRes (bool v) : type(TYPE_Int), pointer(false), ptr(nullptr), ival(v ? 1 : 0), fval(v ? 1 : 0), vval(0, 0, 0), sval(), nval(NAME_None) {}
+
+  VFuncRes (int v) : type(TYPE_Int), pointer(false), ptr(nullptr), ival(v), fval(v), vval(0, 0, 0), sval(), nval(NAME_None) {}
+  //VFuncRes (const int *v) : type(TYPE_Int), pointer(true), ptr(v), ival(v ? *v : 0), fval(v ? float(*v) : 0.0f), vval(0, 0, 0), sval(), nval(NAME_None) {}
+
+  VFuncRes (float v) : type(TYPE_Float), pointer(false), ptr(nullptr), ival(v), fval(v), vval(0, 0, 0), sval(), nval(NAME_None) {}
+  //VFuncRes (const float *v) : type(TYPE_Float), pointer(true), ptr(v), ival(*v ? int(v) : 0), fval(v ? *v : 0.0f), vval(0, 0, 0), sval(), nval(NAME_None) {}
+
+  VFuncRes (const TVec &v) : type(TYPE_Vector), pointer(false), ptr(nullptr), ival(0), fval(0), vval(v.x, v.y, v.z), sval(), nval(NAME_None) {}
+  //VFuncRes (const TVec *&v) : type(TYPE_Vector), pointer(true), ptr(v), ival(0), fval(0), vval(v ? v->x : 0.0f, v ? v->y : 0.0f, v ? v->z : 0.0f), sval(), nval(NAME_None) {}
+  VFuncRes (const float x, const float y, const float z) : type(TYPE_Vector), pointer(false), ptr(nullptr), ival(0), fval(0), vval(x, y, z), sval(), nval(NAME_None) {}
+
+  VFuncRes (const VStr &v) : type(TYPE_String), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(v), nval(NAME_None) {}
+  //VFuncRes (const VStr *&v) : type(TYPE_String), pointer(true), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(v ? *v : VStr::EmptyString), nval(NAME_None) {}
+
+  VFuncRes (const VName &v) : type(TYPE_Name), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(), nval(v) {}
+  //VFuncRes (const VName *&v) : type(TYPE_Name), pointer(true), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(), nval() { if (v) nval = VName(*v); else nval = NAME_None; }
+
+  VFuncRes (VClass *v) : type(TYPE_Class), pointer(false), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(), nval(NAME_None) {}
+  VFuncRes (VObject *v) : type(TYPE_Reference), pointer(false), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(), nval(NAME_None) {}
+  VFuncRes (VState *v) : type(TYPE_State), pointer(false), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(), nval(NAME_None) {}
+
+  inline VFuncRes &operator = (const VFuncRes &b) {
+    if (&b == this) return *this;
+    type = b.type;
+    pointer = b.pointer;
+    ptr = b.ptr;
+    ival = b.ival;
+    fval = b.fval;
+    vval = b.vval;
+    sval = b.sval;
+    return *this;
+  }
+
+  inline EType getType () const { return type; }
+  inline bool isPointer () const { return pointer; }
+
+  inline bool isVoid () const { return (type == TYPE_Void); }
+
+  inline bool isNumber () const { return (type == TYPE_Int || type == TYPE_Float); }
+  inline bool isInt () const { return (type == TYPE_Int); }
+  inline bool isFloat () const { return (type == TYPE_Float); }
+  inline bool isVector () const { return (type == TYPE_Vector); }
+  inline bool isStr () const { return (type == TYPE_String); }
+  inline bool isName () const { return (type == TYPE_Name); }
+  inline bool isClass () const { return (type == TYPE_Class); }
+  inline bool isObject () const { return (type == TYPE_Reference); }
+  inline bool isState () const { return (type == TYPE_State); }
+
+  inline const void *getPtr () const { return ptr; }
+  inline VClass *getClass () const { return (VClass *)ptr; }
+  inline VObject *getObject () const { return (VObject *)ptr; }
+  inline VState *getState () const { return (VState *)ptr; }
+
+  inline int getInt () const { return ival; }
+  inline float getFloat () const { return fval; }
+  inline const TVec &getVector () const { return vval; }
+  inline const VStr &getStr () const { return sval; }
+  inline VName getName () const { return nval; }
+
+  inline bool getBool () const {
+    switch (type) {
+      case TYPE_Int: return (ival != 0);
+      case TYPE_Float: return (fval != 0);
+      case TYPE_Vector: return (vval.x != 0 && vval.y != 0 && vval.z != 0);
+      case TYPE_String: return (sval.length() != 0);
+      case TYPE_Name: return (nval != NAME_None);
+      default: break;
+    }
+    return false;
+  }
+
+  inline operator bool () const { return getBool(); }
+};

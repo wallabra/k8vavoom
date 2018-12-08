@@ -188,8 +188,8 @@ public:
 
   static int GetObjectsCount ();
 
-  static VStack ExecuteFunction (VMethod *);
-  static VStack ExecuteFunctionNoArgs (VMethod *); // `self` should be on the stack
+  static VFuncRes ExecuteFunction (VMethod *);
+  static VFuncRes ExecuteFunctionNoArgs (VMethod *); // `self` should be on the stack
   static void VMDumpCallStack ();
   static void DumpProfile ();
   static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
@@ -293,29 +293,29 @@ inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetUniqueId() : 0
 #define P_PASS_SELF      PR_PushPtr(this)
 
 // macros for calling VavoomC methods with different return types
-#define EV_RET_VOID(v)    ExecuteFunction(GetVFunction(v))
-#define EV_RET_INT(v)     return ExecuteFunction(GetVFunction(v)).i
-#define EV_RET_BYTE(v)    return ExecuteFunction(GetVFunction(v)).i
-#define EV_RET_FLOAT(v)   return ExecuteFunction(GetVFunction(v)).f
-#define EV_RET_BOOL(v)    return !!ExecuteFunction(GetVFunction(v)).i
-#define EV_RET_NAME(v)    vint32 ret = ExecuteFunction(GetVFunction(v)).i; return *(VName*)&ret
-#define EV_RET_STR(v)     VStack Ret = ExecuteFunction(GetVFunction(v)); PR_PushPtr(Ret.p); return PR_PopStr()
-#define EV_RET_VEC(v)     Sys_Error("Not implemented") /*ExecuteFunction(GetVFunction(v))*/
-#define EV_RET_AVEC(v)    Sys_Error("Not implemented") /*ExecuteFunction(GetVFunction(v))*/
-#define EV_RET_REF(t, v)  return (t*)ExecuteFunction(GetVFunction(v)).p
-#define EV_RET_PTR(t, v)  return (t*)ExecuteFunction(GetVFunction(v)).p
+#define EV_RET_VOID(v)    (void)ExecuteFunction(GetVFunction(v))
+#define EV_RET_INT(v)     return ExecuteFunction(GetVFunction(v)).getInt()
+#define EV_RET_BYTE(v)    return ExecuteFunction(GetVFunction(v)).getInt()
+#define EV_RET_FLOAT(v)   return ExecuteFunction(GetVFunction(v)).getFloat()
+#define EV_RET_BOOL(v)    return !!ExecuteFunction(GetVFunction(v)).getInt()
+#define EV_RET_NAME(v)    return ExecuteFunction(GetVFunction(v)).getName()
+#define EV_RET_STR(v)     return ExecuteFunction(GetVFunction(v)).getStr()
+#define EV_RET_VEC(v)     return ExecuteFunction(GetVFunction(v)).getVector()
+//#define EV_RET_AVEC(v)    Sys_Error("Not implemented") /*ExecuteFunction(GetVFunction(v))*/
+#define EV_RET_REF(t, v)  return (t *)ExecuteFunction(GetVFunction(v)).getObject()
+#define EV_RET_PTR(t, v)  return (t *)ExecuteFunction(GetVFunction(v)).getClass()
 
-#define EV_RET_VOID_IDX(v)    ExecuteFunction(GetVFunctionIdx(v))
-#define EV_RET_INT_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).i
-#define EV_RET_BYTE_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).i
-#define EV_RET_FLOAT_IDX(v)   return ExecuteFunction(GetVFunctionIdx(v)).f
-#define EV_RET_BOOL_IDX(v)    return !!ExecuteFunction(GetVFunctionIdx(v)).i
-#define EV_RET_NAME_IDX(v)    vint32 ret = ExecuteFunction(GetVFunctionIdx(v)).i; return *(VName*)&ret
-#define EV_RET_STR_IDX(v)     VStack Ret = ExecuteFunction(GetVFunctionIdx(v)); PR_PushPtr(Ret.p); return PR_PopStr()
-#define EV_RET_VEC_IDX(v)     Sys_Error("Not implemented") /*ExecuteFunction(GetVFunctionIdx(v))*/
-#define EV_RET_AVEC_IDX(v)    Sys_Error("Not implemented") /*ExecuteFunction(GetVFunctionIdx(v))*/
-#define EV_RET_REF_IDX(t, v)  return (t*)ExecuteFunction(GetVFunctionIdx(v)).p
-#define EV_RET_PTR_IDX(t, v)  return (t*)ExecuteFunction(GetVFunctionIdx(v)).p
+#define EV_RET_VOID_IDX(v)    (void)ExecuteFunction(GetVFunctionIdx(v))
+#define EV_RET_INT_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).getInt()
+#define EV_RET_BYTE_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getInt()
+#define EV_RET_FLOAT_IDX(v)   return ExecuteFunction(GetVFunctionIdx(v)).getFloat()
+#define EV_RET_BOOL_IDX(v)    return !!ExecuteFunction(GetVFunctionIdx(v)).getInt()
+#define EV_RET_NAME_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getName()
+#define EV_RET_STR_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).getStr()
+#define EV_RET_VEC_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).getVector()
+//#define EV_RET_AVEC_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getVector()
+#define EV_RET_REF_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getObject()
+#define EV_RET_PTR_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getClass()
 
 // parameter get macros; parameters must be retrieved in backwards order
 #define P_GET_INT(v)     vint32 v = PR_Pop()

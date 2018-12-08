@@ -64,7 +64,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
     bool ShouldSend = false;
-    if (VObject::ExecuteFunctionNoArgs(Base->ReplCond).i) ShouldSend = true;
+    if (VObject::ExecuteFunctionNoArgs(Base->ReplCond).getBool()) ShouldSend = true;
     PlayerFlags = SavedFlags;
 
     if (ShouldSend) {
@@ -88,7 +88,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
   // execute it's replication condition method
   check(Base->ReplCond);
   P_PASS_REF(this);
-  if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).i) return false;
+  if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).getBool()) return false;
 
   if (Net) {
     // replication condition is true, the method must be replicated

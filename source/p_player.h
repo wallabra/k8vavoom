@@ -534,7 +534,7 @@ public:
 
   VEntity *eventGetReadyWeapon () {
     P_PASS_SELF;
-    EV_RET_PTR(VEntity, (VName("eventGetReadyWeapon")));
+    EV_RET_REF(VEntity, (VName("eventGetReadyWeapon")));
   }
 };
 

@@ -1060,8 +1060,7 @@ int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VO
       default: abort(); // the thing that should not be
     }
   }
-  auto ret = VObject::ExecuteFunction(fnless);
-  return ret.i;
+  return VObject::ExecuteFunction(fnless).getInt();
 }
 
 

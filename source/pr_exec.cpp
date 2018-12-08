@@ -2567,19 +2567,18 @@ func_loop:
 //
 //  ALL arguments must be pushed
 //
-//  FIXME:TODO: use automatic type object for result, with autoclearing
-//
 //==========================================================================
-VStack VObject::ExecuteFunction (VMethod *func) {
+VFuncRes VObject::ExecuteFunction (VMethod *func) {
   guard(VObject::ExecuteFunction);
 
   //fprintf(stderr, "*** VObject::ExecuteFunction: <%s>\n", *func->GetFullName());
 
   VMethod *prev_func;
-  VStack ret;
+  //VStack ret;
+  //ret.i = 0;
+  //ret.p = nullptr;
+  VFuncRes ret;
 
-  ret.i = 0;
-  ret.p = nullptr;
   // run function
   prev_func = current_func;
 #ifdef VMEXEC_RUNDUMP
@@ -2591,6 +2590,22 @@ VStack VObject::ExecuteFunction (VMethod *func) {
   // get return value
   if (func->ReturnType.Type) {
     const int tsz = func->ReturnType.GetStackSize()/4;
+    switch (func->ReturnType.Type) {
+      case TYPE_Void: abort(); // the thing that should not be
+      case TYPE_Int: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
+      case TYPE_Byte: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
+      case TYPE_Bool: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
+      case TYPE_Float: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].f); break;
+      case TYPE_Name: check(tsz == 1); ret = VFuncRes(*(VName *)(&pr_stackPtr[-1])); break;
+      case TYPE_String: check(tsz == 1); ret = VFuncRes(*(VStr *)(&pr_stackPtr[-1].p)); ((VStr *)(&pr_stackPtr[-1].p))->clear(); break;
+      case TYPE_Reference: check(tsz == 1); ret = VFuncRes((VClass *)(pr_stackPtr[-1].p)); break;
+      case TYPE_Class: check(tsz == 1); ret = VFuncRes((VObject *)(pr_stackPtr[-1].p)); break;
+      case TYPE_State: check(tsz == 1); ret = VFuncRes((VState *)(pr_stackPtr[-1].p)); break;
+      case TYPE_Vector: check(tsz == 3); ret = VFuncRes(pr_stackPtr[-3].f, pr_stackPtr[-2].f, pr_stackPtr[-1].f); break;
+      default: break;
+    }
+    pr_stackPtr -= tsz;
+    /*
     if (tsz == 1) {
       --pr_stackPtr;
       ret = *pr_stackPtr;
@@ -2599,6 +2614,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
     } else {
       pr_stackPtr -= tsz;
     }
+    */
   }
 #ifdef VMEXEC_RUNDUMP
   printIndent(); fprintf(stderr, "***LEAVING `%s` (RETx); sp=%d, (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK); leaveIndent();
@@ -2650,7 +2666,7 @@ VStack VObject::ExecuteFunction (VMethod *func) {
 //  `self` must be pushed
 //
 //==========================================================================
-VStack VObject::ExecuteFunctionNoArgs (VMethod *func) {
+VFuncRes VObject::ExecuteFunctionNoArgs (VMethod *func) {
   if (!func) Sys_Error("ExecuteFunctionNoArgs: null func!");
 
   // placeholders for "ref" args
@@ -2758,7 +2774,7 @@ VStack VObject::ExecuteFunctionNoArgs (VMethod *func) {
     }
   }
 
-  VStack res = ExecuteFunction(func);
+  VFuncRes res = ExecuteFunction(func);
   for (int f = rstrUsed-1; f >= 0; --f) rstrs[f].clear();
   return res;
 }
