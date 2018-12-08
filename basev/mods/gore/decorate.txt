@@ -272,13 +272,13 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
   States {
     Spawn:
       MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      //MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
       Stop
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      //TNT1 A 0 A_CheckFloor("Disappear")
+      //MSBL HHHHHHHH 1 A_FadeOut(0.1)
       Stop
 
     Vanish:
@@ -1087,13 +1087,13 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
   States {
     Spawn:
       MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      //MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
       Stop
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      //TNT1 A 0 A_CheckFloor("Disappear")
+      //MSBL HHHHHHHH 1 A_FadeOut(0.1)
       Stop
 
     Vanish:
@@ -1900,13 +1900,13 @@ Actor K8Gore_BloodmistSmallGreen : K8Gore_FlyingBloodGreen {
   States {
     Spawn:
       MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      //MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
       Stop
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      //TNT1 A 0 A_CheckFloor("Disappear")
+      //MSBL HHHHHHHH 1 A_FadeOut(0.1)
       Stop
 
     Vanish:
@@ -2715,13 +2715,13 @@ Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_FlyingBloodTransient_Green {
   States {
     Spawn:
       MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      //MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
       Stop
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      //TNT1 A 0 A_CheckFloor("Disappear")
+      //MSBL HHHHHHHH 1 A_FadeOut(0.1)
       Stop
 
     Vanish:
@@ -3528,13 +3528,13 @@ Actor K8Gore_BloodmistSmallBlue : K8Gore_FlyingBloodBlue {
   States {
     Spawn:
       MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      //MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
       Stop
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      //TNT1 A 0 A_CheckFloor("Disappear")
+      //MSBL HHHHHHHH 1 A_FadeOut(0.1)
       Stop
 
     Vanish:
@@ -4343,13 +4343,13 @@ Actor K8Gore_BloodmistSmallTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
   States {
     Spawn:
       MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      //MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
       Stop
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      //TNT1 A 0 A_CheckFloor("Disappear")
+      //MSBL HHHHHHHH 1 A_FadeOut(0.1)
       Stop
 
     Vanish:
