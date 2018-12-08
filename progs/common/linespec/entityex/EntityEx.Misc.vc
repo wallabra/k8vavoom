@@ -1672,6 +1672,8 @@ override void Tick(float deltaTime)
 //
 //  SectorChanged
 //
+//  CrushChange == -666: loader fix
+//
 //==========================================================================
 final override bool SectorChanged (int CrushChange) {
   EntityEx A;

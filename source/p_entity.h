@@ -547,6 +547,14 @@ public:
     EV_RET_VOID(VName("eventLineAttackACS"));
   }
 
+  void callSectorChanged (int crush) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SectorChanged"));
+    P_PASS_SELF;
+    P_PASS_INT(crush);
+    EV_RET_VOID_IDX(mtindex);
+  }
+
   //static final bool decoDoCheckFlag (string flagname, Entity tgt)
   /*
   bool eventCheckFlag (const VStr &flagname) {

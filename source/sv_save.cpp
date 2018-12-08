@@ -46,6 +46,8 @@ static VCvarB sv_new_map_autosave("sv_new_map_autosave", true, "Autosave when en
 
 static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/load?", CVAR_Archive);
 
+static VCvarB loader_recalc_z("loader_recalc_z", true, "Recalculate Z on load (this should help with some edge cases)?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
@@ -1074,6 +1076,8 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
     }
   }
 
+  TArray<VEntity *> elist;
+
   vint32 NumObjects;
   *Loader << STRM_INDEX(NumObjects);
   for (int i = 0; i < NumObjects; ++i) {
@@ -1092,6 +1096,8 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
       GLevelInfo->Game = GGameInfo;
       GLevelInfo->World = GGameInfo->WorldInfo;
       GLevel->LevelInfo = GLevelInfo;
+    } else if (loader_recalc_z && Obj->IsA(VEntity::StaticClass())) {
+      elist.append((VEntity *)Obj);
     }
 
     Loader->Exports.Append(Obj);
@@ -1101,6 +1107,9 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   GLevelInfo->World = GGameInfo->WorldInfo;
 
   for (int i = 0; i < Loader->Exports.Num(); ++i) Loader->Exports[i]->Serialise(*Loader);
+
+  // this will fix thinker positions
+  if (loader_recalc_z) for (int i = 0; i < elist.length(); ++i) elist[i]->callSectorChanged(-666);
 
   GLevelInfo->eventAfterUnarchiveThinkers();
   GLevel->eventAfterUnarchiveThinkers();
