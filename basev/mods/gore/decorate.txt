@@ -135,7 +135,7 @@ Actor K8Gore_FlyingBlood : K8Gore_BloodBase {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker", -15, 0, 90, 2, 90)
@@ -560,7 +560,7 @@ Actor K8Gore_TinyBlood : K8Gore_BloodBase {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop3"); }
       XDT1 EFGHIJKL 2
       Stop
   }
@@ -624,7 +624,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool : K8Gore_TinyBlood {
     Death:
       TNT1 A 0
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpot")
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       XDT1 EFGHIJKL 2
       Stop
   }
@@ -950,7 +950,7 @@ Actor K8Gore_FlyingBloodTransient : K8Gore_BloodBaseTransient {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient", -15, 0, 90, 2, 90)
@@ -1368,7 +1368,7 @@ Actor K8Gore_TinyBloodTransient : K8Gore_BloodBaseTransient {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop3"); }
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
       Stop
   }
@@ -1432,7 +1432,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient : K8Gore_TinyBloodTransient {
     Death:
       TNT1 A 0
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpotTransient")
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
       Stop
   }
@@ -1763,7 +1763,7 @@ Actor K8Gore_FlyingBloodGreen : K8Gore_BloodBase {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotGreen", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerGreen", -15, 0, 90, 2, 90)
@@ -2188,7 +2188,7 @@ Actor K8Gore_TinyBloodGreen : K8Gore_BloodBase {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop3"); }
       XDT1 EFGHIJKL 2
       Stop
   }
@@ -2252,7 +2252,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolGreen : K8Gore_TinyBloodGreen {
     Death:
       TNT1 A 0
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpotGreen")
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       XDT1 EFGHIJKL 2
       Stop
   }
@@ -2578,7 +2578,7 @@ Actor K8Gore_FlyingBloodTransient_Green : K8Gore_BloodBaseTransient {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient_Green", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient_Green", -15, 0, 90, 2, 90)
@@ -2996,7 +2996,7 @@ Actor K8Gore_TinyBloodTransient_Green : K8Gore_BloodBaseTransient {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop3"); }
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
       Stop
   }
@@ -3060,7 +3060,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Green : K8Gore_TinyBloodTransi
     Death:
       TNT1 A 0
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpotTransient_Green")
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
       Stop
   }
@@ -3391,7 +3391,7 @@ Actor K8Gore_FlyingBloodBlue : K8Gore_BloodBase {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotBlue", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerBlue", -15, 0, 90, 2, 90)
@@ -3816,7 +3816,7 @@ Actor K8Gore_TinyBloodBlue : K8Gore_BloodBase {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop3"); }
       XDT1 EFGHIJKL 2
       Stop
   }
@@ -3880,7 +3880,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolBlue : K8Gore_TinyBloodBlue {
     Death:
       TNT1 A 0
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpotBlue")
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       XDT1 EFGHIJKL 2
       Stop
   }
@@ -4206,7 +4206,7 @@ Actor K8Gore_FlyingBloodTransient_Blue : K8Gore_BloodBaseTransient {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient_Blue", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient_Blue", -15, 0, 90, 2, 90)
@@ -4624,7 +4624,7 @@ Actor K8Gore_TinyBloodTransient_Blue : K8Gore_BloodBaseTransient {
 
     Death:
       TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop3"); }
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
       Stop
   }
@@ -4688,7 +4688,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Blue : K8Gore_TinyBloodTransie
     Death:
       TNT1 A 0
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpotTransient_Blue")
-      TNT1 A 0 A_PlaySound("blooddrop2")
+      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
       Stop
   }

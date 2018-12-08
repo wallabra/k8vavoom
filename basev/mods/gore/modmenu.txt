@@ -19,6 +19,18 @@ menudef GoreModMenu {
     help = "Amount of blood to spawn.";
   }
 
+  option bool {
+    title = "Blood drip sound";
+    cvar = k8GoreOpt_BloodDripSound;
+    help = "Play small splashes when flying/dropping blood landed?";
+  }
+
+  option bool {
+    title = "Headshot sound";
+    cvar = k8GoreOpt_HeadshotSound;
+    help = "Play special sound on headshot kill?";
+  }
+
 
   header "Headshots Gore Effects";
 
