@@ -52,6 +52,7 @@ class Actor extends Thinker
   field health = Health;
   field mass = Mass;
   field MeleeRange = MeleeRange;
+  field gravity = Gravity;
 
   field reactiontime = ReactionTime;
   field speed = speed;
