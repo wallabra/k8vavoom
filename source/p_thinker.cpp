@@ -148,6 +148,7 @@ void VThinker::StartSound (const TVec &origin, vint32 origin_id,
 //==========================================================================
 void VThinker::StopSound (vint32 origin_id, vint32 channel) {
   guard(VThinker::StopSound);
+  if (!Level) return;
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level->Game->Players[i]) continue;
     if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;

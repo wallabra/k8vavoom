@@ -511,10 +511,10 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
     VName psname = NAME_None;
     Strm << psname;
     if (ParentStruct) {
-      if (ParentStruct->Name != psname) Host_Error("I/O ERROR: expected parent struct '%s', got '%s'", *ParentStruct->Name, *psname);
+      if (ParentStruct->Name != psname) Sys_Error("I/O ERROR: expected parent struct '%s', got '%s'", *ParentStruct->Name, *psname);
       ParentStruct->SerialiseObject(Strm, Data);
     } else {
-      if (psname != NAME_None) Host_Error("I/O ERROR: expected no parent struct, got '%s'", *psname);
+      if (psname != NAME_None) Sys_Error("I/O ERROR: expected no parent struct, got '%s'", *psname);
     }
   } else {
     // save parent struct

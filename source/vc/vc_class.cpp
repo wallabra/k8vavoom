@@ -814,10 +814,11 @@ VState *VClass::FindState (VName AName) {
 //==========================================================================
 VState *VClass::FindStateChecked (VName AName) {
   guard(VClass::FindStateChecked);
+  if (AName == NAME_None) return nullptr;
   VState *s = FindState(AName);
   if (!s) {
     //HACK!
-    if (VStr::ICmp(*AName, "none") == 0 || VStr::ICmp(*AName, "null") == 0) return nullptr;
+    if (VStr::ICmp(*AName, "none") == 0 || VStr::ICmp(*AName, "null") == 0 || VStr::ICmp(*AName, "nil") == 0) return nullptr;
     Sys_Error("State `%s` not found", *AName);
   }
   return s;
@@ -2147,9 +2148,9 @@ void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
   if (Strm.IsLoading()) {
     // check superclass name
     if (super) {
-      if (super->Name != supname) Host_Error("I/O ERROR: expected superclass '%s', got superclass '%s'", *super->Name, *supname);
+      if (super->Name != supname) Sys_Error("I/O ERROR: expected superclass '%s', got superclass '%s'", *super->Name, *supname);
     } else {
-      if (supname != NAME_None) Host_Error("I/O ERROR: expected no superclass, got superclass '%s'", *supname);
+      if (supname != NAME_None) Sys_Error("I/O ERROR: expected no superclass, got superclass '%s'", *supname);
     }
   }
   if (super) GetSuperClass()->SerialiseObject(Strm, Obj);
@@ -2181,11 +2182,6 @@ void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
         VField *F = *ffp;
         flist.remove(fname);
         VField::SerialiseFieldValue(Strm, (vuint8 *)Obj+F->Ofs, F->Type, F->GetFullName());
-        /*
-        if (VStr::Cmp(F->GetName(), "user_hasunloaded") == 0) {
-          GCon->Logf("!!!!!!!!!!! `%s` %d %d", *GetFullName(), *(vint32 *)(Obj+F->Ofs), *(vint32 *)(Defaults+F->Ofs));
-        }
-        */
       }
     }
     // show missing fields

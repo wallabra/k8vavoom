@@ -110,6 +110,7 @@ void VEntity::Serialise (VStream &Strm) {
 //==========================================================================
 void VEntity::DestroyThinker () {
   guard(VEntity::DestroyThinker)
+
   if (Role == ROLE_Authority) {
     eventDestroyed();
     if (TID) RemoveFromTIDList(); // remove from TID list
@@ -119,7 +120,7 @@ void VEntity::DestroyThinker () {
 
   // unlink from sector and block lists
   UnlinkFromWorld();
-  XLevel->DelSectorList();
+  if (XLevel) XLevel->DelSectorList();
 
   Super::DestroyThinker();
   unguard;
