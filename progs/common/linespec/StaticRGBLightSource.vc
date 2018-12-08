@@ -22,24 +22,18 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class StaticRGBLightSource : Actor __mobjinfo__(1503);
 
-class StaticRGBLightSource : Actor
-  __mobjinfo__(1503);
 
-override void OnMapSpawn(mthing_t * mthing)
-{
+override void OnMapSpawn (mthing_t *mthing) {
+  ::OnMapSpawn(mthing);
   float l;
-
-  InitialHealth = Health;
-  Destroy();
-  if (!mthing->arg1)
-    l = 200.0;
-  else
-    l = itof(mthing->arg1) * 8.0;
+  if (!mthing->arg1) l = 200.0; else l = itof(mthing->arg1)*8.0;
   Level.AddStaticLightRGB(vector(mthing->x, mthing->y, mthing->height), l,
     RGB(mthing->arg2, mthing->arg3, mthing->arg4));
+  Destroy();
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

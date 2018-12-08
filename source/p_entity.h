@@ -143,7 +143,6 @@ class VEntity : public VThinker {
   TAVec Angles; // orientation
 
   VState *State;
-  //VState *DispState;
   vint32 DispSpriteFrame; // high 7 bits is frame
   VName DispSpriteName;
   float StateTime; // state tic counter
@@ -202,7 +201,7 @@ class VEntity : public VThinker {
     EF_NoSector   = 0x00000002, // don't use the sector links (invisible but touchable)
     EF_NoBlockmap = 0x00000004, // don't use the blocklinks (inert but displayable)
     EF_IsPlayer   = 0x00000008, // player or player-bot
-    EF_FixedModel = 0x00000010,
+    EF_FixedModel = 0x00000010, // internal renderer flag
     EF_NoGravity  = 0x00000020, // don't apply gravity every tic
     EF_PassMobj   = 0x00000040, // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
     EF_ColideWithThings  = 0x00000080,
@@ -272,6 +271,7 @@ class VEntity : public VThinker {
 
   VName DecalName;
 
+public:
   static int FIndex_OnMapSpawn;
   static int FIndex_BeginPlay;
   static int FIndex_Destroyed;
@@ -290,13 +290,14 @@ class VEntity : public VThinker {
   static int FIndex_MoveThing;
   static int FIndex_GetStateTime;
 
+public:
   static void InitFuncIndexes ();
 
-  //  VObject interface.
+  // VObject interface
   virtual void Destroy () override;
   virtual void Serialise (VStream &) override;
 
-  //  VThinker interface.
+  // VThinker interface
   virtual void DestroyThinker () override;
   virtual void AddedToLevel () override;
 

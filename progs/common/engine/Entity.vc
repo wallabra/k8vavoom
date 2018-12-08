@@ -78,121 +78,106 @@
 //  Any questions?
 //
 //**************************************************************************
+class Entity : Thinker native abstract;
 
-class Entity : Thinker
-  native
-  abstract;
-
-enum
-{
-  STYLE_None,         // Do not draw
-  STYLE_Normal,       // Normal; just copy the image to the screen
-  STYLE_Fuzzy,        // Draw silhouette using "fuzz" effect
-  STYLE_SoulTrans,      // Draw translucent with amount in r_transsouls
-  STYLE_OptFuzzy,       // Draw as fuzzy or translucent, based on user preference
-  STYLE_Translucent = 64,   // Draw translucent
-  STYLE_Add,         // Draw additive
+enum {
+  STYLE_None, // do not draw
+  STYLE_Normal, // normal: just copy the image to the screen
+  STYLE_Fuzzy, // draw silhouette using "fuzz" effect
+  STYLE_SoulTrans, // draw translucent with amount in r_transsouls
+  STYLE_OptFuzzy, // draw as fuzzy or translucent, based on user preference
+  STYLE_Translucent = 64, // draw translucent
+  STYLE_Add, // draw additive
   STYLE_Stencil, // solid color
   STYLE_AddStencil, // solid color, additive
 };
 
-//  Colour tralslation types.
-enum
-{
-  //  No translation.
-  TRANSL_None,
-  //  Game's standard translations.
-  TRANSL_Standard,
-  //  Per-player translations.
-  TRANSL_Player,
-  //  ACS translations.
-  TRANSL_Level,
-  //  Translations of dead players.
-  TRANSL_BodyQueue,
-  //  Translations defined in DECORATE.
-  TRANSL_Decorate,
-  //  Blood translations, for blood colour
-  TRANSL_Blood,
-
+// colour tralslation types.
+enum {
+  TRANSL_None, // no translation
+  TRANSL_Standard, // game's standard translations
+  TRANSL_Player, // per-player translations
+  TRANSL_Level, // ACS translations
+  TRANSL_BodyQueue, // translations of dead players
+  TRANSL_Decorate, // translations defined in DECORATE
+  TRANSL_Blood, // blood translations, for blood colour
   TRANSL_Max
 };
 
 const int TRANSL_TYPE_SHIFT = 16;
 
-//  Flags for A_LookEx method
-enum
-{
+// flags for A_LookEx method
+enum {
   LOF_NOSIGHTCHECK = 1,
   LOF_NOSOUNDCHECK = 2,
   LOF_DONTCHASEGOAL = 4,
   LOF_NOSEESOUND = 8,
-  LOF_FULLVOLSEESOUND = 16
+  LOF_FULLVOLSEESOUND = 16,
 };
 
-struct LightEffectDef
-{
-  name        Name;
-  ubyte        Type;
-  int         Colour;
-  float       Radius;
-  float       Radius2;
-  float       MinLight;
-  TVec        Offset;
-  float       Chance;
-  float       Interval;
-  float       Scale;
+
+struct LightEffectDef {
+  name Name;
+  ubyte Type;
+  int Colour;
+  float Radius;
+  float Radius2;
+  float MinLight;
+  TVec Offset;
+  float Chance;
+  float Interval;
+  float Scale;
 };
 
-struct ParticleEffectDef
-{
-  name        Name;
-  ubyte        Type;
-  ubyte        Type2;
-  int         Colour;
-  TVec        Offset;
-  int         Count;
-  float       OrgRnd;
-  TVec        Velocity;
-  float       VelRnd;
-  float       Accel;
-  float       Grav;
-  float       Duration;
-  float       Ramp;
+
+struct ParticleEffectDef {
+  name Name;
+  ubyte Type;
+  ubyte Type2;
+  int Colour;
+  TVec Offset;
+  int Count;
+  float OrgRnd;
+  TVec Velocity;
+  float VelRnd;
+  float Accel;
+  float Grav;
+  float Duration;
+  float Ramp;
 };
 
-struct DropItemInfo
-{
-  class!Entity   Type;
-  name        TypeName;
-  int         Amount;
-  float       Chance;
+
+struct DropItemInfo {
+  class!Entity Type;
+  name TypeName;
+  int Amount;
+  float Chance;
 };
 
-struct DamageFactor
-{
-  name        DamageType;
-  float       Factor;
+
+struct DamageFactor {
+  name DamageType;
+  float Factor;
 };
 
-struct PainChanceInfo
-{
-  name        DamageType;
-  float       Chance;
+
+struct PainChanceInfo {
+  name DamageType;
+  float Chance;
 };
 
-struct tmtrace_t
-{
-  Entity      StepThing;
-  TVec      End;
-  float     BBox[4];
-  float     FloorZ;
-  float     CeilingZ;
-  float     DropOffZ;
+
+struct tmtrace_t {
+  Entity StepThing;
+  TVec End;
+  float[4] BBox;
+  float FloorZ;
+  float CeilingZ;
+  float DropOffZ;
   sec_plane_t *Floor;
   sec_plane_t *Ceiling;
 
-  bool      bFloatOk; // if true, move would be ok if
-                // within tmtrace.FloorZ - tmtrace.CeilingZ
+  bool bFloatOk; // if true, move would be ok if within tmtrace.FloorZ-tmtrace.CeilingZ
 
   // keep track of the line that lowers the ceiling,
   // so missiles don't explode against sky hack walls
@@ -204,163 +189,154 @@ struct tmtrace_t
 
   // keep track of special lines as they are hit,
   // but don't process them until the move is proven valid
-  array!(line_t *)  SpecHit;
+  array!(line_t *) SpecHit;
 
-  Entity      BlockingMobj;
+  Entity BlockingMobj;
   line_t *AnyBlockingLine; // any blocking line
 };
 
-// Info for drawing: position.
-TVec      Origin;
+// info for drawing: position
+TVec Origin;
 
-// Momentums, used to update position.
-TVec      Velocity;
+// momentums, used to update position
+TVec Velocity;
 
-TAVec     Angles;       // orientation
+TAVec Angles; // orientation
 
 readonly state State;
-//readonly state DispState;
 readonly int DispSpriteFrame; // high 8 bits is frame
 readonly name DispSpriteName;
 float StateTime; // state tic counter
 
-//More drawing info.
-ubyte      SpriteType;       //  How to draw sprite
-name      FixedSpriteName;
-string      FixedModelName;
-ubyte      ModelVersion;
-int             NumTouchingLights;
+// more drawing info
+ubyte SpriteType; // how to draw sprite
+name FixedSpriteName;
+string FixedModelName;
+ubyte ModelVersion;
+int NumTouchingLights;
 
-ubyte      RenderStyle;
-float     Alpha;
-int       Translation;
+ubyte RenderStyle;
+float Alpha;
+int Translation;
 
 int StencilColour;
 
-float     FloorClip;  // value to use for floor clipping
+float FloorClip; // value to use for floor clipping
 
-//  Scaling.
-float     ScaleX;
-float     ScaleY;
+// scaling
+float ScaleX;
+float ScaleY;
 
+// mostly reliable, but you'd better don't use this
 native readonly subsector_t *SubSector;
 native readonly sector_t *Sector;
 
-// Interaction info, by BLOCKMAP.
-// Links in blocks (if needed).
-native readonly private Entity  BlockMapNext;
-native readonly private Entity  BlockMapPrev;
+// interaction info, by BLOCKMAP
+// links in blocks (if needed)
+native readonly private Entity BlockMapNext;
+native readonly private Entity BlockMapPrev;
 
-// Links in sector (if needed).
-native readonly Entity      SNext;
-native readonly Entity      SPrev;
+// links in sector (if needed)
+native readonly Entity SNext;
+native readonly Entity SPrev;
 
 native readonly msecnode_t *TouchingSectorList;
 
-// The closest interval over all contacted Sectors.
-native float  FloorZ;
-native float  CeilingZ;
-native float  DropOffZ;
+// the closest interval over all contacted Sectors
+native float FloorZ;
+native float CeilingZ;
+native float DropOffZ;
 
-//  Closest floor and ceiling, source of floorz and ceilingz
+// closest floor and ceiling, source of floorz and ceilingz
 native sec_plane_t *Floor;
 native sec_plane_t *Ceiling;
 
-// If == validcount, already checked.
-int       ValidCount;
+// if == validcount, already checked
+int ValidCount;
 
-//  Flags
-bool bSolid;      // Blocks.
-bool bNoSector;     // don't use the sector links (invisible but touchable)
-bool bNoBlockmap;   // don't use the BlockLinks (inert but displayable)
-bool bIsPlayer;     // PLayer or player-bot
-bool bFixedModel;
-
-bool bNoGravity;    // don't apply gravity every tic
-bool bPassMobj;     // Enable z block checking.  If on,
-            // this flag will allow the mobj
-            // to pass over/under other mobjs.
+// flags
+bool bSolid; // blocks
+bool bNoSector; // don't use the sector links (invisible but touchable)
+bool bNoBlockmap; // don't use the BlockLinks (inert but displayable)
+bool bIsPlayer; // player or player-bot
+bool bFixedModel; // internal renderer flag
+bool bNoGravity; // don't apply gravity every tic
+bool bPassMobj; // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
 bool bColideWithThings;
 bool bColideWithWorld;
 bool bCheckLineBlocking;
 bool bCheckLineBlockMonsters;
-bool bDropOff;      // allow jumps from high places
-bool bFloat;      // allow moves to any height, no gravity
-bool bFly;        // fly mode is active
-bool bBlasted;      // missile will pass through ghosts
+bool bDropOff; // allow jumps from high places
+bool bFloat; // allow moves to any height, no gravity
+bool bFly; // fly mode is active
+bool bBlasted; // missile will pass through ghosts
 bool bCantLeaveFloorpic; // stay within a certain floor type
-bool bFloorClip;    // if feet are allowed to be clipped
+bool bFloorClip; // if feet are allowed to be clipped
 bool bIgnoreCeilingStep; // continue walk without lowering itself
-bool bIgnoreFloorStep;  // continue walk ignoring floor height changes
-bool bAvoidingDropoff;  // used to move monsters away from dropoffs
-bool bOnMobj;     // mobj is resting on top of another mobj
-bool bCorpse;     // don't stop moving halfway off a step
-bool bFullBright;   // make current state full bright
-bool bInvisible;    // Don't draw this actor
-bool bMissile;      // don't hit same species, explode on block
-bool bDontOverlap;    // Prevent some things from overlapping.
-private native readonly bool bUseDispState;  // Use DispState for rendering (unused)
-bool bActLikeBridge;  // Always allow objects to pass.
-bool bNoDropOff;    // Can't drop off under any circumstances
-bool bBright;     // Always render full bright
-bool bCanJump;      // Can perform standard jump
-bool bStepMissile;    // Missile can "walk" up steps
+bool bIgnoreFloorStep; // continue walk ignoring floor height changes
+bool bAvoidingDropoff; // used to move monsters away from dropoffs
+bool bOnMobj; // mobj is resting on top of another mobj
+bool bCorpse; // don't stop moving halfway off a step
+bool bFullBright; // make current state full bright
+bool bInvisible; // don't draw this actor
+bool bMissile; // don't hit same species, explode on block
+bool bDontOverlap; // prevent some things from overlapping
+private native readonly bool bUseDispState; // use DispState for rendering (unused, but must present)
+bool bActLikeBridge; // always allow objects to pass
+bool bNoDropOff; // can't drop off under any circumstances
+bool bBright; // always render full bright
+bool bCanJump; // can perform standard jump
+bool bStepMissile; // missile can "walk" up steps
 
-int       Health;
-int       InitialHealth;
+int Health;
+int InitialHealth;
 
-// For movement checking.
+// for movement checking
 float Radius;
 // WARNING: for PlayerPawn, you should use `SetHeight()` method
 //          actually, you'd better use this method for all entities
 float Height;
 
-// Additional info record for player avatars only.
-// Only valid if type == MT_PLAYER
-BasePlayer    Player;
+// additional info record for player avatars only
+// only valid if type == MT_PLAYER
+BasePlayer Player;
 
-readonly int  TID;    // thing identifier
+readonly int TID; // thing identifier
 readonly private Entity TIDHashNext;
 readonly private Entity TIDHashPrev;
 
-int       Special;  // special
-int       Args[5];  // special arguments
-//int[5] DecorateArgs;
+int Special; // special
+int Args[5]; // special arguments
 
-readonly private int  SoundOriginID;
+readonly private int SoundOriginID;
 
-//  Params
-float     Mass;
-float     MaxStepHeight;
-float     MaxDropoffHeight;
-float     Gravity;
+// params
+float Mass;
+float MaxStepHeight;
+float MaxDropoffHeight;
+float Gravity;
 
-//  Water
-ubyte      WaterLevel;
-ubyte      WaterType;
+// water
+ubyte WaterLevel;
+ubyte WaterType;
 
-//   For player sounds.
-name      SoundClass;
-name      SoundGender;
+// for player sounds
+name SoundClass;
+name SoundGender;
 
-  //  Owner entity of inventory item
-Entity      Owner;
+// owner entity of inventory item
+Entity Owner;
 
 name DecalName;
 
-replication
-{
+
+replication {
   reliable if (Role == ROLE_Authority)
     Origin, Angles, FloorClip, State, StateTime, SpriteType,
     FixedSpriteName, ModelVersion, NumTouchingLights, RenderStyle, Alpha,
     Translation, ScaleX, ScaleY, bFly, bNoSector, bInvisible, bFullBright,
     bFixedModel, SoundOriginID/*, bUseDispState*/, bBright,
     DispSpriteFrame, DispSpriteName;
-
-  /*
-  reliable if (Role == ROLE_Authority && bUseDispState)
-    DispState;
-  */
 
   reliable if (Role == ROLE_Authority && bFixedModel)
     FixedModelName;
@@ -369,140 +345,134 @@ replication
     Owner;
 }
 
-//
-//  Natives
-//
 
-native final void SetTID(int tid);
+// ////////////////////////////////////////////////////////////////////////// //
+// natives
+native final void SetTID (int tid);
 
-native final bool SetState(state State);
-native final void SetInitialState(state State);
-native final bool AdvanceState(float deltaTime);
-native final state FindState(name StateName, optional name SubLabel, optional bool Exact);
-native final state FindStateEx(string StateName, optional bool Exact);
-native final state HasSpecialStates(name StateName);
-native final void GetStateEffects(out array!(LightEffectDef *) Lights,
-  out array!(ParticleEffectDef *) Lights);
-native final bool CallStateChain(Entity Actor, state State);
+// various state functions
+native final bool SetState (state State);
+native final void SetInitialState (state State);
+native final bool AdvanceState (float deltaTime);
+native final state FindState (name StateName, optional name SubLabel, optional bool Exact);
+native final state FindStateEx (string StateName, optional bool Exact);
+native final state HasSpecialStates (name StateName);
+native final void GetStateEffects (out array!(LightEffectDef *) Lights, out array!(ParticleEffectDef *) Particles);
+native final bool CallStateChain (Entity Actor, state State);
 
-native final void PlaySound(name SoundName, int Channel, optional float Volume,
-  optional float Atenuation, optional bool Loop, optional bool Local);
-native final void StopSound(int Channel);
-native final bool AreSoundsEquivalent(name Sound1, name Sound2);
-native final bool IsSoundPresent(name Sound);
+// sound functions
+native final void PlaySound (name SoundName, int Channel, optional float Volume,
+                             optional float Atenuation, optional bool Loop, optional bool Local);
+native final void StopSound (int Channel);
+native final bool AreSoundsEquivalent (name Sound1, name Sound2);
+native final bool IsSoundPresent (name Sound);
 
-native final void StartSoundSequence(name sequence, int ModeNum);
-native final void AddSoundSequenceChoice(name Choice);
-native final void StopSoundSequence();
+native final void StartSoundSequence (name sequence, int ModeNum);
+native final void AddSoundSequenceChoice (name Choice);
+native final void StopSoundSequence ();
 
-native final bool CheckSides(TVec lsPos);
-native final void CheckDropOff(out float DeltaX, out float DeltaY);
-native final bool CheckPosition(TVec Pos);
-native final bool CheckRelPosition(tmtrace_t *tmtrace, TVec Pos);
-native final bool TryMove(TVec newPos, bool AllowDropOff);
-native final bool TryMoveEx(tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff);
-native final bool TestMobjZ();
+native final bool CheckSides (TVec lsPos);
+native final void CheckDropOff (out float DeltaX, out float DeltaY);
+native final bool CheckPosition (TVec Pos);
+native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos);
+native final bool TryMove (TVec newPos, bool AllowDropOff);
+native final bool TryMoveEx (tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff);
+native final bool TestMobjZ ();
 
-native final void SlideMove(float StepVelScale);
-native final void BounceWall(float overbounce, float bouncefactor);
+native final void SlideMove (float StepVelScale);
+native final void BounceWall (float overbounce, float bouncefactor);
 
-native final bool CheckWater();
+native final bool CheckWater ();
 
-native final void UpdateVelocity();
+native final void UpdateVelocity ();
 
-native final Entity CheckOnmobj();
+native final Entity CheckOnmobj ();
 
-native final void LinkToWorld();
-native final void UnlinkFromWorld();
+// always call this before changing x and y coordinates (z can be changed freely)
+native final void LinkToWorld ();
+native final void UnlinkFromWorld ();
 
-native final bool CanSee(Entity Other);
+native final bool CanSee (Entity Other);
 
-native final iterator RoughBlockSearch(out Entity EntPtr, int Distance);
+native final iterator RoughBlockSearch (out Entity EntPtr, int Distance);
 
-native final void SetDecorateFlag(string Name, bool Value);
-native final bool GetDecorateFlag(string Name);
+native final void SetDecorateFlag (string Name, bool Value);
+native final bool GetDecorateFlag (string Name);
+
 
 //===========================================================================
 //
 //  OnMapSpawn
 //
 //===========================================================================
-
-void OnMapSpawn(mthing_t *mthing)
-{
+void OnMapSpawn (mthing_t *mthing) {
   InitialHealth = Health;
 }
+
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-void BeginPlay()
-{
+void BeginPlay () {
 }
+
 
 //==========================================================================
 //
 //  Destroyed
 //
 //==========================================================================
-
-void Destroyed()
-{
+void Destroyed () {
 }
+
 
 //==========================================================================
 //
 //  Touch
 //
 //==========================================================================
-
-bool Touch(Entity Other)
-{
+bool Touch (Entity Other) {
   return !Other.bSolid;
 }
+
 
 //===========================================================================
 //
 //  CheckForPushSpecial
 //
 //===========================================================================
-
-void CheckForPushSpecial(line_t *line, int side)
-{
+void CheckForPushSpecial (line_t *line, int side) {
 }
+
 
 //==========================================================================
 //
 //  BlastedHitLine
 //
 //==========================================================================
-
-void BlastedHitLine()
-{
+void BlastedHitLine () {
 }
+
 
 //==========================================================================
 //
 //  PushLine
 //
 //==========================================================================
-
-void PushLine(tmtrace_t *tmtrace)
-{
+void PushLine (tmtrace_t *tmtrace) {
 }
+
 
 //==========================================================================
 //
 //  HandleFloorclip
 //
 //==========================================================================
-
-void HandleFloorclip()
-{
+void HandleFloorclip () {
 }
+
 
 //==========================================================================
 //

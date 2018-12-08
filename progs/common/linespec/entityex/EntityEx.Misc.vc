@@ -1208,7 +1208,7 @@ final void FaceMovementDirection()
 //
 //==========================================================================
 override void OnMapSpawn (mthing_t *mthing) {
-  InitialHealth = Health;
+  ::OnMapSpawn(mthing);
 
   if (IsFast()) ReactionCount = 0;
 

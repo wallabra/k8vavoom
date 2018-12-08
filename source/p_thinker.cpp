@@ -385,7 +385,10 @@ IMPLEMENT_FUNCTION(VThinker, Spawn) {
     if (!specified_AAngles) AAngles = SelfEnt->Angles;
   }
   if (!Class) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
-  RET_REF(Self->XLevel->SpawnThinker(Class, AOrigin, AAngles, mthing, AllowReplace));
+  VThinker *th = Self->XLevel->SpawnThinker(Class, AOrigin, AAngles, mthing, AllowReplace);
+  check(th);
+  th->SpawnTime = (Self->XLevel ? Self->XLevel->Time : 0);
+  RET_REF(th);
 }
 
 IMPLEMENT_FUNCTION(VThinker, Destroy) {

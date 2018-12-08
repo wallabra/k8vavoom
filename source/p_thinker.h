@@ -48,6 +48,8 @@ class VThinker : public VGameObject {
   VThinker *Prev;
   VThinker *Next;
 
+  float SpawnTime; // `Spawn()` function sets this to game time
+
   vuint8 Role;
   vuint8 RemoteRole;
 
@@ -58,8 +60,10 @@ class VThinker : public VGameObject {
   };
   vuint32 ThinkerFlags;
 
+public:
   static int FIndex_Tick;
 
+public:
   VThinker ();
 
   // VObject interface
