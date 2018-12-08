@@ -288,19 +288,18 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         bool doSpray = IsBloodAllowed() && GetCvarB('k8HSHeadKillBloodSpray');
 
         if (doSpray) {
-          bool poolType2 = (P_Random() >= 0x80);
           name bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient', 'Blood');
-          name poolClassName = k8GetBloodClassName((poolType2 ? 'K8Gore_GrowingBloodPool2' : 'K8Gore_GrowingBloodPool'), '');
+          name poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool', '');
           //writeln("bloodtype: ", GetClassName(self.BloodType), "; ", GetClassName(GetClassReplacee(self.BloodType)));
 
           if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {
             bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Green', bloodClassName);
             //mistClassName = 'K8Gore_BloodmistSmallGreen';
-            poolClassName = k8GetBloodClassName((poolType2 ? 'K8Gore_GrowingBloodPool2_Green' : 'K8Gore_GrowingBloodPool_Green'), poolClassName);
+            poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Green', poolClassName);
           } else if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') {
             bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Blue', bloodClassName);
             //mistClassName = 'K8Gore_BloodmistSmallBlue';
-            poolClassName = k8GetBloodClassName((poolType2 ? 'K8Gore_GrowingBloodPool2_Blue' : 'K8Gore_GrowingBloodPool_Blue'), poolClassName);
+            poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Blue', poolClassName);
           }
 
           //writeln("  bloodclass: ", bloodClassName);
@@ -328,7 +327,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
             //poolClassName = 'SmallBloodPool';
             class!Actor poolClass = class!Actor(FindClass(poolClassName));
             if (poolClass) {
-              //print("***SPAWNING BLOOD POOL: '%n'", GetClassName(poolClass));
+              //print("***SPAWNING BLOOD POOL: '%C'", poolClass);
               Level.Spawn(poolClass, Origin);
             }
           }
