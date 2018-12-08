@@ -301,6 +301,8 @@
     <flag name="CantAutoAim" property="bCantAutoAim" />
     <flag name="CanJump" property="bCanJump" />
     <flag name="JumpDown" property="bJumpDown" />
+    <flag name="StickToFloor" property="bStickToFloor" />
+    <flag name="StickToCeiling" property="bStickToCeiling" />
     <!-- SkullTag Specific flags (useless) -->
     <flag_unsupported name="ScorePillar" />
     <flag_unsupported name="AllowClientSpawn" />

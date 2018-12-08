@@ -35,6 +35,28 @@
 //  FixNormalVelocity
 //
 //==========================================================================
+final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
+  bool oldWithThings = bColideWithThings;
+  bool oldWithWorld = bColideWithWorld;
+  bColideWithThings = false;
+  bColideWithWorld = false;
+  // find new position
+  CheckRelPosition(&tmtrace, Origin);
+  bColideWithThings = bColideWithThings;
+  bColideWithWorld = bColideWithWorld;
+  // update position
+  //Floor = tmtrace.Floor;
+  //Ceiling = tmtrace.Ceiling;
+  //FloorZ = tmtrace.FloorZ;
+  //CeilingZ = tmtrace.CeilingZ;
+}
+
+
+//==========================================================================
+//
+//  FixNormalVelocity
+//
+//==========================================================================
 final void FixNormalVelocity () {
   if (!Velocity.x.isfinite || !Velocity.y.isfinite || !Velocity.z.isfinite) {
     print("*** FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
@@ -81,13 +103,21 @@ bool Physics (float DeltaTime) {
       // it is safe to change this flag here
       bNoBlockmap = true;
       // it is safe to change origin here
+      if (bStickToFloor || bStickToCeiling) Velocity.z = 0;
       TVec vel = Velocity*DeltaTime;
       Origin += vel;
       // link it back
       LinkToWorld();
+      if (bStickToFloor || bStickToCeiling) {
+        tmtrace_t tmtrace;
+        GetFloorAndCeiling(out tmtrace);
+        Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
+      }
     }
     return true;
   }
+
+  if (bStickToFloor || bStickToCeiling) Velocity.z = 0;
 
   float oldfloorz;
   float CummX = 0.0;
@@ -215,6 +245,13 @@ bool Physics (float DeltaTime) {
       if (IsDestroyed()) return false; // entity was removed
     }
   }
+
+  if (bStickToFloor || bStickToCeiling) {
+    tmtrace_t tmtrace;
+    GetFloorAndCeiling(out tmtrace);
+    Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
+  }
+
   return true;
 }
 

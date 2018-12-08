@@ -364,6 +364,11 @@ bool bAvoidsDropOffs; //  Monster does avoid dropoffs, overrides value of compat
 bool bNoTimeFreeze;   //  Monster isn't affected by Time Freeze powerups.
 bool bCrashed;      //  Means a monster that has crash state hasn't crashed and can execute Crash method.
 
+// physics will put this entity to floor or ceiling (floor has precedence)
+bool bStickToFloor;
+bool bStickToCeiling;
+
+
 //  Params
 float     Speed;
 float     FastSpeed;

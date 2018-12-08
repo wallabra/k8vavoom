@@ -497,14 +497,7 @@ final bool HeightClip () {
     //k8: always move?
     if (bMoveWithSector && !bNoSector) {
       // faster checking
-      bool oldWithThings = bColideWithThings;
-      bool oldWithWorld = bColideWithWorld;
-      bColideWithThings = false;
-      bColideWithWorld = false;
-      // find new position
-      CheckRelPosition(&tmtrace, Origin);
-      bColideWithThings = bColideWithThings;
-      bColideWithWorld = bColideWithWorld;
+      GetFloorAndCeiling(out tmtrace);
       // update position
       Floor = tmtrace.Floor;
       Ceiling = tmtrace.Ceiling;

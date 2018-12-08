@@ -688,20 +688,7 @@ final void A_ChangeScaleYExt (float delta, optional float killLimit) {
 //==========================================================================
 final void A_LayToFloorWithYaw (float yaw) {
   tmtrace_t tmtrace;
-  // faster checking
-  bool oldWithThings = bColideWithThings;
-  bool oldWithWorld = bColideWithWorld;
-  bColideWithThings = false;
-  bColideWithWorld = false;
-  // find new position
-  CheckRelPosition(&tmtrace, Origin);
-  bColideWithThings = bColideWithThings;
-  bColideWithWorld = bColideWithWorld;
-  // update position
-  //Floor = tmtrace.Floor;
-  //Ceiling = tmtrace.Ceiling;
-  //FloorZ = tmtrace.FloorZ;
-  //CeilingZ = tmtrace.CeilingZ;
+  GetFloorAndCeiling(out tmtrace);
   if (!tmtrace.Floor) {
     Angles.roll = 0;
     Angles.yaw = yaw;
@@ -747,20 +734,7 @@ final void A_LayToFloorWithYaw (float yaw) {
 //==========================================================================
 final void A_LayToCeilingWithYaw (float yaw) {
   tmtrace_t tmtrace;
-  // faster checking
-  bool oldWithThings = bColideWithThings;
-  bool oldWithWorld = bColideWithWorld;
-  bColideWithThings = false;
-  bColideWithWorld = false;
-  // find new position
-  CheckRelPosition(&tmtrace, Origin);
-  bColideWithThings = bColideWithThings;
-  bColideWithWorld = bColideWithWorld;
-  // update position
-  //Floor = tmtrace.Floor;
-  //Ceiling = tmtrace.Ceiling;
-  //FloorZ = tmtrace.FloorZ;
-  //CeilingZ = tmtrace.CeilingZ;
+  GetFloorAndCeiling(out tmtrace);
   if (!tmtrace.Ceiling) {
     Angles.roll = 0;
     Angles.yaw = yaw;
