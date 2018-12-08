@@ -1,4 +1,4 @@
-﻿//**************************************************************************
+//**************************************************************************
 //**
 //**    ##   ##    ##    ##   ##   ####     ####   ###     ###
 //**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
@@ -57,41 +57,26 @@ final void SetOrigin2(TVec origin)
   // Set subsector and/or block links.
   LinkToWorld();
 
-  if (!bNoInteraction)
-  {
-    if (origin.z == ONFLOORZ)
-    {
-      Origin.z = FloorZ;
-    }
-    else if (origin.z == ONCEILINGZ)
-    {
-      Origin.z = CeilingZ - Height;
-    }
-    else if (origin.z == FLOATRANDZ)
-    {
-      float space = CeilingZ - Height - FloorZ;
-      if (space > 48.0)
-      {
+  //k8: why nointeraction is not processed?
+  /*if (!bNoInteraction)*/ {
+         if (origin.z == ONFLOORZ) Origin.z = FloorZ;
+    else if (origin.z == ONCEILINGZ) Origin.z = CeilingZ-Height;
+    else if (origin.z == FLOATRANDZ) {
+      float space = CeilingZ-Height-FloorZ;
+      if (space > 48.0) {
         space -= 40.0;
-        Origin.z = space * Random() + FloorZ + 40.0;
-      }
-      else
-      {
+        Origin.z = space*Random()+FloorZ+40.0;
+      } else {
         Origin.z = FloorZ;
       }
-    }
-    else if (bFloatBob)
-    {
-      Origin.z = FloorZ + Origin.z; // artifact z passed in as height
+    } else if (bFloatBob) {
+      Origin.z = FloorZ+Origin.z; // artifact z passed in as height
     }
 
     VTerrainInfo *TInfo = GetFloorType();
-    if (bFloorClip && TInfo->bLiquid && Origin.z == FloorZ)
-    {
+    if (bFloorClip && TInfo->bLiquid && Origin.z == FloorZ) {
       FloorClip = TInfo->FootClip;
-    }
-    else
-    {
+    } else {
       FloorClip = 0.0;
     }
   }
@@ -1298,6 +1283,10 @@ override void OnMapSpawn (mthing_t *mthing) {
       RenderStyle = STYLE_None;
     }
   } else {
+         if (bSpawnCeiling) Origin.z = ONCEILINGZ;
+    else if (bSpawnFloat) Origin.z = FLOATRANDZ;
+    //else if (bFloatBob) Origin.z = mthing->height;
+    //else z = ONFLOORZ;
     SetOrigin2(Origin);
   }
 
@@ -2626,7 +2615,7 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_JumpZ: if (PlayerPawn(self)) PlayerPawn(self).JumpVelZ = float(IntVal)/65536.0*35.0; break;
     case APROP_ChaseGoal: bChaseGoal = !!IntVal; break;
     case APROP_Frightened: print("Frightened property is not implemented"); break;
-    case APROP_Gravity: Gravity = float(IntVal)/65536.0; break;
+    case APROP_Gravity: if (IntVal < 0) IntVal = 0; Gravity = float(IntVal)/65536.0; break;
     case APROP_Friendly: bFriendly = !!IntVal; break;
     case APROP_SeeSound: SightSound = StrToName(StrVal); break;
     case APROP_AttackSound: AttackSound = StrToName(StrVal); break;
