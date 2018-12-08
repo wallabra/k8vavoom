@@ -246,12 +246,11 @@ class VLevel : public VGameObject {
 
   TArray<VCameraTextureInfo> CameraTextures;
 
-  float Time;
-  int TicTime;
+  float Time; // game time, in seconds
+  int TicTime; // game time, in tics (35 per second)
 
   msecnode_t *SectorList;
   // phares 3/21/98
-  //
   // Maintain a freelist of msecnode_t's to reduce memory allocs and frees
   msecnode_t *HeadSecNode;
 
@@ -270,6 +269,7 @@ class VLevel : public VGameObject {
   TArray<vint32> sectorlinkStart;
   TArray<SectorLink> sectorlinks;
 
+public:
   virtual void Serialise (VStream &Strm) override;
   virtual void ClearReferences () override;
   virtual void Destroy () override;
@@ -297,7 +297,7 @@ class VLevel : public VGameObject {
   bool MovePolyobj (int, float, float);
   bool RotatePolyobj (int, float);
 
-  bool ChangeSector (sector_t *, int);
+  bool ChangeSector (sector_t *sector, int crunch);
 
   bool TraceLine (linetrace_t &, const TVec &, const TVec &, int) const;
 
@@ -419,6 +419,7 @@ private:
   DECLARE_FUNCTION(GetLineIndex)
 
   DECLARE_FUNCTION(PointInSector)
+  DECLARE_FUNCTION(PointInSubsector)
   DECLARE_FUNCTION(TraceLine)
   DECLARE_FUNCTION(ChangeSector)
   DECLARE_FUNCTION(AddExtraFloor)

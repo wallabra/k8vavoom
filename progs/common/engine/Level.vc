@@ -22,34 +22,31 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class Level : GameObject
-  native;
+class Level : GameObject native;
 
 const int MAX_LEVEL_TRANSLATIONS = 0xffff;
 const int MAX_BODY_QUEUE_TRANSLATIONS = 0xff;
 
-//  Script types
+// script types
 const int
-  SCRIPT_Closed   = 0,
-  SCRIPT_Open     = 1,
-  SCRIPT_Respawn    = 2,
-  SCRIPT_Death    = 3,
-  SCRIPT_Enter    = 4,
-  SCRIPT_Pickup   = 5,
-  SCRIPT_BlueReturn = 6,
-  SCRIPT_RedReturn  = 7,
-  SCRIPT_WhiteReturn  = 8,
-  SCRIPT_Lightning  = 12,
-  SCRIPT_Unloading  = 13,
-  SCRIPT_Disconnect = 14,
-  SCRIPT_Return   = 15;
+  SCRIPT_Closed      = 0,
+  SCRIPT_Open        = 1,
+  SCRIPT_Respawn     = 2,
+  SCRIPT_Death       = 3,
+  SCRIPT_Enter       = 4,
+  SCRIPT_Pickup      = 5,
+  SCRIPT_BlueReturn  = 6,
+  SCRIPT_RedReturn   = 7,
+  SCRIPT_WhiteReturn = 8,
+  SCRIPT_Lightning   = 12,
+  SCRIPT_Unloading   = 13,
+  SCRIPT_Disconnect  = 14,
+  SCRIPT_Return      = 15;
 
-struct StateCall
-{
-  Entity    Item;
-  state   State;
-  ubyte    Result;
+struct StateCall {
+  Entity Item;
+  state State;
+  ubyte Result;
 };
 
 struct SectorLink {
@@ -62,50 +59,28 @@ native readonly name MapName;
 native readonly string MapHash;
 native readonly string MapHashMD5;
 
-//  Flags.
+// flags
 native readonly private bool bForServer; // true if this level belongs to the server
-native readonly bool bExtended;  // true if level was in Hexen format
+native readonly bool bExtended; // true if level was in Hexen format
 native readonly private bool bGLNodesV5; // true if using version 5 GL nodes
 native readonly bool bTextMap; // UDMF format map
 
-//  MAP related Lookup tables.
-//  Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
+// MAP related Lookup tables.
+// Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
 
-native /*readonly*/ TVec[] Vertexes;
-//native readonly TVec *Vertexes;
-//native readonly int NumVertexes;
-
-native /*readonly*/ sector_t[] Sectors;
-//native readonly sector_t *Sectors;
-//native readonly int NumSectors;
-
-native /*readonly*/ side_t[] Sides;
-//native readonly side_t *Sides;
-//native readonly int NumSides;
-
-native /*readonly*/ line_t[] Lines;
-//native readonly line_t *Lines;
-//native readonly int NumLines;
-
+native TVec[] Vertexes;
+native sector_t[] Sectors;
+native side_t[] Sides;
+native line_t[] Lines;
 native readonly seg_t[] Segs;
-//native readonly seg_t *Segs;
-//native readonly int NumSegs;
-
 native readonly subsector_t[] Subsectors;
-//native readonly subsector_t *Subsectors;
-//native readonly int NumSubsectors;
-
 native readonly private int/*node_t*/[] Nodes;
-//native readonly private void/*node_t*/* Nodes;
-//native readonly private int NumNodes;
 
 native readonly private void *VisData;
 native readonly private void *NoVis;
 
 // !!! Used only during level loading
-native /*readonly*/ mthing_t[] Things;
-//native readonly mthing_t *Things;
-//native readonly int NumThings;
+native mthing_t[] Things;
 
 native readonly private int BlockMapLumpSize;
 native readonly private void *BlockMapLump;
@@ -120,28 +95,16 @@ native readonly private void *PolyBlockMap;
 native readonly private void *RejectMatrix;
 native readonly private int RejectMatrixSize;
 
-//  Strife conversations.
-native /*readonly*/ RogueConSpeech[] GenericSpeeches;
-//native readonly RogueConSpeech *GenericSpeeches;
-//native readonly int NumGenericSpeeches;
+// strife conversations
+native RogueConSpeech[] GenericSpeeches;
+native RogueConSpeech[] LevelSpeeches;
 
-native /*readonly*/ RogueConSpeech[] LevelSpeeches;
-//native readonly RogueConSpeech *LevelSpeeches;
-//native readonly int NumLevelSpeeches;
-
-//  List of all poly-objects on the level.
+// list of all poly-objects on the level
 native readonly private int[] PolyObjs;
-//native readonly private void *PolyObjs;
-//native readonly private int NumPolyObjs;
-
 native readonly private int[] PolyAnchorPoints;
-//native readonly private void *PolyAnchorPoints;
-//native readonly private int NumPolyAnchorPoints;
 
-//  Sound environments for sector zones.
-native /*readonly*/ int[] Zones;
-//native readonly int *Zones;
-//native readonly int NumZones;
+// sound environments for sector zones
+native int[] Zones;
 
 native readonly private Thinker ThinkerHead;
 native readonly private Thinker ThinkerTail;
@@ -160,15 +123,13 @@ native readonly private void *BaseSectors;
 native readonly private void *BasePolyObjs;
 
 native readonly private int[] StaticLights;
-//native readonly private void *StaticLights;
-//native readonly private int NumStaticLights;
 
 native readonly private array!int ActiveSequences;
 
 native readonly private array!int CameraTextures;
 
-native readonly float Time;
-native readonly int TicTime;
+native readonly float Time; // game time, in seconds
+native readonly int TicTime; // game time, in tics (35 per second)
 
 native readonly private void *SectorList;
 native readonly private void *HeadSecNode;
@@ -187,53 +148,55 @@ native readonly private int __decanimuid;
 native array!int sectorlinkStart; // can be less than sectors; indexed by sector index
 native array!SectorLink sectorlinks;
 
-//
-//  Natives
-//
 
+// ////////////////////////////////////////////////////////////////////////// //
+// natives
 native final int GetLineIndex (line_t *line);
 
-native final sector_t *PointInSector(TVec Point);
-native final bool TraceLine(TVec start, TVec end, out TVec HitPoint,
-  out TVec HitNormal);
-native final bool ChangeSector(sector_t *sector, int crunch);
-native final sec_region_t *AddExtraFloor(line_t *line, sector_t *dst);
-//  Swap sector's floor and ceiling, it's used by level converter to support
-// EDGE and Legacy 3D floors.
-native final void SwapPlanes(sector_t *s);
+// use BSP to find sector where the given point lies
+native final subsector_t *PointInSubsector (const TVec Point);
+native final sector_t *PointInSector (const TVec Point);
+// BSP trace
+native final bool TraceLine (const TVec start, const TVec end, out TVec HitPoint, out TVec HitNormal);
+// call this after sector height changed, to notify things
+// crunch means "crush actors" (otherwise first unfitting actor will stop notifying)
+// returns `false` if there was any unfitting actor
+native final bool ChangeSector (sector_t *sector, int crunch);
+// this is used to create ROR and various 3d structures
+native final sec_region_t *AddExtraFloor (line_t *line, sector_t *dst);
+// swap sector's floor and ceiling, it's used by level converter to support EDGE and Legacy 3D floors
+native final void SwapPlanes (sector_t *s);
 
-native final void SetFloorLightSector(sector_t *Sector, sector_t *SrcSector);
-native final void SetCeilingLightSector(sector_t *Sector, sector_t *SrcSector);
-native final void SetHeightSector(sector_t *Sector, sector_t *SrcSector, int Flags);
+native final void SetFloorLightSector (sector_t *Sector, sector_t *SrcSector);
+native final void SetCeilingLightSector (sector_t *Sector, sector_t *SrcSector);
+native final void SetHeightSector (sector_t *Sector, sector_t *SrcSector, int Flags);
 
-//  Return next sector # that line tag refers to
-native final int FindSectorFromTag(int tag, int start);
-native final line_t *FindLine(int lineTag, int *searchPosition);
+// return next sector # that line tag refers to
+native final int FindSectorFromTag (int tag, int start);
+native final line_t *FindLine (int lineTag, int *searchPosition);
 
+// support for linked sectors
 native final void SectorSetLink (int controltag, int tag, int surface, int movetype);
 
-//
-//  Polyobj functions
-//
 
-native final void SpawnPolyobj(float x, float y, int tag, bool crush,
-  bool hurt);
-native final void AddPolyAnchorPoint(float x, float y, int tag);
-native final polyobj_t *GetPolyobj(int polyNum);
-native final int GetPolyobjMirror(int poly);
-native final bool RotatePolyobj(int num, float angle);
-native final bool MovePolyobj(int num, float x, float y);
+// ////////////////////////////////////////////////////////////////////////// //
+// polyobj functions
+native final void SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt);
+native final void AddPolyAnchorPoint (float x, float y, int tag);
+native final polyobj_t *GetPolyobj (int polyNum);
+native final int GetPolyobjMirror (int poly);
+native final bool RotatePolyobj (int num, float angle);
+native final bool MovePolyobj (int num, float x, float y);
 
-//
-//  ACS functions
-//
 
-native final int StartACS(int number, int map, int arg1, int arg2, int arg3,
-  Entity activator, line_t *line, int side, bool Always, bool WantResult);
-native final bool SuspendACS(int number, int map);
-native final bool TerminateACS(int number, int map);
-native final void StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
-  Entity Activator, bool Always, bool RunNow);
+// ////////////////////////////////////////////////////////////////////////// //
+// ACS functions
+native final int StartACS (int number, int map, int arg1, int arg2, int arg3,
+                           Entity activator, line_t *line, int side, bool Always, bool WantResult);
+native final bool SuspendACS (int number, int map);
+native final bool TerminateACS (int number, int map);
+native final void StartTypedACScripts (int Type, int Arg1, int Arg2, int Arg3,
+                                       Entity Activator, bool Always, bool RunNow);
 
 native final bool RunACS (Entity activator, int script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4);
 native final bool RunACSAlways (Entity activator, int script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4);
@@ -243,28 +206,26 @@ native final bool RunNamedACS (Entity activator, string script, int map, int s_a
 native final bool RunNamedACSAlways (Entity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4);
 native final int RunNamedACSWithResult (Entity activator, string script, int s_arg1, int s_arg2, int s_arg3, int s_arg4);
 
-native final int SetBodyQueueTrans(int Slot, int Transl);
+native final int SetBodyQueueTrans (int Slot, int Transl);
 
-//
-//  Decal functions
-//
 
+// ////////////////////////////////////////////////////////////////////////// //
+// decal functions
 native final void AddDecal (TVec org, name dectype, int side, line_t *li);
 native final void AddDecalById (TVec org, int id, int side, line_t *li);
 
 
-native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec, int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
+// ////////////////////////////////////////////////////////////////////////// //
+// this moved to C++ code to make sound propagation on huge maps faster
+native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec,
+                                    int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
 
-
+// debug function
 final int calcSecIdx (sector_t *sec) {
   if (!sec) return -1;
-  //foreach (int f; 0..Sectors.length) if (&Sectors[f] == sec) return f;
-  //print("WUTAFU(1)?!");
-  //return -2;
   return sec-&Sectors[0];
 }
 
 
-defaultproperties
-{
+defaultproperties {
 }

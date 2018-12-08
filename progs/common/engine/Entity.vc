@@ -41,7 +41,7 @@
 // its z equal to the floor it is standing on.
 //
 //  The sound code uses the x,y, and z fields to do stereo positioning of any
-// sound effited by the Entity.
+// sound emmited by the Entity.
 //
 //  The play simulation uses the BlockLinks, x,y,z, radius, height to
 // determine when mobj_ts are touching each other, touching lines in the map,
@@ -51,8 +51,12 @@
 //  Every Entity is linked into a single sector based on its origin
 // coordinates. The subsector_t is found with R_PointInSubsector(x,y), and
 // the sector_t can be found with subsector->sector. The sector links are
-// only used by the rendering code, the play simulation does not care about
-// them at all.
+// mostly used by the rendering code; the play simulation can ocasionally use
+// sector info to adjust heights and do some cheap checks (mostly for
+// "noblockmap" and "nointeraction" entities).
+//
+//  Sector info is updated by `LinkToWorld()`, so make sure that you will
+// call this even for "noblockmap" entities.
 //
 //  Any Entity that needs to be acted upon by something else in the play
 // world (block movement, be shot, etc) will also need to be linked into the
@@ -520,16 +524,19 @@ void ApplyFriction()
 {
 }
 
+
 //==========================================================================
 //
 //  SectorChanged
+//  called after sector height changed, to notify things
+//  `CrushChange` means "crush unfitting actors"
+//  returns `false` if actor cannot fit
 //
 //==========================================================================
-
-bool SectorChanged(int CrushChange)
-{
+bool SectorChanged (int CrushChange) {
   return true;
 }
+
 
 //===========================================================================
 //
