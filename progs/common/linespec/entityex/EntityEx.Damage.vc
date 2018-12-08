@@ -284,7 +284,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
       // preventing normal damage will prevent monster alerting too, heh
 
       // ketchup spawn
-      if (instakill) {
+      if (instakill || headshot) {
         bool doSpray = IsBloodAllowed() && GetCvarB('k8HSHeadKillBloodSpray');
 
         if (doSpray) {
@@ -314,6 +314,8 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
               if (bcc > 64) bcc = 64;
             }
 
+            if (bcc > 0 && !instakill && dodmg < damage) bcc = max(1, bcc-bcc/3);
+
             TVec spos;
             for (; bcc > 0; --bcc) {
               spos.x = Origin.x+((Random()*51-25)/10.0);
@@ -323,7 +325,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
             }
           }
 
-          if (GetCvarB('k8HSHeadKillBloodPool')) {
+          if ((instakill || dodmg >= damage) && GetCvarB('k8HSHeadKillBloodPool')) {
             //poolClassName = 'SmallBloodPool';
             class!Actor poolClass = class!Actor(FindClass(poolClassName));
             if (poolClass) {
