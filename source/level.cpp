@@ -305,7 +305,7 @@ void VLevel::Serialise (VStream &Strm) {
           if (loadDecals) dc->seg = &Segs[f]; else dc->seg = &Segs[0];
           DecalIO(Strm, dc);
           if (loadDecals) {
-            if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture < 0) {
+            if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture <= 0) {
               delete dc->animator;
               delete dc;
             } else {
