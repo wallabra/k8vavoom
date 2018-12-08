@@ -446,11 +446,12 @@ protected:
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
     VTextureTranslation*, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
-  bool DrawAliasModel (const TVec&, const TAVec&, float, float, VState*,
-    VState*, VTextureTranslation*, int, vuint32, vuint32, float, bool,
+  bool DrawAliasModel (VName clsName, const TVec&, const TAVec&, float, float,
+    const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState*, VState*,
+    VTextureTranslation*, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
   bool DrawEntityModel (VEntity*, vuint32, vuint32, float, bool, float, ERenderPass);
-  bool CheckAliasModelFrame (VEntity*, float);
+  bool CheckAliasModelFrame (VEntity *Ent, float Inter);
 
   // things
   void DrawTranslucentPoly (surface_t*, TVec*, int, int, float, bool, int,

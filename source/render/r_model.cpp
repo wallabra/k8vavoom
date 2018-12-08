@@ -178,6 +178,28 @@ static const float r_avertexnormals[NUMVERTEXNORMALS][3] =
 
 //==========================================================================
 //
+//  FindClassModelByName
+//
+//==========================================================================
+static VClassModelScript *FindClassModelByName (VName clsName) {
+  static TMapNC<VName, VClassModelScript *> mdlmap;
+  static int initlen = -1;
+  if (initlen != ClassModels.length()) {
+    initlen = ClassModels.length();
+    // build map
+    for (int f = 0; f < ClassModels.length(); ++f) {
+      VClassModelScript *mdl = ClassModels[f];
+      if (mdl->Name == NAME_None || !mdl->Model || mdl->Frames.length() == 0) continue;
+      mdlmap.put(mdl->Name, mdl);
+    }
+  }
+  auto mp = mdlmap.find(clsName);
+  return (mp ? *mp : nullptr);
+}
+
+
+//==========================================================================
+//
 //  R_InitModels
 //
 //==========================================================================
@@ -1101,24 +1123,31 @@ bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
 //  VRenderLevelShared::DrawAliasModel
 //
 //==========================================================================
-bool VRenderLevelShared::DrawAliasModel (const TVec &Org, const TAVec &Angles,
-  float ScaleX, float ScaleY, VState *State, VState *NextState,
+bool VRenderLevelShared::DrawAliasModel (VName clsName, const TVec &Org, const TAVec &Angles,
+  float ScaleX, float ScaleY,
+  const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState *State, VState *NextState,
   VTextureTranslation *Trans, int Version, vuint32 Light, vuint32 Fade,
   float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
   guard(VRenderLevelShared::DrawAliasModel);
+  if (clsName == NAME_None) return false;
+
+#if 0
   VClassModelScript *Cls = nullptr;
   for (int i = 0; i < ClassModels.Num(); ++i) {
-    if (ClassModels[i]->Name == State->Outer->Name) Cls = ClassModels[i];
+    if (ClassModels[i]->Name == /*State->Outer->Name*/clsName) Cls = ClassModels[i];
   }
+#else
+  VClassModelScript *Cls = FindClassModelByName(clsName);
+#endif
   if (!Cls) return false;
 
-  int FIdx = FindFrame(*Cls, State->getMFI(), Inter);
+  int FIdx = FindFrame(*Cls, /*State->getMFI()*/Frame, Inter);
   if (FIdx == -1) return false;
 
   float InterpFrac;
-  int NFIdx = FindNextFrame(*Cls, FIdx, NextState->getMFI(), Inter, InterpFrac);
+  int NFIdx = FindNextFrame(*Cls, FIdx, /*NextState->getMFI()*/NextFrame, Inter, InterpFrac);
   if (NFIdx == -1) {
     NFIdx = FIdx;
     Interpolate = false;
@@ -1142,7 +1171,7 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
 {
   guard(VRenderLevelShared::DrawEntityModel);
   //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
-  VState *DispState = Ent->State; //FIXME: skipframes
+  //VState *DispState = Ent->State; //FIXME: skipframes
   // check if we want to interpolate model frames
   const bool Interpolate = !!r_interpolate_frames;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {
@@ -1154,15 +1183,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
     if (!Mdl) return false;
     return DrawAliasModel(Ent->Origin-TVec(0, 0, Ent->FloorClip),
       Ent->Angles, Ent->ScaleX, Ent->ScaleY, Mdl,
-      DispState->getMFI(),
-      (DispState->NextState ? DispState->NextState->getMFI() : DispState->getMFI()),
+      Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
       Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
       Interpolate, Pass);
   } else {
-    return DrawAliasModel(Ent->Origin-TVec(0, 0, Ent->FloorClip),
-      Ent->Angles, Ent->ScaleX, Ent->ScaleY, DispState,
-      DispState->NextState ? DispState->NextState : DispState,
+    return DrawAliasModel(Ent->GetClass()->Name, Ent->Origin-TVec(0, 0, Ent->FloorClip),
+      Ent->Angles, Ent->ScaleX, Ent->ScaleY,
+      Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,
       Alpha, Additive, false, Inter, Interpolate, Pass);
   }
@@ -1182,14 +1210,18 @@ bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
     if (!FL_FileExists(VStr("models/")+Ent->FixedModelName)) return false;
     VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
     if (!Mdl) return false;
-    return FindFrame(*Mdl->DefaultClass, Ent->State->getMFI(), Inter) != -1;
+    return FindFrame(*Mdl->DefaultClass, Ent->getMFI(), Inter) != -1;
   } else {
+#if 0
     VClassModelScript *Cls = nullptr;
     for (int i = 0; i < ClassModels.Num(); ++i) {
       if (ClassModels[i]->Name == Ent->State->Outer->Name) Cls = ClassModels[i];
     }
+#else
+    VClassModelScript *Cls = FindClassModelByName(Ent->State->Outer->Name);
+#endif
     if (!Cls) return false;
-    return FindFrame(*Cls, Ent->State->getMFI(), Inter) != -1;
+    return (FindFrame(*Cls, Ent->getMFI(), Inter) != -1);
   }
   unguard;
 }
@@ -1260,15 +1292,21 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
 //
 //  R_DrawStateModelFrame
 //
+//  called from UI widget only
+//
 //==========================================================================
 bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
-   const TVec &Origin, float Angle)
+                            const TVec &Origin, float Angle)
 {
-  VClassModelScript *Cls = nullptr;
   bool Interpolate = true;
+#if 0
+  VClassModelScript *Cls = nullptr;
   for (int i = 0; i < ClassModels.Num(); ++i) {
     if (ClassModels[i]->Name == State->Outer->Name) Cls = ClassModels[i];
   }
+#else
+  VClassModelScript *Cls = FindClassModelByName(State->Outer->Name);
+#endif
   if (!Cls) return false;
   if (!State) return false;
   int FIdx = FindFrame(*Cls, State->getMFI(), Inter);

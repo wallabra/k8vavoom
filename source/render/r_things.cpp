@@ -641,40 +641,29 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 //
 //  VRenderLevelShared::RenderViewModel
 //
+//  FIXME: this doesn't work with "----" and "####" view states
+//
 //==========================================================================
-
-bool VRenderLevelShared::RenderViewModel(VViewState *VSt, vuint32 light,
-  vuint32 Fade, float Alpha, bool Additive)
+bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
+                                          vuint32 Fade, float Alpha, bool Additive)
 {
   guard(VRenderLevelShared::RenderViewModel);
-  if (!r_view_models)
-  {
-    return false;
-  }
+  if (!r_view_models) return false;
 
-  TVec origin = vieworg + (VSt->SX - 1.0) * viewright / 8.0 -
-    (VSt->SY - 32.0) * viewup / 6.0;
+  TVec origin = vieworg+(VSt->SX-1.0)*viewright/8.0-(VSt->SY-32.0)*viewup/6.0;
 
   float TimeFrac = 0;
-  if (VSt->State->Time > 0)
-  {
-    TimeFrac = 1.0 - (VSt->StateTime / VSt->State->Time);
+  if (VSt->State->Time > 0) {
+    TimeFrac = 1.0-(VSt->StateTime/VSt->State->Time);
     TimeFrac = MID(0.0, TimeFrac, 1.0);
   }
 
-  bool Interpolate;
-  // Check if we want to interpolate model frames
-  if (!r_interpolate_frames)
-  {
-    Interpolate = false;
-  }
-  else
-  {
-    Interpolate = true;
-  }
-  return DrawAliasModel(origin, cl->ViewAngles, 1.0, 1.0, VSt->State,
-    VSt->State->NextState ? VSt->State->NextState : VSt->State, nullptr,
-    0, light, Fade, Alpha, Additive, true, TimeFrac, Interpolate,
+  // check if we want to interpolate model frames
+  bool Interpolate = (r_interpolate_frames ? true : false);
+
+  return DrawAliasModel(VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0, 1.0,
+    VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
+    nullptr, 0, light, Fade, Alpha, Additive, true, TimeFrac, Interpolate,
     RPASS_Normal);
   unguard;
 }

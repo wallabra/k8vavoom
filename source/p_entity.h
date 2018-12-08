@@ -602,6 +602,22 @@ public:
     return res;
   }
 
+  // gross hack!
+  inline VAliasModelFrameInfo getNextMFI () {
+    if (!State || !State->NextState) return getMFI();
+    vint32 oldDSF = DispSpriteFrame;
+    VName oldDSN = DispSpriteName;
+    UpdateDispFrameFrom(State->NextState);
+    VAliasModelFrameInfo res;
+    res.sprite = DispSpriteName;
+    res.frame = GetEffectiveSpriteFrame();
+    res.index = State->NextState->InClassIndex;
+    res.spriteIndex = GetEffectiveSpriteIndex();
+    DispSpriteFrame = oldDSF;
+    DispSpriteName = oldDSN;
+    return res;
+  }
+
 private:
   // world iterator callbacks
   bool CheckThing (cptrace_t &, VEntity *);
