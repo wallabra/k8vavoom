@@ -46,6 +46,20 @@ menudef GoreModMenu {
       "Amount of blood to spawn."
       "Lowest value will block spawning.";
   }
+
+
+  header "Blood Limiter";
+
+  option numeric {
+    title = "Maximum Allowed Blood Actors";
+    cvar = k8GoreOpt_MaxBloodEntities;
+    step = 100;
+    min = 0;
+    max = 64000;
+    help =
+      "Limit number of spawned blood actors."
+      "It is recommended to keep this under 8000.";
+  }
 }
 
 

@@ -12,6 +12,9 @@ $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 // models
 $recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
 
+// progs
+$recursedir progs/  @CMAKE_CURRENT_SOURCE_DIR@/progs/
+
 
 // scripts
 decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
@@ -19,3 +22,4 @@ decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
 cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
 modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
+loadvcs.txt   @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt
