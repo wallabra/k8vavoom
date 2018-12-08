@@ -52,7 +52,7 @@ VThinkerChannel::VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vu
 VThinkerChannel::~VThinkerChannel () {
   // mark channel as closing to prevent sending a message
   Closing = true;
-  // if this is a client version of entity, destriy it
+  // if this is a client version of entity, destroy it
   if (Thinker && !OpenedLocally) {
     Thinker->DestroyThinker();
     Thinker->XLevel->RemoveThinker(Thinker);

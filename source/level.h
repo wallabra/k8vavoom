@@ -432,6 +432,26 @@ private:
     EV_RET_VOID_IDX(mtindex);
   }
 
+  void eventEntitySpawned (VEntity *e) {
+    if (e) {
+      static int mtindex = -666;
+      if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("OnEntitySpawned"));
+      P_PASS_SELF;
+      P_PASS_REF(e);
+      EV_RET_VOID_IDX(mtindex);
+    }
+  }
+
+  void eventEntityDying (VEntity *e) {
+    if (e) {
+      static int mtindex = -666;
+      if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("OnEntityDying"));
+      P_PASS_SELF;
+      P_PASS_REF(e);
+      EV_RET_VOID_IDX(mtindex);
+    }
+  }
+
   DECLARE_FUNCTION(GetLineIndex)
 
   DECLARE_FUNCTION(PointInSector)

@@ -231,6 +231,12 @@ final int calcSecIdx (sector_t *sec) {
 void BeforeWorldTick (float DeltaTime) { /*print("BEFORE: %s", DeltaTime);*/ }
 void AfterWorldTick (float DeltaTime) { /*print("AFTER: %s", DeltaTime);*/ }
 
+// called after `OnMapSpawn()`, `ent` is never `none`
+void OnEntitySpawned (Entity ent) {}
+
+// called after entity was removed from lists, and marked for deletion; `ent` is never `none`
+void OnEntityDying (Entity ent) {}
+
 
 defaultproperties {
 }

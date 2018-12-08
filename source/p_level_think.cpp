@@ -116,8 +116,11 @@ void VLevel::TickWorld (float DeltaTime) {
     Th = c->Next;
     if (!(c->GetFlags()&_OF_DelayedDestroy)) {
       c->Tick(DeltaTime);
-    } else {
+    }
+    if (c->GetFlags()&_OF_DelayedDestroy) {
       RemoveThinker(c);
+      // if it is just destroyed, call level notifier
+      if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
       c->ConditionalDestroy();
     }
   }
@@ -172,11 +175,21 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   AddThinker(Ret);
 
   if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {
-    ((VEntity *)Ret)->Origin = AOrigin;
-    ((VEntity *)Ret)->Angles = AAngles;
-    ((VEntity *)Ret)->eventOnMapSpawn(mthing);
-    if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) ((VEntity *)Ret)->eventBeginPlay();
+    VEntity *e = (VEntity *)Ret;
+    e->Origin = AOrigin;
+    e->Angles = AAngles;
+    e->eventOnMapSpawn(mthing);
+    // call it anyway, some script code may rely on this
+    /*if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed)))*/ {
+      if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) e->eventBeginPlay();
+    }
   }
+
+  if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {
+    VEntity *e = (VEntity *)Ret;
+    if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed))) eventEntitySpawned(e);
+  }
+
   return Ret;
   unguard;
 }
