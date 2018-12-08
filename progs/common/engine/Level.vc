@@ -228,8 +228,8 @@ final int calcSecIdx (sector_t *sec) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void BeforeWorldTick (float DeltaTime) { print("BEFORE: %s", DeltaTime); }
-void AfterWorldTick (float DeltaTime) { print("AFTER: %s", DeltaTime); }
+void BeforeWorldTick (float DeltaTime) { /*print("BEFORE: %s", DeltaTime);*/ }
+void AfterWorldTick (float DeltaTime) { /*print("AFTER: %s", DeltaTime);*/ }
 
 
 defaultproperties {
