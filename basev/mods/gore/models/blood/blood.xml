@@ -10,6 +10,7 @@
 			<skin file="models/blood/blood2.png" shade="6c 00 00" />
 			<skin file="models/blood/blood3.png" shade="6c 00 00" />
 			<skin file="models/blood/blood4.png" shade="6c 00 00" />
+			<!--skin file="models/blood/blood5.png" shade="6c 00 00" /-->
 		</md2>
 	</model>
 
@@ -23,6 +24,7 @@
 			<skin file="models/blood/blood2.png" shade="00 00 6c" />
 			<skin file="models/blood/blood3.png" shade="00 00 6c" />
 			<skin file="models/blood/blood4.png" shade="00 00 6c" />
+			<!--skin file="models/blood/blood5.png" shade="00 00 6c" /-->
 		</md2>
 	</model>
 
@@ -36,6 +38,7 @@
 			<skin file="models/blood/blood2.png" shade="00 6c 00" />
 			<skin file="models/blood/blood3.png" shade="00 6c 00" />
 			<skin file="models/blood/blood4.png" shade="00 6c 00" />
+			<!--skin file="models/blood/blood5.png" shade="00 6c 00" /-->
 		</md2>
 	</model>
 
