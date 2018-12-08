@@ -1,0 +1,2 @@
+user int K8BDWOpt_MaxCasingEntities = 1000;
+user int K8BDWOpt_LimiterDebug = 0;

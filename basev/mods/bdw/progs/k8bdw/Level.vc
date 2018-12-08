@@ -1,0 +1,99 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class Level_K8BDW : replaces(Level);
+
+const int DefaultMaxAllowedEntities = 1024;
+
+int entCounter;
+int skipDeathCounter;
+
+
+final private void CleanCasing () {
+  int allowed = GetCvar('K8BDWOpt_MaxCasingEntities');
+  if (allowed < 0) allowed = DefaultMaxAllowedEntities;
+  if (++entCounter > allowed) {
+    //print("  KILLING: %C", ent);
+    //ent.Destroy();
+    // remove old blood
+    array!Entity elist;
+    Entity e;
+    foreach AllThinkers(BDW_CasingBase, out e) elist[$] = e;
+    //print("  %s blood entities found", elist.length);
+    if (elist.length > allowed) {
+      elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
+      // destroy half of list, from older
+      int toremove = 2048;
+      if (allowed < 128) {
+        toremove = elist.length/2;
+      } else {
+        if (toremove < elist.length/4) toremove = elist.length/4;
+        if (toremove < 128) toremove = 128;
+        toremove = min(toremove, elist.length);
+      }
+      foreach (auto i; 0..toremove) {
+        //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
+        elist[i].Destroy();
+        ++skipDeathCounter;
+        --entCounter;
+      }
+      if (GetCvar('K8BDWOpt_LimiterDebug')) print("%s blood entities removed out of %s", skipDeathCounter, elist.length);
+    }
+  }
+}
+
+
+override void AfterUnarchiveThinkers () {
+  if (GetCvar('K8BDWOpt_LimiterDebug')) print("*** LOADED *** (counter=%s; skip=%s)", entCounter, skipDeathCounter);
+  entCounter = 0;
+  skipDeathCounter = 0;
+  Entity e;
+  foreach AllThinkers(BDW_CasingBase, out e) {
+    ++entCounter;
+  }
+  if (GetCvar('K8BDWOpt_LimiterDebug')) print("  counted: %s", entCounter);
+}
+
+
+override void OnEntitySpawned (Entity ent) {
+  //print("SPAWNED: %C", ent);
+  if (ent isa BDW_CasingBase) {
+    //print("SPAWNED: %C (%d current)", ent, entCounter);
+    CleanCasing();
+  }
+}
+
+
+override void OnEntityDying (Entity ent) {
+  //print("DYING: %C", ent);
+  if (ent isa BDW_CasingBase) {
+    if (skipDeathCounter) {
+      --skipDeathCounter;
+      //print("DYING SKIP: %C (%d left)", ent, entCounter);
+    } else {
+      --entCounter;
+      //print("DYING: %C (%d left)", ent, entCounter);
+    }
+  }
+}

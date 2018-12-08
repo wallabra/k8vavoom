@@ -1,3 +1,6 @@
+Actor BDW_CasingBase {}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 Actor BDW_EmptyClipSpawn {
   Speed 20
@@ -6,13 +9,14 @@ Actor BDW_EmptyClipSpawn {
   +NOBLOCKMAP
   States {
     Spawn:
-      TNT1 AA 1 A_CustomMissile("BDW_EmptyClip", random(0, -5), 0, random(85, 95), 2, 1)
+      TNT1 A 0
+      TNT1 A 1 A_CustomMissile("BDW_EmptyClip", random(0, -5), 0, random(85, 95), 2, 1)
       Stop
   }
 }
 
 
-Actor BDW_EmptyClip {
+Actor BDW_EmptyClip : BDW_CasingBase {
   Height 12
   Radius 9
   Speed 4
@@ -74,7 +78,7 @@ Actor BDW_RifleCaseSpawn {
 }
 
 
-Actor BDW_EmptyBrass {
+Actor BDW_EmptyBrass : BDW_CasingBase {
   Height 2
   Radius 2
   Speed 8
@@ -203,7 +207,7 @@ Actor BDW_ShotCaseSpawn : BDW_RifleCaseSpawn {
 }
 
 
-Actor BDW_ShotgunCasing {
+Actor BDW_ShotgunCasing : BDW_CasingBase {
   Height 12
   Radius 9
   Speed 6

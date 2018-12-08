@@ -1,0 +1,23 @@
+menudef k8BDWModMenu {
+  title = "Gore Mod Options";
+
+  option numeric {
+    title = "Maximum Allowed Casing Actors";
+    cvar = K8BDWOpt_MaxCasingEntities;
+    step = 100;
+    min = 0;
+    max = 40000;
+    help =
+      "Limit number of spawned casing actors."
+      "It is recommended to keep this under 1000.";
+  }
+}
+
+
+// advanced video options menu
+menudef OptionsMenu extend {
+  option submenu {
+    title = "BDW Mod Options";
+    submenu = k8BDWModMenu;
+  }
+}

@@ -3,15 +3,21 @@ $dest bdw.pk3
 // graphics
 $recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 
-
 // sounds
 $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 
 // actors
 $recursedir actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/
 
+// progs
+$recursedir progs/  @CMAKE_CURRENT_SOURCE_DIR@/progs/
+
+
 // scripts
 decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
 gldefs.txt    @CMAKE_CURRENT_SOURCE_DIR@/gldefs.txt
 sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
+modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
+loadvcs.txt   @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt

@@ -1,0 +1,3 @@
+#include "Level.vc"
+
+class BDW_CasingBase : Actor decorate;
