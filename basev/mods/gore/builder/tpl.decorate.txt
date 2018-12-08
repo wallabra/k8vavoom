@@ -2,77 +2,13 @@ Actor K8Gore_BloodBase$(Color) {
 }
 
 // ////////////////////////////////////////////////////////////////////////// //
-Actor K8Gore_TinyBlood$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
-  game Doom
-  scale 0.2
-  speed 7
-  health 1
-  radius 8
-  height 1
-  +DontSplash
-  Gravity 0.1 //0.7
-  Decal K8GoreBloodSplat$(Color)
-  +MISSILE
-  +CLIENTSIDEONLY
-  +NOTELEPORT
-  +NOBLOCKMAP
-  +FORCEXYBILLBOARD
-  -EXPLODEONWATER
-  +DOOMBOUNCE
-  BounceFactor 0.01
-
-  States {
-    Spawn:
-      TNT1 A 0
-      //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-#ifndef TRANSIENT
-      BLUX A 500
-      Stop
-#else
-    TinFade:
-      BLUX A 2 A_FadeOut(0.01)
-      Loop
-#endif
-
-    NoSpawn:
-      TNT1 A 0
-      Stop
-
-    Splash:
-      B8OD A 0
-      //TNT1 AAA 0 A_CustomMissile("K8Gore_Underblood1$(Color)", 7, 0, random(0, 360), 2, random(30, 150))
-      Stop
-
-    Death:
-      TNT1 A 0
-      TNT1 A 0 A_PlaySound("blooddrop3")
-#ifndef TRANSIENT
-      XDT1 EFGHIJKL 2
-#else
-      XDT1 EFGHIJKL 2 A_FadeOut(0.1)
-#endif
-      Stop
-  }
-}
-
-
+// this is main blood actor; it is spawned by the engine
 #ifndef TRANSIENT
 Actor K8Gore_Blood$(Color) : K8Gore_BloodBase$(Color) Replaces Blood$(Color) {
 #else
 Actor K8Gore_Blood$(Color) : K8Gore_BloodBase$(Color) {
 #endif
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   Decal K8GoreBloodSplat$(Color)
   game Doom
   +FORCEXYBILLBOARD
@@ -83,99 +19,79 @@ Actor K8Gore_Blood$(Color) : K8Gore_BloodBase$(Color) {
   Scale 0.5
   Speed 0
 
+  var int user_spray;
+
   States {
     Spawn:
       TNT1 A 0
-      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase$(Color)")
-      //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-#ifndef TRANSIENT
-      TNT1 AAAAAAAA 0 {
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
-          //A_k8ConLog("BLOODBATH 0!");
-          A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
-        }
-      }
-      /*
-      TNT1 A 0 A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60))
-      TNT1 A 0 A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40))
-      TNT1 A 0 A_CustomMissile("K8Gore_BloodmistSmall$(Color)", 0, 0, random(0, 360), 2, random(10, 40))
-      TNT1 A 0 A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), 2, random(0, 90))
-      */
-      TNT1 A 0 {
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmall$(Color)", 0, 0, random(0, 360), 2, random(10, 40));
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
-      }
-#else
       TNT1 AAAA 0 {
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
-          //A_k8ConLog("BLOODBATH 1!");
           A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
         }
       }
-      /*
-      TNT1 A 0 A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(30, 60))
-      TNT1 A 0 A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(30, 60))
-      TNT1 A 0 A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), 2, random(0, 90))
-      */
-      TNT1 A 0 {
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
+
+#ifndef TRANSIENT
+      // normal
+      TNT1 AAAA 0 {
+        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+          A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
+        }
       }
 #endif
-      Stop
 
-    Splash:
-      B8OD A 0
-      //TNT1 AAA 0 A_CustomMissile("K8Gore_Underblood1$(Color)", 7, 0, random(0, 360), 2, random(30, 150))
+      TNT1 A 0 {
+#ifndef TRANSIENT
+        // normal
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
+#endif
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
+#ifndef TRANSIENT
+        // normal
+        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmall$(Color)", 0, 0, random(0, 360), 2, random(10, 40));
+#else
+        // transient
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
+#endif
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
+      }
       Stop
 
     Spray:
+      TNT1 A 0 A_SetUserVar("user_spray", 1)
       Goto Spawn
   }
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+// fast "in-place" blood hit
 Actor K8Gore_BloodHit$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   height 8
   radius 4
   +NOBLOCKMAP
   +NOGRAVITY
   +NOCLIP
   +CLIENTSIDEONLY
-  //+NoInteraction
+  +NoInteraction
   Scale 0.7
+  Renderstyle Translucent
+  Alpha 0.7
 
   States {
     Spawn:
-      TNT1 A 0
-      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase$(Color)")
-#ifndef TRANSIENT
-      BLHT ABCDE 1
-#else
       BLHT ABCDE 1 A_FadeOut(0.1)
-#endif
       Stop
   }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// flying blood; will spawn blood spots and ceiling blood
 Actor K8Gore_FlyingBlood$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   scale 0.5
   speed 4
@@ -203,45 +119,43 @@ Actor K8Gore_FlyingBlood$(Color) : K8Gore_BloodBase$(Color) {
 
   States {
     Spawn:
-      TNT1 A 0
-      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase$(Color)")
-      //B8OD ABCD 2
-      TNT1 A 0
-      //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD AB 2
-      //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      TNT1 A 0 A_Jump(255, "Spawn1", "Spawn2")
+      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+      TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
 
     Spawn1:
-#ifndef TRANSIENT
-      B8OD C 1
-#else
-      B8OD C 1 A_FadeOut(0.01)
-#endif
-      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      Loop
-
+      B8OD C 0
+      Goto MainWorker
     Spawn2:
+      B8OD D 0
+      Goto MainWorker
+    Spawn3:
+      B8OD E 0
+      Goto MainWorker
+
+    MainWorker:
+      "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
+    MainLoop:
 #ifndef TRANSIENT
-      B8OD E 1
+      "####" "#" 1
 #else
-      B8OD E 1 A_FadeOut(0.01)
+      "####" "#" 1 A_FadeOut(0.01)
 #endif
-      TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       Loop
 
     Splash:
-      B8OD A 0
-      //TNT1 A 0 A_SpawnItem("K8Gore_Underblood2$(Color)")
-      Stop
+      "####" "#" 1 A_FadeOut(0.01)
+      Loop
 
+    // hits something
     Death:
       TNT1 A 0
       TNT1 A 0 A_PlaySound("blooddrop2")
-      TNT1 A 0
+      "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot$(Color)", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker$(Color)", -15, 0, 90, 2, 90)
       TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler$(Color)",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+    DeathDone:
       TNT1 A 1
       Stop
    }
@@ -249,26 +163,59 @@ Actor K8Gore_FlyingBlood$(Color) : K8Gore_BloodBase$(Color) {
 
 
 Actor K8Gore_FlyingBloodLevel3$(Color) : K8Gore_FlyingBlood$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   Scale 1.0
   Speed 5 //7
   Mass 5 //1
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// this is blood "arc"
+Actor K8Gore_BloodmistSmall$(Color) : K8Gore_FlyingBlood$(Color) {
+  $(Translation)
+  Decal K8GoreBloodSuper$(Color)
+  +MISSILE
+  +NOTELEPORT
+  +NOBLOCKMAP
+  +NOBLOCKMONST
+  +DONTSPLASH
+  +CLIENTSIDEONLY
+  +THRUACTORS
+  +NoInteraction
+  Scale 0.8
+  Radius 2
+  Height 2
+  Speed 8
+  Mass 4
+  Gravity 0.1 //0.4
+  Scale 0.45
+  RenderStyle Translucent
+  Alpha 0.7
+
+  States {
+    Spawn:
+      MSBL ABCDEFGH 1
+      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.05)
+      Stop
+
+    Death:
+      TNT1 A 0
+      TNT1 A 0 A_CheckFloor("Disappear")
+      MSBL HHHHHHHH 1 A_FadeOut(0.1)
+      Stop
+
+    Vanish:
+    Disappear:
+      TNT1 A 1
+      Stop
+  }
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   radius 2
   height 2
@@ -397,12 +344,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(Color) {
 
 ////////////////////////////////////////////////////////////////////////////////
 Actor K8Gore_DetectCeilBloodSimpler$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   scale 0.4
   speed 0
@@ -455,12 +397,7 @@ Actor K8Gore_DetectCeilBloodSimpler$(Color) : K8Gore_BloodBase$(Color) {
 
 // Checks if there is a ceiling above, and isn't hitting a monster.
 Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   +THRUACTORS
   +BLOODLESSIMPACT
   damagetype Blood
@@ -497,12 +434,7 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
 
 // The Ceil Blood Spot.
 Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   Projectile
   +SPAWNCEILING
   +CEILINGHUGGER
@@ -534,13 +466,62 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+Actor K8Gore_TinyBlood$(Color) : K8Gore_BloodBase$(Color) {
+  $(Translation)
+  game Doom
+  scale 0.2
+  speed 7
+  health 1
+  radius 8
+  height 1
+  +DontSplash
+  Gravity 0.1 //0.7
+  Decal K8GoreBloodSplat$(Color)
+  +MISSILE
+  +CLIENTSIDEONLY
+  +NOTELEPORT
+  +NOBLOCKMAP
+  +FORCEXYBILLBOARD
+  -EXPLODEONWATER
+  +DOOMBOUNCE
+  BounceFactor 0.01
+
+  States {
+    Spawn:
+      TNT1 A 0
+      //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
+#ifndef TRANSIENT
+      BLUX A 500
+      Stop
+#else
+    TinFade:
+      BLUX A 2 A_FadeOut(0.01)
+      Loop
+#endif
+
+    NoSpawn:
+      TNT1 A 0
+      Stop
+
+    Splash:
+      B8OD A 0
+      //TNT1 AAA 0 A_CustomMissile("K8Gore_Underblood1$(Color)", 7, 0, random(0, 360), 2, random(30, 150))
+      Stop
+
+    Death:
+      TNT1 A 0
+      TNT1 A 0 A_PlaySound("blooddrop3")
+#ifndef TRANSIENT
+      XDT1 EFGHIJKL 2
+#else
+      XDT1 EFGHIJKL 2 A_FadeOut(0.1)
+#endif
+      Stop
+  }
+}
 Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   +NOGRAVITY
   +THRUACTORS
   +NOCLIP
@@ -560,12 +541,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
 
 
 Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   +DOOMBOUNCE
   +THRUACTORS
   +CLIENTSIDEONLY
@@ -589,12 +565,7 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
 
 
 Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   -DONTSPLASH
   scale 0.3
 
@@ -626,12 +597,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
 
 /*
 Actor K8Gore_MiniBloodDropEffect$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   +CLIENTSIDEONLY
   +NOBLOCKMAP
   +FLOORCLIP
@@ -648,12 +614,7 @@ Actor K8Gore_MiniBloodDropEffect$(Color) {
 
 
 Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   radius 2
   height 2
@@ -744,12 +705,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
 
 // Blood trails spawned by FlyingBlood
 Actor K8Gore_FlyingBloodTrail$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   scale 0.70
   mass 1
@@ -788,12 +744,7 @@ Actor K8Gore_FlyingBloodTrail$(Color) : K8Gore_BloodBase$(Color) {
 
 
 Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   radius 1
   height 1
@@ -843,12 +794,7 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
 
 
 Actor K8Gore_GrowingBloodPool2$(Color) : K8Gore_BloodSpot$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   radius 1
   height 1
@@ -904,12 +850,7 @@ Actor K8Gore_GrowingBloodPool2$(Color) : K8Gore_BloodSpot$(Color) {
 
 
 Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   game Doom
   scale 0.5
   speed 3
@@ -956,74 +897,14 @@ Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(Color) {
 
 
 Actor K8Gore_FlyingBloodFakeNoDecal$(Color) : K8Gore_FlyingBloodFake$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
   Decal None
-}
-
-
-Actor K8Gore_BloodmistSmall$(Color) : K8Gore_FlyingBlood$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
-  Decal K8GoreBloodSuper$(Color)
-  +MISSILE
-  +NOTELEPORT
-  +NOBLOCKMAP
-  +NOBLOCKMONST
-  +DONTSPLASH
-  +CLIENTSIDEONLY
-  +THRUACTORS
-  +NoInteraction
-  Scale 0.8
-  Radius 2
-  Height 2
-  Speed 8
-  Mass 4
-  Gravity 0.1 //0.4
-  Scale 0.45
-  RenderStyle Translucent
-  Alpha 0.7
-
-  States {
-    Spawn:
-      TNT1 A 0
-      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase$(Color)")
-      MSBL ABCDEFGH 1
-      MSBL HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH 1 A_FadeOut(0.005)
-      TNT1 A 2
-      Stop
-
-    Death:
-      TNT1 A 0
-      TNT1 A 0 A_CheckFloor("Disappear")
-      MSBL HHHHHHHH 1 A_FadeOut(0.1)
-      TNT1 A 2
-      Stop
-
-    Vanish:
-    Disappear:
-      TNT1 A 2
-      Stop
-  }
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 #ifndef TRANSIENT
 Actor K8Gore_Blood_SplatterReplacer$(Color) : K8Gore_Blood Replaces BloodSplatter$(Color) {
-#ifdef BLUE
-  Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
-#endif
-#ifdef GREEN
-  Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
-#endif
+  $(Translation)
 }
 #endif
