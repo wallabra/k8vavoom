@@ -66,25 +66,25 @@
 		<state sprite="BPDL" sprite_frame="C" model="base_red" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_red" frame_index="3" />
 	</class>
-	<class name="K8Gore_GiantBloodSpot">
+	<class name="K8Gore_MinuscleBloodSpot">
 		<state sprite="BPDL" sprite_frame="A" model="base_red" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_red" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_red" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_red" frame_index="3" />
 	</class>
-	<class name="K8Gore_BigBloodSpot">
+	<class name="K8Gore_MinuscleBloodSpotTransient">
 		<state sprite="BPDL" sprite_frame="A" model="base_red" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_red" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_red" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_red" frame_index="3" />
 	</class>
-	<class name="K8Gore_MediumBloodSpot">
+	<class name="K8Gore_CeilBloodSpot">
 		<state sprite="BPDL" sprite_frame="A" model="base_red" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_red" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_red" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_red" frame_index="3" />
 	</class>
-	<class name="K8Gore_MediumBloodSpot2">
+	<class name="K8Gore_CeilBloodSpotTransient">
 		<state sprite="BPDL" sprite_frame="A" model="base_red" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_red" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_red" frame_index="2" />
@@ -103,25 +103,25 @@
 		<state sprite="BPDL" sprite_frame="C" model="base_blue" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_blue" frame_index="3" />
 	</class>
-	<class name="K8Gore_GiantBloodSpotBlue">
+	<class name="K8Gore_MinuscleBloodSpotBlue">
 		<state sprite="BPDL" sprite_frame="A" model="base_blue" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_blue" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_blue" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_blue" frame_index="3" />
 	</class>
-	<class name="K8Gore_BigBloodSpotBlue">
+	<class name="K8Gore_MinuscleBloodSpotTransient_Blue">
 		<state sprite="BPDL" sprite_frame="A" model="base_blue" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_blue" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_blue" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_blue" frame_index="3" />
 	</class>
-	<class name="K8Gore_MediumBloodSpotBlue">
+	<class name="K8Gore_CeilBloodSpotBlue">
 		<state sprite="BPDL" sprite_frame="A" model="base_blue" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_blue" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_blue" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_blue" frame_index="3" />
 	</class>
-	<class name="K8Gore_MediumBloodSpot2Blue">
+	<class name="K8Gore_CeilBloodSpotTransient_Blue">
 		<state sprite="BPDL" sprite_frame="A" model="base_blue" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_blue" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_blue" frame_index="2" />
@@ -140,25 +140,25 @@
 		<state sprite="BPDL" sprite_frame="C" model="base_green" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_green" frame_index="3" />
 	</class>
-	<class name="K8Gore_GiantBloodSpotGreen">
+	<class name="K8Gore_MinuscleBloodSpotGreen">
 		<state sprite="BPDL" sprite_frame="A" model="base_green" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_green" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_green" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_green" frame_index="3" />
 	</class>
-	<class name="K8Gore_BigBloodSpotGreen">
+	<class name="K8Gore_MinuscleBloodSpotTransient_Green">
 		<state sprite="BPDL" sprite_frame="A" model="base_green" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_green" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_green" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_green" frame_index="3" />
 	</class>
-	<class name="K8Gore_MediumBloodSpotGreen">
+	<class name="K8Gore_CeilBloodSpotGreen">
 		<state sprite="BPDL" sprite_frame="A" model="base_green" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_green" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_green" frame_index="2" />
 		<state sprite="BPDL" sprite_frame="D" model="base_green" frame_index="3" />
 	</class>
-	<class name="K8Gore_MediumBloodSpot2Green">
+	<class name="K8Gore_CeilBloodSpotTransient_Green">
 		<state sprite="BPDL" sprite_frame="A" model="base_green" frame_index="0" />
 		<state sprite="BPDL" sprite_frame="B" model="base_green" frame_index="1" />
 		<state sprite="BPDL" sprite_frame="C" model="base_green" frame_index="2" />
