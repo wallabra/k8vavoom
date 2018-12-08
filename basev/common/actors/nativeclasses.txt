@@ -80,9 +80,11 @@ class Actor extends Thinker
   alias GetSSR = _GetSSR;
 
 
-  action native A_RemoveIfRadiusAmountGreater (int radius, int amount, name className, optional bool exact);
+  action native A_JumpIfRadiusAmountGreater (int radius, int amount, name className, state label, optional bool exact);
+
   action native A_k8MoveBy (optional float dx, optional float dy, optional float dz);
   action native A_k8MoveTo (optional float nx, optional float ny, optional float nz);
+
   action native A_k8JumpIfLiquidFloor (state label);
   action native A_k8JumpIfOnLiquidFloor (state label);
 

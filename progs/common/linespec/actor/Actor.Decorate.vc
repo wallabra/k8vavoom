@@ -673,33 +673,43 @@ final bool decorate_CheckClass (string classname, optional int ptr_select, optio
 
 //==========================================================================
 //
-//  A_RemoveIfRadiusAmountGreater
+//  A_JumpIfRadiusAmountGreater
+//
+//  don't include self
 //
 //==========================================================================
-final void A_RemoveIfRadiusAmountGreater (int radius, int amount, class!Actor checkClass, optional bool exact) {
+final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor checkClass, state label, optional bool exact) {
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
-  if (radius < 1) return;
-  if (amount < 1) { DoJump(none); return; }
+  if (radius < 0) return;
   if (!checkClass) return;
+  if (amount < 1) { DoJump(label); return; }
 
   Entity e;
   if (exact) {
     foreach RadiusThings(e, Origin, radius) {
       if (e.Class == checkClass) {
-        if (!(--amount)) { DoJump(none); return; }
+        if (e != self) {
+          if (!(--amount)) { DoJump(label); return; }
+        }
       }
     }
   } else {
     //print("=============");
     foreach RadiusThings(e, Origin, radius) {
-      print("   %C", e);
+      //print("   %C", e);
       if (e isa checkClass) {
-        if (!(--amount)) { DoJump(none); return; }
+        if (e != self) {
+          if (!(--amount)) {
+            //print("%C: radius %s; check %C; hit it!", self, radius, checkClass);
+            DoJump(label);
+            return;
+          }
+        }
       }
     }
   }
-  //print("%C: check %C at %s, %s left", self, checkClass, Origin, amount);
+  //print("%C: check %C with raduis %s, at %s, %s left", self, checkClass, radius, Origin, amount);
 }
 
 
