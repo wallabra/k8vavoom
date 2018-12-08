@@ -18,19 +18,28 @@
 
 	<class name="K8Gore_GrowingBloodPool">
 		<!-- Spawn -->
-		<state sprite="BPDL" sprite_frame="A" model="bloodbrain" frame_index="0" />
-		<state sprite="BPDL" sprite_frame="B" model="bloodspinal" frame_index="0" />
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
 	</class>
 
 	<class name="K8Gore_GrowingBloodPoolBlue">
 		<!-- Spawn -->
-		<state sprite="BPDL" sprite_frame="A" model="bloodbrain" frame_index="0" />
-		<state sprite="BPDL" sprite_frame="B" model="bloodspinal" frame_index="0" />
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2Blue">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
 	</class>
 
 	<class name="K8Gore_GrowingBloodPoolGreen">
 		<!-- Spawn -->
-		<state sprite="BPDL" sprite_frame="A" model="bloodbrain" frame_index="0" />
-		<state sprite="BPDL" sprite_frame="B" model="bloodspinal" frame_index="0" />
+		<state index="-1" model="bloodbrain" frame_index="0" />
+	</class>
+	<class name="K8Gore_GrowingBloodPool2Green">
+		<!-- Spawn -->
+		<state index="-1" model="bloodspinal" frame_index="0" />
 	</class>
 </vavoom_model_definition>

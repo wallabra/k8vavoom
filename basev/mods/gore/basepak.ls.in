@@ -9,6 +9,9 @@ $recursedir graphics/  @CMAKE_CURRENT_SOURCE_DIR@/graphics/
 // sounds
 $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 
+// models
+$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
+
 
 // scripts
 decorate.txt  @CMAKE_CURRENT_SOURCE_DIR@/decorate.txt
@@ -16,17 +19,3 @@ decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
 cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
 modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
-
-
-// models
-//models/models.xml       @CMAKE_CURRENT_SOURCE_DIR@/models/models.xml
-//models/gore/blood.md2   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood.md2
-//models/gore/blood.pcx   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood.pcx
-//models/gore/blood2.md2  @CMAKE_CURRENT_SOURCE_DIR@/models/gore/blood2.md2
-//models/gore/brain.md2   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/brain.md2
-//models/gore/brain.pcx   @CMAKE_CURRENT_SOURCE_DIR@/models/gore/brain.pcx
-//models/gore/gibs.md2    @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gibs.md2
-//models/gore/gibs.pcx    @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gibs.pcx
-//models/gore/gsplat.xml  @CMAKE_CURRENT_SOURCE_DIR@/models/gore/gsplat.xml
-
-$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
