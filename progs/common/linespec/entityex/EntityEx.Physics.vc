@@ -113,6 +113,10 @@ bool Physics (float DeltaTime) {
         GetFloorAndCeiling(out tmtrace);
         Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
       }
+    } else if (bStickToFloor || bStickToCeiling) {
+      tmtrace_t tmtrace;
+      GetFloorAndCeiling(out tmtrace);
+      Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
     }
     return true;
   }
