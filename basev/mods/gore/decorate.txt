@@ -645,7 +645,6 @@ Actor K8Gore_BloodDripingFromCeiling : K8Gore_TinyBlood {
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
@@ -1483,7 +1482,6 @@ Actor K8Gore_BloodDripingFromCeilingTransient : K8Gore_TinyBloodTransient {
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
@@ -2328,7 +2326,6 @@ Actor K8Gore_BloodDripingFromCeilingGreen : K8Gore_TinyBloodGreen {
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
@@ -3166,7 +3163,6 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Green : K8Gore_TinyBloodTransient_
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
@@ -4011,7 +4007,6 @@ Actor K8Gore_BloodDripingFromCeilingBlue : K8Gore_TinyBloodBlue {
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
@@ -4849,7 +4844,6 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Blue : K8Gore_TinyBloodTransient_B
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP

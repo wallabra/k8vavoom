@@ -693,7 +693,6 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
-  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
