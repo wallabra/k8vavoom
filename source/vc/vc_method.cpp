@@ -496,7 +496,7 @@ void VMethod::DumpAsm () {
         break;
       case OPCARGS_String:
         // string
-        dprintf(" \"%s\"", &Package->Strings[Instructions[s].Arg1]);
+        dprintf(" %s", *Package->GetStringByIndex(Instructions[s].Arg1).quote());
         break;
       case OPCARGS_FieldOffset:
         dprintf(" %s", *Instructions[s].Member->Name);
@@ -620,7 +620,7 @@ void VMethod::CompileCode () {
       case OPCARGS_Int: WriteInt32(Instructions[i].Arg1); break;
       case OPCARGS_Name: WriteInt32(Instructions[i].NameArg.GetIndex()); break;
       case OPCARGS_NameS: WriteInt16(Instructions[i].NameArg.GetIndex()); break;
-      case OPCARGS_String: WritePtr(&GetPackage()->Strings[Instructions[i].Arg1]); break;
+      case OPCARGS_String: WritePtr((void *)&(GetPackage()->GetStringByIndex(Instructions[i].Arg1))); break;
       case OPCARGS_FieldOffset:
         // make sure struct / class field offsets have been calculated
         Instructions[i].Member->Outer->PostLoad();

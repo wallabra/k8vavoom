@@ -107,7 +107,7 @@ public:
   virtual bool IsNameConst () const;
   virtual vint32 GetIntConst () const;
   virtual float GetFloatConst () const;
-  virtual const char *GetStrConst (VPackage *) const;
+  virtual const VStr &GetStrConst (VPackage *) const;
   virtual VName GetNameConst () const;
   virtual bool IsNoneLiteral () const;
   virtual bool IsNullLiteral () const;

@@ -2415,13 +2415,16 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       case TYPE_Float:
       case TYPE_Bool:
         if (Args[i]->IsStrConst()) {
-          const char *str = Args[i]->GetStrConst(ec.Package);
-          if (!str || !str[0] || VStr::ICmp(str, "none") == 0 || VStr::ICmp(str, "null") == 0 ||
-              VStr::ICmp(str, "nil") == 0 || VStr::ICmp(str, "false") == 0)
-          {
+          const VStr &str = Args[i]->GetStrConst(ec.Package);
+          if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
             TLocation ALoc = Args[i]->Loc;
             delete Args[i];
             Args[i] = new VIntLiteral(0, ALoc);
+            ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
+          } else if (str.ICmp("true") == 0) {
+            TLocation ALoc = Args[i]->Loc;
+            delete Args[i];
+            Args[i] = new VIntLiteral(1, ALoc);
             ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
           }
         }
@@ -2433,10 +2436,10 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           delete E;
           E = nullptr;
         } else if (Args[i]->IsStrConst()) {
-          const char *Val = Args[i]->GetStrConst(ec.Package);
+          const VStr &Val = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
           delete Args[i];
-          Args[i] = new VNameLiteral(Val, ALoc);
+          Args[i] = new VNameLiteral(*Val, ALoc);
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
@@ -2487,20 +2490,20 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
           E = nullptr;
         }
         if (Args[i]->IsStrConst()) {
-          const char *CName = Args[i]->GetStrConst(ec.Package);
+          const VStr &CName = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
-          if (VStr::ICmp(CName, "None") == 0 || VStr::ICmp(CName, "nil") == 0 || VStr::ICmp(CName, "null") == 0) {
+          if (CName.length() == 0 || CName.ICmp("None") == 0 || CName.ICmp("nil") == 0 || CName.ICmp("null") == 0) {
             //ParseWarning(ALoc, "NONE CLASS `%s`", CName);
             delete Args[i];
             Args[i] = new VNoneLiteral(ALoc);
           } else {
-            VClass *Cls = VClass::FindClassNoCase(CName);
+            VClass *Cls = VClass::FindClassNoCase(*CName);
             if (!Cls) {
-              ParseWarning(ALoc, "No such class `%s` for argument #%d of `%s`", CName, i+1, Func->GetName());
+              ParseWarning(ALoc, "No such class `%s` for argument #%d of `%s`", *CName, i+1, Func->GetName());
               delete Args[i];
               Args[i] = new VNoneLiteral(ALoc);
             } else if (Func->ParamTypes[i].Class && !Cls->IsChildOf(Func->ParamTypes[i].Class)) {
-              ParseWarning(ALoc, "Class `%s` is not a descendant of `%s` for argument #%d of `%s`", CName, Func->ParamTypes[i].Class->GetName(), i+1, Func->GetName());
+              ParseWarning(ALoc, "Class `%s` is not a descendant of `%s` for argument #%d of `%s`", *CName, Func->ParamTypes[i].Class->GetName(), i+1, Func->GetName());
               delete Args[i];
               Args[i] = new VNoneLiteral(ALoc);
             } else {
@@ -2519,12 +2522,12 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       case TYPE_State:
         // dumbfucks in harddoom does this: `A_JumpIfTargetInLOS("1")` -- brilliant! idiots.
         if (Args[i]->IsStrConst()) {
-          const char *str = Args[i]->GetStrConst(ec.Package);
+          const VStr &str = Args[i]->GetStrConst(ec.Package);
           int lbl = -1;
-          if (VStr::convertInt(str, &lbl)) {
+          if (str.convertInt(&lbl)) {
             TLocation ALoc = Args[i]->Loc;
             if (lbl < 0) {
-              ParseError(ALoc, "`%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, str);
+              ParseError(ALoc, "`%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, *str);
             } else {
               ParseWarning(ALoc, "`%s` argument #%d should be number %d; FIX YOUR BROKEN CODE!", Func->GetName(), i+1, lbl);
               delete Args[i];
@@ -2555,7 +2558,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             }
           }
         } else if (Args[i]->IsStrConst()) {
-          VStr Lbl = VStr(Args[i]->GetStrConst(ec.Package));
+          VStr Lbl = Args[i]->GetStrConst(ec.Package);
           TLocation ALoc = Args[i]->Loc;
           int DCol = Lbl.IndexOf("::");
           if (DCol >= 0) {

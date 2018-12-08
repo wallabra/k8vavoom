@@ -591,7 +591,7 @@ void VEmitContext::AddStatement (int statement, int parm1, const TLocation &aloc
       StatementInfo[statement].Args != OPCARGS_Int &&
       StatementInfo[statement].Args != OPCARGS_String)
   {
-    FatalError("Opcode does\'t take 1 params");
+    FatalError("Opcode doesn't take 1 param");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -610,7 +610,7 @@ void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation 
   if (StatementInfo[statement].Args != OPCARGS_Int) FatalError("Opcode does\'t take float argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
-  I.Arg1 = *(vint32*)&FloatArg;
+  I.Arg1 = *(vint32 *)&FloatArg;
   I.Arg1IsFloat = true;
   I.loc = aloc;
 }

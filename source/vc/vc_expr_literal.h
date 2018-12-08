@@ -111,7 +111,7 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsStrConst () const override;
-  virtual const char *GetStrConst (VPackage *) const override;
+  virtual const VStr &GetStrConst (VPackage *) const override;
 
   virtual VStr toString () const override;
 

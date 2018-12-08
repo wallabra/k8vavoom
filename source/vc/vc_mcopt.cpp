@@ -973,7 +973,7 @@ struct Instr {
           VMemberBase *PM = owner->func->Outer;
           while (PM->MemberType != MEMBER_Package) PM = PM->Outer;
           VPackage *Package = (VPackage *)PM;
-          fprintf(stderr, " \"%s\"", &Package->Strings[Arg1]);
+          fprintf(stderr, " %s", *Package->GetStringByIndex(Arg1).quote());
           //fprintf(stderr, " (%d)", Arg1);
         }
         break;

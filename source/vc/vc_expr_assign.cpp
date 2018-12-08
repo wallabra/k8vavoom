@@ -392,7 +392,7 @@ void VAssignment::Emit (VEmitContext &ec) {
 
     case CatAssign:
       // optimize `~= ""`
-      if (op2->IsStrConst() && VStr::length(op2->GetStrConst(ec.Package)) == 0) {
+      if (op2->IsStrConst() && op2->GetStrConst(ec.Package).length() == 0) {
         if (op1->RealType.Type == TYPE_String) break;
       }
       op1->Emit(ec);

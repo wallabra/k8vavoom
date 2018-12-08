@@ -220,21 +220,15 @@ public:
 //  VPackage::VPackage
 //
 //==========================================================================
-VPackage::VPackage()
+VPackage::VPackage ()
   : VMemberBase(MEMBER_Package, NAME_None, nullptr, TLocation())
+  , StringCount(0)
   , KnownEnums()
   , NumBuiltins(0)
   //, Checksum(0)
   //, Reader(nullptr)
 {
-  // strings
-  memset(StringLookup, 0, 256 * 4);
-  // 1-st string is empty
-  StringInfo.Alloc();
-  StringInfo[0].Offs = 0;
-  StringInfo[0].Next = 0;
-  Strings.SetNum(4);
-  memset(Strings.Ptr(), 0, 4);
+  InitStringPool();
 }
 
 
@@ -243,21 +237,14 @@ VPackage::VPackage()
 //  VPackage::VPackage
 //
 //==========================================================================
-VPackage::VPackage(VName AName)
+VPackage::VPackage (VName AName)
   : VMemberBase(MEMBER_Package, AName, nullptr, TLocation())
   , KnownEnums()
   , NumBuiltins(0)
   //, Checksum(0)
   //, Reader(nullptr)
 {
-  // strings
-  memset(StringLookup, 0, 256 * 4);
-  // 1-st string is empty
-  StringInfo.Alloc();
-  StringInfo[0].Offs = 0;
-  StringInfo[0].Next = 0;
-  Strings.SetNum(4);
-  memset(Strings.Ptr(), 0, 4);
+  InitStringPool();
 }
 
 
@@ -267,6 +254,28 @@ VPackage::VPackage(VName AName)
 //
 //==========================================================================
 VPackage::~VPackage () {
+}
+
+
+//==========================================================================
+//
+//  VPackage::~VPackage
+//
+//==========================================================================
+void VPackage::InitStringPool () {
+  // strings
+  memset(StringLookup, 0, sizeof(StringLookup));
+  // 1-st string is empty
+  StringInfo.Alloc();
+  StringInfo[0].Offs = 0;
+  StringInfo[0].Next = 0;
+  StringCount = 1;
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
+  Strings.SetNum(4);
+  memset(Strings.Ptr(), 0, 4);
+#else
+  StringInfo[0].str = VStr::EmptyString;
+#endif
 }
 
 
@@ -319,8 +328,9 @@ void VPackage::Serialise (VStream &Strm) {
 //  VPackage::StringHashFunc
 //
 //==========================================================================
-int VPackage::StringHashFunc (const char *str) {
-  return (str && str[0] ? (str[0]^(str[1]<<4))&0xff : 0);
+vuint32 VPackage::StringHashFunc (const char *str) {
+  //return (str && str[0] ? (str[0]^(str[1]<<4))&0xff : 0);
+  return (str && str[0] ? joaatHashBuf(str, strlen(str)) : 0)&0x0fffU;
 }
 
 
@@ -335,24 +345,40 @@ int VPackage::FindString (const char *str) {
   guard(VPackage::FindString);
   if (!str || !str[0]) return 0;
 
-  int hash = StringHashFunc(str);
+  vuint32 hash = StringHashFunc(str);
   for (int i = StringLookup[hash]; i; i = StringInfo[i].Next) {
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
     if (VStr::Cmp(&Strings[StringInfo[i].Offs], str) == 0) {
       return StringInfo[i].Offs;
     }
+#else
+    if (StringInfo[i].str.Cmp(str) == 0) {
+      return StringInfo[i].Offs;
+    }
+#endif
   }
 
   // add new string
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
   TStringInfo &SI = StringInfo.Alloc();
   int AddLen = VStr::Length(str)+1;
   while (AddLen&3) ++AddLen;
   int Ofs = Strings.Num();
   Strings.SetNum(Strings.Num()+AddLen);
   memset(&Strings[Ofs], 0, AddLen);
+  VStr::Cpy(&Strings[Ofs], str);
+#else
+  int Ofs = StringInfo.length();
+  check(Ofs == StringCount);
+  ++StringCount;
+  TStringInfo &SI = StringInfo.Alloc();
+  // remember string
+  SI.str = VStr(str);
+  SI.str.makeImmutable();
+#endif
   SI.Offs = Ofs;
   SI.Next = StringLookup[hash];
-  StringLookup[hash] = StringInfo.Num()-1;
-  VStr::Cpy(&Strings[Ofs], str);
+  StringLookup[hash] = StringInfo.length()-1;
   return SI.Offs;
   unguard;
 }
@@ -360,7 +386,36 @@ int VPackage::FindString (const char *str) {
 
 //==========================================================================
 //
-//  VClass::IsKnownEnum
+//  VPackage::FindString
+//
+//  Return offset in strings array.
+//
+//==========================================================================
+int VPackage::FindString (const VStr &s) {
+  if (s.length() == 0) return 0;
+  return FindString(*s);
+}
+
+
+//==========================================================================
+//
+//  VPackage::GetStringByIndex
+//
+//==========================================================================
+const VStr &VPackage::GetStringByIndex (int idx) {
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
+  if (idx < 0 || idx >= Strings.length()) return VStr::EmptyString;
+  return VStr(&Package->Strings[idx]);
+#else
+  if (idx < 0 || idx >= StringInfo.length()) return VStr::EmptyString;
+  return StringInfo[idx].str;
+#endif
+}
+
+
+//==========================================================================
+//
+//  VPackage::IsKnownEnum
 //
 //==========================================================================
 bool VPackage::IsKnownEnum (VName EnumName) {
@@ -520,8 +575,17 @@ void VPackage::WriteObject (const VStr &name) {
   for (int i = 0; i < Writer.Names.Num(); ++i) Writer << *VName::GetEntry(Writer.Names[i].GetIndex());
 
   progs.ofs_strings = Writer.Tell();
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
   progs.num_strings = Strings.Num();
   Writer.Serialise(&Strings[0], Strings.Num());
+#else
+  progs.num_strings = StringInfo.length();
+  vint32 count = progs.num_strings;
+  Writer << count;
+  for (int stridx = 0; stridx < StringInfo.length(); ++stridx) {
+    Writer << StringInfo[stridx].str;
+  }
+#endif
 
   //FIXME
   //progs.ofs_mobjinfo = Writer.Tell();
@@ -552,7 +616,11 @@ void VPackage::WriteObject (const VStr &name) {
   dprintf("            count   size\n");
   dprintf("Header     %6d %6ld\n", 1, (long int)sizeof(progs));
   dprintf("Names      %6d %6d\n", Writer.Names.Num(), progs.ofs_strings - progs.ofs_names);
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
   dprintf("Strings    %6d %6d\n", StringInfo.Num(), Strings.Num());
+#else
+  dprintf("Strings    %6d\n", StringInfo.Num());
+#endif
   dprintf("Builtins   %6d\n", NumBuiltins);
   //dprintf("Mobj info  %6d %6d\n", VClass::GMobjInfos.Num(), progs.ofs_scriptids - progs.ofs_mobjinfo);
   //dprintf("Script Ids %6d %6d\n", VClass::GScriptIds.Num(), progs.ofs_imports - progs.ofs_scriptids);
@@ -730,9 +798,31 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   }
 
   // read strings
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
   Strings.SetNum(Progs.num_strings);
   Reader->Seek(Progs.ofs_strings);
   Reader->Serialise(Strings.Ptr(), Progs.num_strings);
+#else
+  Reader->Seek(Progs.ofs_strings);
+  StringInfo.clear();
+  InitStringPool();
+  {
+    vint32 count = 0;
+    *Reader << count;
+    if (count < 0 || count >= 1024*1024*32) { ParseError(l, "Package '%s' contains corrupted string data", *Name); BailOut(); }
+    for (int stridx = 0; stridx < count; ++stridx) {
+      VStr s;
+      *Reader << s;
+      if (stridx == 0) {
+        if (s.length() != 0) { ParseError(l, "Package '%s' contains corrupted string data", *Name); BailOut(); }
+      } else {
+        if (s.length() == 0 || !s[0]) { ParseError(l, "Package '%s' contains corrupted string data", *Name); BailOut(); }
+      }
+      int n = FindString(s);
+      if (n != stridx) { ParseError(l, "Package '%s' contains corrupted string data", *Name); BailOut(); }
+    }
+  }
+#endif
 
   // serialise objects
   Reader->Seek(Progs.ofs_exportdata);

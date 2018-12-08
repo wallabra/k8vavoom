@@ -39,16 +39,24 @@ private:
   struct TStringInfo {
     int Offs;
     int Next;
+#if !defined(VCC_OLD_PACKAGE_STRING_POOL)
+    VStr str;
+#endif
   };
 
   TArray<TStringInfo> StringInfo;
-  int StringLookup[256];
+  int StringLookup[4096];
+  int StringCount;
 
-  static int StringHashFunc (const char *);
+  static vuint32 StringHashFunc (const char *);
+
+  void InitStringPool ();
 
 public:
   // shared fields
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
   TArray<char> Strings;
+#endif
 
   // compiler fields
   TArray<VImportedPackage> PackagesToLoad;
@@ -80,7 +88,10 @@ public:
   virtual void Serialise (VStream &) override;
 
   int FindString (const char *);
+  int FindString (const VStr &str);
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
+
+  const VStr &GetStringByIndex (int idx);
 
   bool IsKnownEnum (VName EnumName);
   bool AddKnownEnum (VName EnumName); // returns `true` if enum was redefined

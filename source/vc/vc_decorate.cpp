@@ -1584,7 +1584,7 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
       if (!Args[f]) continue;
       if (!Args[f]->IsStrConst()) continue;
       if (Func->ParamTypes[f].Type == TYPE_String) continue;
-      VStr str = VStr(Args[f]->GetStrConst(DecPkg));
+      const VStr &str = Args[f]->GetStrConst(DecPkg);
       if (!str.startsWithNoCase("user_")) continue;
       auto loc = Args[f]->Loc;
       ParseWarning(loc, "`user_xxx` should not be a string constant, you moron! FIX YOUR BROKEN CODE!");
@@ -2205,9 +2205,10 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
       }
       // `state("")`?
       if (ste->IsStrConst()) {
-        const char *lbl = ste->GetStrConst(DecPkg);
-        while (*lbl && *(const vuint8 *)lbl <= 32) ++lbl;
-        if (!lbl[0]) {
+        VStr lbl = ste->GetStrConst(DecPkg);
+        while (lbl.length() && (vuint8)lbl[0] <= 32) lbl.chopLeft(1);
+        while (lbl.length() && (vuint8)lbl[lbl.length()-1] <= 32) lbl.chopRight(1);
+        if (lbl.length() == 0) {
           delete ste;
           return new VReturn(nullptr, stloc);
         }

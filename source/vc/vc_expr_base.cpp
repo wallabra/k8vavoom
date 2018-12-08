@@ -352,8 +352,8 @@ VExpression *VExpression::ResolveToIntLiteralEx (VEmitContext &ec, bool allowFlo
 
   // one-char string?
   if (res->IsStrConst()) {
-    const char *s = res->GetStrConst(ec.Package);
-    if (s && s[0] && !s[1]) {
+    const VStr &s = res->GetStrConst(ec.Package);
+    if (s.length() == 1) {
       VExpression *e = new VIntLiteral((vuint8)s[0], res->Loc);
       delete res;
       return e->Resolve(ec);
@@ -386,7 +386,7 @@ bool VExpression::IsStrConst () const { return false; }
 bool VExpression::IsNameConst () const { return false; }
 vint32 VExpression::GetIntConst () const { ParseError(Loc, "Integer constant expected"); return 0; }
 float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expected"); return 0.0; }
-const char *VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return ""; }
+const VStr &VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr::EmptyString; }
 VName VExpression::GetNameConst () const { ParseError(Loc, "Name constant expected"); return NAME_None; }
 bool VExpression::IsNoneLiteral () const { return false; }
 bool VExpression::IsNullLiteral () const { return false; }

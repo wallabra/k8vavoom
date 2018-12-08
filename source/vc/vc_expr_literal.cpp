@@ -364,8 +364,12 @@ bool VStringLiteral::IsStrConst () const {
 //  VStringLiteral::GetStrConst
 //
 //==========================================================================
-const char *VStringLiteral::GetStrConst (VPackage *Pkg) const {
-  return &Pkg->Strings[Value];
+const VStr &VStringLiteral::GetStrConst (VPackage *Pkg) const {
+#if defined(VCC_OLD_PACKAGE_STRING_POOL)
+  return VStr(&Pkg->Strings[Value]);
+#else
+  return Pkg->GetStringByIndex(Value);
+#endif
 }
 
 
