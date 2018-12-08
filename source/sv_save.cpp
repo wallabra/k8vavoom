@@ -1135,9 +1135,49 @@ static void UnarchiveSounds (VStream &Strm) {
 #ifdef CLIENT
   GAudio->SerialiseSounds(Strm);
 #else
-  vint32 Dummy = 0;
-  Strm << Dummy;
-  Strm.Seek(Strm.Tell()+Dummy*36); //FIXME!
+  vint32 count = 0;
+  Strm << count;
+  //FIXME: keep this in sync with VAudio
+  //Strm.Seek(Strm.Tell()+Dummy*36); //FIXME!
+  if (count < 0) Sys_Error("invalid sound sequence data");
+  while (count-- > 0) {
+    vuint8 xver = 0; // current version is 0
+    Strm << xver;
+    if (xver != 0) Sys_Error("invalid sound sequence data");
+    vint32 Sequence;
+    vint32 OriginId;
+    TVec Origin;
+    vint32 CurrentSoundID;
+    float DelayTime;
+    vuint32 DidDelayOnce;
+    float Volume;
+    float Attenuation;
+    vint32 ModeNum;
+    Strm << STRM_INDEX(Sequence)
+      << STRM_INDEX(OriginId)
+      << Origin
+      << STRM_INDEX(CurrentSoundID)
+      << DelayTime
+      << STRM_INDEX(DidDelayOnce)
+      << Volume
+      << Attenuation
+      << STRM_INDEX(ModeNum);
+
+    vint32 Offset;
+    Strm << STRM_INDEX(Offset);
+
+    vint32 Count;
+    Strm << STRM_INDEX(Count);
+    if (Count < 0) Sys_Error("invalid sound sequence data");
+    for (int i = 0; i < Count; ++i) {
+      VName SeqName;
+      Strm << SeqName;
+    }
+
+    vint32 ParentSeqIdx;
+    vint32 ChildSeqIdx;
+    Strm << STRM_INDEX(ParentSeqIdx) << STRM_INDEX(ChildSeqIdx);
+  }
 #endif
 }
 
