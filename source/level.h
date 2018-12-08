@@ -416,6 +416,22 @@ private:
   void processSoundSector (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
   void doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_t *sec, int soundblocks, VEntity *soundtarget, float maxdist, const TVec sndorigin);
 
+  void eventBeforeWorldTick (float deltaTime) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("BeforeWorldTick"));
+    P_PASS_SELF;
+    P_PASS_FLOAT(deltaTime);
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  void eventAfterWorldTick (float deltaTime) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("AfterWorldTick"));
+    P_PASS_SELF;
+    P_PASS_FLOAT(deltaTime);
+    EV_RET_VOID_IDX(mtindex);
+  }
+
   DECLARE_FUNCTION(GetLineIndex)
 
   DECLARE_FUNCTION(PointInSector)

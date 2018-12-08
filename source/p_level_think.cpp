@@ -95,6 +95,8 @@ void VLevel::DestroyAllThinkers () {
 void VLevel::TickWorld (float DeltaTime) {
   guard(VLevel::TickWorld);
 
+  eventBeforeWorldTick(DeltaTime);
+
   // run decal thinkers
   if (DeltaTime > 0 && r_decals_enabled) {
     decal_t *dc = decanimlist;
@@ -133,6 +135,24 @@ void VLevel::TickWorld (float DeltaTime) {
   Time += DeltaTime;
   //++TicTime;
   TicTime = (int)(Time*35.0);
+
+  eventAfterWorldTick(DeltaTime);
+
+  /*
+  {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("AfterWorldTick"));
+    P_PASS_SELF;
+    P_PASS_FLOAT(DeltaTime);
+    //VStr s = ExecuteFunction(GetVFunctionIdx(mtindex)).getStr();
+    //GCon->Logf("STR: %s", *s.quote(true));
+    //VName n = ExecuteFunction(GetVFunctionIdx(mtindex)).getName();
+    //GCon->Logf("NAME: <%s>", *n);
+    TVec v = ExecuteFunction(GetVFunctionIdx(mtindex)).getVector();
+    GCon->Logf("VECTOR: (%f,%f,%f)", v.x, v.y, v.z);
+  }
+  */
+
   unguard;
 }
 
