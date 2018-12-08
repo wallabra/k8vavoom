@@ -202,7 +202,7 @@ static bool onExecuteNetMethod (VObject *aself, VMethod *func) {
   // execute it's replication condition method
   check(Base->ReplCond);
   P_PASS_REF(aself);
-  if (!VObject::ExecuteFunction(Base->ReplCond).i) {
+  if (!VObject::ExecuteFunction(Base->ReplCond).getBool()) {
     //fprintf(stderr, "rpc call to `%s` (%s) is not done\n", aself->GetClass()->GetName(), *func->GetFullName());
     return false;
   }

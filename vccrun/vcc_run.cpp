@@ -551,8 +551,7 @@ static int checkArg (VMethod *mmain) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
-  VStack ret;
-  ret.i = 0;
+  VFuncRes ret((int)0);
 
   srand(time(nullptr));
   SysErrorCB = &OnSysError;
@@ -613,7 +612,7 @@ int main (int argc, char **argv) {
         }
         if (atp&0x01) P_PASS_REF(&scargs);
         ret = VObject::ExecuteFunction(mmain);
-        if ((atp&0x02) == 0) ret.i = 0;
+        if ((atp&0x02) == 0) ret = VFuncRes((int)0);
         if (sss != pr_stackPtr) FatalError("FATAL: stack imbalance!");
       }
     }
@@ -624,7 +623,7 @@ int main (int argc, char **argv) {
     //VObject::StaticExit();
     //VName::StaticExit();
   } catch (VException& e) {
-    ret.i = -1;
+    ret = VFuncRes((int)-1);
 #ifndef WIN32
     FatalError("FATAL: %s", e.What());
 #else
@@ -632,7 +631,7 @@ int main (int argc, char **argv) {
 #endif
   }
 
-  return ret.i;
+  return ret.getInt();
 }
 
 
