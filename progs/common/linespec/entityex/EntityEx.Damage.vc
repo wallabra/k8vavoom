@@ -338,8 +338,10 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
           //if (mistClass) Spawn(mistClass, Pos);
         }
 
-        Health = 1;
-        dodmg = 2;
+        if (instakill) {
+          Health = 1;
+          dodmg = 2;
+        }
       }
 
       return dodmg;
