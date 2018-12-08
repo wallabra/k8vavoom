@@ -301,6 +301,16 @@ void VStr::chopRight (int len) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void VStr::makeImmutable () {
+  guard(VStr::makeImmutable);
+  if (!dataptr) return; // nothing to do
+  if (store()->rc >= 0 && store()->rc < 0xffff) {
+    store()->rc = store()->rc+0xffff; // wow, big rc count, so it will be copied on mutation
+  }
+  unguard;
+}
+
+
 void VStr::makeMutable () {
   guard(VStr::makeMutable);
   if (!dataptr || store()->rc == 1) return; // nothing to do

@@ -108,6 +108,8 @@ public:
 
   ~VStr () { clear(); }
 
+  void makeImmutable ();
+
   // clears the string
   inline void Clean () { decref(); }
   inline void Clear () { decref(); }
