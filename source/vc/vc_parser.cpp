@@ -3764,7 +3764,7 @@ void VParser::ParseClass () {
     if (ExistingClass) return;
 
 #if !defined(IN_VCC)
-    // check if it already exists n DECORATE imports
+    // check if it already exists in DECORATE imports
     for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); ++i) {
       if (VMemberBase::GDecorateClassImports[i]->Name == ClassName) {
         Package->ParsedDecorateImportClasses.Append(VMemberBase::GDecorateClassImports[i]);
