@@ -18,6 +18,34 @@ menudef GoreModMenu {
     }
     help = "Amount of blood to spawn.";
   }
+
+
+  header "Headshots Gore Effects";
+
+  option bool {
+    title = "HeadKill Blood Spray";
+    cvar = k8HSHeadKillBloodSpray;
+    help =
+      "Spawn some more blood (and optional blood pool)"
+      "when monster is killed by headshot or instakill?";
+  }
+
+  option bool {
+    title = "HeadKill Blood Pool";
+    cvar = k8HSHeadKillBloodPool;
+    help = "Spawn blood pool object when monster is killed by headshot or instakill?";
+  }
+
+  option slider {
+    title = "Blood Spray Amount";
+    cvar = k8HSHeadKillBloodCount;
+    step = 1;
+    min = 0;
+    max = 64;
+    help =
+      "Amount of blood to spawn."
+      "Lowest value will block spawning.";
+  }
 }
 
 
