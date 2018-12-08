@@ -566,6 +566,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
       "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
 
     DoFadeOut:
+      "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
       "####" "#" 0 ThrustThingZ(0, 300, 0, 1)
       "####" "#" 2 A_FadeOut(0.01)
       Loop
@@ -588,6 +589,9 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
       BPDL D 0
       Goto DoAfterSpawn
 
+    DieNow:
+      TNT1 A 1
+      Stop
   }
 }
 
