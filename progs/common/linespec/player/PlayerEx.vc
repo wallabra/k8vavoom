@@ -3413,6 +3413,8 @@ override void Cheat_Summon () {
   TVec dir;
   AngleVector(ang, out dir);
   TVec dst = MO.Origin+84*dir;
+
+  // this calls `OnMapSpawn(nullptr)` for spawned item
   Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
 }
 
