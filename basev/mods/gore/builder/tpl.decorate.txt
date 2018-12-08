@@ -37,10 +37,15 @@ Actor K8Gore_Blood$(Color) : K8Gore_BloodBase$(TransientSfx) {
 #endif
 
       TNT1 A 0 {
+/*
 #ifndef TRANSIENT
         // normal
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
 #endif
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
 #ifndef TRANSIENT
@@ -167,7 +172,7 @@ Actor K8Gore_FlyingBloodLevel3$(Color) : K8Gore_FlyingBlood$(Color) {
   $(Translation)
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -287,7 +292,7 @@ Actor K8Gore_BloodmistSmall$(Color) : K8Gore_FlyingBlood$(Color) {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -320,7 +325,6 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -344,7 +348,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
 #else
   //Alpha 0.9
 #endif
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplat$(Color)
   DamageFactor "TeleportRemover", 100.0
@@ -750,7 +754,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -766,7 +770,6 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplat$(Color)
   DamageFactor "TeleportRemover", 100.0
@@ -824,7 +827,7 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent

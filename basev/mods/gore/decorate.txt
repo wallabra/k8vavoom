@@ -36,8 +36,13 @@ Actor K8Gore_Blood : K8Gore_BloodBase Replaces Blood {
       }
 
       TNT1 A 0 {
+/*
         // normal
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3", 7, 0, random(0, 360), 2, random(40, 60));
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood", 7, 0, random(0, 360), 2, random(20, 40));
         // normal
@@ -155,7 +160,7 @@ Actor K8Gore_FlyingBloodLevel3 : K8Gore_FlyingBlood {
   
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -275,7 +280,7 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -308,7 +313,6 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -327,7 +331,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   //+NoInteraction
   //Renderstyle Translucent
   //Alpha 0.9
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplat
   DamageFactor "TeleportRemover", 100.0
@@ -694,7 +698,7 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -710,7 +714,6 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplat
   DamageFactor "TeleportRemover", 100.0
@@ -768,7 +771,7 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent
@@ -875,6 +878,11 @@ Actor K8Gore_BloodTransient : K8Gore_BloodBaseTransient {
 
 
       TNT1 A 0 {
+/*
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Transient", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodTransient", 7, 0, random(0, 360), 2, random(20, 40));
         // transient
@@ -992,7 +1000,7 @@ Actor K8Gore_FlyingBloodLevel3Transient : K8Gore_FlyingBloodTransient {
   
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -1112,7 +1120,7 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -1145,7 +1153,6 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -1165,7 +1172,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   //Renderstyle Translucent
   //!Alpha 0.6
   //Alpha 0.7
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplatTransient
   DamageFactor "TeleportRemover", 100.0
@@ -1529,7 +1536,7 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -1545,7 +1552,6 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatTransient
   DamageFactor "TeleportRemover", 100.0
@@ -1603,7 +1609,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent
@@ -1713,8 +1719,13 @@ Actor K8Gore_BloodGreen : K8Gore_BloodBase Replaces BloodGreen {
       }
 
       TNT1 A 0 {
+/*
         // normal
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Green", 7, 0, random(0, 360), 2, random(40, 60));
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Green", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodGreen", 7, 0, random(0, 360), 2, random(20, 40));
         // normal
@@ -1832,7 +1843,7 @@ Actor K8Gore_FlyingBloodLevel3Green : K8Gore_FlyingBloodGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -1952,7 +1963,7 @@ Actor K8Gore_BloodmistSmallGreen : K8Gore_FlyingBloodGreen {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -1985,7 +1996,6 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -2004,7 +2014,7 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBase {
   //+NoInteraction
   //Renderstyle Translucent
   //Alpha 0.9
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplatGreen
   DamageFactor "TeleportRemover", 100.0
@@ -2371,7 +2381,7 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -2387,7 +2397,6 @@ Actor K8Gore_MinuscleBloodSpotGreen : K8Gore_BloodSpotGreen {
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatGreen
   DamageFactor "TeleportRemover", 100.0
@@ -2445,7 +2454,7 @@ Actor K8Gore_GrowingBloodPoolGreen : K8Gore_BloodSpotGreen {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent
@@ -2552,6 +2561,11 @@ Actor K8Gore_BloodTransient_Green : K8Gore_BloodBaseTransient {
 
 
       TNT1 A 0 {
+/*
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Transient_Green", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodTransient_Green", 7, 0, random(0, 360), 2, random(20, 40));
         // transient
@@ -2669,7 +2683,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Green : K8Gore_FlyingBloodTransient_Gree
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -2789,7 +2803,7 @@ Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_FlyingBloodTransient_Green {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -2822,7 +2836,6 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -2842,7 +2855,7 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient {
   //Renderstyle Translucent
   //!Alpha 0.6
   //Alpha 0.7
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Green
   DamageFactor "TeleportRemover", 100.0
@@ -3206,7 +3219,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -3222,7 +3235,6 @@ Actor K8Gore_MinuscleBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green 
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatTransient_Green
   DamageFactor "TeleportRemover", 100.0
@@ -3280,7 +3292,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent
@@ -3390,8 +3402,13 @@ Actor K8Gore_BloodBlue : K8Gore_BloodBase Replaces BloodBlue {
       }
 
       TNT1 A 0 {
+/*
         // normal
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Blue", 7, 0, random(0, 360), 2, random(40, 60));
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Blue", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodBlue", 7, 0, random(0, 360), 2, random(20, 40));
         // normal
@@ -3509,7 +3526,7 @@ Actor K8Gore_FlyingBloodLevel3Blue : K8Gore_FlyingBloodBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -3629,7 +3646,7 @@ Actor K8Gore_BloodmistSmallBlue : K8Gore_FlyingBloodBlue {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -3662,7 +3679,6 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -3681,7 +3697,7 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBase {
   //+NoInteraction
   //Renderstyle Translucent
   //Alpha 0.9
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplatBlue
   DamageFactor "TeleportRemover", 100.0
@@ -4048,7 +4064,7 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -4064,7 +4080,6 @@ Actor K8Gore_MinuscleBloodSpotBlue : K8Gore_BloodSpotBlue {
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatBlue
   DamageFactor "TeleportRemover", 100.0
@@ -4122,7 +4137,7 @@ Actor K8Gore_GrowingBloodPoolBlue : K8Gore_BloodSpotBlue {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent
@@ -4229,6 +4244,11 @@ Actor K8Gore_BloodTransient_Blue : K8Gore_BloodBaseTransient {
 
 
       TNT1 A 0 {
+/*
+*/
+        // all
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3Transient_Blue", 7, 0, random(0, 360), 2, random(40, 60));
+
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodTransient_Blue", 7, 0, random(0, 360), 2, random(20, 40));
         // transient
@@ -4346,7 +4366,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Blue : K8Gore_FlyingBloodTransient_Blue 
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Scale 1.0
   Speed 5 //7
-  Mass 5 //1
+  Mass 1
 }
 
 
@@ -4466,7 +4486,7 @@ Actor K8Gore_BloodmistSmallTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
   Radius 2
   Height 2
   Speed 8
-  Mass 4
+  Mass 99999
   Gravity 0.1 //0.4
   Scale 0.45
   RenderStyle Translucent
@@ -4499,7 +4519,6 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   game Doom
   radius 2
   height 2
-  mass 1
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -4519,7 +4538,7 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient {
   //Renderstyle Translucent
   //!Alpha 0.6
   //Alpha 0.7
-  Mass 9999
+  Mass 99999
   Scale 0.5
   Decal K8GoreBloodSplatTransient_Blue
   DamageFactor "TeleportRemover", 100.0
@@ -4883,7 +4902,7 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   game Doom
   radius 2
   height 2
-  mass 1
+  Mass 99999
   Health 300
   +NOTELEPORT
   +CLIENTSIDEONLY
@@ -4899,7 +4918,6 @@ Actor K8Gore_MinuscleBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +NOBLOCKMAP
   //+NoInteraction
   //Alpha 0.9
-  Mass 99999999
   Scale 0.25
   Decal K8GoreBloodSplatTransient_Blue
   DamageFactor "TeleportRemover", 100.0
@@ -4957,7 +4975,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   game Doom
   radius 1
   height 1
-  mass 1
+  Mass 99999
   Health 600
   //StencilColor "49 00 00"
   //Renderstyle Translucent
