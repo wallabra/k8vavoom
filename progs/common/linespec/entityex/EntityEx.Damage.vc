@@ -325,7 +325,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
             }
           }
 
-          if ((instakill || dodmg >= damage) && GetCvarB('k8HSHeadKillBloodPool')) {
+          if ((instakill || dodmg >= Health) && GetCvarB('k8HSHeadKillBloodPool')) {
             //poolClassName = 'SmallBloodPool';
             class!Actor poolClass = class!Actor(FindClass(poolClassName));
             if (poolClass) {
@@ -341,6 +341,12 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         if (instakill) {
           Health = 1;
           dodmg = 2;
+        }
+
+        // play headkill sound
+        if (dodmg >= Health && GetCvarB('k8GoreOpt_HeadshotSound')) {
+          //print("HEADBANG!");
+          PlaySound('k8gore/headbang', CHAN_AUTO/*CHAN_VOICE*/, Volume:default, ATTN_NORMAL, Loop:false, Local:false);
         }
       }
 
