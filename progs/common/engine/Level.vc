@@ -216,6 +216,12 @@ native final void AddDecalById (TVec org, int id, int side, line_t *li);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// iterators
+native final iterator AllThinkers (class!Thinker Class, out Thinker Thinker);
+native final static iterator AllActivePlayers (out BasePlayer Player);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // this moved to C++ code to make sound propagation on huge maps faster
 native final void doRecursiveSound (int validcount, ref array!Entity elist, sector_t *sec,
                                     int soundblocks, Entity soundtarget, float maxdist, const TVec sndorigin);
@@ -236,6 +242,9 @@ void OnEntitySpawned (Entity ent) {}
 
 // called after entity was removed from lists, and marked for deletion; `ent` is never `none`
 void OnEntityDying (Entity ent) {}
+
+// this is called after LevelInfo handler when game is loaded (hub or savegame)
+void AfterUnarchiveThinkers () {}
 
 
 defaultproperties {

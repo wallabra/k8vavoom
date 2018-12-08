@@ -452,6 +452,15 @@ private:
     }
   }
 
+public:
+  void eventAfterUnarchiveThinkers () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("AfterUnarchiveThinkers"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+private:
   DECLARE_FUNCTION(GetLineIndex)
 
   DECLARE_FUNCTION(PointInSector)
@@ -501,6 +510,9 @@ private:
   DECLARE_FUNCTION(AddDecalById)
 
   DECLARE_FUNCTION(doRecursiveSound)
+
+  DECLARE_FUNCTION(AllThinkers)
+  DECLARE_FUNCTION(AllActivePlayers)
 };
 
 void CalcLine (line_t *line);

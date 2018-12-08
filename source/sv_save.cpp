@@ -1103,6 +1103,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   for (int i = 0; i < Loader->Exports.Num(); ++i) Loader->Exports[i]->Serialise(*Loader);
 
   GLevelInfo->eventAfterUnarchiveThinkers();
+  GLevel->eventAfterUnarchiveThinkers();
   unguard;
 }
 

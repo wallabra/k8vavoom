@@ -313,7 +313,7 @@ private:
   VThinker *Current;
 
 public:
-  VScriptThinkerIterator(VThinker *ASelf, VClass *AClass, VThinker **AOut)
+  VScriptThinkerIterator (VThinker *ASelf, VClass *AClass, VThinker **AOut)
     : Self(ASelf)
     , Class(AClass)
     , Out(AOut)
@@ -346,13 +346,13 @@ private:
   int Index;
 
 public:
-  VActivePlayersIterator(VThinker *ASelf, VBasePlayer **AOut)
+  VActivePlayersIterator (VThinker *ASelf, VBasePlayer **AOut)
     : Self(ASelf)
     , Out(AOut)
     , Index(0)
   {}
 
-  virtual bool GetNext() override {
+  virtual bool GetNext () override {
     while (Index < MAXPLAYERS) {
       VBasePlayer *P = Self->Level->Game->Players[Index];
       ++Index;

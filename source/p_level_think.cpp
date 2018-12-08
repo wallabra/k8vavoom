@@ -193,3 +193,79 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   return Ret;
   unguard;
 }
+
+
+//==========================================================================
+//
+//  Script iterators
+//
+//==========================================================================
+class VScriptThinkerLevelIterator : public VScriptIterator {
+private:
+  VLevel *Self;
+  VClass *Class;
+  VThinker **Out;
+  VThinker *Current;
+
+public:
+  VScriptThinkerLevelIterator (VLevel *ASelf, VClass *AClass, VThinker **AOut)
+    : Self(ASelf)
+    , Class(AClass)
+    , Out(AOut)
+    , Current(nullptr)
+  {}
+
+  virtual bool GetNext () override {
+    if (!Current) {
+      Current = Self->ThinkerHead;
+    } else {
+      Current = Current->Next;
+    }
+    *Out = nullptr;
+    while (Current) {
+      if (Current->IsA(Class) && !(Current->GetFlags()&_OF_DelayedDestroy)) {
+        *Out = Current;
+        break;
+      }
+      Current = Current->Next;
+    }
+    return !!*Out;
+  }
+};
+
+
+class VActivePlayersLevelIterator : public VScriptIterator {
+private:
+  VLevel *Self;
+  VBasePlayer **Out;
+  int Index;
+
+public:
+  VActivePlayersLevelIterator (VBasePlayer **AOut) : Out(AOut), Index(0) {}
+
+  virtual bool GetNext () override {
+    while (Index < MAXPLAYERS && GGameInfo) {
+      VBasePlayer *P = GGameInfo->Players[Index];
+      ++Index;
+      if (P && (P->PlayerFlags&VBasePlayer::PF_Spawned)) {
+        *Out = P;
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+
+IMPLEMENT_FUNCTION(VLevel, AllThinkers) {
+  P_GET_PTR(VThinker *, Thinker);
+  P_GET_PTR(VClass, Class);
+  P_GET_SELF;
+  RET_PTR(new VScriptThinkerLevelIterator(Self, Class, Thinker));
+}
+
+
+IMPLEMENT_FUNCTION(VLevel, AllActivePlayers) {
+  P_GET_PTR(VBasePlayer *, Out);
+  RET_PTR(new VActivePlayersLevelIterator(Out));
+}
