@@ -425,14 +425,12 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
           //*(VState **)Data = VClass::FindClass(*CName)->FindStateChecked(SName);
           *(VState **)Data = VClass::FindClass(*CName)->FindState(SName);
           if (*(VState **)Data == nullptr) {
-/*
 #if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
             fprintf(stderr, "I/O WARNING: state '%s' not found in '%s'\n", *SName, *fullname);
 #else
             GCon->Logf("I/O WARNING: state '%s' not found in '%s'", *SName, *fullname);
 #endif
-*/
-            Sys_Error("I/O WARNING: state '%s' not found in '%s'", *SName, *fullname);
+            //Sys_Error("I/O WARNING: state '%s' not found in '%s'", *SName, *fullname);
           }
         } else {
           *(VState **)Data = nullptr;
