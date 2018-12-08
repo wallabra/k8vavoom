@@ -224,6 +224,7 @@ public:
     fval = b.fval;
     vval = b.vval;
     sval = b.sval;
+    nval = b.nval;
     return *this;
   }
 
