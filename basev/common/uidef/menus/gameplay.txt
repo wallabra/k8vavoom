@@ -164,9 +164,7 @@ menudef GameplayOptions {
     help = "Amount of damage dealt to Arch-Vile.";
   }
 
-  //TODO: CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
-  //TODO: CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
-  //TODO: CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
+  // headshots gore effects moved to gore mod
 
 
   header "Elven Gifts";
