@@ -343,7 +343,7 @@ struct sec_params_t {
 };
 
 
-//TODO: document this!
+// "regions" are floor/ceiling info for sector
 struct sec_region_t {
   // linked list of regions in bottom to top order
   sec_region_t *prev;
@@ -393,6 +393,11 @@ struct sector_t {
   sec_plane_t ceiling;
   sec_params_t params;
 
+  // floor/ceiling info for sector
+  // for normal sectors, this is the same region, and
+  // for complex 3d sectors (ROR) there can be more than one region
+  // regions are sorted from bottom to top, so you can start
+  // from `botregion` and follow `next` pointer
   sec_region_t *topregion; // highest region
   sec_region_t *botregion; // lowest region
 
