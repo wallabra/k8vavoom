@@ -22,10 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class ClientGameBase : Object
-  abstract
-  native;
+class ClientGameBase : Object abstract native;
 
 bool local_server;
 
@@ -49,254 +46,231 @@ string serverinfo;
 
 int intermission;
 
+
 //==========================================================================
 //
 //  RootWindowCreated
 //
 //==========================================================================
-
-void RootWindowCreated()
-{
+void RootWindowCreated () {
 }
+
 
 //==========================================================================
 //
 //  Connected
 //
 //==========================================================================
-
-void Connected()
-{
+void Connected () {
 }
+
 
 //==========================================================================
 //
 //  Disconnected
 //
 //==========================================================================
-
-void Disconnected()
-{
+void Disconnected () {
 }
+
 
 //==========================================================================
 //
 //  DemoPlaybackStarted
 //
 //==========================================================================
-
-void DemoPlaybackStarted()
-{
+void DemoPlaybackStarted () {
 }
+
 
 //==========================================================================
 //
 //  DemoPlaybackStopped
 //
 //==========================================================================
-
-void DemoPlaybackStopped()
-{
+void DemoPlaybackStopped () {
 }
+
 
 //==========================================================================
 //
 //  OnHostEndGame
 //
 //==========================================================================
-
-void OnHostEndGame()
-{
+void OnHostEndGame () {
 }
+
 
 //==========================================================================
 //
 //  OnHostError
 //
 //==========================================================================
-
-void OnHostError()
-{
+void OnHostError () {
 }
+
 
 //==========================================================================
 //
 //  StatusBarStartMap
 //
 //==========================================================================
-
-void StatusBarStartMap()
-{
+void StatusBarStartMap () {
 }
+
 
 //==========================================================================
 //
 //  StatusBarDrawer
 //
 //==========================================================================
-
-void StatusBarDrawer(int sb_view)
-{
+void StatusBarDrawer (int sb_view) {
 }
+
 
 //==========================================================================
 //
 //  StatusBarUpdateWidgets
 //
 //==========================================================================
-
-void StatusBarUpdateWidgets(float DeltaTime)
-{
+void StatusBarUpdateWidgets (float DeltaTime) {
 }
+
 
 //==========================================================================
 //
 //  IintermissionStart
 //
 //==========================================================================
-
-void IintermissionStart()
-{
+void IintermissionStart () {
 }
+
 
 //==========================================================================
 //
 //  StartFinale
 //
 //==========================================================================
-
-void StartFinale(name FinaleType)
-{
+void StartFinale (name FinaleType) {
 }
+
 
 //===========================================================================
 //
 //  FinaleResponder
 //
 //===========================================================================
-
-bool FinaleResponder(event_t *event)
-{
+bool FinaleResponder (event_t *event) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  DeactivateMenu
 //
 //==========================================================================
-
-void DeactivateMenu()
-{
+void DeactivateMenu () {
 }
+
 
 //==========================================================================
 //
 //  MenuResponder
 //
 //==========================================================================
-
-bool MenuResponder(event_t *event)
-{
+bool MenuResponder (event_t *event) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  MenuActive
 //
 //==========================================================================
-
-bool MenuActive()
-{
+bool MenuActive () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  SetMenu
 //
 //==========================================================================
-
-void SetMenu(string Name)
-{
+void SetMenu (string Name) {
 }
+
 
 //==========================================================================
 //
 //  MessageBoxDrawer
 //
 //==========================================================================
-
-void MessageBoxDrawer()
-{
+void MessageBoxDrawer () {
 }
+
 
 //==========================================================================
 //
 //  MessageBoxResponder
 //
 //==========================================================================
-
-bool MessageBoxResponder(event_t *event)
-{
+bool MessageBoxResponder (event_t *event) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  MessageBoxActive
 //
 //==========================================================================
-
-bool MessageBoxActive()
-{
+bool MessageBoxActive () {
   return false;
 }
+
 
 //==========================================================================
 //
 //  DrawViewBorder
 //
 //==========================================================================
-
-void DrawViewBorder(int x, int y, int w, int h)
-{
+void DrawViewBorder (int x, int y, int w, int h) {
 }
+
 
 //==========================================================================
 //
 //  AddNotifyMessage
 //
 //==========================================================================
-
-void AddNotifyMessage(string Str)
-{
+void AddNotifyMessage (string Str) {
 }
+
 
 //==========================================================================
 //
 //  AddCentreMessage
 //
 //==========================================================================
-
-void AddCentreMessage(string Msg)
-{
+void AddCentreMessage (string Msg) {
 }
+
 
 //==========================================================================
 //
 //  AddHudMessage
 //
 //==========================================================================
-
-void AddHudMessage(string Message, name Font, int Type, int Id, int Colour,
-  string ColourName, float x, float y, int HudWidth, int HudHeight,
-  float HoldTime, float Time1, float Time2)
+void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
+                    string ColourName, float x, float y, int HudWidth, int HudHeight,
+                    float HoldTime, float Time1, float Time2)
 {
 }
 
-defaultproperties
-{
+
+defaultproperties {
   local_server = true;
 }

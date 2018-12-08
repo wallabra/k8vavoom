@@ -50,10 +50,8 @@ enum {
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED
 };
 
-//
-//  Frame flags:
-//  handles maximum brightness (torches, muzzle flare, light sources)
-//
+// frame flags:
+// handles maximum brightness (torches, muzzle flare, light sources)
 enum {
   FF_FRAMEMASK  = 0x7f,
 
@@ -73,12 +71,10 @@ enum {
   NUMPSPRITES
 };
 
-//
-// Button/action code definitions.
-//
+// button/action code definitions
 enum {
-  BT_ATTACK     = 1,  // Press "Fire".
-  BT_USE        = 2,  // Use button, to open doors, activate switches.
+  BT_ATTACK     = 1, // "fire" pressed
+  BT_USE        = 2, // use button, to open doors, activate switches
   BT_JUMP       = 4,
   BT_ALT_ATTACK = 8,
 
@@ -94,16 +90,11 @@ enum {
   BT_BACKWARD   = 0x00020000,
 };
 
-//
-// Player states.
-//
+// player states
 enum {
-  // Playing or camping.
-  PST_LIVE,
-  // Dead on the ground, view follows killer.
-  PST_DEAD,
-  // Ready to restart/respawn???
-  PST_REBORN
+  PST_LIVE, // playing or camping
+  PST_DEAD, // dead on the ground, view follows killer
+  PST_REBORN, // ready to restart/respawn?
 };
 
 enum {
@@ -122,14 +113,12 @@ enum {
 enum {
   RES_OK,
   RES_CRUSHED,
-  RES_PASTDEST
+  RES_PASTDEST,
 };
 
 const float MAXRADIUS = 32.0;
 
-//
-// LineDef attributes.
-//
+// LineDef attributes
 const int
   ML_BLOCKING            = 0x00000001, // Solid, is an obstacle.
   ML_BLOCKMONSTERS       = 0x00000002, // Blocks monsters only.
@@ -162,17 +151,15 @@ const int
                                        // used to simulate original Heretic behaviour
   ML_NODECAL             = 0x40000000; // don't spawn decals on this linedef
 
-//  These will be converted.
+// these will be converted
 const int
-  ML_PASSUSE_BOOM          = 0x0200, //  Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
+  ML_PASSUSE_BOOM          = 0x0200, // Boom's ML_PASSUSE flag (conflicts with ML_REPEAT_SPECIAL)
   ML_RAILING_STRIFE        = 0x0200,
   ML_BLOCK_FLOATERS_STRIFE = 0x0400,
   ML_UNKNOWN2_STRIFE       = 0x0800,
   ML_TRANSLUCENT_STRIFE    = 0x1000;
 
-//
-// Special activation types
-//
+// special activation types
 enum {
   SPAC_Cross      = 0x0001, // when player crosses line
   SPAC_Use        = 0x0002, // when player uses line
@@ -181,16 +168,14 @@ enum {
   SPAC_Push       = 0x0010, // when player pushes line
   SPAC_PCross     = 0x0020, // when projectile crosses line
   SPAC_UseThrough = 0x0040, // SPAC_USE, but passes it through
-  //  SPAC_PTouch is remapped as SPAC_Impact | SPAC_PCross
+  // SPAC_PTouch is remapped as SPAC_Impact|SPAC_PCross
   SPAC_AnyCross   = 0x0080,
   SPAC_MUse       = 0x0100, // when monster uses line
   SPAC_MPush      = 0x0200, // when monster pushes line
   SPAC_UseBack    = 0x0400, // can be used from the backside
 };
 
-//
-//  SECTOR PLANE FLAGS
-//
+// sector plane flags
 enum {
   SPF_NOBLOCKING   = 1,
   SPF_NOBLOCKSIGHT = 2,
@@ -200,11 +185,8 @@ enum {
 
 const int SKY_FROM_SIDE = 0x8000;
 
-//
-//  Sidedef flags.
-//
-const int
-  SDF_ABSLIGHT = 0x0001; //  Light is absolute value.
+// sidedef flags
+const int SDF_ABSLIGHT = 0x0001; // light is absolute value
 
 const float ATTN_NONE   = 0.0;
 const float ATTN_NORMAL = 1.0;
@@ -574,7 +556,7 @@ enum {
 
 // LineDef
 struct line_t : TPlane {
-  // vertices, from v1 to v2.
+  // vertices, from v1 to v2
   TVec *v1;
   TVec *v2;
 
@@ -1123,6 +1105,9 @@ struct particle_t {
 };
 
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+// decorate uservar manipulation
 
 // this field MUST be serialized
 readonly Object _stateRouteSelf; // used to replace state self for uservars if not none

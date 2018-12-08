@@ -22,22 +22,21 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class RootWidget : Widget native;
 
-class RootWidget : Widget
-  native;
+// true if mouse cursor is currently enabled
+readonly bool bMouseEnabled;
 
-//  True if mouse cursor is currently enabled.
-readonly bool       bMouseEnabled;
+// current mouse cursor position
+readonly int MouseX;
+readonly int MouseY;
 
-//  Current mouse cursor position.
-readonly int        MouseX;
-readonly int        MouseY;
+// current mouse cursor graphic
+readonly int MouseCursorPic;
 
-//  Current mouse cursor graphic.
-readonly int        MouseCursorPic;
 
-native final void SetMouse(bool MouseOn);
+native final void SetMouse (bool MouseOn);
 
-defaultproperties
-{
+
+defaultproperties {
 }

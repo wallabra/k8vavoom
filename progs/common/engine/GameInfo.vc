@@ -22,24 +22,16 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-class GameInfo : GameObject
-  native
-  abstract;
+class GameInfo : GameObject native abstract;
 
 // network mode
 enum {
-  // not running a game
-  NM_None,
-  // playing a titlemap
-  NM_TitleMap,
-  // standalone single player game
-  NM_Standalone,
-  // dedicated server, no local client
-  NM_DedicatedServer,
-  // server with local client
-  NM_ListenServer,
-  // client only, no local server
-  NM_Client
+  NM_None, // not running a game
+  NM_TitleMap, // playing a titlemap
+  NM_Standalone, // standalone single player game
+  NM_DedicatedServer, // dedicated server, no local client
+  NM_ListenServer, // server with local client
+  NM_Client, // client only, no local server
 };
 
 name AcsHelper;
@@ -56,7 +48,7 @@ readonly int skyflatnum;
 
 readonly WorldInfo WorldInfo;
 
-readonly BasePlayer Players[MAXPLAYERS]; // Bookkeeping on players - state.
+readonly BasePlayer Players[MAXPLAYERS]; // bookkeeping on players (state)
 
 int RebornPosition;
 

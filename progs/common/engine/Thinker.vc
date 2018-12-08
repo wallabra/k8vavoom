@@ -22,20 +22,15 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class Thinker : GameObject native abstract;
 
-class Thinker : GameObject
-  native
-  abstract;
-
-enum
-{
+enum {
   ROLE_None,
   ROLE_DumbProxy,
-  ROLE_Authority
+  ROLE_Authority,
 };
 
-enum
-{
+enum {
   SNDTYPE_World,
   SNDTYPE_Point,
   SNDTYPE_Surround,

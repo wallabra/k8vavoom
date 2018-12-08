@@ -26,7 +26,6 @@
 //  common Object things, shared between VaVoom and vccrun
 //
 //==========================================================================
-
 native readonly private transient void *CxxVTable;
 native readonly private transient void *VTable;
 native readonly private transient int ObjectIndex;
@@ -45,7 +44,7 @@ native final int GetIntFieldByName (name fldname, optional bool default_value);
 
 
 //**************************************************************************
-
+// not needed anymore (you can use `int.min` and `int.max`)
 const int MININT = 0x80000000;
 const int MAXINT = 0x7fffffff;
 
@@ -140,7 +139,7 @@ enum {
 };
 
 
-// [Input] event types.
+// [input] event types
 enum {
   ev_keydown,
   ev_keyup,
@@ -153,7 +152,7 @@ enum {
 };
 
 
-// Event structure.
+// event structure
 struct event_t {
   int type;  // event type
   int data1; // keys / mouse / joystick buttons
@@ -222,9 +221,9 @@ static native final int GetInputKeyCode (string kname);
 // ////////////////////////////////////////////////////////////////////////// //
 // error functions
 
-// shut down client and server, go to title
+// shutdown client and server, go to title
 native static final void Error (string format, ...) [printf,1];
-// exit programm with error
+// abort with error
 native static final void FatalError (string format, ...) [printf,1];
 
 
@@ -327,6 +326,7 @@ native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec
 native static final bool IsPlainFloor (const ref TPlane plane); // valid only for floors
 native static final bool IsPlainCeiling (const ref TPlane plane); // valid only for ceilings
 native static final bool IsSlopedFlat (const ref TPlane plane);
+
 
 //==========================================================================
 //

@@ -22,34 +22,32 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PlayerReplicationInfo : Thinker native;
 
-class PlayerReplicationInfo : Thinker
-  native;
+BasePlayer Player;
+int PlayerNum;
 
-BasePlayer    Player;
-int       PlayerNum;
+string PlayerName;
+string UserInfo;
 
-string      PlayerName;
-string      UserInfo;
+ubyte TranslStart;
+ubyte TranslEnd;
+int Colour;
 
-ubyte      TranslStart;
-ubyte      TranslEnd;
-int       Colour;
+int Frags;
+int Deaths;
+int KillCount;
+int ItemCount;
+int SecretCount;
 
-int       Frags;
-int       Deaths;
-int       KillCount;
-int       ItemCount;
-int       SecretCount;
 
-replication
-{
+replication {
   reliable if (Role == ROLE_Authority)
     PlayerNum, PlayerName, UserInfo, TranslStart, TranslEnd, Colour,
     Frags, Deaths, KillCount, ItemCount, SecretCount;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bAlwaysRelevant = true;
 }

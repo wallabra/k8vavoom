@@ -26,11 +26,7 @@
 //  Base class of all classes
 //
 //==========================================================================
-
-class Object
-  native
-  abstract
-  transient;
+class Object native abstract transient;
 
 #include "Object_common.vc"
 #ifdef VCC_STANDALONE_EXECUTOR
@@ -40,6 +36,5 @@ class Object
 #endif
 
 
-defaultproperties
-{
+defaultproperties {
 }

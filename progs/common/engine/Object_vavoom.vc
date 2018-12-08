@@ -26,9 +26,7 @@
 //  VaVoom-specific things
 //
 //==========================================================================
-
 const int MAXPLAYERS = 8;
-
 
 // some defines for ACS (and other) flags
 const int MF_SPECIAL = 0x00000001;
@@ -72,27 +70,23 @@ const int MF_ICECORPSE = 0x80000000;
 //**
 //**************************************************************************
 
-//
-// Horisontal text alignement
-//
+// horisontal text alignement
 enum {
-  hleft,   //Left
-  hcentre, //Centred
-  hright,  //Right
+  hleft,
+  hcentre,
+  hright,
 };
 alias hcenter = hcentre;
 
-//
-// Vertical text alignement
-//
+// vertical text alignement
 enum {
-  vtop,    //Top
-  vcentre, //Centre
-  vbottom, //Bottom
+  vtop,
+  vcentre,
+  vbottom,
 };
 alias vcenter = vcentre;
 
-// Text colours.
+// text colours
 enum {
   CR_UNDEFINED = -1,
   CR_BRICK, //A
@@ -124,9 +118,7 @@ enum {
   NUM_TEXT_COLOURS
 };
 
-//
-// STATUS BAR VIEW TYPE
-//
+// status bar view type
 enum {
   SB_VIEW_NORMAL,
   SB_VIEW_AUTOMAP,
@@ -140,9 +132,7 @@ enum {
 //
 //**************************************************************************
 
-//
-//  Server list
-//
+// server list
 
 enum { HOSTCACHESIZE = 8 };
 

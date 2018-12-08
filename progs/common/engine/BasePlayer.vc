@@ -26,24 +26,18 @@
 //  Extended player object info
 //
 //**************************************************************************
+class BasePlayer : GameObject native abstract;
 
-class BasePlayer : GameObject
-  native
-  abstract;
-
-//
-//  Constants for FixedColourmap
-//
-enum
-{
-  NUMCOLOURMAPS   = 32,
-  INVERSECOLOURMAP  = 32,
-  GOLDCOLOURMAP   = 33,
-  REDCOLOURMAP    = 34,
-  GREENCOLOURMAP    = 35
+// constants for FixedColourmap
+enum {
+  NUMCOLOURMAPS    = 32,
+  INVERSECOLOURMAP = 32,
+  GOLDCOLOURMAP    = 33,
+  REDCOLOURMAP     = 34,
+  GREENCOLOURMAP   = 35,
 };
 
-const float TOCENTRE    = -128.0;
+const float TOCENTRE = -128.0;
 
 struct VViewState {
   state State; // a 0 state means not active
@@ -58,14 +52,14 @@ readonly bool bActive;
 readonly bool bSpawned;
 readonly bool bIsBot;
 bool bFixAngle;
-bool bAttackDown; // True if button down last tic.
+bool bAttackDown; // `true` if button down last tic
 bool bUseDown;
-bool bDidSecret; // True if secret level has been done.
+bool bDidSecret; // `true` if secret level has been done
 readonly private bool bCentreing;
-readonly bool bIsClient; // Player on client side
+readonly bool bIsClient; // player on client side
 bool bAutomapRevealed;
 bool bAutomapShowThings;
-bool bReloadQueued; // True if "reload" was pressed
+bool bReloadQueued; // true if "reload" was pressed
 
 native readonly private void *Net;
 
@@ -78,13 +72,13 @@ ubyte TranslStart;
 ubyte TranslEnd;
 int Colour;
 
-float ClientForwardMove;    // *2048 for move
-float ClientSideMove;     // *2048 for move
-float ForwardMove;      // *2048 for move
-float SideMove;       // *2048 for move
-float FlyMove;        // fly up/down/centreing
-/*ubyte*/transient int Buttons;        // fire, use
-/*ubyte*/transient int Impulse;        // weapon changes, inventory, etc
+float ClientForwardMove; // *2048 for move
+float ClientSideMove; // *2048 for move
+float ForwardMove; // *2048 for move
+float SideMove; // *2048 for move
+float FlyMove; // fly up/down/centreing
+/*ubyte*/transient int Buttons; // fire, use
+/*ubyte*/transient int Impulse; // weapon changes, inventory, etc
 // for ACS, see C++ code
 transient readonly int AcsCurrButtonsPressed;
 transient readonly int AcsCurrButtons;
@@ -104,46 +98,46 @@ TVec ViewOrg;
 
 TAVec ViewAngles;
 
-// This is only used between levels,
+// this is only used between levels,
 // mo->health is used during levels.
 int Health;
 
-// Frags, kills of other players.
+// frags, kills of other players
 int Frags;
 int Deaths;
 
-// For intermission stats.
+// for intermission stats
 int KillCount;
 int ItemCount;
 int SecretCount;
 
-// So gun flashes light up areas.
+// so gun flashes light up areas
 ubyte ExtraLight;
 
-// For lite-amp and invulnarability powers
+// for lite-amp and invulnarability powers
 ubyte FixedColourmap;
 
-//  Colour shifts for damage, powerups and content types
+// colour shifts for damage, powerups and content types
 int CShift;
 
-// Overlay view sprites (gun, etc).
+// overlay view sprites (gun, etc)
 VViewState ViewStates[NUMPSPRITES];
 int DispSpriteFrame[NUMPSPRITES];
 name DispSpriteName[NUMPSPRITES];
 float PSpriteSY;
 
-float WorldTimer;       // total time the player's been playing
+float WorldTimer; // total time the player's been playing
 
 native readonly ubyte ClientNum;
 
 int SoundEnvironment;
 
-native readonly ClientGameBase ClGame;     //  Valid only on client side
+native readonly ClientGameBase ClGame; // valid only on client side
 
 PlayerReplicationInfo playerReplicationInfo;
 
-replication
-{
+
+replication {
   reliable if (!bIsClient)
     Health, Frags, Deaths, ExtraLight, FixedColourmap, CShift,
     PSpriteSY, KillCount, ItemCount, SecretCount,
@@ -160,106 +154,206 @@ replication
     ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
     ClientSetServerInfo, ClientHudMessage;
 
-  //  Movement variables
+  // movement variables
   reliable if (bIsClient)
     ViewAngles, ClientForwardMove, ClientSideMove, FlyMove, Buttons;
 
-  //  Methods client can execute on server
+  // methods client can execute on server
   reliable if (bIsClient)
     ServerImpulse, ServerSetUserInfo;
 }
 
-//  Print to client
-native final void cprint(string format, ...) [printf,1];
-//  Client's centre message
-native final void centreprint(string format, ...) [printf,1];
+
+// print to client
+native final void cprint (string format, ...) [printf,1];
+// client's centre message
+native final void centreprint (string format, ...) [printf,1];
 alias centerprint = centreprint;
-native final int GetPlayerNum();
-native final void ClearPlayer();
+native final int GetPlayerNum ();
+native final void ClearPlayer ();
 
-native final void SetViewObject(Object vobj);
-native final void SetViewObjectIfNone(Object vobj);
-native final void SetViewState(int position, state stnum);
-native final void AdvanceViewStates(float deltaTime);
-native final void DisconnectBot();
+native final void SetViewObject (Object vobj);
+native final void SetViewObjectIfNone (Object vobj);
+native final void SetViewState (int position, state stnum);
+native final void AdvanceViewStates (float deltaTime);
+native final void DisconnectBot ();
 
-//  For networking
+// for networking
 // OriginId==-666: local (use player's SoundOriginID)
-native void ClientStartSound(int SoundId, TVec Org, int OriginId,
-  int Channel, float Volume, float Attenuation, bool Loop);
-native void ClientStopSound(int OriginId, int Channel);
-native void ClientStartSequence(TVec Origin, int OriginId, name Name,
-  int ModeNum);
-native void ClientAddSequenceChoice(int OriginId, name Choice);
-native void ClientStopSequence(int OriginId);
-native void ClientPrint(string Str);
-native void ClientCentrePrint(string Str);
-native void ClientSetAngles(TAVec Angles);
-native void ClientIntermission(name NextMap);
-native void ClientPause(bool Paused);
-native void ClientSkipIntermission();
-native void ClientFinale(string Type);
-native void ClientChangeMusic(name Song);
-native void ClientSetServerInfo(string Key, string Value);
-native void ClientHudMessage(string Message, name Font, int Type, int Id,
-  int Colour, string ColourName, float x, float y, int HudWidth,
-  int HudHeight, float HoldTime, float Time1, float Time2);
+native void ClientStartSound (int SoundId, TVec Org, int OriginId,
+                              int Channel, float Volume, float Attenuation, bool Loop);
+native void ClientStopSound (int OriginId, int Channel);
+native void ClientStartSequence (TVec Origin, int OriginId, name Name, int ModeNum);
+native void ClientAddSequenceChoice (int OriginId, name Choice);
+native void ClientStopSequence (int OriginId);
+native void ClientPrint (string Str);
+native void ClientCentrePrint (string Str);
+native void ClientSetAngles (TAVec Angles);
+native void ClientIntermission (name NextMap);
+native void ClientPause (bool Paused);
+native void ClientSkipIntermission ();
+native void ClientFinale (string Type);
+native void ClientChangeMusic (name Song);
+native void ClientSetServerInfo (string Key, string Value);
+native void ClientHudMessage (string Message, name Font, int Type, int Id,
+                              int Colour, string ColourName, float x, float y,
+                              int HudWidth, int HudHeight, float HoldTime,
+                              float Time1, float Time2);
 
-native void ServerSetUserInfo(string Info);
+native void ServerSetUserInfo (string Info);
 
-void PutClientIntoServer()
-{
+
+//==========================================================================
+//
+//  PutClientIntoServer
+//
+//==========================================================================
+void PutClientIntoServer () {
 }
 
-void SpawnClient()
-{
+
+//==========================================================================
+//
+//  SpawnClient
+//
+//==========================================================================
+void SpawnClient () {
 }
 
-void NetGameReborn()
-{
+
+//==========================================================================
+//
+//  NetGameReborn
+//
+//==========================================================================
+void NetGameReborn () {
 }
 
-void DisconnectClient()
-{
+
+//==========================================================================
+//
+//  DisconnectClient
+//
+//==========================================================================
+void DisconnectClient () {
 }
 
-void UserinfoChanged()
-{
+
+//==========================================================================
+//
+//  UserinfoChanged
+//
+//==========================================================================
+void UserinfoChanged () {
 }
 
-void PlayerBeforeExitMap()
-{
+
+//==========================================================================
+//
+//  PlayerBeforeExitMap
+//
+//==========================================================================
+void PlayerBeforeExitMap () {
 }
 
-void PlayerExitMap(bool clusterChange)
-{
+
+//==========================================================================
+//
+//  PlayerExitMap
+//
+//==========================================================================
+void PlayerExitMap (bool clusterChange) {
 }
 
-void PlayerTick(float deltaTime)
-{
+
+//==========================================================================
+//
+//  PlayerTick
+//
+//==========================================================================
+void PlayerTick (float deltaTime) {
 }
 
-void ClientTick(float deltaTime)
-{
+
+//==========================================================================
+//
+//  ClientTick
+//
+//==========================================================================
+void ClientTick (float deltaTime) {
 }
 
-void SetViewPos()
-{
+
+//==========================================================================
+//
+//  SetViewPos
+//
+//==========================================================================
+void SetViewPos () {
 }
 
-void PreTravel()
-{
+
+//==========================================================================
+//
+//  PreTravel
+//
+//==========================================================================
+void PreTravel () {
 }
 
-void UseInventory(string Inv)
-{
+
+//==========================================================================
+//
+//  UseInventory
+//
+//==========================================================================
+void UseInventory (string Inv) {
 }
 
-bool CheckDoubleFiringSpeed()
-{
+
+//==========================================================================
+//
+//  CheckDoubleFiringSpeed
+//
+//==========================================================================
+bool CheckDoubleFiringSpeed () {
   return false;
 }
 
+
+//==========================================================================
+//
+//  ServerImpulse
+//
+//==========================================================================
+void ServerImpulse (int AImpulse) {
+  Impulse = AImpulse;
+}
+
+
+//==========================================================================
+//
+//  ClientSetViewOrg
+//
+//==========================================================================
+void ClientSetViewOrg (float x, float y, float z) {
+  ViewOrg = vector(x, y, z);
+}
+
+
+//==========================================================================
+//
+//  eventGetReadyWeapon
+//
+//==========================================================================
+Entity eventGetReadyWeapon () {
+  return none;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// various cheat commands
+// TODO: generalize this (make some way to register console commands from scripts)
 void Cheat_God () {}
 void Cheat_Buddha () {}
 void Cheat_Summon () {}
@@ -278,21 +372,6 @@ void Cheat_ShooterKing () {}
 void Cheat_Regeneration () {}
 void Cheat_DumpInventory () {}
 void Cheat_VScriptCommand (ref array!string args) {}
-
-
-void ServerImpulse (int AImpulse) {
-  Impulse = AImpulse;
-}
-
-
-void ClientSetViewOrg (float x, float y, float z) {
-  ViewOrg = vector(x, y, z);
-}
-
-
-Entity eventGetReadyWeapon () {
-  return none;
-}
 
 
 defaultproperties {
