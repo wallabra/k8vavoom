@@ -503,14 +503,21 @@ final bool HeightClip () {
       Ceiling = tmtrace.Ceiling;
       FloorZ = tmtrace.FloorZ;
       CeilingZ = tmtrace.CeilingZ;
-      if (onfloor) {
-        if (bNoInteraction || !bNoGravity || Origin.z < FloorZ) {
-          Origin.z = FloorZ;
-        }
+      if (bStickToFloor || bStickToCeiling) {
+        Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
       } else {
-        // don't adjust a floating thing unless forced to
-        if (Origin.z+Height > CeilingZ) Origin.z = CeilingZ-Height;
+        if (onfloor) {
+          if (bNoInteraction || !bNoGravity || Origin.z < FloorZ) {
+            Origin.z = FloorZ;
+          }
+        } else {
+          // don't adjust a floating thing unless forced to
+          if (Origin.z+Height > CeilingZ) Origin.z = CeilingZ-Height;
+        }
       }
+    } else if (bStickToFloor || bStickToCeiling) {
+      GetFloorAndCeiling(out tmtrace);
+      Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
     }
     // never blocks
     return true;
@@ -560,6 +567,10 @@ final bool HeightClip () {
       // doesn't fit, stop
       return false;
     }
+  }
+
+  if (bStickToFloor || bStickToCeiling) {
+    Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
   }
 
   return true;

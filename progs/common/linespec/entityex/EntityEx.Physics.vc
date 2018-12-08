@@ -111,12 +111,12 @@ bool Physics (float DeltaTime) {
       if (bStickToFloor || bStickToCeiling) {
         tmtrace_t tmtrace;
         GetFloorAndCeiling(out tmtrace);
-        Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
+        Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
       }
     } else if (bStickToFloor || bStickToCeiling) {
       tmtrace_t tmtrace;
       GetFloorAndCeiling(out tmtrace);
-      Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
+      Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
     }
     return true;
   }
@@ -253,7 +253,7 @@ bool Physics (float DeltaTime) {
   if (bStickToFloor || bStickToCeiling) {
     tmtrace_t tmtrace;
     GetFloorAndCeiling(out tmtrace);
-    Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ);
+    Origin.z = (bStickToFloor ? tmtrace.FloorZ : tmtrace.CeilingZ-Height);
   }
 
   return true;
