@@ -326,6 +326,7 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBase", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
@@ -1155,6 +1156,7 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBaseTransient", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
@@ -1980,6 +1982,7 @@ Actor K8Gore_BloodSpotGreen : K8Gore_BloodBaseGreen {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBaseGreen", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
@@ -2809,6 +2812,7 @@ Actor K8Gore_BloodSpotTransient_Green : K8Gore_BloodBaseTransient_Green {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBaseTransient_Green", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
@@ -3634,6 +3638,7 @@ Actor K8Gore_BloodSpotBlue : K8Gore_BloodBaseBlue {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBaseBlue", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
@@ -4463,6 +4468,7 @@ Actor K8Gore_BloodSpotTransient_Blue : K8Gore_BloodBaseTransient_Blue {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBaseTransient_Blue", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))

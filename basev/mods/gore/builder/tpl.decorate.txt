@@ -345,6 +345,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(Color) {
   States {
     Spawn:
       TNT1 A 0
+      TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
       // this has no sense, as blood is not in blockmap
       //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBase$(Color)", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
