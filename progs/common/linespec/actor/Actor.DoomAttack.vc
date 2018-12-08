@@ -797,7 +797,7 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
   // change velocity Z component before doing RadiusAttack
   if (!specified_thrustfactor) thrustfactor = 1.0;
   if (thrustfactor > 0) {
-    Target.Velocity.z = (1000.0*thrustfactor / Target.Mass) * 35.0;
+    Target.Velocity.z = (1000.0*thrustfactor / fmax(1, Target.Mass)) * 35.0;
   }
 }
 

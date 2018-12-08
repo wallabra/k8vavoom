@@ -165,7 +165,7 @@ final void Blast(Actor victim, Actor source, float strength)
     }
     else
     {
-      victim.Velocity.z = 1000.0 / victim.Mass * 35.0;
+      victim.Velocity.z = 1000.0 / fmax(1, victim.Mass) * 35.0;
     }
     if (victim.bIsPlayer)
     {

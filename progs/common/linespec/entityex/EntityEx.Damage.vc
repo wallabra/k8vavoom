@@ -486,7 +486,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     }
     if (kickback) {
       TVec dir;
-      float thrust = kickback/8.0*float(damage)/Mass;
+      float thrust = kickback/8.0*float(damage)/fmax(1, Mass);
       if (thrust < 0.0 || thrust > 10.0) thrust = 10.0;
       // make fall forwards sometimes
       //k8: but not if player is cheating

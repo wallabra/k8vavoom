@@ -181,10 +181,11 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
           //  Zero length. In this case Doom would use angle 0
           Dir = vector(1.0, 0.0, 0.0);
         }
-        TVec Vel = Normalise(Dir) * Thrust;
-        Other.Velocity.x += (Vel.x / Other.Mass) * 35.0;
-        Other.Velocity.y += (Vel.y / Other.Mass) * 35.0;
-        if (thrustZ) Other.Velocity.z += (VelZ / Other.Mass) * 35.0;
+        float othermass = fmax(1, Other.Mass);
+        TVec Vel = Normalise(Dir)*Thrust;
+        Other.Velocity.x += (Vel.x/othermass)*35.0;
+        Other.Velocity.y += (Vel.y/othermass)*35.0;
+        if (thrustZ) Other.Velocity.z += (VelZ/othermass)*35.0;
         //old:if (DoDamage) Other.Velocity.z += (VelZ / Other.Mass) * 35.0;
       }
     }
@@ -754,10 +755,10 @@ override bool Touch(Entity InOther)
       Other.Velocity.y += Velocity.y;
       if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
       {
-        damage = (ftoi(Mass) / 100) + 1;
+        damage = (ftoi(fmax(0, Mass)) / 100) + 1;
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, self, damage);
-        damage = (ftoi(Other.Mass) / 100) + 1;
+        damage = (ftoi(fmax(0, Other.Mass)) / 100) + 1;
         Damage(Other, Other, damage >> 2);
       }
       return false;
@@ -1074,7 +1075,7 @@ final override void CheckForPushSpecial(line_t *line, int side)
 
 final override void BlastedHitLine()
 {
-  Damage(none, none, ftoi(Mass) >> 5);
+  Damage(none, none, ftoi(fmax(0, Mass)) >> 5);
 }
 
 //==========================================================================
@@ -2690,7 +2691,7 @@ final override int GetActorProperty (int Prop) {
     case APROP_ScaleX: return int(ScaleX*65536.0);
     case APROP_ScaleY: return int(ScaleY*65536.0);
     case APROP_Dormant: return bDormant;
-    case APROP_Mass: return int(Mass);
+    case APROP_Mass: return int(fmax(0, Mass));
     case APROP_Height: return int(Height*65536.0);
     case APROP_Radius: return int(Radius*65536.0);
     case APROP_MeleeRange: return int(MeleeRange*65536.0);
