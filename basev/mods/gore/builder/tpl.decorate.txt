@@ -296,7 +296,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(Color) {
 #else
   //Alpha 0.9
 #endif
-  Mass 99999999
+  Mass 9999
   Scale 0.5
   Decal K8GoreBloodSplat$(Color)
   DamageFactor "TeleportRemover", 100.0
@@ -304,132 +304,89 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(Color) {
   States {
     Spawn:
       TNT1 A 0
-      //TNT1 A 0 A_RemoveIfRadiusAmountGreater(128, 120, "K8Gore_BloodBase$(Color)")
+      // this has no sense, as blood is not in blockmap
+      //TNT1 A 0 A_JumpIfRadiusAmountGreater(128, 1, "K8Gore_BloodBase$(Color)", "Death")
       TNT1 A 0 A_LayToFloorWithYaw(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
-      TNT1 A 0 A_k8JumpIfLiquidFloor("SplashWater")
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
-      TNT1 A 0 A_Jump(255, "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
-
+      TNT1 A 0 A_Jump(256, "SpawnAFrameOnly", "SpawnBFrameOnly", "SpawnCFrameOnly", "SpawnDFrameOnly")
     SpawnAFrameOnly:
-#ifdef TRANSIENT
-      BPDL A random(100,450)
-      Goto FadeA
-#else
-      BPDL A 80
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      BPDL A 800
-      Loop
-#endif
-
+      BPDL A 0
+      Goto DoAfterSpawn
     SpawnBFrameOnly:
-#ifdef TRANSIENT
-      BPDL B random(100,450)
-      Goto FadeB
-#else
-      BPDL B 80
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      BPDL B 800
-      Loop
-#endif
-
+      BPDL B 0
+      Goto DoAfterSpawn
     SpawnCFrameOnly:
-#ifdef TRANSIENT
-      BPDL C random(100,450)
-      Goto FadeC
-#else
-      BPDL C 80
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      BPDL C 800
-      Loop
-#endif
-
+      BPDL C 0
+      Goto DoAfterSpawn
     SpawnDFrameOnly:
+      BPDL D 0
+      Goto DoAfterSpawn
+
 #ifdef TRANSIENT
-      BPDL D random(100,450)
-      Goto FadeD
+    DoAfterSpawn:
+      "####" "#" 35 A_CheckFloor("ItLanded")
+      Loop
+    ItLanded:
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_k8JumpIfLiquidFloor("ItLandedOnWater")
+      "####" "#" random(100, 450)
+    FadeOutLoop:
+      "####" "#" random(64, 90)
+      "####" "#" 0 A_FadeOut(0.01)
+      Loop
 #else
-      BPDL D 80
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      BPDL D 800
+    DoAfterSpawn:
+      "####" "#" 16 A_CheckFloor("ItLanded")
+      Loop
+    ItLanded:
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      "####" "#" 0 A_k8JumpIfLiquidFloor("ItLandedOnWater")
+    EndlessLoop:
+      "####" "#" 800
+      // it still may disappear after some time
+      "####" "#" 0 A_Jump(250, "EndlessLoop")
+    NormalFadeOut:
+      "####" "#" random(64, 90)
+      "####" "#" 0 A_FadeOut(0.01)
       Loop
 #endif
 
-    FadeA:
-      BPDL AAAA 64
-      TNT1 A 0 A_FadeOut(0.01)
-      Loop
-
-    FadeB:
-      BPDL B 64
-      TNT1 A 0 A_FadeOut(0.01)
-      Loop
-
-    FadeC:
-      BPDL C 64
-      TNT1 A 0 A_FadeOut(0.01)
-      Loop
-
-    FadeD:
-      BPDL D 64
-      TNT1 A 0 A_FadeOut(0.01)
-      Loop
-
-    Splash:
-      Goto SpawnNormally
 
     SplashWater:
       TNT1 A 0 A_FadeOut(0.3)
-      TNT1 A 0 A_Jump(255, "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
-
+      TNT1 A 0 A_Jump(256, "SpawnAFrameOnlyWater", "SpawnBFrameOnlyWater", "SpawnCFrameOnlyWater", "SpawnDFrameOnlyWater")
     SpawnAFrameOnlyWater:
-      BPDL A random(50, 100)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Goto FadeAWater
-
+      BPDL A 0
+      Goto WaterFadeMain
     SpawnBFrameOnlyWater:
-      BPDL B random(50, 100)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Goto FadeBWater
-
+      BPDL B 0
+      Goto WaterFadeMain
     SpawnCFrameOnlyWater:
-      BPDL C random(50, 100)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Goto FadeCWater
-
+      BPDL C 0
+      Goto WaterFadeMain
     SpawnDFrameOnlyWater:
-      BPDL D random(50, 100)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Goto FadeDWater
+      BPDL D 0
+      Goto WaterFadeMain
 
-    FadeAWater:
-      BPDL A 16
-      TNT1 A 0 A_FadeOut(0.05)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
+    WaterFadeMain:
+      "####" "#" 16 A_CheckFloor("ItLandedOnWater")
+      Loop
+    ItLandedOnWater:
+      "####" "#" 0 A_ChangeFlag("NoInteraction", true)
+      // stay for some time
+      "####" "#" random(50, 100)
+      // and fade out
+    WaterFadeLoop:
+      "####" "#" random(9, 24)
+      "####" "#" 0 A_FadeOut(0.05)
       Loop
 
-    FadeBWater:
-      BPDL B 16
-      TNT1 A 0 A_FadeOut(0.05)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Loop
-
-    FadeCWater:
-      BPDL C 16
-      TNT1 A 0 A_FadeOut(0.05)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Loop
-
-    FadeDWater:
-      BPDL D 16
-      TNT1 A 0 A_FadeOut(0.05)
-      TNT1 A 0 A_ChangeFlag("NoInteraction", true)
-      Loop
 
     Death:
       TNT1 A 0 A_NoBlocking
