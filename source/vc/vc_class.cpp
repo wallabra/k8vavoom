@@ -2172,7 +2172,26 @@ void VClass::SerialiseObject (VStream &Strm, VObject *Obj) {
   if (Strm.IsLoading()) {
     // check superclass name
     if (super) {
-      if (super->Name != supname) Sys_Error("I/O ERROR: expected superclass '%s', got superclass '%s' for '%s'", *super->Name, *supname, Obj->GetClass()->GetName());
+      if (super->Name != supname) {
+/*
+        if (VStr(*supname).startsWith("K8Gore_BloodBase")) {
+#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
+#else
+          GCon->Logf("I/O WARNING: expected superclass '%s', got superclass '%s' for '%s'", *super->Name, *supname, Obj->GetClass()->GetName());
+          //supname = super->Name;
+          VClass *spx = VClass::FindClassNoCase(*supname);
+          if (spx) {
+            if (!super->IsChildOf(spx)) Sys_Error("I/O ERROR: cannot fix superclass '%s'", *supname);
+            spx->SerialiseObject(Strm, Obj);
+            super = nullptr;
+          }
+#endif
+        } else
+*/
+        {
+          Sys_Error("I/O ERROR: expected superclass '%s', got superclass '%s' for '%s'", *super->Name, *supname, Obj->GetClass()->GetName());
+        }
+      }
     } else {
       if (supname != NAME_None) Sys_Error("I/O ERROR: expected no superclass, got superclass '%s' for '%s'", *supname, Obj->GetClass()->GetName());
     }
