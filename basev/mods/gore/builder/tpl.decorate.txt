@@ -540,6 +540,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   $(Translation)
   Projectile
   +SPAWNCEILING
+  +StickToCeiling
   +CEILINGHUGGER
   +MOVEWITHSECTOR
   -DOOMBOUNCE
@@ -555,19 +556,18 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
       "####" "#" 1
       "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool$(Color)")
       "####" "#" 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner$(Color)")
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
+      "####" "################################################################################" 2
+      "####" "################################################################################" 2
+      "####" "################################################################################" 2
 
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
-      "####" "################################################################################" 2 ThrustThingZ(0, 300, 0, 1)
+      "####" "################################################################################" 2
+      "####" "################################################################################" 2
+      "####" "################################################################################" 2
+      "####" "################################################################################" 2
+      "####" "################################################################################" 2
 
     DoFadeOut:
       "####" "#" 0 A_JumpIfCVarFalse("r_models", "DieNow")
-      "####" "#" 0 ThrustThingZ(0, 300, 0, 1)
       "####" "#" 2 A_FadeOut(0.01)
       Loop
 
@@ -688,6 +688,7 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
   +THRUACTORS
   +CLIENTSIDEONLY
   +SpawnCeiling
+  +StickToCeiling
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
@@ -697,7 +698,6 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
       TNT1 A 0
       TNT1 A 0 A_Jump(230, "NoSpawn")
       //TNT1 A 0 A_k8ConLog(va("%C: z=%s; ceilingz=%s; floorz=%s; velz=%s; grav=%s", getSelf(), z, ceilingz, floorz, velz, gravity))
-      //TNT1 A 0 ThrustThingZ(0, 300, 0, 1) // raise to ceiling
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
 #ifndef TRANSIENT
       BLUX A 500
