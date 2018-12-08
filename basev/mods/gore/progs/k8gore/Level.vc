@@ -33,41 +33,57 @@ int skipDeathCounter;
 //override void BeforeWorldTick (float DeltaTime) { ::BeforeWorldTick(DeltaTime); print("BEFORE: %s", DeltaTime); }
 //override void AfterWorldTick (float DeltaTime) { ::AfterWorldTick(DeltaTime); print("AFTER: %s", DeltaTime); }
 
+final private void CleanBlood () {
+  int allowed = GetCvar('k8GoreOpt_MaxBloodEntities');
+  if (allowed < 0) allowed = DefaultMaxAllowedBloodEntities;
+  if (++bloodEntCounter > allowed) {
+    //print("  KILLING: %C", ent);
+    //ent.Destroy();
+    // remove old blood
+    array!Entity elist;
+    Entity e;
+    foreach AllThinkers(K8Gore_BloodBase, out e) elist[$] = e;
+    //print("  %s blood entities found", elist.length);
+    if (elist.length > allowed) {
+      elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
+      // destroy half of list, from older
+      int toremove = 2048;
+      if (allowed < 128) {
+        toremove = elist.length/2;
+      } else {
+        if (toremove < elist.length/4) toremove = elist.length/4;
+        if (toremove < 128) toremove = 128;
+        toremove = min(toremove, elist.length);
+      }
+      foreach (auto i; 0..toremove) {
+        //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
+        elist[i].Destroy();
+        ++skipDeathCounter;
+        --bloodEntCounter;
+      }
+      if (GetCvar('k8GoreOpt_LimiterDebug')) print("%s blood entities removed out of %s", skipDeathCounter, elist.length);
+    }
+  }
+}
+
+
+override void AfterUnarchiveThinkers () {
+  if (GetCvar('k8GoreOpt_LimiterDebug')) print("*** LOADED *** (counter=%s; skip=%s)", bloodEntCounter, skipDeathCounter);
+  bloodEntCounter = 0;
+  skipDeathCounter = 0;
+  Entity e;
+  foreach AllThinkers(K8Gore_BloodBase, out e) {
+    ++bloodEntCounter;
+  }
+  if (GetCvar('k8GoreOpt_LimiterDebug')) print("  counted: %s", bloodEntCounter);
+}
+
 
 override void OnEntitySpawned (Entity ent) {
   //print("SPAWNED: %C", ent);
   if (ent isa K8Gore_BloodBase) {
     //print("SPAWNED: %C (%d current)", ent, bloodEntCounter);
-    int allowed = GetCvar('k8GoreOpt_MaxBloodEntities');
-    if (allowed < 0) allowed = DefaultMaxAllowedBloodEntities;
-    if (++bloodEntCounter > allowed) {
-      //print("  KILLING: %C", ent);
-      //ent.Destroy();
-      // remove old blood
-      array!Entity elist;
-      Entity e;
-      foreach ent.AllThinkers(K8Gore_BloodBase, out e) elist[$] = e;
-      //print("  %s blood entities found", elist.length);
-      if (elist.length > allowed) {
-        elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
-        // destroy half of list, from older
-        int toremove = 2048;
-        if (allowed < 128) {
-          toremove = elist.length/2;
-        } else {
-          if (toremove < elist.length/4) toremove = elist.length/4;
-          if (toremove < 128) toremove = 128;
-          toremove = min(toremove, elist.length);
-        }
-        foreach (auto i; 0..toremove) {
-          //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
-          elist[i].Destroy();
-          ++skipDeathCounter;
-          --bloodEntCounter;
-        }
-        if (GetCvar('k8GoreOpt_LimiterDebug')) print("%s blood entities removed out of %s", skipDeathCounter, elist.length);
-      }
-    }
+    CleanBlood();
   }
 }
 
