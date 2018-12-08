@@ -516,6 +516,7 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:
@@ -1349,6 +1350,7 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:
@@ -2191,6 +2193,7 @@ Actor K8Gore_CeilBloodSpotGreen : K8Gore_BloodSpotGreen {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:
@@ -3024,6 +3027,7 @@ Actor K8Gore_CeilBloodSpotTransient_Green : K8Gore_BloodSpotTransient_Green {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:
@@ -3866,6 +3870,7 @@ Actor K8Gore_CeilBloodSpotBlue : K8Gore_BloodSpotBlue {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:
@@ -4699,6 +4704,7 @@ Actor K8Gore_CeilBloodSpotTransient_Blue : K8Gore_BloodSpotTransient_Blue {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:

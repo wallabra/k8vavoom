@@ -547,6 +547,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   +NOGRAVITY
   +DontSplash
   +NOBLOCKMAP
+  +NoInteraction
 
   States {
     Spawn:
