@@ -477,7 +477,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
           ffr.angleRoll = F.angleRoll;
         }
       } else {
-        if (F.Number < 0 && F.sprite != NAME_None) F.Number = -666;
+        if (F.Number < 0 && F.sprite == NAME_None) F.Number = -666;
       }
     }
     if (!Cls->Frames.Num()) Sys_Error("%s class %s has no states defined", *Mdl->Name, *Cls->Name);
