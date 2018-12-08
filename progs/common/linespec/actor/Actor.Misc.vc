@@ -681,7 +681,36 @@ final void A_ChangeScaleYExt (float delta, optional float killLimit) {
 }
 
 
+//==========================================================================
+//
+//  A_LayToFloorWithYaw
+//
+//==========================================================================
 final void A_LayToFloorWithYaw (float yaw) {
+  tmtrace_t tmtrace;
+  // faster checking
+  bool oldWithThings = bColideWithThings;
+  bool oldWithWorld = bColideWithWorld;
+  bColideWithThings = false;
+  bColideWithWorld = false;
+  // find new position
+  CheckRelPosition(&tmtrace, Origin);
+  bColideWithThings = bColideWithThings;
+  bColideWithWorld = bColideWithWorld;
+  // update position
+  //Floor = tmtrace.Floor;
+  //Ceiling = tmtrace.Ceiling;
+  //FloorZ = tmtrace.FloorZ;
+  //CeilingZ = tmtrace.CeilingZ;
+  if (!tmtrace.Floor) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 0;
+    return;
+  }
+  TVec norm = tmtrace.Floor.normal;
+
+  /*
   auto sec = Level.XLevel.PointInSector(Origin);
   if (!sec) {
     Angles.roll = 0;
@@ -690,6 +719,7 @@ final void A_LayToFloorWithYaw (float yaw) {
     return;
   }
   TVec norm = sec.floor.normal;
+  */
   //print("floor normal: %v", norm);
   if (norm.x == 0 && norm.y == 0) {
     /*
@@ -700,6 +730,61 @@ final void A_LayToFloorWithYaw (float yaw) {
     Angles.roll = 0;
     Angles.yaw = yaw;
     Angles.pitch = 0;
+  } else {
+    VectorAngles(norm, Angles);
+    //print("floor normal: %v; angles: %v", norm, Angles);
+    Angles.pitch = AngleMod360(Angles.pitch+90);
+    // alas
+    //Angles.yaw = yaw;
+  }
+}
+
+
+//==========================================================================
+//
+//  A_LayToCeilingWithYaw
+//
+//==========================================================================
+final void A_LayToCeilingWithYaw (float yaw) {
+  tmtrace_t tmtrace;
+  // faster checking
+  bool oldWithThings = bColideWithThings;
+  bool oldWithWorld = bColideWithWorld;
+  bColideWithThings = false;
+  bColideWithWorld = false;
+  // find new position
+  CheckRelPosition(&tmtrace, Origin);
+  bColideWithThings = bColideWithThings;
+  bColideWithWorld = bColideWithWorld;
+  // update position
+  //Floor = tmtrace.Floor;
+  //Ceiling = tmtrace.Ceiling;
+  //FloorZ = tmtrace.FloorZ;
+  //CeilingZ = tmtrace.CeilingZ;
+  if (!tmtrace.Ceiling) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 0;
+    return;
+  }
+  TVec norm = tmtrace.Ceiling.normal;
+
+  /*
+  auto sec = Level.XLevel.PointInSector(Origin);
+  if (!sec) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 0;
+    return;
+  }
+  TVec norm = sec.floor.normal;
+  */
+  //print("floor normal: %v", norm);
+  if (norm.x == 0 && norm.y == 0) {
+    Angles.roll = 0;
+    Angles.yaw = yaw;
+    Angles.pitch = 180;
+    //print("   angles: %s", Angles);
   } else {
     VectorAngles(norm, Angles);
     //print("floor normal: %v; angles: %v", norm, Angles);
