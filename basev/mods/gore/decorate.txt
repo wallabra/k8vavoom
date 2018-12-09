@@ -121,6 +121,8 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       B8OD AB 2
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
@@ -202,6 +204,8 @@ Actor K8Gore_FlyingBloodTrail : K8Gore_BloodBase {
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       //TNT1 A 0 A_k8ConLog(va("BLOOD TRAIL: %C; gravity=%s", getSelf(), Gravity))
       TNT1 A 0 ThrustThingZ(0, random(4, 8)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       BTRL CCCCCCCCCC 4 A_CheckFloor("Death")
       Stop
 
@@ -252,6 +256,8 @@ Actor K8Gore_FlyingBloodFake : K8Gore_BloodBase {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -468,6 +474,8 @@ Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
       }
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       TNT1 A 2
       Stop
 
@@ -977,6 +985,8 @@ Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       B8OD AB 2
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
@@ -1058,6 +1068,8 @@ Actor K8Gore_FlyingBloodTrailTransient : K8Gore_BloodBaseTransient {
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       //TNT1 A 0 A_k8ConLog(va("BLOOD TRAIL: %C; gravity=%s", getSelf(), Gravity))
       TNT1 A 0 ThrustThingZ(0, random(4, 8)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       BTRL CCCCCCCCCC 4 A_CheckFloor("Death")
       Stop
 
@@ -1108,6 +1120,8 @@ Actor K8Gore_FlyingBloodFakeTransient : K8Gore_BloodBaseTransient {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -1321,6 +1335,8 @@ Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
       }
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       TNT1 A 2
       Stop
 
@@ -1836,6 +1852,8 @@ Actor K8Gore_FlyingBloodGreen /*: K8Gore_BloodBase*/ {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       B8OD AB 2
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
@@ -1917,6 +1935,8 @@ Actor K8Gore_FlyingBloodTrailGreen : K8Gore_BloodBase {
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       //TNT1 A 0 A_k8ConLog(va("BLOOD TRAIL: %C; gravity=%s", getSelf(), Gravity))
       TNT1 A 0 ThrustThingZ(0, random(4, 8)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       BTRL CCCCCCCCCC 4 A_CheckFloor("Death")
       Stop
 
@@ -1967,6 +1987,8 @@ Actor K8Gore_FlyingBloodFakeGreen : K8Gore_BloodBase {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -2183,6 +2205,8 @@ Actor K8Gore_DetectCeilBloodSimplerGreen : K8Gore_BloodBase {
       }
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       TNT1 A 2
       Stop
 
@@ -2692,6 +2716,8 @@ Actor K8Gore_FlyingBloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       B8OD AB 2
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
@@ -2773,6 +2799,8 @@ Actor K8Gore_FlyingBloodTrailTransient_Green : K8Gore_BloodBaseTransient {
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       //TNT1 A 0 A_k8ConLog(va("BLOOD TRAIL: %C; gravity=%s", getSelf(), Gravity))
       TNT1 A 0 ThrustThingZ(0, random(4, 8)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       BTRL CCCCCCCCCC 4 A_CheckFloor("Death")
       Stop
 
@@ -2823,6 +2851,8 @@ Actor K8Gore_FlyingBloodFakeTransient_Green : K8Gore_BloodBaseTransient {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -3036,6 +3066,8 @@ Actor K8Gore_DetectCeilBloodSimplerTransient_Green : K8Gore_BloodBaseTransient {
       }
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       TNT1 A 2
       Stop
 
@@ -3551,6 +3583,8 @@ Actor K8Gore_FlyingBloodBlue /*: K8Gore_BloodBase*/ {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       B8OD AB 2
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
@@ -3632,6 +3666,8 @@ Actor K8Gore_FlyingBloodTrailBlue : K8Gore_BloodBase {
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       //TNT1 A 0 A_k8ConLog(va("BLOOD TRAIL: %C; gravity=%s", getSelf(), Gravity))
       TNT1 A 0 ThrustThingZ(0, random(4, 8)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       BTRL CCCCCCCCCC 4 A_CheckFloor("Death")
       Stop
 
@@ -3682,6 +3718,8 @@ Actor K8Gore_FlyingBloodFakeBlue : K8Gore_BloodBase {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -3898,6 +3936,8 @@ Actor K8Gore_DetectCeilBloodSimplerBlue : K8Gore_BloodBase {
       }
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       TNT1 A 2
       Stop
 
@@ -4407,6 +4447,8 @@ Actor K8Gore_FlyingBloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       B8OD AB 2
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       TNT1 A 0 A_Jump(256, "Spawn1", "Spawn2", "Spawn3")
@@ -4488,6 +4530,8 @@ Actor K8Gore_FlyingBloodTrailTransient_Blue : K8Gore_BloodBaseTransient {
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       //TNT1 A 0 A_k8ConLog(va("BLOOD TRAIL: %C; gravity=%s", getSelf(), Gravity))
       TNT1 A 0 ThrustThingZ(0, random(4, 8)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       BTRL CCCCCCCCCC 4 A_CheckFloor("Death")
       Stop
 
@@ -4538,6 +4582,8 @@ Actor K8Gore_FlyingBloodFakeTransient_Blue : K8Gore_BloodBaseTransient {
     Spawn:
       TNT1 A 0
       TNT1 A 0 ThrustThingZ(0, random(2, 4)*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       //TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
       B8OD KKKKKKKKKKKK 1 A_FadeOut(0.05)
       Stop
@@ -4751,6 +4797,8 @@ Actor K8Gore_DetectCeilBloodSimplerTransient_Blue : K8Gore_BloodBaseTransient {
       }
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
+      //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
+      //TNT1 A 0 ThrustThing(random(0, 255), random(0, 2), 1)
       TNT1 A 2
       Stop
 
