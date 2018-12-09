@@ -23,38 +23,32 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  Destroyed
 //
 //==========================================================================
-
-override void Destroyed()
-{
-  if (Role == ROLE_Authority)
-  {
-    //  Remove inventory.
-    while (Inventory)
-    {
-      Inventory.Destroy();
-    }
+override void Destroyed () {
+  if (Role == ROLE_Authority) {
+    // remove inventory
+    while (Inventory) Inventory.Destroy();
   }
   ::Destroyed();
 }
+
 
 //==========================================================================
 //
 //  SetOrigin2
 //
 //==========================================================================
-
-final void SetOrigin2(TVec origin)
-{
+final void SetOrigin2 (TVec origin) {
   UnlinkFromWorld();
 
   Origin = origin;
 
-  // Set subsector and/or block links.
+  // set subsector and/or block links
   LinkToWorld();
 
   //k8: why nointeraction is not processed?
@@ -83,23 +77,6 @@ final void SetOrigin2(TVec origin)
 }
 
 
-//==========================================================================
-//
-//  SetBloodArgs
-//
-//  pass some info to spawned blood actor, so decorate/vc can use 'em.
-//  should be called on blood entity
-//
-//  Tracer: bleeding Entity (can be none)
-//  Args[0]: damage (can be 0)
-//
-//==========================================================================
-final void SetBloodArgs (EntityEx master, optional int damage) {
-  self.Tracer = master;
-  self.Args[0] = damage;
-}
-
-
 //**************************************************************************
 //
 //  RADIUS ATTACK
@@ -113,15 +90,14 @@ final void SetBloodArgs (EntityEx master, optional int damage) {
 //  Source is the creature that caused the explosion at spot.
 //
 //==========================================================================
-
-final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
-  bool DamageSource, optional name BombDmgType, optional bool DoDamage,
-  optional int damagedistance, optional bool thrustZ,
-  optional float fullthrustdistance)
+final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
+                         bool DamageSource, optional name BombDmgType, optional bool DoDamage,
+                         optional int damagedistance, optional bool thrustZ,
+                         optional float fullthrustdistance)
 {
-  EntityEx  Other;
-  float   dist;
-  int     damage;
+  EntityEx Other;
+  //float dist;
+  //int damage;
 
   if (!specified_thrustZ) thrustZ = DoDamage; //k8: see below
 
@@ -135,17 +111,17 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
 
     if (!DamageSource && Other == Source) continue; // don't damage the source of the explosion
 
-    // Option for monsters that fire explosive projectiles not to hurt
+    // option for monsters that fire explosive projectiles not to hurt
     // monsters of the same class with it's projectiles.
-    // Controlled by the bDontHurtClass and bDontHurtSpecies flags.
-    if (Source && !Other.bIsPlayer && ((Source.bDontHurtClass &&
-        Other.Class == Source.Class) || (Source.bDontHurtSpecies &&
-        Other.GetSpecies() == Source.GetSpecies())))
+    // controlled by the bDontHurtClass and bDontHurtSpecies flags.
+    if (Source && !Other.bIsPlayer &&
+        ((Source.bDontHurtClass && Other.Class == Source.Class) ||
+         (Source.bDontHurtSpecies && Other.GetSpecies() == Source.GetSpecies())))
     {
       continue;
     }
 
-    dist = Length(Other.GetCentre()-GetCentre())-Other.Radius;
+    float dist = Length(Other.GetCentre()-GetCentre())-Other.Radius;
     if (dist < 0.0) dist = 0.0;
 
     if (dist >= BombDistance) continue; // out of range
@@ -160,7 +136,7 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
         dist2 = fclamp(dist-itof(damagedistance), 0.0, dist);
       }
 
-      damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
+      int damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
 
       Other.SpawnExploBloodAtHead(damage, Source);
       if (DoDamage) {
@@ -178,9 +154,8 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
         if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
         TVec Dir = Other.Origin-Origin;
         Dir.z = 0.0;
-        if (Length(Dir) < 0.001)
-        {
-          //  Zero length. In this case Doom would use angle 0
+        if (Length(Dir) < 0.001) {
+          // zero length. In this case Doom would use angle 0
           Dir = vector(1.0, 0.0, 0.0);
         }
         float othermass = fmax(1, Other.Mass);
@@ -194,59 +169,43 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
   }
 }
 
+
 //==========================================================================
 //
 //  TeleportMove
 //
 //==========================================================================
-
-final bool TeleportMove(TVec org, optional bool ForceTelestomp)
-{
-  EntityEx  Other;
-  float   blockdist;
+final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
+  EntityEx Other;
+  float blockdist;
 
   // kill anything occupying the position
   // stomp on any things contacted
-  foreach RadiusThings(Other, org, Radius)
-  {
-    if (!Other.bShootable)
-    {
-      continue;
-    }
+  foreach RadiusThings(Other, org, Radius) {
+    if (!Other.bShootable) continue;
 
     blockdist = Other.Radius+Radius;
 
     if (fabs(Other.Origin.x-org.x) >= blockdist ||
-      fabs(Other.Origin.y-org.y) >= blockdist)
+        fabs(Other.Origin.y-org.y) >= blockdist)
     {
       // didn't hit it
       continue;
     }
 
     // don't clip against self
-    if (Other == self)
-    {
-      continue;
-    }
+    if (Other == self) continue;
 
-    //  Z-Check
+    // z-check
     if ((bPassMobj || Other.bActLikeBridge) && !Level.CompatNoPassOver &&
-      (!bDontOverlap || !Other.bDontOverlap))
+        (!bDontOverlap || !Other.bDontOverlap))
     {
-      if (Other.Origin.z > org.z+Height)
-      {
-        continue;
-      }
-      if (Other.Origin.z+Other.Height < org.z)
-      {
-        continue;
-      }
+      if (Other.Origin.z > org.z+Height) continue;
+      if (Other.Origin.z+Other.Height < org.z) continue;
     }
 
-    //  Check if allowed to stomp things
-    if ((!ForceTelestomp && !bTelestomp && !Level.bAllowMonsterTelefrags) ||
-      Other.bNoTeleFrag)
-    {
+    // check if allowed to stomp things
+    if ((!ForceTelestomp && !bTelestomp && !Level.bAllowMonsterTelefrags) || Other.bNoTeleFrag) {
       return false;
     }
 
@@ -260,146 +219,90 @@ final bool TeleportMove(TVec org, optional bool ForceTelestomp)
   UnlinkFromWorld();
   Origin = org;
   LinkToWorld();
-  if (org.z == ONFLOORZ)
-  {
-    Origin.z = FloorZ;
-  }
+  if (org.z == ONFLOORZ) Origin.z = FloorZ;
 
   return true;
 }
+
 
 //==========================================================================
 //
 //  Teleport
 //
 //==========================================================================
+final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepDir) {
+  float fogDelta;
+  EntityEx fog;
+  bool ResetPitch = false;
 
-final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
-  bool KeepDir)
-{
-  TVec    oldOrg;
-  float   aboveFloor;
-  float   fogDelta;
-  EntityEx  fog;
-  bool    ResetPitch = false;
-
-  oldOrg = Origin;
-  aboveFloor = Origin.z-FloorZ;
-  if (Dst.z == ONFLOORZ)
-  {
+  TVec oldOrg = Origin;
+  float aboveFloor = Origin.z-FloorZ;
+  if (Dst.z == ONFLOORZ) {
     sector_t *DstSec = XLevel.PointInSector(Dst);
     float DstFloorZ = GetPlanePointZ(ref DstSec->floor, Dst);
     float DstCeilZ = GetPlanePointZ(ref DstSec->floor, Dst);
-    if (bIsPlayer)
-    {
-      if (FindInventory(PowerFlight) && aboveFloor)
-      {
+    if (bIsPlayer) {
+      if (FindInventory(PowerFlight) && aboveFloor) {
         Dst.z = DstFloorZ+aboveFloor;
-        if (Dst.z+Height > DstCeilZ)
-        {
-          Dst.z = DstCeilZ-Height;
-        }
-      }
-      else
-      {
+        if (Dst.z+Height > DstCeilZ) Dst.z = DstCeilZ-Height;
+      } else {
         Dst.z = DstFloorZ;
-        if (!KeepDir)
-        {
-          ResetPitch = true;
-        }
+        if (!KeepDir) ResetPitch = true;
       }
-    }
-    else if (bMissile)
-    {
+    } else if (bMissile) {
       Dst.z = Dst.z+aboveFloor;
-      if (Dst.z+Height > DstCeilZ)
-      {
-        Dst.z = DstCeilZ-Height;
-      }
-    }
-    else
-    {
+      if (Dst.z+Height > DstCeilZ) Dst.z = DstCeilZ-Height;
+    } else {
       Dst.z = DstFloorZ;
     }
   }
-  if (!TeleportMove(Dst))
-  {
-    return false;
-  }
-  if (bIsPlayer && Player.MO == self)
-  {
-    Player.ViewOrg = Origin+vector(0.0, 0.0,
-      PlayerEx(Player).ViewHeight);
-    if (ResetPitch)
-    {
-      Angles.pitch = 0.0;
-    }
+  if (!TeleportMove(Dst)) return false;
+  if (bIsPlayer && Player.MO == self) {
+    Player.ViewOrg = Origin+vector(0.0, 0.0, PlayerEx(Player).ViewHeight);
+    if (ResetPitch) Angles.pitch = 0.0;
   }
   // spawn teleport fog at source and destination
   fogDelta = bMissile ? 0.0 : LineSpecialGameInfo(Level.Game).TeleFogHeight;
-  if (SrcFog)
-  {
-    Spawn(TeleportFog, oldOrg+vector(0.0, 0.0, fogDelta));
-  }
-  if (DstFog)
-  {
-    Spawn(TeleportFog, Origin+vector(20.0*cos(angle),
-      20.0*sin(angle), fogDelta));
-  }
-  if (!KeepDir)
-  {
-    if (bIsPlayer && !FindInventory(PowerWeaponLevel2) &&
-      !FindInventory(PowerSpeed))
-    {
-      //  Don't move for a bit, freeze player for about .5 sec
+  if (SrcFog) Spawn(TeleportFog, oldOrg+vector(0.0, 0.0, fogDelta));
+  if (DstFog) Spawn(TeleportFog, Origin+vector(20.0*cos(angle), 20.0*sin(angle), fogDelta));
+  if (!KeepDir) {
+    if (bIsPlayer && !FindInventory(PowerWeaponLevel2) && !FindInventory(PowerSpeed)) {
+      // don't move for a bit, freeze player for about .5 sec
       ReactionTime = 0.5;
     }
     Angles.yaw = angle;
-    if (bIsPlayer)
-    {
-      Player.bFixAngle = true;
-    }
+    if (bIsPlayer) Player.bFixAngle = true;
   }
   HandleFloorclip();
-  if (bMissile)
-  {
+  if (bMissile) {
     Velocity.x = Speed*cos(angle);
     Velocity.y = Speed*sin(angle);
-  }
-  else if (!KeepDir)  // no fog doesn't alter the player's momentums
-  {
+  } else if (!KeepDir) {
+    // no fog doesn't alter the player's momentums
     Velocity = vector(0.0, 0.0, 0.0);
   }
   return true;
 }
+
 
 //===========================================================================
 //
 //  MoveThing
 //
 //===========================================================================
-
-final override bool MoveThing(TVec Pos, bool Fog)
-{
+final override bool MoveThing (TVec Pos, bool Fog) {
   TVec OldOrg = Origin;
 
   UnlinkFromWorld();
   Origin = Pos;
   LinkToWorld();
-  if (TestLocation())
-  {
-    if (Fog)
-    {
-      Spawn(TeleportFog, Pos+vector(0.0, 0.0,
-        LineSpecialGameInfo(Level.Game).TeleFogHeight));
-
-      Spawn(TeleportFog, OldOrg+vector(0.0, 0.0,
-        LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  if (TestLocation()) {
+    if (Fog) {
+      Spawn(TeleportFog, Pos+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+      Spawn(TeleportFog, OldOrg+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
     }
     return true;
-  }
-  else
-  {
+  } else {
     UnlinkFromWorld();
     Origin = OldOrg;
     LinkToWorld();
@@ -407,26 +310,21 @@ final override bool MoveThing(TVec Pos, bool Fog)
   }
 }
 
+
 //==========================================================================
 //
 //  TestLocation
 //
 //  Returns true if the mobj is not blocked by anything at its current
-// location, otherwise returns false.
+//  location, otherwise returns false.
 //
 //==========================================================================
-
-final bool TestLocation()
-{
-  if (!bColideWithThings && !bColideWithWorld)
-    return true;
-
-  if (CheckPosition(Origin))
-  {
+final bool TestLocation () {
+  if (!bColideWithThings && !bColideWithWorld) return true;
+  if (CheckPosition(Origin)) {
     // XY is ok, now check Z
-    if ((Origin.z < FloorZ) || (Origin.z+Height > CeilingZ))
-    {
-      // Bad Z
+    if ((Origin.z < FloorZ) || (Origin.z+Height > CeilingZ)) {
+      // bad Z
       return false;
     }
     return true;
@@ -434,17 +332,17 @@ final bool TestLocation()
   return false;
 }
 
+
 //==========================================================================
 //
 //  Thrust
 //
 //==========================================================================
-
-final void Thrust(float angle, float move)
-{
+final void Thrust (float angle, float move) {
   Velocity.x += move*cos(angle)*35.0;
   Velocity.y += move*sin(angle)*35.0;
 }
+
 
 //==========================================================================
 //
@@ -455,39 +353,24 @@ final void Thrust(float angle, float move)
 // needs to turn.
 //
 //==========================================================================
-
-int FaceActor(EntityEx target, out float delta)
-{
-  float diff;
-  float angle1;
-  float angle2;
-
-  angle1 = Angles.yaw;
-  angle2 = atan2(target.Origin.y-Origin.y, target.Origin.x-Origin.x);
-  if (angle2 > angle1)
-  {
-    diff = AngleMod360(angle2-angle1);
-    if (diff > 180.0)
-    {
+int FaceActor (EntityEx target, out float delta) {
+  float angle1 = Angles.yaw;
+  float angle2 = atan2(target.Origin.y-Origin.y, target.Origin.x-Origin.x);
+  if (angle2 > angle1) {
+    float diff = AngleMod360(angle2-angle1);
+    if (diff > 180.0) {
       delta = 360.0-diff;
       return 0;
-    }
-    else
-    {
+    } else {
       delta = diff;
       return 1;
     }
-  }
-  else
-  {
-    diff = AngleMod360(angle1-angle2);
-    if (diff > 180.0)
-    {
+  } else {
+    float diff = AngleMod360(angle1-angle2);
+    if (diff > 180.0) {
       delta = 360.0-diff;
       return 1;
-    }
-    else
-    {
+    } else {
       delta = diff;
       return 0;
     }
@@ -630,25 +513,19 @@ final override float GetStateTime (state AState, float AStateTime) {
 //  NightmareRespawn
 //
 //==========================================================================
-
-final void NightmareRespawn()
-{
-  float x;
-  float y;
+final void NightmareRespawn () {
   float z;
-  EntityEx A;
 
-  SkillRespawnCount++;
+  ++SkillRespawnCount;
 
-  x = SpawnPoint.x;
-  y = SpawnPoint.y;
+  float x = SpawnPoint.x;
+  float y = SpawnPoint.y;
 
   // somthing is occupying it's position?
-  if (!CheckPosition(vector(x, y, ONFLOORZ)))
-    return; // no respwan
+  if (!CheckPosition(vector(x, y, ONFLOORZ))) return; // no respwan
 
   // spawn a teleport fog at old spot
-  A = Spawn(TeleportFog, vector(Origin.x, Origin.y, ONFLOORZ));
+  EntityEx A = Spawn(TeleportFog, vector(Origin.x, Origin.y, ONFLOORZ));
   A.Origin.z += LineSpecialGameInfo(Level.Game).TeleFogHeight;
 
   // spawn a teleport fog at the new spot
@@ -658,24 +535,19 @@ final void NightmareRespawn()
   // spawn the new monster
 
   // spawn it
-  if (bSpawnCeiling)
-    z = ONCEILINGZ;
-  else
-    z = ONFLOORZ;
+  if (bSpawnCeiling) z = ONCEILINGZ; else z = ONFLOORZ;
 
   // inherit attributes from deceased one
   A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, false);
   Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
   A.Angles.yaw = itof(45*(SpawnPoint.angle/45));
 
-  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_AMBUSH)
-    A.bAmbush = true;
-  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_STANDSTILL)
-    A.bStanding = true;
+  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_AMBUSH) A.bAmbush = true;
+  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_STANDSTILL) A.bStanding = true;
 
   A.ReactionCount = 18;
 
-  //  Copy custom translation
+  // copy custom translation
   A.Translation = Translation;
 
   A.SkillRespawnCount = SkillRespawnCount;
@@ -684,19 +556,16 @@ final void NightmareRespawn()
   Destroy();
 }
 
+
 //==========================================================================
 //
 //  Touch
 //
 //==========================================================================
-
-override bool Touch(Entity InOther)
-{
+override bool Touch (Entity InOther) {
   bool solid;
   int damage;
-  EntityEx Other;
-
-  Other = EntityEx(InOther);
+  EntityEx Other = EntityEx(InOther);
 
   // for Korax Arena
   if (Other.IsTouched(self)) {
@@ -716,18 +585,18 @@ override bool Touch(Entity InOther)
 
   // touchy object is alive, toucher is solid
   if (Other.bTouchy && bSolid && Other.Health > 0 &&
-    // Thing is an armed mine or a sentient thing
-    (Other.bArmed || Other.IsSentient()) &&
-    // either different classes or players
-    (Other.bIsPlayer || Other.Class != Class) &&
-    // or different species if DONTHARMSPECIES
-     (!(Other.bDontHurtSpecies) || Other.GetSpecies() != GetSpecies()) &&
-     // touches vertically
-     Other.Origin.z+Other.Height >= Origin.z && Origin.z+Height >= Other.Origin.z &&
-     // prevents lost souls from exploding when fired by pain elementals
-     (Other.Master != self && Master != Other))
-  // Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
-  // but different classes trigger the touchiness, but that seems less straightforwards.
+      // thing is an armed mine or a sentient thing
+      (Other.bArmed || Other.IsSentient()) &&
+      // either different classes or players
+      (Other.bIsPlayer || Other.Class != Class) &&
+      // or different species if DONTHARMSPECIES
+      (!(Other.bDontHurtSpecies) || Other.GetSpecies() != GetSpecies()) &&
+      // touches vertically
+      Other.Origin.z+Other.Height >= Origin.z && Origin.z+Height >= Other.Origin.z &&
+      // prevents lost souls from exploding when fired by pain elementals
+      (Other.Master != self && Master != Other))
+  // difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
+  // but different classes trigger the touchiness, but that seems less straightforwards
   {
     bArmed = false; // Disarm
     Other.SpawnExploBloodAtHead(Other.Health, self);
@@ -749,20 +618,14 @@ override bool Touch(Entity InOther)
   }*/
 
   // check for skulls slamming into things
-  if (bSkullFly)
-  {
-    return Slam(Other);
-  }
+  if (bSkullFly) return Slam(Other);
 
-  // Check for blasted thing running into another
-  if (bBlasted && Other.bShootable)
-  {
-    if (!Other.bBoss && Other.bMonster)
-    {
+  // check for blasted thing running into another
+  if (bBlasted && Other.bShootable) {
+    if (!Other.bBoss && Other.bMonster) {
       Other.Velocity.x += Velocity.x;
       Other.Velocity.y += Velocity.y;
-      if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0)
-      {
+      if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
         damage = (ftoi(fmax(0, Mass))/100)+1;
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, self, damage);
@@ -775,99 +638,56 @@ override bool Touch(Entity InOther)
   }
 
   // missiles can hit other things
-  if (bMissile)
-  {
-    // Check for a non-shootable mobj
-    if (Other.bNonShootable)
-    {
-      return true;
-    }
-    // Check for passing through a ghost
-    if (Other.bGhost && bThruGhost)
-    {
-      return true;
+  if (bMissile) {
+    // check for a non-shootable mobj
+    if (Other.bNonShootable) return true;
+    // check for passing through a ghost
+    if (Other.bGhost && bThruGhost) return true;
+
+    if (bMThruSpecies && Target && (Target.GetSpecies() == GetSpecies())) return true;
+
+    if ((BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) && MissileDamage == 0) {
+      return (Target == Other || !Other.bSolid);
     }
 
-    if (bMThruSpecies && Target && (Target.GetSpecies() == GetSpecies()))
-    {
-      return true;
+    switch (SpecialMissileHit(Other)) {
+      case 0: return false;
+      case 1: return true;
     }
 
-    if ((BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) &&
-      MissileDamage == 0)
-    {
-      return Target == Other || !Other.bSolid;
-    }
-
-    switch (SpecialMissileHit(Other))
-    {
-      case 0:
-        return false;
-      case 1:
-        return true;
-    }
-
-    if (Target)
-    {
-      // Don't hit same species as originator.
-      if (Other == Target)
-      {
-        // Don't missile self
-        return true;
-      }
-      //  Let players missile other players.
-      if (!Target.bIsPlayer && !Other.bIsPlayer)
-      {
+    if (Target) {
+      // don't hit same species as originator
+      if (Other == Target) return true; // don't missile self
+      // let players missile other players
+      if (!Target.bIsPlayer && !Other.bIsPlayer) {
         int Inf = Target.GetInfighting();
-        if (Inf < 0)
-        {
-          //  Monsters can't hurt each other, but make exception
-          // depending on friendliness and hate status.
-          if (Target.bShootable)
-          {
-            if (!Other.bMonster)
-            {
-              return false;
-            }
-            //  Hostile monsters can always hurt each other.
-            if (!Other.IsHostile(Target))
-            {
-              //  The same if the shooter hates the target.
-              if (!Other.TID || Target.TIDToHate != Other.TID)
-              {
-                return false;
-              }
+        if (Inf < 0) {
+          // monsters can't hurt each other, but make exception
+          // depending on friendliness and hate status
+          if (Target.bShootable) {
+            if (!Other.bMonster) return false;
+            // hostile monsters can always hurt each other
+            if (!Other.IsHostile(Target)) {
+              // the same if the shooter hates the target
+              if (!Other.TID || Target.TIDToHate != Other.TID) return false;
             }
           }
-        }
-        else if (Inf == 0)
-        {
+        } else if (Inf == 0) {
           //print("TOUCH: self=%n; other=%n; inf=%d", GetClassName(Class), GetClassName(Other.Class), Inf);
-          if (Other.IsFriend(Target))
-          {
-            //  Don't hurt friends.
-            return false;
-          }
+          if (Other.IsFriend(Target)) return false; // don't hurt friends
           //print("  not friends");
-          if (Other.TIDToHate && Other.TIDToHate == Target.TIDToHate)
-          {
-            //  Don't hurt monsters that hate the same thing as you do.
+          if (Other.TIDToHate && Other.TIDToHate == Target.TIDToHate) {
+            // don't hurt monsters that hate the same thing as you do
             return false;
           }
           //print("  hates");
           //print("  species: target is '%n', other is '%n'", Target.GetSpecies(), Other.GetSpecies());
           //print("  species: target is '%s', other is '%s'", string(Target.GetSpecies()), string(Other.GetSpecies()));
-          if (Target.GetSpecies() == Other.GetSpecies())
-          {
-            //  Don't hurt same species, but only if the target
-            // isn't one's hostile.
-            if (!Other.IsHostile(Target))
-            {
-              //  Allow hurting monsters the shooter hates.
-              if (Other.TID == 0 || Target.TIDToHate != Other.TID)
-              {
-                return false;
-              }
+          if (Target.GetSpecies() == Other.GetSpecies()) {
+            // don't hurt same species, but only if the target isn't one's hostile
+            if (!Other.IsHostile(Target)) {
+              // allow hurting monsters the shooter hates
+              if (Other.TID == 0 || Target.TIDToHate != Other.TID) return false;
             }
           }
           //print("  different species");
@@ -875,33 +695,23 @@ override bool Touch(Entity InOther)
       }
     }
 
-    if (!Other.bShootable)
-    {
-      // didn't do any damage
-      return !Other.bSolid;
-    }
+    if (!Other.bShootable) return !Other.bSolid; // didn't do any damage
 
-    //  Don't hit spectres with non-sigil weapons.
-    if (Other.bSpectral && !bSpectral)
-    {
-      return true;
-    }
-    if (bRip && !Other.bDontRip)
-    {
-      if (!bNoBossRip || !Other.bBoss)
-      {
-        if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable)
-        {
-          // Ok to spawn some blood
+    // don't hit spectres with non-sigil weapons
+    if (Other.bSpectral && !bSpectral) return true;
+
+    if (bRip && !Other.bDontRip) {
+      if (!bNoBossRip || !Other.bBoss) {
+        if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
+          // ok to spawn some blood
           SpawnRipperBlood();
         }
         PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
         damage = GetMissileDamage(3, 2);
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, Target, damage, DamageType);
-        if (Other.bPushable && !bCannotPush)
-        {
-          // Push thing
+        if (Other.bPushable && !bCannotPush) {
+          // push thing
           Other.Velocity.x += Velocity.x/4.0;
           Other.Velocity.y += Velocity.y/4.0;
         }
@@ -912,11 +722,10 @@ override bool Touch(Entity InOther)
 
     // damage / explode
     damage = GetMissileDamage(bStrifeDamage ? 3 : 7, 1);
-    if (damage > 0)
-    {
+    if (damage > 0) {
       if (bBloodSplatter && !Other.bNoBlood && !Other.bReflective &&
-        !Other.bInvulnerable && !Other.bDormant &&
-        !bBloodlessImpact && P_Random() < 192)
+          !Other.bInvulnerable && !Other.bDormant &&
+          !bBloodlessImpact && P_Random() < 192)
       {
         TVec org = self.Origin;
         if (self.Radius > 0) org.z += self.Radius/2.0;
@@ -929,33 +738,26 @@ override bool Touch(Entity InOther)
     return false;
   }
 
-  if (Other.bPushable && !bCannotPush)
-  {
-    // Push thing
+  if (Other.bPushable && !bCannotPush) {
+    // push thing
     Other.Velocity.x += Velocity.x/4.0;
     Other.Velocity.y += Velocity.y/4.0;
   }
 
-  solid = Other.bSolid &&
-      Other.bColideWithThings &&
-      bSolid;
+  solid = (Other.bSolid && Other.bColideWithThings && bSolid);
 
   // check for special pickup
-  if (Other.bSpecial /*&&
-    Other.Origin.z < Origin.z + Height - MaxStepHeight*/)
-  {
-    if (Other.bDehackedSpecial)
-    {
+  if (Other.bSpecial /*&& Other.Origin.z < Origin.z+Height-MaxStepHeight*/) {
+    if (Other.bDehackedSpecial) {
       Other.TouchDehackedSpecial(self);
-    }
-    else
-    {
-      Other.TouchSpecial(self); // Can remove thing
+    } else {
+      Other.TouchSpecial(self); // can remove thing
     }
   }
 
   return !solid;
 }
+
 
 //==========================================================================
 //
@@ -964,34 +766,26 @@ override bool Touch(Entity InOther)
 //  For Korax Arena
 //
 //==========================================================================
-
-bool IsTouched(Entity Toucher)
-{
+bool IsTouched (Entity Toucher) {
   return false;
 }
+
 
 //===========================================================================
 //
 //  Slam
 //
 //===========================================================================
-
-bool Slam(EntityEx Other)
-{
+bool Slam (EntityEx Other) {
   bSkullFly = false;
   Velocity = vector(0.0, 0.0, 0.0);
-
-  if (Health > 0)
-  {
-    if (!bDormant)
-    {
+  if (Health > 0) {
+    if (!bDormant) {
       int damage = GetMissileDamage(7, 1);
       if (damage > 0) Other.SpawnBloodAtHead(damage, Origin);
       Other.Damage(self, self, damage, 'Melee');
       SetState(SeeState ? SeeState : IdleState);
-    }
-    else
-    {
+    } else {
       SetState(IdleState);
       StateTime = -1.0;
     }
@@ -999,53 +793,43 @@ bool Slam(EntityEx Other)
   return false; // stop moving
 }
 
+
 //==========================================================================
 //
 //  GetMissileDamage
 //
 //==========================================================================
-
-int GetMissileDamage(int Mask, int Add)
-{
-  if (!MissileDamage)
-  {
-    return 0;
-  }
-  if (!Mask)
-  {
-    return Add*MissileDamage;
-  }
+int GetMissileDamage (int Mask, int Add) {
+  if (!MissileDamage) return 0;
+  if (!Mask) return Add*MissileDamage;
   return ((P_Random()&Mask)+Add)*MissileDamage;
 }
+
 
 //==========================================================================
 //
 //  SpecialMissileHit
 //
 //==========================================================================
-
-int SpecialMissileHit(EntityEx Other)
-{
+int SpecialMissileHit (EntityEx Other) {
   return -1;
 }
+
 
 //==========================================================================
 //
 //  GetSpecies
 //
 //==========================================================================
-
-name GetSpecies()
-{
+name GetSpecies () {
   if (Species) return name(Species);
 
   class Ret = Class;
   //  Go up in the inheritance hierarchy while there's a monster flag
   // and use the top one as species.
-  if (bMonster)
-  {
+  if (bMonster) {
     while (class!EntityEx(GetClassParent(Ret)) &&
-      class!EntityEx(GetClassParent(Ret)).default.bMonster)
+           class!EntityEx(GetClassParent(Ret)).default.bMonster)
     {
       Ret = GetClassParent(Ret);
     }
@@ -1053,93 +837,73 @@ name GetSpecies()
   return GetClassName(Ret);
 }
 
+
 //===========================================================================
 //
 //  CheckForPushSpecial
 //
 //===========================================================================
-
-final override void CheckForPushSpecial(line_t *line, int side)
-{
-  if (!bNoTrigger)
-  {
-    if (bActivatePushWall)
-    {
-      LineSpecialLevelInfo(Level).ActivateLine(line, self, side,
-        SPAC_Push);
-    }
-    else if (bActivateImpact)
-    {
+final override void CheckForPushSpecial (line_t *line, int side) {
+  if (!bNoTrigger) {
+    if (bActivatePushWall) {
+      LineSpecialLevelInfo(Level).ActivateLine(line, self, side, SPAC_Push);
+    } else if (bActivateImpact) {
       LineSpecialLevelInfo(Level).ActivateLine(line,
-        Level.bMissilesActivateImpact || !bMissile || !Target ?
-        self : Target, side, SPAC_Impact);
+        Level.bMissilesActivateImpact || !bMissile || !Target ? self : Target, side, SPAC_Impact);
     }
   }
 }
+
 
 //==========================================================================
 //
 //  BlastedHitLine
 //
 //==========================================================================
-
-final override void BlastedHitLine()
-{
+final override void BlastedHitLine () {
   int damage = ftoi(fmax(0, Mass))>>5;
   if (damage > 0) SpawnExploBloodAtHead(damage);
   Damage(none, none, damage);
 }
+
 
 //==========================================================================
 //
 //  CrossSpecialLine
 //
 //==========================================================================
-
-final override void CrossSpecialLine(line_t *ld, int side)
-{
-  if (!bNoTrigger)
-  {
-    if (bIsPlayer)
-    {
+final override void CrossSpecialLine (line_t *ld, int side) {
+  if (!ld) return; //k8: just in case
+  if (!bNoTrigger) {
+    if (bIsPlayer) {
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_Cross);
-    }
-    else if (bActivateMCross)
-    {
+    } else if (bActivateMCross) {
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_MCross);
-    }
-    else if (bActivatePCross)
-    {
+    } else if (bActivatePCross) {
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_PCross);
-    }
-    else if (ld->special == LNSPEC_Teleport ||
-      ld->special == LNSPEC_TeleportNoFog ||
-      ld->special == LNSPEC_TeleportLine)
+    } else if (ld->special == LNSPEC_Teleport ||
+               ld->special == LNSPEC_TeleportNoFog ||
+               ld->special == LNSPEC_TeleportLine)
     {
-      //  Teleport hack
+      // teleport hack
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_MCross);
-    }
-    else
-    {
+    } else {
       LineSpecialLevelInfo(Level).ActivateLine(ld, self, side, SPAC_AnyCross);
     }
   }
 }
+
 
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-bool Activate(EntityEx Activator)
-{
+bool Activate (EntityEx Activator) {
   //print("*** ACTIVATING THING %C (tid=%s); bMonster=%B; bDormant=%B; Target=%C; Master=%C; Tracer=%C", self, TID, bMonster, bDormant, Target, Master, Tracer);
-  if (bMonster)
-  {
+  if (bMonster) {
     // Monster
-    if (bDormant)
-    {
+    if (bDormant) {
       bDormant = false;
       StateTime = 0.1;
       return true;
@@ -1148,27 +912,21 @@ bool Activate(EntityEx Activator)
   return false;
 }
 
+
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-bool Deactivate(EntityEx Activator)
-{
-  if (bMonster)
-  {
+bool Deactivate (EntityEx Activator) {
+  if (bMonster) {
     // Monster
-    if (!bDormant)
-    {
+    if (!bDormant) {
       bDormant = true;
       state S = FindState('Inactive');
-      if (S)
-      {
+      if (S) {
         SetState(S);
-      }
-      else
-      {
+      } else {
         StateTime = -1.0;
       }
       return true;
@@ -1177,40 +935,22 @@ bool Deactivate(EntityEx Activator)
   return false;
 }
 
+
 //==========================================================================
 //
 //  FaceMovementDirection
 //
 //==========================================================================
-
-final void FaceMovementDirection()
-{
-  switch (MoveDir)
-  {
-  case DI_EAST:
-    Angles.yaw = 0.0;
-    break;
-  case DI_NORTHEAST:
-    Angles.yaw = 45.0;
-    break;
-  case DI_NORTH:
-    Angles.yaw = 90.0;
-    break;
-  case DI_NORTHWEST:
-    Angles.yaw = 135.0;
-    break;
-  case DI_WEST:
-    Angles.yaw = 180.0;
-    break;
-  case DI_SOUTHWEST:
-    Angles.yaw = 225.0;
-    break;
-  case DI_SOUTH:
-    Angles.yaw = 270.0;
-    break;
-  case DI_SOUTHEAST:
-    Angles.yaw = 315.0;
-    break;
+final void FaceMovementDirection () {
+  switch (MoveDir) {
+    case DI_EAST: Angles.yaw = 0.0; break;
+    case DI_NORTHEAST: Angles.yaw = 45.0; break;
+    case DI_NORTH: Angles.yaw = 90.0; break;
+    case DI_NORTHWEST: Angles.yaw = 135.0; break;
+    case DI_WEST: Angles.yaw = 180.0; break;
+    case DI_SOUTHWEST: Angles.yaw = 225.0; break;
+    case DI_SOUTH: Angles.yaw = 270.0; break;
+    case DI_SOUTHEAST: Angles.yaw = 315.0; break;
   }
 }
 
@@ -1249,8 +989,6 @@ override void OnMapSpawn (mthing_t *mthing) {
   SetInitialState(IdleState);
 
   if (mthing) {
-    float x, y, z;
-
     if (bNoDeathmatch && Level.Game.deathmatch) {
       Destroy();
       return;
@@ -1258,8 +996,9 @@ override void OnMapSpawn (mthing_t *mthing) {
 
     Level.CopyMThing(mthing, &SpawnPoint);
 
-    x = mthing->x;
-    y = mthing->y;
+    float x = mthing->x;
+    float y = mthing->y;
+    float z;
          if (bSpawnCeiling) z = ONCEILINGZ;
     else if (bSpawnFloat) z = FLOATRANDZ;
     else if (bFloatBob) z = mthing->height;
@@ -1332,97 +1071,74 @@ override void OnMapSpawn (mthing_t *mthing) {
 
 //==========================================================================
 //
-// CanSeek
+//  CanSeek
 //
-// Checks if a seeker missile can home in on its target
+//  Checks if a seeker missile can home in on its target
 //
 //==========================================================================
-
-bool CanSeek(EntityEx Targ)
-{
-  if (Targ.bCantSeek)
-  {
-    return false;
-  }
-
-  if (bDontSeekInvisible && (Targ.bShadow || Targ.bGhost))
-  {
-     return false;
-  }
+bool CanSeek (EntityEx Targ) {
+  if (Targ.bCantSeek) return false;
+  if (bDontSeekInvisible && (Targ.bShadow || Targ.bGhost)) return false;
   return true;
 }
+
 
 //==========================================================================
 //
 //  SeekerMissile
 //
-//  The missile Tracer field must be Actor target. Returns true if
-// target was tracked, false if not.
+//  the missile Tracer field must be Actor target
+//  returns true if target was tracked, false if not
 //
 //==========================================================================
-
-final bool SeekerMissile(float thresh, float turnMax, optional bool precise, optional bool curspeed)
-{
-  int dir;
+final bool SeekerMissile (float thresh, float turnMax, optional bool precise, optional bool curspeed) {
   float dist;
   float delta;
-  float angle;
 
-  if (!Tracer)
-  {
-    return false;
-  }
-  if (!Tracer.bShootable)
-  {
-    // Target died
+  if (!Tracer) return false;
+  if (!Tracer.bShootable) {
+    // target died
     Tracer = none;
     return false;
   }
-  dir = FaceActor(Tracer, delta);
-  if (delta > thresh)
-  {
+
+  int dir = FaceActor(Tracer, delta);
+  if (delta > thresh) {
     delta /= 2.0;
-    if (delta > turnMax)
-    {
-      delta = turnMax;
-    }
+    if (delta > turnMax) delta = turnMax;
   }
-  if (dir)
-  {
-    // Turn clockwise
+  if (dir) {
+    // turn clockwise
     Angles.yaw = AngleMod360(Angles.yaw+delta);
-  }
-  else
-  {
-    // Turn counter clockwise
+  } else {
+    // turn counter clockwise
     Angles.yaw = AngleMod360(Angles.yaw-delta);
   }
-  angle = Angles.yaw;
+
+  float angle = Angles.yaw;
+
   //k8: is this right?
   if (!curspeed) {
-    if (!precise)
-    {
+    if (!precise) {
       Velocity.x = Speed*cos(angle);
       Velocity.y = Speed*sin(angle);
       if (Origin.z+Height < Tracer.Origin.z ||
-        Tracer.Origin.z+Tracer.Height < Origin.z)
+          Tracer.Origin.z+Tracer.Height < Origin.z)
       {
-        // Need to seek vertically
+        // need to seek vertically
         dist = DistTo2(Tracer);
         dist = dist/Speed;
         if (dist < 1.0 || !dist.isfinite) dist = 1.0;
         Velocity.z = (Tracer.Origin.z+Tracer.Height/2.0-Origin.z-Height/2.0)/dist;
       }
-    }
-    else
-    {
-      // Need to seek vertically
+    } else {
+      // need to seek vertically
       TVec d = vector(Tracer.Origin.x-Origin.x, Tracer.Origin.y-Origin.y, 0.0);
       //dist = Length(d) > 1.0 ? Length(d) : 1.0;
       dist = fmax(1.0, Length(d));
       if (!dist.isfinite) dist = 1.0;
 
-      // Aim at a player's eyes and at the middle of the actor for everything else.
+      // aim at a player's eyes and at the middle of the actor for everything else.
       float aimheight = Tracer.Height/2.0;
       if (Tracer.bIsPlayer) aimheight = PlayerEx(Tracer.Player).ViewHeight;
       float pitch = atan2((Tracer.Origin.z+aimheight)-(Origin.z+Height/2.0), fabs(dist));
@@ -1433,123 +1149,89 @@ final bool SeekerMissile(float thresh, float turnMax, optional bool precise, opt
       Velocity.z = Speed*sin(pitch);
     }
   }
+
   return true;
 }
+
 
 //==========================================================================
 //
 //  PlayActiveSound
 //
 //==========================================================================
-
-void PlayActiveSound()
-{
-  if (ActiveSound)
-  {
-    PlaySound(ActiveSound, CHAN_VOICE, 1.0,
-      bFullVolActive ? ATTN_NONE : ATTN_NORMAL);
+void PlayActiveSound () {
+  if (ActiveSound) {
+    PlaySound(ActiveSound, CHAN_VOICE, 1.0, (bFullVolActive ? ATTN_NONE : ATTN_NORMAL));
   }
 }
+
 
 //==========================================================================
 //
 //  DropItem
 //
 //==========================================================================
+final EntityEx DropItem (class!EntityEx type, int amount, float chance, optional TVec dropofs) {
+  if (Random() > chance) return none;
 
-final EntityEx DropItem(class!EntityEx type, int amount, float chance, optional TVec dropofs)
-{
-  EntityEx  A;
-
-  if (Random() > chance)
-  {
-    return none;
-  }
   float DropZ = 0.0;
   if (!Level.CompatNoTossDrops) DropZ = Height/2.0;
   if (!specified_dropofs) dropofs = vector(0.0, 0.0, DropZ);
-  A = Spawn(type, Origin+dropofs);
+  EntityEx A = Spawn(type, Origin+dropofs);
   //A = Spawn(type, Origin + vector(0.0, 0.0, DropZ));
-  if (A.bSpecial)
-  {
-    A.bDropped = true;  // special versions of items
+  if (A.bSpecial) A.bDropped = true; // special versions of items
+
+  if (Inventory(A)) {
+    Inventory Item = Inventory(A);
+    if (amount > 0) {
+      Item.Amount = amount;
+    } else if (Ammo(Item)) {
+      // half ammo when dropped by bad guys
+      if (Ammo(Item).DropAmount) {
+        Item.Amount = Ammo(Item).DropAmount;
+      } else {
+        Item.Amount = Item.Amount/2;
+        if (Item.Amount < 1) Item.Amount = 1;
+      }
+    } else if (Weapon(Item)) {
+      // the same from dropped weapons
+      if (Weapon(Item).AmmoGive1 != 0) {
+        Weapon(Item).AmmoGive1 = Weapon(Item).AmmoGive1/2;
+        if (Weapon(Item).AmmoGive1 < 1) Weapon(Item).AmmoGive1 = 1;
+      }
+      if (Weapon(Item).AmmoGive2 != 0) {
+        Weapon(Item).AmmoGive2 = Weapon(Item).AmmoGive2/2;
+        if (Weapon(Item).AmmoGive2 < 1) Weapon(Item).AmmoGive2 = 1;
+      }
+    }
+    if (Item.SpecialDropAction(self)) return none;
   }
 
-  if (Inventory(A))
-  {
-    Inventory Item = Inventory(A);
-    if (amount > 0)
-    {
-      Item.Amount = amount;
-    }
-    else if (Ammo(Item))
-    {
-      //  Half ammo when dropped by bad guys.
-      if (Ammo(Item).DropAmount)
-      {
-        Item.Amount = Ammo(Item).DropAmount;
-      }
-      else
-      {
-        Item.Amount = Item.Amount/2;
-        if (Item.Amount < 1)
-        {
-          Item.Amount = 1;
-        }
-      }
-    }
-    else if (Weapon(Item))
-    {
-      //  The same fror dropped weapons.
-      if (Weapon(Item).AmmoGive1 != 0)
-      {
-        Weapon(Item).AmmoGive1 = Weapon(Item).AmmoGive1/2;
-        if (Weapon(Item).AmmoGive1 < 1)
-        {
-          Weapon(Item).AmmoGive1 = 1;
-        }
-      }
-      if (Weapon(Item).AmmoGive2 != 0)
-      {
-        Weapon(Item).AmmoGive2 = Weapon(Item).AmmoGive2/2;
-        if (Weapon(Item).AmmoGive2 < 1)
-        {
-          Weapon(Item).AmmoGive2 = 1;
-        }
-      }
-    }
-    if (Item.SpecialDropAction(self))
-    {
-      return none;
-    }
-  }
-  if (!Level.CompatNoTossDrops)
-  {
+  if (!Level.CompatNoTossDrops) {
     A.Velocity.x = (Random()-Random())*35.0;
     A.Velocity.y = (Random()-Random())*35.0;
     A.Velocity.z = (5.0+Random()*4.0)*35.0;
   }
+
   return A;
 }
+
 
 //==========================================================================
 //
 //  NoBlockingSet
 //
 //==========================================================================
-
-void NoBlockingSet()
-{
+void NoBlockingSet () {
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
+override void Tick (float deltaTime) {
   //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK!", self);
 
   if (bIsPlayer && GetCvarB('k8TraceDebug')) {
@@ -1579,31 +1261,23 @@ override void Tick(float deltaTime)
     Item.DoEffect();
   }
 
-  if (bVisibilityPulse)
-  {
-    //  Pulse visibility in and out
-    if (VisDir > 0)
-    {
+  if (bVisibilityPulse) {
+    // pulse visibility in and out
+    if (VisDir > 0) {
       Alpha += 0.75*deltaTime;
-      if (Alpha > 1.0)
-      {
+      if (Alpha > 1.0) {
         Alpha = 1.0;
         VisDir = -1;
       }
-    }
-    else
-    {
+    } else {
       Alpha -= 0.75*deltaTime;
-      if (Alpha <= 0.25)
-      {
+      if (Alpha <= 0.25) {
         Alpha = 0.25;
         VisDir = 1;
       }
     }
-  }
-  else if (bStealth)
-  {
-    //  Fade a stealth monster in and out of visibility
+  } else if (bStealth) {
+    // fade a stealth monster in and out of visibility
     if (GetCvarB('fuck_stealth_monsters')) {
       Alpha = 1.0;
     } else if (VisDir > 0) {
@@ -1621,64 +1295,37 @@ override void Tick(float deltaTime)
     }
   }
 
-  if (JumpTime)
-  {
+  if (JumpTime) {
     JumpTime -= deltaTime;
-    if (JumpTime <= 0.0)
-    {
-      JumpTime = 0.0;
-    }
+    if (JumpTime <= 0.0) JumpTime = 0.0;
   }
 
-  if (!Physics(deltaTime))
-  {
-    return;
-  }
+  if (!Physics(deltaTime)) return;
 
-  // Cycle through states, calling action functions at transitions
-  if (StateTime != -1.0)
-  {
+  // cycle through states, calling action functions at transitions
+  if (StateTime != -1.0) {
     //if (self isa PlayerPawn) print("*** PLAYERPAWN(%C): TICK! 000", self);
-    if (!AdvanceState(deltaTime))
-    {
+    if (!AdvanceState(deltaTime)) {
       // freed itself
       //if (self isa PlayerPawn) print("*** *** PLAYERPAWN(%C): TICK! 001", self);
       return;
     }
-  }
-  else
-  {
-    // Check for nightmare respawn
-    if (!bAlwaysRespawn)
-    {
-      if (!bMonster || bDormant || bNeverRespawn)
-      {
-        return;
-      }
-      if (!LineSpecialGameInfo(Level.Game).RespawnTime)
-      {
-        return;
-      }
+  } else {
+    // check for nightmare respawn
+    if (!bAlwaysRespawn) {
+      if (!bMonster || bDormant || bNeverRespawn) return;
+      if (!LineSpecialGameInfo(Level.Game).RespawnTime) return;
       if (Level.World.SkillRespawnLimit > 0 &&
-        SkillRespawnCount >= Level.World.SkillRespawnLimit)
+          SkillRespawnCount >= Level.World.SkillRespawnLimit)
       {
         return;
       }
     }
 
-    MoveCount++;
-    if (MoveCount < ftoi(LineSpecialGameInfo(Level.Game).RespawnTime*35.0))
-    {
-      return;
-    }
-    if (XLevel.TicTime&31)
-    {
-      return;
-    }
-    if (P_Random() > 4)
-    {
-      return;
-    }
+    ++MoveCount;
+    if (MoveCount < ftoi(LineSpecialGameInfo(Level.Game).RespawnTime*35.0)) return;
+    if (XLevel.TicTime&31) return;
+    if (P_Random() > 4) return;
     NightmareRespawn();
   }
 }
@@ -1776,25 +1423,19 @@ final override bool SectorChanged (int CrushChange) {
 //  ClientTick
 //
 //==========================================================================
-
-override void ClientTick(float DeltaTime)
-{
+override void ClientTick (float DeltaTime) {
   dlight_t *dl;
-  TVec    fv;
-  int     i, c;
-  float   r = 0.0;
-  bool    alt = false;
+  TVec fv;
+  int i, c;
+  float r = 0.0;
+  bool alt = false;
 
-  if (bInvisible || bNoSector)
-  {
-    return;
-  }
+  if (bInvisible || bNoSector) return;
 
   DoStateEffects(DeltaTime);
 
-  if (bDynamicLight)
-  {
-    // Update dynamic lights
+  if (bDynamicLight) {
+    // update dynamic lights
     dl = AllocDlight(self, Origin);
     if (dl) {
       //dl->origin = Origin;
@@ -1807,11 +1448,9 @@ override void ClientTick(float DeltaTime)
     }
   }
 
-  if (bLeaveTrail)
-  {
+  if (bLeaveTrail) {
     c = P_Random()>>1;
-    if (P_Random() > 180)
-    {
+    if (P_Random() > 180) {
       r = Random()*8.0;
       alt = true;
     }
@@ -1820,8 +1459,7 @@ override void ClientTick(float DeltaTime)
           0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5,  r);
     }
   }
-  if (bLeaveTrail2)
-  {
+  if (bLeaveTrail2) {
     c = P_Random()>>1;
     if (GetCvarB('r_particle_trails')) {
       LineSpecialLevelInfo(Level).ParticleEffect(6,
@@ -1833,47 +1471,40 @@ override void ClientTick(float DeltaTime)
   }
 }
 
+
 //==========================================================================
 //
 //  DoStateEffects
 //
 //==========================================================================
-
-final void DoStateEffects(float DeltaTime)
-{
-  array!(LightEffectDef *)    Lights;
+final void DoStateEffects (float DeltaTime) {
+  array!(LightEffectDef *) Lights;
   array!(ParticleEffectDef *) Particles;
-  int             i;
-  TVec            Forward;
-  TVec            Right;
-  TVec            Up;
-  float           LightTime;
-  float           max;
 
   GetStateEffects(Lights, Particles);
-  if (!Lights.Num && !Particles.Num)
-  {
-    return;
-  }
+  if (!Lights.Num && !Particles.Num) return;
+
+  TVec Forward;
+  TVec Right;
+  TVec Up;
+  float LightTime;
+  float max;
 
   AngleVectors(Angles, out Forward, out Right, out Up);
 
-  if (!bStaticLightSpwned)
-  {
-    //  Dynamic lights.
-    for (i = 0; i < Lights.Num; i++)
-    {
+  if (!bStaticLightSpwned) {
+    // dynamic lights
+    foreach (auto i; 0..Lights.length) {
       LightEffectDef *L = Lights[i];
       TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
       dlight_t *dl = AllocDlight(self, lorg);
       if (!dl) continue; // alas
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
-      switch (L->Type)
-      {
+      switch (L->Type) {
         case DynamicLight::DLTYPE_Point:
         case DynamicLight::DLTYPE_Subtractive:
           dl->decay = XLevel.Time+300.0;
-          dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
+          dl->radius = (prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time);
           dl->radius += XLevel.Time*dl->decay;
           if (dl->radius > L->Radius) dl->radius = L->Radius;
           dl->type = L->Type;
@@ -1881,20 +1512,16 @@ final void DoStateEffects(float DeltaTime)
         case DynamicLight::DLTYPE_MuzzleFlash:
           max = (L->Radius+Random()*(L->Radius2-L->Radius));
           dl->decay = XLevel.Time+80.0;
-          dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
+          dl->radius = (prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time);
           dl->radius += XLevel.Time*dl->decay;
-          if (dl->radius > max)
-            dl->radius = max;
+          if (dl->radius > max) dl->radius = max;
           break;
         case DynamicLight::DLTYPE_Pulse:
           dl->decay = XLevel.Time+150.0;
-          // Avoid division by 0
-          float PulseCycle = L->Interval ? L->Interval/35.0 : 1.0/35.0;
+          // avoid division by 0
+          float PulseCycle = (L->Interval ? L->Interval/35.0 : 1.0/35.0);
           LightTime += DeltaTime;
-          if (LightTime >= PulseCycle)
-          {
-            LightTime = 0.0;
-          }
+          if (LightTime >= PulseCycle) LightTime = 0.0;
           float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
           dl->radius = L->Radius+Frac*L->Radius2-L->Radius;
           break;
@@ -1904,28 +1531,26 @@ final void DoStateEffects(float DeltaTime)
           break;
         case DynamicLight::DLTYPE_FlickerRandom:
           LightTime += DeltaTime;
-          if (LightTime > L->Interval/360.0)
-          {
+          if (LightTime > L->Interval/360.0) {
             max = (L->Radius+Random()*(L->Radius2-L->Radius));
             dl->decay = XLevel.Time+80.0;
             dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
             dl->radius += XLevel.Time*dl->decay;
-            if (dl->radius > max)
-              dl->radius = max;
+            if (dl->radius > max) dl->radius = max;
             LightTime = 0.0;
           }
           break;
         case DynamicLight::DLTYPE_Sector:
         case DynamicLight::DLTYPE_SectorSubtractive:
-        {
-          float Scale = L->Scale*0.125;
-          if (!Scale) Scale = 1.0;
-          dl->radius = itof(Sector->params.lightlevel)*Scale;
-          if (dl->radius < 0.0) dl->radius = 0.0;
-          if (dl->radius > 255.0) dl->radius = 255.0;
-          dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
+          {
+            float Scale = L->Scale*0.125;
+            if (!Scale) Scale = 1.0;
+            dl->radius = itof(Sector->params.lightlevel)*Scale;
+            if (dl->radius < 0.0) dl->radius = 0.0;
+            if (dl->radius > 255.0) dl->radius = 255.0;
+            dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
+          }
           break;
-        }
       }
       dl->colour = L->Colour;
       dl->minlight = L->MinLight;
@@ -1937,7 +1562,7 @@ final void DoStateEffects(float DeltaTime)
   if (State != PrevEffectState) {
     // particle effects
     if (Particles.Num > 0 && GetCvarB('r_particle_effects')) {
-      foreach (i; 0..Particles.Num) {
+      foreach (auto i; 0..Particles.length) {
         ParticleEffectDef *P = Particles[i];
         Level.ParticleEffect(P->Count, P->Type, P->Type2, Origin +
           Forward*P->Offset.x-Right*P->Offset.y +
@@ -1949,87 +1574,63 @@ final void DoStateEffects(float DeltaTime)
   }
 }
 
+
 //==========================================================================
 //
 //  TouchDehackedSpecial
 //
 //==========================================================================
+final void TouchDehackedSpecial (EntityEx Toucher) {
+  if (!Toucher.bPickUp) return; // can't remove thing
 
-final void TouchDehackedSpecial(EntityEx Toucher)
-{
-  if (!Toucher.bPickUp)
-  {
-    // can't remove thing
-    return;
-  }
-  // Dead thing touching.
-  // Can happen with a sliding player corpse.
-  if (Toucher.Health <= 0)
-  {
-    return;
-  }
+  // dead thing touching
+  // can happen with a sliding player corpse
+  if (Toucher.Health <= 0) return;
 
   class!Inventory ItemType = LineSpecialLevelInfo(Level).GetDehackedItemType(self);
-  if (!ItemType)
-  {
-    return;
-  }
+  if (!ItemType) return;
+
   Inventory Item = Spawn(ItemType, default, default, default, false);
   Item.bDropped = bDropped;
-  if (bDropped)
-  {
-    if (Ammo(Item))
-    {
-      //  Half ammo when dropped by bad guys.
+  if (bDropped) {
+    if (Ammo(Item)) {
+      // half ammo when dropped by bad guys
       Item.Amount = Item.Amount/2;
-      if (Item.Amount < 1)
-      {
-        Item.Amount = 1;
-      }
+      if (Item.Amount < 1) Item.Amount = 1;
     }
   }
-  if (!Item.TryPickup(Toucher))
-  {
+
+  if (!Item.TryPickup(Toucher)) {
     Item.Destroy();
     return;
   }
 
-  if (Special)
-  {
-    Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2], Args[3],
-      Args[4], nullptr, 0, Toucher);
+  if (Special) {
+    Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2], Args[3], Args[4], nullptr, 0, Toucher);
     Special = 0;
   }
-  if (bCountItem)
-  {
-    Toucher.Player.ItemCount++;
-    Level.CurrentItems++;
+  if (bCountItem) {
+    ++Toucher.Player.ItemCount;
+    ++Level.CurrentItems;
   }
+
   Toucher.Player.cprint(Item.GetPickupMessage());
   Toucher.PlaySound(Item.PickupSound, CHAN_ITEM);
-  if (bDropped)
-  {
+
+  if (bDropped) {
     Destroy();
-  }
-  else if (!Item.ShouldStay())
-  {
-    if (Item.ShouldRespawn())
-    {
+  } else if (!Item.ShouldStay()) {
+    if (Item.ShouldRespawn()) {
       bInvisible = true;
       bSpecial = false;
       SetState(FindState('DehackedDormantPickup'));
-    }
-    else
-    {
+    } else {
       Destroy();
     }
   }
   PlayerEx(Toucher.Player).BonusFlash += Inventory::BONUSADD;
-  //  Destroy item if it wasn't added to the toucher's inventory.
-  if (!Item.Owner)
-  {
-    Item.Destroy();
-  }
+  // destroy item if it wasn't added to the toucher's inventory
+  if (!Item.Owner) Item.Destroy();
 }
 
 
@@ -2037,7 +1638,7 @@ final void TouchDehackedSpecial(EntityEx Toucher)
 //
 //  GiveBody
 //
-//  Returns false if the body isn't needed at all.
+//  Returns false if the body isn't needed at all
 //
 //==========================================================================
 final bool GiveBody (int num) {
@@ -2163,298 +1764,6 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
   }
 }
 
-
-//==========================================================================
-//
-// GetBloodSplatDecalName
-//
-//==========================================================================
-final name GetBloodSplatDecalName () {
-  if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
-  return 'BloodSplat';
-}
-
-
-//==========================================================================
-//
-// GetBloodSmearDecalName
-//
-//==========================================================================
-final name GetBloodSmearDecalName () {
-  if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearBlue';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearGreen';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearBlue';
-  return 'BloodSmear';
-}
-
-
-//==========================================================================
-//
-// GetBloodSplatRadiusDecalName
-//
-//==========================================================================
-final name GetBloodSplatRadiusDecalName () {
-  if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatRadiusGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatRadiusBlue';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatRadiusGreen';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatRadiusBlue';
-  return 'BloodSplatRadius';
-}
-
-
-//==========================================================================
-//
-// GetBloodSmearRadiusDecalName
-//
-//==========================================================================
-final name GetBloodSmearRadiusDecalName () {
-  if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearRadiusGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearRadiusBlue';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearRadiusGreen';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearRadiusBlue';
-  return 'BloodSmearRadius';
-}
-
-
-//==========================================================================
-//
-//  SpawnBlood
-//
-//==========================================================================
-final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
-  EntityEx A;
-  int i, c;
-
-  if (!IsBloodAllowed()) return;
-
-  if (specified_shootOrg) {
-    TVec goup = Origin;
-    if (Radius > 0) goup.z += Radius+4+Random()*4;
-    TAVec av;
-    TVec v = goup-shootOrg;
-    VectorAngles(v, out av);
-    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
-    TraceBleed(damage, goup, av.yaw, av.pitch, false);
-  }
-
-  Org.z += (Random()-Random())*4.0;
-  damage = (damage > 255 ? 255 : damage);
-  c = P_Random()>>1;
-  for (i = 0; i < MAXPLAYERS; ++i) {
-    if (!Level.Game.Players[i]) continue;
-    if (!Level.Game.Players[i].bSpawned) continue;
-    if (GetCvarB('r_particle_blood')) {
-      PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
-        LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
-        vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
-        BloodColour ? BloodColour : RGB(32+c, c>>4, c>>4), 0.6, 0.0);
-    }
-  }
-
-  if (!BloodType) return;
-
-  A = Spawn(BloodType, Org);
-  if (!A) return; // oops
-  A.SetBloodArgs(self, damage:damage);
-
-  A.Velocity.z = 2.0*35.0;
-  if (LineSpecialGameInfo(Level.Game).bBloodRandomiseTime) {
-    A.StateTime -= Random()*0.1;
-    if (A.StateTime < 0.1) A.StateTime = 0.1;
-  }
-  if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
-
-  if (LineSpecialGameInfo(Level.Game).bBloodSpray) {
-    if (damage > 13) {
-      A.SetState(A.FindState('Spray'));
-    } else {
-      damage += 2;
-    }
-  }
-
-  if (GetCvarB('zdoom_blood_hack')) {
-    if (damage <= 12 && damage >= 9) {
-      A.SetState(GetStatePlus(A.IdleState, 1));
-    } else if (damage < 9) {
-      A.SetState(GetStatePlus(A.IdleState, 2));
-    }
-  }
-}
-
-//==========================================================================
-//
-//  SpawnBloodAtHead
-//
-//==========================================================================
-
-final void SpawnBloodAtHead (int damage, optional TVec shootOrg) {
-  TVec goup = Origin;
-  if (Radius > 0) goup.z += Radius+4+Random()*4;
-  SpawnBlood(goup, damage, shootOrg!optional);
-}
-
-//==========================================================================
-//
-//  SpawnExploBloodAtHead
-//
-//==========================================================================
-
-final void SpawnExploBloodAtHead (int damage, optional EntityEx src) {
-  if (bNoBlood || damage < 1 || !IsBloodAllowed()) return;
-
-  if (src) {
-    TVec goup = Origin;
-    if (Radius > 0) goup.z += Radius+4+Random()*4;
-    TAVec av;
-    TVec v;
-    if (src.bIsPlayer) v = goup-src.Origin; else v = src.Velocity;
-    VectorAngles(v, out av);
-    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
-    TraceBleed(damage, goup, av.yaw, av.pitch, true);
-  }
-
-  bool isSmallDamage = false;
-  bool isHighDamage = false;
-
-       if (damage <= 10) isSmallDamage = true;
-  else if (damage < 25) {}
-  else isHighDamage = true;
-
-  SpawnBloodAtHead(damage);
-  SpawnBloodAtHead(damage);
-  if (!isSmallDamage) {
-    if (Health <= damage) SpawnBloodAtHead(damage);
-    SpawnBloodAtHead(damage);
-  }
-  // spawn more blood for high damage
-  if (isHighDamage) {
-    if (Health <= damage) SpawnBloodAtHead(damage);
-    if (Health <= damage) SpawnBloodAtHead(damage);
-    SpawnBloodAtHead(damage);
-    SpawnBloodAtHead(damage);
-  } else {
-    if (Health <= damage) SpawnBloodAtHead(damage);
-    if (Health <= damage) SpawnBloodAtHead(damage);
-  }
-}
-
-//==========================================================================
-//
-//  SpawnBloodSplatter
-//
-//==========================================================================
-
-final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
-{
-  EntityEx  mo;
-  int     i, c;
-
-  if (!IsBloodAllowed()) return;
-
-  damage = damage > 255 ? 255 : damage;
-  c = P_Random()>>1;
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (!Level.Game.Players[i]) continue;
-    if (!Level.Game.Players[i].bSpawned) continue;
-    if (GetCvarB('r_particle_blood')) {
-      PlayerEx(Level.Game.Players[i]).ParticleEffect(damage, LineSpecialLevelInfo::pt_static,
-          0, org, 0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(32+c, c>>4, c>>4),
-          0.6, 0.0);
-    }
-  }
-
-  if (!BloodSplatterType)
-  {
-    return;
-  }
-  mo = Spawn(BloodSplatterType, org);
-  mo.Target = self;
-  mo.Velocity.x = (Random()-Random())*4.0*35.0;
-  mo.Velocity.y = (Random()-Random())*4.0*35.0;
-  mo.Velocity.z = 3.0*35.0;
-  if (BloodTranslation && !mo.bDontTranslate)
-  {
-    mo.Translation = BloodTranslation;
-  }
-
-  {
-    TAVec av;
-    TVec v = org-shootOrg;
-    VectorAngles(v, out av);
-    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
-    TraceBleed(damage, org, av.yaw, av.pitch, false);
-  }
-}
-
-//===========================================================================
-//
-//  SpawnBloodSplatter2
-//
-//===========================================================================
-
-final void SpawnBloodSplatter2(TVec org, TVec shootOrg)
-{
-  EntityEx  mo;
-
-  if (!IsBloodAllowed()) return;
-
-  if (!AxeBloodType)
-  {
-    return;
-  }
-  org.x += (Random()-0.5)*8.0;
-  org.y += (Random()-0.5)*8.0;
-  mo = Spawn(AxeBloodType, org);
-  if (!mo) return;
-  mo.SetBloodArgs(self);
-  mo.Target = self;
-  if (BloodTranslation && !mo.bDontTranslate) mo.Translation = BloodTranslation;
-
-  {
-    TAVec av;
-    TVec v = org-shootOrg;
-    VectorAngles(v, out av);
-    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
-    TraceBleed(500, org, av.yaw, av.pitch, false);
-  }
-}
-
-//==========================================================================
-//
-//  SpawnRipperBlood
-//
-//==========================================================================
-
-final void SpawnRipperBlood()
-{
-  EntityEx  th;
-  TVec    org;
-
-  if (!BloodType) return;
-  org.x = Origin.x+(Random()-Random())*16.0;
-  org.y = Origin.y+(Random()-Random())*16.0;
-  org.z = Origin.z+(Random()-Random())*16.0;
-  th = Spawn(BloodType, org);
-  if (!th) return;
-  th.SetBloodArgs(self);
-  if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity) th.bNoGravity = true;
-  th.Velocity.x = Velocity.x/2.0;
-  th.Velocity.y = Velocity.y/2.0;
-  th.StateTime += Random()*0.1;
-  if (BloodTranslation && !th.bDontTranslate)
-  {
-    th.Translation = BloodTranslation;
-  }
-}
 
 //==========================================================================
 //

@@ -1,0 +1,319 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+//  BLOOD UTILITIES
+//**************************************************************************
+
+
+//==========================================================================
+//
+//  SetBloodArgs
+//
+//  pass some info to spawned blood actor, so decorate/vc can use 'em.
+//  should be called on blood entity
+//
+//  Tracer: bleeding Entity (can be none)
+//  Args[0]: damage (can be 0)
+//
+//==========================================================================
+final void SetBloodArgs (EntityEx master, optional int damage) {
+  self.Tracer = master;
+  self.Args[0] = damage;
+}
+
+
+//==========================================================================
+//
+// GetBloodSplatDecalName
+//
+//==========================================================================
+final name GetBloodSplatDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
+  return 'BloodSplat';
+}
+
+
+//==========================================================================
+//
+// GetBloodSmearDecalName
+//
+//==========================================================================
+final name GetBloodSmearDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearBlue';
+  return 'BloodSmear';
+}
+
+
+//==========================================================================
+//
+// GetBloodSplatRadiusDecalName
+//
+//==========================================================================
+final name GetBloodSplatRadiusDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatRadiusGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatRadiusBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatRadiusGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatRadiusBlue';
+  return 'BloodSplatRadius';
+}
+
+
+//==========================================================================
+//
+// GetBloodSmearRadiusDecalName
+//
+//==========================================================================
+final name GetBloodSmearRadiusDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearRadiusGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearRadiusBlue';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearRadiusGreen';
+  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearRadiusBlue';
+  return 'BloodSmearRadius';
+}
+
+
+//==========================================================================
+//
+//  SpawnBlood
+//
+//==========================================================================
+final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
+  EntityEx A;
+  int i, c;
+
+  if (!IsBloodAllowed()) return;
+
+  if (specified_shootOrg) {
+    TVec goup = Origin;
+    if (Radius > 0) goup.z += Radius+4+Random()*4;
+    TAVec av;
+    TVec v = goup-shootOrg;
+    VectorAngles(v, out av);
+    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+    TraceBleed(damage, goup, av.yaw, av.pitch, false);
+  }
+
+  Org.z += (Random()-Random())*4.0;
+  damage = (damage > 255 ? 255 : damage);
+  c = P_Random()>>1;
+  for (i = 0; i < MAXPLAYERS; ++i) {
+    if (!Level.Game.Players[i]) continue;
+    if (!Level.Game.Players[i].bSpawned) continue;
+    if (GetCvarB('r_particle_blood')) {
+      PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
+        LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
+        vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
+        BloodColour ? BloodColour : RGB(32+c, c>>4, c>>4), 0.6, 0.0);
+    }
+  }
+
+  if (!BloodType) return;
+
+  A = Spawn(BloodType, Org);
+  if (!A) return; // oops
+  A.SetBloodArgs(self, damage:damage);
+
+  A.Velocity.z = 2.0*35.0;
+  if (LineSpecialGameInfo(Level.Game).bBloodRandomiseTime) {
+    A.StateTime -= Random()*0.1;
+    if (A.StateTime < 0.1) A.StateTime = 0.1;
+  }
+  if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
+
+  if (LineSpecialGameInfo(Level.Game).bBloodSpray) {
+    if (damage > 13) {
+      A.SetState(A.FindState('Spray'));
+    } else {
+      damage += 2;
+    }
+  }
+
+  if (GetCvarB('zdoom_blood_hack')) {
+    if (damage <= 12 && damage >= 9) {
+      A.SetState(GetStatePlus(A.IdleState, 1));
+    } else if (damage < 9) {
+      A.SetState(GetStatePlus(A.IdleState, 2));
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SpawnBloodAtHead
+//
+//==========================================================================
+final void SpawnBloodAtHead (int damage, optional TVec shootOrg) {
+  TVec goup = Origin;
+  if (Radius > 0) goup.z += Radius+4+Random()*4;
+  SpawnBlood(goup, damage, shootOrg!optional);
+}
+
+
+//==========================================================================
+//
+//  SpawnExploBloodAtHead
+//
+//==========================================================================
+final void SpawnExploBloodAtHead (int damage, optional EntityEx src) {
+  if (bNoBlood || damage < 1 || !IsBloodAllowed()) return;
+
+  if (src) {
+    TVec goup = Origin;
+    if (Radius > 0) goup.z += Radius+4+Random()*4;
+    TAVec av;
+    TVec v;
+    if (src.bIsPlayer) v = goup-src.Origin; else v = src.Velocity;
+    VectorAngles(v, out av);
+    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+    TraceBleed(damage, goup, av.yaw, av.pitch, true);
+  }
+
+  bool isSmallDamage = false;
+  bool isHighDamage = false;
+
+       if (damage <= 10) isSmallDamage = true;
+  else if (damage < 25) {}
+  else isHighDamage = true;
+
+  SpawnBloodAtHead(damage);
+  SpawnBloodAtHead(damage);
+  if (!isSmallDamage) {
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    SpawnBloodAtHead(damage);
+  }
+  // spawn more blood for high damage
+  if (isHighDamage) {
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    SpawnBloodAtHead(damage);
+    SpawnBloodAtHead(damage);
+  } else {
+    if (Health <= damage) SpawnBloodAtHead(damage);
+    if (Health <= damage) SpawnBloodAtHead(damage);
+  }
+}
+
+
+//==========================================================================
+//
+//  SpawnBloodSplatter
+//
+//==========================================================================
+final void SpawnBloodSplatter (TVec org, int damage, TVec shootOrg) {
+  if (!IsBloodAllowed()) return;
+
+  damage = (damage > 255 ? 255 : damage);
+  int c = P_Random()>>1;
+  foreach (auto i; 0..MAXPLAYERS) {
+    if (!Level.Game.Players[i]) continue;
+    if (!Level.Game.Players[i].bSpawned) continue;
+    if (GetCvarB('r_particle_blood')) {
+      PlayerEx(Level.Game.Players[i]).ParticleEffect(damage, LineSpecialLevelInfo::pt_static,
+          0, org, 0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(32+c, c>>4, c>>4),
+          0.6, 0.0);
+    }
+  }
+
+  if (!BloodSplatterType) return;
+
+  EntityEx mo = Spawn(BloodSplatterType, org);
+  if (!mo) return;
+  mo.SetBloodArgs(self, damage);
+  mo.Target = self;
+  mo.Velocity.x = (Random()-Random())*4.0*35.0;
+  mo.Velocity.y = (Random()-Random())*4.0*35.0;
+  mo.Velocity.z = 3.0*35.0;
+  if (BloodTranslation && !mo.bDontTranslate) mo.Translation = BloodTranslation;
+
+  {
+    TAVec av;
+    TVec v = org-shootOrg;
+    VectorAngles(v, out av);
+    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+    TraceBleed(damage, org, av.yaw, av.pitch, false);
+  }
+}
+
+
+//===========================================================================
+//
+//  SpawnBloodSplatter2
+//
+//===========================================================================
+final void SpawnBloodSplatter2 (TVec org, TVec shootOrg) {
+  if (!IsBloodAllowed()) return;
+  if (!AxeBloodType) return;
+
+  org.x += (Random()-0.5)*8.0;
+  org.y += (Random()-0.5)*8.0;
+
+  EntityEx mo = Spawn(AxeBloodType, org);
+  if (!mo) return;
+  mo.SetBloodArgs(self);
+  mo.Target = self;
+  if (BloodTranslation && !mo.bDontTranslate) mo.Translation = BloodTranslation;
+
+  {
+    TAVec av;
+    TVec v = org-shootOrg;
+    VectorAngles(v, out av);
+    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+    TraceBleed(500, org, av.yaw, av.pitch, false);
+  }
+}
+
+
+//==========================================================================
+//
+//  SpawnRipperBlood
+//
+//==========================================================================
+final void SpawnRipperBlood () {
+  if (!BloodType) return;
+
+  TVec org;
+  org.x = Origin.x+(Random()-Random())*16.0;
+  org.y = Origin.y+(Random()-Random())*16.0;
+  org.z = Origin.z+(Random()-Random())*16.0;
+
+  EntityEx th = Spawn(BloodType, org);
+  if (!th) return;
+  th.SetBloodArgs(self);
+  if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity) th.bNoGravity = true;
+  th.Velocity.x = Velocity.x/2.0;
+  th.Velocity.y = Velocity.y/2.0;
+  th.StateTime += Random()*0.1;
+  if (BloodTranslation && !th.bDontTranslate) th.Translation = BloodTranslation;
+}
