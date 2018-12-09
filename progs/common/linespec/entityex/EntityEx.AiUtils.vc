@@ -28,275 +28,153 @@
 //  CheckMeleeRange
 //
 //==========================================================================
+final bool CheckMeleeRange () {
+  if (!Target) return false;
 
-final bool CheckMeleeRange()
-{
-  float dist;
+  float dist = DistTo2(Target);
+  if (dist >= MeleeRange+Target.Radius) return false;
 
-  if (!Target)
-  {
-    return false;
+  // if moving toward goal, then we've reached it
+  if (Target == Goal) return true;
+
+  if (!bNoVerticalMeleeRange) {
+    // don't melee things too far above or below actor
+    if (Target.Origin.z > Origin.z+Height) return false;
+    if (Target.Origin.z+Target.Height < Origin.z) return false;
   }
 
-  dist = DistTo2(Target);
-  if (dist >= MeleeRange + Target.Radius)
-  {
-    return false;
-  }
+  if (!CanSee(Target)) return false;
 
-  //  If moving toward goal, then we've reached it.
-  if (Target == Goal)
-  {
-    return true;
-  }
-
-  if (!bNoVerticalMeleeRange)
-  {
-    // Don't melee things too far above or below actor.
-    if (Target.Origin.z > Origin.z + Height)
-    {
-      return false;
-    }
-    if (Target.Origin.z + Target.Height < Origin.z)
-    {
-      return false;
-    }
-  }
-
-  if (!CanSee(Target))
-  {
-    return false;
-  }
   return true;
 }
+
 
 //==========================================================================
 //
 //  CheckMeleeRange2
 //
 //==========================================================================
+final bool CheckMeleeRange2 () {
+  if (!Target) return false;
 
-final bool CheckMeleeRange2()
-{
-  float dist;
+  float dist = DistTo(Target);
+  if (dist >= MELEERANGE*2.0 || dist < MELEERANGE) return false;
 
-  if (!Target)
-  {
-    return false;
-  }
+  // enemy is higher than the attacker?
+  if (Target.Origin.z > Origin.z+Height) return false;
+  // attacker is higher?
+  if (Origin.z > Target.Origin.z+Target.Height) return false;
 
-  dist = DistTo(Target);
-  if (dist >= MELEERANGE * 2.0 || dist < MELEERANGE)
-  {
-    return false;
-  }
+  if (!CanSee(Target)) return false;
 
-  if (Target.Origin.z > Origin.z + Height)
-  {
-    // Enemy is higher than the attacker
-    return false;
-  }
-  if (Origin.z > Target.Origin.z + Target.Height)
-  {
-    // Attacker is higher
-    return false;
-  }
-
-  if (!CanSee(Target))
-  {
-    return false;
-  }
   return true;
 }
+
 
 //==========================================================================
 //
 //  CheckMissileRange
 //
 //==========================================================================
+final bool CheckMissileRange () {
+  if (!CanSee(Target)) return false;
 
-final bool CheckMissileRange()
-{
-  float dist;
-
-  if (!CanSee(Target))
-  {
-    return false;
-  }
-
-  if (bJustHit)
-  {
-    // The target just hit the enemy, so fight back!
+  if (bJustHit) {
+    // the target just hit the enemy, so fight back!
     bJustHit = false;
     return true;
   }
 
-  if (ReactionCount)
-  {
-    // Don't attack yet
-    return false;
-  }
+  if (ReactionCount) return false; // don't attack yet
 
-  dist = DistTo(Target) - 64.0;
-  if (!MeleeState)
-  {
-    // No melee attack, so fire more frequently
+  float dist = DistTo(Target)-64.0;
+  if (!MeleeState) {
+    // no melee attack, so fire more frequently
     dist -= 128.0;
   }
 
-  if (MissileMaxRange && dist > MissileMaxRange)
-  {
-    return false; // too far away
-  }
+  if (MissileMaxRange && dist > MissileMaxRange) return false; // too far away
+  if (MissileMinRange && MeleeState && dist < MissileMinRange) return false; // close for fist attack
 
-  if (MissileMinRange && MeleeState && dist < MissileMinRange)
-  {
-    return false; // close for fist attack
-  }
+  if (bTriggerHappy) dist /= 2.0; // attack from far away
+  if (bMissileEvenMore) dist /= 8.0;
 
-  if (bTriggerHappy)
-  {
-    //  Attack from far away
-    dist /= 2.0;
-  }
-  if (bMissileEvenMore)
-  {
-    dist /= 8.0;
-  }
+  float MChance = MissileChance*Level.World.SkillAggressiveness;
+  if (dist > MChance) dist = MChance;
 
-  float MChance = MissileChance * Level.World.SkillAggressiveness;
-  if (dist > MChance)
-  {
-    dist = MChance;
-  }
+  if (Random()*256.0 < dist) return false;
 
-  if (Random() * 256.0 < dist)
-  {
-    return false;
-  }
   return true;
 }
+
 
 //==========================================================================
 //
 //  LookForMonsters
 //
 //==========================================================================
-
-final bool LookForMonsters()
-{
-  int     count;
-  EntityEx  mo;
-
-  if (!Level.Game.Players[0].MO.CanSee(self))
-  {
-    // Player can't see monster
-    return false;
-  }
-  count = 0;
-  foreach AllThinkers(EntityEx, mo)
-  {
-    if (!mo.bMonster || (mo == self) || (mo.Health <= 0))
-    {
-      // Not a valid monster
-      continue;
-    }
-    if (DistTo(mo) > MONS_LOOK_RANGE)
-    {
-      // Out of range
-      continue;
-    }
-    if (P_Random() < 16)
-    {
-      // Skip
-      continue;
-    }
-    if (count++ > MONS_LOOK_LIMIT)
-    {
-      // Stop searching
-      return false;
-    }
-    if (!CanSee(mo))
-    {
-      // Out of sight
-      continue;
-    }
-    if (IsNotAttackingMaster(mo))
-    {
-      continue;
-    }
-    // Found a target monster
+final bool LookForMonsters () {
+  if (!Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
+  int count = 0;
+  EntityEx mo;
+  foreach AllThinkers(EntityEx, mo) {
+    if (!mo.bMonster || mo == self || mo.Health <= 0) continue; // not a valid monster
+    if (DistTo(mo) > MONS_LOOK_RANGE) continue; // out of range
+    if (P_Random() < 16) continue; // skip
+    if (count++ > MONS_LOOK_LIMIT) return false; // stop searching
+    if (!CanSee(mo)) continue; // out of sight
+    if (IsNotAttackingMaster(mo)) continue;
+    // found a target monster
     Target = mo;
     return true;
   }
   return false;
 }
+
 
 //==========================================================================
 //
 //  LookForMonsters2
 //
 //==========================================================================
+final bool LookForMonsters2 (bool allaround) {
+  EntityEx mo;
+  foreach AllThinkers(EntityEx, mo) {
+    if (mo.Health <= 0) continue; // dead
+    if (mo == self) continue; // self
+    if (!mo.bMonster) continue; // not a monster
+    if (bFriendly == mo.bFriendly) continue; // fiendly
+    if (!CanSee(mo)) continue; // out of sight
+    if (P_Random() > 128) continue; // sometimes skip
 
-final bool LookForMonsters2(bool allaround)
-{
-  EntityEx  mo;
-  float   an;
-  float   dist;
-
-  foreach AllThinkers(EntityEx, mo)
-  {
-    if (mo.Health <= 0)
-      continue; // dead
-
-    if (mo == self)
-      continue; // self
-
-    if (!mo.bMonster)
-      continue; // not a monster
-
-    if (bFriendly == mo.bFriendly)
-      continue; // fiendly.
-
-    if (!CanSee(mo))
-      continue; // out of sight
-
-    if (P_Random() > 128)
-      continue; // sometimes skip
-
-    if (!allaround)
-    {
-      an = AngleMod360(atan2(mo.Origin.y - Origin.y,
-        mo.Origin.x - Origin.x) - Angles.yaw);
-
-      if (an > 90.0 && an < 270.0)
-      {
-        dist = DistTo(mo);
+    if (!allaround) {
+      float an = AngleMod360(atan2(mo.Origin.y-Origin.y, mo.Origin.x-Origin.x)-Angles.yaw);
+      if (an > 90.0 && an < 270.0) {
+        float dist = DistTo(mo);
         // if real close, react anyway
-        if (dist > MELEERANGE)
-          continue; // behind back
+        if (dist > MELEERANGE) continue; // behind back
       }
     }
-
     Target = mo;
     return true;
   }
 
-  //  Use goal as target
-  if (Goal)
-  {
+  // use goal as target
+  if (Goal) {
     Target = Goal;
     return true;
   }
-  // Use last known enemy if no players sighted -- killough 2/15/98:
-  if (LastEnemy && LastEnemy.Health > 0)
-  {
+
+  // use last known enemy if no players sighted -- killough 2/15/98:
+  if (LastEnemy && LastEnemy.Health > 0) {
     Target = LastEnemy;
     LastEnemy = none;
     return true;
   }
+
   return false;
 }
+
 
 //==========================================================================
 //
@@ -306,63 +184,38 @@ final bool LookForMonsters2(bool allaround)
 //  Returns true if a player is targeted.
 //
 //==========================================================================
-
-final bool LookForPlayers(bool allaround)
-{
-  int     c;
-  int     stop;
-  BasePlayer  P;
-  float   an;
-  float   dist;
-
-  if (TIDToHate != 0)
-  {
-    if (LookForTID(allaround))
-    {
-      return true;
-    }
-    if (!bHuntPlayers)
-    {
-      return false;
-    }
-  }
-  else if (bFriendly)
-  {
+final bool LookForPlayers (bool allaround) {
+  if (TIDToHate != 0) {
+    if (LookForTID(allaround)) return true;
+    if (!bHuntPlayers) return false;
+  } else if (bFriendly) {
     return LookForMonsters2(allaround);
   }
 
   if (!Level.Game.netgame && Level.Game.Players[0] &&
-    Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
+      Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
   {
-    // Single player game and player is dead, look for monsters
+    // single player game and player is dead, look for monsters
     return LookForMonsters();
   }
 
-  c = 0;
-  stop = (LastLook - 1) & (MAXPLAYERS - 1);
+  int c = 0;
+  int stop = (LastLook-1)&(MAXPLAYERS-1);
 
-  for (;; LastLook = (LastLook + 1) & (MAXPLAYERS - 1))
-  {
-    P = Level.Game.Players[LastLook];
-    if (!P && LastLook != stop)
-    {
-      continue;
-    }
+  for (;; LastLook = (LastLook+1)&(MAXPLAYERS-1)) {
+    BasePlayer P = Level.Game.Players[LastLook];
+    if (!P && LastLook != stop) continue;
 
-    if (LastLook == stop || c++ == 2)
-    {
+    if (LastLook == stop || c++ == 2) {
       // done looking
-      if (!Target)
-      {
-        //  Use goal as target
-        if (Goal)
-        {
+      if (!Target) {
+        // use goal as target
+        if (Goal) {
           Target = Goal;
           return true;
         }
-        // Use last known enemy if no players sighted -- killough 2/15/98:
-        if (LastEnemy && LastEnemy.Health > 0)
-        {
+        // use last known enemy if no players sighted -- killough 2/15/98:
+        if (LastEnemy && LastEnemy.Health > 0) {
           Target = LastEnemy;
           LastEnemy = none;
           return true;
@@ -371,80 +224,46 @@ final bool LookForPlayers(bool allaround)
       return Target == Goal && Goal;
     }
 
-    if (!P.bSpawned || !P.MO)
-    {
-      continue; //  not spawned yet
-    }
+    if (!P.bSpawned || !P.MO) continue; // not spawned yet
+    if (PlayerEx(P).bNoTarget) continue; // don't target
+    if (P.Health <= 0) continue; // dead
+    if (!EntityEx(P.MO).bShootable) continue; // not shootable
+    if (!CanSee(P.MO)) continue; // out of sight
 
-    if (PlayerEx(P).bNoTarget)
-    {
-      //  Don't target.
-      continue;
-    }
-
-    if (P.Health <= 0)
-    {
-      continue; // dead
-    }
-
-    if (!EntityEx(P.MO).bShootable)
-    {
-      //  Not shootable.
-      continue;
-    }
-
-    if (!CanSee(P.MO))
-    {
-      continue; //  out of sight
-    }
-
-    if (!allaround)
-    {
-      an = AngleMod360(atan2(P.MO.Origin.y - Origin.y,
-        P.MO.Origin.x - Origin.x) - Angles.yaw);
-      if (an > 90.0 && an < 270.0)
-      {
-        dist = DistTo(P.MO);
+    if (!allaround) {
+      float an = AngleMod360(atan2(P.MO.Origin.y-Origin.y, P.MO.Origin.x-Origin.x)-Angles.yaw);
+      if (an > 90.0 && an < 270.0) {
+        float dist = DistTo(P.MO);
         // if real close, react anyway
-        if (dist > MELEERANGE)
-          continue; // behind back
+        if (dist > MELEERANGE) continue; // behind back
       }
     }
 
-    if ((EntityEx(P.MO).bShadow && !Level.CompatInvisibility) ||
-      EntityEx(P.MO).bGhost)
-    {
-      // Player is invisible
-      if (DistTo(P.MO) > 2.0 * MELEERANGE &&
-        Length(P.MO.Velocity) < 5.0 * 35.0)
-      {
-        // Player is sneaking - can't detect
+    if ((EntityEx(P.MO).bShadow && !Level.CompatInvisibility) || EntityEx(P.MO).bGhost) {
+      // player is invisible
+      if (DistTo(P.MO) > 2.0*MELEERANGE && Length(P.MO.Velocity) < 5.0*35.0) {
+        // player is sneaking - can't detect
         return false;
       }
-      if (P_Random() < 225)
-      {
-        // Player isn't sneaking, but still didn't detect
+      if (P_Random() < 225) {
+        // player isn't sneaking, but still didn't detect
         return false;
       }
     }
 
-    if (IsMaster(EntityEx(P.MO)))
-    {
-      continue; // Don't target master
-    }
+    if (IsMaster(EntityEx(P.MO))) continue; // don't target master
 
-    //  Need to be sure the reactiontime is 0 if the monster is leaving
-    // its goal to go after a player.
-    if (Goal && Target == Goal)
-    {
-      ReactionTime = 0.0;
-    }
+    // need to be sure the reactiontime is 0 if the monster is leaving
+    // its goal to go after a player
+    if (Goal && Target == Goal) ReactionTime = 0.0;
 
     Target = EntityEx(P.MO);
     return true;
   }
+
   return false;
 }
+
 
 //============================================================================
 //
@@ -453,65 +272,31 @@ final bool LookForPlayers(bool allaround)
 //  Selects a live monster with the given TID
 //
 //============================================================================
-
-final bool LookForTID(bool AllAround)
-{
-  Entity    Tmp;
-
-  foreach RadiusThings(Tmp, Origin, 64.0)
-  {
-    if (!EntityEx(Tmp).bShootable)
-    {
-      //  Not shootable
-      continue;
-    }
-
-    if (Tmp == self)
-    {
-      continue;
-    }
-
-    if (Tmp.Health <= 0)
-    {
-      //  Dead
-      continue;
-    }
-
-    if (EntityEx(Tmp).bDormant)
-    {
-      //  Skip dormant things.
-      continue;
-    }
+final bool LookForTID (bool AllAround) {
+  Entity Tmp;
+  foreach RadiusThings(Tmp, Origin, 64.0) {
+    if (!EntityEx(Tmp).bShootable) continue; // not shootable
+    if (Tmp == self) continue;
+    if (Tmp.Health <= 0) continue; // dead
+    if (EntityEx(Tmp).bDormant) continue; // skip dormant things
 
     EntityEx Other;
-    if (Tmp.TID == TIDToHate)
-    {
-      //  Good one.
+    if (Tmp.TID == TIDToHate) {
+      // good one
       Other = EntityEx(Tmp);
-    }
-    else if (EntityEx(Tmp).Target && EntityEx(Tmp).Target.TID == TIDToHate)
-    {
-      //  If it attacks something with given TID, hate it too.
+    } else if (EntityEx(Tmp).Target && EntityEx(Tmp).Target.TID == TIDToHate) {
+      // if it attacks something with given TID, hate it too
       Other = EntityEx(Tmp).Target;
-      if (!Other.bShootable || Other.Health <= 0 || Other.bDormant)
-      {
-        continue;
-      }
-    }
-    else
-    {
+      if (!Other.bShootable || Other.Health <= 0 || Other.bDormant) continue;
+    } else {
       continue;
     }
 
-    if (!bNoSightCheck && !CanSee(Other))
-    {
-      continue;     // out of sight
-    }
+    if (!bNoSightCheck && !CanSee(Other)) continue; // out of sight
 
-    if (Goal && Target == Goal)
-    {
-      ReactionTime = 0.0;
-    }
+    // need to be sure the reactiontime is 0 if the monster is leaving
+    // its goal to go after a player
+    if (Goal && Target == Goal) ReactionTime = 0.0;
 
     Target = Other;
     LastLookActor = none;
@@ -520,105 +305,70 @@ final bool LookForTID(bool AllAround)
 
   bool ReachedEnd = false;
   // Look for between 7 and 38 hatees at a time
-  int Cnt = (P_Random() & 31) + 7;
+  int Cnt = (P_Random()&31)+7;
   for (Tmp = Level.FindMobjFromTID(TIDToHate, LastLookActor);
-    Tmp != LastLookActor;
-    Tmp = Level.FindMobjFromTID(TIDToHate, Tmp))
+       Tmp != LastLookActor;
+       Tmp = Level.FindMobjFromTID(TIDToHate, Tmp))
   {
-    if (!Tmp)
-    {
-      if (ReachedEnd)
-      {
+    if (!Tmp) {
+      if (ReachedEnd) {
         // we have cycled through the entire list at least once
         // so let's abort because even if we continue nothing can
-        // be found.
+        // be found
         break;
       }
       ReachedEnd = true;
       continue;
     }
+
     EntityEx Other = EntityEx(Tmp);
 
-    if (!Other.bShootable)
-    {
-      //  Not a shotable
-      continue;
-    }
+    if (!Other.bShootable) continue; // not a shotable
+    if (Other == self) continue; // don't hate self
+    if (Other.Health <= 0) continue; // dead
+    if (Other.bDormant) continue; // skip dormant things
 
-    if (Other == self)
-    {
-      //  Don't hate self.
-      continue;
-    }
+    if (--Cnt == 0) break;
 
-    if (Other.Health <= 0)
-    {
-      //  Dead
-      continue;
-    }
-
-    if (Other.bDormant)
-    {
-      //  Skip dormant things.
-      continue;
-    }
-
-    if (--Cnt == 0)
-    {
-      break;
-    }
-
-    if (!bNoSightCheck)
-    {
-      if (!CanSee(Other))
-      {
-        continue;     // out of sight
-      }
-
-      if (!AllAround)
-      {
-        float an = AngleMod360(atan2(Other.Origin.y - Origin.y,
-          Other.Origin.x - Origin.x) - Angles.yaw);
-        if (an > 90.0 && an < 270.0)
-        {
+    if (!bNoSightCheck) {
+      if (!CanSee(Other)) continue; // out of sight
+      if (!AllAround) {
+        float an = AngleMod360(atan2(Other.Origin.y-Origin.y, Other.Origin.x-Origin.x)-Angles.yaw);
+        if (an > 90.0 && an < 270.0) {
           float dist = DistTo(Other);
           // if real close, react anyway
-          if (dist > MELEERANGE)
-            continue; // behind back
+          if (dist > MELEERANGE) continue; // behind back
         }
       }
     }
 
-    //  Need to be sure the reactiontime is 0 if the monster is leaving
-    // its goal to go after something else.
-    if (Goal && Target == Goal)
-    {
-      ReactionTime = 0.0;
-    }
+    // need to be sure the reactiontime is 0 if the monster is leaving
+    // its goal to go after something else
+    if (Goal && Target == Goal) ReactionTime = 0.0;
 
     Target = Other;
     LastLookActor = Other;
     return true;
   }
+
   LastLookActor = Tmp;
-  if (!Target)
-  {
-    //  Use goal as target
-    if (Goal)
-    {
+  if (!Target) {
+    // use goal as target
+    if (Goal) {
       Target = Goal;
       return true;
     }
-    //  Use last known enemy if no hatee sighted -- killough 2/15/98:
-    if (LastEnemy && LastEnemy.Health > 0)
-    {
+    // use last known enemy if no hatee sighted -- killough 2/15/98:
+    if (LastEnemy && LastEnemy.Health > 0) {
       Target = LastEnemy;
       LastEnemy = none;
       return true;
     }
   }
+
   return false;
 }
+
 
 //==========================================================================
 //
@@ -627,103 +377,65 @@ final bool LookForTID(bool AllAround)
 //  Move in the current direction, returns false if the move is blocked.
 //
 //==========================================================================
-
-final bool StepMove()
-{
-  float tryx, deltax, origx;
-  float tryy, deltay, origy;
-  float maxmove;
-  int steps;
-  float xspeed;
-  float yspeed;
-  int i;
-  bool try_ok;
-  bool dropoff = false;
-
-  line_t *ld;
-  int good;
-
-  if (bBlasted)
-  {
-    return true;
-  }
-  if (MoveDir == DI_NODIR)
-  {
-    return false;
-  }
+final bool StepMove () {
+  if (bBlasted) return true;
+  if (MoveDir == DI_NODIR) return false;
 
   // Instead of yanking non-floating monsters to the ground,
   // let gravity drop them down, unless they're moving down a step.
-  if (!bNoGravity && Origin.z > FloorZ && !bOnMobj)
-  {
-    if (Origin.z <= FloorZ + MaxStepHeight)
-    {
+  if (!bNoGravity && Origin.z > FloorZ && !bOnMobj) {
+    if (Origin.z <= FloorZ+MaxStepHeight) {
       Origin.z = FloorZ;
-    }
-    else
-    {
+    } else {
       return false;
     }
   }
 
 #ifdef RANGECHECK
-  if (MoveDir >= 8 || MoveDir < 0)
-  {
-    Error("Weird MoveDir!");
-  }
+  if (MoveDir >= 8 || MoveDir < 0) Error("Weird MoveDir!");
 #endif
 
-  origx = Origin.x;
-  origy = Origin.y;
-  deltax = Speed / 35.0 * LineSpecialGameInfo(Level.Game).xspeed[MoveDir];
-  deltay = Speed / 35.0 * LineSpecialGameInfo(Level.Game).yspeed[MoveDir];
-  tryx = origx + deltax;
-  tryy = origy + deltay;
+  float origx = Origin.x;
+  float origy = Origin.y;
+  float deltax = Speed/35.0*LineSpecialGameInfo(Level.Game).xspeed[MoveDir];
+  float deltay = Speed/35.0*LineSpecialGameInfo(Level.Game).yspeed[MoveDir];
+  float tryx = origx+deltax;
+  float tryy = origy+deltay;
 
   // Like P_XYMovement this should do multiple moves if the step size is too large
-  maxmove = Radius;
-  steps = 1;
+  float maxmove = Radius;
+  int steps = 1;
 
-  if (maxmove > 0.0)
-  {
+  float xspeed;
+  float yspeed;
+  if (maxmove > 0.0) {
     xspeed = fabs(deltax);
     yspeed = fabs(deltay);
-
-    if (xspeed > yspeed)
-    {
-      if (xspeed > maxmove)
-      {
-        steps = 1 + ftoi(xspeed / maxmove);
-      }
-    }
-    else
-    {
-      if (yspeed > maxmove)
-      {
-        steps = 1 + ftoi(yspeed / maxmove);
-      }
+    if (xspeed > yspeed) {
+      if (xspeed > maxmove) steps = 1+ftoi(xspeed/maxmove);
+    } else {
+      if (yspeed > maxmove) steps = 1+ftoi(yspeed/maxmove);
     }
   }
 
-  try_ok = true;
+  
+  bool try_ok = true;
+  bool dropoff = false;
   tmtrace_t tmtrace;
   //auto oldRadius = Radius;
-  for (i = 1; i < steps; i++)
-  {
+  foreach (int i; 1..steps) {
     // killough 10/98: allow actors to drop off of taller ledges sometimes.
     // dropoff==1 means only up to 128 high, and only if the target is
     // immediately on the other side of the line.
     if (bJumpDown && Target && !Target.IsFriend(self) &&
-      DistTo(Target) < 144.0 && P_Random() < 235 &&
-      !(tmtrace.FloorZ - tmtrace.DropOffZ > 128.0 ||
-        !Target || Target.Origin.z > tmtrace.DropOffZ))
+        DistTo(Target) < 144.0 && P_Random() < 235 &&
+        !(tmtrace.FloorZ-tmtrace.DropOffZ > 128.0 ||
+          !Target || Target.Origin.z > tmtrace.DropOffZ))
     {
       dropoff = true;
     }
-    try_ok = TryMoveEx(&tmtrace, vector(origx + (deltax / itof(steps * i)), origy +
-          (deltay / itof(steps * i)), Origin.z), dropoff);
-    if (!try_ok)
-    {
+    try_ok = TryMoveEx(&tmtrace, vector(origx+(deltax/itof(steps*i)), origy+(deltay/itof(steps*i)), Origin.z), dropoff);
+    if (!try_ok) {
       //k8: if not player, and cannot move, try smaller radius to unstuck ourselves
       /*
       if (i == 1 && !bIsPlayer && Radius == oldRadius && oldRadius >= 12) {
@@ -744,89 +456,73 @@ final bool StepMove()
   //Radius = oldRadius;
 
   // killough 3/15/98: don't jump over dropoffs:
-  if (try_ok)
-  {
+  if (try_ok) {
     // killough 10/98: allow actors to drop off of taller ledges sometimes.
     // dropoff==1 means only up to 128 high, and only if the target is
     // immediately on the other side of the line.
     if (bJumpDown && Target && !Target.IsFriend(self) &&
-      DistTo(Target) < 144.0 && P_Random() < 235 &&
-      !(tmtrace.FloorZ - tmtrace.DropOffZ > 128.0 ||
-        !Target || Target.Origin.z > tmtrace.DropOffZ))
+        DistTo(Target) < 144.0 && P_Random() < 235 &&
+        !(tmtrace.FloorZ-tmtrace.DropOffZ > 128.0 ||
+          !Target || Target.Origin.z > tmtrace.DropOffZ))
     {
       dropoff = true;
     }
     try_ok = TryMoveEx(&tmtrace, vector(tryx, tryy, Origin.z), dropoff);
   }
 
-  if (!try_ok)
-  {
+  if (!try_ok) {
     // open any specials
-    if (bFloat && tmtrace.bFloatOk)
-    {
+    if (bFloat && tmtrace.bFloatOk) {
       float savedz = Origin.z;
 
       // must adjust height
-      if (Origin.z < tmtrace.FloorZ)
-      {
-        Origin.z += FloatSpeed * 2.0 * Level.Game.frametime;
-      }
-      else
-      {
-        Origin.z -= FloatSpeed * 2.0 * Level.Game.frametime;
+      if (Origin.z < tmtrace.FloorZ) {
+        Origin.z += FloatSpeed*2.0*Level.Game.frametime;
+      } else {
+        Origin.z -= FloatSpeed*2.0*Level.Game.frametime;
       }
 
-      // Check to make sure there's nothing in the way of the float
-      if (TestMobjZ())
-      {
+      // check to make sure there's nothing in the way of the float
+      if (TestMobjZ()) {
         bInFloat = true;
         return true;
       }
       Origin.z = savedz;
     }
+
     if (bCanJump && !bFloat && tmtrace.bFloatOk &&
-      (Origin.z <= FloorZ || bOnMobj) && !JumpTime)
+        (Origin.z <= FloorZ || bOnMobj) && !JumpTime)
     {
-      if (tmtrace.FloorZ - Origin.z <= 48.0 && Target &&
-        tmtrace.FloorZ - Target.Origin.z <= 48.0)
+      if (tmtrace.FloorZ-Origin.z <= 48.0 && Target &&
+          tmtrace.FloorZ-Target.Origin.z <= 48.0)
       {
         float DeltaX;
         float DeltaY;
-        TVec dir;
         TAVec ang;
 
         CheckDropOff(DeltaX, DeltaY);
-        dir = Target.Origin - Origin;
+        TVec dir = Target.Origin-Origin;
         VectorAngles(dir, out ang);
 
-        if (DeltaX > 0.0)
-        {
-          Velocity.x += 0.6 * 35.0 * cos(ang.yaw);
-        }
-        else
-        {
-          Velocity.x += 0.6 * 35.0 * cos(-ang.yaw);
+        if (DeltaX > 0.0) {
+          Velocity.x += 0.6*35.0*cos(ang.yaw);
+        } else {
+          Velocity.x += 0.6*35.0*cos(-ang.yaw);
         }
 
-        if (DeltaY > 0.0)
-        {
-          Velocity.y += 0.6 * 35.0 * sin(ang.yaw);
+        if (DeltaY > 0.0) {
+          Velocity.y += 0.6*35.0*sin(ang.yaw);
+        } else {
+          Velocity.y += 0.6*35.0*sin(-ang.yaw);
         }
-        else
-        {
-          Velocity.y += 0.6 * 35.0 * sin(-ang.yaw);
-        }
-        Velocity.z = (JumpVelZ * 1.1) * 35.0;
+        Velocity.z = (JumpVelZ*1.1)*35.0;
         bOnMobj = false;
         JumpTime = 0.5;
         return true;
       }
     }
 
-    if (!tmtrace.SpecHit.Num)
-    {
-      return false;
-    }
+    if (!tmtrace.SpecHit.Num) return false;
 
     MoveDir = DI_NODIR;
 
@@ -846,39 +542,33 @@ final bool StepMove()
     // Do NOT simply return false 1/4th of the time (causes monsters to
     // back out when they shouldn't, and creates secondary stickiness).
 
-    good = 0;
-    if (!bNoTrigger)
-    {
-      while (tmtrace.SpecHit.Num)
-      {
-        ld = tmtrace.SpecHit[tmtrace.SpecHit.Num - 1];
-        tmtrace.SpecHit.Num = tmtrace.SpecHit.Num - 1;
+    int good = 0;
+    if (!bNoTrigger) {
+      while (tmtrace.SpecHit.Num) {
+        line_t *ld = tmtrace.SpecHit[tmtrace.SpecHit.Num-1];
+        tmtrace.SpecHit.Num = tmtrace.SpecHit.Num-1;
         // if the special is not a door that can be opened
         // then return false
         if ((bCanUseWalls && LineSpecialLevelInfo(Level).ActivateLine(ld, self, 0, SPAC_Use)) ||
-          (bActivatePushWall && LineSpecialLevelInfo(Level).ActivateLine(ld, self, 0, SPAC_Push)))
+            (bActivatePushWall && LineSpecialLevelInfo(Level).ActivateLine(ld, self, 0, SPAC_Push)))
         {
-          good |= ld == tmtrace.BlockingLine ? 1 : 2; //true;
+          good |= (ld == tmtrace.BlockingLine ? 1 : 2); //true;
         }
       }
     }
-    return good && ((P_Random() >= 203) ^ (good & 1));
-  }
-  else
-  {
+    return good && ((P_Random() >= 203)^(good&1));
+  } else {
     bInFloat = false;
   }
 
-  if (!bFloat && !bNoGravity && !bDropOff && !bOnMobj)
-  {
-    if (Origin.z > FloorZ)
-    {
-      HitFloorType();
-    }
+  if (!bFloat && !bNoGravity && !bDropOff && !bOnMobj) {
+    if (Origin.z > FloorZ) HitFloorType();
     Origin.z = FloorZ;
   }
+
   return true;
 }
+
 
 //==========================================================================
 //
@@ -890,159 +580,91 @@ final bool StepMove()
 //  If a door is in the way, an OpenDoor call is made to start it opening.
 //
 //==========================================================================
-
-final bool TryWalk()
-{
-  if (!StepMove())
-  {
-    return false;
-  }
-  MoveCount = P_Random() & 15;
+final bool TryWalk () {
+  if (!StepMove()) return false;
+  MoveCount = P_Random()&15;
   return true;
 }
+
 
 //==========================================================================
 //
 //  DO_NewChaseDir
 //
 //==========================================================================
+final void DO_NewChaseDir (float deltax, float deltay) {
+  int[3] d;
 
-final void DO_NewChaseDir(float deltax, float deltay)
-{
-  int d[3];
+  //int tdir;
 
-  int tdir;
-  int olddir;
+  int olddir = MoveDir;
+  int turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
 
-  int turnaround;
+       if (deltax > 10.0) d[1] = DI_EAST;
+  else if (deltax < -10.0) d[1] = DI_WEST;
+  else d[1] = DI_NODIR;
 
-  olddir = MoveDir;
-  turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
-
-  if (deltax > 10.0)
-  {
-    d[1] = DI_EAST;
-  }
-  else if (deltax < -10.0)
-  {
-    d[1] = DI_WEST;
-  }
-  else
-  {
-    d[1] = DI_NODIR;
-  }
-
-  if (deltay < -10.0)
-  {
-    d[2] = DI_SOUTH;
-  }
-  else if (deltay > 10.0)
-  {
-    d[2] = DI_NORTH;
-  }
-  else
-  {
-    d[2] = DI_NODIR;
-  }
+       if (deltay < -10.0) d[2] = DI_SOUTH;
+  else if (deltay > 10.0) d[2] = DI_NORTH;
+  else d[2] = DI_NODIR;
 
   // try direct route
-  if (d[1] != DI_NODIR && d[2] != DI_NODIR)
-  {
-    MoveDir = LineSpecialGameInfo(Level.Game).diags[((deltay < 0.0) << 1) + (deltax > 0.0)];
-    if (MoveDir != turnaround && TryWalk())
-    {
-      return;
-    }
+  if (d[1] != DI_NODIR && d[2] != DI_NODIR) {
+    MoveDir = LineSpecialGameInfo(Level.Game).diags[((deltay < 0.0)<<1)+(deltax > 0.0)];
+    if (MoveDir != turnaround && TryWalk()) return;
   }
 
   // try other directions
-  if (P_Random() > 200 || fabs(deltay) > fabs(deltax))
-  {
-    tdir = d[1];
+  if (P_Random() > 200 || fabs(deltay) > fabs(deltax)) {
+    int tdir = d[1];
     d[1] = d[2];
     d[2] = tdir;
   }
 
-  if (d[1] == turnaround)
-  {
-    d[1] = DI_NODIR;
-  }
-  if (d[2] == turnaround)
-  {
-    d[2] = DI_NODIR;
-  }
+  if (d[1] == turnaround) d[1] = DI_NODIR;
+  if (d[2] == turnaround) d[2] = DI_NODIR;
 
-  if (d[1] != DI_NODIR)
-  {
+  if (d[1] != DI_NODIR) {
     MoveDir = d[1];
-    if (TryWalk())
-    {
-      // either moved forward or attacked
-      return;
-    }
+    if (TryWalk()) return; // either moved forward or attacked
   }
 
-  if (d[2] != DI_NODIR)
-  {
+  if (d[2] != DI_NODIR) {
     MoveDir = d[2];
-    if (TryWalk())
-    {
-      return;
-    }
+    if (TryWalk()) return;
   }
 
-  // there is no direct path to the player,
-  // so pick another direction.
-  if (olddir != DI_NODIR)
-  {
+  // there is no direct path to the player, so pick another direction
+  if (olddir != DI_NODIR) {
     MoveDir = olddir;
-    if (TryWalk())
-    {
-      return;
-    }
+    if (TryWalk()) return;
   }
 
   // randomly determine direction of search
-  if (P_Random() & 1)
-  {
-    for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-    {
-      if (tdir != turnaround)
-      {
+  if (P_Random()&1) {
+    for (int tdir = DI_EAST; tdir <= DI_SOUTHEAST; ++tdir) {
+      if (tdir != turnaround) {
         MoveDir = tdir;
-        if (TryWalk())
-        {
-          return;
-        }
+        if (TryWalk()) return;
       }
     }
-  }
-  else
-  {
-    for (tdir = DI_SOUTHEAST; tdir != (DI_EAST - 1); tdir--)
-    {
-      if (tdir != turnaround)
-      {
+  } else {
+    for (int tdir = DI_SOUTHEAST; tdir != (DI_EAST-1); --tdir) {
+      if (tdir != turnaround) {
         MoveDir = tdir;
-        if (TryWalk())
-        {
-          return;
-        }
+        if (TryWalk()) return;
       }
     }
   }
 
-  if (turnaround != DI_NODIR)
-  {
+  if (turnaround != DI_NODIR) {
     MoveDir = turnaround;
-    if (TryWalk())
-    {
-      return;
-    }
+    if (TryWalk()) return;
   }
 
   MoveDir = DI_NODIR; // can not move
 }
+
 
 //=============================================================================
 //
@@ -1051,31 +673,20 @@ final void DO_NewChaseDir(float deltax, float deltay)
 // killough 9/8/98: Split into two functions
 //
 //=============================================================================
-
-final void NewChaseDir()
-{
+final void NewChaseDir () {
   float deltax;
   float deltay;
 
-  if ((bChaseGoal || Goal == Target) && Goal)
-  {
-    deltax = Goal.Origin.x - Origin.x;
-    deltay = Goal.Origin.y - Origin.y;
-  }
-  else
-  {
-    if (!Target)
-    {
-      Error("NewChaseDir: called with no Target");
-    }
-    deltax = Target.Origin.x - Origin.x;
-    deltay = Target.Origin.y - Origin.y;
+  if ((bChaseGoal || Goal == Target) && Goal) {
+    deltax = Goal.Origin.x-Origin.x;
+    deltay = Goal.Origin.y-Origin.y;
+  } else {
+    if (!Target) Error("NewChaseDir: called with no Target");
+    deltax = Target.Origin.x-Origin.x;
+    deltay = Target.Origin.y-Origin.y;
 
-    if (!bNoFear)
-    {
-      if (Target.bIsPlayer && (PlayerEx(Target.Player).Cheats & PlayerEx::CF_FRIGHTENING) ||
-        bFrightened)
-      {
+    if (!bNoFear) {
+      if (Target.bIsPlayer && (PlayerEx(Target.Player).Cheats&PlayerEx::CF_FRIGHTENING) || bFrightened) {
         deltax = -deltax;
         deltay = -deltay;
       }
@@ -1087,9 +698,9 @@ final void NewChaseDir()
   strafecount = 0;
 
   // Try to move away from a dropoff
-  if (FloorZ - DropOffZ > MaxDropoffHeight &&
-    Origin.z <= FloorZ && !bDropOff && !bOnMobj && !bFloat &&
-    ((!Level.CompatDropOff && GetCvar('monster_dropoff')) || bAvoidsDropOffs))
+  if (FloorZ-DropOffZ > MaxDropoffHeight &&
+      Origin.z <= FloorZ && !bDropOff && !bOnMobj && !bFloat &&
+      ((!Level.CompatDropOff && GetCvar('monster_dropoff')) || bAvoidsDropOffs))
   {
     float AvoidDeltaX;
     float AvoidDeltaY;
@@ -1097,8 +708,7 @@ final void NewChaseDir()
     // bounding box actually needs to be used below
     CheckDropOff(AvoidDeltaX, AvoidDeltaY);
 
-    if (AvoidDeltaX || AvoidDeltaY)
-    {
+    if (AvoidDeltaX || AvoidDeltaY) {
       // [Graf Zahl] I have changed TryMove to only apply this logic when
       // being called from here. bAavoidingDropoff activates the code that
       // allows monsters to move away from a dropoff. This is different from
@@ -1115,23 +725,19 @@ final void NewChaseDir()
       MoveCount = 1;
       return;
     }
-  }
-  else
-  {
-    float dist;
-
-    dist = DistTo(Target);
+  } else {
+    float dist = DistTo(Target);
 
     if (Target.Health > 0) {
       // Enemy target is alive
       if (GetCvar('monster_backing') && MissileState &&
-        /*actor->type != MT_SKULL &&*/
-        ((!Target.MissileState && dist < MELEERANGE * 2.0) ||
-        (Target.Player && PlayerEx(Target.Player).ReadyWeapon && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
-        dist < MELEERANGE * 3.0)))
+          /*actor->type != MT_SKULL &&*/
+          ((!Target.MissileState && dist < MELEERANGE*2.0) ||
+           (Target.Player && PlayerEx(Target.Player).ReadyWeapon && PlayerEx(Target.Player).ReadyWeapon.bBotMelee &&
+            dist < MELEERANGE*3.0)))
       {
         // Back away from melee attacker
-        strafecount = P_Random() & 15;
+        strafecount = P_Random()&15;
         deltax = -deltax;
         deltay = -deltay;
       }
@@ -1139,82 +745,56 @@ final void NewChaseDir()
   }
   DO_NewChaseDir(deltax, deltay);
 
-  // If strafing, set movecount to strafecount so that old Doom
+  // if strafing, set movecount to strafecount so that old Doom
   // logic still works the same, except in the strafing part
-  if (strafecount)
-  {
-    MoveCount = strafecount;
-  }
+  if (strafecount) MoveCount = strafecount;
 }
+
 
 //==========================================================================
 //
 //  RandomChaseDir
 //
 //==========================================================================
+final void RandomChaseDir () {
+  //int tdir;
 
-final void RandomChaseDir()
-{
-  int olddir;
-  int turnaround;
-  int tdir;
-  int turndir;
+  int olddir = MoveDir;
+  int turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
 
-  olddir = MoveDir;
-  turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
-
-  if (P_Random() & 1)
-  {
-    for (tdir = DI_WEST; tdir <= DI_NORTHWEST; tdir++)
-    {
-      if (tdir != turnaround)
-      {
+  if (P_Random()&1) {
+    for (int tdir = DI_WEST; tdir <= DI_NORTHWEST; ++tdir) {
+      if (tdir != turnaround) {
         MoveDir = tdir;
-
-        if (TryWalk())
-          return;
+        if (TryWalk()) return;
       }
     }
-  }
-  else
-  {
-    for (tdir = DI_NORTHWEST; tdir >= DI_WEST; tdir--)
-    {
-      if (tdir != turnaround)
-      {
+  } else {
+    for (int tdir = DI_NORTHWEST; tdir >= DI_WEST; --tdir) {
+      if (tdir != turnaround) {
         MoveDir = tdir;
-
-        if (TryWalk())
-          return;
+        if (TryWalk()) return;
       }
     }
   }
 
-  // If the actor elects to continue in its current direction, let it do
-  // so unless the way is blocked. Then it must turn.
-  turndir = (P_Random() & 1) ? -1 : 1;
+  // if the actor elects to continue in its current direction, let it do
+  // so unless the way is blocked. then it must turn.
+  int turndir = (P_Random()&1 ? -1 : 1);
 
-  if (olddir == DI_NODIR)
-  {
-    olddir = (P_Random() & 7);
-  }
+  if (olddir == DI_NODIR) olddir = (P_Random()&7);
 
-  for (tdir = (olddir + turndir) & 7; tdir != olddir; tdir = (tdir + turndir) & 7)
-  {
-    if (tdir != turnaround)
-    {
+  for (int tdir = (olddir+turndir)&7; tdir != olddir; tdir = (tdir+turndir)&7) {
+    if (tdir != turnaround) {
       MoveDir = tdir;
-      if (TryWalk ())
-        return;
+      if (TryWalk ()) return;
     }
   }
 
-  if (turnaround != DI_NODIR)
-  {
+  if (turnaround != DI_NODIR) {
     MoveDir = turnaround;
-    if (TryWalk())
-    {
-      MoveCount = P_Random() & 15;
+    if (TryWalk()) {
+      MoveCount = P_Random()&15;
       return;
     }
   }
