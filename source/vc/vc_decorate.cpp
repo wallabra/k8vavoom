@@ -737,6 +737,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   guard(VDecorateSingleName::DoResolve);
   VName CheckName = va("decorate_%s", *Name.ToLower());
   if (ec.SelfClass) {
+    // prefixed constant
     VConstant *Const = ec.SelfClass->FindConstant(CheckName);
     if (Const) {
       VExpression *e = new VConstantValue(Const, Loc);
@@ -744,6 +745,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
+    // prefixed property
     VProperty *Prop = ec.SelfClass->FindProperty(CheckName);
     if (Prop) {
       if (!Prop->GetFunc) {
@@ -760,35 +762,17 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   CheckName = *Name.ToLower();
 
   if (ec.SelfClass) {
+    // non-prefixed checked field access
     VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
-    //FIXME: this is ALL WRONG! we should introduce new field accessor with run-time field checking
     if (fldn != NAME_None) {
       // checked field access
       VExpression *e = new VDecorateUserVar(VName(*Name), Loc);
       delete this;
       return e->Resolve(ec);
-      /*
-      VStr fns = VStr(*fldn);
-      int dotpos = fns.IndexOf('.');
-      if (dotpos > 0 && dotpos < fns.length()-1) {
-          VStr n0 = fns.mid(0, dotpos);
-          VStr n1 = fns.mid(dotpos+1, fns.length()-dotpos);
-          //fprintf(stderr, "::: <%s> <%s>\n", *n0, *n1);
-          VSingleName *sn0 = new VSingleName(VName(*n0), Loc);
-          VDotField *fa = new VDotField(sn0, VName(*n1), Loc);
-          delete this;
-          return fa->Resolve(ec);
-        } else {
-          //fprintf(stderr, "[%s] -> [%s]\n", *CheckName, *fldn);
-          VSingleName *sn = new VSingleName(fldn, Loc);
-          delete this;
-          return sn->Resolve(ec);
-        }
-      }
-      */
     }
   }
 
+  // non-prefixed constant
   // look only for constants defined in DECORATE scripts
   VConstant *Const = ec.Package->FindConstant(CheckName);
   if (Const) {
