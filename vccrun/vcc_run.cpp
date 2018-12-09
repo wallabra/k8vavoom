@@ -192,8 +192,8 @@ public:
 static VStr SourceFileName;
 static TArray<VStr> scriptArgs;
 
-static int num_dump_asm;
-static const char *dump_asm_names[1024];
+//static int num_dump_asm;
+//static const char *dump_asm_names[1024];
 static bool DebugMode = false;
 static FILE *DebugFile;
 
@@ -268,6 +268,7 @@ static void OpenDebugFile (const VStr& name) {
 }
 
 
+/*
 //==========================================================================
 //
 //  PC_DumpAsm
@@ -315,6 +316,7 @@ static void PC_DumpAsm (const char* name) {
 static void DumpAsm () {
   for (int i = 0; i < num_dump_asm; ++i) PC_DumpAsm(dump_asm_names[i]);
 }
+*/
 
 
 //==========================================================================
@@ -496,7 +498,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 static void initialize () {
   DebugMode = false;
   DebugFile = nullptr;
-  num_dump_asm = 0;
+  //num_dump_asm = 0;
   VName::StaticInit();
   //VMemberBase::StaticInit();
   VObject::StaticInit();
@@ -584,7 +586,7 @@ int main (int argc, char **argv) {
 
     CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
     dprintf("Total memory used: %u\n", VExpression::TotalMemoryUsed);
-    DumpAsm();
+    //DumpAsm();
     endtime = time(0);
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
     // free compiler memory
