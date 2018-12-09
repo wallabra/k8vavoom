@@ -26,74 +26,42 @@ class Level_K8BDW : replaces(Level);
 
 const int DefaultMaxAllowedEntities = 1024;
 
-int entCounter;
-int skipDeathCounter;
+int casingEntCounter;
+int casingSkipDeathCounter;
 
 
-final private void CleanCasing () {
+final private int k8casing_GetMaxAmount () {
   int allowed = GetCvar('K8BDWOpt_MaxCasingEntities');
   if (allowed < 0) allowed = DefaultMaxAllowedEntities;
-  if (++entCounter > allowed) {
-    //print("  KILLING: %C", ent);
-    //ent.Destroy();
-    // remove old blood
-    array!Entity elist;
-    Entity e;
-    foreach AllThinkers(BDW_CasingBase, out e) elist[$] = e;
-    //print("  %s blood entities found", elist.length);
-    if (elist.length > allowed) {
-      elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
-      // destroy half of list, from older
-      int toremove = 2048;
-      if (allowed < 128) {
-        toremove = elist.length/2;
-      } else {
-        if (toremove < elist.length/4) toremove = elist.length/4;
-        if (toremove < 128) toremove = 128;
-        toremove = min(toremove, elist.length);
-      }
-      foreach (auto i; 0..toremove) {
-        //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
-        elist[i].Destroy();
-        ++skipDeathCounter;
-        --entCounter;
-      }
-      if (GetCvar('K8BDWOpt_LimiterDebug')) print("%s blood entities removed out of %s", skipDeathCounter, elist.length);
+  return allowed;
+}
+
+
+override void AfterUnarchiveThinkers () {
+  ::AfterUnarchiveThinkers();
+  k8LimiterUnarchiveThinkers(BDW_CasingBase, k8casing_GetMaxAmount(), ref casingEntCounter, ref casingSkipDeathCounter, GetCvar('k8GoreOpt_LimiterDebug'));
+}
+
+
+override void OnEntitySpawned (Entity ent) {
+  ::OnEntitySpawned(ent);
+  if (ent isa BDW_CasingBase) {
+    ++casingEntCounter;
+    int allowed = k8casing_GetMaxAmount();
+    if (casingEntCounter > allowed) {
+      k8LimiterCleanup(BDW_CasingBase, allowed, ref casingEntCounter, ref casingSkipDeathCounter, GetCvar('k8GoreOpt_LimiterDebug'));
     }
   }
 }
 
 
-override void AfterUnarchiveThinkers () {
-  if (GetCvar('K8BDWOpt_LimiterDebug')) print("*** LOADED *** (counter=%s; skip=%s)", entCounter, skipDeathCounter);
-  entCounter = 0;
-  skipDeathCounter = 0;
-  Entity e;
-  foreach AllThinkers(BDW_CasingBase, out e) {
-    ++entCounter;
-  }
-  if (GetCvar('K8BDWOpt_LimiterDebug')) print("  counted: %s", entCounter);
-}
-
-
-override void OnEntitySpawned (Entity ent) {
-  //print("SPAWNED: %C", ent);
-  if (ent isa BDW_CasingBase) {
-    //print("SPAWNED: %C (%d current)", ent, entCounter);
-    CleanCasing();
-  }
-}
-
-
 override void OnEntityDying (Entity ent) {
-  //print("DYING: %C", ent);
+  ::OnEntityDying(ent);
   if (ent isa BDW_CasingBase) {
-    if (skipDeathCounter) {
-      --skipDeathCounter;
-      //print("DYING SKIP: %C (%d left)", ent, entCounter);
+    if (casingSkipDeathCounter) {
+      --casingSkipDeathCounter;
     } else {
-      --entCounter;
-      //print("DYING: %C (%d left)", ent, entCounter);
+      --casingEntCounter;
     }
   }
 }
