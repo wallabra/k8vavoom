@@ -275,7 +275,7 @@ final void k8LimiterCleanup (class!Entity thc, int allowed, ref int counter, ref
       if (allowed <= 256) {
         toremove = elist.length/3;
       } else {
-        /*if (toremove < elist.length/4)*/ toremove = elist.length/4;
+        /*if (toremove < elist.length/4)*/ toremove = elist.length/3;
         //if (toremove < 256) toremove = 256;
         if (allowed >= 3000 && toremove < 2048) toremove = 2048;
         toremove = min(toremove, elist.length);
