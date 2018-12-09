@@ -764,7 +764,7 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
   case LNSPEC_ThrustThing:
     if (A && !Side) // Only thrust on side 0
     {
-      A.Thrust(itof(Arg1) * (90.0 / 64.0), itof(Arg2));
+      if (Arg2) A.Thrust(itof(Arg1) * (90.0 / 64.0), itof(Arg2));
       buttonSuccess = 1;
     }
     break;
