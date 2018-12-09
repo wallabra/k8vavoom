@@ -329,6 +329,10 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
 
   if (!IsBloodAllowed()) return;
 
+  // keep z, but set x and y to our coords
+  Org.x = Origin.x;
+  Org.y = Origin.y;
+
   if (specified_shootOrg) {
     TVec goup = Origin;
     if (Radius > 0) goup.z += Radius+4+Random()*4;
