@@ -26,7 +26,7 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
       TNT1 AAAA 0 {
         if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
-          A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
+          A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), CMF_AIMDIRECTION, random(0, 90));
         }
       }
 
@@ -34,7 +34,7 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
       // normal
       TNT1 AAAA 0 {
         if (user_spray || GetCVar("k8GoreOpt_BloodAmount") >= 3) {
-          A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
+          A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), CMF_AIMDIRECTION, random(0, 90));
         }
       }
 #endif
@@ -43,25 +43,25 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
 /*
 #ifndef TRANSIENT
         // normal
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), CMF_AIMDIRECTION, random(40, 60));
 #endif
 */
         // all
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), 2, random(40, 60));
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 3) A_CustomMissile("K8Gore_FlyingBloodLevel3$(Color)", 7, 0, random(0, 360), CMF_AIMDIRECTION, random(40, 60));
 
         // all
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), CMF_AIMDIRECTION, random(20, 40));
 #ifndef TRANSIENT
         // normal
-        //!if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmall$(Color)", 0, 0, random(0, 360), 2, random(10, 40));
+        //!if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmall$(Color)", 0, 0, random(0, 360), CMF_AIMDIRECTION, random(10, 40));
 #else
         // transient
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), 2, random(20, 40));
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_FlyingBlood$(Color)", 7, 0, random(0, 360), CMF_AIMDIRECTION, random(20, 40));
 #endif
         // all
-        if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
+        if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHit$(Color)", 0, 0, random(0, 360), CMF_AIMDIRECTION, random(0, 90));
       }
-      TNT1 AAAA 0 A_CustomMissile("K8Gore_FlyingBloodTrail$(Color)", 0, 0, random (0, 360), 2, random (0, 180))
+      TNT1 AAAA 0 A_CustomMissile("K8Gore_FlyingBloodTrail$(Color)", 0, 0, random (0, 360), CMF_AIMDIRECTION, random (0, 180))
       Stop
 
     Spray:
@@ -163,7 +163,7 @@ Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
       TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot$(Color)", 0, 1)
-      //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker$(Color)", -15, 0, 90, 2, 90)
+      //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker$(Color)", -15, 0, 90, CMF_AIMDIRECTION, 90)
       TNT1 A 0
         {
           if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
@@ -511,7 +511,7 @@ Actor K8Gore_DetectCeilBloodSimpler$(Color) : K8Gore_BloodBase$(TransientSfx) {
         if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
         //A_k8ConLog(va("CB1: k8GoreOpt_BloodAmount=%s", GetCVar("k8GoreOpt_BloodAmount")));
       }
-      TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker$(Color)", -15, 0, 90, 2, 90)
+      TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker$(Color)", -15, 0, 90, CMF_AIMDIRECTION, 90)
       Stop
   }
 }
@@ -657,7 +657,7 @@ Actor K8Gore_TinyBlood$(Color) : K8Gore_BloodBase$(TransientSfx) {
 
     Splash:
       B8OD A 0
-      //TNT1 AAA 0 A_CustomMissile("K8Gore_Underblood1$(Color)", 7, 0, random(0, 360), 2, random(30, 150))
+      //TNT1 AAA 0 A_CustomMissile("K8Gore_Underblood1$(Color)", 7, 0, random(0, 360), CMF_AIMDIRECTION, random(30, 150))
       Stop
 
     Death:
