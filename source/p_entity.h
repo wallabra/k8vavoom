@@ -224,6 +224,7 @@ class VEntity : public VThinker {
     EF_Missile           = 0x01000000, // don't hit same species, explode on block
     EF_DontOverlap       = 0x02000000, // prevent some things from overlapping.
     //EF_UseDispState      = 0x04000000, // use DispState for rendering (unused)
+    EF_KillOnUnarchive   = 0x04000000, // remove this entity on loading game
     EF_ActLikeBridge     = 0x08000000, // always allow objects to pass.
     EF_NoDropOff         = 0x10000000, // can't drop off under any circumstances
     EF_Bright            = 0x20000000, // always render full bright

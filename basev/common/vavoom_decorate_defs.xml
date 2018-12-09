@@ -303,6 +303,7 @@
     <flag name="JumpDown" property="bJumpDown" />
     <flag name="StickToFloor" property="bStickToFloor" />
     <flag name="StickToCeiling" property="bStickToCeiling" />
+    <flag name="KillOnUnarchive" property="bKillOnUnarchive" />
     <!-- SkullTag Specific flags (useless) -->
     <flag_unsupported name="ScorePillar" />
     <flag_unsupported name="AllowClientSpawn" />
