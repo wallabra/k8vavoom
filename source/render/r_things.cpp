@@ -578,8 +578,16 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   sprframe = &sprdef->spriteframes[mfi.frame/*VSt->State->Frame & VState::FF_FRAMEMASK*/];
 
   lump = sprframe->lump[0];
+  if (lump < 0) {
+    //GCon->Logf("R_ProjectSprite: invalid sprite texture id %d in frame %d : %d", lump, mfi.spriteIndex/*VSt->State->SpriteIndex*/, mfi.frame/*VSt->State->Frame*/);
+    return;
+  }
   flip = sprframe->flip[0];
   VTexture *Tex = GTextureManager[lump];
+  if (!Tex) {
+    GCon->Logf("R_ProjectSprite: invalid sprite texture id %d in frame %d : %d (the thing that should not be)", lump, mfi.spriteIndex/*VSt->State->SpriteIndex*/, mfi.frame/*VSt->State->Frame*/);
+    return;
+  }
 
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
