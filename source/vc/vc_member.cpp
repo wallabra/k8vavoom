@@ -539,28 +539,33 @@ VClass *VMemberBase::StaticFindClassByGameObjName (VName aname, VName pkgname) {
 //  VMemberBase::StaticSplitStateLabel
 //
 //==========================================================================
-void VMemberBase::StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts) {
+void VMemberBase::StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts, bool appendToParts) {
   guard(VMemberBase::StaticSplitStateLabel);
   TArray<VStr> StrParts;
   LabelName.Split(".", StrParts);
-  Parts.Clear();
-  // remap old death state labels to proper names
-  if (StrParts[0] == "XDeath") {
-    Parts.Append("Death");
-    Parts.Append("Extreme");
-  } else if (StrParts[0] == "Burn") {
-    Parts.Append("Death");
-    Parts.Append("Fire");
-  } else if (StrParts[0] == "Ice") {
-    Parts.Append("Death");
-    Parts.Append("Ice");
-  } else if (StrParts[0] == "Disintegrate") {
-    Parts.Append("Death");
-    Parts.Append("Disintegrate");
-  } else {
-    Parts.Append(*StrParts[0]);
+  if (!appendToParts) Parts.Clear();
+  while (StrParts.length() && StrParts[0].length() == 0) StrParts.removeAt(0);
+  if (StrParts.length() > 0) {
+    // remap old death state labels to proper names
+    if (!appendToParts && StrParts[0].ICmp("XDeath") == 0) {
+      Parts.Append("Death");
+      Parts.Append("Extreme");
+    } else if (!appendToParts && StrParts[0].ICmp("Burn") == 0) {
+      Parts.Append("Death");
+      Parts.Append("Fire");
+    } else if (!appendToParts && StrParts[0].ICmp("Ice") == 0) {
+      Parts.Append("Death");
+      Parts.Append("Ice");
+    } else if (!appendToParts && StrParts[0].ICmp("Disintegrate") == 0) {
+      Parts.Append("Death");
+      Parts.Append("Disintegrate");
+    } else {
+      Parts.Append(*StrParts[0]);
+    }
   }
-  for (int i = 1; i < StrParts.Num(); ++i) Parts.Append(*StrParts[i]);
+  for (int i = 1; i < StrParts.Num(); ++i) {
+    if (StrParts[i].length()) Parts.Append(*StrParts[i]);
+  }
   unguard;
 }
 

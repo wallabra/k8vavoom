@@ -117,7 +117,7 @@ public:
 
   static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname);
 
-  static void StaticSplitStateLabel (const VStr &, TArray<VName> &);
+  static void StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts, bool appendToParts=false);
 
   static void StaticAddIncludePath (const char *);
   static void StaticAddDefine (const char *);

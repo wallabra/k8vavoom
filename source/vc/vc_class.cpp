@@ -834,7 +834,9 @@ VState *VClass::FindStateChecked (VName AName) {
 VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
   guard(VClass::FindStateLabel);
 
-  if (SubLabel == NAME_None && AName != NAME_None) {
+  if (AName == NAME_None || VStr::ICmp(*AName, "None") == 0 || VStr::ICmp(*AName, "Null") == 0) return nullptr;
+
+  if (SubLabel == NAME_None) {
     // remap old death state labels to proper names
          if (VStr::ICmp(*AName, "XDeath") == 0) { AName = VName("Death"); SubLabel = VName("Extreme"); }
     else if (VStr::ICmp(*AName, "Burn") == 0) { AName = VName("Death"); SubLabel = VName("Fire"); }
@@ -842,11 +844,22 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
     else if (VStr::ICmp(*AName, "Disintegrate") == 0) { AName = VName("Death"); SubLabel = VName("Disintegrate"); }
   }
 
+  const char *namestr = *AName;
+  if (strchr(namestr, '.') != nullptr || (SubLabel != NAME_None && strchr(*SubLabel, '.') != nullptr)) {
+    // oops, has dots; do it slow
+    VStr lblstr = VStr(namestr);
+    if (SubLabel != NAME_None) { lblstr += '.'; lblstr += *SubLabel; }
+    TArray<VName> names;
+    if (names.length() == 0) return nullptr;
+    StaticSplitStateLabel(lblstr, names);
+    return FindStateLabel(names, Exact);
+  }
+
   for (int i = 0; i < StateLabels.Num(); ++i) {
     //fprintf(stderr, "%s:<%s>: i=%d; lname=%s\n", GetName(), *AName, i, *StateLabels[i].Name);
     if (VStr::ICmp(*StateLabels[i].Name, *AName) == 0) {
       if (SubLabel != NAME_None) {
-        TArray<VStateLabel>& SubList = StateLabels[i].SubLabels;
+        TArray<VStateLabel> &SubList = StateLabels[i].SubLabels;
         for (int j = 0; j < SubList.Num(); ++j) {
           if (VStr::ICmp(*SubList[j].Name, *SubLabel) == 0) return &SubList[j];
         }
@@ -870,9 +883,11 @@ VStateLabel *VClass::FindStateLabel (VName AName, VName SubLabel, bool Exact) {
 //==========================================================================
 VStateLabel *VClass::FindStateLabel (TArray<VName> &Names, bool Exact) {
   guard(VClass::FindStateLabel);
+  if (Names.length() > 0 && (VStr::ICmp(*Names[0], "None") == 0 || VStr::ICmp(*Names[0], "Null") == 0)) return nullptr;
   TArray<VStateLabel> *List = &StateLabels;
   VStateLabel *Best = nullptr;
   for (int ni = 0; ni < Names.Num(); ++ni) {
+    if (Names[ni] == NAME_None) continue;
     VStateLabel *Lbl = nullptr;
     for (int i = 0; i < List->Num(); ++i) {
       if (VStr::ICmp(*(*List)[i].Name, *Names[ni]) == 0) {
@@ -898,10 +913,13 @@ VStateLabel *VClass::FindStateLabel (TArray<VName> &Names, bool Exact) {
 //  VClass::FindStateLabelChecked
 //
 //==========================================================================
+/*
 VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Exact) {
   guard(VClass::FindStateLabelChecked);
+  if (AName == NAME_None || VStr::ICmp(*AName, "None") == 0 || VStr::ICmp(*AName, "Null") == 0) return nullptr;
   VStateLabel *Lbl = FindStateLabel(AName, SubLabel, Exact);
   if (!Lbl) {
+    if (Names.length() > 0 && (VStr::ICmp(*Names[0], "None") == 0 || VStr::ICmp(*Names[0], "Null") == 0)) return nullptr;
     VStr FullName = *AName;
     if (SubLabel != NAME_None) {
       FullName += ".";
@@ -912,6 +930,7 @@ VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Ex
   return Lbl;
   unguard;
 }
+*/
 
 
 //==========================================================================
@@ -919,6 +938,7 @@ VStateLabel *VClass::FindStateLabelChecked (VName AName, VName SubLabel, bool Ex
 //  VClass::FindStateLabelChecked
 //
 //==========================================================================
+/*
 VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
   guard(VClass::FindStateLabelChecked);
   VStateLabel *Lbl = FindStateLabel(Names, Exact);
@@ -933,6 +953,7 @@ VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
   return Lbl;
   unguard;
 }
+*/
 
 
 //==========================================================================

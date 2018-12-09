@@ -598,9 +598,11 @@ IMPLEMENT_FUNCTION(VObject, GetClassReplacee) {
 }
 
 IMPLEMENT_FUNCTION(VObject, FindClassState) {
+  P_GET_BOOL_OPT(Exact, false);
+  P_GET_NAME_OPT(SubLabel, NAME_None);
   P_GET_NAME(StateName);
   P_GET_PTR(VClass, Cls);
-  VStateLabel *Lbl = Cls->FindStateLabel(StateName);
+  VStateLabel *Lbl = Cls->FindStateLabel(StateName, SubLabel, Exact);
   RET_PTR(Lbl ? Lbl->State : nullptr);
 }
 

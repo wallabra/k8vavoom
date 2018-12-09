@@ -481,7 +481,7 @@ native static final name GetClassName (class C);
 native static final class GetClassParent (class C);
 native static final /*spawner*/ class GetClassReplacement (class C); // fake return type
 native static final class GetClassReplacee (class C);
-native static final state FindClassState (class C, name StateName);
+native static final state FindClassState (class C, name StateName, optional name SubLabel, optional bool exact);
 native static final int GetClassNumOwnedStates (class C);
 native static final state GetClassFirstState (class C);
 native static final name GetClassGameObjName (class C);

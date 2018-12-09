@@ -353,10 +353,10 @@ public:
   int GetMethodIndex (VName);
   VState *FindState (VName);
   VState *FindStateChecked (VName);
-  VStateLabel *FindStateLabel (VName, VName=NAME_None, bool=false);
+  VStateLabel *FindStateLabel (VName AName, VName SubLabel=NAME_None, bool Exact=false);
   VStateLabel *FindStateLabel (TArray<VName> &, bool);
-  VStateLabel *FindStateLabelChecked (VName, VName = NAME_None, bool=false);
-  VStateLabel *FindStateLabelChecked (TArray<VName> &, bool);
+  //VStateLabel *FindStateLabelChecked (VName, VName = NAME_None, bool=false);
+  //VStateLabel *FindStateLabelChecked (TArray<VName> &, bool);
   VDecorateStateAction *FindDecorateStateAction (VName);
   VName FindDecorateStateFieldTrans (VName dcname);
 
