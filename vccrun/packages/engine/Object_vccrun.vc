@@ -25,7 +25,7 @@
 //
 //==========================================================================
 
-native static final bool ImmediateDelete { get; set; }
+native static final bool GC_ImmediateDelete { get; set; }
 
 //==========================================================================
 //

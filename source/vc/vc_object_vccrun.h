@@ -1,5 +1,5 @@
-  DECLARE_FUNCTION(get_ImmediateDelete)
-  DECLARE_FUNCTION(set_ImmediateDelete)
+  DECLARE_FUNCTION(get_GC_ImmediateDelete)
+  DECLARE_FUNCTION(set_GC_ImmediateDelete)
 
   // implemented in main vccrun source
   DECLARE_FUNCTION(CreateTimer)
