@@ -23,44 +23,39 @@
 //**
 //**************************************************************************
 
+
 //==========================================================================
 //
 //  AddInventory
 //
 //==========================================================================
+void AddInventory (Inventory Item) {
+  if (!Item) return;
 
-void AddInventory(Inventory Item)
-{
-  if (Item.Owner)
-  {
-    if (Item.Owner == self)
-    {
-      //  Already in the inventory.
-      return;
-    }
-    //  Remove from current owner's inventory.
+  if (Item.Owner) {
+    if (Item.Owner == self) return; // already in the inventory
+    // remove from current owner's inventory
     EntityEx(Item.Owner).RemoveInventory(Item);
   }
 
-  //  Add it at the top of the inventory.
+  // add it at the top of the inventory
   Item.Inventory = Inventory;
   Inventory = Item;
 
-  //  Set itsm's owner
+  // set itsm's owner
   Item.Owner = self;
 }
+
 
 //==========================================================================
 //
 //  RemoveInventory
 //
 //==========================================================================
-
-void RemoveInventory(Inventory Item)
-{
+void RemoveInventory (Inventory Item) {
   if (!Item) return;
 
-  //  Find previous item or owner itself, if it's the first item.
+  // find previous item or owner itself, if it's the first item
   EntityEx Prev = self;
   while (Prev && Prev.Inventory != Item) Prev = Prev.Inventory;
 
@@ -74,7 +69,7 @@ void RemoveInventory(Inventory Item)
     return;
   }
 
-  //  Unlink and remove owner.
+  // unlink and remove owner
   Prev.Inventory = Item.Inventory;
   Item.DetachedFromOwner();
   Item.Owner = none;
@@ -108,144 +103,107 @@ final Inventory FindInventory (class!Inventory ItemClass) {
 //  GiveInventoryType
 //
 //==========================================================================
-
-final Inventory GiveInventoryType(class!Inventory Type)
-{
+final Inventory GiveInventoryType (class!Inventory Type) {
   Inventory Item = Spawn(Type, default, default, default, false);
-  //  This shouldn't count for the item statistics
-  if (Item.bCountItem)
-  {
+  if (!Item) return none;
+  // this shouldn't count for the item statistics
+  if (Item.bCountItem) {
     Item.bCountItem = false;
-    Level.TotalItems--;
+    --Level.TotalItems;
   }
   Item.bDropped = true;
-  if (!Item.TryPickup(self))
-  {
+  if (!Item.TryPickup(self)) {
     Item.Destroy();
     return none;
   }
   return Item;
 }
 
+
 //==========================================================================
 //
 //  DestroyAllInventory
 //
 //==========================================================================
-
-final void DestroyAllInventory()
-{
-  while (Inventory)
-  {
-    Inventory.Destroy();
-  }
+final void DestroyAllInventory () {
+  while (Inventory) Inventory.Destroy();
 }
+
 
 //==========================================================================
 //
 //  UseInventory
 //
 //==========================================================================
-
-bool UseInventory(Inventory Item)
-{
-  //  Don't use items if you are dead.
-  if (Health <= 0)
-  {
-    return false;
-  }
-  //  Don't use item if don't actually have it.
-  if (Item.Amount <= 0)
-  {
-    return false;
-  }
-  if (!Item.Use(false))
-  {
-    return false;
-  }
-  //  Item was used - remove it from inventory
-  Item.Amount--;
-  if (Item.Amount <= 0 && !Item.bKeepDepleted)
-  {
-    Item.Destroy();
-  }
+bool UseInventory (Inventory Item) {
+  // don't use items if you are dead
+  if (Health <= 0) return false;
+  // don't use item if don't actually have it
+  if (Item.Amount <= 0) return false;
+  // tell item that it is used
+  if (!Item.Use(false)) return false;
+  // item was used, remove it from inventory
+  --Item.Amount;
+  if (Item.Amount <= 0 && !Item.bKeepDepleted) Item.Destroy();
   return true;
 }
+
 
 //==========================================================================
 //
 //  DropInventory
 //
 //==========================================================================
-
-EntityEx DropInventory(Inventory SrcItem)
-{
-  TVec      Dir;
-
+EntityEx DropInventory (Inventory SrcItem) {
+  TVec Dir;
   AngleVector(Angles, out Dir);
   Dir.z = 0.0;
   Dir = Normalise(Dir);
   Inventory Item = SrcItem.CreateTossable();
-  if (Item)
-  {
-    Item.SetOrigin2(Origin + vector(0.0, 0.0, 32.0) +
-      Dir * (Radius + 32.0));
+  if (Item) {
+    Item.SetOrigin2(Origin+vector(0.0, 0.0, 32.0)+Dir*(Radius+32.0));
     Item.Angles.yaw = Angles.yaw;
-    Item.Velocity = Dir * 128.0;
+    Item.Velocity = Dir*128.0;
   }
   return Item;
 }
+
 
 //==========================================================================
 //
 //  ObtainInventory
 //
 //==========================================================================
+void ObtainInventory (EntityEx Other) {
+  if (!Other) return; //k8: just in case
 
-void ObtainInventory(EntityEx Other)
-{
-  //  Actor should not have any inventory.
-  if (Inventory)
-  {
-    Error("ObtainInventory called while still having an inventory");
-  }
+  // actor should not have any inventory
+  if (Inventory) Error("ObtainInventory called while still having an inventory");
 
   Inventory = Other.Inventory;
   Other.Inventory = none;
   Inventory Item;
-  for (Item = Inventory; Item; Item = Item.Inventory)
-  {
-    Item.Owner = self;
-  }
+  for (Item = Inventory; Item; Item = Item.Inventory) Item.Owner = self;
 }
+
 
 //===========================================================================
 //
 //  ClearInventory
 //
 //===========================================================================
-
-final override void ClearInventory()
-{
+final override void ClearInventory () {
   Inventory Item = Inventory;
-  while (Item)
-  {
+  while (Item) {
     Inventory Next = Item.Inventory;
-    if (!Item.bUndroppable)
-    {
-      //  IMHO any item that should be kept should not be dropped,
-      // not just ammo.
-      if (Item.bKeepDepleted)
-      {
+    if (!Item.bUndroppable) {
+      // IMHO any item that should be kept should not be dropped, not just ammo
+      if (Item.bKeepDepleted) {
         Item.Amount = 0;
-      }
-      else
-      {
+      } else {
         Item.Destroy();
       }
-    }
-    else if (HexenArmor(Item))
-    {
+    } else if (HexenArmor(Item)) {
       HexenArmor A = HexenArmor(Item);
       A.Slots[0] = 0.0;
       A.Slots[1] = 0.0;
@@ -255,8 +213,7 @@ final override void ClearInventory()
     Item = Next;
   }
 
-  if (bIsPlayer)
-  {
+  if (bIsPlayer) {
     PlayerEx(Player).ReadyWeapon = none;
     PlayerEx(Player).PendingWeapon = none;
     Player.SetViewObject(none);
@@ -265,115 +222,84 @@ final override void ClearInventory()
   }
 }
 
+
 //===========================================================================
 //
 //  GiveInventory
 //
 //===========================================================================
+final override void GiveInventory (name ItemName, int Amount) {
+  if (Amount <= 0) return;
+  if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
 
-final override void GiveInventory(name ItemName, int Amount)
-{
-  if (Amount <= 0)
-  {
-    return;
-  }
-  if (ItemName == 'armor')
-  {
-    ItemName = 'basicarmor';
-  }
-
-  //  Get class of the item.
+  // get class of the item
   class EClass = FindClassNoCase(ItemName);
-  if (!EClass)
-  {
-    print("Unknown item type %n", ItemName);
+  if (!EClass) {
+    print("Unknown item type '%s'", ItemName);
     return;
   }
+
   class!Inventory ItemClass = class!Inventory(EClass);
-  if (!ItemClass)
-  {
-    print("%n is not an inventory class", ItemName);
+  if (!ItemClass) {
+    print("'%s' is not an inventory class", ItemName);
     return;
+  }
+  class!Inventory irepl = class!Inventory(GetClassReplacement(ItemClass));
+  if (!irepl) {
+    print("'%s' replacement is not an inventory class, ignoring it", ItemName);
+  } else {
+    ItemClass = irepl;
   }
 
   Weapon SavedPendingWeapon = none;
   bool HadWeapon = true;
-  if (bIsPlayer)
-  {
+  if (bIsPlayer) {
     SavedPendingWeapon = PlayerEx(Player).PendingWeapon;
     HadWeapon = !!PlayerEx(Player).ReadyWeapon;
   }
 
   Inventory Item = Spawn(ItemClass, default, default, default, false);
-  //  This shouldn't count for the item statistics
-  if (Item.bCountItem)
-  {
-    Item.bCountItem = false;
-    Level.TotalItems--;
-  }
-  if (BasicArmorPickup(Item))
-  {
-    BasicArmorPickup(Item).SaveAmount *= Amount;
-  }
-  else if (BasicArmorBonus(Item))
-  {
-    BasicArmorBonus(Item).SaveAmount *= Amount;
-  }
-  else
-  {
-    Item.Amount = Amount;
-  }
+  if (!Item) return;
 
-  if (!Item.TryPickup(self))
-  {
-    Item.Destroy();
+  // this shouldn't count for the item statistics
+  if (Item.bCountItem) {
+    Item.bCountItem = false;
+    --Level.TotalItems;
   }
-  //  Don't automatically bring up weapon.
-  if (bIsPlayer && HadWeapon)
-  {
+       if (BasicArmorPickup(Item)) BasicArmorPickup(Item).SaveAmount *= Amount;
+  else if (BasicArmorBonus(Item)) BasicArmorBonus(Item).SaveAmount *= Amount;
+  else Item.Amount = Amount;
+
+  if (!Item.TryPickup(self)) Item.Destroy();
+
+  // don't automatically bring up weapon
+  if (bIsPlayer && HadWeapon) {
     PlayerEx(Player).PendingWeapon = SavedPendingWeapon;
   }
 }
+
 
 //===========================================================================
 //
 //  TakeInventory
 //
 //===========================================================================
+final override void TakeInventory (name ItemName, int Amount) {
+  if (Amount <= 0) return;
+  if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
 
-final override void TakeInventory(name ItemName, int Amount)
-{
-  if (Amount <= 0)
-  {
-    return;
-  }
-  if (ItemName == 'armor')
-  {
-    ItemName = 'basicarmor';
-  }
-
-  //  Get class of the item.
+  // get class of the item
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
-  if (!ItemClass)
-  {
-    return;
-  }
+  if (!ItemClass) return;
 
   Inventory Item = FindInventory(ItemClass);
-  if (!Item)
-  {
-    return;
-  }
+  if (!Item) return;
 
   Item.Amount -= Amount;
-  if (Item.Amount <= 0)
-  {
-    if (Item.bKeepDepleted)
-    {
+  if (Item.Amount <= 0) {
+    if (Item.bKeepDepleted) {
       Item.Amount = 0;
-    }
-    else
-    {
+    } else {
       Item.Destroy();
     }
   }
@@ -386,13 +312,13 @@ final override void TakeInventory(name ItemName, int Amount)
 //
 //===========================================================================
 final override int CheckInventory (name ItemName) {
-       if (ItemName == 'armor') ItemName = 'basicarmor';
-  else if (ItemName == 'health') return Health;
+       if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
+  else if (nameicmp(ItemName, 'health') == 0) return Health;
 
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (ItemClass) {
     Inventory Item = FindInventory(ItemClass);
-    return Item ? Item.Amount : 0;
+    return (Item ? Item.Amount : 0);
   }
   return 0;
 }
@@ -403,152 +329,107 @@ final override int CheckInventory (name ItemName) {
 //  UseInventoryName
 //
 //===========================================================================
-
-final override int UseInventoryName(name ItemName)
-{
+final override int UseInventoryName (name ItemName) {
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
-  if (ItemClass)
-  {
+  if (ItemClass) {
     Inventory Item = FindInventory(ItemClass);
-    if (Item)
-    {
-      return UseInventory(Item);
-    }
+    if (Item) return UseInventory(Item);
   }
   return 0;
 }
+
 
 //===========================================================================
 //
 //  GetArmorPoints
 //
 //===========================================================================
-
-final override int GetArmorPoints()
-{
+final override int GetArmorPoints () {
   Inventory A = FindInventory(BasicArmor);
-  return A ? A.Amount : 0;
+  return (A ? A.Amount : 0);
 }
+
 
 //===========================================================================
 //
 //  CheckNamedWeapon
 //
 //===========================================================================
-
-final override int CheckNamedWeapon(name Name)
-{
-  if (!bIsPlayer || !PlayerEx(Player).ReadyWeapon)
-  {
-    return false;
-  }
-  return !stricmp(va("%n", Name), va("%n", GetClassName(
-    PlayerEx(Player).ReadyWeapon.Class)));
+final override int CheckNamedWeapon (name Name) {
+  if (!bIsPlayer || !PlayerEx(Player).ReadyWeapon) return false;
+  return (nameicmp(Name, GetClassName(PlayerEx(Player).ReadyWeapon.Class)) == 0);
 }
+
 
 //===========================================================================
 //
 //  SetNamedWeapon
 //
 //===========================================================================
-
-final override int SetNamedWeapon(name Name)
-{
-  if (!bIsPlayer)
-  {
-    return false;
-  }
+final override int SetNamedWeapon (name Name) {
+  if (!bIsPlayer) return false;
 
   Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassNoCase(Name))));
-  if (!Wpn)
-  {
-    return false;
-  }
-  //  Check if it's already active.
-  if (PlayerEx(Player).ReadyWeapon == Wpn)
-  {
-    //  Make sure player doesn't switch away from it.
+  if (!Wpn) return false;
+
+  // check if it's already active
+  if (PlayerEx(Player).ReadyWeapon == Wpn) {
+    // make sure player doesn't switch away from it
     PlayerEx(Player).PendingWeapon = none;
     return true;
   }
-  //  Check if weapon has enough ammo.
-  if (!Wpn.CheckAmmo(Weapon::FIRE_Either, false))
-  {
-    return false;
-  }
+
+  // check if weapon has enough ammo
+  if (!Wpn.CheckAmmo(Weapon::FIRE_Either, false)) return false;
+
   PlayerEx(Player).PendingWeapon = Wpn;
   return true;
 }
+
 
 //===========================================================================
 //
 //  GetAmmoCapacity
 //
 //===========================================================================
-
-final override int GetAmmoCapacity(name Name)
-{
+final override int GetAmmoCapacity (name Name) {
   class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
-  if (!AmmoType)
-  {
-    return 0;
-  }
-  //  Only direct descendants of Ammo class.
-  if (GetClassParent(AmmoType) != Ammo)
-  {
-    return 0;
-  }
-  //  If we have this ammo, return current max amount, otherwise return
-  // default for this ammo type.
+  if (!AmmoType) return 0;
+
+  // only direct descendants of Ammo class
+  if (GetClassParent(AmmoType) != Ammo) return 0;
+
+  // if we have this ammo, return current max amount, otherwise return
+  // default for this ammo type
   Inventory Item = FindInventory(AmmoType);
-  if (Item)
-  {
-    return Item.MaxAmount;
-  }
-  else
-  {
-    return AmmoType.default.MaxAmount;
-  }
+  return (Item ? Item.MaxAmount : AmmoType.default.MaxAmount);
 }
+
 
 //===========================================================================
 //
 //  SetAmmoCapacity
 //
 //===========================================================================
-
-final override void SetAmmoCapacity(name Name, int Amount)
-{
+final override void SetAmmoCapacity (name Name, int Amount) {
   class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
-  if (!AmmoType)
-  {
-    return;
-  }
-  //  Only direct descendants of Ammo class.
-  if (GetClassParent(AmmoType) != Ammo)
-  {
-    return;
-  }
+  if (!AmmoType) return;
 
-  //  Make sure new ammo capacity is not negative.
-  if (Amount < 0)
-  {
-    Amount = 0;
-  }
+  // only direct descendants of Ammo class
+  if (GetClassParent(AmmoType) != Ammo) return;
+
+  // make sure new ammo capacity is not negative
+  Amount = max(0, Amount);
 
   Inventory Item = FindInventory(AmmoType);
-  if (!Item)
-  {
+  if (!Item) {
     Item = GiveInventoryType(AmmoType);
     Item.Amount = 0;
   }
   Item.MaxAmount = Amount;
-  //  We also should make sure that the current amount doesn't exceed the
-  // new limit.
-  if (Item.Amount > Item.MaxAmount)
-  {
-    Item.Amount = Item.MaxAmount;
-  }
+
+  // we also should make sure that the current amount doesn't exceed the new limit
+  if (Item.Amount > Item.MaxAmount) Item.Amount = Item.MaxAmount;
 }
 
 
