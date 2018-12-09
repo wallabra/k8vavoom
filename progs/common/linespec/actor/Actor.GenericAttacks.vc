@@ -106,21 +106,27 @@ final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
           break;
         case CMF_AIMDIRECTION:
           Origin += Offs;
-          //k8: why `Angles.yaw?'
-          //A = SpawnMissileAngles(MissileType, 0/*Angles.yaw*/, Pitch, SpawnHeight);
+          //k8: why `Angles.yaw?' but gozzo does this too
+          //    but seems that gozzo overrides this later
+          //A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch, SpawnHeight);
           // will be turned later
-          A = SpawnMissileAngles(MissileType, 0/*Angle*/, Pitch, SpawnHeight);
-          if (A) A.Angles.yaw = Angle; // yet store it
+          A = SpawnMissileAngles(MissileType, (Flags&CMF_ABSOLUTEANGLE ? Angle : Angles.yaw), Pitch, SpawnHeight);
+          //if (A) A.Angles.yaw = Angle; // yet store it
           //if (A) print("%C: A_CustomMissile of '%C': Angle=%s; Pitch=%s; angles=%s; vel=%s", self, MissileType, Angle, Pitch, A.Angles, A.Velocity);
           Origin -= Offs;
           break;
       }
 
       if (A) {
-        /*if (AimMode != CMF_AIMDIRECTION)*/ {
+        if (AimMode == CMF_AIMDIRECTION) {
+          if (Angle && !(Flags&CMF_ABSOLUTEANGLE)) {
+            VectorRotateAroundZ(ref A.Velocity, Angle);
+            A.Angles.yaw += Angle;
+          }
+        } else {
           VectorRotateAroundZ(ref A.Velocity, Angle);
-          //print("  %C: A_CustomMissile of '%C': Angle=%s; Pitch=%s; angles=%s; vel=%s", self, MissileType, Angle, Pitch, A.Angles, A.Velocity);
         }
+        A.Angles.yaw = AngleMod360(A.Angles.yaw);
         // find correct shooter for projectiles shooting projectiles
         if (IsMissile(!!(Flags&CMF_TRACKOWNER))) {
           EntityEx Own = self;
