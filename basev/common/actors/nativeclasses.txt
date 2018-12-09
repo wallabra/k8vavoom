@@ -2,6 +2,7 @@
 class Actor extends Thinker
   native
 {
+  /*
   field x = _GetOriginX;
   field y = _GetOriginY;
   field z = _GetOriginZ;
@@ -19,8 +20,9 @@ class Actor extends Thinker
   field yaw = _GetAnglesYaw;
   field pitch = _GetAnglesPitch;
   field roll = _GetAnglesRoll;
+  */
 
-  /*
+  /* in code
   field x = Origin.x;
   field y = Origin.y;
   field z = Origin.z;
@@ -38,41 +40,33 @@ class Actor extends Thinker
   field yaw = Angles.yaw;
   field pitch = Angles.pitch;
   field roll = Angles.roll;
-  */
 
-  field radius = Radius;
   field height = Height;
-  field scalex = ScaleX;
-  field scaley = ScaleY;
-
   field ceilingz = CeilingZ;
   field floorz = FloorZ;
-
   field alpha = Alpha;
   field health = Health;
-  field mass = Mass;
-  field MeleeRange = MeleeRange;
-  field gravity = Gravity;
-
-  field reactiontime = ReactionTime;
-  field speed = speed;
-
   field waterlevel = WaterLevel;
-  field watertype = WaterType;
-
   field TID = TID;
   field TIDToHate = TIDToHate;
-
+  field radius = Radius;
+  field scalex = ScaleX;
+  field scaley = ScaleY;
+  field mass = Mass;
+  field gravity = Gravity;
+  field MeleeRange = MeleeRange;
+  field reactiontime = ReactionTime;
+  field speed = speed;
+  field watertype = WaterType;
   field Threshold = Threshold;
-
   field Damage = MissileDamage; //k8: i think so
+  */
 
-
-  alias random = random;
-  alias frandom = frandom;
-  alias random2 = random2;
-  alias randompick = randompick;
-  alias frandompick = frandompick;
+  //alias random = random;
+  //alias frandom = frandom;
+  //alias random2 = random2;
+  //alias randompick = randompick;
+  //alias frandompick = frandompick;
 
   alias CheckClass = CheckClass;
 

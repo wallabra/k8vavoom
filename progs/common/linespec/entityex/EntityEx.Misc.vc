@@ -176,7 +176,7 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
         }
         float VelZ = ((Other.Origin.z+(Other.Height*0.5))-Origin.z)*Thrust;
         if (Source != Other) VelZ *= 0.5; else VelZ *= 0.8;
-        TVec Dir = Other.Origin - Origin;
+        TVec Dir = Other.Origin-Origin;
         Dir.z = 0.0;
         if (Length(Dir) < 0.001)
         {
@@ -214,10 +214,10 @@ final bool TeleportMove(TVec org, optional bool ForceTelestomp)
       continue;
     }
 
-    blockdist = Other.Radius + Radius;
+    blockdist = Other.Radius+Radius;
 
-    if (fabs(Other.Origin.x - org.x) >= blockdist ||
-      fabs(Other.Origin.y - org.y) >= blockdist)
+    if (fabs(Other.Origin.x-org.x) >= blockdist ||
+      fabs(Other.Origin.y-org.y) >= blockdist)
     {
       // didn't hit it
       continue;
@@ -233,11 +233,11 @@ final bool TeleportMove(TVec org, optional bool ForceTelestomp)
     if ((bPassMobj || Other.bActLikeBridge) && !Level.CompatNoPassOver &&
       (!bDontOverlap || !Other.bDontOverlap))
     {
-      if (Other.Origin.z > org.z + Height)
+      if (Other.Origin.z > org.z+Height)
       {
         continue;
       }
-      if (Other.Origin.z + Other.Height < org.z)
+      if (Other.Origin.z+Other.Height < org.z)
       {
         continue;
       }
@@ -284,7 +284,7 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
   bool    ResetPitch = false;
 
   oldOrg = Origin;
-  aboveFloor = Origin.z - FloorZ;
+  aboveFloor = Origin.z-FloorZ;
   if (Dst.z == ONFLOORZ)
   {
     sector_t *DstSec = XLevel.PointInSector(Dst);
@@ -294,10 +294,10 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
     {
       if (FindInventory(PowerFlight) && aboveFloor)
       {
-        Dst.z = DstFloorZ + aboveFloor;
-        if (Dst.z + Height > DstCeilZ)
+        Dst.z = DstFloorZ+aboveFloor;
+        if (Dst.z+Height > DstCeilZ)
         {
-          Dst.z = DstCeilZ - Height;
+          Dst.z = DstCeilZ-Height;
         }
       }
       else
@@ -311,10 +311,10 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
     }
     else if (bMissile)
     {
-      Dst.z = Dst.z + aboveFloor;
-      if (Dst.z + Height > DstCeilZ)
+      Dst.z = Dst.z+aboveFloor;
+      if (Dst.z+Height > DstCeilZ)
       {
-        Dst.z = DstCeilZ - Height;
+        Dst.z = DstCeilZ-Height;
       }
     }
     else
@@ -328,7 +328,7 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
   }
   if (bIsPlayer && Player.MO == self)
   {
-    Player.ViewOrg = Origin + vector(0.0, 0.0,
+    Player.ViewOrg = Origin+vector(0.0, 0.0,
       PlayerEx(Player).ViewHeight);
     if (ResetPitch)
     {
@@ -339,12 +339,12 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
   fogDelta = bMissile ? 0.0 : LineSpecialGameInfo(Level.Game).TeleFogHeight;
   if (SrcFog)
   {
-    Spawn(TeleportFog, oldOrg + vector(0.0, 0.0, fogDelta));
+    Spawn(TeleportFog, oldOrg+vector(0.0, 0.0, fogDelta));
   }
   if (DstFog)
   {
-    Spawn(TeleportFog, Origin + vector(20.0 * cos(angle),
-      20.0 * sin(angle), fogDelta));
+    Spawn(TeleportFog, Origin+vector(20.0*cos(angle),
+      20.0*sin(angle), fogDelta));
   }
   if (!KeepDir)
   {
@@ -363,8 +363,8 @@ final bool Teleport(TVec Dst, float angle, bool DstFog, bool SrcFog,
   HandleFloorclip();
   if (bMissile)
   {
-    Velocity.x = Speed * cos(angle);
-    Velocity.y = Speed * sin(angle);
+    Velocity.x = Speed*cos(angle);
+    Velocity.y = Speed*sin(angle);
   }
   else if (!KeepDir)  // no fog doesn't alter the player's momentums
   {
@@ -390,10 +390,10 @@ final override bool MoveThing(TVec Pos, bool Fog)
   {
     if (Fog)
     {
-      Spawn(TeleportFog, Pos + vector(0.0, 0.0,
+      Spawn(TeleportFog, Pos+vector(0.0, 0.0,
         LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-      Spawn(TeleportFog, OldOrg + vector(0.0, 0.0,
+      Spawn(TeleportFog, OldOrg+vector(0.0, 0.0,
         LineSpecialGameInfo(Level.Game).TeleFogHeight));
     }
     return true;
@@ -424,7 +424,7 @@ final bool TestLocation()
   if (CheckPosition(Origin))
   {
     // XY is ok, now check Z
-    if ((Origin.z < FloorZ) || (Origin.z + Height > CeilingZ))
+    if ((Origin.z < FloorZ) || (Origin.z+Height > CeilingZ))
     {
       // Bad Z
       return false;
@@ -442,8 +442,8 @@ final bool TestLocation()
 
 final void Thrust(float angle, float move)
 {
-  Velocity.x += move * cos(angle) * 35.0;
-  Velocity.y += move * sin(angle) * 35.0;
+  Velocity.x += move*cos(angle)*35.0;
+  Velocity.y += move*sin(angle)*35.0;
 }
 
 //==========================================================================
@@ -463,13 +463,13 @@ int FaceActor(EntityEx target, out float delta)
   float angle2;
 
   angle1 = Angles.yaw;
-  angle2 = atan2(target.Origin.y - Origin.y, target.Origin.x - Origin.x);
+  angle2 = atan2(target.Origin.y-Origin.y, target.Origin.x-Origin.x);
   if (angle2 > angle1)
   {
-    diff = AngleMod360(angle2 - angle1);
+    diff = AngleMod360(angle2-angle1);
     if (diff > 180.0)
     {
-      delta = 360.0 - diff;
+      delta = 360.0-diff;
       return 0;
     }
     else
@@ -480,10 +480,10 @@ int FaceActor(EntityEx target, out float delta)
   }
   else
   {
-    diff = AngleMod360(angle1 - angle2);
+    diff = AngleMod360(angle1-angle2);
     if (diff > 180.0)
     {
-      delta = 360.0 - diff;
+      delta = 360.0-diff;
       return 1;
     }
     else
@@ -666,11 +666,11 @@ final void NightmareRespawn()
   // inherit attributes from deceased one
   A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, false);
   Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
-  A.Angles.yaw = itof(45 * (SpawnPoint.angle / 45));
+  A.Angles.yaw = itof(45*(SpawnPoint.angle/45));
 
-  if (SpawnPoint.options & LineSpecialLevelInfo::MTF_AMBUSH)
+  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_AMBUSH)
     A.bAmbush = true;
-  if (SpawnPoint.options & LineSpecialLevelInfo::MTF_STANDSTILL)
+  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_STANDSTILL)
     A.bStanding = true;
 
   A.ReactionCount = 18;
@@ -723,7 +723,7 @@ override bool Touch(Entity InOther)
     // or different species if DONTHARMSPECIES
      (!(Other.bDontHurtSpecies) || Other.GetSpecies() != GetSpecies()) &&
      // touches vertically
-     Other.Origin.z + Other.Height >= Origin.z && Origin.z + Height >= Other.Origin.z &&
+     Other.Origin.z+Other.Height >= Origin.z && Origin.z+Height >= Other.Origin.z &&
      // prevents lost souls from exploding when fired by pain elementals
      (Other.Master != self && Master != Other))
   // Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
@@ -761,14 +761,14 @@ override bool Touch(Entity InOther)
     {
       Other.Velocity.x += Velocity.x;
       Other.Velocity.y += Velocity.y;
-      if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
+      if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0)
       {
-        damage = (ftoi(fmax(0, Mass)) / 100) + 1;
+        damage = (ftoi(fmax(0, Mass))/100)+1;
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, self, damage);
-        damage = (ftoi(fmax(0, Other.Mass)) / 100) + 1;
+        damage = (ftoi(fmax(0, Other.Mass))/100)+1;
         SpawnExploBloodAtHead(damage>>2, Other);
-        Damage(Other, Other, damage >> 2);
+        Damage(Other, Other, damage>>2);
       }
       return false;
     }
@@ -902,8 +902,8 @@ override bool Touch(Entity InOther)
         if (Other.bPushable && !bCannotPush)
         {
           // Push thing
-          Other.Velocity.x += Velocity.x / 4.0;
-          Other.Velocity.y += Velocity.y / 4.0;
+          Other.Velocity.x += Velocity.x/4.0;
+          Other.Velocity.y += Velocity.y/4.0;
         }
       }
       //WHAT A FUCK IS THIS???????      numspechit = 0;
@@ -932,8 +932,8 @@ override bool Touch(Entity InOther)
   if (Other.bPushable && !bCannotPush)
   {
     // Push thing
-    Other.Velocity.x += Velocity.x / 4.0;
-    Other.Velocity.y += Velocity.y / 4.0;
+    Other.Velocity.x += Velocity.x/4.0;
+    Other.Velocity.y += Velocity.y/4.0;
   }
 
   solid = Other.bSolid &&
@@ -1013,9 +1013,9 @@ int GetMissileDamage(int Mask, int Add)
   }
   if (!Mask)
   {
-    return Add * MissileDamage;
+    return Add*MissileDamage;
   }
-  return ((P_Random() & Mask) + Add) * MissileDamage;
+  return ((P_Random()&Mask)+Add)*MissileDamage;
 }
 
 //==========================================================================
@@ -1085,7 +1085,7 @@ final override void CheckForPushSpecial(line_t *line, int side)
 
 final override void BlastedHitLine()
 {
-  int damage = ftoi(fmax(0, Mass)) >> 5;
+  int damage = ftoi(fmax(0, Mass))>>5;
   if (damage > 0) SpawnExploBloodAtHead(damage);
   Damage(none, none, damage);
 }
@@ -1390,48 +1390,47 @@ final bool SeekerMissile(float thresh, float turnMax, optional bool precise, opt
   if (dir)
   {
     // Turn clockwise
-    Angles.yaw = AngleMod360(Angles.yaw + delta);
+    Angles.yaw = AngleMod360(Angles.yaw+delta);
   }
   else
   {
     // Turn counter clockwise
-    Angles.yaw = AngleMod360(Angles.yaw - delta);
+    Angles.yaw = AngleMod360(Angles.yaw-delta);
   }
   angle = Angles.yaw;
   //k8: is this right?
   if (!curspeed) {
     if (!precise)
     {
-      Velocity.x = Speed * cos(angle);
-      Velocity.y = Speed * sin(angle);
-      if (Origin.z + Height < Tracer.Origin.z ||
-        Tracer.Origin.z + Tracer.Height < Origin.z)
+      Velocity.x = Speed*cos(angle);
+      Velocity.y = Speed*sin(angle);
+      if (Origin.z+Height < Tracer.Origin.z ||
+        Tracer.Origin.z+Tracer.Height < Origin.z)
       {
         // Need to seek vertically
         dist = DistTo2(Tracer);
-        dist = dist / Speed;
+        dist = dist/Speed;
         if (dist < 1.0 || !dist.isfinite) dist = 1.0;
-        Velocity.z = (Tracer.Origin.z + Tracer.Height / 2.0 -
-          Origin.z - Height / 2.0) / dist;
+        Velocity.z = (Tracer.Origin.z+Tracer.Height/2.0-Origin.z-Height/2.0)/dist;
       }
     }
     else
     {
       // Need to seek vertically
-      TVec d = vector(Tracer.Origin.x - Origin.x, Tracer.Origin.y - Origin.y, 0.0);
+      TVec d = vector(Tracer.Origin.x-Origin.x, Tracer.Origin.y-Origin.y, 0.0);
       //dist = Length(d) > 1.0 ? Length(d) : 1.0;
       dist = fmax(1.0, Length(d));
       if (!dist.isfinite) dist = 1.0;
 
       // Aim at a player's eyes and at the middle of the actor for everything else.
-      float aimheight = Tracer.Height / 2.0;
+      float aimheight = Tracer.Height/2.0;
       if (Tracer.bIsPlayer) aimheight = PlayerEx(Tracer.Player).ViewHeight;
-      float pitch = atan2((Tracer.Origin.z + aimheight) - (Origin.z + Height / 2.0), fabs(dist));
+      float pitch = atan2((Tracer.Origin.z+aimheight)-(Origin.z+Height/2.0), fabs(dist));
 
-      float xyscale = Speed * cos(pitch);
-      Velocity.x = xyscale * cos(angle);
-      Velocity.y = xyscale * sin(angle);
-      Velocity.z = Speed * sin(pitch);
+      float xyscale = Speed*cos(pitch);
+      Velocity.x = xyscale*cos(angle);
+      Velocity.y = xyscale*sin(angle);
+      Velocity.z = Speed*sin(pitch);
     }
   }
   return true;
@@ -1492,7 +1491,7 @@ final EntityEx DropItem(class!EntityEx type, int amount, float chance, optional 
       }
       else
       {
-        Item.Amount = Item.Amount / 2;
+        Item.Amount = Item.Amount/2;
         if (Item.Amount < 1)
         {
           Item.Amount = 1;
@@ -1504,7 +1503,7 @@ final EntityEx DropItem(class!EntityEx type, int amount, float chance, optional 
       //  The same fror dropped weapons.
       if (Weapon(Item).AmmoGive1 != 0)
       {
-        Weapon(Item).AmmoGive1 = Weapon(Item).AmmoGive1 / 2;
+        Weapon(Item).AmmoGive1 = Weapon(Item).AmmoGive1/2;
         if (Weapon(Item).AmmoGive1 < 1)
         {
           Weapon(Item).AmmoGive1 = 1;
@@ -1512,7 +1511,7 @@ final EntityEx DropItem(class!EntityEx type, int amount, float chance, optional 
       }
       if (Weapon(Item).AmmoGive2 != 0)
       {
-        Weapon(Item).AmmoGive2 = Weapon(Item).AmmoGive2 / 2;
+        Weapon(Item).AmmoGive2 = Weapon(Item).AmmoGive2/2;
         if (Weapon(Item).AmmoGive2 < 1)
         {
           Weapon(Item).AmmoGive2 = 1;
@@ -1526,9 +1525,9 @@ final EntityEx DropItem(class!EntityEx type, int amount, float chance, optional 
   }
   if (!Level.CompatNoTossDrops)
   {
-    A.Velocity.x = (Random() - Random()) * 35.0;
-    A.Velocity.y = (Random() - Random()) * 35.0;
-    A.Velocity.z = (5.0 + Random() * 4.0) * 35.0;
+    A.Velocity.x = (Random()-Random())*35.0;
+    A.Velocity.y = (Random()-Random())*35.0;
+    A.Velocity.z = (5.0+Random()*4.0)*35.0;
   }
   return A;
 }
@@ -1570,7 +1569,7 @@ override void Tick(float deltaTime)
   Inventory Item;
 
   if (Level.bFrozen && ((!bIsPlayer && !bNoTimeFreeze) ||
-      (bIsPlayer && !(PlayerEx(Player).Cheats & PlayerEx::CF_TIMEFREEZE))))
+      (bIsPlayer && !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE))))
   {
     return;
   }
@@ -1585,7 +1584,7 @@ override void Tick(float deltaTime)
     //  Pulse visibility in and out
     if (VisDir > 0)
     {
-      Alpha += 0.75 * deltaTime;
+      Alpha += 0.75*deltaTime;
       if (Alpha > 1.0)
       {
         Alpha = 1.0;
@@ -1594,7 +1593,7 @@ override void Tick(float deltaTime)
     }
     else
     {
-      Alpha -= 0.75 * deltaTime;
+      Alpha -= 0.75*deltaTime;
       if (Alpha <= 0.25)
       {
         Alpha = 0.25;
@@ -1608,13 +1607,13 @@ override void Tick(float deltaTime)
     if (GetCvarB('fuck_stealth_monsters')) {
       Alpha = 1.0;
     } else if (VisDir > 0) {
-      Alpha += 2.0 * deltaTime;
+      Alpha += 2.0*deltaTime;
       if (Alpha > 1.0) {
         Alpha = 1.0;
         VisDir = 0;
       }
     } else if (VisDir < 0) {
-      Alpha -= 3.0 * deltaTime / 2.0;
+      Alpha -= 3.0*deltaTime/2.0;
       if (Alpha < 0.0) {
         Alpha = 0.0;
         VisDir = 0;
@@ -1668,11 +1667,11 @@ override void Tick(float deltaTime)
     }
 
     MoveCount++;
-    if (MoveCount < ftoi(LineSpecialGameInfo(Level.Game).RespawnTime * 35.0))
+    if (MoveCount < ftoi(LineSpecialGameInfo(Level.Game).RespawnTime*35.0))
     {
       return;
     }
-    if (XLevel.TicTime & 31)
+    if (XLevel.TicTime&31)
     {
       return;
     }
@@ -1799,36 +1798,36 @@ override void ClientTick(float DeltaTime)
     dl = AllocDlight(self, Origin);
     if (dl) {
       //dl->origin = Origin;
-      dl->radius = prev_rad <= DLightRadius ? prev_rad : (prev_rad - DLightRadius) * XLevel.Time;
-      dl->radius += XLevel.Time * dl->decay;
+      dl->radius = prev_rad <= DLightRadius ? prev_rad : (prev_rad-DLightRadius)*XLevel.Time;
+      dl->radius += XLevel.Time*dl->decay;
       if (dl->radius > DLightRadius) dl->radius = DLightRadius;
       prev_rad = dl->radius;
       dl->colour = DLightColour;
-      dl->die = XLevel.Time + 0.1;
+      dl->die = XLevel.Time+0.1;
     }
   }
 
   if (bLeaveTrail)
   {
-    c = P_Random() >> 1;
+    c = P_Random()>>1;
     if (P_Random() > 180)
     {
-      r = Random() * 8.0;
+      r = Random()*8.0;
       alt = true;
     }
     if (GetCvarB('r_particle_trails')) {
-      LineSpecialLevelInfo(Level).ParticleEffect(ftoi(DeltaTime * 256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
+      LineSpecialLevelInfo(Level).ParticleEffect(ftoi(DeltaTime*256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
           0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5,  r);
     }
   }
   if (bLeaveTrail2)
   {
-    c = P_Random() >> 1;
+    c = P_Random()>>1;
     if (GetCvarB('r_particle_trails')) {
       LineSpecialLevelInfo(Level).ParticleEffect(6,
-          LineSpecialLevelInfo::pt_static, 0, vector(Origin.x - (cos(Angles.yaw) * Radius * 2.0),
-          Origin.y - (sin(Angles.yaw) * Radius * 2.0),
-          Origin.z - (itof(ftoi(Height) >> 3 * ftoi(Velocity.z) >> 16) + 2.0 * Height / 3.0)),
+          LineSpecialLevelInfo::pt_static, 0, vector(Origin.x-(cos(Angles.yaw)*Radius*2.0),
+          Origin.y-(sin(Angles.yaw)*Radius*2.0),
+          Origin.z-(itof(ftoi(Height)>>3*ftoi(Velocity.z)>>16)+2.0*Height/3.0)),
           0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(c, c, c), 0.6, 0.0);
     }
   }
@@ -1865,7 +1864,7 @@ final void DoStateEffects(float DeltaTime)
     for (i = 0; i < Lights.Num; i++)
     {
       LightEffectDef *L = Lights[i];
-      TVec lorg = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
+      TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
       dlight_t *dl = AllocDlight(self, lorg);
       if (!dl) continue; // alas
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
@@ -1873,44 +1872,44 @@ final void DoStateEffects(float DeltaTime)
       {
         case DynamicLight::DLTYPE_Point:
         case DynamicLight::DLTYPE_Subtractive:
-          dl->decay = XLevel.Time + 300.0;
-          dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad - L->Radius) * XLevel.Time;
-          dl->radius += XLevel.Time * dl->decay;
+          dl->decay = XLevel.Time+300.0;
+          dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
+          dl->radius += XLevel.Time*dl->decay;
           if (dl->radius > L->Radius) dl->radius = L->Radius;
           dl->type = L->Type;
           break;
         case DynamicLight::DLTYPE_MuzzleFlash:
-          max = (L->Radius + Random() * (L->Radius2 - L->Radius));
-          dl->decay = XLevel.Time + 80.0;
-          dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad - L->Radius) * XLevel.Time;
-          dl->radius += XLevel.Time * dl->decay;
+          max = (L->Radius+Random()*(L->Radius2-L->Radius));
+          dl->decay = XLevel.Time+80.0;
+          dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
+          dl->radius += XLevel.Time*dl->decay;
           if (dl->radius > max)
             dl->radius = max;
           break;
         case DynamicLight::DLTYPE_Pulse:
-          dl->decay = XLevel.Time + 150.0;
+          dl->decay = XLevel.Time+150.0;
           // Avoid division by 0
-          float PulseCycle = L->Interval ? L->Interval / 35.0 : 1.0 / 35.0;
+          float PulseCycle = L->Interval ? L->Interval/35.0 : 1.0/35.0;
           LightTime += DeltaTime;
           if (LightTime >= PulseCycle)
           {
             LightTime = 0.0;
           }
-          float Frac = (1.0 + sin(360.0 * LightTime / PulseCycle)) * 0.5;
-          dl->radius = L->Radius + Frac * L->Radius2 - L->Radius;
+          float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
+          dl->radius = L->Radius+Frac*L->Radius2-L->Radius;
           break;
         case DynamicLight::DLTYPE_Flicker:
-          dl->decay = XLevel.Time + 80.0;
-          dl->radius = Random() >= L->Chance / 360.0 ? L->Radius2 : L->Radius;
+          dl->decay = XLevel.Time+80.0;
+          dl->radius = Random() >= L->Chance/360.0 ? L->Radius2 : L->Radius;
           break;
         case DynamicLight::DLTYPE_FlickerRandom:
           LightTime += DeltaTime;
-          if (LightTime > L->Interval / 360.0)
+          if (LightTime > L->Interval/360.0)
           {
-            max = (L->Radius + Random() * (L->Radius2 - L->Radius));
-            dl->decay = XLevel.Time + 80.0;
-            dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad - L->Radius) * XLevel.Time;
-            dl->radius += XLevel.Time * dl->decay;
+            max = (L->Radius+Random()*(L->Radius2-L->Radius));
+            dl->decay = XLevel.Time+80.0;
+            dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
+            dl->radius += XLevel.Time*dl->decay;
             if (dl->radius > max)
               dl->radius = max;
             LightTime = 0.0;
@@ -1919,9 +1918,9 @@ final void DoStateEffects(float DeltaTime)
         case DynamicLight::DLTYPE_Sector:
         case DynamicLight::DLTYPE_SectorSubtractive:
         {
-          float Scale = L->Scale * 0.125;
+          float Scale = L->Scale*0.125;
           if (!Scale) Scale = 1.0;
-          dl->radius = itof(Sector->params.lightlevel) * Scale;
+          dl->radius = itof(Sector->params.lightlevel)*Scale;
           if (dl->radius < 0.0) dl->radius = 0.0;
           if (dl->radius > 255.0) dl->radius = 255.0;
           dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
@@ -1930,7 +1929,7 @@ final void DoStateEffects(float DeltaTime)
       }
       dl->colour = L->Colour;
       dl->minlight = L->MinLight;
-      dl->die = XLevel.Time + 0.1;
+      dl->die = XLevel.Time+0.1;
       prev_rad = dl->radius;
     }
   }
@@ -1941,8 +1940,8 @@ final void DoStateEffects(float DeltaTime)
       foreach (i; 0..Particles.Num) {
         ParticleEffectDef *P = Particles[i];
         Level.ParticleEffect(P->Count, P->Type, P->Type2, Origin +
-          Forward * P->Offset.x - Right * P->Offset.y +
-          Up * P->Offset.z, P->OrgRnd, P->Velocity, P->VelRnd,
+          Forward*P->Offset.x-Right*P->Offset.y +
+          Up*P->Offset.z, P->OrgRnd, P->Velocity, P->VelRnd,
           P->Accel, P->Grav, P->Colour, P->Duration, P->Ramp);
       }
     }
@@ -1982,7 +1981,7 @@ final void TouchDehackedSpecial(EntityEx Toucher)
     if (Ammo(Item))
     {
       //  Half ammo when dropped by bad guys.
-      Item.Amount = Item.Amount / 2;
+      Item.Amount = Item.Amount/2;
       if (Item.Amount < 1)
       {
         Item.Amount = 1;
@@ -2256,7 +2255,7 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
       PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
         LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
         vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
-        BloodColour ? BloodColour : RGB(32 + c, c >> 4, c >> 4), 0.6, 0.0);
+        BloodColour ? BloodColour : RGB(32+c, c>>4, c>>4), 0.6, 0.0);
     }
   }
 
@@ -2361,14 +2360,14 @@ final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
   if (!IsBloodAllowed()) return;
 
   damage = damage > 255 ? 255 : damage;
-  c = P_Random() >> 1;
+  c = P_Random()>>1;
   for (i = 0; i < MAXPLAYERS; i++)
   {
     if (!Level.Game.Players[i]) continue;
     if (!Level.Game.Players[i].bSpawned) continue;
     if (GetCvarB('r_particle_blood')) {
       PlayerEx(Level.Game.Players[i]).ParticleEffect(damage, LineSpecialLevelInfo::pt_static,
-          0, org, 0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(32 + c, c >> 4, c >> 4),
+          0, org, 0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(32+c, c>>4, c>>4),
           0.6, 0.0);
     }
   }
@@ -2379,9 +2378,9 @@ final void SpawnBloodSplatter(TVec org, int damage, TVec shootOrg)
   }
   mo = Spawn(BloodSplatterType, org);
   mo.Target = self;
-  mo.Velocity.x = (Random() - Random()) * 4.0 * 35.0;
-  mo.Velocity.y = (Random() - Random()) * 4.0 * 35.0;
-  mo.Velocity.z = 3.0 * 35.0;
+  mo.Velocity.x = (Random()-Random())*4.0*35.0;
+  mo.Velocity.y = (Random()-Random())*4.0*35.0;
+  mo.Velocity.z = 3.0*35.0;
   if (BloodTranslation && !mo.bDontTranslate)
   {
     mo.Translation = BloodTranslation;
@@ -2412,8 +2411,8 @@ final void SpawnBloodSplatter2(TVec org, TVec shootOrg)
   {
     return;
   }
-  org.x += (Random() - 0.5) * 8.0;
-  org.y += (Random() - 0.5) * 8.0;
+  org.x += (Random()-0.5)*8.0;
+  org.y += (Random()-0.5)*8.0;
   mo = Spawn(AxeBloodType, org);
   if (!mo) return;
   mo.SetBloodArgs(self);
@@ -2441,16 +2440,16 @@ final void SpawnRipperBlood()
   TVec    org;
 
   if (!BloodType) return;
-  org.x = Origin.x + (Random() - Random()) * 16.0;
-  org.y = Origin.y + (Random() - Random()) * 16.0;
-  org.z = Origin.z + (Random() - Random()) * 16.0;
+  org.x = Origin.x+(Random()-Random())*16.0;
+  org.y = Origin.y+(Random()-Random())*16.0;
+  org.z = Origin.z+(Random()-Random())*16.0;
   th = Spawn(BloodType, org);
   if (!th) return;
   th.SetBloodArgs(self);
   if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity) th.bNoGravity = true;
-  th.Velocity.x = Velocity.x / 2.0;
-  th.Velocity.y = Velocity.y / 2.0;
-  th.StateTime += Random() * 0.1;
+  th.Velocity.x = Velocity.x/2.0;
+  th.Velocity.y = Velocity.y/2.0;
+  th.StateTime += Random()*0.1;
   if (BloodTranslation && !th.bDontTranslate)
   {
     th.Translation = BloodTranslation;
@@ -2566,7 +2565,7 @@ final int GetSpeechIndex(RogueConSpeech[] List, int ID, int Num)
       Found++;
       if (Found == Num)
       {
-        return i + 1;
+        return i+1;
       }
     }
   }
@@ -2607,18 +2606,18 @@ final EntityEx TossUpObject(class!EntityEx type)
   float   an;
   float   randomspeed;
 
-  randomspeed = Random() * 8.0 - 6.0;
+  randomspeed = Random()*8.0-6.0;
 
   A = Spawn(type, GetCentre());
   if (A)
   {
-    an = AngleMod360(Angles.yaw + Random() * 360.0);
+    an = AngleMod360(Angles.yaw+Random()*360.0);
     A.Angles.yaw = an;
     A.Tracer = Target;
     A.Target = self;
-    A.Velocity.x = randomspeed * cos(an) * 35.0;
-    A.Velocity.y = randomspeed * sin(an) * 35.0;
-    A.Velocity.z = (12.0 + Random() / 8.0) * 35.0;
+    A.Velocity.x = randomspeed*cos(an)*35.0;
+    A.Velocity.y = randomspeed*sin(an)*35.0;
+    A.Velocity.z = (12.0+Random()/8.0)*35.0;
   }
   return A;
 }
@@ -2764,154 +2763,6 @@ final bool SetPlayerProperty (int Prop, int Set) {
 
 //==========================================================================
 //
-//  decorate_random
-//
-//==========================================================================
-final int decorate_random (int From, int To) {
-  if (From > To) {
-    int Tmp = From;
-    From = To;
-    To = Tmp;
-  }
-  int RVal;
-  if (To-From > 255) {
-    RVal = (P_Random()<<24)|(P_Random()<<16)|(P_Random()<<8)|P_Random();
-  } else {
-    RVal = P_Random();
-  }
-  return From+RVal%(To-From+1);
-}
-
-
-//==========================================================================
-//
-//  decorate_random2
-//
-//==========================================================================
-final int decorate_random2 (optional int Mask) {
-  if (specified_Mask) return (P_Random()&Mask)-(P_Random()&Mask);
-  return P_Random()-P_Random();
-}
-
-
-//==========================================================================
-//
-//  decorate_frandom
-//
-//==========================================================================
-final float decorate_frandom (float From, float To) {
-  return From+FRandomFull()*(To-From);
-}
-
-
-//==========================================================================
-//
-//  decorate_randompick
-//
-//==========================================================================
-final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
-                               optional int v4, optional int v5, optional int v6,
-                               optional int v7, optional int v8, optional int v9,
-                               optional int v10, optional int v11, optional int v12,
-                               optional int v13, optional int v14, optional int v15,
-                               optional int v16, optional int v17, optional int v18,
-                               optional int v19, optional int v20, optional int v21,
-                               optional int v22, optional int v23, optional int v24,
-                               optional int v25, optional int v26, optional int v27)
-{
-  int[22] values;
-  int vcount = 1;
-  values[0] = v0;
-  if (specified_v1) values[vcount++] = v1;
-  if (specified_v2) values[vcount++] = v2;
-  if (specified_v3) values[vcount++] = v3;
-  if (specified_v4) values[vcount++] = v4;
-  if (specified_v5) values[vcount++] = v5;
-  if (specified_v6) values[vcount++] = v6;
-  if (specified_v7) values[vcount++] = v7;
-  if (specified_v8) values[vcount++] = v8;
-  if (specified_v9) values[vcount++] = v9;
-  if (specified_v10) values[vcount++] = v10;
-  if (specified_v11) values[vcount++] = v11;
-  if (specified_v12) values[vcount++] = v12;
-  if (specified_v13) values[vcount++] = v13;
-  if (specified_v14) values[vcount++] = v14;
-  if (specified_v15) values[vcount++] = v15;
-  if (specified_v16) values[vcount++] = v16;
-  if (specified_v17) values[vcount++] = v17;
-  if (specified_v18) values[vcount++] = v18;
-  if (specified_v19) values[vcount++] = v19;
-  if (specified_v20) values[vcount++] = v20;
-  if (specified_v21) values[vcount++] = v21;
-  if (specified_v22) values[vcount++] = v22;
-  if (specified_v23) values[vcount++] = v23;
-  if (specified_v24) values[vcount++] = v24;
-  if (specified_v25) values[vcount++] = v25;
-  if (specified_v26) values[vcount++] = v26;
-  if (specified_v27) values[vcount++] = v27;
-  return values[P_Random()%vcount];
-}
-
-
-//==========================================================================
-//
-//  decorate_frandompick
-//
-//==========================================================================
-final float decorate_frandompick (float v0, optional float v1, optional float v2, optional float v3,
-                                  optional float v4, optional float v5, optional float v6,
-                                  optional float v7, optional float v8, optional float v9)
-{
-  float[12] values;
-  int vcount = 1;
-  values[0] = v0;
-  if (specified_v1) values[vcount++] = v1;
-  if (specified_v2) values[vcount++] = v2;
-  if (specified_v3) values[vcount++] = v3;
-  if (specified_v4) values[vcount++] = v4;
-  if (specified_v5) values[vcount++] = v5;
-  if (specified_v6) values[vcount++] = v6;
-  if (specified_v7) values[vcount++] = v7;
-  if (specified_v8) values[vcount++] = v8;
-  if (specified_v9) values[vcount++] = v9;
-  return values[P_Random()%vcount];
-}
-
-
-//==========================================================================
-//
-//  decorate_sin
-//
-//==========================================================================
-
-final float decorate_sin(float Angle)
-{
-  return sin(Angle);
-}
-
-//==========================================================================
-//
-//  decorate_cos
-//
-//==========================================================================
-
-final float decorate_cos(float Angle)
-{
-  return cos(Angle);
-}
-
-//==========================================================================
-//
-//  decorate_clamp
-//
-//==========================================================================
-final float decorate_clamp (float val, float min, float max) {
-  return fclamp(val, min, max);
-}
-
-
-//==========================================================================
-//
 //  ShouldDropItems
 //
 //==========================================================================
@@ -2950,12 +2801,12 @@ final void PainShootSkull(class!Actor SpawnType, float angle, optional bool noat
   }
 
   // okay, there's place for another one
-  prestep = 4.0 + 3.0 * (Radius + SpawnType.default.Radius) / 2.0;
+  prestep = 4.0+3.0*(Radius+SpawnType.default.Radius)/2.0;
 
   // Check whether the Lost Soul is being fired through a 1-sided
   // wall or an impassible line, or a "monsters can't cross" line.
   // If it is, then we don't allow the spawn.
-  if (CheckSides(Origin + vector(prestep * cos(angle), prestep * sin(angle), 8.0))) {
+  if (CheckSides(Origin+vector(prestep*cos(angle), prestep*sin(angle), 8.0))) {
     return;
   }
 
@@ -2963,7 +2814,7 @@ final void PainShootSkull(class!Actor SpawnType, float angle, optional bool noat
 
   // Check to see if the new Lost Soul's z value is above the
   // ceiling of its new sector, or below the floor. If so, kill it.
-  if ((newSkull.Origin.z > (newSkull.CeilingZ - newSkull.Height)) ||
+  if ((newSkull.Origin.z > (newSkull.CeilingZ-newSkull.Height)) ||
       (newSkull.Origin.z < newSkull.FloorZ))
   {
     // kill it immediately
@@ -2972,8 +2823,8 @@ final void PainShootSkull(class!Actor SpawnType, float angle, optional bool noat
   }
 
   // Check for movements.
-  if (!newSkull.TryMove(newSkull.Origin + vector(
-      prestep * cos(angle), prestep * sin(angle), 8.0), false))
+  if (!newSkull.TryMove(newSkull.Origin+vector(
+      prestep*cos(angle), prestep*sin(angle), 8.0), false))
   {
     // kill it immediately
     newSkull.Damage(self, self, 10000, forced:true);
@@ -3012,24 +2863,24 @@ final void AutoUseHealth(int saveHealth)
       if (mode == 1)
       {
         normal[normal.Num] = inv;
-        normal.Num = normal.Num + 1;
+        normal.Num = normal.Num+1;
       }
       else if (mode == 2)
       {
         super[super.Num] = inv;
-        super.Num = super.Num + 1;
+        super.Num = super.Num+1;
       }
     }
   }
 
-  for(i = 0; i < normal.Num - 1; i++)
+  for(i = 0; i < normal.Num-1; i++)
   {
-    normalhealth += normal[i].Amount * normal[i].Health;
+    normalhealth += normal[i].Amount*normal[i].Health;
   }
 
-  for(i = 0; i < super.Num - 1; i++)
+  for(i = 0; i < super.Num-1; i++)
   {
-    superhealth += super[i].Amount * super[i].Health;
+    superhealth += super[i].Amount*super[i].Health;
   }
 
   if (Level.World.bSkillAutoUseHealth && normalhealth >= saveHealth)
@@ -3041,7 +2892,7 @@ final void AutoUseHealth(int saveHealth)
       int index = -1;
 
       // Find the largest item in the list
-      for(i = 0; i < normal.Num - 1; i++)
+      for(i = 0; i < normal.Num-1; i++)
       {
         if (normal[i].Health > maxhealth)
         {
@@ -3051,7 +2902,7 @@ final void AutoUseHealth(int saveHealth)
       }
 
       // Now apply the health items, using the same logic as Heretic and Hexen.
-      count = (saveHealth + maxhealth - 1) / maxhealth;
+      count = (saveHealth+maxhealth-1)/maxhealth;
       for(i = 0; i < count; i++)
       {
         saved += maxhealth;
@@ -3075,7 +2926,7 @@ final void AutoUseHealth(int saveHealth)
       int index = -1;
 
       // Find the largest item in the list
-      for(i = 0; i < super.Num - 1; i++)
+      for(i = 0; i < super.Num-1; i++)
       {
         if (super[i].Health > maxhealth)
         {
@@ -3085,7 +2936,7 @@ final void AutoUseHealth(int saveHealth)
       }
 
       // Now apply the health items, using the same logic as Heretic and Hexen.
-      count = (saveHealth + maxhealth - 1) / maxhealth;
+      count = (saveHealth+maxhealth-1)/maxhealth;
       for(i = 0; i < count; i++)
       {
         saved += maxhealth;
@@ -3100,7 +2951,7 @@ final void AutoUseHealth(int saveHealth)
 
     Health += saved;
   }
-  else if (Level.World.bSkillAutoUseHealth && normalhealth + superhealth >= saveHealth)
+  else if (Level.World.bSkillAutoUseHealth && normalhealth+superhealth >= saveHealth)
   { // Use mystic urns and quartz flasks
     while (normal.Num > 0 && saveHealth > 0)
     {
@@ -3108,7 +2959,7 @@ final void AutoUseHealth(int saveHealth)
       int index = -1;
 
       // Find the largest item in the list
-      for(i = 0; i < normal.Num - 1; i++)
+      for(i = 0; i < normal.Num-1; i++)
       {
         if (normal[i].Health > maxhealth)
         {
@@ -3118,7 +2969,7 @@ final void AutoUseHealth(int saveHealth)
       }
 
       // Now apply the health items, using the same logic as Heretic and Hexen.
-      count = (saveHealth + maxhealth - 1) / maxhealth;
+      count = (saveHealth+maxhealth-1)/maxhealth;
       for(i = 0; i < count; i++)
       {
         saved += maxhealth;
@@ -3140,7 +2991,7 @@ final void AutoUseHealth(int saveHealth)
         int index = -1;
 
         // Find the largest item in the list
-        for(i = 0; i < super.Num - 1; i++)
+        for(i = 0; i < super.Num-1; i++)
         {
           if (super[i].Health > maxhealth)
           {
@@ -3150,7 +3001,7 @@ final void AutoUseHealth(int saveHealth)
         }
 
         // Now apply the health items, using the same logic as Heretic and Hexen.
-        count = (saveHealth + maxhealth - 1) / maxhealth;
+        count = (saveHealth+maxhealth-1)/maxhealth;
         for(i = 0; i < count; i++)
         {
           saved += maxhealth;
@@ -3190,15 +3041,15 @@ final void AutoUseStrifeHealth(int saveHealth)
 
       if (mode == 3)
       {
-        Items.Num = Items.Num + 1;
-        Items[Items.Num - 1] = inv;
+        Items.Num = Items.Num+1;
+        Items[Items.Num-1] = inv;
       }
     }
   }
 
   for(i = 0; i < Items.Num; i++)
   {
-    itemshealth += Items[i].Amount * Items[i].Health;
+    itemshealth += Items[i].Amount*Items[i].Health;
   }
 
   while (Items.Num > 0)
@@ -3232,12 +3083,12 @@ final void AutoUseStrifeHealth(int saveHealth)
     Items[index] = none;
     if (index < Items.Num)
     {
-      for (i = Items.Num - index; i < Items.Num - 1; i++)
+      for (i = Items.Num-index; i < Items.Num-1; i++)
       {
         Items[i] = Items[i+1];
       }
     }
-    Items.Num = Items.Num - 1;
+    Items.Num = Items.Num-1;
   }
 
   Player.Health = Health;
@@ -3286,7 +3137,7 @@ final void AutoUseArmor()
 
 final int HITDICE(int a)
 {
-  return (1 + (P_Random() & 7)) * a;
+  return (1+(P_Random()&7))*a;
 }
 
 //==========================================================================
@@ -3304,11 +3155,11 @@ final void SpawnDirt(float radius)
   class!EntityEx dtype;
   EntityEx dirt;
 
-  angle = 360.0 * Random();
-  org.x = Origin.x + radius * cos(angle);
-  org.y = Origin.y + radius * sin(angle);
-  org.z = Origin.z + Random() * 2.0 + 1.0;
-  switch (P_Random() % 6)
+  angle = 360.0*Random();
+  org.x = Origin.x+radius*cos(angle);
+  org.y = Origin.y+radius*sin(angle);
+  org.z = Origin.z+Random()*2.0+1.0;
+  switch (P_Random()%6)
   {
   case 0:
     dtype = Dirt1;
@@ -3332,7 +3183,7 @@ final void SpawnDirt(float radius)
   dirt = Spawn(dtype, org);
   if (dirt)
   {
-    dirt.Velocity.z = Random() * 4.0 * 35.0;
+    dirt.Velocity.z = Random()*4.0*35.0;
   }
 }
 
@@ -3355,11 +3206,11 @@ final void GunShot(int accurate, TVec dir, name DmgType, bool secondary, optiona
 
     VectorAngles(dir, out angles);
     angles.yaw = AngleMod360(angles.yaw +
-      (Random() - Random()) * 45.0 / 8.0);
+      (Random()-Random())*45.0/8.0);
     AngleVector(angles, out dir);
   }
 
-  damage = 5 * (P_Random() % 3 + 1);
+  damage = 5*(P_Random()%3+1);
 
   LineAttack(dir, range, damage, BulletPuff, default, default, DmgType, secondary, DecalName!optional);
 }
@@ -3466,7 +3317,7 @@ override void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
   //  Check for crossing fake floor or ceiling
   if (OldSec->heightsec && Sector->heightsec && Sector->ActionList)
   {
-    float EyeZ = bIsPlayer ? Player.ViewOrg.z : Origin.z + Height * 0.5;
+    float EyeZ = bIsPlayer ? Player.ViewOrg.z : Origin.z+Height*0.5;
     float FakeZ = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
 
     if (!OldAboveFakeFloor && EyeZ > FakeZ)
@@ -3511,7 +3362,7 @@ override void CheckForSectorActions(sector_t *OldSec, bool OldAboveFakeFloor,
       {
         Spac |= SectorAction::SECSPAC_HitFloor;
       }
-      if (Origin.z + Height >= GetPlanePointZ(ref Sector->ceiling,
+      if (Origin.z+Height >= GetPlanePointZ(ref Sector->ceiling,
         Origin))
       {
         Spac |= SectorAction::SECSPAC_HitCeiling;
@@ -3536,7 +3387,7 @@ final void CheckFakeFloorTriggers(float OldZ, optional bool OldHasViewH)
 {
   if (Sector && Sector->heightsec && Sector->ActionList)
   {
-    float ViewH = bIsPlayer ? PlayerEx(Player).ViewHeight : Height * 0.5;
+    float ViewH = bIsPlayer ? PlayerEx(Player).ViewHeight : Height*0.5;
     float FakeZ = GetPlanePointZ(ref Sector->heightsec->floor, Origin);
 
     if (OldZ > FakeZ && Origin.z <= FakeZ)
@@ -3545,7 +3396,7 @@ final void CheckFakeFloorTriggers(float OldZ, optional bool OldHasViewH)
         SectorAction::SECSPAC_HitFakeFloor);
     }
 
-    float EyeZ = Origin.z + ViewH;
+    float EyeZ = Origin.z+ViewH;
     if (!OldHasViewH)
     {
       OldZ += ViewH;
@@ -3603,8 +3454,8 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
   x1 = Origin.x;
   y1 = Origin.y;
 
-  x2 = x1 + UseThingRange * useDir.x;
-  y2 = y1 + UseThingRange * useDir.y;
+  x2 = x1+UseThingRange*useDir.x;
+  y2 = y1+UseThingRange*useDir.y;
   foreach PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS/*|PT_EARLYOUT*/) {
     if (!in->bIsALine) {
       // check height
@@ -3621,7 +3472,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
       continue;
     }
 
-    if (!(in->line->flags & ML_TWOSIDED)) break; // stop
+    if (!(in->line->flags&ML_TWOSIDED)) break; // stop
 
     hit_point = Origin+(UseThingRange*in->frac)*useDir;
     open = LineOpenings(in->line, hit_point);
@@ -3927,21 +3778,21 @@ override void CalcFakeZMovement(out TVec Ret, float DeltaTime)
   //  adjust height
   //
   Ret = Origin;
-  Ret.z += Velocity.z * DeltaTime;
+  Ret.z += Velocity.z*DeltaTime;
   if (bFloat && Target)
   {
     // float down towards enemy if too close
     if (!bSkullFly && !bInFloat)
     {
       float dist = DistTo2(Target);
-      float delta = Target.Origin.z + Height / 2.0 - Ret.z;
-      if (delta < 0.0 && dist < -(delta * 3.0))
+      float delta = Target.Origin.z+Height/2.0-Ret.z;
+      if (delta < 0.0 && dist < -(delta*3.0))
       {
-        Ret.z -= FloatSpeed * DeltaTime;
+        Ret.z -= FloatSpeed*DeltaTime;
       }
-      else if (delta > 0.0 && dist < (delta * 3.0))
+      else if (delta > 0.0 && dist < (delta*3.0))
       {
-        Ret.z += FloatSpeed * DeltaTime;
+        Ret.z += FloatSpeed*DeltaTime;
       }
     }
   }
@@ -4197,116 +4048,204 @@ void TouchSpecial(EntityEx Toucher, optional bool noflash)
 {
 }
 
-states
-{
-DehackedDormantPickup:
-  TNT1 A 1050
-  TNT1 A -1
-  {
-    EntityEx  A;
 
-    bInvisible = false;
-    bSpecial = true;
-    SetState(IdleState);
+// ////////////////////////////////////////////////////////////////////////// //
 
-    // spawn a teleport fog at the new spot
-    A = Spawn(ItemFog, Origin);
-    A.PlaySound('misc/spawn', CHAN_ITEM);
+//==========================================================================
+//
+//  decorate_random
+//
+//==========================================================================
+final int decorate_random (int From, int To) {
+  if (From > To) {
+    int Tmp = From;
+    From = To;
+    To = Tmp;
   }
-  Stop
+  int RVal;
+  if (To-From > 255) {
+    RVal = (P_Random()<<24)|(P_Random()<<16)|(P_Random()<<8)|P_Random();
+  } else {
+    RVal = P_Random();
+  }
+  return From+RVal%(To-From+1);
 }
 
-float decorate_alpha
-{
-  get { return Alpha; }
+
+//==========================================================================
+//
+//  decorate_random2
+//
+//==========================================================================
+final int decorate_random2 (optional int Mask) {
+  if (specified_Mask) return (P_Random()&Mask)-(P_Random()&Mask);
+  return P_Random()-P_Random();
 }
 
-float decorate_angle
-{
-  get { return AngleMod360(Angles.yaw); }
+
+//==========================================================================
+//
+//  decorate_frandom
+//
+//==========================================================================
+final float decorate_frandom (float From, float To) {
+  return From+FRandomFull()*(To-From);
 }
 
-int *decorate_args
+
+//==========================================================================
+//
+//  decorate_randompick
+//
+//==========================================================================
+final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
+                               optional int v4, optional int v5, optional int v6,
+                               optional int v7, optional int v8, optional int v9,
+                               optional int v10, optional int v11, optional int v12,
+                               optional int v13, optional int v14, optional int v15,
+                               optional int v16, optional int v17, optional int v18,
+                               optional int v19, optional int v20, optional int v21,
+                               optional int v22, optional int v23, optional int v24,
+                               optional int v25, optional int v26, optional int v27)
 {
-  get { return &Args[0]; }
+  int[22] values;
+  int vcount = 1;
+  values[0] = v0;
+  if (specified_v1) values[vcount++] = v1;
+  if (specified_v2) values[vcount++] = v2;
+  if (specified_v3) values[vcount++] = v3;
+  if (specified_v4) values[vcount++] = v4;
+  if (specified_v5) values[vcount++] = v5;
+  if (specified_v6) values[vcount++] = v6;
+  if (specified_v7) values[vcount++] = v7;
+  if (specified_v8) values[vcount++] = v8;
+  if (specified_v9) values[vcount++] = v9;
+  if (specified_v10) values[vcount++] = v10;
+  if (specified_v11) values[vcount++] = v11;
+  if (specified_v12) values[vcount++] = v12;
+  if (specified_v13) values[vcount++] = v13;
+  if (specified_v14) values[vcount++] = v14;
+  if (specified_v15) values[vcount++] = v15;
+  if (specified_v16) values[vcount++] = v16;
+  if (specified_v17) values[vcount++] = v17;
+  if (specified_v18) values[vcount++] = v18;
+  if (specified_v19) values[vcount++] = v19;
+  if (specified_v20) values[vcount++] = v20;
+  if (specified_v21) values[vcount++] = v21;
+  if (specified_v22) values[vcount++] = v22;
+  if (specified_v23) values[vcount++] = v23;
+  if (specified_v24) values[vcount++] = v24;
+  if (specified_v25) values[vcount++] = v25;
+  if (specified_v26) values[vcount++] = v26;
+  if (specified_v27) values[vcount++] = v27;
+  return values[P_Random()%vcount];
 }
 
-float decorate_ceilingz
+
+//==========================================================================
+//
+//  decorate_frandompick
+//
+//==========================================================================
+final float decorate_frandompick (float v0, optional float v1, optional float v2, optional float v3,
+                                  optional float v4, optional float v5, optional float v6,
+                                  optional float v7, optional float v8, optional float v9,
+                                  optional float v10, optional float v11, optional float v12,
+                                  optional float v13, optional float v14, optional float v15)
 {
-  get { return CeilingZ; }
+  float[18] values;
+  int vcount = 1;
+  values[0] = v0;
+  if (specified_v1) values[vcount++] = v1;
+  if (specified_v2) values[vcount++] = v2;
+  if (specified_v3) values[vcount++] = v3;
+  if (specified_v4) values[vcount++] = v4;
+  if (specified_v5) values[vcount++] = v5;
+  if (specified_v6) values[vcount++] = v6;
+  if (specified_v7) values[vcount++] = v7;
+  if (specified_v8) values[vcount++] = v8;
+  if (specified_v9) values[vcount++] = v9;
+  if (specified_v10) values[vcount++] = v10;
+  if (specified_v11) values[vcount++] = v11;
+  if (specified_v12) values[vcount++] = v12;
+  if (specified_v13) values[vcount++] = v13;
+  if (specified_v14) values[vcount++] = v14;
+  if (specified_v15) values[vcount++] = v15;
+  return values[P_Random()%vcount];
 }
 
-float decorate_floorz
-{
-  get { return FloorZ; }
+
+//==========================================================================
+//
+//  decorate_sin
+//
+//==========================================================================
+final float decorate_sin (float Angle) {
+  return sin(Angle);
 }
 
-int decorate_health
-{
-  get { return Health; }
+
+//==========================================================================
+//
+//  decorate_cos
+//
+//==========================================================================
+final float decorate_cos (float Angle) {
+  return cos(Angle);
 }
 
-float decorate_pitch
-{
-  get { return AngleMod360(Angles.pitch); }
+
+//==========================================================================
+//
+//  decorate_clamp
+//
+//==========================================================================
+final float decorate_clamp (float val, float min, float max) {
+  return fclamp(val, min, max);
 }
 
-int decorate_special
-{
-  get { return Special; }
-}
 
-int decorate_tid
-{
-  get { return TID; }
-}
-
-int decorate_tidtohate
-{
-  get { return TIDToHate; }
-}
-
-int decorate_waterlevel
-{
-  get { return WaterLevel; }
-}
-
-float decorate_x
-{
-  get { return Origin.x; }
-}
-
-float decorate_y
-{
-  get { return Origin.y; }
-}
-
-float decorate_z
-{
-  get { return Origin.z; }
-}
-
-float decorate_momx
-{
-  get { return Velocity.x / 35.0; }
-}
-
-float decorate_momy
-{
-  get { return Velocity.y / 35.0; }
-}
-
-float decorate_momz
-{
-  get { return Velocity.z / 35.0; }
-}
+// ////////////////////////////////////////////////////////////////////////// //
+///*final*/ int *decorate_args { get { return &Args[0]; } }
+/*final*/ float decorate_alpha { get { return Alpha; } }
+/*final*/ float decorate_angle { get { return AngleMod360(Angles.yaw); } }
+/*final*/ float decorate_yaw { get { return AngleMod360(Angles.yaw); } }
+/*final*/ float decorate_pitch { get { return AngleMod360(Angles.pitch); } }
+/*final*/ float decorate_roll { get { return AngleMod360(Angles.roll); } }
+/*final*/ float decorate_ceilingz { get { return CeilingZ; } }
+/*final*/ float decorate_floorz { get { return FloorZ; } }
+/*final*/ int decorate_health { get { return Health; } }
+/*final*/ float decorate_radius { get { return Radius; } }
+/*final*/ float decorate_scalex { get { return ScaleX; } }
+/*final*/ float decorate_scaley { get { return ScaleY; } }
+/*final*/ float decorate_mass { get { return Mass; } }
+/*final*/ float decorate_gravity { get { return Gravity; } }
+/*final*/ float decorate_meleerange { get { return MeleeRange; } }
+/*final*/ float decorate_reactiontime { get { return ReactionTime*35.0; } }
+/*final*/ float decorate_speed { get { return Speed; } }
+/*final*/ int decorate_special { get { return Special; } }
+/*final*/ int decorate_tid { get { return TID; } }
+/*final*/ int decorate_tidtohate { get { return TIDToHate; } }
+/*final*/ int decorate_waterlevel { get { return WaterLevel; } }
+/*final*/ int decorate_watertype { get { return WaterType; } }
+/*final*/ int decorate_threshold { get { return Threshold; } }
+/*final*/ int decorate_damage { get { return MissileDamage; } } //k8: i think so
+/*final*/ float decorate_x { get { return Origin.x; } }
+/*final*/ float decorate_y { get { return Origin.y; } }
+/*final*/ float decorate_z { get { return Origin.z; } }
+/*final*/ float decorate_momx { get { return Velocity.x/35.0; } }
+/*final*/ float decorate_momy { get { return Velocity.y/35.0; } }
+/*final*/ float decorate_momz { get { return Velocity.z/35.0; } }
+/*final*/ float decorate_velx { get { return Velocity.x/35.0; } }
+/*final*/ float decorate_vely { get { return Velocity.y/35.0; } }
+/*final*/ float decorate_velz { get { return Velocity.z/35.0; } }
 
 
 //==========================================================================
 // Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
 //enum EJumpFlags
 //!NOT_IMPLEMENTED!const int JLOSF_PROJECTILE =    1;
-const int JLOSF_NOSIGHT =     1 << 1;
+const int JLOSF_NOSIGHT =     1<<1;
 //!NOT_IMPLEMENTED!const int JLOSF_CLOSENOFOV =    1 << 2;
 //!NOT_IMPLEMENTED!const int JLOSF_CLOSENOSIGHT =  1 << 3;
 //!NOT_IMPLEMENTED!const int JLOSF_CLOSENOJUMP =   1 << 4;
@@ -4314,7 +4253,7 @@ const int JLOSF_DEADNOJUMP = 1<<5;
 const int JLOSF_CHECKMASTER = 1<<6;
 //!NOT_IMPLEMENTED!const int JLOSF_TARGETLOS =   1 << 7;
 //!NOT_IMPLEMENTED!const int JLOSF_FLIPFOV =     1 << 8;
-const int JLOSF_ALLYNOJUMP =    1 << 9;
+const int JLOSF_ALLYNOJUMP =    1<<9;
 //!NOT_IMPLEMENTED!const int JLOSF_COMBATANTONLY = 1 << 10;
 //!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM =   1 << 11;
 //!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER =   1 << 12;
@@ -4363,4 +4302,25 @@ final bool checkIfTargetInLOS (optional float Fov, optional int flags, optional 
   }
 
   return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+states
+{
+DehackedDormantPickup:
+  TNT1 A 1050
+  TNT1 A -1
+  {
+    EntityEx  A;
+
+    bInvisible = false;
+    bSpecial = true;
+    SetState(IdleState);
+
+    // spawn a teleport fog at the new spot
+    A = Spawn(ItemFog, Origin);
+    A.PlaySound('misc/spawn', CHAN_ITEM);
+  }
+  Stop
 }
