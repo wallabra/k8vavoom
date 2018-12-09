@@ -1030,11 +1030,21 @@ bool VClass::Define () {
     }
     //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
     // now set replacemente for the actual replacement (if necessary)
+    /*
     if (DoesReplacement) {
       //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
-      if (!ParentClass->SetReplacement(this)) {
-        ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
+      VClass *pc = ParentClass->GetReplacement();
+      if (!pc) {
+        ParseError(ParentClassLoc, "Cannot replace class `%s` (oops)", *ParentClassName);
+      } else if (!pc->IsChildOf(ParentClass)) {
+        ParseError(ParentClassLoc, "Cannot replace class `%s` (%s)", *ParentClassName, pc->GetName());
+      } else {
+        //if (!ParentClass->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
+        fprintf(stderr, "**** %s : %s\n", ParentClass->GetName(), pc->GetName());
+        if (!pc->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
       }
+      */
+      if (!ParentClass->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
     }
 #else
     if (DoesReplacement) {
@@ -1046,7 +1056,9 @@ bool VClass::Define () {
         ParentClass->DefinedAsDependency = true;
         if (!xdres) return false;
       }
-      //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
+#if !defined(IN_VCC)
+      if (developer) GCon->Logf(NAME_Dev, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
+#endif
       if (!ParentClass->SetReplacement(this)) {
         ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
       }
