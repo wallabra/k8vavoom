@@ -29,8 +29,12 @@
 //
 //**************************************************************************
 
-IMPLEMENT_FUNCTION(VObject, get_GCMessagesAllowed) { RET_BOOL(GGCMessagesAllowed); }
-IMPLEMENT_FUNCTION(VObject, set_GCMessagesAllowed) { P_GET_BOOL(val); GGCMessagesAllowed = val; }
+IMPLEMENT_FUNCTION(VObject, get_GC_AliveObjects) { RET_INT(gcLastStats.alive); }
+IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectedObjects) { RET_INT(gcLastStats.lastCollected); }
+IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectDuration) { RET_FLOAT((float)gcLastStats.lastCollectTime); }
+
+IMPLEMENT_FUNCTION(VObject, get_GC_MessagesAllowed) { RET_BOOL(GGCMessagesAllowed); }
+IMPLEMENT_FUNCTION(VObject, set_GC_MessagesAllowed) { P_GET_BOOL(val); GGCMessagesAllowed = val; }
 
 
 static TMap<VStr, bool> setOfNameSets;
@@ -115,7 +119,7 @@ IMPLEMENT_FUNCTION(VObject, IsDestroyed) {
 //
 //==========================================================================
 // static final void CollectGarbage (optional bool destroyDelayed);
-IMPLEMENT_FUNCTION(VObject, CollectGarbage) {
+IMPLEMENT_FUNCTION(VObject, GC_CollectGarbage) {
   P_GET_BOOL_OPT(destroyDelayed, false);
 #if defined(VCC_STANDALONE_EXECUTOR)
   CollectGarbage(destroyDelayed);

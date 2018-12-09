@@ -135,7 +135,7 @@ private:
 
   // private systemwide variables
   //static bool GObjInitialised;
-  static TArray<VObject*> GObjObjects; // list of all objects.
+  static TArray<VObject *> GObjObjects; // list of all objects
   static int GNumDeleted;
   static bool GInGarbageCollection;
 

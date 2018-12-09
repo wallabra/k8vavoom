@@ -1030,8 +1030,8 @@ bool VClass::Define () {
     }
     //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
     // now set replacemente for the actual replacement (if necessary)
-    /*
     if (DoesReplacement) {
+      /*
       //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
       VClass *pc = ParentClass->GetReplacement();
       if (!pc) {

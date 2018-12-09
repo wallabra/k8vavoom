@@ -21,6 +21,6 @@ void main () {
   // now kill one object: it should magically disappear from array
   // note that local dynarrays won't be cleaned
   delete oo;
-  CollectGarbage(true);
+  GC_CollectGarbage(true);
   writeln("==================="); foreach (auto idx, auto v; a) writeln("[", idx, "] = ", (v ? v.n : -666));
 }
