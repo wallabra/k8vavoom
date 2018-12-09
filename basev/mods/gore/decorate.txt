@@ -5,6 +5,8 @@ Actor K8Gore_BloodBaseTransient : K8Gore_BloodBase {}
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
   
   Decal K8GoreBloodSplat
@@ -23,6 +25,7 @@ Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFake", 0, 0, random(0, 360), 2, random(0, 90));
         }
@@ -30,7 +33,7 @@ Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
 
       // normal
       TNT1 AAAA 0 {
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+        if (user_spray || GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFake", 0, 0, random(0, 360), 2, random(0, 90));
         }
       }
@@ -866,6 +869,8 @@ Actor K8Gore_Blood_SplatterReplacer : K8Gore_Blood Replaces BloodSplatter {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodTransient /*: K8Gore_BloodBaseTransient*/ {
   
   Decal K8GoreBloodSplatTransient
@@ -884,6 +889,7 @@ Actor K8Gore_BloodTransient /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeTransient", 0, 0, random(0, 360), 2, random(0, 90));
         }
@@ -1714,6 +1720,8 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodGreen : BloodGreen /*: K8Gore_BloodBase*/ Replaces BloodGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatGreen
@@ -1732,6 +1740,7 @@ Actor K8Gore_BloodGreen : BloodGreen /*: K8Gore_BloodBase*/ Replaces BloodGreen 
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeGreen", 0, 0, random(0, 360), 2, random(0, 90));
         }
@@ -1739,7 +1748,7 @@ Actor K8Gore_BloodGreen : BloodGreen /*: K8Gore_BloodBase*/ Replaces BloodGreen 
 
       // normal
       TNT1 AAAA 0 {
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+        if (user_spray || GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeGreen", 0, 0, random(0, 360), 2, random(0, 90));
         }
       }
@@ -2575,6 +2584,8 @@ Actor K8Gore_Blood_SplatterReplacerGreen : K8Gore_Blood Replaces BloodSplatterGr
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatTransient_Green
@@ -2593,6 +2604,7 @@ Actor K8Gore_BloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeTransient_Green", 0, 0, random(0, 360), 2, random(0, 90));
         }
@@ -3423,6 +3435,8 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodBlue : BloodBlue /*: K8Gore_BloodBase*/ Replaces BloodBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatBlue
@@ -3441,6 +3455,7 @@ Actor K8Gore_BloodBlue : BloodBlue /*: K8Gore_BloodBase*/ Replaces BloodBlue {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeBlue", 0, 0, random(0, 360), 2, random(0, 90));
         }
@@ -3448,7 +3463,7 @@ Actor K8Gore_BloodBlue : BloodBlue /*: K8Gore_BloodBase*/ Replaces BloodBlue {
 
       // normal
       TNT1 AAAA 0 {
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+        if (user_spray || GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeBlue", 0, 0, random(0, 360), 2, random(0, 90));
         }
       }
@@ -4284,6 +4299,8 @@ Actor K8Gore_Blood_SplatterReplacerBlue : K8Gore_Blood Replaces BloodSplatterBlu
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 Actor K8Gore_BloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatTransient_Blue
@@ -4302,6 +4319,7 @@ Actor K8Gore_BloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFakeTransient_Blue", 0, 0, random(0, 360), 2, random(0, 90));
         }

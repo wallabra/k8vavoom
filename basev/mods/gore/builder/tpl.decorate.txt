@@ -1,5 +1,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
+// Args[0] is damage (0 means "unknown")
+// Tracer is damaged actor (can be empty)
 #ifndef TRANSIENT
 Actor K8Gore_Blood$(Color) : Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ Replaces Blood$(Color) {
 #else
@@ -22,6 +24,7 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
     Spawn:
       TNT1 A 0
       TNT1 AAAA 0 {
+        if (Args[0] > 20) A_SetUserVar("user_spray", 1);
         if (GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
         }
@@ -30,7 +33,7 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
 #ifndef TRANSIENT
       // normal
       TNT1 AAAA 0 {
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 3) {
+        if (user_spray || GetCVar("k8GoreOpt_BloodAmount") >= 3) {
           A_CustomMissile("K8Gore_FlyingBloodFake$(Color)", 0, 0, random(0, 360), 2, random(0, 90));
         }
       }
