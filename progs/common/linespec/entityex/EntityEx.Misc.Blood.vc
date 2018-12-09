@@ -45,21 +45,6 @@ final void SetBloodArgs (EntityEx master, optional int damage) {
 
 //==========================================================================
 //
-// GetBloodSplatDecalName
-//
-//==========================================================================
-final name GetBloodSplatDecalName () {
-  if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
-  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
-  return 'BloodSplat';
-}
-
-
-//==========================================================================
-//
 // GetBloodSmearDecalName
 //
 //==========================================================================
@@ -105,6 +90,235 @@ final name GetBloodSmearRadiusDecalName () {
 
 //==========================================================================
 //
+// GetBloodSplatDecalName
+//
+//==========================================================================
+final name GetBloodSplatDecalName () {
+  if (bNoBlood || !self.BloodType) return '';
+  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
+  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
+  //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
+  return 'BloodSplat';
+}
+
+
+//==========================================================================
+//
+//  TraceSplat
+//
+//  trace line to the wall, so we can spawn decal on it.
+//  returns `true` if wall was hit.
+//  returns `false` if floor/ceiling was hit, or nothing was hit.
+//  `dir` must be normalized.
+//  (not anymore) if zofs is not given, use default entity vertical offset.
+//
+//==========================================================================
+final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs) {
+  TVec dst;
+  intercept_t *in;
+  TVec lineStart;
+  TVec lineEnd;
+  TVec shootOrigin;
+  TVec outHitPoint;
+
+  shootOrigin = org;
+  //ShootOrigin.z += Height*0.5-FloorClip;
+  if (specified_zofs) {
+    shootOrigin.z += zofs;
+  } else {
+    //shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+  }
+
+  dst = shootOrigin+distance*dir;
+
+  if (tr) {
+    tr->org = org;
+    tr->hit = dst;
+    tr->line = nullptr;
+    tr->sec = nullptr;
+    tr->didhit = false;
+    tr->mobj = none;
+  }
+
+  lineStart = shootOrigin;
+  foreach PathTraverse(in, org.x, org.y, dst.x, dst.y, PT_ADDLINES/*|PT_EARLYOUT*/) {
+    TVec hit_point, real_hit_point;
+    line_t *li;
+
+    if (in->bIsALine) {
+      int side;
+      sector_t *sec;
+
+      li = in->line;
+      hit_point = shootOrigin+(distance*in->frac)*dir;
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
+        side = 1;
+        sec = li->backsector;
+      } else {
+        side = 0;
+        sec = li->frontsector;
+      }
+
+      lineEnd = hit_point;
+
+      // check for shooting floor or ceiling
+      if (!ShootCheckPlanes(sec, li, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
+        // process floor and ceiling here
+        if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
+        return false;
+      }
+
+      lineStart = lineEnd;
+
+      if (Level.CompatTrace && li->frontsector == li->backsector) continue;
+
+      if (li->flags&ML_TWOSIDED) {
+        // crosses a two sided line
+        float opentop = 0.0;
+
+        opening_t *open = LineOpenings(li, hit_point);
+        if (open) opentop = open->top;
+        while (open) {
+          if (open->bottom <= hit_point.z && open->top >= hit_point.z) {
+            if (!(li->flags&ML_BLOCKEVERYTHING)) break; // shot continues
+          }
+          open = open->next;
+        }
+        if (open) continue;
+
+        if (li->frontsector->ceiling.pic == Level.Game.skyflatnum &&
+            li->backsector->ceiling.pic == Level.Game.skyflatnum &&
+            hit_point.z > opentop)
+        {
+          // it's a sky hack wall
+          if (tr) { tr->hit = hit_point; tr->didhit = true; }
+          return false;
+        }
+      }
+
+      outHitPoint = hit_point;
+
+      if (li->special == LNSPEC_LineHorizon) {
+        if (tr) tr->hit = hit_point;
+        return false; // don't spawn decals on sky
+      }
+
+      // Hit line
+      if (tr) {
+        tr->hit = hit_point;
+        tr->line = li;
+        tr->sec = sec;
+        tr->side = side;
+        tr->didhit = true;
+      }
+
+      // don't go any farther
+      return true;
+    }
+  }
+
+  lineEnd = dst;
+  if (!ShootCheckPlanes(XLevel.PointInSector(dst), line:default, lineStart, lineEnd, distance, PuffType:none, &outHitPoint)) {
+    // process floor and ceiling here
+    if (tr) { tr->hit = outHitPoint; tr->didhit = true; }
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  TraceBleed
+//
+//  trace line to the wall, spawn blood splats
+//
+//==========================================================================
+final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radiusDamage) {
+  if (damage < 1 || !IsBloodAllowed()) return;
+
+  if (bIsPlayer) {
+    // gods don't bleed
+    if ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE)) return;
+  }
+
+  //k8: sorry, this should be one var, but meh
+  bool isHighDamage = false;
+  bool isSmallDamage = false;
+
+  name bclasssplat = GetBloodSplatDecalName();
+  name bclasssmear = GetBloodSmearDecalName();
+
+  if (radiusDamage) {
+    if (HasDecal(GetBloodSplatRadiusDecalName())) bclasssplat = GetBloodSplatRadiusDecalName();
+    if (HasDecal(GetBloodSmearRadiusDecalName())) bclasssmear = GetBloodSmearRadiusDecalName();
+  }
+
+  name bloodType = bclasssplat;
+
+  int count;
+  float noise;
+
+  if (damage < 15) {
+    // for low damages, there is a chance to not spray blood at all
+    if (damage <= 10) {
+      if (P_Random() < /*1*//*60*/30) {
+        if (!radiusDamage) return;
+        isSmallDamage = true;
+        //return;
+      }
+    }
+    count = 1+P_Random()%3+1;
+    noise = 11.25/256.0;
+  } else if (damage < 25) {
+    count = 2+P_Random()%3+2;
+    noise = 22.5/256.0;
+  } else {
+    // for high damages, there is a chance to spray just one big glob of blood
+    if (P_Random() < 24) {
+      bloodType = bclasssmear;
+      count = 2+P_Random()%3+2;
+      noise = 45.0/256.0;
+      isHighDamage = true;
+    } else {
+      count = 6+P_Random()%4+3;
+      noise = 45.0/256.0;
+    }
+  }
+
+  if (!HasDecal(bloodType)) {
+    //print("*** NO BLOOD DECAL '%s'", NameToStr(bloodType));
+    return;
+  }
+
+  if (isSmallDamage && !radiusDamage) return; // oops
+
+  trsplat_t tr;
+  while (count-- > 0) {
+    float bleedang = AngleMod360(angle+(P_Random()-128)*noise);
+    float bleedpitch = AngleMod360(pitch+(P_Random()-128)*noise);
+    //bleedpitch = pitch;
+    //double cosp = bleedpitch.Cos();
+    float cosp = cos(bleedpitch);
+    TVec vdir;
+    vdir.x = cosp*cos(bleedang);
+    vdir.y = cosp*sin(bleedang);
+    vdir.z = -sin(bleedpitch);
+    //DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
+
+    if (isSmallDamage && !radiusDamage) continue;
+
+    if (TraceSplat(pos, vdir, 172.0, &tr, 0)) {
+      //print("*** spawning blood decal '%s'!", NameToStr(bloodType));
+      SpawnDecal(tr.hit, bloodType, tr.side, tr.line);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  SpawnBlood
 //
 //==========================================================================
@@ -120,7 +334,7 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
     TAVec av;
     TVec v = goup-shootOrg;
     VectorAngles(v, out av);
-    //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
+    //print("bleed angles: vel=%s; pitch=%s; roll=%s; yaw=%s", v, av.pitch, av.roll, av.yaw);
     TraceBleed(damage, goup, av.yaw, av.pitch, false);
   }
 
@@ -143,6 +357,8 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
   A = Spawn(BloodType, Org);
   if (!A) return; // oops
   A.SetBloodArgs(self, damage:damage);
+
+  //print("shooter vel=%s; A vel=%s", Velocity, A.Velocity);
 
   A.Velocity.z = 2.0*35.0;
   if (LineSpecialGameInfo(Level.Game).bBloodRandomiseTime) {
