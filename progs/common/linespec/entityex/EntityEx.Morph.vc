@@ -22,82 +22,65 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 const float MORPHTIME = 40.0;
 
 // Morph style states how morphing affects health and other effects in the
 // game; only valid for players.
 const int
-  MORPH_ADDSTAMINA    = 0x00000001, // Player has a "power" instead of a "curse" (add stamina instead of limiting to health)
-  MORPH_FULLHEALTH    = 0x00000002, // Player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
-  MORPH_UNDOBYTOMEOFPOWER = 0x00000004, // Player unmorphs upon activating a Tome of Power
-  MORPH_UNDOBYCHAOSDEVICE = 0x00000008, // Player unmorphs upon activating a Chaos Device
-  MORPH_FAILNOTELEFRAG  = 0x00000010, // Player stays morphed if unmorph by Tome of Power fails
-  MORPH_FAILNOLAUGH   = 0x00000020, // Player doesn't laugh if unmorph by Chaos Device fails
-  MORPH_WHENINVULNERABLE  = 0x00000040, // Player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
-  MORPH_LOSEACTUALWEAPON  = 0x00000080, // Player loses specified morph weapon only (not "whichever they have when unmorphing")
-  MORPH_NEWTIDBEHAVIOUR = 0x00000100, // Actor TID is by default transferred from the old actor to the new actor
-  MORPH_UNDOBYDEATH   = 0x00000200, // Actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
-  MORPH_UNDOBYDEATHFORCED = 0x00000400, // Actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
-  MORPH_UNDOBYDEATHSAVES  = 0x00000800; // Actor (if unmorphed when killed) regains their health and doesn't die
+  MORPH_ADDSTAMINA        = 0x00000001, // player has a "power" instead of a "curse" (add stamina instead of limiting to health)
+  MORPH_FULLHEALTH        = 0x00000002, // player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
+  MORPH_UNDOBYTOMEOFPOWER = 0x00000004, // player unmorphs upon activating a Tome of Power
+  MORPH_UNDOBYCHAOSDEVICE = 0x00000008, // player unmorphs upon activating a Chaos Device
+  MORPH_FAILNOTELEFRAG    = 0x00000010, // player stays morphed if unmorph by Tome of Power fails
+  MORPH_FAILNOLAUGH       = 0x00000020, // player doesn't laugh if unmorph by Chaos Device fails
+  MORPH_WHENINVULNERABLE  = 0x00000040, // player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
+  MORPH_LOSEACTUALWEAPON  = 0x00000080, // player loses specified morph weapon only (not "whichever they have when unmorphing")
+  MORPH_NEWTIDBEHAVIOUR   = 0x00000100, // actor TID is by default transferred from the old actor to the new actor
+  MORPH_UNDOBYDEATH       = 0x00000200, // actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
+  MORPH_UNDOBYDEATHFORCED = 0x00000400, // actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
+  MORPH_UNDOBYDEATHSAVES  = 0x00000800; // actor (if unmorphed when killed) regains their health and doesn't die
+
 
 //==========================================================================
 //
 //  Morph
 //
 //==========================================================================
-
-final bool Morph(class!MorphedMonster MonsterClass,
-  class!PlayerPawn PlayerClass, float Duration, int MorphStyle,
-  class!Actor MorphFlash, class!Actor UnmorphFlash)
+final bool Morph (class!MorphedMonster MonsterClass,
+                  class!PlayerPawn PlayerClass, float Duration, int MorphStyle,
+                  class!Actor MorphFlash, class!Actor UnmorphFlash)
 {
   if (bIsPlayer)
   {
-    return MorphPlayer(PlayerClass, Duration ? Duration : MORPHTIME,
-      MorphStyle, MorphFlash, UnmorphFlash, none);
-  }
-  else
-  {
-    return MorphMonster(MonsterClass, (Duration ? Duration : MORPHTIME) +
-      Random() * 256.0 / 35.0, MorphStyle, MorphFlash, UnmorphFlash);
+    return MorphPlayer(PlayerClass, (Duration ? Duration : MORPHTIME),
+                       MorphStyle, MorphFlash, UnmorphFlash, none);
+  } else {
+    return MorphMonster(MonsterClass, (Duration ? Duration : MORPHTIME)+Random()*256.0/35.0,
+                        MorphStyle, MorphFlash, UnmorphFlash);
   }
 }
+
 
 //==========================================================================
 //
 //  MorphMonster
 //
 //==========================================================================
-
-final bool MorphMonster(class!MorphedMonster MonsterClass, float Duration,
-  int MorphStyle, class!Actor MorphFlash, class!Actor UnmorphFlash)
+final bool MorphMonster (class!MorphedMonster MonsterClass, float Duration,
+                         int MorphStyle, class!Actor MorphFlash, class!Actor UnmorphFlash)
 {
-  int i;
+  if (!bMonster) return false;
+  if (bBoss) return false;
+  if (bNoMorph) return false;
+  if (!MonsterClass) return false;
 
-  if (!bMonster)
-  {
-    return false;
-  }
-  if (bBoss)
-  {
-    return false;
-  }
-  if (bNoMorph)
-  {
-    return false;
-  }
-  if (!MonsterClass)
-  {
-    return false;
-  }
-
-  Spawn(MorphFlash ? MorphFlash : class!Actor(TeleportFog), Origin +
-    vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  if (!MorphFlash) MorphFlash = class!Actor(TeleportFog);
+  if (MorphFlash) Spawn(MorphFlash, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
   MorphedMonster monster = Spawn(MonsterClass, Origin, default, default, false);
   monster.SpecialCID = class!Actor(Class);
   monster.MorphStyle = MorphStyle;
-  monster.UnmorphTime = XLevel.Time + Duration;
+  monster.UnmorphTime = XLevel.Time+Duration;
   monster.UnmorphFlash = UnmorphFlash;
   monster.RenderStyle = RenderStyle;
   monster.Alpha = Alpha;
@@ -107,10 +90,7 @@ final bool MorphMonster(class!MorphedMonster MonsterClass, float Duration,
   monster.Angles.yaw = Angles.yaw;
   monster.Special = Special;
   monster.SetTID(TID);
-  for (i = 0; i < 5; i++)
-  {
-    monster.Args[i] = Args[i];
-  }
+  foreach (auto i; 0..Args.length) monster.Args[i] = Args[i];
 
   SetTID(0);
 
@@ -120,15 +100,15 @@ final bool MorphMonster(class!MorphedMonster MonsterClass, float Duration,
   return true;
 }
 
+
 //==========================================================================
 //
 //  MonsterMorphed
 //
 //==========================================================================
-
-void MonsterMorphed()
-{
+void MonsterMorphed () {
 }
+
 
 //==========================================================================
 //
@@ -137,46 +117,30 @@ void MonsterMorphed()
 //  Returns true if the player gets turned into a monster.
 //
 //==========================================================================
-
-final bool MorphPlayer(class!PlayerPawn PlayerClass, float Duration,
-  int MorphStyle, class!Actor MorphFlash, class!Actor UnmorphFlash,
-  EntityEx Activator)
+final bool MorphPlayer (class!PlayerPawn PlayerClass, float Duration,
+                        int MorphStyle, class!Actor MorphFlash, class!Actor UnmorphFlash,
+                        EntityEx Activator)
 {
-  Actor beastMo;
-  int i;
-
-  if (bInvulnerable && (self != Activator ||
-    !(MorphStyle & MORPH_WHENINVULNERABLE)))
-  {
-    // Immune when invulnerable
+  if (bInvulnerable && (self != Activator || !(MorphStyle&MORPH_WHENINVULNERABLE))) {
+    // immune when invulnerable
     return false;
   }
-  if (bNoMorph)
-  {
-    return false;
-  }
-  if (!PlayerClass)
-  {
-    return false;
-  }
-  if (PlayerEx(Player).MorphTime)
-  {
-    // Player is already a beast
-    if ((PlayerEx(Player).MorphTime < Duration - 1.0) &&
-      !FindInventory(PowerWeaponLevel2))
-    {
-      //  Make a super monster
+  if (bNoMorph) return false;
+  if (!PlayerClass) return false;
+  if (PlayerEx(Player).MorphTime) {
+    // player is already a beast
+    if ((PlayerEx(Player).MorphTime < Duration-1.0) && !FindInventory(PowerWeaponLevel2)) {
+      // make a super monster
       GiveInventoryType(PowerWeaponLevel2);
     }
     return false;
   }
 
-  Spawn(MorphFlash ? MorphFlash : class!Actor(TeleportFog), Origin +
-    vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  if (!MorphFlash) MorphFlash = class!Actor(TeleportFog);
+  if (MorphFlash) Spawn(MorphFlash, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-  beastMo = Spawn(PlayerClass, Origin, default, default, false);
-  if (TID && (MorphStyle & MORPH_NEWTIDBEHAVIOUR))
-  {
+  Actor beastMo = Spawn(PlayerClass, Origin, default, default, false);
+  if (TID && (MorphStyle&MORPH_NEWTIDBEHAVIOUR)) {
     beastMo.SetTID(TID);
     SetTID(0);
   }
@@ -186,31 +150,18 @@ final bool MorphPlayer(class!PlayerPawn PlayerClass, float Duration,
   beastMo.bIsPlayer = true;
   Player.Health = beastMo.Health;
   Player.MO = beastMo;
-  if (Player.Camera == self)
-  {
-    Player.Camera = beastMo;
-  }
+  if (Player.Camera == self) Player.Camera = beastMo;
   BasicArmor Armor = BasicArmor(FindInventory(BasicArmor));
   Armor.Amount = 0;
   Armor.SavePercent = 0.0;
   HexenArmor HArmor = HexenArmor(FindInventory(HexenArmor));
-  if (HArmor)
-  {
-    for (i = 0; i < 4; i++)
-    {
-      HArmor.Slots[i] = 0.0;
-    }
+  if (HArmor) {
+    foreach (auto i; 0..4) HArmor.Slots[i] = 0.0;
   }
   Inventory Pw = FindInventory(PowerGhost);
-  if (Pw)
-  {
-    Pw.Destroy();
-  }
+  if (Pw) Pw.Destroy();
   Pw = FindInventory(PowerWeaponLevel2);
-  if (Pw)
-  {
-    Pw.Destroy();
-  }
+  if (Pw) Pw.Destroy();
   beastMo.ObtainInventory(self);
   beastMo.bShadow = bShadow;
   beastMo.bGhost = bGhost;
@@ -226,14 +177,14 @@ final bool MorphPlayer(class!PlayerPawn PlayerClass, float Duration,
   return true;
 }
 
+
 //==========================================================================
 //
 //  MorphActor
 //
 //==========================================================================
-
-override int MorphActor(name PlayerClass, name MonsterClass, float Duration,
-  int Style, name MorphFlash, name UnmorphFlash)
+override int MorphActor (name PlayerClass, name MonsterClass, float Duration,
+                         int Style, name MorphFlash, name UnmorphFlash)
 {
   return Morph(class!MorphedMonster(FindClassNoCase(MonsterClass)),
     class!PlayerPawn(FindClassNoCase(PlayerClass)), Duration, Style,
