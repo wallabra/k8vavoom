@@ -1011,9 +1011,9 @@ final void A_KillChildren (optional string damagetype, optional int flags
         continue;
       }
       if (specified_damagetype) {
-        A.Damage(self, self, A.Health, name(damagetype), true, !!(flags&KILS_FOILINVUL));
+        A.Damage(self, self, A.Health, name(damagetype), NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
       } else {
-        A.Damage(self, self, A.Health, default, true, !!(flags&KILS_FOILINVUL));
+        A.Damage(self, self, A.Health, default, NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
       }
     }
   }

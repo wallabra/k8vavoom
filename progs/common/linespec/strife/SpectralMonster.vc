@@ -34,7 +34,7 @@ class SpectralMonster : Actor
 
 override bool Touch(Entity InOther)
 {
-  EntityEx(InOther).Damage(self, self, 5, 'Melee');
+  EntityEx(InOther).Damage(self, self, 5, 'Melee', spawnBlood:true);
 
   return ::Touch(InOther);
 }
@@ -201,7 +201,7 @@ final void A_AlienSpectreDeath()
       if (A && A.bMonster && A.Health > 0)
       {
         // Kill the oracle if his specter dies...
-        EntityEx(A).Damage(none, none, 10000);
+        EntityEx(A).Damage(none, none, 10000, spawnBlood:true);
       }
     }
 

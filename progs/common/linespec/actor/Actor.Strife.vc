@@ -372,7 +372,7 @@ final void A_StalkerAttack()
 
     if (CheckMeleeRange())
     {
-      Target.Damage(self, self, (P_Random() & 7) * 2 + 2);
+      Target.Damage(self, self, (P_Random() & 7) * 2 + 2, spawnBlood:true);
     }
   }
 }
@@ -1205,7 +1205,7 @@ final void A_FireMauler2() self(Actor)
   SetState(MissileState);
   Wpn.DepleteAmmo(Wpn.FireMode);
   SpawnPlayerMissile(MaulerTorpedo);
-  Damage(none, self, 20);
+  Damage(none, self, 20, spawnBlood:true);
   Thrust(Angles.yaw + 180.0, 125.0 / 16.0);
 }
 

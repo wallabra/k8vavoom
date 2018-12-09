@@ -228,7 +228,7 @@ final void A_TroopAttack()
   {
     PlaySound('imp/melee', CHAN_WEAPON);
     damage = (P_Random() % 8 + 1) * 3;
-    Target.Damage(self, self, damage);
+    Target.Damage(self, self, damage, spawnBlood:true);
     return;
   }
 
@@ -257,7 +257,7 @@ final void A_SargAttack()
   if (CheckMeleeRange())
   {
     damage = ((P_Random() % 10) + 1) * 4;
-    Target.Damage(self, self, damage);
+    Target.Damage(self, self, damage, spawnBlood:true);
   }
 }
 
@@ -282,7 +282,7 @@ final void A_HeadAttack()
   if (CheckMeleeRange())
   {
     damage = (P_Random() % 6 + 1) * 10;
-    Target.Damage(self, self, damage);
+    Target.Damage(self, self, damage, spawnBlood:true);
     return;
   }
 
@@ -311,7 +311,7 @@ final void A_BruisAttack()
   {
     PlaySound('baron/melee', CHAN_WEAPON);
     damage = (P_Random() % 8 + 1) * 10;
-    Target.Damage(self, self, damage);
+    Target.Damage(self, self, damage, spawnBlood:true);
     return;
   }
 
@@ -520,7 +520,7 @@ final void A_SkelFist()
   {
     damage = ((P_Random() % 10) + 1) * 6;
     PlaySound('skeleton/melee', CHAN_WEAPON);
-    Target.Damage(self, self, damage);
+    Target.Damage(self, self, damage, spawnBlood:true);
   }
 }
 
@@ -773,7 +773,7 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
   }
   if (!specified_initialdamage) initialdamage = 20;
   if (initialdamage < 0) initialdamage = 0;
-  Target.Damage(self, self, /*20*/initialdamage, (flags&1 ? damagetype : 'None'));
+  Target.Damage(self, self, /*20*/initialdamage, (flags&1 ? damagetype : 'None'), spawnBlood:true);
 
   fire = Tracer;
 

@@ -75,7 +75,7 @@ override bool Touch(Entity InOther)
           // ghost burns out faster when attacking players/bosses
           Health -= 6;
         }
-        Other.Damage(self, Target, damage);
+        Other.Damage(self, Target, damage, spawnBlood:true);
         if (P_Random() < 128)
         {
           Spawn(HolyPuff, Origin);

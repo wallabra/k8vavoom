@@ -63,7 +63,7 @@ override bool Touch(Entity InOther)
       if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
       {
         damage = (ftoi(fmax(0, Mass)) / 100) + 1;
-        Other.Damage(self, self, damage);
+        Other.Damage(self, self, damage, spawnBlood:true);
         damage = (ftoi(fmax(0, Other.Mass)) / 100) + 1;
         Damage(Other, Other, damage >> 2);
       }
@@ -86,11 +86,11 @@ override bool Touch(Entity InOther)
     if (Other.IsA('Centaur'))
     {
       // Lightning does more damage to centaurs
-      Other.Damage(self, Target, 9);
+      Other.Damage(self, Target, 9, spawnBlood:true);
     }
     else
     {
-      Other.Damage(self, Target, 3);
+      Other.Damage(self, Target, 3, spawnBlood:true);
     }
     if (!(GetSoundPlayingInfo(self, GetSoundID('MageLightningZap'))))
     {

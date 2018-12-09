@@ -210,7 +210,7 @@ final void A_Srcr2Attack()
   PlaySound(AttackSound, CHAN_AUTO, 1.0, ATTN_NONE);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(20));
+    Target.Damage(self, self, HITDICE(20), spawnBlood:true);
     return;
   }
   chance = Health < default.Health / 2 ? 96 : 48;

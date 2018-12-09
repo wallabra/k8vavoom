@@ -274,7 +274,7 @@ final void A_CustomMeleeAttack(int MeleeDamage, optional name MeleeSound,
     {
       PlaySound(MeleeSound, CHAN_WEAPON);
     }
-    Target.Damage(self, self, MeleeDamage, DamageType);
+    Target.Damage(self, self, MeleeDamage, DamageType, spawnBlood:true);
   }
   else
   {
@@ -311,7 +311,7 @@ final void A_CustomComboAttack(class!Actor MissileType, float MissileHeight,
     {
       PlaySound(MeleeSound, CHAN_WEAPON);
     }
-    Target.Damage(self, self, MeleeDamage, DamageType);
+    Target.Damage(self, self, MeleeDamage, DamageType, spawnBlood:true);
     return;
   }
 
@@ -350,7 +350,7 @@ final void DoAttack(bool DoMelee, bool DoMissile, int MeleeDamage,
       PlaySound(MeleeSound, CHAN_WEAPON);
     }
     int damage = (P_Random() % 8 + 1) * MeleeDamage;
-    Target.Damage(self, self, damage, 'Melee');
+    Target.Damage(self, self, damage, 'Melee', spawnBlood:true);
     return;
   }
 
@@ -974,7 +974,7 @@ final void BlastActor(Actor victim, Actor source, float speed,
   if (victim.bTouchy)
   {
     victim.bArmed = false; // Disarm
-    Damage(victim, source, victim.Health);
+    Damage(victim, source, victim.Health, spawnBlood:true);
   }
 }
 
@@ -1298,7 +1298,7 @@ final void A_MinotaurChase()
 
   if (XLevel.Time - StartTime >= PowerMinotaur.default.EffectTime)
   {
-    Damage(none, none, 10000);
+    Damage(none, none, 10000, spawnBlood:true);
     return;
   }
 
@@ -1360,7 +1360,7 @@ final void A_MinotaurRoam()
 
   if (XLevel.Time - StartTime >= PowerMinotaur.default.EffectTime)
   {
-    Damage(none, none, 10000);
+    Damage(none, none, 10000, spawnBlood:true);
     return;
   }
 
@@ -1402,7 +1402,7 @@ final void A_MinotaurAtk1()
   PlaySound('minotaur/melee', CHAN_WEAPON);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(4));
+    Target.Damage(self, self, HITDICE(4), spawnBlood:true);
     if (Target.bIsPlayer)
     {
       // Squish the player
@@ -1483,7 +1483,7 @@ final void A_MinotaurAtk2()
   PlaySound('minotaur/attack2', CHAN_WEAPON);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)));
+    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), spawnBlood:true);
     return;
   }
   A = SpawnMissile(Target, MinotaurFX1, 40.0);
@@ -1521,7 +1521,7 @@ final void A_MinotaurAtk3()
   PlaySound('minotaur/attack3', CHAN_WEAPON);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)));
+    Target.Damage(self, self, HITDICE((bSummonedMonster ? 3 : 5)), spawnBlood:true);
     if (Target.bIsPlayer)
     {
       // Squish the player

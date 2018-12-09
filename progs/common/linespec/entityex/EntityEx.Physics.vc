@@ -667,7 +667,7 @@ final bool HitFloor () {
   // allow very short drops to be safe, so that a touchy can be summoned without exploding
   if (bTouchy && (bArmed || IsSentient()) && Velocity.z < -5.0) {
     bArmed = false; // disarm
-    Damage(none, none, Health);  // kill object
+    Damage(none, none, Health, spawnBlood:true);  // kill object
     return true;
   }
 
@@ -1028,7 +1028,7 @@ final void FallingDamage () {
     return;
   }
 
-  Damage(none, none, damage, 'Falling');
+  Damage(none, none, damage, 'Falling', spawnBlood:true);
   LineSpecialLevelInfo(Level).NoiseAlert(self, self);
 }
 
@@ -1053,7 +1053,7 @@ final void MonsterFallingDamage () {
     damage = int((mom-23.0)*6.0);
   }
   damage = 10000; // always kill 'em
-  Damage(none, none, damage, 'Falling');
+  Damage(none, none, damage, 'Falling', spawnBlood:true);
 }
 
 
@@ -1120,7 +1120,7 @@ final bool HitFloorType () {
   if (Mass < 10.0 || bSmallSplash) smallsplash = true;
 
   if (TInfo->DamageAmount && bIsPlayer && (XLevel.TicTime&TInfo->DamageTimeMask)) {
-    Damage(none, none, TInfo->DamageAmount, TInfo->DamageType);
+    Damage(none, none, TInfo->DamageAmount, TInfo->DamageType/*, spawnBlood:true*/);
   }
 
   SInfo = GetSplashInfo(TInfo->Splash);

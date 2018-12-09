@@ -68,7 +68,7 @@ void TouchWhirlwind(Actor Other)
   }
   if (!(XLevel.TicTime & 7))
   {
-    Other.Damage(none, none, 3);
+    Other.Damage(none, none, 3, spawnBlood:true);
   }
 }
 

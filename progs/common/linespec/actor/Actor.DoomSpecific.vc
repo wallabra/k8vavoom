@@ -203,6 +203,6 @@ final void decorate_A_BFGSpray(optional class!EntityEx FlashType,
       damage += (P_Random() & 7) + 1;
     }
 
-    AimTarget.Damage(Target, Target, damage);
+    AimTarget.Damage(Target, Target, damage, spawnBlood:true);
   }
 }

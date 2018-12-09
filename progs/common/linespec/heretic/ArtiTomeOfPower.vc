@@ -46,7 +46,7 @@ override bool Use(bool Pickup)
       // Failed
       if (!(PlayerEx(Owner.Player).MorphStyle & MORPH_FAILNOTELEFRAG))
       {
-        EntityEx(Owner).Damage(none, none, 10000);
+        EntityEx(Owner).Damage(none, none, 10000, spawnBlood:true);
       }
     }
     else

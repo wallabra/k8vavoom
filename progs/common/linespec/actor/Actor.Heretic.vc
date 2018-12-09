@@ -485,7 +485,7 @@ final void A_KnightAttack()
   }
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(3));
+    Target.Damage(self, self, HITDICE(3), spawnBlood:true);
     PlaySound('hknight/melee', CHAN_WEAPON);
     return;
   }
@@ -551,7 +551,7 @@ final void A_WizAtk3()
   PlaySound(AttackSound, CHAN_WEAPON);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(4));
+    Target.Damage(self, self, HITDICE(4), spawnBlood:true);
     return;
   }
   A = SpawnMissile(Target, WizardFX1);
@@ -606,7 +606,7 @@ final void A_LichAttack()
   A_FaceTarget();
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(6));
+    Target.Damage(self, self, HITDICE(6), spawnBlood:true);
     return;
   }
   dist = DistTo2(Target) > 8.0 * 64.0;
@@ -1279,7 +1279,7 @@ final void A_Srcr1Attack()
   PlaySound(AttackSound, CHAN_WEAPON);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(8));
+    Target.Damage(self, self, HITDICE(8), spawnBlood:true);
     return;
   }
   if (Health > (default.Health / 3) * 2)

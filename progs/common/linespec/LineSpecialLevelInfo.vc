@@ -773,12 +773,12 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
     {
       if (Arg1)
       {
-        A.Damage(none, none, Arg1, ModToDamageType(Arg2));
+        A.Damage(none, none, Arg1, ModToDamageType(Arg2), spawnBlood:true);
       }
       else
       {
         // If arg1 is zero, then guarantee a kill
-        A.Damage(none, none, 10000, ModToDamageType(Arg2));
+        A.Damage(none, none, 10000, ModToDamageType(Arg2), forced:true, spawnBlood:true);
       }
     }
     buttonSuccess = 1;
@@ -4516,7 +4516,7 @@ final bool EV_ThingDestroy(int tid, int Extreme)
   {
     if (A.bShootable)
     {
-      A.Damage(none, none, Extreme ? 1000000 : A.Health, '');
+      A.Damage(none, none, Extreme ? 1000000 : A.Health, '', forced:true, spawnBlood:true);
       success = true;
     }
   }
@@ -4597,7 +4597,7 @@ final override int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activ
     {
       if (Amount > 0)
       {
-        EntityEx(A).Damage(none, EntityEx(Activator), Amount, DmgType);
+        EntityEx(A).Damage(none, EntityEx(Activator), Amount, DmgType, spawnBlood:true);
       }
       else if (A.Health < A.default.Health)
       {
@@ -5183,7 +5183,7 @@ final bool DoThingRaise(EntityEx A)
 final bool EV_ForceField(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   EntityEx A)
 {
-  A.Damage(none, none, 16, '');
+  A.Damage(none, none, 16, '', spawnBlood:true);
   A.Velocity.x += 7.8125 * cos(A.Angles.yaw + 180.0) * 35.0;
   A.Velocity.y += 7.8125 * sin(A.Angles.yaw + 180.0) * 35.0;
   return true;
@@ -6523,7 +6523,7 @@ final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
     if (po->bHurtOnTouch || !Other.CheckPosition(testPos))
     {
       // Damage other type of actors
-      EntityEx(Other).Damage(none, none, 3, 'Crush');
+      EntityEx(Other).Damage(none, none, 3, 'Crush', spawnBlood:true);
     }
   }
 }
@@ -6802,7 +6802,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
         }
       }
 
-      EntityEx(Ent).Damage(none, none, Amount, DamageType);
+      EntityEx(Ent).Damage(none, none, Amount, DamageType/*, spawnBlood:true*/);
     }
   }
 }
@@ -7575,7 +7575,7 @@ final int P_Massacre()
       mo.bInvulnerable = false;
       mo.bDormant = false;
       mo.bShootable = true;
-      mo.Damage(none, none, 10000);
+      mo.Damage(none, none, 10000, spawnBlood:true);
       count++;
     }
   }

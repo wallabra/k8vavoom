@@ -368,7 +368,7 @@ final void A_FireSigil1() self(Actor)
     return;
   }
 
-  Damage(none, self, 1 * 4, default, true);
+  Damage(none, self, 1 * 4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   sigil = Spawn(SpectralLightningSpot, Origin + vector(0.0, 0.0, 32.0));
@@ -406,7 +406,7 @@ final void A_FireSigil2() self(Actor)
     return;
   }
 
-  Damage(none, self, 2 * 4, default, true);
+  Damage(none, self, 2 * 4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   SpawnPlayerMissile(SpectralLightningH1);
@@ -429,7 +429,7 @@ final void A_FireSigil3() self(Actor)
     return;
   }
 
-  Damage(none, self, 3 * 4, default, true);
+  Damage(none, self, 3 * 4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   for (i = 0; i < 20; i++)
@@ -458,7 +458,7 @@ final void A_FireSigil4() self(Actor)
     return;
   }
 
-  Damage(none, self, 4 * 4, default, true);
+  Damage(none, self, 4 * 4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   SpawnPlayerMissile(SpectralLightningBigV1);
@@ -477,7 +477,7 @@ final void A_FireSigil5() self(Actor)
     return;
   }
 
-  Damage(none, self, 5 * 4, default, true);
+  Damage(none, self, 5 * 4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   SpawnPlayerMissile(SpectralLightningBigBall1);

@@ -96,7 +96,7 @@ override int SpecialMissileHit(EntityEx Other)
     if (!Other.bIsPlayer && !Other.bBoss && Other.Class != FighterBoss &&
       Other.Class != ClericBoss && Other.Class != MageBoss)
     {
-      Other.Damage(self, Target, 10, DamageType);
+      Other.Damage(self, Target, 10, DamageType, spawnBlood:true);
       return 1;
     }
   }

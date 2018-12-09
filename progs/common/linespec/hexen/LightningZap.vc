@@ -105,7 +105,7 @@ override bool Touch(Entity InOther)
         if (self.Radius > 0) org.z += self.Radius/2.0;
         Other.SpawnBloodSplatter(Origin, damage, org);
       }
-      Other.Damage(self, Target, damage);
+      Other.Damage(self, Target, damage, spawnBlood:true);
     }
     return false;
   }

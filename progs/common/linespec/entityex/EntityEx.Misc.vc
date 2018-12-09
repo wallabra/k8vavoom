@@ -82,6 +82,24 @@ final void SetOrigin2(TVec origin)
   }
 }
 
+
+//==========================================================================
+//
+//  SetBloodArgs
+//
+//  pass some info to spawned blood actor, so decorate/vc can use 'em.
+//  should be called on blood entity
+//
+//  Tracer: bleeding Entity (can be none)
+//  Args[0]: damage (can be 0)
+//
+//==========================================================================
+final void SetBloodArgs (EntityEx master, optional int damage) {
+  self.Tracer = master;
+  self.Args[0] = damage;
+}
+
+
 //**************************************************************************
 //
 //  RADIUS ATTACK
@@ -145,7 +163,6 @@ final void RadiusAttack(EntityEx Source, int BombDamage, float BombDistance,
       damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
 
       Other.SpawnExploBloodAtHead(damage, Source);
-
       if (DoDamage) {
         Other.Damage(self, Source, damage, BombDmgType);
       } else {
@@ -233,7 +250,9 @@ final bool TeleportMove(TVec org, optional bool ForceTelestomp)
       return false;
     }
 
-    Other.Damage(self, self, 10000, 'Telefrag');
+    Other.SpawnExploBloodAtHead(max(Other.Health, 10000), self);
+    // telefrags kills even invincible things
+    Other.Damage(self, self, max(Other.Health, 10000), 'Telefrag', forced:true/*, spawnBlood:true*/);
   }
 
   // the move is ok,
@@ -712,7 +731,7 @@ override bool Touch(Entity InOther)
   {
     bArmed = false; // Disarm
     Other.SpawnExploBloodAtHead(Other.Health, self);
-    Other.Damage(none, none, Other.Health);  // kill object
+    Other.Damage(none, none, Other.Health); // kill object
     return true;
   }
 
@@ -748,6 +767,7 @@ override bool Touch(Entity InOther)
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, self, damage);
         damage = (ftoi(fmax(0, Other.Mass)) / 100) + 1;
+        SpawnExploBloodAtHead(damage>>2, Other);
         Damage(Other, Other, damage >> 2);
       }
       return false;
@@ -966,6 +986,7 @@ bool Slam(EntityEx Other)
     if (!bDormant)
     {
       int damage = GetMissileDamage(7, 1);
+      if (damage > 0) Other.SpawnBloodAtHead(damage, Origin);
       Other.Damage(self, self, damage, 'Melee');
       SetState(SeeState ? SeeState : IdleState);
     }
@@ -1064,7 +1085,9 @@ final override void CheckForPushSpecial(line_t *line, int side)
 
 final override void BlastedHitLine()
 {
-  Damage(none, none, ftoi(fmax(0, Mass)) >> 5);
+  int damage = ftoi(fmax(0, Mass)) >> 5;
+  if (damage > 0) SpawnExploBloodAtHead(damage);
+  Damage(none, none, damage);
 }
 
 //==========================================================================
@@ -1670,21 +1693,21 @@ override void Tick(float deltaTime)
 //
 //==========================================================================
 final override bool SectorChanged (int CrushChange) {
-  EntityEx A;
-
   if (HeightClip()) return true;
 
   // crunch bodies to giblets
   if (bCorpse && !bDontGib && Health <= 0) {
     bool CanDestroy = false;
-    if (!bNoBlood) {
+    state stgibs = FindClassState(Class, 'Death', 'SectorGibs');
+    if (stgibs) {
+      bDontGib = true;
+      SetState(stgibs);
+    } else if (!bNoBlood) {
       class c = FindClass('RealGibs');
+      if (c) c = GetClassReplacement(c);
       if (c) {
-        if (!FindClassState(GetClassReplacement(c), 'Spawn') ||
-            !AreStateSpritesPresent(FindClassState(GetClassReplacement(c), 'Spawn')))
-        {
-          c = none;
-        }
+        state spst = FindClassState(c, 'Spawn');
+        if (!spst || !AreStateSpritesPresent(spst)) c = none;
       }
 
       if (c) {
@@ -1720,6 +1743,7 @@ final override bool SectorChanged (int CrushChange) {
   // killough 11/98: kill touchy things immediately
   if (bTouchy && (bArmed || IsSentient())) {
     bArmed = false; // disarm
+    SpawnExploBloodAtHead(default.Health, none);
     Damage(none, none, default.Health); // kill object
     return true;
   }
@@ -1729,12 +1753,12 @@ final override bool SectorChanged (int CrushChange) {
     return true;
   }
 
-  if (CrushChange && !(XLevel.TicTime&3)) {
+  if (CrushChange > 0 && !(XLevel.TicTime&3)) {
     Damage(none, none, CrushChange);
-
     // spray blood in a random direction
     if (!bNoBlood && !bInvulnerable && BloodType && IsBloodAllowed()) {
-      A = Spawn(BloodType, Origin+vector(0.0, 0.0, Height/2.0));
+      EntityEx A = Spawn(BloodType, Origin+vector(0.0, 0.0, Height/2.0));
+      A.SetBloodArgs(self, damage:CrushChange);
       A.Velocity.x = (Random()-Random())*16.0*35.0;
       A.Velocity.y = (Random()-Random())*16.0*35.0;
       if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
@@ -2206,17 +2230,17 @@ final name GetBloodSmearRadiusDecalName () {
 //  SpawnBlood
 //
 //==========================================================================
-final void SpawnBlood (TVec Org, int damage, optional TVec org) {
+final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg) {
   EntityEx A;
   int i, c;
 
   if (!IsBloodAllowed()) return;
 
-  if (specified_org) {
+  if (specified_shootOrg) {
     TVec goup = Origin;
     if (Radius > 0) goup.z += Radius+4+Random()*4;
     TAVec av;
-    TVec v = goup-org;
+    TVec v = goup-shootOrg;
     VectorAngles(v, out av);
     //print("bleed angles: vel=(%f,%f,%f); pitch=%f; roll=%f; yaw=%f", v.x, v.y, v.z, av.pitch, av.roll, av.yaw);
     TraceBleed(damage, goup, av.yaw, av.pitch, false);
@@ -2239,6 +2263,9 @@ final void SpawnBlood (TVec Org, int damage, optional TVec org) {
   if (!BloodType) return;
 
   A = Spawn(BloodType, Org);
+  if (!A) return; // oops
+  A.SetBloodArgs(self, damage:damage);
+
   A.Velocity.z = 2.0*35.0;
   if (LineSpecialGameInfo(Level.Game).bBloodRandomiseTime) {
     A.StateTime -= Random()*0.1;
@@ -2269,10 +2296,10 @@ final void SpawnBlood (TVec Org, int damage, optional TVec org) {
 //
 //==========================================================================
 
-final void SpawnBloodAtHead (int damage) {
+final void SpawnBloodAtHead (int damage, optional TVec shootOrg) {
   TVec goup = Origin;
   if (Radius > 0) goup.z += Radius+4+Random()*4;
-  SpawnBlood(goup, damage);
+  SpawnBlood(goup, damage, shootOrg!optional);
 }
 
 //==========================================================================
@@ -2281,7 +2308,7 @@ final void SpawnBloodAtHead (int damage) {
 //
 //==========================================================================
 
-final void SpawnExploBloodAtHead (int damage, EntityEx src) {
+final void SpawnExploBloodAtHead (int damage, optional EntityEx src) {
   if (bNoBlood || damage < 1 || !IsBloodAllowed()) return;
 
   if (src) {
@@ -2388,11 +2415,10 @@ final void SpawnBloodSplatter2(TVec org, TVec shootOrg)
   org.x += (Random() - 0.5) * 8.0;
   org.y += (Random() - 0.5) * 8.0;
   mo = Spawn(AxeBloodType, org);
+  if (!mo) return;
+  mo.SetBloodArgs(self);
   mo.Target = self;
-  if (BloodTranslation && !mo.bDontTranslate)
-  {
-    mo.Translation = BloodTranslation;
-  }
+  if (BloodTranslation && !mo.bDontTranslate) mo.Translation = BloodTranslation;
 
   {
     TAVec av;
@@ -2414,18 +2440,14 @@ final void SpawnRipperBlood()
   EntityEx  th;
   TVec    org;
 
-  if (!BloodType)
-  {
-    return;
-  }
+  if (!BloodType) return;
   org.x = Origin.x + (Random() - Random()) * 16.0;
   org.y = Origin.y + (Random() - Random()) * 16.0;
   org.z = Origin.z + (Random() - Random()) * 16.0;
   th = Spawn(BloodType, org);
-  if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity)
-  {
-    th.bNoGravity = true;
-  }
+  if (!th) return;
+  th.SetBloodArgs(self);
+  if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity) th.bNoGravity = true;
   th.Velocity.x = Velocity.x / 2.0;
   th.Velocity.y = Velocity.y / 2.0;
   th.StateTime += Random() * 0.1;
@@ -2945,7 +2967,7 @@ final void PainShootSkull(class!Actor SpawnType, float angle, optional bool noat
       (newSkull.Origin.z < newSkull.FloorZ))
   {
     // kill it immediately
-    newSkull.Damage(self, self, 10000);
+    newSkull.Damage(self, self, 10000, forced:true);
     return;
   }
 
@@ -2954,7 +2976,7 @@ final void PainShootSkull(class!Actor SpawnType, float angle, optional bool noat
       prestep * cos(angle), prestep * sin(angle), 8.0), false))
   {
     // kill it immediately
-    newSkull.Damage(self, self, 10000);
+    newSkull.Damage(self, self, 10000, forced:true);
     return;
   }
 

@@ -338,7 +338,7 @@ final void A_CountdownArg(int Index)
     }
     else if (bShootable)
     {
-      Damage(none, none, Health);
+      Damage(none, none, Health, spawnBlood:true);
     }
     else
     {

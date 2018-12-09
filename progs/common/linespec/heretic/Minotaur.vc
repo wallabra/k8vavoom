@@ -109,7 +109,7 @@ final void MinotaurSlam(Actor Other)
   thrust = 16.0 + Random() * 4.0;
   Other.Velocity.x += thrust * cos(angle) * 35.0;
   Other.Velocity.y += thrust * sin(angle) * 35.0;
-  Other.Damage(none, self, HITDICE(6));
+  Other.Damage(none, self, HITDICE(6), spawnBlood:true);
   if (Other.Player)
   {
     Other.ReactionTime = 0.4 + Random() * 0.2;

@@ -305,6 +305,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
           //writeln("  bloodclass: ", bloodClassName);
 
           class!Actor bloodClass = class!Actor(FindClass(bloodClassName));
+          if (bloodClass) bloodClass = class!Actor(GetClassReplacement(bloodClass));
 
           if (bloodClass) {
             int bcc = int(GetCvarF('k8HSHeadKillBloodCount'));
@@ -321,16 +322,19 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
               spos.x = Origin.x+((Random()*51-25)/10.0);
               spos.y = Origin.y+((Random()*51-25)/10.0);
               spos.z = Origin.z+Height+((Random()*29-14)/10.0);
-              Level.Spawn(bloodClass, spos); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+              EntityEx bld = EntityEx(Level.Spawn(bloodClass, spos)); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+              if (bld) bld.SetBloodArgs(self, damage:(instakill ? Health : dodmg));
             }
           }
 
           if ((instakill || dodmg >= Health) && GetCvarB('k8HSHeadKillBloodPool')) {
             //poolClassName = 'SmallBloodPool';
             class!Actor poolClass = class!Actor(FindClass(poolClassName));
+            if (poolClass) poolClass = class!Actor(GetClassReplacement(bloodClass));
             if (poolClass) {
               //print("***SPAWNING BLOOD POOL: '%C'", poolClass);
-              Level.Spawn(poolClass, Origin);
+              EntityEx bld = EntityEx(Level.Spawn(poolClass, Origin));
+              if (bld) bld.SetBloodArgs(self, damage:(instakill ? Health : dodmg));
             }
           }
 
@@ -339,6 +343,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         }
 
         if (instakill) {
+          // so they won't gib
           Health = 1;
           dodmg = 2;
         }
@@ -363,11 +368,11 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 //  DamageEx
 //
 //==========================================================================
-void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary) {
+void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary, optional bool spawnBlood) {
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
   //print("THP(%s):(%f,%f,%f); dmg=%d; new=%d; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, NameToStr(DmgType));
   //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(StrToName("FUCK!")));
-  Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor);
+  Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood!optional);
 }
 
 
@@ -376,15 +381,21 @@ void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bo
 //  Damage
 //
 //  Damages both enemies and players.
+//
 //  "inflictor" is the thing that caused the damage, creature or missile,
-// can be nullptr (slime, etc).
+//  can be nullptr (slime, etc).
+//
 //  "source" is the thing to target after taking damage, creature or nullptr.
 //  Source and inflictor are the same for melee attacks. Source can be nullptr
-// for slime, barrel explosions and other environmental stuff.
+//  for slime, barrel explosions and other environmental stuff.
+//
+//  "forced" can be set to ignore "invulnerable" flag
+//
+//  "spawnBlood" can be set to spawn blood
 //
 //==========================================================================
 final void Damage (EntityEx inflictor, EntityEx source, int damage,
-                   optional name DmgType, optional bool NoArmor, optional bool forced)
+                   optional name DmgType, optional bool NoArmor, optional bool forced, optional bool spawnBlood)
 {
   if (!bShootable && !forced) return; // shouldn't happen...
 
@@ -403,6 +414,19 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       Velocity.y = 0.0;
     }
     return;
+  }
+
+  // forced blood?
+  if (spawnBlood && damage > 0) {
+    if (damage > 100 || forced) {
+      SpawnExploBloodAtHead(damage, inflictor);
+    } else {
+      if (inflictor) {
+        SpawnBlood(Origin, damage, inflictor.Origin);
+      } else {
+        SpawnBlood(Origin, damage);
+      }
+    }
   }
 
   if (!forced && bInvulnerable && damage < 10000) {

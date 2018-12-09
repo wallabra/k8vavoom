@@ -169,7 +169,7 @@ final void A_ThrustImpale()
     if (Other == self)
       continue; // don't clip against self
 
-    EntityEx(Other).Damage(self, self, 10001);
+    EntityEx(Other).Damage(self, self, 10001, forced:true, spawnBlood:true);
     bBloody = true; // Mark thrust thing as bloody
   }
 }

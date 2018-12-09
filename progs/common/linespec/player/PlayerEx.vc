@@ -504,19 +504,19 @@ final void PlayerInSpecialSector (float deltaTime) {
       case SECSPEC_DamageHellslime:
         if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 10, 'Slime');
+          EntityEx(MO).Damage(none, none, 10, 'Slime'/*, spawnBlood:true*/);
         }
         break;
       case SECSPEC_DamageSludge:
         if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 4);
+          EntityEx(MO).Damage(none, none, 4/*, spawnBlood:true*/);
         }
         break;
       case SECSPEC_DamageNukage:
         if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Slime');
+          EntityEx(MO).Damage(none, none, 5, 'Slime'/*, spawnBlood:true*/);
         }
         break;
       case SECSPEC_LightStrobeFastDamage:
@@ -524,7 +524,7 @@ final void PlayerInSpecialSector (float deltaTime) {
         if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
           if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
             LastSectorDamageTime = Level.XLevel.Time;
-            EntityEx(MO).Damage(none, none, 20, 'Slime');
+            EntityEx(MO).Damage(none, none, 20, 'Slime'/*, spawnBlood:true*/);
           }
         }
         break;
@@ -533,21 +533,21 @@ final void PlayerInSpecialSector (float deltaTime) {
         Cheats &= ~CF_GODMODE;
         if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 20);
+          EntityEx(MO).Damage(none, none, 20/*, spawnBlood:true*/);
         }
         if (Health <= 10) Level.ExitLevel(0);
         break;
       case SECSPEC_DamageLavaWimpy:
         if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Fire');
+          EntityEx(MO).Damage(none, none, 5, 'Fire'/*, spawnBlood:true*/);
           EntityEx(MO).HitFloorType();
         }
         break;
       case SECSPEC_DamageLavaHefty:
         if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 8, 'Fire');
+          EntityEx(MO).Damage(none, none, 8, 'Fire'/*, spawnBlood:true*/);
           EntityEx(MO).HitFloorType();
         }
         break;
@@ -555,7 +555,7 @@ final void PlayerInSpecialSector (float deltaTime) {
         ThrustPlayer(0.0, 1024.0, deltaTime);
         if (Level.XLevel.Time-LastSectorDamageTime >= 16.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Fire');
+          EntityEx(MO).Damage(none, none, 5, 'Fire'/*, spawnBlood:true*/);
           EntityEx(MO).HitFloorType();
         }
         break;
@@ -563,7 +563,7 @@ final void PlayerInSpecialSector (float deltaTime) {
         if (!IronFeet) HazardTime += 2.0*deltaTime;
         break;
       case SECSPEC_DamageInstantDeath:
-        EntityEx(MO).Damage(none, none, 999, 'InstantDeath');
+        EntityEx(MO).Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
         break;
       case SECSPEC_DamageSuperHazard:
         if (!IronFeet) HazardTime += 4.0*deltaTime;
@@ -575,20 +575,20 @@ final void PlayerInSpecialSector (float deltaTime) {
       case 0x0100:
         if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 5, 'Fire');
+          EntityEx(MO).Damage(none, none, 5, 'Fire'/*, spawnBlood:true*/);
         }
         break;
       case 0x0200:
         if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, 10, 'Slime');
+          EntityEx(MO).Damage(none, none, 10, 'Slime'/*, spawnBlood:true*/);
         }
         break;
       case 0x0300:
         if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
           if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
             LastSectorDamageTime = Level.XLevel.Time;
-            EntityEx(MO).Damage(none, none, 20, 'Slime');
+            EntityEx(MO).Damage(none, none, 20, 'Slime'/*, spawnBlood:true*/);
           }
         }
         break;
@@ -600,18 +600,18 @@ final void PlayerInSpecialSector (float deltaTime) {
     if (MO.Sector->Damage < 20) {
       if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, MO.Sector->Damage);
+        EntityEx(MO).Damage(none, none, MO.Sector->Damage/*, spawnBlood:true*/);
       }
     } else if (MO.Sector->Damage < 50) {
       if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
         if (Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
           LastSectorDamageTime = Level.XLevel.Time;
-          EntityEx(MO).Damage(none, none, MO.Sector->Damage);
+          EntityEx(MO).Damage(none, none, MO.Sector->Damage/*, spawnBlood:true*/);
         }
       }
     } else if (Level.XLevel.Time-LastSectorDamageTime >= 1.0/35.0) {
       LastSectorDamageTime = Level.XLevel.Time;
-      EntityEx(MO).Damage(none, none, MO.Sector->Damage);
+      EntityEx(MO).Damage(none, none, MO.Sector->Damage/*, spawnBlood:true*/);
     }
   }
 
@@ -714,7 +714,7 @@ final void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
 
   if (floorType->DamageAmount && Level.XLevel.Time-LastSectorDamageTime >= float(floorType->DamageTimeMask+1)/35.0) {
     LastSectorDamageTime = Level.XLevel.Time;
-    EntityEx(MO).Damage(none, none, 10, 'Fire');
+    EntityEx(MO).Damage(none, none, 10, 'Fire'/*, spawnBlood:true*/);
     MO.PlaySound('world/lavasizzle', CHAN_BODY);
   }
 }
@@ -739,31 +739,31 @@ final void PlayerInContents (float deltaTime) {
     case CONTENTS_LAVA:
       if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 10, 'Fire');
+        EntityEx(MO).Damage(none, none, 10, 'Fire'/*, spawnBlood:true*/);
       }
       break;
     case CONTENTS_NUKAGE:
       if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 5);
+        EntityEx(MO).Damage(none, none, 5/*, spawnBlood:true*/);
       }
       break;
     case CONTENTS_SLIME:
       if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 10);
+        EntityEx(MO).Damage(none, none, 10/*, spawnBlood:true*/);
       }
       break;
     case CONTENTS_HELLSLIME:
       if ((!IronFeet || (P_Random() < 5)) && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 20);
+        EntityEx(MO).Damage(none, none, 20/*, spawnBlood:true*/);
       }
       break;
     case CONTENTS_SLUDGE:
       if (!IronFeet && Level.XLevel.Time-LastSectorDamageTime >= 32.0/35.0) {
         LastSectorDamageTime = Level.XLevel.Time;
-        EntityEx(MO).Damage(none, none, 4);
+        EntityEx(MO).Damage(none, none, 4/*, spawnBlood:true*/);
       }
       break;
     case CONTENTS_HAZARD:
@@ -1975,7 +1975,7 @@ override void DisconnectClient () {
   if (MO) {
     MO.Player = none;
     MO.bIsPlayer = false;
-    Actor(MO).Damage(none, none, 10000);
+    Actor(MO).Damage(none, none, 10000, forced:true, spawnBlood:true);
   }
   Level.bprint("%s left the game\n", PlayerName);
   MO.PlaySound('misc/chat', CHAN_AUTO, 1.0, ATTN_NONE);
@@ -2990,7 +2990,7 @@ override void PlayerTick (float deltaTime) {
     if (HazardTime <= 0.0) HazardTime = 0.0;
     if (Level.XLevel.Time-LastHazardTime >= 32.0/35.0 && HazardTime > 16.0) {
       LastHazardTime = Level.XLevel.Time;
-      Actor(MO).Damage(none, none, 5);
+      Actor(MO).Damage(none, none, 5/*, spawnBlood:true*/);
     }
   }
 

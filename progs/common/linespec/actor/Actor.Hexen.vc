@@ -1534,7 +1534,7 @@ final void A_BishopAttack()
   PlaySound(AttackSound, CHAN_WEAPON);
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(4));
+    Target.Damage(self, self, HITDICE(4), spawnBlood:true);
     return;
   }
   Special1 = (P_Random() & 3) + 5;
@@ -1757,7 +1757,7 @@ final void A_SerpentMeleeAttack()
   }
   if (CheckMeleeRange())
   {
-    Target.Damage(self, self, HITDICE(5));
+    Target.Damage(self, self, HITDICE(5), spawnBlood:true);
     PlaySound('SerpentMeleeHit', CHAN_WEAPON);
   }
   if (P_Random() < 96)
@@ -1948,7 +1948,7 @@ final void A_WraithMelee()
   if (CheckMeleeRange() && (P_Random() < 220))
   {
     amount = HITDICE(2);
-    Target.Damage(self, self, amount);
+    Target.Damage(self, self, amount, spawnBlood:true);
     Health += amount;
   }
 }
@@ -2115,7 +2115,7 @@ final void DragonSeek(float thresh, float turnMax)
       Target = tempTarget;
       if (CheckMeleeRange())
       {
-        Target.Damage(self, self, HITDICE(10));
+        Target.Damage(self, self, HITDICE(10), spawnBlood:true);
         PlaySound('DragonAttack', CHAN_WEAPON);
       }
       else if (P_Random() < 128 && CheckMissileRange())
@@ -2192,7 +2192,7 @@ final void A_DragonFlight()
     if (fabs(AngleMod180(Angles.yaw - angle)) < 45.0 / 2.0
       && CheckMeleeRange())
     {
-      Target.Damage(self, self, HITDICE(8));
+      Target.Damage(self, self, HITDICE(8), spawnBlood:true);
       PlaySound('DragonAttack', CHAN_WEAPON);
     }
     else if (fabs(AngleMod180(Angles.yaw - angle)) <= 20.0)

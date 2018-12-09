@@ -180,7 +180,7 @@ final void Blast(Actor victim, Actor source, float strength)
     if (victim.bTouchy)
     {
       victim.bArmed = false; // Disarm
-      Damage(victim, source, victim.Health);
+      Damage(victim, source, victim.Health, spawnBlood:true);
     }
   }
 }
