@@ -66,6 +66,7 @@ enum
 #include "entityex/EntityEx.Inventory.vc"
 #include "entityex/EntityEx.Morph.vc"
 #include "entityex/EntityEx.Misc.vc"
+#include "entityex/EntityEx.Decorate.vc"
 #include "entityex/EntityEx.Decal.vc"
 #include "entityex/EntityEx.CheckFlag.vc"
 #include "entityex/EntityEx.Defaults.vc"
