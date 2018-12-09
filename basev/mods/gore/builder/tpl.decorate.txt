@@ -119,6 +119,7 @@ Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
+  +KillOnUnarchive
   Mass 1
 
   States {
@@ -178,6 +179,7 @@ Actor K8Gore_FlyingBloodLevel3$(Color) : K8Gore_FlyingBlood$(Color) {
   Scale 1.0
   Speed 5 //7
   Mass 1
+  +KillOnUnarchive
 }
 
 
@@ -200,6 +202,7 @@ Actor K8Gore_FlyingBloodTrail$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +DontSplash
   +MISSILE
   -NOGRAVITY
+  +KillOnUnarchive
   Speed 2
 
   States {
@@ -251,6 +254,7 @@ Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(TransientSfx) {
   -DONTSPLASH
   +THRUACTORS
   -NOGRAVITY
+  +KillOnUnarchive
   Mass 1
 
   States {
@@ -294,6 +298,7 @@ Actor K8Gore_BloodmistSmall$(Color) : K8Gore_FlyingBlood$(Color) {
   +THRUACTORS
   +NoInteraction
   -NOGRAVITY
+  +KillOnUnarchive
   Scale 0.8
   Radius 2
   Height 2
@@ -703,6 +708,7 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
+  +KillOnUnarchive
 
   States {
     Spawn:
@@ -728,6 +734,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
+  +KillOnUnarchive
   scale 0.3
 
   States {
