@@ -88,7 +88,7 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 
 static VCvarF host_framerate("framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
 //k8: this was `3`; why 3? looks like arbitrary number
-static VCvarI host_cap_tics("host_cap_tics", "6", "Process no more than this number of ticks if frame rate is too slow; DEBUG CVAR, DON'T USE!");
+static VCvarI host_cap_tics("host_cap_tics", "8", "Process no more than this number of ticks if frame rate is too slow; DEBUG CVAR, DON'T USE!");
 
 static double last_time;
 
@@ -318,8 +318,16 @@ static bool FilterTime () {
   host_frametics = thistime-lasttime;
   if (!real_time && host_frametics < 1) return false; // no tics to run
   int ticlimit = host_cap_tics;
-  if (ticlimit < 1) ticlimit = 3; else if (ticlimit > 42) ticlimit = 42;
-  if (host_frametics > ticlimit) host_frametics = ticlimit; // don't run too slow
+  if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;
+  if (host_frametics > ticlimit) {
+    if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+    host_frametics = ticlimit; // don't run too slow
+  }
+  /*
+  else if (host_frametics > 1) {
+    if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics", host_frametics);
+  }
+  */
   oldrealtime = realtime;
   lasttime = thistime;
 
