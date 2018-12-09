@@ -5,7 +5,7 @@ Actor K8Gore_BloodBaseTransient : K8Gore_BloodBase {}
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
-Actor K8Gore_Blood : K8Gore_BloodBase Replaces Blood {
+Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
   
   Decal K8GoreBloodSplat
   game Doom
@@ -85,7 +85,7 @@ Actor K8Gore_BloodHit : K8Gore_BloodBase {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBlood : K8Gore_BloodBase {
+Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
   
   game Doom
   scale 0.5
@@ -852,7 +852,7 @@ Actor K8Gore_Blood_SplatterReplacer : K8Gore_Blood Replaces BloodSplatter {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
-Actor K8Gore_BloodTransient : K8Gore_BloodBaseTransient {
+Actor K8Gore_BloodTransient /*: K8Gore_BloodBaseTransient*/ {
   
   Decal K8GoreBloodSplatTransient
   game Doom
@@ -924,7 +924,7 @@ Actor K8Gore_BloodHitTransient : K8Gore_BloodBaseTransient {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBloodTransient : K8Gore_BloodBaseTransient {
+Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
   
   game Doom
   scale 0.5
@@ -1686,7 +1686,7 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
-Actor K8Gore_BloodGreen : K8Gore_BloodBase Replaces BloodGreen {
+Actor K8Gore_BloodGreen : BloodGreen /*: K8Gore_BloodBase*/ Replaces BloodGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatGreen
   game Doom
@@ -1766,7 +1766,7 @@ Actor K8Gore_BloodHitGreen : K8Gore_BloodBase {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBloodGreen : K8Gore_BloodBase {
+Actor K8Gore_FlyingBloodGreen /*: K8Gore_BloodBase*/ {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
@@ -2533,7 +2533,7 @@ Actor K8Gore_Blood_SplatterReplacerGreen : K8Gore_Blood Replaces BloodSplatterGr
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
-Actor K8Gore_BloodTransient_Green : K8Gore_BloodBaseTransient {
+Actor K8Gore_BloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSplatTransient_Green
   game Doom
@@ -2605,7 +2605,7 @@ Actor K8Gore_BloodHitTransient_Green : K8Gore_BloodBaseTransient {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBloodTransient_Green : K8Gore_BloodBaseTransient {
+Actor K8Gore_FlyingBloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   game Doom
   scale 0.5
@@ -3367,7 +3367,7 @@ Actor K8Gore_GrowingBloodPoolTransient_Green : K8Gore_BloodSpotTransient_Green {
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
-Actor K8Gore_BloodBlue : K8Gore_BloodBase Replaces BloodBlue {
+Actor K8Gore_BloodBlue : BloodBlue /*: K8Gore_BloodBase*/ Replaces BloodBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatBlue
   game Doom
@@ -3447,7 +3447,7 @@ Actor K8Gore_BloodHitBlue : K8Gore_BloodBase {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBloodBlue : K8Gore_BloodBase {
+Actor K8Gore_FlyingBloodBlue /*: K8Gore_BloodBase*/ {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5
@@ -4214,7 +4214,7 @@ Actor K8Gore_Blood_SplatterReplacerBlue : K8Gore_Blood Replaces BloodSplatterBlu
 ////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
-Actor K8Gore_BloodTransient_Blue : K8Gore_BloodBaseTransient {
+Actor K8Gore_BloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSplatTransient_Blue
   game Doom
@@ -4286,7 +4286,7 @@ Actor K8Gore_BloodHitTransient_Blue : K8Gore_BloodBaseTransient {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBloodTransient_Blue : K8Gore_BloodBaseTransient {
+Actor K8Gore_FlyingBloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   game Doom
   scale 0.5

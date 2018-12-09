@@ -1,9 +1,9 @@
 // ////////////////////////////////////////////////////////////////////////// //
 // this is main blood actor; it is spawned by the engine
 #ifndef TRANSIENT
-Actor K8Gore_Blood$(Color) : K8Gore_BloodBase$(TransientSfx) Replaces Blood$(Color) {
+Actor K8Gore_Blood$(Color) : Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ Replaces Blood$(Color) {
 #else
-Actor K8Gore_Blood$(Color) : K8Gore_BloodBase$(TransientSfx) {
+Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
 #endif
   $(Translation)
   Decal K8GoreBloodSplat$(Color)
@@ -93,7 +93,7 @@ Actor K8Gore_BloodHit$(Color) : K8Gore_BloodBase$(TransientSfx) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // flying blood; will spawn blood spots and ceiling blood
-Actor K8Gore_FlyingBlood$(Color) : K8Gore_BloodBase$(TransientSfx) {
+Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
   $(Translation)
   game Doom
   scale 0.5
