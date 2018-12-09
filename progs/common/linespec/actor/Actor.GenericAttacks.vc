@@ -23,17 +23,14 @@
 //**
 //**************************************************************************
 
-//
 // Minotaur variables
-//
-
-bool bFloorFireRefired;   //  internal to minotaur AI
-//  Special1        charge duration countdown
+bool bFloorFireRefired; // internal to minotaur AI
+// Special1 charge duration countdown
 
 const float MinotaurLookDist = 16.0 * 54.0;
 const float ChargeSpeed = 455.0;
 
-float StartTime;      //  minotaur start time
+float StartTime; //  minotaur start time
 
 
 enum /*ERadiusThrustFlags*/ {
@@ -48,6 +45,17 @@ const int ZOOM_INSTANT = 1;
 const int ZOOM_NOSCALETURNING = 2;
 
 
+// flags for A_CustomMissile
+const int CMF_AIMOFFSET       = 1;
+const int CMF_AIMDIRECTION    = 2;
+const int CMF_TRACKOWNER      = 4;
+const int CMF_CHECKTARGETDEAD = 8;
+const int CMF_ABSOLUTEPITCH   = 16;
+const int CMF_OFFSETPITCH     = 32;
+const int CMF_SAVEPITCH       = 64;
+const int CMF_ABSOLUTEANGLE   = 128;
+
+
 //**************************************************************************
 //  Generic monster attacks
 //**************************************************************************
@@ -57,20 +65,30 @@ const int ZOOM_NOSCALETURNING = 2;
 //  A_CustomMissile
 //
 //==========================================================================
-
 final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
-  optional int SpawnXYOffset, optional float Angle, optional int AimMode,
+  optional int SpawnXYOffset, optional float Angle, optional int Flags/*AimMode*/,
   optional float Pitch, optional int aptr)
 {
   if (!specified_aptr) aptr = AAPTR_TARGET;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_CustomMissile', aptr));
   if (!specified_aptr && tgt != Target) Error("WUTA?! in `A_CustomMissile`");
 
-  int Flags = AimMode & ~3;
-  AimMode &= 3;
+  //int Flags = AimMode&~3;
+  int AimMode = Flags&3;
+  if (Flags&CMF_ABSOLUTEPITCH) {
+    if (!tgt) return;
+    AimMode = CMF_AIMDIRECTION;
+  }
 
   if (tgt || AimMode == 2) {
+    if (Flags&CMF_CHECKTARGETDEAD) {
+      if (!tgt) return;
+      if (tgt.Health <= 0 || tgt.bCorpse) return;
+    }
+
     if (MissileType) {
+      Angle = AngleMod360(Angle);
+
       if (!specified_SpawnHeight) SpawnHeight = 32.0;
       if (!specified_SpawnXYOffset) SpawnXYOffset = 1;
       TVec Offs = itof(SpawnXYOffset)*vector(cos(Angles.yaw-90.0), sin(Angles.yaw-90.0), 0.0);
@@ -82,25 +100,31 @@ final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
           A = SpawnMissile(tgt, MissileType, SpawnHeight);
           Origin -= Offs;
           break;
-        case 1:
+        case CMF_AIMOFFSET:
           Offs.z = SpawnHeight;
-          A = SpawnMissileXYZ(Origin + Offs, tgt, MissileType);
+          A = SpawnMissileXYZ(Origin+Offs, tgt, MissileType);
           break;
-        case 2:
+        case CMF_AIMDIRECTION:
           Origin += Offs;
-          A = SpawnMissileAngles(MissileType, Angles.yaw, Pitch, SpawnHeight);
+          //k8: why `Angles.yaw?'
+          //A = SpawnMissileAngles(MissileType, 0/*Angles.yaw*/, Pitch, SpawnHeight);
+          // will be turned later
+          A = SpawnMissileAngles(MissileType, 0/*Angle*/, Pitch, SpawnHeight);
+          if (A) A.Angles.yaw = Angle; // yet store it
+          //if (A) print("%C: A_CustomMissile of '%C': Angle=%s; Pitch=%s; angles=%s; vel=%s", self, MissileType, Angle, Pitch, A.Angles, A.Velocity);
           Origin -= Offs;
+          break;
       }
 
       if (A) {
-        //if (GetClassName(A.Class) == 'PentFXTail') print("PFXTAIL from '%C'; org=%s; pfxorg=%s; offs=%s", self, Origin, A.Origin, Offs);
-        //if (GetClassName(Class) == 'Sister5') print("000: %C: summoned %C (aim=%d); orig=%s; A.orig=%s; A.vel=%s; A.Speed=%s; A.Mass=%s", self, A, AimMode, Origin, A.Origin, A.Velocity, A.Speed, A.Mass);
-        VectorRotateAroundZ(ref A.Velocity, Angle);
-        //if (GetClassName(Class) == 'Sister5') print("001: %C: summoned %C (aim=%d); orig=%s; A.orig=%s; A.vel=%s; A.Speed=%s; A.Mass=%s", self, A, AimMode, Origin, A.Origin, A.Velocity, A.Speed, A.Mass);
+        /*if (AimMode != CMF_AIMDIRECTION)*/ {
+          VectorRotateAroundZ(ref A.Velocity, Angle);
+          //print("  %C: A_CustomMissile of '%C': Angle=%s; Pitch=%s; angles=%s; vel=%s", self, MissileType, Angle, Pitch, A.Angles, A.Velocity);
+        }
         // find correct shooter for projectiles shooting projectiles
-        if (IsMissile(!!(Flags&4))) {
+        if (IsMissile(!!(Flags&CMF_TRACKOWNER))) {
           EntityEx Own = self;
-          while (Own.IsMissile(!!(Flags & 4)) && Own.Target) Own = Own.Target;
+          while (Own.IsMissile(!!(Flags&CMF_TRACKOWNER)) && Own.Target) Own = Own.Target;
           A.Target = Own;
           if (A.bSeekerMissile) A.Tracer = Tracer;
         } else if (A.bSeekerMissile) {
@@ -108,7 +132,8 @@ final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
         }
       }
     }
-  } else if (Flags&8) {
+  } else if (Flags&CMF_CHECKTARGETDEAD) {
+    //k8: ???
     if (SeeState) SetState(SeeState);
   }
 }

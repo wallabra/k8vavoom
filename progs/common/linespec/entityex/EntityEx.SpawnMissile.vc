@@ -378,129 +378,97 @@ final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
   return A.CheckMissileSpawn() ? A : none;
 }
 
+
 //==========================================================================
 //
 //  SpawnMissileAngles
 //
 //  Returns nullptr if the missile exploded immediately, otherwise returns
-// a Actor reference to the missile.
+//  a Actor reference to the missile.
 //
 //==========================================================================
-
-final EntityEx SpawnMissileAngles(class!EntityEx type, float yaw, float pitch,
-  optional float SpawnHeight)
+final EntityEx SpawnMissileAngles (class!EntityEx type, float yaw, float pitch,
+                                   optional float SpawnHeight)
 {
-  TVec    org;
-  EntityEx  A;
-  TVec    dir;
+  if (!type) return none;
+  TVec dir;
 
-  org = Origin;
-  if (specified_SpawnHeight)
-  {
-    org.z += SpawnHeight;
-  }
-  else if (type.default.bIgnoreFloorStep)
-  {
-    org.z = ONFLOORZ + FloorClip;
-  }
-  else if (type.default.bIgnoreCeilingStep)
-  {
-    org.z = ONCEILINGZ;
-  }
-  else
-  {
-    org.z += 32.0;
-  }
-  if (org.z != ONFLOORZ)
-  {
-    org.z -= FloorClip;
-  }
-  A = Spawn(type, org);
-  if (A) A.DecalName = A.default.DecalName;
+  TVec org = Origin;
+       if (specified_SpawnHeight) org.z += SpawnHeight;
+  else if (type.default.bIgnoreFloorStep) org.z = ONFLOORZ+FloorClip;
+  else if (type.default.bIgnoreCeilingStep) org.z = ONCEILINGZ;
+  else org.z += 32.0;
+
+  if (org.z != ONFLOORZ) org.z -= FloorClip;
+
+  EntityEx A = Spawn(type, org);
+  if (!A) return none;
+  if (!A.DecalName) A.DecalName = type.default.DecalName;
   A.PlayMissileSpawnSound(self);
-  A.Target = self;  // Originator
+  A.Target = self; // originator
   A.Angles.yaw = yaw;
   A.Angles.pitch = pitch;
   AngleVector(A.Angles, out dir);
-  A.Velocity = A.Speed * dir;
-  // Floor and ceiling huggers should never have a vertical component to their velocity
-  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep)
-  {
-    A.Velocity.z = 0.0;
-  }
-  return A.CheckMissileSpawn() ? A : none;
+  A.Velocity = A.Speed*dir;
+  // floor and ceiling huggers should never have a vertical component to their velocity
+  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep) A.Velocity.z = 0.0;
+  return (A.CheckMissileSpawn() ? A : none);
 }
+
 
 //==========================================================================
 //
 //  SpawnMissileAngle
 //
 //  Returns nullptr if the missile exploded immediately, otherwise returns
-// a Actor reference to the missile.
+//  a Actor reference to the missile.
 //
 //==========================================================================
-
-final EntityEx SpawnMissileAngle(class!EntityEx type, float angle,
-  float momz, optional float SpawnHeight)
+final EntityEx SpawnMissileAngle (class!EntityEx type, float angle,
+                                  float momz, optional float SpawnHeight)
 {
-  TVec org;
-  EntityEx mo;
+  if (!type) return none;
 
-  org = Origin;
-  if (specified_SpawnHeight)
-  {
-    org.z += SpawnHeight;
-  }
-  else if (type.default.bIgnoreFloorStep)
-  {
-    // Minotaur floor fire missile
-    org.z = ONFLOORZ + FloorClip;
-  }
-  else if (type.default.bIgnoreCeilingStep)
-  {
-    org.z = ONCEILINGZ;
-  }
-  else
-  {
-    org.z += 32.0;
-  }
-  if (org.z != ONFLOORZ)
-  {
-    org.z -= FloorClip;
-  }
-  mo = Spawn(type, org);
-  if (mo) mo.DecalName = mo.default.DecalName;
+  TVec org = Origin;
+       if (specified_SpawnHeight) org.z += SpawnHeight;
+  else if (type.default.bIgnoreFloorStep) org.z = ONFLOORZ+FloorClip; // minotaur floor fire missile
+  else if (type.default.bIgnoreCeilingStep) org.z = ONCEILINGZ;
+  else org.z += 32.0;
+
+  if (org.z != ONFLOORZ) org.z -= FloorClip;
+
+  EntityEx mo = Spawn(type, org);
+  if (!mo) return none;
+  if (!mo.DecalName) mo.DecalName = type.default.DecalName;
   mo.PlayMissileSpawnSound(self);
-  mo.Target = self; // Originator
+  mo.Target = self; // originator
   mo.Angles.yaw = angle;
-  mo.Velocity.x = mo.Speed * cos(angle);
-  mo.Velocity.y = mo.Speed * sin(angle);
+  mo.Velocity.x = mo.Speed*cos(angle);
+  mo.Velocity.y = mo.Speed*sin(angle);
   mo.Velocity.z = momz;
-  return mo.CheckMissileSpawn() ? mo : none;
+  return (mo.CheckMissileSpawn() ? mo : none);
 }
+
 
 //==========================================================================
 //
 //  SpawnMissileAngleSpeed
 //
 //  Returns nullptr if the missile exploded immediately, otherwise returns
-// a Actor reference to the missile.
+//  a Actor reference to the missile.
 //
 //==========================================================================
-
-final EntityEx SpawnMissileAngleSpeed(class!EntityEx type, float angle,
-  float momz, float speed)
+final EntityEx SpawnMissileAngleSpeed (class!EntityEx type, float angle,
+                                       float momz, float speed)
 {
-  TVec org;
-  EntityEx mo;
+  if (!type) return none;
 
-  org = Origin;
-  if (org.z != ONFLOORZ)
-  {
-    org.z -= FloorClip;
-  }
-  mo = Spawn(type, org);
-  if (mo) mo.DecalName = mo.default.DecalName;
+  TVec org = Origin;
+  if (org.z != ONFLOORZ) org.z -= FloorClip;
+
+  EntityEx mo = Spawn(type, org);
+  if (!mo) return none;
+  if (!mo.DecalName) mo.DecalName = type.default.DecalName;
   mo.Tracer = self; // Originator
   mo.Angles.yaw = angle;
   mo.Velocity.x = speed * cos(angle);
@@ -510,74 +478,63 @@ final EntityEx SpawnMissileAngleSpeed(class!EntityEx type, float angle,
   return mo.CheckMissileSpawn() ? mo : none;
 }
 
+
 //==========================================================================
 //
 //  SpawnSubMissile
 //
 //==========================================================================
+final EntityEx SpawnSubMissile (class!EntityEx type, EntityEx AInstigator) {
+  TVec dir;
 
-final EntityEx SpawnSubMissile(class!EntityEx type, EntityEx AInstigator)
-{
-  EntityEx  other;
-  TVec    dir;
-
-  other = Spawn(type, Origin);
-  if (!other)
-  {
-    return none;
-  }
+  EntityEx other = Spawn(type, Origin);
+  if (!other) return none;
 
   other.Target = AInstigator;
   other.Angles = Angles;
   other.DecalName = other.default.DecalName;
 
-  other.Velocity.x = other.Speed * cos(Angles.yaw);
-  other.Velocity.y = other.Speed * sin(Angles.yaw);
+  other.Velocity.x = other.Speed*cos(Angles.yaw);
+  other.Velocity.y = other.Speed*sin(Angles.yaw);
   AimLineAttack(dir, Angles, 1024.0);
-  other.Velocity.z = other.Speed * dir.z;
+  other.Velocity.z = other.Speed*dir.z;
   other.CheckMissileSpawn();
   return other;
 }
+
 
 //==========================================================================
 //
 //  SpawnPlayerMissile
 //
 //==========================================================================
-
-final EntityEx SpawnPlayerMissile(class!EntityEx type, optional name decalType)
-{
-  EntityEx  AimTarget;
-
+final EntityEx SpawnPlayerMissile (class!EntityEx type, optional name decalType) {
+  EntityEx AimTarget;
   return SpawnPlayerMissileEx(type, false, AimTarget, default, default, decalType);
 }
+
 
 //==========================================================================
 //
 //  SpawnPlayerMissileAngle
 //
 //==========================================================================
-
-final EntityEx SpawnPlayerMissileAngle(class!EntityEx type, float angle)
-{
-  EntityEx  AimTarget;
-
+final EntityEx SpawnPlayerMissileAngle (class!EntityEx type, float angle) {
+  EntityEx AimTarget;
   return SpawnPlayerMissileEx(type, false, AimTarget, angle);
 }
+
 
 //===========================================================================
 //
 //  SpawnPlayerMissileAngleXYZ
 //
 //===========================================================================
-
-final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class!EntityEx type,
-  float angle)
-{
-  EntityEx  AimTarget;
-
+final EntityEx SpawnPlayerMissileAngleXYZ (TVec org, class!EntityEx type, float angle) {
+  EntityEx AimTarget;
   return SpawnPlayerMissileEx(type, false, AimTarget, angle, org);
 }
+
 
 //==========================================================================
 //
@@ -586,54 +543,43 @@ final EntityEx SpawnPlayerMissileAngleXYZ(TVec org, class!EntityEx type,
 //  Tries to aim at a nearby monster
 //
 //==========================================================================
-
-final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
+final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
   out EntityEx AimTarget, optional float angle, optional TVec SpawnOrg, optional name decalType,
   optional bool noAutoAim)
 {
-  EntityEx  A;
-  TVec    dir;
-  TVec    org;
+  if (!type) return none;
+  TVec dir;
 
-  // Try to find a target
-  if (specified_angle)
-  {
-    AimTarget = Aim(dir, 16.0 * 64.0, angle, noAutoaim:noAutoAim!optional);
-  }
-  else
-  {
-    AimTarget = Aim(dir, 16.0 * 64.0, noAutoaim:noAutoAim!optional);
+  // try to find a target
+  if (specified_angle) {
+    AimTarget = Aim(dir, 16.0*64.0, angle, noAutoaim:noAutoAim!optional);
+  } else {
+    AimTarget = Aim(dir, 16.0*64.0, noAutoaim:noAutoAim!optional);
   }
 
-  org = specified_SpawnOrg ? SpawnOrg : Origin;
-  if (type.default.bIgnoreFloorStep)
-  {
+  TVec org = (specified_SpawnOrg ? SpawnOrg : Origin);
+  if (type.default.bIgnoreFloorStep) {
     org.z = ONFLOORZ;
     dir.z = 0.0;
     dir = Normalise(dir);
-  }
-  else if (type.default.bIgnoreCeilingStep)
-  {
+  } else if (type.default.bIgnoreCeilingStep) {
     org.z = ONCEILINGZ;
     dir.z = 0.0;
     dir = Normalise(dir);
-  }
-  else
-  {
-    org.z += Height * 0.5 - FloorClip;
-    //  Missiles are spawned 4 units lower than hitscan attacks.
-    //  Add an extra unit to simulate Doom's original behaviour.
-    if (bIsPlayer)
-    {
-      org.z += PlayerEx(Player).GetAttackZOfs(missile:true) - 3.0;
-    }
-    else
-    {
+  } else {
+    org.z += Height*0.5-FloorClip;
+    // missiles are spawned 4 units lower than hitscan attacks
+    // add an extra unit to simulate Doom's original behaviour
+    if (bIsPlayer) {
+      org.z += PlayerEx(Player).GetAttackZOfs(missile:true)-3.0;
+    } else {
       org.z += 5.0;
     }
   }
-  A = Spawn(type, org);
-  if (A) A.DecalName = A.default.DecalName;
+
+  EntityEx A = Spawn(type, org);
+  if (!A) return none;
+  if (!A.DecalName) A.DecalName = type.default.DecalName;
   if (specified_decalType && decalType) {
     if (GetCvarB('k8ExplodeMissleTest')) print("missile decal set to <%n>", decalType);
     A.DecalName = decalType;
@@ -642,18 +588,19 @@ final EntityEx SpawnPlayerMissileEx(class!EntityEx type, bool RetExploded,
   A.PlayMissileSpawnSound(self);
 
   A.Target = self;
-  A.Velocity = dir * A.Speed;
-  // Adjust the trajectory if the missile will go over the target's head.
-  if (AimTarget && Origin.z >= AimTarget.Origin.z && Origin.z <= AimTarget.Origin.z + AimTarget.Height && A.Origin.z >= AimTarget.Origin.z + AimTarget.Height)
+  A.Velocity = dir*A.Speed;
+  // adjust the trajectory if the missile will go over the target's head
+  if (AimTarget && Origin.z >= AimTarget.Origin.z &&
+      Origin.z <= AimTarget.Origin.z+AimTarget.Height &&
+      A.Origin.z >= AimTarget.Origin.z+AimTarget.Height)
   {
     float dist = fmax(1.0, A.DistTo(AimTarget));
     if (!dist.isfinite) dist = 1;
-    dir.z += (AimTarget.Origin.z + AimTarget.Height - A.Origin.z) / dist;
+    dir.z += (AimTarget.Origin.z+AimTarget.Height-A.Origin.z)/dist;
     dir = Normalise(dir);
-
-    A.Velocity.z = dir.z * A.Speed;
+    A.Velocity.z = dir.z*A.Speed;
   }
   VectorAngles(dir, out A.Angles);
 
-  return A.CheckMissileSpawn() || RetExploded ? A : none;
+  return (A.CheckMissileSpawn() || RetExploded ? A : none);
 }

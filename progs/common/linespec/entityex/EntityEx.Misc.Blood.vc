@@ -33,12 +33,13 @@
 //  pass some info to spawned blood actor, so decorate/vc can use 'em.
 //  should be called on blood entity
 //
-//  Tracer: bleeding Entity (can be none)
+//  Tracer, Target: bleeding Entity (can be none)
 //  Args[0]: damage (can be 0)
 //
 //==========================================================================
 final void SetBloodArgs (EntityEx master, optional int damage) {
   self.Tracer = master;
+  self.Target = master;
   self.Args[0] = damage;
 }
 
