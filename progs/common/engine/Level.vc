@@ -247,5 +247,77 @@ void OnEntityDying (Entity ent) {}
 void AfterUnarchiveThinkers () {}
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// useful for variuos limiters
+final void k8LimiterCleanup (class!Entity thc, int allowed, ref int counter, ref int deathCounter, optional bool debugmsg) {
+  if (!thc) return;
+  if (counter > allowed) {
+    // remove old blood
+    array!Entity elist;
+    Entity e;
+    foreach AllThinkers(thc, out e) elist[$] = e;
+    if (elist.length < 1) return;
+    if (allowed < 1) {
+      if (debugmsg) print("REMOVING ALL blood entities out of %s (%s allowed)", elist.length, allowed);
+      counter -= elist.length;
+      deathCounter += elist.length;
+      foreach (auto i; 0..elist.length) {
+        //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
+        elist[i].Destroy();
+      }
+      return;
+    }
+    //print("  %s blood entities found", elist.length);
+    if (elist.length > allowed) {
+      elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
+      // destroy half of list, from older
+      int toremove = 2048;
+      if (allowed <= 256) {
+        toremove = elist.length/3;
+      } else {
+        /*if (toremove < elist.length/4)*/ toremove = elist.length/4;
+        //if (toremove < 256) toremove = 256;
+        if (allowed >= 3000 && toremove < 2048) toremove = 2048;
+        toremove = min(toremove, elist.length);
+      }
+      if (elist.length-toremove > allowed) toremove = clamp(elist.length-allowed, 0, elist.length);
+      if (toremove < 1) return;
+      if (debugmsg) print("REMOVING %s blood entities out of %s (%s allowed)", toremove, elist.length, allowed);
+      counter -= toremove;
+      deathCounter += toremove;
+      foreach (auto i; 0..toremove) {
+        //print("    KILLING %C (spawn time is %s)", elist[i], elist[i].SpawnTime);
+        elist[i].Destroy();
+      }
+      if (debugmsg) print("%s blood entities removed out of %s", deathCounter, elist.length);
+    }
+  }
+}
+
+
+final void k8LimiterUnarchiveThinkers (class!Entity thc, int allowed, ref int counter, ref int deathCounter, optional bool debugmsg) {
+  int oldcounter = counter;
+  counter = 0;
+  Entity e;
+  array!Entity elist;
+  foreach AllThinkers(thc, out e) {
+    //print("* FOUND %C", e);
+    elist[$] = e;
+  }
+  counter = elist.length;
+  if (debugmsg) print("*** LOADED (%C): counter=%s; skip=%s; counted=%s", thc, oldcounter, deathCounter, counter);
+  deathCounter = 0;
+  if (elist.length > allowed) {
+    elist.sort(delegate int (Entity a, Entity b) { float d = (a.SpawnTime-b.SpawnTime); return (d < 0 ? -1 : d > 0 ? 1 : 0); });
+    int toremove = elist.length-allowed;
+    counter -= toremove;
+    deathCounter += toremove;
+    foreach (auto i; 0..toremove) {
+      elist[i].Destroy();
+    }
+  }
+}
+
+
 defaultproperties {
 }
