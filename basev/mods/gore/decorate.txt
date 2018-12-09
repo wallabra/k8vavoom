@@ -46,7 +46,7 @@ Actor K8Gore_Blood : Blood /*: K8Gore_BloodBase*/ Replaces Blood {
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBlood", 7, 0, random(0, 360), 2, random(20, 40));
         // normal
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmall", 0, 0, random(0, 360), 2, random(10, 40));
+        //!if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmall", 0, 0, random(0, 360), 2, random(10, 40));
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHit", 0, 0, random(0, 360), 2, random(0, 90));
       }
@@ -134,7 +134,7 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
     MainWorker:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
     MainLoop:
-      "####" "#" 1
+      "####" "#" 100
       Loop
 
     Splash:
@@ -148,7 +148,12 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker", -15, 0, 90, 2, 90)
-      TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT1 A 0
+        {
+          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
+          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+        }
     DeathDone:
       TNT1 A 1
       Stop
@@ -264,6 +269,7 @@ Actor K8Gore_FlyingBloodFakeNoDecal : K8Gore_FlyingBloodFake {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is blood "arc"
+/*
 Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
   
   Decal K8GoreBloodSuper
@@ -304,6 +310,7 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
       Stop
   }
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -987,7 +994,12 @@ Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient", -15, 0, 90, 2, 90)
-      TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT1 A 0
+        {
+          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
+          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+        }
     DeathDone:
       TNT1 A 1
       Stop
@@ -1103,6 +1115,7 @@ Actor K8Gore_FlyingBloodFakeNoDecalTransient : K8Gore_FlyingBloodFakeTransient {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is blood "arc"
+/*
 Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
   
   Decal K8GoreBloodSuperTransient
@@ -1143,6 +1156,7 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
       Stop
   }
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1727,7 +1741,7 @@ Actor K8Gore_BloodGreen : BloodGreen /*: K8Gore_BloodBase*/ Replaces BloodGreen 
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodGreen", 7, 0, random(0, 360), 2, random(20, 40));
         // normal
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmallGreen", 0, 0, random(0, 360), 2, random(10, 40));
+        //!if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmallGreen", 0, 0, random(0, 360), 2, random(10, 40));
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHitGreen", 0, 0, random(0, 360), 2, random(0, 90));
       }
@@ -1815,7 +1829,7 @@ Actor K8Gore_FlyingBloodGreen /*: K8Gore_BloodBase*/ {
     MainWorker:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
     MainLoop:
-      "####" "#" 1
+      "####" "#" 100
       Loop
 
     Splash:
@@ -1829,7 +1843,12 @@ Actor K8Gore_FlyingBloodGreen /*: K8Gore_BloodBase*/ {
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotGreen", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerGreen", -15, 0, 90, 2, 90)
-      TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerGreen",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT1 A 0
+        {
+          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
+          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerGreen",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+        }
     DeathDone:
       TNT1 A 1
       Stop
@@ -1945,6 +1964,7 @@ Actor K8Gore_FlyingBloodFakeNoDecalGreen : K8Gore_FlyingBloodFakeGreen {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is blood "arc"
+/*
 Actor K8Gore_BloodmistSmallGreen : K8Gore_FlyingBloodGreen {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSuperGreen
@@ -1985,6 +2005,7 @@ Actor K8Gore_BloodmistSmallGreen : K8Gore_FlyingBloodGreen {
       Stop
   }
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2668,7 +2689,12 @@ Actor K8Gore_FlyingBloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient_Green", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient_Green", -15, 0, 90, 2, 90)
-      TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient_Green",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT1 A 0
+        {
+          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
+          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient_Green",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+        }
     DeathDone:
       TNT1 A 1
       Stop
@@ -2784,6 +2810,7 @@ Actor K8Gore_FlyingBloodFakeNoDecalTransient_Green : K8Gore_FlyingBloodFakeTrans
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is blood "arc"
+/*
 Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_FlyingBloodTransient_Green {
   Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Decal K8GoreBloodSuperTransient_Green
@@ -2824,6 +2851,7 @@ Actor K8Gore_BloodmistSmallTransient_Green : K8Gore_FlyingBloodTransient_Green {
       Stop
   }
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3408,7 +3436,7 @@ Actor K8Gore_BloodBlue : BloodBlue /*: K8Gore_BloodBase*/ Replaces BloodBlue {
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 2) A_CustomMissile("K8Gore_FlyingBloodBlue", 7, 0, random(0, 360), 2, random(20, 40));
         // normal
-        if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmallBlue", 0, 0, random(0, 360), 2, random(10, 40));
+        //!if (user_spray && GetCVar("k8GoreOpt_BloodAmount") >= 1) A_CustomMissile("K8Gore_BloodmistSmallBlue", 0, 0, random(0, 360), 2, random(10, 40));
         // all
         if (GetCVar("k8GoreOpt_BloodAmount") >= 0) A_CustomMissile("K8Gore_BloodHitBlue", 0, 0, random(0, 360), 2, random(0, 90));
       }
@@ -3496,7 +3524,7 @@ Actor K8Gore_FlyingBloodBlue /*: K8Gore_BloodBase*/ {
     MainWorker:
       "####" "#" 0 A_JumpIf(waterlevel > 1, "Splash")
     MainLoop:
-      "####" "#" 1
+      "####" "#" 100
       Loop
 
     Splash:
@@ -3510,7 +3538,12 @@ Actor K8Gore_FlyingBloodBlue /*: K8Gore_BloodBase*/ {
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotBlue", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerBlue", -15, 0, 90, 2, 90)
-      TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerBlue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT1 A 0
+        {
+          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
+          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerBlue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+        }
     DeathDone:
       TNT1 A 1
       Stop
@@ -3626,6 +3659,7 @@ Actor K8Gore_FlyingBloodFakeNoDecalBlue : K8Gore_FlyingBloodFakeBlue {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is blood "arc"
+/*
 Actor K8Gore_BloodmistSmallBlue : K8Gore_FlyingBloodBlue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSuperBlue
@@ -3666,6 +3700,7 @@ Actor K8Gore_BloodmistSmallBlue : K8Gore_FlyingBloodBlue {
       Stop
   }
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4349,7 +4384,12 @@ Actor K8Gore_FlyingBloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
       TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient_Blue", 0, 1)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient_Blue", -15, 0, 90, 2, 90)
-      TNT1 A 0 A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient_Blue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0)
+      TNT1 A 0
+        {
+          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
+          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient_Blue",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+        }
     DeathDone:
       TNT1 A 1
       Stop
@@ -4465,6 +4505,7 @@ Actor K8Gore_FlyingBloodFakeNoDecalTransient_Blue : K8Gore_FlyingBloodFakeTransi
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is blood "arc"
+/*
 Actor K8Gore_BloodmistSmallTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
   Translation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   Decal K8GoreBloodSuperTransient_Blue
@@ -4505,6 +4546,7 @@ Actor K8Gore_BloodmistSmallTransient_Blue : K8Gore_FlyingBloodTransient_Blue {
       Stop
   }
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
