@@ -23,6 +23,12 @@
 //**
 //**************************************************************************
 
+
+//==========================================================================
+//
+//  k8GetBloodClassName
+//
+//==========================================================================
 final static name k8GetBloodClassName (name newblood, name oldblood) {
   if (FindClass(newblood)) return newblood;
   return oldblood;
@@ -31,16 +37,15 @@ final static name k8GetBloodClassName (name newblood, name oldblood) {
 
 //==========================================================================
 //
-// K8onBeforeLineDamage
+//  K8onBeforeLineDamage
 //
-// this script will be called before hitscan line damage is done
-// you can return new damage, or <= 0 to prevent any hitscan damage.
-// note that poisoned puffs will still inflict damage to victim.
-// also note that preventing victim from taking any damage will not
-// "awake" it.
+//  this script will be called before hitscan line damage is done.
+//  you can return new damage, or <= 0 to prevent any hitscan damage.
+//  note that poisoned puffs will still inflict damage to victim.
+//  also note that preventing victim from taking any damage will not
+//  "awake" it.
 //
 //==========================================================================
-
 final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
   // is it from player?
   if (!inflictor) return damage;
@@ -57,21 +62,13 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
   if (!GetCvarB('k8HSEnabled')) return damage;
 
-  /*bool*/auto debugme = GetCvarB('k8HSDEBUG');
+  bool debugme = GetCvarB('k8HSDEBUG');
 
-  if (debugme) print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
+  if (debugme) {
+    print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
+  }
 
   PlayerPawn plr = PlayerPawn(inflictor);
-
-  /*
-  sector_t ss;
-  auto atest = &ss;
-  */
-  /*
-  print("goo");
-  auto a = booboo();
-  print("zoo");
-  */
 
   //if (k8CheckBoolCVar('k8HSShowKnownDamage', debugme)) print("K8HS: damage type '%s', damage=%d", damageType, damage);
 
@@ -252,14 +249,11 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 
     if (dodmg) {
       if (showMessage && GetCvarB('k8HSShowCriticals')) {
-        inflictor.Player.ClientHudMessage(messageText, 'smallfont', 0, 123666, messageColor, "",
-          0.5, 0.45, 0, 0,
-          1.5, 0.0, 0.0);
-        /*
-        native void ClientHudMessage(string Message, name Font, int Type, int Id,
-          int Colour, string ColourName, float x, float y, int HudWidth,
-          int HudHeight, float HoldTime, float Time1, float Time2);
-        */
+        inflictor.Player.ClientHudMessage(
+          messageText, 'smallfont', Type:0, Id:123666,
+          /*Colour:*/messageColor, /*ColourName:*/"",
+          x:0.5, y:0.45, HudWidth:0, HudHeight:0,
+          HoldTime:1.5, Time1:0.0, Time2:0.0);
       }
 
       if (fastkills) {
@@ -552,7 +546,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     if (!forced && PlayerEx(Player).CheckFriendlyFire(source, damage)) return;
 
     // end of game hell hack
-    if ((Sector->special & SECSPEC_BASE_MASK) == SECSPEC_DamageSuperHellslimeExit && damage >= Health) {
+    if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_DamageSuperHellslimeExit && damage >= Health) {
       damage = Health-1;
     }
 
@@ -581,7 +575,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     }
     Player.Health -= damage; // mirror mobj health here for Dave
     if (Player.Health < 0) Player.Health = 0;
-    if (Player.Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Player.Health = 1;
+    if (Player.Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Player.Health = 1;
     PlayerEx(Player).Attacker = source;
     PlayerEx(Player).DamageFlash += float(damage)/35.0; // add damage after armor / invuln
     if (PlayerEx(Player).DamageFlash > 3.0) PlayerEx(Player).DamageFlash = 3.0; // teleport stomp does 10k points...
@@ -591,7 +585,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   // do the damage
   Health -= damage;
-  if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Health = 1;
+  if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Health = 1;
   if (Health <= 0) {
     // death
     Special1 = damage;
@@ -685,16 +679,14 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   }
 }
 
+
 //==========================================================================
 //
 //  DoSpecialDamage
 //
 //==========================================================================
-
-int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
-{
-  if (victim.bIsPlayer && MissilePoisonDamage > 0)
-  {
+int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
+  if (victim.bIsPlayer && MissilePoisonDamage > 0) {
     victim.PoisonPlayer(source, MissilePoisonDamage);
     damage >>= 1;
   }
@@ -723,116 +715,80 @@ int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgT
   return (FindState('Death', DmgType) ? damage : -1);
 }
 
+
 //==========================================================================
 //
 //  OkayToSwitchTarget
 //
 //==========================================================================
-
-bool OkayToSwitchTarget(EntityEx source)
-{
-  if (source == self)
+bool OkayToSwitchTarget (EntityEx source) {
+  if (source == self) return false; // don't hate self
+  if (!source.bShootable) return false; // don't hate actors that cannot be hurt
+  if (bNoTargetSwitch && Target) return false;
+  if ((Master && source.IsA(GetClassName(Master.Class))) || // don't attack your master (or others of its type)
+      (source.Master && IsA(GetClassName(source.Master.Class)))) // don't attack your minion (or those of others of your type)
   {
-    //  Don't hate self.
-    return false;
-  }
-  if (!source.bShootable)
-  {
-    //  Don't hate actors that cannot be hurt.
-    return false;
-  }
-  if (bNoTargetSwitch && Target)
-  {
-    return false;
-  }
-  if ((Master && source.IsA(GetClassName(Master.Class))) ||   // don't attack your master (or others of its type)
-    (source.Master && IsA(GetClassName(source.Master.Class))))  // don't attack your minion (or those of others of your type)
-  {
-    if (!IsHostile(source) &&               // allow target switch if other is considered hostile
-      (source.TID != TIDToHate || TIDToHate == 0) &&    // or has the tid we hate
-      source.TIDToHate == TIDToHate)            // or has different hate information
+    if (!IsHostile(source) && // allow target switch if other is considered hostile
+        (source.TID != TIDToHate || TIDToHate == 0) && // or has the tid we hate
+        source.TIDToHate == TIDToHate) // or has different hate information
     {
       return false;
     }
   }
-  if (source.bNeverTarget && (source.TID != TIDToHate || TIDToHate == 0) &&
-    !IsHostile(source))
-  {
-    return false;
-  }
-  if (Threshold && !bNoGrudge)
-  {
-    return false;
-  }
-  if (IsFriend(source))
-  {
-    //  Don't hate friends.
-    return false;
-  }
+  if (source.bNeverTarget && (source.TID != TIDToHate || TIDToHate == 0) && !IsHostile(source)) return false;
+  if (Threshold && !bNoGrudge) return false;
+  if (IsFriend(source)) return false; // don't hate friends
 
   int Inf = GetInfighting();
-  if (Inf < 0 && !source.bIsPlayer && !IsHostile(source))
-  {
-    //  Infighting is off, so don't target it if it's not hostile.
+  if (Inf < 0 && !source.bIsPlayer && !IsHostile(source)) {
+    // infighting is off, so don't target it if it's not hostile
     return false;
   }
 
-  if (TIDToHate && TIDToHate == source.TIDToHate)
-  {
-    //  Don't target actors that hate the same thing.
-    return false;
-  }
-  if (source.bIsPlayer && bNoHatePlayers)
-  {
-    return false;
-  }
+  // don't target actors that hate the same thing
+  if (TIDToHate && TIDToHate == source.TIDToHate) return false;
+
+  if (source.bIsPlayer && bNoHatePlayers) return false;
+
   if (Target && Target.Health > 0 && TIDToHate &&
-    Target.TID == TIDToHate && Random() < 0.5 && CanSee(Target))
+      Target.TID == TIDToHate && Random() < 0.5 && CanSee(Target))
   {
-    //  Don't be too quick to give up things we hate
+    // don't be too quick to give up things we hate
     return false;
   }
+
   return true;
 }
+
 
 //==========================================================================
 //
 //  Died
 //
 //==========================================================================
-
-void Died(EntityEx source, EntityEx inflictor)
-{
+void Died (EntityEx source, EntityEx inflictor) {
   Inventory Item;
 
-  //  Calculate gibs health
+  // calculate gibs health
   int GHealth = GibsHealth;
-  if (!GHealth)
-  {
-    GHealth = ftoi(itof(-default.Health) *
-      LineSpecialGameInfo(Level.Game).GibsHealthFactor);
+  if (!GHealth) {
+    GHealth = ftoi(itof(-default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
   }
 
-  //  Handle possible unmorph on death
-  bool WasGibbed = Health < GHealth;
+  // handle possible unmorph on death
+  bool WasGibbed = (Health < GHealth);
   EntityEx RealSelf = none;
   int RealStyle = 0;
   int RealHealth = 0;
-  if (MorphedDeath(RealSelf, RealStyle, RealHealth))
-  {
-    if (!(RealStyle & MORPH_UNDOBYDEATHSAVES))
-    {
-      if (WasGibbed)
-      {
+  if (MorphedDeath(RealSelf, RealStyle, RealHealth)) {
+    if (!(RealStyle&MORPH_UNDOBYDEATHSAVES)) {
+      if (WasGibbed) {
         int RealGibHealth = RealSelf.GibsHealth;
-        if (!RealGibHealth)
-        {
-          RealGibHealth = ftoi(itof(-RealSelf.default.Health) *
-            LineSpecialGameInfo(Level.Game).GibsHealthFactor);
+        if (!RealGibHealth) {
+          RealGibHealth = ftoi(itof(-RealSelf.default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
         }
-        if (RealSelf.Health >= RealGibHealth)
-        {
-          //  If morphed was gibbed, so must original be (where allowed)
+        if (RealSelf.Health >= RealGibHealth) {
+          // if morphed was gibbed, so must original be (where allowed)
           RealSelf.Health = RealGibHealth -1;
         }
       }
@@ -841,117 +797,79 @@ void Died(EntityEx source, EntityEx inflictor)
     return;
   }
 
-  //  Notify actor's items.
-  for (Item = Inventory; Item;)
-  {
+  // notify actor's items
+  for (Item = Inventory; Item;) {
     Inventory Next = Item.Inventory;
     Item.OwnerDied();
     Item = Next;
   }
 
-  if (source)
-  {
-    //  Set Target to the thing that killed it. It's needed for Strife's
-    // special dropped items.
+  if (source) {
+    // set Target to the thing that killed it
+    // it's needed for Strife's special dropped items
     Target = source;
   }
 
-  if (inflictor && inflictor.bNoExtremeDeath)
-  {
-    //  Prevent gibing animation.
+  if (inflictor && inflictor.bNoExtremeDeath) {
+    // prevent gibing animation
     Health = -1;
   }
 
-  if (source && (source.bIsPlayer) &&
-    PlayerEx(source.Player).IsWeaponAlwaysExtremeDeath())
-  {
-    // Always extreme death.
+  if (source && (source.bIsPlayer) && PlayerEx(source.Player).IsWeaponAlwaysExtremeDeath()) {
+    // always extreme death
     Health = -5000;
   }
 
-  if (bIsPlayer && Level.bDeathSlideShow)
-  {
-    //  Start sad finale.
+  if (bIsPlayer && Level.bDeathSlideShow) {
+    // start sad finale
     PlayerEx(Player).StartDeathSlideShow();
   }
 
   bShootable = false;
   bFloat = false;
   bSkullFly = false;
-  if (!bNoGravKill)
-  {
-    bNoGravity = false;
-  }
+  if (!bNoGravKill) bNoGravity = false;
   bDropOff = true;
   bCorpse = true;
   bPassMobj = false;
 
   float NewHeight = 0.0;
-  if (DamageType == 'Fire')
-  {
-    NewHeight = BurnHeight;
-  }
-  if (!NewHeight)
-  {
-    NewHeight = DeathHeight;
-  }
-  if (NewHeight < 0.0)
-  {
-    Height = 0.0;
-  }
-  else if (NewHeight)
-  {
-    Height = NewHeight;
-  }
-  else
-  {
-    Height /= 4.0;
-  }
+  if (DamageType == 'Fire') NewHeight = BurnHeight;
+  if (!NewHeight) NewHeight = DeathHeight;
+       if (NewHeight < 0.0) Height = 0.0;
+  else if (NewHeight) Height = NewHeight;
+  else Height /= 4.0;
 
-  if (Special && (!bSpecial || bMonster))
-  {
-    // Initiate monster death actions
+  if (Special && (!bSpecial || bMonster)) {
+    // initiate monster death actions
     auto swd = SwitchableDecoration(self);
     if (!swd || !(swd.ActivationType&SwitchableDecoration::AF_NoDeathSpecial)) {
-      Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-        Args[3], Args[4], nullptr, 0, Level.bActivateOwnSpecial ? self : source);
+      Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2], Args[3], Args[4],
+                                 nullptr, 0, (Level.bActivateOwnSpecial ? self : source));
     }
   }
-  if (CountsAsKill())
-  {
-    Level.CurrentKills++;
-  }
-  if (source && source.bIsPlayer)
-  {
-    if (CountsAsKill())
-    {
+  if (CountsAsKill()) ++Level.CurrentKills;
+  if (source && source.bIsPlayer) {
+    if (CountsAsKill()) {
       // count for intermission
-      source.Player.KillCount++;
+      ++source.Player.KillCount;
     }
     PlayerEx(source.Player).KilledActor(self);
-  }
-  else if (!Level.Game.netgame && CountsAsKill())
-  {
-    // Count all monster deaths,
-    // even those caused by other monsters
-    Level.Game.Players[0].KillCount++;
+  } else if (!Level.Game.netgame && CountsAsKill()) {
+    // count all monster deaths, even those caused by other monsters
+    ++Level.Game.Players[0].KillCount;
   }
 
-  if (bIsPlayer)
-  {
-    //  Display obituary.
+  if (bIsPlayer) {
+    // display obituary
     PlayerEx(Player).DisplayObituary(inflictor, source, DamageType);
 
-    XLevel.StartTypedACScripts(Level::SCRIPT_Death, 0, 0, 0, self, true,
-      false);
+    XLevel.StartTypedACScripts(Level::SCRIPT_Death, 0, 0, 0, self, true, false);
 
-    PlayerEx(Player).Deaths++;
+    ++PlayerEx(Player).Deaths;
 
-    // Count environment kills against you
-    if (!source)
-    {
-      Player.Frags--;
-    }
+    // count environment kills against you
+    if (!source) --Player.Frags;
 
     PlayerEx(Player).Killed(source, inflictor);
 
@@ -960,87 +878,60 @@ void Died(EntityEx source, EntityEx inflictor)
     Player.PlayerState = PST_DEAD;
     PlayerEx(Player).DropWeapon();
 #ifdef FIXME
-    if (Player == Level.Game.Players[consoleplayer] && automapactive)
-    {
-      // Don't die in auto map, switch view prior to dying
+    if (Player == Level.Game.Players[consoleplayer] && automapactive) {
+      // don't die in auto map, switch view prior to dying
       AM_Stop();
     }
 #endif
   }
 
   state DeathState = none;
-  if (DamageType)
-  {
-    // Specialised death state for this damage type (ice, etc).
+  if (DamageType) {
+    // specialised death state for this damage type (ice, etc)
     DeathState = FindState('Death', DamageType, true);
-    if (DamageType == 'Ice' && !bNoIceDeath && (bIsPlayer || bMonster))
-    {
-      if (FindState('Death', 'Ice', true))
-      {
+    if (DamageType == 'Ice' && !bNoIceDeath && (bIsPlayer || bMonster)) {
+      if (FindState('Death', 'Ice', true)) {
         DeathState = FindState('Death', 'Ice', true);
-      }
-      else
-      {
+      } else {
         DeathState = FindState('GenericFreezeDeath');
       }
     }
   }
-  if (!DeathState)
-  {
-    //  Don't pass damage type unless it's a massacre damage.
-    if (DamageType != 'Massacre')
-    {
-      DamageType = '';
-    }
+  if (!DeathState) {
+    // don't pass damage type unless it's a massacre damage
+    if (DamageType != 'Massacre') DamageType = '';
 
-    if (Health < GHealth)
-    {
-      // Extreme death
-      DeathState = FindState('Death', 'Extreme', true);
-    }
-    if (!DeathState)
-    {
-      // Normal death
-      DeathState = FindState('Death');
-    }
+    // extreme death?
+    if (Health < GHealth) DeathState = FindState('Death', 'Extreme', true);
+    // normal death?
+    if (!DeathState) DeathState = FindState('Death');
   }
 
-  if (DeathState)
-  {
+  if (DeathState) {
     SetState(DeathState);
-    StateTime -= Random() * 0.1;
-    if (StateTime < 1.0 / 35.0)
-    {
-      StateTime = 1.0 / 35.0;
-    }
-  }
-  else
-  {
+    StateTime -= Random()*0.1;
+    if (StateTime < 1.0/35.0) StateTime = 1.0/35.0;
+  } else {
     //if (bIsPlayer) writeln("************ DESTROYING PLAYER!");
     Destroy();
   }
 }
+
 
 //==========================================================================
 //
 //  MorphedDeath
 //
 //==========================================================================
-
-bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
-  out int MorphedHealth)
-{
+bool MorphedDeath (out EntityEx Morphed, out int MorphedStyle, out int MorphedHealth) {
   // May be a morphed player
   if (bIsPlayer && PlayerEx(Player).MorphTime &&
-    (PlayerEx(Player).MorphStyle & MORPH_UNDOBYDEATH) &&
-    PlayerEx(Player).MO)
+      (PlayerEx(Player).MorphStyle&MORPH_UNDOBYDEATH) &&
+      PlayerEx(Player).MO)
   {
     int RealStyle = PlayerEx(Player).MorphStyle;
     int RealHealth = Health;
-    if (PlayerEx(Player).UndoPlayerMorph(
-      PlayerEx(Player).MorphStyle & MORPH_UNDOBYDEATHFORCED,
-      PlayerEx(Player)))
-    {
+    if (PlayerEx(Player).UndoPlayerMorph(PlayerEx(Player).MorphStyle&MORPH_UNDOBYDEATHFORCED, PlayerEx(Player))) {
       Morphed = EntityEx(PlayerEx(Player).MO);
       MorphedStyle = RealStyle;
       MorphedHealth = RealHealth;
@@ -1052,28 +943,23 @@ bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
   return false;
 }
 
-//==========================================================================
-//
-//  PoisonPlayer - Sets up all data concerning poisoning
-//
-//==========================================================================
 
-final void PoisonPlayer(EntityEx poisoner, int poison)
-{
-  if ((PlayerEx(Player).Cheats & PlayerEx::CF_GODMODE) || bInvulnerable)
-  {
-    return;
-  }
+//==========================================================================
+//
+//  PoisonPlayer
+//
+//  Sets up all data concerning poisoning
+//
+//==========================================================================
+final void PoisonPlayer (EntityEx poisoner, int poison) {
+  if ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable) return;
   PlayerEx(Player).PoisonCount += poison;
   PlayerEx(Player).Poisoner = poisoner;
-  PlayerEx(Player).PoisonerPlayer = poisoner ? PlayerEx(poisoner.Player) :
-    none;
-  if (PlayerEx(Player).PoisonCount > 100)
-  {
-    PlayerEx(Player).PoisonCount = 100;
-  }
+  PlayerEx(Player).PoisonerPlayer = (poisoner ? PlayerEx(poisoner.Player) : none);
+  if (PlayerEx(Player).PoisonCount > 100) PlayerEx(Player).PoisonCount = 100;
   PlayerEx(Player).LastPoisonTime = XLevel.Time;
 }
+
 
 //==========================================================================
 //
@@ -1082,68 +968,44 @@ final void PoisonPlayer(EntityEx poisoner, int poison)
 //  Similar to Actor::Damage
 //
 //==========================================================================
-
-final void PoisonDamage(EntityEx inflictor, EntityEx source, int damage,
-  bool playPainSound)
-{
-  if (Health <= 0)
-  {
+final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool playPainSound) {
+  if (Health <= 0) return;
+  if (bInvulnerable && damage < 10000) return; // mobj is invulnerable
+  if (bIsPlayer) {
+    // take half damage in trainer mode
+    damage = ftoi(itof(damage)*Level.World.SkillDamageFactor);
+  }
+  if (damage < 1000 && ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable)) {
     return;
   }
-  if (bInvulnerable && damage < 10000)
-  { // mobj is invulnerable
-    return;
-  }
-  if (bIsPlayer)
+  if (damage >= Player.Health && (Level.World.bSkillAutoUseHealth || Level.Game.deathmatch) &&
+      !PlayerEx(Player).MorphTime)
   {
-    // Take half damage in trainer mode
-    damage = ftoi(itof(damage) * Level.World.SkillDamageFactor);
+    // try to use some inventory health
+    AutoUseHealth(damage-Player.Health+1);
   }
-  if (damage < 1000 && ((PlayerEx(Player).Cheats & PlayerEx::CF_GODMODE) ||
-    bInvulnerable))
-  {
-    return;
-  }
-  if (damage >= Player.Health && (Level.World.bSkillAutoUseHealth ||
-    Level.Game.deathmatch) && !PlayerEx(Player).MorphTime)
-  {
-    // Try to use some inventory health
-    AutoUseHealth(damage - Player.Health + 1);
-  }
-  Player.Health -= damage;  // mirror mobj health here for Dave
-  if (Player.Health < 0)
-  {
-    Player.Health = 0;
-  }
-  if (Player.Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Player.Health = 1;
+  Player.Health -= damage; // mirror mobj health here for Dave
+  if (Player.Health < 0) Player.Health = 0;
+  if (Player.Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Player.Health = 1;
   PlayerEx(Player).Attacker = source;
 
-  //
   // do the damage
-  //
   Health -= damage;
-  if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats & PlayerEx::CF_BUDDHA)) Health = 1;
-  if (Health <= 0)
-  {
-    // Death
+  if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Health = 1;
+  if (Health <= 0) {
+    // death
     Special1 = damage;
-    if (bIsPlayer && inflictor && !PlayerEx(Player).MorphTime)
-    {
-      // Check for flame death
-      if (inflictor.DamageType == 'Fire' && (Health > -50) && (damage > 25))
-      {
+    if (bIsPlayer && inflictor && !PlayerEx(Player).MorphTime) {
+      // check for flame death
+      if (inflictor.DamageType == 'Fire' && Health > -50 && damage > 25) {
         DamageType = 'Fire';
-      }
-      else
-      {
+      } else {
         DamageType = inflictor.DamageType;
       }
     }
     Died(source, inflictor);
     return;
   }
-  if (!(XLevel.TicTime & 63) && playPainSound)
-  {
-    SetState(FindState('Pain'));
-  }
+
+  if (!(XLevel.TicTime&63) && playPainSound) SetState(FindState('Pain'));
 }

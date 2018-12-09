@@ -22,9 +22,7 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-defaultproperties
-{
+defaultproperties {
   Health = 1000;
   InitialHealth = 1000;
   ReactionCount = 8;

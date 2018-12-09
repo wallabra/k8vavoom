@@ -32,7 +32,7 @@
 
 //==========================================================================
 //
-//  FixNormalVelocity
+//  GetFloorAndCeiling
 //
 //==========================================================================
 final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
