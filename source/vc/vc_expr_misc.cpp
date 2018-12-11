@@ -938,7 +938,7 @@ VExpression *VConditional::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  CoerceTypes(op1, op2, true); // coerce "none delegate" here
+  VExpression::CoerceTypes(op1, op2, true); // coerce "none delegate" here
   if (!op1 || !op2) { delete this; return nullptr; }
 
   op1->Type.CheckMatch(false, Loc, op2->Type);

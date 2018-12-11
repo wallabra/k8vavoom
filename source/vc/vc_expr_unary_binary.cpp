@@ -666,7 +666,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   }
 
   // coerce both types if it is possible
-  CoerceTypes(op1, op2, false); // don't coerce "none delegate"
+  VExpression::CoerceTypes(op1, op2, false); // don't coerce "none delegate"
   if (!op1 || !op2) { delete this; return nullptr; }
 
   // decorate coercion to float
