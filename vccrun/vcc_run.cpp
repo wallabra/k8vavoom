@@ -519,25 +519,31 @@ static void initialize () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// <0: error; bit 0: has arg; bit 1: returns int
+// <0: error; bit 0: has arg; bit 1: returns int; bit 2: slice
 static int checkArg (VMethod *mmain) {
   if (!mmain) return -1;
   if ((mmain->Flags&FUNC_VarArgs) != 0) return -1;
   //if (mmain->NumParams > 0 && mmain->ParamFlags[0] != 0) return -1;
   int res = 0;
   if (mmain->ReturnType.Type != TYPE_Void && mmain->ReturnType.Type != TYPE_Int) return -1;
-  if (mmain->ReturnType.Type == TYPE_Int) res |= 0x02;
+  if (mmain->ReturnType.Type == TYPE_Int || mmain->ReturnType.Type == TYPE_Byte || mmain->ReturnType.Type == TYPE_Bool) res |= 0x02;
   if (mmain->NumParams != 0) {
     if (mmain->NumParams != 1) return -1;
     if (mmain->ParamFlags[0] == 0) {
       VFieldType atp = mmain->ParamTypes[0];
       dprintf("  ptype0: %s\n", *atp.GetName());
-      if (atp.Type != TYPE_Pointer) return -1;
-      atp = atp.GetPointerInnerType();
-      if (atp.Type != TYPE_DynamicArray) return -1;
-      atp = atp.GetArrayInnerType();
-      if (atp.Type != TYPE_String) return -1;
-      res |= 0x01;
+      if (atp.Type == TYPE_SliceArray) {
+        atp = atp.GetArrayInnerType();
+        if (atp.Type != TYPE_String) return -1;
+        res |= 0x04;
+      } else {
+        if (atp.Type != TYPE_Pointer) return -1;
+        atp = atp.GetPointerInnerType();
+        if (atp.Type != TYPE_DynamicArray) return -1;
+        atp = atp.GetArrayInnerType();
+        if (atp.Type != TYPE_String) return -1;
+        res |= 0x01;
+      }
     } else if ((mmain->ParamFlags[0]&(FPARM_Out|FPARM_Ref)) != 0) {
       VFieldType atp = mmain->ParamTypes[0];
       dprintf("  ptype1: %s\n", *atp.GetName());
@@ -612,7 +618,14 @@ int main (int argc, char **argv) {
           //auto imain = Spawn<VLevel>();
           P_PASS_REF((VObject *)mainObject);
         }
-        if (atp&0x01) P_PASS_REF(&scargs);
+        if (atp&0x01) {
+          // dunarray
+          P_PASS_PTR(&scargs);
+        } else if (atp&0x04) {
+          // slice
+          P_PASS_PTR(scargs.Ptr());
+          P_PASS_INT(scargs.length());
+        }
         ret = VObject::ExecuteFunction(mmain);
         if ((atp&0x02) == 0) ret = VFuncRes((int)0);
         if (sss != pr_stackPtr) FatalError("FATAL: stack imbalance!");
