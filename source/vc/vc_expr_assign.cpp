@@ -187,6 +187,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       } else if (op1->RealType.Type == TYPE_Delegate && op2->Type.Type == TYPE_Delegate) {
         ec.AddStatement(OPC_AssignDelegate, Loc);
       } else if (op1->RealType.Type == TYPE_Delegate && op2->Type.Type == TYPE_Reference && op2->Type.Class == nullptr) {
+        // note: `op2` can be `none` literal, but it doesn't matter here
         ec.AddStatement(OPC_PushNull, Loc);
         ec.AddStatement(OPC_AssignDelegate, Loc);
       } else {
