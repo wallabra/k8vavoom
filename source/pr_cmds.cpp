@@ -243,9 +243,14 @@ VStr PF_FormatString () {
       --pi;
       ptypes[pi] = ptypes[pi+1];
       params[pi] = *(--pr_stackPtr);
+    } else if (ptypes[pi].Type == TYPE_Delegate) {
+      --pi;
+      ptypes[pi] = ptypes[pi+1];
+      params[pi] = *(--pr_stackPtr);
     }
   }
   P_GET_STR(str);
+  //fprintf(stderr, "<%s>\n", *str);
 
   PFFmtBuf pbuf((size_t)str.length());
   int spos = 0;
@@ -416,7 +421,24 @@ VStr PF_FormatString () {
                 pbuf.putStr(VStr("(none)"), width, toRight, zeroFill);
               }
               break;
-            //case TYPE_Delegate:
+            case TYPE_Delegate:
+              // [pi+0]: self
+              // [pi+1]: method
+              if (params[pi+1].p) {
+                if (!params[pi].p) {
+                  pbuf.putStr("(invalid delegate)", width, toRight, zeroFill);
+                } else {
+                  VStr s = "delegate<";
+                  s += ((VObject *)params[pi].p)->GetClass()->GetFullName();
+                  s += '/';
+                  s += ((VMemberBase *)params[pi+1].p)->GetFullName();
+                  pbuf.putStr(*s, width, toRight, zeroFill, (fspec == 'q'));
+                }
+              } else {
+                pbuf.putStr("(empty delegate)", width, toRight, zeroFill);
+              }
+              pi += 1;
+              break;
             //case TYPE_Struct:
             //case TYPE_Array:
             //case TYPE_DynamicArray:
@@ -457,7 +479,7 @@ VStr PF_FormatString () {
   if (pi < count) GCon->Log(NAME_Dev, "PF_FormatString: Not all params were used");
   //if (pi > count) GCon->Log(NAME_Dev, "PF_FormatString: Param count overflow");
 #else
-  if (pi < count) fprintf(stderr, "PF_FormatString: Not all params were used\n");
+  if (pi < count) fprintf(stderr, "PF_FormatString: Not all params were used (%d, %d)\n", pi, count);
   //if (pi > count) fprintf(stderr, "PF_FormatString: Param count overflow\n");
 #endif
 
@@ -1052,7 +1074,22 @@ void PR_WriteOne (const VFieldType &type) {
       }
       break;
     case TYPE_Reference: snprintf(sptr, maxlen, "<%s>", (type.Class ? *type.Class->Name : "none")); break;
-    case TYPE_Delegate: snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr()); break;
+    case TYPE_Delegate:
+      //snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr());
+      {
+        VMethod *m = (VMethod *)PR_PopPtr();
+        VObject *o = (VObject *)PR_PopPtr();
+        if (m) {
+          if (!o) {
+            snprintf(sptr, maxlen, "(invalid delegate)");
+          } else {
+            snprintf(sptr, maxlen, "delegate<%s/%s>", *o->GetClass()->GetFullName(), *m->GetFullName());
+          }
+        } else {
+          snprintf(sptr, maxlen, "(empty delegate)");
+        }
+      }
+      break;
     case TYPE_Struct: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.Struct->Name); break;
     case TYPE_Array: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.GetName()); break;
     case TYPE_SliceArray: snprintf(sptr, maxlen, "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;

@@ -155,7 +155,22 @@ void PR_WriteOne (const VFieldType &type) {
       }
       break;
     case TYPE_Reference: blen = snprintf(buf, sizeof(buf), "<%s>", (type.Class ? *type.Class->Name : "none")); break;
-    case TYPE_Delegate: blen = snprintf(buf, sizeof(buf), "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr()); break;
+    case TYPE_Delegate:
+      //snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr());
+      {
+        VMethod *m = (VMethod *)PR_PopPtr();
+        VObject *o = (VObject *)PR_PopPtr();
+        if (m) {
+          if (!o) {
+            blen = snprintf(buf, sizeof(buf), "(invalid delegate)");
+          } else {
+            blen = snprintf(buf, sizeof(buf), "delegate<%s/%s>", *o->GetClass()->GetFullName(), *m->GetFullName());
+          }
+        } else {
+          blen = snprintf(buf, sizeof(buf), "(empty delegate)");
+        }
+      }
+      break;
     case TYPE_Struct: PR_PopPtr(); blen = snprintf(buf, sizeof(buf), "<%s>", *type.Struct->Name); break;
     case TYPE_Array: PR_PopPtr(); blen = snprintf(buf, sizeof(buf), "<%s>", *type.GetName()); break;
     case TYPE_SliceArray: blen = snprintf(buf, sizeof(buf), "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
