@@ -507,9 +507,10 @@ bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &O
   bool result = true;
 
   if (Type == TYPE_Delegate && Other.Type == TYPE_Delegate) {
+    if (!Function || !Other.Function) return true; // one or both are `none delegate`
     VMethod &F1 = *Function;
     VMethod &F2 = *Other.Function;
-    if (F1.Flags & FUNC_Static || F2.Flags & FUNC_Static) {
+    if ((F1.Flags&FUNC_Static) != 0 || (F2.Flags&FUNC_Static) != 0) {
       result = false;
       if (raiseError) ParseError(l, "Can't assign a static function to delegate");
     }

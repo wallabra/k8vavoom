@@ -48,7 +48,7 @@ enum EType {
   TYPE_Unknown,
   TYPE_Automatic, // this is valid only for variable declarations, and will be resolved to actual type
 
-  NUM_BASIC_TYPES
+  NUM_BASIC_TYPES,
 };
 
 
@@ -66,7 +66,7 @@ public:
     vuint32 BitMask;
     VClass *Class; // class of the reference
     VStruct *Struct; // struct data
-    VMethod *Function; // function of the delegate type
+    VMethod *Function; // function of the delegate type; can be `nullptr` for `none delegate`
   };
 
   VFieldType ();

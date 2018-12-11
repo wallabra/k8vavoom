@@ -241,6 +241,80 @@ VExpression *VExpression::CoerceToFloat () {
 
 //==========================================================================
 //
+//  workerCoerceOp1None
+//
+//==========================================================================
+static bool workerCoerceOp1None (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
+  if (op1->IsNoneLiteral() && !op2->IsNoneLiteral() && !op2->IsNullLiteral()) {
+    switch (op2->Type.Type) {
+      case TYPE_Reference:
+      case TYPE_Class:
+      case TYPE_State:
+        op1->Type = op2->Type;
+        return true;
+      //k8: delegate coercing requires turning `none` to two different types:
+      //    `none class/object` and `none delegate`
+      case TYPE_Delegate:
+        if (coerceNoneDelegate) {
+          VNoneDelegateLiteral *nl = new VNoneDelegateLiteral(op1->Loc);
+          delete op1;
+          op1 = nl;
+        }
+        return true;
+    }
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  workerCoerceOp1Null
+//
+//==========================================================================
+static bool workerCoerceOp1Null (VExpression *&op1, VExpression *&op2) {
+  if (op1->IsNullLiteral() && !op2->IsNoneLiteral() && !op2->IsNullLiteral()) {
+    switch (op2->Type.Type) {
+      case TYPE_Pointer:
+        op1->Type = op2->Type;
+        return true;
+    }
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VExpression::CoerceTypes
+//
+//  this coerces ints to floats, and fixes `none`/`nullptr` type
+//
+//==========================================================================
+void VExpression::CoerceTypes (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
+  if (!op1 || !op2) return; // oops
+  // coerce to float
+  if ((op1->Type.Type == TYPE_Float || op2->Type.Type == TYPE_Float) &&
+      (op1->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Int ||
+       op1->Type.Type == TYPE_Byte || op2->Type.Type == TYPE_Byte))
+  {
+    op1 = op1->CoerceToFloat();
+    op2 = op2->CoerceToFloat();
+    return;
+  }
+  // coerce `none`
+  if (workerCoerceOp1None(op1, op2, coerceNoneDelegate)) return;
+  if (workerCoerceOp1None(op2, op1, coerceNoneDelegate)) return;
+  // coerce `nullptr`
+  if (workerCoerceOp1Null(op1, op2)) return;
+  if (workerCoerceOp1Null(op2, op1)) return;
+}
+
+
+//==========================================================================
+//
 //  VExpression::ResolveAsType
 //
 //==========================================================================
@@ -389,6 +463,7 @@ float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expe
 const VStr &VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr::EmptyString; }
 VName VExpression::GetNameConst () const { ParseError(Loc, "Name constant expected"); return NAME_None; }
 bool VExpression::IsNoneLiteral () const { return false; }
+bool VExpression::IsNoneDelegateLiteral () const { return false; }
 bool VExpression::IsNullLiteral () const { return false; }
 bool VExpression::IsDefaultObject () const { return false; }
 bool VExpression::IsPropertyAssign () const { return false; }

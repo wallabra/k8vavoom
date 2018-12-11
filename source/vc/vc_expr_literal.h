@@ -185,6 +185,28 @@ protected:
 
 //==========================================================================
 //
+//  VNoneDelegateLiteral
+//
+//==========================================================================
+class VNoneDelegateLiteral : public VExpression {
+public:
+  VNoneDelegateLiteral (const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsNoneDelegateLiteral () const override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VNoneDelegateLiteral () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VNullLiteral
 //
 //==========================================================================

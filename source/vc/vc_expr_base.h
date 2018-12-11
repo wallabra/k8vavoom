@@ -95,6 +95,8 @@ public:
   // return `nullptr` to indicate error, or consume `val` and set `resolved` to `true` if resolved
   // if `nullptr` is returned, both `this` and `val` should be destroyed
   virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved);
+  // this coerces ints to floats, and fixes `none`\`nullptr` type
+  void CoerceTypes (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate); // expression *MUST* be already resolved
   virtual void RequestAddressOf ();
   virtual void Emit (VEmitContext &ec) = 0;
   virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
@@ -110,6 +112,7 @@ public:
   virtual const VStr &GetStrConst (VPackage *) const;
   virtual VName GetNameConst () const;
   virtual bool IsNoneLiteral () const;
+  virtual bool IsNoneDelegateLiteral () const;
   virtual bool IsNullLiteral () const;
   virtual bool IsDefaultObject () const;
   virtual bool IsPropertyAssign () const;

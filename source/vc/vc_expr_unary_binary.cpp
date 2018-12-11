@@ -665,25 +665,13 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       break;
   }
 
-  // coerce both to floats, if necessary
-
-  // if op1 is `float` or `vector`, and op2 is integral -> coerce op2
-  if ((op1->Type.Type == TYPE_Float /*|| op1->Type.Type == TYPE_Vector*/) &&
-      (op2->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Byte))
-  {
-    op2 = op2->CoerceToFloat();
-    if (!op2) { delete this; return nullptr; }
-  }
-
-  // if op2 is `float` or `vector`, and op1 is integral -> coerce op1
-  if ((op2->Type.Type == TYPE_Float /*|| op2->Type.Type == TYPE_Vector*/) &&
-      (op1->Type.Type == TYPE_Int || op1->Type.Type == TYPE_Byte))
-  {
-    op1 = op1->CoerceToFloat();
-    if (!op1) { delete this; return nullptr; }
-  }
+  // coerce both types if it is possible
+  CoerceTypes(op1, op2, false); // don't coerce "none delegate"
+  if (!op1 || !op2) { delete this; return nullptr; }
 
   // decorate coercion to float
+  // k8: no need to do it, as VaVoom C now does such coercion for all code
+  /*
   if (ec.Package->Name == NAME_decorate) {
     if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_Float) {
       op1 = (new VScalarToFloat(op1, true))->Resolve(ec);
@@ -693,6 +681,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       if (!op2) { delete this; return nullptr; } // oops
     }
   }
+  */
 
   // determine resulting type (and check operand types)
   switch (Oper) {

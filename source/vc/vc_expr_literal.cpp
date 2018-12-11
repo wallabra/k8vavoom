@@ -605,6 +605,80 @@ VStr VNoneLiteral::toString () const {
 
 //==========================================================================
 //
+//  VNoneDelegateLiteral::VNoneDelegateLiteral
+//
+//==========================================================================
+VNoneDelegateLiteral::VNoneDelegateLiteral (const TLocation &ALoc) : VExpression(ALoc) {
+  Type = VFieldType(TYPE_Delegate);
+}
+
+
+//==========================================================================
+//
+//  VNoneDelegateLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VNoneDelegateLiteral::SyntaxCopy () {
+  auto res = new VNoneDelegateLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VNoneDelegateLiteral::DoSyntaxCopyTo
+//
+//==========================================================================
+void VNoneDelegateLiteral::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+}
+
+
+//==========================================================================
+//
+//  VNoneDelegateLiteral::DoResolve
+//
+//==========================================================================
+VExpression *VNoneDelegateLiteral::DoResolve (VEmitContext &) {
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VNoneDelegateLiteral::Emit
+//
+//==========================================================================
+void VNoneDelegateLiteral::Emit (VEmitContext &ec) {
+  ec.AddStatement(OPC_PushNull, Loc);
+  ec.AddStatement(OPC_PushNull, Loc);
+}
+
+
+//==========================================================================
+//
+//  VNoneDelegateLiteral::IsNoneDelegateLiteral
+//
+//==========================================================================
+bool VNoneDelegateLiteral::IsNoneDelegateLiteral () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VNoneDelegateLiteral::toString
+//
+//==========================================================================
+VStr VNoneDelegateLiteral::toString () const {
+  return VStr("nonedg");
+}
+
+
+
+//==========================================================================
+//
 //  VNullLiteral::VNullLiteral
 //
 //==========================================================================
