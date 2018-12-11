@@ -4,7 +4,7 @@ array!int(0)
 <class!Main>
 <Object>
 <S>
-<delegate:(nil):(nil)>
+(empty delegate)
 <state>
 ====
-<delegate:(nil):(nil)><state>array!int(0)<float[4]><Object><class!Main><state>
+(empty delegate)<state>array!int(0)<float[4]><Object><class!Main><state>

@@ -1,0 +1,13 @@
+class Test : Object;
+
+
+class Main : Object;
+
+void delegate () boo;
+
+void foo () {}
+
+void main (string[] args) {
+  boo = (args.length ? &foo : none);
+  print("%s: %s", args.length, boo);
+}

@@ -1,0 +1,9 @@
+class Test : Object;
+
+
+class Main : Object;
+
+void main (string[] args) {
+  auto v = (args.length ? Test : none);
+  print("%s", v);
+}

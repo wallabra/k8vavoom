@@ -1,0 +1,12 @@
+class Main : Object;
+
+void main (string[] args) {
+  int n = 42;
+  float f = 69;
+  auto v = (args.length ? n : f);
+  print("%s", v);
+  writeln("args length: ", args.length);
+  foreach (auto idx, auto arg; args) {
+    writeln("  ", idx, ": <", arg, ">");
+  }
+}
