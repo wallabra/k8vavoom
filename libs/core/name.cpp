@@ -91,7 +91,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
     size_t nlen = strlen(Name);
     check(nlen > 0);
     if (nlen >= NAME_SIZE) nlen = NAME_SIZE-1;
-    if (FindType == AddLower) {
+    if (FindType == AddLower || FindType == FindLower) {
       for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
     } else {
       memcpy(NameBuf, Name, nlen);
@@ -111,7 +111,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
   }
 
   // add new name if not found
-  if (!TempHash && FindType != Find) {
+  if (!TempHash && (FindType != Find && FindType != FindLower)) {
     Index = Names.Num();
     Names.Append(AllocateNameEntry(NameBuf, Index, HashTable[HashIndex]));
     HashTable[HashIndex] = Names[Index];
@@ -145,9 +145,11 @@ void VName::StaticInit () {
 
 
 void VName::StaticExit () {
+/*k8: there is no reason to do this
   guard(VName::StaticExit);
   for (int i = NUM_HARDCODED_NAMES; i < Names.Num(); ++i) Z_Free(Names[i]);
   Names.Clear();
   Initialised = false;
   unguard;
+*/
 }
