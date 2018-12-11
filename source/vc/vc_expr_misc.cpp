@@ -942,10 +942,11 @@ VExpression *VConditional::DoResolve (VEmitContext &ec) {
   if (!op1 || !op2) { delete this; return nullptr; }
 
   op1->Type.CheckMatch(false, Loc, op2->Type);
-  if (op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void) {
+  Type = op1->Type;
+  if ((op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void) ||
+      op1->IsNoneDelegateLiteral() || op1->IsNoneLiteral())
+  {
     Type = op2->Type;
-  } else {
-    Type = op1->Type;
   }
 
   return this;
