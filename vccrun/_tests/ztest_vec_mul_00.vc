@@ -1,0 +1,8 @@
+class Main : Object;
+
+void main () {
+  TVec v0 = vector(2, 3, 4);
+  TVec v1 = v0*2;
+  writeln(v0);
+  writeln(v1);
+}
