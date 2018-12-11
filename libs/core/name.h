@@ -86,7 +86,7 @@ public:
 
   // global functions
   static void StaticInit ();
-  static void StaticExit ();
+  //static void StaticExit ();
 
   static inline int GetNumNames () { return Names.Num(); }
   static inline VNameEntry *GetEntry (int i) { return Names[i]; }
