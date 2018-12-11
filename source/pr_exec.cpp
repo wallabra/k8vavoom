@@ -2567,6 +2567,16 @@ func_loop:
 }
 
 
+struct CurrFuncHolder {
+  VMethod **place;
+  VMethod *prevfunc;
+
+  CurrFuncHolder (VMethod **aplace, VMethod *newfunc) : place(aplace), prevfunc(*aplace) { *aplace = newfunc; }
+  ~CurrFuncHolder () { *place = prevfunc; place = nullptr; }
+  CurrFuncHolder &operator = (const CurrFuncHolder &);
+};
+
+
 //==========================================================================
 //
 //  VObject::ExecuteFunction
@@ -2579,19 +2589,16 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
 
   //fprintf(stderr, "*** VObject::ExecuteFunction: <%s>\n", *func->GetFullName());
 
-  VMethod *prev_func;
-  //VStack ret;
-  //ret.i = 0;
-  //ret.p = nullptr;
   VFuncRes ret;
 
   // run function
-  prev_func = current_func;
+  {
+    CurrFuncHolder cfholder(&current_func, func);
 #ifdef VMEXEC_RUNDUMP
-  enterIndent(); printIndent(); fprintf(stderr, "***ENTERING `%s` (RETx); sp=%d (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
+    enterIndent(); printIndent(); fprintf(stderr, "***ENTERING `%s` (RETx); sp=%d (MAX:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
 #endif
-  RunFunction(func);
-  current_func = prev_func;
+    RunFunction(func);
+  }
 
   // get return value
   if (func->ReturnType.Type) {
@@ -2630,7 +2637,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
   // after executing base function stack must be empty
   if (!current_func && pr_stackPtr != pr_stack+1) {
     cstDump(nullptr);
-    Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack = %p, oldsp = %p", *func->Name, pr_stack, pr_stackPtr);
+    Sys_Error("ExecuteFunction: Stack is not empty after executing function:\n%s\nstack=%p, oldsp=%p, diff=%d", *func->Name, pr_stack, pr_stackPtr, (int)(ptrdiff_t)(pr_stack-pr_stackPtr));
     #ifdef VMEXEC_RUNDUMP
     abort();
     #endif
