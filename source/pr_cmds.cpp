@@ -432,6 +432,7 @@ VStr PF_FormatString () {
                   s += ((VObject *)params[pi].p)->GetClass()->GetFullName();
                   s += '/';
                   s += ((VMemberBase *)params[pi+1].p)->GetFullName();
+                  s += '>';
                   pbuf.putStr(*s, width, toRight, zeroFill, (fspec == 'q'));
                 }
               } else {
