@@ -668,7 +668,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   // coerce both to floats, if necessary
 
   // if op1 is `float` or `vector`, and op2 is integral -> coerce op2
-  if ((op1->Type.Type == TYPE_Float || op1->Type.Type == TYPE_Vector) &&
+  if ((op1->Type.Type == TYPE_Float /*|| op1->Type.Type == TYPE_Vector*/) &&
       (op2->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Byte))
   {
     op2 = op2->CoerceToFloat();
@@ -676,7 +676,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
   }
 
   // if op2 is `float` or `vector`, and op1 is integral -> coerce op1
-  if ((op2->Type.Type == TYPE_Float || op2->Type.Type == TYPE_Vector) &&
+  if ((op2->Type.Type == TYPE_Float /*|| op2->Type.Type == TYPE_Vector*/) &&
       (op1->Type.Type == TYPE_Int || op1->Type.Type == TYPE_Byte))
   {
     op1 = op1->CoerceToFloat();

@@ -938,6 +938,15 @@ VExpression *VConditional::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
+  // coerce to float/vector
+  if ((op1->Type.Type == TYPE_Float || op2->Type.Type == TYPE_Float) &&
+      (op1->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Int ||
+       op1->Type.Type == TYPE_Byte || op2->Type.Type == TYPE_Byte))
+  {
+    op1 = op1->CoerceToFloat();
+    op2 = op2->CoerceToFloat();
+  }
+
   op1->Type.CheckMatch(false, Loc, op2->Type);
   if (op1->Type.Type == TYPE_Pointer && op1->Type.InnerType == TYPE_Void) {
     Type = op2->Type;
