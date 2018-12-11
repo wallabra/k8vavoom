@@ -2320,7 +2320,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
               TLocation Loc = Args[i]->Loc;
               delete Args[i];
               Args[i] = (new VFloatLiteral(val, Loc))->Resolve(ec); // literal's `Reslove()` does nothing, but...
-            } else if (Args[i]->Type.Type == TYPE_Int) {
+            } else if (Args[i]->Type.Type == TYPE_Int || Args[i]->Type.Type == TYPE_Byte) {
               auto erloc = Args[i]->Loc;
               Args[i] = (new VScalarToFloat(Args[i], true))->Resolve(ec);
               if (!Args[i]) ParseError(erloc, "Cannot convert argument to float for arg #%d", i+1);
