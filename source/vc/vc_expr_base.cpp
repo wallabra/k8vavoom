@@ -295,6 +295,16 @@ static bool workerCoerceOp1Null (VExpression *&op1, VExpression *&op2) {
 //==========================================================================
 void VExpression::CoerceTypes (VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate) {
   if (!op1 || !op2) return; // oops
+  // if one operand is vector, and other operand is integer, coerce integer to float
+  // this is required for float vs scalar operators
+  if (op1->Type.Type == TYPE_Vector && (op2->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Byte)) {
+    op2 = op2->CoerceToFloat();
+    return;
+  }
+  if (op2->Type.Type == TYPE_Vector && (op1->Type.Type == TYPE_Int || op1->Type.Type == TYPE_Byte)) {
+    op1 = op1->CoerceToFloat();
+    return;
+  }
   // coerce to float
   if ((op1->Type.Type == TYPE_Float || op2->Type.Type == TYPE_Float) &&
       (op1->Type.Type == TYPE_Int || op2->Type.Type == TYPE_Int ||
