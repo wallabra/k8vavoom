@@ -1643,7 +1643,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
     //FIXME
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
-      ParseError(Loc, "ref locals arent supported yet (sorry)");
+      ParseError(Loc, "ref locals aren't supported yet (sorry)");
       delete this;
       return nullptr;
     }
@@ -2288,7 +2288,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
         // ref/out args: no int->float conversion allowed
         if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
           if (!Args[i]->Type.Equals(Func->ParamTypes[i])) {
-            //FIXME: This should be error
+            //FIXME: This should be an error
             /*
             if (!(Func->ParamFlags[NumArgs]&FPARM_Optional)) {
               Args[i]->Type.CheckMatch(true, Args[i]->Loc, Func->ParamTypes[i]);

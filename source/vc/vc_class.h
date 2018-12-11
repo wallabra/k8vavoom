@@ -284,7 +284,7 @@ public:
   VClass *LowerCaseHashNext;
 
   static TArray<VName> GSpriteNames;
-  static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
+  //static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
 
   struct AliasInfo {
     VName aliasName;
@@ -347,7 +347,7 @@ public:
   VField *FindFieldChecked (VName);
   VProperty *FindProperty (VName);
   VMethod *FindMethod (VName Name, bool bRecursive=true);
-  VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
+  //VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr);
   int GetMethodIndex (VName);
@@ -375,7 +375,7 @@ public:
   void SetStateLabel (VName, VState *);
   void SetStateLabel (const TArray<VName> &, VState *);
 
-  bool IsChildOf (const VClass *SomeBaseClass) const {
+  inline bool IsChildOf (const VClass *SomeBaseClass) const {
     for (const VClass *c = this; c; c = c->GetSuperClass()) if (SomeBaseClass == c) return true;
     return false;
   }
@@ -395,7 +395,7 @@ public:
   // returns `false` if replacee cannot be set for some reason
   bool SetReplacement (VClass *cls); // assign `cls` as a replacement for this
 
-  void HashLowerCased ();
+  //void HashLowerCased ();
 
   // df state thingy
   void DFStateSetTexDir (const VStr &adir);

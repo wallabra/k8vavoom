@@ -43,7 +43,7 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 TArray<VName> VClass::GSpriteNames;
-VClass *VClass::GLowerCaseHashTable[VClass::LOWER_CASE_HASH_SIZE];
+//VClass *VClass::GLowerCaseHashTable[VClass::LOWER_CASE_HASH_SIZE];
 
 static TArray<mobjinfo_t> GMobjInfos;
 static TArray<mobjinfo_t> GScriptIds;
@@ -135,7 +135,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   LinkNext = GClasses;
   GClasses = this;
   ClassGameObjName = NAME_None;
-  HashLowerCased();
+  //HashLowerCased();
   unguard;
 }
 
@@ -324,12 +324,36 @@ bool VClass::AddKnownEnum (VName EnumName) {
 //==========================================================================
 VClass *VClass::FindClass (const char *AName) {
   guard(VClass::FindClass);
+  if (!AName || !AName[0]) return nullptr;
   VName TempName(AName, VName::Find);
   if (TempName == NAME_None) return nullptr; // no such name, no chance to find a class
+  return (VClass *)VMemberBase::ForEachNamed(TempName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
+  /*
   for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
     if (Cls->GetVName() == TempName && Cls->MemberType == MEMBER_Class) return Cls;
   }
   return nullptr;
+  */
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindClassLowerCase
+//
+//==========================================================================
+VClass *VClass::FindClassLowerCase (VName AName) {
+  guard(VClass::FindClassLowerCase);
+  if (AName == NAME_None) return nullptr;
+  /*
+  int HashIndex = GetTypeHash(AName)&(LOWER_CASE_HASH_SIZE-1);
+  for (VClass *Probe = GLowerCaseHashTable[HashIndex]; Probe; Probe = Probe->LowerCaseHashNext) {
+    if (Probe->LowerCaseName == AName) return Probe;
+  }
+  return nullptr;
+  */
+  return (VClass *)VMemberBase::ForEachNamedCI(AName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
   unguard;
 }
 
@@ -341,10 +365,14 @@ VClass *VClass::FindClass (const char *AName) {
 //==========================================================================
 VClass *VClass::FindClassNoCase (const char *AName) {
   guard(VClass::FindClassNoCase);
+  if (!AName || !AName[0]) return nullptr;
+  /*
   for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
     if (Cls->MemberType == MEMBER_Class && VStr::ICmp(Cls->GetName(), AName) == 0) return Cls;
   }
   return nullptr;
+  */
+  return (VClass *)VMemberBase::ForEachNamedCI(VName(AName, VName::FindLower), [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
   unguard;
 }
 
@@ -720,6 +748,7 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
 //  VClass::FindMethodNoCase
 //
 //==========================================================================
+/*
 VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
   guard(VClass::FindMethodNoCase);
   if (Name == NAME_None) return nullptr;
@@ -730,6 +759,7 @@ VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
   return nullptr;
   unguard;
 }
+*/
 
 
 //==========================================================================
@@ -1012,11 +1042,23 @@ bool VClass::Define () {
   guard(VClass::Define);
 
   // check for duplicates
+  /*
   int HashIndex = Name.GetIndex()&4095;
   for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == Name && m->MemberType == MEMBER_Class && ((VClass *)m)->Defined) {
       if (((VClass *)m)->DefinedAsDependency) return true;
       ParseError(Loc, "Class `%s` already has been declared", *Name);
+    }
+  }
+  */
+  if (Name != NAME_None) {
+    VClass *cc = StaticFindClass(Name);
+    if (cc) {
+      if (cc->Defined) {
+        if (cc->DefinedAsDependency) return true;
+        ParseError(Loc, "Class `%s` already has been declared", *Name);
+        return false;
+      }
     }
   }
 
@@ -2490,6 +2532,7 @@ bool VClass::SetReplacement (VClass *cls) {
 //  VClass::HashLowerCased
 //
 //==========================================================================
+/*
 void VClass::HashLowerCased () {
   guard(VClass::HashLowerCased);
   LowerCaseName = *VStr(*Name).ToLower();
@@ -2498,22 +2541,7 @@ void VClass::HashLowerCased () {
   GLowerCaseHashTable[HashIndex] = this;
   unguard;
 }
-
-
-//==========================================================================
-//
-//  VClass::FindClassLowerCase
-//
-//==========================================================================
-VClass *VClass::FindClassLowerCase (VName AName) {
-  guard(VClass::FindClassLowerCase);
-  int HashIndex = GetTypeHash(AName)&(LOWER_CASE_HASH_SIZE-1);
-  for (VClass *Probe = GLowerCaseHashTable[HashIndex]; Probe; Probe = Probe->LowerCaseHashNext) {
-    if (Probe->LowerCaseName == AName) return Probe;
-  }
-  return nullptr;
-  unguard;
-}
+*/
 
 
 //==========================================================================

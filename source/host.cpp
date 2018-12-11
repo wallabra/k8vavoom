@@ -699,6 +699,8 @@ void Host_Shutdown () {
     SAFE_SHUTDOWN(delete GSoundManager,)
     GSoundManager = nullptr;
   }
+
+  VMemberBase::DumpNameMaps();
   //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownTexture, ()) // texture manager
   //k8:no need to do this:SAFE_SHUTDOWN(R_ShutdownData, ()) // various game tables
   //k8:no need to do this:SAFE_SHUTDOWN(VCommand::Shutdown, ())

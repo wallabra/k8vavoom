@@ -43,8 +43,6 @@ TMapDtor<VStr, vint32> TLocation::SourceFilesMap;
 //
 //  TLocation::AddSourceFile
 //
-//  FIXME: kill Schlemiel
-//
 //==========================================================================
 int TLocation::AddSourceFile (const VStr &SName) {
   if (SourceFiles.length() == 0) {

@@ -342,11 +342,11 @@ int main (int argc, char **argv) {
     dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
     CurrentPackage->WriteObject(*ObjectFileName);
     DumpAsm();
-    VName::StaticExit();
+    //VName::StaticExit(); //k8: no reason to do this
     endtime = time(0);
     dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
     dprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
-    VMemberBase::StaticExit();
+    //VMemberBase::StaticExit(); //k8: no reason to do this
   } catch (VException& e) {
     FatalError("%s", e.What());
   }

@@ -34,7 +34,10 @@ bool VMemberBase::optDeprecatedLaxStates = false;
 // ////////////////////////////////////////////////////////////////////////// //
 bool VMemberBase::GObjInitialised;
 TArray<VMemberBase *> VMemberBase::GMembers;
-VMemberBase *VMemberBase::GMembersHash[4096];
+//static VMemberBase *GMembersHash[4096];
+static TMapNC<VName, VMemberBase *> gMembersMap;
+static TMapNC<VName, VMemberBase *> gMembersMapLC; // lower-cased names
+static TArray<VPackage *> gPackageList;
 
 TArray<VStr> VMemberBase::GPackagePath;
 TArray<VPackage *> VMemberBase::GLoadedPackages;
@@ -81,6 +84,7 @@ VProgsExport::VProgsExport (VMemberBase *InObj)
 }
 
 
+
 //==========================================================================
 //
 //  VMemberBase::VMemberBase
@@ -91,13 +95,21 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
   , Name(AName)
   , Outer(AOuter)
   , Loc(ALoc)
+  , HashNext(nullptr)
+  , HashNextLC(nullptr)
 {
   if (GObjInitialised) {
     MemberIndex = GMembers.Append(this);
+    /*
     int HashIndex = Name.GetIndex()&4095;
     HashNext = GMembersHash[HashIndex];
     GMembersHash[HashIndex] = this;
+    */
+    PutToNameHash(this);
+  } else {
+    MemberIndex = -666;
   }
+  if (AMemberType == MEMBER_Package) gPackageList.append((VPackage *)this);
 }
 
 
@@ -107,6 +119,7 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
 //
 //==========================================================================
 VMemberBase::~VMemberBase () {
+  RemoveFromNameHash(this);
 }
 
 
@@ -116,6 +129,151 @@ VMemberBase::~VMemberBase () {
 //
 //==========================================================================
 void VMemberBase::CompilerShutdown () {
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::PutToNameHash
+//
+//==========================================================================
+void VMemberBase::PutToNameHash (VMemberBase *self) {
+  if (!self || self->Name == NAME_None) return;
+  //fprintf(stderr, "REGISTERING: <%s>\n", *self->Name);
+  check(self->HashNext == nullptr);
+  check(self->HashNextLC == nullptr);
+  {
+    VMemberBase **mpp = gMembersMap.find(self->Name);
+    if (mpp) {
+      check(*mpp != self);
+      self->HashNext = (*mpp);
+      *mpp = self;
+    } else {
+      self->HashNext = nullptr;
+      gMembersMap.put(self->Name, self);
+    }
+  }
+  // case-insensitive search is required only for classes
+  if (self->MemberType != MEMBER_Class) return;
+  // locase map
+  {
+    VName lname = VName(*self->Name, VName::AddLower);
+    VMemberBase **mpp = gMembersMapLC.find(lname);
+    if (mpp) {
+      self->HashNextLC = (*mpp);
+      *mpp = self;
+    } else {
+      self->HashNextLC = nullptr;
+      gMembersMapLC.put(lname, self);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::DumpNameMap
+//
+//==========================================================================
+void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensitive) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  GCon->Logf("=== CASE-%sSENSITIVE NAME MAP ===", (caseSensitive ? "" : "IN"));
+  for (auto it = map.first(); it; ++it) {
+    GCon->Logf(" --- <%s>", *it.getKey());
+    for (VMemberBase *m = it.getValue(); m; m = (caseSensitive ? m->HashNext : m->HashNextLC)) {
+      GCon->Logf("  <%s> : <%s>", *m->Name, *m->GetFullName());
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::DumpNameMaps
+//
+//==========================================================================
+void VMemberBase::DumpNameMaps () {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  if (!GArgs.CheckParm("-dev-dump-name-tables")) return;
+  DumpNameMap(gMembersMap, true);
+  DumpNameMap(gMembersMapLC, false);
+#endif
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::RemoveFromNameHash
+//
+//==========================================================================
+void VMemberBase::RemoveFromNameHash (VMemberBase *self) {
+  if (!self || self->Name == NAME_None) return;
+  //fprintf(stderr, "UNREGISTERING: <%s>\n", *self->Name);
+  {
+    VMemberBase **mpp = gMembersMap.find(self->Name);
+    if (mpp) {
+      VMemberBase *mprev = nullptr, *m = *mpp;
+      while (m && m != self) { mprev = m; m = m->HashNext; }
+      if (m) {
+        if (mprev) {
+          mprev->HashNext = m->HashNext;
+        } else {
+          if (m->HashNext) *mpp = m->HashNext; else gMembersMap.remove(m->Name);
+        }
+      }
+    }
+  }
+  // locase map
+  {
+    VName lname = VName(*self->Name, VName::FindLower);
+    if (lname != NAME_None) {
+      VMemberBase **mpp = gMembersMapLC.find(lname);
+      if (mpp) {
+        VMemberBase *mprev = nullptr, *m = *mpp;
+        while (m && m != self) { mprev = m; m = m->HashNextLC; }
+        if (m) {
+          if (mprev) {
+            mprev->HashNextLC = m->HashNextLC;
+          } else {
+            if (m->HashNextLC) *mpp = m->HashNextLC; else gMembersMapLC.remove(lname);
+          }
+        }
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::ForEachNamed
+//
+//  WARNING! don't add/remove ANY named members from callback!
+//  return `false` from callback to stop (and return current member)
+//
+//==========================================================================
+VMemberBase *VMemberBase::ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m), bool caseSensitive) {
+  if (!dg) return nullptr;
+  if (aname == NAME_None) return nullptr; // oops
+  if (!caseSensitive) {
+    // use lower-case map
+    aname = VName(*aname, VName::FindLower);
+    if (aname == NAME_None) return nullptr; // no such name, no chance to find a member
+    VMemberBase **mpp = gMembersMapLC.find(aname);
+    if (!mpp) return nullptr;
+    for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+      if (dg(m) == FERes::FOREACH_STOP) return m;
+    }
+  } else {
+    // use normal map
+    VMemberBase **mpp = gMembersMap.find(aname);
+    if (!mpp) return nullptr;
+    for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+      if (dg(m) == FERes::FOREACH_STOP) return m;
+    }
+  }
+  return nullptr;
 }
 
 
@@ -194,13 +352,16 @@ void VMemberBase::Shutdown () {
 //==========================================================================
 void VMemberBase::StaticInit () {
   guard(VMemberBase::StaticInit);
-  // add native classes to the list.
+  // add native classes to the list
   for (VClass *C = GClasses; C; C = C->LinkNext) {
     C->MemberIndex = GMembers.Append(C);
+    PutToNameHash(C);
+    /*
     int HashIndex = C->Name.GetIndex()&4095;
     C->HashNext = GMembersHash[HashIndex];
     GMembersHash[HashIndex] = C;
     C->HashLowerCased();
+    */
   }
 
   // sprite TNT1 is always 0, ---- is always 1
@@ -217,8 +378,10 @@ void VMemberBase::StaticInit () {
 //  VMemberBase::StaticExit
 //
 //==========================================================================
+/*
 void VMemberBase::StaticExit () {
   for (int i = 0; i < GMembers.Num(); ++i) {
+    if (!GMembers[i]) continue;
     if (GMembers[i]->MemberType != MEMBER_Class || (((VClass *)GMembers[i])->ObjectFlags&CLASSOF_Native) == 0) {
       delete GMembers[i];
       GMembers[i] = nullptr;
@@ -233,8 +396,11 @@ void VMemberBase::StaticExit () {
   //VClass::GMobjInfos.Clear();
   //VClass::GScriptIds.Clear();
   VClass::GSpriteNames.Clear();
+  gMembersMap.clear();
+  gMembersMapLC.clear();
   GObjInitialised = false;
 }
+*/
 
 
 //==========================================================================
@@ -281,7 +447,7 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
 //  VMemberBase::StaticFindMember
 //
 //==========================================================================
-VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
+VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName/*, bool caseSensitive*/) {
   guard(VMemberBase::StaticFindMember);
   //VName realName = AName;
   if (AType == MEMBER_Const && EnumName != NAME_None) {
@@ -291,6 +457,7 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
     nn += *AName;
     AName = VName(*nn);
   }
+  /*
   int HashIndex = AName.GetIndex()&4095;
   for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
     if (m->Name == AName && (m->Outer == AOuter ||
@@ -300,35 +467,45 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
       return m;
     }
   }
-  return nullptr;
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VMemberBase::StaticFindMemberNoCase
-//
-//==========================================================================
-VMemberBase *VMemberBase::StaticFindMemberNoCase (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
-  guard(VMemberBase::StaticFindMemberNoCase);
-  //VName realName = AName;
-  if (AType == MEMBER_Const && EnumName != NAME_None) {
-    // rewrite name
-    VStr nn(*EnumName);
-    nn += " ";
-    nn += *AName;
-    AName = VName(*nn);
-  }
-  //FIXME: make this faster
-  int len = GMembers.length();
-  for (int f = 0; f < len; ++f) {
-    VMemberBase *m = GMembers[f];
-    if (VStr::ICmp(*m->Name, *AName) == 0 && (m->Outer == AOuter ||
-        (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
+  */
+  //k8: FUCK YOU, SHITPP!
+  /*
+  VMemberBase *mm = ForEachNamed(AName, [&](VMemberBase *m) -> FERes {
+    if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
         (AType == ANY_MEMBER || m->MemberType == AType))
     {
-      return m;
+      return FERes::FOREACH_STOP;
+    }
+    return FERes::FOREACH_NEXT;
+  }, caseSensitive);
+  return mm;
+  */
+  /*
+  if (!caseSensitive) {
+    // use lower-case map
+    AName = VName(*AName, VName::FindLower);
+    if (AName == NAME_None) return nullptr; // no such name, no chance to find a member
+    VMemberBase **mpp = gMembersMapLC.find(AName);
+    if (!mpp) return nullptr;
+    for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+      if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
+          (AType == ANY_MEMBER || m->MemberType == AType))
+      {
+        return m;
+      }
+    }
+  } else
+  */
+  {
+    // use normal map
+    VMemberBase **mpp = gMembersMap.find(AName);
+    if (!mpp) return nullptr;
+    for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+      if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
+          (AType == ANY_MEMBER || m->MemberType == AType))
+      {
+        return m;
+      }
     }
   }
   return nullptr;
@@ -345,6 +522,7 @@ VMemberBase *VMemberBase::StaticFindMemberNoCase (VName AName, VMemberBase *AOut
 //==========================================================================
 void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass) {
   //FIXME: make this faster
+#if 0
   int len = GMembers.length();
   for (int f = 0; f < len; ++f) {
     VMemberBase *m = GMembers[f];
@@ -359,6 +537,23 @@ void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, const VStr &pref
       list.append(n);
     }
   }
+#else
+  // use locase member map, it consists mostly of classes
+  for (auto it = gMembersMapLC.first(); it; ++it) {
+    for (VMemberBase *m = it.getValue(); m; m = m->HashNextLC) {
+      if (m->MemberType == MEMBER_Class && m->Name != NAME_None) {
+        VClass *cls = (VClass *)m;
+        if (isaClass && !cls->IsChildOf(isaClass)) continue;
+        VStr n = *m->Name;
+        if (prefix.length()) {
+          if (n.length() < prefix.length()) continue;
+          if (!n.startsWithNoCase(prefix)) continue;
+        }
+        list.append(n);
+      }
+    }
+  }
+#endif
 }
 
 
@@ -389,6 +584,7 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
   }
 
   // package enum
+#if 0
   //FIXME: make this faster
   {
     int len = GMembers.length();
@@ -399,6 +595,15 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
       }
     }
   }
+#else
+  {
+    int len = gPackageList.length();
+    for (int f = 0; f < len; ++f) {
+      VPackage *pkg = gPackageList[f];
+      if (pkg->IsKnownEnum(Name)) return VFieldType(TYPE_Int);
+    }
+  }
+#endif
 
   return VFieldType(TYPE_Unknown);
   unguard;
@@ -410,10 +615,37 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
 //  VMemberBase::StaticFindClass
 //
 //==========================================================================
-VClass *VMemberBase::StaticFindClass (VName Name) {
+VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
   guard(VMemberBase::StaticFindClass);
-  VMemberBase *m = StaticFindMember(Name, ANY_PACKAGE, MEMBER_Class);
-  if (m) return (VClass *)m;
+  if (AName == NAME_None) return nullptr;
+  //VMemberBase *m = StaticFindMember(AName, ANY_PACKAGE, MEMBER_Class, NAME_None, caseSensitive);
+  //if (m) return (VClass *)m;
+#if 0
+  if (caseSensitive) {
+    // use normal map
+    VMemberBase **mpp = gMembersMap.find(AName);
+    if (!mpp) return nullptr;
+    for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+      if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
+        return (VClass *)m;
+      }
+    }
+  } else
+#endif
+  // classes cannot be duplicated, so we can use much smaller lower-case map to find class
+  {
+    // use lower-case map
+    VName loname = VName(*AName, VName::FindLower);
+    if (loname == NAME_None) return nullptr; // no such name, no chance to find a member
+    VMemberBase **mpp = gMembersMapLC.find(loname);
+    if (!mpp) return nullptr;
+    for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+      if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
+        if (caseSensitive && m->Name != AName) continue;
+        return (VClass *)m;
+      }
+    }
+  }
   return nullptr;
   unguard;
 }
@@ -424,13 +656,15 @@ VClass *VMemberBase::StaticFindClass (VName Name) {
 //  VMemberBase::StaticFindClassNoCase
 //
 //==========================================================================
-VClass *VMemberBase::StaticFindClassNoCase (VName Name) {
+/*
+VClass *VMemberBase::StaticFindClassNoCase (VName AName) {
   guard(VMemberBase::StaticFindClassNoCase);
-  VMemberBase *m = StaticFindMemberNoCase(Name, ANY_PACKAGE, MEMBER_Class);
+  VMemberBase *m = StaticFindMemberNoCase(AName, ANY_PACKAGE, MEMBER_Class);
   if (m) return (VClass *)m;
   return nullptr;
   unguard;
 }
+*/
 
 
 /*

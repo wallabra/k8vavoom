@@ -47,6 +47,11 @@ enum {
   MEMBER_DecorateClass,
 };
 
+enum FERes {
+  FOREACH_NEXT,
+  FOREACH_STOP,
+};
+
 
 //==========================================================================
 //
@@ -68,11 +73,19 @@ public:
   VName Name;
   VMemberBase *Outer;
   TLocation Loc;
-  VMemberBase *HashNext;
 
+private:
+  VMemberBase *HashNext;
+  VMemberBase *HashNextLC;
+
+  static void PutToNameHash (VMemberBase *self);
+  static void RemoveFromNameHash (VMemberBase *self);
+
+  static void DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensitive);
+
+public:
   static bool GObjInitialised;
   static TArray<VMemberBase *> GMembers;
-  static VMemberBase *GMembersHash[4096];
 
   static TArray<VStr> GPackagePath;
   static TArray<VPackage *> GLoadedPackages;
@@ -83,11 +96,17 @@ public:
   static bool unsafeCodeAllowed; // true by default
   static bool unsafeCodeWarning; // false by default
 
-  // srtuctors
+public:
   VMemberBase (vuint8, VName, VMemberBase *, const TLocation &);
   virtual ~VMemberBase ();
 
   virtual void CompilerShutdown ();
+
+  // for each name
+  // WARNING! don't add/remove ANY named members from callback!
+  // return `FOREACH_STOP` from callback to stop (and return current member)
+  static VMemberBase *ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m), bool caseSensitive=true);
+  static inline VMemberBase *ForEachNamedCI (VName aname, FERes (*dg) (VMemberBase *m)) { return ForEachNamed(aname, dg, false); }
 
   // accessors
   inline const char *GetName () const { return *Name; }
@@ -100,17 +119,19 @@ public:
   virtual void PostLoad ();
   virtual void Shutdown ();
 
+  static void DumpNameMaps ();
+
   static void StaticInit ();
-  static void StaticExit ();
+  //static void StaticExit ();
   static void StaticAddPackagePath (const char *);
   static VPackage *StaticLoadPackage (VName, const TLocation &);
-  static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
-  static VMemberBase *StaticFindMemberNoCase (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
+  static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None/*, bool caseSensitive=true*/);
+  //static inline VMemberBase *StaticFindMemberNoCase (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None) { return StaticFindMember(AName, AOuter, AType, EnumName, false); }
 
   //FIXME: this looks ugly
   static VFieldType StaticFindType (VClass *, VName);
-  static VClass *StaticFindClass (VName);
-  static VClass *StaticFindClassNoCase (VName);
+  static VClass *StaticFindClass (VName AName, bool caseSensitive=true);
+  static inline VClass *StaticFindClassNoCase (VName AName) { return StaticFindClass(AName, false); }
 
   // will not clear `list`
   static void StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass=nullptr);
@@ -142,4 +163,4 @@ private:
   static TArray<VStr> definelist;
 };
 
-inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? M->MemberIndex : 0); }
+inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? M->MemberIndex+1 : 0); }
