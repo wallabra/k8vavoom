@@ -11,6 +11,21 @@ menudef k8BDWModMenu {
       "Limit number of spawned casing actors."
       "It is recommended to keep this under 1000.";
   }
+
+  option bool {
+    title = "Drop Empty Shogun Shells";
+    cvar = K8BDWOpt_DropEmptyShells;
+  }
+
+  option bool {
+    title = "Drop Empty Rifle Casing";
+    cvar = K8BDWOpt_DropEmptyCasing;
+  }
+
+  option bool {
+    title = "Drop Empty Rifle Magazine";
+    cvar = K8BDWOpt_DropEmptyMagazine;
+  }
 }
 
 

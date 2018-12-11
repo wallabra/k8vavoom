@@ -1,2 +1,5 @@
 user int K8BDWOpt_MaxCasingEntities = 1000;
 user int K8BDWOpt_LimiterDebug = 0;
+user int K8BDWOpt_DropEmptyShells = 1;
+user int K8BDWOpt_DropEmptyCasing = 1;
+user int K8BDWOpt_DropEmptyMagazine = 1;

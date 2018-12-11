@@ -118,7 +118,12 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
       SHTG A 1 A_SetPitch(+3.0+pitch)
       SHTG AA 1 A_SetPitch(+1.0+pitch)
       SHTG BCDEFG 1
-      TNT1 A 0 A_FireCustomMissile("BDW_ShotCaseSpawn", 0, 0, -4, -4)
+      TNT1 A 0
+        {
+          if (GetCVar("K8BDWOpt_DropEmptyShells")) {
+            A_FireCustomMissile("BDW_ShotCaseSpawn", 0, 0, -4, -4);
+          }
+        }
       Goto PumpCommon
 
     Pump2:
