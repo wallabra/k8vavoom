@@ -189,6 +189,7 @@ final float decorate_clamp (float val, float min, float max) {
 /*final*/ float decorate_floorz { get { return FloorZ; } }
 /*final*/ int decorate_health { get { return Health; } }
 /*final*/ float decorate_radius { get { return Radius; } }
+/*final*/ float decorate_height { get { return Height; } }
 /*final*/ float decorate_scalex { get { return ScaleX; } }
 /*final*/ float decorate_scaley { get { return ScaleY; } }
 /*final*/ float decorate_mass { get { return Mass; } }
