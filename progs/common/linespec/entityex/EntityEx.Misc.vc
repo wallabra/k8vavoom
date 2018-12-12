@@ -1344,7 +1344,7 @@ final override bool SectorChanged (int CrushChange) {
   // crunch bodies to giblets
   if (bCorpse && !bDontGib && Health <= 0) {
     bool CanDestroy = false;
-    state stgibs = FindClassState(Class, 'Death', 'SectorGibs');
+    state stgibs = FindClassState(Class, 'Death', 'SectorGibs', exact:true);
     if (stgibs) {
       bDontGib = true;
       SetState(stgibs);
