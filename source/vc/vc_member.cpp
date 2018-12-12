@@ -354,6 +354,7 @@ void VMemberBase::StaticInit () {
   guard(VMemberBase::StaticInit);
   // add native classes to the list
   for (VClass *C = GClasses; C; C = C->LinkNext) {
+    check(C->MemberIndex == -666);
     C->MemberIndex = GMembers.Append(C);
     PutToNameHash(C);
     /*

@@ -2573,7 +2573,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
 
   for (int j = 0; j < FlagList.Num(); ++j) {
     VFlagList &ClassDef = FlagList[j];
-    if (ClassFilter != NAME_None && ClassDef.Class->LowerCaseName != ClassFilter) continue;
+    if (ClassFilter != NAME_None && VStr::ICmp(*ClassDef.Class->/*LowerCase*/Name, *ClassFilter) != 0) continue;
     if (!Class->IsChildOf(ClassDef.Class)) continue;
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
       const VFlagDef &F = ClassDef.Flags[i];
@@ -4839,7 +4839,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
 
   for (int j = 0; j < FlagList.Num(); ++j) {
     VFlagList &ClassDef = FlagList[j];
-    if (ClassFilter != NAME_None && ClassDef.Class->LowerCaseName != ClassFilter) continue;
+    if (ClassFilter != NAME_None && VStr::ICmp(*ClassDef.Class->/*LowerCase*/Name, *ClassFilter) != 0) continue;
     if (!IsA(ClassDef.Class)) continue;
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
       const VFlagDef &F = ClassDef.Flags[i];
@@ -4893,7 +4893,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
   }
   for (int j = 0; j < FlagList.Num(); ++j) {
     VFlagList &ClassDef = FlagList[j];
-    if (ClassFilter != NAME_None && ClassDef.Class->LowerCaseName != ClassFilter) continue;
+    if (ClassFilter != NAME_None && VStr::ICmp(*ClassDef.Class->/*LowerCase*/Name, *ClassFilter) != 0) continue;
     if (!IsA(ClassDef.Class)) continue;
     for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
       const VFlagDef &F = ClassDef.Flags[i];

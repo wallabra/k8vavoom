@@ -280,8 +280,8 @@ public:
 
   TArray<VSpriteEffect> SpriteEffects;
 
-  VName LowerCaseName;
-  VClass *LowerCaseHashNext;
+  //VName LowerCaseName;
+  //VClass *LowerCaseHashNext;
 
   static TArray<VName> GSpriteNames;
   //static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
