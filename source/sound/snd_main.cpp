@@ -290,16 +290,14 @@ int VAudio::AllocChannel () {
     // has some free channels?
     if (cbv == 0xffffffffu) continue; // nope
     int cidx = bidx*32;
-    vuint32 mask = 0x80000000u;
-    while (mask) {
+    for (vuint32 mask = 0x80000000u; mask; mask >>= 1, ++cidx) {
       if ((cbv&mask) == 0) {
         ChanBitmap[bidx] |= mask;
         ++ChanUsed;
         return cidx;
       }
-      ++cidx;
-      mask >>= 1;
     }
+    abort(); // we should never come here
   }
   // we should never come here
   check(ChanUsed >= NumChannels);
@@ -436,14 +434,13 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   // check if this sound is emited by the local player
   bool LocalPlayerSound = (origin_id == -666 || origin_id == 0 || (cl && cl->MO && cl->MO->SoundOriginID == origin_id));
 
-  // calculate the distance before other stuff so that we can throw out
-  // sounds that are beyond the hearing range
+  // calculate the distance before other stuff so that we can throw out sounds that are beyond the hearing range
   int dist = 0;
   if (origin_id && !LocalPlayerSound && Attenuation > 0 && cl) dist = (int)(Length(origin-cl->ViewOrg)*Attenuation);
   //GCon->Logf("DISTANCE=%d", dist);
   if (dist >= MaxSoundDist) {
     //GCon->Logf("  too far away (%d)", MaxSoundDist);
-    return; // sound is beyond the hearing range...
+    return; // sound is beyond the hearing range
   }
 
   int priority = GSoundManager->S_sfx[sound_id].Priority*(PRIORITY_MAX_ADJUST-PRIORITY_MAX_ADJUST*dist/MaxSoundDist);
@@ -552,13 +549,13 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) 
 
   // look for a lower priority sound to replace
   int lowestlp = -1;
-  int lowestprio = 0x7fffffff;
+  int lowestprio = priority;
   FOR_EACH_CHANNEL(i) {
-    if (lowestlp < 0 || lowestprio > Channel[i].priority) {
+    if (lowestprio > Channel[i].priority) {
       lowestlp = i;
       lowestprio = Channel[i].priority;
     } else if (Channel[i].priority == lowestprio) {
-      if (Channel[lowestlp].origin_id != Channel[i].origin_id) {
+      if (lowestlp < 0 || Channel[lowestlp].origin_id == Channel[i].origin_id) {
         lowestlp = i;
       }
     }
