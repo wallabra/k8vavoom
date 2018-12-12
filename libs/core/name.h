@@ -90,7 +90,7 @@ public:
 
   static inline int GetNumNames () { return Names.Num(); }
   static inline VNameEntry *GetEntry (int i) { return Names[i]; }
-  static inline const char *SafeString (EName N) { return (Initialised ? Names[N]->Name : "Uninitialised"); }
+  static const char *SafeString (EName N);
 };
 
 inline vuint32 GetTypeHash (const VName &N) { return N.GetIndex(); }

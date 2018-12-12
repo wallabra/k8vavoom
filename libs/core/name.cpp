@@ -128,6 +128,17 @@ bool VName::operator == (const char *s) const { return (Index == 0 ? (!s || !s[0
 bool VName::operator != (const char *s) const { return !(*this == s); }
 
 
+const char *VName::SafeString (EName N) {
+  if (N == NAME_None) return "";
+  if (!Initialised) {
+    if (N > NAME_None && N < (int)ARRAY_COUNT(AutoNames)) return AutoNames[N].Name;
+    return "*VName::Uninitialised*";
+  } else {
+    return Names[N]->Name;
+  }
+}
+
+
 void VName::StaticInit () {
   guard(VName::StaticInit);
   VStr::vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you();
