@@ -115,6 +115,7 @@ VPngTexture::VPngTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, i
   Height = AHeight;
   SOffset = ASOffset;
   TOffset = ATOffset;
+  mFormat = TEXFMT_RGBA; // always
 }
 
 

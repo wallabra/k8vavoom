@@ -110,6 +110,7 @@ VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
   Name = W_LumpName(SourceLump);
   Width = Hdr.xmax-Hdr.xmin+1;
   Height = Hdr.ymax-Hdr.ymin+1;
+  mFormat = TEXFMT_8Pal;
 }
 
 

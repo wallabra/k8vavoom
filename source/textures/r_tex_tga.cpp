@@ -27,7 +27,7 @@
 #include "r_tex.h"
 
 
-struct tgaHeader_t {
+struct TGAHeader_t {
   vuint8 id_length;
   vuint8 pal_type;
   vuint8 img_type;
@@ -41,7 +41,7 @@ struct tgaHeader_t {
   vuint8 bpp;
   vuint8 descriptor_bits;
 
-  friend VStream &operator << (VStream &Strm, tgaHeader_t &h) {
+  friend VStream &operator << (VStream &Strm, TGAHeader_t &h) {
     return Strm << h.id_length << h.pal_type << h.img_type
       << h.first_colour << h.pal_colours << h.pal_entry_size << h.left
       << h.top << h.width << h.height << h.bpp << h.descriptor_bits;
@@ -57,25 +57,26 @@ struct tgaHeader_t {
 VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
   if (Strm.TotalSize() < 18) return nullptr; // file is too small
 
-  tgaHeader_t Hdr;
+  TGAHeader_t hdr;
   Strm.Seek(0);
-  Strm << Hdr;
+  Strm << hdr;
 
-  if ((Hdr.pal_type != 0 && Hdr.pal_type != 1) || Hdr.width <= 0 ||
-      Hdr.height <= 0 || Hdr.width > 2048 || Hdr.height > 2048 ||
-      (Hdr.pal_type == 0 && Hdr.bpp != 15 && Hdr.bpp != 16 &&
-      Hdr.bpp != 24 && Hdr.bpp != 32) ||
-      (Hdr.pal_type == 1 && Hdr.bpp != 8) ||
-      (Hdr.pal_type == 0 && Hdr.img_type != 2 && Hdr.img_type != 10) ||
-      (Hdr.pal_type == 1 && Hdr.img_type != 1 && Hdr.img_type != 3 &&
-      Hdr.img_type != 9 && Hdr.img_type != 11) ||
-      (Hdr.pal_type == 1 && Hdr.pal_entry_size != 16 &&
-      Hdr.pal_entry_size != 24 && Hdr.pal_entry_size != 32) ||
-      (Hdr.descriptor_bits&16) != 0)
+  if ((hdr.pal_type != 0 && hdr.pal_type != 1) || hdr.width <= 0 ||
+      hdr.height <= 0 || hdr.width > 2048 || hdr.height > 2048 ||
+      (hdr.pal_type == 0 && hdr.bpp != 15 && hdr.bpp != 16 &&
+      hdr.bpp != 24 && hdr.bpp != 32) ||
+      (hdr.pal_type == 1 && hdr.bpp != 8) ||
+      (hdr.pal_type == 0 && hdr.img_type != 2 && hdr.img_type != 10) ||
+      (hdr.pal_type == 1 && hdr.img_type != 1 && hdr.img_type != 3 &&
+      hdr.img_type != 9 && hdr.img_type != 11) ||
+      (hdr.pal_type == 1 && hdr.pal_entry_size != 16 &&
+      hdr.pal_entry_size != 24 && hdr.pal_entry_size != 32) ||
+      (hdr.descriptor_bits&16) != 0)
   {
     return nullptr;
   }
-  return new VTgaTexture(LumpNum, Hdr);
+
+  return new VTgaTexture(LumpNum, hdr);
 }
 
 
@@ -84,14 +85,30 @@ VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
 //  VTgaTexture::VTgaTexture
 //
 //==========================================================================
-VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t &Hdr)
+VTgaTexture::VTgaTexture (int ALumpNum, TGAHeader_t &hdr)
   : VTexture()
   , Palette(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
-  Width = Hdr.width;
-  Height = Hdr.height;
+  Width = hdr.width;
+  Height = hdr.height;
+  //mFormat = TEXFMT_RGBA; // most TGA images are truecolor, so this is a good guess
+  // set real internal image format
+  /* Image type:
+  *    0 = no image data
+  *    1 = uncompressed colour mapped
+  *    2 = uncompressed true colour
+  *    3 = grayscale
+  *    9 = RLE colour mapped
+  *   10 = RLE true colour
+  *   11 = RLE grayscale
+  */
+  if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {
+    mFormat = TEXFMT_8Pal;
+  } else {
+    mFormat = TEXFMT_RGBA;
+  }
 }
 
 
@@ -128,7 +145,7 @@ vuint8 *VTgaTexture::GetPixels () {
   VStream *Strm = W_CreateLumpReaderNum(SourceLump);
   if (!Strm) Sys_Error("Couldn't find file %s", *Name);
 
-  tgaHeader_t hdr;
+  TGAHeader_t hdr;
   *Strm << hdr;
 
   Width = hdr.width;
@@ -420,7 +437,7 @@ void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp,
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write tga"); return; }
 
-  tgaHeader_t hdr;
+  TGAHeader_t hdr;
   hdr.id_length = 0;
   hdr.pal_type = (bpp == 8 ? 1 : 0);
   hdr.img_type = (bpp == 8 ? 1 : 2);

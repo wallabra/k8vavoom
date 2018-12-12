@@ -52,6 +52,7 @@ VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
   TScale = SrcTex->TScale;
   WarpType = 1;
   if (Speed < 1) Speed = 1; else if (Speed > 16) Speed = 16;
+  mFormat = (SrcTex ? SrcTex->Format : TEXFMT_RGBA);
 }
 
 

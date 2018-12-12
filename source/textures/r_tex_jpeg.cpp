@@ -109,6 +109,7 @@ VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight)
   Name = W_LumpName(SourceLump);
   Width = AWidth;
   Height = AHeight;
+  mFormat = TEXFMT_RGBA;
 }
 
 

@@ -172,7 +172,7 @@ private:
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
-  VTgaTexture (int, struct tgaHeader_t &);
+  VTgaTexture (int, struct TGAHeader_t &);
   virtual ~VTgaTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
