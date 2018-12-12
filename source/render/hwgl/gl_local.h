@@ -449,9 +449,12 @@ public:
   virtual void EndFogPass () override;
   virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
   virtual void DrawMaskedPolygon (surface_t *, float, bool) override;
-  virtual void DrawSpritePolygon (TVec *, VTexture *, float, bool, VTextureTranslation *,
-                          int, vuint32, vuint32, const TVec &, float,
-                          const TVec &, const TVec &, const TVec &) override;
+  virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
+                                  float Alpha, bool Additive,
+                                  VTextureTranslation *Translation, int CMap,
+                                  vuint32 light, vuint32 Fade,
+                                  const TVec &sprnormal, float sprpdist,
+                                  const TVec &saxis, const TVec &taxis, const TVec &texorg) override;
   virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&, const TVec&,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, vuint32,
     vuint32, float, bool, bool, float, bool, bool, bool, bool) override;

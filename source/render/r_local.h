@@ -261,6 +261,7 @@ public:
       surface_t *surf;
       VEntity *Ent;
     };
+    int prio; // for things
     int lump;
     TVec normal;
     union {
@@ -456,7 +457,7 @@ protected:
   // things
   void DrawTranslucentPoly (surface_t*, TVec*, int, int, float, bool, int,
     bool, vuint32, vuint32, const TVec&, float, const TVec&, const TVec&,
-    const TVec&);
+    const TVec&, int priority=0);
   void RenderSprite (VEntity*, vuint32, vuint32, float, bool);
   void RenderTranslucentAliasModel (VEntity*, vuint32, vuint32, float, bool, float);
   bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);

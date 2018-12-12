@@ -18,6 +18,14 @@ menudef AdvVideoOptions {
       "This can win several FPS on huge levels.";
   }
 
+  option bool {
+    title = "Sort sprites";
+    cvar = r_sort_sprites;
+    help =
+      "Sort sprites, so sprites on the same coords will flicker less."
+      "This *can* reduce sprite flickering, but it is not guaranteed.";
+  }
+
 
   header "Lighting";
 

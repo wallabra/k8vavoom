@@ -163,9 +163,9 @@ public:
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
                                float offs1, VTexture *Texture2, float offs2, int CMap) = 0;
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
-  virtual void DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
+  virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex, float Alpha,
                                   bool Additive, VTextureTranslation *Translation, int CMap,
-                                  vuint32 light, vuint32 Fade, const TVec &, float, const TVec &saxis,
+                                  vuint32 light, vuint32 Fade, const TVec &normal, float pdist, const TVec &saxis,
                                   const TVec &taxis, const TVec &texorg) = 0;
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const TVec &Offset,
                                const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,

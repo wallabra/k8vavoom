@@ -1296,12 +1296,16 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //  VOpenGLDrawer::DrawSpritePolygon
 //
 //==========================================================================
-void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
-  bool Additive, VTextureTranslation *Translation, int CMap, vuint32 light,
-  vuint32 Fade, const TVec &, float, const TVec &saxis, const TVec &taxis,
-  const TVec &texorg)
+void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
+                                       float Alpha, bool Additive,
+                                       VTextureTranslation *Translation, int CMap,
+                                       vuint32 light, vuint32 Fade,
+                                       const TVec &sprnormal, float sprpdist,
+                                       const TVec &saxis, const TVec &taxis, const TVec &texorg)
 {
   guard(VOpenGLDrawer::DrawSpritePolygon);
+  if (!Tex) return; // just in case
+
   TVec texpt(0, 0, 0);
 
   SetSpriteLump(Tex, Translation, CMap, true);
@@ -1311,12 +1315,12 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
   p_glUniform1iARB(SurfMaskedTextureLoc, 0);
   p_glUniform1iARB(SurfMaskedFogTypeLoc, r_fog&3);
 
-  if (blend_sprites || Additive || Alpha < 1.0) {
+  if (blend_sprites || Additive || Alpha < 1.0f) {
     p_glUniform1fARB(SurfMaskedAlphaRefLoc, getAlphaThreshold());
     glEnable(GL_BLEND);
     if (Additive) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
-    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555);
+    p_glUniform1fARB(SurfMaskedAlphaRefLoc, 0.555f);
     Alpha = 1.0f;
   }
 
@@ -1337,33 +1341,56 @@ void VOpenGLDrawer::DrawSpritePolygon (TVec *cv, VTexture *Tex, float Alpha,
     p_glUniform1iARB(SurfMaskedFogEnabledLoc, GL_FALSE);
   }
 
+#if 0
+  if (Alpha >= 1.0f) {
+    /*
+    GLint odf = GL_LEQUAL;
+    glGetIntegerv(GL_DEPTH_FUNC, &odf);
+    glDepthFunc(!CanUseRevZ() ? GL_LESS : GL_GREATER);
+    //glDepthFunc(GL_ALWAYS);
+    */
+    int nn = Tex->Name.GetIndex()%400;
+    float ofs = ((float)nn)/400.0f;
+    glPolygonOffset(/*0.75f*/-ofs, -4);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+  }
+#endif
+
   glBegin(GL_QUADS);
 
-  texpt = cv[0] - texorg;
+  texpt = cv[0]-texorg;
   p_glVertexAttrib2fARB(SurfMaskedTexCoordLoc,
-    DotProduct(texpt, saxis) * tex_iw,
-    DotProduct(texpt, taxis) * tex_ih);
+    DotProduct(texpt, saxis)*tex_iw,
+    DotProduct(texpt, taxis)*tex_ih);
   glVertex(cv[0]);
 
-  texpt = cv[1] - texorg;
+  texpt = cv[1]-texorg;
   p_glVertexAttrib2fARB(SurfMaskedTexCoordLoc,
-    DotProduct(texpt, saxis) * tex_iw,
-    DotProduct(texpt, taxis) * tex_ih);
+    DotProduct(texpt, saxis)*tex_iw,
+    DotProduct(texpt, taxis)*tex_ih);
   glVertex(cv[1]);
 
-  texpt = cv[2] - texorg;
+  texpt = cv[2]-texorg;
   p_glVertexAttrib2fARB(SurfMaskedTexCoordLoc,
-    DotProduct(texpt, saxis) * tex_iw,
-    DotProduct(texpt, taxis) * tex_ih);
+    DotProduct(texpt, saxis)*tex_iw,
+    DotProduct(texpt, taxis)*tex_ih);
   glVertex(cv[2]);
 
-  texpt = cv[3] - texorg;
+  texpt = cv[3]-texorg;
   p_glVertexAttrib2fARB(SurfMaskedTexCoordLoc,
-    DotProduct(texpt, saxis) * tex_iw,
-    DotProduct(texpt, taxis) * tex_ih);
+    DotProduct(texpt, saxis)*tex_iw,
+    DotProduct(texpt, taxis)*tex_ih);
   glVertex(cv[3]);
 
   glEnd();
+
+#if 0
+  if (Alpha >= 1.0f) {
+    //glDepthFunc(odf);
+    glPolygonOffset(0, 0);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+  }
+#endif
 
   if (blend_sprites || Additive || Alpha < 1.0) glDisable(GL_BLEND);
   if (Additive) {

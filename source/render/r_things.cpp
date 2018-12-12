@@ -70,19 +70,20 @@ extern VCvarB   r_chasecam;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-VCvarB      r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
-VCvarB      r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
-VCvarB      r_models("r_models", true, "Allow models?", CVAR_Archive);
-VCvarB      r_view_models("r_view_models", true, "View models?", CVAR_Archive);
-VCvarB      r_model_shadows("r_model_shadows", false, "Draw model shadows in advanced renderer?", CVAR_Archive);
-VCvarB      r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
-VCvarB      r_sort_sprites("r_sort_sprites", false, "Sprite sorting.");
-VCvarB      r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
-VCvarI      r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
-VCvarB      r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
-VCvarF      r_transsouls("r_transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
-VCvarI      crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
-VCvarF      crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
+VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
+VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
+VCvarB r_models("r_models", true, "Allow models?", CVAR_Archive);
+VCvarB r_view_models("r_view_models", true, "View models?", CVAR_Archive);
+VCvarB r_model_shadows("r_model_shadows", false, "Draw model shadows in advanced renderer?", CVAR_Archive);
+VCvarB r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
+VCvarB r_sort_sprites("r_sort_sprites", false, "Sprite sorting.", CVAR_Archive);
+VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
+VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
+VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
+VCvarB r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
+VCvarF r_transsouls("r_transsouls", "1.0", "Translucent Lost Souls?", CVAR_Archive);
+VCvarI crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
+VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 
 static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
 
@@ -95,7 +96,7 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
   bool type, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
-  const TVec &saxis, const TVec &taxis, const TVec &texorg)
+  const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority)
 {
   guard(VRenderLevelShared::DrawTranslucentPoly);
 
@@ -128,6 +129,7 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   spr.type = type;
   spr.light = light;
   spr.Fade = Fade;
+  spr.prio = priority;
 
   unguard;
 }
@@ -351,10 +353,18 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   sv[3] = sprorigin+end+botdelta;
 
   if (Alpha < 1.0 || Additive || r_sort_sprites) {
+    int priority = 0;
+    if (thing) {
+           if (thing->EntityFlags&VEntity::EF_Bright) priority = 200;
+      else if (thing->EntityFlags&VEntity::EF_FullBright) priority = 100;
+      else if (thing->EntityFlags&(VEntity::EF_Corpse|VEntity::EF_Blasted)) priority = -120;
+      else if (thing->Health <= 0) priority = -110;
+      else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
+    }
     DrawTranslucentPoly(nullptr, sv, 4, lump, Alpha, Additive,
       thing->Translation, true, light, Fade, -sprforward, DotProduct(
       sprorigin, -sprforward), (flip ? -sprright : sprright) /
-      thing->ScaleX, -sprup / thing->ScaleY, flip ? sv[2] : sv[1]);
+      thing->ScaleX, -sprup / thing->ScaleY, (flip ? sv[2] : sv[1]), priority);
   } else {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
@@ -499,10 +509,25 @@ void VRenderLevelShared::RenderMobjs(ERenderPass Pass) {
 extern "C" {
   static int traspCmp (const void *a, const void *b, void * /*udata*/) {
     if (a == b) return 0;
-    float d0 = ((const VRenderLevelShared::trans_sprite_t *)a)->dist;
-    float d1 = ((const VRenderLevelShared::trans_sprite_t *)b)->dist;
-    if (d1 < d0) return -1;
-    if (d1 > d0) return 1;
+    const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
+    const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
+    if (ta->Alpha < 1.0f && tb->Alpha < 1.0f) {
+      const float d0 = ta->dist;
+      const float d1 = tb->dist;
+      if (d1 < d0) return -1;
+      if (d1 > d0) return 1;
+    }
+    if (ta->Alpha >= 1.0f) {
+      if (tb->Alpha < 1.0f) return -1; // a is not translucent, b is translucent; a first
+    }
+    if (tb->Alpha >= 1.0f) {
+      if (ta->Alpha < 1.0f) return 1; // a is translucent, b is not translucent; b first
+    }
+    if (ta->prio < tb->prio) return 1;
+    if (ta->prio > tb->prio) return -1;
+    // sort by lump number, why not
+    if (ta->lump < tb->lump) return -1;
+    if (ta->lump > tb->lump) return 1;
     return 0;
   }
 }
@@ -521,21 +546,44 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   // sort 'em
   timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
 
+#define MAX_POFS  (15)
+  bool pofsEnabled = false;
+  int pofs = 0;
+
   // render 'em
   for (int f = traspFirst; f < traspUsed; ++f) {
     trans_sprite_t &spr = trans_sprites[f];
     if (spr.type == 2) {
+      if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
     } else if (spr.type) {
+      if (spr.Alpha >= 1.0f && r_sprite_use_pofs) {
+        if (!pofsEnabled) {
+          glEnable(GL_POLYGON_OFFSET_FILL);
+          glPolygonOffset(-((float)pofs)/(float)MAX_POFS, -4);
+          pofsEnabled = true;
+        }
+      } else {
+        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+      }
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
                                 spr.Alpha, spr.Additive, GetTranslation(spr.translation),
                                 ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
                                 spr.saxis, spr.taxis, spr.texorg);
+      if (spr.Alpha >= 1.0f && r_sprite_use_pofs) {
+        check(pofsEnabled);
+        if (++pofs == MAX_POFS) pofs = 0;
+        glPolygonOffset(-((float)pofs)/15.0f, -4);
+      }
     } else {
       check(spr.surf);
+      if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
     }
   }
+#undef MAX_POFS
+
+  if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
 
   // reset list
   traspUsed = traspFirst;
