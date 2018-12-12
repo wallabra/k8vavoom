@@ -129,7 +129,7 @@ private:
   FChannel Channel[MAX_CHANNELS];
   int NumChannels;
   int ChanUsed;
-  vuint32 *ChanBitmap; // used bitmap
+  vuint32 ChanBitmap[(MAX_CHANNELS+31)/32]; // used bitmap
 
   // maximum volume for sound
   float MaxVolume;
@@ -154,7 +154,7 @@ private:
 
   // sound effect helpers
   int GetChannel (int, int, int, int);
-  void StopChannel (int cidx, bool freeit);
+  void StopChannel (int cidx); // won't deallocate it
   void UpdateSfx ();
 
   // music playback
@@ -170,26 +170,12 @@ private:
   void DeallocChannel (int cidx);
 
   inline int ChanFirstUsed () const { return ChanNextUsed(-1, true); }
-
-  inline int ChanNextUsed (int cidx, bool wantFirst=false) const {
-    if (!wantFirst && cidx < 0) return -1;
-    ++cidx;
-    while (cidx < NumChannels) {
-      const int bidx = cidx/32;
-      const vuint32 mask = 0xffffffffu>>(cidx%32);
-      const vuint32 cbv = ChanBitmap[bidx];
-      if (cbv&mask) {
-        // has some used channels
-        for (;;) {
-          if (cbv&(0x80000000u>>(cidx%32))) return cidx;
-          ++cidx;
-        }
-      }
-      cidx = (cidx|0x1f)+1;
-    }
-    return -1;
-  }
+  int ChanNextUsed (int cidx, bool wantFirst=false) const;
 };
+
+
+#define FOR_EACH_CHANNEL(varname) \
+  for (int varname = ChanFirstUsed(); varname >= 0; varname = ChanNextUsed(i))
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -237,7 +223,6 @@ VAudio::VAudio ()
 {
   ActiveSequences = 0;
   SequenceListHead = nullptr;
-  ChanBitmap = (vuint32 *)Z_Calloc(((MAX_CHANNELS+31)/32)*4);
   ResetAllChannels();
 }
 
@@ -261,7 +246,33 @@ void VAudio::ResetAllChannels () {
   memset(Channel, 0, sizeof(Channel));
   ChanUsed = 0;
   for (int f = 0; f < MAX_CHANNELS; ++f) Channel[f].handle = -1;
-  memset(ChanBitmap, 0, ((MAX_CHANNELS+31)/32)*4);
+  memset(ChanBitmap, 0, sizeof(ChanBitmap));
+}
+
+
+//==========================================================================
+//
+//  VAudio::ChanNextUsed
+//
+//==========================================================================
+int VAudio::ChanNextUsed (int cidx, bool wantFirst) const {
+  if (ChanUsed < 1) return -1; // anyway
+  if (!wantFirst && cidx < 0) return -1;
+  if (wantFirst) cidx = 0; else ++cidx;
+  while (cidx < NumChannels) {
+    const int bidx = cidx/32;
+    const vuint32 mask = 0xffffffffu>>(cidx%32);
+    const vuint32 cbv = ChanBitmap[bidx];
+    if (cbv&mask) {
+      // has some used channels
+      for (;;) {
+        if (cbv&(0x80000000u>>(cidx%32))) return cidx;
+        ++cidx;
+      }
+    }
+    cidx = (cidx|0x1f)+1;
+  }
+  return -1;
 }
 
 
@@ -274,35 +285,27 @@ void VAudio::ResetAllChannels () {
 //==========================================================================
 int VAudio::AllocChannel () {
   if (ChanUsed >= NumChannels) return -1;
-  int cidx = -1;
-  for (int bidx = 0; bidx < (MAX_CHANNELS+31)/32; ++bidx) {
+  for (int bidx = 0; bidx < (NumChannels+31)/32; ++bidx) {
     vuint32 cbv = ChanBitmap[bidx];
-    if (!cbv) {
-      ChanBitmap[bidx] |= 0x80000000u;
-      cidx = bidx*32;
-      break;
-    }
     // has some free channels?
-    if (cbv != 0xffffffffu) {
-      vuint32 mask = 0x80000000u;
-      cidx = bidx*32;
-      while (mask) {
-        if ((cbv&mask) == 0) {
-          ChanBitmap[bidx] |= mask;
-          break;
-        }
-        ++cidx;
-        mask >>= 1;
+    if (cbv == 0xffffffffu) continue; // nope
+    int cidx = bidx*32;
+    vuint32 mask = 0x80000000u;
+    while (mask) {
+      if ((cbv&mask) == 0) {
+        ChanBitmap[bidx] |= mask;
+        ++ChanUsed;
+        return cidx;
       }
-      check(mask);
-      break;
+      ++cidx;
+      mask >>= 1;
     }
   }
-  check(cidx >= 0);
-  ++ChanUsed;
+  // we should never come here
+  check(ChanUsed >= NumChannels);
   //memset((void *)&Channel[cidx], 0, sizeof(FChannel));
   //Channel[cidx].handle = -1;
-  return cidx;
+  return -1;
 }
 
 
@@ -313,7 +316,7 @@ int VAudio::AllocChannel () {
 //==========================================================================
 void VAudio::DeallocChannel (int cidx) {
   if (ChanUsed == 0) return; // wtf?!
-  if (cidx < 0 || cidx >= MAX_CHANNELS) return; // oops
+  if (cidx < 0 || cidx >= NumChannels) return; // oops
   const int bidx = cidx/32;
   const vuint32 mask = 0x80000000u>>(cidx%32);
   const vuint32 cbv = ChanBitmap[bidx];
@@ -321,6 +324,11 @@ void VAudio::DeallocChannel (int cidx) {
     // allocated channel, free it
     ChanBitmap[bidx] ^= mask;
     --ChanUsed;
+    check(Channel[cidx].handle == -1);
+    // just in case
+    Channel[cidx].handle = -1;
+    Channel[cidx].origin_id = 0;
+    Channel[cidx].sound_id = 0;
   }
 }
 
@@ -383,6 +391,7 @@ void VAudio::Shutdown () {
     delete SoundDevice;
     SoundDevice = nullptr;
   }
+  ResetAllChannels();
   unguard;
 }
 
@@ -410,7 +419,7 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   if (GSoundManager->S_sfx[sound_id].VolumeAmp <= 0) return; // nothing to see here, come along
 
   // if it's a looping sound and it's still playing, then continue playing the existing one
-  for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
+  FOR_EACH_CHANNEL(i) {
     if (Channel[i].origin_id == origin_id && Channel[i].channel == channel &&
         Channel[i].sound_id == sound_id && Channel[i].Loop)
     {
@@ -496,29 +505,26 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
 //==========================================================================
 int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) {
   guard(VAudio::GetChannel);
-  int lp; // least priority
-  int found;
-  int prior;
-  int numchannels = GSoundManager->S_sfx[sound_id].NumChannels;
+  const int numchannels = GSoundManager->S_sfx[sound_id].NumChannels;
 
   // first, look if we want to replace sound on some channel
   if (channel != 0) {
-    for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
+    FOR_EACH_CHANNEL(i) {
       if (Channel[i].origin_id == origin_id && Channel[i].channel == channel) {
-        StopChannel(i, false); // don't deallocate
+        StopChannel(i);
         return i;
       }
     }
   }
 
   if (numchannels > 0) {
-    lp = -1; // denote the argument sound_id
-    found = 0;
-    prior = priority;
-    for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
+    int lp = -1; // least priority
+    int found = 0;
+    int prior = priority;
+    FOR_EACH_CHANNEL(i) {
       if (Channel[i].sound_id == sound_id) {
         if (GSoundManager->S_sfx[sound_id].bSingular) {
-          // this sound is already playing, so don't start it again.
+          // this sound is already playing, so don't start it again
           return -1;
         }
         ++found; // found one; now, should we replace it?
@@ -535,39 +541,33 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) 
         // other sounds have greater priority
         return -1; // don't replace any sounds
       }
-      StopChannel(lp, false); // don't deallocate
+      StopChannel(lp);
       return lp;
     }
   }
-
-  //  Mobjs can have only one sound
-  /*
-  if (origin_id && channel) {
-    for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
-      if (Channel[i].origin_id == origin_id && Channel[i].channel == channel) {
-        // only allow other mobjs one sound
-        StopChannel(i);
-        return i;
-      }
-    }
-  }
-  */
 
   // get a free channel, if there is any
   if (ChanUsed < NumChannels) return AllocChannel();
   if (NumChannels < 1) return -1;
 
   // look for a lower priority sound to replace
-  for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
-    if (priority >= Channel[i].priority) {
-      // replace the lower priority sound
-      StopChannel(i, false); // don't deallocate
-      return i;
+  int lowestlp = -1;
+  int lowestprio = 0x7fffffff;
+  FOR_EACH_CHANNEL(i) {
+    if (lowestlp < 0 || lowestprio > Channel[i].priority) {
+      lowestlp = i;
+      lowestprio = Channel[i].priority;
+    } else if (Channel[i].priority == lowestprio) {
+      if (Channel[lowestlp].origin_id != Channel[i].origin_id) {
+        lowestlp = i;
+      }
     }
   }
+  if (lowestlp < 0) return -1; // no free channels
 
-  // no free channels
-  return -1;
+  // replace the lower priority sound
+  StopChannel(lowestlp);
+  return lowestlp;
   unguard;
 }
 
@@ -577,16 +577,15 @@ int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) 
 //  VAudio::StopChannel
 //
 //==========================================================================
-void VAudio::StopChannel (int cidx, bool freeit) {
+void VAudio::StopChannel (int cidx) {
   guard(VAudio::StopChannel);
   if (cidx < 0 || cidx >= NumChannels) return;
-  if (Channel[cidx].sound_id) {
+  if (Channel[cidx].sound_id || Channel[cidx].handle >= 0) {
     SoundDevice->StopChannel(Channel[cidx].handle);
     Channel[cidx].handle = -1;
     Channel[cidx].origin_id = 0;
     Channel[cidx].sound_id = 0;
   }
-  if (freeit) DeallocChannel(cidx);
   unguard;
 }
 
@@ -598,9 +597,10 @@ void VAudio::StopChannel (int cidx, bool freeit) {
 //==========================================================================
 void VAudio::StopSound (int origin_id, int channel) {
   guard(VAudio::StopSound);
-  for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
+  FOR_EACH_CHANNEL(i) {
     if (Channel[i].origin_id == origin_id && (!channel || Channel[i].channel == channel)) {
-      StopChannel(i, true); // deallocate
+      StopChannel(i);
+      DeallocChannel(i);
     }
   }
   unguard;
@@ -615,7 +615,7 @@ void VAudio::StopSound (int origin_id, int channel) {
 void VAudio::StopAllSound () {
   guard(VAudio::StopAllSound);
   // stop all sounds
-  for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) StopChannel(i, false);
+  FOR_EACH_CHANNEL(i) StopChannel(i);
   ResetAllChannels();
   unguard;
 }
@@ -629,7 +629,7 @@ void VAudio::StopAllSound () {
 bool VAudio::IsSoundPlaying (int origin_id, int InSoundId) {
   guard(VAudio::IsSoundPlaying);
   int sound_id = GSoundManager->ResolveSound(InSoundId);
-  for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
+  FOR_EACH_CHANNEL(i) {
     if (Channel[i].sound_id == sound_id &&
         Channel[i].origin_id == origin_id &&
         SoundDevice->IsChannelPlaying(Channel[i].handle))
@@ -784,16 +784,18 @@ void VAudio::UpdateSfx () {
 
   if (cl) AngleVectors(cl->ViewAngles, ListenerForward, ListenerRight, ListenerUp);
 
-  for (int i = ChanFirstUsed(); i >= 0; i = ChanNextUsed(i)) {
+  FOR_EACH_CHANNEL(i) {
     // active channel?
     if (!Channel[i].sound_id) {
+      check(Channel[i].handle == -1);
       DeallocChannel(i);
       continue;
     }
 
     // still playing?
     if (!SoundDevice->IsChannelPlaying(Channel[i].handle)) {
-      StopChannel(i, true); // deallocate it
+      StopChannel(i);
+      DeallocChannel(i);
       continue;
     }
 
@@ -811,7 +813,8 @@ void VAudio::UpdateSfx () {
     int dist = (int)(Length(Channel[i].origin-cl->ViewOrg)*Channel[i].Attenuation);
     if (dist >= MaxSoundDist) {
       // too far away
-      StopChannel(i, true); // deallocate
+      StopChannel(i);
+      DeallocChannel(i);
       continue;
     }
 
