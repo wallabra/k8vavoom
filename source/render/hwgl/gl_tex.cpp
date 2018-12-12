@@ -331,6 +331,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
   } else if (CMap) {
     // only colormap
+    //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
     UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColourMaps[CMap].GetPalette());
   } else {
     // normal uploading
@@ -367,8 +368,8 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 //==========================================================================
 void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal) {
   // this is single-threaded, so why not?
-  int w = (Width > 0 ? Width : 1);
-  int h = (Height > 0 ? Height : 1);
+  int w = (Width > 0 ? Width : 2);
+  int h = (Height > 0 ? Height : 2);
   static rgba_t *databuf = nullptr;
   static size_t databufSize = 0;
   if (databufSize < (size_t)(w*h*4)) {
@@ -395,8 +396,8 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
 //==========================================================================
 void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal) {
   // this is single-threaded, so why not?
-  int w = (Width > 0 ? Width : 1);
-  int h = (Height > 0 ? Height : 1);
+  int w = (Width > 0 ? Width : 2);
+  int h = (Height > 0 ? Height : 2);
   static rgba_t *databuf = nullptr;
   static size_t databufSize = 0;
   if (databufSize < (size_t)(w*h*4)) {

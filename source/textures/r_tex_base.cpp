@@ -209,7 +209,7 @@ vuint8 *VTexture::GetPixels8 () {
     Remap[0] = 0;
     for (int i = 1; i < 256; ++i) Remap[i] = r_rgbtable[((Pal[i].r<<7)&0x7c00)+((Pal[i].g<<2)&0x3e0)+((Pal[i].b>>3)&0x1f)];
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
-    vuint8 *pSrc = pixdata;
+    const vuint8 *pSrc = pixdata;
     vuint8 *pDst = Pixels8Bit;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) *pDst = Remap[*pSrc];
     Pixels8BitValid = true;
@@ -217,7 +217,7 @@ vuint8 *VTexture::GetPixels8 () {
   } else if (Format == TEXFMT_RGBA) {
     int NumPixels = Width*Height;
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
-    rgba_t *pSrc = (rgba_t *)pixdata;
+    const rgba_t *pSrc = (rgba_t *)pixdata;
     vuint8 *pDst = Pixels8Bit;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       if (pSrc->a < 128) {
@@ -244,29 +244,38 @@ pala_t *VTexture::GetPixels8A () {
   // if already have converted version, then just return it
   if (Pixels8BitA && Pixels8BitAValid) return Pixels8BitA;
 
+  const vuint8 *pixdata = GetPixels();
+
   int NumPixels = Width*Height;
   if (!Pixels8BitA) Pixels8BitA = new pala_t[NumPixels];
   pala_t *pDst = Pixels8BitA;
 
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
+    check(Format == mFormat);
     // remap to game palette
+    //GCon->Logf(NAME_Dev, "remapping paletted '%s' to 8A... (%dx%d:%d) (%d)", *Name, Width, Height, NumPixels, mFormat);
     vuint8 remap[256];
     if (Format == TEXFMT_8Pal) {
       // own palette, remap
       remap[0] = 0;
       const rgba_t *pal = GetPalette();
-      for (int i = 1; i < 256; ++i) remap[i] = r_rgbtable[((pal[i].r<<7)&0x7c00)+((pal[i].g<<2)&0x3e0)+((pal[i].b>>3)&0x1f)];
+      if (pal) {
+        for (int i = 1; i < 256; ++i) remap[i] = r_rgbtable[((pal[i].r<<7)&0x7c00)+((pal[i].g<<2)&0x3e0)+((pal[i].b>>3)&0x1f)];
+      } else {
+        for (int i = 0; i < 256; ++i) remap[i] = i;
+      }
     } else {
       // game palette, no remap
       for (int i = 0; i < 256; ++i) remap[i] = i;
     }
-    const vuint8 *pSrc = GetPixels();
+    const vuint8 *pSrc = (const vuint8 *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = remap[*pSrc];
       pDst->a = (*pSrc ? 255 : 0);
     }
   } else if (Format == TEXFMT_RGBA) {
-    const rgba_t *pSrc = (const rgba_t *)GetPixels();
+    //GCon->Logf(NAME_Dev, "remapping 32-bit '%s' to 8A... (%dx%d)", *Name, Width, Height);
+    const rgba_t *pSrc = (const rgba_t *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
       pDst->a = pSrc->a;

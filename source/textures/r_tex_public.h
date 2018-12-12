@@ -52,6 +52,7 @@ struct __attribute__((__packed__)) rgb_t {
   rgb_t () : r(0), g(0), b(0) {}
   rgb_t (vuint8 ar, vuint8 ag, vuint8 ab) : r(ar), g(ag), b(ab) {}
 };
+static_assert(sizeof(rgb_t) == 3);
 
 struct __attribute__((__packed__)) rgba_t {
   vuint8 r, g, b, a;
@@ -59,12 +60,14 @@ struct __attribute__((__packed__)) rgba_t {
   rgba_t (vuint8 ar, vuint8 ag, vuint8 ab, vuint8 aa=255) : r(ar), g(ag), b(ab), a(aa) {}
   static inline rgba_t Transparent () { return rgba_t(0, 0, 0, 0); }
 };
+static_assert(sizeof(rgba_t) == 4);
 
 struct __attribute__((__packed__)) pala_t {
   vuint8 idx, a;
   pala_t () : idx(0), a(0) {}
   pala_t (vuint8 aidx, vuint8 aa=255) : idx(aidx), a(aa) {}
 };
+static_assert(sizeof(pala_t) == 2);
 
 
 struct picinfo_t {
@@ -228,6 +231,7 @@ protected:
   void ConvertPixelsToShaded ();
 
 public:
+  //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`
   inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }
   PropertyRO<int, VTexture> Format {this, &VTexture::GetFormat};
 
