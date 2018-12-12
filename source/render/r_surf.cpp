@@ -425,7 +425,16 @@ void VRenderLevelShared::CreateSegParts (drawseg_t *dseg, seg_t *seg) {
   side_t *sidedef = seg->sidedef;
   line_t *linedef = seg->linedef;
 
-  TVec segdir = (*seg->v2-*seg->v1)/seg->length;
+  //TVec segdir = (*seg->v2-*seg->v1)/seg->length;
+
+  TVec segdir;
+  check(seg->length >= 0);
+  if (seg->length <= 0) {
+    GCon->Logf(NAME_Warning, "Seg #%d for linedef #%d has zero length", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
+    segdir = TVec(1, 0, 0); // arbitrary
+  } else {
+    segdir = (*seg->v2-*seg->v1)/seg->length;
+  }
 
   float topz1 = r_ceiling->GetPointZ(*seg->v1);
   float topz2 = r_ceiling->GetPointZ(*seg->v2);
@@ -481,7 +490,7 @@ void VRenderLevelShared::CreateSegParts (drawseg_t *dseg, seg_t *seg) {
     sp->TextureOffset = sidedef->MidTextureOffset;
     sp->RowOffset = sidedef->MidRowOffset;
 
-    // sky above line.
+    // sky above line
     dseg->topsky = pspart++;
     sp = dseg->topsky;
     sp->texinfo.Tex = GTextureManager[skyflatnum];
@@ -660,6 +669,7 @@ void VRenderLevelShared::CreateSegParts (drawseg_t *dseg, seg_t *seg) {
     dseg->mid = pspart++;
     sp = dseg->mid;
 
+    // middle wall
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     sp->texinfo.Tex = MTex;
     sp->texinfo.noDecals = (MTex ? MTex->noDecals : true);
@@ -1139,7 +1149,16 @@ void VRenderLevelShared::UpdateDrawSeg (drawseg_t *dseg, bool ShouldClip) {
         float texh = MTex->GetScaledHeight();
         float z_org;
 
-        TVec segdir = (*seg->v2-*seg->v1)/seg->length;
+        //TVec segdir = (*seg->v2-*seg->v1)/seg->length;
+
+        TVec segdir;
+        //check(seg->length >= 0);
+        if (seg->length <= 0) {
+          GCon->Logf(NAME_Warning, "Seg #%d for linedef #%d has zero length", (int)(ptrdiff_t)(seg-Level->Segs), (int)(ptrdiff_t)(linedef-Level->Lines));
+          segdir = TVec(1, 0, 0); // arbitrary
+        } else {
+          segdir = (*seg->v2-*seg->v1)/seg->length;
+        }
 
         sp->texinfo.saxis = segdir*TextureSScale(MTex);
         sp->texinfo.taxis = TVec(0, 0, -1)*TextureTScale(MTex);
