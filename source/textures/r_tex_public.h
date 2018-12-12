@@ -148,12 +148,11 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VTexture {
-protected:
-  int origFormat; // shaded/stenciled textures will be created on-demand, and we need this
-
 public:
   int Type;
-  int Format;
+protected:
+  int mFormat; // never use this directly!
+public:
   VName Name;
   int Width;
   int Height;
@@ -197,6 +196,7 @@ public:
   vuint32 SavedDriverHandle;
 
 protected:
+  vuint8 *Pixels; // most textures has some kind of pixel data, so declare it here
   vuint8 *Pixels8Bit;
   pala_t *Pixels8BitA;
   VTexture *HiResTexture;
@@ -213,18 +213,22 @@ protected:
   static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);
 
   // this should be called after `Pixels` were converted to RGBA
-  vuint8 *shadePixelsRGBA (vuint8 *Pixels, int shadeColor);
-  vuint8 *stencilPixelsRGBA (vuint8 *Pixels, int shadeColor);
+  void shadePixelsRGBA (int shadeColor);
+  void stencilPixelsRGBA (int shadeColor);
 
   // uses `Format` to convert, so it must be valid
   // `Pixels` must be set
   // will delete old `Pixels` if necessary
-  vuint8 *ConvertPixelsToRGBA (vuint8 *Pixels);
+  void ConvertPixelsToRGBA ();
 
   // uses `Format` to convert, so it must be valid
   // `Pixels` must be set
   // will delete old `Pixels` if necessary
-  vuint8 *ConvertPixelsToShaded (vuint8 *Pixels);
+  void ConvertPixelsToShaded ();
+
+public:
+  inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }
+  PropertyRO<int, VTexture> Format {this, &VTexture::GetFormat};
 
 public:
   VTexture ();
@@ -263,7 +267,7 @@ public:
   static void PremultiplyRGBA (void *dest, const void *src, int w, int h);
 
 protected:
-  void FixupPalette (vuint8 *Pixels, rgba_t *Palette);
+  void FixupPalette (rgba_t *Palette);
 };
 
 

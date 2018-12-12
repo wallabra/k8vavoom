@@ -35,7 +35,6 @@
 VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
   : VTexture()
   , SrcTex(ASrcTex)
-  , Pixels(nullptr)
   , GenTime(0)
   , Speed(aspeed)
   , WarpXScale(1.0)
@@ -123,7 +122,7 @@ vuint8 *VWarpTexture::GetPixels () {
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
-  Format = SrcTex->Format;
+  mFormat = SrcTex->Format;
 
   GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
@@ -142,7 +141,7 @@ vuint8 *VWarpTexture::GetPixels () {
     YSin1[y] = msin(GenTime*50+y/WarpYScale*5.625)*8*WarpXScale+8*WarpXScale*Width;
   }
 
-  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal) {
+  if (mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal) {
     if (!Pixels) Pixels = new vuint8[Width*Height];
     vuint8 *Dst = Pixels;
     for (int y = 0; y < Height; ++y) {
@@ -241,7 +240,7 @@ vuint8 *VWarp2Texture::GetPixels () {
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
-  Format = SrcTex->Format;
+  mFormat = SrcTex->Format;
 
   GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
@@ -264,7 +263,7 @@ vuint8 *VWarp2Texture::GetPixels () {
     YSin2[x] = msin(x/WarpXScale*11.25+GenTime*251.116+52.73)*2*WarpYScale;
   }
 
-  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal) {
+  if (mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal) {
     if (!Pixels) Pixels = new vuint8[Width*Height];
     vuint8 *dest = Pixels;
     for (int y = 0; y < Height; ++y) {

@@ -41,9 +41,6 @@ public:
 
 // standard Doom patch
 class VPatchTexture : public VTexture {
-private:
-  vuint8 *Pixels;
-
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
@@ -85,7 +82,6 @@ private:
   // all the Patches[PatchCount] are drawn back to front into the cached texture
   int PatchCount;
   VTexPatch *Patches;
-  vuint8 *Pixels;
 
 public:
   VMultiPatchTexture (VStream &, int, VTexture **, int, int, bool);
@@ -99,9 +95,6 @@ public:
 
 // standard Doom flat
 class VFlatTexture : public VTexture {
-private:
-  vuint8 *Pixels;
-
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
@@ -116,7 +109,6 @@ public:
 class VRawPicTexture : public VTexture {
 private:
   int PalLumpNum;
-  vuint8 *Pixels;
   rgba_t *Palette;
 
 public:
@@ -132,9 +124,6 @@ public:
 
 // raven's automap background
 class VAutopageTexture : public VTexture {
-private:
-  vuint8 *Pixels;
-
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
@@ -149,9 +138,6 @@ public:
 // [RH] Just a format I invented to avoid WinTex's palette remapping
 // when I wanted to insert some alpha maps
 class VImgzTexture : public VTexture {
-private:
-  vuint8 *Pixels;
-
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
@@ -165,7 +151,6 @@ public:
 // PCX file
 class VPcxTexture : public VTexture {
 private:
-  vuint8 *Pixels;
   rgba_t *Palette;
 
 public:
@@ -182,7 +167,6 @@ public:
 // TGA file
 class VTgaTexture : public VTexture {
 private:
-  vuint8 *Pixels;
   rgba_t *Palette;
 
 public:
@@ -198,9 +182,6 @@ public:
 
 // PNG file
 class VPngTexture : public VTexture {
-private:
-  vuint8 *Pixels;
-
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
@@ -213,9 +194,6 @@ public:
 
 // JPEG file
 class VJpegTexture : public VTexture {
-public:
-  vuint8 *Pixels;
-
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
@@ -230,7 +208,6 @@ public:
 class VWarpTexture : public VTexture {
 protected:
   VTexture *SrcTex;
-  vuint8 *Pixels;
   float GenTime;
   float Speed;
   float WarpXScale;

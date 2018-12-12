@@ -1253,7 +1253,7 @@ VFontChar::VFontChar (VTexture *ATex, rgba_t *APalette)
   , Palette(APalette)
 {
   Type = TEXTYPE_FontChar;
-  Format = TEXFMT_8Pal;
+  mFormat = TEXFMT_8Pal;
   Name = NAME_None;
   Width = BaseTex->GetWidth();
   Height = BaseTex->GetHeight();
@@ -1280,6 +1280,7 @@ VFontChar::~VFontChar () {
 //==========================================================================
 vuint8 *VFontChar::GetPixels () {
   guard(VFontChar::GetPixels);
+  shadeColor = -1; //FIXME
   return BaseTex->GetPixels8();
   unguard;
 }
@@ -1341,7 +1342,7 @@ VFontChar2::VFontChar2 (int ALumpNum, int AFilePos, int CharW, int CharH, rgba_t
   , MaxCol(AMaxCol)
 {
   Type = TEXTYPE_FontChar;
-  Format = TEXFMT_8Pal;
+  mFormat = TEXFMT_8Pal;
   Name = NAME_None;
   Width = CharW;
   Height = CharH;
@@ -1369,6 +1370,7 @@ VFontChar2::~VFontChar2 () {
 vuint8 *VFontChar2::GetPixels () {
   guard(VFontChar2::GetPixels);
   if (Pixels) return Pixels;
+  shadeColor = -1; //FIXME
 
   VStream *Strm = W_CreateLumpReaderNum(LumpNum);
   Strm->Seek(FilePos);

@@ -47,13 +47,12 @@ VTexture *VAutopageTexture::Create (VStream &Strm, int LumpNum) {
 //==========================================================================
 VAutopageTexture::VAutopageTexture (int ALumpNum)
   : VTexture()
-  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
   Width = 320;
   Height = W_LumpLength(SourceLump)/320;
-  Format = TEXFMT_8;
+  mFormat = TEXFMT_8;
 }
 
 

@@ -36,11 +36,9 @@
 VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     VTexture **PatchLookup, int NumPatchLookup, int FirstTex, bool IsStrife)
   : VTexture()
-  , Pixels(nullptr)
 {
-  guard(VMultiPatchTexture::VMultiPatchTexture);
   Type = TEXTYPE_Wall;
-  Format = TEXFMT_8;
+  mFormat = TEXFMT_8;
 
   // read offset and seek to the starting position
   Strm.Seek(4+DirectoryIndex*4);
@@ -128,7 +126,6 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
       Height = Patches[0].Tex->GetHeight();
     }
   }
-  unguard;
 }
 
 
@@ -140,11 +137,9 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
 VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
   : PatchCount(0)
   , Patches(nullptr)
-  , Pixels(0)
 {
-  guard(VMultiPatchTexture::VMultiPatchTexture);
   Type = AType;
-  Format = TEXFMT_8;
+  mFormat = TEXFMT_8;
 
   sc->SetCMode(true);
 
@@ -266,7 +261,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               if (Rot != 0 && Rot != 90 && Rot != 180 && Rot != -90) sc->Error("Rotation must be a multiple of 90 degrees.");
               P.Rot = (Rot/90)&3;
             } else if (sc->Check("translation")) {
-              Format = TEXFMT_RGBA;
+              mFormat = TEXFMT_RGBA;
               if (P.bOwnTrans) {
                 delete P.Trans;
                 P.Trans = nullptr;
@@ -293,7 +288,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                 } while (sc->Check(","));
               }
             } else if (sc->Check("blend")) {
-              Format = TEXFMT_RGBA;
+              mFormat = TEXFMT_RGBA;
               if (P.bOwnTrans) {
                 delete P.Trans;
                 P.Trans = nullptr;
@@ -352,7 +347,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                   sc->Error(va("Bad texture patch command '%s'", *sc->String));
                 }
               }
-              if (P.Style != STYLE_Copy) Format = TEXFMT_RGBA;
+              if (P.Style != STYLE_Copy) mFormat = TEXFMT_RGBA;
             }
           }
         }
@@ -375,7 +370,6 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
   }
 
   sc->SetCMode(false);
-  unguard;
 }
 
 
@@ -385,7 +379,6 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
 //
 //==========================================================================
 VMultiPatchTexture::~VMultiPatchTexture () {
-  //guard(VMultiPatchTexture::~VMultiPatchTexture);
   if (Patches) {
     for (int i = 0; i < PatchCount; ++i) {
       if (Patches[i].bOwnTrans) {
@@ -400,7 +393,6 @@ VMultiPatchTexture::~VMultiPatchTexture () {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -410,10 +402,8 @@ VMultiPatchTexture::~VMultiPatchTexture () {
 //
 //==========================================================================
 void VMultiPatchTexture::SetFrontSkyLayer () {
-  guard(VMultiPatchTexture::SetFrontSkyLayer);
   for (int i = 0; i < PatchCount; ++i) Patches[i].Tex->SetFrontSkyLayer();
   bNoRemap0 = true;
-  unguard;
 }
 
 
@@ -426,7 +416,6 @@ void VMultiPatchTexture::SetFrontSkyLayer () {
 //
 //==========================================================================
 vuint8 *VMultiPatchTexture::GetPixels () {
-  guard(VMultiPatchTexture::GetPixels);
   // if already got pixels, then just return them.
   if (Pixels) return Pixels;
 
@@ -434,7 +423,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
   for (int i = 0; i < PatchCount; ++i) {
     if (!Patches[i].Tex) continue;
     Patches[i].Tex->GetPixels();
-    if (Patches[i].Tex->Format != TEXFMT_8) Format = TEXFMT_RGBA;
+    if (Patches[i].Tex->Format != TEXFMT_8) mFormat = TEXFMT_RGBA;
   }
 
   if (Format == TEXFMT_8) {
@@ -460,6 +449,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     int y2 = y1+(patch->Rot&1 ? PWidth : PHeight);
     if (y2 > Height) y2 = Height;
     float IAlpha = 1.0-patch->Alpha;
+    if (IAlpha < 0) IAlpha = 0; else if (IAlpha > 1) IAlpha = 1;
 
     for (int y = y1 < 0 ? 0 : y1; y < y2; ++y) {
       int PIdxY;
@@ -482,6 +472,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
         }
 
         if (Format == TEXFMT_8) {
+          // patch texture is guaranteed to be paletted
           if (PatchPixels[PIdx]) {
             Pixels[x+y*Width] = PatchPixels[PIdx];
           }
@@ -564,9 +555,8 @@ vuint8 *VMultiPatchTexture::GetPixels () {
     }
   }
 
-  Pixels = ConvertPixelsToShaded(Pixels);
+  ConvertPixelsToShaded();
   return Pixels;
-  unguard;
 }
 
 
@@ -576,10 +566,8 @@ vuint8 *VMultiPatchTexture::GetPixels () {
 //
 //==========================================================================
 void VMultiPatchTexture::Unload () {
-  guard(VMultiPatchTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }

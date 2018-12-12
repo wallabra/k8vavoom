@@ -55,7 +55,6 @@ struct tgaHeader_t {
 //
 //==========================================================================
 VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VTgaTexture::Create);
   if (Strm.TotalSize() < 18) return nullptr; // file is too small
 
   tgaHeader_t Hdr;
@@ -77,7 +76,6 @@ VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
     return nullptr;
   }
   return new VTgaTexture(LumpNum, Hdr);
-  unguard;
 }
 
 
@@ -88,7 +86,6 @@ VTexture *VTgaTexture::Create (VStream &Strm, int LumpNum) {
 //==========================================================================
 VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t &Hdr)
   : VTexture()
-  , Pixels(nullptr)
   , Palette(nullptr)
 {
   SourceLump = ALumpNum;
@@ -104,7 +101,6 @@ VTgaTexture::VTgaTexture (int ALumpNum, tgaHeader_t &Hdr)
 //
 //==========================================================================
 VTgaTexture::~VTgaTexture () {
-  //guard(VTgaTexture::~VTgaTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -113,7 +109,6 @@ VTgaTexture::~VTgaTexture () {
     delete[] Palette;
     Palette = nullptr;
   }
-  //unguard;
 }
 
 
@@ -123,7 +118,6 @@ VTgaTexture::~VTgaTexture () {
 //
 //==========================================================================
 vuint8 *VTgaTexture::GetPixels () {
-  guard(VTgaTexture::GetPixels);
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
 
@@ -175,10 +169,10 @@ vuint8 *VTgaTexture::GetPixels () {
   *   11 = RLE grayscale
   */
   if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {
-    Format = TEXFMT_8Pal;
+    mFormat = TEXFMT_8Pal;
     Pixels = new vuint8[Width*Height];
   } else {
-    Format = TEXFMT_RGBA;
+    mFormat = TEXFMT_RGBA;
     Pixels = new vuint8[Width*Height*4];
   }
 
@@ -383,11 +377,9 @@ vuint8 *VTgaTexture::GetPixels () {
   delete Strm;
 
   // for 8-bit textures remap colour 0
-  if (Format == TEXFMT_8Pal) FixupPalette(Pixels, Palette);
-  Pixels = ConvertPixelsToShaded(Pixels);
+  if (mFormat == TEXFMT_8Pal) FixupPalette(Palette);
+  ConvertPixelsToShaded();
   return Pixels;
-
-  unguard;
 }
 
 
@@ -397,9 +389,7 @@ vuint8 *VTgaTexture::GetPixels () {
 //
 //==========================================================================
 rgba_t *VTgaTexture::GetPalette () {
-  guardSlow(VTgaTexture::GetPalette);
   return Palette;
-  unguardSlow;
 }
 
 
@@ -409,7 +399,6 @@ rgba_t *VTgaTexture::GetPalette () {
 //
 //==========================================================================
 void VTgaTexture::Unload () {
-  guard(VTgaTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -418,7 +407,6 @@ void VTgaTexture::Unload () {
     delete[] Palette;
     Palette = nullptr;
   }
-  unguard;
 }
 
 
@@ -429,7 +417,6 @@ void VTgaTexture::Unload () {
 //
 //==========================================================================
 void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top) {
-  guard(WriteTGA);
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write tga"); return; }
 
@@ -469,6 +456,5 @@ void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp,
   }
 
   delete Strm;
-  unguard;
 }
 #endif

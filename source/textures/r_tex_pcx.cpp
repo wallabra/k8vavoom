@@ -71,7 +71,6 @@ struct pcx_t {
 //
 //==========================================================================
 VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VPcxTexture::Create);
   if (Strm.TotalSize() < 128) return nullptr; // file is too small
 
   pcx_t Hdr;
@@ -95,7 +94,6 @@ VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
   */
 
   return new VPcxTexture(LumpNum, Hdr);
-  unguard;
 }
 
 
@@ -106,7 +104,6 @@ VTexture *VPcxTexture::Create (VStream &Strm, int LumpNum) {
 //==========================================================================
 VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
   : VTexture()
-  , Pixels(nullptr)
   , Palette(nullptr)
 {
   SourceLump = ALumpNum;
@@ -122,7 +119,6 @@ VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
 //
 //==========================================================================
 VPcxTexture::~VPcxTexture () {
-  //guard(VPcxTexture::~VPcxTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -131,7 +127,6 @@ VPcxTexture::~VPcxTexture () {
     delete[] Palette;
     Palette = nullptr;
   }
-  //unguard;
 }
 
 
@@ -141,7 +136,6 @@ VPcxTexture::~VPcxTexture () {
 //
 //==========================================================================
 vuint8 *VPcxTexture::GetPixels () {
-  guard(VPcxTexture::GetPixels);
   int c;
   int bytes_per_line;
   vint8 ch;
@@ -162,7 +156,7 @@ vuint8 *VPcxTexture::GetPixels () {
 
   Width = pcx.xmax-pcx.xmin+1;
   Height = pcx.ymax-pcx.ymin+1;
-  Format = TEXFMT_8Pal;
+  mFormat = TEXFMT_8Pal;
 
   bytes_per_line = pcx.bytes_per_line;
 
@@ -198,14 +192,11 @@ vuint8 *VPcxTexture::GetPixels () {
     *Strm << Palette[c].r << Palette[c].g << Palette[c].b;
     Palette[c].a = 255;
   }
-  FixupPalette(Pixels, Palette);
-
   delete Strm;
 
-  Pixels = ConvertPixelsToShaded(Pixels);
+  FixupPalette(Palette);
+  ConvertPixelsToShaded();
   return Pixels;
-
-  unguard;
 }
 
 
@@ -215,9 +206,7 @@ vuint8 *VPcxTexture::GetPixels () {
 //
 //==========================================================================
 rgba_t *VPcxTexture::GetPalette () {
-  guardSlow(VPcxTexture::GetPalette);
   return Palette;
-  unguardSlow;
 }
 
 
@@ -227,7 +216,6 @@ rgba_t *VPcxTexture::GetPalette () {
 //
 //==========================================================================
 void VPcxTexture::Unload () {
-  guard(VPcxTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -236,7 +224,6 @@ void VPcxTexture::Unload () {
     delete[] Palette;
     Palette = nullptr;
   }
-  unguard;
 }
 
 
@@ -247,8 +234,6 @@ void VPcxTexture::Unload () {
 //
 //==========================================================================
 void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top) {
-  guard(WritePCX);
-
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write pcx"); return; }
 
@@ -309,6 +294,5 @@ void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp,
   }
 
   delete Strm;
-  unguard;
 }
 #endif

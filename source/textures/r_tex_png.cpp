@@ -32,8 +32,6 @@
 //
 //==========================================================================
 VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VPngTexture::Create);
-
   if (Strm.TotalSize() < 29) return nullptr; // file is too small
 
   vuint8 Id[8];
@@ -100,7 +98,6 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
   }
 
   return new VPngTexture(LumpNum, Width, Height, SOffset, TOffset);
-  unguard;
 }
 
 
@@ -111,7 +108,6 @@ VTexture *VPngTexture::Create (VStream &Strm, int LumpNum) {
 //==========================================================================
 VPngTexture::VPngTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
   : VTexture()
-  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
@@ -128,12 +124,10 @@ VPngTexture::VPngTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, i
 //
 //==========================================================================
 VPngTexture::~VPngTexture () {
-  //guard(VPngTexture::~VPngTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -143,8 +137,6 @@ VPngTexture::~VPngTexture () {
 //
 //==========================================================================
 vuint8 *VPngTexture::GetPixels () {
-  guard(VPngTexture::GetPixels);
-
 #ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
@@ -164,7 +156,7 @@ vuint8 *VPngTexture::GetPixels () {
 
   Width = png->width;
   Height = png->height;
-  Format = TEXFMT_RGBA;
+  mFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
 
   vuint8 *dest = Pixels;
@@ -181,15 +173,13 @@ vuint8 *VPngTexture::GetPixels () {
   // free memory
   delete Strm;
 
-  Pixels = ConvertPixelsToShaded(Pixels);
+  ConvertPixelsToShaded();
   return Pixels;
 
 #else
   Sys_Error("GetPixels on dedicated server");
   return nullptr;
 #endif
-
-  unguard;
 }
 
 
@@ -199,12 +189,10 @@ vuint8 *VPngTexture::GetPixels () {
 //
 //==========================================================================
 void VPngTexture::Unload () {
-  guard(VPngTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }
 
 
@@ -215,8 +203,6 @@ void VPngTexture::Unload () {
 //==========================================================================
 #ifdef CLIENT
 void WritePNG(const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
-  guard(WritePNG);
-
 #if 0
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write png"); return; }
@@ -284,7 +270,5 @@ void WritePNG(const VStr &FileName, const void *Data, int Width, int Height, int
   delete Strm;
 
 #endif
-
-  unguard;
 }
 #endif

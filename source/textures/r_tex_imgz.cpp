@@ -33,7 +33,6 @@
 //
 //==========================================================================
 VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VImgzTexture::Create);
   if (Strm.TotalSize() < 24) return nullptr; // not enough space for IMGZ header
 
   vuint8 Id[4];
@@ -48,7 +47,6 @@ VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
 
   Strm << Width << Height << SOffset << TOffset;
   return new VImgzTexture(LumpNum, Width, Height, SOffset, TOffset);
-  unguard;
 }
 
 
@@ -59,11 +57,10 @@ VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
 //==========================================================================
 VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, int ATOffset)
   : VTexture()
-  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
-  Format = TEXFMT_8;
+  mFormat = TEXFMT_8;
   Width = AWidth;
   Height = AHeight;
   SOffset = ASOffset;
@@ -77,12 +74,10 @@ VImgzTexture::VImgzTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset,
 //
 //==========================================================================
 VImgzTexture::~VImgzTexture () {
-  //guard(VImgzTexture::~VImgzTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -92,13 +87,12 @@ VImgzTexture::~VImgzTexture () {
 //
 //==========================================================================
 vuint8 *VImgzTexture::GetPixels () {
-  guard(VImgzTexture::GetPixels);
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 
   VStream *Strm = W_CreateLumpReaderNum(SourceLump);
 
-  // read header.
+  // read header
   Strm->Seek(4); // skip magic
   Width = Streamer<vuint16>(*Strm);
   Height = Streamer<vuint16>(*Strm);
@@ -145,13 +139,8 @@ vuint8 *VImgzTexture::GetPixels () {
   }
   delete Strm;
 
-  if (origFormat != -1) {
-    check(origFormat == TEXFMT_8);
-    Format = origFormat;
-    Pixels = ConvertPixelsToShaded(Pixels);
-  }
+  ConvertPixelsToShaded();
   return Pixels;
-  unguard;
 }
 
 
@@ -161,10 +150,8 @@ vuint8 *VImgzTexture::GetPixels () {
 //
 //==========================================================================
 void VImgzTexture::Unload () {
-  guard(VImgzTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }

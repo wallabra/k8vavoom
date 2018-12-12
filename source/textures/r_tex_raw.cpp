@@ -33,7 +33,6 @@
 //
 //==========================================================================
 VTexture *VRawPicTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VRawPicTexture::Create);
   if (Strm.TotalSize() != 64000) return nullptr; // wrong size
 
   // do an extra check to see if it's a valid patch
@@ -68,7 +67,6 @@ VTexture *VRawPicTexture::Create (VStream &Strm, int LumpNum) {
   }
 
   return new VRawPicTexture(LumpNum, -1);
-  unguard;
 }
 
 
@@ -80,7 +78,6 @@ VTexture *VRawPicTexture::Create (VStream &Strm, int LumpNum) {
 VRawPicTexture::VRawPicTexture (int ALumpNum, int APalLumpNum)
   : VTexture()
   , PalLumpNum(APalLumpNum)
-  , Pixels(nullptr)
   , Palette(nullptr)
 {
   SourceLump = ALumpNum;
@@ -88,7 +85,7 @@ VRawPicTexture::VRawPicTexture (int ALumpNum, int APalLumpNum)
   Name = W_LumpName(SourceLump);
   Width = 320;
   Height = 200;
-  Format = (PalLumpNum >= 0 ? TEXFMT_8Pal : TEXFMT_8);
+  mFormat = (PalLumpNum >= 0 ? TEXFMT_8Pal : TEXFMT_8);
 }
 
 
@@ -98,7 +95,6 @@ VRawPicTexture::VRawPicTexture (int ALumpNum, int APalLumpNum)
 //
 //==========================================================================
 VRawPicTexture::~VRawPicTexture () {
-  //guard(VRawPicTexture::~VRawPicTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -107,7 +103,6 @@ VRawPicTexture::~VRawPicTexture () {
     delete[] Palette;
     Palette = nullptr;
   }
-  //unguard;
 }
 
 
@@ -117,7 +112,6 @@ VRawPicTexture::~VRawPicTexture () {
 //
 //==========================================================================
 vuint8 *VRawPicTexture::GetPixels () {
-  guard(VRawPicTexture::GetPixels);
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 
@@ -158,13 +152,8 @@ vuint8 *VRawPicTexture::GetPixels () {
   }
   delete Strm;
 
-  if (origFormat != -1) {
-    Format = origFormat;
-    Pixels = ConvertPixelsToShaded(Pixels);
-  }
-
+  ConvertPixelsToShaded();
   return Pixels;
-  unguard;
 }
 
 
@@ -174,9 +163,7 @@ vuint8 *VRawPicTexture::GetPixels () {
 //
 //==========================================================================
 rgba_t *VRawPicTexture::GetPalette () {
-  guardSlow(VRawPicTexture::GetPalette);
   return (Palette ? Palette : r_palette);
-  unguardSlow;
 }
 
 
@@ -186,7 +173,6 @@ rgba_t *VRawPicTexture::GetPalette () {
 //
 //==========================================================================
 void VRawPicTexture::Unload () {
-  guard(VRawPicTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -195,5 +181,4 @@ void VRawPicTexture::Unload () {
     delete[] Palette;
     Palette = nullptr;
   }
-  unguard;
 }

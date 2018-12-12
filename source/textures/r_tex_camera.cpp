@@ -34,13 +34,12 @@
 //==========================================================================
 VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   : VTexture()
-  , Pixels(nullptr)
   , bNeedsUpdate(true)
   , bUpdated(false)
 {
   Name = AName;
   Type = TEXTYPE_Wall;
-  Format = TEXFMT_RGBA;
+  mFormat = TEXFMT_RGBA;
   Width = AWidth;
   Height = AHeight;
   bIsCameraTexture = true;

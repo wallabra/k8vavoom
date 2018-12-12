@@ -55,7 +55,6 @@ static VCvarI jpeg_quality("jpeg_quality", "80", "Jpeg screenshot quality.", CVA
 //
 //==========================================================================
 VTexture *VJpegTexture::Create (VStream &Strm, int LumpNum) {
-  guard(VJpegTexture::Create);
   if (Strm.TotalSize() < 11) return nullptr; // file is too small
 
   vuint8 Buf[8];
@@ -95,7 +94,6 @@ VTexture *VJpegTexture::Create (VStream &Strm, int LumpNum) {
   vint32 Width = Buf[4]+(Buf[3]<<8);
   vint32 Height = Buf[2]+(Buf[1]<<8);
   return new VJpegTexture(LumpNum, Width, Height);
-  unguard;
 }
 
 
@@ -106,7 +104,6 @@ VTexture *VJpegTexture::Create (VStream &Strm, int LumpNum) {
 //==========================================================================
 VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight)
   : VTexture()
-  , Pixels(nullptr)
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
@@ -121,12 +118,10 @@ VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight)
 //
 //==========================================================================
 VJpegTexture::~VJpegTexture () {
-  //guard(VJpegTexture::~VJpegTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -137,10 +132,8 @@ VJpegTexture::~VJpegTexture () {
 //
 //==========================================================================
 static void my_init_source (j_decompress_ptr cinfo) {
-  guard(my_init_source);
   cinfo->src->next_input_byte = nullptr;
   cinfo->src->bytes_in_buffer = 0;
-  unguard;
 }
 
 
@@ -150,7 +143,6 @@ static void my_init_source (j_decompress_ptr cinfo) {
 //
 //==========================================================================
 static boolean my_fill_input_buffer (j_decompress_ptr cinfo) {
-  guard(my_fill_input_buffer);
   VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
   if (cdata->Strm->AtEnd()) {
     // insert a fake EOI marker
@@ -169,7 +161,6 @@ static boolean my_fill_input_buffer (j_decompress_ptr cinfo) {
   cinfo->src->next_input_byte = cdata->Buffer;
   cinfo->src->bytes_in_buffer = Count;
   return TRUE;
-  unguard;
 }
 
 
@@ -179,7 +170,6 @@ static boolean my_fill_input_buffer (j_decompress_ptr cinfo) {
 //
 //==========================================================================
 static void my_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
-  guard(my_skip_input_data);
   if (num_bytes <= 0) return;
   if ((long)cinfo->src->bytes_in_buffer > num_bytes) {
     cinfo->src->bytes_in_buffer -= num_bytes;
@@ -191,7 +181,6 @@ static void my_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
     cdata->Strm->Seek(Pos);
     cinfo->src->bytes_in_buffer = 0;
   }
-  unguard;
 }
 
 
@@ -210,10 +199,8 @@ static void my_term_source (j_decompress_ptr) {
 //
 //==========================================================================
 static void my_error_exit (j_common_ptr cinfo) {
-  guard(my_error_exit);
   (*cinfo->err->output_message)(cinfo);
   throw -1;
-  unguard;
 }
 
 
@@ -223,11 +210,9 @@ static void my_error_exit (j_common_ptr cinfo) {
 //
 //==========================================================================
 static void my_output_message (j_common_ptr cinfo) {
-  guard(my_output_message);
   char Msg[JMSG_LENGTH_MAX];
   cinfo->err->format_message(cinfo, Msg);
   GCon->Log(Msg);
-  unguard;
 }
 #endif
 
@@ -238,12 +223,11 @@ static void my_output_message (j_common_ptr cinfo) {
 //
 //==========================================================================
 vuint8 *VJpegTexture::GetPixels () {
-  guard(VJpegTexture::GetPixels);
 #ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
 
-  Format = TEXFMT_RGBA;
+  mFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
   memset(Pixels, 0, Width*Height*4);
 
@@ -348,15 +332,13 @@ vuint8 *VJpegTexture::GetPixels () {
   // free memory
   delete Strm;
 
-  Pixels = ConvertPixelsToShaded(Pixels);
+  ConvertPixelsToShaded();
   return Pixels;
 
 #else
   Sys_Error("ReadPixels on dedicated server");
   return nullptr;
 #endif
-
-  unguard;
 }
 
 
@@ -366,12 +348,10 @@ vuint8 *VJpegTexture::GetPixels () {
 //
 //==========================================================================
 void VJpegTexture::Unload () {
-  guard(VJpegTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }
 
 
@@ -384,11 +364,9 @@ void VJpegTexture::Unload () {
 //
 //==========================================================================
 static void my_init_destination (j_compress_ptr cinfo) {
-  guard(my_init_destination);
   VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
   cinfo->dest->next_output_byte = cdata->Buffer;
   cinfo->dest->free_in_buffer = 4096;
-  unguard;
 }
 
 
@@ -398,13 +376,11 @@ static void my_init_destination (j_compress_ptr cinfo) {
 //
 //==========================================================================
 static boolean my_empty_output_buffer (j_compress_ptr cinfo) {
-  guard(my_empty_output_buffer);
   VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
   cdata->Strm->Serialise(cdata->Buffer, 4096);
   cinfo->dest->next_output_byte = cdata->Buffer;
   cinfo->dest->free_in_buffer = 4096;
   return TRUE;
-  unguard;
 }
 
 
@@ -414,10 +390,8 @@ static boolean my_empty_output_buffer (j_compress_ptr cinfo) {
 //
 //==========================================================================
 static void my_term_destination (j_compress_ptr cinfo) {
-  guard(my_term_destination);
   VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
   cdata->Strm->Serialise(cdata->Buffer, 4096-cinfo->dest->free_in_buffer);
-  unguard;
 }
 
 
@@ -427,7 +401,6 @@ static void my_term_destination (j_compress_ptr cinfo) {
 //
 //==========================================================================
 void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
-  guard(WriteJPG);
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) {
     GCon->Log(NAME_Warning, "Couldn't write jpg");
@@ -499,8 +472,6 @@ void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, in
   jpeg_destroy_compress(&cinfo);
   Strm->Close();
   delete Strm;
-
-  unguard;
 }
 #endif
 

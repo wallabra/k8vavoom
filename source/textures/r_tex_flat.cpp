@@ -33,9 +33,7 @@
 //
 //==========================================================================
 VTexture *VFlatTexture::Create (VStream &, int LumpNum) {
-  guard(VFlatTexture::Create);
   return new VFlatTexture(LumpNum);
-  unguard;
 }
 
 
@@ -46,12 +44,10 @@ VTexture *VFlatTexture::Create (VStream &, int LumpNum) {
 //==========================================================================
 VFlatTexture::VFlatTexture (int InLumpNum)
   : VTexture()
-  , Pixels(nullptr)
 {
-  guard(VFlatTexture::VFlatTexture);
   SourceLump = InLumpNum;
   Type = TEXTYPE_Flat;
-  Format = TEXFMT_8;
+  mFormat = TEXFMT_8;
   Name = W_LumpName(SourceLump);
   Width = 64;
   // check for larger flats
@@ -62,7 +58,6 @@ VFlatTexture::VFlatTexture (int InLumpNum)
     SScale = Width/64;
     TScale = Width/64;
   }
-  unguard;
 }
 
 
@@ -72,12 +67,10 @@ VFlatTexture::VFlatTexture (int InLumpNum)
 //
 //==========================================================================
 VFlatTexture::~VFlatTexture () {
-  //guard(VFlatTexture::~VFlatTexture);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  //unguard;
 }
 
 
@@ -87,7 +80,6 @@ VFlatTexture::~VFlatTexture () {
 //
 //==========================================================================
 vuint8 *VFlatTexture::GetPixels () {
-  guard(VFlatTexture::GetPixels);
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 
@@ -108,14 +100,8 @@ vuint8 *VFlatTexture::GetPixels () {
     delete Strm;
   }
 
-  if (origFormat != -1) {
-    check(origFormat == TEXFMT_8);
-    Format = origFormat;
-    Pixels = ConvertPixelsToShaded(Pixels);
-  }
-
+  ConvertPixelsToShaded();
   return Pixels;
-  unguard;
 }
 
 
@@ -125,10 +111,8 @@ vuint8 *VFlatTexture::GetPixels () {
 //
 //==========================================================================
 void VFlatTexture::Unload () {
-  guard(VFlatTexture::Unload);
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
   }
-  unguard;
 }

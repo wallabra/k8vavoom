@@ -120,9 +120,8 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
 //
 //==========================================================================
 VTexture::VTexture ()
-  : origFormat(-1)
-  , Type(TEXTYPE_Any)
-  , Format(TEXFMT_8)
+  : Type(TEXTYPE_Any)
+  , mFormat(TEXFMT_8)
   , Name(NAME_None)
   , Width(0)
   , Height(0)
@@ -148,6 +147,7 @@ VTexture::VTexture ()
   , DriverData(nullptr)
   , DriverTranslated()
   , SavedDriverHandle(0)
+  , Pixels(nullptr)
   , Pixels8Bit(nullptr)
   , Pixels8BitA(nullptr)
   , HiResTexture(nullptr)
@@ -164,6 +164,7 @@ VTexture::VTexture ()
 //
 //==========================================================================
 VTexture::~VTexture () {
+  if (Pixels) { delete[] Pixels; Pixels = nullptr; }
   if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
   if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
   if (HiResTexture) { delete HiResTexture; HiResTexture = nullptr; }
@@ -199,7 +200,7 @@ vuint8 *VTexture::GetPixels8 () {
   guard(VTexture::GetPixels8);
   // if already have converted version, then just return it
   if (Pixels8Bit && Pixels8BitValid) return Pixels8Bit;
-  vuint8 *Pixels = GetPixels();
+  vuint8 *pixdata = GetPixels();
   if (Format == TEXFMT_8Pal) {
     // remap to game palette
     int NumPixels = Width*Height;
@@ -208,7 +209,7 @@ vuint8 *VTexture::GetPixels8 () {
     Remap[0] = 0;
     for (int i = 1; i < 256; ++i) Remap[i] = r_rgbtable[((Pal[i].r<<7)&0x7c00)+((Pal[i].g<<2)&0x3e0)+((Pal[i].b>>3)&0x1f)];
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
-    vuint8 *pSrc = Pixels;
+    vuint8 *pSrc = pixdata;
     vuint8 *pDst = Pixels8Bit;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) *pDst = Remap[*pSrc];
     Pixels8BitValid = true;
@@ -216,7 +217,7 @@ vuint8 *VTexture::GetPixels8 () {
   } else if (Format == TEXFMT_RGBA) {
     int NumPixels = Width*Height;
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
-    rgba_t *pSrc = (rgba_t *)Pixels;
+    rgba_t *pSrc = (rgba_t *)pixdata;
     vuint8 *pDst = Pixels8Bit;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       if (pSrc->a < 128) {
@@ -228,7 +229,7 @@ vuint8 *VTexture::GetPixels8 () {
     Pixels8BitValid = true;
     return Pixels8Bit;
   }
-  return Pixels;
+  return pixdata;
   unguard;
 }
 
@@ -337,8 +338,9 @@ VTexture *VTexture::GetHighResolutionTexture() {
 //  VTexture::FixupPalette
 //
 //==========================================================================
-void VTexture::FixupPalette (vuint8 *Pixels, rgba_t *Palette) {
-  guard(VTexture::FixupPalette);
+void VTexture::FixupPalette (rgba_t *Palette) {
+  if (Width < 1 || Height < 1) return;
+  check(Pixels);
   // find black colour for remaping
   int black = 0;
   int best_dist = 0x10000;
@@ -360,7 +362,6 @@ void VTexture::FixupPalette (vuint8 *Pixels, rgba_t *Palette) {
   Palette[0].g = 0;
   Palette[0].b = 0;
   Palette[0].a = 0;
-  unguard;
 }
 
 
@@ -741,24 +742,23 @@ rgba_t VTexture::getPixel (int x, int y) {
 //  VTexture::ConvertPixelsToRGBA
 //
 //==========================================================================
-vuint8 *VTexture::ConvertPixelsToRGBA (vuint8 *Pixels) {
-  check(Pixels);
-  check(Width > 0);
-  check(Height > 0);
-  if (Format == TEXFMT_RGBA) return Pixels; // nothing to do here
-  check(Format == TEXFMT_8 || Format == TEXFMT_8Pal);
-  rgba_t *newpic = new rgba_t[Width*Height];
-  rgba_t *dest = newpic;
-  const rgba_t *pal = (Format == TEXFMT_8Pal ? GetPalette() : r_palette);
-  const vuint8 *pic = Pixels;
-  if (!pal) pal = r_palette;
-  for (int f = Width*Height; f > 0; --f, ++pic, ++dest) {
-    *dest = pal[*pic];
-    dest->a = (*pic ? 255 : 0); // just in case
+void VTexture::ConvertPixelsToRGBA () {
+  if (Width > 0 && Height > 0 && mFormat != TEXFMT_RGBA) {
+    check(Pixels);
+    check(mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal);
+    rgba_t *newpic = new rgba_t[Width*Height];
+    rgba_t *dest = newpic;
+    const rgba_t *pal = (mFormat == TEXFMT_8Pal ? GetPalette() : r_palette);
+    const vuint8 *pic = Pixels;
+    if (!pal) pal = r_palette;
+    for (int f = Width*Height; f > 0; --f, ++pic, ++dest) {
+      *dest = pal[*pic];
+      dest->a = (*pic ? 255 : 0); // just in case
+    }
+    delete[] Pixels;
+    Pixels = (vuint8 *)newpic;
   }
-  delete[] Pixels;
-  Format = TEXFMT_RGBA;
-  return (vuint8 *)newpic;
+  mFormat = TEXFMT_RGBA;
 }
 
 
@@ -767,14 +767,12 @@ vuint8 *VTexture::ConvertPixelsToRGBA (vuint8 *Pixels) {
 //  VTexture::ConvertPixelsToShaded
 //
 //==========================================================================
-vuint8 *VTexture::ConvertPixelsToShaded (vuint8 *Pixels) {
-  if (shadeColor == -1) return Pixels; // nothing to do
-  Pixels = ConvertPixelsToRGBA(Pixels);
-  if (shadeColor >= 0) Pixels = shadePixelsRGBA(Pixels, shadeColor); else Pixels = stencilPixelsRGBA(Pixels, shadeColor&0xffffff);
-  // no more conversions; just in case
-  shadeColor = -1;
-  origFormat = -1;
-  return Pixels;
+void VTexture::ConvertPixelsToShaded () {
+  if (shadeColor == -1) return; // nothing to do
+  int sc = shadeColor;
+  shadeColor = -1; // no more conversions, and return original format info
+  ConvertPixelsToRGBA();
+  if (sc >= 0) shadePixelsRGBA(sc); else stencilPixelsRGBA(sc&0xffffff);
 }
 
 
@@ -785,15 +783,14 @@ vuint8 *VTexture::ConvertPixelsToShaded (vuint8 *Pixels) {
 //  use image as alpha-map
 //
 //==========================================================================
-vuint8 *VTexture::shadePixelsRGBA (vuint8 *Pixels, int shadeColor) {
+void VTexture::shadePixelsRGBA (int shadeColor) {
+  if (Width < 1 || Height < 1) return;
   check(Pixels);
-  check(Width > 0);
-  check(Height > 0);
   check(shadeColor >= 0);
-  check(Format == TEXFMT_RGBA);
-  vuint8 shadeR = (shadeColor>>16)&0xff;
-  vuint8 shadeG = (shadeColor>>8)&0xff;
-  vuint8 shadeB = (shadeColor)&0xff;
+  check(mFormat == TEXFMT_RGBA);
+  const vuint8 shadeR = (shadeColor>>16)&0xff;
+  const vuint8 shadeG = (shadeColor>>8)&0xff;
+  const vuint8 shadeB = (shadeColor)&0xff;
   rgba_t *pic = (rgba_t *)Pixels;
   for (int f = Width*Height; f > 0; --f, ++pic) {
     // use red as intensity
@@ -810,7 +807,6 @@ vuint8 *VTexture::shadePixelsRGBA (vuint8 *Pixels, int shadeColor) {
     pic->b = shadeB;
     pic->a = intensity;
   }
-  return Pixels;
 }
 
 
@@ -819,15 +815,14 @@ vuint8 *VTexture::shadePixelsRGBA (vuint8 *Pixels, int shadeColor) {
 //  VTexture::stencilPixelsRGBA
 //
 //==========================================================================
-vuint8 *VTexture::stencilPixelsRGBA (vuint8 *Pixels, int shadeColor) {
+void VTexture::stencilPixelsRGBA (int shadeColor) {
+  if (Width < 1 || Height < 1) return;
   check(Pixels);
-  check(Width > 0);
-  check(Height > 0);
   check(shadeColor >= 0);
-  check(Format == TEXFMT_RGBA);
-  float shadeR = (shadeColor>>16)&0xff;
-  float shadeG = (shadeColor>>8)&0xff;
-  float shadeB = (shadeColor)&0xff;
+  check(mFormat == TEXFMT_RGBA);
+  const float shadeR = (shadeColor>>16)&0xff;
+  const float shadeG = (shadeColor>>8)&0xff;
+  const float shadeB = (shadeColor)&0xff;
   rgba_t *pic = (rgba_t *)Pixels;
   for (int f = Width*Height; f > 0; --f, ++pic) {
     float intensity = colorIntensity(pic->r, pic->g, pic->b)/255.0f;
@@ -835,7 +830,6 @@ vuint8 *VTexture::stencilPixelsRGBA (vuint8 *Pixels, int shadeColor) {
     pic->g = clampToByte(intensity*shadeG);
     pic->b = clampToByte(intensity*shadeB);
   }
-  return Pixels;
 }
 
 
@@ -847,13 +841,8 @@ vuint8 *VTexture::stencilPixelsRGBA (vuint8 *Pixels, int shadeColor) {
 void VTexture::Shade (int shade) {
   if (shadeColor == shade) return;
   check(shadeColor == -1);
-  check(origFormat == -1);
-  // save original format
-  origFormat = Format;
   // remember shading
   shadeColor = shade;
-  // new format is RGBA
-  Format = TEXFMT_RGBA;
 }
 
 
@@ -932,7 +921,7 @@ void VTexture::checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height) {
 //==========================================================================
 VDummyTexture::VDummyTexture () {
   Type = TEXTYPE_Null;
-  Format = TEXFMT_8;
+  mFormat = TEXFMT_8;
 }
 
 
