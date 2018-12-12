@@ -229,6 +229,7 @@ vuint8 *VTexture::GetPixels8 () {
     Pixels8BitValid = true;
     return Pixels8Bit;
   }
+  check(Format == TEXFMT_8);
   return pixdata;
   unguard;
 }

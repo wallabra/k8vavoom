@@ -366,12 +366,25 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 //
 //==========================================================================
 void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal) {
-  rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
-  for (int i = 0; i < Width*Height; ++i) {
-    if (Data[i]) NewData[i] = Pal[Data[i]];
+  // this is single-threaded, so why not?
+  int w = (Width > 0 ? Width : 1);
+  int h = (Height > 0 ? Height : 1);
+  static rgba_t *databuf = nullptr;
+  static size_t databufSize = 0;
+  if (databufSize < (size_t)(w*h*4)) {
+    databuf = (rgba_t *)Z_Realloc(databuf, w*h*4);
+    databufSize = (size_t)(w*h*4);
   }
-  UploadTexture(Width, Height, NewData);
-  Z_Free(NewData);
+  rgba_t *NewData = databuf;
+  if (Width > 0 && Height > 0) {
+    for (int i = 0; i < Width*Height; ++i, ++Data, ++NewData) {
+      *NewData = (*Data ? Pal[*Data] : rgba_t::Transparent());
+    }
+  } else {
+    memset((void *)NewData, 0, w*h*4);
+  }
+  UploadTexture(w, h, databuf);
+  //Z_Free(NewData);
 }
 
 
@@ -381,13 +394,27 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
 //
 //==========================================================================
 void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal) {
-  rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
-  for (int i = 0; i < Width*Height; ++i, ++Data) {
-    NewData[i] = Pal[Data->idx];
-    NewData[i].a = Data->a;
+  // this is single-threaded, so why not?
+  int w = (Width > 0 ? Width : 1);
+  int h = (Height > 0 ? Height : 1);
+  static rgba_t *databuf = nullptr;
+  static size_t databufSize = 0;
+  if (databufSize < (size_t)(w*h*4)) {
+    databuf = (rgba_t *)Z_Realloc(databuf, w*h*4);
+    databufSize = (size_t)(w*h*4);
   }
-  UploadTexture(Width, Height, NewData);
-  Z_Free(NewData);
+  rgba_t *NewData = databuf;
+  //rgba_t *NewData = (rgba_t *)Z_Calloc(Width*Height*4);
+  if (Width > 0 && Height > 0) {
+    for (int i = 0; i < Width*Height; ++i, ++Data, ++NewData) {
+      *NewData = Pal[Data->idx];
+      NewData->a = Data->a;
+    }
+  } else {
+    memset((void *)NewData, 0, w*h*4);
+  }
+  UploadTexture(w, h, databuf);
+  //Z_Free(NewData);
 }
 
 

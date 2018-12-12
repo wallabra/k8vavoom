@@ -57,6 +57,7 @@ struct __attribute__((__packed__)) rgba_t {
   vuint8 r, g, b, a;
   rgba_t () : r(0), g(0), b(0), a(0) {}
   rgba_t (vuint8 ar, vuint8 ag, vuint8 ab, vuint8 aa=255) : r(ar), g(ag), b(ab), a(aa) {}
+  static inline rgba_t Transparent () { return rgba_t(0, 0, 0, 0); }
 };
 
 struct __attribute__((__packed__)) pala_t {
