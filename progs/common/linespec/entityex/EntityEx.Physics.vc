@@ -129,7 +129,7 @@ bool Physics (float DeltaTime) {
   float CummX = 0.0;
   float CummY = 0.0;
 
-  if (Sector->AffectorData && bColideWithWorld && !bNoSector) {
+  if (Sector && Sector->AffectorData && bColideWithWorld && !bNoSector) {
     // killough 3/7/98: Carry things on floor
     // killough 3/20/98: use new sector list which reflects true members
     // killough 3/27/98: fix carrier bug
@@ -179,13 +179,13 @@ bool Physics (float DeltaTime) {
   if (bFloatBob) {
     if (bSpecial) {
       // floating item bobbing motion (special1 is height)
-      if (Sector->bHasExtrafloors) {
+      if (Sector && Sector->bHasExtrafloors) {
         // make sure FloorZ is from bottom region
         Origin.z = ONFLOORZ;
         LinkToWorld();
       }
       FloatBobPhase += DeltaTime;
-      Origin.z = GetPlanePointZ(ref Sector->floor, Origin)+Special1f+Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
+      if (Sector) Origin.z = GetPlanePointZ(ref Sector->floor, Origin)+Special1f+Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
     } else {
       // floating bobbing motion for monsters
       float savedz = Origin.z;
@@ -278,7 +278,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   FixNormalVelocity();
   scope(exit) ClampNormalVelocity();
 
-  if (bWindThrust) {
+  if (bWindThrust && Sector) {
     special = Sector->special&SECSPEC_BASE_MASK;
     switch (special) {
       case SECSPEC_WindEastSlow:
@@ -423,7 +423,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.
   // Make objects fall to their own weight.
-  if (Origin.z > FloorZ && !bNoGravity) {
+  if (Origin.z > FloorZ && !bNoGravity && Sector) {
     float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
     if (grav.isinf) grav = 1000;
     float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
@@ -658,10 +658,8 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
 //
 //==========================================================================
 final bool HitFloor () {
-  float vdot;
-
   // trigger hit floor sector actions
-  if (Sector->ActionList && GetPlanePointZ(ref Sector->floor, Origin) == FloorZ) {
+  if (Sector && Sector->ActionList && GetPlanePointZ(ref Sector->floor, Origin) == FloorZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFloor);
   }
 
@@ -690,12 +688,11 @@ final bool HitFloor () {
       return false;
     }
     HitFloorType();
-    //!print("FLOOR HIT (1)! '%s'", NameToStr(GetClassName(Class)));
     ExplodeMissile(none);
     return false;
   }
 
-  vdot = DotProduct(Velocity, Floor->normal);
+  float vdot = DotProduct(Velocity, Floor->normal);
   if (bMonster) {
     // blasted mobj falling
     if (vdot < -23.0*35.0) MonsterFallingDamage();
@@ -740,12 +737,8 @@ final bool HitFloor () {
 //
 //==========================================================================
 final bool HitCeiling () {
-  float vdot;
-
-  if (!Sector) return false;
-
-  // trigger hit ceiling sector actions.
-  if (Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) == CeilingZ) {
+  // trigger hit ceiling sector actions
+  if (Sector && Sector->ActionList && GetPlanePointZ(ref Sector->ceiling, Origin) == CeilingZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitCeiling);
   }
   Origin.z = CeilingZ-Height;
@@ -762,11 +755,11 @@ final bool HitCeiling () {
       else Destroy();
       return false;
     }
-    //!print("CEILING HIT (1)! '%s'", NameToStr(GetClassName(Class)));
     ExplodeMissile(none);
     return false;
   }
-  vdot = DotProduct(Velocity, Ceiling->normal);
+
+  float vdot = DotProduct(Velocity, Ceiling->normal);
 
   if (vdot < 0.0) {
     TVec Vel = vdot*Ceiling->normal;
@@ -995,7 +988,7 @@ final void FallingDamage () {
   int damage;
   float dist;
 
-  if (Sector->bNoFallingDamage) return;
+  if (Sector && Sector->bNoFallingDamage) return;
 
   float mom = fabs(Velocity.z);
 
@@ -1045,7 +1038,7 @@ final void MonsterFallingDamage () {
   float mom;
 
   if (!Level.bMonsterFallingDamage) return;
-  if (Sector->bNoFallingDamage) return;
+  if (Sector && Sector->bNoFallingDamage) return;
 
   mom = fabs(Velocity.z)/35.0;
   if (mom > 35.0) {
@@ -1108,7 +1101,7 @@ final bool HitFloorType () {
   VTerrainInfo *TInfo;
   VSplashInfo *SInfo;
 
-  if (FloorZ != GetPlanePointZ(ref Sector->floor, Origin)) {
+  if (!Sector || FloorZ != GetPlanePointZ(ref Sector->floor, Origin)) {
     // don't splash if landing on the edge above water/lava/etc....
     return false;
   }
@@ -1217,7 +1210,7 @@ final override void ApplyFriction () {
     if (Velocity.x > 0.25*35.0 || Velocity.x < -0.25*35.0 ||
         Velocity.y > 0.25*35.0 || Velocity.y < -0.25*35.0)
     {
-      if (FloorZ > GetPlanePointZ(ref Sector->floor, Origin) || DropOffZ != FloorZ) {
+      if (Sector && FloorZ > GetPlanePointZ(ref Sector->floor, Origin) || DropOffZ != FloorZ) {
         return;
       }
     }
