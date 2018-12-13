@@ -256,26 +256,26 @@ public:
   };
 
   struct trans_sprite_t {
-    TVec Verts[4];
+    TVec Verts[4]; // only for sprites
     union {
-      surface_t *surf;
-      VEntity *Ent;
+      surface_t *surf; // for masked polys and sprites
+      VEntity *Ent; // only for alias models
     };
     int prio; // for things
-    int lump;
-    TVec normal;
+    int lump; // basically, has any sense only for sprites, has no sense for alias models
+    TVec normal; // not set for alias models
     union {
-      float pdist;
-      float TimeFrac;
+      float pdist; // masked polys and sprites
+      float TimeFrac; // alias models
     };
-    TVec saxis;
-    TVec taxis;
-    TVec texorg;
+    TVec saxis; // masked polys and sprites
+    TVec taxis; // masked polys and sprites
+    TVec texorg; // masked polys and sprites
     float Alpha;
     bool Additive;
-    int translation;
-    int type;
-    float dist;
+    int translation; // masked polys and sprites
+    int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
+    float dist; // for soriting
     vuint32 light;
     vuint32 Fade;
   };
@@ -455,9 +455,11 @@ protected:
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
 
   // things
-  void DrawTranslucentPoly (surface_t*, TVec*, int, int, float, bool, int,
-    bool, vuint32, vuint32, const TVec&, float, const TVec&, const TVec&,
-    const TVec&, int priority=0);
+  void DrawTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,
+                            float Alpha, bool Additive, int translation,
+                            bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
+                            const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
+                            bool useSprOrigin=false, const TVec &sprOrigin=TVec());
   void RenderSprite (VEntity*, vuint32, vuint32, float, bool);
   void RenderTranslucentAliasModel (VEntity*, vuint32, vuint32, float, bool, float);
   bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);

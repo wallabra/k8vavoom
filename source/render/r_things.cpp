@@ -87,6 +87,9 @@ VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Arch
 
 static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
 
+static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
+static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
+
 
 //==========================================================================
 //
@@ -95,8 +98,9 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 //==========================================================================
 void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
-  bool type, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
-  const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority)
+  bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
+  const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
+  bool useSprOrigin, const TVec &sprOrigin)
 {
   guard(VRenderLevelShared::DrawTranslucentPoly);
 
@@ -108,13 +112,18 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   }
 
   TVec mid(0, 0, 0);
-  for (int i = 0; i < count; ++i) mid += sv[i];
-  mid /= count;
-  float dist = fabs(DotProduct(mid-vieworg, viewforward));
+  if (useSprOrigin) {
+    mid = sprOrigin;
+  } else {
+    for (int i = 0; i < count; ++i) mid += sv[i];
+    mid /= count;
+  }
+
+  const float dist = fabs(DotProduct(mid-vieworg, viewforward));
   //float dist = Length(mid-vieworg);
 
   trans_sprite_t &spr = trans_sprites[traspUsed++];
-  if (type) memcpy(spr.Verts, sv, sizeof(TVec)*4);
+  if (isSprite) memcpy(spr.Verts, sv, sizeof(TVec)*4);
   spr.dist = dist;
   spr.lump = lump;
   spr.normal = normal;
@@ -126,7 +135,7 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
   spr.Alpha = Alpha;
   spr.Additive = Additive;
   spr.translation = translation;
-  spr.type = type;
+  spr.type = (isSprite ? 1 : 0);
   spr.light = light;
   spr.Fade = Fade;
   spr.prio = priority;
@@ -150,7 +159,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
     trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
 
-  float dist = fabs(DotProduct(mobj->Origin-vieworg, viewforward));
+  const float dist = fabs(DotProduct(mobj->Origin-vieworg, viewforward));
 
   trans_sprite_t &spr = trans_sprites[traspUsed++];
   spr.Ent = mobj;
@@ -161,6 +170,8 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
   spr.dist = dist;
   spr.type = 2;
   spr.TimeFrac = TimeFrac;
+  spr.lump = -1; // has no sense
+  spr.prio = 0; // normal priority
 
   unguard;
 }
@@ -210,7 +221,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // cross product will be between two nearly parallel vectors and
       // starts to approach an undefined state, so we don't draw if the two
       // vectors are less than 1 degree apart
-      tvec = Normalise(sprorigin - vieworg);
+      tvec = Normalise(sprorigin-vieworg);
       dot = tvec.z; // same as DotProduct (tvec, sprup), because sprup is 0, 0, 1
       if (dot > 0.999848 || dot < -0.999848) return; // cos(1 degree) = 0.999848
       sprup = TVec(0, 0, 1);
@@ -362,15 +373,16 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
     DrawTranslucentPoly(nullptr, sv, 4, lump, Alpha, Additive,
-      thing->Translation, true, light, Fade, -sprforward, DotProduct(
-      sprorigin, -sprforward), (flip ? -sprright : sprright) /
-      thing->ScaleX, -sprup / thing->ScaleY, (flip ? sv[2] : sv[1]), priority);
+      thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
+      DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
+      /*,true, sprorigin*/);
   } else {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
-      (flip ? -sprright : sprright) / thing->ScaleX,
-      -sprup / thing->ScaleY, flip ? sv[2] : sv[1]);
+      (flip ? -sprright : sprright)/thing->ScaleX,
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]));
   }
   unguard;
 }
@@ -511,11 +523,15 @@ extern "C" {
     if (a == b) return 0;
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
+    bool didDistanceCheck = false;
     if (ta->Alpha < 1.0f && tb->Alpha < 1.0f) {
+      // both translucent, sort by distance
       const float d0 = ta->dist;
       const float d1 = tb->dist;
       if (d1 < d0) return -1;
       if (d1 > d0) return 1;
+      // same distance, do other checks
+      didDistanceCheck = true;
     }
     if (ta->Alpha >= 1.0f) {
       if (tb->Alpha < 1.0f) return -1; // a is not translucent, b is translucent; a first
@@ -523,11 +539,24 @@ extern "C" {
     if (tb->Alpha >= 1.0f) {
       if (ta->Alpha < 1.0f) return 1; // a is translucent, b is not translucent; b first
     }
+    // first masked polys, then sprites, then alias models
+    if (ta->type < tb->type) return -1;
+    if (ta->type > tb->type) return 1;
+    // distance again
+    if (!didDistanceCheck) {
+      const float d0 = (ta->type == 1 ? ta->pdist : ta->dist);
+      const float d1 = (tb->type == 1 ? tb->pdist : tb->dist);
+      if (d1 < d0) return -1;
+      if (d1 > d0) return 1;
+    }
+    // priority check
     if (ta->prio < tb->prio) return 1;
     if (ta->prio > tb->prio) return -1;
-    // sort by lump number, why not
-    if (ta->lump < tb->lump) return -1;
-    if (ta->lump > tb->lump) return 1;
+    // sort sprites by lump number, why not
+    if (ta->type == 1) {
+      if (ta->lump < tb->lump) return -1;
+      if (ta->lump > tb->lump) return 1;
+    }
     return 0;
   }
 }
@@ -546,36 +575,57 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   // sort 'em
   timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
 
-#define MAX_POFS  (15)
+#define MAX_POFS  (10)
   bool pofsEnabled = false;
   int pofs = 0;
+  float lastpdist = -1e12f; // for sprites: use polyofs for the same dist
+  bool firstSprite = true;
 
   // render 'em
   for (int f = traspFirst; f < traspUsed; ++f) {
     trans_sprite_t &spr = trans_sprites[f];
     if (spr.type == 2) {
+      // alias model
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
     } else if (spr.type) {
-      if (spr.Alpha >= 1.0f && r_sprite_use_pofs) {
-        if (!pofsEnabled) {
-          glEnable(GL_POLYGON_OFFSET_FILL);
-          glPolygonOffset(-((float)pofs)/(float)MAX_POFS, -4);
-          pofsEnabled = true;
+      // sprite
+      if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
+        lastpdist = spr.pdist;
+        if (!firstSprite) {
+          if (!pofsEnabled) {
+            // switch to next pofs
+            //if (++pofs == MAX_POFS) pofs = 0;
+            ++pofs;
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            //glPolygonOffset(((float)pofs)/(float)MAX_POFS, -4);
+            glPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
+            pofsEnabled = true;
+          }
+        } else {
+          firstSprite = false;
         }
       } else {
+        lastpdist = spr.pdist;
         if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+        // reset pofs
+        pofs = 0;
       }
+      /*
+      GLint odf = GL_LEQUAL;
+      glGetIntegerv(GL_DEPTH_FUNC, &odf);
+      //glDepthFunc(((VOpenGLDrawer *)Drawer)->CanUseRevZ() ? GL_GREATER : GL_LESS);
+      glDepthFunc(GL_GREATER);
+      */
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
                                 spr.Alpha, spr.Additive, GetTranslation(spr.translation),
                                 ColourMap, spr.light, spr.Fade, spr.normal, spr.pdist,
                                 spr.saxis, spr.taxis, spr.texorg);
-      if (spr.Alpha >= 1.0f && r_sprite_use_pofs) {
-        check(pofsEnabled);
-        if (++pofs == MAX_POFS) pofs = 0;
-        glPolygonOffset(-((float)pofs)/15.0f, -4);
-      }
+      /*
+      glDepthFunc(odf);
+      */
     } else {
+      // masked polygon
       check(spr.surf);
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
