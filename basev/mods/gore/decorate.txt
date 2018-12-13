@@ -114,7 +114,7 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
-  +KillOnUnarchive
+  //+KillOnUnarchive
   Mass 1
 
   States {
@@ -172,7 +172,7 @@ Actor K8Gore_FlyingBloodLevel3 : K8Gore_FlyingBlood {
   Scale 1.0
   Speed 5 //7
   Mass 1
-  +KillOnUnarchive
+  //+KillOnUnarchive
 }
 
 
@@ -679,7 +679,7 @@ Actor K8Gore_BloodDripingFromCeiling : K8Gore_TinyBlood {
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
 
   States {
     Spawn:
@@ -701,7 +701,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool : K8Gore_TinyBlood {
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
   scale 0.3
 
   States {
@@ -998,7 +998,7 @@ Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
-  +KillOnUnarchive
+  //+KillOnUnarchive
   Mass 1
 
   States {
@@ -1056,7 +1056,7 @@ Actor K8Gore_FlyingBloodLevel3Transient : K8Gore_FlyingBloodTransient {
   Scale 1.0
   Speed 5 //7
   Mass 1
-  +KillOnUnarchive
+  //+KillOnUnarchive
 }
 
 
@@ -1561,7 +1561,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient : K8Gore_TinyBloodTransient {
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
 
   States {
     Spawn:
@@ -1583,7 +1583,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient : K8Gore_TinyBloodTransient {
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
   scale 0.3
 
   States {
@@ -1885,7 +1885,7 @@ Actor K8Gore_FlyingBloodGreen /*: K8Gore_BloodBase*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
-  +KillOnUnarchive
+  //+KillOnUnarchive
   Mass 1
 
   States {
@@ -1943,7 +1943,7 @@ Actor K8Gore_FlyingBloodLevel3Green : K8Gore_FlyingBloodGreen {
   Scale 1.0
   Speed 5 //7
   Mass 1
-  +KillOnUnarchive
+  //+KillOnUnarchive
 }
 
 
@@ -2450,7 +2450,7 @@ Actor K8Gore_BloodDripingFromCeilingGreen : K8Gore_TinyBloodGreen {
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
 
   States {
     Spawn:
@@ -2472,7 +2472,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolGreen : K8Gore_TinyBloodGreen {
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
   scale 0.3
 
   States {
@@ -2769,7 +2769,7 @@ Actor K8Gore_FlyingBloodTransient_Green /*: K8Gore_BloodBaseTransient*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
-  +KillOnUnarchive
+  //+KillOnUnarchive
   Mass 1
 
   States {
@@ -2827,7 +2827,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Green : K8Gore_FlyingBloodTransient_Gree
   Scale 1.0
   Speed 5 //7
   Mass 1
-  +KillOnUnarchive
+  //+KillOnUnarchive
 }
 
 
@@ -3332,7 +3332,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Green : K8Gore_TinyBloodTransient_
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
 
   States {
     Spawn:
@@ -3354,7 +3354,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Green : K8Gore_TinyBloodTransi
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
   scale 0.3
 
   States {
@@ -3656,7 +3656,7 @@ Actor K8Gore_FlyingBloodBlue /*: K8Gore_BloodBase*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
-  +KillOnUnarchive
+  //+KillOnUnarchive
   Mass 1
 
   States {
@@ -3714,7 +3714,7 @@ Actor K8Gore_FlyingBloodLevel3Blue : K8Gore_FlyingBloodBlue {
   Scale 1.0
   Speed 5 //7
   Mass 1
-  +KillOnUnarchive
+  //+KillOnUnarchive
 }
 
 
@@ -4221,7 +4221,7 @@ Actor K8Gore_BloodDripingFromCeilingBlue : K8Gore_TinyBloodBlue {
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
 
   States {
     Spawn:
@@ -4243,7 +4243,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolBlue : K8Gore_TinyBloodBlue {
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
   scale 0.3
 
   States {
@@ -4540,7 +4540,7 @@ Actor K8Gore_FlyingBloodTransient_Blue /*: K8Gore_BloodBaseTransient*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
-  +KillOnUnarchive
+  //+KillOnUnarchive
   Mass 1
 
   States {
@@ -4598,7 +4598,7 @@ Actor K8Gore_FlyingBloodLevel3Transient_Blue : K8Gore_FlyingBloodTransient_Blue 
   Scale 1.0
   Speed 5 //7
   Mass 1
-  +KillOnUnarchive
+  //+KillOnUnarchive
 }
 
 
@@ -5103,7 +5103,7 @@ Actor K8Gore_BloodDripingFromCeilingTransient_Blue : K8Gore_TinyBloodTransient_B
   //BounceFactor 0.1
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
 
   States {
     Spawn:
@@ -5125,7 +5125,7 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Blue : K8Gore_TinyBloodTransie
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
-  +KillOnUnarchive
+  //+KillOnUnarchive
   scale 0.3
 
   States {
