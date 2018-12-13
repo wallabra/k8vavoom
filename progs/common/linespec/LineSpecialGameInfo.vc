@@ -168,9 +168,9 @@ override void Init () {
   // how mush damage should be inflicted to Arch-Vile?
   CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill?", CVAR_ARCHIVE);
-  CreateCvar('k8HSHeadKillBloodCount', "8", "How much blood to spray on instakill?", CVAR_ARCHIVE);
-  CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill?", CVAR_ARCHIVE);
+  CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill/headshot?", CVAR_ARCHIVE);
+  CreateCvar('k8HSHeadKillBloodCount', "5", "How much blood to spray on instakill/headshot?", CVAR_ARCHIVE);
+  CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill/headkill?", CVAR_ARCHIVE);
 
   CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
