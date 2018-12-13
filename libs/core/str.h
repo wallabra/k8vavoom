@@ -23,7 +23,7 @@
 //**
 //**************************************************************************
 //
-//  Dynamic string class.
+// dynamic string class
 //
 //**************************************************************************
 
@@ -39,7 +39,7 @@ private:
   struct Store {
     int length;
     int alloted;
-    int rc; // has no meaning for slices
+    int rc; // negative number means "immutable string"
     // actual string data starts after this struct; and this is where `data` points
   };
 
@@ -53,18 +53,20 @@ private:
   inline const char *getData () const { return dataptr; }
 
   inline void incref () const {
-    if (dataptr) ++store()->rc;
+    if (dataptr && store()->rc >= 0) ++store()->rc;
   }
 
   // WARNING! may free `data` contents!
   // this also clears `data`
   inline void decref () {
     if (dataptr) {
-      if (--store()->rc == 0) {
-        #ifdef VAVOOM_TEST_VSTR
-        fprintf(stderr, "VStr: freeing %p\n", dataptr);
-        #endif
-        Z_Free(store());
+      if (store()->rc > 0) {
+        if (--store()->rc == 0) {
+          #ifdef VAVOOM_TEST_VSTR
+          fprintf(stderr, "VStr: freeing %p\n", dataptr);
+          #endif
+          Z_Free(store());
+        }
       }
       dataptr = nullptr;
     }
@@ -126,8 +128,8 @@ public:
   }
   inline void SetLength (int len, char fillChar=' ') { setLength(len, fillChar); }
 
-  inline int getRC () const { return (dataptr ? store()->rc : 0); }
-  inline int getReserved () const { return (dataptr ? store()->alloted : 0); }
+  //inline int getRC () const { return (dataptr ? store()->rc : 0); }
+  inline int getCapacity () const { return (dataptr ? store()->alloted : 0); }
 
   // returns number of characters in a UTF-8 string
   inline int Utf8Length () const { return Utf8Length(getCStr(), length()); }
@@ -137,16 +139,17 @@ public:
   // returns C string
   inline const char *operator * () const { return (dataptr ? getData() : ""); }
   inline const char *getCStr () const { return (dataptr ? getData() : ""); }
-
-  // checks if string is empty
-  inline bool IsEmpty () const { return !dataptr; }
-  inline bool isEmpty () const { return !dataptr; }
-  inline bool IsNotEmpty () const { return !!dataptr; }
-  inline bool isNotEmpty () const { return !!dataptr; }
+  inline char *getMutableCStr () { makeMutable(); return (dataptr ? getData() : nullptr); }
 
   // character accessors
-  inline char operator [] (int idx) const { return getData()[idx]; }
-  inline char *GetMutableCharPointer (int idx) { makeMutable(); return &dataptr[idx]; }
+  inline char operator [] (int idx) const { return (dataptr && idx >= 0 && idx < length() ? getData()[idx] : 0); }
+  inline char *GetMutableCharPointer (int idx) { makeMutable(); return (dataptr ? &dataptr[idx] : nullptr); }
+
+  // checks if string is empty
+  inline bool IsEmpty () const { return (length() == 0); }
+  inline bool isEmpty () const { return (length() == 0); }
+  inline bool IsNotEmpty () const { return (length() != 0); }
+  inline bool isNotEmpty () const { return (length() != 0); }
 
   VStr mid (int start, int len) const;
   VStr left (int len) const;
@@ -191,7 +194,7 @@ public:
     return *this;
   }
 
-  VStr &operator += (char inchr) {
+  inline VStr &operator += (char inchr) {
     int l = length();
     resize(l+1);
     dataptr[l] = inchr;
@@ -254,6 +257,11 @@ public:
   bool startsWithNoCase (const VStr &s) const;
   bool endsWithNoCase (const char *s) const;
   bool endsWithNoCase (const VStr &s) const;
+
+  static bool startsWith (const char *str, const char *part);
+  static bool endsWith (const char *str, const char *part);
+  static bool startsWithNoCase (const char *str, const char *part);
+  static bool endsWithNoCase (const char *str, const char *part);
 
   VStr ToLower () const;
   VStr ToUpper () const;

@@ -304,9 +304,12 @@ void VStr::chopRight (int len) {
 void VStr::makeImmutable () {
   guard(VStr::makeImmutable);
   if (!dataptr) return; // nothing to do
+  /*
   if (store()->rc >= 0 && store()->rc < 0xffff) {
     store()->rc = store()->rc+0xffff; // wow, big rc count, so it will be copied on mutation
   }
+  */
+  store()->rc = -0x0fffffff; // any negative means "immutable"
   unguard;
 }
 
@@ -327,7 +330,7 @@ void VStr::makeMutable () {
   dataptr = ((char *)newdata)+sizeof(Store);
   // copy old data
   memcpy(dataptr, olddata, olen+1);
-  --oldstore->rc; // decrement old refcounter
+  if (oldstore->rc > 0) --oldstore->rc; // decrement old refcounter
 #ifdef VAVOOM_TEST_VSTR
   fprintf(stderr, "VStr: makeMutable: old=%p(%d); new=%p(%d)\n", oldstore+1, oldstore->rc, dataptr, newdata->rc);
 #endif
@@ -435,7 +438,7 @@ void VStr::resize (int newlen) {
     ns->alloted = alloclen;
     ns->rc = 1;
     // decrement old rc
-    --store()->rc;
+    if (store()->rc > 0) --store()->rc;
     #ifdef VAVOOM_TEST_VSTR
     fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", dataptr, store()->rc, ns+1, ns->rc);
     #endif
@@ -481,7 +484,7 @@ bool VStr::StartsWith (const char *s) const {
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
-  return (NCmp(getData(), s, l) == 0);
+  return (memcmp(getData(), s, l) == 0);
   unguard;
 }
 
@@ -490,7 +493,7 @@ bool VStr::StartsWith (const VStr &s) const {
   guard(VStr::StartsWith);
   int l = s.length();
   if (l > length()) return false;
-  return (NCmp(getData(), *s, l) == 0);
+  return (memcmp(getData(), *s, l) == 0);
   unguard;
 }
 
@@ -500,7 +503,7 @@ bool VStr::EndsWith (const char *s) const {
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
-  return (NCmp(getData()+length()-l, s, l) == 0);
+  return (memcmp(getData()+length()-l, s, l) == 0);
   unguard;
 }
 
@@ -509,7 +512,7 @@ bool VStr::EndsWith (const VStr &s) const {
   guard(VStr::EndsWith);
   int l = s.length();
   if (l > length()) return false;
-  return (NCmp(getData()+length()-l, *s, l) == 0);
+  return (memcmp(getData()+length()-l, *s, l) == 0);
   unguard;
 }
 
@@ -549,6 +552,46 @@ bool VStr::endsWithNoCase (const VStr &s) const {
   if (l > length()) return false;
   return (NICmp(getData()+length()-l, *s, l) == 0);
   unguard;
+}
+
+
+bool VStr::startsWith (const char *str, const char *part) {
+  if (!str || !str[0]) return false;
+  if (!part || !part[0]) return false;
+  int slen = VStr::length(str);
+  int plen = VStr::length(part);
+  if (plen > slen) return false;
+  return (memcmp(str, part, plen) == 0);
+}
+
+
+bool VStr::endsWith (const char *str, const char *part) {
+  if (!str || !str[0]) return false;
+  if (!part || !part[0]) return false;
+  int slen = VStr::length(str);
+  int plen = VStr::length(part);
+  if (plen > slen) return false;
+  return (memcmp(str+slen-plen, part, plen) == 0);
+}
+
+
+bool VStr::startsWithNoCase (const char *str, const char *part) {
+  if (!str || !str[0]) return false;
+  if (!part || !part[0]) return false;
+  int slen = VStr::length(str);
+  int plen = VStr::length(part);
+  if (plen > slen) return false;
+  return (NICmp(str, part, plen) == 0);
+}
+
+
+bool VStr::endsWithNoCase (const char *str, const char *part) {
+  if (!str || !str[0]) return false;
+  if (!part || !part[0]) return false;
+  int slen = VStr::length(str);
+  int plen = VStr::length(part);
+  if (plen > slen) return false;
+  return (NICmp(str+slen-plen, part, plen) == 0);
 }
 
 
