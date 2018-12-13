@@ -71,6 +71,7 @@ class Actor extends Thinker
   alias CheckClass = CheckClass;
 
   alias GetIntFieldByName = GetIntFieldByName;
+  alias GetUID = _GetUID;
   alias GetSelf = _GetSelf;
   alias GetSSR = _GetSSR;
 

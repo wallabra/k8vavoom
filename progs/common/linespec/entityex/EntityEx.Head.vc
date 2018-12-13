@@ -772,6 +772,7 @@ final float GetAnglesPitch () { return Angles.pitch; }
 final float GetAnglesRoll () { return Angles.roll; }
 */
 
+final int _GetUID () { return ObjectUniqueId; }
 final Object _GetSelf () { return self; }
 final Object _GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }
 
