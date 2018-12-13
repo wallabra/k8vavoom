@@ -1,6 +1,6 @@
 user int k8GoreOpt_CeilBlood = 1;
 user int k8GoreOpt_BloodAmount = 3;
-user int k8GoreOpt_MaxBloodEntities = 6000;
+user int k8GoreOpt_MaxBloodEntities = 4000;
 user int k8GoreOpt_BloodDripSound = 1;
-user int k8GoreOpt_HeadshotSound = 1;
+user int k8GoreOpt_HeadshotSound = 0;
 user int k8GoreOpt_LimiterDebug = 0;
