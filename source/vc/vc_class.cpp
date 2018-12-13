@@ -192,7 +192,6 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
 //
 //==========================================================================
 VClass::~VClass() {
-  //guard(VClass::~VClass);
   delete GameExpr; GameExpr = nullptr;
   delete MobjInfoExpr; MobjInfoExpr = nullptr;
   delete ScriptIdExpr; ScriptIdExpr = nullptr;
@@ -209,7 +208,7 @@ VClass::~VClass() {
   }
 #endif
 
-  if (!GObjInitialised) return;
+  if (!GObjInitialised || GObjShuttingDown) return;
 
   // unlink from classes list
   if (GClasses == this) {
@@ -225,7 +224,6 @@ VClass::~VClass() {
 #endif
     }
   }
-  //unguard;
 }
 
 

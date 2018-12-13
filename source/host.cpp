@@ -711,7 +711,7 @@ void Host_Shutdown () {
   //k8:no need to do this:SAFE_SHUTDOWN(GLanguage.FreeData, ())
   //k8:no need to do this:SAFE_SHUTDOWN(ShutdownDecorate, ())
 
-  //k8:no need to do this:SAFE_SHUTDOWN(VObject::StaticExit, ())
+  SAFE_SHUTDOWN(VObject::StaticExit, ())
   //k8:no need to do this:SAFE_SHUTDOWN(VName::StaticExit, ())
   //SAFE_SHUTDOWN(Z_Shutdown, ())
   //GCon->Log("VaVoom: shutdown complete");

@@ -85,6 +85,7 @@ private:
 
 public:
   static bool GObjInitialised;
+  static bool GObjShuttingDown;
   static TArray<VMemberBase *> GMembers;
 
   static TArray<VStr> GPackagePath;
@@ -121,8 +122,9 @@ public:
 
   static void DumpNameMaps ();
 
-  static void StaticInit ();
-  //static void StaticExit ();
+  static void StaticInit (); // don't call directly!
+  static void StaticExit (); // don't call directly!
+
   static void StaticAddPackagePath (const char *);
   static VPackage *StaticLoadPackage (VName, const TLocation &);
   static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None/*, bool caseSensitive=true*/);

@@ -32,7 +32,8 @@ bool VMemberBase::optDeprecatedLaxStates = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-bool VMemberBase::GObjInitialised;
+bool VMemberBase::GObjInitialised = false;
+bool VMemberBase::GObjShuttingDown = false;
 TArray<VMemberBase *> VMemberBase::GMembers;
 //static VMemberBase *GMembersHash[4096];
 static TMapNC<VName, VMemberBase *> gMembersMap;
@@ -119,7 +120,10 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
 //
 //==========================================================================
 VMemberBase::~VMemberBase () {
-  RemoveFromNameHash(this);
+  // you should never delete members
+  // but they can be deleted on shutdown, and at that time
+  // there is no reason to do this anyway
+  if (!GObjShuttingDown) RemoveFromNameHash(this);
 }
 
 
@@ -349,9 +353,13 @@ void VMemberBase::Shutdown () {
 //
 //  VMemberBase::StaticInit
 //
+//  called from `VObject::StaticInit()`
+//
 //==========================================================================
 void VMemberBase::StaticInit () {
   guard(VMemberBase::StaticInit);
+  check(!GObjInitialised);
+  check(!GObjShuttingDown);
   // add native classes to the list
   for (VClass *C = GClasses; C; C = C->LinkNext) {
     check(C->MemberIndex == -666);
@@ -378,9 +386,12 @@ void VMemberBase::StaticInit () {
 //
 //  VMemberBase::StaticExit
 //
+//  called from `VObject::StaticInit()`
+//
 //==========================================================================
-/*
 void VMemberBase::StaticExit () {
+  check(!GObjShuttingDown);
+  /*
   for (int i = 0; i < GMembers.Num(); ++i) {
     if (!GMembers[i]) continue;
     if (GMembers[i]->MemberType != MEMBER_Class || (((VClass *)GMembers[i])->ObjectFlags&CLASSOF_Native) == 0) {
@@ -399,9 +410,10 @@ void VMemberBase::StaticExit () {
   VClass::GSpriteNames.Clear();
   gMembersMap.clear();
   gMembersMapLC.clear();
+  */
   GObjInitialised = false;
+  GObjShuttingDown = true;
 }
-*/
 
 
 //==========================================================================

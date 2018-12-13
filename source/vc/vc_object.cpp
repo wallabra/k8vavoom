@@ -361,16 +361,16 @@ void VObject::StaticInit () {
 //  VObject::StaticExit
 //
 //==========================================================================
-/*
 void VObject::StaticExit () {
+  /*
   for (int i = 0; i < GObjObjects.length(); ++i) if (GObjObjects[i]) GObjObjects[i]->ConditionalDestroy();
   CollectGarbage();
   GObjObjects.Clear();
   gObjAvailable.clear();
   //GObjInitialised = false;
+  */
   VMemberBase::StaticExit();
 }
-*/
 
 
 //==========================================================================

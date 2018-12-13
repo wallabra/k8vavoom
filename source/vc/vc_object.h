@@ -171,7 +171,8 @@ public:
 
   // system-wide functions
   static void StaticInit ();
-  //static void StaticExit ();
+  // call this before exiting from `main()`, so VC can skip some destructor duties
+  static void StaticExit ();
 
   static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN);
 
