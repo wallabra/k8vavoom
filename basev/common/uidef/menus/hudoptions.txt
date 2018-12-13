@@ -90,15 +90,9 @@ menudef HUDOptions {
 
   header "Crosshair";
 
-  option enum {
+  option crosshair {
     title = "Crosshair";
     cvar = crosshair;
-    list {
-      "None",
-      "Cross",
-      "Angle",
-      "Dot"
-    }
   }
 
   option slider {

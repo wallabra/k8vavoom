@@ -45,6 +45,7 @@ import 'linespec';
 #include "wgchoice/MenuSList.vc"
 #include "wgchoice/MenuControlKey.vc"
 #include "wgchoice/MenuInputLine.vc"
+#include "wgchoice/MenuCrosshairChoice.vc"
 
 #include "wgslotsl/MenuSaveSlot.vc"
 #include "wgslotsl/MenuChoiceLoadSlot.vc"

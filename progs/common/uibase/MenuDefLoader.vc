@@ -314,6 +314,7 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("submenubig") || par.Check("submenu_big")) res = SpawnObject(MenuDefOptionSubMenuBig);
   else if (par.Check("mod_controls")) res = SpawnObject(MenuDefOptionControls);
   else if (par.Check("console")) res = SpawnObject(MenuDefOptionConsole);
+  else if (par.Check("crosshair")) res = SpawnObject(MenuDefOptionCrosshair);
   else par.ScriptError("invalid option type '%s'", par.String);
   // condition?
   if (par.Check("[")) {
@@ -807,5 +808,19 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   opt.Activated = delegate void (Object Sender) { CmdBuf_AddText("ToggleConsole\n"); };
+  return opt;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionCrosshair : MenuDefOptionBase;
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto opt = MenuCrosshairChoice(menu.NewChild(MenuCrosshairChoice));
+  opt.Text = title;
+  opt.cvar = cvar;
+  if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
+  if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   return opt;
 }

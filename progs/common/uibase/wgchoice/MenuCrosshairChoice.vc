@@ -1,0 +1,178 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+class MenuCrosshairChoice : MenuChoice;
+
+int TextColour = CR_RED;
+int TextColourFocus = CR_YELLOW;
+string Text;
+bool bLeftAlign;
+name cvar;
+
+final int value {
+  get {
+    if (cvar) return GetCvar(cvar);
+    return 0;
+  }
+  set(value) {
+    if (cvar) SetCvar(cvar, value);
+  }
+}
+
+
+//==========================================================================
+//
+//  isValidValue
+//
+//==========================================================================
+final int loadPic (int v) {
+  if (v <= 0) return 0;
+  if (v > 9) return 0;
+  name pn = name(va("CROSHAI%d", v));
+  int pic = R_RegisterPic(pn);
+  if (pic > 0) return pic;
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  isValidValue
+//
+//==========================================================================
+final bool isValidValue (int v) {
+  if (v < 0) return false;
+  if (v == 0) return true;
+  if (v > 9) return false;
+  return !!loadPic(v);
+}
+
+
+//==========================================================================
+//
+//  SetOrigin
+//
+//==========================================================================
+override void SetOrigin (int x, int y) {
+  if (bLeftAlign) {
+    SetPos(x, y);
+  } else {
+    CursorXOffs = /*200*/CursorXOffsHR;
+    SetPos(x-CursorXOffs, y);
+  }
+}
+
+
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
+override void OnDraw () {
+  int Col = (IsFocus() ? TextColourFocus : TextColour);
+  if (bLeftAlign) {
+    SetTextAlign(hleft, vtop);
+    DrawText(0, 3, Text, Col);
+  } else {
+    SetTextAlign(hright, vtop);
+    DrawText(CursorXOffs, 3, Text, Col);
+  }
+  int xx = (bLeftAlign ? TextWidth(Text)+8 : CursorXOffs+10)+4;
+  SetTextAlign(hleft, vtop);
+  int pic = loadPic(value);
+  if (pic) {
+    DrawPic(xx, 5, pic);
+  }
+}
+
+
+//==========================================================================
+//
+//  OnKeyDown
+//
+//==========================================================================
+override bool OnKeyDown (int key) {
+  int idx = value;
+  switch (key) {
+    case K_LEFTARROW:
+    case K_MOUSE2:
+    case K_MWHEELUP:
+      if (idx > 0) {
+        --idx;
+        if (isValidValue(idx)) {
+          value = idx;
+          LocalSound('menu/change');
+        }
+      }
+      return true;
+    case K_RIGHTARROW:
+    case K_ENTER:
+    case K_PADENTER:
+    case K_MOUSE1:
+    case K_MWHEELDOWN:
+      if (idx < 9) {
+        ++idx;
+        if (isValidValue(idx)) {
+          value = idx;
+          LocalSound('menu/change');
+          break;
+        }
+      }
+      return true;
+  }
+  return false;
+}
+
+
+override void OnMouseClick (int X, int Y) {
+  SetFocus();
+  int idx = value;
+  if (idx < 9) {
+    ++idx;
+    if (isValidValue(idx)) {
+      value = idx;
+      LocalSound('menu/change');
+    }
+  }
+}
+
+
+override void OnRMouseClick (int X, int Y) {
+  SetFocus();
+  int idx = value;
+  if (idx > 0) {
+    --idx;
+    if (isValidValue(idx)) {
+      value = idx;
+      LocalSound('menu/change');
+    }
+  }
+}
+
+
+defaultproperties {
+  Width = 360;
+  Height = 14;
+  cvarSession = '';
+}
