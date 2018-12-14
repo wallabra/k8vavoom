@@ -111,7 +111,8 @@ void SwitchAutoNormal () {
 //
 //==========================================================================
 override bool OnKeyDown (int key) {
-  switch (key) {
+  int nkey = ConvertBoundKey(key);
+  switch (nkey) {
     case K_TAB: SwitchAutoNormal(); return true;
   }
   return ::OnKeyDown(key);

@@ -552,6 +552,51 @@ static void DrawFullScreenPic (int Handle) {
 }
 
 
+#ifdef VCC_STANDALONE_EXECUTOR
+#else
+static int ConvertBoundKey (int key) {
+  if (key <= 0) return key;
+
+  int key1, key2;
+
+  IN_GetBindingKeys("+Forward", &key1, &key2);
+  if (key == key1 || key == key2) return K_UPARROW;
+
+  IN_GetBindingKeys("+Backward", &key1, &key2);
+  if (key == key1 || key == key2) return K_DOWNARROW;
+
+  IN_GetBindingKeys("+Left", &key1, &key2);
+  if (key == key1 || key == key2) return K_LEFTARROW;
+
+  IN_GetBindingKeys("+MoveLeft", &key1, &key2);
+  if (key == key1 || key == key2) return K_LEFTARROW;
+
+  IN_GetBindingKeys("+Right", &key1, &key2);
+  if (key == key1 || key == key2) return K_RIGHTARROW;
+
+  IN_GetBindingKeys("+MoveRight", &key1, &key2);
+  if (key == key1 || key == key2) return K_RIGHTARROW;
+
+  IN_GetBindingKeys("+Attack", &key1, &key2);
+  if (key == key1 || key == key2) return K_ENTER;
+
+  IN_GetBindingKeys("+Use", &key1, &key2);
+  if (key == key1 || key == key2) return K_ENTER;
+
+  // convert numpad arrows
+  switch (key) {
+    case K_PAD8: return K_UPARROW;
+    case K_PAD2: return K_DOWNARROW;
+    case K_PAD4: return K_LEFTARROW;
+    case K_PAD6: return K_RIGHTARROW;
+    case K_PADENTER: return K_ENTER;
+  }
+
+  return key;
+}
+#endif
+
+
 defaultproperties {
   ScaleX = 1.0;
   ScaleY = 1.0;

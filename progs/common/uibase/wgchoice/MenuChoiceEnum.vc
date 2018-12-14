@@ -173,6 +173,7 @@ override void OnDraw () {
 //==========================================================================
 override bool OnKeyDown (int key) {
   if (vallist.length == 0) return false;
+  key = ConvertBoundKey(key);
   int idx;
   switch (key) {
     case K_LEFTARROW:

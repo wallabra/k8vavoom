@@ -111,6 +111,7 @@ override void CreateChoices () {
 //
 //==========================================================================
 override bool OnKeyDown (int key) {
+  key = ConvertBoundKey(key);
   switch (key) {
     case K_ESCAPE:
     case K_BACKSPACE:

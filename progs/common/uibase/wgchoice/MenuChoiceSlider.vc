@@ -183,8 +183,9 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnKeyDown (int key) {
+  int nkey = ConvertBoundKey(key);
   float newValue;
-  switch (key) {
+  switch (nkey) {
     case K_LEFTARROW:
     case K_MWHEELDOWN:
       newValue = Value-ValueDelta;

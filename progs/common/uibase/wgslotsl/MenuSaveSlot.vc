@@ -142,6 +142,8 @@ override bool OnKeyDown (int key) {
     return true;
   }
 
+  key = ConvertBoundKey(key);
+
   if (key == K_DELETE || key == K_PADDOT) {
     if (Status) {
       if (!waitingDeletion) {

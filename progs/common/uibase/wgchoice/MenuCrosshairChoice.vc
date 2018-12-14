@@ -114,6 +114,7 @@ override void OnDraw () {
 //==========================================================================
 override bool OnKeyDown (int key) {
   int idx = value;
+  key = ConvertBoundKey(key);
   switch (key) {
     case K_LEFTARROW:
     case K_MOUSE2:

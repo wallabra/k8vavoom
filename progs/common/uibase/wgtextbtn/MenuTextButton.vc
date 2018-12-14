@@ -72,6 +72,7 @@ void ActivateEvent () {
 
 
 override bool OnKeyDown (int key) {
+  key = ConvertBoundKey(key);
   if (key == K_ENTER || key == K_PADENTER || key == K_MOUSE1 || key == K_JOY1) {
     ActivateEvent();
     LocalSound(ActivateSound);

@@ -165,7 +165,8 @@ override void OnDraw () {
 //
 //==========================================================================
 override bool OnKeyDown (int key) {
-  switch (key) {
+  int nkey = ConvertBoundKey(key);
+  switch (nkey) {
     case K_ESCAPE:
     case K_MOUSE2:
       CmdBuf_AddText("Impulse 200\n");
