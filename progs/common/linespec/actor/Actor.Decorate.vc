@@ -761,7 +761,8 @@ final void common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
       globmatch("*lava*", tname, caseSensitive:false) ||
       globmatch("*blood*", tname, caseSensitive:false) ||
       globmatch("*slime*", tname, caseSensitive:false) ||
-      globmatch("*slimage*", tname, caseSensitive:false))
+      globmatch("*slimage*", tname, caseSensitive:false) ||
+      globmatch("f_watr*", tname, caseSensitive:false)) // Strife water
   {
     DoJump(label);
   }
