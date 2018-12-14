@@ -22,65 +22,38 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_CLASS(V, GameInfo)
 
 VGameInfo *GGameInfo;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VGameInfo::VGameInfo
 //
 //==========================================================================
-
-VGameInfo::VGameInfo()
-: PlayerClasses(E_NoInit)
-{
+VGameInfo::VGameInfo () : PlayerClasses(E_NoInit) {
 }
+
 
 //==========================================================================
 //
 //  VGameInfo::IsPaused
 //
 //==========================================================================
-
-bool VGameInfo::IsPaused()
-{
+bool VGameInfo::IsPaused () {
   guard(VGameInfo::IsPaused);
-  if (NetMode <= NM_TitleMap)
-  {
-    return false;
-  }
+  if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
-  //  In single player pause game if in menu or console.
-  return (Flags & GIF_Paused) || (NetMode == NM_Standalone &&
-    (MN_Active() || C_Active()));
+  // in single player pause game if in menu or console
+  return (Flags&GIF_Paused) || (NetMode == NM_Standalone && (MN_Active() || C_Active()));
 #endif
-  return !!(Flags & GIF_Paused);
+  return !!(Flags&GIF_Paused);
   unguard;
 }
 
@@ -95,56 +68,42 @@ IMPLEMENT_FUNCTION(VGameInfo, get_isPaused) {
 //  COMMAND ClearPlayerClasses
 //
 //==========================================================================
-
-COMMAND(ClearPlayerClasses)
-{
+COMMAND(ClearPlayerClasses) {
   guard(COMMAND ClearPlayerClasses);
-  if (!ParsingKeyConf)
-  {
-    return;
-  }
-
+  if (!ParsingKeyConf) return;
   GGameInfo->PlayerClasses.Clear();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND AddPlayerClass
 //
 //==========================================================================
-
-COMMAND(AddPlayerClass)
-{
+COMMAND(AddPlayerClass) {
   guard(COMMAND AddPlayerClass);
-  if (!ParsingKeyConf)
-  {
-    return;
-  }
+  if (!ParsingKeyConf) return;
 
-  if (Args.Num() < 2)
-  {
-    GCon->Logf("Player class name missing");
+  if (Args.Num() < 2) {
+    GCon->Logf(NAME_Warning, "AddPlayerClass: Player class name missing");
     return;
   }
 
   VClass *Class = VClass::FindClassNoCase(*Args[1]);
-  if (!Class)
-  {
-    GCon->Logf("No such class %s", *Args[1]);
+  if (!Class) {
+    GCon->Logf(NAME_Warning, "AddPlayerClass: No such class `%s`", *Args[1]);
     return;
   }
 
   VClass *PPClass = VClass::FindClass("PlayerPawn");
-  if (!PPClass)
-  {
-    GCon->Logf("Can't find PlayerPawn class");
+  if (!PPClass) {
+    GCon->Logf(NAME_Warning, "AddPlayerClass: Can't find PlayerPawn class");
     return;
   }
 
-  if (!Class->IsChildOf(PPClass))
-  {
-    GCon->Logf("%s is not a player pawn class", *Args[1]);
+  if (!Class->IsChildOf(PPClass)) {
+    GCon->Logf(NAME_Warning, "AddPlayerClass: '%s' is not a player pawn class", *Args[1]);
     return;
   }
 
@@ -152,40 +111,37 @@ COMMAND(AddPlayerClass)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  COMMAND WeaponSection
 //
 //==========================================================================
-
-COMMAND(WeaponSection)
-{
+COMMAND(WeaponSection) {
   guard(COMMAND WeaponSection);
   GGameInfo->eventCmdWeaponSection(Args.Num() > 1 ? Args[1] : "");
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND SetSlot
 //
 //==========================================================================
-
-COMMAND(SetSlot)
-{
+COMMAND(SetSlot) {
   guard(COMMAND SetSlot);
   GGameInfo->eventCmdSetSlot(&Args);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND AddSlotDefault
 //
 //==========================================================================
-
-COMMAND(AddSlotDefault)
-{
+COMMAND(AddSlotDefault) {
   guard(COMMAND AddSlotDefault);
   GGameInfo->eventCmdAddSlotDefault(&Args);
   unguard;
