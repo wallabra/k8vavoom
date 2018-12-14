@@ -7111,32 +7111,32 @@ final class!EntityEx GetClassFromID(int ID)
   return none;
 }
 
+
 //==========================================================================
 //
 //  CheckForNeededItem
 //
 //==========================================================================
-
-final int CheckForNeededItem(EntityEx A, int ID, int Amount)
-{
-  int i;
-
-  if (!ID)
-  {
-    return -1;
+final int CheckForNeededItem (EntityEx A, int ID, int Amount) {
+  if (!ID) return -1;
+  // Strife hack: item ID 168 (Coin) with amount 0 is always present
+  if (ID == 168 && Amount == 0) {
+    dprint("CheckForNeededItem: want 0 coins, success");
+    return 0;
   }
-  //  Get class ID.
+  // get class ID
   class!EntityEx CID = GetClassFromID(ID);
-  //  Check inventory items.
-  if (class!Inventory(CID) && class!Inventory(CID).default.bInvBar)
-  {
+  dprint("CheckForNeededItem: A=%C; CID=%C (%s); Amount=%d", A, CID, ID, Amount);
+  // check inventory items
+  if (class!Inventory(CID) && class!Inventory(CID).default.bInvBar) {
     Inventory Item = A.FindInventory(class!Inventory(CID));
-    return !Item || Item.Amount < Amount ? -2 : 0;
+    dprint ("  checked in inventory for %C; found %C (amount=%d); res=%d", CID, Item, (Item ? Item.Amount : -666), (!Item || Item.Amount < Amount ? -2 : 0));
+    return (!Item || Item.Amount < Amount ? -2 : 0);
   }
-  //  Check keys.
+  // check keys
   Inventory Item = A.FindInventory(class!Inventory(CID));
-  if (Item)
-  {
+  if (Item) {
+    dprint ("  checked in inventory for KEY %C; found %C (amount=%d)", CID, Item, (Item ? Item.Amount : -666));
     return -1;
   }
   return -2;

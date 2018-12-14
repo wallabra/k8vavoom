@@ -138,6 +138,7 @@ defaultproperties
 {
   ConversationID = 168;
   PickupMessage = "$txt_coin";
+  //Amount = 0; //k8: default number of coins (this is invalid, though)
   MaxAmount = 0x7fffffff;
   IconName = 'i_coin';
   bDropped = true;

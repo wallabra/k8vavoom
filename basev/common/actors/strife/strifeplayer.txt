@@ -13,6 +13,9 @@ actor StrifePlayer : PlayerPawn
   Player.ColorRange 128, 143
   Player.DisplayName "Rebel"
   Player.StartItem "PunchDagger"
+  // k8: don't do this, 'cause 0 coins in inventory looks ugly
+  //     i added a hack to conversation checker instead
+  //Player.StartItem "Coin" //k8: give player dummy Coin item -- some dialogs checks for 0 coins
   CrushPainSound "misc/pcrush"
   Player.WeaponSlot 1, PunchDagger
   Player.WeaponSlot 2, StrifeCrossbow2, StrifeCrossbow
