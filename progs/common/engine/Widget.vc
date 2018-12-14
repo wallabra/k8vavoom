@@ -583,6 +583,9 @@ static int ConvertBoundKey (int key) {
   IN_GetBindingKeys("+Use", &key1, &key2);
   if (key == key1 || key == key2) return K_ENTER;
 
+  IN_GetBindingKeys("+Strafe", &key1, &key2);
+  if (key == key1 || key == key2) return K_ESCAPE;
+
   // convert numpad arrows
   switch (key) {
     case K_PAD8: return K_UPARROW;
