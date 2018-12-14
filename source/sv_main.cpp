@@ -813,7 +813,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
 
   if (spawn_thinkers) {
     // create level info
-    GLevelInfo = (VLevelInfo*)GLevel->SpawnThinker(GGameInfo->LevelInfoClass);
+    GLevelInfo = (VLevelInfo *)GLevel->SpawnThinker(GGameInfo->LevelInfoClass);
     GLevelInfo->Level = GLevelInfo;
     GLevelInfo->Game = GGameInfo;
     GLevelInfo->World = GGameInfo->WorldInfo;

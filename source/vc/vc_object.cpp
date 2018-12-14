@@ -390,7 +390,9 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 
   // copy values from the default object
   check(AClass->Defaults);
+  //GCon->Logf(NAME_Dev, "000: INITIALIZING fields of `%s`...", AClass->GetName());
   AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
+  //GCon->Logf(NAME_Dev, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
 
   // find native class
   VClass *NativeClass = AClass;

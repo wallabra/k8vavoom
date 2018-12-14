@@ -215,10 +215,7 @@ private:
   }
 
 public:
-  VBasePlayer()
-  : UserInfo(E_NoInit)
-  , PlayerName(E_NoInit)
-  {}
+  VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
 
   const int GetEffectiveSpriteIndex (int idx) const { return DispSpriteFrame[idx]&0x00ffffff; }
   const int GetEffectiveSpriteFrame (int idx) const { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }

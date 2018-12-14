@@ -3031,11 +3031,14 @@ void VLevel::LoadACScripts (int Lump) {
   guard(VLevel::LoadACScripts);
   Acs = new VAcsLevel(this);
 
+  GCon->Logf(NAME_Dev, "ACS: BEHAVIOR lump: %d", Lump);
+
   // load level's BEHAVIOR lump if it has one
   if (Lump >= 0 && W_LumpLength(Lump) > 0) Acs->LoadObject(Lump);
 
   // load ACS helper scripts if needed (for Strife)
   if (GGameInfo->AcsHelper != NAME_None) {
+    GCon->Logf(NAME_Dev, "ACS: looking for helper script from '%s'", *GGameInfo->AcsHelper);
     int hlump = W_GetNumForName(GGameInfo->AcsHelper, WADNS_ACSLibrary);
     if (hlump >= 0) {
       GCon->Logf(NAME_Dev, "ACS: loading helper script from '%s'", *W_FullLumpName(hlump));

@@ -132,7 +132,7 @@ struct VPainChanceInfo {
 // ////////////////////////////////////////////////////////////////////////// //
 class VEntity : public VThinker {
   DECLARE_CLASS(VEntity, VThinker, 0)
-  NO_DEFAULT_CONSTRUCTOR(VEntity)
+  //NO_DEFAULT_CONSTRUCTOR(VEntity)
 
   // info for drawing: position
   TVec Origin;
@@ -271,6 +271,9 @@ class VEntity : public VThinker {
   VEntity *Owner;
 
   VName DecalName;
+
+protected:
+  VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 
 public:
   static int FIndex_OnMapSpawn;

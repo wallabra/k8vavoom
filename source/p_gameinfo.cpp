@@ -37,7 +37,11 @@ VGameInfo *GGameInfo;
 //  VGameInfo::VGameInfo
 //
 //==========================================================================
-VGameInfo::VGameInfo () : PlayerClasses(E_NoInit) {
+VGameInfo::VGameInfo ()
+  : AcsHelper(E_NoInit)
+  , GenericConScript(E_NoInit)
+  , PlayerClasses(E_NoInit)
+{
 }
 
 

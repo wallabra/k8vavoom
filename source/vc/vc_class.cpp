@@ -2196,13 +2196,18 @@ void VClass::CreateDefaults () {
 void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
   guard(VClass::CopyObject);
   // copy parent class fields
-  if (GetSuperClass()) GetSuperClass()->CopyObject(Src, Dst);
-  // copy fields
-  //fprintf(stderr, "COPYING fields of `%s`...\n", GetName());
-  for (VField *F = Fields; F; F = F->Next) {
-    //fprintf(stderr, "  COPYING field '%s' of `%s`...\n", F->GetName(), GetName());
-    VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
+  if (GetSuperClass()) {
+    //GCon->Logf(NAME_Dev, "COPYING SUPER fields of `%s` (super is '%s')...", GetName(), GetSuperClass()->GetName());
+    GetSuperClass()->CopyObject(Src, Dst);
   }
+  // copy fields
+  //GCon->Logf(NAME_Dev, "COPYING fields of `%s`...", GetName());
+  for (VField *F = Fields; F; F = F->Next) {
+    //GCon->Logf(NAME_Dev, "  COPYING field '%s' of `%s`... (ofs=%d, type=%s)", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
+    VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
+    //if (VStr::Cmp(F->GetName(), "AcsHelper") == 0) GCon->Logf(NAME_Dev, "    '%s' : '%s'", **((VName *)(Src+F->Ofs)), **((VName *)(Dst+F->Ofs)));
+  }
+  //GCon->Logf(NAME_Dev, "DONE COPYING fields of `%s`...", GetName());
   unguardf(("(%s)", GetName()));
 }
 

@@ -28,20 +28,20 @@ class VPlayerReplicationInfo : public VThinker
   DECLARE_CLASS(VPlayerReplicationInfo, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VPlayerReplicationInfo);
 
-  //  Player we are replicating
+  // player we are replicating
   VBasePlayer *Player;
-  vint32        PlayerNum;
+  vint32 PlayerNum;
 
-  VStr        PlayerName;
-  VStr        UserInfo;
+  VStr PlayerName;
+  VStr UserInfo;
 
-  vuint8        TranslStart;
-  vuint8        TranslEnd;
-  vint32        Colour;
+  vuint8 TranslStart;
+  vuint8 TranslEnd;
+  vint32 Colour;
 
-  vint32        Frags;
-  vint32        Deaths;
-  vint32        KillCount;
-  vint32        ItemCount;
-  vint32        SecretCount;
+  vint32 Frags;
+  vint32 Deaths;
+  vint32 KillCount;
+  vint32 ItemCount;
+  vint32 SecretCount;
 };
