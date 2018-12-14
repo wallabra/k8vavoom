@@ -69,20 +69,20 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
     if (SpeechNum > ClGame.GLevel.LevelSpeeches.length) return;
     Speech = &ClGame.GLevel.LevelSpeeches[SpeechNum-1];
   }
-  if (Speech->BackPic) BackPic = R_RegisterPic(Speech->BackPic);
+  if (Speech.BackPic) BackPic = R_RegisterPic(Speech.BackPic);
 
   // get name of the speaker
-       if (Speech->Name) SpeakerName = Speech->Name;
+       if (Speech.Name) SpeakerName = Speech.Name;
   else if (Speaker) SpeakerName = Speaker.StrifeName;
   if (!SpeakerName) SpeakerName = "Person";
 
-  SpeechText = Speech->Text;
+  SpeechText = Speech.Text;
 
   // check for random conversation text
   if (stricmp(SpeechText[0..6], "RANDOM") == 0) {
-    string TempStr = SpeechText[7..$];
+    string tempStr = SpeechText[7..$];
     foreach (auto i; 0..RandomConversations.length) {
-      if (stricmp(TempStr, RandomConversations[i].Name) == 0) {
+      if (stricmp(tempStr, RandomConversations[i].Name) == 0) {
         SpeechText = RandomConversations[i].Texts[P_Random()%RandomConversations[i].Texts.length];
         break;
       }
@@ -91,16 +91,16 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
 
   // split speech text
   SetFont('smallfont');
-  SpeechText = SplitTextWithNewlines(SpeechText, GetVirtualWidth()-128);
+  SpeechText = SplitTextWithNewlines(SpeechText, Width-128);
 
-  foreach (auto i; 0..5) {
-    if (!Speech->Choices[i].Text) continue;
+  foreach (auto i; 0..Speech.Choices.length) {
+    if (!Speech.Choices[i].Text) continue;
     WinChoices[NumChoices] = ConDlgChoice(NewChild(ConDlgChoice));
-    if (Speech->Choices[i].NeedItem1 == 168 && Speech->Choices[i].NeedAmount1 > 0) {
-      WinChoices[NumChoices].Text = va("%s for %d gold", Speech->Choices[i].Text, Speech->Choices[i].NeedAmount1);
+    WinChoices[NumChoices].Text = Speech.Choices[i].Text;
+    if (Speech.Choices[i].NeedItem1 == 168 && Speech.Choices[i].NeedAmount1 > 0) {
+      //WinChoices[NumChoices].Text = va("%s \cDfor \cX%d\cD gold", Speech.Choices[i].Text, Speech.Choices[i].NeedAmount1);
+      WinChoices[NumChoices].Price = Speech.Choices[i].NeedAmount1;
       bNeedGold = true;
-    } else {
-      WinChoices[NumChoices].Text = Speech->Choices[i].Text;
     }
     WinChoices[NumChoices].ImpulseNum = 201+i;
     ++NumChoices;
@@ -113,7 +113,7 @@ void SetSpeech (EntityEx Speaker, int SpeechNum) {
 
   foreach (auto i; 0..NumChoices) WinChoices[i].SetPos(100, Height-4*10-NumChoices*18+i*18);
 
-  if (Speech->Voice) LocalSound(Speech->Voice);
+  if (Speech.Voice) LocalSound(Speech.Voice);
 
   SetDefaultChoice();
 }
@@ -148,11 +148,12 @@ override void OnDraw () {
     Inventory Item = EntityEx(StatusBarShared(ClGame.GSBar).ClGame.cl.MO).FindInventory(Coin);
     //int ypos = 510-NumChoices*22;
     int ypos = Height+30-NumChoices*22;
-    DrawPic(/*480*/Width-180, ypos, R_RegisterPic('i_coin'));
-    DrawText(/*510*/Width-180+30, ypos, va("%d", Item ? Item.Amount : 0), CR_WHITE);
+    int xpos = Width-110;
+    DrawPic(/*480*/xpos, ypos, R_RegisterPic('i_coin'));
+    DrawText(/*510*/xpos+30, ypos, va("%d", Item ? Item.Amount : 0), CR_WHITE);
   }
 
-  ShadeRect(60, Height-4*10-NumChoices*22, Width-200, NumChoices*22, 0.3);
+  ShadeRect(60, Height-4*10-NumChoices*22, Width-128, NumChoices*22, 0.3);
   DrawText(64, 48, SpeakerName, CR_GREEN);
   DrawText(64, 72, SpeechText);
 }

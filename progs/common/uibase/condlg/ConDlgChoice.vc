@@ -25,6 +25,27 @@
 class ConDlgChoice : MenuSmallTextButton;
 
 int ImpulseNum;
+int Price;
+
+
+override void OnDraw () {
+  int y = 0;
+       if (TextVAlign == vbottom) y += Height-1;
+  else if (TextVAlign == vcenter) y += Height/2;
+
+  string text = Text;
+  if (Price) {
+    if (IsFocus()) {
+      text = va("%s \cDfor \cJ%d\cD gold", text, Price);
+    } else {
+      text = va("%s \cQfor \cX%d\cQ gold", text, Price);
+    }
+  }
+
+  SetFont(TextFont);
+  SetTextAlign(TextHAlign, TextVAlign);
+  DrawText(CursorXOffs, y, text, IsFocus() ? TextColourFocus : TextColour);
+}
 
 
 override void ActivateEvent () {
@@ -36,4 +57,6 @@ override void ActivateEvent () {
 
 defaultproperties {
   TextHAlign = hleft;
+  TextColourFocus = CR_WHITE;
+  TextColour = CR_ORANGE;
 }

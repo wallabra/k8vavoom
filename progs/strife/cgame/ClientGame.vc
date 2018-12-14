@@ -393,21 +393,12 @@ override void DrawViewBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void StartSpeech (EntityEx Speaker, int SpeechNum) {
-  /*
-  if (GetRealScreenWidth() <= 800 || GetRealScreenHeight() <= 600) {
-    print("normalizing screen!");
-    SetVirtualScreen(640, 480);
-    //if (Width != 640) Width = 640;
-    //if (Height != 480) Height = 480;
-  }
-  */
-
-  //SetVirtualScreen(GetRealScreenWidth(), GetRealScreenHeight());
   Widget.SetDefaultVirtualScreenSize();
-  ConDialog Dlg = ConDialog(SpawnMenu(ConDialog));
-  Dlg.SetSize(GetVirtualWidth(), GetVirtualHeight());
-  Dlg.SetSpeech(Speaker, SpeechNum);
-  PushMenuScreen(Dlg);
+  ConDialog dlg = ConDialog(SpawnMenu(ConDialog));
+  dlg.SetSize(GetVirtualWidth(), GetVirtualHeight());
+  dlg.SetPos(0, 0);
+  dlg.SetSpeech(Speaker, SpeechNum);
+  PushMenuScreen(dlg);
 }
 
 
