@@ -67,6 +67,7 @@ public:
 
   // constructors
   VName () : Index(0) {}
+  VName (ENoInit) {}
   VName (EName N) : Index(N) {}
   VName (const char *, ENameFindType=Add);
 
