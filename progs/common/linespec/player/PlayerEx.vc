@@ -2311,7 +2311,8 @@ void AddDefaultInventory () {
     if (!tprepl) continue;
     Inventory Item = Inventory(Level.Spawn(tprepl, default, default, default, false));
     Item.bIgnoreSkill = true;
-    if (EntityEx(MO).DropItemList[i].Amount > 0) Item.Amount = EntityEx(MO).DropItemList[i].Amount;
+    int amount = EntityEx(MO).DropItemList[i].Amount;
+    if (amount > 0) Item.Amount = amount; else if (amount == -666) Item.Amount = 0;
     if (Weapon(Item)) {
       // for better control empty weapon's ammo
       Weapon(Item).AmmoGive1 = 0;

@@ -2368,8 +2368,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               if (sc->Check(",")) {
                 sc->ExpectNumber();
                 DI.Amount = sc->Number;
+                if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
               } else if (sc->CheckNumber()) {
                 DI.Amount = sc->Number;
+                if (DI.Amount == 0) DI.Amount = -666; //k8:hack!
               }
               DropItems.Insert(0, DI);
             }
