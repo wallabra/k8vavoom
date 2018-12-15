@@ -1239,25 +1239,6 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
 
 //==========================================================================
 //
-//  FL_GetConfigDir
-//
-//==========================================================================
-VStr FL_GetConfigDir () {
-  VStr res;
-#if !defined(_WIN32)
-  const char *HomeDir = getenv("HOME");
-  if (HomeDir && HomeDir[0]) {
-    res = VStr(HomeDir)+"/.vavoom";
-  }
-#else
-  res = ".";
-#endif
-  return res;
-}
-
-
-//==========================================================================
-//
 //  FL_OpenFileReadInCfgDir
 //
 //==========================================================================
@@ -1411,4 +1392,71 @@ bool VStreamFileReader::Close () {
 void VStreamFileReader::Serialise (void *V, int Length) {
   if (!File || bError) { bError = true; return; }
   if (fread(V, Length, 1, File) != 1) bError = true;
+}
+
+
+//==========================================================================
+//
+//  FL_GetConfigDir
+//
+//==========================================================================
+VStr FL_GetConfigDir () {
+  VStr res;
+#if !defined(_WIN32)
+  const char *HomeDir = getenv("HOME");
+  if (HomeDir && HomeDir[0]) {
+    res = VStr(HomeDir)+"/.vavoom";
+    Sys_CreateDirectory(res);
+  } else {
+    //res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
+    res = (fl_savedir.IsNotEmpty() ? fl_savedir : ".");
+  }
+#else
+  //res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
+  res = (fl_savedir.IsNotEmpty() ? fl_savedir : ".");
+#endif
+  Sys_CreateDirectory(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  FL_GetCacheDir
+//
+//==========================================================================
+VStr FL_GetCacheDir () {
+  VStr res = FL_GetConfigDir();
+  if (res.isEmpty()) return res;
+  res += "/.mapcache";
+  Sys_CreateDirectory(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  FL_GetSavesDir
+//
+//==========================================================================
+VStr FL_GetSavesDir () {
+  VStr res = FL_GetConfigDir();
+  if (res.isEmpty()) return res;
+  res += "/saves";
+  Sys_CreateDirectory(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  FL_GetScreenshotsDir
+//
+//==========================================================================
+VStr FL_GetScreenshotsDir () {
+  VStr res = FL_GetConfigDir();
+  if (res.isEmpty()) return res;
+  res += "/sshots";
+  Sys_CreateDirectory(res);
+  return res;
 }

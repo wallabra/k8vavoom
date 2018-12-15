@@ -47,6 +47,12 @@ VStream *FL_OpenSysFileWrite (const VStr &Name);
 const TArray<VStr> &GetWadPk3List ();
 
 
+VStr FL_GetConfigDir ();
+VStr FL_GetCacheDir ();
+VStr FL_GetSavesDir ();
+VStr FL_GetScreenshotsDir ();
+
+
 //extern bool fl_devmode;
 extern VStr fl_basedir;
 extern VStr fl_savedir;

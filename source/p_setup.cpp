@@ -560,18 +560,8 @@ static bool hashLump (sha224_ctx *sha224ctx, MD5Context *md5ctx, int lumpnum) {
 //
 //==========================================================================
 static VStr getCacheDir () {
-  VStr res;
-  if (!loader_cache_data) return res;
-#if !defined(_WIN32)
-  const char *HomeDir = getenv("HOME");
-  if (HomeDir && HomeDir[0]) {
-    res = VStr(HomeDir)+"/.vavoom";
-    Sys_CreateDirectory(res);
-    res += "/.mapcache";
-    Sys_CreateDirectory(res);
-  }
-#endif
-  return res;
+  if (!loader_cache_data) return VStr();
+  return FL_GetCacheDir();
 }
 
 

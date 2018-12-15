@@ -543,18 +543,7 @@ COMMAND(Version) {
 //
 //==========================================================================
 VStr Host_GetConfigDir () {
-  VStr res;
-#if !defined(_WIN32)
-  const char *HomeDir = getenv("HOME");
-  if (HomeDir && HomeDir[0]) {
-    res = VStr(HomeDir)+"/.vavoom";
-  } else {
-    res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
-  }
-#else
-  res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
-#endif
-  return res;
+  return FL_GetConfigDir();
 }
 
 

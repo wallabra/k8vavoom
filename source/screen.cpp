@@ -206,19 +206,8 @@ COMMAND(ScreenShot) {
   }
 
   // find a file name to save it to
-  VStr BaseDir;
-  {
-#if !defined(_WIN32)
-    const char *HomeDir = getenv("HOME");
-    if (HomeDir && HomeDir[0]) {
-      BaseDir = VStr(HomeDir)+"/.vavoom";
-    } else {
-      BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
-    }
-#else
-    BaseDir = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir)+"/"+fl_gamedir;
-#endif
-  }
+  VStr BaseDir = FL_GetScreenshotsDir();
+  if (BaseDir.isEmpty()) return;
 
   for (i = 0; i <= 9999; ++i) {
     snprintf(tmpbuf, sizeof(tmpbuf), "shot%04d.%s", i, (const char*)screenshot_type);
