@@ -667,12 +667,12 @@ VConstant *VClass::FindConstant (VName Name, VName EnumName) {
 //  VClass::FindField
 //
 //==========================================================================
-VField *VClass::FindField (VName Name) {
+VField *VClass::FindField (VName Name, bool bRecursive) {
   guard(VClass::FindField);
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
   for (VField *F = Fields; F; F = F->Next) if (Name == F->Name) return F;
-  if (ParentClass) return ParentClass->FindField(Name);
+  if (bRecursive && ParentClass) return ParentClass->FindField(Name, bRecursive);
   return nullptr;
   unguard;
 }
@@ -685,10 +685,16 @@ VField *VClass::FindField (VName Name) {
 //==========================================================================
 VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
   guard(VClass::FindField);
-  VField *F = FindField(Name);
-  if (F != nullptr && (F->Flags&FIELD_Private) && this != SelfClass) ParseError(l, "Field `%s` is private", *F->Name);
-  if (F != nullptr && (F->Flags&FIELD_Protected) && (!SelfClass || !SelfClass->IsChildOf(this))) ParseError(l, "Field `%s` is protected", *F->Name);
-  return F;
+  if (Name == NAME_None) return nullptr;
+  for (VClass *cls = this; cls; cls = cls->ParentClass) {
+    VField *F = cls->FindField(Name, false); // non-recursive search
+    if (F) {
+      if ((F->Flags&FIELD_Private) && cls != SelfClass) ParseError(l, "Field `%s` is private", *F->Name);
+      if ((F->Flags&FIELD_Protected) && (!SelfClass || !SelfClass->IsChildOf(cls))) ParseError(l, "Field `%s` is protected", *F->Name);
+      return F;
+    }
+  }
+  return nullptr;
   unguard;
 }
 

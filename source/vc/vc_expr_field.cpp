@@ -42,10 +42,20 @@ VFieldBase::VFieldBase (VExpression *AOp, VName AFieldName, const TLocation &ALo
 {
 }
 
+//==========================================================================
+//
+//  VFieldBase::~VFieldBase
+//
+//==========================================================================
 VFieldBase::~VFieldBase () {
   if (op) { delete op; op = nullptr; }
 }
 
+//==========================================================================
+//
+//  VFieldBase::DoSyntaxCopyTo
+//
+//==========================================================================
 void VFieldBase::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
   auto res = (VFieldBase *)e;
