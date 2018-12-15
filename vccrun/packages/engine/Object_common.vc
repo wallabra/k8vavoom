@@ -26,12 +26,15 @@
 //  common Object things, shared between VaVoom and vccrun
 //
 //==========================================================================
-native readonly private transient void *CxxVTable;
-native readonly private transient void *VTable;
-native readonly private transient int ObjectIndex;
-native readonly private transient int ObjectUniqueId;
-native readonly private transient int ObjectFlags;
-native readonly transient class Class;
+// [internal] fields won't be touched by initialization (and other object copying duties)
+// don't use the following fields
+native readonly private transient [internal] void *__CxxVTable;
+native readonly private transient [internal] void *__VTable;
+native readonly private transient [internal] int __ObjectIndex;
+native readonly protected transient [internal] int __ObjectUniqueId;
+native readonly private transient [internal] int __ObjectFlags;
+// object class
+native readonly transient [internal] class Class;
 
 native void Destroy ();
 native final bool IsA (name CheckName);

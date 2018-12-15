@@ -127,7 +127,7 @@ public:
 
 private:
   // internal per-object variables
-  VMethod **vtable;
+  VMethod **vtable; // VaVoom C VMT
   vint32 Index; // index of object into table
   vuint32 UniqueId; // monotonically increasing
   vuint32 ObjectFlags; // private EObjectFlags used by object manager
@@ -153,6 +153,7 @@ public:
   // constructors
   VObject ();
   static void InternalConstructor () { new VObject(); }
+  virtual void PostCtor (); // this is called after defaults were blit
 
   // destructors
   virtual ~VObject () override;

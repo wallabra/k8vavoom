@@ -256,6 +256,16 @@ VObject::VObject () : Index(-1), UniqueId(0) {
 
 //==========================================================================
 //
+//  VObject::PostCtor
+//
+//==========================================================================
+void VObject::PostCtor () {
+  //fprintf(stderr, "VObject::PostCtor(%p): '%s'\n", this, GetClass()->GetName());
+}
+
+
+//==========================================================================
+//
 //  VObject::~VObject
 //
 //==========================================================================
@@ -382,38 +392,47 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
   guard(VObject::StaticSpawnObject);
   check(AClass);
 
-  // actually, spawn a replacement
-  if (!skipReplacement) AClass = AClass->GetReplacement();
-
-  // allocate memory
-  VObject *Obj = (VObject *)Z_Calloc(AClass->ClassSize);
-
-  // copy values from the default object
-  check(AClass->Defaults);
-  //GCon->Logf(NAME_Dev, "000: INITIALIZING fields of `%s`...", AClass->GetName());
-  AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
-  //GCon->Logf(NAME_Dev, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
-
-  // find native class
-  VClass *NativeClass = AClass;
-  while (NativeClass != nullptr && !(NativeClass->ObjectFlags&CLASSOF_Native)) {
-    NativeClass = NativeClass->GetSuperClass();
-  }
-  check(NativeClass);
-
-  // call constructor of the native class to set up C++ virtual table
-  GNewObject = Obj;
+  VObject *Obj = nullptr;
   try {
+    // actually, spawn a replacement
+    if (!skipReplacement) AClass = AClass->GetReplacement();
+
+    // allocate memory
+    Obj = (VObject *)Z_Calloc(AClass->ClassSize);
+
+    // find native class
+    VClass *NativeClass = AClass;
+    while (NativeClass != nullptr && !(NativeClass->ObjectFlags&CLASSOF_Native)) {
+      NativeClass = NativeClass->GetSuperClass();
+    }
+    check(NativeClass);
+
+    // call constructor of the native class to set up C++ virtual table
+    GNewObject = Obj;
     NativeClass->ClassConstructor();
+
+    // copy values from the default object
+    check(AClass->Defaults);
+    //GCon->Logf(NAME_Dev, "000: INITIALIZING fields of `%s`...", AClass->GetName());
+    AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
+    //GCon->Logf(NAME_Dev, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
+
+    // set up object fields
+    Obj->Class = AClass;
+    Obj->vtable = AClass->ClassVTable;
+
+    // postinit
+    Obj->PostCtor();
   } catch (...) {
     Z_Free(Obj);
     GNewObject = nullptr;
     throw;
   }
+  GNewObject = nullptr;
+  check(Obj);
 
-  // set up object fields
-  Obj->Class = AClass;
-  Obj->vtable = AClass->ClassVTable;
+  // register in pool
+  // this sets `Index` and `UniqueId`
   Obj->Register();
 
   // we're done

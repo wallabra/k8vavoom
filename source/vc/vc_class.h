@@ -251,12 +251,12 @@ public:
   vint32 dfStateTexDirSet;
 
   // internal per-object variables
-  vuint32 ObjectFlags; // private EObjectFlags used by object manager
+  vuint32 ObjectFlags; // private EClassObjectFlags used by object manager
   VClass *LinkNext; // next class in linked list
 
   vint32 ClassSize;
   vint32 ClassUnalignedSize;
-  vuint32 ClassFlags;
+  vuint32 ClassFlags; // EClassFlags
   VMethod **ClassVTable;
   void (*ClassConstructor) ();
 

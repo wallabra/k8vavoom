@@ -37,6 +37,7 @@ enum {
   FIELD_Net       = 0x0010, // network replicated field
   FIELD_Repnotify = 0x0020, // your C++ code should call `void ReplicatedEvent (name fldname)` after getting a new value
   FIELD_Protected = 0x0100,
+  FIELD_Internal  = 0x4000, // this field should not be initialized when creating new object, nor copied on object copy
 };
 
 

@@ -2151,7 +2151,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         fi->TypeExpr = FieldType;
         fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
           TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-          TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+          TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Internal, FieldLoc));
         // delegate?
         if (FieldType->IsDelegateType()) {
           fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(Struct);
@@ -2186,7 +2186,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
         TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-        TModifiers::ReadOnly|TModifiers::Transient, FieldLoc));
+        TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Internal, FieldLoc));
       // delegate?
       if (FieldType->IsDelegateType()) {
         fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(Struct);
@@ -4112,7 +4112,7 @@ void VParser::ParseClass () {
         fi->TypeExpr = FieldType;
         fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
           TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-          TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify, FieldLoc));
+          TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify|TModifiers::Internal, FieldLoc));
         Class->AddField(fi);
         //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         need_semicolon = true;
@@ -4286,7 +4286,7 @@ void VParser::ParseClass () {
       fi->TypeExpr = FieldType;
       fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
         TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-        TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify, FieldLoc));
+        TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify|TModifiers::Internal, FieldLoc));
       Class->AddField(fi);
 
       // new-style delegate syntax: `type delegate (args) name;`

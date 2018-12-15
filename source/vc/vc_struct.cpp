@@ -474,7 +474,10 @@ void VStruct::CopyObject (const vuint8 *Src, vuint8 *Dst) {
   // copy parent struct's fields
   if (ParentStruct) ParentStruct->CopyObject(Src, Dst);
   // copy fields
-  for (VField *F = Fields; F; F = F->Next) VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
+  for (VField *F = Fields; F; F = F->Next) {
+    if (F->Flags&FIELD_Internal) continue;
+    VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
+  }
   unguardf(("(%s)", *Name));
 }
 

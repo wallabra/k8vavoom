@@ -68,6 +68,16 @@ int TModifiers::Parse (VLexer &Lex) {
         Modifiers |= mod->flag;
         wasHit = true;
         break;
+      } else if (Lex.Check(TK_LBracket)) {
+        // [opt]
+        Lex.Expect(TK_Identifier);
+        if (Lex.Name == "internal") {
+          if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier");
+          Modifiers |= Internal;
+        } else {
+          ParseError(Lex.Location, "unknown modifier");
+        }
+        Lex.Expect(TK_RBracket);
       }
     }
     if (!wasHit) break;
@@ -101,6 +111,7 @@ const char *TModifiers::Name (int Modifier) {
     case Const: return "const";
     case Repnotify: return "repnotify";
     case Scope: return "scope";
+    case Internal: return "[internal]";
   }
   return "";
 }
@@ -174,6 +185,7 @@ int TModifiers::FieldAttr (int Modifiers) {
   if (Modifiers&ReadOnly) Attributes |= FIELD_ReadOnly;
   if (Modifiers&Protected) Attributes |= FIELD_Protected;
   if (Modifiers&Repnotify) Attributes |= FIELD_Repnotify;
+  if (Modifiers&Internal) Attributes |= FIELD_Internal;
   return Attributes;
 }
 

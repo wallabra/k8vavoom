@@ -2203,9 +2203,12 @@ void VClass::CopyObject (const vuint8 *Src, vuint8 *Dst) {
   // copy fields
   //GCon->Logf(NAME_Dev, "COPYING fields of `%s`...", GetName());
   for (VField *F = Fields; F; F = F->Next) {
+    if (F->Flags&FIELD_Internal) {
+      //fprintf(stderr, "skipping field '%s' of `%s`... (ofs=%d, type=%s)\n", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
+      continue;
+    }
     //GCon->Logf(NAME_Dev, "  COPYING field '%s' of `%s`... (ofs=%d, type=%s)", F->GetName(), GetName(), F->Ofs, *F->Type.GetName());
     VField::CopyFieldValue(Src+F->Ofs, Dst+F->Ofs, F->Type);
-    //if (VStr::Cmp(F->GetName(), "AcsHelper") == 0) GCon->Logf(NAME_Dev, "    '%s' : '%s'", **((VName *)(Src+F->Ofs)), **((VName *)(Dst+F->Ofs)));
   }
   //GCon->Logf(NAME_Dev, "DONE COPYING fields of `%s`...", GetName());
   unguardf(("(%s)", GetName()));
