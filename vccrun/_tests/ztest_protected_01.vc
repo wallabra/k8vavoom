@@ -1,0 +1,19 @@
+// FAIL
+class Test0 : Object;
+protected int n = 42;
+
+
+class Test1 : Test0;
+
+void foo () {
+  writeln(n);
+}
+
+
+class Main : Object;
+
+void main () {
+  auto t = SpawnObject(Test1);
+  t.foo();
+  writeln(t.n);
+}

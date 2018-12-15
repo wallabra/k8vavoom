@@ -1,0 +1,2 @@
+ztest_private_00.vc:9: Field `n` is private
+FATAL: Confused by previous errors, bailing out
