@@ -56,7 +56,8 @@
 
 // debug feature, nan and inf can be used for various purposes
 // but meh...
-#define CHECK_FOR_NANS_INFS
+//#define CHECK_FOR_NANS_INFS
+#define CHECK_FOR_NANS_INFS_RETURN
 
 
 #ifdef VMEXEC_RUNDUMP
@@ -466,7 +467,7 @@ func_loop:
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
-#ifdef CHECK_FOR_NANS_INFS
+#ifdef CHECK_FOR_NANS_INFS_RETURN
         if (!isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("returning NAN/INF vector"); }
 #endif
         ((VStack *)local_vars)[0] = sp[-3];
@@ -1545,8 +1546,10 @@ func_loop:
       PR_VM_CASE(OPC_VPreScale)
         {
           float scale = sp[-4].f;
-#ifdef CHECK_FOR_NANS_INFS
+#ifdef CHECK_FOR_INF_NAN_DIV
           if (!isFiniteF(scale)) { cstDump(ip); Sys_Error("vecprescale scale is NAN/INF"); }
+#endif
+#ifdef CHECK_FOR_NANS_INFS
           if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecprescale vec is NAN/INF"); }
 #endif
           sp[-4].f = scale*sp[-3].f;
@@ -1558,8 +1561,10 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VPostScale)
-#ifdef CHECK_FOR_NANS_INFS
+#ifdef CHECK_FOR_INF_NAN_DIV
         if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscale scale is NAN/INF"); }
+#endif
+#ifdef CHECK_FOR_NANS_INFS
         if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("vecscale vec is NAN/INF"); }
 #endif
         sp[-4].f *= sp[-1].f;
@@ -1574,8 +1579,8 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VIScale)
-#ifdef CHECK_FOR_NANS_INFS
         if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("veciscale scale is NAN/INF"); }
+#ifdef CHECK_FOR_NANS_INFS
         if (!isFiniteF(sp[-4].f) || !isFiniteF(sp[-3].f) || !isFiniteF(sp[-2].f)) { cstDump(ip); Sys_Error("veciscale vec is NAN/INF"); }
 #endif
         sp[-4].f /= sp[-1].f;
@@ -1660,6 +1665,9 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VScaleVarDrop)
+#ifdef CHECK_FOR_INF_NAN_DIV
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vecscaledrop scale is NAN/INF"); }
+#endif
         ++ip;
         *(TVec *)sp[-2].p *= sp[-1].f;
         sp -= 2;
@@ -1681,7 +1689,9 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VectorToBool)
-        sp[-3].i = (sp[-1].f == 0 && sp[-2].f == 0 && sp[-3].f == 0 ? 0 : 1);
+        //sp[-3].i = (sp[-1].f == 0 && sp[-2].f == 0 && sp[-3].f == 0 ? 0 : 1);
+        sp[-3].i = (isFiniteF(sp[-1].f) && isFiniteF(sp[-2].f) && isFiniteF(sp[-3].f) &&
+                    (sp[-1].f != 0 || sp[-2].f != 0 || sp[-3].f != 0) ? 1 : 0);
         sp -= 2;
         ++ip;
         PR_VM_BREAK;
@@ -1902,11 +1912,13 @@ func_loop:
       PR_VM_CASE(OPC_IntToFloat)
         ++ip;
         ftemp = (float)sp[-1].i;
+        if (!isFiniteF(ftemp)) { cstDump(ip); Sys_Error("Invalid int->float conversion"); }
         sp[-1].f = ftemp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_FloatToInt)
         ++ip;
+        if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("Invalid float->int conversion"); }
         itemp = (vint32)sp[-1].f;
         sp[-1].i = itemp;
         PR_VM_BREAK;
@@ -2468,16 +2480,26 @@ func_loop:
           case OPC_Builtin_ASin: sp[-1].f = masin(sp[-1].f); break;
           case OPC_Builtin_ACos: sp[-1].f = acos(sp[-1].f); break;
           case OPC_Builtin_ATan: sp[-1].f = RAD2DEG(atan(sp[-1].f)); break;
-          case OPC_Builtin_Sqrt: sp[-1].f = sqrt(sp[-1].f); break;
+          case OPC_Builtin_Sqrt: sp[-1].f = sqrtf(sp[-1].f); break;
           case OPC_Builtin_ATan2: sp[-2].f = matan(sp[-2].f, sp[-1].f); --sp; break;
-          case OPC_Builtin_VecLength: sp[-3].f = sqrt(sp[-1].f*sp[-1].f+sp[-2].f*sp[-2].f+sp[-3].f*sp[-3].f); sp -= 2; break;
-          case OPC_Builtin_VecLength2D: sp[-3].f = sqrt(sp[-2].f*sp[-2].f+sp[-3].f*sp[-3].f); sp -= 2; break;
+          case OPC_Builtin_VecLength:
+            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
+            sp[-3].f = sqrtf(sp[-1].f*sp[-1].f+sp[-2].f*sp[-2].f+sp[-3].f*sp[-3].f);
+            sp -= 2;
+            if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length is INF/NAN"); }
+            break;
+          case OPC_Builtin_VecLength2D:
+            if (!isFiniteF(sp[-1].f) || !isFiniteF(sp[-2].f) || !isFiniteF(sp[-3].f)) { cstDump(ip); Sys_Error("vector is INF/NAN"); }
+            sp[-3].f = sqrtf(sp[-2].f*sp[-2].f+sp[-3].f*sp[-3].f);
+            sp -= 2;
+            if (!isFiniteF(sp[-1].f)) { cstDump(ip); Sys_Error("vector length2D is INF/NAN"); }
+            break;
           case OPC_Builtin_VecNormalize:
             {
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
-              v = normalise(v);
+              v.normaliseInPlace();
               // normalizing zero vector should produce zero, not nan/inf
-              if (!isFiniteF(v.x) || !isFiniteF(v.y) || !isFiniteF(v.z)) v = TVec(0, 0, 0);
+              if (!v.isValid()) v = TVec(0, 0, 0);
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
@@ -2488,7 +2510,7 @@ func_loop:
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
               v = normalise2D(v);
               // normalizing zero vector should produce zero, not nan/inf
-              if (!isFiniteF(v.x) || !isFiniteF(v.y) || !isFiniteF(v.z)) v = TVec(0, 0, 0);
+              if (!v.isValid()) v = TVec(0, 0, 0);
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;
@@ -2523,7 +2545,7 @@ func_loop:
               sp[-1].f = v1.z;
               sp[-2].f = v1.y;
               sp[-3].f = v1.x;
-              if (!isFiniteF(v1.x) || !isFiniteF(v1.y) || !isFiniteF(v1.z)) { cstDump(ip); Sys_Error("crossproduct result is INF/NAN"); }
+              if (!v1.isValid()) { cstDump(ip); Sys_Error("crossproduct result is INF/NAN"); }
               break;
             }
           case OPC_Builtin_VecCross2D:
