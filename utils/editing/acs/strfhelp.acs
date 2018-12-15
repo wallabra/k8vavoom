@@ -79,7 +79,8 @@ script << 0 >> (int type, int tag)
 	case 52:
 		//	Map teleport.
 		//UNUSED Probably because as once-trigger it makes no use in Strife.
-		Teleport_NewMap(tag / 100, 0, FALSE);
+		tag /= 100;
+		if (tag == 0) Exit_Normal(0); else Teleport_NewMap(tag, 0, FALSE);
 		break;
 
 	case 145:
@@ -87,6 +88,7 @@ script << 0 >> (int type, int tag)
 		if (gametype() == GAME_NET_DEATHMATCH)
 		{
 			Floor_RaiseByValue(tag, 128, 64);
+			clearlinespecial();
 		}
 		else
 		{
@@ -146,6 +148,7 @@ script << 0 >> (int type, int tag)
 		if (gametype() == GAME_NET_DEATHMATCH)
 		{
 			Floor_RaiseByValue(tag, 128, 64);
+			clearlinespecial();
 		}
 		else
 		{
@@ -155,7 +158,7 @@ script << 0 >> (int type, int tag)
 
 	case 187:
 		//	Remove force field when have required item.
-		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]))
+		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			ClearForceField(tag);
 			clearlinespecial();
@@ -164,7 +167,7 @@ script << 0 >> (int type, int tag)
 
 	case 188:
 		//	Open door when blown up gates.
-		if (CheckInventory("QuestItem16"))
+		if (CheckInventory("QuestItem16") || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Open(tag, VDOORSPEED);
 			clearlinespecial();
@@ -179,7 +182,7 @@ script << 0 >> (int type, int tag)
 
 	case 193:
 		//	Lower floor when got a quest item.
-		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]))
+		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Floor_LowerToLowest(tag, 8);
 			clearlinespecial();
@@ -335,7 +338,7 @@ script << 0 >> (int type, int tag)
 
 	case 216:
 		//	Raise door if got a quest item.
-		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]))
+		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Raise(tag, VDOORSPEED, VDOORWAIT);
 		}
@@ -363,7 +366,7 @@ script << 0 >> (int type, int tag)
 
 	case 227:
 		//	Close door when have a quest item.
-		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]))
+		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Close(tag, VDOORSPEED);
 			clearlinespecial();
@@ -397,7 +400,7 @@ script << 0 >> (int type, int tag)
 
 	case 230:
 		//	Open door when have a quest item.
-		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]))
+		if (CheckInventory(QuestItems[GetLineRowOffset() & 31]) || gametype() == GAME_NET_DEATHMATCH)
 		{
 			Door_Open(tag, VDOORSPEED);
 			clearlinespecial();
@@ -406,7 +409,7 @@ script << 0 >> (int type, int tag)
 
 	case 232:
 		//	Open door if have Oracle pass.
-		if (!CheckInventory("QuestItem18"))
+		if (!CheckInventory("QuestItem18") || gametype() == GAME_NET_DEATHMATCH)
 		{
 			print(s:"You need the Oracle Pass!");
 			activatorsound("*usefail", 127);
@@ -434,7 +437,7 @@ script << 0 >> (int type, int tag)
 
 	case 234:
 		//	Open door when got quest to go to prison.
-		if (CheckInventory("QuestItem3"))
+		if (CheckInventory("QuestItem3") || gametype() == GAME_NET_DEATHMATCH)
 		{
 			SetResultValue(Door_Raise(tag, VDOORSPEED, VDOORWAIT));
 		}
