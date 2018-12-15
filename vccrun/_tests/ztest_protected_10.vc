@@ -1,0 +1,21 @@
+class Test0 : Object;
+private int n = 42;
+
+protected void boo () { writeln(n); }
+
+private void zoo () { boo(); }
+
+
+class Test1 : Test0;
+
+void foo () {
+  boo();
+}
+
+
+class Main : Object;
+
+void main () {
+  auto t = SpawnObject(Test1);
+  t.foo();
+}

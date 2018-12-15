@@ -1,0 +1,2 @@
+ztest_private_10.vc:13: Method `boo` is private
+FATAL: Confused by previous errors, bailing out
