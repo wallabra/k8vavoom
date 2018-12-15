@@ -50,10 +50,11 @@ static VCvarF sv_aircontrol("sv_aircontrol", "0.00390625", "Air control value.",
 
 //==========================================================================
 //
-//  VLevelInfo::VLevelInfo
+//  VLevelInfo::PostCtor
 //
 //==========================================================================
-VLevelInfo::VLevelInfo () {
+void VLevelInfo::PostCtor () {
+  Super::PostCtor();
   Level = this;
 }
 

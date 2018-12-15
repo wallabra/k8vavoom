@@ -41,6 +41,7 @@ enum {
 // doubly linked list of actors and other special elements of a level
 class VThinker : public VGameObject {
   DECLARE_CLASS(VThinker, VGameObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VThinker)
 
   VLevel *XLevel; // level object
   VLevelInfo *Level; // level info object
@@ -64,7 +65,7 @@ public:
   static int FIndex_Tick;
 
 public:
-  VThinker ();
+  //VThinker ();
 
   // VObject interface
   virtual void Destroy () override;

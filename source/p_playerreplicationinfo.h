@@ -23,8 +23,7 @@
 //**
 //**************************************************************************
 
-class VPlayerReplicationInfo : public VThinker
-{
+class VPlayerReplicationInfo : public VThinker {
   DECLARE_CLASS(VPlayerReplicationInfo, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VPlayerReplicationInfo);
 

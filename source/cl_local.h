@@ -79,6 +79,7 @@ struct im_t {
 // ////////////////////////////////////////////////////////////////////////// //
 class VClientGameBase : public VObject {
   DECLARE_CLASS(VClientGameBase, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VClientGameBase)
 
   enum {
     CF_LocalServer      = 0x01,
@@ -105,7 +106,7 @@ class VClientGameBase : public VObject {
   int intermission;
 
 public:
-  VClientGameBase () : serverinfo(E_NoInit) {}
+  //VClientGameBase () : serverinfo(E_NoInit) {}
 
   void eventPostSpawn () { P_PASS_SELF; EV_RET_VOID(VName("PostSpawn")); }
   void eventRootWindowCreated () { P_PASS_SELF; EV_RET_VOID(NAME_RootWindowCreated); }

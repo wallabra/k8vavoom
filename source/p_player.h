@@ -102,9 +102,9 @@ struct VViewState
 //
 // Extended player object info: player_t
 //
-class VBasePlayer : public VGameObject
-{
+class VBasePlayer : public VGameObject {
   DECLARE_CLASS(VBasePlayer, VGameObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VBasePlayer)
 
   enum { TOCENTRE = -128 };
 
@@ -215,7 +215,7 @@ private:
   }
 
 public:
-  VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
+  //VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
 
   const int GetEffectiveSpriteIndex (int idx) const { return DispSpriteFrame[idx]&0x00ffffff; }
   const int GetEffectiveSpriteFrame (int idx) const { return ((DispSpriteFrame[idx]>>24)&VState::FF_FRAMEMASK); }

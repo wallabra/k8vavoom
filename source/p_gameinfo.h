@@ -36,6 +36,7 @@ enum {
 
 class VGameInfo : public VGameObject {
   DECLARE_CLASS(VGameInfo, VGameObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VGameInfo)
 
   VName AcsHelper;
   VName GenericConScript;
@@ -75,7 +76,7 @@ class VGameInfo : public VGameObject {
   vuint32 Flags;
 
 public:
-  VGameInfo ();
+  //VGameInfo ();
 
   bool IsPaused ();
 

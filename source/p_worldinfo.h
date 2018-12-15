@@ -28,6 +28,7 @@ class VAcsGlobal;
 
 class VWorldInfo : public VGameObject {
   DECLARE_CLASS(VWorldInfo, VGameObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VWorldInfo)
 
   VAcsGlobal *Acs;
 
@@ -51,12 +52,13 @@ class VWorldInfo : public VGameObject {
   vuint32 Flags;
 
 public:
-  VWorldInfo();
+  //VWorldInfo ();
+  virtual void PostCtor () override;
 
-  virtual void Serialise(VStream &Strm) override;
-  virtual void Destroy() override;
+  virtual void Serialise (VStream &Strm) override;
+  virtual void Destroy () override;
 
-  void SetSkill(int);
+  void SetSkill (int);
 
   DECLARE_FUNCTION(SetSkill)
 

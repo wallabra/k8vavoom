@@ -24,6 +24,7 @@
 //**************************************************************************
 class VLevelInfo : public VThinker {
   DECLARE_CLASS(VLevelInfo, VThinker, 0)
+  NO_DEFAULT_CONSTRUCTOR(VLevelInfo)
 
   enum { TID_HASH_SIZE = 128 };
 
@@ -130,7 +131,9 @@ class VLevelInfo : public VThinker {
   int Infighting;
   TArray<VMapSpecialAction> SpecialActions;
 
-  VLevelInfo ();
+public:
+  //VLevelInfo ();
+  virtual void PostCtor () override;
 
   void SetMapInfo (const mapInfo_t &);
 

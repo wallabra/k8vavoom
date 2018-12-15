@@ -22,51 +22,30 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_CLASS(V, WorldInfo)
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
-//  VWorldInfo::VWorldInfo
+//  VWorldInfo::PostCtor
 //
 //==========================================================================
-
-VWorldInfo::VWorldInfo()
-{
+void VWorldInfo::PostCtor () {
+  Super::PostCtor();
   Acs = new VAcsGlobal;
 }
+
 
 //==========================================================================
 //
 //  VWorldInfo::Serialise
 //
 //==========================================================================
-
-void VWorldInfo::Serialise(VStream &Strm)
-{
+void VWorldInfo::Serialise (VStream &Strm) {
   guard(VWorldInfo::Serialise);
   vuint8 xver = 0;
   Strm << xver;
@@ -76,14 +55,13 @@ void VWorldInfo::Serialise(VStream &Strm)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWorldInfo::Destroy
 //
 //==========================================================================
-
-void VWorldInfo::Destroy()
-{
+void VWorldInfo::Destroy () {
   guard(VWorldInfo::Destroy);
   delete Acs;
   Acs = nullptr;
@@ -92,27 +70,17 @@ void VWorldInfo::Destroy()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VWorldInfo::SetSkill
 //
 //==========================================================================
-
-void VWorldInfo::SetSkill(int ASkill)
-{
+void VWorldInfo::SetSkill (int ASkill) {
   guard(VWorldInfo::SetSkill);
-  if (ASkill < 0)
-  {
-    GameSkill = 0;
-  }
-  else if (ASkill >= P_GetNumSkills())
-  {
-    GameSkill = P_GetNumSkills() - 1;
-  }
-  else
-  {
-    GameSkill = ASkill;
-  }
+       if (ASkill < 0) GameSkill = 0;
+  else if (ASkill >= P_GetNumSkills()) GameSkill = P_GetNumSkills()-1;
+  else GameSkill = ASkill;
   const VSkillDef *SDef = P_GetSkillDef(GameSkill);
 
   SkillAmmoFactor = SDef->AmmoFactor;

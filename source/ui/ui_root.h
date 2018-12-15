@@ -24,6 +24,7 @@
 //**************************************************************************
 class VRootWidget : public VWidget {
   DECLARE_CLASS(VRootWidget, VWidget, 0)
+  NO_DEFAULT_CONSTRUCTOR(VRootWidget)
 
 private:
   enum {
@@ -43,7 +44,6 @@ private:
   bool MouseButtonEvent (int, bool);
 
 public:
-  VRootWidget ();
   void Init ();
   virtual void Init (VWidget*) override { Sys_Error("Root canot have a parent"); }
 

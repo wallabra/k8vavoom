@@ -22,71 +22,40 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "ui.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-class VActorDisplayWindow : public VWidget
-{
+class VActorDisplayWindow : public VWidget {
   DECLARE_CLASS(VActorDisplayWindow, VWidget, 0)
+  NO_DEFAULT_CONSTRUCTOR(VActorDisplayWindow)
 
   VState *CastState;
-  float   CastTime;
-  float   StateTime;
+  float CastTime;
+  float StateTime;
   VState *NextState;
 
-  VActorDisplayWindow();
-
+public:
   void SetState(VState*);
   virtual void OnDraw() override;
 
   DECLARE_FUNCTION(SetState)
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-bool R_DrawStateModelFrame(VState *State, VState *NextState, float Inter,
-  const TVec &Origin, float Angle);
+bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter, const TVec &Origin, float Angle);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 IMPLEMENT_CLASS(V, ActorDisplayWindow);
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-//  VActorDisplayWindow::VActorDisplayWindow
-//
-//==========================================================================
-
-VActorDisplayWindow::VActorDisplayWindow()
-{
-}
 
 //==========================================================================
 //
 //  VActorDisplayWindow::SetState
 //
 //==========================================================================
-
-void VActorDisplayWindow::SetState(VState *AState)
-{
+void VActorDisplayWindow::SetState (VState *AState) {
   guard(VActorDisplayWindow::SetState);
   CastState = AState;
   StateTime = CastState->Time;
@@ -94,19 +63,17 @@ void VActorDisplayWindow::SetState(VState *AState)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VActorDisplayWindow::OnDraw
 //
 //==========================================================================
-
-void VActorDisplayWindow::OnDraw()
-{
+void VActorDisplayWindow::OnDraw () {
   guard(VActorDisplayWindow::OnDraw);
   // draw the current frame in the middle of the screen
   float TimeFrac = 0.0;
-  if (StateTime > 0.0)
-  {
+  if (StateTime > 0.0) {
     TimeFrac = 1.0 - CastTime / StateTime;
     TimeFrac = MID(0.0, TimeFrac, 1.0);
   }
@@ -122,8 +89,8 @@ void VActorDisplayWindow::OnDraw()
   unguard;
 }
 
-IMPLEMENT_FUNCTION(VActorDisplayWindow, SetState)
-{
+
+IMPLEMENT_FUNCTION(VActorDisplayWindow, SetState) {
   P_GET_PTR(VState, State);
   P_GET_SELF;
   Self->SetState(State);
