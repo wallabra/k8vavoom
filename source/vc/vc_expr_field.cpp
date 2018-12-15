@@ -368,7 +368,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   if (op->Type.Type == TYPE_Reference) {
     if (op->Type.Class) {
       //!if (op->Type.Class && op->Type.Class != ec.SelfClass && !op->Type.Class->Defined) op->Type.Class->Define();
-      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
+      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass, &Loc);
       if (M) {
         if (M->Flags&FUNC_Iterator) {
           ParseError(Loc, "Iterator methods can only be used in foreach statements");
@@ -612,7 +612,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       VProperty *Prop = op->Type.Class->FindProperty(FieldName);
       if (Prop) return DoPropertyResolve(ec, Prop, assType);
       // method
-      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass);
+      VMethod *M = op->Type.Class->FindAccessibleMethod(FieldName, ec.SelfClass, &Loc);
       if (!M) {
         ParseError(Loc, "Method `%s` not found in class `%s`", *FieldName, op->Type.Class->GetName());
         delete this;

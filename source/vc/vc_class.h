@@ -349,7 +349,7 @@ public:
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   //VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
   VMethod *FindMethodChecked (VName);
-  VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr);
+  VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr, const TLocation *loc=nullptr);
   int GetMethodIndex (VName);
   VState *FindState (VName);
   VState *FindStateChecked (VName);

@@ -771,26 +771,34 @@ VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
 //  VClass::FindAccessibleMethod
 //
 //==========================================================================
-VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self) {
+VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation *loc) {
   guard(VClass::FindAccessibleMethod);
   if (Name == NAME_None) return nullptr;
+  //if (self && !loc && self->Name == "Test1") abort();
   Name = ResolveAlias(Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) {
-    //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false));
-    if (!self) {
-      if ((M->Flags&(FUNC_Private|FUNC_Protected)) == 0) return M;
+    //fprintf(stderr, "FAM: <%s>; self=%s; this=%s; child=%d; loc=%p\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), loc);
+    if (loc) {
+      //fprintf(stderr, "  FAM: <%s>; self=%s; this=%s; child=%d; flags=0x%04x\n", *Name, (self ? *self->Name : "<none>"), *this->Name, (int)(self ? self->IsChildOf(this) : false), M->Flags);
+      if ((M->Flags&FUNC_Private) && this != self) ParseError(*loc, "Method `%s` is private", *M->Name);
+      if ((M->Flags&FUNC_Protected) && (!self || !self->IsChildOf(this))) ParseError(*loc, "Method `%s` is protected", *M->Name);
+      return M;
     } else {
-      if (M->Flags&FUNC_Private) {
-        if (self == this) return M;
-      } else if (M->Flags&FUNC_Protected) {
-        if (self->IsChildOf(this)) return M;
+      if (!self) {
+        if ((M->Flags&(FUNC_Private|FUNC_Protected)) == 0) return M;
       } else {
-        return M;
+        if (M->Flags&FUNC_Private) {
+          if (self == this) return M;
+        } else if (M->Flags&FUNC_Protected) {
+          if (self->IsChildOf(this)) return M;
+        } else {
+          return M;
+        }
       }
     }
   }
-  return (ParentClass ? ParentClass->FindAccessibleMethod(Name, self) : nullptr);
+  return (ParentClass ? ParentClass->FindAccessibleMethod(Name, self, loc) : nullptr);
   unguard;
 }
 
