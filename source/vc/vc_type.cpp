@@ -41,6 +41,7 @@ VFieldType::VFieldType()
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , KeyInnerType(0)
+  , ValueInnerType(0)
   , PtrLevel(0)
   //, ArrayDimInternal(0)
   , KClass(0)
@@ -59,6 +60,7 @@ VFieldType::VFieldType(EType Atype)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , KeyInnerType(0)
+  , ValueInnerType(0)
   , PtrLevel(0)
   //, ArrayDimInternal(0)
   , KClass(0)
@@ -77,6 +79,7 @@ VFieldType::VFieldType (VClass *InClass)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , KeyInnerType(0)
+  , ValueInnerType(0)
   , PtrLevel(0)
   //, ArrayDimInternal(0)
   , KClass(0)
@@ -95,6 +98,7 @@ VFieldType::VFieldType (VStruct *InStruct)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
   , KeyInnerType(0)
+  , ValueInnerType(0)
   , PtrLevel(0)
   //, ArrayDimInternal(0)
   , KClass(0)
@@ -114,6 +118,7 @@ VFieldType VFieldType::ReadTypeMem (vuint8 *&ptr) {
   tp.InnerType = *ptr++;
   tp.ArrayInnerType = *ptr++;
   tp.KeyInnerType = *ptr++;
+  tp.ValueInnerType = *ptr++;
   tp.PtrLevel = *ptr++;
   tp.KClass = *(VClass **)ptr;
   ptr += sizeof(void *);
@@ -133,6 +138,7 @@ void VFieldType::WriteTypeMem (vuint8 *&ptr) const {
   *ptr++ = InnerType;
   *ptr++ = ArrayInnerType;
   *ptr++ = KeyInnerType;
+  *ptr++ = ValueInnerType;
   *ptr++ = PtrLevel;
   *(VClass **)ptr = KClass;
   ptr += sizeof(void *);
@@ -157,8 +163,8 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
     Strm << T.ArrayInnerType;
     RealType = T.ArrayInnerType;
   } else if (RealType == TYPE_Dictionary) {
-    Strm << T.ValueInnerType;
     Strm << T.KeyInnerType;
+    Strm << T.ValueInnerType;
     if (T.KeyInnerType == TYPE_Reference || RealType == TYPE_Class) Strm << T.KClass;
     RealType = T.ValueInnerType;
   }
@@ -187,8 +193,9 @@ bool VFieldType::Equals (const VFieldType &Other) const {
       InnerType != Other.InnerType ||
       ArrayInnerType != Other.ArrayInnerType ||
       KeyInnerType != Other.KeyInnerType ||
+      ValueInnerType != Other.ValueInnerType ||
       PtrLevel != Other.PtrLevel ||
-      ArrayDimInternal != Other.ArrayDimInternal ||
+      //ArrayDimInternal != Other.ArrayDimInternal ||
       KClass != Other.KClass ||
       Class != Other.Class)
   {
@@ -402,10 +409,22 @@ VFieldType VFieldType::GetDictKeyType () const {
   VFieldType ret = *this;
   ret.Type = KeyInnerType;
   ret.InnerType = TYPE_Void;
-  ret.ValueInnerType = TYPE_Void;
   ret.KeyInnerType = TYPE_Void;
-  if (KeyInnerType != TYPE_Class && KeyInnerType != TYPE_Reference) ret.KClass = 0;
-  ret.PtrLevel = (KeyInnerType == TYPE_Pointer ? 1 : 0);
+  ret.ValueInnerType = TYPE_Void;
+  ret.PtrLevel = 0;
+  ret.Class = nullptr;
+  ret.KClass = nullptr;
+  switch (KeyInnerType) {
+    case TYPE_Pointer:
+      ret.PtrLevel = 1;
+      break;
+    case TYPE_Class:
+    case TYPE_Reference:
+    case TYPE_Struct:
+    case TYPE_Delegate:
+      ret.Class = KClass;
+      break;
+  }
   return ret;
   unguard;
 }
@@ -424,9 +443,9 @@ VFieldType VFieldType::GetDictValueType () const {
   }
   VFieldType ret = *this;
   ret.Type = ValueInnerType;
-  ret.ValueInnerType = TYPE_Void;
   ret.KeyInnerType = TYPE_Void;
-  ret.KClass = 0;
+  ret.ValueInnerType = TYPE_Void;
+  ret.KClass = nullptr;
   return ret;
   unguard;
 }
@@ -538,6 +557,10 @@ bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
     if (raiseError) ParseError(l, "Type `%s` is not passable", *GetName());
     return false;
   }
+  if (Type == TYPE_Dictionary) {
+    if (raiseError) ParseError(l, "Type `%s` is not passable", *GetName());
+    return false;
+  }
   return true;
   unguardSlow;
 }
@@ -553,6 +576,10 @@ bool VFieldType::CheckPassable (const TLocation &l, bool raiseError) const {
 bool VFieldType::CheckReturnable (const TLocation &l, bool raiseError) const {
   guardSlow(VFieldType::CheckReturnable);
   if (GetStackSize() != 4 && Type != TYPE_Vector) {
+    if (raiseError) ParseError(l, "Type `%s` is not returnable", *GetName());
+    return false;
+  }
+  if (Type == TYPE_Dictionary) {
     if (raiseError) ParseError(l, "Type `%s` is not returnable", *GetName());
     return false;
   }
@@ -1525,6 +1552,7 @@ void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
   //check(!nodestroy);
   int sz = type.GetSize();
   dest->value = Z_Calloc(sz);
+  //fprintf(stderr, "VScriptDictElem::copyTo: src=%p; dest=%p; type='%s' (%d)\n", value, dest->value, *type.GetName(), type.GetSize());
   VField::CopyFieldValue((const vuint8 *)value, (vuint8 *)dest->value, type);
   dest->type = type;
   dest->nodestroy = false;

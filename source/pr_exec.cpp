@@ -268,7 +268,7 @@ static void popOldIterator () {
 //==========================================================================
 static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldType &KType, VFieldType &VType, vuint8 dcopcode) {
   VScriptDict *ht;
-  VScriptDictElem e, v;
+  VScriptDictElem e, v, *r;
   switch (dcopcode) {
     // [-1]: VScriptDict
     case OPC_DictDispatch_Clear:
@@ -302,7 +302,12 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       ht = (VScriptDict *)sp[-2].p;
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
-      sp[-2].p = ht->find(e);
+      r = ht->find(e);
+      if (r && VType.Type == TYPE_String) {
+        sp[-2].p = (r ? &r->value : nullptr);
+      } else {
+        sp[-2].p = (r ? r->value : nullptr);
+      }
       --sp;
       return;
     // [-3]: VScriptDict

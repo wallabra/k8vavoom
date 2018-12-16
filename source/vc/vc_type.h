@@ -58,11 +58,9 @@ class VFieldType {
 public:
   vuint8 Type;
   vuint8 InnerType; // for pointers and dictionary value pointers
-  union {
-    vuint8 ArrayInnerType; // for arrays
-    vuint8 ValueInnerType; // value for dictionaries
-  };
+  vuint8 ArrayInnerType; // for arrays and dictionary array values
   vuint8 KeyInnerType; // key for dictionaries; PtrLevel is always 1 for pointers (and pointers are `void`)
+  vuint8 ValueInnerType; // value for dictionaries
   vuint8 PtrLevel; // for pointers and dictionary pointer values
   union {
     // you should never access `ArrayDimInternal` directly!
@@ -83,7 +81,7 @@ public:
   explicit VFieldType (VClass *InClass);
   explicit VFieldType (VStruct *InStruct);
 
-  enum { MemSize = 5+sizeof(void *)*2 };
+  enum { MemSize = 6+sizeof(void *)*2 };
   static VFieldType ReadTypeMem (vuint8 *&ptr);
   void WriteTypeMem (vuint8 *&ptr) const;
 
