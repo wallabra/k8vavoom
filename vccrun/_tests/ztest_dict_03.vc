@@ -1,0 +1,34 @@
+class Main : Object;
+
+struct Test {
+  string s;
+  int n;
+}
+
+
+void main () {
+  Test ss;
+
+  dictionary!(string, Test) i2s;
+
+  ss.s = "string 1";
+  ss.n = 42;
+  i2s.put("a", ss);
+
+  ss.s = "string 2";
+  ss.n = 666;
+  i2s.put("b", ss);
+  print("<%q> : %s", (&ss).s, ss.n);
+
+  writeln(i2s.length);
+
+  auto sp = i2s.find("a");
+  //writeln(sp);
+  print("<%q> : %s", sp.s, sp.n);
+
+  sp = i2s.find("b");
+  print("<%q> : %s", sp.s, sp.n);
+
+  sp = i2s.find("z");
+  if (sp) FatalError("fuuuu");
+}

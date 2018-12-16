@@ -1,0 +1,10 @@
+class Main : Object;
+
+void main () {
+  dictionary!(int, string) i2s;
+  i2s.put(69, "i love it!");
+  writeln(i2s.length);
+  //writeln(i2s.capacity);
+  i2s.put(666, "welcome!");
+  writeln(i2s.length);
+}

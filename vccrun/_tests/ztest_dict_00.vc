@@ -1,0 +1,10 @@
+class Main : Object;
+
+void main () {
+  //string s;
+  dictionary!(int, string) i2s;
+  writeln(i2s.length);
+  writeln(i2s.capacity);
+  i2s.clear();
+  i2s.reset();
+}
