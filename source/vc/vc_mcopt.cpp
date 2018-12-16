@@ -952,6 +952,17 @@ struct Instr {
           case OPC_DictDispatch_ClearPointed:
             spdelta -= 1;
             return;
+          case OPC_DictDispatch_FirstIndex:
+            return;
+          case OPC_DictDispatch_IsValidIndex:
+          case OPC_DictDispatch_NextIndex:
+          case OPC_DictDispatch_DelAndNextIndex:
+            spdelta -= 1;
+            return;
+          case OPC_DictDispatch_GetValueAtIndex:
+          case OPC_DictDispatch_GetKeyAtIndex:
+            spdelta -= 1;
+            return;
           default: FatalError("Unknown dictionary opcode");
         }
     }

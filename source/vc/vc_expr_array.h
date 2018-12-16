@@ -456,3 +456,118 @@ protected:
   VDictPut () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VDictFirstIndex
+//
+//==========================================================================
+class VDictFirstIndex : public VExpression {
+public:
+  VExpression *sexpr;
+
+  // `asexpr` should be already resolved
+  VDictFirstIndex (VExpression *asexpr, const TLocation &aloc);
+  virtual ~VDictFirstIndex () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictFirstIndex () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex
+//
+//==========================================================================
+class VDictIsValidIndex : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *idxexpr;
+
+  // `asexpr` should be already resolved
+  VDictIsValidIndex (VExpression *asexpr, VExpression *aidxexpr, const TLocation &aloc);
+  virtual ~VDictIsValidIndex () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictIsValidIndex () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictNextIndex
+//
+//==========================================================================
+class VDictNextIndex : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *idxexpr;
+  bool doRemove;
+
+  // `asexpr` should be already resolved
+  VDictNextIndex (VExpression *asexpr, VExpression *aidxexpr, bool aRemove, const TLocation &aloc);
+  virtual ~VDictNextIndex () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictNextIndex () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex
+//
+//==========================================================================
+class VDictKeyAtIndex : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *idxexpr;
+
+  // `asexpr` should be already resolved
+  VDictKeyAtIndex (VExpression *asexpr, VExpression *aidxexpr, const TLocation &aloc);
+  virtual ~VDictKeyAtIndex () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictKeyAtIndex () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex
+//
+//==========================================================================
+class VDictValueAtIndex : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *idxexpr;
+
+  // `asexpr` should be already resolved
+  VDictValueAtIndex (VExpression *asexpr, VExpression *aidxexpr, const TLocation &aloc);
+  virtual ~VDictValueAtIndex () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictValueAtIndex () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

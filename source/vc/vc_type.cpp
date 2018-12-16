@@ -1448,6 +1448,7 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
 vuint32 GetTypeHash (const VScriptDictElem &e) {
   if (e.type.Type == TYPE_String) {
     VStr *s = (VStr *)&e.value;
+    //fprintf(stderr, "GetTypeHash: str=<%s>; hash=0x%08x\n", *s->quote(), joaatHashBuf(s->getCStr(), (size_t)s->length()));
     return joaatHashBuf(s->getCStr(), (size_t)s->length());
   }
   //fprintf(stderr, "GetTypeHash: ptr=%p; type=%s; size=%d\n", e.value, *e.type.GetName(), e.type.GetSize());

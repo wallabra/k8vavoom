@@ -1075,9 +1075,9 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     } else if (SelfExpr->Type.Type == TYPE_Dictionary) {
       // dictionary
       if (MethodName == "clear" || MethodName == "reset") {
+        delete selfCopy;
         if (NumArgs != 0) {
           ParseError(Loc, "Dictionary builtin `%s` cannot have args", *MethodName);
-          delete selfCopy;
           delete this;
           return nullptr;
         }
@@ -1087,9 +1087,9 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "find" || MethodName == "get") {
+        delete selfCopy;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have exactly one arg (key)", *MethodName);
-          delete selfCopy;
           delete this;
           return nullptr;
         }
@@ -1100,9 +1100,9 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "del" || MethodName == "delete" || MethodName == "remove") {
+        delete selfCopy;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have exactly one arg (key)", *MethodName);
-          delete selfCopy;
           delete this;
           return nullptr;
         }
@@ -1113,13 +1113,77 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "put" || MethodName == "ins" || MethodName == "insert") {
+        delete selfCopy;
         if (NumArgs != 2) {
           ParseError(Loc, "Dictionary builtin `%s` should have two args (key and value)", *MethodName);
-          delete selfCopy;
           delete this;
           return nullptr;
         }
         VExpression *e = new VDictPut(SelfExpr, Args[0], Args[1], Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "firstIndex") {
+        delete selfCopy;
+        if (NumArgs != 0) {
+          ParseError(Loc, "Dictionary builtin `%s` cannot have args", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictFirstIndex(SelfExpr, Loc);
+        SelfExpr = nullptr;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "isValidIndex") {
+        delete selfCopy;
+        if (NumArgs != 1) {
+          ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictIsValidIndex(SelfExpr, Args[0], Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "nextIndex" || MethodName == "removeAndNextIndex") {
+        delete selfCopy;
+        if (NumArgs != 1) {
+          ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictNextIndex(SelfExpr, Args[0], (MethodName == "removeAndNextIndex"), Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "keyAtIndex") {
+        delete selfCopy;
+        if (NumArgs != 1) {
+          ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictKeyAtIndex(SelfExpr, Args[0], Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "valueAtIndex") {
+        delete selfCopy;
+        if (NumArgs != 1) {
+          ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictValueAtIndex(SelfExpr, Args[0], Loc);
         SelfExpr = nullptr;
         NumArgs = 0;
         delete this;

@@ -2025,6 +2025,7 @@ VExpression *VDictFind::DoResolve (VEmitContext &ec) {
 
   sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
+
   if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) {
     keyexpr->Flags &= ~FIELD_ReadOnly;
     keyexpr->RequestAddressOf();
@@ -2251,4 +2252,425 @@ void VDictPut::Emit (VEmitContext &ec) {
   keyexpr->Emit(ec);
   valexpr->Emit(ec);
   ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Put, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictFirstIndex
+//
+//==========================================================================
+VDictFirstIndex::VDictFirstIndex (VExpression *asexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictFirstIndex::~VDictFirstIndex
+//
+//==========================================================================
+VDictFirstIndex::~VDictFirstIndex () {
+  delete sexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictFirstIndex::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictFirstIndex::SyntaxCopy () {
+  auto res = new VDictFirstIndex();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictFirstIndex::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictFirstIndex::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictFirstIndex *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictFirstIndex::DoResolve
+//
+//==========================================================================
+VExpression *VDictFirstIndex::DoResolve (VEmitContext &ec) {
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictFirstIndex::Emit
+//
+//==========================================================================
+void VDictFirstIndex::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_FirstIndex, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex
+//
+//==========================================================================
+VDictIsValidIndex::VDictIsValidIndex (VExpression *asexpr, VExpression *aidxexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , idxexpr(aidxexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex::~VDictIsValidIndex
+//
+//==========================================================================
+VDictIsValidIndex::~VDictIsValidIndex () {
+  delete sexpr;
+  delete idxexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictIsValidIndex::SyntaxCopy () {
+  auto res = new VDictIsValidIndex();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictIsValidIndex::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictIsValidIndex *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->idxexpr = (idxexpr ? idxexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex::DoResolve
+//
+//==========================================================================
+VExpression *VDictIsValidIndex::DoResolve (VEmitContext &ec) {
+  if (!idxexpr) { ParseError(Loc, "`.isValidIndex` cannot have empty arguments"); delete this; return nullptr; }
+  idxexpr = idxexpr->Resolve(ec);
+  if (!idxexpr) { delete this; return nullptr; }
+
+  if (idxexpr->Type.Type != TYPE_Int && idxexpr->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "`.isValidIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Int); // bool
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictIsValidIndex::Emit
+//
+//==========================================================================
+void VDictIsValidIndex::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  idxexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_IsValidIndex, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictNextIndex
+//
+//==========================================================================
+VDictNextIndex::VDictNextIndex (VExpression *asexpr, VExpression *aidxexpr, bool aRemove, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , idxexpr(aidxexpr)
+  , doRemove(aRemove)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictNextIndex::~VDictNextIndex
+//
+//==========================================================================
+VDictNextIndex::~VDictNextIndex () {
+  delete sexpr;
+  delete idxexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictNextIndex::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictNextIndex::SyntaxCopy () {
+  auto res = new VDictNextIndex();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictNextIndex::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictNextIndex::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictNextIndex *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->idxexpr = (idxexpr ? idxexpr->SyntaxCopy() : nullptr);
+  res->doRemove = doRemove;
+}
+
+
+//==========================================================================
+//
+//  VDictNextIndex::DoResolve
+//
+//==========================================================================
+VExpression *VDictNextIndex::DoResolve (VEmitContext &ec) {
+  if (!idxexpr) { ParseError(Loc, "`.nextIndex` cannot have empty arguments"); delete this; return nullptr; }
+  idxexpr = idxexpr->Resolve(ec);
+  if (!idxexpr) { delete this; return nullptr; }
+
+  if (idxexpr->Type.Type != TYPE_Int && idxexpr->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "`.nextIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  if (!doRemove) sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictNextIndex::Emit
+//
+//==========================================================================
+void VDictNextIndex::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  idxexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(),
+    (doRemove ? OPC_DictDispatch_NextIndex : OPC_DictDispatch_DelAndNextIndex), Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex
+//
+//==========================================================================
+VDictKeyAtIndex::VDictKeyAtIndex (VExpression *asexpr, VExpression *aidxexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , idxexpr(aidxexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex::~VDictKeyAtIndex
+//
+//==========================================================================
+VDictKeyAtIndex::~VDictKeyAtIndex () {
+  delete sexpr;
+  delete idxexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictKeyAtIndex::SyntaxCopy () {
+  auto res = new VDictKeyAtIndex();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictKeyAtIndex::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictKeyAtIndex *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->idxexpr = (idxexpr ? idxexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex::DoResolve
+//
+//==========================================================================
+VExpression *VDictKeyAtIndex::DoResolve (VEmitContext &ec) {
+  if (!idxexpr) { ParseError(Loc, "`.isValidIndex` cannot have empty arguments"); delete this; return nullptr; }
+  idxexpr = idxexpr->Resolve(ec);
+  if (!idxexpr) { delete this; return nullptr; }
+
+  if (idxexpr->Type.Type != TYPE_Int && idxexpr->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "`.isValidIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = sexpr->Type.GetDictKeyType();
+  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) {
+    Type = Type.MakePointerType();
+  }
+  Flags |= FIELD_ReadOnly;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictKeyAtIndex::Emit
+//
+//==========================================================================
+void VDictKeyAtIndex::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  idxexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_GetKeyAtIndex, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex
+//
+//==========================================================================
+VDictValueAtIndex::VDictValueAtIndex (VExpression *asexpr, VExpression *aidxexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , idxexpr(aidxexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex::~VDictValueAtIndex
+//
+//==========================================================================
+VDictValueAtIndex::~VDictValueAtIndex () {
+  delete sexpr;
+  delete idxexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictValueAtIndex::SyntaxCopy () {
+  auto res = new VDictValueAtIndex();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictValueAtIndex::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictValueAtIndex *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->idxexpr = (idxexpr ? idxexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex::DoResolve
+//
+//==========================================================================
+VExpression *VDictValueAtIndex::DoResolve (VEmitContext &ec) {
+  if (!idxexpr) { ParseError(Loc, "`.isValidIndex` cannot have empty arguments"); delete this; return nullptr; }
+  idxexpr = idxexpr->Resolve(ec);
+  if (!idxexpr) { delete this; return nullptr; }
+
+  if (idxexpr->Type.Type != TYPE_Int && idxexpr->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "`.isValidIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = sexpr->Type.GetDictValueType();
+  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) {
+    Type = Type.MakePointerType();
+  }
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictValueAtIndex::Emit
+//
+//==========================================================================
+void VDictValueAtIndex::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  idxexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_GetValueAtIndex, Loc);
 }

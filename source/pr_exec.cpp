@@ -339,6 +339,76 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       ht->clear();
       --sp;
       return;
+    // [-1]: VScriptDict*
+    case OPC_DictDispatch_FirstIndex:
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      sp[-1].i = (ht->map ? ht->map->getFirstIIdx() : -1);
+      return;
+    // [-2]: VScriptDict*
+    // [-1]: index
+    case OPC_DictDispatch_IsValidIndex:
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      sp[-2].i = ((ht->map ? ht->map->isValidIIdx(sp[-1].i) : false) ? 1 : 0);
+      --sp;
+      return;
+    // [-2]: VScriptDict*
+    // [-1]: index
+    case OPC_DictDispatch_NextIndex:
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      sp[-2].i = (ht->map ? ht->map->getNextIIdx(sp[-1].i) : -1);
+      --sp;
+      return;
+    // [-2]: VScriptDict*
+    // [-1]: index
+    case OPC_DictDispatch_DelAndNextIndex:
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      sp[-2].i = (ht->map ? ht->map->removeCurrAndGetNextIIdx(sp[-1].i) : -1);
+      --sp;
+      return;
+    // [-2]: VScriptDict
+    // [-1]: index
+    case OPC_DictDispatch_GetKeyAtIndex:
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      {
+        const VScriptDictElem *ep = (ht->map ? ht->map->getKeyIIdx(sp[-1].i) : nullptr);
+        if (ep) {
+          if (KType.Type == TYPE_String) {
+            sp[-2].p = nullptr;
+            *((VStr *)&sp[-2].p) = *((VStr *)&ep->value);
+          } else {
+            sp[-2].p = ep->value;
+          }
+        } else {
+          sp[-2].p = nullptr;
+        }
+      }
+      --sp;
+      return;
+    // [-2]: VScriptDict
+    // [-1]: index
+    case OPC_DictDispatch_GetValueAtIndex:
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      {
+        VScriptDictElem *ep = (ht->map ? ht->map->getValueIIdx(sp[-1].i) : nullptr);
+        if (ep) {
+          if (VType.Type == TYPE_String) {
+            sp[-2].p = nullptr;
+            *((VStr *)&sp[-2].p) = *((VStr *)&ep->value);
+          } else {
+            sp[-2].p = ep->value;
+          }
+        } else {
+          sp[-2].p = nullptr;
+        }
+      }
+      --sp;
+      return;
   }
   cstDump(origip);
   Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
