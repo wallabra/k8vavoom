@@ -1389,8 +1389,11 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     varaddr = new VLocalVar(indLocalVal, loopLoad->Loc);
     varaddr = varaddr->Resolve(ec); // should not fail (i hope)
     if (varaddr) {
+      auto oflags = varaddr->Flags;
+      varaddr->Flags &= ~FIELD_ReadOnly;
       varaddr->RequestAddressOf(); // get rid of `ref`
       varaddr->RequestAddressOf(); // and request a real address
+      varaddr->Flags = oflags;
     }
     // work around r/o fields
     //loopLoad = new VUnary(VUnary::TakeAddress, loopLoad, loopLoad->Loc);
