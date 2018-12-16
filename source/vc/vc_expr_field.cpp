@@ -600,6 +600,39 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
   }
 
+  // dictionary properties
+  if (op->Type.Type == TYPE_Dictionary) {
+    if (FieldName == NAME_length) {
+      if (assType == AssType::AssTarget) {
+        ParseError(Loc, "Cannot change dictionary length");
+        delete this;
+        return nullptr;
+      }
+      //op->Flags &= ~FIELD_ReadOnly;
+      //op->RequestAddressOf();
+      VExpression *e = new VDictGetLength(op, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    } else if (FieldName == "capacity") {
+      if (assType == AssType::AssTarget) {
+        ParseError(Loc, "Cannot change dictionary capacity");
+        delete this;
+        return nullptr;
+      }
+      //op->Flags &= ~FIELD_ReadOnly;
+      //op->RequestAddressOf();
+      VExpression *e = new VDictGetCapacity(op, Loc);
+      op = nullptr;
+      delete this;
+      return e->Resolve(ec);
+    } else {
+      ParseError(Loc, "No field `%s` in dictionary", *FieldName);
+      delete this;
+      return nullptr;
+    }
+  }
+
   // convert to method, 'cause why not?
   if (assType != AssType::AssTarget) {
     // Class.Method -- for static methods

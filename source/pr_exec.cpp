@@ -273,6 +273,7 @@ static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFiel
     // [-1]: VScriptDict
     case OPC_DictDispatch_Clear:
       ht = (VScriptDict *)&sp[-1].p;
+      //if (!ht) { cstDump(ip); Sys_Error("uninitialized dictionary");
       ht->clear();
       --sp;
       return;

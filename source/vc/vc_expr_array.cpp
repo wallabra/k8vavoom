@@ -22,8 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "vc_local.h"
+
+#define DICTDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
 
 
 //==========================================================================
@@ -1732,4 +1734,144 @@ VExpression *VSliceGetPtr::DoResolve (VEmitContext &ec) {
 void VSliceGetPtr::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   ec.AddStatement(OPC_PushPointedPtr, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictGetLength
+//
+//==========================================================================
+VDictGetLength::VDictGetLength (VExpression *asexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+
+//==========================================================================
+//
+//  VDictGetLength::~VDictGetLength
+//
+//==========================================================================
+VDictGetLength::~VDictGetLength () {
+  delete sexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictGetLength::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictGetLength::SyntaxCopy () {
+  auto res = new VDictGetLength();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictGetLength::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictGetLength::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictGetLength *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictGetLength::DoResolve
+//
+//==========================================================================
+VExpression *VDictGetLength::DoResolve (VEmitContext &ec) {
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictGetLength::Emit
+//
+//==========================================================================
+void VDictGetLength::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Length, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictGetCapacity
+//
+//==========================================================================
+VDictGetCapacity::VDictGetCapacity (VExpression *asexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+
+//==========================================================================
+//
+//  VDictGetCapacity::~VDictGetCapacity
+//
+//==========================================================================
+VDictGetCapacity::~VDictGetCapacity () {
+  delete sexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictGetCapacity::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictGetCapacity::SyntaxCopy () {
+  auto res = new VDictGetCapacity();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictGetCapacity::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictGetCapacity::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictGetCapacity *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictGetCapacity::DoResolve
+//
+//==========================================================================
+VExpression *VDictGetCapacity::DoResolve (VEmitContext &ec) {
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictGetCapacity::Emit
+//
+//==========================================================================
+void VDictGetCapacity::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Capacity, Loc);
 }

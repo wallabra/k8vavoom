@@ -318,3 +318,47 @@ protected:
   VSliceGetPtr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VDictGetLength
+//
+//==========================================================================
+class VDictGetLength : public VExpression {
+public:
+  VExpression *sexpr;
+
+  // `asexpr` should be already resolved
+  VDictGetLength (VExpression *asexpr, const TLocation &aloc);
+  virtual ~VDictGetLength () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictGetLength () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictGetCapacity
+//
+//==========================================================================
+class VDictGetCapacity : public VExpression {
+public:
+  VExpression *sexpr;
+
+  // `asexpr` should be already resolved
+  VDictGetCapacity (VExpression *asexpr, const TLocation &aloc);
+  virtual ~VDictGetCapacity () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictGetCapacity () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

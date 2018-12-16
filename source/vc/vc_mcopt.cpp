@@ -934,7 +934,7 @@ struct Instr {
         }
 
       case OPC_DictDispatch:
-        switch (Arg1) {
+        switch (Arg2) {
           case OPC_DictDispatch_Clear:
           case OPC_DictDispatch_Reset:
             spdelta -= 1;
