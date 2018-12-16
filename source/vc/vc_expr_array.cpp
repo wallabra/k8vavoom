@@ -1791,6 +1791,8 @@ void VDictGetLength::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictGetLength::DoResolve (VEmitContext &ec) {
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int);
   return this;
 }
@@ -1861,6 +1863,8 @@ void VDictGetCapacity::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictGetCapacity::DoResolve (VEmitContext &ec) {
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int);
   return this;
 }
@@ -1933,6 +1937,8 @@ void VDictClearOrReset::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictClearOrReset::DoResolve (VEmitContext &ec) {
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Void);
   return this;
 }
@@ -1947,4 +1953,243 @@ void VDictClearOrReset::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(),
     (doClear ? OPC_DictDispatch_Clear : OPC_DictDispatch_Reset), Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictFind
+//
+//==========================================================================
+VDictFind::VDictFind (VExpression *asexpr, VExpression *akeyexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , keyexpr(akeyexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictFind::~VDictFind
+//
+//==========================================================================
+VDictFind::~VDictFind () {
+  delete sexpr;
+  delete keyexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictFind::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictFind::SyntaxCopy () {
+  auto res = new VDictFind();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictFind::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictFind::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictFind *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->keyexpr = (keyexpr ? keyexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictFind::DoResolve
+//
+//==========================================================================
+VExpression *VDictFind::DoResolve (VEmitContext &ec) {
+  if (!keyexpr) { ParseError(Loc, "`.find` cannot have empty argument"); delete this; return nullptr; }
+  keyexpr = keyexpr->Resolve(ec);
+  if (!keyexpr) { delete this; return nullptr; }
+  sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = keyexpr->Type.MakePointerType();
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictFind::Emit
+//
+//==========================================================================
+void VDictFind::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  keyexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Find, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictDelete
+//
+//==========================================================================
+VDictDelete::VDictDelete (VExpression *asexpr, VExpression *akeyexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , keyexpr(akeyexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictDelete::~VDictDelete
+//
+//==========================================================================
+VDictDelete::~VDictDelete () {
+  delete sexpr;
+  delete keyexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictDelete::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictDelete::SyntaxCopy () {
+  auto res = new VDictDelete();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictDelete::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictDelete::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictDelete *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->keyexpr = (keyexpr ? keyexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictDelete::DoResolve
+//
+//==========================================================================
+VExpression *VDictDelete::DoResolve (VEmitContext &ec) {
+  if (!keyexpr) { ParseError(Loc, "`.delete` cannot have empty argument"); delete this; return nullptr; }
+  keyexpr = keyexpr->Resolve(ec);
+  if (!keyexpr) { delete this; return nullptr; }
+  //sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Int); // bool
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictDelete::Emit
+//
+//==========================================================================
+void VDictDelete::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  keyexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Delete, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictPut
+//
+//==========================================================================
+VDictPut::VDictPut (VExpression *asexpr, VExpression *akeyexpr, VExpression *avalexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , keyexpr(akeyexpr)
+  , valexpr(avalexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictPut::~VDictPut
+//
+//==========================================================================
+VDictPut::~VDictPut () {
+  delete sexpr;
+  delete keyexpr;
+  delete valexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictPut::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictPut::SyntaxCopy () {
+  auto res = new VDictPut();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictPut::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictPut::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictPut *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->keyexpr = (keyexpr ? keyexpr->SyntaxCopy() : nullptr);
+  res->valexpr = (valexpr ? valexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictPut::DoResolve
+//
+//==========================================================================
+VExpression *VDictPut::DoResolve (VEmitContext &ec) {
+  if (!keyexpr || !valexpr) { ParseError(Loc, "`.put` cannot have empty arguments"); delete this; return nullptr; }
+  keyexpr = keyexpr->Resolve(ec);
+  valexpr = valexpr->Resolve(ec);
+  if (!keyexpr || !valexpr) { delete this; return nullptr; }
+  //sexpr->Flags &= ~FIELD_ReadOnly;
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Int); // bool
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictPut::Emit
+//
+//==========================================================================
+void VDictPut::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  keyexpr->Emit(ec);
+  valexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Put, Loc);
 }

@@ -1410,12 +1410,13 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
 //==========================================================================
 vuint32 GetTypeHash (const VScriptDictElem &e) {
   if (e.type.Type == TYPE_String) {
-    VStr *s = (VStr *)e.value;
+    VStr *s = (VStr *)&e.value;
     return joaatHashBuf(s->getCStr(), (size_t)s->length());
   }
+  //fprintf(stderr, "GetTypeHash: ptr=%p; type=%s; size=%d\n", e.value, *e.type.GetName(), e.type.GetSize());
   //TODO: hash structs and other complex types when we will allow 'em as keys
   int ksize = e.type.GetSize();
-  return joaatHashBuf(e.value, (size_t)ksize);
+  return joaatHashBuf((VScriptDictElem::isSimpleType(e.type) ? &e.value : e.value), (size_t)ksize);
 }
 
 
@@ -1442,6 +1443,10 @@ void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VField
 //==========================================================================
 bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
   if (value == e.value || &e == this) return true;
+  if (type.Type == TYPE_String) {
+    if (e.type.Type != TYPE_String) return false; // just in case
+    return *((VStr *)&value) == *((VStr *)&e.value);
+  }
   if (isSimpleType(type)) return false; // covered by the previous comparison
   if (!type.Equals(e.type)) return false; // sanity check
   return VField::IdenticalValue((const vuint8 *)value, (const vuint8 *)e.value, type);
@@ -1456,7 +1461,9 @@ bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
 void VScriptDictElem::clear () {
   if (!nodestroy) {
     if (!value || type.Type == TYPE_Void) return;
-    if (!isSimpleType(type)) {
+    if (type.Type == TYPE_String) {
+      ((VStr *)&value)->clear();
+    } else if (!isSimpleType(type)) {
       VField::DestructField((vuint8 *)value, type, false); // no need to zero it
       Z_Free(value);
     }
@@ -1479,6 +1486,14 @@ void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
   // k8: nope, always do full copy
   //if (nodestroy) { dest->value = (void *)value; dest->type = type; dest->nodestroy = nodestroy; return; }
   if (!value || type.Type == TYPE_Void) return;
+  // strings are special
+  if (type.Type == TYPE_String) {
+    dest->value = nullptr; // just in case
+    *((VStr *)&dest->value) = *((VStr *)&value);
+    dest->type = type;
+    dest->nodestroy = false;
+    return;
+  }
   if (isSimpleType(type)) { dest->value = (void *)value; dest->type = type; dest->nodestroy = false; return; }
   // complex copy
   //check(!nodestroy);
@@ -1488,6 +1503,7 @@ void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
   dest->type = type;
   dest->nodestroy = false;
 }
+
 
 
 //==========================================================================

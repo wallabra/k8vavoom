@@ -212,6 +212,7 @@ struct VScriptDictElem {
       case TYPE_Reference:
       case TYPE_Class:
       case TYPE_State:
+      case TYPE_String: // special
         return true;
     }
     return false;

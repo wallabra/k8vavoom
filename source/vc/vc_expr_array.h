@@ -385,3 +385,74 @@ protected:
   VDictClearOrReset () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VDictFind
+//
+//==========================================================================
+class VDictFind : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *keyexpr;
+  bool doClear;
+
+  // `asexpr` should be already resolved
+  VDictFind (VExpression *asexpr, VExpression *akeyexpr, const TLocation &aloc);
+  virtual ~VDictFind () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictFind () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictDelete
+//
+//==========================================================================
+class VDictDelete : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *keyexpr;
+
+  // `asexpr` should be already resolved
+  VDictDelete (VExpression *asexpr, VExpression *akeyexpr, const TLocation &aloc);
+  virtual ~VDictDelete () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictDelete () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictPut
+//
+//==========================================================================
+class VDictPut : public VExpression {
+public:
+  VExpression *sexpr;
+  VExpression *keyexpr;
+  VExpression *valexpr;
+
+  // `asexpr` should be already resolved
+  VDictPut (VExpression *asexpr, VExpression *akeyexpr, VExpression *avalexpr, const TLocation &aloc);
+  virtual ~VDictPut () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictPut () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

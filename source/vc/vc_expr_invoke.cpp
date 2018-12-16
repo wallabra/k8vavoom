@@ -1081,10 +1081,47 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
           delete this;
           return nullptr;
         }
-        SelfExpr->Flags &= ~FIELD_ReadOnly;
-        SelfExpr->RequestAddressOf();
         VExpression *e = new VDictClearOrReset(SelfExpr, (MethodName == "clear"), Loc);
         SelfExpr = nullptr;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "find" || MethodName == "get") {
+        if (NumArgs != 1) {
+          ParseError(Loc, "Dictionary builtin `%s` should have exactly one arg (key)", *MethodName);
+          delete selfCopy;
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictFind(SelfExpr, Args[0], Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "del" || MethodName == "delete" || MethodName == "remove") {
+        if (NumArgs != 1) {
+          ParseError(Loc, "Dictionary builtin `%s` should have exactly one arg (key)", *MethodName);
+          delete selfCopy;
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictDelete(SelfExpr, Args[0], Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
+      if (MethodName == "put" || MethodName == "ins" || MethodName == "insert") {
+        if (NumArgs != 2) {
+          ParseError(Loc, "Dictionary builtin `%s` should have two args (key and value)", *MethodName);
+          delete selfCopy;
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictPut(SelfExpr, Args[0], Args[1], Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
         delete this;
         return e->Resolve(ec);
       }

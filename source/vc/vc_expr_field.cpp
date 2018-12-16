@@ -608,8 +608,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      op->Flags &= ~FIELD_ReadOnly;
-      op->RequestAddressOf();
       VExpression *e = new VDictGetLength(op, Loc);
       op = nullptr;
       delete this;
@@ -620,8 +618,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      op->Flags &= ~FIELD_ReadOnly;
-      op->RequestAddressOf();
       VExpression *e = new VDictGetCapacity(op, Loc);
       op = nullptr;
       delete this;
