@@ -31,7 +31,7 @@
 //==========================================================================
 class VTypeExpr : public VExpression {
 public:
-  VExpression *Expr;
+  VExpression *Expr; // key type for dictionaries
   VName MetaClassName;
 
   VTypeExpr (VFieldType atype, const TLocation &aloc);
@@ -199,5 +199,28 @@ public:
 
 protected:
   VDelegateType () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDictType
+//
+//==========================================================================
+class VDictType : public VTypeExpr {
+public:
+  VExpression *VExpr; // value type
+
+public:
+  VDictType (VExpression *AKExpr, VExpression *AVExpr, const TLocation &ALoc);
+  virtual ~VDictType () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VTypeExpr *ResolveAsType (VEmitContext &) override;
+
+  virtual bool IsDictType () const override;
+
+protected:
+  VDictType () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };

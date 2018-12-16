@@ -82,6 +82,8 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
       return new VDynamicArrayType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
     case TYPE_SliceArray:
       return new VSliceType(NewTypeExpr(atype.GetArrayInnerType(), aloc), aloc);
+    case TYPE_Dictionary:
+      return new VDictType(NewTypeExpr(atype.GetDictKeyType(), aloc), NewTypeExpr(atype.GetDictValueType(), aloc), aloc);
     case TYPE_Unknown:
     case TYPE_Automatic: // this is valid only for variable declarations, and will be resolved to actual type
       Sys_Error("VC: VTypeExpr::NewTypeExpr: internal compiler error");
@@ -712,5 +714,84 @@ VMethod *VDelegateType::CreateDelegateMethod (VMemberBase *aowner) {
 //
 //==========================================================================
 bool VDelegateType::IsDelegateType () const {
+  return true;
+}
+
+
+
+//==========================================================================
+//
+//  VDictType::VDictType
+//
+//==========================================================================
+VDictType::VDictType (VExpression *AKExpr, VExpression *AVExpr, const TLocation &ALoc)
+  : VTypeExpr(TYPE_Unknown, ALoc)
+{
+  Expr = AKExpr;
+  VExpr = AVExpr;
+}
+
+
+//==========================================================================
+//
+//  VDictType::~VDictType
+//
+//==========================================================================
+VDictType::~VDictType () {
+  delete VExpr; VExpr = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDictType::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictType::SyntaxCopy () {
+  auto res = new VDictType();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictType::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictType::DoSyntaxCopyTo (VExpression *e) {
+  VTypeExpr::DoSyntaxCopyTo(e);
+  auto res = (VDictType *)e;
+  res->VExpr = (VExpr ? VExpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDictType::ResolveAsType
+//
+//==========================================================================
+VTypeExpr *VDictType::ResolveAsType (VEmitContext &ec) {
+  if (!Expr || !VExpr) {
+    ParseError(Loc, "no auto dictionaries allowed");
+    delete this;
+    return nullptr;
+  }
+
+  if (Expr) Expr = Expr->ResolveAsType(ec);
+  if (VExpr) VExpr = VExpr->ResolveAsType(ec);
+  if (!Expr || !VExpr) { delete this; return nullptr; }
+
+  Type = VFieldType::MakeDictType(Expr->Type, VExpr->Type, Loc);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictType::IsDictType
+//
+//==========================================================================
+bool VDictType::IsDictType () const {
   return true;
 }

@@ -932,6 +932,28 @@ struct Instr {
             return;
           default: FatalError("Unknown builtin");
         }
+
+      case OPC_DictDispatch:
+        switch (Arg1) {
+          case OPC_DictDispatch_Clear:
+          case OPC_DictDispatch_Reset:
+            spdelta -= 1;
+            return;
+          case OPC_DictDispatch_Length:
+          case OPC_DictDispatch_Capacity:
+            return;
+          case OPC_DictDispatch_Find:
+            spdelta -= 1;
+            return;
+          case OPC_DictDispatch_Put:
+          case OPC_DictDispatch_Delete:
+            spdelta -= 1; // returns `duplicate`/`success` flag
+            return;
+          case OPC_DictDispatch_ClearPointed:
+            spdelta -= 1;
+            return;
+          default: FatalError("Unknown dictionary opcode");
+        }
     }
     FatalError("setStackOffsets: unhandled opcode %d", Opcode);
   }

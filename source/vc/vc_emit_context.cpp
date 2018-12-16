@@ -46,6 +46,9 @@ VStatementBuiltinInfo StatementDictDispatchInfo[] = {
   { nullptr },
 };
 
+#define DICTDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VEmitContext::VAutoFin
@@ -946,6 +949,12 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
   if (LocalDefs[locidx].Type.Type == TYPE_String) {
     EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
     AddStatement(OPC_ClearPointedStr, aloc);
+    return;
+  }
+
+  if (LocalDefs[locidx].Type.Type == TYPE_Dictionary) {
+    EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
+    AddStatement(OPC_DictDispatch, LocalDefs[locidx].Type.GetDictKeyType(), LocalDefs[locidx].Type.GetDictValueType(), OPC_DictDispatch_ClearPointed, aloc);
     return;
   }
 

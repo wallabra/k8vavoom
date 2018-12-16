@@ -220,6 +220,44 @@ bool VFieldType::IsCompatiblePointerRelaxed (const VFieldType &other) const {
 
 //==========================================================================
 //
+//  VFieldType::MakeDictType
+//
+//==========================================================================
+VFieldType VFieldType::MakeDictType (const VFieldType &ktype, const VFieldType &vtype, const TLocation &loc) {
+  guard(VFieldType::MakeDictType);
+
+  // check for valid key type
+  switch (ktype.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Float:
+    case TYPE_Name:
+    case TYPE_String:
+    case TYPE_Reference:
+    case TYPE_Class:
+      break;
+    case TYPE_Pointer:
+      if (ktype.PtrLevel == 1) break;
+      /* fallthrough */
+    default:
+      ParseError(loc, "Invalid dictionary key type `%s`", *ktype.GetName());
+      return VFieldType();
+  }
+
+  if (vtype.IsAnyArray()) { ParseError(loc, "Dictionary value cannot be array/dictionary"); return VFieldType(); }
+
+  VFieldType res = vtype;
+  res.Type = TYPE_Dictionary;
+  res.KeyInnerType = ktype.Type;
+  res.ValueInnerType = vtype.Type;
+  res.KClass = (ktype.Type == TYPE_Reference || ktype.Type == TYPE_Class ? ktype.Class : nullptr);
+  return res;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VFieldType::MakePointerType
 //
 //==========================================================================
@@ -675,8 +713,7 @@ VStr VFieldType::GetName () const {
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
     case TYPE_SliceArray: return GetArrayInnerType().GetName()+"[]";
-    case TYPE_Dictionary:
-      return VStr("dictionary!(")+GetDictKeyType().GetName()+","+GetDictValueType().GetName()+")";
+    case TYPE_Dictionary: return VStr("dictionary!(")+GetDictKeyType().GetName()+","+GetDictValueType().GetName()+")";
     case TYPE_Automatic: return "auto";
     case TYPE_Delegate: return "delegate";
     default: return VStr("unknown:")+VStr((vuint32)Type);

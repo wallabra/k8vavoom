@@ -94,12 +94,15 @@ public:
   // used for `==` and `!=` -- allow substructs and subclasses
   bool IsCompatiblePointerRelaxed (const VFieldType &) const;
 
+  static VFieldType MakeDictType (const VFieldType &ktype, const VFieldType &vtype, const TLocation &loc);
+
   VFieldType MakePointerType () const;
   VFieldType GetPointerInnerType () const;
   VFieldType MakeArrayType (int, const TLocation &) const;
   VFieldType MakeArray2DType (int d0, int d1, const TLocation &l) const;
   VFieldType MakeDynamicArrayType (const TLocation &) const;
   VFieldType MakeSliceType (const TLocation &) const;
+
   VFieldType GetArrayInnerType () const;
   VFieldType GetDictKeyType () const;
   VFieldType GetDictValueType () const;

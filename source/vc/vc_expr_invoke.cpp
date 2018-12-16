@@ -2740,6 +2740,7 @@ VExpression *VInvokeWrite::DoResolve (VEmitContext &ec) {
           case TYPE_Struct:
           case TYPE_Array:
           case TYPE_DynamicArray:
+          case TYPE_Dictionary:
             Args[i]->RequestAddressOf();
             break;
           case TYPE_SliceArray:

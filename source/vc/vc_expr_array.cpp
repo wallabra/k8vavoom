@@ -1325,6 +1325,7 @@ bool VDynArraySort::checkDelegateType (VMethod *dg) {
       case TYPE_Struct:
       case TYPE_Vector: //FIXME
       case TYPE_DynamicArray:
+      case TYPE_Dictionary:
         requireRef = true;
         break;
       case TYPE_Delegate:

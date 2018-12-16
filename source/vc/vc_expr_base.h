@@ -144,6 +144,7 @@ public:
   virtual bool IsClassType () const;
   virtual bool IsPointerType () const;
   virtual bool IsAnyArrayType () const;
+  virtual bool IsDictType () const;
   virtual bool IsStaticArrayType () const;
   virtual bool IsDynamicArrayType () const;
   virtual bool IsSliceType () const;

@@ -505,6 +505,7 @@ bool VExpression::IsReferenceType () const { return false; }
 bool VExpression::IsClassType () const { return false; }
 bool VExpression::IsPointerType () const { return false; }
 bool VExpression::IsAnyArrayType () const { return false; }
+bool VExpression::IsDictType () const { return false; }
 bool VExpression::IsStaticArrayType () const { return false; }
 bool VExpression::IsDynamicArrayType () const { return false; }
 bool VExpression::IsDelegateType () const { return false; }

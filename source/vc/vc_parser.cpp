@@ -1454,6 +1454,7 @@ VStatement *VParser::ParseStatement () {
     case TK_String:
     case TK_Void:
     case TK_Array:
+    case TK_Dictionary:
     case TK_Auto:
       {
         // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
@@ -1636,7 +1637,7 @@ VExpression *VParser::ParsePrimitiveType () {
       }
     case TK_Array:
       {
-        Lex.NextToken();
+        Lex.NextToken(); // skip `array`
         VExpression *Inner = nullptr;
         if (Lex.Check(TK_Not)) {
           // `array!type` or `array!(type)`
@@ -1660,6 +1661,17 @@ VExpression *VParser::ParsePrimitiveType () {
           Lex.Expect(TK_Greater);
         }
         return new VDynamicArrayType(Inner, l);
+      }
+    case TK_Dictionary:
+      {
+        Lex.NextToken(); // skip `dictionary`
+        Lex.Expect(TK_Not);
+        Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+        VExpression *ktype = ParseType(); // no delegates yet
+        Lex.Expect(TK_Comma);
+        VExpression *vtype = ParseType(); // no delegates yet
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+        return new VDictType(ktype, vtype, l);
       }
     default:
       return nullptr;

@@ -37,6 +37,7 @@
 static inline bool NeedDtor (const VFieldType &Type) {
   if (Type.Type == TYPE_String) return true;
   if (Type.Type == TYPE_DynamicArray) return true;
+  if (Type.Type == TYPE_Dictionary) return true;
   if (Type.Type == TYPE_Array) {
     if (Type.ArrayInnerType == TYPE_String) return true;
     if (Type.ArrayInnerType == TYPE_Struct) return Type.Struct->NeedsDestructor();
@@ -192,6 +193,11 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
     case TYPE_SliceArray:
       memcpy(Dst, Src, (size_t)Type.GetSize());
       break;
+    case TYPE_Dictionary:
+      { //FIXME
+        abort();
+      }
+      break;
   }
   unguardSlow;
 }
@@ -250,6 +256,9 @@ void VField::SkipSerialisedType (VStream &Strm) {
     case TYPE_SliceArray:
       //FIXME:SLICE
       break;
+    case TYPE_Dictionary:
+      //FIXME
+      abort();
     default:
       Sys_Error("I/O Error: unknown data type");
   }
@@ -523,6 +532,9 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       //FIXME:SLICE
       dprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
       break;
+    case TYPE_Dictionary:
+      //FIXME
+      abort();
     default:
       Sys_Error("I/O Error: unknown data type");
   }
@@ -540,6 +552,7 @@ bool VField::NeedToCleanField (const VFieldType &Type) {
   switch (Type.Type) {
     case TYPE_Reference:
     case TYPE_Delegate:
+    case TYPE_Dictionary:
       return true;
     case TYPE_Struct:
       return Type.Struct->NeedToCleanObject();
@@ -592,6 +605,12 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
           InnerSize = IntType.GetSize();
           for (int i = 0; i < A.Num(); ++i) CleanField(A.Ptr()+i*InnerSize, IntType);
         }
+      }
+      break;
+    case TYPE_Dictionary:
+      {
+        //FIXME
+        abort();
       }
       break;
   }
@@ -654,6 +673,12 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
     case TYPE_SliceArray:
       memset(Data, 0, Type.GetSize());
       break;
+    case TYPE_Dictionary:
+      {
+        //FIXME
+        abort();
+      }
+      break;
   }
   unguard;
 }
@@ -707,6 +732,12 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
       return true;
     case TYPE_SliceArray:
       return (memcmp(Val1, Val2, Type.GetSize()) == 0);
+    case TYPE_Dictionary:
+      {
+        //FIXME
+        abort();
+      }
+      break;
   }
   Sys_Error("Bad field type");
   return false;
