@@ -95,7 +95,8 @@ VMemberBase::~VMemberBase () {
   // you should never delete members
   // but they can be deleted on shutdown, and at that time
   // there is no reason to do this anyway
-  if (!GObjShuttingDown) RemoveFromNameHash(this);
+  //k8: no member should be removed ever (except on shutdown), so skip this
+  //if (!GObjShuttingDown) RemoveFromNameHash(this);
 }
 
 
