@@ -194,8 +194,10 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
       memcpy(Dst, Src, (size_t)Type.GetSize());
       break;
     case TYPE_Dictionary:
-      { //FIXME
-        abort();
+      {
+        const VScriptDict *src = (const VScriptDict *)Src;
+        VScriptDict *dst = (VScriptDict *)Dst;
+        src->copyTo(dst);
       }
       break;
   }
@@ -571,29 +573,35 @@ bool VField::NeedToCleanField (const VFieldType &Type) {
 //  VField::CleanField
 //
 //==========================================================================
-void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
+bool VField::CleanField (vuint8 *Data, const VFieldType &Type) {
   guard(CleanField);
   VFieldType IntType;
   int InnerSize;
+  bool res = false;
   switch (Type.Type) {
     case TYPE_Reference:
-      if (*(VObject **)Data && ((*(VObject **)Data)->GetFlags()&_OF_CleanupRef) != 0) *(VObject **)Data = nullptr;
+      if (*(VObject **)Data && ((*(VObject **)Data)->GetFlags()&_OF_CleanupRef) != 0) {
+        *(VObject **)Data = nullptr;
+        res = true;
+      }
       break;
     case TYPE_Delegate:
       if (((VObjectDelegate *)Data)->Obj && (((VObjectDelegate *)Data)->Obj->GetFlags()&_OF_CleanupRef) != 0) {
         ((VObjectDelegate *)Data)->Obj = nullptr;
         ((VObjectDelegate *)Data)->Func = nullptr;
+        res = true;
       }
       break;
     case TYPE_Struct:
-      Type.Struct->CleanObject(Data);
-      break;
+      return Type.Struct->CleanObject(Data);
     case TYPE_Array:
       IntType = Type;
       IntType.Type = Type.ArrayInnerType;
       if (NeedToCleanField(IntType)) {
         InnerSize = IntType.GetSize();
-        for (int i = 0; i < Type.GetArrayDim(); ++i) CleanField(Data+i*InnerSize, IntType);
+        for (int i = 0; i < Type.GetArrayDim(); ++i) {
+          if (CleanField(Data+i*InnerSize, IntType)) res = true;
+        }
       }
       break;
     case TYPE_DynamicArray:
@@ -603,17 +611,20 @@ void VField::CleanField (vuint8 *Data, const VFieldType &Type) {
         IntType.Type = Type.ArrayInnerType;
         if (NeedToCleanField(IntType)) {
           InnerSize = IntType.GetSize();
-          for (int i = 0; i < A.Num(); ++i) CleanField(A.Ptr()+i*InnerSize, IntType);
+          for (int i = 0; i < A.Num(); ++i) {
+            if (CleanField(A.Ptr()+i*InnerSize, IntType)) res = true;
+          }
         }
       }
       break;
     case TYPE_Dictionary:
       {
-        //FIXME
-        abort();
+        VScriptDict *dc = (VScriptDict *)Data;
+        res = dc->cleanRefs();
       }
       break;
   }
+  return res;
   unguard;
 }
 
@@ -675,8 +686,8 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
       break;
     case TYPE_Dictionary:
       {
-        //FIXME
-        abort();
+        VScriptDict *dc = (VScriptDict *)Data;
+        dc->clear();
       }
       break;
   }
@@ -734,8 +745,9 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
       return (memcmp(Val1, Val2, Type.GetSize()) == 0);
     case TYPE_Dictionary:
       {
-        //FIXME
-        abort();
+        const VScriptDict *v1 = (const VScriptDict *)Val1;
+        const VScriptDict *v2 = (const VScriptDict *)Val2;
+        return (v1->map == v2->map);
       }
       break;
   }

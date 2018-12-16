@@ -78,7 +78,7 @@ public:
   static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &, VStr fullname);
   static void SkipSerialisedType (VStream &);
   static void SkipSerialisedValue (VStream &);
-  static void CleanField (vuint8 *, const VFieldType &);
+  static bool CleanField (vuint8 *, const VFieldType &); // returns `true` if something was cleaned
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);
   static bool NeedToDestructField (const VFieldType &);
   static bool NeedToCleanField (const VFieldType &);

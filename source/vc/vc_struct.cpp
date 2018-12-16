@@ -400,11 +400,22 @@ void VStruct::InitReferences () {
         if (F->Type.GetDictKeyType().Type == TYPE_Reference || F->Type.GetDictValueType().Type == TYPE_Reference) {
           F->NextReference = ReferenceFields;
           ReferenceFields = F;
-        } else if (F->Type.GetDictValueType().Type == TYPE_Struct) {
-          F->Type.Struct->PostLoad();
-          if (F->Type.Struct->ReferenceFields) {
-            F->NextReference = ReferenceFields;
-            ReferenceFields = F;
+        } else {
+          if (F->Type.GetDictKeyType().Type == TYPE_Struct) {
+            F->Type.KStruct->PostLoad();
+            if (F->Type.KStruct->ReferenceFields) {
+              F->NextReference = ReferenceFields;
+              ReferenceFields = F;
+              break;
+            }
+          }
+          if (F->Type.GetDictValueType().Type == TYPE_Struct) {
+            F->Type.Struct->PostLoad();
+            if (F->Type.Struct->ReferenceFields) {
+              F->NextReference = ReferenceFields;
+              ReferenceFields = F;
+              break;
+            }
           }
         }
         break;
@@ -626,9 +637,13 @@ bool VStruct::NeedToCleanObject () {
 //  VStruct::CleanObject
 //
 //==========================================================================
-void VStruct::CleanObject (vuint8 *Data) {
+bool VStruct::CleanObject (vuint8 *Data) {
   guard(VStruct::CleanObject);
-  for (VField *F = ReferenceFields; F; F = F->NextReference) VField::CleanField(Data+F->Ofs, F->Type);
+  bool res = false;
+  for (VField *F = ReferenceFields; F; F = F->NextReference) {
+    if (VField::CleanField(Data+F->Ofs, F->Type)) res = true;
+  }
+  return res;
   unguardf(("(%s)", *Name));
 }
 

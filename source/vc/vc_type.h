@@ -224,7 +224,7 @@ vuint32 GetTypeHash (const VScriptDictElem &e);
 
 
 class VScriptDict {
-private:
+public:
   TMapDtor<VScriptDictElem, VScriptDictElem> *map;
 
 public:
@@ -235,7 +235,7 @@ public:
   int length () const;
   int capacity () const;
 
-  void copyTo (VScriptDict *dest);
+  void copyTo (VScriptDict *dest) const;
 
   void clear (); // this destroys `map`
   void reset (); // this resets `map`
@@ -244,6 +244,9 @@ public:
   bool put (const VScriptDictElem &key, const VScriptDictElem &value);
   // returns `true` if value was deleted
   bool del (const VScriptDictElem &key);
+
+  // returns `true` if something was cleaned
+  bool cleanRefs ();
 };
 
 // required for VaVoom C VM

@@ -1591,7 +1591,7 @@ int VScriptDict::capacity () const { return (map ? map->capacity() : 0); }
 //  VScriptDict::copyTo
 //
 //==========================================================================
-void VScriptDict::copyTo (VScriptDict *dest) {
+void VScriptDict::copyTo (VScriptDict *dest) const {
   check(dest);
   if (dest == this) return;
   dest->clear();
@@ -1664,6 +1664,64 @@ bool VScriptDict::put (const VScriptDictElem &key, const VScriptDictElem &value)
 bool VScriptDict::del (const VScriptDictElem &key) {
   if (!map) return false;
   return map->del(key);
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::cleanRefs
+//
+//==========================================================================
+bool VScriptDict::cleanRefs () {
+  if (!map) return false;
+  if (map->count() == 0) return false;
+  auto it = map->first();
+  if (!it) return false;
+
+  // get types
+  VFieldType kt = it.getKey().type;
+  VFieldType vt = it.getValue().type;
+
+  bool res = false;
+
+  // special handling for object keys
+  if (kt.Type == TYPE_Reference) {
+    while (!it) {
+      VObject *obj = *(VObject **)it.getKey().value;
+      if (obj && (obj->GetFlags()&_OF_CleanupRef) != 0) {
+        //VObject::VMDumpCallStack();
+        //Sys_Error("dictionary key cleanup is not supported (yet)");
+        res = true;
+        it.removeCurrent();
+      } else {
+        ++it;
+      }
+    }
+    it.resetToFirst();
+    if (!it) return res;
+  }
+
+  bool ktsimple = VScriptDictElem::isSimpleType(kt);
+  bool vtsimple = VScriptDictElem::isSimpleType(vt);
+  if (ktsimple && vtsimple && vt.Type != TYPE_Reference) return res; // nothing to do
+
+  while (it) {
+    if (!vtsimple) {
+      if (VField::CleanField((vuint8 *)it.getValue().value, vt)) res = true;
+    }
+    if (!ktsimple) {
+      if (VField::CleanField((vuint8 *)it.getKey().value, kt)) {
+        VObject::VMDumpCallStack();
+        Sys_Error("dictionary key cleanup is not supported (yet)");
+        res = true;
+        it.removeCurrent();
+        continue;
+      }
+    }
+    ++it;
+  }
+
+  return res;
 }
 
 #endif // !defined(IN_VCC)
