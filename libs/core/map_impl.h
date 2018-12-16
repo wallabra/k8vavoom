@@ -118,6 +118,14 @@ public:
       }
     }
     inline void RemoveCurrent () { removeCurrent(); }
+    inline void resetToFirst () {
+      if (map.mFirstEntry < 0) {
+        index = map.mEBSize;
+      } else {
+        index = (vuint32)map.mFirstEntry;
+        while (index < map.mEBSize && map.mEntries[index].empty) ++index;
+      }
+    }
   };
 
   friend class TIterator;
