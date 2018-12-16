@@ -247,7 +247,7 @@ private:
     abort();
   }
 
-  inline int getCapacity () const { return mBucketsUsed; }
+  inline int getCapacity () const { return (int)mEBSize; }
 
 public:
   TMap_Class_Name () : mEBSize(0), mEntries(nullptr), mBuckets(nullptr), mBucketsUsed(0), mFreeEntryHead(nullptr), mFirstEntry(-1), mLastEntry(-1), mSeed(0), mSeedCount(0) {}
