@@ -165,7 +165,8 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   } else if (RealType == TYPE_Dictionary) {
     Strm << T.KeyInnerType;
     Strm << T.ValueInnerType;
-    if (T.KeyInnerType == TYPE_Reference || RealType == TYPE_Class) Strm << T.KClass;
+         if (T.KeyInnerType == TYPE_Reference || RealType == TYPE_Class) Strm << T.KClass;
+    else if (T.KeyInnerType == TYPE_Struct) Strm << T.KStruct;
     RealType = T.ValueInnerType;
   }
 
@@ -242,6 +243,8 @@ VFieldType VFieldType::MakeDictType (const VFieldType &ktype, const VFieldType &
     case TYPE_String:
     case TYPE_Reference:
     case TYPE_Class:
+    case TYPE_State:
+    case TYPE_Struct:
       break;
     case TYPE_Pointer:
       if (ktype.PtrLevel == 1) break;
@@ -251,13 +254,19 @@ VFieldType VFieldType::MakeDictType (const VFieldType &ktype, const VFieldType &
       return VFieldType();
   }
 
-  if (vtype.IsAnyArray()) { ParseError(loc, "Dictionary value cannot be array/dictionary"); return VFieldType(); }
-
   VFieldType res = vtype;
   res.Type = TYPE_Dictionary;
   res.KeyInnerType = ktype.Type;
   res.ValueInnerType = vtype.Type;
-  res.KClass = (ktype.Type == TYPE_Reference || ktype.Type == TYPE_Class ? ktype.Class : nullptr);
+  res.KClass = (ktype.Type == TYPE_Reference || ktype.Type == TYPE_Class || ktype.Type == TYPE_Struct ? ktype.Class : nullptr);
+
+  if (vtype.IsAnyArray()) {
+    if (vtype.Type != TYPE_SliceArray && vtype.Type != TYPE_DynamicArray) {
+      ParseError(loc, "Dictionary value cannot be array/dictionary");
+      return VFieldType();
+    }
+  }
+
   return res;
   unguard;
 }
@@ -409,6 +418,7 @@ VFieldType VFieldType::GetDictKeyType () const {
   VFieldType ret = *this;
   ret.Type = KeyInnerType;
   ret.InnerType = TYPE_Void;
+  ret.ArrayInnerType = TYPE_Void;
   ret.KeyInnerType = TYPE_Void;
   ret.ValueInnerType = TYPE_Void;
   ret.PtrLevel = 0;

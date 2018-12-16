@@ -67,6 +67,8 @@ public:
     // sign bit is used to mark "2-dim array"
     vint32 ArrayDimInternal;
     VClass *KClass; // class for class key type
+    VStruct *KStruct; // struct data
+    VMethod *KFunction; // function of the delegate type; can be `nullptr` for `none delegate`
   };
   // for normal types and dictionary values
   union {

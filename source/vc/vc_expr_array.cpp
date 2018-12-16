@@ -2202,6 +2202,18 @@ VExpression *VDictPut::DoResolve (VEmitContext &ec) {
 
   if (sexpr->Type.GetDictKeyType().Type == TYPE_Float) keyexpr = keyexpr->CoerceToFloat();
   if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType())) {
+    /*
+    VFieldType t = keyexpr->Type;
+    VFieldType Other = sexpr->Type.GetDictKeyType();
+    fprintf(stderr, "Type: %d\n", (int)(t.Type == Other.Type));
+    fprintf(stderr, "InnerType: %d\n", (int)(t.InnerType == Other.InnerType));
+    fprintf(stderr, "ArrayInnerType: %d\n", (int)(t.ArrayInnerType == Other.ArrayInnerType));
+    fprintf(stderr, "KeyInnerType: %d\n", (int)(t.KeyInnerType == Other.KeyInnerType));
+    fprintf(stderr, "ValueInnerType: %d\n", (int)(t.ValueInnerType == Other.ValueInnerType));
+    fprintf(stderr, "PtrLevel: %d\n", (int)(t.PtrLevel == Other.PtrLevel));
+    fprintf(stderr, "KClass: %d\n", (int)(t.KClass == Other.KClass));
+    fprintf(stderr, "Class: %d\n", (int)(t.Class == Other.Class));
+    */
     ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *keyexpr->Type.GetName());
     delete this;
     return nullptr;
