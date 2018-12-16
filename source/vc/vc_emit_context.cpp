@@ -647,7 +647,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, const TLoca
       StatementInfo[statement].Args != OPCARGS_FieldOffset &&
       StatementInfo[statement].Args != OPCARGS_VTableIndex)
   {
-    FatalError("Opcode does\'t take member as argument");
+    FatalError("Opcode does't take member as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -666,7 +666,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, co
       StatementInfo[statement].Args != OPCARGS_FieldOffset_Byte &&
       StatementInfo[statement].Args != OPCARGS_Member_Int)
   {
-    FatalError("Opcode does\'t take member and byte as argument");
+    FatalError("Opcode does't take member and byte as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -683,14 +683,31 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, co
 //==========================================================================
 void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_TypeSize &&
-      StatementInfo[statement].Args != OPCARGS_Type &&
-      StatementInfo[statement].Args != OPCARGS_A2DDimsAndSize)
+      StatementInfo[statement].Args != OPCARGS_Type)
   {
-    FatalError("Opcode doesn\'t take type as argument");
+    FatalError("Opcode doesn't take type as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.TypeArg = TypeArg;
+  I.loc = aloc;
+}
+
+
+//==========================================================================
+//
+//  VEmitContext::AddStatement
+//
+//==========================================================================
+void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const VFieldType &TypeArg1, int OpCode, const TLocation &aloc) {
+  if (StatementInfo[statement].Args != OPCARGS_TypeDD) {
+    FatalError("Opcode doesn't take types as argument");
+  }
+  FInstruction &I = CurrentFunc->Instructions.Alloc();
+  I.Opcode = statement;
+  I.TypeArg = TypeArg;
+  I.TypeArg1 = TypeArg1;
+  I.Arg2 = OpCode;
   I.loc = aloc;
 }
 
@@ -705,7 +722,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int A
       StatementInfo[statement].Args != OPCARGS_ArrElemType_Int &&
       StatementInfo[statement].Args != OPCARGS_TypeDD)
   {
-    FatalError("Opcode doesn\'t take type as argument");
+    FatalError("Opcode doesn't take type as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -745,7 +762,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
       StatementInfo[statement].Args != OPCARGS_ShortBranchTarget &&
       StatementInfo[statement].Args != OPCARGS_IntBranchTarget)
   {
-    FatalError("Opcode does\'t take 2 params");
+    FatalError("Opcode does't take 2 params");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;

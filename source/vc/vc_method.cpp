@@ -514,7 +514,7 @@ void VMethod::DumpAsm () {
         dprintf(" %s", *Instructions[s].TypeArg.GetName());
         break;
       case OPCARGS_TypeDD:
-        dprintf(" %s %s", StatementDictDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName());
+        dprintf(" %s!(%s,%s)", StatementDictDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName(), *Instructions[s].TypeArg1.GetName());
         break;
       case OPCARGS_Builtin:
         dprintf(" %s", StatementBuiltinInfo[Instructions[s].Arg1].name);
@@ -673,6 +673,7 @@ void VMethod::CompileCode () {
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
       case OPCARGS_TypeDD:
         WriteType(Instructions[i].TypeArg);
+        WriteType(Instructions[i].TypeArg1);
         WriteUInt8(Instructions[i].Arg2);
         break;
       case OPCARGS_A2DDimsAndSize:
@@ -893,6 +894,7 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
       break;
     case OPCARGS_TypeDD:
       Strm << Instr.TypeArg;
+      Strm << Instr.TypeArg1;
       Strm << STRM_INDEX(Instr.Arg2);
       break;
     case OPCARGS_Builtin:

@@ -107,10 +107,7 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   if (RealType == TYPE_Array) {
     Strm << T.ArrayInnerType << STRM_INDEX(T.ArrayDimInternal);
     RealType = T.ArrayInnerType;
-  } else if (RealType == TYPE_DynamicArray) {
-    Strm << T.ArrayInnerType;
-    RealType = T.ArrayInnerType;
-  } else if (RealType == TYPE_SliceArray) {
+  } else if (RealType == TYPE_DynamicArray || RealType == TYPE_SliceArray || RealType == TYPE_Dictionary) {
     Strm << T.ArrayInnerType;
     RealType = T.ArrayInnerType;
   }
@@ -301,6 +298,48 @@ VFieldType VFieldType::GetArrayInnerType () const {
 
 //==========================================================================
 //
+//  VFieldType::GetDictKeyType
+//
+//==========================================================================
+VFieldType VFieldType::GetDictKeyType () const {
+  guard(VFieldType::GetDictKeyType);
+  if (Type != TYPE_Dictionary) {
+    FatalError("Not a dictionary type");
+    return *this;
+  }
+  VFieldType ret = *this;
+  ret.Type = InnerType;
+  ret.InnerType = TYPE_Void;
+  ret.ArrayInnerType = TYPE_Void;
+  ret.ArrayDimInternal = 0;
+  return ret;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::GetDictValueType
+//
+//==========================================================================
+VFieldType VFieldType::GetDictValueType () const {
+  guard(VFieldType::GetDictValueType);
+  if (Type != TYPE_Dictionary) {
+    FatalError("Not a dictionary type");
+    return *this;
+  }
+  VFieldType ret = *this;
+  ret.Type = ArrayInnerType;
+  ret.InnerType = TYPE_Void;
+  ret.ArrayInnerType = TYPE_Void;
+  ret.ArrayDimInternal = 0;
+  return ret;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VFieldType::GetStackSize
 //
 //==========================================================================
@@ -323,6 +362,7 @@ int VFieldType::GetStackSize () const {
     case TYPE_Array: return GetArrayDim()*GetArrayInnerType().GetStackSize();
     case TYPE_SliceArray: return 2*4; // ptr and length
     case TYPE_DynamicArray: return 3*4; // 3 fields in VScriptArray
+    case TYPE_Dictionary: return 4; // VScriptDict is just a pointer to the underlying implementation class
   }
   return 0;
   unguard;
@@ -343,16 +383,17 @@ int VFieldType::GetSize () const {
     case TYPE_Float: return sizeof(float);
     case TYPE_Name: return sizeof(VName);
     case TYPE_String: return sizeof(VStr);
-    case TYPE_Pointer: return sizeof(void*);
-    case TYPE_Reference: return sizeof(VObject*);
-    case TYPE_Class: return sizeof(VClass*);
-    case TYPE_State: return sizeof(VState*);
+    case TYPE_Pointer: return sizeof(void *);
+    case TYPE_Reference: return sizeof(VObject *);
+    case TYPE_Class: return sizeof(VClass *);
+    case TYPE_State: return sizeof(VState *);
     case TYPE_Delegate: return sizeof(VObjectDelegate);
     case TYPE_Struct: return (Struct->Size+3)&~3;
     case TYPE_Vector: return sizeof(TVec);
     case TYPE_Array: return GetArrayDim()*GetArrayInnerType().GetSize();
     case TYPE_SliceArray: return sizeof(void *)+sizeof(vint32); // ptr and length
     case TYPE_DynamicArray: return sizeof(VScriptArray);
+    case TYPE_Dictionary: return sizeof(VScriptDict);
   }
   return 0;
   unguard;
@@ -383,6 +424,7 @@ int VFieldType::GetAlignment () const {
     case TYPE_Array: return GetArrayInnerType().GetAlignment();
     case TYPE_SliceArray: return sizeof(void *);
     case TYPE_DynamicArray: return sizeof(void *);
+    case TYPE_Dictionary: return sizeof(void *);
   }
   return 0;
   unguard;
@@ -577,6 +619,8 @@ VStr VFieldType::GetName () const {
       Ret = GetArrayInnerType().GetName();
       return (Ret.IndexOf('*') < 0 ? VStr("array!")+Ret : VStr("array!(")+Ret+")");
     case TYPE_SliceArray: return GetArrayInnerType().GetName()+"[]";
+    case TYPE_Dictionary:
+      return VStr("dictionary!(")+GetDictKeyType().GetName()+","+GetDictValueType().GetName()+")";
     case TYPE_Automatic: return "auto";
     case TYPE_Delegate: return "delegate";
     default: return VStr("unknown:")+VStr((vuint32)Type);
@@ -587,11 +631,12 @@ VStr VFieldType::GetName () const {
 
 //==========================================================================
 //
-//  VFieldType::CanBeReplaced
+//  VFieldType::IsAnyArray
 //
 //==========================================================================
 bool VFieldType::IsAnyArray () const {
-  return (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray);
+  return (Type == TYPE_Array || Type == TYPE_DynamicArray ||
+          Type == TYPE_SliceArray || Type == TYPE_Dictionary);
 }
 
 
@@ -635,6 +680,7 @@ bool VFieldType::IsReusingDisabled () const {
       //return (ArrayInnerType == TYPE_String || ArrayInnerType == TYPE_Array || ArrayInnerType == TYPE_DynamicArray);
       return !(ArrayInnerType == TYPE_Int || ArrayInnerType == TYPE_Float || ArrayInnerType == TYPE_Name);
     case TYPE_DynamicArray: // dynamic arrays should be cleared with dtors
+    case TYPE_Dictionary: // dictionaries should be cleared with dtors
     case TYPE_Automatic: // this is something that should not be, so let's play safe
       return true;
     default:
@@ -650,7 +696,8 @@ bool VFieldType::IsReusingDisabled () const {
 //
 //==========================================================================
 bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
-  if (Equals(atype)) return true; // same types are always replaceable
+  // same types are always replaceable
+  if (Equals(atype) && !IsReusingDisabled()) return true;
   // don't change types
   return false;
 }
@@ -1031,9 +1078,10 @@ int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VO
       //case TYPE_Delegate
       //case TYPE_Struct,
       case TYPE_Vector: P_PASS_VEC(*(TVec *)p0); break;
-      //case TYPE_Array,
-      //case TYPE_DynamicArray,
-      //case TYPE_SliceArray, // array consisting of pointer and length, with immutable length
+      //case TYPE_Array:
+      //case TYPE_DynamicArray:
+      //case TYPE_SliceArray: // array consisting of pointer and length, with immutable length
+      //case TYPE_Dictionary:
       default: abort(); // the thing that should not be
     }
   }
@@ -1055,9 +1103,10 @@ int VScriptArray::CallComparePtr (void *p0, void *p1, const VFieldType &Type, VO
       //case TYPE_Delegate
       //case TYPE_Struct,
       case TYPE_Vector: P_PASS_VEC(*(TVec *)p1); break;
-      //case TYPE_Array,
-      //case TYPE_DynamicArray,
-      //case TYPE_SliceArray, // array consisting of pointer and length, with immutable length
+      //case TYPE_Array:
+      //case TYPE_DynamicArray:
+      //case TYPE_SliceArray: // array consisting of pointer and length, with immutable length
+      //case TYPE_Dictionary:
       default: abort(); // the thing that should not be
     }
   }
@@ -1140,6 +1189,7 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
       case TYPE_Struct:
       case TYPE_Vector: //FIXME
       case TYPE_DynamicArray:
+      case TYPE_Dictionary:
         requireRef = true;
         break;
       case TYPE_Delegate:

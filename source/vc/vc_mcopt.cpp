@@ -169,6 +169,7 @@ struct Instr {
   VMemberBase *Member;
   VName NameArg;
   VFieldType TypeArg;
+  VFieldType TypeArg1;
   TLocation loc;
   // copied from statement info list
   int opcArgType;
@@ -193,6 +194,7 @@ struct Instr {
     , Member(i.Member)
     , NameArg(i.NameArg)
     , TypeArg(i.TypeArg)
+    , TypeArg1(i.TypeArg1)
     , loc(i.loc)
     , opcArgType(StatementInfo[Opcode].Args)
     , idx(-1)
@@ -212,6 +214,7 @@ struct Instr {
     dest.Member = Member;
     dest.NameArg = NameArg;
     dest.TypeArg = TypeArg;
+    dest.TypeArg1 = TypeArg1;
     dest.loc = loc;
   }
 
@@ -996,7 +999,7 @@ struct Instr {
         fprintf(stderr, " %s", *TypeArg.GetName());
         break;
       case OPCARGS_TypeDD:
-        fprintf(stderr, " %s %s", StatementDictDispatchInfo[Arg2].name, *TypeArg.GetName());
+        fprintf(stderr, " %s!(%s,%s)", StatementDictDispatchInfo[Arg2].name, *TypeArg.GetName(), *TypeArg1.GetName());
         break;
       case OPCARGS_Builtin:
         fprintf(stderr, " %s", StatementBuiltinInfo[Arg1].name);
@@ -1090,6 +1093,7 @@ void VMCOptimizer::finish () {
   olist[iofs].Member = nullptr;
   olist[iofs].NameArg = NAME_None;
   olist[iofs].TypeArg = VFieldType(TYPE_Void);
+  olist[iofs].TypeArg1 = VFieldType(TYPE_Void);
   if (iofs > 0) {
     olist[iofs].loc = olist[iofs-1].loc;
   } else {
@@ -1252,6 +1256,7 @@ void VMCOptimizer::replaceInstr (Instr *dest, Instr *src) {
   dest->Member = src->Member;
   dest->NameArg = src->NameArg;
   dest->TypeArg = src->TypeArg;
+  dest->TypeArg1 = src->TypeArg1;
   //dest->loc = src->loc; // don't replace location, to get better debug info
   dest->opcArgType = src->opcArgType;
   dest->origIdx = src->origIdx; // so we can show some motion in debug dumps
@@ -1543,7 +1548,7 @@ void VMCOptimizer::optimizeJumps () {
         addr += 8+sizeof(void *);
         break;
       case OPCARGS_TypeDD:
-        addr += 8+sizeof(void *)+1;
+        addr += 2*(8+sizeof(void *))+1;
         break;
       case OPCARGS_Builtin:
         addr += 1;

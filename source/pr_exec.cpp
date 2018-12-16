@@ -275,7 +275,7 @@ static void popOldIterator () {
 //  ExecDictOperator
 //
 //==========================================================================
-static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &Type, vuint8 dcopcode) {
+static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFieldType &VType, vuint8 dcopcode) {
   cstDump(ip);
   Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
 }
@@ -2606,11 +2606,12 @@ func_loop:
 
       PR_VM_CASE(OPC_DictDispatch)
         {
-          VFieldType Type;
+          VFieldType Type, Type1;
           ++ip;
           ReadType(Type, ip);
+          ReadType(Type1, ip);
           vuint8 dcopcode = *ip++;
-          ExecDictOperator(ip, sp, Type, dcopcode);
+          ExecDictOperator(ip, sp, Type, Type1, dcopcode);
         }
         PR_VM_BREAK;
 

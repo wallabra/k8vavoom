@@ -45,6 +45,7 @@ enum EType {
   TYPE_Array,
   TYPE_DynamicArray,
   TYPE_SliceArray, // array consisting of pointer and length, with immutable length
+  TYPE_Dictionary,
   TYPE_Unknown,
   TYPE_Automatic, // this is valid only for variable declarations, and will be resolved to actual type
 
@@ -56,8 +57,8 @@ enum EType {
 class VFieldType {
 public:
   vuint8 Type;
-  vuint8 InnerType; // for pointers
-  vuint8 ArrayInnerType; // for arrays
+  vuint8 InnerType; // for pointers; key for dictionaries
+  vuint8 ArrayInnerType; // for arrays; value for dictionaries
   vuint8 PtrLevel;
   // you should never access `ArrayDimInternal` directly!
   // sign bit is used to mark "2-dim array"
@@ -88,6 +89,8 @@ public:
   VFieldType MakeDynamicArrayType (const TLocation &) const;
   VFieldType MakeSliceType (const TLocation &) const;
   VFieldType GetArrayInnerType () const;
+  VFieldType GetDictKeyType () const;
+  VFieldType GetDictValueType () const;
 
   // this is used in VM, don't touch it
   inline void SetArrayDimIntr (vint32 v) { ArrayDimInternal = v; }
@@ -163,6 +166,20 @@ public:
 
 // required for VaVoom C VM
 static_assert(sizeof(VScriptArray) <= sizeof(void *)*3, "oops");
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// dictionary object, used in script executor
+class VScriptDict {
+private:
+  TMapNC<void *, void *> *map;
+
+public:
+  VScriptDict () : map(nullptr) {}
+};
+
+// required for VaVoom C VM
+static_assert(sizeof(VScriptDict) == sizeof(void *), "oops");
 
 
 // ////////////////////////////////////////////////////////////////////////// //
