@@ -1041,6 +1041,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
   if (SelfExpr->Type.Type != TYPE_Reference) {
     // translate method name for some built-in types
     if (SelfExpr->Type.Type == TYPE_String) {
+      // string
       static const char *knownStrTrans[] = {
         "mid", "strmid",
         "left", "strleft",
@@ -1058,14 +1059,32 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         }
       }
     } else if (SelfExpr->Type.Type == TYPE_Float) {
+      // float
       if (MethodName == "isnan" || MethodName == "isNan" || MethodName == "isNaN" || MethodName == "isNAN" ||
           MethodName == "isinf" || MethodName == "isInf" || MethodName == "isfinite" || MethodName == "isFinite") {
         if (NumArgs != 0) {
           ParseError(Loc, "`float` builtin `%s` cannot have args", *MethodName);
+          delete selfCopy;
           delete this;
           return nullptr;
         }
         VExpression *e = new VDotField(selfCopy, MethodName, Loc);
+        delete this;
+        return e->Resolve(ec);
+      }
+    } else if (SelfExpr->Type.Type == TYPE_Dictionary) {
+      // dictionary
+      if (MethodName == "clear" || MethodName == "reset") {
+        if (NumArgs != 0) {
+          ParseError(Loc, "Dictionary builtin `%s` cannot have args", *MethodName);
+          delete selfCopy;
+          delete this;
+          return nullptr;
+        }
+        SelfExpr->Flags &= ~FIELD_ReadOnly;
+        SelfExpr->RequestAddressOf();
+        VExpression *e = new VDictClearOrReset(SelfExpr, (MethodName == "clear"), Loc);
+        SelfExpr = nullptr;
         delete this;
         return e->Resolve(ec);
       }

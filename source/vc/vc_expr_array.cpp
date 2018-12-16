@@ -1875,3 +1875,76 @@ void VDictGetCapacity::Emit (VEmitContext &ec) {
   sexpr->Emit(ec);
   ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_Capacity, Loc);
 }
+
+
+
+//==========================================================================
+//
+//  VDictClearOrReset
+//
+//==========================================================================
+VDictClearOrReset::VDictClearOrReset (VExpression *asexpr, bool aClear, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , doClear(aClear)
+{
+  Flags = FIELD_ReadOnly;
+}
+
+
+//==========================================================================
+//
+//  VDictClearOrReset::~VDictClearOrReset
+//
+//==========================================================================
+VDictClearOrReset::~VDictClearOrReset () {
+  delete sexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictClearOrReset::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictClearOrReset::SyntaxCopy () {
+  auto res = new VDictClearOrReset();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictClearOrReset::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictClearOrReset::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictClearOrReset *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->doClear = doClear;
+}
+
+
+//==========================================================================
+//
+//  VDictClearOrReset::DoResolve
+//
+//==========================================================================
+VExpression *VDictClearOrReset::DoResolve (VEmitContext &ec) {
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictClearOrReset::Emit
+//
+//==========================================================================
+void VDictClearOrReset::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(),
+    (doClear ? OPC_DictDispatch_Clear : OPC_DictDispatch_Reset), Loc);
+}

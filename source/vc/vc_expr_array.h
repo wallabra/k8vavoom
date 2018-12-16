@@ -362,3 +362,26 @@ protected:
   VDictGetCapacity () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VDictClearOrReset
+//
+//==========================================================================
+class VDictClearOrReset : public VExpression {
+public:
+  VExpression *sexpr;
+  bool doClear;
+
+  // `asexpr` should be already resolved
+  VDictClearOrReset (VExpression *asexpr, bool aClear, const TLocation &aloc);
+  virtual ~VDictClearOrReset () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictClearOrReset () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

@@ -266,37 +266,41 @@ static void popOldIterator () {
 //  ExecDictOperator
 //
 //==========================================================================
-static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFieldType &VType, vuint8 dcopcode) {
+static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldType &KType, VFieldType &VType, vuint8 dcopcode) {
   VScriptDict *ht;
   VScriptDictElem e, v;
   switch (dcopcode) {
     // [-1]: VScriptDict
     case OPC_DictDispatch_Clear:
-      ht = (VScriptDict *)&sp[-1].p;
-      //if (!ht) { cstDump(ip); Sys_Error("uninitialized dictionary");
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       ht->clear();
       --sp;
       return;
     // [-1]: VScriptDict
     case OPC_DictDispatch_Reset:
-      ht = (VScriptDict *)&sp[-1].p;
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       ht->reset();
       --sp;
       return;
     // [-1]: VScriptDict
     case OPC_DictDispatch_Length:
-      ht = (VScriptDict *)&sp[-1].p;
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       sp[-1].i = ht->length();
       return;
     // [-1]: VScriptDict
     case OPC_DictDispatch_Capacity:
-      ht = (VScriptDict *)&sp[-1].p;
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       sp[-1].i = ht->capacity();
       return;
     // [-2]: VScriptDict
     // [-1]: keyptr
     case OPC_DictDispatch_Find:
-      ht = (VScriptDict *)&sp[-2].p;
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
       sp[-2].p = ht->find(e);
       --sp;
@@ -306,7 +310,8 @@ static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFiel
     // [-1]: valptr
     case OPC_DictDispatch_Put:
       {
-        ht = (VScriptDict *)&sp[-3].p;
+        ht = (VScriptDict *)sp[-3].p;
+        if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
         VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType);
         VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType);
         sp[-3].i = (ht->put(e, v) ? 1 : 0);
@@ -316,7 +321,8 @@ static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFiel
     // [-2]: VScriptDict
     // [-1]: keyptr
     case OPC_DictDispatch_Delete:
-      ht = (VScriptDict *)&sp[-2].p;
+      ht = (VScriptDict *)sp[-2].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
       sp[-2].i = (ht->del(e) ? 1 : 0);
       --sp;
@@ -324,11 +330,12 @@ static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFiel
     // [-1]: VScriptDict*
     case OPC_DictDispatch_ClearPointed:
       ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       ht->clear();
       --sp;
       return;
   }
-  cstDump(ip);
+  cstDump(origip);
   Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
 }
 
@@ -2642,11 +2649,12 @@ func_loop:
 
       PR_VM_CASE(OPC_DictDispatch)
         {
+          vuint8 *origip = ip;
           ++ip;
           VFieldType KType = VFieldType::ReadTypeMem(ip);
           VFieldType VType = VFieldType::ReadTypeMem(ip);
           vuint8 dcopcode = *ip++;
-          ExecDictOperator(ip, sp, KType, VType, dcopcode);
+          ExecDictOperator(origip, ip, sp, KType, VType, dcopcode);
         }
         PR_VM_BREAK;
 
