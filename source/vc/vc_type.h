@@ -182,12 +182,66 @@ static_assert(sizeof(VScriptArray) <= sizeof(void *)*3, "oops");
 
 // ////////////////////////////////////////////////////////////////////////// //
 // dictionary object, used in script executor
+struct VScriptDictElem {
+  void *value;
+  VFieldType type;
+  bool nodestroy;
+
+  VScriptDictElem () : value(nullptr), type(), nodestroy(true) {}
+  ~VScriptDictElem () { clear(); }
+  VScriptDictElem (const VScriptDictElem &e) { e.copyTo(this); }
+  VScriptDictElem &operator = (const VScriptDictElem &e) { if (&e != this) e.copyTo(this); return *this; }
+
+  bool operator == (const VScriptDictElem &e) const;
+
+  // create from [pointer to] value
+  // don't clear value on destroying
+  static void CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype);
+
+  void clear ();
+  void copyTo (VScriptDictElem *dest) const;
+
+  // types that can be casted to/from pointer
+  static inline bool isSimpleType (const VFieldType &tp) {
+    switch (tp.Type) {
+      case TYPE_Int:
+      case TYPE_Byte:
+      case TYPE_Float:
+      case TYPE_Name:
+      case TYPE_Pointer:
+      case TYPE_Reference:
+      case TYPE_Class:
+      case TYPE_State:
+        return true;
+    }
+    return false;
+  }
+};
+
+vuint32 GetTypeHash (const VScriptDictElem &e);
+
+
 class VScriptDict {
 private:
-  TMapNC<void *, void *> *map;
+  TMapDtor<VScriptDictElem, VScriptDictElem> *map;
 
 public:
   VScriptDict () : map(nullptr) {}
+  VScriptDict (const VScriptDict &); // no wai
+  VScriptDict &operator = (const VScriptDict &); // no wai
+
+  int length () const;
+  int capacity () const;
+
+  void copyTo (VScriptDict *dest);
+
+  void clear (); // this destroys `map`
+  void reset (); // this resets `map`
+  VScriptDictElem *find (const VScriptDictElem &key);
+  // returns `true` if old value was replaced
+  bool put (const VScriptDictElem &key, const VScriptDictElem &value);
+  // returns `true` if value was deleted
+  bool del (const VScriptDictElem &key);
 };
 
 // required for VaVoom C VM

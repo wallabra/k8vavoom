@@ -800,7 +800,6 @@ bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
 // VScriptArray
 // ////////////////////////////////////////////////////////////////////////// //
 
-
 #if !defined(IN_VCC)
 
 //==========================================================================
@@ -1392,6 +1391,199 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
 #endif
 
   return true;
+}
+
+#endif // !defined(IN_VCC)
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// VScriptDict
+// ////////////////////////////////////////////////////////////////////////// //
+
+#if !defined(IN_VCC)
+
+//==========================================================================
+//
+//  GetTypeHash
+//
+//==========================================================================
+vuint32 GetTypeHash (const VScriptDictElem &e) {
+  if (e.type.Type == TYPE_String) {
+    VStr *s = (VStr *)e.value;
+    return joaatHashBuf(s->getCStr(), (size_t)s->length());
+  }
+  //TODO: hash structs and other complex types when we will allow 'em as keys
+  int ksize = e.type.GetSize();
+  return joaatHashBuf(e.value, (size_t)ksize);
+}
+
+
+//==========================================================================
+//
+//  VScriptDictElem::CreateFromPtr
+//
+//  create from [pointer to] value
+//  don't clear value on destroying
+//
+//==========================================================================
+void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype) {
+  e.clear();
+  e.value = ptr;
+  e.type = atype;
+  e.nodestroy = true;
+}
+
+
+//==========================================================================
+//
+//  VScriptDictElem::operator ==
+//
+//==========================================================================
+bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
+  if (value == e.value || &e == this) return true;
+  if (isSimpleType(type)) return false; // covered by the previous comparison
+  if (!type.Equals(e.type)) return false; // sanity check
+  return VField::IdenticalValue((const vuint8 *)value, (const vuint8 *)e.value, type);
+}
+
+
+//==========================================================================
+//
+//  VScriptDictElem::clear
+//
+//==========================================================================
+void VScriptDictElem::clear () {
+  if (!nodestroy) {
+    if (!value || type.Type == TYPE_Void) return;
+    if (!isSimpleType(type)) {
+      VField::DestructField((vuint8 *)value, type, false); // no need to zero it
+      Z_Free(value);
+    }
+  }
+  value = nullptr;
+  type = VFieldType();
+  nodestroy = true;
+}
+
+
+//==========================================================================
+//
+//  VScriptDictElem::copyTo
+//
+//==========================================================================
+void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
+  if (!dest || dest == this) return;
+  dest->clear();
+  // for "no destroy", just copy everything and exit
+  // k8: nope, always do full copy
+  //if (nodestroy) { dest->value = (void *)value; dest->type = type; dest->nodestroy = nodestroy; return; }
+  if (!value || type.Type == TYPE_Void) return;
+  if (isSimpleType(type)) { dest->value = (void *)value; dest->type = type; dest->nodestroy = false; return; }
+  // complex copy
+  //check(!nodestroy);
+  int sz = type.GetSize();
+  dest->value = Z_Calloc(sz);
+  VField::CopyFieldValue((const vuint8 *)value, (vuint8 *)dest->value, type);
+  dest->type = type;
+  dest->nodestroy = false;
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::length
+//
+//==========================================================================
+int VScriptDict::length () const { return (map ? map->count() : 0); }
+
+
+//==========================================================================
+//
+//  VScriptDict::capacity
+//
+//==========================================================================
+int VScriptDict::capacity () const { return (map ? map->capacity() : 0); }
+
+
+//==========================================================================
+//
+//  VScriptDict::copyTo
+//
+//==========================================================================
+void VScriptDict::copyTo (VScriptDict *dest) {
+  check(dest);
+  if (dest == this) return;
+  dest->clear();
+  check(dest->map == nullptr);
+  if (map) {
+    // copy hashtable
+    dest->map = new TMapDtor<VScriptDictElem, VScriptDictElem>;
+    for (auto it = map->first(); it; ++it) {
+      dest->map->put(it.getKey(), it.getValue());
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::clear
+//
+//  this destroys `map`
+//
+//==========================================================================
+void VScriptDict::clear () {
+  if (map) {
+    map->clear();
+    delete map;
+    map = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::reset
+//
+//  this resets `map`
+//
+//==========================================================================
+void VScriptDict::reset () {
+  if (map) map->reset();
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::find
+//
+//==========================================================================
+VScriptDictElem *VScriptDict::find (const VScriptDictElem &key) {
+  if (!map) return nullptr;
+  return map->find(key);
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::put
+//
+//==========================================================================
+bool VScriptDict::put (const VScriptDictElem &key, const VScriptDictElem &value) {
+  if (!map) map = new TMapDtor<VScriptDictElem, VScriptDictElem>;
+  return map->put(key, value);
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::del
+//
+//==========================================================================
+bool VScriptDict::del (const VScriptDictElem &key) {
+  if (!map) return false;
+  return map->del(key);
 }
 
 #endif // !defined(IN_VCC)
