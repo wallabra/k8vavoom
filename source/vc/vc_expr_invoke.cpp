@@ -32,6 +32,9 @@
 #define BUILTIN_OPCODE_INFO
 #include "../progdefs.h"
 
+#define DICTDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
 
 //==========================================================================
 //

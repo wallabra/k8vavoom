@@ -44,6 +44,9 @@
 #define BUILTIN_OPCODE_INFO
 #include "progdefs.h"
 
+#define DICTDISPATCH_OPCODE_INFO
+#include "progdefs.h"
+
 
 #define MAX_PROG_STACK  (10000)
 #define STACK_ID  (0x45f6cd4b)
@@ -238,6 +241,11 @@ static int iterStackUsed = 0;
 static int iterStackSize = 0;
 
 
+//==========================================================================
+//
+//  pushOldIterator
+//
+//==========================================================================
 static void pushOldIterator (VScriptIterator *iter) {
   if (iterStackUsed == iterStackSize) {
     // grow
@@ -250,6 +258,11 @@ static void pushOldIterator (VScriptIterator *iter) {
 }
 
 
+//==========================================================================
+//
+//  popOldIterator
+//
+//==========================================================================
 static void popOldIterator () {
   if (iterStackUsed == 0) { cstDump(nullptr); Sys_Error("popOldIterator: iterator stack underflow"); }
   VScriptIterator *it = iterStack[--iterStackUsed];
@@ -257,6 +270,22 @@ static void popOldIterator () {
 }
 
 
+//==========================================================================
+//
+//  ExecDictOperator
+//
+//==========================================================================
+static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &Type, vuint8 dcopcode) {
+  cstDump(ip);
+  Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
+}
+
+
+//==========================================================================
+//
+//  RunFunction
+//
+//==========================================================================
 static void RunFunction (VMethod *func) {
   vuint8 *ip = nullptr;
   VStack *sp;
@@ -2573,6 +2602,16 @@ func_loop:
           default: cstDump(ip); Sys_Error("Unknown builtin");
         }
         ip += 2;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_DictDispatch)
+        {
+          VFieldType Type;
+          ++ip;
+          ReadType(Type, ip);
+          vuint8 dcopcode = *ip++;
+          ExecDictOperator(ip, sp, Type, dcopcode);
+        }
         PR_VM_BREAK;
 
       PR_VM_DEFAULT

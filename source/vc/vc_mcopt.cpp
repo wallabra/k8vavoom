@@ -59,6 +59,9 @@
 #define BUILTIN_OPCODE_INFO
 #include "../progdefs.h"
 
+#define DICTDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct Instr;
@@ -992,6 +995,9 @@ struct Instr {
       case OPCARGS_A2DDimsAndSize:
         fprintf(stderr, " %s", *TypeArg.GetName());
         break;
+      case OPCARGS_TypeDD:
+        fprintf(stderr, " %s %s", StatementDictDispatchInfo[Arg2].name, *TypeArg.GetName());
+        break;
       case OPCARGS_Builtin:
         fprintf(stderr, " %s", StatementBuiltinInfo[Arg1].name);
         break;
@@ -1534,7 +1540,10 @@ void VMCOptimizer::optimizeJumps () {
         addr += 6;
         break;
       case OPCARGS_Type:
-        addr += 8+sizeof(void*);
+        addr += 8+sizeof(void *);
+        break;
+      case OPCARGS_TypeDD:
+        addr += 8+sizeof(void *)+1;
         break;
       case OPCARGS_Builtin:
         addr += 1;
@@ -1546,7 +1555,7 @@ void VMCOptimizer::optimizeJumps () {
         addr += 4;
         break;
       case OPCARGS_ArrElemType_Int:
-        addr += 8+sizeof(void*)+4;
+        addr += 8+sizeof(void *)+4;
         break;
     }
   }

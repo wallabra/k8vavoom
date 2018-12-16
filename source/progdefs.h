@@ -79,6 +79,26 @@ enum {
 };
 # endif
 
+#elif defined(DICTDISPATCH_OPCODE_INFO)
+# ifndef DECLARE_OPC_DICTDISPATCH
+#  define DICTDISPATCH_OPCODE_INFO_DEFAULT
+#  define DECLARE_OPC_DICTDISPATCH(name)  OPC_DictDispatch_##name
+enum {
+# endif
+  DECLARE_OPC_DICTDISPATCH(Clear),
+  DECLARE_OPC_DICTDISPATCH(Reset),
+  DECLARE_OPC_DICTDISPATCH(Length),
+  DECLARE_OPC_DICTDISPATCH(Capacity),
+  DECLARE_OPC_DICTDISPATCH(Find),
+  DECLARE_OPC_DICTDISPATCH(Put),
+  DECLARE_OPC_DICTDISPATCH(Delete),
+# undef DECLARE_OPC_DICTDISPATCH
+# undef DICTDISPATCH_OPCODE_INFO
+# ifdef DICTDISPATCH_OPCODE_INFO_DEFAULT
+#  undef DICTDISPATCH_OPCODE_INFO_DEFAULT
+};
+# endif
+
 #else
 
 #ifndef OPCODE_INFO
@@ -121,6 +141,7 @@ enum {
   OPCARGS_Type_Int,
   // used for dynarray sorting, int is delegate argc
   OPCARGS_ArrElemType_Int,
+  OPCARGS_TypeDD, // dictdispatch
 };
 
 
@@ -450,6 +471,9 @@ enum {
 
   // builtins (k8: i'm short of opcodes, so...)
   DECLARE_OPC(Builtin, Builtin),
+
+  // universal dispatcher for dictionary type
+  DECLARE_OPC(DictDispatch, TypeDD), // type followed by OPC_DictDispatch_XXX
 
 #undef DECLARE_OPC
 #ifndef OPCODE_INFO

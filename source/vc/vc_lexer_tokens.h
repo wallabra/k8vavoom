@@ -49,6 +49,7 @@
   VC_LEXER_DEFTOKEN(DefaultProperties, "defaultproperties")
   VC_LEXER_DEFTOKEN(Delegate,          "delegate")
   VC_LEXER_DEFTOKEN(Delete,            "delete")
+  VC_LEXER_DEFTOKEN(Dictionary,        "dictionary")
   VC_LEXER_DEFTOKEN(Do,                "do")
   VC_LEXER_DEFTOKEN(Else,              "else")
   VC_LEXER_DEFTOKEN(Enum,              "enum")

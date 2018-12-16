@@ -513,6 +513,9 @@ void VMethod::DumpAsm () {
       case OPCARGS_A2DDimsAndSize:
         dprintf(" %s", *Instructions[s].TypeArg.GetName());
         break;
+      case OPCARGS_TypeDD:
+        dprintf(" %s %s", StatementDictDispatchInfo[Instructions[s].Arg2].name, *Instructions[s].TypeArg.GetName());
+        break;
       case OPCARGS_Builtin:
         dprintf(" %s", StatementBuiltinInfo[Instructions[s].Arg1].name);
         break;
@@ -668,6 +671,10 @@ void VMethod::CompileCode () {
       case OPCARGS_TypeSize: WriteInt32(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_TypeSizeB: WriteUInt8(Instructions[i].TypeArg.GetSize()); break;
       case OPCARGS_Type: WriteType(Instructions[i].TypeArg); break;
+      case OPCARGS_TypeDD:
+        WriteType(Instructions[i].TypeArg);
+        WriteUInt8(Instructions[i].Arg2);
+        break;
       case OPCARGS_A2DDimsAndSize:
         {
           // we got an array type here, but we need size of one array element, so DIY it
@@ -883,6 +890,10 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
     case OPCARGS_Type:
     case OPCARGS_A2DDimsAndSize:
       Strm << Instr.TypeArg;
+      break;
+    case OPCARGS_TypeDD:
+      Strm << Instr.TypeArg;
+      Strm << STRM_INDEX(Instr.Arg2);
       break;
     case OPCARGS_Builtin:
       Strm << STRM_INDEX(Instr.Arg1);
