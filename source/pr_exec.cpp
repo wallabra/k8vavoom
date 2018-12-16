@@ -267,6 +267,66 @@ static void popOldIterator () {
 //
 //==========================================================================
 static void ExecDictOperator (vuint8 *&ip, VStack *&sp, VFieldType &KType, VFieldType &VType, vuint8 dcopcode) {
+  VScriptDict *ht;
+  VScriptDictElem e, v;
+  switch (dcopcode) {
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_Clear:
+      ht = (VScriptDict *)&sp[-1].p;
+      ht->clear();
+      --sp;
+      return;
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_Reset:
+      ht = (VScriptDict *)&sp[-1].p;
+      ht->reset();
+      --sp;
+      return;
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_Length:
+      ht = (VScriptDict *)&sp[-1].p;
+      sp[-1].i = ht->length();
+      return;
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_Capacity:
+      ht = (VScriptDict *)&sp[-1].p;
+      sp[-1].i = ht->capacity();
+      return;
+    // [-2]: VScriptDict
+    // [-1]: keyptr
+    case OPC_DictDispatch_Find:
+      ht = (VScriptDict *)&sp[-2].p;
+      VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
+      sp[-2].p = ht->find(e);
+      --sp;
+      return;
+    // [-3]: VScriptDict
+    // [-2]: keyptr
+    // [-1]: valptr
+    case OPC_DictDispatch_Put:
+      {
+        ht = (VScriptDict *)&sp[-3].p;
+        VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType);
+        VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType);
+        sp[-3].i = (ht->put(e, v) ? 1 : 0);
+        sp -= 2;
+      }
+      return;
+    // [-2]: VScriptDict
+    // [-1]: keyptr
+    case OPC_DictDispatch_Delete:
+      ht = (VScriptDict *)&sp[-2].p;
+      VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
+      sp[-2].i = (ht->del(e) ? 1 : 0);
+      --sp;
+      return;
+    // [-1]: VScriptDict*
+    case OPC_DictDispatch_ClearPointed:
+      ht = (VScriptDict *)sp[-1].p;
+      ht->clear();
+      --sp;
+      return;
+  }
   cstDump(ip);
   Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
 }
