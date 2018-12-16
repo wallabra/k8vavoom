@@ -90,18 +90,16 @@ public:
         index = amap.mEBSize;
       } else {
         index = (vuint32)amap.mFirstEntry;
-        while (index < amap.mEBSize && amap.mEntries[index].empty) ++index;
+        while ((vint32)index <= amap.mLastEntry && index < amap.mEBSize && amap.mEntries[index].empty) ++index;
+        if ((vint32)index > amap.mLastEntry) index = amap.mEBSize;
       }
     }
-    inline operator bool () const { return (index < map.mEBSize); }
+    inline operator bool () const { return ((vint32)index <= map.mLastEntry); }
     inline void operator ++ () {
       if (index < map.mEBSize) {
         ++index;
-        if ((int)index > map.mLastEntry) {
-          index = map.mEBSize;
-        } else {
-          while (index < map.mEBSize && map.mEntries[index].empty) ++index;
-        }
+        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].empty) ++index;
+        if ((int)index > map.mLastEntry) index = map.mEBSize;
       }
     }
     inline const TK &GetKey () const { return map.mEntries[index].key; }
@@ -111,10 +109,9 @@ public:
     inline const TV &getValue () const { return map.mEntries[index].value; }
     inline TV &getValue () { return map.mEntries[index].value; }
     inline void removeCurrent () {
-      if (index < map.mEBSize && !map.mEntries[index].empty) {
-        map.del(map.mEntries[index].key);
+      if ((vint32)index <= map.mLastEntry && index < map.mEBSize) {
+        if (!map.mEntries[index].empty) map.del(map.mEntries[index].key);
         operator++();
-        //while (index < map.mEBSize && map.mEntries[index].empty) ++index;
       }
     }
     inline void RemoveCurrent () { removeCurrent(); }
@@ -123,12 +120,53 @@ public:
         index = map.mEBSize;
       } else {
         index = (vuint32)map.mFirstEntry;
-        while (index < map.mEBSize && map.mEntries[index].empty) ++index;
+        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].empty) ++index;
+        if ((vint32)index > map.mLastEntry) index = map.mEBSize;
       }
     }
   };
 
   friend class TIterator;
+
+public:
+  // this is for VaVoom C VM
+  inline bool isValidIIdx (vint32 index) const {
+    return (index >= 0 && index <= (int)mLastEntry);
+  }
+
+  // this is for VaVoom C VM
+  inline vint32 getFirstIIdx () const {
+    if (mFirstEntry < 0) return -1;
+    vint32 index = mFirstEntry;
+    while (index <= mLastEntry && index < (vint32)mEBSize && mEntries[index].empty) ++index;
+    return (index <= mLastEntry ? index : -1);
+  }
+
+  // <0: done
+  inline vint32 getNextIIdx (vint32 index) const {
+    if (index >= 0 && index <= mLastEntry) {
+      ++index;
+      while (index <= mLastEntry && mEntries[index].empty) ++index;
+      return (index <= mLastEntry ? index : -1);
+    }
+    return -1;
+  }
+
+  inline vint32 removeCurrAndGetNextIIdx (vint32 index) {
+    if (index >= 0 && index <= mLastEntry) {
+      if (!mEntries[index].empty) del(mEntries[index].key);
+      return getNextIIdx(index);
+    }
+    return -1;
+  }
+
+  inline const TK *getKeyIIdx (vint32 index) const {
+    return (isValidIIdx(index) && !mEntries[index].empty ? &mEntries[index].key : nullptr);
+  }
+
+  inline TV *getValueIIdx (vint32 index) const {
+    return (isValidIIdx(index) && !mEntries[index].empty ? &mEntries[index].value : nullptr);
+  }
 
 private:
   void freeEntries () {
