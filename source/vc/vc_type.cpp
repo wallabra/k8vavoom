@@ -1569,6 +1569,68 @@ void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
 }
 
 
+//==========================================================================
+//
+//  VScriptDictElem::streamSkip
+//
+//==========================================================================
+void VScriptDictElem::streamSkip (VStream &strm) {
+  VField::SkipSerialisedValue(strm);
+}
+
+
+//==========================================================================
+//
+//  VScriptDictElem::Serialise
+//
+//==========================================================================
+void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) {
+  if (strm.IsLoading()) {
+    // reading
+    clear();
+    if (type.Type == TYPE_String || isSimpleType(type)) {
+      type = dtp;
+      nodestroy = false;
+      VField::SerialiseFieldValue(strm, (vuint8 *)&value, type, fullname);
+    } else {
+      int sz = dtp.GetSize();
+      value = Z_Calloc(sz);
+      type = dtp;
+      nodestroy = false;
+      VField::SerialiseFieldValue(strm, (vuint8 *)value, type, fullname);
+    }
+  } else {
+    // writing
+    vuint8 *ptr;
+    if (type.Type == TYPE_String || isSimpleType(type)) {
+      ptr = (vuint8 *)&value;
+    } else {
+      ptr = (vuint8 *)value;
+    }
+    VField::SerialiseFieldValue(strm, ptr, type, fullname);
+  }
+}
+
+
+
+//==========================================================================
+//
+//  VScriptDictElem::Serialise
+//
+//==========================================================================
+void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) const {
+  check(!strm.IsLoading());
+  // writing
+  vuint8 *ptr;
+  if (type.Type == TYPE_String || isSimpleType(type)) {
+    ptr = (vuint8 *)&value;
+  } else {
+    ptr = (vuint8 *)value;
+  }
+  VField::SerialiseFieldValue(strm, ptr, type, fullname);
+}
+
+
 
 //==========================================================================
 //
@@ -1723,5 +1785,87 @@ bool VScriptDict::cleanRefs () {
 
   return res;
 }
+
+//==========================================================================
+//
+//  VScriptDict::getKeyType
+//
+//  SLOW!
+//
+//==========================================================================
+VFieldType VScriptDict::getKeyType () const {
+  if (!map || map->count() == 0) return VFieldType();
+  auto it = map->first();
+  return it.getKey().type;
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::getValueType
+//
+//  SLOW!
+//
+//==========================================================================
+VFieldType VScriptDict::getValueType () const {
+  if (!map || map->count() == 0) return VFieldType();
+  auto it = map->first();
+  return it.getValue().type;
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::streamSkip
+//
+//==========================================================================
+void VScriptDict::streamSkip (VStream &strm) {
+  vuint32 count = 0;
+  strm << STRM_INDEX(count);
+  if (count < 0 || count > 0x1fffffff) Sys_Error("I/O Error: invalid dictionary size");
+  if (count == 0) return;
+  VFieldType t;
+  while (count--) {
+    strm << t; // key type
+    VScriptDictElem::streamSkip(strm); // key
+    strm << t; // value type
+    VScriptDictElem::streamSkip(strm); // value
+  }
+}
+
+
+//==========================================================================
+//
+//  VScriptDict::Serialise
+//
+//==========================================================================
+void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) {
+  if (strm.IsLoading()) {
+    // reading
+    vint32 count = 0;
+    strm << STRM_INDEX(count);
+    clear();
+    if (count < 0 || count > 0x1fffffff) Sys_Error("I/O Error: invalid dictionary size");
+    while (count--) {
+      // key and value
+      VScriptDictElem ke, ve;
+      ke.Serialise(strm, dtp.GetDictKeyType(), fullname);
+      ve.Serialise(strm, dtp.GetDictValueType(), fullname);
+      put(ke, ve);
+    }
+  } else {
+    // writing
+    vint32 count = length();
+    strm << STRM_INDEX(count);
+    if (count) {
+      for (auto it = map->first(); it; ++it, --count) {
+        it.getKey().Serialise(strm, dtp.GetDictKeyType(), fullname);
+        it.getValue().Serialise(strm, dtp.GetDictValueType(), fullname);
+      }
+      check(count == 0);
+    }
+  }
+}
+
 
 #endif // !defined(IN_VCC)

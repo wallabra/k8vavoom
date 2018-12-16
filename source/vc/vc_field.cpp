@@ -259,8 +259,12 @@ void VField::SkipSerialisedType (VStream &Strm) {
       //FIXME:SLICE
       break;
     case TYPE_Dictionary:
-      //FIXME
-      abort();
+      {
+        VFieldType t;
+        Strm << t;
+        VScriptDict::streamSkip(Strm);
+      }
+      break;
     default:
       Sys_Error("I/O Error: unknown data type");
   }
@@ -535,8 +539,16 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       dprintf("Don't know how to serialise slice type `%s`\n", *Type.GetName());
       break;
     case TYPE_Dictionary:
-      //FIXME
-      abort();
+      {
+        VScriptDict *dc = (VScriptDict *)Data;
+        VFieldType t = Type;
+        Strm << t;
+        if (Strm.IsLoading()) {
+          if (!t.Equals(Type)) Sys_Error("I/O Error: expected dictionary of type `%s`, but got `%s`", *Type.GetName(), *t.GetName());
+        }
+        dc->Serialise(Strm, Type, fullname);
+      }
+      break;
     default:
       Sys_Error("I/O Error: unknown data type");
   }

@@ -218,6 +218,10 @@ struct VScriptDictElem {
     }
     return false;
   }
+
+  static void streamSkip (VStream &strm);
+  void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname);
+  void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) const;
 };
 
 vuint32 GetTypeHash (const VScriptDictElem &e);
@@ -247,10 +251,21 @@ public:
 
   // returns `true` if something was cleaned
   bool cleanRefs ();
+
+  //SLOW!
+  VFieldType getKeyType () const;
+  //SLOW!
+  VFieldType getValueType () const;
+
+  static void streamSkip (VStream &strm);
+  //friend VStream &operator << (VStream &strm, VScriptDict &dc);
+  void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname);
 };
 
 // required for VaVoom C VM
 static_assert(sizeof(VScriptDict) == sizeof(void *), "oops");
+
+VStream &operator << (VStream &strm, VScriptDict &dc);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
