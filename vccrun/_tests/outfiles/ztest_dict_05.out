@@ -1,0 +1,16 @@
+===============
+1
+2
+--- 0: <string 1> : 42
+ list length: 2
+  0: item 0=1
+  1: item 1=2
+--- 1: <string 2> : 666
+ list length: 3
+  0: item 2=3
+  1: item 3=4
+  2: item 4=5
+===============
+2
+0: <string 1>
+1: <string 2>
