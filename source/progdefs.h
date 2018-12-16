@@ -458,66 +458,6 @@ enum {
 
 static_assert(NUM_OPCODES < 256, "VaVoomC: too many opcodes!");
 
-struct dprograms_t {
-  char magic[4]; // "VPRG"
-  int version;
-
-  int ofs_names;
-  int num_names;
-
-  int num_strings;
-  int ofs_strings;
-
-  int ofs_mobjinfo;
-  int num_mobjinfo;
-
-  int ofs_scriptids;
-  int num_scriptids;
-
-  int ofs_exportinfo;
-  int ofs_exportdata;
-  int num_exports;
-
-  int ofs_imports;
-  int num_imports;
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct VProgsImport {
-  vuint8 Type;
-  VName Name;
-  vint32 OuterIndex;
-  VName ParentClassName;  // for decorate class imports
-
-  VMemberBase *Obj;
-
-  VProgsImport () : Type(0), Name(NAME_None), OuterIndex(0), Obj(0) {}
-  VProgsImport (VMemberBase *InObj, vint32 InOuterIndex);
-
-  friend VStream &operator << (VStream &Strm, VProgsImport &I) {
-    Strm << I.Type << I.Name << STRM_INDEX(I.OuterIndex);
-    if (I.Type == MEMBER_DecorateClass) Strm << I.ParentClassName;
-    return Strm;
-  }
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct VProgsExport {
-  vuint8 Type;
-  VName Name;
-
-  VMemberBase *Obj;
-
-  VProgsExport () : Type(0), Name(NAME_None), Obj(0) {}
-  VProgsExport(VMemberBase *InObj);
-
-  friend VStream &operator << (VStream &Strm, VProgsExport &E) {
-    return Strm << E.Type << E.Name;
-  }
-};
-
 
 #endif
 

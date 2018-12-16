@@ -60,34 +60,6 @@ VStream *(*VMemberBase::dgOpenFile) (const VStr &filename, void *userdata);
 
 //==========================================================================
 //
-//  VProgsImport::VProgsImport
-//
-//==========================================================================
-VProgsImport::VProgsImport (VMemberBase *InObj, vint32 InOuterIndex)
-  : Type(InObj->MemberType)
-  , Name(InObj->Name)
-  , OuterIndex(InOuterIndex)
-  , Obj(InObj)
-{
-}
-
-
-//==========================================================================
-//
-//  VProgsExport::VProgsExport
-//
-//==========================================================================
-VProgsExport::VProgsExport (VMemberBase *InObj)
-  : Type(InObj->MemberType)
-  , Name(InObj->Name)
-  , Obj(InObj)
-{
-}
-
-
-
-//==========================================================================
-//
 //  VMemberBase::VMemberBase
 //
 //==========================================================================
