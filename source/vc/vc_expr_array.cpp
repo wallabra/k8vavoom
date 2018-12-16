@@ -2015,9 +2015,15 @@ VExpression *VDictFind::DoResolve (VEmitContext &ec) {
   if (!keyexpr) { ParseError(Loc, "`.find` cannot have empty argument"); delete this; return nullptr; }
   keyexpr = keyexpr->Resolve(ec);
   if (!keyexpr) { delete this; return nullptr; }
+  if (sexpr->Type.GetDictKeyType().Type == TYPE_Float) keyexpr = keyexpr->CoerceToFloat();
+  if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType())) {
+    ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *keyexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
   sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
-  Type = keyexpr->Type.MakePointerType();
+  Type = sexpr->Type.GetDictValueType().MakePointerType();
   return this;
 }
 
@@ -2093,6 +2099,12 @@ VExpression *VDictDelete::DoResolve (VEmitContext &ec) {
   if (!keyexpr) { ParseError(Loc, "`.delete` cannot have empty argument"); delete this; return nullptr; }
   keyexpr = keyexpr->Resolve(ec);
   if (!keyexpr) { delete this; return nullptr; }
+  if (sexpr->Type.GetDictKeyType().Type == TYPE_Float) keyexpr = keyexpr->CoerceToFloat();
+  if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType())) {
+    ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *keyexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
   //sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int); // bool
@@ -2175,6 +2187,18 @@ VExpression *VDictPut::DoResolve (VEmitContext &ec) {
   keyexpr = keyexpr->Resolve(ec);
   valexpr = valexpr->Resolve(ec);
   if (!keyexpr || !valexpr) { delete this; return nullptr; }
+  if (sexpr->Type.GetDictKeyType().Type == TYPE_Float) keyexpr = keyexpr->CoerceToFloat();
+  if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType())) {
+    ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *keyexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  if (sexpr->Type.GetDictValueType().Type == TYPE_Float) valexpr = valexpr->CoerceToFloat();
+  if (!valexpr->Type.Equals(sexpr->Type.GetDictValueType())) {
+    ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *valexpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
   //sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int); // bool

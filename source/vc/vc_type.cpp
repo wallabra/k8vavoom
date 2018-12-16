@@ -1414,9 +1414,35 @@ vuint32 GetTypeHash (const VScriptDictElem &e) {
     return joaatHashBuf(s->getCStr(), (size_t)s->length());
   }
   //fprintf(stderr, "GetTypeHash: ptr=%p; type=%s; size=%d\n", e.value, *e.type.GetName(), e.type.GetSize());
-  //TODO: hash structs and other complex types when we will allow 'em as keys
-  int ksize = e.type.GetSize();
-  return joaatHashBuf((VScriptDictElem::isSimpleType(e.type) ? &e.value : e.value), (size_t)ksize);
+  switch (e.type.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Float:
+    case TYPE_Pointer:
+    case TYPE_Reference:
+    case TYPE_Class:
+    case TYPE_State:
+    case TYPE_Vector:
+    case TYPE_SliceArray:
+    case TYPE_Array:
+    case TYPE_Struct:
+      return joaatHashBuf(&e.value, (size_t)e.type.GetSize());
+    case TYPE_Bool:
+      return 0;
+    case TYPE_Name:
+      return hashU32((vuint32)((VName *)e.value)->GetIndex());
+    case TYPE_String:
+      {
+        VStr *s = (VStr *)&e.value;
+        return joaatHashBuf(s->getCStr(), (size_t)s->length());
+      }
+    case TYPE_Delegate:
+      return 0;
+    //case TYPE_Struct: //TODO: hash individual fields
+    //case TYPE_DynamicArray:
+    //case TYPE_Dictionary:
+  }
+  return 0;
 }
 
 

@@ -207,6 +207,7 @@ struct VScriptDictElem {
       case TYPE_Int:
       case TYPE_Byte:
       case TYPE_Float:
+      case TYPE_Bool:
       case TYPE_Name:
       case TYPE_Pointer:
       case TYPE_Reference:
