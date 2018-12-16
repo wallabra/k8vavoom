@@ -652,7 +652,7 @@ int main (int argc, char **argv) {
     //VCvar::Shutdown();
     //VObject::StaticExit();
     //VName::StaticExit();
-  } catch (VException& e) {
+  } catch (VException &e) {
     ret = VFuncRes((int)-1);
 #ifndef WIN32
     FatalError("FATAL: %s", e.What());
@@ -660,6 +660,7 @@ int main (int argc, char **argv) {
     FatalError("%s", e.What());
 #endif
   }
+  VObject::StaticExit();
 
   return ret.getInt();
 }
