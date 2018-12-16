@@ -1820,15 +1820,14 @@ VFieldType VScriptDict::getValueType () const {
 //
 //==========================================================================
 void VScriptDict::streamSkip (VStream &strm) {
+  VFieldType tp;
+  strm << tp;
   vuint32 count = 0;
   strm << STRM_INDEX(count);
   if (count < 0 || count > 0x1fffffff) Sys_Error("I/O Error: invalid dictionary size");
   if (count == 0) return;
-  VFieldType t;
   while (count--) {
-    strm << t; // key type
     VScriptDictElem::streamSkip(strm); // key
-    strm << t; // value type
     VScriptDictElem::streamSkip(strm); // value
   }
 }
@@ -1840,8 +1839,11 @@ void VScriptDict::streamSkip (VStream &strm) {
 //
 //==========================================================================
 void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) {
+  VFieldType tp;
   if (strm.IsLoading()) {
     // reading
+    strm << tp;
+    if (!tp.Equals(dtp)) Sys_Error("I/O Error: invalid dictionary type");
     vint32 count = 0;
     strm << STRM_INDEX(count);
     clear();
@@ -1855,6 +1857,8 @@ void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname
     }
   } else {
     // writing
+    tp = dtp;
+    strm << tp;
     vint32 count = length();
     strm << STRM_INDEX(count);
     if (count) {
