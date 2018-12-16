@@ -584,6 +584,20 @@ void VMethod::PostLoad () {
 
 //==========================================================================
 //
+//  VMethod::WriteType
+//
+//==========================================================================
+void VMethod::WriteType (const VFieldType &tp) {
+  vuint8 tbuf[VFieldType::MemSize*2];
+  vuint8 *ptr = tbuf;
+  tp.WriteTypeMem(ptr);
+  check((ptrdiff_t)(ptr-tbuf) == VFieldType::MemSize);
+  for (vuint8 *p = tbuf; p != ptr; ++p) Statements.append(*p);
+}
+
+
+//==========================================================================
+//
 //  VMethod::CompileCode
 //
 //==========================================================================
@@ -591,13 +605,6 @@ void VMethod::PostLoad () {
 #define WriteInt16(p)  Statements.SetNum(Statements.Num()+2); *(vint16 *)&Statements[Statements.Num()-2] = (p)
 #define WriteInt32(p)  Statements.SetNum(Statements.Num()+4); *(vint32 *)&Statements[Statements.Num()-4] = (p)
 #define WritePtr(p)    Statements.SetNum(Statements.Num()+sizeof(void *)); *(void **)&Statements[Statements.Num()-sizeof(void *)] = (p)
-#define WriteType(T) \
-  WriteUInt8(T.Type); \
-  WriteUInt8(T.ArrayInnerType); \
-  WriteUInt8(T.InnerType); \
-  WriteUInt8(T.PtrLevel); \
-  WriteInt32(T.GetArrayDim()); \
-  WritePtr(T.Class);
 
 
 void VMethod::CompileCode () {

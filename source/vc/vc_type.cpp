@@ -40,8 +40,10 @@ VFieldType::VFieldType()
   : Type(TYPE_Void)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
+  , KeyInnerType(0)
   , PtrLevel(0)
-  , ArrayDimInternal(0)
+  //, ArrayDimInternal(0)
+  , KClass(0)
   , Class(0)
 {
 }
@@ -56,8 +58,10 @@ VFieldType::VFieldType(EType Atype)
   : Type(Atype)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
+  , KeyInnerType(0)
   , PtrLevel(0)
-  , ArrayDimInternal(0)
+  //, ArrayDimInternal(0)
+  , KClass(0)
   , Class(0)
 {
 }
@@ -72,8 +76,10 @@ VFieldType::VFieldType (VClass *InClass)
   : Type(TYPE_Reference)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
+  , KeyInnerType(0)
   , PtrLevel(0)
-  , ArrayDimInternal(0)
+  //, ArrayDimInternal(0)
+  , KClass(0)
   , Class(InClass)
 {
 }
@@ -88,10 +94,50 @@ VFieldType::VFieldType (VStruct *InStruct)
   : Type(InStruct->IsVector ? TYPE_Vector : TYPE_Struct)
   , InnerType(TYPE_Void)
   , ArrayInnerType(TYPE_Void)
+  , KeyInnerType(0)
   , PtrLevel(0)
-  , ArrayDimInternal(0)
+  //, ArrayDimInternal(0)
+  , KClass(0)
   , Struct(InStruct)
 {
+}
+
+
+//==========================================================================
+//
+//  VFieldType::ReadTypeMem
+//
+//==========================================================================
+VFieldType VFieldType::ReadTypeMem (vuint8 *&ptr) {
+  VFieldType tp;
+  tp.Type = *ptr++;
+  tp.InnerType = *ptr++;
+  tp.ArrayInnerType = *ptr++;
+  tp.KeyInnerType = *ptr++;
+  tp.PtrLevel = *ptr++;
+  tp.KClass = *(VClass **)ptr;
+  ptr += sizeof(void *);
+  tp.Class = *(VClass **)ptr;
+  ptr += sizeof(void *);
+  return tp;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::WriteTypeMem
+//
+//==========================================================================
+void VFieldType::WriteTypeMem (vuint8 *&ptr) const {
+  *ptr++ = Type;
+  *ptr++ = InnerType;
+  *ptr++ = ArrayInnerType;
+  *ptr++ = KeyInnerType;
+  *ptr++ = PtrLevel;
+  *(VClass **)ptr = KClass;
+  ptr += sizeof(void *);
+  *(VClass **)ptr = Class;
+  ptr += sizeof(void *);
 }
 
 
@@ -107,10 +153,16 @@ VStream &operator << (VStream &Strm, VFieldType &T) {
   if (RealType == TYPE_Array) {
     Strm << T.ArrayInnerType << STRM_INDEX(T.ArrayDimInternal);
     RealType = T.ArrayInnerType;
-  } else if (RealType == TYPE_DynamicArray || RealType == TYPE_SliceArray || RealType == TYPE_Dictionary) {
+  } else if (RealType == TYPE_DynamicArray || RealType == TYPE_SliceArray) {
     Strm << T.ArrayInnerType;
     RealType = T.ArrayInnerType;
+  } else if (RealType == TYPE_Dictionary) {
+    Strm << T.ValueInnerType;
+    Strm << T.KeyInnerType;
+    if (T.KeyInnerType == TYPE_Reference || RealType == TYPE_Class) Strm << T.KClass;
+    RealType = T.ValueInnerType;
   }
+
   if (RealType == TYPE_Pointer) {
     Strm << T.InnerType << T.PtrLevel;
     RealType = T.InnerType;
@@ -134,8 +186,10 @@ bool VFieldType::Equals (const VFieldType &Other) const {
   if (Type != Other.Type ||
       InnerType != Other.InnerType ||
       ArrayInnerType != Other.ArrayInnerType ||
+      KeyInnerType != Other.KeyInnerType ||
       PtrLevel != Other.PtrLevel ||
       ArrayDimInternal != Other.ArrayDimInternal ||
+      KClass != Other.KClass ||
       Class != Other.Class)
   {
     return false;
@@ -308,10 +362,12 @@ VFieldType VFieldType::GetDictKeyType () const {
     return *this;
   }
   VFieldType ret = *this;
-  ret.Type = InnerType;
+  ret.Type = KeyInnerType;
   ret.InnerType = TYPE_Void;
-  ret.ArrayInnerType = TYPE_Void;
-  ret.ArrayDimInternal = 0;
+  ret.ValueInnerType = TYPE_Void;
+  ret.KeyInnerType = TYPE_Void;
+  if (KeyInnerType != TYPE_Class && KeyInnerType != TYPE_Reference) ret.KClass = 0;
+  ret.PtrLevel = (KeyInnerType == TYPE_Pointer ? 1 : 0);
   return ret;
   unguard;
 }
@@ -329,10 +385,10 @@ VFieldType VFieldType::GetDictValueType () const {
     return *this;
   }
   VFieldType ret = *this;
-  ret.Type = ArrayInnerType;
-  ret.InnerType = TYPE_Void;
-  ret.ArrayInnerType = TYPE_Void;
-  ret.ArrayDimInternal = 0;
+  ret.Type = ValueInnerType;
+  ret.ValueInnerType = TYPE_Void;
+  ret.KeyInnerType = TYPE_Void;
+  ret.KClass = 0;
   return ret;
   unguard;
 }

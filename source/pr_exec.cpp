@@ -225,15 +225,6 @@ static void cstDump (const vuint8 *ip) {
 #define ReadInt16(ip)  (*(vint16 *)(ip))
 #define ReadInt32(ip)  (*(vint32 *)(ip))
 #define ReadPtr(ip)    (*(void **)(ip))
-#define ReadType(T, ip)  do { \
-  T.Type = (ip)[0]; \
-  T.ArrayInnerType = (ip)[1]; \
-  T.InnerType = (ip)[2]; \
-  T.PtrLevel = (ip)[3]; \
-  T.SetArrayDimIntr(ReadInt32((ip)+4)); \
-  T.Class = (VClass *)ReadPtr((ip)+8); \
-  ip += 8+sizeof(VClass *); \
-} while (0)
 
 
 static VScriptIterator **iterStack = nullptr;
@@ -2096,10 +2087,8 @@ func_loop:
       // pointer to a new element left on the stack
       PR_VM_CASE(OPC_DynArrayElementGrow)
         {
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
           int idx = sp[-1].i;
           if (idx < 0) { cstDump(ip); Sys_Error("Array index %d is negative", idx); }
@@ -2139,9 +2128,8 @@ func_loop:
           int newsize = sp[-1].i;
           // allow clearing for 2d arrays
           if (A.Is2D() && newsize != 0) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (newsize < 0) { cstDump(ip); Sys_Error("Array index %d is negative", newsize); }
           if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", newsize); }
           A.SetNum(newsize, Type);
@@ -2157,9 +2145,8 @@ func_loop:
           int newsize = sp[-1].i;
           // allow clearing for 2d arrays
           if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (newsize < 0) { cstDump(ip); Sys_Error("Array shrink delta %d is negative", newsize); }
           if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array shrink delta %d is too big", newsize); }
           if (A.length() < newsize) { cstDump(ip); Sys_Error("Array shrink delta %d is too big (%d)", newsize, A.length()); }
@@ -2176,9 +2163,8 @@ func_loop:
           int newsize = sp[-1].i;
           // allow clearing for 2d arrays
           if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (newsize < 0) { cstDump(ip); Sys_Error("Array grow delta %d is negative", newsize); }
           if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array grow delta %d is too big", newsize); }
           if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < newsize) { cstDump(ip); Sys_Error("Array grow delta %d is too big (%d)", newsize, A.length()); }
@@ -2196,9 +2182,8 @@ func_loop:
           if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot insert into 2D array"); }
           int index = sp[-2].i;
           int count = sp[-1].i;
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
           if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
           if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
@@ -2217,9 +2202,8 @@ func_loop:
           if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot insert into 2D array"); }
           int index = sp[-2].i;
           int count = sp[-1].i;
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
           if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
           if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
@@ -2233,9 +2217,8 @@ func_loop:
       PR_VM_CASE(OPC_DynArrayClear)
         {
           VScriptArray &A = *(VScriptArray *)sp[-1].p;
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           A.Reset(Type);
           --sp;
         }
@@ -2250,9 +2233,8 @@ func_loop:
         {
           VScriptArray &A = *(VScriptArray *)sp[-3].p;
           if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot sort non-flat arrays"); }
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           // get self
           VObject *dgself = (VObject *)sp[-2].p;
           // get pointer to the delegate
@@ -2279,9 +2261,8 @@ func_loop:
         {
           VScriptArray &A = *(VScriptArray *)sp[-3].p;
           if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot swap items of non-flat arrays"); }
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           int idx0 = sp[-2].i;
           int idx1 = sp[-1].i;
           if (idx0 < 0 || idx0 >= A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", idx0, A.length()); }
@@ -2297,9 +2278,8 @@ func_loop:
         {
           VScriptArray &A = *(VScriptArray *)sp[-2].p;
           int newsize = sp[-1].i;
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (newsize < 0) { cstDump(ip); Sys_Error("Array size %d is negative", newsize); }
           if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize); }
           A.SetNum(newsize, Type); // this will flatten it
@@ -2315,9 +2295,8 @@ func_loop:
           VScriptArray &A = *(VScriptArray *)sp[-3].p;
           int newsize1 = sp[-2].i;
           int newsize2 = sp[-1].i;
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           if (newsize1 < 1) { cstDump(ip); Sys_Error("Array size %d is too small", newsize1); }
           if (newsize1 > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize1); }
           if (newsize2 < 1) { cstDump(ip); Sys_Error("Array size %d is too small", newsize2); }
@@ -2407,10 +2386,8 @@ func_loop:
 
       PR_VM_CASE(OPC_DoWriteOne)
         {
-          VFieldType Type;
           ++ip;
-          ReadType(Type, ip);
-          //ip += 9+sizeof(VClass *);
+          VFieldType Type = VFieldType::ReadTypeMem(ip);
           pr_stackPtr = sp;
           PR_WriteOne(Type); // this will pop everything
           if (pr_stackPtr < pr_stack) { pr_stackPtr = pr_stack; cstDump(ip); Sys_Error("Stack underflow in `write`"); }
@@ -2428,9 +2405,7 @@ func_loop:
         sp->p = ip;
         sp += 1;
         // skip type
-        //VFieldType Type;
-        //ReadType(Type, ip);
-        ip += 8+sizeof(VClass *);
+        (void)VFieldType::ReadTypeMem(ip);
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ZeroByPtr)
@@ -2606,12 +2581,11 @@ func_loop:
 
       PR_VM_CASE(OPC_DictDispatch)
         {
-          VFieldType Type, Type1;
           ++ip;
-          ReadType(Type, ip);
-          ReadType(Type1, ip);
+          VFieldType KType = VFieldType::ReadTypeMem(ip);
+          VFieldType VType = VFieldType::ReadTypeMem(ip);
           vuint8 dcopcode = *ip++;
-          ExecDictOperator(ip, sp, Type, Type1, dcopcode);
+          ExecDictOperator(ip, sp, KType, VType, dcopcode);
         }
         PR_VM_BREAK;
 

@@ -57,12 +57,20 @@ enum EType {
 class VFieldType {
 public:
   vuint8 Type;
-  vuint8 InnerType; // for pointers; key for dictionaries
-  vuint8 ArrayInnerType; // for arrays; value for dictionaries
-  vuint8 PtrLevel;
-  // you should never access `ArrayDimInternal` directly!
-  // sign bit is used to mark "2-dim array"
-  vint32 ArrayDimInternal;
+  vuint8 InnerType; // for pointers and dictionary value pointers
+  union {
+    vuint8 ArrayInnerType; // for arrays
+    vuint8 ValueInnerType; // value for dictionaries
+  };
+  vuint8 KeyInnerType; // key for dictionaries; PtrLevel is always 1 for pointers (and pointers are `void`)
+  vuint8 PtrLevel; // for pointers and dictionary pointer values
+  union {
+    // you should never access `ArrayDimInternal` directly!
+    // sign bit is used to mark "2-dim array"
+    vint32 ArrayDimInternal;
+    VClass *KClass; // class for class key type
+  };
+  // for normal types and dictionary values
   union {
     vuint32 BitMask;
     VClass *Class; // class of the reference
@@ -74,6 +82,10 @@ public:
   VFieldType (EType Atype);
   explicit VFieldType (VClass *InClass);
   explicit VFieldType (VStruct *InStruct);
+
+  enum { MemSize = 5+sizeof(void *)*2 };
+  static VFieldType ReadTypeMem (vuint8 *&ptr);
+  void WriteTypeMem (vuint8 *&ptr) const;
 
   friend VStream &operator << (VStream &, VFieldType &);
 
@@ -91,9 +103,6 @@ public:
   VFieldType GetArrayInnerType () const;
   VFieldType GetDictKeyType () const;
   VFieldType GetDictValueType () const;
-
-  // this is used in VM, don't touch it
-  inline void SetArrayDimIntr (vint32 v) { ArrayDimInternal = v; }
 
   inline bool IsArray1D () const { return (ArrayDimInternal >= 0); }
   inline bool IsArray2D () const { return (ArrayDimInternal < 0); }

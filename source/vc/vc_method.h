@@ -151,6 +151,10 @@ class VMethod : public VMemberBase {
 private:
   bool mPostLoaded;
 
+  // used in codegen
+  // write binary type info to `Statements`
+  void WriteType (const VFieldType &tp);
+
 public:
   enum { MAX_PARAMS = 32 };
 
@@ -186,6 +190,7 @@ public:
   vint32 NetIndex;
   VMethod *NextNetMethod;
 
+public:
   VMethod (VName, VMemberBase *, TLocation);
   virtual ~VMethod () override;
   virtual void CompilerShutdown () override;

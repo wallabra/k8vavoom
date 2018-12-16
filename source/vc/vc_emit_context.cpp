@@ -683,7 +683,8 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, co
 //==========================================================================
 void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_TypeSize &&
-      StatementInfo[statement].Args != OPCARGS_Type)
+      StatementInfo[statement].Args != OPCARGS_Type &&
+      StatementInfo[statement].Args != OPCARGS_A2DDimsAndSize)
   {
     FatalError("Opcode doesn't take type as argument");
   }
@@ -719,8 +720,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //==========================================================================
 void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int Arg, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_Type_Int &&
-      StatementInfo[statement].Args != OPCARGS_ArrElemType_Int &&
-      StatementInfo[statement].Args != OPCARGS_TypeDD)
+      StatementInfo[statement].Args != OPCARGS_ArrElemType_Int)
   {
     FatalError("Opcode doesn't take type as argument");
   }
