@@ -854,7 +854,11 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         }
       }
       // ok
-      //op->Flags &= ~FIELD_ReadOnly;
+      if (SelfExpr->Flags&FIELD_ReadOnly) {
+        ParseError(Loc, "Cannot set length of read-only array");
+        delete this;
+        return nullptr;
+      }
       SelfExpr->RequestAddressOf();
       VDynArraySetNum *e = new VDynArraySetNum(SelfExpr, Args[0], Args[1], Loc);
       e->asSetSize = true;
@@ -2466,10 +2470,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
           if ((Args[i]->Flags&FIELD_ReadOnly) != 0 && (Func->ParamFlags[i]&FPARM_Const) == 0) {
             ParseError(Args[i]->Loc, "Cannot pass const argument #%d as non-const", i+1);
           }
-          int oldFlags = Args[i]->Flags;
-          Args[i]->Flags &= ~FIELD_ReadOnly;
           Args[i]->RequestAddressOf();
-          Args[i]->Flags = oldFlags;
         } else {
           // normal args: do int->float conversion
           if (Func->ParamTypes[i].Type == TYPE_Float) {

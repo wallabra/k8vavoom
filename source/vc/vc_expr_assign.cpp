@@ -118,6 +118,12 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
 
   if (!op1 || !op2) { delete this; return nullptr; }
 
+  if (op1->Flags&FIELD_ReadOnly) {
+    ParseError(Loc, "Cannot assign to read-only destination");
+    delete this;
+    return nullptr;
+  }
+
   if (op1->IsPropertyAssign()) {
     if (Oper != Assign) {
       ParseError(Loc, "Only `=` can be used to assign to a property");

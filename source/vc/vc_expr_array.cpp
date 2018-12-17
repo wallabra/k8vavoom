@@ -274,7 +274,12 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
     }
     Flags = op->Flags;
     Type = op->Type.GetArrayInnerType();
-    if (!assTarget) op->Flags &= ~FIELD_ReadOnly;
+    if (assTarget && (Flags&FIELD_ReadOnly) != 0) {
+      ParseError(Loc, "Cannot assign to read-only array");
+      delete this;
+      return nullptr;
+    }
+    //!!!if (!assTarget) op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
   } else if (op->Type.Type == TYPE_String) {
     // check bounds
@@ -355,6 +360,13 @@ VExpression *VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
 //==========================================================================
 VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
   if (ind2) return this;
+
+  if (op && (op->Flags&FIELD_ReadOnly) != 0) {
+    ParseError(Loc, "Cannot assign to read-only destination");
+    delete val;
+    delete this;
+    return nullptr;
+  }
 
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
   if (!rop) { delete val; delete this; return nullptr; }
@@ -506,11 +518,7 @@ VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression
 //
 //==========================================================================
 void VArrayElement::RequestAddressOf () {
-  if (op->Type.Type == TYPE_String) {
-    ParseError(Loc, "Cannot get string element address");
-  } else {
-    if (Flags&FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
-  }
+  if (op->Type.Type == TYPE_String) ParseError(Loc, "Cannot get string element address");
   if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }
@@ -667,10 +675,7 @@ VExpression *VSliceOp::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (op->Type.Type == TYPE_SliceArray) {
-    op->Flags &= ~FIELD_ReadOnly;
-    op->RequestAddressOf();
-  }
+  if (op->Type.Type == TYPE_SliceArray) op->RequestAddressOf();
 
   Type = op->Type;
   return this;
@@ -696,6 +701,13 @@ VExpression *VSliceOp::ResolveAssignmentTarget (VEmitContext &ec) {
 //==========================================================================
 VExpression *VSliceOp::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {
   resolved = true; // anyway
+
+  if (op && (op->Flags&FIELD_ReadOnly) != 0) {
+    ParseError(Loc, "Cannot assign to read-only destination");
+    delete val;
+    delete this;
+    return nullptr;
+  }
 
   VExpression *rop = op->SyntaxCopy()->Resolve(ec);
   if (!rop) { delete val; delete this; return nullptr; }
@@ -794,7 +806,6 @@ VDynArrayGetNum::VDynArrayGetNum (VExpression *AArrayExpr, int aDimNumber, const
   , ArrayExpr(AArrayExpr)
   , dimNumber(aDimNumber)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -1046,6 +1057,12 @@ void VDynArrayInsert::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDynArrayInsert::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
+
   if (ArrayExpr) ArrayExpr->RequestAddressOf();
   // resolve arguments
   if (IndexExpr) IndexExpr = IndexExpr->Resolve(ec);
@@ -1146,6 +1163,12 @@ void VDynArrayRemove::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDynArrayRemove::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
+
   if (ArrayExpr) ArrayExpr->RequestAddressOf();
   // resolve arguments
   if (IndexExpr) IndexExpr = IndexExpr->Resolve(ec);
@@ -1240,6 +1263,11 @@ void VDynArrayClear::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDynArrayClear::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
   if (ArrayExpr) ArrayExpr->RequestAddressOf();
   Type = VFieldType(TYPE_Void);
   return this;
@@ -1382,6 +1410,12 @@ bool VDynArraySort::checkDelegateType (VMethod *dg) {
 //
 //==========================================================================
 VExpression *VDynArraySort::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
+
   if (ArrayExpr) ArrayExpr->RequestAddressOf();
   // resolve arguments
   if (DgExpr) DgExpr = DgExpr->Resolve(ec);
@@ -1480,6 +1514,12 @@ void VDynArraySwap1D::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDynArraySwap1D::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
+
   if (ArrayExpr) ArrayExpr->RequestAddressOf();
   // resolve arguments
   if (Index0Expr) Index0Expr = Index0Expr->Resolve(ec);
@@ -1577,6 +1617,12 @@ void VDynArrayCopyFrom::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDynArrayCopyFrom::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
+
   // resolve arguments
   if (SrcExpr) SrcExpr = SrcExpr->Resolve(ec);
   if (!ArrayExpr || !SrcExpr) { delete this; return nullptr; }
@@ -1589,7 +1635,6 @@ VExpression *VDynArrayCopyFrom::DoResolve (VEmitContext &ec) {
   }
 
   ArrayExpr->RequestAddressOf();
-  SrcExpr->Flags &= FIELD_ReadOnly;
   SrcExpr->RequestAddressOf();
 
   Type = VFieldType(TYPE_Void);
@@ -1662,6 +1707,11 @@ void VDynArrayAllocElement::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDynArrayAllocElement::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (ArrayExpr && (ArrayExpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only array");
+    delete this;
+    return nullptr;
+  }
   if (!ArrayExpr) { delete this; return nullptr; }
   ArrayExpr->RequestAddressOf();
   Type = ArrayExpr->Type.GetArrayInnerType().MakePointerType();
@@ -1690,7 +1740,6 @@ VStringGetLength::VStringGetLength(VExpression *AStrExpr, const TLocation &ALoc)
   : VExpression(ALoc)
   , StrExpr(AStrExpr)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -1771,7 +1820,6 @@ VSliceGetLength::VSliceGetLength (VExpression *asexpr, const TLocation &aloc)
   : VExpression(aloc)
   , sexpr(asexpr)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -1846,7 +1894,6 @@ VSliceGetPtr::VSliceGetPtr (VExpression *asexpr, const TLocation &aloc)
   : VExpression(aloc)
   , sexpr(asexpr)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -1893,6 +1940,7 @@ VExpression *VSliceGetPtr::DoResolve (VEmitContext &ec) {
   //fprintf(stderr, "setype: <%s>\n", *sexpr->Type.GetName());
   Type = sexpr->Type.GetArrayInnerType();
   //Type = Type.MakePointerType();
+  Flags |= sexpr->Flags&FIELD_ReadOnly;
   return this;
 }
 
@@ -1918,7 +1966,6 @@ VDictGetLength::VDictGetLength (VExpression *asexpr, const TLocation &aloc)
   : VExpression(aloc)
   , sexpr(asexpr)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -1962,7 +2009,6 @@ void VDictGetLength::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictGetLength::DoResolve (VEmitContext &ec) {
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int);
   return this;
@@ -1990,7 +2036,6 @@ VDictGetCapacity::VDictGetCapacity (VExpression *asexpr, const TLocation &aloc)
   : VExpression(aloc)
   , sexpr(asexpr)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -2034,7 +2079,6 @@ void VDictGetCapacity::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictGetCapacity::DoResolve (VEmitContext &ec) {
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int);
   return this;
@@ -2063,7 +2107,6 @@ VDictClearOrReset::VDictClearOrReset (VExpression *asexpr, bool aClear, const TL
   , sexpr(asexpr)
   , doClear(aClear)
 {
-  Flags = FIELD_ReadOnly;
 }
 
 
@@ -2108,7 +2151,11 @@ void VDictClearOrReset::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictClearOrReset::DoResolve (VEmitContext &ec) {
-  sexpr->Flags &= ~FIELD_ReadOnly;
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only dictionary");
+    delete this;
+    return nullptr;
+  }
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Void);
   return this;
@@ -2194,13 +2241,9 @@ VExpression *VDictFind::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
+  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) keyexpr->RequestAddressOf();
 
-  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) {
-    keyexpr->Flags &= ~FIELD_ReadOnly;
-    keyexpr->RequestAddressOf();
-  }
   Type = sexpr->Type.GetDictValueType().MakePointerType();
   return this;
 }
@@ -2274,6 +2317,12 @@ void VDictDelete::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictDelete::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only dictionary");
+    delete this;
+    return nullptr;
+  }
+
   if (!keyexpr) { ParseError(Loc, "`.delete` cannot have empty argument"); delete this; return nullptr; }
   keyexpr = keyexpr->Resolve(ec);
   if (!keyexpr) { delete this; return nullptr; }
@@ -2285,12 +2334,9 @@ VExpression *VDictDelete::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  //sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
-  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) {
-    keyexpr->Flags &= ~FIELD_ReadOnly;
-    keyexpr->RequestAddressOf();
-  }
+  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) keyexpr->RequestAddressOf();
+
   Type = VFieldType(TYPE_Int); // bool
   return this;
 }
@@ -2367,6 +2413,12 @@ void VDictPut::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictPut::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only dictionary");
+    delete this;
+    return nullptr;
+  }
+
   if (!keyexpr || !valexpr) { ParseError(Loc, "`.put` cannot have empty arguments"); delete this; return nullptr; }
   keyexpr = keyexpr->Resolve(ec);
   valexpr = valexpr->Resolve(ec);
@@ -2374,18 +2426,6 @@ VExpression *VDictPut::DoResolve (VEmitContext &ec) {
 
   if (sexpr->Type.GetDictKeyType().Type == TYPE_Float) keyexpr = keyexpr->CoerceToFloat();
   if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType())) {
-    /*
-    VFieldType t = keyexpr->Type;
-    VFieldType Other = sexpr->Type.GetDictKeyType();
-    fprintf(stderr, "Type: %d\n", (int)(t.Type == Other.Type));
-    fprintf(stderr, "InnerType: %d\n", (int)(t.InnerType == Other.InnerType));
-    fprintf(stderr, "ArrayInnerType: %d\n", (int)(t.ArrayInnerType == Other.ArrayInnerType));
-    fprintf(stderr, "KeyInnerType: %d\n", (int)(t.KeyInnerType == Other.KeyInnerType));
-    fprintf(stderr, "ValueInnerType: %d\n", (int)(t.ValueInnerType == Other.ValueInnerType));
-    fprintf(stderr, "PtrLevel: %d\n", (int)(t.PtrLevel == Other.PtrLevel));
-    fprintf(stderr, "KClass: %d\n", (int)(t.KClass == Other.KClass));
-    fprintf(stderr, "Class: %d\n", (int)(t.Class == Other.Class));
-    */
     ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *keyexpr->Type.GetName());
     delete this;
     return nullptr;
@@ -2398,16 +2438,10 @@ VExpression *VDictPut::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  //sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
-  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) {
-    keyexpr->Flags &= ~FIELD_ReadOnly;
-    keyexpr->RequestAddressOf();
-  }
-  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictValueType())) {
-    valexpr->Flags &= ~FIELD_ReadOnly;
-    valexpr->RequestAddressOf();
-  }
+  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictKeyType())) keyexpr->RequestAddressOf();
+  if (!VScriptDictElem::isSimpleType(sexpr->Type.GetDictValueType())) valexpr->RequestAddressOf();
+
   Type = VFieldType(TYPE_Int); // bool
   return this;
 }
@@ -2479,7 +2513,6 @@ void VDictFirstIndex::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictFirstIndex::DoResolve (VEmitContext &ec) {
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int);
   return this;
@@ -2563,7 +2596,6 @@ VExpression *VDictIsValidIndex::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int); // bool
   return this;
@@ -2650,7 +2682,12 @@ VExpression *VDictNextIndex::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (!doRemove) sexpr->Flags &= ~FIELD_ReadOnly;
+  if (doRemove && ((Flags&FIELD_ReadOnly) != 0 || (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot remove elements from read-only dictionary");
+    delete this;
+    return nullptr;
+  }
+
   sexpr->RequestAddressOf();
   Type = VFieldType(TYPE_Int);
   return this;
@@ -2736,12 +2773,9 @@ VExpression *VDictKeyAtIndex::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = sexpr->Type.GetDictKeyType();
-  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) {
-    Type = Type.MakePointerType();
-  }
+  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) Type = Type.MakePointerType();
   Flags |= FIELD_ReadOnly;
   return this;
 }
@@ -2825,12 +2859,10 @@ VExpression *VDictValueAtIndex::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  sexpr->Flags &= ~FIELD_ReadOnly;
   sexpr->RequestAddressOf();
   Type = sexpr->Type.GetDictValueType();
-  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) {
-    Type = Type.MakePointerType();
-  }
+  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) Type = Type.MakePointerType();
+  Flags |= sexpr->Flags&FIELD_ReadOnly;
   return this;
 }
 

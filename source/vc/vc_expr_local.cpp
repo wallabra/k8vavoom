@@ -296,7 +296,6 @@ VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VLocalVar::RequestAddressOf () {
-  if (Flags&FIELD_ReadOnly) ParseError(Loc, "Tried to assign to a read-only variable");
   if (PushOutParam) {
     PushOutParam = false;
     return;

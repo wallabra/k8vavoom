@@ -356,16 +356,19 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
 
   // allow dotted access for dynamic arrays
   if (op->Type.Type == TYPE_Pointer) {
+    auto oldflags = op->Flags;
     if (op->Type.InnerType == TYPE_DynamicArray) {
       auto loc = op->Loc;
       delete op;
       op = nullptr;
       op = (new VPushPointed(opcopy.SyntaxCopy(), loc))->Resolve(ec);
+      op->Flags |= oldflags&FIELD_ReadOnly;
       if (!op) { delete this; return nullptr; }
     } else {
       delete op;
       op = nullptr;
       VPointerField *e = new VPointerField(opcopy.get(), FieldName, Loc);
+      e->Flags |= oldflags&FIELD_ReadOnly;
       delete this;
       return e->Resolve(ec);
     }
@@ -405,6 +408,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         } else*/ {
           // generate field access
           e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
+          //!!!e->Flags |= op->Flags&FIELD_ReadOnly;
           op = nullptr;
         }
         delete this;
@@ -440,10 +444,11 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     }
     //delete opcopy; // we never ever need opcopy here
     //opcopy = nullptr; // just in case
-    int Flags = op->Flags;
-    if (assType != AssType::AssTarget) op->Flags &= ~FIELD_ReadOnly;
+    int opflags = op->Flags;
+    //!!!if (assType != AssType::AssTarget) op->Flags &= ~FIELD_ReadOnly;
     op->RequestAddressOf();
     VExpression *e = new VFieldAccess(op, field, Loc, Flags&FIELD_ReadOnly);
+    e->Flags |= (opflags|field->Flags)&FIELD_ReadOnly;
     op = nullptr;
     delete this;
     return e->Resolve(ec);
@@ -459,12 +464,15 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
     //VFieldType type = op->Type;
     if (assType == AssType::AssTarget) {
       if (FieldName == "length1" || FieldName == "length2") {
-        ParseError(Loc, "Use `SetSize` method to create 2d dynamic array");
+        ParseError(Loc, "Use `setLength` method to create 2d dynamic array");
         delete this;
         return nullptr;
       }
-    } else {
-      op->Flags &= ~FIELD_ReadOnly;
+      if (op->Flags&FIELD_ReadOnly) {
+        ParseError(Loc, "Cannot change length of read-only array");
+        delete this;
+        return nullptr;
+      }
     }
     op->RequestAddressOf();
     if (assType == AssType::AssTarget) {
@@ -511,10 +519,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      if (!op->IsStrConst()) {
-        op->Flags &= ~FIELD_ReadOnly;
-        op->RequestAddressOf();
-      }
+      if (!op->IsStrConst()) op->RequestAddressOf();
       VExpression *e = new VStringGetLength(op, Loc);
       op = nullptr;
       delete this;
@@ -578,7 +583,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      op->Flags &= ~FIELD_ReadOnly;
       op->RequestAddressOf();
       VExpression *e = new VSliceGetLength(op, Loc);
       op = nullptr;
@@ -590,9 +594,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      op->Flags &= ~FIELD_ReadOnly;
       op->RequestAddressOf();
       VExpression *e = new VSliceGetPtr(op, Loc);
+      e->Flags |= (Flags|op->Flags)&FIELD_ReadOnly;
       op = nullptr;
       delete this;
       return e->Resolve(ec);
@@ -716,6 +720,11 @@ VExpression *VDotField::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VDotField::ResolveAssignmentTarget (VEmitContext &ec) {
+  if (Flags&FIELD_ReadOnly) {
+    ParseError(Loc, "Cannot assign to read-only destination");
+    delete this;
+    return nullptr;
+  }
   return InternalResolve(ec, AssType::AssTarget);
 }
 
@@ -767,7 +776,7 @@ VFieldAccess::VFieldAccess (VExpression *AOp, VField *AField, const TLocation &A
   , field(AField)
   , AddressRequested(false)
 {
-  Flags = field->Flags | ExtraFlags;
+  Flags = /*field->Flags|*/ExtraFlags;
 }
 
 
@@ -815,7 +824,7 @@ void VFieldAccess::DoSyntaxCopyTo (VExpression *e) {
 //  VFieldAccess::DoResolve
 //
 //==========================================================================
-VExpression *VFieldAccess::DoResolve (VEmitContext&) {
+VExpression *VFieldAccess::DoResolve (VEmitContext &) {
   Type = field->Type;
   RealType = field->Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
@@ -829,7 +838,6 @@ VExpression *VFieldAccess::DoResolve (VEmitContext&) {
 //
 //==========================================================================
 void VFieldAccess::RequestAddressOf () {
-  if (Flags&FIELD_ReadOnly) ParseError(op->Loc, "Tried to assign to a read-only field");
   if (AddressRequested) ParseError(Loc, "Multiple address of");
   AddressRequested = true;
 }

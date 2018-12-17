@@ -432,6 +432,19 @@ VExpression *VUnaryMutator::DoResolve (VEmitContext &ec) {
     delete this;
     return nullptr;
   }
+
+  if (op->Flags&FIELD_ReadOnly) {
+    ParseError(Loc, "Cannot modify read-only destination (0)");
+    delete this;
+    return nullptr;
+  }
+
+  if (Flags&FIELD_ReadOnly) {
+    ParseError(Loc, "Cannot modify read-only destination (1)");
+    delete this;
+    return nullptr;
+  }
+
   Type = TYPE_Int;
   op->RequestAddressOf();
 

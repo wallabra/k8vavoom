@@ -61,12 +61,7 @@ VDelegateToBool::VDelegateToBool (VExpression *AOp, bool aOpResolved)
   : VCastExpressionBase(AOp, aOpResolved)
 {
   Type = TYPE_Int;
-  if (aOpResolved) {
-    vint32 wasRO = (op->Flags&FIELD_ReadOnly);
-    op->Flags &= ~FIELD_ReadOnly;
-    op->RequestAddressOf();
-    op->Flags |= wasRO;
-  }
+  if (aOpResolved) op->RequestAddressOf();
 }
 
 
@@ -91,12 +86,7 @@ VExpression *VDelegateToBool::DoResolve (VEmitContext &ec) {
   if (!opResolved) {
     opResolved = true;
     if (op) op = op->Resolve(ec);
-    if (op) {
-      vint32 wasRO = (op->Flags&FIELD_ReadOnly);
-      op->Flags &= ~FIELD_ReadOnly;
-      op->RequestAddressOf();
-      op->Flags |= wasRO;
-    }
+    if (op) op->RequestAddressOf();
   }
   if (!op) { delete this; return nullptr; }
   if (op->Type.Type != TYPE_Delegate) {

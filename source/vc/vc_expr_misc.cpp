@@ -769,6 +769,7 @@ VPushPointed::VPushPointed (VExpression *AOp, const TLocation &ALoc)
     ParseError(Loc, "Expression expected");
     return;
   }
+  Flags |= op->Flags&FIELD_ReadOnly;
 }
 
 
