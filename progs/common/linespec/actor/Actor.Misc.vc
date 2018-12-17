@@ -97,7 +97,7 @@ final void A_LogInt(int num)
 //
 //===========================================================================
 
-final void A_ChangeVelocity(float x, float y, float z, optional int flags, optional int aptr)
+final void A_ChangeVelocity(float x, optional float y, optional float z, optional int flags, optional int aptr)
 {
   Entity tgt = DecorDoAAPtr('A_ChangeVelocity', aptr!optional);
   if (!tgt) return;
@@ -115,13 +115,13 @@ final void A_ChangeVelocity(float x, float y, float z, optional int flags, optio
   if (flags&2) {
     // discard old velocity - replace old velocity with new velocity
     tgt.Velocity.x = vx;
-    tgt.Velocity.y = vy;
-    tgt.Velocity.z = vz;
+    if (specified_y) tgt.Velocity.y = vy;
+    if (specified_z) tgt.Velocity.z = vz;
   } else {
     // add new velocity to old velocity
     tgt.Velocity.x += vx;
-    tgt.Velocity.y += vy;
-    tgt.Velocity.z += vz;
+    if (specified_y) tgt.Velocity.y += vy;
+    if (specified_z) tgt.Velocity.z += vz;
   }
 }
 
