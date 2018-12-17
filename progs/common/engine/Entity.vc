@@ -281,7 +281,6 @@ bool bFullBright; // make current state full bright
 bool bInvisible; // don't draw this actor
 bool bMissile; // don't hit same species, explode on block
 bool bDontOverlap; // prevent some things from overlapping
-//private native readonly bool bUseDispState; // use DispState for rendering (unused, but must present)
 bool bKillOnUnarchive; // remove this entity on loading game
 bool bActLikeBridge; // always allow objects to pass
 bool bNoDropOff; // can't drop off under any circumstances
