@@ -868,7 +868,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (MethodName == NAME_Insert || VStr::Cmp(*MethodName, "insert") == 0) {
+    if (MethodName == NAME_Insert || MethodName == "insert") {
       if (NumArgs == 1) {
         if (Args[0] && Args[0]->GetArgName() == "count") {
           ParseError(Loc, "`count` without index");
@@ -901,7 +901,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (MethodName == NAME_Remove || VStr::Cmp(*MethodName, "remove") == 0) {
+    if (MethodName == NAME_Remove || MethodName == "remove") {
       if (NumArgs == 1) {
         if (Args[0] && Args[0]->GetArgName() == "count") {
           ParseError(Loc, "`count` without index");
@@ -935,9 +935,9 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     }
 
     // clear array, but don't reallocate
-    if (VStr::Cmp(*MethodName, "clear") == 0) {
+    if (MethodName == "clear" || MethodName == "reset") {
       if (NumArgs != 0) {
-        ParseError(Loc, "`.clear` requires no arguments");
+        ParseError(Loc, "`.reset` requires no arguments");
         delete this;
         return nullptr;
       }
@@ -948,7 +948,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (MethodName == NAME_Remove || VStr::Cmp(*MethodName, "sort") == 0) {
+    if (MethodName == "sort") {
       if (NumArgs != 1) {
         ParseError(Loc, "`.sort` require delegate argument");
         delete this;
@@ -971,7 +971,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (VStr::Cmp(*MethodName, "swap") == 0) {
+    if (MethodName == "swap") {
       if (NumArgs != 2) {
         ParseError(Loc, "`.swap` requires two arguments");
         delete this;
@@ -1009,7 +1009,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (VStr::Cmp(*MethodName, "copyFrom") == 0) {
+    if (MethodName == "copyFrom") {
       if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
         ParseError(Loc, "`.copyFrom` requires one argument");
         delete this;
@@ -1027,7 +1027,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
-    if (VStr::Cmp(*MethodName, "alloc") == 0) {
+    if (MethodName == "alloc") {
       if (NumArgs != 0) {
         ParseError(Loc, "`.alloc` should nave no arguments");
         delete this;
