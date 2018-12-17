@@ -151,8 +151,15 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  op2->Type.CheckMatch(false, Loc, op1->RealType);
-  op1->RequestAddressOf();
+  // struct assignment
+  if (Oper == Assign && op1->Type.Type == TYPE_Struct && op2->Type.Type == TYPE_Struct) {
+    op2->Type.CheckMatch(true/*asref*/, Loc, op1->Type);
+    op1->RequestAddressOf();
+    op2->RequestAddressOf();
+  } else {
+    op2->Type.CheckMatch(false, Loc, op1->RealType);
+    op1->RequestAddressOf();
+  }
 
   return this;
 }
@@ -190,6 +197,10 @@ void VAssignment::Emit (VEmitContext &ec) {
         // note: `op2` can be `none` literal, but it doesn't matter here
         ec.AddStatement(OPC_PushNull, Loc);
         ec.AddStatement(OPC_AssignDelegate, Loc);
+      } else if (op1->RealType.Type == TYPE_Struct) {
+        check(op2->RealType.Type == TYPE_Struct);
+        check(op1->RealType.Struct->IsA(op2->RealType.Struct));
+        ec.AddStatement(OPC_StructDeepCopy, op2->RealType, Loc);
       } else {
         //fprintf(stderr, "***OP1: %s\n", *op1->toString());
         //fprintf(stderr, "***OP2: %s\n", *op2->toString());

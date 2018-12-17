@@ -151,6 +151,7 @@ bool VField::Define () {
 //==========================================================================
 void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &Type) {
   guardSlow(VField::CopyFieldValue);
+  if (Src == Dst) return; // nothing to do
   switch (Type.Type) {
     case TYPE_Int: *(vint32 *)Dst = *(const vint32 *)Src; break;
     case TYPE_Byte: *(vuint8 *)Dst = *(const vuint8 *)Src; break;
@@ -714,6 +715,7 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
 //==========================================================================
 bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFieldType &Type) {
   guard(VField::IdenticalValue);
+  if (Val1 == Val2) return true; // nothing to do
   VFieldType IntType;
   int InnerSize;
   switch (Type.Type) {

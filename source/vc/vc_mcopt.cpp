@@ -750,6 +750,10 @@ struct Instr {
         spdelta = -1;
         return;
 
+      case OPC_StructDeepCopy:
+        spdelta = -2;
+        return;
+
       // drop result
       case OPC_Drop:
         spdelta = -1;
