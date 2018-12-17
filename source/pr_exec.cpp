@@ -651,9 +651,11 @@ func_loop:
         ip -= ip[1];
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_GotoS)
         ip += ReadInt16(ip+1);
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_Goto)
         ip += ReadInt32(ip+1);
@@ -669,10 +671,12 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_IfGotoS)
         if (sp[-1].i) ip += ReadInt16(ip+1); else ip += 3;
         --sp;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_IfGoto)
         if (sp[-1].i) ip += ReadInt32(ip+1); else ip += 5;
@@ -689,10 +693,12 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      /*
       PR_VM_CASE(OPC_IfNotGotoS)
         if (!sp[-1].i) ip += ReadInt16(ip+1); else ip += 3;
         --sp;
         PR_VM_BREAK;
+      */
 
       PR_VM_CASE(OPC_IfNotGoto)
         if (!sp[-1].i) ip += ReadInt32(ip+1); else ip += 5;

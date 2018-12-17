@@ -225,7 +225,7 @@ struct Instr {
     switch (opcArgType) {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
         return (Arg1 == idx);
       case OPCARGS_ByteBranchTarget:
@@ -240,7 +240,7 @@ struct Instr {
     switch (opcArgType) {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
@@ -264,7 +264,7 @@ struct Instr {
     switch (opcArgType) {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
         return Arg1;
       case OPCARGS_ByteBranchTarget:
@@ -280,7 +280,7 @@ struct Instr {
     switch (opcArgType) {
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
         oldidx = Arg1;
         Arg1 = newidx;
@@ -319,7 +319,7 @@ struct Instr {
     switch (Opcode) {
       case OPC_GotoB:
       case OPC_GotoNB:
-      case OPC_GotoS:
+      //case OPC_GotoS:
       case OPC_Goto:
         return true;
     }
@@ -406,16 +406,16 @@ struct Instr {
       // branching
       case OPC_GotoB:
       case OPC_GotoNB:
-      case OPC_GotoS:
+      //case OPC_GotoS:
       case OPC_Goto:
         return;
       case OPC_IfGotoB:
       case OPC_IfGotoNB:
-      case OPC_IfGotoS:
+      //case OPC_IfGotoS:
       case OPC_IfGoto:
       case OPC_IfNotGotoB:
       case OPC_IfNotGotoNB:
-      case OPC_IfNotGotoS:
+      //case OPC_IfNotGotoS:
       case OPC_IfNotGoto:
         spdelta = -1;
         return;
@@ -989,7 +989,7 @@ struct Instr {
         break;
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
         fprintf(stderr, " %d", Arg1);
         break;
@@ -1558,7 +1558,7 @@ void VMCOptimizer::optimizeJumps () {
       case OPCARGS_TypeSizeB:
         addr += 1;
         break;
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_Short:
       case OPCARGS_NameS:
       case OPCARGS_FieldOffsetS:
@@ -1617,9 +1617,16 @@ void VMCOptimizer::optimizeJumps () {
     Instr &insn = *it;
     if (insn.opcArgType == OPCARGS_BranchTarget && insn.getBranchDest() < iaddrs.length()) {
       vint32 ofs = iaddrs[insn.getBranchDest()]-insn.Address;
+      // old, with BranchTargetS
+      /*
+      if (ofs < -250) ofs -= 10; else if (ofs > 250) ofs += 10;
            if (ofs >= 0 && ofs < 256) insn.Opcode -= 3;
       else if (ofs < 0 && ofs > -256) insn.Opcode -= 2;
       else if (ofs >= MIN_VINT16 && ofs <= MAX_VINT16) insn.Opcode -= 1;
+      */
+      // new, without BranchTargetS
+           if (ofs >= 0 && ofs < 256-10) insn.Opcode -= 2;
+      else if (ofs < 0 && ofs > -256+10) insn.Opcode -= 1;
     }
   }
 }

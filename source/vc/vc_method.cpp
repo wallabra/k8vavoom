@@ -470,7 +470,7 @@ void VMethod::DumpAsm () {
         break;
       case OPCARGS_BranchTargetB:
       case OPCARGS_BranchTargetNB:
-      case OPCARGS_BranchTargetS:
+      //case OPCARGS_BranchTargetS:
       case OPCARGS_BranchTarget:
         dprintf(" %6d", Instructions[s].Arg1);
         break;
@@ -623,7 +623,7 @@ void VMethod::CompileCode () {
       case OPCARGS_Member: WritePtr(Instructions[i].Member); break;
       case OPCARGS_BranchTargetB: WriteUInt8(0); break;
       case OPCARGS_BranchTargetNB: WriteUInt8(0); break;
-      case OPCARGS_BranchTargetS: WriteInt16(0); break;
+      //case OPCARGS_BranchTargetS: WriteInt16(0); break;
       case OPCARGS_BranchTarget: WriteInt32(0); break;
       case OPCARGS_ByteBranchTarget: WriteUInt8(Instructions[i].Arg1); WriteInt16(0); break;
       case OPCARGS_ShortBranchTarget: WriteInt16(Instructions[i].Arg1); WriteInt16(0); break;
@@ -717,9 +717,9 @@ void VMethod::CompileCode () {
       case OPCARGS_BranchTargetNB:
         Statements[Instructions[i].Address+1] = Instructions[i].Address-Instructions[Instructions[i].Arg1].Address;
         break;
-      case OPCARGS_BranchTargetS:
-        *(vint16 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
-        break;
+      //case OPCARGS_BranchTargetS:
+      //  *(vint16 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+      //  break;
       case OPCARGS_BranchTarget:
         *(vint32 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
         break;
