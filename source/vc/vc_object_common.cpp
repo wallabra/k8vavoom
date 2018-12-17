@@ -592,6 +592,14 @@ IMPLEMENT_FUNCTION(VObject, GetClassReplacement) {
   RET_PTR(SomeClass ? SomeClass->GetReplacement() : nullptr);
 }
 
+IMPLEMENT_FUNCTION(VObject, GetCompatibleClassReplacement) {
+  P_GET_PTR(VClass, SomeClass);
+  P_GET_PTR(VClass, CType);
+  VClass *nc = (SomeClass ? SomeClass->GetReplacement() : nullptr);
+  if (nc && CType && !nc->IsChildOf(CType)) nc = nullptr;
+  RET_PTR(nc);
+}
+
 IMPLEMENT_FUNCTION(VObject, GetClassReplacee) {
   P_GET_PTR(VClass, SomeClass);
   RET_PTR(SomeClass ? SomeClass->GetReplacee() : nullptr);
