@@ -1,2 +1,2 @@
-ztest_constparam_02.vc:17: Tried to assign to a read-only variable
+ztest_constparam_02.vc:17: Cannot assign to read-only destination
 FATAL: Confused by previous errors, bailing out

@@ -1,2 +1,2 @@
-ztest_struct_prot_00.vc:12: Tried to assign to a read-only field
+ztest_struct_prot_00.vc:12: Cannot assign to read-only destination
 FATAL: Confused by previous errors, bailing out

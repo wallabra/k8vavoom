@@ -1,2 +1,2 @@
-ztest_rostruct_00.vc:11: Tried to assign to a read-only field
+ztest_rostruct_00.vc:11: Cannot assign to read-only destination
 FATAL: Confused by previous errors, bailing out

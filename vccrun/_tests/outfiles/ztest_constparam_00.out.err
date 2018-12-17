@@ -1,3 +1,3 @@
-ztest_constparam_00.vc:6: Tried to assign to a read-only variable
-ztest_constparam_00.vc:11: Tried to assign to a read-only variable
+ztest_constparam_00.vc:6: Cannot assign to read-only destination
+ztest_constparam_00.vc:11: Cannot assign to read-only destination
 FATAL: Confused by previous errors, bailing out
