@@ -18,7 +18,9 @@ void main () {
   a.s = "fuck";
   a.v[$] = "zoo";
   a.v[$] = "foo";
-  b = a;
+
+  b.v.copyFrom(a.v);
+  b.s = a.s;
 
   dump(a);
   dump(b);
