@@ -1741,6 +1741,9 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
     CheckName = VStr(CheckName, DCol+2, CheckName.Length()-DCol-2);
   }
 
+  if (VStr::ICmp(*CheckName, "Null") == 0) return nullptr;
+  if (VStr::ICmp(*CheckName, "None") == 0) return nullptr;
+
   TArray<VName> Names;
   StaticSplitStateLabel(CheckName, Names);
   VStateLabel *Lbl = CheckClass->FindStateLabel(Names, true);
