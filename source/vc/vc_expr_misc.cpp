@@ -1070,6 +1070,7 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
   }
 
   Type = TYPE_Void;
+  Flags |= op->Flags&FIELD_ReadOnly;
   return this;
 }
 

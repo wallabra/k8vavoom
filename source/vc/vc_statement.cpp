@@ -1382,7 +1382,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   delete limit;
 
   loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc, true); // we can skip bounds checking here
-  if (isConst) loopLoad->Flags |= FIELD_ReadOnly;
+  loopLoad->Flags &= ~FIELD_ReadOnly;
   // refvar code will be completed in our codegen
   if (isRef) {
     check(indLocalVal >= 0);
@@ -1397,16 +1397,22 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     loopLoad = loopLoad->Resolve(ec);
     if (loopLoad) {
       loopLoad->RequestAddressOf();
-      if (isConst) {
+      if (isConst || (arr->Flags&FIELD_ReadOnly)) {
         loopLoad->Flags |= FIELD_ReadOnly;
         varaddr->Flags |= FIELD_ReadOnly;
       }
     }
   } else {
+    auto oldvflags = var->Flags;
+    var->Flags &= ~FIELD_ReadOnly;
     loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
-    loopLoad = new VDropResult(loopLoad);
-    loopLoad = loopLoad->Resolve(ec);
+    if (loopLoad) {
+      loopLoad = new VDropResult(loopLoad);
+      loopLoad = loopLoad->Resolve(ec);
+    }
+    if (var) var->Flags = oldvflags;
   }
+  if (isConst && loopLoad) loopLoad->Flags |= FIELD_ReadOnly;
 
   // we don't need index anymore
   delete index;
