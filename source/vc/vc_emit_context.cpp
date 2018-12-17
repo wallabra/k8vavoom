@@ -393,6 +393,7 @@ void VEmitContext::EndCode () {
   }
 #endif
 
+  // dummy finishing instruction should always present
   FInstruction &Dummy = CurrentFunc->Instructions.Alloc();
   Dummy.Opcode = OPC_Done;
 

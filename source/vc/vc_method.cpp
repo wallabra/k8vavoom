@@ -615,8 +615,13 @@ void VMethod::CompileCode () {
   Statements.Clear();
   if (!Instructions.Num()) return;
 
+  TArray<int> iaddr; // addresses of all generated instructions
+  iaddr.resize(Instructions.length()); // we know the size beforehand
+
   for (int i = 0; i < Instructions.Num()-1; ++i) {
-    Instructions[i].Address = Statements.Num();
+    //Instructions[i].Address = Statements.Num();
+    check(iaddr.length() == i);
+    iaddr.append(Statements.length());
     Statements.Append(Instructions[i].Opcode);
     switch (StatementInfo[Instructions[i].Opcode].Args) {
       case OPCARGS_None: break;
@@ -707,30 +712,32 @@ void VMethod::CompileCode () {
     }
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
-  Instructions[Instructions.Num()-1].Address = Statements.Num();
+  //Instructions[Instructions.Num()-1].Address = Statements.Num();
+  check(iaddr.length() == Instructions.length()-1);
+  iaddr.append(Statements.length());
 
   for (int i = 0; i < Instructions.Num()-1; ++i) {
     switch (StatementInfo[Instructions[i].Opcode].Args) {
       case OPCARGS_BranchTargetB:
-        Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+        Statements[iaddr[i]+1] = iaddr[Instructions[i].Arg1]-iaddr[i];
         break;
       case OPCARGS_BranchTargetNB:
-        Statements[Instructions[i].Address+1] = Instructions[i].Address-Instructions[Instructions[i].Arg1].Address;
+        Statements[iaddr[i]+1] = iaddr[i]-iaddr[Instructions[i].Arg1];
         break;
       //case OPCARGS_BranchTargetS:
-      //  *(vint16 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+      //  *(vint16 *)&Statements[iaddr[i]+1] = iaddr[Instructions[i].Arg1]-iaddr[i];
       //  break;
       case OPCARGS_BranchTarget:
-        *(vint32 *)&Statements[Instructions[i].Address+1] = Instructions[Instructions[i].Arg1].Address-Instructions[i].Address;
+        *(vint32 *)&Statements[iaddr[i]+1] = iaddr[Instructions[i].Arg1]-iaddr[i];
         break;
       case OPCARGS_ByteBranchTarget:
-        *(vint16 *)&Statements[Instructions[i].Address+2] = Instructions[Instructions[i].Arg2].Address-Instructions[i].Address;
+        *(vint16 *)&Statements[iaddr[i]+2] = iaddr[Instructions[i].Arg2]-iaddr[i];
         break;
       case OPCARGS_ShortBranchTarget:
-        *(vint16 *)&Statements[Instructions[i].Address+3] = Instructions[Instructions[i].Arg2].Address-Instructions[i].Address;
+        *(vint16 *)&Statements[iaddr[i]+3] = iaddr[Instructions[i].Arg2]-iaddr[i];
         break;
       case OPCARGS_IntBranchTarget:
-        *(vint16 *)&Statements[Instructions[i].Address+5] = Instructions[Instructions[i].Arg2].Address-Instructions[i].Address;
+        *(vint16 *)&Statements[iaddr[i]+5] = iaddr[Instructions[i].Arg2]-iaddr[i];
         break;
     }
   }

@@ -162,7 +162,7 @@ struct Instr {
   Instr *prev, *next; // in main list
   Instr *jpprev, *jpnext; // in "jump" list
   // fields from the original
-  vint32 Address;
+  //vint32 Address;
   vint32 Opcode;
   vint32 Arg1;
   vint32 Arg2;
@@ -183,11 +183,13 @@ struct Instr {
   // used for return checking
   int retflag; // 0: not visited; -1: processing it right now; 2: determined to return
 
+  vint32 tempValue; // used to temporary store various info; can be overwritten in any moment
+
   Instr (VMCOptimizer *aowner, const FInstruction &i)
     : owner(aowner)
     , prev(nullptr), next(nullptr)
     , jpprev(nullptr), jpnext(nullptr)
-    , Address(i.Address)
+    //, Address(i.Address)
     , Opcode(i.Opcode)
     , Arg1(i.Arg1)
     , Arg2(i.Arg2)
@@ -204,12 +206,13 @@ struct Instr {
     , origIdx(-1)
     , meJumpTarget(false)
     , retflag(0)
+    , tempValue(0)
   {
   }
 
   inline void copyTo (FInstruction &dest) const {
     //dest.Address = Address; // no need to do this
-    dest.Address = 0;
+    //dest.Address = 0;
     dest.Opcode = Opcode;
     dest.Arg1 = Arg1;
     dest.Arg2 = Arg2;
@@ -977,6 +980,76 @@ struct Instr {
     FatalError("setStackOffsets: unhandled opcode %d", Opcode);
   }
 
+  // calculate compiled instruction size, in bytes
+  int calcVMSize () const {
+    int res = 1; // opcode itself
+    switch (opcArgType) {
+      case OPCARGS_Member:
+      case OPCARGS_String:
+        res += (int)sizeof(void *);
+        break;
+      case OPCARGS_BranchTargetB:
+      case OPCARGS_BranchTargetNB:
+      case OPCARGS_Byte:
+      case OPCARGS_VTableIndexB:
+      case OPCARGS_TypeSizeB:
+        res += 1;
+        break;
+      //case OPCARGS_BranchTargetS:
+      case OPCARGS_Short:
+      case OPCARGS_NameS:
+      case OPCARGS_FieldOffsetS:
+      case OPCARGS_VTableIndex:
+      case OPCARGS_VTableIndexB_Byte:
+        res += 2;
+        break;
+      case OPCARGS_ByteBranchTarget:
+      case OPCARGS_VTableIndex_Byte:
+      case OPCARGS_FieldOffsetS_Byte:
+        res += 3;
+        break;
+      case OPCARGS_BranchTarget:
+      case OPCARGS_ShortBranchTarget:
+      case OPCARGS_Int:
+      case OPCARGS_Name:
+      case OPCARGS_FieldOffset:
+      case OPCARGS_TypeSize:
+        res += 4;
+        break;
+      case OPCARGS_A2DDimsAndSize:
+        res += 2+2+4;
+        break;
+      case OPCARGS_FieldOffset_Byte:
+        res += 5;
+        break;
+      case OPCARGS_IntBranchTarget:
+        res += 4+2;
+        break;
+      case OPCARGS_Type:
+        res += VFieldType::MemSize;
+        break;
+      case OPCARGS_TypeDD:
+        res += 2*VFieldType::MemSize+1;
+        break;
+      case OPCARGS_TypeAD:
+        res += VFieldType::MemSize+1;
+        break;
+      case OPCARGS_Builtin:
+        res += 1;
+        break;
+      case OPCARGS_Member_Int:
+        res += sizeof(void *);
+        break;
+      case OPCARGS_Type_Int:
+        res += 4;
+        break;
+      case OPCARGS_ArrElemType_Int:
+        res += VFieldType::MemSize+4;
+        break;
+    }
+    return res;
+  }
+
   void disasm () const {
     // opcode
     fprintf(stderr, "(%6d) %c%6d: %s", origIdx, (meJumpTarget ? '*' : ' '), idx, StatementInfo[Opcode].name);
@@ -1129,7 +1202,7 @@ void VMCOptimizer::finish () {
     it->copyTo(olist[iofs]);
   }
   // append `Done`
-  olist[iofs].Address = 0;
+  //olist[iofs].Address = 0;
   olist[iofs].Opcode = OPC_Done;
   olist[iofs].Arg1 = 0;
   olist[iofs].Arg2 = 0;
@@ -1544,79 +1617,15 @@ void VMCOptimizer::optimizeJumps () {
   for (Instr *it = ilistHead; it; it = it->next) {
     iaddrs.append(addr);
     Instr &insn = *it;
-    insn.Address = addr;
-    addr += 1; // opcode itself
-    switch (insn.opcArgType) {
-      case OPCARGS_Member:
-      case OPCARGS_String:
-        addr += sizeof(void *);
-        break;
-      case OPCARGS_BranchTargetB:
-      case OPCARGS_BranchTargetNB:
-      case OPCARGS_Byte:
-      case OPCARGS_VTableIndexB:
-      case OPCARGS_TypeSizeB:
-        addr += 1;
-        break;
-      //case OPCARGS_BranchTargetS:
-      case OPCARGS_Short:
-      case OPCARGS_NameS:
-      case OPCARGS_FieldOffsetS:
-      case OPCARGS_VTableIndex:
-      case OPCARGS_VTableIndexB_Byte:
-        addr += 2;
-        break;
-      case OPCARGS_ByteBranchTarget:
-      case OPCARGS_VTableIndex_Byte:
-      case OPCARGS_FieldOffsetS_Byte:
-        addr += 3;
-        break;
-      case OPCARGS_BranchTarget:
-      case OPCARGS_ShortBranchTarget:
-      case OPCARGS_Int:
-      case OPCARGS_Name:
-      case OPCARGS_FieldOffset:
-      case OPCARGS_TypeSize:
-        addr += 4;
-        break;
-      case OPCARGS_A2DDimsAndSize:
-        addr += 2+2+4;
-        break;
-      case OPCARGS_FieldOffset_Byte:
-        addr += 5;
-        break;
-      case OPCARGS_IntBranchTarget:
-        addr += 6;
-        break;
-      case OPCARGS_Type:
-        addr += VFieldType::MemSize;
-        break;
-      case OPCARGS_TypeDD:
-        addr += 2*VFieldType::MemSize+1;
-        break;
-      case OPCARGS_TypeAD:
-        addr += VFieldType::MemSize+1;
-        break;
-      case OPCARGS_Builtin:
-        addr += 1;
-        break;
-      case OPCARGS_Member_Int:
-        addr += sizeof(void *);
-        break;
-      case OPCARGS_Type_Int:
-        addr += 4;
-        break;
-      case OPCARGS_ArrElemType_Int:
-        addr += VFieldType::MemSize+4;
-        break;
-    }
+    insn.tempValue = addr;
+    addr += insn.calcVMSize();
   }
 
   // now optimize jump instructions
   for (Instr *it = jplistHead; it; it = it->jpnext) {
     Instr &insn = *it;
     if (insn.opcArgType == OPCARGS_BranchTarget && insn.getBranchDest() < iaddrs.length()) {
-      vint32 ofs = iaddrs[insn.getBranchDest()]-insn.Address;
+      vint32 ofs = iaddrs[insn.getBranchDest()]-insn.tempValue;
       // old, with BranchTargetS
       /*
       if (ofs < -250) ofs -= 10; else if (ofs > 250) ofs += 10;
@@ -1625,8 +1634,8 @@ void VMCOptimizer::optimizeJumps () {
       else if (ofs >= MIN_VINT16 && ofs <= MAX_VINT16) insn.Opcode -= 1;
       */
       // new, without BranchTargetS
-           if (ofs >= 0 && ofs < 256-10) insn.Opcode -= 2;
-      else if (ofs < 0 && ofs > -256+10) insn.Opcode -= 1;
+           if (ofs >= 0 && ofs < 256-5) insn.Opcode -= 2;
+      else if (ofs < 0 && ofs > -256+5) insn.Opcode -= 1;
     }
   }
 }

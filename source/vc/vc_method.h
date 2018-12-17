@@ -103,7 +103,7 @@ public:
 //
 //==========================================================================
 struct FInstruction {
-  vint32 Address;
+  //vint32 Address;
   vint32 Opcode;
   vint32 Arg1;
   vint32 Arg2;
@@ -114,7 +114,7 @@ struct FInstruction {
   VFieldType TypeArg1;
   TLocation loc;
 
-  FInstruction () : Address(0), Opcode(0), Arg1(0), Arg2(0), Arg1IsFloat(false), Member(nullptr), NameArg(NAME_None), TypeArg(TYPE_Unknown), loc(TLocation()) {}
+  FInstruction () : /*Address(0),*/ Opcode(0), Arg1(0), Arg2(0), Arg1IsFloat(false), Member(nullptr), NameArg(NAME_None), TypeArg(TYPE_Unknown), loc(TLocation()) {}
 
   friend VStream &operator << (VStream &, FInstruction &);
 };
