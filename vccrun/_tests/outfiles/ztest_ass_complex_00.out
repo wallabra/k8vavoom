@@ -1,0 +1,11 @@
+0x8223968: s=<fuck>; v.length=2
+  0: <zoo>
+  1: <foo>
+0x8223978: s=<fuck>; v.length=2
+  0: <zoo>
+  1: <foo>
+============
+0x8223968: s=<oops>; v.length=0
+0x8223978: s=<fuck>; v.length=2
+  0: <zoo>
+  1: <foo>

@@ -1,0 +1,31 @@
+class Main : Object;
+
+struct Test {
+  string s;
+  array!string v;
+}
+
+
+void dump (ref Test s) {
+  print("%s: s=<%q>; v.length=%s", &s, s.s, s.v.length);
+  foreach (auto idx, string str; s.v) print("  %d: <%q>", idx, str);
+}
+
+
+void main () {
+  Test a, b;
+  a.s = "fuck";
+  a.v[$] = "zoo";
+  a.v[$] = "foo";
+  b = a;
+
+  dump(a);
+  dump(b);
+
+  writeln("============");
+  a.v.clear();
+  a.s = "oops";
+
+  dump(a);
+  dump(b);
+}
