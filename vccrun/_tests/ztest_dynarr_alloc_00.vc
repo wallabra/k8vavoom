@@ -1,0 +1,30 @@
+class Main : Object;
+
+struct Test {
+  string s;
+  array!string v;
+}
+
+
+void dump (ref Test s) {
+  //print("%s: s=<%q>; v.length=%s", &s, s.s, s.v.length);
+  print("s=<%q>; v.length=%s", s.s, s.v.length);
+  foreach (auto idx, string str; s.v) print("  %d: <%q>", idx, str);
+}
+
+
+void main () {
+  array!Test arr;
+
+  {
+    auto sp = arr.alloc();
+    (*sp).s = "fuck";
+    *(*sp).v.alloc() = "zoo";
+    *(*sp).v.alloc() = "foo";
+  }
+
+  foreach (auto idx, ref auto val; arr) {
+    print("=== index: %d ===", idx);
+    dump(val);
+  }
+}
