@@ -2177,6 +2177,84 @@ void VDictClearOrReset::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDictRehash
+//
+//==========================================================================
+VDictRehash::VDictRehash (VExpression *asexpr, bool aCompact, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+  , doCompact(aCompact)
+{
+}
+
+
+//==========================================================================
+//
+//  VDictRehash::~VDictRehash
+//
+//==========================================================================
+VDictRehash::~VDictRehash () {
+  delete sexpr;
+}
+
+
+//==========================================================================
+//
+//  VDictRehash::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictRehash::SyntaxCopy () {
+  auto res = new VDictRehash();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictRehash::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDictRehash::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDictRehash *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+  res->doCompact = doCompact;
+}
+
+
+//==========================================================================
+//
+//  VDictRehash::DoResolve
+//
+//==========================================================================
+VExpression *VDictRehash::DoResolve (VEmitContext &ec) {
+  if ((Flags&FIELD_ReadOnly) != 0 || (sexpr && (sexpr->Flags&FIELD_ReadOnly) != 0)) {
+    ParseError(Loc, "Cannot change read-only dictionary");
+    delete this;
+    return nullptr;
+  }
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictRehash::Emit
+//
+//==========================================================================
+void VDictRehash::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(),
+    (doCompact ? OPC_DictDispatch_Compact : OPC_DictDispatch_Rehash), Loc);
+}
+
+
+
+//==========================================================================
+//
 //  VDictFind
 //
 //==========================================================================

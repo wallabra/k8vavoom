@@ -980,6 +980,10 @@ struct Instr {
           case OPC_DictDispatch_GetKeyAtIndex:
             spdelta -= 1;
             return;
+          case OPC_DictDispatch_Compact:
+          case OPC_DictDispatch_Rehash:
+            spdelta -= 1;
+            return;
           default: FatalError("Unknown dictionary opcode");
         }
     }

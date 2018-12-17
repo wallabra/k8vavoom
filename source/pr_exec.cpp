@@ -412,6 +412,20 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       }
       --sp;
       return;
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_Compact:
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (ht->map) ht->map->compact();
+      --sp;
+      return;
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_Rehash:
+      ht = (VScriptDict *)sp[-1].p;
+      if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
+      if (ht->map) ht->map->rehash();
+      --sp;
+      return;
   }
   cstDump(origip);
   Sys_Error("Dictionary opcode %d is not implemented", dcopcode);

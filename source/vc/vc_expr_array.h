@@ -432,6 +432,29 @@ protected:
 
 //==========================================================================
 //
+//  VDictRehash
+//
+//==========================================================================
+class VDictRehash : public VExpression {
+public:
+  VExpression *sexpr;
+  bool doCompact;
+
+  // `asexpr` should be already resolved
+  VDictRehash (VExpression *asexpr, bool aCompact, const TLocation &aloc);
+  virtual ~VDictRehash () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDictRehash () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VDictFind
 //
 //==========================================================================

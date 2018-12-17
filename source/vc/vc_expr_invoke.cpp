@@ -1164,6 +1164,19 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return e->Resolve(ec);
       }
+      if (MethodName == "compact" || MethodName == "rehash") {
+        delete selfCopy;
+        if (NumArgs != 0) {
+          ParseError(Loc, "Dictionary builtin `%s` should have no args", *MethodName);
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VDictRehash(SelfExpr, (MethodName == "compact"), Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
       if (MethodName == "firstIndex") {
         delete selfCopy;
         if (NumArgs != 0) {
