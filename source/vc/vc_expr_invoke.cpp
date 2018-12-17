@@ -826,7 +826,8 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     }
 
     // set new array size, 1d or 2d
-    if (MethodName == "SetSize" || MethodName == "setSize") {
+    if (MethodName == "SetSize" || MethodName == "setSize" ||
+        MethodName == "SetLength" || MethodName == "setLength") {
       if (NumArgs < 1 || NumArgs > 2) {
         ParseError(Loc, "Method `%s` expects one or two arguments", *MethodName);
         delete this;
@@ -998,6 +999,24 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return nullptr;
       }
       VExpression *e = new VDynArraySwap1D(SelfExpr, Args[0], Args[1], Loc);
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+
+    if (VStr::Cmp(*MethodName, "copyFrom") == 0) {
+      if (NumArgs != 1 || !Args[0] || Args[0]->IsDefaultArg()) {
+        ParseError(Loc, "`.copyFrom` requires one argument");
+        delete this;
+        return nullptr;
+      }
+      if (Args[0]->IsRefArg() || Args[0]->IsOutArg()) {
+        ParseError(Loc, "`.copyFrom` arguments cannot be `ref`");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynArrayCopyFrom(SelfExpr, Args[0], Loc);
       SelfExpr = nullptr;
       NumArgs = 0;
       delete this;

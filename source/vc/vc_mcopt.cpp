@@ -750,7 +750,7 @@ struct Instr {
         spdelta = -1;
         return;
 
-      case OPC_StructDeepCopy:
+      case OPC_TypeDeepCopy:
         spdelta = -2;
         return;
 

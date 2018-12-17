@@ -2133,16 +2133,15 @@ func_loop:
 
       // [-2] destptr
       // [-1] srcptr
-      PR_VM_CASE(OPC_StructDeepCopy)
+      PR_VM_CASE(OPC_TypeDeepCopy)
         {
           vuint8 *origip = ip++;
           VFieldType stp = VFieldType::ReadTypeMem(ip);
-          if (stp.Type != TYPE_Struct) { cstDump(origip); Sys_Error("internal error in VM codegen (OPC_StructDeepCopy type is not struct)"); }
           if (!sp[-2].p && !sp[-1].p) {
             sp -= 2;
           } else {
-            if (!sp[-2].p) { cstDump(origip); Sys_Error("destination struct is nullptr"); }
-            if (!sp[-1].p) { cstDump(origip); Sys_Error("source struct is nullptr"); }
+            if (!sp[-2].p) { cstDump(origip); Sys_Error("destination is nullptr"); }
+            if (!sp[-1].p) { cstDump(origip); Sys_Error("source is nullptr"); }
             VField::CopyFieldValue((const vuint8 *)sp[-1].p, (vuint8 *)sp[-2].p, stp);
             sp -= 2;
           }

@@ -200,7 +200,7 @@ void VAssignment::Emit (VEmitContext &ec) {
       } else if (op1->RealType.Type == TYPE_Struct) {
         check(op2->RealType.Type == TYPE_Struct);
         check(op1->RealType.Struct->IsA(op2->RealType.Struct));
-        ec.AddStatement(OPC_StructDeepCopy, op2->RealType, Loc);
+        ec.AddStatement(OPC_TypeDeepCopy, op2->RealType, Loc);
       } else {
         //fprintf(stderr, "***OP1: %s\n", *op1->toString());
         //fprintf(stderr, "***OP2: %s\n", *op2->toString());

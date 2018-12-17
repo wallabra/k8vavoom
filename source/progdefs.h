@@ -436,7 +436,7 @@ enum {
   DECLARE_OPC(ZeroPointedStruct, Member),
 
   // struct deep copy
-  DECLARE_OPC(StructDeepCopy, Type),
+  DECLARE_OPC(TypeDeepCopy, Type),
 
   // drop result
   DECLARE_OPC(Drop, None),

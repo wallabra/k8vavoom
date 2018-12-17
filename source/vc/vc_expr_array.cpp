@@ -1524,6 +1524,94 @@ void VDynArraySwap1D::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDynArrayCopyFrom::VDynArrayCopyFrom
+//
+//==========================================================================
+VDynArrayCopyFrom::VDynArrayCopyFrom (VExpression *aarr, VExpression *asrc, const TLocation &aloc)
+  : VExpression(aloc)
+  , ArrayExpr(aarr)
+  , SrcExpr(asrc)
+{
+}
+
+
+//==========================================================================
+//
+//  VDynArrayCopyFrom::~VDynArrayCopyFrom
+//
+//==========================================================================
+VDynArrayCopyFrom::~VDynArrayCopyFrom () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+  if (SrcExpr) { delete SrcExpr; SrcExpr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VDynArrayCopyFrom::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayCopyFrom::SyntaxCopy () {
+  auto res = new VDynArrayCopyFrom();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayCopyFrom::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArrayCopyFrom::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArrayCopyFrom *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+  res->SrcExpr = (SrcExpr ? SrcExpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDynArrayCopyFrom::DoResolve
+//
+//==========================================================================
+VExpression *VDynArrayCopyFrom::DoResolve (VEmitContext &ec) {
+  // resolve arguments
+  if (SrcExpr) SrcExpr = SrcExpr->Resolve(ec);
+  if (!ArrayExpr || !SrcExpr) { delete this; return nullptr; }
+
+  // check argument types
+  if (!ArrayExpr->Type.Equals(SrcExpr->Type)) {
+    ParseError(Loc, "arrays are not compatible (`%s` and `%s`)", *ArrayExpr->Type.GetName(), *SrcExpr->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  ArrayExpr->RequestAddressOf();
+  SrcExpr->Flags &= FIELD_ReadOnly;
+  SrcExpr->RequestAddressOf();
+
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayCopyFrom::Emit
+//
+//==========================================================================
+void VDynArrayCopyFrom::Emit (VEmitContext &ec) {
+  ArrayExpr->Emit(ec);
+  SrcExpr->Emit(ec);
+  ec.AddStatement(OPC_TypeDeepCopy, ArrayExpr->Type, Loc);
+}
+
+
+
+//==========================================================================
+//
 //  VStringGetLength::VStringGetLength
 //
 //==========================================================================

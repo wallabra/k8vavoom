@@ -98,7 +98,7 @@ protected:
 //==========================================================================
 class VDynArrayGetNum : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
   int dimNumber; // 0: total size
 
   VDynArrayGetNum (VExpression *AArrayExpr, int aDimNumber, const TLocation &ALoc);
@@ -120,7 +120,7 @@ protected:
 //==========================================================================
 class VDynArraySetNum : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
   VExpression *NumExpr;
   VExpression *NumExpr2;
   int opsign; // <0: -=; >0: +=; 0: =; fixed in assign expression resolving
@@ -146,7 +146,7 @@ protected:
 //==========================================================================
 class VDynArrayInsert : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
   VExpression *IndexExpr;
   VExpression *CountExpr;
 
@@ -169,7 +169,7 @@ protected:
 //==========================================================================
 class VDynArrayRemove : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
   VExpression *IndexExpr;
   VExpression *CountExpr;
 
@@ -192,7 +192,7 @@ protected:
 //==========================================================================
 class VDynArrayClear : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
 
   VDynArrayClear (VExpression *, const TLocation &);
   virtual ~VDynArrayClear () override;
@@ -213,7 +213,7 @@ protected:
 //==========================================================================
 class VDynArraySort : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
   VExpression *DgExpr;
 
   VDynArraySort (VExpression *, VExpression *, const TLocation &);
@@ -238,7 +238,7 @@ private:
 //==========================================================================
 class VDynArraySwap1D : public VExpression {
 public:
-  VExpression *ArrayExpr;
+  VExpression *ArrayExpr; // should be already resolved
   VExpression *Index0Expr;
   VExpression *Index1Expr;
 
@@ -250,6 +250,28 @@ public:
 
 protected:
   VDynArraySwap1D () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
+//  VDynArrayCopyFrom
+//
+//==========================================================================
+class VDynArrayCopyFrom : public VExpression {
+public:
+  VExpression *ArrayExpr; // should be already resolved
+  VExpression *SrcExpr;
+
+  VDynArrayCopyFrom (VExpression *aarr, VExpression *asrc, const TLocation &aloc);
+  virtual ~VDynArrayCopyFrom () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArrayCopyFrom () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 
