@@ -1151,6 +1151,20 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
 
 //==========================================================================
 //
+//  VScriptArray::Alloc
+//
+//==========================================================================
+vuint8 *VScriptArray::Alloc (const VFieldType &Type) {
+  check(ArrNum <= ArrSize);
+  SetNum(ArrNum+1, Type, false);
+  check(ArrNum > 0);
+  const int InnerSize = Type.GetSize();
+  return ArrData+(ArrNum-1)*InnerSize;
+}
+
+
+//==========================================================================
+//
 //  VScriptArray::SwapElements
 //
 //==========================================================================

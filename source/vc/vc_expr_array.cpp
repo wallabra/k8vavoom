@@ -1612,6 +1612,77 @@ void VDynArrayCopyFrom::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VDynArrayAllocElement::VDynArrayAllocElement
+//
+//==========================================================================
+VDynArrayAllocElement::VDynArrayAllocElement (VExpression *aarr, const TLocation &aloc)
+  : VExpression(aloc)
+  , ArrayExpr(aarr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDynArrayAllocElement::~VDynArrayAllocElement
+//
+//==========================================================================
+VDynArrayAllocElement::~VDynArrayAllocElement () {
+  if (ArrayExpr) { delete ArrayExpr; ArrayExpr = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VDynArrayAllocElement::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayAllocElement::SyntaxCopy () {
+  auto res = new VDynArrayAllocElement();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayAllocElement::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VDynArrayAllocElement::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDynArrayAllocElement *)e;
+  res->ArrayExpr = (ArrayExpr ? ArrayExpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VDynArrayAllocElement::DoResolve
+//
+//==========================================================================
+VExpression *VDynArrayAllocElement::DoResolve (VEmitContext &ec) {
+  if (!ArrayExpr) { delete this; return nullptr; }
+  ArrayExpr->RequestAddressOf();
+  Type = ArrayExpr->Type.GetArrayInnerType().MakePointerType();
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayAllocElement::Emit
+//
+//==========================================================================
+void VDynArrayAllocElement::Emit (VEmitContext &ec) {
+  ArrayExpr->Emit(ec);
+  ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArrayAlloc, Loc);
+}
+
+
+
+//==========================================================================
+//
 //  VStringGetLength::VStringGetLength
 //
 //==========================================================================

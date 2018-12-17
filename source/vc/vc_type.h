@@ -167,6 +167,7 @@ public:
   void Insert (int Index, int Count, const VFieldType &Type);
   void Remove (int Index, int Count, const VFieldType &Type);
   void SetSize2D (int dim1, int dim2, const VFieldType &Type);
+  vuint8 *Alloc (const VFieldType &Type);
 
   void SwapElements (int i0, int i1, const VFieldType &Type);
   int CallCompare (int i0, int i1, const VFieldType &Type, VObject *self, VMethod *fnless);

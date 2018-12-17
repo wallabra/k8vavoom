@@ -278,6 +278,27 @@ protected:
 
 //==========================================================================
 //
+//  VDynArrayAllocElement
+//
+//==========================================================================
+class VDynArrayAllocElement : public VExpression {
+public:
+  VExpression *ArrayExpr; // should be already resolved
+
+  VDynArrayAllocElement (VExpression *aarr, const TLocation &aloc);
+  virtual ~VDynArrayAllocElement () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VDynArrayAllocElement () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VStringGetLength
 //
 //==========================================================================

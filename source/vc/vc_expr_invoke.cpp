@@ -1023,6 +1023,19 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
 
+    if (VStr::Cmp(*MethodName, "alloc") == 0) {
+      if (NumArgs != 0) {
+        ParseError(Loc, "`.alloc` should nave no arguments");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VDynArrayAllocElement(SelfExpr, Loc);
+      SelfExpr = nullptr;
+      NumArgs = 0;
+      delete this;
+      return e->Resolve(ec);
+    }
+
     ParseError(Loc, "Invalid operation on dynamic array");
     delete this;
     return nullptr;

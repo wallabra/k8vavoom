@@ -812,6 +812,8 @@ struct Instr {
           case OPC_DynArrDispatch_DynArraySetSize2D:
             spdelta -= 3;
             return;
+          case OPC_DynArrDispatch_DynArrayAlloc:
+            return;
           default: FatalError("Unknown dynarr opcode");
         }
         break;

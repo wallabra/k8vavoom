@@ -2452,6 +2452,13 @@ func_loop:
                 sp -= 3;
               }
               break;
+            // [-1]: *dynarray
+            case OPC_DynArrDispatch_DynArrayAlloc:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-1].p;
+                sp[-1].p = A.Alloc(Type);
+              }
+              break;
             default:
               cstDump(origip);
               Sys_Error("Dictionary opcode %d is not implemented", ip[-1]);
