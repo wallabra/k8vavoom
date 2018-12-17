@@ -47,6 +47,9 @@
 #define DICTDISPATCH_OPCODE_INFO
 #include "progdefs.h"
 
+#define DYNARRDISPATCH_OPCODE_INFO
+#include "progdefs.h"
+
 
 #define MAX_PROG_STACK  (10000)
 #define STACK_ID  (0x45f6cd4b)
@@ -2263,189 +2266,173 @@ func_loop:
         sp[-1].i = ((VScriptArray *)sp[-1].p)->length2();
         PR_VM_BREAK;
 
-      // [-2]: *dynarray
-      // [-1]: length
-      PR_VM_CASE(OPC_DynArraySetNum)
+      // this is always followed by type and opcode
+      PR_VM_CASE(OPC_DynArrayDispatch)
         {
-          VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          int newsize = sp[-1].i;
-          // allow clearing for 2d arrays
-          if (A.Is2D() && newsize != 0) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
+          vuint8 *origip = ip;
           ++ip;
           VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (newsize < 0) { cstDump(ip); Sys_Error("Array index %d is negative", newsize); }
-          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array index %d is too big", newsize); }
-          A.SetNum(newsize, Type);
-          sp -= 2;
-        }
-        PR_VM_BREAK;
-
-      // [-2]: *dynarray
-      // [-1]: delta
-      PR_VM_CASE(OPC_DynArraySetNumMinus)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          int newsize = sp[-1].i;
-          // allow clearing for 2d arrays
-          if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (newsize < 0) { cstDump(ip); Sys_Error("Array shrink delta %d is negative", newsize); }
-          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array shrink delta %d is too big", newsize); }
-          if (A.length() < newsize) { cstDump(ip); Sys_Error("Array shrink delta %d is too big (%d)", newsize, A.length()); }
-          if (newsize > 0) A.SetNumMinus(newsize, Type);
-          sp -= 2;
-        }
-        PR_VM_BREAK;
-
-      // [-2]: *dynarray
-      // [-1]: delta
-      PR_VM_CASE(OPC_DynArraySetNumPlus)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          int newsize = sp[-1].i;
-          // allow clearing for 2d arrays
-          if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(ip); Sys_Error("Cannot resize 2D array"); }
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (newsize < 0) { cstDump(ip); Sys_Error("Array grow delta %d is negative", newsize); }
-          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array grow delta %d is too big", newsize); }
-          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < newsize) { cstDump(ip); Sys_Error("Array grow delta %d is too big (%d)", newsize, A.length()); }
-          if (newsize > 0) A.SetNumPlus(newsize, Type);
-          sp -= 2;
-        }
-        PR_VM_BREAK;
-
-      // [-3]: *dynarray
-      // [-2]: index
-      // [-1]: count
-      PR_VM_CASE(OPC_DynArrayInsert)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
-          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot insert into 2D array"); }
-          int index = sp[-2].i;
-          int count = sp[-1].i;
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
-          if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
-          if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
-          if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < count) { cstDump(ip); Sys_Error("Out of memory for dynarray"); }
-          if (count > 0) A.Insert(index, count, Type);
-          sp -= 3;
-        }
-        PR_VM_BREAK;
-
-      // [-3]: *dynarray
-      // [-2]: index
-      // [-1]: count
-      PR_VM_CASE(OPC_DynArrayRemove)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
-          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot insert into 2D array"); }
-          int index = sp[-2].i;
-          int count = sp[-1].i;
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (count < 0) { cstDump(ip); Sys_Error("Array count %d is negative", count); }
-          if (index < 0) { cstDump(ip); Sys_Error("Array index %d is negative", index); }
-          if (index > A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
-          if (count > A.length()-index) { cstDump(ip); Sys_Error("Array count %d is too big at %d (%d)", count, index, A.length()); }
-          if (count > 0) A.Remove(index, count, Type);
-          sp -= 3;
-        }
-        PR_VM_BREAK;
-
-      // [-1]: *dynarray
-      PR_VM_CASE(OPC_DynArrayClear)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-1].p;
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          A.Reset(Type);
-          --sp;
-        }
-        PR_VM_BREAK;
-
-      // [-1]: delegate
-      // [-2]: self
-      // [-3]: *dynarray
-      // in code: type
-      PR_VM_CASE(OPC_DynArraySort)
-        //fprintf(stderr, "sp=%p\n", sp);
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
-          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot sort non-flat arrays"); }
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          // get self
-          VObject *dgself = (VObject *)sp[-2].p;
-          // get pointer to the delegate
-          VMethod *dgfunc = (VMethod *)sp[-1].p;
-          if (!dgself) {
-            if (!dgfunc || (dgfunc->Flags&FUNC_Static) == 0) { cstDump(ip); Sys_Error("Delegate is not initialised"); }
+          switch (*ip++) {
+            // [-2]: *dynarray
+            // [-1]: length
+            case OPC_DynArrDispatch_DynArraySetNum:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-2].p;
+                int newsize = sp[-1].i;
+                // allow clearing for 2d arrays
+                if (A.Is2D() && newsize != 0) { cstDump(origip); Sys_Error("Cannot resize 2D array"); }
+                if (newsize < 0) { cstDump(origip); Sys_Error("Array index %d is negative", newsize); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array index %d is too big", newsize); }
+                A.SetNum(newsize, Type);
+                sp -= 2;
+              }
+              break;
+            // [-2]: *dynarray
+            // [-1]: delta
+            case OPC_DynArrDispatch_DynArraySetNumMinus:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-2].p;
+                int newsize = sp[-1].i;
+                // allow clearing for 2d arrays
+                if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(origip); Sys_Error("Cannot resize 2D array"); }
+                if (newsize < 0) { cstDump(origip); Sys_Error("Array shrink delta %d is negative", newsize); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array shrink delta %d is too big", newsize); }
+                if (A.length() < newsize) { cstDump(origip); Sys_Error("Array shrink delta %d is too big (%d)", newsize, A.length()); }
+                if (newsize > 0) A.SetNumMinus(newsize, Type);
+                sp -= 2;
+              }
+              break;
+            // [-2]: *dynarray
+            // [-1]: delta
+            case OPC_DynArrDispatch_DynArraySetNumPlus:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-2].p;
+                int newsize = sp[-1].i;
+                // allow clearing for 2d arrays
+                if (A.Is2D() && newsize != 0 && newsize != A.length()) { cstDump(origip); Sys_Error("Cannot resize 2D array"); }
+                if (newsize < 0) { cstDump(origip); Sys_Error("Array grow delta %d is negative", newsize); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array grow delta %d is too big", newsize); }
+                if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < newsize) { cstDump(origip); Sys_Error("Array grow delta %d is too big (%d)", newsize, A.length()); }
+                if (newsize > 0) A.SetNumPlus(newsize, Type);
+                sp -= 2;
+              }
+              break;
+            // [-3]: *dynarray
+            // [-2]: index
+            // [-1]: count
+            case OPC_DynArrDispatch_DynArrayInsert:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-3].p;
+                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot insert into 2D array"); }
+                int index = sp[-2].i;
+                int count = sp[-1].i;
+                if (count < 0) { cstDump(origip); Sys_Error("Array count %d is negative", count); }
+                if (index < 0) { cstDump(origip); Sys_Error("Array index %d is negative", index); }
+                if (index > A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
+                if (A.length() > MaxDynArrayLength || MaxDynArrayLength-A.length() < count) { cstDump(origip); Sys_Error("Out of memory for dynarray"); }
+                if (count > 0) A.Insert(index, count, Type);
+                sp -= 3;
+              }
+              break;
+            // [-3]: *dynarray
+            // [-2]: index
+            // [-1]: count
+            case OPC_DynArrDispatch_DynArrayRemove:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-3].p;
+                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot insert into 2D array"); }
+                int index = sp[-2].i;
+                int count = sp[-1].i;
+                if (count < 0) { cstDump(origip); Sys_Error("Array count %d is negative", count); }
+                if (index < 0) { cstDump(origip); Sys_Error("Array index %d is negative", index); }
+                if (index > A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", index, A.length()); }
+                if (count > A.length()-index) { cstDump(origip); Sys_Error("Array count %d is too big at %d (%d)", count, index, A.length()); }
+                if (count > 0) A.Remove(index, count, Type);
+                sp -= 3;
+              }
+              break;
+            // [-1]: *dynarray
+            case OPC_DynArrDispatch_DynArrayClear:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-1].p;
+                A.Reset(Type);
+                --sp;
+              }
+              break;
+            // [-1]: delegate
+            // [-2]: self
+            // [-3]: *dynarray
+            // in code: type
+            case OPC_DynArrDispatch_DynArraySort:
+              //fprintf(stderr, "sp=%p\n", sp);
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-3].p;
+                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot sort non-flat arrays"); }
+                // get self
+                VObject *dgself = (VObject *)sp[-2].p;
+                // get pointer to the delegate
+                VMethod *dgfunc = (VMethod *)sp[-1].p;
+                if (!dgself) {
+                  if (!dgfunc || (dgfunc->Flags&FUNC_Static) == 0) { cstDump(origip); Sys_Error("Delegate is not initialised"); }
+                }
+                if (!dgfunc) { cstDump(origip); Sys_Error("Delegate is not initialised (empty method)"); }
+                // fix stack, so we can call a delegate properly
+                pr_stackPtr = sp;
+                cstFixTopIPSP(ip);
+                if (!A.Sort(Type, dgself, dgfunc)) { cstDump(origip); Sys_Error("Internal error in array sorter"); }
+              }
+              current_func = func;
+              sp = pr_stackPtr;
+              //fprintf(stderr, "sp=%p\n", sp);
+              sp -= 3;
+              break;
+            // [-1]: idx1
+            // [-2]: idx0
+            // [-3]: *dynarray
+            case OPC_DynArrDispatch_DynArraySwap1D:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-3].p;
+                if (A.Is2D()) { cstDump(origip); Sys_Error("Cannot swap items of non-flat arrays"); }
+                int idx0 = sp[-2].i;
+                int idx1 = sp[-1].i;
+                if (idx0 < 0 || idx0 >= A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", idx0, A.length()); }
+                if (idx1 < 0 || idx1 >= A.length()) { cstDump(origip); Sys_Error("Index %d outside the bounds of an array (%d)", idx1, A.length()); }
+                A.SwapElements(idx0, idx1, Type);
+                sp -= 3;
+              }
+              break;
+            // [-2]: *dynarray
+            // [-1]: size
+            case OPC_DynArrDispatch_DynArraySetSize1D:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-2].p;
+                int newsize = sp[-1].i;
+                if (newsize < 0) { cstDump(origip); Sys_Error("Array size %d is negative", newsize); }
+                if (newsize > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array size %d is too big", newsize); }
+                A.SetNum(newsize, Type); // this will flatten it
+                sp -= 2;
+              }
+              break;
+            // [-3]: *dynarray
+            // [-2]: size1
+            // [-1]: size2
+            case OPC_DynArrDispatch_DynArraySetSize2D:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-3].p;
+                int newsize1 = sp[-2].i;
+                int newsize2 = sp[-1].i;
+                if (newsize1 < 1) { cstDump(origip); Sys_Error("Array size %d is too small", newsize1); }
+                if (newsize1 > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array size %d is too big", newsize1); }
+                if (newsize2 < 1) { cstDump(origip); Sys_Error("Array size %d is too small", newsize2); }
+                if (newsize2 > MaxDynArrayLength) { cstDump(origip); Sys_Error("Array size %d is too big", newsize2); }
+                A.SetSize2D(newsize1, newsize2, Type);
+                sp -= 3;
+              }
+              break;
+            default:
+              cstDump(origip);
+              Sys_Error("Dictionary opcode %d is not implemented", ip[-1]);
           }
-          if (!dgfunc) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
-          // fix stack, so we can call a delegate properly
-          pr_stackPtr = sp;
-          cstFixTopIPSP(ip);
-          if (!A.Sort(Type, dgself, dgfunc)) { cstDump(ip); Sys_Error("Internal error in array sorter"); }
-        }
-        current_func = func;
-        sp = pr_stackPtr;
-        //fprintf(stderr, "sp=%p\n", sp);
-        sp -= 3;
-        PR_VM_BREAK;
-
-      // [-1]: idx1
-      // [-2]: idx0
-      // [-3]: *dynarray
-      PR_VM_CASE(OPC_DynArraySwap1D)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
-          if (A.Is2D()) { cstDump(ip); Sys_Error("Cannot swap items of non-flat arrays"); }
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          int idx0 = sp[-2].i;
-          int idx1 = sp[-1].i;
-          if (idx0 < 0 || idx0 >= A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", idx0, A.length()); }
-          if (idx1 < 0 || idx1 >= A.length()) { cstDump(ip); Sys_Error("Index %d outside the bounds of an array (%d)", idx1, A.length()); }
-          A.SwapElements(idx0, idx1, Type);
-          sp -= 3;
-        }
-        PR_VM_BREAK;
-
-      // [-2]: *dynarray
-      // [-1]: size
-      PR_VM_CASE(OPC_DynArraySetSize1D)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-2].p;
-          int newsize = sp[-1].i;
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (newsize < 0) { cstDump(ip); Sys_Error("Array size %d is negative", newsize); }
-          if (newsize > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize); }
-          A.SetNum(newsize, Type); // this will flatten it
-          sp -= 2;
-        }
-        PR_VM_BREAK;
-
-      // [-3]: *dynarray
-      // [-2]: size1
-      // [-1]: size2
-      PR_VM_CASE(OPC_DynArraySetSize2D)
-        {
-          VScriptArray &A = *(VScriptArray *)sp[-3].p;
-          int newsize1 = sp[-2].i;
-          int newsize2 = sp[-1].i;
-          ++ip;
-          VFieldType Type = VFieldType::ReadTypeMem(ip);
-          if (newsize1 < 1) { cstDump(ip); Sys_Error("Array size %d is too small", newsize1); }
-          if (newsize1 > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize1); }
-          if (newsize2 < 1) { cstDump(ip); Sys_Error("Array size %d is too small", newsize2); }
-          if (newsize2 > MaxDynArrayLength) { cstDump(ip); Sys_Error("Array size %d is too big", newsize2); }
-          A.SetSize2D(newsize1, newsize2, Type);
-          sp -= 3;
         }
         PR_VM_BREAK;
 

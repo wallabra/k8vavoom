@@ -27,6 +27,9 @@
 #define DICTDISPATCH_OPCODE_INFO
 #include "../progdefs.h"
 
+#define DYNARRDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
 
 //==========================================================================
 //
@@ -957,16 +960,20 @@ void VDynArraySetNum::Emit (VEmitContext &ec) {
   if (opsign == 0) {
     // normal assign
     if (asSetSize) {
-      ec.AddStatement((NumExpr2 ? OPC_DynArraySetSize2D : OPC_DynArraySetSize1D), ArrayExpr->Type.GetArrayInnerType(), Loc);
+      //ec.AddStatement((NumExpr2 ? OPC_DynArraySetSize2D : OPC_DynArraySetSize1D), ArrayExpr->Type.GetArrayInnerType(), Loc);
+      ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), (NumExpr2 ? OPC_DynArrDispatch_DynArraySetSize2D : OPC_DynArrDispatch_DynArraySetSize1D), Loc);
     } else {
-      ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType(), Loc);
+      //ec.AddStatement(OPC_DynArraySetNum, ArrayExpr->Type.GetArrayInnerType(), Loc);
+      ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, Loc);
     }
   } else if (opsign < 0) {
     // -=
-    ec.AddStatement(OPC_DynArraySetNumMinus, ArrayExpr->Type.GetArrayInnerType(), Loc);
+    //ec.AddStatement(OPC_DynArraySetNumMinus, ArrayExpr->Type.GetArrayInnerType(), Loc);
+    ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNumMinus, Loc);
   } else {
     // +=
-    ec.AddStatement(OPC_DynArraySetNumPlus, ArrayExpr->Type.GetArrayInnerType(), Loc);
+    //ec.AddStatement(OPC_DynArraySetNumPlus, ArrayExpr->Type.GetArrayInnerType(), Loc);
+    ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNumPlus, Loc);
   }
 }
 
@@ -1075,7 +1082,8 @@ void VDynArrayInsert::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   IndexExpr->Emit(ec);
   CountExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayInsert, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  //ec.AddStatement(OPC_DynArrayInsert, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArrayInsert, Loc);
 }
 
 
@@ -1174,7 +1182,8 @@ void VDynArrayRemove::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   IndexExpr->Emit(ec);
   CountExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayRemove, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  //ec.AddStatement(OPC_DynArrayRemove, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArrayRemove, Loc);
 }
 
 
@@ -1244,7 +1253,8 @@ VExpression *VDynArrayClear::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDynArrayClear::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArrayClear, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  //ec.AddStatement(OPC_DynArrayClear, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArrayClear, Loc);
 }
 
 
@@ -1406,7 +1416,8 @@ VExpression *VDynArraySort::DoResolve (VEmitContext &ec) {
 void VDynArraySort::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   DgExpr->Emit(ec);
-  ec.AddStatement(OPC_DynArraySort, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  //ec.AddStatement(OPC_DynArraySort, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySort, Loc);
 }
 
 
@@ -1505,7 +1516,8 @@ void VDynArraySwap1D::Emit (VEmitContext &ec) {
   ArrayExpr->Emit(ec);
   Index0Expr->Emit(ec);
   Index1Expr->Emit(ec);
-  ec.AddStatement(OPC_DynArraySwap1D, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  //ec.AddStatement(OPC_DynArraySwap1D, ArrayExpr->Type.GetArrayInnerType(), Loc);
+  ec.AddStatement(OPC_DynArrayDispatch, ArrayExpr->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySwap1D, Loc);
 }
 
 

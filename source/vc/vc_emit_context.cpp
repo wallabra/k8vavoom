@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "vc_local.h"
 
 
@@ -46,7 +45,17 @@ VStatementBuiltinInfo StatementDictDispatchInfo[] = {
   { nullptr },
 };
 
+VStatementBuiltinInfo StatementDynArrayDispatchInfo[] = {
+#define DYNARRDISPATCH_OPCODE_INFO
+#define DECLARE_OPC_DYNARRDISPATCH(name)  { #name }
+#include "../progdefs.h"
+  { nullptr },
+};
+
 #define DICTDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
+#define DYNARRDISPATCH_OPCODE_INFO
 #include "../progdefs.h"
 
 
@@ -703,15 +712,17 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const VFieldType &TypeArg1, int OpCode, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_TypeDD) {
-    FatalError("Opcode doesn't take types as argument");
+void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int Arg, const TLocation &aloc) {
+  if (StatementInfo[statement].Args != OPCARGS_Type_Int &&
+      StatementInfo[statement].Args != OPCARGS_ArrElemType_Int &&
+      StatementInfo[statement].Args != OPCARGS_TypeAD)
+  {
+    FatalError("Opcode doesn't take type as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.TypeArg = TypeArg;
-  I.TypeArg1 = TypeArg1;
-  I.Arg2 = OpCode;
+  I.Arg2 = Arg;
   I.loc = aloc;
 }
 
@@ -721,16 +732,15 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //  VEmitContext::AddStatement
 //
 //==========================================================================
-void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int Arg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Type_Int &&
-      StatementInfo[statement].Args != OPCARGS_ArrElemType_Int)
-  {
-    FatalError("Opcode doesn't take type as argument");
+void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const VFieldType &TypeArg1, int OpCode, const TLocation &aloc) {
+  if (StatementInfo[statement].Args != OPCARGS_TypeDD) {
+    FatalError("Opcode doesn't take types as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.TypeArg = TypeArg;
-  I.Arg2 = Arg;
+  I.TypeArg1 = TypeArg1;
+  I.Arg2 = OpCode;
   I.loc = aloc;
 }
 
@@ -961,7 +971,8 @@ void VEmitContext::EmitOneLocalDtor (int locidx, const TLocation &aloc, bool zer
   if (LocalDefs[locidx].Type.Type == TYPE_DynamicArray) {
     EmitLocalAddress(LocalDefs[locidx].Offset, aloc);
     AddStatement(OPC_PushNumber0, aloc);
-    AddStatement(OPC_DynArraySetNum, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
+    //AddStatement(OPC_DynArraySetNum, LocalDefs[locidx].Type.GetArrayInnerType(), aloc);
+    AddStatement(OPC_DynArrayDispatch, LocalDefs[locidx].Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArraySetNum, aloc);
     return;
   }
 

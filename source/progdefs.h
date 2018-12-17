@@ -106,6 +106,29 @@ enum {
 };
 # endif
 
+#elif defined(DYNARRDISPATCH_OPCODE_INFO)
+# ifndef DECLARE_OPC_DYNARRDISPATCH
+#  define DYNARRDISPATCH_OPCODE_INFO_DEFAULT
+#  define DECLARE_OPC_DYNARRDISPATCH(name)  OPC_DynArrDispatch_##name
+enum {
+# endif
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySetNum),
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySetNumMinus),
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySetNumPlus),
+  DECLARE_OPC_DYNARRDISPATCH(DynArrayInsert),
+  DECLARE_OPC_DYNARRDISPATCH(DynArrayRemove),
+  DECLARE_OPC_DYNARRDISPATCH(DynArrayClear),
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySort),
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySwap1D),
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySetSize1D),
+  DECLARE_OPC_DYNARRDISPATCH(DynArraySetSize2D),
+# undef DECLARE_OPC_DYNARRDISPATCH
+# undef DYNARRDISPATCH_OPCODE_INFO
+# ifdef DYNARRDISPATCH_OPCODE_INFO_DEFAULT
+#  undef DYNARRDISPATCH_OPCODE_INFO_DEFAULT
+};
+# endif
+
 #else
 
 #ifndef OPCODE_INFO
@@ -149,6 +172,7 @@ enum {
   // used for dynarray sorting, int is delegate argc
   OPCARGS_ArrElemType_Int,
   OPCARGS_TypeDD, // dictdispatch
+  OPCARGS_TypeAD, // dynarrdispatch
 };
 
 
@@ -432,17 +456,22 @@ enum {
   DECLARE_OPC(DynArrayGetNum, None),
   DECLARE_OPC(DynArrayGetNum1, None),
   DECLARE_OPC(DynArrayGetNum2, None), // second dimension
+  DECLARE_OPC(DynArrayDispatch, TypeAD),
+  /*
   DECLARE_OPC(DynArraySetNum, Type),
   DECLARE_OPC(DynArraySetNumMinus, Type),
   DECLARE_OPC(DynArraySetNumPlus, Type),
   DECLARE_OPC(DynArrayInsert, Type),
   DECLARE_OPC(DynArrayRemove, Type),
   DECLARE_OPC(DynArrayClear, Type),
-  DECLARE_OPC(DynArraySort, /*ArrElemType_Int*/Type),
+  DECLARE_OPC(DynArraySort, / *ArrElemType_Int* /Type),
   DECLARE_OPC(DynArraySwap1D, Type),
+  */
   // 2d (and some 1d)
+  /*
   DECLARE_OPC(DynArraySetSize1D, Type),
   DECLARE_OPC(DynArraySetSize2D, Type),
+  */
   DECLARE_OPC(DynArrayElement2D, TypeSize),
 
   // dynamic cast

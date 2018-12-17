@@ -310,3 +310,4 @@ struct VStatementBuiltinInfo {
 extern VStatementInfo StatementInfo[NUM_OPCODES];
 extern VStatementBuiltinInfo StatementBuiltinInfo[];
 extern VStatementBuiltinInfo StatementDictDispatchInfo[];
+extern VStatementBuiltinInfo StatementDynArrayDispatchInfo[];

@@ -62,6 +62,9 @@
 #define DICTDISPATCH_OPCODE_INFO
 #include "../progdefs.h"
 
+#define DYNARRDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct Instr;
@@ -780,26 +783,31 @@ struct Instr {
       case OPC_DynArrayGetNum1:
       case OPC_DynArrayGetNum2:
         return;
-      case OPC_DynArraySetNum:
-      case OPC_DynArraySetNumMinus:
-      case OPC_DynArraySetNumPlus:
-      case OPC_DynArraySetSize1D:
-        spdelta = -2;
-        return;
-      case OPC_DynArrayInsert:
-      case OPC_DynArrayRemove:
-        spdelta = -3;
-        return;
-      case OPC_DynArrayClear:
-        spdelta = -1;
-        return;
-      case OPC_DynArraySort: // array, self, and delegate
-      case OPC_DynArraySwap1D: // array, idx0, idx1
-        spdelta = -3;
-        return;
-      case OPC_DynArraySetSize2D:
-        spdelta -= 3;
-        return;
+      case OPC_DynArrayDispatch:
+        switch (Arg2) {
+          case OPC_DynArrDispatch_DynArraySetNum:
+          case OPC_DynArrDispatch_DynArraySetNumMinus:
+          case OPC_DynArrDispatch_DynArraySetNumPlus:
+          case OPC_DynArrDispatch_DynArraySetSize1D:
+            spdelta = -2;
+            return;
+          case OPC_DynArrDispatch_DynArrayInsert:
+          case OPC_DynArrDispatch_DynArrayRemove:
+            spdelta = -3;
+            return;
+          case OPC_DynArrDispatch_DynArrayClear:
+            spdelta = -1;
+            return;
+          case OPC_DynArrDispatch_DynArraySort: // array, self, and delegate
+          case OPC_DynArrDispatch_DynArraySwap1D: // array, idx0, idx1
+            spdelta = -3;
+            return;
+          case OPC_DynArrDispatch_DynArraySetSize2D:
+            spdelta -= 3;
+            return;
+          default: FatalError("Unknown dynarr opcode");
+        }
+        break;
       case OPC_DynArrayElement2D:
         spdelta -= 2;
         return;
@@ -1033,6 +1041,9 @@ struct Instr {
         break;
       case OPCARGS_TypeDD:
         fprintf(stderr, " %s!(%s,%s)", StatementDictDispatchInfo[Arg2].name, *TypeArg.GetName(), *TypeArg1.GetName());
+        break;
+      case OPCARGS_TypeAD:
+        fprintf(stderr, " %s!(%s)", StatementDynArrayDispatchInfo[Arg2].name, *TypeArg.GetName());
         break;
       case OPCARGS_Builtin:
         fprintf(stderr, " %s", StatementBuiltinInfo[Arg1].name);
@@ -1578,10 +1589,13 @@ void VMCOptimizer::optimizeJumps () {
         addr += 6;
         break;
       case OPCARGS_Type:
-        addr += 8+sizeof(void *);
+        addr += VFieldType::MemSize;
         break;
       case OPCARGS_TypeDD:
-        addr += 2*(8+sizeof(void *))+1;
+        addr += 2*VFieldType::MemSize+1;
+        break;
+      case OPCARGS_TypeAD:
+        addr += VFieldType::MemSize+1;
         break;
       case OPCARGS_Builtin:
         addr += 1;
@@ -1593,7 +1607,7 @@ void VMCOptimizer::optimizeJumps () {
         addr += 4;
         break;
       case OPCARGS_ArrElemType_Int:
-        addr += 8+sizeof(void *)+4;
+        addr += VFieldType::MemSize+4;
         break;
     }
   }

@@ -35,6 +35,9 @@
 #define DICTDISPATCH_OPCODE_INFO
 #include "../progdefs.h"
 
+#define DYNARRDISPATCH_OPCODE_INFO
+#include "../progdefs.h"
+
 
 //==========================================================================
 //
