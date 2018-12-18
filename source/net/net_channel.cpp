@@ -343,11 +343,6 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
   }
   // execute it
   VObject::ExecuteFunction(Func);
-  // if it returns a vector, pop the rest of values
-  if (Func->ReturnType.Type == TYPE_Vector) {
-    PR_Pop();
-    PR_Pop();
-  }
   return true;
   unguard;
 }
