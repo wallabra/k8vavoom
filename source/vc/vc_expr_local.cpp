@@ -131,13 +131,13 @@ void VLocalDecl::Declare (VEmitContext &ec) {
           if (mnext && e.toeIterArgN < mnext->NumParams) {
             //fprintf(stderr, "*** <%s>\n", *mnext->ParamTypes[e.toeIterArgN].GetName()); abort();
             delete e.TypeExpr; // delete old `automatic` type
-            e.TypeExpr = VTypeExpr::NewTypeExpr(mnext->ParamTypes[e.toeIterArgN], te->Loc);
+            e.TypeExpr = VTypeExpr::NewTypeExprFromAuto(mnext->ParamTypes[e.toeIterArgN], te->Loc);
           }
         }
         if (e.TypeExpr->Type.Type == TYPE_Automatic) {
           ParseError(e.TypeExpr->Loc, "Cannot infer type for variable `%s`", *e.Name);
           delete e.TypeExpr; // delete old `automatic` type
-          e.TypeExpr = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Int), te->Loc);
+          e.TypeExpr = VTypeExpr::NewTypeExprFromAuto(VFieldType(TYPE_Int), te->Loc);
         }
       } else {
         auto res = te->SyntaxCopy()->Resolve(ec);
@@ -148,7 +148,7 @@ void VLocalDecl::Declare (VEmitContext &ec) {
         } else {
           //fprintf(stderr, "*** automatic type resolved to `%s`\n", *(res->Type.GetName()));
           delete e.TypeExpr; // delete old `automatic` type
-          e.TypeExpr = VTypeExpr::NewTypeExpr(res->Type, te->Loc);
+          e.TypeExpr = VTypeExpr::NewTypeExprFromAuto(res->Type, te->Loc);
           delete res;
         }
       }

@@ -633,7 +633,14 @@ bool VFieldType::CheckMatch (bool asRef, const TLocation &l, const VFieldType &O
   if (Equals(Other)) return true;
 
   if (Type == TYPE_String && Other.Type == TYPE_String) return true;
-  if (Type == TYPE_Vector && Other.Type == TYPE_Vector) return true;
+  if (Type == TYPE_Vector && Other.Type == TYPE_Vector) {
+    // vector records should be compatible
+    if (!Struct || !Other.Struct) return true; // generic `vector` is compatible with everything
+    //fprintf(stderr, "*** vec0: %s; vec1: %s; %d\n", (Struct ? *Struct->GetFullName() : "---"), (Other.Struct ? *Other.Struct->GetFullName() : "---"), Struct->IsA(Other.Struct));
+    if (Struct->IsA(Other.Struct)) return true;
+    if (raiseError) ParseError(l, "vector types `%s` and `%s` are not compatible", Struct->GetName(), Other.Struct->GetName());
+    return false;
+  }
 
   if (Type == TYPE_Pointer && Other.Type == TYPE_Pointer) {
     VFieldType it1 = GetPointerInnerType();

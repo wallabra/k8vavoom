@@ -22,8 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "vc_local.h"
+#if defined(IN_VCC) //&& !defined(VCC_STANDALONE_EXECUTOR)
+# include "vc_object.h"
+#endif
 
 
 //==========================================================================
@@ -93,6 +95,36 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
   Sys_Error("VC: VTypeExpr::NewTypeExpr: internal compiler error");
   return nullptr;
 };
+
+
+//==========================================================================
+//
+//  VTypeExpr::NewTypeExprFromAuto
+//
+//  this one resolves `TYPE_Vector` to `TVec` struct
+//
+//==========================================================================
+VTypeExpr *VTypeExpr::NewTypeExprFromAuto (VFieldType atype, const TLocation &aloc) {
+  // convert vector to `TVec` struct
+  if (atype.Type == TYPE_Vector || (atype.Type == TYPE_Pointer && atype.InnerType == TYPE_Vector)) {
+    if (!atype.Struct) {
+#if defined(IN_VCC) //&& !defined(VCC_STANDALONE_EXECUTOR)
+      VClass *ocls = (VClass *)VMemberBase::StaticFindMember("Object", ANY_PACKAGE, MEMBER_Class);
+      check(ocls);
+      VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", ocls, MEMBER_Struct);
+#else
+      VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
+#endif
+      if (!tvs) {
+        ParseError(aloc, "Cannot find `TVec` struct for vector type");
+        return NewTypeExpr(atype, aloc);
+      }
+      VFieldType stt = VFieldType(tvs);
+      return new VTypeExprSimple(stt, aloc);
+    }
+  }
+  return NewTypeExpr(atype, aloc);
+}
 
 
 //==========================================================================

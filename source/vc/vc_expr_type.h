@@ -44,6 +44,8 @@ public:
   virtual bool IsTypeExpr () const override;
 
   static VTypeExpr *NewTypeExpr (VFieldType atype, const TLocation &aloc);
+  // this one resolves `TYPE_Vector` to `TVec` struct
+  static VTypeExpr *NewTypeExprFromAuto (VFieldType atype, const TLocation &aloc);
 
   virtual VStr toString () const override;
 

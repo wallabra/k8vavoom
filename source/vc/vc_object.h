@@ -366,6 +366,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#if !defined(IN_VCC)
 static __attribute__((unused)) inline void vobj_get_param (int &n) { n = PR_Pop(); }
 static __attribute__((unused)) inline void vobj_get_param (float &n) { n = PR_Popf(); }
 static __attribute__((unused)) inline void vobj_get_param (double &n) { n = PR_Popf(); }
@@ -384,6 +385,7 @@ template<typename T, typename... Args> static __attribute__((unused)) inline voi
 template<typename... Args> static __attribute__((unused)) inline void vobjGetParam (Args&... args) {
   vobj_get_param(args...);
 }
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //

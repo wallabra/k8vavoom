@@ -487,9 +487,11 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
     VMemberBase **mpp = gMembersMap.find(AName);
     if (!mpp) return nullptr;
     for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+      //if (AName == "TVec") fprintf(stderr, "V: <%s> %d : %d (anypkg=%d); outerpkg=%d\n", *m->GetFullName(), m->MemberType, AType, (AOuter == ANY_PACKAGE), (m->Outer && m->Outer->MemberType == MEMBER_Package));
       if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
           (AType == ANY_MEMBER || m->MemberType == AType))
       {
+        //if (AName == "TVec") fprintf(stderr, "  FOUND: V: <%s> %d : %d\n", *m->GetFullName(), m->MemberType, AType);
         return m;
       }
     }
