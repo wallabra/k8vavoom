@@ -304,7 +304,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     case OPC_DictDispatch_Find:
       ht = (VScriptDict *)sp[-2].p;
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
-      VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
+      VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType, true); // calc hash
       r = ht->find(e);
       if (r && VType.Type == TYPE_String) {
         sp[-2].p = (r ? &r->value : nullptr);
@@ -320,8 +320,8 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       {
         ht = (VScriptDict *)sp[-3].p;
         if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
-        VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType);
-        VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType);
+        VScriptDictElem::CreateFromPtr(e, sp[-2].p, KType, true); // calc hash
+        VScriptDictElem::CreateFromPtr(v, sp[-1].p, VType, false); // no hash
         sp[-3].i = (ht->put(e, v) ? 1 : 0);
         sp -= 2;
       }
@@ -331,7 +331,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
     case OPC_DictDispatch_Delete:
       ht = (VScriptDict *)sp[-2].p;
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
-      VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType);
+      VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType, true); // calc hash
       sp[-2].i = (ht->del(e) ? 1 : 0);
       --sp;
       return;

@@ -1460,13 +1460,37 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fnless)
 //
 //==========================================================================
 vuint32 GetTypeHash (const VScriptDictElem &e) {
-  if (e.type.Type == TYPE_String) {
-    VStr *s = (VStr *)&e.value;
+  //if (e.isHashCached()) return e.hash;
+  return e.calcHash();
+}
+
+
+//==========================================================================
+//
+//  GetTypeHash
+//
+//==========================================================================
+/*
+vuint32 GetTypeHash (VScriptDictElem &e) {
+  if (!e.isHashCached()) e.updateHashCache();
+  return e.hash;
+}
+*/
+
+
+//==========================================================================
+//
+//  VScriptDictElem::calcHash
+//
+//==========================================================================
+vuint32 VScriptDictElem::calcHash () const {
+  if (type.Type == TYPE_String) {
+    VStr *s = (VStr *)&value;
     //fprintf(stderr, "GetTypeHash: str=<%s>; hash=0x%08x\n", *s->quote(), joaatHashBuf(s->getCStr(), (size_t)s->length()));
     return joaatHashBuf(s->getCStr(), (size_t)s->length());
   }
-  //fprintf(stderr, "GetTypeHash: ptr=%p; type=%s; size=%d\n", e.value, *e.type.GetName(), e.type.GetSize());
-  switch (e.type.Type) {
+  //fprintf(stderr, "GetTypeHash: ptr=%p; type=%s; size=%d\n", value, *type.GetName(), type.GetSize());
+  switch (type.Type) {
     case TYPE_Int:
     case TYPE_Byte:
     case TYPE_Float:
@@ -1478,14 +1502,14 @@ vuint32 GetTypeHash (const VScriptDictElem &e) {
     case TYPE_SliceArray:
     case TYPE_Array:
     case TYPE_Struct:
-      return joaatHashBuf(&e.value, (size_t)e.type.GetSize());
+      return joaatHashBuf(&value, (size_t)type.GetSize());
     case TYPE_Bool:
       return 0;
     case TYPE_Name:
-      return hashU32((vuint32)((VName *)e.value)->GetIndex());
+      return hashU32((vuint32)((VName *)value)->GetIndex());
     case TYPE_String:
       {
-        VStr *s = (VStr *)&e.value;
+        VStr *s = (VStr *)&value;
         return joaatHashBuf(s->getCStr(), (size_t)s->length());
       }
     case TYPE_Delegate:
@@ -1506,11 +1530,12 @@ vuint32 GetTypeHash (const VScriptDictElem &e) {
 //  don't clear value on destroying
 //
 //==========================================================================
-void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype) {
+void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype, bool calcHash) {
   e.clear();
   e.value = ptr;
   e.type = atype;
-  e.nodestroy = true;
+  e.setDestroy(false);
+  //if (calcHash) e.updateHashCache();
 }
 
 
@@ -1521,11 +1546,12 @@ void VScriptDictElem::CreateFromPtr (VScriptDictElem &e, void *ptr, const VField
 //==========================================================================
 bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
   if (value == e.value || &e == this) return true;
+  //if ((flags&Flag_Hashed) && (e.flags&Flag_Hashed) && hash != e.hash) return false;
   if (type.Type == TYPE_String) {
     if (e.type.Type != TYPE_String) return false; // just in case
     return *((VStr *)&value) == *((VStr *)&e.value);
   }
-  if (isSimpleType(type)) return false; // covered by the previous comparison
+  if (isSimpleType(type)) return false; // covered by the previous `value` comparison
   if (!type.Equals(e.type)) return false; // sanity check
   return VField::IdenticalValue((const vuint8 *)value, (const vuint8 *)e.value, type);
 }
@@ -1537,8 +1563,7 @@ bool VScriptDictElem::operator == (const VScriptDictElem &e) const {
 //
 //==========================================================================
 void VScriptDictElem::clear () {
-  if (!nodestroy) {
-    if (!value || type.Type == TYPE_Void) return;
+  if (needDestroy() && value && type.Type != TYPE_Void) {
     if (type.Type == TYPE_String) {
       ((VStr *)&value)->clear();
     } else if (!isSimpleType(type)) {
@@ -1548,7 +1573,9 @@ void VScriptDictElem::clear () {
   }
   value = nullptr;
   type = VFieldType();
-  nodestroy = true;
+  //hash = 0;
+  flags = 0;
+  setDestroy(false);
 }
 
 
@@ -1558,29 +1585,33 @@ void VScriptDictElem::clear () {
 //
 //==========================================================================
 void VScriptDictElem::copyTo (VScriptDictElem *dest) const {
+  // always do full copy (except for special cases)
   if (!dest || dest == this) return;
   dest->clear();
-  // for "no destroy", just copy everything and exit
-  // k8: nope, always do full copy
-  //if (nodestroy) { dest->value = (void *)value; dest->type = type; dest->nodestroy = nodestroy; return; }
   if (!value || type.Type == TYPE_Void) return;
+  dest->setDestroy(true);
+  dest->type = type;
   // strings are special
   if (type.Type == TYPE_String) {
     dest->value = nullptr; // just in case
     *((VStr *)&dest->value) = *((VStr *)&value);
-    dest->type = type;
-    dest->nodestroy = false;
-    return;
+  } else if (isSimpleType(type)) {
+    dest->value = (void *)value;
+  } else {
+    // complex copy
+    int sz = type.GetSize();
+    dest->value = Z_Calloc(sz);
+    //fprintf(stderr, "VScriptDictElem::copyTo: src=%p; dest=%p; type='%s' (%d)\n", value, dest->value, *type.GetName(), type.GetSize());
+    VField::CopyFieldValue((const vuint8 *)value, (vuint8 *)dest->value, type);
   }
-  if (isSimpleType(type)) { dest->value = (void *)value; dest->type = type; dest->nodestroy = false; return; }
-  // complex copy
-  //check(!nodestroy);
-  int sz = type.GetSize();
-  dest->value = Z_Calloc(sz);
-  //fprintf(stderr, "VScriptDictElem::copyTo: src=%p; dest=%p; type='%s' (%d)\n", value, dest->value, *type.GetName(), type.GetSize());
-  VField::CopyFieldValue((const vuint8 *)value, (vuint8 *)dest->value, type);
-  dest->type = type;
-  dest->nodestroy = false;
+  /*
+  if (isHashCached()) {
+    dest->hash = hash;
+    dest->flags |= Flag_Hashed;
+  }/ * else {
+    dest->updateHashCache();
+  }* /
+  */
 }
 
 
@@ -1605,15 +1636,16 @@ void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr full
     clear();
     if (type.Type == TYPE_String || isSimpleType(type)) {
       type = dtp;
-      nodestroy = false;
+      setDestroy(true);
       VField::SerialiseFieldValue(strm, (vuint8 *)&value, type, fullname);
     } else {
       int sz = dtp.GetSize();
       value = Z_Calloc(sz);
       type = dtp;
-      nodestroy = false;
+      setDestroy(true);
       VField::SerialiseFieldValue(strm, (vuint8 *)value, type, fullname);
     }
+    //updateHashCache();
   } else {
     // writing
     vuint8 *ptr;
@@ -1800,6 +1832,7 @@ bool VScriptDict::cleanRefs () {
 
   return res;
 }
+
 
 //==========================================================================
 //

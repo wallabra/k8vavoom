@@ -184,20 +184,28 @@ static_assert(sizeof(VScriptArray) <= sizeof(void *)*3, "oops");
 // ////////////////////////////////////////////////////////////////////////// //
 // dictionary object, used in script executor
 struct VScriptDictElem {
+  enum {
+    Flag_Destroy = 0x0001u,
+  };
+
   void *value;
   VFieldType type;
-  bool nodestroy;
+  //vuint32 hash; // precalced
+  vuint32 flags; // Flag_XXX
 
-  VScriptDictElem () : value(nullptr), type(), nodestroy(true) {}
+  VScriptDictElem () : value(nullptr), type(), /*hash(0),*/ flags(0) {}
   ~VScriptDictElem () { clear(); }
   VScriptDictElem (const VScriptDictElem &e) { e.copyTo(this); }
   VScriptDictElem &operator = (const VScriptDictElem &e) { if (&e != this) e.copyTo(this); return *this; }
 
   bool operator == (const VScriptDictElem &e) const;
 
+  inline bool needDestroy () const { return !!(flags&Flag_Destroy); }
+  inline void setDestroy (bool v) { if (v) flags |= Flag_Destroy; else flags &= ~Flag_Destroy; }
+
   // create from [pointer to] value
   // don't clear value on destroying
-  static void CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype);
+  static void CreateFromPtr (VScriptDictElem &e, void *ptr, const VFieldType &atype, bool calcHash);
 
   void clear ();
   void copyTo (VScriptDictElem *dest) const;
@@ -223,9 +231,20 @@ struct VScriptDictElem {
   static void streamSkip (VStream &strm);
   void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname);
   void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) const;
+
+  // always recalculating, never returns cached hash
+  vuint32 calcHash () const;
+
+  /*
+  inline void updateHashCache () {
+    hash = calcHash();
+    flags |= Flag_Hashed;
+  }
+  */
 };
 
 vuint32 GetTypeHash (const VScriptDictElem &e);
+//vuint32 GetTypeHash (VScriptDictElem &e);
 
 
 class VScriptDict {
