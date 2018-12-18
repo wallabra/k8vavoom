@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "network.h"
 
@@ -228,7 +227,7 @@ void VChannel::Tick () {
 void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   guard(VChannel::SendRpc);
   VMessageOut Msg(this);
-  Msg.bReliable = !!(Func->Flags & FUNC_NetReliable);
+  Msg.bReliable = !!(Func->Flags&FUNC_NetReliable);
 
   Msg.WriteInt(Func->NetIndex, Owner->GetClass()->NumNetFields);
 
@@ -269,7 +268,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
       default:
         Sys_Error("Bad method argument type %d", Func->ParamTypes[i].Type);
     }
-    if (Func->ParamFlags[i] & FPARM_Optional) {
+    if (Func->ParamFlags[i]&FPARM_Optional) {
       Msg.WriteBit(!!Param->i);
       ++Param;
     }
@@ -298,7 +297,7 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
   }
   if (!Func) return false;
 
-  memset(pr_stackPtr, 0, Func->ParamsSize * sizeof(VStack));
+  memset(pr_stackPtr, 0, Func->ParamsSize*sizeof(VStack));
   // push self pointer
   PR_PushPtr(Owner);
   // get arguments
@@ -337,7 +336,7 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
       default:
         Sys_Error("Bad method argument type %d", Func->ParamTypes[i].Type);
     }
-    if (Func->ParamFlags[i] & FPARM_Optional) {
+    if (Func->ParamFlags[i]&FPARM_Optional) {
       pr_stackPtr->i = Msg.ReadBit();
       ++pr_stackPtr;
     }

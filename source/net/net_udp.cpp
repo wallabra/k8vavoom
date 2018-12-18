@@ -573,20 +573,20 @@ int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int Defa
     num = 0;
     run = 0;
     while (!(*b < '0' || *b > '9')) {
-      num = num*10 + *b++ - '0';
+      num = num*10+(*b++)-'0';
       if (++run > 3) return -1;
     }
     if ((*b < '0' || *b > '9') && *b != '.' && *b != ':' && *b != 0) return -1;
     if (num < 0 || num > 255) return -1;
     mask <<= 8;
-    addr = (addr << 8) + num;
+    addr = (addr<<8)+num;
   }
 
   if (*b++ == ':') port = atoi(b); else port = DefaultPort;
 
   hostaddr->sa_family = AF_INET;
   ((sockaddr_in *)hostaddr)->sin_port = htons((short)port);
-  ((sockaddr_in *)hostaddr)->sin_addr.s_addr = (myAddr & htonl(mask)) | htonl(addr);
+  ((sockaddr_in *)hostaddr)->sin_addr.s_addr = (myAddr&htonl(mask))|htonl(addr);
 
   return 0;
   unguard;

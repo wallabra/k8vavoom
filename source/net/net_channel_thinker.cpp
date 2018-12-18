@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "network.h"
 
@@ -156,7 +155,7 @@ void VThinkerChannel::Update () {
   TAVec SavedAngles;
   if (Ent) {
     SavedAngles = Ent->Angles;
-    if (Ent->EntityFlags & VEntity::EF_IsPlayer) {
+    if (Ent->EntityFlags&VEntity::EF_IsPlayer) {
       // clear look angles, because they must not affect model orientation
       Ent->Angles.pitch = 0;
       Ent->Angles.roll = 0;
@@ -207,12 +206,12 @@ void VThinkerChannel::Update () {
 
       Msg.WriteInt(F->NetIndex, Thinker->GetClass()->NumNetFields);
       if (VField::NetSerialiseValue(Msg, Connection->ObjMap, FieldValue, F->Type)) {
-        VField::CopyFieldValue(FieldValue, OldData + F->Ofs, F->Type);
+        VField::CopyFieldValue(FieldValue, OldData+F->Ofs, F->Type);
       }
     }
   }
 
-  if (Ent && (Ent->EntityFlags & VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
+  if (Ent && (Ent->EntityFlags&VEntity::EF_IsPlayer)) Ent->Angles = SavedAngles;
   UpdatedThisFrame = true;
 
   if (Msg.GetNumBits()) SendMessage(&Msg);

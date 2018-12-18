@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #ifndef VAVOOM_NETWORK_HEADER
 #define VAVOOM_NETWORK_HEADER
 

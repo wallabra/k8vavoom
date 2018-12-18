@@ -57,7 +57,6 @@
 //    string[]  wad_files       empty string terminated
 //
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "net_local.h"
 #ifdef USE_INTERNAL_ZLIB
@@ -220,7 +219,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
 
   Drv->GetSocketAddr(Drv->controlSock, &myaddr);
   if (xmit) {
-    VBitStreamWriter Reply(256 << 3);
+    VBitStreamWriter Reply(256<<3);
     TmpByte = NETPACKET_CTL;
     Reply << TmpByte;
     TmpByte = CCREQ_SERVER_INFO;
@@ -241,7 +240,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     // is the cache full?
     if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
-    VBitStreamReader msg(packetBuffer.data, len << 3);
+    VBitStreamReader msg(packetBuffer.data, len<<3);
     msg << control;
     if (control != NETPACKET_CTL) continue;
 
@@ -272,7 +271,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     msg << TmpByte;
     Net->HostCache[n].MaxUsers = TmpByte;
     msg << TmpByte;
-    if (TmpByte != NET_PROTOCOL_VERSION) Net->HostCache[n].Name = VStr("*") + Net->HostCache[n].Name;
+    if (TmpByte != NET_PROTOCOL_VERSION) Net->HostCache[n].Name = VStr("*")+Net->HostCache[n].Name;
     Net->HostCache[n].CName = addr;
     i = 0;
     do {
@@ -285,7 +284,7 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
       if (i == n) continue;
       if (Net->HostCache[n].Name.ICmp(Net->HostCache[i].Name) == 0) {
         i = Net->HostCache[n].Name.Length();
-        if (i < 15 && Net->HostCache[n].Name[i - 1] > '8') {
+        if (i < 15 && Net->HostCache[n].Name[i-1] > '8') {
           Net->HostCache[n].Name += '0';
         } else {
           ++(*Net->HostCache[n].Name.GetMutableCharPointer(i-1));
@@ -380,7 +379,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
           continue;
         }
 
-        msg = new VBitStreamReader(packetBuffer.data, ret << 3);
+        msg = new VBitStreamReader(packetBuffer.data, ret<<3);
 
         *msg << control;
         if (control !=  NETPACKET_CTL) {
@@ -390,7 +389,7 @@ VSocket *VDatagramDriver::Connect (VNetLanDriver *Drv, const char *host) {
           continue;
         }
       }
-    } while (ret == 0 && (Net->SetNetTime() - start_time) < 2.5);
+    } while (ret == 0 && (Net->SetNetTime()-start_time) < 2.5);
     if (ret) break;
     GCon->Log("still trying..."); SCR_Update();
     start_time = Net->SetNetTime();
@@ -511,7 +510,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   len = Drv->Read(acceptsock, packetBuffer.data, MAX_MSGLEN, &clientaddr);
   if (len < (int)sizeof(vint32)) return nullptr;
-  VBitStreamReader msg(packetBuffer.data, len << 3);
+  VBitStreamReader msg(packetBuffer.data, len<<3);
 
   msg << control;
   if (control != NETPACKET_CTL) return nullptr;
@@ -521,7 +520,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     msg << gamename;
     if (gamename != "VAVOOM") return nullptr;
 
-    VBitStreamWriter MsgOut(MAX_MSGLEN << 3);
+    VBitStreamWriter MsgOut(MAX_MSGLEN<<3);
     TmpByte = NETPACKET_CTL;
     MsgOut << TmpByte;
     TmpByte = CCREP_SERVER_INFO;
@@ -575,7 +574,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
       // is this a duplicate connection reqeust?
       if (ret == 0 && Net->NetTime-s->ConnectTime < 2.0) {
         // yes, so send a duplicate reply
-        VBitStreamWriter MsgOut(32 << 3);
+        VBitStreamWriter MsgOut(32<<3);
         Drv->GetSocketAddr(s->LanSocket, &newaddr);
         TmpByte = NETPACKET_CTL;
         MsgOut << TmpByte;
@@ -595,7 +594,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
 
   if (svs.num_connected >= svs.max_clients) {
     // no room; try to let him know
-    VBitStreamWriter MsgOut(256 << 3);
+    VBitStreamWriter MsgOut(256<<3);
     TmpByte = NETPACKET_CTL;
     MsgOut << TmpByte;
     TmpByte = CCREP_REJECT;
@@ -627,7 +626,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   Drv->GetSocketAddr(newsock, &newaddr);
 
   // send him back the info about the server connection he has been allocated
-  VBitStreamWriter MsgOut(32 << 3);
+  VBitStreamWriter MsgOut(32<<3);
   TmpByte = NETPACKET_CTL;
   MsgOut << TmpByte;
   TmpByte = CCREP_ACCEPT;
@@ -683,7 +682,7 @@ void VDatagramDriver::UpdateMaster (VNetLanDriver *Drv) {
   }
 
   // send the connection request
-  VBitStreamWriter MsgOut(256 << 3);
+  VBitStreamWriter MsgOut(256<<3);
   vuint8 TmpByte = MCREQ_JOIN;
   MsgOut << TmpByte;
   TmpByte = NET_PROTOCOL_VERSION;
@@ -729,7 +728,7 @@ void VDatagramDriver::QuitMaster (VNetLanDriver *Drv) {
   }
 
   // send the quit request
-  VBitStreamWriter MsgOut(256 << 3);
+  VBitStreamWriter MsgOut(256<<3);
   vuint8 TmpByte = MCREQ_QUIT;
   MsgOut << TmpByte;
   Drv->Write(Drv->net_acceptsocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
@@ -777,7 +776,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       return false;
     }
     // send the query request
-    VBitStreamWriter MsgOut(256 << 3);
+    VBitStreamWriter MsgOut(256<<3);
     TmpByte = MCREQ_LIST;
     MsgOut << TmpByte;
     Drv->Write(Drv->MasterQuerySocket, MsgOut.GetData(), MsgOut.GetNumBytes(), &sendaddr);
@@ -793,7 +792,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
     if (Net->HostCacheCount == HOSTCACHESIZE) continue;
 
     //GCon->Logf("processing master reply...");
-    VBitStreamReader msg(packetBuffer.data, len << 3);
+    VBitStreamReader msg(packetBuffer.data, len<<3);
     msg << control;
     if (control != MCREP_LIST) continue;
 
@@ -817,7 +816,7 @@ bool VDatagramDriver::QueryMaster (VNetLanDriver *Drv, bool xmit) {
       }*/
 
       if (pver == NET_PROTOCOL_VERSION) {
-        VBitStreamWriter Reply(256 << 3);
+        VBitStreamWriter Reply(256<<3);
         TmpByte = NETPACKET_CTL;
         Reply << TmpByte;
         TmpByte = CCREQ_SERVER_INFO;

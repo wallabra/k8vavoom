@@ -22,11 +22,11 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "network.h"
 #include "cl_local.h"
 #include "sv_local.h"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum {
@@ -94,13 +94,13 @@ void VLevelChannel::SetLevel (VLevel *ALevel) {
 
   if (Level) {
     Lines = new rep_line_t[Level->NumLines];
-    memcpy(Lines, Level->BaseLines, sizeof(rep_line_t) * Level->NumLines);
+    memcpy(Lines, Level->BaseLines, sizeof(rep_line_t)*Level->NumLines);
     Sides = new rep_side_t[Level->NumSides];
-    memcpy(Sides, Level->BaseSides, sizeof(rep_side_t) * Level->NumSides);
+    memcpy(Sides, Level->BaseSides, sizeof(rep_side_t)*Level->NumSides);
     Sectors = new rep_sector_t[Level->NumSectors];
-    memcpy(Sectors, Level->BaseSectors, sizeof(rep_sector_t) * Level->NumSectors);
+    memcpy(Sectors, Level->BaseSectors, sizeof(rep_sector_t)*Level->NumSectors);
     PolyObjs = new rep_polyobj_t[Level->NumPolyObjs];
-    memcpy(PolyObjs, Level->BasePolyObjs, sizeof(rep_polyobj_t) * Level->NumPolyObjs);
+    memcpy(PolyObjs, Level->BasePolyObjs, sizeof(rep_polyobj_t)*Level->NumPolyObjs);
   }
   unguard;
 }
@@ -247,8 +247,8 @@ void VLevelChannel::Update () {
   for (int i = 0; i < Level->NumSectors; ++i) {
     sector_t *Sec = &Level->Sectors[i];
     if (!Connection->SecCheckFatPVS(Sec) &&
-        !(Sec->SectorFlags & sector_t::SF_ExtrafloorSource) &&
-        !(Sec->SectorFlags & sector_t::SF_TransferSource))
+        !(Sec->SectorFlags&sector_t::SF_ExtrafloorSource) &&
+        !(Sec->SectorFlags&sector_t::SF_TransferSource))
     {
       continue;
     }
@@ -278,7 +278,7 @@ void VLevelChannel::Update () {
       mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle) ||
       mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs) ||
       RepSec->ceil_SkyBox != CeilSkyBox;
-    bool LightChanged = abs(RepSec->lightlevel - Sec->params.lightlevel) >= 4;
+    bool LightChanged = abs(RepSec->lightlevel-Sec->params.lightlevel) >= 4;
     bool FadeChanged = RepSec->Fade != Sec->params.Fade;
     bool SkyChanged = RepSec->Sky != Sec->Sky;
     bool MirrorChanged = RepSec->floor_MirrorAlpha != Sec->floor.MirrorAlpha ||
@@ -305,9 +305,9 @@ void VLevelChannel::Update () {
         Msg << Sec->floor.TexZ;
       }
       Msg.WriteBit(mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs));
-      if (mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs)) Msg.WriteInt(mround(Sec->floor.xoffs) & 63, 64);
+      if (mround(RepSec->floor_xoffs) != mround(Sec->floor.xoffs)) Msg.WriteInt(mround(Sec->floor.xoffs)&63, 64);
       Msg.WriteBit(mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs));
-      if (mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs)) Msg.WriteInt(mround(Sec->floor.yoffs) & 63, 64);
+      if (mround(RepSec->floor_yoffs) != mround(Sec->floor.yoffs)) Msg.WriteInt(mround(Sec->floor.yoffs)&63, 64);
       Msg.WriteBit(RepSec->floor_XScale != Sec->floor.XScale);
       if (RepSec->floor_XScale != Sec->floor.XScale) Msg << Sec->floor.XScale;
       Msg.WriteBit(RepSec->floor_YScale != Sec->floor.YScale);
@@ -317,7 +317,7 @@ void VLevelChannel::Update () {
       Msg.WriteBit(mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle));
       if (mround(RepSec->floor_BaseAngle) != mround(Sec->floor.BaseAngle)) Msg.WriteInt((int)AngleMod(Sec->floor.BaseAngle), 360);
       Msg.WriteBit(mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs));
-      if (mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs)) Msg.WriteInt(mround(Sec->floor.BaseYOffs) & 63, 64);
+      if (mround(RepSec->floor_BaseYOffs) != mround(Sec->floor.BaseYOffs)) Msg.WriteInt(mround(Sec->floor.BaseYOffs)&63, 64);
       Msg.WriteBit(RepSec->floor_SkyBox != FloorSkyBox);
       if (RepSec->floor_SkyBox != FloorSkyBox) Msg << FloorSkyBox;
     }
@@ -329,9 +329,9 @@ void VLevelChannel::Update () {
         Msg << Sec->ceiling.TexZ;
       }
       Msg.WriteBit(mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs));
-      if (mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs)) Msg.WriteInt(mround(Sec->ceiling.xoffs) & 63, 64);
+      if (mround(RepSec->ceil_xoffs) != mround(Sec->ceiling.xoffs)) Msg.WriteInt(mround(Sec->ceiling.xoffs)&63, 64);
       Msg.WriteBit(mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs));
-      if (mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs)) Msg.WriteInt(mround(Sec->ceiling.yoffs) & 63, 64);
+      if (mround(RepSec->ceil_yoffs) != mround(Sec->ceiling.yoffs)) Msg.WriteInt(mround(Sec->ceiling.yoffs)&63, 64);
       Msg.WriteBit(RepSec->ceil_XScale != Sec->ceiling.XScale);
       if (RepSec->ceil_XScale != Sec->ceiling.XScale) Msg << Sec->ceiling.XScale;
       Msg.WriteBit(RepSec->ceil_YScale != Sec->ceiling.YScale);
@@ -341,12 +341,12 @@ void VLevelChannel::Update () {
       Msg.WriteBit(mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle));
       if (mround(RepSec->ceil_BaseAngle) != mround(Sec->ceiling.BaseAngle)) Msg.WriteInt((int)AngleMod(Sec->ceiling.BaseAngle), 360);
       Msg.WriteBit(mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs));
-      if (mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs)) Msg.WriteInt(mround(Sec->ceiling.BaseYOffs) & 63, 64);
+      if (mround(RepSec->ceil_BaseYOffs) != mround(Sec->ceiling.BaseYOffs)) Msg.WriteInt(mround(Sec->ceiling.BaseYOffs)&63, 64);
       Msg.WriteBit(RepSec->ceil_SkyBox != CeilSkyBox);
       if (RepSec->ceil_SkyBox != CeilSkyBox) Msg << CeilSkyBox;
     }
     Msg.WriteBit(LightChanged);
-    if (LightChanged) Msg.WriteInt(Sec->params.lightlevel >> 2, 256);
+    if (LightChanged) Msg.WriteInt(Sec->params.lightlevel>>2, 256);
     Msg.WriteBit(FadeChanged);
     if (FadeChanged) Msg << Sec->params.Fade;
     Msg.WriteBit(SkyChanged);
@@ -571,7 +571,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
             if (Msg.ReadBit()) Sec->ceiling.BaseYOffs = Msg.ReadInt(64);
             if (Msg.ReadBit()) Msg << Sec->ceiling.SkyBox;
           }
-          if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadInt(256) << 2;
+          if (Msg.ReadBit()) Sec->params.lightlevel = Msg.ReadInt(256)<<2;
           if (Msg.ReadBit()) Msg << Sec->params.Fade;
           if (Msg.ReadBit()) Sec->Sky = Msg.ReadInt(MAX_VUINT16);
           if (Msg.ReadBit()) {

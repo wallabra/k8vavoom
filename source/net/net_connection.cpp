@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "network.h"
 
@@ -44,7 +43,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   , LastSendTime(0)
   , NeedsUpdate(false)
   , AutoAck(false)
-  , Out(MAX_MSGLEN * 8)
+  , Out(MAX_MSGLEN*8)
   , AckSequence(0)
   , UnreliableSendSequence(0)
   , UnreliableReceiveSequence(0)
@@ -139,7 +138,7 @@ void VNetConnection::GetMessages () {
         if (LastByte) {
           // find out real length by stepping back until the trailing bit
           vuint32 Length = Data.Num()*8-1;
-          for (vuint8 Mask = 0x80; !(LastByte & Mask); Mask >>= 1) --Length;
+          for (vuint8 Mask = 0x80; !(LastByte&Mask); Mask >>= 1) --Length;
           VBitStreamReader Packet(Data.Ptr(), Length);
           ReceivedPacket(Packet);
         } else {
@@ -188,7 +187,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   }
   if (Sequence < UnreliableReceiveSequence) GCon->Log(NAME_DevNet, "Got a stale datagram");
   if (Sequence != UnreliableReceiveSequence) {
-    int count = Sequence - UnreliableReceiveSequence;
+    int count = Sequence-UnreliableReceiveSequence;
     Driver->droppedDatagrams += count;
     GCon->Logf(NAME_DevNet, "Dropped %d datagram(s)", count);
   }
@@ -222,7 +221,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
       }
 
       // notify channels that ACK has been received
-      for (int i = OpenChannels.Num() - 1; i >= 0; --i) OpenChannels[i]->ReceivedAck();
+      for (int i = OpenChannels.Num()-1; i >= 0; --i) OpenChannels[i]->ReceivedAck();
     } else {
       NeedsAck = true;
       VMessageIn Msg;
@@ -313,7 +312,7 @@ void VNetConnection::SendRawMessage (VMessageOut &Msg) {
   Out.WriteBit(Msg.bClose);
   if (Msg.bReliable) Out << Msg.Sequence;
   if (Msg.bOpen) Out.WriteInt(Msg.ChanType, CHANNEL_MAX);
-  Out.WriteInt(Msg.GetNumBits(), MAX_MSGLEN * 8);
+  Out.WriteInt(Msg.GetNumBits(), MAX_MSGLEN*8);
   Out.SerialiseBits(Msg.GetData(), Msg.GetNumBits());
 
   Msg.Time = Driver->NetTime;
@@ -345,7 +344,7 @@ void VNetConnection::SendAck (vuint32 Sequence) {
 void VNetConnection::PrepareOut (int Length) {
   guard(VNetConnection::PrepareOut);
   // send current packet if new message doesn't fit
-  if (Out.GetNumBits() + Length + MAX_PACKET_TRAILER_BITS > MAX_MSGLEN*8) Flush();
+  if (Out.GetNumBits()+Length+MAX_PACKET_TRAILER_BITS > MAX_MSGLEN*8) Flush();
   if (Out.GetNumBits() == 0) {
     Out.WriteInt(NETPACKET_DATA, 256);
     Out << UnreliableSendSequence;
@@ -370,7 +369,7 @@ void VNetConnection::Flush () {
   // add trailing bit so we can find out how many bits the message has
   Out.WriteBit(true);
   // pad it with zero bits untill byte boundary
-  while (Out.GetNumBits() & 7) Out.WriteBit(false);
+  while (Out.GetNumBits()&7) Out.WriteBit(false);
 
   // send the message
   if (net_test_loss == 0 || Random()*100.0 <= net_test_loss) {
@@ -497,15 +496,15 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     int SubNum = 0;
     subsector_t *Sub = &Level->Subsectors[SubNum];
     if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-    if (!(LeafPvs[SubNum >> 3] & (1 << (SubNum & 7)))) return;
+    if (!(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
     if (!Clipper.ClipCheckSubsector(Sub, false)) return;
     Clipper.ClipAddSubsectorSegs(Sub, false);
-    UpdatePvs[SubNum >> 3] |= 1 << (SubNum & 7);
+    UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
     return;
   }
 
   // found a subsector?
-  if (!(BspNum & NF_SUBSECTOR)) {
+  if (!(BspNum&NF_SUBSECTOR)) {
     node_t *Bsp = &Level->Nodes[BspNum];
     // decide which side the view point is on
     int Side = Bsp->PointOnSide(Owner->ViewOrg);
@@ -520,10 +519,10 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   int SubNum = BspNum&~NF_SUBSECTOR;
   subsector_t *Sub = &Level->Subsectors[SubNum];
   if (!Sub->sector->linecount) return; // skip sectors containing original polyobjs
-  if (!(LeafPvs[SubNum >> 3] & (1 << (SubNum & 7)))) return;
+  if (!(LeafPvs[SubNum>>3]&(1<<(SubNum&7)))) return;
   if (!Clipper.ClipCheckSubsector(Sub, false)) return;
   Clipper.ClipAddSubsectorSegs(Sub, false);
-  UpdatePvs[SubNum >> 3] |= 1 << (SubNum & 7);
+  UpdatePvs[SubNum>>3] |= 1<<(SubNum&7);
   unguard;
 }
 
@@ -536,8 +535,8 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
 int VNetConnection::CheckFatPVS (subsector_t *Subsector) {
   guardSlow(VNetConnection::CheckFatPVS);
   //return true; //k8: this returns "always visible" for sector: more data, no door glitches
-  int ss = Subsector - Context->GetLevel()->Subsectors;
-  return UpdatePvs[ss / 8] & (1 << (ss & 7));
+  int ss = Subsector-Context->GetLevel()->Subsectors;
+  return UpdatePvs[ss/8]&(1<<(ss&7));
   unguardSlow;
 }
 
@@ -564,12 +563,12 @@ bool VNetConnection::SecCheckFatPVS (sector_t *Sec) {
 //==========================================================================
 bool VNetConnection::IsRelevant (VThinker *Th) {
   guardSlow(VNetConnection::IsRelevant);
-  if (Th->ThinkerFlags & VThinker::TF_AlwaysRelevant) return true;
+  if (Th->ThinkerFlags&VThinker::TF_AlwaysRelevant) return true;
   VEntity *Ent = Cast<VEntity>(Th);
   if (!Ent) return false;
   if (Ent->GetTopOwner() == Owner->MO) return true;
-  if (Ent->EntityFlags & VEntity::EF_NoSector) return false;
-  if (Ent->EntityFlags & VEntity::EF_Invisible) return false;
+  if (Ent->EntityFlags&VEntity::EF_NoSector) return false;
+  if (Ent->EntityFlags&VEntity::EF_Invisible) return false;
   if (!CheckFatPVS(Ent->SubSector)) return false;
   return true;
   unguardSlow;

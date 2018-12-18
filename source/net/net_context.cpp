@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "network.h"
 #include "sv_local.h"
@@ -83,7 +82,7 @@ void VNetContext::Tick () {
   for (int i = 0; i < ClientConnections.Num(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     // don't update level if the player isn't totally in the game yet
-    if (Conn->Channels[CHANIDX_General] && (Conn->Owner->PlayerFlags & VBasePlayer::PF_Spawned)) {
+    if (Conn->Channels[CHANIDX_General] && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
       if (Conn->NeedsUpdate) Conn->UpdateLevel();
       ((VPlayerChannel *)Conn->Channels[CHANIDX_Player])->Update();
     }

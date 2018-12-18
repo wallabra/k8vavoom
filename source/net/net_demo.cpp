@@ -31,7 +31,6 @@
 // Whenever cl->time gets past the last received message, another message
 // is read from the demo file.
 //
-
 #include "gamedefs.h"
 #include "network.h"
 
@@ -75,7 +74,7 @@ VDemoPlaybackNetConnection::~VDemoPlaybackNetConnection () {
     int frames = (host_framecount-td_startframe)-1;
     float time = realtime-td_starttime;
     if (!time) time = 1;
-    GCon->Logf("%d frames %f seconds %f fps", frames, time, frames / time);
+    GCon->Logf("%d frames %f seconds %f fps", frames, time, frames/time);
   }
 }
 

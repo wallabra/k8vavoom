@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "net_local.h"
 
@@ -350,7 +349,7 @@ void VNetwork::Slist_Send () {
     Drivers[i]->SearchForHosts(true, SlistMaster);
   }
 
-  if ((Sys_Time() - SlistStartTime) < 0.5) SchedulePollProcedure(&SlistSendProcedure, 0.75);
+  if ((Sys_Time()-SlistStartTime) < 0.5) SchedulePollProcedure(&SlistSendProcedure, 0.75);
   unguard;
 }
 
@@ -442,7 +441,7 @@ void VNetwork::MasterList_Send () {
     Drivers[i]->QueryMaster(true);
   }
 
-  if ((Sys_Time() - SlistStartTime) < 0.5) SchedulePollProcedure(&MasterListSendProcedure, 0.75);
+  if ((Sys_Time()-SlistStartTime) < 0.5) SchedulePollProcedure(&MasterListSendProcedure, 0.75);
   unguard;
 }
 
@@ -568,7 +567,7 @@ slist_t *VNetwork::GetSlist () {
     if (HostCacheCount > 1) {
       vuint8 temp[sizeof(hostcache_t)];
       for (int i = 0; i < HostCacheCount; ++i) {
-        for (int j = i + 1; j < HostCacheCount; ++j) {
+        for (int j = i+1; j < HostCacheCount; ++j) {
           if (HostCache[j].Name.Cmp(HostCache[i].Name) < 0) {
             memcpy(&temp, (void *)(&HostCache[j]), sizeof(hostcache_t));
             memcpy((void *)(&HostCache[j]), (void *)(&HostCache[i]), sizeof(hostcache_t));
