@@ -702,15 +702,17 @@ final void decorate_A_Explode(optional int damage, optional int distance,
   {
     int i;
     TAVec Ang;
+    TVec adir;
     for (i = 0; i < nails; i++)
     {
       Ang.yaw = AngleMod360(itof(i * (360 / nails)));
       // Comparing the results of a test wad with Eternity, it seems
       // A_NailBomb does not aim
-      //AimLineAttack (self, Ang, MISSILERANGE),
-      //LineAttack (Ang, MISSILERANGE, 0, naildamage, default, default,'Nail');
-      //LineAttack (Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
-      LineAttack (Ang, MISSILERANGE, naildamage, BulletPuff, default, default, 'Nail', false);
+      //AimLineAttack(self, Ang, MISSILERANGE),
+      //LineAttack(Ang, MISSILERANGE, 0, naildamage, default, default,'Nail');
+      //LineAttack(Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
+      AngleVector(Ang, out adir);
+      LineAttack(/*Ang*/adir, MISSILERANGE, naildamage, BulletPuff, default, default, 'Nail', false);
     }
   }
 
