@@ -508,12 +508,6 @@ if(ENABLE_CLIENT)
   endif(OPENGL_FOUND)
 
 
-  if(WITH_GME)
-    set(MAIN_SOURCES ${MAIN_SOURCES} sound/snd_gme.cpp)
-    set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} gme)
-  endif(WITH_GME)
-
-
   if(CYGWIN OR MINGW)
     # prune --out-implib from executables: it doesn't make sense, even with --export-all-symbols
     string(REGEX REPLACE "-Wl,--out-implib,[^ ]+ " " " CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")

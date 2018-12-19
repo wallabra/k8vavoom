@@ -25,10 +25,5 @@ if(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY)
 endif(ENABLE_CLIENT OR ENABLE_VCCRUN_ONLY)
 
 if(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
-  if(WITH_GME)
-    message(STATUS "GME enabled")
-    add_subdirectory(gme)
-  endif(WITH_GME)
-
   add_subdirectory(timidity)
 endif(ENABLE_CLIENT AND NOT ENABLE_VCCRUN_ONLY)
