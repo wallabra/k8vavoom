@@ -125,6 +125,12 @@ inline void *PR_PopPtr () {
 }
 
 
+inline VObject *PR_PopRef () {
+  --pr_stackPtr;
+  return (VObject *)(pr_stackPtr->p);
+}
+
+
 inline void PR_PushStr (const VStr &value) {
   pr_stackPtr->p = nullptr;
   *(VStr*)&pr_stackPtr->p = value;
@@ -146,3 +152,10 @@ extern VStr PF_FormatString ();
 class VFieldType;
 extern void PR_WriteOne (const VFieldType &type);
 extern void PR_WriteFlush ();
+
+// if `buf` is `nullptr`, it means "flush"
+extern void (*PR_WriterCB) (const char *buf, bool debugPrint);
+
+// calls `PR_WriterCB` if it is not empty, or does default printing
+// if `buf` is `nullptr`, it means "flush"
+void PR_DoWriteBuf (const char *buf, bool debugPrint=false);

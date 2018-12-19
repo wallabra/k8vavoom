@@ -223,32 +223,40 @@ VStr PF_FormatString () {
   //VStr Ret;
   VStack params[MAX_PARAMS];
   VFieldType ptypes[MAX_PARAMS];
-  int pi;
+  int pi = MAX_PARAMS-1;
 
   P_GET_INT(count);
-  if (count > MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
-  for (pi = count-1; pi >= 0; --pi) {
+  if (count < 0) { VObject::VMDumpCallStack(); Sys_Error("Invalid number of arguments to string formatting function (%d)", count); }
+  if (count >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
+  //fprintf(stderr, "***COUNT=%d\n", count);
+  for (int pcnt = 0; pcnt < count; ++pcnt) {
+    if (pi < 0) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
     ptypes[pi] = PR_ReadTypeFromPtr((--pr_stackPtr)->p);
+    //fprintf(stderr, "  %d: <%s>\n", pcnt, *ptypes[pi].GetName());
     params[pi] = *(--pr_stackPtr);
-    if (ptypes[pi].Type == TYPE_Vector) {
-      --pi;
+    --pi;
+    if (ptypes[pi+1].Type == TYPE_Vector) {
+      if (pi < 2) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
       ptypes[pi] = ptypes[pi+1];
       params[pi] = *(--pr_stackPtr);
       --pi;
       ptypes[pi] = ptypes[pi+1];
       params[pi] = *(--pr_stackPtr);
-    } else if (ptypes[pi].Type == TYPE_Delegate) {
       --pi;
+    } else if (ptypes[pi+1].Type == TYPE_Delegate) {
+      if (pi < 1) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
       ptypes[pi] = ptypes[pi+1];
       params[pi] = *(--pr_stackPtr);
+      --pi;
     }
   }
+  pi += 1;
+  //int pistart = pi;
   P_GET_STR(str);
   //fprintf(stderr, "<%s>\n", *str);
 
   PFFmtBuf pbuf((size_t)str.length());
   int spos = 0;
-  pi = 0;
   while (spos < str.length()) {
     if (str[spos] == '%') {
       auto savedpos = spos;
@@ -277,7 +285,7 @@ VStr PF_FormatString () {
       switch (fspec) {
         case 'i':
         case 'd':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putInt(params[pi].i, width, toRight, zeroFill); break;
             case TYPE_Float: pbuf.putInt((int)params[pi].f, width, toRight, zeroFill); break;
@@ -287,7 +295,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 'x':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putHex(params[pi].i); break;
             case TYPE_Float: pbuf.putHex((int)params[pi].f); break;
@@ -297,7 +305,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 'f':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putFloat(params[pi].i); break;
             case TYPE_Float: pbuf.putFloat(params[pi].f); break;
@@ -306,7 +314,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 'n':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Name:
               {
@@ -324,7 +332,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 'p':
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
@@ -332,7 +340,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 'v':
-          if (count-pi < 3) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (MAX_PARAMS-pi < 3) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           if (ptypes[pi].Type == TYPE_Vector) {
             pbuf.putChar('(');
             pbuf.putFloat(params[pi].f);
@@ -347,7 +355,7 @@ VStr PF_FormatString () {
           pi += 3;
           break;
         case 'B': // boolean
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putStr(VStr(params[pi].i ? "true" : "false"), width, toRight, zeroFill); break;
             case TYPE_Float: pbuf.putStr(VStr(params[pi].f ? "true" : "false"), width, toRight, zeroFill); break;
@@ -357,7 +365,7 @@ VStr PF_FormatString () {
           ++pi;
           break;
         case 'C': // class name
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Class: pbuf.putStr(VStr(params[pi].p ? ((VClass *)params[pi].p)->GetName() : "<none>"), width, toRight, zeroFill); break;
             case TYPE_Reference: pbuf.putStr(VStr(params[pi].p ? ((VObject *)params[pi].p)->GetClass()->GetName() : "<none>"), width, toRight, zeroFill); break;
@@ -367,7 +375,7 @@ VStr PF_FormatString () {
           break;
         case 's': // this can convert most of the types to string
         case 'q': // this can convert most of the types to string
-          if (pi >= count) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
+          if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
             case TYPE_Void: pbuf.putStr(VStr("<void>"), width, toRight, zeroFill); break;
             case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putInt(params[pi].i, width, toRight, zeroFill); break;
@@ -385,23 +393,31 @@ VStr PF_FormatString () {
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
             case TYPE_Reference:
               if (params[pi].p) {
+                if (ptypes[pi].Class) {
+                  pbuf.putStr(va("(%s)", *ptypes[pi].Class->Name), width, toRight, zeroFill, (fspec == 'q'));
+                } else {
+                  pbuf.putStr(va("(none:%s)", *ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
+                }
+                /*
                 VStr ss = "(";
                 ss += (ptypes[pi].Class ? *ptypes[pi].Class->Name : "none");
                 ss += ")";
                 pbuf.putStr(ss, width, toRight, zeroFill, (fspec == 'q'));
+                */
                 /*
                 pbuf.putChar(':');
                 pbuf.putPtr(params[pi].p);
                 */
               } else {
-                pbuf.putStr(VStr("none"), width, toRight, zeroFill);
+                //pbuf.putStr(VStr("none"), width, toRight, zeroFill);
+                pbuf.putStr(va("(none:%s)", *ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
               }
               break;
             case TYPE_Class:
               if (params[pi].p) {
                 pbuf.putStr(((VMemberBase *)params[pi].p)->GetFullName(), width, toRight, zeroFill, (fspec == 'q'));
               } else {
-                pbuf.putStr(VStr("(none)"), width, toRight, zeroFill);
+                pbuf.putStr(va("(none:%s)", *ptypes[pi].GetName()), width, toRight, zeroFill);
               }
               break;
             case TYPE_State:
@@ -422,12 +438,7 @@ VStr PF_FormatString () {
                 if (!params[pi].p) {
                   pbuf.putStr("(invalid delegate)", width, toRight, zeroFill);
                 } else {
-                  VStr s = "delegate<";
-                  s += ((VObject *)params[pi].p)->GetClass()->GetFullName();
-                  s += '/';
-                  s += ((VMemberBase *)params[pi+1].p)->GetFullName();
-                  s += '>';
-                  pbuf.putStr(*s, width, toRight, zeroFill, (fspec == 'q'));
+                  pbuf.putStr(va("delegate<%s/%s>", *((VObject *)params[pi].p)->GetClass()->GetFullName(), *((VMemberBase *)params[pi+1].p)->GetFullName()), width, toRight, zeroFill, (fspec == 'q'));
                 }
               } else {
                 pbuf.putStr("(empty delegate)", width, toRight, zeroFill);
@@ -443,6 +454,7 @@ VStr PF_FormatString () {
             //  pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
             //  break;
             case TYPE_Vector:
+              /*
               pbuf.putChar('(');
               pbuf.putFloat(params[pi].f);
               pbuf.putChar(',');
@@ -450,7 +462,29 @@ VStr PF_FormatString () {
               pbuf.putChar(',');
               pbuf.putFloat(params[pi+2].f);
               pbuf.putChar(')');
+              */
+              pbuf.putStr(va("(%f,%f,%f)", params[pi+0].f, params[pi+1].f, params[pi+2].f), width, toRight, zeroFill);
               pi += 2;
+              break;
+            case TYPE_Dictionary:
+              {
+                VScriptDict *dc = (VScriptDict *)params[pi].p;
+                if (dc && dc->length()) {
+                  pbuf.putStr(va("dictionary!(%s,%s)", *dc->getKeyType().GetName(), *dc->getValueType().GetName()), width, toRight, zeroFill);
+                } else {
+                  pbuf.putStr("<empty dicitionary>", width, toRight, zeroFill);
+                }
+              }
+              break;
+            case TYPE_DynamicArray:
+              {
+                VScriptArray *arr = (VScriptArray *)params[pi].p;
+                pbuf.putStr(va("%s(%d)", *ptypes[pi].GetName(), arr->length()), width, toRight, zeroFill);
+              }
+              break;
+            case TYPE_Array:
+            case TYPE_SliceArray:
+              pbuf.putStr(*ptypes[pi].GetName(), width, toRight, zeroFill);
               break;
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
@@ -471,10 +505,10 @@ VStr PF_FormatString () {
   }
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  if (pi < count) GCon->Log(NAME_Dev, "PF_FormatString: Not all params were used");
+  if (pi < MAX_PARAMS) GCon->Log(NAME_Dev, "PF_FormatString: Not all params were used");
   //if (pi > count) GCon->Log(NAME_Dev, "PF_FormatString: Param count overflow");
 #else
-  if (pi < count) fprintf(stderr, "PF_FormatString: Not all params were used (%d, %d)\n", pi, count);
+  if (pi < MAX_PARAMS) fprintf(stderr, "PF_FormatString: Not all params were used (%d, %d)\n", pi, count);
   //if (pi > count) fprintf(stderr, "PF_FormatString: Param count overflow\n");
 #endif
 
@@ -1043,64 +1077,119 @@ IMPLEMENT_FUNCTION(VObject, StartSearch) {
 
 #endif // CLIENT
 
-static char wrbuffer[1024] = {0};
+#endif // !VCC_STANDALONE_EXECUTOR
+
+
+// if `buf` is `nullptr`, it means "flush"
+void (*PR_WriterCB) (const char *buf, bool debugPrint) = nullptr;
+
+static char wrbuffer[16384] = {0};
+
+
+void PR_DoWriteBuf (const char *buf, bool debugPrint) {
+  if (PR_WriterCB) {
+    PR_WriterCB(buf, debugPrint);
+    return;
+  }
+  if (!buf) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+    if (debugPrint) GCon->Log(NAME_Dev, wrbuffer); else GCon->Log(wrbuffer);
+#endif
+    wrbuffer[0] = 0;
+  } else if (buf[0]) {
+    char *sptr = (char *)memchr(wrbuffer, 0, sizeof(wrbuffer));
+    if (!sptr) {
+      wrbuffer[sizeof(wrbuffer)-1] = 0; // just in case
+    } else {
+      size_t maxlen = (size_t)(wrbuffer+sizeof(wrbuffer)-sptr);
+      if (maxlen > 1) snprintf(wrbuffer, maxlen, "%s", buf);
+    }
+  }
+}
+
 
 void PR_WriteOne (const VFieldType &type) {
-  char *sptr = (char *)memchr(wrbuffer, 0, sizeof(wrbuffer));
-  if (!sptr) { sptr = wrbuffer; wrbuffer[0] = 0; } // just in case
-  size_t maxlen = (size_t)(wrbuffer+sizeof(wrbuffer)-sptr);
+  char buf[256];
+  buf[0] = 0;
   switch (type.Type) {
-    case TYPE_Int: case TYPE_Byte: snprintf(sptr, maxlen, "%d", PR_Pop()); break;
-    case TYPE_Bool: snprintf(sptr, maxlen, "%s", (PR_Pop() ? "true" : "false")); break;
-    case TYPE_Float: snprintf(sptr, maxlen, "%f", PR_Popf()); break;
-    case TYPE_Name: snprintf(sptr, maxlen, "%s", *PR_PopName()); break;
-    case TYPE_String: snprintf(sptr, maxlen, "%s", *PR_PopStr()); break;
-    case TYPE_Vector: { TVec v = PR_Popv(); snprintf(sptr, maxlen, "(%f,%f,%f)", v.x, v.y, v.z); } break;
-    case TYPE_Pointer: snprintf(sptr, maxlen, "<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
-    case TYPE_Class: if (PR_PopPtr()) snprintf(sptr, maxlen, "<%s>", *type.GetName()); else snprintf(sptr, maxlen, "<none>"); break;
+    case TYPE_Int: case TYPE_Byte: snprintf(buf, sizeof(buf), "%d", PR_Pop()); break;
+    case TYPE_Bool: snprintf(buf, sizeof(buf), "%s", (PR_Pop() ? "true" : "false")); break;
+    case TYPE_Float: snprintf(buf, sizeof(buf), "%f", PR_Popf()); break;
+    case TYPE_Name: snprintf(buf, sizeof(buf), "%s", *PR_PopName()); break;
+    case TYPE_String: snprintf(buf, sizeof(buf), "%s", *PR_PopStr()); break;
+    case TYPE_Vector: { TVec v = PR_Popv(); snprintf(buf, sizeof(buf), "(%f,%f,%f)", v.x, v.y, v.z); } break;
+    case TYPE_Pointer: snprintf(buf, sizeof(buf), "<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
+    case TYPE_Class:
+      {
+        VClass *cls = (VClass *)PR_PopPtr();
+        if (cls) {
+          snprintf(buf, sizeof(buf), "(class!%s)", cls->GetName());
+        } else {
+          snprintf(buf, sizeof(buf), "<%s>", *type.GetName());
+        }
+      }
+      break;
     case TYPE_State:
       {
         VState *st = (VState *)PR_PopPtr();
         if (st) {
-          snprintf(sptr, maxlen, "<state:%s %d %f>", (st->SpriteName != NAME_None ? *st->SpriteName : "<####>"), st->Frame, st->Time);
+          snprintf(buf, sizeof(buf), "<state:%s %d %f>", (st->SpriteName != NAME_None ? *st->SpriteName : "<####>"), st->Frame, st->Time);
         } else {
-          snprintf(sptr, maxlen, "<state>");
+          snprintf(buf, sizeof(buf), "<state>");
         }
       }
       break;
-    case TYPE_Reference: snprintf(sptr, maxlen, "<%s>", (type.Class ? *type.Class->Name : "none")); break;
+    case TYPE_Reference:
+      {
+        VObject *o = PR_PopRef();
+        if (o) {
+          snprintf(buf, sizeof(buf), "(%s)", *o->GetClass()->Name);
+        } else {
+          snprintf(buf, sizeof(buf), "<none:%s>", *type.GetName());
+        }
+      }
+      break;
     case TYPE_Delegate:
-      //snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr());
+      //snprintf(buf, sizeof(buf), "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr());
       {
         VMethod *m = (VMethod *)PR_PopPtr();
         VObject *o = (VObject *)PR_PopPtr();
         if (m) {
           if (!o) {
-            snprintf(sptr, maxlen, "(invalid delegate)");
+            snprintf(buf, sizeof(buf), "(invalid delegate)");
           } else {
-            snprintf(sptr, maxlen, "delegate<%s/%s>", *o->GetClass()->GetFullName(), *m->GetFullName());
+            snprintf(buf, sizeof(buf), "delegate<%s/%s>", *o->GetClass()->GetFullName(), *m->GetFullName());
           }
         } else {
-          snprintf(sptr, maxlen, "(empty delegate)");
+          snprintf(buf, sizeof(buf), "(empty delegate)");
         }
       }
       break;
-    case TYPE_Struct: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.Struct->Name); break;
-    case TYPE_Array: PR_PopPtr(); snprintf(sptr, maxlen, "<%s>", *type.GetName()); break;
-    case TYPE_SliceArray: snprintf(sptr, maxlen, "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
+    case TYPE_Struct: PR_PopPtr(); snprintf(buf, sizeof(buf), "<%s>", *type.Struct->Name); break;
+    case TYPE_Array: PR_PopPtr(); snprintf(buf, sizeof(buf), "<%s>", *type.GetName()); break;
+    case TYPE_SliceArray: snprintf(buf, sizeof(buf), "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
     case TYPE_DynamicArray:
       {
         VScriptArray *a = (VScriptArray *)PR_PopPtr();
-        snprintf(sptr, maxlen, "%s(%d)", *type.GetName(), a->Num());
+        snprintf(buf, sizeof(buf), "%s(%d)", *type.GetName(), a->Num());
+      }
+      break;
+    case TYPE_Dictionary:
+      {
+        VScriptDict *dc = (VScriptDict *)PR_PopPtr();
+        if (dc && dc->length()) {
+          snprintf(buf, sizeof(buf), "dictionary!(%s,%s)", *dc->getKeyType().GetName(), *dc->getValueType().GetName());
+        } else {
+          snprintf(buf, sizeof(buf), "<empty dictionary>");
+        }
       }
       break;
     default: Sys_Error("Tried to print something strange...");
   }
+  PR_DoWriteBuf(buf);
 }
+
 
 void PR_WriteFlush () {
-  GCon->Logf("%s", wrbuffer);
-  wrbuffer[0] = 0;
+  PR_DoWriteBuf(nullptr);
 }
-
-#endif // !VCC_STANDALONE_EXECUTOR

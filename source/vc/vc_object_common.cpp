@@ -509,19 +509,15 @@ IMPLEMENT_FUNCTION(VObject, bjprngNextFloat) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, print) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Log(PF_FormatString());
-#else
-  fprintf(stdout, "%s\n", *PF_FormatString());
-#endif
+  VStr s = PF_FormatString();
+  PR_DoWriteBuf(*s);
+  PR_DoWriteBuf(nullptr);
 }
 
 IMPLEMENT_FUNCTION(VObject, dprint) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Log(NAME_Dev, PF_FormatString());
-#else
-  fprintf(stderr, "%s\n", *PF_FormatString());
-#endif
+  VStr s = PF_FormatString();
+  PR_DoWriteBuf(*s, true); // debug
+  PR_DoWriteBuf(nullptr, true); // debug
 }
 
 

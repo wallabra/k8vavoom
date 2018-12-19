@@ -2232,12 +2232,28 @@ void VInvocation::Emit (VEmitContext &ec) {
         ++SelfOffset;
       }
     } else {
-      Args[i]->Emit(ec);
       if (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) {
+        Args[i]->Emit(ec);
         SelfOffset += 1;
       } else {
         //SelfOffset += (Args[i]->Type.Type == TYPE_Vector ? 3 : Args[i]->Type.Type == TYPE_Delegate ? 2 : 1);
-        SelfOffset += Args[i]->Type.GetStackSize()/4;
+        if ((Func->Flags&(FUNC_Native|FUNC_VarArgs)) == (FUNC_Native|FUNC_VarArgs)) {
+          switch (Args[i]->Type.Type) {
+            case TYPE_Array:
+            case TYPE_DynamicArray:
+            case TYPE_SliceArray:
+            case TYPE_Dictionary:
+              Args[i]->RequestAddressOf();
+              SelfOffset += 1;
+              break;
+            default:
+              SelfOffset += Args[i]->Type.GetStackSize()/4;
+              break;
+          }
+        } else {
+          SelfOffset += Args[i]->Type.GetStackSize()/4;
+        }
+        Args[i]->Emit(ec);
       }
       if (Func->ParamFlags[i]&FPARM_Optional) {
         // marshall "specified_*"?
@@ -2527,7 +2543,9 @@ void VInvocation::CheckParams (VEmitContext &ec) {
   }
 
   if (Func->Flags&FUNC_VarArgs) {
-    Args[NumArgs++] = new VIntLiteral(argsize/4-requiredParams, Loc);
+    //Args[NumArgs++] = new VIntLiteral(argsize/4-requiredParams, Loc);
+    int argc = NumArgs-requiredParams;
+    Args[NumArgs++] = new VIntLiteral(argc, Loc);
   }
 
   unguard;

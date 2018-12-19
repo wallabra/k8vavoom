@@ -125,76 +125,6 @@ static const char *comatoze (vuint32 n) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void PR_WriteOne (const VFieldType &type) {
-  char buf[128];
-  size_t blen = 0;
-
-  switch (type.Type) {
-    case TYPE_Int: blen = snprintf(buf, sizeof(buf), "%d", PR_Pop()); break;
-    case TYPE_Byte: blen = snprintf(buf, sizeof(buf), "%d", PR_Pop()); break;
-    case TYPE_Bool: blen = snprintf(buf, sizeof(buf), "%s", (PR_Pop() ? "true" : "false")); break;
-    case TYPE_Float: blen = snprintf(buf, sizeof(buf), "%f", PR_Popf()); break;
-    case TYPE_Name: blen = snprintf(buf, sizeof(buf), "%s", *PR_PopName()); break;
-    case TYPE_String:
-      {
-        VStr s = PR_PopStr();
-        if (writeToConsole) VConsole::WriteStr(s); else printf("%s", *s);
-      }
-      return;
-    case TYPE_Vector: { TVec v = PR_Popv(); blen = snprintf(buf, sizeof(buf), "(%f,%f,%f)", v.x, v.y, v.z); } break;
-    case TYPE_Pointer: blen = snprintf(buf, sizeof(buf), "<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
-    case TYPE_Class: if (PR_PopPtr()) blen = snprintf(buf, sizeof(buf), "<%s>", *type.GetName()); else blen = snprintf(buf, sizeof(buf), "<none>"); break;
-    case TYPE_State:
-      {
-        VState *st = (VState *)PR_PopPtr();
-        if (st) {
-          blen = snprintf(buf, sizeof(buf), "<state:%s %d %f>", *st->SpriteName, st->Frame, st->Time);
-        } else {
-          blen = snprintf(buf, sizeof(buf), "<state>");
-        }
-      }
-      break;
-    case TYPE_Reference: blen = snprintf(buf, sizeof(buf), "<%s>", (type.Class ? *type.Class->Name : "none")); break;
-    case TYPE_Delegate:
-      //snprintf(sptr, maxlen, "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr());
-      {
-        VMethod *m = (VMethod *)PR_PopPtr();
-        VObject *o = (VObject *)PR_PopPtr();
-        if (m) {
-          if (!o) {
-            blen = snprintf(buf, sizeof(buf), "(invalid delegate)");
-          } else {
-            blen = snprintf(buf, sizeof(buf), "delegate<%s/%s>", *o->GetClass()->GetFullName(), *m->GetFullName());
-          }
-        } else {
-          blen = snprintf(buf, sizeof(buf), "(empty delegate)");
-        }
-      }
-      break;
-    case TYPE_Struct: PR_PopPtr(); blen = snprintf(buf, sizeof(buf), "<%s>", *type.Struct->Name); break;
-    case TYPE_Array: PR_PopPtr(); blen = snprintf(buf, sizeof(buf), "<%s>", *type.GetName()); break;
-    case TYPE_SliceArray: blen = snprintf(buf, sizeof(buf), "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
-    case TYPE_DynamicArray:
-      {
-        VScriptArray *a = (VScriptArray *)PR_PopPtr();
-        blen = snprintf(buf, sizeof(buf), "%s(%d)", *type.GetName(), a->Num());
-      }
-      break;
-    default: Sys_Error(va("Tried to print something strange: `%s`", *type.GetName()));
-  }
-
-  if (blen) {
-    if (writeToConsole) VConsole::WriteStr(buf, blen); else printf("%s", buf);
-  }
-}
-
-
-void PR_WriteFlush () {
-  if (writeToConsole) VConsole::PutChar('\n'); else printf("\n");
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 class VVccLog : public VLogListener {
 public:
   virtual void Serialise (const char* text, EName event) override {
@@ -216,6 +146,18 @@ static VLexer Lex;
 static VVccLog VccLog;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// if `buf` is `nullptr`, it means "flush"
+static void vmWriter (const char *buf, bool debugPrint) {
+  if (debugPrint && !DebugMode) return;
+  if (!buf) {
+    if (writeToConsole) VConsole::PutChar('\n'); else printf("\n");
+  } else if (buf) {
+    if (writeToConsole) VConsole::WriteStr(buf, (int)strlen(buf)); else printf("%s", buf);
+  }
+}
+
+
 //==========================================================================
 //
 //  dprintf
@@ -223,7 +165,6 @@ static VVccLog VccLog;
 //==========================================================================
 __attribute__((format(printf, 1, 2))) int dprintf (const char *text, ...) {
   if (!DebugMode) return 0;
-
   va_list argPtr;
   FILE* fp = stderr; //(DebugFile ? DebugFile : stdout);
   va_start(argPtr, text);
@@ -578,6 +519,7 @@ int main (int argc, char **argv) {
 
   srand(time(nullptr));
   SysErrorCB = &OnSysError;
+  PR_WriterCB = &vmWriter;
 
   try {
     GLog.AddListener(&VccLog);
