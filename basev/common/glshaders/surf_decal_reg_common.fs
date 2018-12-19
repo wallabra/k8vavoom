@@ -30,8 +30,8 @@ void main () {
   if (TexColour.a < 0.01) discard;
 
   FinalColour_1.a = clamp(TexColour.a*SplatAlpha, 0.0, 1.0);
-  FinalColour_1.rgb = TexColour.rgb;
   if (FinalColour_1.a < 0.01) discard;
+  FinalColour_1.rgb = TexColour.rgb;
 
 #ifdef REG_LIGHTMAP
   // lightmapped
