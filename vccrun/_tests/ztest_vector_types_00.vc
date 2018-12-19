@@ -1,0 +1,36 @@
+// FAIL
+class Main : Object;
+
+struct S {
+  int i;
+  float f;
+}
+
+enum {
+  E1 = 1,
+  E2 = 2,
+}
+
+S st;
+
+final S *getS () {
+  st.i = 42;
+  st.f = 666;
+  return &st;
+}
+
+final void main () {
+  //S *s = getS();
+  auto s = getS();
+  print("i=%d; f=%f", s->i, s->f);
+  print("i=%d; f=%f", s.i, s.f);
+  s.i = 666;
+  s.f = 42;
+  print("i=%d; f=%f", s->i, s->f);
+  print("i=%d; f=%f", s.i, s.f);
+
+  auto v = vector(1, 2, 3);
+  print("v=%v", v);
+
+  TAVec av = v;
+}

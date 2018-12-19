@@ -1,0 +1,13 @@
+class Main : Object;
+
+
+void main () {
+  Main m = self;
+  dictionary!(int, string) dict;
+  array!string arr;
+  float[4] farr;
+  *(arr.alloc()) = "boo";
+  dict.put(666, "yay!");
+  writeln("m=", m, "; dict=", dict, "; arr=", arr, "; farr=", farr);
+  print("m=%s; dict=%s; arr=%s; farr=%s", m, dict, arr, farr);
+}

@@ -1,10 +1,10 @@
 array!int(0)
 <float[4]>
-<none>
 <class!Main>
-<Object>
+(class!Main)
+<none:Object>
 <S>
 (empty delegate)
 <state>
 ====
-(empty delegate)<state>array!int(0)<float[4]><Object><class!Main><state>
+(empty delegate)<state>array!int(0)<float[4]><none:Object>(class!Main)<state>
