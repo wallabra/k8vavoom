@@ -625,7 +625,8 @@ protected:
   GLint SurfAdvDecalTextureLoc;
   GLint SurfAdvDecalAmbLightTextureLoc;
   GLint SurfAdvDecalSplatAlphaLoc;
-  GLint SurfAdvDecalLightLoc;
+  //GLint SurfAdvDecalLightLoc;
+  GLint SurfAdvDecalFullBright;
   GLint SurfAdvDecalScreenSize;
 
   GLhandleARB SurfDecalNoLMapProgram;

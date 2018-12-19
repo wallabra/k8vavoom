@@ -623,7 +623,8 @@ void VOpenGLDrawer::InitResolution () {
   SurfAdvDecalTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Texture");
   SurfAdvDecalAmbLightTextureLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "AmbLightTexture");
   SurfAdvDecalSplatAlphaLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "SplatAlpha");
-  SurfAdvDecalLightLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Light");
+  //SurfAdvDecalLightLoc = p_glGetUniformLocationARB(SurfAdvDecalProgram, "Light");
+  SurfAdvDecalFullBright = p_glGetUniformLocationARB(SurfAdvDecalProgram, "FullBright");
   SurfAdvDecalScreenSize = p_glGetUniformLocationARB(SurfAdvDecalProgram, "ScreenSize");
 
   VertexShader = LoadShader(GL_VERTEX_SHADER_ARB, "glshaders/surf_decal_nolmap.vs");
