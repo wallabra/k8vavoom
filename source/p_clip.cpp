@@ -783,20 +783,19 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
 
   // 2-sided line, determine if it can be skipped
   if (seg->backsector) {
+    if (clip_trans_hack && seg->sidedef->MidTexture <= 0) {
+      //TODO: here we can check if opposite sector is really visible
+      //      but this is not really necessary (i think). k8.
+      //const sector_t *ops = (seg->side ? seg->frontsector : seg->backsector);
+      //if (ops->ceiling.minz >= ops->floor.maxz) return;
+      return;
+    }
     if (IsSegAnOpenedSomething(seg)) return;
-  }
-
-  if (Mirror) {
-    // clip seg with mirror plane
-    float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
-    float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
-
-         if (Dist1 > 0.0 && Dist2 <= 0.0) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
-    else if (Dist2 > 0.0 && Dist1 <= 0.0) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
   }
 
   //k8: this is hack for boom translucency
   //    midtexture 0 *SHOULD* mean "transparent", but let's play safe
+#if 0
   if (clip_trans_hack && seg->linedef && seg->frontsector && seg->backsector && seg->sidedef->MidTexture <= 0) {
     // ok, we can possibly see thru it, now check the OPPOSITE sector ceiling and floor heights
     const sector_t *ops = (seg->side ? seg->frontsector : seg->backsector);
@@ -818,6 +817,16 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
       //fprintf(stderr, "  (f,c)=(%f:%f,%f:%f)\n", ops->floor.minz, ops->floor.maxz, ops->ceiling.minz, ops->ceiling.maxz);
     }
     //continue;
+  }
+#endif
+
+  if (Mirror) {
+    // clip seg with mirror plane
+    float Dist1 = DotProduct(v1, Mirror->normal)-Mirror->dist;
+    float Dist2 = DotProduct(v2, Mirror->normal)-Mirror->dist;
+
+         if (Dist1 > 0.0 && Dist2 <= 0.0) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
+    else if (Dist2 > 0.0 && Dist1 <= 0.0) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
   }
 
   AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
