@@ -415,12 +415,10 @@ static void ramp_out(MidiSong* song, sample_t* sp, int32* lp, int v, int32 c)
 	int32 left, li;
 
 	sample_t s = 0; /* silly warning about uninitialised s */
+	int32 cnt = c; /* fix by Ketmar Dark */
 
 	/* Fix by James Caldwell */
-	if (c == 0)
-	{
-		c = 1;
-	}
+	if (c <= 0) c = 1;
 	left = song->voice[v].left_mix;
 	li = -(left/c);
 
@@ -434,7 +432,7 @@ static void ramp_out(MidiSong* song, sample_t* sp, int32* lp, int v, int32 c)
 		int32 right=song->voice[v].right_mix;
 		int32 ri = -(right / c);
 
-		while (c--)
+		while (cnt-- > 0)
 		{
 			left += li;
 
@@ -456,7 +454,7 @@ static void ramp_out(MidiSong* song, sample_t* sp, int32* lp, int v, int32 c)
 	}
 	else if (song->voice[v].panned == PANNED_CENTRE)
 	{
-		while (c--)
+		while (cnt-- > 0)
 		{
 			left += li;
 
@@ -472,7 +470,7 @@ static void ramp_out(MidiSong* song, sample_t* sp, int32* lp, int v, int32 c)
 	}
 	else if (song->voice[v].panned == PANNED_LEFT)
 	{
-		while (c--)
+		while (cnt-- > 0)
 		{
 			left += li;
 
@@ -487,7 +485,7 @@ static void ramp_out(MidiSong* song, sample_t* sp, int32* lp, int v, int32 c)
 	}
 	else if (song->voice[v].panned == PANNED_RIGHT)
 	{
-		while (c--)
+		while (cnt-- > 0)
 		{
 			left += li;
 
