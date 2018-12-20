@@ -1339,6 +1339,12 @@ override void Tick (float deltaTime) {
 //
 //==========================================================================
 final override bool SectorChanged (int CrushChange) {
+  if (CrushChange == -666) {
+    // only fix positions for monsters (and don't touch corpses too)
+    if (!bMonster && !bIsPlayer) return true;
+    if (!bSolid || bCorpse) return true;
+  }
+
   if (HeightClip()) return true;
 
   // crunch bodies to giblets
