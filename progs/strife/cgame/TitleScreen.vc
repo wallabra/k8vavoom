@@ -103,7 +103,7 @@ void AdvanceDemo()
     break;
 
   case 8:
-    CmdBuf_AddText("PlayDemo demo1\n");
+    if (GetCvarB('d_attraction_mode')) CmdBuf_AddText("PlayDemo demo1\n");
     break;
 
   case 9:

@@ -63,7 +63,7 @@ void AdvanceDemo()
 
   case 1:
     advisor_pic = R_RegisterPic('advisor');
-    CmdBuf_AddText("PlayDemo demo1\n");
+    if (GetCvarB('d_attraction_mode')) CmdBuf_AddText("PlayDemo demo1\n");
     break;
 
   case 2:
@@ -72,7 +72,7 @@ void AdvanceDemo()
     break;
 
   case 3:
-    CmdBuf_AddText("PlayDemo demo2\n");
+    if (GetCvarB('d_attraction_mode')) CmdBuf_AddText("PlayDemo demo2\n");
     break;
 
   case 4:
@@ -88,7 +88,7 @@ void AdvanceDemo()
     break;
 
   case 5:
-    CmdBuf_AddText("PlayDemo demo3\n");
+    if (GetCvarB('d_attraction_mode')) CmdBuf_AddText("PlayDemo demo3\n");
     break;
   }
 }

@@ -50,6 +50,8 @@ VCvarI cl_colour("colour", "0", "Player colo(u)r.", CVAR_Archive | CVAR_UserInfo
 VCvarI cl_class("class", "0", "Player class.", CVAR_Archive | CVAR_UserInfo);
 VCvarS cl_model("model", "", "Player model.", CVAR_Archive | CVAR_UserInfo);
 
+static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-VaVoom demos)?", CVAR_Archive);
+
 IMPLEMENT_CLASS(V, ClientGameBase);
 
 static VName CurrentSongLump;
