@@ -132,7 +132,8 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
   switch (aspectRatio) {
     default:
     case 0: // original aspect ratio
-      return ((float)scrhgt*320.0)/((float)scrwdt*200.0);
+      //return ((float)scrhgt*320.0)/((float)scrwdt*200.0);
+      return 1.2f; // original vanilla pixels are 20% taller than wide
     case 1: // 4:3 aspect ratio
       return ((float)scrhgt*4.0)/((float)scrwdt*3.0);
     case 2: // 16:9 aspect ratio
