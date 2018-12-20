@@ -552,31 +552,6 @@ void VOpenGLDrawer::InitResolution () {
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 
-  // allocate secondary FBO object
-  glGenFramebuffers(1, &secondFBO);
-  if (secondFBO == 0) Sys_Error("OpenGL: cannot create secondary FBO");
-  glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
-
-  // attach 2D texture to this FBO
-  glGenTextures(1, &secondFBOColorTid);
-  if (secondFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
-  glBindTexture(GL_TEXTURE_2D, secondFBOColorTid);
-
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
-
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-  // empty texture
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, secondFBOColorTid, 0);
-
-
   // allocate ambient FBO object
   glGenFramebuffers(1, &ambLightFBO);
   if (ambLightFBO == 0) Sys_Error("OpenGL: cannot create ambient FBO");
@@ -1385,7 +1360,34 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
 //
 //==========================================================================
 void VOpenGLDrawer::CopyToSecondaryFBO () {
-  if (!mainFBO || !secondFBO) return;
+  if (!mainFBO) return;
+
+  if (!secondFBO) {
+    // allocate secondary FBO object
+    glGenFramebuffers(1, &secondFBO);
+    if (secondFBO == 0) Sys_Error("OpenGL: cannot create secondary FBO");
+    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
+
+    // attach 2D texture to this FBO
+    glGenTextures(1, &secondFBOColorTid);
+    if (secondFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
+    glBindTexture(GL_TEXTURE_2D, secondFBOColorTid);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+    //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // empty texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, secondFBOColorTid, 0);
+  }
+
 
   glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
 
