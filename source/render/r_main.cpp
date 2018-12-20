@@ -146,6 +146,16 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
 
 //==========================================================================
 //
+//  GetAspectRatio
+//
+//==========================================================================
+float R_GetAspectRatio () {
+  return CalcAspect(aspect_ratio, ScreenWidth, ScreenHeight);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetMinPoolNodeSize
 //
 //==========================================================================
@@ -588,7 +598,7 @@ bool VRenderLevelShared::RadiusCastRay (const TVec &org, const TVec &dest, float
 //  R_SetViewSize
 //
 //  Do not really change anything here, because it might be in the middle
-// of a refresh. The change will take effect next refresh.
+//  of a refresh. The change will take effect next refresh.
 //
 //==========================================================================
 void R_SetViewSize (int blocks) {
@@ -649,8 +659,8 @@ void VRenderLevelShared::ExecuteSetViewSize () {
     refdef.y = (ScreenHeight-refdef.height)>>1;
   } else {
     refdef.width = screenblocks*ScreenWidth/10;
-    refdef.height = (screenblocks*(ScreenHeight-SB_REALHEIGHT)/10);
-    refdef.y = (ScreenHeight-SB_REALHEIGHT-refdef.height)>>1;
+    refdef.height = (screenblocks*(ScreenHeight-SB_RealHeight())/10);
+    refdef.y = (ScreenHeight-SB_RealHeight()-refdef.height)>>1;
   }
   refdef.x = (ScreenWidth-refdef.width)>>1;
 

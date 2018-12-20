@@ -383,6 +383,8 @@ native static final void R_DrawModelFrame (TVec origin, float angle,
 // draws a coloured rectangle
 native static final void R_FillRect (int x, int y, int w, int h, int colour);
 
+native static final float R_GetAspectRatio ();
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // client sound stuff

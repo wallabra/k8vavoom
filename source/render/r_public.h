@@ -71,6 +71,8 @@ void R_InitSprites ();
 //  2D graphics
 void R_DrawPic (int x, int y, int handle, float Aplha = 1.0);
 
+float R_GetAspectRatio ();
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern int validcount;

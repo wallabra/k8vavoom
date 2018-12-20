@@ -26,7 +26,6 @@
 //**  Status bar code.
 //**
 //**************************************************************************
-
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "drawer.h"
@@ -47,10 +46,20 @@ int sb_height = 32;
 
 //==========================================================================
 //
+//  SB_RealHeight
+//
+//==========================================================================
+int SB_RealHeight () {
+  //return (int)(ScreenHeight/640.0f*sb_height*R_GetAspectRatio());
+  return (int)(ScreenHeight/480.0f*sb_height*R_GetAspectRatio());
+}
+
+
+//==========================================================================
+//
 //  SB_Init
 //
 //==========================================================================
-
 void SB_Init () {
   sb_height = GClGame->sb_height;
 }

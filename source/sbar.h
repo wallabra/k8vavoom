@@ -25,7 +25,7 @@
 
 // status bar height at bottom of screen
 //#define SB_REALHEIGHT ((int)(sb_height * fScaleY))
-#define SB_REALHEIGHT ((int)(ScreenHeight/640.0f*sb_height))
+//#define SB_REALHEIGHT ((int)(ScreenHeight/640.0f*sb_height*R_GetAspectRatio()))
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -34,6 +34,7 @@ void SB_Drawer ();
 void SB_Ticker ();
 bool SB_Responder (event_t *ev);
 void SB_Start (); // called when the console player is spawned on each level
+int SB_RealHeight ();
 
 
 // ////////////////////////////////////////////////////////////////////////// //

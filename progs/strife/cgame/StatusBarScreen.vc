@@ -182,7 +182,7 @@ void SB_DrawTallNum (int x, int y, int num, float alpha) {
 //  SB_DrawMainBar
 //
 //==========================================================================
-void SB_DrawMainBar () {
+override void SB_DrawMainBar () {
   int NumKeys;
   Inventory Item;
 
@@ -318,7 +318,7 @@ void DrawAmmo (class!Inventory Type, int Y, optional float alpha) {
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
-void SB_DrawFullscreenStats () {
+override void SB_DrawFullscreenStats () {
   int NumKeys;
   Inventory Item;
 
@@ -441,21 +441,7 @@ override void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
-  auto owdt = GetVirtualWidth();
-  auto ohgt = GetVirtualHeight();
-  scope(exit) {
-    SetVirtualScreen(owdt, ohgt);
-    //if (Width != owdt) Width = owdt;
-    //if (Height != ohgt) Height = ohgt;
-  }
-  SetVirtualScreen(640, 480);
-  if (Width != 640) Width = 640;
-  if (Height != 480) Height = 480;
-  if (sb_view != SB_VIEW_FULLSCREEN) {
-    SB_DrawMainBar();
-  } else {
-    SB_DrawFullscreenStats();
-  }
+  SB_DrawMainPart(sb_view);
   SB_DrawPause();
 }
 

@@ -343,6 +343,60 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Colour,
 }
 
 
+void SB_DrawFullscreenStats () {}
+
+void SB_DrawMainBarPre (bool inAutomap) {}
+void SB_DrawMainBar () {}
+void SB_DrawMainBarInAutomap () { SB_DrawMainBar(); }
+void SB_DrawMainBarPost (bool inAutomap) {}
+
+
+struct SB_SavedVScreenState {
+  int width, height;
+  float scaleY;
+}
+
+
+final void SB_SetCorrected640x480 (out SB_SavedVScreenState sss) {
+  sss.width = GetVirtualWidth();
+  sss.height = GetVirtualHeight();
+  sss.scaleY = ScaleY;
+  SetVirtualScreen(640, 480);
+  if (Width != 640 || Height != 480) SetSize(640, 480);
+  Y = -int(480.0*R_GetAspectRatio()-480);
+  ScaleY = ScaleY*R_GetAspectRatio();
+}
+
+
+final void SB_RestoreVScreen (const ref SB_SavedVScreenState sss) {
+  ScaleY = sss.scaleY;
+  Y = 0;
+  SetVirtualScreen(sss.width, sss.height);
+  if (Width != sss.width || Height != sss.height) SetSize(sss.width, sss.height);
+}
+
+
+// this is common code for all games
+void SB_DrawMainPart (int sb_view) {
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  if (Width != ovw || Height != ovh) SetSize(ovw, ovh);
+  if (sb_view == SB_VIEW_FULLSCREEN) {
+    SB_DrawFullscreenStats();
+  } else {
+    bool inAutomap = (sb_view == SB_VIEW_AUTOMAP);
+    SB_DrawMainBarPre(inAutomap);
+    {
+      SB_SavedVScreenState sss;
+      SB_SetCorrected640x480(out sss);
+      scope(exit) SB_RestoreVScreen(ref sss);
+      if (inAutomap) SB_DrawMainBarInAutomap(); else SB_DrawMainBar();
+    }
+    SB_DrawMainBarPost(inAutomap);
+  }
+}
+
+
 void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
 }

@@ -372,7 +372,7 @@ void SB_DrawMNumber(int x, int y, int num)
 //
 //==========================================================================
 
-void SB_DrawMainBar()
+override void SB_DrawMainBar()
 {
   int sb_mana1;
   int sb_mana2;
@@ -608,7 +608,7 @@ private final int yfix (int y) { return (y == 480/2 ? GetVirtualHeight()/2 : y <
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
-void SB_DrawFullscreenStats () {
+override void SB_DrawFullscreenStats () {
   int sb_mana1;
   int sb_mana2;
   int readyweapon;
@@ -723,13 +723,13 @@ void SB_DrawIcons () {
   // defensive power
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerInvulnerable));
   if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
-    DrawPic(xfix(580), 19, pic_shld[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
+    DrawPic(/*xfix*/(580), 19, pic_shld[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 
   // minotaur active
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerMinotaur));
   if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
-    DrawPic(xfix(620), 19, pic_mino[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
+    DrawPic(/*xfix*/(620), 19, pic_mino[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 }
 
@@ -751,40 +751,36 @@ void SB_DrawPause () {
 //  SB_Drawer
 //
 //==========================================================================
+override void SB_DrawMainBarInAutomap () {}
+
+
+//==========================================================================
+//
+//  SB_Drawer
+//
+//==========================================================================
 override void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
-  auto ovw = GetVirtualWidth();
-  auto ovh = GetVirtualHeight();
-  if (sb_view == SB_VIEW_FULLSCREEN) {
-    if (Width != ovw) Width = ovw;
-    if (Height != ovh) Height = ovh;
-    SB_DrawFullscreenStats();
-  } else if (cl.InventoryTime) {
-    // this is broken for now
-    SetVirtualScreen(640, 480);
-    if (Width != 640) Width = 640;
-    if (Height != 480) Height = 480;
-    SB_DrawInventoryBar();
-  } else if (sb_view == SB_VIEW_AUTOMAP) {
-    // this is broken for now
-    SetVirtualScreen(640, 480);
-    if (Width != 640) Width = 640;
-    if (Height != 480) Height = 480;
-    SB_DrawKeyBar();
-    SetVirtualScreen(ovw, ovh);
-  } else {
-    // this is broken for now
-    SetVirtualScreen(640, 480);
-    if (Width != 640) Width = 640;
-    if (Height != 480) Height = 480;
-    SB_DrawMainBar();
-    SetVirtualScreen(ovw, ovh);
+  SB_DrawMainPart(sb_view);
+  if (sb_view == SB_VIEW_AUTOMAP || cl.InventoryTime) {
+    SB_SavedVScreenState sss;
+    SB_SetCorrected640x480(out sss);
+    scope(exit) SB_RestoreVScreen(ref sss);
+    if (cl.InventoryTime) {
+      SB_DrawInventoryBar();
+    } else if (sb_view == SB_VIEW_AUTOMAP) {
+      SB_DrawKeyBar();
+    }
   }
-
   // animated icons
-  SB_DrawIcons();
+  {
+    SB_SavedVScreenState sss;
+    SB_SetCorrected640x480(out sss);
+    scope(exit) SB_RestoreVScreen(ref sss);
+    SB_DrawIcons();
+  }
   SB_DrawPause();
 }
 

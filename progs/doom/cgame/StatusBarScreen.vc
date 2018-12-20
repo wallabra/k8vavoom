@@ -313,28 +313,10 @@ void SB_DrawSmallNum (int x, int y, int num) {
 
 //==========================================================================
 //
-//  SB_DrawMainBarPre
-//
-//==========================================================================
-void SB_DrawMainBarPre () {
-}
-
-
-//==========================================================================
-//
-//  SB_DrawMainBarPost
-//
-//==========================================================================
-void SB_DrawMainBarPost () {
-}
-
-
-//==========================================================================
-//
 //  SB_DrawMainBar
 //
 //==========================================================================
-void SB_DrawMainBar () {
+override void SB_DrawMainBar () {
   if (!cl || !cl.MO) return;
 
   // draw something in the blank spaces
@@ -446,7 +428,7 @@ void DrawAmmo (int CountX, int CountY, int MaxX, int MaxY, class!Inventory AmmoC
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
-void SB_DrawFullscreenStats () {
+override void SB_DrawFullscreenStats () {
   if (!cl || !cl.MO) return;
 
   auto ovw = GetVirtualWidth();
@@ -562,29 +544,7 @@ override void SB_Drawer (int sb_view) {
   SB_Housekeeping(sb_view);
   if (!cl || !cl.MO) return;
   if (!GetCvarB('r_statusbar_draw')) return;
-  //SetVirtualScreen(640, 480);
-  auto ovw = GetVirtualWidth();
-  auto ovh = GetVirtualHeight();
-  if (Width != ovw) Width = ovw;
-  if (Height != ovh) Height = ovh;
-  if (sb_view == SB_VIEW_FULLSCREEN) {
-    SB_DrawFullscreenStats();
-  } else {
-    // this is broken for now
-    SB_DrawMainBarPre();
-    SetVirtualScreen(640, 480);
-    // 448
-    //print("rd: (%s,%s)x(%s,%s); hh=%s", rd.x, rd.y, rd.width, rd.height, GetRealScreenHeight());
-    //refdef_t rd;
-    //GetCurrRefDef(out rd);
-    if (Width != GetVirtualWidth()) Width = GetVirtualWidth();
-    if (Height != GetVirtualHeight()) Height = GetVirtualHeight();
-    SB_DrawMainBar();
-    SetVirtualScreen(ovw, ovh);
-    if (Width != ovw) Width = ovw;
-    if (Height != ovh) Height = ovh;
-    SB_DrawMainBarPost();
-  }
+  SB_DrawMainPart(sb_view);
   SB_DrawPause();
 }
 

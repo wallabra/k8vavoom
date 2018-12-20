@@ -902,6 +902,16 @@ IMPLEMENT_FUNCTION(VObject, R_FillRect) {
 }
 
 
+//==========================================================================
+//
+//  PF_R_GetAspectRatio
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_GetAspectRatio) {
+  RET_FLOAT(R_GetAspectRatio());
+}
+
+
 //**************************************************************************
 //
 //  Client side sound

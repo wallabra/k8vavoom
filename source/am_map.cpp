@@ -556,7 +556,7 @@ static void AM_LevelInit () {
 
   f_x = f_y = 0;
   f_w = ScreenWidth;
-  f_h = ScreenHeight-(screen_size < 11 ? SB_REALHEIGHT : 0);
+  f_h = ScreenHeight-(screen_size < 11 ? SB_RealHeight() : 0);
 
   AM_clearMarks();
   mapxstart = mapystart = 0;
@@ -1382,12 +1382,12 @@ static vuint32 StringToColour (const char *str) {
 //==========================================================================
 static void AM_CheckVariables () {
   // check for screen resolution change
-  if (f_w != ScreenWidth || f_h != ScreenHeight-SB_REALHEIGHT) {
+  if (f_w != ScreenWidth || f_h != ScreenHeight-SB_RealHeight()) {
     float old_mtof_zoommul = mtof_zoommul;
     mtof_zoommul = scale_mtof/start_scale_mtof;
 
     f_w = ScreenWidth;
-    f_h = ScreenHeight-(screen_size < 11 ? SB_REALHEIGHT : 0);
+    f_h = ScreenHeight-(screen_size < 11 ? SB_RealHeight() : 0);
 
     float a = (float)f_w/max_w;
     float b = (float)f_h/max_h;
