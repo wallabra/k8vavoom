@@ -698,22 +698,23 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec sprorigin = vieworg+PSP_DIST*viewforward;
 
   float sprx = 160.0-VSt->SX+TexSOffset;
-  float spry = 100.0-VSt->SY+TexTOffset;
+  float spry = 100.0-VSt->SY*R_GetAspectRatio()+TexTOffset;
 
   spry -= cl->PSpriteSY;
   //k8: this is not right, but meh...
-  if (fov > 90) spry -= (refdef.fovx-1.0f)*100.0f;
+  if (fov > 90) spry -= (refdef.fovx-1.0f)*(aspect_ratio != 0 ? 100.0f : 110.0f);
 
   //  1 / 160 = 0.00625
   TVec start = sprorigin-(sprx*PSP_DIST*0.00625)*viewright;
   TVec end = start+(TexWidth*PSP_DIST*0.00625)*viewright;
 
   //  1 / 160.0 * 120 / 100 = 0.0075
-  TVec topdelta = (spry*PSP_DIST*0.0075)*viewup;
-  TVec botdelta = topdelta-(TexHeight*PSP_DIST*0.0075)*viewup;
-  if (aspect_ratio > 1) {
-    topdelta *= 100.0/120.0;
-    botdelta *= 100.0/120.0;
+  const float symul = 1.0f/160.0f*120.0f/100.0f;
+  TVec topdelta = (spry*PSP_DIST*symul)*viewup;
+  TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*viewup;
+  if (aspect_ratio != 1) {
+    topdelta *= 100.0f/120.0f;
+    botdelta *= 100.0f/120.0f;
   }
 
   dv[0] = start+botdelta;
@@ -855,18 +856,18 @@ void VRenderLevelShared::DrawCrosshair () {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  R_DrawSpritePatch
 //
 //==========================================================================
-
-void R_DrawSpritePatch(int x, int y, int sprite, int frame, int rot,
-  int TranslStart, int TranslEnd, int Colour)
+void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
+                        int TranslStart, int TranslEnd, int Colour)
 {
   guard(R_DrawSpritePatch);
-  bool      flip;
-  int       lump;
+  bool flip;
+  int lump;
 
   spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame & VState::FF_FRAMEMASK];
   flip = sprframe->flip[rot];
