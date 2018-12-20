@@ -145,8 +145,11 @@ static void SetClassFieldVec (VClass *Class, const char *FieldName, const TVec &
 //  InitPalette
 //
 //==========================================================================
-static void InitPalette() {
+static void InitPalette () {
   guard(InitPalette);
+  if (W_CheckNumForName(NAME_playpal) == -1) {
+    Sys_Error("Palette lump not found. Did you forgot to specify path to IWAD file?");
+  }
   // We use colour 0 as transparent colour, so we must find an alternate
   // index for black colour. In Doom, Heretic and Strife there is another
   // black colour, in Hexen it's almost black.
