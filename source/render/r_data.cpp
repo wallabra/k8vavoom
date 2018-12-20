@@ -26,99 +26,137 @@
 //**  Preparation of data for rendering, generation of lookups.
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 
+
 extern VCvarB dbg_show_missing_classes;
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-struct VTempSpriteEffectDef
-{
-  VStr              Sprite;
-  VStr              Light;
-  VStr              Part;
+struct VTempSpriteEffectDef {
+  VStr Sprite;
+  VStr Light;
+  VStr Part;
 };
 
-struct VTempClassEffects
-{
-  VStr              ClassName;
-  VStr              StaticLight;
+struct VTempClassEffects {
+  VStr ClassName;
+  VStr StaticLight;
   TArray<VTempSpriteEffectDef>  SpriteEffects;
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
+// main palette
 //
-//  Main palette
-//
-rgba_t                r_palette[256];
-vuint8                r_black_colour;
-vuint8                r_white_colour;
+rgba_t r_palette[256];
+vuint8 r_black_colour;
+vuint8 r_white_colour;
 
-vuint8                r_rgbtable[32 * 32 * 32 + 4];
+vuint8 r_rgbtable[32*32*32+4];
 
-//  variables used to look up
+// variables used to look up
 // and range check thing_t sprites patches
-spritedef_t             sprites[MAX_SPRITE_MODELS];
+spritedef_t sprites[MAX_SPRITE_MODELS];
 
 VTextureTranslation **TranslationTables;
-int                 NumTranslationTables;
-VTextureTranslation         IceTranslation;
-TArray<VTextureTranslation*>    DecorateTranslations;
-TArray<VTextureTranslation*>    BloodTranslations;
+int NumTranslationTables;
+VTextureTranslation IceTranslation;
+TArray<VTextureTranslation *> DecorateTranslations;
+TArray<VTextureTranslation *> BloodTranslations;
 
-//  They basicly work the same as translations.
-VTextureTranslation         ColourMaps[CM_Max];
+// they basicly work the same as translations
+VTextureTranslation ColourMaps[CM_Max];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-//  Temporary variables for sprite installing
+// temporary variables for sprite installing
 enum { MAX_SPR_TEMP = 30 };
-static spriteframe_t        sprtemp[MAX_SPR_TEMP];
-static int              maxframe;
+static spriteframe_t sprtemp[MAX_SPR_TEMP];
+static int maxframe;
 static const char *spritename;
 
-static TArray<VLightEffectDef>    GLightEffectDefs;
+static TArray<VLightEffectDef> GLightEffectDefs;
 static TArray<VParticleEffectDef> GParticleEffectDefs;
 
 static VCvarB spr_report_missing_rotations("spr_report_missing_rotations", false, "Report missing sprite rotations?");
 static VCvarB spr_report_missing_patches("spr_report_missing_patches", false, "Report missing sprite patches?");
 
-// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+//  SetClassFieldInt
+//
+//==========================================================================
+static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, int Idx=0) {
+  guard(SetClassFieldInt);
+  VField *F = Class->FindFieldChecked(FieldName);
+  check(F->Type.Type == TYPE_Int);
+  vint32 *Ptr = (vint32 *)(Class->Defaults+F->Ofs);
+  Ptr[Idx] = Value;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  SetClassFieldBool
+//
+//==========================================================================
+static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) {
+  guard(SetClassFieldBool);
+  VField *F = Class->FindFieldChecked(FieldName);
+  check(F->Type.Type == TYPE_Bool);
+  vuint32 *Ptr = (vuint32 *)(Class->Defaults+F->Ofs);
+  if (Value) *Ptr |= F->Type.BitMask; else *Ptr &= ~F->Type.BitMask;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  SetClassFieldFloat
+//
+//==========================================================================
+static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Value) {
+  guard(SetClassFieldFloat);
+  VField *F = Class->FindFieldChecked(FieldName);
+  check(F->Type.Type == TYPE_Float);
+  float *Ptr = (float*)(Class->Defaults+F->Ofs);
+  *Ptr = Value;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  SetClassFieldVec
+//
+//==========================================================================
+static void SetClassFieldVec (VClass *Class, const char *FieldName, const TVec &Value) {
+  guard(SetClassFieldVec);
+  VField *F = Class->FindFieldChecked(FieldName);
+  check(F->Type.Type == TYPE_Vector);
+  TVec *Ptr = (TVec*)(Class->Defaults+F->Ofs);
+  *Ptr = Value;
+  unguard;
+}
+
 
 //==========================================================================
 //
 //  InitPalette
 //
 //==========================================================================
-
-static void InitPalette()
-{
+static void InitPalette() {
   guard(InitPalette);
-  //  We use colour 0 as transparent colour, so we must find an alternate
+  // We use colour 0 as transparent colour, so we must find an alternate
   // index for black colour. In Doom, Heretic and Strife there is another
   // black colour, in Hexen it's almost black.
-  //  I think that originaly Doom uses colour 255 as transparent colour,
+  // I think that originaly Doom uses colour 255 as transparent colour,
   // but utilites created by others uses the alternate black colour and
   // these graphics can contain pixels of colour 255.
-  //  Heretic and Hexen also uses colour 255 as transparent, even more - in
+  // Heretic and Hexen also uses colour 255 as transparent, even more - in
   // colourmaps it's maped to colour 0. Posibly this can cause problems
   // with modified graphics.
-  //  Strife uses colour 0 as transparent. I already had problems with fact
+  // Strife uses colour 0 as transparent. I already had problems with fact
   // that colour 255 is normal colour, now there shouldn't be any problems.
   VStream *Strm = W_CreateLumpReaderName(NAME_playpal);
   check(Strm);
@@ -149,92 +187,80 @@ static void InitPalette()
     }
   }
   delete Strm;
-  Strm = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  InitRgbTable
 //
 //==========================================================================
-
-static void InitRgbTable()
-{
+static void InitRgbTable () {
   guard(InitRgbTable);
-  for (int ir = 0; ir < 32; ir++)
-  {
-    for (int ig = 0; ig < 32; ig++)
-    {
-      for (int ib = 0; ib < 32; ib++)
-      {
-        int r = (int)(ir * 255.0 / 31.0 + 0.5);
-        int g = (int)(ig * 255.0 / 31.0 + 0.5);
-        int b = (int)(ib * 255.0 / 31.0 + 0.5);
-        int best_colour = 0;
+  for (int ir = 0; ir < 32; ++ir) {
+    for (int ig = 0; ig < 32; ++ig) {
+      for (int ib = 0; ib < 32; ++ib) {
+        const int r = (int)(ir*255.0f/31.0f+0.5f);
+        const int g = (int)(ig*255.0f/31.0f+0.5f);
+        const int b = (int)(ib*255.0f/31.0f+0.5f);
+        int best_colour = -1;
         int best_dist = 0x1000000;
-        for (int i = 1; i < 256; i++)
-        {
-          int dist = (r_palette[i].r - r) * (r_palette[i].r - r) +
-            (r_palette[i].g - g) * (r_palette[i].g - g) +
-            (r_palette[i].b - b) * (r_palette[i].b - b);
-          if (dist < best_dist)
-          {
+        for (int i = 1; i < 256; ++i) {
+          /*
+          int dist = (r_palette[i].r-r)*(r_palette[i].r-r)+
+                     (r_palette[i].g-g)*(r_palette[i].g-g)+
+                     (r_palette[i].b-b)*(r_palette[i].b-b);
+          */
+          const vint32 dist = rgbDistanceSquared(r_palette[i].r, r_palette[i].g, r_palette[i].b, r, g, b);
+          if (best_colour < 0 || dist < best_dist) {
             best_colour = i;
             best_dist = dist;
-            if (!dist)
-              break;
+            if (!dist) break;
           }
         }
-        r_rgbtable[(ir << 10) + (ig << 5) + ib] = best_colour;
+        check(best_colour >= 0 && best_colour <= 255);
+        r_rgbtable[(ir<<10)+(ig<<5)+ib] = best_colour;
       }
     }
   }
-  r_rgbtable[32 * 32 * 32] = 0;
+  r_rgbtable[32*32*32] = 0;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  InitTranslationTables
 //
 //==========================================================================
-
-static void InitTranslationTables()
-{
+static void InitTranslationTables () {
   guard(InitTranslationTables);
   VStream *Strm = W_CreateLumpReaderName(NAME_translat);
-  NumTranslationTables = Strm->TotalSize() / 256;
+  NumTranslationTables = Strm->TotalSize()/256;
   TranslationTables = new VTextureTranslation*[NumTranslationTables];
-  for (int j = 0; j < NumTranslationTables; j++)
-  {
+  for (int j = 0; j < NumTranslationTables; ++j) {
     VTextureTranslation *Trans = new VTextureTranslation;
     TranslationTables[j] = Trans;
     Strm->Serialise(Trans->Table, 256);
-    //  Make sure that 0 always maps to 0.
+    // make sure that 0 always maps to 0
     Trans->Table[0] = 0;
     Trans->Palette[0] = r_palette[0];
-    for (int i = 1; i < 256; i++)
-    {
-      //  Make sure that normal colours doesn't map to colour 0.
-      if (Trans->Table[i] == 0)
-      {
-        Trans->Table[i] = r_black_colour;
-      }
+    for (int i = 1; i < 256; ++i) {
+      // make sure that normal colours doesn't map to colour 0
+      if (Trans->Table[i] == 0) Trans->Table[i] = r_black_colour;
       Trans->Palette[i] = r_palette[Trans->Table[i]];
     }
   }
   delete Strm;
-  Strm = nullptr;
 
-  //  Calculate ice translation.
+  // calculate ice translation
   IceTranslation.Table[0] = 0;
   IceTranslation.Palette[0] = r_palette[0];
-  for (int i = 1; i < 256; i++)
-  {
-    int r = int(r_palette[i].r * 0.5 + 64 * 0.5);
-    int g = int(r_palette[i].g * 0.5 + 64 * 0.5);
-    int b = int(r_palette[i].b * 0.5 + 255 * 0.5);
+  for (int i = 1; i < 256; ++i) {
+    int r = int(r_palette[i].r*0.5f+64*0.5f);
+    int g = int(r_palette[i].g*0.5f+64*0.5f);
+    int b = int(r_palette[i].b*0.5f+255*0.5f);
     IceTranslation.Palette[i].r = r;
     IceTranslation.Palette[i].g = g;
     IceTranslation.Palette[i].b = b;
@@ -244,24 +270,21 @@ static void InitTranslationTables()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  InitColourMaps
 //
 //==========================================================================
-
-static void InitColourMaps()
-{
+static void InitColourMaps () {
   guard(InitColourMaps);
-  //  Calculate inverse colourmap.
+  // calculate inverse colourmap
   VTextureTranslation *T = &ColourMaps[CM_Inverse];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
-  for (int i = 1; i < 256; i++)
-  {
-    int Gray = (r_palette[i].r * 77 + r_palette[i].g * 143 +
-      r_palette[i].b * 37) >> 8;
-    int Val = 255 - Gray;
+  for (int i = 1; i < 256; ++i) {
+    int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
+    int Val = 255-Gray;
     T->Palette[i].r = Val;
     T->Palette[i].g = Val;
     T->Palette[i].b = Val;
@@ -269,55 +292,47 @@ static void InitColourMaps()
     T->Table[i] = R_LookupRGB(Val, Val, Val);
   }
 
-  //  Calculate gold colourmap.
+  // calculate gold colourmap
   T = &ColourMaps[CM_Gold];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
-  for (int i = 1; i < 256; i++)
-  {
-    int Gray = (r_palette[i].r * 77 + r_palette[i].g * 143 +
-      r_palette[i].b * 37) >> 8;
-    T->Palette[i].r = MIN(255, Gray + Gray / 2);
+  for (int i = 1; i < 256; ++i) {
+    int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
+    T->Palette[i].r = MIN(255, Gray+Gray/2);
     T->Palette[i].g = Gray;
     T->Palette[i].b = 0;
     T->Palette[i].a = 255;
-    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g,
-      T->Palette[i].b);
+    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
   }
 
-  //  Calculate red colourmap.
+  // calculate red colourmap
   T = &ColourMaps[CM_Red];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
-  for (int i = 1; i < 256; i++)
-  {
-    int Gray = (r_palette[i].r * 77 + r_palette[i].g * 143 +
-      r_palette[i].b * 37) >> 8;
-    T->Palette[i].r = MIN(255, Gray + Gray / 2);
+  for (int i = 1; i < 256; ++i) {
+    int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
+    T->Palette[i].r = MIN(255, Gray+Gray/2);
     T->Palette[i].g = 0;
     T->Palette[i].b = 0;
     T->Palette[i].a = 255;
-    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g,
-      T->Palette[i].b);
+    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
   }
 
-  //  Calculate green colourmap.
+  // calculate green colourmap
   T = &ColourMaps[CM_Green];
   T->Table[0] = 0;
   T->Palette[0] = r_palette[0];
-  for (int i = 1; i < 256; i++)
-  {
-    int Gray = (r_palette[i].r * 77 + r_palette[i].g * 143 +
-      r_palette[i].b * 37) >> 8;
-    T->Palette[i].r = MIN(255, Gray + Gray / 2);
-    T->Palette[i].g = MIN(255, Gray + Gray / 2);
+  for (int i = 1; i < 256; ++i) {
+    int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
+    T->Palette[i].r = MIN(255, Gray+Gray/2);
+    T->Palette[i].g = MIN(255, Gray+Gray/2);
     T->Palette[i].b = Gray;
     T->Palette[i].a = 255;
-    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g,
-      T->Palette[i].b);
+    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -326,68 +341,45 @@ static void InitColourMaps()
 //  Local function for R_InitSprites.
 //
 //==========================================================================
-
-static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
-{
+static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
   guard(InstallSpriteLump);
-  int     r;
-  int     rotation;
+  int rotation;
 
   //fprintf(stderr, "!!INSTALL_SPRITE_LUMP: <%s> (lumpnr=%d; frame=%d; Rot=%c; flipped=%d)\n", *GTextureManager[lumpnr]->Name, lumpnr, frame, Rot, (flipped ? 1 : 0));
 
-  if (Rot >= '0' && Rot <= '9')
-  {
-    rotation = Rot - '0';
-  }
-  else if (Rot >= 'a')
-  {
-    rotation = Rot - 'a' + 10;
-  }
-  else
-  {
-    rotation = 17;
-  }
+       if (Rot >= '0' && Rot <= '9') rotation = Rot-'0';
+  else if (Rot >= 'a') rotation = Rot-'a'+10;
+  else rotation = 17;
 
   VTexture *Tex = GTextureManager[lumpnr];
   if ((vuint32)frame >= 30 || (vuint32)rotation > 16) {
     //Sys_Error("InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
     GCon->Logf("ERROR:InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
-    for (r = 0; r < 16; ++r) {
+    for (int r = 0; r < 16; ++r) {
       sprtemp[frame].lump[r] = -1;
       sprtemp[frame].flip[r] = false;
     }
     return;
   }
 
-  if (frame > maxframe)
-    maxframe = frame;
+  if (frame > maxframe) maxframe = frame;
 
-  if (rotation == 0)
-  {
+  if (rotation == 0) {
     // the lump should be used for all rotations
     sprtemp[frame].rotate = 0;
-    for (r = 0; r < 16; r++)
-    {
+    for (int r = 0; r < 16; ++r) {
       sprtemp[frame].lump[r] = lumpnr;
       sprtemp[frame].flip[r] = flipped;
     }
     return;
   }
 
-  if (rotation <= 8)
-  {
-    rotation = (rotation - 1) * 2;
-  }
-  else
-  {
-    rotation = (rotation - 9) * 2 + 1;
-  }
+       if (rotation <= 8) rotation = (rotation-1)*2;
+  else rotation = (rotation-9)*2+1;
 
   // the lump is only used for one rotation
-  if (sprtemp[frame].rotate == 0)
-  {
-    for (r = 0; r < 16; r++)
-    {
+  if (sprtemp[frame].rotate == 0) {
+    for (int r = 0; r < 16; r++) {
       sprtemp[frame].lump[r] = -1;
       sprtemp[frame].flip[r] = false;
     }
@@ -399,26 +391,23 @@ static void InstallSpriteLump(int lumpnr, int frame, char Rot, bool flipped)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  R_InstallSprite
 //
 //  Builds the sprite rotation matrixes to account for horizontally flipped
-// sprites. Will report an error if the lumps are inconsistant.
+//  sprites. Will report an error if the lumps are inconsistant.
+//
 //  Sprite lump names are 4 characters for the actor, a letter for the frame,
-// and a number for the rotation. A sprite that is flippable will have an
-// additional letter/number appended. The rotation character can be 0 to
-// signify no rotations.
+//  and a number for the rotation. A sprite that is flippable will have an
+//  additional letter/number appended. The rotation character can be 0 to
+//  signify no rotations.
 //
 //==========================================================================
-
-void R_InstallSprite(const char *name, int index)
-{
+void R_InstallSprite (const char *name, int index) {
   guard(R_InstallSprite);
-  if ((vuint32)index >= MAX_SPRITE_MODELS)
-  {
-    Host_Error("Invalid sprite index %d for sprite %s", index, name);
-  }
+  if ((vuint32)index >= MAX_SPRITE_MODELS) Host_Error("Invalid sprite index %d for sprite %s", index, name);
   //fprintf(stderr, "!!INSTALL_SPRITE: <%s> (%d)\n", name, index);
   spritename = name;
 #if 1
@@ -434,19 +423,15 @@ void R_InstallSprite(const char *name, int index)
 #endif
   maxframe = -1;
 
-  // scan all the lump names for each of the names,
-  //  noting the highest frame letter.
-  // Just compare 4 characters as ints
+  // scan all the lump names for each of the names, noting the highest frame letter
+  // just compare 4 characters as ints
   int intname = *(int*)*VName(spritename, VName::AddLower8);
 
   // scan the lumps, filling in the frames for whatever is found
-  for (int l = 0; l < GTextureManager.GetNumTextures(); l++)
-  {
-    if (GTextureManager[l]->Type == TEXTYPE_Sprite)
-    {
+  for (int l = 0; l < GTextureManager.GetNumTextures(); ++l) {
+    if (GTextureManager[l]->Type == TEXTYPE_Sprite) {
       const char *lumpname = *GTextureManager[l]->Name;
-      if (*(int*)lumpname == intname)
-      {
+      if (*(int*)lumpname == intname) {
         //fprintf(stderr, "!!<%s> [4]=%c; [6]=%c; [7]=%c\n", lumpname, lumpname[4], lumpname[6], (lumpname[6] ? lumpname[7] : 0));
         InstallSpriteLump(l, VStr::ToUpper(lumpname[4])-'A', lumpname[5], false);
         if (lumpname && strlen(lumpname) >= 6 && lumpname[6]) {
@@ -457,151 +442,128 @@ void R_InstallSprite(const char *name, int index)
   }
 
   // check the frames that were found for completeness
-  if (maxframe == -1)
-  {
+  if (maxframe == -1) {
     sprites[index].numframes = 0;
     return;
   }
 
-  maxframe++;
+  ++maxframe;
 
-  for (int frame = 0; frame < maxframe; frame++)
-  {
+  for (int frame = 0; frame < maxframe; ++frame) {
     //fprintf(stderr, "  frame=%d; rot=%d (%u)\n", frame, (int)sprtemp[frame].rotate, *((unsigned char *)&sprtemp[frame].rotate));
-    switch ((int)sprtemp[frame].rotate)
-    {
-    case -1:
-      // no rotations were found for that frame at all
-      if (GArgs.CheckParm("-sprstrict")) {
-        Sys_Error("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
-      } else {
-        if (spr_report_missing_patches) {
-          GCon->Logf("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
+    switch ((int)sprtemp[frame].rotate) {
+      case -1:
+        // no rotations were found for that frame at all
+        if (GArgs.CheckParm("-sprstrict")) {
+          Sys_Error("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
+        } else {
+          if (spr_report_missing_patches) {
+            GCon->Logf("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
+          }
         }
-      }
-      break;
+        break;
 
-    case 0:
-      // only the first rotation is needed
-      break;
+      case 0:
+        // only the first rotation is needed
+        break;
 
-    case 1:
-      //  Copy missing frames for 16-angle rotation.
-      for (int rotation = 0; rotation < 8; rotation++)
-      {
-        if (sprtemp[frame].lump[rotation * 2 + 1] == -1)
-        {
-          sprtemp[frame].lump[rotation * 2 + 1] =
-            sprtemp[frame].lump[rotation * 2];
-          sprtemp[frame].flip[rotation * 2 + 1] =
-            sprtemp[frame].flip[rotation * 2];
+      case 1:
+        // copy missing frames for 16-angle rotation
+        for (int rotation = 0; rotation < 8; ++rotation) {
+          if (sprtemp[frame].lump[rotation*2+1] == -1) {
+            sprtemp[frame].lump[rotation*2+1] = sprtemp[frame].lump[rotation*2];
+            sprtemp[frame].flip[rotation*2+1] = sprtemp[frame].flip[rotation*2];
+          }
+          if (sprtemp[frame].lump[rotation*2] == -1) {
+            sprtemp[frame].lump[rotation*2] = sprtemp[frame].lump[rotation*2+1];
+            sprtemp[frame].flip[rotation*2] = sprtemp[frame].flip[rotation*2+1];
+          }
         }
-        if (sprtemp[frame].lump[rotation * 2] == -1)
-        {
-          sprtemp[frame].lump[rotation * 2] =
-            sprtemp[frame].lump[rotation * 2 + 1];
-          sprtemp[frame].flip[rotation * 2] =
-            sprtemp[frame].flip[rotation * 2 + 1];
-        }
-      }
-      // must have all 8 frames
-      for (int rotation = 0; rotation < 8; rotation++)
-      {
-        if (sprtemp[frame].lump[rotation] == -1)
-        {
-          if (GArgs.CheckParm("-sprstrict")) {
-            Sys_Error("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
-          } else {
-            if (spr_report_missing_rotations) {
-              GCon->Logf("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
+        // must have all 8 frames
+        for (int rotation = 0; rotation < 8; ++rotation) {
+          if (sprtemp[frame].lump[rotation] == -1) {
+            if (GArgs.CheckParm("-sprstrict")) {
+              Sys_Error("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
+            } else {
+              if (spr_report_missing_rotations) {
+                GCon->Logf("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
+              }
             }
           }
         }
-      }
-      break;
+        break;
     }
   }
 
-  if (sprites[index].spriteframes)
-  {
+  if (sprites[index].spriteframes) {
     Z_Free(sprites[index].spriteframes);
     sprites[index].spriteframes = nullptr;
   }
+
   // allocate space for the frames present and copy sprtemp to it
   sprites[index].numframes = maxframe;
-  sprites[index].spriteframes = (spriteframe_t*)Z_Malloc(maxframe * sizeof(spriteframe_t));
-  memcpy(sprites[index].spriteframes, sprtemp, maxframe * sizeof(spriteframe_t));
+  sprites[index].spriteframes = (spriteframe_t*)Z_Malloc(maxframe*sizeof(spriteframe_t));
+  memcpy(sprites[index].spriteframes, sprtemp, maxframe*sizeof(spriteframe_t));
   unguard;
 }
+
 
 //==========================================================================
 //
 //  FreeSpriteData
 //
 //==========================================================================
-
-static void FreeSpriteData()
-{
+static void FreeSpriteData () {
   guard(FreeSpriteData);
-  for (int i = 0; i < MAX_SPRITE_MODELS; i++)
-  {
-    if (sprites[i].spriteframes)
-    {
+  for (int i = 0; i < MAX_SPRITE_MODELS; ++i) {
+    if (sprites[i].spriteframes) {
       Z_Free(sprites[i].spriteframes);
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  R_AreSpritesPresent
 //
 //==========================================================================
-
-bool R_AreSpritesPresent(int Index)
-{
+bool R_AreSpritesPresent (int Index) {
   guardSlow(R_AreSpritesPresent);
-  return sprites[Index].numframes > 0;
+  return (sprites[Index].numframes > 0);
   unguardSlow;
 }
+
 
 //==========================================================================
 //
 //  R_InitData
 //
 //==========================================================================
-
-void R_InitData()
-{
+void R_InitData () {
   guard(R_InitData);
-  //  Load palette.
+  // load palette
   InitPalette();
-
-  //  Calculate RGB table.
+  // calculate RGB table
   InitRgbTable();
-
-  //  Init standard translation tables.
+  // init standard translation tables
   InitTranslationTables();
-
-  //  Init colour maps.
+  // init colour maps
   InitColourMaps();
   unguard;
 }
+
 
 //==========================================================================
 //
 //  R_ShutdownData
 //
 //==========================================================================
-
-void R_ShutdownData()
-{
+void R_ShutdownData () {
   guard(R_ShutdownData);
-  if (TranslationTables)
-  {
-    for (int i = 0; i < NumTranslationTables; i++)
-    {
+  if (TranslationTables) {
+    for (int i = 0; i < NumTranslationTables; ++i) {
       delete TranslationTables[i];
       TranslationTables[i] = nullptr;
     }
@@ -609,8 +571,7 @@ void R_ShutdownData()
     TranslationTables = nullptr;
   }
 
-  for (int i = 0; i < DecorateTranslations.Num(); i++)
-  {
+  for (int i = 0; i < DecorateTranslations.Num(); ++i) {
     delete DecorateTranslations[i];
     DecorateTranslations[i] = nullptr;
   }
@@ -623,6 +584,7 @@ void R_ShutdownData()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VTextureTranslation::VTextureTranslation
@@ -630,25 +592,23 @@ void R_ShutdownData()
 //==========================================================================
 
 VTextureTranslation::VTextureTranslation()
-: Crc(0)
-, TranslStart(0)
-, TranslEnd(0)
-, Colour(0)
+  : Crc(0)
+  , TranslStart(0)
+  , TranslEnd(0)
+  , Colour(0)
 {
   Clear();
 }
+
 
 //==========================================================================
 //
 //  VTextureTranslation::Clear
 //
 //==========================================================================
-
-void VTextureTranslation::Clear()
-{
+void VTextureTranslation::Clear () {
   guard(VTextureTranslation::Clear);
-  for (int i = 0; i < 256; i++)
-  {
+  for (int i = 0; i < 256; ++i) {
     Table[i] = i;
     Palette[i] = r_palette[i];
   }
@@ -657,18 +617,16 @@ void VTextureTranslation::Clear()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VTextureTranslation::CalcCrc
 //
 //==========================================================================
-
-void VTextureTranslation::CalcCrc()
-{
+void VTextureTranslation::CalcCrc () {
   guard(VTextureTranslation::CalcCrc);
   auto Work = TCRC16();
-  for (int i = 1; i < 256; i++)
-  {
+  for (int i = 1; i < 256; ++i) {
     Work += Palette[i].r;
     Work += Palette[i].g;
     Work += Palette[i].b;
@@ -677,14 +635,13 @@ void VTextureTranslation::CalcCrc()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VTextureTranslation::Serialise
 //
 //==========================================================================
-
-void VTextureTranslation::Serialise(VStream &Strm)
-{
+void VTextureTranslation::Serialise (VStream &Strm) {
   guard(VTextureTranslation::Serialise);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
@@ -696,43 +653,34 @@ void VTextureTranslation::Serialise(VStream &Strm)
     << Colour;
   int CmdsSize = Commands.Num();
   Strm << STRM_INDEX(CmdsSize);
-  if (Strm.IsLoading())
-  {
-    Commands.SetNum(CmdsSize);
-  }
-  for (int i = 0; i < CmdsSize; i++)
-  {
+  if (Strm.IsLoading()) Commands.SetNum(CmdsSize);
+  for (int i = 0; i < CmdsSize; ++i) {
     VTransCmd &C = Commands[i];
-    Strm << C.Type << C.Start << C.End << C.R1 << C.G1 << C.B1 <<
-      C.R2 << C.G2 << C.B2;
+    Strm << C.Type << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VTextureTranslation::BuildPlayerTrans
 //
 //==========================================================================
-
-void VTextureTranslation::BuildPlayerTrans(int Start, int End, int Col)
-{
+void VTextureTranslation::BuildPlayerTrans (int Start, int End, int Col) {
   guard(VTextureTranslation::BuildPlayerTrans);
-  int Count = End - Start + 1;
-  vuint8 r = (Col >> 16) & 255;
-  vuint8 g = (Col >> 8) & 255;
-  vuint8 b = Col & 255;
+  int Count = End-Start+1;
+  vuint8 r = (Col>>16)&255;
+  vuint8 g = (Col>>8)&255;
+  vuint8 b = Col&255;
   vuint8 h, s, v;
   M_RgbToHsv(r, g, b, h, s, v);
-  for (int i = 0; i < Count; i++)
-  {
-    int Idx = Start + i;
+  for (int i = 0; i < Count; ++i) {
+    int Idx = Start+i;
     vuint8 TmpH, TmpS, TmpV;
     M_RgbToHsv(Palette[Idx].r, Palette[Idx].g,Palette[Idx].b, TmpH, TmpS, TmpV);
-    M_HsvToRgb(h, s, v * TmpV / 255, Palette[Idx].r,
-      Palette[Idx].g, Palette[Idx].b);
-    Table[Idx] = R_LookupRGB(Palette[Idx].r, Palette[Idx].g,
-      Palette[Idx].b);
+    M_HsvToRgb(h, s, v*TmpV/255, Palette[Idx].r, Palette[Idx].g, Palette[Idx].b);
+    Table[Idx] = R_LookupRGB(Palette[Idx].r, Palette[Idx].g, Palette[Idx].b);
   }
   CalcCrc();
   TranslStart = Start;
@@ -741,47 +689,39 @@ void VTextureTranslation::BuildPlayerTrans(int Start, int End, int Col)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VTextureTranslation::MapToRange
 //
 //==========================================================================
-
-void VTextureTranslation::MapToRange(int AStart, int AEnd, int ASrcStart,
-  int ASrcEnd)
-{
+void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int ASrcEnd) {
   guard(VTextureTranslation::MapToRange);
   int Start;
   int End;
   int SrcStart;
   int SrcEnd;
-  //  Swap range if necesary.
-  if (AStart > AEnd)
-  {
+  // swap range if necesary
+  if (AStart > AEnd) {
     Start = AEnd;
     End = AStart;
     SrcStart = ASrcEnd;
     SrcEnd = ASrcStart;
-  }
-  else
-  {
+  } else {
     Start = AStart;
     End = AEnd;
     SrcStart = ASrcStart;
     SrcEnd = ASrcEnd;
   }
-  //  Check for single colour change.
-  if (Start == End)
-  {
+  // check for single colour change
+  if (Start == End) {
     Table[Start] = SrcStart;
     Palette[Start] = r_palette[SrcStart];
     return;
   }
   float CurCol = SrcStart;
-  float ColStep = (float(SrcEnd) - float(SrcStart)) /
-    (float(End) - float(Start));
-  for (int i = Start; i < End; i++, CurCol += ColStep)
-  {
+  float ColStep = (float(SrcEnd)-float(SrcStart))/(float(End)-float(Start));
+  for (int i = Start; i < End; ++i, CurCol += ColStep) {
     Table[i] = int(CurCol);
     Palette[i] = r_palette[Table[i]];
   }
@@ -795,27 +735,23 @@ void VTextureTranslation::MapToRange(int AStart, int AEnd, int ASrcStart,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VTextureTranslation::MapToColours
 //
 //==========================================================================
-
-void VTextureTranslation::MapToColours(int AStart, int AEnd, int AR1, int AG1,
-  int AB1, int AR2, int AG2, int AB2)
+void VTextureTranslation::MapToColours (int AStart, int AEnd,
+                                        int AR1, int AG1, int AB1,
+                                        int AR2, int AG2, int AB2)
 {
   guard(VTextureTranslation::MapToColours);
   int Start;
   int End;
-  int R1;
-  int G1;
-  int B1;
-  int R2;
-  int G2;
-  int B2;
-  //  Swap range if necesary.
-  if (AStart > AEnd)
-  {
+  int R1, G1, B1;
+  int R2, G2, B2;
+  // swap range if necesary
+  if (AStart > AEnd) {
     Start = AEnd;
     End = AStart;
     R1 = AR2;
@@ -824,9 +760,7 @@ void VTextureTranslation::MapToColours(int AStart, int AEnd, int AR1, int AG1,
     R2 = AR1;
     G2 = AG1;
     B2 = AB1;
-  }
-  else
-  {
+  } else {
     Start = AStart;
     End = AEnd;
     R1 = AR1;
@@ -836,9 +770,8 @@ void VTextureTranslation::MapToColours(int AStart, int AEnd, int AR1, int AG1,
     G2 = AG2;
     B2 = AB2;
   }
-  //  Check for single colour change.
-  if (Start == End)
-  {
+  // check for single colour change
+  if (Start == End) {
     Palette[Start].r = R1;
     Palette[Start].g = G1;
     Palette[Start].b = B1;
@@ -848,12 +781,13 @@ void VTextureTranslation::MapToColours(int AStart, int AEnd, int AR1, int AG1,
   float CurR = R1;
   float CurG = G1;
   float CurB = B1;
-  float RStep = (float(R2) - float(R1)) / (float(End) - float(Start));
-  float GStep = (float(G2) - float(G1)) / (float(End) - float(Start));
-  float BStep = (float(B2) - float(B1)) / (float(End) - float(Start));
-  for (int i = Start; i < End; i++, CurR += RStep, CurG += GStep,
-    CurB += BStep)
-  {
+  float RStep = (float(R2)-float(R1))/(float(End)-float(Start));
+  float GStep = (float(G2)-float(G1))/(float(End)-float(Start));
+  float BStep = (float(B2)-float(B1))/(float(End)-float(Start));
+  if (!isFiniteF(RStep)) RStep = 0;
+  if (!isFiniteF(GStep)) GStep = 0;
+  if (!isFiniteF(BStep)) BStep = 0;
+  for (int i = Start; i < End; i++, CurR += RStep, CurG += GStep, CurB += BStep) {
     Palette[i].r = int(CurR);
     Palette[i].g = int(CurG);
     Palette[i].b = int(CurB);
@@ -873,25 +807,23 @@ void VTextureTranslation::MapToColours(int AStart, int AEnd, int AR1, int AG1,
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VTextureTranslation::BuildBloodTrans
 //
 //==========================================================================
-
-void VTextureTranslation::BuildBloodTrans(int Col)
-{
+void VTextureTranslation::BuildBloodTrans (int Col) {
   guard(VTextureTranslation::BuildBloodTrans);
-  vuint8 r = (Col >> 16) & 255;
-  vuint8 g = (Col >> 8) & 255;
-  vuint8 b = Col & 255;
-  //  Don't remap colour 0.
-  for (int i = 1; i < 256; i++)
-  {
+  vuint8 r = (Col>>16)&255;
+  vuint8 g = (Col>>8)&255;
+  vuint8 b = Col&255;
+  // don't remap colour 0
+  for (int i = 1; i < 256; ++i) {
     int Bright = MAX(MAX(r_palette[i].r, r_palette[i].g), r_palette[i].b);
-    Palette[i].r = r * Bright / 255;
-    Palette[i].g = g * Bright / 255;
-    Palette[i].b = b * Bright / 255;
+    Palette[i].r = r*Bright/255;
+    Palette[i].g = g*Bright/255;
+    Palette[i].b = b*Bright/255;
     Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
   }
   CalcCrc();
@@ -899,469 +831,332 @@ void VTextureTranslation::BuildBloodTrans(int Col)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  CheckChar
 //
 //==========================================================================
-
-static bool CheckChar(char *&pStr, char Chr)
-{
-  //  Skip whitespace
-  while (*pStr && *pStr <= ' ')
-  {
-    pStr++;
-  }
-  if (*pStr != Chr)
-  {
-    return false;
-  }
-  pStr++;
+static bool CheckChar (const char *&pStr, char Chr) {
+  // skip whitespace
+  while (*pStr && *((const vuint8 *)pStr) <= ' ') ++pStr;
+  if (*pStr != Chr) return false;
+  ++pStr;
   return true;
 }
+
 
 //==========================================================================
 //
 //  VTextureTranslation::AddTransString
 //
 //==========================================================================
-
-void VTextureTranslation::AddTransString(const VStr &Str)
-{
+void VTextureTranslation::AddTransString (const VStr &Str) {
   guard(VTextureTranslation::AddTransString);
-  char *pStr = const_cast<char*>(*Str);
+  const char *pStr = *Str;
 
-  //  Parse start and end of the range
-  int Start = strtol(pStr, &pStr, 10);
-  if (!CheckChar(pStr, ':'))
-  {
-    return;
-  }
-  int End = strtol(pStr, &pStr, 10);
-  if (!CheckChar(pStr, '='))
-  {
-    return;
-  }
-  if (!CheckChar(pStr, '['))
-  {
-    int SrcStart = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ':'))
-    {
-      return;
-    }
-    int SrcEnd = strtol(pStr, &pStr, 10);
+  // parse start and end of the range
+  int Start = strtol(pStr, (char **)&pStr, 10);
+  if (!CheckChar(pStr, ':')) return;
+
+  int End = strtol(pStr, (char **)&pStr, 10);
+  if (!CheckChar(pStr, '=')) return;
+
+  if (!CheckChar(pStr, '[')) {
+    int SrcStart = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ':')) return;
+    int SrcEnd = strtol(pStr, (char **)&pStr, 10);
     MapToRange(Start, End, SrcStart, SrcEnd);
-  }
-  else
-  {
-    int R1 = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ','))
-    {
-      return;
-    }
-    int G1 = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ','))
-    {
-      return;
-    }
-    int B1 = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ']'))
-    {
-      return;
-    }
-    if (!CheckChar(pStr, ':'))
-    {
-      return;
-    }
-    if (!CheckChar(pStr, '['))
-    {
-      return;
-    }
-    int R2 = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ','))
-    {
-      return;
-    }
-    int G2 = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ','))
-    {
-      return;
-    }
-    int B2 = strtol(pStr, &pStr, 10);
-    if (!CheckChar(pStr, ']'))
-    {
-      return;
-    }
+  } else {
+    int R1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int G1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int B1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ']')) return;
+    if (!CheckChar(pStr, ':')) return;
+    if (!CheckChar(pStr, '[')) return;
+    int R2 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int G2 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int B2 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ']')) return;
     MapToColours(Start, End, R1, G1, B1, R2, G2, B2);
   }
   unguard;
 }
+
 
 //==========================================================================
 //
 //  R_ParseDecorateTranslation
 //
 //==========================================================================
-
-int R_ParseDecorateTranslation(VScriptParser *sc, int GameMax)
-{
+int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax) {
   guard(R_ParseDecorateTranslation);
-  //  First check for standard translation.
-  if (sc->CheckNumber())
-  {
-    if (sc->Number < 0 || sc->Number >= MAX(NumTranslationTables, GameMax))
-    {
-      sc->Error(va("Translation must be in range [0, %d]",
-        MAX(NumTranslationTables, GameMax) - 1));
+  // first check for standard translation
+  if (sc->CheckNumber()) {
+    if (sc->Number < 0 || sc->Number >= MAX(NumTranslationTables, GameMax)) {
+      sc->Error(va("Translation must be in range [0, %d]", MAX(NumTranslationTables, GameMax)-1));
     }
-    return (TRANSL_Standard << TRANSL_TYPE_SHIFT) + sc->Number;
+    return (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+sc->Number;
   }
 
-  //  Check for special ice translation
-  if (sc->Check("Ice"))
-  {
-    return (TRANSL_Standard << TRANSL_TYPE_SHIFT) + 7;
-  }
+  // check for special ice translation
+  if (sc->Check("Ice")) return (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+7;
 
   VTextureTranslation *Tr = new VTextureTranslation;
-
-  do
-  {
+  do {
     sc->ExpectString();
     Tr->AddTransString(sc->String);
-  }
-  while (sc->Check(","));
+  } while (sc->Check(","));
 
-  //  See if we already have this translation.
-  for (int i = 0; i < DecorateTranslations.Num(); i++)
-  {
-    if (DecorateTranslations[i]->Crc != Tr->Crc)
-    {
-      continue;
-    }
-    if (memcmp(DecorateTranslations[i]->Palette, Tr->Palette,
-      sizeof(Tr->Palette)))
-    {
-      continue;
-    }
-    //  Found a match.
+  // see if we already have this translation
+  for (int i = 0; i < DecorateTranslations.Num(); ++i) {
+    if (DecorateTranslations[i]->Crc != Tr->Crc) continue;
+    if (memcmp(DecorateTranslations[i]->Palette, Tr->Palette, sizeof(Tr->Palette))) continue;
+    // found a match
     delete Tr;
     Tr = nullptr;
-    return (TRANSL_Decorate << TRANSL_TYPE_SHIFT) + i;
+    return (TRANSL_Decorate<<TRANSL_TYPE_SHIFT)+i;
   }
 
-  //  Add it.
-  if (DecorateTranslations.Num() >= MAX_DECORATE_TRANSLATIONS)
-  {
+  // add it
+  if (DecorateTranslations.Num() >= MAX_DECORATE_TRANSLATIONS) {
     sc->Error("Too many translations in DECORATE scripts");
   }
   DecorateTranslations.Append(Tr);
-  return (TRANSL_Decorate << TRANSL_TYPE_SHIFT) +
-    DecorateTranslations.Num() - 1;
+  return (TRANSL_Decorate<<TRANSL_TYPE_SHIFT)+DecorateTranslations.Num()-1;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  R_GetBloodTranslation
 //
 //==========================================================================
-
-int R_GetBloodTranslation(int Col)
-{
+int R_GetBloodTranslation (int Col) {
   guard(R_GetBloodTranslation);
-  //  Check for duplicate blood translation.
-  for (int i = 0; i < BloodTranslations.Num(); i++)
-  {
-    if (BloodTranslations[i]->Colour == Col)
-    {
-      return (TRANSL_Blood << TRANSL_TYPE_SHIFT) + i;
+  // check for duplicate blood translation
+  for (int i = 0; i < BloodTranslations.Num(); ++i) {
+    if (BloodTranslations[i]->Colour == Col) {
+      return (TRANSL_Blood<<TRANSL_TYPE_SHIFT)+i;
     }
   }
 
-  //  Create new translation.
+  // create new translation
   VTextureTranslation *Tr = new VTextureTranslation;
   Tr->BuildBloodTrans(Col);
 
-  //  Add it.
-  if (BloodTranslations.Num() >= MAX_BLOOD_TRANSLATIONS)
-  {
+  // add it
+  if (BloodTranslations.Num() >= MAX_BLOOD_TRANSLATIONS) {
     Sys_Error("Too many blood colours in DECORATE scripts");
   }
   BloodTranslations.Append(Tr);
-  return (TRANSL_Blood << TRANSL_TYPE_SHIFT) +
-    BloodTranslations.Num() - 1;
+  return (TRANSL_Blood<<TRANSL_TYPE_SHIFT)+BloodTranslations.Num()-1;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  R_FindLightEffect
 //
 //==========================================================================
-
-VLightEffectDef *R_FindLightEffect(const VStr &Name) {
+VLightEffectDef *R_FindLightEffect (const VStr &Name) {
   guard(R_FindLightEffect);
-  for (int i = 0; i < GLightEffectDefs.Num(); i++) {
+  for (int i = 0; i < GLightEffectDefs.Num(); ++i) {
     if (Name.ICmp(*GLightEffectDefs[i].Name) == 0) return &GLightEffectDefs[i];
   }
   return nullptr;
   unguard;
 }
 
+
 //==========================================================================
 //
 //  ParseLightDef
 //
 //==========================================================================
-
-static void ParseLightDef(VScriptParser *sc, int LightType)
-{
+static void ParseLightDef (VScriptParser *sc, int LightType) {
   guard(ParseLightDef);
-  //  Get name, find it in the list or add it if it's not there yet.
+  // get name, find it in the list or add it if it's not there yet
   sc->ExpectString();
   VLightEffectDef *L = R_FindLightEffect(sc->String);
-  if (!L)
-  {
-    L = &GLightEffectDefs.Alloc();
-  }
+  if (!L) L = &GLightEffectDefs.Alloc();
 
-  //  Set default values.
+  // set default values
   L->Name = *sc->String.ToLower();
   L->Type = LightType;
   L->Colour = 0xffffffff;
-  L->Radius = 0.0;
-  L->Radius2 = 0.0;
-  L->MinLight = 0.0;
+  L->Radius = 0.0f;
+  L->Radius2 = 0.0f;
+  L->MinLight = 0.0f;
   L->Offset = TVec(0, 0, 0);
-  L->Chance = 0.0;
-  L->Interval = 0.0;
-  L->Scale = 0.0;
+  L->Chance = 0.0f;
+  L->Interval = 0.0f;
+  L->Scale = 0.0f;
 
-  //  Parse light def.
+  // parse light def
   sc->Expect("{");
-  while (!sc->Check("}"))
-  {
-    if (sc->Check("colour"))
-    {
+  while (!sc->Check("}")) {
+    if (sc->Check("colour")) {
       sc->ExpectFloat();
       float r = MID(0, sc->Float, 1);
       sc->ExpectFloat();
       float g = MID(0, sc->Float, 1);
       sc->ExpectFloat();
       float b = MID(0, sc->Float, 1);
-      L->Colour = ((int)(r * 255) << 16) | ((int)(g * 255) << 8) |
-        (int)(b * 255) | 0xff000000;
-    }
-    else if (sc->Check("radius"))
-    {
+      L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
+    } else if (sc->Check("radius")) {
       sc->ExpectFloat();
       L->Radius = sc->Float;
-    }
-    else if (sc->Check("radius2"))
-    {
+    } else if (sc->Check("radius2")) {
       sc->ExpectFloat();
       L->Radius2 = sc->Float;
-    }
-    else if (sc->Check("minlight"))
-    {
+    } else if (sc->Check("minlight")) {
       sc->ExpectFloat();
       L->MinLight = sc->Float;
-    }
-    else if (sc->Check("offset"))
-    {
+    } else if (sc->Check("offset")) {
       sc->ExpectFloat();
       L->Offset.x = sc->Float;
       sc->ExpectFloat();
       L->Offset.y = sc->Float;
       sc->ExpectFloat();
       L->Offset.z = sc->Float;
-    }
-    else
-    {
+    } else {
       sc->Error(va("Bad point light parameter (%s)", *sc->String));
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  IntensityToRadius
 //
 //==========================================================================
-
-float IntensityToRadius(float Val)
-{
-  if (Val <= 20.0)
-  {
-    return Val * 4.5;
-  }
-  if (Val <= 30.0)
-  {
-    return Val * 3.6;
-  }
-  if (Val <= 40.0)
-  {
-    return Val * 3.3;
-  }
-  if (Val <= 60.0)
-  {
-    return Val * 2.8;
-  }
-  return Val * 2.5;
+static float IntensityToRadius (float Val) {
+  if (Val <= 20.0f) return Val*4.5f;
+  if (Val <= 30.0f) return Val*3.6f;
+  if (Val <= 40.0f) return Val*3.3f;
+  if (Val <= 60.0f) return Val*2.8f;
+  return Val*2.5f;
 }
+
 
 //==========================================================================
 //
 //  ParseGZLightDef
 //
 //==========================================================================
-
-static void ParseGZLightDef(VScriptParser *sc, int LightType)
-{
+static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   guard(ParseGZLightDef);
-  //  Get name, find it in the list or add it if it's not there yet.
+  // get name, find it in the list or add it if it's not there yet
   sc->ExpectString();
   VLightEffectDef *L = R_FindLightEffect(sc->String);
-  if (!L)
-  {
-    L = &GLightEffectDefs.Alloc();
-  }
+  if (!L) L = &GLightEffectDefs.Alloc();
 
-  //  Set default values.
+  // set default values
   L->Name = *sc->String.ToLower();
   L->Type = LightType;
   L->Colour = 0xffffffff;
-  L->Radius = 0.0;
-  L->Radius2 = 0.0;
-  L->MinLight = 0.0;
+  L->Radius = 0.0f;
+  L->Radius2 = 0.0f;
+  L->MinLight = 0.0f;
   L->Offset = TVec(0, 0, 0);
-  L->Chance = 0.0;
-  L->Interval = 0.0;
-  L->Scale = 0.0;
+  L->Chance = 0.0f;
+  L->Interval = 0.0f;
+  L->Scale = 0.0f;
 
-  //  Parse light def.
+  // parse light def
   sc->Expect("{");
-  while (!sc->Check("}"))
-  {
-    if (sc->Check("color"))
-    {
+  while (!sc->Check("}")) {
+    if (sc->Check("color")) {
       sc->ExpectFloat();
       float r = MID(0, sc->Float, 1);
       sc->ExpectFloat();
       float g = MID(0, sc->Float, 1);
       sc->ExpectFloat();
       float b = MID(0, sc->Float, 1);
-      L->Colour = ((int)(r * 255) << 16) | ((int)(g * 255) << 8) |
-        (int)(b * 255) | 0xff000000;
-    }
-    else if (sc->Check("size"))
-    {
+      L->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
+    } else if (sc->Check("size")) {
       sc->ExpectNumber();
       L->Radius = IntensityToRadius(float(sc->Number));
-    }
-    else if (sc->Check("secondarySize"))
-    {
+    } else if (sc->Check("secondarySize")) {
       sc->ExpectNumber();
       L->Radius2 = IntensityToRadius(float(sc->Number));
-    }
-    else if (sc->Check("offset"))
-    {
-      // GZDoom manages Z offset as Y offset...
+    } else if (sc->Check("offset")) {
+      // GZDoom manages Z offset as Y offset
       sc->ExpectNumber();
       L->Offset.x = float(sc->Number);
       sc->ExpectNumber();
       L->Offset.z = float(sc->Number);
       sc->ExpectNumber();
       L->Offset.y = float(sc->Number);
-    }
-    else if (sc->Check("subtractive"))
-    {
+    } else if (sc->Check("subtractive")) {
       sc->ExpectNumber();
       sc->Message("Subtractive lights not supported.");
-    }
-    else if (sc->Check("chance"))
-    {
+    } else if (sc->Check("chance")) {
       sc->ExpectFloat();
       L->Chance = sc->Float;
-    }
-    else if (sc->Check("scale"))
-    {
+    } else if (sc->Check("scale")) {
       sc->ExpectFloat();
       L->Scale = sc->Float;
-    }
-    else if (sc->Check("interval"))
-    {
+    } else if (sc->Check("interval")) {
       sc->ExpectFloat();
       L->Interval = sc->Float;
-    }
-    else if (sc->Check("additive"))
-    {
+    } else if (sc->Check("additive")) {
       sc->ExpectNumber();
       sc->Message("Additive parameter not supported.");
-    }
-    else if (sc->Check("halo"))
-    {
+    } else if (sc->Check("halo")) {
       sc->ExpectNumber();
       sc->Message("Halo parameter not supported.");
-    }
-    else if (sc->Check("dontlightself"))
-    {
+    } else if (sc->Check("dontlightself")) {
       sc->ExpectNumber();
       sc->Message("DontLightSelf parameter not supported.");
-    }
-    else if (sc->Check("attenuate"))
-    {
+    } else if (sc->Check("attenuate")) {
       sc->ExpectNumber();
       sc->Message("attenuate parameter not supported.");
-    }
-    else
-    {
+    } else {
       sc->Error(va("Bad gz light parameter (%s)", *sc->String));
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  FindParticleEffect
 //
 //==========================================================================
-
-static VParticleEffectDef *FindParticleEffect(const VStr &Name)
-{
+static VParticleEffectDef *FindParticleEffect (const VStr &Name) {
   guard(FindParticleEffect);
-  for (int i = 0; i < GParticleEffectDefs.Num(); i++)
-  {
-    if (GParticleEffectDefs[i].Name == *Name)
-    {
-      return &GParticleEffectDefs[i];
-    }
+  for (int i = 0; i < GParticleEffectDefs.Num(); ++i) {
+    if (Name.ICmp(*GParticleEffectDefs[i].Name) == 0) return &GParticleEffectDefs[i];
   }
   return nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  ParseParticleEffect
 //
 //==========================================================================
-
-static void ParseParticleEffect(VScriptParser *sc)
-{
+static void ParseParticleEffect (VScriptParser *sc) {
   guard(ParseParticleEffect);
-  //  Get name, find it in the list or add it if it's not there yet.
+  // get name, find it in the list or add it if it's not there yet
   sc->ExpectString();
   VParticleEffectDef *P = FindParticleEffect(sc->String);
-  if (!P)
-  {
-    P = &GParticleEffectDefs.Alloc();
-  }
+  if (!P) P = &GParticleEffectDefs.Alloc();
 
-  //  Set default values.
+  // set default values
   P->Name = *sc->String.ToLower();
   P->Type = 0;
   P->Type2 = 0;
@@ -1376,293 +1171,181 @@ static void ParseParticleEffect(VScriptParser *sc)
   P->Duration = 0;
   P->Ramp = 0;
 
-  //  Parse light def.
+  // parse light def
   sc->Expect("{");
-  while (!sc->Check("}"))
-  {
-    if (sc->Check("type"))
-    {
-      if (sc->Check("static"))
-      {
-        P->Type = 0;
-      }
-      else if (sc->Check("explode"))
-      {
-        P->Type = 1;
-      }
-      else if (sc->Check("explode2"))
-      {
-        P->Type = 2;
-      }
-      else
-      {
-        sc->Error("Bad type");
-      }
-    }
-    else if (sc->Check("type2"))
-    {
-      if (sc->Check("static"))
-      {
-        P->Type2 = 0;
-      }
-      else if (sc->Check("explode"))
-      {
-        P->Type2 = 1;
-      }
-      else if (sc->Check("explode2"))
-      {
-        P->Type2 = 2;
-      }
-      else
-      {
-        sc->Error("Bad type");
-      }
-    }
-    else if (sc->Check("colour"))
-    {
+  while (!sc->Check("}")) {
+    if (sc->Check("type")) {
+           if (sc->Check("static")) P->Type = 0;
+      else if (sc->Check("explode")) P->Type = 1;
+      else if (sc->Check("explode2")) P->Type = 2;
+      else sc->Error("Bad type");
+    } else if (sc->Check("type2")) {
+           if (sc->Check("static")) P->Type2 = 0;
+      else if (sc->Check("explode")) P->Type2 = 1;
+      else if (sc->Check("explode2")) P->Type2 = 2;
+      else sc->Error("Bad type");
+    } else if (sc->Check("colour")) {
       sc->ExpectFloat();
       float r = MID(0, sc->Float, 1);
       sc->ExpectFloat();
       float g = MID(0, sc->Float, 1);
       sc->ExpectFloat();
       float b = MID(0, sc->Float, 1);
-      P->Colour = ((int)(r * 255) << 16) | ((int)(g * 255) << 8) |
-        (int)(b * 255) | 0xff000000;
-    }
-    else if (sc->Check("offset"))
-    {
+      P->Colour = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
+    } else if (sc->Check("offset")) {
       sc->ExpectFloat();
       P->Offset.x = sc->Float;
       sc->ExpectFloat();
       P->Offset.y = sc->Float;
       sc->ExpectFloat();
       P->Offset.z = sc->Float;
-    }
-    else if (sc->Check("count"))
-    {
+    } else if (sc->Check("count")) {
       sc->ExpectNumber();
       P->Count = sc->Number;
-    }
-    else if (sc->Check("originrandom"))
-    {
+    } else if (sc->Check("originrandom")) {
       sc->ExpectFloat();
       P->OrgRnd = sc->Float;
-    }
-    else if (sc->Check("velocity"))
-    {
+    } else if (sc->Check("velocity")) {
       sc->ExpectFloat();
       P->Velocity.x = sc->Float;
       sc->ExpectFloat();
       P->Velocity.y = sc->Float;
       sc->ExpectFloat();
       P->Velocity.z = sc->Float;
-    }
-    else if (sc->Check("velocityrandom"))
-    {
+    } else if (sc->Check("velocityrandom")) {
       sc->ExpectFloat();
       P->VelRnd = sc->Float;
-    }
-    else if (sc->Check("acceleration"))
-    {
+    } else if (sc->Check("acceleration")) {
       sc->ExpectFloat();
       P->Accel = sc->Float;
-    }
-    else if (sc->Check("gravity"))
-    {
+    } else if (sc->Check("gravity")) {
       sc->ExpectFloat();
       P->Grav = sc->Float;
-    }
-    else if (sc->Check("duration"))
-    {
+    } else if (sc->Check("duration")) {
       sc->ExpectFloat();
       P->Duration = sc->Float;
-    }
-    else if (sc->Check("ramp"))
-    {
+    } else if (sc->Check("ramp")) {
       sc->ExpectFloat();
       P->Ramp = sc->Float;
-    }
-    else
-    {
+    } else {
       sc->Error(va("Bad particle effect parameter (%s)", *sc->String));
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  ParseClassEffects
 //
 //==========================================================================
-
-static void ParseClassEffects(VScriptParser *sc,
-  TArray<VTempClassEffects>& ClassDefs)
-{
+static void ParseClassEffects (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
   guard(ParseClassEffects);
-  //  Get name, find it in the list or add it if it's not there yet.
+  // get name, find it in the list or add it if it's not there yet
   sc->ExpectString();
   VTempClassEffects *C = nullptr;
-  for (int i = 0; i < ClassDefs.Num(); i++)
-  {
-    if (ClassDefs[i].ClassName == sc->String)
-    {
+  for (int i = 0; i < ClassDefs.Num(); ++i) {
+    if (ClassDefs[i].ClassName.ICmp(sc->String) == 0) {
       C = &ClassDefs[i];
       break;
     }
   }
-  if (!C)
-  {
-    C = &ClassDefs.Alloc();
-  }
+  if (!C) C = &ClassDefs.Alloc();
 
-  //  Set defaults.
+  // set defaults
   C->ClassName = sc->String;
   C->StaticLight.Clean();
   C->SpriteEffects.Clear();
 
-  //  Parse
+  // parse
   sc->Expect("{");
-  while (!sc->Check("}"))
-  {
-    if (sc->Check("frame"))
-    {
+  while (!sc->Check("}")) {
+    if (sc->Check("frame")) {
       sc->ExpectString();
       VTempSpriteEffectDef &S = C->SpriteEffects.Alloc();
       S.Sprite = sc->String;
       sc->Expect("{");
-      while (!sc->Check("}"))
-      {
-        if (sc->Check("light"))
-        {
+      while (!sc->Check("}")) {
+        if (sc->Check("light")) {
           sc->ExpectString();
           S.Light = sc->String.ToLower();
-        }
-        else if (sc->Check("particles"))
-        {
+        } else if (sc->Check("particles")) {
           sc->ExpectString();
           S.Part = sc->String.ToLower();
-        }
-        else
-        {
+        } else {
           sc->Error("Bad frame parameter");
         }
       }
-    }
-    else if (sc->Check("static_light"))
-    {
+    } else if (sc->Check("static_light")) {
       sc->ExpectString();
       C->StaticLight = sc->String.ToLower();
-    }
-    else
-    {
+    } else {
       sc->Error("Bad class parameter");
     }
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  ParseEffectDefs
 //
 //==========================================================================
-
-static void ParseEffectDefs(VScriptParser *sc,
-  TArray<VTempClassEffects>& ClassDefs)
-{
+static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
   guard(ParseEffectDefs);
-  while (!sc->AtEnd())
-  {
-    if (sc->Check("#include"))
-    {
+  while (!sc->AtEnd()) {
+    if (sc->Check("#include")) {
       sc->ExpectString();
       int Lump = W_CheckNumForFileName(sc->String);
-      //  Check WAD lump only if it's no longer than 8 characters and
-      // has no path separator.
-      if (Lump < 0 && sc->String.Length() <= 8 &&
-        sc->String.IndexOf('/') < 0)
-      {
+      // check WAD lump only if it's no longer than 8 characters and has no path separator
+      if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
-      if (Lump < 0)
-      {
-        sc->Error(va("Lump %s not found", *sc->String));
-      }
-      ParseEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump),
-        W_CreateLumpReaderNum(Lump)), ClassDefs);
+      if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
+      ParseEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
-    else if (sc->Check("pointlight"))
-    {
-      ParseLightDef(sc, DLTYPE_Point);
-    }
-    else if (sc->Check("muzzleflashlight"))
-    {
-      ParseLightDef(sc, DLTYPE_MuzzleFlash);
-    }
-    else if (sc->Check("particleeffect"))
-    {
-      ParseParticleEffect(sc);
-    }
-    else if (sc->Check("class"))
-    {
-      ParseClassEffects(sc, ClassDefs);
-    }
-    else if (sc->Check("clear"))
-    {
-      ClassDefs.Clear();
-    }
-    else if (sc->Check("pwad"))
-    {
-      sc->Message("Tried to parse a WAD file, aborting parsing...");
-      break;
-    }
-    else
-    {
-      sc->Error(va("Unknown command (%s)", *sc->String));
-    }
+    else if (sc->Check("pointlight")) ParseLightDef(sc, DLTYPE_Point);
+    else if (sc->Check("muzzleflashlight")) ParseLightDef(sc, DLTYPE_MuzzleFlash);
+    else if (sc->Check("particleeffect")) ParseParticleEffect(sc);
+    else if (sc->Check("class")) ParseClassEffects(sc, ClassDefs);
+    else if (sc->Check("clear")) ClassDefs.Clear();
+    else sc->Error(va("Unknown command (%s)", *sc->String));
   }
   delete sc;
-  sc = nullptr;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  ParseGZDoomEffectDefs
 //
 //==========================================================================
-
 static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
   guard(ParseEffectDefs);
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
       int Lump = W_CheckNumForFileName(sc->String);
-      //  Check WAD lump only if it's no longer than 8 characters and
-      // has no path separator.
+      // check WAD lump only if it's no longer than 8 characters and has no path separator
       if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
       ParseGZDoomEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
-    } else if (sc->Check("pointlight")) {
-      ParseGZLightDef(sc, DLTYPE_Point);
-    } else if (sc->Check("pulselight")) {
-      ParseGZLightDef(sc, DLTYPE_Pulse);
-    } else if (sc->Check("flickerlight")) {
-      ParseGZLightDef(sc, DLTYPE_Flicker);
-    } else if (sc->Check("flickerlight2")) {
-      ParseGZLightDef(sc, DLTYPE_FlickerRandom);
-    } else if (sc->Check("sectorlight")) {
-      ParseGZLightDef(sc, DLTYPE_Sector);
-    } else if (sc->Check("object")) {
-      ParseClassEffects(sc, ClassDefs);
-    } else if (sc->Check("skybox")) {
-      R_ParseMapDefSkyBoxesScript(sc);
-    } else if (sc->Check("brightmap")) {
+    }
+    else if (sc->Check("pointlight")) ParseGZLightDef(sc, DLTYPE_Point);
+    else if (sc->Check("pulselight")) ParseGZLightDef(sc, DLTYPE_Pulse);
+    else if (sc->Check("flickerlight")) ParseGZLightDef(sc, DLTYPE_Flicker);
+    else if (sc->Check("flickerlight2")) ParseGZLightDef(sc, DLTYPE_FlickerRandom);
+    else if (sc->Check("sectorlight")) ParseGZLightDef(sc, DLTYPE_Sector);
+    else if (sc->Check("object")) ParseClassEffects(sc, ClassDefs);
+    else if (sc->Check("skybox")) R_ParseMapDefSkyBoxesScript(sc);
+    else if (sc->Check("brightmap")) {
       if (GArgs.CheckParm("-Wbrightmaps") || GArgs.CheckParm("-Wall")) sc->Message("Brightmaps are not supported.");
       sc->SkipBracketed();
     } else if (sc->Check("glow")) {
@@ -1671,79 +1354,11 @@ static void ParseGZDoomEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> 
     } else if (sc->Check("hardwareshader")) {
       sc->Message("Shaders are not supported");
       sc->SkipBracketed();
-    } else if (sc->Check("pwad")) {
-      sc->Error("Tried to parse a WAD file, aborting...");
     } else {
       sc->Error(va("Unknown command (%s)", *sc->String));
     }
   }
   delete sc;
-  unguard;
-}
-
-//==========================================================================
-//
-//  SetClassFieldInt
-//
-//==========================================================================
-
-static void SetClassFieldInt(VClass *Class, const char *FieldName,
-  int Value, int Idx = 0)
-{
-  guard(SetClassFieldInt);
-  VField *F = Class->FindFieldChecked(FieldName);
-  vint32 *Ptr = (vint32*)(Class->Defaults + F->Ofs);
-  Ptr[Idx] = Value;
-  unguard;
-}
-
-//==========================================================================
-//
-//  SetClassFieldBool
-//
-//==========================================================================
-
-static void SetClassFieldBool(VClass *Class, const char *FieldName, int Value)
-{
-  guard(SetClassFieldBool);
-  VField *F = Class->FindFieldChecked(FieldName);
-  vuint32 *Ptr = (vuint32*)(Class->Defaults + F->Ofs);
-  if (Value)
-    *Ptr |= F->Type.BitMask;
-  else
-    *Ptr &= ~F->Type.BitMask;
-  unguard;
-}
-
-//==========================================================================
-//
-//  SetClassFieldFloat
-//
-//==========================================================================
-
-static void SetClassFieldFloat(VClass *Class, const char *FieldName,
-  float Value)
-{
-  guard(SetClassFieldFloat);
-  VField *F = Class->FindFieldChecked(FieldName);
-  float *Ptr = (float*)(Class->Defaults + F->Ofs);
-  *Ptr = Value;
-  unguard;
-}
-
-//==========================================================================
-//
-//  SetClassFieldVec
-//
-//==========================================================================
-
-static void SetClassFieldVec(VClass *Class, const char *FieldName,
-  const TVec &Value)
-{
-  guard(SetClassFieldVec);
-  VField *F = Class->FindFieldChecked(FieldName);
-  TVec *Ptr = (TVec*)(Class->Defaults + F->Ofs);
-  *Ptr = Value;
   unguard;
 }
 
@@ -1775,7 +1390,7 @@ void R_ParseEffectDefs () {
   // add effects to the classes
   for (int i = 0; i < ClassDefs.Num(); ++i) {
     VTempClassEffects &CD = ClassDefs[i];
-    VClass *Cls = VClass::FindClass(*CD.ClassName);
+    VClass *Cls = VClass::FindClassNoCase(*CD.ClassName);
     if (Cls) {
       // get class replacement
       Cls = Cls->GetReplacement();
