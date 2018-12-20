@@ -245,6 +245,9 @@ public:
                                   VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
                                   bool Interpolate, bool AllowTransparency) = 0;
   virtual void GetRealWindowSize (int *rw, int *rh) = 0;
+
+  // copy current FBO to secondary FBO
+  virtual void CopyToSecondaryFBO () = 0;
 };
 
 

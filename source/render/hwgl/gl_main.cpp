@@ -79,6 +79,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   mainFBOColorTid = 0;
   mainFBODepthStencilTid = 0;
 
+  secondFBO = 0;
+  secondFBOColorTid = 0;
+
   ambLightFBO = 0;
   ambLightFBOColorTid = 0;
 
@@ -464,11 +467,21 @@ void VOpenGLDrawer::InitResolution () {
     mainFBODepthStencilTid = 0;
   }
 
+  if (secondFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (secondFBOColorTid) glDeleteTextures(1, &secondFBOColorTid);
+    glDeleteFramebuffers(1, &secondFBO);
+    secondFBO = 0;
+    secondFBOColorTid = 0;
+  }
+
   if (ambLightFBO) {
     glBindFramebuffer(GL_FRAMEBUFFER, ambLightFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (mainFBOColorTid) glDeleteTextures(1, &ambLightFBOColorTid);
+    if (ambLightFBOColorTid) glDeleteTextures(1, &ambLightFBOColorTid);
     glDeleteFramebuffers(1, &ambLightFBO);
     ambLightFBO = 0;
     ambLightFBOColorTid = 0;
@@ -537,6 +550,31 @@ void VOpenGLDrawer::InitResolution () {
 
   glClearStencil(0);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+
+  // allocate secondary FBO object
+  glGenFramebuffers(1, &secondFBO);
+  if (secondFBO == 0) Sys_Error("OpenGL: cannot create secondary FBO");
+  glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
+
+  // attach 2D texture to this FBO
+  glGenTextures(1, &secondFBOColorTid);
+  if (secondFBOColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for main FBO");
+  glBindTexture(GL_TEXTURE_2D, secondFBOColorTid);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+  //glnvg__checkError(gl, "glnvg__allocFBO: glTexParameterf: GL_TEXTURE_WRAP_S");
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, /*GL_CLAMP_TO_EDGE*/ClampToEdge);
+
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  // empty texture
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenWidth, ScreenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, secondFBOColorTid, 0);
 
 
   // allocate ambient FBO object
@@ -1336,6 +1374,61 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
   }
   CurrentFade = NewFade;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::CopyToSecondaryFBO
+//
+//  copy main FBO texture to secondary FBO
+//
+//==========================================================================
+void VOpenGLDrawer::CopyToSecondaryFBO () {
+  if (!mainFBO || !secondFBO) return;
+
+  glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, secondFBO);
+  glBindTexture(GL_TEXTURE_2D, mainFBOColorTid);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+
+  glColor4f(1.0, 1.0, 1.0, 1.0);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_BLEND);
+  //glDisable(GL_STENCIL_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glEnable(GL_TEXTURE_2D);
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE/*GL_TRUE*/);
+  p_glUseProgramObjectARB(0);
+
+  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex2i(0, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2i(ScreenWidth, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2i(ScreenWidth, ScreenHeight);
+    glTexCoord2f(0.0f, 0.0f); glVertex2i(0, ScreenHeight);
+  glEnd();
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+
+  glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+  glPopAttrib();
 }
 
 

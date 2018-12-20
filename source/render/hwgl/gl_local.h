@@ -503,6 +503,8 @@ public:
   // advanced drawing.
   virtual bool SupportsAdvancedRendering () override;
 
+  virtual void CopyToSecondaryFBO () override;
+
   static inline float getAlphaThreshold () { float res = gl_alpha_threshold; if (res < 0) res = 0; else if (res > 1) res = 1; return res; }
 
   //virtual void GetRealWindowSize (int *rw, int *rh) override;
@@ -569,6 +571,9 @@ protected:
   GLuint mainFBO;
   GLuint mainFBOColorTid;
   GLuint mainFBODepthStencilTid;
+
+  GLuint secondFBO; // for transition effects
+  GLuint secondFBOColorTid;
 
   // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
   GLuint ambLightFBO;
