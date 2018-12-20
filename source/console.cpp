@@ -293,6 +293,9 @@ bool C_Responder (event_t *ev) {
 
   // we are iterested only in key down events
   if (ev->type != ev_keydown) return false;
+  // k8: nope, eat all keyboard events
+  //     oops, console (de)activation is processed down the chain
+  //if (ev->type != ev_keydown && ev->type != ev_keyup) return false;
 
   switch (ev->data1) {
     // close console

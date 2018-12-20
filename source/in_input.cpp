@@ -383,6 +383,12 @@ void VInput::ProcessEvents () {
     if (MN_Responder(ev)) continue; // menu
     if (GRoot->Responder(ev)) continue; // root widget
 
+    //k8: this hack prevents "keyup" to be propagated when console is active
+    //    this should be in console responder, but...
+    //if (C_Active() && (ev->type == ev_keydown || ev->type == ev_keyup)) continue;
+    // actually, when console is active, it eats everything
+    if (C_Active()) continue;
+
     if (cl && !GClGame->intermission) {
       if (KBCheatProcessor(ev)) continue; // cheatcode typed
       if (SB_Responder(ev)) continue; // status window ate it
