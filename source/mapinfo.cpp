@@ -959,6 +959,8 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       skipUnimplementedCommand(sc, true);
     } else if (sc->Check("Grinding_PolyObj")) {
       skipUnimplementedCommand(sc, false);
+    } else if (sc->Check("UsePlayerStartZ")) {
+      skipUnimplementedCommand(sc, false);
     } else {
       if (newFormat) {
         if (sc->Check("}")) break;
