@@ -359,7 +359,7 @@ private:
 
   // map loading helpers
   int FindGLNodes (VName) const;
-  int TexNumForName (const char *, int, bool=false) const;
+  int TexNumForName (const char *name, int Type, bool CMap=false, bool fromUDMF=false) const;
   int TexNumOrColour (const char *, int, bool &, vuint32 &) const;
   void CreateSides ();
   void FinaliseLines ();

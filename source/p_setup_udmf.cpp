@@ -238,11 +238,11 @@ void VUdmfParser::ParseSector(VLevel *Level)
     }
     else if (!Key.ICmp("texturefloor"))
     {
-      S.floor.pic = Level->TexNumForName(*Val, TEXTYPE_Flat);
+      S.floor.pic = Level->TexNumForName(*Val, TEXTYPE_Flat, false, true);
     }
     else if (!Key.ICmp("textureceiling"))
     {
-      S.ceiling.pic = Level->TexNumForName(*Val, TEXTYPE_Flat);
+      S.ceiling.pic = Level->TexNumForName(*Val, TEXTYPE_Flat, false, true);
     }
     else if (!Key.ICmp("lightlevel"))
     {
@@ -1217,14 +1217,14 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
         sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower), TEXTYPE_Wall, true, true);
         if (sd->MidTexture == -1) sd->MidTexture = GTextureManager.CheckNumForName(VName(*Src.MidTexture, VName::AddLower8), TEXTYPE_Wall, true, true);
         if (sd->MidTexture == -1) sd->MidTexture = 0;
-        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall);
-        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall);
+        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall, false, true);
+        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, false, true);
         break;
 
       case LNSPEC_TransferHeights:
-        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, true);
-        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall, true);
-        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, true);
+        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, true, true);
+        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall, true, true);
+        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, true, true);
         break;
 
       case LNSPEC_StaticInit:
@@ -1233,7 +1233,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
           bool HaveFade;
           vuint32 Col;
           vuint32 Fade;
-          sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall);
+          sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, false, true);
           int TmpTop = TexNumOrColour(*Src.TopTexture, TEXTYPE_Wall, HaveCol, Col);
           sd->BottomTexture = TexNumOrColour(*Src.BotTexture, TEXTYPE_Wall, HaveFade, Fade);
           if (HaveCol || HaveFade) {
@@ -1249,9 +1249,9 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
         break;
 
       default:
-        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall);
-        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall);
-        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall);
+        sd->MidTexture = TexNumForName(*Src.MidTexture, TEXTYPE_Wall, false, true);
+        sd->TopTexture = TexNumForName(*Src.TopTexture, TEXTYPE_Wall, false, true);
+        sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, false, true);
         break;
     }
   }

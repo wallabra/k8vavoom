@@ -68,6 +68,8 @@ static VCvarI loader_cache_compression_level("loader_cache_compression_level", "
 
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", 0/*CVAR_Archive*/);
 
+static VCvarB r_udmf_allow_extra_textures("r_udmf_allow_extra_textures", false, "Allow force-loading UDMF textures? (WARNING: savegames WILL crash!)", CVAR_Archive);
+
 
 extern VCvarI r_max_portal_depth;
 extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
@@ -3071,13 +3073,13 @@ void VLevel::LoadACScripts (int Lump) {
 //  Retrieval, get a texture or flat number for a name.
 //
 //==========================================================================
-int VLevel::TexNumForName (const char *name, int Type, bool CMap) const {
+int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF) const {
   guard(VLevel::TexNumForName);
   if (!name || !name[0]) return GTextureManager.DefaultTexture; // just in case
   int i = -1;
   // try filename if slash is found
   const char *slash = strchr(name, '/');
-  if (slash && slash[1]) {
+  if (slash && slash[1] && fromUDMF && r_udmf_allow_extra_textures) {
     VName loname = VName(name, VName::AddLower);
     i = GTextureManager.AddFileTextureChecked(loname, Type);
     if (i != -1) return i;
@@ -3094,7 +3096,16 @@ int VLevel::TexNumForName (const char *name, int Type, bool CMap) const {
     static TStrSet texNumForNameWarned;
     if (CMap) return 0;
     VName loname = VName(name, VName::AddLower);
-    if (!texNumForNameWarned.put(*loname)) GCon->Logf("VLevel::TexNumForName: '%s' not found", *loname);
+    if (!texNumForNameWarned.put(*loname)) GCon->Logf(NAME_Warning, "VLevel::TexNumForName: '%s' not found", *loname);
+    if (fromUDMF && r_udmf_allow_extra_textures) {
+      if (!slash) {
+        i = GTextureManager.AddFileTextureChecked(loname, Type);
+        if (i != -1) {
+          GCon->Logf(NAME_Warning, "VLevel::TexNumForName: force-loaded '%s'", *loname);
+          return i;
+        }
+      }
+    }
     return GTextureManager.DefaultTexture;
   } else {
     //static TStrSet texReported;
