@@ -901,7 +901,9 @@ int R_ParseDecorateTranslation (VScriptParser *sc, int GameMax) {
   // first check for standard translation
   if (sc->CheckNumber()) {
     if (sc->Number < 0 || sc->Number >= MAX(NumTranslationTables, GameMax)) {
-      sc->Error(va("Translation must be in range [0, %d]", MAX(NumTranslationTables, GameMax)-1));
+      //sc->Error(va("Translation must be in range [0, %d]", MAX(NumTranslationTables, GameMax)-1));
+      GCon->Logf(NAME_Warning, "%s: Translation must be in range [0, %d]", *sc->GetLoc().toStringNoCol(), MAX(NumTranslationTables, GameMax)-1);
+      sc->Number = 2; // red
     }
     return (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+sc->Number;
   }
