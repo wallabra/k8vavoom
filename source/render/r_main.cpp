@@ -67,7 +67,7 @@ VCvarF r_fog_start("r_fog_start", "1.0", "Fog start distance.");
 VCvarF r_fog_end("r_fog_end", "2048.0", "Fog end distance.");
 VCvarF r_fog_density("r_fog_density", "0.5", "Fog density.");
 
-VCvarI aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
+VCvarI aspect_ratio("r_aspect_ratio", "0", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
 VCvarB r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
 VCvarB r_vsync("r_vsync", true, "VSync mode.", CVAR_Archive);
 VCvarB r_vsync_adaptive("r_vsync_adaptive", true, "Use adaptive VSync mode.", CVAR_Archive);
