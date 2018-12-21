@@ -220,7 +220,7 @@ final void DebugCheckMidTex () {
   if (tr.didhit && tr.line) {
     float top, bot;
     bool ok = P_GetMidTexturePosition(tr.line, tr.side, out top, out bot);
-    print("DebugCheckMidTex(%B): hitpoint=%s; top=%s; bot=%s", ok, tr.hit, top, bot);
+    print("DebugCheckMidTex(%B): hitpoint=%s; top=%s; bot=%s; flags=0x%08x", ok, tr.hit, top, bot, (tr.line ? tr.line->flags : 0));
 
     auto real_hit_point = tr.hit;
     auto hit_point = real_hit_point-(4.0*aimDir);
