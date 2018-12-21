@@ -1,0 +1,65 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**    $Id$
+//**
+//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**
+//**    This program is free software; you can redistribute it and/or
+//**  modify it under the terms of the GNU General Public License
+//**  as published by the Free Software Foundation; either version 2
+//**  of the License, or (at your option) any later version.
+//**
+//**    This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**************************************************************************
+//
+//  Lump iteration
+//
+//==========================================================================
+struct WadLumpIteratorInfoNS {
+  EWadNamespace ns;
+  int curr;
+}
+
+static final bool WadIterateNS_opIterInit (out WadLumpIteratorInfoNS it, EWadNamespace ns) {
+  it.ns = ns;
+  it.curr = W_IterateNS(-1, ns);
+  return (it.curr >= 0);
+}
+
+static final bool WadIterateNS_opIterNext (out WadLumpIteratorInfoNS it, out int lumpnum) {
+  if (it.curr < 0) return false; // done
+  lumpnum = it.curr;
+  it.curr = W_IterateNS(it.curr, it.ns);
+  return true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct WadLumpIteratorInfoName {
+  string fname;
+  int curr;
+}
+
+static final bool WadIterateFile_opIterInit (out WadLumpIteratorInfoName it, string fname) {
+  it.fname = fname;
+  it.curr = W_IterateFile(-1, fname);
+  return (it.curr >= 0);
+}
+
+static final bool WadIterateFile_opIterNext (out WadLumpIteratorInfoName it, out int lumpnum) {
+  if (it.curr < 0) return false; // done
+  lumpnum = it.curr;
+  it.curr = W_IterateFile(it.curr, it.fname);
+  return true;
+}

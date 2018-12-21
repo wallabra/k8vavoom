@@ -177,3 +177,6 @@
 
   DECLARE_FUNCTION(SetNamePutElement)
   DECLARE_FUNCTION(SetNameCheckElement)
+
+  DECLARE_FUNCTION(RayLineIntersection2D)
+  DECLARE_FUNCTION(RayLineIntersection2DDir)

@@ -498,45 +498,7 @@ native static final int W_GetNumForName (name Name, optional EWadNamespace NS /*
 // you can use result of `W_LumpFile()` with the following
 native static final int W_CheckNumForNameInFile (name Name, int File, optional EWadNamespace NS /*= WADNS_Global*/);
 
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct WadLumpIteratorInfoNS {
-  EWadNamespace ns;
-  int curr;
-}
-
-static final bool WadIterateNS_opIterInit (out WadLumpIteratorInfoNS it, EWadNamespace ns) {
-  it.ns = ns;
-  it.curr = W_IterateNS(-1, ns);
-  return (it.curr >= 0);
-}
-
-static final bool WadIterateNS_opIterNext (out WadLumpIteratorInfoNS it, out int lumpnum) {
-  if (it.curr < 0) return false; // done
-  lumpnum = it.curr;
-  it.curr = W_IterateNS(it.curr, it.ns);
-  return true;
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct WadLumpIteratorInfoName {
-  string fname;
-  int curr;
-}
-
-static final bool WadIterateFile_opIterInit (out WadLumpIteratorInfoName it, string fname) {
-  it.fname = fname;
-  it.curr = W_IterateFile(-1, fname);
-  return (it.curr >= 0);
-}
-
-static final bool WadIterateFile_opIterNext (out WadLumpIteratorInfoName it, out int lumpnum) {
-  if (it.curr < 0) return false; // done
-  lumpnum = it.curr;
-  it.curr = W_IterateFile(it.curr, it.fname);
-  return true;
-}
+#include "Object_vv_lumpiter.vc"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

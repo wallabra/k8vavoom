@@ -333,36 +333,8 @@ native static final bool IsPlainFloor (const ref TPlane plane); // valid only fo
 native static final bool IsPlainCeiling (const ref TPlane plane); // valid only for ceilings
 native static final bool IsSlopedFlat (const ref TPlane plane);
 
-
-//==========================================================================
-//
-//  RayLineIntersection
-//
-//==========================================================================
-static final TVec RayLineIntersection (TVec rayO, TVec rayE, TVec vv1, TVec vv2) {
-  TVec rayDir = rayE-rayO;
-  rayDir.z = 0; // not interested
-  //rayDir = Normalise(rayDir);
-  float den = (vv2.y-vv1.y)*rayDir.x-(vv2.x-vv1.x)*rayDir.y;
-  if (fabs(den) < 0.01) return rayO;
-  float e = rayO.y-vv1.y;
-  float f = rayO.x-vv1.x;
-  float invden = 1.0/den;
-  float ua = ((vv2.x-vv1.x)*e-(vv2.y-vv1.y)*f)*invden;
-  if (ua >= 0 && ua <= 1) {
-    float ub = (rayDir.x*e-rayDir.y*f)*invden;
-    if (ua != 0 || ub != 0) {
-      TVec res;
-      res.x = rayO.x+ua*rayDir.x;
-      res.y = rayO.y+ua*rayDir.y;
-      res.z = rayO.z;
-      return res;
-    }
-  }
-  return rayO;
-}
-
-
+native static final TVec RayLineIntersection2D (const TVec rayO, const TVec rayE, const TVec vv1, const TVec vv2);
+native static final TVec RayLineIntersection2DDir (const TVec rayO, const TVec rayDir, const TVec vv1, const TVec vv2);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

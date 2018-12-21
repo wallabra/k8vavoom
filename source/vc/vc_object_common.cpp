@@ -1113,3 +1113,48 @@ IMPLEMENT_FUNCTION(VObject, SetNameCheckElement) {
   P_GET_NAME(setName);
   RET_BOOL(setNameCheck(setName, value));
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static TVec RayLineIntersection2D (TVec rayO, TVec rayDir, TVec vv1, TVec vv2) {
+  rayDir.z = 0; // not interested
+  //rayDir = Normalise(rayDir);
+  const float den = (vv2.y-vv1.y)*rayDir.x-(vv2.x-vv1.x)*rayDir.y;
+  //if (fabs(den) < 0.00001) return rayO;
+  const float e = rayO.y-vv1.y;
+  const float f = rayO.x-vv1.x;
+  const float invden = 1.0/den;
+  if (!isFiniteF(invden)) return rayO;
+  const float ua = ((vv2.x-vv1.x)*e-(vv2.y-vv1.y)*f)*invden;
+  if (ua >= 0 && ua <= 1) {
+    const float ub = (rayDir.x*e-rayDir.y*f)*invden;
+    if (ua != 0 || ub != 0) {
+      TVec res;
+      res.x = rayO.x+ua*rayDir.x;
+      res.y = rayO.y+ua*rayDir.y;
+      res.z = rayO.z;
+      return res;
+    }
+  }
+  return rayO;
+}
+
+
+// native static final TVec RayLineIntersection2D (TVec rayO, TVec rayE, TVec vv1, TVec vv2);
+IMPLEMENT_FUNCTION(VObject, RayLineIntersection2D) {
+  P_GET_VEC(vv2);
+  P_GET_VEC(vv1);
+  P_GET_VEC(rayE);
+  P_GET_VEC(rayO);
+  const TVec rayDir = rayE-rayO;
+  RET_VEC(RayLineIntersection2D(rayO, rayDir, vv1, vv2));
+}
+
+// native static final TVec RayLineIntersection2DDir (TVec rayO, TVec rayDir, TVec vv1, TVec vv2);
+IMPLEMENT_FUNCTION(VObject, RayLineIntersection2DDir) {
+  P_GET_VEC(vv2);
+  P_GET_VEC(vv1);
+  P_GET_VEC(rayDir);
+  P_GET_VEC(rayO);
+  RET_VEC(RayLineIntersection2D(rayO, rayDir, vv1, vv2));
+}
