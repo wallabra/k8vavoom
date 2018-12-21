@@ -1406,6 +1406,9 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
               if (sb->TopTexture <= 0 && hiz >= sec->ceiling.TexZ) { /*!GCon->Logf("  *** higher than ceiling, and no top texture");*/ continue; }
               if (sb->BottomTexture <= 0 && loz <= sec->floor.TexZ) { /*!GCon->Logf("  *** lower than floor, and no bottom texture");*/ continue; }
             }
+          } else {
+                 if ((li->flags&ML_DONTPEGBOTTOM) != 0) slideWithFloor = true;
+            else if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
           }
         }
         int count = 0;
@@ -1478,17 +1481,18 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       // setup misc flags
       decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
 
+      sector_t *slidesec = (li->sidenum[1-sidenum] >= 0 ? Sides[li->sidenum[1-sidenum]].Sector : Sides[li->sidenum[sidenum]].Sector);
       // setup curz and pegs
       if (slideWithFloor) {
-        sector_t *bsec = Sides[li->sidenum[1-sidenum]].Sector;
+        //sector_t *slidesec = Sides[li->sidenum[1-sidenum]].Sector;
         decal->flags |= decal_t::SlideFloor|(sidenum == 0 ? decal_t::SideDefOne : 0);
-        decal->curz -= bsec->floor.TexZ;
-        decal->bsec = bsec;
+        decal->curz -= slidesec->floor.TexZ;
+        decal->bsec = slidesec;
       } else if (slideWithCeiling) {
-        sector_t *bsec = Sides[li->sidenum[1-sidenum]].Sector;
+        //sector_t *slidesec = Sides[li->sidenum[1-sidenum]].Sector;
         decal->flags |= decal_t::SlideCeil|(sidenum == 0 ? decal_t::SideDefOne : 0);
-        decal->curz -= bsec->ceiling.TexZ;
-        decal->bsec = bsec;
+        decal->curz -= slidesec->ceiling.TexZ;
+        decal->bsec = slidesec;
       }
     }
   }
