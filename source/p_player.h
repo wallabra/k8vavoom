@@ -23,59 +23,39 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 class VNetConnection;
 class VClientGameBase;
 
-//
-//  Constants for FixedColourmap
-//
-enum
-{
-  NUMCOLOURMAPS   = 32,
-  INVERSECOLOURMAP  = 32,
-  GOLDCOLOURMAP   = 33,
-  REDCOLOURMAP    = 34,
-  GREENCOLOURMAP    = 35,
+// constants for FixedColourmap
+enum {
+  NUMCOLOURMAPS    = 32,
+  INVERSECOLOURMAP = 32,
+  GOLDCOLOURMAP    = 33,
+  REDCOLOURMAP     = 34,
+  GREENCOLOURMAP   = 35,
 };
 
-//
+
 // Overlay psprites are scaled shapes
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
-//
-enum psprnum_t
-{
+enum psprnum_t {
   ps_weapon,
-  ps_flash, //  Only DOOM uses it
+  ps_flash, // only DOOM uses it
   NUMPSPRITES
 };
 
-//
-// Player states.
-//
-enum playerstate_t
-{
-  // Playing or camping.
-  PST_LIVE,
-  // Dead on the ground, view follows killer.
-  PST_DEAD,
-  // Ready to restart/respawn???
-  PST_REBORN
+// player states
+enum playerstate_t {
+  PST_LIVE, // playing or camping
+  PST_DEAD, // dead on the ground, view follows killer
+  PST_REBORN, // ready to restart/respawn
 };
 
-//
-// Button/action code definitions.
-//
-enum
-{
-  BT_ATTACK     = 1,    // Press "Fire".
-  BT_USE        = 2,    // Use button, to open doors, activate switches.
+// button/action code definitions
+enum {
+  BT_ATTACK     = 1, // press "fire"
+  BT_USE        = 2, // use button, to open doors, activate switches
   BT_JUMP       = 4,
   BT_ALT_ATTACK = 8,
 
@@ -91,17 +71,14 @@ enum
   BT_BACKWARD   = 0x00020000,
 };
 
-struct VViewState
-{
+struct VViewState {
   VState *State;
-  float     StateTime;
-  float     SX;
-  float     SY;
+  float StateTime;
+  float SX;
+  float SY;
 };
 
-//
-// Extended player object info: player_t
-//
+// extended player object info: player_t
 class VBasePlayer : public VGameObject {
   DECLARE_CLASS(VBasePlayer, VGameObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VBasePlayer)
@@ -139,14 +116,14 @@ class VBasePlayer : public VGameObject {
   vuint8 TranslEnd;
   vint32 Colour;
 
-  float ClientForwardMove;  // *2048 for move
-  float ClientSideMove;   // *2048 for move
-  float ForwardMove;  // *2048 for move
-  float SideMove;   // *2048 for move
-  float FlyMove;    // fly up/down/centreing
-  /*vuint8*/vuint32 Buttons;    // fire, use
-  /*vuint8*/vuint32 Impulse;    // weapon changes, inventory, etc
-  //  For ACS
+  float ClientForwardMove; // *2048 for move
+  float ClientSideMove; // *2048 for move
+  float ForwardMove; // *2048 for move
+  float SideMove; // *2048 for move
+  float FlyMove; // fly up/down/centreing
+  /*vuint8*/vuint32 Buttons; // fire, use
+  /*vuint8*/vuint32 Impulse; // weapon changes, inventory, etc
+  // for ACS
   vuint32 AcsCurrButtonsPressed; // was pressed after last copy
   vuint32 AcsCurrButtons; // current state
   vuint32 AcsButtons; // what ACS will see
@@ -165,35 +142,35 @@ class VBasePlayer : public VGameObject {
 
   TAVec ViewAngles;
 
-  // This is only used between levels,
-  // mo->health is used during levels.
+  // this is only used between levels
+  // mo->health is used during levels
   vint32 Health;
 
-  // Frags, kills of other players.
+  // frags, kills of other players
   vint32 Frags;
   vint32 Deaths;
 
-  // For intermission stats.
+  // for intermission stats
   vint32 KillCount;
   vint32 ItemCount;
   vint32 SecretCount;
 
-  // So gun flashes light up areas.
+  // so gun flashes light up areas
   vuint8 ExtraLight;
 
-  // For lite-amp and invulnarability powers
+  // for lite-amp and invulnarability powers
   vuint8 FixedColourmap;
 
-  // Colour shifts for damage, powerups and content types
+  // colour shifts for damage, powerups and content types
   vuint32 CShift;
 
-  // Overlay view sprites (gun, etc).
+  // overlay view sprites (gun, etc)
   VViewState ViewStates[NUMPSPRITES];
   vint32 DispSpriteFrame[NUMPSPRITES]; // see entity code for explanation
   VName DispSpriteName[NUMPSPRITES]; // see entity code for explanation
   float PSpriteSY;
 
-  float WorldTimer;       // total time the player's been playing
+  float WorldTimer; // total time the player's been playing
 
   vuint8 ClientNum;
 
@@ -300,76 +277,20 @@ public:
 
   DECLARE_FUNCTION(ServerSetUserInfo)
 
-  //  Player events.
-  void eventPutClientIntoServer()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_PutClientIntoServer);
-  }
-  void eventSpawnClient()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_SpawnClient);
-  }
-  void eventNetGameReborn()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_NetGameReborn);
-  }
-  void eventDisconnectClient()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_DisconnectClient);
-  }
-  void eventUserinfoChanged()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_UserinfoChanged);
-  }
-  void eventPlayerExitMap(bool clusterChange)
-  {
-    P_PASS_SELF;
-    P_PASS_BOOL(clusterChange);
-    EV_RET_VOID(NAME_PlayerExitMap);
-  }
-  void eventPlayerBeforeExitMap()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_PlayerBeforeExitMap);
-  }
-  void eventPlayerTick(float deltaTime)
-  {
-    P_PASS_SELF;
-    P_PASS_FLOAT(deltaTime);
-    EV_RET_VOID(NAME_PlayerTick);
-  }
-  void eventClientTick(float DeltaTime)
-  {
-    P_PASS_SELF;
-    P_PASS_FLOAT(DeltaTime);
-    EV_RET_VOID(NAME_ClientTick);
-  }
-  void eventSetViewPos()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_SetViewPos);
-  }
-  void eventPreTravel()
-  {
-    P_PASS_SELF;
-    EV_RET_VOID(NAME_PreTravel);
-  }
-  void eventUseInventory(VStr Inv)
-  {
-    P_PASS_SELF;
-    P_PASS_STR(Inv);
-    EV_RET_VOID(NAME_UseInventory);
-  }
-  bool eventCheckDoubleFiringSpeed()
-  {
-    P_PASS_SELF;
-    EV_RET_BOOL(NAME_CheckDoubleFiringSpeed);
-  }
+  // player events
+  void eventPutClientIntoServer () { P_PASS_SELF; EV_RET_VOID(NAME_PutClientIntoServer); }
+  void eventSpawnClient () { P_PASS_SELF; EV_RET_VOID(NAME_SpawnClient); }
+  void eventNetGameReborn () { P_PASS_SELF; EV_RET_VOID(NAME_NetGameReborn); }
+  void eventDisconnectClient () { P_PASS_SELF; EV_RET_VOID(NAME_DisconnectClient); }
+  void eventUserinfoChanged () { P_PASS_SELF; EV_RET_VOID(NAME_UserinfoChanged); }
+  void eventPlayerExitMap (bool clusterChange) { P_PASS_SELF; P_PASS_BOOL(clusterChange); EV_RET_VOID(NAME_PlayerExitMap); }
+  void eventPlayerBeforeExitMap () { P_PASS_SELF; EV_RET_VOID(NAME_PlayerBeforeExitMap); }
+  void eventPlayerTick (float deltaTime) { P_PASS_SELF; P_PASS_FLOAT(deltaTime); EV_RET_VOID(NAME_PlayerTick); }
+  void eventClientTick (float DeltaTime) { P_PASS_SELF; P_PASS_FLOAT(DeltaTime); EV_RET_VOID(NAME_ClientTick); }
+  void eventSetViewPos () { P_PASS_SELF; EV_RET_VOID(NAME_SetViewPos); }
+  void eventPreTravel () { P_PASS_SELF; EV_RET_VOID(NAME_PreTravel); }
+  void eventUseInventory (const VStr &Inv) { P_PASS_SELF; P_PASS_STR(Inv); EV_RET_VOID(NAME_UseInventory); }
+  bool eventCheckDoubleFiringSpeed () { P_PASS_SELF; EV_RET_BOOL(NAME_CheckDoubleFiringSpeed); }
 
   // cheats
   void eventCheat_God () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_God); }
@@ -390,15 +311,11 @@ public:
   void eventCheat_Regeneration () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Regeneration")); }
   void eventCheat_DumpInventory () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_DumpInventory")); }
 
-  void eventCheat_VScriptCommand (TArray<VStr> &args) {
-    P_PASS_SELF;
-    P_PASS_PTR((void *)&args);
-    EV_RET_VOID(VName("Cheat_VScriptCommand"));
-  }
+  void eventCheat_VScriptCommand (TArray<VStr> &args) { P_PASS_SELF; P_PASS_PTR((void *)&args); EV_RET_VOID(VName("Cheat_VScriptCommand")); }
 
-  //  Server to client events.
-  void eventClientStartSound(int SoundId, TVec Org, int OriginId,
-    int Channel, float Volume, float Attenuation, bool Loop)
+  // server to client events
+  void eventClientStartSound (int SoundId, TVec Org, int OriginId,
+                              int Channel, float Volume, float Attenuation, bool Loop)
   {
     P_PASS_SELF;
     P_PASS_INT(SoundId);
@@ -410,16 +327,13 @@ public:
     P_PASS_BOOL(Loop);
     EV_RET_VOID(NAME_ClientStartSound);
   }
-  void eventClientStopSound(int OriginId, int Channel)
-  {
+  void eventClientStopSound (int OriginId, int Channel) {
     P_PASS_SELF;
     P_PASS_INT(OriginId);
     P_PASS_INT(Channel);
     EV_RET_VOID(NAME_ClientStopSound);
   }
-  void eventClientStartSequence(TVec Origin, int OriginId, VName Name,
-    int ModeNum)
-  {
+  void eventClientStartSequence (TVec Origin, int OriginId, VName Name, int ModeNum) {
     P_PASS_SELF;
     P_PASS_VEC(Origin);
     P_PASS_INT(OriginId);
@@ -427,76 +341,65 @@ public:
     P_PASS_INT(ModeNum);
     EV_RET_VOID(NAME_ClientStartSequence);
   }
-  void eventClientAddSequenceChoice(int OriginId, VName Choice)
-  {
+  void eventClientAddSequenceChoice (int OriginId, VName Choice) {
     P_PASS_SELF;
     P_PASS_INT(OriginId);
     P_PASS_NAME(Choice);
     EV_RET_VOID(NAME_ClientAddSequenceChoice);
   }
-  void eventClientStopSequence(int OriginId)
-  {
+  void eventClientStopSequence (int OriginId) {
     P_PASS_SELF;
     P_PASS_INT(OriginId);
     EV_RET_VOID(NAME_ClientStopSequence);
   }
-  void eventClientPrint(VStr Str)
-  {
+  void eventClientPrint (const VStr &Str) {
     P_PASS_SELF;
     P_PASS_STR(Str);
     EV_RET_VOID(NAME_ClientPrint);
   }
-  void eventClientCentrePrint(VStr Str)
-  {
+  void eventClientCentrePrint (const VStr &Str) {
     P_PASS_SELF;
     P_PASS_STR(Str);
     EV_RET_VOID(NAME_ClientCentrePrint);
   }
-  void eventClientSetAngles(TAVec Angles)
-  {
+  void eventClientSetAngles (TAVec Angles) {
     P_PASS_SELF;
     P_PASS_AVEC(Angles);
     EV_RET_VOID(NAME_ClientSetAngles);
   }
-  void eventClientIntermission(VName NextMap)
-  {
+  void eventClientIntermission (VName NextMap) {
     P_PASS_SELF;
     P_PASS_NAME(NextMap);
     EV_RET_VOID(NAME_ClientIntermission);
   }
-  void eventClientPause(bool Paused)
-  {
+  void eventClientPause (bool Paused) {
     P_PASS_SELF;
     P_PASS_BOOL(Paused);
     EV_RET_VOID(NAME_ClientPause);
   }
-  void eventClientSkipIntermission()
-  {
+  void eventClientSkipIntermission () {
     P_PASS_SELF;
     EV_RET_VOID(NAME_ClientSkipIntermission);
   }
-  void eventClientFinale(VStr Type)
-  {
+  void eventClientFinale (const VStr &Type) {
     P_PASS_SELF;
     P_PASS_STR(Type);
     EV_RET_VOID(NAME_ClientFinale);
   }
-  void eventClientChangeMusic(VName Song)
-  {
+  void eventClientChangeMusic (VName Song) {
     P_PASS_SELF;
     P_PASS_NAME(Song);
     EV_RET_VOID(NAME_ClientChangeMusic);
   }
-  void eventClientSetServerInfo(VStr Key, VStr Value)
-  {
+  void eventClientSetServerInfo (const VStr &Key, const VStr &Value) {
     P_PASS_SELF;
     P_PASS_STR(Key);
     P_PASS_STR(Value);
     EV_RET_VOID(NAME_ClientSetServerInfo);
   }
-  void eventClientHudMessage(const VStr &Message, VName Font, int Type,
-    int Id, int Colour, const VStr &ColourName, float x, float y,
-    int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
+  void eventClientHudMessage (const VStr &Message, VName Font, int Type,
+                              int Id, int Colour, const VStr &ColourName, float x, float y,
+                              int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
   {
     P_PASS_SELF;
     P_PASS_STR(Message);
@@ -515,15 +418,13 @@ public:
     EV_RET_VOID(NAME_ClientHudMessage);
   }
 
-  //  Client to server events.
-  void eventServerImpulse(int AImpulse)
-  {
+  // client to server events
+  void eventServerImpulse (int AImpulse) {
     P_PASS_SELF;
     P_PASS_INT(AImpulse);
     EV_RET_VOID(NAME_ServerImpulse);
   }
-  void eventServerSetUserInfo(VStr Info)
-  {
+  void eventServerSetUserInfo (const VStr &Info) {
     P_PASS_SELF;
     P_PASS_STR(Info);
     EV_RET_VOID(NAME_ServerSetUserInfo);
@@ -534,7 +435,3 @@ public:
     EV_RET_REF(VEntity, (VName("eventGetReadyWeapon")));
   }
 };
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
