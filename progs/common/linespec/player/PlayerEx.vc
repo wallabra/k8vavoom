@@ -2124,6 +2124,10 @@ void ResetPlayerOnSpawn () {
   //k8: just in case
   bReloadQueued = false;
   Refire = 0;
+
+  k8HealthAccum_Amount = 0;
+  k8HealthAccum_LastRegenTime = -10000;
+  k8HealthAccum_LastBoostTime = -10000;
 }
 
 
@@ -2843,7 +2847,7 @@ override void PlayerTick (float deltaTime) {
   //print("***000: BUTTONS: 0x%08x; old=0x%08x", Buttons, OldButtons);
 
   // Health Accumulator
-  if (/*!(Cheats&CF_TIMEFREEZE) &&*/ GetCvarB('k8HealthAccum_Enabled')) {
+  if (/*!(Cheats&CF_TIMEFREEZE) &&*/ PlayerState == PST_LIVE && GetCvarB('k8HealthAccum_Enabled')) {
     int accMax = GetCvarI('k8HealthAccum_Max');
     int accAmount = 0;
     if (accMax > 0) {
