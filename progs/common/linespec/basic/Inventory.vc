@@ -852,12 +852,10 @@ final void decorate_A_Lower (optional float lowerspeed) {
   Weapon ready = PlayerEx(Player).ReadyWeapon;
   Weapon pending = PlayerEx(Player).PendingWeapon;
 
-  if (!pending) {
-    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
-    return;
-  }
-
   if (ready && ready == pending) {
+    if (Player.PlayerState == PST_DEAD) return;
+    if (Player.MO != self) return; // voodoo doll
+    if (Player.bIsBot) return;
     print("%C: LOWERING UNRAISED WEAPON! (3)", self);
     return;
   }
@@ -893,6 +891,14 @@ final void decorate_A_Lower (optional float lowerspeed) {
 
   // clear flash state, needed for Strife
   Player.SetViewState(ps_flash, none);
+
+  if (!pending) {
+    if (Player.PlayerState == PST_DEAD) return;
+    if (Player.MO != self) return; // voodoo doll
+    if (Player.bIsBot) return;
+    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
+    return;
+  }
 
   PlayerEx(Player).SetWeapon(pending/*PlayerEx(Player).PendingWeapon*/);
   PlayerEx(Player).BringUpWeapon();
