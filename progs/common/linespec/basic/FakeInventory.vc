@@ -27,50 +27,43 @@
 //**  attached special.
 //**
 //**************************************************************************
-
 class FakeInventory : Inventory;
 
-bool      bRespawns;
+bool bRespawns;
+
 
 //==========================================================================
 //
 //  ShouldRespawn
 //
 //==========================================================================
-
-override bool ShouldRespawn()
-{
+override bool ShouldRespawn () {
   return bRespawns && ::ShouldRespawn();
 }
+
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
+override bool TryPickup (EntityEx Toucher) {
   bool Result = Level.ExecuteActionSpecial(Special, Args[0], Args[1],
-    Args[2], Args[3], Args[4], nullptr, 0, Toucher);
-  if (Result)
-  {
-    GoAwayAndDie();
-  }
+                        Args[2], Args[3], Args[4], nullptr, 0, Toucher);
+  if (Result) GoAwayAndDie();
   return Result;
 }
+
 
 //==========================================================================
 //
 //  DoPickupSpecial
 //
 //==========================================================================
-
-override void DoPickupSpecial(EntityEx Toucher)
-{
-  //  TryPickup already executed special.
+override void DoPickupSpecial (EntityEx Toucher) {
+  // TryPickup already executed special
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -22,172 +22,113 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class BackpackItem : Inventory abstract;
 
-class BackpackItem : Inventory
-  abstract;
+// a depleeted backpack will not give any ammo
+bool bDepleeted;
 
-//  A depleeted backpack will not give any ammo.
-bool      bDepleeted;
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (BackpackItem(Item))
-  {
+override bool HandlePickup (Inventory Item) {
+  if (BackpackItem(Item)) {
     Inventory AmmoItem;
-    for (AmmoItem = EntityEx(Owner).Inventory;
-      AmmoItem; AmmoItem = AmmoItem.Inventory)
-    {
-      //  Only direct descendants.
-      if (GetClassParent(AmmoItem.Class) != Ammo)
-      {
-        continue;
-      }
-      if (AmmoItem.Amount == AmmoItem.MaxAmount)
-      {
-        continue;
-      }
+    for (AmmoItem = EntityEx(Owner).Inventory; AmmoItem; AmmoItem = AmmoItem.Inventory) {
+      // only direct descendants
+      if (GetClassParent(AmmoItem.Class) != Ammo) continue;
+      if (AmmoItem.Amount == AmmoItem.MaxAmount) continue;
       int num = Ammo(AmmoItem).default.BackpackAmount;
-      if (!num || BackpackItem(Item).bDepleeted)
-      {
-        continue;
-      }
-      if (!Item.bIgnoreSkill)
-      {
-        //  Extra ammo in baby mode and nightmare mode
-        num = ftoi(itof(num) * Level.World.SkillAmmoFactor);
+      if (!num || BackpackItem(Item).bDepleeted) continue;
+      if (!Item.bIgnoreSkill) {
+        // extra ammo in baby mode and nightmare mode
+        num = ftoi(itof(num)*Level.World.SkillAmmoFactor);
       }
       int oldammo = AmmoItem.Amount;
       AmmoItem.Amount += num;
-      if (AmmoItem.Amount > AmmoItem.MaxAmount)
-      {
-        AmmoItem.Amount = AmmoItem.MaxAmount;
-      }
-      if (oldammo <= 0 && Owner.Player)
-      {
-        PlayerEx(Owner.Player).GotAmmo(Ammo(AmmoItem));
-      }
+      if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
+      if (oldammo <= 0 && Owner.Player) PlayerEx(Owner.Player).GotAmmo(Ammo(AmmoItem));
     }
     Item.bPickupGood = true;
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   class!Ammo Cls;
 
-  //  Give toucher every kind of ammo.
-  foreach AllClasses(Ammo, Cls)
-  {
-    //  Only direct descendants.
-    if (GetClassParent(Cls) != Ammo)
-    {
-      continue;
-    }
+  // give toucher every kind of ammo
+  foreach AllClasses(Ammo, Cls) {
+    // only direct descendants
+    if (GetClassParent(Cls) != Ammo) continue;
     Ammo AmmoItem = Ammo(Toucher.FindInventory(Cls));
-    if (!AmmoItem)
-    {
+    if (!AmmoItem) {
       AmmoItem = Spawn(Cls, default, default, default, false);
       AmmoItem.AttachToOwner(Toucher);
       AmmoItem.Amount = 0;
     }
-    if (AmmoItem.MaxAmount < AmmoItem.BackpackMaxAmount)
-    {
-      AmmoItem.MaxAmount = AmmoItem.BackpackMaxAmount;
-    }
-    if (AmmoItem.Amount == AmmoItem.MaxAmount)
-    {
-      continue;
-    }
+    if (AmmoItem.MaxAmount < AmmoItem.BackpackMaxAmount) AmmoItem.MaxAmount = AmmoItem.BackpackMaxAmount;
+    if (AmmoItem.Amount == AmmoItem.MaxAmount) continue;
     int num = AmmoItem.default.BackpackAmount;
-    if (!num || bDepleeted)
-    {
-      continue;
-    }
-    if (!bIgnoreSkill)
-    {
-      //  Extra ammo in baby mode and nightmare mode
-      num = ftoi(itof(num) * Level.World.SkillAmmoFactor);
+    if (!num || bDepleeted) continue;
+    if (!bIgnoreSkill) {
+      // extra ammo in baby mode and nightmare mode
+      num = ftoi(itof(num)*Level.World.SkillAmmoFactor);
     }
     int oldammo = AmmoItem.Amount;
     AmmoItem.Amount += num;
-    if (AmmoItem.Amount > AmmoItem.MaxAmount)
-    {
-      AmmoItem.Amount = AmmoItem.MaxAmount;
-    }
-    if (oldammo <= 0 && Toucher.Player)
-    {
-      PlayerEx(Toucher.Player).GotAmmo(AmmoItem);
-    }
+    if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
+    if (oldammo <= 0 && Toucher.Player) PlayerEx(Toucher.Player).GotAmmo(AmmoItem);
   }
 
   Inventory Copy = ::CreateCopy(Toucher);
   return Copy;
 }
 
+
 //==========================================================================
 //
 //  DetachedFromOwner
 //
 //==========================================================================
-
-override void DetachedFromOwner()
-{
-  //  Backpack has been removed, reset all ammo maximal amounts to default.
+override void DetachedFromOwner () {
+  // backpack has been removed, reset all ammo maximal amounts to default
   Inventory AmmoItem;
-  for (AmmoItem = EntityEx(Owner).Inventory;
-    AmmoItem; AmmoItem = AmmoItem.Inventory)
-  {
-    if (GetClassParent(AmmoItem.Class) != Ammo)
-    {
-      //  Not an ammo.
-      continue;
-    }
-    if (AmmoItem.MaxAmount != Ammo(AmmoItem).BackpackMaxAmount)
-    {
-      //  Maximal amount doesn't match what backpack should give.
+  for (AmmoItem = EntityEx(Owner).Inventory; AmmoItem; AmmoItem = AmmoItem.Inventory) {
+    if (GetClassParent(AmmoItem.Class) != Ammo) continue; // not an ammo
+    if (AmmoItem.MaxAmount != Ammo(AmmoItem).BackpackMaxAmount) {
+      // maximal amount doesn't match what backpack should give
       continue;
     }
     AmmoItem.MaxAmount = AmmoItem.default.MaxAmount;
-    if (AmmoItem.Amount > AmmoItem.MaxAmount)
-    {
-      AmmoItem.Amount = AmmoItem.MaxAmount;
-    }
+    if (AmmoItem.Amount > AmmoItem.MaxAmount) AmmoItem.Amount = AmmoItem.MaxAmount;
   }
 }
+
 
 //==========================================================================
 //
 //  CreateTossable
 //
 //==========================================================================
-
-override Inventory CreateTossable()
-{
-  //  Set depleeted flag to prevent cheating.
+override Inventory CreateTossable () {
+  // set depleeted flag to prevent cheating
   Inventory Copy = ::CreateTossable();
   BackpackItem(Copy).bDepleeted = true;
   return Copy;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

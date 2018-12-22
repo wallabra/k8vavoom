@@ -22,27 +22,21 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MapRevealer : Inventory abstract;
 
-class MapRevealer : Inventory
-  abstract;
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  if (Toucher.bIsPlayer)
-  {
-    PlayerEx(Toucher.Player).AddRevealedMap();
-  }
+override bool TryPickup (EntityEx Toucher) {
+  if (Toucher.bIsPlayer) PlayerEx(Toucher.Player).AddRevealedMap();
   GiveQuest(Toucher);
   GoAwayAndDie();
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -22,74 +22,60 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PuzzleItem : Inventory abstract;
 
-class PuzzleItem : Inventory
-  abstract;
+int PuzzleItemNumber;
+string FailMessage;
 
-int       PuzzleItemNumber;
-string      FailMessage;
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Item.Class == Class && Level.Game.netgame && !Level.Game.deathmatch)
-  {
-    // Can't carry more than 1 puzzle item in coop netplay
+override bool HandlePickup (Inventory Item) {
+  if (Item.Class == Class && Level.Game.netgame && !Level.Game.deathmatch) {
+    // can't carry more than 1 puzzle item in coop netplay
     return true;
   }
-
   return ::HandlePickup(Item);
 }
+
 
 //==========================================================================
 //
 //  ShouldStay
 //
 //==========================================================================
-
-override bool ShouldStay()
-{
-  return Level.Game.netgame && !Level.Game.deathmatch;
+override bool ShouldStay () {
+  return (Level.Game.netgame && !Level.Game.deathmatch);
 }
+
 
 //==========================================================================
 //
 //  ShouldRespawn
 //
 //==========================================================================
-
-override bool ShouldRespawn()
-{
-  // Remove puzzle items if not cooperative netplay
+override bool ShouldRespawn () {
+  // remove puzzle items if not cooperative netplay
   return false;
 }
+
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
-  if (PlayerEx(Owner.Player).UsePuzzleItem(PuzzleItemNumber))
-  {
-    return true;
-  }
-  else
-  {
-    Owner.Player.centreprint(FailMessage);
-    return false;
-  }
+override bool Use (bool Pickup) {
+  if (PlayerEx(Owner.Player).UsePuzzleItem(PuzzleItemNumber)) return true;
+  Owner.Player.centreprint(FailMessage);
+  return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MaxAmount = DefMaxAmount;
   bNoGravity = true;
   bInvBar = true;

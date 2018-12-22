@@ -22,54 +22,46 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class CustomInventory : Inventory abstract;
 
-class CustomInventory : Inventory
-  abstract;
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
+override bool TryPickup (EntityEx Toucher) {
   state S = FindState('Pickup');
   bool IsOk = CallStateChain(Toucher, S);
-  if ((IsOk || !S) && FindState('Use'))
-  {
+  if ((IsOk || !S) && FindState('Use')) {
     IsOk = ::TryPickup(Toucher);
-  }
-  else if (IsOk || bAlwaysPickup)
-  {
+  } else if (IsOk || bAlwaysPickup) {
     GiveQuest(Toucher);
     GoAwayAndDie();
   }
   return IsOk;
 }
 
+
 //==========================================================================
 //
 //  SpecialDropAction
 //
 //==========================================================================
-
-override bool SpecialDropAction(EntityEx Source)
-{
+override bool SpecialDropAction (EntityEx Source) {
   return CallStateChain(Source, FindState('Drop'));
 }
+
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
+override bool Use (bool Pickup) {
   return CallStateChain(Owner, FindState('Use'));
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

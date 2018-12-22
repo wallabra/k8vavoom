@@ -22,153 +22,119 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class Ammo : Inventory abstract;
 
-class Ammo : Inventory
-  abstract;
+int BackpackAmount;
+int BackpackMaxAmount;
+int DropAmount;
 
-int       BackpackAmount;
-int       BackpackMaxAmount;
-int       DropAmount;
 
 //==========================================================================
 //
 //  GetParentAmmo
 //
 //==========================================================================
-
-final class!Ammo GetParentAmmo()
-{
+final class!Ammo GetParentAmmo () {
   class Ret = Class;
-  //  Get parent class that is direct descendant of Ammo class.
-  while (GetClassParent(Ret) != Ammo)
-  {
-    Ret = GetClassParent(Ret);
-  }
+  // get parent class that is direct descendant of Ammo class
+  while (GetClassParent(Ret) != Ammo) Ret = GetClassParent(Ret);
   return class!Ammo(Ret);
 }
+
 
 //==========================================================================
 //
 // k8GetAmmoKingMax
 //
 //==========================================================================
-
 final int k8GetAmmoKingMax () {
   if (!GetCvarB('k8AmmoKing')) return MaxAmount;
-
   int max = 666;
-
   if (GetClassName(Class) == 'BDW_RifleClip' || GetClassName(Class) == 'BDW_ShotgunShell' ||
       GetClassName(GetClassReplacee(Class)) == 'Clip' || GetClassName(GetClassReplacee(Class)) == 'Shell')
   {
     if (GetCvarB('k8HSEnabled')) max = 444; // headshots ARE powerful!
   }
-
   return max;
 }
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Item.Class == Class ||
-    (Ammo(Item) && Ammo(Item).GetParentAmmo() == Class))
-  {
-    if (Amount == /*MaxAmount*/k8GetAmmoKingMax())
-    {
-      //  We're full.
-      return true;
-    }
+override bool HandlePickup (Inventory Item) {
+  if (Item.Class == Class || (Ammo(Item) && Ammo(Item).GetParentAmmo() == Class)) {
+    if (Amount == /*MaxAmount*/k8GetAmmoKingMax()) return true; // we're full
 
     int ReceiveAmount = Item.Amount;
-    if (!Item.bIgnoreSkill)
-    {
-      //  Extra ammo in baby mode and nightmare mode
-      ReceiveAmount = ftoi(itof(ReceiveAmount) *
-        Level.World.SkillAmmoFactor);
+    if (!Item.bIgnoreSkill) {
+      // extra ammo in baby mode and nightmare mode
+      ReceiveAmount = ftoi(itof(ReceiveAmount)*Level.World.SkillAmmoFactor);
     }
 
     int oldammo = Amount;
 
     Amount += ReceiveAmount;
-    if (Amount > /*MaxAmount*/k8GetAmmoKingMax())
-    {
-      Amount = /*MaxAmount*/k8GetAmmoKingMax();
-    }
+    if (Amount > /*MaxAmount*/k8GetAmmoKingMax()) Amount = /*MaxAmount*/k8GetAmmoKingMax();
 
-    //  If non zero ammo, don't change up weapons,
-    // player was lower on purpose.
-    if (oldammo <= 0 && Owner.Player)
-    {
-      PlayerEx(Owner.Player).GotAmmo(self);
-    }
+    // if non zero ammo, don't change up weapons, player was lower on purpose
+    if (oldammo <= 0 && Owner.Player) PlayerEx(Owner.Player).GotAmmo(self);
     Item.bPickupGood = true;
     return true;
   }
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+
+  if (Inventory) return Inventory.HandlePickup(Item);
+
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   int NewAmount = Amount;
-  if (!bIgnoreSkill)
-  {
-    //  Extra ammo in baby mode and nightmare mode
-    NewAmount = ftoi(itof(NewAmount) * Level.World.SkillAmmoFactor);
+  if (!bIgnoreSkill) {
+    // extra ammo in baby mode and nightmare mode
+    NewAmount = ftoi(itof(NewAmount)*Level.World.SkillAmmoFactor);
   }
 
   Inventory Copy;
-  if (GetClassParent(Class) == Ammo)
-  {
+  if (GetClassParent(Class) == Ammo) {
     Copy = ::CreateCopy(Toucher);
-  }
-  else
-  {
+  } else {
     Copy = Spawn(GetParentAmmo(), default, default, default, false);
     GoAwayAndDie();
   }
   Copy.Amount = NewAmount;
-  //  Don't pick up more ammo that you can carry.
-  if (Copy.Amount > Copy.MaxAmount)
-  {
-    Copy.Amount = Copy.MaxAmount;
-  }
+
+  // don't pick up more ammo that you can carry
+  if (Copy.Amount > Copy.MaxAmount) Copy.Amount = Copy.MaxAmount;
+
   return Copy;
 }
+
 
 //==========================================================================
 //
 //  CreateTossable
 //
 //==========================================================================
-
-override Inventory CreateTossable()
-{
+override Inventory CreateTossable () {
   Inventory Copy = ::CreateTossable();
-  if (Copy)
-  {
-    //  Avoid cheating on certain skill levels.
+  if (Copy) {
+    // avoid cheating on certain skill levels
     Copy.bIgnoreSkill = true;
   }
   return Copy;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   PickupSound = 'misc/ammo_pkup';
   bKeepDepleted = true;
 }

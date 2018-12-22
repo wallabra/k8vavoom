@@ -22,49 +22,37 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class Key : Inventory abstract;
 
-class Key : Inventory
-  abstract;
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Item.Class == Class)
-  {
-    //  In sinle player keys are always picked up, even if you
-    // already have one.
-    if (!Level.Game.netgame)
-    {
-      Item.bPickupGood = true;
-    }
+override bool HandlePickup (Inventory Item) {
+  if (Item.Class == Class) {
+    // in sinle player keys are always picked up, even if you already have one
+    if (!Level.Game.netgame) Item.bPickupGood = true;
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  ShouldStay
 //
 //==========================================================================
-
-override bool ShouldStay()
-{
+override bool ShouldStay () {
   return Level.Game.netgame;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   PickupSound = 'misc/k_pkup';
   bInterHubStrip = true;
 }

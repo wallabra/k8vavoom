@@ -22,17 +22,16 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class PickupFlash : Actor;
 
-states
-{
+
+states {
 Spawn:
   ACLO DCDCBCBABA 3
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoGravity = true;
 }
