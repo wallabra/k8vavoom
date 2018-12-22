@@ -315,7 +315,7 @@ struct sec_plane_t : public TPlane {
   // use for wall texture mapping
   float TexZ;
 
-  int pic;
+  VTextureID pic;
 
   float xoffs;
   float yoffs;
@@ -476,7 +476,7 @@ struct sector_t {
   float MoveFactor;
   float Gravity; // Sector gravity (1.0 is normal)
 
-  int Sky;
+  int Sky; //k8:??? document this!
 
   int Zone; // reverb zone id
 

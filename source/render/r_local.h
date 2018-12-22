@@ -139,7 +139,7 @@ struct decal_t {
   sector_t *bsec; // backsector for SlideXXX
   VName dectype;
   //VName picname;
-  int texture;
+  VTextureID texture;
   vuint32 flags;
   float orgz; // original z position
   float curz; // z position (offset with floor/ceiling TexZ if not midtex, see `flags`)
