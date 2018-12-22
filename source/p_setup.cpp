@@ -3068,6 +3068,52 @@ void VLevel::LoadACScripts (int Lump) {
 
 //==========================================================================
 //
+//  texForceLoad
+//
+//==========================================================================
+static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceLoad) {
+  if (!name || !name[0]) return (CMap ? 0 : GTextureManager.DefaultTexture); // just in case
+  int i = -1;
+
+  VName loname = NAME_None;
+  // try filename if slash is found
+  const char *slash = strchr(name, '/');
+  if (slash && slash[1]) {
+    loname = VName(name, VName::AddLower);
+    //i = GTextureManager.AddFileTextureChecked(loname, Type);
+  } else if (strchr(name, '.')) {
+    loname = VName(name, VName::AddLower);
+    //i = GTextureManager.AddFileTextureChecked(loname, Type);
+  }
+
+  if (loname != NAME_None) {
+    i = GTextureManager.CheckNumForName(loname, Type);
+    if (i >= 0) return i;
+    if (CMap) return 0;
+    if (!allowForceLoad) return GTextureManager.DefaultTexture;
+    i = GTextureManager.AddFileTextureChecked(loname, Type);
+  }
+
+  if (i == -1) {
+    VName loname8(name, VName::AddLower8);
+    i = GTextureManager.CheckNumForName(loname8, Type, true, true);
+    if (i == -1 && CMap) return 0;
+  }
+
+  //if (i == -1) i = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, true, true);
+  //if (i == -1 && VStr::length(name) > 8) i = GTextureManager.AddFileTexture(VName(name, VName::AddLower), Type);
+
+  if (i == -1 && !slash && allowForceLoad) {
+    i = GTextureManager.AddFileTextureChecked(loname, Type);
+  }
+
+  if (i == -1) i = (CMap ? 0 : GTextureManager.DefaultTexture);
+  return i;
+}
+
+
+//==========================================================================
+//
 //  VLevel::TexNumForName
 //
 //  Retrieval, get a texture or flat number for a name.
@@ -3075,7 +3121,8 @@ void VLevel::LoadACScripts (int Lump) {
 //==========================================================================
 int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF) const {
   guard(VLevel::TexNumForName);
-  if (!name || !name[0]) return GTextureManager.DefaultTexture; // just in case
+  return texForceLoad(name, Type, CMap, (fromUDMF ? r_udmf_allow_extra_textures : false));
+/*
   int i = -1;
   // try filename if slash is found
   const char *slash = strchr(name, '/');
@@ -3112,7 +3159,21 @@ int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF)
     //if (!texReported.put(name)) GCon->Logf("TEXTURE: '%s' (%s) is %d", name, *Name, i);
   }
   return i;
+*/
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VLevel::TexNumForName2
+//
+//==========================================================================
+int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
+  if (!name || !name[0]) return GTextureManager.DefaultTexture; // just in case
+  int res = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, /*bOverload*/true, /*bCheckAny*/true);
+  if (!fromUDMF) return res;
+  return texForceLoad(name, Type, /*CMap*/false, r_udmf_allow_extra_textures);
 }
 
 
