@@ -22,35 +22,29 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef VAVOOM_COMMON_TYPES_HEADER
-#define VAVOOM_COMMON_TYPES_HEADER
+#ifndef VAVOOM_TEX_ID_HEADER
+#define VAVOOM_TEX_ID_HEADER
+
+#include "../../libs/core/core.h"
+#include "../common.h"
 
 
-//typedef unsigned short    word;
-#define word  vuint16
+// ////////////////////////////////////////////////////////////////////////// //
+struct VTextureID {
+public:
+  vint32 id;
+  VTextureID () : id (-1) {}
+  VTextureID (const VTextureID &b) : id(b.id) {}
+  // temp
+  VTextureID (vint32 aid) : id(aid) {}
 
+  inline VTextureID &operator = (const VTextureID &b) { id = b.id; return *this; }
+  inline operator int () const { return id; }
+  friend VStream &operator << (VStream &strm, const VTextureID &tid);
+  friend VStream &operator << (VStream &strm, VTextureID &tid);
+};
 
-//==========================================================================
-//
-//  Forward declarations
-//
-//==========================================================================
-class VName;
-class VStr;
-class VStream;
-
-class VMemberBase;
-class VPackage;
-class VField;
-class VMethod;
-class VState;
-class VConstant;
-class VStruct;
-class VClass;
-class VNetObjectsMap;
-struct mobjinfo_t;
-
-class VObject;
+static_assert(sizeof(VTextureID) == sizeof(vint32), "invalid VTextureID size");
 
 
 #endif

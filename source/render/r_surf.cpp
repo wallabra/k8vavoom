@@ -448,7 +448,7 @@ void VRenderLevelShared::CreateSegParts (drawseg_t *dseg, seg_t *seg) {
     VTexture *MTex = GTextureManager(sidedef->MidTexture);
     // k8: one-sided line should have a midtex
     if (!MTex) {
-      GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture);
+      GCon->Logf(NAME_Warning, "Sidedef #%d should have midtex, but it hasn't (%d)", (int)(ptrdiff_t)(sidedef-Level->Sides), sidedef->MidTexture.id);
       MTex = GTextureManager[GTextureManager.DefaultTexture];
     }
     sp->texinfo.saxis = segdir*TextureSScale(MTex);

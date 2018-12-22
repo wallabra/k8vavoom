@@ -27,6 +27,8 @@
 //**  used by play and refresh
 //**
 //**************************************************************************
+#include "textures/r_tex_id.h"
+
 
 class VRenderLevelPublic;
 class VTextureTranslation;
@@ -274,9 +276,9 @@ struct side_t {
 
   // texture indices: we do not maintain names here
   // 0 means "no texture"; -1 means "i forgot what it is"
-  int TopTexture;
-  int BottomTexture;
-  int MidTexture;
+  VTextureID TopTexture;
+  VTextureID BottomTexture;
+  VTextureID MidTexture;
 
   // sector the SideDef is facing
   sector_t *Sector;

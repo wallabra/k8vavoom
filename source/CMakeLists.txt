@@ -80,9 +80,11 @@ set(VCCLIB_SOURCES
 #
 #---------------------------------------
 set(TEXTURELIB_SOURCES
+  textures/r_tex_id.h
   textures/r_tex_public.h
   textures/r_tex.h
   textures/r_tex.cpp
+  textures/r_tex_id.cpp
   textures/r_tex_automap.cpp
   textures/r_tex_base.cpp
   textures/r_tex_camera.cpp

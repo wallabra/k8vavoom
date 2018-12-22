@@ -22,35 +22,28 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-#ifndef VAVOOM_COMMON_TYPES_HEADER
-#define VAVOOM_COMMON_TYPES_HEADER
-
-
-//typedef unsigned short    word;
-#define word  vuint16
+#include "r_tex_id.h"
 
 
 //==========================================================================
 //
-//  Forward declarations
+//  << (VTextureID)
 //
 //==========================================================================
-class VName;
-class VStr;
-class VStream;
-
-class VMemberBase;
-class VPackage;
-class VField;
-class VMethod;
-class VState;
-class VConstant;
-class VStruct;
-class VClass;
-class VNetObjectsMap;
-struct mobjinfo_t;
-
-class VObject;
+VStream &operator << (VStream &strm, const VTextureID &tid) {
+  check(!strm.IsLoading());
+  int aid = tid.id;
+  strm << aid;
+  return strm;
+}
 
 
-#endif
+//==========================================================================
+//
+//  << (VTextureID)
+//
+//==========================================================================
+VStream &operator << (VStream &strm, VTextureID &tid) {
+  strm << tid.id;
+  return strm;
+}
