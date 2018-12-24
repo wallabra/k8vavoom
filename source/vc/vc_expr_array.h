@@ -637,3 +637,25 @@ protected:
   VDictValueAtIndex () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VStructZero
+//
+//==========================================================================
+class VStructZero : public VExpression {
+public:
+  VExpression *sexpr;
+
+  // `asexpr` should be already resolved
+  VStructZero (VExpression *asexpr, const TLocation &aloc);
+  virtual ~VStructZero () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VStructZero () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

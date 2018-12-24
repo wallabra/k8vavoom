@@ -2955,3 +2955,89 @@ void VDictValueAtIndex::Emit (VEmitContext &ec) {
   idxexpr->Emit(ec);
   ec.AddStatement(OPC_DictDispatch, sexpr->Type.GetDictKeyType(), sexpr->Type.GetDictValueType(), OPC_DictDispatch_GetValueAtIndex, Loc);
 }
+
+
+
+//==========================================================================
+//
+//  VStructZero
+//
+//==========================================================================
+VStructZero::VStructZero (VExpression *asexpr, const TLocation &aloc)
+  : VExpression(aloc)
+  , sexpr(asexpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VStructZero::~VStructZero
+//
+//==========================================================================
+VStructZero::~VStructZero () {
+  delete sexpr;
+}
+
+
+//==========================================================================
+//
+//  VStructZero::SyntaxCopy
+//
+//==========================================================================
+VExpression *VStructZero::SyntaxCopy () {
+  auto res = new VStructZero();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VStructZero::DoSyntaxCopyTo
+//
+//==========================================================================
+void VStructZero::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VStructZero *)e;
+  res->sexpr = (sexpr ? sexpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VStructZero::DoResolve
+//
+//==========================================================================
+VExpression *VStructZero::DoResolve (VEmitContext &ec) {
+  if (!sexpr) { delete this; return nullptr; }
+  check(sexpr->Type.Type == TYPE_Struct || sexpr->Type.Type == TYPE_Vector);
+  if (sexpr->Flags&FIELD_ReadOnly) {
+    ParseError(Loc, "cannot zero read-only struct");
+    delete this;
+    return nullptr;
+  }
+  sexpr->RequestAddressOf();
+  Type = VFieldType(TYPE_Void);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VStructZero::Emit
+//
+//==========================================================================
+void VStructZero::Emit (VEmitContext &ec) {
+  sexpr->Emit(ec);
+  if (sexpr->Type.Type == TYPE_Struct && sexpr->Type.Struct) {
+    if (sexpr->Type.Struct->NeedsDestructor()) {
+      ec.AddStatement(OPC_ZeroPointedStruct, sexpr->Type.Struct, Loc);
+    } else {
+      ec.AddStatement(OPC_ZeroByPtr, sexpr->Type.GetSize(), Loc);
+    }
+  } else {
+    // default vector
+    ec.AddStatement(OPC_ZeroByPtr, sexpr->Type.GetSize(), Loc);
+  }
+}

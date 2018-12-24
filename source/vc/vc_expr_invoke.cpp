@@ -1241,6 +1241,20 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return e->Resolve(ec);
       }
+    } else if (SelfExpr->Type.Type == TYPE_Struct || SelfExpr->Type.Type == TYPE_Vector) {
+      // each struct/vector has `zero()` method
+      if (MethodName == "zero") {
+        if (NumArgs != 0) {
+          ParseError(Loc, "`.zero` requires no arguments");
+          delete this;
+          return nullptr;
+        }
+        VExpression *e = new VStructZero(SelfExpr, Loc);
+        SelfExpr = nullptr;
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
     }
     // try UFCS
     if (NumArgs+1 <= VMethod::MAX_PARAMS) {
