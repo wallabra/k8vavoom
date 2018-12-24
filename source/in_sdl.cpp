@@ -56,6 +56,8 @@ private:
   int mouse_oldx;
   int mouse_oldy;
 
+  vuint32 curmodflags;
+
   SDL_Joystick *joystick;
   bool joystick_started;
   int joy_num_buttons;
@@ -193,6 +195,7 @@ VSdlInputDevice::VSdlInputDevice ()
   , curHidden(false)
   , mouse_oldx(0)
   , mouse_oldy(0)
+  , curmodflags(0)
   , joystick(nullptr)
   , joystick_started(false)
   , joy_num_buttons(0)
@@ -294,6 +297,7 @@ void VSdlInputDevice::RegrabMouse () {
   }
 }
 
+
 //==========================================================================
 //
 //  VSdlInputDevice::ReadInput
@@ -312,6 +316,7 @@ void VSdlInputDevice::ReadInput () {
   SDL_PumpEvents();
   while (SDL_PollEvent(&ev)) {
     memset((void *)&vev, 0, sizeof(vev));
+    vev.modflags = curmodflags;
     switch (ev.type) {
       case SDL_KEYDOWN:
       case SDL_KEYUP:
@@ -319,6 +324,21 @@ void VSdlInputDevice::ReadInput () {
           int kk = sdl2TranslateKey(ev.key.keysym.scancode);
           if (kk > 0) GInput->KeyEvent(kk, (ev.key.state == SDL_PRESSED) ? 1 : 0);
         }
+        // now fix flags
+        switch (ev.key.keysym.sym) {
+          case SDLK_LSHIFT: if (ev.type == SDL_KEYDOWN) curmodflags |= bShiftLeft; else curmodflags &= ~bShiftLeft; break;
+          case SDLK_RSHIFT: if (ev.type == SDL_KEYDOWN) curmodflags |= bShiftRight; else curmodflags &= ~bShiftRight; break;
+          case SDLK_LCTRL: if (ev.type == SDL_KEYDOWN) curmodflags |= bCtrlLeft; else curmodflags &= ~bCtrlLeft; break;
+          case SDLK_RCTRL: if (ev.type == SDL_KEYDOWN) curmodflags |= bCtrlRight; else curmodflags &= ~bCtrlRight; break;
+          case SDLK_LALT: if (ev.type == SDL_KEYDOWN) curmodflags |= bAltLeft; else curmodflags &= ~bAltLeft; break;
+          case SDLK_RALT: if (ev.type == SDL_KEYDOWN) curmodflags |= bAltRight; else curmodflags &= ~bAltRight; break;
+          case SDLK_LGUI: if (ev.type == SDL_KEYDOWN) curmodflags |= bHyper; else curmodflags &= ~bHyper; break;
+          case SDLK_RGUI: if (ev.type == SDL_KEYDOWN) curmodflags |= bHyper; else curmodflags &= ~bHyper; break;
+          default: break;
+        }
+        if (curmodflags&(bShiftLeft|bShiftRight)) curmodflags |= bShift; else curmodflags &= ~bShift;
+        if (curmodflags&(bCtrlLeft|bCtrlRight)) curmodflags |= bCtrl; else curmodflags &= ~bCtrl;
+        if (curmodflags&(bAltLeft|bAltRight)) curmodflags |= bAlt; else curmodflags &= ~bAlt;
         break;
       /*
       case SDL_MOUSEMOTION:
@@ -341,6 +361,10 @@ void VSdlInputDevice::ReadInput () {
         vev.data2 = 0;
         vev.data3 = 0;
         if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(&vev);
+        // now fix flags
+             if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
+        else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bRMB; else curmodflags &= ~bRMB; }
+        else if (ev.button.button == SDL_BUTTON_MIDDLE) { if (ev.button.state == SDL_PRESSED) curmodflags |= bMMB; else curmodflags &= ~bMMB; }
         break;
       case SDL_MOUSEWHEEL:
         vev.type = ev_keydown;
@@ -370,6 +394,8 @@ void VSdlInputDevice::ReadInput () {
         switch (ev.window.event) {
           case SDL_WINDOWEVENT_FOCUS_GAINED:
             //fprintf(stderr, "***FOCUS GAIN; wa=%d; first=%d; drawer=%p\n", (int)winactive, (int)firsttime, Drawer);
+            curmodflags = 0; // just in case
+            vev.modflags = 0;
             if (!winactive && mouse) {
               if (Drawer) {
                 if (!ui_active || ui_mouse) Drawer->WarpMouseToWindowCenter();
@@ -382,6 +408,8 @@ void VSdlInputDevice::ReadInput () {
             break;
           case SDL_WINDOWEVENT_FOCUS_LOST:
             //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
+            curmodflags = 0; // just in case
+            vev.modflags = 0;
             winactive = false;
             firsttime = true;
             SDL_CaptureMouse(SDL_FALSE);

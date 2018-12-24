@@ -479,6 +479,12 @@ enum {
   bLMB = 1U<<4,
   bMMB = 1U<<5,
   bRMB = 1U<<6,
+  bCtrlLeft = 1U<<7,
+  bAltLeft = 1U<<8,
+  bShiftLeft = 1U<<9,
+  bCtrlRight = 1U<<10,
+  bAltRight = 1U<<11,
+  bShiftRight = 1U<<12,
 };
 
 // event structure
