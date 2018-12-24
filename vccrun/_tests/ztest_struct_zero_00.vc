@@ -1,0 +1,25 @@
+class Main : Object;
+
+struct S0 {
+  int n;
+}
+
+struct S1 {
+  int n;
+  string s;
+}
+
+
+void main () {
+  auto v = vector(1, 2, 3);
+  S0 s0;
+  s0.n = 666;
+  S1 s1;
+  s1.n = 69;
+  s1.s = "fuck";
+  print("vec=%s; s0.n=%s; s1.n=%s; s1.s=<%q>", v, s0.n, s1.n, s1.s);
+  v.zero();
+  s0.zero();
+  s1.zero();
+  print("vec=%s; s0.n=%s; s1.n=%s; s1.s=<%q>", v, s0.n, s1.n, s1.s);
+}
