@@ -405,6 +405,7 @@ void VSdlInputDevice::ReadInput () {
             firsttime = true;
             winactive = true;
             if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
+            if (cl) cl->ClearInput();
             break;
           case SDL_WINDOWEVENT_FOCUS_LOST:
             //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
@@ -413,6 +414,7 @@ void VSdlInputDevice::ReadInput () {
             winactive = false;
             firsttime = true;
             SDL_CaptureMouse(SDL_FALSE);
+            if (cl) cl->ClearInput();
             break;
           //case SDL_WINDOWEVENT_TAKE_FOCUS: Drawer->SDL_SetWindowInputFocus();
         }

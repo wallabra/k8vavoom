@@ -39,12 +39,8 @@
 //**  state bit 2 is edge triggered on the down to up transition
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 
-// MACROS ------------------------------------------------------------------
 
 #define BUTTON(name) \
 static TKButton   Key ## name; \
@@ -78,39 +74,37 @@ static TCmdKeyUp  name ## Up_f("-" #name, Key ## name);
 #define ACS_BT_USER3      0x00800000
 #define ACS_BT_USER4      0x01000000
 
-// TYPES -------------------------------------------------------------------
 
-class TKButton
-{
+class TKButton {
 public:
-  int   down[2];    // key nums holding it down
-  int   state;      // low bit is down state
+  int down[2]; // key nums holding it down
+  int state; // low bit is down state
 
-  void KeyDown(const char *c);
-  void KeyUp(const char *c);
-  float KeyState();
+  void KeyDown (const char *c);
+  void KeyUp (const char *c);
+  float KeyState ();
 };
 
-class TCmdKeyDown : public VCommand
-{
-public:
-  TCmdKeyDown(const char *AName, TKButton &AKey) : VCommand(AName), Key(AKey) { }
-  virtual void Run() override;
 
-  TKButton  &Key;
+class TCmdKeyDown : public VCommand {
+public:
+  TCmdKeyDown (const char *AName, TKButton &AKey) : VCommand(AName), Key(AKey) {}
+  virtual void Run () override;
+
+  TKButton &Key;
 };
 
-class TCmdKeyUp : public VCommand
-{
-public:
-  TCmdKeyUp(const char *AName, TKButton &AKey) : VCommand(AName), Key(AKey) { }
-  virtual void Run() override;
 
-  TKButton  &Key;
+class TCmdKeyUp : public VCommand {
+public:
+  TCmdKeyUp (const char *AName, TKButton &AKey) : VCommand(AName), Key(AKey) {}
+  virtual void Run () override;
+
+  TKButton &Key;
 };
 
-enum
-{
+
+enum {
   INPUT_OLDBUTTONS,
   INPUT_BUTTONS,
   INPUT_PITCH,
@@ -129,26 +123,16 @@ enum
   MODINPUT_UPMOVE
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // mouse values are used once
-static float  mousex;
-static float  mousey;
+static float mousex;
+static float mousey;
 // joystick values are repeated
-static int    joyxmove;
-static int    joyymove;
+static int joyxmove;
+static int joyymove;
 
-static int    impulse_cmd;
+static int impulse_cmd;
+
 
 static VCvarB allways_run("allways_run", false, "Always run?", CVAR_Archive);
 static VCvarB artiskip("artiskip", true, "Should Shift+Enter skip an artifact?", CVAR_Archive); // whether shift-enter skips an artifact
@@ -183,6 +167,7 @@ static VCvarF m_side("m_side", "0.8", "Mouse sidestepping speed.", CVAR_Archive)
 
 static VCvarF joy_yaw("joy_yaw", "140", "Joystick yaw speed.", CVAR_Archive);
 
+
 BUTTON(Forward)
 BUTTON(Backward)
 BUTTON(Left)
@@ -208,102 +193,60 @@ BUTTON(Speed)
 BUTTON(Strafe)
 BUTTON(MouseLook)
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  TKButton::KeyDown
 //
 //==========================================================================
-
-void TKButton::KeyDown(const char *c)
-{
+void TKButton::KeyDown (const char *c) {
   guard(TKButton::KeyDown);
-  int   k;
+  int k = -1;
 
-  if (c[0])
-  {
-    k = atoi(c);
-  }
-  else
-  {
-    k = -1;   // typed manually at the console for continuous down
-  }
+  if (c && c[0]) k = atoi(c); // otherwise, typed manually at the console for continuous down
 
-  if (k == down[0] || k == down[1])
-  {
-    return;   // repeating key
-  }
+  if (k == down[0] || k == down[1]) return; // repeating key
 
-  if (!down[0])
-  {
-    down[0] = k;
-  }
-  else if (!down[1])
-  {
-    down[1] = k;
-  }
-  else
-  {
-    GCon->Log(NAME_Dev, "Three keys down for a button!");
-    return;
-  }
+       if (!down[0]) down[0] = k;
+  else if (!down[1]) down[1] = k;
+  else { GCon->Log(NAME_Dev, "Three keys down for a button!"); return; }
 
-  if (state & 1)
-  {
-    return;   // still down
-  }
-  state |= 1 + 2; // down + impulse down
+  if (state&1) return; // still down
+
+  state |= 1|2; // down + impulse down
   unguard;
 }
+
 
 //==========================================================================
 //
 //  TKButton::KeyUp
 //
 //==========================================================================
-
-void TKButton::KeyUp(const char *c)
-{
+void TKButton::KeyUp (const char *c) {
   guard(TKButton::KeyUp);
-  int   k;
 
-  if (c[0])
-  {
-    k = atoi(c);
-  }
-  else
-  { // typed manually at the console, assume for unsticking, so clear all
+  if (!c || !c[0]) {
+    // typed manually at the console, assume for unsticking, so clear all
     down[0] = down[1] = 0;
-    state = 4;  // impulse up
+    state = 4; // impulse up
     return;
   }
 
-  if (down[0] == k)
-  {
-    down[0] = 0;
-  }
-  else if (down[1] == k)
-  {
-    down[1] = 0;
-  }
-  else
-  {
-    return;   // key up without coresponding down (menu pass through)
-  }
-  if (down[0] || down[1])
-  {
-    return;   // some other key is still holding it down
-  }
+  int k = atoi(c);
 
-  if (!(state & 1))
-  {
-    return;   // still up (this should not happen)
-  }
-  state &= ~1;    // now up
-  state |= 4;     // impulse up
+       if (down[0] == k) down[0] = 0;
+  else if (down[1] == k) down[1] = 0;
+  else return; // key up without coresponding down (menu pass through)
+
+  if (down[0] || down[1]) return; // some other key is still holding it down
+  if (!(state&1)) return; // still up (this should not happen)
+
+  state &= ~1; // now up
+  state |= 4; // impulse up
   unguard;
 }
+
 
 //==========================================================================
 //
@@ -315,12 +258,9 @@ void TKButton::KeyUp(const char *c)
 //  1.0 if held for the entire time
 //
 //==========================================================================
-
-float TKButton::KeyState()
-{
+float TKButton::KeyState () {
   guard(TKButton::KeyState);
-  static const float newVal[8] =
-  {
+  static const float newVal[8] = {
     0.0f, // up the entire frame
     1.0f, // held the entire frame
     0.0f, // Sys_Error();
@@ -331,72 +271,63 @@ float TKButton::KeyState()
     0.75f // released and re-pressed this frame
   };
 
-  float val = newVal[state & 7];
-  state &= 1;   // clear impulses
+  float val = newVal[state&7];
+  state &= 1; // clear impulses
 
   return val;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  TCmdKeyDown::Run
 //
 //==========================================================================
-
-void TCmdKeyDown::Run()
-{
+void TCmdKeyDown::Run () {
   guard(TCmdKeyDown::Run);
   Key.KeyDown(Args.Num() > 1 ? *Args[1] : "");
   unguard;
 }
+
 
 //==========================================================================
 //
 //  TCmdKeyUp::Run
 //
 //==========================================================================
-
-void TCmdKeyUp::Run()
-{
+void TCmdKeyUp::Run () {
   guard(TCmdKeyUp::Run);
   Key.KeyUp(Args.Num() > 1 ? *Args[1] : "");
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND Impulse
 //
 //==========================================================================
-
-COMMAND(Impulse)
-{
+COMMAND(Impulse) {
   guard(COMMAND Impulse);
-  if (Args.Num() < 2)
-  {
-    return;
-  }
+  if (Args.Num() < 2) return;
   impulse_cmd = atoi(*Args[1]);
   unguard;
 }
+
 
 //==========================================================================
 //
 //  COMMAND ToggleAlwaysRun
 //
 //==========================================================================
-
-COMMAND(ToggleAlwaysRun)
-{
+COMMAND(ToggleAlwaysRun) {
   guard(COMMAND ToggleAlwaysRun);
   allways_run = !allways_run;
 #ifdef CLIENT
-  if (cl)
-  {
+  if (cl) {
     cl->Printf(allways_run ? "Always run on" : "Always run off");
-  }
-  else
+  } else
 #endif
   {
     GCon->Log(allways_run ? "Always run on" : "Always run off");
@@ -404,174 +335,102 @@ COMMAND(ToggleAlwaysRun)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  COMMAND Use
 //
 //==========================================================================
-
-COMMAND(Use)
-{
+COMMAND(Use) {
   guard(COMMAND Use);
-  if (Args.Num() < 1)
-  {
-    return;
-  }
+  if (Args.Num() < 1) return;
 #ifdef CLIENT
   cl->eventUseInventory(*Args[1]);
 #endif
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::StartPitchDrift
 //
 //==========================================================================
-
-void VBasePlayer::StartPitchDrift()
-{
+void VBasePlayer::StartPitchDrift () {
   PlayerFlags |= PF_Centreing;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::StopPitchDrift
 //
 //==========================================================================
-
-void VBasePlayer::StopPitchDrift()
-{
+void VBasePlayer::StopPitchDrift () {
   PlayerFlags &= ~PF_Centreing;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::AdjustAngles
 //
 //==========================================================================
-
-void VBasePlayer::AdjustAngles()
-{
+void VBasePlayer::AdjustAngles () {
   guard(VBasePlayer::AdjustAngles);
-  float speed;
 
-  if (KeySpeed.state & 1)
-  {
-    speed = host_frametime * cl_anglespeedkey;
-  }
-  else
-  {
-    speed = host_frametime;
-  }
+  float speed = host_frametime*(KeySpeed.state&1 ? cl_anglespeedkey : 1.0f);
 
-  if ((KeyMouseLook.state & 4) && lookspring)
-  {
-    StartPitchDrift();
-  }
+  if ((KeyMouseLook.state&4) && lookspring) StartPitchDrift();
   KeyMouseLook.state &= 1;
 
-  //  YAW
-  if (!(KeyStrafe.state & 1))
-  {
-    ViewAngles.yaw -= KeyRight.KeyState() * cl_yawspeed * speed;
-    ViewAngles.yaw += KeyLeft.KeyState() * cl_yawspeed * speed;
-    if (joyxmove > 0)
-    {
-      ViewAngles.yaw -= joy_yaw * speed;
-    }
-    if (joyxmove < 0)
-    {
-      ViewAngles.yaw += joy_yaw * speed;
-    }
+  // yaw
+  if (!(KeyStrafe.state&1)) {
+    ViewAngles.yaw -= KeyRight.KeyState()*cl_yawspeed*speed;
+    ViewAngles.yaw += KeyLeft.KeyState()*cl_yawspeed*speed;
+    if (joyxmove > 0) ViewAngles.yaw -= joy_yaw*speed;
+    if (joyxmove < 0) ViewAngles.yaw += joy_yaw*speed;
   }
-  if (!(KeyStrafe.state & 1) &&
-    (!lookstrafe || (!mouse_look && !(KeyMouseLook.state & 1))))
-  {
-    ViewAngles.yaw -= mousex * m_yaw;
-  }
+  if (!(KeyStrafe.state&1) && (!lookstrafe || (!mouse_look && !(KeyMouseLook.state&1)))) ViewAngles.yaw -= mousex*m_yaw;
   ViewAngles.yaw = AngleMod(ViewAngles.yaw);
 
-  //  PITCH
+  // pitch
   float up = KeyLookUp.KeyState();
   float down = KeyLookDown.KeyState();
-  ViewAngles.pitch -= cl_pitchspeed * up * speed;
-  ViewAngles.pitch += cl_pitchspeed * down * speed;
-  if (up || down || (KeyMouseLook.state & 1))
-  {
-    StopPitchDrift();
-  }
-  if ((mouse_look || (KeyMouseLook.state & 1)) && !(KeyStrafe.state & 1))
-  {
-    ViewAngles.pitch -= mousey * m_pitch;
-  }
+  ViewAngles.pitch -= cl_pitchspeed*up*speed;
+  ViewAngles.pitch += cl_pitchspeed*down*speed;
+  if (up || down || (KeyMouseLook.state&1)) StopPitchDrift();
+  if ((mouse_look || (KeyMouseLook.state&1)) && !(KeyStrafe.state&1)) ViewAngles.pitch -= mousey*m_pitch;
 
-  //  Centre look
-  if ((KeyLookCentre.state & 1) || (KeyFlyCentre.state & 1))
-  {
-    StartPitchDrift();
-  }
-  if (PlayerFlags & PF_Centreing)
-  {
-    float adelta = cl_pitchdriftspeed * host_frametime;
-    if (fabs(ViewAngles.pitch) < adelta)
-    {
+  // centre look
+  if ((KeyLookCentre.state&1) || (KeyFlyCentre.state&1)) StartPitchDrift();
+  if (PlayerFlags&PF_Centreing) {
+    float adelta = cl_pitchdriftspeed*host_frametime;
+    if (fabsf(ViewAngles.pitch) < adelta) {
       ViewAngles.pitch = 0;
       PlayerFlags &= ~PF_Centreing;
-    }
-    else
-    {
-      if (ViewAngles.pitch > 0.0)
-      {
-        ViewAngles.pitch -= adelta;
-      }
-      else if (ViewAngles.pitch < 0.0)
-      {
-        ViewAngles.pitch += adelta;
-      }
+    } else {
+           if (ViewAngles.pitch > 0.0) ViewAngles.pitch -= adelta;
+      else if (ViewAngles.pitch < 0.0) ViewAngles.pitch += adelta;
     }
   }
 
-  //  ROLL
-  if (Health <= 0)
-  {
-    if (ViewAngles.roll >= 0 && ViewAngles.roll < cl_deathroll)
-    {
-      ViewAngles.roll += cl_deathrollspeed * host_frametime;
-    }
-    if (ViewAngles.roll < 0 && ViewAngles.roll > -cl_deathroll)
-    {
-      ViewAngles.roll -= cl_deathrollspeed * host_frametime;
-    }
-  }
-  else
-  {
+  // roll
+  if (Health <= 0) {
+    if (ViewAngles.roll >= 0 && ViewAngles.roll < cl_deathroll) ViewAngles.roll += cl_deathrollspeed*host_frametime;
+    if (ViewAngles.roll < 0 && ViewAngles.roll > -cl_deathroll) ViewAngles.roll -= cl_deathrollspeed*host_frametime;
+  } else {
     ViewAngles.roll = 0.0;
   }
 
-  //  Check angles
-  if (ViewAngles.pitch > 80.0)
-  {
-    ViewAngles.pitch = 80.0;
-  }
-  if (ViewAngles.pitch < -80.0)
-  {
-    ViewAngles.pitch = -80.0;
-  }
+  // check angles
+  if (ViewAngles.pitch > 80.0) ViewAngles.pitch = 80.0;
+  if (ViewAngles.pitch < -80.0) ViewAngles.pitch = -80.0;
 
-  if (ViewAngles.roll > 80.0)
-  {
-    ViewAngles.roll = 80.0;
-  }
-  if (ViewAngles.roll < -80.0)
-  {
-    ViewAngles.roll = -80.0;
-  }
+  if (ViewAngles.roll > 80.0) ViewAngles.roll = 80.0;
+  if (ViewAngles.roll < -80.0) ViewAngles.roll = -80.0;
 
-  if (Level->LevelInfoFlags & VLevelInfo::LIF_NoFreelook)
-  {
-    ViewAngles.pitch = 0;
-  }
+  if (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook) ViewAngles.pitch = 0;
   unguard;
 }
 
@@ -608,7 +467,7 @@ void VBasePlayer::HandleInput () {
   if (joyymove < 0) forward += cl_forwardspeed;
   if (joyymove > 0) forward -= cl_backspeed;
 
-  // Fly up/down/drop keys
+  // fly up/down/drop keys
   flyheight += KeyFlyUp.KeyState()*cl_flyspeed; // note that the actual flyheight will be twice this
   flyheight -= KeyFlyDown.KeyState()*cl_flyspeed;
 
@@ -616,7 +475,7 @@ void VBasePlayer::HandleInput () {
     forward += m_forward*mousey;
   }
 
-  if ((KeyStrafe.state & 1) || (lookstrafe && (mouse_look || (KeyMouseLook.state&1)))) {
+  if ((KeyStrafe.state&1) || (lookstrafe && (mouse_look || (KeyMouseLook.state&1)))) {
     side += m_side*mousex;
   }
 
@@ -632,10 +491,7 @@ void VBasePlayer::HandleInput () {
   flyheight = MID(flyheight, -127, 127);
   if (KeyFlyCentre.KeyState()) flyheight = TOCENTRE;
 
-  //
-  //  BUTTONS
-  //
-
+  // buttons
   Buttons = 0;
 
   if (KeyAttack.KeyState()) Buttons |= BT_ATTACK;
@@ -663,9 +519,7 @@ void VBasePlayer::HandleInput () {
   //AcsButtons = Buttons; // this logic is handled by `SV_RunClients()`
   //GCon->Logf("VBasePlayer::HandleInput(%p): %d; Buttons=0x%08x; OldButtons=0x%08x", this, (KeyJump.KeyState() ? 1 : 0), Buttons, OldButtons);
 
-  //
-  //  IMPULSE
-  //
+  // impulse
   if (impulse_cmd) {
     eventServerImpulse(impulse_cmd);
     impulse_cmd = 0;
@@ -683,6 +537,7 @@ void VBasePlayer::HandleInput () {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VBasePlayer::Responder
@@ -690,41 +545,34 @@ void VBasePlayer::HandleInput () {
 //  Get info needed to make movement commands for the players.
 //
 //==========================================================================
-
-bool VBasePlayer::Responder(event_t *ev)
-{
+bool VBasePlayer::Responder (event_t *ev) {
   guard(VBasePlayer::Responder);
-  switch (ev->type)
-  {
-  case ev_mouse:
-    mousex = ev->data2 * mouse_x_sensitivity;
-    mousey = ev->data3 * mouse_y_sensitivity;
-    if (invert_mouse)
-    {
-      mousey = -mousey;
-    }
-    return true;    // eat events
+  switch (ev->type) {
+    case ev_mouse:
+      mousex = ev->data2*mouse_x_sensitivity;
+      mousey = ev->data3*mouse_y_sensitivity;
+      if (invert_mouse) mousey = -mousey;
+      return true; // eat events
 
-  case ev_joystick:
-    joyxmove = ev->data2;
-    joyymove = ev->data3;
-    return true;    // eat events
+    case ev_joystick:
+      joyxmove = ev->data2;
+      joyymove = ev->data3;
+      return true; // eat events
 
-  default:
-    break;
+    default:
+      break;
   }
   return false;
   unguard;
 }
+
 
 //==========================================================================
 //
 //  VBasePlayer::ClearInput
 //
 //==========================================================================
-
-void VBasePlayer::ClearInput()
-{
+void VBasePlayer::ClearInput () {
   guard(VBasePlayer::ClearInput);
   // clear cmd building stuff
   joyxmove = joyymove = 0;
@@ -739,8 +587,7 @@ void VBasePlayer::ClearInput()
 //  VBasePlayer::AcsGetInput
 //
 //==========================================================================
-int VBasePlayer::AcsGetInput(int InputType)
-{
+int VBasePlayer::AcsGetInput (int InputType) {
   guard(VBasePlayer::AcsGetInput);
   int Btn;
   int Ret = 0;
@@ -791,7 +638,7 @@ int VBasePlayer::AcsGetInput(int InputType)
 
     case INPUT_UPMOVE:
     case MODINPUT_UPMOVE:
-      return (int)(FlyMove * 3 * 256 / 80);
+      return (int)(FlyMove*3*256/80);
   }
   return 0;
   unguard;
