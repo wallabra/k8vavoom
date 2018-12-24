@@ -231,6 +231,9 @@ protected:
   void ConvertPixelsToShaded ();
 
 public:
+  static void filterFringe (rgba_t *pic, int wdt, int hgt);
+
+public:
   //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`
   inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }
   PropertyRO<int, VTexture> Format {this, &VTexture::GetFormat};

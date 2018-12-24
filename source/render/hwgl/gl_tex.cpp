@@ -381,6 +381,7 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
     for (int i = 0; i < Width*Height; ++i, ++Data, ++NewData) {
       *NewData = (*Data ? Pal[*Data] : rgba_t::Transparent());
     }
+    VTexture::filterFringe(databuf, w, h);
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
@@ -411,6 +412,7 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
       *NewData = Pal[Data->idx];
       NewData->a = Data->a;
     }
+    VTexture::filterFringe(databuf, w, h);
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
@@ -443,7 +445,7 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
   if (w > maxTexSize) w = maxTexSize;
   if (h > maxTexSize) h = maxTexSize;
 
-  // get two temporary buffers: 0 for resampled image, 1 for premultiplied image
+  // get two temporary buffers
   if (tmpImgBufSize < w*h*4) {
     tmpImgBufSize = ((w*h*4)|0xffff)+1;
     tmpImgBuf0 = (vuint8 *)Z_Realloc(tmpImgBuf0, tmpImgBufSize);
@@ -466,38 +468,13 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data) {
   } else {
     memcpy(image, data, w*h*4);
     VTexture::SmoothEdges(image, w, h);
+    //VTexture::filterFringe((rgba_t *)image, w, h);
   }
 
   VTexture::AdjustGamma((rgba_t *)image, w*h);
-  //VTexture::PremultiplyRGBA(pmimage, image, w, h);
-  //VTexture::SmoothEdges(pmimage, w, h, pmimage);
-  memcpy(pmimage, image, w*h*4);
-  //for (int f = 0; f < w*h; ++f) pmimage[f*4+3] = 255;
 
-  /*
-  if (hasHWMipmaps) {
-    //glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-    glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-  }
-  */
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-  glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pmimage);
-
-  // generate mipmaps
-  /*
-  if (hasHWMipmaps) {
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
-  } else {
-    for (int level = 1; w > 1 || h > 1; ++level) {
-      VTexture::MipMap(w, h, image);
-      if (w > 1) w >>= 1;
-      if (h > 1) h >>= 1;
-      VTexture::PremultiplyRGBA(pmimage, image, w, h);
-      glTexImage2D(GL_TEXTURE_2D, level, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pmimage);
-    }
-  }
-  */
+  glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
   unguard;
 }

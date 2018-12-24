@@ -845,6 +845,54 @@ void VTexture::stencilPixelsRGBA (int shadeColor) {
 
 //==========================================================================
 //
+//  VTexture::filterFringe
+//
+//==========================================================================
+void VTexture::filterFringe (rgba_t *pic, int wdt, int hgt) {
+#define GETPIX(dest,_sx,_sy)  do { \
+  int sx = (_sx), sy = (_sy); \
+  if (sx >= 0 && sy >= 0 && sx < wdt && sy < hgt) { \
+    (dest) = pic[sy*wdt+sx]; \
+  } else { \
+    (dest) = rgba_t(0, 0, 0, 0); \
+  } \
+} while (0)
+
+  if (!pic || wdt < 1 || hgt < 1) return;
+  for (int y = 0; y < hgt; ++y) {
+    for (int x = 0; x < wdt; ++x) {
+      rgba_t *dp = &pic[y*wdt+x];
+      if (dp->a != 0) continue;
+      if (dp->r != 0 || dp->g != 0 || dp->b != 0) continue;
+      int r = 0, g = 0, b = 0, cnt = 0;
+      rgba_t px;
+      for (int dy = -1; dy < 2; ++dy) {
+        for (int dx = -1; dx < 2; ++dx) {
+          GETPIX(px, x+dx, y+dy);
+          if (px.a != 0)
+          //if (px.r != 0 || px.g != 0 || px.b != 0)
+          {
+            r += px.r;
+            g += px.g;
+            b += px.b;
+            ++cnt;
+          }
+        }
+      }
+      if (cnt > 0) {
+        dp->r = clampToByte(r/cnt);
+        dp->g = clampToByte(g/cnt);
+        dp->b = clampToByte(b/cnt);
+      }
+    }
+  }
+
+#undef GETPIX
+}
+
+
+//==========================================================================
+//
 //  VTexture::Shade
 //
 //==========================================================================
