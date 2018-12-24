@@ -409,13 +409,6 @@ state GetDownState () {
 //
 //==========================================================================
 state GetReadyState () {
-  /*
-  if (HasFieldByName('user_unloading')) {
-    print("GRS: %C; user_unloading=%d:%d; spread=%d:%d", self,
-      GetIntFieldByName('user_unloading'), GetIntFieldByName('user_unloading', default_value:true),
-      GetIntFieldByName('user_spread'), GetIntFieldByName('user_spread', default_value:true));
-  }
-  */
   return FindState('Ready');
 }
 

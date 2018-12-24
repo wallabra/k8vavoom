@@ -32,8 +32,7 @@
   DECLARE_FUNCTION(get_GC_MessagesAllowed)
   DECLARE_FUNCTION(set_GC_MessagesAllowed)
 
-  DECLARE_FUNCTION(HasFieldByName)
-  DECLARE_FUNCTION(GetIntFieldByName)
+#include "vc_object_rtti.h"
 
   // error functions
   DECLARE_FUNCTION(Error)

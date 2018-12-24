@@ -45,8 +45,7 @@ native static final int GC_LastCollectedObjects { get; }
 native static final float GC_LastCollectDuration { get; } // in seconds
 native static final bool GC_MessagesAllowed { get; set; }
 
-native final bool HasFieldByName (name fldname);
-native final int GetIntFieldByName (name fldname, optional bool default_value);
+#include "RTTI.vc"
 
 
 //**************************************************************************
