@@ -311,6 +311,7 @@ void VSdlInputDevice::ReadInput () {
 
   SDL_PumpEvents();
   while (SDL_PollEvent(&ev)) {
+    memset((void *)&vev, 0, sizeof(vev));
     switch (ev.type) {
       case SDL_KEYDOWN:
       case SDL_KEYUP:

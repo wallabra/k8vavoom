@@ -329,10 +329,12 @@ void VInput::PostEvent (event_t *ev) {
 void VInput::KeyEvent (int key, int press) {
   guard(VInput::KeyEvent);
   if (!key) return;
-  Events[EventHead].type = (press ? ev_keydown : ev_keyup);
-  Events[EventHead].data1 = key;
-  Events[EventHead].data2 = 0;
-  Events[EventHead].data3 = 0;
+  event_t *ev = &Events[EventHead];
+  memset((void *)ev, 0, sizeof(event_t));
+  ev->type = (press ? ev_keydown : ev_keyup);
+  ev->data1 = key;
+  //data2 = 0;
+  //data3 = 0;
   EventHead = (EventHead+1)&(MAXEVENTS-1);
   unguard;
 }

@@ -2332,6 +2332,7 @@ void VVideo::runEventLoop () {
     bool gotEvent = doFrameBusiness(ev);
 
   morevents:
+    memset((void *)&evt, 0, sizeof(evt));
     if (gotEvent) {
       switch (ev.type) {
         case SDL_KEYDOWN:

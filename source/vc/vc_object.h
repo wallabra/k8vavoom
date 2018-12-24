@@ -462,16 +462,23 @@ enum {
   ev_winfocus, // data1: focused
   ev_timer, // data1: timer id
   ev_closequery, // data1: !=0 -- system shutdown
+  ev_user = 666,
 };
 
 enum {
-  bCtrl = 1<<0,
-  bAlt = 1<<1,
-  bShift = 1<<2,
-  bHyper = 1<<3,
-  bLMB = 1<<4,
-  bMMB = 1<<5,
-  bRMB = 1<<6,
+  EFlag_Eaten = 1U<<0,
+  EFlag_Cancelled = 1U<<1,
+  EFlag_Bubbling = 1U<<2, // this event is "bubbling up"
+};
+
+enum {
+  bCtrl = 1U<<0,
+  bAlt = 1U<<1,
+  bShift = 1U<<2,
+  bHyper = 1U<<3,
+  bLMB = 1U<<4,
+  bMMB = 1U<<5,
+  bRMB = 1U<<6,
 };
 
 // event structure
@@ -480,5 +487,8 @@ struct event_t {
   vint32 data1; // keys / mouse / joystick buttons
   vint32 data2; // mouse / joystick x move
   vint32 data3; // mouse / joystick y move
+  VObject *obj;
+  VObject *dest;
+  vuint32 flags; // EFlag_XXX
   vuint32 modflags;
 };
