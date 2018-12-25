@@ -28,6 +28,7 @@
 //**************************************************************************
 import 'game';
 import 'uibase';
+import 'newui';
 
 #include "MenuScreenMain.vc"
 #include "MenuScreenMultiplayer.vc"

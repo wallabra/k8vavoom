@@ -7,17 +7,10 @@ add_custom_command(OUTPUT ${OUTDIR}/engine.dat
 add_custom_target(engine ALL DEPENDS ${OUTDIR}/engine.dat)
 add_dependencies(engine vcc)
 
-add_custom_command(OUTPUT ${OUTDIR}/glvideo.dat
-  COMMAND mkdir ARGS -p ${OUTDIR}
-  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/glvideo/classes.vc ${OUTDIR}/glvideo.dat
-  DEPENDS vcc glvideo/*.vc ${OUTDIR}/engine.dat)
-add_custom_target(glvideo ALL DEPENDS ${OUTDIR}/glvideo.dat)
-add_dependencies(glvideo vcc)
-
 add_custom_command(OUTPUT ${OUTDIR}/newui.dat
   COMMAND mkdir ARGS -p ${OUTDIR}
   COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/newui/classes.vc ${OUTDIR}/newui.dat
-  DEPENDS vcc newui/*.vc ${OUTDIR}/engine.dat ${OUTDIR}/glvideo.dat)
+  DEPENDS vcc newui/*.vc ${OUTDIR}/engine.dat)
 add_custom_target(newui ALL DEPENDS ${OUTDIR}/newui.dat)
 add_dependencies(newui vcc)
 
@@ -58,5 +51,5 @@ add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
     uibase/wgselector/*.vc
     uibase/wgtextbtn/*.vc
     ${OUTDIR}/engine.dat)
-add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat)
+add_custom_target(uibase ALL DEPENDS ${OUTDIR}/uibase.dat ${OUTDIR}/newui.dat)
 add_dependencies(uibase vcc engine linespec)

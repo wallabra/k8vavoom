@@ -37,3 +37,6 @@
 #include "ActorDisplayWindow.vc"
 #include "ClientGameBase.vc"
 #include "ScriptsParser.vc"
+
+#include "GLVideo.vc"
+#include "GLTexture.vc"
