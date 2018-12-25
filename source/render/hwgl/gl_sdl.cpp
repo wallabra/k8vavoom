@@ -44,6 +44,7 @@ public:
   virtual void Shutdown () override;
 
   virtual void WarpMouseToWindowCenter () override;
+  virtual void GetMousePosition (int *mx, int *my) override;
 
   virtual void GetRealWindowSize (int *rw, int *rh) override;
 
@@ -76,7 +77,7 @@ void VSdlOpenGLDrawer::Init () {
 //
 //  VSdlOpenGLDrawer::WarpMouseToWindowCenter
 //
-//  k8: omebody should fix this; i don't care
+//  k8: somebody should fix this; i don't care
 //
 //==========================================================================
 void VSdlOpenGLDrawer::WarpMouseToWindowCenter () {
@@ -90,6 +91,25 @@ void VSdlOpenGLDrawer::WarpMouseToWindowCenter () {
   //SDL_GetWindowPosition(hw_window, &wx, &wy);
   //SDL_WarpMouseGlobal(wx+ScreenWidth/2, wy+ScreenHeight/2);
   SDL_WarpMouseInWindow(hw_window, ScreenWidth/2, ScreenHeight/2);
+}
+
+
+//==========================================================================
+//
+//  VSdlOpenGLDrawer::GetMousePosition
+//
+//==========================================================================
+void VSdlOpenGLDrawer::GetMousePosition (int *mx, int *my) {
+  int xp = 0, yp = 0;
+  if (hw_window) {
+    SDL_GetGlobalMouseState(&xp, &yp);
+    int wx, wy;
+    SDL_GetWindowPosition(hw_window, &wx, &wy);
+    xp -= wx;
+    yp -= wy;
+  }
+  if (mx) *mx = xp;
+  if (my) *my = yp;
 }
 
 

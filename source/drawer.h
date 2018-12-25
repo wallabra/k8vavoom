@@ -164,6 +164,7 @@ public:
   virtual void *ReadScreen (int *bpp, bool *bot2top) = 0;
   virtual void ReadBackScreen (int Width, int Height, rgba_t *Dest) = 0;
   virtual void WarpMouseToWindowCenter () = 0;
+  virtual void GetMousePosition (int *mx, int *my) = 0;
 
   // rendring stuff
   virtual void SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) = 0;

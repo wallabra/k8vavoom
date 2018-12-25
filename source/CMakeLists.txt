@@ -504,6 +504,8 @@ if(ENABLE_CLIENT)
     endif(WIN32)
     set(MAIN_SOURCES ${MAIN_SOURCES} in_sdl.cpp sys_sdl.cpp)
     set(MAIN_SOURCES ${MAIN_SOURCES} render/hwgl/gl_sdl.cpp)
+    set(VAVOOM_MAIN_DEPS ${VAVOOM_MAIN_DEPS} imago)
+    set(MAIN_LIBS imago ${MAIN_LIBS})
   endif(SDL2_FOUND)
 
 

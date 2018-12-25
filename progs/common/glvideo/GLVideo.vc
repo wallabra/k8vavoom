@@ -24,29 +24,18 @@ enum BlendMode {
   InvModulate, // glBlendFunc(GL_ZERO, GL_SRC_COLOR)
 }
 
-enum BlendFunc {
-  Add,
-  Sub,
-  SubRev,
-  Min,
-  Max,
-}
-
 
 native final static bool isInitialized ();
 
 native final static int screenWidth ();
 native final static int screenHeight ();
 
-native final static bool isMouseCursorVisible ();
+//native final static bool isMouseCursorVisible ();
 // no recursion is supported
-native final static void hideMouseCursor ();
-native final static void showMouseCursor ();
+//native final static void hideMouseCursor ();
+//native final static void showMouseCursor ();
 
-native final static void getRealWindowSize (out int w, out int h);
-
-native final static bool glHasNPOT { get; }
-native final static bool glHasExtension (string extname);
+//native final static bool glHasNPOT { get; }
 
 native final static void clearScreen (optional int rgb); // default is black
 
@@ -61,7 +50,6 @@ alias color = colorARGB;
 
 // BlendXXX
 native final static BlendMode blendMode { get; set; }
-native final static BlendFunc blendFunc { get; set; }
 
 
 // aborts if font cannot be loaded
