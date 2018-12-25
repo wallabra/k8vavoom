@@ -2503,15 +2503,19 @@ VExpression *VDictPut::DoResolve (VEmitContext &ec) {
   if (!keyexpr || !valexpr) { delete this; return nullptr; }
 
   if (sexpr->Type.GetDictKeyType().Type == TYPE_Float) keyexpr = keyexpr->CoerceToFloat();
-  if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType())) {
+  //if (!keyexpr->Type.Equals(sexpr->Type.GetDictKeyType()))
+  if (!keyexpr->Type.CheckMatch(true, Loc, sexpr->Type.GetDictKeyType(), false))
+  {
     ParseError(Loc, "expected key type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *keyexpr->Type.GetName());
     delete this;
     return nullptr;
   }
 
   if (sexpr->Type.GetDictValueType().Type == TYPE_Float) valexpr = valexpr->CoerceToFloat();
-  if (!valexpr->Type.Equals(sexpr->Type.GetDictValueType())) {
-    ParseError(Loc, "expected value type `%s`, but got `%s`", *sexpr->Type.GetDictKeyType().GetName(), *valexpr->Type.GetName());
+  //if (!valexpr->Type.Equals(sexpr->Type.GetDictValueType()))
+  if (!valexpr->Type.CheckMatch(true, Loc, sexpr->Type.GetDictValueType(), false))
+  {
+    ParseError(Loc, "expected value type `%s`, but got `%s`", *sexpr->Type.GetDictValueType().GetName(), *valexpr->Type.GetName());
     delete this;
     return nullptr;
   }

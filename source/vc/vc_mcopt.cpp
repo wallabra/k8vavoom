@@ -963,8 +963,10 @@ struct Instr {
             spdelta -= 1;
             return;
           case OPC_DictDispatch_Put:
+            spdelta -= 2; // returns `duplicate` flag
+            return;
           case OPC_DictDispatch_Delete:
-            spdelta -= 1; // returns `duplicate`/`success` flag
+            spdelta -= 1; // returns `success` flag
             return;
           case OPC_DictDispatch_ClearPointed:
             spdelta -= 1;
