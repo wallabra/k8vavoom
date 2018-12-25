@@ -400,9 +400,8 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       {
         VScriptDictElem *ep = (ht->map ? ht->map->getValueIIdx(sp[-1].i) : nullptr);
         if (ep) {
-          if (VType.Type == TYPE_String) {
-            sp[-2].p = nullptr;
-            *((VStr *)&sp[-2].p) = *((VStr *)&ep->value);
+          if (VType.Type == TYPE_String || VScriptDictElem::isSimpleType(VType)) {
+            sp[-2].p = &ep->value;
           } else {
             sp[-2].p = ep->value;
           }

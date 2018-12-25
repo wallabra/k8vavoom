@@ -2841,12 +2841,12 @@ void VDictKeyAtIndex::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictKeyAtIndex::DoResolve (VEmitContext &ec) {
-  if (!idxexpr) { ParseError(Loc, "`.isValidIndex` cannot have empty arguments"); delete this; return nullptr; }
+  if (!idxexpr) { ParseError(Loc, "`.keyAtIndex` cannot have empty arguments"); delete this; return nullptr; }
   idxexpr = idxexpr->Resolve(ec);
   if (!idxexpr) { delete this; return nullptr; }
 
   if (idxexpr->Type.Type != TYPE_Int && idxexpr->Type.Type != TYPE_Byte) {
-    ParseError(Loc, "`.isValidIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
+    ParseError(Loc, "`.keyAtIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
     delete this;
     return nullptr;
   }
@@ -2927,19 +2927,19 @@ void VDictValueAtIndex::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDictValueAtIndex::DoResolve (VEmitContext &ec) {
-  if (!idxexpr) { ParseError(Loc, "`.isValidIndex` cannot have empty arguments"); delete this; return nullptr; }
+  if (!idxexpr) { ParseError(Loc, "`.valueAtIndex` cannot have empty arguments"); delete this; return nullptr; }
   idxexpr = idxexpr->Resolve(ec);
   if (!idxexpr) { delete this; return nullptr; }
 
   if (idxexpr->Type.Type != TYPE_Int && idxexpr->Type.Type != TYPE_Byte) {
-    ParseError(Loc, "`.isValidIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
+    ParseError(Loc, "`.valueAtIndex` argument must be `int`, but got `%s`", *idxexpr->Type.GetName());
     delete this;
     return nullptr;
   }
 
   sexpr->RequestAddressOf();
   Type = sexpr->Type.GetDictValueType();
-  if (Type.Type != TYPE_String && !VScriptDictElem::isSimpleType(Type)) Type = Type.MakePointerType();
+  Type = Type.MakePointerType();
   Flags |= sexpr->Flags&FIELD_ReadOnly;
   return this;
 }
