@@ -87,7 +87,7 @@ void test01 () {
   for (auto idx = i2s.firstIndex(); i2s.isValidIndex(idx); idx = i2s.nextIndex(idx)) {
     string key = i2s.keyAtIndex(idx);
     auto val = i2s.valueAtIndex(idx);
-    print("idx=%s; key=<%q>; value=<%q>", idx, key, val);
+    print("idx=%s; key=<%q>; value=<%q>", idx, key, *val);
   }
 }
 
@@ -101,7 +101,7 @@ void test02 () {
   for (auto idx = i2s.firstIndex(); i2s.isValidIndex(idx); idx = i2s.nextIndex(idx)) {
     auto key = i2s.keyAtIndex(idx);
     auto val = i2s.valueAtIndex(idx);
-    print("idx=%s; key=<%q>; value=<%q>", idx, key, val);
+    print("idx=%s; key=<%q>; value=<%q>", idx, key, *val);
   }
 }
 
