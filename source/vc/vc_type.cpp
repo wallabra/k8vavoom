@@ -1513,7 +1513,7 @@ vuint32 VScriptDictElem::calcHash () const {
     case TYPE_Bool:
       return 0;
     case TYPE_Name:
-      return hashU32((vuint32)((VName *)value)->GetIndex());
+      return hashU32((vuint32)(*(vuint32 *)&value));
     case TYPE_String:
       {
         VStr *s = (VStr *)&value;
