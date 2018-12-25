@@ -31,8 +31,8 @@ public:
   virtual void ReadInput() = 0;
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
-  //  Implemented in corresponding system module.
-  static VInputDevice *CreateDevice();
+  // implemented in corresponding system module
+  static VInputDevice *CreateDevice ();
 };
 
 
@@ -60,18 +60,18 @@ public:
   virtual void Shutdown () = 0;
 
   // input event handling
-  virtual void PostEvent (event_t *) = 0;
-  virtual void KeyEvent (int, int) = 0;
+  virtual void PostEvent (event_t *ev) = 0;
+  virtual void KeyEvent (int key, int press) = 0;
   virtual void ProcessEvents () = 0;
   virtual int ReadKey () = 0;
 
   // handling of key bindings
-  virtual void GetBindingKeys (const VStr &, int &, int &) = 0;
-  virtual void GetBinding (int, VStr &, VStr &) = 0;
-  virtual void SetBinding (int, const VStr &, const VStr &, bool = true) = 0;
-  virtual void WriteBindings (FILE *) = 0;
+  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2) = 0;
+  virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) = 0;
+  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true) = 0;
+  virtual void WriteBindings (FILE *f) = 0;
 
-  virtual int TranslateKey (int) = 0;
+  virtual int TranslateKey (int ch) = 0;
 
   virtual int KeyNumForName (const VStr &Name) = 0;
   virtual VStr KeyNameForNum (int KeyNr) = 0;
@@ -80,10 +80,11 @@ public:
 
   static void KBCheatClearAll ();
   static void KBCheatAppend (VStr keys, VStr concmd);
-  static bool KBCheatProcessor (event_t *);
+  static bool KBCheatProcessor (event_t *ev);
 
   static VInputPublic *Create ();
 };
+
 
 // global input handler
 extern VInputPublic *GInput;

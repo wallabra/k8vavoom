@@ -48,26 +48,26 @@ public:
   virtual void Shutdown () override;
 
   // input event handling
-  virtual void PostEvent (event_t *) override;
-  virtual void KeyEvent (int, int) override;
+  virtual void PostEvent (event_t *ev) override;
+  virtual void KeyEvent (int key, int press) override;
   virtual void ProcessEvents () override;
   virtual int ReadKey () override;
 
   // handling of key bindings
-  virtual void GetBindingKeys (const VStr &, int &, int &) override;
-  virtual void GetBinding (int, VStr &, VStr &) override;
-  virtual void SetBinding (int, const VStr &, const VStr &, bool) override;
-  virtual void WriteBindings (FILE *) override;
+  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2) override;
+  virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) override;
+  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true) override;
+  virtual void WriteBindings (FILE *f) override;
 
-  virtual int TranslateKey (int) override;
+  virtual int TranslateKey (int ch) override;
 
   virtual int KeyNumForName (const VStr &Name) override;
-  virtual VStr KeyNameForNum( int KeyNr) override;
+  virtual VStr KeyNameForNum (int KeyNr) override;
 
   virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
 private:
-  enum { MAXEVENTS = 512 };
+  enum { MAXEVENTS = 2048 };
 
   VInputDevice *Device;
 
@@ -353,32 +353,14 @@ void VInput::ProcessEvents () {
   for (; EventTail != EventHead; EventTail = (EventTail+1)&(MAXEVENTS-1)) {
     event_t *ev = &Events[EventTail];
     // shift key state
-    if (ev->data1 == K_RSHIFT) {
-      ShiftDown &= ~1;
-      if (ev->type == ev_keydown) ShiftDown |= 1;
-    }
-    if (ev->data1 == K_LSHIFT) {
-      ShiftDown &= ~2;
-      if (ev->type == ev_keydown) ShiftDown |= 2;
-    }
+    if (ev->data1 == K_RSHIFT) { if (ev->type == ev_keydown) ShiftDown |= 1; else ShiftDown &= ~1; }
+    if (ev->data1 == K_LSHIFT) { if (ev->type == ev_keydown) ShiftDown |= 2; else ShiftDown &= ~2; }
     // ctrl key state
-    if (ev->data1 == K_RCTRL) {
-      CtrlDown &= ~1;
-      if (ev->type == ev_keydown) CtrlDown |= 1;
-    }
-    if (ev->data1 == K_LCTRL) {
-      CtrlDown &= ~2;
-      if (ev->type == ev_keydown) CtrlDown |= 2;;
-    }
+    if (ev->data1 == K_RCTRL) { if (ev->type == ev_keydown) CtrlDown |= 1; else CtrlDown &= ~1; }
+    if (ev->data1 == K_LCTRL) { if (ev->type == ev_keydown) CtrlDown |= 2; else CtrlDown &= ~2; }
     // alt key state
-    if (ev->data1 == K_RALT) {
-      AltDown &= ~1;
-      if (ev->type == ev_keydown) AltDown |= 1;
-    }
-    if (ev->data1 == K_LALT) {
-      AltDown &= ~2;
-      if (ev->type == ev_keydown) AltDown |= 2;;
-    }
+    if (ev->data1 == K_RALT) { if (ev->type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
+    if (ev->data1 == K_LALT) { if (ev->type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
 
     if (C_Responder(ev)) continue; // console
     if (CT_Responder(ev)) continue; // chat
@@ -538,7 +520,7 @@ int VInput::TranslateKey (int ch) {
 //  VInput::KeyNumForName
 //
 //  Searches in key names for given name
-// return key code
+//  return key code
 //
 //==========================================================================
 int VInput::KeyNumForName (const VStr &Name) {
@@ -596,7 +578,7 @@ COMMAND(Unbind) {
 
   int b = GInput->KeyNumForName(Args[1]);
   if (b == -1) {
-    GCon->Log(VStr("\"")+Args[1]+"\" isn't a valid key");
+    GCon->Logf("\"%s\" isn't a valid key", *Args[1].quote());
     return;
   }
 
@@ -634,7 +616,7 @@ COMMAND(Bind) {
   if (Args[1].length() == 0) return;
   int b = GInput->KeyNumForName(Args[1]);
   if (b == -1) {
-    GCon->Log(VStr("\"")+Args[1]+"\" isn't a valid key");
+    GCon->Logf("\"%s\" isn't a valid key", *Args[1].quote());
     return;
   }
 
@@ -642,13 +624,17 @@ COMMAND(Bind) {
     VStr Down, Up;
     GInput->GetBinding(b, Down, Up);
     if (Down.IsNotEmpty() || Up.IsNotEmpty()) {
-      GCon->Log(Args[1] + " = \"" + Down + "\" / \"" + Up + "\"");
+      if (Up.IsNotEmpty()) {
+        GCon->Logf("\"%s\" = \"%s\" / \"%s\"", *Args[1].quote(), *Down.quote(), *Up.quote());
+      } else {
+        GCon->Logf("\"%s\" = \"%s\"", *Args[1].quote(), *Down.quote());
+      }
     } else {
-      GCon->Logf("'%s' is not bound", *Args[1]);
+      GCon->Logf("\"%s\" is not bound", *Args[1].quote());
     }
     return;
   }
-  GInput->SetBinding(b, Args[2], c > 3 ? Args[3] : VStr(), !ParsingKeyConf);
+  GInput->SetBinding(b, Args[2], (c > 3 ? Args[3] : VStr()), !ParsingKeyConf);
   unguard;
 }
 
@@ -670,7 +656,7 @@ COMMAND(DefaultBind) {
   if (Args[1].length() == 0) return;
   int b = GInput->KeyNumForName(Args[1]);
   if (b == -1) {
-    GCon->Log(VStr("\"")+Args[1]+"\" isn't a valid key");
+    GCon->Logf("\"%s\" isn't a valid key", *Args[1].quote());
     return;
   }
 
@@ -678,12 +664,16 @@ COMMAND(DefaultBind) {
     VStr Down, Up;
     GInput->GetBinding(b, Down, Up);
     if (Down.IsNotEmpty() || Up.IsNotEmpty()) {
-      GCon->Log(Args[1] + " = \"" + Down + "\" / \"" + Up + "\"");
+      if (Up.IsNotEmpty()) {
+        GCon->Logf("\"%s\" = \"%s\" / \"%s\"", *Args[1].quote(), *Down.quote(), *Up.quote());
+      } else {
+        GCon->Logf("\"%s\" = \"%s\"", *Args[1].quote(), *Down.quote());
+      }
     } else {
-      GCon->Logf("%s is not bound", *Args[1]);
+      GCon->Logf("\"%s\" is not bound", *Args[1].quote());
     }
     return;
   }
-  GInput->SetBinding(b, Args[2], c > 3 ? Args[3] : VStr(), !ParsingKeyConf);
+  GInput->SetBinding(b, Args[2], (c > 3 ? Args[3] : VStr()), !ParsingKeyConf);
   unguard;
 }
