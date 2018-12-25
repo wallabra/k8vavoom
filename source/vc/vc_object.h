@@ -493,8 +493,8 @@ struct event_t {
   vint32 data1; // keys / mouse / joystick buttons
   vint32 data2; // mouse / joystick x move
   vint32 data3; // mouse / joystick y move
+  vuint32 flags; // EFlag_XXX
   VObject *obj;
   VObject *dest;
-  vuint32 flags; // EFlag_XXX
   vuint32 modflags;
 };

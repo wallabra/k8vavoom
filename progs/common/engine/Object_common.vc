@@ -154,14 +154,8 @@ enum {
   ev_winfocus, // data1: focused
   ev_timer, // data1: timer id
   ev_closequery,
+  ev_newui = 69,
   ev_user = 666,
-};
-
-
-enum EFlag {
-  Eaten = 1<<0,
-  Cancelled = 1<<1,
-  Bubbling = 1<<2, // this event is "bubbling up"
 };
 
 
@@ -171,9 +165,13 @@ struct event_t {
   int data1; // keys / mouse / joystick buttons
   int data2; // mouse / joystick x move
   int data3; // mouse / joystick y move
+  //int flags; // EFlag.XXX bitset
+  bool eaten;
+  bool cancelled;
+  bool bubbling;
+  // for new UI
   Object obj; // usually `none`, can be used as event source
   Object dest; // usually `none`, used as "destination widget" in UI system
-  int flags; // EFlag.XXX bitset
   // for key
   alias keycode = data1;
   // for mouse
@@ -236,7 +234,6 @@ static final ModMask eventBuildModMask (const ref event_t evt) {
   if (evt.bShiftRight) res |= ModMask.ShiftRight;
   return res;
 }
-
 
 static native final string GetInputKeyStrName (int kcode);
 static native final int GetInputKeyCode (string kname);
