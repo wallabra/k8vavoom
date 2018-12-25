@@ -38,8 +38,8 @@ void delegate (WidgetListBox me, int curidx, int curtag) onSelectionChanged;
 
 // ////////////////////////////////////////////////////////////////////////// //
 void onCreated () {
-  int th = Video.textHeight("W");
-  mBaseWidth = Video.textWidth("W")*24+4;
+  int th = GLVideo.textHeight("W");
+  mBaseWidth = GLVideo.textWidth("W")*24+4;
   mBaseHeight = th*8+2+th/2;
 }
 
@@ -47,8 +47,8 @@ void onCreated () {
 // ////////////////////////////////////////////////////////////////////////// //
 final void setDefWidthInChars (int chars) {
   if (chars < 1) return;
-  Video.fontName = fontName;
-  mBaseWidth = Video.textWidth("W")*chars+4;
+  GLVideo.fontName = fontName;
+  mBaseWidth = GLVideo.textWidth("W")*chars+4;
   mWidth = mBaseWidth;
 }
 
@@ -66,8 +66,8 @@ final void appendItem (string text, optional int tag, optional bool checked) {
 final void makeCurrentVisible () {
   int mlen = mItems.length;
   if (mlen == 0) { mSkipY = 0; return; }
-  Video.fontName = fontName;
-  int th = Video.textHeight("W");
+  GLVideo.fontName = fontName;
+  int th = GLVideo.textHeight("W");
   int y0 = th*mCurrItem-mSkipY;
   if (y0 < 0) {
     mSkipY = th*mCurrItem;
@@ -87,23 +87,23 @@ final void makeCurrentVisible () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 protected override void selfPaintAt (int x0, int y0) {
-  Video.color = (focused ? 0x10_10_10 : 0x20_20_20);
-  Video.fillRect(x0, y0, mWidth, mHeight);
-  Video.drawBevel(x0, y0, mWidth, mHeight, 0x10_10_10, 0x40_40_40);
-  if (!Video.scissorCombine(x0+1, y0+1, mWidth-2, mHeight-2)) return;
+  GLVideo.color = (focused ? 0x10_10_10 : 0x20_20_20);
+  GLVideo.fillRect(x0, y0, mWidth, mHeight);
+  GLVideo.drawBevel(x0, y0, mWidth, mHeight, 0x10_10_10, 0x40_40_40);
+  if (!GLVideo.scissorCombine(x0+1, y0+1, mWidth-2, mHeight-2)) return;
   makeCurrentVisible();
-  Video.fontName = fontName;
-  int th = Video.textHeight("W");
+  GLVideo.fontName = fontName;
+  int th = GLVideo.textHeight("W");
   int y = y0+1-mSkipY;
   foreach (int f, ref auto it; mItems) {
     if (f == mCurrItem) {
-      Video.color = (focused ? mFcSelBackColor : mSelBackColor);
-      Video.fillRect(x0+1, y, mWidth, th-1);
-      Video.color = (focused ? mFcSelTextColor : mSelTextColor);
+      GLVideo.color = (focused ? mFcSelBackColor : mSelBackColor);
+      GLVideo.fillRect(x0+1, y, mWidth, th-1);
+      GLVideo.color = (focused ? mFcSelTextColor : mSelTextColor);
     } else {
-      Video.color = (focused ? mFcTextColor : mTextColor);
+      GLVideo.color = (focused ? mFcTextColor : mTextColor);
     }
-    Video.drawTextAt(x0+1, y, it.text);
+    GLVideo.drawTextAt(x0+1, y, it.text);
     y += th;
   }
 }
@@ -122,8 +122,8 @@ override bool onEvent (ref event_t evt) {
       case K_MOUSE1:
         if (mItems.length > 0) {
           makeCurrentVisible();
-          Video.fontName = fontName;
-          int th = Video.textHeight("W");
+          GLVideo.fontName = fontName;
+          int th = GLVideo.textHeight("W");
           int my = evt.y-1+mSkipY;
           int idx = my/th;
           //if (idx < 0 || idx >= mItems.length || mCurrItem == idx) return true;

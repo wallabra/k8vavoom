@@ -41,10 +41,10 @@ static VOpenGLTexture *txHead = nullptr, *txTail = nullptr;
 static TMap<VStr, VOpenGLTexture *> txLoaded;
 //static TArray<VOpenGLTexture *> txLoadedUnnamed;
 
-bool VVideo::doGLSwap = false;
-bool VVideo::doRefresh = false;
-bool VVideo::quitSignal = false;
-bool VVideo::hasNPOT = false;
+bool VGLVideo::doGLSwap = false;
+bool VGLVideo::doRefresh = false;
+bool VGLVideo::quitSignal = false;
+bool VGLVideo::hasNPOT = false;
 
 extern VObject *mainObject;
 
@@ -878,7 +878,7 @@ IMPLEMENT_FUNCTION(VObject, CreateTimer) {
   P_GET_BOOL(oneShot);
   P_GET_INT(intervalms);
   if (!specifiedOneShot) oneShot = false; // just in case
-  RET_INT(VVideo::CreateTimerWithId(0, intervalms, oneShot));
+  RET_INT(VGLVideo::CreateTimerWithId(0, intervalms, oneShot));
 }
 
 //native static final bool CreateTimerWithId (int id, int intervalms, optional bool oneShot);
@@ -888,38 +888,38 @@ IMPLEMENT_FUNCTION(VObject, CreateTimerWithId) {
   P_GET_INT(intervalms);
   P_GET_INT(id);
   if (!specifiedOneShot) oneShot = false; // just in case
-  RET_BOOL(VVideo::CreateTimerWithId(id, intervalms, oneShot) > 0);
+  RET_BOOL(VGLVideo::CreateTimerWithId(id, intervalms, oneShot) > 0);
 }
 
 //native static final bool DeleteTimer (int id);
 IMPLEMENT_FUNCTION(VObject, DeleteTimer) {
   P_GET_INT(id);
-  RET_BOOL(VVideo::DeleteTimer(id));
+  RET_BOOL(VGLVideo::DeleteTimer(id));
 }
 
 //native static final bool IsTimerExists (int id);
 IMPLEMENT_FUNCTION(VObject, IsTimerExists) {
   P_GET_INT(id);
-  RET_BOOL(VVideo::IsTimerExists(id));
+  RET_BOOL(VGLVideo::IsTimerExists(id));
 }
 
 //native static final bool IsTimerOneShot (int id);
 IMPLEMENT_FUNCTION(VObject, IsTimerOneShot) {
   P_GET_INT(id);
-  RET_BOOL(VVideo::IsTimerOneShot(id));
+  RET_BOOL(VGLVideo::IsTimerOneShot(id));
 }
 
 //native static final int GetTimerInterval (int id);
 IMPLEMENT_FUNCTION(VObject, GetTimerInterval) {
   P_GET_INT(id);
-  RET_INT(VVideo::GetTimerInterval(id));
+  RET_INT(VGLVideo::GetTimerInterval(id));
 }
 
 //native static final bool SetTimerInterval (int id, int intervalms);
 IMPLEMENT_FUNCTION(VObject, SetTimerInterval) {
   P_GET_INT(intervalms);
   P_GET_INT(id);
-  RET_BOOL(VVideo::SetTimerInterval(id, intervalms));
+  RET_BOOL(VGLVideo::SetTimerInterval(id, intervalms));
 }
 
 
@@ -1043,7 +1043,7 @@ static bool texUpload (VOpenGLTexture *tx) {
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   */
-  VVideo::forceGLTexFilter();
+  VGLVideo::forceGLTexFilter();
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tx->img->width, tx->img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr); // this creates texture
 
@@ -1255,7 +1255,7 @@ VOpenGLTexture *VOpenGLTexture::CreateEmpty (VName txname, int wdt, int hgt) {
 
 
 void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1, float angle) const {
-  if (!tid /*|| VVideo::isFullyTransparent() || mTransparent*/) return;
+  if (!tid /*|| VGLVideo::isFullyTransparent() || mTransparent*/) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -1263,24 +1263,24 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  VVideo::forceGLTexFilter();
+  VGLVideo::forceGLTexFilter();
 
-  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
-    if (mOpaque && VVideo::isFullyOpaque()) {
+  if (VGLVideo::getBlendMode() == VGLVideo::BlendNormal) {
+    if (mOpaque && VGLVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
     } else {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
-    VVideo::setupBlending();
+    VGLVideo::setupBlending();
   }
 
   const float fx0 = (float)x0/(float)img->width;
   const float fx1 = (float)x1/(float)img->width;
   const float fy0 = (float)y0/(float)img->height;
   const float fy1 = (float)y1/(float)img->height;
-  const float z = VVideo::currZFloat;
+  const float z = VGLVideo::currZFloat;
 
   if (angle != 0) {
     glPushMatrix();
@@ -1301,7 +1301,7 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
 
 
 void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, int x1, int y1) const {
-  if (!tid /*|| VVideo::isFullyTransparent() || mTransparent*/) return;
+  if (!tid /*|| VGLVideo::isFullyTransparent() || mTransparent*/) return;
   if (x1 < 0) x1 = img->width;
   if (y1 < 0) y1 = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -1309,19 +1309,19 @@ void VOpenGLTexture::blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  VVideo::forceGLTexFilter();
+  VGLVideo::forceGLTexFilter();
 
-  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
-    if (mOpaque && VVideo::isFullyOpaque()) {
+  if (VGLVideo::getBlendMode() == VGLVideo::BlendNormal) {
+    if (mOpaque && VGLVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
     } else {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
-    VVideo::setupBlending();
+    VGLVideo::setupBlending();
   }
-  const float z = VVideo::currZFloat;
+  const float z = VGLVideo::currZFloat;
 
   glBegin(GL_QUADS);
     glTexCoord2i(x0, y0); glVertex3f(dx0, dy0, z);
@@ -1350,7 +1350,7 @@ void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQua
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    VVideo::forceGLTexFilter();
+    VGLVideo::forceGLTexFilter();
   }
 
   // bind lightmap texture
@@ -1365,18 +1365,18 @@ void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQua
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   }
 
-  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
-    if (mOpaque && VVideo::isFullyOpaque()) {
+  if (VGLVideo::getBlendMode() == VGLVideo::BlendNormal) {
+    if (mOpaque && VGLVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
     } else {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
-    VVideo::setupBlending();
+    VGLVideo::setupBlending();
   }
 
-  const float z = VVideo::currZFloat;
+  const float z = VGLVideo::currZFloat;
   glBegin(GL_QUADS);
     p_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, t0->tx0, t0->ty0);
     p_glMultiTexCoord2fARB(GL_TEXTURE1_ARB, t1->tx0, t1->ty0);
@@ -1405,7 +1405,7 @@ void VOpenGLTexture::blitWithLightmap (TexQuad *t0, VOpenGLTexture *lmap, TexQua
 
 
 void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
-  if (!tid /*|| VVideo::isFullyTransparent() || scale <= 0 || mTransparent*/) return;
+  if (!tid /*|| VGLVideo::isFullyTransparent() || scale <= 0 || mTransparent*/) return;
   int w = img->width;
   int h = img->height;
   glEnable(GL_TEXTURE_2D);
@@ -1413,19 +1413,19 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  VVideo::forceGLTexFilter();
+  VGLVideo::forceGLTexFilter();
 
-  if (VVideo::getBlendMode() == VVideo::BlendNormal) {
-    if (mOpaque && VVideo::isFullyOpaque()) {
+  if (VGLVideo::getBlendMode() == VGLVideo::BlendNormal) {
+    if (mOpaque && VGLVideo::isFullyOpaque()) {
       glDisable(GL_BLEND);
     } else {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
   } else {
-    VVideo::setupBlending();
+    VGLVideo::setupBlending();
   }
-  const float z = VVideo::currZFloat;
+  const float z = VGLVideo::currZFloat;
 
   const float dx1 = dx0+w*scale;
   const float dy1 = dy0+h*scale;
@@ -1683,25 +1683,25 @@ IMPLEMENT_FUNCTION(VGLTexture, smoothEdges) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_CLASS(V, Video);
+IMPLEMENT_CLASS(V, GLVideo);
 
-bool VVideo::mInited = false;
-bool VVideo::mPreInitWasDone = false;
-int VVideo::mWidth = 0;
-int VVideo::mHeight = 0;
-bool VVideo::smoothLine = false;
-bool VVideo::directMode = false;
-bool VVideo::depthTest = false;
-bool VVideo::stencilEnabled = false;
-int VVideo::depthFunc = VVideo::ZFunc_Less;
-int VVideo::currZ = 0;
-float VVideo::currZFloat = 1.0f;
-int VVideo::swapInterval = 0;
-bool VVideo::texFiltering = false;
-int VVideo::colorMask = CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
-int VVideo::stencilBits = 0;
-int VVideo::alphaTestFunc = VVideo::STC_Always;
-float VVideo::alphaFuncVal = 0.0f;
+bool VGLVideo::mInited = false;
+bool VGLVideo::mPreInitWasDone = false;
+int VGLVideo::mWidth = 0;
+int VGLVideo::mHeight = 0;
+bool VGLVideo::smoothLine = false;
+bool VGLVideo::directMode = false;
+bool VGLVideo::depthTest = false;
+bool VGLVideo::stencilEnabled = false;
+int VGLVideo::depthFunc = VGLVideo::ZFunc_Less;
+int VGLVideo::currZ = 0;
+float VGLVideo::currZFloat = 1.0f;
+int VGLVideo::swapInterval = 0;
+bool VGLVideo::texFiltering = false;
+int VGLVideo::colorMask = CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
+int VGLVideo::stencilBits = 0;
+int VGLVideo::alphaTestFunc = VGLVideo::STC_Always;
+float VGLVideo::alphaFuncVal = 0.0f;
 
 
 struct TimerInfo {
@@ -1771,7 +1771,7 @@ static Uint32 sdlTimerCallback (Uint32 interval, void *param) {
 // returns timer id or 0
 // if id <= 0, creates new unique timer id
 // if interval is < 1, returns with error and won't create timer
-int VVideo::CreateTimerWithId (int id, int intervalms, bool oneShot) {
+int VGLVideo::CreateTimerWithId (int id, int intervalms, bool oneShot) {
   if (intervalms < 1) return 0;
   if (id <= 0) {
     // get new id
@@ -1796,33 +1796,33 @@ int VVideo::CreateTimerWithId (int id, int intervalms, bool oneShot) {
 
 
 // `true`: deleted, `false`: no such timer
-bool VVideo::DeleteTimer (int id) {
+bool VGLVideo::DeleteTimer (int id) {
   if (id <= 0 || !timerMap.has(id)) return false;
   timerFreeId(id);
   return true;
 }
 
 
-bool VVideo::IsTimerExists (int id) {
+bool VGLVideo::IsTimerExists (int id) {
   return (id > 0 && timerMap.has(id));
 }
 
 
-bool VVideo::IsTimerOneShot (int id) {
+bool VGLVideo::IsTimerOneShot (int id) {
   TimerInfo *ti = timerMap.get(id);
   return (ti && ti->oneShot);
 }
 
 
 // 0: no such timer
-int VVideo::GetTimerInterval (int id) {
+int VGLVideo::GetTimerInterval (int id) {
   TimerInfo *ti = timerMap.get(id);
   return (ti ? ti->interval : 0);
 }
 
 
 // returns success flag; won't do anything if interval is < 1
-bool VVideo::SetTimerInterval (int id, int intervalms) {
+bool VGLVideo::SetTimerInterval (int id, int intervalms) {
   if (intervalms < 1) return false;
   TimerInfo *ti = timerMap.get(id);
   if (ti) {
@@ -1846,14 +1846,14 @@ enum {
 
 static GLenum convertStencilOp (int op) {
   switch (op) {
-    case VVideo::STC_Keep: return GL_KEEP;
-    case VVideo::STC_Zero: return GL_ZERO;
-    case VVideo::STC_Replace: return GL_REPLACE;
-    case VVideo::STC_Incr: return GL_INCR;
-    case VVideo::STC_IncrWrap: return GL_INCR_WRAP;
-    case VVideo::STC_Decr: return GL_DECR;
-    case VVideo::STC_DecrWrap: return GL_DECR_WRAP;
-    case VVideo::STC_Invert: return GL_INVERT;
+    case VGLVideo::STC_Keep: return GL_KEEP;
+    case VGLVideo::STC_Zero: return GL_ZERO;
+    case VGLVideo::STC_Replace: return GL_REPLACE;
+    case VGLVideo::STC_Incr: return GL_INCR;
+    case VGLVideo::STC_IncrWrap: return GL_INCR_WRAP;
+    case VGLVideo::STC_Decr: return GL_DECR;
+    case VGLVideo::STC_DecrWrap: return GL_DECR_WRAP;
+    case VGLVideo::STC_Invert: return GL_INVERT;
     default: break;
   }
   return GL_KEEP;
@@ -1862,14 +1862,14 @@ static GLenum convertStencilOp (int op) {
 
 static GLenum convertStencilFunc (int op) {
   switch (op) {
-    case VVideo::STC_Never: return GL_NEVER;
-    case VVideo::STC_Less: return GL_LESS;
-    case VVideo::STC_LEqual: return GL_LEQUAL;
-    case VVideo::STC_Greater: return GL_GREATER;
-    case VVideo::STC_GEqual: return GL_GEQUAL;
-    case VVideo::STC_NotEqual: return GL_NOTEQUAL;
-    case VVideo::STC_Equal: return GL_EQUAL;
-    case VVideo::STC_Always: return GL_ALWAYS;
+    case VGLVideo::STC_Never: return GL_NEVER;
+    case VGLVideo::STC_Less: return GL_LESS;
+    case VGLVideo::STC_LEqual: return GL_LEQUAL;
+    case VGLVideo::STC_Greater: return GL_GREATER;
+    case VGLVideo::STC_GEqual: return GL_GEQUAL;
+    case VGLVideo::STC_NotEqual: return GL_NOTEQUAL;
+    case VGLVideo::STC_Equal: return GL_EQUAL;
+    case VGLVideo::STC_Always: return GL_ALWAYS;
     default: break;
   }
   return GL_ALWAYS;
@@ -1878,11 +1878,11 @@ static GLenum convertStencilFunc (int op) {
 
 static GLenum convertBlendFunc (int op) {
   switch (op) {
-    case VVideo::BlendFunc_Add: return GL_FUNC_ADD;
-    case VVideo::BlendFunc_Sub: return GL_FUNC_SUBTRACT;
-    case VVideo::BlendFunc_SubRev: return GL_FUNC_REVERSE_SUBTRACT;
-    case VVideo::BlendFunc_Min: return GL_MIN;
-    case VVideo::BlendFunc_Max: return GL_MAX;
+    case VGLVideo::BlendFunc_Add: return GL_FUNC_ADD;
+    case VGLVideo::BlendFunc_Sub: return GL_FUNC_SUBTRACT;
+    case VGLVideo::BlendFunc_SubRev: return GL_FUNC_REVERSE_SUBTRACT;
+    case VGLVideo::BlendFunc_Min: return GL_MIN;
+    case VGLVideo::BlendFunc_Max: return GL_MAX;
     default: break;
   }
   return GL_FUNC_ADD;
@@ -1890,7 +1890,7 @@ static GLenum convertBlendFunc (int op) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VVideo::forceAlphaFunc () {
+void VGLVideo::forceAlphaFunc () {
   if (mInited) {
     auto fn = convertStencilFunc(alphaTestFunc);
     if (fn == GL_ALWAYS) {
@@ -1902,28 +1902,28 @@ void VVideo::forceAlphaFunc () {
   }
 }
 
-void VVideo::forceBlendFunc () {
+void VGLVideo::forceBlendFunc () {
   if (mInited) glBlendEquationFunc(convertBlendFunc(mBlendFunc));
 }
 
 
-bool VVideo::canInit () {
+bool VGLVideo::canInit () {
   return true;
 }
 
 
-bool VVideo::hasOpenGL () {
+bool VGLVideo::hasOpenGL () {
   return true;
 }
 
 
-bool VVideo::isInitialized () { return mInited; }
-int VVideo::getWidth () { return mWidth; }
-int VVideo::getHeight () { return mHeight; }
+bool VGLVideo::isInitialized () { return mInited; }
+int VGLVideo::getWidth () { return mWidth; }
+int VGLVideo::getHeight () { return mHeight; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VVideo::close () {
+void VGLVideo::close () {
   if (mInited) {
     if (hw_glctx) {
       if (hw_window) {
@@ -1939,7 +1939,7 @@ void VVideo::close () {
     mHeight = 0;
     directMode = false;
     depthTest = false;
-    depthFunc = VVideo::ZFunc_Less;
+    depthFunc = VGLVideo::ZFunc_Less;
     currZ = 0;
     currZFloat = 1.0f;
     texFiltering = false;
@@ -1954,7 +1954,7 @@ void VVideo::close () {
 //k8: no, i really don't know why i have to repeat this twice,
 //    but at the first try i'll get no stencil buffer for some reason
 //    (and no rgba framebuffer too)
-void VVideo::fuckfucksdl () {
+void VGLVideo::fuckfucksdl () {
   if (mInited) return;
 
   mPreInitWasDone = true;
@@ -2002,7 +2002,7 @@ void VVideo::fuckfucksdl () {
 }
 
 
-bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
+bool VGLVideo::open (const VStr &winname, int width, int height, int fullscreen) {
   if (width < 1 || height < 1) {
     width = 800;
     height = 600;
@@ -2186,7 +2186,7 @@ bool VVideo::open (const VStr &winname, int width, int height, int fullscreen) {
 }
 
 
-void VVideo::clear () {
+void VGLVideo::clear () {
   if (!mInited) return;
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -2200,12 +2200,12 @@ void VVideo::clear () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VMethod *VVideo::onDrawVC = nullptr;
-VMethod *VVideo::onEventVC = nullptr;
-VMethod *VVideo::onNewFrameVC = nullptr;
+VMethod *VGLVideo::onDrawVC = nullptr;
+VMethod *VGLVideo::onEventVC = nullptr;
+VMethod *VGLVideo::onNewFrameVC = nullptr;
 
 
-void VVideo::initMethods () {
+void VGLVideo::initMethods () {
   onDrawVC = nullptr;
   onEventVC = nullptr;
 
@@ -2241,7 +2241,7 @@ void VVideo::initMethods () {
 }
 
 
-void VVideo::onDraw () {
+void VGLVideo::onDraw () {
   doRefresh = false;
   if (!hw_glctx || !onDrawVC) return;
   if ((onDrawVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
@@ -2250,7 +2250,7 @@ void VVideo::onDraw () {
 }
 
 
-void VVideo::onEvent (event_t &evt) {
+void VGLVideo::onEvent (event_t &evt) {
   if (!hw_glctx || !onEventVC) return;
   if ((onEventVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
   P_PASS_REF((event_t *)&evt);
@@ -2258,7 +2258,7 @@ void VVideo::onEvent (event_t &evt) {
 }
 
 
-void VVideo::onNewFrame () {
+void VGLVideo::onNewFrame () {
   if (!hw_glctx || !onNewFrameVC) return;
   if ((onNewFrameVC->Flags&FUNC_Static) == 0) P_PASS_REF((VObject *)mainObject);
   VObject::ExecuteFunction(onNewFrameVC);
@@ -2266,16 +2266,16 @@ void VVideo::onNewFrame () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int VVideo::currFrameTime = 0;
-int VVideo::prevFrameTime = 0;
+int VGLVideo::currFrameTime = 0;
+int VGLVideo::prevFrameTime = 0;
 
 
-int VVideo::getFrameTime () {
+int VGLVideo::getFrameTime () {
   return currFrameTime;
 }
 
 
-void VVideo::setFrameTime (int newft) {
+void VGLVideo::setFrameTime (int newft) {
   if (newft < 0) newft = 0;
   if (currFrameTime == newft) return;
   prevFrameTime = 0;
@@ -2283,7 +2283,7 @@ void VVideo::setFrameTime (int newft) {
 }
 
 
-bool VVideo::doFrameBusiness (SDL_Event &ev) {
+bool VGLVideo::doFrameBusiness (SDL_Event &ev) {
   if (currFrameTime <= 0) {
     SDL_WaitEvent(&ev);
     return true;
@@ -2315,7 +2315,7 @@ bool VVideo::doFrameBusiness (SDL_Event &ev) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VVideo::runEventLoop () {
+void VGLVideo::runEventLoop () {
   if (!mInited) return;
 
   initMethods();
@@ -2478,19 +2478,19 @@ void VVideo::runEventLoop () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-vuint32 VVideo::colorARGB = 0xffffff;
-int VVideo::mBlendMode = VVideo::BlendNormal;
-int VVideo::mBlendFunc = BlendFunc_Add;
-VFont *VVideo::currFont = nullptr;
+vuint32 VGLVideo::colorARGB = 0xffffff;
+int VGLVideo::mBlendMode = VGLVideo::BlendNormal;
+int VGLVideo::mBlendFunc = BlendFunc_Add;
+VFont *VGLVideo::currFont = nullptr;
 
 
-void VVideo::setFont (VName fontname) {
+void VGLVideo::setFont (VName fontname) {
   if (currFont && currFont->getName() == fontname) return;
   currFont = VFont::findFont(fontname);
 }
 
 
-void VVideo::drawTextAt (int x, int y, const VStr &text) {
+void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!currFont /*|| isFullyTransparent()*/ || text.isEmpty()) return;
   if (!mInited) return;
 
@@ -2538,7 +2538,7 @@ void VVideo::drawTextAt (int x, int y, const VStr &text) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VVideo::sendPing () {
+void VGLVideo::sendPing () {
   if (!mInited) return;
 
   SDL_Event event;
@@ -2554,36 +2554,36 @@ void VVideo::sendPing () {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, canInit) { RET_BOOL(VVideo::canInit()); }
-IMPLEMENT_FUNCTION(VVideo, hasOpenGL) { RET_BOOL(VVideo::hasOpenGL()); }
-IMPLEMENT_FUNCTION(VVideo, isInitialized) { RET_BOOL(VVideo::isInitialized()); }
-IMPLEMENT_FUNCTION(VVideo, screenWidth) { RET_INT(VVideo::getWidth()); }
-IMPLEMENT_FUNCTION(VVideo, screenHeight) { RET_INT(VVideo::getHeight()); }
+IMPLEMENT_FUNCTION(VGLVideo, canInit) { RET_BOOL(VGLVideo::canInit()); }
+IMPLEMENT_FUNCTION(VGLVideo, hasOpenGL) { RET_BOOL(VGLVideo::hasOpenGL()); }
+IMPLEMENT_FUNCTION(VGLVideo, isInitialized) { RET_BOOL(VGLVideo::isInitialized()); }
+IMPLEMENT_FUNCTION(VGLVideo, screenWidth) { RET_INT(VGLVideo::getWidth()); }
+IMPLEMENT_FUNCTION(VGLVideo, screenHeight) { RET_INT(VGLVideo::getHeight()); }
 
-IMPLEMENT_FUNCTION(VVideo, isMouseCursorVisible) { RET_BOOL(mInited ? SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE : true); }
-IMPLEMENT_FUNCTION(VVideo, hideMouseCursor) { if (mInited) SDL_ShowCursor(SDL_DISABLE); }
-IMPLEMENT_FUNCTION(VVideo, showMouseCursor) { if (mInited) SDL_ShowCursor(SDL_ENABLE); }
+IMPLEMENT_FUNCTION(VGLVideo, isMouseCursorVisible) { RET_BOOL(mInited ? SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE : true); }
+IMPLEMENT_FUNCTION(VGLVideo, hideMouseCursor) { if (mInited) SDL_ShowCursor(SDL_DISABLE); }
+IMPLEMENT_FUNCTION(VGLVideo, showMouseCursor) { if (mInited) SDL_ShowCursor(SDL_ENABLE); }
 
-IMPLEMENT_FUNCTION(VVideo, get_frameTime) { RET_BOOL(VVideo::getFrameTime()); }
-IMPLEMENT_FUNCTION(VVideo, set_frameTime) { P_GET_INT(newft); VVideo::setFrameTime(newft); VVideo::sendPing(); }
+IMPLEMENT_FUNCTION(VGLVideo, get_frameTime) { RET_BOOL(VGLVideo::getFrameTime()); }
+IMPLEMENT_FUNCTION(VGLVideo, set_frameTime) { P_GET_INT(newft); VGLVideo::setFrameTime(newft); VGLVideo::sendPing(); }
 
 // native final static bool openScreen (string winname, int width, int height, optional int fullscreen);
-IMPLEMENT_FUNCTION(VVideo, openScreen) {
+IMPLEMENT_FUNCTION(VGLVideo, openScreen) {
   P_GET_INT_OPT(fs, 0);
   P_GET_INT(hgt);
   P_GET_INT(wdt);
   P_GET_STR(wname);
-  RET_BOOL(VVideo::open(wname, wdt, hgt, fs));
+  RET_BOOL(VGLVideo::open(wname, wdt, hgt, fs));
 }
 
-IMPLEMENT_FUNCTION(VVideo, closeScreen) {
-  VVideo::close();
-  VVideo::sendPing();
+IMPLEMENT_FUNCTION(VGLVideo, closeScreen) {
+  VGLVideo::close();
+  VGLVideo::sendPing();
 }
 
 
 // native final static void getRealWindowSize (out int w, out int h);
-IMPLEMENT_FUNCTION(VVideo, getRealWindowSize) {
+IMPLEMENT_FUNCTION(VGLVideo, getRealWindowSize) {
   P_GET_PTR(int, h);
   P_GET_PTR(int, w);
   if (mInited) {
@@ -2594,14 +2594,14 @@ IMPLEMENT_FUNCTION(VVideo, getRealWindowSize) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, runEventLoop) { VVideo::runEventLoop(); }
+IMPLEMENT_FUNCTION(VGLVideo, runEventLoop) { VGLVideo::runEventLoop(); }
 
-IMPLEMENT_FUNCTION(VVideo, clearScreen) { VVideo::clear(); }
+IMPLEMENT_FUNCTION(VGLVideo, clearScreen) { VGLVideo::clear(); }
 
 
 //native final static void setScale (float sx, float sy);
 /*
-IMPLEMENT_FUNCTION(VVideo, setScale) {
+IMPLEMENT_FUNCTION(VGLVideo, setScale) {
   P_GET_FLOAT(sy);
   P_GET_FLOAT(sx);
   if (mInited) {
@@ -2612,25 +2612,25 @@ IMPLEMENT_FUNCTION(VVideo, setScale) {
 */
 
 
-IMPLEMENT_FUNCTION(VVideo, requestQuit) {
-  if (!VVideo::quitSignal) {
-    VVideo::quitSignal = true;
-    VVideo::sendPing();
+IMPLEMENT_FUNCTION(VGLVideo, requestQuit) {
+  if (!VGLVideo::quitSignal) {
+    VGLVideo::quitSignal = true;
+    VGLVideo::sendPing();
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, resetQuitRequest) {
-  VVideo::quitSignal = false;
+IMPLEMENT_FUNCTION(VGLVideo, resetQuitRequest) {
+  VGLVideo::quitSignal = false;
 }
 
-IMPLEMENT_FUNCTION(VVideo, requestRefresh) {
-  if (!VVideo::doRefresh) {
-    VVideo::doRefresh = true;
-    if (VVideo::getFrameTime() <= 0) VVideo::sendPing();
+IMPLEMENT_FUNCTION(VGLVideo, requestRefresh) {
+  if (!VGLVideo::doRefresh) {
+    VGLVideo::doRefresh = true;
+    if (VGLVideo::getFrameTime() <= 0) VGLVideo::sendPing();
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, forceSwap) {
+IMPLEMENT_FUNCTION(VGLVideo, forceSwap) {
   if (!mInited) return;
   doGLSwap = false;
   SDL_GL_SwapWindow(hw_window);
@@ -2638,7 +2638,7 @@ IMPLEMENT_FUNCTION(VVideo, forceSwap) {
 
 
 //native final static bool glHasExtension (string extname);
-IMPLEMENT_FUNCTION(VVideo, glHasExtension) {
+IMPLEMENT_FUNCTION(VGLVideo, glHasExtension) {
   P_GET_STR(extname);
   if (extname.isEmpty() || !mInited) {
     RET_BOOL(false);
@@ -2652,15 +2652,15 @@ IMPLEMENT_FUNCTION(VVideo, glHasExtension) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, get_glHasNPOT) {
+IMPLEMENT_FUNCTION(VGLVideo, get_glHasNPOT) {
   RET_BOOL(mInited ? hasNPOT : false);
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_directMode) {
+IMPLEMENT_FUNCTION(VGLVideo, get_directMode) {
   RET_BOOL(directMode);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_directMode) {
+IMPLEMENT_FUNCTION(VGLVideo, set_directMode) {
   P_GET_BOOL(m);
   if (!mInited) { directMode = m; return; }
   if (m != directMode) {
@@ -2669,11 +2669,11 @@ IMPLEMENT_FUNCTION(VVideo, set_directMode) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_depthTest) {
+IMPLEMENT_FUNCTION(VGLVideo, get_depthTest) {
   RET_BOOL(depthTest);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_depthTest) {
+IMPLEMENT_FUNCTION(VGLVideo, set_depthTest) {
   P_GET_BOOL(m);
   if (!mInited) { depthTest = m; return; }
   if (m != depthTest) {
@@ -2682,11 +2682,11 @@ IMPLEMENT_FUNCTION(VVideo, set_depthTest) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_depthFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, get_depthFunc) {
   RET_INT(depthFunc);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_depthFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, set_depthFunc) {
   P_GET_INT(v);
   if (v < 0 || v >= ZFunc_Max) return;
   if (!mInited) { depthFunc = v; return; }
@@ -2696,11 +2696,11 @@ IMPLEMENT_FUNCTION(VVideo, set_depthFunc) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_currZ) {
+IMPLEMENT_FUNCTION(VGLVideo, get_currZ) {
   RET_INT(currZ);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_currZ) {
+IMPLEMENT_FUNCTION(VGLVideo, set_currZ) {
   P_GET_INT(z);
   if (z < 0) z = 0; else if (z > 65535) z = 65535;
   if (z == currZ) return;
@@ -2713,7 +2713,7 @@ IMPLEMENT_FUNCTION(VVideo, set_currZ) {
   currZFloat = (k*b)/(z-(k*a));
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_scissorEnabled) {
+IMPLEMENT_FUNCTION(VGLVideo, get_scissorEnabled) {
   if (mInited) {
     RET_BOOL((glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0));
   } else {
@@ -2721,14 +2721,14 @@ IMPLEMENT_FUNCTION(VVideo, get_scissorEnabled) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_scissorEnabled) {
+IMPLEMENT_FUNCTION(VGLVideo, set_scissorEnabled) {
   P_GET_BOOL(v);
   if (mInited) {
     if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, copyScissor) {
+IMPLEMENT_FUNCTION(VGLVideo, copyScissor) {
   P_GET_PTR(ScissorRect, s);
   P_GET_PTR(ScissorRect, d);
   if (d) {
@@ -2743,7 +2743,7 @@ IMPLEMENT_FUNCTION(VVideo, copyScissor) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, getScissor) {
+IMPLEMENT_FUNCTION(VGLVideo, getScissor) {
   P_GET_PTR(ScissorRect, sr);
   if (sr) {
     if (!mInited) { sr->x = sr->y = sr->w = sr->h = sr->enabled = 0; return; }
@@ -2759,7 +2759,7 @@ IMPLEMENT_FUNCTION(VVideo, getScissor) {
   }
 }
 
-IMPLEMENT_FUNCTION(VVideo, setScissor) {
+IMPLEMENT_FUNCTION(VGLVideo, setScissor) {
   P_GET_PTR_OPT(ScissorRect, sr, nullptr);
   if (sr) {
     if (!mInited) return;
@@ -2783,16 +2783,16 @@ IMPLEMENT_FUNCTION(VVideo, setScissor) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // static native final void glPushMatrix ();
-IMPLEMENT_FUNCTION(VVideo, glPushMatrix) { if (mInited) glPushMatrix(); }
+IMPLEMENT_FUNCTION(VGLVideo, glPushMatrix) { if (mInited) glPushMatrix(); }
 
 // static native final void glPopMatrix ();
-IMPLEMENT_FUNCTION(VVideo, glPopMatrix) { if (mInited) glPopMatrix(); }
+IMPLEMENT_FUNCTION(VGLVideo, glPopMatrix) { if (mInited) glPopMatrix(); }
 
 // static native final void glLoadIdentity ();
-IMPLEMENT_FUNCTION(VVideo, glLoadIdentity) { if (mInited) glLoadIdentity(); }
+IMPLEMENT_FUNCTION(VGLVideo, glLoadIdentity) { if (mInited) glLoadIdentity(); }
 
 // static native final void glScale (float sx, float sy, optional float sz);
-IMPLEMENT_FUNCTION(VVideo, glScale) {
+IMPLEMENT_FUNCTION(VGLVideo, glScale) {
   P_GET_FLOAT_OPT(z, 1);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
@@ -2800,7 +2800,7 @@ IMPLEMENT_FUNCTION(VVideo, glScale) {
 }
 
 // static native final void glTranslate (float dx, float dy, optional float dz);
-IMPLEMENT_FUNCTION(VVideo, glTranslate) {
+IMPLEMENT_FUNCTION(VGLVideo, glTranslate) {
   P_GET_FLOAT_OPT(z, 0);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
@@ -2809,7 +2809,7 @@ IMPLEMENT_FUNCTION(VVideo, glTranslate) {
 
 // static native final void glRotate (float ax, float ay, optional float az);
 /*
-IMPLEMENT_FUNCTION(VVideo, glRotate) {
+IMPLEMENT_FUNCTION(VGLVideo, glRotate) {
   P_GET_FLOAT(x);
   P_GET_FLOAT(y);
   P_GET_FLOAT_OPT(z, 1);
@@ -2819,11 +2819,11 @@ IMPLEMENT_FUNCTION(VVideo, glRotate) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_FUNCTION(VVideo, get_smoothLine) {
+IMPLEMENT_FUNCTION(VGLVideo, get_smoothLine) {
   RET_BOOL(smoothLine);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_smoothLine) {
+IMPLEMENT_FUNCTION(VGLVideo, set_smoothLine) {
   P_GET_BOOL(v);
   if (smoothLine != v) {
     smoothLine = v;
@@ -2835,12 +2835,12 @@ IMPLEMENT_FUNCTION(VVideo, set_smoothLine) {
 
 
 // native final static AlphaFunc get_alphaTestFunc ()
-IMPLEMENT_FUNCTION(VVideo, get_alphaTestFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, get_alphaTestFunc) {
   RET_INT(alphaTestFunc);
 }
 
 // native final static void set_alphaTestFunc (AlphaFunc v)
-IMPLEMENT_FUNCTION(VVideo, set_alphaTestFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, set_alphaTestFunc) {
   P_GET_INT(atf);
   if (alphaTestFunc != atf) {
     alphaTestFunc = atf;
@@ -2849,12 +2849,12 @@ IMPLEMENT_FUNCTION(VVideo, set_alphaTestFunc) {
 }
 
 //native final static float get_alphaTestVal ()
-IMPLEMENT_FUNCTION(VVideo, get_alphaTestVal) {
+IMPLEMENT_FUNCTION(VGLVideo, get_alphaTestVal) {
   RET_FLOAT(alphaFuncVal);
 }
 
 // native final static void set_alphaTestVal (float v)
-IMPLEMENT_FUNCTION(VVideo, set_alphaTestVal) {
+IMPLEMENT_FUNCTION(VGLVideo, set_alphaTestVal) {
   P_GET_FLOAT(v);
   if (alphaFuncVal != v) {
     alphaFuncVal = v;
@@ -2863,21 +2863,21 @@ IMPLEMENT_FUNCTION(VVideo, set_alphaTestVal) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, get_realStencilBits) {
+IMPLEMENT_FUNCTION(VGLVideo, get_realStencilBits) {
   RET_INT(stencilBits);
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_framebufferHasAlpha) {
+IMPLEMENT_FUNCTION(VGLVideo, get_framebufferHasAlpha) {
   int res;
   SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &res);
   RET_BOOL(res == 8);
 }
 
-IMPLEMENT_FUNCTION(VVideo, get_stencil) {
+IMPLEMENT_FUNCTION(VGLVideo, get_stencil) {
   RET_BOOL(stencilEnabled);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_stencil) {
+IMPLEMENT_FUNCTION(VGLVideo, set_stencil) {
   P_GET_BOOL(v);
   if (stencilEnabled != v) {
     stencilEnabled = v;
@@ -2889,7 +2889,7 @@ IMPLEMENT_FUNCTION(VVideo, set_stencil) {
 }
 
 //native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
-IMPLEMENT_FUNCTION(VVideo, stencilOp) {
+IMPLEMENT_FUNCTION(VGLVideo, stencilOp) {
   P_GET_INT_OPT(dppass, STC_Keep);
   P_GET_INT(dpfail);
   P_GET_INT(sfail);
@@ -2898,7 +2898,7 @@ IMPLEMENT_FUNCTION(VVideo, stencilOp) {
 }
 
 //native final static void stencilFunc (StencilFunc func, int refval, optional int mask);
-IMPLEMENT_FUNCTION(VVideo, stencilFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, stencilFunc) {
   P_GET_INT_OPT(mask, -1);
   P_GET_INT(refval);
   P_GET_INT(func);
@@ -2908,34 +2908,34 @@ IMPLEMENT_FUNCTION(VVideo, stencilFunc) {
 
 
 //native final static int getColorARGB ();
-IMPLEMENT_FUNCTION(VVideo, get_colorARGB) {
+IMPLEMENT_FUNCTION(VGLVideo, get_colorARGB) {
   RET_INT(colorARGB);
 }
 
 //native final static void setColorARGB (int v);
-IMPLEMENT_FUNCTION(VVideo, set_colorARGB) {
+IMPLEMENT_FUNCTION(VGLVideo, set_colorARGB) {
   P_GET_INT(c);
   setColor((vuint32)c);
 }
 
 //native final static int getBlendMode ();
-IMPLEMENT_FUNCTION(VVideo, get_blendMode) {
+IMPLEMENT_FUNCTION(VGLVideo, get_blendMode) {
   RET_INT(getBlendMode());
 }
 
 //native final static void set_blendMode (int v);
-IMPLEMENT_FUNCTION(VVideo, set_blendMode) {
+IMPLEMENT_FUNCTION(VGLVideo, set_blendMode) {
   P_GET_INT(c);
   setBlendMode(c);
 }
 
 //native final static int getBlendFunc ();
-IMPLEMENT_FUNCTION(VVideo, get_blendFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, get_blendFunc) {
   RET_INT(mBlendFunc);
 }
 
 //native final static void set_blendMode (int v);
-IMPLEMENT_FUNCTION(VVideo, set_blendFunc) {
+IMPLEMENT_FUNCTION(VGLVideo, set_blendFunc) {
   P_GET_INT(v);
   if (mBlendFunc != v) {
     mBlendFunc = v;
@@ -2945,13 +2945,13 @@ IMPLEMENT_FUNCTION(VVideo, set_blendFunc) {
 
 
 //native final static CMask get_colorMask ();
-IMPLEMENT_FUNCTION(VVideo, get_colorMask) {
+IMPLEMENT_FUNCTION(VGLVideo, get_colorMask) {
   RET_INT(colorMask);
 }
 
 
 //native final static void set_colorMask (CMask mask);
-IMPLEMENT_FUNCTION(VVideo, set_colorMask) {
+IMPLEMENT_FUNCTION(VGLVideo, set_colorMask) {
   P_GET_INT(mask);
   mask &= CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
   if (mask != colorMask) {
@@ -2962,12 +2962,12 @@ IMPLEMENT_FUNCTION(VVideo, set_colorMask) {
 
 
 //native final static bool get_textureFiltering ();
-IMPLEMENT_FUNCTION(VVideo, get_textureFiltering) {
+IMPLEMENT_FUNCTION(VGLVideo, get_textureFiltering) {
   RET_BOOL(getTexFiltering());
 }
 
 //native final static void set_textureFiltering (bool v);
-IMPLEMENT_FUNCTION(VVideo, set_textureFiltering) {
+IMPLEMENT_FUNCTION(VGLVideo, set_textureFiltering) {
   P_GET_BOOL(tf);
   setTexFiltering(tf);
 }
@@ -2976,7 +2976,7 @@ IMPLEMENT_FUNCTION(VVideo, set_textureFiltering) {
 // ////////////////////////////////////////////////////////////////////////// //
 // aborts if font cannot be loaded
 //native final static void loadFontDF (name fname, string fnameIni, string fnameTexture);
-IMPLEMENT_FUNCTION(VVideo, loadFontDF) {
+IMPLEMENT_FUNCTION(VGLVideo, loadFontDF) {
   /*
   P_GET_STR(fnameTexture);
   P_GET_STR(fnameIni);
@@ -2994,7 +2994,7 @@ IMPLEMENT_FUNCTION(VVideo, loadFontDF) {
 
 // aborts if font cannot be loaded
 //native final static void loadFontPCF (name fname, string filename);
-IMPLEMENT_FUNCTION(VVideo, loadFontPCF) {
+IMPLEMENT_FUNCTION(VGLVideo, loadFontPCF) {
   P_GET_STR(filename);
   P_GET_NAME(fontname);
   if (VFont::findFont(fontname)) return;
@@ -3013,7 +3013,7 @@ struct FontCharInfo {
 
 
 // native final static bool getCharInfo (int ch, out FontCharInfo ci); // returns `false` if char wasn't found
-IMPLEMENT_FUNCTION(VVideo, getCharInfo) {
+IMPLEMENT_FUNCTION(VGLVideo, getCharInfo) {
   P_GET_PTR(FontCharInfo, fc);
   P_GET_INT(ch);
   if (!fc) { RET_BOOL(false); return; }
@@ -3042,13 +3042,13 @@ IMPLEMENT_FUNCTION(VVideo, getCharInfo) {
 
 
 //native final static void setFont (name fontname);
-IMPLEMENT_FUNCTION(VVideo, set_fontName) {
+IMPLEMENT_FUNCTION(VGLVideo, set_fontName) {
   P_GET_NAME(fontname);
   setFont(fontname);
 }
 
 //native final static name getFont ();
-IMPLEMENT_FUNCTION(VVideo, get_fontName) {
+IMPLEMENT_FUNCTION(VGLVideo, get_fontName) {
   if (!currFont) {
     RET_NAME(NAME_None);
   } else {
@@ -3057,35 +3057,35 @@ IMPLEMENT_FUNCTION(VVideo, get_fontName) {
 }
 
 //native final static void fontHeight ();
-IMPLEMENT_FUNCTION(VVideo, fontHeight) {
+IMPLEMENT_FUNCTION(VGLVideo, fontHeight) {
   RET_INT(currFont ? currFont->getHeight() : 0);
 }
 
 //native final static int spaceWidth ();
-IMPLEMENT_FUNCTION(VVideo, spaceWidth) {
+IMPLEMENT_FUNCTION(VGLVideo, spaceWidth) {
   RET_INT(currFont ? currFont->getSpaceWidth() : 0);
 }
 
 //native final static int charWidth (int ch);
-IMPLEMENT_FUNCTION(VVideo, charWidth) {
+IMPLEMENT_FUNCTION(VGLVideo, charWidth) {
   P_GET_INT(ch);
   RET_INT(currFont ? currFont->charWidth(ch) : 0);
 }
 
 //native final static int textWidth (string text);
-IMPLEMENT_FUNCTION(VVideo, textWidth) {
+IMPLEMENT_FUNCTION(VGLVideo, textWidth) {
   P_GET_STR(text);
   RET_INT(currFont ? currFont->textWidth(text) : 0);
 }
 
 //native final static int textHeight (string text);
-IMPLEMENT_FUNCTION(VVideo, textHeight) {
+IMPLEMENT_FUNCTION(VGLVideo, textHeight) {
   P_GET_STR(text);
   RET_INT(currFont ? currFont->textHeight(text) : 0);
 }
 
 //native final static void drawText (int x, int y, string text);
-IMPLEMENT_FUNCTION(VVideo, drawTextAt) {
+IMPLEMENT_FUNCTION(VGLVideo, drawTextAt) {
   P_GET_STR(text);
   P_GET_INT(y);
   P_GET_INT(x);
@@ -3094,7 +3094,7 @@ IMPLEMENT_FUNCTION(VVideo, drawTextAt) {
 
 
 //native final static void drawLine (int x0, int y0, int x1, int y1);
-IMPLEMENT_FUNCTION(VVideo, drawLine) {
+IMPLEMENT_FUNCTION(VGLVideo, drawLine) {
   P_GET_INT(y1);
   P_GET_INT(x1);
   P_GET_INT(y0);
@@ -3102,7 +3102,7 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
   if (!mInited /*|| isFullyTransparent()*/) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
-  const float z = VVideo::currZFloat;
+  const float z = VGLVideo::currZFloat;
   glBegin(GL_LINES);
     glVertex3f(x0+0.5f, y0+0.5f, z);
     glVertex3f(x1+0.5f, y1+0.5f, z);
@@ -3111,7 +3111,7 @@ IMPLEMENT_FUNCTION(VVideo, drawLine) {
 
 
 //native final static void drawRect (int x0, int y0, int w, int h);
-IMPLEMENT_FUNCTION(VVideo, drawRect) {
+IMPLEMENT_FUNCTION(VGLVideo, drawRect) {
   P_GET_INT(h);
   P_GET_INT(w);
   P_GET_INT(y0);
@@ -3130,7 +3130,7 @@ IMPLEMENT_FUNCTION(VVideo, drawRect) {
 
 
 //native final static void fillRect (int x0, int y0, int w, int h);
-IMPLEMENT_FUNCTION(VVideo, fillRect) {
+IMPLEMENT_FUNCTION(VGLVideo, fillRect) {
   P_GET_INT(h);
   P_GET_INT(w);
   P_GET_INT(y0);
@@ -3150,7 +3150,7 @@ IMPLEMENT_FUNCTION(VVideo, fillRect) {
 }
 
 // native final static bool getMousePos (out int x, out int y)
-IMPLEMENT_FUNCTION(VVideo, getMousePos) {
+IMPLEMENT_FUNCTION(VGLVideo, getMousePos) {
   P_GET_PTR(int, yp);
   P_GET_PTR(int, xp);
   if (mInited) {
@@ -3169,11 +3169,11 @@ IMPLEMENT_FUNCTION(VVideo, getMousePos) {
 }
 
 
-IMPLEMENT_FUNCTION(VVideo, get_swapInterval) {
+IMPLEMENT_FUNCTION(VGLVideo, get_swapInterval) {
   RET_INT(swapInterval);
 }
 
-IMPLEMENT_FUNCTION(VVideo, set_swapInterval) {
+IMPLEMENT_FUNCTION(VGLVideo, set_swapInterval) {
   P_GET_INT(si);
   if (si < 0) si = -1; else if (si > 0) si = 1;
   if (!mInited) { swapInterval = si; return; }

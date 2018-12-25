@@ -31,5 +31,5 @@ enum VidNamed1 {
 }
 #endif
 
-#include "Video.vc"
+#include "GLVideo.vc"
 #include "GLTexture.vc"

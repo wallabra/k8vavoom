@@ -14,8 +14,8 @@ class WidgetRoot : Widget;
 
 // ////////////////////////////////////////////////////////////////////////// //
 void onCreated () {
-  mBaseWidth = Video.screenWidth;
-  mBaseHeight = Video.screenHeight;
+  mBaseWidth = GLVideo.screenWidth;
+  mBaseHeight = GLVideo.screenHeight;
 }
 
 

@@ -18,12 +18,12 @@ void onCreated (bool ahoriz) {
 }
 
 protected override void selfPaintAt (int x0, int y0) {
-  Video.color = 0;
-  Video.color = 0x20_20_20;
-  Video.fillRect(x0, y0, mWidth, mHeight);
-  //Video.drawRect(x0, y0, mWidth, mHeight);
-  //Video.color = 0xff_ff_ff;
-  //Video.drawLine(x0, y0, x0+mWidth, y0);
+  GLVideo.color = 0;
+  GLVideo.color = 0x20_20_20;
+  GLVideo.fillRect(x0, y0, mWidth, mHeight);
+  //GLVideo.drawRect(x0, y0, mWidth, mHeight);
+  //GLVideo.color = 0xff_ff_ff;
+  //GLVideo.drawLine(x0, y0, x0+mWidth, y0);
 }
 
 

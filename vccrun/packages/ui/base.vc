@@ -311,10 +311,10 @@ protected void selfPaintAt (int x0, int y0) {
 void paintAt (int x0, int y0) {
   mDirty = false;
   if (mWidth < 1 || mHeight < 1) return; // nothing to do
-  Video::ScissorRect osr;
-  Video.getScissor(&osr);
+  GLVideo::ScissorRect osr;
+  GLVideo.getScissor(&osr);
   // if scissor was disabled, combiner will use screen dimensions, and enable it
-  if (Video.scissorCombine(x0, y0, mWidth, mHeight)) {
+  if (GLVideo.scissorCombine(x0, y0, mWidth, mHeight)) {
     prePaintAt(x0, y0);
     selfPaintAt(x0, y0);
     foreach (auto w; mChildren) {
@@ -325,7 +325,7 @@ void paintAt (int x0, int y0) {
     resetDirty();
   }
   // restore scissor
-  Video.setScissor(&osr);
+  GLVideo.setScissor(&osr);
 }
 
 
@@ -636,7 +636,7 @@ private final static void fixDimensionsFromActual (Widget w) {
 // ////////////////////////////////////////////////////////////////////////// //
 final static WidgetRoot CreateRoot () {
   auto res = WidgetRoot(SpawnObject(WidgetRoot));
-  Video.fontName = res.fontName;
+  GLVideo.fontName = res.fontName;
   res.onCreated();
   fixDimensions(res);
   return res;
@@ -647,7 +647,7 @@ final static WidgetRoot CreateRoot () {
 final static WidgetBox CreateBox (Widget parent, bool horiz, optional name aid) {
   auto res = WidgetBox(SpawnObject(WidgetBox));
   if (specified_aid) res.id = aid;
-  if (parent) Video.fontName = parent.fontName;
+  if (parent) GLVideo.fontName = parent.fontName;
   res.onCreated(horiz);
   fixDimensions(res);
   if (parent) parent.appendChild(res);
@@ -665,7 +665,7 @@ final static WidgetBox CreateVBox (Widget parent, optional name aid) {
 
 final static WidgetSpan CreateSpan (Widget parent, int defsize) {
   auto res = WidgetSpan(SpawnObject(WidgetSpan));
-  if (parent) Video.fontName = parent.fontName;
+  if (parent) GLVideo.fontName = parent.fontName;
   res.onCreated();
   res.align = AlignExpand;
   if (parent) {
@@ -683,7 +683,7 @@ final static WidgetSpan CreateSpan (Widget parent, int defsize) {
 final static WidgetLabel CreateLabel (Widget parent, string atext, optional name aid) {
   auto res = WidgetLabel(SpawnObject(WidgetLabel));
   if (specified_aid) res.id = aid;
-  if (parent) Video.fontName = parent.fontName;
+  if (parent) GLVideo.fontName = parent.fontName;
   res.onCreated(atext);
   fixDimensions(res);
   if (parent) parent.appendChild(res);
@@ -695,7 +695,7 @@ final static WidgetLabel CreateLabel (Widget parent, string atext, optional name
 final static WidgetButton CreateButton (Widget parent, string atext, optional name aid) {
   auto res = WidgetButton(SpawnObject(WidgetButton));
   if (specified_aid) res.id = aid;
-  if (parent) Video.fontName = parent.fontName;
+  if (parent) GLVideo.fontName = parent.fontName;
   res.onCreated(atext);
   fixDimensions(res);
   if (parent) parent.appendChild(res);
@@ -707,7 +707,7 @@ final static WidgetButton CreateButton (Widget parent, string atext, optional na
 final static WidgetListBox CreateListBox (Widget parent, optional name aid) {
   auto res = WidgetListBox(SpawnObject(WidgetListBox));
   if (specified_aid) res.id = aid;
-  if (parent) Video.fontName = parent.fontName;
+  if (parent) GLVideo.fontName = parent.fontName;
   res.onCreated();
   fixDimensions(res);
   if (parent) parent.appendChild(res);

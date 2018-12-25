@@ -45,9 +45,9 @@ class VFont;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VVideo : public VObject {
-  DECLARE_ABSTRACT_CLASS(VVideo, VObject, 0)
-  NO_DEFAULT_CONSTRUCTOR(VVideo)
+class VGLVideo : public VObject {
+  DECLARE_ABSTRACT_CLASS(VGLVideo, VObject, 0)
+  NO_DEFAULT_CONSTRUCTOR(VGLVideo)
 
 public:
   // (srcColor * <srcFactor>) <op> (dstColor * <dstFactor>)

@@ -22,24 +22,24 @@ protected bool mWaitRelease;
 
 void onCreated (string atext) {
   mText = atext;
-  mBaseWidth = Video.textWidth(atext)+6;
-  mBaseHeight = Video.textHeight(atext)+6;
+  mBaseWidth = GLVideo.textWidth(atext)+6;
+  mBaseHeight = GLVideo.textHeight(atext)+6;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 protected override void selfPaintAt (int x0, int y0) {
-  Video.color = 0x40_40_40;
-  Video.fillRect(x0, y0, mWidth, mHeight);
+  GLVideo.color = 0x40_40_40;
+  GLVideo.fillRect(x0, y0, mWidth, mHeight);
   if (mWaitRelease) {
-    Video.drawBevel(x0, y0, mWidth, mHeight, 0x20_20_20, 0x60_60_60);
+    GLVideo.drawBevel(x0, y0, mWidth, mHeight, 0x20_20_20, 0x60_60_60);
   } else {
-    Video.drawBevel(x0, y0, mWidth, mHeight, 0x60_60_60, 0x20_20_20);
+    GLVideo.drawBevel(x0, y0, mWidth, mHeight, 0x60_60_60, 0x20_20_20);
   }
   if (mText) {
-    Video.color = (focused ? mSelColor : mColor);
-    Video.fontName = fontName;
-    Video.drawTextAt(x0+3+(mWaitRelease ? 1 : 0), y0+3+(mWaitRelease ? 1 : 0), mText);
+    GLVideo.color = (focused ? mSelColor : mColor);
+    GLVideo.fontName = fontName;
+    GLVideo.drawTextAt(x0+3+(mWaitRelease ? 1 : 0), y0+3+(mWaitRelease ? 1 : 0), mText);
   }
 }
 

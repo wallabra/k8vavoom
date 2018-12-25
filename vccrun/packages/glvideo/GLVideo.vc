@@ -9,7 +9,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  **************************************************************************/
-class Video : Object abstract native;
+class GLVideo : Object abstract native;
 
 // default mode is `Blend.Normal`
 enum BlendMode {
@@ -66,7 +66,7 @@ native final static void closeScreen ();
 
 //native final bool fullscreen { get; set; }
 
-native final static void clearScreen ();
+native final static void clearScreen (optional int rgb);
 //native final static void clearScreenRGB (int r, int g, int b);
 
 native final static void runEventLoop ();
@@ -310,8 +310,8 @@ final static void drawBevel (int x0, int y0, int awidth, int aheight, int argbUp
 /*
 // will set alpha to opaque, and return alpha as 0
 final static int colorRGB {
-  get { return Video.getColorARGB()&0xff_ff_ff; }
-  set { Video.setColorARGB(value|(value&0xff_00_00_00 ? 0 : 0xff_00_00_00)); }
+  get { return GLVideo.getColorARGB()&0xff_ff_ff; }
+  set { GLVideo.setColorARGB(value|(value&0xff_00_00_00 ? 0 : 0xff_00_00_00)); }
 }
 */
 //alias colorRGB = colorARGB;
