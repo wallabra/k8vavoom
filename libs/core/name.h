@@ -94,4 +94,4 @@ public:
   static const char *SafeString (EName N);
 };
 
-inline vuint32 GetTypeHash (const VName &N) { return N.GetIndex(); }
+inline vuint32 GetTypeHash (const VName &N) { return hashU32((vuint32)(N.GetIndex())); }
