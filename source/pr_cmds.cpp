@@ -952,12 +952,26 @@ IMPLEMENT_FUNCTION(VObject, StopLocalSounds) {
 
 //==========================================================================
 //
-//  PF_InputLine_SetValue
+//  TranslateKey
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, TranslateKey) {
   P_GET_INT(ch);
   RET_STR(VStr((char)GInput->TranslateKey(ch)));
+}
+
+//==========================================================================
+//
+//  PostEvent
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, PostEvent) {
+  P_GET_PTR(event_t, ev);
+  if (GInput) {
+    RET_BOOL(GInput->PostEvent(ev));
+  } else {
+    RET_BOOL(false);
+  }
 }
 
 

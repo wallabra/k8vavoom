@@ -399,6 +399,8 @@ native static final void StopLocalSounds ();
 // handle shift+key
 native static final string TranslateKey (int c);
 
+native static final bool PostEvent (const ref event_t ev); // returns `false` if queue is full
+
 native static final string P_GetMapName (int map);
 native static final name P_GetMapLumpName (int map);
 native static final name P_TranslateMap (int map);

@@ -60,7 +60,7 @@ public:
   virtual void Shutdown () = 0;
 
   // input event handling
-  virtual void PostEvent (event_t *ev) = 0;
+  virtual bool PostEvent (event_t *ev) = 0; // false: queue is full
   virtual void KeyEvent (int key, int press) = 0;
   virtual void ProcessEvents () = 0;
   virtual int ReadKey () = 0;

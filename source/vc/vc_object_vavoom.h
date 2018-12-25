@@ -72,6 +72,8 @@
   DECLARE_FUNCTION(StopLocalSounds)
 
   DECLARE_FUNCTION(TranslateKey)
+
+  DECLARE_FUNCTION(PostEvent)
 #endif // CLIENT
 
   DECLARE_FUNCTION(KBCheatClearAll)
