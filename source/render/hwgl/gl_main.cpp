@@ -897,6 +897,8 @@ void VOpenGLDrawer::InitResolution () {
 
   mInitialized = true;
 
+  callICB(VCB_InitResolution);
+
   unguard;
 }
 

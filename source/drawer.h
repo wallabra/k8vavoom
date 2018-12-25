@@ -125,8 +125,23 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VDrawer {
+public:
+  enum {
+    VCB_InitVideo,
+    VCB_DeinitVideo,
+    VCB_InitResolution,
+    VCB_FinishUpdate,
+  };
+
 protected:
   bool mInitialized;
+
+  static TArray<void (*) (int phase)> cbInitDeinit;
+
+  static void callICB (int phase);
+
+public:
+  static void RegisterICB (void (*cb) (int phase));
 
 public:
   VRenderLevelDrawer *RendLev;

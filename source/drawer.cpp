@@ -44,10 +44,36 @@ static int lastPBarWdt = -666;
 static double pbarStartTime = 0;
 static double pbarLastUpdateTime = 0;
 
+TArray<void (*) (int phase)> VDrawer::cbInitDeinit;
+
 
 //==========================================================================
 //
-//  R_LMsgReset
+//  VDrawer::RegisterICB
+//
+//==========================================================================
+void VDrawer::RegisterICB (void (*cb) (int phase)) {
+  if (!cb) return;
+  for (int f = 0; f < cbInitDeinit.length(); ++f) {
+    if (cbInitDeinit[f] == cb) return;
+  }
+  cbInitDeinit.append(cb);
+}
+
+
+//==========================================================================
+//
+//  VDrawer::callICB
+//
+//==========================================================================
+void VDrawer::callICB (int phase) {
+  for (int f = 0; f < cbInitDeinit.length(); ++f) cbInitDeinit[f](phase);
+}
+
+
+//==========================================================================
+//
+//  R_LdrMsgReset
 //
 //==========================================================================
 void R_LdrMsgReset () {

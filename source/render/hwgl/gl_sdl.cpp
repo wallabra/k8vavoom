@@ -212,6 +212,8 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
 
   gl_current_screen_fsmode = fsmode;
 
+  callICB(VCB_InitVideo);
+
   return true;
   unguard;
 }
@@ -238,6 +240,7 @@ void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
 //==========================================================================
 void VSdlOpenGLDrawer::Update () {
   guard(VSdlOpenGLDrawer::Update);
+  if (mInitialized && hw_window && hw_glctx) callICB(VCB_FinishUpdate);
   FinishUpdate();
   if (hw_window) SDL_GL_SwapWindow(hw_window);
   unguard;
@@ -253,6 +256,7 @@ void VSdlOpenGLDrawer::Update () {
 //==========================================================================
 void VSdlOpenGLDrawer::Shutdown() {
   guard(VSdlOpenGLDrawer::Shutdown);
+  if (hw_glctx && mInitialized) callICB(VCB_DeinitVideo);
   DeleteTextures();
   if (hw_glctx) {
     if (hw_window) SDL_GL_MakeCurrent(hw_window, hw_glctx);
