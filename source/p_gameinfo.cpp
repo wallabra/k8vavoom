@@ -25,6 +25,7 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "sv_local.h"
+#include "newui/newui.h"
 
 
 IMPLEMENT_CLASS(V, GameInfo)
@@ -57,7 +58,7 @@ bool VGameInfo::IsPaused () {
   if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
   // in single player pause game if in menu or console
-  return (Flags&GIF_Paused) || (NetMode == NM_Standalone && (MN_Active() || C_Active()));
+  return (Flags&GIF_Paused) || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
 #endif
   return !!(Flags&GIF_Paused);
   unguard;

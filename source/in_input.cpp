@@ -32,6 +32,7 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "ui/ui.h"
+#include "newui/newui.h"
 
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);
@@ -365,6 +366,7 @@ void VInput::ProcessEvents () {
     if (ev->data1 == K_LALT) { if (ev->type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
 
     if (C_Responder(ev)) continue; // console
+    if (NUI_Responder(ev)) continue; // new UI
     if (CT_Responder(ev)) continue; // chat
     if (MN_Responder(ev)) continue; // menu
     if (GRoot->Responder(ev)) continue; // root widget

@@ -752,6 +752,8 @@ IMPLEMENT_FUNCTION(VObject, FindClassFromScriptId) {
 
 #ifdef CLIENT
 
+#include "newui/vc_object_newui.cpp"
+
 //**************************************************************************
 //
 //  Graphics

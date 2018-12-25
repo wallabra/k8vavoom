@@ -27,6 +27,7 @@
 #include "cl_local.h"
 #include "drawer.h"
 #include "ui/ui.h"
+#include "newui/newui.h"
 
 
 void CalcFadetable16 (byte *pal);

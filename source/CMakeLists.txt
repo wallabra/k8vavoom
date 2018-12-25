@@ -147,6 +147,16 @@ set(UIWIDGETS_SOURCES
 
 #---------------------------------------
 #
+# New UI library sources
+#
+#---------------------------------------
+set(NEWUI_SOURCES
+  newui/newui.h
+  newui/newui_main.cpp
+)
+
+#---------------------------------------
+#
 # sound subsystem sources
 #
 #---------------------------------------
@@ -340,6 +350,7 @@ set(MAIN_COMMON_SOURCES
   text.cpp
   text.h
   ${UIWIDGETS_SOURCES}
+  ${NEWUI_SOURCES}
   ${VCCLIB_SOURCES}
   video.h
   ${AJBSP_SOURCES}
