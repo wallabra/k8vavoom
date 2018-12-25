@@ -77,14 +77,20 @@ void MN_DeactivateMenu () {
 bool MN_Responder (event_t *ev) {
   if (GClGame->eventMessageBoxResponder(ev)) return true;
 
-  // Pop-up menu?
+  // show menu?
   if (!MN_Active() && ev->type == ev_keydown && !C_Active() &&
-      (!cl || cls.demoplayback || GGameInfo->NetMode == NM_TitleMap) &&
-      ev->data1 != '`' && ev->data1 != K_BACKQUOTE &&
-      (ev->data1 < K_F1 || ev->data1 > K_F12))
+      (!cl || cls.demoplayback || GGameInfo->NetMode == NM_TitleMap))
   {
-    MN_ActivateMenu();
-    return true;
+    bool doActivate = (ev->data1 < K_F1 || ev->data1 > K_F12);
+    if (doActivate) {
+      VStr down, up;
+      GInput->GetBinding(ev->data1, down, up);
+      if (down.ICmp("ToggleConsole") == 0) doActivate = false;
+    }
+    if (doActivate) {
+      MN_ActivateMenu();
+      return true;
+    }
   }
 
   return GClGame->eventMenuResponder(ev);
