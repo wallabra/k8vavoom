@@ -956,8 +956,10 @@ void SV_ShutdownGame () {
     // sends a disconnect message to the server
     if (!cls.demoplayback) {
       GCon->Log(NAME_Dev, "Sending clc_disconnect");
-      cl->Net->Channels[0]->Close();
-      cl->Net->Flush();
+      if (cl->Net) {
+        if (cl->Net->Channels[0]) cl->Net->Channels[0]->Close();
+        cl->Net->Flush();
+      }
     }
 
     delete cl->Net;
