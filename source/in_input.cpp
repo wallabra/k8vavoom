@@ -386,30 +386,19 @@ void VInput::ProcessEvents () {
     if (F_Responder(ev)) continue; // finale
 
     // key bindings
-    if (ev->type == ev_keydown) {
-      VStr kb = KeyBindingsDown[ev->data1];
+    if ((ev->type == ev_keydown || ev->type == ev_keyup) && (ev->data1 > 0 && ev->data1 < 256)) {
+      VStr kb = (ev->type == ev_keydown ? KeyBindingsDown[ev->data1&0xff] : KeyBindingsUp[ev->data1&0xff]);
       if (kb.IsNotEmpty()) {
         if (kb[0] == '+' || kb[0] == '-') {
           // button commands add keynum as a parm
-          GCmdBuf << kb << " " << VStr(ev->data1) << "\n";
+          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev->data1) << "\n";
         } else {
           GCmdBuf << kb << "\n";
         }
         continue;
       }
     }
-    if (ev->type == ev_keyup) {
-      VStr kb = KeyBindingsUp[ev->data1];
-      if (kb.IsNotEmpty()) {
-        if (kb[0] == '+' || kb[0] == '-') {
-          // button commands add keynum as a parm
-          GCmdBuf << kb << " " << VStr(ev->data1) << "\n";
-        } else {
-          GCmdBuf << kb << "\n";
-        }
-        continue;
-      }
-    }
+
     if (CL_Responder(ev)) continue;
   }
   unguard;
