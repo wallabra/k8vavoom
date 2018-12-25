@@ -49,9 +49,9 @@ class VScriptsParser : public VObject {
 
 #if !defined(VCC_STANDALONE_EXECUTOR)
   DECLARE_FUNCTION(OpenLumpName)
-  DECLARE_FUNCTION(OpenLumpFullName)
   DECLARE_FUNCTION(OpenLumpIndex)
 #endif
+  DECLARE_FUNCTION(OpenLumpFullName)
   DECLARE_FUNCTION(OpenString)
   DECLARE_FUNCTION(get_String)
   DECLARE_FUNCTION(get_Number)
@@ -1025,21 +1025,6 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpName) {
 #endif
 }
 
-IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
-  P_GET_STR(Name);
-  P_GET_SELF;
-#if !defined(IN_VCC)
-  if (Self->Int) {
-    delete Self->Int;
-    Self->Int = nullptr;
-  }
-  int num = W_GetNumForFileName(Name);
-  //int num = W_IterateFile(-1, *Name);
-  if (num < 0) Sys_Error("file '%s' not found", *Name);
-  Self->Int = new VScriptParser(*Name, W_CreateLumpReaderNum(num));
-#endif
-}
-
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpIndex) {
   P_GET_INT(lump);
   P_GET_SELF;
@@ -1053,6 +1038,40 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpIndex) {
 #endif
 }
 #endif
+
+IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
+  P_GET_STR(Name);
+  P_GET_SELF;
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  if (Self->Int) {
+    delete Self->Int;
+    Self->Int = nullptr;
+  }
+  int num = W_GetNumForFileName(Name);
+  //int num = W_IterateFile(-1, *Name);
+  if (num < 0) Sys_Error("file '%s' not found", *Name);
+  Self->Int = new VScriptParser(*Name, W_CreateLumpReaderNum(num));
+#elif defined(VCC_STANDALONE_EXECUTOR)
+  if (Self->Int) {
+    delete Self->Int;
+    Self->Int = nullptr;
+  }
+  VStream *st = fsysOpenFile(*Name);
+  if (!st) Sys_Error("file '%s' not found", *Name);
+  bool ok = true;
+  VStr s;
+  if (st->TotalSize() > 0) {
+    s.setLength(st->TotalSize());
+    st->Serialise(s.getMutableCStr(), s.length());
+    ok = !st->IsError();
+  }
+  delete st;
+  if (!ok) Sys_Error("cannot read file '%s'", *Name);
+  Self->Int = new VScriptParser(*Name, *s);
+#else
+  Sys_Error("file '%s' not found", *Name);
+#endif
+}
 
 IMPLEMENT_FUNCTION(VScriptsParser, OpenString) {
   P_GET_STR(s);
