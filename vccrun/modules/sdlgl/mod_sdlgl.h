@@ -265,8 +265,7 @@ public:
   static bool open (const VStr &winname, int width, int height, int fullscreen);
   static void close ();
 
-  static void clear ();
-  static void clearColored (int r, int g, int b);
+  static void clear (int rgb=0);
 
   static void runEventLoop ();
 

@@ -2186,10 +2186,10 @@ bool VGLVideo::open (const VStr &winname, int width, int height, int fullscreen)
 }
 
 
-void VGLVideo::clear () {
+void VGLVideo::clear (int rgb) {
   if (!mInited) return;
 
-  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClearColor(((rgb>>16)&0xff)/255.0f, ((rgb>>8)&0xff)/255.0f, (rgb&0xff)/255.0f, 0.0);
   glClearDepth(1.0);
   glClearStencil(0);
 
@@ -2596,7 +2596,10 @@ IMPLEMENT_FUNCTION(VGLVideo, getRealWindowSize) {
 
 IMPLEMENT_FUNCTION(VGLVideo, runEventLoop) { VGLVideo::runEventLoop(); }
 
-IMPLEMENT_FUNCTION(VGLVideo, clearScreen) { VGLVideo::clear(); }
+IMPLEMENT_FUNCTION(VGLVideo, clearScreen) {
+  P_GET_INT_OPT(rgb, 0);
+  VGLVideo::clear(rgb);
+}
 
 
 //native final static void setScale (float sx, float sy);
