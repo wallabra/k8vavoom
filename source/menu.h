@@ -23,19 +23,9 @@
 //**
 //**************************************************************************
 
-// HEADER FILES ------------------------------------------------------------
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void MN_Init();
-bool MN_Responder(event_t *event);
-void MN_Drawer();
-void MN_ActivateMenu();
-void MN_DeactivateMenu();
-bool MN_Active();
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
+void MN_Init ();
+bool MN_Responder (event_t *ev);
+void MN_Drawer ();
+void MN_ActivateMenu ();
+void MN_DeactivateMenu ();
+bool MN_Active ();
