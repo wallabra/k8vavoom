@@ -1,0 +1,203 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
+// listbox
+class WidgetListBox : NWidget;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct Item {
+  string text;
+  bool checked;
+  int tag;
+}
+
+protected int mTextColor;
+protected int mSelTextColor;
+protected int mSelBackColor;
+protected int mFcTextColor;
+protected int mFcSelTextColor;
+protected int mFcSelBackColor;
+
+protected array!Item mItems;
+protected int mCurrItem;
+protected int mSkipY;
+protected bool mMultiselect; // not yet
+
+
+void delegate (WidgetListBox me, int curidx, int curtag) onSelectionChanged;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void onCreated () {
+  int th = GLVideo.textHeight("W");
+  mBaseWidth = GLVideo.textWidth("W")*24+4;
+  mBaseHeight = th*8+2+th/2;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final void setDefWidthInChars (int chars) {
+  if (chars < 1) return;
+  GLVideo.fontName = fontName;
+  mBaseWidth = GLVideo.textWidth("W")*chars+4;
+  mWidth = mBaseWidth;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final void appendItem (string text, optional int tag, optional bool checked) {
+  mItems.length += 1;
+  mItems[$-1].text = text;
+  mItems[$-1].checked = checked;
+  mItems[$-1].tag = tag;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final void makeCurrentVisible () {
+  int mlen = mItems.length;
+  if (mlen == 0) { mSkipY = 0; return; }
+  GLVideo.fontName = fontName;
+  int th = GLVideo.textHeight("W");
+  int y0 = th*mCurrItem-mSkipY;
+  if (y0 < 0) {
+    mSkipY = th*mCurrItem;
+    setDirty();
+    return;
+  }
+  int y1 = y0+th-1;
+  if (y1 >= mHeight-2) {
+    mSkipY = th*mCurrItem;
+    mSkipY -= mHeight-th-1;
+    if (mSkipY < 0) mSkipY = 0;
+    setDirty();
+    return;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected override void selfPaintAt (int x0, int y0) {
+  GLVideo.color = (focused ? 0x10_10_10 : 0x20_20_20);
+  GLVideo.fillRect(x0, y0, mWidth, mHeight);
+  GLVideo.drawBevel(x0, y0, mWidth, mHeight, 0x10_10_10, 0x40_40_40);
+  if (!GLVideo.scissorCombine(x0+1, y0+1, mWidth-2, mHeight-2)) return;
+  makeCurrentVisible();
+  GLVideo.fontName = fontName;
+  int th = GLVideo.textHeight("W");
+  int y = y0+1-mSkipY;
+  foreach (int f, ref auto it; mItems) {
+    if (f == mCurrItem) {
+      GLVideo.color = (focused ? mFcSelBackColor : mSelBackColor);
+      GLVideo.fillRect(x0+1, y, mWidth, th-1);
+      GLVideo.color = (focused ? mFcSelTextColor : mSelTextColor);
+    } else {
+      GLVideo.color = (focused ? mFcTextColor : mTextColor);
+    }
+    GLVideo.drawTextAt(x0+1, y, it.text);
+    y += th;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+override bool onEvent (ref event_t evt) {
+  if (evt.type == ev_keydown) {
+    switch (evt.keycode) {
+      case K_UPARROW: case K_PAD8: case K_MWHEELUP:
+        currItemIndex = mCurrItem-1;
+        return true;
+      case K_DOWNARROW: case K_PAD2: case K_MWHEELDOWN:
+        currItemIndex = mCurrItem+1;
+        return true;
+      case K_MOUSE1:
+        if (mItems.length > 0) {
+          makeCurrentVisible();
+          GLVideo.fontName = fontName;
+          int th = GLVideo.textHeight("W");
+          int my = evt.y-1+mSkipY;
+          int idx = my/th;
+          //if (idx < 0 || idx >= mItems.length || mCurrItem == idx) return true;
+          currItemIndex = idx;
+        }
+        return true;
+    }
+  }
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int textColor {
+  get mTextColor;
+  set { if (mTextColor != value) { mTextColor = value; setDirty(); } }
+}
+
+int selTextColor {
+  get mSelTextColor;
+  set { if (mSelTextColor != value) { mSelTextColor = value; setDirty(); } }
+}
+
+int selBackColor {
+  get mSelBackColor;
+  set { if (mSelBackColor != value) { mSelBackColor = value; setDirty(); } }
+}
+
+int textColorFocused {
+  get mFcTextColor;
+  set { if (mFcTextColor != value) { mFcTextColor = value; setDirty(); } }
+}
+
+int selTextColorFocused {
+  get mFcSelTextColor;
+  set { if (mFcSelTextColor != value) { mFcSelTextColor = value; setDirty(); } }
+}
+
+int selBackColorFocused {
+  get mFcSelBackColor;
+  set { if (mFcSelBackColor != value) { mFcSelBackColor = value; setDirty(); } }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int currItemIndex {
+  get mCurrItem;
+  set {
+    if (mItems.length) {
+      value = clamp(value, 0, mItems.length-1);
+      if (value != mCurrItem) {
+        mCurrItem = value;
+        setDirty();
+        if (onSelectionChanged) onSelectionChanged(self, mCurrItem, mItems[mCurrItem].tag);
+      }
+    }
+  }
+}
+
+int currItemTag {
+  get { return (mCurrItem >= 0 && mCurrItem < mItems.length ? mItems[mCurrItem].tag : 0); }
+  set { if (mCurrItem >= 0 && mCurrItem < mItems.length) mItems[mCurrItem].tag = value; }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+defaultproperties {
+  mCurrItem = 0;
+  mSkipY = 0;
+  mMultiselect = false;
+  mTextColor = 0xff_7f_00;
+  mSelTextColor = 0x8f_8f_8f;
+  mSelBackColor = 0x30_30_30;
+  mFcTextColor = 0xff_7f_00;
+  mFcSelTextColor = 0xff_ff_ff;
+  mFcSelBackColor = 0x40_40_40;
+  mFocusable = true;
+}

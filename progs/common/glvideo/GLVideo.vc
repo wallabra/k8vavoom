@@ -1,0 +1,177 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
+class GLVideo : Object abstract native;
+
+// default mode is `Blend.Normal`
+enum BlendMode {
+  None, // blending disabled
+  Normal, // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  Blend, // glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+  Filter, // glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR)
+  Invert, // glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO)
+  Modulate /*Particle*/, // glBlendFunc(GL_DST_COLOR, GL_ZERO)
+  Highlight, // glBlendFunc(GL_DST_COLOR, GL_ONE);
+  DstMulDstAlpha, // glBlendFunc(GL_ZERO, GL_DST_ALPHA);
+  InvModulate, // glBlendFunc(GL_ZERO, GL_SRC_COLOR)
+}
+
+enum BlendFunc {
+  Add,
+  Sub,
+  SubRev,
+  Min,
+  Max,
+}
+
+
+native final static bool isInitialized ();
+
+native final static int screenWidth ();
+native final static int screenHeight ();
+
+native final static bool isMouseCursorVisible ();
+// no recursion is supported
+native final static void hideMouseCursor ();
+native final static void showMouseCursor ();
+
+native final static void getRealWindowSize (out int w, out int h);
+
+native final static bool glHasNPOT { get; }
+native final static bool glHasExtension (string extname);
+
+native final static void clearScreen (optional int rgb); // default is black
+
+native final static bool smoothLine { get; set; }
+
+// color: aarrggbb
+// WARNING: "a" is inverted, and actually means "transparency"
+//          i.e. a==0 is completely opaque
+//          it is easier this way, even if it may look conunterintuitive for you
+native final static int colorARGB { get; set; }
+alias color = colorARGB;
+
+// BlendXXX
+native final static BlendMode blendMode { get; set; }
+native final static BlendFunc blendFunc { get; set; }
+
+
+// aborts if font cannot be loaded
+native final static void loadFontDF (name fontname, string fnameIni, string fnameTexture);
+
+// aborts if font cannot be loaded
+native final static void loadFontPCF (name fontname, string filename);
+
+native final static name fontName { get; set; }
+
+struct FontCharInfo {
+  int ch;
+  //int width, height; // height may differ from font height
+  //int advance; // horizontal advance to print next char
+  //int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
+  int leftbear, rightbear; // positive means "more to the respective bbox side"
+  int ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
+}
+
+
+native final static int fontHeight ();
+native final static int spaceWidth ();
+native final static bool getCharInfo (int ch, out FontCharInfo ci); // returns `false` if char wasn't found
+native final static int charWidth (int ch);
+native final static int textWidth (string text); // max width, knows about '\n'
+native final static int textHeight (string text); // this knows about '\n'
+native final static void drawTextAt (int x, int y, string text);
+
+native final static void drawLine (int x0, int y0, int x1, int y1);
+native final static void drawRect (int x0, int y0, int w, int h);
+native final static void fillRect (int x0, int y0, int w, int h);
+
+// true : GL_LINEAR
+// false: GL_NEAREST
+native final static bool textureFiltering { get; set; }
+
+
+native final static bool getMousePos (out int x, out int y);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static native final void glPushMatrix ();
+static native final void glPopMatrix ();
+static native final void glLoadIdentity ();
+static native final void glScale (float sx, float sy, optional float sz);
+static native final void glTranslate (float dx, float dy, optional float dz);
+//static native final void glRotate (float ax, float ay, optional float az);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct ScissorRect {
+  int x, y, w, h;
+  int enabled;
+}
+
+
+native final static bool scissorEnabled { get; set; }
+
+native final static void getScissor (out ScissorRect sr);
+native final static void setScissor (ref optional ScissorRect sr);
+
+native final static void copyScissor (out ScissorRect dest, const ref ScissorRect src);
+
+
+// returns `false` if no area left
+final static bool scissorCombine (int x0, int y0, int w, int h) {
+  ScissorRect sr;
+  getScissor(sr);
+  if (!sr.enabled) {
+    sr.x = 0;
+    sr.y = 0;
+    sr.w = screenWidth;
+    sr.h = screenHeight;
+    sr.enabled = true;
+  }
+  if (sr.w < 1 || sr.h < 1) return false; // nothing to do
+  if (w < 1 || h < 1) {
+    sr.w = 0;
+    sr.h = 0;
+  } else {
+    int sx1 = sr.x+sr.w-1;
+    int sy1 = sr.y+sr.h-1;
+    int x1 = x0+w-1;
+    int y1 = y0+h-1;
+    // check for overlapping rects
+    if (x0 > sx1 || y0 > sy1 || x1 < sr.x || y1 < sr.y) {
+      // no overlap
+      sr.w = 0;
+      sr.h = 0;
+    } else {
+      // overlaps
+      if (x0 > sr.x) sr.x = x0;
+      if (y0 > sr.y) sr.y = y0;
+      if (x1 < sx1) sx1 = x1;
+      if (y1 < sy1) sy1 = y1;
+      sr.w = sx1-sr.x+1;
+      sr.h = sy1-sr.y+1;
+    }
+  }
+  setScissor(sr);
+  return (sr.w > 0 && sr.h > 0);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+final static void drawBevel (int x0, int y0, int awidth, int aheight, int argbUp, int argbDown) {
+  colorARGB = argbUp;
+  drawLine(x0, y0, x0+awidth, y0);
+  drawLine(x0, y0+1, x0, y0+aheight);
+  colorARGB = argbDown;
+  drawLine(x0+1, y0+aheight-1, x0+awidth, y0+aheight-1);
+  drawLine(x0+awidth-1, y0+1, x0+awidth-1, y0+aheight-1);
+}

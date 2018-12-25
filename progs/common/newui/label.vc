@@ -1,0 +1,47 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
+// text label
+class WidgetLabel : NWidget;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected string mText;
+protected int mColor;
+
+
+void onCreated (string atext) {
+  mText = atext;
+  mBaseWidth = GLVideo.textWidth(atext);
+  mBaseHeight = GLVideo.textHeight(atext);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+protected override void selfPaintAt (int x0, int y0) {
+  if (mText.length == 0) return;
+  GLVideo.color = mColor;
+  GLVideo.fontName = fontName;
+  GLVideo.drawTextAt(x0, y0, mText);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int color {
+  get mColor;
+  set { if (mColor != value) { mColor = value; setDirty(); } }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+defaultproperties {
+  mColor = 0xff_ff_ff;
+}

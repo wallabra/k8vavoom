@@ -1,0 +1,46 @@
+/**************************************************************************
+ *    This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ **************************************************************************/
+class GLTexture : Object /*abstract*/ native;
+
+private native transient readonly void *__tex;
+native readonly transient int id; // internal texture id
+
+
+native final static GLTexture Load (string fname);
+native final static GLTexture GetById (int id);
+native override void Destroy ();
+
+native final int width ();
+native final int height ();
+
+// that is:
+//  isTransparent==true: no need to draw anything
+//  isOpaque==true: no need to do alpha-blending
+//  isOneBitAlpha==true: no need to do advanced alpha-blending
+native final bool isTransparent ();
+native final bool isOpaque ();
+native final bool isOneBitAlpha ();
+
+// the following two clamps
+native final void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1, optional float angle);
+native final void blitAt (int dx0, int dy0, optional float scale, optional float angle);
+
+// this one repeats
+native final void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
+
+
+// `txname` can be used in `Load()`
+native final static GLTexture CreateEmpty (int wdt, int hgt, optional string txname);
+native final void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
+native final int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
+native final void smoothEdges (); // this is done automatically in `upload()`, so there is no reason to call it manually
+native final void upload (); // call this after you set texture pixels

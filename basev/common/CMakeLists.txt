@@ -169,6 +169,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     uidef/*.txt
     uidef/menus/*.txt
     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/glvideo/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/newui/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/uibase/hud/*.vc
