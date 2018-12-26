@@ -395,7 +395,10 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
   VObject *Obj = nullptr;
   try {
     // actually, spawn a replacement
-    if (!skipReplacement) AClass = AClass->GetReplacement();
+    if (!skipReplacement) {
+      VClass *newclass = AClass->GetReplacement();
+      if (newclass && newclass->IsChildOf(AClass)) AClass = newclass;
+    }
 
     // allocate memory
     Obj = (VObject *)Z_Calloc(AClass->ClassSize);
