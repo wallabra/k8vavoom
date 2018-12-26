@@ -1,0 +1,18 @@
+class Main : Object;
+
+
+void test01 () {
+  dictionary!(name, name) i2s;
+
+  i2s.put('a', 'boo');
+  i2s.put('z', 'foo');
+
+  auto sp = i2s.find('a');
+  if (sp) print("<%q>", *sp);
+}
+
+
+void main () {
+  writeln("===============");
+  test01();
+}

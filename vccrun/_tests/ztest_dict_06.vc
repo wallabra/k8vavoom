@@ -1,0 +1,80 @@
+class Main : Object;
+
+struct ListItem {
+  string vname;
+  int value;
+}
+
+
+struct Test {
+  string s;
+  int n;
+  array!ListItem list;
+}
+
+
+void dumpList (const ref array!ListItem list) {
+  writeln(" list length: ", list.length);
+  foreach (auto idx, const ref auto val; list) {
+    print("  %d: %q=%s", idx, val.vname, val.value);
+  }
+}
+
+
+void test00 () {
+  array!Test ss;
+
+  dictionary!(name, array!Test) i2s;
+
+  ss.length = 2;
+
+  ss[0].s = "string 1";
+  ss[0].n = 42;
+  ss[0].list.length = 2;
+  ss[0].list[0].vname = "item 0";
+  ss[0].list[0].value = 1;
+  ss[0].list[1].vname = "item 1";
+  ss[0].list[1].value = 2;
+
+  ss[1].s = "string 2";
+  ss[1].n = 666;
+  ss[1].list.length = 3;
+  ss[1].list[0].vname = "item 2";
+  ss[1].list[0].value = 3;
+  ss[1].list[1].vname = "item 3";
+  ss[1].list[1].value = 4;
+  ss[1].list[2].vname = "item 4";
+  ss[1].list[2].value = 5;
+
+  i2s.put('key', ss);
+
+  ss.length = 0;
+  writeln(i2s.length);
+
+  auto sp = i2s.find('key');
+  writeln(sp.length);
+  foreach (auto idx, ref auto val; *sp) {
+    print("--- %d: <%q> : %d", idx, val.s, val.n);
+    dumpList(val.list);
+  }
+}
+
+
+void test01 () {
+  dictionary!(name, name) i2s;
+
+  i2s.put('a', 'boo');
+  i2s.put('z', 'foo');
+
+  auto sp = i2s.find('a');
+  if (sp) print("<%q>", *sp);
+}
+
+
+void main () {
+  writeln("===============");
+  test00();
+
+  writeln("===============");
+  test01();
+}
