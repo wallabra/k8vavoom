@@ -46,6 +46,7 @@ VStr appName;
 bool compileOnly = false;
 bool writeToConsole = true; //FIXME
 bool dumpProfile = false;
+static bool isGDB = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -100,13 +101,15 @@ __attribute__((noreturn, format(printf, 1, 2))) void Host_Error (const char *err
   va_end(argPtr);
   fprintf(stderr, "\n");
 #endif
-  exit(1);
+  if (!isGDB) exit(1);
+  abort();
 }
 
 
 static void OnSysError (const char *msg) {
   fprintf(stderr, "FATAL: %s\n", msg);
-  exit(1);
+  if (!isGDB) exit(1);
+  abort();
 }
 
 
@@ -313,6 +316,10 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       ++text;
       if (*text == 0) DisplayUsage();
       if (text[0] == '-' && text[1] == 0) { nomore = true; continue; }
+      if (strcmp(text, "gdb") == 0 || strcmp(text, "-gdb") == 0) {
+        isGDB = true;
+        continue;
+      }
       const char option = *text++;
       switch (option) {
         case 'd': DebugMode = true; if (*text) OpenDebugFile(text); break;
