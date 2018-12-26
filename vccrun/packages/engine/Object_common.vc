@@ -169,6 +169,7 @@ struct event_t {
   bool eaten;
   bool cancelled;
   bool bubbling;
+  bool deleteObj; // new UI dispatcher should delete `obj`
   // for new UI
   Object obj; // usually `none`, can be used as event source
   Object dest; // usually `none`, used as "destination widget" in UI system
