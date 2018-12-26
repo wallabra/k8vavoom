@@ -273,6 +273,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
   VScriptDict *ht;
   VScriptDictElem e, v, *r;
   switch (dcopcode) {
+    // clear
     // [-1]: VScriptDict
     case OPC_DictDispatch_Clear:
       ht = (VScriptDict *)sp[-1].p;
@@ -280,6 +281,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       ht->clear();
       --sp;
       return;
+    // reset
     // [-1]: VScriptDict
     case OPC_DictDispatch_Reset:
       ht = (VScriptDict *)sp[-1].p;
@@ -287,18 +289,21 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       ht->reset();
       --sp;
       return;
+    // length
     // [-1]: VScriptDict
     case OPC_DictDispatch_Length:
       ht = (VScriptDict *)sp[-1].p;
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       sp[-1].i = ht->length();
       return;
+    // capacity
     // [-1]: VScriptDict
     case OPC_DictDispatch_Capacity:
       ht = (VScriptDict *)sp[-1].p;
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       sp[-1].i = ht->capacity();
       return;
+    // find
     // [-2]: VScriptDict
     // [-1]: keyptr
     case OPC_DictDispatch_Find:
@@ -306,13 +311,18 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       VScriptDictElem::CreateFromPtr(e, sp[-1].p, KType, true); // calc hash
       r = ht->find(e);
-      if (r && VType.Type == TYPE_String) {
-        sp[-2].p = (r ? &r->value : nullptr);
+      if (r) {
+        if (VType.Type == TYPE_String || VScriptDictElem::isSimpleType(VType)) {
+          sp[-2].p = &r->value;
+        } else {
+          sp[-2].p = r->value;
+        }
       } else {
-        sp[-2].p = (r ? r->value : nullptr);
+        sp[-2].p = nullptr;
       }
       --sp;
       return;
+    // put
     // [-3]: VScriptDict
     // [-2]: keyptr
     // [-1]: valptr
@@ -326,6 +336,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
         sp -= 2;
       }
       return;
+    // delete
     // [-2]: VScriptDict
     // [-1]: keyptr
     case OPC_DictDispatch_Delete:
@@ -335,6 +346,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       sp[-2].i = (ht->del(e) ? 1 : 0);
       --sp;
       return;
+    // clear by ptr
     // [-1]: VScriptDict*
     case OPC_DictDispatch_ClearPointed:
       ht = (VScriptDict *)sp[-1].p;
@@ -342,12 +354,14 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       ht->clear();
       --sp;
       return;
+    // first index
     // [-1]: VScriptDict*
     case OPC_DictDispatch_FirstIndex:
       ht = (VScriptDict *)sp[-1].p;
       if (!ht) { cstDump(origip); Sys_Error("uninitialized dictionary"); }
       sp[-1].i = (ht->map ? ht->map->getFirstIIdx() : -1);
       return;
+    // is valid index?
     // [-2]: VScriptDict*
     // [-1]: index
     case OPC_DictDispatch_IsValidIndex:
@@ -356,6 +370,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       sp[-2].i = ((ht->map ? ht->map->isValidIIdx(sp[-1].i) : false) ? 1 : 0);
       --sp;
       return;
+    // next index
     // [-2]: VScriptDict*
     // [-1]: index
     case OPC_DictDispatch_NextIndex:
@@ -364,6 +379,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       sp[-2].i = (ht->map ? ht->map->getNextIIdx(sp[-1].i) : -1);
       --sp;
       return;
+    // delete current and next index
     // [-2]: VScriptDict*
     // [-1]: index
     case OPC_DictDispatch_DelAndNextIndex:
@@ -372,6 +388,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       sp[-2].i = (ht->map ? ht->map->removeCurrAndGetNextIIdx(sp[-1].i) : -1);
       --sp;
       return;
+    // key at index
     // [-2]: VScriptDict
     // [-1]: index
     case OPC_DictDispatch_GetKeyAtIndex:
@@ -392,6 +409,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       }
       --sp;
       return;
+    // value at index
     // [-2]: VScriptDict
     // [-1]: index
     case OPC_DictDispatch_GetValueAtIndex:
@@ -411,6 +429,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       }
       --sp;
       return;
+    // compact
     // [-1]: VScriptDict
     case OPC_DictDispatch_Compact:
       ht = (VScriptDict *)sp[-1].p;
@@ -418,6 +437,7 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       if (ht->map) ht->map->compact();
       --sp;
       return;
+    // rehash
     // [-1]: VScriptDict
     case OPC_DictDispatch_Rehash:
       ht = (VScriptDict *)sp[-1].p;
