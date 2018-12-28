@@ -172,9 +172,14 @@ public:
     bufused += 1;
   }
 
-  void putInt (int v, int width, bool toRight, bool zeroFill) {
+  void putInt (int v, int width, bool toRight, bool zeroFill, bool asdec=true) {
     char tmp[64];
-    int len = (int)snprintf(tmp, sizeof(tmp), "%d", v);
+    int len;
+    if (asdec) {
+      len = (int)snprintf(tmp, sizeof(tmp), "%d", v);
+    } else {
+      len = (int)snprintf(tmp, sizeof(tmp), "%x", (unsigned)v);
+    }
     if (len > 0) {
       if (width > len && toRight) {
         if (zeroFill) {
@@ -194,16 +199,19 @@ public:
     }
   }
 
-  void putHex (int v) {
-    char tmp[64];
-    int len = (int)snprintf(tmp, sizeof(tmp), "%08x", (unsigned)v);
-    if (len > 0) putStr(tmp, len);
+  void putHex (int v, int width, bool toRight, bool zeroFill) {
+    putInt(v, width, toRight, zeroFill, false);
   }
 
   void putFloat (float v) {
+    char tmp[VStr::FloatBufSize];
+    int len = VStr::float2str(tmp, v);
+    putStr(tmp, len);
+    /*
     char tmp[512];
     int len = (int)snprintf(tmp, sizeof(tmp), "%f", v);
     if (len > 0) putStr(tmp, len);
+    */
   }
 
   void putPtr (const void *v) {
@@ -297,9 +305,9 @@ VStr PF_FormatString () {
         case 'x':
           if (pi >= MAX_PARAMS) { VObject::VMDumpCallStack(); Sys_Error("Out of arguments to string formatting function"); }
           switch (ptypes[pi].Type) {
-            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putHex(params[pi].i); break;
-            case TYPE_Float: pbuf.putHex((int)params[pi].f); break;
-            case TYPE_Name: pbuf.putHex(params[pi].i); break; // hack
+            case TYPE_Int: case TYPE_Byte: case TYPE_Bool: pbuf.putHex(params[pi].i, width, toRight, zeroFill); break;
+            case TYPE_Float: pbuf.putHex((int)params[pi].f, width, toRight, zeroFill); break; //FIXME! HACK!
+            case TYPE_Name: pbuf.putHex(params[pi].i, width, toRight, zeroFill); break; // hack
             default: VObject::VMDumpCallStack(); Sys_Error("Invalid argument to format specifier '%c'", fspec);
           }
           ++pi;
