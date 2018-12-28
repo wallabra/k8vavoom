@@ -1,7 +1,7 @@
 TestObject ctor!
 Main ctor!
-hello! defval=42; vector=(1.000000,2.000000,0.000000)
-vector c=(1.000000,2.000000,0.000000)
+hello! defval=42; vector=(1,2,0)
+vector c=(1,2,0)
 BOO! E2=2
-cos(90)=-0.017452
+cos(90)=-0.017452406
 cls is 'Main'
