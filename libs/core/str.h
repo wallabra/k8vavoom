@@ -93,6 +93,20 @@ private:
   void setContent (const char *s, int len=-1);
 
 public:
+  // some utilities
+  static bool convertInt (const char *s, int *outv);
+  static bool convertFloat (const char *s, float *outv, const float *defval=nullptr);
+
+  static float atof (const char *s) { float res = 0; convertFloat(s, &res, nullptr); return res; }
+  static float atof (const char *s, float defval) { float res = 0; convertFloat(s, &res, &defval); return res; }
+
+  enum { FloatBufSize = 16 };
+  static int float2str (char *buf, float v); // 0-terminated
+
+  enum { DoubleBufSize = 26 };
+  static int double2str (char *buf, double v); // 0-terminated
+
+public:
   VStr (ENoInit) {}
   VStr () : dataptr(nullptr) {}
   VStr (const VStr &instr) : dataptr(nullptr) { dataptr = instr.dataptr; incref(); }
@@ -204,8 +218,10 @@ public:
   inline VStr &operator += (bool v) { return operator+=(v ? "true" : "false"); }
   inline VStr &operator += (int v) { char buf[64]; snprintf(buf, sizeof(buf), "%d", v); return operator+=(buf); }
   inline VStr &operator += (unsigned v) { char buf[64]; snprintf(buf, sizeof(buf), "%u", v); return operator+=(buf); }
-  inline VStr &operator += (float v) { char buf[64]; snprintf(buf, sizeof(buf), "%f", v); return operator+=(buf); }
-  inline VStr &operator += (double v) { char buf[64]; snprintf(buf, sizeof(buf), "%f", v); return operator+=(buf); }
+  //inline VStr &operator += (float v) { char buf[64]; snprintf(buf, sizeof(buf), "%f", v); return operator+=(buf); }
+  //inline VStr &operator += (double v) { char buf[64]; snprintf(buf, sizeof(buf), "%f", v); return operator+=(buf); }
+  VStr &operator += (float v);
+  VStr &operator += (double v);
   inline VStr &operator += (const VName &v) { return operator+=(*v); }
 
   friend VStr operator + (const VStr &S1, const char *S2) { VStr res(S1); res += S2; return res; }
@@ -472,12 +488,6 @@ public:
   bool fnameEqu1251CI (const char *s) const;
 
   static VStr buf2hex (const void *buf, int buflen);
-
-  static bool convertInt (const char *s, int *outv);
-  static bool convertFloat (const char *s, float *outv, const float *defval=nullptr);
-
-  static float atof (const char *s) { float res = 0; convertFloat(s, &res, nullptr); return res; }
-  static float atof (const char *s, float defval) { float res = 0; convertFloat(s, &res, &defval); return res; }
 
   inline bool convertInt (int *outv) const { return convertInt(getCStr(), outv); }
   inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }

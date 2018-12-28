@@ -26,10 +26,10 @@
 //  Dynamic string class.
 //
 //**************************************************************************
-
-//#include <cctype>
-
 #include "core.h"
+#include "ryu_f2s.c"
+#define RYU_OMIT_COMMON_INCLUDE
+#include "ryu_d2s.c"
 
 #if !defined _WIN32 && !defined DJGPP
 #undef stricmp  //  Allegro defines them
@@ -99,6 +99,11 @@ const vuint8 VUtf8DecoderFast::utf8dfa[0x16c] = {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+int VStr::float2str (char *buf, float v) { return f2s_buffered(v, buf); }
+int VStr::double2str (char *buf, double v) { return d2s_buffered(v, buf); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 VStr::VStr (int v) : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%d", v);
@@ -112,16 +117,21 @@ VStr::VStr (unsigned v) : dataptr(nullptr) {
 }
 
 VStr::VStr (float v) : dataptr(nullptr) {
-  char buf[64];
-  int len = (int)snprintf(buf, sizeof(buf), "%f", v);
+  char buf[32];
+  int len = f2s_buffered(v, buf);
   setContent(buf, len);
 }
 
 VStr::VStr (double v) : dataptr(nullptr) {
-  char buf[64];
-  int len = (int)snprintf(buf, sizeof(buf), "%f", v);
+  char buf[32];
+  int len = d2s_buffered(v, buf);
   setContent(buf, len);
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStr &VStr::operator += (float v) { char buf[32]; (void)f2s_buffered(v, buf); return operator+=(buf); }
+VStr &VStr::operator += (double v) { char buf[32]; (void)d2s_buffered(v, buf); return operator+=(buf); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1624,11 +1634,11 @@ void VStr::Tokenise (TArray <VStr> &args) const {
 
 //==========================================================================
 //
-// va
+//  va
 //
-// Very useful function from Quake.
-// Does a varargs printf into a temp buffer, so I don't need to have
-// varargs versions of all text functions.
+//  Very useful function from Quake.
+//  Does a varargs printf into a temp buffer, so I don't need to have
+//  varargs versions of all text functions.
 //
 //==========================================================================
 __attribute__((format(printf, 1, 2))) char *va (const char *text, ...) {
