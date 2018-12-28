@@ -125,17 +125,8 @@ override void OnDraw () {
   int xx = CursorXOffs+10;
   int Col2 = (IsFocus() ? ValueColourFocus : ValueColour);
   SetTextAlign(hleft, vtop);
-  // integer?
-  if (fabs(Value)-int(fabs(Value)) == 0 && fabs(ValueDelta)-int(fabs(ValueDelta)) == 0) {
-    // int
-    DrawText(xx, 0, va("%d", int(Value)), Col2);
-  } else {
-    // float
-    string s = va("%f", Value);
-    while (s.length && s[$-1] == '0') s = s[0..$-1];
-    if (!s) s = va("%f", Value); else if (s[$-1] == ".") s ~= "0";
-    DrawText(xx, 0, s, Col2);
-  }
+  //k8: we have much better fp->str now, so there's no need to perform any string trickery here
+  DrawText(xx, 0, va("%f", Value), Col2);
 }
 
 
