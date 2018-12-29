@@ -419,6 +419,15 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       if (Prop) return DoPropertyResolve(ec, Prop, assType);
     }
 
+    // convert to method, 'cause why not?
+    if (assType != AssType::AssTarget && ec.SelfClass && ec.SelfClass->FindMethod(FieldName)) {
+      VExpression *ufcsArgs[1];
+      ufcsArgs[0] = opcopy.get();
+      VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+      delete this;
+      return call->Resolve(ec);
+    }
+
     ParseError(Loc, "No such field `%s`", *FieldName);
     delete this;
     return nullptr;
