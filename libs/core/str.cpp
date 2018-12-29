@@ -1430,12 +1430,20 @@ bool VStr::convertInt (const char *s, int *outv) {
   if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
   if (!s[0]) return false;
   if (s[0] < '0' || s[0] > '9') return false;
-  int base = 10;
-  if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-    if (!s[2] || digitInBase(s[2], 16) < 0) return false;
-    base = 16;
-    s += 2;
+  int base = 0;
+  if (s[0] == '0') {
+    switch (s[1]) {
+      case 'x': case 'X': base = 16; break;
+      case 'o': case 'O': base = 8; break;
+      case 'b': case 'B': base = 2; break;
+      case 'd': case 'D': base = 10; break;
+    }
+    if (base) {
+      if (!s[2] || digitInBase(s[2], base) < 0) return false;
+      s += 2;
+    }
   }
+  if (!base) base = 10;
   while (*s) {
     char ch = *s++;
     int d = digitInBase(ch, base);
