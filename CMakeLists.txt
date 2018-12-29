@@ -25,6 +25,7 @@ option(NO_SSE "Disable all SSE instructions" OFF)
 option(NO_PTHREAD "Disable pthreads, use C11 threads instead" OFF)
 option(NO_MEMRCHR "Disable usage of memrchr()" OFF)
 option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you any noticeable speedup)" OFF)
+option(ENABLE_STRTODEX "Use internal strtod implementation to parse floats" OFF)
 option(WITH_OLD_CPU "Use pIV CPU instruction set" OFF)
 option(DEBUG_FPU_CHECKS "Use FPU and turn on some checks (GNU/Linux only)" OFF)
 option(VCCRUN_HAXPAK "You cannot turn this on" OFF)
@@ -119,6 +120,10 @@ set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wall")
 #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address")
 # k8: fuck you, gcc. i have my own style, gtfo.
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-misleading-indentation")
+
+if(ENABLE_STRTODEX)
+  add_definitions(-DVCORE_ALLOW_STRTODEX=1)
+endif(ENABLE_STRTODEX)
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.4)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wimplicit-fallthrough")

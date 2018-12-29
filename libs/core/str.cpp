@@ -38,7 +38,20 @@
 #define strnicmp  strncasecmp
 #endif
 
-#define VCORE_USE_LOCALE
+#if defined(VCORE_ALLOW_STRTODEX)
+# if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN32) || defined(__i386__)
+#  if !defined(USE_FPU_MATH)
+#   define VCORE_USE_STRTODEX
+#  endif
+# endif
+#endif
+
+#ifdef VCORE_USE_STRTODEX
+# include "dtoa_k8.c"
+#else
+# define VCORE_USE_LOCALE
+#endif
+
 //#define VCORE_STUPID_ATOF
 
 #ifdef VCORE_USE_LOCALE
@@ -1514,7 +1527,16 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
     return false;
   }
   return true;
-#else /* VCORE_STUPID_ATOF */
+/* VCORE_STUPID_ATOF */
+#elif defined(VCORE_USE_STRTODEX)
+  char *end = nullptr;
+  double res = strtodEx(s, &end);
+  while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
+  if (*end) { if (defval) *outv = *defval; return false; } // oops
+  *outv = res;
+  if (!isFiniteF(*outv)) { if (defval) *outv = *defval; return false; } // oops
+  return true;
+#else
   if (!s[0]) { if (defval) *outv = *defval; return false; }
 #ifdef VCORE_USE_LOCALE
   static int dpconvinited = -1; // >0: need conversion
@@ -1561,6 +1583,7 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
       // do conversion
       char *end = nullptr;
       float res = strtof(newstr, &end);
+      if (!isFiniteF(res)) { Z_Free(newstr); if (defval) *outv = *defval; return false; } // oops
       while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
       if (*end) { Z_Free(newstr); if (defval) *outv = *defval; return false; } // oops
       Z_Free(newstr);
@@ -1573,6 +1596,7 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
   {
     char *end = nullptr;
     float res = strtof(s, &end);
+    if (!isFiniteF(res)) { if (defval) *outv = *defval; return false; } // oops
     while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
     if (*end) { if (defval) *outv = *defval; return false; } // oops
     *outv = res;
