@@ -36,6 +36,7 @@ if(CMAKE_CROSSCOMPILING AND WIN32)
   option(WITH_WINE "Use wine to run built executables" ON)
   option(WITH_STATIC_OPENAL "Use special flags to link with static OpenAL" ON)
   #endif(MINGW)
+  set(ENABLE_STRTODEX ON)
 endif(CMAKE_CROSSCOMPILING AND WIN32)
 
 if(SWITCH_LIBNX)
@@ -576,6 +577,7 @@ message(STATUS "  VaVoom Client: " ${ENABLE_CLIENT})
 message(STATUS "  VaVoom Server: " ${ENABLE_SERVER})
 message(STATUS "  VaVoom Master: " ${ENABLE_MASTER})
 message(STATUS "  VccRun       : " ${ENABLE_VCCRUN})
+message(STATUS "  strtodEx     : " ${ENABLE_STRTODEX})
 
 
 add_subdirectory(libs)
