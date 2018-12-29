@@ -156,6 +156,15 @@ public:
 
   static inline VStr e2s (const VExpression *e) { return (e ? e->toString() : "<{null}>"); }
 
+  // checks if expression consists of only numeric literals
+  // returns `ExprXXX`
+  enum { ExprNotNum, ExprInt, ExprFloat };
+  static int IsNumericLiteralExpr (VExpression *e);
+
+  // this simplifies expression consists of only numeric literals
+  // if it cannot simplify the expression, it returns the original one
+  static VExpression *CalculateNumericLiteralExpr (VExpression *e);
+
   // this resolves one-char strings and names to int literals too
   VExpression *ResolveToIntLiteralEx (VEmitContext &ec, bool allowFloatTrunc=false);
 

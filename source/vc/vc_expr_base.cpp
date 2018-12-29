@@ -599,3 +599,248 @@ void VExpression::operator delete[] (void *p) {
 #endif
   }
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VExpression::IsNumericLiteralExpr
+//
+//  checks if expression consists of only numeric literals
+//
+//==========================================================================
+int VExpression::IsNumericLiteralExpr (VExpression *e) {
+  if (!e) return ExprNotNum;
+  if (e->IsIntConst()) return ExprInt;
+  if (e->IsFloatConst()) return ExprFloat;
+  // parentheses
+  if (e->IsParens()) {
+    VExprParens *ep = (VExprParens *)e;
+    return IsNumericLiteralExpr(ep->op);
+  }
+  // unary math
+  if (e->IsUnaryMath()) {
+    VUnary *eu = (VUnary *)e;
+    switch (eu->Oper) {
+      case VUnary::Plus:
+      case VUnary::Minus:
+        return IsNumericLiteralExpr(eu->op);
+      case VUnary::Not:
+        return ExprInt;
+      case VUnary::BitInvert:
+        if (IsNumericLiteralExpr(eu->op) != ExprInt) return ExprNotNum; // invalid type
+        return ExprInt;
+      case VUnary::TakeAddress:
+        return ExprNotNum;
+      default: break;
+    }
+    Sys_Error("ketmar forgot to process some unary operator in `VExpression::IsNumericLiteralExpr()`");
+  }
+  // binary math
+  if (e->IsBinaryMath()) {
+    int t0, t1;
+    VBinary *eb = (VBinary *)e;
+    switch (eb->Oper) {
+      case VBinary::Add:
+      case VBinary::Subtract:
+      case VBinary::Multiply:
+      case VBinary::Divide:
+        t0 = IsNumericLiteralExpr(eb->op1);
+        if (t0 == ExprNotNum) return ExprNotNum;
+        t1 = IsNumericLiteralExpr(eb->op2);
+        if (t1 == ExprNotNum) return ExprNotNum;
+        if (t0 == ExprFloat || t1 == ExprFloat) return ExprFloat;
+        check(t0 == ExprInt);
+        check(t1 == ExprInt);
+        return ExprInt;
+      case VBinary::Equals:
+      case VBinary::NotEquals:
+      case VBinary::Less:
+      case VBinary::LessEquals:
+      case VBinary::Greater:
+      case VBinary::GreaterEquals:
+        if (IsNumericLiteralExpr(eb->op1) == ExprNotNum) return ExprNotNum;
+        if (IsNumericLiteralExpr(eb->op2) == ExprNotNum) return ExprNotNum;
+        return ExprInt;
+      case VBinary::Modulus:
+      case VBinary::LShift:
+      case VBinary::RShift:
+      case VBinary::URShift:
+      case VBinary::And:
+      case VBinary::XOr:
+      case VBinary::Or:
+        if (IsNumericLiteralExpr(eb->op1) != ExprInt) return ExprNotNum;
+        if (IsNumericLiteralExpr(eb->op2) != ExprInt) return ExprNotNum;
+        return ExprInt;
+      case VBinary::StrCat:
+      case VBinary::IsA:
+      case VBinary::NotIsA:
+        return ExprNotNum;
+      default: break;
+    }
+    Sys_Error("ketmar forgot to process some binary operator in `VExpression::IsNumericLiteralExpr()`");
+  }
+  return ExprNotNum;
+}
+
+
+struct LEVal {
+  vint32 iv;
+  float fv;
+  bool isFloat;
+
+  LEVal () : iv(0), fv(0), isFloat(false) {}
+  LEVal (vint32 v) : iv(v), fv(0), isFloat(false) {}
+  LEVal (float v) : iv(0), fv(v), isFloat(true) {}
+
+  static inline LEVal Invalid () { LEVal res; res.fv = NAN; res.isFloat = true; return res; }
+
+  inline bool isValid () { return !(isFloat && isFiniteF(fv)); }
+
+  inline LEVal toFloat () const { if (isFloat) return LEVal(fv); return LEVal((float)iv); }
+};
+
+
+//==========================================================================
+//
+//  calcLE
+//
+//  sanity checks are already done
+//
+//==========================================================================
+static LEVal calcLE (VExpression *e) {
+  check(e);
+  if (e->IsIntConst()) return LEVal(e->GetIntConst());
+  if (e->IsFloatConst()) return LEVal(e->GetFloatConst());
+  // parentheses
+  if (e->IsParens()) {
+    VExprParens *ep = (VExprParens *)e;
+    return calcLE(ep->op);
+  }
+  // unary math
+  if (e->IsUnaryMath()) {
+    VUnary *eu = (VUnary *)e;
+    LEVal val = calcLE(eu->op);
+    if (!val.isValid()) return val;
+    switch (eu->Oper) {
+      case VUnary::Plus:
+        return val;
+      case VUnary::Minus:
+        return LEVal(-val.fv);
+      case VUnary::Not:
+        return LEVal(val.fv == 0 ? (vint32)1 : (vint32)0);
+      case VUnary::BitInvert:
+        if (val.isFloat) return LEVal::Invalid();
+        return LEVal((vint32)(~val.iv));
+      case VUnary::TakeAddress:
+        return LEVal::Invalid();
+      default: break;
+    }
+    Sys_Error("ketmar forgot to process some unary operator in `VExpression::calcLE()`");
+  }
+  // binary math
+  if (e->IsBinaryMath()) {
+    VBinary *eb = (VBinary *)e;
+    LEVal val1 = calcLE(eb->op1);
+    if (!val1.isValid()) return val1;
+    LEVal val2 = calcLE(eb->op2);
+    if (!val2.isValid()) return val2;
+    if (val1.isFloat) {
+      if (!val2.isFloat) val2 = val2.toFloat();
+    } else if (val2.isFloat) {
+      val1 = val1.toFloat();
+    }
+    check(val1.isFloat == val2.isFloat);
+    switch (eb->Oper) {
+      case VBinary::Add:
+        return (val1.isFloat ? LEVal(val1.fv+val2.fv) : LEVal((vint32)(val1.iv+val2.iv)));
+      case VBinary::Subtract:
+        return (val1.isFloat ? LEVal(val1.fv-val2.fv) : LEVal((vint32)(val1.iv-val2.iv)));
+      case VBinary::Multiply:
+        return (val1.isFloat ? LEVal(val1.fv*val2.fv) : LEVal((vint32)(val1.iv*val2.iv)));
+      case VBinary::Divide:
+        if (val1.isFloat) return LEVal(val1.fv/val2.fv);
+        if (val2.iv == 0) return LEVal::Invalid();
+        return LEVal((vint32)(val1.iv/val2.iv));
+      case VBinary::Modulus:
+        if (val1.isFloat) return LEVal::Invalid();
+        if (val2.iv == 0) return LEVal::Invalid();
+        return LEVal((vint32)(val1.iv%val2.iv));
+      case VBinary::Equals:
+        if (val1.isFloat) return LEVal(val1.fv == val2.fv ? (vint32)1 : (vint32)0);
+        return LEVal(val1.iv == val2.iv ? (vint32)1 : (vint32)0);
+      case VBinary::NotEquals:
+        if (val1.isFloat) return LEVal(val1.fv != val2.fv ? (vint32)1 : (vint32)0);
+        return LEVal(val1.iv != val2.iv ? (vint32)1 : (vint32)0);
+      case VBinary::Less:
+        if (val1.isFloat) return LEVal(val1.fv < val2.fv ? (vint32)1 : (vint32)0);
+        return LEVal(val1.iv < val2.iv ? (vint32)1 : (vint32)0);
+      case VBinary::LessEquals:
+        if (val1.isFloat) return LEVal(val1.fv <= val2.fv ? (vint32)1 : (vint32)0);
+        return LEVal(val1.iv <= val2.iv ? (vint32)1 : (vint32)0);
+      case VBinary::Greater:
+        if (val1.isFloat) return LEVal(val1.fv > val2.fv ? (vint32)1 : (vint32)0);
+        return LEVal(val1.iv > val2.iv ? (vint32)1 : (vint32)0);
+      case VBinary::GreaterEquals:
+        if (val1.isFloat) return LEVal(val1.fv >= val2.fv ? (vint32)1 : (vint32)0);
+        return LEVal(val1.iv >= val2.iv ? (vint32)1 : (vint32)0);
+      case VBinary::LShift:
+        if (val1.isFloat) return LEVal::Invalid();
+        if (val2.iv > 31) return LEVal((vint32)0);
+        if (val2.iv < 0 || val2.iv > 31) return LEVal::Invalid();
+        return LEVal(val1.iv<<val2.iv);
+      case VBinary::RShift:
+        if (val1.isFloat) return LEVal::Invalid();
+        if (val2.iv > 31) return LEVal((vint32)(val1.iv>>31));
+        if (val2.iv < 0 || val2.iv > 31) return LEVal::Invalid();
+        return LEVal(val1.iv>>val2.iv);
+      case VBinary::URShift:
+        if (val1.isFloat) return LEVal::Invalid();
+        if (val2.iv > 31) return LEVal((vint32)0);
+        if (val2.iv < 0 || val2.iv > 31) return LEVal::Invalid();
+        return LEVal((vint32)((vuint32)val1.iv>>val2.iv));
+      case VBinary::And:
+        if (val1.isFloat) return LEVal::Invalid();
+        return LEVal((vint32)((vuint32)val1.iv&(vuint32)val2.iv));
+      case VBinary::XOr:
+        if (val1.isFloat) return LEVal::Invalid();
+        return LEVal((vint32)((vuint32)val1.iv^(vuint32)val2.iv));
+      case VBinary::Or:
+        if (val1.isFloat) return LEVal::Invalid();
+        return LEVal((vint32)((vuint32)val1.iv|(vuint32)val2.iv));
+      case VBinary::StrCat:
+      case VBinary::IsA:
+      case VBinary::NotIsA:
+        return LEVal::Invalid();
+      default: break;
+    }
+    Sys_Error("ketmar forgot to process some binary operator in `VExpression::calcLE()`");
+  }
+  return LEVal::Invalid();
+}
+
+
+//==========================================================================
+//
+//  VExpression::CalculateNumericLiteralExpr
+//
+//  this simplifies expression consists of only numeric literals
+//  if it cannot simplify the expression, it returns the original one
+//
+//==========================================================================
+VExpression *VExpression::CalculateNumericLiteralExpr (VExpression *e) {
+  auto rtp = IsNumericLiteralExpr(e);
+  if (rtp == ExprNotNum) return e;
+  auto val = calcLE(e);
+  if (!val.isValid()) return e;
+  if (val.isFloat) {
+    VExpression *res = new VFloatLiteral(val.fv, e->Loc);
+    delete e;
+    return res;
+  } else {
+    VExpression *res = new VIntLiteral(val.iv, e->Loc);
+    delete e;
+    return res;
+  }
+}
