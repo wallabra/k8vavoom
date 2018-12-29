@@ -221,7 +221,7 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
   switch (Oper) {
     case Plus:
       Type = op->Type;
-      if (op->Type.Type != TYPE_Int && op->Type.Type != TYPE_Float) {
+      if (op->Type.Type != TYPE_Int && op->Type.Type != TYPE_Float && op->Type.Type == TYPE_Vector) {
         ParseError(Loc, "Expression type mismatch");
         delete this;
         return nullptr;
@@ -281,11 +281,18 @@ VExpression *VUnary::DoResolve (VEmitContext &ec) {
   }
 
   // optimize float constants
-  if (op->IsFloatConst() && Oper == Minus) {
+  if (op->IsFloatConst()) {
     float Value = op->GetFloatConst();
-    VExpression *e = new VFloatLiteral(-Value, Loc);
-    delete this;
-    return e;
+    VExpression *e = nullptr;
+    switch (Oper) {
+      case Minus: e = new VFloatLiteral(-Value, Loc); break;
+      case Not: e = new VIntLiteral(Value == 0.0f, Loc); break;
+      default: break;
+    }
+    if (e) {
+      delete this;
+      return e;
+    }
   }
 
   return this;
@@ -857,18 +864,39 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
         }
         e = new VIntLiteral(Value1%Value2, Loc);
         break;
-      case LShift: e = new VIntLiteral(Value1<<Value2, Loc); break;
-      case RShift: e = new VIntLiteral(Value1>>Value2, Loc); break;
-      case URShift: e = new VIntLiteral((vint32)((vuint32)Value1>>Value2), Loc); break;
+      case LShift:
+        if (Value2 < 0 || Value2 > 31) {
+          ParseError(Loc, "shl by %d", Value2);
+          delete this;
+          return nullptr;
+        }
+        e = new VIntLiteral(Value1<<Value2, Loc);
+        break;
+      case RShift:
+        if (Value2 < 0 || Value2 > 31) {
+          ParseError(Loc, "shr by %d", Value2);
+          delete this;
+          return nullptr;
+        }
+        e = new VIntLiteral(Value1>>Value2, Loc);
+        break;
+      case URShift:
+        if (Value2 < 0 || Value2 > 31) {
+          ParseError(Loc, "ushr by %d", Value2);
+          delete this;
+          return nullptr;
+        }
+        e = new VIntLiteral((vint32)((vuint32)Value1>>Value2), Loc);
+        break;
       case Less: e = new VIntLiteral(Value1 < Value2, Loc); break;
       case LessEquals: e = new VIntLiteral(Value1 <= Value2, Loc); break;
       case Greater: e = new VIntLiteral(Value1 > Value2, Loc); break;
       case GreaterEquals: e = new VIntLiteral(Value1 >= Value2, Loc); break;
       case Equals: e = new VIntLiteral(Value1 == Value2, Loc); break;
       case NotEquals: e = new VIntLiteral(Value1 != Value2, Loc); break;
-      case And: e = new VIntLiteral(Value1 & Value2, Loc); break;
-      case XOr: e = new VIntLiteral(Value1 ^ Value2, Loc); break;
-      case Or: e = new VIntLiteral(Value1 | Value2, Loc); break;
+      case And: e = new VIntLiteral(Value1&Value2, Loc); break;
+      case XOr: e = new VIntLiteral(Value1^Value2, Loc); break;
+      case Or: e = new VIntLiteral(Value1|Value2, Loc); break;
       default: break;
     }
     if (e) { delete this; return e; }
@@ -886,6 +914,11 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       case Divide:
         if (!Value2) {
           ParseError(Loc, "Division by 0");
+          delete this;
+          return nullptr;
+        }
+        if (!isFiniteF(Value2)) {
+          ParseError(Loc, "Division by inf/nan");
           delete this;
           return nullptr;
         }
@@ -928,6 +961,14 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
 
   // optimize n/1
   if (Oper == Divide && isOp2One) { VExpression *e = op1; op1 = nullptr; delete this; return e; }
+
+  // optimize n/2.0
+  if (Oper == Divide && op2->IsFloatConst() && op2->GetFloatConst() == 2.0f) {
+    Oper = Multiply;
+    VExpression *ef = new VFloatLiteral(0.5f, op2->Loc);
+    delete op2;
+    op2 = ef;
+  }
 
   return this;
 }
