@@ -38,6 +38,13 @@
 #define strnicmp  strncasecmp
 #endif
 
+#define VCORE_USE_LOCALE
+//#define VCORE_STUPID_ATOF
+
+#ifdef VCORE_USE_LOCALE
+#include "locale.h"
+#endif
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 const VStr VStr::EmptyString = VStr();
@@ -1453,6 +1460,7 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
   *outv = 0.0f;
   if (!s || !s[0]) { if (defval) *outv = *defval; return false; }
   while (*s && (vuint8)*s <= ' ') ++s;
+#ifdef VCORE_STUPID_ATOF
   bool neg = (s[0] == '-');
   if (s[0] == '+' || s[0] == '-') ++s;
   if (!s[0]) { if (defval) *outv = *defval; return false; }
@@ -1498,6 +1506,71 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
     return false;
   }
   return true;
+#else /* VCORE_STUPID_ATOF */
+  if (!s[0]) { if (defval) *outv = *defval; return false; }
+#ifdef VCORE_USE_LOCALE
+  static int dpconvinited = -1; // >0: need conversion
+  static char *dpointstr = nullptr; // this actually `const`
+  if (dpconvinited < 0) {
+    const char *dcs = (const char *)localeconv()->decimal_point;
+    if (!dcs || !dcs[0] || strcmp(dcs, ".") == 0) {
+      dpconvinited = 0;
+      /*
+      dpointstr = (char *)Z_Malloc(2);
+      dpointstr[0] = '.';
+      dpointstr[1] = 0;
+      */
+    } else {
+      dpconvinited = 1;
+      dpointstr = (char *)Z_Malloc(strlen(dcs)+1);
+      memcpy(dpointstr, dcs, strlen(dcs)+1);
+      //fprintf(stderr, "*** <%s> ***\n", dpointstr);
+    }
+  }
+  // if locale has some different separator, do conversion
+  if (dpconvinited > 0) {
+    int newlen = 0;
+    bool hasDPoint = false;
+    for (const char *tmp = s; *tmp; ++tmp) {
+      if (*tmp == '.') {
+        newlen += (int)strlen(dpointstr);
+        hasDPoint = true;
+      } else {
+        ++newlen;
+      }
+    }
+    if (hasDPoint) {
+      char *newstr = (char *)Z_Malloc(newlen+8);
+      char *dest = newstr;
+      for (const char *tmp = s; *tmp; ++tmp) {
+        if (*tmp == '.') {
+          strcpy(dest, dpointstr);
+          dest += strlen(dpointstr);
+        } else {
+          *dest++ = *tmp;
+        }
+      }
+      // do conversion
+      char *end = nullptr;
+      float res = strtof(newstr, &end);
+      while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
+      if (*end) { Z_Free(newstr); if (defval) *outv = *defval; return false; } // oops
+      Z_Free(newstr);
+      *outv = res;
+      return true;
+    }
+  }
+#endif /* VCORE_USE_LOCALE */
+  // no locale, cannot convert (or no need to convert anything)
+  {
+    char *end = nullptr;
+    float res = strtof(s, &end);
+    while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
+    if (*end) { if (defval) *outv = *defval; return false; } // oops
+    *outv = res;
+    return true;
+  }
+#endif /* VCORE_STUPID_ATOF */
 }
 
 
