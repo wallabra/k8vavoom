@@ -59,6 +59,22 @@
 #endif
 
 
+#ifdef VCORE_USE_STRTODEX
+static bool strtofEx (float *resptr, const char *s) {
+  if (!s || !s[0]) return false;
+  while (*s && *(const unsigned char *)s <= ' ') ++s;
+  if (!s[0]) return false;
+  char *end = nullptr;
+  float res = (float)strtodEx(s, &end);
+  if (!isFiniteF(res)) return false;
+  while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
+  if (*end) return false; // oops
+  if (resptr) *resptr = res;
+  return true;
+}
+#endif
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 const VStr VStr::EmptyString = VStr();
 
@@ -1529,12 +1545,19 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
   return true;
 /* VCORE_STUPID_ATOF */
 #elif defined(VCORE_USE_STRTODEX)
+  /*
   char *end = nullptr;
   double res = strtodEx(s, &end);
   while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
   if (*end) { if (defval) *outv = *defval; return false; } // oops
   *outv = res;
   if (!isFiniteF(*outv)) { if (defval) *outv = *defval; return false; } // oops
+  return true;
+  */
+  if (!strtofEx(outv, s)) {
+    if (defval) *outv = *defval;
+    return false;
+  }
   return true;
 #else
   if (!s[0]) { if (defval) *outv = *defval; return false; }
