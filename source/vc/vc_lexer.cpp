@@ -24,6 +24,8 @@
 //**************************************************************************
 #include "vc_local.h"
 
+//#define VC_LEXER_DUMP_COLLECTED_NUMBERS
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 const char *VLexer::TokenNames[] = {
@@ -440,6 +442,7 @@ void VLexer::ProcessPreprocessor () {
     SkipWhitespaceAndComments();
     if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "`#line`: line number expected");
     ProcessNumberToken();
+    if (Token != TK_IntLiteral) ParseError(Location, "`#line`: integer expected");
     auto lno = Number-1;
 
     // read file name
@@ -724,8 +727,9 @@ void VLexer::ProcessNumberToken () {
 
   char c = currCh;
   NextChr();
-  Number = c-'0';
 
+#if 0
+  Number = c-'0';
   // hex/octal/decimal/binary constant?
   if (c == '0') {
     int base = 0;
@@ -785,6 +789,123 @@ void VLexer::ProcessNumberToken () {
   }
 
   if (isAlpha(currCh)) ParseError(Location, "Invalid number");
+#else
+  // collect number
+  char numbuf[256];
+  numbuf[0] = c;
+  unsigned int nbpos = 1;
+  bool isHex = false;
+  Number = 0;
+  if (c == '0') {
+    int base = 0;
+    switch (currCh) {
+      case 'x': case 'X': isHex = true; numbuf[nbpos++] = 'x'; break;
+      case 'd': case 'D': base = 10; break;
+      case 'o': case 'O': base = 8; break;
+      case 'b': case 'B': base = 2; break;
+    }
+    if (base != 0) {
+      // other radixes, only integers
+      NextChr();
+      for (;;) {
+        if (currCh != '_') {
+          int d = VStr::digitInBase(currCh, base);
+          if (d < 0) break;
+          Number = Number*base+d;
+        }
+        NextChr();
+      }
+#ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
+      fprintf(stderr, "*** CONVERTED INT(base=%d): %d\n", base, Number);
+#endif
+      if (isAlpha(currCh)) ParseError(Location, "Invalid number");
+      return;
+    }
+    if (isHex) NextChr(); // skip 'x'
+  }
+  // collect integral part
+  int xbase = (isHex ? 16 : 10);
+  for (;;) {
+    if (currCh != '_') {
+      int d = VStr::digitInBase(currCh, xbase);
+      if (d < 0) break;
+      if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid number");
+      numbuf[nbpos++] = currCh;
+    }
+    NextChr();
+  }
+  if (currCh == '.') {
+    char nch = Peek(1);
+    //if (isAlpha(nch) || nch == '_' || nch == '.')
+    if (VStr::digitInBase(nch, xbase) < 0)
+    {
+      // num dot smth
+      numbuf[nbpos++] = 0;
+#ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
+      fprintf(stderr, "*** COLLECTED INT(0): <%s>\n", numbuf);
+#endif
+      if (!VStr::convertInt(numbuf, &Number)) ParseError(Location, "Invalid floating number");
+      return; // so 10.seconds is allowed
+    }
+  }
+  if (currCh == 'f' || currCh == '.' || (isHex && (currCh == 'p' || currCh == 'P')) || (!isHex && (currCh == 'e' || currCh == 'E'))) {
+    // floating number
+    Token = TK_FloatLiteral;
+    // dotted part
+    if (currCh == '.') {
+      if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid number");
+      numbuf[nbpos++] = '.';
+      NextChr(); // skip dot
+      for (;;) {
+        if (currCh != '_') {
+          int d = VStr::digitInBase(currCh, xbase);
+          if (d < 0) break;
+          if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid number");
+          numbuf[nbpos++] = currCh;
+        }
+        NextChr();
+      }
+    }
+    // exponent
+    if ((isHex && (currCh == 'p' || currCh == 'P')) || (!isHex && (currCh == 'e' || currCh == 'E'))) {
+      if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number exponent");
+      numbuf[nbpos++] = (isHex ? 'p' : 'e');
+      NextChr(); // skip e/p
+      if (currCh == '+' || currCh == '-') {
+        if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number exponent");
+        numbuf[nbpos++] = currCh;
+        NextChr(); // skip sign
+      }
+      for (;;) {
+        if (currCh != '_') {
+          int d = VStr::digitInBase(currCh, xbase);
+          if (d < 0) break;
+          if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number exponent");
+          numbuf[nbpos++] = currCh;
+        }
+        NextChr();
+      }
+    }
+    // skip optional 'f'
+    if (currCh == 'f') NextChr();
+    if (isAlpha(currCh) || (currCh >= '0' && currCh <= '9')) ParseError(Location, "Invalid floating number");
+    if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number");
+    numbuf[nbpos++] = 0;
+#ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
+    fprintf(stderr, "*** COLLECTED FLOAT: <%s>\n", numbuf);
+#endif
+    if (!VStr::convertFloat(numbuf, &Float)) ParseError(Location, "Invalid floating number");
+    Number = (int)Float;
+  } else {
+    if (isAlpha(currCh) || (currCh >= '0' && currCh <= '9')) ParseError(Location, "Invalid number");
+    if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid number");
+    numbuf[nbpos++] = 0;
+#ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
+    fprintf(stderr, "*** COLLECTED INT(1): <%s>\n", numbuf);
+#endif
+    if (!VStr::convertInt(numbuf, &Number)) ParseError(Location, "Invalid floating number");
+  }
+#endif
 }
 
 
