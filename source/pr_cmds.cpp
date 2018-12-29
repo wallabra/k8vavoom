@@ -1148,10 +1148,27 @@ void PR_WriteOne (const VFieldType &type) {
   switch (type.Type) {
     case TYPE_Int: case TYPE_Byte: snprintf(buf, sizeof(buf), "%d", PR_Pop()); break;
     case TYPE_Bool: snprintf(buf, sizeof(buf), "%s", (PR_Pop() ? "true" : "false")); break;
-    case TYPE_Float: snprintf(buf, sizeof(buf), "%f", PR_Popf()); break;
+    case TYPE_Float: /*snprintf(buf, sizeof(buf), "%f", PR_Popf());*/ (void)VStr::float2str(buf, PR_Popf()); break;
     case TYPE_Name: snprintf(buf, sizeof(buf), "%s", *PR_PopName()); break;
     case TYPE_String: snprintf(buf, sizeof(buf), "%s", *PR_PopStr()); break;
-    case TYPE_Vector: { TVec v = PR_Popv(); snprintf(buf, sizeof(buf), "(%f,%f,%f)", v.x, v.y, v.z); } break;
+    case TYPE_Vector:
+      {
+        TVec v = PR_Popv();
+        //snprintf(buf, sizeof(buf), "(%f,%f,%f)", v.x, v.y, v.z);
+        buf[0] = '(';
+        int bpos = 1;
+        int xlen = VStr::float2str(buf+bpos, v.x);
+        bpos += xlen;
+        buf[bpos++] = ',';
+        xlen = VStr::float2str(buf+bpos, v.y);
+        bpos += xlen;
+        buf[bpos++] = ',';
+        xlen = VStr::float2str(buf+bpos, v.z);
+        bpos += xlen;
+        buf[bpos++] = ')';
+        buf[bpos] = 0;
+      }
+      break;
     case TYPE_Pointer: snprintf(buf, sizeof(buf), "<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
     case TYPE_Class:
       {
