@@ -1,0 +1,12 @@
+class Main : Object;
+
+void main () {
+  writeln(42);
+  writeln(0d42);
+  writeln(0x42);
+  writeln(42.0, " : 42");
+  writeln(42.669, " : 42.669");
+  writeln(42.669e2, " : 4266.9");
+  writeln(42.669e+2, " : 4266.9");
+  writeln(42.669e-2, " : 0.42669");
+}
