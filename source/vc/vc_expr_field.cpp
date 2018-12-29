@@ -103,17 +103,12 @@ VExpression *VPointerField::TryUFCS (VEmitContext &ec, VExpression *opcopy, cons
   if (ec.SelfClass) {
     VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
     opcopy = new VPushPointed(opcopy, opcopy->Loc);
-    VExpression *oprv = opcopy->SyntaxCopy()->Resolve(ec);
-    if (!oprv) { delete opcopy; delete this; return nullptr; }
-    ufcsArgs[0] = oprv; // it needs to be resolved
+    ufcsArgs[0] = opcopy;
     if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
-      delete oprv;
-      ufcsArgs[0] = opcopy;
       VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
       delete this;
       return call->Resolve(ec);
     }
-    delete oprv;
   }
   ParseError(Loc, "No such field `%s` in %s `%s`", *FieldName, errdatatype, *mb->GetFullName());
   delete opcopy;

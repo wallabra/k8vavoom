@@ -280,9 +280,9 @@ public:
   void CheckParams (VEmitContext &ec);
   void CheckDecorateParams (VEmitContext &);
 
-  // arguments should be already resolved (i.e. has type)
+  // arguments should not be resolved, but should be resolvable without errors
   static VMethod *FindMethodWithSignature (VEmitContext &ec, VName name, int argc, VExpression **argv, const TLocation *loc=nullptr);
-  // arguments should be already resolved (i.e. has type)
+  // arguments should not be resolved, but should be resolvable without errors
   static bool IsGoodMethodParams (VEmitContext &ec, VMethod *m, int argc, VExpression **argv);
 
   virtual bool IsMethodNameChangeable () const override;
