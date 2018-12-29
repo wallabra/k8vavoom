@@ -60,6 +60,10 @@ public:
 
 protected:
   VPointerField () {}
+
+  // return result of this unconditionally
+  // this uses or deletes `opcopy`
+  VExpression *TryUFCS (VEmitContext &ec, VExpression *opcopy, const char *errdatatype, VMemberBase *mb);
 };
 
 

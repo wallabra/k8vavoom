@@ -37,9 +37,13 @@ public:
     AutoCopy () : e(nullptr) {}
     AutoCopy (VExpression *ae) : e(ae ? ae->SyntaxCopy() : nullptr) {}
     ~AutoCopy () { delete e; e = nullptr; }
+    inline bool isEmpty () const { return !!e; }
+    // use `release()` to delete `e`
     inline void release () { delete e; e = nullptr; }
+    // use `get()` to extract `e` (and leave autocopy empty)
     inline VExpression *get () { VExpression *res = e; e = nullptr; return res; }
     VExpression *SyntaxCopy () { return (e ? e->SyntaxCopy() : nullptr); }
+    // delete current `e`, and remember `ae->SyntaxCopy()`
     inline void assignSyntaxCopy (VExpression *ae) {
       if (!ae) { delete e; e = nullptr; return; }
       if (ae != e) {
@@ -49,6 +53,7 @@ public:
         Sys_Error("VC: internal compiler error (AutoCopy::assignSyntaxCopy)");
       }
     }
+    // delete current `e`, and remember `ae` (without syntax-copying)
     inline void assignNoCopy (VExpression *ae) {
       if (!ae) { delete e; e = nullptr; return; }
       if (ae != e) {
@@ -60,8 +65,8 @@ public:
     }
 
   private:
-    AutoCopy (const AutoCopy &ac);
-    void operator = (const AutoCopy &ac);
+    AutoCopy (const AutoCopy &ac) = delete;
+    AutoCopy &operator = (const AutoCopy &ac) = delete;
   };
 
 public:

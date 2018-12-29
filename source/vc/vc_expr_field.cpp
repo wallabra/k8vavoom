@@ -95,10 +95,41 @@ VExpression *VPointerField::SyntaxCopy () {
 
 //==========================================================================
 //
+//  VPointerField::TryUFCS
+//
+//==========================================================================
+VExpression *VPointerField::TryUFCS (VEmitContext &ec, VExpression *opcopy, const char *errdatatype, VMemberBase *mb) {
+  // try UFCS
+  if (ec.SelfClass) {
+    VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
+    opcopy = new VPushPointed(opcopy, opcopy->Loc);
+    VExpression *oprv = opcopy->SyntaxCopy()->Resolve(ec);
+    if (!oprv) { delete opcopy; delete this; return nullptr; }
+    ufcsArgs[0] = oprv; // it needs to be resolved
+    if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
+      delete oprv;
+      ufcsArgs[0] = opcopy;
+      VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
+      delete this;
+      return call->Resolve(ec);
+    }
+    delete oprv;
+  }
+  ParseError(Loc, "No such field `%s` in %s `%s`", *FieldName, errdatatype, *mb->GetFullName());
+  delete opcopy;
+  delete this;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VPointerField::DoResolve
 //
 //==========================================================================
 VExpression *VPointerField::DoResolve (VEmitContext &ec) {
+  AutoCopy opcopy(op);
+
   if (op) op = op->Resolve(ec);
   if (!op) {
     delete this;
@@ -112,17 +143,30 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
   }
 
   VFieldType type = op->Type.GetPointerInnerType();
-  if (!type.Struct) {
-    ParseError(Loc, "Not a structure type");
-    delete this;
-    return nullptr;
+
+  if (type.Type == TYPE_Struct) {
+    if (!type.Struct) {
+      ParseError(Loc, "Not a structure/reference type");
+      delete this;
+      return nullptr;
+    }
+  } else if (type.Type == TYPE_Reference) {
+    // this can came from dictionary
+    if (!type.Class) {
+      ParseError(Loc, "Not a structure/reference type");
+      delete this;
+      return nullptr;
+    }
   }
 
-  VField *field = type.Struct->FindField(FieldName);
-  if (!field) {
-    ParseError(Loc, "No such field `%s` in struct `%s`", *FieldName, *type.Struct->GetFullName());
-    delete this;
-    return nullptr;
+  VField *field;
+  if (type.Type == TYPE_Struct) {
+    field = type.Struct->FindField(FieldName);
+    if (!field) return TryUFCS(ec, opcopy.get(), "struct", type.Struct);
+  } else {
+    check(type.Type == TYPE_Reference);
+    field = type.Class->FindField(FieldName);
+    if (!field) return TryUFCS(ec, opcopy.get(), "class", type.Class);
   }
 
   VExpression *e = new VFieldAccess(op, field, Loc, 0);
