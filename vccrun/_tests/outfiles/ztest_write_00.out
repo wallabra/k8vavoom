@@ -1,4 +1,4 @@
 hey, this is `writeln`! and i am a number: 42
-i am a vector: (1.000000,2.000000,3.000000)
+i am a vector: (1,2,3)
 i am a name: ThisIsName
-i am a float: 6.900000
+i am a float: 6.9
