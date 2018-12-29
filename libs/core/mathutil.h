@@ -136,8 +136,8 @@ static __attribute__((unused)) inline int ToPowerOf2 (int val) {
 static __attribute__((unused)) inline float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
-  while (angle < 0.0) angle += 360.0;
-  while (angle >= 360.0) angle -= 360.0;
+  while (angle < 0.0) angle += 360.0f;
+  while (angle >= 360.0f) angle -= 360.0f;
 #else
   angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
 #endif
@@ -147,8 +147,8 @@ static __attribute__((unused)) inline float AngleMod (float angle) {
 static __attribute__((unused)) inline float AngleMod180 (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
-  while (angle < -180.0) angle += 360.0;
-  while (angle >= 180.0) angle -= 360.0;
+  while (angle < -180.0f) angle += 360.0f;
+  while (angle >= 180.0f) angle -= 360.0f;
 #else
   angle += 180;
   angle = (360.0/65536)*((int)(angle*(65536/360.0))&65535);
@@ -166,7 +166,7 @@ static __attribute__((unused)) inline float macos (float x) { return RAD2DEG(aco
 static __attribute__((unused)) inline float matan (float y, float x) { return RAD2DEG(atan2(y, x)); }
 
 
-static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0/256.0; }
+static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0/256.0); }
 static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return (vuint8)(AngleMod(angle)*256.0/360.0); }
 
 
