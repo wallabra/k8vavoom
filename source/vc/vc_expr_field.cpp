@@ -103,6 +103,18 @@ VExpression *VPointerField::TryUFCS (VEmitContext &ec, VExpression *opcopy, cons
   if (ec.SelfClass) {
     VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
     opcopy = new VPushPointed(opcopy, opcopy->Loc);
+    //HACK! for classes
+    if (mb->MemberType == MEMBER_Class) {
+      // class
+      VClass *cls = (VClass *)mb;
+      VMethod *mt = cls->FindAccessibleMethod(FieldName, ec.SelfClass);
+      if (mt) {
+        opcopy = new VDotInvocation(opcopy, FieldName, Loc, 0, nullptr);
+        delete this;
+        return opcopy->Resolve(ec);
+      }
+    }
+    // normal UFCS
     ufcsArgs[0] = opcopy;
     if (VInvocation::FindMethodWithSignature(ec, FieldName, 1, ufcsArgs)) {
       VCastOrInvocation *call = new VCastOrInvocation(FieldName, Loc, 1, ufcsArgs);
