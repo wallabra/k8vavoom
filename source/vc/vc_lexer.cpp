@@ -878,7 +878,7 @@ void VLexer::ProcessNumberToken () {
       }
       for (;;) {
         if (currCh != '_') {
-          int d = VStr::digitInBase(currCh, xbase);
+          int d = VStr::digitInBase(currCh, 10/*xbase*/); // it is decimal for both types
           if (d < 0) break;
           if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid floating number exponent");
           numbuf[nbpos++] = currCh;
@@ -897,13 +897,13 @@ void VLexer::ProcessNumberToken () {
     if (!VStr::convertFloat(numbuf, &Float)) ParseError(Location, "Invalid floating number");
     Number = (int)Float;
   } else {
-    if (isAlpha(currCh) || (currCh >= '0' && currCh <= '9')) ParseError(Location, "Invalid number");
-    if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid number");
+    if (isAlpha(currCh) || (currCh >= '0' && currCh <= '9')) ParseError(Location, "Invalid integer number");
+    if (nbpos >= sizeof(numbuf)-1) ParseError(Location, "Invalid integer number");
     numbuf[nbpos++] = 0;
 #ifdef VC_LEXER_DUMP_COLLECTED_NUMBERS
     fprintf(stderr, "*** COLLECTED INT(1): <%s>\n", numbuf);
 #endif
-    if (!VStr::convertInt(numbuf, &Number)) ParseError(Location, "Invalid floating number");
+    if (!VStr::convertInt(numbuf, &Number)) ParseError(Location, "Invalid integer number");
   }
 #endif
 }
