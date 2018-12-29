@@ -794,6 +794,34 @@ void VDotInvocation::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
+//  VDotInvocation::DoReResolvePtr
+//
+//  this is used to avoid some pasta in `DoResolve()`
+//  it re-resolves pointer to (*selfCopy), or deletes `selfCopy`, and
+//  assigns result to `SelfExpr`
+//  it also returns `false` on error (and does `delete this`)
+//
+//==========================================================================
+bool VDotInvocation::DoReResolvePtr (VEmitContext &ec, VExpression *&selfCopy) {
+  check(SelfExpr);
+  check(selfCopy);
+  check(selfCopy != SelfExpr);
+  if (SelfExpr->Type.Type == TYPE_Pointer) {
+    delete SelfExpr;
+    SelfExpr = new VPushPointed(selfCopy, selfCopy->Loc);
+    selfCopy = nullptr;
+    SelfExpr = SelfExpr->Resolve(ec);
+    if (!SelfExpr) { delete this; return false; }
+  } else {
+    delete selfCopy;
+    selfCopy = nullptr;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VDotInvocation::DoResolve
 //
 //==========================================================================
@@ -1046,7 +1074,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
   }
 
   // Class.Method -- for static methods
-  if (SelfExpr->Type.Type == TYPE_Class) {
+  if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Class)) {
     delete selfCopy;
     if (!SelfExpr->Type.Class) {
       ParseError(Loc, "Class name expected at the left side of `.`");
@@ -1077,9 +1105,9 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  if (SelfExpr->Type.Type != TYPE_Reference) {
+  if (!SelfExpr->Type.IsNormalOrPointerType(TYPE_Reference)) {
     // translate method name for some built-in types
-    if (SelfExpr->Type.Type == TYPE_String) {
+    if (SelfExpr->Type.IsNormalOrPointerType(TYPE_String)) {
       // string
       static const char *knownStrTrans[] = {
         "mid", "strmid",
@@ -1097,24 +1125,27 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
           break;
         }
       }
-    } else if (SelfExpr->Type.Type == TYPE_Float) {
+    } else if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Float)) {
       // float
-      if (MethodName == "isnan" || MethodName == "isNan" || MethodName == "isNaN" || MethodName == "isNAN" ||
-          MethodName == "isinf" || MethodName == "isInf" || MethodName == "isfinite" || MethodName == "isFinite") {
+      if (VStr::ICmp(*MethodName, "isnan") == 0 ||
+          VStr::ICmp(*MethodName, "isinf") == 0 ||
+          VStr::ICmp(*MethodName, "isfinite") == 0)
+      {
         if (NumArgs != 0) {
           ParseError(Loc, "`float` builtin `%s` cannot have args", *MethodName);
           delete selfCopy;
           delete this;
           return nullptr;
         }
+        if (SelfExpr->Type.Type == TYPE_Pointer) selfCopy = new VPushPointed(selfCopy, selfCopy->Loc);
         VExpression *e = new VDotField(selfCopy, MethodName, Loc);
         delete this;
         return e->Resolve(ec);
       }
-    } else if (SelfExpr->Type.Type == TYPE_Dictionary) {
+    } else if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Dictionary)) {
       // dictionary
       if (MethodName == "clear" || MethodName == "reset") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 0) {
           ParseError(Loc, "Dictionary builtin `%s` cannot have args", *MethodName);
           delete this;
@@ -1126,7 +1157,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "find" || MethodName == "get") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have exactly one arg (key)", *MethodName);
           delete this;
@@ -1139,7 +1170,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "del" || MethodName == "delete" || MethodName == "remove") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have exactly one arg (key)", *MethodName);
           delete this;
@@ -1152,7 +1183,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "put" || MethodName == "ins" || MethodName == "insert") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 2) {
           ParseError(Loc, "Dictionary builtin `%s` should have two args (key and value)", *MethodName);
           delete this;
@@ -1165,7 +1196,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "compact" || MethodName == "rehash") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 0) {
           ParseError(Loc, "Dictionary builtin `%s` should have no args", *MethodName);
           delete this;
@@ -1178,7 +1209,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "firstIndex") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 0) {
           ParseError(Loc, "Dictionary builtin `%s` cannot have args", *MethodName);
           delete this;
@@ -1190,7 +1221,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "isValidIndex") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
           delete this;
@@ -1203,7 +1234,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "nextIndex" || MethodName == "removeAndNextIndex") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
           delete this;
@@ -1216,7 +1247,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "keyAtIndex") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
           delete this;
@@ -1229,7 +1260,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return e->Resolve(ec);
       }
       if (MethodName == "valueAtIndex") {
-        delete selfCopy;
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 1) {
           ParseError(Loc, "Dictionary builtin `%s` should have one arg", *MethodName);
           delete this;
@@ -1244,6 +1275,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     } else if (SelfExpr->Type.Type == TYPE_Struct || SelfExpr->Type.Type == TYPE_Vector) {
       // each struct/vector has `zero()` method
       if (MethodName == "zero") {
+        if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
         if (NumArgs != 0) {
           ParseError(Loc, "`.zero` requires no arguments");
           delete this;
@@ -1261,6 +1293,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
       int newArgC = NumArgs+1;
       VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
       for (int f = 0; f < NumArgs; ++f) ufcsArgs[f+1] = Args[f];
+      if (SelfExpr->Type.Type == TYPE_Pointer) selfCopy = new VPushPointed(selfCopy, selfCopy->Loc);
       ufcsArgs[0] = selfCopy;
       if (VInvocation::FindMethodWithSignature(ec, MethodName, newArgC, ufcsArgs)) {
         VCastOrInvocation *call = new VCastOrInvocation(MethodName, Loc, newArgC, ufcsArgs);
@@ -1270,7 +1303,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         return call->Resolve(ec);
       }
     }
-    ParseError(Loc, "Object reference expected at the left side of `.`");
+    ParseError(Loc, "Object reference expected at the left side of `.` (0)");
     delete selfCopy;
     delete this;
     return nullptr;
@@ -1286,7 +1319,8 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     fprintf(stderr, "!!!! CALL: <%s>\n", *M->GetFullName());
     */
     // don't need it anymore
-    delete selfCopy;
+    //delete selfCopy;
+    if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
     if (M->Flags&FUNC_Iterator) {
       ParseError(Loc, "Iterator methods can only be used in foreach statements");
       delete this;
@@ -1302,7 +1336,8 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
   VField *field = SelfExpr->Type.Class->FindField(MethodName, Loc, ec.SelfClass);
   if (field && field->Type.Type == TYPE_Delegate) {
     // don't need it anymore
-    delete selfCopy;
+    //delete selfCopy;
+    if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
     VExpression *e = new VInvocation(SelfExpr, field->Func, field, true, false, Loc, NumArgs, Args);
     SelfExpr = nullptr;
     NumArgs = 0;
@@ -1315,6 +1350,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     int newArgC = NumArgs+1;
     VExpression *ufcsArgs[VMethod::MAX_PARAMS+1];
     for (int f = 0; f < NumArgs; ++f) ufcsArgs[f+1] = Args[f];
+    if (SelfExpr->Type.Type == TYPE_Pointer) selfCopy = new VPushPointed(selfCopy, selfCopy->Loc);
     ufcsArgs[0] = selfCopy;
     if (VInvocation::FindMethodWithSignature(ec, MethodName, newArgC, ufcsArgs)) {
       VCastOrInvocation *call = new VCastOrInvocation(MethodName, Loc, newArgC, ufcsArgs);

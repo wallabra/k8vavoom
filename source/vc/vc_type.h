@@ -128,6 +128,9 @@ public:
   inline bool IsPointer () const { return (Type == TYPE_Pointer); } // useless, but nice
   inline bool IsVoidPointer () const { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == TYPE_Void); }
 
+  inline bool IsPointerType (EType tp) const { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp); }
+  inline bool IsNormalOrPointerType (EType tp) const { return (Type == tp || (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp)); }
+
   bool IsReusingDisabled () const;
   bool IsReplacableWith (const VFieldType &atype) const;
 };

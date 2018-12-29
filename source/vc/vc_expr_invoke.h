@@ -203,6 +203,12 @@ public:
 protected:
   VDotInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  // this is used to avoid some pasta in `DoResolve()`
+  // it re-resolves pointer to (*selfCopy), or deletes `selfCopy`, and
+  // assigns result to `SelfExpr`
+  // it also returns `false` on error (and does `delete this`)
+  bool DoReResolvePtr (VEmitContext &ec, VExpression *&selfCopy);
 };
 
 
