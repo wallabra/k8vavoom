@@ -1,0 +1,20 @@
+class Main : Object;
+
+void goo (const ref TVec t) { writeln("goo=", t); }
+
+
+void main () {
+  TVec v;
+  v.x = 666;
+  v.y = 6.9;
+  v.z = 0.1;
+  {
+    dictionary!(name, TVec) dc;
+    dc.put('666', v);
+    auto dcp = dc.find('666');
+    dcp.goo();
+    dcp.goo;
+    goo(*dcp);
+    //goo(dcp);
+  }
+}

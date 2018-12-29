@@ -1,0 +1,17 @@
+class Test : Object;
+
+int n = 42;
+
+void foo () { writeln("n=", n); }
+
+
+class Main : Object;
+
+void zoo (Test t) { t.foo(); }
+
+
+void main () {
+  auto t = SpawnObject(Test);
+  t.zoo();
+  t.zoo;
+}

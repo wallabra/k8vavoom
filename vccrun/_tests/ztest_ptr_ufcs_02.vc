@@ -1,0 +1,20 @@
+class Main : Object;
+
+struct Test {
+  int n;
+}
+
+void zoo (const ref Test t) {
+  writeln("n=", t.n);
+}
+
+
+void main () {
+  Test t;
+  t.n = 42;
+  t.zoo();
+  t.zoo;
+  Test *tp = &t;
+  tp.zoo();
+  tp.zoo;
+}

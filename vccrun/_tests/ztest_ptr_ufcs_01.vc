@@ -1,0 +1,28 @@
+class Test : Object;
+
+int n = 42;
+
+void foo () { writeln("n=", n); }
+
+
+class Main : Object;
+
+struct Goo {
+  int n;
+}
+
+void zoo (Test t) { t.foo(); }
+void goo (const ref Goo t) { writeln("goo.n=", t.n); }
+
+
+void main () {
+  auto t = SpawnObject(Test);
+  t.foo();
+  t.foo;
+  t.zoo();
+  t.zoo;
+  Goo g;
+  g.n = 666;
+  g.goo();
+  g.goo;
+}
