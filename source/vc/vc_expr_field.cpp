@@ -157,6 +157,23 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
+  } else if (type.Type == TYPE_Vector) {
+    // vectors are such structs
+    if (!type.Struct) {
+#if defined(IN_VCC) //&& !defined(VCC_STANDALONE_EXECUTOR)
+      VClass *ocls = (VClass *)VMemberBase::StaticFindMember("Object", ANY_PACKAGE, MEMBER_Class);
+      check(ocls);
+      VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", ocls, MEMBER_Struct);
+#else
+      VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
+#endif
+      if (!tvs) {
+        ParseError(Loc, "Cannot find `TVec` struct for vector type");
+        delete this;
+        return nullptr;
+      }
+      type.Struct = tvs;
+    }
   } else if (type.Type == TYPE_Reference) {
     // this can came from dictionary
     if (!type.Class) {
@@ -164,14 +181,20 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
+  } else {
+    ParseError(Loc, "Expected structure/reference type, but got `%s`", *op->Type.GetName());
+    delete this;
+    return nullptr;
   }
 
   VField *field;
-  if (type.Type == TYPE_Struct) {
+  if (type.Type == TYPE_Struct || type.Type == TYPE_Vector) {
+    check(type.Struct);
     field = type.Struct->FindField(FieldName);
     if (!field) return TryUFCS(ec, opcopy.get(), "struct", type.Struct);
   } else {
     check(type.Type == TYPE_Reference);
+    check(type.Class);
     field = type.Class->FindField(FieldName);
     if (!field) return TryUFCS(ec, opcopy.get(), "class", type.Class);
   }
