@@ -96,14 +96,17 @@ enum {
 //==========================================================================
 
 #ifndef M_PI
-#define M_PI  (3.14159265358979323846)
+//#define M_PI  (3.14159265358979323846)
+#define M_PI  (0x1.921fb54442d18p+1)
 #endif
 
-#define _DEG2RAD  (0.017453292519943296)
-#define _RAD2DEG  (57.2957795130823209)
+//#define _DEG2RAD  (0.017453292519943296)
+#define _DEG2RAD  (0x1.1df46a2529d39p-6)
+//#define _RAD2DEG  (57.2957795130823209)
+#define _RAD2DEG  (0x1.ca5dc1a63c1f8p+5)
 
-#define DEG2RAD(a)    ((a) * _DEG2RAD)
-#define RAD2DEG(a)    ((a) * _RAD2DEG)
+#define DEG2RAD(a)  ((a)*_DEG2RAD)
+#define RAD2DEG(a)  ((a)*_RAD2DEG)
 
 
 //int mlog2 (int val);
@@ -164,7 +167,7 @@ static __attribute__((unused)) inline float matan (float y, float x) { return RA
 
 
 static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)angle*360.0/256.0; }
-static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return (vuint8)(angle*256.0/360.0); }
+static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return (vuint8)(AngleMod(angle)*256.0/360.0); }
 
 
 // this is actually branch-less for ints on x86, and even for longs on x86_64
