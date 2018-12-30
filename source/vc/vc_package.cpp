@@ -26,6 +26,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#if defined(IN_VCC)
 struct dprograms_t {
   char magic[4]; // "VPRG"
   int version;
@@ -112,7 +113,7 @@ VProgsExport::VProgsExport (VMemberBase *InObj)
   , Obj(InObj)
 {
 }
-
+#endif
 
 
 #if defined(IN_VCC)
