@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 #include <signal.h>
 #include <time.h>
 
@@ -94,10 +93,8 @@ static VStr ObjectFileName;
 
 static VPackage *CurrentPackage;
 
-static int num_dump_asm;
-static char *dump_asm_names[1024];
-static bool DebugMode;
-static FILE *DebugFile;
+static bool DebugMode = false;
+static FILE *DebugFile = nullptr;
 
 static VLexer Lex;
 static VVccLog VccLog;
@@ -169,52 +166,6 @@ static void OpenDebugFile (const VStr& name) {
 
 //==========================================================================
 //
-//  PC_DumpAsm
-//
-//==========================================================================
-static void PC_DumpAsm (const char* name) {
-  char buf[1024];
-  char *cname;
-  char *fname;
-
-  snprintf(buf, sizeof(buf), "%s", name);
-
-  //FIXME! PATH WITH DOTS!
-  if (strstr(buf, ".")) {
-    cname = buf;
-    fname = strstr(buf, ".")+1;
-    fname[-1] = 0;
-  } else {
-    dprintf("Dump ASM: Bad name %s\n", name);
-    return;
-  }
-
-  for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
-    if (VMemberBase::GMembers[i]->MemberType == MEMBER_Method &&
-        !VStr::Cmp(cname, *VMemberBase::GMembers[i]->Outer->Name) &&
-        !VStr::Cmp(fname, *VMemberBase::GMembers[i]->Name))
-    {
-      ((VMethod*)VMemberBase::GMembers[i])->DumpAsm();
-      return;
-    }
-  }
-
-  dprintf("Dump ASM: %s not found!\n", name);
-}
-
-
-//==========================================================================
-//
-//  DumpAsm
-//
-//==========================================================================
-static void DumpAsm () {
-  for (int i = 0; i < num_dump_asm; ++i) PC_DumpAsm(dump_asm_names[i]);
-}
-
-
-//==========================================================================
-//
 //  PC_Init
 //
 //==========================================================================
@@ -231,7 +182,6 @@ static void PC_Init () {
 static void Init () {
   DebugMode = false;
   DebugFile = nullptr;
-  num_dump_asm = 0;
   VName::StaticInit();
   VMemberBase::StaticInit();
   PC_Init();
@@ -246,12 +196,12 @@ static void Init () {
 static void DisplayUsage () {
   printf("\n");
   printf("VCC Version 1.%d. Copyright (c) 2000-2001 by JL, 2018 by Ketmar Dark. (" __DATE__ " " __TIME__ ")\n", PROG_VERSION);
-  printf("Usage: vcc [options] source[.c] [object[.dat]]\n");
-  printf("    -d<file>     Output debugging information into specified file\n");
-  printf("    -a<function> Output function's ASM statements into debug file\n");
-  printf("    -D<name>           Define macro\n");
-  printf("    -I<directory>      Include files directory\n");
-  printf("    -P<directory>      Package import files directory\n");
+  printf("Usage: vcc [options] source[.c] object[.dat]\n");
+  //printf("    -d<file>     Output debugging information into specified file\n");
+  //printf("    -a<function> Output function's ASM statements into debug file\n");
+  printf("    -D<name>        Define macro\n");
+  printf("    -I<directory>   Include files directory\n");
+  printf("    -P<directory>   Package import files directory\n");
   exit(1);
 }
 
@@ -274,10 +224,6 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
         case 'd':
           DebugMode = true;
           if (*text) OpenDebugFile(text);
-          break;
-        case 'a':
-          if (!*text) DisplayUsage();
-          dump_asm_names[num_dump_asm++] = text;
           break;
         case 'I':
           Lex.AddIncludePath(text);
@@ -304,19 +250,10 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   if (count == 0) DisplayUsage();
 
-  if (count == 1) ObjectFileName = SourceFileName.StripExtension()+".dat";
-
-  if (!DebugFile) {
-    VStr DbgFileName;
-    DbgFileName = ObjectFileName.StripExtension()+".txt";
-    OpenDebugFile(DbgFileName);
-    DebugMode = true;
-  }
+  if (count == 1) DisplayUsage();
 
   SourceFileName = SourceFileName.FixFileSlashes();
-  ObjectFileName = ObjectFileName.FixFileSlashes();
   dprintf("Main source file: %s\n", *SourceFileName);
-  dprintf("  Resulting file: %s\n", *ObjectFileName);
 }
 
 
@@ -341,7 +278,7 @@ int main (int argc, char **argv) {
     int compiletime = time(0);
     dprintf("Compiled in %02d:%02d\n", (compiletime-parsetime)/60, (compiletime-parsetime)%60);
     CurrentPackage->WriteObject(*ObjectFileName);
-    DumpAsm();
+    //DumpAsm();
     //VName::StaticExit(); //k8: no reason to do this
     endtime = time(0);
     dprintf("Wrote in %02d:%02d\n", (endtime-compiletime)/60, (endtime-compiletime)%60);
