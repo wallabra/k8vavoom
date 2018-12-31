@@ -83,48 +83,38 @@
 //** selects which choice it picks.
 //**
 //**************************************************************************
+class SoundSequence : Actor __mobjinfo__(14066);
 
-class SoundSequence : Actor
-  __mobjinfo__(14066);
 
 //==========================================================================
 //
 //  Destroyed
 //
 //==========================================================================
-
-override void Destroyed()
-{
+override void Destroyed () {
   StopSoundSequence();
   ::Destroyed();
 }
+
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
 
   name SName = GetSeqTrans(Args[0], SEQ_Environment);
   name slot = GetSeqSlot(SName);
-  if (slot)
-  {
-    // This is a slotted sound, so add it to the master for that slot
+  if (slot) {
+    // this is a slotted sound, so add it to the master for that slot
     SoundSequenceSlot master;
 
-    foreach AllThinkers(SoundSequenceSlot, master)
-    {
-      if (master.SeqName == slot)
-      {
-        break;
-      }
+    foreach AllThinkers(SoundSequenceSlot, master) {
+      if (master.SeqName == slot) break;
     }
-    if (!master)
-    {
+    if (!master) {
       master = Spawn(SoundSequenceSlot, vector(0.0, 0.0, 0.0), default, default, false);
       master.SeqName = slot;
       master.StartSoundSequence(slot, 0);
@@ -134,32 +124,30 @@ override void BeginPlay()
   }
 }
 
+
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
+override bool Activate (EntityEx Activator) {
   StartSoundSequence(GetSeqTrans(Args[0], SEQ_Environment), Args[1]);
   return true;
 }
+
 
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
+override bool Deactivate (EntityEx Activator) {
   StopSoundSequence();
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
 }

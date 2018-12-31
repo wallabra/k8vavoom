@@ -22,9 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class SpecialSpot : Actor;
 
-defaultproperties
-{
+
+defaultproperties {
 }

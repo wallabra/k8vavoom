@@ -26,8 +26,7 @@
 //**  Only Activate changes state.
 //**
 //**************************************************************************
-class SwitchingDecoration : SwitchableDecoration
-  abstract;
+class SwitchingDecoration : SwitchableDecoration abstract;
 
 
 //==========================================================================

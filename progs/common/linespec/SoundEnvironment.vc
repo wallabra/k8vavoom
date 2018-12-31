@@ -22,51 +22,43 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class SoundEnvironment : Actor __mobjinfo__(9048);
 
-class SoundEnvironment : Actor
-  __mobjinfo__(9048);
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
-  if (!bDormant)
-  {
-    Activate(self);
-  }
+  if (!bDormant) Activate(self);
 }
+
 
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
-  XLevel.Zones[Sector->Zone] = (Args[0] << 8) | Args[1];
+override bool Activate (EntityEx Activator) {
+  XLevel.Zones[Sector->Zone] = (Args[0]<<8)|Args[1];
   return true;
 }
+
 
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
+override bool Deactivate (EntityEx Activator) {
   bDormant = true;
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoSector = true;
   bNoGravity = true;

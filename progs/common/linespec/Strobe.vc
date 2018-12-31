@@ -26,66 +26,53 @@
 //**  STROBE LIGHT FLASHING
 //**
 //**************************************************************************
-
 class Strobe : Lighting;
 
-float   Time;
-int     MaxLight;
-int     MinLight;
-float   MaxTime;
-float   MinTime;
+float Time;
+int MaxLight;
+int MinLight;
+float MaxTime;
+float MinTime;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-void Init(sector_t *InSector, int FastOrSlow, int InMaxTime, int InSync)
-{
+void Init (sector_t *InSector, int FastOrSlow, int InMaxTime, int InSync) {
   Sector = InSector;
   Sector->LightingData = self;
 
-  MinTime = itof(FastOrSlow) / 35.0;
-  MaxTime = itof(InMaxTime) / 35.0;
+  MinTime = itof(FastOrSlow)/35.0;
+  MaxTime = itof(InMaxTime)/35.0;
   MaxLight = Sector->params.lightlevel;
   MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
 
-  if (MinLight == MaxLight)
-    MinLight = 0;
+  if (MinLight == MaxLight) MinLight = 0;
 
-  if (!InSync)
-    Time = (Random() * 8.0 + 1.0) / 35.0;
-  else
-    Time = 1.0 / 35.0;
+  if (!InSync) Time = (Random()*8.0+1.0)/35.0; else Time = 1.0/35.0;
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   Time -= DeltaTime;
-  if (Time > 0.0)
-  {
-    return;
-  }
+  if (Time > 0.0) return;
 
-  if (Sector->params.lightlevel == MinLight)
-  {
+  if (Sector->params.lightlevel == MinLight) {
     Sector->params.lightlevel = MaxLight;
     Time = MaxTime;
-  }
-  else
-  {
+  } else {
     Sector->params.lightlevel = MinLight;
     Time = MinTime;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

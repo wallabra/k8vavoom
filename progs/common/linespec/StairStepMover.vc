@@ -22,89 +22,81 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class StairStepMover : SectorMover;
 
-enum
-{
+enum {
   STAIRSEV_DownNormal,
   STAIRSEV_UpNormal,
   STAIRSEV_DownSync,
-  STAIRSEV_UpSync
+  STAIRSEV_UpSync,
 };
 
-float     Speed;
-int       Direction;
-int       Crush;
-float     FloorDestDist;
-float     DelayTime;
-float     DelayTotal;
-float     StairsDelayDist;
-float     StairsDelayDistDelta;
-float     ResetDist;
-float     ResetDelay;
-float     ResetDelayTime;
+float Speed;
+int Direction;
+int Crush;
+float FloorDestDist;
+float DelayTime;
+float DelayTotal;
+float StairsDelayDist;
+float StairsDelayDistDelta;
+float ResetDist;
+float ResetDelay;
+float ResetDelayTime;
 
-//  Variables that were stored in stair queue array.
-int       QueueType;
-float     QueueHeight;
-StairStepMover  QueueNext;
+// variables that were stored in stair queue array
+int QueueType;
+float QueueHeight;
+StairStepMover QueueNext;
 
-//  These were global variables, used only during initialisation.
-int       StairsType;
-float     StairStepDelta;
-float     StairSpeed;
-int       StairTexture;
-float     StairStartHeight;
+// these were global variables, used only during initialisation
+int StairsType;
+float StairStepDelta;
+float StairSpeed;
+int StairTexture;
+float StairStartHeight;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
+void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int InStairsType) {
+  int Dir = (InStairsType == STAIRSEV_DownNormal || InStairsType == STAIRSEV_DownSync ? -1 : 1);
 
-void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, int InStairsType)
-{
-  int     Dir;
-  float   Height;
-
-  Dir = (InStairsType == STAIRSEV_DownNormal ||
-    InStairsType == STAIRSEV_DownSync) ? -1 : 1;
-
-  Height = GetPlanePointZ(ref InSector->floor, vector(0.0, 0.0, 0.0));
-  switch (InStairsType)
-  {
-  case STAIRSEV_DownNormal:
-  case STAIRSEV_UpNormal:
-    QueueInit(InSector,
-      (InSector->special & SECSPEC_BASE_MASK) == SECSPEC_StairsSpecial1,
-      Height,
-      InStairsType,
-      itof(Dir * Arg3),
-      Dir,
-      itof(Arg2) * 35.0 / 8.0,
-      InSector->floor.pic,
-      Height,
-      itof(Arg4) / 35.0,
-      itof(Arg5) / 35.0);
-    break;
-  case STAIRSEV_DownSync:
-  case STAIRSEV_UpSync:
-    QueueInit(InSector,
-      (InSector->special & SECSPEC_BASE_MASK) == SECSPEC_StairsSpecial1,
-      Height,
-      InStairsType,
-      itof(Dir * Arg3),
-      Dir,
-      itof(Arg2) * 35.0 / 8.0,
-      InSector->floor.pic,
-      Height,
-      0.0,
-      itof(Arg4) / 35.0);
-    break;
+  float Height = GetPlanePointZ(ref InSector->floor, vector(0.0, 0.0, 0.0));
+  switch (InStairsType) {
+    case STAIRSEV_DownNormal:
+    case STAIRSEV_UpNormal:
+      QueueInit(InSector,
+        (InSector->special&SECSPEC_BASE_MASK) == SECSPEC_StairsSpecial1,
+        Height,
+        InStairsType,
+        itof(Dir*Arg3),
+        Dir,
+        itof(Arg2)*35.0/8.0,
+        InSector->floor.pic,
+        Height,
+        itof(Arg4)/35.0,
+        itof(Arg5)/35.0);
+      break;
+    case STAIRSEV_DownSync:
+    case STAIRSEV_UpSync:
+      QueueInit(InSector,
+        (InSector->special&SECSPEC_BASE_MASK) == SECSPEC_StairsSpecial1,
+        Height,
+        InStairsType,
+        itof(Dir*Arg3),
+        Dir,
+        itof(Arg2)*35.0/8.0,
+        InSector->floor.pic,
+        Height,
+        0.0,
+        itof(Arg4)/35.0);
+      break;
   }
 }
+
 
 //==========================================================================
 //
@@ -113,13 +105,12 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 //  New stairStep thinker
 //
 //==========================================================================
-
-void QueueInit(sector_t *InSector, int InType, float InHeight, int InStairsType,
+void QueueInit (sector_t *InSector, int InType, float InHeight, int InStairsType,
   float InStairStepDelta, int InDirection, float InStairSpeed,
   int InStairTexture, float InStairStartHeight,
   float InDelay, float InResetDelay)
 {
-  TVec    Spot;
+  TVec Spot;
 
   Sector = InSector;
   Sector->FloorData = self;
@@ -141,9 +132,8 @@ void QueueInit(sector_t *InSector, int InType, float InHeight, int InStairsType,
   FloorDestDist = DotProduct(Sector->floor.normal, Spot);
 
   DelayTotal = InDelay;
-  if (DelayTotal)
-  {
-    Spot.z = GetPlanePointZ(ref Sector->floor, Spot) + StairStepDelta;
+  if (DelayTotal) {
+    Spot.z = GetPlanePointZ(ref Sector->floor, Spot)+StairStepDelta;
     StairsDelayDist = DotProduct(Sector->floor.normal, Spot);
     StairsDelayDistDelta = StairStepDelta;
   }
@@ -151,110 +141,87 @@ void QueueInit(sector_t *InSector, int InType, float InHeight, int InStairsType,
   ResetDelayTime = ResetDelay;
   ResetDist = Sector->floor.dist;
 
-  switch (StairsType)
-  {
-  case STAIRSEV_DownNormal:
-  case STAIRSEV_UpNormal:
-    Speed = StairSpeed;
-    break;
-  case STAIRSEV_DownSync:
-  case STAIRSEV_UpSync:
-    Speed = StairSpeed * (QueueHeight - StairStartHeight) / StairStepDelta;
-    break;
+  switch (StairsType) {
+    case STAIRSEV_DownNormal:
+    case STAIRSEV_UpNormal:
+      Speed = StairSpeed;
+      break;
+    case STAIRSEV_DownSync:
+    case STAIRSEV_UpSync:
+      Speed = StairSpeed*(QueueHeight-StairStartHeight)/StairStepDelta;
+      break;
   }
   StartFloorSound();
 }
+
 
 //==========================================================================
 //
 //  QueueStairSector
 //
 //==========================================================================
-
-void QueueStairSector(sector_t *sec, float height)
-{
-  StairStepMover  Other;
-
-  Other = Spawn(StairStepMover);
-  Other.QueueInit(sec, QueueType ^ 1, height, StairsType,
+void QueueStairSector (sector_t *sec, float height) {
+  StairStepMover Other = Spawn(StairStepMover);
+  Other.QueueInit(sec, QueueType^1, height, StairsType,
     StairStepDelta, Direction, StairSpeed, StairTexture,
     StairStartHeight, DelayTotal, ResetDelay);
   AppendToQueue(Other);
 }
+
 
 //==========================================================================
 //
 //  AppendToQueue
 //
 //==========================================================================
-
-void AppendToQueue(StairStepMover Other)
-{
-  StairStepMover  Tail;
-
-  Tail = self;
-  while (Tail.QueueNext)
-    Tail = Tail.QueueNext;
+void AppendToQueue (StairStepMover Other) {
+  StairStepMover Tail = self;
+  while (Tail.QueueNext) Tail = Tail.QueueNext;
   Tail.QueueNext = Other;
 }
+
 
 //==========================================================================
 //
 //  ProcessStairSector
 //
 //==========================================================================
-
-void ProcessStairSector()
-{
-  int     i;
+void ProcessStairSector () {
   sector_t *tsec;
   line_t *line;
 
-  //
-  // Find next sector to raise
-  // Find nearby sector with sector special equal to type
-  //
-  for (i = 0; i < Sector.lines.length; i++)
-  {
+  // find next sector to raise
+  // find nearby sector with sector special equal to type
+  foreach (auto i; 0..Sector.lines.length) {
     line = Sector->lines[i];
-    if (!(line->flags & ML_TWOSIDED))
-    {
-      continue;
-    }
+    if (!(line->flags&ML_TWOSIDED)) continue;
     tsec = line->frontsector;
-    if ((tsec->special & SECSPEC_BASE_MASK) ==
-      QueueType + SECSPEC_StairsSpecial1 &&
-      !tsec->FloorData && tsec->floor.pic == StairTexture)
+    if ((tsec->special&SECSPEC_BASE_MASK) == QueueType+SECSPEC_StairsSpecial1 &&
+        !tsec->FloorData && tsec->floor.pic == StairTexture)
     {
       QueueStairSector(tsec, QueueHeight);
     }
     tsec = line->backsector;
-    if ((tsec->special & SECSPEC_BASE_MASK) ==
-      QueueType + SECSPEC_StairsSpecial1 &&
-      !tsec->FloorData && tsec->floor.pic == StairTexture)
+    if ((tsec->special&SECSPEC_BASE_MASK) == QueueType+SECSPEC_StairsSpecial1 &&
+        !tsec->FloorData && tsec->floor.pic == StairTexture)
     {
       QueueStairSector(tsec, QueueHeight);
     }
   }
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
-//  MOVE A FLOOR TO IT'S DESTINATION (UP OR DOWN)
+//  move a floor to it's destination (up or down)
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
-  int res;
-
-  if (ResetDelayTime)
-  {
+override void Tick (float deltaTime) {
+  if (ResetDelayTime) {
     ResetDelayTime -= deltaTime;
-    if (ResetDelayTime <= 0.0)
-    {
+    if (ResetDelayTime <= 0.0) {
       ResetDelayTime = 0.0;
       FloorDestDist = ResetDist;
       Direction = -Direction;
@@ -263,63 +230,47 @@ override void Tick(float deltaTime)
       DelayTotal = 0.0;
     }
   }
-  if (DelayTime)
-  {
+
+  if (DelayTime) {
     DelayTime -= deltaTime;
-    if (DelayTime <= 0.0)
-    {
-      DelayTime = 0.0;
-    }
+    if (DelayTime <= 0.0) DelayTime = 0.0;
     return;
   }
 
-  res = MovePlane(Sector, Speed * deltaTime, FloorDestDist, Crush, 0,
-    Direction, true);
+  int res = MovePlane(Sector, Speed*deltaTime, FloorDestDist, Crush, 0, Direction, true);
 
   if ((Direction == 1 && Sector->floor.dist >= StairsDelayDist) ||
-    (Direction == -1 && Sector->floor.dist <= StairsDelayDist))
+      (Direction == -1 && Sector->floor.dist <= StairsDelayDist))
   {
     DelayTime = DelayTotal;
     StairsDelayDist += StairsDelayDistDelta;
   }
-  if (res == RES_PASTDEST)
-  {
+  if (res == RES_PASTDEST) {
     SectorStopSequence(Sector);
-    if (DelayTotal)
-    {
-      DelayTotal = 0.0;
-    }
-    if (ResetDelay)
-    {
-//          ResetDelayTime = ResetDelay;
-//          ResetDelay = 0.0;
+    if (DelayTotal) DelayTotal = 0.0;
+    if (ResetDelay) {
+      //ResetDelayTime = ResetDelay;
+      //ResetDelay = 0.0;
       return;
     }
     Finished();
   }
 }
 
+
 //==========================================================================
 //
 //  StartFloorSound
 //
 //==========================================================================
-
-void StartFloorSound()
-{
-  if (!LineSpecialLevelInfo(Level).DefaultStairStepSound ||
-    Sector->seqType >= 0)
-  {
-    SectorStartSequence(Sector, GetSeqTrans(Sector->seqType,
-      SEQ_Platform), 0);
-  }
-  else
-  {
-    SectorStartSequence(Sector,
-      LineSpecialLevelInfo(Level).DefaultStairStepSound, 0);
+void StartFloorSound () {
+  if (!LineSpecialLevelInfo(Level).DefaultStairStepSound || Sector->seqType >= 0) {
+    SectorStartSequence(Sector, GetSeqTrans(Sector->seqType, SEQ_Platform), 0);
+  } else {
+    SectorStartSequence(Sector, LineSpecialLevelInfo(Level).DefaultStairStepSound, 0);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

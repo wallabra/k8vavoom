@@ -26,11 +26,9 @@
 //**  A decoration that can be activated and deactivated.
 //**
 //**************************************************************************
+class SwitchableDecoration : Actor abstract;
 
-class SwitchableDecoration : Actor
-  abstract;
-
-// Activation flags
+// activation flags
 enum /*EActivationFlags*/ {
   /*
   THINGSPEC_Default = 0,

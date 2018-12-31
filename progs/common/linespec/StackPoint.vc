@@ -22,20 +22,18 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class StackPoint : SkyViewpoint;
+
 
 //==========================================================================
 //
 //  InitSkyBox
 //
 //==========================================================================
-
-override void InitSkyBox()
-{
+override void InitSkyBox () {
   bAlways = true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

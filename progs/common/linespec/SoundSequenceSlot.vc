@@ -22,13 +22,12 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class SoundSequenceSlot : Actor;
 
-name      SeqName;
+name SeqName;
 
-defaultproperties
-{
+
+defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
 }

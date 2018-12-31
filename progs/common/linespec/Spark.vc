@@ -26,51 +26,37 @@
 //**  Actor that makes a particle spark when activated
 //**
 //**************************************************************************
+class Spark : Actor __mobjinfo__(9026);
 
-class Spark : Actor
-  __mobjinfo__(9026);
 
 //==========================================================================
 //
 //  AngleIncrements
 //
 //==========================================================================
-
-override int AngleIncrements()
-{
+override int AngleIncrements () {
   return 1;
 }
+
 
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
-  int     i;
-
+override bool Activate (EntityEx Activator) {
   ::Activate(Activator);
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (!Level.Game.Players[i])
-    {
-      continue;
-    }
-    if (!Level.Game.Players[i].bSpawned)
-    {
-      continue;
-    }
-    PlayerEx(Level.Game.Players[i]).ClientSparkParticles(
-      Args[0] ? Args[0] : 32, Origin, Angles.yaw);
+  foreach (auto i; 0..MAXPLAYERS) {
+    auto plr = Level.Game.Players[i];
+    if (!plr || !plr.bSpawned) continue;
+    PlayerEx(plr).ClientSparkParticles((Args[0] ? Args[0] : 32), Origin, Angles.yaw);
   }
   PlaySound('world/spark', CHAN_AUTO);
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
   bNoGravity = true;
