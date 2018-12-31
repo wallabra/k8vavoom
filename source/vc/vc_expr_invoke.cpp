@@ -1996,6 +1996,7 @@ bool VInvocation::CheckSimpleConstArgs (int argc, const int *types) const {
 VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
   if (!Func || Func->builtinOpc < 0) return this; // sanity check
   TVec v0(0, 0, 0), v1(0, 0, 0);
+  float fv;
   VExpression *e = nullptr;
   switch (Func->builtinOpc) {
     case OPC_Builtin_IntAbs:
@@ -2099,23 +2100,29 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
     case OPC_Builtin_VecLength:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
-      e = new VFloatLiteral(v0.length(), Loc);
+      fv = v0.length();
+      if (!isFiniteF(fv)) fv = 0;
+      e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecLength2D:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
-      e = new VFloatLiteral(v0.length2D(), Loc);
+      fv = v0.length2D();
+      if (!isFiniteF(fv)) fv = 0;
+      e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecNormalize:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v0 = normalise(v0);
+      if (!v0.isValid()) v0 = TVec(0, 0, 0);
       e = new VVector(v0, Loc);
       break;
     case OPC_Builtin_VecNormalize2D:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v0 = normalise2D(v0);
+      if (!v0.isValid()) v0 = TVec(0, 0, 0);
       e = new VVector(v0, Loc);
       break;
     case OPC_Builtin_VecDot:
@@ -2123,26 +2130,33 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v1 = ((VVector *)Args[1])->GetConstValue();
-      e = new VFloatLiteral(dot(v0, v1), Loc);
+      fv = dot(v0, v1);
+      if (!isFiniteF(fv)) ParseError(Loc, "dotproduct is INF/NAN");
+      e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecDot2D:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v1 = ((VVector *)Args[1])->GetConstValue();
-      e = new VFloatLiteral(dot2D(v0, v1), Loc);
+      fv = dot2D(v0, v1);
+      if (!isFiniteF(fv)) ParseError(Loc, "dotproduct2d is INF/NAN");
+      e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecCross:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v1 = ((VVector *)Args[1])->GetConstValue();
       v0 = cross(v0, v1);
+      if (!v0.isValid()) ParseError(Loc, "crossproduct is INF/NAN");
       e = new VVector(v0, Loc);
       break;
     case OPC_Builtin_VecCross2D:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
       v0 = ((VVector *)Args[0])->GetConstValue();
       v1 = ((VVector *)Args[1])->GetConstValue();
-      e = new VFloatLiteral(cross2D(v0, v1), Loc);
+      fv = cross2D(v0, v1);
+      if (!isFiniteF(fv)) ParseError(Loc, "crossproduct2d is INF/NAN");
+      e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_RoundF2I:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Float})) return this;
@@ -2188,6 +2202,24 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
     case OPC_Builtin_NameToInt:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Name})) return this;
       e = new VIntLiteral(Args[0]->GetNameConst().GetIndex(), Loc);
+      break;
+    case OPC_Builtin_VectorClamp: // (val, min, max)
+      if (!CheckSimpleConstArgs(3, (const int []){TYPE_Vector, TYPE_Float, TYPE_Float})) return this;
+      v0 = ((VVector *)Args[0])->GetConstValue();
+      {
+        float vmin = Args[1]->GetFloatConst();
+        float vmax = Args[2]->GetFloatConst();
+        if (!isFiniteF(vmin)) vmin = 0;
+        if (!isFiniteF(vmax)) vmax = 0;
+        if (!v0.isValid()) {
+          v0.x = v0.y = v0.z = vmin;
+        } else {
+          v0.x = MID(vmin, v0.x, vmax);
+          v0.y = MID(vmin, v0.y, vmax);
+          v0.z = MID(vmin, v0.z, vmax);
+        }
+        e = new VVector(v0, Loc);
+      }
       break;
     default: break;
   }

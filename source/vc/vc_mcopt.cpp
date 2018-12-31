@@ -896,6 +896,7 @@ struct Instr {
             return;
           case OPC_Builtin_IntClamp:
           case OPC_Builtin_FloatClamp:
+          case OPC_Builtin_VectorClamp:
             spdelta = -2;
             return;
           case OPC_Builtin_FloatIsNaN:

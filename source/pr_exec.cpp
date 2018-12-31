@@ -2767,6 +2767,26 @@ func_loop:
           case OPC_Builtin_FloatSmoothStep: sp[-3].f = smoothstep(sp[-3].f, sp[-2].f, sp[-1].f); sp -= 2; break;
           case OPC_Builtin_FloatSmoothStepPerlin: sp[-3].f = smoothstepPerlin(sp[-3].f, sp[-2].f, sp[-1].f); sp -= 2; break;
           case OPC_Builtin_NameToInt: break; // no, really, it is THAT easy
+          case OPC_Builtin_VectorClamp:
+            {
+              TVec v(sp[-5].f, sp[-4].f, sp[-3].f);
+              float vmin = sp[-2].f;
+              float vmax = sp[-1].f;
+              if (!isFiniteF(vmin)) vmin = 0;
+              if (!isFiniteF(vmax)) vmax = 0;
+              if (!v.isValid()) {
+                v.x = v.y = v.z = vmin;
+              } else {
+                v.x = MID(vmin, v.x, vmax);
+                v.y = MID(vmin, v.y, vmax);
+                v.z = MID(vmin, v.z, vmax);
+              }
+              sp -= 2;
+              sp[-1].f = v.z;
+              sp[-2].f = v.y;
+              sp[-3].f = v.x;
+              break;
+            }
           default: cstDump(ip); Sys_Error("Unknown builtin");
         }
         ip += 2;
