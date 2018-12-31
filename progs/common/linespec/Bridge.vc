@@ -22,26 +22,21 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class Bridge : Actor game(GAME_Raven) __mobjinfo__(118) __scriptid__(21);
 
-class Bridge : Actor
-  game(GAME_Raven)
-  __mobjinfo__(118)
-  __scriptid__(21);
 
 //==========================================================================
 //
 //  A_BridgeInit
 //
 //==========================================================================
-
-final void A_BridgeInit()
-{
+final void A_BridgeInit () {
   float StartAngle;
   BridgeBall ball1;
   BridgeBall ball2;
   BridgeBall ball3;
 
-  StartAngle = Random() * 360.0;
+  StartAngle = Random()*360.0;
   Special1 = 0;
 
   // Spawn triad into world
@@ -50,11 +45,11 @@ final void A_BridgeInit()
   ball1.Target = self;
 
   ball2 = BridgeBall(Spawn(BridgeBall, Origin));
-  ball2.OrbitAngle = AngleMod360(StartAngle + 120.0);
+  ball2.OrbitAngle = AngleMod360(StartAngle+120.0);
   ball2.Target = self;
 
   ball3 = BridgeBall(Spawn(BridgeBall, Origin));
-  ball3.OrbitAngle = AngleMod360(StartAngle + 240.0);
+  ball3.OrbitAngle = AngleMod360(StartAngle+240.0);
   ball3.Target = self;
 
   ball1.A_BridgeOrbit();
@@ -62,8 +57,20 @@ final void A_BridgeInit()
   ball3.A_BridgeOrbit();
 }
 
-states
-{
+
+//==========================================================================
+//
+//  RemoveThing
+//
+//==========================================================================
+override void RemoveThing () {
+  Special1 = true; // removing the bridge
+  bSolid = false;
+  SetState(GetStatePlus(IdleState, 3, true));
+}
+
+
+states {
 Spawn:
   TLGL A 2
   TLGL A 2 A_BridgeInit
@@ -74,21 +81,8 @@ Spawn:
   Stop
 }
 
-//==========================================================================
-//
-//  RemoveThing
-//
-//==========================================================================
 
-override void RemoveThing()
-{
-  Special1 = true;  // Removing the bridge
-  bSolid = false;
-  SetState(GetStatePlus(IdleState, 3, true));
-}
-
-defaultproperties
-{
+defaultproperties {
   Radius = 32.0;
   Height = 2.0;
   RenderStyle = STYLE_Translucent;

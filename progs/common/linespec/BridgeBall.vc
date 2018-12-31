@@ -34,40 +34,35 @@
 //      Instigator  pointer to centre mobj
 //
 //**************************************************************************
-
 class BridgeBall : Actor;
 
-float OrbitAngle;   // Angle of ball
+float OrbitAngle; // Angle of ball
+
 
 //==========================================================================
 //
 //  A_BridgeOrbit
 //
 //==========================================================================
-
-final void A_BridgeOrbit()
-{
-  if (Actor(Target).Special1)
-  {
-    SetState(none);
-  }
-  //  3.0 * 360.0 / 256.0 = 4.21875
-  OrbitAngle = AngleMod360(OrbitAngle + 4.21875);
-  Origin.x = Target.Origin.x + 15.0 * cos(OrbitAngle);
-  Origin.y = Target.Origin.y + 15.0 * sin(OrbitAngle);
+final void A_BridgeOrbit () {
+  if (Actor(Target).Special1) SetState(none);
+  // 3.0 * 360.0 / 256.0 = 4.21875
+  OrbitAngle = AngleMod360(OrbitAngle+4.21875);
+  Origin.x = Target.Origin.x+15.0*cos(OrbitAngle);
+  Origin.y = Target.Origin.y+15.0*sin(OrbitAngle);
   Origin.z = Target.Origin.z;
 }
 
-states
-{
+
+states {
 Spawn:
   TLGL A 2
   TLGL A 5 A_BridgeOrbit
   Wait
 }
 
-defaultproperties
-{
+
+defaultproperties {
   RenderStyle = STYLE_Add;
   bNoBlockmap = true;
   bNoGravity = true;

@@ -60,80 +60,60 @@
 //**  args[3] = tid of thing to move
 //**
 //**************************************************************************
-
-class ActorMover : PathFollower
-  __mobjinfo__(9074);
+class ActorMover : PathFollower __mobjinfo__(9074);
 
 bool bSavedNoGravity;
 bool bSavedNoBlockmap;
 bool bSavedSolid;
 bool bSavedDormant;
 
+
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
-  EntityEx A;
-
+override void BeginPlay () {
   ::BeginPlay();
 
-  foreach AllThinkers(EntityEx, A)
-  {
-    if (A.TID == Args[3])
-    {
+  EntityEx A;
+  foreach AllThinkers(EntityEx, A) {
+    if (A.TID == Args[3]) {
       Tracer = A;
       break;
     }
   }
 
-  if (Tracer == none)
-  {
-    print("ActorMover %d: Can't find target %d", TID, Args[3]);
-  }
+  if (Tracer == none) print("ActorMover %d: Can't find target %d", TID, Args[3]);
 }
+
 
 //==========================================================================
 //
 //  Interpolate
 //
 //==========================================================================
+override bool Interpolate () {
+  if (Tracer == none) return true;
 
-override bool Interpolate()
-{
-  if (Tracer == none)
-    return true;
-
-  if (::Interpolate())
-  {
-    if (!Tracer.TryMove(Origin, true))
-    {
-      return false;
-    }
-
-    if (Args[2] & 2)
-      Tracer.Angles.yaw = Angles.yaw;
-    if (Args[2] & 4)
-      Tracer.Angles.pitch = Angles.pitch;
-
+  if (::Interpolate()) {
+    if (!Tracer.TryMove(Origin, true)) return false;
+    if (Args[2]&2) Tracer.Angles.yaw = Angles.yaw;
+    if (Args[2]&4) Tracer.Angles.pitch = Angles.pitch;
     return true;
   }
+
   return false;
 }
+
 
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
-  if (Tracer == none || bActive)
-    return false;
+override bool Activate (EntityEx Activator) {
+  if (Tracer == none || bActive) return false;
 
   ::Activate(Activator);
   bSavedNoGravity = Tracer.bNoGravity;
@@ -141,31 +121,25 @@ override bool Activate(EntityEx Activator)
   bSavedSolid = Tracer.bSolid;
   bSavedDormant = Tracer.bDormant;
   Tracer.bNoGravity = true;
-  if (Args[2] & 128)
-  {
+  if (Args[2]&128) {
     Tracer.UnlinkFromWorld();
     Tracer.bNoBlockmap = true;
     Tracer.bSolid = false;
     Tracer.LinkToWorld();
   }
-  if (Tracer.bMonster)
-  {
-    Tracer.bDormant = true;
-  }
+  if (Tracer.bMonster) Tracer.bDormant = true;
   return true;
 }
+
 
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
+override bool Deactivate (EntityEx Activator) {
   ::Deactivate(Activator);
-  if (Tracer != none)
-  {
+  if (Tracer != none) {
     Tracer.bSolid = bSavedSolid;
     Tracer.bNoGravity = bSavedNoGravity;
     Tracer.UnlinkFromWorld();
@@ -176,6 +150,6 @@ override bool Deactivate(EntityEx Activator)
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

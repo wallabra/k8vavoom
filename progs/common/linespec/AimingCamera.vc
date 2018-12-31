@@ -61,87 +61,60 @@
 //**  args[3] = tid of thing to look at
 //**
 //**************************************************************************
-
-class AimingCamera : SecurityCamera
-  __mobjinfo__(9073);
+class AimingCamera : SecurityCamera __mobjinfo__(9073);
 
 float MaxPitchChange;
+
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
-  EntityEx A;
-
+override void BeginPlay () {
   MaxPitchChange = itof(Args[2]);
 
   Args[2] = 0;
   ::BeginPlay();
 
-  foreach AllThinkers(EntityEx, A)
-  {
-    if (A.TID == Args[3])
-    {
+  EntityEx A;
+  foreach AllThinkers(EntityEx, A) {
+    if (A.TID == Args[3]) {
       Target = A;
       break;
     }
   }
-  if (Target == none)
-  {
-    print("AimingCamera %d: Can't find thing %d", TID, Args[3]);
-  }
+  if (Target == none) print("AimingCamera %d: Can't find thing %d", TID, Args[3]);
 }
+
 
 //==========================================================================
 //
 //  TickCamera
 //
 //==========================================================================
-
-override void TickCamera(float DeltaTime)
-{
-  if (Target)
-  {
+override void TickCamera (float DeltaTime) {
+  if (Target) {
     float delta;
     int dir = FaceActor(Target, delta);
-    if (delta > Range * DeltaTime)
-    {
-      delta = Range * DeltaTime;
-    }
-    if (dir)
-    {
+    if (delta > Range*DeltaTime) delta = Range*DeltaTime;
+    if (dir) {
       Angles.yaw += delta;
-    }
-    else
-    {
+    } else {
       Angles.yaw -= delta;
     }
-    if (MaxPitchChange)
-    {
-      // Aim camera's pitch
-      TVec dv = Target.GetCentre() - Origin;
+    if (MaxPitchChange) {
+      // aim camera's pitch
+      TVec dv = Target.GetCentre()-Origin;
       TAVec d;
       VectorAngles(dv, out d);
-      if (fabs(d.pitch - Angles.pitch) < MaxPitchChange * DeltaTime)
-      {
-        Angles.pitch = d.pitch;
-      }
-      else if (d.pitch < Angles.pitch)
-      {
-        Angles.pitch -= MaxPitchChange * DeltaTime;
-      }
-      else
-      {
-        Angles.pitch += MaxPitchChange * DeltaTime;
-      }
+           if (fabs(d.pitch-Angles.pitch) < MaxPitchChange*DeltaTime) Angles.pitch = d.pitch;
+      else if (d.pitch < Angles.pitch) Angles.pitch -= MaxPitchChange*DeltaTime;
+      else Angles.pitch += MaxPitchChange*DeltaTime;
     }
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

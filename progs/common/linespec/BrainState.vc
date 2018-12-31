@@ -22,33 +22,28 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class BrainState : Thinker;
 
-array!EntityEx   Targets;
-int         TargetOn;
-bool        bEasy;
+array!EntityEx Targets;
+int TargetOn;
+bool bEasy;
+
 
 //==========================================================================
 //
 //  FindTargets
 //
 //==========================================================================
-
-void FindTargets()
-{
+void FindTargets () {
   Actor m;
-
   // find all the target spots
   Targets.Num = 0;
-  foreach AllThinkers(BossTarget, m)
-  {
-    Targets.Num = Targets.Num + 1;
-    Targets[Targets.Num - 1] = m;
+  foreach AllThinkers(BossTarget, m) {
+    Targets[$] = m;
   }
   TargetOn = 0;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
