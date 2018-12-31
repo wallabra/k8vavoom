@@ -22,26 +22,20 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class SecActHitFloor : SectorAction __mobjinfo__(9999);
 
-class SecActHitFloor : SectorAction
-  __mobjinfo__(9999);
 
 //==========================================================================
 //
 //  TriggerAction
 //
 //==========================================================================
-
-override bool TriggerAction(EntityEx Triggerer, int ActType)
-{
-  bool Ret = (ActType & SECSPAC_HitFloor) && CheckTrigger(Triggerer);
-  if (::TriggerAction(Triggerer, ActType))
-  {
-    Ret = true;
-  }
+override bool TriggerAction (EntityEx Triggerer, int ActType) {
+  bool Ret = (ActType&SECSPAC_HitFloor) && CheckTrigger(Triggerer);
+  if (::TriggerAction(Triggerer, ActType)) Ret = true;
   return Ret;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

@@ -22,14 +22,12 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class SectorPointLight : DynamicLight __mobjinfo__(9803);
 
-class SectorPointLight : DynamicLight
-  __mobjinfo__(9803);
-
-defaultproperties
-{
+defaultproperties {
   LightType = DLTYPE_Sector;
 }
+
 
 class SectorPointLightSubtractive : DynamicLight   __mobjinfo__(9823);
 

@@ -45,7 +45,7 @@ void Finished () {
 
 //**************************************************************************
 //
-//  MOVE FLOOR/CEILING
+//  move floor/ceiling
 //
 //**************************************************************************
 //TODO: do movement blocking
@@ -84,12 +84,12 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
 
   switch (floorOrCeiling) {
     case 0:
-      // FLOOR
+      // floor
       lastpos = sector->floor.dist;
       LastTexZ = sector->floor.TexZ;
       switch (direction) {
         case -1:
-          // DOWN
+          // down
           sector->floor.dist -= amount*sector->floor.normal.z;
           sector->floor.TexZ -= amount;
           if (sector->floor.dist <= dest) {
@@ -116,7 +116,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
           break;
 
         case 1:
-          // UP
+          // up
           // jff 02/04/98 keep floor from moving thru ceilings
           // [RH] not so easy with arbitrary planes
           if (!sector->bExtrafloorSource &&
@@ -158,12 +158,12 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
       break;
 
     case 1:
-      // CEILING
+      // ceiling
       lastpos = sector->ceiling.dist;
       LastTexZ = sector->ceiling.TexZ;
       switch (direction) {
         case -1:
-          // DOWN
+          // down
           // jff 02/04/98 keep ceiling from moving thru floors
           // [RH] not so easy with arbitrary planes
           if (!sector->bExtrafloorSource &&
@@ -200,7 +200,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
           break;
 
         case 1:
-          // UP
+          // up
           sector->ceiling.dist += amount*sector->ceiling.normal.z;
           sector->ceiling.TexZ += amount;
           if (sector->ceiling.dist < dest) {
@@ -223,7 +223,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
   return RES_OK;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Not_Keep = true;
 }

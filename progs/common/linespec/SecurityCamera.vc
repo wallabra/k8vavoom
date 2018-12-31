@@ -61,69 +61,56 @@
 //**  args[2] = octics to complete one cycle
 //**
 //**************************************************************************
-
-class SecurityCamera : Actor
-  __mobjinfo__(9025);
+class SecurityCamera : Actor __mobjinfo__(9025);
 
 float Centre;
 float Acc;
 float Delta;
 float Range;
 
+
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
   Centre = Angles.yaw;
-  if (Args[2])
-    Delta = 360.0 / (itof(Args[2]) / 8.0);
-  else
-    Delta = 0.0;
-  if (Args[1])
-    Delta /= 2.0;
+  if (Args[2]) Delta = 360.0/(itof(Args[2])/8.0); else Delta = 0.0;
+  if (Args[1]) Delta /= 2.0;
   Acc = 0.0;
   Angles.pitch = itof(Args[0]);
-  if (Angles.pitch <= -90.0)
-    Angles.pitch = -89.0;
-  else if (Angles.pitch >= 90.0)
-    Angles.pitch = 89.0;
+       if (Angles.pitch <= -90.0) Angles.pitch = -89.0;
+  else if (Angles.pitch >= 90.0) Angles.pitch = 89.0;
   Range = itof(Args[1]);
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   ::Tick(DeltaTime);
   TickCamera(DeltaTime);
 }
+
 
 //==========================================================================
 //
 //  TickCamera
 //
 //==========================================================================
-
-void TickCamera(float DeltaTime)
-{
-  Acc += Delta * DeltaTime;
-  if (Range)
-    Angles.yaw = Centre + Range * sin(Acc);
-  else if (Delta)
-    Angles.yaw = Acc;
+void TickCamera (float DeltaTime) {
+  Acc += Delta*DeltaTime;
+       if (Range) Angles.yaw = Centre+Range*sin(Acc);
+  else if (Delta) Angles.yaw = Acc;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoGravity = true;
   bNoSplash = true;

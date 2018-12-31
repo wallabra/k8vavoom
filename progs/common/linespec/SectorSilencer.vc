@@ -22,36 +22,32 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class SectorSilencer : Actor __mobjinfo__(9082);
 
-class SectorSilencer : Actor
-  __mobjinfo__(9082);
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
   Sector->bSilent = true;
 }
+
 
 //==========================================================================
 //
 //  Destroyed
 //
 //==========================================================================
-
-override void Destroyed()
-{
+override void Destroyed () {
   Sector->bSilent = false;
   ::Destroyed();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoGravity = true;
   RenderStyle = STYLE_None;
