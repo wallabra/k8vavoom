@@ -22,11 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class FloorMover : SectorMover;
 
-enum
-{
+enum {
   FLOOREV_LowerToHighest,
   FLOOREV_RaiseToHighest,
   FLOOREV_LowerToLowest,
@@ -52,7 +50,7 @@ enum
   FLOOREV_GenericChange0,
   FLOOREV_GenericChangeT,
   FLOOREV_GenericChange,
-  FLOOREV_Donut
+  FLOOREV_Donut,
 };
 
 int   Type;
@@ -71,21 +69,21 @@ float PauseTime;
 float StepTime;
 float PerStepTime;
 
+
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, int InType, line_t *Line)
+void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+           int Arg5, int InType, line_t *Line)
 {
   sector_t *ModelSec;
-  float     DestHeight;
-  float     CeilHeight;
-  TVec      Spot;
-  TVec      Spot2;
-  name      SeqName;
+  float DestHeight;
+  float CeilHeight;
+  TVec Spot;
+  TVec Spot2;
+  name SeqName;
 
   //FIXME: memleak?
   if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
@@ -99,315 +97,242 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
 
   Type = InType;
   Crush = false;
-  Speed = itof(Arg2) * 35.0 / 8.0;
-  if (Type == FLOOREV_LowerTimes8Instant ||
-    Type == FLOOREV_RaiseTimes8Instant)
-  {
-    Speed = 35.0 * 2000.0;
-  }
+  Speed = itof(Arg2)*35.0/8.0;
+  if (Type == FLOOREV_LowerTimes8Instant || Type == FLOOREV_RaiseTimes8Instant) Speed = 35.0*2000.0;
   Spot = *Sector->lines[0]->v1;
   SeqName = LineSpecialLevelInfo(Level).DefaultFloorSound;
-  switch (Type)
-  {
-  case FLOOREV_LowerToHighest:
-    Direction = -1;
-    DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    if (FloorDestDist != Sector->floor.dist)
-    {
-      Spot.z = DestHeight + itof(Arg3) - 128.0;
-      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    }
-    break;
-
-  case FLOOREV_LowerToLowest:
-    Direction = -1;
-    DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_LowerToNearest:
-    Direction = -1;
-    DestHeight = Level.FindNextLowestFloor(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_LowerByValue:
-    Direction = -1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) - itof(Arg3);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_RaiseByValue:
-    Direction = 1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_LowerByValueTimes8:
-  case FLOOREV_LowerTimes8Instant:
-    Direction = -1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) - itof(Arg3) * 8.0;
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_MoveToValue:
-  case FLOOREV_MoveToValueTimes8:
-    Level.FindHighestFloorPoint(Sector, &Spot);
-    DestHeight = itof(Arg3);
-    if (Type == FLOOREV_MoveToValueTimes8)
-    {
-      DestHeight *= 8.0;
-    }
-    if (Arg4)
-    {
-      DestHeight = -DestHeight;
-    }
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    if (FloorDestDist > Sector->floor.dist)
-    {
-      Direction = 1;
-    }
-    else
-    {
+  switch (Type) {
+    case FLOOREV_LowerToHighest:
       Direction = -1;
-    }
-    break;
-
-  case FLOOREV_RaiseAndCrush:
-    Crush = Arg3; // arg[2] = crushing value
-    Direction = 1;
-    DestHeight = Level.FindLowestCeilingSurrounding(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    CeilHeight = Level.FindLowestCeilingPoint(Sector, &Spot2);
-    if ((FloorDestDist - Sector->floor.normal.x * Spot2.x -
-      Sector->floor.normal.y * Spot2.y) / Sector->floor.normal.z >
-      CeilHeight)
-    {
-      Spot2.z = CeilHeight - 8.0;
-      FloorDestDist = DotProduct(Sector->floor.normal, Spot2);
-    }
-    break;
-
-  case FLOOREV_RaiseToLowestCeiling:
-    Direction = 1;
-    DestHeight = Level.FindLowestCeilingSurrounding(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    CeilHeight = Level.FindLowestCeilingPoint(Sector, &Spot2);
-    if ((FloorDestDist - Sector->floor.normal.x * Spot2.x -
-      Sector->floor.normal.y * Spot2.y) / Sector->floor.normal.z >
-      CeilHeight)
-    {
-      Spot2.z = CeilHeight;
-      FloorDestDist = DotProduct(Sector->floor.normal, Spot2);
-    }
-    break;
-
-  case FLOOREV_RaiseToHighest:
-    Direction = 1;
-    DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_RaiseToNearest:
-    Direction = 1;
-    DestHeight = Level.FindNextHighestFloor(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_RaiseByValueTimes8:
-  case FLOOREV_RaiseTimes8Instant:
-    Direction = 1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3) * 8.0;
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_RaiseByTexture:
-    Direction = 1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) +
-      Level.FindShortestTextureAround(Sector);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    break;
-
-  case FLOOREV_LowerToLowestChange:
-    Direction = -1;
-    DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    Texture = Sector->floor.pic;
-    // jff 1/24/98 make sure NewSpecial gets initialised
-    // in case no surrounding Sector is at DestHeight
-    // --> should not affect compatibility <--
-    NewSpecial = Sector->special & ~SECSPEC_SECRET_MASK;
-    ModelSec = Level.FindModelFloorSector(Sector, DestHeight);
-    if (ModelSec)
-    {
-      Texture = ModelSec->floor.pic;
-      NewSpecial = ModelSec->special & ~SECSPEC_SECRET_MASK;
-    }
-    break;
-
-  case FLOOREV_RaiseToNearestChange:
-    Direction = 1;
-    DestHeight = Level.FindNextHighestFloor(Sector, &Spot);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    // NO MORE DAMAGE, IF APPLICABLE
-    if (Line)
-    {
-      Sector->floor.pic = Line->frontsector->floor.pic;
-      Sector->special = (Sector->special & SECSPEC_SECRET_MASK) |
-        (Line->frontsector->special & ~SECSPEC_SECRET_MASK);
-      if (Line->flags & ML_KEEPDATA)
-      {
-        // Don't destroy the thinker
-        Not_Keep = false;
-      }
-    }
-    else
-    {
-      Sector->special &= SECSPEC_SECRET_MASK;
-    }
-    SeqName = LineSpecialLevelInfo(Level).DefaultFloorAltSound;
-    break;
-
-  case FLOOREV_RaiseByValueChange:
-    Direction = 1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3);
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    if (Line)
-    {
-      Sector->floor.pic = Line->frontsector->floor.pic;
-      Sector->special = (Sector->special & SECSPEC_SECRET_MASK) |
-        (Line->frontsector->special & ~SECSPEC_SECRET_MASK);
-    }
-    else
-    {
-      Sector->special &= SECSPEC_SECRET_MASK;
-    }
-    break;
-
-  case FLOOREV_RaiseByValueChange2:
-    Direction = 1;
-    DestHeight = GetPlanePointZ(ref Sector->floor, Spot) + itof(Arg3) * 8.0;
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-    if (Line)
-    {
-      Sector->floor.pic = Line->frontsector->floor.pic;
-    }
-    SeqName = LineSpecialLevelInfo(Level).DefaultFloorAltSound;
-    break;
-
-  case FLOOREV_Generic:
-    Direction = (Arg5 & 8) ? 1 : -1;
-    Crush = (Arg4 & 16) ? 20 : 0;
-    switch (Arg4)
-    {
-    case 1:
       DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      if (FloorDestDist != Sector->floor.dist) {
+        Spot.z = DestHeight+itof(Arg3)-128.0;
+        FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      }
       break;
-    case 2:
+    case FLOOREV_LowerToLowest:
+      Direction = -1;
       DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
       break;
-    case 3:
-      if (Direction == 1)
-        DestHeight = Level.FindNextHighestFloor(Sector, &Spot);
-      else
-        DestHeight = Level.FindNextLowestFloor(Sector, &Spot);
+    case FLOOREV_LowerToNearest:
+      Direction = -1;
+      DestHeight = Level.FindNextLowestFloor(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
       break;
-    case 4:
+    case FLOOREV_LowerByValue:
+      Direction = -1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)-itof(Arg3);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_RaiseByValue:
+      Direction = 1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+itof(Arg3);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_LowerByValueTimes8:
+    case FLOOREV_LowerTimes8Instant:
+      Direction = -1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)-itof(Arg3)*8.0;
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_MoveToValue:
+    case FLOOREV_MoveToValueTimes8:
+      Level.FindHighestFloorPoint(Sector, &Spot);
+      DestHeight = itof(Arg3);
+      if (Type == FLOOREV_MoveToValueTimes8) DestHeight *= 8.0;
+      if (Arg4) DestHeight = -DestHeight;
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      Direction = (FloorDestDist > Sector->floor.dist ? 1 : -1);
+      break;
+    case FLOOREV_RaiseAndCrush:
+      Crush = Arg3; // arg[2] = crushing value
+      Direction = 1;
       DestHeight = Level.FindLowestCeilingSurrounding(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      CeilHeight = Level.FindLowestCeilingPoint(Sector, &Spot2);
+      if ((FloorDestDist-Sector->floor.normal.x*Spot2.x-Sector->floor.normal.y*Spot2.y)/Sector->floor.normal.z > CeilHeight) {
+        Spot2.z = CeilHeight-8.0;
+        FloorDestDist = DotProduct(Sector->floor.normal, Spot2);
+      }
       break;
-    case 5:
-      DestHeight = Level.FindLowestCeilingPoint(Sector, &Spot);
-       break;
-    case 6:
-      DestHeight = GetPlanePointZ(ref Sector->floor, Spot) +
-        itof(Direction) * Level.FindShortestTextureAround(Sector);
-       break;
-    default:
-      DestHeight = GetPlanePointZ(ref Sector->floor, Spot) +
-        itof(Direction * Arg3);
+    case FLOOREV_RaiseToLowestCeiling:
+      Direction = 1;
+      DestHeight = Level.FindLowestCeilingSurrounding(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      CeilHeight = Level.FindLowestCeilingPoint(Sector, &Spot2);
+      if ((FloorDestDist-Sector->floor.normal.x*Spot2.x-Sector->floor.normal.y*Spot2.y)/Sector->floor.normal.z > CeilHeight) {
+        Spot2.z = CeilHeight;
+        FloorDestDist = DotProduct(Sector->floor.normal, Spot2);
+      }
       break;
-    }
-    Spot.z = DestHeight;
-    FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+    case FLOOREV_RaiseToHighest:
+      Direction = 1;
+      DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_RaiseToNearest:
+      Direction = 1;
+      DestHeight = Level.FindNextHighestFloor(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_RaiseByValueTimes8:
+    case FLOOREV_RaiseTimes8Instant:
+      Direction = 1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+itof(Arg3)*8.0;
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_RaiseByTexture:
+      Direction = 1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+Level.FindShortestTextureAround(Sector);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      break;
+    case FLOOREV_LowerToLowestChange:
+      Direction = -1;
+      DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      Texture = Sector->floor.pic;
+      // jff 1/24/98 make sure NewSpecial gets initialised
+      // in case no surrounding Sector is at DestHeight
+      // --> should not affect compatibility <--
+      NewSpecial = Sector->special&~SECSPEC_SECRET_MASK;
+      ModelSec = Level.FindModelFloorSector(Sector, DestHeight);
+      if (ModelSec) {
+        Texture = ModelSec->floor.pic;
+        NewSpecial = ModelSec->special&~SECSPEC_SECRET_MASK;
+      }
+      break;
+    case FLOOREV_RaiseToNearestChange:
+      Direction = 1;
+      DestHeight = Level.FindNextHighestFloor(Sector, &Spot);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      // no more damage, if applicable
+      if (Line) {
+        Sector->floor.pic = Line->frontsector->floor.pic;
+        Sector->special = (Sector->special&SECSPEC_SECRET_MASK)|(Line->frontsector->special&~SECSPEC_SECRET_MASK);
+        if (Line->flags&ML_KEEPDATA) {
+          // don't destroy the thinker
+          Not_Keep = false;
+        }
+      } else {
+        Sector->special &= SECSPEC_SECRET_MASK;
+      }
+      SeqName = LineSpecialLevelInfo(Level).DefaultFloorAltSound;
+      break;
+    case FLOOREV_RaiseByValueChange:
+      Direction = 1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+itof(Arg3);
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      if (Line) {
+        Sector->floor.pic = Line->frontsector->floor.pic;
+        Sector->special = (Sector->special&SECSPEC_SECRET_MASK)|(Line->frontsector->special&~SECSPEC_SECRET_MASK);
+      } else {
+        Sector->special &= SECSPEC_SECRET_MASK;
+      }
+      break;
+    case FLOOREV_RaiseByValueChange2:
+      Direction = 1;
+      DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+itof(Arg3)*8.0;
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      if (Line) Sector->floor.pic = Line->frontsector->floor.pic;
+      SeqName = LineSpecialLevelInfo(Level).DefaultFloorAltSound;
+      break;
+    case FLOOREV_Generic:
+      Direction = (Arg5&8) ? 1 : -1;
+      Crush = (Arg4&16) ? 20 : 0;
+      switch (Arg4) {
+        case 1: DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot); break;
+        case 2: DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot); break;
+        case 3:
+          if (Direction == 1) {
+            DestHeight = Level.FindNextHighestFloor(Sector, &Spot);
+          } else {
+            DestHeight = Level.FindNextLowestFloor(Sector, &Spot);
+          }
+          break;
+        case 4: DestHeight = Level.FindLowestCeilingSurrounding(Sector, &Spot); break;
+        case 5: DestHeight = Level.FindLowestCeilingPoint(Sector, &Spot); break;
+        case 6:
+          DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+itof(Direction)*Level.FindShortestTextureAround(Sector);
+           break;
+        default:
+          DestHeight = GetPlanePointZ(ref Sector->floor, Spot)+itof(Direction*Arg3);
+          break;
+      }
+      Spot.z = DestHeight;
+      FloorDestDist = DotProduct(Sector->floor.normal, Spot);
 
-    if (Arg5 & 3)
-    {
-      if (Arg5 & 4)
-      {
-        // Numeric model change
-        ModelSec = (Arg4 == 4 || Arg4 == 5) ?
-          Level.FindModelCeilingSector(Sector, DestHeight) :
-          Level.FindModelFloorSector(Sector, DestHeight);
-        if (ModelSec)
-        {
-          Texture = ModelSec->floor.pic;
-          switch (Arg5 & 3)
-          {
-          case 1:
-            NewSpecial = 0;
-            Type = FLOOREV_GenericChange0;
-            break;
-          case 2:
-            NewSpecial = Sector->special & ~SECSPEC_SECRET_MASK;
-            Type = FLOOREV_GenericChangeT;
-            break;
-          case 3:
-            Type = FLOOREV_GenericChange;
-            break;
+      if (Arg5&3) {
+        if (Arg5&4) {
+          // numeric model change
+          ModelSec = (Arg4 == 4 || Arg4 == 5) ?
+            Level.FindModelCeilingSector(Sector, DestHeight) :
+            Level.FindModelFloorSector(Sector, DestHeight);
+          if (ModelSec) {
+            Texture = ModelSec->floor.pic;
+            switch (Arg5&3) {
+              case 1:
+                NewSpecial = 0;
+                Type = FLOOREV_GenericChange0;
+                break;
+              case 2:
+                NewSpecial = Sector->special&~SECSPEC_SECRET_MASK;
+                Type = FLOOREV_GenericChangeT;
+                break;
+              case 3:
+                Type = FLOOREV_GenericChange;
+                break;
+            }
+          }
+        } else if (Line) {
+          // trigger model change
+          Texture = Line->frontsector->floor.pic;
+          switch (Arg5&3) {
+            case 1:
+              NewSpecial = 0;
+              Type = FLOOREV_GenericChange0;
+              break;
+            case 2:
+              NewSpecial = Sector->special&~SECSPEC_SECRET_MASK;
+              Type = FLOOREV_GenericChangeT;
+              break;
+            case 3:
+              Type = FLOOREV_GenericChange;
+              break;
           }
         }
       }
-      else if (Line)
-      {
-        // Trigger model change
-        Texture = Line->frontsector->floor.pic;
-        switch (Arg5 & 3)
-        {
-        case 1:
-          NewSpecial = 0;
-          Type = FLOOREV_GenericChange0;
-          break;
-        case 2:
-          NewSpecial = Sector->special & ~SECSPEC_SECRET_MASK;
-          Type = FLOOREV_GenericChangeT;
-          break;
-        case 3:
-          Type = FLOOREV_GenericChange;
-          break;
-        }
-      }
-    }
-    break;
+      break;
   }
   StartFloorSound(SeqName);
 }
+
 
 //==========================================================================
 //
 //  InitStair
 //
 //==========================================================================
-
-void InitStair(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, bool Generic, float InHeight)
+void InitStair (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
+                int Arg5, bool Generic, float InHeight)
 {
   //FIXME: memleak?
   if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
@@ -420,45 +345,39 @@ void InitStair(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Sector->FloorData = self;
 
   Type = FLOOREV_RaiseBuildStep;
-  if (Generic)
-  {
-    Direction = Arg4 & 1 ? 1 : -1;
-  }
-  else
-  {
+  if (Generic) {
+    Direction = (Arg4&1 ? 1 : -1);
+  } else {
     Direction = 1;
   }
-  Speed = itof(Arg2) * 35.0 / 8.0;
+  Speed = itof(Arg2)*35.0/8.0;
   //jff 2/27/98 fix uninitialised crush field
   Crush = (Arg2 == 32) ? 10 : -1;
-  FloorDestDist = DotProduct(Sector->floor.normal,
-    vector(0.0, 0.0, InHeight));
+  FloorDestDist = DotProduct(Sector->floor.normal, vector(0.0, 0.0, InHeight));
 
-  //  Delay between steps.
-  if (!Generic)
-  {
-    Delay = itof(Arg4) / 35.0;
-    StepTime = itof(Arg3) / Speed;
+  // delay between steps
+  if (!Generic) {
+    Delay = itof(Arg4)/35.0;
+    StepTime = itof(Arg3)/Speed;
     if (!Speed) StepTime = Arg3;
     PerStepTime = StepTime;
   }
 
-  //  Reset.
-  ResetTime = itof(Arg5) / 35.0;
+  // reset
+  ResetTime = itof(Arg5)/35.0;
   OrgDist = Sector->floor.dist;
   StartFloorSound(LineSpecialLevelInfo(Level).DefaultStairStepSound);
 }
+
 
 //==========================================================================
 //
 //  InitDonut
 //
 //==========================================================================
-
-void InitDonut(sector_t *InSector, sector_t *OtherSector, int Arg2)
-{
-  float   DestHeight;
-  TVec    Spot;
+void InitDonut (sector_t *InSector, sector_t *OtherSector, int Arg2) {
+  float DestHeight;
+  TVec Spot;
 
   //FIXME: memleak?
   if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
@@ -473,7 +392,7 @@ void InitDonut(sector_t *InSector, sector_t *OtherSector, int Arg2)
   Type = FLOOREV_Donut;
   Crush = false;
   Direction = 1;
-  Speed = itof(Arg2) * 35.0 / 8.0;
+  Speed = itof(Arg2)*35.0/8.0;
   Texture = OtherSector->floor.pic;
   NewSpecial = 0;
   DestHeight = Level.FindHighestFloorPoint(OtherSector, &Spot);
@@ -482,16 +401,15 @@ void InitDonut(sector_t *InSector, sector_t *OtherSector, int Arg2)
   StartFloorSound(LineSpecialLevelInfo(Level).DefaultFloorSound);
 }
 
+
 //==========================================================================
 //
 //  InitDonut2
 //
 //==========================================================================
-
-void InitDonut2(sector_t *InSector, sector_t *OtherSector, int Arg3)
-{
-  float   DestHeight;
-  TVec    Spot;
+void InitDonut2 (sector_t *InSector, sector_t *OtherSector, int Arg3) {
+  float DestHeight;
+  TVec Spot;
 
   //FIXME: memleak?
   if (!InSector) { Type = -669666; print("ERROR: FloorMover::Init: no sector!"); return; }
@@ -506,60 +424,48 @@ void InitDonut2(sector_t *InSector, sector_t *OtherSector, int Arg3)
   Type = FLOOREV_LowerToNearest;
   Crush = false;
   Direction = -1;
-  Speed = itof(Arg3) * 35.0 / 8.0;
+  Speed = itof(Arg3)*35.0/8.0;
   DestHeight = Level.FindHighestFloorPoint(OtherSector, &Spot);
   Spot.z = DestHeight;
   FloorDestDist = DotProduct(Sector->floor.normal, Spot);
   StartFloorSound(LineSpecialLevelInfo(Level).DefaultFloorSound);
 }
 
+
 //==========================================================================
 //
 //  CrushStop
 //
 //==========================================================================
-
-bool CrushStop(int InTag)
-{
-  if (Type != FLOOREV_RaiseAndCrush)
-  {
-    return false;
-  }
-  if (Sector->tag != InTag)
-  {
-    return false;
-  }
-
-  // Completely remove the crushing floor
+bool CrushStop (int InTag) {
+  if (Type != FLOOREV_RaiseAndCrush) return false;
+  if (Sector->tag != InTag) return false;
+  // completely remove the crushing floor
   SectorStopSequence(Sector);
   Finished();
   return true;
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
-//  MOVE A FLOOR TO IT'S DESTINATION (UP OR DOWN)
+//  move a floor to it's destination (up or down)
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
+override void Tick (float deltaTime) {
   if (Type == -669666) return;
 
-  //  Handle resetting stairs.
-  if (Type == FLOOREV_RaiseBuildStep)
-  {
-    if (ResetTime)
-    {
+  // handle resetting stairs
+  if (Type == FLOOREV_RaiseBuildStep) {
+    if (ResetTime) {
       ResetTime -= deltaTime;
-      if (ResetTime <= 0.0)
-      {
+      if (ResetTime <= 0.0) {
         ResetTime = 0.0;
         Direction = -Direction;
         FloorDestDist = OrgDist;
-        //  Clear all delay variables.
+        // clear all delay variables
         PauseTime = 0.0;
         Delay = 0.0;
         StepTime = 0.0;
@@ -567,82 +473,58 @@ override void Tick(float deltaTime)
         StartFloorSound(LineSpecialLevelInfo(Level).DefaultStairStepSound);
       }
     }
-    if (PauseTime)
-    {
+    if (PauseTime) {
       PauseTime -= deltaTime;
-      if (PauseTime <= 0.0)
-      {
-        PauseTime = 0.0;
-      }
+      if (PauseTime <= 0.0) PauseTime = 0.0;
       return;
-    }
-    else if (StepTime)
-    {
+    } else if (StepTime) {
       StepTime -= deltaTime;
-      if (StepTime <= 0.0)
-      {
+      if (StepTime <= 0.0) {
         PauseTime = Delay;
         StepTime = PerStepTime;
       }
     }
 
-    if (ResetTime && Sector->floor.dist == FloorDestDist)
-    {
-      //  Reached dest, waiting for reset.
+    if (ResetTime && Sector->floor.dist == FloorDestDist) {
+      // reached dest, waiting for reset
       return;
     }
   }
 
-  int res = MovePlane(Sector, Speed * deltaTime, FloorDestDist, Crush, 0,
-    Direction, false);
+  int res = MovePlane(Sector, Speed*deltaTime, FloorDestDist, Crush, 0, Direction, false);
 
-  if (res == RES_PASTDEST)
-  {
+  if (res == RES_PASTDEST) {
     SectorStopSequence(Sector);
-    if (Type == FLOOREV_RaiseBuildStep && ResetTime)
-    {
-      return;
-    }
+    if (Type == FLOOREV_RaiseBuildStep && ResetTime) return;
     if ((Direction == 1 && Type == FLOOREV_Donut) ||
-      (Direction == -1 && Type == FLOOREV_LowerToLowestChange) ||
-      Type == FLOOREV_GenericChange0 ||
-      Type == FLOOREV_GenericChangeT)
+        (Direction == -1 && Type == FLOOREV_LowerToLowestChange) ||
+        Type == FLOOREV_GenericChange0 ||
+        Type == FLOOREV_GenericChangeT)
     {
-      Sector->special = (Sector->special & SECSPEC_SECRET_MASK) |
-        NewSpecial;
+      Sector->special = (Sector->special&SECSPEC_SECRET_MASK)|NewSpecial;
+      Sector->floor.pic = Texture;
+    } else if (Type == FLOOREV_GenericChange) {
       Sector->floor.pic = Texture;
     }
-    else if (Type == FLOOREV_GenericChange)
-    {
-      Sector->floor.pic = Texture;
-    }
-    if (TextureChange)
-    {
-      Sector->floor.pic = Sector->floor.pic - TextureChange;
-    }
+    if (TextureChange) Sector->floor.pic = Sector->floor.pic-TextureChange;
     Finished();
   }
 }
+
 
 //==========================================================================
 //
 //  StartFloorSound
 //
 //==========================================================================
-
-void StartFloorSound(name DefaultSound)
-{
-  if (!DefaultSound || Sector->seqType >= 0)
-  {
-    SectorStartSequence(Sector, GetSeqTrans(Sector->seqType,
-      SEQ_Platform), 0);
-  }
-  else
-  {
+void StartFloorSound (name DefaultSound) {
+  if (!DefaultSound || Sector->seqType >= 0) {
+    SectorStartSequence(Sector, GetSeqTrans(Sector->seqType, SEQ_Platform), 0);
+  } else {
     SectorStartSequence(Sector, DefaultSound, 0);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
