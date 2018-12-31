@@ -22,16 +22,13 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class QuakeFocus : Actor;
 
-//
-// Quake variables
-//
-int Richters;   // Intensity on richter scale (2..9)
-int QuakeDuration;  // Duration in tics
-float DamageRadius; // Radius for damage
-float TremorRadius; // Radius for tremor
+// quake variables
+int Richters; // intensity on richter scale (2..9)
+int QuakeDuration; // duration in tics
+float DamageRadius; // radius for damage
+float TremorRadius; // radius for tremor
 name SoundName;
 
 
@@ -40,54 +37,36 @@ name SoundName;
 //  A_FocusQuake
 //
 //==========================================================================
-
-final void A_FocusQuake()
-{
-  float   an;
-  PlayerEx  pl;
-  EntityEx  victim;
-  int     playnum;
-  float   dist;
+final void A_FocusQuake () {
+  float an;
+  PlayerEx pl;
+  EntityEx victim;
+  float dist;
 
   //print("QuakeFocus: dur=%s; power=%s", QuakeDuration, Richters);
-  if (QuakeDuration-- > 0)
-  {
-    if (Richters > 256 / 9)
-    {
-      Richters = 256 / 9;
-    }
+  if (QuakeDuration-- > 0) {
+    if (Richters > 256/9) Richters = 256/9;
 
-    for (playnum = 0; playnum < MAXPLAYERS; playnum++)
-    {
+    foreach (auto playnum; 0..MAXPLAYERS) {
       pl = PlayerEx(Level.Game.Players[playnum]);
-      if (!pl || !pl.bSpawned)
-        continue;
-
+      if (!pl || !pl.bSpawned) continue;
       victim = EntityEx(pl.MO);
       dist = DistTo(victim);
-      if (dist < TremorRadius)  // In tremor radius
-      {
+      if (dist < TremorRadius) {
+        // in tremor radius
         pl.LocalQuakeHappening = Richters;
       }
-      // Check if in damage radius
-      if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ)
-      {
-        if (Random() < 0.1953125)
-        {
-          victim.Damage(none, none, 1 + (P_Random() & 7), spawnBlood:true);
-        }
-        // Thrust player around
-        an = victim.Angles.yaw + Random() * 256.0;
-        victim.Thrust(an, itof(Richters) / 2.0);
+      // check if in damage radius
+      if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ) {
+        if (Random() < 0.1953125) victim.Damage(none, none, 1+(P_Random()&7), spawnBlood:true);
+        // thrust player around
+        an = victim.Angles.yaw+Random()*256.0;
+        victim.Thrust(an, itof(Richters)/2.0);
       }
     }
-  }
-  else
-  {
-    for (playnum = 0; playnum < MAXPLAYERS; playnum++)
-    {
-      if (Level.Game.Players[playnum])
-      {
+  } else {
+    foreach (auto playnum; 0..MAXPLAYERS) {
+      if (Level.Game.Players[playnum]) {
         PlayerEx(Level.Game.Players[playnum]).LocalQuakeHappening = 0;
       }
     }
@@ -95,22 +74,20 @@ final void A_FocusQuake()
   }
 }
 
+
 //==========================================================================
 //
 //  A_ContMobjSound
 //
 //==========================================================================
-
-final void A_ContMobjSound()
-{
+final void A_ContMobjSound () {
   //print("QuakeFocus: SOUND! dur=%s; power=%s", QuakeDuration, Richters);
   if (SoundName) PlaySound(/*'world/quake'*/SoundName, CHAN_VOICE);
 }
 
 
 //???k8: first quake is ignored; this seems to be intended
-states
-{
+states {
 Spawn:
   TNT1 A 2 A_FocusQuake
   TNT1 A 1 A_ContMobjSound
