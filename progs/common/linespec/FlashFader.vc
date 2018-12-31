@@ -22,30 +22,29 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class FlashFader : Thinker;
 
-float   BlendR1;
-float   BlendG1;
-float   BlendB1;
-float   BlendA1;
-float   BlendR2;
-float   BlendG2;
-float   BlendB2;
-float   BlendA2;
-float   Time;
-float   Duration;
-EntityEx  ForWho;
+float BlendR1;
+float BlendG1;
+float BlendB1;
+float BlendA1;
+float BlendR2;
+float BlendG2;
+float BlendB2;
+float BlendA2;
+float Time;
+float Duration;
+EntityEx ForWho;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-final void Init(float ABlendR1, float ABlendG1, float ABlendB1, float ABlendA1,
-  float ABlendR2, float ABlendG2, float ABlendB2, float ABlendA2,
-  float ADuration, EntityEx AForWho)
+final void Init (float ABlendR1, float ABlendG1, float ABlendB1, float ABlendA1,
+                 float ABlendR2, float ABlendG2, float ABlendB2, float ABlendA2,
+                 float ADuration, EntityEx AForWho)
 {
   BlendR1 = ABlendR1;
   BlendG1 = ABlendG1;
@@ -60,75 +59,66 @@ final void Init(float ABlendR1, float ABlendG1, float ABlendB1, float ABlendA1,
   Time = 0.0;
 }
 
+
 //==========================================================================
 //
 //  Destroy
 //
 //==========================================================================
-
-override void Destroy()
-{
+override void Destroy () {
   SetBlend(1.0);
   ::Destroy();
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  //  We need a valid player.
-  if (!ForWho || !ForWho.bIsPlayer)
-  {
+override void Tick (float DeltaTime) {
+  // we need a valid player
+  if (!ForWho || !ForWho.bIsPlayer) {
     Destroy();
     return;
   }
 
   Time += DeltaTime;
-  if (Time >= Duration)
-  {
+  if (Time >= Duration) {
     SetBlend(1.0);
     Destroy();
     return;
   }
-  SetBlend(Time / Duration);
+  SetBlend(Time/Duration);
 }
+
 
 //==========================================================================
 //
 //  Cancel
 //
 //==========================================================================
-
-final void Cancel()
-{
+final void Cancel () {
   Duration = Time;
   BlendA2 = 0.0;
 }
+
 
 //==========================================================================
 //
 //  SetBlend
 //
 //==========================================================================
-
-final void SetBlend(float Inter)
-{
-  if (!ForWho || !ForWho.bIsPlayer)
-  {
-    return;
-  }
+final void SetBlend (float Inter) {
+  if (!ForWho || !ForWho.bIsPlayer) return;
   PlayerEx P = PlayerEx(ForWho.Player);
-  float InvInter = 1.0 - Inter;
-  P.BlendR = BlendR1 * InvInter + BlendR2 * Inter;
-  P.BlendG = BlendG1 * InvInter + BlendG2 * Inter;
-  P.BlendB = BlendB1 * InvInter + BlendB2 * Inter;
-  P.BlendA = BlendA1 * InvInter + BlendA2 * Inter;
+  float InvInter = 1.0-Inter;
+  P.BlendR = BlendR1*InvInter+BlendR2*Inter;
+  P.BlendG = BlendG1*InvInter+BlendG2*Inter;
+  P.BlendB = BlendB1*InvInter+BlendB2*Inter;
+  P.BlendA = BlendA1*InvInter+BlendA2*Inter;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

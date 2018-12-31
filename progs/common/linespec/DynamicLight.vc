@@ -22,11 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class DynamicLight : Actor;
 
-enum
-{
+enum {
   DLTYPE_Point,
   DLTYPE_MuzzleFlash,
   DLTYPE_Pulse,
@@ -37,18 +35,17 @@ enum
   DLTYPE_SectorSubtractive, // not supported yet
 };
 
-ubyte     LightType;
-float     LightTime;
-float     Intensity;
+ubyte LightType;
+float LightTime;
+float Intensity;
+
 
 //==========================================================================
 //
 //  OnMapSpawn
 //
 //==========================================================================
-
-override void OnMapSpawn(mthing_t *mthing)
-{
+override void OnMapSpawn(mthing_t *mthing) {
   ::OnMapSpawn(mthing);
 
   //TODO: replace with statics
@@ -56,23 +53,18 @@ override void OnMapSpawn(mthing_t *mthing)
     //bDormant = true;
     //print("*** SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
     if (RGB(Args[0], Args[1], Args[2]) == 0) {
-      print("*** DUMMY SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
+      dprint("*** DUMMY SUBTRACTIVE: r=%d; g=%d; b=%d; Args[3]=%d; Args[4]=%d", Args[0], Args[1], Args[2], Args[3], Args[4]);
       Destroy();
     }
     return;
   }
 
-  //  Use static light for placed point lights that cannot be deactivated.
-  if (LightType == DLTYPE_Point && mthing && !TID && !bDormant /*&& self !isa BurningBarrel*/)
-  {
-    //print("*** adding static light for class '%n'", GetClassName(Class));
-    if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3)
-    {
-      Level.AddStaticLight(Origin,
-        StaticIntensityToRadius(itof(mthing->arg4)));
-    }
-    else
-    {
+  // use static light for placed point lights that cannot be deactivated
+  if (LightType == DLTYPE_Point && mthing && !TID && !bDormant) {
+    //dprint("*** adding static light for class '%n'", GetClassName(Class));
+    if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3) {
+      Level.AddStaticLight(Origin, StaticIntensityToRadius(itof(mthing->arg4)));
+    } else {
       Level.AddStaticLightRGB(Origin,
         StaticIntensityToRadius(itof(mthing->arg4)),
         RGB(mthing->arg1, mthing->arg2, mthing->arg3));
@@ -81,62 +73,51 @@ override void OnMapSpawn(mthing_t *mthing)
   }
 }
 
+
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
-
-  if (!bDormant)
-  {
-    Activate(none);
-  }
+  if (!bDormant) Activate(none);
 }
+
 
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
+override bool Activate (EntityEx Activator) {
   bDormant = false;
   LightTime = 0.0;
   Intensity = itof(Args[3]);
   return true;
 }
 
+
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
+override bool Deactivate (EntityEx Activator) {
   bDormant = true;
   return true;
 }
+
 
 //==========================================================================
 //
 //  ClientTick
 //
 //==========================================================================
-
-override void ClientTick(float DeltaTime)
-{
+override void ClientTick (float DeltaTime) {
   ::ClientTick(DeltaTime);
 
-  if (bDormant)
-  {
-    return;
-  }
+  if (bDormant) return;
 
   int realLightType = LightType;
 
@@ -144,51 +125,45 @@ override void ClientTick(float DeltaTime)
     case DLTYPE_Point:
       Intensity = itof(Args[3]);
       break;
-
     case DLTYPE_Pulse:
-    {
-      // Avoid division by 0
-      float PulseCycle = Angles.yaw ? Angles.yaw / 35.0 : 1.0 / 35.0;
-      LightTime += DeltaTime;
-      if (LightTime >= PulseCycle) LightTime = 0.0;
-      float Frac = (1.0 + sin(360.0 * LightTime / PulseCycle)) * 0.5;
-      Intensity = itof(Args[3]) + Frac * itof(Args[4] - Args[3]);
-      break;
-    }
-
-    case DLTYPE_Flicker:
-      Intensity = itof(Random() >= Angles.yaw / 360.0 ? Args[4] : Args[3]);
-      break;
-
-    case DLTYPE_FlickerRandom:
-      LightTime += DeltaTime;
-      if (LightTime > Angles.yaw / 35.0) {
-        LightTime = 0.0;
-        Intensity = itof(Args[3]) + Random() * itof(Args[4] - Args[3]);
+      {
+        // avoid division by 0
+        float PulseCycle = (Angles.yaw ? Angles.yaw/35.0 : 1.0/35.0);
+        LightTime += DeltaTime;
+        if (LightTime >= PulseCycle) LightTime = 0.0;
+        float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
+        Intensity = itof(Args[3])+Frac*itof(Args[4]-Args[3]);
       }
       break;
-
+    case DLTYPE_Flicker:
+      Intensity = itof(Random() >= Angles.yaw/360.0 ? Args[4] : Args[3]);
+      break;
+    case DLTYPE_FlickerRandom:
+      LightTime += DeltaTime;
+      if (LightTime > Angles.yaw/35.0) {
+        LightTime = 0.0;
+        Intensity = itof(Args[3])+Random()*itof(Args[4]-Args[3]);
+      }
+      break;
     case DLTYPE_Sector:
-    {
-      float Scale = itof(Args[3]) * 0.125;
-      if (!Scale) Scale = 1.0;
-      Intensity = itof(Sector->params.lightlevel) * Scale;
-      if (Intensity < 0.0) Intensity = 0.0;
-      if (Intensity > 255.0) Intensity = 255.0;
+      {
+        float Scale = itof(Args[3])*0.125;
+        if (!Scale) Scale = 1.0;
+        Intensity = itof(Sector->params.lightlevel)*Scale;
+        if (Intensity < 0.0) Intensity = 0.0;
+        if (Intensity > 255.0) Intensity = 255.0;
+      }
       break;
-    }
-
     case DLTYPE_SectorSubtractive:
-    {
-      float Scale = itof(Args[3]) * 0.125;
-      if (!Scale) Scale = 1.0;
-      Intensity = itof(Sector->params.lightlevel) * Scale;
-      if (Intensity < 0.0) Intensity = 0.0;
-      if (Intensity > 255.0) Intensity = 255.0;
-      realLightType = DLTYPE_Subtractive;
+      {
+        float Scale = itof(Args[3])*0.125;
+        if (!Scale) Scale = 1.0;
+        Intensity = itof(Sector->params.lightlevel)*Scale;
+        if (Intensity < 0.0) Intensity = 0.0;
+        if (Intensity > 255.0) Intensity = 255.0;
+        realLightType = DLTYPE_Subtractive;
+      }
       break;
-    }
-
     case DLTYPE_Subtractive:
       Intensity = itof(Args[3]);
       //if (RGB(Args[0], Args[1], Args[2]) == 0) return;
@@ -200,43 +175,41 @@ override void ClientTick(float DeltaTime)
     //dl->origin = Origin;
     dl->colour = RGB(Args[0], Args[1], Args[2]);
     //dl->radius = IntensityToRadius(Intensity);
-    dl->die = XLevel.Time + 0.01;
+    dl->die = XLevel.Time+0.01;
     dl->type = /*LightType*/realLightType;
   }
 }
+
 
 //==========================================================================
 //
 //  StaticIntensityToRadius
 //
 //==========================================================================
-
-final float StaticIntensityToRadius(float Val)
-{
-  if (Val <= 20.0) return Val * 3.5;
-  if (Val <= 30.0) return Val * 3.0;
-  if (Val <= 40.0) return Val * 2.8;
-  if (Val <= 60.0) return Val * 2.4;
-  return Val * 2.0;
+final float StaticIntensityToRadius (float Val) {
+  if (Val <= 20.0) return Val*3.5;
+  if (Val <= 30.0) return Val*3.0;
+  if (Val <= 40.0) return Val*2.8;
+  if (Val <= 60.0) return Val*2.4;
+  return Val*2.0;
 }
+
 
 //==========================================================================
 //
 //  IntensityToRadius
 //
 //==========================================================================
-
-final float IntensityToRadius(float Val)
-{
-  if (Val <= 20.0) return Val * 4.5;
-  if (Val <= 30.0) return Val * 3.6;
-  if (Val <= 40.0) return Val * 3.3;
-  if (Val <= 60.0) return Val * 2.8;
-  return Val * 2.5;
+final float IntensityToRadius (float Val) {
+  if (Val <= 20.0) return Val*4.5;
+  if (Val <= 30.0) return Val*3.6;
+  if (Val <= 40.0) return Val*3.3;
+  if (Val <= 60.0) return Val*2.8;
+  return Val*2.5;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Height = 0.0;
   Radius = 0.1;
   bNoBlockmap = true;

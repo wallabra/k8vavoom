@@ -26,56 +26,41 @@
 //**  FIRELIGHT FLICKER
 //**
 //**************************************************************************
-
 class FireFlicker : Lighting;
 
-float   Time;
-int     MaxLight;
-int     MinLight;
+float Time;
+int MaxLight;
+int MinLight;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-void Init(sector_t *InSector)
-{
+void Init (sector_t *InSector) {
   Sector = InSector;
   Sector->LightingData = self;
 
-  Time = 4.0 / 35.0;
+  Time = 4.0/35.0;
   MaxLight = Sector->params.lightlevel;
-  MinLight = Level.FindMinSurroundingLight(Sector,
-    Sector->params.lightlevel) + 16;
+  MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel)+16;
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
-  int   Amount;
-
+override void Tick (float deltaTime) {
   Time -= deltaTime;
-  if (Time > 0.0)
-  {
-    return;
-  }
-
-  Amount = (P_Random() & 3) * 16;
-
-  if (Sector->params.lightlevel - Amount < MinLight)
-    Sector->params.lightlevel = MinLight;
-  else
-    Sector->params.lightlevel = MaxLight - Amount;
-
-  Time = 4.0 / 35.0;
+  if (Time > 0.0) return;
+  int Amount = (P_Random()&3)*16;
+  Sector->params.lightlevel = (Sector->params.lightlevel-Amount < MinLight ? MinLight : MaxLight-Amount);
+  Time = 4.0/35.0;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

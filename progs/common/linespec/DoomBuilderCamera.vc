@@ -27,24 +27,21 @@
 //**  itself so that it doesn't show up as an unknown object.
 //**
 //**************************************************************************
+class DoomBuilderCamera : Actor __mobjinfo__(32000);
 
-class DoomBuilderCamera : Actor
-  __mobjinfo__(32000);
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
   Destroy();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoSector = true;
 }
