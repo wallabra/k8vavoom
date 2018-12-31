@@ -22,10 +22,9 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class LineSpecialGameInfo : GameInfo;
 
-//  Thing types that are handled durign set-up of a level.
+// thing types that are handled durign set-up of a level
 const int
   FLOOR_SLOPE_TYPE = 1500,
   CEILING_SLOPE_TYPE = 1501,
@@ -50,64 +49,54 @@ const int
   COPY_CEILING_PLANE_TYPE = 9511;
 
 
-float     contents_alpha[9];
+float[9] contents_alpha;
 
-bool      bUseHexenPolyobjTypes;
-//  -- Flags for actor behavior --
-//  In Doom non-clipping missiles doesn't explode when hitting the floor,
-// in other games they do.
-bool      bNoClipIgnoreFloor;
-//  Don't do damage thrust to the invulnerable players
-bool      bNoDamageThrustInvulnerable;
-//  Monsters move faster in nightmare mode.
-bool      bNightmareFastChase;
-//  Use pickup respawn effects like in Raven's games.
-bool      bRavenStylePickupRespawn;
-//  Always to switch to a newly picked up weapon.
-bool      bAlwaysSwitchNewWeapon;
-//  Randomise blood's initial state time
-bool      bBloodRandomiseTime;
-//  Enter blood's spray state
-bool      bBloodSpray;
-//  Ripper blood has no gravity
-bool      bRipperBloodNoGravity;
+bool bUseHexenPolyobjTypes;
+// -- Flags for actor behavior --
+bool bNoClipIgnoreFloor; // in Doom non-clipping missiles doesn't explode when hitting the floor, in other games they do
+bool bNoDamageThrustInvulnerable; // don't do damage thrust to the invulnerable players
+bool bNightmareFastChase; // monsters move faster in nightmare mode
+bool bRavenStylePickupRespawn; // use pickup respawn effects like in Raven's games
+bool bAlwaysSwitchNewWeapon; // always to switch to a newly picked up weapon
+bool bBloodRandomiseTime; // randomise blood's initial state time
+bool bBloodSpray; // enter blood's spray state
+bool bRipperBloodNoGravity; // ripper blood has no gravity
+bool bDehacked;
 
-bool      bDehacked;
+bool bRespawnItems;
+bool bRespawnBigItems;
+bool bWeaponsStay;
+bool bRandomClass;
 
-bool      bRespawnItems;
-bool      bRespawnBigItems;
-bool      bWeaponsStay;
-bool      bRandomClass;
+float[3] windTab;
+float[5] pushTab;
 
-float     windTab[3];
-float     pushTab[5];
+int[9] opposite;
+int[4] diags;
+float[8] xspeed;
+float[8] yspeed;
 
-int       opposite[9];
-int       diags[4];
-float     xspeed[8];
-float     yspeed[8];
+float TeleFogHeight;
+name TeleportFogState;
 
-float     TeleFogHeight;
-name      TeleportFogState;
+float DefaultKickBack;
 
-float     DefaultKickBack;
+int NonMonsterAngleIncrements;
 
-int       NonMonsterAngleIncrements;
+int InvDefaultMaxAmount;
 
-int       InvDefaultMaxAmount;
+float IceMoveFactor;
+float GibsHealthFactor;
 
-float     IceMoveFactor;
-float     GibsHealthFactor;
+int[16] ramp1;
+int[16] ramp2;
 
-int       ramp1[16];
-int       ramp2[16];
+float RespawnTime;
 
-float     RespawnTime;
+int GOD_HEALTH;
 
-int       GOD_HEALTH;
-
-int       DehExplosionStyle;
-float     DehExplosionAlpha;
+int DehExplosionStyle;
+float DehExplosionAlpha;
 
 
 struct WeaponSlot {
@@ -219,9 +208,7 @@ override void Init () {
 //  CreateWorldInfo
 //
 //==========================================================================
-
-override WorldInfo CreateWorldInfo()
-{
+override WorldInfo CreateWorldInfo () {
   return WorldInfo(SpawnObject(WorldInfoEx));
 }
 
@@ -240,148 +227,96 @@ void SetSkill (int NewSkill) {
   if (!RespawnTime && GetCvar('RespawnMonsters')) RespawnTime = 12.0/35.0;
 }
 
+
 //==========================================================================
 //
 //  MakeSlope
 //
 //==========================================================================
-
-void MakeSlope(Level InLevel, mthing_t *mthing, bool IsCeiling)
-{
-  sector_t *sec;
-  line_t *line;
-  int       i;
+void MakeSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+  TVec v1, v2;
+  TVec p1, p2, p3;
   sec_plane_t *plane;
 
-  sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-  for (i = 0; i < sec.lines.length; i++)
-  {
-    line = sec->lines[i];
-    if (mthing->tid == line->arg1)
-    {
-      TVec v1;
-      TVec v2;
-      TVec p1;
-      TVec p2;
-      TVec p3;
-
-      if (!IsCeiling)
-      {
+  sector_t *sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  foreach (auto i; 0..sec.lines.length) {
+    line_t *line = sec->lines[i];
+    if (mthing->tid == line->arg1) {
+      if (!IsCeiling) {
         plane = &sec->floor;
         p1 = vector(line->v1->x, line->v1->y, plane->minz);
         p2 = vector(line->v2->x, line->v2->y, plane->minz);
-      }
-      else
-      {
+      } else {
         plane = &sec->ceiling;
         p1 = vector(line->v1->x, line->v1->y, plane->maxz);
         p2 = vector(line->v2->x, line->v2->y, plane->maxz);
       }
       p3 = vector(mthing->x, mthing->y, mthing->height);
-      if (PointOnPlaneSide(p3, line) == IsCeiling)
-      {
-        v1 = p2 - p3;
-        v2 = p1 - p3;
-      }
-      else
-      {
-        v1 = p1 - p3;
-        v2 = p2 - p3;
+      if (PointOnPlaneSide(p3, line) == IsCeiling) {
+        v1 = p2-p3;
+        v2 = p1-p3;
+      } else {
+        v1 = p1-p3;
+        v2 = p2-p3;
       }
       plane->normal = Normalise(CrossProduct(v1, v2));
-      if (!IsCeiling && plane->normal.z <= 0.0)
-      {
-        Error("Floor with normal.z <= 0.0");
-      }
-      else if (IsCeiling && plane->normal.z >= 0.0)
-      {
-        Error("Ceiling with normal.z >= 0.0");
-      }
+           if (!IsCeiling && plane->normal.z <= 0.0) Error("Floor with normal.z <= 0.0");
+      else if (IsCeiling && plane->normal.z >= 0.0) Error("Ceiling with normal.z >= 0.0");
       plane->dist = DotProduct(plane->normal, p3);
       return;
     }
   }
 }
 
+
 //===========================================================================
 //
 //  SlopeLineToPoint
 //
 //===========================================================================
-
-void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
-{
-  sector_t *sec;
+void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   sec_plane_t *plane;
-  TVec      p1;
-  TVec      p2;
-  int       i;
-  TVec      v1;
-  TVec      v2;
-  TVec      cross;
+  TVec p1, p2;
+  TVec v1, v2;
+  TVec cross;
 
-  sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-  if (!IsCeiling)
-  {
+  sector_t *sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  if (!IsCeiling) {
     plane = &sec->floor;
-  }
-  else
-  {
+  } else {
     plane = &sec->ceiling;
   }
   p1 = vector(mthing->x, mthing->y, 0.0);
-  p1.z = GetPlanePointZ(ref *plane, p1) + mthing->height;
+  p1.z = GetPlanePointZ(ref *plane, p1)+mthing->height;
 
-  for (i = 0; i < InLevel.Lines.length; i++)
-  {
+  foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
-    if (line->LineTag != mthing->arg1)
-    {
-      continue;
-    }
+    if (line->LineTag != mthing->arg1) continue;
 
-    if (PointOnPlaneSide(p1, line) == 0)
-    {
-      sec = line->frontsector;
-    }
-    else
-    {
-      sec = line->backsector;
-    }
-    if (sec == nullptr)
-    {
-      continue;
-    }
-    if (!IsCeiling)
-    {
+    sec = (PointOnPlaneSide(p1, line) == 0 ? line->frontsector : line->backsector);
+    if (sec == nullptr) continue;
+    if (!IsCeiling) {
       plane = &sec->floor;
-    }
-    else
-    {
+    } else {
       plane = &sec->ceiling;
     }
 
     p2 = *line->v1;
     p2.z = GetPlanePointZ(ref *plane, p2);
-    v1 = *line->v2 - *line->v1;
-    v1.z = GetPlanePointZ(ref *plane, *line->v2) - p2.z;
-    v2 = p1 - *line->v1;
-    v2.z = p1.z - p2.z;
+    v1 = (*line->v2)-(*line->v1);
+    v1.z = GetPlanePointZ(ref *plane, *line->v2)-p2.z;
+    v2 = p1-(*line->v1);
+    v2.z = p1.z-p2.z;
 
     cross = CrossProduct(v1, v2);
     float len = Length(cross);
-    if (len == 0.0)
-    {
-      print("Slope thing at (%d,%d) lies directly on its target line.\n",
-        mthing->x, mthing->y);
+    if (len == 0.0) {
+      print("WARNING: slope thing at (%d,%d) lies directly on its target line.", mthing->x, mthing->y);
       return;
     }
-    cross = cross / len;
-    // Fix backward normals
-    if ((cross.z < 0.0 && !IsCeiling) || (cross.z > 0.0 && IsCeiling))
-    {
-      cross = -cross;
-    }
+    cross = cross/len;
+    // fix backward normals
+    if ((cross.z < 0.0 && !IsCeiling) || (cross.z > 0.0 && IsCeiling)) cross = -cross;
 
     plane->normal = cross;
     plane->dist = DotProduct(plane->normal, p1);
@@ -394,88 +329,61 @@ void SlopeLineToPoint(Level InLevel, mthing_t *mthing, bool IsCeiling)
 //  SetSlope
 //
 //===========================================================================
-
-void SetSlope(Level InLevel, mthing_t *mthing, bool IsCeiling)
-{
-  TVec      p1;
+void SetSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+  TVec p1;
   sec_plane_t *plane;
-  sector_t *sec;
-  float     xyang;
-  float     zang;
-  TVec      norm;
+  float xyang;
+  float zang;
+  TVec norm;
 
-  sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  sector_t *sec = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
   if (!sec) FatalError("point (%f,%f) is not in level", mthing->x, mthing->y);
-  if (!IsCeiling)
-  {
+  if (!IsCeiling) {
     plane = &sec->floor;
     //if (plane.normal.z == 0) FatalError("SetSlope: invalid floor in sector #%d (%v)", calcSecIdx(InLevel, sec), plane.normal);
     //print("SetSlope; sector %d (floor); %s; plane.dist=%f; plane.normal=%v", calcSecIdx(InLevel, sec), plane, plane.dist, plane.normal);
-  }
-  else
-  {
+  } else {
     plane = &sec->ceiling;
     //if (plane.normal.z == 0) FatalError("SetSlope: invalid ceiling in sector #%d (%v)", calcSecIdx(InLevel, sec), plane.normal);
     //print("SetSlope; sector %d (ceiling); %s; plane.dist=%f; plane.normal=%v", calcSecIdx(InLevel, sec), plane, plane.dist, plane.normal);
   }
   p1 = vector(mthing->x, mthing->y, 0.0);
-  p1.z = GetPlanePointZ(ref *plane, p1) + mthing->height;
+  p1.z = GetPlanePointZ(ref *plane, p1)+mthing->height;
 
-  if (mthing->arg1 >= 180)
-  {
-    zang = 179.0;
-  }
-  else if (mthing->arg1 <= 0)
-  {
-    zang = 1.0;
-  }
-  else
-  {
-    zang = itof(mthing->arg1);
-  }
-  if (IsCeiling)
-  {
-    zang += 180.0;
-  }
+       if (mthing->arg1 >= 180) zang = 179.0;
+  else if (mthing->arg1 <= 0) zang = 1.0;
+  else zang = float(mthing->arg1);
 
-  xyang = itof(mthing->angle);
+  if (IsCeiling) zang += 180.0;
 
-  norm.x = cos(zang) * cos(xyang);
-  norm.y = cos(zang) * sin(xyang);
+  xyang = float(mthing->angle);
+
+  norm.x = cos(zang)*cos(xyang);
+  norm.y = cos(zang)*sin(xyang);
   norm.z = sin(zang);
   norm = Normalise(norm);
   plane->normal = norm;
   plane->dist = DotProduct(plane->normal, p1);
 }
 
+
 //==========================================================================
 //
 //  SetVertexHeights
 //
 //==========================================================================
+bool SetVertexHeights (Level InLevel, int ThingID) {
+  bool ret = false;
 
-bool SetVertexHeights(Level InLevel, int ThingID)
-{
-  int i;
-  int j;
-  bool ret;
-  mthing_t * mthing;
+  // clean all
+  foreach (auto i; 0..InLevel.Vertexes.length) InLevel.Vertexes[i].z = 0.1;
 
-  ret = false;
-  //  Clean all
-  for (i = 0; i < InLevel.Vertexes.length; i++)
-  {
-    InLevel.Vertexes[i].z = 0.1;
-  }
-  for (j = 0; j < InLevel.Things.length; j++)
-  {
-    mthing = &InLevel.Things[j];
-    if (mthing->type == ThingID)
-    {
-      for (i = 0; i < InLevel.Vertexes.length; i++)
-      {
+  foreach (auto j; 0..InLevel.Things.length) {
+    mthing_t *mthing = &InLevel.Things[j];
+    if (mthing->type == ThingID) {
+      foreach (auto i; 0..InLevel.Vertexes.length) {
         if (InLevel.Vertexes[i].x == mthing->x &&
-          InLevel.Vertexes[i].y == mthing->y)
+            InLevel.Vertexes[i].y == mthing->y)
         {
           InLevel.Vertexes[i].z = mthing->height;
           ret = true;
@@ -484,163 +392,98 @@ bool SetVertexHeights(Level InLevel, int ThingID)
       mthing->type = 0;
     }
   }
+
   return ret;
 }
+
 
 //==========================================================================
 //
 //  CleanVertexHeights
 //
 //==========================================================================
-
-void CleanVertexHeights(Level InLevel)
-{
-  int i;
-
-  for (i = 0; i < InLevel.Vertexes.length; i++)
-  {
-    InLevel.Vertexes[i].z = 0.0;
-  }
+void CleanVertexHeights (Level InLevel) {
+  foreach (auto i; 0..InLevel.Vertexes.length) InLevel.Vertexes[i].z = 0.0;
 }
+
 
 //==========================================================================
 //
 //  MakeVertexFloorHeights
 //
 //==========================================================================
+void MakeVertexFloorHeights (Level InLevel) {
+  TVec p1, p2, p3;
+  TVec v1, v2;
 
-void MakeVertexFloorHeights(Level InLevel)
-{
-  int i;
-  sector_t *sec;
-  TVec p1;
-  TVec p2;
-  TVec p3;
-  TVec v1;
-  TVec v2;
+  if (!SetVertexHeights(InLevel, FLOOR_VERTEX_HEIGHT_TYPE)) return;
 
-  if (!SetVertexHeights(InLevel, FLOOR_VERTEX_HEIGHT_TYPE))
-  {
-    return;
-  }
-  for (i = 0; i < InLevel.Sectors.length; i++)
-  {
-    sec = &InLevel.Sectors[i];
-    if (sec.lines.length != 3)
-      continue;
+  foreach (auto i; 0..InLevel.Sectors.length) {
+    sector_t *sec = &InLevel.Sectors[i];
+    if (sec.lines.length != 3) continue;
     p1 = *sec->lines[0]->v1;
     p2 = *sec->lines[0]->v2;
     if (sec->lines[1]->v1 == sec->lines[0]->v1 ||
-      sec->lines[1]->v1 == sec->lines[0]->v2)
+        sec->lines[1]->v1 == sec->lines[0]->v2)
     {
       p3 = *sec->lines[1]->v2;
-    }
-    else
-    {
+    } else {
       p3 = *sec->lines[1]->v1;
     }
-    if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1)
-    {
-      continue;
-    }
-    if (p1.z == 0.1)
-    {
-      p1.z = sec->floor.TexZ;
-    }
-    if (p2.z == 0.1)
-    {
-      p2.z = sec->floor.TexZ;
-    }
-    if (p3.z == 0.1)
-    {
-      p3.z = sec->floor.TexZ;
-    }
-    if (PointOnPlaneSide(p3, sec->lines[0]) == 0)
-    {
-      v1 = p2 - p3;
-      v2 = p1 - p3;
-    }
-    else
-    {
-      v1 = p1 - p3;
-      v2 = p2 - p3;
+    if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1) continue;
+    if (p1.z == 0.1) p1.z = sec->floor.TexZ;
+    if (p2.z == 0.1) p2.z = sec->floor.TexZ;
+    if (p3.z == 0.1) p3.z = sec->floor.TexZ;
+    if (PointOnPlaneSide(p3, sec->lines[0]) == 0) {
+      v1 = p2-p3;
+      v2 = p1-p3;
+    } else {
+      v1 = p1-p3;
+      v2 = p2-p3;
     }
     sec->floor.normal = Normalise(CrossProduct(v1, v2));
-    if (sec->floor.normal.z <= 0.0)
-    {
-      Error("Floor with normal.z <= 0.0");
-    }
+    if (sec->floor.normal.z <= 0.0) Error("Floor with normal.z <= 0.0");
     sec->floor.dist = DotProduct(sec->floor.normal, p3);
   }
 }
+
 
 //==========================================================================
 //
 //  MakeVertexCeilingHeights
 //
 //==========================================================================
+void MakeVertexCeilingHeights (Level InLevel) {
+  TVec p1, p2, p3;
+  TVec v1, v2;
 
-void MakeVertexCeilingHeights(Level InLevel)
-{
-  int i;
-  sector_t *sec;
-  TVec p1;
-  TVec p2;
-  TVec p3;
-  TVec v1;
-  TVec v2;
+  if (!SetVertexHeights(InLevel, CEILING_VERTEX_HEIGHT_TYPE)) return;
 
-  if (!SetVertexHeights(InLevel, CEILING_VERTEX_HEIGHT_TYPE))
-  {
-    return;
-  }
-  for (i = 0; i < InLevel.Sectors.length; i++)
-  {
-    sec = &InLevel.Sectors[i];
-    if (sec.lines.length != 3)
-      continue;
+  foreach (auto i; 0..InLevel.Sectors.length) {
+    sector_t *sec = &InLevel.Sectors[i];
+    if (sec.lines.length != 3) continue;
     p1 = *sec->lines[0]->v1;
     p2 = *sec->lines[0]->v2;
     if (sec->lines[1]->v1 == sec->lines[0]->v1 ||
-      sec->lines[1]->v1 == sec->lines[0]->v2)
+        sec->lines[1]->v1 == sec->lines[0]->v2)
     {
       p3 = *sec->lines[1]->v2;
-    }
-    else
-    {
+    } else {
       p3 = *sec->lines[1]->v1;
     }
-    if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1)
-    {
-      continue;
-    }
-    if (p1.z == 0.1)
-    {
-      p1.z = sec->ceiling.TexZ;
-    }
-    if (p2.z == 0.1)
-    {
-      p2.z = sec->ceiling.TexZ;
-    }
-    if (p3.z == 0.1)
-    {
-      p3.z = sec->ceiling.TexZ;
-    }
-    if (PointOnPlaneSide(p3, sec->lines[0]) == 0)
-    {
-      v1 = p1 - p3;
-      v2 = p2 - p3;
-    }
-    else
-    {
-      v1 = p2 - p3;
-      v2 = p1 - p3;
+    if (p1.z == 0.1 && p2.z == 0.1 && p3.z == 0.1) continue;
+    if (p1.z == 0.1) p1.z = sec->ceiling.TexZ;
+    if (p2.z == 0.1) p2.z = sec->ceiling.TexZ;
+    if (p3.z == 0.1) p3.z = sec->ceiling.TexZ;
+    if (PointOnPlaneSide(p3, sec->lines[0]) == 0) {
+      v1 = p1-p3;
+      v2 = p2-p3;
+    } else {
+      v1 = p2-p3;
+      v2 = p1-p3;
     }
     sec->ceiling.normal = Normalise(CrossProduct(v1, v2));
-    if (sec->ceiling.normal.z >= 0.0)
-    {
-      Error("Ceiling with normal.z >= 0.0");
-    }
+    if (sec->ceiling.normal.z >= 0.0) Error("Ceiling with normal.z >= 0.0");
     sec->ceiling.dist = DotProduct(sec->ceiling.normal, p3);
   }
 }
@@ -804,15 +647,11 @@ void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srctag, bo
 //
 //===========================================================================
 void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
-  sector_t *dst;
-  sector_t *src;
-  int secnum;
-
-  dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
-  secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
+  sector_t *dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
+  int secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
   if (secnum == -1) return;
 
-  src = &InLevel.Sectors[secnum];
+  sector_t *src = &InLevel.Sectors[secnum];
 
   if (!IsCeiling) {
     dst->floor.normal = src->floor.normal;
@@ -829,57 +668,41 @@ void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 //  SpawnExtraFloors
 //
 //==========================================================================
-
-void SpawnExtraFloors(Level InLevel, line_t * line)
-{
-  int j;
-
-  for (j = 0; j < InLevel.Sectors.length; j++)
-  {
-    if (line->arg1 == InLevel.Sectors[j].tag)
-    {
+void SpawnExtraFloors (Level InLevel, line_t *line) {
+  foreach (auto j; 0..InLevel.Sectors.length) {
+    if (line->arg1 == InLevel.Sectors[j].tag) {
       InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
     }
   }
 }
+
 
 //==========================================================================
 //
 //  MakeContents
 //
 //==========================================================================
-
-void MakeContents(line_t * line)
-{
-  int contents;
-
-  if (!line->arg1 && !line->arg2 && !line->arg3)
-  {
-    contents = 1;//CONTENTS_WATER;
+void MakeContents (line_t *line) {
+  if (!line->arg1 && !line->arg2 && !line->arg3) {
+    int contents = 1;//CONTENTS_WATER;
     line->frontsector->params.contents = contents;
-    if (line->frontsector->floor.dist == -line->frontsector->ceiling.dist)
-    {
-      line->frontsector->floor.Alpha =
-        contents_alpha[contents];
-      line->frontsector->ceiling.Alpha =
-        contents_alpha[contents];
-      line->frontsector->ceiling.flags |=
-        SPF_NOBLOCKING | SPF_NOBLOCKSIGHT | SPF_NOBLOCKSHOOT;
-      line->frontsector->floor.flags |=
-        SPF_NOBLOCKING | SPF_NOBLOCKSIGHT | SPF_NOBLOCKSHOOT;
+    if (line->frontsector->floor.dist == -line->frontsector->ceiling.dist) {
+      line->frontsector->floor.Alpha = contents_alpha[contents];
+      line->frontsector->ceiling.Alpha = contents_alpha[contents];
+      line->frontsector->ceiling.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
+      line->frontsector->floor.flags |= SPF_NOBLOCKING|SPF_NOBLOCKSIGHT|SPF_NOBLOCKSHOOT;
     }
-  }
-  else
-  {
+  } else {
     line->frontsector->params.contents = line->arg1;
 
-    line->frontsector->floor.Alpha = (100.0 - itof(line->arg2)) / 100.0;
-    line->frontsector->ceiling.Alpha = (100.0 - itof(line->arg2)) / 100.0;
+    line->frontsector->floor.Alpha = (100.0-float(line->arg2))/100.0;
+    line->frontsector->ceiling.Alpha = (100.0-float(line->arg2))/100.0;
 
     line->frontsector->ceiling.flags = line->arg3;
     line->frontsector->floor.flags = line->arg3;
   }
 }
+
 
 //==========================================================================
 //
@@ -889,88 +712,57 @@ void MakeContents(line_t * line)
 //  support for drawn heights coming from different sector
 //
 //==========================================================================
-
-void MakeHeightSec(Level InLevel, line_t *Line)
-{
-  sector_t *Sec;
-  int     s;
-
-  Sec = Line->frontsector;
-  Sec->bTransferSource = true;
-  if (Line->arg2 & 2)
-  {
-    Sec->bFakeFloorOnly = true;
-  }
-  if (Line->arg2 & 4)
-  {
-    Sec->bClipFakePlanes = true;
-  }
-  if (Line->arg2 & 8)
-  {
-    Sec->bUnderWater = true;
-  }
-  if (Line->arg2 & 16)
-  {
-    Sec->bIgnoreHeightSec = true;
-  }
-  if (Line->arg2 & 32)
-  {
-    Sec->bNoFakeLight = true;
-  }
-  for (s = InLevel.FindSectorFromTag(Line->arg1, -1); s  >= 0;
-    s = InLevel.FindSectorFromTag(Line->arg1, s))
-  {
-    InLevel.Sectors[s].heightsec = Sec;
-    InLevel.SetHeightSector(&InLevel.Sectors[s], Sec, Line->arg2);
+void MakeHeightSec (Level InLevel, line_t *line) {
+  sector_t *sec = line->frontsector;
+  sec->bTransferSource = true;
+  if (line->arg2&2) sec->bFakeFloorOnly = true;
+  if (line->arg2&4) sec->bClipFakePlanes = true;
+  if (line->arg2&8) sec->bUnderWater = true;
+  if (line->arg2&16) sec->bIgnoreHeightSec = true;
+  if (line->arg2&32) sec->bNoFakeLight = true;
+  for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s  >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
+    InLevel.Sectors[s].heightsec = sec;
+    InLevel.SetHeightSector(&InLevel.Sectors[s], sec, line->arg2);
   }
 }
+
 
 //==========================================================================
 //
 //  SetSectorFriction
 //
 //==========================================================================
+void SetSectorFriction (Level InLevel, int tag, int amount, bool alterFlag) {
+  int OldMoveFactor;
 
-void SetSectorFriction(Level InLevel, int tag, int amount, bool alterFlag)
-{
-  int     s;
-  int     OldFriction;
-  int     OldMoveFactor;
-  float   Friction;
-  float   MoveFactor;
-
-  // An amount of 100 should result in a friction of
-  // ORIG_FRICTION (0xE800)
-  OldFriction = (0x1EB8 * amount) / 0x80 + 0xD001;
+  // an amount of 100 should result in a friction of ORIG_FRICTION (0xE800)
+  int OldFriction = (0x1EB8*amount)/0x80+0xD001;
 
   // killough 8/28/98: prevent odd situations
-  if (OldFriction > 0x10000)
-    OldFriction = 0x10000;
-  if (OldFriction < 0)
-    OldFriction = 0;
+  if (OldFriction > 0x10000) OldFriction = 0x10000;
+  if (OldFriction < 0) OldFriction = 0;
 
-  // The following check might seem odd. At the time of movement,
+  // the following check might seem odd. At the time of movement,
   // the move distance is multiplied by 'friction/0x10000', so a
-  // higher friction value actually means 'less friction'.
+  // higher friction value actually means 'less friction'
 
   // [RH] Twiddled these values so that momentum on ice (with
-  //    friction 0xf900) is the same as in Heretic/Hexen.
-  if (OldFriction >= 0xe800)  // ice
-//    movefactor = ((0x10092 - friction)*(0x70))/0x158;
-    OldMoveFactor = ((0x10092 - OldFriction) * 1024) / 4352 + 568;
-  else
-    OldMoveFactor = ((OldFriction - 0xDB34) * (0xA)) / 0x80;
+  //    friction 0xf900) is the same as in Heretic/Hexen
+  if (OldFriction >= 0xe800) {
+    // ice
+    //movefactor = ((0x10092-friction)*(0x70))/0x158;
+    OldMoveFactor = ((0x10092-OldFriction)*1024)/4352+568;
+  } else {
+    OldMoveFactor = ((OldFriction-0xDB34)*(0xA))/0x80;
+  }
 
   // killough 8/28/98: prevent odd situations
-  if (OldMoveFactor < 32)
-    OldMoveFactor = 32;
+  if (OldMoveFactor < 32) OldMoveFactor = 32;
 
-  Friction = (1.0 - itof(OldFriction) / itof(0x10000)) * 35.0;
-  MoveFactor = itof(OldMoveFactor) / itof(0x10000);
+  float Friction = (1.0-float(OldFriction)/float(0x10000))*35.0;
+  float MoveFactor = float(OldMoveFactor)/float(0x10000);
 
-  for (s = InLevel.FindSectorFromTag(tag, -1); s >= 0;
-    s = InLevel.FindSectorFromTag(tag, s))
-  {
+  for (int s = InLevel.FindSectorFromTag(tag, -1); s >= 0; s = InLevel.FindSectorFromTag(tag, s)) {
     // killough 8/28/98:
     //
     // Instead of spawning thinkers, which are slow and expensive,
@@ -983,61 +775,45 @@ void SetSectorFriction(Level InLevel, int tag, int amount, bool alterFlag)
 
     InLevel.Sectors[s].Friction = Friction;
     InLevel.Sectors[s].MoveFactor = MoveFactor;
-    if (alterFlag)
-    {
-      // When used inside a script, the sectors' friction flags
-      // can be enabled and disabled at will.
-      if (OldFriction == 0xe800)
-      {
+    if (alterFlag) {
+      // when used inside a script, the sectors' friction flags can be enabled and disabled at will
+      if (OldFriction == 0xe800) {
         InLevel.Sectors[s].special &= ~SECSPEC_FRICTION_MASK;
-      }
-      else
-      {
+      } else {
         InLevel.Sectors[s].special |= SECSPEC_FRICTION_MASK;
       }
     }
   }
 }
 
+
 //==========================================================================
 //
 //  StaticInit
 //
 //==========================================================================
+void StaticInit (Level InLevel, line_t *line) {
+  float Grav;
+  int Dmg;
 
-void StaticInit(Level InLevel, line_t *line)
-{
-  int     s;
-  float   Grav;
-  int     Dmg;
-
-  switch (line->arg2)
-  {
-  case 0:
-    Grav = Length(*line->v2 - *line->v1) / 100.0;
-    for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
-      s = InLevel.FindSectorFromTag(line->arg1, s))
-    {
-      InLevel.Sectors[s].Gravity = Grav;
-    }
-    break;
-
-  case 2:
-    Dmg = ftoi(Length(*line->v2 - *line->v1));
-    for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
-      s = InLevel.FindSectorFromTag(line->arg1, s))
-    {
-      InLevel.Sectors[s].Damage = Dmg;
-    }
-    break;
-
-  case 255:
-    for (s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0;
-      s = InLevel.FindSectorFromTag(line->arg1, s))
-    {
-      InLevel.Sectors[s].Sky = (line->sidenum[0] + 1) | SKY_FROM_SIDE;
-    }
-    break;
+  switch (line->arg2) {
+    case 0:
+      Grav = Length((*line->v2)-(*line->v1))/100.0;
+      for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
+        InLevel.Sectors[s].Gravity = Grav;
+      }
+      break;
+    case 2:
+      Dmg = int(Length((*line->v2)-(*line->v1)));
+      for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
+        InLevel.Sectors[s].Damage = Dmg;
+      }
+      break;
+    case 255:
+      for (int s = InLevel.FindSectorFromTag(line->arg1, -1); s >= 0; s = InLevel.FindSectorFromTag(line->arg1, s)) {
+        InLevel.Sectors[s].Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
+      }
+      break;
   }
 }
 
@@ -1047,55 +823,43 @@ void StaticInit(Level InLevel, line_t *line)
 //  SpawnWorld
 //
 //==========================================================================
+override void SpawnWorld (Level InLevel) {
+  int length;
+  int SecNum;
+  float alpha;
 
-override void SpawnWorld(Level InLevel)
-{
-  int     i;
-  int     j;
-  int     length;
-  int     SecNum;
-  float   alpha;
-  mthing_t *mthing;
-  line_t *line;
-
-  //  Set up tagged lines.
-  if (!InLevel.bTextMap)
-  {
-    for (i = 0; i < InLevel.Lines.length; i++)
-    {
-      line = &InLevel.Lines[i];
-      switch (line->special)
-      {
-      case LNSPEC_LineSetIdentification:
-        line->special = 0;
-        line->LineTag = line->arg1 + (line->arg5 << 8);
-        line->flags |= line->arg2 << 16;
-        break;
-      case LNSPEC_LineTranslucent:
-        line->LineTag = line->arg1;
-        line->flags |= line->arg4 << 16;
-        break;
-      case LNSPEC_TeleportLine:
-      case LNSPEC_ScrollTextureModel:
-        line->LineTag = line->arg1;
-        break;
-      case LNSPEC_PolyStartLine:
-        line->LineTag = line->arg4;
-        break;
-      case LNSPEC_PolyExplicitLine:
-        line->LineTag = line->arg5;
-        break;
-      case LNSPEC_StaticInit:
-        if (line->arg2 == 3)
-        {
+  // set up tagged lines
+  if (!InLevel.bTextMap) {
+    foreach (auto i; 0..InLevel.Lines.length) {
+      line_t *line = &InLevel.Lines[i];
+      switch (line->special) {
+        case LNSPEC_LineSetIdentification:
+          line->special = 0;
+          line->LineTag = line->arg1+(line->arg5<<8);
+          line->flags |= line->arg2<<16;
+          break;
+        case LNSPEC_LineTranslucent:
           line->LineTag = line->arg1;
-        }
-        break;
+          line->flags |= line->arg4<<16;
+          break;
+        case LNSPEC_TeleportLine:
+        case LNSPEC_ScrollTextureModel:
+          line->LineTag = line->arg1;
+          break;
+        case LNSPEC_PolyStartLine:
+          line->LineTag = line->arg4;
+          break;
+        case LNSPEC_PolyExplicitLine:
+          line->LineTag = line->arg5;
+          break;
+        case LNSPEC_StaticInit:
+          if (line->arg2 == 3) line->LineTag = line->arg1;
+          break;
       }
     }
   }
 
-  //  Spawn slopes.
+  // spawn slopes
   SetSlopes(InLevel);
 
   // order:
@@ -1113,8 +877,8 @@ override void SpawnWorld(Level InLevel)
   //   FLOOR_VERTEX_HEIGHT_TYPE
   //   CEILING_VERTEX_HEIGHT_TYPE
 
-  for (i = 0; i < InLevel.Things.length; i++) {
-    mthing = &InLevel.Things[i];
+  foreach (auto i; 0..InLevel.Things.length) {
+    mthing_t *mthing = &InLevel.Things[i];
     switch (mthing->type) {
       case FLOOR_SLOPE_TYPE:
         //print("SLOPE: FLOOR_SLOPE_TYPE");
@@ -1149,12 +913,12 @@ override void SpawnWorld(Level InLevel)
       }
   }
 
-  for (i = 0; i < InLevel.Things.length; i++) {
-    mthing = &InLevel.Things[i];
+  foreach (auto i; 0..InLevel.Things.length) {
+    mthing_t *mthing = &InLevel.Things[i];
     if (mthing->type == COPY_FLOOR_PLANE_TYPE ||
         mthing->type == COPY_CEILING_PLANE_TYPE)
     {
-      CopyPlaneWithThing(InLevel, mthing, mthing->type & 1);
+      CopyPlaneWithThing(InLevel, mthing, mthing->type&1);
       mthing->type = 0;
     }
   }
@@ -1166,8 +930,8 @@ override void SpawnWorld(Level InLevel)
   ProcessCopySlopes(InLevel);
 
   // set up 3D floors, transfers of light, etc.
-  for (i = 0; i < InLevel.Lines.length; i++) {
-    line = &InLevel.Lines[i];
+  foreach (auto i; 0..InLevel.Lines.length) {
+    line_t *line = &InLevel.Lines[i];
     switch (line->special) {
       case LNSPEC_SectorSet3dFloor:
         SpawnExtraFloors(InLevel, line);
@@ -1202,7 +966,7 @@ override void SpawnWorld(Level InLevel)
           // allow setting friction amount from parameter
           length = line->arg2 <= 200 ? line->arg2 : 200;
         } else {
-          length = ftoi(Length(*line->v2 - *line->v1));
+          length = int(Length((*line->v2)-(*line->v1)));
         }
         SetSectorFriction(InLevel, line->arg1, length, false);
         line->special = 0;
@@ -1219,7 +983,7 @@ override void SpawnWorld(Level InLevel)
   }
 
   // initialise initial friction values
-  for (i = 0; i < InLevel.Sectors.length; i++) {
+  foreach (auto i; 0..InLevel.Sectors.length) {
     InLevel.Sectors[i].Friction = EntityEx::FRICTION_NORMAL;
     // handle Sky2 sector special
     if (InLevel.Sectors[i].special == SECSPEC_Sky2) {
@@ -1228,13 +992,13 @@ override void SpawnWorld(Level InLevel)
   }
 
   // process translucent lines
-  for (i = 0; i < InLevel.Lines.length; i++) {
-    line = &InLevel.Lines[i];
+  foreach (auto i; 0..InLevel.Lines.length) {
+    line_t *line = &InLevel.Lines[i];
     switch (line->special) {
       case LNSPEC_LineTranslucent:
         alpha = fclamp(float(line->arg2)/255.0, 0, 255);
         if (line->arg1) {
-          for (j = 0; j < InLevel.Lines.length; ++j) {
+          foreach (auto j; 0..InLevel.Lines.length) {
             if (InLevel.Lines[j].LineTag == line->arg1) {
               InLevel.Lines[j].alpha = alpha;
               if (line->arg3 == 1) InLevel.Lines[j].flags |= ML_ADDITIVE;
@@ -1253,8 +1017,8 @@ override void SpawnWorld(Level InLevel)
   }
 
   // spawn polyobjects
-  for (i = 0; i < InLevel.Things.length; i++) {
-    mthing = &InLevel.Things[i];
+  foreach (auto i; 0..InLevel.Things.length) {
+    mthing_t *mthing = &InLevel.Things[i];
     switch (mthing->type) {
       case PO_SPAWN_TYPE_HEXEN:
       case PO_SPAWNCRUSH_TYPE_HEXEN:
@@ -1271,7 +1035,6 @@ override void SpawnWorld(Level InLevel)
           mthing->type == PO_SPAWNHURT_TYPE);
         mthing->type = 0;
         break;
-
       case PO_ANCHOR_TYPE_HEXEN:
         if (!bUseHexenPolyobjTypes) break;
         goto case; //k8: is it right???
@@ -1449,15 +1212,15 @@ defaultproperties {
   contents_alpha[7] = 0.7;
   contents_alpha[8] = 0.7;
 
-  windTab[0] = 5.0 / 32.0;
-  windTab[1] = 10.0 / 32.0;
-  windTab[2] = 25.0 / 32.0;
+  windTab[0] = 5.0/32.0;
+  windTab[1] = 10.0/32.0;
+  windTab[2] = 25.0/32.0;
 
-  pushTab[0] = 5.0 * 35.0 * 35.0 / 32.0;
-  pushTab[1] = 10.0 * 35.0 * 35.0 / 32.0;
-  pushTab[2] = 25.0 * 35.0 * 35.0 / 32.0;
-  pushTab[3] = 30.0 * 35.0 * 35.0 / 32.0;
-  pushTab[4] = 35.0 * 35.0 * 35.0 / 32.0;
+  pushTab[0] = 5.0*35.0*35.0/32.0;
+  pushTab[1] = 10.0*35.0*35.0/32.0;
+  pushTab[2] = 25.0*35.0*35.0/32.0;
+  pushTab[3] = 30.0*35.0*35.0/32.0;
+  pushTab[4] = 35.0*35.0*35.0/32.0;
 
   opposite[0] = DI_WEST;
   opposite[1] = DI_SOUTHWEST;
