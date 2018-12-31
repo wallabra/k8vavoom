@@ -62,49 +62,38 @@
 //**  args[4] = high byte of next node's tid
 //**
 //**************************************************************************
-
-class InterpolationPoint : Actor
-  __mobjinfo__(9070);
+class InterpolationPoint : Actor __mobjinfo__(9070);
 
 InterpolationPoint NextPoint;
+
 
 //==========================================================================
 //
 //  FormChain
 //
 //==========================================================================
-
-void FormChain()
-{
-  InterpolationPoint A;
-
-  if (bAmbush)
-    return;
+void FormChain () {
+  if (bAmbush) return;
 
   bAmbush = true;
 
-  foreach AllThinkers(InterpolationPoint, A)
-  {
-    if (A.TID != Args[3] + 256 * Args[4])
-      continue;
-    if (A == self)  // Don't link to self
-      continue;
+  InterpolationPoint A;
+  foreach AllThinkers(InterpolationPoint, A) {
+    if (A.TID != Args[3]+256*Args[4]) continue;
+    if (A == self) continue; // don't link to self
     NextPoint = A;
     break;
   }
 
-  if (NextPoint == none && (Args[3] | Args[4]))
-    print("Can't find target for camera node %d", TID);
+  if (NextPoint == none && (Args[3]|Args[4])) print("Can't find target for camera node %d", TID);
 
   Angles.pitch = itof(Args[0]);
-  if (Angles.pitch <= -90.0)
-    Angles.pitch = -89.0;
-  else if (Angles.pitch >= 90.0)
-    Angles.pitch = 89.0;
+       if (Angles.pitch <= -90.0) Angles.pitch = -89.0;
+  else if (Angles.pitch >= 90.0) Angles.pitch = 89.0;
 
-  if (NextPoint != none)
-    NextPoint.FormChain();
+  if (NextPoint != none) NextPoint.FormChain();
 }
+
 
 //==========================================================================
 //
@@ -113,20 +102,17 @@ void FormChain()
 //  Return the node (if any) where a path loops, relative to this one.
 //
 //==========================================================================
-
-InterpolationPoint ScanForLoop()
-{
+InterpolationPoint ScanForLoop () {
   InterpolationPoint node = self;
-  while (node.NextPoint && node.NextPoint != self && node.Special1 == 0)
-  {
+  while (node.NextPoint && node.NextPoint != self && node.Special1 == 0) {
     node.Special1 = 1;
     node = node.NextPoint;
   }
-  return node.NextPoint ? node : none;
+  return (node && node.NextPoint ? node : none);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoGravity = true;
   bNoSplash = true;

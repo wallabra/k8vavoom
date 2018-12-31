@@ -247,9 +247,6 @@ enum {
 #include "Bridge.vc"
 #include "ZBridge.vc"
 #include "InvisibleBridge.vc"
-#include "InvisibleBridge32.vc"
-#include "InvisibleBridge16.vc"
-#include "InvisibleBridge8.vc"
 
 #include "SkyViewpoint.vc"
 #include "SkyPicker.vc"

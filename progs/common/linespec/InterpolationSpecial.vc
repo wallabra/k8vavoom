@@ -57,12 +57,10 @@
 //**  PathFollower reaches an InterpolationPoint of the same TID.
 //**
 //**************************************************************************
+class InterpolationSpecial : Actor __mobjinfo__(9075);
 
-class InterpolationSpecial : Actor
-  __mobjinfo__(9075);
 
-defaultproperties
-{
+defaultproperties {
   bNoBlockmap = true;
   bNoSector = true;
   bNoSplash = true;

@@ -22,33 +22,23 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class IceChunk : Actor;
+
 
 //============================================================================
 //
 //  A_IceSetTics
 //
 //============================================================================
-
-final void A_IceSetTics()
-{
-  VTerrainInfo *floor;
-
-  StateTime = 2.0 + Random() * 2.0;
-  floor = GetFloorType();
-  if (floor->DamageType == 'lava')
-  {
-    StateTime /= 4.0;
-  }
-  else if (floor->DamageType == 'ice')
-  {
-    StateTime *= 2.0;
-  }
+final void A_IceSetTics () {
+  StateTime = 2.0+Random()*2.0;
+  VTerrainInfo *floor = GetFloorType();
+       if (nameicmp(floor->DamageType, 'lava') == 0) StateTime /= 4.0;
+  else if (nameicmp(floor->DamageType, 'ice') == 0) StateTime *= 2.0;
 }
 
-states
-{
+
+states {
 Spawn:
   ICEC A 10
   ICEC B 10 A_IceSetTics
@@ -57,8 +47,8 @@ Spawn:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Radius = 3.0;
   Height = 4.0;
   Gravity = 0.125;

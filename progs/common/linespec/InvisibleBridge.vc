@@ -22,38 +22,29 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class InvisibleBridge : Actor __mobjinfo__(9990);
 
-class InvisibleBridge : Actor
-  __mobjinfo__(9990);
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
-  if (Args[0])
-  {
-    Radius = itof(Args[0]);
-  }
-  if (Args[1])
-  {
-    Height = itof(Args[1]);
-  }
+  if (Args[0]) Radius = itof(Args[0]);
+  if (Args[1]) Height = itof(Args[1]);
 }
 
-states
-{
+
+states {
 Spawn:
   TNT1 A -1
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Radius = 32.0;
   Height = 4.0;
   RenderStyle = STYLE_None;
@@ -61,4 +52,28 @@ defaultproperties
   bNoGravity = true;
   bNoLiftDrop = true;
   bActLikeBridge = true;
+}
+
+
+class InvisibleBridge8 : InvisibleBridge __mobjinfo__(5065);
+
+defaultproperties {
+  Radius = 8.0;
+  Height = 8.0;
+}
+
+
+class InvisibleBridge16 : InvisibleBridge __mobjinfo__(5064);
+
+defaultproperties {
+  Radius = 16.0;
+  Height = 8.0;
+}
+
+
+class InvisibleBridge32 : InvisibleBridge __mobjinfo__(5061);
+
+defaultproperties {
+  Radius = 32.0;
+  Height = 8.0;
 }

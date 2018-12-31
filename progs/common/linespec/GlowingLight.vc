@@ -26,13 +26,13 @@
 //**  GLOWING LIGHT
 //**
 //**************************************************************************
-
 class GlowingLight : Lighting;
 
-float   Speed;
-int     Direction;
-int     MaxLight;
-int     MinLight;
+float Speed;
+int Direction;
+int MaxLight;
+int MinLight;
+
 
 //==========================================================================
 //
@@ -41,9 +41,7 @@ int     MinLight;
 //  Initialise glowing light
 //
 //==========================================================================
-
-void Init(sector_t *InSector)
-{
+void Init (sector_t *InSector) {
   Sector = InSector;
   Sector->LightingData = self;
 
@@ -52,39 +50,34 @@ void Init(sector_t *InSector)
   Direction = -1;
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  switch (Direction)
-  {
-  case -1:
-    // DOWN
-    Sector->params.lightlevel -= ftoi(Speed * DeltaTime);
-    if (Sector->params.lightlevel <= MinLight)
-    {
-      Sector->params.lightlevel += ftoi(Speed * DeltaTime);
-      Direction = 1;
-    }
-    break;
-
-  case 1:
-    // UP
-    Sector->params.lightlevel += ftoi(Speed * DeltaTime);
-    if (Sector->params.lightlevel >= MaxLight)
-    {
-      Sector->params.lightlevel -= ftoi(Speed * DeltaTime);
-      Direction = -1;
-    }
-    break;
+override void Tick (float DeltaTime) {
+  switch (Direction) {
+    case -1:
+      // down
+      Sector->params.lightlevel -= ftoi(Speed*DeltaTime);
+      if (Sector->params.lightlevel <= MinLight) {
+        Sector->params.lightlevel += ftoi(Speed*DeltaTime);
+        Direction = 1;
+      }
+      break;
+    case 1:
+      // up
+      Sector->params.lightlevel += ftoi(Speed*DeltaTime);
+      if (Sector->params.lightlevel >= MaxLight) {
+        Sector->params.lightlevel -= ftoi(Speed*DeltaTime);
+        Direction = -1;
+      }
+      break;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Speed = 256.0;
 }

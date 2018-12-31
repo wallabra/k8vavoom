@@ -22,37 +22,29 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class GlassShard : Actor abstract;
 
-class GlassShard : Actor
-  abstract;
 
 //==========================================================================
 //
 //  FloorBounceMissile
 //
 //==========================================================================
-
-override void FloorBounceMissile()
-{
-  if (HitFloorType())
-  {
+override void FloorBounceMissile () {
+  if (HitFloorType()) {
     Destroy();
     return;
   }
-  Velocity.z = Velocity.z * -0.3;
-  if (fabs(Velocity.z) < 0.5 * 35.0)
-  {
+  Velocity.z = Velocity.z*(-0.3);
+  if (fabs(Velocity.z) < 0.5*35.0) {
     SetState(none);
     return;
   }
-  Velocity.x = 2.0 * Velocity.x / 3.0;
-  Velocity.y = 2.0 * Velocity.y / 3.0;
-  if (SightSound)
-  {
-    PlaySound(SightSound, CHAN_VOICE);
-  }
+  Velocity.x = 2.0*Velocity.x/3.0;
+  Velocity.y = 2.0*Velocity.y/3.0;
+  if (SightSound) PlaySound(SightSound, CHAN_VOICE);
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
