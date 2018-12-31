@@ -1986,6 +1986,9 @@ VExpression *VParser::ParseLambda () {
   if (Lex.Token != TK_RParen) {
     for (;;) {
       VMethodParam &P = Func->Params[Func->NumParams];
+      int ParmModifiers = TModifiers::Parse(Lex);
+      Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(
+            ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
       P.TypeExpr = ParseTypeWithPtrs(true);
       if (!P.TypeExpr) break;
       if (Lex.Token == TK_Identifier) {
