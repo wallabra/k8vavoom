@@ -116,7 +116,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
   ScriptEndPtr = ScriptPtr+ScriptSize;
 
   // skip garbage some editors add in the begining of UTF-8 files
-  if ((vuint8)ScriptPtr[0] == 0xef && (vuint8)ScriptPtr[1] == 0xbb && (vuint8)ScriptPtr[2] == 0xbf) ScriptPtr += 3;
+  if (*(const vuint8 *)ScriptPtr == 0xef && *(const vuint8 *)(ScriptPtr+1) == 0xbb && *(const vuint8 *)(ScriptPtr+2) == 0xbf) ScriptPtr += 3;
 }
 
 
@@ -151,7 +151,7 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
   ScriptEndPtr = ScriptPtr+ScriptSize;
 
   // skip garbage some editors add in the begining of UTF-8 files
-  if ((vuint8)ScriptPtr[0] == 0xef && (vuint8)ScriptPtr[1] == 0xbb && (vuint8)ScriptPtr[2] == 0xbf) ScriptPtr += 3;
+  if (*(const vuint8 *)ScriptPtr == 0xef && *(const vuint8 *)(ScriptPtr+1) == 0xbb && *(const vuint8 *)(ScriptPtr+2) == 0xbf) ScriptPtr += 3;
 }
 
 
@@ -211,7 +211,7 @@ VScriptParser *VScriptParser::clone () const {
 bool VScriptParser::IsText () {
   int i = 0;
   while (i < ScriptSize) {
-    vuint8 ch = ScriptBuffer[i++];
+    vuint8 ch = *(const vuint8 *)(ScriptBuffer+(i++));
     if (ch == 127) return false;
     if (ch < ' ' && ch != '\n' && ch != '\r' && ch != '\t') return false;
     if (ch < 128) continue;
@@ -269,7 +269,7 @@ bool VScriptParser::IsAtEol () {
         inComment = true;
         continue;
       }
-      if ((vuint8)(*s) > ' ') return false;
+      if (*(const vuint8 *)s > ' ') return false;
     } else {
       // in multiline comment
       if (s[0] == '*' && s[1] == '/') {
@@ -307,7 +307,7 @@ bool VScriptParser::GetString () {
   bool foundToken = false;
   while (!foundToken) {
     // skip whitespace
-    while ((vuint8)*ScriptPtr <= 32) {
+    while (*(const vuint8 *)ScriptPtr <= 32) {
       if (ScriptPtr >= ScriptEndPtr) {
         End = true;
         return false;
