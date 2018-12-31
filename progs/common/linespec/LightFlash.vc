@@ -26,23 +26,21 @@
 //**  BROKEN LIGHT FLASHING
 //**
 //**************************************************************************
-
 class LightFlash : Lighting;
 
-float   Time;
-int     MaxLight;
-int     MinLight;
-int     MaxTime;
-int     MinTime;
+float Time;
+int MaxLight;
+int MinLight;
+int MaxTime;
+int MinTime;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-void Init(sector_t *InSector)
-{
+void Init (sector_t *InSector) {
   Sector = InSector;
   Sector->LightingData = self;
 
@@ -50,38 +48,30 @@ void Init(sector_t *InSector)
   MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
   MaxTime = 64;
   MinTime = 7;
-  Time = itof((P_Random() & MaxTime) + 1) / 35.0;
+  Time = itof((P_Random()&MaxTime)+1)/35.0;
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
-//  Do flashing lights.
+//  do flashing lights
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   Time -= DeltaTime;
-  if (Time >= 0.0)
-  {
-    return;
-  }
+  if (Time >= 0.0) return;
 
-  if (Sector->params.lightlevel == MaxLight)
-  {
+  if (Sector->params.lightlevel == MaxLight) {
     Sector->params.lightlevel = MinLight;
-    Time = itof((P_Random() & MinTime) + 1) / 35.0;
-  }
-  else
-  {
+    Time = itof((P_Random()&MinTime)+1)/35.0;
+  } else {
     Sector->params.lightlevel = MaxLight;
-    Time = itof((P_Random() & MaxTime) + 1) / 35.0;
+    Time = itof((P_Random()&MaxTime)+1)/35.0;
   }
-
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

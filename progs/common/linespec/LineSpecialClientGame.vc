@@ -22,50 +22,44 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class LineSpecialClientGame : ClientGameBase abstract;
 
-class LineSpecialClientGame : ClientGameBase
-  abstract;
 
 //==========================================================================
 //
 //  StartSpeech
 //
 //==========================================================================
-
-void StartSpeech(EntityEx Speaker, int SpeechNum)
-{
+void StartSpeech (EntityEx Speaker, int SpeechNum) {
 }
+
 
 //==========================================================================
 //
 //  StartConSlideshow1
 //
 //==========================================================================
-
-void StartConSlideshow1()
-{
+void StartConSlideshow1 () {
 }
+
 
 //==========================================================================
 //
 //  StartConSlideshow2
 //
 //==========================================================================
-
-void StartConSlideshow2()
-{
+void StartConSlideshow2 () {
 }
+
 
 //==========================================================================
 //
 //  SetFinaleType
 //
 //==========================================================================
-
-void SetFinaleType(int FinaleType)
-{
+void SetFinaleType (int FinaleType) {
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

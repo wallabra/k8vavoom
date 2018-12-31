@@ -26,10 +26,8 @@
 //**  Base class for all lighting effects.
 //**
 //**************************************************************************
+class Lighting : SectorThinker abstract;
 
-class Lighting : SectorThinker
-  abstract;
 
-defaultproperties
-{
+defaultproperties {
 }
