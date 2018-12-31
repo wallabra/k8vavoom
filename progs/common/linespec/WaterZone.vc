@@ -26,25 +26,22 @@
 //**  Actor that makes BOOM water swimable.
 //**
 //**************************************************************************
+class WaterZone : Actor __mobjinfo__(9045);
 
-class WaterZone : Actor
-  __mobjinfo__(9045);
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
   Sector->bUnderWater = true;
   Destroy();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
   bNoGravity = true;

@@ -22,21 +22,17 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class ZBridge : Actor game(GAME_Doom) __mobjinfo__(118) __scriptid__(21);
 
-class ZBridge : Actor
-  game(GAME_Doom)
-  __mobjinfo__(118)
-  __scriptid__(21);
 
-states
-{
+states {
 Spawn:
   TLGL ABCDE 4
   Loop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Radius = 36.0;
   Height = 4.0;
   bSolid = true;
