@@ -22,113 +22,86 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class RandomSpawner : Actor
-  abstract;
+class RandomSpawner : Actor abstract;
 
 const int MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough...
 
 //!int BounceCount;
+
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   int n = 0, i = 0;
   bool IsBoss = false;
   Entity NewEntity;
 
   ::BeginPlay();
-  if (DropItemList.Num)
-  {
-    while (i < DropItemList.Num)
-    {
-      if (DropItemList[i].Type)
-      {
-        if (DropItemList[i].Amount <= 0)
-        {
+  if (DropItemList.length) {
+    while (i < DropItemList.length) {
+      if (DropItemList[i].Type) {
+        if (DropItemList[i].Amount <= 0) {
           // default value is negative, we need a positive value.
           DropItemList[i].Amount = 1;
         }
         // this is how we can weight the list.
         n += DropItemList[i].Amount;
-        i++;
-      }
-      else
-      {
-        // Send a warning that this class can't be found and continue the loop
-        print("WARNING: RandomSpawner type definition is incorrect at element %i", DropItemList.Num - i);
-        // Show that there's a problem.
+        ++i;
+      } else {
+        // send a warning that this class can't be found and continue the loop
+        print("WARNING: RandomSpawner type definition is incorrect at element %i", DropItemList.length-i);
+        // show that there's a problem.
         Spawn(Unknown, Origin, default, default, false);
         Destroy();
         return;
       }
     }
-    // Then we reset the iterator to the start position...
+    // then we reset the iterator to the start position...
     i = 0;
-    // Take a random number...
-    n = P_Random() % n;
-    // And iterate in the array up to the random number chosen.
-    while (n > -1)
-    {
-      if (DropItemList[i].Type)
-      {
+    // take a random number...
+    n = P_Random()%n;
+    // and iterate in the array up to the random number chosen
+    while (n > -1) {
+      if (DropItemList[i].Type) {
         n -= DropItemList[i].Amount;
-        if ((i + 1) < DropItemList.Num && (n > -1))
-        {
-          i++;
-        }
-        else
-        {
+        if (i+1 < DropItemList.length && n > -1) {
+          ++i;
+        } else {
           n = -1;
         }
       }
     }
-    //
     // ...and we can spawn the dropped item...
-    //
 
-    // Prevent infinite recursions
-    if (BounceCount >= MAX_RANDOMSPAWNERS_RECURSION)
-    {
-      // Show that there's a problem.
+    // prevent infinite recursions
+    if (BounceCount >= MAX_RANDOMSPAWNERS_RECURSION) {
+      // show that there's a problem
       Spawn(Unknown, Origin, default, default, false);
       Destroy();
       return;
-    }
-    else if (Random() <= DropItemList[i].Chance)
-    {
+    } else if (Random() <= DropItemList[i].Chance) {
       class!EntityEx cls = class!EntityEx(FindClass(GetClassName(GetClassReplacement(DropItemList[i].Type))));
 
-      if (!cls)
-      {
-        // Show that there's a problem.
+      if (!cls) {
+        // show that there's a problem
         Spawn(Unknown, Origin, default, default, false);
         Destroy();
         return;
       }
 
-      if (bMissile && Target && Target.Target)
-      {
-        // Attempting to spawn a missile.
-        if (!Tracer && bSeekerMissile)
-        {
-          Tracer = Target;
-        }
+      if (bMissile && Target && Target.Target) {
+        // attempting to spawn a missile
+        if (!Tracer && bSeekerMissile) Tracer = Target;
         NewEntity = SpawnMissileXYZ(Origin, Target, cls);
-      }
-      else
-      {
+      } else {
         NewEntity = Spawn(cls, Origin, default, default, false);
       }
 
-      if (NewEntity)
-      {
-        // Copy everything that is relevant
+      if (NewEntity) {
+        // copy everything that is relevant
         NewEntity.Angles = Angles;
         NewEntity.Origin = Origin;
         NewEntity.Special = Special;
@@ -146,94 +119,62 @@ override void BeginPlay()
         EntityEx(NewEntity).Species = Species;
         EntityEx(NewEntity).CopyFriendliness(self, false);
 
-        // Copy Map Spawn flags
+        // copy map spawn flags
         EntityEx(NewEntity).bAmbush = bAmbush;
         EntityEx(NewEntity).bStanding = bStanding;
-        if (bDormant)
-        {
-          EntityEx(NewEntity).Deactivate(none);
-        }
-        if (bShadow && RenderStyle == STYLE_Translucent && Alpha == 0.25)
-        {
+        if (bDormant) EntityEx(NewEntity).Deactivate(none);
+        if (bShadow && RenderStyle == STYLE_Translucent && Alpha == 0.25) {
           EntityEx(NewEntity).bShadow = true;
           EntityEx(NewEntity).RenderStyle = STYLE_Translucent;
           EntityEx(NewEntity).Alpha = 0.25;
         }
-        if (RenderStyle == STYLE_None)
-        {
-          EntityEx(NewEntity).RenderStyle = STYLE_None;
-        }
+        if (RenderStyle == STYLE_None) EntityEx(NewEntity).RenderStyle = STYLE_None;
 
-        // This handles things such as projectiles with the MF4_SPECTRAL flag that have
-        // a health set to -2 after spawning, for internal reasons.
-        if (Health != default.Health)
-        {
-          NewEntity.Health = Health;
-        }
-        if (NewEntity.IsA('Inventory'))
-        {
+        // this handles things such as projectiles with the MF4_SPECTRAL flag that have
+        // a health set to -2 after spawning, for internal reasons
+        if (Health != default.Health) NewEntity.Health = Health;
+        if (NewEntity.IsA('Inventory')) {
           EntityEx(NewEntity).bDropped = bDropped;
-        }
-        else
-        {
+        } else {
           EntityEx(NewEntity).bDropped = false;
         }
-        // Handle special altitude flags
-        if (EntityEx(NewEntity).bSpawnCeiling)
-        {
-          NewEntity.Origin.z = NewEntity.CeilingZ - NewEntity.Height;
-        }
-        else if (EntityEx(NewEntity).bSpawnFloat)
-        {
-          NewEntity.Origin.z = FLOATRANDZ;
-        }
-        if (EntityEx(NewEntity).bMissile)
-        {
-          EntityEx(NewEntity).CheckMissileSpawn();
-        }
+        // handle special altitude flags
+             if (EntityEx(NewEntity).bSpawnCeiling) NewEntity.Origin.z = NewEntity.CeilingZ-NewEntity.Height;
+        else if (EntityEx(NewEntity).bSpawnFloat) NewEntity.Origin.z = FLOATRANDZ;
+        if (EntityEx(NewEntity).bMissile) EntityEx(NewEntity).CheckMissileSpawn();
 
-        // Bouncecount is used to count how many recursions we're in.
-        if (NewEntity.IsA('RandomSpawner'))
-        {
-          RandomSpawner(NewEntity).BounceCount = ++BounceCount;
-        }
-        // If the spawned actor has either of those flags, it's a boss.
-        if (EntityEx(NewEntity).bBossDeath || EntityEx(NewEntity).bBoss)
-        {
-          IsBoss = true;
-        }
+        // bouncecount is used to count how many recursions we're in
+        if (NewEntity.IsA('RandomSpawner')) RandomSpawner(NewEntity).BounceCount = ++BounceCount;
+
+        // if the spawned actor has either of those flags, it's a boss
+        if (EntityEx(NewEntity).bBossDeath || EntityEx(NewEntity).bBoss) IsBoss = true;
       }
     }
-    if (NewEntity && IsBoss)
-    {
+    if (NewEntity && IsBoss) {
       Tracer = EntityEx(NewEntity);
-    }
-    else
-    {
+    } else {
       // "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
       Destroy();
     }
   }
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
+override void Tick (float deltaTime) {
   ::Tick(deltaTime);
 
-  if (!Tracer || Tracer.Health <= 0)
-  {
+  if (!Tracer || Tracer.Health <= 0) {
     A_BossDeath();
     Destroy();
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   BounceCount = 0;
 }
