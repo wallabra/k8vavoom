@@ -22,38 +22,28 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class LowerStackLookOnly : StackPoint __mobjinfo__(9078);
 
-class LowerStackLookOnly : StackPoint
-  __mobjinfo__(9078);
 
 //==========================================================================
 //
 //  InitSkyBox
 //
 //==========================================================================
-
-override void InitSkyBox()
-{
+override void InitSkyBox () {
   ::InitSkyBox();
 
   UpperStackLookOnly SkyBox = none;
-  Entity E;
-  for (E = Level.FindMobjFromTID(TID, none); E && !SkyBox;
-    E = Level.FindMobjFromTID(TID, E))
-  {
-    if (UpperStackLookOnly(E))
-    {
-      SkyBox = UpperStackLookOnly(E);
-    }
+  for (Entity E = Level.FindMobjFromTID(TID, none); E && !SkyBox; E = Level.FindMobjFromTID(TID, E)) {
+    if (UpperStackLookOnly(E)) SkyBox = UpperStackLookOnly(E);
   }
   Sector->ceiling.SkyBox = SkyBox;
-  if (SkyBox)
-  {
+  if (SkyBox) {
     SkyBox.Mate = self;
-    SkyBox.PlaneAlpha = itof(Args[0]) / 255.0;
+    SkyBox.PlaneAlpha = itof(Args[0])/255.0;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

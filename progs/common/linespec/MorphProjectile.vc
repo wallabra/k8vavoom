@@ -22,32 +22,29 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class MorphProjectile : Actor abstract;
 
-class MorphProjectile : Actor
-  abstract;
-
-class!Actor    MonsterClass;
+class!Actor MonsterClass;
 class!PlayerPawn PlayerClass;
-float       Duration;
-int         MorphStyle;
-class!Actor    MorphFlash;
-class!Actor    UnmorphFlash;
+float Duration;
+int MorphStyle;
+class!Actor MorphFlash;
+class!Actor UnmorphFlash;
+
 
 //==========================================================================
 //
 //  DoSpecialDamage
 //
 //==========================================================================
-
-override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
-{
+override int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
   victim.Morph(class!MorphedMonster(MonsterClass), PlayerClass, Duration,
-    MorphStyle, MorphFlash, UnmorphFlash);
-  return -1;  // Always return
+               MorphStyle, MorphFlash, UnmorphFlash);
+  return -1; // always return
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MissileDamage = 1;
   bNoBlockmap = true;
   bMissile = true;

@@ -26,39 +26,32 @@
 //**  PILLAR
 //**
 //**************************************************************************
-
 class Pillar : SectorMover;
 
-int     Direction;
-int     Crush;
-float   CeilingSpeed;
-float   FloorSpeed;
-float   FloorDest;
-float   CeilingDest;
+int Direction;
+int Crush;
+float CeilingSpeed;
+float FloorSpeed;
+float FloorDest;
+float CeilingDest;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, bool InCrush)
-{
-  float   NewHeight;
-  TVec    Spot;
-  float   FloorHeight;
-  float   CeilHeight;
+void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, bool InCrush) {
+  float NewHeight;
 
   Sector = InSector;
 
-  Spot = *Sector->lines[0]->v1;
-  FloorHeight = GetPlanePointZ(ref Sector->floor, Spot);
-  CeilHeight = GetPlanePointZ(ref Sector->ceiling, Spot);
+  TVec Spot = *Sector->lines[0]->v1;
+  float FloorHeight = GetPlanePointZ(ref Sector->floor, Spot);
+  float CeilHeight = GetPlanePointZ(ref Sector->ceiling, Spot);
 
-  //  Not so easy.
-  if (FloorHeight == CeilHeight)
-  {
+  // not so easy
+  if (FloorHeight == CeilHeight) {
     // pillar is already closed
     Destroy();
     return;
@@ -67,86 +60,67 @@ void Init(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Sector->FloorData = self;
   Sector->CeilingData = self;
 
-  if (!Arg3)
-  {
-    NewHeight = FloorHeight + ((CeilHeight - FloorHeight) / 2.0);
-  }
-  else
-  {
-    NewHeight = FloorHeight + itof(Arg3);
+  if (!Arg3) {
+    NewHeight = FloorHeight+((CeilHeight-FloorHeight)/2.0);
+  } else {
+    NewHeight = FloorHeight+itof(Arg3);
   }
 
-  if (!Arg3)
-  {
-    FloorSpeed = itof(Arg2) * 35.0 / 8.0;
+  if (!Arg3) {
+    FloorSpeed = itof(Arg2)*35.0/8.0;
     CeilingSpeed = FloorSpeed;
-  }
-  else if (NewHeight - FloorHeight > CeilHeight - NewHeight)
-  {
-    FloorSpeed = itof(Arg2) * 35.0 / 8.0;
-    CeilingSpeed = (CeilHeight - NewHeight) * FloorSpeed /
-      (NewHeight - FloorHeight);
-  }
-  else
-  {
-    CeilingSpeed = itof(Arg2) * 35.0 / 8.0;
-    FloorSpeed = (NewHeight - FloorHeight) * CeilingSpeed /
-      (CeilHeight - NewHeight);
+  } else if (NewHeight-FloorHeight > CeilHeight-NewHeight) {
+    FloorSpeed = itof(Arg2)*35.0/8.0;
+    CeilingSpeed = (CeilHeight-NewHeight)*FloorSpeed/(NewHeight-FloorHeight);
+  } else {
+    CeilingSpeed = itof(Arg2)*35.0/8.0;
+    FloorSpeed = (NewHeight-FloorHeight)*CeilingSpeed/(CeilHeight-NewHeight);
   }
   Spot.z = NewHeight;
   FloorDest = DotProduct(Sector->floor.normal, Spot);
   CeilingDest = DotProduct(Sector->ceiling.normal, Spot);
   Direction = 1;
-  Crush = InCrush * Arg4;
+  Crush = InCrush*Arg4;
   StartFloorSound();
 }
+
 
 //==========================================================================
 //
 //  InitOpen
 //
 //==========================================================================
-
-void InitOpen(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5)
-{
-  TVec    Spot1;
-  TVec    Spot2;
-  float   FloorDestHeight;
-  float   FloorHeight;
-  float   CeilDestHeight;
-  float   CeilHeight;
+void InitOpen (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
+  TVec Spot1;
+  TVec Spot2;
+  float FloorDestHeight;
+  float FloorHeight;
+  float CeilDestHeight;
+  float CeilHeight;
 
   Sector = InSector;
 
-  if (!Arg3)
-  {
+  if (!Arg3) {
     FloorDestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot1);
-  }
-  else
-  {
+  } else {
     Spot1 = *Sector->lines[0]->v1;
-    FloorDestHeight = GetPlanePointZ(ref Sector->floor, Spot1) - itof(Arg3);
+    FloorDestHeight = GetPlanePointZ(ref Sector->floor, Spot1)-itof(Arg3);
   }
   FloorHeight = GetPlanePointZ(ref Sector->floor, Spot1);
   Spot1.z = FloorDestHeight;
   FloorDest = DotProduct(Sector->floor.normal, Spot1);
 
-  if (!Arg4)
-  {
+  if (!Arg4) {
     CeilDestHeight = Level.FindHighestCeilingSurrounding(Sector, &Spot2);
-  }
-  else
-  {
+  } else {
     Spot2 = *Sector->lines[0]->v1;
-    CeilDestHeight = GetPlanePointZ(ref Sector->ceiling, Spot2) + itof(Arg4);
+    CeilDestHeight = GetPlanePointZ(ref Sector->ceiling, Spot2)+itof(Arg4);
   }
   CeilHeight = GetPlanePointZ(ref Sector->ceiling, Spot2);
   Spot2.z = CeilDestHeight;
   CeilingDest = DotProduct(Sector->ceiling.normal, Spot2);
 
-  if (FloorHeight != CeilHeight)
-  {
+  if (FloorHeight != CeilHeight) {
     // pillar isn't closed
     Destroy();
     return;
@@ -155,67 +129,48 @@ void InitOpen(sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Sector->FloorData = self;
   Sector->CeilingData = self;
 
-  if (FloorHeight - FloorDestHeight >= CeilDestHeight - CeilHeight)
-  {
-    FloorSpeed = itof(Arg2) * 35.0 / 8.0;
-    CeilingSpeed = (CeilHeight - CeilDestHeight) * FloorSpeed /
-      (FloorDestHeight - FloorHeight);
-  }
-  else
-  {
-    CeilingSpeed = itof(Arg2) * 35.0 / 8.0;
-    FloorSpeed = (FloorDestHeight - FloorHeight) * CeilingSpeed /
-      (CeilHeight - CeilDestHeight);
+  if (FloorHeight-FloorDestHeight >= CeilDestHeight-CeilHeight) {
+    FloorSpeed = itof(Arg2)*35.0/8.0;
+    CeilingSpeed = (CeilHeight-CeilDestHeight)*FloorSpeed/(FloorDestHeight-FloorHeight);
+  } else {
+    CeilingSpeed = itof(Arg2)*35.0/8.0;
+    FloorSpeed = (FloorDestHeight-FloorHeight)*CeilingSpeed/(CeilHeight-CeilDestHeight);
   }
   Direction = -1; // open the pillar
   StartFloorSound();
 }
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
-  int res1;
-  int res2;
-
-  // First, raise the floor
-  res1 = MovePlane(Sector, FloorSpeed * deltaTime, FloorDest,
-    Crush, 0, Direction, true);
-  // Then, lower the ceiling
-  res2 = MovePlane(Sector, CeilingSpeed * deltaTime,
-    CeilingDest, Crush, 1, -Direction, true);
-  if (res1 == RES_PASTDEST && res2 == RES_PASTDEST)
-  {
+override void Tick (float deltaTime) {
+  // first, raise the floor
+  int res1 = MovePlane(Sector, FloorSpeed*deltaTime, FloorDest, Crush, 0, Direction, true);
+  // then, lower the ceiling
+  int res2 = MovePlane(Sector, CeilingSpeed*deltaTime, CeilingDest, Crush, 1, -Direction, true);
+  if (res1 == RES_PASTDEST && res2 == RES_PASTDEST) {
     SectorStopSequence(Sector);
     Finished();
   }
 }
+
 
 //==========================================================================
 //
 //  StartFloorSound
 //
 //==========================================================================
-
-void StartFloorSound()
-{
-  if (!LineSpecialLevelInfo(Level).DefaultFloorSound ||
-    Sector->seqType >= 0)
-  {
-    SectorStartSequence(Sector, GetSeqTrans(Sector->seqType,
-      SEQ_Platform), 0);
-  }
-  else
-  {
-    SectorStartSequence(Sector, LineSpecialLevelInfo(Level).
-      DefaultFloorSound, 0);
+void StartFloorSound () {
+  if (!LineSpecialLevelInfo(Level).DefaultFloorSound || Sector->seqType >= 0) {
+    SectorStartSequence(Sector, GetSeqTrans(Sector->seqType, SEQ_Platform), 0);
+  } else {
+    SectorStartSequence(Sector, LineSpecialLevelInfo(Level).DefaultFloorSound, 0);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

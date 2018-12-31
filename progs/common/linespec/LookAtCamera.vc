@@ -59,61 +59,45 @@
 //**  args[3] = tid of thing to look at (0 if none)
 //**
 //**************************************************************************
+class LookAtCamera : PathFollower __mobjinfo__(9072);
 
-class LookAtCamera : PathFollower
-  __mobjinfo__(9072);
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
-  EntityEx A;
-
+override void BeginPlay () {
   ::BeginPlay();
-
-  if (Args[3] != 0)
-  {
-    foreach AllThinkers(EntityEx, A)
-    {
-      if (A.TID == Args[3])
-      {
+  if (Args[3] != 0) {
+    EntityEx A;
+    foreach AllThinkers(EntityEx, A) {
+      if (A.TID == Args[3]) {
         Target = A;
         break;
       }
     }
-    if (Target == none)
-    {
-      print("LookAtCamera %d: Can't find thing %d", TID, Args[3]);
-    }
+    if (Target == none) print("LookAtCamera %d: Can't find thing %d", TID, Args[3]);
   }
 }
+
 
 //==========================================================================
 //
 //  Interpolate
 //
 //==========================================================================
-
-override bool Interpolate()
-{
-  TVec delta;
+override bool Interpolate () {
   TAVec ang;
 
-  if (Target == none)
-    return ::Interpolate();
+  if (Target == none) return ::Interpolate();
 
-  if (::Interpolate())
-  {
-    delta = Target.GetCentre() - Origin;
+  if (::Interpolate()) {
+    TVec delta = Target.GetCentre()-Origin;
     VectorAngles(delta, out ang);
     Angles.yaw = ang.yaw;
-    if (Args[2] & 4)
-    {
-      // Also aim camera's pitch
+    if (Args[2]&4) {
+      // also aim camera's pitch
       Angles.pitch = ang.pitch;
     }
     return true;
@@ -121,6 +105,6 @@ override bool Interpolate()
   return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

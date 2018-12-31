@@ -43,7 +43,7 @@ void Init (sector_t *InSector, int InBase, int InIndex) {
   } else {
     Index = itof(InIndex)/32.0;
   }
-  Base = InBase & 255;
+  Base = InBase&255;
   Sector->params.lightlevel = clamp(Base+Level.Game.PhaseTable[ftoi(Index*32.0)&63], 0, 255);
 }
 

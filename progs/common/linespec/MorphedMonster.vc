@@ -22,27 +22,23 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class MorphedMonster : Actor;
 
-int       MorphStyle;
-float     UnmorphTime;
-class!Actor  UnmorphFlash;
-EntityEx    UnmorphedMo;
+int MorphStyle;
+float UnmorphTime;
+class!Actor UnmorphFlash;
+EntityEx UnmorphedMo;
+
 
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  if (!UpdateMorphedMonster())
-  {
-    ::Tick(DeltaTime);
-  }
+override void Tick (float DeltaTime) {
+  if (!UpdateMorphedMonster()) ::Tick(DeltaTime);
 }
+
 
 //==========================================================================
 //
@@ -51,46 +47,31 @@ override void Tick(float DeltaTime)
 //  Returns true if the pig morphs.
 //
 //==========================================================================
-
-final bool UpdateMorphedMonster()
-{
-  if (Health <= 0)
-  {
-    return false;
-  }
-  if (UnmorphTime > XLevel.Time)
-  {
-    return false;
-  }
-  if (!UnmorphActor(none, false))
-  {
-    return false;
-  }
+final bool UpdateMorphedMonster () {
+  if (Health <= 0) return false;
+  if (UnmorphTime > XLevel.Time) return false;
+  if (!UnmorphActor(none, false)) return false;
   return true;
 }
+
 
 //==========================================================================
 //
 //  UnmorphActor
 //
 //==========================================================================
-
-override int UnmorphActor(Entity Activator, int Force)
-{
+override int UnmorphActor (Entity Activator, int Force) {
   TVec oldOrigin;
   class!EntityEx originalClass;
   float oldAngle;
   int oldSpecial;
   int oldTID;
-  int oldArgs[5];
+  int[5] oldArgs;
   EntityEx mo;
 
   originalClass = SpecialCID;
-  if (originalClass.default.bStayMorphed)
-  {
-    // These must remain morphed
-    return false;
-  }
+  if (originalClass.default.bStayMorphed) return false; // these must remain morphed
+
   oldOrigin = Origin;
   oldAngle = Angles.yaw;
   oldSpecial = Special;
@@ -104,12 +85,11 @@ override int UnmorphActor(Entity Activator, int Force)
   UnlinkFromWorld();
   mo = Spawn(originalClass, Origin);
 
-  if (!mo.TestLocation() && !Force)
-  {
-    // Didn't fit
+  if (!mo.TestLocation() && !Force) {
+    // didn't fit
     mo.Destroy();
     LinkToWorld();
-    UnmorphTime = XLevel.Time + 5.0;  // Next try in 5 seconds
+    UnmorphTime = XLevel.Time+5.0; // next try in 5 seconds
     return false;
   }
   LinkToWorld();
@@ -127,26 +107,22 @@ override int UnmorphActor(Entity Activator, int Force)
   mo.bGhost = bGhost;
   SetState(FindState('FreeTargMobj'));
   UnmorphedMo = mo;
-  Spawn(UnmorphFlash ? UnmorphFlash : class!Actor(TeleportFog), oldOrigin +
-    vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
+  Spawn(UnmorphFlash ? UnmorphFlash : class!Actor(TeleportFog),
+        oldOrigin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
   return true;
 }
+
 
 //==========================================================================
 //
 //  MorphedDeath
 //
 //==========================================================================
-
-override bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
-  out int MorphedHealth)
-{
-  if (UnmorphTime && (MorphStyle & MORPH_UNDOBYDEATH))
-  {
+override bool MorphedDeath (out EntityEx Morphed, out int MorphedStyle, out int MorphedHealth) {
+  if (UnmorphTime && (MorphStyle&MORPH_UNDOBYDEATH)) {
     int RealStyle = MorphStyle;
     int RealHealth = Health;
-    if (UnmorphActor(none, MorphStyle & MORPH_UNDOBYDEATHFORCED))
-    {
+    if (UnmorphActor(none, MorphStyle&MORPH_UNDOBYDEATHFORCED)) {
       Morphed = UnmorphedMo;
       MorphedStyle = RealStyle;
       MorphedHealth = RealHealth;
@@ -157,6 +133,6 @@ override bool MorphedDeath(out EntityEx Morphed, out int MorphedStyle,
   return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
