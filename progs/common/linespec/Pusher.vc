@@ -66,28 +66,27 @@
 // types 1 & 2 is the sector containing the MT_PUSH/MT_PULL Thing.
 //
 //**************************************************************************
-
 class Pusher : Thinker;
 
-enum
-{
+enum {
   PUSHER_Push,
   PUSHER_Pull,
   PUSHER_Wind,
-  PUSHER_Current
+  PUSHER_Current,
 };
 
-int     Type;
-EntityEx  Source;     // Point source if point pusher
-int     Xmag;     // X Strength
-int     Ymag;     // Y Strength
-int     Magnitude;    // Vector strength for point pusher
-float   Radius;     // Effective radius for point pusher
-float   X;        // X of point source if point pusher
-float   Y;        // Y of point source if point pusher
-int     Affectee;   // Number of affected sector
-float   PUSH_FACTOR;
-Pusher    AdjustLink;
+int Type;
+EntityEx Source; // Point source if point pusher
+int Xmag; // X Strength
+int Ymag; // Y Strength
+int Magnitude; // Vector strength for point pusher
+float Radius; // Effective radius for point pusher
+float X; // X of point source if point pusher
+float Y; // Y of point source if point pusher
+int Affectee; // Number of affected sector
+float PUSH_FACTOR;
+Pusher AdjustLink;
+
 
 //==========================================================================
 //
@@ -96,61 +95,50 @@ Pusher    AdjustLink;
 //  Add a push thinker to the thinker list
 //
 //==========================================================================
-
-void Init(int InType, line_t *l, int magnitude, int angle, EntityEx source,
-  int affectee)
-{
+void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int affectee) {
   Source = source;
   Type = InType;
-  if (l)
-  {
-    Xmag = ftoi(l->v2->x - l->v1->x);
-    Ymag = ftoi(l->v2->y - l->v1->y);
+  if (l) {
+    Xmag = ftoi(l->v2->x-l->v1->x);
+    Ymag = ftoi(l->v2->y-l->v1->y);
     Magnitude = ftoi(Length(vector(itof(Xmag), itof(Ymag), 0.0)));
-  }
-  else
-  {
-    // [RH] Allow setting magnitude and angle with parameters
+  } else {
+    // [RH] allow setting magnitude and angle with parameters
     ChangeValues(magnitude, angle);
   }
-  if (source) // point source exist?
-  {
-    Radius = itof(Magnitude * 2); // where force goes to zero
+  if (source) {
+    // point source exist?
+    Radius = itof(Magnitude*2); // where force goes to zero
     X = Source.Origin.x;
     Y = Source.Origin.y;
   }
   Affectee = affectee;
 }
 
+
 //==========================================================================
 //
 //  CheckForSectorMatch
 //
 //==========================================================================
-
-int CheckForSectorMatch(int type, int tag)
-{
-  if (Type == type && XLevel.Sectors[Affectee].tag == tag)
-    return Affectee;
-  else
-    return -1;
+int CheckForSectorMatch (int type, int tag) {
+  if (Type == type && XLevel.Sectors[Affectee].tag == tag) return Affectee;
+  return -1;
 }
+
 
 //==========================================================================
 //
 //  ChangeValues
 //
 //==========================================================================
-
-void ChangeValues(int magnitude, int angle)
-{
-  float ang;
-
-  ang = itof(angle) * 360.0 / 256.0;
-  Xmag = ftoi(itof(magnitude) * cos(ang));
-  Ymag = ftoi(itof(magnitude) * sin(ang));
+void ChangeValues (int magnitude, int angle) {
+  float ang = itof(angle)*360.0/256.0;
+  Xmag = ftoi(itof(magnitude)*cos(ang));
+  Ymag = ftoi(itof(magnitude)*sin(ang));
   Magnitude = magnitude;
 }
+
 
 //==========================================================================
 //
@@ -159,26 +147,22 @@ void ChangeValues(int magnitude, int angle)
 //  Looks for all objects that are inside the radius of the effect.
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
+override void Tick (float DeltaTime) {
   sector_t *sec;
-  EntityEx    thing;
-  int       xspeed, yspeed;
-  float     ht;
+  EntityEx thing;
+  int xspeed, yspeed;
+  float ht;
   sec_plane_t *floor;
   msecnode_t *Node;
 
-//  if (!var_pushers)
-//    return;
+  //if (!var_pushers) return;
 
   sec = &XLevel.Sectors[Affectee];
 
-  // Be sure the special sector type is still turned on. If so, proceed.
-  // Else, bail out; the sector type has been changed on us.
+  // be sure the special sector type is still turned on; if so, proceed
+  // else, bail out; the sector type has been changed on us
 
-  if (!(sec->special & SECSPEC_PUSH_MASK))
-    return;
+  if (!(sec->special&SECSPEC_PUSH_MASK)) return;
 
   // For constant pushers (wind/current) there are 3 situations:
   //
@@ -199,39 +183,34 @@ override void Tick(float DeltaTime)
   // In Phase II, you can apply these effects to Things other than players.
   // [RH] No Phase II, but it works with anything having MF2_WINDTHRUST now.
 
-  if (Type == PUSHER_Push)
-  {
-    // Seek out all pushable things within the force radius of this
-    // point pusher. Crosses sectors, so use blockmap.
-    foreach RadiusThings(thing, vector(X, Y, 0.0), Radius)
-    {
-      // PIT_PushThing determines the angle and magnitude of the effect.
-      // The object's x and y momentum values are changed.
+  if (Type == PUSHER_Push) {
+    // seek out all pushable things within the force radius of this
+    // point pusher. Crosses sectors, so use blockmap
+    foreach RadiusThings(thing, vector(X, Y, 0.0), Radius) {
+      // PIT_PushThing determines the angle and magnitude of the effect
+      // the object's x and y momentum values are changed
       //
-      // tmpusher belongs to the point source (MT_PUSH/MT_PULL).
+      // tmpusher belongs to the point source (MT_PUSH/MT_PULL)
       float sx;
       float sy;
       float dist;
       float speed;
       float pushangle;
 
-      if (EntityEx(thing).bWindThrust && thing.bColideWithWorld)
-      {
+      if (EntityEx(thing).bWindThrust && thing.bColideWithWorld) {
         sx = X;
         sy = Y;
-        dist = Length(vector(thing.Origin.x - sx, thing.Origin.y - sy, 0.0));
-        speed = itof(Magnitude - (ftoi(dist) >> 1)) / (2.0 * PUSH_FACTOR);
+        dist = Length(vector(thing.Origin.x-sx, thing.Origin.y-sy, 0.0));
+        speed = itof(Magnitude-(ftoi(dist)>>1))/(2.0*PUSH_FACTOR);
 
         // If speed <= 0, you're outside the effective radius. You also have
         // to be able to see the push/pull source point.
 
-        if ((speed > 0.0) && thing.CanSee(Source))
-        {
-          pushangle = atan2(sy - thing.Origin.y, sx - thing.Origin.x);
-          if (PointPusher(Source))
-            pushangle += 180.0;    // away
-          thing.Velocity.x += speed * cos(pushangle) * 35.0 * DeltaTime;
-          thing.Velocity.y += speed * sin(pushangle) * 35.0 * DeltaTime;
+        if ((speed > 0.0) && thing.CanSee(Source)) {
+          pushangle = atan2(sy-thing.Origin.y, sx-thing.Origin.x);
+          if (PointPusher(Source)) pushangle += 180.0; // away
+          thing.Velocity.x += speed*cos(pushangle)*35.0*DeltaTime;
+          thing.Velocity.y += speed*sin(pushangle)*35.0*DeltaTime;
         }
       }
     }
@@ -241,96 +220,72 @@ override void Tick(float DeltaTime)
   // constant pushers p_wind and p_current
 
   // things touching this sector
-  for (Node = sec->TouchingThingList; Node; Node = Node->SNext)
-  {
+  for (Node = sec->TouchingThingList; Node; Node = Node->SNext) {
     thing = EntityEx(Node->Thing);
-    if (!thing.bColideWithWorld)
-    {
-      continue;
-    }
-    if (!thing.bWindThrust)
-    {
-      continue;
-    }
-    if (Type == PUSHER_Wind)
-    {
-      if (thing.WaterLevel > 2) // underwater
-      {
+    if (!thing.bColideWithWorld) continue;
+    if (!thing.bWindThrust) continue;
+    if (Type == PUSHER_Wind) {
+      if (thing.WaterLevel > 2) {
+        // underwater
         xspeed = 0;
         yspeed = 0; // no force
-      }
-      else if (thing.WaterLevel) // wading in water
-      {
-        xspeed = Xmag >> 1; // half force
-        yspeed = Ymag >> 1;
-      }
-      else if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)
-      {
-        // NOT special water sector
-        if (thing.Origin.z > thing.FloorZ) // above ground
-        {
+      } else if (thing.WaterLevel) {
+        // wading in water
+        xspeed = Xmag>>1; // half force
+        yspeed = Ymag>>1;
+      } else if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) {
+        // not special water sector
+        if (thing.Origin.z > thing.FloorZ) {
+          // above ground
           xspeed = Xmag; // full force
           yspeed = Ymag;
+        } else {
+          // on ground
+          xspeed = Xmag>>1; // half force
+          yspeed = Ymag>>1;
         }
-        else // on ground
-        {
-          xspeed = Xmag >> 1; // half force
-          yspeed = Ymag >> 1;
-        }
-      }
-      else // special water sector
-      {
+      } else {
+        // special water sector
         ht = GetPlanePointZ(ref sec->heightsec->floor, thing.Origin);
-        if (thing.Origin.z > ht) // above ground
-        {
+        if (thing.Origin.z > ht) {
+          // above ground
           xspeed = Xmag; // full force
           yspeed = Ymag;
-        }
-        else if (thing.bIsPlayer &&
-          thing.Origin.z + PlayerEx(thing.Player).ViewHeight < ht) // underwater
-        {
+        } else if (thing.bIsPlayer && thing.Origin.z+PlayerEx(thing.Player).ViewHeight < ht) {
+          // underwater
           xspeed = 0;
           yspeed = 0; // no force
-        }
-        else // wading in water
-        {
-          xspeed = Xmag >> 1; // half force
-          yspeed = Ymag >> 1;
+        } else {
+          // wading in water
+          xspeed = Xmag>>1; // half force
+          yspeed = Ymag>>1;
         }
       }
-    }
-    else // PUSHER_Current
-    {
-      if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)
-      {
-        // NOT special water sector
+    } else {
+      // PUSHER_Current
+      if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) {
+        // not special water sector
         floor = &sec->floor;
-      }
-      else
-      {
+      } else {
         // special water sector
         floor = &sec->heightsec->floor;
       }
-      if (!thing.WaterLevel &&
-        thing.Origin.z > GetPlanePointZ(ref *floor, thing.Origin))
-      {
+      if (!thing.WaterLevel && thing.Origin.z > GetPlanePointZ(ref *floor, thing.Origin)) {
         // above ground
         xspeed = 0;
         yspeed = 0; // no force
-      }
-      else
-      {
+      } else {
         // on ground/underwater
         xspeed = Xmag; // full force
         yspeed = Ymag;
       }
     }
-    thing.Velocity.x += (itof(xspeed) / PUSH_FACTOR) * 35.0 * DeltaTime;
-    thing.Velocity.y += (itof(yspeed) / PUSH_FACTOR) * 35.0 * DeltaTime;
+    thing.Velocity.x += (itof(xspeed)/PUSH_FACTOR)*35.0*DeltaTime;
+    thing.Velocity.y += (itof(yspeed)/PUSH_FACTOR)*35.0*DeltaTime;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   PUSH_FACTOR = 128.0;
 }
