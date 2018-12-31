@@ -22,8 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class FastProjectile : Actor;
+
 
 //==========================================================================
 //
@@ -32,117 +32,85 @@ class FastProjectile : Actor;
 //  Thinker for the ultra-fast blaster PL2 ripper-spawning missile.
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  int     i;
-  float   xfrac;
-  float   yfrac;
-  float   zfrac;
-  bool    changexy;
-  tmtrace_t tmtrace;
-
+override void Tick (float DeltaTime) {
   float Count = 8.0;
 
-  // clamp some values on exit
-  // velocity
-  Velocity.x = fclamp(Velocity.x, -8191, 8191);
-  Velocity.y = fclamp(Velocity.y, -8191, 8191);
-  Velocity.z = fclamp(Velocity.z, -8191, 8191);
-  // position
-  Origin.x = fclamp(Origin.x, -100000, 100000);
-  Origin.y = fclamp(Origin.y, -100000, 100000);
-  Origin.z = fclamp(Origin.z, -100000, 100000);
-  // speed
+  // clamp some values
+  Velocity = vclamp(Velocity, -8191, 8191);
+  Origin = vclamp(Origin, -100000, 100000);
   Speed = fclamp(Speed, -4095, 4095);
 
-  if (Radius > 0.0)
-  {
-    while (Velocity.x * DeltaTime / Count > Radius ||
-      Velocity.y * DeltaTime / Count > Radius)
-    {
-      //  Must take smaller steps.
+  if (Radius > 0.0) {
+    while (Velocity.x*DeltaTime/Count > Radius || Velocity.y*DeltaTime/Count > Radius) {
+      // must take smaller steps
       Count *= 2.0;
     }
   }
 
-  // Handle movement
-  if (Velocity.x || Velocity.y || (Origin.z != FloorZ) || Velocity.z)
-  {
-    xfrac = Velocity.x * DeltaTime / Count;
-    yfrac = Velocity.y * DeltaTime / Count;
-    zfrac = Velocity.z * DeltaTime / Count;
-    changexy = xfrac || yfrac;
-    for (i = 0; i < 8; i++)
-    {
-      if (changexy)
-      {
-        if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true))
-        {
-          // Blocked move
-          if (tmtrace.BlockingMobj)
-          {
+  // handle movement
+  if (Velocity || Origin.z != FloorZ) {
+    tmtrace_t tmtrace;
+    float xfrac = Velocity.x*DeltaTime/Count;
+    float yfrac = Velocity.y*DeltaTime/Count;
+    float zfrac = Velocity.z*DeltaTime/Count;
+    bool changexy = xfrac || yfrac;
+    foreach (auto i; 0..8) {
+      if (changexy) {
+        if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true)) {
+          // blocked move
+          if (tmtrace.BlockingMobj) {
             BlasterHitMobj(tmtrace.BlockingMobj);
-          }
-          else
-          {
-            // Hit the wall
-            ExplodeMissile(none, tmtrace.BlockingLine);
+          } else {
+            // hit the wall
+            ExplodeMissile(Victim:none, tmtrace.BlockingLine);
           }
           return;
         }
       }
       Origin.z += zfrac;
-      if (Origin.z <= FloorZ)
-      {
-        // Hit the floor
+      if (Origin.z <= FloorZ) {
+        // hit the floor
         Origin.z = FloorZ;
         HitFloorType();
         //!print("FLOOR HIT! '%s'", NameToStr(GetClassName(Class)));
-        ExplodeMissile(none);
+        ExplodeMissile(Victim:none);
         return;
       }
-      if (Origin.z + Height > CeilingZ)
-      {
-        // Hit the ceiling
-        Origin.z = CeilingZ - Height;
-        ExplodeMissile(none);
+      if (Origin.z+Height > CeilingZ) {
+        // hit the ceiling
+        Origin.z = CeilingZ-Height;
+        ExplodeMissile(Victim:none);
         return;
       }
-      if (changexy)
-      {
-        SpawnBlasterEffects();
-      }
+      if (changexy) SpawnBlasterEffects();
     }
   }
 
-  // Cycle through states, calling action functions at transitions
+  // cycle through states, calling action functions at transitions
   AdvanceState(DeltaTime);
 }
+
 
 //==========================================================================
 //
 //  BlasterHitMobj
 //
 //==========================================================================
-
-bool BlasterHitMobj(Entity Other)
-{
+bool BlasterHitMobj (Entity Other) {
   return ExplodeMissile(EntityEx(Other));
 }
+
 
 //==========================================================================
 //
 //  SpawnBlasterEffects
 //
 //==========================================================================
-
-void SpawnBlasterEffects()
-{
+void SpawnBlasterEffects () {
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bMissile = true;
   bNoBlockmap = true;
   bDropOff = true;
