@@ -161,12 +161,12 @@ override void SpawnSpecials()
     {
       continue;
     }
-    if (sector->special & SECSPEC_SECRET_MASK)
+    if (sector->special&SECSPEC_SECRET_MASK)
     {
       //  Secret sector.
       TotalSecret++;
     }
-    switch (sector->special & SECSPEC_BASE_MASK)
+    switch (sector->special&SECSPEC_BASE_MASK)
     {
     case SECSPEC_LightPhased: //  Phased light
       //  Hardcoded base, use sector->lightlevel as the index
@@ -222,49 +222,49 @@ override void SpawnSpecials()
     case SECSPEC_ScrollNorthMedium:
     case SECSPEC_ScrollNorthFast:
       SpawnScrollingFloor(sector, 0, 1, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollNorthSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthSlow);
       break;
     case SECSPEC_ScrollEastSlow:
     case SECSPEC_ScrollEastMedium:
     case SECSPEC_ScrollEastFast:
       SpawnScrollingFloor(sector, -1, 0, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollEastSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollEastSlow);
       break;
     case SECSPEC_ScrollSouthSlow:
     case SECSPEC_ScrollSouthMedium:
     case SECSPEC_ScrollSouthFast:
       SpawnScrollingFloor(sector, 0, -1, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollSouthSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthSlow);
       break;
     case SECSPEC_ScrollWestSlow:
     case SECSPEC_ScrollWestMedium:
     case SECSPEC_ScrollWestFast:
       SpawnScrollingFloor(sector, 1, 0, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollWestSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollWestSlow);
       break;
     case SECSPEC_ScrollNorthWestSlow:
     case SECSPEC_ScrollNorthWestMedium:
     case SECSPEC_ScrollNorthWestFast:
       SpawnScrollingFloor(sector, 1, 1, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollNorthWestSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthWestSlow);
       break;
     case SECSPEC_ScrollNorthEastSlow:
     case SECSPEC_ScrollNorthEastMedium:
     case SECSPEC_ScrollNorthEastFast:
       SpawnScrollingFloor(sector, -1, 1, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollNorthEastSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthEastSlow);
       break;
     case SECSPEC_ScrollSouthEastSlow:
     case SECSPEC_ScrollSouthEastMedium:
     case SECSPEC_ScrollSouthEastFast:
       SpawnScrollingFloor(sector, -1, -1, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollSouthEastSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthEastSlow);
       break;
     case SECSPEC_ScrollSouthWestSlow:
     case SECSPEC_ScrollSouthWestMedium:
     case SECSPEC_ScrollSouthWestFast:
       SpawnScrollingFloor(sector, 1, -1, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollSouthWestSlow);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthWestSlow);
       break;
     case SECSPEC_ScrollEast5:
     case SECSPEC_ScrollEast10:
@@ -272,7 +272,7 @@ override void SpawnSpecials()
     case SECSPEC_ScrollEast30:
     case SECSPEC_ScrollEast35:
       SpawnScrollingFloor(sector, -1, 0, (sector->special &
-        SECSPEC_BASE_MASK) - SECSPEC_ScrollEast5);
+        SECSPEC_BASE_MASK)-SECSPEC_ScrollEast5);
       break;
     }
   }
@@ -355,12 +355,12 @@ final bool ActivateLine(line_t *Line, EntityEx A, int Side,
   }
 
   lineActivation = Line->SpacFlags;
-  repeat = Line->flags & ML_REPEAT_SPECIAL;
+  repeat = Line->flags&ML_REPEAT_SPECIAL;
   buttonSuccess = ExecuteActionSpecial(Line->special, Line->arg1,
     Line->arg2, Line->arg3, Line->arg4, Line->arg5, Line, Side, A);
   changeBack = Line->special == LNSPEC_GlassBreak &&
-    (Line->flags & ML_TWOSIDED) && buttonSuccess;
-  if ((lineActivation & (SPAC_Use | SPAC_Impact | SPAC_UseThrough)) &&
+    (Line->flags&ML_TWOSIDED) && buttonSuccess;
+  if ((lineActivation&(SPAC_Use|SPAC_Impact|SPAC_UseThrough)) &&
     buttonSuccess)
   {
     ubyte Quest;
@@ -393,18 +393,18 @@ final bool ActivateLine(line_t *Line, EntityEx A, int Side,
 final bool CheckActivation(int activationType, line_t *line, int Side,
   EntityEx A)
 {
-  if ((line->flags & ML_FIRSTSIDEONLY) && Side == 1)
+  if ((line->flags&ML_FIRSTSIDEONLY) && Side == 1)
   {
     return false;
   }
 
   int lineActivation = line->SpacFlags;
-  if (lineActivation & SPAC_UseThrough)
+  if (lineActivation&SPAC_UseThrough)
   {
     lineActivation |= SPAC_Use;
   }
   else if (line->special == LNSPEC_Teleport &&
-    (lineActivation & SPAC_Cross) && activationType == SPAC_PCross &&
+    (lineActivation&SPAC_Cross) && activationType == SPAC_PCross &&
     A && A.bMissile)
   {
     // Let missiles use regular player teleports
@@ -412,30 +412,30 @@ final bool CheckActivation(int activationType, line_t *line, int Side,
   }
   //  BOOM's generalized line types that allow monster use can actually be
   // activated by anything except projectiles.
-  if (lineActivation & SPAC_AnyCross)
+  if (lineActivation&SPAC_AnyCross)
   {
-    lineActivation |= SPAC_Cross | SPAC_MCross;
+    lineActivation |= SPAC_Cross|SPAC_MCross;
   }
-  if (!(lineActivation & activationType))
+  if (!(lineActivation&activationType))
   {
-    if (activationType == SPAC_Use && (lineActivation & SPAC_MUse) &&
+    if (activationType == SPAC_Use && (lineActivation&SPAC_MUse) &&
       !A.bIsPlayer && A.bCanUseWalls)
     {
       return true;
     }
-    if (activationType == SPAC_Push && (lineActivation & SPAC_MPush) &&
+    if (activationType == SPAC_Push && (lineActivation&SPAC_MPush) &&
       !A.bIsPlayer && A.bActivatePushWall)
     {
       return true;
     }
-    if (activationType != SPAC_MCross || !(lineActivation & SPAC_Cross))
+    if (activationType != SPAC_MCross || !(lineActivation&SPAC_Cross))
     {
       return false;
     }
   }
   if (A && !A.bIsPlayer && !A.bMissile &&
-    !(line->flags & ML_MONSTERSCANACTIVATE) &&
-    (activationType != SPAC_MCross || !(lineActivation & SPAC_MCross)))
+    !(line->flags&ML_MONSTERSCANACTIVATE) &&
+    (activationType != SPAC_MCross || !(lineActivation&SPAC_MCross)))
   {
     //  With lax monster activation monsters can activate several line
     // specials even when not marked as monster activateable. This is
@@ -446,7 +446,7 @@ final bool CheckActivation(int activationType, line_t *line, int Side,
     }
 
     if ((activationType == SPAC_Use || activationType == SPAC_Push) &&
-      (line->flags & ML_SECRET))
+      (line->flags&ML_SECRET))
     {
       return false; // never open secret doors
     }
@@ -455,7 +455,7 @@ final bool CheckActivation(int activationType, line_t *line, int Side,
     switch (activationType)
     {
     case SPAC_MCross:
-      if (!(lineActivation & SPAC_MCross))
+      if (!(lineActivation&SPAC_MCross))
       {
         switch (line->special)
         {
@@ -498,8 +498,8 @@ final bool CheckActivation(int activationType, line_t *line, int Side,
     }
     return !noway;
   }
-  if (activationType == SPAC_MCross && !(lineActivation & SPAC_MCross) &&
-    !(line->flags & ML_MONSTERSCANACTIVATE))
+  if (activationType == SPAC_MCross && !(lineActivation&SPAC_MCross) &&
+    !(line->flags&ML_MONSTERSCANACTIVATE))
   {
     return false;
   }
@@ -764,7 +764,7 @@ override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
   case LNSPEC_ThrustThing:
     if (A && !Side) // Only thrust on side 0
     {
-      if (Arg2) A.Thrust(itof(Arg1) * (90.0 / 64.0), itof(Arg2));
+      if (Arg2) A.Thrust(itof(Arg1)*(90.0/64.0), itof(Arg2));
       buttonSuccess = 1;
     }
     break;
@@ -1415,7 +1415,7 @@ final int EV_GenericDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
 
   //  Check for Boom's local door light special.
-  if (Arg3 & 128)
+  if (Arg3&128)
   {
     Tag = 0;
     LightTag = Arg1;
@@ -1426,7 +1426,7 @@ final int EV_GenericDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     LightTag = 0;
   }
 
-  switch (Arg3 & 127)
+  switch (Arg3&127)
   {
   case 0:
     return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0,
@@ -1803,7 +1803,7 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
     // find a two sided line around the pool whose other side isn't the pillar
     for (i = 0; i < s2.lines.length; i++)
     {
-      if ((!s2->lines[i]->flags & ML_TWOSIDED) ||
+      if ((!s2->lines[i]->flags&ML_TWOSIDED) ||
         (s2->lines[i]->backsector == s1))
         continue;
       s3 = s2->lines[i]->backsector;
@@ -1893,15 +1893,15 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
   if (Generic)
   {
-    Direction = Arg4 & 1 ? 1 : -1;
-    IgnTxt = !!(Arg4 & 2);
+    Direction = Arg4&1 ? 1 : -1;
+    IgnTxt = !!(Arg4&2);
   }
   else
   {
     Direction = 1;
     IgnTxt = false;
   }
-  StairSize = itof(Arg3 * Direction);
+  StairSize = itof(Arg3*Direction);
   Rtn = 0;
   for (SecNum = Arg1 ? XLevel.FindSectorFromTag(Arg1, -1) : 1; SecNum >= 0;
     SecNum = Arg1 ? XLevel.FindSectorFromTag(Arg1, SecNum) : -1)
@@ -1935,7 +1935,7 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       {
         SecLine = Sec->lines[i];
 
-        if (!(SecLine->flags & ML_TWOSIDED))
+        if (!(SecLine->flags&ML_TWOSIDED))
           continue;
 
         TSec = SecLine->frontsector;
@@ -2277,17 +2277,17 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
     }
     else
     {
-      pe.dist = itof(Arg3) * (90.0 / 64.0); // Angle
+      pe.dist = itof(Arg3)*(90.0/64.0); // Angle
     }
   }
   else
   {
     pe.dist = 360.0;
   }
-  pe.speed = AngleMod180(32.0 * itof(Arg2) * itof(direction) * 90.0 / 64.0 / 8.0);
+  pe.speed = AngleMod180(32.0*itof(Arg2)*itof(direction)*90.0/64.0/8.0);
 
   //THRUST
-  pe.thrust_force = pe.speed / 32.0 * itof(0x800) / 90.0;
+  pe.thrust_force = pe.speed/32.0*itof(0x800)/90.0;
 
   poly->SpecialData = pe;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -2315,7 +2315,7 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
       }
       else
       {
-        pe.dist = itof(Arg3) * (90.0 / 64.0); // Angle
+        pe.dist = itof(Arg3)*(90.0/64.0); // Angle
       }
     }
     else
@@ -2323,10 +2323,10 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
       pe.dist = 360.0;
     }
     direction = -direction;
-    pe.speed = AngleMod180(32.0 * itof(Arg2) * itof(direction) * 90.0 / 64.0 / 8.0);
+    pe.speed = AngleMod180(32.0*itof(Arg2)*itof(direction)*90.0/64.0/8.0);
 
     //THRUST
-    pe.thrust_force = pe.speed / 32.0 * itof(0x800) / 90.0;
+    pe.thrust_force = pe.speed/32.0*itof(0x800)/90.0;
 
     polyNum = mirror;
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -2340,7 +2340,7 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
 //
 //==========================================================================
 
-final bool EV_MovePoly(line_t * line, int Arg1, int Arg2, int Arg3, int Arg4,
+final bool EV_MovePoly(line_t*line, int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, bool timesEight, bool overRide)
 {
   int mirror;
@@ -2366,20 +2366,20 @@ final bool EV_MovePoly(line_t * line, int Arg1, int Arg2, int Arg3, int Arg4,
   pe.polyobj = polyNum;
   if (timesEight)
   {
-    pe.dist = itof(Arg4) * 8.0;
+    pe.dist = itof(Arg4)*8.0;
   }
   else
   {
     pe.dist = itof(Arg4); // Distance
   }
-  pe.speed = itof(Arg2) * 4.0;
+  pe.speed = itof(Arg2)*4.0;
 
   //THRUST
-  pe.thrust_force = pe.speed / 8.0;
+  pe.thrust_force = pe.speed/8.0;
 
   poly->SpecialData = pe;
 
-  an = itof(Arg3) * (90.0 / 64.0);
+  an = itof(Arg3)*(90.0/64.0);
 
   pe.angle = an;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -2397,18 +2397,18 @@ final bool EV_MovePoly(line_t * line, int Arg1, int Arg2, int Arg3, int Arg4,
     poly->SpecialData = pe;
     if (timesEight)
     {
-      pe.dist = itof(Arg4) * 8.0;
+      pe.dist = itof(Arg4)*8.0;
     }
     else
     {
       pe.dist = itof(Arg4); // Distance
     }
-    pe.speed = itof(Arg2) * 4.0;
+    pe.speed = itof(Arg2)*4.0;
 
     //THRUST
-    pe.thrust_force = pe.speed / 8.0;
+    pe.thrust_force = pe.speed/8.0;
 
-    an = AngleMod360(an + 180.0); // reverse the angle
+    an = AngleMod360(an+180.0); // reverse the angle
     pe.angle = an;
     polyNum = mirror;
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -2422,7 +2422,7 @@ final bool EV_MovePoly(line_t * line, int Arg1, int Arg2, int Arg3, int Arg4,
 //
 //==========================================================================
 
-final bool EV_OpenPolyDoor(line_t * line, int Arg1, int Arg2, int Arg3,
+final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
   int Arg4, int Arg5, int type)
 {
   int mirror;
@@ -2449,28 +2449,28 @@ final bool EV_OpenPolyDoor(line_t * line, int Arg1, int Arg2, int Arg3,
   pd.polyobj = polyNum;
   if (type == PolyobjDoor::PODOOR_SLIDE)
   {
-    pd.waitTime = itof(Arg5) / 35.0;
-    pd.speed = itof(Arg2) * 4.0;
+    pd.waitTime = itof(Arg5)/35.0;
+    pd.speed = itof(Arg2)*4.0;
     pd.totalDist = itof(Arg4);  // Distance
     pd.dist = pd.totalDist;
-    an = itof(Arg3) * (90.0 / 64.0);
+    an = itof(Arg3)*(90.0/64.0);
     pd.xSpeed = cos(an);
     pd.ySpeed = sin(an);
 
     //THRUST
-    pd.thrust_force = pd.speed / 8.0;
+    pd.thrust_force = pd.speed/8.0;
 
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
   }
   else if (type == PolyobjDoor::PODOOR_SWING)
   {
-    pd.waitTime = itof(Arg4) / 35.0;
-    pd.speed = AngleMod180(4.0 * itof(Arg2) * (90.0 / 64.0));
-    pd.totalDist = itof(Arg3) * (90.0 / 64.0);
+    pd.waitTime = itof(Arg4)/35.0;
+    pd.speed = AngleMod180(4.0*itof(Arg2)*(90.0/64.0));
+    pd.totalDist = itof(Arg3)*(90.0/64.0);
     pd.dist = pd.totalDist;
 
     //THRUST
-    pd.thrust_force = pd.speed * itof(0x1000) / 180.0;
+    pd.thrust_force = pd.speed*itof(0x1000)/180.0;
 
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
   }
@@ -2491,28 +2491,28 @@ final bool EV_OpenPolyDoor(line_t * line, int Arg1, int Arg2, int Arg3,
     poly->SpecialData = pd;
     if (type == PolyobjDoor::PODOOR_SLIDE)
     {
-      pd.waitTime = itof(Arg5) / 35.0;
-      pd.speed = itof(Arg2) * 4.0;
+      pd.waitTime = itof(Arg5)/35.0;
+      pd.speed = itof(Arg2)*4.0;
       pd.totalDist = itof(Arg4);  // Distance
       pd.dist = pd.totalDist;
-      an = AngleMod360(an + 180.0); // reverse the angle
+      an = AngleMod360(an+180.0); // reverse the angle
       pd.xSpeed = cos(an);
       pd.ySpeed = sin(an);
 
       //THRUST
-      pd.thrust_force = pd.speed / 8.0;
+      pd.thrust_force = pd.speed/8.0;
 
       PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
     }
     else if (type == PolyobjDoor::PODOOR_SWING)
     {
-      pd.waitTime = itof(Arg4) / 35.0;
-      pd.speed = AngleMod180(4.0 * itof(-Arg2) * (90.0 / 64.0));
-      pd.totalDist = itof(Arg3) * (90.0 / 64.0);
+      pd.waitTime = itof(Arg4)/35.0;
+      pd.speed = AngleMod180(4.0*itof(-Arg2)*(90.0/64.0));
+      pd.totalDist = itof(Arg3)*(90.0/64.0);
       pd.dist = pd.totalDist;
 
       //THRUST
-      pd.thrust_force = pd.speed * itof(0x1000) / 180.0;
+      pd.thrust_force = pd.speed*itof(0x1000)/180.0;
 
       PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
     }
@@ -2592,7 +2592,7 @@ final void SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int maxtime,
 //
 //==========================================================================
 
-final void SpawnPhasedLight(sector_t * sector, int base, int index)
+final void SpawnPhasedLight(sector_t *sector, int base, int index)
 {
   PhasedLight Phase;
 
@@ -2606,7 +2606,7 @@ final void SpawnPhasedLight(sector_t * sector, int base, int index)
 //
 //==========================================================================
 
-final void SpawnLightSequence(sector_t * sector, float indexStep)
+final void SpawnLightSequence(sector_t *sector, float indexStep)
 {
   sector_t *sec;
   sector_t *nextSec;
@@ -2625,7 +2625,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
   {
     nextSec = nullptr;
     //  Make sure that the search doesn't back up.
-    sec->special = (sec->special & ~SECSPEC_BASE_MASK) |
+    sec->special = (sec->special&~SECSPEC_BASE_MASK) |
       SECSPEC_LightSequenceStart;
     for (i = 0; i < sec.lines.length; i++)
     {
@@ -2634,7 +2634,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
       {
         continue;
       }
-      if ((tempSec->special & SECSPEC_BASE_MASK) == seqSpecial)
+      if ((tempSec->special&SECSPEC_BASE_MASK) == seqSpecial)
       {
         if (seqSpecial == SECSPEC_LightSequence)
         {
@@ -2655,7 +2655,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
   sec = sector;
   count *= indexStep;
   index = 0.0;
-  indexDelta = 64.0 / count;
+  indexDelta = 64.0/count;
   base = sector->params.lightlevel;
   do
   {
@@ -2675,7 +2675,7 @@ final void SpawnLightSequence(sector_t * sector, float indexStep)
       {
         continue;
       }
-      if ((tempSec->special & SECSPEC_BASE_MASK) ==
+      if ((tempSec->special&SECSPEC_BASE_MASK) ==
         SECSPEC_LightSequenceStart)
       {
         nextSec = tempSec;
@@ -2997,8 +2997,8 @@ final void SpawnTextureBothScroller(line_t *Line)
   Scroller  Scroll;
 
   Scroll = Spawn(Scroller);
-  Scroll.InitTextureBoth(Line, itof(Line->arg2 - Line->arg3) / 64.0,
-    itof(Line->arg5 - Line->arg4) / 64.0, 0, 7);
+  Scroll.InitTextureBoth(Line, itof(Line->arg2-Line->arg3)/64.0,
+    itof(Line->arg5-Line->arg4)/64.0, 0, 7);
 }
 
 //==========================================================================
@@ -3099,7 +3099,7 @@ final bool EV_ScrollTextureBoth(int Arg1, int Arg2, int Arg3, int Arg4,
     Arg1 = -Arg1;
   }
 
-  SetWallScroller(Arg1, itof(Arg2 - Arg3) / 64.0, itof(Arg5 - Arg4) / 64.0,
+  SetWallScroller(Arg1, itof(Arg2-Arg3)/64.0, itof(Arg5-Arg4)/64.0,
     WhichSide, 7);
   return true;
 }
@@ -3119,8 +3119,8 @@ final bool EV_ScrollWall(int Arg1, int Arg2, int Arg3, int Arg4,
     return false;
   }
 
-  SetWallScroller(Arg1, itof(Arg2) / itof(0x10000),
-    itof(Arg3) / itof(0x10000), !!Arg4, Arg5);
+  SetWallScroller(Arg1, itof(Arg2)/itof(0x10000),
+    itof(Arg3)/itof(0x10000), !!Arg4, Arg5);
   return true;
 }
 
@@ -3341,8 +3341,8 @@ final bool EV_FloorTransferTrigger(int Arg1, int Arg2, int Arg3, int Arg4,
     Rtn = true;
 
     Sec->floor.pic = Line->frontsector->floor.pic;
-    Sec->special = (Sec->special & SECSPEC_SECRET_MASK) |
-      (Line->frontsector->special & ~SECSPEC_SECRET_MASK);
+    Sec->special = (Sec->special&SECSPEC_SECRET_MASK) |
+      (Line->frontsector->special&~SECSPEC_SECRET_MASK);
   }
   return Rtn;
 }
@@ -3494,7 +3494,7 @@ final bool EV_SectorSetGravity(int Arg1, int Arg2, int Arg3, int Arg4,
   if (Arg3 > 99)
     Arg3 = 99;
 
-  SecGrav = itof(Arg2) + itof(Arg3) * 0.01;
+  SecGrav = itof(Arg2)+itof(Arg3)*0.01;
   Ret = false;
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
@@ -3523,7 +3523,7 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
 
   // An amount of 100 should result in a friction of
   // ORIG_FRICTION (0xE800)
-  OldFriction = (0x1EB8 * Arg2) / 0x80 + 0xD001;
+  OldFriction = (0x1EB8*Arg2)/0x80+0xD001;
 
   // killough 8/28/98: prevent odd situations
   if (OldFriction > 0x10000)
@@ -3539,16 +3539,16 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
   //    friction 0xf900) is the same as in Heretic/Hexen.
   if (OldFriction >= 0xe800)  // ice
 //    movefactor = ((0x10092 - friction)*(0x70))/0x158;
-    OldMoveFactor = ((0x10092 - OldFriction) * 1024) / 4352 + 568;
+    OldMoveFactor = ((0x10092-OldFriction)*1024)/4352+568;
   else
-    OldMoveFactor = ((OldFriction - 0xDB34) * (0xA)) / 0x80;
+    OldMoveFactor = ((OldFriction-0xDB34)*(0xA))/0x80;
 
   // killough 8/28/98: prevent odd situations
   if (OldMoveFactor < 32)
     OldMoveFactor = 32;
 
-  Friction = (1.0 - itof(OldFriction) / itof(0x10000)) * 35.0;
-  MoveFactor = itof(OldMoveFactor) / itof(0x10000);
+  Friction = (1.0-itof(OldFriction)/itof(0x10000))*35.0;
+  MoveFactor = itof(OldMoveFactor)/itof(0x10000);
 
   Ret = false;
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
@@ -3602,19 +3602,19 @@ final bool EV_SectorChangeFlags(int Arg1, int Arg2, int Arg3, int Arg4,
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
     sector_t *Sec = &XLevel.Sectors[SecNum];
-    if (Arg3 & SECF_SILENT)
+    if (Arg3&SECF_SILENT)
     {
       Sec->bSilent = false;
     }
-    else if (Arg2 & SECF_SILENT)
+    else if (Arg2&SECF_SILENT)
     {
       Sec->bSilent = true;
     }
-    if (Arg3 & SECF_NOFALLINGDAMAGE)
+    if (Arg3&SECF_NOFALLINGDAMAGE)
     {
       Sec->bNoFallingDamage = false;
     }
-    else if (Arg2 & SECF_NOFALLINGDAMAGE)
+    else if (Arg2&SECF_NOFALLINGDAMAGE)
     {
       Sec->bNoFallingDamage = true;
     }
@@ -3633,8 +3633,8 @@ final bool EV_SectorSetFloorPanning(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XOffs = itof(Arg2) + itof(Arg3) / 100.0;
-  float YOffs = itof(Arg4) + itof(Arg5) / 100.0;
+  float XOffs = itof(Arg2)+itof(Arg3)/100.0;
+  float YOffs = itof(Arg4)+itof(Arg5)/100.0;
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
   {
@@ -3655,8 +3655,8 @@ final bool EV_SectorSetCeilingPanning(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XOffs = itof(Arg2) + itof(Arg3) / 100.0;
-  float YOffs = itof(Arg4) + itof(Arg5) / 100.0;
+  float XOffs = itof(Arg2)+itof(Arg3)/100.0;
+  float YOffs = itof(Arg4)+itof(Arg5)/100.0;
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
   {
@@ -3696,15 +3696,15 @@ final bool EV_SectorSetFloorScale(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2) + itof(Arg3) / 100.0;
-  float YScale = itof(Arg4) + itof(Arg5) / 100.0;
+  float XScale = itof(Arg2)+itof(Arg3)/100.0;
+  float YScale = itof(Arg4)+itof(Arg5)/100.0;
   if (XScale)
   {
-    XScale = 1.0 / XScale;
+    XScale = 1.0/XScale;
   }
   if (YScale)
   {
-    YScale = 1.0 / YScale;
+    YScale = 1.0/YScale;
   }
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
@@ -3731,15 +3731,15 @@ final bool EV_SectorSetCeilingScale(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2) + itof(Arg3) / 100.0;
-  float YScale = itof(Arg4) + itof(Arg5) / 100.0;
+  float XScale = itof(Arg2)+itof(Arg3)/100.0;
+  float YScale = itof(Arg4)+itof(Arg5)/100.0;
   if (XScale)
   {
-    XScale = 1.0 / XScale;
+    XScale = 1.0/XScale;
   }
   if (YScale)
   {
-    YScale = 1.0 / YScale;
+    YScale = 1.0/YScale;
   }
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
@@ -3766,15 +3766,15 @@ final bool EV_SectorSetFloorScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2) / itof(0x10000);
-  float YScale = itof(Arg3) / itof(0x10000);
+  float XScale = itof(Arg2)/itof(0x10000);
+  float YScale = itof(Arg3)/itof(0x10000);
   if (XScale)
   {
-    XScale = 1.0 / XScale;
+    XScale = 1.0/XScale;
   }
   if (YScale)
   {
-    YScale = 1.0 / YScale;
+    YScale = 1.0/YScale;
   }
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
@@ -3801,15 +3801,15 @@ final bool EV_SectorSetCeilingScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2) / itof(0x10000);
-  float YScale = itof(Arg3) / itof(0x10000);
+  float XScale = itof(Arg2)/itof(0x10000);
+  float YScale = itof(Arg3)/itof(0x10000);
   if (XScale)
   {
-    XScale = 1.0 / XScale;
+    XScale = 1.0/XScale;
   }
   if (YScale)
   {
-    YScale = 1.0 / YScale;
+    YScale = 1.0/YScale;
   }
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
@@ -3853,14 +3853,14 @@ final bool EV_LineAlignFloor(int Arg1, int Arg2, int Arg3, int Arg4,
 
     TVec v1 = *Line->v1;
 
-    float Angle = atan2(Line->v2->y - v1.y, Line->v2->x - v1.x);
-    float Norm = Angle - 90.0;
+    float Angle = atan2(Line->v2->y-v1.y, Line->v2->x-v1.x);
+    float Norm = Angle-90.0;
 
-    float Dist = -(cos(Norm) * v1.x + sin(Norm) * v1.y);
+    float Dist = -(cos(Norm)*v1.x+sin(Norm)*v1.y);
 
     if (Arg2)
     {
-      Angle = AngleMod360(Angle + 180.0);
+      Angle = AngleMod360(Angle+180.0);
       Dist = -Dist;
     }
 
@@ -3906,14 +3906,14 @@ final bool EV_LineAlignCeiling(int Arg1, int Arg2, int Arg3, int Arg4,
 
     TVec v1 = *Line->v1;
 
-    float Angle = atan2(Line->v2->y - v1.y, Line->v2->x - v1.x);
-    float Norm = Angle - 90.0;
+    float Angle = atan2(Line->v2->y-v1.y, Line->v2->x-v1.x);
+    float Norm = Angle-90.0;
 
-    float Dist = -(cos(Norm) * v1.x + sin(Norm) * v1.y);
+    float Dist = -(cos(Norm)*v1.x+sin(Norm)*v1.y);
 
     if (Arg2)
     {
-      Angle = AngleMod360(Angle + 180.0);
+      Angle = AngleMod360(Angle+180.0);
       Dist = -Dist;
     }
 
@@ -3965,19 +3965,19 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
     //  X offset
     if (Arg2 != NoChange)
     {
-      float Offs = itof(Arg2) / itof(0x10000);
-      if (!(Arg5 & 8))
+      float Offs = itof(Arg2)/itof(0x10000);
+      if (!(Arg5&8))
       {
         //  Set
-        if (Arg5 & 1)
+        if (Arg5&1)
         {
           Side->TopTextureOffset = Offs;
         }
-        if (Arg5 & 2)
+        if (Arg5&2)
         {
           Side->MidTextureOffset = Offs;
         }
-        if (Arg5 & 4)
+        if (Arg5&4)
         {
           Side->BotTextureOffset = Offs;
         }
@@ -3985,15 +3985,15 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
       else
       {
         //  Add
-        if (Arg5 & 1)
+        if (Arg5&1)
         {
           Side->TopTextureOffset += Offs;
         }
-        if (Arg5 & 2)
+        if (Arg5&2)
         {
           Side->MidTextureOffset += Offs;
         }
-        if (Arg5 & 4)
+        if (Arg5&4)
         {
           Side->BotTextureOffset += Offs;
         }
@@ -4003,19 +4003,19 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
     //  Y offset
     if (Arg3 != NoChange)
     {
-      float Offs = itof(Arg3) / itof(0x10000);
-      if (!(Arg5 & 8))
+      float Offs = itof(Arg3)/itof(0x10000);
+      if (!(Arg5&8))
       {
         //  Set
-        if (Arg5 & 1)
+        if (Arg5&1)
         {
           Side->TopRowOffset = Offs;
         }
-        if (Arg5 & 2)
+        if (Arg5&2)
         {
           Side->MidRowOffset = Offs;
         }
-        if (Arg5 & 4)
+        if (Arg5&4)
         {
           Side->BotRowOffset = Offs;
         }
@@ -4023,15 +4023,15 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
       else
       {
         //  Add
-        if (Arg5 & 1)
+        if (Arg5&1)
         {
           Side->TopRowOffset += Offs;
         }
-        if (Arg5 & 2)
+        if (Arg5&2)
         {
           Side->MidRowOffset += Offs;
         }
-        if (Arg5 & 4)
+        if (Arg5&4)
         {
           Side->BotRowOffset += Offs;
         }
@@ -4179,9 +4179,9 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   {
     return false;
   }
-  angle = itof(AAngle) * (360.0 / 256.0);
-  speed = itof(ASpeed) / 8.0;
-  vspeed = itof(AVSpeed) / 8.0;
+  angle = itof(AAngle)*(360.0/256.0);
+  speed = itof(ASpeed)/8.0;
+  vspeed = itof(AVSpeed)/8.0;
 
   //print("projectile '%C', vspeed=%f (%f); intercept=%B", moType, AVSpeed, vspeed, Intercept);
   for (A = tid ? FindMobjFromTID(tid, none) : Activator; A; A = FindMobjFromTID(tid, A)) {
@@ -4197,8 +4197,8 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
 
     newA.Target = EntityEx(A);  // Originator
     if (Targ) {
-      TVec TargOrg = Targ.Origin + vector(0.0, 0.0, Targ.Height / 2.0);
-      TVec Delta = TargOrg - newA.Origin;
+      TVec TargOrg = Targ.Origin+vector(0.0, 0.0, Targ.Height/2.0);
+      TVec Delta = TargOrg-newA.Origin;
       TVec TargVel = Targ.Velocity;
 
       if (!Targ.bNoGravity && Targ.WaterLevel < 3) {
@@ -4215,11 +4215,11 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
         //     a/sin(A) = b/sin(B)
 
         float Dist = Length(Delta);
-        float TargSpeed = Length(TargVel) / 35.0;
-        float YDotX = DotProduct(-Delta, TargVel) / 35.0;
-        float a = acos(FClamp(YDotX / TargSpeed / Dist, -1.0, 1.0));
-        float Multiplier = (Random() - Random()) * 0.1 + 1.1;
-        float SinB = FClamp(TargSpeed * Multiplier * sin(a) / speed, -1.0, 1.0);
+        float TargSpeed = Length(TargVel)/35.0;
+        float YDotX = DotProduct(-Delta, TargVel)/35.0;
+        float a = acos(FClamp(YDotX/TargSpeed/Dist, -1.0, 1.0));
+        float Multiplier = (Random()-Random())*0.1+1.1;
+        float SinB = FClamp(TargSpeed*Multiplier*sin(a)/speed, -1.0, 1.0);
 
         // use the cross product of two of the triangle's sides to get a rotation vector
         TVec rv = CrossProduct(TargVel, Delta);
@@ -4228,19 +4228,19 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
         // rotate around this vector
         TVec AimVec = RotateVectorAroundVector(Delta, rv, asin(SinB));
         // and make the projectile follow that vector at the desired speed
-        float AimScale = speed / Dist * 35.0;
-        newA.Velocity = AimVec * AimScale;
+        float AimScale = speed/Dist*35.0;
+        newA.Velocity = AimVec*AimScale;
         newA.Angles.yaw = atan2(newA.Velocity.y, newA.Velocity.x);
       } else {
         newA.Angles.yaw = atan2(Delta.y, Delta.x);
-        newA.Velocity = Normalise(Delta) * speed * 35.0;
+        newA.Velocity = Normalise(Delta)*speed*35.0;
       }
       if (newA.bSeekerMissile) newA.Tracer = EntityEx(Targ);
     } else {
       newA.Angles.yaw = angle;
-      newA.Velocity.x = speed * cos(angle) * 35.0;
-      newA.Velocity.y = speed * sin(angle) * 35.0;
-      newA.Velocity.z = vspeed * 35.0;
+      newA.Velocity.x = speed*cos(angle)*35.0;
+      newA.Velocity.y = speed*sin(angle)*35.0;
+      newA.Velocity.z = vspeed*35.0;
     }
 
     if (newA.bSpecial) newA.bDropped = true; // Don't respawn
@@ -4300,14 +4300,14 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
   auto moRepl = class!EntityEx(GetClassReplacement(moType));
   if (moRepl) moType = moRepl;
-  angle = itof(Arg3) * 360.0 / 256.0;
+  angle = itof(Arg3)*360.0/256.0;
   for (A = tid ? FindMobjFromTID(tid, none) : Activator; A;
     A = FindMobjFromTID(tid, A))
   {
     newAct = Spawn(moType, A.Origin);
     if (newAct.bFloatBob)
     {
-      newAct.Origin.z = A.Origin.z - A.FloorZ;
+      newAct.Origin.z = A.Origin.z-A.FloorZ;
       newAct.SetOrigin2(newAct.Origin);
     }
     if (!newAct.TestLocation())
@@ -4331,7 +4331,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       newAct.SetTID(Arg4);
       if (fog == true)
       {
-        Spawn(TeleportFog, A.Origin + vector(0.0, 0.0,
+        Spawn(TeleportFog, A.Origin+vector(0.0, 0.0,
           LineSpecialGameInfo(Game).TeleFogHeight));
       }
       if (newAct.bSpecial)
@@ -4340,7 +4340,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       }
       if (newAct.bFloatBob)
       {
-        newAct.Special1f = newAct.Origin.z - newAct.FloorZ;
+        newAct.Special1f = newAct.Origin.z-newAct.FloorZ;
       }
       success = true;
     }
@@ -4732,8 +4732,7 @@ final bool EV_ThingSetTranslation(int Arg1, int Arg2, int Arg3, int Arg4,
   }
   else if (Arg2 >= 1 && Arg2 < Level::MAX_LEVEL_TRANSLATIONS)
   {
-    Trans = (Entity::TRANSL_Level << Entity::TRANSL_TYPE_SHIFT) +
-      Arg2 - 1;
+    Trans = (Entity::TRANSL_Level<<Entity::TRANSL_TYPE_SHIFT)+Arg2-1;
   }
   else
   {
@@ -4937,9 +4936,9 @@ final bool EV_ThingMove(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     {
       if (Arg3)
       {
-        Spawn(TeleportFog, OldOrg + vector(0.0, 0.0,
+        Spawn(TeleportFog, OldOrg+vector(0.0, 0.0,
           LineSpecialGameInfo(Game).TeleFogHeight));
-        Spawn(TeleportFog, A.Origin + vector(0.0, 0.0,
+        Spawn(TeleportFog, A.Origin+vector(0.0, 0.0,
           LineSpecialGameInfo(Game).TeleFogHeight));
       }
       return true;
@@ -5184,8 +5183,8 @@ final bool EV_ForceField(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   EntityEx A)
 {
   A.Damage(none, none, 16, '', spawnBlood:true);
-  A.Velocity.x += 7.8125 * cos(A.Angles.yaw + 180.0) * 35.0;
-  A.Velocity.y += 7.8125 * sin(A.Angles.yaw + 180.0) * 35.0;
+  A.Velocity.x += 7.8125*cos(A.Angles.yaw+180.0)*35.0;
+  A.Velocity.y += 7.8125*sin(A.Angles.yaw+180.0)*35.0;
   return true;
 }
 
@@ -5212,7 +5211,7 @@ final bool EV_RemoveForceField(int Arg1, int Arg2, int Arg3, int Arg4,
       secline = sec->lines[i];
       if (secline->special != LNSPEC_ForceField)
         continue;
-      if (!(secline->flags & ML_TWOSIDED))
+      if (!(secline->flags&ML_TWOSIDED))
         continue;
 
       XLevel.Sides[secline->sidenum[0]].MidTexture = 0;
@@ -5289,7 +5288,7 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     {
       return false;
     }
-    count = 1 + (P_Random() % count);
+    count = 1+(P_Random()%count);
     A = none;
     for (i = 0; i < count; i++)
     {
@@ -5339,7 +5338,7 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     // Rotate 180 degrees, so that walking perpendicularly across
     // teleporter linedef causes thing to exit in the direction
     // indicated by the exit thing.
-    Angle = atan2(Line->normal.y, Line->normal.x) - A.Angles.yaw + 180.0;
+    Angle = atan2(Line->normal.y, Line->normal.x)-A.Angles.yaw+180.0;
 
     // Momentum of thing crossing teleporter linedef
     OldVel = thing.Velocity;
@@ -5354,11 +5353,11 @@ final bool EV_Teleport(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     if (!fog && Line && KeepOrient)
     {
       // Rotate thing according to difference in angles
-      thing.Angles.yaw = AngleMod360(thing.Angles.yaw + Angle);
+      thing.Angles.yaw = AngleMod360(thing.Angles.yaw+Angle);
 
       // Rotate thing's momentum to come out of exit just like it entered
-      thing.Velocity.x = OldVel.x * cos(Angle) - OldVel.y * sin(Angle);
-      thing.Velocity.y = OldVel.y * cos(Angle) + OldVel.x * sin(Angle);
+      thing.Velocity.x = OldVel.x*cos(Angle)-OldVel.y*sin(Angle);
+      thing.Velocity.y = OldVel.y*cos(Angle)+OldVel.x*sin(Angle);
     }
     return true;
   }
@@ -5399,19 +5398,19 @@ final bool EV_TeleportOther(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
 final bool DoGroupForOne(EntityEx victim, EntityEx source, EntityEx dest,
   bool floorz, bool fog)
 {
-  float an = dest.Angles.yaw - source.Angles.yaw;
-  float offX = victim.Origin.x - source.Origin.x;
-  float offY = victim.Origin.y - source.Origin.y;
-  float offAngle = victim.Angles.yaw - source.Angles.yaw;
-  float newX = offX * cos(an) - offY * sin(an);
-  float newY = offX * sin(an) + offY * cos(an);
+  float an = dest.Angles.yaw-source.Angles.yaw;
+  float offX = victim.Origin.x-source.Origin.x;
+  float offY = victim.Origin.y-source.Origin.y;
+  float offAngle = victim.Angles.yaw-source.Angles.yaw;
+  float newX = offX*cos(an)-offY*sin(an);
+  float newY = offX*sin(an)+offY*cos(an);
   bool res;
 
-  res = victim.Teleport(vector(dest.Origin.x + newX,
-    dest.Origin.y + newY, floorz ? EntityEx::ONFLOORZ : dest.Origin.z +
-    victim.Origin.z - source.Origin.z), 0.0, fog, fog, !fog);
+  res = victim.Teleport(vector(dest.Origin.x+newX,
+    dest.Origin.y+newY, floorz ? EntityEx::ONFLOORZ : dest.Origin.z +
+    victim.Origin.z-source.Origin.z), 0.0, fog, fog, !fog);
   // P_Teleport only changes angle if fog is true
-  victim.Angles.yaw = AngleMod360(dest.Angles.yaw + offAngle);
+  victim.Angles.yaw = AngleMod360(dest.Angles.yaw+offAngle);
 
   return res;
 }
@@ -5593,26 +5592,26 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
     }
 
     // Get the thing's position along the source linedef
-    SrcXAxis = Normalise(*line->v2 - *line->v1);
+    SrcXAxis = Normalise((*line->v2)-(*line->v1));
     SrcYAxis = -line->normal;
-    pos = DotProduct(SrcXAxis, thing.Origin - *line->v1);
+    pos = DotProduct(SrcXAxis, thing.Origin-(*line->v1));
     oldZ = thing.Origin.z;
 
     // Interpolate position across the exit linedef
     if (reverse)
     {
-      DstXAxis = Normalise(*l->v2 - *l->v1);
+      DstXAxis = Normalise((*l->v2)-(*l->v1));
       DstYAxis = -l->normal;
-      newPos = *l->v1 + pos * DstXAxis;
-      newPos.z = thing.Origin.z - GetPlanePointZ(ref *line->frontsector->botregion->floor, thing.Origin) +
+      newPos = *l->v1+pos*DstXAxis;
+      newPos.z = thing.Origin.z-GetPlanePointZ(ref *line->frontsector->botregion->floor, thing.Origin)+
         GetPlanePointZ(ref *l->frontsector->botregion->floor, newPos);
     }
     else
     {
-      DstXAxis = Normalise(*l->v1 - *l->v2);
+      DstXAxis = Normalise((*l->v1)-(*l->v2));
       DstYAxis = l->normal;
-      newPos = *l->v2 + pos * DstXAxis;
-      newPos.z = thing.Origin.z - GetPlanePointZ(ref *line->frontsector->botregion->floor, thing.Origin) +
+      newPos = *l->v2+pos*DstXAxis;
+      newPos.z = thing.Origin.z-GetPlanePointZ(ref *line->frontsector->botregion->floor, thing.Origin)+
         GetPlanePointZ(ref *l->backsector->botregion->floor, newPos);
     }
 
@@ -5627,18 +5626,18 @@ final bool EV_SilentLineTeleport(line_t *line, int side, EntityEx thing,
     TempV.y = DotProduct(DstYAxis, SrcXAxis);
     TempV.z = 0.0;
     VectorAngles(TempV, out TempA);
-    thing.Angles.yaw = AngleMod360(thing.Angles.yaw - TempA.yaw);
+    thing.Angles.yaw = AngleMod360(thing.Angles.yaw-TempA.yaw);
 
     // Rotate thing's momentum to come out of exit just like it entered
     TempX = DotProduct(thing.Velocity, SrcXAxis);
     TempY = DotProduct(thing.Velocity, SrcYAxis);
-    thing.Velocity.x = TempX * DstXAxis.x + TempY * DstYAxis.x;
-    thing.Velocity.y = TempX * DstXAxis.y + TempY * DstYAxis.y;
+    thing.Velocity.x = TempX*DstXAxis.x+TempY*DstYAxis.x;
+    thing.Velocity.y = TempX*DstXAxis.y+TempY*DstYAxis.y;
 
     // Adjust a player's view, in case there has been a height change
     if (thing.bIsPlayer && thing.Player.MO == thing)
     {
-      thing.Player.ViewOrg.z += thing.Origin.z - oldZ;
+      thing.Player.ViewOrg.z += thing.Origin.z-oldZ;
 
       thing.Player.bFixAngle = true;
     }
@@ -6126,7 +6125,7 @@ final bool EV_LineTranslucent(int Arg1, int Arg2, int Arg3, int Arg4,
   for (Other = XLevel.FindLine(Arg1, &Searcher); Other;
     Other = XLevel.FindLine(Arg1, &Searcher))
   {
-    Other->alpha = itof(Arg2) / 255.0;
+    Other->alpha = itof(Arg2)/255.0;
     if (Arg3 == 0)
     {
       Other->flags &= ~ML_ADDITIVE;
@@ -6157,8 +6156,8 @@ int EV_SectorSetPlaneReflection(int Arg1, int Arg2, int Arg3, int Arg4,
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
-    XLevel.Sectors[SecNum].floor.MirrorAlpha = itof(255 - Arg2) / 255.0;
-    XLevel.Sectors[SecNum].ceiling.MirrorAlpha = itof(255 - Arg3) / 255.0;
+    XLevel.Sectors[SecNum].floor.MirrorAlpha = itof(255-Arg2)/255.0;
+    XLevel.Sectors[SecNum].ceiling.MirrorAlpha = itof(255-Arg3)/255.0;
   }
   return 1;
 }
@@ -6186,9 +6185,9 @@ final bool EV_GlassBreak(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   {
     return false;
   }
-  if (Line->flags & ML_TWOSIDED)
+  if (Line->flags&ML_TWOSIDED)
   {
-    Line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING);
+    Line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
   }
   switched = ChangeSwitchTexture(Line->sidenum[0], false,
     'switches/normbutn', Quest1);
@@ -6210,22 +6209,22 @@ final bool EV_GlassBreak(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     if (!Arg1)
     {
       // Break some glass
-      x = Line->v1->x + (Line->v2->x - Line->v1->x) / 2.0;
-      y = Line->v1->y + (Line->v2->y - Line->v1->y) / 2.0;
-      x += (Line->frontsector->soundorg.x - x) / 5.0;
-      y += (Line->frontsector->soundorg.y - y) / 5.0;
+      x = Line->v1->x+(Line->v2->x-Line->v1->x)/2.0;
+      y = Line->v1->y+(Line->v2->y-Line->v1->y)/2.0;
+      x += (Line->frontsector->soundorg.x-x)/5.0;
+      y += (Line->frontsector->soundorg.y-y)/5.0;
 
       for (i = 0; i < 7; i++)
       {
         glass = Spawn(GlassJunk, vector(x, y, EntityEx::ONFLOORZ));
         glass.Origin.z += 24.0;
-        glass.SetState(GetStatePlus(glass.IdleState, P_Random() % glass.Health, true));
-        an = Random() * 360.0;
+        glass.SetState(GetStatePlus(glass.IdleState, P_Random()%glass.Health, true));
+        an = Random()*360.0;
         glass.Angles.yaw = an;
-        speed = Random() * 4.0 * 35.0;
-        glass.Velocity.x = cos(an) * speed;
-        glass.Velocity.y = sin(an) * speed;
-        glass.Velocity.z = Random() * 8.0 * 35.0;
+        speed = Random()*4.0*35.0;
+        glass.Velocity.x = cos(an)*speed;
+        glass.Velocity.y = sin(an)*speed;
+        glass.Velocity.z = Random()*8.0*35.0;
       }
     }
     if (Quest1 || Quest2)
@@ -6313,8 +6312,7 @@ final bool EV_StartConversation(int Arg1, int Arg2, int Arg3, int Arg4,
     {
       if (Arg2)
       {
-        A.Angles.yaw = atan2(Ent.Origin.y - A.Origin.y,
-          Ent.Origin.x - A.Origin.x);
+        A.Angles.yaw = atan2(Ent.Origin.y-A.Origin.y, Ent.Origin.x-A.Origin.x);
         A.Player.bFixAngle = true;
       }
       return true;
@@ -6493,11 +6491,11 @@ final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
   {
     if (pe.IsA('PolyobjRotator'))
     {
-      force = pe.thrust_force * 8.0;
+      force = pe.thrust_force*8.0;
     }
     else
     {
-      force = pe.thrust_force * 3.0;
+      force = pe.thrust_force*3.0;
     }
 
     if (force < 1.0)
@@ -6514,12 +6512,12 @@ final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
     force = 1.0;
   }
 
-  Other.Velocity += (force * thrustDir) * 2.0;
+  Other.Velocity += (force*thrustDir)*2.0;
   if (po->bCrush)
   {
     TVec testPos;
 
-    testPos = Other.Origin + force * thrustDir * Game.frametime;
+    testPos = Other.Origin+force*thrustDir*Game.frametime;
     if (po->bHurtOnTouch || !Other.CheckPosition(testPos))
     {
       // Damage other type of actors
@@ -6627,7 +6625,7 @@ final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
 {
   class!EntityEx   moType;
 
-  if (!(type + tid) && !TypeName)
+  if (!(type+tid) && !TypeName)
   {
     // Nothing to count
     return 0;
@@ -6760,16 +6758,16 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
       {
         continue;
       }
-      if (!(Flags & DAMAGE_NONPLAYERS) && !Ent.bIsPlayer)
+      if (!(Flags&DAMAGE_NONPLAYERS) && !Ent.bIsPlayer)
       {
         continue;
       }
-      if (!(Flags & DAMAGE_PLAYERS) && Ent.bIsPlayer)
+      if (!(Flags&DAMAGE_PLAYERS) && Ent.bIsPlayer)
       {
         continue;
       }
 
-      if (!(Flags & DAMAGE_IN_AIR) && Ent.Origin.z !=
+      if (!(Flags&DAMAGE_IN_AIR) && Ent.Origin.z !=
         GetPlanePointZ(ref Sec->floor, Ent.Origin) && !Ent.WaterLevel)
       {
         continue;
@@ -6777,7 +6775,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
 
       if (ProtectClass)
       {
-        if (!(Flags & DAMAGE_SUBCLASSES_PROTECT))
+        if (!(Flags&DAMAGE_SUBCLASSES_PROTECT))
         {
           if (EntityEx(Ent).FindInventory(ProtectClass))
           {
@@ -6859,7 +6857,7 @@ final override void SpawnMapThing (mthing_t *mthing) {
 
     // check current character classes with spawn flags
     spawnMask = GetPClassSpawnFlags();
-    if (spawnMask && !(mthing->SkillClassFilter & spawnMask)) return; // not for current class
+    if (spawnMask && !(mthing->SkillClassFilter&spawnMask)) return; // not for current class
   }
 
   if (IsPlayerStart) {
@@ -7036,8 +7034,7 @@ bool StartConversation(EntityEx User, EntityEx UseOn)
     CurrentSpeaker = UseOn;
     CurrentSpeakingTo = User;
     OldSpeakerAngle = UseOn.Angles.yaw;
-    UseOn.Angles.yaw = atan2(User.Origin.y - UseOn.Origin.y,
-      User.Origin.x - UseOn.Origin.x);
+    UseOn.Angles.yaw = atan2(User.Origin.y-UseOn.Origin.y, User.Origin.x-UseOn.Origin.x);
     User.PlaySound('misc/chat', CHAN_VOICE);
     StartSpeech(SpeechNum);
   }
@@ -7065,11 +7062,11 @@ final void StartSpeech(int SpeechNum)
     }
     if (SpeechNum < 0)
     {
-      Speech = &XLevel.GenericSpeeches[-SpeechNum - 1];
+      Speech = &XLevel.GenericSpeeches[-SpeechNum-1];
     }
     else
     {
-      Speech = &XLevel.LevelSpeeches[SpeechNum - 1];
+      Speech = &XLevel.LevelSpeeches[SpeechNum-1];
     }
     if (Speech->JumpToConv &&
       CheckForNeededItem(CurrentSpeakingTo, Speech->CheckItem1, 1) != -2 &&
@@ -7192,13 +7189,13 @@ final void ConChoiceImpulse(int ChoiceNum)
   }
   if (CurrentSpeechIndex < 0)
   {
-    Speech = &XLevel.GenericSpeeches[-CurrentSpeechIndex - 1];
+    Speech = &XLevel.GenericSpeeches[-CurrentSpeechIndex-1];
   }
   else
   {
-    Speech = &XLevel.LevelSpeeches[CurrentSpeechIndex - 1];
+    Speech = &XLevel.LevelSpeeches[CurrentSpeechIndex-1];
   }
-  Choice = &Speech->Choices[ChoiceNum - 1];
+  Choice = &Speech->Choices[ChoiceNum-1];
   //  Check if player has needed items.
   Item1 = CheckForNeededItem(CurrentSpeakingTo, Choice->NeedItem1, Choice->NeedAmount1);
   Item2 = CheckForNeededItem(CurrentSpeakingTo, Choice->NeedItem2, Choice->NeedAmount2);
@@ -7304,14 +7301,14 @@ final void AddPlayerCorpse(EntityEx Corpse)
   if (bodyqueslot >= BodyQueSize)
   {
     // Too many player corpses - remove an old one
-    if (bodyque[bodyqueslot % BodyQueSize])
+    if (bodyque[bodyqueslot%BodyQueSize])
     {
-      bodyque[bodyqueslot % BodyQueSize].Destroy();
+      bodyque[bodyqueslot%BodyQueSize].Destroy();
     }
   }
-  bodyque[bodyqueslot % BodyQueSize] = Corpse;
+  bodyque[bodyqueslot%BodyQueSize] = Corpse;
   Corpse.Translation = XLevel.SetBodyQueueTrans(
-    bodyqueslot % BodyQueSize, Corpse.Translation);
+    bodyqueslot%BodyQueSize, Corpse.Translation);
   bodyqueslot++;
 }
 
@@ -7333,16 +7330,16 @@ override void ParticleEffect(int count, int type1, int type2, TVec origin, float
     if (!p)
       return;
 
-    p->die = Level.XLevel.Time + duration * Random();
+    p->die = Level.XLevel.Time+duration*Random();
     p->colour = colour;
     p->Size = 1.0;
     if(ramp)
-      p->ramp = Random() * ramp;
+      p->ramp = Random()*ramp;
 
     if(type2)
     {
       // Choose between the two types
-      if (i & 1)
+      if (i&1)
       {
         p->type = type1;
       }
@@ -7363,9 +7360,9 @@ override void ParticleEffect(int count, int type1, int type2, TVec origin, float
     }
     else
     {
-      p->org.x = origin.x + ((Random() * ornd) - ornd / 2.0);
-      p->org.y = origin.y + ((Random() * ornd) - ornd / 2.0);
-      p->org.z = origin.z + ((Random() * ornd) - ornd / 2.0);
+      p->org.x = origin.x+((Random()*ornd)-ornd/2.0);
+      p->org.y = origin.y+((Random()*ornd)-ornd/2.0);
+      p->org.z = origin.z+((Random()*ornd)-ornd/2.0);
     }
 
     // No random velocity
@@ -7375,9 +7372,9 @@ override void ParticleEffect(int count, int type1, int type2, TVec origin, float
     }
     else
     {
-      p->vel.x = velocity.x * (Random() - vrnd);
-      p->vel.y = velocity.y * (Random() - vrnd);
-      p->vel.z = velocity.z * (Random() - vrnd);
+      p->vel.x = velocity.x*(Random()-vrnd);
+      p->vel.y = velocity.y*(Random()-vrnd);
+      p->vel.z = velocity.z*(Random()-vrnd);
     }
     p->accel.x = acceleration;
     p->accel.y = acceleration;
@@ -7392,22 +7389,22 @@ override void ParticleEffect(int count, int type1, int type2, TVec origin, float
 //
 //==========================================================================
 
-override void UpdateParticle(particle_t * p, float DeltaTime)
+override void UpdateParticle(particle_t *p, float DeltaTime)
 {
   float time2, time3;
   float dvel;
   float grav;
 
-  time2 = DeltaTime * 10.0; // 15;
-  time3 = DeltaTime * 15.0;
-  dvel = 4.0 * DeltaTime;
-  grav = DeltaTime * p->gravity /*sv_gravity.value * 0.05*/;
+  time2 = DeltaTime*10.0; // 15;
+  time3 = DeltaTime*15.0;
+  dvel = 4.0*DeltaTime;
+  grav = DeltaTime*p->gravity /*sv_gravity.value * 0.05*/;
   p->vel.z -= grav;
 
   switch (p->type)
   {
   case pt_static:
-    p->vel += p->accel * DeltaTime;
+    p->vel += p->accel*DeltaTime;
     break;
 
   case pt_explode:
@@ -7416,10 +7413,10 @@ override void UpdateParticle(particle_t * p, float DeltaTime)
       p->die = -1.0;
     else
       p->colour = LineSpecialGameInfo.default.ramp1[ftoi(p->ramp)];
-    p->vel.x += p->vel.x * dvel;
-    p->vel.y += p->vel.y * dvel;
-    p->vel.z += p->vel.z * dvel;
-    p->vel += p->accel * DeltaTime;
+    p->vel.x += p->vel.x*dvel;
+    p->vel.y += p->vel.y*dvel;
+    p->vel.z += p->vel.z*dvel;
+    p->vel += p->accel*DeltaTime;
     p->vel.z -= grav;
     break;
 
@@ -7429,35 +7426,35 @@ override void UpdateParticle(particle_t * p, float DeltaTime)
       p->die = -1.0;
     else
       p->colour = LineSpecialGameInfo.default.ramp2[ftoi(p->ramp)];
-    p->vel.x -= p->vel.x * DeltaTime;
-    p->vel.y -= p->vel.y * DeltaTime;
-    p->vel.z -= p->vel.z * DeltaTime;
-    p->vel += p->accel * DeltaTime;
+    p->vel.x -= p->vel.x*DeltaTime;
+    p->vel.y -= p->vel.y*DeltaTime;
+    p->vel.z -= p->vel.z*DeltaTime;
+    p->vel += p->accel*DeltaTime;
     p->vel.z -= grav;
     break;
 
   case pt_fountain:
-    p->vel += p->accel * DeltaTime;
-    p->colour = (p->colour & 0x00ffffff) | (ftoi(
-      itof(p->colour >> 24) - 255.0 / 51.0 * 35.0 * DeltaTime) << 24);
+    p->vel += p->accel*DeltaTime;
+    p->colour = (p->colour&0x00ffffff)|(ftoi(
+      itof(p->colour>>24)-255.0/51.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_spark:
-    p->vel += p->accel * DeltaTime;
-    p->colour = (p->colour & 0x00ffffff) | (ftoi(
-      itof(p->colour >> 24) - 255.0 / 10.0 * 35.0 * DeltaTime) << 24);
+    p->vel += p->accel*DeltaTime;
+    p->colour = (p->colour&0x00ffffff)|(ftoi(
+      itof(p->colour>>24)-255.0/10.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_ice_chunk:
-    p->vel.x -= p->vel.x * DeltaTime;
-    p->vel.y -= p->vel.y * DeltaTime;
-    p->vel.z += p->accel.z * DeltaTime;
+    p->vel.x -= p->vel.x*DeltaTime;
+    p->vel.y -= p->vel.y*DeltaTime;
+    p->vel.z += p->accel.z*DeltaTime;
     break;
 
   case pt_rail:
-    p->vel += p->accel * DeltaTime;
-    p->colour = (p->colour & 0x00ffffff) | (ftoi(
-      itof(p->colour >> 24) - 255.0 * DeltaTime) << 24);
+    p->vel += p->accel*DeltaTime;
+    p->colour = (p->colour&0x00ffffff)|(ftoi(
+      itof(p->colour>>24)-255.0*DeltaTime)<<24);
     break;
   }
 }
