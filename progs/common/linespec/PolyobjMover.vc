@@ -22,7 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class PolyobjMover:PolyobjThinker;
 
 int polyobj;
@@ -30,38 +29,29 @@ float speed;
 float dist;
 float angle;
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
+override void Tick (float deltaTime) {
   float move;
   float absMove;
   float xMove;
   float yMove;
   polyobj_t *poly;
 
-  move = speed * deltaTime;
+  move = speed*deltaTime;
   absMove = fabs(move);
-  if (dist < absMove)
-  {
-    move = dist * (move < 0.0 ? -1.0 : 1.0);
-  }
-  xMove = move * cos(angle);
-  yMove = move * sin(angle);
-  if (XLevel.MovePolyobj(polyobj, xMove, yMove))
-  {
+  if (dist < absMove) move = dist*(move < 0.0 ? -1.0 : 1.0);
+  xMove = move*cos(angle);
+  yMove = move*sin(angle);
+  if (XLevel.MovePolyobj(polyobj, xMove, yMove)) {
     dist -= absMove;
-    if (dist <= 0.0)
-    {
+    if (dist <= 0.0) {
       poly = XLevel.GetPolyobj(polyobj);
-      if (poly->SpecialData == self)
-      {
-        poly->SpecialData = none;
-      }
+      if (poly->SpecialData == self) poly->SpecialData = none;
       PolyobjStopSequence(poly);
       Destroy();
       return;
@@ -69,6 +59,6 @@ override void Tick(float deltaTime)
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

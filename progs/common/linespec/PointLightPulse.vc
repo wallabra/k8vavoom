@@ -22,11 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PointLightPulse : DynamicLight __mobjinfo__(9801);
 
-class PointLightPulse : DynamicLight
-  __mobjinfo__(9801);
-
-defaultproperties
-{
+defaultproperties {
   LightType = DLTYPE_Pulse;
 }

@@ -22,19 +22,17 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class PointPuller : Actor __mobjinfo__(5002);
 
-class PointPuller : Actor
-  __mobjinfo__(5002);
 
-states
-{
+states {
 Spawn:
   TNT1 A -1
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   RenderStyle = STYLE_None;
   bNoBlockmap = true;
 }

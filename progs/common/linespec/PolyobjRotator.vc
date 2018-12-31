@@ -22,46 +22,32 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class PolyobjRotator:PolyobjThinker;
 
 int polyobj;
 float dist;
 float speed;
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
+override void Tick (float deltaTime) {
   float move;
   float absMove;
   polyobj_t *poly;
 
-  move = speed * deltaTime;
+  move = speed*deltaTime;
   absMove = fabs(move);
-  if (dist >= 0.0 && dist < absMove)
-  {
-    move = dist * (speed < 0.0 ? -1.0 : 1.0);
-  }
-  if (XLevel.RotatePolyobj(polyobj, move))
-  {
-    if (dist < 0.0)
-    {
-      // perpetual polyobj
-      return;
-    }
+  if (dist >= 0.0 && dist < absMove) move = dist*(speed < 0.0 ? -1.0 : 1.0);
+  if (XLevel.RotatePolyobj(polyobj, move)) {
+    if (dist < 0.0) return; // perpetual polyobj
     dist -= absMove;
-    if (dist <= 0.0)
-    {
+    if (dist <= 0.0) {
       poly = XLevel.GetPolyobj(polyobj);
-      if (poly->SpecialData == self)
-      {
-        poly->SpecialData = none;
-      }
+      if (poly->SpecialData == self) poly->SpecialData = none;
       PolyobjStopSequence(poly);
       Destroy();
       return;
@@ -69,6 +55,6 @@ override void Tick(float deltaTime)
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

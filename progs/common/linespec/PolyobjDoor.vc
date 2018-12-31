@@ -22,14 +22,12 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class PolyobjDoor : PolyobjThinker;
 
-enum
-{
+enum {
   PODOOR_NONE,
   PODOOR_SLIDE,
-  PODOOR_SWING
+  PODOOR_SWING,
 };
 
 int type;
@@ -43,135 +41,96 @@ float time;
 float waitTime;
 bool bClose;
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float deltaTime)
-{
+override void Tick (float deltaTime) {
   polyobj_t *poly;
   float move;
 
-  if (time)
-  {
+  if (time) {
     time -= deltaTime;
-    if (time <= 0.0)
-    {
+    if (time <= 0.0) {
       time = 0.0;
       poly = XLevel.GetPolyobj(polyobj);
       PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
     }
     return;
   }
-  switch (type)
-  {
-  case PODOOR_SLIDE:
-    move = speed * deltaTime;
-    if (fabs(move) > dist)
-    {
-      move = (move < 0.0 ? -1.0 : 1.0) * dist;
-    }
-    if (XLevel.MovePolyobj(polyobj, move * xSpeed, move * ySpeed))
-    {
-      dist -= fabs(move);
-      if (dist <= 0.0)
-      {
-        poly = XLevel.GetPolyobj(polyobj);
-        PolyobjStopSequence(poly);
-        if (!bClose)
-        {
-          dist = totalDist;
-          bClose = true;
-          time = waitTime;
-          xSpeed = -xSpeed;
-          ySpeed = -ySpeed;
-        }
-        else
-        {
-          if (poly->SpecialData == self)
-          {
-            poly->SpecialData = none;
+
+  switch (type) {
+    case PODOOR_SLIDE:
+      move = speed*deltaTime;
+      if (fabs(move) > dist) move = (move < 0.0 ? -1.0 : 1.0)*dist;
+      if (XLevel.MovePolyobj(polyobj, move*xSpeed, move*ySpeed)) {
+        dist -= fabs(move);
+        if (dist <= 0.0) {
+          poly = XLevel.GetPolyobj(polyobj);
+          PolyobjStopSequence(poly);
+          if (!bClose) {
+            dist = totalDist;
+            bClose = true;
+            time = waitTime;
+            xSpeed = -xSpeed;
+            ySpeed = -ySpeed;
+          } else {
+            if (poly->SpecialData == self) poly->SpecialData = none;
+            Destroy();
           }
-          Destroy();
         }
-      }
-    }
-    else
-    {
-      poly = XLevel.GetPolyobj(polyobj);
-      if (poly->bCrush || !bClose)
-      {
-        // continue moving if the poly is a crusher, or is opening
-        return;
-      }
-      else
-      {
+      } else {
+        poly = XLevel.GetPolyobj(polyobj);
+        if (poly->bCrush || !bClose) {
+          // continue moving if the poly is a crusher, or is opening
+          return;
+        }
         // open back up
-        dist = totalDist - dist;
+        dist = totalDist-dist;
         xSpeed = -xSpeed;
         ySpeed = -ySpeed;
         bClose = false;
         PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
       }
-    }
-    break;
-
-  case PODOOR_SWING:
-    move = speed * deltaTime;
-    if (fabs(move) > dist)
-    {
-      move = (move < 0.0 ? -1.0 : 1.0) * dist;
-    }
-    if (XLevel.RotatePolyobj(polyobj, move))
-    {
-      dist -= fabs(move);
-      if (dist <= 0.0)
-      {
-        poly = XLevel.GetPolyobj(polyobj);
-        PolyobjStopSequence(poly);
-        if (!bClose)
-        {
-          dist = totalDist;
-          bClose = true;
-          time = waitTime;
-          speed = -speed;
-        }
-        else
-        {
-          if (poly->SpecialData == self)
-          {
-            poly->SpecialData = none;
+      break;
+    case PODOOR_SWING:
+      move = speed*deltaTime;
+      if (fabs(move) > dist) move = (move < 0.0 ? -1.0 : 1.0)*dist;
+      if (XLevel.RotatePolyobj(polyobj, move)) {
+        dist -= fabs(move);
+        if (dist <= 0.0) {
+          poly = XLevel.GetPolyobj(polyobj);
+          PolyobjStopSequence(poly);
+          if (!bClose) {
+            dist = totalDist;
+            bClose = true;
+            time = waitTime;
+            speed = -speed;
+          } else {
+            if (poly->SpecialData == self) poly->SpecialData = none;
+            Destroy();
           }
-          Destroy();
         }
-      }
-    }
-    else
-    {
-      poly = XLevel.GetPolyobj(polyobj);
-      if (poly->bCrush || !bClose)
-      {
-        // continue moving if the poly is a crusher, or is opening
-        return;
-      }
-      else
-      {
+      } else {
+        poly = XLevel.GetPolyobj(polyobj);
+        if (poly->bCrush || !bClose) {
+          // continue moving if the poly is a crusher, or is opening
+          return;
+        }
         // open back up and rewait
-        dist = totalDist - dist;
+        dist = totalDist-dist;
         speed = -speed;
         bClose = false;
         PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
       }
-    }
-    break;
-
-  default:
-    break;
+      break;
+    default:
+      break;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
