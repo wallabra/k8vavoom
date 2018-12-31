@@ -22,16 +22,14 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 import 'engine';
 
-enum
-{
+enum {
   CHAN_AUTO,
   CHAN_VOICE,
   CHAN_WEAPON,
   CHAN_ITEM,
-  CHAN_BODY
+  CHAN_BODY,
 };
 
 enum {
@@ -41,8 +39,7 @@ enum {
   XF_NOSPLASH = 0x08, // No splash: if set, the explosion does not create any terrain splashes.
 }
 
-enum
-{
+enum {
   CONTENTS_EMPTY,
   CONTENTS_WATER,
   CONTENTS_LAVA,
@@ -156,8 +153,6 @@ enum
 #include "weapon/FourthWeaponHolder.vc"
 
 #include "TeleportDest.vc"
-#include "TeleportDest2.vc"
-#include "TeleportDest3.vc"
 #include "TeleportFog.vc"
 #include "PointPusher.vc"
 #include "PointPuller.vc"

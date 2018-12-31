@@ -22,12 +22,33 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class TeleportDest : Actor __mobjinfo__(14);
 
-class TeleportDest : Actor
-  __mobjinfo__(14);
-
-defaultproperties
-{
+defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
+}
+
+
+//**************************************************************************
+//**
+//**  Teleport dest that can spawn above floor
+//**
+//**************************************************************************
+class TeleportDest2 : TeleportDest __mobjinfo__(9044);
+
+defaultproperties {
+  bNoGravity = true;
+}
+
+
+//**************************************************************************
+//**
+//**  Z-preserving dest subject to gravity (for TeleportGroup, etc.)
+//**
+//**************************************************************************
+class TeleportDest3 : TeleportDest2 __mobjinfo__(9043);
+
+defaultproperties {
+  bNoGravity = false;
 }

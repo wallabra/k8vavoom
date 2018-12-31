@@ -22,27 +22,24 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class TeleportFog : Actor;
+
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   ::BeginPlay();
   PlaySound('misc/teleport', CHAN_VOICE);
-  if (LineSpecialGameInfo(Level.Game).TeleportFogState)
-  {
+  if (LineSpecialGameInfo(Level.Game).TeleportFogState) {
     SetState(FindState(LineSpecialGameInfo(Level.Game).TeleportFogState));
   }
 }
 
-states
-{
+
+states {
 Spawn:
   TFOG ABABCDEFGHIJ 6 Bright
   Stop
@@ -56,8 +53,8 @@ Strife:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   RenderStyle = STYLE_Add;
   Alpha = 0.666;
   bNoBlockmap = true;
