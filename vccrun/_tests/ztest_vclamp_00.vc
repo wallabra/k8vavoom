@@ -1,0 +1,17 @@
+class Main : Object;
+
+
+void main () {
+  auto v0 = vector(3, 4, 5);
+  writeln(v0);
+  foreach (auto f; 2..7) {
+    auto v1 = v0;
+    v1 = vclamp(v0, f, f+4);
+    print("(%s,%s); v0=%s; v1=%s", f, f+4, v0, v1);
+  }
+  foreach (auto f; 2..7) {
+    auto v1 = v0;
+    v1 = vclamp(v0, f+3, f+4);
+    print("(%s,%s); v0=%s; v1=%s", f+3, f+4, v0, v1);
+  }
+}
