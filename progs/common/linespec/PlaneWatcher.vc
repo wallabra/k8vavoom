@@ -22,29 +22,28 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class PlaneWatcher : Thinker;
 
 sector_t *Sector;
-float   WatchD;
-float   LastD;
-int     Special;
-int     Args[5];
-Entity    Activator;
+float WatchD;
+float LastD;
+int Special;
+int Args[5];
+Entity Activator;
 line_t *Line;
-int     LineSide;
-bool    bCeiling;
+int LineSide;
+bool bCeiling;
+
 
 //==========================================================================
 //
 //  Start
 //
 //==========================================================================
-
-void Start(Entity it, line_t *line, int lineSide, bool ceiling, int tag,
-  int height, int special, int arg0, int arg1, int arg2, int arg3, int arg4)
+void Start (Entity it, line_t *line, int lineSide, bool ceiling, int tag,
+            int height, int special, int arg0, int arg1, int arg2, int arg3, int arg4)
 {
-  int       secnum;
+  int secnum;
   sec_plane_t *plane;
 
   Special = special;
@@ -59,64 +58,46 @@ void Start(Entity it, line_t *line, int lineSide, bool ceiling, int tag,
   bCeiling = ceiling;
 
   secnum = XLevel.FindSectorFromTag(tag, -1);
-  if (secnum >= 0)
-  {
+  if (secnum >= 0) {
     Sector = &XLevel.Sectors[secnum];
-    if (bCeiling)
-    {
+    if (bCeiling) {
       plane = &Sector->ceiling;
-    }
-    else
-    {
+    } else {
       plane = &Sector->floor;
     }
     LastD = plane->dist;
-    //FIXME plane.ChangeHeight ();
-    WatchD = plane->dist + itof(height);
-  }
-  else
-  {
+    //FIXME plane.ChangeHeight();
+    WatchD = plane->dist+itof(height);
+  } else {
     Sector = nullptr;
     WatchD = 0.0;
     LastD = 0.0;
   }
 }
 
+
 //==========================================================================
 //
 //  Tick
 //
 //==========================================================================
-
-override void Tick(float DeltaTime)
-{
-  float   NewDist;
-
-  if (Sector == nullptr)
-  {
+override void Tick (float DeltaTime) {
+  if (Sector == nullptr) {
     Destroy();
     return;
   }
 
-  if (bCeiling)
-  {
-    NewDist = Sector->ceiling.dist;
-  }
-  else
-  {
-    NewDist = Sector->floor.dist;
-  }
+  float NewDist = (bCeiling ? Sector->ceiling.dist : Sector->floor.dist);
 
   if ((LastD < WatchD && NewDist >= WatchD) ||
-    (LastD > WatchD && NewDist <= WatchD))
+      (LastD > WatchD && NewDist <= WatchD))
   {
     Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
       Args[3], Args[4], Line, LineSide, Activator);
     Destroy();
   }
-
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
