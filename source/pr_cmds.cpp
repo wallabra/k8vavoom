@@ -462,16 +462,15 @@ VStr PF_FormatString () {
             //  pbuf.putStr(VStr(ptypes[pi].GetName()), width, toRight, zeroFill, (fspec == 'q'));
             //  break;
             case TYPE_Vector:
-              /*
-              pbuf.putChar('(');
-              pbuf.putFloat(params[pi].f);
-              pbuf.putChar(',');
-              pbuf.putFloat(params[pi+1].f);
-              pbuf.putChar(',');
-              pbuf.putFloat(params[pi+2].f);
-              pbuf.putChar(')');
-              */
-              pbuf.putStr(va("(%f,%f,%f)", params[pi+0].f, params[pi+1].f, params[pi+2].f), width, toRight, zeroFill);
+              {
+                char tx[VStr::FloatBufSize];
+                char ty[VStr::FloatBufSize];
+                char tz[VStr::FloatBufSize];
+                VStr::float2str(tx, params[pi+0].f);
+                VStr::float2str(ty, params[pi+1].f);
+                VStr::float2str(tz, params[pi+2].f);
+                pbuf.putStr(va("(%s,%s,%s)", tx, ty, tz), width, toRight, zeroFill);
+              }
               pi += 2;
               break;
             case TYPE_Dictionary:
