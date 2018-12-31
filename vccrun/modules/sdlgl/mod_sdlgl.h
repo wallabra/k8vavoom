@@ -262,6 +262,8 @@ public:
 
   static void fuckfucksdl ();
 
+  static void getMousePosition (int *mx, int *my);
+
   static bool open (const VStr &winname, int width, int height, int fullscreen);
   static void close ();
 

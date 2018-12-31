@@ -51,7 +51,7 @@ override void onBlur () { if (mWaitRelease) setDirty(); mWaitRelease = false; }
 
 // ////////////////////////////////////////////////////////////////////////// //
 override bool onEvent (ref event_t evt) {
-  if (evt.type == ev_mouse) return false;
+  if (evt.type == ev_mouse || evt.type == ev_uimouse) return false;
   //writeln(GetClassName(Class), ":<", mId, ">: event: ", evt.type);
   if (evt.type == ev_keydown) {
     if (!focused) return false;

@@ -352,16 +352,15 @@ void VSdlInputDevice::ReadInput () {
       */
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
-        vev.type = (ev.button.state == SDL_PRESSED) ? ev_keydown : ev_keyup;
+        vev.type = (ev.button.state == SDL_PRESSED ? ev_keydown : ev_keyup);
              if (ev.button.button == SDL_BUTTON_LEFT) vev.data1 = K_MOUSE1;
         else if (ev.button.button == SDL_BUTTON_RIGHT) vev.data1 = K_MOUSE2;
         else if (ev.button.button == SDL_BUTTON_MIDDLE) vev.data1 = K_MOUSE3;
         else if (ev.button.button == SDL_BUTTON_X1) vev.data1 = K_MOUSE4;
         else if (ev.button.button == SDL_BUTTON_X2) vev.data1 = K_MOUSE5;
         else break;
-        vev.data2 = 0;
-        vev.data3 = 0;
-        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(&vev);
+        if (Drawer) Drawer->GetMousePosition(&vev.data2, &vev.data3);
+        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(vev);
         // now fix flags
              if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
         else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bRMB; else curmodflags &= ~bRMB; }
@@ -372,9 +371,8 @@ void VSdlInputDevice::ReadInput () {
              if (ev.wheel.y > 0) vev.data1 = K_MWHEELUP;
         else if (ev.wheel.y < 0) vev.data1 = K_MWHEELDOWN;
         else break;
-        vev.data2 = 0;
-        vev.data3 = 0;
-        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(&vev);
+        if (Drawer) Drawer->GetMousePosition(&vev.data2, &vev.data3);
+        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(vev);
         break;
       case SDL_JOYAXISMOTION:
         normal_value = ev.jaxis.value*127/32767;
@@ -407,6 +405,9 @@ void VSdlInputDevice::ReadInput () {
             winactive = true;
             if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
             if (cl) cl->ClearInput();
+            vev.type = ev_winfocus;
+            vev.data1 = 1;
+            GInput->PostEvent(vev);
             break;
           case SDL_WINDOWEVENT_FOCUS_LOST:
             //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
@@ -416,6 +417,9 @@ void VSdlInputDevice::ReadInput () {
             firsttime = true;
             SDL_CaptureMouse(SDL_FALSE);
             if (cl) cl->ClearInput();
+            vev.type = ev_winfocus;
+            vev.data1 = 0;
+            GInput->PostEvent(vev);
             break;
           //case SDL_WINDOWEVENT_TAKE_FOCUS: Drawer->SDL_SetWindowInputFocus();
         }
@@ -473,11 +477,18 @@ void VSdlInputDevice::ReadInput () {
       int dy = mouse_oldy-mouse_y;
       if (dx || dy) {
         if (!firsttime) {
+          memset((void *)&vev, 0, sizeof(vev));
+          vev.modflags = curmodflags;
           vev.type = ev_mouse;
           vev.data1 = 0;
           vev.data2 = dx;
           vev.data3 = dy;
-          GInput->PostEvent(&vev);
+          GInput->PostEvent(vev);
+          vev.type = ev_uimouse;
+          vev.data1 = 0;
+          vev.data2 = mouse_x;
+          vev.data3 = mouse_y;
+          GInput->PostEvent(vev);
         }
         firsttime = false;
         mouse_oldx = ScreenWidth/2;
@@ -576,7 +587,7 @@ void VSdlInputDevice::PostJoystick () {
     event.data1 = 0;
     event.data2 = joy_x;
     event.data3 = joy_y;
-    GInput->PostEvent(&event);
+    GInput->PostEvent(event);
 
     joy_oldx = joy_x;
     joy_oldy = joy_y;

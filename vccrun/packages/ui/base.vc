@@ -331,7 +331,7 @@ void paintAt (int x0, int y0) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 final static bool isMouseEvent (ref event_t evt) {
-  if (evt.type == ev_mouse) return true;
+  if (evt.type == ev_mouse || evt.type == ev_uimouse) return true;
   if (evt.type == ev_keydown || evt.type == ev_keyup) {
     switch (evt.keycode) {
       case K_MOUSE1:

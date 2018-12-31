@@ -2315,7 +2315,28 @@ bool VGLVideo::doFrameBusiness (SDL_Event &ev) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void VGLVideo::getMousePosition (int *mx, int *my) {
+  if (mInited) {
+    //SDL_GetMouseState(xp, yp); //k8: alas, this returns until a mouse has been moved
+    int xp = 0, yp = 0;
+    SDL_GetGlobalMouseState(&xp, &yp);
+    int wx, wy;
+    SDL_GetWindowPosition(hw_window, &wx, &wy);
+    xp -= wx;
+    yp -= wy;
+    if (mx) *mx = xp;
+    if (my) *my = yp;
+  } else {
+    if (mx) *mx = 0;
+    if (my) *my = 0;
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VGLVideo::runEventLoop () {
+  int mx, my;
+
   if (!mInited) return;
 
   initMethods();
@@ -2340,10 +2361,11 @@ void VGLVideo::runEventLoop () {
           {
             int kk = sdl2TranslateKey(ev.key.keysym.scancode);
             if (kk > 0) {
+              getMousePosition(&mx, &my);
               evt.type = (ev.type == SDL_KEYDOWN ? ev_keydown : ev_keyup);
               evt.data1 = kk;
-              evt.data2 = 0;
-              evt.data3 = 0;
+              evt.data2 = mx;
+              evt.data3 = my;
               onEvent(evt);
             }
             // now fix flags
@@ -2364,12 +2386,20 @@ void VGLVideo::runEventLoop () {
           }
           break;
         case SDL_MOUSEMOTION:
+          getMousePosition(&mx, &my);
           evt.type = ev_mouse;
           evt.data1 = 0;
-          //evt.data2 = ev.motion.xrel;
-          //evt.data3 = ev.motion.yrel;
-          evt.data2 = ev.motion.x;
-          evt.data3 = ev.motion.y;
+          //evt.data2 = ev.motion.x;
+          //evt.data3 = ev.motion.y;
+          evt.data2 = mx;
+          evt.data3 = my;
+          onEvent(evt);
+          memset((void *)&evt, 0, sizeof(evt));
+          evt.modflags = curmodflags;
+          evt.type = ev_uimouse;
+          evt.data1 = 0;
+          evt.data2 = ev.motion.xrel;
+          evt.data3 = ev.motion.yrel;
           onEvent(evt);
           break;
         case SDL_MOUSEBUTTONDOWN:
@@ -2381,8 +2411,11 @@ void VGLVideo::runEventLoop () {
           else if (ev.button.button == SDL_BUTTON_X1) evt.data1 = K_MOUSE4;
           else if (ev.button.button == SDL_BUTTON_X2) evt.data1 = K_MOUSE5;
           else break;
-          evt.data2 = ev.button.x;
-          evt.data3 = ev.button.y;
+          getMousePosition(&mx, &my);
+          //evt.data2 = ev.button.x;
+          //evt.data3 = ev.button.y;
+          evt.data2 = mx;
+          evt.data3 = my;
           onEvent(evt);
           // now fix flags
                if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
@@ -2394,14 +2427,10 @@ void VGLVideo::runEventLoop () {
                if (ev.wheel.y > 0) evt.data1 = K_MWHEELUP;
           else if (ev.wheel.y < 0) evt.data1 = K_MWHEELDOWN;
           else break;
-          {
-            int mx, my;
-            //SDL_GetGlobalMouseState(&mx, &my);
-            SDL_GetMouseState(&mx, &my);
-            evt.data2 = mx;
-            evt.data3 = my;
-            onEvent(evt);
-          }
+          getMousePosition(&mx, &my);
+          evt.data2 = mx;
+          evt.data3 = my;
+          onEvent(evt);
           break;
         case SDL_WINDOWEVENT:
           switch (ev.window.event) {
@@ -3156,19 +3185,8 @@ IMPLEMENT_FUNCTION(VGLVideo, fillRect) {
 IMPLEMENT_FUNCTION(VGLVideo, getMousePos) {
   P_GET_PTR(int, yp);
   P_GET_PTR(int, xp);
-  if (mInited) {
-    //SDL_GetMouseState(xp, yp); //k8: alas, this returns until a mouse has been moved
-    SDL_GetGlobalMouseState(xp, yp);
-    int wx, wy;
-    SDL_GetWindowPosition(hw_window, &wx, &wy);
-    *xp -= wx;
-    *yp -= wy;
-    RET_BOOL(true);
-  } else {
-    *xp = 0;
-    *yp = 0;
-    RET_BOOL(false);
-  }
+  getMousePosition(xp, yp);
+  RET_BOOL(mInited);
 }
 
 

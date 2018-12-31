@@ -977,8 +977,8 @@ IMPLEMENT_FUNCTION(VObject, TranslateKey) {
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, PostEvent) {
   P_GET_PTR(event_t, ev);
-  if (GInput) {
-    RET_BOOL(GInput->PostEvent(ev));
+  if (GInput && ev) {
+    RET_BOOL(GInput->PostEvent(*ev));
   } else {
     RET_BOOL(false);
   }

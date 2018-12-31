@@ -49,7 +49,7 @@ public:
   virtual void Shutdown () override;
 
   // input event handling
-  virtual bool PostEvent (event_t *ev) override; // false: queue is full
+  virtual bool PostEvent (const event_t &ev) override; // false: queue is full
   virtual void KeyEvent (int key, int press) override;
   virtual void ProcessEvents () override;
   virtual int ReadKey () override;
@@ -312,11 +312,10 @@ void VInput::Shutdown () {
 //  Called by the I/O functions when input is detected
 //
 //==========================================================================
-bool VInput::PostEvent (event_t *ev) {
-  if (!ev) return false;
+bool VInput::PostEvent (const event_t &ev) {
   int nextHead = (EventHead+1)&(MAXEVENTS-1);
   if (nextHead == EventTail) return false; // queue overflow
-  Events[EventHead] = *ev;
+  Events[EventHead] = ev;
   EventHead = nextHead;
   return true;
 }

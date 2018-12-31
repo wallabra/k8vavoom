@@ -148,9 +148,10 @@ enum {
 enum {
   ev_keydown,
   ev_keyup,
-  ev_mouse, // for vcc_run: data2/data3 are coords, otherwise deltas
+  ev_mouse,
   ev_joystick,
   // extended events for vcc_run
+  ev_uimouse,
   ev_winfocus, // data1: focused
   ev_timer, // data1: timer id
   ev_closequery,
@@ -175,7 +176,10 @@ struct event_t {
   Object dest; // usually `none`, used as "destination widget" in UI system
   // for key
   alias keycode = data1;
-  // for mouse
+  // for ev_mouse
+  alias dx = data2;
+  alias dy = data3;
+  // for ev_uimouse
   alias x = data2;
   alias y = data3;
   // for focus

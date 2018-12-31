@@ -459,9 +459,11 @@ enum {
   ev_mouse,
   ev_joystick,
   // extended events for vcc_run
+  ev_uimouse,
   ev_winfocus, // data1: focused
   ev_timer, // data1: timer id
-  ev_closequery, // data1: !=0 -- system shutdown
+  ev_closequery,
+  ev_newui = 69,
   ev_user = 666,
 };
 
