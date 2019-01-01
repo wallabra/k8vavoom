@@ -599,9 +599,11 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     // region's base light
     if (r_allow_ambient) {
       l = reg->secregion->params->lightlevel+ExtraLight;
-      if (r_darken) l = light_remap[MIN(255, (int)l)];
+      l = MID(0, l, 255);
+      if (r_darken) l = light_remap[(int)l];
       if (l < r_ambient) l = r_ambient;
-      l = MIN(255, l);
+      //l = MIN(255, l);
+      l = MID(0, l, 255);
     } else {
       l = 0;
     }
