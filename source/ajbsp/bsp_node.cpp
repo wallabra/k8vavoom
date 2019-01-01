@@ -1725,8 +1725,8 @@ static void SanityCheckClosed(subsec_t *sub)
 	if (gaps > 0)
 	{
 		MinorIssue("Subsector #%d near (%1.1f,%1.1f) is not closed "
-				"(%d gaps, %d segs)\n", sub->index,
-				sub->mid_x, sub->mid_y, gaps, total);
+				"(%d gap%s, %d seg%s)\n", sub->index,
+				sub->mid_x, sub->mid_y, gaps, (gaps == 1 ? "" : "s"), total, (total == 1 ? "" : "s"));
 
 #   if DEBUG_SUBSEC
 		for (seg=sub->seg_list ; seg ; seg=seg->next)
