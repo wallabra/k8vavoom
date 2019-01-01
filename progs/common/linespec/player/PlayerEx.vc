@@ -1471,7 +1471,7 @@ void PaletteFlash () {
     }
   }
 
-  if (EntityEx(MO).DamageType == 'Ice') {
+  if (nameicmp(EntityEx(MO).DamageType, 'Ice') == 0) {
     // Frozen player
     AddBlend(r, g, b, a, RGBA(2, 2, 255, 113));
   } else {
@@ -1642,21 +1642,21 @@ final void SetObjectives (int NewObjectives) {
 void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
   string Msg;
 
-       if (DmgType == 'Suicide') Msg = "$ob_suicide"; // commited a suicide
-  else if (DmgType == 'Falling') Msg = "$ob_falling"; // fell down
-  else if (DmgType == 'Crush') Msg = "$ob_crush"; // crushed by the environment
-  else if (DmgType == 'Exit') Msg = "$ob_exit"; // tried to exit when it's not allowed
-  else if (DmgType == 'Drowning') Msg = "$ob_water"; // drowned int the water
-  else if (DmgType == 'Slime') Msg = "$ob_slime"; // was standing in the slime
-  else if (DmgType == 'Fire' && !source) Msg = "$ob_lava"; // was standing in the lava
+       if (nameicmp(DmgType, 'Suicide') == 0) Msg = "$ob_suicide"; // commited a suicide
+  else if (nameicmp(DmgType, 'Falling') == 0) Msg = "$ob_falling"; // fell down
+  else if (nameicmp(DmgType, 'Crush') == 0) Msg = "$ob_crush"; // crushed by the environment
+  else if (nameicmp(DmgType, 'Exit') == 0) Msg = "$ob_exit"; // tried to exit when it's not allowed
+  else if (nameicmp(DmgType, 'Drowning') == 0) Msg = "$ob_water"; // drowned int the water
+  else if (nameicmp(DmgType, 'Slime') == 0) Msg = "$ob_slime"; // was standing in the slime
+  else if (nameicmp(DmgType, 'Fire') == 0 && !source) Msg = "$ob_lava"; // was standing in the lava
   else if (source) {
     if (source.Player == self) {
       // suicide
       Msg = "$ob_killedself";
     } else if (!source.bIsPlayer) {
       // killed by monster
-           if (DmgType == 'Telefrag') Msg = "$ob_montelefrag"; // monster telefrag
-      else if (DmgType == 'Melee' && source.HitObituary) Msg = source.HitObituary;
+           if (nameicmp(DmgType, 'Telefrag') == 0) Msg = "$ob_montelefrag"; // monster telefrag
+      else if (nameicmp(DmgType, 'Melee') == 0 && source.HitObituary) Msg = source.HitObituary;
       else Msg = source.Obituary;
     }
   }
@@ -1665,7 +1665,7 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
     if (Level.Game.netgame && !Level.Game.deathmatch) {
       // killed another player in cooperative net game
       Msg = va("$ob_friendly%d", P_Random()&3);
-    } else if (DmgType == 'Telefrag') {
+    } else if (nameicmp(DmgType, 'Telefrag') == 0) {
       // telefrag
       Msg = "$ob_mptelefrag";
     } else if (inflictor && inflictor.Obituary) {
@@ -1674,8 +1674,8 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
     } else {
       Weapon Wpn = PlayerEx(inflictor.Player).ReadyWeapon;
            if (Wpn && Wpn.Obituary) Msg = Wpn.Obituary; // weapon obituary message
-      else if (DmgType == 'BFGSplash') Msg = "$ob_mpbfg_splash"; // BFG splash damage
-      else if (DmgType == 'Railgun') Msg = "$ob_railgun"; // railgun
+      else if (nameicmp(DmgType, 'BFGSplash') == 0) Msg = "$ob_mpbfg_splash"; // BFG splash damage
+      else if (nameicmp(DmgType, 'Railgun') == 0) Msg = "$ob_railgun"; // railgun
       else Msg = "$ob_mpdefault"; // default multiplayer kill message
     }
   } else {

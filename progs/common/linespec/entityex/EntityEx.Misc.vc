@@ -1725,7 +1725,7 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
   }
 
   if (!decalType && PuffType) decalType = PuffType.default.DecalName;
-  if (decalType == 'none' || decalType == 'None') decalType = ''; // prevent error spam
+  if (nameicmp(decalType, 'none') == 0) decalType = ''; // prevent error spam
   /*
   if (specified_decalType) {
     if (!decalType) doDecal = false;
@@ -2056,7 +2056,7 @@ final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noa
   float prestep;
 
   if (!SpawnType) SpawnType = LostSoul;
-  if (DamageType == 'Massacre') return;
+  if (nameicmp(DamageType, 'Massacre') == 0) return;
 
   if (Level.CompatLimitPain) {
     // count total number of skull currently on the level

@@ -886,8 +886,6 @@ final void decorate_A_FaceTarget(optional float max_turn) {
   if (Target.bShadow) {
     Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   }
-
-  //if (GetClassName(Class) == 'Sister5') print("%C: faced; angles=%s", self, Angles);
 }
 
 

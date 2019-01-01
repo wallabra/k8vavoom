@@ -33,7 +33,7 @@ class PowerIronFeet : Powerup;
 
 override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
-  if (DmgType == 'Drowning')
+  if (nameicmp(DmgType, 'Drowning') == 0)
   {
     NewDamage = 0;
   }

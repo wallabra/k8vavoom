@@ -54,7 +54,7 @@ override void DoEffect()
 
 override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
 {
-  if (DmgType == 'Fire')
+  if (nameicmp(DmgType, 'Fire') == 0)
   {
     // If the player wears an environmental suit it's not
     // damaged by fire damage

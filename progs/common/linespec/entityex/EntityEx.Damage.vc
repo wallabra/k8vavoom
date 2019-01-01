@@ -393,14 +393,14 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 {
   if (!bShootable && !forced) return; // shouldn't happen...
 
-  if (DmgType == 'None' || DmgType == 'none') {
+  if (nameicmp(DmgType, 'None') == 0) {
     //print("DAMAGE TYPE: NONE");
     DmgType = 'None';
   }
   if (!DmgType) DmgType = 'None';
 
   if (Health <= 0) {
-    if (inflictor && DmgType == 'Ice') return;
+    if (inflictor && nameicmp(DmgType, 'Ice') == 0) return;
     if (bIceCorpse) {
       // frozen
       StateTime = 0.1;
@@ -471,14 +471,15 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     if (damage == -1) return;
   }
 
-  if (DmgType == 'SpectralLow' && bLowSpectralResist) damage = 0;
+  if (nameicmp(DmgType, 'SpectralLow') == 0 && bLowSpectralResist) damage = 0;
 
-  if (DmgType == 'Fire' && bFireResist) {
+  if (nameicmp(DmgType, 'Fire') == 0 && bFireResist) {
     damage >>= 1;
   } else {
     foreach (auto i; 0..DamageFactors.length) {
       if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
-          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
+          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0) ||
+          (nameicmp(DmgType, 'None') == 0 && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
       {
         damage = int(float(damage)*DamageFactors[i].Factor);
         if (damage <= 0) return;
@@ -590,7 +591,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     // death
     Special1 = damage;
     // check for special fire damage or ice damage deaths
-    if (DmgType == 'Fire') {
+    if (nameicmp(DmgType, 'Fire') == 0) {
       if (bIsPlayer && !PlayerEx(Player).MorphTime) {
         // check for flame death
         if (!inflictor || !inflictor.bConditionalFireDamage || (Health > -50 && damage > 25)) DamageType = 'Fire';
@@ -618,8 +619,9 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   float PChance = PainChance;
   foreach (auto i; 0..PainChances.Num) {
-    if (PainChances[i].DamageType == DmgType ||
-        (!DmgType && (PainChances[i].DamageType == 'None' || PainChances[i].DamageType == 'none')))
+    if (nameicmp(PainChances[i].DamageType, DmgType) == 0 ||
+        (!DmgType && nameicmp(PainChances[i].DamageType, 'None') == 0) ||
+        (nameicmp(DmgType, 'None') == 0 && nameicmp(PainChances[i].DamageType, 'None') == 0))
     {
       PChance = PainChances[i].Chance;
       break;
@@ -706,7 +708,7 @@ int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgT
   if (FindState('Death') || !HasSpecialStates('Death')) return damage;
 
   // if there's no corresponding death state, actor takes no damage at all
-  if (DmgType == 'Ice') {
+  if (nameicmp(DmgType, 'Ice') == 0) {
     if (FindState('Death', 'Ice', true)) return damage;
     if ((bIsPlayer || bMonster) && !bNoIceDeath) return damage;
     return -1;
@@ -834,7 +836,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   bPassMobj = false;
 
   float NewHeight = 0.0;
-  if (DamageType == 'Fire') NewHeight = BurnHeight;
+  if (nameicmp(DamageType, 'Fire') == 0) NewHeight = BurnHeight;
   if (!NewHeight) NewHeight = DeathHeight;
        if (NewHeight < 0.0) Height = 0.0;
   else if (NewHeight) Height = NewHeight;
@@ -889,7 +891,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   if (DamageType) {
     // specialised death state for this damage type (ice, etc)
     DeathState = FindState('Death', DamageType, true);
-    if (DamageType == 'Ice' && !bNoIceDeath && (bIsPlayer || bMonster)) {
+    if (nameicmp(DamageType, 'Ice') == 0 && !bNoIceDeath && (bIsPlayer || bMonster)) {
       if (FindState('Death', 'Ice', true)) {
         DeathState = FindState('Death', 'Ice', true);
       } else {
@@ -899,7 +901,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   }
   if (!DeathState) {
     // don't pass damage type unless it's a massacre damage
-    if (DamageType != 'Massacre') DamageType = '';
+    if (nameicmp(DamageType, 'Massacre') != 0) DamageType = '';
 
     // extreme death?
     if (Health < GHealth) DeathState = FindState('Death', 'Extreme', true);
@@ -997,7 +999,7 @@ final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool p
     Special1 = damage;
     if (bIsPlayer && inflictor && !PlayerEx(Player).MorphTime) {
       // check for flame death
-      if (inflictor.DamageType == 'Fire' && Health > -50 && damage > 25) {
+      if (nameicmp(inflictor.DamageType, 'Fire') == 0 && Health > -50 && damage > 25) {
         DamageType = 'Fire';
       } else {
         DamageType = inflictor.DamageType;

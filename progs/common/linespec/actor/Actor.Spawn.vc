@@ -281,7 +281,7 @@ final void A_SpawnItem(class!Actor ItemType, optional float Distance,
   }
 
   //  Don't spawn monsters if this actor has been massacred
-  if (DamageType == 'Massacre' && ItemType.default.bMonster)
+  if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster)
   {
     return;
   }
@@ -332,7 +332,7 @@ final bool A_SpawnItemEx (class!Actor ItemType,
   if (Chance > 0 && P_Random() < Chance) return true; // per wiki
 
   // don't spawn monsters if this actor has been massacred (???)
-  if (DamageType == 'Massacre' && ItemType.default.bMonster) return false;
+  if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) return false;
 
   if (!(Flags&SXF_ABSOLUTEANGLE)) Angle += Angles.yaw;
 
