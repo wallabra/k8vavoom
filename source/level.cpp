@@ -314,7 +314,10 @@ void VLevel::Serialise (VStream &Strm) {
                 line_t *lin = Segs[f].linedef;
                 if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
                 int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
-                if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
+                if (lin->sidenum[bsidenum] < 0) {
+                  bsidenum = 1-bsidenum;
+                  if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
+                }
                 side_t *sb = &Sides[lin->sidenum[bsidenum]];
                 dc->bsec = sb->Sector;
                 if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
@@ -1485,12 +1488,12 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       // setup curz and pegs
       if (slideWithFloor) {
         //sector_t *slidesec = Sides[li->sidenum[1-sidenum]].Sector;
-        decal->flags |= decal_t::SlideFloor|(sidenum == 0 ? decal_t::SideDefOne : 0);
+        decal->flags |= decal_t::SlideFloor|(sidenum == 1 ? decal_t::SideDefOne : 0);
         decal->curz -= slidesec->floor.TexZ;
         decal->bsec = slidesec;
       } else if (slideWithCeiling) {
         //sector_t *slidesec = Sides[li->sidenum[1-sidenum]].Sector;
-        decal->flags |= decal_t::SlideCeil|(sidenum == 0 ? decal_t::SideDefOne : 0);
+        decal->flags |= decal_t::SlideCeil|(sidenum == 1 ? decal_t::SideDefOne : 0);
         decal->curz -= slidesec->ceiling.TexZ;
         decal->bsec = slidesec;
       }
