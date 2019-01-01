@@ -374,6 +374,8 @@ REGISTER_NAME(Console)
 REGISTER_NAME(decoDoCheckFlag)
 REGISTER_NAME(decoDoSetFlag)
 
+REGISTER_NAME(Socket)
+
 // Closing -----------------------------------------------------------------
 
 #ifdef REGISTERING_ENUM
