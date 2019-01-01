@@ -31,6 +31,10 @@ public:
   virtual void ReadInput() = 0;
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
+  virtual void SetClipboardText (const VStr &text) = 0;
+  virtual bool HasClipboardText () = 0;
+  virtual VStr GetClipboardText () = 0;
+
   // implemented in corresponding system module
   static VInputDevice *CreateDevice ();
 };
@@ -61,7 +65,7 @@ public:
 
   // input event handling
   virtual bool PostEvent (const event_t &ev) = 0; // false: queue is full
-  virtual void KeyEvent (int key, int press) = 0;
+  virtual void KeyEvent (int key, int press, vuint32 modflags) = 0;
   virtual void ProcessEvents () = 0;
   virtual int ReadKey () = 0;
 
@@ -77,6 +81,10 @@ public:
   virtual VStr KeyNameForNum (int KeyNr) = 0;
 
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
+
+  virtual void SetClipboardText (const VStr &text) = 0;
+  virtual bool HasClipboardText () = 0;
+  virtual VStr GetClipboardText () = 0;
 
   static void KBCheatClearAll ();
   static void KBCheatAppend (VStr keys, VStr concmd);

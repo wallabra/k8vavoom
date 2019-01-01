@@ -50,7 +50,7 @@ public:
 
   // input event handling
   virtual bool PostEvent (const event_t &ev) override; // false: queue is full
-  virtual void KeyEvent (int key, int press) override;
+  virtual void KeyEvent (int key, int press, vuint32 modflags) override;
   virtual void ProcessEvents () override;
   virtual int ReadKey () override;
 
@@ -66,6 +66,10 @@ public:
   virtual VStr KeyNameForNum (int KeyNr) override;
 
   virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
+
+  virtual void SetClipboardText (const VStr &text) override;
+  virtual bool HasClipboardText () override;
+  virtual VStr GetClipboardText () override;
 
 private:
   enum { MAXEVENTS = 2048 };
@@ -328,15 +332,14 @@ bool VInput::PostEvent (const event_t &ev) {
 //  Called by the I/O functions when a key or button is pressed or released
 //
 //==========================================================================
-void VInput::KeyEvent (int key, int press) {
+void VInput::KeyEvent (int key, int press, vuint32 modflags) {
   guard(VInput::KeyEvent);
   if (!key) return;
   event_t *ev = &Events[EventHead];
   memset((void *)ev, 0, sizeof(event_t));
   ev->type = (press ? ev_keydown : ev_keyup);
   ev->data1 = key;
-  //data2 = 0;
-  //data3 = 0;
+  ev->modflags = modflags;
   EventHead = (EventHead+1)&(MAXEVENTS-1);
   unguard;
 }
@@ -553,6 +556,36 @@ VStr VInput::KeyNameForNum (int KeyNr) {
 //==========================================================================
 void VInput::RegrabMouse () {
   if (Device) Device->RegrabMouse();
+}
+
+
+//==========================================================================
+//
+//  VInput::SetClipboardText
+//
+//==========================================================================
+void VInput::SetClipboardText (const VStr &text) {
+  if (Device) Device->SetClipboardText(text);
+}
+
+
+//==========================================================================
+//
+//  VInput::HasClipboardText
+//
+//==========================================================================
+bool VInput::HasClipboardText () {
+  return (Device ? Device->HasClipboardText() : false);
+}
+
+
+//==========================================================================
+//
+//  VInput::GetClipboardText
+//
+//==========================================================================
+VStr VInput::GetClipboardText () {
+  return (Device ? Device->GetClipboardText() : VStr::EmptyString);
 }
 
 

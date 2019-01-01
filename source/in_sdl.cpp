@@ -46,6 +46,10 @@ public:
   virtual void ReadInput () override;
   virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
+  virtual void SetClipboardText (const VStr &text) override;
+  virtual bool HasClipboardText () override;
+  virtual VStr GetClipboardText () override;
+
 private:
   bool mouse;
   bool winactive;
@@ -301,6 +305,55 @@ void VSdlInputDevice::RegrabMouse () {
 
 //==========================================================================
 //
+//  VSdlInputDevice::SetClipboardText
+//
+//==========================================================================
+void VSdlInputDevice::SetClipboardText (const VStr &text) {
+  if (text.length() && !text.IsValidUtf8()) {
+    VStr s2 = text.Latin1ToUtf8();
+    SDL_SetClipboardText(s2.getCStr());
+  } else {
+    SDL_SetClipboardText(text.getCStr());
+  }
+}
+
+
+//==========================================================================
+//
+//  VSdlInputDevice::HasClipboardText
+//
+//==========================================================================
+bool VSdlInputDevice::HasClipboardText () {
+  return !!SDL_HasClipboardText();
+}
+
+
+//==========================================================================
+//
+//  VSdlInputDevice::GetClipboardText
+//
+//==========================================================================
+VStr VSdlInputDevice::GetClipboardText () {
+  char *text = SDL_GetClipboardText();
+  if (!text) return VStr::EmptyString;
+  VStr str;
+  for (const char *p = text; *p; ++p) {
+    char ch = *p;
+    if (ch <= 0 || ch > 127) {
+      ch = '?';
+    } else if (ch > 0 && ch < 32) {
+           if (ch == '\t') ch = ' ';
+      else if (ch != '\n') continue;
+    }
+    str += ch;
+  }
+  SDL_free(text);
+  return str;
+}
+
+
+//==========================================================================
+//
 //  VSdlInputDevice::ReadInput
 //
 //  Reads input from the input devices.
@@ -323,7 +376,7 @@ void VSdlInputDevice::ReadInput () {
       case SDL_KEYUP:
         {
           int kk = sdl2TranslateKey(ev.key.keysym.scancode);
-          if (kk > 0) GInput->KeyEvent(kk, (ev.key.state == SDL_PRESSED) ? 1 : 0);
+          if (kk > 0) GInput->KeyEvent(kk, (ev.key.state == SDL_PRESSED ? 1 : 0), vev.modflags);
         }
         // now fix flags
         switch (ev.key.keysym.sym) {
@@ -598,9 +651,9 @@ void VSdlInputDevice::PostJoystick () {
 #ifdef __SWITCH__
       //TEMPORARY: also translate some buttons to keys
       int key = SwitchJoyToKey(i);
-      if (key) GInput->KeyEvent(key, joy_newb[i]);
+      if (key) GInput->KeyEvent(key, joy_newb[i], curmodflags);
 #endif
-      GInput->KeyEvent(K_JOY1+i, joy_newb[i]);
+      GInput->KeyEvent(K_JOY1+i, joy_newb[i], curmodflags);
       joy_oldb[i] = joy_newb[i];
     }
   }
