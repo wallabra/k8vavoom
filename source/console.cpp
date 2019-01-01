@@ -227,7 +227,7 @@ bool C_Active () {
 //==========================================================================
 static void DrawInputLine (int y) {
   // input line
-  T_DrawText(4, y, ">", CR_ORANGE);
+  T_DrawText(4, y, ">", CR_YELLOW);
   int llen = VStr::Length(c_iline.Data);
   if (llen > MAX_LINE_LENGTH-3) {
     T_DrawText(12, y, ".", CR_FIRE);
