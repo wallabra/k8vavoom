@@ -15,6 +15,13 @@ if (ENABLE_VCCRUN)
 
     set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE} -s")
     set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -s")
+
+    set(MODSOCK_SRC )
+  else(WIN32)
+    set(MODSOCK_SRC
+      #modules/mod_socket.h
+      #modules/mod_socket.cpp
+    )
   endif(WIN32)
 
 
@@ -194,6 +201,8 @@ if (ENABLE_VCCRUN)
     # command console
     modules/mod_console.h
     modules/mod_console.cpp
+    # socket
+    ${MODSOCK_SRC}
     # sound system
     ${VCCRUN_SOUND_SOURCES}
   )
