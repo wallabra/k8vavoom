@@ -29,7 +29,7 @@
 bool chatmodeon;
 
 
-static TILine w_chat;
+static TILine w_chat(80);
 static VCvarS ChatMacro0("Chatmacro0", "No", "Chat macro #0.", CVAR_Archive);
 static VCvarS ChatMacro1("Chatmacro1", "I'm ready to kick butt!", "Chat macro #1.", CVAR_Archive);
 static VCvarS ChatMacro2("Chatmacro2", "I'm OK.", "Chat macro #2.", CVAR_Archive);
@@ -94,7 +94,7 @@ bool CT_Responder (event_t *ev) {
     }
   }
 
-  eatkey = w_chat.Key((byte)ev->data1);
+  eatkey = w_chat.Key(*ev);
   if (ev->data1 == K_ENTER || ev->data1 == K_PADENTER) {
     GCmdBuf << "Say " << w_chat.Data << "\n";
     CT_Stop();

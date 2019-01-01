@@ -68,7 +68,9 @@ void TILine::DelChar () {
 //  Returns true if it ate the key
 //
 //==========================================================================
-bool TILine::Key (byte ch) {
+bool TILine::Key (const event_t &ev) {
+  if (ev.type != ev_keydown) return false;
+  int ch = ev.data1;
   if (ch >= ' ' && ch < 128) {
     ch = GInput->TranslateKey(ch);
     AddChar((char)ch);

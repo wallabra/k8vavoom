@@ -59,7 +59,7 @@ FConsoleDevice Console;
 FOutputDevice *GCon = &Console;
 
 
-static TILine c_iline = {"", 0};
+static TILine c_iline;
 
 static cons_state_t consolestate = cons_closed;
 
@@ -220,6 +220,29 @@ bool C_Active () {
 
 //==========================================================================
 //
+//  DrawInputLine
+//
+//  font and text mode should be already set
+//
+//==========================================================================
+static void DrawInputLine (int y) {
+  // input line
+  T_DrawText(4, y, ">", CR_ORANGE);
+  int llen = VStr::Length(c_iline.Data);
+  if (llen > MAX_LINE_LENGTH-3) {
+    T_DrawText(12, y, ".", CR_FIRE);
+    int x = 12+8;
+    llen -= MAX_LINE_LENGTH-3-1;
+    T_DrawText(x, y, c_iline.Data+llen, CR_ORANGE);
+  } else {
+    T_DrawText(12, y, c_iline.Data, CR_ORANGE);
+  }
+  T_DrawCursor();
+}
+
+
+//==========================================================================
+//
 //  C_Drawer
 //
 //  Draws console
@@ -256,15 +279,11 @@ void C_Drawer () {
 
   // input line
   int y = (int)cons_h-10;
-  T_DrawText(4, y, ">", CR_UNTRANSLATED);
-  int i = VStr::Length(c_iline.Data)-37;
-  if (i < 0) i = 0;
-  T_DrawText(12, y, c_iline.Data+i, CR_UNTRANSLATED);
-  T_DrawCursor();
+  DrawInputLine(y);
   y -= 10;
 
   // lines
-  i = last_line;
+  int i = last_line;
   while ((y+9 > 0) && i--) {
     int lidx = (i+first_line)%MAX_LINES;
     const char *line = clines[lidx];
@@ -286,7 +305,6 @@ void C_Drawer () {
 bool C_Responder (event_t *ev) {
   const char *cp;
   VStr str;
-  bool eat;
 
   // respond to events only when console is active
   if (!C_Active()) return false;
@@ -443,7 +461,7 @@ bool C_Responder (event_t *ev) {
         c_iline.Init();
         return true;
       }
-      return c_iline.Key((byte)ev->data1);
+      return c_iline.Key(*ev);
 
     // auto complete
     case K_TAB:
@@ -459,8 +477,7 @@ bool C_Responder (event_t *ev) {
 
     // add character to input line
     default:
-      eat = c_iline.Key((byte)ev->data1);
-      return eat;
+      return c_iline.Key(*ev);
   }
 }
 
