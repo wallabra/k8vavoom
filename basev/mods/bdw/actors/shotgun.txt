@@ -180,7 +180,7 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
       SSHR ABC 1
       SSHR D 1 A_PlaySound("weapons/bdw_shotgun/shellin")
       SSHR EFG 1
-      SSHR A 2 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWREFIRE) //A_Refire // so we can abort reloading and start firing
+      SSHR A 2 A_WeaponReady(/*WRF_ALLOWRELOAD|*/WRF_ALLOWREFIRE) //A_Refire // so we can abort reloading and start firing
       Goto ReloadMainLoop
   }
 }
