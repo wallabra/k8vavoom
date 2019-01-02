@@ -309,7 +309,11 @@ bool VWhile::Resolve (VEmitContext &ec) {
   bool Ret = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) Ret = false;
-  if (!Statement->Resolve(ec)) Ret = false;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!Statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
   return Ret;
 }
 
@@ -451,7 +455,11 @@ bool VDo::Resolve (VEmitContext &ec) {
   bool Ret = true;
   if (Expr) Expr = Expr->ResolveBoolean(ec);
   if (!Expr) Ret = false;
-  if (!Statement->Resolve(ec)) Ret = false;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!Statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
   return Ret;
 }
 
@@ -619,7 +627,11 @@ bool VFor::Resolve (VEmitContext &ec) {
     if (!LoopExpr[i]) Ret = false;
   }
 
-  if (!Statement->Resolve(ec)) Ret = false;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!Statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
 
   return Ret;
 }
@@ -789,7 +801,11 @@ bool VForeach::Resolve (VEmitContext &ec) {
   bool Ret = true;
   if (Expr) Expr = Expr->ResolveIterator(ec);
   if (!Expr) Ret = false;
-  if (!Statement->Resolve(ec)) Ret = false;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!Statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
   return Ret;
 }
 
@@ -1072,7 +1088,13 @@ bool VForeachIota::Resolve (VEmitContext &ec) {
   if (!var) return false;
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  return statement->Resolve(ec);
+  bool Ret = true;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
+  return Ret;
 }
 
 
@@ -1434,7 +1456,13 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   if (!loopLoad) return false;
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  return statement->Resolve(ec);
+  bool Ret = true;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
+  return Ret;
 }
 
 
@@ -1783,7 +1811,13 @@ bool VForeachScripted::Resolve (VEmitContext &ec) {
   }
 
   // finally, resolve statement (last, so local reusing will work as expected)
-  return statement->Resolve(ec);
+  bool Ret = true;
+  {
+    auto cidx = ec.EnterCompound(true);
+    if (!statement->Resolve(ec)) Ret = false;
+    ec.ExitCompound(cidx);
+  }
+  return Ret;
 }
 
 
@@ -2975,7 +3009,7 @@ void VCompound::DoFixSwitch (VSwitch *aold, VSwitch *anew) {
 //==========================================================================
 bool VCompound::Resolve (VEmitContext &ec) {
   bool Ret = true;
-  auto cidx = ec.EnterCompound();
+  auto cidx = ec.EnterCompound(false);
   //fprintf(stderr, "ENTERING COMPOUND %d (%s:%d)\n", cidx, *Loc.GetSource(), Loc.GetLine());
   for (int i = 0; i < Statements.length(); ++i) {
     if (!Statements[i]->Resolve(ec)) {

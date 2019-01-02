@@ -175,10 +175,60 @@ void VLocalDecl::Declare (VEmitContext &ec) {
       e.Value = e.Value->Resolve(ec);
       L.Visible = true; // and make it visible again
       e.emitClear = false;
+      // if clear is not necessary, and we are assigning default value, drop assign
+      if (!L.reused && !ec.IsInLoop() && e.Value && e.Value->IsAssignExpr() &&
+          ((VAssignment *)e.Value)->Oper == VAssignment::Assign &&
+          ((VAssignment *)e.Value)->op2)
+      {
+        VExpression *val = ((VAssignment *)e.Value)->op2;
+        bool killInit = false;
+        switch (val->Type.Type) {
+          case TYPE_Int:
+          case TYPE_Byte:
+          case TYPE_Bool:
+            killInit = (val->IsIntConst() && val->GetIntConst() == 0);
+            break;
+          case TYPE_Float:
+            killInit = (val->IsFloatConst() && val->GetFloatConst() == 0);
+            break;
+          case TYPE_Name:
+            killInit = (val->IsNameConst() && val->GetNameConst() == NAME_None);
+            break;
+          case TYPE_String:
+            killInit = (val->IsStrConst() && val->GetStrConst(ec.Package).length() == 0);
+            break;
+          case TYPE_Pointer:
+            killInit = val->IsNullLiteral();
+            break;
+          case TYPE_Reference:
+          case TYPE_Class:
+          case TYPE_State:
+            killInit = val->IsNoneLiteral();
+            break;
+          case TYPE_Delegate:
+            killInit = (val->IsNoneDelegateLiteral() || val->IsNoneLiteral() || val->IsNullLiteral());
+            break;
+          case TYPE_Vector:
+            if (val->IsConstVectorCtor()) {
+              VVector *vc = (VVector *)val;
+              TVec vec = vc->GetConstValue();
+              killInit = (vec.x == 0 && vec.y == 0 && vec.z == 0);
+            }
+            break;
+        }
+        if (killInit) {
+          //ParseWarning(Loc, "initializer for `%s` removed", *e.Name);
+          //fprintf(stderr, "!!!%s (%s)\n", *e.Name, *val->Type.GetName());
+          //fprintf(stderr, "initializer for `%s` removed\n", *e.Name);
+          delete e.Value;
+          e.Value = nullptr;
+        }
+      }
     } else {
       //e.emitClear = L.reused;
       //TODO: only set this for locals in loop blocks
-      e.emitClear = true; // always clear, so locals in loop won't retain old values, for example
+      //e.emitClear = true; // always clear, so locals in loop won't retain old values, for example
+      e.emitClear = L.reused || ec.IsInLoop();
     }
   }
 }

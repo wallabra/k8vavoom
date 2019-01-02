@@ -1932,7 +1932,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (Func->Flags&FUNC_Spawner) Type.Class = Args[0]->Type.Class;
 
   // we may create new locals, so activate local reuse mechanics
-  int compIdx = ec.EnterCompound();
+  int compIdx = ec.EnterCompound(false);
 
   for (int f = 0; f < VMethod::MAX_PARAMS; ++f) {
     lcidx[f] = -1;

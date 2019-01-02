@@ -60,15 +60,15 @@ public:
   bool reused;
 
 private:
-  int compindex; // for enter/exit compound
+  int compIndex; // for enter/exit compound
   int stackSize; // for reusing
 
 public:
   VLocalVarDef () {}
 
-  inline int GetCompIndex () const { return compindex; } // for debugging
+  inline int GetCompIndex () const { return compIndex; } // for debugging
 
-  friend class VEmitContext; // it needs access to `compindex`
+  friend class VEmitContext; // it needs access to `compIndex`
 };
 
 
@@ -126,7 +126,8 @@ private:
   TArray<int> Labels;
   TArray<VLabelFixup> Fixups;
   TArray<VLocalVarDef> LocalDefs;
-  int compindex;
+  int compIndex;
+  int firstLoopCompIndex;
 
   struct VGotoListItem {
     VLabel jlbl;
@@ -220,10 +221,13 @@ public:
   inline int GetLocalDefCount () const { return LocalDefs.length(); }
 
   // compound statement will call these functions; exiting will mark all allocated vars for reusing
-  int EnterCompound (); // returns compound index
+  int EnterCompound (bool asLoop); // returns compound index
   void ExitCompound (int cidx); // pass result of `EnterCompound()` to this
 
-  inline int GetCurrCompIndex () const { return compindex; } // for debugging
+  inline int GetCurrCompIndex () const { return compIndex; } // for debugging
+
+  // returns `true` if current codegen is in loop compound (of any depth)
+  inline bool IsInLoop () const { return (firstLoopCompIndex >= 0 && compIndex >= firstLoopCompIndex); }
 
   // returns index in `LocalDefs`
   int CheckForLocalVar (VName Name);

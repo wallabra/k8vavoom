@@ -334,7 +334,8 @@ void VEmitContext::VBreakCont::emitFinalizers () {
 //
 //==========================================================================
 VEmitContext::VEmitContext (VMemberBase *Member)
-  : compindex(0)
+  : compIndex(0)
+  , firstLoopCompIndex(-1)
   , lastFin(nullptr)
   , lastBC(nullptr)
   , CurrentFunc(nullptr)
@@ -466,7 +467,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     ll.Name = aname;
     ll.Type = atype;
     ll.ParamFlags = 0;
-    ll.compindex = compindex;
+    ll.compIndex = compIndex;
     ll.reused = true;
     return ll;
   } else {
@@ -480,7 +481,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     loc.Visible = true;
     loc.ParamFlags = 0;
     loc.ldindex = LocalDefs.length()-1;
-    loc.compindex = compindex;
+    loc.compIndex = compIndex;
     loc.stackSize = ssz;
     loc.reused = false;
     localsofs += ssz;
@@ -509,8 +510,10 @@ VLocalVarDef &VEmitContext::GetLocalByIndex (int idx) {
 //  VEmitContext::EnterCompound
 //
 //==========================================================================
-int VEmitContext::EnterCompound () {
-  return ++compindex;
+int VEmitContext::EnterCompound (bool asLoop) {
+  ++compIndex;
+  if (asLoop && firstLoopCompIndex < 0) firstLoopCompIndex = compIndex;
+  return compIndex;
 }
 
 
@@ -520,18 +523,19 @@ int VEmitContext::EnterCompound () {
 //
 //==========================================================================
 void VEmitContext::ExitCompound (int cidx) {
-  if (cidx != compindex) Sys_Error("VC COMPILER INTERNAL ERROR: unbalanced compounds");
+  if (cidx != compIndex) Sys_Error("VC COMPILER INTERNAL ERROR: unbalanced compounds");
   if (cidx < 1) Sys_Error("VC COMPILER INTERNAL ERROR: invalid compound index");
   for (int f = 0; f < LocalDefs.length(); ++f) {
     VLocalVarDef &loc = LocalDefs[f];
-    if (loc.compindex == cidx) {
+    if (loc.compIndex == cidx) {
       //fprintf(stderr, "method '%s': compound #%d; freeing '%s' (%d; %s)\n", CurrentFunc->GetName(), cidx, *loc.Name, f, *loc.Type.GetName());
       loc.Visible = false;
       loc.Reusable = true;
-      loc.compindex = -1;
+      loc.compIndex = -1;
     }
   }
-  --compindex;
+  if (firstLoopCompIndex == compIndex) firstLoopCompIndex = -1;
+  --compIndex;
 }
 
 
