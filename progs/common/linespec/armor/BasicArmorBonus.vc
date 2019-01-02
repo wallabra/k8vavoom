@@ -22,49 +22,36 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class BasicArmorBonus : Armor abstract;
 
-class BasicArmorBonus : Armor
-  abstract;
+float SavePercent;
+int SaveAmount;
+int MaxSaveAmount;
 
-float     SavePercent;
-int       SaveAmount;
-int       MaxSaveAmount;
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
+override bool Use (bool Pickup) {
   BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
-  if (!Armor)
-  {
+  if (!Armor) {
     Armor = Spawn(BasicArmor, default, default, default, false);
     Armor.Amount = 0;
     Armor.AttachToOwner(EntityEx(Owner));
   }
-  if (Armor.Amount >= MaxSaveAmount)
-  {
-    return false;
-  }
+  if (Armor.Amount >= MaxSaveAmount) return false;
   Armor.Amount += SaveAmount;
-  if (Armor.Amount > MaxSaveAmount)
-  {
-    Armor.Amount = MaxSaveAmount;
-  }
-  if (!Armor.SavePercent)
-  {
-    Armor.SavePercent = SavePercent;
-  }
+  if (Armor.Amount > MaxSaveAmount) Armor.Amount = MaxSaveAmount;
+  if (!Armor.SavePercent) Armor.SavePercent = SavePercent;
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MaxAmount = 0;
   bAutoActivate = true;
   bAlwaysPickup = true;
-  SavePercent = 1.0 / 3.0;
+  SavePercent = 1.0/3.0;
 }

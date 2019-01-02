@@ -22,11 +22,8 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class Armor : Inventory abstract;
 
-class Armor : Inventory
-  abstract;
-
-defaultproperties
-{
+defaultproperties {
   PickupSound = 'misc/armor_pkup';
 }

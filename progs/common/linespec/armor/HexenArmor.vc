@@ -22,49 +22,39 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class HexenArmor : Armor;
 
-float     Slots[5];
-float     SlotsIncrement[4];
+float[5] Slots;
+float[4] SlotsIncrement;
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (HexenArmor(Item))
-  {
-    if (AddArmorToSlot(EntityEx(Owner), Item.Health, Item.Amount))
-    {
-      Item.bPickupGood = true;
-    }
+override bool HandlePickup (Inventory Item) {
+  if (HexenArmor(Item)) {
+    if (AddArmorToSlot(EntityEx(Owner), Item.Health, Item.Amount)) Item.bPickupGood = true;
     return true;
   }
-
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   HexenArmor Copy = Spawn(HexenArmor, default, default, default, false);
   Copy.AddArmorToSlot(Toucher, Health, Amount);
   GoAwayAndDie();
   return Copy;
 }
+
 
 //==========================================================================
 //
@@ -73,11 +63,10 @@ override Inventory CreateCopy(EntityEx Toucher)
 //  You can't drop it, ever.
 //
 //==========================================================================
-
-override Inventory CreateTossable()
-{
+override Inventory CreateTossable () {
   return none;
 }
+
 
 //==========================================================================
 //
@@ -86,96 +75,52 @@ override Inventory CreateTossable()
 //  Returns false if the armor is worse than the current armor.
 //
 //==========================================================================
+bool AddArmorToSlot (EntityEx Toucher, int armortype, int amount) {
+  if (armortype < 0 || armortype > 3) return false;
 
-bool AddArmorToSlot(EntityEx Toucher, int armortype, int amount)
-{
-  float hits;
-
-  if (armortype < 0 || armortype > 3)
-  {
-    return false;
-  }
-
-  if (amount <= 0)
-  {
-    hits = SlotsIncrement[armortype];
-    if (Slots[armortype] >= hits)
-    {
-      return false;
-    }
-    else
-    {
-      Slots[armortype] = hits;
-    }
-  }
-  else
-  {
-    hits = itof(amount) * 5.0;
+  if (amount <= 0) {
+    float hits = SlotsIncrement[armortype];
+    if (Slots[armortype] >= hits) return false;
+    Slots[armortype] = hits;
+  } else {
+    float hits = itof(amount)*5.0;
     float total = Slots[0]+Slots[1]+Slots[2]+Slots[3]+Slots[4];
     float max = SlotsIncrement[0]+SlotsIncrement[1]+SlotsIncrement[2]+SlotsIncrement[3]/*+SlotsIncrement[4]*/+20.0; //k8: [4]?
-    if (total < max)
-    {
-      Slots[armortype] += hits;
-    }
-    else
-    {
-      return false;
-    }
+    if (total < max) Slots[armortype] += hits; else return false;
   }
   return true;
 }
+
 
 //==========================================================================
 //
 //  AbsorbDamage
 //
 //==========================================================================
-
-override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
-{
-  float saved;
-  float savedPercent;
-  int i;
-
-  if (DmgType != 'Drowning')
-  {
-    savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
-    if (savedPercent)
-    {
+override void AbsorbDamage (int damage, name DmgType, out int NewDamage) {
+  if (nameicmp(DmgType, 'Drowning') != 0) {
+    float savedPercent = Slots[0]+Slots[1]+Slots[2]+Slots[3]+Slots[4];
+    if (savedPercent) {
       // armor absorbed some damage
-      if (savedPercent > 100.0)
-      {
-        savedPercent = 100.0;
-      }
-      for (i = 0; i < 4; i++)
-      {
-        if (Slots[i])
-        {
-          Slots[i] -= itof(damage) * SlotsIncrement[i] / 300.0;
-          if (Slots[i] < 2.0)
-          {
-            Slots[i] = 0.0;
-          }
+      if (savedPercent > 100.0) savedPercent = 100.0;
+      foreach (auto i; 0..4) {
+        if (Slots[i]) {
+          Slots[i] -= itof(damage)*SlotsIncrement[i]/300.0;
+          if (Slots[i] < 2.0) Slots[i] = 0.0;
         }
       }
-      saved = itof(damage) * savedPercent / 100.0;
-      if (saved > savedPercent * 2.0)
-      {
-        saved = savedPercent * 2.0;
-      }
+      float saved = itof(damage)*savedPercent/100.0;
+      if (saved > savedPercent*2.0) saved = savedPercent*2.0;
       NewDamage -= ftoi(saved);
       damage = NewDamage;
     }
   }
 
-  if (Inventory)
-  {
-    Inventory.AbsorbDamage(damage, DmgType, NewDamage);
-  }
+  if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bUndroppable = true;
   bKeepDepleted = true;
 }

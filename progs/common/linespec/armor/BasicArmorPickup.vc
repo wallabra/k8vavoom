@@ -22,64 +22,50 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class BasicArmorPickup : Armor abstract;
 
-class BasicArmorPickup : Armor
-  abstract;
+int SaveAmount;
+float SavePercent;
 
-int       SaveAmount;
-float     SavePercent;
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   BasicArmorPickup Copy = BasicArmorPickup(::CreateCopy(Toucher));
-  if (Copy)
-  {
+  if (Copy) {
     Copy.SaveAmount = SaveAmount;
     Copy.SavePercent = SavePercent;
   }
   return Copy;
 }
 
+
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
+override bool Use (bool Pickup) {
   BasicArmor Armor = BasicArmor(EntityEx(Owner).FindInventory(BasicArmor));
-  if (!Armor)
-  {
+  if (!Armor) {
     Armor = Spawn(BasicArmor, default, default, default, false);
     Armor.AttachToOwner(EntityEx(Owner));
-  }
-  else
-  {
-    //  Can't use it if owner has more armor that is given by this one.
-    if (Armor.Amount >= SaveAmount)
-    {
-      return false;
-    }
-    //  Don't use if you are picking it up and already have some.
-    if (Pickup && Armor.Amount > 0 && MaxAmount > 0)
-    {
-      return false;
-    }
+  } else {
+    // can't use it if owner has more armor that is given by this one
+    if (Armor.Amount >= SaveAmount) return false;
+    // don't use if you are picking it up and already have some
+    if (Pickup && Armor.Amount > 0 && MaxAmount > 0) return false;
   }
   Armor.SavePercent = SavePercent;
   Armor.Amount = SaveAmount;
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MaxAmount = 0;
   bAutoActivate = true;
 }
