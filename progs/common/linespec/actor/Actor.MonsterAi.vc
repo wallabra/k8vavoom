@@ -696,7 +696,7 @@ final void A_ExtChase (bool UseMelee, bool UseMissile, optional bool PlayActive,
 //  A_FaceTarget
 //
 //==========================================================================
-final void A_FaceTarget() {
+final void A_FaceTarget () {
   decorate_A_FaceTarget();
 }
 
