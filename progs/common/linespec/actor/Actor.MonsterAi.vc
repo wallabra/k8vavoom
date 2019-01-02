@@ -22,8 +22,6 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-//**************************************************************************
 //  Monster AI
 //**************************************************************************
 
@@ -53,181 +51,106 @@ enum /*EAlertFlags*/ {
 //  Stay in state until a player is sighted or has a goal.
 //
 //==========================================================================
+final void A_Look () {
+  EntityEx targ;
+  Entity Ent;
 
-final void A_Look()
-{
-  EntityEx  targ;
-  Entity    Ent;
-
-  //  Set goal now if appropriate.
-  if (Special == LNSPEC_ThingSetGoal && Args[0] == 0)
-  {
+  // set goal now if appropriate
+  if (Special == LNSPEC_ThingSetGoal && Args[0] == 0) {
     Goal = none;
-    for (Ent = Level.FindMobjFromTID(Args[1], none); Ent;
-      Ent = Level.FindMobjFromTID(Args[1], Ent))
-    {
-      if (!Ent.IsA('PatrolPoint'))
-      {
-        continue;
-      }
+    for (Ent = Level.FindMobjFromTID(Args[1], none); Ent; Ent = Level.FindMobjFromTID(Args[1], Ent)) {
+      if (!Ent.IsA('PatrolPoint')) continue;
       Goal = EntityEx(Ent);
       break;
     }
     Special = 0;
-    ReactionTime = itof(Args[2]) + XLevel.Time;
+    ReactionTime = itof(Args[2])+XLevel.Time;
     bChaseGoal = !!Args[3];
   }
 
-  Threshold = 0;  // any shot will wake up
-  if (TIDToHate)
-  {
+  Threshold = 0; // any shot will wake up
+
+  if (TIDToHate) {
     targ = Target;
-  }
-  else
-  {
-    targ = Level.CompatSoundTarget || bNoSector ?
-      EntityEx(Sector->SoundTarget) : LastHeard;
-    //  If it's dead, don't chase it.
-    if (targ && targ.Health <= 0)
-    {
-      targ = none;
-    }
-    if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget)
-    {
-      return;
-    }
+  } else {
+    targ = (Level.CompatSoundTarget || bNoSector ? EntityEx(Sector->SoundTarget) : LastHeard);
+    // if it's dead, don't chase it
+    if (targ && targ.Health <= 0) targ = none;
+    if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget) return;
   }
 
-  //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
-    VisDir = -1;
-  }
+  // Andy Baker's stealth monsters
+  if (bStealth) VisDir = -1;
 
-  if (targ && targ.bShootable)
-  {
-    if (bFriendly && targ.bFriendly)
-    {
-      //  If we find a valid target here, the wandering logic should
-      // *not* be activated! If would cause the seestate to be set twice.
-      if (!LookForPlayers(bLookAllAround))
-      {
-        // Let the actor wander around aimlessly looking for a fight
-        if (SeeState)
-        {
-          if (!bInChase)
-          {
-            SetState(SeeState);
-          }
-        }
-        else
-        {
+  if (targ && targ.bShootable) {
+    if (bFriendly && targ.bFriendly) {
+      // if we find a valid target here, the wandering logic should *not* be activated!
+      // if would cause the seestate to be set twice
+      if (!LookForPlayers(bLookAllAround)) {
+        // let the actor wander around aimlessly looking for a fight
+        if (SeeState) {
+          if (!bInChase) SetState(SeeState);
+        } else {
           A_Wander();
         }
       }
-    }
-    else
-    {
+    } else {
       Target = targ;
-
-      if (bAmbush)
-      {
-        if (!CanSee(Target))
-        {
-          if (!LookForPlayers(bLookAllAround))
-          {
-            return;
-          }
+      if (bAmbush) {
+        if (!CanSee(Target)) {
+          if (!LookForPlayers(bLookAllAround)) return;
         }
       }
     }
-  }
-  else
-  {
-    if (!LookForPlayers(bLookAllAround))
-    {
-      return;
-    }
+  } else {
+    if (!LookForPlayers(bLookAllAround)) return;
   }
 
-  //  Go into chase state
-  //  Don't start chasing after a goal if it isn't time yet.
-  if (Target == Goal)
-  {
-    if (ReactionTime > XLevel.Time)
-    {
-      Target = none;
-    }
-  }
-  else if (SightSound)
-  {
-    if (bBoss)
-    {
-      // Full volume
+  // go into chase state
+  // don't start chasing after a goal if it isn't time yet
+  if (Target == Goal) {
+    if (ReactionTime > XLevel.Time) Target = none;
+  } else if (SightSound) {
+    if (bBoss) {
+      // full volume
       PlaySound(SightSound, CHAN_VOICE, 1.0, ATTN_NONE);
-    }
-    else
-    {
+    } else {
       PlaySound(SightSound, CHAN_VOICE);
     }
   }
 
-  if (Target)
-  {
-    SetState(SeeState);
-  }
+  if (Target) SetState(SeeState);
 }
+
 
 //==========================================================================
 //
 //  A_Look2
 //
 //==========================================================================
+final void A_Look2 () {
+  Threshold = 0; // any shot will wake up
+  EntityEx targ = LastHeard;
 
-final void A_Look2()
-{
-  EntityEx  targ;
-
-  Threshold = 0;  // any shot will wake up
-  targ = LastHeard;
-
-  if (!bNeutral && targ && targ.bShootable)
-  {
-    if (bFriendly != targ.bFriendly || Level.bNoAllies)
-    {
+  if (!bNeutral && targ && targ.bShootable) {
+    if (bFriendly != targ.bFriendly || Level.bNoAllies) {
       Target = targ;
-      if (!bStandMustSeeTarget || CanSee(targ))
-      {
+      if (!bStandMustSeeTarget || CanSee(targ)) {
         Threshold = 10;
-        // Let the actor wander around aimlessly looking for a fight
-        if (SeeState)
-        {
-          if (!bInChase)
-          {
-            SetState(SeeState);
-          }
-        }
-        else
-        {
+        // let the actor wander around aimlessly looking for a fight
+        if (SeeState) {
+          if (!bInChase) SetState(SeeState);
+        } else {
           A_Wander();
         }
         return;
       }
-    }
-    else
-    {
-      if (LookForPlayers(bLookAllAround))
-      {
-        // Let the actor wander around aimlessly looking for a fight
-        if (SeeState)
-        {
-          if (!bInChase)
-          {
-            SetState(SeeState);
-          }
-        }
-        else
-        {
+    } else {
+      if (LookForPlayers(bLookAllAround)) {
+        // let the actor wander around aimlessly looking for a fight
+        if (SeeState) {
+          if (!bInChase) SetState(SeeState);
+        } else {
           A_Wander();
         }
         bInCombat = true;
@@ -235,25 +158,24 @@ final void A_Look2()
       }
     }
   }
-  if (P_Random() < 30)
-  {
-    if (!(P_Random() & 1))
+
+  if (P_Random() < 30) {
+    if (!(P_Random()&1)) {
       SetState(GetStatePlus(IdleState, 1, true));
-    else
+    } else {
       SetState(GetStatePlus(IdleState, 2, true));
+    }
   }
-  if (!bStanding && P_Random() < 40)
-  {
-    SetState(GetStatePlus(IdleState, 3, true));
-  }
+
+  if (!bStanding && P_Random() < 40) SetState(GetStatePlus(IdleState, 3, true));
 }
 
 
 //==========================================================================
 //
-// A_LookEx
+//  A_LookEx
 //
-// [KS] Borrowed the A_Look code to make a parameterized version.
+//  [KS] Borrowed the A_Look code to make a parameterized version.
 //
 //==========================================================================
 final void A_LookEx (int flags, optional float minseedist, optional float maxseedist, optional float maxheardist,
@@ -376,76 +298,50 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
 //  Stay in state untill alarm is triggered.
 //
 //==========================================================================
-
-final void A_TurretLook()
-{
-  EntityEx targ;
-
+final void A_TurretLook () {
   Threshold = 0;
-  targ = LastHeard;
-  if (targ && targ.Health > 0 && targ.bShootable &&
-    bFriendly != targ.bFriendly)
-  {
+  EntityEx targ = LastHeard;
+  if (targ && targ.Health > 0 && targ.bShootable && bFriendly != targ.bFriendly) {
     Target = targ;
-    if (bAmbush && !CanSee(Target))
-    {
-      return;
-    }
+    if (bAmbush && !CanSee(Target)) return;
     // go into chase state
-    if (SightSound)
-    {
-      PlaySound(SightSound, CHAN_VOICE);
-    }
+    if (SightSound) PlaySound(SightSound, CHAN_VOICE);
     LastHeard = none;
     Threshold = 10;
     SetState(SeeState);
   }
 }
 
+
 //==========================================================================
 //
 //  A_Wander
 //
 //==========================================================================
-
-final void A_Wander()
-{
-  float delta;
-
+final void A_Wander () {
   bInCombat = false;
-  if (bStanding)
-  {
-    return;
-  }
+  if (bStanding) return;
 
-  if (ReactionCount != 0)
-  {
-    ReactionCount--;
+  if (ReactionCount != 0) {
+    --ReactionCount;
     return;
   }
 
   // turn towards movement direction if not there yet
-  if (MoveDir < DI_NODIR)
-  {
-    Angles.yaw = itof(ftoi(Angles.yaw / 45.0)) * 45.0;
-    delta = AngleMod180(Angles.yaw - itof(MoveDir) * 45.0);
+  if (MoveDir < DI_NODIR) {
+    Angles.yaw = itof(ftoi(Angles.yaw/45.0))*45.0;
+    float delta = AngleMod180(Angles.yaw-itof(MoveDir)*45.0);
 
-    if (delta > 0.0)
-    {
-      Angles.yaw = AngleMod360(Angles.yaw - 45.0);
-    }
-    else if (delta < 0.0)
-    {
-      Angles.yaw = AngleMod360(Angles.yaw + 45.0);
-    }
+         if (delta > 0.0) Angles.yaw = AngleMod360(Angles.yaw-45.0);
+    else if (delta < 0.0) Angles.yaw = AngleMod360(Angles.yaw+45.0);
   }
 
-  if (--MoveCount < 0 || !StepMove())
-  {
+  if (--MoveCount < 0 || !StepMove()) {
     RandomChaseDir();
     MoveCount += 5;
   }
 }
+
 
 //==========================================================================
 //
@@ -456,10 +352,10 @@ final void A_Wander()
 //  FIXME: optional flags are not working
 //
 //==========================================================================
-void DoChase(bool FastChase, state AMeleeState, state AMissileState,
-  bool NightmareFast, bool PlayActive, bool DontMove,
-  optional bool noRandomTurn, optional bool noDirectionTurn,
-  optional bool noPostAttackTurn, optional bool stopIfBlocked)
+void DoChase (bool FastChase, state AMeleeState, state AMissileState,
+              bool NightmareFast, bool PlayActive, bool DontMove,
+              optional bool noRandomTurn, optional bool noDirectionTurn,
+              optional bool noPostAttackTurn, optional bool stopIfBlocked)
 {
   float delta;
   float dist;
@@ -684,45 +580,32 @@ void DoChase(bool FastChase, state AMeleeState, state AMissileState,
 //  Check for ressurecting a body.
 //
 //==========================================================================
-
-final bool CheckForResurrect(bool UseVileStates)
-{
+final bool CheckForResurrect (bool UseVileStates) {
   float viletryx;
   float viletryy;
   Entity Other;
 
-  if (MoveDir != DI_NODIR)
-  {
+  if (MoveDir != DI_NODIR) {
     // check for corpses to raise
-    viletryx = Origin.x + Speed / 35.0 * LineSpecialGameInfo(Level.Game).xspeed[MoveDir];
-    viletryy = Origin.y + Speed / 35.0 * LineSpecialGameInfo(Level.Game).yspeed[MoveDir];
+    viletryx = Origin.x+Speed/35.0*LineSpecialGameInfo(Level.Game).xspeed[MoveDir];
+    viletryy = Origin.y+Speed/35.0*LineSpecialGameInfo(Level.Game).yspeed[MoveDir];
 
-    //  For all things in radius check whether object is a corpse
-    // that can be raised.
-    foreach RadiusThings(Other, vector(viletryx, viletryy, 0.0), MAXRADIUS)
-    {
-      //  Detect a corpse that could be raised.
-      float maxdist;
-      bool check;
+    // for all things in radius check whether object is a corpse that can be raised
+    foreach RadiusThings(Other, vector(viletryx, viletryy, 0.0), MAXRADIUS) {
+      // detect a corpse that could be raised
+      float maxdist = Other.Radius+Radius;
 
-      maxdist = Other.Radius + Radius;
-
-      if (fabs(Other.Origin.x - viletryx) > maxdist ||
-        fabs(Other.Origin.y - viletryy) > maxdist)
+      if (fabs(Other.Origin.x-viletryx) > maxdist ||
+          fabs(Other.Origin.y-viletryy) > maxdist)
       {
         continue; // not actually touching
       }
 
-      if (!CanSee(Other))
-      {
-        continue; //  Con't see, possibly in other region
-      }
+      if (!CanSee(Other)) continue; // can't see, possibly in other region
 
-      if (!EntityEx(Other).DoThingRaise())
-      {
-        continue;
-      }
-      //  This is now a archvile minion, so hate what he hates.
+      if (!EntityEx(Other).DoThingRaise()) continue;
+
+      // this is now a archvile minion, so hate what he hates
       EntityEx(Other).CopyFriendliness(self, false);
 
       // got one!
@@ -731,18 +614,13 @@ final bool CheckForResurrect(bool UseVileStates)
       A_FaceTarget();
       Target = temp;
 
-      //  Enter heal state.
+      // enter heal state
       state HealState = FindState('Heal');
-      if (!HealState && UseVileStates)
-      {
-        //  For DeHackEd compatibility use Arch-vile heal states if
-        // this one doesn't have it's own.
+      if (!HealState && UseVileStates) {
+        // for DeHackEd compatibility use Arch-vile heal states if this one doesn't have it's own
         HealState = FindClassState(Archvile, 'Heal');
       }
-      if (HealState)
-      {
-        SetState(HealState);
-      }
+      if (HealState) SetState(HealState);
 
       return true;
     }
@@ -750,93 +628,65 @@ final bool CheckForResurrect(bool UseVileStates)
   return false;
 }
 
+
 //==========================================================================
 //
 //  A_Chase
 //
 //==========================================================================
-
-final void A_Chase()
-{
-  DoChase(false, MeleeState, MissileState,
-    LineSpecialGameInfo(Level.Game).bNightmareFastChase, true, false);
+final void A_Chase () {
+  DoChase(false, MeleeState, MissileState, LineSpecialGameInfo(Level.Game).bNightmareFastChase, true, false);
 }
+
 
 //==========================================================================
 //
 //  decorate_A_Chase
 //
 //==========================================================================
-
-final void decorate_A_Chase(optional state AMeleeState,
-  optional state AMissileState, optional int Flags)
-{
-  if (specified_AMeleeState)
-  {
-    if ((Flags & 8) && CheckForResurrect(false))
-    {
-      return;
-    }
-    DoChase(!!(Flags & 1), AMeleeState, AMissileState,
-      !!(Flags & 4), !(Flags & 2), !!(Flags & 16),
-      !!(Flags&32), !!(Flags&64), !!(Flags&128), !!(Flags&256));
-  }
-  else
-  {
-    DoChase(false, MeleeState, MissileState,
-      LineSpecialGameInfo(Level.Game).bNightmareFastChase, true, false);
+final void decorate_A_Chase (optional state AMeleeState, optional state AMissileState, optional int Flags) {
+  if (specified_AMeleeState) {
+    if ((Flags&8) && CheckForResurrect(false)) return;
+    DoChase(!!(Flags&1), AMeleeState, AMissileState,
+            !!(Flags&4), !(Flags&2), !!(Flags&16),
+            !!(Flags&32), !!(Flags&64), !!(Flags&128), !!(Flags&256));
+  } else {
+    DoChase(false, MeleeState, MissileState, LineSpecialGameInfo(Level.Game).bNightmareFastChase, true, false);
   }
 }
+
 
 //============================================================================
 //
 //  A_FastChase
 //
 //============================================================================
-
-final void A_FastChase()
-{
+final void A_FastChase () {
   DoChase(true, MeleeState, MissileState, true, true, false);
 }
+
 
 //==========================================================================
 //
 //  A_VileChase
 //
 //==========================================================================
-
-final void A_VileChase()
-{
-  if (!CheckForResurrect(true))
-  {
-    // Return to normal attack.
-    A_Chase();
-  }
+final void A_VileChase () {
+  if (!CheckForResurrect(true)) A_Chase(); // return to normal attack
 }
+
 
 //==========================================================================
 //
 //  A_ExtChase
 //
 //==========================================================================
-
-final void A_ExtChase(bool UseMelee, bool UseMissile,
-  optional bool PlayActive, optional bool NightmareFast)
-{
-  if (!specified_PlayActive)
-  {
-    PlayActive = true;
-  }
+final void A_ExtChase (bool UseMelee, bool UseMissile, optional bool PlayActive, optional bool NightmareFast) {
+  if (!specified_PlayActive) PlayActive = true;
   state Melee = MeleeState;
-  if (!UseMelee)
-  {
-    Melee = none;
-  }
+  if (!UseMelee) Melee = none;
   state Missile = MissileState;
-  if (!UseMissile)
-  {
-    Missile = none;
-  }
+  if (!UseMissile) Missile = none;
   DoChase(false, Melee, Missile, NightmareFast, PlayActive, false);
 }
 
@@ -856,8 +706,7 @@ final void A_FaceTarget() {
 //  decorate_A_FaceTarget
 //
 //==========================================================================
-
-final void decorate_A_FaceTarget(optional float max_turn) {
+final void decorate_A_FaceTarget (optional float max_turn) {
   if (!Target || Target == self) return;
 
   // Andy Baker's stealth monsters
@@ -908,16 +757,14 @@ final void A_Die (optional name DamageType) {
 //  A_CentaurDefend
 //
 //==========================================================================
-
-final void A_CentaurDefend()
-{
+final void A_CentaurDefend () {
   A_FaceTarget();
-  if (CheckMeleeRange() && Random() < 0.125)
-  {
+  if (CheckMeleeRange() && Random() < 0.125) {
     A_UnSetInvulnerable();
     SetState(MeleeState);
   }
 }
+
 
 //==========================================================================
 //
@@ -942,61 +789,53 @@ final void A_AlertMonsters (optional float maxrange, optional int flags) {
   }
 }
 
+
 //==========================================================================
 //
 //  A_ClearTarget
 //
 //==========================================================================
-
-final void A_ClearTarget()
-{
+final void A_ClearTarget () {
   Target = none;
   LastEnemy = none;
   LastHeard = none;
 }
+
 
 //==========================================================================
 //
 //  A_ClearSoundTarget
 //
 //==========================================================================
-
-final void A_ClearSoundTarget()
-{
-  Entity Ent;
+final void A_ClearSoundTarget () {
   Sector->SoundTarget = none;
-  for (Ent = Sector->ThingList; Ent; Ent = Ent.SNext)
-  {
+  for (Entity Ent = Sector->ThingList; Ent; Ent = Ent.SNext) {
     EntityEx(Ent).LastHeard = none;
   }
 }
+
 
 //==========================================================================
 //
 //  A_KillMaster
 //
 //==========================================================================
-
-final void A_KillMaster()
-{
-  if (Master)
-  {
-    Master.Damage(self, self, Master.Health, default, true);
-  }
+final void A_KillMaster () {
+  if (Master) Master.Damage(self, self, Master.Health, default, true);
 }
+
 
 //==========================================================================
 //
 //  A_KillChildren
 //
 //==========================================================================
-
-final void A_KillChildren (optional string damagetype, optional int flags
+final void A_KillChildren (optional name damagetype, optional int flags
              /*, optional string filter, optional string species, optional int src, optional int inflict*/)
 {
   Actor A;
   if (specified_damagetype) {
-         if (!damagetype || stricmp(damagetype, "none") == 0) damagetype = "None";
+    if (!damagetype || nameicmp(damagetype, 'none') == 0) damagetype = '';
     //else if (stricmp(damagetype, "NODAMAGE") == 0) damagetype = "None";//FIXME: TODO
   }
   foreach AllThinkers(Actor, A) {
@@ -1009,7 +848,7 @@ final void A_KillChildren (optional string damagetype, optional int flags
         continue;
       }
       if (specified_damagetype) {
-        A.Damage(self, self, A.Health, name(damagetype), NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
+        A.Damage(self, self, A.Health, damagetype, NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
       } else {
         A.Damage(self, self, A.Health, default, NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
       }
@@ -1017,95 +856,66 @@ final void A_KillChildren (optional string damagetype, optional int flags
   }
 }
 
+
 //==========================================================================
 //
 //  A_SentinelBob
 //
 //==========================================================================
+final void A_SentinelBob () {
+  if (bInFloat) { Velocity.z = 0.0; return; }
 
-final void A_SentinelBob()
-{
-  float minz, maxz;
+  if (Threshold) return;
 
-  if (bInFloat)
-  {
-    Velocity.z = 0.0;
-    return;
+  float maxz = CeilingZ-Height-16.0;
+  float minz = FloorZ+96.0;
+  if (minz > maxz) minz = maxz;
+
+  if (minz < Origin.z) {
+    Velocity.z -= 1.0*35.0;
+  } else {
+    Velocity.z += 1.0*35.0;
   }
-
-  if (Threshold)
-    return;
-
-  maxz = CeilingZ - Height - 16.0;
-  minz = FloorZ + 96.0;
-  if (minz > maxz)
-  {
-    minz = maxz;
-  }
-
-  if (minz < Origin.z)
-  {
-    Velocity.z -= 1.0 * 35.0;
-  }
-  else
-  {
-    Velocity.z += 1.0 * 35.0;
-  }
-  ReactionCount = (minz >= Origin.z) ? 4 : 0;
+  ReactionCount = (minz >= Origin.z ? 4 : 0);
 }
+
 
 //==========================================================================
 //
 //  A_Burst
 //
 //==========================================================================
+final void A_Burst (class!Actor ChunkType) {
+  if (!ChunkType) return;
+  ChunkType = GetCompatibleClassReplacement(Actor, ChunkType);
+  if (!ChunkType) return;
 
-final void A_Burst(class!Actor ChunkType)
-{
-  if (!ChunkType)
-  {
-    return;
-  }
-
-  //  Stop the thing and reset it's height.
+  // stop the thing and reset it's height
   Velocity = vector(0.0, 0.0, 0.0);
   Height = default.Height;
 
   //  Calculate number of chunks based on the size of the thing.
-  int NumChunks = ftoi(Radius * Height) / 32;
-  if (NumChunks < 4)
-  {
-    NumChunks = 4;
-  }
-  int i = NumChunks + ((P_Random() - P_Random()) % (NumChunks / 4));
-  if (i < 24)
-  {
-    i = 24;
-  }
-  for (; i >= 0; i--)
-  {
-    Actor A = Spawn(ChunkType, Origin + vector(
-      (Random() - 0.5) * 2.0 * Radius,
-      (Random() - 0.5) * 2.0 * Radius,
-      Random() * Height));
-    if (A)
-    {
-      A.Velocity.z = (A.Origin.z - Origin.z) / Height * 4.0 * 35.0;
-      A.Velocity.x = (Random() - Random()) * 2.0 * 35.0;
-      A.Velocity.y = (Random() - Random()) * 2.0 * 35.0;
+  int NumChunks = ftoi(Radius*Height)/32;
+  if (NumChunks < 4) NumChunks = 4;
+
+  int i = NumChunks+((P_Random()-P_Random())%(NumChunks/4));
+  if (i < 24) i = 24;
+  for (; i >= 0; --i) {
+    Actor A = Spawn(ChunkType, Origin+vector((Random()-0.5)*2.0*Radius, (Random()-0.5)*2.0*Radius, Random()*Height));
+    if (A) {
+      A.Velocity.z = (A.Origin.z-Origin.z)/Height*4.0*35.0;
+      A.Velocity.x = (Random()-Random())*2.0*35.0;
+      A.Velocity.y = (Random()-Random())*2.0*35.0;
       A.RenderStyle = RenderStyle;
       A.Alpha = Alpha;
       A.CopyFriendliness(self, true);
     }
   }
 
-  //  If it's a boss, execute special boss death actions.
-  if (bBossDeath)
-  {
-    A_BossDeath();
-  }
+  // if it's a boss, execute special boss death actions
+  if (bBossDeath) A_BossDeath();
 
-  //  Drop items and go away.
+  // drop items and go away
   A_NoBlocking();
   Destroy();
 }
