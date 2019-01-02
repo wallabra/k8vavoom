@@ -22,31 +22,28 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class LineSpecialLevelInfo : LevelInfo;
 
 const int
-  STROBEBRIGHT  = 5,
-  FASTDARK    = 15,
-  SLOWDARK    = 35;
+  STROBEBRIGHT = 5,
+  FASTDARK     = 15,
+  SLOWDARK     = 35;
 
-//
-// Map things flags
-//
+// map things flags
 const int
-  MTF_AMBUSH    = 0x0008, // Deaf monsters/do not react to sound.
-  MTF_DORMANT   = 0x0010, // The thing is dormant
-  MTF_GSINGLE   = 0x0100, // Appearing in game modes
-  MTF_GCOOP   = 0x0200,
+  MTF_AMBUSH      = 0x0008, // deaf monsters/do not react to sound
+  MTF_DORMANT     = 0x0010, // the thing is dormant
+  MTF_GSINGLE     = 0x0100, // appearing in game modes
+  MTF_GCOOP       = 0x0200,
   MTF_GDEATHMATCH = 0x0400,
-  MTF_SHADOW    = 0x0800,
-  MTF_ALTSHADOW = 0x1000,
-  MTF_FRIENDLY  = 0x2000,
+  MTF_SHADOW      = 0x0800,
+  MTF_ALTSHADOW   = 0x1000,
+  MTF_FRIENDLY    = 0x2000,
   MTF_STANDSTILL  = 0x4000,
 
-  MTF2_FIGHTER  = 0x000010000,  // Thing appearing in player classes
-  MTF2_CLERIC   = 0x000020000,
-  MTF2_MAGE   = 0x000040000;
+  MTF2_FIGHTER    = 0x000010000, // thing appearing in player classes
+  MTF2_CLERIC     = 0x000020000,
+  MTF2_MAGE       = 0x000040000;
 
 
 bitenum {
@@ -62,6 +59,7 @@ bitenum {
   BLOCKF_HITSCAN, // (512): Blocks hitscan attacks
   BLOCKF_SOUND, // (1024): Blocks sound
 }
+
 
 static final int ConvertLineBlockingFlags (int Arg2) {
   int setFlags = 0;
@@ -80,289 +78,257 @@ static final int ConvertLineBlockingFlags (int Arg2) {
 }
 
 
-enum
-{
+enum {
   pt_static,
   pt_explode,
   pt_explode2,
   pt_ice_chunk,
   pt_rail,
   pt_fountain,
-  pt_spark
+  pt_spark,
 };
 
-//  Flags for SectorDamage
-const int DAMAGE_PLAYERS      = 1;
-const int DAMAGE_NONPLAYERS     = 2;
-const int DAMAGE_IN_AIR       = 4;
+// flags for SectorDamage
+const int DAMAGE_PLAYERS = 1;
+const int DAMAGE_NONPLAYERS = 2;
+const int DAMAGE_IN_AIR = 4;
 const int DAMAGE_SUBCLASSES_PROTECT = 8;
 
-const int BODYQUESIZE       = 32;
-const int CORPSEQUEUESIZE     = 64;
+const int BODYQUESIZE = 32;
+const int CORPSEQUEUESIZE = 64;
 
 const int
   SECF_SILENT           = 1,
-  SECF_NOFALLINGDAMAGE      = 2;
+  SECF_NOFALLINGDAMAGE  = 2;
 
-name      DefaultDoorSound;
-name      DefaultCeilingSound;
-name      DefaultSilentCeilingSound;
-name      DefaultFloorSound;
-name      DefaultFloorAltSound;
-name      DefaultStairStepSound;
-name      DefaultPlatformSound;
+name DefaultDoorSound;
+name DefaultCeilingSound;
+name DefaultSilentCeilingSound;
+name DefaultFloorSound;
+name DefaultFloorAltSound;
+name DefaultStairStepSound;
+name DefaultPlatformSound;
 
-bool      bTeleportNewMapBothSides;
-bool      bCheckStrifeStartSpots;
-bool      bDefaultStopOnCrush;
+bool bTeleportNewMapBothSides;
+bool bCheckStrifeStartSpots;
+bool bDefaultStopOnCrush;
 
-bool      bPuffSpawned;
+bool bPuffSpawned;
 
-int       ExtPlayersBase;
-string      Lock103Message;
+int ExtPlayersBase;
+string Lock103Message;
 
-EntityEx    CurrentSpeaker;
-EntityEx    CurrentSpeakingTo;
-float     OldSpeakerAngle;
-int       CurrentSpeechIndex;
-bool      ConversationSlideshow;
+EntityEx CurrentSpeaker;
+EntityEx CurrentSpeakingTo;
+float OldSpeakerAngle;
+int CurrentSpeechIndex;
+bool ConversationSlideshow;
 
-EntityEx    bodyque[BODYQUESIZE];
-int       BodyQueSize;
-int       bodyqueslot;
+EntityEx[BODYQUESIZE] bodyque;
+int BodyQueSize;
+int bodyqueslot;
 
-// Corpse queue for monsters
-EntityEx    corpseQueue[CORPSEQUEUESIZE];
-int       CorpseQueSize;
-int       corpseQueueSlot;
+// corpse queue for monsters
+EntityEx[CORPSEQUEUESIZE] corpseQueue;
+int CorpseQueSize;
+int corpseQueueSlot;
+
 
 //==========================================================================
 //
 //  SpawnSpecials
 //
 //==========================================================================
-
-override void SpawnSpecials()
-{
+override void SpawnSpecials () {
   sector_t *sector;
   int i;
 
-  if (Level.bLightning)
-  {
+  if (Level.bLightning) {
     LightningThinker Lightning = Spawn(LightningThinker);
     Lightning.Init();
   }
 
-  //  Init special SECTORs.
-  for (i = 0; i < XLevel.Sectors.length; i++)
-  {
+  // init special sectors
+  foreach (i; 0..XLevel.Sectors.length) {
     sector = &XLevel.Sectors[i];
-    if (!sector->special)
-    {
-      continue;
-    }
-    if (sector->special&SECSPEC_SECRET_MASK)
-    {
-      //  Secret sector.
-      TotalSecret++;
-    }
-    switch (sector->special&SECSPEC_BASE_MASK)
-    {
-    case SECSPEC_LightPhased: //  Phased light
-      //  Hardcoded base, use sector->lightlevel as the index
-      SpawnPhasedLight(sector, 80, -1);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_LightSequenceStart:  // Phased light sequence start
-      SpawnLightSequence(sector, 1.0);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-      // Specials 3 & 4 are used by the phased light sequences
-    case SECSPEC_LightFlicker:
-      SpawnLightFlash(sector);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_LightStrobeFast:
-      SpawnStrobeFlash(sector, FASTDARK, STROBEBRIGHT, 0);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_LightStrobeSlow:
-      SpawnStrobeFlash(sector, SLOWDARK, STROBEBRIGHT, 0);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_LightStrobeFastDamage:
-      SpawnStrobeFlash(sector, FASTDARK, STROBEBRIGHT, 0);
-      break;
-    case SECSPEC_LightGlow:
-      SpawnGlowingLight(sector);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_DoorCloseIn30:
-      SpawnDoorCloseIn30(sector);
-      break;
-    case SECSPEC_LightSyncStrobeSlow:
-      SpawnStrobeFlash(sector, SLOWDARK, STROBEBRIGHT, 1);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_LightSyncStrobeFast:
-      SpawnStrobeFlash(sector, FASTDARK, STROBEBRIGHT, 1);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_DoorRaiseIn5Minutes:
-      SpawnDoorRaiseIn5Mins(sector);
-      break;
-    case SECSPEC_LightFireFlicker:
-      SpawnFireFlicker(sector);
-      sector->special &= ~SECSPEC_BASE_MASK;
-      break;
-    case SECSPEC_ScrollEastLavaDamage:
-      SpawnScrollingFloor(sector, -1, 0, 3);
-      break;
-    case SECSPEC_ScrollNorthSlow:
-    case SECSPEC_ScrollNorthMedium:
-    case SECSPEC_ScrollNorthFast:
-      SpawnScrollingFloor(sector, 0, 1, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthSlow);
-      break;
-    case SECSPEC_ScrollEastSlow:
-    case SECSPEC_ScrollEastMedium:
-    case SECSPEC_ScrollEastFast:
-      SpawnScrollingFloor(sector, -1, 0, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollEastSlow);
-      break;
-    case SECSPEC_ScrollSouthSlow:
-    case SECSPEC_ScrollSouthMedium:
-    case SECSPEC_ScrollSouthFast:
-      SpawnScrollingFloor(sector, 0, -1, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthSlow);
-      break;
-    case SECSPEC_ScrollWestSlow:
-    case SECSPEC_ScrollWestMedium:
-    case SECSPEC_ScrollWestFast:
-      SpawnScrollingFloor(sector, 1, 0, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollWestSlow);
-      break;
-    case SECSPEC_ScrollNorthWestSlow:
-    case SECSPEC_ScrollNorthWestMedium:
-    case SECSPEC_ScrollNorthWestFast:
-      SpawnScrollingFloor(sector, 1, 1, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthWestSlow);
-      break;
-    case SECSPEC_ScrollNorthEastSlow:
-    case SECSPEC_ScrollNorthEastMedium:
-    case SECSPEC_ScrollNorthEastFast:
-      SpawnScrollingFloor(sector, -1, 1, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthEastSlow);
-      break;
-    case SECSPEC_ScrollSouthEastSlow:
-    case SECSPEC_ScrollSouthEastMedium:
-    case SECSPEC_ScrollSouthEastFast:
-      SpawnScrollingFloor(sector, -1, -1, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthEastSlow);
-      break;
-    case SECSPEC_ScrollSouthWestSlow:
-    case SECSPEC_ScrollSouthWestMedium:
-    case SECSPEC_ScrollSouthWestFast:
-      SpawnScrollingFloor(sector, 1, -1, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthWestSlow);
-      break;
-    case SECSPEC_ScrollEast5:
-    case SECSPEC_ScrollEast10:
-    case SECSPEC_ScrollEast25:
-    case SECSPEC_ScrollEast30:
-    case SECSPEC_ScrollEast35:
-      SpawnScrollingFloor(sector, -1, 0, (sector->special &
-        SECSPEC_BASE_MASK)-SECSPEC_ScrollEast5);
-      break;
+    if (!sector->special) continue;
+    if (sector->special&SECSPEC_SECRET_MASK) ++TotalSecret; // secret sector
+    switch (sector->special&SECSPEC_BASE_MASK) {
+      case SECSPEC_LightPhased: // phased light
+        // hardcoded base, use sector->lightlevel as the index
+        SpawnPhasedLight(sector, 80, -1);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_LightSequenceStart: // phased light sequence start
+        SpawnLightSequence(sector, 1.0);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+        // specials 3 & 4 are used by the phased light sequences
+      case SECSPEC_LightFlicker:
+        SpawnLightFlash(sector);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_LightStrobeFast:
+        SpawnStrobeFlash(sector, FASTDARK, STROBEBRIGHT, 0);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_LightStrobeSlow:
+        SpawnStrobeFlash(sector, SLOWDARK, STROBEBRIGHT, 0);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_LightStrobeFastDamage:
+        SpawnStrobeFlash(sector, FASTDARK, STROBEBRIGHT, 0);
+        break;
+      case SECSPEC_LightGlow:
+        SpawnGlowingLight(sector);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_DoorCloseIn30:
+        SpawnDoorCloseIn30(sector);
+        break;
+      case SECSPEC_LightSyncStrobeSlow:
+        SpawnStrobeFlash(sector, SLOWDARK, STROBEBRIGHT, 1);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_LightSyncStrobeFast:
+        SpawnStrobeFlash(sector, FASTDARK, STROBEBRIGHT, 1);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_DoorRaiseIn5Minutes:
+        SpawnDoorRaiseIn5Mins(sector);
+        break;
+      case SECSPEC_LightFireFlicker:
+        SpawnFireFlicker(sector);
+        sector->special &= ~SECSPEC_BASE_MASK;
+        break;
+      case SECSPEC_ScrollEastLavaDamage:
+        SpawnScrollingFloor(sector, -1, 0, 3);
+        break;
+      case SECSPEC_ScrollNorthSlow:
+      case SECSPEC_ScrollNorthMedium:
+      case SECSPEC_ScrollNorthFast:
+        SpawnScrollingFloor(sector, 0, 1, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthSlow);
+        break;
+      case SECSPEC_ScrollEastSlow:
+      case SECSPEC_ScrollEastMedium:
+      case SECSPEC_ScrollEastFast:
+        SpawnScrollingFloor(sector, -1, 0, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEastSlow);
+        break;
+      case SECSPEC_ScrollSouthSlow:
+      case SECSPEC_ScrollSouthMedium:
+      case SECSPEC_ScrollSouthFast:
+        SpawnScrollingFloor(sector, 0, -1, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthSlow);
+        break;
+      case SECSPEC_ScrollWestSlow:
+      case SECSPEC_ScrollWestMedium:
+      case SECSPEC_ScrollWestFast:
+        SpawnScrollingFloor(sector, 1, 0, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWestSlow);
+        break;
+      case SECSPEC_ScrollNorthWestSlow:
+      case SECSPEC_ScrollNorthWestMedium:
+      case SECSPEC_ScrollNorthWestFast:
+        SpawnScrollingFloor(sector, 1, 1, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthWestSlow);
+        break;
+      case SECSPEC_ScrollNorthEastSlow:
+      case SECSPEC_ScrollNorthEastMedium:
+      case SECSPEC_ScrollNorthEastFast:
+        SpawnScrollingFloor(sector, -1, 1, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthEastSlow);
+        break;
+      case SECSPEC_ScrollSouthEastSlow:
+      case SECSPEC_ScrollSouthEastMedium:
+      case SECSPEC_ScrollSouthEastFast:
+        SpawnScrollingFloor(sector, -1, -1, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthEastSlow);
+        break;
+      case SECSPEC_ScrollSouthWestSlow:
+      case SECSPEC_ScrollSouthWestMedium:
+      case SECSPEC_ScrollSouthWestFast:
+        SpawnScrollingFloor(sector, 1, -1, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthWestSlow);
+        break;
+      case SECSPEC_ScrollEast5:
+      case SECSPEC_ScrollEast10:
+      case SECSPEC_ScrollEast25:
+      case SECSPEC_ScrollEast30:
+      case SECSPEC_ScrollEast35:
+        SpawnScrollingFloor(sector, -1, 0, (sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEast5);
+        break;
     }
   }
 
-  //  Init line EFFECTs
-  for (i = 0; i < XLevel.Lines.length; i++)
-  {
-    switch (XLevel.Lines[i].special)
-    {
-    case LNSPEC_ScrollTextureLeft:
-      SpawnWallScroller(&XLevel.Lines[i], 1, 0);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_ScrollTextureRight:
-      SpawnWallScroller(&XLevel.Lines[i], -1, 0);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_ScrollTextureUp:
-      SpawnWallScroller(&XLevel.Lines[i], 0, 1);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_ScrollTextureDown:
-      SpawnWallScroller(&XLevel.Lines[i], 0, -1);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_ScrollTextureBoth:
-      SpawnTextureBothScroller(&XLevel.Lines[i]);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_ScrollTextureModel:
-      SpawnScrollTextureModel(&XLevel.Lines[i]);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_ScrollFloor:
-      SpawnScrollFloor(&XLevel.Lines[i]);
-      XLevel.Lines[i].special = 0;
-      break;
-    case LNSPEC_ScrollCeiling:
-      SpawnScrollCeiling(&XLevel.Lines[i]);
-      XLevel.Lines[i].special = 0;
-      break;
-    case LNSPEC_ScrollTextureOffsets:
-      SpawnWallOffsetsScroller(&XLevel.Lines[i]);
-      XLevel.Lines[i].special = 0;
-      XLevel.Lines[i].flags |= ML_NODECAL;
-      break;
-    case LNSPEC_TransferWallLight:
-      SpawnTransferWallLight(&XLevel.Lines[i]);
-      XLevel.Lines[i].special = 0;
-      break;
+  // init line effects
+  foreach (i; 0..XLevel.Lines.length) {
+    switch (XLevel.Lines[i].special) {
+      case LNSPEC_ScrollTextureLeft:
+        SpawnWallScroller(&XLevel.Lines[i], 1, 0);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_ScrollTextureRight:
+        SpawnWallScroller(&XLevel.Lines[i], -1, 0);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_ScrollTextureUp:
+        SpawnWallScroller(&XLevel.Lines[i], 0, 1);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_ScrollTextureDown:
+        SpawnWallScroller(&XLevel.Lines[i], 0, -1);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_ScrollTextureBoth:
+        SpawnTextureBothScroller(&XLevel.Lines[i]);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_ScrollTextureModel:
+        SpawnScrollTextureModel(&XLevel.Lines[i]);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_ScrollFloor:
+        SpawnScrollFloor(&XLevel.Lines[i]);
+        XLevel.Lines[i].special = 0;
+        break;
+      case LNSPEC_ScrollCeiling:
+        SpawnScrollCeiling(&XLevel.Lines[i]);
+        XLevel.Lines[i].special = 0;
+        break;
+      case LNSPEC_ScrollTextureOffsets:
+        SpawnWallOffsetsScroller(&XLevel.Lines[i]);
+        XLevel.Lines[i].special = 0;
+        XLevel.Lines[i].flags |= ML_NODECAL;
+        break;
+      case LNSPEC_TransferWallLight:
+        SpawnTransferWallLight(&XLevel.Lines[i]);
+        XLevel.Lines[i].special = 0;
+        break;
     }
   }
 
   SpawnPushers();
 }
 
+
 //==========================================================================
 //
 //  ActivateLine
 //
 //==========================================================================
-
-final bool ActivateLine(line_t *Line, EntityEx A, int Side,
-  int ActivationType)
-{
+final bool ActivateLine (line_t *Line, EntityEx A, int Side, int ActivationType) {
   int lineActivation;
   bool repeat;
   bool buttonSuccess;
   bool changeBack;
 
-  if (!CheckActivation(ActivationType, Line, Side, A))
-  {
-    return false;
-  }
+  if (!CheckActivation(ActivationType, Line, Side, A)) return false;
 
   lineActivation = Line->SpacFlags;
   repeat = Line->flags&ML_REPEAT_SPECIAL;
-  buttonSuccess = ExecuteActionSpecial(Line->special, Line->arg1,
-    Line->arg2, Line->arg3, Line->arg4, Line->arg5, Line, Side, A);
-  changeBack = Line->special == LNSPEC_GlassBreak &&
-    (Line->flags&ML_TWOSIDED) && buttonSuccess;
-  if ((lineActivation&(SPAC_Use|SPAC_Impact|SPAC_UseThrough)) &&
-    buttonSuccess)
-  {
+  buttonSuccess = ExecuteActionSpecial(Line->special, Line->arg1, Line->arg2, Line->arg3, Line->arg4, Line->arg5, Line, Side, A);
+  changeBack = (Line->special == LNSPEC_GlassBreak && (Line->flags&ML_TWOSIDED) && buttonSuccess);
+  if ((lineActivation&(SPAC_Use|SPAC_Impact|SPAC_UseThrough)) && buttonSuccess) {
     ubyte Quest;
     ChangeSwitchTexture(Line->sidenum[0], repeat,
       Line->special == LNSPEC_ExitNormal ||
@@ -371,960 +337,765 @@ final bool ActivateLine(line_t *Line, EntityEx A, int Side,
       Line->special == LNSPEC_TeleportEndGame
       ? 'switches/exitbutn' : 'switches/normbutn', Quest);
   }
-  if (changeBack)
-  {
-    XLevel.Sides[Line->sidenum[1]].MidTexture =
-      XLevel.Sides[Line->sidenum[0]].MidTexture;
-  }
-  if (!repeat && buttonSuccess)
-  {
-    // clear the special on non-retriggerable lines
-    Line->special = 0;
-  }
+  if (changeBack) XLevel.Sides[Line->sidenum[1]].MidTexture = XLevel.Sides[Line->sidenum[0]].MidTexture;
+  if (!repeat && buttonSuccess) Line->special = 0; // clear the special on non-retriggerable lines
   return true;
 }
+
 
 //==========================================================================
 //
 //  CheckActivation
 //
 //==========================================================================
-
-final bool CheckActivation(int activationType, line_t *line, int Side,
-  EntityEx A)
-{
-  if ((line->flags&ML_FIRSTSIDEONLY) && Side == 1)
-  {
-    return false;
-  }
+final bool CheckActivation (int activationType, line_t *line, int Side, EntityEx A) {
+  if ((line->flags&ML_FIRSTSIDEONLY) && Side == 1) return false;
 
   int lineActivation = line->SpacFlags;
-  if (lineActivation&SPAC_UseThrough)
-  {
+  if (lineActivation&SPAC_UseThrough) {
     lineActivation |= SPAC_Use;
-  }
-  else if (line->special == LNSPEC_Teleport &&
-    (lineActivation&SPAC_Cross) && activationType == SPAC_PCross &&
-    A && A.bMissile)
+  } else if (line->special == LNSPEC_Teleport &&
+             (lineActivation&SPAC_Cross) && activationType == SPAC_PCross &&
+             A && A.bMissile)
   {
-    // Let missiles use regular player teleports
+    // let missiles use regular player teleports
     lineActivation |= SPAC_PCross;
   }
-  //  BOOM's generalized line types that allow monster use can actually be
-  // activated by anything except projectiles.
-  if (lineActivation&SPAC_AnyCross)
-  {
-    lineActivation |= SPAC_Cross|SPAC_MCross;
-  }
-  if (!(lineActivation&activationType))
-  {
-    if (activationType == SPAC_Use && (lineActivation&SPAC_MUse) &&
-      !A.bIsPlayer && A.bCanUseWalls)
-    {
-      return true;
-    }
-    if (activationType == SPAC_Push && (lineActivation&SPAC_MPush) &&
-      !A.bIsPlayer && A.bActivatePushWall)
-    {
-      return true;
-    }
-    if (activationType != SPAC_MCross || !(lineActivation&SPAC_Cross))
-    {
-      return false;
-    }
+  // BOOM's generalized line types that allow monster use can actually be activated by anything except projectiles
+  if (lineActivation&SPAC_AnyCross) lineActivation |= SPAC_Cross|SPAC_MCross;
+  if (!(lineActivation&activationType)) {
+    if (activationType == SPAC_Use && (lineActivation&SPAC_MUse) && !A.bIsPlayer && A.bCanUseWalls) return true;
+    if (activationType == SPAC_Push && (lineActivation&SPAC_MPush) && !A.bIsPlayer && A.bActivatePushWall) return true;
+    if (activationType != SPAC_MCross || !(lineActivation&SPAC_Cross)) return false;
   }
   if (A && !A.bIsPlayer && !A.bMissile &&
-    !(line->flags&ML_MONSTERSCANACTIVATE) &&
-    (activationType != SPAC_MCross || !(lineActivation&SPAC_MCross)))
+      !(line->flags&ML_MONSTERSCANACTIVATE) &&
+      (activationType != SPAC_MCross || !(lineActivation&SPAC_MCross)))
   {
-    //  With lax monster activation monsters can activate several line
-    // specials even when not marked as monster activateable. This is
-    // the default for non-Hexen maps in Hexen format.
-    if (!Level.bLaxMonsterActivation)
-    {
-      return false;
-    }
+    // with lax monster activation monsters can activate several line
+    // specials even when not marked as monster activateable
+    // this is the default for non-Hexen maps in Hexen format
+    if (!Level.bLaxMonsterActivation) return false;
 
-    if ((activationType == SPAC_Use || activationType == SPAC_Push) &&
-      (line->flags&ML_SECRET))
-    {
-      return false; // never open secret doors
-    }
+    if ((activationType == SPAC_Use || activationType == SPAC_Push) && (line->flags&ML_SECRET)) return false; // never open secret doors
 
     bool noway = true;
-    switch (activationType)
-    {
-    case SPAC_MCross:
-      if (!(lineActivation&SPAC_MCross))
-      {
-        switch (line->special)
-        {
-        case LNSPEC_DoorRaise:
-          if (line->arg2 >= 64) break;
-          goto case; //k8: is it right???
-        case LNSPEC_PlatDownWaitUpStay:
-        case LNSPEC_Teleport:
-        case LNSPEC_TeleportNoFog:
-        case LNSPEC_PlatDownWaitUpStayLip:
-        case LNSPEC_TeleportLine:
-          noway = false;
-        }
-      }
-      else
-      {
-        noway = false;
-      }
-      break;
-
-    case SPAC_Use:
-    case SPAC_Push:
-      switch (line->special)
-      {
-      case LNSPEC_DoorRaise:
-        if (line->arg1 == 0 && line->arg2 < 64)
-        {
+    switch (activationType) {
+      case SPAC_MCross:
+        if (!(lineActivation&SPAC_MCross)) {
+          switch (line->special) {
+            case LNSPEC_DoorRaise:
+              if (line->arg2 >= 64) break;
+              goto case; //k8: is it right???
+            case LNSPEC_PlatDownWaitUpStay:
+            case LNSPEC_Teleport:
+            case LNSPEC_TeleportNoFog:
+            case LNSPEC_PlatDownWaitUpStayLip:
+            case LNSPEC_TeleportLine:
+              noway = false;
+          }
+        } else {
           noway = false;
         }
         break;
-      case LNSPEC_Teleport:
-      case LNSPEC_TeleportNoFog:
+      case SPAC_Use:
+      case SPAC_Push:
+        switch (line->special) {
+          case LNSPEC_DoorRaise:
+            if (line->arg1 == 0 && line->arg2 < 64) noway = false;
+            break;
+          case LNSPEC_Teleport:
+          case LNSPEC_TeleportNoFog:
+            noway = false;
+        }
+        break;
+      default:
         noway = false;
-      }
-      break;
-
-    default:
-      noway = false;
-      break;
+        break;
     }
     return !noway;
   }
-  if (activationType == SPAC_MCross && !(lineActivation&SPAC_MCross) &&
-    !(line->flags&ML_MONSTERSCANACTIVATE))
-  {
-    return false;
-  }
+  if (activationType == SPAC_MCross && !(lineActivation&SPAC_MCross) && !(line->flags&ML_MONSTERSCANACTIVATE)) return false;
   return true;
 }
+
 
 //==========================================================================
 //
 //  ExecuteActionSpecial
 //
 //==========================================================================
-
-override int ExecuteActionSpecial(int Special, int Arg1, int Arg2, int Arg3,
-  int Arg4, int Arg5, line_t *Line, int Side, Entity E)
+override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
+                                   int Arg4, int Arg5, line_t *Line, int Side, Entity E)
 {
   EntityEx A = EntityEx(E);
   int buttonSuccess = false;
-  switch (Special)
-  {
-  case LNSPEC_PolyStartLine:
-    break;
-  case LNSPEC_PolyRotateLeft:
-    buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1,
-      false);
-    break;
-  case LNSPEC_PolyRotateRight:
-    buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, -1,
-      false);
-    break;
-  case LNSPEC_PolyMove:
-    buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5,
-      false, false);
-    break;
-  case LNSPEC_PolyExplicitLine: // Only used in initialization
-    break;
-  case LNSPEC_PolyMoveTimes8:
-    buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, true,
-      false);
-    break;
-  case LNSPEC_PolyDoorSwing:
-    buttonSuccess = EV_OpenPolyDoor(Line, Arg1, Arg2, Arg3, Arg4, Arg5,
-      PolyobjDoor::PODOOR_SWING);
-    break;
-  case LNSPEC_PolyDoorSlide:
-    buttonSuccess = EV_OpenPolyDoor(Line, Arg1, Arg2, Arg3, Arg4, Arg5,
-      PolyobjDoor::PODOOR_SLIDE);
-    break;
-  case LNSPEC_DoorClose:
-    buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      VerticalDoor::DOOREV_Close, Line, A);
-    break;
-  case LNSPEC_DoorOpen:
-    buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      VerticalDoor::DOOREV_Open, Line, A);
-    break;
-  case LNSPEC_DoorRaise:
-    buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      VerticalDoor::DOOREV_Raise, Line, A);
-    break;
-  case LNSPEC_DoorLockedRaise:
-    if (CheckLock(A, Arg4, true))
-    {
-      buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5,
-        VerticalDoor::DOOREV_RaiseLocked, Line, A);
-    }
-    break;
-  case LNSPEC_DoorAnimated:
-    buttonSuccess = EV_TextureChangeDoor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Line, A);
-    break;
-  case LNSPEC_Autosave:
-    AutoSave();
-    buttonSuccess = true;
-    break;
-  case LNSPEC_ThingRaise:
-    buttonSuccess = EV_ThingRaise(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_StartConversation:
-    buttonSuccess = EV_StartConversation(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ThingStop:
-    buttonSuccess = EV_ThingStop(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_FloorLowerByValue:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerByValue, Line);
-    break;
-  case LNSPEC_FloorLowerToLowest:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerToLowest, Line);
-    break;
-  case LNSPEC_FloorLowerToNearest:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerToNearest, Line);
-    break;
-  case LNSPEC_FloorRaiseByValue:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseByValue, Line);
-    break;
-  case LNSPEC_FloorRaiseToHighest:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseToHighest, Line);
-    break;
-  case LNSPEC_FloorRaiseToNearest:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseToNearest, Line);
-    break;
-  case LNSPEC_StairsBuildDownNormal:
-    buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5,
-      StairStepMover::STAIRSEV_DownNormal);
-    break;
-  case LNSPEC_StairsBuildUpNormal:
-    buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5,
-      StairStepMover::STAIRSEV_UpNormal);
-    break;
-  case LNSPEC_FloorRaiseAndCrush:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseAndCrush, Line);
-    break;
-  case LNSPEC_PillarBuild:  // (no crushing)
-    buttonSuccess = EV_BuildPillar(Arg1, Arg2, Arg3, Arg4, Arg5, false);
-    break;
-  case LNSPEC_PillarOpen:
-    buttonSuccess = EV_OpenPillar(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_StairsBuildDownSync:
-    buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5,
-      StairStepMover::STAIRSEV_DownSync);
-    break;
-  case LNSPEC_StairsBuildUpSync:
-    buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5,
-      StairStepMover::STAIRSEV_UpSync);
-    break;
-  case LNSPEC_ForceField:
-    buttonSuccess = EV_ForceField(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ClearForceField:
-    buttonSuccess = EV_RemoveForceField(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_FloorRaiseByValueTimes8:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseByValueTimes8, Line);
-    break;
-  case LNSPEC_FloorLowerByValueTimes8:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerByValueTimes8, Line);
-    break;
-  case LNSPEC_FloorMoveToValue:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_MoveToValue, Line);
-    break;
-  case LNSPEC_CeilingWaggle:
-    buttonSuccess = EV_StartCeilingWaggle(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_TeleportZombieChanger:
-    if (Side == 0)
-    {
-      //  Only teleport when crossing the front side of a line
-      buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line,
-        true);
-      A.SetState(A.FindState('Pain'));
-    }
-    break;
-  case LNSPEC_CeilingLowerByValue:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerByValue, Line);
-    break;
-  case LNSPEC_CeilingRaiseByValue:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_RaiseByValue, Line);
-    break;
-  case LNSPEC_CeilingCrushAndRaise:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_CrushAndRaise, Line);
-    break;
-  case LNSPEC_CeilingLowerAndCrush:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerAndCrush, Line);
-    break;
-  case LNSPEC_CeilingCrushStop:
-    buttonSuccess = EV_CeilingCrushStop(Line, Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_CeilingCrushRaiseAndStay:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_CrushRaiseAndStay, Line);
-    break;
-  case LNSPEC_FloorCrushStop:
-    buttonSuccess = EV_FloorCrushStop(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_CeilingMoveToValue:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_MoveToValue, Line);
-    break;
-  case LNSPEC_GlassBreak:
-    buttonSuccess = EV_GlassBreak(Arg1, Arg2, Arg3, Arg4, Arg5, Line, A);
-    break;
-  case LNSPEC_ScrollWall:
-    buttonSuccess = EV_ScrollWall(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LineSetTextureOffset:
-    buttonSuccess = EV_LineSetTextureOffset(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorChangeFlags:
-    buttonSuccess = EV_SectorChangeFlags(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_PlatPerpetualRaise:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_PerpetualRaise, Line);
-    break;
-  case LNSPEC_PlatStop:
-    buttonSuccess = EV_StopPlat(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_PlatDownWaitUpStay:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_DownWaitUpStay, Line);
-    break;
-  case LNSPEC_PlatDownByValueWaitUpStay:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_DownByValueWaitUpStay, Line);
-    break;
-  case LNSPEC_PlatUpWaitDownStay:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_UpWaitDownStay, Line);
-    break;
-  case LNSPEC_PlatUpByValueWaitDownStay:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_UpByValueWaitDownStay, Line);
-    break;
-  case LNSPEC_FloorLowerTimes8Instant:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerTimes8Instant, Line);
-    break;
-  case LNSPEC_FloorRaiseTimes8Instant:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseTimes8Instant, Line);
-    break;
-  case LNSPEC_FloorMoveToValueTimes8:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_MoveToValueTimes8, Line);
-    break;
-  case LNSPEC_CeilingMoveToValueTimes8:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_MoveToValueTimes8, Line);
-    break;
-  case LNSPEC_Teleport:
-    if (Side == 0)
-    {
-      // Only teleport when crossing the front side of a line
-      buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line,
-        true);
-    }
-    break;
-  case LNSPEC_TeleportNoFog:
-    if (Side == 0)
-    {
-      // Only teleport when crossing the front side of a line
-      buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line,
-        false);
-    }
-    break;
-  case LNSPEC_ThrustThing:
-    if (A && !Side) // Only thrust on side 0
-    {
-      if (Arg2) A.Thrust(itof(Arg1)*(90.0/64.0), itof(Arg2));
+  switch (Special) {
+    case LNSPEC_PolyStartLine:
+      break;
+    case LNSPEC_PolyRotateLeft:
+      buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, false);
+      break;
+    case LNSPEC_PolyRotateRight:
+      buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, -1, false);
+      break;
+    case LNSPEC_PolyMove:
+      buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, false, false);
+      break;
+    case LNSPEC_PolyExplicitLine: // Only used in initialization
+      break;
+    case LNSPEC_PolyMoveTimes8:
+      buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, true, false);
+      break;
+    case LNSPEC_PolyDoorSwing:
+      buttonSuccess = EV_OpenPolyDoor(Line, Arg1, Arg2, Arg3, Arg4, Arg5, PolyobjDoor::PODOOR_SWING);
+      break;
+    case LNSPEC_PolyDoorSlide:
+      buttonSuccess = EV_OpenPolyDoor(Line, Arg1, Arg2, Arg3, Arg4, Arg5, PolyobjDoor::PODOOR_SLIDE);
+      break;
+    case LNSPEC_DoorClose:
+      buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5, VerticalDoor::DOOREV_Close, Line, A);
+      break;
+    case LNSPEC_DoorOpen:
+      buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5, VerticalDoor::DOOREV_Open, Line, A);
+      break;
+    case LNSPEC_DoorRaise:
+      buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5, VerticalDoor::DOOREV_Raise, Line, A);
+      break;
+    case LNSPEC_DoorLockedRaise:
+      if (CheckLock(A, Arg4, true)) buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5, VerticalDoor::DOOREV_RaiseLocked, Line, A);
+      break;
+    case LNSPEC_DoorAnimated:
+      buttonSuccess = EV_TextureChangeDoor(Arg1, Arg2, Arg3, Arg4, Arg5, Line, A);
+      break;
+    case LNSPEC_Autosave:
+      AutoSave();
+      buttonSuccess = true;
+      break;
+    case LNSPEC_ThingRaise:
+      buttonSuccess = EV_ThingRaise(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_StartConversation:
+      buttonSuccess = EV_StartConversation(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingStop:
+      buttonSuccess = EV_ThingStop(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_FloorLowerByValue:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerByValue, Line);
+      break;
+    case LNSPEC_FloorLowerToLowest:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerToLowest, Line);
+      break;
+    case LNSPEC_FloorLowerToNearest:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerToNearest, Line);
+      break;
+    case LNSPEC_FloorRaiseByValue:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByValue, Line);
+      break;
+    case LNSPEC_FloorRaiseToHighest:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseToHighest, Line);
+      break;
+    case LNSPEC_FloorRaiseToNearest:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseToNearest, Line);
+      break;
+    case LNSPEC_StairsBuildDownNormal:
+      buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5, StairStepMover::STAIRSEV_DownNormal);
+      break;
+    case LNSPEC_StairsBuildUpNormal:
+      buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5, StairStepMover::STAIRSEV_UpNormal);
+      break;
+    case LNSPEC_FloorRaiseAndCrush:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseAndCrush, Line);
+      break;
+    case LNSPEC_PillarBuild:  // (no crushing)
+      buttonSuccess = EV_BuildPillar(Arg1, Arg2, Arg3, Arg4, Arg5, false);
+      break;
+    case LNSPEC_PillarOpen:
+      buttonSuccess = EV_OpenPillar(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_StairsBuildDownSync:
+      buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5, StairStepMover::STAIRSEV_DownSync);
+      break;
+    case LNSPEC_StairsBuildUpSync:
+      buttonSuccess = EV_BuildStairs(Arg1, Arg2, Arg3, Arg4, Arg5, StairStepMover::STAIRSEV_UpSync);
+      break;
+    case LNSPEC_ForceField:
+      buttonSuccess = EV_ForceField(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ClearForceField:
+      buttonSuccess = EV_RemoveForceField(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_FloorRaiseByValueTimes8:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByValueTimes8, Line);
+      break;
+    case LNSPEC_FloorLowerByValueTimes8:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerByValueTimes8, Line);
+      break;
+    case LNSPEC_FloorMoveToValue:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_MoveToValue, Line);
+      break;
+    case LNSPEC_CeilingWaggle:
+      buttonSuccess = EV_StartCeilingWaggle(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_TeleportZombieChanger:
+      if (Side == 0) {
+        // only teleport when crossing the front side of a line
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, true);
+        A.SetState(A.FindState('Pain'));
+      }
+      break;
+    case LNSPEC_CeilingLowerByValue:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerByValue, Line);
+      break;
+    case LNSPEC_CeilingRaiseByValue:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_RaiseByValue, Line);
+      break;
+    case LNSPEC_CeilingCrushAndRaise:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_CrushAndRaise, Line);
+      break;
+    case LNSPEC_CeilingLowerAndCrush:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerAndCrush, Line);
+      break;
+    case LNSPEC_CeilingCrushStop:
+      buttonSuccess = EV_CeilingCrushStop(Line, Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_CeilingCrushRaiseAndStay:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_CrushRaiseAndStay, Line);
+      break;
+    case LNSPEC_FloorCrushStop:
+      buttonSuccess = EV_FloorCrushStop(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_CeilingMoveToValue:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_MoveToValue, Line);
+      break;
+    case LNSPEC_GlassBreak:
+      buttonSuccess = EV_GlassBreak(Arg1, Arg2, Arg3, Arg4, Arg5, Line, A);
+      break;
+    case LNSPEC_ScrollWall:
+      buttonSuccess = EV_ScrollWall(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LineSetTextureOffset:
+      buttonSuccess = EV_LineSetTextureOffset(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorChangeFlags:
+      buttonSuccess = EV_SectorChangeFlags(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_PlatPerpetualRaise:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_PerpetualRaise, Line);
+      break;
+    case LNSPEC_PlatStop:
+      buttonSuccess = EV_StopPlat(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_PlatDownWaitUpStay:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_DownWaitUpStay, Line);
+      break;
+    case LNSPEC_PlatDownByValueWaitUpStay:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_DownByValueWaitUpStay, Line);
+      break;
+    case LNSPEC_PlatUpWaitDownStay:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_UpWaitDownStay, Line);
+      break;
+    case LNSPEC_PlatUpByValueWaitDownStay:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_UpByValueWaitDownStay, Line);
+      break;
+    case LNSPEC_FloorLowerTimes8Instant:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerTimes8Instant, Line);
+      break;
+    case LNSPEC_FloorRaiseTimes8Instant:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseTimes8Instant, Line);
+      break;
+    case LNSPEC_FloorMoveToValueTimes8:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_MoveToValueTimes8, Line);
+      break;
+    case LNSPEC_CeilingMoveToValueTimes8:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_MoveToValueTimes8, Line);
+      break;
+    case LNSPEC_Teleport:
+      if (Side == 0) {
+        // only teleport when crossing the front side of a line
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, true);
+      }
+      break;
+    case LNSPEC_TeleportNoFog:
+      if (Side == 0) {
+        // only teleport when crossing the front side of a line
+        buttonSuccess = EV_Teleport(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, false);
+      }
+      break;
+    case LNSPEC_ThrustThing:
+      if (A && !Side) {
+        // only thrust on side 0
+        if (Arg2) A.Thrust(itof(Arg1)*(90.0/64.0), itof(Arg2));
+        buttonSuccess = 1;
+      }
+      break;
+    case LNSPEC_DamageThing:
+      if (A) {
+        if (Arg1) {
+          A.Damage(none, none, Arg1, ModToDamageType(Arg2), spawnBlood:true);
+        } else {
+          // if arg1 is zero, then guarantee a kill
+          A.Damage(none, none, 10000, ModToDamageType(Arg2), forced:true, spawnBlood:true);
+        }
+      }
       buttonSuccess = 1;
-    }
-    break;
-  case LNSPEC_DamageThing:
-    if (A)
-    {
-      if (Arg1)
-      {
-        A.Damage(none, none, Arg1, ModToDamageType(Arg2), spawnBlood:true);
-      }
-      else
-      {
-        // If arg1 is zero, then guarantee a kill
-        A.Damage(none, none, 10000, ModToDamageType(Arg2), forced:true, spawnBlood:true);
-      }
-    }
-    buttonSuccess = 1;
-    break;
-  case LNSPEC_TeleportNewMap:
-    if (Side == 0 || bTeleportNewMapBothSides)
-    {
-      // Only teleport when crossing the front side of a line
-      // Players must be alive to teleport
-      if (!(A && A.bIsPlayer && A.Player.PlayerState == PST_DEAD))
-      {
-        Completed(Arg1, Arg2, Arg3);
-        buttonSuccess = true;
-      }
-    }
-    break;
-  case LNSPEC_TeleportEndGame:
-    if (Side == 0)
-    {
-      // Only teleport when crossing the front side of a line
-      // Players must be alive to teleport
-      if (!(A && A.bIsPlayer && A.Player.PlayerState == PST_DEAD))
-      {
-        buttonSuccess = true;
-        if (Game.deathmatch)
-        {
-          // Winning in deathmatch just goes back to map 1
-          Completed(1, 0, 0);
-        }
-        else
-        {
-          // Passing -1, -1 to G_Completed() starts the Finale
-          Completed(-1, -1, 0);
+      break;
+    case LNSPEC_TeleportNewMap:
+      if (Side == 0 || bTeleportNewMapBothSides) {
+        // only teleport when crossing the front side of a line
+        // players must be alive to teleport
+        if (!(A && A.bIsPlayer && A.Player.PlayerState == PST_DEAD)) {
+          Completed(Arg1, Arg2, Arg3);
+          buttonSuccess = true;
         }
       }
-    }
-    break;
-  case LNSPEC_TeleportOther:
-    buttonSuccess = EV_TeleportOther(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_TeleportGroup:
-    buttonSuccess = EV_TeleportGroup(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_TeleportSector:
-    buttonSuccess = EV_TeleportSector(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_ACSExecute:
-    buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line,
-      Side, false, false);
-    break;
-  case LNSPEC_ACSSuspend:
-    buttonSuccess = XLevel.SuspendACS(Arg1, Arg2);
-    break;
-  case LNSPEC_ACSTerminate:
-    buttonSuccess = XLevel.TerminateACS(Arg1, Arg2);
-    break;
-  case LNSPEC_ACSLockedExecute:
-    if (CheckLock(A, Arg5, false))
-    {
-      buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, 0, A,
-        Line, Side, false, false);
-    }
-    break;
-  case LNSPEC_ACSExecuteWithResult:
-    buttonSuccess = XLevel.StartACS(Arg1, 0, Arg2, Arg3, Arg4, A, Line,
-      Side, true, true);
-    break;
-  case LNSPEC_ACSLockedExecuteDoor:
-    if (CheckLock(A, Arg5, true))
-    {
-      buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, 0, A,
-        Line, Side, false, false);
-    }
-    break;
-  case LNSPEC_PolyRotateLeftOverride:
-    buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1,
-      true);
-    break;
-  case LNSPEC_PolyRotateRightOverride:
-    buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, -1,
-      true);
-    break;
-  case LNSPEC_PolyMoveOverride:
-    buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5,
-      false, true);
-    break;
-  case LNSPEC_PolyMoveTimes8Override:
-    buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5,
-      true, true);
-    break;
-  case LNSPEC_PillarBuildCrush:
-    buttonSuccess = EV_BuildPillar(Arg1, Arg2, Arg3, Arg4, Arg5, true);
-    break;
-  case LNSPEC_FloorAndCeilingLowerByValue:
-    buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Elevator::ELEVEV_Lower, Line);
-    break;
-  case LNSPEC_FloorAndCeilingRaiseByValue:
-    buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Elevator::ELEVEV_Raise, Line);
-    break;
-  case LNSPEC_LightForceLightning:
-    buttonSuccess = true;
-    ForceLightning(Arg1);
-    break;
-  case LNSPEC_LightRaiseByValue:
-    buttonSuccess = EV_LightRaiseByValue(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LightLowerByValue:
-    buttonSuccess = EV_LightLowerByValue(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LightChangeToValue:
-    buttonSuccess = EV_LightChangeToValue(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LightFade:
-    buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5,
-      LightEffect::LIGHTEV_Fade);
-    break;
-  case LNSPEC_LightGlow:
-    buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5,
-      LightEffect::LIGHTEV_Glow);
-    break;
-  case LNSPEC_LightFlicker:
-    buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5,
-      LightEffect::LIGHTEV_Flicker);
-    break;
-  case LNSPEC_LightStrobe:
-    buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5,
-      LightEffect::LIGHTEV_Strobe);
-    break;
-  case LNSPEC_LightStop:
-    buttonSuccess = EV_LightStop(Arg1);
-    break;
-  case LNSPEC_ThingDamage:
-    buttonSuccess = EV_ThingDamage(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_QuakeTremor:
-    buttonSuccess = A_LocalQuake(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ThingMove:
-    buttonSuccess = EV_ThingMove(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ThingSetSpecial:
-    buttonSuccess = EV_ThingSetSpecial(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ThrustThingZ:
-    buttonSuccess = EV_ThrustThingZ(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_UsePuzzleItem:
-    buttonSuccess = EV_LineSearchForPuzzleItem(Arg1, Arg2, Arg3, Arg4,
-      Arg5, A);
-    break;
-  case LNSPEC_ThingActivate:
-    buttonSuccess = EV_ThingActivate(Arg1, A);
-    break;
-  case LNSPEC_ThingDeactivate:
-    buttonSuccess = EV_ThingDeactivate(Arg1, A);
-    break;
-  case LNSPEC_ThingRemove:
-    buttonSuccess = EV_ThingRemove(Arg1);
-    break;
-  case LNSPEC_ThingDestroy:
-    buttonSuccess = EV_ThingDestroy(Arg1, Arg2);
-    break;
-  case LNSPEC_ThingProjectile:
-    buttonSuccess = EV_ThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, 0,
-      0, '', A);
-    break;
-  case LNSPEC_ThingSpawn:
-    buttonSuccess = EV_ThingSpawn(Arg1, Arg2, Arg3, Arg4, Arg5, true,
-      false, A);
-    break;
-  case LNSPEC_ThingProjectileGravity:
-    buttonSuccess = EV_ThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, 1,
-      0, '', A);
-    break;
-  case LNSPEC_ThingSpawnNoFog:
-    buttonSuccess = EV_ThingSpawn(Arg1, Arg2, Arg3, Arg4, Arg5, false,
-      false, A);
-    break;
-  case LNSPEC_FloorWaggle:
-    buttonSuccess = EV_StartFloorWaggle(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_ThingSpawnFacing:
-    buttonSuccess = EV_ThingSpawn(Arg1, Arg2, 0, Arg4, Arg5, !Arg3,
-      true, A);
-    break;
-  case LNSPEC_SectorSoundChange:
-    buttonSuccess = EV_SectorSoundChange(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetPlaneReflection:
-    buttonSuccess = EV_SectorSetPlaneReflection(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_CeilingGenericCrush2:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_GenericCrush2, Line);
-    break;
-  case LNSPEC_SectorSetCeilingScale2:
-    buttonSuccess = EV_SectorSetCeilingScale2(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_SectorSetFloorScale2:
-    buttonSuccess = EV_SectorSetFloorScale2(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_PlaneUpNearestWaitDownStay:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_UpNearestWaitDownStay, Line);
-    break;
-  case LNSPEC_NoiseAlert:
-    buttonSuccess = EV_NoiseAlert(A, Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SendToCommunicator:
-    buttonSuccess = EV_SendToCommunicator(A, Arg1, Arg2, Arg3, Arg4,
-      Arg5, Side);
-    break;
-  case LNSPEC_ThingProjectileIntercept:
-    buttonSuccess = EV_ThingProjectileIntercept(Arg1, Arg2, Arg3, Arg4,
-      Arg5, A);
-    break;
-  case LNSPEC_ThingChangeTID:
-    buttonSuccess = EV_ThingChangeTID(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ThingHate:
-    buttonSuccess = EV_ThingHate(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_ThingProjectileAimed:
-    buttonSuccess = EV_ThingProjectileAimed(Arg1, Arg2, Arg3, Arg4, Arg5,
-      A);
-    break;
-  case LNSPEC_ChangeSkill:
-    LineSpecialGameInfo(Game).SetSkill(Arg1);
-    buttonSuccess = true;
-    break;
-  case LNSPEC_ThingSetTranslation:
-    buttonSuccess = EV_ThingSetTranslation(Arg1, Arg2, Arg3, Arg4, Arg5,
-      A);
-    break;
-  case LNSPEC_LineAlignCeiling:
-    buttonSuccess = EV_LineAlignCeiling(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LineAlignFloor:
-    buttonSuccess = EV_LineAlignFloor(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetRotation:
-    buttonSuccess = EV_SectorSetRotation(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetCeilingPanning:
-    buttonSuccess = EV_SectorSetCeilingPanning(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_SectorSetFloorPanning:
-    buttonSuccess = EV_SectorSetFloorPanning(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_SectorSetCeilingScale:
-    buttonSuccess = EV_SectorSetCeilingScale(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_SectorSetFloorScale:
-    buttonSuccess = EV_SectorSetFloorScale(Arg1, Arg2, Arg3, Arg4,
-      Arg5);
-    break;
-  case LNSPEC_SetPlayerProperty:
-    buttonSuccess = EV_SetPlayerProperty(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_CeilingLowerToHighestFloor:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerToHighestFloor, Line);
-    break;
-  case LNSPEC_CeilingLowerInstant:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerTimes8Instant, Line);
-    break;
-  case LNSPEC_CeilingRaiseInstant:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_RaiseTimes8Instant, Line);
-    break;
-  case LNSPEC_CeilingCrushRaiseAndStayA:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_CrushRaiseAndStayA, Line);
-    break;
-  case LNSPEC_CeilingCrushAndRaiseA:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_CrushAndRaiseA, Line);
-    break;
-  case LNSPEC_CeilingCrushAndRaiseSilentA:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_CrushAndRaiseSilA, Line);
-    break;
-  case LNSPEC_CeilingRaiseByValueTimes8:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_RaiseByValueTimes8, Line);
-    break;
-  case LNSPEC_CeilingLowerByValueTimes8:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerByValueTimes8, Line);
-    break;
-  case LNSPEC_FloorGeneric:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_Generic, Line);
-    break;
-  case LNSPEC_CeilingGeneric:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_Generic, Line);
-    break;
-  case LNSPEC_DoorGeneric:
-    buttonSuccess = EV_GenericDoor(Arg1, Arg2, Arg3, Arg4, Arg5, Line, A);
-    break;
-  case LNSPEC_PlatGeneric:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_Generic, Line);
-    break;
-  case LNSPEC_StairsGeneric:
-    buttonSuccess = EV_BuildStairsOld(Arg1, Arg2, Arg3, Arg4, Arg5,
-      true, Line);
-    break;
-  case LNSPEC_CeilingGenericCrush:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_GenericCrush, Line);
-    break;
-  case LNSPEC_PlatDownWaitUpStayLip:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_DownWaitUpStayLip, Line);
-    break;
-  case LNSPEC_PlatPerpetualRaiseLip:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Platform::PLATEV_PerpetualRaiseLip, Line);
-    break;
-  case LNSPEC_LineTranslucent:
-    buttonSuccess = EV_LineTranslucent(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetColour:
-    buttonSuccess = EV_SectorSetColour(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetFade:
-    buttonSuccess = EV_SectorSetFade(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetDamage:
-    buttonSuccess = EV_SectorSetDamage(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_TeleportLine:
-    buttonSuccess = EV_SilentLineTeleport(Line, Side, A, Arg2, Arg3);
-    break;
-  case LNSPEC_SectorSetGravity:
-    buttonSuccess = EV_SectorSetGravity(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_StairsBuildUpDoom:
-    buttonSuccess = EV_BuildStairsOld(Arg1, Arg2, Arg3, Arg4, Arg5,
-      false, Line);
-    break;
-  case LNSPEC_SectorSetWind:
-    buttonSuccess = AdjustPusher(Arg1, Arg2, Arg3, Arg4, Arg5, Line,
-      Pusher::PUSHER_Wind);
-    break;
-  case LNSPEC_SectorSetFriction:
-    buttonSuccess = EV_SectorSetFriction(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_SectorSetCurrent:
-    buttonSuccess = AdjustPusher(Arg1, Arg2, Arg3, Arg4, Arg5, Line,
-      Pusher::PUSHER_Current);
-    break;
-  case LNSPEC_ScrollTextureBoth:
-    buttonSuccess = EV_ScrollTextureBoth(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_ScrollFloor:
-    buttonSuccess = EV_ScrollFloor(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_ScrollCeiling:
-    buttonSuccess = EV_ScrollCeiling(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_ACSExecuteAlways:
-    //print("LNSPEC_ACSExecuteAlways: number=%d; map=%d; arg1=%d; arg2=%d; arg3=%d", Arg1, Arg2, Arg3, Arg4, Arg5);
-    buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, Side, true, false);
-    break;
-  case LNSPEC_FloorRaiseToNearestChange:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseToNearestChange, Line);
-    break;
-  case LNSPEC_ThingSetGoal:
-    buttonSuccess = EV_ThingSetGoal(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_FloorRaiseByValueChangeTex:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByValueChange2, Line);
-    break;
-  case LNSPEC_PlatToggle:
-    buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_Toggle, Line);
-    break;
-  case LNSPEC_LightStrobeDoom:
-    buttonSuccess = EV_StartLightStrobing(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LightMinNeighbor:
-    buttonSuccess = EV_TurnTagLightsOff(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_LightMaxNeighbor:
-    buttonSuccess = EV_TagLightTurnOn(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_FloorTransferTrigger:
-    buttonSuccess = EV_FloorTransferTrigger(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Line);
-    break;
-  case LNSPEC_FloorTransferNumeric:
-    buttonSuccess = EV_FloorTransferNumeric(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_ChangeCamera:
-    buttonSuccess = EV_ChangeCamera(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_FloorRaiseToLowestCeiling:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseToLowestCeiling, Line);
-    break;
-  case LNSPEC_FloorRaiseByValueChange:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseByValueChange, Line);
-    break;
-  case LNSPEC_FloorRaiseByTexture:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_RaiseByTexture, Line);
-    break;
-  case LNSPEC_FloorLowerToLowestChange:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerToLowestChange, Line);
-    break;
-  case LNSPEC_FloorLowerToHighest:
-    buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      FloorMover::FLOOREV_LowerToHighest, Line);
-    break;
-  case LNSPEC_ExitNormal:
-    buttonSuccess = true;
-    ExitLevel(Arg1);
-    break;
-  case LNSPEC_ExitSecret:
-    buttonSuccess = true;
-    SecretExitLevel(Arg1);
-    break;
-  case LNSPEC_ElevatorRaiseToNearest:
-    buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Elevator::ELEVEV_Up, Line);
-    break;
-  case LNSPEC_ElevatorMoveToFloor:
-    buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Elevator::ELEVEV_Current, Line);
-    break;
-  case LNSPEC_ElevatorLowerToNearest:
-    buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5,
-      Elevator::ELEVEV_Down, Line);
-    break;
-  case LNSPEC_HealThing:
-    buttonSuccess = EV_HealThing(Arg1, Arg2, Arg3, Arg4, Arg5, A);
-    break;
-  case LNSPEC_DoorCloseWaitOpen:
-    buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5,
-      VerticalDoor::DOOREV_CloseWaitOpen, Line, A);
-    break;
-  case LNSPEC_FloorDonut:
-    buttonSuccess = EV_DoDonut(Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
-  case LNSPEC_FloorAndCeilingLowerRaise:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg3, 0, 0, 0,
-      CeilingMover::CEILEV_RaiseToHighest, Line);
-    buttonSuccess |= EV_DoFloor(Arg1, Arg2, 0, 0, 0,
-      FloorMover::FLOOREV_LowerToLowest, Line);
-    break;
-  case LNSPEC_CeilingRaiseToNearest:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_RaiseToNearest, Line);
-    break;
-  case LNSPEC_CeilingLowerToLowest:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerToLowest, Line);
-    break;
-  case LNSPEC_CeilingLowerToFloor:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_LowerToFloor, Line);
-    break;
-  case LNSPEC_CeilingCrushRaiseAndStaySilentA:
-    buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5,
-      CeilingMover::CEILEV_CrushRaiseAndStaySilA, Line);
-    break;
-
-  case LNSPEC_ExtraFloorLightOnly:
-    print("Unknown action special %d aka 'ExtraFloor_LightOnly' (tag=%d; type=%d) not implemented", Special, Arg1, Arg2);
-    break;
-
-  case LNSPEC_LineSetBlocking:
-    {
-      //print("LNSPEC_LineSetBlocking: (%d, 0x%04x, 0x%04x)", Arg1, Arg2, Arg3);
-      int setFlags = ConvertLineBlockingFlags(Arg2), clearFlags = ~ConvertLineBlockingFlags(Arg3);
-      int searcher = -1;
-      for (line_t *line = XLevel.FindLine(Arg1, &searcher); line; line = XLevel.FindLine(Arg1, &searcher)) {
-        line->flags |= setFlags;
-        line->flags &= clearFlags;
+      break;
+    case LNSPEC_TeleportEndGame:
+      if (Side == 0) {
+        // only teleport when crossing the front side of a line
+        // players must be alive to teleport
+        if (!(A && A.bIsPlayer && A.Player.PlayerState == PST_DEAD)) {
+          buttonSuccess = true;
+          if (Game.deathmatch) {
+            // winning in deathmatch just goes back to map 1
+            Completed(1, 0, 0);
+          } else {
+            // passing -1, -1 to G_Completed() starts the finale
+            Completed(-1, -1, 0);
+          }
+        }
+      }
+      break;
+    case LNSPEC_TeleportOther:
+      buttonSuccess = EV_TeleportOther(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_TeleportGroup:
+      buttonSuccess = EV_TeleportGroup(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_TeleportSector:
+      buttonSuccess = EV_TeleportSector(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_ACSExecute:
+      buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, Side, false, false);
+      break;
+    case LNSPEC_ACSSuspend:
+      buttonSuccess = XLevel.SuspendACS(Arg1, Arg2);
+      break;
+    case LNSPEC_ACSTerminate:
+      buttonSuccess = XLevel.TerminateACS(Arg1, Arg2);
+      break;
+    case LNSPEC_ACSLockedExecute:
+      if (CheckLock(A, Arg5, false)) buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, 0, A, Line, Side, false, false);
+      break;
+    case LNSPEC_ACSExecuteWithResult:
+      buttonSuccess = XLevel.StartACS(Arg1, 0, Arg2, Arg3, Arg4, A, Line, Side, true, true);
+      break;
+    case LNSPEC_ACSLockedExecuteDoor:
+      if (CheckLock(A, Arg5, true)) buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, 0, A, Line, Side, false, false);
+      break;
+    case LNSPEC_PolyRotateLeftOverride:
+      buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, true);
+      break;
+    case LNSPEC_PolyRotateRightOverride:
+      buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, -1, true);
+      break;
+    case LNSPEC_PolyMoveOverride:
+      buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, false, true);
+      break;
+    case LNSPEC_PolyMoveTimes8Override:
+      buttonSuccess = EV_MovePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, true, true);
+      break;
+    case LNSPEC_PillarBuildCrush:
+      buttonSuccess = EV_BuildPillar(Arg1, Arg2, Arg3, Arg4, Arg5, true);
+      break;
+    case LNSPEC_FloorAndCeilingLowerByValue:
+      buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5, Elevator::ELEVEV_Lower, Line);
+      break;
+    case LNSPEC_FloorAndCeilingRaiseByValue:
+      buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5, Elevator::ELEVEV_Raise, Line);
+      break;
+    case LNSPEC_LightForceLightning:
+      buttonSuccess = true;
+      ForceLightning(Arg1);
+      break;
+    case LNSPEC_LightRaiseByValue:
+      buttonSuccess = EV_LightRaiseByValue(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LightLowerByValue:
+      buttonSuccess = EV_LightLowerByValue(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LightChangeToValue:
+      buttonSuccess = EV_LightChangeToValue(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LightFade:
+      buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5, LightEffect::LIGHTEV_Fade);
+      break;
+    case LNSPEC_LightGlow:
+      buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5, LightEffect::LIGHTEV_Glow);
+      break;
+    case LNSPEC_LightFlicker:
+      buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5, LightEffect::LIGHTEV_Flicker);
+      break;
+    case LNSPEC_LightStrobe:
+      buttonSuccess = EV_SpawnLight(Arg1, Arg2, Arg3, Arg4, Arg5, LightEffect::LIGHTEV_Strobe);
+      break;
+    case LNSPEC_LightStop:
+      buttonSuccess = EV_LightStop(Arg1);
+      break;
+    case LNSPEC_ThingDamage:
+      buttonSuccess = EV_ThingDamage(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_QuakeTremor:
+      buttonSuccess = A_LocalQuake(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingMove:
+      buttonSuccess = EV_ThingMove(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingSetSpecial:
+      buttonSuccess = EV_ThingSetSpecial(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThrustThingZ:
+      buttonSuccess = EV_ThrustThingZ(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_UsePuzzleItem:
+      buttonSuccess = EV_LineSearchForPuzzleItem(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingActivate:
+      buttonSuccess = EV_ThingActivate(Arg1, A);
+      break;
+    case LNSPEC_ThingDeactivate:
+      buttonSuccess = EV_ThingDeactivate(Arg1, A);
+      break;
+    case LNSPEC_ThingRemove:
+      buttonSuccess = EV_ThingRemove(Arg1);
+      break;
+    case LNSPEC_ThingDestroy:
+      buttonSuccess = EV_ThingDestroy(Arg1, Arg2);
+      break;
+    case LNSPEC_ThingProjectile:
+      buttonSuccess = EV_ThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, 0, 0, '', A);
+      break;
+    case LNSPEC_ThingSpawn:
+      buttonSuccess = EV_ThingSpawn(Arg1, Arg2, Arg3, Arg4, Arg5, true, false, A);
+      break;
+    case LNSPEC_ThingProjectileGravity:
+      buttonSuccess = EV_ThingProjectile(Arg1, Arg2, Arg3, Arg4, Arg5, 1, 0, '', A);
+      break;
+    case LNSPEC_ThingSpawnNoFog:
+      buttonSuccess = EV_ThingSpawn(Arg1, Arg2, Arg3, Arg4, Arg5, false, false, A);
+      break;
+    case LNSPEC_FloorWaggle:
+      buttonSuccess = EV_StartFloorWaggle(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_ThingSpawnFacing:
+      buttonSuccess = EV_ThingSpawn(Arg1, Arg2, 0, Arg4, Arg5, !Arg3, true, A);
+      break;
+    case LNSPEC_SectorSoundChange:
+      buttonSuccess = EV_SectorSoundChange(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetPlaneReflection:
+      buttonSuccess = EV_SectorSetPlaneReflection(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_CeilingGenericCrush2:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_GenericCrush2, Line);
+      break;
+    case LNSPEC_SectorSetCeilingScale2:
+      buttonSuccess = EV_SectorSetCeilingScale2(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetFloorScale2:
+      buttonSuccess = EV_SectorSetFloorScale2(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_PlaneUpNearestWaitDownStay:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_UpNearestWaitDownStay, Line);
+      break;
+    case LNSPEC_NoiseAlert:
+      buttonSuccess = EV_NoiseAlert(A, Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SendToCommunicator:
+      buttonSuccess = EV_SendToCommunicator(A, Arg1, Arg2, Arg3, Arg4, Arg5, Side);
+      break;
+    case LNSPEC_ThingProjectileIntercept:
+      buttonSuccess = EV_ThingProjectileIntercept(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingChangeTID:
+      buttonSuccess = EV_ThingChangeTID(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingHate:
+      buttonSuccess = EV_ThingHate(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ThingProjectileAimed:
+      buttonSuccess = EV_ThingProjectileAimed(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_ChangeSkill:
+      LineSpecialGameInfo(Game).SetSkill(Arg1);
+      buttonSuccess = true;
+      break;
+    case LNSPEC_ThingSetTranslation:
+      buttonSuccess = EV_ThingSetTranslation(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_LineAlignCeiling:
+      buttonSuccess = EV_LineAlignCeiling(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LineAlignFloor:
+      buttonSuccess = EV_LineAlignFloor(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetRotation:
+      buttonSuccess = EV_SectorSetRotation(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetCeilingPanning:
+      buttonSuccess = EV_SectorSetCeilingPanning(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetFloorPanning:
+      buttonSuccess = EV_SectorSetFloorPanning(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetCeilingScale:
+      buttonSuccess = EV_SectorSetCeilingScale(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetFloorScale:
+      buttonSuccess = EV_SectorSetFloorScale(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SetPlayerProperty:
+      buttonSuccess = EV_SetPlayerProperty(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_CeilingLowerToHighestFloor:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerToHighestFloor, Line);
+      break;
+    case LNSPEC_CeilingLowerInstant:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerTimes8Instant, Line);
+      break;
+    case LNSPEC_CeilingRaiseInstant:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_RaiseTimes8Instant, Line);
+      break;
+    case LNSPEC_CeilingCrushRaiseAndStayA:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_CrushRaiseAndStayA, Line);
+      break;
+    case LNSPEC_CeilingCrushAndRaiseA:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_CrushAndRaiseA, Line);
+      break;
+    case LNSPEC_CeilingCrushAndRaiseSilentA:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_CrushAndRaiseSilA, Line);
+      break;
+    case LNSPEC_CeilingRaiseByValueTimes8:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_RaiseByValueTimes8, Line);
+      break;
+    case LNSPEC_CeilingLowerByValueTimes8:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerByValueTimes8, Line);
+      break;
+    case LNSPEC_FloorGeneric:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_Generic, Line);
+      break;
+    case LNSPEC_CeilingGeneric:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_Generic, Line);
+      break;
+    case LNSPEC_DoorGeneric:
+      buttonSuccess = EV_GenericDoor(Arg1, Arg2, Arg3, Arg4, Arg5, Line, A);
+      break;
+    case LNSPEC_PlatGeneric:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_Generic, Line);
+      break;
+    case LNSPEC_StairsGeneric:
+      buttonSuccess = EV_BuildStairsOld(Arg1, Arg2, Arg3, Arg4, Arg5, true, Line);
+      break;
+    case LNSPEC_CeilingGenericCrush:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_GenericCrush, Line);
+      break;
+    case LNSPEC_PlatDownWaitUpStayLip:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_DownWaitUpStayLip, Line);
+      break;
+    case LNSPEC_PlatPerpetualRaiseLip:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_PerpetualRaiseLip, Line);
+      break;
+    case LNSPEC_LineTranslucent:
+      buttonSuccess = EV_LineTranslucent(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetColour:
+      buttonSuccess = EV_SectorSetColour(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetFade:
+      buttonSuccess = EV_SectorSetFade(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetDamage:
+      buttonSuccess = EV_SectorSetDamage(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_TeleportLine:
+      buttonSuccess = EV_SilentLineTeleport(Line, Side, A, Arg2, Arg3);
+      break;
+    case LNSPEC_SectorSetGravity:
+      buttonSuccess = EV_SectorSetGravity(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_StairsBuildUpDoom:
+      buttonSuccess = EV_BuildStairsOld(Arg1, Arg2, Arg3, Arg4, Arg5, false, Line);
+      break;
+    case LNSPEC_SectorSetWind:
+      buttonSuccess = AdjustPusher(Arg1, Arg2, Arg3, Arg4, Arg5, Line, Pusher::PUSHER_Wind);
+      break;
+    case LNSPEC_SectorSetFriction:
+      buttonSuccess = EV_SectorSetFriction(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_SectorSetCurrent:
+      buttonSuccess = AdjustPusher(Arg1, Arg2, Arg3, Arg4, Arg5, Line, Pusher::PUSHER_Current);
+      break;
+    case LNSPEC_ScrollTextureBoth:
+      buttonSuccess = EV_ScrollTextureBoth(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_ScrollFloor:
+      buttonSuccess = EV_ScrollFloor(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_ScrollCeiling:
+      buttonSuccess = EV_ScrollCeiling(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_ACSExecuteAlways:
+      //print("LNSPEC_ACSExecuteAlways: number=%d; map=%d; arg1=%d; arg2=%d; arg3=%d", Arg1, Arg2, Arg3, Arg4, Arg5);
+      buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, Arg5, A, Line, Side, true, false);
+      break;
+    case LNSPEC_FloorRaiseToNearestChange:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseToNearestChange, Line);
+      break;
+    case LNSPEC_ThingSetGoal:
+      buttonSuccess = EV_ThingSetGoal(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_FloorRaiseByValueChangeTex:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByValueChange2, Line);
+      break;
+    case LNSPEC_PlatToggle:
+      buttonSuccess = EV_DoPlat(Arg1, Arg2, Arg3, Arg4, Arg5, Platform::PLATEV_Toggle, Line);
+      break;
+    case LNSPEC_LightStrobeDoom:
+      buttonSuccess = EV_StartLightStrobing(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LightMinNeighbor:
+      buttonSuccess = EV_TurnTagLightsOff(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_LightMaxNeighbor:
+      buttonSuccess = EV_TagLightTurnOn(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_FloorTransferTrigger:
+      buttonSuccess = EV_FloorTransferTrigger(Arg1, Arg2, Arg3, Arg4, Arg5, Line);
+      break;
+    case LNSPEC_FloorTransferNumeric:
+      buttonSuccess = EV_FloorTransferNumeric(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_ChangeCamera:
+      buttonSuccess = EV_ChangeCamera(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_FloorRaiseToLowestCeiling:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseToLowestCeiling, Line);
+      break;
+    case LNSPEC_FloorRaiseByValueChange:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByValueChange, Line);
+      break;
+    case LNSPEC_FloorRaiseByTexture:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_RaiseByTexture, Line);
+      break;
+    case LNSPEC_FloorLowerToLowestChange:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerToLowestChange, Line);
+      break;
+    case LNSPEC_FloorLowerToHighest:
+      buttonSuccess = EV_DoFloor(Arg1, Arg2, Arg3, Arg4, Arg5, FloorMover::FLOOREV_LowerToHighest, Line);
+      break;
+    case LNSPEC_ExitNormal:
+      buttonSuccess = true;
+      ExitLevel(Arg1);
+      break;
+    case LNSPEC_ExitSecret:
+      buttonSuccess = true;
+      SecretExitLevel(Arg1);
+      break;
+    case LNSPEC_ElevatorRaiseToNearest:
+      buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5, Elevator::ELEVEV_Up, Line);
+      break;
+    case LNSPEC_ElevatorMoveToFloor:
+      buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5, Elevator::ELEVEV_Current, Line);
+      break;
+    case LNSPEC_ElevatorLowerToNearest:
+      buttonSuccess = EV_DoElevator(Arg1, Arg2, Arg3, Arg4, Arg5, Elevator::ELEVEV_Down, Line);
+      break;
+    case LNSPEC_HealThing:
+      buttonSuccess = EV_HealThing(Arg1, Arg2, Arg3, Arg4, Arg5, A);
+      break;
+    case LNSPEC_DoorCloseWaitOpen:
+      buttonSuccess = EV_DoDoor(Arg1, Arg2, Arg3, Arg4, Arg5, VerticalDoor::DOOREV_CloseWaitOpen, Line, A);
+      break;
+    case LNSPEC_FloorDonut:
+      buttonSuccess = EV_DoDonut(Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+    case LNSPEC_FloorAndCeilingLowerRaise:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg3, 0, 0, 0, CeilingMover::CEILEV_RaiseToHighest, Line);
+      buttonSuccess |= EV_DoFloor(Arg1, Arg2, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, Line);
+      break;
+    case LNSPEC_CeilingRaiseToNearest:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_RaiseToNearest, Line);
+      break;
+    case LNSPEC_CeilingLowerToLowest:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerToLowest, Line);
+      break;
+    case LNSPEC_CeilingLowerToFloor:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_LowerToFloor, Line);
+      break;
+    case LNSPEC_CeilingCrushRaiseAndStaySilentA:
+      buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_CrushRaiseAndStaySilA, Line);
+      break;
+    case LNSPEC_ExtraFloorLightOnly:
+      print("Unknown action special %d aka 'ExtraFloor_LightOnly' (tag=%d; type=%d) not implemented", Special, Arg1, Arg2);
+      break;
+    case LNSPEC_LineSetBlocking:
+      {
+        //print("LNSPEC_LineSetBlocking: (%d, 0x%04x, 0x%04x)", Arg1, Arg2, Arg3);
+        int setFlags = ConvertLineBlockingFlags(Arg2), clearFlags = ~ConvertLineBlockingFlags(Arg3);
+        int searcher = -1;
+        for (line_t *line = XLevel.FindLine(Arg1, &searcher); line; line = XLevel.FindLine(Arg1, &searcher)) {
+          line->flags |= setFlags;
+          line->flags &= clearFlags;
+        }
+        buttonSuccess = true;
+      }
+      break;
+    // Sector_SetLink (controltag, tag, surface, movetype)
+    case LNSPEC_SectorSetLink:
+      if (Arg1 == 0) {
+        print("LNSPEC_SectorSetLink: (controltag=%d, tag=%d, surface=%d, movetype=%d)", Arg1, Arg2, Arg3, Arg4);
+      } else {
+        XLevel.SectorSetLink(Arg1, Arg2, Arg3, Arg4);
       }
       buttonSuccess = true;
-    }
-    break;
-
-  // Sector_SetLink (controltag, tag, surface, movetype)
-  case LNSPEC_SectorSetLink:
-    if (Arg1 == 0) {
-      print("LNSPEC_SectorSetLink: (controltag=%d, tag=%d, surface=%d, movetype=%d)", Arg1, Arg2, Arg3, Arg4);
-    } else {
-      XLevel.SectorSetLink(Arg1, Arg2, Arg3, Arg4);
-    }
-    buttonSuccess = true;
-    break;
-
-  // Line specials only processed during level initialization
-  // LNSPEC_ScrollTextureLeft:
-  // LNSPEC_ScrollTextureRight:
-  // LNSPEC_ScrollTextureUp:
-  // LNSPEC_ScrollTextureDown:
-  // LNSPEC_LineSetIdentification:
-  // LNSPEC_3DFloor:
-  // LNSPEC_Contents:
-  // LNSPEC_PlaneAlign:
-  // LNSPEC_PlaneCopy:
-  // LNSPEC_TransferHeights:
-  // LNSPEC_ScrollTextureModel:
-  // LNSPEC_ScrollTextureOffsets:
-  // LNSPEC_PointPushSetForce:
-
-  default:
-    //  Log everything else to know what needs to be implemented.
-    print("Unknown action special %d(%d, %d, %d, %d, %d)", Special, Arg1, Arg2, Arg3, Arg4, Arg5);
-    break;
+      break;
+    // Line specials only processed during level initialization
+    // LNSPEC_ScrollTextureLeft:
+    // LNSPEC_ScrollTextureRight:
+    // LNSPEC_ScrollTextureUp:
+    // LNSPEC_ScrollTextureDown:
+    // LNSPEC_LineSetIdentification:
+    // LNSPEC_3DFloor:
+    // LNSPEC_Contents:
+    // LNSPEC_PlaneAlign:
+    // LNSPEC_PlaneCopy:
+    // LNSPEC_TransferHeights:
+    // LNSPEC_ScrollTextureModel:
+    // LNSPEC_ScrollTextureOffsets:
+    // LNSPEC_PointPushSetForce:
+    default:
+      //  Log everything else to know what needs to be implemented.
+      print("Unknown action special %d(%d, %d, %d, %d, %d)", Special, Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
   }
   return buttonSuccess;
 }
+
 
 //==========================================================================
 //
 //  StartPlaneWatcher
 //
 //==========================================================================
-
-final override void StartPlaneWatcher(Entity it, line_t *line, int lineSide,
+final override void StartPlaneWatcher (Entity it, line_t *line, int lineSide,
   bool ceiling, int tag, int height, int special, int arg0, int arg1,
   int arg2, int arg3, int arg4)
 {
-  PlaneWatcher  PW;
-
-  PW = Spawn(PlaneWatcher);
-  PW.Start(it, line, lineSide, ceiling, tag, height, special, arg0, arg1,
-    arg2, arg3, arg4);
+  PlaneWatcher PW = Spawn(PlaneWatcher);
+  PW.Start(it, line, lineSide, ceiling, tag, height, special, arg0, arg1, arg2, arg3, arg4);
 }
+
 
 //**************************************************************************
 //
@@ -1339,34 +1110,23 @@ final override void StartPlaneWatcher(Entity it, line_t *line, int lineSide,
 //  Move a door up/down
 //
 //==========================================================================
-
-final int EV_DoDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t *Line, Entity Thing)
-{
-  int       SecNum;
-  int       RetCode;
+final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type, line_t *Line, Entity Thing) {
+  int SecNum;
   sector_t *Sec;
-  VerticalDoor  Door;
+  VerticalDoor Door;
+  int RetCode = false;
 
-  RetCode = false;
-  if (!Arg1)
-  {
-    if (!Line)
-      return false;
+  if (!Arg1) {
+    if (!Line) return false;
 
-    //  Make sure it's a two-sided line.
-    if (Line->sidenum[1] < 0)
-      return false;
+    // make sure it's a two-sided line
+    if (Line->sidenum[1] < 0) return false;
 
     // if the sector has an active thinker, use it
     Sec = XLevel.Sides[Line->sidenum[1]].Sector;
-    if (Sec->CeilingData)
-    {
+    if (Sec->CeilingData) {
       Door = VerticalDoor(Sec->CeilingData);
-      if (Door)
-      {
-        return Door.ReUse(Type, Line, Thing);
-      }
+      if (Door) return Door.ReUse(Type, Line, Thing);
       return false;
     }
 
@@ -1374,18 +1134,11 @@ final int EV_DoDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     Door = Spawn(VerticalDoor);
     Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
     RetCode = true;
-  }
-  else
-  {
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-      SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
-    {
+  } else {
+    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
       Sec = &XLevel.Sectors[SecNum];
-      if (Sec->CeilingData)
-      {
-        continue;
-      }
-      // Add new door thinker
+      if (Sec->CeilingData) continue;
+      // add new door thinker
       RetCode = true;
       Door = Spawn(VerticalDoor);
       Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
@@ -1394,6 +1147,7 @@ final int EV_DoDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return RetCode;
 }
 
+
 //==========================================================================
 //
 //  EV_GenericDoor
@@ -1401,48 +1155,32 @@ final int EV_DoDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //  Boom's generic doors.
 //
 //==========================================================================
+final int EV_GenericDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, line_t *Line, Entity Thing) {
+  int Tag;
+  int LightTag;
 
-final int EV_GenericDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  line_t *Line, Entity Thing)
-{
-  int     Tag;
-  int     LightTag;
+  // check for locked door
+  if (Arg5 && !CheckLock(Thing, Arg5, true)) return false;
 
-  //  Check for locked door.
-  if (Arg5 && !CheckLock(Thing, Arg5, true))
-  {
-    return false;
-  }
-
-  //  Check for Boom's local door light special.
-  if (Arg3&128)
-  {
+  // check for Boom's local door light special
+  if (Arg3&128) {
     Tag = 0;
     LightTag = Arg1;
-  }
-  else
-  {
+  } else {
     Tag = Arg1;
     LightTag = 0;
   }
 
-  switch (Arg3&127)
-  {
-  case 0:
-    return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0,
-      VerticalDoor::DOOREV_Raise, Line, Thing);
-  case 1:
-    return EV_DoDoor(Tag, Arg2, LightTag, 0, 0,
-      VerticalDoor::DOOREV_Open, Line, Thing);
-  case 2:
-    return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0,
-      VerticalDoor::DOOREV_CloseWaitOpen, Line, Thing);
-  case 3:
-    return EV_DoDoor(Tag, Arg2, LightTag, 0, 0,
-      VerticalDoor::DOOREV_Close, Line, Thing);
+  switch (Arg3&127) {
+    case 0: return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0, VerticalDoor::DOOREV_Raise, Line, Thing);
+    case 1: return EV_DoDoor(Tag, Arg2, LightTag, 0, 0, VerticalDoor::DOOREV_Open, Line, Thing);
+    case 2: return EV_DoDoor(Tag, Arg2, Arg4, LightTag, 0, VerticalDoor::DOOREV_CloseWaitOpen, Line, Thing);
+    case 3: return EV_DoDoor(Tag, Arg2, LightTag, 0, 0, VerticalDoor::DOOREV_Close, Line, Thing);
   }
+
   return false;
 }
+
 
 //==========================================================================
 //
@@ -1451,15 +1189,12 @@ final int EV_GenericDoor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //  Spawn a door that closes after 30 seconds
 //
 //==========================================================================
-
-final void SpawnDoorCloseIn30(sector_t *sec)
-{
-  VerticalDoor  Door;
-
-  Door = Spawn(VerticalDoor);
+final void SpawnDoorCloseIn30 (sector_t *sec) {
+  VerticalDoor Door = Spawn(VerticalDoor);
   Door.InitCloseIn30(sec);
   sec->special = 0;
 }
+
 
 //==========================================================================
 //
@@ -1468,81 +1203,52 @@ final void SpawnDoorCloseIn30(sector_t *sec)
 //  Spawn a door that opens after 5 minutes
 //
 //==========================================================================
-
-final void SpawnDoorRaiseIn5Mins(sector_t *sec)
-{
-  VerticalDoor Door;
-
+final void SpawnDoorRaiseIn5Mins (sector_t *sec) {
   sec->special = 0;
-  Door = Spawn(VerticalDoor);
+  VerticalDoor Door = Spawn(VerticalDoor);
   Door.Init(sec, 0, 16, 150, 0, 0, VerticalDoor::DOOREV_RaiseIn5Mins);
 }
+
 
 //==========================================================================
 //
 //  EV_TextureChangeDoor
 //
 //==========================================================================
-
-final int EV_TextureChangeDoor(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, line_t *Line, Entity E)
-{
-  int         i;
-  int         SecNum;
-  int         Rtn;
+final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, line_t *Line, Entity E) {
+  int SecNum;
+  int Rtn;
   sector_t *Sec;
   TextureChangeDoor Door;
 
   Rtn = false;
 
-  if (!Arg1)
-  {
-    if (!Line || !Line->backsector)
-    {
-      return false;
-    }
+  if (!Arg1) {
+    if (!Line || !Line->backsector) return false;
 
     // if the sector has an active thinker, use it
-    if (Line->backsector->CeilingData)
-    {
-      if (!E.bIsPlayer)
-        return false;
+    if (Line->backsector->CeilingData) {
+      if (!E.bIsPlayer) return false;
       Door = TextureChangeDoor(Line->backsector->CeilingData);
-      if (Door && Door.Direction == 0)
-      {
-        return Door.StartClosing();
-      }
+      if (Door && Door.Direction == 0) return Door.StartClosing();
       return false;
     }
 
     // new door thinker
-    if (FindAnimDoor(XLevel.Sides[Line->sidenum[0]].TopTexture))
-    {
+    if (FindAnimDoor(XLevel.Sides[Line->sidenum[0]].TopTexture)) {
       Door = Spawn(TextureChangeDoor);
       Door.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Line);
       Rtn = true;
     }
-  }
-  else
-  {
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-      SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
-    {
+  } else {
+    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
       Sec = &XLevel.Sectors[SecNum];
-      if (Sec->CeilingData)
-      {
-        continue;
-      }
-      for (i = 0; i < Sec.lines.length; i++)
-      {
+      if (Sec->CeilingData) continue;
+      foreach (auto i; 0..Sec.lines.length) {
         Line = Sec->lines[i];
-        if (!Line->backsector)
-        {
-          continue;
-        }
-        //  New door thinker
-        if (FindAnimDoor(XLevel.Sides[Line->sidenum[0]].TopTexture))
-        {
+        if (!Line->backsector) continue;
+        // new door thinker
+        if (FindAnimDoor(XLevel.Sides[Line->sidenum[0]].TopTexture)) {
           Rtn = true;
           Door = Spawn(TextureChangeDoor);
           Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Line);
@@ -1553,6 +1259,7 @@ final int EV_TextureChangeDoor(int Arg1, int Arg2, int Arg3, int Arg4,
   }
   return Rtn;
 }
+
 
 //**************************************************************************
 //
@@ -1567,58 +1274,45 @@ final int EV_TextureChangeDoor(int Arg1, int Arg2, int Arg3, int Arg4,
 //  Move a ceiling up/down and all around!
 //
 //==========================================================================
-
-final int EV_DoCeiling(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  int Type, line_t *Line)
-{
-  int       SecNum;
-  int       Rtn;
+final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type, line_t *Line) {
+  int SecNum;
+  int Rtn;
   sector_t *Sec;
-  CeilingMover  Ceiling;
+  CeilingMover Ceiling;
 
   Rtn = false;
 
-  if (!Arg1)
-  {
-    if (!Line || !Line->backsector)
-      return false;
+  if (!Arg1) {
+    if (!Line || !Line->backsector) return false;
 
-    //  Reactivate in-stasis ceilings...for certain types.
+    // reactivate in-stasis ceilings... for certain types
     if ((Type == CeilingMover::CEILEV_CrushAndRaiseA ||
-      Type == CeilingMover::CEILEV_CrushAndRaiseSilA) &&
-      CeilingMover(Line->backsector->CeilingData))
+         Type == CeilingMover::CEILEV_CrushAndRaiseSilA) &&
+        CeilingMover(Line->backsector->CeilingData))
     {
       CeilingMover(Line->backsector->CeilingData).ActivateInStasis(0);
     }
 
-    if (!Line->backsector->CeilingData)
-    {
+    if (!Line->backsector->CeilingData) {
       // new ceiling thinker
       Rtn = true;
       Ceiling = Spawn(CeilingMover);
       Ceiling.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5,
         Type, Line);
     }
-  }
-  else
-  {
-    //  Reactivate in-stasis ceilings...for certain types.
+  } else {
+    // reactivate in-stasis ceilings... for certain types
     if (Type == CeilingMover::CEILEV_CrushAndRaiseA ||
-      Type == CeilingMover::CEILEV_CrushAndRaiseSilA)
+        Type == CeilingMover::CEILEV_CrushAndRaiseSilA)
     {
-      foreach AllThinkers(CeilingMover, Ceiling)
-      {
+      foreach AllThinkers(CeilingMover, Ceiling) {
         Ceiling.ActivateInStasis(Arg1);
       }
     }
 
-    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
-      SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
-    {
+    for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0; SecNum = XLevel.FindSectorFromTag(Arg1, SecNum)) {
       Sec = &XLevel.Sectors[SecNum];
-      if (Sec->CeilingData)
-        continue;
-
+      if (Sec->CeilingData) continue;
       // new ceiling thinker
       Rtn = true;
       Ceiling = Spawn(CeilingMover);
@@ -1628,6 +1322,7 @@ final int EV_DoCeiling(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return Rtn;
 }
 
+
 //==========================================================================
 //
 //  EV_CeilingCrushStop
@@ -1635,54 +1330,36 @@ final int EV_DoCeiling(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //  Stop a ceiling from crushing!
 //
 //==========================================================================
-
-final int EV_CeilingCrushStop(line_t *line, int Arg1, int Arg2, int Arg3,
-  int Arg4, int Arg5)
-{
-  int       rtn;
-  CeilingMover  Ceiling;
-
-  rtn = false;
-  foreach AllThinkers(CeilingMover, Ceiling)
-  {
-    if (Ceiling.CrushStop(Arg1))
-    {
-      rtn = true;
-    }
+final int EV_CeilingCrushStop (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
+  int rtn = false;
+  CeilingMover Ceiling;
+  foreach AllThinkers(CeilingMover, Ceiling) {
+    if (Ceiling.CrushStop(Arg1)) rtn = true;
   }
   return rtn;
 }
+
 
 //==========================================================================
 //
 //  EV_StartCeilingWaggle
 //
 //==========================================================================
-
-final bool EV_StartCeilingWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5)
-{
-  int       SectorIndex;
+final bool EV_StartCeilingWaggle (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5) {
+  int SectorIndex;
   sector_t *Sector;
   CeilingWaggle Waggle;
-  bool      RetCode;
-
-  RetCode = false;
-  for (SectorIndex = XLevel.FindSectorFromTag(Arg1, -1); SectorIndex >= 0;
-    SectorIndex = XLevel.FindSectorFromTag(Arg1, SectorIndex))
-  {
+  bool RetCode = false;
+  for (SectorIndex = XLevel.FindSectorFromTag(Arg1, -1); SectorIndex >= 0; SectorIndex = XLevel.FindSectorFromTag(Arg1, SectorIndex)) {
     Sector = &XLevel.Sectors[SectorIndex];
-    if (Sector->CeilingData)
-    {
-      // Already busy with another thinker
-      continue;
-    }
+    if (Sector->CeilingData) continue; // already busy with another thinker
     RetCode = true;
     Waggle = Spawn(CeilingWaggle);
     Waggle.Init(Sector, Arg1, Arg2, Arg3, Arg4, Arg5);
   }
   return RetCode;
 }
+
 
 //**************************************************************************
 //
