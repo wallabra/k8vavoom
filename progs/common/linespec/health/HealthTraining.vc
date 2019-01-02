@@ -22,40 +22,34 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class HealthTraining : Inventory;
+
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  if (::TryPickup(Toucher))
-  {
+override bool TryPickup (EntityEx Toucher) {
+  if (::TryPickup(Toucher)) {
     Toucher.GiveInventoryType(GunTraining);
     Inventory Item = Spawn(Coin, default, default, default, false);
-    Item.Amount = PlayerEx(Toucher.Player).Accuracy * 5 + 300;
-    if (!Item.TryPickup(Toucher))
-    {
-      Item.Destroy();
-    }
+    Item.Amount = PlayerEx(Toucher.Player).Accuracy*5+300;
+    if (!Item.TryPickup(Toucher)) Item.Destroy();
     return true;
   }
   return false;
 }
 
-states
-{
+
+states {
 Spawn:
   HELT A -1
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 309;
   PickupMessage = "Toughness";
   MaxAmount = 100;

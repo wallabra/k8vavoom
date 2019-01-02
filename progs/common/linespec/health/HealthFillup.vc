@@ -22,43 +22,38 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
 class HealthFillup : DummyStrifeItem;
+
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
+override bool TryPickup (EntityEx Toucher) {
+  int Amount;
 
-override bool TryPickup(EntityEx Toucher)
-{
-  int     Amount;
-
-  switch (Level.World.GameSkill)
-  {
-  case 0:
-  case 4:
-    Amount = 100;
-    break;
-  case 1:
-    Amount = 75;
-    break;
-  case 2:
-  case 3:
-    Amount = 50;
-    break;
+  switch (Level.World.GameSkill) {
+    case 0:
+    case 4:
+      Amount = 100;
+      break;
+    case 1:
+      Amount = 75;
+      break;
+    case 2:
+    case 3:
+    default:
+      Amount = 50;
+      break;
   }
-  if (!Toucher.GiveBody(-Amount))
-  {
-    return false;
-  }
+  if (!Toucher.GiveBody(-Amount)) return false;
   GoAwayAndDie();
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 299;
   StrifeName = "Health";
 }

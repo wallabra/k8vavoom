@@ -22,75 +22,59 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class HealthPickup : Inventory
-  abstract;
+class HealthPickup : Inventory abstract;
 
 int AutoUseMode;
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   Inventory Copy = ::CreateCopy(Toucher);
   Copy.Health = Health;
   return Copy;
 }
+
 
 //==========================================================================
 //
 //  CreateTossable
 //
 //==========================================================================
-
-override Inventory CreateTossable()
-{
+override Inventory CreateTossable () {
   Inventory Copy = ::CreateTossable();
-  if (Copy)
-  {
-    Copy.Health = Health;
-  }
+  if (Copy) Copy.Health = Health;
   return Copy;
 }
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  //  Health pickups of the same type but with different health amount are
-  // considerer different items.
-  if (Item.Health == Health)
-  {
-    return ::HandlePickup(Item);
-  }
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+override bool HandlePickup (Inventory Item) {
+  // health pickups of the same type but with different health amount are considerer different items
+  if (Item.Health == Health) return ::HandlePickup(Item);
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
+override bool Use (bool Pickup) {
   return EntityEx(Owner).GiveBody(Health);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   MaxAmount = DefMaxAmount;
   bInvBar = true;
   AutoUseMode = 0;

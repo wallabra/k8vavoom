@@ -105,9 +105,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     // non-placed items are dropped by default
     bDropped = true;
   }
-  if (MaxAmount == DefMaxAmount) {
-    MaxAmount = LineSpecialGameInfo(Level.Game).InvDefaultMaxAmount;
-  }
+  if (MaxAmount == DefMaxAmount) MaxAmount = LineSpecialGameInfo(Level.Game).InvDefaultMaxAmount;
   ::OnMapSpawn(mthing);
 }
 
@@ -365,7 +363,7 @@ Inventory CreateTossable () {
   Copy.DropTime = 1.0;
   Copy.bSpecial = false;
   Copy.bSolid = false;
-  Amount--;
+  --Amount;
   return Copy;
 }
 
@@ -471,8 +469,7 @@ string GetPickupMessage () {
 //==========================================================================
 void DoPickupSpecial (EntityEx Toucher) {
   if (Special) {
-    Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2],
-                               Args[3], Args[4], nullptr, 0, Toucher);
+    Level.ExecuteActionSpecial(Special, Args[0], Args[1], Args[2], Args[3], Args[4], nullptr, 0, Toucher);
     Special = 0;
   }
 }
@@ -627,7 +624,7 @@ final void A_JumpIfNoAmmo (state Label) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
-  // inly for weapons
+  // only for weapons
   if (!bIsPlayer || XLevel.StateCall) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
@@ -693,13 +690,13 @@ final void decorate_A_Lower (optional float lowerspeed) {
   if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM) return; // not lowered all the way yet
 
   if (Player.PlayerState == PST_DEAD) {
-    // Player is dead, so don't bring up a pending weapon
+    // player is dead, so don't bring up a pending weapon
     Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
     return;
   }
 
   if (Player.MO.Health <= 0) {
-    // Player is dead, so keep the weapon off screen.
+    // player is dead, so keep the weapon off screen
     Player.SetViewObject(none);
     Player.SetViewState(ps_weapon, none);
     return;
