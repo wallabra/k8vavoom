@@ -26,11 +26,9 @@
 //**  Class for Actor state action methods.
 //**
 //**************************************************************************
+class Actor : EntityEx abstract;
 
-class Actor : EntityEx
-  abstract;
-
-// Flags for A_WeaponReady
+// flags for A_WeaponReady
 enum {
   WRF_NOBOB = 1,
   WRF_NOSWITCH = 2,
@@ -49,56 +47,43 @@ enum {
 //  Destroyed
 //
 //==========================================================================
-
-override void Destroyed()
-{
-  // Remove from creature queue
-  if (bMonster && bCorpse)
-  {
-    A_DeQueueCorpse();
-  }
-
+override void Destroyed () {
+  // remove from creature queue
+  if (bMonster && bCorpse) A_DeQueueCorpse();
   ::Destroyed();
 }
 
-//**************************************************************************
-//  Not documented
-//**************************************************************************
 
 //===========================================================================
 //
 //  A_Log
 //
 //===========================================================================
-
-final void A_Log(string text)
-{
+final void A_Log (string text) {
   print("<------------------------------->");
   print("%s", text);
   print("<------------------------------->");
 }
+
 
 //===========================================================================
 //
 //  A_LogInt
 //
 //===========================================================================
-
-final void A_LogInt(int num)
-{
+final void A_LogInt (int num) {
   print("<------------------------------->");
   print("%i", num);
   print("<------------------------------->");
 }
+
 
 //===========================================================================
 //
 //  A_ChangeVelocity
 //
 //===========================================================================
-
-final void A_ChangeVelocity(float x, optional float y, optional float z, optional int flags, optional int aptr)
-{
+final void A_ChangeVelocity (float x, optional float y, optional float z, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_ChangeVelocity', aptr!optional);
   if (!tgt) return;
 
@@ -106,10 +91,10 @@ final void A_ChangeVelocity(float x, optional float y, optional float z, optiona
 
   if (flags&1) {
     // relative axes - make x, y relative to actor's current angle
-    vx = x * -y * cos(tgt.Angles.yaw) * sin(tgt.Angles.yaw);
-    vx /= 4.0 * 35.0;
-    vy = x * sin(tgt.Angles.yaw) * y * cos(tgt.Angles.yaw);
-    vy /= 4.0 * 35.0;
+    vx = x*(-y)*cos(tgt.Angles.yaw)*sin(tgt.Angles.yaw);
+    vx /= 4.0*35.0;
+    vy = x*sin(tgt.Angles.yaw)*y*cos(tgt.Angles.yaw);
+    vy /= 4.0*35.0;
   }
 
   if (flags&2) {
@@ -125,13 +110,13 @@ final void A_ChangeVelocity(float x, optional float y, optional float z, optiona
   }
 }
 
+
 //===========================================================================
 //
 //  A_ScaleVelocity
 //
 //===========================================================================
-
-final void A_ScaleVelocity(float scale, optional int aptr) {
+final void A_ScaleVelocity (float scale, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_ScaleVelocity', aptr!optional);
   if (!tgt) return;
   tgt.Velocity.x *= scale;
@@ -139,33 +124,23 @@ final void A_ScaleVelocity(float scale, optional int aptr) {
   tgt.Velocity.z *= scale;
 }
 
+
 //===========================================================================
 //
 //  A_SetGravity
 //
 //===========================================================================
-
-final void A_SetGravity(float Grav)
-{
-  Gravity = Grav;
-  if (Gravity < 0.0)
-  {
-    Gravity = 0.0;
-  }
-  else if (Gravity > 1.0)
-  {
-    Gravity = 1.0;
-  }
+final void A_SetGravity (float Grav) {
+  Gravity = fclamp(Grav, 0, 1);
 }
+
 
 //===========================================================================
 //
 //  A_Respawn
 //
 //===========================================================================
-
-final void A_Respawn(optional int Flags)
-{
+final void A_Respawn (optional int Flags) {
   TVec Org;
   bool OK = false;
   Org.x = SpawnPoint.x;
@@ -174,205 +149,155 @@ final void A_Respawn(optional int Flags)
   SetOrigin(Org);
   bSolid = true;
   Height = default.Height;
-  if (Flags & 4)
-  {
-    if (TeleportMove (Org, true))
-    {
-      OK = true;
-    }
+  if (Flags&4) {
+    if (TeleportMove(Org, true)) OK = true;
+  } else if (TestLocation()) {
+    OK = true;
   }
-  else if (TestLocation())
-  {
-      OK = true;
-  }
-  if (OK)
-  {
+  if (OK) {
     Health = default.Health;
 
-    // [KS] Don't keep target, because it could be self if the monster committed suicide
-    //      ...Actually it's better off an option, so you have better control over monster behavior.
-    if (!(Flags & 2))
-    {
+    // [KS] don't keep target, because it could be self if the monster committed suicide
+    //      ...actually it's better off an option, so you have better control over monster behavior
+    if (!(Flags&2)) {
       Target = none;
       LastHeard = none;
       LastEnemy = none;
-    }
-    else
-    {
-      // Don't attack yourself (Re: "Marine targets itself after suicide")
-      if (Target == self)
-      {
-        Target = none;
-      }
-      if (LastEnemy == self)
-      {
-        LastEnemy = none;
-      }
+    } else {
+      // don't attack yourself (Re: "Marine targets itself after suicide")
+      if (Target == self) Target = none;
+      if (LastEnemy == self) LastEnemy = none;
     }
 
-    //  Restore default flags
+    // restore default flags
     RespawnResetFlags();
     SetState(IdleState);
     bInvisible = false;
-    if (Flags & 1)
-    {
-      Spawn(TeleportFog, Origin + vector(0.0, 0.0,
-        LineSpecialGameInfo(Level.Game).TeleFogHeight));
+    if (Flags&1) {
+      Spawn(TeleportFog, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
     }
-    if (CountsAsKill())
-    {
-      Level.TotalKills++;
-    }
-  }
-  else
-  {
+    if (CountsAsKill()) ++Level.TotalKills;
+  } else {
     bSolid = false;
   }
 }
+
 
 //==========================================================================
 //
 //  A_Feathers
 //
 //==========================================================================
-
-final void A_Feathers()
-{
-  int i;
+final void A_Feathers () {
   int count;
-  EntityEx mo;
 
-  if (Health > 0)
-  {
-    // Pain
-    count = P_Random() < 32 ? 2 : 1;
+  if (Health > 0) {
+    // pain
+    count = (P_Random() < 32 ? 2 : 1);
+  } else {
+    // death
+    count = 5+(P_Random()&3);
   }
-  else
-  {
-    // Death
-    count = 5 + (P_Random() & 3);
-  }
-  for (i = 0; i < count; i++)
-  {
-    mo = Spawn(Feather, Origin + vector(0.0, 0.0, 20.0));
+
+  foreach (auto i; 0..count) {
+    EntityEx mo = Spawn(Feather, Origin+vector(0.0, 0.0, 20.0));
     mo.Target = self;
-    mo.Velocity.x = (Random() - Random()) * 35.0;
-    mo.Velocity.y = (Random() - Random()) * 35.0;
-    mo.Velocity.z = (1.0 + Random() * 2.0) * 35.0;
-    mo.SetState(GetStatePlus(mo.IdleState, P_Random() & 7));
+    mo.Velocity.x = (Random()-Random())*35.0;
+    mo.Velocity.y = (Random()-Random())*35.0;
+    mo.Velocity.z = (1.0+Random()*2.0)*35.0;
+    mo.SetState(GetStatePlus(mo.IdleState, P_Random()&7));
   }
 }
+
 
 //==========================================================================
 //
 //  A_ShootGun
 //
 //==========================================================================
-
-final void A_ShootGun()
-{
-  int damage;
+final void A_ShootGun () {
   TVec dir;
 
-  if (!Target)
-    return;
+  if (!Target) return;
 
   PlaySound('monsters/rifle', CHAN_WEAPON);
   A_FaceTarget();
   AimLineAttack(dir, Angles, MISSILERANGE);
-  VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
-  damage = ((P_Random() % 5) + 1) * 3;
+  VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
+  int damage = ((P_Random()%5)+1)*3;
   LineAttack(dir, MISSILERANGE, damage, StrifePuff);
 }
+
 
 //==========================================================================
 //
 //  A_RocketInFlight
 //
 //==========================================================================
-
-final void A_RocketInFlight()
-{
-  EntityEx A;
-
+final void A_RocketInFlight () {
   PlaySound('misc/missileinflight', CHAN_VOICE);
   SpawnPuff(Origin, MISSILERANGE, MiniMissilePuff, false);
-  A = Spawn(RocketTrail, Origin - Velocity / 35.0);
-  if (A)
-  {
-    A.Velocity.z = 1.0 * 35.0;
-  }
+  EntityEx A = Spawn(RocketTrail, Origin-Velocity/35.0);
+  if (A) A.Velocity.z = 1.0*35.0;
 }
+
 
 //==========================================================================
 //
 //  A_Bang4Cloud
 //
 //==========================================================================
-
-final void A_Bang4Cloud()
-{
-  Spawn(Bang4Cloud, Origin + vector(
-    (Random() - Random()) * 5.0 / 8.0,
-    (Random() - Random()) * 5.0 / 8.0, 0.0));
+final void A_Bang4Cloud () {
+  Spawn(Bang4Cloud, Origin+vector((Random()-Random())*5.0/8.0, (Random()-Random())*5.0/8.0, 0.0));
 }
+
 
 //==========================================================================
 //
 //  A_DropFire
 //
 //==========================================================================
-
-final void A_DropFire()
-{
-  Actor A = Spawn(FireDroplet, Origin + vector(0.0, 0.0, 24.0));
-  A.Velocity.z = -35.0;
-  RadiusAttack(self, 64, 64.0, false, 'Fire');
+final void A_DropFire () {
+  Actor A = Spawn(FireDroplet, Origin+vector(0.0, 0.0, 24.0));
+  if (A) {
+    A.Velocity.z = -35.0;
+    RadiusAttack(self, 64, 64.0, false, 'Fire');
+  }
 }
+
 
 //==========================================================================
 //
 //  decorate_A_GiveQuestItem
 //
 //==========================================================================
-
-final void decorate_A_GiveQuestItem(int QuestType)
-{
-  // This function does a lot more than just this
-  if (DeathSound)
-  {
+final void decorate_A_GiveQuestItem (int QuestType) {
+  // this function does a lot more than just this
+  if (DeathSound) {
     PlaySound(DeathSound, CHAN_VOICE);
     PlaySound(DeathSound, 6);
   }
 
-  //  Give quest item for destroying important object.
-  //  Basicly all object using this function does this.
-  class!Inventory QClass = class!Inventory(FindClass(
-    StrToName(va("QuestItem%d", QuestType))));
-  if (QClass)
-  {
+  // give quest item for destroying important object
+  // basicly all object using this function does this
+  class!Inventory QClass = class!Inventory(FindClass(name(va("QuestItem%d", QuestType))));
+  if (QClass) {
     EntityEx(Level.Game.Players[0].MO).GiveInventoryType(QClass);
     Level.Game.Players[0].cprint(va("$txt_quest_%d", QuestType));
   }
 }
+
 
 //==========================================================================
 //
 //  A_RemoveForceField
 //
 //==========================================================================
-
-final void A_RemoveForceField()
-{
-  int i;
-  line_t *line;
-
+final void A_RemoveForceField () {
   bSpecial = false;
-  for (i = 0; i < Sector.lines.length; i++)
-  {
-    line = Sector->lines[i];
-    if (line->backsector && line->special == LNSPEC_ForceField)
-    {
+  foreach (auto i; 0..Sector.lines.length) {
+    line_t *line = Sector->lines[i];
+    if (line->backsector && line->special == LNSPEC_ForceField) {
       line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
       line->special = 0;
       XLevel.Sides[line->sidenum[0]].MidTexture = 0;
@@ -381,38 +306,33 @@ final void A_RemoveForceField()
   }
 }
 
+
 //==========================================================================
 //
 //  A_PigPain
 //
 //==========================================================================
-
-final void A_PigPain()
-{
+final void A_PigPain () {
   A_Pain();
-  if (Origin.z <= FloorZ)
-  {
-    Velocity.z = 3.5 * 35.0;
-  }
+  if (Origin.z <= FloorZ) Velocity.z = 3.5*35.0;
 }
+
 
 //============================================================================
 //
 //  A_ClassBossHealth
 //
 //============================================================================
-
-final void A_ClassBossHealth()
-{
-  if (Level.Game.netgame && !Level.Game.deathmatch) // co-op only
-  {
-    if (!Special1)
-    {
+final void A_ClassBossHealth () {
+  if (Level.Game.netgame && !Level.Game.deathmatch) {
+    // co-op only
+    if (!Special1) {
       Health *= 5;
-      Special1 = true;  // has been initialised
+      Special1 = true; // has been initialised
     }
   }
 }
+
 
 //==========================================================================
 //
@@ -422,12 +342,11 @@ final void A_ClassBossHealth()
 //  just before exploding. This one can be used in DECORATE now.
 //
 //==========================================================================
-
-void A_PreExplode(int Style, float A)
-{
+void A_PreExplode (int Style, float A) {
   RenderStyle = Style;
   Alpha = A;
 }
+
 
 //============================================================================
 //
@@ -436,9 +355,7 @@ void A_PreExplode(int Style, float A)
 //  This is only a stub method
 //
 //============================================================================
-
-final void A_BarrelDestroy()
-{
+final void A_BarrelDestroy () {
   // In ZDoom this method is used to preserve barrels because of
   // deathmatch flags... here the only relevant function for it
   // would be to make things invisible.
@@ -462,6 +379,7 @@ final void A_BarrelDestroy()
   }
 }
 
+
 //============================================================================
 //
 //  A_PlayerSkinCheck
@@ -469,40 +387,33 @@ final void A_BarrelDestroy()
 //  This is only a stub method
 //
 //============================================================================
-
-final void A_PlayerSkinCheck(state label)
-{
+final void A_PlayerSkinCheck (state label) {
   // Vavoom doesn't support skins as of now...
   // but there are some MODs that use this method
   return;
 }
 
-//**************************************************************************
-//**************************************************************************
 
 //==========================================================================
 //
 //  A_BeShadowyFoe
 //
 //==========================================================================
-
-final void A_BeShadowyFoe()
-{
+final void A_BeShadowyFoe () {
   RenderStyle = STYLE_Translucent;
   Alpha = 0.333;
   bFriendly = false;
 }
+
 
 //==========================================================================
 //
 //  A_FreeTargMobj
 //
 //==========================================================================
-
-final void A_FreeTargMobj()
-{
+final void A_FreeTargMobj () {
   Velocity = vector(0.0, 0.0, 0.0);
-  Origin.z = CeilingZ + 4.0;
+  Origin.z = CeilingZ+4.0;
   Gravity = 1.0;
   bSolid = false;
   bShootable = false;
@@ -519,49 +430,43 @@ final void A_FreeTargMobj()
   Alpha = 0.0;
   Player = none;
   bIsPlayer = false;
-  Health = -1000; // Don't resurrect
+  Health = -1000; // don't resurrect
 }
+
 
 //==========================================================================
 //
 //  A_ExecActionSpecial
 //
 //==========================================================================
-
-final int A_ExecActionSpecial(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, int Special)
-{
+final int A_ExecActionSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Special) {
   return Level.ExecuteActionSpecial(Special, Arg1, Arg2, Arg3, Arg4, Arg5, nullptr, 0, self);
 }
+
 
 //==========================================================================
 //
 //  A_GiveQuestItem
 //
 //==========================================================================
-
-final void A_GiveQuestItem()
-{
-  decorate_A_GiveQuestItem(ftoi(Speed / 35.0));
+final void A_GiveQuestItem () {
+  decorate_A_GiveQuestItem(int(Speed/35.0));
 }
+
 
 //==========================================================================
 //
 //  A_ItBurnsItBurns
 //
 //==========================================================================
-
-final void A_ItBurnsItBurns()
-{
+final void A_ItBurnsItBurns () {
   DeathSound = 'human/imonfire';
   A_Scream();
-  if (bIsPlayer)
-  {
+  if (bIsPlayer) {
     Weapon wpn = PlayerEx(Player).ReadyWeapon;
     if (!wpn) return;
     state WaveState = wpn.FindState('BurnWave');
-    if (WaveState)
-    {
+    if (WaveState) {
       Player.SetViewObject(wpn);
       Player.SetViewState(ps_weapon, WaveState);
       Player.SetViewState(ps_flash, none);
@@ -604,14 +509,14 @@ final void A_SetPitchExt (float newa) {
 //
 //  A_SetScale
 //
-// scaleX: the actor's new horizontal scale.
-//         Using negative values will result in mirroring the sprite on the axis.
-// scaleY: the actor's new vertical scale. If this parameter is not given, or
-//         is set to 0, scaleX is used as well. Default is 0.
-// ptr: The actor to change its scale. This is an actor pointer.
-// usezero: If this is false and scaleY is 0, scaleY uses the same value
-//          passed to scaleX, otherwise if it is true, the value of scaleY
-//          is used, instead. Default is false.
+//  scaleX: the actor's new horizontal scale.
+//          Using negative values will result in mirroring the sprite on the axis.
+//  scaleY: the actor's new vertical scale. If this parameter is not given, or
+//          is set to 0, scaleX is used as well. Default is 0.
+//  ptr: The actor to change its scale. This is an actor pointer.
+//  usezero: If this is false and scaleY is 0, scaleY uses the same value
+//           passed to scaleX, otherwise if it is true, the value of scaleY
+//           is used, instead. Default is false.
 //==========================================================================
 final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, optional bool usezero) {
   Entity tgt = DecorDoAAPtr('A_SetScale', aptr!optional);
@@ -774,7 +679,7 @@ final void A_LayToCeilingWithYaw (float yaw) {
 //  A_WeaponReady
 //
 //  The player can fire the weapon or change to another weapon at this time.
-// Follows after getting weapon up, or after previous attack/fire sequence.
+//  Follows after getting weapon up, or after previous attack/fire sequence.
 //
 //==========================================================================
 final void A_WeaponReady (optional int Flags) {
@@ -820,20 +725,8 @@ final void A_WeaponReady (optional int Flags) {
 
   //print("wpnready: %C; flags=0x%04x; attack=%B", Wpn, Flags, !!(Player.Buttons&BT_ATTACK));
   if ((Flags&WRF_NOFIRE) != WRF_NOFIRE) {
-    //bool attackDown = (Flags&WRF_NOPRIMARY ? false : !!(Player.Buttons&BT_ATTACK));
-    //if (attackDown) Player.bReloadQueued = false;
-    // check for reload
-    /+
-    if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && /*!Player.bAttackDown &&*/ !attackDown && Wpn.FindState('Reload')) {
-      Player.bAttackDown = true;
-      Player.bReloadQueued = false;
-      PlayerEx(Player).Refire = 0;
-      PlayerEx(Player).ReloadWeapon();
-      return;
-    }
-    +/
     // check for fire
-    if ((Flags&WRF_NOPRIMARY) == 0 && /*attackDown*/(Player.Buttons&BT_ATTACK)) {
+    if ((Flags&WRF_NOPRIMARY) == 0 && (Player.Buttons&BT_ATTACK)) {
       if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
@@ -880,7 +773,6 @@ final void A_WeaponReady (optional int Flags) {
 //  This function replaces calls to A_WeaponReady in other codepointers.
 //
 //==========================================================================
-final void DoReadyWeapon()
-{
+final void DoReadyWeapon () {
   A_WeaponReady(0);
 }
