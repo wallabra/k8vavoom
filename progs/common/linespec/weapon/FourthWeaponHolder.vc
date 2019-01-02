@@ -26,19 +26,18 @@
 //**  Holds info about picked up fourth weapon pieces.
 //**
 //**************************************************************************
-
 class FourthWeaponHolder : Inventory;
 
-int       PieceMask;
+int PieceMask;
 
-replication
-{
+
+replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     PieceMask;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoSector = true;
   bUndroppable = true;

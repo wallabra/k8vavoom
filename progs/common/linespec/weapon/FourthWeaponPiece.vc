@@ -22,105 +22,72 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-class FourthWeaponPiece : WeaponPiece
-  abstract;
+class FourthWeaponPiece : WeaponPiece abstract;
 
 const int
-  WPIECE1     = 1,
-  WPIECE2     = 2,
-  WPIECE3     = 4;
+  WPIECE1 = 1,
+  WPIECE2 = 2,
+  WPIECE3 = 4;
 
-class!Actor  PieceClass;
+class!Actor PieceClass;
 
-bool      gaveWeapon;
+bool gaveWeapon;
+
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
+override bool TryPickup (EntityEx Toucher) {
+  int GaveAmmo;
+  Inventory Inv;
 
-override bool TryPickup(EntityEx Toucher)
-{
-  int       GaveAmmo;
-  bool      checkAssembled;
-  Inventory   Inv;
-
-  checkAssembled = true;
+  bool checkAssembled = true;
   gaveWeapon = false;
-  if (!ClassIsChildOf(Toucher.Class, GetClassReplacement(PieceClass)))
-  {
-    // Wrong class, but try to pick up for mana
-    if (ShouldStay())
-    {
-      // Can't pick up wrong-class weapons in coop netplay
-      return false;
-    }
+  if (!ClassIsChildOf(Toucher.Class, GetClassReplacement(PieceClass))) {
+    // wrong class, but try to pick up for mana
+    if (ShouldStay()) return false; // can't pick up wrong-class weapons in coop netplay
     checkAssembled = false;
     GaveAmmo = PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
-      WeaponType.default.AmmoGive1) |
-      PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
+      WeaponType.default.AmmoGive1)|PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
       WeaponType.default.AmmoGive2);
-    if (!GaveAmmo)
-    {
-      // Didn't need the mana, so don't pick it up
-      return false;
-    }
+    if (!GaveAmmo) return false; // didn't need the mana, so don't pick it up
     GoAwayAndDie();
     return true;
   }
 
-  FourthWeaponHolder Hold = FourthWeaponHolder(
-    Toucher.FindInventory(FourthWeaponHolder));
-  if (!Hold)
-  {
+  FourthWeaponHolder Hold = FourthWeaponHolder(Toucher.FindInventory(FourthWeaponHolder));
+  if (!Hold) {
     Hold = Spawn(FourthWeaponHolder, default, default, default, false);
     Hold.AttachToOwner(Toucher);
     Hold.PieceMask = 0;
   }
 
-  if (ShouldStay() && (Hold.PieceMask & PieceValue))
-  {
-    // Already has the piece
-    return false;
-  }
+  if (ShouldStay() && (Hold.PieceMask&PieceValue)) return false; // already has the piece
 
   GaveAmmo = PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
     WeaponType.default.AmmoGive1) |
     PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
     WeaponType.default.AmmoGive2);
-  if (ShouldStay())
-  {
-    PieceValue = GetPieceValueTrans(PieceValue);
+  if (ShouldStay()) PieceValue = GetPieceValueTrans(PieceValue);
+
+  if ((Hold.PieceMask&PieceValue) == PieceValue) {
+    // already has the piece, check if mana needed
+    if (!GaveAmmo) return false; // didn't need the mana, so don't pick it up
   }
 
-  if ((Hold.PieceMask & PieceValue) == PieceValue)
-  {
-    // Already has the piece, check if mana needed
-    if (!GaveAmmo)
-    {
-      // Didn't need the mana, so don't pick it up
-      return false;
-    }
-  }
+  // pick up the weapon piece
 
-  // Pick up the weapon piece
-
-  // Check if fourth weapon assembled
+  // check if fourth weapon assembled
   Hold.PieceMask |= PieceValue;
-  if (Hold.PieceMask == (WPIECE1 | WPIECE2 | WPIECE3))
-  {
-    // Give the weapon if we don't already have it
-    if (!Weapon(Toucher.FindInventory(WeaponType)))
-    {
+  if (Hold.PieceMask == (WPIECE1|WPIECE2|WPIECE3)) {
+    // give the weapon if we don't already have it
+    if (!Weapon(Toucher.FindInventory(WeaponType))) {
       Weapon Wpn = Level.Spawn(WeaponType);
-      if (!Wpn.TryPickup(Toucher))
-      {
+      if (!Wpn.TryPickup(Toucher)) {
         Wpn.Destroy();
-      }
-      else
-      {
+      } else {
         gaveWeapon = true;
         PlayerEx(Toucher.Player).PendingWeapon = Wpn;
         GivenWeapon = Wpn;
@@ -131,77 +98,60 @@ override bool TryPickup(EntityEx Toucher)
   return true;
 }
 
+
 //==========================================================================
 //
 //  GetPickupMessage
 //
 //==========================================================================
-
-override string GetPickupMessage()
-{
-  if (gaveWeapon)
-  {
-    return Inventory(GivenWeapon).PickupMessage;
-  }
-  else
-  {
-    return ::GetPickupMessage();
-  }
+override string GetPickupMessage () {
+  if (gaveWeapon) return Inventory(GivenWeapon).PickupMessage;
+  return ::GetPickupMessage();
 }
+
 
 //==========================================================================
 //
 //  PlayPickupSound
 //
 //==========================================================================
-
-override void PlayPickupSound(EntityEx Toucher)
-{
-  if (gaveWeapon)
-  {
-    // Play the build-sound full volume for all players
+override void PlayPickupSound (EntityEx Toucher) {
+  if (gaveWeapon) {
+    // play the build-sound full volume for all players
     Toucher.PlaySound('WeaponBuild', /*CHAN_BODY*/CHAN_AUTO, 1.0, ATTN_NONE);
-  }
-  else
-  {
+  } else {
     ::PlayPickupSound(Toucher);
   }
 }
+
 
 //==========================================================================
 //
 //  ShouldStay
 //
 //==========================================================================
-
-override bool ShouldStay()
-{
-  return Level.Game.netgame && !Level.Game.deathmatch;
+override bool ShouldStay () {
+  return (Level.Game.netgame && !Level.Game.deathmatch);
 }
+
 
 //==========================================================================
 //
 //  GetPieceValueTrans
 //
 //==========================================================================
-
-final int GetPieceValueTrans(int Val)
-{
-  switch (Val)
-  {
-  case WPIECE1:
-    return WPIECE1 | WPIECE2 | WPIECE3;
-  case WPIECE2:
-    return WPIECE2 | WPIECE3;
-  case WPIECE3:
-    return WPIECE3;
+final int GetPieceValueTrans (int Val) {
+  switch (Val) {
+    case WPIECE1: return WPIECE1|WPIECE2|WPIECE3;
+    case WPIECE2: return WPIECE2|WPIECE3;
+    case WPIECE3: return WPIECE3;
   }
-  //  Should not happen.
+  // should not happen
   return 0;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Height = 32.0;
   bFullVolPickupSound = true;
   PickupSound = 'PickupWeapon';

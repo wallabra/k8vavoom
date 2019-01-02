@@ -26,21 +26,18 @@
 //**  Holds info about picked up weapon pieces.
 //**
 //**************************************************************************
+class WeaponHolder : Inventory abstract;
 
-class WeaponHolder : Inventory
-  abstract;
-
-int       PieceMask;
+int PieceMask;
 class!Weapon WeaponType;
 
-replication
-{
+replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     PieceMask, WeaponType;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bNoSector = true;
   bUndroppable = true;

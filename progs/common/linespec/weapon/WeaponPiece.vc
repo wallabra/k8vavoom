@@ -22,84 +22,60 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class WeaponPiece : Inventory abstract;
 
-class WeaponPiece : Inventory
-  abstract;
-
-int       PieceValue;
+int PieceValue;
 class!Weapon WeaponType;
-Weapon      GivenWeapon;
+Weapon GivenWeapon;
+
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
+override bool TryPickup (EntityEx Toucher) {
   GivenWeapon = none;
 
-  Inventory Inv;
   WeaponHolder Hold = none;
-  for (Inv = Toucher.Inventory; Inv; Inv = Inv.Inventory)
-  {
-    if (WeaponHolder(Inv) && WeaponHolder(Inv).WeaponType == WeaponType)
-    {
+  for (Inventory Inv = Toucher.Inventory; Inv; Inv = Inv.Inventory) {
+    if (WeaponHolder(Inv) && WeaponHolder(Inv).WeaponType == WeaponType) {
       Hold = WeaponHolder(Inv);
       break;
     }
   }
-  if (!Hold)
-  {
+  if (!Hold) {
     Hold = Spawn(WeaponHolder, default, default, default, false);
     Hold.AttachToOwner(Toucher);
     Hold.WeaponType = WeaponType;
     Hold.PieceMask = 0;
   }
 
-  if (ShouldStay())
-  {
-    if (Hold.PieceMask & PieceValue)
-    {
-      // Already has the piece
-      return false;
-    }
-    PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
-      WeaponType.default.AmmoGive1);
-    PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
-      WeaponType.default.AmmoGive2);
-  }
-  else
-  {
+  if (ShouldStay()) {
+    if (Hold.PieceMask&PieceValue) return false; // already has the piece
+    PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1, WeaponType.default.AmmoGive1);
+    PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2, WeaponType.default.AmmoGive2);
+  } else {
     int GaveAmmo = PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType1,
-      WeaponType.default.AmmoGive1) |
-      PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
+      WeaponType.default.AmmoGive1)|PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
       WeaponType.default.AmmoGive2);
-    if (Hold.PieceMask & PieceValue)
-    {
-      // Already has the piece, check if ammo needed
-      if (!GaveAmmo)
-      {
-        // Didn't need the ammo, so don't pick it up
-        return false;
-      }
+    if (Hold.PieceMask&PieceValue) {
+      // already has the piece, check if ammo needed
+      if (!GaveAmmo) return false; // didn't need the ammo, so don't pick it up
       GiveQuest(Toucher);
       GoAwayAndDie();
       return true;
     }
   }
 
-  // Pick up the weapon piece
+  // pick up the weapon piece
 
-  // Check if fourth weapon assembled
+  // check if fourth weapon assembled
   Hold.PieceMask |= PieceValue;
-  if (Hold.PieceMask == (1 << WeaponType.default.Health) - 1)
-  {
-    if (!Toucher.FindInventory(WeaponType))
-    {
+  if (Hold.PieceMask == (1<<WeaponType.default.Health)-1) {
+    if (!Toucher.FindInventory(WeaponType)) {
       GivenWeapon = Level.Spawn(WeaponType);
-      //  Given weapon should not give any more ammo to the player.
+      // given weapon should not give any more ammo to the player
       GivenWeapon.AmmoGive1 = 0;
       GivenWeapon.AmmoGive2 = 0;
       GivenWeapon.AttachToOwner(Toucher);
@@ -112,53 +88,41 @@ override bool TryPickup(EntityEx Toucher)
   return true;
 }
 
+
 //==========================================================================
 //
 //  ShouldStay
 //
 //==========================================================================
-
-override bool ShouldStay()
-{
+override bool ShouldStay () {
   return LineSpecialGameInfo(Level.Game).bWeaponsStay;
 }
+
 
 //==========================================================================
 //
 //  GetPickupMessage
 //
 //==========================================================================
-
-override string GetPickupMessage()
-{
-  if (GivenWeapon)
-  {
-    return GivenWeapon.PickupMessage;
-  }
-  else
-  {
-    return ::GetPickupMessage();
-  }
+override string GetPickupMessage () {
+  if (GivenWeapon) return GivenWeapon.PickupMessage;
+  return ::GetPickupMessage();
 }
+
 
 //==========================================================================
 //
 //  PlayPickupSound
 //
 //==========================================================================
-
-override void PlayPickupSound(EntityEx Toucher)
-{
-  if (GivenWeapon)
-  {
+override void PlayPickupSound (EntityEx Toucher) {
+  if (GivenWeapon) {
     GivenWeapon.PlayPickupSound(Toucher);
-  }
-  else
-  {
+  } else {
     ::PlayPickupSound(Toucher);
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

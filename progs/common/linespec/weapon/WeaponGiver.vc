@@ -22,26 +22,20 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
+class WeaponGiver : Weapon abstract;
 
-class WeaponGiver : Weapon
-  abstract;
 
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  if (DropItemList.Num && ClassIsChildOf(DropItemList[0].Type, Weapon))
-  {
+override bool TryPickup (EntityEx Toucher) {
+  if (DropItemList.Num && ClassIsChildOf(DropItemList[0].Type, Weapon)) {
     Weapon Wpn = Weapon(Spawn(DropItemList[0].Type, default, default, default, false));
-    if (Wpn)
-    {
+    if (Wpn) {
       Wpn.bAlwaysPickup = false;
-      if (!Wpn.TryPickup(Toucher))
-      {
+      if (!Wpn.TryPickup(Toucher)) {
         Wpn.Destroy();
         return false;
       }
@@ -52,6 +46,6 @@ override bool TryPickup(EntityEx Toucher)
   return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
