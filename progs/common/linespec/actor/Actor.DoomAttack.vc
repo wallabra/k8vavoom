@@ -22,10 +22,10 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-//**************************************************************************
 //  Original Doom/Strife monster attacks
 //**************************************************************************
+const float SKULLSPEED = 20.0*35.0;
+const float FatsoSpreadAngle = 90.0/8.0;
 
 // Flags for A_PainAttack
 enum /*EPainAttackFlags*/ {
@@ -42,28 +42,23 @@ enum /*EPainAttackFlags*/ {
 //  Zombieman attack.
 //
 //==========================================================================
-
-final void A_PosAttack()
-{
-  int damage;
+final void A_PosAttack () {
   TVec dir;
 
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
 
   A_FaceTarget();
 
-  AimLineAttack(dir, Angles, MISSILERANGE);
-  VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
+  AimLineAttack(out dir, Angles, MISSILERANGE);
+  VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
 
   PlaySound('grunt/attack', CHAN_WEAPON);
 
-  damage = ((P_Random() % 5) + 1) * 3;
+  int damage = ((P_Random()%5)+1)*3;
 
   LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', false);
 }
+
 
 //==========================================================================
 //
@@ -72,17 +67,13 @@ final void A_PosAttack()
 //  For DeHackEd compatibility only.
 //
 //==========================================================================
-
-final void A_SPosAttack()
-{
-  if (!Target)
-  {
-    return;
-  }
+final void A_SPosAttack () {
+  if (!Target) return;
 
   PlaySound('shotguy/attack', CHAN_WEAPON);
   DoSPosAttack();
 }
+
 
 //==========================================================================
 //
@@ -91,41 +82,41 @@ final void A_SPosAttack()
 //  Shotgun guy, Spider mastermind attack.
 //
 //==========================================================================
-
-final void A_SPosAttackUseAtkSound()
-{
-  if (!Target)
-  {
-    return;
-  }
+final void A_SPosAttackUseAtkSound () {
+  if (!Target) return;
 
   PlaySound(AttackSound, CHAN_WEAPON);
   DoSPosAttack();
 }
+
 
 //==========================================================================
 //
 //  DoSPosAttack
 //
 //==========================================================================
-
-final void DoSPosAttack()
-{
-  int i;
-  int damage;
+final void DoSPosAttack () {
   TVec aimDir;
-  TVec dir;
+
+  //k8: Mastermind should use 'Bullet' here
+  name atype = 'Shell';
+  for (class co = self.Class; co; co = GetClassParent(co)) {
+    if (GetClassName(co) == 'SpiderMastermind') {
+      atype = 'Bullet';
+      break;
+    }
+  }
 
   A_FaceTarget();
-  AimLineAttack(aimDir, Angles, MISSILERANGE);
-  for (i = 0; i < 3; i++)
-  {
-    dir = aimDir;
-    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
-    damage = ((P_Random() % 5) + 1) * 3;
-    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Shell', (i != 0)); //k8:FIXME: Mastermind guy should use 'Bullet' here
+  AimLineAttack(out aimDir, Angles, MISSILERANGE);
+  foreach (auto i; 0..3) {
+    TVec dir = aimDir;
+    VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
+    int damage = ((P_Random()%5)+1)*3;
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, atype, (i != 0));
   }
 }
+
 
 //==========================================================================
 //
@@ -134,31 +125,24 @@ final void DoSPosAttack()
 //  Heavy weapon dude attack.
 //
 //==========================================================================
-
-final void A_CPosAttack()
-{
+final void A_CPosAttack () {
   int damage;
   TVec dir;
 
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
 
-  //  Andy Baker's stealth monsters
-  if (bStealth)
-  {
-    VisDir = 1;
-  }
+  // Andy Baker's stealth monsters
+  if (bStealth) VisDir = 1;
 
-  //FIXME
+  //FIXME (k8: what???)
   PlaySound(AttackSound, CHAN_WEAPON);
   A_FaceTarget();
   AimLineAttack(dir, Angles, MISSILERANGE);
-  VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
-  damage = ((P_Random() % 5) + 1) * 3;
+  VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
+  damage = ((P_Random()%5)+1)*3;
   LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', false);
 }
+
 
 //==========================================================================
 //
@@ -167,22 +151,15 @@ final void A_CPosAttack()
 //  Heavy weapon dude refire.
 //
 //==========================================================================
-
-final void A_CPosRefire()
-{
+final void A_CPosRefire () {
   // keep firing unless target got out of sight
   A_FaceTarget();
 
-  if (P_Random() < 40)
-  {
-    return;
-  }
+  if (P_Random() < 40) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target))
-  {
-    SetState(SeeState);
-  }
+  if (!Target || Target.Health <= 0 || !CanSee(Target)) SetState(SeeState);
 }
+
 
 //==========================================================================
 //
@@ -191,20 +168,15 @@ final void A_CPosRefire()
 //  Spider mastermind refire.
 //
 //==========================================================================
-
-final void A_SpidRefire()
-{
+final void A_SpidRefire () {
   // keep firing unless target got out of sight
   A_FaceTarget();
 
-  if (P_Random() < 10)
-    return;
+  if (P_Random() < 10) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target))
-  {
-    SetState(SeeState);
-  }
+  if (!Target || Target.Health <= 0 || !CanSee(Target)) SetState(SeeState);
 }
+
 
 //==========================================================================
 //
@@ -213,21 +185,13 @@ final void A_SpidRefire()
 //  Imp attack.
 //
 //==========================================================================
-
-final void A_TroopAttack()
-{
-  int damage;
-
-  if (!Target)
-  {
-    return;
-  }
+final void A_TroopAttack () {
+  if (!Target) return;
 
   A_FaceTarget();
-  if (CheckMeleeRange())
-  {
+  if (CheckMeleeRange()) {
     PlaySound('imp/melee', CHAN_WEAPON);
-    damage = (P_Random() % 8 + 1) * 3;
+    int damage = (P_Random()%8+1)*3;
     Target.Damage(self, self, damage, spawnBlood:true);
     return;
   }
@@ -236,6 +200,7 @@ final void A_TroopAttack()
   SpawnMissile(Target, DoomImpBall);
 }
 
+
 //==========================================================================
 //
 //  A_SargAttack
@@ -243,23 +208,16 @@ final void A_TroopAttack()
 //  Demon, Spectre attack.
 //
 //==========================================================================
-
-final void A_SargAttack()
-{
-  int damage;
-
-  if (!Target)
-  {
-    return;
-  }
+final void A_SargAttack () {
+  if (!Target) return;
 
   A_FaceTarget();
-  if (CheckMeleeRange())
-  {
-    damage = ((P_Random() % 10) + 1) * 4;
+  if (CheckMeleeRange()) {
+    int damage = ((P_Random()%10)+1)*4;
     Target.Damage(self, self, damage, spawnBlood:true);
   }
 }
+
 
 //==========================================================================
 //
@@ -268,20 +226,12 @@ final void A_SargAttack()
 //  Cacodemon attack.
 //
 //==========================================================================
-
-final void A_HeadAttack()
-{
-  int damage;
-
-  if (!Target)
-  {
-    return;
-  }
+final void A_HeadAttack () {
+  if (!Target) return;
 
   A_FaceTarget();
-  if (CheckMeleeRange())
-  {
-    damage = (P_Random() % 6 + 1) * 10;
+  if (CheckMeleeRange()) {
+    int damage = (P_Random()%6+1)*10;
     Target.Damage(self, self, damage, spawnBlood:true);
     return;
   }
@@ -290,6 +240,7 @@ final void A_HeadAttack()
   SpawnMissile(Target, CacodemonBall);
 }
 
+
 //==========================================================================
 //
 //  A_BruisAttack
@@ -297,20 +248,12 @@ final void A_HeadAttack()
 //  Hell knight, Baron of hell attack.
 //
 //==========================================================================
+final void A_BruisAttack () {
+  if (!Target) return;
 
-final void A_BruisAttack()
-{
-  int damage;
-
-  if (!Target)
-  {
-    return;
-  }
-
-  if (CheckMeleeRange())
-  {
+  if (CheckMeleeRange()) {
     PlaySound('baron/melee', CHAN_WEAPON);
-    damage = (P_Random() % 8 + 1) * 10;
+    int damage = (P_Random()%8+1)*10;
     Target.Damage(self, self, damage, spawnBlood:true);
     return;
   }
@@ -319,6 +262,7 @@ final void A_BruisAttack()
   SpawnMissile(Target, BaronBall);
 }
 
+
 //==========================================================================
 //
 //  A_SkullAttack
@@ -326,46 +270,31 @@ final void A_BruisAttack()
 //  Lost soul attack. Fly at the player like a missile.
 //
 //==========================================================================
-
-const float SKULLSPEED = 700.0;
-
-final void A_SkullAttack()
-{
-  if (!Target)
-  {
-    return;
-  }
+final void A_SkullAttack () {
+  if (!Target) return;
 
   bSkullFly = true;
-
   PlaySound(AttackSound, CHAN_VOICE);
   A_FaceTarget();
-  Velocity = Normalise(Target.GetCentre() - Origin) * SKULLSPEED;
+  Velocity = Normalise(Target.GetCentre()-Origin)*SKULLSPEED;
 }
+
 
 //==========================================================================
 //
 //  A_SkullAttack
 //
 //==========================================================================
-
-final void decorate_A_SkullAttack(optional float SkullSpeed)
-{
-  if (!specified_SkullSpeed)
-  {
-    SkullSpeed = 20.0;
-  }
-  if (!Target)
-  {
-    return;
-  }
+final void decorate_A_SkullAttack (optional float SkullSpeed) {
+  if (!Target) return;
+  if (!specified_SkullSpeed) SkullSpeed = SKULLSPEED; else SkullSpeed *= 35.0;
 
   bSkullFly = true;
-
   PlaySound(AttackSound, CHAN_VOICE);
   A_FaceTarget();
-  Velocity = Normalise(Target.GetCentre() - Origin) * SkullSpeed * 35.0;
+  Velocity = Normalise(Target.GetCentre()-Origin)*SkullSpeed;
 }
+
 
 //==========================================================================
 //
@@ -374,19 +303,14 @@ final void decorate_A_SkullAttack(optional float SkullSpeed)
 //  Arachnotron attack.
 //
 //==========================================================================
-
-final void A_BspiAttack()
-{
-  if (!Target)
-  {
-    return;
-  }
+final void A_BspiAttack () {
+  if (!Target) return;
 
   A_FaceTarget();
-
   // launch a missile
   SpawnMissile(Target, ArachnotronPlasma);
 }
+
 
 //==========================================================================
 //
@@ -395,17 +319,13 @@ final void A_BspiAttack()
 //  Cyberdemon attack.
 //
 //==========================================================================
-
-final void A_CyberAttack()
-{
-  if (!Target)
-  {
-    return;
-  }
+final void A_CyberAttack () {
+  if (!Target) return;
 
   A_FaceTarget();
   SpawnMissile(Target, Rocket);
 }
+
 
 //==========================================================================
 //
@@ -414,11 +334,10 @@ final void A_CyberAttack()
 //  Pain elemental attack. Spawn a lost soul and launch it at the target.
 //
 //==========================================================================
-
-final void A_PainAttack()
-{
+final void A_PainAttack () {
   decorate_A_PainAttack(LostSoul);
 }
+
 
 //==========================================================================
 //
@@ -427,7 +346,6 @@ final void A_PainAttack()
 //  Pain elemental attack. Spawn a lost soul and launch it at the target.
 //
 //==========================================================================
-
 final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float angle,
                                   optional int flags, optional int limit)
 {
@@ -452,21 +370,21 @@ final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float
   PainShootSkull(SpawnType, angle, !!(flags&PAF_NOSKULLATTACK), !!(flags&PAF_NOTARGET));
 }
 
+
 //==========================================================================
 //
 //  A_DualPainAttack
 //
 //==========================================================================
-
-final void A_DualPainAttack(optional class!Actor SpawnType)
-{
+final void A_DualPainAttack (optional class!Actor SpawnType) {
   if (!Target) return;
   if (GetCvarB('k8ElvenPaineless')) return;
 
   A_FaceTarget();
-  PainShootSkull(SpawnType, Angles.yaw + 45.0);
-  PainShootSkull(SpawnType, Angles.yaw - 45.0);
+  PainShootSkull(SpawnType, Angles.yaw+45.0);
+  PainShootSkull(SpawnType, Angles.yaw-45.0);
 }
+
 
 //==========================================================================
 //
@@ -475,11 +393,10 @@ final void A_DualPainAttack(optional class!Actor SpawnType)
 //  Pain elemental death.
 //
 //==========================================================================
-
-final void A_PainDie()
-{
+final void A_PainDie () {
   decorate_A_PainDie(LostSoul);
 }
+
 
 //==========================================================================
 //
@@ -488,14 +405,13 @@ final void A_PainDie()
 //  Pain elemental death.
 //
 //==========================================================================
-
-final void decorate_A_PainDie(optional class!Actor SpawnType)
-{
+final void decorate_A_PainDie (optional class!Actor SpawnType) {
   A_Fall();
-  PainShootSkull(SpawnType, Angles.yaw + 90.0);
-  PainShootSkull(SpawnType, Angles.yaw + 180.0);
-  PainShootSkull(SpawnType, Angles.yaw + 270.0);
+  PainShootSkull(SpawnType, Angles.yaw+90.0);
+  PainShootSkull(SpawnType, Angles.yaw+180.0);
+  PainShootSkull(SpawnType, Angles.yaw+270.0);
 }
+
 
 //==========================================================================
 //
@@ -504,25 +420,18 @@ final void decorate_A_PainDie(optional class!Actor SpawnType)
 //  Ravenant close attack.
 //
 //==========================================================================
-
-final void A_SkelFist()
-{
-  int damage;
-
-  if (!Target)
-  {
-    return;
-  }
+final void A_SkelFist () {
+  if (!Target) return;
 
   A_FaceTarget();
 
-  if (CheckMeleeRange())
-  {
-    damage = ((P_Random() % 10) + 1) * 6;
+  if (CheckMeleeRange()) {
+    int damage = ((P_Random()%10)+1)*6;
     PlaySound('skeleton/melee', CHAN_WEAPON);
     Target.Damage(self, self, damage, spawnBlood:true);
   }
 }
+
 
 //==========================================================================
 //
@@ -531,82 +440,59 @@ final void A_SkelFist()
 //  Ravenant far attack.
 //
 //==========================================================================
-
-final void A_SkelMissile()
-{
-  EntityEx A;
-
-  if (!Target)
-  {
-    return;
-  }
+final void A_SkelMissile () {
+  if (!Target) return;
 
   A_FaceTarget();
   Origin.z += 16.0; // so missile spawns higher
-  A = SpawnMissile(Target, RevenantTracer);
+  EntityEx A = SpawnMissile(Target, RevenantTracer);
   Origin.z -= 16.0; // back to normal
 
-  if (A)
-  {
+  if (A) {
     A.UnlinkFromWorld();
-    A.Origin = A.Origin + A.Velocity * 0.03;
+    A.Origin = A.Origin+A.Velocity*0.03;
     A.LinkToWorld();
     A.Tracer = Target;
     A.bSeekerMissile = true;
   }
 }
 
+
 //==========================================================================
 //
 //  A_FatAttack1
 //
-//  Mancubus attack, firing three missiles (bruisers) in three different
-// directions? Doesn't look like it.
+//  Mancubus attack, fire missile in first direction
 //
 //==========================================================================
-
-final void A_FatAttack1()
-{
+final void A_FatAttack1 () {
   decorate_A_FatAttack1(FatShot);
 }
+
 
 //==========================================================================
 //
 //  decorate_A_FatAttack1
 //
-//  Mancubus attack, firing three missiles (bruisers) in three different
-// directions? Doesn't look like it.
+//  Mancubus attack, fire missile in first direction
 //
 //==========================================================================
-
-const float FatsoSpreadAngle = 90.0 / 8.0;
-
-final void decorate_A_FatAttack1(optional class!EntityEx SpawnType)
-{
-  EntityEx A;
-
-  if (!SpawnType)
-  {
-    SpawnType = FatShot;
-  }
-
-  if (!Target)
-  {
-    return;
-  }
+final void decorate_A_FatAttack1 (optional class!EntityEx SpawnType) {
+  if (!Target) return;
+  if (!SpawnType) SpawnType = FatShot;
 
   A_FaceTarget();
-  // Change direction  to ...
-  Angles.yaw = AngleMod360(Angles.yaw + FatsoSpreadAngle);
+  // adjust direction
+  Angles.yaw = AngleMod360(Angles.yaw+FatsoSpreadAngle);
   SpawnMissile(Target, SpawnType);
 
-  A = SpawnMissile(Target, SpawnType);
-  if (A)
-  {
-    A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle);
+  EntityEx A = SpawnMissile(Target, SpawnType);
+  if (A) {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw+FatsoSpreadAngle);
     VectorRotateAroundZ(ref A.Velocity, FatsoSpreadAngle);
   }
 }
+
 
 //==========================================================================
 //
@@ -615,11 +501,10 @@ final void decorate_A_FatAttack1(optional class!EntityEx SpawnType)
 //  Mancubus attack, second direction.
 //
 //==========================================================================
-
-final void A_FatAttack2()
-{
+final void A_FatAttack2 () {
   decorate_A_FatAttack2(FatShot);
 }
+
 
 //==========================================================================
 //
@@ -628,33 +513,22 @@ final void A_FatAttack2()
 //  Mancubus attack, second direction.
 //
 //==========================================================================
-
-final void decorate_A_FatAttack2(optional class!EntityEx SpawnType)
-{
-  EntityEx A;
-
-  if (!SpawnType)
-  {
-    SpawnType = FatShot;
-  }
-
-  if (!Target)
-  {
-    return;
-  }
+final void decorate_A_FatAttack2 (optional class!EntityEx SpawnType) {
+  if (!Target) return;
+  if (!SpawnType) SpawnType = FatShot;
 
   A_FaceTarget();
-  // Now here choose opposite deviation.
-  Angles.yaw = AngleMod360(Angles.yaw - FatsoSpreadAngle);
+  // now here choose opposite deviation.
+  Angles.yaw = AngleMod360(Angles.yaw-FatsoSpreadAngle);
   SpawnMissile(Target, SpawnType);
 
-  A = SpawnMissile(Target, SpawnType);
-  if (A)
-  {
-    A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle * 2.0);
-    VectorRotateAroundZ(ref A.Velocity, -FatsoSpreadAngle * 2.0);
+  EntityEx A = SpawnMissile(Target, SpawnType);
+  if (A) {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw-FatsoSpreadAngle*2.0);
+    VectorRotateAroundZ(ref A.Velocity, -FatsoSpreadAngle*2.0);
   }
 }
+
 
 //==========================================================================
 //
@@ -663,11 +537,10 @@ final void decorate_A_FatAttack2(optional class!EntityEx SpawnType)
 //  Mancubus attack, third direction.
 //
 //==========================================================================
-
-final void A_FatAttack3()
-{
+final void A_FatAttack3 () {
   decorate_A_FatAttack3(FatShot);
 }
+
 
 //==========================================================================
 //
@@ -676,37 +549,25 @@ final void A_FatAttack3()
 //  Mancubus attack, third direction.
 //
 //==========================================================================
-
-final void decorate_A_FatAttack3(optional class!EntityEx SpawnType)
-{
-  EntityEx A;
-
-  if (!SpawnType)
-  {
-    SpawnType = FatShot;
-  }
-
-  if (!Target)
-  {
-    return;
-  }
+final void decorate_A_FatAttack3 (optional class!EntityEx SpawnType) {
+  if (!Target) return;
+  if (!SpawnType) SpawnType = FatShot;
 
   A_FaceTarget();
 
-  A = SpawnMissile(Target, SpawnType);
-  if (A)
-  {
-    A.Angles.yaw = AngleMod360(A.Angles.yaw - FatsoSpreadAngle / 2.0);
-    VectorRotateAroundZ(ref A.Velocity, -FatsoSpreadAngle / 2.0);
+  EntityEx A = SpawnMissile(Target, SpawnType);
+  if (A) {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw-FatsoSpreadAngle/2.0);
+    VectorRotateAroundZ(ref A.Velocity, -FatsoSpreadAngle/2.0);
   }
 
   A = SpawnMissile(Target, SpawnType);
-  if (A)
-  {
-    A.Angles.yaw = AngleMod360(A.Angles.yaw + FatsoSpreadAngle / 2.0);
-    VectorRotateAroundZ(ref A.Velocity, FatsoSpreadAngle / 2.0);
+  if (A) {
+    A.Angles.yaw = AngleMod360(A.Angles.yaw+FatsoSpreadAngle/2.0);
+    VectorRotateAroundZ(ref A.Velocity, FatsoSpreadAngle/2.0);
   }
 }
+
 
 //==========================================================================
 //
@@ -715,8 +576,7 @@ final void decorate_A_FatAttack3(optional class!EntityEx SpawnType)
 //  Spawn the hellfire.
 //
 //==========================================================================
-
-final void A_VileTarget(optional name firetype) {
+final void A_VileTarget (optional name firetype) {
   if (!Target) return;
 
   A_FaceTarget();
@@ -750,11 +610,11 @@ final void A_VileTarget(optional name firetype) {
 //  Arch-vile attack.
 //
 //==========================================================================
-
-final void A_VileAttack(optional string sound, optional int initialdamage, optional int blastdamage, optional int blastradius, optional float thrustfactor, optional name damagetype, optional int flags)
+final void A_VileAttack (optional string sound, optional int initialdamage,
+                         optional int blastdamage, optional int blastradius,
+                         optional float thrustfactor, optional name damagetype,
+                         optional int flags)
 {
-  EntityEx fire;
-
   if (!Target) return;
 
   A_FaceTarget();
@@ -775,14 +635,13 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
   if (initialdamage < 0) initialdamage = 0;
   Target.Damage(self, self, /*20*/initialdamage, (flags&1 ? damagetype : 'None'), spawnBlood:true);
 
-  fire = Tracer;
-
+  EntityEx fire = Tracer;
   if (!fire) return;
 
   // move the fire between the vile and the player
   fire.UnlinkFromWorld();
-  fire.Origin.x = Target.Origin.x - 24.0 * cos(Angles.yaw);
-  fire.Origin.y = Target.Origin.y - 24.0 * sin(Angles.yaw);
+  fire.Origin.x = Target.Origin.x-24.0*cos(Angles.yaw);
+  fire.Origin.y = Target.Origin.y-24.0*sin(Angles.yaw);
   fire.LinkToWorld();
 
   if (!specified_blastdamage) blastdamage = 70;
@@ -797,9 +656,10 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
   // change velocity Z component before doing RadiusAttack
   if (!specified_thrustfactor) thrustfactor = 1.0;
   if (thrustfactor > 0) {
-    Target.Velocity.z = (1000.0*thrustfactor / fmax(1, Target.Mass)) * 35.0;
+    Target.Velocity.z = (1000.0*thrustfactor/fmax(1, Target.Mass))*35.0;
   }
 }
+
 
 //==========================================================================
 //
@@ -808,8 +668,7 @@ final void A_VileAttack(optional string sound, optional int initialdamage, optio
 //  Spawn a cube.
 //
 //==========================================================================
-
-final void A_BrainSpit() {
+final void A_BrainSpit () {
   decorate_A_BrainSpit();
 }
 
@@ -821,41 +680,26 @@ final void A_BrainSpit() {
 //  Spawn a cube.
 //
 //==========================================================================
-
-final void decorate_A_BrainSpit(optional name actname)
-{
-  BrainState    BState;
-  EntityEx    targ;
-  EntityEx    A;
-  float     Frac;
-
-  //  Find brain state object, create it if not found.
-  BState = none;
-  foreach AllThinkers(BrainState, BState)
-  {
+final void decorate_A_BrainSpit (optional name actname) {
+  // find brain state object, create it if not found
+  BrainState BState = none;
+  foreach AllThinkers(BrainState, BState) {
     break;
   }
-  if (!BState)
-  {
+
+  if (!BState) {
     BState = Spawn(BrainState);
     BState.FindTargets();
   }
 
-  if (!BState.Targets.Num)
-  {
-    //  No brain targets placed on a map.
-    return;
-  }
+  if (!BState.Targets.Num) return; // no brain targets placed on a map
 
   BState.bEasy = !BState.bEasy;
-  if (Level.World.bSkillEasyBossBrain && !BState.bEasy)
-  {
-    return;
-  }
+  if (Level.World.bSkillEasyBossBrain && !BState.bEasy) return;
 
   // shoot a cube at current target
-  targ = BState.Targets[BState.TargetOn];
-  BState.TargetOn = (BState.TargetOn + 1) % BState.Targets.Num;
+  EntityEx targ = BState.Targets[BState.TargetOn];
+  BState.TargetOn = (BState.TargetOn+1)%BState.Targets.Num;
 
   class!Actor brnmiss = SpawnShot;
   if (specified_actname) {
@@ -867,29 +711,21 @@ final void decorate_A_BrainSpit(optional name actname)
   }
 
   // spawn brain missile
-  A = SpawnMissile(targ, /*SpawnShot*/brnmiss);
-  if (A)
-  {
+  EntityEx A = SpawnMissile(targ, /*SpawnShot*/brnmiss);
+  if (A) {
     A.Target = targ;
     A.Master = self;
-    //  Prevent division by 0
-    if (!A.Velocity.x && !A.Velocity.y)
-    {
-      Frac = 0.0;
-    }
-    else if (fabs(A.Velocity.x) > fabs(A.Velocity.y))
-    {
-      Frac = (targ.Origin.x - Origin.x) / A.Velocity.x;
-    }
-    else
-    {
-      Frac = (targ.Origin.y - Origin.y) / A.Velocity.y;
-    }
-    A.ReactionCount = ftoi(Frac / GetStateDuration(A.State));
+    // prevent division by 0
+    float Frac;
+         if (!A.Velocity.x && !A.Velocity.y) Frac = 0.0;
+    else if (fabs(A.Velocity.x) > fabs(A.Velocity.y)) Frac = (targ.Origin.x-Origin.x)/A.Velocity.x;
+    else Frac = (targ.Origin.y-Origin.y)/A.Velocity.y;
+    A.ReactionCount = ftoi(Frac/GetStateDuration(A.State));
   }
 
   PlaySound('brain/spit', CHAN_WEAPON, 1.0, ATTN_NONE);
 }
+
 
 //==========================================================================
 //
@@ -898,103 +734,75 @@ final void decorate_A_BrainSpit(optional name actname)
 //  Cube flying, spawn monster, when finished.
 //
 //==========================================================================
-
-final void SpawnFly(class!EntityEx SpawnType, name SpawnSound)
-{
-  EntityEx newmobj;
-  EntityEx fog;
-  int r;
+final void SpawnFly (class!EntityEx SpawnType, name SpawnSound) {
   class!EntityEx type;
 
-  if (--ReactionCount)
-    return; // still flying
+  if (--ReactionCount) return; // still flying
 
-  // First spawn teleport fog.
-  fog = Spawn(SpawnType, Target.Origin, vector(0.0, 0.0, 0.0));
-  fog.PlaySound(SpawnSound, CHAN_VOICE);
+  // first spawn teleport fog
+  EntityEx fog = Spawn(SpawnType, Target.Origin, vector(0.0, 0.0, 0.0));
+  if (fog) fog.PlaySound(SpawnSound, CHAN_VOICE);
 
-  // Randomly select monster to spawn.
-  r = P_Random();
+  // randomly select monster to spawn
+  int r = P_Random();
 
-  // Probability distribution (kind of :),
-  // decreasing likelihood.
-  if (r < 50)
-    type = DoomImp;
-  else if (r < 90)
-    type = Demon;
-  else if (r < 120)
-    type = Spectre;
-  else if (r < 130)
-    type = PainElemental;
-  else if (r < 160)
-    type = Cacodemon;
-  else if (r < 162)
-    type = Archvile;
-  else if (r < 172)
-    type = Revenant;
-  else if (r < 192)
-    type = Arachnotron;
-  else if (r < 222)
-    type = Fatso;
-  else if (r < 246)
-    type = HellKnight;
-  else
-    type = BaronOfHell;
+  // probability distribution (kind of :), decreasing likelihood
+       if (r < 50) type = DoomImp;
+  else if (r < 90) type = Demon;
+  else if (r < 120) type = Spectre;
+  else if (r < 130) type = PainElemental;
+  else if (r < 160) type = Cacodemon;
+  else if (r < 162) type = Archvile;
+  else if (r < 172) type = Revenant;
+  else if (r < 192) type = Arachnotron;
+  else if (r < 222) type = Fatso;
+  else if (r < 246) type = HellKnight;
+  else type = BaronOfHell;
 
-  newmobj = Spawn(type, Target.Origin, vector(0.0, 0.0, 0.0));
-  //  Make new monster hate the same thing eye hates. Note that this
-  // differs from ZDoom which copies friendliness from target spot.
-  if (Master)
-  {
-    newmobj.CopyFriendliness(Master, false);
-  }
-  if (newmobj.SeeState && newmobj.LookForPlayers(true))
-  {
-    newmobj.SetState(newmobj.SeeState);
+  EntityEx newmobj = Spawn(type, Target.Origin, vector(0.0, 0.0, 0.0));
+  if (newmobj) {
+    // make new monster hate the same thing eye hates
+    // note that this differs from ZDoom which copies friendliness from target spot
+    if (Master) newmobj.CopyFriendliness(Master, false);
+    if (newmobj.SeeState && newmobj.LookForPlayers(true)) newmobj.SetState(newmobj.SeeState);
+    // telefrag anything in this spot
+    if (!newmobj.IsDestroyed()) {
+      newmobj.bTelestomp = true;
+      newmobj.TeleportMove(newmobj.Origin);
+    }
   }
 
-  // telefrag anything in this spot
-  if (!newmobj.IsDestroyed())
-  {
-    newmobj.bTelestomp = true;
-    newmobj.TeleportMove(newmobj.Origin);
-  }
-
-  // remove self (i.e., cube).
+  // remove self (i.e., cube)
   Destroy();
 }
+
 
 //==========================================================================
 //
 //  A_SpawnFly
 //
 //==========================================================================
-
-final void A_SpawnFly()
-{
+final void A_SpawnFly () {
   SpawnFly(SpawnFire, 'brain/spawn');
 }
+
 
 //==========================================================================
 //
 //  decorate_A_SpawnFly
 //
 //==========================================================================
-
-final void decorate_A_SpawnFly(optional class!EntityEx SpawnType)
-{
+final void decorate_A_SpawnFly (optional class!EntityEx SpawnType) {
   name SpawnSound;
-  if (SpawnType)
-  {
+  if (SpawnType) {
     SpawnSound = SpawnType.default.SightSound;
-  }
-  else
-  {
+  } else {
     SpawnType = SpawnFire;
     SpawnSound = 'brain/spawn';
   }
   SpawnFly(SpawnType, SpawnSound);
 }
+
 
 //==========================================================================
 //
@@ -1003,12 +811,11 @@ final void decorate_A_SpawnFly(optional class!EntityEx SpawnType)
 //  Travelling cube sound.
 //
 //==========================================================================
-
-final void A_SpawnSound()
-{
+final void A_SpawnSound () {
   PlaySound('brain/cube', CHAN_VOICE);
   SpawnFly(SpawnFire, 'brain/spawn');
 }
+
 
 //==========================================================================
 //
@@ -1017,20 +824,17 @@ final void A_SpawnSound()
 //  Brain death sound, make explosions.
 //
 //==========================================================================
-
-final void A_BrainScream()
-{
+final void A_BrainScream () {
   TVec org;
-
-  for (org.x = Origin.x - 196.0; org.x < Origin.x + 320.0; org.x += 8.0)
-  {
-    org.y = Origin.y - 320.0;
-    org.z = 1.0 / 512.0 + Random() * 512.0;
+  for (org.x = Origin.x-196.0; org.x < Origin.x+320.0; org.x += 8.0) {
+    org.y = Origin.y-320.0;
+    org.z = 1.0/512.0+Random()*512.0;
     BrainishExplosion(org);
   }
 
   PlaySound('brain/death', CHAN_VOICE, 1.0, ATTN_NONE);
 }
+
 
 //==========================================================================
 //
@@ -1039,50 +843,44 @@ final void A_BrainScream()
 //  Brain explosions.
 //
 //==========================================================================
-
-final void A_BrainExplode()
-{
+final void A_BrainExplode () {
   TVec org;
-
-  org.x = Origin.x + (Random() - Random()) * 8.0;
+  org.x = Origin.x+(Random()-Random())*8.0;
   org.y = Origin.y;
-  org.z = 1.0 / 512.0 + Random() * 512.0;
+  org.z = 1.0/512.0+Random()*512.0;
   BrainishExplosion(org);
 }
+
 
 //==========================================================================
 //
 //  BrainishExplosion
 //
 //==========================================================================
-
-final void BrainishExplosion(TVec org)
-{
+final void BrainishExplosion (TVec org) {
   EntityEx A = Spawn(Rocket, org, default, default, false);
   A.DeathSound = 'misc/brainexplode';
-  //  Disables collision detection which is not wanted here
+
+  // disables collision detection which is not wanted here
   A.MissileDamage = 0;
-  A.Velocity.z = Random() * 2.0 * 35.0;
+  A.Velocity.z = Random()*2.0*35.0;
 
   A.SetState(FindClassState(BossBrain, 'BrainExplode'));
 
-  A.StateTime -= Random() * 0.2;
-  if (A.StateTime < 0.1)
-  {
-    A.StateTime = 0.1;
-  }
+  A.StateTime -= Random()*0.2;
+  if (A.StateTime < 0.1) A.StateTime = 0.1;
 }
+
 
 //==========================================================================
 //
 //  A_Mushroom
 //
 //==========================================================================
-
-final void A_Mushroom()
-{
+final void A_Mushroom () {
   decorate_A_Mushroom();
 }
+
 
 //==========================================================================
 //
@@ -1092,58 +890,41 @@ final void A_Mushroom()
 //  Original idea: Linguica
 //
 //==========================================================================
-
-final void decorate_A_Mushroom(optional class!Actor SpawnType,
-  optional int Amount, optional int Flags, optional float vrange,
-  optional float hrange)
+final void decorate_A_Mushroom (optional class!Actor SpawnType,
+                                optional int Amount, optional int Flags,
+                                optional float vrange, optional float hrange)
 {
-  int     i;
-  int     j;
+  if (!SpawnType) SpawnType = FatShot;
+  if (!Amount) Amount = GetMissileDamage(0, 1);
 
-  if (!SpawnType)
-  {
-    SpawnType = FatShot;
-  }
-  if (!Amount)
-  {
-    Amount = GetMissileDamage(0, 1);
-  }
+  // first make normal explosion
+  RadiusAttack(self, 128, 128.0, !(Flags&2), DamageType);
 
-  // First make normal explosion
-  RadiusAttack(self, 128, 128.0, !(Flags & 2), DamageType);
-
-  // Now launch mushroom cloud
-  // We need something to aim at.
+  // now launch mushroom cloud
+  // we need something to aim at
   Actor target = Spawn(MapSpot, default, default, default, false);
   target.Height = Height;
-  for (i = -Amount; i <= Amount; i += 8)
-  {
-    for (j = -Amount; j <= Amount; j += 8)
-    {
-      // Aim in many directions from source
+  for (int i = -Amount; i <= Amount; i += 8) {
+    for (int j = -Amount; j <= Amount; j += 8) {
+      // aim in many directions from source
       target.UnlinkFromWorld();
-      target.Origin.x = Origin.x + itof(i);
-      target.Origin.y = Origin.y + itof(j);
+      target.Origin.x = Origin.x+itof(i);
+      target.Origin.y = Origin.y+itof(j);
       target.LinkToWorld();
-      // Aim up fairly high
-      target.Origin.z = Origin.z + Length(vector(itof(i), itof(j),
-        0.0)) * (vrange ? vrange : 4.0);
+      // aim up fairly high
+      target.Origin.z = Origin.z+Length(vector(itof(i), itof(j), 0.0))*(vrange ? vrange : 4.0);
       EntityEx mo;
-      // Launch fireball
-      if (Flags & 1)
-      {
-        TVec org = vector(Origin.x, Origin.y, Origin.z + 32.0);
+      // launch fireball
+      if (Flags&1) {
+        TVec org = vector(Origin.x, Origin.y, Origin.z+32.0);
         mo = SpawnMissileXYZ(org, target, SpawnType);
-      }
-      else
-      {
+      } else {
         mo = SpawnMissile(target, SpawnType);
       }
-      if (mo)
-      {
-        // Slow it down a bit
-        mo.Velocity = mo.Velocity * (hrange ? hrange : 0.5);
-        // Make debris fall under gravity
+      if (mo) {
+        // slow it down a bit
+        mo.Velocity = mo.Velocity*(hrange ? hrange : 0.5);
+        // make debris fall under gravity
         mo.bNoGravity = false;
       }
     }
@@ -1151,87 +932,65 @@ final void decorate_A_Mushroom(optional class!Actor SpawnType,
   target.Destroy();
 }
 
+
 //===========================================================================
 //
 //  A_M_Saw
 //
 //===========================================================================
+final void A_M_Saw () {
+  TVec dir;
 
-final void A_M_Saw()
-{
-  float   angle;
-  int     damage;
-  TAVec   aimAng;
-  TVec    dir;
-  EntityEx  AimTarget;
-
-  if (!Target)
-  {
-    return;
-  }
+  if (!Target) return;
 
   A_FaceTarget();
-  if (CheckMeleeRange())
-  {
-    damage = 2 * (P_Random() % 10 + 1);
-    aimAng = Angles;
-    aimAng.yaw = AngleMod360(aimAng.yaw + (Random() -
-      Random()) * 45.0 / 8.0);
+  if (CheckMeleeRange()) {
+    int damage = 2*(P_Random()%10+1);
+    TAVec aimAng = Angles;
+    aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
     // use meleerange + 1 se the puff doesn't skip the flash
-    AimTarget = AimLineAttack(dir, aimAng, MELEERANGE + 0.00001);
-    LineAttack(dir, MELEERANGE + 0.00001, damage, BulletPuff, default, default, 'Chainsaw', false);
+    EntityEx AimTarget = AimLineAttack(out dir, aimAng, MELEERANGE+0.00001);
+    LineAttack(dir, MELEERANGE+0.00001, damage, BulletPuff, default, default, 'Chainsaw', false);
 
-    if (!AimTarget)
-    {
+    if (!AimTarget) {
       PlaySound('weapons/sawfull', CHAN_WEAPON);
       return;
     }
     PlaySound('weapons/sawhit', CHAN_WEAPON);
 
     // turn to face target
-    angle = atan2(AimTarget.Origin.y - Origin.y,
-      AimTarget.Origin.x - Origin.x);
-    if (AngleMod360(angle - Angles.yaw) > 180.0)
-    {
-      if (AngleMod360(angle - Angles.yaw) < -90.0 / 20.0)
-        Angles.yaw = angle + 90.0 / 21.0;
-      else
-        Angles.yaw = Angles.yaw - 90.0 / 20.0;
-    }
-    else
-    {
-      if (AngleMod360(angle - Angles.yaw) > 90.0 / 20.0)
-        Angles.yaw = angle - 90.0 / 21.0;
-      else
-        Angles.yaw += 90.0 / 20.0;
+    float angle = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
+    if (AngleMod360(angle-Angles.yaw) > 180.0) {
+      if (AngleMod360(angle-Angles.yaw) < -90.0/20.0) {
+        Angles.yaw = angle+90.0/21.0;
+      } else {
+        Angles.yaw = Angles.yaw-90.0/20.0;
+      }
+    } else {
+      if (AngleMod360(angle-Angles.yaw) > 90.0/20.0) {
+        Angles.yaw = angle-90.0/21.0;
+      } else {
+        Angles.yaw += 90.0/20.0;
+      }
     }
     Angles.yaw = AngleMod360(Angles.yaw);
-  }
-  else
-  {
+  } else {
     PlaySound('weapons/sawfull', CHAN_WEAPON);
   }
 }
+
 
 //==========================================================================
 //
 //  A_SentinelRefire
 //
 //==========================================================================
-
-final void A_SentinelRefire()
-{
+final void A_SentinelRefire () {
   // keep firing unless target got out of sight
   A_FaceTarget();
 
-  if (P_Random() < 30)
-  {
-    return;
-  }
+  if (P_Random() < 30) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target) || P_Random() < 40)
-  {
-    SetState(SeeState);
-  }
+  if (!Target || Target.Health <= 0 || !CanSee(Target) || P_Random() < 40) SetState(SeeState);
 }

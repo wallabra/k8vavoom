@@ -27,7 +27,7 @@
 //**
 //**************************************************************************
 
-// Flags for A_Remove*
+// flags for A_Remove*
 enum /*ERemoveFlags*/ {
   RMVF_MISSILES   = 0x00000001,
   RMVF_NOMONSTERS = 0x00000002,
@@ -38,26 +38,26 @@ enum /*ERemoveFlags*/ {
   RMVF_EITHER     = 0x00000040,
 };
 
-// Flags for A_RadiusGive
+// flags for A_RadiusGive
 enum /*ERadiusGiveFlags*/ {
   RGF_GIVESELF  = 1,
-  RGF_PLAYERS   = 1 << 1,
-  RGF_MONSTERS  = 1 << 2,
-  RGF_OBJECTS   = 1 << 3,
-  RGF_VOODOO    = 1 << 4,
-  RGF_CORPSES   = 1 << 5,
-  RGF_NOTARGET  = 1 << 6,
-  RGF_NOTRACER  = 1 << 7,
-  RGF_NOMASTER  = 1 << 8,
-  RGF_CUBE      = 1 << 9,
-  RGF_NOSIGHT   = 1 << 10,
-  RGF_MISSILES  = 1 << 11,
-  RGF_INCLUSIVE = 1 << 12,
-  RGF_ITEMS     = 1 << 13,
-  RGF_KILLED    = 1 << 14,
-  RGF_EXFILTER  = 1 << 15,
-  RGF_EXSPECIES = 1 << 16,
-  RGF_EITHER    = 1 << 17,
+  RGF_PLAYERS   = 1<<1,
+  RGF_MONSTERS  = 1<<2,
+  RGF_OBJECTS   = 1<<3,
+  RGF_VOODOO    = 1<<4,
+  RGF_CORPSES   = 1<<5,
+  RGF_NOTARGET  = 1<<6,
+  RGF_NOTRACER  = 1<<7,
+  RGF_NOMASTER  = 1<<8,
+  RGF_CUBE      = 1<<9,
+  RGF_NOSIGHT   = 1<<10,
+  RGF_MISSILES  = 1<<11,
+  RGF_INCLUSIVE = 1<<12,
+  RGF_ITEMS     = 1<<13,
+  RGF_KILLED    = 1<<14,
+  RGF_EXFILTER  = 1<<15,
+  RGF_EXSPECIES = 1<<16,
+  RGF_EITHER    = 1<<17,
 };
 
 
@@ -293,7 +293,7 @@ final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, 
         // find correct shooter for projectiles shooting projectiles
         if (tgt.IsMissile(!!(Flags&4))) {
           EntityEx Own = tgt/*self*/;
-          while (Own.IsMissile(!!(Flags & 4)) && Own.Target) Own = Own.Target;
+          while (Own.IsMissile(!!(Flags&4)) && Own.Target) Own = Own.Target;
           A.Target = Own;
           if (A.bSeekerMissile) A.Tracer = tgt.Tracer;
         } else if (A.bSeekerMissile) {
