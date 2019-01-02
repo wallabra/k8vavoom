@@ -1,73 +1,54 @@
 //**************************************************************************
 //**
-//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
-//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**     #    ##    ##    #      ####     ####   ##       ##
-//**
-//**  $Id$
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
 //**
-//**  This program is free software; you can redistribute it and/or
-//**  modify it under the terms of the GNU General Public License
-//**  as published by the Free Software Foundation; either version 2
-//**  of the License, or (at your option) any later version.
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
 //**
 //**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
-
-// MACROS ------------------------------------------------------------------
 
 //#define CLOSEDDF
 
-// TYPES -------------------------------------------------------------------
 
-class VDebugLog : public VLogListener
-{
+class VDebugLog : public VLogListener {
 public:
-  virtual void Serialise(const char *Text, EName Event) override {
+  virtual void Serialise (const char *Text, EName Event) override {
     dprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColours());
   }
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static FILE *df = nullptr;
-static const char *debug_file_name;
-static VDebugLog  DebugLog;
+static const char *debug_file_name = nullptr;
+static VDebugLog DebugLog;
 
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  OpenDebugFile
 //
 //==========================================================================
-
-void OpenDebugFile(const char *name)
-{
-    debug_file_name = name;
+void OpenDebugFile (const char *name) {
+  debug_file_name = name;
 #ifdef CLOSEDDF
   df = fopen(debug_file_name, "w");
   fclose(df);
@@ -76,35 +57,31 @@ void OpenDebugFile(const char *name)
   if (GArgs.CheckParm("-debug"))
 #endif
   {
-    if (GArgs.CheckParm("-RHIDE"))
-        df = stderr;
-    else
+    if (GArgs.CheckParm("-RHIDE")) {
+      df = stderr;
+    } else {
       df = fopen(debug_file_name, "w");
+    }
   }
 #endif
-  if (df)
-  {
-    GLog.AddListener(&DebugLog);
-  }
+  if (df) GLog.AddListener(&DebugLog);
 }
+
 
 //==========================================================================
 //
 //  dprintf
 //
 //==========================================================================
-
-int dprintf(const char *s, ...)
-{
+int dprintf (const char *s, ...) {
   va_list v;
 
 #ifdef CLOSEDDF
-    df = fopen(debug_file_name, "a");
+  df = fopen(debug_file_name, "a");
 #endif
 
   va_start(v, s);
-  if (df)
-  {
+  if (df) {
     vfprintf(df, s, v);
     fflush(df);
   }

@@ -1,28 +1,29 @@
 //**************************************************************************
 //**
-//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
-//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**     #    ##    ##    #      ####     ####   ##       ##
-//**
-//**  $Id$
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
 //**
-//**  This program is free software; you can redistribute it and/or
-//**  modify it under the terms of the GNU General Public License
-//**  as published by the Free Software Foundation; either version 2
-//**  of the License, or (at your option) any later version.
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
 //**
 //**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
 //**************************************************************************
-
 #include "vc_local.h"
 #include <limits.h>
 #include <float.h>
@@ -2099,61 +2100,61 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       break;
     case OPC_Builtin_VecLength:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       fv = v0.length();
       if (!isFiniteF(fv)) fv = 0;
       e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecLength2D:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       fv = v0.length2D();
       if (!isFiniteF(fv)) fv = 0;
       e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecNormalize:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       v0 = normalise(v0);
       if (!v0.isValid()) v0 = TVec(0, 0, 0);
-      e = new VVector(v0, Loc);
+      e = new VVectorExpr(v0, Loc);
       break;
     case OPC_Builtin_VecNormalize2D:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       v0 = normalise2D(v0);
       if (!v0.isValid()) v0 = TVec(0, 0, 0);
-      e = new VVector(v0, Loc);
+      e = new VVectorExpr(v0, Loc);
       break;
     case OPC_Builtin_VecDot:
       //fprintf(stderr, "op0=<%s>; op1=<%s>\n", *Args[0]->toString(), *Args[1]->toString());
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
-      v1 = ((VVector *)Args[1])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
       fv = dot(v0, v1);
       if (!isFiniteF(fv)) ParseError(Loc, "dotproduct is INF/NAN");
       e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecDot2D:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
-      v1 = ((VVector *)Args[1])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
       fv = dot2D(v0, v1);
       if (!isFiniteF(fv)) ParseError(Loc, "dotproduct2d is INF/NAN");
       e = new VFloatLiteral(fv, Loc);
       break;
     case OPC_Builtin_VecCross:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
-      v1 = ((VVector *)Args[1])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
       v0 = cross(v0, v1);
       if (!v0.isValid()) ParseError(Loc, "crossproduct is INF/NAN");
-      e = new VVector(v0, Loc);
+      e = new VVectorExpr(v0, Loc);
       break;
     case OPC_Builtin_VecCross2D:
       if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Vector})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
-      v1 = ((VVector *)Args[1])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      v1 = ((VVectorExpr *)Args[1])->GetConstValue();
       fv = cross2D(v0, v1);
       if (!isFiniteF(fv)) ParseError(Loc, "crossproduct2d is INF/NAN");
       e = new VFloatLiteral(fv, Loc);
@@ -2205,7 +2206,7 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       break;
     case OPC_Builtin_VectorClamp: // (val, min, max)
       if (!CheckSimpleConstArgs(3, (const int []){TYPE_Vector, TYPE_Float, TYPE_Float})) return this;
-      v0 = ((VVector *)Args[0])->GetConstValue();
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       {
         float vmin = Args[1]->GetFloatConst();
         float vmax = Args[2]->GetFloatConst();
@@ -2218,7 +2219,7 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
           v0.y = MID(vmin, v0.y, vmax);
           v0.z = MID(vmin, v0.z, vmax);
         }
-        e = new VVector(v0, Loc);
+        e = new VVectorExpr(v0, Loc);
       }
       break;
     default: break;

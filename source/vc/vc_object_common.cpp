@@ -1,25 +1,27 @@
 //**************************************************************************
 //**
-//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
-//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**     #    ##    ##    #      ####     ####   ##       ##
-//**
-//**  $Id$
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
 //**
-//**  This program is free software; you can redistribute it and/or
-//**  modify it under the terms of the GNU General Public License
-//**  as published by the Free Software Foundation; either version 2
-//**  of the License, or (at your option) any later version.
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
 //**
 //**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
 #include "vc_object_rtti.cpp"
@@ -450,29 +452,8 @@ IMPLEMENT_FUNCTION(VObject, GenRandomSeedU32) {
 }
 
 IMPLEMENT_FUNCTION(VObject, P_Random) {
-  RET_INT(rand()&0xff);
-}
-
-
-// http://burtleburtle.net/bob/rand/smallprng.html
-struct BJPRNGCtx {
-  vuint32 a, b, c, d;
-};
-
-#define bjprng_rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
-static inline vuint32 ranval (BJPRNGCtx *x) {
-  vuint32 e = x->a-bjprng_rot(x->b, 27);
-  x->a = x->b^bjprng_rot(x->c, 17);
-  x->b = x->c+x->d;
-  x->c = x->d+e;
-  x->d = e+x->a;
-  return x->d;
-}
-
-static inline void raninit (BJPRNGCtx *x, vuint32 seed) {
-  x->a = 0xf1ea5eed;
-  x->b = x->c = x->d = seed;
-  for (unsigned i = 0; i < 20; ++i) (void)ranval(x);
+  //RET_INT(rand()&0xff);
+  RET_INT(P_Random());
 }
 
 
@@ -480,14 +461,14 @@ static inline void raninit (BJPRNGCtx *x, vuint32 seed) {
 IMPLEMENT_FUNCTION(VObject, bjprngSeed) {
   P_GET_INT(aseed);
   P_GET_PTR(BJPRNGCtx, ctx);
-  if (ctx) raninit(ctx, (vuint32)aseed);
+  if (ctx) bjprng_raninit(ctx, (vuint32)aseed);
 }
 
 // full 32-bit value (so it can be negative)
 //native static final int bjprngNext (ref BJPRNGCtx ctx);
 IMPLEMENT_FUNCTION(VObject, bjprngNext) {
   P_GET_PTR(BJPRNGCtx, ctx);
-  RET_INT(ctx ? ranval(ctx) : 0);
+  RET_INT(ctx ? bjprng_ranval(ctx) : 0);
 }
 
 // [0..1) (WARNING! not really uniform!)
@@ -496,7 +477,7 @@ IMPLEMENT_FUNCTION(VObject, bjprngNextFloat) {
   P_GET_PTR(BJPRNGCtx, ctx);
   if (ctx) {
     for (;;) {
-      float v = ((double)ranval(ctx))/((double)0xffffffffu);
+      float v = ((double)bjprng_ranval(ctx))/((double)0xffffffffu);
       if (v < 1.0f) { RET_FLOAT(v); return; }
     }
   } else {

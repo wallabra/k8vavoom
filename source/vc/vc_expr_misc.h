@@ -1,43 +1,44 @@
 //**************************************************************************
 //**
-//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
-//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**     #    ##    ##    #      ####     ####   ##       ##
-//**
-//**  $Id$
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
 //**
-//**  This program is free software; you can redistribute it and/or
-//**  modify it under the terms of the GNU General Public License
-//**  as published by the Free Software Foundation; either version 2
-//**  of the License, or (at your option) any later version.
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
 //**
 //**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
 //**************************************************************************
 
-
 //==========================================================================
 //
-//  VVector
+//  VVectorExpr
 //
 //==========================================================================
-class VVector : public VExpression {
+class VVectorExpr : public VExpression {
 public:
   VExpression *op1;
   VExpression *op2;
   VExpression *op3;
 
-  VVector (VExpression *, VExpression *, VExpression *, const TLocation &);
-  VVector (const TVec &vv, const TLocation &aloc);
-  virtual ~VVector () override;
+  VVectorExpr (VExpression *, VExpression *, VExpression *, const TLocation &);
+  VVectorExpr (const TVec &vv, const TLocation &aloc);
+  virtual ~VVectorExpr () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
@@ -52,7 +53,7 @@ public:
   virtual VStr toString () const override;
 
 protected:
-  VVector () {}
+  VVectorExpr () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
 

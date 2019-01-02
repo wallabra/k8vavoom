@@ -7,40 +7,41 @@
 //**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**       #    ##    ##    #      ####     ####   ##       ##
 //**
-//**    $Id$
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
 //**
-//**    Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
 //**
-//**    This program is free software; you can redistribute it and/or
-//**  modify it under the terms of the GNU General Public License
-//**  as published by the Free Software Foundation; either version 2
-//**  of the License, or (at your option) any later version.
-//**
-//**    This program is distributed in the hope that it will be useful,
+//**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
 //**************************************************************************
-
 class HUDMessageTypeOnFadeOut : HUDMessage;
 
-int     State;
-float   TypeOnTime;
-int     CurrentLine;
-int     LineChars;
-int     LineLen;
-float   FadeOutTime;
+int State;
+float TypeOnTime;
+int CurrentLine;
+int LineChars;
+int LineLen;
+float FadeOutTime;
+
 
 //==========================================================================
 //
 //  Init
 //
 //==========================================================================
-
-override void Init(string Message, name AFont, int Type, int AId, int Colour,
-  float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
-  float Time1, float Time2)
+override void Init (string Message, name AFont, int Type, int AId, int Colour,
+                    float AMsgX, float AMsgY, int AHudWidth, int AHudHeight, float AHoldTime,
+                    float Time1, float Time2)
 {
   ::Init(Message, AFont, Type, AId, Colour, AMsgX, AMsgY, AHudWidth, AHudHeight, AHoldTime, Time1, Time2);
   Time1 = fclamp(Time1, 0.1, 100000);

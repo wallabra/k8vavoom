@@ -1,3 +1,8 @@
+/*
+	Public domain by Andrew M. <liquidsun@gmail.com>
+
+	Ed25519 reference implementation using Ed25519-donna
+*/
 #ifndef ED25519_H
 #define ED25519_H
 

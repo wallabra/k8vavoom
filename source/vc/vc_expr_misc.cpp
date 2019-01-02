@@ -1,37 +1,38 @@
-///**************************************************************************
+//**************************************************************************
 //**
-//**  ##   ##    ##    ##   ##   ####     ####   ###     ###
-//**  ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
-//**   ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
-//**   ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
-//**    ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
-//**     #    ##    ##    #      ####     ####   ##       ##
-//**
-//**  $Id$
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
 //**
-//**  This program is free software; you can redistribute it and/or
-//**  modify it under the terms of the GNU General Public License
-//**  as published by the Free Software Foundation; either version 2
-//**  of the License, or (at your option) any later version.
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
 //**
 //**  This program is distributed in the hope that it will be useful,
 //**  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //**  GNU General Public License for more details.
 //**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
 //**************************************************************************
-
 #include "vc_local.h"
 
 
 //==========================================================================
 //
-//  VVector::VVector
+//  VVectorExpr::VVectorExpr
 //
 //==========================================================================
-VVector::VVector (VExpression *AOp1, VExpression *AOp2, VExpression *AOp3, const TLocation &ALoc)
+VVectorExpr::VVectorExpr (VExpression *AOp1, VExpression *AOp2, VExpression *AOp3, const TLocation &ALoc)
   : VExpression(ALoc)
   , op1(AOp1)
   , op2(AOp2)
@@ -45,10 +46,10 @@ VVector::VVector (VExpression *AOp1, VExpression *AOp2, VExpression *AOp3, const
 
 //==========================================================================
 //
-//  VVector::VVector
+//  VVectorExpr::VVectorExpr
 //
 //==========================================================================
-VVector::VVector (const TVec &vv, const TLocation &aloc)
+VVectorExpr::VVectorExpr (const TVec &vv, const TLocation &aloc)
   : VExpression(aloc)
 {
   op1 = new VFloatLiteral(vv.x, aloc);
@@ -59,10 +60,10 @@ VVector::VVector (const TVec &vv, const TLocation &aloc)
 
 //==========================================================================
 //
-//  VVector::~VVector
+//  VVectorExpr::~VVectorExpr
 //
 //==========================================================================
-VVector::~VVector () {
+VVectorExpr::~VVectorExpr () {
   if (op1) { delete op1; op1 = nullptr; }
   if (op2) { delete op2; op2 = nullptr; }
   if (op3) { delete op3; op3 = nullptr; }
@@ -71,11 +72,11 @@ VVector::~VVector () {
 
 //==========================================================================
 //
-//  VVector::SyntaxCopy
+//  VVectorExpr::SyntaxCopy
 //
 //==========================================================================
-VExpression *VVector::SyntaxCopy () {
-  auto res = new VVector();
+VExpression *VVectorExpr::SyntaxCopy () {
+  auto res = new VVectorExpr();
   DoSyntaxCopyTo(res);
   return res;
 }
@@ -83,12 +84,12 @@ VExpression *VVector::SyntaxCopy () {
 
 //==========================================================================
 //
-//  VVector::DoSyntaxCopyTo
+//  VVectorExpr::DoSyntaxCopyTo
 //
 //==========================================================================
-void VVector::DoSyntaxCopyTo (VExpression *e) {
+void VVectorExpr::DoSyntaxCopyTo (VExpression *e) {
   VExpression::DoSyntaxCopyTo(e);
-  auto res = (VVector *)e;
+  auto res = (VVectorExpr *)e;
   res->op1 = (op1 ? op1->SyntaxCopy() : nullptr);
   res->op2 = (op2 ? op2->SyntaxCopy() : nullptr);
   res->op3 = (op3 ? op3->SyntaxCopy() : nullptr);
@@ -97,10 +98,10 @@ void VVector::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VVector::DoResolve
+//  VVectorExpr::DoResolve
 //
 //==========================================================================
-VExpression *VVector::DoResolve (VEmitContext &ec) {
+VExpression *VVectorExpr::DoResolve (VEmitContext &ec) {
   if (op1) op1 = op1->ResolveFloat(ec);
   if (op2) op2 = op2->ResolveFloat(ec);
   if (op3) op3 = op3->ResolveFloat(ec);
@@ -134,10 +135,10 @@ VExpression *VVector::DoResolve (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VVector::Emit
+//  VVectorExpr::Emit
 //
 //==========================================================================
-void VVector::Emit (VEmitContext &ec) {
+void VVectorExpr::Emit (VEmitContext &ec) {
   if (op1) op1->Emit(ec);
   if (op1) op2->Emit(ec);
   if (op1) op3->Emit(ec);
@@ -146,31 +147,31 @@ void VVector::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
-//  VVector::IsVectorCtor
+//  VVectorExpr::IsVectorCtor
 //
 //==========================================================================
-bool VVector::IsVectorCtor () const {
+bool VVectorExpr::IsVectorCtor () const {
   return true;
 }
 
 
 //==========================================================================
 //
-//  VVector::IsConstVectorCtor
+//  VVectorExpr::IsConstVectorCtor
 //
 //==========================================================================
-bool VVector::IsConstVectorCtor () const {
+bool VVectorExpr::IsConstVectorCtor () const {
   return IsConst();
 }
 
 
 //==========================================================================
 //
-//  VVector::IsConst
+//  VVectorExpr::IsConst
 //
 //==========================================================================
 // is this a const ctor? (should be called after resolving)
-bool VVector::IsConst () const {
+bool VVectorExpr::IsConst () const {
   if (!op1 || !op2 || !op3) return false;
   return
     (op1->IsFloatConst() || op1->IsIntConst()) &&
@@ -181,10 +182,10 @@ bool VVector::IsConst () const {
 
 //==========================================================================
 //
-//  VVector::GetConstValue
+//  VVectorExpr::GetConstValue
 //
 //==========================================================================
-TVec VVector::GetConstValue () const {
+TVec VVectorExpr::GetConstValue () const {
   TVec res(0, 0, 0);
   if (!IsConst()) {
     ParseError(Loc, "Cannot get const value from non-const vector");
@@ -199,10 +200,10 @@ TVec VVector::GetConstValue () const {
 
 //==========================================================================
 //
-//  VVector::toString
+//  VVectorExpr::toString
 //
 //==========================================================================
-VStr VVector::toString () const {
+VStr VVectorExpr::toString () const {
   return VStr("vector(")+e2s(op1)+","+e2s(op2)+","+e2s(op3)+")";
 }
 
