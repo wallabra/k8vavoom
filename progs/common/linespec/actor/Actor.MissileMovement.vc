@@ -22,86 +22,50 @@
 //**  GNU General Public License for more details.
 //**
 //**************************************************************************
-
-//**************************************************************************
 //  Missile movement
 //**************************************************************************
+const float TRACEADJUST = 0.2865921825;
+const float TRACE2ANGLE = 7.0*45.0/16.0;
+
 
 //==========================================================================
 //
 //  A_SeekerMissile
 //
 //==========================================================================
-
-final void A_SeekerMissile(int Threshold, int TurnMax, optional int flags,
-              optional int chance, optional int distance)
+final void A_SeekerMissile (int Threshold, int TurnMax, optional int flags,
+                            optional int chance, optional int distance)
 {
-  if (Threshold < 0)
-  {
-    Threshold = 0;
-  }
-  else if (Threshold > 90)
-  {
-    Threshold = 90;
-  }
-  if (TurnMax < 0)
-  {
-    TurnMax = 0;
-  }
-  else if (TurnMax > 90)
-  {
-    TurnMax = 90;
-  }
-  if ((flags & SMF_LOOK) && !Tracer && (Random() < itof(chance) / 100.0))
-  {
+       if (Threshold < 0) Threshold = 0;
+  else if (Threshold > 90) Threshold = 90;
+
+       if (TurnMax < 0) TurnMax = 0;
+  else if (TurnMax > 90) TurnMax = 90;
+
+  if ((flags&SMF_LOOK) && !Tracer && (Random() < float(chance)/100.0)) {
     Entity Other;
-
-    foreach RoughBlockSearch(Other, distance)
-    {
+    foreach RoughBlockSearch(Other, distance) {
       EntityEx link = EntityEx(Other);
-
-      if (!(link.bMonster || link.bIsPlayer) || link == Target ||
-        link.bDormant)
-      {
-        continue;
-      }
-      if (!link.bShootable)
-      {
-        continue;
-      }
-      if (IsTeammate(link))
-      {
-        continue;
-      }
-      if (!CanSeek(link))
-      {
-        continue;
-      }
-      if (bScreenSeeker)
-      {
-        if (CanSee(link))
-        {
-          float angle = AngleMod360(atan2(link.Origin.y - Target.Origin.y,
-            link.Origin.x - Target.Origin.x) - Target.Angles.yaw);
-          if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
-          {
-            continue;
-          }
+      if (!link) continue;
+      if (!(link.bMonster || link.bIsPlayer) || link == Target || link.bDormant) continue;
+      if (!link.bShootable) continue;
+      if (IsTeammate(link)) continue;
+      if (!CanSeek(link)) continue;
+      if (bScreenSeeker) {
+        if (CanSee(link)) {
+          float angle = AngleMod360(atan2(link.Origin.y-Target.Origin.y, link.Origin.x-Target.Origin.x)-Target.Angles.yaw);
+          if (angle <= 226.0*360.0/256.0 || angle >= 30.0*360.0/256.0) continue;
         }
-      }
-      else
-      {
-        if (!CanSee(link))
-        {
-          continue;
-        }
+      } else {
+        if (!CanSee(link)) continue;
       }
       Tracer = link;
       break;
     }
   }
-  SeekerMissile(itof(Threshold), itof(TurnMax), !!(flags & SMF_PRECISE), !!(flags&SMF_CURSPEED));
+  SeekerMissile(float(Threshold), float(TurnMax), !!(flags&SMF_PRECISE), !!(flags&SMF_CURSPEED));
 }
+
 
 //==========================================================================
 //
@@ -110,103 +74,72 @@ final void A_SeekerMissile(int Threshold, int TurnMax, optional int flags,
 //  Ravenant missile tracer.
 //
 //==========================================================================
-
-const float TRACEADJUST = 0.2865921825;
-
-final void A_Tracer()
-{
+final void A_Tracer () {
   EntityEx A;
   TVec wishdir;
   TVec currdir;
   TVec delta;
   float adjustlen;
 
-  if (XLevel.TicTime & 3)
-  {
-    return;
-  }
+  if (XLevel.TicTime&3) return;
 
   // spawn a puff of smoke behind the rocket
   SpawnPuff(Origin, MISSILERANGE, BulletPuff, false);
 
-  A = Spawn(RevenantTracerSmoke, Origin - Velocity * Level.Game.frametime);
+  A = Spawn(RevenantTracerSmoke, Origin-Velocity*Level.Game.frametime);
 
-  A.Velocity.z = 1.0 * 35.0;
-  A.StateTime -= Random() * 0.1;
-  if (A.StateTime < 0.1)
-  {
-    A.StateTime = 0.1;
-  }
+  A.Velocity.z = 1.0*35.0;
+  A.StateTime -= Random()*0.1;
+  if (A.StateTime < 0.1) A.StateTime = 0.1;
 
   // adjust direction
-  if (!Tracer || Tracer.Health <= 0 || !CanSeek(Tracer))
-  {
-    return;
-  }
+  if (!Tracer || Tracer.Health <= 0 || !CanSeek(Tracer)) return;
 
-  wishdir = Normalise(Tracer.GetCentre() - Origin);
+  wishdir = Normalise(Tracer.GetCentre()-Origin);
   currdir = Normalise(Velocity);
-  delta = wishdir - currdir;
+  delta = wishdir-currdir;
   adjustlen = Length(delta);
-  if (adjustlen > TRACEADJUST)
-  {
-    adjustlen = TRACEADJUST;
-  }
-  wishdir = currdir + delta * adjustlen;
-  Velocity = wishdir * Speed;
+  if (adjustlen > TRACEADJUST) adjustlen = TRACEADJUST;
+  wishdir = currdir+delta*adjustlen;
+  Velocity = wishdir*Speed;
   VectorAngles(wishdir, out Angles);
 }
+
 
 //==========================================================================
 //
 //  A_Tracer2
 //
 //==========================================================================
+final void A_Tracer2 () {
+  EntityEx dest = Tracer;
 
-const float TRACE2ANGLE = (7.0 * 45.0 / 16.0);
-
-final void A_Tracer2()
-{
-  EntityEx dest;
-  float exact;
-  float dist;
-  float slope;
-
-  dest = Tracer;
-
-  if (!dest || dest.Health <= 0 || !CanSeek(dest))
-    return;
+  if (!dest || dest.Health <= 0 || !CanSeek(dest)) return;
 
   // change angle
-  exact = atan2(dest.Origin.y - Origin.y, dest.Origin.x - Origin.x);
+  float exact = atan2(dest.Origin.y-Origin.y, dest.Origin.x-Origin.x);
 
-  if (exact != Angles.yaw)
-  {
-    if (AngleMod360(exact - Angles.yaw) > 180.0)
-    {
-      Angles.yaw = AngleMod360(Angles.yaw - TRACE2ANGLE);
-      if (AngleMod360(exact - Angles.yaw) < 180.0)
-        Angles.yaw = exact;
-    }
-    else
-    {
-      Angles.yaw = AngleMod360(Angles.yaw + TRACE2ANGLE);
-      if (AngleMod360(exact - Angles.yaw) > 180.0)
-        Angles.yaw = exact;
+  if (exact != Angles.yaw) {
+    if (AngleMod360(exact-Angles.yaw) > 180.0) {
+      Angles.yaw = AngleMod360(Angles.yaw-TRACE2ANGLE);
+      if (AngleMod360(exact-Angles.yaw) < 180.0) Angles.yaw = exact;
+    } else {
+      Angles.yaw = AngleMod360(Angles.yaw+TRACE2ANGLE);
+      if (AngleMod360(exact-Angles.yaw) > 180.0) Angles.yaw = exact;
     }
   }
 
   exact = Angles.yaw;
-  Velocity.x = Speed * cos(exact);
-  Velocity.y = Speed * sin(exact);
+  Velocity.x = Speed*cos(exact);
+  Velocity.y = Speed*sin(exact);
 
   // change slope
   if (Speed) {
-    dist = DistTo2(dest);
+    float dist = DistTo2(dest);
     dist /= Speed;
     if (dist < 1.0 || !dist.isfinite) dist = 1.0;
 
-    slope = (dest.Origin.z+40.0-Origin.z)/dist;
+    float slope = (dest.Origin.z+40.0-Origin.z)/dist;
     if (slope < Velocity.z) {
       Velocity.z -= 1.0/8.0*35.0;
     } else {
@@ -215,16 +148,16 @@ final void A_Tracer2()
   }
 }
 
+
 //==========================================================================
 //
 //  A_Fire
 //
 //==========================================================================
-
-final void A_Fire()
-{
+final void A_Fire () {
   decorate_A_Fire();
 }
+
 
 //==========================================================================
 //
@@ -233,127 +166,97 @@ final void A_Fire()
 //  Keep fire in front of player unless out of sight.
 //
 //==========================================================================
-
-final void decorate_A_Fire(optional int Height)
-{
-  if (!Target || !Tracer)
-  {
-    return;
-  }
+final void decorate_A_Fire (optional int Height) {
+  if (!Target || !Tracer) return;
 
   // don't move it if the vile lost sight
-  if (!Target.CanSee(Tracer))
-  {
-    return;
-  }
+  if (!Target.CanSee(Tracer)) return;
 
   UnlinkFromWorld();
-  Origin.x = Tracer.Origin.x + 24.0 * cos(Tracer.Angles.yaw);
-  Origin.y = Tracer.Origin.y + 24.0 * sin(Tracer.Angles.yaw);
-  if (!specified_Height)
-  {
+  Origin.x = Tracer.Origin.x+24.0*cos(Tracer.Angles.yaw);
+  Origin.y = Tracer.Origin.y+24.0*sin(Tracer.Angles.yaw);
+  if (!specified_Height) {
     Origin.z = Tracer.Origin.z;
-  }
-  else
-  {
-    Origin.z = Tracer.Origin.z + itof(Height);
+  } else {
+    Origin.z = Tracer.Origin.z+float(Height);
   }
   LinkToWorld();
 }
+
 
 //==========================================================================
 //
 //  A_BishopMissileWeave
 //
 //==========================================================================
-
-final void A_BishopMissileWeave()
-{
-  int WeaveXY = Special2 >> 16;
-  int WeaveZ = Special2 & 0xffff;
-  float angle = AngleMod360(Angles.yaw + 90.0);
-  float newX = Origin.x - cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 2.0;
-  float newY = Origin.y - sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 2.0;
-  WeaveXY = (WeaveXY + 2) & 63;
-  newX += cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 2.0;
-  newY += sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 2.0;
+final void A_BishopMissileWeave () {
+  int WeaveXY = Special2>>16;
+  int WeaveZ = Special2&0xffff;
+  float angle = AngleMod360(Angles.yaw+90.0);
+  float newX = Origin.x-cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*2.0;
+  float newY = Origin.y-sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*2.0;
+  WeaveXY = (WeaveXY+2)&63;
+  newX += cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*2.0;
+  newY += sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*2.0;
   TryMove(vector(newX, newY, Origin.z), false);
   Origin.z -= Level.Game.FloatBobOffsets[WeaveZ];
-  WeaveZ = (WeaveZ + 2) & 63;
+  WeaveZ = (WeaveZ+2)&63;
   Origin.z += Level.Game.FloatBobOffsets[WeaveZ];
-  Special2 = (WeaveXY << 16) | WeaveZ;
+  Special2 = (WeaveXY<<16)|WeaveZ;
 }
+
 
 //============================================================================
 //
 //  A_CStaffMissileSlither
 //
 //============================================================================
-
-final void A_CStaffMissileSlither()
-{
+final void A_CStaffMissileSlither () {
   int WeaveXY = Special2;
-  float angle = AngleMod360(Angles.yaw + 90.0);
-  float newX = Origin.x - cos(angle) * Level.Game.FloatBobOffsets[WeaveXY];
-  float newY = Origin.y - sin(angle) * Level.Game.FloatBobOffsets[WeaveXY];
-  WeaveXY = (WeaveXY + 3) & 63;
-  newX += cos(angle) * Level.Game.FloatBobOffsets[WeaveXY];
-  newY += sin(angle) * Level.Game.FloatBobOffsets[WeaveXY];
+  float angle = AngleMod360(Angles.yaw+90.0);
+  float newX = Origin.x-cos(angle)*Level.Game.FloatBobOffsets[WeaveXY];
+  float newY = Origin.y-sin(angle)*Level.Game.FloatBobOffsets[WeaveXY];
+  WeaveXY = (WeaveXY+3)&63;
+  newX += cos(angle)*Level.Game.FloatBobOffsets[WeaveXY];
+  newY += sin(angle)*Level.Game.FloatBobOffsets[WeaveXY];
   TryMove(vector(newX, newY, Origin.z), false);
   Special2 = WeaveXY;
 }
+
 
 //==========================================================================
 //
 //  A_Countdown
 //
 //==========================================================================
-
-final void A_Countdown()
-{
-  if (--ReactionCount <= 0)
-  {
+final void A_Countdown () {
+  if (--ReactionCount <= 0) {
     ExplodeMissile(none);
     bSkullFly = false;
   }
 }
+
 
 //==========================================================================
 //
 //  A_CountdownArg
 //
 //==========================================================================
-
-final void A_CountdownArg(int Index)
-{
-  if (Index <= 0 || Index > 5)
-  {
-    return;
-  }
-  if (!Args[Index - 1]--)
-  {
-    if (bMissile)
-    {
-      ExplodeMissile(none);
-    }
-    else if (bShootable)
-    {
-      Damage(none, none, Health, spawnBlood:true);
-    }
-    else
-    {
-      SetState(FindState('Death'));
-    }
+final void A_CountdownArg (int Index) {
+  if (Index <= 0 || Index > 5) return;
+  if (!Args[Index-1]--) {
+         if (bMissile) ExplodeMissile(none);
+    else if (bShootable) Damage(none, none, Health, spawnBlood:true);
+    else SetState(FindState('Death'));
   }
 }
+
 
 //============================================================================
 //
 //  A_Stop
 //
 //============================================================================
-
-final void A_Stop()
-{
+final void A_Stop () {
   Velocity = vector(0.0, 0.0, 0.0);
 }
