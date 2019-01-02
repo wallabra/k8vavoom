@@ -84,6 +84,8 @@ float Random () {
 
 #include "../source/scripts.h"
 
+#include "../source/misc.h"
+
 
 extern int dprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
 extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
