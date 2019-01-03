@@ -35,28 +35,79 @@ class FastProjectile : Actor;
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
-  float Count = 8.0;
+  int Count = 8;
 
+  //print("%C: velocity=%s", self, Velocity);
   // clamp some values
-  Velocity = vclamp(Velocity, -8191, 8191);
+  Velocity = vclamp(Velocity, -8191*2, 8191*2);
   Origin = vclamp(Origin, -100000, 100000);
-  Speed = fclamp(Speed, -4095, 4095);
+  //Speed = fclamp(Speed, -4095, 4095);
+
+  float velxDT = Velocity.x*DeltaTime;
+  float velyDT = Velocity.y*DeltaTime;
 
   if (Radius > 0.0) {
-    while (Velocity.x*DeltaTime/Count > Radius || Velocity.y*DeltaTime/Count > Radius) {
+    //print("  0count=%s", Count);
+    bool xbad = (velxDT/float(Count) > Radius);
+    bool ybad = (velyDT/float(Count) > Radius);
+    if (xbad || ybad) {
       // must take smaller steps
-      Count *= 2.0;
+      for (;;) {
+        // multiply
+        int newCount = Count*2;
+        bool newxbad = (xbad ? (velxDT/float(newCount) > Radius) : false);
+        bool newybad = (ybad ? (velyDT/float(newCount) > Radius) : false);
+        if (newxbad || newybad) {
+          xbad = newxbad;
+          ybad = newybad;
+          Count = newCount;
+        } else {
+          break;
+        }
+      }
+      // several step sizes
+      int currStep = Count;
+      while (currStep > 1) {
+        for (;;) {
+          int newCount = Count+currStep;
+          bool newxbad = (xbad ? (velxDT/float(newCount) > Radius) : false);
+          bool newybad = (ybad ? (velyDT/float(newCount) > Radius) : false);
+          if (newxbad || newybad) {
+            xbad = newxbad;
+            ybad = newybad;
+            Count = newCount;
+          } else {
+            break;
+          }
+        }
+        if (currStep > 3) {
+          //print(" NCS: %s (%s); count=%s", currStep, currStep-currStep/3, Count);
+          currStep -= currStep/3;
+        } else {
+          //print(" NCS: %s (%s); count=%s", currStep, currStep-1, Count);
+          --currStep;
+        }
+      }
+      // and final one
+      while (xbad || ybad) {
+        ++Count;
+        if (xbad) xbad = (velxDT/float(Count) > Radius);
+        if (ybad) ybad = (velyDT/float(Count) > Radius);
+      }
+      // just a check
+      if (velxDT/float(Count) > Radius || velyDT/float(Count) > Radius) FatalError("FastProjectile::Tick step calculation failed");
     }
+    //print("  1count=%s", Count);
   }
 
   // handle movement
   if (Velocity || Origin.z != FloorZ) {
     tmtrace_t tmtrace;
-    float xfrac = Velocity.x*DeltaTime/Count;
-    float yfrac = Velocity.y*DeltaTime/Count;
-    float zfrac = Velocity.z*DeltaTime/Count;
+    float xfrac = velxDT/float(Count);
+    float yfrac = velyDT/float(Count);
+    float zfrac = Velocity.z*DeltaTime/float(Count);
     bool changexy = xfrac || yfrac;
-    foreach (auto i; 0..8) {
+    foreach (auto i; 0..Count) {
       if (changexy) {
         if (!TryMoveEx(&tmtrace, vector(Origin.x+xfrac, Origin.y+yfrac, Origin.z), true)) {
           // blocked move
