@@ -1074,12 +1074,12 @@ VStr VStr::RemoveColours () const {
   while (pos < oldlen) {
     char c = data[pos++];
     if (c == TEXT_COLOUR_ESCAPE) {
-      if (data[pos] == '[') {
-        ++pos;
-        while (pos < oldlen && data[pos] != ']') ++pos;
-        ++pos;
-      } else {
-        ++pos;
+      if (pos >= oldlen) break;
+      c = data[pos++];
+      if (!c) break;
+      if (c == '[') {
+        while (pos < oldlen && data[pos] && data[pos] != ']') ++pos;
+        if (pos < oldlen && data[pos]) ++pos;
       }
     } else {
       if (!c) break;
@@ -1098,12 +1098,12 @@ VStr VStr::RemoveColours () const {
   while (pos < oldlen) {
     char c = data[pos++];
     if (c == TEXT_COLOUR_ESCAPE) {
-      if (data[pos] == '[') {
-        ++pos;
-        while (pos < oldlen && data[pos] != ']') ++pos;
-        ++pos;
-      } else {
-        ++pos;
+      if (pos >= oldlen) break;
+      c = data[pos++];
+      if (!c) break;
+      if (c == '[') {
+        while (pos < oldlen && data[pos] && data[pos] != ']') ++pos;
+        if (pos < oldlen && data[pos]) ++pos;
       }
     } else {
       if (!c) break;
