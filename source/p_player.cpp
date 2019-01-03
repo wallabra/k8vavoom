@@ -423,7 +423,7 @@ void VBasePlayer::DoClientPrint (VStr AStr) {
 
   if (Str.IsEmpty()) return;
   if (Str[0] == '$') Str = GLanguage[*VStr(Str.ToLower(), 1, Str.Length()-1)];
-  if (hud_msg_echo) GCon->Log(Str);
+  if (hud_msg_echo) GCon->Logf("\034S%s", *Str);
 
   ClGame->eventAddNotifyMessage(Str);
   unguard;
@@ -442,9 +442,9 @@ void VBasePlayer::DoClientCentrePrint (VStr Str) {
   if (Msg.IsEmpty()) return;
   if (Msg[0] == '$') Msg = GLanguage[*VStr(Msg.ToLower(), 1, Msg.Length()-1)];
   if (hud_msg_echo) {
-    GCon->Log("<-------------------------------->");
-    GCon->Log(Msg);
-    GCon->Log("<-------------------------------->");
+    //GCon->Log("<-------------------------------->");
+    GCon->Logf("\034X%s", *Msg);
+    //GCon->Log("<-------------------------------->");
   }
 
   ClGame->eventAddCentreMessage(Msg);
