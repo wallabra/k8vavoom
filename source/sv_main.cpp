@@ -105,7 +105,7 @@ static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
     return W_CreateLumpReaderNum(flump);
   }
   */
-  int lmp = W_CheckNumForFileNameInSameFile(vcmodCurrFileLump, filename);
+  int lmp = W_CheckNumForFileNameInSameFileOrLower(vcmodCurrFileLump, filename);
   if (lmp >= 0) return W_CreateLumpReaderNum(lmp);
   //fprintf(stderr, "VC: NOT found <%s>\n", *filename);
   return nullptr;

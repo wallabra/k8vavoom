@@ -260,9 +260,31 @@ int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
   if (fidx < 0 || fidx >= SearchPaths.length()) return -1;
-  VSearchPath *w = GET_LUMP_FILE(filelump);
+  VSearchPath *w = SearchPaths[fidx];
   int i = w->CheckNumForFileName(Name);
   if (i >= 0) return MAKE_HANDLE(fidx, i);
+  // not found
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  W_CheckNumForFileNameInSameFileOrLower
+//
+//  Returns -1 if name not found.
+//
+//==========================================================================
+int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
+  if (filelump < 0) return W_CheckNumForFileName(Name);
+  int fidx = FILE_INDEX(filelump);
+  if (fidx >= SearchPaths.length()) fidx = SearchPaths.length()-1;
+  while (fidx >= 0) {
+    VSearchPath *w = SearchPaths[fidx];
+    int i = w->CheckNumForFileName(Name);
+    if (i >= 0) return MAKE_HANDLE(fidx, i);
+    --fidx;
+  }
   // not found
   return -1;
 }
