@@ -1237,7 +1237,7 @@ void P_InitAnimated () {
       // meh, do it like grandpa did
       ad.Type = ANIM_Forward;
 
-      // [RH] Allow for either forward or backward animations
+      // [RH] allow for either forward or backward animations
       if (pic1 < pic2) {
         ad.Index = pic1;
         fd.Index = pic2;
@@ -1286,7 +1286,7 @@ void P_InitAnimated () {
     }
 
     ad.CurrentFrame = ad.NumFrames-1;
-    ad.Time = 0.0001; // Force 1st game tic to animate
+    ad.Time = 0.0001; // force 1st game tic to animate
     ad.allowDecals = (Type == 3);
     AnimDefs.Append(ad);
   }
@@ -1305,8 +1305,8 @@ void P_InitAnimated () {
 //==========================================================================
 static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   guard(ParseFTAnim);
-  animDef_t   ad;
-  frameDef_t  fd;
+  animDef_t ad;
+  frameDef_t fd;
 
   memset(&ad, 0, sizeof(ad));
 
@@ -1331,7 +1331,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   ad.StartFrameDef = FrameDefs.Num();
   ad.Type = ANIM_Normal;
   ad.allowDecals = 0;
-  while (1) {
+  for (;;) {
     if (sc->Check("allowdecals")) {
       ad.allowDecals = 1;
       continue;
@@ -1402,7 +1402,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
       if (ad.Type != ANIM_Random) ad.CurrentFrame = 0; else ad.CurrentFrame = (int)(Random()*ad.NumFrames);
     }
-    ad.Time = 0.01; // Force 1st game tic to animate
+    ad.Time = 0.0001; // force 1st game tic to animate
     AnimDefs.Append(ad);
   }
   unguard;
