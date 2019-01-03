@@ -1202,7 +1202,7 @@ final void A_FireBullets (float SpreadHoriz, float SpreadVert, int NumBullets,
 //  doFireMissileProjectile
 //
 //  `A_FireCustomMissile()` and `A_FireProjectile()` are the same thing, so
-//  they'll both will use this code
+//  they both will use this code
 //
 //===========================================================================
 final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
@@ -1226,7 +1226,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
     ShootOrg.x += float(SpawnXY)*cos(Angles.yaw-90.0);
     ShootOrg.y += float(SpawnXY)*sin(Angles.yaw-90.0);
   }
-  ShootOrg.x += SpawnZ;
+  ShootOrg.z += SpawnZ;
 
   float ShootAngle = Angles.yaw;
   if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
