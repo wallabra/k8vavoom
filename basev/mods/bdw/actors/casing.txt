@@ -85,9 +85,11 @@ Actor BDW_EmptyClip : BDW_CasingBase {
       ECLI G 180
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
-      "####" "#" 600
-      "####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
-      "####" "#" 0 A_FadeOut(0.01)
+      //"####" "#" random(800, 1200)
+      "####" "#" 0 A_SetTics(GetCVar("K8BDWOpt_EmptyClipTime")*35*60+10)
+      //"####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
+    FadeOut:
+      "####" "#" random(10, 15) A_FadeOut(0.01)
       Loop
 
    Stopping:
@@ -160,9 +162,11 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
       "####" "#" 60
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
-      "####" "#" 600
-      "####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
-      "####" "#" 0 A_FadeOut(0.01)
+      //"####" "#" random(600, 800)
+      "####" "#" 0 A_SetTics(GetCVar("K8BDWOpt_EmptyCasingTime")*35*60+10)
+      //"####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
+    FadeOut:
+      "####" "#" random(10, 15) A_FadeOut(0.01)
       Loop
 
     Rest1:
@@ -281,9 +285,11 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
       "####" "#" 60
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
-      "####" "#" 600
-      "####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
-      "####" "#" 0 A_FadeOut(0.01)
+      //"####" "#" random(600, 800)
+      "####" "#" 0 A_SetTics(GetCVar("K8BDWOpt_EmptyShellTime")*35*60+10)
+      //"####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
+    FadeOut:
+      "####" "#" random(10, 15) A_FadeOut(0.01)
       Loop
 
     Rest1:

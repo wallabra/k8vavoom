@@ -12,6 +12,9 @@ menudef k8BDWModMenu {
       "It is recommended to keep this under 1000.";
   }
 
+
+  header "Dropouts";
+
   option bool {
     title = "Drop Empty Shogun Shells";
     cvar = K8BDWOpt_DropEmptyShells;
@@ -27,6 +30,9 @@ menudef k8BDWModMenu {
     cvar = K8BDWOpt_DropEmptyMagazine;
   }
 
+
+  header "Tracers";
+
   option bool {
     title = "Spawn Rifle Tracers";
     cvar = K8BDWOpt_RifleTracers;
@@ -35,6 +41,36 @@ menudef k8BDWModMenu {
   option bool {
     title = "Spawn Shotgun Tracers";
     cvar = K8BDWOpt_ShotgunTracers;
+  }
+
+
+  header "Disappearing Time (mins)";
+
+  option numeric {
+    title = "Empty Shotgun Shells";
+    cvar = K8BDWOpt_EmptyShellTime;
+    step = 1;
+    min = 0;
+    max = 60;
+    help = "How long empty shotgun shells should stay, in minutes.";
+  }
+
+  option numeric {
+    title = "Empty Rifle Casing";
+    cvar = K8BDWOpt_EmptyCasingTime;
+    step = 1;
+    min = 0;
+    max = 60;
+    help = "How long empty rifle casing should stay, in minutes.";
+  }
+
+  option numeric {
+    title = "Empty Rifle Magazine";
+    cvar = K8BDWOpt_EmptyClipTime;
+    step = 1;
+    min = 0;
+    max = 60;
+    help = "How long empty rifle magazine should stay, in minutes.";
   }
 }
 
