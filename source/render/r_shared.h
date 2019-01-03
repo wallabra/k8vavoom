@@ -109,7 +109,6 @@ struct surface_t {
 // camera texture
 class VCameraTexture : public VTexture {
 public:
-  vuint8 *Pixels;
   bool bNeedsUpdate;
   bool bUpdated;
 

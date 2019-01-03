@@ -1284,6 +1284,16 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
 void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
   guard(VOpenGLDrawer::ReadBackScreen);
 
+  if (Width < 1 || Height < 1) return;
+  //check(Width > 0);
+  //check(Height > 0);
+  check(Dest);
+
+  if (ScreenWidth < 1 || ScreenHeight < 1) {
+    memset((void *)Dest, 0, Width*Height*sizeof(rgba_t));
+    return;
+  }
+
   if (readBackTempBufSize < ScreenWidth*ScreenHeight*4) {
     readBackTempBufSize = ScreenWidth*ScreenHeight*4;
     readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
@@ -1307,10 +1317,19 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
     rgba_t *temp = (rgba_t *)readBackTempBuf;
+    check(temp);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
     glBindTexture(GL_TEXTURE_2D, 0);
-    for (int y = 0; y < Height; ++y) {
-      memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, Width*sizeof(rgba_t));
+    if (Width <= ScreenWidth) {
+      size_t blen = Width*sizeof(rgba_t);
+      for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
+    } else {
+      size_t blen = ScreenWidth*sizeof(rgba_t);
+      size_t restlen = Width*sizeof(rgba_t)-blen;
+      for (int y = 0; y < Height; ++y) {
+        memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
+        memset((void *)(Dest+y*Width+ScreenWidth), 0, restlen);
+      }
     }
     //delete[] temp;
   }
