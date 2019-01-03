@@ -268,6 +268,7 @@ int main (int argc, char **argv) {
     starttime = time(0);
     Init();
     ProcessArgs(argc, argv);
+    Lex.AddDefine("IN_VCC");
 
     Lex.OpenSource(SourceFileName);
     VParser Parser(Lex, CurrentPackage);
