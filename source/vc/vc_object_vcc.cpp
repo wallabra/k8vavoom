@@ -202,12 +202,10 @@ IMPLEMENT_FUNCTION(VObject, ParseColour) {
 
 IMPLEMENT_FUNCTION(VObject, TextColourString) {
   P_GET_INT(Colour);
-  /*
   VStr Ret;
   Ret += TEXT_COLOUR_ESCAPE;
   Ret += (Colour < CR_BRICK || Colour >= NUM_TEXT_COLOURS ? '-' : (char)(Colour+'A'));
-  */
-  RET_STR(VStr());
+  RET_STR(Ret);
 }
 
 IMPLEMENT_FUNCTION(VObject, StartTitleMap) {
