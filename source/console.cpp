@@ -38,7 +38,7 @@ enum cons_state_t {
   cons_closed,
   cons_opening,
   cons_open,
-  cons_closing
+  cons_closing,
 };
 
 
@@ -65,7 +65,15 @@ static TILine c_iline;
 
 static cons_state_t consolestate = cons_closed;
 
-static char clines[MAX_LINES][MAX_LINE_LENGTH];
+struct ConLine {
+  char *str;
+  int len;
+  int alloced;
+
+  ConLine () : str(nullptr), len(0), alloced(0) {}
+};
+
+static ConLine clines[MAX_LINES];
 static int num_lines = 0;
 static int first_line = 0;
 static int last_line = 0;
@@ -120,10 +128,7 @@ void C_Init () {
   if (!logfout) logfout = fopen("/switch/vavoom/conlog.log", "w");
 #endif
 
-  memset(clines, 0, sizeof(clines));
-  /*
-  c_history_last = 0;
-  */
+  memset((void *)&clines[0], 0, sizeof(clines));
   memset(c_history_buf, 0, sizeof(c_history_buf));
   c_history_size = 0;
   c_history_current = -1;
@@ -288,10 +293,10 @@ void C_Drawer () {
   int i = last_line;
   while ((y+9 > 0) && i--) {
     int lidx = (i+first_line)%MAX_LINES;
-    const char *line = clines[lidx];
+    const ConLine &line = clines[lidx];
     int trans = CR_UNTRANSLATED;
     //if (line[0] == 1) { trans = line[1]; line += 2; }
-    T_DrawText(4, y, line, trans);
+    T_DrawText(4, y, (line.str ? line.str : ""), trans);
     y -= 9;
   }
 }
@@ -504,12 +509,25 @@ COMMAND(Cls) {
 //
 //==========================================================================
 static void AddLine (const char *Data) {
+  if (!Data) Data = "";
   if (num_lines >= MAX_LINES) {
     --num_lines;
     ++first_line;
   }
+  int len = VStr::length(Data);
+  int lidx = (num_lines+first_line)%MAX_LINES;
+  ConLine &line = clines[lidx];
+  if (len+1 > line.alloced) {
+    int newsz = ((len+1)|0xff)+1;
+    line.str = (char *)Z_Realloc(line.str, newsz);
+    line.alloced = newsz;
+  }
+  line.len = len;
+  memcpy(line.str, Data, len+1);
+  /*
   VStr::NCpy(clines[(num_lines+first_line)%MAX_LINES], Data, MAX_LINE_LENGTH);
   clines[(num_lines+first_line)%MAX_LINES][MAX_LINE_LENGTH-1] = 0;
+  */
   ++num_lines;
   if (last_line == num_lines-1) last_line = num_lines;
 }
@@ -520,59 +538,146 @@ static void AddLine (const char *Data) {
 //  DoPrint
 //
 //==========================================================================
-static char cpbuf[MAX_LINE_LENGTH];
-static int  cpbuflen = 0;
+static ConLine cpbuf;
+static int cpCurrLineLen = 0;
+static VStr cpLastColor;
+
+
+static void cpAppendChar (char ch) {
+  if (ch == 0) ch = ' ';
+  int nlen = cpbuf.len+1;
+  if (nlen+1 > cpbuf.alloced) {
+    int newsz = ((nlen+1)|0xff)+1;
+    cpbuf.str = (char *)Z_Realloc(cpbuf.str, newsz);
+    cpbuf.alloced = newsz;
+  }
+  cpbuf.str[cpbuf.len++] = ch;
+  cpbuf.str[cpbuf.len] = 0;
+}
+
+
+static void cpPrintCurrColor () {
+  for (const char *s = cpLastColor.getCStr(); *s; ++s) cpAppendChar(*s);
+}
+
+
+static void cpFlushCurrent (bool asNewline) {
+  AddLine(cpbuf.str);
+  cpbuf.len = 0;
+  if (cpbuf.str) cpbuf.str[0] = 0;
+  cpCurrLineLen = 0;
+  if (asNewline) {
+    cpLastColor.clear();
+  } else {
+    cpPrintCurrColor();
+  }
+}
+
+
+// *ch should be TEXT_COLOUR_ESCAPE
+static const char *cpProcessColorEscape (const char *ch) {
+  check(*ch == TEXT_COLOUR_ESCAPE);
+  cpLastColor.clear();
+  ++ch; // skip TEXT_COLOUR_ESCAPE
+  if (!ch[0]) {
+    // reset
+    cpAppendChar(TEXT_COLOUR_ESCAPE);
+    cpAppendChar('L'); // untranslated
+    return ch;
+  }
+  cpLastColor += TEXT_COLOUR_ESCAPE;
+  if (*ch == '[') {
+    cpLastColor += *ch++;
+    while (*ch && *ch != ']') cpLastColor += *ch++;
+    if (*ch) cpLastColor += *ch++; else cpLastColor += ']';
+  } else {
+    cpLastColor += *ch++;
+  }
+  cpPrintCurrColor();
+  return ch;
+}
+
+
+// *ch should be TEXT_COLOUR_ESCAPE
+static const char *cpSkipColorEscape (const char *ch) {
+  check(*ch == TEXT_COLOUR_ESCAPE);
+  ++ch; // skip TEXT_COLOUR_ESCAPE
+  if (!ch[0]) return ch;
+  if (*ch++ == '[') {
+    while (*ch && *ch != ']') ++ch;
+    if (*ch) ++ch;
+  }
+  return ch;
+}
+
 
 static void DoPrint (const char *buf) {
-  const char *ch;
-  const char *p;
-  int wlen;
-
 #ifndef _WIN32
   //k8: done in `Serialize()` if (!graphics_started) printf("%s", buf);
 #endif
-
-  ch = buf;
+  const char *ch = buf;
   while (*ch) {
     if (*ch == '\n') {
-      cpbuf[cpbuflen] = 0;
-      AddLine(cpbuf);
-      cpbuflen = 0;
+      cpFlushCurrent(true);
       ++ch;
+    } else if (*ch == TEXT_COLOUR_ESCAPE) {
+      // new color sequence
+      ch = cpProcessColorEscape(ch);
     } else if (*(const vuint8 *)ch > ' ') {
       // count word length
-      p = ch;
-      wlen = 0;
+      const char *p = ch;
+      int wlen = 0;
       while (*(const vuint8 *)p > ' ') {
-        ++wlen;
-        ++p;
+        if (*p == TEXT_COLOUR_ESCAPE) {
+          p = cpSkipColorEscape(p);
+        } else {
+          ++wlen;
+          ++p;
+        }
       }
 
-      if (cpbuflen+wlen >= MAX_LINE_LENGTH) {
-        if (cpbuflen) {
+      if (cpCurrLineLen+wlen >= MAX_LINE_LENGTH) {
+        if (cpCurrLineLen) {
           // word too long and it is not a first word
           // add current buffer and try again
-          cpbuf[cpbuflen] = 0;
-          AddLine(cpbuf);
-          cpbuflen = 0;
+          cpFlushCurrent(false); // don't clear current color
         } else {
-          // a very long word
-          VStr::NCpy(cpbuf, ch, MAX_LINE_LENGTH-1);
-          cpbuf[MAX_LINE_LENGTH-1] = 0;
-          AddLine(cpbuf);
-          ch += MAX_LINE_LENGTH-1;
+          // a very long first word, add partially
+          while (*(const vuint8 *)ch > ' ' && cpCurrLineLen < MAX_LINE_LENGTH) {
+            if (*ch == TEXT_COLOUR_ESCAPE) {
+              ch = cpProcessColorEscape(ch);
+            } else {
+              cpAppendChar(*ch++);
+              ++cpCurrLineLen;
+            }
+          }
+          cpFlushCurrent(false); // don't clear current color
         }
       } else {
         // add word to buffer
-        while (*(const vuint8 *)ch > ' ') cpbuf[cpbuflen++] = *ch++;
+        while (*(const vuint8 *)ch > ' ') {
+          if (*ch == TEXT_COLOUR_ESCAPE) {
+            ch = cpProcessColorEscape(ch);
+          } else {
+            cpAppendChar(*ch++);
+            ++cpCurrLineLen;
+          }
+        }
       }
     } else {
       // whitespace symbol
-      cpbuf[cpbuflen++] = *ch;
-      if (cpbuflen >= MAX_LINE_LENGTH) {
-        cpbuf[MAX_LINE_LENGTH-1] = 0;
-        AddLine(cpbuf);
-        cpbuflen = 0;
+      if (cpCurrLineLen < MAX_LINE_LENGTH) {
+        int count;
+        if (*ch == '\t') {
+          // tab
+          count = 8-cpCurrLineLen%8;
+        } else {
+          count = 1;
+        }
+        while (count--) {
+          cpAppendChar(' ');
+          ++cpCurrLineLen;
+        }
       }
       ++ch;
     }
