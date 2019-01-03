@@ -1,16 +1,10 @@
 $dest bdw.pk3
 
-// graphics
 $recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
-
-// sounds
-$recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
-
-// actors
-$recursedir actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/
-
-// progs
-$recursedir progs/  @CMAKE_CURRENT_SOURCE_DIR@/progs/
+$recursedir sounds/   @CMAKE_CURRENT_SOURCE_DIR@/sounds/
+$recursedir actors/   @CMAKE_CURRENT_SOURCE_DIR@/actors/
+$recursedir models/   @CMAKE_CURRENT_SOURCE_DIR@/models/
+$recursedir progs/    @CMAKE_CURRENT_SOURCE_DIR@/progs/
 
 
 // scripts

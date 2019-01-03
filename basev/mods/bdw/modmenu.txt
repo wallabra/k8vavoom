@@ -26,6 +26,16 @@ menudef k8BDWModMenu {
     title = "Drop Empty Rifle Magazine";
     cvar = K8BDWOpt_DropEmptyMagazine;
   }
+
+  option bool {
+    title = "Spawn Rifle Tracers";
+    cvar = K8BDWOpt_RifleTracers;
+  }
+
+  option bool {
+    title = "Spawn Shotgun Tracers";
+    cvar = K8BDWOpt_ShotgunTracers;
+  }
 }
 
 

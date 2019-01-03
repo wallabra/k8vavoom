@@ -11,9 +11,11 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
     cvarinfo.txt
     modmenu.txt
     actors/*.txt
-    actors/*.gl
+    actors/gl/*.gl
     loadvcs.txt
     progs/k8bdw/*
+    models/*
+    models/tracer/*
   )
 add_custom_target(bdw_modpak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3)
 

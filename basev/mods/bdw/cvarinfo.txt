@@ -3,3 +3,5 @@ user int K8BDWOpt_LimiterDebug = 0;
 user int K8BDWOpt_DropEmptyShells = 1;
 user int K8BDWOpt_DropEmptyCasing = 1;
 user int K8BDWOpt_DropEmptyMagazine = 1;
+user int K8BDWOpt_RifleTracers = 1;
+user int K8BDWOpt_ShotgunTracers = 1;

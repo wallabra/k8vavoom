@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<vavoom_model_definition>
+	<model name="bdw_tracer">
+		<md2 file="models/tracer/tracer.md2" skin_anim_speed="1" skin_anim_range="1" noshadow="true" allowtransparency="true">
+			<frame index="0" skin_index="0" scale="1.0" />
+			<skin file="models/tracer/tracer1.png" />
+		</md2>
+	</model>
+
+	<class name="BDW_Tracer">
+		<state index="-1" model="bdw_tracer" frame_index="0" />
+	</class>
+</vavoom_model_definition>

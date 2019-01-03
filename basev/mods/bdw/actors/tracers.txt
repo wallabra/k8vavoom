@@ -5,16 +5,22 @@ Actor BDW_Tracer : FastProjectile {
   +DONTSPLASH
   //+BLOODSPLATTER
   +NOEXTREMEDEATH
+  +NoBlockmap
   Damage 0
   Radius 2
   Height 2
-  Speed 140
-  RenderStyle ADD
+  Speed 60
+  RenderStyle Add
   Alpha 0.9
   Scale .15
+
   States {
     Spawn:
-      TRAC A 1 BRIGHT
+      TRAC A 0 Bright
+      TRAC A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+
+    MainLoop:
+      TRAC A 100 Bright
       Loop
 
     Death:
