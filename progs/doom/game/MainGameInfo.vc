@@ -43,8 +43,11 @@ struct spec_trans_t {
 
 spec_trans_t spec_trans_tab[NUM_SPECIALS];
 
+enum { NUMTOTALBOTS = 12 };
+enum { NUMBOTTYPES = 12 };
+
+BotPlayer::botinfo_t botinfo[NUMTOTALBOTS];
 int botskill;
-BotPlayer::botinfo_t botinfo[12];
 
 int INITIAL_HEALTH;
 
