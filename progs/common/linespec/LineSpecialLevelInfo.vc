@@ -6626,7 +6626,7 @@ final bool CheckLock (Entity user, int lock, bool door) {
   LockDef *Lock = GetLockDef(lock);
   if (!Lock) {
     if (lock == 103) {
-      user.Player.centreprint(Lock103Message);
+      user.Player.centreprint("%s", Lock103Message);
     } else {
       user.Player.centreprint("That doesn't seem to work");
     }
@@ -6634,7 +6634,7 @@ final bool CheckLock (Entity user, int lock, bool door) {
     return false;
   }
   if (CheckLockDef(Lock, EntityEx(user))) return true;
-  user.Player.centreprint(door ? Lock->Message : Lock->RemoteMessage);
+  user.Player.centreprint("%s", (door ? Lock->Message : Lock->RemoteMessage));
   user.PlaySound(Lock->LockedSound, CHAN_VOICE);
   return false;
 }
@@ -6881,7 +6881,7 @@ final void ConChoiceImpulse(int ChoiceNum)
   Item3 = CheckForNeededItem(CurrentSpeakingTo, Choice->NeedItem3, Choice->NeedAmount3);
   if (Item1 == -2 || Item2 == -2 || Item3 == -2)
   {
-    CurrentSpeakingTo.Player.cprint(Choice->TextNo);
+    CurrentSpeakingTo.Player.cprint("%s", Choice->TextNo);
     StopSpeech();
     return;
   }
@@ -6944,11 +6944,11 @@ final void ConChoiceImpulse(int ChoiceNum)
   }
   if (!GaveItem)
   {
-    CurrentSpeakingTo.Player.cprint(Choice->TextNo);
+    CurrentSpeakingTo.Player.cprint("%s", Choice->TextNo);
   }
   else if (strcmp(Choice->TextOK, "") && strcmp(Choice->TextOK, "_"))
   {
-    CurrentSpeakingTo.Player.cprint(Choice->TextOK);
+    CurrentSpeakingTo.Player.cprint("%s", Choice->TextOK);
   }
   if (Choice->Next < 0)
   {

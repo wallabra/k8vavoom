@@ -225,7 +225,7 @@ final override void TouchSpecial (EntityEx Toucher, optional bool noflash) {
   if (!TryPickup(Toucher)) return;
 
   if (!bQuiet && (!specified_noflash || !noflash)) {
-    if (Toucher.bIsPlayer) Toucher.Player.cprint(GetPickupMessage());
+    if (Toucher.bIsPlayer) Toucher.Player.cprint("%s", GetPickupMessage());
     PlayPickupSound(Toucher);
     if (Toucher.bIsPlayer) PlayerEx(Toucher.Player).BonusFlash += BONUSADD;
   }

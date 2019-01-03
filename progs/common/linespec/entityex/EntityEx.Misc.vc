@@ -1621,7 +1621,7 @@ final void TouchDehackedSpecial (EntityEx Toucher) {
     ++Level.CurrentItems;
   }
 
-  Toucher.Player.cprint(Item.GetPickupMessage());
+  Toucher.Player.cprint("%s", Item.GetPickupMessage());
   Toucher.PlaySound(Item.PickupSound, CHAN_ITEM);
 
   if (bDropped) {

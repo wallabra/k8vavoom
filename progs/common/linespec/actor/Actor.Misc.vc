@@ -285,7 +285,7 @@ final void decorate_A_GiveQuestItem (int QuestType) {
   class!Inventory QClass = class!Inventory(FindClass(name(va("QuestItem%d", QuestType))));
   if (QClass) {
     EntityEx(Level.Game.Players[0].MO).GiveInventoryType(QClass);
-    Level.Game.Players[0].cprint(va("$txt_quest_%d", QuestType));
+    Level.Game.Players[0].cprint("$txt_quest_%d", QuestType);
   }
 }
 
