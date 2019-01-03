@@ -39,7 +39,7 @@ override void DoEffect()
     Owner.Player.FixedColourmap  < PlayerEx::NUMCOLOURMAPS)
   {
     if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-      (ftoi(4.0 * EffectTime) & 1))
+      (int(4.0 * EffectTime) & 1))
     {
       // almost full bright
       Owner.Player.FixedColourmap = 1;

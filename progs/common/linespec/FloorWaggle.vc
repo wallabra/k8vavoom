@@ -56,12 +56,12 @@ void Init (sector_t *InSector, int InTag, int InHeight, int InSpeed, int InOffse
   Sector->FloorData = self;
 
   OriginalDist = Sector->floor.dist;
-  Accumulator = itof(InOffset);
-  AccSpeed = itof(InSpeed)/2.0;
+  Accumulator = float(InOffset);
+  AccSpeed = float(InSpeed)/2.0;
   Scale = 0.0;
-  TargetScale = itof(InHeight)/64.0;
-  ScaleSpeed = TargetScale/(1.0+3.0*itof(InHeight)/255.0);
-  Timer = Timer ? itof(InTimer) : -1.0;
+  TargetScale = float(InHeight)/64.0;
+  ScaleSpeed = TargetScale/(1.0+3.0*float(InHeight)/255.0);
+  Timer = Timer ? float(InTimer) : -1.0;
   State = WGLSTATE_EXPAND;
 }
 
@@ -99,7 +99,7 @@ override void Tick (float DeltaTime) {
   }
 
   Accumulator += AccSpeed*DeltaTime;
-  Sector->floor.dist = OriginalDist+Level.Game.FloatBobOffsets[ftoi(Accumulator)&63]*Scale/Sector->floor.normal.z;
+  Sector->floor.dist = OriginalDist+Level.Game.FloatBobOffsets[int(Accumulator)&63]*Scale/Sector->floor.normal.z;
   XLevel.ChangeSector(Sector, true);
 }
 

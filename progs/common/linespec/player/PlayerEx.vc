@@ -2192,7 +2192,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   // if a voodoo doll has been spawned, take it's inventory
   if (Voodoo) PP.ObtainInventory(EntityEx(MO));
 
-  DesiredFOV = 90.0; //itof(GetCvar('FOV'));
+  DesiredFOV = 90.0; //float(GetCvar('FOV'));
   FOV = DesiredFOV;
   PP.Angles.yaw = float(45*(mthing->angle/45));
   PP.Player = self;

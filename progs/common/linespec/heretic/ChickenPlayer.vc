@@ -38,9 +38,9 @@ override void MorphPlayerThink()
   {
     // Handle beak movement
     Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP +
-      itof(PlayerEx(Player).ChickenPeck) / 2.0;
+      float(PlayerEx(Player).ChickenPeck) / 2.0;
   }
-  if (ftoi(32.0 * PlayerEx(Player).MorphTime) & 15)
+  if (int(32.0 * PlayerEx(Player).MorphTime) & 15)
   {
     return;
   }

@@ -46,8 +46,8 @@ void Init (sector_t *InSector, int FastOrSlow, int InMaxTime, int InSync) {
   Sector = InSector;
   Sector->LightingData = self;
 
-  MinTime = itof(FastOrSlow)/35.0;
-  MaxTime = itof(InMaxTime)/35.0;
+  MinTime = float(FastOrSlow)/35.0;
+  MaxTime = float(InMaxTime)/35.0;
   MaxLight = Sector->params.lightlevel;
   MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
 

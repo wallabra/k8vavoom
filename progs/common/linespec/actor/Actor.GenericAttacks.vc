@@ -90,7 +90,7 @@ final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
 
       if (!specified_SpawnHeight) SpawnHeight = 32.0;
       if (!specified_SpawnXYOffset) SpawnXYOffset = 1;
-      TVec Offs = itof(SpawnXYOffset)*vector(cos(Angles.yaw-90.0), sin(Angles.yaw-90.0), 0.0);
+      TVec Offs = float(SpawnXYOffset)*vector(cos(Angles.yaw-90.0), sin(Angles.yaw-90.0), 0.0);
 
       EntityEx A;
       switch (AimMode) {
@@ -540,11 +540,11 @@ final void A_ExplodeAndAlert () {
 //==========================================================================
 final void A_ExplodeParms () {
   int damage = ExplosionDamage;
-  float distance = itof(ExplosionRadius);
+  float distance = float(ExplosionRadius);
   ubyte damageSelf = !bExplosionDontHurtSelf;
 
   if (!damage) damage = 128;
-  if (!distance) distance = itof(damage);
+  if (!distance) distance = float(damage);
   DoExplode(damage, distance, damageSelf);
 }
 
@@ -577,7 +577,7 @@ final void decorate_A_Explode (optional int damage, optional float distance,
     TAVec Ang;
     TVec adir;
     foreach (auto i; 0..nails) {
-      Ang.yaw = AngleMod360(itof(i*(360/nails)));
+      Ang.yaw = AngleMod360(float(i*(360/nails)));
       // comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
       //AimLineAttack(self, Ang, MISSILERANGE),
       //LineAttack(Ang, MISSILERANGE, 0, naildamage, default, default,'Nail');
@@ -612,9 +612,9 @@ final void A_RadiusThrust (optional int Force, optional int Distance, optional i
   bool AffectSelf = !!(flags&RTF_AFFECTSOURCE);
   //???if (!specified_AffectSelf) AffectSelf = true;
 
-  RadiusAttack((flags&RTF_NOTMISSILE ? self : Target), Force, itof(Distance), AffectSelf, DamageType,
+  RadiusAttack((flags&RTF_NOTMISSILE ? self : Target), Force, float(Distance), AffectSelf, DamageType,
     /*false*/!(flags&RTF_NOIMPACTDAMAGE), thrustZ:!!(flags&RTF_THRUSTZ), fullthrustdistance:fullthrustdistance!optional);
-  if (Origin.z <= FloorZ+itof(Distance)) HitFloorType();
+  if (Origin.z <= FloorZ+float(Distance)) HitFloorType();
 }
 
 
@@ -625,7 +625,7 @@ final void A_RadiusThrust (optional int Force, optional int Distance, optional i
 //==========================================================================
 final void A_Detonate () {
   int damage = GetMissileDamage(0, 1);
-  DoExplode(damage, itof(damage), true);
+  DoExplode(damage, float(damage), true);
 }
 
 

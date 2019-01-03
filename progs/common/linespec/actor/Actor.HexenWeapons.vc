@@ -379,7 +379,7 @@ final void A_FireConePL1 () self(Actor) {
   int damage = 90+(P_Random()&15);
   foreach (auto i; 0..16) {
     TAVec ang = Angles;
-    ang.yaw = AngleMod360(ang.yaw+itof(i)*(45.0/16.0));
+    ang.yaw = AngleMod360(ang.yaw+float(i)*(45.0/16.0));
     EntityEx AimTarget = AimLineAttack(out Dir, ang, MELEERANGE);
     if (AimTarget) {
       AimTarget.Damage(self, self, damage, 'Ice');

@@ -56,7 +56,7 @@ override void CreateChoices()
   ColR.SetOrigin(ChoicesStartX, currY);
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
-  ColR.SetInitialValue(itof((Col >> 16) & 0xff) / 255.0);
+  ColR.SetInitialValue(float((Col >> 16) & 0xff) / 255.0);
   ColR.ValueChanging = &ChangeColour;
   currY += ColR.Height;
 
@@ -64,7 +64,7 @@ override void CreateChoices()
   ColG.SetOrigin(ChoicesStartX, currY);
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
-  ColG.SetInitialValue(itof((Col >> 8) & 0xff) / 255.0);
+  ColG.SetInitialValue(float((Col >> 8) & 0xff) / 255.0);
   ColG.ValueChanging = &ChangeColour;
   currY += ColG.Height;
 
@@ -72,7 +72,7 @@ override void CreateChoices()
   ColB.SetOrigin(ChoicesStartX, currY);
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;
-  ColB.SetInitialValue(itof(Col & 0xff) / 255.0);
+  ColB.SetInitialValue(float(Col & 0xff) / 255.0);
   ColB.ValueChanging = &ChangeColour;
   currY += ColB.Height;
 
@@ -110,10 +110,10 @@ bool ChangeColour(Object Sender, float newValue)
   float r = Sender == ColR ? newValue : ColR.Value;
   float g = Sender == ColG ? newValue : ColG.Value;
   float b = Sender == ColB ? newValue : ColB.Value;
-  int Col = RGBA(ftoi(r * 255.0), ftoi(g * 255.0), ftoi(b * 255.0), 255);
+  int Col = RGBA(int(r * 255.0), int(g * 255.0), int(b * 255.0), 255);
 
-  SetCvarS('colour', va("%x %x %x", ftoi(r * 255.0), ftoi(g * 255.0),
-    ftoi(b * 255.0)));
+  SetCvarS('colour', va("%x %x %x", int(r * 255.0), int(g * 255.0),
+    int(b * 255.0)));
   Anim.Colour = Col;
   return true;
 }

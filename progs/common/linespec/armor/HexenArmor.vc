@@ -85,7 +85,7 @@ bool AddArmorToSlot (EntityEx Toucher, int armortype, int amount) {
     if (Slots[armortype] >= hits) return false;
     Slots[armortype] = hits;
   } else {
-    float hits = itof(amount)*5.0;
+    float hits = float(amount)*5.0;
     float total = Slots[0]+Slots[1]+Slots[2]+Slots[3]+Slots[4];
     float max = SlotsIncrement[0]+SlotsIncrement[1]+SlotsIncrement[2]+SlotsIncrement[3]/*+SlotsIncrement[4]*/+20.0; //k8: [4]?
     if (total < max) Slots[armortype] += hits; else return false;
@@ -107,13 +107,13 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
       if (savedPercent > 100.0) savedPercent = 100.0;
       foreach (auto i; 0..4) {
         if (Slots[i]) {
-          Slots[i] -= itof(damage)*SlotsIncrement[i]/300.0;
+          Slots[i] -= float(damage)*SlotsIncrement[i]/300.0;
           if (Slots[i] < 2.0) Slots[i] = 0.0;
         }
       }
-      float saved = itof(damage)*savedPercent/100.0;
+      float saved = float(damage)*savedPercent/100.0;
       if (saved > savedPercent*2.0) saved = savedPercent*2.0;
-      NewDamage -= ftoi(saved);
+      NewDamage -= int(saved);
       damage = NewDamage;
     }
   }

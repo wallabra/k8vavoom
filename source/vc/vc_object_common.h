@@ -97,12 +97,6 @@
   DECLARE_FUNCTION(print)
   DECLARE_FUNCTION(dprint)
 
-  // type conversions
-  DECLARE_FUNCTION(itof)
-  DECLARE_FUNCTION(ftoi)
-  DECLARE_FUNCTION(StrToName)
-  DECLARE_FUNCTION(NameToStr)
-
   // class methods
   DECLARE_FUNCTION(FindClass)
   DECLARE_FUNCTION(FindClassNoCase)

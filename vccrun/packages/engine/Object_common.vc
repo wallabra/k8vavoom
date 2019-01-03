@@ -461,10 +461,6 @@ native static final void dprint (string format, ...) [printf,1];
 // ////////////////////////////////////////////////////////////////////////// //
 // type conversions
 
-// float -> int (use `int(val)` instead)
-native static final int ftoi (float f);
-// int -> float (use `float(val)` instead)
-native static final float itof (int f);
 // converts name to internal index (as name is just an int internally)
 native static final int NameToIIndex (name Name) [builtin NameToIIndex];
 

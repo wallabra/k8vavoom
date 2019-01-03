@@ -63,9 +63,9 @@ override bool Touch(Entity InOther)
       Other.Velocity.y += Velocity.y;
       if ((Other.Velocity.x + Other.Velocity.y) > 3.0 * 35.0)
       {
-        damage = (ftoi(fmax(0, Mass)) / 100) + 1;
+        damage = (int(fmax(0, Mass)) / 100) + 1;
         Other.Damage(self, self, damage, spawnBlood:true);
-        damage = (ftoi(fmax(0, Other.Mass)) / 100) + 1;
+        damage = (int(fmax(0, Other.Mass)) / 100) + 1;
         Damage(Other, Other, damage >> 2);
       }
       return false;

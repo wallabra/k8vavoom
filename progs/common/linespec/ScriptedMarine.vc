@@ -68,7 +68,7 @@ override void Tick (float DeltaTime) {
   if (Special1f) {
     if (MissileState == FindState('Missile', 'SSG', true)) {
       // super shotgun sounds
-      int Ticks = ftoi((XLevel.Time-Special1f)*35.0);
+      int Ticks = int((XLevel.Time-Special1f)*35.0);
       if (Ticks < 47) {
         if (Ticks != PrevTicks) {
           switch (Ticks) {

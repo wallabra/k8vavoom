@@ -248,7 +248,7 @@ final void A_FireAssaultGun () {
     if (PlayerEx(Player).Refire) {
       TAVec angles;
       VectorAngles(dir, out angles);
-      angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/2.0/itof(1<<(PlayerEx(Player).Accuracy*5/100)));
+      angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/2.0/float(1<<(PlayerEx(Player).Accuracy*5/100)));
       AngleVector(angles, out dir);
     }
   } else {

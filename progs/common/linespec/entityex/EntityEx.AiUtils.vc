@@ -414,13 +414,12 @@ final bool StepMove () {
     xspeed = fabs(deltax);
     yspeed = fabs(deltay);
     if (xspeed > yspeed) {
-      if (xspeed > maxmove) steps = 1+ftoi(xspeed/maxmove);
+      if (xspeed > maxmove) steps = 1+int(xspeed/maxmove);
     } else {
-      if (yspeed > maxmove) steps = 1+ftoi(yspeed/maxmove);
+      if (yspeed > maxmove) steps = 1+int(yspeed/maxmove);
     }
   }
 
-  
   bool try_ok = true;
   bool dropoff = false;
   tmtrace_t tmtrace;
@@ -436,7 +435,7 @@ final bool StepMove () {
     {
       dropoff = true;
     }
-    try_ok = TryMoveEx(&tmtrace, vector(origx+(deltax/itof(steps*i)), origy+(deltay/itof(steps*i)), Origin.z), dropoff);
+    try_ok = TryMoveEx(&tmtrace, vector(origx+(deltax/float(steps*i)), origy+(deltay/float(steps*i)), Origin.z), dropoff);
     if (!try_ok) {
       //k8: if not player, and cannot move, try smaller radius to unstuck ourselves
       /*

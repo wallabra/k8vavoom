@@ -52,9 +52,9 @@ final void A_ChainTend()
   for (i = 4; i > 1; i--)
   {
     Spawn(LoreShot2, vector(
-      Origin.x - Radius * itof(i) * cos(Angles.yaw),
-      Origin.y - Radius * itof(i) * sin(Angles.yaw),
-      Origin.z - (Velocity.z / (4.0 * 35.0) * itof(i))));
+      Origin.x - Radius * float(i) * cos(Angles.yaw),
+      Origin.y - Radius * float(i) * sin(Angles.yaw),
+      Origin.z - (Velocity.z / (4.0 * 35.0) * float(i))));
   }
   PlaySound(ActiveSound, CHAN_BODY);
 }

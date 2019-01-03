@@ -65,7 +65,7 @@ override bool HandlePickup (Inventory Item) {
 //==========================================================================
 override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
   if (nameicmp(DmgType, 'Drowning') != 0) {
-    int saved = ftoi(itof(damage)*SavePercent);
+    int saved = int(float(damage)*SavePercent);
     if (Amount <= saved) saved = Amount;
     Amount -= saved;
     NewDamage -= saved;

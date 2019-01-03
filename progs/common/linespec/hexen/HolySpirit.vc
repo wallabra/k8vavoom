@@ -270,7 +270,7 @@ final void A_CHolySeek()
   }
   if (Tracer)
   {
-    CHolySeekerMissile(itof(Args[0]), itof(Args[0]) * 2.0);
+    CHolySeekerMissile(float(Args[0]), float(Args[0]) * 2.0);
     if (!((XLevel.TicTime + 7) & 15))
     {
       Args[0] = 5 + (P_Random() / 20);

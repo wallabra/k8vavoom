@@ -119,7 +119,7 @@ override void Tick(float DeltaTime)
 
 override void OnDraw()
 {
-  int frame = ftoi(Time * itof(Speed)) % Frames.Num;
+  int frame = int(Time * float(Speed)) % Frames.Num;
   if (bBackwards)
   {
     frame = Frames.Num - frame - 1;

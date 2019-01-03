@@ -56,13 +56,13 @@ override void InitEffect()
 
     // [RH] The effect ends one tic after the counter hits zero, so make
     // sure we start at an odd count.
-    EffectTime += itof(!(ftoi(EffectTime) & 1));
-    if (!(ftoi(EffectTime) & 1))
+    EffectTime += float(!(int(EffectTime) & 1));
+    if (!(int(EffectTime) & 1))
     {
       EffectTime += 1.0;
     }
     // Make sure the effect starts and ends on an even tic.
-    if (!(ftoi(XLevel.Time) & 1))
+    if (!(int(XLevel.Time) & 1))
     {
       Level.bFrozen = true;
     }
@@ -84,7 +84,7 @@ override void DoEffect()
   ::DoEffect();
   // [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
   // will get thrown off.
-  if (ftoi(XLevel.Time) & 1)
+  if (int(XLevel.Time) & 1)
   {
 
     return;
@@ -92,7 +92,7 @@ override void DoEffect()
   // [RH] The "blinking" can't check against EffectTics exactly or it will
   // never happen, because InitEffect ensures that EffectTics will always
   // be odd when level.time is even.
-  if (EffectTime > PlayerEx::BLINKTHRESHOLD || (ftoi(4.0 * EffectTime) & 1))
+  if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0 * EffectTime) & 1))
   {
     Level.bFrozen = true;
   }

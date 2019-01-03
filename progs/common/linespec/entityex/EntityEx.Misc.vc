@@ -134,10 +134,10 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       if (!specified_damagedistance) {
         dist2 = dist;
       } else {
-        dist2 = fclamp(dist-itof(damagedistance), 0.0, dist);
+        dist2 = fclamp(dist-float(damagedistance), 0.0, dist);
       }
 
-      int damage = ftoi(((itof(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
+      int damage = int(((float(BombDamage)*RDFactor*(BombDistance-dist2))/BombDistance));
 
       Other.SpawnExploBloodAtHead(damage, Source);
       if (DoDamage) {
@@ -147,7 +147,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       }
 
       if (!Other.bIceCorpse && (!DoDamage || !bNoDamageThrust)) {
-        float Thrust = itof(damage)*0.5;
+        float Thrust = float(damage)*0.5;
         if (specified_fullthrustdistance && fullthrustdistance != 0 && dist <= fullthrustdistance) {
           Thrust = BombDamage*RDFactor*0.5;
         }
@@ -541,7 +541,7 @@ final void NightmareRespawn () {
   // inherit attributes from deceased one
   A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, false);
   Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
-  A.Angles.yaw = itof(45*(SpawnPoint.angle/45));
+  A.Angles.yaw = float(45*(SpawnPoint.angle/45));
 
   if (SpawnPoint.options&LineSpecialLevelInfo::MTF_AMBUSH) A.bAmbush = true;
   if (SpawnPoint.options&LineSpecialLevelInfo::MTF_STANDSTILL) A.bStanding = true;
@@ -627,10 +627,10 @@ override bool Touch (Entity InOther) {
       Other.Velocity.x += Velocity.x;
       Other.Velocity.y += Velocity.y;
       if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
-        damage = (ftoi(fmax(0, Mass))/100)+1;
+        damage = (int(fmax(0, Mass))/100)+1;
         Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, self, damage);
-        damage = (ftoi(fmax(0, Other.Mass))/100)+1;
+        damage = (int(fmax(0, Other.Mass))/100)+1;
         SpawnExploBloodAtHead(damage>>2, Other);
         Damage(Other, Other, damage>>2);
       }
@@ -862,7 +862,7 @@ final override void CheckForPushSpecial (line_t *line, int side) {
 //
 //==========================================================================
 final override void BlastedHitLine () {
-  int damage = ftoi(fmax(0, Mass))>>5;
+  int damage = int(fmax(0, Mass))>>5;
   if (damage > 0) SpawnExploBloodAtHead(damage);
   Damage(none, none, damage);
 }
@@ -1324,7 +1324,7 @@ override void Tick (float deltaTime) {
     }
 
     ++MoveCount;
-    if (MoveCount < ftoi(LineSpecialGameInfo(Level.Game).RespawnTime*35.0)) return;
+    if (MoveCount < int(LineSpecialGameInfo(Level.Game).RespawnTime*35.0)) return;
     if (XLevel.TicTime&31) return;
     if (P_Random() > 4) return;
     NightmareRespawn();
@@ -1462,7 +1462,7 @@ override void ClientTick (float DeltaTime) {
       alt = true;
     }
     if (GetCvarB('r_particle_trails')) {
-      LineSpecialLevelInfo(Level).ParticleEffect(ftoi(DeltaTime*256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
+      LineSpecialLevelInfo(Level).ParticleEffect(int(DeltaTime*256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
           0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5,  r);
     }
   }
@@ -1472,7 +1472,7 @@ override void ClientTick (float DeltaTime) {
       LineSpecialLevelInfo(Level).ParticleEffect(6,
           LineSpecialLevelInfo::pt_static, 0, vector(Origin.x-(cos(Angles.yaw)*Radius*2.0),
           Origin.y-(sin(Angles.yaw)*Radius*2.0),
-          Origin.z-(itof(ftoi(Height)>>3*ftoi(Velocity.z)>>16)+2.0*Height/3.0)),
+          Origin.z-(float(int(Height)>>3*int(Velocity.z)>>16)+2.0*Height/3.0)),
           0.0, vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0, RGB(c, c, c), 0.6, 0.0);
     }
   }
@@ -1552,7 +1552,7 @@ final void DoStateEffects (float DeltaTime) {
           {
             float Scale = L->Scale*0.125;
             if (!Scale) Scale = 1.0;
-            dl->radius = itof(Sector->params.lightlevel)*Scale;
+            dl->radius = float(Sector->params.lightlevel)*Scale;
             if (dl->radius < 0.0) dl->radius = 0.0;
             if (dl->radius > 255.0) dl->radius = 255.0;
             dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
@@ -1906,7 +1906,7 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_Health: Health = IntVal; if (bIsPlayer) Player.Health = IntVal; break;
     case APROP_Speed: Speed = float(IntVal)/65536.0*35.0; break;
     case APROP_Damage: MissileDamage = IntVal; break;
-    case APROP_Alpha: Alpha = itof(IntVal)/65536.0; break;
+    case APROP_Alpha: Alpha = float(IntVal)/65536.0; break;
     case APROP_RenderStyle: RenderStyle = IntVal; break;
     case APROP_Ambush: bAmbush = !!IntVal; break;
     case APROP_Invulnerable: bInvulnerable = !!IntVal; break;

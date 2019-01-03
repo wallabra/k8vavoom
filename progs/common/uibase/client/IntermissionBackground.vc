@@ -269,7 +269,7 @@ void ParseScript (name ScriptName) {
       sc.ExpectNumber();
       Anims[i].Y = sc.Number;
       sc.ExpectNumber();
-      Anims[i].Period = itof(sc.Number) / 35.0;
+      Anims[i].Period = float(sc.Number) / 35.0;
       if (sc.Check("Once")) Anims[i].bOnce = true;
       sc.Expect("{");
       while (!sc.Check("}")) {
@@ -361,10 +361,10 @@ override void OnDraw () {
       SetVirtualScreen(640, 480);
       for (int i = 0; i < Spots.Num; ++i) {
         // flash level we are leaving now
-        if (Spots[i].Map == ClGame.im.LeaveMap && State == STATE_PrevLoc && (ftoi(2.0 * btime) & 1)) continue;
+        if (Spots[i].Map == ClGame.im.LeaveMap && State == STATE_PrevLoc && (int(2.0 * btime) & 1)) continue;
         if (IsVisited(Spots[i].Map)) DrawPic(Spots[i].X, Spots[i].Y, SplatPic);
         if (Spots[i].Map == ClGame.im.EnterMap && (State == STATE_Done ||
-            (State == STATE_NextLoc && (ftoi(32.0 * btime) & 31) < 20)))
+            (State == STATE_NextLoc && (int(32.0 * btime) & 31) < 20)))
         {
           DrawPointer(i);
         }

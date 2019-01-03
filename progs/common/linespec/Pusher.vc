@@ -101,16 +101,16 @@ void Init (int InType, line_t *l, int magnitude, int angle, EntityEx source, int
   Source = source;
   Type = InType;
   if (l) {
-    Xmag = ftoi(l->v2->x-l->v1->x);
-    Ymag = ftoi(l->v2->y-l->v1->y);
-    Magnitude = ftoi(Length(vector(itof(Xmag), itof(Ymag), 0.0)));
+    Xmag = int(l->v2->x-l->v1->x);
+    Ymag = int(l->v2->y-l->v1->y);
+    Magnitude = int(Length(vector(float(Xmag), float(Ymag), 0.0)));
   } else {
     // [RH] allow setting magnitude and angle with parameters
     ChangeValues(magnitude, angle);
   }
   if (source) {
     // point source exist?
-    Radius = itof(Magnitude*2); // where force goes to zero
+    Radius = float(Magnitude*2); // where force goes to zero
     X = Source.Origin.x;
     Y = Source.Origin.y;
   }
@@ -135,9 +135,9 @@ int CheckForSectorMatch (int type, int tag) {
 //
 //==========================================================================
 void ChangeValues (int magnitude, int angle) {
-  float ang = itof(angle)*360.0/256.0;
-  Xmag = ftoi(itof(magnitude)*cos(ang));
-  Ymag = ftoi(itof(magnitude)*sin(ang));
+  float ang = float(angle)*360.0/256.0;
+  Xmag = int(float(magnitude)*cos(ang));
+  Ymag = int(float(magnitude)*sin(ang));
   Magnitude = magnitude;
 }
 
@@ -203,7 +203,7 @@ override void Tick (float DeltaTime) {
         sx = X;
         sy = Y;
         dist = Length(vector(thing.Origin.x-sx, thing.Origin.y-sy, 0.0));
-        speed = itof(Magnitude-(ftoi(dist)>>1))/(2.0*PUSH_FACTOR);
+        speed = float(Magnitude-(int(dist)>>1))/(2.0*PUSH_FACTOR);
 
         // If speed <= 0, you're outside the effective radius. You also have
         // to be able to see the push/pull source point.
@@ -282,8 +282,8 @@ override void Tick (float DeltaTime) {
         yspeed = Ymag;
       }
     }
-    thing.Velocity.x += (itof(xspeed)/PUSH_FACTOR)*35.0*DeltaTime;
-    thing.Velocity.y += (itof(yspeed)/PUSH_FACTOR)*35.0*DeltaTime;
+    thing.Velocity.x += (float(xspeed)/PUSH_FACTOR)*35.0*DeltaTime;
+    thing.Velocity.y += (float(yspeed)/PUSH_FACTOR)*35.0*DeltaTime;
   }
 }
 

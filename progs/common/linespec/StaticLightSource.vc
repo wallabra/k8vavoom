@@ -30,7 +30,7 @@ class StaticLightSource : Actor __mobjinfo__(1502);
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
   float l;
-  if (!mthing->arg1) l = 200.0; else l = itof(mthing->arg1)*8.0;
+  if (!mthing->arg1) l = 200.0; else l = float(mthing->arg1)*8.0;
   Level.AddStaticLight(vector(mthing->x, mthing->y, mthing->height), l);
   Destroy();
 }

@@ -30,7 +30,7 @@ array!(string*) sarr;
 
 
 final static void classTest (class!Object cls) {
-  print("cls is '%s'", NameToStr(GetClassName(cls)));
+  print("cls is '%s'", string(GetClassName(cls)));
   class!Object a = class!Object(cls);
 }
 

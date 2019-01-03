@@ -522,32 +522,6 @@ IMPLEMENT_FUNCTION(VObject, dprint) {
 
 //==========================================================================
 //
-//  Type conversions
-//
-//==========================================================================
-IMPLEMENT_FUNCTION(VObject, itof) {
-  P_GET_INT(x);
-  RET_FLOAT((float)x);
-}
-
-IMPLEMENT_FUNCTION(VObject, ftoi) {
-  P_GET_FLOAT(x);
-  RET_INT((vint32)x);
-}
-
-IMPLEMENT_FUNCTION(VObject, StrToName) {
-  P_GET_STR(str);
-  RET_NAME(VName(*str));
-}
-
-IMPLEMENT_FUNCTION(VObject, NameToStr) {
-  P_GET_NAME(Name);
-  RET_STR(*Name);
-}
-
-
-//==========================================================================
-//
 //  Class methods
 //
 //==========================================================================

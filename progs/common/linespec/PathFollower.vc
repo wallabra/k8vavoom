@@ -214,7 +214,7 @@ override void Tick (float DeltaTime) {
   if (bJustStepped) {
     bJustStepped = false;
     if (CurrNode.Args[2]) {
-      HoldTime = XLevel.Time+itof(CurrNode.Args[2])*4.0/35.0;
+      HoldTime = XLevel.Time+float(CurrNode.Args[2])*4.0/35.0;
       Origin = CurrNode.Origin;
     }
   }
@@ -227,7 +227,7 @@ override void Tick (float DeltaTime) {
   }
 
   if (Interpolate()) {
-    Time += 8.0/itof(CurrNode.Args[1])*DeltaTime;
+    Time += 8.0/float(CurrNode.Args[1])*DeltaTime;
     if (Time > 1.0) {
       Time -= 1.0;
       bJustStepped = true;

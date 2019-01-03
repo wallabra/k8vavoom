@@ -91,7 +91,7 @@ override void EndEffect()
 override void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
 {
   if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-    (ftoi(4.0 * EffectTime) & 1))
+    (int(4.0 * EffectTime) & 1))
   {
     OutRenderStyle = STYLE_OptFuzzy;
     OutAlpha = 0.4;

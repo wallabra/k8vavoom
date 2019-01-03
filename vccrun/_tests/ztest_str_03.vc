@@ -4,14 +4,14 @@ class Main : Object;
 string sfld;
 
 final int main (array!string *args) {
-  string s = NameToStr('ThisIsName');
-  name n = StrToName("AnotherName");
+  string s = string('ThisIsName');
+  name n = name("AnotherName");
 
   int i = 42;
   float f = 66.6;
 
-  int i1 = ftoi(f);
-  float f1 = itof(i);
+  int i1 = int(f);
+  float f1 = float(i);
 
   print("<%s>", s);
   print("<%n>", n);

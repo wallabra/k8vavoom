@@ -270,7 +270,7 @@ final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
 
   if (!bIgnoreSkill) {
     // extra ammo in baby mode and nightmare mode
-    count = ftoi(itof(count)*Level.World.SkillAmmoFactor);
+    count = int(float(count)*Level.World.SkillAmmoFactor);
   }
 
   Ammo AmmoItem = Ammo(Toucher.FindInventory(AmmoType));
@@ -303,7 +303,7 @@ final bool AddExistingAmmo (Ammo AmmoItem, int count) {
 
   if (!bIgnoreSkill) {
     // extra ammo in baby mode and nightmare mode
-    count = ftoi(itof(count)*Level.World.SkillAmmoFactor);
+    count = int(float(count)*Level.World.SkillAmmoFactor);
   }
 
   oldammo = AmmoItem.Amount;

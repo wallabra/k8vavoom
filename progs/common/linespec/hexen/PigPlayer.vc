@@ -35,7 +35,7 @@ class PigPlayer : PlayerPawn;
 override void MorphPlayerThink()
 {
   //FIXME this sucks
-  if (ftoi(32.0 * PlayerEx(Player).MorphTime) & 15)
+  if (int(32.0 * PlayerEx(Player).MorphTime) & 15)
   {
     return;
   }

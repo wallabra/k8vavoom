@@ -65,7 +65,7 @@ override void Tick(float DeltaTime)
 override int GetBlend()
 {
   // slowly fade the berzerk out
-  int Amount = 12 - ftoi(EffectTime / 2.0);
+  int Amount = 12 - int(EffectTime / 2.0);
   if (Amount > 0)
   {
     Amount = (Amount + 7) >> 3;

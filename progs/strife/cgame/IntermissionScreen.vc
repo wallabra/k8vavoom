@@ -132,7 +132,7 @@ void IM_InitHubText()
   {
     HubText = ClGame.im.Text;
   }
-  HubCount = itof(strlenutf8(HubText)) * TextSpeed + TextWait;
+  HubCount = float(strlenutf8(HubText)) * TextSpeed + TextWait;
 
   TextFlat = '';
   TextPic = 0;
@@ -176,7 +176,7 @@ void IM_DrawHubText()
   {
     R_FillRect(0, 0, 640, 480, 0);
   }
-  int count = ftoi((intertime - 0.3) / TextSpeed);
+  int count = int((intertime - 0.3) / TextSpeed);
   count = clamp(count, 0, strlenutf8(HubText));
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);

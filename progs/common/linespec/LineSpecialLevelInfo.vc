@@ -628,7 +628,7 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_ThrustThing:
       if (A && !Side) {
         // only thrust on side 0
-        if (Arg2) A.Thrust(itof(Arg1)*(90.0/64.0), itof(Arg2));
+        if (Arg2) A.Thrust(float(Arg1)*(90.0/64.0), float(Arg2));
         buttonSuccess = 1;
       }
       break;
@@ -1580,7 +1580,7 @@ final int EV_BuildStairsOld(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     Direction = 1;
     IgnTxt = false;
   }
-  StairSize = itof(Arg3*Direction);
+  StairSize = float(Arg3*Direction);
   Rtn = 0;
   for (SecNum = Arg1 ? XLevel.FindSectorFromTag(Arg1, -1) : 1; SecNum >= 0;
     SecNum = Arg1 ? XLevel.FindSectorFromTag(Arg1, SecNum) : -1)
@@ -1956,17 +1956,17 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
     }
     else
     {
-      pe.dist = itof(Arg3)*(90.0/64.0); // Angle
+      pe.dist = float(Arg3)*(90.0/64.0); // Angle
     }
   }
   else
   {
     pe.dist = 360.0;
   }
-  pe.speed = AngleMod180(32.0*itof(Arg2)*itof(direction)*90.0/64.0/8.0);
+  pe.speed = AngleMod180(32.0*float(Arg2)*float(direction)*90.0/64.0/8.0);
 
   //THRUST
-  pe.thrust_force = pe.speed/32.0*itof(0x800)/90.0;
+  pe.thrust_force = pe.speed/32.0*float(0x800)/90.0;
 
   poly->SpecialData = pe;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -1994,7 +1994,7 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
       }
       else
       {
-        pe.dist = itof(Arg3)*(90.0/64.0); // Angle
+        pe.dist = float(Arg3)*(90.0/64.0); // Angle
       }
     }
     else
@@ -2002,10 +2002,10 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
       pe.dist = 360.0;
     }
     direction = -direction;
-    pe.speed = AngleMod180(32.0*itof(Arg2)*itof(direction)*90.0/64.0/8.0);
+    pe.speed = AngleMod180(32.0*float(Arg2)*float(direction)*90.0/64.0/8.0);
 
     //THRUST
-    pe.thrust_force = pe.speed/32.0*itof(0x800)/90.0;
+    pe.thrust_force = pe.speed/32.0*float(0x800)/90.0;
 
     polyNum = mirror;
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -2045,20 +2045,20 @@ final bool EV_MovePoly(line_t*line, int Arg1, int Arg2, int Arg3, int Arg4,
   pe.polyobj = polyNum;
   if (timesEight)
   {
-    pe.dist = itof(Arg4)*8.0;
+    pe.dist = float(Arg4)*8.0;
   }
   else
   {
-    pe.dist = itof(Arg4); // Distance
+    pe.dist = float(Arg4); // Distance
   }
-  pe.speed = itof(Arg2)*4.0;
+  pe.speed = float(Arg2)*4.0;
 
   //THRUST
   pe.thrust_force = pe.speed/8.0;
 
   poly->SpecialData = pe;
 
-  an = itof(Arg3)*(90.0/64.0);
+  an = float(Arg3)*(90.0/64.0);
 
   pe.angle = an;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
@@ -2076,13 +2076,13 @@ final bool EV_MovePoly(line_t*line, int Arg1, int Arg2, int Arg3, int Arg4,
     poly->SpecialData = pe;
     if (timesEight)
     {
-      pe.dist = itof(Arg4)*8.0;
+      pe.dist = float(Arg4)*8.0;
     }
     else
     {
-      pe.dist = itof(Arg4); // Distance
+      pe.dist = float(Arg4); // Distance
     }
-    pe.speed = itof(Arg2)*4.0;
+    pe.speed = float(Arg2)*4.0;
 
     //THRUST
     pe.thrust_force = pe.speed/8.0;
@@ -2128,11 +2128,11 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
   pd.polyobj = polyNum;
   if (type == PolyobjDoor::PODOOR_SLIDE)
   {
-    pd.waitTime = itof(Arg5)/35.0;
-    pd.speed = itof(Arg2)*4.0;
-    pd.totalDist = itof(Arg4);  // Distance
+    pd.waitTime = float(Arg5)/35.0;
+    pd.speed = float(Arg2)*4.0;
+    pd.totalDist = float(Arg4);  // Distance
     pd.dist = pd.totalDist;
-    an = itof(Arg3)*(90.0/64.0);
+    an = float(Arg3)*(90.0/64.0);
     pd.xSpeed = cos(an);
     pd.ySpeed = sin(an);
 
@@ -2143,13 +2143,13 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
   }
   else if (type == PolyobjDoor::PODOOR_SWING)
   {
-    pd.waitTime = itof(Arg4)/35.0;
-    pd.speed = AngleMod180(4.0*itof(Arg2)*(90.0/64.0));
-    pd.totalDist = itof(Arg3)*(90.0/64.0);
+    pd.waitTime = float(Arg4)/35.0;
+    pd.speed = AngleMod180(4.0*float(Arg2)*(90.0/64.0));
+    pd.totalDist = float(Arg3)*(90.0/64.0);
     pd.dist = pd.totalDist;
 
     //THRUST
-    pd.thrust_force = pd.speed*itof(0x1000)/180.0;
+    pd.thrust_force = pd.speed*float(0x1000)/180.0;
 
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
   }
@@ -2170,9 +2170,9 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
     poly->SpecialData = pd;
     if (type == PolyobjDoor::PODOOR_SLIDE)
     {
-      pd.waitTime = itof(Arg5)/35.0;
-      pd.speed = itof(Arg2)*4.0;
-      pd.totalDist = itof(Arg4);  // Distance
+      pd.waitTime = float(Arg5)/35.0;
+      pd.speed = float(Arg2)*4.0;
+      pd.totalDist = float(Arg4);  // Distance
       pd.dist = pd.totalDist;
       an = AngleMod360(an+180.0); // reverse the angle
       pd.xSpeed = cos(an);
@@ -2185,13 +2185,13 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
     }
     else if (type == PolyobjDoor::PODOOR_SWING)
     {
-      pd.waitTime = itof(Arg4)/35.0;
-      pd.speed = AngleMod180(4.0*itof(-Arg2)*(90.0/64.0));
-      pd.totalDist = itof(Arg3)*(90.0/64.0);
+      pd.waitTime = float(Arg4)/35.0;
+      pd.speed = AngleMod180(4.0*float(-Arg2)*(90.0/64.0));
+      pd.totalDist = float(Arg3)*(90.0/64.0);
       pd.dist = pd.totalDist;
 
       //THRUST
-      pd.thrust_force = pd.speed*itof(0x1000)/180.0;
+      pd.thrust_force = pd.speed*float(0x1000)/180.0;
 
       PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
     }
@@ -2343,7 +2343,7 @@ final void SpawnLightSequence(sector_t *sector, float indexStep)
     {
       base = sec->params.lightlevel;
     }
-    SpawnPhasedLight(sec, base, ftoi(index));
+    SpawnPhasedLight(sec, base, int(index));
     //  Clear sector special.
     sec->special &= ~SECSPEC_BASE_MASK;
     index += indexDelta;
@@ -2676,8 +2676,8 @@ final void SpawnTextureBothScroller(line_t *Line)
   Scroller  Scroll;
 
   Scroll = Spawn(Scroller);
-  Scroll.InitTextureBoth(Line, itof(Line->arg2-Line->arg3)/64.0,
-    itof(Line->arg5-Line->arg4)/64.0, 0, 7);
+  Scroll.InitTextureBoth(Line, float(Line->arg2-Line->arg3)/64.0,
+    float(Line->arg5-Line->arg4)/64.0, 0, 7);
 }
 
 //==========================================================================
@@ -2778,7 +2778,7 @@ final bool EV_ScrollTextureBoth(int Arg1, int Arg2, int Arg3, int Arg4,
     Arg1 = -Arg1;
   }
 
-  SetWallScroller(Arg1, itof(Arg2-Arg3)/64.0, itof(Arg5-Arg4)/64.0,
+  SetWallScroller(Arg1, float(Arg2-Arg3)/64.0, float(Arg5-Arg4)/64.0,
     WhichSide, 7);
   return true;
 }
@@ -2798,8 +2798,8 @@ final bool EV_ScrollWall(int Arg1, int Arg2, int Arg3, int Arg4,
     return false;
   }
 
-  SetWallScroller(Arg1, itof(Arg2)/itof(0x10000),
-    itof(Arg3)/itof(0x10000), !!Arg4, Arg5);
+  SetWallScroller(Arg1, float(Arg2)/float(0x10000),
+    float(Arg3)/float(0x10000), !!Arg4, Arg5);
   return true;
 }
 
@@ -3173,7 +3173,7 @@ final bool EV_SectorSetGravity(int Arg1, int Arg2, int Arg3, int Arg4,
   if (Arg3 > 99)
     Arg3 = 99;
 
-  SecGrav = itof(Arg2)+itof(Arg3)*0.01;
+  SecGrav = float(Arg2)+float(Arg3)*0.01;
   Ret = false;
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
@@ -3226,8 +3226,8 @@ final bool EV_SectorSetFriction(int Arg1, int Arg2, int Arg3, int Arg4,
   if (OldMoveFactor < 32)
     OldMoveFactor = 32;
 
-  Friction = (1.0-itof(OldFriction)/itof(0x10000))*35.0;
-  MoveFactor = itof(OldMoveFactor)/itof(0x10000);
+  Friction = (1.0-float(OldFriction)/float(0x10000))*35.0;
+  MoveFactor = float(OldMoveFactor)/float(0x10000);
 
   Ret = false;
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
@@ -3312,8 +3312,8 @@ final bool EV_SectorSetFloorPanning(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XOffs = itof(Arg2)+itof(Arg3)/100.0;
-  float YOffs = itof(Arg4)+itof(Arg5)/100.0;
+  float XOffs = float(Arg2)+float(Arg3)/100.0;
+  float YOffs = float(Arg4)+float(Arg5)/100.0;
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
   {
@@ -3334,8 +3334,8 @@ final bool EV_SectorSetCeilingPanning(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XOffs = itof(Arg2)+itof(Arg3)/100.0;
-  float YOffs = itof(Arg4)+itof(Arg5)/100.0;
+  float XOffs = float(Arg2)+float(Arg3)/100.0;
+  float YOffs = float(Arg4)+float(Arg5)/100.0;
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
   {
@@ -3359,8 +3359,8 @@ final bool EV_SectorSetRotation(int Arg1, int Arg2, int Arg3, int Arg4,
   for (s = XLevel.FindSectorFromTag(Arg1, -1); s >= 0;
     s = XLevel.FindSectorFromTag(Arg1, s))
   {
-    XLevel.Sectors[s].floor.Angle = itof(Arg2);
-    XLevel.Sectors[s].ceiling.Angle = itof(Arg3);
+    XLevel.Sectors[s].floor.Angle = float(Arg2);
+    XLevel.Sectors[s].ceiling.Angle = float(Arg3);
   }
   return true;
 }
@@ -3375,8 +3375,8 @@ final bool EV_SectorSetFloorScale(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2)+itof(Arg3)/100.0;
-  float YScale = itof(Arg4)+itof(Arg5)/100.0;
+  float XScale = float(Arg2)+float(Arg3)/100.0;
+  float YScale = float(Arg4)+float(Arg5)/100.0;
   if (XScale)
   {
     XScale = 1.0/XScale;
@@ -3410,8 +3410,8 @@ final bool EV_SectorSetCeilingScale(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2)+itof(Arg3)/100.0;
-  float YScale = itof(Arg4)+itof(Arg5)/100.0;
+  float XScale = float(Arg2)+float(Arg3)/100.0;
+  float YScale = float(Arg4)+float(Arg5)/100.0;
   if (XScale)
   {
     XScale = 1.0/XScale;
@@ -3445,8 +3445,8 @@ final bool EV_SectorSetFloorScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2)/itof(0x10000);
-  float YScale = itof(Arg3)/itof(0x10000);
+  float XScale = float(Arg2)/float(0x10000);
+  float YScale = float(Arg3)/float(0x10000);
   if (XScale)
   {
     XScale = 1.0/XScale;
@@ -3480,8 +3480,8 @@ final bool EV_SectorSetCeilingScale2(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5)
 {
   int s;
-  float XScale = itof(Arg2)/itof(0x10000);
-  float YScale = itof(Arg3)/itof(0x10000);
+  float XScale = float(Arg2)/float(0x10000);
+  float YScale = float(Arg3)/float(0x10000);
   if (XScale)
   {
     XScale = 1.0/XScale;
@@ -3644,7 +3644,7 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
     //  X offset
     if (Arg2 != NoChange)
     {
-      float Offs = itof(Arg2)/itof(0x10000);
+      float Offs = float(Arg2)/float(0x10000);
       if (!(Arg5&8))
       {
         //  Set
@@ -3682,7 +3682,7 @@ final bool EV_LineSetTextureOffset(int Arg1, int Arg2, int Arg3, int Arg4,
     //  Y offset
     if (Arg3 != NoChange)
     {
-      float Offs = itof(Arg3)/itof(0x10000);
+      float Offs = float(Arg3)/float(0x10000);
       if (!(Arg5&8))
       {
         //  Set
@@ -3858,9 +3858,9 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
   {
     return false;
   }
-  angle = itof(AAngle)*(360.0/256.0);
-  speed = itof(ASpeed)/8.0;
-  vspeed = itof(AVSpeed)/8.0;
+  angle = float(AAngle)*(360.0/256.0);
+  speed = float(ASpeed)/8.0;
+  vspeed = float(AVSpeed)/8.0;
 
   //print("projectile '%C', vspeed=%f (%f); intercept=%B", moType, AVSpeed, vspeed, Intercept);
   for (A = tid ? FindMobjFromTID(tid, none) : Activator; A; A = FindMobjFromTID(tid, A)) {
@@ -3979,7 +3979,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
   auto moRepl = class!EntityEx(GetClassReplacement(moType));
   if (moRepl) moType = moRepl;
-  angle = itof(Arg3)*360.0/256.0;
+  angle = float(Arg3)*360.0/256.0;
   for (A = tid ? FindMobjFromTID(tid, none) : Activator; A;
     A = FindMobjFromTID(tid, A))
   {
@@ -4334,7 +4334,7 @@ final bool EV_ThingSetGoal(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
       E.bChaseGoal = !!Arg4;
       if (!E.Target)
       {
-        E.ReactionTime = itof(Arg3);
+        E.ReactionTime = float(Arg3);
       }
     }
   }
@@ -5804,7 +5804,7 @@ final bool EV_LineTranslucent(int Arg1, int Arg2, int Arg3, int Arg4,
   for (Other = XLevel.FindLine(Arg1, &Searcher); Other;
     Other = XLevel.FindLine(Arg1, &Searcher))
   {
-    Other->alpha = itof(Arg2)/255.0;
+    Other->alpha = float(Arg2)/255.0;
     if (Arg3 == 0)
     {
       Other->flags &= ~ML_ADDITIVE;
@@ -5835,8 +5835,8 @@ int EV_SectorSetPlaneReflection(int Arg1, int Arg2, int Arg3, int Arg4,
   for (SecNum = XLevel.FindSectorFromTag(Arg1, -1); SecNum >= 0;
     SecNum = XLevel.FindSectorFromTag(Arg1, SecNum))
   {
-    XLevel.Sectors[SecNum].floor.MirrorAlpha = itof(255-Arg2)/255.0;
-    XLevel.Sectors[SecNum].ceiling.MirrorAlpha = itof(255-Arg3)/255.0;
+    XLevel.Sectors[SecNum].floor.MirrorAlpha = float(255-Arg2)/255.0;
+    XLevel.Sectors[SecNum].ceiling.MirrorAlpha = float(255-Arg3)/255.0;
   }
   return 1;
 }
@@ -7091,7 +7091,7 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
     if (p->ramp >= 16.0)
       p->die = -1.0;
     else
-      p->colour = LineSpecialGameInfo.default.ramp1[ftoi(p->ramp)];
+      p->colour = LineSpecialGameInfo.default.ramp1[int(p->ramp)];
     p->vel.x += p->vel.x*dvel;
     p->vel.y += p->vel.y*dvel;
     p->vel.z += p->vel.z*dvel;
@@ -7104,7 +7104,7 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
     if (p->ramp >= 16.0)
       p->die = -1.0;
     else
-      p->colour = LineSpecialGameInfo.default.ramp2[ftoi(p->ramp)];
+      p->colour = LineSpecialGameInfo.default.ramp2[int(p->ramp)];
     p->vel.x -= p->vel.x*DeltaTime;
     p->vel.y -= p->vel.y*DeltaTime;
     p->vel.z -= p->vel.z*DeltaTime;
@@ -7114,14 +7114,14 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_fountain:
     p->vel += p->accel*DeltaTime;
-    p->colour = (p->colour&0x00ffffff)|(ftoi(
-      itof(p->colour>>24)-255.0/51.0*35.0*DeltaTime)<<24);
+    p->colour = (p->colour&0x00ffffff)|(int(
+      float(p->colour>>24)-255.0/51.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_spark:
     p->vel += p->accel*DeltaTime;
-    p->colour = (p->colour&0x00ffffff)|(ftoi(
-      itof(p->colour>>24)-255.0/10.0*35.0*DeltaTime)<<24);
+    p->colour = (p->colour&0x00ffffff)|(int(
+      float(p->colour>>24)-255.0/10.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_ice_chunk:
@@ -7132,8 +7132,7 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
 
   case pt_rail:
     p->vel += p->accel*DeltaTime;
-    p->colour = (p->colour&0x00ffffff)|(ftoi(
-      itof(p->colour>>24)-255.0*DeltaTime)<<24);
+    p->colour = (p->colour&0x00ffffff)|(int(float(p->colour>>24)-255.0*DeltaTime)<<24);
     break;
   }
 }

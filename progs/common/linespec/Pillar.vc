@@ -65,17 +65,17 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   if (!Arg3) {
     NewHeight = FloorHeight+((CeilHeight-FloorHeight)/2.0);
   } else {
-    NewHeight = FloorHeight+itof(Arg3);
+    NewHeight = FloorHeight+float(Arg3);
   }
 
   if (!Arg3) {
-    FloorSpeed = itof(Arg2)*35.0/8.0;
+    FloorSpeed = float(Arg2)*35.0/8.0;
     CeilingSpeed = FloorSpeed;
   } else if (NewHeight-FloorHeight > CeilHeight-NewHeight) {
-    FloorSpeed = itof(Arg2)*35.0/8.0;
+    FloorSpeed = float(Arg2)*35.0/8.0;
     CeilingSpeed = (CeilHeight-NewHeight)*FloorSpeed/(NewHeight-FloorHeight);
   } else {
-    CeilingSpeed = itof(Arg2)*35.0/8.0;
+    CeilingSpeed = float(Arg2)*35.0/8.0;
     FloorSpeed = (NewHeight-FloorHeight)*CeilingSpeed/(CeilHeight-NewHeight);
   }
   Spot.z = NewHeight;
@@ -106,7 +106,7 @@ void InitOpen (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int A
     FloorDestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot1);
   } else {
     Spot1 = *Sector->lines[0]->v1;
-    FloorDestHeight = GetPlanePointZ(ref Sector->floor, Spot1)-itof(Arg3);
+    FloorDestHeight = GetPlanePointZ(ref Sector->floor, Spot1)-float(Arg3);
   }
   FloorHeight = GetPlanePointZ(ref Sector->floor, Spot1);
   Spot1.z = FloorDestHeight;
@@ -116,7 +116,7 @@ void InitOpen (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int A
     CeilDestHeight = Level.FindHighestCeilingSurrounding(Sector, &Spot2);
   } else {
     Spot2 = *Sector->lines[0]->v1;
-    CeilDestHeight = GetPlanePointZ(ref Sector->ceiling, Spot2)+itof(Arg4);
+    CeilDestHeight = GetPlanePointZ(ref Sector->ceiling, Spot2)+float(Arg4);
   }
   CeilHeight = GetPlanePointZ(ref Sector->ceiling, Spot2);
   Spot2.z = CeilDestHeight;
@@ -132,10 +132,10 @@ void InitOpen (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int A
   Sector->CeilingData = self;
 
   if (FloorHeight-FloorDestHeight >= CeilDestHeight-CeilHeight) {
-    FloorSpeed = itof(Arg2)*35.0/8.0;
+    FloorSpeed = float(Arg2)*35.0/8.0;
     CeilingSpeed = (CeilHeight-CeilDestHeight)*FloorSpeed/(FloorDestHeight-FloorHeight);
   } else {
-    CeilingSpeed = itof(Arg2)*35.0/8.0;
+    CeilingSpeed = float(Arg2)*35.0/8.0;
     FloorSpeed = (FloorDestHeight-FloorHeight)*CeilingSpeed/(CeilHeight-CeilDestHeight);
   }
   Direction = -1; // open the pillar

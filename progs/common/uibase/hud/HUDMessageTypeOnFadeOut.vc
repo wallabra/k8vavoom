@@ -75,7 +75,7 @@ override void Tick (float DeltaTime) {
           //return;
           goto case;
         }
-        LineChars = ftoi(Time/TypeOnTime);
+        LineChars = int(Time/TypeOnTime);
         LineLen = strlenutf8(MsgLines[CurrentLine].Text);
       }
       break;

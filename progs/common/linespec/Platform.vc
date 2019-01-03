@@ -102,7 +102,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   }
 
   Tag = Arg1;
-  Speed = itof(Arg2)*35.0/8.0;
+  Speed = float(Arg2)*35.0/8.0;
   Crush = 0;
   StartSound = LineSpecialLevelInfo(Level).DefaultPlatformSound;
   if (Sector.lines.length == 0) { print("WARNING: invalid platform in `linespec.Platform.Init()`"); return; }
@@ -116,19 +116,19 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       Spot.z = DestHeight;
       High = DotProduct(Sector->floor.normal, Spot);
       if (High < Sector->floor.dist) High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = P_Random()&1;
       break;
     case PLATEV_PerpetualRaiseLip:
       DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
-      Spot.z = DestHeight+itof(Arg4);
+      Spot.z = DestHeight+float(Arg4);
       Low = DotProduct(Sector->floor.normal, Spot);
       if (Low > Sector->floor.dist) Low = Sector->floor.dist;
       DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot);
       Spot.z = DestHeight;
       High = DotProduct(Sector->floor.normal, Spot);
       if (High < Sector->floor.dist) High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = P_Random()&1;
       break;
     case PLATEV_DownWaitUpStay:
@@ -137,25 +137,25 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       Low = DotProduct(Sector->floor.normal, Spot);
       if (Low > Sector->floor.dist) Low = Sector->floor.dist;
       High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Down;
       break;
     case PLATEV_DownWaitUpStayLip:
       DestHeight = Level.FindLowestFloorSurrounding(Sector, &Spot);
-      Spot.z = DestHeight+itof(Arg4);
+      Spot.z = DestHeight+float(Arg4);
       Low = DotProduct(Sector->floor.normal, Spot);
       if (Low > Sector->floor.dist) Low = Sector->floor.dist;
       High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Down;
       if (Arg5) StartSound = LineSpecialLevelInfo(Level).DefaultFloorSound;
       break;
     case PLATEV_DownNearestWaitUpStay:
       DestHeight = Level.FindNextLowestFloor(Sector, &Spot);
-      Spot.z = DestHeight+itof(Arg4);
+      Spot.z = DestHeight+float(Arg4);
       Low = DotProduct(Sector->floor.normal, Spot);
       High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Down;
       break;
     case PLATEV_DownLowestCeilingWaitUpStay:
@@ -164,16 +164,16 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       Low = DotProduct(Sector->floor.normal, Spot);
       if (Low > Sector->floor.dist) Low = Sector->floor.dist;
       High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Down;
       break;
     case PLATEV_DownByValueWaitUpStay:
       Spot = *Sector->lines[0]->v1;
-      Spot.z = GetPlanePointZ(ref Sector->floor, Spot)-itof(Arg4)*8.0;
+      Spot.z = GetPlanePointZ(ref Sector->floor, Spot)-float(Arg4)*8.0;
       Low = DotProduct(Sector->floor.normal, Spot);
       if (Low > Sector->floor.dist) Low = Sector->floor.dist;
       High = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Down;
       break;
     case PLATEV_UpWaitDownStay:
@@ -182,7 +182,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       High = DotProduct(Sector->floor.normal, Spot);
       if (High < Sector->floor.dist) High = Sector->floor.dist;
       Low = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Up;
       break;
     case PLATEV_UpNearestWaitDownStay:
@@ -191,16 +191,16 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       High = DotProduct(Sector->floor.normal, Spot);
       if (High < Sector->floor.dist) High = Sector->floor.dist;
       Low = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Up;
       break;
     case PLATEV_UpByValueWaitDownStay:
       Spot = *Sector->lines[0]->v1;
-      Spot.z = GetPlanePointZ(ref Sector->floor, Spot)+itof(Arg4)*8.0;
+      Spot.z = GetPlanePointZ(ref Sector->floor, Spot)+float(Arg4)*8.0;
       High = DotProduct(Sector->floor.normal, Spot);
       if (High < Sector->floor.dist) High = Sector->floor.dist;
       Low = Sector->floor.dist;
-      Wait = itof(Arg3)/35.0;
+      Wait = float(Arg3)/35.0;
       Status = PLAT_Up;
       break;
     case PLATEV_Toggle: //jff 3/14/98 add new type to support instant toggle

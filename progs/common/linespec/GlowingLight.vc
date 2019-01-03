@@ -62,17 +62,17 @@ override void Tick (float DeltaTime) {
   switch (Direction) {
     case -1:
       // down
-      Sector->params.lightlevel -= ftoi(Speed*DeltaTime);
+      Sector->params.lightlevel -= int(Speed*DeltaTime);
       if (Sector->params.lightlevel <= MinLight) {
-        Sector->params.lightlevel += ftoi(Speed*DeltaTime);
+        Sector->params.lightlevel += int(Speed*DeltaTime);
         Direction = 1;
       }
       break;
     case 1:
       // up
-      Sector->params.lightlevel += ftoi(Speed*DeltaTime);
+      Sector->params.lightlevel += int(Speed*DeltaTime);
       if (Sector->params.lightlevel >= MaxLight) {
-        Sector->params.lightlevel -= ftoi(Speed*DeltaTime);
+        Sector->params.lightlevel -= int(Speed*DeltaTime);
         Direction = -1;
       }
       break;

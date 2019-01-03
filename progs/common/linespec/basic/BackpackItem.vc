@@ -46,7 +46,7 @@ override bool HandlePickup (Inventory Item) {
       if (!num || BackpackItem(Item).bDepleeted) continue;
       if (!Item.bIgnoreSkill) {
         // extra ammo in baby mode and nightmare mode
-        num = ftoi(itof(num)*Level.World.SkillAmmoFactor);
+        num = int(float(num)*Level.World.SkillAmmoFactor);
       }
       int oldammo = AmmoItem.Amount;
       AmmoItem.Amount += num;
@@ -86,7 +86,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
     if (!num || bDepleeted) continue;
     if (!bIgnoreSkill) {
       // extra ammo in baby mode and nightmare mode
-      num = ftoi(itof(num)*Level.World.SkillAmmoFactor);
+      num = int(float(num)*Level.World.SkillAmmoFactor);
     }
     int oldammo = AmmoItem.Amount;
     AmmoItem.Amount += num;

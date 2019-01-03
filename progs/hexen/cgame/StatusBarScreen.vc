@@ -496,7 +496,7 @@ override void SB_DrawMainBar()
   HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(
     HexenArmor));
   int TotalArmorPoints = !HArmor ? 0 :
-    ftoi((HArmor.Slots[0] + HArmor.Slots[1] + HArmor.Slots[2] +
+    int((HArmor.Slots[0] + HArmor.Slots[1] + HArmor.Slots[2] +
     HArmor.Slots[3] + HArmor.Slots[4]) / 5.0);
   SB_DrawNumber9(BAR_X + 250, BAR_Y + 15, TotalArmorPoints, 0);
 }
@@ -591,11 +591,11 @@ void SB_DrawInventoryBar()
 
   if (cl.InvFirst && cl.InvFirst.PrevInv())
   {
-    DrawPic(BAR_X + 42, BAR_Y + 2, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
+    DrawPic(BAR_X + 42, BAR_Y + 2, pic_invgeml[!(int(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
   }
   if (Item)
   {
-    DrawPic(BAR_X + 269, BAR_Y + 2, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
+    DrawPic(BAR_X + 269, BAR_Y + 2, pic_invgemr[!(int(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
   }
 }
 
@@ -648,8 +648,8 @@ override void SB_DrawFullscreenStats () {
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(xfix(200), yfix(447), pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
-    if (Item) DrawPic(xfix(428), yfix(447), pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(xfix(200), yfix(447), pic_invgeml[!(int(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
+    if (Item) DrawPic(xfix(428), yfix(447), pic_invgemr[!(int(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
   } else if (cl.InvPtr) {
     // ready artifact
     DrawPic(xfix(546), yfix(440), pic_artibox, 0.6);
@@ -699,7 +699,7 @@ void SB_DrawIcons () {
   // wings of wrath
   Powerup Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerFlight));
   if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(Pw.EffectTime*35.0)&16))) {
-    int frame = (ftoi(cl.MO.Level.XLevel.Time*35.0)/3)&15;
+    int frame = (int(cl.MO.Level.XLevel.Time*35.0)/3)&15;
     if (cl.MO.bFly) {
       if (hitCentreFrame && frame != 15 && frame != 0) {
         frame = 15;

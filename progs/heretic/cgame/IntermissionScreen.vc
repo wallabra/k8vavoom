@@ -97,8 +97,8 @@ void Start()
   if (!Background)
   {
     Background = NewChild(IntermissionBackground);
-    Background.ScaleX = itof(Width) / itof(Background.Width);
-    Background.ScaleY = itof(Height) / itof(Background.Height);
+    Background.ScaleX = float(Width) / float(Background.Width);
+    Background.ScaleY = float(Height) / float(Background.Height);
   }
 
   IM_InitStats();
@@ -354,7 +354,7 @@ void IM_InitStats()
       return;
     }
 
-    time = ftoi(ClGame.GLevel.LevelInfo.CompletitionTime);
+    time = int(ClGame.GLevel.LevelInfo.CompletitionTime);
     hours = time / 3600;
     time -= hours * 3600;
     minutes = time / 60;
@@ -403,8 +403,8 @@ void IM_InitStats()
     {
       i = RepInfo.PlayerNum;
       playercount++;
-      dSlideX[i] = (43.0 * itof(posnum)) / 20.0;
-      dSlideY[i] = (36.0 * itof(posnum)) / 20.0;
+      dSlideX[i] = (43.0 * float(posnum)) / 20.0;
+      dSlideY[i] = (36.0 * float(posnum)) / 20.0;
       posnum++;
       if (RepInfo.Frags > slaughterfrags)
       {
@@ -636,11 +636,11 @@ void IM_DrawDMStats()
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
     {
       i = RepInfo.PlayerNum;
-      DrawShadowedPic(200, ypos + ftoi(dSlideY[i] * 35.0 * intertime),
+      DrawShadowedPic(200, ypos + int(dSlideY[i] * 35.0 * intertime),
         patchFaceOkay[i]);
       SetFont('smallfont');
       SetTextAlign(hleft, vtop);
-      DrawText(240, ypos + 10 + ftoi(dSlideY[i] * 35.0 * intertime),
+      DrawText(240, ypos + 10 + int(dSlideY[i] * 35.0 * intertime),
         RepInfo.PlayerName);
     }
     return;
@@ -674,7 +674,7 @@ void IM_DrawDMStats()
     DrawText(240, ypos + 10, RepInfo.PlayerName);
     if (slaughterboy & (1 << i))
     {
-      if (!(ftoi(32.0 * intertime) & 16))
+      if (!(int(32.0 * intertime) & 16))
       {
         DrawText(423, ypos + 10, va("%d", RepInfo.Frags));
         DrawText(523, ypos + 10, va("%d", RepInfo.Deaths));
@@ -772,7 +772,7 @@ void IM_InitText()
   {
     HubText = ClGame.im.Text;
   }
-  HubCount = itof(strlenutf8(HubText)) * TEXTSPEED + TEXTWAIT;
+  HubCount = float(strlenutf8(HubText)) * TEXTSPEED + TEXTWAIT;
 
   TextFlat = '';
   TextPic = 0;
@@ -819,7 +819,7 @@ void IM_DrawText()
   else R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0);
 
   // draw some of the text onto the screen
-  count = ftoi((intertime - 0.3) / TEXTSPEED);
+  count = int((intertime - 0.3) / TEXTSPEED);
   count = clamp(count, 0, strlenutf8(HubText));
 
   SetFont('smallfont');

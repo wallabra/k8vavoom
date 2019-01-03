@@ -50,7 +50,7 @@ void Init (sector_t *InSector) {
   MinLight = Level.FindMinSurroundingLight(Sector, Sector->params.lightlevel);
   MaxTime = 64;
   MinTime = 7;
-  Time = itof((P_Random()&MaxTime)+1)/35.0;
+  Time = float((P_Random()&MaxTime)+1)/35.0;
 }
 
 
@@ -67,10 +67,10 @@ override void Tick (float DeltaTime) {
 
   if (Sector->params.lightlevel == MaxLight) {
     Sector->params.lightlevel = MinLight;
-    Time = itof((P_Random()&MinTime)+1)/35.0;
+    Time = float((P_Random()&MinTime)+1)/35.0;
   } else {
     Sector->params.lightlevel = MaxLight;
-    Time = itof((P_Random()&MaxTime)+1)/35.0;
+    Time = float((P_Random()&MaxTime)+1)/35.0;
   }
 }
 

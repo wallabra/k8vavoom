@@ -65,10 +65,10 @@ override void OnMapSpawn(mthing_t *mthing) {
   if (LightType == DLTYPE_Point && mthing && !TID && !bDormant) {
     //dprint("*** adding static light for class '%n'", GetClassName(Class));
     if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3) {
-      Level.AddStaticLight(Origin, StaticIntensityToRadius(itof(mthing->arg4)));
+      Level.AddStaticLight(Origin, StaticIntensityToRadius(float(mthing->arg4)));
     } else {
       Level.AddStaticLightRGB(Origin,
-        StaticIntensityToRadius(itof(mthing->arg4)),
+        StaticIntensityToRadius(float(mthing->arg4)),
         RGB(mthing->arg1, mthing->arg2, mthing->arg3));
     }
     Destroy();
@@ -95,7 +95,7 @@ override void BeginPlay () {
 override bool Activate (EntityEx Activator) {
   bDormant = false;
   LightTime = 0.0;
-  Intensity = itof(Args[3]);
+  Intensity = float(Args[3]);
   return true;
 }
 
@@ -125,7 +125,7 @@ override void ClientTick (float DeltaTime) {
 
   switch (LightType) {
     case DLTYPE_Point:
-      Intensity = itof(Args[3]);
+      Intensity = float(Args[3]);
       break;
     case DLTYPE_Pulse:
       {
@@ -134,40 +134,40 @@ override void ClientTick (float DeltaTime) {
         LightTime += DeltaTime;
         if (LightTime >= PulseCycle) LightTime = 0.0;
         float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
-        Intensity = itof(Args[3])+Frac*itof(Args[4]-Args[3]);
+        Intensity = float(Args[3])+Frac*float(Args[4]-Args[3]);
       }
       break;
     case DLTYPE_Flicker:
-      Intensity = itof(Random() >= Angles.yaw/360.0 ? Args[4] : Args[3]);
+      Intensity = float(Random() >= Angles.yaw/360.0 ? Args[4] : Args[3]);
       break;
     case DLTYPE_FlickerRandom:
       LightTime += DeltaTime;
       if (LightTime > Angles.yaw/35.0) {
         LightTime = 0.0;
-        Intensity = itof(Args[3])+Random()*itof(Args[4]-Args[3]);
+        Intensity = float(Args[3])+Random()*float(Args[4]-Args[3]);
       }
       break;
     case DLTYPE_Sector:
       {
-        float Scale = itof(Args[3])*0.125;
+        float Scale = float(Args[3])*0.125;
         if (!Scale) Scale = 1.0;
-        Intensity = itof(Sector->params.lightlevel)*Scale;
+        Intensity = float(Sector->params.lightlevel)*Scale;
         if (Intensity < 0.0) Intensity = 0.0;
         if (Intensity > 255.0) Intensity = 255.0;
       }
       break;
     case DLTYPE_SectorSubtractive:
       {
-        float Scale = itof(Args[3])*0.125;
+        float Scale = float(Args[3])*0.125;
         if (!Scale) Scale = 1.0;
-        Intensity = itof(Sector->params.lightlevel)*Scale;
+        Intensity = float(Sector->params.lightlevel)*Scale;
         if (Intensity < 0.0) Intensity = 0.0;
         if (Intensity > 255.0) Intensity = 255.0;
         realLightType = DLTYPE_Subtractive;
       }
       break;
     case DLTYPE_Subtractive:
-      Intensity = itof(Args[3]);
+      Intensity = float(Args[3]);
       //if (RGB(Args[0], Args[1], Args[2]) == 0) return;
       break;
   }

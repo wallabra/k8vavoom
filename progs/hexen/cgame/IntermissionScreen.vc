@@ -258,7 +258,7 @@ void IM_InitHubText()
     {
       HubText = ClGame.im.Text;
     }
-    HubCount = itof(strlenutf8(HubText)) * TextSpeed + TextWait;
+    HubCount = float(strlenutf8(HubText)) * TextSpeed + TextWait;
 
     TextFlat = '';
     TextPic = 0;
@@ -306,7 +306,7 @@ void IM_DrawHubText()
   {
     R_FillRect(0, 0, 640, 480, 0);
   }
-  int count = ftoi((intertime - 0.3) / TextSpeed);
+  int count = int((intertime - 0.3) / TextSpeed);
   count = clamp(count, 0, strlenutf8(HubText));
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
@@ -395,17 +395,17 @@ void IM_DrawDeathTally()
     showTotals = true;
     LocalSound('PlatformStop');
   }
-  y = ftoi(yPos);
+  y = int(yPos);
   foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo)
   {
     i = RepInfo.PlayerNum;
     xPos = xStart;
     SetFont('smallfont');
     SetTextAlign(hleft, vtop);
-    DrawText(ftoi(xPos), y, RepInfo.PlayerName,
+    DrawText(int(xPos), y, RepInfo.PlayerName,
       i == ClGame.cl.ClientNum ? CR_YELLOW : CR_WHITE);
     if (showTotals && !((slaughterboy & (1 << i)) &&
-      !(ftoi(32.0 * intertime) & 16)))
+      !(int(32.0 * intertime) & 16)))
     {
       if (i == ClGame.cl.ClientNum)
       {
@@ -417,7 +417,7 @@ void IM_DrawDeathTally()
       }
     }
     yPos += yDelta;
-    y = ftoi(yPos);
+    y = int(yPos);
   }
 }
 

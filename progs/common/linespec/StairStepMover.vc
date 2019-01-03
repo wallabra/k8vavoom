@@ -74,13 +74,13 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
         (InSector->special&SECSPEC_BASE_MASK) == SECSPEC_StairsSpecial1,
         Height,
         InStairsType,
-        itof(Dir*Arg3),
+        float(Dir*Arg3),
         Dir,
-        itof(Arg2)*35.0/8.0,
+        float(Arg2)*35.0/8.0,
         InSector->floor.pic,
         Height,
-        itof(Arg4)/35.0,
-        itof(Arg5)/35.0);
+        float(Arg4)/35.0,
+        float(Arg5)/35.0);
       break;
     case STAIRSEV_DownSync:
     case STAIRSEV_UpSync:
@@ -88,13 +88,13 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
         (InSector->special&SECSPEC_BASE_MASK) == SECSPEC_StairsSpecial1,
         Height,
         InStairsType,
-        itof(Dir*Arg3),
+        float(Dir*Arg3),
         Dir,
-        itof(Arg2)*35.0/8.0,
+        float(Arg2)*35.0/8.0,
         InSector->floor.pic,
         Height,
         0.0,
-        itof(Arg4)/35.0);
+        float(Arg4)/35.0);
       break;
   }
 }

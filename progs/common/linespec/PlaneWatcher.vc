@@ -69,7 +69,7 @@ void Start (Entity it, line_t *line, int lineSide, bool ceiling, int tag,
     }
     LastD = plane->dist;
     //FIXME plane.ChangeHeight();
-    WatchD = plane->dist+itof(height);
+    WatchD = plane->dist+float(height);
   } else {
     Sector = nullptr;
     WatchD = 0.0;

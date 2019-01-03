@@ -298,8 +298,8 @@ override void SB_DrawMainBar()
   DrawPic(BAR_X + 276, BAR_Y + 32, pic_rtface);
   for (i = 0; i < 16; i++)
   {
-    ShadeRect(BAR_X + 277 + i, BAR_Y + 32, 1, 10, itof(9 + i) / 32.0);
-    ShadeRect(BAR_X + 19 + i, BAR_Y + 32, 1, 10, itof(9 + 15 - i) / 32.0);
+    ShadeRect(BAR_X + 277 + i, BAR_Y + 32, 1, 10, float(9 + i) / 32.0);
+    ShadeRect(BAR_X + 19 + i, BAR_Y + 32, 1, 10, float(9 + 15 - i) / 32.0);
   }
 
   if (!cl.InventoryTime)
@@ -374,11 +374,11 @@ override void SB_DrawMainBar()
     }
     if (cl.InvFirst && cl.InvFirst.PrevInv())
     {
-      DrawPic(BAR_X + 38, BAR_Y + 1, pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
+      DrawPic(BAR_X + 38, BAR_Y + 1, pic_invgeml[!(int(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
     }
     if (Item)
     {
-      DrawPic(BAR_X + 269, BAR_Y + 1, pic_invgemr[!(ftoi(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
+      DrawPic(BAR_X + 269, BAR_Y + 1, pic_invgemr[!(int(cl.MO.Level.XLevel.Time * 35.0) & 4) ? 0 : 1]);
     }
   }
 }
@@ -445,7 +445,7 @@ override void SB_DrawFullscreenStats () {
         Item = Item.NextInv();
       }
     }
-    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(xfix(198), yfix(447), pic_invgeml[!(ftoi(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
+    if (cl.InvFirst && cl.InvFirst.PrevInv()) DrawPic(xfix(198), yfix(447), pic_invgeml[!(int(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
     if (Item) DrawPic(xfix(429), yfix(447), pic_invgemr[!(int(cl.MO.Level.XLevel.Time*35.0)&4) ? 0 : 1], 0.6);
   } else if (cl.InvPtr) {
     // ready artifact
@@ -485,7 +485,7 @@ void SB_DrawIcons () {
 
   Pw = Powerup(EntityEx(cl.MO).FindInventory(PowerWeaponLevel2));
   if (Pw && !cl.MorphTime && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(2.0*Pw.EffectTime)&1))) {
-    DrawPic(/*xfix*/(620), 17, pic_book[(ftoi(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
+    DrawPic(/*xfix*/(620), 17, pic_book[(int(cl.MO.Level.XLevel.Time*35.0)/3)&15]);
   }
 }
 

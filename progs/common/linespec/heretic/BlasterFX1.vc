@@ -83,7 +83,7 @@ final void A_SpawnRippers()
   for (i = 0; i < 8; i++)
   {
     ripper = Spawn(Ripper, Origin);
-    angle = itof(i) * 45.0;
+    angle = float(i) * 45.0;
     ripper.Target = Target;
     ripper.Angles.yaw = angle;
     ripper.Velocity.x = ripper.Speed * cos(angle);

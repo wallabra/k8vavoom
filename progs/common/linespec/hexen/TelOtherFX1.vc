@@ -96,7 +96,7 @@ final void TeleportToDeathmatchStarts(Actor victim)
     i = P_Random() % Level.DeathmatchStarts.Num;
     destX = Level.DeathmatchStarts[i].x;
     destY = Level.DeathmatchStarts[i].y;
-    destAngle = itof(45 * (Level.DeathmatchStarts[i].angle / 45));
+    destAngle = float(45 * (Level.DeathmatchStarts[i].angle / 45));
     victim.Teleport(vector(destX, destY, ONFLOORZ), destAngle, true,
       true, false);
   }
@@ -129,7 +129,7 @@ final void TeleportToPlayerStarts(Actor victim)
   i = P_Random() % selections;
   destX = Level.GetPlayerStart(i, 0)->x;
   destY = Level.GetPlayerStart(i, 0)->y;
-  destAngle = itof(45 * (Level.GetPlayerStart(i, 0)->angle / 45));
+  destAngle = float(45 * (Level.GetPlayerStart(i, 0)->angle / 45));
   victim.Teleport(vector(destX, destY, ONFLOORZ), destAngle, true, true,
     false);
 }

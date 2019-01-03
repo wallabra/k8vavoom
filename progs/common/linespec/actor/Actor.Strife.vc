@@ -335,9 +335,9 @@ final void A_SentinelAttack () {
   if (missile && (missile.Velocity.x || missile.Velocity.y)) {
     for (int i = 8; i > 1; --i) {
       EntityEx trail = Spawn(SentinelFX1, vector(
-        Origin.x+missile.Radius*itof(i)*cos(missile.Angles.yaw),
-        Origin.y+missile.Radius*itof(i)*sin(missile.Angles.yaw),
-        missile.Origin.z+(missile.Velocity.z/35.0/4.0*itof(i))));
+        Origin.x+missile.Radius*float(i)*cos(missile.Angles.yaw),
+        Origin.y+missile.Radius*float(i)*sin(missile.Angles.yaw),
+        missile.Origin.z+(missile.Velocity.z/35.0/4.0*float(i))));
       if (trail) {
         trail.Target = self;
         trail.Velocity = missile.Velocity;
@@ -802,7 +802,7 @@ final void A_FireArrow (class!Actor Proj) self(Actor) {
   if (!Wpn) return;
 
   float savedangle = Angles.yaw;
-  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/8.0/itof(1<<(PlayerEx(Player).Accuracy*5/100)));
+  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/8.0/float(1<<(PlayerEx(Player).Accuracy*5/100)));
   Wpn.DepleteAmmo(Wpn.FireMode);
   SetState(MissileState);
   SpawnPlayerMissile(Proj);
@@ -823,7 +823,7 @@ final void A_FireMiniMissile () self(Actor) {
   if (!Wpn) return;
 
   float savedangle = Angles.yaw;
-  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/4.0/itof(1<<(PlayerEx(Player).Accuracy*5/100)));
+  Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0/4.0/float(1<<(PlayerEx(Player).Accuracy*5/100)));
   Wpn.DepleteAmmo(Wpn.FireMode);
   SetState(MissileState);
   SpawnPlayerMissile(MiniMissile);

@@ -125,7 +125,7 @@ final void A_SorcUpdateBallAngle()
 {
   if (Class == SorcBall1)
   {
-    Actor(Target).Special1f = AngleMod360(Actor(Target).Special1f + itof(Target.Args[4]));
+    Actor(Target).Special1f = AngleMod360(Actor(Target).Special1f + float(Target.Args[4]));
   }
 }
 
@@ -144,7 +144,7 @@ final void A_SorcOffense2()
   float delta, index;
   float dist;
 
-  index = itof(Args[4]) * 360.0 / 256.0;
+  index = float(Args[4]) * 360.0 / 256.0;
   Args[4] = (Args[4] + 15) & 0xff;
   delta = sin(index) * SORCFX4_SPREAD_ANGLE;
   ang1 = AngleMod360(Angles.yaw + delta);

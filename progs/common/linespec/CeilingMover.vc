@@ -89,7 +89,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Type = InType;
   Tag = Sector->tag;
   Crush = false;
-  Speed = itof(Arg2)*35.0/8.0;
+  Speed = float(Arg2)*35.0/8.0;
   Spot = *Sector->lines[0]->v1;
   SeqName = 'CeilingNormal';
   bStopOnCrush = LineSpecialLevelInfo(Level).bDefaultStopOnCrush;
@@ -125,38 +125,38 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       Direction = 1;
       break;
     case CEILEV_LowerByValue:
-      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)-itof(Arg3);
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)-float(Arg3);
       Spot.z = DestHeight;
       BottomDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = -1;
       break;
     case CEILEV_RaiseByValue:
-      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+itof(Arg3);
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+float(Arg3);
       Spot.z = DestHeight;
       TopDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = 1;
       break;
     case CEILEV_LowerByValueTimes8:
-      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)-itof(Arg3)*8.0;
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)-float(Arg3)*8.0;
       Spot.z = DestHeight;
       BottomDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = -1;
       break;
     case CEILEV_RaiseByValueTimes8:
-      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+itof(Arg3)*8.0;
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+float(Arg3)*8.0;
       Spot.z = DestHeight;
       TopDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = 1;
       break;
     case CEILEV_LowerTimes8Instant:
-      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)-itof(Arg3)*8.0;
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)-float(Arg3)*8.0;
       Spot.z = DestHeight;
       BottomDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = -1;
       Speed = 35.0*2000.0;
       break;
     case CEILEV_RaiseTimes8Instant:
-      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+itof(Arg3)*8.0;
+      DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+float(Arg3)*8.0;
       Spot.z = DestHeight;
       TopDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = 1;
@@ -164,7 +164,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       break;
     case CEILEV_MoveToValue:
     case CEILEV_MoveToValueTimes8:
-      DestHeight = itof(Arg3);
+      DestHeight = float(Arg3);
       if (Type == CEILEV_MoveToValueTimes8) DestHeight *= 8.0;
       if (Arg4) DestHeight = -DestHeight;
       Spot.z = DestHeight;
@@ -208,8 +208,8 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       Spot.z = DestHeight+8.0;
       BottomDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = -1;
-      DnSpeed = itof(Arg2)*35.0/8.0;
-      UpSpeed = itof(Arg3)*35.0/8.0;
+      DnSpeed = float(Arg2)*35.0/8.0;
+      UpSpeed = float(Arg3)*35.0/8.0;
            if (Arg5 == 1) bStopOnCrush = false;
       else if (Arg5 == 2) bStopOnCrush = true;
       break;
@@ -230,10 +230,10 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
         case 4: DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot); break;
         case 5: DestHeight = Level.FindHighestFloorPoint(Sector, &Spot); break;
         case 6:
-          DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+itof(Direction)*Level.FindShortestUpperAround(Sector);
+          DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+float(Direction)*Level.FindShortestUpperAround(Sector);
           break;
         default:
-          DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+itof(Direction*Arg3);
+          DestHeight = GetPlanePointZ(ref Sector->ceiling, Spot)+float(Direction*Arg3);
           break;
       }
       Spot.z = DestHeight;
@@ -297,8 +297,8 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       Spot.z = DestHeight+8.0;
       BottomDist = DotProduct(Sector->ceiling.normal, Spot);
       Direction = -1;
-      DnSpeed = itof(Arg2)*35.0/8.0;
-      UpSpeed = itof(Arg3)*35.0/8.0;
+      DnSpeed = float(Arg2)*35.0/8.0;
+      UpSpeed = float(Arg3)*35.0/8.0;
       if (Arg4) SeqName = 'CeilingSemiSilent';
       bStopOnCrush = Type == CEILEV_GenericCrush2;
       break;

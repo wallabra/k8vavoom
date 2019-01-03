@@ -59,7 +59,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
   Sector->CeilingData = self;
 
   Type = InType;
-  Speed = itof(Arg2)*35.0/8.0;
+  Speed = float(Arg2)*35.0/8.0;
 
   FloorHeight = GetPlanePointZ(ref Sector->floor, Sector->soundorg);
   CeilingHeight = GetPlanePointZ(ref Sector->ceiling, Sector->soundorg);
@@ -98,18 +98,18 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
     case ELEVEV_Raise:
       Direction = 1;
       Spot = Sector->soundorg;
-      Spot.z = FloorHeight+itof(Arg3);
+      Spot.z = FloorHeight+float(Arg3);
       FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-      Spot.z = CeilingHeight+itof(Arg3);
+      Spot.z = CeilingHeight+float(Arg3);
       CeilingDestDist = DotProduct(Sector->ceiling.normal, Spot);
       break;
     // elevate down by a specific amount
     case ELEVEV_Lower:
       Direction = -1;
       Spot = Sector->soundorg;
-      Spot.z = FloorHeight-itof(Arg3);
+      Spot.z = FloorHeight-float(Arg3);
       FloorDestDist = DotProduct(Sector->floor.normal, Spot);
-      Spot.z = CeilingHeight-itof(Arg3);
+      Spot.z = CeilingHeight-float(Arg3);
       CeilingDestDist = DotProduct(Sector->ceiling.normal, Spot);
       break;
   }

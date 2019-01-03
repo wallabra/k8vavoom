@@ -49,7 +49,7 @@ override void InitEffect()
 override void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
 {
   if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-    (ftoi(4.0 * EffectTime) & 1))
+    (int(4.0 * EffectTime) & 1))
   {
     OutRenderStyle = STYLE_Translucent;
     OutAlpha = 0.666;

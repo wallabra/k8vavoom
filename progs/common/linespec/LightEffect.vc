@@ -63,7 +63,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
         Destroy();
         return;
       }
-      Delta = itof((Arg2-Sector->params.lightlevel)/Arg3)*32.0; // delta lightlevel
+      Delta = float((Arg2-Sector->params.lightlevel)/Arg3)*32.0; // delta lightlevel
       if (Sector->params.lightlevel <= Arg2) {
         Direction = 1; // get brighter
       } else {
@@ -73,7 +73,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     case LIGHTEV_Glow:
       Value1 = Arg2; // upper lightlevel
       Value2 = Arg3; // lower lightlevel
-      Delta = itof((Arg2-Sector->params.lightlevel)/Arg4)*32.0; // lightlevel delta
+      Delta = float((Arg2-Sector->params.lightlevel)/Arg4)*32.0; // lightlevel delta
       if (Sector->params.lightlevel <= Arg2) {
         Direction = 1; // get brighter
       } else {
@@ -84,14 +84,14 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       Value1 = Arg2; // upper lightlevel
       Value2 = Arg3; // lower lightlevel
       Sector->params.lightlevel = Value1;
-      Time = itof((P_Random()&64)+1)/32.0;
+      Time = float((P_Random()&64)+1)/32.0;
       break;
     case LIGHTEV_Strobe:
       Value1 = Arg2; // upper lightlevel
       Value2 = Arg3; // lower lightlevel
-      Time1 = itof(Arg4)/35.0; // upper tics
-      Time2 = itof(Arg5)/35.0; // lower tics
-      Time = itof(Arg4)/35.0;
+      Time1 = float(Arg4)/35.0; // upper tics
+      Time2 = float(Arg5)/35.0; // lower tics
+      Time = float(Arg4)/35.0;
       Sector->params.lightlevel = Value1;
       break;
   }
@@ -114,7 +114,7 @@ override void Tick (float DeltaTime) {
 
   switch (Type) {
     case LIGHTEV_Fade:
-      d = ftoi(Delta*DeltaTime);
+      d = int(Delta*DeltaTime);
       if (!d) d = Direction;
       Sector->params.lightlevel += d;
       if (Direction == 1) {
@@ -130,7 +130,7 @@ override void Tick (float DeltaTime) {
       }
       break;
     case LIGHTEV_Glow:
-      Sector->params.lightlevel += ftoi(Delta*DeltaTime);
+      Sector->params.lightlevel += int(Delta*DeltaTime);
       if (Direction == 1) {
         if (Sector->params.lightlevel >= Value1) {
           Sector->params.lightlevel = Value1;
@@ -146,10 +146,10 @@ override void Tick (float DeltaTime) {
     case LIGHTEV_Flicker:
       if (Sector->params.lightlevel == Value1) {
         Sector->params.lightlevel = Value2;
-        Time = itof((P_Random()&7)+1)/32.0;
+        Time = float((P_Random()&7)+1)/32.0;
       } else {
         Sector->params.lightlevel = Value1;
-        Time = itof((P_Random()&31)+1)/32.0;
+        Time = float((P_Random()&31)+1)/32.0;
       }
       break;
     case LIGHTEV_Strobe:

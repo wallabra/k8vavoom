@@ -63,7 +63,7 @@ final void A_FocusQuake () {
         if (Random() < 0.1953125) victim.Damage(none, none, 1+(P_Random()&7), spawnBlood:true);
         // thrust player around
         an = victim.Angles.yaw+Random()*256.0;
-        victim.Thrust(an, itof(Richters)/2.0);
+        victim.Thrust(an, float(Richters)/2.0);
       }
     }
   } else {

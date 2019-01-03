@@ -45,7 +45,7 @@ override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
         break;
       }
     }
-    NewDamage = ftoi(itof(damage)*dmg_factor > 0.0 ? dmg_factor : 1.0);
+    NewDamage = int(float(damage)*dmg_factor > 0.0 ? dmg_factor : 1.0);
     if (NewDamage == 0) {
       // don't allow zero damage as result of an underflow
       NewDamage = 1;

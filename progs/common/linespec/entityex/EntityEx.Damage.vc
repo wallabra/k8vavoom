@@ -775,7 +775,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   // calculate gibs health
   int GHealth = GibsHealth;
   if (!GHealth) {
-    GHealth = ftoi(itof(-default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
+    GHealth = int(float(-default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
   }
 
   // handle possible unmorph on death
@@ -788,7 +788,7 @@ void Died (EntityEx source, EntityEx inflictor) {
       if (WasGibbed) {
         int RealGibHealth = RealSelf.GibsHealth;
         if (!RealGibHealth) {
-          RealGibHealth = ftoi(itof(-RealSelf.default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
+          RealGibHealth = int(float(-RealSelf.default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
         }
         if (RealSelf.Health >= RealGibHealth) {
           // if morphed was gibbed, so must original be (where allowed)
@@ -976,7 +976,7 @@ final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool p
   if (bInvulnerable && damage < 10000) return; // mobj is invulnerable
   if (bIsPlayer) {
     // take half damage in trainer mode
-    damage = ftoi(itof(damage)*Level.World.SkillDamageFactor);
+    damage = int(float(damage)*Level.World.SkillDamageFactor);
   }
   if (damage < 1000 && ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable)) {
     return;

@@ -42,7 +42,7 @@ override void InitSkyBox () {
   Sector->ceiling.SkyBox = SkyBox;
   if (SkyBox) {
     SkyBox.Mate = self;
-    SkyBox.PlaneAlpha = itof(Args[0])/255.0;
+    SkyBox.PlaneAlpha = float(Args[0])/255.0;
   }
 }
 

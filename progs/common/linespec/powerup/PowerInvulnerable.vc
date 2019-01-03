@@ -69,7 +69,7 @@ override void DoEffect()
     return;
   }
 
-  int TicTime = ftoi(Level.XLevel.Time * 35.0);
+  int TicTime = int(Level.XLevel.Time * 35.0);
   if (TicTime == PrevTicTime)
   {
     return;
@@ -277,7 +277,7 @@ override void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
 {
   if (Owner && (Mode == 'Ghost' || Mode == 'Initial') &&
     (EffectTime > PlayerEx::BLINKTHRESHOLD ||
-    (ftoi(4.0 * EffectTime) & 1)))
+    (int(4.0 * EffectTime) & 1)))
   {
     if (Owner.RenderStyle == STYLE_Translucent)
     {

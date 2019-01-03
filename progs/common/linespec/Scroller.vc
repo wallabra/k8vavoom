@@ -62,8 +62,8 @@ void InitFloor (sector_t *InSector, int XDir, int YDir, int InSpeed) {
     }
   }
   Type = SCROLLEV_Floor;
-  XSpeed = itof(XDir)*itof(1<<InSpeed)*35.0/2.0;
-  YSpeed = itof(YDir)*itof(1<<InSpeed)*35.0/2.0;
+  XSpeed = float(XDir)*float(1<<InSpeed)*35.0/2.0;
+  YSpeed = float(YDir)*float(1<<InSpeed)*35.0/2.0;
 }
 
 
@@ -77,8 +77,8 @@ void InitWall (line_t *Line, int XDir, int YDir) {
   Type = SCROLLEV_Side;
   AffecteeSrcLine = Line;
   Affectee = Line->sidenum[0];
-  XSpeed = itof(XDir*Line->arg1)*35.0/64.0;
-  YSpeed = itof(YDir*Line->arg1)*35.0/64.0;
+  XSpeed = float(XDir*Line->arg1)*35.0/64.0;
+  YSpeed = float(YDir*Line->arg1)*35.0/64.0;
   SideParts = 7;
 }
 
@@ -230,8 +230,8 @@ void InitGen (int InType, line_t *SrcLine, int InAffectee) {
     YSpeed = (SrcLine->v2->y-SrcLine->v1->y)*35.0/32.0;
   } else {
     // the speed and direction are parameters to the special
-    XSpeed = itof(SrcLine->arg4-128)*35.0/32.0;
-    YSpeed = itof(SrcLine->arg5-128)*35.0/32.0;
+    XSpeed = float(SrcLine->arg4-128)*35.0/32.0;
+    YSpeed = float(SrcLine->arg5-128)*35.0/32.0;
   }
 
   if (Type == SCROLLEV_Carry) {
@@ -273,8 +273,8 @@ void InitScripted (int InType, int Arg2, int Arg3, int InAffectee) {
   Affectee = InAffectee;
   Sector = &XLevel.Sectors[Affectee];
   // the speed and direction are parameters to the special
-  XSpeed = itof(Arg2)*35.0/32.0;
-  YSpeed = itof(Arg3)*35.0/32.0;
+  XSpeed = float(Arg2)*35.0/32.0;
+  YSpeed = float(Arg3)*35.0/32.0;
 
   if (Type == SCROLLEV_Carry) {
     AddAffector();
@@ -295,8 +295,8 @@ void InitScripted (int InType, int Arg2, int Arg3, int InAffectee) {
 //==========================================================================
 void SetSpeed (int Arg2, int Arg3) {
   // the speed and direction are parameters to the special
-  XSpeed = itof(Arg2)*32.0*35.0;
-  YSpeed = itof(Arg3)*32.0*35.0;
+  XSpeed = float(Arg2)*32.0*35.0;
+  YSpeed = float(Arg3)*32.0*35.0;
   if (Type != SCROLLEV_Carry) XSpeed = -XSpeed;
 }
 

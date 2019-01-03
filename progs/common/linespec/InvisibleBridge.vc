@@ -34,8 +34,8 @@ class InvisibleBridge : Actor __mobjinfo__(9990);
 //==========================================================================
 override void BeginPlay () {
   ::BeginPlay();
-  if (Args[0]) Radius = itof(Args[0]);
-  if (Args[1]) Height = itof(Args[1]);
+  if (Args[0]) Radius = float(Args[0]);
+  if (Args[1]) Height = float(Args[1]);
 }
 
 

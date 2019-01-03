@@ -66,7 +66,7 @@ final void A_Look () {
       break;
     }
     Special = 0;
-    ReactionTime = itof(Args[2])+XLevel.Time;
+    ReactionTime = float(Args[2])+XLevel.Time;
     bChaseGoal = !!Args[3];
   }
 
@@ -203,7 +203,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
       break;
     }
     Special = 0;
-    ReactionTime = itof(Args[2])+XLevel.Time;
+    ReactionTime = float(Args[2])+XLevel.Time;
     bChaseGoal = !!Args[3];
   }
 
@@ -331,8 +331,8 @@ final void A_Wander () {
 
   // turn towards movement direction if not there yet
   if (MoveDir < DI_NODIR) {
-    Angles.yaw = itof(ftoi(Angles.yaw/45.0))*45.0;
-    float delta = AngleMod180(Angles.yaw-itof(MoveDir)*45.0);
+    Angles.yaw = float(int(Angles.yaw/45.0))*45.0;
+    float delta = AngleMod180(Angles.yaw-float(MoveDir)*45.0);
 
          if (delta > 0.0) Angles.yaw = AngleMod360(Angles.yaw-45.0);
     else if (delta < 0.0) Angles.yaw = AngleMod360(Angles.yaw+45.0);
@@ -396,8 +396,8 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
     A_FaceTarget();
   } else {
     if (MoveDir < 8) {
-      Angles.yaw = itof(ftoi(Angles.yaw/45.0))*45.0;
-      delta = AngleMod180(Angles.yaw-itof(MoveDir)*45.0);
+      Angles.yaw = float(int(Angles.yaw/45.0))*45.0;
+      delta = AngleMod180(Angles.yaw-float(MoveDir)*45.0);
            if (delta > 0.0) Angles.yaw = AngleMod360(Angles.yaw-45.0);
       else if (delta < 0.0) Angles.yaw = AngleMod360(Angles.yaw+45.0);
     }
@@ -467,7 +467,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
       }
       if (NewGoal && Goal == Target) {
         Delay = NewGoal.Args[1];
-        ReactionTime = itof(Delay)+XLevel.Time;
+        ReactionTime = float(Delay)+XLevel.Time;
       } else {
         Delay = 0;
         ReactionTime = default.ReactionTime;
@@ -897,7 +897,7 @@ final void A_Burst (class!Actor ChunkType) {
   Height = default.Height;
 
   //  Calculate number of chunks based on the size of the thing.
-  int NumChunks = ftoi(Radius*Height)/32;
+  int NumChunks = int(Radius*Height)/32;
   if (NumChunks < 4) NumChunks = 4;
 
   int i = NumChunks+((P_Random()-P_Random())%(NumChunks/4));

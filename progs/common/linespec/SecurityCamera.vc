@@ -79,13 +79,13 @@ float Range;
 override void BeginPlay () {
   ::BeginPlay();
   Centre = Angles.yaw;
-  if (Args[2]) Delta = 360.0/(itof(Args[2])/8.0); else Delta = 0.0;
+  if (Args[2]) Delta = 360.0/(float(Args[2])/8.0); else Delta = 0.0;
   if (Args[1]) Delta /= 2.0;
   Acc = 0.0;
-  Angles.pitch = itof(Args[0]);
+  Angles.pitch = float(Args[0]);
        if (Angles.pitch <= -90.0) Angles.pitch = -89.0;
   else if (Angles.pitch >= 90.0) Angles.pitch = 89.0;
-  Range = itof(Args[1]);
+  Range = float(Args[1]);
 }
 
 
