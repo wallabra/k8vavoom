@@ -52,7 +52,7 @@ override void Init (string Message, name AFont, int Type, int AId, int Colour,
   FadeOutTime = Time2;
   CurrentLine = 0;
   LineChars = 0;
-  LineLen = (MsgLines.length ? MsgLines[0].Text.length : 0);
+  LineLen = (MsgLines.length ? strlenutf8(MsgLines[0].Text) : 0);
 }
 
 
@@ -76,7 +76,7 @@ override void Tick (float DeltaTime) {
           goto case;
         }
         LineChars = ftoi(Time/TypeOnTime);
-        LineLen = strlen(MsgLines[CurrentLine].Text);
+        LineLen = strlenutf8(MsgLines[CurrentLine].Text);
       }
       break;
     case 1:
@@ -110,7 +110,7 @@ override void DrawLine (int LineIdx, int x, int y, string Text) {
     if (LineIdx < CurrentLine) {
       DrawText(x, y, Text, MsgColour, CR_YELLOW, MsgAlpha);
     } else if (LineIdx == CurrentLine) {
-      DrawText(x, y, substr(Text, 0, LineChars), MsgColour, CR_YELLOW, MsgAlpha);
+      DrawText(x, y, substrutf8(Text, 0, LineChars), MsgColour, CR_YELLOW, MsgAlpha);
     }
   } else {
     ::DrawLine(LineIdx, x, y, Text);

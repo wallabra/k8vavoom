@@ -108,8 +108,8 @@ override void StartMap () {
   pic_invpbak2 = R_RegisterPic('invpbak2');
 
   foreach (auto i; 0..10) {
-    pic_yellownum[i] = R_RegisterPic(StrToName(va("invfony%d", i)));
-    pic_graynum[i] = R_RegisterPic(StrToName(va("invfong%d", i)));
+    pic_yellownum[i] = R_RegisterPic(name(va("invfony%d", i)));
+    pic_graynum[i] = R_RegisterPic(name(va("invfong%d", i)));
   }
   pic_yellownum[10] = R_RegisterPic('invfony%');
   pic_graynum[10] = R_RegisterPic('invfong%');
@@ -289,7 +289,7 @@ override void SB_DrawMainBar () {
     DrawPic(BAR_X+0, BAR_Y+56, pic_invpop2);
     SetFont('smallfont2');
     if (LoadedLog != cl.Objectives) {
-      LogText = SplitTextWithNewlines(LoadTextLump(StrToName(va("log%d", cl.Objectives))), 280);
+      LogText = SplitTextWithNewlines(LoadTextLump(name(va("log%d", cl.Objectives))), 280);
       LoadedLog = cl.Objectives;
     }
     SetTextAlign(hleft, vtop);
@@ -412,7 +412,7 @@ override void SB_DrawFullscreenStats () {
     DrawPic(BAR_X+0, BAR_Y+96, pic_invpop2);
     SetFont('smallfont2');
     if (LoadedLog != cl.Objectives) {
-      LogText = SplitTextWithNewlines(LoadTextLump(StrToName(va("log%d", cl.Objectives))), 280);
+      LogText = SplitTextWithNewlines(LoadTextLump(name(va("log%d", cl.Objectives))), 280);
       LoadedLog = cl.Objectives;
     }
     SetTextAlign(hleft, vtop);

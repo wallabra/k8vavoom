@@ -134,14 +134,14 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
 
   //k8:TODO: this should be strictly client-side
   if (line && DecalName) {
-    if (GetCvarB('k8ExplodeMissleTest')) print("MISSILE DECAL: <%s> (side:%d:%d) vel:(%f,%f,%f)", NameToStr(DecalName), PointOnPlaneSide(Origin, line), PointOnPlaneSide(Origin-savedVelocity, line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
+    if (GetCvarB('k8ExplodeMissleTest')) print("MISSILE DECAL: <%s> (side:%d:%d) vel:(%f,%f,%f)", DecalName, PointOnPlaneSide(Origin, *line), PointOnPlaneSide(Origin-savedVelocity, *line), savedVelocity.x, savedVelocity.y, savedVelocity.z);
     //TVec v1, v2;
     TVec dir = Normalise(savedVelocity);
     trsplat_t tr;
     // trace without z offset
     if (TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0)) {
       if (GetCvarB('k8ExplodeMissleTest')) {
-        auto side = PointOnPlaneSide(Origin-savedVelocity, line); // move out a little, just in case
+        auto side = PointOnPlaneSide(Origin-savedVelocity, *line); // move out a little, just in case
         sector_t *sec = (side ? line->backsector : line->frontsector);
         print("  MISSILE SPLAT: side=%d; org=(%f,%f,%f); hit=(%f,%f,%f); sameline:%s; samesec:%s", tr.side, tr.org.x, tr.org.y, tr.org.z, tr.hit.x, tr.hit.y, tr.hit.z, (tr.line == line ? "tan" : "ona"), (tr.sec == sec ? "tan" : "ona"));
       }

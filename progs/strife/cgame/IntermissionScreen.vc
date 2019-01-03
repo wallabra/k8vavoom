@@ -126,13 +126,13 @@ void IM_InitHubText()
 
   if (ClGame.im.bTextIsLump)
   {
-    HubText = LoadTextLump(StrToName(ClGame.im.Text));
+    HubText = LoadTextLump(name(ClGame.im.Text));
   }
   else
   {
     HubText = ClGame.im.Text;
   }
-  HubCount = itof(strlen(HubText)) * TextSpeed + TextWait;
+  HubCount = itof(strlenutf8(HubText)) * TextSpeed + TextWait;
 
   TextFlat = '';
   TextPic = 0;
@@ -177,17 +177,10 @@ void IM_DrawHubText()
     R_FillRect(0, 0, 640, 480, 0);
   }
   int count = ftoi((intertime - 0.3) / TextSpeed);
-  if (count < 0)
-  {
-    count = 0;
-  }
-  if (count > strlen(HubText))
-  {
-    count = strlen(HubText);
-  }
+  count = clamp(count, 0, strlenutf8(HubText));
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(170, 145, substr(HubText, 0, count));
+  DrawText(170, 145, substrutf8(HubText, 0, count));
 }
 
 //==========================================================================

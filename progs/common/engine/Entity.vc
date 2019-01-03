@@ -758,7 +758,7 @@ int UnmorphActor(Entity Activator, int Force)
 //
 //==========================================================================
 
-void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
 {
 }
 

@@ -44,7 +44,7 @@ override void CreateChoices () {
     Epi = MenuChoiceEpisode(NewChild(MenuChoiceEpisode));
     Epi.SetPos(ChoicesStartX, currentY);
          if (EDef->PicName) Epi.PicHandle = R_RegisterPic(EDef->PicName);
-    else if (EDef->bLookupText) Epi.Text = GetLangString(StrToName(EDef->Text));
+    else if (EDef->bLookupText) Epi.Text = GetLangString(name(EDef->Text));
     else Epi.Text = EDef->Text;
     Epi.EDef = EDef;
     Epi.Activated = &ActivateEpisode;

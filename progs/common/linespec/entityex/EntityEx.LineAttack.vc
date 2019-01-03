@@ -114,7 +114,7 @@ final override Entity PickActor (optional TVec org, TVec dir, float distance, op
 
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         sec = li->backsector;
       } else {
         sec = li->frontsector;
@@ -279,7 +279,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         side = 1;
         sec = li->backsector;
       } else {
@@ -526,7 +526,7 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
 
   bool aaim = (bIsPlayer && PlayerEx(Player).bAutoAim);
   if (specified_noAutoaim) {
-    //print("AIM<%s>: noaa=%s", NameToStr(GetClassName(self.Class)), (noAutoaim ? "tan" : "ona"));
+    //print("AIM<%C>: noaa=%s", self, (noAutoaim ? "tan" : "ona"));
     if (noAutoaim) aaim = false;
   }
 
@@ -570,19 +570,19 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
 //==========================================================================
 final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps, optional float FinalRange) {
   TAVec angles;
-  TVec vforward;
+  //TVec vforward;
   EntityEx LineTarget;
 
-  for (int i = 0; i < NumSteps; ++i) {
+  foreach (auto i; 0..NumSteps) {
     // try to the left
     angles = Angles;
-    angles.yaw = AngleMod360(angles.yaw+itof(i)*AngleInc);
+    angles.yaw = AngleMod360(angles.yaw+float(i)*AngleInc);
     LineTarget = AimLineAttack(OutDir, angles, Range);
     if (LineTarget) return LineTarget;
 
     // try to the right
     angles = Angles;
-    angles.yaw = AngleMod360(angles.yaw-itof(i)*AngleInc);
+    angles.yaw = AngleMod360(angles.yaw-float(i)*AngleInc);
     LineTarget = AimLineAttack(OutDir, angles, Range);
     if (LineTarget) return LineTarget;
   }
@@ -590,10 +590,11 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
   if (FinalRange) {
     // didn't find any creatures, so try to strike any walls
     angles = Angles;
-    LineTarget = AimLineAttack(OutDir, angles, FinalRange);
+    LineTarget = AimLineAttack(out OutDir, angles, FinalRange);
   } else {
-    AngleVector(Angles, out vforward);
-    OutDir = vforward;
+    //AngleVector(Angles, out vforward);
+    //OutDir = vforward;
+    AngleVector(Angles, out OutDir);
   }
 
   return LineTarget;
@@ -715,7 +716,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
   TVec lineEnd;
   TVec shootOrigin;
 
-  //print("LineAttack: self=<%s>", NameToStr(GetClassName(Class)));
+  //print("LineAttack: self=<%C>", self);
 
   //Entity e; print("%f", e.Height);
 
@@ -740,7 +741,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
 
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         sec = li->backsector;
       } else {
         sec = li->frontsector;
@@ -996,7 +997,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
 
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if (li->flags&ML_TWOSIDED && PointOnPlaneSide(shootOrigin, li)) {
+      if (li->flags&ML_TWOSIDED && PointOnPlaneSide(shootOrigin, *li)) {
         sec = li->backsector;
       } else {
         sec = li->frontsector;

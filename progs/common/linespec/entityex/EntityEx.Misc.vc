@@ -1810,7 +1810,7 @@ void PreExplode () {
 //  GetExplodeParms
 //
 //==========================================================================
-void GetExplodeParms (out int damage, out float distance, out ubyte damageSelf) {
+void GetExplodeParms (ref int damage, ref float distance, ref ubyte damageSelf) {
 }
 
 
@@ -1915,15 +1915,15 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_Frightened: print("Frightened property is not implemented"); break;
     case APROP_Gravity: if (IntVal < 0) IntVal = 0; Gravity = float(IntVal)/65536.0; break;
     case APROP_Friendly: bFriendly = !!IntVal; break;
-    case APROP_SeeSound: SightSound = StrToName(StrVal); break;
-    case APROP_AttackSound: AttackSound = StrToName(StrVal); break;
-    case APROP_PainSound: PainSound = StrToName(StrVal); break;
-    case APROP_DeathSound: DeathSound = StrToName(StrVal); break;
-    case APROP_ActiveSound: ActiveSound = StrToName(StrVal); break;
+    case APROP_SeeSound: SightSound = name(StrVal); break;
+    case APROP_AttackSound: AttackSound = name(StrVal); break;
+    case APROP_PainSound: PainSound = name(StrVal); break;
+    case APROP_DeathSound: DeathSound = name(StrVal); break;
+    case APROP_ActiveSound: ActiveSound = name(StrVal); break;
     case APROP_SpawnHealth: if (PlayerPawn(self)) PlayerPawn(self).MaxHealth = IntVal; break;
     case APROP_Dropped: bDropped = !!IntVal; break;
-    //case APROP_Species: return NameToInt(GetSpecies()); //HACK! keep in sync with C++ code!
-    //case APROP_NameTag: return NameToInt(GetClassName(Class)); //HACK! keep in sync with C++ code!
+    //case APROP_Species: return NameToIIndex(GetSpecies()); //HACK! keep in sync with C++ code!
+    //case APROP_NameTag: return NameToIIndex(GetClassName(Class)); //HACK! keep in sync with C++ code!
     case APROP_MasterTID: if (IntVal <= 0) { Master = none; break; } Master = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Master == self) Master = none; break; //k8: allow self?
     case APROP_TargetTID: if (IntVal <= 0) { Target = none; break; } Target = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Target == self) Target = none; break; //k8: allow self?
     case APROP_TracerTID: if (IntVal <= 0) { Tracer = none; break; } Tracer = EntityEx(Level.FindMobjFromTID(IntVal, none)); if (Tracer == self) Tracer = none; break; //k8: allow self?
@@ -1969,8 +1969,8 @@ final override int GetActorProperty (int Prop) {
     case APROP_Friendly: return bFriendly;
     case APROP_SpawnHealth: if (PlayerPawn(self)) return PlayerPawn(self).MaxHealth; else return self.default.Health;
     case APROP_Dropped: return bDropped;
-    case APROP_Species: return NameToInt(GetSpecies()); //HACK! keep in sync with C++ code!
-    case APROP_NameTag: return (StrifeName ? NameToInt(name(StrifeName)) : NameToInt(GetClassName(Class))); //HACK! keep in sync with C++ code!
+    case APROP_Species: return NameToIIndex(GetSpecies()); //HACK! keep in sync with C++ code!
+    case APROP_NameTag: return (StrifeName ? NameToIIndex(name(StrifeName)) : NameToIIndex(GetClassName(Class))); //HACK! keep in sync with C++ code!
     case APROP_MasterTID: return (Master ? Master.TID : 0);
     case APROP_TargetTID: return (Target ? Target.TID : 0);
     case APROP_TracerTID: return (Tracer ? Tracer.TID : 0);
@@ -2624,7 +2624,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
           break;
         }
 
-        sector_t *Sec = (PointOnPlaneSide(Origin, line) == 0 ? line->frontsector : line->backsector);
+        sector_t *Sec = (PointOnPlaneSide(Origin, *line) == 0 ? line->frontsector : line->backsector);
         if (Sec && Sec->ActionList && SectorAction(Sec->ActionList).TriggerAction(self, SectorAction::SECSPAC_UseWall)) {
           break;
         }
@@ -2641,7 +2641,7 @@ final bool UseLines (float UseRange, float UseThingRange, name FailSound) {
       continue;
     }
 
-    if (PointOnPlaneSide(Origin, line) == 1) {
+    if (PointOnPlaneSide(Origin, *line) == 1) {
       if (!(line->SpacFlags&SPAC_UseBack)) continue;
       //k8: gozzo doesn't check this, but we'll do
       // don't use back side unless it's a two-sided line
@@ -3044,7 +3044,7 @@ final bool CountsAsKill () {
 //  GetViewEntRenderParams
 //
 //==========================================================================
-override void GetViewEntRenderParams (out float OutAlpha, out int OutRenderStyle) {
+override void GetViewEntRenderParams (ref float OutAlpha, ref int OutRenderStyle) {
   if (Inventory) {
     Inventory.GetViewEntRenderParams(OutAlpha, OutRenderStyle);
   }

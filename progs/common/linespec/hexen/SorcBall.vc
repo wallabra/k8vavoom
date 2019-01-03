@@ -56,7 +56,7 @@ override void FloorBounceMissile()
 //
 //==========================================================================
 
-override void GetExplodeParms(out int damage, out float distance, out ubyte damageSelf)
+override void GetExplodeParms(ref int damage, ref float distance, ref ubyte damageSelf)
 {
   // Sorcerer balls
   distance = 255.0;

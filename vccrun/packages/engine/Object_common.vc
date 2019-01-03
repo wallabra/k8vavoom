@@ -342,15 +342,15 @@ native static final float cross2d (const TVec v1, const TVec v2) [builtin VecCro
 alias CrossProduct2D = cross2d;
 alias cross2D = cross2d;
 // creates vectors for given angle vector
-native static final void AngleVectors (const ref TAVec angles, out TVec forward, out TVec right, out TVec up);
-// simplified version of AngleVectors, creates only forward vector
-native static final void AngleVector (const ref TAVec angles, out TVec forward);
+native static final void AngleVectors (const TAVec angles, out TVec forward, optional out TVec right, optional out TVec up);
+// simplified version of AngleVectors, creates only forward vector (this is slightly faster)
+native static final void AngleVector (const TAVec angles, out TVec forward);
 // create angle vector for a vector
-native static final void VectorAngles (const ref TVec vec, out TAVec angles);
+native static final void VectorAngles (const TVec vec, out TAVec angles);
 // get z of point with given x and y coords (don't try to use it on a vertical plane)
 native static final float GetPlanePointZ (const ref TPlane plane, const TVec point);
 // returns side 0 (front) or 1 (back)
-native static final int PointOnPlaneSide (const TVec point, const TPlane *plane);
+native static final int PointOnPlaneSide (const TVec point, const ref TPlane plane);
 // rotates a direction vector
 native static final TVec RotateDirectionVector (const TVec vec, const TAVec rot);
 // rotates vector around Z axis
@@ -361,6 +361,7 @@ native static final TVec RotateVectorAroundVector (const TVec Vector, const TVec
 native static final bool IsPlainFloor (const ref TPlane plane); // valid only for floors
 native static final bool IsPlainCeiling (const ref TPlane plane); // valid only for ceilings
 native static final bool IsSlopedFlat (const ref TPlane plane);
+native static final bool IsVerticalPlane (const ref TPlane plane);
 
 native static final TVec RayLineIntersection2D (const TVec rayO, const TVec rayE, const TVec vv1, const TVec vv2);
 native static final TVec RayLineIntersection2DDir (const TVec rayO, const TVec rayDir, const TVec vv1, const TVec vv2);
@@ -395,7 +396,7 @@ native static final float bjprngNextFloat (ref BJPRNGCtx ctx);
 // string functions
 
 // string length (utf8-aware)
-native static final int strlen (string s);
+native static final int strlenutf8 (string s);
 // compare strings
 native static final int strcmp (string s1, string s2);
 // compare strings ingnoring case
@@ -404,14 +405,12 @@ native static final int stricmp (string s1, string s2);
 native static final int nameicmp (name s1, name s2);
 // compare string and name ingnoring case
 native static final int namestricmp (name s1, string s2);
-// append string to string
-native static final string strcat (string s1, string s2);
 // convert string to lowercase
 native static final string strlwr (string s);
 // convert string to uppercase
 native static final string strupr (string s);
 // gets a substring (utf8-aware)
-native static final string substr (string Str, int Start, int Len);
+native static final string substrutf8 (string Str, int Start, int Len);
 // creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
 native static final string strFromChar (int ch);
 // creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
@@ -466,12 +465,8 @@ native static final void dprint (string format, ...) [printf,1];
 native static final int ftoi (float f);
 // int -> float (use `float(val)` instead)
 native static final float itof (int f);
-// converts string to name (use `string(val)` instead)
-native static final name StrToName (string Str);
-// converts name to string (use `name(val)` instead)
-native static final string NameToStr (name Name);
-// converts name to int (as name is just an int internally)
-native static final int NameToInt (name Name) [builtin NameToInt];
+// converts name to internal index (as name is just an int internally)
+native static final int NameToIIndex (name Name) [builtin NameToIIndex];
 
 
 // ////////////////////////////////////////////////////////////////////////// //

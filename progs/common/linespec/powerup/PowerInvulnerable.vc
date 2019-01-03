@@ -273,7 +273,7 @@ override void EndEffect()
 //
 //==========================================================================
 
-override void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+override void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
 {
   if (Owner && (Mode == 'Ghost' || Mode == 'Initial') &&
     (EffectTime > PlayerEx::BLINKTHRESHOLD ||

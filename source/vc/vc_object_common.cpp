@@ -165,31 +165,40 @@ IMPLEMENT_FUNCTION(VObject, AngleMod180) {
   RET_FLOAT(AngleMod180(an));
 }
 
+// native static final void AngleVectors (const TAVec angles, out TVec forward, optional out TVec right, optional out TVec up);
 IMPLEMENT_FUNCTION(VObject, AngleVectors) {
-  P_GET_PTR(TVec, vup);
-  P_GET_PTR(TVec, vright);
+  // note that optional out will still get a temporary storage
+  P_GET_OUT_OPT(TVec, vup);
+  P_GET_OUT_OPT(TVec, vright);
   P_GET_PTR(TVec, vforward);
-  P_GET_PTR(TAVec, angles);
-  AngleVectors(*angles, *vforward, *vright, *vup);
+  P_GET_AVEC(angles);
+  if (specified_vup || specified_vright) {
+    check(vup);
+    check(vright);
+    AngleVectors(angles, *vforward, *vright, *vup);
+  } else {
+    AngleVector(angles, *vforward);
+  }
 }
 
 IMPLEMENT_FUNCTION(VObject, AngleVector) {
-  P_GET_PTR(TVec, vec);
-  P_GET_PTR(TAVec, angles);
-  AngleVector(*angles, *vec);
+  P_GET_PTR(TVec, vforward);
+  P_GET_AVEC(angles);
+  AngleVector(angles, *vforward);
 }
 
 IMPLEMENT_FUNCTION(VObject, VectorAngles) {
   P_GET_PTR(TAVec, angles);
-  P_GET_PTR(TVec, vec);
-  VectorAngles(*vec, *angles);
+  P_GET_VEC(vec);
+  VectorAngles(vec, *angles);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetPlanePointZ) {
   P_GET_VEC(point);
   P_GET_PTR(TPlane, plane);
-  // /*if (plane->normal.z == 0)*/ { fprintf(stderr, "*** %p; dist=%f; normal=(%f,%f,%f)\n", plane, plane->dist, plane->normal.x, plane->normal.y, plane->normal.z); /*VObject::VMDumpCallStack(); Sys_Error("FUUUUUUU");*/ }
-  RET_FLOAT(plane->GetPointZ(point));
+  float res = plane->GetPointZ(point);
+  if (!isFiniteF(res)) { VObject::VMDumpCallStack(); Sys_Error("invalid call to `GetPlanePointZ()` (probably called with vertical plane)"); }
+  RET_FLOAT(res);
 }
 
 IMPLEMENT_FUNCTION(VObject, PointOnPlaneSide) {
@@ -217,8 +226,9 @@ IMPLEMENT_FUNCTION(VObject, VectorRotateAroundZ) {
   P_GET_FLOAT(angle);
   P_GET_PTR(TVec, vec);
 
-  float dstx = vec->x * mcos(angle) - vec->y * msin(angle);
-  float dsty = vec->x * msin(angle) + vec->y * mcos(angle);
+  angle = AngleMod(angle);
+  const float dstx = vec->x*mcos(angle)-vec->y*msin(angle);
+  const float dsty = vec->x*msin(angle)+vec->y*mcos(angle);
 
   vec->x = dstx;
   vec->y = dsty;
@@ -234,19 +244,25 @@ IMPLEMENT_FUNCTION(VObject, RotateVectorAroundVector) {
 //native static final bool IsPlainFloor (const ref TPlane plane); // valid only for floors
 IMPLEMENT_FUNCTION(VObject, IsPlainFloor) {
   P_GET_PTR(TPlane, plane);
-  RET_BOOL(plane->normal.z == 1.0);
+  RET_BOOL(plane->normal.z == 1.0f);
 }
 
 //native static final bool IsPlainCeiling (const ref TPlane plane); // valid only for ceilings
 IMPLEMENT_FUNCTION(VObject, IsPlainCeiling) {
   P_GET_PTR(TPlane, plane);
-  RET_BOOL(plane->normal.z == -1.0);
+  RET_BOOL(plane->normal.z == -1.0f);
 }
 
 //native static final bool IsSlopedFlat (const ref TPlane plane);
 IMPLEMENT_FUNCTION(VObject, IsSlopedFlat) {
   P_GET_PTR(TPlane, plane);
-  RET_BOOL(fabs(plane->normal.z) != 1.0);
+  RET_BOOL(fabs(plane->normal.z) != 1.0f);
+}
+
+//native static final bool IsVerticalPlane (const ref TPlane plane);
+IMPLEMENT_FUNCTION(VObject, IsVerticalPlane) {
+  P_GET_PTR(TPlane, plane);
+  RET_BOOL(plane->normal.z == 0.0f);
 }
 
 
@@ -255,7 +271,7 @@ IMPLEMENT_FUNCTION(VObject, IsSlopedFlat) {
 //  String functions
 //
 //**************************************************************************
-IMPLEMENT_FUNCTION(VObject, strlen) {
+IMPLEMENT_FUNCTION(VObject, strlenutf8) {
   P_GET_STR(s);
   RET_INT(s.Utf8Length());
 }
@@ -284,12 +300,6 @@ IMPLEMENT_FUNCTION(VObject, namestricmp) {
   RET_INT(s2.ICmp(*s1));
 }
 
-IMPLEMENT_FUNCTION(VObject, strcat) {
-  P_GET_STR(s2);
-  P_GET_STR(s1);
-  RET_STR(s1 + s2);
-}
-
 IMPLEMENT_FUNCTION(VObject, strlwr) {
   P_GET_STR(s);
   RET_STR(s.ToLower());
@@ -300,7 +310,7 @@ IMPLEMENT_FUNCTION(VObject, strupr) {
   RET_STR(s.ToUpper());
 }
 
-IMPLEMENT_FUNCTION(VObject, substr) {
+IMPLEMENT_FUNCTION(VObject, substrutf8) {
   P_GET_INT(Len);
   P_GET_INT(Start);
   P_GET_STR(Str);

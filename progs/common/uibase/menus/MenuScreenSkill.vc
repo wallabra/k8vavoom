@@ -38,7 +38,7 @@ override void CreateChoices () {
     SkillDef *SDef = P_GetSkillDef(i);
     Btn.SetPos(ChoicesStartX, currentY);
     if (SDef->bMenuNameIsPic) {
-      Btn.PicHandle = R_RegisterPic(StrToName(SDef->MenuName));
+      Btn.PicHandle = R_RegisterPic(name(SDef->MenuName));
     } else {
       Btn.SetText(SDef->MenuName);
     }
@@ -48,7 +48,7 @@ override void CreateChoices () {
         Btn.PicHandle = 0;
       }
     }
-    if (strlen(SDef->TextColour) > 0) Btn.Text = strcat(strcat("\c[", SDef->TextColour), strcat("]", Btn.Text));
+    if (SDef->TextColour) Btn.Text = "\c["~SDef->TextColour~"]"~Btn.Text;
     Btn.SkillIndex = i;
     Btn.bMustConfirm = SDef->bMustConfirm;
     Btn.ConfirmationText = SDef->ConfirmationText;
@@ -89,7 +89,7 @@ void ActivateSkill (Object Sender) {
   if (Btn.bMustConfirm) {
     ClGame.SkillToConfirm = Btn.SkillIndex;
     ClGame.MessageBoxStartMessage(
-      strlen(Btn.ConfirmationText) > 0 ? Btn.ConfirmationText :
+      Btn.ConfirmationText ? Btn.ConfirmationText :
       "are you sure? this skill level\nisn\'t even remotely fair.\n\npress y or n.",
       ClientGameShared::MB_Nightmare, true);
   } else {

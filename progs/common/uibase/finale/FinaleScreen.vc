@@ -93,7 +93,7 @@ void StartFinale (name AFinaleType) {
     InitStrifeFinale();
   } else if (StrStartsWith(va("%n", FinaleType), "EndGameCustomPic")) {
     string ft = va("%n", FinaleType);
-    InitPic(StrToName(substr(ft, 16, ft.length-16)));
+    InitPic(name(substrutf8(ft, 16, ft.length-16)));
   } else {
     print("Unknown finale type %n", FinaleType);
     InitPic('credit');

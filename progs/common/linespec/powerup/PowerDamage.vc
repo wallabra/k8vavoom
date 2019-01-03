@@ -32,7 +32,7 @@ class PowerDamage : Powerup;
 //
 //==========================================================================
 
-override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
+override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
 {
   float dmg_factor;
 

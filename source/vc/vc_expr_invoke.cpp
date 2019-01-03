@@ -2200,7 +2200,7 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       if (!CheckSimpleConstArgs(3, (const int []){TYPE_Float, TYPE_Float, TYPE_Float})) return this;
       e = new VFloatLiteral(smoothstepPerlin(Args[0]->GetFloatConst(), Args[1]->GetFloatConst(), Args[2]->GetFloatConst()), Loc);
       break;
-    case OPC_Builtin_NameToInt:
+    case OPC_Builtin_NameToIIndex:
       if (!CheckSimpleConstArgs(1, (const int []){TYPE_Name})) return this;
       e = new VIntLiteral(Args[0]->GetNameConst().GetIndex(), Loc);
       break;

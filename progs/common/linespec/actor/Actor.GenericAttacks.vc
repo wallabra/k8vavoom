@@ -699,11 +699,11 @@ void A_CheckForReload (int Count, state Jump, optional bool DoIncrement) {
 
     // if we have not made our last shot...
     if (ReloadCounter != 0) {
-      // Go back to the refire frames, instead of continuing on to the reload frames.
+      // go back to the refire frames, instead of continuing on to the reload frames
       PlayerEx(Player).SetViewObject(Wpn);
       DoJump(Jump);
     } else {
-      // We need to reload. However, don't reload if we're out of ammo.
+      // we need to reload; however, don't reload if we're out of ammo
       Wpn.CheckAmmo(Weapon::FIRE_Either, false, false);
     }
 
@@ -828,7 +828,7 @@ final void A_Blast (int BlastFlags, float Strength, float Radius, float Speed,
     if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  Owner.PlaySound(StrToName(BlastSound), CHAN_ITEM);
+  Owner.PlaySound(name(BlastSound), CHAN_ITEM);
   if (!(BlastFlags&2)) LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(Owner), EntityEx(Owner));
 
   Actor mo;

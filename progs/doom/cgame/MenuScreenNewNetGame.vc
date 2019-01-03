@@ -141,7 +141,7 @@ void InitMapList (int epi) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
     name startMap = EDef->Name;
     if (EDef->TeaserName && !IsMapPresent(EDef->Name)) startMap = EDef->TeaserName;
-    print("EPISODE #%d (%s:%s): start map is %s", i, EDef->Text, GetLangString(StrToName(EDef->Text)), NameToStr(startMap));
+    print("EPISODE #%d (%s:%s): start map is %s", i, EDef->Text, GetLangString(name(EDef->Text)), startMap);
   }
   */
 
@@ -196,7 +196,7 @@ void ActivateStartNewGame (Object Sender) {
     */
     mapInfo_t *mi = P_GetMapInfo(int(Level.Value));
     if (mi) {
-      CmdBuf_AddText("Map %s\n", NameToStr(mi->LumpName));
+      CmdBuf_AddText("Map %s\n", string(mi->LumpName));
     } else {
       Error("cannot start map!");
     }

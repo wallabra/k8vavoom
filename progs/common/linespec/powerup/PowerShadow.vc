@@ -85,7 +85,7 @@ override void InitEffect()
 //
 //==========================================================================
 
-override void GetViewEntRenderParams(out float OutAlpha, out int OutRenderStyle)
+override void GetViewEntRenderParams(ref float OutAlpha, ref int OutRenderStyle)
 {
   if (EffectTime > PlayerEx::BLINKTHRESHOLD ||
     (ftoi(4.0 * EffectTime) & 1))

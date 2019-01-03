@@ -379,7 +379,7 @@ final void FixTopIndex () {
   int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
-  //print("Menu <%s>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d", NameToStr(GetClassName(Class)), ChildrenOfsY, ys, ye, th, Height);
+  //print("Menu <%C>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d", Class, ChildrenOfsY, ys, ye, th, Height);
        if (ys+ChildrenOfsY < ChoicesStartY) ChildrenOfsY = -ys+ChoicesStartY;
   else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
   if (helpText.Height > 0) {

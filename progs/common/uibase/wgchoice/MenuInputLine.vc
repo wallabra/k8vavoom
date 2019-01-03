@@ -84,7 +84,7 @@ override bool OnKeyDown (int key) {
         break;
       default:
         if (key >= 32 && key < 128) {
-          Len = strlen(EnterText);
+          Len = EnterText.length;
           if (Len < 30) EnterText ~= TranslateKey(key);
         }
         break;

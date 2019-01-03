@@ -74,7 +74,7 @@ override void Tick (float DeltaTime) {
         // hit the floor
         Origin.z = FloorZ;
         HitFloorType();
-        //!print("FLOOR HIT! '%s'", NameToStr(GetClassName(Class)));
+        //!print("FLOOR HIT! '%C'", Class);
         ExplodeMissile(Victim:none);
         return;
       }

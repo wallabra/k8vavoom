@@ -53,7 +53,7 @@ override void DoEffect()
 //
 //==========================================================================
 
-override void AbsorbDamage(int damage, name DmgType, out int NewDamage)
+override void AbsorbDamage(int damage, name DmgType, ref int NewDamage)
 {
   if (nameicmp(DmgType, 'Fire') == 0)
   {

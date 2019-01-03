@@ -250,7 +250,7 @@ final void A_JumpIfInTargetLOS (state Label, optional float Fov, optional int fl
 //
 //==========================================================================
 final void A_JumpIfCVarTrue (string cvar, state Label) {
-  name cvn = StrToName(cvar);
+  name cvn = name(cvar);
   if (CvarExists(cvn)) {
     if (GetCvarB(cvn)) DoJump(Label);
   }

@@ -66,7 +66,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   bool debugme = GetCvarB('k8HSDEBUG');
 
   if (debugme) {
-    print("ME: %s; inf: %s", NameToStr(GetClassName(self.Class)), NameToStr(GetClassName(GetClassReplacee(inflictor.Class))));
+    print("ME: %C; inf: %C", self, GetClassReplacee(inflictor.Class));
   }
 
   PlayerPawn plr = PlayerPawn(inflictor);
@@ -147,7 +147,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
   if (headshot) {
     if (showHeadshots) {
       //Log(s:"K8HS: Headshot! ", s:vicName, s:"; vicHgt=", d:vicHgt, s:"; fromtop=", d:fromtop, s:"; mass=", d:vicMass, s:"; radius=", d:vicRadius, s:"; len=", d:len);
-      print("K8HS: Headshot! %s; vicHgt=%f; fromtop=%f; radius=%f; len=%f", NameToStr(GetClassName(Class)), vicHgt, fromtop, vicRadius, len);
+      print("K8HS: Headshot! %C; vicHgt=%f; fromtop=%f; radius=%f; len=%f", Class, vicHgt, fromtop, vicRadius, len);
     }
     bool debugCrits = false;
     if (debugme) debugCrits = GetCvarB('k8HSDebugCrits');
@@ -365,8 +365,8 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
 //==========================================================================
 void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary, optional bool spawnBlood) {
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
-  //print("THP(%s):(%f,%f,%f); dmg=%d; new=%d; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, NameToStr(DmgType));
-  //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, NameToStr(StrToName("FUCK!")));
+  //print("THP(%s):(%f,%f,%f); dmg=%d; new=%d; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, DmgType);
+  //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
   Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood!optional);
 }
 

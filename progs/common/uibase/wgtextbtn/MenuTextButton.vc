@@ -52,7 +52,7 @@ void SetSubMenuName (string menuName) {
 
 void SetText (string AText) {
   if (StrStartsWith(AText, "$")) {
-    Text = GetLangString(StrToName(substr(AText, 1, AText.length-1)));
+    Text = GetLangString(name(AText[1..$]));
   } else {
     Text = AText;
   }

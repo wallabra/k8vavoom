@@ -155,7 +155,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
       li = in->line;
       hit_point = shootOrigin+(distance*in->frac)*dir;
-      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, li)) {
+      if ((li->flags&ML_TWOSIDED) && PointOnPlaneSide(shootOrigin, *li)) {
         side = 1;
         sec = li->backsector;
       } else {
@@ -291,7 +291,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
   }
 
   if (!HasDecal(bloodType)) {
-    //print("*** NO BLOOD DECAL '%s'", NameToStr(bloodType));
+    //print("*** NO BLOOD DECAL '%s'", bloodType);
     return;
   }
 
@@ -313,7 +313,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     if (isSmallDamage && !radiusDamage) continue;
 
     if (TraceSplat(pos, vdir, 172.0, &tr, 0)) {
-      //print("*** spawning blood decal '%s'!", NameToStr(bloodType));
+      //print("*** spawning blood decal '%s'!", bloodType);
       SpawnDecal(tr.hit, bloodType, tr.side, tr.line);
     }
   }

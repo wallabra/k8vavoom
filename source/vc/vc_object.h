@@ -338,8 +338,9 @@ inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetUniqueId() : 0
 #define P_GET_STR_OPT(v, d)     bool specified_##v = !!PR_Pop(); VStr v = PR_PopStr(); if (!specified_##v) v = d
 #define P_GET_VEC_OPT(v, d)     bool specified_##v = !!PR_Pop(); TVec v = PR_Popv(); if (!specified_##v) v = d
 #define P_GET_AVEC_OPT(v, d)    bool specified_##v = !!PR_Pop(); TAVec v = PR_Popav(); if (!specified_##v) v = d
-#define P_GET_REF_OPT(c, v, d)  bool specified_##v = !!PR_Pop(); c *v = (c*)PR_PopPtr(); if (!specified_##v) v = d
-#define P_GET_PTR_OPT(t, v, d)  bool specified_##v = !!PR_Pop(); t *v = (t*)PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_REF_OPT(c, v, d)  bool specified_##v = !!PR_Pop(); c *v = (c *)PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_PTR_OPT(t, v, d)  bool specified_##v = !!PR_Pop(); t *v = (t *)PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_OUT_OPT(t, v)     bool specified_##v = !!PR_Pop(); t *v = (t *)PR_PopPtr();
 
 // method return macros
 #define RET_INT(v)    PR_Push(v)

@@ -207,26 +207,26 @@ override void StartMap () {
   pic_arms = R_RegisterPic('starms');
 
   foreach (auto i; 0..10) {
-    pic_tallnum[i] = R_RegisterPic(StrToName(va("sttnum%d", i)));
-    pic_yellownum[i] = R_RegisterPic(StrToName(va("stysnum%d", i)));
-    pic_graynum[i] = R_RegisterPic(StrToName(va("stgnum%d", i)));
+    pic_tallnum[i] = R_RegisterPic(name(va("sttnum%d", i)));
+    pic_yellownum[i] = R_RegisterPic(name(va("stysnum%d", i)));
+    pic_graynum[i] = R_RegisterPic(name(va("stgnum%d", i)));
   }
   pic_minus = R_RegisterPic('sttminus');
   pic_percent = R_RegisterPic('sttprcnt');
 
   pic_faceback = R_RegisterPic('stfb0');
 
-  foreach (auto i; 0..6) pic_keys[i] = R_RegisterPic(StrToName(va("stkeys%d", i)));
+  foreach (auto i; 0..6) pic_keys[i] = R_RegisterPic(name(va("stkeys%d", i)));
 
   foreach (auto i; 0..ST_NUMPAINFACES) {
-    pic_faces[i*ST_FACESTRIDE+0] = R_RegisterPic(StrToName(va("stfst%d0", i)));
-    pic_faces[i*ST_FACESTRIDE+1] = R_RegisterPic(StrToName(va("stfst%d1", i)));
-    pic_faces[i*ST_FACESTRIDE+2] = R_RegisterPic(StrToName(va("stfst%d2", i)));
-    pic_faces[i*ST_FACESTRIDE+3] = R_RegisterPic(StrToName(va("stftr%d0", i)));
-    pic_faces[i*ST_FACESTRIDE+4] = R_RegisterPic(StrToName(va("stftl%d0", i)));
-    pic_faces[i*ST_FACESTRIDE+5] = R_RegisterPic(StrToName(va("stfouch%d", i)));
-    pic_faces[i*ST_FACESTRIDE+6] = R_RegisterPic(StrToName(va("stfevl%d", i)));
-    pic_faces[i*ST_FACESTRIDE+7] = R_RegisterPic(StrToName(va("stfkill%d", i)));
+    pic_faces[i*ST_FACESTRIDE+0] = R_RegisterPic(name(va("stfst%d0", i)));
+    pic_faces[i*ST_FACESTRIDE+1] = R_RegisterPic(name(va("stfst%d1", i)));
+    pic_faces[i*ST_FACESTRIDE+2] = R_RegisterPic(name(va("stfst%d2", i)));
+    pic_faces[i*ST_FACESTRIDE+3] = R_RegisterPic(name(va("stftr%d0", i)));
+    pic_faces[i*ST_FACESTRIDE+4] = R_RegisterPic(name(va("stftl%d0", i)));
+    pic_faces[i*ST_FACESTRIDE+5] = R_RegisterPic(name(va("stfouch%d", i)));
+    pic_faces[i*ST_FACESTRIDE+6] = R_RegisterPic(name(va("stfevl%d", i)));
+    pic_faces[i*ST_FACESTRIDE+7] = R_RegisterPic(name(va("stfkill%d", i)));
   }
   pic_faces[ST_GODFACE] = R_RegisterPic('stfgod0');
   pic_faces[ST_DEADFACE] = R_RegisterPic('stfdead0');

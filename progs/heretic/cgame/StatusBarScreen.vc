@@ -96,7 +96,7 @@ override void StartMap()
   }
   else
   {
-    pic_lifegem = R_RegisterPic(StrToName(va("lifegem%d", cl.ClientNum)));
+    pic_lifegem = R_RegisterPic(name(va("lifegem%d", cl.ClientNum)));
   }
   pic_ltface = R_RegisterPic('ltface');
   pic_rtface = R_RegisterPic('rtface');
@@ -111,9 +111,9 @@ override void StartMap()
   }
   for (i = 0; i < 10; i++)
   {
-    pic_innum[i] = R_RegisterPic(StrToName(va("in%d", i)));
-    pic_smallinnum[i] = R_RegisterPic(StrToName(va("smallin%d", i)));
-    pic_bignum[i] = R_RegisterPic(StrToName(va("fontb%d", 16 + i)));
+    pic_innum[i] = R_RegisterPic(name(va("in%d", i)));
+    pic_smallinnum[i] = R_RegisterPic(name(va("smallin%d", i)));
+    pic_bignum[i] = R_RegisterPic(name(va("fontb%d", 16 + i)));
     R_GetPicInfo(pic_bignum[i], &info);
     bignumwidth[i] = info.width;
   }
@@ -137,8 +137,8 @@ override void StartMap()
 
   for (i = 0; i < 16; i++)
   {
-    pic_flight[i] = R_RegisterPic(StrToName(va("spfly%d", i)));
-    pic_book[i] = R_RegisterPic(StrToName(va("spinbk%d", i)));
+    pic_flight[i] = R_RegisterPic(name(va("spfly%d", i)));
+    pic_book[i] = R_RegisterPic(name(va("spinbk%d", i)));
   }
 
   pic_paused = R_RegisterPic('paused');

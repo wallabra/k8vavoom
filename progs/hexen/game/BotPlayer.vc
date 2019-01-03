@@ -614,7 +614,7 @@ bool CheckPath(float ang, float dist)
       if (!ld->backsector)
         return false;
 
-      if (!PointOnPlaneSide(botmo.Origin, ld))
+      if (!PointOnPlaneSide(botmo.Origin, *ld))
       {
         back = ld->backsector;
         front = ld->frontsector;

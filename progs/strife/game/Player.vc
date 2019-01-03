@@ -180,7 +180,7 @@ override void Cheat_Gimme () {
   // quest items.
   foreach (auto i; 0..31) {
     if (Cmd_CheckParm(va("Quest%d", i+1))) {
-      EntityEx(MO).GiveInventoryType(class!Inventory(FindClass(StrToName(va("QuestItem%d", i)))));
+      EntityEx(MO).GiveInventoryType(class!Inventory(FindClass(name(va("QuestItem%d", i)))));
       cprint("YOU GOT IT");
     }
   }

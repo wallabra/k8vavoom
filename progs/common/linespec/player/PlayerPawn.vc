@@ -469,7 +469,7 @@ override bool UseInventory (Inventory Item) {
 //  AdjustSpeed
 //
 //==========================================================================
-final void AdjustSpeed (out float forward, out float side) {
+final void AdjustSpeed (ref float forward, ref float side) {
   // when the player has less than 25 health points, he's unable to run
   if (Health < RunHealth) {
     //if (forward > 1000.0) forward = 1000.0; else if (forward < -1000.0) forward = -1000.0;

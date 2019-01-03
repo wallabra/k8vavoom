@@ -1209,7 +1209,7 @@ final bool UsePuzzleItem (int PuzzleItemType) {
         }
         continue; // continue searching
       }
-      if (PointOnPlaneSide(MO.Origin, in->line) == 1) {
+      if (PointOnPlaneSide(MO.Origin, *in->line) == 1) {
         // don't use back sides
         break;
       }
@@ -1631,7 +1631,7 @@ void ClientFinaleType (int Type) {
 final void SetObjectives (int NewObjectives) {
   if (!NewObjectives) return;
   // check if log text lump exists in wad file
-  if (!WadLumpPresent(StrToName(va("log%d", NewObjectives)))) return;
+  if (!WadLumpPresent(name(va("log%d", NewObjectives)))) return;
   Objectives = NewObjectives;
 }
 
@@ -1772,7 +1772,7 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
 //
 //==========================================================================
 void ClientVoice (int VoiceNum) {
-  LocalSound(StrToName(va("svox/voc%d", VoiceNum)));
+  LocalSound(name(va("svox/voc%d", VoiceNum)));
 }
 
 

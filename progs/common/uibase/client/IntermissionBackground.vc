@@ -111,9 +111,8 @@ void Init (name Name, ubyte AState, ClientGameShared AClGame) {
 
   string NameStr = string(Name);
   if (StrStartsWith(NameStr, "$")) {
-    //ParseScript(StrToName(substr(NameStr, 1, strlen(NameStr)-1)));
     //print("INTERBG: parsing script '%s'", NameStr[1..$]);
-    ParseScript(StrToName(NameStr[1..$]));
+    ParseScript(name(NameStr[1..$]));
   } else {
     BackgroundPic = R_RegisterPic(Name);
   }
@@ -179,7 +178,7 @@ void ParseScript (name ScriptName) {
   while (!sc.AtEnd()) {
     if (sc.Check("Background")) {
       sc.ExpectString();
-      BackgroundPic = R_RegisterPic(StrToName(strlwr(sc.String)));
+      BackgroundPic = R_RegisterPic(name(strlwr(sc.String)));
       continue;
     }
 
@@ -190,7 +189,7 @@ void ParseScript (name ScriptName) {
 
     if (sc.Check("Splat")) {
       sc.ExpectString();
-      SplatPic = R_RegisterPic(StrToName(strlwr(sc.String)));
+      SplatPic = R_RegisterPic(name(strlwr(sc.String)));
       continue;
     }
 
@@ -199,7 +198,7 @@ void ParseScript (name ScriptName) {
         if (!sc.Crossed) {
           int i = PointerPics.Num;
           PointerPics.length = i+1;
-          PointerPics[i] = R_RegisterPic(StrToName(strlwr(sc.String)));
+          PointerPics[i] = R_RegisterPic(name(strlwr(sc.String)));
         } else {
           sc.UnGet();
           break;
@@ -214,7 +213,7 @@ void ParseScript (name ScriptName) {
         int i = Spots.Num;
         Spots.length = i+1;
         sc.ExpectString();
-        Spots[i].Map = StrToName(strlwr(sc.String));
+        Spots[i].Map = name(strlwr(sc.String));
         sc.ExpectNumber();
         Spots[i].X = sc.Number;
         sc.ExpectNumber();
@@ -229,39 +228,39 @@ void ParseScript (name ScriptName) {
     if (sc.Check("IfLeaving")) {
       Anims[i].Cond = COND_IfLeaving;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
     } else if (sc.Check("IfNotLeaving")) {
       Anims[i].Cond = COND_IfNotLeaving;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
     } else if (sc.Check("IfEntering")) {
       Anims[i].Cond = COND_IfEntering;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
     } else if (sc.Check("IfNotEntering")) {
       Anims[i].Cond = COND_IfNotEntering;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
     } else if (sc.Check("IfVisited")) {
       Anims[i].Cond = COND_IfVisited;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
     } else if (sc.Check("IfNotVisited")) {
       Anims[i].Cond = COND_IfNotVisited;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
     } else if (sc.Check("IfTravelling")) {
       Anims[i].Cond = COND_IfTravelling;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
       sc.ExpectString();
-      Anims[i].MapName2 = StrToName(strlwr(sc.String));
+      Anims[i].MapName2 = name(strlwr(sc.String));
     } else if (sc.Check("IfNotTravelling")) {
       Anims[i].Cond = COND_IfTravelling;
       sc.ExpectString();
-      Anims[i].MapName1 = StrToName(strlwr(sc.String));
+      Anims[i].MapName1 = name(strlwr(sc.String));
       sc.ExpectString();
-      Anims[i].MapName2 = StrToName(strlwr(sc.String));
+      Anims[i].MapName2 = name(strlwr(sc.String));
     }
 
     if (sc.Check("Animation")) {
@@ -277,7 +276,7 @@ void ParseScript (name ScriptName) {
         int j = Anims[i].Pics.Num;
         Anims[i].Pics.Num = j+1;
         sc.ExpectString();
-        Anims[i].Pics[j] = R_RegisterPic(StrToName(strlwr(sc.String)));
+        Anims[i].Pics[j] = R_RegisterPic(name(strlwr(sc.String)));
       }
       // init variables
       Anims[i].Ctr = -1;
@@ -291,7 +290,7 @@ void ParseScript (name ScriptName) {
       Anims[i].Period = 0.0;
       Anims[i].Pics.Num = 1;
       sc.ExpectString();
-      Anims[i].Pics[0] = R_RegisterPic(StrToName(strlwr(sc.String)));
+      Anims[i].Pics[0] = R_RegisterPic(name(strlwr(sc.String)));
       // init variables
       Anims[i].Ctr = -1;
       // specify the next time to draw it

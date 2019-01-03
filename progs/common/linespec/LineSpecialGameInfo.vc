@@ -254,7 +254,7 @@ void MakeSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
         p2 = vector(line->v2->x, line->v2->y, plane->maxz);
       }
       p3 = vector(mthing->x, mthing->y, mthing->height);
-      if (PointOnPlaneSide(p3, line) == IsCeiling) {
+      if (PointOnPlaneSide(p3, *line) == IsCeiling) {
         v1 = p2-p3;
         v2 = p1-p3;
       } else {
@@ -295,7 +295,7 @@ void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
     line_t *line = &InLevel.Lines[i];
     if (line->LineTag != mthing->arg1) continue;
 
-    sec = (PointOnPlaneSide(p1, line) == 0 ? line->frontsector : line->backsector);
+    sec = (PointOnPlaneSide(p1, *line) == 0 ? line->frontsector : line->backsector);
     if (sec == nullptr) continue;
     if (!IsCeiling) {
       plane = &sec->floor;
@@ -436,7 +436,7 @@ void MakeVertexFloorHeights (Level InLevel) {
     if (p1.z == 0.1) p1.z = sec->floor.TexZ;
     if (p2.z == 0.1) p2.z = sec->floor.TexZ;
     if (p3.z == 0.1) p3.z = sec->floor.TexZ;
-    if (PointOnPlaneSide(p3, sec->lines[0]) == 0) {
+    if (PointOnPlaneSide(p3, *sec->lines[0]) == 0) {
       v1 = p2-p3;
       v2 = p1-p3;
     } else {
@@ -477,7 +477,7 @@ void MakeVertexCeilingHeights (Level InLevel) {
     if (p1.z == 0.1) p1.z = sec->ceiling.TexZ;
     if (p2.z == 0.1) p2.z = sec->ceiling.TexZ;
     if (p3.z == 0.1) p3.z = sec->ceiling.TexZ;
-    if (PointOnPlaneSide(p3, sec->lines[0]) == 0) {
+    if (PointOnPlaneSide(p3, *sec->lines[0]) == 0) {
       v1 = p1-p3;
       v2 = p2-p3;
     } else {
@@ -1117,7 +1117,7 @@ bool AddWeaponToSlot (int Slot, class!Weapon WeaponClass) {
 //
 //==========================================================================
 override void CmdWeaponSection (string Section) {
-  if (!strlen(Section)) {
+  if (!Section) {
     print("Usage: WeaponSection <section name>");
     return;
   }
