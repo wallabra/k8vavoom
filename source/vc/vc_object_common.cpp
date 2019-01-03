@@ -395,13 +395,29 @@ IMPLEMENT_FUNCTION(VObject, va) {
 }
 
 IMPLEMENT_FUNCTION(VObject, atoi) {
+  P_GET_OUT_OPT_NOSP(int, err); // this is actually bool
   P_GET_STR(str);
-  RET_INT(atoi(*str));
+  int res = 0;
+  if (str.convertInt(&res)) {
+    *err = 0;
+    RET_INT(res);
+  } else {
+    *err = 1;
+    RET_INT(0);
+  }
 }
 
 IMPLEMENT_FUNCTION(VObject, atof) {
+  P_GET_OUT_OPT_NOSP(int, err); // this is actually bool
   P_GET_STR(str);
-  RET_FLOAT(VStr::atof(*str, 0));
+  float res = 0;
+  if (str.convertFloat(&res)) {
+    *err = 0;
+    RET_FLOAT(res);
+  } else {
+    *err = 1;
+    RET_FLOAT(0);
+  }
 }
 
 IMPLEMENT_FUNCTION(VObject, StrStartsWith) {

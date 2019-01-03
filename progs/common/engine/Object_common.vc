@@ -434,9 +434,9 @@ native static final bool globmatch (const string pat, const string str, optional
 native static final string va (string format, ...) [printf,1];
 
 // converts string to integer
-native static final int atoi (string str);
+native static final int atoi (string str, optional out bool err);
 // converts string to float
-native static final float atof (string str);
+native static final float atof (string str, optional out bool err);
 
 // checks if string starts with given string
 native static final bool StrStartsWith (string Str, string Check);

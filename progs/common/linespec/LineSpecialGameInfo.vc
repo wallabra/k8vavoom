@@ -1137,8 +1137,9 @@ override void CmdSetSlot (ref array!string Args) {
   }
 
   // get slot number
-  int Slot = atoi(Args[1]);
-  if (Slot < 0 || Slot >= PlayerPawn::NUM_WEAPON_SLOTS) {
+  bool err;
+  int Slot = atoi(Args[1], out err);
+  if (err || Slot < 0 || Slot >= PlayerPawn::NUM_WEAPON_SLOTS) {
     print("Bad weapon slot number");
     return;
   }
@@ -1177,8 +1178,9 @@ override void CmdAddSlotDefault (ref array!string Args) {
   }
 
   // get slot number
-  int Slot = atoi(Args[1]);
-  if (Slot < 0 || Slot >= PlayerPawn::NUM_WEAPON_SLOTS) {
+  bool err;
+  int Slot = atoi(Args[1], out err);
+  if (err || Slot < 0 || Slot >= PlayerPawn::NUM_WEAPON_SLOTS) {
     print("Bad weapon slot number");
     return;
   }
