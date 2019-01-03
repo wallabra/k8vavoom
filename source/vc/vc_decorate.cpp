@@ -126,6 +126,7 @@ enum {
   PROP_PawnWeaponSlot,
   PROP_DefaultAlpha,
   PROP_Activation,
+  PROP_PoisonDamage,
 };
 
 enum {
@@ -527,6 +528,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         //P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_activation") {
         VPropDef &P = Lst.NewProp(PROP_Activation, PN);
+        P.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "prop_poison_damage") {
+        VPropDef &P = Lst.NewProp(PROP_PoisonDamage, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "flag") {
         VFlagDef &F = Lst.NewFlag(FLAG_Bool, PN);
@@ -1067,7 +1071,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -1823,7 +1827,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_IntUnsupported:
             //FIXME
             sc->CheckNumberWithSign();
-            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_IntIdUnsupported:
             //FIXME
@@ -1835,7 +1839,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
               sc->SetCMode(oldcm);
-              if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             }
             break;
           case PROP_BitIndex:
@@ -1849,7 +1853,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_FloatUnsupported:
             //FIXME
             sc->ExpectFloatWithSign();
-            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
@@ -1902,11 +1906,22 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_StrUnsupported:
             //FIXME
             sc->ExpectString();
-            if (dbg_show_decorate_unsupported) GCon->Logf("%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Class:
             sc->ExpectString();
             AddClassFixup(Class, P.Field, P.CPrefix + sc->String, ClassFixups);
+            break;
+          case PROP_PoisonDamage:
+            sc->ExpectNumberWithSign();
+            P.Field->SetInt(DefObj, sc->Number);
+            if (sc->Check(",")) {
+              GCon->Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              for (;;) {
+                sc->ExpectNumberWithSign();
+                if (!sc->Check(",")) break;
+              }
+            }
             break;
           case PROP_Power_Class:
             // This is a very inconvenient shit!
@@ -3155,7 +3170,7 @@ void ProcessDecorateScripts () {
   // make sure all import classes were defined
   if (VMemberBase::GDecorateClassImports.Num()) {
     for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); ++i) {
-      GCon->Logf("Undefined DECORATE class `%s`", VMemberBase::GDecorateClassImports[i]->GetName());
+      GCon->Logf(NAME_Warning, "Undefined DECORATE class `%s`", VMemberBase::GDecorateClassImports[i]->GetName());
     }
     Sys_Error("Not all DECORATE class imports were defined");
   }
@@ -3338,7 +3353,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
         bool didset = true;
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
@@ -3358,7 +3373,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       }
     }
   }
-  GCon->Logf("Unknown flag '%s'", *Flag);
+  GCon->Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
   return false;
   unguard;
 }
@@ -3389,7 +3404,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: return F.Field->GetBool(this);
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf("Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
+          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
           case FLAG_Byte: return !!F.Field->GetByte(this);
           case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
           case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
@@ -3400,7 +3415,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       }
     }
   }
-  GCon->Logf("Unknown flag '%s'", *Flag);
+  GCon->Logf(NAME_Warning, "Unknown flag '%s'", *Flag);
   return false;
   unguard;
 }

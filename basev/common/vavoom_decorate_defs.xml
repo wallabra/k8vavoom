@@ -14,7 +14,7 @@
     <prop_pain_chance name="PainChance" />
     <prop_damage_factor name="DamageFactor" />
     <prop_missile_damage name="Damage" />
-    <prop_int name="PoisonDamage" property="MissilePoisonDamage" />
+    <prop_poison_damage name="PoisonDamage" property="MissilePoisonDamage" />
     <prop_float name="RadiusDamageFactor" property="RDFactor" />
     <prop_speed name="Speed" property="Speed" />
     <prop_vspeed name="VSpeed" />
