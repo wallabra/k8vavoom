@@ -1116,19 +1116,21 @@ IMPLEMENT_FUNCTION(VObject, StartSearch) {
 
 
 // if `buf` is `nullptr`, it means "flush"
-void (*PR_WriterCB) (const char *buf, bool debugPrint) = nullptr;
+void (*PR_WriterCB) (const char *buf, bool debugPrint, VName wrname) = nullptr;
 
 static char wrbuffer[16384] = {0};
 
 
-void PR_DoWriteBuf (const char *buf, bool debugPrint) {
+void PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
   if (PR_WriterCB) {
-    PR_WriterCB(buf, debugPrint);
+    PR_WriterCB(buf, debugPrint, wrname);
     return;
   }
   if (!buf) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (debugPrint) GCon->Log(NAME_Dev, wrbuffer); else GCon->Log(wrbuffer);
+    if (debugPrint) GCon->Log(NAME_Dev, wrbuffer);
+    else if (wrname == NAME_None) GCon->Log(wrbuffer);
+    else GCon->Log((EName)wrname.GetIndex(), wrbuffer);
 #endif
     wrbuffer[0] = 0;
   } else if (buf[0]) {

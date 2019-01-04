@@ -58,14 +58,19 @@ struct SectorLink {
 };
 
 native readonly name MapName;
-native readonly string MapHash;
-native readonly string MapHashMD5;
+native readonly string MapHash; // lowercase
+native readonly string MapHashMD5; // lowercase
 
 // flags
 native readonly private bool bForServer; // true if this level belongs to the server
 native readonly bool bExtended; // true if level was in Hexen format
 native readonly private bool bGLNodesV5; // true if using version 5 GL nodes
 native readonly bool bTextMap; // UDMF format map
+// used in map fixer
+native transient bool bForceRebuildNodes;
+native transient bool bForceAllowSeveralPObjInSubsector;
+native transient bool bForceNoTexturePrecache;
+native transient bool bForceNoPrecalcStaticLights;
 
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
@@ -247,6 +252,11 @@ void OnEntityDying (Entity ent) {}
 
 // this is called after LevelInfo handler when game is loaded (hub or savegame)
 void AfterUnarchiveThinkers () {}
+
+
+native int LdrTexNumForName (string texname, int Type, optional bool CMap, optional bool fromUDMF);
+
+#include "LevelMapFixer.vc"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

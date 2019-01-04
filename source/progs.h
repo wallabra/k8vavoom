@@ -156,8 +156,8 @@ extern void PR_WriteOne (const VFieldType &type);
 extern void PR_WriteFlush ();
 
 // if `buf` is `nullptr`, it means "flush"
-extern void (*PR_WriterCB) (const char *buf, bool debugPrint);
+extern void (*PR_WriterCB) (const char *buf, bool debugPrint, VName wrname);
 
 // calls `PR_WriterCB` if it is not empty, or does default printing
 // if `buf` is `nullptr`, it means "flush"
-void PR_DoWriteBuf (const char *buf, bool debugPrint=false);
+void PR_DoWriteBuf (const char *buf, bool debugPrint=false, VName wrname=NAME_None);

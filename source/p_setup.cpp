@@ -132,404 +132,15 @@ static bool cacheCleanupComplete = false;
 
 //==========================================================================
 //
-//  SectorOffsetFloor
-//
-//==========================================================================
-static void SectorOffsetFloor (sector_t *sec, float ofs) {
-  if (!sec) return;
-  sec->floor.TexZ += ofs;
-  sec->floor.minz += ofs;
-  sec->floor.maxz += ofs;
-}
-
-
-//==========================================================================
-//
-//  SectorOffsetCeiling
-//
-//==========================================================================
-static void SectorOffsetCeiling (sector_t *sec, float ofs) {
-  if (!sec) return;
-  sec->ceiling.TexZ += ofs;
-  sec->ceiling.minz += ofs;
-  sec->ceiling.maxz += ofs;
-}
-
-
-//==========================================================================
-//
 //  VLevel::FixKnownMapErrors
 //
 //==========================================================================
 void VLevel::FixKnownMapErrors () {
-  // Doom: E1M4
-  if (MapHashMD5 == "5b26545ff21b051ca06d389ce535684c") {
-    // missing textures
-    Sides[Lines[693].sidenum[1]].TopTexture = TexNumForName("BROWN1", TEXTYPE_Wall);
-    // fix HOM errors with sectors too low
-    SectorOffsetFloor(&Sectors[9], 8);
-    SectorOffsetFloor(&Sectors[105], 8);
-    SectorOffsetFloor(&Sectors[132], 8);
-    SectorOffsetFloor(&Sectors[137], 8);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E1M4 detected and fixed");
-    return;
-  }
+  eventKnownMapBugFixer();
 
-  // Doom: E2M2
-  if (MapHashMD5 == "a24fe135d5b6fd427fe27bef89717a65") {
-    // missing textures
-    Sides[Lines[947].sidenum[1]].TopTexture = TexNumForName("BROWN1", TEXTYPE_Wall);
-    Sides[Lines[1596].sidenum[1]].TopTexture = TexNumForName("WOOD1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M2 detected and fixed");
-    return;
-  }
-
-  // Doom: E2M4
-  if (MapHashMD5 == "1bc04d646b32d3a3e411daf3c1a38ff8") {
-    // missing textures
-    Sides[Lines[551].sidenum[1]].TopTexture = TexNumForName("PIPE4", TEXTYPE_Wall);
-    Sides[Lines[865].sidenum[1]].BottomTexture = TexNumForName("STEP5", TEXTYPE_Wall);
-    Sides[Lines[1062].sidenum[0]].TopTexture = TexNumForName("GSTVINE1", TEXTYPE_Wall);
-    Sides[Lines[1071].sidenum[0]].TopTexture = TexNumForName("MARBLE1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M4 detected and fixed");
-    return;
-  }
-
-  // Doom: E2M5
-  if (MapHashMD5 == "99c580ad8fabe923cab485cb7f3c5e5d") {
-    // missing textures
-    Sides[Lines[590].sidenum[1]].TopTexture = TexNumForName("GRAYBIG", TEXTYPE_Wall);
-    Sides[Lines[590].sidenum[0]].BottomTexture = TexNumForName("BROWN1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M5 detected and fixed");
-    return;
-  }
-
-  // Doom: E2M6
-  if (MapHashMD5 == "3838ab29292587a7ee3ca71e7040868d") {
-    // missing textures
-    Sides[Lines[1091].sidenum[1]].TopTexture = TexNumForName("COMPSPAN", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M6 detected and fixed");
-    return;
-  }
-
-  // Doom: E2M7
-  if (MapHashMD5 == "8590f489879870c098cd7029c3187159") {
-    // missing textures
-    Sides[Lines[1286].sidenum[0]].BottomTexture = TexNumForName("SHAWN2", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M7 detected and fixed");
-    return;
-  }
-
-  // Doom: E2M9
-  if (MapHashMD5 == "8a6399faaa2e68649d4e4b16642074be") {
-    // missing textures
-    Sides[Lines[121].sidenum[1]].TopTexture = TexNumForName("SW1LION", TEXTYPE_Wall);
-    Sides[Lines[123].sidenum[1]].TopTexture = TexNumForName("GSTONE1", TEXTYPE_Wall);
-    Sides[Lines[140].sidenum[1]].TopTexture = TexNumForName("GSTONE1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E2M9 detected and fixed");
-    return;
-  }
-
-  // Doom: E3M7
-  if (MapHashMD5 == "5ac51ca9f1b57d4538049422a5e37291") {
-    // missing textures
-    Sides[Lines[971].sidenum[1]].TopTexture = TexNumForName("SP_HOT1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E3M7 detected and fixed");
-    return;
-  }
-
-  // Doom: E4M1
-  if (MapHashMD5 == "da0c8281ac70eec31127c228bcd7fe2c") {
-    // missing textures
-    Sides[Lines[470].sidenum[0]].TopTexture = TexNumForName("GSTONE1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E4M1 detected and fixed");
-    return;
-  }
-
-  // Doom: E4M4
-  if (MapHashMD5 == "aaecadd4d97970aff702d86fafac7d17") {
-    // missing textures
-    Sides[Lines[427].sidenum[1]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
-    Sides[Lines[558].sidenum[1]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
-    Sides[Lines[567].sidenum[0]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
-    Sides[Lines[572].sidenum[0]].TopTexture = TexNumForName("BROWNHUG", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom: E4M4 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP02 (normal and BFG edition)
-  if (MapHashMD5 == "ab24ae6e2cb13cbdd04600a4d37f9189" || MapHashMD5 == "1ec0af1e3985650f0c9000319c599d0c") {
-    // missing textures
-    Sides[Lines[327].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
-    Sides[Lines[328].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
-    Sides[Lines[338].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
-    Sides[Lines[339].sidenum[0]].BottomTexture = TexNumForName("STONE4", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP02 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP04
-  if (MapHashMD5 == "cec791136a83eec4b91d39718bdf9d82") {
-    // missing textures
-    Sides[Lines[456].sidenum[1]].TopTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
-    Sides[Lines[108].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
-    Sides[Lines[109].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
-    Sides[Lines[110].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
-    Sides[Lines[111].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
-    Sides[Lines[127].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
-    Sides[Lines[128].sidenum[0]].TopTexture = TexNumForName("STONE", TEXTYPE_Wall);
-    // remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
-    Sectors[19].tag = 0;
-    Sectors[20].tag = 0;
-    Sectors[23].tag = 0;
-    Sectors[28].tag = 0;
-    Sectors[33].tag = 0;
-    Sectors[34].tag = 0;
-    Sectors[83].tag = 0;
-    Sectors[85].tag = 0;
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP04 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP05
-  if (MapHashMD5 == "9e061ad7fbcd7fad968c976cb4aa3b9d") {
-    // fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
-    Sectors[4].tag = 0;
-    Sectors[153].tag = 0;
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP05 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP08
-  if (MapHashMD5 == "66c46385eb1a23d60839d1532522076b") {
-    // missing texture
-    Sides[Lines[101].sidenum[1]].TopTexture = TexNumForName("BRICK7", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP08 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP14
-  if (MapHashMD5 == "5bda34da60c0530794cc1ea2da017976") {
-    // missing texture
-    Sides[Lines[1259].sidenum[1]].TopTexture = TexNumForName("BSTONE2", TEXTYPE_Wall);
-    Sides[Lines[1305].sidenum[1]].TopTexture = TexNumForName("BSTONE2", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP14 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP15
-  if (MapHashMD5 == "1a540ba717bf9ec85f8522594c352f2a") {
-    Sectors[147].special = 0; // this secret is possible, but meh...
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP15 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP18
-  if (MapHashMD5 == "0d491365c1b88b7d1b603890100dd03e") {
-    // missing texture
-    Sides[Lines[451].sidenum[0]].MidTexture = TexNumForName("METAL", TEXTYPE_Wall);
-    Sides[Lines[459].sidenum[0]].MidTexture = TexNumForName("METAL", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP18 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP19
-  if (MapHashMD5 == "b5506b1e8f2fc272ad0c77b9e0df5491") {
-    // missing texture
-    Sides[Lines[355].sidenum[1]].TopTexture = TexNumForName("STONE2", TEXTYPE_Wall);
-    Sides[Lines[736].sidenum[0]].TopTexture = TexNumForName("SLADWALL", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP19 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP21
-  if (MapHashMD5 == "ebdac00e9d25d884b2c8f4b1f0390539") {
-    // push ceiling down in glitchy sectors above the stair switches
-    SectorOffsetCeiling(&Sectors[50], -56);
-    SectorOffsetCeiling(&Sectors[54], -56);
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP21 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP27
-  if (MapHashMD5 == "110f84de041052b59307faf0293e6bc0") {
-    // missing texture
-    Sides[Lines[582].sidenum[1]].TopTexture = TexNumForName("ZIMMER3", TEXTYPE_Wall);
-    Sectors[93].special = 0; // this secret is possible, but meh...
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP27 detected and fixed");
-    return;
-  }
-
-  // Doom II: MAP29
-  if (MapHashMD5 == "20251eda21b2f2ecf6ff5b8bbc00b26c") {
-    // missing textures on teleporters
-    for (int i = 0; i < 4; ++i) {
-      Sides[Lines[405+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
-      Sides[Lines[516+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
-      Sides[Lines[524+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
-      Sides[Lines[1146+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
-      Sides[Lines[1138+i].sidenum[1]].BottomTexture = TexNumForName("SUPPORT3", TEXTYPE_Wall);
-    }
-    GCon->Logf(NAME_Warning, "MAPFIX: Doom II: MAP29 detected and fixed");
-    return;
-  }
-
-  // TNT:Evilution: MAP15
-  if (MapHashMD5 == "dfc18b92bf3e8142b8684ecd8bd2ef06") {
-    // raise up sector with its counterpart so 100% kills becomes possible
-    Sectors[330].tag = 11;
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: TNT:Evilution: MAP15 detected and fixed");
-    return;
-  }
-
-  // TNT:Evilution: MAP29
-  if (MapHashMD5 == "2c4a3356c5eb3526d2c72a4aa4b18a36") {
-    // remove mancubus who always gets stuck in teleport tunnel, preventing 100% kills on HMP
-    Things[405].options = 0;
-    Things[17].SkillClassFilter &= ~(0x03|0x04|0x18);
-    GCon->Logf(NAME_Warning, "MAPFIX: TNT:Evilution: MAP29 detected and fixed");
-    return;
-  }
-
-  // TNT:Evilution: MAP31
-  if (MapHashMD5 == "a53ae580a4af2b5d0b0893f86914781e") {
-    // the famous missing yellow key...
-    Things[470].options |= 0x07;
-    Things[470].SkillClassFilter |= 0x03|0x04|0x18;
-    GCon->Logf(NAME_Warning, "MAPFIX: TNT:Evilution: MAP31 detected and fixed");
-    return;
-  }
-
-  // Plutonia: MAP26
-  if (MapHashMD5 == "abc4eb5a1535eccd0061ad14f3547908") {
-    Sectors[156].special = 0;
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: Plutonia: MAP26 detected and fixed");
-    return;
-  }
-
-  // Nerve: MAP04
-  if (MapHashMD5 == "ff635fb9a2f076566299910f8c78f707") {
-    Sectors[868].special = 0;
-    HashSectors();
-    GCon->Logf(NAME_Warning, "MAPFIX: Nerve: MAP04 detected and fixed");
-    return;
-  }
-
-  // Heretic: E1M2
-  if (MapHashMD5 == "d94587625ba779644d58151a87897cf1") {
-    // missing textures
-    Sides[Lines[477].sidenum[1]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    Sides[Lines[478].sidenum[1]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    Sides[Lines[479].sidenum[1]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    Sides[Lines[1057].sidenum[0]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E1M2 detected and fixed");
-    return;
-  }
-
-  // Heretic: E1M3
-  if (MapHashMD5 == "add0fac41afb0b3c9b9f3c0006f93805") {
-    // Broken door between the hallway that leads to a Torch
-    // and the passage that has a Bag of Holding at its end
-    SectorOffsetFloor(&Sectors[86], -128);
-    SectorOffsetCeiling(&Sectors[86], -128);
-    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E1M3 detected and fixed");
-    return;
-  }
-
-  // Heretic: E1M4
-  if (MapHashMD5 == "916318d8b06dac2d83424b23e4b66531") {
-    // wrong sector offsets
-    SectorOffsetCeiling(&Sectors[0], 8);
-    SectorOffsetCeiling(&Sectors[1], 8);
-    SectorOffsetCeiling(&Sectors[2], 8);
-    SectorOffsetCeiling(&Sectors[3], 8);
-    SectorOffsetCeiling(&Sectors[4], 8);
-    SectorOffsetCeiling(&Sectors[6], 8);
-    SectorOffsetFloor(&Sectors[6], 8);
-    SectorOffsetCeiling(&Sectors[17], 8);
-    // yellow key door
-    SectorOffsetFloor(&Sectors[284], -8);
-    SectorOffsetCeiling(&Sectors[284], -8);
-    // missing textures
-    Sides[Lines[490].sidenum[1]].BottomTexture = TexNumForName("GRSTNPB", TEXTYPE_Wall);
-    Sides[Lines[722].sidenum[0]].BottomTexture = TexNumForName("WOODWL", TEXTYPE_Wall);
-    Sides[Lines[911].sidenum[0]].BottomTexture = TexNumForName("WOODWL", TEXTYPE_Wall);
-    Sides[Lines[1296].sidenum[0]].BottomTexture = TexNumForName("WOODWL", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E1M4 detected and fixed");
-    return;
-  }
-
-  // Heretic: E2M2
-  if (MapHashMD5 == "397a0e17a39542e4e8294e156fab0502") {
-    // missing green door statues on easy and hard difficulties
-    Things[17].options |= 0x07;
-    Things[17].SkillClassFilter |= 0x03|0x04|0x18;
-    Things[18].options |= 0x07;
-    Things[18].SkillClassFilter |= 0x03|0x04|0x18;
-    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E2M2 detected and fixed");
-    return;
-  }
-
-  // Heretic: E3M6
-  if (MapHashMD5 == "ca3773ed313e8899311f3dd0ca195a68") {
-    // quartz flask outside of map
-    Things[373].options = 0;
-    Things[373].SkillClassFilter &= ~(0x03|0x04|0x18);
-    // missing wall torch on hard difficulty
-    Things[448].options |= 0x07;
-    Things[448].SkillClassFilter |= 0x03|0x04|0x18;
-    // missing textures
-    Sides[Lines[343].sidenum[0]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    Sides[Lines[370].sidenum[0]].TopTexture = TexNumForName("MOSSRCK1", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E2M2 detected and fixed");
-    return;
-  }
-
-  // Heretic: E4M7
-  if (MapHashMD5 == "5e3fcfde78310bb89f92b1626a47d0ad") {
-    // missing textures
-    Sides[Lines[1274].sidenum[0]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
-    Sides[Lines[1277].sidenum[1]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
-    Sides[Lines[1278].sidenum[0]].TopTexture = TexNumForName("CSTLRCK", TEXTYPE_Wall);
-    GCon->Logf(NAME_Warning, "MAPFIX: Heretic: E4M7 detected and fixed");
-    return;
-  }
-
-  // Winter's Fury
-  if (MapHashMD5 == "369034113c5315b17cadfb11f730a571" ||
-      MapHashMD5 == "355695fadf065955f62ea993e942c35d" ||
-      MapHashMD5 == "253c286d243fdd6fae882b657b9ffc99" ||
-      MapHashMD5 == "2842ece024c5c7905f637c616fefc36e" ||
-      MapHashMD5 == "c3cd90a4d470b5413849e6341f245737")
-  {
-#ifdef CLIENT
-    r_max_portal_depth = 1;
-#endif
-    pobj_allow_several_in_subsector_override = 1;
-    GCon->Logf(NAME_Warning, "MAPFIX: Winter's Fury: reduced portals to 1, enabled pobj hack");
-    return;
-  }
-
-  // Skulldash EE first map and credits map, too many static lights, don't precalc
-  if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16" ||
-      MapHashMD5 == "a8d2a336f0b8e77a84be9460743be70d") {
-#ifdef CLIENT
-    if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
-      // hub map
-      r_precache_textures_override = 0;
-      r_precalc_static_lights_override = 0;
-    }
-    //ldr_extrasamples_override = 0;
-#endif
-    GCon->Logf(NAME_Warning, "MAPFIX: SkullDash EE: disabled precalculated static lightmaps and texture precaching");
-    return;
-  }
+  if (LevelFlags&LF_ForceAllowSeveralPObjInSubsector) pobj_allow_several_in_subsector_override = 1;
+  if (LevelFlags&LF_ForceNoTexturePrecache) r_precache_textures_override = 0;
+  if (LevelFlags&LF_ForceNoPrecalcStaticLights) r_precalc_static_lights_override = 0;
 }
 
 
@@ -1233,6 +844,7 @@ load_again:
     MapHashMD5 = VStr::buf2hex(md5digest, MD5Context::DIGEST_SIZE);
 
     if (dbg_show_map_hash) GCon->Logf("MAP HASH MD5: %s", *MapHashMD5);
+    else if (developer) GCon->Logf(NAME_Dev, "MAP HASH MD5: %s", *MapHashMD5);
   }
 
   bool cachedDataLoaded = false;
@@ -1328,6 +940,9 @@ load_again:
   }
   double Lines2Time = -Sys_Time();
   FixKnownMapErrors();
+  HashSectors();
+  HashLines();
+  bool forceNodeRebuildFromFixer = !!(LevelFlags&LF_ForceRebuildNodes);
   FinaliseLines();
   Lines2Time += Sys_Time();
 
@@ -1351,8 +966,8 @@ load_again:
 
   double NodesTime = -Sys_Time();
   // and again; sorry!
-  if (!cachedDataLoaded) {
-    if (NeedNodesBuild) {
+  if (!cachedDataLoaded || forceNodeRebuildFromFixer) {
+    if (NeedNodesBuild || forceNodeRebuildFromFixer) {
       GCon->Logf("building GL nodes...");
       BuildNodes();
       saveCachedData = true;
@@ -1372,7 +987,7 @@ load_again:
   NodesTime += Sys_Time();
 
   // load blockmap
-  if (build_blockmap && BlockMapLump) {
+  if ((build_blockmap || forceNodeRebuildFromFixer) && BlockMapLump) {
     delete[] BlockMapLump;
     BlockMapLump = nullptr;
     BlockMapLumpSize = 0;
@@ -1380,7 +995,7 @@ load_again:
 
   double BlockMapTime = -Sys_Time();
   if (!BlockMapLump) {
-    LoadBlockMap(BlockmapLumpNum);
+    LoadBlockMap(forceNodeRebuildFromFixer || NeedNodesBuild ? -1 : BlockmapLumpNum);
     saveCachedData = true;
   }
   {
@@ -1452,6 +1067,8 @@ load_again:
   // set up polyobjs, slopes, 3D floors and some other static stuff
   double SpawnWorldTime = -Sys_Time();
   GGameInfo->eventSpawnWorld(this);
+  // hash it all again, 'cause spawner may change something
+  HashSectors();
   HashLines();
   SpawnWorldTime += Sys_Time();
 
@@ -1861,7 +1478,7 @@ void VLevel::LoadSectors (int Lump) {
     ss->Zone = -1;
   }
   delete Strm;
-  HashSectors();
+  //HashSectors();
   unguard;
 }
 
@@ -3111,6 +2728,23 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
 
   if (i == -1) i = (CMap ? 0 : GTextureManager.DefaultTexture);
   return i;
+}
+
+
+//==========================================================================
+//
+//  LdrTexNumForName
+//
+//  native int LdrTexNumForName (string name, int Type, optional bool CMap, optional bool fromUDMF);
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VLevel, LdrTexNumForName) {
+  P_GET_BOOL_OPT(fromUDMF, false);
+  P_GET_BOOL_OPT(CMap, false);
+  P_GET_INT(Type);
+  P_GET_STR(name);
+  P_GET_SELF;
+  RET_INT(Self->TexNumForName(*name, Type, CMap, fromUDMF));
 }
 
 

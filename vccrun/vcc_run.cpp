@@ -152,7 +152,7 @@ static VVccLog VccLog;
 
 // ////////////////////////////////////////////////////////////////////////// //
 // if `buf` is `nullptr`, it means "flush"
-static void vmWriter (const char *buf, bool debugPrint) {
+static void vmWriter (const char *buf, bool debugPrint, VName wrname) {
   if (debugPrint && !DebugMode) return;
   if (!buf) {
     if (writeToConsole) VConsole::PutChar('\n'); else printf("\n");

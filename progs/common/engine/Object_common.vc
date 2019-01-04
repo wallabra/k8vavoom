@@ -456,6 +456,8 @@ alias strReplace = StrReplace;
 native static final void print (string format, ...) [printf,1];
 // print to console only when developer == 1
 native static final void dprint (string format, ...) [printf,1];
+// print warning to console
+native static final void printwarn (string format, ...) [printf,1];
 
 
 // ////////////////////////////////////////////////////////////////////////// //

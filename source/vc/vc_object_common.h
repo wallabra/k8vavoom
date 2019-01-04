@@ -96,6 +96,7 @@
   // printing in console
   DECLARE_FUNCTION(print)
   DECLARE_FUNCTION(dprint)
+  DECLARE_FUNCTION(printwarn)
 
   // class methods
   DECLARE_FUNCTION(FindClass)

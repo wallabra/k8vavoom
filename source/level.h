@@ -152,6 +152,11 @@ class VLevel : public VGameObject {
     LF_Extended  = 0x02, // true if level was in Hexen format
     LF_GLNodesV5 = 0x04, // true if using version 5 GL nodes
     LF_TextMap   = 0x08, // UDMF format map
+    // used in map fixer
+    LF_ForceRebuildNodes                = 0x0010,
+    LF_ForceAllowSeveralPObjInSubsector = 0x0020,
+    LF_ForceNoTexturePrecache           = 0x0040,
+    LF_ForceNoPrecalcStaticLights       = 0x0080,
   };
   vuint32 LevelFlags;
 
@@ -282,22 +287,22 @@ public:
   subsector_t *PointInSubsector (const TVec &point) const;
   const vuint8 *LeafPVS (const subsector_t *ss) const;
 
-  VThinker *SpawnThinker (VClass *, const TVec& = TVec(0, 0, 0),
-    const TAVec& = TAVec(0, 0, 0), mthing_t* = nullptr,
-    bool AllowReplace=true);
-  void AddThinker (VThinker *);
-  void RemoveThinker (VThinker *);
+  VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
+                          const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,
+                          bool AllowReplace=true);
+  void AddThinker (VThinker *Th);
+  void RemoveThinker (VThinker *Th);
   void DestroyAllThinkers ();
-  void TickWorld (float);
+  void TickWorld (float DeltaTime);
 
   // poly-objects
-  void SpawnPolyobj (float, float, int, bool, bool);
-  void AddPolyAnchorPoint (float, float, int);
+  void SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt);
+  void AddPolyAnchorPoint (float x, float y, int tag);
   void InitPolyobjs ();
-  polyobj_t *GetPolyobj (int);
-  int GetPolyobjMirror (int);
-  bool MovePolyobj (int, float, float);
-  bool RotatePolyobj (int, float);
+  polyobj_t *GetPolyobj (int polyNum); // actually, tag
+  int GetPolyobjMirror (int poly); // tag again
+  bool MovePolyobj (int num, float x, float y); // tag (GetPolyobj)
+  bool RotatePolyobj (int num, float angle); // tag (GetPolyobj)
 
   bool ChangeSector (sector_t *sector, int crunch);
 
@@ -455,6 +460,14 @@ private:
     }
   }
 
+
+  void eventKnownMapBugFixer () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("KnownMapBugFixer"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
 public:
   void eventAfterUnarchiveThinkers () {
     static int mtindex = -666;
@@ -516,6 +529,8 @@ private:
 
   DECLARE_FUNCTION(AllThinkers)
   DECLARE_FUNCTION(AllActivePlayers)
+
+  DECLARE_FUNCTION(LdrTexNumForName)
 };
 
 void CalcLine (line_t *line);
