@@ -1844,7 +1844,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_BitIndex:
             sc->ExpectNumber();
-            P.Field->SetInt(DefObj, 1 << (sc->Number - 1));
+            P.Field->SetInt(DefObj, 1<<(sc->Number-1));
             break;
           case PROP_Float:
             sc->ExpectFloatWithSign();
@@ -1857,19 +1857,19 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, sc->Float * 35.0);
+            P.Field->SetFloat(DefObj, sc->Float*35.0f);
             break;
           case PROP_Tics:
             sc->ExpectNumberWithSign();
-            P.Field->SetFloat(DefObj, (sc->Number > 0 ? sc->Number/35.0 : -sc->Number));
+            P.Field->SetFloat(DefObj, (sc->Number > 0 ? sc->Number/35.0f : -sc->Number));
             break;
           case PROP_TicsSecs:
             sc->ExpectNumberWithSign();
-            P.Field->SetFloat(DefObj, sc->Number >= 0 ? sc->Number / 35.0 : sc->Number);
+            P.Field->SetFloat(DefObj, sc->Number >= 0 ? sc->Number/35.0f : sc->Number);
             break;
           case PROP_Percent:
             sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, MID(0, sc->Float, 100) / 100.0);
+            P.Field->SetFloat(DefObj, MID(0, sc->Float, 100)/100.0f);
             break;
           case PROP_FloatClamped:
             sc->ExpectFloatWithSign();
@@ -1910,7 +1910,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_Class:
             sc->ExpectString();
-            AddClassFixup(Class, P.Field, P.CPrefix + sc->String, ClassFixups);
+            AddClassFixup(Class, P.Field, P.CPrefix+sc->String, ClassFixups);
             break;
           case PROP_PoisonDamage:
             sc->ExpectNumberWithSign();
@@ -1975,7 +1975,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_PainChance:
             if (sc->CheckNumber()) {
-              P.Field->SetFloat(DefObj, float(sc->Number)/256.0);
+              P.Field->SetFloat(DefObj, float(sc->Number)/256.0f);
             } else {
               sc->ExpectString();
               VName DamageType = (sc->String.ICmp("Normal") == 0 ? NAME_None : VName(*sc->String));
@@ -1995,7 +1995,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 PC = &PainChances.Alloc();
                 PC->DamageType = DamageType;
               }
-              PC->Chance = float(sc->Number)/256.0;
+              PC->Chance = float(sc->Number)/256.0f;
             }
             break;
           case PROP_DamageFactor:
@@ -2065,7 +2065,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             {
               sc->ExpectFloatWithSign();
               TVec Val = P.Field->GetVec(DefObj);
-              Val.z = sc->Float * 35.0;
+              Val.z = sc->Float*35.0f;
               P.Field->SetVec(DefObj, Val);
             }
             break;
@@ -2107,7 +2107,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 sc->Check(",");
                 sc->ExpectNumber();
                 int b = MID(0, sc->Number, 255);
-                Col = 0xff000000 | (r << 16) | (g << 8) | b;
+                Col = 0xff000000|(r<<16)|(g<<8)|b;
               } else {
                 //GCon->Logf("********** <%s>", *sc->String);
                 sc->ExpectString();
@@ -2141,7 +2141,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 sc->Check(",");
                 sc->ExpectNumber();
                 int b = MID(0, sc->Number, 255);
-                Col = 0xff000000 | (r << 16) | (g << 8) | b;
+                Col = 0xff000000|(r<<16)|(g<<8)|b;
               } else {
                 sc->ExpectString();
                 Col = M_ParseColour(sc->String);
@@ -2167,7 +2167,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             SetClassFieldBool(Class, "bActivateImpact", true);
             SetClassFieldBool(Class, "bActivatePCross", true);
             SetClassFieldBool(Class, "bNoTeleport", true);
-            if (GGameInfo->Flags & VGameInfo::GIF_DefaultBloodSplatter) SetClassFieldBool(Class, "bBloodSplatter", true);
+            if (GGameInfo->Flags&VGameInfo::GIF_DefaultBloodSplatter) SetClassFieldBool(Class, "bBloodSplatter", true);
             break;
           case PROP_BounceType:
             if (sc->Check("None")) {
@@ -2231,7 +2231,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               DI.TypeName = *sc->String.ToLower();
               DI.Type = nullptr;
               DI.Amount = 0;
-              DI.Chance = 1.0;
+              DI.Chance = 1.0f;
               bool HaveChance = false;
               if (sc->Check(",")) {
                 sc->ExpectNumber();
@@ -2240,7 +2240,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 HaveChance = sc->CheckNumber();
               }
               if (HaveChance) {
-                DI.Chance = float(sc->Number)/255.0;
+                DI.Chance = float(sc->Number)/255.0f;
                 if (sc->Check(",")) {
                   sc->ExpectNumber();
                   DI.Amount = sc->Number;
@@ -2305,21 +2305,21 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 vuint32 Col;
                 sc->ExpectString();
                 Col = M_ParseColour(sc->String);
-                r = (Col >> 16) & 255;
-                g = (Col >> 8) & 255;
-                b = Col & 255;
+                r = (Col>>16)&255;
+                g = (Col>>8)&255;
+                b = Col&255;
               }
               sc->ResetCrossed();
               sc->Check(",");
               // alpha may be missing
               if (!sc->Crossed) {
                 sc->ExpectFloat();
-                a = MID(0, int(sc->Float * 255), 254);
+                a = MID(0, int(sc->Float*255), 254);
                 if (a > 250) a = 250;
               } else {
                 a = 88; // default alpha, around 0.(3)
               }
-              P.Field->SetInt(DefObj, (r << 16) | (g << 8) | b | (a << 24));
+              P.Field->SetInt(DefObj, (r<<16)|(g<<8)|b|(a<<24));
             }
             break;
           case PROP_ColourRange:
@@ -2342,7 +2342,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 sc->Check(",");
                 sc->ExpectNumber();
                 int b = MID(sc->Number, 0, 255);
-                Col = 0xff000000 | (r << 16) | (g << 8) | b;
+                Col = 0xff000000|(r<<16)|(g<<8)|b;
               } else {
                 sc->ExpectString();
                 Col = M_ParseColour(sc->String);
@@ -2381,7 +2381,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               DI.TypeName = *sc->String.ToLower();
               DI.Type = nullptr;
               DI.Amount = 0;
-              DI.Chance = 1.0;
+              DI.Chance = 1.0f;
               if (sc->Check(",")) {
                 sc->ExpectNumber();
                 DI.Amount = sc->Number;
@@ -2497,7 +2497,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   // set up linked list of states
   if (States.Num()) {
     Class->States = States[0];
-    for (int i = 0; i < States.Num() - 1; ++i) States[i]->Next = States[i+1];
+    for (int i = 0; i < States.Num()-1; ++i) States[i]->Next = States[i+1];
     for (int i = 0; i < States.Num(); ++i) {
       if (States[i]->GotoLabel != NAME_None) {
         States[i]->NextState = Class->ResolveStateLabel(States[i]->Loc, States[i]->GotoLabel, States[i]->GotoOffset);
@@ -2566,7 +2566,7 @@ static void ParseOldDecStates (VScriptParser *sc, TArray<VState *> &States, VCla
         VState *State = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
         States.Append(State);
         State->Frame = cc-'A';
-        State->Time = float(Duration)/35.0;
+        State->Time = float(Duration)/35.0f;
       }
       ++pFrame;
     }
@@ -2623,12 +2623,12 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
   int DeathEnd = 0;
   bool DiesAway = false;
   bool SolidOnDeath = false;
-  float DeathHeight = 0.0;
+  float DeathHeight = 0.0f;
   int BurnStart = 0;
   int BurnEnd = 0;
   bool BurnsAway = false;
   bool SolidOnBurn = false;
-  float BurnHeight = 0.0;
+  float BurnHeight = 0.0f;
   int IceStart = 0;
   int IceEnd = 0;
   bool GenericIceDeath = false;
@@ -2702,7 +2702,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       SetClassFieldFloat(Class, "ScaleY", sc->Float);
     } else if (sc->Check("Alpha")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Alpha", MID(0.0, sc->Float, 1.0));
+      SetClassFieldFloat(Class, "Alpha", MID(0.0f, sc->Float, 1.0f));
     } else if (sc->Check("RenderStyle")) {
       int RenderStyle = 0;
            if (sc->Check("STYLE_None")) RenderStyle = STYLE_None;
@@ -2747,7 +2747,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     // projectile properties
     else if (Type == OLDDEC_Projectile && sc->Check("Speed")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Speed", sc->Float*35.0);
+      SetClassFieldFloat(Class, "Speed", sc->Float*35.0f);
     } else if (Type == OLDDEC_Projectile && sc->Check("Damage")) {
       sc->ExpectNumber();
       SetClassFieldFloat(Class, "MissileDamage", sc->Number);
@@ -2790,7 +2790,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     }
     // compatibility flags
     else if (sc->Check("LowGravity")) {
-      SetClassFieldFloat(Class, "Gravity", 0.125);
+      SetClassFieldFloat(Class, "Gravity", 0.125f);
     } else if (sc->Check("FireDamage")) {
       SetClassFieldName(Class, "DamageType", "Fire");
     }
@@ -2868,7 +2868,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 
   // set up links of spawn states
   if (States.Num() == 1) {
-    States[SpawnStart]->Time = -1.0;
+    States[SpawnStart]->Time = -1.0f;
   } else {
     for (int i = SpawnStart; i < SpawnEnd-1; ++i) States[i]->NextState = States[i+1];
     States[SpawnEnd-1]->NextState = States[SpawnStart];
@@ -2877,8 +2877,8 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 
   // set up links of death states
   if (DeathEnd != 0) {
-    for (int i = DeathStart; i < DeathEnd-1; ++i) States[i]->NextState = States[i + 1];
-    if (!DiesAway && Type != OLDDEC_Projectile) States[DeathEnd-1]->Time = -1.0;
+    for (int i = DeathStart; i < DeathEnd-1; ++i) States[i]->NextState = States[i+1];
+    if (!DiesAway && Type != OLDDEC_Projectile) States[DeathEnd-1]->Time = -1.0f;
     if (Type == OLDDEC_Projectile) {
       if (Explosive) States[DeathStart]->Function = FuncA_ExplodeParms;
     } else {
@@ -2899,8 +2899,8 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 
   // set up links of burn death states
   if (BurnEnd != 0) {
-    for (int i = BurnStart; i < BurnEnd-1; ++i) States[i]->NextState = States[i + 1];
-    if (!BurnsAway) States[BurnEnd-1]->Time = -1.0;
+    for (int i = BurnStart; i < BurnEnd-1; ++i) States[i]->NextState = States[i+1];
+    if (!BurnsAway) States[BurnEnd-1]->Time = -1.0f;
     // First death state plays active sound, second makes it non-blocking unless it should stay solid
     States[BurnStart]->Function = FuncA_ActiveSound;
     if (!SolidOnBurn) {
@@ -2922,13 +2922,13 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 
   // set up links of ice death states
   if (IceEnd != 0) {
-    for (int i = IceStart; i < IceEnd-1; ++i) States[i]->NextState = States[i + 1];
+    for (int i = IceStart; i < IceEnd-1; ++i) States[i]->NextState = States[i+1];
 
-    States[IceEnd-2]->Time = 5.0 / 35.0;
+    States[IceEnd-2]->Time = 5.0f/35.0f;
     States[IceEnd-2]->Function = FuncA_FreezeDeath;
 
     States[IceEnd-1]->NextState = States[IceEnd-1];
-    States[IceEnd-1]->Time = 1.0 / 35.0;
+    States[IceEnd-1]->Time = 1.0f/35.0f;
     States[IceEnd-1]->Function = FuncA_FreezeDeathChunks;
 
     TArray<VName> Names;
