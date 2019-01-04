@@ -42,7 +42,7 @@
   ACS_EXTFUNC(GetAirSupply) // ignored
   ACS_EXTFUNC(SetAirSupply) // ignored
   ACS_EXTFUNC(SetSkyScrollSpeed) // ignored
-  ACS_EXTFUNC(GetArmorType)
+  ACS_EXTFUNC(GetArmorType) // implemented
   ACS_EXTFUNC(SpawnSpotForced) // implemented
   ACS_EXTFUNC(SpawnSpotFacingForced) // implemented
   ACS_EXTFUNC(CheckActorProperty) // implemented

@@ -2295,6 +2295,19 @@ int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
       }
       return ActiveObject->Level->PutNewString("");
 
+    // int GetArmorType (string armortype, int playernum)
+    case ACSF_GetArmorType:
+      if (argCount >= 2) {
+        int pidx = args[1];
+        VBasePlayer *plr = SV_GetPlayerByNum(pidx);
+        if (!plr || !plr->MO) return 0;
+        if (!(plr->PlayerFlags&VBasePlayer::PF_Spawned)) return 0;
+        if (plr->MO->Health <= 0) return 0; // it is dead
+        VName atype = GetNameLowerCase(args[0]);
+        if (atype == NAME_None || atype == "none") return 0;
+        return plr->MO->eventGetArmorPointsForType(atype);
+      }
+      return 0;
 
     // bool ACS_NamedExecute (string script, int map, int s_arg1, int s_arg2, int s_arg3)
     case ACSF_ACS_NamedExecute:

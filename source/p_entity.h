@@ -552,6 +552,8 @@ public:
     EV_RET_VOID(VName("eventLineAttackACS"));
   }
 
+  int eventGetArmorPointsForType (VName atype) { P_PASS_SELF; P_PASS_NAME(atype); EV_RET_INT(VName("GetArmorPointsForType")); }
+
   void callSectorChanged (int crush) {
     static int mtindex = -666;
     if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SectorChanged"));
