@@ -61,6 +61,7 @@ override bool Use (bool Pickup) {
     // don't use if you are picking it up and already have some
     if (Pickup && Armor.Amount > 0 && MaxAmount > 0) return false;
   }
+  Armor.ArmorClass = class!Inventory(Class);
   Armor.SavePercent = SavePercent;
   Armor.Amount = SaveAmount;
   return true;

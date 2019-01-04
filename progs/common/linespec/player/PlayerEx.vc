@@ -3769,6 +3769,7 @@ override void Cheat_VScriptCommand (ref array!string args) {
     print("take what [amount] -- take inventory item");
     print("drop what          -- drop inventory item");
     print("fire mtp [ofs]     -- fire missile");
+    print("apts type          -- get armor points for type");
     return;
   }
 
@@ -3854,6 +3855,12 @@ override void Cheat_VScriptCommand (ref array!string args) {
       it.MaxAmount = invit.MaxAmount;
       EntityEx(MO).RemoveInventory(invit);
     }
+    return;
+  }
+
+  if (args[0] == "apts") {
+    int pts = MO.GetArmorPointsForType(name(args[1]));
+    print("points for armor type '%s': %s", args[1], pts);
     return;
   }
 }

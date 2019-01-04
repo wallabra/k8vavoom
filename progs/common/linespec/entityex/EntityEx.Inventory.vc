@@ -353,6 +353,29 @@ final override int GetArmorPoints () {
 
 //===========================================================================
 //
+//  GetArmorPointsForType
+//
+//===========================================================================
+override int GetArmorPointsForType (name armtype) {
+  if (!armtype || nameicmp(armtype, 'None') == 0) return 0;
+  BasicArmor armor = BasicArmor(FindInventory(BasicArmor));
+  if (!armor) return 0;
+  //FIXME: should we really try parents here?
+  if (nameicmp(armtype, armor.GetArmorName()) == 0) return max(0, armor.Amount);
+  /*
+  if (armor.GetArmorName() == 'None') return 0;
+  class!Inventory aclass = armor.ArmorClass;
+  while (aclass) {
+    if (nameicmp(armtype, GetClassName(aclass)) == 0) return max(0, armor.Amount);
+    aclass = class!Inventory(GetClassParent(aclass));
+  }
+  */
+  return 0;
+}
+
+
+//===========================================================================
+//
 //  CheckNamedWeapon
 //
 //===========================================================================

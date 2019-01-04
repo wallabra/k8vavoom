@@ -27,6 +27,7 @@
 class BasicArmor : Armor;
 
 float SavePercent;
+class!Inventory ArmorClass; // last armor pickup name
 
 
 //==========================================================================
@@ -41,8 +42,20 @@ override Inventory CreateCopy (EntityEx Toucher) {
   Copy.MaxAmount = MaxAmount;
   Copy.SavePercent = (SavePercent ? SavePercent : 1.0/3.0);
   Copy.IconName = IconName;
+  Copy.ArmorClass = ArmorClass;
   GoAwayAndDie();
   return Copy;
+}
+
+
+//==========================================================================
+//
+//  HandlePickup
+//
+//==========================================================================
+name GetArmorName () {
+  if (Amount < 1 || !ArmorClass) return 'None';
+  return GetClassName(ArmorClass);
 }
 
 
@@ -72,6 +85,7 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
     if (Amount == 0) {
       // armor is used up
       SavePercent = 0.0;
+      ArmorClass = none;
       // try to use some inventory armor
       EntityEx(Owner).AutoUseArmor();
     }

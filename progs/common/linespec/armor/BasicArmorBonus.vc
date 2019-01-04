@@ -44,6 +44,7 @@ override bool Use (bool Pickup) {
     Armor.AttachToOwner(EntityEx(Owner));
   }
   if (Armor.Amount >= MaxSaveAmount) return false;
+  if (Armor.GetArmorName() == 'None') Armor.ArmorClass = class!Inventory(Class);
   Armor.Amount += SaveAmount;
   if (Armor.Amount > MaxSaveAmount) Armor.Amount = MaxSaveAmount;
   if (!Armor.SavePercent) Armor.SavePercent = SavePercent;
