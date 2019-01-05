@@ -1297,8 +1297,8 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
             delete this;
             return nullptr;
           }
-          if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
-          SelfExpr->RequestAddressOf();
+          //if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
+          if (SelfExpr->Type.Type != TYPE_Pointer) SelfExpr->RequestAddressOf();
           VExpression *fldAccess = new VFieldAccess(SelfExpr, field, Loc, 0);
           fldAccess->RequestAddressOf();
           VInvocation *e = new VInvocation((new VSelfClass(Loc))->Resolve(ec), fldAccess, field->Func, Loc, NumArgs, Args);
