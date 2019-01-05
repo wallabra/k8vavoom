@@ -27,7 +27,7 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-#include "newui/newui.h"
+#include "neoui/neoui.h"
 
 
 //==========================================================================

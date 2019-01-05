@@ -27,7 +27,7 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "sv_local.h"
-#include "newui/newui.h"
+#include "neoui/neoui.h"
 
 
 IMPLEMENT_CLASS(V, GameInfo)

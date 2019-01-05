@@ -99,7 +99,7 @@
 
   DECLARE_FUNCTION(TranslateKey)
 
-#include "../newui/vc_object_newui.h"
+#include "../neoui/vc_object_neoui.h"
 #endif // CLIENT
 
   DECLARE_FUNCTION(KBCheatClearAll)

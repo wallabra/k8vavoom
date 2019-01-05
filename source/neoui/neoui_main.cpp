@@ -36,12 +36,12 @@
 #include "../cl_local.h"
 #include "../drawer.h"
 #include "../../libs/imago/imago.h"
-#include "newui.h"
+#include "neoui.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct NewUIICB {
-  NewUIICB () {
+struct NeoUIICB {
+  NeoUIICB () {
     VDrawer::RegisterICB(&drawerICB);
   }
 
@@ -101,14 +101,14 @@ struct NewUIICB {
   }
 };
 
-static NewUIICB newuiicb;
+static NeoUIICB neouiicb;
 
-bool NewUIICB::inited = false;
-VClass *NewUIICB::nuiMainCls = nullptr;
-VObject *NewUIICB::nuiMainObj = nullptr;
-VMethod *NewUIICB::nuiMDispatch = nullptr;
-VMethod *NewUIICB::nuiMIsPaused = nullptr;
-VMethod *NewUIICB::nuiMRenderFrame = nullptr;
+bool NeoUIICB::inited = false;
+VClass *NeoUIICB::nuiMainCls = nullptr;
+VObject *NeoUIICB::nuiMainObj = nullptr;
+VMethod *NeoUIICB::nuiMDispatch = nullptr;
+VMethod *NeoUIICB::nuiMIsPaused = nullptr;
+VMethod *NeoUIICB::nuiMRenderFrame = nullptr;
 
 // ////////////////////////////////////////////////////////////////////////// //
 
@@ -118,9 +118,9 @@ VMethod *NewUIICB::nuiMRenderFrame = nullptr;
 //
 //==========================================================================
 bool NUI_IsPaused () {
-  if (NewUIICB::nuiMIsPaused) {
-    if ((NewUIICB::nuiMIsPaused->Flags&FUNC_Static) == 0) P_PASS_REF(NewUIICB::nuiMainObj);
-    return VObject::ExecuteFunction(NewUIICB::nuiMIsPaused).getBool();
+  if (NeoUIICB::nuiMIsPaused) {
+    if ((NeoUIICB::nuiMIsPaused->Flags&FUNC_Static) == 0) P_PASS_REF(NeoUIICB::nuiMainObj);
+    return VObject::ExecuteFunction(NeoUIICB::nuiMIsPaused).getBool();
   }
   return false;
 }
@@ -133,10 +133,10 @@ bool NUI_IsPaused () {
 //==========================================================================
 bool NUI_Responder (event_t *ev) {
   if (!ev) return false;
-  if (NewUIICB::nuiMDispatch) {
-    if ((NewUIICB::nuiMDispatch->Flags&FUNC_Static) == 0) P_PASS_REF(NewUIICB::nuiMainObj);
+  if (NeoUIICB::nuiMDispatch) {
+    if ((NeoUIICB::nuiMDispatch->Flags&FUNC_Static) == 0) P_PASS_REF(NeoUIICB::nuiMainObj);
     P_PASS_PTR(ev);
-    return VObject::ExecuteFunction(NewUIICB::nuiMDispatch).getBool();
+    return VObject::ExecuteFunction(NeoUIICB::nuiMDispatch).getBool();
   }
   return false;
 }
@@ -178,7 +178,7 @@ private:
 
 public:
   static inline void forceGLTexFilter () {
-    if (NewUIICB::inited) {
+    if (NeoUIICB::inited) {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (texFiltering ? GL_LINEAR : GL_NEAREST));
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (texFiltering ? GL_LINEAR : GL_NEAREST));
     }
@@ -189,7 +189,7 @@ private:
   static inline void setTexFiltering (bool filterit) { texFiltering = filterit; }
 
   static inline void realiseGLColor () {
-    if (NewUIICB::inited) {
+    if (NeoUIICB::inited) {
       glColor4f(
         ((colorARGB>>16)&0xff)/255.0f,
         ((colorARGB>>8)&0xff)/255.0f,
@@ -1311,7 +1311,7 @@ static bool texUpload (VOpenGLTexture *tx) {
 
 
 void unloadAllTextures () {
-  if (!NewUIICB::inited) return;
+  if (!NeoUIICB::inited) return;
   glBindTexture(GL_TEXTURE_2D, 0);
   for (VOpenGLTexture *tx = txHead; tx; tx = tx->next) {
     if (tx->tid) { glDeleteTextures(1, &tx->tid); tx->tid = 0; }
@@ -1320,7 +1320,7 @@ void unloadAllTextures () {
 
 
 void uploadAllTextures () {
-  if (!NewUIICB::inited) return;
+  if (!NeoUIICB::inited) return;
   for (VOpenGLTexture *tx = txHead; tx; tx = tx->next) texUpload(tx);
 }
 
@@ -1338,7 +1338,7 @@ VOpenGLTexture::VOpenGLTexture (VImage *aimg, const VStr &apath)
   , next(nullptr)
 {
   analyzeImage();
-  if (!NewUIICB::inited) texUpload(this);
+  if (!NeoUIICB::inited) texUpload(this);
   registerMe();
 }
 
@@ -1362,13 +1362,13 @@ VOpenGLTexture::VOpenGLTexture (int awdt, int ahgt)
     }
   }
   analyzeImage();
-  //if (!NewUIICB::inited) texUpload(this);
+  //if (!NeoUIICB::inited) texUpload(this);
   registerMe();
 }
 
 
 VOpenGLTexture::~VOpenGLTexture () {
-  if (NewUIICB::inited && tid) {
+  if (NeoUIICB::inited && tid) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, &tid);
   }
@@ -1447,13 +1447,13 @@ void VOpenGLTexture::release () {
 
 //FIXME: optimize this!
 void VOpenGLTexture::update () {
-  if (NewUIICB::inited && tid) {
+  if (NeoUIICB::inited && tid) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glDeleteTextures(1, &tid);
   }
   tid = 0;
   analyzeImage();
-  if (NewUIICB::inited) texUpload(this);
+  if (NeoUIICB::inited) texUpload(this);
 }
 
 
@@ -1849,7 +1849,7 @@ bool VGLVideo::texFiltering = false;
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VGLVideo::clearColored (int rgb) {
-  if (!NewUIICB::inited) return;
+  if (!NeoUIICB::inited) return;
 
   glClearColor(((rgb>>16)&0xff)/255.0f, ((rgb>>8)&0xff)/255.0f, (rgb&0xff)/255.0f, 0.0);
   //glClearDepth(1.0);
@@ -1875,7 +1875,7 @@ void VGLVideo::setFont (VName fontname) {
 
 void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!currFont /*|| isFullyTransparent()*/ || text.isEmpty()) return;
-  if (!NewUIICB::inited) return;
+  if (!NeoUIICB::inited) return;
 
   const VOpenGLTexture *tex = currFont->getTexture();
   if (currFont->singleTexture) {
@@ -1921,13 +1921,13 @@ void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_FUNCTION(VGLVideo, isInitialized) { RET_BOOL(NewUIICB::inited); }
+IMPLEMENT_FUNCTION(VGLVideo, isInitialized) { RET_BOOL(NeoUIICB::inited); }
 IMPLEMENT_FUNCTION(VGLVideo, screenWidth) { RET_INT(ScreenWidth); }
 IMPLEMENT_FUNCTION(VGLVideo, screenHeight) { RET_INT(ScreenHeight); }
 
-//IMPLEMENT_FUNCTION(VGLVideo, isMouseCursorVisible) { RET_BOOL(NewUIICB::inited ? SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE : true); }
-//IMPLEMENT_FUNCTION(VGLVideo, hideMouseCursor) { if (NewUIICB::inited) SDL_ShowCursor(SDL_DISABLE); }
-//IMPLEMENT_FUNCTION(VGLVideo, showMouseCursor) { if (NewUIICB::inited) SDL_ShowCursor(SDL_ENABLE); }
+//IMPLEMENT_FUNCTION(VGLVideo, isMouseCursorVisible) { RET_BOOL(NeoUIICB::inited ? SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE : true); }
+//IMPLEMENT_FUNCTION(VGLVideo, hideMouseCursor) { if (NeoUIICB::inited) SDL_ShowCursor(SDL_DISABLE); }
+//IMPLEMENT_FUNCTION(VGLVideo, showMouseCursor) { if (NeoUIICB::inited) SDL_ShowCursor(SDL_ENABLE); }
 
 IMPLEMENT_FUNCTION(VGLVideo, clearScreen) {
   P_GET_INT_OPT(rgb, 0);
@@ -1937,13 +1937,13 @@ IMPLEMENT_FUNCTION(VGLVideo, clearScreen) {
 
 /*
 IMPLEMENT_FUNCTION(VGLVideo, get_glHasNPOT) {
-  RET_BOOL(NewUIICB::inited ? hasNPOT : false);
+  RET_BOOL(NeoUIICB::inited ? hasNPOT : false);
 }
 */
 
 
 IMPLEMENT_FUNCTION(VGLVideo, get_scissorEnabled) {
-  if (NewUIICB::inited) {
+  if (NeoUIICB::inited) {
     RET_BOOL((glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0));
   } else {
     RET_BOOL(0);
@@ -1952,7 +1952,7 @@ IMPLEMENT_FUNCTION(VGLVideo, get_scissorEnabled) {
 
 IMPLEMENT_FUNCTION(VGLVideo, set_scissorEnabled) {
   P_GET_BOOL(v);
-  if (NewUIICB::inited) {
+  if (NeoUIICB::inited) {
     if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
   }
 }
@@ -1975,7 +1975,7 @@ IMPLEMENT_FUNCTION(VGLVideo, copyScissor) {
 IMPLEMENT_FUNCTION(VGLVideo, getScissor) {
   P_GET_PTR(ScissorRect, sr);
   if (sr) {
-    if (!NewUIICB::inited) { sr->x = sr->y = sr->w = sr->h = sr->enabled = 0; return; }
+    if (!NeoUIICB::inited) { sr->x = sr->y = sr->w = sr->h = sr->enabled = 0; return; }
     sr->enabled = (glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0);
     GLint scxywh[4];
     glGetIntegerv(GL_SCISSOR_BOX, scxywh);
@@ -1991,7 +1991,7 @@ IMPLEMENT_FUNCTION(VGLVideo, getScissor) {
 IMPLEMENT_FUNCTION(VGLVideo, setScissor) {
   P_GET_PTR_OPT(ScissorRect, sr, nullptr);
   if (sr) {
-    if (!NewUIICB::inited) return;
+    if (!NeoUIICB::inited) return;
     if (sr->enabled) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
     //glScissor(sr->x0, mHeight-sr->y0-1, sr->x1, mHeight-sr->y1-1);
     int w = (sr->w > 0 ? sr->w : 0);
@@ -2000,7 +2000,7 @@ IMPLEMENT_FUNCTION(VGLVideo, setScissor) {
     int y0 = ScreenHeight-(sr->y+h);
     glScissor(sr->x, y0, w, y1-y0+1);
   } else {
-    if (NewUIICB::inited) {
+    if (NeoUIICB::inited) {
       glDisable(GL_SCISSOR_TEST);
       GLint scxywh[4];
       glGetIntegerv(GL_VIEWPORT, scxywh);
@@ -2012,20 +2012,20 @@ IMPLEMENT_FUNCTION(VGLVideo, setScissor) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // static native final void glPushMatrix ();
-IMPLEMENT_FUNCTION(VGLVideo, glPushMatrix) { if (NewUIICB::inited) glPushMatrix(); }
+IMPLEMENT_FUNCTION(VGLVideo, glPushMatrix) { if (NeoUIICB::inited) glPushMatrix(); }
 
 // static native final void glPopMatrix ();
-IMPLEMENT_FUNCTION(VGLVideo, glPopMatrix) { if (NewUIICB::inited) glPopMatrix(); }
+IMPLEMENT_FUNCTION(VGLVideo, glPopMatrix) { if (NeoUIICB::inited) glPopMatrix(); }
 
 // static native final void glLoadIdentity ();
-IMPLEMENT_FUNCTION(VGLVideo, glLoadIdentity) { if (NewUIICB::inited) glLoadIdentity(); }
+IMPLEMENT_FUNCTION(VGLVideo, glLoadIdentity) { if (NeoUIICB::inited) glLoadIdentity(); }
 
 // static native final void glScale (float sx, float sy, optional float sz);
 IMPLEMENT_FUNCTION(VGLVideo, glScale) {
   P_GET_FLOAT_OPT(z, 1);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
-  if (NewUIICB::inited) glScalef(x, y, z);
+  if (NeoUIICB::inited) glScalef(x, y, z);
 }
 
 // static native final void glTranslate (float dx, float dy, optional float dz);
@@ -2033,7 +2033,7 @@ IMPLEMENT_FUNCTION(VGLVideo, glTranslate) {
   P_GET_FLOAT_OPT(z, 0);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
-  if (NewUIICB::inited) glTranslatef(x, y, z);
+  if (NeoUIICB::inited) glTranslatef(x, y, z);
 }
 
 // static native final void glRotate (float ax, float ay, optional float az);
@@ -2056,7 +2056,7 @@ IMPLEMENT_FUNCTION(VGLVideo, set_smoothLine) {
   P_GET_BOOL(v);
   if (smoothLine != v) {
     smoothLine = v;
-    if (NewUIICB::inited) {
+    if (NeoUIICB::inited) {
       if (v) glEnable(GL_LINE_SMOOTH); else glDisable(GL_LINE_SMOOTH);
     }
   }
@@ -2223,7 +2223,7 @@ IMPLEMENT_FUNCTION(VGLVideo, drawLine) {
   P_GET_INT(x1);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!NewUIICB::inited /*|| isFullyTransparent()*/) return;
+  if (!NeoUIICB::inited /*|| isFullyTransparent()*/) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
   const float z = 0;
@@ -2240,7 +2240,7 @@ IMPLEMENT_FUNCTION(VGLVideo, drawRect) {
   P_GET_INT(w);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!NewUIICB::inited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
+  if (!NeoUIICB::inited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
   const float z = 0;
@@ -2259,7 +2259,7 @@ IMPLEMENT_FUNCTION(VGLVideo, fillRect) {
   P_GET_INT(w);
   P_GET_INT(y0);
   P_GET_INT(x0);
-  if (!NewUIICB::inited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
+  if (!NeoUIICB::inited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
 
@@ -2277,7 +2277,7 @@ IMPLEMENT_FUNCTION(VGLVideo, fillRect) {
 IMPLEMENT_FUNCTION(VGLVideo, getMousePos) {
   P_GET_PTR(int, yp);
   P_GET_PTR(int, xp);
-  if (NewUIICB::inited && Drawer) {
+  if (NeoUIICB::inited && Drawer) {
     Drawer->GetMousePosition(xp, yp);
     RET_BOOL(true);
   } else {

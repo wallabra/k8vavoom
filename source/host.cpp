@@ -28,7 +28,7 @@
 #include "net/network.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-#include "newui/newui.h"
+#include "neoui/neoui.h"
 #include <time.h>
 #ifdef SERVER
 # include "render/r_local.h"

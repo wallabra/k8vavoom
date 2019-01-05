@@ -34,7 +34,7 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 #include "ui/ui.h"
-#include "newui/newui.h"
+#include "neoui/neoui.h"
 
 
 static VCvarB allow_vanilla_cheats("allow_vanilla_cheats", true, "Allow vanilla keyboard cheat codes?", CVAR_Archive);

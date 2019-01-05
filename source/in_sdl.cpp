@@ -28,7 +28,7 @@
 #include "gamedefs.h"
 #include "drawer.h"
 #include "ui/ui.h"
-#include "newui/newui.h"
+#include "neoui/neoui.h"
 
 #ifndef MAX_JOYSTICK_BUTTONS
 # define MAX_JOYSTICK_BUTTONS  (100)

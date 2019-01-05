@@ -151,8 +151,8 @@ set(UIWIDGETS_SOURCES
 #
 #---------------------------------------
 set(NEWUI_SOURCES
-  newui/newui.h
-  newui/newui_main.cpp
+  neoui/neoui.h
+  neoui/neoui_main.cpp
 )
 
 #---------------------------------------

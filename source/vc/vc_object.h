@@ -519,9 +519,13 @@ enum {
   // extended events for vcc_run
   ev_uimouse,
   ev_winfocus, // data1: focused
+  // only for vccrun
   ev_timer, // data1: timer id
   ev_closequery,
-  ev_newui = 69,
+  // socket library
+  ev_socket,
+  // for neoUI library
+  ev_neoui = 69,
   ev_user = 666,
 };
 

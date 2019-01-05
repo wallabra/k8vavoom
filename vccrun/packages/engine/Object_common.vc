@@ -161,7 +161,7 @@ enum {
   // socket library
   ev_socket, // see below
   // for neoUI library
-  ev_newui = 69,
+  ev_neoui = 69,
   ev_user = 666,
 };
 
