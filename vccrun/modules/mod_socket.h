@@ -13,60 +13,20 @@
  * GNU General Public License for more details.
  *
  **************************************************************************/
-#ifndef VCCMOD_TEXTREAD_HEADER_FILE
-#define VCCMOD_TEXTREAD_HEADER_FILE
+#ifndef VCCMOD_SOCKET_HEADER_FILE
+#define VCCMOD_SOCKET_HEADER_FILE
+// event-based socket i/o
 
 #include "../vcc_run.h"
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-class VSocketInternal;
+// callback should be thread-safe (it may be called from several different threads)
+// if `wantAck` is `true`, and event wasn't eaten or cancelled in dispatcher,
+// the next callback will be called
+extern void (*sockmodPostEventCB) (int code, int sockid, int data, bool wantAck);
 
-class VSocket : public VObject {
-  DECLARE_CLASS(VSocket, VObject, 0)
-  NO_DEFAULT_CONSTRUCTOR(VSocket)
-
-public:
-  enum {
-    ST_Closed,
-    ST_TCP,
-    ST_UDP,
-  };
-
-private:
-  VSocketInternal *sock;
-
-public:
-  virtual void Destroy () override;
-
-public:
-  DECLARE_FUNCTION(OpenTCP)
-  DECLARE_FUNCTION(OpenUDP)
-
-  DECLARE_FUNCTION(Destroy)
-
-  DECLARE_FUNCTION(close)
-
-  DECLARE_FUNCTION(getch)
-  DECLARE_FUNCTION(readBuf)
-
-  DECLARE_FUNCTION(get_isOpen)
-  DECLARE_FUNCTION(get_error)
-  DECLARE_FUNCTION(get_type)
-
-  // convenient functions
-  DECLARE_FUNCTION(readU8)
-  DECLARE_FUNCTION(readU16)
-  DECLARE_FUNCTION(readU32)
-  DECLARE_FUNCTION(readI8)
-  DECLARE_FUNCTION(readI16)
-  DECLARE_FUNCTION(readI32)
-
-  DECLARE_FUNCTION(readU16BE)
-  DECLARE_FUNCTION(readU32BE)
-  DECLARE_FUNCTION(readI16BE)
-  DECLARE_FUNCTION(readI32BE)
-};
+// this callback will be called... ah, see above
+void sockmodAckEvent (int code, int sockid, int data, bool eaten, bool cancelled);
 
 
 #endif

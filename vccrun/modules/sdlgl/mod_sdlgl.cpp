@@ -30,6 +30,8 @@
 #include "mod_sdlgl.h"
 #include "../../filesys/fsys.h"
 
+#include "../mod_socket.h"
+
 #include <sys/time.h>
 
 #include <SDL.h>
@@ -80,6 +82,21 @@ static glMultiTexCoord2fARB_t p_glMultiTexCoord2fARB = nullptr;
 typedef void (APIENTRY *glActiveTextureARB_t) (GLenum);
 static glActiveTextureARB_t p_glActiveTextureARB = nullptr;
 #endif
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// data for socket event sub-dispatcher
+static mythread_mutex sockLock;
+
+struct DsEvData {
+  int code;
+  int sid;
+  int data;
+  bool wantAck;
+};
+
+
+static TArray<DsEvData> dsevids;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -2340,6 +2357,26 @@ void VGLVideo::dispatchEvents () {
     if (!VObject::GetEvent(&ev)) break;
     onEvent(ev);
   }
+  // dispatch socket events
+  for (;;) {
+    DsEvData dev;
+    {
+      MyThreadLocker lock(&sockLock);
+      if (dsevids.length() == 0) break;
+      dev = dsevids[0];
+      dsevids.removeAt(0);
+    }
+    //fprintf(stderr, "DISPATCHING\n");
+    event_t ev;
+    memset((void *)&ev, 0, sizeof(ev));
+    ev.type = ev_socket;
+    ev.data1 = dev.code;
+    ev.data2 = dev.sid;
+    ev.data3 = dev.data;
+    onEvent(ev);
+    if (dev.wantAck) sockmodAckEvent(dev.code, dev.sid, dev.data, !!(ev.flags&EFlag_Eaten), !!(ev.flags&EFlag_Cancelled));
+    //fprintf(stderr, "DISPATCHED\n");
+  }
 }
 
 
@@ -2507,7 +2544,7 @@ void VGLVideo::runEventLoop () {
       //if (currFrameTime <= 0 && SDL_PollEvent(&ev)) goto morevents;
       //HACK: after switching on new event processor, it should be done this way (to not break old code)
       dispatchEvents();
-      if (currFrameTime <= 0 && SDL_PollEvent(&ev)) goto morevents;
+      if (currFrameTime <= 0 && !quitSignal && SDL_PollEvent(&ev)) goto morevents;
     }
 
     if (doRefresh) onDraw();
@@ -2589,6 +2626,17 @@ void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VideoAutoInit {
+public:
+  VideoAutoInit() {
+    mythread_mutex_init(&sockLock);
+    sockmodPostEventCB = &VGLVideo::postSocketEvent;
+  }
+};
+static VideoAutoInit videoAutoInit;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VGLVideo::sendPing () {
   if (!mInited) return;
 
@@ -2603,6 +2651,32 @@ void VGLVideo::sendPing () {
 
   SDL_PushEvent(&event);
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void VGLVideo::postSocketEvent (int code, int sockid, int data, bool wantAck) {
+  // put it into saved queue, and ping dispatcher
+  bool doSendPing = false;
+  {
+    MyThreadLocker lock(&sockLock);
+    doSendPing = (dsevids.length() == 0); // no need to send many pings
+    DsEvData &dev = dsevids.alloc();
+    dev.code = code;
+    dev.sid = sockid;
+    dev.data = data;
+    dev.wantAck = wantAck;
+  }
+  if (doSendPing) sendPing();
+};
+
+
+// callback should be thread-safe (it may be called from several different threads)
+// if `wantAck` is `true`, and event wasn't eaten or cancelled in dispatcher,
+// the next callback will be called
+extern void (*sockmodPostEventCB) (int code, int sockid, int data, bool wantAck);
+
+// this callback will be called... ah, see above
+void sockmodLostEvent (int code, int sockid, int data, bool eaten, bool cancelled);
 
 
 IMPLEMENT_FUNCTION(VGLVideo, canInit) { RET_BOOL(VGLVideo::canInit()); }

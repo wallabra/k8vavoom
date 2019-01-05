@@ -65,3 +65,16 @@
   DECLARE_FUNCTION(ccmdPrependQuoted)
   DECLARE_FUNCTION(ccmdAppend)
   DECLARE_FUNCTION(ccmdAppendQuoted)
+
+  DECLARE_FUNCTION(SocketConnectUDP)
+  DECLARE_FUNCTION(SocketConnectTCP)
+  DECLARE_FUNCTION(SocketDisconnect)
+
+  DECLARE_FUNCTION(SocketGetIOCTL)
+  DECLARE_FUNCTION(SocketSetIOCTL)
+
+  DECLARE_FUNCTION(SocketSendStr)
+  DECLARE_FUNCTION(SocketSendBuf)
+
+  DECLARE_FUNCTION(SocketRecvStr)
+  DECLARE_FUNCTION(SocketRecvBuf)

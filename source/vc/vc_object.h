@@ -399,6 +399,7 @@ inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetUniqueId() : 0
 #define P_GET_PTR_OPT(t, v, d)  bool specified_##v = !!PR_Pop(); t *v = (t *)PR_PopPtr(); if (!specified_##v) v = d
 #define P_GET_OUT_OPT(t, v)     bool specified_##v = !!PR_Pop(); t *v = (t *)PR_PopPtr()
 
+#define P_GET_PTR_OPT_NOSP(t, v)  PR_Pop(); t *v = (t *)PR_PopPtr()
 #define P_GET_OUT_OPT_NOSP(t, v)  PR_Pop(); t *v = (t *)PR_PopPtr()
 
 // method return macros

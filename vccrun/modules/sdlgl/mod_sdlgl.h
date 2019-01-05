@@ -297,6 +297,7 @@ public:
   static bool SetTimerInterval (int id, int intervalms);
 
   static void sendPing ();
+  static void postSocketEvent (int code, int sockid, int data, bool wantAck);
 
   static int getFrameTime ();
   static void setFrameTime (int newft);

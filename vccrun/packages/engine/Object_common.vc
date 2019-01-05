@@ -166,20 +166,24 @@ enum {
 };
 
 
+// all events except `evsock_sqempty` and `evsock_error` must be either eaten, or cancelled, or
+// socked will be destroyed
 enum {
   evsock_connected,
-  evsock_disconnected,
-  evsock_cantconnect,
+  evsock_disconnected, // autodestruct
+  evsock_cantconnect, // autodestruct
   evsock_gotdata, // received some data
   evsock_sqempty, // sent queue is empty (generated when all queued data was sent)
   evsock_gotclient, // new connection comes for listening sockets
-  evsock_error, // some error occured, socket will be closed after dispatching this message
+  evsock_error, // some error occured, socket will be destroyed after dispatching this message
+  evsock_timeout, // timeout, socket will be destroyed after dispatching this message
 }
 
 /*
   ev_socket event:
-    data1: socket id
-    data2: number of bytes for "gotdata", socketid for "gotclient"
+    data1: subevent type
+    data2: socket id
+    data3: socketid for "gotclient"
 
   if you will not "eat" "gotdata" event, socket will be closed
   if you will not send data or ping socket, nothing will happen until timeout
@@ -214,6 +218,10 @@ struct event_t {
   alias focused = data1;
   // for timer
   alias timerid = data1;
+  // for socket
+  alias sockev = data1;
+  alias sockid = data2;
+  alias sockdata = data3;
   // modifiers/buttons state
   // modifiers state changed *after* processing an even
   // i.e. if `K_?CTRL` is pressed, the flag will be set after calling `onEvent()`,

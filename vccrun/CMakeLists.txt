@@ -19,8 +19,8 @@ if (ENABLE_VCCRUN)
     set(MODSOCK_SRC )
   else(WIN32)
     set(MODSOCK_SRC
-      #modules/mod_socket.h
-      #modules/mod_socket.cpp
+      modules/mod_socket.h
+      modules/mod_socket.cpp
     )
   endif(WIN32)
 

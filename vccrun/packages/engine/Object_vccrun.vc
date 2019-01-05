@@ -205,10 +205,10 @@ native static final bool SocketSetIOCTL (int sockid, SockIOCTL opcode, optional 
 // on error, socket will be automatically closed
 // note that sockid will be destroyed after dispatching `ev_socket` event
 native static final bool SocketSendStr (int sockid, string data);
-native static final bool SocketSendBuf (int sockid, const ref array!ubyte data);
+native static final bool SocketSendBuf (int sockid, const ref array!ubyte data, optional int ofs, optional int len);
 
 // can return empty string if there is noting in recv queue (or on error)
 // you can check for errors using `IsAlive` IOCTL request
-native static final string SocketRecvStr (int sockid);
-// append data to buffer; returns number of appended bytes or -1 on error
-native static final int SocketRecvBuf (int sockid, ref array!ubyte data);
+native static final string SocketRecvStr (int sockid, optional int maxlen);
+// append data to buffer; returns number of appended bytes or 0 on error/empty queue
+native static final int SocketRecvBuf (int sockid, ref array!ubyte data, optional int maxlen);
