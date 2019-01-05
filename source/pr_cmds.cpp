@@ -1145,7 +1145,7 @@ void PR_WriteOne (const VFieldType &type) {
         if (n == NAME_None) {
           PR_DoWriteBuf("");
         } else {
-          PR_DoWriteBuf(buf);
+          PR_DoWriteBuf(*n);
         }
       }
       return;
