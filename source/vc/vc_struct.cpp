@@ -711,3 +711,31 @@ bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMap *Map, vuint8 *Da
   unguardf(("(%s)", *Name));
 }
 #endif
+
+
+//==========================================================================
+//
+//  VStruct::CreateWrapperStruct
+//
+//==========================================================================
+VStruct *VStruct::CreateWrapperStruct (VExpression *aTypeExpr, VMemberBase *AOuter, TLocation ALoc) {
+  check(aTypeExpr);
+  check(AOuter);
+  VStruct *st = new VStruct(NAME_None, AOuter, ALoc);
+  st->Defined = false;
+  st->IsVector = false;
+  st->Fields = nullptr;
+
+  VField *fi = new VField(VName("__"), st, ALoc);
+  fi->TypeExpr = aTypeExpr;
+  if (aTypeExpr->IsDelegateType()) {
+    fi->Func = ((VDelegateType *)aTypeExpr)->CreateDelegateMethod(st);
+    fi->Type = VFieldType(TYPE_Delegate);
+    fi->Type.Function = fi->Func;
+    fi->TypeExpr = nullptr;
+    delete aTypeExpr;
+  }
+  st->AddField(fi);
+
+  return st;
+}

@@ -836,6 +836,47 @@ bool VFieldType::IsReplacableWith (const VFieldType &atype) const {
 }
 
 
+//==========================================================================
+//
+//  VFieldType::NeedWrapStruct
+//
+//==========================================================================
+bool VFieldType::NeedWrapStruct () const {
+  switch (Type) {
+    case TYPE_Array:
+    case TYPE_DynamicArray:
+    case TYPE_SliceArray:
+    case TYPE_Dictionary:
+      return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VFieldType::IsWrapStruct
+//
+//==========================================================================
+bool VFieldType::IsWrapStruct () const {
+  // it should be anonymous struct with exactly one field named '__'
+  return (Type == TYPE_Struct && Struct && Struct->Name == NAME_None && !Struct->ParentStruct &&
+          Struct->Fields && !Struct->Fields->Next);
+}
+
+
+//==========================================================================
+//
+//  VFieldType::WrapStructType
+//
+//==========================================================================
+VFieldType VFieldType::WrapStructType () const {
+  if (!IsWrapStruct()) return VFieldType();
+  return Struct->Fields->Type;
+}
+
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // VScriptArray
 // ////////////////////////////////////////////////////////////////////////// //

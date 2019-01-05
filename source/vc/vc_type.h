@@ -137,11 +137,15 @@ public:
   bool IsReusingDisabled () const;
   bool IsReplacableWith (const VFieldType &atype) const;
 
-  //TODO
   // returns `true` if this type requires a wrapping struct
   // for example, it is impossible to hold `array!(array!int)` directly, so
   // compiler should create an anonymous wrapping struct for it
-  //bool NeedWrapStruct () const;
+  bool NeedWrapStruct () const;
+
+  // is this "wrapper struct" type?
+  bool IsWrapStruct () const;
+
+  VFieldType WrapStructType () const;
 };
 
 

@@ -98,5 +98,7 @@ public:
   bool NetSerialiseObject (VStream &, VNetObjectsMap *, vuint8 *);
 #endif
 
+  static VStruct *CreateWrapperStruct (VExpression *aTypeExpr, VMemberBase *AOuter, TLocation ALoc); // takes ownership
+
   friend inline VStream &operator << (VStream &Strm, VStruct *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };
