@@ -1138,8 +1138,28 @@ void PR_WriteOne (const VFieldType &type) {
     case TYPE_Int: case TYPE_Byte: snprintf(buf, sizeof(buf), "%d", PR_Pop()); break;
     case TYPE_Bool: snprintf(buf, sizeof(buf), "%s", (PR_Pop() ? "true" : "false")); break;
     case TYPE_Float: /*snprintf(buf, sizeof(buf), "%f", PR_Popf());*/ (void)VStr::float2str(buf, PR_Popf()); break;
-    case TYPE_Name: snprintf(buf, sizeof(buf), "%s", *PR_PopName()); break;
-    case TYPE_String: snprintf(buf, sizeof(buf), "%s", *PR_PopStr()); break;
+    case TYPE_Name:
+      //snprintf(buf, sizeof(buf), "%s", *PR_PopName()); break;
+      {
+        VName n = PR_PopName();
+        if (n == NAME_None) {
+          PR_DoWriteBuf("");
+        } else {
+          PR_DoWriteBuf(buf);
+        }
+      }
+      return;
+    case TYPE_String:
+      //snprintf(buf, sizeof(buf), "%s", *PR_PopStr()); break;
+      {
+        VStr s = PR_PopStr();
+        if (s.length() == 0) {
+          PR_DoWriteBuf("");
+        } else {
+          PR_DoWriteBuf(*s);
+        }
+      }
+      return;
     case TYPE_Vector:
       {
         TVec v = PR_Popv();
