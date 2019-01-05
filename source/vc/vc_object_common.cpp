@@ -1129,3 +1129,44 @@ IMPLEMENT_FUNCTION(VObject, RayLineIntersection2DDir) {
   P_GET_VEC(rayO);
   RET_VEC(RayLineIntersection2D(rayO, rayDir, vv1, vv2));
 }
+
+
+//==========================================================================
+//
+//  Events
+//
+//==========================================================================
+// native static final bool PostEvent (const ref event_t ev);
+IMPLEMENT_FUNCTION(VObject, PostEvent) {
+  P_GET_PTR(event_t, ev);
+  RET_BOOL(VObject::PostEvent(*ev));
+}
+
+// native static final bool InsertEvent (const ref event_t ev);
+IMPLEMENT_FUNCTION(VObject, InsertEvent) {
+  P_GET_PTR(event_t, ev);
+  RET_BOOL(VObject::InsertEvent(*ev));
+}
+
+// native static final int CountQueuedEvents ();
+IMPLEMENT_FUNCTION(VObject, CountQueuedEvents) {
+  RET_INT(VObject::CountQueuedEvents());
+}
+
+// native static final bool PeekEvent (int idx, out event_t ev);
+IMPLEMENT_FUNCTION(VObject, PeekEvent) {
+  P_GET_PTR(event_t, ev);
+  P_GET_INT(idx);
+  RET_BOOL(VObject::PeekEvent(idx, ev));
+}
+
+// native static final bool GetEvent (out event_t ev);
+IMPLEMENT_FUNCTION(VObject, GetEvent) {
+  P_GET_PTR(event_t, ev);
+  RET_BOOL(VObject::GetEvent(ev));
+}
+
+// native static final int GetEventQueueSize ();
+IMPLEMENT_FUNCTION(VObject, GetEventQueueSize) {
+  RET_INT(VObject::GetEventQueueSize());
+}

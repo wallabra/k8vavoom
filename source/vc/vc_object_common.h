@@ -177,3 +177,10 @@
 
   DECLARE_FUNCTION(RayLineIntersection2D)
   DECLARE_FUNCTION(RayLineIntersection2DDir)
+
+  DECLARE_FUNCTION(PostEvent)
+  DECLARE_FUNCTION(InsertEvent)
+  DECLARE_FUNCTION(CountQueuedEvents)
+  DECLARE_FUNCTION(PeekEvent)
+  DECLARE_FUNCTION(GetEvent)
+  DECLARE_FUNCTION(GetEventQueueSize)

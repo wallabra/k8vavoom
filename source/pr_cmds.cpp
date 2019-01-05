@@ -971,24 +971,10 @@ IMPLEMENT_FUNCTION(VObject, TranslateKey) {
   RET_STR(VStr((char)GInput->TranslateKey(ch)));
 }
 
-//==========================================================================
-//
-//  PostEvent
-//
-//==========================================================================
-IMPLEMENT_FUNCTION(VObject, PostEvent) {
-  P_GET_PTR(event_t, ev);
-  if (GInput && ev) {
-    RET_BOOL(GInput->PostEvent(*ev));
-  } else {
-    RET_BOOL(false);
-  }
-}
-
 
 //==========================================================================
 //
-//  Temporary menu stuff
+//  various
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, P_GetMapName) {

@@ -51,8 +51,6 @@ public:
   virtual void Shutdown () override;
 
   // input event handling
-  virtual bool PostEvent (const event_t &ev) override; // false: queue is full
-  virtual void KeyEvent (int key, int press, vuint32 modflags) override;
   virtual void ProcessEvents () override;
   virtual int ReadKey () override;
 
@@ -74,13 +72,7 @@ public:
   virtual VStr GetClipboardText () override;
 
 private:
-  enum { MAXEVENTS = 2048 };
-
   VInputDevice *Device;
-
-  event_t Events[MAXEVENTS];
-  int EventHead;
-  int EventTail;
 
   VStr KeyBindingsDown[256];
   VStr KeyBindingsUp[256];
@@ -265,11 +257,7 @@ bool VInputPublic::KBCheatProcessor (event_t *ev) {
 //  VInput::VInput
 //
 //==========================================================================
-VInput::VInput()
-  : Device(0)
-  , EventHead(0)
-  , EventTail(0)
-{
+VInput::VInput () : Device(0) {
   memset(KeyBindingsSave, 0, sizeof(KeyBindingsSave));
 }
 
@@ -313,37 +301,19 @@ void VInput::Shutdown () {
 
 //==========================================================================
 //
-//  VInput::PostEvent
-//
-//  Called by the I/O functions when input is detected
-//
-//==========================================================================
-bool VInput::PostEvent (const event_t &ev) {
-  int nextHead = (EventHead+1)&(MAXEVENTS-1);
-  if (nextHead == EventTail) return false; // queue overflow
-  Events[EventHead] = ev;
-  EventHead = nextHead;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VInput::KeyEvent
+//  VInputPublic::PostKeyEvent
 //
 //  Called by the I/O functions when a key or button is pressed or released
 //
 //==========================================================================
-void VInput::KeyEvent (int key, int press, vuint32 modflags) {
-  guard(VInput::KeyEvent);
-  if (!key) return;
-  event_t *ev = &Events[EventHead];
-  memset((void *)ev, 0, sizeof(event_t));
-  ev->type = (press ? ev_keydown : ev_keyup);
-  ev->data1 = key;
-  ev->modflags = modflags;
-  EventHead = (EventHead+1)&(MAXEVENTS-1);
-  unguard;
+bool VInputPublic::PostKeyEvent (int key, int press, vuint32 modflags) {
+  if (!key) return true; // always succeed
+  event_t ev;
+  memset((void *)&ev, 0, sizeof(event_t));
+  ev.type = (press ? ev_keydown : ev_keyup);
+  ev.data1 = key;
+  ev.modflags = modflags;
+  return VObject::PostEvent(ev);
 }
 
 
@@ -357,45 +327,47 @@ void VInput::KeyEvent (int key, int press, vuint32 modflags) {
 void VInput::ProcessEvents () {
   guard(VInput::ProcessEvents);
   Device->ReadInput();
-  for (; EventTail != EventHead; EventTail = (EventTail+1)&(MAXEVENTS-1)) {
-    event_t *ev = &Events[EventTail];
-    // shift key state
-    if (ev->data1 == K_RSHIFT) { if (ev->type == ev_keydown) ShiftDown |= 1; else ShiftDown &= ~1; }
-    if (ev->data1 == K_LSHIFT) { if (ev->type == ev_keydown) ShiftDown |= 2; else ShiftDown &= ~2; }
-    // ctrl key state
-    if (ev->data1 == K_RCTRL) { if (ev->type == ev_keydown) CtrlDown |= 1; else CtrlDown &= ~1; }
-    if (ev->data1 == K_LCTRL) { if (ev->type == ev_keydown) CtrlDown |= 2; else CtrlDown &= ~2; }
-    // alt key state
-    if (ev->data1 == K_RALT) { if (ev->type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
-    if (ev->data1 == K_LALT) { if (ev->type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
+  for (int count = VObject::CountQueuedEvents(); count > 0; --count) {
+    event_t ev;
+    if (!VObject::GetEvent(&ev)) break;
 
-    if (C_Responder(ev)) continue; // console
-    if (NUI_Responder(ev)) continue; // new UI
-    if (CT_Responder(ev)) continue; // chat
-    if (MN_Responder(ev)) continue; // menu
-    if (GRoot->Responder(ev)) continue; // root widget
+    // shift key state
+    if (ev.data1 == K_RSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 1; else ShiftDown &= ~1; }
+    if (ev.data1 == K_LSHIFT) { if (ev.type == ev_keydown) ShiftDown |= 2; else ShiftDown &= ~2; }
+    // ctrl key state
+    if (ev.data1 == K_RCTRL) { if (ev.type == ev_keydown) CtrlDown |= 1; else CtrlDown &= ~1; }
+    if (ev.data1 == K_LCTRL) { if (ev.type == ev_keydown) CtrlDown |= 2; else CtrlDown &= ~2; }
+    // alt key state
+    if (ev.data1 == K_RALT) { if (ev.type == ev_keydown) AltDown |= 1; else AltDown &= ~1; }
+    if (ev.data1 == K_LALT) { if (ev.type == ev_keydown) AltDown |= 2; else AltDown &= ~2; }
+
+    if (C_Responder(&ev)) continue; // console
+    if (NUI_Responder(&ev)) continue; // new UI
+    if (CT_Responder(&ev)) continue; // chat
+    if (MN_Responder(&ev)) continue; // menu
+    if (GRoot->Responder(&ev)) continue; // root widget
 
     //k8: this hack prevents "keyup" to be propagated when console is active
     //    this should be in console responder, but...
-    //if (C_Active() && (ev->type == ev_keydown || ev->type == ev_keyup)) continue;
+    //if (C_Active() && (ev.type == ev_keydown || ev.type == ev_keyup)) continue;
     // actually, when console is active, it eats everything
     if (C_Active()) continue;
 
     if (cl && !GClGame->intermission) {
-      if (KBCheatProcessor(ev)) continue; // cheatcode typed
-      if (SB_Responder(ev)) continue; // status window ate it
-      if (AM_Responder(ev)) continue; // automap ate it
+      if (KBCheatProcessor(&ev)) continue; // cheatcode typed
+      if (SB_Responder(&ev)) continue; // status window ate it
+      if (AM_Responder(&ev)) continue; // automap ate it
     }
 
-    if (F_Responder(ev)) continue; // finale
+    if (F_Responder(&ev)) continue; // finale
 
     // key bindings
-    if ((ev->type == ev_keydown || ev->type == ev_keyup) && (ev->data1 > 0 && ev->data1 < 256)) {
-      VStr kb = (ev->type == ev_keydown ? KeyBindingsDown[ev->data1&0xff] : KeyBindingsUp[ev->data1&0xff]);
+    if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.data1 > 0 && ev.data1 < 256)) {
+      VStr kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.data1&0xff] : KeyBindingsUp[ev.data1&0xff]);
       if (kb.IsNotEmpty()) {
         if (kb[0] == '+' || kb[0] == '-') {
           // button commands add keynum as a parm
-          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev->data1) << "\n";
+          if (kb.length() > 1) GCmdBuf << kb << " " << VStr(ev.data1) << "\n";
         } else {
           GCmdBuf << kb << "\n";
         }
@@ -403,7 +375,7 @@ void VInput::ProcessEvents () {
       }
     }
 
-    if (CL_Responder(ev)) continue;
+    if (CL_Responder(&ev)) continue;
   }
   unguard;
 }
@@ -419,9 +391,9 @@ int VInput::ReadKey () {
   int ret = 0;
   do {
     Device->ReadInput();
-    while (EventTail != EventHead && !ret) {
-      if (Events[EventTail].type == ev_keydown) ret = Events[EventTail].data1;
-      EventTail = (EventTail+1)&(MAXEVENTS-1);
+    event_t ev;
+    while (!ret && VObject::GetEvent(&ev)) {
+      if (ev.type == ev_keydown) ret = ev.data1;
     }
   } while (!ret);
   return ret;

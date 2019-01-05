@@ -1119,6 +1119,7 @@ int VObject::VKeyFromName (const VStr &kn) {
   return 0;
 }
 
+#include "vc_object_evqueue.cpp"
 
 #include "vc_object_common.cpp"
 

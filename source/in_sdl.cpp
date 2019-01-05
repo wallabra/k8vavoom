@@ -378,7 +378,7 @@ void VSdlInputDevice::ReadInput () {
       case SDL_KEYUP:
         {
           int kk = sdl2TranslateKey(ev.key.keysym.scancode);
-          if (kk > 0) GInput->KeyEvent(kk, (ev.key.state == SDL_PRESSED ? 1 : 0), vev.modflags);
+          if (kk > 0) GInput->PostKeyEvent(kk, (ev.key.state == SDL_PRESSED ? 1 : 0), vev.modflags);
         }
         // now fix flags
         switch (ev.key.keysym.sym) {
@@ -415,7 +415,7 @@ void VSdlInputDevice::ReadInput () {
         else if (ev.button.button == SDL_BUTTON_X2) vev.data1 = K_MOUSE5;
         else break;
         if (Drawer) Drawer->GetMousePosition(&vev.data2, &vev.data3);
-        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(vev);
+        if (ui_mouse || !ui_active || ui_control_waiting) VObject::PostEvent(vev);
         // now fix flags
              if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
         else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bRMB; else curmodflags &= ~bRMB; }
@@ -427,7 +427,7 @@ void VSdlInputDevice::ReadInput () {
         else if (ev.wheel.y < 0) vev.data1 = K_MWHEELDOWN;
         else break;
         if (Drawer) Drawer->GetMousePosition(&vev.data2, &vev.data3);
-        if (ui_mouse || !ui_active || ui_control_waiting) GInput->PostEvent(vev);
+        if (ui_mouse || !ui_active || ui_control_waiting) VObject::PostEvent(vev);
         break;
       case SDL_JOYAXISMOTION:
         normal_value = ev.jaxis.value*127/32767;
@@ -462,7 +462,7 @@ void VSdlInputDevice::ReadInput () {
             if (cl) cl->ClearInput();
             vev.type = ev_winfocus;
             vev.data1 = 1;
-            GInput->PostEvent(vev);
+            VObject::PostEvent(vev);
             break;
           case SDL_WINDOWEVENT_FOCUS_LOST:
             //fprintf(stderr, "***FOCUS LOST; first=%d; drawer=%p\n", (int)firsttime, Drawer);
@@ -474,7 +474,7 @@ void VSdlInputDevice::ReadInput () {
             if (cl) cl->ClearInput();
             vev.type = ev_winfocus;
             vev.data1 = 0;
-            GInput->PostEvent(vev);
+            VObject::PostEvent(vev);
             break;
           //case SDL_WINDOWEVENT_TAKE_FOCUS: Drawer->SDL_SetWindowInputFocus();
         }
@@ -538,12 +538,12 @@ void VSdlInputDevice::ReadInput () {
           vev.data1 = 0;
           vev.data2 = dx;
           vev.data3 = dy;
-          GInput->PostEvent(vev);
+          VObject::PostEvent(vev);
           vev.type = ev_uimouse;
           vev.data1 = 0;
           vev.data2 = mouse_x;
           vev.data3 = mouse_y;
-          GInput->PostEvent(vev);
+          VObject::PostEvent(vev);
         }
         firsttime = false;
         mouse_oldx = ScreenWidth/2;
@@ -642,7 +642,7 @@ void VSdlInputDevice::PostJoystick () {
     event.data1 = 0;
     event.data2 = joy_x;
     event.data3 = joy_y;
-    GInput->PostEvent(event);
+    VObject::PostEvent(event);
 
     joy_oldx = joy_x;
     joy_oldy = joy_y;
@@ -653,9 +653,9 @@ void VSdlInputDevice::PostJoystick () {
 #ifdef __SWITCH__
       //TEMPORARY: also translate some buttons to keys
       int key = SwitchJoyToKey(i);
-      if (key) GInput->KeyEvent(key, joy_newb[i], curmodflags);
+      if (key) GInput->PostKeyEvent(key, joy_newb[i], curmodflags);
 #endif
-      GInput->KeyEvent(K_JOY1+i, joy_newb[i], curmodflags);
+      GInput->PostKeyEvent(K_JOY1+i, joy_newb[i], curmodflags);
       joy_oldb[i] = joy_newb[i];
     }
   }

@@ -78,6 +78,19 @@ public: \
   void TClass::exec##Func()
 
 
+// event structure
+struct event_t {
+  vint32 type; // event type
+  vint32 data1; // keys / mouse / joystick buttons
+  vint32 data2; // mouse / joystick x move
+  vint32 data3; // mouse / joystick y move
+  vuint32 flags; // EFlag_XXX
+  VObject *obj;
+  VObject *dest;
+  vuint32 modflags;
+};
+
+
 // flags describing an object instance
 enum EObjectFlags {
   // object Destroy has already been called
@@ -228,6 +241,50 @@ public:
 #else
 # include "vc_object_vavoom.h"
 #endif
+
+public:
+  // event queue API; as it is used both in VaVoom and in vccrun, and with common `event_t` struct,
+  // there is no reason to not have it here
+
+  // returns `false` if queue is full
+  // add event to the bottom of the current queue
+  // it is unspecified if posted event will be processed in the current
+  // frame, or in the next one
+  static bool PostEvent (const event_t &ev);
+
+  // returns `false` if queue is full
+  // add event to the top of the current queue
+  // it is unspecified if posted event will be processed in the current
+  // frame, or in the next one
+  static bool InsertEvent (const event_t &ev);
+
+  // check if event queue has any unprocessed events
+  // returns number of events in queue or 0
+  // it is unspecified if unprocessed events will be processed in the current
+  // frame, or in the next one
+  static int CountQueuedEvents ();
+
+  // peek event from queue
+  // event with index 0 is the top one
+  // it is safe to call this with `nullptr`
+  static bool PeekEvent (int idx, event_t *ev);
+
+  // get top event from queue
+  // returns `false` if there are no more events
+  // it is safe to call this with `nullptr` (in this case event will be removed)
+  static bool GetEvent (event_t *ev);
+
+  // returns maximum size of event queue
+  // note that event queue may be longer that the returned value
+  static int GetEventQueueSize ();
+
+  // invalid newsize values will be ignored
+  // if event queue currently contanis more than `newsize` events, the API is noop
+  // returns success flag
+  static bool SetEventQueueSize (int newsize);
+
+  // unconditionally clears event queue
+  static void ClearEventQueue ();
 };
 
 
@@ -488,16 +545,4 @@ enum {
   bCtrlRight = 1U<<10,
   bAltRight = 1U<<11,
   bShiftRight = 1U<<12,
-};
-
-// event structure
-struct event_t {
-  vint32 type; // event type
-  vint32 data1; // keys / mouse / joystick buttons
-  vint32 data2; // mouse / joystick x move
-  vint32 data3; // mouse / joystick y move
-  vuint32 flags; // EFlag_XXX
-  VObject *obj;
-  VObject *dest;
-  vuint32 modflags;
 };

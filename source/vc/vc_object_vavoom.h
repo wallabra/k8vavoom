@@ -99,8 +99,6 @@
 
   DECLARE_FUNCTION(TranslateKey)
 
-  DECLARE_FUNCTION(PostEvent)
-
 #include "../newui/vc_object_newui.h"
 #endif // CLIENT
 

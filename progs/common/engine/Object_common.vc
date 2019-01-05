@@ -152,14 +152,40 @@ enum {
   ev_keyup,
   ev_mouse,
   ev_joystick,
-  // extended events for vcc_run
+  // extended events
   ev_uimouse,
   ev_winfocus, // data1: focused
+  // only for vccrun
   ev_timer, // data1: timer id
   ev_closequery,
+  // socket library
+  ev_socket, // see below
+  // for neoUI library
   ev_newui = 69,
   ev_user = 666,
 };
+
+
+enum {
+  evsock_connected,
+  evsock_disconnected,
+  evsock_cantconnect,
+  evsock_gotdata, // received some data
+  evsock_sqempty, // sent queue is empty (generated when all queued data was sent)
+  evsock_gotclient, // new connection comes for listening sockets
+  evsock_error, // some error occured, socket will be closed after dispatching this message
+}
+
+/*
+  ev_socket event:
+    data1: socket id
+    data2: number of bytes for "gotdata", socketid for "gotclient"
+
+  if you will not "eat" "gotdata" event, socket will be closed
+  if you will not send data or ping socket, nothing will happen until timeout
+
+  if you will not accept "gotclient" event, client socket will be closed
+ */
 
 
 // event structure
@@ -242,8 +268,39 @@ static final ModMask eventBuildModMask (const ref event_t evt) {
   return res;
 }
 
-static native final string GetInputKeyStrName (int kcode);
-static native final int GetInputKeyCode (string kname);
+native static final string GetInputKeyStrName (int kcode);
+native static final int GetInputKeyCode (string kname);
+
+
+// returns `false` if queue is full
+// add event to the bottom of the current queue
+// it is unspecified if posted event will be processed in the current
+// frame, or in the next one
+native static final bool PostEvent (const ref event_t ev);
+
+// returns `false` if queue is full
+// add event to the top of the current queue
+// it is unspecified if posted event will be processed in the current
+// frame, or in the next one
+native static final bool InsertEvent (const ref event_t ev);
+
+// check if event queue has any unprocessed events
+// returns number of events in queue or 0
+// it is unspecified if unprocessed events will be processed in the current
+// frame, or in the next one
+native static final int CountQueuedEvents ();
+
+// peek event from queue
+// event with index 0 is the top one
+native static final bool PeekEvent (int idx, out event_t ev);
+
+// get top event from queue
+// returns `false` if there are no more events
+native static final bool GetEvent (out event_t ev);
+
+// returns maximum size of event queue
+// note that event queue may be longer that the returned value
+native static final int GetEventQueueSize ();
 
 
 //==========================================================================

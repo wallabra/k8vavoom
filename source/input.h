@@ -65,8 +65,7 @@ public:
   virtual void Shutdown () = 0;
 
   // input event handling
-  virtual bool PostEvent (const event_t &ev) = 0; // false: queue is full
-  virtual void KeyEvent (int key, int press, vuint32 modflags) = 0;
+  bool PostKeyEvent (int key, int press, vuint32 modflags);
   virtual void ProcessEvents () = 0;
   virtual int ReadKey () = 0;
 
