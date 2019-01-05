@@ -1,0 +1,3 @@
+ztest_struct_dg_05.vc:17: Type mismatch, types `delegate` and `int` are not compatible
+ztest_struct_dg_05.vc:17: Expression type mismatch (int : delegate)
+FATAL: Confused by previous errors, bailing out

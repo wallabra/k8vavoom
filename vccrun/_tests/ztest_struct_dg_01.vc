@@ -1,0 +1,18 @@
+class Main : Object;
+
+struct St {
+  int n;
+  void delegate (int x) dg;
+}
+
+
+string s;
+
+void main () {
+  s = "foo";
+  St st;
+  st.n = 42;
+  st.dg = delegate void (int x) { writeln("x=", x, "; s=", s); };
+  if (!st.dg) FatalError("FUUUU");
+  st.dg(666);
+}

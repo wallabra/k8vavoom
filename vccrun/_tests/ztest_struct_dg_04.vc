@@ -1,0 +1,21 @@
+//FAIL
+class Main : Object;
+
+struct St {
+  int n;
+  void delegate () dg;
+}
+
+
+string s;
+
+void main () {
+  s = "foo";
+  St st;
+  st.n = 42;
+  st.dg = delegate void () { writeln("s=", s); };
+  if (!st.dg) FatalError("FUUUU");
+  St *stp = &st;
+  if (!stp.dg) FatalError("FUUUU");
+  stp.dg;
+}

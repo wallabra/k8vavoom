@@ -1,0 +1,18 @@
+class Main : Object;
+
+struct St {
+  int n;
+  void delegate (const ref St st) dg;
+}
+
+
+string s;
+
+void main () {
+  s = "foo";
+  St st;
+  st.n = 42;
+  st.dg = delegate void (const ref St st) { writeln("s=", s, "; st.n=", st.n); };
+  if (!st.dg) FatalError("FUUUU");
+  st.dg(st);
+}
