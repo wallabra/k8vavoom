@@ -37,6 +37,7 @@
 # include <unistd.h>
 # include <netdb.h>
 # include <sys/ioctl.h>
+# define closesocket close
 #endif
 
 #include "gamedefs.h"
@@ -326,35 +327,29 @@ int VUdpDriver::OpenSocket (int port) {
   guard(UDP_OpenSocket);
   int newsocket;
   sockaddr_in address;
-#ifdef WIN32
-  DWORD trueval = 1;
-#else
-  int trueval = 1;
-#endif
 
-  newsocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (newsocket == -1) return -1;
 
+  // switch to non-blocking mode
 #ifdef WIN32
-  if (ioctlsocket(newsocket, FIONBIO, &trueval) == -1) {
+  DWORD trueval = 1;
+  if (ioctlsocket(newsocket, FIONBIO, &trueval) == -1)
+#else
+  u_long trueval = 1;
+  if (ioctl(newsocket, FIONBIO, (char *)&trueval) == -1)
+#endif
+  {
     closesocket(newsocket);
     return -1;
   }
-#else
-  if (ioctl(newsocket, FIONBIO, (char*)&trueval) == -1) {
-    close(newsocket);
-    return -1;
-  }
-#endif
 
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = myAddr;
   address.sin_port = htons((word)port);
   if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) return newsocket;
 
-#ifdef WIN32
   closesocket(newsocket);
-#endif
 
   Sys_Error("Unable to bind to %s", AddrToString((sockaddr_t *)&address));
   return -1;
@@ -370,11 +365,7 @@ int VUdpDriver::OpenSocket (int port) {
 int VUdpDriver::CloseSocket (int socket) {
   guard(VUdpDriver::CloseSocket);
   if (socket == net_broadcastsocket) net_broadcastsocket = 0;
-#ifdef WIN32
   return closesocket(socket);
-#else
-  return close(socket);
-#endif
   unguard;
 }
 
@@ -599,8 +590,10 @@ int VUdpDriver::PartialIPAddress (const char *in, sockaddr_t *hostaddr, int Defa
 //
 //  VUdpDriver::GetAddrFromName
 //
+//  TODO: IPv6
+//
 //==========================================================================
-int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr,int DefaultPort) {
+int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr, int DefaultPort) {
   guard(VUdpDriver::GetAddrFromName);
   hostent *hostentry;
 
@@ -610,8 +603,8 @@ int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr,int DefaultP
   if (!hostentry) return -1;
 
   addr->sa_family = AF_INET;
-  ((sockaddr_in*)addr)->sin_port = htons(DefaultPort);
-  ((sockaddr_in*)addr)->sin_addr.s_addr = *(int*)hostentry->h_addr_list[0];
+  ((sockaddr_in *)addr)->sin_port = htons(DefaultPort);
+  ((sockaddr_in *)addr)->sin_addr.s_addr = *(int*)hostentry->h_addr_list[0];
 
   return 0;
   unguard;
