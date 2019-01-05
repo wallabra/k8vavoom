@@ -1043,6 +1043,8 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
   }
 
   if (op->Type.Type == TYPE_Delegate) {
+    // paren-less delegate call
+    //fprintf(stderr, ":<%s> : %s\n", *this->toString(), *shitppTypeNameObj(*op));
     ParseError(Loc, "Delegate call parameters are missing");
     delete this;
     return nullptr;

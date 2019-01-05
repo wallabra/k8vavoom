@@ -1273,7 +1273,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         delete this;
         return e->Resolve(ec);
       }
-    } else if (SelfExpr->Type.Type == TYPE_Struct || SelfExpr->Type.Type == TYPE_Vector) {
+    } else if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Struct) || SelfExpr->Type.IsNormalOrPointerType(TYPE_Vector)) {
       // each struct/vector has `zero()` method
       if (MethodName == "zero") {
         if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
@@ -1287,6 +1287,26 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         NumArgs = 0;
         delete this;
         return e->Resolve(ec);
+      }
+      // try delegate
+      if (SelfExpr->Type.IsNormalOrPointerType(TYPE_Struct)) {
+        VField *field = SelfExpr->Type.Struct->FindField(MethodName);
+        if (field && field->Type.Type == TYPE_Delegate) {
+          if (!ec.SelfClass) {
+            ParseError(Loc, "static delegates aren't supported");
+            delete this;
+            return nullptr;
+          }
+          if (!DoReResolvePtr(ec, selfCopy)) return nullptr;
+          SelfExpr->RequestAddressOf();
+          VExpression *fldAccess = new VFieldAccess(SelfExpr, field, Loc, 0);
+          fldAccess->RequestAddressOf();
+          VInvocation *e = new VInvocation((new VSelfClass(Loc))->Resolve(ec), fldAccess, field->Func, Loc, NumArgs, Args);
+          SelfExpr = nullptr;
+          NumArgs = 0;
+          delete this;
+          return e->Resolve(ec);
+        }
       }
     }
     // try UFCS
@@ -1722,6 +1742,7 @@ VInvocation::VInvocation (VExpression *ASelfExpr, VMethod *AFunc, VField *ADeleg
   , HaveSelf(AHaveSelf)
   , BaseCall(ABaseCall)
   , CallerState(nullptr)
+  , DgPtrExpr(nullptr)
 {
 }
 
@@ -1740,6 +1761,26 @@ VInvocation::VInvocation (VMethod *AFunc, int ADelegateLocal, const TLocation &A
   , HaveSelf(false)
   , BaseCall(false)
   , CallerState(nullptr)
+  , DgPtrExpr(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VInvocation::VInvocation
+//
+//==========================================================================
+VInvocation::VInvocation (VExpression *ASelfExpr, VExpression *ADgPtrExpr, VMethod *AFunc, const TLocation &ALoc, int ANumArgs, VExpression **AArgs)
+  : VInvocationBase(ANumArgs, AArgs, ALoc)
+  , SelfExpr(ASelfExpr)
+  , Func(AFunc)
+  , DelegateField(nullptr)
+  , DelegateLocal(-666)
+  , HaveSelf(true)
+  , BaseCall(false)
+  , CallerState(nullptr)
+  , DgPtrExpr(ADgPtrExpr)
 {
 }
 
@@ -1751,6 +1792,7 @@ VInvocation::VInvocation (VMethod *AFunc, int ADelegateLocal, const TLocation &A
 //==========================================================================
 VInvocation::~VInvocation() {
   if (SelfExpr) { delete SelfExpr; SelfExpr = nullptr; }
+  if (DgPtrExpr) { delete DgPtrExpr; DgPtrExpr = nullptr; }
 }
 
 
@@ -1782,6 +1824,7 @@ void VInvocation::DoSyntaxCopyTo (VExpression *e) {
   res->HaveSelf = HaveSelf;
   res->BaseCall = BaseCall;
   res->CallerState = CallerState;
+  res->DgPtrExpr = (DgPtrExpr ? DgPtrExpr->SyntaxCopy() : nullptr);
 }
 
 
@@ -1870,6 +1913,14 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     if (loc.ParamFlags&(FPARM_Out|FPARM_Ref)) {
       ParseError(Loc, "ref locals aren't supported yet (sorry)");
+      delete this;
+      return nullptr;
+    }
+  }
+
+  if (DgPtrExpr) {
+    DgPtrExpr = DgPtrExpr->Resolve(ec);
+    if (!DgPtrExpr) {
       delete this;
       return nullptr;
     }
@@ -2239,6 +2290,7 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
 //==========================================================================
 void VInvocation::Emit (VEmitContext &ec) {
   guard(VInvocation::Emit);
+
   if (SelfExpr) SelfExpr->Emit(ec);
 
   bool DirectCall = (BaseCall || (Func->Flags&FUNC_Final) != 0);
@@ -2400,6 +2452,11 @@ void VInvocation::Emit (VEmitContext &ec) {
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
     ec.EmitLocalAddress(loc.Offset, Loc);
     ec.AddStatement(OPC_DelegateCallPtr, loc.Type, SelfOffset, Loc);
+  } else if (DgPtrExpr) {
+    if (DgPtrExpr) DgPtrExpr->Emit(ec);
+    VFieldType tp = VFieldType(TYPE_Delegate);
+    tp.Function = Func;
+    ec.AddStatement(OPC_DelegateCallPtr, tp, SelfOffset, Loc);
   } else {
     ec.AddStatement(OPC_VCall, Func, SelfOffset, Loc);
   }

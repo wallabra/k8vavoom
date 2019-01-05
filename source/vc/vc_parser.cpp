@@ -1490,6 +1490,7 @@ VStatement *VParser::ParseStatement () {
         return new VLocalVarStatement(Decl);
       } else {
         Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
+        //fprintf(stderr, "*<%s>\n", *Expr->toString());
         return new VExpressionStatement(new VDropResult(Expr));
       }
   }
