@@ -2334,6 +2334,16 @@ void VGLVideo::getMousePosition (int *mx, int *my) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+void VGLVideo::dispatchEvents () {
+  for (int ecount = VObject::CountQueuedEvents(); ecount > 0; --ecount) {
+    event_t ev;
+    if (!VObject::GetEvent(&ev)) break;
+    onEvent(ev);
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 void VGLVideo::runEventLoop () {
   int mx, my;
 
@@ -2366,7 +2376,8 @@ void VGLVideo::runEventLoop () {
               evt.data1 = kk;
               evt.data2 = mx;
               evt.data3 = my;
-              onEvent(evt);
+              //onEvent(evt);
+              VObject::PostEvent(evt);
             }
             // now fix flags
             switch (ev.key.keysym.sym) {
@@ -2393,14 +2404,16 @@ void VGLVideo::runEventLoop () {
           //evt.data3 = ev.motion.y;
           evt.data2 = mx;
           evt.data3 = my;
-          onEvent(evt);
+          //onEvent(evt);
+          VObject::PostEvent(evt);
           memset((void *)&evt, 0, sizeof(evt));
           evt.modflags = curmodflags;
           evt.type = ev_uimouse;
           evt.data1 = 0;
           evt.data2 = ev.motion.xrel;
           evt.data3 = ev.motion.yrel;
-          onEvent(evt);
+          //onEvent(evt);
+          VObject::PostEvent(evt);
           break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
@@ -2416,7 +2429,8 @@ void VGLVideo::runEventLoop () {
           //evt.data3 = ev.button.y;
           evt.data2 = mx;
           evt.data3 = my;
-          onEvent(evt);
+          //onEvent(evt);
+          VObject::PostEvent(evt);
           // now fix flags
                if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
           else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bRMB; else curmodflags &= ~bRMB; }
@@ -2430,7 +2444,8 @@ void VGLVideo::runEventLoop () {
           getMousePosition(&mx, &my);
           evt.data2 = mx;
           evt.data3 = my;
-          onEvent(evt);
+          //onEvent(evt);
+          VObject::PostEvent(evt);
           break;
         case SDL_WINDOWEVENT:
           switch (ev.window.event) {
@@ -2441,7 +2456,8 @@ void VGLVideo::runEventLoop () {
               evt.data2 = 0;
               evt.data3 = 0;
               evt.modflags = 0;
-              onEvent(evt);
+              //onEvent(evt);
+              VObject::PostEvent(evt);
               break;
             case SDL_WINDOWEVENT_FOCUS_LOST:
               curmodflags = 0;
@@ -2450,7 +2466,8 @@ void VGLVideo::runEventLoop () {
               evt.data2 = 0;
               evt.data3 = 0;
               evt.modflags = 0;
-              onEvent(evt);
+              //onEvent(evt);
+              VObject::PostEvent(evt);
               break;
             case SDL_WINDOWEVENT_EXPOSED:
               onDraw();
@@ -2463,7 +2480,8 @@ void VGLVideo::runEventLoop () {
           evt.data1 = 0; // alas, there is no way to tell why we're quiting; fuck you, sdl!
           evt.data2 = 0;
           evt.data3 = 0;
-          onEvent(evt);
+          //onEvent(evt);
+          VObject::PostEvent(evt);
           break;
         case SDL_USEREVENT:
           //fprintf(stderr, "SDL: userevent, code=%d\n", ev.user.code);
@@ -2477,7 +2495,8 @@ void VGLVideo::runEventLoop () {
               evt.data1 = id;
               evt.data2 = 0;
               evt.data3 = 0;
-              onEvent(evt);
+              //onEvent(evt);
+              VObject::PostEvent(evt);
             }
           }
           break;
@@ -2485,6 +2504,9 @@ void VGLVideo::runEventLoop () {
           break;
       }
       // if we have no fixed frame time, process more events
+      //if (currFrameTime <= 0 && SDL_PollEvent(&ev)) goto morevents;
+      //HACK: after switching on new event processor, it should be done this way (to not break old code)
+      dispatchEvents();
       if (currFrameTime <= 0 && SDL_PollEvent(&ev)) goto morevents;
     }
 

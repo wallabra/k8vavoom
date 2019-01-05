@@ -269,6 +269,7 @@ public:
 
   static void clear (int rgb=0);
 
+  static void dispatchEvents ();
   static void runEventLoop ();
 
   static void setFont (VName fontname);

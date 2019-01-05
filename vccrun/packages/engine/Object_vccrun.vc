@@ -153,3 +153,62 @@ native static final void ccmdPrependQuoted (string str); // use `va()` for forma
 
 native static final void ccmdAppend (string str); // use `va()` for formatting
 native static final void ccmdAppendQuoted (string str); // use `va()` for formatting
+
+
+//==========================================================================
+//
+//              SOCKET LIBRARY
+//
+//==========================================================================
+enum SockIOCTL {
+  RecvTimeout, // in msecs
+  SendTimeout, // in msecs
+  ConnectTimeout, // in msecs
+  Type, // tcp or udp
+  RecvQLength, // number of received data in queue
+  SendQLength, // number of unsent data in queue
+  RecvQMax, // default: 1MB
+  SendQMax, // default: 1MB
+  IsValidId, // is this socket id valid?
+  IsAlive, // is this socket alive and operational? errored/closed sockets retains id for some time, but they are not "alive"
+  Port,
+  Address,
+}
+
+enum SockType {
+  UDP,
+  TCP,
+}
+
+struct SocketOptions {
+  int RecvTimeout; // in msecs (0: default -- 30 seconds)
+  int SendTimeout; // in msecs (0: default -- 30 seconds)
+  int ConnectTimeout; // in msecs (0: default -- 30 seconds)
+}
+
+
+// create socket, initiate connection
+// if some timeout is zero, default timeout will be returned in opts
+// returns 0 on error, or positive socket id
+native static final int SocketConnectUDP (string host, int port, optional ref SocketOptions opts);
+native static final int SocketConnectTCP (string host, int port, optional ref SocketOptions opts);
+
+// returns `false` if sockid is invalid or if socket is already errored/disconnected
+// note that sockid will be destroyed after dispatching `ev_socket` event
+// immediate disconnect means "don't do shutdown, use SO_LIGER 0"
+native static final bool SocketDisconnect (int sockid, optional bool immediate);
+
+// for most queries, returns -1 for invalid sockid
+native static final int SocketGetIOCTL (int sockid, SockIOCTL opcode);
+native static final bool SocketSetIOCTL (int sockid, SockIOCTL opcode, optional int arg);
+
+// on error, socket will be automatically closed
+// note that sockid will be destroyed after dispatching `ev_socket` event
+native static final bool SocketSendStr (int sockid, string data);
+native static final bool SocketSendBuf (int sockid, const ref array!ubyte data);
+
+// can return empty string if there is noting in recv queue (or on error)
+// you can check for errors using `IsAlive` IOCTL request
+native static final string SocketRecvStr (int sockid);
+// append data to buffer; returns number of appended bytes or -1 on error
+native static final int SocketRecvBuf (int sockid, ref array!ubyte data);
