@@ -64,6 +64,22 @@ void TILine::DelChar () {
 
 //==========================================================================
 //
+//  TILine::DelWord
+//
+//==========================================================================
+void TILine::DelWord () {
+  if (!len) return;
+  if ((vuint8)Data[len-1] <= ' ') {
+    while (len > 0 && (vuint8)Data[len-1] <= ' ') --len;
+  } else {
+    while (len > 0 && (vuint8)Data[len-1] > ' ') --len;
+  }
+  Data[len] = 0;
+}
+
+
+//==========================================================================
+//
 //  TILine::Key
 //
 //  Wrapper function for handling general keyed input.
@@ -77,7 +93,11 @@ bool TILine::Key (const event_t &ev) {
     ch = GInput->TranslateKey(ch);
     AddChar((char)ch);
   } else if (ch == K_BACKSPACE) {
-    DelChar();
+    if (ev.modflags&bCtrl) {
+      DelWord();
+    } else {
+      DelChar();
+    }
   } else if (ch != K_ENTER && ch != K_PADENTER) {
     return false; // did not eat key
   }

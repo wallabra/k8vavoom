@@ -45,5 +45,6 @@ public:
   void Init ();
   void AddChar (char ch);
   void DelChar ();
+  void DelWord ();
   bool Key (const event_t &ev); // whether eaten
 };
