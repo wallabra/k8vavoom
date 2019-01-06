@@ -195,9 +195,6 @@ if (ENABLE_VCCRUN)
     # file reader
     modules/mod_textread.h
     modules/mod_textread.cpp
-    # command console
-    modules/mod_console.h
-    modules/mod_console.cpp
     # socket
     ${MODSOCK_SRC}
     # sound system

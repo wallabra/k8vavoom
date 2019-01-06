@@ -851,3 +851,140 @@ __attribute__((format(printf,1,2))) void ccmdAppendQuotedf (const char *fmt, ...
   va_end(ap);
   ccmdAppendQuoted(snbuf);
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static char *cbuf = nullptr;
+static vuint32 cbufHead = 0;
+static vuint32 cbufTail = 0; // `cbuftail` points *at* last char
+//static bool cbufLastWasCR = false;
+static vuint32 cbufcursize = 0;
+static vuint32 cbufmaxsize = 256*1024;
+
+
+static inline vuint32 textsize () {
+  return
+    cbufTail == cbufHead ? cbufcursize :
+    cbufTail > cbufHead ? cbufTail-cbufHead :
+    cbufcursize-cbufHead+cbufTail;
+}
+
+/*
+static char *cbufPos (vuint32 pos) {
+  return
+    pos >= textsize() ? nullptr :
+    pos < cbufcursize-cbufHead ? cbuf+cbufHead+pos :
+    cbuf+(pos-(cbufcursize-cbufHead));
+}
+*/
+
+static char cbufAt (vuint32 pos) {
+  return
+    pos >= textsize() ? '\0' :
+    *(pos < cbufcursize-cbufHead ? cbuf+cbufHead+pos :
+      cbuf+(pos-(cbufcursize-cbufHead)));
+}
+
+static vuint32 getLastLineStart () {
+  vuint32 sz = textsize();
+  while (sz--) {
+    if (cbufAt(sz) == '\n') return sz+1;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  PutCharInternal
+//
+//==========================================================================
+static void PutCharInternal (char ch, bool doDump) {
+  if (ch == '\r') return;
+
+  if (cbufcursize != cbufmaxsize) {
+    cbuf = (char *)realloc(cbuf, cbufmaxsize);
+    if (!cbuf) Sys_Error("Out of memory for console buffer");
+    //FIXME
+    cbufHead = 0;
+    cbufTail = 1;
+    cbuf[0] = '\n';
+    cbufcursize = cbufmaxsize;
+  }
+
+  if (ch == '\t') {
+    if (doDump) putc(ch, stdout);
+    auto lslen = (textsize()-getLastLineStart())%8;
+    for (; lslen < 8; ++lslen) PutCharInternal(' ', doDump);
+    return;
+  }
+
+  if (ch != '\n' && (vuint8)ch < 32) ch = ' ';
+
+  // has room?
+  if (cbufTail == cbufHead) {
+    // oops, no room; remove top line then
+    /*
+    bool foundNL = false;
+    vuint32 cbsz = cbufcursize;
+    vuint32 cbh = cbufHead;
+    cbh = (cbh+cbsz-1)%cbsz; // one char back, unconditionally
+    for (vuint32 cnt = cbsz-1; cnt > 0; --cnt) {
+      cbh = (cbh+cbsz-1)%cbsz;
+      if (cncbuf[cbh] == '\n') {
+        cbufHead = cbh;
+        foundNL = true;
+        break;
+      }
+    }
+    if (!foundNL) {
+      //FIXME: no newline, just clear it all
+      cbufHead = 0;
+      cbufTail = 1;
+      cbuf[0] = ch;
+      return;
+    }
+    */
+    cbufHead = (cbufHead+1)%cbufcursize;
+  }
+  cbuf[cbufTail++] = ch;
+  cbufTail %= cbufcursize;
+
+  if (doDump) putc(ch, stdout);
+}
+
+
+//==========================================================================
+//
+//  conWriteStr
+//
+//==========================================================================
+void conWriteStr (const VStr &str) {
+  if (!str.isEmpty()) {
+    fprintf(stdout, "%.*s", (vuint32)str.length(), *str);
+    const char *strd = *str;
+    int slen = str.length();
+    while (slen--) PutCharInternal(*strd++, false);
+  }
+}
+
+
+//==========================================================================
+//
+//  conWriteStr
+//
+//==========================================================================
+void conWriteStr (const char *str, size_t strlen) {
+  if (strlen) fprintf(stdout, "%.*s", (vuint32)strlen, str);
+  while (strlen--) PutCharInternal(*str++, false);
+}
+
+
+//==========================================================================
+//
+//  conPutChar
+//
+//==========================================================================
+void conPutChar (char ch) {
+  PutCharInternal(ch, true);
+}

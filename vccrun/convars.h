@@ -229,4 +229,11 @@ void ccmdAppendQuoted (const VStr &str);
 void ccmdAppendQuotedf (const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+void conPutChar (char ch);
+
+void conWriteStr (const VStr &str);
+void conWriteStr (const char *str, size_t strlen);
+
+
 #endif

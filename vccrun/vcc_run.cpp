@@ -30,7 +30,6 @@
 #include "vcc_run.h"
 
 #include "modules/mod_sound/sound.h"
-#include "modules/mod_console.h"
 
 #ifdef SERIALIZER_USE_LIBHA
 # include "filesys/halib/libha.h"
@@ -155,9 +154,9 @@ static VVccLog VccLog;
 static void vmWriter (const char *buf, bool debugPrint, VName wrname) {
   if (debugPrint && !DebugMode) return;
   if (!buf) {
-    if (writeToConsole) VConsole::PutChar('\n'); else printf("\n");
-  } else if (buf) {
-    if (writeToConsole) VConsole::WriteStr(buf, (int)strlen(buf)); else printf("%s", buf);
+    if (writeToConsole) conPutChar('\n'); else printf("\n");
+  } else if (buf[0]) {
+    if (writeToConsole) conWriteStr(buf, strlen(buf)); else printf("%s", buf);
   }
 }
 
