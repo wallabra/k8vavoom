@@ -15,14 +15,11 @@ if (ENABLE_VCCRUN)
 
     set(CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE} -s")
     set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -s")
-
-    set(MODSOCK_SRC )
-  else(WIN32)
-    set(MODSOCK_SRC
-      modules/mod_socket.h
-      modules/mod_socket.cpp
-    )
   endif(WIN32)
+  set(MODSOCK_SRC
+    modules/mod_socket.h
+    modules/mod_socket.cpp
+  )
 
 
   set(VCCRUN_DEPS ${VAVOOM_MAIN_DEPS} imago)
@@ -206,6 +203,8 @@ if (ENABLE_VCCRUN)
     # sound system
     ${VCCRUN_SOUND_SOURCES}
   )
+
+  set(VCCRUN_LINKLIBS ${VCCRUN_LINKLIBS} ${NET_LIBRARIES})
 
   #message(STATUS "VCCRUN: LIBS: " ${VCCRUN_LINKLIBS})
   #message(STATUS "VCCRUN: DEFS: " ${VCCRUN_DEFINES})

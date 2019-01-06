@@ -21,6 +21,9 @@
 # include <windows.h>
 # define socklen_t  int
 # define MSG_NOSIGNAL  (0)
+# define SHITSOCKCAST(expr)  (char *)(expr)
+# define GetSockError()  WSAGetLastError()
+# define SHITSOCKWOULDBLOCK  (10035)
 #else
 # include <sys/types.h>
 # include <sys/time.h>
@@ -33,11 +36,20 @@
 # include <netdb.h>
 # include <sys/ioctl.h>
 # define closesocket close
+# define SHITSOCKCAST(expr)  (expr)
+# define GetSockError()  errno
+# define SHITSOCKWOULDBLOCK  EWOULDBLOCK
 #endif
 #define sockaddr_t sockaddr
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#ifdef WIN32
+static bool initSuccess = false;
+# define INITED  initSuccess
+#else
+# define INITED  true
+#endif
 static mythread_mutex mainLock;
 static mythread mainThread;
 
@@ -260,14 +272,24 @@ static SocketObj *findSocket (int sockid) {
 }
 
 
+static void setZeroLinger (int fd) {
+  if (fd < 0) return;
+  linger l;
+  l.l_onoff = 1;
+  l.l_linger = 0;
+#ifdef WIN32
+  setsockopt(fd ,SOL_SOCKET, SO_LINGER, (char *)&l, sizeof(l));
+#else
+  setsockopt(fd ,SOL_SOCKET, SO_LINGER, (void *)&l, sizeof(l));
+#endif
+}
+
+
 static void deallocSocket (int idx) {
   if (idx < 0 || idx >= sockused) return;
   SocketObj *so = &socklist[idx];
   if (so->fd >= 0) {
-    linger l;
-    l.l_onoff = 1;
-    l.l_linger = 0;
-    setsockopt(so->fd ,SOL_SOCKET, SO_LINGER, (void *)(&l), sizeof(l));
+    setZeroLinger(so->fd);
     closesocket(so->fd);
   }
   so->rbuf.clear();
@@ -284,12 +306,11 @@ static void deallocSocket (int idx) {
 static void closeSO (SocketObj *so, bool immed) {
   if (!so || so->fd < 0) return;
   if (immed) {
-    linger l;
-    l.l_onoff = 1;
-    l.l_linger = 10;
-    setsockopt(so->fd ,SOL_SOCKET, SO_LINGER, (void *)(&l), sizeof(l));
+    setZeroLinger(so->fd);
   } else {
+#ifndef WIN32
     shutdown(so->fd, SHUT_RDWR);
+#endif
   }
   closesocket(so->fd);
   so->fd = -1;
@@ -316,6 +337,8 @@ void sockmodAckEvent (int code, int sockid, int data, bool eaten, bool cancelled
 // ////////////////////////////////////////////////////////////////////////// //
 //TODO: IPv6
 static int SocketConnect (bool asUDP, const VStr &host, int port, SocketOptions &opts) {
+  if (!INITED) return 0;
+
   if (host.isEmpty()) return 0;
   if (port < 1 || port > 65535) return 0;
 
@@ -354,7 +377,9 @@ static int SocketConnect (bool asUDP, const VStr &host, int port, SocketOptions 
   // if connection fails immediately, we can save one sockid
   bool connected = false;
   if (connect(sfd, &addr, (socklen_t)sizeof(addr)) != 0) {
-    if (errno != EINPROGRESS) {
+    int skerr = GetSockError();
+    //fprintf(stderr, "skerr=%d\n", skerr);
+    if (skerr != EINPROGRESS && skerr != SHITSOCKWOULDBLOCK) {
       closesocket(sfd);
       return 0;
     }
@@ -717,7 +742,7 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
             // connection complete
             int err = -1;
             socklen_t sl = sizeof(err);
-            if (getsockopt(so->fd, SOL_SOCKET, SO_ERROR, &err, &sl) != 0) {
+            if (getsockopt(so->fd, SOL_SOCKET, SO_ERROR, SHITSOCKCAST(&err), &sl) != 0) {
               sockErrored(so, evsock_cantconnect);
             } else {
               if (err != 0) {
@@ -734,7 +759,7 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
           // write data, if we can
           if (FD_ISSET(so->fd, &wrs)) {
             while (!so->sbuf.isEmpty()) {
-              auto wr = send(so->fd, so->sbuf.data, so->sbuf.used, MSG_NOSIGNAL);
+              auto wr = send(so->fd, SHITSOCKCAST(so->sbuf.data), so->sbuf.used, MSG_NOSIGNAL);
               if (wr == 0) {
                 // if we sent zero bytes, it means that socket is closed (not really, but meh)
                 closeSO(so, true);
@@ -742,7 +767,8 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
                 sockQueueEvent(so, evsock_disconnected);
                 break;
               } else if (wr < 0) {
-                if (errno != EAGAIN && errno == EWOULDBLOCK) sockErrored(so, evsock_error);
+                int skerr = GetSockError();
+                if (skerr != EAGAIN && skerr == SHITSOCKWOULDBLOCK) sockErrored(so, evsock_error);
                 break;
               } else {
                 if ((size_t)wr > so->sbuf.used) abort();
@@ -785,8 +811,8 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
               }
               size_t toread = sizeof(readbuf);
               if (toread > so->rbuf.maxsize-so->rbuf.used) toread = so->rbuf.maxsize-so->rbuf.used;
-              auto rd = recv(so->fd, readbuf, toread, 0);
-              fprintf(stderr, "socket #%d: rd=%d\n", so->id, (int)rd);
+              auto rd = recv(so->fd, SHITSOCKCAST(readbuf), toread, 0);
+              //fprintf(stderr, "socket #%d: rd=%d\n", so->id, (int)rd);
               if (rd == 0) {
                 // if we received zero bytes, it means that socket is closed (not really, but meh)
                 // UDP datagrams can have empty payload, though, and cannot be closed
@@ -803,7 +829,8 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
                   so->timeLastRecv = currt;
                 }
               } else if (rd < 0) {
-                if (errno != EAGAIN && errno == EWOULDBLOCK) sockErrored(so, evsock_error);
+                int skerr = GetSockError();
+                if (skerr != EAGAIN && skerr == SHITSOCKWOULDBLOCK) sockErrored(so, evsock_error);
                 break;
               } else {
                 // received some data, put it into buffer
@@ -848,6 +875,15 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 static void sockmodInit () {
+#ifdef WIN32
+  static WSADATA winsockdata;
+  if (WSAStartup(MAKEWORD(1, 1), &winsockdata) == 0) {
+    initSuccess = true;
+  } else {
+    initSuccess = false;
+    //fprintf(stderr, "VCCRUN: shitsock init failed!\n");
+  }
+#endif
   mythread_mutex_init(&mainLock);
   if (mythread_create(&mainThread, &mainTrd, nullptr) != 0) Sys_Error("cannot create socket thread");
 }
