@@ -679,28 +679,24 @@ COMMAND(SetInfo) {
 //  Natives
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VBasePlayer, cprint)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, cprint) {
   VStr msg = PF_FormatString();
   P_GET_SELF;
   Self->eventClientPrint(*msg);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, centreprint)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, centreprint) {
   VStr msg = PF_FormatString();
   P_GET_SELF;
   Self->eventClientCentrePrint(*msg);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, GetPlayerNum)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, GetPlayerNum) {
   P_GET_SELF;
   RET_INT(SV_GetPlayerNum(Self));
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   P_GET_SELF;
 
   Self->PClass = 0;
@@ -732,23 +728,20 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer)
   }
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject) {
   P_GET_PTR(VObject, vobj);
   P_GET_SELF;
   //if (!vobj) GCon->Logf("RESET VIEW OBJECT; WTF?!");
   if (Self) Self->_stateRouteSelf = vobj;
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, SetViewObjectIfNone)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, SetViewObjectIfNone) {
   P_GET_PTR(VObject, vobj);
   P_GET_SELF;
   if (Self && !Self->_stateRouteSelf) Self->_stateRouteSelf = vobj;
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, SetViewState)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, SetViewState) {
   //fprintf(stderr, "*** SVS ***\n");
   P_GET_PTR(VState, stnum);
   P_GET_INT(position);
@@ -756,22 +749,19 @@ IMPLEMENT_FUNCTION(VBasePlayer, SetViewState)
   Self->SetViewState(position, stnum);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, AdvanceViewStates)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, AdvanceViewStates) {
   P_GET_FLOAT(deltaTime);
   P_GET_SELF;
   Self->AdvanceViewStates(deltaTime);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, DisconnectBot)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, DisconnectBot) {
   P_GET_SELF;
   check(Self->PlayerFlags & PF_IsBot);
   SV_DropClient(Self, false);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSound)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSound) {
   P_GET_BOOL(Loop);
   P_GET_FLOAT(Attenuation);
   P_GET_FLOAT(Volume);
@@ -784,16 +774,14 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSound)
     Attenuation, Loop);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientStopSound)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientStopSound) {
   P_GET_INT(Channel);
   P_GET_INT(OriginId);
   P_GET_SELF;
   Self->DoClientStopSound(OriginId, Channel);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSequence)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSequence) {
   P_GET_INT(ModeNum);
   P_GET_NAME(Name);
   P_GET_INT(OriginId);
@@ -802,86 +790,74 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSequence)
   Self->DoClientStartSequence(Origin, OriginId, Name, ModeNum);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientAddSequenceChoice)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientAddSequenceChoice) {
   P_GET_NAME(Choice);
   P_GET_INT(OriginId);
   P_GET_SELF;
   Self->DoClientAddSequenceChoice(OriginId, Choice);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientStopSequence)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientStopSequence) {
   P_GET_INT(OriginId);
   P_GET_SELF;
   Self->DoClientStopSequence(OriginId);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientPrint)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientPrint) {
   P_GET_STR(Str);
   P_GET_SELF;
   Self->DoClientPrint(Str);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientCentrePrint)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientCentrePrint) {
   P_GET_STR(Str);
   P_GET_SELF;
   Self->DoClientCentrePrint(Str);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientSetAngles)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientSetAngles) {
   P_GET_AVEC(Angles);
   P_GET_SELF;
   Self->DoClientSetAngles(Angles);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientIntermission)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientIntermission) {
   P_GET_NAME(NextMap);
   P_GET_SELF;
   Self->DoClientIntermission(NextMap);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientPause)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientPause) {
   P_GET_BOOL(Paused);
   P_GET_SELF;
   Self->DoClientPause(Paused);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientSkipIntermission)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientSkipIntermission) {
   P_GET_SELF;
   Self->DoClientSkipIntermission();
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientFinale)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientFinale) {
   P_GET_STR(Type);
   P_GET_SELF;
   Self->DoClientFinale(Type);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientChangeMusic)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientChangeMusic) {
   P_GET_NAME(Song);
   P_GET_SELF;
   Self->DoClientChangeMusic(Song);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientSetServerInfo)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientSetServerInfo) {
   P_GET_STR(Value);
   P_GET_STR(Key);
   P_GET_SELF;
   Self->DoClientSetServerInfo(Key, Value);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientHudMessage)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ClientHudMessage) {
   P_GET_FLOAT(Time2);
   P_GET_FLOAT(Time1);
   P_GET_FLOAT(HoldTime);
@@ -900,8 +876,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientHudMessage)
     x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ServerSetUserInfo)
-{
+IMPLEMENT_FUNCTION(VBasePlayer, ServerSetUserInfo) {
   P_GET_STR(Info);
   P_GET_SELF;
   Self->SetUserInfo(Info);

@@ -72,6 +72,23 @@ static bool CheatAllowed (VBasePlayer *Player) {
 
 //==========================================================================
 //
+//  Resurrect_f
+//
+//  Cheat code Resurrect
+//
+//==========================================================================
+COMMAND(Resurrect) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  if (!Player) return;
+  if (CheatAllowed(Player)) Player->eventCheat_Resurrect();
+}
+
+
+//==========================================================================
+//
 //  God_f
 //
 //  Cheat code GOD

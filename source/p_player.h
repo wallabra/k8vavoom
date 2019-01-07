@@ -294,6 +294,7 @@ public:
   bool eventCheckDoubleFiringSpeed () { P_PASS_SELF; EV_RET_BOOL(NAME_CheckDoubleFiringSpeed); }
 
   // cheats
+  void eventCheat_Resurrect () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Resurrect); }
   void eventCheat_God () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_God); }
   void eventCheat_Buddha () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Buddha); }
   void eventCheat_Summon () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Summon); }
