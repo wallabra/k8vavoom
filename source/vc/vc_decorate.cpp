@@ -3114,6 +3114,7 @@ void ProcessDecorateScripts () {
 
   GCon->Logf(NAME_Init, "Parsing DECORATE definition files");
   for (int Lump = W_IterateFile(-1, "vavoom_decorate_defs.xml"); Lump != -1; Lump = W_IterateFile(Lump, "vavoom_decorate_defs.xml")) {
+    //GCon->Logf(NAME_Init, "  %s", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
     check(Strm);
     VXmlDocument *Doc = new VXmlDocument();

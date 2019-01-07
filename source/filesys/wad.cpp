@@ -32,7 +32,7 @@
 #include "fs_local.h"
 
 
-#define GET_LUMP_FILE(num)    SearchPaths[(num)>>16]
+#define GET_LUMP_FILE(num)    SearchPaths[((num)>>16)&0xffff]
 #define FILE_INDEX(num)       ((num)>>16)
 #define LUMP_INDEX(num)       ((num)&0xffff)
 #define MAKE_HANDLE(wi, num)  (((wi)<<16)+(num))
@@ -41,7 +41,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 extern TArray<VStr> wadfiles;
 
-static int AuxiliaryIndex;
+static int AuxiliaryIndex = 0;
 
 static TMap<VStr, int> fullNameTexLumpChecked;
 
@@ -132,6 +132,17 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaNam
 
 //==========================================================================
 //
+//  W_StartAuxiliary
+//
+//==========================================================================
+int W_StartAuxiliary () {
+  if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
+  return MAKE_HANDLE(AuxiliaryIndex, 0);
+}
+
+
+//==========================================================================
+//
 //  W_OpenAuxiliary
 //
 //==========================================================================
@@ -148,7 +159,9 @@ int W_OpenAuxiliary (const VStr &FileName) {
 #else
   VStream *WadStrm = FL_OpenFileRead(FileName);
   if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
+  auto olen = wadfiles.length();
   W_AddFileFromZip(FileName, WadStrm);
+  wadfiles.setLength(olen);
 #endif
   return MAKE_HANDLE(AuxiliaryIndex, 0);
   unguard;
@@ -160,17 +173,94 @@ int W_OpenAuxiliary (const VStr &FileName) {
 //  W_AddAuxiliary
 //
 //==========================================================================
+/*
 int W_AddAuxiliary (const VStr &FileName) {
   guard(W_AddAuxiliary);
   if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
+  int residx = SearchPaths.length();
   VStream *Strm = FL_OpenFileRead(FileName);
   if (!Strm) {
     if (AuxiliaryIndex == SearchPaths.length()) AuxiliaryIndex = 0;
     return -1;
   }
+  auto olen = wadfiles.length();
   W_AddFileFromZip(FileName, Strm);
-  return MAKE_HANDLE(AuxiliaryIndex, 0);
+  wadfiles.setLength(olen);
+  return MAKE_HANDLE(residx, 0);
   unguard;
+}
+*/
+
+
+//==========================================================================
+//
+//  zipAddWads
+//
+//==========================================================================
+static void zipAddWads (VZipFile *zip) {
+  if (!zip) return;
+  TArray<VStr> list;
+  // scan for wads
+  zip->ListWadFiles(list);
+  for (int f = 0; f < list.length(); ++f) {
+    VStream *wadstrm = zip->OpenFileRead(list[f]);
+    if (!wadstrm) continue;
+    if (wadstrm->TotalSize() < 16) { delete wadstrm; continue; }
+    VStream *memstrm = new VMemoryStream(wadstrm);
+    bool err = wadstrm->IsError();
+    delete wadstrm;
+    if (err) { delete memstrm; continue; }
+    char sign[4];
+    memstrm->Serialise(sign, 4);
+    if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete memstrm; continue; }
+    memstrm->Seek(0);
+    VWadFile *wad = new VWadFile;
+    wad->Open("", false, memstrm, VStr());
+    SearchPaths.Append(wad);
+  }
+}
+
+
+//==========================================================================
+//
+//  W_AddAuxiliaryStream
+//
+//==========================================================================
+int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
+  if (!strm) return -1;
+  //if (strm.TotalSize() < 16) return -1;
+  if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
+  int residx = SearchPaths.length();
+
+  if (ftype != WAuxFileType::Wad) {
+    VZipFile *zip = new VZipFile(strm, "");
+    SearchPaths.Append(zip);
+    // scan for wads and pk3s
+    if (ftype == WAuxFileType::Zip) {
+      zipAddWads(zip);
+      // scan for pk3s
+      TArray<VStr> list;
+      zip->ListPk3Files(list);
+      for (int f = 0; f < list.length(); ++f) {
+        VStream *zipstrm = zip->OpenFileRead(list[f]);
+        if (!zipstrm) continue;
+        if (zipstrm->TotalSize() < 16) { delete zipstrm; continue; }
+        VStream *memstrm = new VMemoryStream(zipstrm);
+        bool err = zipstrm->IsError();
+        delete zipstrm;
+        if (err) { delete memstrm; continue; }
+        VZipFile *pk3 = new VZipFile(memstrm, "");
+        SearchPaths.Append(pk3);
+        zipAddWads(pk3);
+      }
+    }
+  } else {
+    VWadFile *wad = new VWadFile;
+    wad->Open("", false, strm, VStr());
+    SearchPaths.Append(wad);
+  }
+
+  return MAKE_HANDLE(residx, 0);
 }
 
 
@@ -188,7 +278,7 @@ void W_CloseAuxiliary () {
       delete SearchPaths[f];
       SearchPaths[f] = nullptr;
     }
-    SearchPaths.SetNum(AuxiliaryIndex);
+    SearchPaths.setLength(AuxiliaryIndex);
     AuxiliaryIndex = 0;
   }
   unguard;
@@ -509,8 +599,10 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
   guard(W_IterateFile);
+  //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, SearchPaths.length(), *Name);
   for (int wi = FILE_INDEX(Prev)+1; wi < SearchPaths.length(); ++wi) {
     int li = SearchPaths[wi]->CheckNumForFileName(Name);
+    //GCon->Logf(NAME_Dev, "W_IterateFile: wi=%d (%d); fn=<%s>; li=%d", wi, SearchPaths.length(), *Name, li);
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
@@ -600,7 +692,7 @@ void W_Shutdown () {
 
 //==========================================================================
 //
-//  W_FindMapInLastFile
+//  W_NextMountFileId
 //
 //==========================================================================
 int W_NextMountFileId () {
@@ -656,6 +748,22 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
   if (found < 0xffff) {
     if (doom1) return VStr(va("e%dm%d", found/10, found%10));
     return VStr(va("map%02d", found));
+  }
+  return VStr();
+}
+
+
+//==========================================================================
+//
+//  W_FindMapInAuxuliaries
+//
+//==========================================================================
+VStr W_FindMapInAuxuliaries (int *mapnum) {
+  if (!AuxiliaryIndex) return VStr();
+  for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
+    VStr mn = W_FindMapInLastFile(f, mapnum);
+    //GCon->Logf(NAME_Init, "W_FindMapInAuxuliaries:<%s>: f=%d; ax=%d; mn=%s", *SearchPaths[f]->GetPrefix(), f, AuxiliaryIndex, *mn);
+    if (!mn.isEmpty()) return mn;
   }
   return VStr();
 }

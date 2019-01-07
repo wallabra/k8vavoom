@@ -58,8 +58,17 @@ enum EWadNamespace {
 void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir=VStr());
 void W_Shutdown ();
 
+enum WAuxFileType {
+  Wad,
+  Zip,
+  Pk3,
+};
+
+// returns lump handle
+int W_StartAuxiliary (); // returns first aux index
 int W_OpenAuxiliary (const VStr &FileName); // -1: not found
-int W_AddAuxiliary (const VStr &FileName); // -1: not found
+//int W_AddAuxiliary (const VStr &FileName); // -1: not found
+int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype); // -1: error/not found; otherwise handle of the first appended file
 void W_CloseAuxiliary (); // close all aux files
 
 int W_CheckNumForName (VName Name, EWadNamespace NS = WADNS_Global);
@@ -89,3 +98,4 @@ int W_IterateFile (int Prev, const VStr &Name);
 
 int W_NextMountFileId ();
 VStr W_FindMapInLastFile (int fileid, int *mapnum);
+VStr W_FindMapInAuxuliaries (int *mapnum);

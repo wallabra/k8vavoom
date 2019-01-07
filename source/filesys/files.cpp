@@ -99,6 +99,7 @@ struct PWadFile {
 
 
 static TArray<PWadFile> pwadList;
+static bool doStartMap = false;
 
 
 static void collectPWads () {
@@ -163,6 +164,64 @@ static void collectPWads () {
     pwadList.append(pwf);
 
     storeInSave = true; // autoreset
+  }
+}
+
+
+static void tempMount (const PWadFile &pwf) {
+  if (pwf.fname.isEmpty()) return;
+
+  W_StartAuxiliary(); // just in case
+
+  if (pwf.asDirectory) {
+    VDirPakFile *dpak = new VDirPakFile(pwf.fname);
+    if (!dpak->hasFiles()) { delete dpak; return; }
+
+    SearchPaths.append(dpak);
+
+    // add all WAD files in the root
+    TArray<VStr> wads;
+    dpak->ListWadFiles(wads);
+    for (int i = 0; i < wads.length(); ++i) {
+      VStream *wadst = dpak->OpenFileRead(wads[i]);
+      if (!wadst) continue;
+      W_AddAuxiliaryStream(wadst, WAuxFileType::Wad);
+    }
+
+    // add all pk3 files in the root
+    TArray<VStr> pk3s;
+    dpak->ListPk3Files(pk3s);
+    for (int i = 0; i < pk3s.length(); ++i) {
+      VStream *pk3st = dpak->OpenFileRead(pk3s[i]);
+      W_AddAuxiliaryStream(pk3st, WAuxFileType::Pk3);
+    }
+  } else {
+    VStream *strm = FL_OpenSysFileRead(pwf.fname);
+    if (!strm) {
+      //GCon->Logf(NAME_Init, "TEMPMOUNT: OOPS0: %s", *pwf.fname);
+      return;
+    }
+    if (strm->TotalSize() < 16) {
+      delete strm;
+      //GCon->Logf(NAME_Init, "TEMPMOUNT: OOPS1: %s", *pwf.fname);
+      return;
+    }
+    char sign[4];
+    strm->Serialise(sign, 4);
+    strm->Seek(0);
+    if (memcmp(sign, "PWAD", 4) == 0 || memcmp(sign, "IWAD", 4) == 0) {
+      //GCon->Logf(NAME_Init, "TEMPMOUNT: WAD: %s", *pwf.fname);
+      W_AddAuxiliaryStream(strm, WAuxFileType::Wad);
+    } else {
+      VStr ext = pwf.fname.ExtractFileExtension().ToLower();
+      if (ext == "pk3") {
+        //GCon->Logf(NAME_Init, "TEMPMOUNT: PK3: %s", *pwf.fname);
+        W_AddAuxiliaryStream(strm, WAuxFileType::Pk3);
+      } else if (ext == "zip") {
+        //GCon->Logf(NAME_Init, "TEMPMOUNT: ZIP: %s", *pwf.fname);
+        W_AddAuxiliaryStream(strm, WAuxFileType::Zip);
+      }
+    }
   }
 }
 
@@ -249,16 +308,14 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
 #endif
 
     if (!WadStrm) continue;
-
+    if (WadStrm->TotalSize() < 16) { delete WadStrm; continue; }
+    char sign[4];
+    WadStrm->Serialise(sign, 4);
+    if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete WadStrm; continue; }
+    WadStrm->Seek(0);
     // decompress WAD and GWA files into a memory stream since reading from ZIP will be very slow
-    size_t Len = WadStrm->TotalSize();
-    vuint8 *Buf = new vuint8[Len];
-    WadStrm->Serialise(Buf, Len);
+    VStream *MemStrm = new VMemoryStream(WadStrm);
     delete WadStrm;
-    WadStrm = nullptr;
-    WadStrm = new VMemoryStream(Buf, Len);
-    delete[] Buf;
-    Buf = nullptr;
 
 #ifdef VAVOOM_USE_GWA
     if (GwaStrm) {
@@ -274,7 +331,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
 
     W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm, ZipName+":"+GwaName, GwaStrm);
 #else
-    W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm);
+    W_AddFileFromZip(ZipName+":"+Wads[i], MemStrm);
 #endif
   }
 
@@ -285,20 +342,12 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
   Zip->ListPk3Files(pk3s);
   for (int i = 0; i < pk3s.length(); ++i) {
     VStream *ZipStrm = Zip->OpenFileRead(pk3s[i]);
-
+    if (ZipStrm->TotalSize() < 16) { delete ZipStrm; continue; }
     // decompress file into a memory stream since reading from ZIP will be very slow
-    size_t Len = ZipStrm->TotalSize();
-    vuint8 *Buf = new vuint8[Len];
-    ZipStrm->Serialise(Buf, Len);
+    VStream *MemStrm = new VMemoryStream(ZipStrm);
     delete ZipStrm;
-    ZipStrm = nullptr;
-
-    ZipStrm = new VMemoryStream(Buf, Len);
-    delete[] Buf;
-    Buf = nullptr;
-
     if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
-    VZipFile *pk3 = new VZipFile(ZipStrm, ZipName+":"+pk3s[i]);
+    VZipFile *pk3 = new VZipFile(MemStrm, ZipName+":"+pk3s[i]);
     AddZipFile(ZipName+":"+pk3s[i], pk3, false);
   }
 }
@@ -328,7 +377,7 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
   VStr ext = fname.ExtractFileExtension().ToLower();
   if (!Sys_FileExists(fname)) {
     if (!allowFail) Sys_Error("cannot add file \"%s\"", *fname);
-    GCon->Logf("cannot add file \"%s\"", *fname);
+    GCon->Logf(NAME_Warning,"cannot add file \"%s\"", *fname);
     return;
   }
   if (ext == "pk3" || ext == "zip") {
@@ -540,7 +589,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
   else if (Sys_FileExists(fl_basedir+"/"+name)) UseName = fl_basedir+"/"+name;
   else return;
 
-  if (dbg_dump_gameinfo) GCon->Logf("Parsing game definition file \"%s\"...", *UseName);
+  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Parsing game definition file \"%s\"...", *UseName);
   VScriptParser *sc = new VScriptParser(UseName, FL_OpenSysFileRead(UseName));
   while (!sc->AtEnd()) {
     version_t &dst = games.Alloc();
@@ -549,14 +598,14 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
     sc->Expect("game");
     sc->ExpectString();
     dst.GameDir = sc->String;
-    if (dbg_dump_gameinfo) GCon->Logf(" game dir: \"%s\"", *dst.GameDir);
+    if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, " game dir: \"%s\"", *dst.GameDir);
     for (;;) {
       if (sc->Check("iwad")) {
         sc->ExpectString();
         if (sc->String.isEmpty()) continue;
         if (dst.MainWads.length() == 0) {
           dst.MainWads.Append(sc->String);
-          if (dbg_dump_gameinfo) GCon->Logf("  iwad: \"%s\"", *sc->String);
+          if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  iwad: \"%s\"", *sc->String);
         } else {
           sc->Error(va("duplicate iwad (%s) for game \"%s\"!", *sc->String, *dst.GameDir));
         }
@@ -569,7 +618,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
           sc->Error(va("no iwad for game \"%s\"!", *dst.GameDir));
         }
         dst.MainWads.Append(sc->String);
-        if (dbg_dump_gameinfo) GCon->Logf("  alternate iwad: \"%s\"", *sc->String);
+        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  alternate iwad: \"%s\"", *sc->String);
         continue;
       }
       if (sc->Check("addfile")) {
@@ -579,27 +628,27 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
         AuxFile &aux = dst.AddFiles.alloc();
         aux.name = sc->String;
         aux.optional = optional;
-        if (dbg_dump_gameinfo) GCon->Logf("  aux file: \"%s\"", *sc->String);
+        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  aux file: \"%s\"", *sc->String);
         continue;
       }
       if (sc->Check("base")) {
         sc->ExpectString();
         if (sc->String.isEmpty()) continue;
         dst.BaseDirs.Append(sc->String);
-        if (dbg_dump_gameinfo) GCon->Logf("  base: \"%s\"", *sc->String);
+        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  base: \"%s\"", *sc->String);
         continue;
       }
       if (sc->Check("param")) {
         sc->ExpectString();
         if (sc->String.length() < 2 || sc->String[0] != '-') sc->Error(va("invalid game (%s) param!", *dst.GameDir));
         dst.param = (*sc->String)+1;
-        if (dbg_dump_gameinfo) GCon->Logf("  param: \"%s\"", (*sc->String)+1);
+        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  param: \"%s\"", (*sc->String)+1);
         dst.ParmFound = GArgs.CheckParm(*sc->String);
         continue;
       }
       if (sc->Check("fixvoices")) {
         dst.FixVoices = true;
-        if (dbg_dump_gameinfo) GCon->Logf("  fix voices: tan");
+        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  fix voices: tan");
         continue;
       }
       if (sc->Check("warp")) {
@@ -612,7 +661,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
     sc->Expect("end");
   }
   delete sc;
-  if (dbg_dump_gameinfo) GCon->Logf("Done parsing game definition file \"%s\"...", *UseName);
+  if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "Done parsing game definition file \"%s\"...", *UseName);
 
   if (games.length() == 0) Sys_Error("No game definitions found!");
 
@@ -628,20 +677,40 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
 
   if (selectedGame >= 0) {
     game_name = *games[selectedGame].param;
-    if (dbg_dump_gameinfo) GCon->Logf("SELECTED GAME: \"%s\"", *games[selectedGame].param);
+    if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "SELECTED GAME: \"%s\"", *games[selectedGame].param);
   } else {
     if (games.length() != 1) {
-      // try to detect game
-      if (mainiwad.length() > 0) {
-        for (int gi = 0; gi < games.length(); ++gi) {
-          version_t &gmi = games[gi];
-          bool okwad = false;
-          VStr mw = mainiwad.extractFileBaseName();
-          for (int f = 0; f < gmi.MainWads.length(); ++f) {
-            VStr gw = gmi.MainWads[f].extractFileBaseName();
-            if (mw.ICmp(gw) == 0) { okwad = true; break; }
+      // try to select DooM or DooM II automatically
+      if (true) {
+        W_CloseAuxiliary();
+        for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
+        VStr mname = W_FindMapInAuxuliaries(nullptr);
+        W_CloseAuxiliary();
+        if (!mname.isEmpty()) {
+          // found map, find DooM or DooM II game definition
+          VStr gamename = (mname[0] == 'e' ? "doom" : "doom2");
+          for (int gi = 0; gi < games.length(); ++gi) {
+            version_t &G = games[gi];
+            if (G.param.Cmp(gamename) == 0) {
+              selectedGame = gi;
+              break;
+            }
           }
-          if (okwad) { selectedGame = gi; break; }
+        }
+      }
+      if (selectedGame < 0) {
+        // try to detect game
+        if (mainiwad.length() > 0) {
+          for (int gi = 0; gi < games.length(); ++gi) {
+            version_t &gmi = games[gi];
+            bool okwad = false;
+            VStr mw = mainiwad.extractFileBaseName();
+            for (int f = 0; f < gmi.MainWads.length(); ++f) {
+              VStr gw = gmi.MainWads[f].extractFileBaseName();
+              if (mw.ICmp(gw) == 0) { okwad = true; break; }
+            }
+            if (okwad) { selectedGame = gi; break; }
+          }
         }
       }
       if (selectedGame < 0) {
@@ -817,7 +886,7 @@ void FL_Init () {
   VStr mainIWad = VStr();
   int wmap1 = -1, wmap2 = -1; // warp
 
-  bool doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
+  doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
 
   //GCon->Logf(NAME_Init, "=== INITIALIZING VaVoom ===");
 

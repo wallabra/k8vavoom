@@ -246,7 +246,7 @@ VZipFile::VZipFile (VStream *fstream, const VStr &name)
 //  VZipFile::VZipFile
 //
 //==========================================================================
-VZipFile::VZipFile(const VStr &zipfile)
+VZipFile::VZipFile (const VStr &zipfile)
   : ZipFileName(zipfile)
   , Files(nullptr)
   , NumFiles(0)
@@ -516,11 +516,12 @@ void VZipFile::OpenArchive (VStream *fstream) {
       }
     }
     if (filemap.has(Files[f].Name)) {
-      GCon->Logf("duplicate file \"%s\" in archive \"%s\".", *Files[f].Name, *fstream->GetName());
-      GCon->Log("THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
+      GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *Files[f].Name, *fstream->GetName());
+      GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
     }
     // put files into hashmap
     filemap.put(Files[f].Name, f);
+    GCon->Logf(NAME_Dev, "%s: %s", *ZipFileName, *Files[f].Name);
   }
 
   unguard;
@@ -635,6 +636,7 @@ int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
 //==========================================================================
 int VZipFile::CheckNumForFileName (const VStr &Name) {
   auto fp = filemap.find(Name.toLowerCase());
+  //GCon->Logf(NAME_Dev, "ZIP:%s:%s is %d", *ZipFileName, *Name.toLowerCase(), (fp ? *fp : -1));
   return (fp ? *fp : -1);
 }
 

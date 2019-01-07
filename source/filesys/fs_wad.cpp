@@ -94,7 +94,7 @@ void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream, co
     Stream = FL_OpenSysFileRead(FileName);
     if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
   }
-  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks && !FileName.isEmpty()) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
   Stream->Serialise(&header, sizeof(header));
