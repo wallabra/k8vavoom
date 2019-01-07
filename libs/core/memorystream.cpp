@@ -32,118 +32,114 @@
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-
-VMemoryStream::VMemoryStream()
-: Pos(0)
-{
+VMemoryStream::VMemoryStream () : Pos(0) {
   bLoading = false;
 }
 
+
 //==========================================================================
 //
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-
-VMemoryStream::VMemoryStream(void *InData, int InLen)
-: Pos(0)
-{
-  guard(VMemoryStream::VMemoryStream);
+VMemoryStream::VMemoryStream (const void *InData, int InLen) : Pos(0) {
+  if (InLen < 0) InLen = 0;
   bLoading = true;
   Array.SetNum(InLen);
-  memcpy(Array.Ptr(), InData, InLen);
-  unguard;
+  if (InLen) memcpy(Array.Ptr(), InData, InLen);
 }
+
 
 //==========================================================================
 //
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-
-VMemoryStream::VMemoryStream(const TArray<vuint8>& InArray)
-: Pos(0)
-{
-  guard(VMemoryStream::VMemoryStream);
+VMemoryStream::VMemoryStream (const TArray<vuint8> &InArray) : Pos(0) {
   bLoading = true;
   Array = InArray;
-  unguard;
 }
+
+
+//==========================================================================
+//
+//  VMemoryStream::VMemoryStream
+//
+//==========================================================================
+VMemoryStream::VMemoryStream (VStream *strm) : Pos(0) {
+  if (strm) {
+    check(strm->IsLoading());
+    int tsz = strm->TotalSize();
+    check(tsz >= 0);
+    int cpos = strm->Tell();
+    check(cpos >= 0);
+    if (cpos < tsz) {
+      int len = tsz-cpos;
+      Array.setLength(len);
+      strm->Serialize(Array.ptr(), len);
+      bError = strm->IsError();
+    }
+  }
+  bLoading = true;
+}
+
 
 //==========================================================================
 //
 //  VMemoryStream::Serialise
 //
 //==========================================================================
-
-void VMemoryStream::Serialise(void *Data, int Len)
-{
+void VMemoryStream::Serialise (void *Data, int Len) {
   guard(VMemoryStream::Serialise);
-  if (bLoading)
-  {
-    if (Pos + Len > Array.Num())
-    {
+  if (bLoading) {
+    if (Pos+Len > Array.Num()) {
       bError = true;
-      if (Pos < Array.Num())
-      {
-        memcpy(Data, &Array[Pos], Array.Num() - Pos);
+      if (Pos < Array.Num()) {
+        memcpy(Data, &Array[Pos], Array.Num()-Pos);
         Pos = Array.Num();
       }
-    }
-    else if (Len)
-    {
+    } else if (Len) {
       memcpy(Data, &Array[Pos], Len);
       Pos += Len;
     }
-  }
-  else
-  {
-    if (Pos + Len > Array.Num())
-      Array.SetNumWithReserve(Pos + Len);
+  } else {
+    if (Pos+Len > Array.Num()) Array.SetNumWithReserve(Pos+Len);
     memcpy(&Array[Pos], Data, Len);
     Pos += Len;
   }
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VMemoryStream::Seek
 //
 //==========================================================================
-
-void VMemoryStream::Seek(int InPos)
-{
-  guard(VMemoryStream::Seek);
-  if (InPos < 0 || InPos > Array.Num())
-  {
+void VMemoryStream::Seek (int InPos) {
+  if (InPos < 0 || InPos > Array.Num()) {
     bError = true;
-  }
-  else
-  {
+  } else {
     Pos = InPos;
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VMemoryStream::Tell
 //
 //==========================================================================
-
-int VMemoryStream::Tell()
-{
+int VMemoryStream::Tell () {
   return Pos;
 }
+
 
 //==========================================================================
 //
 //  VMemoryStream::TotalSize
 //
 //==========================================================================
-
-int VMemoryStream::TotalSize()
-{
+int VMemoryStream::TotalSize () {
   return Array.Num();
 }

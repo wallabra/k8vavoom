@@ -35,8 +35,9 @@ public:
   // initialise empty writing stream
   VMemoryStream ();
   // initialise reading streams
-  VMemoryStream (void*, int);
+  VMemoryStream (const void *, int);
   VMemoryStream (const TArray<vuint8> &);
+  VMemoryStream (VStream *strm); // from current position to stream end
 
   virtual void Serialise (void*, int) override;
   virtual void Seek (int) override;
