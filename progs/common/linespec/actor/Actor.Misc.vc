@@ -631,6 +631,7 @@ final void A_LayToFloorWithYaw (float yaw) {
     // alas
     //Angles.yaw = yaw;
   }
+  Origin.z = tmtrace.FloorZ;
 }
 
 
@@ -673,6 +674,7 @@ final void A_LayToCeilingWithYaw (float yaw) {
     // alas
     //Angles.yaw = yaw;
   }
+  Origin.z = tmtrace.CeilingZ-Height;
 }
 
 
