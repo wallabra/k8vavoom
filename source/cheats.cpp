@@ -47,7 +47,7 @@ extern "C" {
 //  CheatAllowed
 //
 //==========================================================================
-static bool CheatAllowed (VBasePlayer *Player) {
+static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
   if (!Player) return false;
   if (sv.intermission) {
     Player->Printf("You are not in game!");
@@ -61,7 +61,7 @@ static bool CheatAllowed (VBasePlayer *Player) {
     Player->Printf("You are too good to cheat!");
     return false;
   }
-  if (Player->Health <= 0) {
+  if (!allowDead && Player->Health <= 0) {
     // dead players can't cheat
     Player->Printf("You must be alive to cheat");
     return false;
@@ -83,7 +83,7 @@ COMMAND(Resurrect) {
     return;
   }
   if (!Player) return;
-  if (CheatAllowed(Player)) Player->eventCheat_Resurrect();
+  if (CheatAllowed(Player, true)) Player->eventCheat_Resurrect();
 }
 
 

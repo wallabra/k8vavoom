@@ -356,6 +356,7 @@ Entity eventGetReadyWeapon () {
 // ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
 // TODO: generalize this (make some way to register console commands from scripts)
+void Cheat_Resurrect () {}
 void Cheat_God () {}
 void Cheat_Buddha () {}
 void Cheat_Summon () {}
