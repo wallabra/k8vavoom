@@ -603,7 +603,7 @@ void W_Shutdown () {
 //  W_FindMapInLastFile
 //
 //==========================================================================
-int W_NextMoundFileId () {
+int W_NextMountFileId () {
   return SearchPaths.length();
 }
 

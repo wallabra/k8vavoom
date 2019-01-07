@@ -27,6 +27,7 @@
 #include "gamedefs.h"
 #include "fs_local.h"
 
+
 extern VCvarB game_release_mode;
 //extern VCvarI game_override_mode;
 
@@ -75,6 +76,95 @@ TArray<VStr> wadfiles;
 static TArray<VStr> IWadDirs;
 static int IWadIndex;
 static VStr warpTpl;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct PWadFile {
+  VStr fname;
+  bool skipSounds;
+  bool skipSprites;
+  bool skipDehacked;
+  bool storeInSave;
+  bool asDirectory;
+
+  PWadFile ()
+    : fname()
+    , skipSounds(false)
+    , skipSprites(false)
+    , skipDehacked(false)
+    , storeInSave(false)
+    , asDirectory(false)
+  {}
+};
+
+
+static TArray<PWadFile> pwadList;
+
+
+static void collectPWads () {
+  int fp = GArgs.CheckParm("-file");
+  if (!fp) return;
+  bool wasAnyFile = false;
+  bool skipSounds = false;
+  bool skipSprites = false;
+  bool skipDehacked = fsys_skipDehacked;
+  bool storeInSave = true;
+  // setup flags
+  for (int f = 1; f < fp; ++f) {
+         if (VStr::Cmp(GArgs[f], "-skipsounds") == 0) skipSounds = true;
+    else if (VStr::Cmp(GArgs[f], "-allowsounds") == 0) skipSounds = false;
+    else if (VStr::Cmp(GArgs[f], "-skipsprites") == 0) skipSprites = true;
+    else if (VStr::Cmp(GArgs[f], "-allowsprites") == 0) skipSprites = false;
+    else if (VStr::Cmp(GArgs[f], "-skipdehacked") == 0) skipDehacked = true;
+    else if (VStr::Cmp(GArgs[f], "-allowdehacked") == 0) skipDehacked = false;
+  }
+  // process pwads
+  bool inFile = true;
+  while (++fp < GArgs.Count()) {
+    const char *arg = GArgs[fp];
+    if (!arg || !arg[0]) continue;
+    if (arg[0] == '-' || arg[0] == '+') {
+           if (VStr::Cmp(arg, "-skipsounds") == 0) skipSounds = true;
+      else if (VStr::Cmp(arg, "-allowsounds") == 0) skipSounds = false;
+      else if (VStr::Cmp(arg, "-skipsprites") == 0) skipSprites = true;
+      else if (VStr::Cmp(arg, "-allowsprites") == 0) skipSprites = false;
+      else if (VStr::Cmp(arg, "-skipdehacked") == 0) skipDehacked = true;
+      else if (VStr::Cmp(arg, "-allowdehacked") == 0) skipDehacked = false;
+      else if (VStr::Cmp(arg, "-cosmetic") == 0) storeInSave = false;
+      else { inFile = (VStr::Cmp(arg, "-file") == 0); if (inFile) { wasAnyFile = false; storeInSave = true; } }
+      continue;
+    }
+    if (!inFile) continue;
+
+    PWadFile pwf;
+    pwf.skipSounds = skipSounds;
+    pwf.skipSprites = skipSprites;
+    pwf.skipDehacked = skipDehacked;
+    pwf.storeInSave = storeInSave;
+    pwf.asDirectory = false;
+
+    if (Sys_DirExists(arg)) {
+      //REVERTED: never append dirs to saves, 'cause it is meant to be used by developers
+      pwf.asDirectory = true;
+      if (!wasAnyFile) {
+        wasAnyFile = true;
+      } else {
+        GCon->Logf(NAME_Init, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", arg);
+        continue;
+      }
+    } else if (Sys_FileExists(arg)) {
+      wasAnyFile = true;
+    } else {
+      GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", arg);
+      continue;
+    }
+
+    pwf.fname = arg;
+    pwadList.append(pwf);
+
+    storeInSave = true; // autoreset
+  }
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -911,6 +1001,8 @@ void FL_Init () {
 
   AddGameDir("basev/common");
 
+  collectPWads();
+
   ParseBase("basev/games.txt", mainIWad);
 #ifdef DEVELOPER
   // i need progs to be loaded from files
@@ -958,78 +1050,43 @@ void FL_Init () {
   VStr mapname;
   bool mapinfoFound = false;
 
-  int fp = GArgs.CheckParm("-file");
-  if (fp) {
-    bool wasAnyFile = false;
-    fsys_report_added_paks = reportPWads;
-    fsys_skipSounds = false;
-    fsys_skipSprites = false;
-    bool noStoreInSave = false;
-    for (int f = 1; f < fp; ++f) {
-           if (VStr::Cmp(GArgs[f], "-skipsounds") == 0) fsys_skipSounds = true;
-      else if (VStr::Cmp(GArgs[f], "-allowsounds") == 0) fsys_skipSounds = false;
-      else if (VStr::Cmp(GArgs[f], "-skipsprites") == 0) fsys_skipSprites = true;
-      else if (VStr::Cmp(GArgs[f], "-allowsprites") == 0) fsys_skipSprites = false;
-      else if (VStr::Cmp(GArgs[f], "-skipdehacked") == 0) fsys_skipDehacked = true;
-      else if (VStr::Cmp(GArgs[f], "-allowdehacked") == 0) fsys_skipDehacked = false;
+  // mount pwads
+  fsys_report_added_paks = reportPWads;
+  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
+    PWadFile &pwf = pwadList[pwidx];
+    fsys_skipSounds = pwf.skipSounds;
+    fsys_skipSprites = pwf.skipSprites;
+    int nextfid = W_NextMountFileId();
+
+    if (pwf.asDirectory) {
+      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
+      GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", *pwf.fname);
+      AddPakDir(pwf.fname);
+    } else {
+      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
+      AddAnyFile(pwf.fname, true);
     }
-    bool inFile = true;
-    while (++fp != GArgs.Count()) {
-      if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') {
-             if (VStr::Cmp(GArgs[fp], "-skipsounds") == 0) fsys_skipSounds = true;
-        else if (VStr::Cmp(GArgs[fp], "-allowsounds") == 0) fsys_skipSounds = false;
-        else if (VStr::Cmp(GArgs[fp], "-skipsprites") == 0) fsys_skipSprites = true;
-        else if (VStr::Cmp(GArgs[fp], "-allowsprites") == 0) fsys_skipSprites = false;
-        else if (VStr::Cmp(GArgs[fp], "-skipdehacked") == 0) fsys_skipDehacked = true;
-        else if (VStr::Cmp(GArgs[fp], "-allowdehacked") == 0) fsys_skipDehacked = false;
-        else if (VStr::Cmp(GArgs[fp], "-cosmetic") == 0) noStoreInSave = true;
-        else { inFile = (VStr::Cmp(GArgs[fp], "-file") == 0); if (inFile) { wasAnyFile = false; noStoreInSave = false; } }
-        continue;
-      }
-      if (!inFile) continue;
 
-      int nextfid = W_NextMoundFileId();
-      if (Sys_DirExists(GArgs[fp])) {
-        //REVERTED: never append dirs to saves, 'cause it is meant to be used by developers
-        if (!wasAnyFile) {
-          wasAnyFile = true;
-          if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
-          GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", GArgs[fp]);
-          AddPakDir(GArgs[fp]);
-        } else {
-          GCon->Logf(NAME_Init, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", GArgs[fp]);
+    //GCon->Log("**************************");
+    if (doStartMap && !mapinfoFound) {
+      //GCon->Logf("::: %d : %d", nextfid, W_NextMountFileId());
+      for (; nextfid < W_NextMountFileId(); ++nextfid) {
+        if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
+          GCon->Logf(NAME_Init, "FOUND 'mapinfo'!");
+          mapinfoFound = true;
+          break;
         }
-      } else if (Sys_FileExists(GArgs[fp])) {
-        wasAnyFile = true;
-        if (!noStoreInSave) wpkAppend(GArgs[fp], false); // non-system pak
-        AddAnyFile(GArgs[fp], true);
-      } else {
-        GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", GArgs[fp]);
-      }
-
-      //GCon->Log("**************************");
-      if (doStartMap && !mapinfoFound) {
-        //GCon->Logf("::: %d : %d", nextfid, W_NextMoundFileId());
-        for (; nextfid < W_NextMoundFileId(); ++nextfid) {
-          if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
-            GCon->Logf(NAME_Init, "FOUND 'mapinfo'!");
-            mapinfoFound = true;
-            break;
-          }
-          int midx = -1;
-          VStr mname = W_FindMapInLastFile(nextfid, &midx);
-          if (mname.length() && (mapnum < 0 || midx < mapnum)) {
-            mapnum = midx;
-            mapname = mname;
-          }
+        int midx = -1;
+        VStr mname = W_FindMapInLastFile(nextfid, &midx);
+        if (mname.length() && (mapnum < 0 || midx < mapnum)) {
+          mapnum = midx;
+          mapname = mname;
         }
       }
-
-      noStoreInSave = false; // autoreset
     }
-    fsys_skipSounds = false;
-    fsys_skipSprites = false;
   }
+  fsys_skipSounds = false;
+  fsys_skipSprites = false;
 
   fsys_report_added_paks = reportIWads;
   if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
