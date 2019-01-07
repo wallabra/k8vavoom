@@ -1006,14 +1006,14 @@ void AddMinisegs(seg_t *part,
 			ajbsp_BugError("Bad order in intersect list: %1.3f > %1.3f\n",
 					cur->along_dist, next->along_dist);
 
-		if (len > 0.2)
+		if (len > /*0.2*/DIST_EPSILON)
 		{
 			cur  = next;
 			next = cur->next;
 			continue;
 		}
 
-		if (len > DIST_EPSILON)
+		//if (len > DIST_EPSILON)
 		{
 			MinorIssue("Skipping very short seg (len=%1.3f) near (%1.1f,%1.1f)\n",
 					len, cur->vertex->x, cur->vertex->y);
