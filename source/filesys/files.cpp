@@ -150,9 +150,15 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
   TArray<VStr> Wads;
   Zip->ListWadFiles(Wads);
   for (int i = 0; i < Wads.length(); ++i) {
+#ifdef VAVOOM_USE_GWA
     VStr GwaName = Wads[i].StripExtension()+".gwa";
+#endif
     VStream *WadStrm = Zip->OpenFileRead(Wads[i]);
+#ifdef VAVOOM_USE_GWA
     VStream *GwaStrm = Zip->OpenFileRead(GwaName);
+#endif
+
+    if (!WadStrm) continue;
 
     // decompress WAD and GWA files into a memory stream since reading from ZIP will be very slow
     size_t Len = WadStrm->TotalSize();
@@ -164,6 +170,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
     delete[] Buf;
     Buf = nullptr;
 
+#ifdef VAVOOM_USE_GWA
     if (GwaStrm) {
       Len = GwaStrm->TotalSize();
       Buf = new vuint8[Len];
@@ -176,6 +183,9 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
     }
 
     W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm, ZipName+":"+GwaName, GwaStrm);
+#else
+    W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm);
+#endif
   }
 
   if (!allowpk3) return;
@@ -235,9 +245,9 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
     AddZipFile(fname);
   } else {
     if (allowFail) {
-      W_AddFile(fname, VStr(), false);
+      W_AddFile(fname, false);
     } else {
-      W_AddFile(fname, fl_savedir, fixVoices);
+      W_AddFile(fname, fixVoices, fl_savedir);
     }
   }
 }
@@ -315,7 +325,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   // now add wads, then pk3s
   for (int i = 0; i < WadFiles.length(); ++i) {
     //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
-    W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
+    W_AddFile(bdx+"/"+WadFiles[i], false);
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
@@ -345,7 +355,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     }
 
     // now add wads, then pk3s
-    for (int i = 0; i < WadFiles.length(); ++i) W_AddFile(bdx+"/"+WadFiles[i], VStr(), false);
+    for (int i = 0; i < WadFiles.length(); ++i) W_AddFile(bdx+"/"+WadFiles[i], false);
     for (int i = 0; i < ZipFiles.length(); ++i) AddZipFile(bdx+"/"+ZipFiles[i]);
   }
 

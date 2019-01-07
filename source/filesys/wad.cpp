@@ -56,7 +56,7 @@ static TMap<VStr, int> fullNameTexLumpChecked;
 //  filename for the lump name.
 //
 //==========================================================================
-void W_AddFile (const VStr &FileName, const VStr &GwaDir, bool FixVoices) {
+void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
   guard(W_AddFile);
   int wadtime;
 
@@ -70,10 +70,11 @@ void W_AddFile (const VStr &FileName, const VStr &GwaDir, bool FixVoices) {
   if (ext != "wad" && ext != "gwa") {
     Wad->OpenSingleLump(FileName);
   } else {
-    Wad->Open(FileName, GwaDir, FixVoices, nullptr);
+    Wad->Open(FileName, FixVoices, nullptr, GwaDir);
   }
   SearchPaths.Append(Wad);
 
+#ifdef VAVOOM_USE_GWA
   if (ext == "wad") {
     VStr gl_name;
 
@@ -96,6 +97,7 @@ void W_AddFile (const VStr &FileName, const VStr &GwaDir, bool FixVoices) {
       }
     }
   }
+#endif
   unguard;
 }
 
@@ -110,8 +112,9 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaNam
   // add WAD file
   wadfiles.Append(WadName);
   VWadFile *Wad = new VWadFile;
-  Wad->Open(WadName, VStr(), false, WadStrm);
+  Wad->Open(WadName, false, WadStrm, VStr());
   SearchPaths.Append(Wad);
+#ifdef VAVOOM_USE_GWA
   if (GwaStrm) {
     // add GWA file
     wadfiles.Append(GwaName);
@@ -122,6 +125,7 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaNam
     // leave empty slot for GWA file
     SearchPaths.Append(new VWadFile);
   }
+#endif
   unguard;
 }
 
@@ -135,10 +139,36 @@ int W_OpenAuxiliary (const VStr &FileName) {
   guard(W_OpenAuxiliary);
   W_CloseAuxiliary();
   AuxiliaryIndex = SearchPaths.length();
+#ifdef VAVOOM_USE_GWA
   VStr GwaName = FileName.StripExtension()+".gwa";
   VStream *WadStrm = FL_OpenFileRead(FileName);
+  if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
   VStream *GwaStrm = FL_OpenFileRead(GwaName);
   W_AddFileFromZip(FileName, WadStrm, GwaName, GwaStrm);
+#else
+  VStream *WadStrm = FL_OpenFileRead(FileName);
+  if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
+  W_AddFileFromZip(FileName, WadStrm);
+#endif
+  return MAKE_HANDLE(AuxiliaryIndex, 0);
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  W_AddAuxiliary
+//
+//==========================================================================
+int W_AddAuxiliary (const VStr &FileName) {
+  guard(W_AddAuxiliary);
+  if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
+  VStream *Strm = FL_OpenFileRead(FileName);
+  if (!Strm) {
+    if (AuxiliaryIndex == SearchPaths.length()) AuxiliaryIndex = 0;
+    return -1;
+  }
+  W_AddFileFromZip(FileName, Strm);
   return MAKE_HANDLE(AuxiliaryIndex, 0);
   unguard;
 }
@@ -152,12 +182,12 @@ int W_OpenAuxiliary (const VStr &FileName) {
 void W_CloseAuxiliary () {
   guard(W_CloseAuxiliary);
   if (AuxiliaryIndex) {
-    SearchPaths[AuxiliaryIndex]->Close();
-    SearchPaths[AuxiliaryIndex+1]->Close();
-    delete SearchPaths[AuxiliaryIndex];
-    SearchPaths[AuxiliaryIndex] = nullptr;
-    delete SearchPaths[AuxiliaryIndex+1];
-    SearchPaths[AuxiliaryIndex+1] = nullptr;
+    // close all additional files
+    for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) SearchPaths[f]->Close();
+    for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
+      delete SearchPaths[f];
+      SearchPaths[f] = nullptr;
+    }
     SearchPaths.SetNum(AuxiliaryIndex);
     AuxiliaryIndex = 0;
   }

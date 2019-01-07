@@ -114,7 +114,9 @@ private:
   VStream *Stream;
   int NumLumps;
   lumpinfo_t *LumpInfo; // location of each lump on disk
+#ifdef VAVOOM_USE_GWA
   VStr GwaDir;
+#endif
 
 private:
   void InitNamespaces ();
@@ -124,7 +126,7 @@ private:
 public:
   VWadFile ();
   virtual ~VWadFile () override;
-  void Open (const VStr &FileName, const VStr &AGwaDir, bool FixVoices, VStream *InStream);
+  void Open (const VStr &FileName, bool FixVoices, VStream *InStream, const VStr &AGwaDir);
   void OpenSingleLump (const VStr &FileName);
   virtual void Close () override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace NS) override;
@@ -261,10 +263,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaName, VStream *GwaStrm);
-
-bool GLBSP_BuildNodes (const char *name, const char *gwafile);
-void GLVis_BuildPVS (const char *srcfile, const char *gwafile);
+void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaName=VStr(), VStream *GwaStrm=nullptr);
 
 bool VFS_ShouldIgnoreExt (const VStr &fname);
 

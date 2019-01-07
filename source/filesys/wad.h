@@ -28,6 +28,12 @@
 //**  WAD I/O functions.
 //**
 //**************************************************************************
+// k8: use .gwa supplemental wads?
+// those are remnants of the early times, and not really used these days
+// you still can put PVS there, but PVS seems to be totally unused
+// these days too; so i opted to exclude GWA support
+//#define VAVOOM_USE_GWA
+
 
 // boom namespaces
 enum EWadNamespace {
@@ -49,11 +55,12 @@ enum EWadNamespace {
 };
 
 
-void W_AddFile (const VStr &FileName, const VStr &GwaDir, bool FixVoices);
+void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir=VStr());
 void W_Shutdown ();
 
-int W_OpenAuxiliary (const VStr &FileName);
-void W_CloseAuxiliary ();
+int W_OpenAuxiliary (const VStr &FileName); // -1: not found
+int W_AddAuxiliary (const VStr &FileName); // -1: not found
+void W_CloseAuxiliary (); // close all aux files
 
 int W_CheckNumForName (VName Name, EWadNamespace NS = WADNS_Global);
 int W_GetNumForName (VName Name, EWadNamespace NS = WADNS_Global);

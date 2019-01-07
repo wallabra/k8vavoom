@@ -706,8 +706,10 @@ load_again:
     if (FL_FileExists(aux_file_name)) {
       // Apped map wad to list of wads (it will be deleted later).
       lumpnum = W_OpenAuxiliary(aux_file_name);
-      MapLumpName = W_LumpName(lumpnum);
-      AuxiliaryMap = true;
+      if (lumpnum >= 0) {
+        MapLumpName = W_LumpName(lumpnum);
+        AuxiliaryMap = true;
+      }
     }
   }
   if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
@@ -1111,11 +1113,9 @@ load_again:
   }
   LineVVListTime += Sys_Time();
 
-  //
-  // End of map lump processing
-  //
+  // end of map lump processing
   if (AuxiliaryMap) {
-    // Close the auxiliary file.
+    // close the auxiliary file(s)
     W_CloseAuxiliary();
   }
 
