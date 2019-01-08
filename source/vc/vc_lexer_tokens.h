@@ -102,6 +102,7 @@
   VC_LEXER_DEFTOKEN(Vector,            "vector")
   VC_LEXER_DEFTOKEN(Void,              "void")
   VC_LEXER_DEFTOKEN(While,             "while")
+  VC_LEXER_DEFTOKEN(With,              "with")
 
   VC_LEXER_DEFTOKEN(MobjInfo, "__mobjinfo__")
   VC_LEXER_DEFTOKEN(ScriptId, "__scriptid__")

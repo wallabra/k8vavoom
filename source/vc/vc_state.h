@@ -100,7 +100,6 @@ public:
   VStr LightName;
 
   VState (VName AName, VMemberBase *AOuter, TLocation ALoc);
-  //VState (VName AName); // this won't register state in object list
   virtual ~VState () override;
 
   virtual void Serialise (VStream &) override;

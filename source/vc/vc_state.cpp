@@ -67,46 +67,6 @@ VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
 
 //==========================================================================
 //
-//  VState::VState
-//
-//==========================================================================
-/*
-VState::VState (VName AName)
-  //: VMemberBase(MEMBER_State, AName, AOuter, ALoc) // don't register
-  : Type(VaVoom)
-  , TicType(TicKind::TCK_Normal)
-  , SpriteName(NAME_None)
-  , Frame(0)
-  , Time(0)
-  , Misc1(0)
-  , Misc2(0)
-  , Arg1(0)
-  , Arg2(0)
-  , NextState(nullptr)
-  , Function(nullptr)
-  , Next(nullptr)
-  , GotoLabel(NAME_None)
-  , GotoOffset(0)
-  , FunctionName(NAME_None)
-  , frameWidth(-1)
-  , frameHeight(-1)
-  , frameOfsX(0)
-  , frameOfsY(0)
-  , frameAction(0)
-  , SpriteIndex(0)
-  , InClassIndex(-1)
-  , NetId(-1)
-  , NetNext(nullptr)
-  , LightInited(false)
-  , LightDef(nullptr)
-  , LightName(VStr())
-{
-}
-*/
-
-
-//==========================================================================
-//
 //  VState::~VState
 //
 //==========================================================================
