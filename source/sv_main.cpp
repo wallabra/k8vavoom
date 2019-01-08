@@ -533,8 +533,8 @@ static VName CheckRedirects (VName Map) {
 static void G_DoCompleted () {
   completed = false;
   if (sv.intermission) return;
-  if ((GGameInfo->NetMode < NM_DedicatedServer) && (!GGameInfo->Players[0] ||
-      !(GGameInfo->Players[0]->PlayerFlags & VBasePlayer::PF_Spawned)))
+  if (GGameInfo->NetMode < NM_DedicatedServer &&
+      (!GGameInfo->Players[0] || !(GGameInfo->Players[0]->PlayerFlags&VBasePlayer::PF_Spawned)))
   {
     //FIXME: some ACS left from previous visit of the level
     return;
