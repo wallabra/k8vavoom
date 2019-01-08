@@ -2376,6 +2376,15 @@ void DoClearPlayer () {
 //
 //==========================================================================
 override void PlayerBeforeExitMap () {
+  int maxhealth = GetMaxHealth();
+  int oldhealth = Health;
+  if (maxhealth > 0 && oldhealth < maxhealth && k8HealthAccum_Amount > 0) {
+    Health = min(oldhealth+k8HealthAccum_Amount, maxhealth);
+    if (Health > oldhealth) {
+      if (MO) MO.Health = Health;
+      k8HealthAccum_Amount -= Health-oldhealth; // just in case
+    }
+  }
 }
 
 
