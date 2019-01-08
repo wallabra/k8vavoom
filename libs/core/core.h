@@ -41,6 +41,7 @@
 #include "mythreadlite.h"
 
 #include "common.h" // common types and definitions
+#include "strtod_plan9.h"
 #include "propp.h"
 #include "hashfunc.h"
 #include "jh32.h"

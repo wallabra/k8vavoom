@@ -40,6 +40,7 @@
 #define strnicmp  strncasecmp
 #endif
 
+/*
 #if defined(VCORE_ALLOW_STRTODEX)
 # if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN32) || defined(__i386__)
 #  if !defined(USE_FPU_MATH)
@@ -47,9 +48,15 @@
 #  endif
 # endif
 #endif
+*/
+#if defined(VCORE_ALLOW_STRTODEX)
+# ifndef VCORE_USE_STRTODEX
+#  define VCORE_USE_STRTODEX
+# endif
+#endif
 
 #ifdef VCORE_USE_STRTODEX
-# include "dtoa_k8.c"
+# include "strtod_plan9.h"
 #else
 # define VCORE_USE_LOCALE
 #endif
@@ -64,13 +71,9 @@
 #ifdef VCORE_USE_STRTODEX
 static bool strtofEx (float *resptr, const char *s) {
   if (!s || !s[0]) return false;
-  while (*s && *(const unsigned char *)s <= ' ') ++s;
-  if (!s[0]) return false;
-  char *end = nullptr;
-  float res = (float)strtodEx(s, &end);
+  char *end;
+  float res = fmtstrtof(s, &end, nullptr);
   if (!isFiniteF(res)) return false;
-  while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
-  if (*end) return false; // oops
   if (resptr) *resptr = res;
   return true;
 }
@@ -1524,6 +1527,7 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
   }
   // 'e' part
   if (wasNum && (s[0] == 'e' || s[0] == 'E')) {
+    //FIXME: we should do this backwards
     ++s;
     bool negexp = (s[0] == '-');
     if (s[0] == '-' || s[0] == '+') ++s;
@@ -1547,15 +1551,6 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
   return true;
 /* VCORE_STUPID_ATOF */
 #elif defined(VCORE_USE_STRTODEX)
-  /*
-  char *end = nullptr;
-  double res = strtodEx(s, &end);
-  while (*end && *(unsigned char *)end <= ' ') ++end; // skip trailing spaces
-  if (*end) { if (defval) *outv = *defval; return false; } // oops
-  *outv = res;
-  if (!isFiniteF(*outv)) { if (defval) *outv = *defval; return false; } // oops
-  return true;
-  */
   if (!strtofEx(outv, s)) {
     if (defval) *outv = *defval;
     return false;

@@ -56,4 +56,6 @@ add_library(core STATIC
   timsort-impl.h
   timsort.h
   timsort.c
+  strtod_plan9.h
+  strtod_plan9.c
 )
