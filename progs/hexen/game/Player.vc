@@ -306,7 +306,7 @@ override void SpawnSpeedEffect()
 //
 //==========================================================================
 
-override void Cheat_Gimme()
+void Cheat_Gimme()
 {
   class!Inventory      Cls;
   class!Weapon       WpnCls;
@@ -454,7 +454,7 @@ override void Cheat_Gimme()
 //
 //==========================================================================
 
-override void Cheat_Morph()
+void Cheat_Morph()
 {
   if (MorphTime)
   {
@@ -474,7 +474,7 @@ override void Cheat_Morph()
 //
 //==========================================================================
 
-override void Cheat_Class()
+void Cheat_Class()
 {
   int i;
   int pclass;

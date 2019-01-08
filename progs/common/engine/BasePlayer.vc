@@ -355,7 +355,12 @@ Entity eventGetReadyWeapon () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
-// TODO: generalize this (make some way to register console commands from scripts)
+// if commands starts with `Cheat_`, is void, and has no args, it is console command
+// if commands starts with `Cheat_`, ends with '_AC', is void, and is
+//   (const ref array!string args, bool newArg, out array!string aclist)
+// this is autocompleter
+
+/*
 void Cheat_Resurrect () {}
 void Cheat_God () {}
 void Cheat_Buddha () {}
@@ -374,6 +379,7 @@ void Cheat_Jumper () {}
 void Cheat_ShooterKing () {}
 void Cheat_Regeneration () {}
 void Cheat_DumpInventory () {}
+*/
 void Cheat_VScriptCommand (ref array!string args) {}
 
 

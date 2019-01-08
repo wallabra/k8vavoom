@@ -186,12 +186,49 @@ override void BotTick(float deltaTime)
   Bot.BotTick(deltaTime);
 }
 
+
+//==========================================================================
+//
+//  Cheat_Gimme_AC
+//
+//==========================================================================
+void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  //print("!!!!!!!!! <%s> : <%s> %s", args[0], args[$-1], newArg);
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+  //string pfx = (newArg ? "" : args[$-1]);
+
+  aclist[$] = "All";
+  aclist[$] = "AllMap";
+  aclist[$] = "Ammo";
+  aclist[$] = "Armor";
+  aclist[$] = "Armor2";
+  aclist[$] = "Arsenal";
+  aclist[$] = "Backpack";
+  aclist[$] = "Bersek";
+  aclist[$] = "Choppers";
+  aclist[$] = "Health";
+  aclist[$] = "Health2";
+  aclist[$] = "Invisibility";
+  aclist[$] = "Invulnerability";
+  aclist[$] = "Keys";
+  aclist[$] = "LiteAmp";
+  aclist[$] = "Powers";
+  aclist[$] = "Suit";
+  aclist[$] = "Weapons";
+}
+
+
 //==========================================================================
 //
 //  Cheat_Gimme
 //
 //==========================================================================
-
 const int
   GIMME_INVULNERABILITY = 0x00040000,
   GIMME_STRENGTH        = 0x00080000,
@@ -208,7 +245,7 @@ const int
   GIMME_POWERS          = 0x00fc0000,
   GIMME_ALL             = 0xffffffff;
 
-override void Cheat_Gimme () {
+void Cheat_Gimme () {
   int i1 = 0;
   class!Inventory Cls;
 

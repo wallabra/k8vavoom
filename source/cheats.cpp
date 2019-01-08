@@ -32,6 +32,7 @@
 #include "sv_local.h"
 
 
+/*
 extern "C" {
   static int sortCmpVStrCI (const void *a, const void *b, void *udata) {
     if (a == b) return 0;
@@ -40,6 +41,7 @@ extern "C" {
     return sa->ICmp(*sb);
   }
 }
+*/
 
 
 //==========================================================================
@@ -70,55 +72,9 @@ static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
 }
 
 
-//==========================================================================
-//
-//  Resurrect_f
-//
-//  Cheat code Resurrect
-//
-//==========================================================================
-COMMAND(Resurrect) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (!Player) return;
-  if (CheatAllowed(Player, true)) Player->eventCheat_Resurrect();
-}
-
-
-//==========================================================================
-//
-//  God_f
-//
-//  Cheat code GOD
-//
-//==========================================================================
-COMMAND(God) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (!Player) return;
-  if (CheatAllowed(Player)) Player->eventCheat_God();
-}
-
-
-//==========================================================================
-//
-//  Buddha_f
-//
-//  Cheat code Buddha
-//
-//==========================================================================
-COMMAND(Buddha) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Buddha();
-}
-
+#if 0
+// all cheats are automatically collected from VC code
+// left here as an example
 
 //==========================================================================
 //
@@ -171,114 +127,27 @@ COMMAND_AC(Summon) {
   }
   return AutoCompleteFromList(prefix, newlist, true); // return unchanged as empty
 }
+#endif
 
 
 //==========================================================================
 //
-//  NoClip_f
+//  COMMAND VScript_Command
 //
 //==========================================================================
-COMMAND(NoClip) {
+COMMAND(VScript_Command) {
+  if (Args.Num() < 2) return;
+
   if (Source == SRC_Command) {
     ForwardToServer();
     return;
   }
-  if (CheatAllowed(Player)) Player->eventCheat_NoClip();
-}
 
-
-//==========================================================================
-//
-//  Gimme_f
-//
-//==========================================================================
-COMMAND_WITH_AC(Gimme) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
+  if (!Player) return;
+  if (CheatAllowed(Player)) {
+    Args.removeAt(0); // remove command name
+    Player->eventCheat_VScriptCommand(Args);
   }
-  if (CheatAllowed(Player)) Player->eventCheat_Gimme();
-}
-
-COMMAND_AC(Gimme) {
-  if (aidx != 1) return VStr::EmptyString;
-  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
-  TArray<VStr> list;
-  list.append(VStr("All"));
-  list.append(VStr("AllMap"));
-  list.append(VStr("Ammo"));
-  list.append(VStr("Armor"));
-  list.append(VStr("Armor2"));
-  list.append(VStr("Arsenal"));
-  list.append(VStr("Backpack"));
-  list.append(VStr("Bersek"));
-  list.append(VStr("Choppers"));
-  list.append(VStr("Health"));
-  list.append(VStr("Health2"));
-  list.append(VStr("Invisibility"));
-  list.append(VStr("Invulnerability"));
-  list.append(VStr("Keys"));
-  list.append(VStr("LiteAmp"));
-  list.append(VStr("Powers"));
-  list.append(VStr("Suit"));
-  list.append(VStr("Weapons"));
-  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
-}
-
-
-//==========================================================================
-//
-//  KillAll_f
-//
-//==========================================================================
-COMMAND(KillAll) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_KillAll();
-}
-
-
-//==========================================================================
-//
-//  Morph_f
-//
-//==========================================================================
-COMMAND(Morph) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Morph();
-}
-
-
-//==========================================================================
-//
-//  NoWeapons_f
-//
-//==========================================================================
-COMMAND(NoWeapons) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_NoWeapons();
-}
-
-
-//==========================================================================
-//
-//  Class_f
-//
-//==========================================================================
-COMMAND(ChangeClass) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Class();
 }
 
 
@@ -326,62 +195,6 @@ COMMAND(MyPos) {
 
 //==========================================================================
 //
-//  Fly_f
-//
-//==========================================================================
-COMMAND(Fly) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Fly();
-}
-
-
-//==========================================================================
-//
-//  NoTarget_f
-//
-//==========================================================================
-COMMAND(NoTarget) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_NoTarget();
-}
-
-
-//==========================================================================
-//
-//  Anubis_f
-//
-//==========================================================================
-COMMAND(Anubis) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Anubis();
-}
-
-
-//==========================================================================
-//
-//  Freeze_f
-//
-//==========================================================================
-COMMAND(Freeze) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Freeze();
-}
-
-
-//==========================================================================
-//
 //  my_sector_info
 //
 //==========================================================================
@@ -401,81 +214,4 @@ COMMAND(my_sector_info) {
   );
   GCon->Logf("  floor texture  : %s", *GTextureManager.GetTextureName(sec->floor.pic));
   GCon->Logf("  ceiling texture: %s", *GTextureManager.GetTextureName(sec->ceiling.pic));
-}
-
-
-//==========================================================================
-//
-//  Jumper
-//
-//==========================================================================
-COMMAND(Jumper) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Jumper();
-}
-
-
-//==========================================================================
-//
-//  ShooterKing
-//
-//==========================================================================
-COMMAND(ShooterKing) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_ShooterKing();
-}
-
-
-//==========================================================================
-//
-//  Regeneration
-//
-//==========================================================================
-COMMAND(Regeneration) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  if (CheatAllowed(Player)) Player->eventCheat_Regeneration();
-}
-
-
-//==========================================================================
-//
-//  Dump_Inventory
-//
-//==========================================================================
-COMMAND(Dump_Inventory) {
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  Player->eventCheat_DumpInventory();
-}
-
-
-//==========================================================================
-//
-//  COMMAND VScript_Command
-//
-//==========================================================================
-COMMAND(VScript_Command) {
-  if (Args.Num() < 2) return;
-
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-
-  if (!Player) return;
-  if (CheatAllowed(Player)) {
-    Args.removeAt(0); // remove command name
-    Player->eventCheat_VScriptCommand(Args);
-  }
 }

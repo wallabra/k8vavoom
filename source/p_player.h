@@ -192,6 +192,8 @@ private:
     }
   }
 
+  VMethod *FindConCommandMethod (const VStr &name);
+
 public:
   //VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}
 
@@ -250,6 +252,19 @@ public:
 
   void WriteViewData();
 
+  // append player commands with the given prefix
+  void ListConCommands (TArray<VStr> &list, const VStr &pfx);
+
+  bool IsConCommand (const VStr &name);
+
+  // returns `true` if command was found and executed
+  // uses VCommand command line
+  bool ExecConCommand ();
+
+  // returns `true` if command was found (autocompleter may be still missing)
+  // autocompleter should filter list
+  bool ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr> &aclist);
+
   DECLARE_FUNCTION(cprint)
   DECLARE_FUNCTION(centreprint)
   DECLARE_FUNCTION(GetPlayerNum)
@@ -294,25 +309,6 @@ public:
   bool eventCheckDoubleFiringSpeed () { P_PASS_SELF; EV_RET_BOOL(NAME_CheckDoubleFiringSpeed); }
 
   // cheats
-  void eventCheat_Resurrect () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Resurrect); }
-  void eventCheat_God () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_God); }
-  void eventCheat_Buddha () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Buddha); }
-  void eventCheat_Summon () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Summon); }
-  void eventCheat_NoClip () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_NoClip); }
-  void eventCheat_Gimme () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Gimme); }
-  void eventCheat_KillAll () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_KillAll); }
-  void eventCheat_Morph () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Morph); }
-  void eventCheat_NoWeapons () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_NoWeapons); }
-  void eventCheat_Class () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Class); }
-  void eventCheat_Fly () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Fly); }
-  void eventCheat_NoTarget () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_NoTarget); }
-  void eventCheat_Anubis () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Anubis); }
-  void eventCheat_Freeze () { P_PASS_SELF; EV_RET_VOID(NAME_Cheat_Freeze); }
-  void eventCheat_Jumper () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Jumper")); }
-  void eventCheat_ShooterKing () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_ShooterKing")); }
-  void eventCheat_Regeneration () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_Regeneration")); }
-  void eventCheat_DumpInventory () { P_PASS_SELF; EV_RET_VOID(VName("Cheat_DumpInventory")); }
-
   void eventCheat_VScriptCommand (TArray<VStr> &args) { P_PASS_SELF; P_PASS_PTR((void *)&args); EV_RET_VOID(VName("Cheat_VScriptCommand")); }
 
   // server to client events

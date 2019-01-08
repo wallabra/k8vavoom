@@ -191,7 +191,7 @@ override void BotTick(float deltaTime)
 //
 //==========================================================================
 
-override void Cheat_Gimme()
+void Cheat_Gimme()
 {
   class!Inventory  Cls;
   class!Weapon   WpnCls;
@@ -369,7 +369,7 @@ override void Cheat_Gimme()
 //
 //==========================================================================
 
-override void Cheat_Morph()
+void Cheat_Morph()
 {
   if (MorphTime)
   {

@@ -3293,7 +3293,7 @@ int GetMaxHealth () {
 //  Cheat_Jumper
 //
 //==========================================================================
-override void Cheat_Jumper () {
+void Cheat_Jumper () {
   Cheats ^= CF_HIGHJUMP;
   if (Cheats&CF_HIGHJUMP) cprint("High Jump Cheat is On"); else cprint("High Jump Cheat is Off");
 }
@@ -3304,7 +3304,7 @@ override void Cheat_Jumper () {
 //  Cheat_ShooterKing
 //
 //==========================================================================
-override void Cheat_ShooterKing () {
+void Cheat_ShooterKing () {
   Cheats ^= CF_DOUBLEFIRINGSPEED;
   if (Cheats&CF_DOUBLEFIRINGSPEED) cprint("Double Firing Speed Cheat is On"); else cprint("Double Firing Speed Cheat is Off");
 }
@@ -3315,7 +3315,7 @@ override void Cheat_ShooterKing () {
 //  Cheat_Regeneration
 //
 //==========================================================================
-override void Cheat_Regeneration () {
+void Cheat_Regeneration () {
   Cheats ^= CF_REGENERATION;
   if (Cheats&CF_REGENERATION) cprint("Regeneration Cheat is On"); else cprint("Regeneration Cheat is Off");
 }
@@ -3326,7 +3326,7 @@ override void Cheat_Regeneration () {
 //  Cheat_Regeneration
 //
 //==========================================================================
-override void Cheat_DumpInventory () {
+void Cheat_DumpInventory () {
   print("=== inventory of player (%C : %C) ===", self, self.MO);
   for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
     print("  %C: amount=%s", Item, Item.Amount);
@@ -3339,9 +3339,11 @@ override void Cheat_DumpInventory () {
 //  Cheat_Resurrect
 //
 //==========================================================================
-override void Cheat_Resurrect () {
+/*
+void Cheat_Resurrect () {
   cprint("Not Implemented");
 }
+*/
 
 
 //==========================================================================
@@ -3349,7 +3351,7 @@ override void Cheat_Resurrect () {
 //  Cheat_God
 //
 //==========================================================================
-override void Cheat_God () {
+void Cheat_God () {
   Cheats ^= CF_GODMODE;
   if (Cheats&CF_GODMODE) {
     if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
@@ -3374,9 +3376,37 @@ override void Cheat_God () {
 //  Cheat_Buddha
 //
 //==========================================================================
-override void Cheat_Buddha () {
+void Cheat_Buddha () {
   Cheats ^= CF_BUDDHA;
   if (Cheats&CF_BUDDHA) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_Summon_AC
+//
+//==========================================================================
+void Cheat_Summon_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  class!Actor cls;
+  foreach AllClasses(Actor, out cls) {
+    // skip unspawnable actors
+    class!Actor ac = class!Actor(GetClassReplacement(cls));
+    if (!ac || ac != cls) continue;
+    // check state
+    auto spwspate = FindClassState(ac, 'Spawn');
+    if (!spwspate) continue;
+    if (!AreStateSpritesPresent(spwspate)) continue;
+    aclist[$] = string(GetClassName(ac));
+  }
 }
 
 
@@ -3385,7 +3415,7 @@ override void Cheat_Buddha () {
 //  Cheat_Summon
 //
 //==========================================================================
-override void Cheat_Summon () {
+void Cheat_Summon () {
   //print("SUMMON: argc=%d", Cmd_GetArgC());
   if (!MO.bIsPlayer || !Level) return;
   auto plr = PlayerEx(MO.Player);
@@ -3441,7 +3471,7 @@ override void Cheat_Summon () {
 //  Cheat_NoClip
 //
 //==========================================================================
-override void Cheat_NoClip () {
+void Cheat_NoClip () {
   Cheats ^= CF_NOCLIP;
   if (Cheats&CF_NOCLIP) {
     MO.bColideWithThings = false;
@@ -3460,7 +3490,7 @@ override void Cheat_NoClip () {
 //  Cheat_KillAll
 //
 //==========================================================================
-override void Cheat_KillAll () {
+void Cheat_KillAll () {
   cprint("%d MONSTERS KILLED", LineSpecialLevelInfo(Level).P_Massacre());
 }
 
@@ -3470,7 +3500,7 @@ override void Cheat_KillAll () {
 //  Cheat_NoWeapons
 //
 //==========================================================================
-override void Cheat_NoWeapons () {
+void Cheat_NoWeapons () {
   if (MorphTime) return;
 
   // find weakest weapon
@@ -3502,7 +3532,7 @@ override void Cheat_NoWeapons () {
 //  Cheat_Fly
 //
 //==========================================================================
-override void Cheat_Fly () {
+void Cheat_Fly () {
   if (!bFly) {
     bFly = true;
     MO.bFly = true;
@@ -3533,7 +3563,7 @@ override void Cheat_Fly () {
 //  Cheat_NoTarget
 //
 //==========================================================================
-override void Cheat_NoTarget () {
+void Cheat_NoTarget () {
   bNoTarget = !bNoTarget;
   if (bNoTarget) {
     cprint("No Target Mode ON");
@@ -3548,7 +3578,7 @@ override void Cheat_NoTarget () {
 //  Cheat_Anubis
 //
 //==========================================================================
-override void Cheat_Anubis () {
+void Cheat_Anubis () {
   Cheats ^= CF_FRIGHTENING;
   if (Cheats&CF_FRIGHTENING) {
     cprint("\"Quake with fear!\"");
@@ -3563,7 +3593,7 @@ override void Cheat_Anubis () {
 //  Cheat_Freeze
 //
 //==========================================================================
-override void Cheat_Freeze () {
+void Cheat_Freeze () {
   Cheats ^= CF_TIMEFREEZE;
   if (Cheats&CF_TIMEFREEZE) {
     cprint("Freeze mode on");

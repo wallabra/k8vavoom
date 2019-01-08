@@ -656,6 +656,157 @@ void VBasePlayer::WriteViewData () {
 
 //==========================================================================
 //
+//  VBasePlayer::ListConCommands
+//
+//  append player commands with the given prefix
+//
+//==========================================================================
+void VBasePlayer::ListConCommands (TArray<VStr> &list, const VStr &pfx) {
+  int cstart = list.length();
+  VClass *cls = GetClass();
+  while (cls) {
+    for (int f = 0; f < cls->Methods.length(); ++f) {
+      VMethod *mt = cls->Methods[f];
+      if (!mt || mt->Name == NAME_None) continue;
+      if (mt->NumParams != 0) continue;
+      if (mt->ReturnType.Type != TYPE_Void) continue;
+      const char *mtname = *mt->Name;
+      if (!VStr::startsWith(mtname, "Cheat_")) continue;
+      mtname += 6;
+      if (!mtname[0]) continue;
+      //if (VStr::endsWith(mtname, "_AC")) continue; // skip autocompleters
+      //GCon->Logf("pfx:<%s>; mtname:<%s>", *pfx, mtname);
+      if (!pfx.isEmpty()) {
+        if (!VStr::startsWithNoCase(mtname, *pfx)) continue;
+      }
+      bool found = false;
+      for (int cc = cstart; cc < list.length(); ++cc) {
+        if (list[cc].ICmp(mtname) == 0) { found = true; break; }
+      }
+      if (!found) list.append(VStr(mtname));
+    }
+    cls = cls->GetSuperClass();
+  }
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::FindConCommandMethod
+//
+//==========================================================================
+VMethod *VBasePlayer::FindConCommandMethod (const VStr &name) {
+  if (name.isEmpty()) return nullptr;
+  VClass *cls = GetClass();
+  while (cls) {
+    for (int f = 0; f < cls->Methods.length(); ++f) {
+      VMethod *mt = cls->Methods[f];
+      if (!mt || mt->Name == NAME_None) continue;
+      //if (mt->NumParams != 0) continue;
+      const char *mtname = *mt->Name;
+      if (!VStr::startsWith(mtname, "Cheat_")) continue;
+      mtname += 6;
+      if (!mtname[0]) continue;
+      if (name.ICmp(mtname) == 0) return mt;
+    }
+    cls = cls->GetSuperClass();
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::IsConCommand
+//
+//==========================================================================
+bool VBasePlayer::IsConCommand (const VStr &name) {
+  return !!FindConCommandMethod(name);
+}
+
+
+//==========================================================================
+//
+//  IsGoodAC
+//
+//==========================================================================
+static bool IsGoodAC (VMethod *mt) {
+  if (!mt) return false;
+  if (mt->NumParams != 3) return false;
+  if (mt->ReturnType.Type != TYPE_Void) return false;
+  // first arg should be `const ref array!string`
+  if (mt->ParamFlags[0] != (FPARM_Const|FPARM_Ref)) return false;
+  VFieldType tp = mt->ParamTypes[0];
+  if (tp.Type != TYPE_DynamicArray) return false;
+  tp = tp.GetArrayInnerType();
+  if (tp.Type != TYPE_String) return false;
+  // second arg should be int (actually, bool, but it is converted to int)
+  if (mt->ParamFlags[1]&~FPARM_Const) return false;
+  tp = mt->ParamTypes[1];
+  if (tp.Type != TYPE_Int && tp.Type != TYPE_Bool) return false;
+  // third arg should be `out array!string`
+  if (mt->ParamFlags[2] != FPARM_Out) return false;
+  tp = mt->ParamTypes[2];
+  if (tp.Type != TYPE_DynamicArray) return false;
+  tp = tp.GetArrayInnerType();
+  if (tp.Type != TYPE_String) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::ExecConCommand
+//
+//  returns `true` if command was found and executed
+//  uses VCommand command line
+//
+//==========================================================================
+bool VBasePlayer::ExecConCommand () {
+  if (VCommand::GetArgC() < 1) return false;
+  VStr name = VCommand::GetArgV(0);
+  VMethod *mt = FindConCommandMethod(name);
+  if (!mt) return false;
+  // i found her!
+  P_PASS_SELF;
+  (void)ExecuteFunction(GetVFunction(mt->Name));
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::ExecConCommandAC
+//
+//  returns `true` if command was found (autocompleter may be still missing)
+//  autocompleter should filter list
+//
+//==========================================================================
+bool VBasePlayer::ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr> &aclist) {
+  if (args.length() < 1) return false;
+  VStr name = args[0];
+  if (name.isEmpty()) return false;
+  VMethod *mt = FindConCommandMethod(name+"_AC");
+  if (mt) {
+    // i found her!
+    if (!IsGoodAC(mt)) return true; // don't call invalid method
+    // build command line
+    //args.removeAt(0); // remove command name
+    P_PASS_SELF;
+    P_PASS_PTR((void *)&args);
+    P_PASS_INT(newArg ? 1 : 0);
+    P_PASS_PTR((void *)&aclist);
+    (void)ExecuteFunction(GetVFunction(mt->Name));
+    return true;
+  }
+  mt = FindConCommandMethod(name);
+  if (mt) return (mt->NumParams == 0); // has cheat?
+  return false;
+}
+
+
+//==========================================================================
+//
 //  COMMAND SetInfo
 //
 //==========================================================================

@@ -60,11 +60,49 @@ static const char *KeyConfCommands[] = {
 };
 
 
+extern "C" {
+  static int sortCmpVStrCI (const void *a, const void *b, void *udata) {
+    if (a == b) return 0;
+    VStr *sa = (VStr *)a;
+    VStr *sb = (VStr *)b;
+    return sa->ICmp(*sb);
+  }
+}
+
+
 //**************************************************************************
 //
 //  Commands, alias
 //
 //**************************************************************************
+
+//==========================================================================
+//
+//  CheatAllowed
+//
+//==========================================================================
+static bool CheatAllowed (VBasePlayer *Player, bool allowDead=false) {
+  if (!Player) return false;
+  if (sv.intermission) {
+    Player->Printf("You are not in game!");
+    return false;
+  }
+  if (GGameInfo->NetMode >= NM_DedicatedServer) {
+    Player->Printf("You cannot cheat in a network game!");
+    return false;
+  }
+  if (GGameInfo->WorldInfo->Flags&VWorldInfo::WIF_SkillDisableCheats) {
+    Player->Printf("You are too good to cheat!");
+    return false;
+  }
+  if (!allowDead && Player->Health <= 0) {
+    // dead players can't cheat
+    Player->Printf("You must be alive to cheat");
+    return false;
+  }
+  return true;
+}
+
 
 //==========================================================================
 //
@@ -297,6 +335,30 @@ VStr VCommand::AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &li
 
 //==========================================================================
 //
+//  findPlayer
+//
+//==========================================================================
+static VBasePlayer *findPlayer () {
+  if (sv.intermission) return nullptr;
+  if (GGameInfo->NetMode < NM_Standalone) return nullptr; // not playing
+  // find any active player
+  for (int f = 0; f < MAXPLAYERS; ++f) {
+    VBasePlayer *plr = GGameInfo->Players[f];
+    if (!plr) continue;
+    if ((plr->PlayerFlags&VBasePlayer::PF_IsBot) ||
+        !(plr->PlayerFlags&VBasePlayer::PF_Spawned))
+    {
+      continue;
+    }
+    if (plr->PlayerState != PST_LIVE || plr->Health <= 0) continue;
+    return plr;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VCommand::GetAutoComplete
 //
 //  if returned string ends with space, this is the only match
@@ -314,7 +376,17 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
 
   bool endsWithBlank = ((vuint8)prefix[prefix.length()-1] <= ' ');
 
-  if (aidx == 1 && !endsWithBlank) return AutoCompleteFromList(prefix, AutoCompleteTable);
+  if (aidx == 1 && !endsWithBlank) {
+    auto otbllen = AutoCompleteTable.length();
+    VBasePlayer *plr = findPlayer();
+    if (plr) {
+      plr->ListConCommands(AutoCompleteTable, prefix);
+      //GCon->Logf("***PLR: pfx=<%s>; found=%d", *prefix, AutoCompleteTable.length()-otbllen);
+    }
+    VStr res = AutoCompleteFromList(prefix, AutoCompleteTable);
+    if (AutoCompleteTable.length() != otbllen) AutoCompleteTable.setLength(otbllen, false); // don't resize
+    return res;
+  }
 
   // autocomplete new arg?
   if (aidx > 1 && !endsWithBlank) --aidx; // nope, last arg
@@ -343,6 +415,39 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
       }
       // cannot complete, nothing's changed
       return prefix;
+    }
+  }
+
+  // try player
+  {
+    VBasePlayer *plr = findPlayer();
+    if (plr) {
+      TArray<VStr> aclist;
+      if (plr->ExecConCommandAC(args, endsWithBlank, aclist)) {
+        if (aclist.length() == 0) return prefix; // nothing's found
+        // rebuild string
+        VStr res;
+        for (int f = 0; f < aidx; ++f) {
+          res += args[f].quote(true); // add quote chars if necessary
+          res += ' ';
+        }
+        // several matches
+        // sort
+        timsort_r(aclist.ptr(), aclist.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
+        //for (int f = 0; f < aclist.length(); ++f) GCon->Logf(" %d:<%s>", f, *aclist[f]);
+        VStr ac = AutoCompleteFromList((endsWithBlank ? VStr() : args[args.length()-1]), aclist);
+        bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
+        if (addSpace) ac.chopRight(1);
+        if (ac.length()) {
+          ac = ac.quote(true);
+          if (!addSpace && ac[ac.length()-1] == '"') ac.chopRight(1);
+        }
+        if (ac.length()) {
+          res += ac;
+          if (addSpace) res += ' ';
+        }
+        return res;
+      }
     }
   }
 
@@ -424,6 +529,18 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
       cmd->Run();
       return;
     }
+  }
+
+  // check for player command
+  if (Source == SRC_Command) {
+    VBasePlayer *plr = findPlayer();
+    if (plr && plr->IsConCommand(Args[0])) {
+      ForwardToServer();
+      return;
+    }
+  } else if (Player && Player->IsConCommand(Args[0])) {
+    if (CheatAllowed(Player)) Player->ExecConCommand();
+    return;
   }
 
   // Cvar
