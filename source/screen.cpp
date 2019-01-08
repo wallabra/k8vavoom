@@ -35,6 +35,12 @@ void CalcFadetable16 (byte *pal);
 
 extern int screenblocks;
 
+extern VCvarB dbg_world_think_vm_time;
+extern VCvarB dbg_world_think_decal_time;
+
+extern double worldThinkTimeVM;
+extern double worldThinkTimeDecal;
+
 
 int ScreenWidth = 0;
 int ScreenHeight = 0;
@@ -260,8 +266,13 @@ COMMAND(ScreenShot) {
 //==========================================================================
 static void DrawFPS () {
   guard(DrawFPS);
+
+  const float FilterFadeoff = 0.1f; // 10%
+  static float curFilterValue = 0;
+
+  int ypos = 0;
+
   if (draw_gc_stats) {
-    enum { ypos = 0 };
     const VObject::GCStats &stats = VObject::GetGCStats();
     T_SetFont(ConFont);
     int xpos;
@@ -277,10 +288,10 @@ static void DrawFPS () {
     }
     T_DrawText(xpos, ypos, va("obj:[\034U%3d\034-/\034U%3d\034-]  array:[\034U%5d\034-/\034U%5d\034-/\034U%d\034-]; \034U%2d\034- msec",
       stats.lastCollected, stats.alive, stats.firstFree, stats.poolSize, stats.poolAllocated, (int)(stats.lastCollectTime*1000+0.5)), CR_DARKBROWN);
+    ypos += 9;
   }
 
   if (draw_fps) {
-    int ypos = (draw_gc_stats ? 9 : 0);
     double time = Sys_Time();
     ++fps_frames;
 
@@ -309,7 +320,25 @@ static void DrawFPS () {
       T_SetAlign(hright, vtop);
       T_DrawText(VirtualWidth-2, ypos, va("%.2f ms", ms), CR_DARKBROWN);
     }
+
+    ypos += 9;
   }
+
+  if (worldThinkTimeVM < 0) curFilterValue = 0;
+  if (worldThinkTimeVM >= 0) curFilterValue = FilterFadeoff*worldThinkTimeVM+(1.0f-FilterFadeoff)*curFilterValue;
+
+  if ((dbg_world_think_vm_time && worldThinkTimeVM >= 0) || (dbg_world_think_decal_time && worldThinkTimeDecal >= 0)) {
+    T_SetFont(ConFont);
+    T_SetAlign(hleft, vtop);
+    int xpos = 4;
+
+    if (dbg_world_think_vm_time && worldThinkTimeVM < 0) worldThinkTimeVM = 0;
+    if (dbg_world_think_decal_time && worldThinkTimeDecal < 0) worldThinkTimeDecal = 0;
+
+    if (dbg_world_think_vm_time) { T_DrawText(xpos, ypos, va("VM:%d", (int)(curFilterValue*1000+0.5)), CR_DARKBROWN); ypos += 9; }
+    if (dbg_world_think_decal_time) { T_DrawText(xpos, ypos, va("DECALS:%d", (int)(worldThinkTimeDecal*1000+0.5)), CR_DARKBROWN); ypos += 9; }
+  }
+
   unguard;
 }
 

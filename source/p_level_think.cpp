@@ -29,6 +29,12 @@
 
 extern VCvarB r_decals_enabled;
 
+VCvarB dbg_world_think_vm_time("dbg_world_think_vm_time", false, "Show time taken by VM thinkers (for debug)?", CVAR_Archive);
+VCvarB dbg_world_think_decal_time("dbg_world_think_decal_time", false, "Show time taken by decal thinkers (for debug)?", CVAR_Archive);
+
+double worldThinkTimeVM = -1;
+double worldThinkTimeDecal = -1;
+
 
 //==========================================================================
 //
@@ -97,8 +103,11 @@ void VLevel::DestroyAllThinkers () {
 void VLevel::TickWorld (float DeltaTime) {
   guard(VLevel::TickWorld);
 
+  double stimed = 0, stimet = 0;
+
   eventBeforeWorldTick(DeltaTime);
 
+  if (dbg_world_think_decal_time) stimed = -Sys_Time();
   // run decal thinkers
   if (DeltaTime > 0 && r_decals_enabled) {
     decal_t *dc = decanimlist;
@@ -110,7 +119,9 @@ void VLevel::TickWorld (float DeltaTime) {
       if (removeIt) RemoveAnimatedDecal(c);
     }
   }
+  worldThinkTimeDecal = (dbg_world_think_decal_time ? Sys_Time()+stimed : -1);
 
+  if (dbg_world_think_vm_time) stimet = -Sys_Time();
   // run thinkers
   VThinker *Th = ThinkerHead;
   while (Th) {
@@ -126,6 +137,7 @@ void VLevel::TickWorld (float DeltaTime) {
       c->ConditionalDestroy();
     }
   }
+  worldThinkTimeVM = (dbg_world_think_vm_time ? Sys_Time()+stimet : -1);
 
   // don't update specials if the level is frozen
   if (!(LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) LevelInfo->eventUpdateSpecials();

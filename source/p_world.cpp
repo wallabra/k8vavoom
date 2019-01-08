@@ -174,7 +174,7 @@ bool VBlockLinesIterator::GetNext () {
 //  VRadiusThingsIterator::VRadiusThingsIterator
 //
 //==========================================================================
-VRadiusThingsIterator::VRadiusThingsIterator(VThinker *ASelf, VEntity **AEntPtr, TVec Org, float Radius)
+VRadiusThingsIterator::VRadiusThingsIterator (VThinker *ASelf, VEntity **AEntPtr, TVec Org, float Radius)
   : Self(ASelf)
   , EntPtr(AEntPtr)
 {
