@@ -377,15 +377,22 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
   bool endsWithBlank = ((vuint8)prefix[prefix.length()-1] <= ' ');
 
   if (aidx == 1 && !endsWithBlank) {
-    auto otbllen = AutoCompleteTable.length();
     VBasePlayer *plr = findPlayer();
     if (plr) {
+      auto otbllen = AutoCompleteTable.length();
       plr->ListConCommands(AutoCompleteTable, prefix);
       //GCon->Logf("***PLR: pfx=<%s>; found=%d", *prefix, AutoCompleteTable.length()-otbllen);
+      if (AutoCompleteTable.length() > otbllen) {
+        // copy and sort
+        TArray<VStr> newlist;
+        newlist.setLength(AutoCompleteTable.length());
+        for (int f = 0; f < AutoCompleteTable.length(); ++f) newlist[f] = AutoCompleteTable[f];
+        AutoCompleteTable.setLength(otbllen, false); // don't resize
+        timsort_r(newlist.ptr(), newlist.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
+        return AutoCompleteFromList(prefix, newlist);
+      }
     }
-    VStr res = AutoCompleteFromList(prefix, AutoCompleteTable);
-    if (AutoCompleteTable.length() != otbllen) AutoCompleteTable.setLength(otbllen, false); // don't resize
-    return res;
+    return AutoCompleteFromList(prefix, AutoCompleteTable);
   }
 
   // autocomplete new arg?
