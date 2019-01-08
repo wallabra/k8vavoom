@@ -34,6 +34,9 @@ static void G_DoReborn (int playernum);
 static void G_DoCompleted ();
 
 
+static VCvarB dbg_skipframe_player_tick("dbg_skipframe_player_tick", true, "Run player ticks on skipped frames?", 0);
+static VCvarB dbg_skipframe_player_keep_moving("dbg_skipframe_player_keep_moving", false, "Keep moving on skipped player frames (this is wrong)?", 0);
+
 VCvarB real_time("real_time", true, "Run server in real time?");
 
 static VCvarB sv_ignore_nojump("sv_ignore_nojump", true, "Ignore \"nojump\" flag in MAPINFO?", CVAR_ServerInfo);
@@ -353,10 +356,53 @@ static void CheckForSkip () {
 
 //==========================================================================
 //
+//  SV_RunPlayerTick
+//
+//  do all necessary checks *BEFORE* calling this function
+//
+//==========================================================================
+static void SV_RunPlayerTick (VBasePlayer *Player, bool skipFrame) {
+  Player->ForwardMove = (!skipFrame || dbg_skipframe_player_keep_moving ? Player->ClientForwardMove : 0);
+  Player->SideMove = (!skipFrame || dbg_skipframe_player_keep_moving ? Player->ClientSideMove : 0);
+  // don't move faster than maxmove
+       if (Player->ForwardMove > sv_maxmove) Player->ForwardMove = sv_maxmove;
+  else if (Player->ForwardMove < -sv_maxmove) Player->ForwardMove = -sv_maxmove;
+       if (Player->SideMove > sv_maxmove) Player->SideMove = sv_maxmove;
+  else if (Player->SideMove < -sv_maxmove) Player->SideMove = -sv_maxmove;
+  // check for disabled freelook and jumping
+  if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) Player->ViewAngles.pitch = 0;
+  if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) Player->Buttons &= ~BT_JUMP;
+  //GCon->Logf("*** 000: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
+  Player->eventPlayerTick(host_frametime);
+  //GCon->Logf("*** 001: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
+  // new logic for client buttons update
+  //Player->OldButtons = Player->AcsButtons;
+  //Player->OldViewAngles = Player->ViewAngles;
+  // latch logic
+  //if ((Player->AcsNextButtonUpdate -= host_frametime) <= 0.0f)
+  if (Player->AcsNextButtonUpdate <= GLevel->TicTime) {
+    //Player->AcsNextButtonUpdate = 1.0f/35.0f; // once per standard DooM frame
+    //!Player->AcsNextButtonUpdate = 1.0f/36.0f; // once per standard DooM frame
+    Player->AcsNextButtonUpdate = GLevel->TicTime+1;
+    Player->OldButtons = Player->AcsButtons;
+    // now create new acs buttons
+    Player->AcsButtons = Player->AcsCurrButtonsPressed;
+    Player->AcsCurrButtonsPressed = Player->AcsCurrButtons;
+    // mouse movement
+    Player->AcsMouseX = Player->AcsPrevMouseX;
+    Player->AcsMouseY = Player->AcsPrevMouseY;
+    Player->AcsPrevMouseX = 0;
+    Player->AcsPrevMouseY = 0;
+  }
+}
+
+
+//==========================================================================
+//
 //  SV_RunClients
 //
 //==========================================================================
-void SV_RunClients () {
+static void SV_RunClients (bool skipFrame=false) {
   guard(SV_RunClients);
   // get commands
   for (int i = 0; i < MAXPLAYERS; ++i) {
@@ -379,39 +425,7 @@ void SV_RunClients () {
 
     // pause if in menu or console and at least one tic has been run
     if ((Player->PlayerFlags&VBasePlayer::PF_Spawned) && !sv.intermission && !GGameInfo->IsPaused()) {
-      Player->ForwardMove = Player->ClientForwardMove;
-      Player->SideMove = Player->ClientSideMove;
-      // don't move faster than maxmove
-           if (Player->ForwardMove > sv_maxmove) Player->ForwardMove = sv_maxmove;
-      else if (Player->ForwardMove < -sv_maxmove) Player->ForwardMove = -sv_maxmove;
-           if (Player->SideMove > sv_maxmove) Player->SideMove = sv_maxmove;
-      else if (Player->SideMove < -sv_maxmove) Player->SideMove = -sv_maxmove;
-      // check for disabled freelook and jumping
-      if (!sv_ignore_nomlook && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) Player->ViewAngles.pitch = 0;
-      if (!sv_ignore_nojump && (GLevelInfo->LevelInfoFlags&VLevelInfo::LIF_NoJump)) Player->Buttons &= ~BT_JUMP;
-      //GCon->Logf("*** 000: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
-      Player->eventPlayerTick(host_frametime);
-      //GCon->Logf("*** 001: PLAYER TICK(%p) ***: Buttons=0x%08x; OldButtons=0x%08x", Player, Player->Buttons, Player->OldButtons);
-      // new logic for client buttons update
-      //Player->OldButtons = Player->AcsButtons;
-      //Player->OldViewAngles = Player->ViewAngles;
-      // latch logic
-      //if ((Player->AcsNextButtonUpdate -= host_frametime) <= 0.0f)
-      if (Player->AcsNextButtonUpdate <= GLevel->TicTime)
-      {
-        //Player->AcsNextButtonUpdate = 1.0f/35.0f; // once per standard DooM frame
-        //!Player->AcsNextButtonUpdate = 1.0f/36.0f; // once per standard DooM frame
-        Player->AcsNextButtonUpdate = GLevel->TicTime+1;
-        Player->OldButtons = Player->AcsButtons;
-        // now create new acs buttons
-        Player->AcsButtons = Player->AcsCurrButtonsPressed;
-        Player->AcsCurrButtonsPressed = Player->AcsCurrButtons;
-        // mouse movement
-        Player->AcsMouseX = Player->AcsPrevMouseX;
-        Player->AcsMouseY = Player->AcsPrevMouseY;
-        Player->AcsPrevMouseX = 0;
-        Player->AcsPrevMouseY = 0;
-      }
+      SV_RunPlayerTick(Player, skipFrame);
     }
   }
 
@@ -469,8 +483,16 @@ void SV_Ticker () {
             completed = true;
           }
         }
-        if (i) VObject::CollectGarbage();
+        if (i) {
+          // if we're doing additional frames, apply some normal frame logic
+          VObject::CollectGarbage();
+          // advance player states, so weapons won't slow down on frame skip
+          if (dbg_skipframe_player_tick) {
+            SV_RunClients(true); // have to make a full run, for demos/network (k8: is it really necessary?]
+          }
+        }
         GLevel->TickWorld(host_frametime);
+        if (sv.intermission) break;
       }
     }
   }
