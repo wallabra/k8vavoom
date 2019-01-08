@@ -64,7 +64,7 @@
 //#define VCORE_STUPID_ATOF
 
 #ifdef VCORE_USE_LOCALE
-#include "locale.h"
+# include "locale.h"
 #endif
 
 
@@ -73,7 +73,7 @@ static bool strtofEx (float *resptr, const char *s) {
   if (!s || !s[0]) return false;
   char *end;
   float res = fmtstrtof(s, &end, nullptr);
-  if (!isFiniteF(res)) return false;
+  if (!isFiniteF(res) || *end) return false;
   if (resptr) *resptr = res;
   return true;
 }
