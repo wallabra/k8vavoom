@@ -150,6 +150,7 @@ enum {
   OPCARGS_ByteBranchTarget,
   OPCARGS_ShortBranchTarget,
   OPCARGS_IntBranchTarget,
+  OPCARGS_NameBranchTarget,
   OPCARGS_Byte,
   OPCARGS_Short,
   OPCARGS_Int,
@@ -215,6 +216,7 @@ enum {
   DECLARE_OPC(CaseGotoB, ByteBranchTarget),
   DECLARE_OPC(CaseGotoS, ShortBranchTarget),
   DECLARE_OPC(CaseGoto, IntBranchTarget),
+  DECLARE_OPC(CaseGotoN, NameBranchTarget),
 
   // push constants
   DECLARE_OPC(PushNumber0, None),

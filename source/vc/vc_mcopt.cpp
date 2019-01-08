@@ -237,6 +237,7 @@ struct Instr {
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         return (Arg2 == idx);
     }
     return false;
@@ -251,6 +252,7 @@ struct Instr {
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         return true;
     }
     return false;
@@ -261,6 +263,7 @@ struct Instr {
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         return true;
     }
     return false;
@@ -276,6 +279,7 @@ struct Instr {
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         return Arg2;
     }
     return -1;
@@ -294,6 +298,7 @@ struct Instr {
       case OPCARGS_ByteBranchTarget:
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         oldidx = Arg2;
         Arg2 = newidx;
         break;
@@ -428,6 +433,7 @@ struct Instr {
       case OPC_CaseGotoB:
       case OPC_CaseGotoS:
       case OPC_CaseGoto:
+      case OPC_CaseGotoN:
         return;
 
       // push constants
@@ -1039,6 +1045,7 @@ struct Instr {
         res += 5;
         break;
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         res += 4+2;
         break;
       case OPCARGS_Type:
@@ -1086,6 +1093,9 @@ struct Instr {
       case OPCARGS_ShortBranchTarget:
       case OPCARGS_IntBranchTarget:
         fprintf(stderr, " %d, %d", Arg1, Arg2);
+        break;
+      case OPCARGS_NameBranchTarget:
+        fprintf(stderr, " '%s', %d", *VName(EName(Arg1)), Arg2);
         break;
       case OPCARGS_Byte:
         fprintf(stderr, " %d (0x%02x)", Arg1, (unsigned)Arg1);

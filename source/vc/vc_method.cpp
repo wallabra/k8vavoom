@@ -480,6 +480,9 @@ void VMethod::DumpAsm () {
       case OPCARGS_IntBranchTarget:
         dprintf(" %6d, %6d", Instructions[s].Arg1, Instructions[s].Arg2);
         break;
+      case OPCARGS_NameBranchTarget:
+        dprintf(" '%s', %6d", *VName(EName(Instructions[s].Arg1)), Instructions[s].Arg2);
+        break;
       case OPCARGS_Byte:
       case OPCARGS_Short:
         dprintf(" %6d (%x)", Instructions[s].Arg1, Instructions[s].Arg1);
@@ -634,6 +637,7 @@ void VMethod::CompileCode () {
       case OPCARGS_ByteBranchTarget: WriteUInt8(Instructions[i].Arg1); WriteInt16(0); break;
       case OPCARGS_ShortBranchTarget: WriteInt16(Instructions[i].Arg1); WriteInt16(0); break;
       case OPCARGS_IntBranchTarget: WriteInt32(Instructions[i].Arg1); WriteInt16(0); break;
+      case OPCARGS_NameBranchTarget: WriteInt32(Instructions[i].Arg1); WriteInt16(0); break;
       case OPCARGS_Byte: WriteUInt8(Instructions[i].Arg1); break;
       case OPCARGS_Short: WriteInt16(Instructions[i].Arg1); break;
       case OPCARGS_Int: WriteInt32(Instructions[i].Arg1); break;
@@ -738,6 +742,7 @@ void VMethod::CompileCode () {
         *(vint16 *)&Statements[iaddr[i]+3] = iaddr[Instructions[i].Arg2]-iaddr[i];
         break;
       case OPCARGS_IntBranchTarget:
+      case OPCARGS_NameBranchTarget:
         *(vint16 *)&Statements[iaddr[i]+5] = iaddr[Instructions[i].Arg2]-iaddr[i];
         break;
     }
@@ -893,6 +898,17 @@ VStream &operator << (VStream &Strm, FInstruction &Instr) {
     case OPCARGS_ShortBranchTarget:
     case OPCARGS_IntBranchTarget:
       Strm << STRM_INDEX(Instr.Arg1);
+      Strm << Instr.Arg2;
+      break;
+    case OPCARGS_NameBranchTarget:
+      if (Strm.IsLoading()) {
+        VName n = NAME_None;
+        Strm << n;
+        Instr.Arg1 = n.GetIndex();
+      } else {
+        VName n = VName(EName(Instr.Arg1));
+        Strm << n;
+      }
       Strm << Instr.Arg2;
       break;
     case OPCARGS_Byte:

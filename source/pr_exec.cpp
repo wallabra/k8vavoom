@@ -767,6 +767,16 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      // yeah, exactly the same as normal `OPC_CaseGoto`
+      PR_VM_CASE(OPC_CaseGotoN)
+        if (ReadInt32(ip+1) == sp[-1].i) {
+          ip += ReadInt16(ip+5);
+          --sp;
+        } else {
+          ip += 7;
+        }
+        PR_VM_BREAK;
+
       PR_VM_CASE(OPC_PushNumber0)
         ++ip;
         sp->i = 0;

@@ -2023,8 +2023,13 @@ bool VSwitch::Resolve (VEmitContext &ec) {
 
   if (Expr) Expr = Expr->Resolve(ec);
 
-  if (!Expr || (Expr->Type.Type != TYPE_Int && Expr->Type.Type != TYPE_Name)) {
-    ParseError(Loc, "Int expression expected");
+  if (!Expr ||
+      (Expr->Type.Type != TYPE_Byte && Expr->Type.Type != TYPE_Int &&
+       Expr->Type.Type != TYPE_Name))
+  {
+    if (Expr) {
+      ParseError(Loc, "Invalid switch expression type (%s)", *Expr->Type.GetName());
+    }
     Ret = false;
   }
 
@@ -2061,16 +2066,22 @@ void VSwitch::DoEmit (VEmitContext &ec) {
   Expr->Emit(ec);
 
   auto loopEnd = ec.DefineBreak();
+  bool isName = (Expr->Type.Type == TYPE_Name);
 
   // case table
   for (int i = 0; i < CaseInfo.length(); ++i) {
     CaseInfo[i].Address = ec.DefineLabel();
-    if (CaseInfo[i].Value >= 0 && CaseInfo[i].Value < 256) {
-      ec.AddStatement(OPC_CaseGotoB, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
-    } else if (CaseInfo[i].Value >= MIN_VINT16 && CaseInfo[i].Value < MAX_VINT16) {
-      ec.AddStatement(OPC_CaseGotoS, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+    if (!isName) {
+      // int/byte
+      if (CaseInfo[i].Value >= 0 && CaseInfo[i].Value < 256) {
+        ec.AddStatement(OPC_CaseGotoB, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+      } else if (CaseInfo[i].Value >= MIN_VINT16 && CaseInfo[i].Value < MAX_VINT16) {
+        ec.AddStatement(OPC_CaseGotoS, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+      } else {
+        ec.AddStatement(OPC_CaseGoto, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+      }
     } else {
-      ec.AddStatement(OPC_CaseGoto, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
+      ec.AddStatement(OPC_CaseGotoN, CaseInfo[i].Value, CaseInfo[i].Address, Loc);
     }
   }
   ec.AddStatement(OPC_Drop, Loc);

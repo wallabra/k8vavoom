@@ -780,7 +780,8 @@ void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &alo
 void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_ByteBranchTarget &&
       StatementInfo[statement].Args != OPCARGS_ShortBranchTarget &&
-      StatementInfo[statement].Args != OPCARGS_IntBranchTarget)
+      StatementInfo[statement].Args != OPCARGS_IntBranchTarget &&
+      StatementInfo[statement].Args != OPCARGS_NameBranchTarget)
   {
     FatalError("Opcode does't take 2 params");
   }
