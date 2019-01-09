@@ -192,6 +192,7 @@ struct SocketOptions {
 // returns 0 on error, or positive socket id
 native static final int SocketConnectUDP (string host, int port, optional ref SocketOptions opts);
 native static final int SocketConnectTCP (string host, int port, optional ref SocketOptions opts);
+native static final int SocketConnectTLS (string host, int port, optional ref SocketOptions opts);
 
 // returns `false` if sockid is invalid or if socket is already errored/disconnected
 // note that sockid will be destroyed after dispatching `ev_socket` event

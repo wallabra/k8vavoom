@@ -68,6 +68,7 @@
 
   DECLARE_FUNCTION(SocketConnectUDP)
   DECLARE_FUNCTION(SocketConnectTCP)
+  DECLARE_FUNCTION(SocketConnectTLS)
   DECLARE_FUNCTION(SocketDisconnect)
 
   DECLARE_FUNCTION(SocketGetIOCTL)

@@ -35,12 +35,17 @@
 # include <unistd.h>
 # include <netdb.h>
 # include <sys/ioctl.h>
-# define closesocket close
+# define closesocket ::close
 # define SHITSOCKCAST(expr)  (expr)
 # define GetSockError()  errno
 # define SHITSOCKWOULDBLOCK  EWOULDBLOCK
 #endif
 #define sockaddr_t sockaddr
+
+#ifdef USE_GNU_TLS
+# include <gnutls/gnutls.h>
+# include <gnutls/x509.h>
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -102,6 +107,7 @@ enum SockIOCTL {
 enum SockType {
   UDP,
   TCP,
+  TLS,
 };
 
 struct SocketOptions {
@@ -230,7 +236,127 @@ struct SocketObj {
   double timeLastRecv;
   double timeLastSend;
 
+#ifdef USE_GNU_TLS
+  bool tls;
+  bool handshakeComplete;
+  gnutls_certificate_credentials_t xcred;
+  gnutls_session_t session;
+#endif
+
   inline bool isAlive () const { return (state >= ST_CONNECTING); }
+
+  bool initialize () {
+    if (fd < 0) return false;
+#ifdef USE_GNU_TLS
+    if (tls) {
+      // x509 stuff
+      gnutls_certificate_allocate_credentials(&xcred);
+
+      // sets the trusted certificate authority file (no need for us, as we aren't checking any certificate)
+      //gnutls_certificate_set_x509_trust_file(xcred, CAFILE, GNUTLS_X509_FMT_PEM);
+
+      // initialize TLS session
+      gnutls_init(&session, GNUTLS_CLIENT);
+
+      // use default priorities
+      const char *err;
+      auto ret = gnutls_priority_set_direct(session, "PERFORMANCE", &err);
+      if (ret < 0) return false;
+
+      // put the x509 credentials to the current session
+      gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, xcred);
+
+      gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t)fd);
+    }
+#endif
+    return true;
+  }
+
+  void close (bool forced) {
+    if (fd >= 0) {
+#ifdef USE_GNU_TLS
+      if (forced) {
+        setZeroLinger();
+      } else {
+#ifndef WIN32
+        if (!tls) shutdown(fd, SHUT_RDWR);
+#endif
+      }
+      if (tls) {
+        if (!forced) gnutls_bye(session, GNUTLS_SHUT_RDWR);
+        gnutls_deinit(session);
+        gnutls_certificate_free_credentials(xcred);
+        tls = false;
+      }
+#endif
+      closesocket(fd);
+      fd = -1;
+    }
+  }
+
+  bool needHandshake () const {
+    if (fd < 0) return false;
+#ifdef USE_GNU_TLS
+    return (tls && !handshakeComplete);
+#else
+    return false;
+#endif
+  }
+
+  // <0: error; 0: try again; 1: ok
+  int handshake () {
+    if (fd < 0) return -1;
+#ifdef USE_GNU_TLS
+    if (handshakeComplete) return 1;
+    if (tls) {
+      auto ret = gnutls_handshake(session);
+      if (ret < 0) {
+        //fprintf(stderr, "GNUTLS: handshake failed(%d): %s\n", gnutls_error_is_fatal(ret), gnutls_strerror(ret));
+        if (gnutls_error_is_fatal(ret)) return -1;
+        return 0;
+      }
+    }
+    handshakeComplete = true;
+#endif
+    return 1;
+  }
+
+  void setZeroLinger () {
+    if (fd < 0) return;
+    linger l;
+    l.l_onoff = 1;
+    l.l_linger = 0;
+#ifdef WIN32
+    setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *)&l, sizeof(l));
+#else
+    setsockopt(fd, SOL_SOCKET, SO_LINGER, (void *)&l, sizeof(l));
+#endif
+  }
+
+  int send () {
+    if (fd < 0) return -1;
+#ifdef USE_GNU_TLS
+    if (tls) {
+      if (!handshakeComplete) return -1;
+      return (int)gnutls_record_send(session, SHITSOCKCAST(sbuf.data), sbuf.used);
+    }
+    else
+#endif
+    return (int)::send(fd, SHITSOCKCAST(sbuf.data), sbuf.used, MSG_NOSIGNAL);
+  }
+
+  int recv (void *readbuf, int toread) {
+    if (fd < 0) return -1;
+    if (toread < 1) return -1;
+#ifdef USE_GNU_TLS
+    if (tls) {
+      if (!handshakeComplete) return -1;
+      return (int)gnutls_record_recv(session, SHITSOCKCAST(readbuf), toread);
+    }
+    else
+#endif
+    return (int)::recv(fd, SHITSOCKCAST(readbuf), toread, 0);
+  }
 };
 
 
@@ -272,26 +398,12 @@ static SocketObj *findSocket (int sockid) {
 }
 
 
-static void setZeroLinger (int fd) {
-  if (fd < 0) return;
-  linger l;
-  l.l_onoff = 1;
-  l.l_linger = 0;
-#ifdef WIN32
-  setsockopt(fd ,SOL_SOCKET, SO_LINGER, (char *)&l, sizeof(l));
-#else
-  setsockopt(fd ,SOL_SOCKET, SO_LINGER, (void *)&l, sizeof(l));
-#endif
-}
 
 
 static void deallocSocket (int idx) {
   if (idx < 0 || idx >= sockused) return;
   SocketObj *so = &socklist[idx];
-  if (so->fd >= 0) {
-    setZeroLinger(so->fd);
-    closesocket(so->fd);
-  }
+  so->close(true); // forced
   so->rbuf.clear();
   so->sbuf.clear();
   for (int c = idx+1; c < sockused; ++c) {
@@ -304,16 +416,8 @@ static void deallocSocket (int idx) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 static void closeSO (SocketObj *so, bool immed) {
-  if (!so || so->fd < 0) return;
-  if (immed) {
-    setZeroLinger(so->fd);
-  } else {
-#ifndef WIN32
-    shutdown(so->fd, SHUT_RDWR);
-#endif
-  }
-  closesocket(so->fd);
-  so->fd = -1;
+  if (!so) return;
+  so->close(immed);
 }
 
 
@@ -336,8 +440,12 @@ void sockmodAckEvent (int code, int sockid, int data, bool eaten, bool cancelled
 
 // ////////////////////////////////////////////////////////////////////////// //
 //TODO: IPv6
-static int SocketConnect (bool asUDP, const VStr &host, int port, SocketOptions &opts) {
+static int SocketConnect (SockType type, const VStr &host, int port, SocketOptions &opts) {
   if (!INITED) return 0;
+
+#ifndef USE_GNU_TLS
+  if (type == SockType::TLS) return 0;
+#endif
 
   if (host.isEmpty()) return 0;
   if (port < 1 || port > 65535) return 0;
@@ -357,7 +465,7 @@ static int SocketConnect (bool asUDP, const VStr &host, int port, SocketOptions 
   ((sockaddr_in *)&addr)->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];
 
   // create socket fd
-  int sfd = socket(PF_INET, (asUDP ? SOCK_DGRAM : SOCK_STREAM), (asUDP ? IPPROTO_UDP : IPPROTO_TCP));
+  int sfd = socket(PF_INET, (type == SockType::UDP ? SOCK_DGRAM : SOCK_STREAM), (type == SockType::UDP ? IPPROTO_UDP : IPPROTO_TCP));
   if (sfd == -1) return 0;
 
   // switch to non-blocking mode
@@ -389,17 +497,21 @@ static int SocketConnect (bool asUDP, const VStr &host, int port, SocketOptions 
   }
 
   int resid;
+  SocketObj *so;
   {
     MyThreadLocker lock(&mainLock);
     // allocate internal socket object
-    SocketObj *so = allocSocket();
+    so = allocSocket();
     if (!so) {
       closesocket(sfd);
       return 0;
     }
 
     so->fd = sfd;
-    so->isUDP = asUDP;
+    so->isUDP = (type == SockType::UDP);
+#ifdef USE_GNU_TLS
+    so->tls = (type == SockType::TLS);
+#endif
     so->state = (connected ? SocketObj::ST_NORMAL : SocketObj::ST_CONNECTING);
     so->toRecv = opts.RecvTimeout;
     so->toSend = opts.SendTimeout;
@@ -410,7 +522,25 @@ static int SocketConnect (bool asUDP, const VStr &host, int port, SocketOptions 
     resid = so->id;
   }
 
+  if (!so->initialize()) {
+    MyThreadLocker lock(&mainLock);
+    deallocSocket(so->id);
+    return 0;
+  }
+
   if (connected) {
+    if (so->needHandshake()) {
+      int res = so->handshake();
+      if (res < 0) {
+        MyThreadLocker lock(&mainLock);
+        deallocSocket(so->id);
+        return 0;
+      }
+      if (res == 0) {
+        // try again
+        so->state = SocketObj::ST_CONNECTING;
+      }
+    }
     // send connected event
     sockmodPostEventCB(evsock_connected, resid, 0, true);
   }
@@ -427,7 +557,7 @@ IMPLEMENT_FUNCTION(VObject, SocketConnectUDP) {
   P_GET_PTR_OPT_NOSP(SocketOptions, opts);
   P_GET_INT(port);
   P_GET_STR(host);
-  RET_INT(SocketConnect(true, host, port, *opts));
+  RET_INT(SocketConnect(SockType::UDP, host, port, *opts));
 }
 
 //native static final int SocketConnectTCP (string host, int port, optional ref SocketOptions opts);
@@ -435,7 +565,15 @@ IMPLEMENT_FUNCTION(VObject, SocketConnectTCP) {
   P_GET_PTR_OPT_NOSP(SocketOptions, opts);
   P_GET_INT(port);
   P_GET_STR(host);
-  RET_INT(SocketConnect(false, host, port, *opts));
+  RET_INT(SocketConnect(SockType::TCP, host, port, *opts));
+}
+
+//native static final int SocketConnectTLS (string host, int port, optional ref SocketOptions opts);
+IMPLEMENT_FUNCTION(VObject, SocketConnectTLS) {
+  P_GET_PTR_OPT_NOSP(SocketOptions, opts);
+  P_GET_INT(port);
+  P_GET_STR(host);
+  RET_INT(SocketConnect(SockType::TLS, host, port, *opts));
 }
 
 
@@ -748,9 +886,17 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
               if (err != 0) {
                 sockErrored(so, evsock_cantconnect);
               } else {
-                so->state = SocketObj::ST_NORMAL;
                 // update times
                 so->timeLastRecv = so->timeLastSend = currt;
+                if (so->needHandshake()) {
+                  int cres = so->handshake();
+                  if (cres < 0) {
+                    sockErrored(so, evsock_cantconnect);
+                    continue;
+                  }
+                  if (cres == 0) continue; // in progress
+                }
+                so->state = SocketObj::ST_NORMAL;
                 sockQueueEvent(so, evsock_connected);
               }
             }
@@ -759,7 +905,8 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
           // write data, if we can
           if (FD_ISSET(so->fd, &wrs)) {
             while (!so->sbuf.isEmpty()) {
-              auto wr = send(so->fd, SHITSOCKCAST(so->sbuf.data), so->sbuf.used, MSG_NOSIGNAL);
+              //auto wr = send(so->fd, SHITSOCKCAST(so->sbuf.data), so->sbuf.used, MSG_NOSIGNAL);
+              auto wr = so->send();
               if (wr == 0) {
                 // if we sent zero bytes, it means that socket is closed (not really, but meh)
                 closeSO(so, true);
@@ -811,7 +958,8 @@ static MYTHREAD_RET_TYPE mainTrd (void *xarg) {
               }
               size_t toread = sizeof(readbuf);
               if (toread > so->rbuf.maxsize-so->rbuf.used) toread = so->rbuf.maxsize-so->rbuf.used;
-              auto rd = recv(so->fd, SHITSOCKCAST(readbuf), toread, 0);
+              //auto rd = recv(so->fd, SHITSOCKCAST(readbuf), toread, 0);
+              auto rd = so->recv(readbuf, toread);
               //fprintf(stderr, "socket #%d: rd=%d\n", so->id, (int)rd);
               if (rd == 0) {
                 // if we received zero bytes, it means that socket is closed (not really, but meh)
@@ -883,6 +1031,9 @@ static void sockmodInit () {
     initSuccess = false;
     //fprintf(stderr, "VCCRUN: shitsock init failed!\n");
   }
+#endif
+#ifdef USE_GNU_TLS
+  gnutls_global_init();
 #endif
   mythread_mutex_init(&mainLock);
   if (mythread_create(&mainThread, &mainTrd, nullptr) != 0) Sys_Error("cannot create socket thread");
