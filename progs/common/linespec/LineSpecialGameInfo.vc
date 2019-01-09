@@ -201,6 +201,8 @@ override void Init () {
 
   CreateCvar('hud_scale_messages', "1", "Rescale HUD messages, so message font is less distorted?", CVAR_ARCHIVE);
 
+  CreateCvar('ldr_fix_slope_cracks', "1", "Try to fix empty cracks near sloped floors?", CVAR_ARCHIVE);
+
   ::Init(); // parse cvarinfo and such
 }
 
@@ -235,7 +237,7 @@ void SetSkill (int NewSkill) {
 //  MakeSlope
 //
 //==========================================================================
-void MakeSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+final void MakeSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   TVec v1, v2;
   TVec p1, p2, p3;
   sec_plane_t *plane;
@@ -276,7 +278,7 @@ void MakeSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 //  SlopeLineToPoint
 //
 //===========================================================================
-void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+final void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   sec_plane_t *plane;
   TVec p1, p2;
   TVec v1, v2;
@@ -331,7 +333,7 @@ void SlopeLineToPoint (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 //  SetSlope
 //
 //===========================================================================
-void SetSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+final void SetSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   TVec p1;
   sec_plane_t *plane;
   float xyang;
@@ -366,6 +368,28 @@ void SetSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   norm = Normalise(norm);
   plane->normal = norm;
   plane->dist = DotProduct(plane->normal, p1);
+
+  // fix missing top/bottom textures, so there won't be empty cracks
+  if (GetCvarB('ldr_fix_slope_cracks')) {
+    //int snum = 1;
+    foreach (auto lidx, line_t *ln; sec.lines) {
+      foreach (int snum; 0..2) {
+        if (ln.sidenum[snum] >= 0) {
+          side_t *sd = &InLevel.Sides[ln.sidenum[snum]];
+          // floor
+          if (!IsCeiling && sd.BottomTexture <= 0) {
+            //print("F-FUUUUUUUU! (%s:%s) %s", lidx, snum, sec.floor.pic);
+            sd.BottomTexture = sec.floor.pic;
+          }
+          // ceiling
+          if (IsCeiling && sd.TopTexture <= 0) {
+            //print("C-FUUUUUUUU! (%s:%s) %s", lidx, snum, sec.floor.pic);
+            sd.TopTexture = sec.floor.pic;
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -374,7 +398,7 @@ void SetSlope (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 //  SetVertexHeights
 //
 //==========================================================================
-bool SetVertexHeights (Level InLevel, int ThingID) {
+final bool SetVertexHeights (Level InLevel, int ThingID) {
   bool ret = false;
 
   // clean all
@@ -404,7 +428,7 @@ bool SetVertexHeights (Level InLevel, int ThingID) {
 //  CleanVertexHeights
 //
 //==========================================================================
-void CleanVertexHeights (Level InLevel) {
+final void CleanVertexHeights (Level InLevel) {
   foreach (auto i; 0..InLevel.Vertexes.length) InLevel.Vertexes[i].z = 0.0;
 }
 
@@ -414,7 +438,7 @@ void CleanVertexHeights (Level InLevel) {
 //  MakeVertexFloorHeights
 //
 //==========================================================================
-void MakeVertexFloorHeights (Level InLevel) {
+final void MakeVertexFloorHeights (Level InLevel) {
   TVec p1, p2, p3;
   TVec v1, v2;
 
@@ -455,7 +479,7 @@ void MakeVertexFloorHeights (Level InLevel) {
 //  MakeVertexCeilingHeights
 //
 //==========================================================================
-void MakeVertexCeilingHeights (Level InLevel) {
+final void MakeVertexCeilingHeights (Level InLevel) {
   TVec p1, p2, p3;
   TVec v1, v2;
 
@@ -505,7 +529,7 @@ void MakeVertexCeilingHeights (Level InLevel) {
 //  If which == 1, sets ceiling.
 //
 //==========================================================================
-void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which, int lineidx) {
+final void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which, int lineidx) {
   if (line->backsector == nullptr) return;
 
   // find furthest vertex from the reference line
@@ -544,6 +568,29 @@ void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which, int line
 
   srcplane.normal = cross;
   srcplane.dist = DotProduct(cross, p);
+
+  // fix missing top/bottom textures, so there won't be empty cracks
+  if (GetCvarB('ldr_fix_slope_cracks')) {
+    //int snum = (line.frontsector == sec ? 0 : 1);
+    //int snum = 1;
+    foreach (auto lidx, line_t *ln; sec.lines) {
+      foreach (int snum; 0..2) {
+        if (ln.sidenum[snum] >= 0) {
+          side_t *sd = &InLevel.Sides[ln.sidenum[snum]];
+          // floor
+          if (which == 0 && sd.BottomTexture <= 0) {
+            //print("F-FUUUUUUUU! (%s:%s) %s", lidx, snum, sec.floor.pic);
+            sd.BottomTexture = sec.floor.pic;
+          }
+          // ceiling
+          if (which != 0 && sd.TopTexture <= 0) {
+            //print("C-FUUUUUUUU! (%s:%s) %s", lidx, snum, sec.floor.pic);
+            sd.TopTexture = sec.floor.pic;
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -552,7 +599,7 @@ void AlignPlane (Level InLevel, sector_t *sec, line_t *line, int which, int line
 //  SetSlopes
 //
 //==========================================================================
-void SetSlopes (Level InLevel) {
+final void SetSlopes (Level InLevel) {
   foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
     if (line.special == LNSPEC_PlaneAlign) {
@@ -588,7 +635,7 @@ void SetSlopes (Level InLevel) {
 //  ProcessCopySlopes
 //
 //==========================================================================
-void ProcessCopySlopes (Level InLevel) {
+final void ProcessCopySlopes (Level InLevel) {
   foreach (auto i; 0..InLevel.Lines.length) {
     line_t *line = &InLevel.Lines[i];
     if (line.special == LNSPEC_PlaneCopy) {
@@ -618,7 +665,7 @@ void ProcessCopySlopes (Level InLevel) {
 //  CopyPlaneBetweenSectors
 //
 //===========================================================================
-void CopyPlaneBetweenSectors (Level InLevel, sector_t *dst, sector_t *src, bool IsCeiling) {
+final void CopyPlaneBetweenSectors (Level InLevel, sector_t *dst, sector_t *src, bool IsCeiling) {
   if (!src || !dst || src == dst) return; // just in case
   if (!IsCeiling) {
     dst->floor.normal = src->floor.normal;
@@ -635,7 +682,7 @@ void CopyPlaneBetweenSectors (Level InLevel, sector_t *dst, sector_t *src, bool 
 //  CopyPlaneBetweenTaggedSectors
 //
 //===========================================================================
-void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srctag, bool IsCeiling) {
+final void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srctag, bool IsCeiling) {
   if (srctag <= 0 || !dst) return; // just in case
   int secnum = InLevel.FindSectorFromTag(srctag, -1);
   if (secnum == -1) return; // no source sector
@@ -648,7 +695,7 @@ void CopyPlaneBetweenTaggedSectors (Level InLevel, sector_t *dst, int srctag, bo
 //  CopyPlaneWithThing
 //
 //===========================================================================
-void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
+final void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
   sector_t *dst = InLevel.PointInSector(vector(mthing->x, mthing->y, 0.0));
   int secnum = InLevel.FindSectorFromTag(mthing->arg1, -1);
   if (secnum == -1) return;
@@ -670,7 +717,7 @@ void CopyPlaneWithThing (Level InLevel, mthing_t *mthing, bool IsCeiling) {
 //  SpawnExtraFloors
 //
 //==========================================================================
-void SpawnExtraFloors (Level InLevel, line_t *line) {
+final void SpawnExtraFloors (Level InLevel, line_t *line) {
   foreach (auto j; 0..InLevel.Sectors.length) {
     if (line->arg1 == InLevel.Sectors[j].tag) {
       InLevel.AddExtraFloor(line, &InLevel.Sectors[j]);
