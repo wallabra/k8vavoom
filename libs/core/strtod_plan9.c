@@ -747,6 +747,11 @@ float fmtstrtof (const char *as, char **aas, int *rangeErr) {
   if (rerr) return (float)dguess;
   if (dguess == 0) return (float)dguess;
 
+  int exp = ((*(const uint64_t *)&dguess)>>DBL_EXP_SHIFT)&DBL_EXP_SMASK;
+  if (exp == 0 || exp == DBL_EXP_SMASK) return (float)dguess;
+
+  int isNegative = !!((*(const uint64_t *)&dguess)&DBL_SIGN_MASK);
+
   double dguesspos = dguess;
   // remove sign
   *(uint64_t *)&dguesspos &= ~DBL_SIGN_MASK;
@@ -754,7 +759,7 @@ float fmtstrtof (const char *as, char **aas, int *rangeErr) {
   float fguesspos = sanitizedD2F(dguesspos);
   if (fguesspos == dguesspos) {
     // this shortcut triggers for integer values
-    if (*(const uint64_t *)&dguesspos&DBL_SIGN_MASK) fguesspos = -fguesspos;
+    if (isNegative) fguesspos = -fguesspos;
     return fguesspos;
   }
 
@@ -785,7 +790,7 @@ float fmtstrtof (const char *as, char **aas, int *rangeErr) {
 
   // if the guess doesn't lie near a single-precision boundary we can simply return its float value
   if (f1 == f4) {
-    if (*(const uint64_t *)&dguesspos&DBL_SIGN_MASK) fguesspos = -fguesspos;
+    if (isNegative) fguesspos = -fguesspos;
     return fguesspos;
   }
 
@@ -800,5 +805,7 @@ float fmtstrtof (const char *as, char **aas, int *rangeErr) {
 
   // THIS IS ABSOLUTELY WRONG!
   uint32_t dv = ((*(const uint64_t *)&dguesspos)&DBL_MANT_MASK)>>28;
-  return (dv&1 ? f4 : f1);
+  fguesspos = (dv&1 ? f4 : f1);
+  if (isNegative) fguesspos = -fguesspos;
+  return fguesspos;
 }
