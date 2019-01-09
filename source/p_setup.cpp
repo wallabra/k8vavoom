@@ -681,8 +681,6 @@ void VLevel::LoadMap (VName AMapName) {
   decanimlist = nullptr;
   decanimuid = 0;
 
-  auto texLock = GTextureManager.LockMapLocalTextures();
-
 load_again:
   GTextureManager.ResetMapTextures();
 
@@ -878,7 +876,6 @@ load_again:
     }
   }
 
-  double NodeBuildTime = -Sys_Time();
   //bool glNodesFound = false;
 
   if (hasCacheFile) {
@@ -898,7 +895,7 @@ load_again:
       if ((LevelFlags&LF_TextMap) != 0 || !UseComprGLNodes) NeedNodesBuild = true;
     }
   }
-  NodeBuildTime += Sys_Time();
+
 
   int NumBaseVerts;
   double VertexTime = 0;
@@ -908,46 +905,52 @@ load_again:
   double TranslTime = 0;
   double SidesTime = 0;
   double DecalProcessingTime = 0;
-  // begin processing map lumps
-  if (LevelFlags&LF_TextMap) {
-    VertexTime = -Sys_Time();
-    LoadTextMap(lumpnum+1, MInfo);
-    VertexTime += Sys_Time();
-  } else {
-    // Note: most of this ordering is important
-    VertexTime = -Sys_Time();
-    LevelFlags &= ~LF_GLNodesV5;
-    LoadVertexes(VertexesLump, gl_lumpnum+ML_GL_VERT, NumBaseVerts);
-    VertexTime += Sys_Time();
-    SectorsTime = -Sys_Time();
-    LoadSectors(SectorsLump);
-    SectorsTime += Sys_Time();
-    LinesTime = -Sys_Time();
-    if (!(LevelFlags&LF_Extended)) {
-      LoadLineDefs1(LinesLump, NumBaseVerts, MInfo);
-      LinesTime += Sys_Time();
-      ThingsTime = -Sys_Time();
-      LoadThings1(ThingsLump);
-    } else {
-      LoadLineDefs2(LinesLump, NumBaseVerts, MInfo);
-      LinesTime += Sys_Time();
-      ThingsTime = -Sys_Time();
-      LoadThings2(ThingsLump);
-    }
-    ThingsTime += Sys_Time();
 
-    TranslTime = -Sys_Time();
-    if (!(LevelFlags&LF_Extended)) {
-      // translate level to Hexen format
-      GGameInfo->eventTranslateLevel(this);
+  {
+    auto texLock = GTextureManager.LockMapLocalTextures();
+
+    // begin processing map lumps
+    if (LevelFlags&LF_TextMap) {
+      VertexTime = -Sys_Time();
+      LoadTextMap(lumpnum+1, MInfo);
+      VertexTime += Sys_Time();
+    } else {
+      // Note: most of this ordering is important
+      VertexTime = -Sys_Time();
+      LevelFlags &= ~LF_GLNodesV5;
+      LoadVertexes(VertexesLump, gl_lumpnum+ML_GL_VERT, NumBaseVerts);
+      VertexTime += Sys_Time();
+      SectorsTime = -Sys_Time();
+      LoadSectors(SectorsLump);
+      SectorsTime += Sys_Time();
+      LinesTime = -Sys_Time();
+      if (!(LevelFlags&LF_Extended)) {
+        LoadLineDefs1(LinesLump, NumBaseVerts, MInfo);
+        LinesTime += Sys_Time();
+        ThingsTime = -Sys_Time();
+        LoadThings1(ThingsLump);
+      } else {
+        LoadLineDefs2(LinesLump, NumBaseVerts, MInfo);
+        LinesTime += Sys_Time();
+        ThingsTime = -Sys_Time();
+        LoadThings2(ThingsLump);
+      }
+      ThingsTime += Sys_Time();
+
+      TranslTime = -Sys_Time();
+      if (!(LevelFlags&LF_Extended)) {
+        // translate level to Hexen format
+        GGameInfo->eventTranslateLevel(this);
+      }
+      TranslTime += Sys_Time();
+      // set up textures after loading lines because for some Boom line
+      // specials there can be special meaning of some texture names
+      SidesTime = -Sys_Time();
+      LoadSideDefs(SidesLump);
+      SidesTime += Sys_Time();
     }
-    TranslTime += Sys_Time();
-    // set up textures after loading lines because for some Boom line
-    // specials there can be special meaning of some texture names
-    SidesTime = -Sys_Time();
-    LoadSideDefs(SidesLump);
-    SidesTime += Sys_Time();
   }
+
   double Lines2Time = -Sys_Time();
   FixKnownMapErrors();
   HashSectors();
@@ -1141,7 +1144,6 @@ load_again:
     GCon->Logf("-------");
     GCon->Logf("Level loadded in %f", TotalTime);
     //GCon->Logf("Initialisation   %f", InitTime);
-    GCon->Logf("Node build       %f", NodeBuildTime);
     //GCon->Logf("Vertexes         %f", VertexTime);
     //GCon->Logf("Sectors          %f", SectorsTime);
     //GCon->Logf("Lines            %f", LinesTime);
