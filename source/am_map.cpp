@@ -178,9 +178,12 @@ static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Chea
 static VCvarF am_overlay_alpha("am_overlay_alpha", "0.4", "Automap overlay alpha", CVAR_Archive);
 static VCvarB am_show_parchment("am_show_parchment", true, "Show automap parchment?", CVAR_Archive);
 
+static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
+
 static int grid = 0;
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called
+static int amBigMode = -1; // -1: unknown
 
 // location of window on screen
 static int f_x;
@@ -529,6 +532,34 @@ static void AM_initVariables () {
 
 //==========================================================================
 //
+//  AM_minOutWindowScale
+//
+//  set the window scale to the maximum size
+//
+//==========================================================================
+static void AM_minOutWindowScale () {
+  scale_mtof = min_scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
+  AM_activateNewScale();
+}
+
+
+//==========================================================================
+//
+//  AM_maxOutWindowScale
+//
+//  set the window scale to the minimum size
+//
+//==========================================================================
+static void AM_maxOutWindowScale () {
+  scale_mtof = max_scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
+  AM_activateNewScale();
+}
+
+
+//==========================================================================
+//
 //  AM_loadPics
 //
 //==========================================================================
@@ -555,6 +586,7 @@ static void AM_loadPics () {
 //==========================================================================
 static void AM_LevelInit () {
   leveljuststarted = 0;
+  amBigMode = -1;
 
   f_x = f_y = 0;
   f_w = ScreenWidth;
@@ -596,34 +628,13 @@ static void AM_Start () {
   }
   AM_initVariables();
   AM_loadPics();
-}
-
-
-//==========================================================================
-//
-//  AM_minOutWindowScale
-//
-//  set the window scale to the maximum size
-//
-//==========================================================================
-static void AM_minOutWindowScale () {
-  scale_mtof = min_scale_mtof;
-  scale_ftom = 1.0/scale_mtof;
-  AM_activateNewScale();
-}
-
-
-//==========================================================================
-//
-//  AM_maxOutWindowScale
-//
-//  set the window scale to the minimum size
-//
-//==========================================================================
-static void AM_maxOutWindowScale () {
-  scale_mtof = max_scale_mtof;
-  scale_ftom = 1.0/scale_mtof;
-  AM_activateNewScale();
+  if (amBigMode < 0) {
+    amBigMode = (am_default_whole ? 1 : 0);
+    if (amBigMode) {
+      AM_saveScaleAndLoc();
+      AM_minOutWindowScale();
+    }
+  }
 }
 
 
@@ -636,7 +647,6 @@ static void AM_maxOutWindowScale () {
 //==========================================================================
 bool AM_Responder (event_t *ev) {
   bool rc = false;
-  static int bigstate = 0;
 
   if (!automapactive) {
     if (ev->type == ev_keydown && ev->data1 == AM_STARTKEY) {
@@ -667,12 +677,11 @@ bool AM_Responder (event_t *ev) {
         ftom_zoommul = M_ZOOMOUT;
         break;
       case AM_ENDKEY:
-        bigstate = 0;
         AM_Stop();
         break;
       case AM_GOBIGKEY:
-        bigstate = !bigstate;
-        if (bigstate) {
+        amBigMode = !amBigMode;
+        if (amBigMode) {
           AM_saveScaleAndLoc();
           AM_minOutWindowScale();
         } else {
