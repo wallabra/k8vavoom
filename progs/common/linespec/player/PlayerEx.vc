@@ -3616,6 +3616,43 @@ void Cheat_Freeze () {
 
 //==========================================================================
 //
+//  Cheat_WarpTo
+//
+//==========================================================================
+void Cheat_WarpTo () {
+  if (!MO.bIsPlayer || !Level || !EntityEx(MO)) return;
+
+  if (Cmd_GetArgC() < 3 || Cmd_GetArgC() > 4) {
+    cprint("WarpTo: x y [z]");
+    return;
+  }
+
+  bool err;
+
+  float x = atof(Cmd_GetArgV(1), out err);
+  if (err) { cprint("WarpTo: invalid x coord (%s)", Cmd_GetArgV(1)); return; }
+
+  float y = atof(Cmd_GetArgV(2), out err);
+  if (err) { cprint("WarpTo: invalid y coord (%s)", Cmd_GetArgV(2)); return; }
+
+  float z = EntityEx::ONFLOORZ;
+  if (Cmd_GetArgC() > 3) {
+    z = atof(Cmd_GetArgV(3), out err);
+    if (err) { cprint("WarpTo: invalid z coord (%s)", Cmd_GetArgV(3)); return; }
+  }
+
+  if (EntityEx(MO).Teleport(vector(x, y, z), MO.Angles.yaw, DstFog:false, SrcFog:false, KeepDir:true, ForceTelestomp:true)) {
+    if (Cmd_GetArgC() > 3) {
+      cprint("Teleported to (%s,%s,%s)", x, y, z);
+    } else {
+      cprint("Teleported to (%s,%s)", x, y);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  CheckFriendlyFire
 //
 //  TODO
