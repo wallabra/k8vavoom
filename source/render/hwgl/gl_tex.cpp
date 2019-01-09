@@ -152,7 +152,7 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
 //
 //==========================================================================
 void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
-  guard(VOpenGLDrawer::FlushTexture);
+  guard(VOpenGLDrawer::DeleteTexture);
   if (!Tex) return;
   if (Tex->DriverHandle) {
     if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);

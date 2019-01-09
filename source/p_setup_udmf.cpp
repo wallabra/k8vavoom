@@ -188,7 +188,7 @@ void VUdmfParser::ParseVertex () {
 //  VUdmfParser::ParseSector
 //
 //==========================================================================
-void VUdmfParser::ParseSector(VLevel *Level) {
+void VUdmfParser::ParseSector (VLevel *Level) {
   guard(VUdmfParser::ParseSector);
   sector_t &S = ParsedSectors.Alloc();
   memset((void *)&S, 0, sizeof(sector_t));

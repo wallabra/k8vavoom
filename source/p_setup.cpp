@@ -70,7 +70,7 @@ static VCvarI loader_cache_compression_level("loader_cache_compression_level", "
 
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", 0/*CVAR_Archive*/);
 
-static VCvarB r_udmf_allow_extra_textures("r_udmf_allow_extra_textures", false, "Allow force-loading UDMF textures? (WARNING: savegames WILL crash!)", CVAR_Archive);
+//static VCvarB r_udmf_allow_extra_textures("r_udmf_allow_extra_textures", false, "Allow force-loading UDMF textures? (WARNING: savegames WILL crash!)", CVAR_Archive);
 
 
 extern VCvarI r_max_portal_depth;
@@ -305,7 +305,7 @@ void VLevel::ClearAllLevelData () {
   Things = nullptr;
   NumThings = 0;
 
-  GTextureManager.ResetToKnownTextures();
+  GTextureManager.ResetMapTextures();
 }
 
 
@@ -681,8 +681,10 @@ void VLevel::LoadMap (VName AMapName) {
   decanimlist = nullptr;
   decanimuid = 0;
 
+  auto texLock = GTextureManager.LockMapLocalTextures();
+
 load_again:
-  GTextureManager.ResetToKnownTextures();
+  GTextureManager.ResetMapTextures();
 
   pobj_allow_several_in_subsector_override = 0;
 #ifdef CLIENT
@@ -2763,7 +2765,7 @@ IMPLEMENT_FUNCTION(VLevel, LdrTexNumForName) {
 //==========================================================================
 int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF) const {
   guard(VLevel::TexNumForName);
-  return texForceLoad(name, Type, CMap, (fromUDMF ? r_udmf_allow_extra_textures : false));
+  return texForceLoad(name, Type, CMap, /*(fromUDMF ? r_udmf_allow_extra_textures : false)*/true);
 /*
   int i = -1;
   // try filename if slash is found
@@ -2813,9 +2815,9 @@ int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF)
 //==========================================================================
 int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
   if (!name || !name[0]) return GTextureManager.DefaultTexture; // just in case
-  int res = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, /*bOverload*/true, /*bCheckAny*/true);
-  if (!fromUDMF) return res;
-  return texForceLoad(name, Type, /*CMap*/false, r_udmf_allow_extra_textures);
+  //int res = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, /*bOverload*/true, /*bCheckAny*/true);
+  //if (!fromUDMF) return res;
+  return texForceLoad(name, Type, /*CMap*/false, /*r_udmf_allow_extra_textures*/true);
 }
 
 

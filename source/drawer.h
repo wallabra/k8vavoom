@@ -176,6 +176,7 @@ public:
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
+  virtual void FlushTextures () = 0; // unload all textures
 
   // polygon drawing
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,

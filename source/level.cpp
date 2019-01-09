@@ -811,6 +811,8 @@ void VLevel::Destroy () {
   }
   BodyQueueTrans.Clear();
 
+  GTextureManager.ResetMapTextures();
+
   // call parent class' `Destroy()` method
   Super::Destroy();
   unguard;

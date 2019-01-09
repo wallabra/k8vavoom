@@ -871,7 +871,7 @@ protected:
   void SetFade(vuint32 NewFade);
 
   void GenerateTextures();
-  void FlushTextures();
+  virtual void FlushTextures () override; // unload all textures
   void DeleteTextures();
   void FlushTexture(VTexture*);
   void DeleteTexture(VTexture*);

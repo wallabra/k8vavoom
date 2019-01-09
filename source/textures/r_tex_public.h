@@ -285,10 +285,48 @@ protected:
 // ////////////////////////////////////////////////////////////////////////// //
 class VTextureManager {
 private:
-  enum { HASH_SIZE = 1024 };
+  enum { HASH_SIZE = 4096 };
+  enum { FirstMapTextureIndex = 1000000 };
 
   TArray<VTexture *> Textures;
+  TArray<VTexture *> MapTextures;
   int TextureHash[HASH_SIZE];
+
+  int inMapTextures; // >0: loading map textures
+
+public:
+  struct MTLock {
+  friend class VTextureManager;
+  private:
+    VTextureManager *tm;
+    MTLock (VTextureManager *atm) : tm(atm) { ++tm->inMapTextures; }
+  public:
+    MTLock (const MTLock &alock) : tm(alock.tm) { ++tm->inMapTextures; }
+    ~MTLock () { if (tm) --tm->inMapTextures; tm = nullptr; }
+    MTLock &operator = (const MTLock &alock) {
+      if (&alock == this) return *this;
+      if (alock.tm != tm) {
+        if (tm) --tm->inMapTextures;
+        tm = alock.tm;
+      }
+      if (tm) ++tm->inMapTextures;
+    }
+  };
+
+private:
+  void rehashTextures ();
+
+  inline VTexture *getTxByIndex (int idx) {
+    VTexture *res;
+    if (idx < FirstMapTextureIndex) {
+      res = ((vuint32)idx < (vuint32)Textures.length() ? Textures[idx] : nullptr);
+    } else {
+      idx -= FirstMapTextureIndex;
+      res = ((vuint32)idx < (vuint32)MapTextures.length() ? MapTextures[idx] : nullptr);
+    }
+    return res;
+  }
+
 
 public:
   vint32 DefaultTexture;
@@ -299,6 +337,12 @@ public:
 
   void Init ();
   void Shutdown ();
+
+  // unload all map-local textures
+  void ResetMapTextures ();
+
+  // call this before possible loading of map-local texture
+  inline MTLock LockMapLocalTextures () { return MTLock(this); }
 
   int AddTexture (VTexture *Tex);
   void ReplaceTexture (int Index, VTexture *Tex);
@@ -322,38 +366,51 @@ public:
 
   // get unanimated texture
   inline VTexture *operator [] (int TexNum) {
-    VTexture *res = ((vuint32)TexNum < (vuint32)Textures.Num() ? Textures[TexNum] : nullptr);
+    VTexture *res = getTxByIndex(TexNum);
     if (res) res->noDecals = res->staticNoDecals;
     return res;
   }
 
   inline VTexture *getIgnoreAnim (int TexNum) {
-    return ((vuint32)TexNum < (vuint32)Textures.Num() ? Textures[TexNum] : nullptr);
+    if (TexNum < FirstMapTextureIndex) {
+      return ((vuint32)TexNum < (vuint32)Textures.length() ? Textures[TexNum] : nullptr);
+    } else {
+      TexNum -= FirstMapTextureIndex;
+      return ((vuint32)TexNum < (vuint32)MapTextures.length() ? MapTextures[TexNum] : nullptr);
+    }
   }
 
   //inline int TextureAnimation (int InTex) { return Textures[InTex]->TextureTranslation; }
 
   // get animated texture
   inline VTexture *operator () (int TexNum) {
-    if ((vuint32)TexNum >= (vuint32)Textures.Num()) return nullptr;
-    VTexture *origtex = Textures[TexNum];
+    VTexture *origtex;
+    if (TexNum < FirstMapTextureIndex) {
+      if ((vuint32)TexNum >= (vuint32)Textures.length()) return nullptr;
+      origtex = Textures[TexNum];
+    } else {
+      if ((vuint32)(TexNum-FirstMapTextureIndex) >= (vuint32)MapTextures.length()) return nullptr;
+      origtex = MapTextures[TexNum-FirstMapTextureIndex];
+    }
     if (!origtex) return nullptr;
     //FIXMEFIXMEFIXME: `origtex->TextureTranslation == -1`? whatisthat?
     if (origtex->TextureTranslation != TexNum /*&& (vuint32)origtex->TextureTranslation < (vuint32)Textures.length()*/) {
-      VTexture *res = Textures[origtex->TextureTranslation];
-      if (res) res->noDecals = origtex->animNoDecals || res->staticNoDecals;
-      return res;
-    } else {
-      origtex->noDecals = (origtex->animated ? origtex->animNoDecals : false) || origtex->staticNoDecals;
-      return origtex;
+      //VTexture *res = Textures[origtex->TextureTranslation];
+      VTexture *res = getTxByIndex(origtex->TextureTranslation);
+      if (res) {
+        if (res) res->noDecals = origtex->animNoDecals || res->staticNoDecals;
+        return res;
+      }
     }
+    origtex->noDecals = (origtex->animated ? origtex->animNoDecals : false) || origtex->staticNoDecals;
+    return origtex;
   }
 
-  inline int GetNumTextures () const { return Textures.Num(); }
+  inline int GetNumTextures () const { return Textures.length(); }
+  inline int GetNumMapTextures () const { return MapTextures.length(); }
 
 private:
   void AddToHash (int Index);
-  void RemoveFromHash (int Index);
   void AddTextures ();
   void AddTexturesLump (int, int, int, bool, TArray<VName> &numberedNames);
   void AddGroup (int, EWadNamespace);

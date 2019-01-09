@@ -110,6 +110,8 @@ TArray<TSwitch *>  Switches;
 VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive);
 VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
 
+static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textures to GPU when new map is loaded?", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -158,8 +160,9 @@ static bool isSeenMissingTexture (VName Name) {
 //  VTextureManager::VTextureManager
 //
 //==========================================================================
-VTextureManager::VTextureManager()
-  : DefaultTexture(-1)
+VTextureManager::VTextureManager ()
+  : inMapTextures(0)
+  , DefaultTexture(-1)
   , Time(0)
 {
   for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
@@ -171,8 +174,11 @@ VTextureManager::VTextureManager()
 //  VTextureManager::Init
 //
 //==========================================================================
-void VTextureManager::Init() {
+void VTextureManager::Init () {
   guard(VTextureManager::Init);
+
+  check(inMapTextures == 0);
+
   // add a dummy texture
   AddTexture(new VDummyTexture);
 
@@ -199,6 +205,7 @@ void VTextureManager::Init() {
   skyflatnum = CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true, false);
   if (skyflatnum < 0) skyflatnum = CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true, false);
   if (skyflatnum < 0) skyflatnum = NumForName(NAME_f_sky1, TEXTYPE_Flat, true, false);
+
   unguard;
 }
 
@@ -210,9 +217,59 @@ void VTextureManager::Init() {
 //==========================================================================
 void VTextureManager::Shutdown () {
   guard(VTextureManager::Shutdown);
-  for (int i = 0; i < Textures.Num(); ++i) { delete Textures[i]; Textures[i] = nullptr; }
-  Textures.Clear();
+  for (int i = 0; i < Textures.length(); ++i) { delete Textures[i]; Textures[i] = nullptr; }
+  for (int i = 0; i < MapTextures.length(); ++i) { delete MapTextures[i]; MapTextures[i] = nullptr; }
+  Textures.clear();
+  MapTextures.clear();
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::rehashTextures
+//
+//==========================================================================
+void VTextureManager::rehashTextures () {
+  for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
+  for (int f = 0; f < Textures.length(); ++f) if (Textures[f]) AddToHash(f);
+  for (int f = 0; f < MapTextures.length(); ++f) if (MapTextures[f]) AddToHash(FirstMapTextureIndex+f);
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::ResetMapTextures
+//
+//==========================================================================
+void VTextureManager::ResetMapTextures () {
+  if (MapTextures.length() == 0) {
+#ifdef CLIENT
+    if (r_reupload_textures && Drawer) {
+      GCon->Logf("Unloading textures from GPU...");
+      Drawer->FlushTextures();
+      //rehashTextures();
+    }
+#endif
+    return;
+  }
+
+  check(MapTextures.length() != 0);
+
+  GCon->Logf(NAME_Dev, "*** *** MapTextures.length()=%d *** ***", MapTextures.length());
+#ifdef CLIENT
+  if (Drawer) Drawer->FlushTextures();
+#endif
+  for (int f = MapTextures.length()-1; f >= 0; --f) {
+    if (developer) {
+      if (MapTextures[f]) GCon->Logf(NAME_Dev, "removing map texture #%d (%s)", f, *MapTextures[f]->Name);
+    }
+    delete MapTextures[f];
+    MapTextures[f] = nullptr;
+  }
+  GCon->Logf("TextureManager: %d map textures removed", MapTextures.length());
+  MapTextures.setLength(0, false); // don't resize
+  rehashTextures();
 }
 
 
@@ -224,14 +281,17 @@ void VTextureManager::Shutdown () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
-  //if (Textures.length() > 0 && Tex->Name == NAME_None) abort();
-  //GCon->Logf("AddTexture0: <%s>; i=%d; %p  (%p)", *Tex->Name, Textures.length(), Tex, Textures.ptr());
-  //if (Textures.length() > 2666) fprintf(stderr, "  [2666]=%p <%s>  (%p)\n", Textures[2666], *Textures[2666]->Name, Textures.ptr());
-  Textures.Append(Tex);
-  Tex->TextureTranslation = Textures.Num()-1;
-  AddToHash(Textures.Num()-1);
-  //fprintf(stderr, "AddTexture1: <%s>; i=%d; %p  (%p)\n", *Textures[Textures.Num()-1]->Name, Textures.length(), Textures[Textures.Num()-1], Textures.ptr());
-  return Textures.Num()-1;
+  if (!inMapTextures) {
+    Textures.Append(Tex);
+    Tex->TextureTranslation = Textures.length()-1;
+    AddToHash(Textures.length()-1);
+    return Textures.length()-1;
+  } else {
+    MapTextures.Append(Tex);
+    Tex->TextureTranslation = FirstMapTextureIndex+MapTextures.length()-1;
+    AddToHash(FirstMapTextureIndex+MapTextures.length()-1);
+    return FirstMapTextureIndex+MapTextures.length()-1;
+  }
   unguard;
 }
 
@@ -244,16 +304,22 @@ int VTextureManager::AddTexture (VTexture *Tex) {
 void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
   guard(VTextureManager::ReplaceTexture);
   check(Index >= 0);
-  check(Index < Textures.Num());
+  check((Index < FirstMapTextureIndex && Index < Textures.length()) || (Index >= FirstMapTextureIndex && Index-FirstMapTextureIndex < MapTextures.length()));
   check(NewTex);
-  VTexture *OldTex = Textures[Index];
-  //int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
-  //fprintf(stderr, "ReplaceTexture: <%s>; HashIndex=%d; i=%d; len=%d; [hi]=%d; HashNext=%d\n", *Textures[Index]->Name, HashIndex, Index, Textures.length(), TextureHash[HashIndex], OldTex->HashNext);
+  //VTexture *OldTex = Textures[Index];
+  VTexture *OldTex = getTxByIndex(Index);
+  if (OldTex == NewTex) return;
   NewTex->Name = OldTex->Name;
   NewTex->Type = OldTex->Type;
   NewTex->TextureTranslation = OldTex->TextureTranslation;
   NewTex->HashNext = OldTex->HashNext;
-  Textures[Index] = NewTex;
+  //Textures[Index] = NewTex;
+  if (Index < FirstMapTextureIndex) {
+    Textures[Index] = NewTex;
+  } else {
+    MapTextures[Index-FirstMapTextureIndex] = NewTex;
+  }
+  //FIXME: delete OldTex?
   unguard;
 }
 
@@ -265,41 +331,13 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
 //==========================================================================
 void VTextureManager::AddToHash (int Index) {
   guard(VTextureManager::AddToHash);
-  int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
-  //fprintf(stderr, "AddToHash: <%s>; HashIndex=%d; i=%d; len=%d; [hi]=%d\n", *Textures[Index]->Name, HashIndex, Index, Textures.length(), TextureHash[HashIndex]);
-  Textures[Index]->HashNext = TextureHash[HashIndex];
+  int HashIndex = GetTypeHash(getTxByIndex(Index)->Name)&(HASH_SIZE-1);
+  if (Index < FirstMapTextureIndex) {
+    Textures[Index]->HashNext = TextureHash[HashIndex];
+  } else {
+    MapTextures[Index-FirstMapTextureIndex]->HashNext = TextureHash[HashIndex];
+  }
   TextureHash[HashIndex] = Index;
-  //HashIndex = 1006;
-  /*
-  if (HashIndex == 1006) {
-    for (int n = TextureHash[HashIndex]; n >= 0; n = Textures[n]->HashNext) {
-      if (n >= 0 && n < Textures.length()) {
-        fprintf(stderr, "  n=%d  <%s>  %p\n", n, *Textures[n]->Name, Textures[n]);
-      } else {
-        fprintf(stderr, "  n=%d  <#$$#^&@!%%@$5>\n", n);
-      }
-    }
-  }
-  */
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VTextureManager::RemoveFromHash
-//
-//==========================================================================
-void VTextureManager::RemoveFromHash (int Index) {
-  guard(VTextureManager::RemoveFromHash);
-  int HashIndex = GetTypeHash(Textures[Index]->Name)&(HASH_SIZE-1);
-  //fprintf(stderr, "RemoveFromHash: <%s>; HashIndex=%d; i=%d; len=%d; [hi]=%d\n", *Textures[Index]->Name, HashIndex, Index, Textures.length(), TextureHash[HashIndex]);
-  int *Prev = &TextureHash[HashIndex];
-  while (*Prev != -1 && *Prev != Index) {
-    Prev = &Textures[*Prev]->HashNext;
-  }
-  check(*Prev != -1);
-  *Prev = Textures[Index]->HashNext;
   unguard;
 }
 
@@ -324,23 +362,21 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
       currname = VName(*Name, VName::AddLower8);
     }
     int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
-    for (int i = TextureHash[HashIndex]; i >= 0; i = Textures[i]->HashNext) {
-      //fprintf(stderr, "CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d\n", *currname, HashIndex, i, Textures.length());
+    for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
       if (i < 0 || i >= Textures.length()) continue;
-      if (Textures[i]->Name != currname) continue;
-      //GCon->Logf("CheckNumForName: <%s>; HashIndex=%d; i=%d; len=%d; type=%d", *currname, HashIndex, i, Textures.length(), Textures[i]->Type);
+      if (getTxByIndex(i)->Name != currname) continue;
 
-      if (Type == TEXTYPE_Any || Textures[i]->Type == Type ||
-          (bOverload && Textures[i]->Type == TEXTYPE_Overload))
+      if (Type == TEXTYPE_Any || getTxByIndex(i)->Type == Type ||
+          (bOverload && getTxByIndex(i)->Type == TEXTYPE_Overload))
       {
-        if (Textures[i]->Type == TEXTYPE_Null) return 0;
+        if (getTxByIndex(i)->Type == TEXTYPE_Null) return 0;
         return i;
       }
       /*
-      if ((Type == TEXTYPE_Wall && Textures[i]->Type == TEXTYPE_WallPatch) ||
-          (Type == TEXTYPE_WallPatch && Textures[i]->Type == TEXTYPE_Wall))
+      if ((Type == TEXTYPE_Wall && getTxByIndex(i)->Type == TEXTYPE_WallPatch) ||
+          (Type == TEXTYPE_WallPatch && getTxByIndex(i)->Type == TEXTYPE_Wall))
       {
-        if (Textures[i]->Type == TEXTYPE_Null) return 0;
+        if (getTxByIndex(i)->Type == TEXTYPE_Null) return 0;
         return i;
       }
       */
@@ -372,7 +408,7 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
       if (VStr::ICmp(*Name, "ml_sky1") == 0) {
         GCon->Logf("!!!!!!!!!!!!!!!!!!");
         for (int f = 0; f < Textures.length(); ++f) {
-          if (VStr::ICmp(*Name, *Textures[f]->Name) == 0) {
+          if (VStr::ICmp(*Name, *getTxByIndex(f)->Name) == 0) {
             GCon->Logf("****************** FOUND ******************");
           }
         }
@@ -393,8 +429,11 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
 //==========================================================================
 int VTextureManager::FindTextureByLumpNum (int LumpNum) {
   guard(VTextureManager::FindTextureByLumpNum);
-  for (int i = 0; i < Textures.Num(); ++i) {
+  for (int i = 0; i < Textures.length(); ++i) {
     if (Textures[i]->SourceLump == LumpNum) return i;
+  }
+  for (int i = 0; i < MapTextures.length(); ++i) {
+    if (MapTextures[i]->SourceLump == LumpNum) return i+FirstMapTextureIndex;
   }
   return -1;
   unguard;
@@ -407,10 +446,8 @@ int VTextureManager::FindTextureByLumpNum (int LumpNum) {
 //
 //==========================================================================
 VName VTextureManager::GetTextureName (int TexNum) {
-  guard(VTextureManager::GetTextureName);
-  if (TexNum < 0 || TexNum >= Textures.Num()) return NAME_None;
-  return Textures[TexNum]->Name;
-  unguard;
+  VTexture *tx = getTxByIndex(TexNum);
+  return (tx ? tx->Name : NAME_None);
 }
 
 
@@ -420,9 +457,8 @@ VName VTextureManager::GetTextureName (int TexNum) {
 //
 //==========================================================================
 float VTextureManager::TextureWidth (int TexNum) {
-  guard(VTextureManager::TextureWidth);
-  return Textures[TexNum]->GetWidth()/Textures[TexNum]->SScale;
-  unguard;
+  VTexture *tx = getTxByIndex(TexNum);
+  return (tx ? tx->GetWidth()/tx->SScale : 0);
 }
 
 
@@ -432,9 +468,8 @@ float VTextureManager::TextureWidth (int TexNum) {
 //
 //==========================================================================
 float VTextureManager::TextureHeight (int TexNum) {
-  guard(VTextureManager::TextureHeight);
-  return Textures[TexNum]->GetHeight()/Textures[TexNum]->TScale;
-  unguard;
+  VTexture *tx = getTxByIndex(TexNum);
+  return (tx ? tx->GetHeight()/tx->TScale : 0);
 }
 
 
@@ -444,9 +479,8 @@ float VTextureManager::TextureHeight (int TexNum) {
 //
 //==========================================================================
 void VTextureManager::SetFrontSkyLayer (int tex) {
-  guard(VTextureManager::SetFrontSkyLayer);
-  Textures[tex]->SetFrontSkyLayer();
-  unguard;
+  VTexture *tx = getTxByIndex(tex);
+  if (tx) tx->SetFrontSkyLayer();
 }
 
 
@@ -456,17 +490,15 @@ void VTextureManager::SetFrontSkyLayer (int tex) {
 //
 //==========================================================================
 void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
-  guard(VTextureManager::GetTextureInfo);
-  if (TexNum < 0) {
-    memset((void *)info, 0, sizeof(*info));
-  } else {
-    VTexture *Tex = Textures[TexNum];
+  VTexture *Tex = getTxByIndex(TexNum);
+  if (Tex) {
     info->width = Tex->GetWidth();
     info->height = Tex->GetHeight();
     info->xoffset = Tex->SOffset;
     info->yoffset = Tex->TOffset;
+  } else {
+    memset((void *)info, 0, sizeof(*info));
   }
-  unguard;
 }
 
 
@@ -797,7 +829,7 @@ int VTextureManager::AddPatchShaded (VName Name, int Type, int shade, bool Silen
 
 //==========================================================================
 //
-//  CheckNumForNameAndForce
+//  VTextureManager::CheckNumForNameAndForce
 //
 //  find or force-load texture
 //
@@ -849,7 +881,7 @@ void VTextureManager::AddTextures () {
     NamesFile = W_LumpFile(Lump);
     LumpTex1 = W_CheckNumForNameInFile(NAME_texture1, NamesFile);
     LumpTex2 = W_CheckNumForNameInFile(NAME_texture2, NamesFile);
-    FirstTex = Textures.Num();
+    FirstTex = Textures.length();
     AddTexturesLump(Lump, LumpTex1, FirstTex, true, numberedNames);
     AddTexturesLump(Lump, LumpTex2, FirstTex, false, numberedNames);
   }
@@ -859,7 +891,7 @@ void VTextureManager::AddTextures () {
   int LastTex2 = W_CheckNumForName(NAME_texture2);
   if (LastTex1 >= 0 && (LastTex1 == LumpTex1 || W_LumpFile(LastTex1) <= NamesFile)) LastTex1 = -1;
   if (LastTex2 >= 0 && (LastTex2 == LumpTex2 || W_LumpFile(LastTex2) <= NamesFile)) LastTex2 = -1;
-  FirstTex = Textures.Num();
+  FirstTex = Textures.length();
   AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex1, FirstTex, true, numberedNames);
   AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex2, FirstTex, false, numberedNames);
 
@@ -893,6 +925,8 @@ void VTextureManager::AddTextures () {
 void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex, bool First, TArray<VName> &numberedNames) {
   guard(VTextureManager::AddTexturesLump);
   if (TexLump < 0) return;
+
+  check(inMapTextures == 0);
 
   // load the patch names from pnames.lmp
   VStream *Strm = W_CreateLumpReaderNum(NamesLump);
@@ -1001,6 +1035,8 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
 //
 //==========================================================================
 void VTextureManager::AddHiResTextures () {
+  check(inMapTextures == 0);
+
   guard(VTextureManager::AddHiResTextures);
   for (int Lump = W_IterateNS(-1, WADNS_HiResTextures); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_HiResTextures)) {
     VName Name = W_LumpName(Lump);
@@ -1229,7 +1265,7 @@ void P_InitAnimated () {
     memset(&ad, 0, sizeof(ad));
     memset(&fd, 0, sizeof(fd));
 
-    ad.StartFrameDef = FrameDefs.Num();
+    ad.StartFrameDef = FrameDefs.length();
 
     // lump indicies aren't the best way to make animation frames
     // let's do some guesswork
@@ -1328,7 +1364,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   bool missing = ignore && optional;
 
   int CurType = 0;
-  ad.StartFrameDef = FrameDefs.Num();
+  ad.StartFrameDef = FrameDefs.length();
   ad.Type = ANIM_Normal;
   ad.allowDecals = 0;
   for (;;) {
@@ -1390,13 +1426,13 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     if (!ignore) FrameDefs.Append(fd);
   }
 
-  if (!ignore && ad.Type == ANIM_Normal && FrameDefs.Num()-ad.StartFrameDef < 2) {
+  if (!ignore && ad.Type == ANIM_Normal && FrameDefs.length()-ad.StartFrameDef < 2) {
     sc->Error(va("AnimDef '%s' has framecount < 2", *adefname));
   }
 
   if (!ignore) {
     if (ad.Type == ANIM_Normal) {
-      ad.NumFrames = FrameDefs.Num()-ad.StartFrameDef;
+      ad.NumFrames = FrameDefs.length()-ad.StartFrameDef;
       ad.CurrentFrame = ad.NumFrames-1;
     } else {
       ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
@@ -1416,7 +1452,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
 //==========================================================================
 static int AddSwitchDef (TSwitch *Switch) {
   guard(AddSwitchDef);
-  for (int i = 0; i < Switches.Num(); ++i) {
+  for (int i = 0; i < Switches.length(); ++i) {
     if (Switches[i]->Tex == Switch->Tex) {
       delete Switches[i];
       Switches[i] = nullptr;
@@ -1478,14 +1514,14 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
   }
   //GCon->Logf("*============*");
 
-  if (!Frames.Num()) sc->Error("Switch state needs at least one frame");
+  if (!Frames.length()) sc->Error("Switch state needs at least one frame");
   if (Bad) return nullptr;
 
   TSwitch *Def = new TSwitch();
   Def->Sound = Sound;
-  Def->NumFrames = Frames.Num();
-  Def->Frames = new TSwitchFrame[Frames.Num()];
-  for (int i = 0; i < Frames.Num(); ++i) {
+  Def->NumFrames = Frames.length();
+  Def->Frames = new TSwitchFrame[Frames.length()];
+  for (int i = 0; i < Frames.length(); ++i) {
     Def->Frames[i].Texture = Frames[i].Texture;
     Def->Frames[i].BaseTime = Frames[i].BaseTime;
     Def->Frames[i].RandomRange = Frames[i].RandomRange;
@@ -1613,8 +1649,8 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
     A.Texture = BaseTex;
     A.OpenSound = OpenSound;
     A.CloseSound = CloseSound;
-    A.NumFrames = Frames.Num();
-    A.Frames = new vint32[Frames.Num()];
+    A.NumFrames = Frames.length();
+    A.Frames = new vint32[Frames.length()];
     for (int i = 0; i < A.NumFrames; i++) A.Frames[i] = Frames[i];
   }
   unguard;
@@ -1855,7 +1891,7 @@ void P_InitSwitchList () {
 //==========================================================================
 VAnimDoorDef *R_FindAnimDoor (vint32 BaseTex) {
   guard(R_FindAnimDoor);
-  for (int i = 0; i < AnimDoorDefs.Num(); ++i) {
+  for (int i = 0; i < AnimDoorDefs.length(); ++i) {
     if (AnimDoorDefs[i].Texture == BaseTex) return &AnimDoorDefs[i];
   }
   return nullptr;
@@ -1872,7 +1908,7 @@ VAnimDoorDef *R_FindAnimDoor (vint32 BaseTex) {
 void R_AnimateSurfaces () {
   guard(R_AnimateSurfaces);
   // animate flats and textures
-  for (int i = 0; i < AnimDefs.Num(); ++i) {
+  for (int i = 0; i < AnimDefs.length(); ++i) {
     animDef_t &ad = AnimDefs[i];
     ad.Time -= host_frametime;
     for (int trycount = 128; trycount > 0; --trycount) {
@@ -2000,6 +2036,7 @@ void R_InitTexture () {
   guard(R_InitTexture);
   GTextureManager.Init();
   InitFTAnims(); // Init flat and texture animations
+  //GTextureManager.FinishedKnownTextures();
   unguard;
 }
 
@@ -2012,14 +2049,14 @@ void R_InitTexture () {
 void R_ShutdownTexture () {
   guard(R_ShutdownTexture);
   // clean up animation and switch definitions
-  for (int i = 0; i < Switches.Num(); ++i) {
+  for (int i = 0; i < Switches.length(); ++i) {
     delete Switches[i];
     Switches[i] = nullptr;
   }
   Switches.Clear();
   AnimDefs.Clear();
   FrameDefs.Clear();
-  for (int i = 0; i < AnimDoorDefs.Num(); ++i) {
+  for (int i = 0; i < AnimDoorDefs.length(); ++i) {
     delete[] AnimDoorDefs[i].Frames;
     AnimDoorDefs[i].Frames = nullptr;
   }
