@@ -132,6 +132,7 @@ class VLevelInfo : public VThinker {
   float AirControl;
   int Infighting;
   TArray<VMapSpecialAction> SpecialActions;
+  TArray<TVec> MapMarkers;
 
 public:
   //VLevelInfo ();

@@ -25,17 +25,51 @@
 //**
 //**************************************************************************
 // https://zdoom.org/wiki/Classes:MapMarker
-// TODO
-class MapMarker : Actor;
+class MapMarker : Actor  __mobjinfo__(9040);
+
+int markerId;
+
+/*
+A map marker is an actor which shows up on the automap, and can be used
+to point out points of interest, specific monsters, etc. Inherit from
+this class to create your own custom map marker. Setting the thing's
+special arguments can be used to control its behavior. If the first
+argument is non-zero, the map marker will follow the thing with the same
+TID as specified. If the second argument is 1, then the map marker will
+not show up until the player has seen the sector it resides in. You can
+use Thing_Activate and Thing_Deactivate to turn map markers on and off.
+*/
 
 
-// just remove it for now
-states
-{
-Spawn:
-  TNT1 A 0
-  Stop
+//==========================================================================
+//
+//  OnMapSpawn
+//
+//==========================================================================
+override void OnMapSpawn (mthing_t *mthing) {
+  ::OnMapSpawn(mthing);
+  markerId = Level.AddMapMarker(Origin);
+  //mthing->arg1
 }
+
+
+//==========================================================================
+//
+//  Destroy
+//
+//==========================================================================
+override void Destroy () {
+  Level.RemoveMapMarker(markerId);
+  ::Destroy();
+}
+
+
+states {
+Spawn:
+  TNT1 A -1
+  Loop
+}
+
 
 defaultproperties {
   bDormant = true;
@@ -48,7 +82,7 @@ defaultproperties {
   bNoBlood = true;
 
   Health = 0;
-  Radius = 8.0;
-  Height = 8.0;
+  Radius = 0;
+  Height = 0;
   Mass = 99999.0;
 }
