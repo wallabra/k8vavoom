@@ -139,8 +139,10 @@ void VLevel::FixKnownMapErrors () {
   eventKnownMapBugFixer();
 
   if (LevelFlags&LF_ForceAllowSeveralPObjInSubsector) pobj_allow_several_in_subsector_override = 1;
+#ifdef CLIENT
   if (LevelFlags&LF_ForceNoTexturePrecache) r_precache_textures_override = 0;
   if (LevelFlags&LF_ForceNoPrecalcStaticLights) r_precalc_static_lights_override = 0;
+#endif
 }
 
 
@@ -302,6 +304,8 @@ void VLevel::ClearAllLevelData () {
   delete[] Things;
   Things = nullptr;
   NumThings = 0;
+
+  GTextureManager.ResetToKnownTextures();
 }
 
 
@@ -678,6 +682,8 @@ void VLevel::LoadMap (VName AMapName) {
   decanimuid = 0;
 
 load_again:
+  GTextureManager.ResetToKnownTextures();
+
   pobj_allow_several_in_subsector_override = 0;
 #ifdef CLIENT
   ldr_extrasamples_override = -1;
