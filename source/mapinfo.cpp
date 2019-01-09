@@ -128,16 +128,16 @@ void P_SetupMapinfoPlayerClasses () {
   for (int f = 0; f < MapInfoPlayerClasses.length(); ++f) {
     VClass *Class = VClass::FindClassNoCase(*MapInfoPlayerClasses[f]);
     if (!Class) {
-      GCon->Logf("No player class '%s'", *MapInfoPlayerClasses[f]);
+      GCon->Logf(NAME_Warning, "No player class '%s'", *MapInfoPlayerClasses[f]);
       continue;
     }
     VClass *PPClass = VClass::FindClass("PlayerPawn");
     if (!PPClass) {
-      GCon->Logf("Can't find PlayerPawn class");
+      GCon->Logf(NAME_Warning, "Can't find PlayerPawn class");
       return;
     }
     if (!Class->IsChildOf(PPClass)) {
-      GCon->Logf("'%s' is not a player pawn class", *MapInfoPlayerClasses[f]);
+      GCon->Logf(NAME_Warning, "'%s' is not a player pawn class", *MapInfoPlayerClasses[f]);
       continue;
     }
     GGameInfo->PlayerClasses.Append(Class);
@@ -204,7 +204,7 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
       } else {
         cls = VClass::FindClassNoCase(*cname);
         if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
-        if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
+        if (!cls) GCon->Logf(NAME_Warning, "MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
       }
       nfo.Class = cls;
       nfo.GameFilter = GAME_Any;
@@ -233,7 +233,7 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
     } else {
       cls = VClass::FindClassNoCase(*cname);
       if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
-      if (!cls) GCon->Logf("MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
+      if (!cls) GCon->Logf(NAME_Warning, "MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
     }
     //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);
     if (!cls) {
@@ -849,7 +849,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
           break;
         }
       }
-      if (!A.Special) GCon->Logf("Unknown action special '%s'", *sc->String);
+      if (!A.Special) GCon->Logf(NAME_Warning, "Unknown action special '%s'", *sc->String);
       memset(A.Args, 0, sizeof(A.Args));
       for (int i = 0; i < 5 && sc->Check(","); ++i) {
         sc->ExpectNumber();
@@ -1358,6 +1358,9 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
     if (sc->Check("AmmoFactor")) {
       sc->ExpectFloat();
       sdef->AmmoFactor = sc->Float;
+    } else if (sc->Check("DropAmmoFactor")) {
+      sc->ExpectFloat();
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill setting 'DropAmmoFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("DoubleAmmoFactor")) {
       sc->ExpectFloat();
       sdef->DoubleAmmoFactor = sc->Float;
@@ -1380,7 +1383,7 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
       sc->ExpectNumber();
       sdef->RespawnLimit = sc->Number;
     } else if (sc->Check("NoPain")) {
-      GCon->Logf("MAPINFO:%s: skill param 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
@@ -1483,7 +1486,7 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("DropAmmoFactor")) {
       sc->Expect("=");
       sc->ExpectFloat();
-      GCon->Logf("MAPINFO:%s: skill setting 'DropAmmoFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill setting 'DropAmmoFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("DamageFactor")) {
       sc->Expect("=");
       sc->ExpectFloat();
@@ -1511,7 +1514,7 @@ static void ParseSkillDef (VScriptParser *sc) {
         else if (sc->Check("Normal")) sdef->SpawnFilter = 4;
         else if (sc->Check("Hard")) sdef->SpawnFilter = 8;
         else if (sc->Check("Nightmare")) sdef->SpawnFilter = 16;
-        else { sc->ExpectString(); GCon->Logf("MAPINFO:%s: unknown spawnfilter '%s'", *sc->GetLoc().toStringNoCol(), *sc->String); }
+        else { sc->ExpectString(); GCon->Logf(NAME_Warning, "MAPINFO:%s: unknown spawnfilter '%s'", *sc->GetLoc().toStringNoCol(), *sc->String); }
       }
     } else if (sc->Check("ACSReturn")) {
       sc->Expect("=");
@@ -1552,7 +1555,7 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("EasyBossBrain")) {
       sdef->Flags |= SKILLF_EasyBossBrain;
     } else if (sc->Check("EasyKey")) {
-      GCon->Logf("MAPINFO:%s: skill param 'EasyKey' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'EasyKey' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("FastMonsters")) {
       sdef->Flags |= SKILLF_FastMonsters;
     } else if (sc->Check("SlowMonsters")) {
@@ -1563,45 +1566,45 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("AutoUseHealth")) {
       sdef->Flags |= SKILLF_AutoUseHealth;
     } else if (sc->Check("ReplaceActor")) {
-      GCon->Logf("MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectString();
       sc->Expect(",");
       sc->ExpectString();
     } else if (sc->Check("MonsterHealth")) {
-      GCon->Logf("MAPINFO:%s: skill param 'MonsterHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'MonsterHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("FriendlyHealth")) {
-      GCon->Logf("MAPINFO:%s: skill param 'FriendlyHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'FriendlyHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("NoPain")) {
-      GCon->Logf("MAPINFO:%s: skill param 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'NoPain' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("DefaultSkill")) {
-      GCon->Logf("MAPINFO:%s: skill param 'DefaultSkill' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'DefaultSkill' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("ArmorFactor")) {
-      GCon->Logf("MAPINFO:%s: skill param 'ArmorFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'ArmorFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("NoInfighting")) {
-      GCon->Logf("MAPINFO:%s: skill param 'NoInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'NoInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("TotalInfighting")) {
-      GCon->Logf("MAPINFO:%s: skill param 'TotalInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'TotalInfighting' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("HealthFactor")) {
-      GCon->Logf("MAPINFO:%s: skill param 'HealthFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'HealthFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("KickbackFactor")) {
-      GCon->Logf("MAPINFO:%s: skill param 'KickbackFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'KickbackFactor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectFloat();
     } else if (sc->Check("NoMenu")) {
-      GCon->Logf("MAPINFO:%s: skill param 'NoMenu' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'NoMenu' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("PlayerRespawn")) {
-      GCon->Logf("MAPINFO:%s: skill param 'PlayerRespawn' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'PlayerRespawn' is not implemented yet.", *sc->GetLoc().toStringNoCol());
     } else if (sc->Check("ReplaceActor")) {
-      GCon->Logf("MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       for (;;) {
         sc->ExpectString();
@@ -2081,7 +2084,7 @@ void P_SetParTime (VName Map, int Par) {
         return;
       }
     }
-    GCon->Logf("WARNING! No such map '%s'", *Map);
+    GCon->Logf(NAME_Warning, "No such map '%s' for par time", *Map);
   } else {
     ParTimeInfo &pi = partimes.alloc();
     pi.MapName = Map;
