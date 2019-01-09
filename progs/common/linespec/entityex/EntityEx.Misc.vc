@@ -231,7 +231,7 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
 //  Teleport
 //
 //==========================================================================
-final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepDir) {
+final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepDir, optional bool ForceTelestomp) {
   float fogDelta;
   EntityEx fog;
   bool ResetPitch = false;
@@ -257,13 +257,13 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
       Dst.z = DstFloorZ;
     }
   }
-  if (!TeleportMove(Dst)) return false;
+  if (!TeleportMove(Dst, ForceTelestomp!optional)) return false;
   if (bIsPlayer && Player.MO == self) {
     Player.ViewOrg = Origin+vector(0.0, 0.0, PlayerEx(Player).ViewHeight);
     if (ResetPitch) Angles.pitch = 0.0;
   }
   // spawn teleport fog at source and destination
-  fogDelta = bMissile ? 0.0 : LineSpecialGameInfo(Level.Game).TeleFogHeight;
+  fogDelta = (bMissile ? 0.0 : LineSpecialGameInfo(Level.Game).TeleFogHeight);
   if (SrcFog) Spawn(TeleportFog, oldOrg+vector(0.0, 0.0, fogDelta));
   if (DstFog) Spawn(TeleportFog, Origin+vector(20.0*cos(angle), 20.0*sin(angle), fogDelta));
   if (!KeepDir) {
