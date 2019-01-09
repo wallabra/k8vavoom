@@ -176,6 +176,7 @@ public:
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
+  virtual void FlushOneTexture (VTexture *) = 0; // unload one texture
   virtual void FlushTextures () = 0; // unload all textures
 
   // polygon drawing

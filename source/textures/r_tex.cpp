@@ -258,12 +258,15 @@ void VTextureManager::ResetMapTextures () {
 
   GCon->Logf(NAME_Dev, "*** *** MapTextures.length()=%d *** ***", MapTextures.length());
 #ifdef CLIENT
-  if (Drawer) Drawer->FlushTextures();
+  if (Drawer && r_reupload_textures) Drawer->FlushTextures();
 #endif
   for (int f = MapTextures.length()-1; f >= 0; --f) {
     if (developer) {
       if (MapTextures[f]) GCon->Logf(NAME_Dev, "removing map texture #%d (%s)", f, *MapTextures[f]->Name);
     }
+#ifdef CLIENT
+    if (Drawer && !r_reupload_textures && MapTextures[f]) Drawer->FlushOneTexture(MapTextures[f]);
+#endif
     delete MapTextures[f];
     MapTextures[f] = nullptr;
   }
