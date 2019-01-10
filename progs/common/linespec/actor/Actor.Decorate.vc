@@ -757,6 +757,11 @@ final void common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   if (!tgt) return;
   if (!tgt.Sector) return; // just in case
+  if (IsAnimatedTexture(tgt.Sector.floor.pic)) {
+    //print("ANIM FLOOR: %s", GetTextureName(tgt.Sector.floor.pic));
+    DoJump(label);
+    return;
+  }
   auto tname = string(GetTextureName(tgt.Sector.floor.pic));
   if (globmatch("*water*", tname, caseSensitive:false) ||
       globmatch("*nukage*", tname, caseSensitive:false) ||
