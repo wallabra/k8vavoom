@@ -26,6 +26,9 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net/network.h"
+#ifdef CLIENT
+# include "drawer.h"
+#endif
 
 
 VCmdBuf GCmdBuf;
@@ -180,6 +183,17 @@ void VCommand::InsertCLICommands () {
   bool in_cmd = false;
   for (int i = 1; i < GArgs.Count(); ++i) {
     if (in_cmd) {
+      // check for number
+      if (GArgs[i] && (GArgs[i][0] == '-' || GArgs[i][0] == '+')) {
+        float v;
+        if (VStr::convertFloat(GArgs[i], &v)) {
+          cstr += ' ';
+          cstr += '"';
+          cstr += VStr(GArgs[i]).quote();
+          cstr += '"';
+          continue;
+        }
+      }
       if (!GArgs[i] || GArgs[i][0] == '-' || GArgs[i][0] == '+') {
         in_cmd = false;
         //GCmdBuf << "\n";
@@ -201,6 +215,8 @@ void VCommand::InsertCLICommands () {
   }
   //if (in_cmd) GCmdBuf << "\n";
   if (in_cmd) cstr += '\n';
+
+  //GCon->Logf("===\n%s\n===", *cstr);
 
   if (!cstr.isEmpty()) GCmdBuf.Insert(cstr);
 }
@@ -544,10 +560,16 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
 
   if (Args[0] == "__run_cli_commands__") {
     if (!cliInserted) {
+#ifdef CLIENT
+      if (!Drawer || !Drawer->IsInited()) {
+        GCmdBuf.Insert("wait\n__run_cli_commands__\n");
+        return;
+      }
+#endif
       cliInserted = true;
       InsertCLICommands();
-      return;
     }
+    return;
   }
 
   if (ParsingKeyConf) {
@@ -961,5 +983,5 @@ COMMAND(__k8_run_first_map) {
     return;
   }
 
-  GCmdBuf << va("map \"%s\"\n", *VStr(*startMap).quote());
+  GCmdBuf.Insert(va("map \"%s\"\n", *VStr(*startMap).quote()));
 }
