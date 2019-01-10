@@ -183,7 +183,7 @@ static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"sho
 static int grid = 0;
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called
-static int amBigMode = -1; // -1: unknown
+static int amWholeScale = -1; // -1: unknown
 
 // location of window on screen
 static int f_x;
@@ -385,6 +385,34 @@ static void AM_restoreScaleAndLoc () {
 
 //==========================================================================
 //
+//  AM_minOutWindowScale
+//
+//  set the window scale to the maximum size
+//
+//==========================================================================
+static void AM_minOutWindowScale () {
+  scale_mtof = min_scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
+  AM_activateNewScale();
+}
+
+
+//==========================================================================
+//
+//  AM_maxOutWindowScale
+//
+//  set the window scale to the minimum size
+//
+//==========================================================================
+static void AM_maxOutWindowScale () {
+  scale_mtof = max_scale_mtof;
+  scale_ftom = 1.0/scale_mtof;
+  AM_activateNewScale();
+}
+
+
+//==========================================================================
+//
 //  AM_findMinMaxBoundaries
 //
 //  Determines bounding box of all vertices, sets global variables
@@ -532,34 +560,6 @@ static void AM_initVariables () {
 
 //==========================================================================
 //
-//  AM_minOutWindowScale
-//
-//  set the window scale to the maximum size
-//
-//==========================================================================
-static void AM_minOutWindowScale () {
-  scale_mtof = min_scale_mtof;
-  scale_ftom = 1.0/scale_mtof;
-  AM_activateNewScale();
-}
-
-
-//==========================================================================
-//
-//  AM_maxOutWindowScale
-//
-//  set the window scale to the minimum size
-//
-//==========================================================================
-static void AM_maxOutWindowScale () {
-  scale_mtof = max_scale_mtof;
-  scale_ftom = 1.0/scale_mtof;
-  AM_activateNewScale();
-}
-
-
-//==========================================================================
-//
 //  AM_loadPics
 //
 //==========================================================================
@@ -586,7 +586,7 @@ static void AM_loadPics () {
 //==========================================================================
 static void AM_LevelInit () {
   leveljuststarted = 0;
-  amBigMode = -1;
+  amWholeScale = -1;
 
   f_x = f_y = 0;
   f_w = ScreenWidth;
@@ -628,13 +628,15 @@ static void AM_Start () {
   }
   AM_initVariables();
   AM_loadPics();
-  if (amBigMode < 0) {
-    amBigMode = (am_default_whole ? 1 : 0);
-    if (amBigMode) {
+  if (amWholeScale < 0) {
+    amWholeScale = (am_default_whole ? 1 : 0);
+    if (amWholeScale) {
       AM_saveScaleAndLoc();
       AM_minOutWindowScale();
     }
   }
+  mtof_zoommul = 1.0;
+  ftom_zoommul = 1.0;
 }
 
 
@@ -669,19 +671,25 @@ bool AM_Responder (event_t *ev) {
         if (!am_follow_player) m_paninc.y = -FTOM(F_PANINC/2.0); else rc = false;
         break;
       case AM_ZOOMOUTKEY: // zoom out
-        mtof_zoommul = M_ZOOMOUT;
-        ftom_zoommul = M_ZOOMIN;
+        if (!amWholeScale) {
+          mtof_zoommul = M_ZOOMOUT;
+          ftom_zoommul = M_ZOOMIN;
+        }
         break;
       case AM_ZOOMINKEY: // zoom in
-        mtof_zoommul = M_ZOOMIN;
-        ftom_zoommul = M_ZOOMOUT;
+        if (!amWholeScale) {
+          mtof_zoommul = M_ZOOMIN;
+          ftom_zoommul = M_ZOOMOUT;
+        }
         break;
       case AM_ENDKEY:
         AM_Stop();
         break;
       case AM_GOBIGKEY:
-        amBigMode = !amBigMode;
-        if (amBigMode) {
+        mtof_zoommul = 1.0;
+        ftom_zoommul = 1.0;
+        amWholeScale = (amWholeScale ? 0 : 1);
+        if (amWholeScale) {
           AM_saveScaleAndLoc();
           AM_minOutWindowScale();
         } else {
