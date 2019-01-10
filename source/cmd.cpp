@@ -936,3 +936,30 @@ COMMAND(Exec) {
 COMMAND(Wait) {
   GCmdBuf.Wait = true;
 }
+
+
+//==========================================================================
+//
+//  __k8_run_first_map
+//
+//  used for "-k8runmap" if mapinfo found
+//
+//==========================================================================
+COMMAND(__k8_run_first_map) {
+  if (P_GetNumEpisodes() == 0) {
+    GCon->Logf("ERROR: No eposode info found!");
+    return;
+  }
+
+  VEpisodeDef *edef = P_GetEpisodeDef(0);
+
+  VName startMap = edef->Name;
+  if (edef->TeaserName != NAME_None && !IsMapPresent(startMap)) startMap = edef->TeaserName;
+
+  if (startMap == NAME_None) {
+    GCon->Logf("ERROR: Starting map not found!");
+    return;
+  }
+
+  GCmdBuf << va("map \"%s\"\n", *VStr(*startMap).quote());
+}

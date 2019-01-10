@@ -1168,6 +1168,8 @@ void FL_Init () {
     mapname = va("map %s\n", *mapname);
     //GCmdBuf.Insert(mapname);
     fsys_warp_cmd = mapname;
+  } else if (doStartMap && fsys_warp_cmd.isEmpty() && mapinfoFound) {
+    fsys_warp_cmd = "__k8_run_first_map";
   }
 
   unguard;
