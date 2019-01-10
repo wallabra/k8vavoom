@@ -152,6 +152,7 @@ override void OnDraw () {
   scope(exit) SetCvar('gl_pic_filtering', oldflt ? 1 : 0);
   SetCvar('gl_pic_filtering', GetCvarB('gl_font_filtering') ? 1 : 0);
 
+  picinfo_t pinf;
   if (pic_M_SLDLT != -1) {
     xx = CursorXOffs;
     DrawPic(xx, 0, pic_M_SLDLT);
@@ -161,7 +162,8 @@ override void OnDraw () {
       xx += 8;
     }
     DrawPic(xx, 0, pic_M_SLDRT);
-    xt = xx+8;
+    R_GetPicInfo(pic_M_SLDRT, &pinf);
+    xt = xx+pinf.width;
     xx = CursorXOffs+30+int((Value-MinValue)*100.0/(MaxValue-MinValue));
     DrawPic(xx, 7, pic_M_SLDKB);
   } else {
@@ -173,9 +175,14 @@ override void OnDraw () {
       xx += 8;
     }
     DrawPic(xx, 0, pic_M_THERMR);
+    R_GetPicInfo(pic_M_THERMR, &pinf);
+    xt = xx+pinf.width;
     xx = CursorXOffs+8+6+int((Value-MinValue)*100.0/(MaxValue-MinValue));
     DrawPic(xx, 0, pic_M_THERMO);
   }
+
+  SetTextAlign(hleft, vtop);
+  DrawText(xt+3, 3, va("%f", Value), CR_BLACK);
 }
 
 
