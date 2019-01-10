@@ -1165,7 +1165,7 @@ void FL_Init () {
 
   if (doStartMap && fsys_warp_cmd.isEmpty() && !mapinfoFound && mapnum > 0 && mapname.length()) {
     GCon->Logf(NAME_Init, "FOUND MAP: %s", *mapname);
-    mapname = va("map %s\n", *mapname);
+    mapname = va("map \"%s\"\n", *mapname.quote());
     //GCmdBuf.Insert(mapname);
     fsys_warp_cmd = mapname;
   } else if (doStartMap && fsys_warp_cmd.isEmpty() && mapinfoFound) {
