@@ -310,7 +310,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 
           opening_t *open = LineOpenings(li, hit_point, stopat3dmidtex);
           if (open) {
-            print(":: line #%d ::", li-&XLevel.Lines[0]);
+            print(":: line #%d (flags=0x%08x) ::", li-&XLevel.Lines[0], li->flags);
             for (opening_t *o = open; o; o = o->next) {
               print(" opening:");
               print("  open top: %s", o->top);
