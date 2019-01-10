@@ -511,6 +511,7 @@ static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const
 }
 
 #endif // defined(HAS_64_BIT_INTRINSICS)
+#endif // defined(HAS_UINT128)
 
 #ifdef RYU_32_BIT_PLATFORM
 
@@ -574,7 +575,6 @@ static inline uint64_t div1e8(const uint64_t x) {
 }
 
 #endif // RYU_32_BIT_PLATFORM
-#endif // defined(HAS_UINT128)
 
 
 #define DOUBLE_MANTISSA_BITS 52
