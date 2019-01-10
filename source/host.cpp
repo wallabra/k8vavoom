@@ -219,6 +219,16 @@ void Host_Init () {
 
   //GCon->Logf("WARP: n0=%d; n1=%d; cmd=<%s>", fsys_warp_n0, fsys_warp_n1, *fsys_warp_cmd);
 
+
+#ifndef CLIENT
+  bool wasWarp = false;
+
+  if (GGameInfo->NetMode == NM_None) {
+    //GCmdBuf << "MaxPlayers 4\n";
+    VCommand::cliPreCmds += "MaxPlayers 4\n";
+  }
+#endif
+
   if (fsys_warp_n0 >= 0 && fsys_warp_n1 < 0) {
     VName maplump = P_TranslateMapEx(fsys_warp_n0);
     if (maplump != NAME_None) {
@@ -227,21 +237,33 @@ void Host_Init () {
       VStr mcmd = "map ";
       mcmd += *maplump;
       mcmd += "\n";
-      GCmdBuf.Insert(mcmd);
+      //GCmdBuf.Insert(mcmd);
+      VCommand::cliPreCmds += mcmd;
       fsys_warp_cmd = VStr();
+#ifndef CLIENT
+      wasWarp = true;
+#endif
     }
   }
 
-  if (fsys_warp_n0 >= 0 && fsys_warp_cmd.length()) {
-    GCmdBuf.Insert(fsys_warp_cmd);
+  if (/*fsys_warp_n0 >= 0 &&*/ fsys_warp_cmd.length()) {
+    //GCmdBuf.Insert(fsys_warp_cmd);
+    VCommand::cliPreCmds += fsys_warp_cmd;
+    if (!fsys_warp_cmd.endsWith("\n")) VCommand::cliPreCmds += '\n';
+#ifndef CLIENT
+    wasWarp = true;
+#endif
   }
 
   GCmdBuf.Exec();
 
 #ifndef CLIENT
-  if (GGameInfo->NetMode == NM_None) {
-    GCmdBuf << "MaxPlayers 4\n";
-    GCmdBuf << "Map " << *P_TranslateMap(1) << "\n";
+  if (GGameInfo->NetMode == NM_None && !wasWarp) {
+    //GCmdBuf << "MaxPlayers 4\n";
+    //GCmdBuf << "Map " << *P_TranslateMap(1) << "\n";
+    VCommand::cliPreCmds += "Map \"";
+    VCommand::cliPreCmds += VStr(*P_TranslateMap(1)).quote();
+    VCommand::cliPreCmds += "\"\n";
   }
 #endif
 

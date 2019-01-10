@@ -44,6 +44,9 @@ TArray<VStr> VCommand::AutoCompleteTable;
 VCommand *VCommand::Cmds = nullptr;
 VCommand::VAlias *VCommand::Alias = nullptr;
 
+bool VCommand::cliInserted = false;
+VStr VCommand::cliPreCmds;
+
 void (*VCommand::onShowCompletionMatch) (bool isheader, const VStr &s);
 
 static const char *KeyConfCommands[] = {
@@ -147,34 +150,59 @@ VStr VCommand::AutoCompleteArg (const TArray<VStr> &args, int aidx) {
 //==========================================================================
 void VCommand::Init () {
   guard(VCommand::Init);
-  bool in_cmd = false;
 
   for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) AddToAutoComplete(cmd->Name);
 
   // add configuration file execution
-  GCmdBuf << "exec startup.vs\n";
+  GCmdBuf.Insert("exec startup.vs\n__run_cli_commands__\n");
+
+  Initialised = true;
+  unguard;
+}
+
+
+//==========================================================================
+//
+//  VCommand::InsertCLICommands
+//
+//==========================================================================
+void VCommand::InsertCLICommands () {
+  VStr cstr;
+
+  if (!cliPreCmds.isEmpty()) {
+    cstr = cliPreCmds;
+    if (!cstr.endsWith("\n")) cstr += '\n';
+    cliPreCmds.clear();
+  }
 
   // add console commands from command line
   // these are params, that start with + and continue until the end or until next param that starts with - or +
+  bool in_cmd = false;
   for (int i = 1; i < GArgs.Count(); ++i) {
     if (in_cmd) {
       if (!GArgs[i] || GArgs[i][0] == '-' || GArgs[i][0] == '+') {
         in_cmd = false;
-        GCmdBuf << "\n";
+        //GCmdBuf << "\n";
+        cstr += '\n';
       } else {
-        GCmdBuf << " \"" << VStr(GArgs[i]).quote() << "\"";
+        //GCmdBuf << " \"" << VStr(GArgs[i]).quote() << "\"";
+        cstr += ' ';
+        cstr += '"';
+        cstr += VStr(GArgs[i]).quote();
+        cstr += '"';
         continue;
       }
     }
     if (GArgs[i][0] == '+') {
       in_cmd = true;
-      GCmdBuf << (GArgs[i]+1);
+      //GCmdBuf << (GArgs[i]+1);
+      cstr += (GArgs[i]+1);
     }
   }
-  if (in_cmd) GCmdBuf << "\n";
+  //if (in_cmd) GCmdBuf << "\n";
+  if (in_cmd) cstr += '\n';
 
-  Initialised = true;
-  unguard;
+  if (!cstr.isEmpty()) GCmdBuf.Insert(cstr);
 }
 
 
@@ -513,6 +541,14 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
   //for (int f = 0; f < Args.length(); ++f) fprintf(stderr, "  #%d: <%s>\n", f, *Args[f]);
 
   if (!Args.Num()) return;
+
+  if (Args[0] == "__run_cli_commands__") {
+    if (!cliInserted) {
+      cliInserted = true;
+      InsertCLICommands();
+      return;
+    }
+  }
 
   if (ParsingKeyConf) {
     // verify that it's a valid keyconf command

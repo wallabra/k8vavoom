@@ -1163,10 +1163,11 @@ void FL_Init () {
 
   RenameSprites();
 
-  if (doStartMap && !mapinfoFound && mapnum > 0 && mapname.length()) {
+  if (doStartMap && fsys_warp_cmd.isEmpty() && !mapinfoFound && mapnum > 0 && mapname.length()) {
     GCon->Logf(NAME_Init, "FOUND MAP: %s", *mapname);
     mapname = va("map %s\n", *mapname);
-    GCmdBuf.Insert(mapname);
+    //GCmdBuf.Insert(mapname);
+    fsys_warp_cmd = mapname;
   }
 
   unguard;

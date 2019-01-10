@@ -826,6 +826,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   }
 
   SV_Clear();
+  //GCon->Log("*** UNLATCH ***");
   VCvar::Unlatch();
 
   // load it

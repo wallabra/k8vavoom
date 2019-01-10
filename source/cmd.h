@@ -53,6 +53,8 @@ private:
   static VCommand *Cmds;
   static VAlias *Alias;
 
+  static bool cliInserted;
+
   static void TokeniseString (const VStr &);
 
 protected:
@@ -63,6 +65,9 @@ protected:
 public:
   static bool ParsingKeyConf;
   static void (*onShowCompletionMatch) (bool isheader, const VStr &s);
+
+  // will be added before real CLI console commands
+  static VStr cliPreCmds;
 
 public:
   VCommand (const char *);
@@ -77,6 +82,7 @@ public:
   virtual VStr AutoCompleteArg (const TArray<VStr> &args, int aidx);
 
   static void Init ();
+  static void InsertCLICommands (); // should be called after loading startup scripts
   static void WriteAlias (FILE *);
   static void Shutdown ();
   static void ProcessKeyConf ();
