@@ -1012,7 +1012,7 @@ void VRenderLevelShared::PrecacheLevel () {
     if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
   }
 
-  R_LdrMsgShow("PRECACHING TEXTURES...");
+  R_LdrMsgShow("PRECACHING TEXTURES...", CR_TEAL);
   R_PBarReset();
 
   // precache textures
