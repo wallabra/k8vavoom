@@ -133,6 +133,11 @@ IMPLEMENT_FUNCTION(VObject, FindAnimDoor) {
   RET_PTR(R_FindAnimDoor(BaseTex));
 }
 
+IMPLEMENT_FUNCTION(VObject, IsAnimatedTexture) {
+  P_GET_INT(texid);
+  RET_BOOL(R_IsAnimatedTexture(texid));
+}
+
 IMPLEMENT_FUNCTION(VObject, GetLangString) {
   P_GET_NAME(Id);
   RET_STR(GLanguage[Id]);

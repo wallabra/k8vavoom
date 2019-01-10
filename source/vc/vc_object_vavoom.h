@@ -91,6 +91,7 @@
   DECLARE_FUNCTION(R_DrawModelFrame)
   DECLARE_FUNCTION(R_FillRect)
   DECLARE_FUNCTION(R_GetAspectRatio)
+  DECLARE_FUNCTION(IsAnimatedTexture)
 
   // client side sound
   DECLARE_FUNCTION(LocalSound)

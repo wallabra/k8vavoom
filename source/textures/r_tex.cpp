@@ -1904,6 +1904,24 @@ VAnimDoorDef *R_FindAnimDoor (vint32 BaseTex) {
 
 //==========================================================================
 //
+//  R_IsAnimatedTexture
+//
+//==========================================================================
+bool R_IsAnimatedTexture (int texid) {
+  if (texid < 0 || GTextureManager.IsMapLocalTexture(texid)) return false;
+  VTexture *tx = GTextureManager[texid];
+  if (!tx) return false;
+  const int len = AnimDefs.length();
+  for (int i = 0; i < len; ++i) {
+    animDef_t &ad = AnimDefs[i];
+    if (texid == ad.Index) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  R_AnimateSurfaces
 //
 //==========================================================================

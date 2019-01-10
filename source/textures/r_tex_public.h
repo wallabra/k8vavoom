@@ -364,6 +364,8 @@ public:
   // try to force-load texture
   int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool bCheckAny, bool silent);
 
+  inline bool IsMapLocalTexture (int TexNum) const { return (TexNum >= FirstMapTextureIndex); }
+
   // get unanimated texture
   inline VTexture *operator [] (int TexNum) {
     VTexture *res = getTxByIndex(TexNum);
@@ -424,6 +426,7 @@ void R_InitTexture ();
 void R_ShutdownTexture ();
 VAnimDoorDef *R_FindAnimDoor (vint32);
 void R_AnimateSurfaces ();
+bool R_IsAnimatedTexture (int texid);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

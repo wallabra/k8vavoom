@@ -289,6 +289,7 @@ native static final string Info_ValueForKey (string info, string key);
 // checks if WAD lump is present, used to check for shareware/extended WADs
 native static final bool WadLumpPresent (name Name);
 native static final GameObject::VAnimDoorDef *FindAnimDoor (int BaseTex);
+native static final bool IsAnimatedTexture (int Tex);
 native static final string GetLangString (name Id);
 native static final GameObject::LockDef *GetLockDef (int Lock);
 native static final int ParseColour (string Name);
