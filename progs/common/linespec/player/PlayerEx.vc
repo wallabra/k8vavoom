@@ -2243,7 +2243,18 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     k8ElvenGifted = false;
   }
 
-  // elven gifts
+  GiveElvenGifts(mthing, Voodoo);
+}
+
+
+//===========================================================================
+//
+//  GiveElvenGifts
+//
+//  this is virtual, so mods can override it
+//
+//===========================================================================
+void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
   //print("************SpawnPlayer: gifted=%s", (k8ElvenGifted ? "tan" : "ona"));
   if (GetCvarB('k8ElvenGift')) {
     if (!Voodoo && !k8ElvenGifted) {
@@ -2258,7 +2269,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
     if (Voodoo && k8ElvenGifted) {
       if (FindClass('BDW_Rifle') && ReadyWeapon && ReadyWeapon.bWimpyWeapon && (!PendingWeapon || PendingWeapon.bWimpyWeapon)) {
         auto rfc = FindClass('BDW_Rifle');
-        for (Item = PP.Inventory; Item; Item = Item.Inventory) {
+        for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
           if (Item.Class == rfc) {
             if (ReadyWeapon != Weapon(Item)) {
               //PendingWeapon = Weapon(Item);
@@ -2279,7 +2290,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
 //===========================================================================
 //
-// AddElvenGift
+//  AddElvenGift
 //
 //===========================================================================
 final bool AddElvenGift (name Klass) {
