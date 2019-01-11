@@ -121,6 +121,7 @@ set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wall")
 #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-frame-address")
 # k8: fuck you, gcc. i have my own style, gtfo.
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-misleading-indentation")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-ignored-attributes")
 
 if(WITH_STRTODEX)
   add_definitions(-DVCORE_ALLOW_STRTODEX=1)

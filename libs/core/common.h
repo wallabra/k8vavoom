@@ -51,20 +51,12 @@ typedef unsigned char  byte;
 //#define HAVE_INTTYPES_H
 
 #include <inttypes.h>
-typedef int8_t    vint8;
-typedef uint8_t   vuint8;
-typedef int16_t   vint16;
-typedef uint16_t  vuint16;
-typedef int32_t   vint32;
-typedef uint32_t  vuint32;
-/*
-typedef char            vint8;
-typedef unsigned char   vuint8;
-typedef short           vint16;
-typedef unsigned short  vuint16;
-typedef int             vint32;
-typedef unsigned int    vuint32;
-*/
+typedef int8_t    __attribute__((__may_alias__)) vint8;
+typedef uint8_t   __attribute__((__may_alias__)) vuint8;
+typedef int16_t   __attribute__((__may_alias__)) vint16;
+typedef uint16_t  __attribute__((__may_alias__)) vuint16;
+typedef int32_t   __attribute__((__may_alias__)) vint32;
+typedef uint32_t  __attribute__((__may_alias__)) vuint32;
 
 enum ENoInit { E_NoInit };
 
