@@ -57,6 +57,8 @@ typedef int16_t   __attribute__((__may_alias__)) vint16;
 typedef uint16_t  __attribute__((__may_alias__)) vuint16;
 typedef int32_t   __attribute__((__may_alias__)) vint32;
 typedef uint32_t  __attribute__((__may_alias__)) vuint32;
+typedef int64_t   __attribute__((__may_alias__)) vint64;
+typedef uint64_t  __attribute__((__may_alias__)) vuint64;
 
 enum ENoInit { E_NoInit };
 

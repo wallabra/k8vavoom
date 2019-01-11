@@ -30,6 +30,9 @@
 //#define TMAP_DO_DTOR
 //#define TMAP_NO_CLEAR
 
+// see https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
+//#define TMAP_USE_MULTIPLY
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 template<class TK, class TV> class TMap_Class_Name {
@@ -267,14 +270,22 @@ private:
   }
 
   inline vuint32 distToStIdx (vuint32 idx) const {
+#ifndef TMAP_USE_MULTIPLY
     vuint32 res = (mBuckets[idx]->hash^mSeed)&(vuint32)(mEBSize-1);
+#else
+    vuint32 res = (vuint32)(((vuint64)(mBuckets[idx]->hash^mSeed)*(vuint64)(mEBSize-1))>>32);
+#endif
     res = (res <= idx ? idx-res : idx+(mEBSize-res));
     return res;
   }
 
   void putEntryInternal (TEntry *swpe) {
-    vuint32 bhigh = (vuint32)(mEBSize-1);
+    const vuint32 bhigh = (vuint32)(mEBSize-1);
+#ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (swpe->hash^mSeed)&bhigh;
+#else
+    vuint32 idx = (vuint32)(((vuint64)(swpe->hash^mSeed)*(vuint64)bhigh)>>32);
+#endif
     vuint32 pcur = 0;
     for (vuint32 dist = 0; dist <= bhigh; ++dist) {
       if (!mBuckets[idx]) {
@@ -476,10 +487,14 @@ public:
 
   bool has (const TK &akey) const {
     if (mBucketsUsed == 0) return false;
-    vuint32 bhigh = (vuint32)(mEBSize-1);
+    const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
     if (!khash) khash = 1; // avoid zero hash value
+#ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
+#else
+    vuint32 idx = (vuint32)(((vuint64)(khash^mSeed)*(vuint64)bhigh)>>32);
+#endif
     if (!mBuckets[idx]) return false;
     bool res = false;
     for (vuint32 dist = 0; dist <= bhigh; ++dist) {
@@ -495,10 +510,14 @@ public:
 
   const TV *get (const TK &akey) const {
     if (mBucketsUsed == 0) return nullptr;
-    vuint32 bhigh = (vuint32)(mEBSize-1);
+    const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
     if (!khash) khash = 1; // avoid zero hash value
+#ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
+#else
+    vuint32 idx = (vuint32)(((vuint64)(khash^mSeed)*(vuint64)bhigh)>>32);
+#endif
     if (!mBuckets[idx]) return nullptr;
     for (vuint32 dist = 0; dist <= bhigh; ++dist) {
       if (!mBuckets[idx]) break;
@@ -512,10 +531,14 @@ public:
 
   TV *get (const TK &akey) {
     if (mBucketsUsed == 0) return nullptr;
-    vuint32 bhigh = (vuint32)(mEBSize-1);
+    const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
     if (!khash) khash = 1; // avoid zero hash value
+#ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
+#else
+    vuint32 idx = (vuint32)(((vuint64)(khash^mSeed)*(vuint64)bhigh)>>32);
+#endif
     if (!mBuckets[idx]) return nullptr;
     for (vuint32 dist = 0; dist <= bhigh; ++dist) {
       if (!mBuckets[idx]) break;
@@ -544,10 +567,14 @@ public:
   bool del (const TK &akey) {
     if (mBucketsUsed == 0) return false;
 
-    vuint32 bhigh = (vuint32)(mEBSize-1);
+    const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
     if (!khash) khash = 1; // avoid zero hash value
+#ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
+#else
+    vuint32 idx = (vuint32)(((vuint64)(khash^mSeed)*(vuint64)bhigh)>>32);
+#endif
 
     // find key
     if (!mBuckets[idx]) return false; // no key
@@ -565,14 +592,18 @@ public:
 
     releaseEntry(mBuckets[idx]);
 
-    vuint32 idxnext = (idx+1)&bhigh;
-    for (vuint32 dist = 0; dist <= bhigh; ++dist) {
-      if (!mBuckets[idxnext]) { mBuckets[idx] = nullptr; break; }
-      vuint32 pdist = distToStIdx(idxnext);
-      if (pdist == 0) { mBuckets[idx] = nullptr; break; }
-      mBuckets[idx] = mBuckets[idxnext];
-      idx = (idx+1)&bhigh;
-      idxnext = (idxnext+1)&bhigh;
+    if (mBucketsUsed > 1) {
+      vuint32 idxnext = (idx+1)&bhigh;
+      for (vuint32 dist = 0; dist <= bhigh; ++dist) {
+        if (!mBuckets[idxnext]) { mBuckets[idx] = nullptr; break; }
+        vuint32 pdist = distToStIdx(idxnext);
+        if (pdist == 0) { mBuckets[idx] = nullptr; break; }
+        mBuckets[idx] = mBuckets[idxnext];
+        idx = (idx+1)&bhigh;
+        idxnext = (idxnext+1)&bhigh;
+      }
+    } else {
+      mBuckets[idx] = nullptr;
     }
 
     --mBucketsUsed;
@@ -585,10 +616,14 @@ public:
 
   // returns `true` if old value was replaced
   bool put (const TK &akey, const TV &aval) {
-    vuint32 bhigh = (vuint32)(mEBSize-1);
+    const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
     if (!khash) khash = 1; // avoid zero hash value
+#ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
+#else
+    vuint32 idx = (vuint32)(((vuint64)(khash^mSeed)*(vuint64)bhigh)>>32);
+#endif
 
     // check if we already have this key
     if (mBucketsUsed != 0 && mBuckets[idx]) {
