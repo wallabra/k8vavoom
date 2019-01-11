@@ -181,11 +181,6 @@ class VBasePlayer : public VGameObject {
 
   VPlayerReplicationInfo *PlayerReplicationInfo;
 
-  // contains both commands and autocompleters
-  TArray<VName> ConCmdList;
-  TArray<vint32> ConCmdListIdx; // may contain garbage after `ConCmdList.length()`
-  TArray<VMethod *> ConCmdListMts; // for static and non-virtual methods
-
 private:
   inline void UpdateDispFrameFrom (int idx, const VState *st) {
     if (st) {
@@ -196,12 +191,6 @@ private:
       if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame[idx] = (DispSpriteFrame[idx]&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
     }
   }
-
-  // returns index in lists, or -1
-  int FindConCommandMethodIdx (const VStr &name, bool exact=false); // skips autocompleters
-  inline int FindConCommandMethodIdxExact (const VStr &name) { return FindConCommandMethodIdx(name, true); } // doesn't skip anything
-
-  void BuildConCmdCache ();
 
 public:
   //VBasePlayer () : UserInfo(E_NoInit), PlayerName(E_NoInit) {}

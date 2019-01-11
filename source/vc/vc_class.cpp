@@ -2143,7 +2143,85 @@ void VClass::CreateVTable () {
     if (M->VTableIndex == -1) continue;
     ClassVTable[M->VTableIndex] = M;
   }
+  CreateMethodMap();
   unguard;
+}
+
+
+//==========================================================================
+//
+//  IsGoodAC
+//
+//==========================================================================
+static bool IsGoodAC (VMethod *mt) {
+  if (!mt) return false;
+  if (mt->NumParams != 3) return false;
+  if (mt->ReturnType.Type != TYPE_Void) return false;
+  // first arg should be `const ref array!string`
+  if (mt->ParamFlags[0] != (FPARM_Const|FPARM_Ref)) return false;
+  VFieldType tp = mt->ParamTypes[0];
+  if (tp.Type != TYPE_DynamicArray) return false;
+  tp = tp.GetArrayInnerType();
+  if (tp.Type != TYPE_String) return false;
+  // second arg should be int (actually, bool, but it is converted to int)
+  if (mt->ParamFlags[1]&~FPARM_Const) return false;
+  tp = mt->ParamTypes[1];
+  if (tp.Type != TYPE_Int && tp.Type != TYPE_Bool) return false;
+  // third arg should be `out array!string`
+  if (mt->ParamFlags[2] != FPARM_Out) return false;
+  tp = mt->ParamTypes[2];
+  if (tp.Type != TYPE_DynamicArray) return false;
+  tp = tp.GetArrayInnerType();
+  if (tp.Type != TYPE_String) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VClass::CreateMethodMap
+//
+//==========================================================================
+void VClass::CreateMethodMap () {
+  // build mehtod map and console command map
+  MethodMap.clear();
+  ConCmdListMts.clear();
+  for (VClass *cls = this; cls; cls = cls->GetSuperClass()) {
+    for (int f = 0; f < cls->Methods.length(); ++f) {
+      VMethod *mt = cls->Methods[f];
+      if (!mt || mt->Name == NAME_None) continue;
+      if (!MethodMap.has(mt->Name)) MethodMap.put(mt->Name, mt);
+      // check and register console command (including autocompleters)
+      if (mt->ReturnType.Type != TYPE_Void) continue;
+      const char *mtname = *mt->Name;
+      if (!VStr::startsWith(mtname, "Cheat_")) continue;
+      if (!mtname[6] || mtname[6] == '_') continue;
+      // should not be "special" or networked
+      if (!mt->IsNormal() || mt->IsNetwork()) continue;
+      if (VStr::endsWithNoCase(mtname, "_AC")) {
+        if (!IsGoodAC(mt)) continue;
+      } else {
+        if (mt->NumParams != 0) continue;
+      }
+      VStr loname = VStr(mtname+6).toLowerCase();
+      if (!ConCmdListMts.has(loname)) ConCmdListMts.put(loname, mt);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VBasePlayer::FindConCommandMethodIdx
+//
+//==========================================================================
+VMethod *VClass::FindConCommandMethod (const VStr &name, bool exact) {
+  if (name.isEmpty()) return nullptr;
+  VStr loname = name.toLowerCase();
+  auto mtp = ConCmdListMts.find(loname);
+  if (!mtp) return nullptr;
+  if (!exact && VStr::endsWithNoCase(*(*mtp)->Name, "_AC")) return nullptr;
+  return *mtp;
 }
 
 

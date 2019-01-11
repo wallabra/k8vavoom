@@ -138,10 +138,6 @@ native readonly ClientGameBase ClGame; // valid only on client side
 
 PlayerReplicationInfo playerReplicationInfo;
 
-private native transient array!name __ConCmdList;
-private native transient array!int __ConCmdListIdx;
-private native transient array!(void *) __ConCmdListMts;
-
 
 replication {
   reliable if (!bIsClient)

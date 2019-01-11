@@ -214,6 +214,15 @@ public:
   // <0: not found
   int FindArgByName (VName aname) const;
 
+  inline bool IsStatic () const { return !!(Flags&FUNC_Static); }
+  // valid only after codegen phase
+  inline bool IsVirtual () const { return !(Flags&FUNC_NonVirtual); } // you can use `VTableIndex >= 0` too
+
+  // is this method suitable for various "normal" calls?
+  inline bool IsNormal () const { return ((Flags&(FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator)) == 0); }
+
+  inline bool IsNetwork () const { return ((Flags&(FUNC_Net|FUNC_NetReliable)) != 0); }
+
 private:
   void CompileCode ();
 };

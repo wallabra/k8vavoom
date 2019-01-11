@@ -247,6 +247,11 @@ public:
   bool Defined;
   bool DefinedAsDependency;
 
+  // this is built when class postloaded
+  TMapNC<VName, VMethod *> MethodMap;
+  // contains both commands and autocompleters
+  TMap<VStr, VMethod *> ConCmdListMts; // names are lowercased
+
   // new-style state options and textures
   TMapDtor<VStr, TextureInfo> dfStateTexList;
   VStr dfStateTexDir;
@@ -363,6 +368,7 @@ public:
   VName FindDecorateStateFieldTrans (VName dcname);
 
   // WARNING! method with such name should exist, or return value will be invalid
+  //          this is valid only after class was postloaded
   bool isNonVirtualMethod (VName Name);
 
   bool Define ();
@@ -405,12 +411,18 @@ public:
   const VStr &DFStateGetTexDir () const;
   bool DFStateGetTexture (const VStr &tname, TextureInfo &ti) const;
 
+  // console command methods
+  // returns index in lists, or -1
+  VMethod *FindConCommandMethod (const VStr &name, bool exact=false); // skips autocompleters if `exact` is `false`
+  inline VMethod *FindConCommandMethodExact (const VStr &name) { return FindConCommandMethod(name, true); } // doesn't skip anything
+
 private:
   void CalcFieldOffsets ();
   void InitNetFields ();
   void InitReferences ();
   void InitDestructorFields ();
   void CreateVTable ();
+  void CreateMethodMap (); // called from `CreateVTable()`
   void InitStatesLookup ();
 #if !defined(IN_VCC)
   void CreateDefaults ();

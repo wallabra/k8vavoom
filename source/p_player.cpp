@@ -656,104 +656,14 @@ void VBasePlayer::WriteViewData () {
 
 //==========================================================================
 //
-//  IsGoodAC
-//
-//==========================================================================
-static bool IsGoodAC (VMethod *mt) {
-  if (!mt) return false;
-  if (mt->NumParams != 3) return false;
-  if (mt->ReturnType.Type != TYPE_Void) return false;
-  // first arg should be `const ref array!string`
-  if (mt->ParamFlags[0] != (FPARM_Const|FPARM_Ref)) return false;
-  VFieldType tp = mt->ParamTypes[0];
-  if (tp.Type != TYPE_DynamicArray) return false;
-  tp = tp.GetArrayInnerType();
-  if (tp.Type != TYPE_String) return false;
-  // second arg should be int (actually, bool, but it is converted to int)
-  if (mt->ParamFlags[1]&~FPARM_Const) return false;
-  tp = mt->ParamTypes[1];
-  if (tp.Type != TYPE_Int && tp.Type != TYPE_Bool) return false;
-  // third arg should be `out array!string`
-  if (mt->ParamFlags[2] != FPARM_Out) return false;
-  tp = mt->ParamTypes[2];
-  if (tp.Type != TYPE_DynamicArray) return false;
-  tp = tp.GetArrayInnerType();
-  if (tp.Type != TYPE_String) return false;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VBasePlayer::FindConCommandMethodIdx
-//
-//==========================================================================
-int VBasePlayer::FindConCommandMethodIdx (const VStr &name, bool exact) {
-  if (name.isEmpty()) return -1;
-  if (!ConCmdListIdx.length()) BuildConCmdCache();
-  const int len = ConCmdList.length();
-  for (int f = 0; f < len; ++f) {
-    const char *mtname = *ConCmdList[f];
-    mtname += 6;
-    if (!exact && VStr::endsWithNoCase(mtname, "_AC")) continue;
-    if (name.ICmp(mtname) == 0) return f;
-  }
-  return -1;
-}
-
-
-//==========================================================================
-//
-//  VBasePlayer::BuildConCmdCache
-//
-//==========================================================================
-void VBasePlayer::BuildConCmdCache () {
-  if (ConCmdListIdx.length()) return;
-  VClass *cls = GetClass();
-  while (cls) {
-    for (int f = 0; f < cls->Methods.length(); ++f) {
-      VMethod *mt = cls->Methods[f];
-      if (!mt || mt->Name == NAME_None) continue;
-      if (mt->ReturnType.Type != TYPE_Void) continue;
-      const char *mtname = *mt->Name;
-      if (!VStr::startsWith(mtname, "Cheat_")) continue;
-      if (!mtname[6] || mtname[6] == '_') continue;
-      // should not be final, etc.
-      if (mt->Flags&(/*FUNC_Static|*/FUNC_VarArgs/*|FUNC_NonVirtual*/|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Iterator/*|FUNC_Private*/)) continue;
-      if (VStr::endsWithNoCase(mtname, "_AC")) {
-        if (!IsGoodAC(mt)) continue;
-      } else {
-        if (mt->NumParams != 0) continue;
-      }
-      bool found = false;
-      for (int cc = 0; cc < ConCmdList.length(); ++cc) {
-        if (VStr::ICmp(*ConCmdList[cc], *mt->Name) == 0) { found = true; break; }
-      }
-      if (!found) {
-        int idx = GetClass()->GetMethodIndex(mt->Name);
-        ConCmdList.append(mt->Name);
-        ConCmdListIdx.append(idx);
-        ConCmdListMts.append(idx >= 0 ? nullptr : mt);
-      }
-    }
-    cls = cls->GetSuperClass();
-  }
-  if (ConCmdListIdx.length() == 0) ConCmdListIdx.append(-1);
-}
-
-
-//==========================================================================
-//
 //  VBasePlayer::ListConCommands
 //
 //  append player commands with the given prefix
 //
 //==========================================================================
 void VBasePlayer::ListConCommands (TArray<VStr> &list, const VStr &pfx) {
-  if (!ConCmdListIdx.length()) BuildConCmdCache();
-  const int len = ConCmdList.length();
-  for (int f = 0; f < len; ++f) {
-    const char *mtname = *ConCmdList[f];
+  for (auto it = GetClass()->ConCmdListMts.first(); it; ++it) {
+    const char *mtname = *it.getValue()->Name;
     mtname += 6;
     if (VStr::endsWithNoCase(mtname, "_AC")) continue;
     if (!pfx.isEmpty()) {
@@ -770,7 +680,7 @@ void VBasePlayer::ListConCommands (TArray<VStr> &list, const VStr &pfx) {
 //
 //==========================================================================
 bool VBasePlayer::IsConCommand (const VStr &name) {
-  return (FindConCommandMethodIdx(name) >= 0);
+  return !!GetClass()->FindConCommandMethod(name);
 }
 
 
@@ -785,16 +695,9 @@ bool VBasePlayer::IsConCommand (const VStr &name) {
 bool VBasePlayer::ExecConCommand () {
   if (VCommand::GetArgC() < 1) return false;
   VStr name = VCommand::GetArgV(0);
-  int listidx = FindConCommandMethodIdx(name);
-  if (listidx < 0) return false;
+  VMethod *mt = GetClass()->FindConCommandMethod(name);
+  if (!mt) return false;
   // i found her!
-  VMethod *mt;
-  if (ConCmdListIdx[listidx] >= 0) {
-    mt = GetVFunctionIdx(ConCmdListIdx[listidx]);
-  } else {
-    mt = ConCmdListMts[listidx];
-    check(mt);
-  }
   if ((mt->Flags&FUNC_Static) == 0) P_PASS_SELF;
   (void)ExecuteFunction(mt);
   return true;
@@ -813,18 +716,11 @@ bool VBasePlayer::ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr
   if (args.length() < 1) return false;
   VStr name = args[0];
   if (name.isEmpty()) return false;
-  int listidx = FindConCommandMethodIdxExact(name+"_AC");
-  if (listidx >= 0) {
+  VMethod *mt = GetClass()->FindConCommandMethodExact(name+"_AC");
+  if (mt) {
     // i found her!
     // build command line
     //args.removeAt(0); // remove command name
-    VMethod *mt;
-    if (ConCmdListIdx[listidx] >= 0) {
-      mt = GetVFunctionIdx(ConCmdListIdx[listidx]);
-    } else {
-      mt = ConCmdListMts[listidx];
-      check(mt);
-    }
     if ((mt->Flags&FUNC_Static) == 0) P_PASS_SELF;
     P_PASS_PTR((void *)&args);
     P_PASS_INT(newArg ? 1 : 0);
@@ -832,7 +728,7 @@ bool VBasePlayer::ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr
     (void)ExecuteFunction(mt);
     return true;
   }
-  return (FindConCommandMethodIdx(name) >= 0);  // has such cheat?
+  return !!GetClass()->FindConCommandMethod(name);  // has such cheat?
 }
 
 
