@@ -1761,8 +1761,8 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
             P_BoxOnLineSide(t_bbox, line) == -1)
         {
           // new logic for 3D Floors
-          sec_region_t*FrontReg = SV_FindThingGap(line->frontsector->botregion, Origin, Origin.z, Origin.z+Height);
-          sec_region_t*BackReg = SV_FindThingGap(line->backsector->botregion, Origin, Origin.z, Origin.z+Height);
+          sec_region_t *FrontReg = SV_FindThingGap(line->frontsector->botregion, Origin, Origin.z, Origin.z+Height);
+          sec_region_t *BackReg = SV_FindThingGap(line->backsector->botregion, Origin, Origin.z, Origin.z+Height);
           float front = FrontReg->floor->GetPointZ(Origin);
           float back = BackReg->floor->GetPointZ(Origin);
 

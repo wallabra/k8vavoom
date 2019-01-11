@@ -24,7 +24,7 @@ menudef GameplayOptions {
   option bool {
     title = "Better sight for monsters";
     cvar = compat_better_sight;
-    help = "Do slightly better line-of-sight checking for monsters.";
+    help = "Do slightly better (and slower) line-of-sight checking for monsters.";
   }
 
   header "Other Options";
@@ -35,7 +35,7 @@ menudef GameplayOptions {
     help =
       "Can barrels be pushed?"
       "Don't worry, this option is latched (I should explain this)."
-      "Requires game restart.";
+      "Requires game/map restart.";
   }
 
   option bool {

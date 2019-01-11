@@ -383,8 +383,8 @@ final bool StepMove () {
   if (bBlasted) return true;
   if (MoveDir == DI_NODIR) return false;
 
-  // Instead of yanking non-floating monsters to the ground,
-  // let gravity drop them down, unless they're moving down a step.
+  // instead of yanking non-floating monsters to the ground,
+  // let gravity drop them down, unless they're moving down a step
   if (!bNoGravity && Origin.z > FloorZ && !bOnMobj) {
     if (Origin.z <= FloorZ+MaxStepHeight) {
       Origin.z = FloorZ;
@@ -404,7 +404,7 @@ final bool StepMove () {
   float tryx = origx+deltax;
   float tryy = origy+deltay;
 
-  // Like P_XYMovement this should do multiple moves if the step size is too large
+  // like P_XYMovement this should do multiple moves if the step size is too large
   float maxmove = Radius;
   int steps = 1;
 
@@ -425,9 +425,9 @@ final bool StepMove () {
   tmtrace_t tmtrace;
   //auto oldRadius = Radius;
   foreach (int i; 1..steps) {
-    // killough 10/98: allow actors to drop off of taller ledges sometimes.
+    // killough 10/98: allow actors to drop off of taller ledges sometimes
     // dropoff==1 means only up to 128 high, and only if the target is
-    // immediately on the other side of the line.
+    // immediately on the other side of the line
     if (bJumpDown && Target && !Target.IsFriend(self) &&
         DistTo(Target) < 144.0 && P_Random() < 235 &&
         !(tmtrace.FloorZ-tmtrace.DropOffZ > 128.0 ||
@@ -456,9 +456,9 @@ final bool StepMove () {
   }
   //Radius = oldRadius;
 
-  // killough 3/15/98: don't jump over dropoffs:
+  // killough 3/15/98: don't jump over dropoffs
   if (try_ok) {
-    // killough 10/98: allow actors to drop off of taller ledges sometimes.
+    // killough 10/98: allow actors to drop off of taller ledges sometimes
     // dropoff==1 means only up to 128 high, and only if the target is
     // immediately on the other side of the line.
     if (bJumpDown && Target && !Target.IsFriend(self) &&
@@ -596,8 +596,6 @@ final bool TryWalk () {
 final void DO_NewChaseDir (float deltax, float deltay) {
   int[3] d;
 
-  //int tdir;
-
   int olddir = MoveDir;
   int turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
 
@@ -669,9 +667,9 @@ final void DO_NewChaseDir (float deltax, float deltay) {
 
 //=============================================================================
 //
-// NewChaseDir
+//  NewChaseDir
 //
-// killough 9/8/98: Split into two functions
+//  killough 9/8/98: Split into two functions
 //
 //=============================================================================
 final void NewChaseDir () {
@@ -758,8 +756,6 @@ final void NewChaseDir () {
 //
 //==========================================================================
 final void RandomChaseDir () {
-  //int tdir;
-
   int olddir = MoveDir;
   int turnaround = LineSpecialGameInfo(Level.Game).opposite[olddir];
 

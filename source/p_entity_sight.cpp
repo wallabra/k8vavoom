@@ -418,8 +418,8 @@ bool VEntity::CanSee (VEntity *Other) {
 #endif
 
   if (!Other) return false;
-  if (GetFlags()&(_OF_Destroyed|_OF_Destroyed)) return false;
-  if (Other->GetFlags()&(_OF_Destroyed|_OF_Destroyed)) return false;
+  if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;
+  if (Other->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) return false;
 
   // if we have no subsector for this object, it cannot see anything
   if (!SubSector) {
@@ -439,7 +439,7 @@ bool VEntity::CanSee (VEntity *Other) {
     int s1 = Sector-XLevel->Sectors;
     int s2 = Other->Sector-XLevel->Sectors;
     int pnum = s1*XLevel->NumSectors+s2;
-    // Check in REJECT table.
+    // check in REJECT table
     if (XLevel->RejectMatrix[pnum>>3]&(1<<(pnum&7))) return false; // can't possibly be connected
   }
 
@@ -459,7 +459,7 @@ bool VEntity::CanSee (VEntity *Other) {
     return false;
   }
 
-  // killough 11/98: shortcut for melee situations.
+  // killough 11/98: shortcut for melee situations
   // same subsector? obviously visible
   if (SubSector == Other->SubSector) return true;
 
