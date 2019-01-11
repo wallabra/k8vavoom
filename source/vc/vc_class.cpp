@@ -824,10 +824,12 @@ VMethod *VClass::FindMethodChecked (VName AName) {
 //
 //==========================================================================
 int VClass::GetMethodIndex (VName AName) {
-  guard(VClass::GetMethodIndex);
-  for (int i = 0; i < ClassNumMethods; ++i) if (ClassVTable[i]->Name == AName) return i;
-  return -1;
-  unguard;
+  if (AName == NAME_None) return -1;
+  //for (int i = 0; i < ClassNumMethods; ++i) if (ClassVTable[i]->Name == AName) return i;
+  //return -1;
+  auto mptr = MethodMap.find(AName);
+  //fprintf(stderr, "%s: %s = %d\n", *GetFullName(), *AName, (mptr ? (*mptr)->VTableIndex : -1));
+  return (mptr ? (*mptr)->VTableIndex : -1);
 }
 
 
