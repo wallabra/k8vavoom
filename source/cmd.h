@@ -57,10 +57,15 @@ private:
 
   static void TokeniseString (const VStr &);
 
+  static void rebuildCommandCache ();
+
 protected:
   static TArray<VStr> Args;
   static ECmdSource Source;
   static VBasePlayer *Player; // for SRC_Client
+
+  static bool rebuildCache;
+  static TMapDtor<VStr, VCommand *> locaseCache;
 
 public:
   static bool ParsingKeyConf;
@@ -116,7 +121,7 @@ public:
 #define COMMAND(name) \
 static class TCmd ## name : public VCommand { \
 public: \
-  TCmd ## name() : VCommand(#name) {} \
+  TCmd ## name() : VCommand(#name) { rebuildCache = true; } \
   virtual void Run () override; \
 } name ## _f; \
 \
@@ -126,7 +131,7 @@ void TCmd ## name::Run ()
 #define COMMAND_WITH_AC(name) \
 static class TCmd ## name : public VCommand { \
 public: \
-  TCmd ## name() : VCommand(#name) {} \
+  TCmd ## name() : VCommand(#name) { rebuildCache = true; } \
   virtual void Run () override; \
   virtual VStr AutoCompleteArg (const TArray<VStr> &args, int aidx) override; \
 } name ## _f; \

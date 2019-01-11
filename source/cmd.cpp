@@ -38,6 +38,9 @@ bool VCommand::ParsingKeyConf;
 bool VCommand::Initialised = false;
 VStr VCommand::Original;
 
+bool VCommand::rebuildCache = true;
+TMapDtor<VStr, VCommand *> VCommand::locaseCache;
+
 TArray<VStr> VCommand::Args;
 VCommand::ECmdSource VCommand::Source;
 VBasePlayer *VCommand::Player;
@@ -443,30 +446,32 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
   if (aidx > 1 && !endsWithBlank) --aidx; // nope, last arg
 
   // check for command
-  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) {
-    if (args[0].ICmp(cmd->Name) == 0) {
-      VStr ac = cmd->AutoCompleteArg(args, aidx);
-      if (ac.length()) {
-        // autocompleted, rebuild string
-        //if (aidx < args.length()) args[aidx] = ac; else args.append(ac);
-        bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
-        if (addSpace) ac.chopRight(1);
-        VStr res;
-        for (int f = 0; f < aidx; ++f) {
-          res += args[f].quote(true); // add quote chars if necessary
-          res += ' ';
-        }
-        if (ac.length()) {
-          ac = ac.quote(true);
-          if (!addSpace && ac[ac.length()-1] == '"') ac.chopRight(1);
-        }
-        res += ac;
-        if (addSpace) res += ' ';
-        return res;
+  if (rebuildCache) rebuildCommandCache();
+  VStr loname = args[0].toLowerCase();
+  auto cptr = locaseCache.find(loname);
+  if (cptr) {
+    VCommand *cmd = *cptr;
+    VStr ac = cmd->AutoCompleteArg(args, aidx);
+    if (ac.length()) {
+      // autocompleted, rebuild string
+      //if (aidx < args.length()) args[aidx] = ac; else args.append(ac);
+      bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
+      if (addSpace) ac.chopRight(1);
+      VStr res;
+      for (int f = 0; f < aidx; ++f) {
+        res += args[f].quote(true); // add quote chars if necessary
+        res += ' ';
       }
-      // cannot complete, nothing's changed
-      return prefix;
+      if (ac.length()) {
+        ac = ac.quote(true);
+        if (!addSpace && ac[ac.length()-1] == '"') ac.chopRight(1);
+      }
+      res += ac;
+      if (addSpace) res += ' ';
+      return res;
     }
+    // cannot complete, nothing's changed
+    return prefix;
   }
 
   // try player
@@ -542,6 +547,20 @@ void VCommand::TokeniseString (const VStr &str) {
 
 //==========================================================================
 //
+//  VCommand::rebuildCommandCache
+//
+//==========================================================================
+void VCommand::rebuildCommandCache () {
+  locaseCache.clear();
+  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) {
+    VStr loname = VStr(cmd->Name).toLowerCase();
+    locaseCache.put(loname, cmd);
+  }
+}
+
+
+//==========================================================================
+//
 //  VCommand::ExecuteString
 //
 //==========================================================================
@@ -588,12 +607,12 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
   }
 
   // check for command
-  for (VCommand *cmd = Cmds; cmd; cmd = cmd->Next) {
-    if (Args[0].ICmp(cmd->Name) == 0) {
-      //fprintf(stderr, "+++ COMMAND FOUND: [%s] [%s] +++\n", *Args[0], cmd->Name);
-      cmd->Run();
-      return;
-    }
+  if (rebuildCache) rebuildCommandCache();
+  VStr loname = Args[0].toLowerCase();
+  auto cptr = locaseCache.find(loname);
+  if (cptr) {
+    (*cptr)->Run();
+    return;
   }
 
   // check for player command
