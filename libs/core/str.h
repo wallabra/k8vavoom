@@ -74,7 +74,7 @@ private:
     }
   }
 
-  inline bool isMyData (const char *buf, int len) const { return (dataptr && buf && buf < dataptr+length() && buf+len >= dataptr); }
+  inline bool isMyData (const char *buf, int len) const { return (dataptr && buf && (uintptr_t)buf < (uintptr_t)dataptr+length() && (uintptr_t)buf+len >= (uintptr_t)dataptr); }
 
   inline void assign (const VStr &instr) {
     if (&instr != this) {
