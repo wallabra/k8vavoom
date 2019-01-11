@@ -137,7 +137,7 @@ public:
 public:
   // this is for VaVoom C VM
   inline bool isValidIIdx (vint32 index) const {
-    return (index >= 0 && index <= (int)mLastEntry);
+    return (index >= 0 && index <= mLastEntry);
   }
 
   // this is for VaVoom C VM
@@ -178,8 +178,9 @@ private:
   void freeEntries () {
 #if defined(TMAP_DO_DTOR) || !defined(TMAP_NO_CLEAR)
     if (mFirstEntry >= 0) {
-      for (int f = mFirstEntry; f <= mLastEntry; ++f) {
-        TEntry *e = &mEntries[f];
+      const int end = mLastEntry;
+      TEntry *e = &mEntries[mFirstEntry];
+      for (int f = mFirstEntry; f <= end; ++f, ++e) {
         if (!e->isEmpty()) {
           // free key
 #if defined(TMAP_DO_DTOR)
@@ -296,8 +297,6 @@ private:
     abort();
   }
 
-  inline int getCapacity () const { return (int)mEBSize; }
-
 public:
   TMap_Class_Name () : mEBSize(0), mEntries(nullptr), mBuckets(nullptr), mBucketsUsed(0), mFreeEntryHead(nullptr), mFirstEntry(-1), mLastEntry(-1), mSeed(0), mSeedCount(0) {}
 
@@ -318,14 +317,20 @@ public:
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
         mEntries = (TEntry *)Z_Malloc(mEBSize*sizeof(TEntry));
         memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
-        for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].isEmpty() = true;
+        //for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].setEmpty(); //k8: don't need this
+        mSeedCount = other.mSeedCount;
         mFirstEntry = mLastEntry = -1;
-        for (vuint32 f = 0; f < mEBSize; ++f) {
-          if (f >= other.mEBSize) break;
-          mEntries[f] = other.mEntries[f];
-          if (!mEntries[f].isEmpty()) {
-            if (mFirstEntry < 0) mFirstEntry = (int)f;
-            mLastEntry = (int)f;
+        if (other.mLastEntry >= 0) {
+          const vuint32 end = (vuint32)other.mLastEntry;
+          vuint32 didx = 0;
+          for (vuint32 f = (vuint32)other.mFirstEntry; f <= end; ++f) {
+            if (!other.mEntries[f].isEmpty()) {
+              mEntries[didx++] = other.mEntries[f];
+            }
+          }
+          if (didx > 0) {
+            mFirstEntry = 0;
+            mLastEntry = (int)didx-1;
           }
         }
         rehash();
@@ -359,73 +364,114 @@ public:
   }
 
   void rehash () {
-    // change seed, to minimize pathological cases
-    //TODO: use prng to generate new hash
-    if (++mSeedCount == 0) mSeedCount = 1;
-    mSeed = hashU32(mSeedCount);
     // clear buckets
     memset(mBuckets, 0, mEBSize*sizeof(TEntry *));
     mBucketsUsed = 0;
     // reinsert entries
     mFreeEntryHead = nullptr;
     TEntry *lastfree = nullptr;
-    for (vuint32 idx = 0; idx < mEBSize; ++idx) {
-      TEntry *e = &mEntries[idx];
-      if (!e->isEmpty()) {
-        // no need to recalculate hash
-        putEntryInternal(e);
-      } else {
-        if (lastfree) lastfree->nextFree = e; else mFreeEntryHead = e;
-        lastfree = e;
+    if (mLastEntry >= 0) {
+      // change seed, to minimize pathological cases
+      //TODO: use prng to generate new hash
+      if (++mSeedCount == 0) mSeedCount = 1;
+      mSeed = hashU32(mSeedCount);
+      // small optimisation for empty head case
+      const vuint32 stx = (vuint32)mFirstEntry;
+      TEntry *e;
+      if (stx > 0) {
+        e = &mEntries[0];
+        lastfree = mFreeEntryHead = e++;
+        for (vuint32 idx = 1; idx < stx; ++idx, ++e) {
+          lastfree->nextFree = e;
+          lastfree = e;
+        }
+        lastfree->nextFree = nullptr;
       }
+      // reinsert all alive entries
+      const vuint32 end = (vuint32)mLastEntry;
+      e = &mEntries[stx];
+      for (vuint32 idx = stx; idx <= /*mEBSize*/end; ++idx, ++e) {
+        if (!e->isEmpty()) {
+          // no need to recalculate hash
+          putEntryInternal(e);
+        } else {
+          if (lastfree) lastfree->nextFree = e; else mFreeEntryHead = e;
+          lastfree = e;
+        }
+      }
+      if (lastfree) lastfree->nextFree = nullptr;
     }
-    if (lastfree) lastfree->nextFree = nullptr;
   }
 
   // call this instead of `rehash()` after alot of deletions
-  void compact () {
+  // if `doRealloc` is `false`, force moving all entries to top
+  void compact (bool doRealloc=true) {
     vuint32 newsz = nextPOTU32((vuint32)mBucketsUsed);
-    if (newsz >= 1024*1024*1024) return;
-    if (newsz*2 >= mEBSize) return;
-    if (newsz*2 < 128) return;
-    newsz *= 2;
+    if (doRealloc) {
+      if (newsz >= 1024*1024*1024) return;
+      if (newsz*2 >= mEBSize) return;
+      if (newsz*2 < /*128*/64) return;
+      newsz *= 2;
+    }
 #ifdef CORE_MAP_TEST
-    printf("compacting; old size=%u; new size=%u; used=%d; fe=%d; le=%d\n", mEBSize, newsz, mBucketsUsed, mFirstEntry, mLastEntry);
+    printf("compacting; old size=%u; new size=%u; used=%d; fe=%d; le=%d; cseed=(%d:0x%08x)", mEBSize, newsz, mBucketsUsed, mFirstEntry, mLastEntry, mSeedCount, mSeed);
 #endif
+    //bool didAnyCopy = doRealloc; // realloc may change address, so reinsert entries
+    bool didAnyCopy = false;
     // move all entries to top
     if (mFirstEntry >= 0) {
       vuint32 didx = 0;
       while (didx < mEBSize) if (!mEntries[didx].isEmpty()) ++didx; else break;
       vuint32 f = didx+1;
-      // copy entries
-      for (;;) {
-        if (!mEntries[f].isEmpty()) {
-          mEntries[didx] = mEntries[f];
+      const vuint32 end = mLastEntry;
+      if (f <= end) {
+        // copy entries
+        for (;;) {
+          if (!mEntries[f].isEmpty()) {
+            didAnyCopy = true;
+            mEntries[didx] = mEntries[f];
 #if defined(TMAP_DO_DTOR)
-          mEntries[f].key.~TK();
-          mEntries[f].value.~TV();
+            mEntries[f].key.~TK();
+            mEntries[f].value.~TV();
 #elif !defined(TMAP_NO_CLEAR)
-          mEntries[f].key = TK();
-          mEntries[f].value = TV();
+            mEntries[f].key = TK();
+            mEntries[f].value = TV();
 #endif
-          mEntries[f].setEmpty();
-          ++didx;
-          if (f == (vuint32)mLastEntry) break;
-          while (didx < mEBSize) if (!mEntries[didx].isEmpty()) ++didx; else break;
+            mEntries[f].setEmpty();
+            ++didx;
+            if (f == end) break;
+            while (didx < mEBSize) if (!mEntries[didx].isEmpty()) ++didx; else break;
+          }
+          if (++f > end) break;
         }
-        if (++f > (vuint32)mLastEntry) break;
       }
       mFirstEntry = 0;
       mLastEntry = mBucketsUsed-1;
     }
-    // shrink
-    mBuckets = (TEntry **)Z_Realloc(mBuckets, newsz*sizeof(TEntry *));
-    // shrink
-    mEntries = (TEntry *)Z_Realloc((void *)mEntries, newsz*sizeof(TEntry));
-    mEBSize = newsz;
+    if (doRealloc) {
+      // shrink
+      TEntry **obptr = mBuckets;
+      mBuckets = (TEntry **)Z_Realloc(mBuckets, newsz*sizeof(TEntry *));
+      mEntries = (TEntry *)Z_Realloc((void *)mEntries, newsz*sizeof(TEntry));
+      mEBSize = newsz;
+      if (obptr != mBuckets) {
+        didAnyCopy = true; // reinsert
+#ifdef CORE_MAP_TEST
+        printf("; (AC)");
+#endif
+      }
+#ifdef CORE_MAP_TEST
+      else if (didAnyCopy) {
+        printf("; (XC)");
+      }
+#endif
+    }
     // mFreeEntryHead will be fixed in `rehash()`
     // reinsert entries
-    rehash();
+    if (didAnyCopy) rehash();
+#ifdef CORE_MAP_TEST
+    printf("; newfe=%d; newle=%d; newcseed=(%d:0x%08x)\n", mFirstEntry, mLastEntry, mSeedCount, mSeed);
+#endif
   }
 
   bool has (const TK &akey) const {
@@ -530,6 +576,7 @@ public:
     }
 
     --mBucketsUsed;
+
     return true;
   }
 
@@ -592,7 +639,8 @@ public:
   inline void set (const TK &Key, const TV &Value) { put(Key, Value); }
 
   inline int count () const { return (int)mBucketsUsed; }
-  inline int capacity () const { return getCapacity(); }
+  inline int length () const { return (int)mBucketsUsed; }
+  inline int capacity () const { return (int)mEBSize; }
 
 #ifdef CORE_MAP_TEST
   int countItems () const {

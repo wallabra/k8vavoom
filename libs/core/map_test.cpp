@@ -35,6 +35,7 @@ typedef unsigned int vuint32;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 
 static vuint32 GetTypeHash (int a) {
@@ -136,6 +137,7 @@ int main () {
   for (int i = 0; i < MaxItems; ++i) its[i] = -1;
 
   //Randomize();
+  srand(time(nullptr));
 
   printf("testing: insertion\n");
   xcount = 0;
