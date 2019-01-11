@@ -543,9 +543,10 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     trace.dx = trace_delta.x;
     trace.dy = trace_delta.y;
     divline_t line;
-    for (int dy = -1; dy < 2; ++dy) {
-      for (int dx = -1; dx < 2; ++dx) {
-        for (VBlockThingsIterator It(Self->XLevel, mapx+dx, mapy+dy); Self && It; ++It) {
+    static const int deltas[3] = { 0, -1, 1 };
+    for (int dy = 0; dy < 3; ++dy) {
+      for (int dx = 0; dx < 3; ++dx) {
+        for (VBlockThingsIterator It(Self->XLevel, mapx+deltas[dx], mapy+deltas[dy]); Self && It; ++It) {
           if (vptSeenThings.has(*It)) continue;
           // [RH] don't check a corner to corner crossection for hit
           // instead, check against the actual bounding box

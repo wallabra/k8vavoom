@@ -567,7 +567,7 @@ bool VEntity::CheckLine (cptrace_t &cptrace, line_t *ld) {
   if (P_BoxOnLineSide(&cptrace.bbox[0], ld) != -1) return true;
 
   // a line has been hit
-  if (!ld->backsector) return false; // One sided line
+  if (!ld->backsector) return false; // one sided line
 
   if (!(ld->flags&ML_RAILING)) {
     if (ld->flags&ML_BLOCKEVERYTHING) return false; // explicitly blocking everything
