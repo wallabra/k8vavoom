@@ -240,6 +240,17 @@ bool Sys_DirExists (const VStr &path) {
 //
 //==========================================================================
 double Sys_Time () {
+#ifdef __linux__
+  static bool initialized = false;
+  static time_t secbase = 0;
+  struct timespec ts;
+  if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
+  if (!initialized) {
+    initialized = true;
+    secbase = ts.tv_sec;
+  }
+  return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0;
+#else
   struct timeval tp;
   struct timezone tzp;
   static int secbase = 0;
@@ -247,6 +258,7 @@ double Sys_Time () {
   gettimeofday(&tp, &tzp);
   if (!secbase) secbase = tp.tv_sec;
   return (tp.tv_sec-secbase)+tp.tv_usec/1000000.0;
+#endif
 }
 
 

@@ -117,6 +117,8 @@ static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-net
 void Host_Init () {
   guard(Host_Init);
 
+  (void)Sys_Time(); // this initializes timer
+
 #ifdef CLIENT
   C_Init();
 #else
