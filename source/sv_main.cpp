@@ -488,7 +488,7 @@ void SV_Ticker () {
           VObject::CollectGarbage();
           // advance player states, so weapons won't slow down on frame skip
           if (dbg_skipframe_player_tick) {
-            SV_RunClients(true); // have to make a full run, for demos/network (k8: is it really necessary?]
+            SV_RunClients(true); // have to make a full run, for demos/network (k8: is it really necessary?)
           }
         }
         GLevel->TickWorld(host_frametime);
