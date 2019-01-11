@@ -192,7 +192,7 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
 //  VClass::~VClass
 //
 //==========================================================================
-VClass::~VClass() {
+VClass::~VClass () {
   delete GameExpr; GameExpr = nullptr;
   delete MobjInfoExpr; MobjInfoExpr = nullptr;
   delete ScriptIdExpr; ScriptIdExpr = nullptr;
