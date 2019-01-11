@@ -50,13 +50,23 @@ static vuint32 GetTypeHash (int a) {
 }
 
 
-#include "map.h"
-
-
 static void fatal (const char *msg) {
   fprintf(stderr, "FATAL: %s\n", msg);
   abort();
 }
+
+
+void Sys_Error (const char *msg) { fatal(msg); }
+
+
+#include "common.h"
+#include "zone.h"
+#include "map.h"
+
+int zone_malloc_call_count;
+int zone_realloc_call_count;
+int zone_free_call_count;
+
 
 
 // tests for hash table

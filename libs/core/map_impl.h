@@ -65,11 +65,14 @@ private:
   };
 
   struct TEntry {
+    vuint32 hash; // 0 means "empty"
+    TEntry *nextFree; // next free entry
+    //bool empty;
     TK key;
     TV value;
-    vuint32 hash;
-    TEntry *nextFree; // next free entry
-    bool empty;
+
+    inline bool isEmpty () const { return (hash == 0); }
+    inline void setEmpty () { hash = 0; }
   };
 
 private:
@@ -93,7 +96,7 @@ public:
         index = amap.mEBSize;
       } else {
         index = (vuint32)amap.mFirstEntry;
-        while ((vint32)index <= amap.mLastEntry && index < amap.mEBSize && amap.mEntries[index].empty) ++index;
+        while ((vint32)index <= amap.mLastEntry && index < amap.mEBSize && amap.mEntries[index].isEmpty()) ++index;
         if ((vint32)index > amap.mLastEntry) index = amap.mEBSize;
       }
     }
@@ -101,7 +104,7 @@ public:
     inline void operator ++ () {
       if (index < map.mEBSize) {
         ++index;
-        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].empty) ++index;
+        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].isEmpty()) ++index;
         if ((int)index > map.mLastEntry) index = map.mEBSize;
       }
     }
@@ -113,7 +116,7 @@ public:
     inline TV &getValue () { return map.mEntries[index].value; }
     inline void removeCurrent () {
       if ((vint32)index <= map.mLastEntry && index < map.mEBSize) {
-        if (!map.mEntries[index].empty) map.del(map.mEntries[index].key);
+        if (!map.mEntries[index].isEmpty()) map.del(map.mEntries[index].key);
         operator++();
       }
     }
@@ -123,7 +126,7 @@ public:
         index = map.mEBSize;
       } else {
         index = (vuint32)map.mFirstEntry;
-        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].empty) ++index;
+        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].isEmpty()) ++index;
         if ((vint32)index > map.mLastEntry) index = map.mEBSize;
       }
     }
@@ -141,7 +144,7 @@ public:
   inline vint32 getFirstIIdx () const {
     if (mFirstEntry < 0) return -1;
     vint32 index = mFirstEntry;
-    while (index <= mLastEntry && index < (vint32)mEBSize && mEntries[index].empty) ++index;
+    while (index <= mLastEntry && index < (vint32)mEBSize && mEntries[index].isEmpty()) ++index;
     return (index <= mLastEntry ? index : -1);
   }
 
@@ -149,7 +152,7 @@ public:
   inline vint32 getNextIIdx (vint32 index) const {
     if (index >= 0 && index <= mLastEntry) {
       ++index;
-      while (index <= mLastEntry && mEntries[index].empty) ++index;
+      while (index <= mLastEntry && mEntries[index].isEmpty()) ++index;
       return (index <= mLastEntry ? index : -1);
     }
     return -1;
@@ -157,18 +160,18 @@ public:
 
   inline vint32 removeCurrAndGetNextIIdx (vint32 index) {
     if (index >= 0 && index <= mLastEntry) {
-      if (!mEntries[index].empty) del(mEntries[index].key);
+      if (!mEntries[index].isEmpty()) del(mEntries[index].key);
       return getNextIIdx(index);
     }
     return -1;
   }
 
   inline const TK *getKeyIIdx (vint32 index) const {
-    return (isValidIIdx(index) && !mEntries[index].empty ? &mEntries[index].key : nullptr);
+    return (isValidIIdx(index) && !mEntries[index].isEmpty() ? &mEntries[index].key : nullptr);
   }
 
   inline TV *getValueIIdx (vint32 index) const {
-    return (isValidIIdx(index) && !mEntries[index].empty ? &mEntries[index].value : nullptr);
+    return (isValidIIdx(index) && !mEntries[index].isEmpty() ? &mEntries[index].value : nullptr);
   }
 
 private:
@@ -177,7 +180,7 @@ private:
     if (mFirstEntry >= 0) {
       for (int f = mFirstEntry; f <= mLastEntry; ++f) {
         TEntry *e = &mEntries[f];
-        if (!e->empty) {
+        if (!e->isEmpty()) {
           // free key
 #if defined(TMAP_DO_DTOR)
           e->key.~TK();
@@ -192,10 +195,7 @@ private:
 #endif
     if (mEBSize > 0) {
       memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
-      for (vuint32 f = 0; f < mEBSize; ++f) {
-        TEntry *e = &mEntries[f];
-        e->empty = true;
-      }
+      //for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].setEmpty(); //k8: no need to
     }
     mFreeEntryHead = nullptr;
     mFirstEntry = mLastEntry = -1;
@@ -211,7 +211,7 @@ private:
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
         mEntries = (TEntry *)Z_Malloc(mEBSize*sizeof(TEntry));
         memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
-        for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].empty = true;
+        //for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].setEmpty(); //k8: no need to
       }
       ++mLastEntry;
       if (mFirstEntry == -1) {
@@ -228,7 +228,7 @@ private:
       if (idx > mLastEntry) mLastEntry = idx;
     }
     res->nextFree = nullptr; // just in case
-    res->empty = false;
+    //res->setEmpty(false);
     return res;
   }
 
@@ -242,7 +242,7 @@ private:
     e->value = TV();
 #endif
     memset((void *)e, 0, sizeof(*e));
-    e->empty = true;
+    //e->setEmpty(); //k8: no need to
     e->nextFree = mFreeEntryHead;
     mFreeEntryHead = e;
     // fix mFirstEntry and mLastEntry
@@ -253,13 +253,13 @@ private:
       // fix first entry index
       if (idx == mFirstEntry) {
         int cidx = idx+1;
-        while (mEntries[cidx].empty) ++cidx;
+        while (mEntries[cidx].isEmpty()) ++cidx;
         mFirstEntry = cidx;
       }
       // fix last entry index
       if (idx == mLastEntry) {
         int cidx = idx-1;
-        while (mEntries[cidx].empty) --cidx;
+        while (mEntries[cidx].isEmpty()) --cidx;
         mLastEntry = cidx;
       }
     }
@@ -318,12 +318,12 @@ public:
         memset(&mBuckets[0], 0, mEBSize*sizeof(TEntry *));
         mEntries = (TEntry *)Z_Malloc(mEBSize*sizeof(TEntry));
         memset((void *)(&mEntries[0]), 0, mEBSize*sizeof(TEntry));
-        for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].empty = true;
+        for (vuint32 f = 0; f < mEBSize; ++f) mEntries[f].isEmpty() = true;
         mFirstEntry = mLastEntry = -1;
         for (vuint32 f = 0; f < mEBSize; ++f) {
           if (f >= other.mEBSize) break;
           mEntries[f] = other.mEntries[f];
-          if (!mEntries[f].empty) {
+          if (!mEntries[f].isEmpty()) {
             if (mFirstEntry < 0) mFirstEntry = (int)f;
             mLastEntry = (int)f;
           }
@@ -371,7 +371,7 @@ public:
     TEntry *lastfree = nullptr;
     for (vuint32 idx = 0; idx < mEBSize; ++idx) {
       TEntry *e = &mEntries[idx];
-      if (!e->empty) {
+      if (!e->isEmpty()) {
         // no need to recalculate hash
         putEntryInternal(e);
       } else {
@@ -395,16 +395,23 @@ public:
     // move all entries to top
     if (mFirstEntry >= 0) {
       vuint32 didx = 0;
-      while (didx < mEBSize) if (!mEntries[didx].empty) ++didx; else break;
+      while (didx < mEBSize) if (!mEntries[didx].isEmpty()) ++didx; else break;
       vuint32 f = didx+1;
       // copy entries
       for (;;) {
-        if (!mEntries[f].empty) {
+        if (!mEntries[f].isEmpty()) {
           mEntries[didx] = mEntries[f];
-          mEntries[f].empty = true;
+#if defined(TMAP_DO_DTOR)
+          mEntries[f].key.~TK();
+          mEntries[f].value.~TV();
+#elif !defined(TMAP_NO_CLEAR)
+          mEntries[f].key = TK();
+          mEntries[f].value = TV();
+#endif
+          mEntries[f].setEmpty();
           ++didx;
           if (f == (vuint32)mLastEntry) break;
-          while (didx < mEBSize) if (!mEntries[didx].empty) ++didx; else break;
+          while (didx < mEBSize) if (!mEntries[didx].isEmpty()) ++didx; else break;
         }
         if (++f > (vuint32)mLastEntry) break;
       }
@@ -425,6 +432,7 @@ public:
     if (mBucketsUsed == 0) return false;
     vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
+    if (!khash) khash = 1; // avoid zero hash value
     vuint32 idx = (khash^mSeed)&bhigh;
     if (!mBuckets[idx]) return false;
     bool res = false;
@@ -443,6 +451,7 @@ public:
     if (mBucketsUsed == 0) return nullptr;
     vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
+    if (!khash) khash = 1; // avoid zero hash value
     vuint32 idx = (khash^mSeed)&bhigh;
     if (!mBuckets[idx]) return nullptr;
     for (vuint32 dist = 0; dist <= bhigh; ++dist) {
@@ -459,6 +468,7 @@ public:
     if (mBucketsUsed == 0) return nullptr;
     vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
+    if (!khash) khash = 1; // avoid zero hash value
     vuint32 idx = (khash^mSeed)&bhigh;
     if (!mBuckets[idx]) return nullptr;
     for (vuint32 dist = 0; dist <= bhigh; ++dist) {
@@ -490,6 +500,7 @@ public:
 
     vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
+    if (!khash) khash = 1; // avoid zero hash value
     vuint32 idx = (khash^mSeed)&bhigh;
 
     // find key
@@ -529,6 +540,7 @@ public:
   bool put (const TK &akey, const TV &aval) {
     vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
+    if (!khash) khash = 1; // avoid zero hash value
     vuint32 idx = (khash^mSeed)&bhigh;
 
     // check if we already have this key
@@ -547,7 +559,7 @@ public:
       }
     }
 
-    // need to resize hash?
+    // need to resize elements table?
     if ((vuint32)mBucketsUsed >= (bhigh+1)*LoadFactorPrc/100) {
       vuint32 newsz = (vuint32)mEBSize;
       //if (Length(mEntries) <> newsz) then raise Exception.Create('internal error in hash table (resize)');
@@ -559,7 +571,7 @@ public:
       // resize entries array
       mEntries = (TEntry *)Z_Realloc((void *)mEntries, newsz*sizeof(TEntry));
       memset((void *)(mEntries+mEBSize), 0, (newsz-mEBSize)*sizeof(TEntry));
-      for (vuint32 f = mEBSize; f < newsz; ++f) mEntries[f].empty = true;
+      //for (vuint32 f = mEBSize; f < newsz; ++f) mEntries[f].setEmpty(); //k8: no need to
       mEBSize = newsz;
       // mFreeEntryHead will be fixed in `rehash()`
       // reinsert entries
@@ -585,7 +597,7 @@ public:
 #ifdef CORE_MAP_TEST
   int countItems () const {
     int res = 0;
-    for (vuint32 f = 0; f < mEBSize; ++f) if (!mEntries[f].empty) ++res;
+    for (vuint32 f = 0; f < mEBSize; ++f) if (!mEntries[f].isEmpty()) ++res;
     return res;
   }
 #endif
