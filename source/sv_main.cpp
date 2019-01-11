@@ -896,7 +896,7 @@ COMMAND(PreSpawn) {
   // make sure level info is spawned on client side, since there could be some RPCs that depend on it
   VThinkerChannel *Chan = Player->Net->ThinkerChannels.FindPtr(GLevelInfo);
   if (!Chan) {
-    Chan = (VThinkerChannel*)Player->Net->CreateChannel(CHANNEL_Thinker, -1);
+    Chan = (VThinkerChannel *)Player->Net->CreateChannel(CHANNEL_Thinker, -1);
     if (Chan) {
       Chan->SetThinker(GLevelInfo);
       Chan->Update();

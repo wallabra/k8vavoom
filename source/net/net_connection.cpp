@@ -599,7 +599,7 @@ void VNetConnection::UpdateLevel () {
     if (!IsRelevant(*Th)) continue;
     VThinkerChannel *Chan = ThinkerChannels.FindPtr(*Th);
     if (!Chan) {
-      Chan = (VThinkerChannel*)CreateChannel(CHANNEL_Thinker, -1);
+      Chan = (VThinkerChannel *)CreateChannel(CHANNEL_Thinker, -1);
       if (!Chan) continue;
       Chan->SetThinker(*Th);
     }
