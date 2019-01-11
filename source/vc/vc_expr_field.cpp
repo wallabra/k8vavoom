@@ -1052,8 +1052,8 @@ VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
   if ((M->Flags&FUNC_Static) != 0) { wasError = true; ParseError(Loc, "delegate should not be static"); }
   if ((M->Flags&FUNC_VarArgs) != 0) { wasError = true; ParseError(Loc, "delegate should not be vararg"); }
   if ((M->Flags&FUNC_Iterator) != 0) { wasError = true; ParseError(Loc, "delegate should not be iterator"); }
-  // sadly, `FUNC_RealFinal` is not set yet, so use slower check
-  //if (ec.SelfClass->isRealFinalMethod(M->Name)) { wasError = true; ParseError(Loc, "delegate should not be final"); }
+  // sadly, `FUNC_NonVirtual` is not set yet, so use slower check
+  //if (ec.SelfClass->isNonVirtualMethod(M->Name)) { wasError = true; ParseError(Loc, "delegate should not be final"); }
   if (wasError) { delete this; return nullptr; }
   Type = TYPE_Delegate;
   Type.Function = M;
@@ -1069,13 +1069,13 @@ VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
 void VDelegateVal::Emit (VEmitContext &ec) {
   if (!op) return;
   op->Emit(ec);
-  // call class postload, so `FUNC_RealFinal` will be set
+  // call class postload, so `FUNC_NonVirtual` will be set
   //ec.SelfClass->PostLoad();
   if (!M->Outer) { ParseError(Loc, "VDelegateVal::Emit: Method has no outer!"); return; }
   if (M->Outer->MemberType != MEMBER_Class) { ParseError(Loc, "VDelegateVal::Emit: Method outer is not a class!"); return; }
   M->Outer->PostLoad();
-  //fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_RealFinal ? 1 : 0));
-  if (M->Flags&FUNC_RealFinal) {
+  //fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_NonVirtual ? 1 : 0));
+  if (M->Flags&FUNC_NonVirtual) {
     ec.AddStatement(OPC_PushFunc, M, Loc);
   } else {
     ec.AddStatement(OPC_PushVFunc, M, Loc);

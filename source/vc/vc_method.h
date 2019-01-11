@@ -44,11 +44,11 @@ enum {
   FUNC_Private     = 0x2000,
   FUNC_Protected   = 0x4000,
 
-  // "real final" method -- i.e. it has `FUNC_Final` set, and it is not in VMT
-  FUNC_RealFinal   = 0x8000, // set in postload processor
+  // non-virtual method -- i.e. it has `FUNC_Final` set, and it is not in VMT
+  FUNC_NonVirtual  = 0x8000, // set in postload processor
 
   FUNC_NetFlags = FUNC_Net|FUNC_NetReliable,
-  FUNC_ProtectionFlags = FUNC_Override|FUNC_Private|FUNC_Protected|FUNC_RealFinal,
+  FUNC_ProtectionFlags = FUNC_Override|FUNC_Private|FUNC_Protected|FUNC_NonVirtual,
 };
 
 
