@@ -1380,8 +1380,8 @@ void P_InitAnimated () {
       continue;
     }
 
-    if (!TmpName1[0]) Sys_Error("P_InitPicAnims: empty first texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
-    if (!TmpName2[0]) Sys_Error("P_InitPicAnims: empty second texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
+    if (!TmpName2[0]) Sys_Error("P_InitPicAnims: empty first texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
+    if (!TmpName1[0]) Sys_Error("P_InitPicAnims: empty second texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
 
     // 0 is flat, 1 is texture, 3 is texture with decals allowed
     int txtype = (Type&1 ? TEXTYPE_Wall : TEXTYPE_Flat);
@@ -1391,7 +1391,7 @@ void P_InitAnimated () {
     VName tn28 = VName(TmpName2, VName::AddLower8); // first
 
     if (animPicSeen.find(tn18) || animPicSeen.find(tn28)) {
-      GCon->Logf(NAME_Warning, "ANIMATED: skipping animation sequence between '%s' and '%s' due to animdef", TmpName1, TmpName2);
+      GCon->Logf(NAME_Warning, "ANIMATED: skipping animation sequence between '%s' and '%s' due to animdef", TmpName2, TmpName1);
       continue;
     }
 
@@ -1406,11 +1406,11 @@ void P_InitAnimated () {
     BuildTextureRange(tn28, tn18, txtype, ids, 32, true); // limit to 32 frames
 
     if (ids.length() == 1) {
-      if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: ignored zero-step animtex sequence ('%s' -- '%s')", TmpName1, TmpName2);
+      if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: ignored zero-step animtex sequence ('%s' -- '%s')", TmpName2, TmpName1);
     }
     if (ids.length() < 2) continue; // nothing to do
 
-    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: found animtex sequence ('%s' -- '%s'): %d", TmpName1, TmpName2, ids.length());
+    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: found animtex sequence ('%s' -- '%s'): %d (tics=%d)", TmpName2, TmpName1, ids.length(), BaseTime);
 
     memset(&ad, 0, sizeof(ad));
     //memset(&fd, 0, sizeof(fd));
@@ -1497,13 +1497,24 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     animPicSeen.put(sc->Name8, true);
   }
   //VName adefname = sc->Name8;
-  bool missing = ignore && optional;
+  bool missing = (ignore && optional);
+
+  bool vanilla = false;
+  float vanillaTics = 8;
+  if (sc->Check("vanilla")) {
+    vanilla = true;
+    if (sc->Check("tics")) {
+      sc->ExpectFloat();
+      vanillaTics = sc->Float;
+      if (vanillaTics < 0.1) vanillaTics = 0.1; // this is tics
+    }
+  }
 
   int CurType = 0;
   ad.StartFrameDef = FrameDefs.length();
   ad.Type = ANIM_Forward; //ANIM_Normal;
   ad.allowDecals = 0;
-  ad.range = 0; // for now
+  ad.range = (vanilla ? 1 : 0);
   TArray<int> ids;
 
   for (;;) {
@@ -1526,6 +1537,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       if (CurType == 2) sc->Error("You cannot use pic together with range.");
       CurType = 1;
     } else if (sc->Check("range")) {
+      if (vanilla) sc->Error("Vanilla animations should use pic.");
       if (CurType == 2) sc->Error("You can only use range once in a single animation.");
       if (CurType == 1) sc->Error("You cannot use range together with pic.");
       CurType = 2;
@@ -1537,52 +1549,66 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
 
     memset(&fd, 0, sizeof(fd));
 
-    if (sc->CheckNumber()) {
+    if (vanilla) {
+      sc->ExpectName8Warn();
       if (!ignore) {
-        if (!ad.range) {
-          // simple pic
-          check(CurType == 1);
-          if (sc->Number < 0) sc->Number = 1;
-          int txidx = GetTextureIdWithOffset(ad.Index, sc->Number-1, IsFlat);
-          if (txidx == -1) {
-            sc->Message(va("Cannot find %stexture '%s'+%d", (IsFlat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), sc->Number-1));
+        check(ad.range == 1);
+        // simple pic
+        check(CurType == 1);
+        fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
+        if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
+        animPicSeen.put(sc->Name8, true);
+        fd.BaseTime = vanillaTics;
+        fd.RandomRange = 0;
+      }
+    } else {
+      if (sc->CheckNumber()) {
+        if (!ignore) {
+          if (!ad.range) {
+            // simple pic
+            check(CurType == 1);
+            if (sc->Number < 0) sc->Number = 1;
+            int txidx = GetTextureIdWithOffset(ad.Index, sc->Number-1, IsFlat);
+            if (txidx == -1) {
+              sc->Message(va("Cannot find %stexture '%s'+%d", (IsFlat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), sc->Number-1));
+            } else {
+              animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
+            }
+            fd.Index = txidx;
           } else {
-            animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
-          }
-          fd.Index = txidx;
-        } else {
-          // range
-          check(CurType == 2);
-          if (!ignore) {
-            // create frames
-            for (int ofs = 0; ofs <= sc->Number; ++ofs) {
-              int txidx = GetTextureIdWithOffset(ad.Index, ofs, IsFlat);
-              if (txidx == -1) {
-                sc->Message(va("Cannot find %stexture '%s'+%d", (IsFlat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), ofs));
-              } else {
-                animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
+            // range
+            check(CurType == 2);
+            if (!ignore) {
+              // create frames
+              for (int ofs = 0; ofs <= sc->Number; ++ofs) {
+                int txidx = GetTextureIdWithOffset(ad.Index, ofs, IsFlat);
+                if (txidx == -1) {
+                  sc->Message(va("Cannot find %stexture '%s'+%d", (IsFlat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), ofs));
+                } else {
+                  animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
+                }
+                ids.append(txidx);
               }
-              ids.append(txidx);
             }
           }
         }
-      }
-      //fd.Index = ad.Index+sc->Number-1;
-    } else {
-      sc->ExpectName8Warn();
-      if (!ignore) {
-        if (!ad.range) {
-          // simple pic
-          check(CurType == 1);
-          fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
-          if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
-          animPicSeen.put(sc->Name8, true);
-        } else {
-          // range
-          check(CurType == 2);
-          int txtype = (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall);
-          BuildTextureRange(GTextureManager.GetTextureName(ad.Index), sc->Name8, txtype, ids, 64); // limit to 64 frames
-          for (int f = 0; f < ids.length(); ++f) animPicSeen.put(GTextureManager.GetTextureName(ids[f]), true);
+        //fd.Index = ad.Index+sc->Number-1;
+      } else {
+        sc->ExpectName8Warn();
+        if (!ignore) {
+          if (!ad.range) {
+            // simple pic
+            check(CurType == 1);
+            fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
+            if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
+            animPicSeen.put(sc->Name8, true);
+          } else {
+            // range
+            check(CurType == 2);
+            int txtype = (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall);
+            BuildTextureRange(GTextureManager.GetTextureName(ad.Index), sc->Name8, txtype, ids, 64); // limit to 64 frames
+            for (int f = 0; f < ids.length(); ++f) animPicSeen.put(GTextureManager.GetTextureName(ids[f]), true);
+          }
         }
       }
     }
@@ -1598,7 +1624,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       sc->ExpectNumber(true);
       fd.RandomRange = sc->Number-(int)fd.BaseTime+1;
     } else {
-      sc->Error(va("bad command (%s)", *sc->String));
+      if (!vanilla) sc->Error(va("bad command (%s)", *sc->String));
     }
 
     /*
@@ -1626,7 +1652,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     } else {
       // this is simple pic
       check(CurType == 1);
-      check(ad.range == 0);
+      check(ad.range == 0 || vanilla);
       FrameDefs.Append(fd);
     }
   }
