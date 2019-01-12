@@ -487,7 +487,7 @@ public:
   virtual void SetupFakeFloors (sector_t *) override;
 
   virtual void AddStaticLight (const TVec&, float, vuint32) override;
-  virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius) override;
+  virtual dlight_t *AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid=-1) override;
   virtual void DecayLights (float) override;
 
 public: // k8: so i don't have to fuck with friends

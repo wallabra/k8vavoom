@@ -206,7 +206,7 @@ bool bCannotPush; // cannot push other pushable mobjs
 bool bSmallSplash; // always use small splash
 bool bNoSplash; // things that don't splash
 bool bStaticLight; // static light source
-bool bStaticLightSpwned;
+bool bStaticLightSpawned;
 bool bDynamicLight; // dynamic light source
 bool bLeaveTrail; // leave particles trail type 1 (Rocket)
 bool bLeaveTrail2; // leave particles trail type 2 (Grenade)

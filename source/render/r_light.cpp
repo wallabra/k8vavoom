@@ -71,7 +71,7 @@ void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint
 // VRenderLevelShared::AllocDlight
 //
 //==========================================================================
-dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, float radius) {
+dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, float radius, int lightid) {
   guard(VRenderLevelShared::AllocDlight);
 
   dlight_t *dlowner = nullptr;

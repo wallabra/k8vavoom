@@ -1063,7 +1063,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     } else {
       Level.AddStaticLightRGB(Origin+LightOffset, mthing->arg1 ? float(mthing->arg1)*8.0 : LightRadius, LightColour);
     }
-    bStaticLightSpwned = true;
+    bStaticLightSpawned = true;
   }
 
   //print("SPAWNED: %C (%B)", self, bSolid);
@@ -1446,9 +1446,10 @@ override void ClientTick (float DeltaTime) {
     dl = AllocDlight(self, Origin);
     if (dl) {
       //dl->origin = Origin;
-      dl->radius = prev_rad <= DLightRadius ? prev_rad : (prev_rad-DLightRadius)*XLevel.Time;
+      dl->radius = (prev_rad <= DLightRadius ? prev_rad : (prev_rad-DLightRadius)*XLevel.Time);
       dl->radius += XLevel.Time*dl->decay;
-      if (dl->radius > DLightRadius) dl->radius = DLightRadius;
+      //if (dl->radius > DLightRadius) dl->radius = DLightRadius;
+      dl->radius = fmin(dl->radius, DLightRadius);
       prev_rad = dl->radius;
       dl->colour = DLightColour;
       dl->die = XLevel.Time+0.1;
@@ -1499,12 +1500,19 @@ final void DoStateEffects (float DeltaTime) {
 
   AngleVectors(Angles, out Forward, out Right, out Up);
 
-  if (!bStaticLightSpwned) {
+  if (!bStaticLightSpawned) {
     // dynamic lights
+    // note that this is wrong, as entity can only have one dynlight attached
+    //BeginEntityDlights(self); // this should forget all entity dlights, *AND* allow several dlights attached; noop for now
+    //scope(exit) EndEntityDlights(self);
+    // maybe it is better to allow any number of entity dlights, but reset all of them on new frame?
+    // or give each dynlight an id, to allow replacing?
+    // note that sprite effects can have several lights attached, and that can be changed with each new frame, so
+    // i think that it will be better to use ids, and allow unreplaced lights to decay
     foreach (auto i; 0..Lights.length) {
       LightEffectDef *L = Lights[i];
       TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
-      dlight_t *dl = AllocDlight(self, lorg);
+      dlight_t *dl = AllocDlight(self, lorg, lightid:i+1); // pass "light id" to allow replacing
       if (!dl) continue; // alas
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
       switch (L->Type) {
@@ -1571,9 +1579,9 @@ final void DoStateEffects (float DeltaTime) {
     if (Particles.Num > 0 && GetCvarB('r_particle_effects')) {
       foreach (auto i; 0..Particles.length) {
         ParticleEffectDef *P = Particles[i];
-        Level.ParticleEffect(P->Count, P->Type, P->Type2, Origin +
-          Forward*P->Offset.x-Right*P->Offset.y +
-          Up*P->Offset.z, P->OrgRnd, P->Velocity, P->VelRnd,
+        Level.ParticleEffect(P->Count, P->Type, P->Type2,
+          Origin+Forward*P->Offset.x-Right*P->Offset.y+Up*P->Offset.z,
+          P->OrgRnd, P->Velocity, P->VelRnd,
           P->Accel, P->Grav, P->Colour, P->Duration, P->Ramp);
       }
     }

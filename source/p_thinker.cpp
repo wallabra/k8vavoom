@@ -396,13 +396,14 @@ IMPLEMENT_FUNCTION(VThinker, bprint) {
   Self->BroadcastPrint(*Msg);
 }
 
-// native final dlight_t *AllocDlight(Thinker Owner, TVec origin, optional float radius);
+// native final dlight_t *AllocDlight(Thinker Owner, TVec origin, optional float radius, optional int lightid);
 IMPLEMENT_FUNCTION(VThinker, AllocDlight) {
+  P_GET_INT_OPT(lightid, -1);
   P_GET_FLOAT_OPT(radius, 0);
   P_GET_VEC(lorg);
   P_GET_REF(VThinker, Owner);
   P_GET_SELF;
-  RET_PTR(Self->XLevel->RenderData->AllocDlight(Owner, lorg, radius));
+  RET_PTR(Self->XLevel->RenderData->AllocDlight(Owner, lorg, radius, lightid));
 }
 
 IMPLEMENT_FUNCTION(VThinker, NewParticle) {
