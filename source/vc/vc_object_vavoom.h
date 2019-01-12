@@ -91,7 +91,6 @@
   DECLARE_FUNCTION(R_DrawModelFrame)
   DECLARE_FUNCTION(R_FillRect)
   DECLARE_FUNCTION(R_GetAspectRatio)
-  DECLARE_FUNCTION(IsAnimatedTexture)
 
   // client side sound
   DECLARE_FUNCTION(LocalSound)
@@ -102,6 +101,8 @@
 
 #include "../neoui/vc_object_neoui.h"
 #endif // CLIENT
+
+  DECLARE_FUNCTION(IsAnimatedTexture)
 
   DECLARE_FUNCTION(KBCheatClearAll)
   DECLARE_FUNCTION(KBCheatAppend)
