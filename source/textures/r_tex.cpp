@@ -199,11 +199,15 @@ void VTextureManager::Init () {
 
   check(inMapTextures == 0);
 
+  // we have to force-load textures after adding textures lump, so
+  // texture numbering for animations won't break
+  TArray<VName> numberedNames;
+
   // add a dummy texture
   AddTexture(new VDummyTexture);
 
   // initialise wall textures
-  AddTextures();
+  AddTextures(numberedNames);
 
   // initialise flats
   AddGroup(TEXTYPE_Flat, WADNS_Flats);
@@ -216,6 +220,9 @@ void VTextureManager::Init () {
 
   // initialise hires textures
   AddHiResTextures();
+
+  // force-load numbered textures
+  AddMissingNumberedTextures(numberedNames);
 
   // find default texture
   DefaultTexture = CheckNumForName("-noflat-", TEXTYPE_Overload, false, false);
@@ -887,16 +894,12 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
 //  Initialises the texture list with the textures from the textures lump
 //
 //==========================================================================
-void VTextureManager::AddTextures () {
+void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
   guard(VTextureManager::AddTextures);
   int NamesFile = -1;
   int LumpTex1 = -1;
   int LumpTex2 = -1;
   int FirstTex;
-
-  // we have to force-load textures after adding textures lump, so
-  // texture numbering for animations won't break
-  TArray<VName> numberedNames;
 
   // for each PNAMES lump load TEXTURE1 and TEXTURE2 from the same wad
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
@@ -917,7 +920,18 @@ void VTextureManager::AddTextures () {
   FirstTex = Textures.length();
   AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex1, FirstTex, true, numberedNames);
   AddTexturesLump(W_GetNumForName(NAME_pnames), LastTex2, FirstTex, false, numberedNames);
+  unguard;
+}
 
+
+//==========================================================================
+//
+//  VTextureManager::AddMissingNumberedTextures
+//
+//  Initialises the texture list with the textures from the textures lump
+//
+//==========================================================================
+void VTextureManager::AddMissingNumberedTextures (TArray<VName> &numberedNames) {
   //k8: force-load numbered textures
   for (int f = 0; f < numberedNames.length(); ++f) {
     const char *txname = *numberedNames[f];
@@ -931,12 +945,12 @@ void VTextureManager::AddTextures () {
         if (CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false) < 0) {
           int tid = CheckNumForNameAndForce(PatchName, TEXTYPE_WallPatch, false, false, true);
           if (tid > 0) GCon->Logf(NAME_Init, "Textures: force-loaded numbered texture '%s'", nbuf);
+        } else {
+          if (developer) GCon->Logf(NAME_Dev, "Textures: already loaded numbered texture '%s'", nbuf);
         }
       }
     }
   }
-
-  unguard;
 }
 
 

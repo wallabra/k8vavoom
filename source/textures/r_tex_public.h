@@ -413,7 +413,8 @@ public:
 
 private:
   void AddToHash (int Index);
-  void AddTextures ();
+  void AddTextures (TArray<VName> &numberedNames);
+  void AddMissingNumberedTextures (TArray<VName> &numberedNames);
   void AddTexturesLump (int, int, int, bool, TArray<VName> &numberedNames);
   void AddGroup (int, EWadNamespace);
   void AddHiResTextures ();
