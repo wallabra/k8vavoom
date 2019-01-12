@@ -727,7 +727,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
     } else {
       selectedGame = 0;
     }
-    if (selectedGame < 0) Sys_Error("please, select game!");
+    if (selectedGame < 0) Sys_Error("Looks like I cannot find any IWADs. Did you forgot to specify -iwaddir?");
   }
 
   version_t &gmi = games[selectedGame];

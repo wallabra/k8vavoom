@@ -87,6 +87,11 @@ VName W_LumpName (int lump);
 VStr W_FullLumpName (int lump);
 int W_LumpFile (int lump);
 
+// this is used to resolve animated ranges
+// returns handle or -1
+int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS);
+
+
 void W_ReadFromLump (int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump (VName name);
 void W_LoadLumpIntoArray (VName Lump, TArray<vuint8>& Array);

@@ -295,6 +295,8 @@ void W_CloseAuxiliary () {
 int W_CheckNumForName (VName Name, EWadNamespace NS) {
   guard(W_CheckNumForName);
 
+  if (Name == NAME_None) return -1;
+
   for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForName(Name, NS);
     if (i >= 0) return MAKE_HANDLE(wi, i);
@@ -312,6 +314,21 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
   // not found
   return -1;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  W_FindFirstLumpOccurence
+//
+//==========================================================================
+int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS) {
+  if (lmpname == NAME_None) return -1;
+  for (int wi = 0; wi < SearchPaths.length(); ++wi) {
+    int i = SearchPaths[wi]->CheckNumForName(lmpname, NS);
+    if (i >= 0) return MAKE_HANDLE(wi, i);
+  }
+  return -1;
 }
 
 

@@ -497,6 +497,8 @@ void VZipFile::OpenArchive (VStream *fstream) {
     qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
   }
 
+  bool dumpZips = GArgs.CheckParm("-dev-dump-zips");
+
   // now create hashmaps, and link lumps
   TMapNC<VName, int> lastSeenLump;
   for (int f = 0; f < NumFiles; ++f) {
@@ -521,7 +523,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
     }
     // put files into hashmap
     filemap.put(Files[f].Name, f);
-    GCon->Logf(NAME_Dev, "%s: %s", *ZipFileName, *Files[f].Name);
+    if (dumpZips) GCon->Logf(NAME_Dev, "%s: %s", *ZipFileName, *Files[f].Name);
   }
 
   unguard;
