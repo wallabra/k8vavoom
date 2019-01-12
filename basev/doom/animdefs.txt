@@ -1,3 +1,63 @@
+//  Animated textures
+Texture nukage1 vanilla tics 8
+  pic nukage1
+  pic nukage2
+  pic nukage3
+
+Texture fwater1 vanilla tics 8
+  pic fwater1
+  pic fwater2
+  pic fwater3
+  pic fwater4
+
+Texture lava1 vanilla tics 8
+  pic lava1
+  pic lava2
+  pic lava3
+  pic lava4
+
+Texture blood1 vanilla tics 8
+  pic blood1
+  pic blood2
+  pic blood3
+
+Texture rrock05 vanilla tics 8
+  pic rrock05
+  pic rrock06
+  pic rrock07
+  pic rrock08
+
+Texture slime01 vanilla tics 8
+  pic slime01
+  pic slime02
+  pic slime03
+  pic slime04
+
+Texture slime05 vanilla tics 8
+  pic slime05
+  pic slime06
+  pic slime07
+  pic slime08
+
+Texture slime09 vanilla tics 8
+  pic slime09
+  pic slime10
+  pic slime11
+  pic slime12
+
+Texture bfall01 vanilla tics 8
+  pic bfall01
+  pic bfall02
+  pic bfall03
+  pic bfall04
+
+Texture sfall01 vanilla tics 8
+  pic sfall01
+  pic sfall02
+  pic sfall03
+  pic sfall04
+
+
 //  Switches available in Doom shareware
 switch SW1BRCOM on pic SW2BRCOM tics 0
 switch SW1BRN1  on pic SW2BRN1  tics 0

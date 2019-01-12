@@ -29,7 +29,7 @@ $recursedirext progs/cgame/  @CMAKE_SOURCE_DIR@/progs/doom/cgame/  .vc
 $recursedirext progs/game/  @CMAKE_SOURCE_DIR@/progs/doom/game/  .vc
 
 //  Binary data lumps
-animated.lmp      @CMAKE_CURRENT_SOURCE_DIR@/animated.lmp
+//animated.lmp      @CMAKE_CURRENT_SOURCE_DIR@/animated.lmp
 
 //  Scripts
 animdefs.txt      @CMAKE_CURRENT_SOURCE_DIR@/animdefs.txt

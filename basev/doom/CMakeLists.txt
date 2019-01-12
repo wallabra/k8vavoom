@@ -9,7 +9,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     graphics/croshai3.lmp
     basepak.ls.in
     bigfont.pcx
-    animated.lmp
+    #animated.lmp
     animdefs.txt
     dehinfo.txt
     lockdefs.txt
