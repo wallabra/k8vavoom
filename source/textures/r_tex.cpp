@@ -1216,7 +1216,7 @@ void VTextureManager::AddHiResTextures () {
 //  int txtype = (Type&1 ? TEXTYPE_Wall : TEXTYPE_Flat);
 //
 //==========================================================================
-static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int> &ids, int limit=64) {
+static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int> &ids, int limit=64, bool checkadseen=false) {
   ids.clear();
   if (nfirst == NAME_None || nlast == NAME_None) {
     GCon->Logf(NAME_Warning, "ANIMATED: skipping animation sequence between '%s' and '%s'", *nfirst, *nlast);
@@ -1254,16 +1254,45 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
   int start = (backward ? pic2lmp : pic1lmp);
   int end = (backward ? pic1lmp : pic2lmp);
 
-  if (developer) GCon->Logf("=== %s : %s === (0x%08x : 0x%08x)", *nfirst, *nlast, pic1lmp, pic2lmp);
+  // try to find common texture prefix, to filter out accidental shit introduced by pwads
+  VStr pfx;
+  {
+    const char *n0 = *nfirst;
+    const char *n1 = *nlast;
+    while (*n0 && *n1) {
+      if (*n0 != *n1) break;
+      pfx += *n0;
+      ++n0;
+      ++n1;
+    }
+  }
+
+  if (developer) GCon->Logf("=== %s : %s === (0x%08x : 0x%08x) [%s]", *nfirst, *nlast, pic1lmp, pic2lmp, *pfx);
   // find all textures in animation (up to arbitrary limit)
   // it is safe to not check for `-1` here, as it is guaranteed that the last texture is present
   for (; start <= end; start = W_IterateNS(start, txns)) {
     check(start != -1); // should not happen
+    // check prefix
+    if (pfx.length()) {
+      const char *lname = *W_LumpName(start);
+      if (!VStr::startsWith(lname, *pfx)) {
+        if (developer) GCon->Logf("    PFX SKIP: %s : 0x%08x (0x%08x)", lname, start, end);
+        continue;
+      }
+    }
     int txidx = GTextureManager.CheckNumForName(W_LumpName(start), txtype, true, false);
     if (developer) {
       GCon->Logf("  %s : 0x%08x (0x%08x)", (txidx == -1 ? "----" : *GTextureManager.GetTextureName(txidx)), start, end);
     }
     if (txidx == -1) continue;
+    // if we have seen this texture in animdef, skip the whole sequence
+    if (checkadseen) {
+      if (animPicSeen.has(W_LumpName(start))) {
+        if (developer) GCon->Logf(" SEEN IN ANIMDEF, SKIPPED");
+        ids.clear();
+        return;
+      }
+    }
     // check for overlong sequences
     if (ids.length() > limit) {
       if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: too long animtex sequence ('%s' -- '%s')", *nfirst, *nlast);
@@ -1372,8 +1401,9 @@ void P_InitAnimated () {
     // different episode ?
     //if (pic1 == -1 || pic2 == -1) continue;
 
+    // if we have seen this texture in animdef, skip the whole sequence
     TArray<int> ids;
-    BuildTextureRange(tn28, tn18, txtype, ids, 32); // limit to 32 frames
+    BuildTextureRange(tn28, tn18, txtype, ids, 32, true); // limit to 32 frames
 
     if (ids.length() == 1) {
       if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: ignored zero-step animtex sequence ('%s' -- '%s')", TmpName1, TmpName2);
