@@ -43,6 +43,17 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
+
+#if defined(USE_FPU_MATH)
+# include <fenv.h>
+# define VAVOOM_ALLOW_FPU_DEBUG
+#elif defined(__linux__)
+# if defined(__x86_64__) || defined(__i386__)
+#  include <fenv.h>
+#  define VAVOOM_ALLOW_FPU_DEBUG
+# endif
+#endif
+
 #include "gamedefs.h"
 
 
@@ -231,6 +242,19 @@ int main (int argc, char **argv) {
     signal(SIGBREAK,signal_handler);
     signal(SIGABRT, signal_handler);
 # endif
+#endif
+
+#ifdef VAVOOM_ALLOW_FPU_DEBUG
+    if (GArgs.CheckParm("-dev-fpu-alltraps") || GArgs.CheckParm("-dev-fpu-all-traps")) {
+      feenableexcept(FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW|FE_UNDERFLOW);
+    } else if (GArgs.CheckParm("-dev-fpu-traps")) {
+      feenableexcept(FE_DIVBYZERO|FE_INVALID);
+    } else {
+      //GCon->Logf("ROUND: %d (%d); EXCEPT: %d", fegetround(), FLT_ROUNDS, fegetexcept());
+      feclearexcept(FE_ALL_EXCEPT);
+    }
+    // sse math can only round towards zero, so force it for FPU
+    if (fesetround(0) != 0) GCon->Logf(NAME_Warning, "Cannot set float rounding mode (this is not fatal)");
 #endif
 
     // initialise
