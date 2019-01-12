@@ -45,17 +45,17 @@ Texture slime09 vanilla tics 8
   pic slime11
   pic slime12
 
-Texture bfall01 vanilla tics 8
-  pic bfall01
-  pic bfall02
-  pic bfall03
-  pic bfall04
+Texture bfall1 vanilla tics 8
+  pic bfall1
+  pic bfall2
+  pic bfall3
+  pic bfall4
 
-Texture sfall01 vanilla tics 8
-  pic sfall01
-  pic sfall02
-  pic sfall03
-  pic sfall04
+Texture sfall1 vanilla tics 8
+  pic sfall1
+  pic sfall2
+  pic sfall3
+  pic sfall4
 
 
 //  Switches available in Doom shareware
