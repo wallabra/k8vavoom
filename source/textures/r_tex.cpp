@@ -1254,11 +1254,15 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
   int start = (backward ? pic2lmp : pic1lmp);
   int end = (backward ? pic1lmp : pic2lmp);
 
+  if (developer) GCon->Logf("=== %s : %s === (0x%08x : 0x%08x)", *nfirst, *nlast, pic1lmp, pic2lmp);
   // find all textures in animation (up to arbitrary limit)
   // it is safe to not check for `-1` here, as it is guaranteed that the last texture is present
   for (; start <= end; start = W_IterateNS(start, txns)) {
     check(start != -1); // should not happen
-    int txidx = GTextureManager.CheckNumForName(W_LumpName(pic1lmp), txtype, true, false);
+    int txidx = GTextureManager.CheckNumForName(W_LumpName(start), txtype, true, false);
+    if (developer) {
+      GCon->Logf("  %s : 0x%08x (0x%08x)", (txidx == -1 ? "----" : *GTextureManager.GetTextureName(txidx)), start, end);
+    }
     if (txidx == -1) continue;
     // check for overlong sequences
     if (ids.length() > limit) {
@@ -2175,7 +2179,7 @@ void R_AnimateSurfaces () {
 
       const FrameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.range ? 0 : ad.CurrentFrame)];
 
-      ad.Time = fd.BaseTime/35.0;
+      ad.Time += fd.BaseTime/35.0;
       if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
 
       /*
