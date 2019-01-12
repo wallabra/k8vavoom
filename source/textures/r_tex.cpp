@@ -1489,7 +1489,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   // name
   bool ignore = false;
   sc->ExpectName8Warn();
-  ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, !optional);
+  ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, optional);
   if (ad.Index == -1) {
     ignore = true;
     if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->Name8);
@@ -1497,7 +1497,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     animPicSeen.put(sc->Name8, true);
   }
   //VName adefname = sc->Name8;
-  bool missing = (ignore && optional);
+  //bool missing = (ignore && optional);
 
   bool vanilla = false;
   float vanillaTics = 8;
@@ -1555,8 +1555,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
         check(ad.range == 1);
         // simple pic
         check(CurType == 1);
-        fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
-        if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
+        fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, optional);
+        if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
         animPicSeen.put(sc->Name8, true);
         fd.BaseTime = vanillaTics;
         fd.RandomRange = 0;
@@ -1586,8 +1586,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
                   sc->Message(va("Cannot find %stexture '%s'+%d", (IsFlat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), ofs));
                 } else {
                   animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
+                  ids.append(txidx);
                 }
-                ids.append(txidx);
               }
             }
           }
@@ -1599,8 +1599,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
           if (!ad.range) {
             // simple pic
             check(CurType == 1);
-            fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, false);
-            if (fd.Index == -1 && !missing) sc->Message(va("Unknown texture \"%s\"", *sc->String));
+            fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall), true, true, optional);
+            if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
             animPicSeen.put(sc->Name8, true);
           } else {
             // range
@@ -1653,7 +1653,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       // this is simple pic
       check(CurType == 1);
       check(ad.range == 0 || vanilla);
-      FrameDefs.Append(fd);
+      if (fd.Index != -1) FrameDefs.Append(fd);
     }
   }
 
@@ -1677,6 +1677,8 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     */
     ad.Time = 0.0001; // force 1st game tic to animate
     AnimDefs.Append(ad);
+  } else if (!ignore && !optional) {
+    // report something here
   }
   unguard;
 }
