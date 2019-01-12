@@ -162,7 +162,7 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
 //
 //  VRenderLevel::CalcFaceVectors
 //
-//  fills in texorg, worldtotex. and textoworld
+//  fills in texorg, worldtotex, and textoworld
 //
 //==========================================================================
 void VRenderLevel::CalcFaceVectors (surface_t *surf) {
@@ -518,7 +518,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 //  VRenderLevel::MarkLights
 //
 //==========================================================================
-void VRenderLevel::MarkLights (dlight_t *light, int bit, int bspnum) {
+void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
   guard(VRenderLevel::MarkLights);
   if (bspnum&NF_SUBSECTOR) {
     int num;
@@ -567,7 +567,7 @@ void VRenderLevel::PushDlights () {
   dlight_t *l = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++l) {
     if (!l->radius || l->die < Level->Time) continue;
-    MarkLights(l, 1<<i, Level->NumNodes-1);
+    MarkLights(l, 1U<<i, Level->NumNodes-1);
   }
   unguard;
 }

@@ -605,8 +605,8 @@ struct subsector_t {
 
   sector_t *deepref; // for deepwater
 
-  vuint32 dlightbits;
-  int dlightframe;
+  vuint32 dlightbits; // bitmask of active dynamic lights
+  int dlightframe; // `dlightbits` validity counter
   subregion_t *regions;
 };
 

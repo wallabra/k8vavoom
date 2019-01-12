@@ -876,6 +876,7 @@ void VRenderLevelShared::RenderPlayerView () {
   if (!Level->LevelInfo) return;
 
   int renderattempts = 2;
+  bool didIt = false;
 
 again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);
@@ -885,9 +886,12 @@ again:
 
   BuildPlayerTranslations();
 
-  AnimateSky(host_frametime);
+  if (!didIt) {
+    didIt = true;
+    AnimateSky(host_frametime);
+    UpdateParticles(host_frametime);
+  }
 
-  UpdateParticles(host_frametime);
   PushDlights();
 
   // update camera textures that were visible in last frame

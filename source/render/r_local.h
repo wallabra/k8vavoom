@@ -254,7 +254,7 @@ public:
   enum {
     MAX_PARTICLES = 2048, // default max # of particles at one time
     ABSOLUTE_MIN_PARTICLES = 512, // no fewer than this no matter what's on the command line
-    MAX_DLIGHTS = 32,
+    MAX_DLIGHTS = 32, // should fit into vuint32, 'cause subsector is using that as bitmask for active lights
   };
 
   struct trans_sprite_t {
@@ -553,14 +553,14 @@ protected:
   void UpdateWorld (const refdef_t*, const VViewClipper*);
 
   // light methods
-  static void CalcMinMaxs (surface_t*);
-  float CastRay (const TVec&, const TVec&, float);
-  static void CalcFaceVectors (surface_t*);
-  void CalcPoints (surface_t*);
-  void SingleLightFace (light_t*, surface_t*, const vuint8 *facevis);
-  void LightFace (surface_t*, subsector_t*);
-  void MarkLights (dlight_t*, int, int);
-  void AddDynamicLights (surface_t*);
+  static void CalcMinMaxs (surface_t *surf);
+  float CastRay (const TVec &p1, const TVec &p2, float squaredist);
+  static void CalcFaceVectors (surface_t *surf);
+  void CalcPoints (surface_t *surf);
+  void SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis);
+  void LightFace (surface_t *surf, subsector_t *leaf);
+  void MarkLights (dlight_t *light, vuint32 bit, int bspnum);
+  void AddDynamicLights (surface_t *surf);
   virtual void PushDlights () override;
 
   void FlushCaches ();
