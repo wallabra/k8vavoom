@@ -63,14 +63,22 @@ static inline float makeInfF (void) { return *(const float *)&uinf; }
 
 static inline double prevDouble (double d) {
   uint64_t n = *(const uint64_t *)&d;
-  if ((n&DBL_MANT_MASK) == 0) return d;
+  if ((n&DBL_MANT_MASK) == 0) {
+    //return d; // this seems to be wrong
+    // can we borrow bits from exponent?
+    if ((uint32_t)((n>>DBL_EXP_SHIFT)&DBL_EXP_SMASK) < 1) return d;
+  }
   --n;
   return *(const double *)&n;
 }
 
 static inline double nextDouble (double d) {
   uint64_t n = *(const uint64_t *)&d;
-  if ((n&DBL_MANT_MASK) == DBL_MANT_MASK) return d;
+  if ((n&DBL_MANT_MASK) == DBL_MANT_MASK) {
+    //return d; // this seems to be wrong
+    // can we put bits into exponent?
+    if ((uint32_t)((n>>DBL_EXP_SHIFT)&DBL_EXP_SMASK) >= DBL_EXP_SMASK-1) return d;
+  }
   ++n;
   return *(const double *)&n;
 }
