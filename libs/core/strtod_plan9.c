@@ -60,6 +60,8 @@ static inline float makeInfF (void) { return *(const float *)&uinf; }
 #define DBL_SIGN_MASK  (0x8000000000000000UL)
 #define DBL_EXP_SHIFT  (52)
 #define DBL_EXP_SMASK  (0x7FFU)
+#define DBL_EXP_OFFSET (1023)
+
 
 static inline double prevDouble (double d) {
   uint64_t n = *(const uint64_t *)&d;
