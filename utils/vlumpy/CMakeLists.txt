@@ -17,7 +17,7 @@ add_executable(vlumpy
   zip.cpp
   zip.h
 )
-target_link_libraries(vlumpy core ${ZLIB_LIBRARIES})
+target_link_libraries(vlumpy core ${ZLIB_LIBRARIES} ${VAVOOM_SHITDOZE_LIBS})
 set_target_properties(vlumpy PROPERTIES OUTPUT_NAME ../bin/vlumpy)
 #add_dependencies(vlumpy core ${LIBLZMA_LIBRARIES} ${ZLIB_DEPS})
 add_dependencies(vlumpy core ${ZLIB_DEPS})

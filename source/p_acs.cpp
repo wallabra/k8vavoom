@@ -2227,7 +2227,7 @@ __attribute__((unused)) static const PCD_Info PCD_List[] = {
 //  VAcs::CallFunction
 //
 //==========================================================================
-int VAcs::CallFunction (int argCount, int funcIndex, int32_t *args) {
+int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 #if !USE_COMPUTED_GOTO
   {
     VStr dstr;

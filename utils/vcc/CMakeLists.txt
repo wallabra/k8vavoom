@@ -75,5 +75,5 @@ add_executable(vcc
 set_target_properties(vcc PROPERTIES OUTPUT_NAME ../bin/vcc)
 #set_target_properties(vcc PROPERTIES COMPILE_FLAGS IN_VCC)
 target_compile_definitions(vcc PRIVATE IN_VCC)
-target_link_libraries(vcc core)
+target_link_libraries(vcc core ${VAVOOM_SHITDOZE_LIBS})
 add_dependencies(vcc core)

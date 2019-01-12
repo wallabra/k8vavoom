@@ -60,6 +60,16 @@ typedef uint32_t  __attribute__((__may_alias__)) vuint32;
 typedef int64_t   __attribute__((__may_alias__)) vint64;
 typedef uint64_t  __attribute__((__may_alias__)) vuint64;
 
+static_assert(sizeof(vint8) == 1, "invalid vint8");
+static_assert(sizeof(vuint8) == 1, "invalid vuint8");
+static_assert(sizeof(vint16) == 2, "invalid vint16");
+static_assert(sizeof(vuint16) == 2, "invalid vuint16");
+static_assert(sizeof(vint32) == 4, "invalid vint32");
+static_assert(sizeof(vuint32) == 4, "invalid vuint32");
+static_assert(sizeof(vint64) == 8, "invalid vint64");
+static_assert(sizeof(vuint64) == 8, "invalid vuint64");
+
+
 enum ENoInit { E_NoInit };
 
 

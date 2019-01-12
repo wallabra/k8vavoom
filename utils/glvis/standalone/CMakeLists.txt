@@ -17,6 +17,6 @@ add_executable(glvis
   glvis.cpp
 )
 add_dependencies(glvis libglvis)
-target_link_libraries(glvis libglvis)
+target_link_libraries(glvis libglvis ${VAVOOM_SHITDOZE_LIBS})
 
 #EXTRA_DIST = glvis.txt

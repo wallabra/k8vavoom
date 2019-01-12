@@ -28,6 +28,7 @@
 //**  Low-level OS-dependent functions
 //**
 //**************************************************************************
+#define SHITDOZE_USE_WINMM
 
 #include "core.h"
 
@@ -461,6 +462,33 @@ bool Sys_DirExists (const VStr &path) {
 }
 
 
+#ifdef SHITDOZE_USE_WINMM
+static bool shitdozeTimerInited = false;
+static vuint32 shitdozeLastTime = 0;
+static vuint64 shitdozeCurrTime = 0;
+
+struct ShitdozeTimerInit {
+  ShitdozeTimerInit () { timeBeginPeriod(1); shitdozeTimerInited = true; shitdozeLastTime = (vuint32)timeGetTime(); }
+  ~ShitdozeTimerInit () { timeEndPeriod(1); shitdozeTimerInited = false; }
+};
+
+ShitdozeTimerInit thisIsFuckinShitdozeTimerInitializer;
+
+
+double Sys_Time () {
+  if (!shitdozeTimerInited) Sys_Error("shitdoze shits itself");
+  vuint32 currtime = (vuint32)timeGetTime();
+  if (currtime > shitdozeLastTime) {
+    shitdozeCurrTime += currtime-shitdozeLastTime;
+  } else {
+    // meh; do nothing on wraparound, this should only happen once
+  }
+  shitdozeLastTime = currtime;
+  return shitdozeCurrTime/1000.0;
+}
+
+
+#else
 //==========================================================================
 //
 //  Sys_Time
@@ -547,6 +575,7 @@ double Sys_Time () {
 
   return curtime;
 }
+#endif
 
 
 //==========================================================================

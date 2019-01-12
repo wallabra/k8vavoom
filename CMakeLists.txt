@@ -389,6 +389,14 @@ if(ENABLE_CLIENT OR ENABLE_VCCRUN)
   endif(WIN32)
 endif(ENABLE_CLIENT OR ENABLE_VCCRUN)
 
+if(WIN32)
+  set(VAVOOM_SHITDOZE_LIBS winmm)
+else(WIN32)
+  set(VAVOOM_SHITDOZE_LIBS )
+endif(WIN32)
+
+set(MAIN_LIBS ${VAVOOM_SHITDOZE_LIBS} ${MAIN_LIBS})
+
 
 #
 #  **** Check for Vorbis ****

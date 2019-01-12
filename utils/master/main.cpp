@@ -81,7 +81,7 @@ static TArray<TSrvItem> srvBlocked;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-char *AddrToString (sockaddr* addr) {
+static char *AddrToString (sockaddr *addr) {
   static char buffer[22];
   int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
   sprintf(buffer, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff,
