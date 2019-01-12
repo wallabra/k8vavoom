@@ -160,9 +160,9 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
 
 //==========================================================================
 //
-// VRenderLevel::CalcFaceVectors
+//  VRenderLevel::CalcFaceVectors
 //
-// fills in texorg, worldtotex. and textoworld
+//  fills in texorg, worldtotex. and textoworld
 //
 //==========================================================================
 void VRenderLevel::CalcFaceVectors (surface_t *surf) {
@@ -219,8 +219,8 @@ void VRenderLevel::CalcFaceVectors (surface_t *surf) {
 //
 //  VRenderLevel::CalcPoints
 //
-// for each texture aligned grid point, back project onto the plane
-// to get the world xyz value of the sample point
+//  for each texture aligned grid point, back project onto the plane
+//  to get the world xyz value of the sample point
 //
 //==========================================================================
 void VRenderLevel::CalcPoints (surface_t *surf) {
@@ -303,7 +303,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 
 //==========================================================================
 //
-// VRenderLevel::SingleLightFace
+//  VRenderLevel::SingleLightFace
 //
 //==========================================================================
 void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis) {
@@ -386,7 +386,7 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
 
 //==========================================================================
 //
-// VRenderLevel::LightFace
+//  VRenderLevel::LightFace
 //
 //==========================================================================
 void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
@@ -554,7 +554,7 @@ void VRenderLevel::MarkLights (dlight_t *light, int bit, int bspnum) {
 
 //==========================================================================
 //
-// VRenderLevel::PushDlights
+//  VRenderLevel::PushDlights
 //
 //==========================================================================
 void VRenderLevel::PushDlights () {
@@ -707,7 +707,7 @@ this way, when level geometry changed, we can re-trace static lights too.
 
 //==========================================================================
 //
-// VRenderLevel::AddDynamicLights
+//  VRenderLevel::AddDynamicLights
 //
 //==========================================================================
 void VRenderLevel::AddDynamicLights (surface_t *surf) {
@@ -832,7 +832,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
 //==========================================================================
 //
-// xblight
+//  xblight
 //
 //==========================================================================
 static inline int xblight (int add, int sub) {
@@ -847,9 +847,9 @@ static inline int xblight (int add, int sub) {
 
 //==========================================================================
 //
-// VRenderLevel::BuildLightMap
+//  VRenderLevel::BuildLightMap
 //
-// Combine and scale multiple lightmaps into the 8.8 format in blocklights
+//  combine and scale multiple lightmaps into the 8.8 format in blocklights
 //
 //==========================================================================
 void VRenderLevel::BuildLightMap (surface_t *surf) {
@@ -979,7 +979,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 
 //==========================================================================
 //
-// VRenderLevel::FlushCaches
+//  VRenderLevel::FlushCaches
 //
 //==========================================================================
 void VRenderLevel::FlushCaches () {
@@ -1004,7 +1004,7 @@ void VRenderLevel::FlushCaches () {
 
 //==========================================================================
 //
-// VRenderLevel::FlushOldCaches
+//  VRenderLevel::FlushOldCaches
 //
 //==========================================================================
 void VRenderLevel::FlushOldCaches () {
@@ -1025,7 +1025,7 @@ void VRenderLevel::FlushOldCaches () {
 
 //==========================================================================
 //
-// VRenderLevel::GentlyFlushAllCaches
+//  VRenderLevel::GentlyFlushAllCaches
 //
 //==========================================================================
 void VRenderLevel::GentlyFlushAllCaches () {
@@ -1046,7 +1046,7 @@ void VRenderLevel::GentlyFlushAllCaches () {
 
 //==========================================================================
 //
-// VRenderLevel::AllocBlock
+//  VRenderLevel::AllocBlock
 //
 //==========================================================================
 surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
@@ -1136,7 +1136,7 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
 
 //==========================================================================
 //
-// VRenderLevel::FreeBlock
+//  VRenderLevel::FreeBlock
 //
 //==========================================================================
 surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
@@ -1191,7 +1191,7 @@ surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
 
 //==========================================================================
 //
-// VRenderLevel::FreeSurfCache
+//  VRenderLevel::FreeSurfCache
 //
 //==========================================================================
 void VRenderLevel::FreeSurfCache (surfcache_t *block) {

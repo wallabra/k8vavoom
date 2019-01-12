@@ -119,6 +119,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   // look for any free slot (or free one if necessary)
   dlight_t *dl = DLights;
+
   // first try to find owned light to replace
   if (Owner) {
     for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
