@@ -411,4 +411,19 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: SkullDash EE: disabled precalculated static lightmaps and texture precaching");
     return;
   }
+
+
+  // Discharge! map04
+  // k8: actually, is looks better with dynamic lights:
+  //     there is a bug in static lightmap calculation that leaves unlit regions, and
+  //     for some mysterious reason dynamic lighting doesn't have it.
+  //     it would be event better when i'll do proper dynlight caching system
+  /*
+  if (MapHashMD5 == "d28e3374cd4d2a17a00bfe49fb6d48d8")
+  {
+    bConvertSectorLightsToStatic = true;
+    printwarn("MAPFIX: Discharge MAP04: made sector lights static");
+    return;
+  }
+  */
 }

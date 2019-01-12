@@ -3686,6 +3686,38 @@ void Cheat_WarpTo () {
 
 //==========================================================================
 //
+//  Cheat_MapHash
+//
+//==========================================================================
+void Cheat_MapHash () {
+  if (Cmd_GetArgC() > 1 && stricmp(Cmd_GetArgV(1), "sha224") == 0) {
+    print("MAP SHA224: %s", Level.XLevel.MapHash);
+  } else {
+    print("MAP MD5: %s", Level.XLevel.MapHashMD5);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_MapHash_AC
+//
+//==========================================================================
+void Cheat_MapHash_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  aclist[$] = "sha224";
+}
+
+
+//==========================================================================
+//
 //  CheckFriendlyFire
 //
 //  TODO

@@ -72,6 +72,27 @@ override void OnMapSpawn (mthing_t *mthing) {
         RGB(mthing->arg1, mthing->arg2, mthing->arg3));
     }
     Destroy();
+  } else if (LightType == DLTYPE_Sector && mthing && !TID && Level.XLevel.bConvertSectorLightsToStatic && Sector) {
+    // hack for Discharge map set
+    float Scale = float(Args[3])*0.125;
+    if (!Scale) Scale = 1.0;
+    Intensity = float(Sector->params.lightlevel)*Scale;
+    if (Intensity < 0.0) Intensity = 0.0;
+    if (Intensity > 255.0) Intensity = 255.0;
+    //print("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, LightType, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
+    Level.AddStaticLightRGB(Origin, IntensityToRadius(Intensity), RGB(Args[0], Args[1], Args[2]));
+    /*
+    if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
+      Level.AddStaticLight(Origin, StaticIntensityToRadius(float(mthing->arg4)));
+    } else {
+      Level.AddStaticLightRGB(Origin,
+        StaticIntensityToRadius(float(mthing->arg4)),
+        RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+    }
+    */
+    Destroy();
+  } else {
+    //dprint("*** CANNOT add static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere)", Class, LightType, TID, bDormant, (mthing ? "" : "not "));
   }
 }
 

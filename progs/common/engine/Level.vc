@@ -71,6 +71,8 @@ native transient bool bForceRebuildNodes;
 native transient bool bForceAllowSeveralPObjInSubsector;
 native transient bool bForceNoTexturePrecache;
 native transient bool bForceNoPrecalcStaticLights;
+// not in C++
+native transient bool bConvertSectorLightsToStatic;
 
 // MAP related Lookup tables.
 // Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
