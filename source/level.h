@@ -119,6 +119,10 @@ struct VCameraTextureInfo {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+extern VLevelScriptThinker *AcsCreateEmptyThinker ();
+
+
 //==========================================================================
 //
 //                  LEVEL
@@ -275,6 +279,15 @@ class VLevel : public VGameObject {
 
   TArray<vint32> sectorlinkStart;
   TArray<SectorLink> sectorlinks;
+
+  TArray<VLevelScriptThinker *> scriptThinkers;
+
+public:
+  void AddScriptThinker (VLevelScriptThinker *sth);
+  void RunScriptThinkers (float DeltaTime);
+
+  // used in save/load
+  void CollectAcsScripts (TArray<VLevelScriptThinker *> &outlist);
 
 public:
   virtual void Serialise (VStream &Strm) override;

@@ -154,8 +154,11 @@ native readonly private int NextSoundOriginID;
 native readonly private void *__decanimlist;
 native readonly private int __decanimuid;
 
-native array!int sectorlinkStart; // can be less than sectors; indexed by sector index
-native array!SectorLink sectorlinks;
+// don't mark as native, so serializer will do the work for us
+/*native*/ array!int sectorlinkStart; // can be less than sectors; indexed by sector index
+/*native*/ array!SectorLink sectorlinks;
+
+native transient array!(/*VLevelScriptThinker*/void *) scriptThinkers;
 
 
 // ////////////////////////////////////////////////////////////////////////// //

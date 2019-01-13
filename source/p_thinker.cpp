@@ -127,7 +127,7 @@ void VThinker::StartSound (const TVec &origin, vint32 origin_id,
   guard(VThinker::StartSound);
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (!Level->Game->Players[i]) continue;
-    if (!(Level->Game->Players[i]->PlayerFlags & VBasePlayer::PF_Spawned)) continue;
+    if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
     Level->Game->Players[i]->eventClientStartSound(sound_id, origin, (Local ? -666 : origin_id), channel, volume, Attenuation, Loop);
   }
   unguard;

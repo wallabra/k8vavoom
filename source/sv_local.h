@@ -111,6 +111,8 @@ public:
   VStr GetNewString (int idx);
   VName GetNewLowerName (int idx);
   int PutNewString (VStr str);
+
+  void CollectAcsScriptsNoDups (TArray<VLevelScriptThinker *> &outlist);
 };
 
 

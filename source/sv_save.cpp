@@ -70,7 +70,7 @@ extern VCvarI Skill;
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
-#define SAVE_VERSION_TEXT          "Version 1.34.10"
+#define SAVE_VERSION_TEXT          "Version 1.34.11"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
 
 static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");
@@ -138,6 +138,7 @@ private:
 public:
   TArray<VName> NameRemap;
   TArray<VObject *> Exports;
+  TArray<VLevelScriptThinker *> AcsExports;
 
   VSaveLoaderStream (VStream *InStream) : Stream(InStream) { bLoading = true; }
   virtual ~VSaveLoaderStream () override { delete Stream; Stream = nullptr; }
@@ -151,8 +152,19 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
+  virtual VStream &operator << (VLevelScriptThinker *&Ref) override {
+    vint32 scpIndex;
+    *this << STRM_INDEX(scpIndex);
+    if (scpIndex == 0) {
+      Ref = nullptr;
+    } else {
+      Ref = AcsExports[scpIndex-1];
+    }
+    return *this;
+  }
+
   virtual VStream &operator << (VName &Name) override {
-    int NameIndex;
+    vint32 NameIndex;
     *this << STRM_INDEX(NameIndex);
     Name = NameRemap[NameIndex];
     return *this;
@@ -199,6 +211,7 @@ public:
   TArray<VObject *> Exports;
   TArray<vint32> NamesMap;
   TMapNC<vuint32, vint32> ObjectsMap; // key: object uid; value: internal index
+  TArray<VLevelScriptThinker *> AcsExports;
 
   VSaveWriterStream (VStream *InStream) : Stream(InStream) {
     bLoading = false;
@@ -216,6 +229,17 @@ public:
   virtual bool AtEnd () override { return Stream->AtEnd(); }
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
+
+  virtual VStream &operator << (VLevelScriptThinker *&Ref) override {
+    vint32 scpIndex = 0;
+    if (Ref) {
+      while (scpIndex < AcsExports.length() && AcsExports[scpIndex] != Ref) ++scpIndex;
+      check(scpIndex < AcsExports.length());
+      ++scpIndex;
+    }
+    *this << STRM_INDEX(scpIndex);
+    return *this;
+  }
 
   virtual VStream &operator << (VName &Name) override {
     if (NamesMap[Name.GetIndex()] == -1) NamesMap[Name.GetIndex()] = Names.Append(Name);
@@ -1002,6 +1026,10 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   //!!Saver->ObjectsMap.SetNum(VObject::GetObjectsCount());
   //!!for (int i = 0; i < VObject::GetObjectsCount(); ++i) Saver->ObjectsMap[i] = 0;
 
+  // create acs export list
+  GLevel->CollectAcsScripts(Saver->AcsExports);
+  if (GLevel->Acs) GLevel->Acs->CollectAcsScriptsNoDups(Saver->AcsExports);
+
   // add level
   Saver->Exports.Append(GLevel);
   //!!Saver->ObjectsMap[GLevel->GetObjectIndex()] = Saver->Exports.Num();
@@ -1017,6 +1045,11 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   }
 
   // add players
+  {
+    check(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
+    vuint8 mpl = MAXPLAYERS;
+    *Saver << mpl;
+  }
   for (int i = 0; i < MAXPLAYERS; ++i) {
     byte Active = (byte)(SavingPlayers && GGameInfo->Players[i]);
     *Saver << Active;
@@ -1036,6 +1069,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     Saver->ObjectsMap.put(Th->GetUniqueId(), Saver->Exports.Num());
   }
 
+  // write exported object names
   vint32 NumObjects = Saver->Exports.Num()-ThinkersStart;
   *Saver << STRM_INDEX(NumObjects);
   for (int i = ThinkersStart; i < Saver->Exports.Num(); ++i) {
@@ -1043,8 +1077,16 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     *Saver << CName;
   }
 
+  // serialise acs scripts
+  vint32 numScripts = Saver->AcsExports.length();
+  *Saver << STRM_INDEX(numScripts);
+  for (vint32 f = 0; f < numScripts; ++f) {
+    Saver->AcsExports[f]->Serialise(*Saver);
+  }
+
   // serialise objects
   for (int i = 0; i < Saver->Exports.Num(); ++i) Saver->Exports[i]->Serialise(*Saver);
+
   unguard;
 }
 
@@ -1069,6 +1111,11 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   if (WorldInfoSaved) Loader->Exports.Append(GGameInfo->WorldInfo);
 
   // add players
+  {
+    vuint8 mpl = 255;
+    *Loader << mpl;
+    if (mpl != MAXPLAYERS) Host_Error("Invalid number of players in save");
+  }
   sv_load_num_players = 0;
   for (int i = 0; i < MAXPLAYERS; ++i) {
     byte Active;
@@ -1088,6 +1135,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 
   vint32 NumObjects;
   *Loader << STRM_INDEX(NumObjects);
+  if (NumObjects < 0) Host_Error("invalid number of VM objects");
   for (int i = 0; i < NumObjects; ++i) {
     // get params
     VName CName;
@@ -1126,6 +1174,16 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 
   GLevelInfo->Game = GGameInfo;
   GLevelInfo->World = GGameInfo->WorldInfo;
+
+  // unserialise acs scripts
+  vint32 numScripts;
+  *Loader << STRM_INDEX(numScripts);
+  if (numScripts < 0) Host_Error("invalid number of ACS scripts");
+  Loader->AcsExports.setLength(numScripts);
+  // create empty script objects
+  for (vint32 f = 0; f < numScripts; ++f) Loader->AcsExports[f] = AcsCreateEmptyThinker();
+  // load script objects
+  for (vint32 f = 0; f < numScripts; ++f) Loader->AcsExports[f]->Serialise(*Loader);
 
   for (int i = 0; i < Loader->Exports.Num(); ++i) {
     check(Loader->Exports[i]);

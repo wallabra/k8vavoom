@@ -499,13 +499,61 @@ void VLevel::Serialise (VStream &Strm) {
   }
   unguard;
 
-  // ACS
+  // ACS: script thinkers must be serialized first
   guard(VLevel::Serialise::ACS);
+
+  // script thinkers
+  {
+    vuint8 xver = 1;
+    Strm << xver;
+    if (xver != 1) Host_Error("Save is broken (invalid scripts version %u)", (unsigned)xver);
+    vint32 sthcount = scriptThinkers.length();
+    Strm << STRM_INDEX(sthcount);
+    if (sthcount < 0) Host_Error("Save is broken (invalid number of scripts)");
+    if (Strm.IsLoading()) scriptThinkers.setLength(sthcount);
+    for (int f = 0; f < sthcount; ++f) Strm << scriptThinkers[f];
+  }
+  /*
+  {
+    vuint8 xver = 1;
+    Strm << xver;
+    if (Strm.IsLoading()) {
+      if (xver != 1) Host_Error("Save is broken (invalid scripts version %u)", (unsigned)xver);
+      vint32 sthcount = scriptThinkers.length();
+      Strm << STRM_INDEX(sthcount);
+      if (Strm.IsLoading()) scriptThinkers.setLength(sthcount);
+      for (int f = 0; f < sthcount; ++f) {
+        if (Strm.IsLoading()) {
+          // loading
+          vuint8 isAlive = 69;
+          Strm << isAlive;
+          check(isAlive == 0 || isAlive == 1);
+          if (isAlive) {
+            scriptThinkers[f] = AcsLoadScriptFromStream(this, Strm);
+          } else {
+            scriptThinkers[f] = nullptr;
+          }
+        } else {
+          if (scriptThinkers[f] && !scriptThinkers[f]->destroyed) {
+            vuint8 isAlive = 1;
+            Strm << isAlive;
+            scriptThinkers[f]->Serialise(Strm);
+          } else {
+            vuint8 isAlive = 0;
+            Strm << isAlive;
+          }
+        }
+      }
+    }
+  }
+  */
+
   {
     vuint8 xver = 0;
     Strm << xver;
+    if (xver != 0) Host_Error("Save is broken (invalid acs manager version %u)", (unsigned)xver);
+    Acs->Serialise(Strm);
   }
-  Acs->Serialise(Strm);
   unguard;
 
   // camera textures
@@ -581,30 +629,41 @@ void VLevel::Serialise (VStream &Strm) {
   }
   unguard;
 
-  // subversion
-  {
+
+/*
+  // sector links subversion; 0 was manual
+  if (Strm.IsLoading()) {
     vuint8 xver = 0;
     Strm << xver;
-  }
 
-  // sector links
-  vint32 slscount = sectorlinkStart.length();
-  Strm << STRM_INDEX(slscount);
-  if (Strm.IsLoading()) sectorlinkStart.setLength(slscount);
-  for (int f = 0; f < slscount; ++f) {
-    vint32 sv = sectorlinkStart[f];
-    Strm << STRM_INDEX(sv);
-    if (Strm.IsLoading()) sectorlinkStart[f] = sv;
+    if (xver != 0 && xver != 1) Host_Error("Save is broken (invalid sector links version)");
+
+    // load sector links
+    if (xver == 0) {
+      vint32 slscount = sectorlinkStart.length();
+      Strm << STRM_INDEX(slscount);
+      if (Strm.IsLoading()) sectorlinkStart.setLength(slscount);
+      for (int f = 0; f < slscount; ++f) {
+        vint32 sv = sectorlinkStart[f];
+        Strm << STRM_INDEX(sv);
+        if (Strm.IsLoading()) sectorlinkStart[f] = sv;
+      }
+      slscount = sectorlinks.length();
+      Strm << STRM_INDEX(slscount);
+      if (Strm.IsLoading()) sectorlinks.setLength(slscount);
+      for (int f = 0; f < slscount; ++f) {
+        SectorLink *sl = &sectorlinks[f];
+        Strm << STRM_INDEX(sl->index);
+        Strm << STRM_INDEX(sl->mts);
+        Strm << STRM_INDEX(sl->next);
+      }
+    }
+  } else {
+    // version 1: no sector links
+    vuint8 xver = 1;
+    Strm << xver;
   }
-  slscount = sectorlinks.length();
-  Strm << STRM_INDEX(slscount);
-  if (Strm.IsLoading()) sectorlinks.setLength(slscount);
-  for (int f = 0; f < slscount; ++f) {
-    SectorLink *sl = &sectorlinks[f];
-    Strm << STRM_INDEX(sl->index);
-    Strm << STRM_INDEX(sl->mts);
-    Strm << STRM_INDEX(sl->next);
-  }
+*/
 
   unguard;
 }
@@ -618,8 +677,11 @@ void VLevel::Serialise (VStream &Strm) {
 void VLevel::ClearReferences () {
   guard(VLevel::ClearReferences);
   Super::ClearReferences();
-  for (int i = 0; i < NumSectors; ++i) {
-    sector_t *sec = Sectors+i;
+  // clear script refs
+  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) scriptThinkers[scidx]->ClearReferences();
+  // clear other refs
+  sector_t *sec = Sectors;
+  for (int i = NumSectors-1; i >= 0; --i, ++sec) {
     if (sec->SoundTarget && sec->SoundTarget->GetFlags()&_OF_CleanupRef) sec->SoundTarget = nullptr;
     if (sec->FloorData && sec->FloorData->GetFlags()&_OF_CleanupRef) sec->FloorData = nullptr;
     if (sec->CeilingData && sec->CeilingData->GetFlags()&_OF_CleanupRef) sec->CeilingData = nullptr;
@@ -651,7 +713,7 @@ void VLevel::Destroy () {
 
   decanimlist = nullptr; // why not?
 
-  // destroy all thinkers
+  // destroy all thinkers (including scripts)
   DestroyAllThinkers();
 
   while (HeadSecNode) {

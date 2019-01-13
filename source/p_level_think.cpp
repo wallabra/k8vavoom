@@ -38,6 +38,38 @@ double worldThinkTimeDecal = -1;
 
 //==========================================================================
 //
+//  VLevel::AddScriptThinker
+//
+//==========================================================================
+void VLevel::AddScriptThinker (VLevelScriptThinker *sth) {
+  if (!sth) return;
+  check(!sth->XLevel);
+  check(!sth->Level);
+  sth->XLevel = this;
+  sth->Level = LevelInfo;
+  scriptThinkers.append(sth);
+  //GCon->Logf("*** ADDED ACS: %s", *sth->DebugDumpToString());
+  if (scriptThinkers.length() > 1024*1024) Host_Error("too many ACS thinkers spawned");
+}
+
+
+//==========================================================================
+//
+//  VLevel::CollectAcsScripts
+//
+//==========================================================================
+void VLevel::CollectAcsScripts (TArray<VLevelScriptThinker *> &outlist) {
+  for (int f = 0; f < scriptThinkers.length(); ++f) {
+    if (scriptThinkers[f]) {
+      check(!scriptThinkers[f]->destroyed);
+      outlist.append(scriptThinkers[f]);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddThinker
 //
 //==========================================================================
@@ -77,6 +109,13 @@ void VLevel::RemoveThinker (VThinker *Th) {
 //==========================================================================
 void VLevel::DestroyAllThinkers () {
   guard(VLevel::DestroyAllThinkers);
+
+  // destroy scripts
+  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) scriptThinkers[scidx]->Destroy();
+  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) delete scriptThinkers[scidx];
+  scriptThinkers.clear();
+
+  // destroy VC thinkers
   VThinker *Th = ThinkerHead;
   while (Th) {
     VThinker *c = Th;
@@ -92,6 +131,63 @@ void VLevel::DestroyAllThinkers () {
   ThinkerHead = nullptr;
   ThinkerTail = nullptr;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VLevel::RunScriptThinkers
+//
+//==========================================================================
+void VLevel::RunScriptThinkers (float DeltaTime) {
+  // run script thinkers
+  int firstEmpty = -1;
+  // don't cache number of thinkers, as scripts may add new thinkers
+  for (int scidx = 0; scidx < scriptThinkers.length(); ++scidx) {
+    VLevelScriptThinker *sth = scriptThinkers[scidx];
+    if (!sth) {
+      if (firstEmpty < 0) firstEmpty = scidx;
+      continue;
+    }
+    if (sth->destroyed) {
+      //GCon->Logf("(0)DEAD ACS at slot #%d", scidx);
+      if (firstEmpty < 0) firstEmpty = scidx;
+      delete sth;
+      scriptThinkers[scidx] = nullptr;
+      continue;
+    }
+    //GCon->Logf("ACS #%d RUNNING: %s", scidx, *sth->DebugDumpToString());
+    sth->Tick(DeltaTime);
+    if (sth->destroyed) {
+      //GCon->Logf("(1)DEAD ACS at slot #%d", scidx);
+      if (firstEmpty < 0) firstEmpty = scidx;
+      delete sth;
+      scriptThinkers[scidx] = nullptr;
+      continue;
+    }
+  }
+  // remove dead thinkers
+  if (firstEmpty >= 0) {
+    const int sclen = scriptThinkers.length();
+    int currIdx = firstEmpty+1;
+    while (currIdx < sclen) {
+      VLevelScriptThinker *sth = scriptThinkers[currIdx];
+      if (sth) {
+        // alive
+        check(firstEmpty < currIdx);
+        scriptThinkers[firstEmpty] = sth;
+        scriptThinkers[currIdx] = nullptr;
+        // find next empty slot
+        ++firstEmpty;
+        while (firstEmpty < sclen && scriptThinkers[firstEmpty]) ++firstEmpty;
+      } else {
+        // dead, do nothing
+      }
+      ++currIdx;
+    }
+    //GCon->Logf("  SHRINKING ACS from %d to %d", sclen, firstEmpty);
+    scriptThinkers.setLength(firstEmpty, false); // don't resize
+  }
 }
 
 
@@ -138,6 +234,9 @@ void VLevel::TickWorld (float DeltaTime) {
     }
   }
   worldThinkTimeVM = (dbg_world_think_vm_time ? Sys_Time()+stimet : -1);
+
+  RunScriptThinkers(DeltaTime);
+
 
   // don't update specials if the level is frozen
   if (!(LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) LevelInfo->eventUpdateSpecials();

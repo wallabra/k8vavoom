@@ -31,6 +31,35 @@
 
 
 class VStr;
+class VLevel;
+class VLevelInfo;
+class VStream;
+
+
+// eh... need to be here, so we can virtual method for it
+class VLevelScriptThinker {
+public:
+  bool destroyed; // script `Destroy()` method should set this (and check to avoid double destroying)
+  VLevel *XLevel; // level object
+  VLevelInfo *Level; // level info object
+
+public:
+  VLevelScriptThinker () : destroyed(false), XLevel(nullptr), Level(nullptr) {}
+
+  virtual ~VLevelScriptThinker () {
+    if (!destroyed) Sys_Error("trying to delete unfinalized Acs script");
+  }
+
+  inline void DestroyThinker () { Destroy(); }
+
+  // it is guaranteed that `Destroy()` will be called by master before deleting the object
+  virtual void Destroy () = 0;
+  virtual void Serialise (VStream &) = 0;
+  virtual void ClearReferences () = 0;
+  virtual void Tick (float DeltaTime) = 0;
+
+  virtual VStr DebugDumpToString () = 0;
+};
 
 
 // base class for various streams
@@ -70,6 +99,8 @@ public:
   virtual VStream &operator << (VObject *&);
   virtual void SerialiseStructPointer (void *&, VStruct *);
   virtual VStream &operator << (VMemberBase *&);
+
+  virtual VStream &operator << (VLevelScriptThinker *&);
 
   // serialise integers in particular byte order
   void SerialiseLittleEndian (void *, int);

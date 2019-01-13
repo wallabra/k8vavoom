@@ -250,10 +250,11 @@ struct VAcsCallReturn {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VAcs : public VThinker {
-  DECLARE_CLASS(VAcs, VThinker, 0)
-  NO_DEFAULT_CONSTRUCTOR(VAcs)
+class VAcs : public VLevelScriptThinker /*: public VThinker*/ {
+  //DECLARE_CLASS(VAcs, VThinker, 0)
+  //NO_DEFAULT_CONSTRUCTOR(VAcs)
 
+public:
   enum {
     ASTE_Running,
     ASTE_Suspended,
@@ -271,7 +272,7 @@ class VAcs : public VThinker {
   VAcsInfo *info;
   vuint8 State;
   float DelayTime;
-  vint32 DelayActivationTick;
+  vint32 DelayActivationTick; // used only when `acs_use_doomtic_granularity` is set
   vint32 WaitValue;
   vint32 *LocalVars;
   vuint8 *InstructionPointer;
@@ -280,12 +281,39 @@ class VAcs : public VThinker {
   int HudHeight;
   VName Font;
 
+public:
+  VAcs ()
+    : VLevelScriptThinker()
+    , Activator(nullptr)
+    , line(nullptr)
+    , side(0)
+    , number(0)
+    , info(nullptr)
+    , State(0)
+    , DelayTime(0.0f)
+    , DelayActivationTick(0)
+    , WaitValue(0)
+    , LocalVars(nullptr)
+    , InstructionPointer(nullptr)
+    , ActiveObject(nullptr)
+    , HudWidth(0)
+    , HudHeight(0)
+    , Font(NAME_None)
+  {
+  }
+
+  //virtual ~VAcs () override { Destroy(); } // just in case
+
   virtual void Destroy () override;
   virtual void Serialise (VStream &) override;
   virtual void ClearReferences () override;
   int RunScript (float);
   virtual void Tick (float) override;
   int CallFunction (int argCount, int funcIndex, vint32 *args);
+
+  virtual VStr DebugDumpToString () override {
+    return VStr(va("number=%d; name=<%s>", number, *info->Name));
+  }
 
 private:
   enum { ACS_STACK_DEPTH = 4096 };
@@ -359,10 +387,28 @@ private:
   inline VEntity *EntityFromTID (int TID, VEntity *Default) { return (!TID ? Default : Level->FindMobjFromTID(TID, nullptr)); }
 
   int FindSectorFromTag (int, int);
+
+  void BroadcastCentrePrint (const char *s) {
+    if (destroyed) return; // just in case
+    for (int i = 0; i < svs.max_clients; ++i) {
+      if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCentrePrint(s);
+    }
+  }
+
+  void StartSound (const TVec &origin, vint32 origin_id,
+    vint32 sound_id, vint32 channel, float volume, float Attenuation,
+    bool Loop, bool Local=false)
+  {
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      if (!Level->Game->Players[i]) continue;
+      if (!(Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) continue;
+      Level->Game->Players[i]->eventClientStartSound(sound_id, origin, (Local ? -666 : origin_id), channel, volume, Attenuation, Loop);
+    }
+  }
 };
 
 
-IMPLEMENT_CLASS(V, Acs)
+//IMPLEMENT_CLASS(V, Acs)
 
 
 //==========================================================================
@@ -406,10 +452,7 @@ void VAcsGrowingArray::Serialise (VStream &Strm) {
 //  VAcsObject::VAcsObject
 //
 //==========================================================================
-
-VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
-  : Level(ALevel)
-{
+VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
   guard(VAcsObject::VAcsObject);
   Format = ACS_Unknown;
   LumpNum = Lump;
@@ -517,14 +560,13 @@ VAcsObject::VAcsObject(VAcsLevel *ALevel, int Lump)
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsObject::~VAcsObject
 //
 //==========================================================================
-
-VAcsObject::~VAcsObject()
-{
+VAcsObject::~VAcsObject () {
   //guard(VAcsObject::~VAcsObject);
   delete[] Scripts;
   Scripts = nullptr;
@@ -532,18 +574,15 @@ VAcsObject::~VAcsObject()
   Strings = nullptr;
   delete[] LowerCaseNames;
   LowerCaseNames = nullptr;
-  for (int i = 0; i < NumArrays; i++)
-  {
+  for (int i = 0; i < NumArrays; ++i) {
     delete[] ArrayStore[i].Data;
     ArrayStore[i].Data = nullptr;
   }
-  if (ArrayStore)
-  {
+  if (ArrayStore) {
     delete[] ArrayStore;
     ArrayStore = nullptr;
   }
-  if (Arrays)
-  {
+  if (Arrays) {
     delete[] Arrays;
     Arrays = nullptr;
   }
@@ -552,14 +591,13 @@ VAcsObject::~VAcsObject()
   //unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsObject::LoadOldObject
 //
 //==========================================================================
-
-void VAcsObject::LoadOldObject()
-{
+void VAcsObject::LoadOldObject () {
   guard(VAcsObject::LoadOldObject);
   int i;
   int *buffer;
@@ -569,20 +607,15 @@ void VAcsObject::LoadOldObject()
   //  Add to loaded objects.
   LibraryID = Level->LoadedObjects.Append(this) << 16;
 
-  header = (VAcsHeader*)Data;
+  header = (VAcsHeader *)Data;
 
   //  Load script info.
   buffer = (int*)(Data + LittleLong(header->InfoOffset));
   NumScripts = LittleLong(*buffer++);
-  if (NumScripts == 0)
-  {
-    //  Empty behavior lump
-    return;
-  }
+  if (NumScripts == 0) return; // empty behavior lump
   Scripts = new VAcsInfo[NumScripts];
   memset((void *)Scripts, 0, NumScripts * sizeof(VAcsInfo));
-  for (i = 0, info = Scripts; i < NumScripts; i++, info++)
-  {
+  for (i = 0, info = Scripts; i < NumScripts; i++, info++) {
     info->Number = LittleLong(*buffer) % 1000;
     info->Type = LittleLong(*buffer) / 1000;
     buffer++;
@@ -612,12 +645,12 @@ void VAcsObject::LoadOldObject()
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsObject::LoadEnhancedObject
 //
 //==========================================================================
-
 void VAcsObject::LoadEnhancedObject () {
   guard(VAcsObject::LoadEnhancedObject);
   int i;
@@ -671,7 +704,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   //  Load script flags.
-  buffer = (int*)FindChunk("SFLG");
+  buffer = (int *)FindChunk("SFLG");
   if (buffer)
   {
     int count = LittleLong(buffer[1]) / 4;
@@ -1178,12 +1211,95 @@ void VAcsObject::Serialise (VStream &Strm) {
   if (xver != 1) Host_Error("invalid ACS object version in save file");
 
   // scripts
-  int scriptCount = NumScripts;
+  vint32 scriptCount = NumScripts;
   Strm << STRM_INDEX(scriptCount);
   if (Strm.IsLoading()) {
     if (scriptCount != NumScripts) Host_Error("invalid number of ACS scripts in save file");
   }
-  for (int i = 0; i < scriptCount; ++i) Strm << Scripts[i].RunningScript;
+
+  //fprintf(stderr, "ACS COUNT=%d\n", scriptCount);
+/*
+  check(Level);
+  check(Level->XLevel);
+  if (Strm.IsLoading()) {
+    // loading
+    for (int i = 0; i < scriptCount; ++i) {
+      vuint8 isAlive = 69;
+      Strm << isAlive;
+      check(isAlive == 0 || isAlive == 1 || isAlive == 2);
+      switch (isAlive) {
+        case 0: // dead
+          Scripts[i].RunningScript = nullptr;
+          break;
+        case 1: // object
+          {
+            VAcs *script = new VAcs();
+            script->Serialise(strm);
+            Scripts[i].RunningScript = script;
+          }
+          break;
+        case 2: // index
+          {
+          }
+          break;
+      if (isAlive) {
+        vint32 sidx = -666;
+        Strm << STRM_INDEX(sidx);
+        Scripts[i].RunningScript = (VAcs *)Level->XLevel->GetScriptByIndex(sidx);
+        check(Scripts[i].RunningScript);
+      } else {
+        Scripts[i].RunningScript = nullptr;
+      }
+    }
+  } else {
+    // saving
+    for (int i = 0; i < scriptCount; ++i) {
+      vuint8 isAlive = (Scripts[i].RunningScript && !Scripts[i].RunningScript->destroyed ? 1 : 0);
+      if (isAlive) {
+        vint32 sidx = Level->XLevel->FindScriptIndex(Scripts[i].RunningScript);
+        if (sidx >= 0) {
+          // 2: index
+          isAlive = 2;
+          Strm << isAlive;
+          Strm << STRM_INDEX(sidx);
+        } else {
+          // 1: object
+          Strm << isAlive;
+          Strm << Scripts[i].RunningScript;
+        }
+      } else {
+        // 0: dead
+        Strm << isAlive;
+      }
+      / *
+      if (isAlive) {
+        vint32 sidx = Level->XLevel->FindScriptIndex(Scripts[i].RunningScript);
+        Strm << STRM_INDEX(sidx);
+      }
+      * /
+    }
+  }
+  */
+  /*
+  for (int i = 0; i < scriptCount; ++i) {
+    vuint8 isAlive = (Scripts[i].RunningScript ? 1 : 0);
+    Strm << isAlive;
+    if (Strm.IsLoading()) {
+      if (isAlive) {
+        Strm << Scripts[i].RunningScript;
+      } else {
+        Scripts[i].RunningScript = nullptr;
+      }
+    } else {
+      if (isAlive) Strm << Scripts[i].RunningScript;
+    }
+  }
+  */
+  for (int i = 0; i < scriptCount; ++i) {
+    VLevelScriptThinker *vth = Scripts[i].RunningScript;
+    Strm << vth;
+    if (Strm.IsLoading()) Scripts[i].RunningScript = (VAcs *)vth;
+  }
 
   // map variables
   int mapvarCount = MAX_ACS_MAP_VARS;
@@ -1662,6 +1778,29 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 //  VAcsLevel::Serialise
 //
 //==========================================================================
+void VAcsLevel::CollectAcsScriptsNoDups (TArray<VLevelScriptThinker *> &outlist) {
+  for (int f = 0; f < LoadedObjects.length(); ++f) {
+    VAcsObject *ao = LoadedObjects[f];
+    if (!ao) continue;
+    for (int sidx = 0; sidx < ao->NumScripts; ++sidx) {
+      VLevelScriptThinker *sth = ao->Scripts[sidx].RunningScript;
+      if (!sth || sth->destroyed) continue;
+      //FIXME: made this faster!
+      bool found = false;
+      for (int cc = outlist.length()-1; cc >= 0; --cc) {
+        if (outlist[cc] == sth) { found = true; break; }
+      }
+      if (!found) outlist.append(sth);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VAcsLevel::Serialise
+//
+//==========================================================================
 void VAcsLevel::Serialise (VStream &Strm) {
   guard(VAcsLevel::Serialise);
   vuint8 xver = 1;
@@ -1902,24 +2041,25 @@ bool VAcsLevel::Suspend (int Number, int MapNum) {
 //  VAcsLevel::SpawnScript
 //
 //==========================================================================
-
-VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
+VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
   bool Always, bool Delayed)
 {
   guard(VAcsLevel::SpawnScript);
-  if (!Always && Info->RunningScript)
-  {
-    if (Info->RunningScript->State == VAcs::ASTE_Suspended)
-    {
-      //  Resume a suspended script
+  if (!Always && Info->RunningScript) {
+    if (Info->RunningScript->State == VAcs::ASTE_Suspended) {
+      // resume a suspended script
       Info->RunningScript->State = VAcs::ASTE_Running;
     }
-    //  Script is already executing
+    // script is already executing
     return Info->RunningScript;
   }
 
-  VAcs *script = (VAcs *)XLevel->SpawnThinker(VAcs::StaticClass());
+  //VAcs *script = (VAcs *)XLevel->SpawnThinker(VAcs::StaticClass());
+  VAcs *script = new VAcs();
+  // `XLevel->AddScriptThinker()` will do this
+  //script->Level = XLevel->LevelInfo;
+  //script->XLevel = XLevel;
   script->info = Info;
   script->number = Info->Number;
   script->InstructionPointer = Info->Address;
@@ -1941,13 +2081,43 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
     //k8: this was commented in the original
     // world objects are allotted 1 second for initialization
     //script->DelayTime = 1.0f;
+    // as scripts are runned last in the frame, there is no need to delay them
+    // but leave delay code for "tic granularity"
     script->DelayActivationTick = XLevel->TicTime+1; // on next tick
   }
   if (!Always) {
     Info->RunningScript = script;
   }
+  XLevel->AddScriptThinker(script);
   return script;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  AcsLoadScriptFromStream
+//
+//==========================================================================
+/*
+VLevelScriptThinker *AcsLoadScriptFromStream (VLevel *XLevel, VStream &strm) {
+  check(strm.IsLoading());
+  VAcs *script = new VAcs();
+  //script->Level = XLevel->LevelInfo;
+  //script->XLevel = XLevel;
+  script->Serialise(strm);
+  return script;
+}
+*/
+
+
+//==========================================================================
+//
+//  AcsCreateEmptyThinker
+//
+//==========================================================================
+VLevelScriptThinker *AcsCreateEmptyThinker () {
+  return new VAcs();
 }
 
 
@@ -1956,16 +2126,27 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
 //  VAcs::Destroy
 //
 //==========================================================================
-
-void VAcs::Destroy()
-{
-  guard(VAcs::Destroy);
-  if (LocalVars)
-  {
-    delete[] LocalVars;
-    LocalVars = nullptr;
+void VAcs::Destroy () {
+  if (!destroyed) {
+    destroyed = true;
+    if (LocalVars) {
+      delete[] LocalVars;
+      LocalVars = nullptr;
+    }
+    Level = nullptr;
+    XLevel = nullptr;
   }
-  unguard;
+}
+
+
+//==========================================================================
+//
+//  VAcs::Serialise
+//
+//==========================================================================
+VStream &operator << (VStream &strm, VLevelScriptThinker *sth) {
+  sth->Serialise(strm);
+  return strm;
 }
 
 
@@ -1978,10 +2159,15 @@ void VAcs::Serialise (VStream &Strm) {
   guard(VAcs::Serialise);
   vint32 TmpInt;
 
-  Super::Serialise(Strm);
-  vuint8 xver = 1;
+  check(!destroyed);
+
+  //Super::Serialise(Strm);
+  vuint8 xver = 2;
   Strm << xver;
-  if (xver != 1) Host_Error("invalid ACS script version in save file");
+  if (xver != 2) Host_Error("invalid ACS script version in save file");
+
+  Strm << Level;
+  Strm << XLevel;
 
   Strm << Activator;
   if (Strm.IsLoading()) {
@@ -2036,9 +2222,11 @@ void VAcs::Serialise (VStream &Strm) {
 //==========================================================================
 void VAcs::ClearReferences () {
   guard(VAcs::ClearReferences);
-  Super::ClearReferences();
-  if (Activator && (Activator->GetFlags()&_OF_CleanupRef)) {
-    Activator = nullptr;
+  //Super::ClearReferences();
+  if (!destroyed) {
+    if (Activator && (Activator->GetFlags()&_OF_CleanupRef)) Activator = nullptr;
+    if (XLevel && (XLevel->GetFlags()&_OF_CleanupRef)) XLevel = nullptr;
+    if (Level && (Level->GetFlags()&_OF_CleanupRef)) Level = nullptr;
   }
   unguard;
 }
@@ -2050,9 +2238,7 @@ void VAcs::ClearReferences () {
 //
 //==========================================================================
 void VAcs::Tick (float DeltaTime) {
-  guard(VAcs::Tick);
-  RunScript(DeltaTime);
-  unguard;
+  if (!destroyed) RunScript(DeltaTime);
 }
 
 
@@ -6471,10 +6657,8 @@ LblFuncStop:
 #endif
   //fprintf(stderr, "VAcs::RunScript:003: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   InstructionPointer = ip;
-  if (action == SCRIPT_Terminate)
-  {
-    if (info->RunningScript == this)
-    {
+  if (action == SCRIPT_Terminate) {
+    if (info->RunningScript == this) {
       info->RunningScript = nullptr;
     }
     DestroyThinker();
