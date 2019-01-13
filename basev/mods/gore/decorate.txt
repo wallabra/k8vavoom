@@ -705,10 +705,9 @@ Actor K8Gore_DripingBloodLeavesSmallPool : K8Gore_TinyBlood {
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0
@@ -1586,10 +1585,9 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient : K8Gore_TinyBloodTransient {
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0
@@ -2474,10 +2472,9 @@ Actor K8Gore_DripingBloodLeavesSmallPoolGreen : K8Gore_TinyBloodGreen {
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0
@@ -3355,10 +3352,9 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Green : K8Gore_TinyBloodTransi
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0
@@ -4243,10 +4239,9 @@ Actor K8Gore_DripingBloodLeavesSmallPoolBlue : K8Gore_TinyBloodBlue {
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0
@@ -5124,10 +5119,9 @@ Actor K8Gore_DripingBloodLeavesSmallPoolTransient_Blue : K8Gore_TinyBloodTransie
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0

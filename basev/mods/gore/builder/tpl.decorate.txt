@@ -761,10 +761,9 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
 
   States {
     Spawn:
-      TNT1 A 0
       TNT1 A 0 A_JumpIf(waterlevel > 1, "Splash")
-      BLUX A 4
-      Goto Death
+      BLUX A 4 A_CheckFloor("Death")
+      Loop
 
     Splash:
       B8OD A 0
