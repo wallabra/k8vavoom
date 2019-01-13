@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 #include "r_tex_id.h"
+#include "gamedefs.h"
 
 
 //==========================================================================
@@ -34,8 +35,16 @@
 //==========================================================================
 VStream &operator << (VStream &strm, const VTextureID &tid) {
   check(!strm.IsLoading());
-  int aid = tid.id;
-  strm << aid;
+  vint32 aid = tid.id;
+  if (aid > 0 && GTextureManager.getIgnoreAnim(aid)) {
+    strm << STRM_INDEX(aid);
+    // name
+    VName txname = GTextureManager.GetTextureName(aid);
+    strm << txname;
+  } else {
+    if (aid > 0) aid = 0;
+    strm << STRM_INDEX(aid);
+  }
   return strm;
 }
 
@@ -46,6 +55,33 @@ VStream &operator << (VStream &strm, const VTextureID &tid) {
 //
 //==========================================================================
 VStream &operator << (VStream &strm, VTextureID &tid) {
-  strm << tid.id;
+  if (strm.IsLoading()) {
+    // loading
+    strm << STRM_INDEX(tid.id);
+    if (tid.id > 0) {
+      // name
+      VName txname = NAME_None;
+      strm << txname;
+      if (txname == NAME_None) Host_Error("save file is broken");
+      if (txname != GTextureManager.GetTextureName(tid.id)) {
+        // try to fix texture
+        auto lock = GTextureManager.LockMapLocalTextures();
+        int texid = GTextureManager.CheckNumForNameAndForce(txname, TEXTYPE_Wall, true, true, false);
+        tid.id = texid;
+      }
+    }
+  } else {
+    // writing
+    vint32 aid = tid.id;
+    if (aid > 0 && GTextureManager.getIgnoreAnim(aid)) {
+      strm << STRM_INDEX(aid);
+      // name
+      VName txname = GTextureManager.GetTextureName(aid);
+      strm << txname;
+    } else {
+      if (aid > 0) aid = 0;
+      strm << STRM_INDEX(aid);
+    }
+  }
   return strm;
 }
