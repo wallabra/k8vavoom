@@ -48,24 +48,29 @@ static inline vuint32 cvnamehash (const char *buf) {
 }
 
 
+// `pat` must be in [a-z] range
 static bool xstrcmpCI (const char *s, const char *pat) {
   if (!s || !pat || !s[0] || !pat[0]) return false;
-  while (*s && *s <= ' ') ++s;
+  while (*s && *(const vuint8 *)s <= ' ') ++s;
   while (*s && *pat) {
-    char c0 = *s++;
-    char c1 = *pat++;
+    const char c0 = (*s++)|32; // lowercase
+    const char c1 = *pat++;
     if (c0 != c1) {
+      /*
       if (c0 >= 'A' && c0 <= 'Z') c0 += 32; // poor man's tolower
       if (c1 >= 'A' && c1 <= 'Z') c1 += 32; // poor man's tolower
       if (c0 != c1) return false;
+      */
+      return false;
     }
   }
-  if (*pat || *s > ' ') return false;
-  while (*s && *s <= ' ') ++s;
+  if (*pat || *(const vuint8 *)s > ' ') return false;
+  while (*s && *(const vuint8 *)s <= ' ') ++s;
   return (s[0] == 0);
 }
 
 
+/*
 static bool convertInt (const char *s, int *outv) {
   bool neg = false;
   *outv = 0;
@@ -133,6 +138,7 @@ static bool convertFloat (const char *s, float *outv) {
   if (neg) *outv = -(*outv);
   return true;
 }
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -271,8 +277,13 @@ void VCvar::DoSet (const VStr &AValue) {
   guard(VCvar::DoSet);
 
   StringValue = AValue;
-  bool validInt = convertInt(*StringValue, &IntValue);
-  bool validFloat = convertFloat(*StringValue, &FloatValue);
+  bool validInt = VStr::convertInt(*StringValue, &IntValue);
+  bool validFloat = VStr::convertFloat(*StringValue, &FloatValue);
+
+  if (!validInt) IntValue = 0;
+  if (!validFloat) FloatValue = 0.0f;
+
+  //fprintf(stderr, "::: <%s>: s=<%s>; i(%d)=%d; f(%d)=%f\n", Name, *StringValue, (validInt ? 1 : 0), IntValue, (validFloat ? 1 : 0), FloatValue);
 
   // interpret boolean
   if (validFloat) {
@@ -291,8 +302,15 @@ void VCvar::DoSet (const VStr &AValue) {
     IntValue = (BoolValue ? 1 : 0);
     FloatValue = IntValue;
     //fprintf(stderr, "CVAR: badint; str=<%s>; b=%d; i=%d; f=%f\n", *StringValue, (BoolValue ? 1 : 0), IntValue, FloatValue);
+    //fprintf(stderr, "::: BOOL: <%s>: s=<%s>; i(%d)=%d; f(%d)=%f; b=%d\n", Name, *StringValue, (validInt ? 1 : 0), IntValue, (validFloat ? 1 : 0), FloatValue, (BoolValue ? 1 : 0));
   }
-  if (!validInt && validFloat) IntValue = (int)FloatValue;
+  if (!validInt && validFloat) {
+    if (FloatValue >= MIN_VINT32 && FloatValue <= MAX_VINT32) {
+      IntValue = (int)FloatValue;
+    } else {
+      IntValue = (FloatValue < 0 ? MIN_VINT32 : MAX_VINT32);
+    }
+  }
 
 #ifdef CLIENT
   if (Flags&CVAR_UserInfo) {
