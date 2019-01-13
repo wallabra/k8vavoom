@@ -390,10 +390,10 @@ VUnaryMutator::~VUnaryMutator () {
 
 //==========================================================================
 //
-//  VUnaryMutator::IsUnaryMath
+//  VUnaryMutator::IsUnaryMutator
 //
 //==========================================================================
-bool VUnaryMutator::IsUnaryMath () const {
+bool VUnaryMutator::IsUnaryMutator () const {
   return true;
 }
 

@@ -131,6 +131,7 @@ public:
   virtual bool IsAssignExpr () const;
   virtual bool IsParens () const;
   virtual bool IsUnaryMath () const;
+  virtual bool IsUnaryMutator () const;
   virtual bool IsBinaryMath () const;
   virtual bool IsSingleName () const;
   virtual bool IsDoubleName () const;

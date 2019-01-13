@@ -113,7 +113,7 @@ public:
   virtual void Emit (VEmitContext &) override;
   virtual bool AddDropResult () override;
 
-  virtual bool IsUnaryMath () const override;
+  virtual bool IsUnaryMutator () const override;
 
   virtual VStr toString () const override;
 
