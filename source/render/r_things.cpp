@@ -106,6 +106,9 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
 {
   guard(VRenderLevelShared::DrawTranslucentPoly);
 
+  check(count >= 0);
+  if (count == 0 || Alpha < 0.0002f) return;
+
   // make room
   if (traspUsed == traspSize) {
     if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
@@ -113,15 +116,30 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
     trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
 
-  TVec mid(0, 0, 0);
+  float dist;
   if (useSprOrigin) {
-    mid = sprOrigin;
+    // not really used
+    TVec mid = sprOrigin;
+    //dist = fabsf(DotProduct(mid-vieworg, viewforward));
+    dist = Length2DSquared(mid-vieworg);
   } else {
+#if 1
+    TVec mid(0, 0, 0);
     for (int i = 0; i < count; ++i) mid += sv[i];
     mid /= count;
+    //dist = fabsf(DotProduct(mid-vieworg, viewforward));
+    dist = Length2DSquared(mid-vieworg);
+#else
+    // select nearest vertex
+    dist = Length2DSquared(sv[0]-vieworg);
+    for (int i = 1; i < count; ++i) {
+      const float nd = Length2DSquared(sv[i]-vieworg);
+      if (dist > nd) dist = nd;
+    }
+#endif
   }
 
-  const float dist = fabs(DotProduct(mid-vieworg, viewforward));
+  //const float dist = fabsf(DotProduct(mid-vieworg, viewforward));
   //float dist = Length(mid-vieworg);
 
   trans_sprite_t &spr = trans_sprites[traspUsed++];
@@ -161,7 +179,7 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
     trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
 
-  const float dist = fabs(DotProduct(mobj->Origin-vieworg, viewforward));
+  const float dist = fabsf(DotProduct(mobj->Origin-vieworg, viewforward));
 
   trans_sprite_t &spr = trans_sprites[traspUsed++];
   spr.Ent = mobj;
@@ -208,7 +226,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // starts to approach an undefined state, so we don't draw if the two
       // vectors are less than 1 degree apart
       dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
-      if (dot > 0.999848 || dot < -0.999848) return; // cos(1 degree) = 0.999848
+      if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
       sprup = TVec(0, 0, 1);
       // CrossProduct(sprup, viewforward)
       sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
@@ -225,7 +243,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // vectors are less than 1 degree apart
       tvec = Normalise(sprorigin-vieworg);
       dot = tvec.z; // same as DotProduct (tvec, sprup), because sprup is 0, 0, 1
-      if (dot > 0.999848 || dot < -0.999848) return; // cos(1 degree) = 0.999848
+      if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
       sprup = TVec(0, 0, 1);
       // CrossProduct(sprup, -sprorigin)
       sprright = Normalise(TVec(tvec.y, -tvec.x, 0));
@@ -273,7 +291,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // don't draw if the two vectors are less than 1 degree apart
       dot = viewforward.z;  //  same as DotProduct(viewforward, sprup)
                   // because sprup is 0, 0, 1
-      if ((dot > 0.999848) || (dot < -0.999848))  // cos(1 degree) = 0.999848
+      if ((dot > 0.999848f) || (dot < -0.999848f))  // cos(1 degree) = 0.999848f
         return;
 
       sr = msin(thing->Angles.roll);
@@ -324,12 +342,12 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
     //FIXME must use sprforward here?
     float ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
     if (sprframe->lump[0] == sprframe->lump[1]) {
-      ang = AngleMod(ang-thing->Angles.yaw+180.0+45.0/2.0);
+      ang = AngleMod(ang-thing->Angles.yaw+180.0f+45.0f/2.0f);
     } else {
       ang = matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x);
-      ang = AngleMod(ang-thing->Angles.yaw+180.0+45.0/4.0);
+      ang = AngleMod(ang-thing->Angles.yaw+180.0f+45.0f/4.0f);
     }
-    vuint32 rot = (vuint32)(ang*16.0/360.0)&15;
+    vuint32 rot = (vuint32)(ang*16.0f/360.0f)&15;
     lump = sprframe->lump[rot];
     flip = sprframe->flip[rot];
   } else {
@@ -365,7 +383,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   sv[2] = sprorigin+end+topdelta;
   sv[3] = sprorigin+end+botdelta;
 
-  if (Alpha < 1.0 || Additive || r_sort_sprites) {
+  if (Alpha < 1.0f || Additive || r_sort_sprites) {
     int priority = 0;
     if (thing) {
            if (thing->EntityFlags&VEntity::EF_Bright) priority = 200;
@@ -407,12 +425,12 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   float TimeFrac = 0;
   if (mobj->State->Time > 0)
   {
-    TimeFrac = 1.0 - (mobj->StateTime / mobj->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   //  Draw it
-  if (Alpha < 1.0 || Additive)
+  if (Alpha < 1.0f || Additive)
   {
     if (!CheckAliasModelFrame(mobj, TimeFrac))
     {
@@ -424,7 +442,7 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   }
   else
   {
-    return DrawEntityModel(mobj, light, Fade, 1.0, false, TimeFrac,
+    return DrawEntityModel(mobj, light, Fade, 1.0f, false, TimeFrac,
       Pass);
   }
   unguard;
@@ -463,14 +481,17 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 
   switch (RendStyle) {
     case STYLE_None: return;
-    case STYLE_Normal: Alpha = 1.0; break;
+    case STYLE_Normal: Alpha = 1.0f; break;
     case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
     case STYLE_Add: Additive = true; break;
     case STYLE_Stencil: break;
     case STYLE_AddStencil: Additive = true; break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
-  if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
+  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
+  if (Alpha > 1.0f) Alpha = 1.0f;
+
+  //Alpha = MID(0.0f, Alpha, 1.0f);
+  //if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
 
   // setup lighting
   vuint32 light;
@@ -525,31 +546,43 @@ extern "C" {
     if (a == b) return 0;
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
+
+    // first masked polys, then sprites, then alias models
+    // type 0: masked polys
+    // type 1: sprites
+    // type 2: alias models
+    const int typediff = (int)ta->type-(int)tb->type;
+    if (typediff) return typediff;
+    //if (ta->type < tb->type) return -1;
+    //if (ta->type > tb->type) return 1;
+
+    // non-translucent objects should come first
     bool didDistanceCheck = false;
-    if (ta->Alpha < 1.0f && tb->Alpha < 1.0f) {
-      // both translucent, sort by distance
+    const bool aTrans = (ta->Additive || ta->Alpha < 1.0f);
+    const bool bTrans = (tb->Additive || tb->Alpha < 1.0f);
+    if (aTrans && bTrans) {
+      // both translucent, sort by distance to view origin (nearest last)
       const float d0 = ta->dist;
       const float d1 = tb->dist;
-      if (d1 < d0) return -1;
-      if (d1 > d0) return 1;
+      if (d0 < d1) return 1; // a is nearer, so it is last
+      if (d0 > d1) return -1; // b is nearer, so it is last
       // same distance, do other checks
       didDistanceCheck = true;
     }
-    if (ta->Alpha >= 1.0f) {
-      if (tb->Alpha < 1.0f) return -1; // a is not translucent, b is translucent; a first
+    if (!aTrans) {
+      if (bTrans) return -1; // a is not translucent, b is translucent; a first
     }
-    if (tb->Alpha >= 1.0f) {
-      if (ta->Alpha < 1.0f) return 1; // a is translucent, b is not translucent; b first
+    if (bTrans) {
+      if (aTrans) return 1; // a is translucent, b is not translucent; b first
     }
-    // first masked polys, then sprites, then alias models
-    if (ta->type < tb->type) return -1;
-    if (ta->type > tb->type) return 1;
     // distance again
     if (!didDistanceCheck) {
+      // both translucent, sort by distance to view origin (nearest first)
+      // do nearest first here, so z-buffer will do some culling for us
       const float d0 = (ta->type == 1 ? ta->pdist : ta->dist);
       const float d1 = (tb->type == 1 ? tb->pdist : tb->dist);
-      if (d1 < d0) return -1;
-      if (d1 > d0) return 1;
+      if (d0 < d1) return -1; // a is nearest, so it is first
+      if (d0 > d1) return 1; // b is nearest, so it is first
     }
     // priority check
     if (ta->prio < tb->prio) return 1;
@@ -661,6 +694,9 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   int lump;
   bool flip;
 
+  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
+  if (Alpha > 1.0f) Alpha = 1.0f;
+
   // decide which patch to use
   if ((vuint32)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= MAX_SPRITE_MODELS) {
 #ifdef PARANOID
@@ -696,21 +732,21 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 
   TVec dv[4];
 
-  float PSP_DISTI = 1.0/PSP_DIST;
+  float PSP_DISTI = 1.0f/PSP_DIST;
   TVec sprorigin = vieworg+PSP_DIST*viewforward;
 
-  float sprx = 160.0-VSt->SX+TexSOffset;
-  float spry = 100.0-VSt->SY*R_GetAspectRatio()+TexTOffset;
+  float sprx = 160.0f-VSt->SX+TexSOffset;
+  float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset;
 
   spry -= cl->PSpriteSY;
   //k8: this is not right, but meh...
   if (fov > 90) spry -= (refdef.fovx-1.0f)*(aspect_ratio != 0 ? 100.0f : 110.0f);
 
-  //  1 / 160 = 0.00625
-  TVec start = sprorigin-(sprx*PSP_DIST*0.00625)*viewright;
-  TVec end = start+(TexWidth*PSP_DIST*0.00625)*viewright;
+  //  1 / 160 = 0.00625f
+  TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*viewright;
+  TVec end = start+(TexWidth*PSP_DIST*0.00625f)*viewright;
 
-  //  1 / 160.0 * 120 / 100 = 0.0075
+  //  1 / 160.0f * 120 / 100 = 0.0075f
   const float symul = 1.0f/160.0f*120.0f/100.0f;
   TVec topdelta = (spry*PSP_DIST*symul)*viewup;
   TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*viewup;
@@ -759,18 +795,18 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
   guard(VRenderLevelShared::RenderViewModel);
   if (!r_view_models) return false;
 
-  TVec origin = vieworg+(VSt->SX-1.0)*viewright/8.0-(VSt->SY-32.0)*viewup/6.0;
+  TVec origin = vieworg+(VSt->SX-1.0f)*viewright/8.0f-(VSt->SY-32.0f)*viewup/6.0f;
 
   float TimeFrac = 0;
   if (VSt->State->Time > 0) {
-    TimeFrac = 1.0-(VSt->StateTime/VSt->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f-(VSt->StateTime/VSt->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   // check if we want to interpolate model frames
   bool Interpolate = (r_interpolate_frames ? true : false);
 
-  return DrawAliasModel(VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0, 1.0,
+  return DrawAliasModel(VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
     VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
     nullptr, 0, light, Fade, Alpha, Additive, true, TimeFrac, Interpolate,
     RPASS_Normal);
@@ -788,7 +824,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
   if (!r_draw_psprites || r_chasecam) return;
 
   int RendStyle = STYLE_Normal;
-  float Alpha = 1.0;
+  float Alpha = 1.0f;
   bool Additive = false;
 
   cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
@@ -802,13 +838,15 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   switch (RendStyle) {
     case STYLE_None: return;
-    case STYLE_Normal: Alpha = 1.0; break;
+    case STYLE_Normal: Alpha = 1.0f; break;
     case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
     case STYLE_Add: Additive = true; break;
     case STYLE_Stencil: break;
     case STYLE_AddStencil: Additive = true; break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
+  //Alpha = MID(0.0f, Alpha, 1.0f);
+  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
+  if (Alpha > 1.0f) Alpha = 1.0f;
 
   // add all active psprites
   for (int i = 0; i < NUMPSPRITES; ++i) {
