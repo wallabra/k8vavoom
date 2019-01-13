@@ -44,6 +44,8 @@ static VCvarB sv_ignore_nocrouch("sv_ignore_nocrouch", true, "Ignore \"nocrouch\
 static VCvarB sv_ignore_nomlook("sv_ignore_nomlook", true, "Ignore \"nofreelook\" flag in MAPINFO?", CVAR_ServerInfo);
 static VCvarB mod_allow_server_cvars("mod_allow_server_cvars", false, "Allow server cvars from CVARINFO?", CVAR_Archive);
 
+extern VCvarI host_max_skip_frames;
+
 server_t sv;
 server_static_t svs;
 
@@ -500,7 +502,17 @@ void SV_Ticker () {
 
   // do main actions
   if (!sv.intermission) {
-    host_frametime /= exec_times;
+    if (exec_times > 1) {
+      static int showExecTimes = -1;
+      int scap = host_max_skip_frames;
+      if (scap < 3) scap = 3;
+      if (showExecTimes < 0) showExecTimes = (GArgs.CheckParm("-show-exec-times") ? 1 : 0);
+      if (showExecTimes) {
+        if (exec_times <= scap) GCon->Logf("exec_times=%d", exec_times); else GCon->Logf("exec_times=%d (capped to %d)", exec_times, scap);
+      }
+      if (exec_times > scap) exec_times = scap;
+    }
+    if (exec_times > 1) host_frametime /= exec_times;
     GGameInfo->frametime = host_frametime;
     for (int i = 0; i < exec_times && !completed; ++i) {
       if (!GGameInfo->IsPaused()) {
@@ -529,6 +541,8 @@ void SV_Ticker () {
           completed = true;
         }
         if (sv.intermission) break;
+      } else {
+        if (i) VObject::CollectGarbage();
       }
     }
   }

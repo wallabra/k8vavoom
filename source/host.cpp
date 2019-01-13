@@ -91,7 +91,7 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 
 static VCvarF host_framerate("__dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
 //k8: this was `3`; why 3? looks like arbitrary number
-static VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "18", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
+VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
 static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)");
 static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)");
 
@@ -325,6 +325,7 @@ static bool FilterTime () {
   guard(FilterTime);
   double curr_time = Sys_Time();
   double time = curr_time-last_time;
+  const double max_fps_cap = 0.004; // no more than 250 FPS
 
   //GCon->Logf("*** FilterTime; lasttime=%f; ctime=%f; time=%f", last_time, curr_time, time);
 
@@ -333,28 +334,36 @@ static bool FilterTime () {
   if (time == 0) return false;
   realtime += time;
 
+  const double timeDelta = realtime-oldrealtime;
+
   if (real_time) {
     if (!cap_framerate && (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Standalone)) {
       // uncapped fps
       if (realtime <= oldrealtime) return false;
-      float delta = realtime-oldrealtime;
-      if (delta < 0.004) return false; // no more than 250 FPS
+      if (timeDelta < max_fps_cap) return false;
     } else {
       // capped fps
-      if (realtime-oldrealtime < 1.0/90.0) return false; // framerate is too high
+      if (timeDelta < 1.0/90.0) return false; // framerate is too high
     }
   } else {
-    if (realtime-oldrealtime < 1.0/35.0) return false; // framerate is too high
+    if (timeDelta < 1.0/35.0) return false; // framerate is too high
   }
 
   host_frametime = realtime-oldrealtime;
+
+  int ticlimit = host_max_skip_frames;
+  if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;
 
   if (host_framerate > 0) {
     host_frametime = host_framerate;
   } else {
     // don't allow really long or short frames
-    if (host_frametime > 0.1) host_frametime = 0.1;
-    if (host_frametime < 0.004) host_frametime = 0.004;
+    double tld = (ticlimit+1)/(double)TICRATE;
+    if (host_frametime > tld) {
+      if (developer) GCon->Logf(NAME_Dev, "*** FRAME TOO LONG: %f (capped to %f)", host_frametime, tld);
+      host_frametime = tld;
+    }
+    if (host_frametime < max_fps_cap) host_frametime = max_fps_cap; // just in case
   }
 
   int thistime;
@@ -363,8 +372,6 @@ static bool FilterTime () {
   thistime = (int)(realtime*TICRATE);
   host_frametics = thistime-lasttime;
   if (!real_time && host_frametics < 1) return false; // no tics to run
-  int ticlimit = host_max_skip_frames;
-  if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;
   if (host_frametics > ticlimit) {
          if (host_show_skip_limit) GCon->Logf(NAME_Warning, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
     else if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
