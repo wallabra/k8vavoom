@@ -606,6 +606,7 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
 bool VSaveSlot::LoadSlot (int Slot) {
   guard(VSaveSlot::LoadSlot);
   Clear();
+
   VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (!Strm) {
     GCon->Log("Savegame file doesn't exist");
@@ -694,7 +695,8 @@ bool VSaveSlot::LoadSlot (int Slot) {
 
   Strm->Close();
   delete Strm;
-  Strm = nullptr;
+
+  Host_ResetSkipFrames();
   return true;
   unguard;
 }
@@ -771,7 +773,9 @@ void VSaveSlot::SaveToSlot (int Slot) {
   Strm->Close();
   err = err || Strm->IsError();
   delete Strm;
-  Strm = nullptr;
+
+  Host_ResetSkipFrames();
+
   if (err) {
     GCon->Logf("ERROR: error saving to slot %d, savegame is corrupted!", Slot);
     return;
@@ -1358,6 +1362,8 @@ void SV_SaveGame (int slot, const VStr &Description) {
 
   // write data to destination slot
   BaseSlot.SaveToSlot(slot);
+
+  Host_ResetSkipFrames();
   unguard;
 }
 
@@ -1377,6 +1383,7 @@ void SV_LoadGame (int slot) {
 
   // load the current map
   SV_LoadMap(BaseSlot.CurrentMap);
+  Host_ResetSkipFrames();
 
 #ifdef CLIENT
   if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
@@ -1490,6 +1497,8 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     if (Ent) Ent->LinkToWorld();
   }
 
+  Host_ResetSkipFrames();
+
 #ifdef CLIENT
   bool doSaveGame = false;
   if (GGameInfo->NetMode == NM_TitleMap ||
@@ -1581,6 +1590,7 @@ void SV_AutoSave () {
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("AUTO: ")+(*GLevel->MapName);
 
   SV_SaveGame(aslot, svname);
+  Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
 }
@@ -1605,6 +1615,7 @@ void SV_AutoSaveOnLevelExit () {
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
 
   SV_SaveGame(aslot, svname);
+  Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
 }
@@ -1631,6 +1642,7 @@ COMMAND(Save) {
   Draw_SaveIcon();
 
   SV_SaveGame(atoi(*Args[1]), Args[2]);
+  Host_ResetSkipFrames();
 
   BroadcastSaveText("Game saved.");
   unguard;
@@ -1710,6 +1722,8 @@ COMMAND(Load) {
 
   Draw_LoadIcon();
   SV_LoadGame(slot);
+  Host_ResetSkipFrames();
+
   //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
   BroadcastSaveText(va("Loaded save \"%s\".", *desc));
   unguard;
@@ -1729,6 +1743,7 @@ COMMAND(QuickSave) {
   Draw_SaveIcon();
 
   SV_SaveGame(QUICKSAVE_SLOT, "quicksave");
+  Host_ResetSkipFrames();
 
   BroadcastSaveText("Game quicksaved.");
   unguard;
@@ -1754,6 +1769,7 @@ COMMAND(QuickLoad) {
 
   Draw_LoadIcon();
   SV_LoadGame(QUICKSAVE_SLOT);
+  Host_ResetSkipFrames();
   // don't copy to reborn slot -- this is quickload after all!
 
   BroadcastSaveText("Quicksave loaded.");
@@ -1784,6 +1800,7 @@ COMMAND(AutoSaveEnter) {
   VStr svname = TimeVal2Str(&tv, true)+": "+(*GLevel->MapName);
 
   SV_SaveGame(aslot, svname);
+  Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
   unguard;
@@ -1798,6 +1815,7 @@ COMMAND(AutoSaveEnter) {
 COMMAND(AutoSaveLeave) {
   guard(COMMAND AutoSaveLeave)
   SV_AutoSaveOnLevelExit();
+  Host_ResetSkipFrames();
   unguard;
 }
 #endif

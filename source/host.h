@@ -34,6 +34,8 @@ const char *Host_GetCoreDump ();
 bool Host_StartTitleMap ();
 VStr Host_GetConfigDir ();
 
+// call this after saving/loading/map loading, so we won't unnecessarily skip frames
+void Host_ResetSkipFrames ();
 
 extern VCvarB developer;
 

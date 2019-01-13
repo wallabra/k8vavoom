@@ -327,6 +327,8 @@ void CL_SetUpStandaloneClient () {
   GCon->Log(NAME_Dev, "Client level loaded");
   GCmdBuf << "HideConsole\n";
 
+  Host_ResetSkipFrames();
+
   unguard;
 }
 
@@ -427,6 +429,8 @@ void CL_ParseServerInfo (VMessageIn &msg) {
 
   R_Start(GClLevel);
   GAudio->Start();
+
+  Host_ResetSkipFrames();
 
   SB_Start();
 

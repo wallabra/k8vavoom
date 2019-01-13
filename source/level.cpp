@@ -1857,6 +1857,7 @@ void SV_LoadLevel (VName MapName) {
   GLevel->LevelFlags |= VLevel::LF_ForServer;
 
   GLevel->LoadMap(MapName);
+  Host_ResetSkipFrames();
   unguard;
 }
 #endif
@@ -1879,6 +1880,7 @@ void CL_LoadLevel (VName MapName) {
   GClGame->GLevel = GClLevel;
 
   GClLevel->LoadMap(MapName);
+  Host_ResetSkipFrames();
   unguard;
 }
 #endif

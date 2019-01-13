@@ -92,7 +92,8 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 static VCvarF host_framerate("__dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
 //k8: this was `3`; why 3? looks like arbitrary number
 static VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "18", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
-static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits?; DEBUG CVAR, DON'T USE!");
+static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)");
+static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)");
 
 static double last_time;
 
@@ -299,6 +300,22 @@ static void Host_GetConsoleCommands () {
 
 //==========================================================================
 //
+//  Host_ResetSkipFrames
+//
+//  call this after saving/loading/map loading, so we won't
+//  unnecessarily skip frames
+//
+//==========================================================================
+void Host_ResetSkipFrames () {
+  last_time = Sys_Time();
+  host_frametics = 0;
+  host_frametime = 0;
+  //GCon->Logf("*** Host_ResetSkipFrames; ctime=%f", last_time);
+}
+
+
+//==========================================================================
+//
 //  FilterTime
 //
 //  Returns false if the time is too short to run a frame
@@ -308,6 +325,9 @@ static bool FilterTime () {
   guard(FilterTime);
   double curr_time = Sys_Time();
   double time = curr_time-last_time;
+
+  //GCon->Logf("*** FilterTime; lasttime=%f; ctime=%f; time=%f", last_time, curr_time, time);
+
   last_time = curr_time;
 
   if (time == 0) return false;
@@ -350,11 +370,8 @@ static bool FilterTime () {
     else if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
     host_frametics = ticlimit; // don't run too slow
   }
-  /*
-  else if (host_frametics > 1) {
-    if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics", host_frametics);
-  }
-  */
+  if (host_frametics > 1 && host_show_skip_frames) GCon->Logf(NAME_Warning, "processing %d ticframes", host_frametics);
+
   oldrealtime = realtime;
   lasttime = thistime;
 

@@ -893,6 +893,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   }
 
   // set up world state
+  Host_ResetSkipFrames();
 
   // P_SpawnSpecials
   // after the map has been loaded, scan for specials that spawn thinkers
@@ -906,9 +907,12 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   for (TThinkerIterator<VEntity> Ent(GLevel); Ent; ++Ent) Ent->eventBeginPlay();
   GLevelInfo->LevelInfoFlags2 |= VLevelInfo::LIF2_BegunPlay;
 
+  Host_ResetSkipFrames();
+
   if (GGameInfo->NetMode != NM_TitleMap && GGameInfo->NetMode != NM_Standalone) {
-    GLevel->TickWorld(host_frametime);
-    GLevel->TickWorld(host_frametime);
+    const double frmtime = 1.0/35.0; //host_frametime;
+    GLevel->TickWorld(frmtime);
+    GLevel->TickWorld(frmtime);
     // start open scripts
     GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
   }
