@@ -222,8 +222,8 @@ public:
   //inline void SetFlags (vuint32 NewFlags) { ObjectFlags |= NewFlags; }
   void SetFlags (vuint32 NewFlags);
   inline void ClearFlags (vuint32 NewFlags) { ObjectFlags &= ~NewFlags; }
-  inline vuint32 GetObjectIndex () const { return Index; }
-  inline vuint32 GetUniqueId () const { return UniqueId; }
+  //inline vuint32 GetObjectIndex () const { return Index; }
+  inline vuint32 GetUniqueId () const { return UniqueId; } // never 0
 
   inline VMethod *GetVFunctionIdx (int InIndex) const { return vtable[InIndex]; }
   inline VMethod *GetVFunction (VName FuncName) const { return vtable[Class->GetMethodIndex(FuncName)]; }

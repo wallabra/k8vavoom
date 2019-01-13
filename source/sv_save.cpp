@@ -160,7 +160,7 @@ public:
 
   virtual VStream &operator << (VObject *&Ref) override {
     guard(Loader::operator<<VObject*&);
-    int TmpIdx;
+    vint32 TmpIdx;
     *this << STRM_INDEX(TmpIdx);
     if (TmpIdx == 0) {
       Ref = nullptr;
@@ -168,6 +168,7 @@ public:
       if (TmpIdx > Exports.Num()) Sys_Error("Bad index %d", TmpIdx);
       Ref = Exports[TmpIdx-1];
     } else {
+      printf("LOAD: playerbase %d", -TmpIdx-1);
       Ref = GPlayersBase[-TmpIdx-1];
     }
     return *this;
@@ -175,7 +176,7 @@ public:
   }
 
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override {
-    int TmpIdx;
+    vint32 TmpIdx;
     *this << STRM_INDEX(TmpIdx);
     if (Struct->Name == "sector_t") {
       Ptr = (TmpIdx >= 0 ? &GLevel->Sectors[TmpIdx] : nullptr);
@@ -197,7 +198,7 @@ public:
   TArray<VName> Names;
   TArray<VObject *> Exports;
   TArray<vint32> NamesMap;
-  TArray<vint32> ObjectsMap;
+  TMapNC<vuint32, vint32> ObjectsMap; // key: object uid; value: internal index
 
   VSaveWriterStream (VStream *InStream) : Stream(InStream) {
     bLoading = false;
@@ -224,18 +225,19 @@ public:
 
   virtual VStream &operator << (VObject *&Ref) override {
     guard(Saver::operator<<VObject*&);
-    int TmpIdx;
+    vint32 TmpIdx;
     if (!Ref) {
       TmpIdx = 0;
     } else {
-      TmpIdx = ObjectsMap[Ref->GetObjectIndex()];
+      //TmpIdx = ObjectsMap[Ref->GetObjectIndex()];
+      TmpIdx = *ObjectsMap.get(Ref->GetUniqueId());
     }
     return *this << STRM_INDEX(TmpIdx);
     unguard;
   }
 
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override {
-    int TmpIdx;
+    vint32 TmpIdx;
     if (Struct->Name == "sector_t") {
       TmpIdx = (Ptr ? (int)((sector_t *)Ptr-GLevel->Sectors) : -1);
     } else if (Struct->Name == "line_t") {
@@ -993,19 +995,21 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   vint32 Seg = ASEG_WORLD;
   *Saver << Seg;
 
-  Saver->ObjectsMap.SetNum(VObject::GetObjectsCount());
-  for (int i = 0; i < VObject::GetObjectsCount(); ++i) Saver->ObjectsMap[i] = 0;
+  //!!Saver->ObjectsMap.SetNum(VObject::GetObjectsCount());
+  //!!for (int i = 0; i < VObject::GetObjectsCount(); ++i) Saver->ObjectsMap[i] = 0;
 
   // add level
   Saver->Exports.Append(GLevel);
-  Saver->ObjectsMap[GLevel->GetObjectIndex()] = Saver->Exports.Num();
+  //!!Saver->ObjectsMap[GLevel->GetObjectIndex()] = Saver->Exports.Num();
+  Saver->ObjectsMap.put(GLevel->GetUniqueId(), Saver->Exports.Num());
 
   // add world info
   vuint8 WorldInfoSaved = (byte)SavingPlayers;
   *Saver << WorldInfoSaved;
   if (WorldInfoSaved) {
     Saver->Exports.Append(GGameInfo->WorldInfo);
-    Saver->ObjectsMap[GGameInfo->WorldInfo->GetObjectIndex()] = Saver->Exports.Num();
+    //!!Saver->ObjectsMap[GGameInfo->WorldInfo->GetObjectIndex()] = Saver->Exports.Num();
+    Saver->ObjectsMap.put(GGameInfo->WorldInfo->GetUniqueId(), Saver->Exports.Num());
   }
 
   // add players
@@ -1014,7 +1018,8 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     *Saver << Active;
     if (!Active) continue;
     Saver->Exports.Append(GGameInfo->Players[i]);
-    Saver->ObjectsMap[GGameInfo->Players[i]->GetObjectIndex()] = Saver->Exports.Num();
+    //!!Saver->ObjectsMap[GGameInfo->Players[i]->GetObjectIndex()] = Saver->Exports.Num();
+    Saver->ObjectsMap.put(GGameInfo->Players[i]->GetUniqueId(), Saver->Exports.Num());
   }
 
   // add thinkers
@@ -1023,7 +1028,8 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     VEntity *mobj = Cast<VEntity>(*Th);
     if (mobj != nullptr && mobj->EntityFlags & VEntity::EF_IsPlayer && !SavingPlayers) continue; // skipping player mobjs
     Saver->Exports.Append(*Th);
-    Saver->ObjectsMap[Th->GetObjectIndex()] = Saver->Exports.Num();
+    //!!Saver->ObjectsMap[Th->GetObjectIndex()] = Saver->Exports.Num();
+    Saver->ObjectsMap.put(Th->GetUniqueId(), Saver->Exports.Num());
   }
 
   vint32 NumObjects = Saver->Exports.Num()-ThinkersStart;
