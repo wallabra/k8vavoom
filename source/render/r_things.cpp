@@ -118,22 +118,21 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
 
   float dist;
   if (useSprOrigin) {
-    // not really used
     TVec mid = sprOrigin;
     //dist = fabsf(DotProduct(mid-vieworg, viewforward));
-    dist = Length2DSquared(mid-vieworg);
+    dist = LengthSquared(mid-vieworg);
   } else {
 #if 1
     TVec mid(0, 0, 0);
     for (int i = 0; i < count; ++i) mid += sv[i];
     mid /= count;
     //dist = fabsf(DotProduct(mid-vieworg, viewforward));
-    dist = Length2DSquared(mid-vieworg);
+    dist = LengthSquared(mid-vieworg);
 #else
     // select nearest vertex
-    dist = Length2DSquared(sv[0]-vieworg);
+    dist = LengthSquared(sv[0]-vieworg);
     for (int i = 1; i < count; ++i) {
-      const float nd = Length2DSquared(sv[i]-vieworg);
+      const float nd = LengthSquared(sv[i]-vieworg);
       if (dist > nd) dist = nd;
     }
 #endif
@@ -179,7 +178,8 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
     trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
 
-  const float dist = fabsf(DotProduct(mobj->Origin-vieworg, viewforward));
+  //const float dist = fabsf(DotProduct(mobj->Origin-vieworg, viewforward));
+  const float dist = LengthSquared(mobj->Origin-vieworg);
 
   trans_sprite_t &spr = trans_sprites[traspUsed++];
   spr.Ent = mobj;
@@ -289,8 +289,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // up or down, because the cross product will be between two nearly
       // parallel vectors and starts to approach an undefined state, so we
       // don't draw if the two vectors are less than 1 degree apart
-      dot = viewforward.z;  //  same as DotProduct(viewforward, sprup)
-                  // because sprup is 0, 0, 1
+      dot = viewforward.z;  //  same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
       if ((dot > 0.999848f) || (dot < -0.999848f))  // cos(1 degree) = 0.999848f
         return;
 
@@ -396,7 +395,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
       DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
       -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
-      /*,true, sprorigin*/);
+      ,true, /*sprorigin*/thing->Origin);
   } else {
     Drawer->DrawSpritePolygon(sv, GTextureManager[lump], Alpha,
       Additive, GetTranslation(thing->Translation), ColourMap, light,
@@ -547,51 +546,96 @@ extern "C" {
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
 
+    /*
+    {
+      const float d0 = ta->dist;
+      const float d1 = tb->dist;
+      if (d0 < d1) return -1; // a is nearer, so it is last
+      if (d0 > d1) return 1; // b is nearer, so it is last
+    }
+    */
+
+    // first masked polys, then sprites, then alias models
+    // type 0: masked polys
+    // type 1: sprites
+    // type 2: alias models
+    //const int typediff = (int)ta->type-(int)tb->type;
+    //if (typediff) return typediff;
+    //if (ta->type < tb->type) return -1;
+    //if (ta->type > tb->type) return 1;
+
+    // non-translucent objects should come first, and
+    // additive ones should come last
+    bool didDistanceCheck = false;
+
+    // additive
+    if (ta->Additive && tb->Additive) {
+      // both additive, sort by distance to view origin (order doesn't matter, as long as it is consistent)
+      // but additive models should be sorted back-to-front, so use back-to-front, as with translucents
+      const float d0 = ta->dist;
+      const float d1 = tb->dist;
+      if (d0 < d1) return 1;
+      if (d0 > d1) return -1;
+      // same distance, do other checks
+      didDistanceCheck = true;
+    } else if (ta->Additive) {
+      // a is additive, b is not additive, so b should come first (a > b)
+      return 1;
+    } else if (tb->Additive) {
+      // a is not additive, b is additive, so a should come first (a < b)
+      return -1;
+    }
+
+    // translucent
+    const bool aTrans = (!ta->Additive && ta->Alpha < 1.0f);
+    const bool bTrans = (!tb->Additive && tb->Alpha < 1.0f);
+    if (aTrans && bTrans) {
+      // both translucent, sort by distance to view origin (nearest last)
+      const float d0 = ta->dist;
+      const float d1 = tb->dist;
+      if (d0 < d1) return 1; // a is nearer, so it is last (a > b)
+      if (d0 > d1) return -1; // b is nearer, so it is last (a < b)
+      // same distance, do other checks
+      didDistanceCheck = true;
+    } else if (aTrans) {
+      // a is translucent, b is not translucent; b first (a > b)
+      return 1;
+    } else if (bTrans) {
+      // a is not translucent, b is translucent; a first (a < b)
+      return -1;
+    }
+
+    // sort by object type
     // first masked polys, then sprites, then alias models
     // type 0: masked polys
     // type 1: sprites
     // type 2: alias models
     const int typediff = (int)ta->type-(int)tb->type;
     if (typediff) return typediff;
-    //if (ta->type < tb->type) return -1;
-    //if (ta->type > tb->type) return 1;
 
-    // non-translucent objects should come first
-    bool didDistanceCheck = false;
-    const bool aTrans = (ta->Additive || ta->Alpha < 1.0f);
-    const bool bTrans = (tb->Additive || tb->Alpha < 1.0f);
-    if (aTrans && bTrans) {
-      // both translucent, sort by distance to view origin (nearest last)
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return 1; // a is nearer, so it is last
-      if (d0 > d1) return -1; // b is nearer, so it is last
-      // same distance, do other checks
-      didDistanceCheck = true;
-    }
-    if (!aTrans) {
-      if (bTrans) return -1; // a is not translucent, b is translucent; a first
-    }
-    if (bTrans) {
-      if (aTrans) return 1; // a is translucent, b is not translucent; b first
-    }
     // distance again
     if (!didDistanceCheck) {
-      // both translucent, sort by distance to view origin (nearest first)
       // do nearest first here, so z-buffer will do some culling for us
-      const float d0 = (ta->type == 1 ? ta->pdist : ta->dist);
-      const float d1 = (tb->type == 1 ? tb->pdist : tb->dist);
-      if (d0 < d1) return -1; // a is nearest, so it is first
-      if (d0 > d1) return 1; // b is nearest, so it is first
+      //const float d0 = (ta->type == 1 ? ta->pdist : ta->dist);
+      //const float d1 = (tb->type == 1 ? tb->pdist : tb->dist);
+      const float d0 = ta->dist;
+      const float d1 = tb->dist;
+      if (d0 < d1) return -1; // a is nearest, so it is first (a < b)
+      if (d0 > d1) return 1; // b is nearest, so it is first (a > b)
     }
+
     // priority check
-    if (ta->prio < tb->prio) return 1;
-    if (ta->prio > tb->prio) return -1;
+    // higher priority comes first
+    if (ta->prio < tb->prio) return 1; // a has lower priority, it should come last (a > b)
+    if (ta->prio > tb->prio) return -1; // a has higher priority, it should come first (a < b)
+
     // sort sprites by lump number, why not
     if (ta->type == 1) {
       if (ta->lump < tb->lump) return -1;
       if (ta->lump > tb->lump) return 1;
     }
+
+    // nothing to check anymore, consider equal
     return 0;
   }
 }
