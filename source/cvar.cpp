@@ -383,7 +383,7 @@ void VCvar::dumpHashStats () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// this is called only once on egine shutdown, so don't bother with deletion
+// this is called only once on engine shutdown, so don't bother with deletion
 void VCvar::Shutdown () {
   guard(VCvar::Shutdown);
   dumpHashStats();
