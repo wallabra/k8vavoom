@@ -505,7 +505,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 //  VRenderLevelShared::RenderMobjs
 //
 //==========================================================================
-void VRenderLevelShared::RenderMobjs(ERenderPass Pass) {
+void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   guard(VRenderLevelShared::RenderMobjs);
   if (!r_draw_mobjs) return;
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
