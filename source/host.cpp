@@ -91,7 +91,8 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 
 static VCvarF host_framerate("__dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
 //k8: this was `3`; why 3? looks like arbitrary number
-static VCvarI host_max_skip_frames("host_max_skip_frames", "18", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
+static VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "18", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
+static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits?; DEBUG CVAR, DON'T USE!");
 
 static double last_time;
 
@@ -345,7 +346,8 @@ static bool FilterTime () {
   int ticlimit = host_max_skip_frames;
   if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;
   if (host_frametics > ticlimit) {
-    if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+         if (host_show_skip_limit) GCon->Logf(NAME_Warning, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
+    else if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
     host_frametics = ticlimit; // don't run too slow
   }
   /*
