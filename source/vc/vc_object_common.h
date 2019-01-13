@@ -31,6 +31,7 @@
   DECLARE_FUNCTION(get_GC_AliveObjects)
   DECLARE_FUNCTION(get_GC_LastCollectedObjects)
   DECLARE_FUNCTION(get_GC_LastCollectDuration)
+  DECLARE_FUNCTION(get_GC_LastCollectTime)
   DECLARE_FUNCTION(get_GC_MessagesAllowed)
   DECLARE_FUNCTION(set_GC_MessagesAllowed)
 

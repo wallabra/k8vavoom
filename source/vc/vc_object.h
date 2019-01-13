@@ -133,7 +133,8 @@ public:
     int poolSize; // total number of used (including free) slots in object pool
     int poolAllocated; // total number of allocated slots in object pool
     int firstFree; // first free slot in pool
-    double lastCollectTime; // in seconds
+    double lastCollectDuration; // in seconds
+    double lastCollectTime;
   };
 
 private:
@@ -231,6 +232,7 @@ public:
   static int VKeyFromName (const VStr &kn);
 
   inline static const GCStats &GetGCStats () { return gcLastStats; }
+  inline static void ResetGCStatsLastCollected () { gcLastStats.lastCollected = 0; }
 
 #include "vc_object_common.h"
 

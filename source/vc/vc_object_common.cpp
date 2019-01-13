@@ -35,7 +35,8 @@
 
 IMPLEMENT_FUNCTION(VObject, get_GC_AliveObjects) { RET_INT(gcLastStats.alive); }
 IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectedObjects) { RET_INT(gcLastStats.lastCollected); }
-IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectDuration) { RET_FLOAT((float)gcLastStats.lastCollectTime); }
+IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectDuration) { RET_FLOAT((float)gcLastStats.lastCollectDuration); }
+IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectTime) { RET_FLOAT((float)gcLastStats.lastCollectTime); }
 
 IMPLEMENT_FUNCTION(VObject, get_GC_MessagesAllowed) { RET_BOOL(GGCMessagesAllowed); }
 IMPLEMENT_FUNCTION(VObject, set_GC_MessagesAllowed) { P_GET_BOOL(val); GGCMessagesAllowed = val; }
