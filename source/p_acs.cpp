@@ -315,6 +315,13 @@ public:
     return VStr(va("number=%d; name=<%s>", number, *info->Name));
   }
 
+  // it doesn't matter if there will be duplicates
+  virtual void RegisterObjects (VStream &strm) override {
+    strm.RegisterObject(Level); // just in case, ..
+    strm.RegisterObject(XLevel); // ..cause why not?
+    strm.RegisterObject(Activator);
+  }
+
 private:
   enum { ACS_STACK_DEPTH = 4096 };
 
@@ -1439,8 +1446,7 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3, /*i
     if (Scripts[i].Type == Type)
     {
       // Auto-activate
-      VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator,
-        nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow);
+      VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator, nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow);
       if (RunNow)
       {
         Script->RunScript(host_frametime);
@@ -1689,8 +1695,7 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
   guard(VAcsLevel::StartTypedACScripts);
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
-    LoadedObjects[i]->StartTypedACScripts(Type, Arg1, Arg2, Arg3,
-      Activator, Always, RunNow);
+    LoadedObjects[i]->StartTypedACScripts(Type, Arg1, Arg2, Arg3, Activator, Always, RunNow);
   }
   unguard;
 }

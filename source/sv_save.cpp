@@ -53,6 +53,8 @@ static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/
 static VCvarB loader_recalc_z("loader_recalc_z", true, "Recalculate Z on load (this should help with some edge cases)?", CVAR_Archive);
 static VCvarB loader_ignore_kill_on_unarchive("loader_ignore_kill_on_unarchive", false, "Ignore 'Kill On Unarchive' flag when loading a game?", 0/*CVAR_Archive*/);
 
+static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing", CVAR_Archive);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
@@ -180,7 +182,7 @@ public:
       if (TmpIdx > Exports.Num()) Sys_Error("Bad index %d", TmpIdx);
       Ref = Exports[TmpIdx-1];
     } else {
-      printf("LOAD: playerbase %d", -TmpIdx-1);
+      GCon->Logf("LOAD: playerbase %d", -TmpIdx-1);
       Ref = GPlayersBase[-TmpIdx-1];
     }
     return *this;
@@ -212,6 +214,7 @@ public:
   TArray<vint32> NamesMap;
   TMapNC<vuint32, vint32> ObjectsMap; // key: object uid; value: internal index
   TArray<VLevelScriptThinker *> AcsExports;
+  bool skipPlayers;
 
   VSaveWriterStream (VStream *InStream) : Stream(InStream) {
     bLoading = false;
@@ -229,6 +232,23 @@ public:
   virtual bool AtEnd () override { return Stream->AtEnd(); }
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
+
+  virtual VStream &RegisterObject (VObject *o) override {
+    if (!o) return *this;
+    if (ObjectsMap.has(o->GetUniqueId())) return *this;
+    if (skipPlayers) {
+      VEntity *mobj = Cast<VEntity>(o);
+      if (mobj != nullptr && (mobj->EntityFlags&VEntity::EF_IsPlayer)) {
+        // skipping player mobjs
+        if (dbg_save_verbose&0x01) GCon->Logf("*** SKIP(0) PLAYER MOBJ: <%s>", *mobj->GetClass()->GetFullName());
+        return *this;
+      }
+    }
+    if (dbg_save_verbose&0x02) GCon->Logf("*** unique object (%u : %s)", o->GetUniqueId(), *o->GetClass()->GetFullName());
+    Exports.Append(o);
+    ObjectsMap.put(o->GetUniqueId(), Exports.Num());
+    return *this;
+  }
 
   virtual VStream &operator << (VLevelScriptThinker *&Ref) override {
     vint32 scpIndex = 0;
@@ -250,11 +270,27 @@ public:
   virtual VStream &operator << (VObject *&Ref) override {
     guard(Saver::operator<<VObject*&);
     vint32 TmpIdx;
-    if (!Ref) {
+    if (!Ref /*|| (Ref->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) != 0*/) {
       TmpIdx = 0;
     } else {
       //TmpIdx = ObjectsMap[Ref->GetObjectIndex()];
-      TmpIdx = *ObjectsMap.get(Ref->GetUniqueId());
+      auto ppp = ObjectsMap.get(Ref->GetUniqueId());
+      if (!ppp) {
+        if (skipPlayers) {
+          VEntity *mobj = Cast<VEntity>(Ref);
+          if (mobj != nullptr && (mobj->EntityFlags&VEntity::EF_IsPlayer)) {
+            // skipping player mobjs
+            if (dbg_save_verbose&0x04) GCon->Logf("*** SKIP(1) PLAYER MOBJ: <%s> -- THIS IS HARMLESS", *mobj->GetClass()->GetFullName());
+            TmpIdx = 0;
+            return *this << STRM_INDEX(TmpIdx);
+          }
+        }
+        if (dbg_save_verbose&0x08) GCon->Logf("*** unknown object (%u : %s) -- THIS IS HARMLESS", Ref->GetUniqueId(), *Ref->GetClass()->GetFullName());
+        TmpIdx = 0; // that is how it was done in previous version of the code
+      } else {
+        TmpIdx = *ppp;
+      }
+      //TmpIdx = *ObjectsMap.get(Ref->GetUniqueId());
     }
     return *this << STRM_INDEX(TmpIdx);
     unguard;
@@ -1023,6 +1059,8 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   vint32 Seg = ASEG_WORLD;
   *Saver << Seg;
 
+  Saver->skipPlayers = !SavingPlayers;
+
   //!!Saver->ObjectsMap.SetNum(VObject::GetObjectsCount());
   //!!for (int i = 0; i < VObject::GetObjectsCount(); ++i) Saver->ObjectsMap[i] = 0;
 
@@ -1031,17 +1069,23 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   if (GLevel->Acs) GLevel->Acs->CollectAcsScriptsNoDups(Saver->AcsExports);
 
   // add level
+  /*
   Saver->Exports.Append(GLevel);
   //!!Saver->ObjectsMap[GLevel->GetObjectIndex()] = Saver->Exports.Num();
   Saver->ObjectsMap.put(GLevel->GetUniqueId(), Saver->Exports.Num());
+  */
+  Saver->RegisterObject(GLevel);
 
   // add world info
   vuint8 WorldInfoSaved = (byte)SavingPlayers;
   *Saver << WorldInfoSaved;
   if (WorldInfoSaved) {
+    /*
     Saver->Exports.Append(GGameInfo->WorldInfo);
     //!!Saver->ObjectsMap[GGameInfo->WorldInfo->GetObjectIndex()] = Saver->Exports.Num();
     Saver->ObjectsMap.put(GGameInfo->WorldInfo->GetUniqueId(), Saver->Exports.Num());
+    */
+    Saver->RegisterObject(GGameInfo->WorldInfo);
   }
 
   // add players
@@ -1054,20 +1098,38 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     byte Active = (byte)(SavingPlayers && GGameInfo->Players[i]);
     *Saver << Active;
     if (!Active) continue;
+    Saver->RegisterObject(GGameInfo->Players[i]);
+    /*
     Saver->Exports.Append(GGameInfo->Players[i]);
     //!!Saver->ObjectsMap[GGameInfo->Players[i]->GetObjectIndex()] = Saver->Exports.Num();
     Saver->ObjectsMap.put(GGameInfo->Players[i]->GetUniqueId(), Saver->Exports.Num());
+    */
   }
 
   // add thinkers
   int ThinkersStart = Saver->Exports.Num();
   for (TThinkerIterator<VThinker> Th(GLevel); Th; ++Th) {
+    /*
     VEntity *mobj = Cast<VEntity>(*Th);
-    if (mobj != nullptr && mobj->EntityFlags & VEntity::EF_IsPlayer && !SavingPlayers) continue; // skipping player mobjs
+    if (mobj != nullptr) {
+      if (!SavingPlayers && (mobj->EntityFlags&VEntity::EF_IsPlayer)) {
+        // skipping player mobjs
+        GCon->Logf("*** SKIP PLAYER MOBJ: <%s>", *mobj->GetClass()->GetFullName());
+        continue;
+      }
+    }
+    check(*Th);
+    */
+    Saver->RegisterObject(*Th);
+    /*
+    check(!Saver->ObjectsMap.has(Th));
     Saver->Exports.Append(*Th);
     //!!Saver->ObjectsMap[Th->GetObjectIndex()] = Saver->Exports.Num();
     Saver->ObjectsMap.put(Th->GetUniqueId(), Saver->Exports.Num());
+    */
   }
+
+  for (int f = 0; f < Saver->AcsExports.length(); ++f) Saver->AcsExports[f]->RegisterObjects(*Saver);
 
   // write exported object names
   vint32 NumObjects = Saver->Exports.Num()-ThinkersStart;
@@ -1085,7 +1147,12 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   }
 
   // serialise objects
-  for (int i = 0; i < Saver->Exports.Num(); ++i) Saver->Exports[i]->Serialise(*Saver);
+  for (int i = 0; i < Saver->Exports.Num(); ++i) {
+    if (dbg_save_verbose&0x10) GCon->Logf("** SR #%d: <%s>", i, *Saver->Exports[i]->GetClass()->GetFullName());
+    Saver->Exports[i]->Serialise(*Saver);
+  }
+
+  //GCon->Logf("dbg_save_verbose=0x%04x (%s) %d", dbg_save_verbose.asInt(), *dbg_save_verbose.asStr(), dbg_save_verbose.asInt());
 
   unguard;
 }

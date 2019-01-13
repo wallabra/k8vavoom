@@ -59,6 +59,9 @@ public:
   virtual void Tick (float DeltaTime) = 0;
 
   virtual VStr DebugDumpToString () = 0;
+
+  // it doesn't matter if there will be duplicates
+  virtual void RegisterObjects (VStream &) = 0;
 };
 
 
@@ -115,6 +118,9 @@ public:
   friend VStream &operator << (VStream &Strm, vuint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
   friend VStream &operator << (VStream &Strm, float &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
   friend VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+
+  // for custom i/o
+  virtual VStream &RegisterObject (VObject *o);
 };
 
 

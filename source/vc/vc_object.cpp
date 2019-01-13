@@ -935,16 +935,22 @@ int VObject::GetObjectsCount () {
 //==========================================================================
 void VObject::Serialise (VStream &Strm) {
   guard(VObject::Serialise);
-  vuint8 xver = 0; // current version is 0
+  vuint8 xver = 1; // current version is 0
   Strm << xver;
-  /*
-  if (GetClass() == VObject::StaticClass()) {
-    GetClass()->SerialiseObject(Strm, nullptr);
-  } else
-  */
-  {
-    GetClass()->SerialiseObject(Strm, this);
+  if (xver != 1) Host_Error("invalid VM object version (%u)", (unsigned)xver);
+  //check((ObjectFlags&_OF_CleanupRef) == 0);
+  // save flags
+  if (Strm.IsLoading()) {
+    //ObjectFlags = 0;
+    vint32 flg;
+    Strm << STRM_INDEX(flg);
+    if (flg) SetFlags(flg);
+  } else {
+    vint32 flg = ObjectFlags;
+    Strm << STRM_INDEX(flg);
   }
+  if (ObjectFlags&_OF_Destroyed) return;
+  GetClass()->SerialiseObject(Strm, this);
   unguard;
 }
 
