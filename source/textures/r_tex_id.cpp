@@ -67,7 +67,10 @@ VStream &operator << (VStream &strm, VTextureID &tid) {
         // try to fix texture
         auto lock = GTextureManager.LockMapLocalTextures();
         int texid = GTextureManager.CheckNumForNameAndForce(txname, TEXTYPE_Wall, true, true, false);
+        if (developer) GCon->Logf("LOAD: REPLACED texture '%s' (id %d) with '%s' (id %d)", *txname, tid.id, *GTextureManager.GetTextureName(texid), texid);
         tid.id = texid;
+      } else {
+        if (developer) GCon->Logf("LOAD: HIT texture '%s' (id %d)", *txname, tid.id);
       }
     }
   } else {
