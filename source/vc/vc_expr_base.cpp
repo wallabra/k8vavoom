@@ -464,7 +464,7 @@ VExpression *VExpression::ResolveToIntLiteralEx (VEmitContext &ec, bool allowFlo
 
 // ////////////////////////////////////////////////////////////////////////// //
 // IsXXX
-bool VExpression::AddDropResult () { return false; }
+VExpression *VExpression::AddDropResult () { return nullptr; } // not processed
 bool VExpression::IsValidTypeExpression () const { return false; }
 bool VExpression::IsIntConst () const { return false; }
 bool VExpression::IsFloatConst () const { return false; }

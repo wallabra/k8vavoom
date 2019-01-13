@@ -111,7 +111,7 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
-  virtual bool AddDropResult () override;
+  virtual VExpression *AddDropResult () override;
 
   virtual bool IsUnaryMutator () const override;
 

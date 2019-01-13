@@ -483,14 +483,14 @@ void VUnaryMutator::Emit (VEmitContext &ec) {
 //  VUnaryMutator::AddDropResult
 //
 //==========================================================================
-bool VUnaryMutator::AddDropResult () {
+VExpression *VUnaryMutator::AddDropResult () {
   switch (Oper) {
     case PreInc: case PostInc: Oper = Inc; break;
     case PreDec: case PostDec: Oper = Dec; break;
     case Inc: case Dec: FatalError("Should not happen (inc/dec)");
   }
   Type = TYPE_Void;
-  return true;
+  return this;
 }
 
 

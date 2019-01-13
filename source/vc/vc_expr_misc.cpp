@@ -1065,11 +1065,12 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (op->AddDropResult()) {
-    VExpression *e = op;
+  VExpression *dpr = op->AddDropResult();
+  if (dpr) {
+    //fprintf(stderr, "*** <%s> *** (%s)\n", *dpr->toString(), *dpr->Loc.toStringNoCol());
     op = nullptr;
     delete this;
-    return e;
+    return dpr;
   }
 
   Type = TYPE_Void;

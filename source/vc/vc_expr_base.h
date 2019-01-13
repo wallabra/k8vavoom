@@ -108,7 +108,9 @@ public:
   virtual void Emit (VEmitContext &ec) = 0;
   virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
   void EmitPushPointedCode (VFieldType type, VEmitContext &ec); // yeah, non-virtual
-  virtual bool AddDropResult ();
+  // return non-nullptr to drop `VDropResult` node, and use the result directly
+  // this is called on resolved node
+  virtual VExpression *AddDropResult ();
   virtual bool IsValidTypeExpression () const;
   virtual bool IsIntConst () const;
   virtual bool IsFloatConst () const;
