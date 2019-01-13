@@ -58,6 +58,7 @@ static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback
 IMPLEMENT_CLASS(V, ClientGameBase);
 
 static VName CurrentSongLump;
+static double LastKeepAliveTime = 0.0;
 
 
 //==========================================================================
@@ -155,6 +156,7 @@ void CL_ReadFromServer () {
   if (!cl) return;
 
   if (cl->Net) {
+    LastKeepAliveTime = Sys_Time();
     cl->Net->GetMessages();
     if (cl->Net->State == NETCON_Closed) Host_EndGame("Server disconnected");
   }
@@ -192,9 +194,33 @@ void CL_KeepaliveMessage () {
   guard(CL_KeepaliveMessage);
   if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
   if (cls.demoplayback) return;
+  if (!cl->Net) return;
+  double currTime = Sys_Time();
+  if (currTime-LastKeepAliveTime < 1.0/35.0) return;
+  LastKeepAliveTime = currTime;
   // write out a nop
   cl->Net->Flush();
   unguard;
+}
+
+
+//==========================================================================
+//
+//  CL_KeepaliveMessageEx
+//
+//  pass `Sys_Time()` here
+//
+//==========================================================================
+void CL_KeepaliveMessageEx (double currTime, bool forced) {
+  if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
+  if (cls.demoplayback) return;
+  if (!cl->Net) return;
+  if (currTime < 0) currTime = 0;
+  if (LastKeepAliveTime > currTime) LastKeepAliveTime = currTime; // wtf?!
+  if (!forced && currTime-LastKeepAliveTime < 1.0/35.0) return;
+  LastKeepAliveTime = currTime;
+  // write out a nop
+  cl->Net->Flush();
 }
 
 
@@ -225,6 +251,7 @@ void CL_EstablishConnection (const char *host) {
 
   GClGame->eventConnected();
   cls.signon = 0; // need all the signon messages before playing
+  LastKeepAliveTime = Sys_Time();
 
   MN_DeactivateMenu();
   unguard;

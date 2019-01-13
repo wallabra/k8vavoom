@@ -34,6 +34,7 @@
 
 #ifdef CLIENT
 # include "drawer.h"
+# include "cl_local.h"
 #endif
 
 
@@ -1145,6 +1146,7 @@ static void pvsDrawPBar (int cur, int max) {
 */
 #ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
+    CL_KeepaliveMessageEx(pvsLastReportTime);
     int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
     if (cur < max && wdt == lastPBarWdt) return;
     lastPBarWdt = wdt;
