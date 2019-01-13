@@ -29,7 +29,7 @@
 
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger, but we do not have any moving sectors nearby
-#define MAXRADIUS  (32.0)
+#define MAXRADIUS  (32.0f)
 
 // mapblocks are used to check movement against lines and things
 #define MapBlock(x)  ((int)floor(x)>>7)

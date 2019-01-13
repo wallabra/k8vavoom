@@ -415,12 +415,12 @@ void VSoundManager::ParseReverbs(VScriptParser *sc)
       }
       else if (sc->Check("EnvironmentSize"))
       {
-        DoFloat(sc, Prop.EnvironmentSize, 1.0, 100.0);
+        DoFloat(sc, Prop.EnvironmentSize, 1.0f, 100.0f);
         HaveEnvironmentSize = true;
       }
       else if (sc->Check("EnvironmentDiffusion"))
       {
-        DoFloat(sc, Prop.EnvironmentDiffusion, 0.0, 1.0);
+        DoFloat(sc, Prop.EnvironmentDiffusion, 0.0f, 1.0f);
         HaveEnvironmentDiffusion = true;
       }
       else if (sc->Check("Room"))
@@ -440,17 +440,17 @@ void VSoundManager::ParseReverbs(VScriptParser *sc)
       }
       else if (sc->Check("DecayTime"))
       {
-        DoFloat(sc, Prop.DecayTime, 0.1, 20.0);
+        DoFloat(sc, Prop.DecayTime, 0.1f, 20.0f);
         HaveDecayTime = true;
       }
       else if (sc->Check("DecayHFRatio"))
       {
-        DoFloat(sc, Prop.DecayHFRatio, 0.1, 2.0);
+        DoFloat(sc, Prop.DecayHFRatio, 0.1f, 2.0f);
         HaveDecayHFRatio = true;
       }
       else if (sc->Check("DecayLFRatio"))
       {
-        DoFloat(sc, Prop.DecayLFRatio, 0.1, 2.0);
+        DoFloat(sc, Prop.DecayLFRatio, 0.1f, 2.0f);
         HaveDecayLFRatio = true;
       }
       else if (sc->Check("Reflections"))
@@ -460,22 +460,22 @@ void VSoundManager::ParseReverbs(VScriptParser *sc)
       }
       else if (sc->Check("ReflectionsDelay"))
       {
-        DoFloat(sc, Prop.ReflectionsDelay, 0.0, 0.3);
+        DoFloat(sc, Prop.ReflectionsDelay, 0.0f, 0.3f);
         HaveReflectionsDelay = true;
       }
       else if (sc->Check("ReflectionsPanX"))
       {
-        DoFloat(sc, Prop.ReflectionsPanX, -2000.0, 2000.0);
+        DoFloat(sc, Prop.ReflectionsPanX, -2000.0f, 2000.0f);
         HaveReflectionsPanX = true;
       }
       else if (sc->Check("ReflectionsPanY"))
       {
-        DoFloat(sc, Prop.ReflectionsPanY, -2000.0, 2000.0);
+        DoFloat(sc, Prop.ReflectionsPanY, -2000.0f, 2000.0f);
         HaveReflectionsPanY = true;
       }
       else if (sc->Check("ReflectionsPanZ"))
       {
-        DoFloat(sc, Prop.ReflectionsPanZ, -2000.0, 2000.0);
+        DoFloat(sc, Prop.ReflectionsPanZ, -2000.0f, 2000.0f);
         HaveReflectionsPanZ = true;
       }
       else if (sc->Check("Reverb"))
@@ -485,72 +485,72 @@ void VSoundManager::ParseReverbs(VScriptParser *sc)
       }
       else if (sc->Check("ReverbDelay"))
       {
-        DoFloat(sc, Prop.ReverbDelay, 0.0, 0.1);
+        DoFloat(sc, Prop.ReverbDelay, 0.0f, 0.1f);
         HaveReverbDelay = true;
       }
       else if (sc->Check("ReverbPanX"))
       {
-        DoFloat(sc, Prop.ReverbPanX, -2000.0, 2000.0);
+        DoFloat(sc, Prop.ReverbPanX, -2000.0f, 2000.0f);
         HaveReverbPanX = true;
       }
       else if (sc->Check("ReverbPanY"))
       {
-        DoFloat(sc, Prop.ReverbPanY, -2000.0, 2000.0);
+        DoFloat(sc, Prop.ReverbPanY, -2000.0f, 2000.0f);
         HaveReverbPanY = true;
       }
       else if (sc->Check("ReverbPanZ"))
       {
-        DoFloat(sc, Prop.ReverbPanZ, -2000.0, 2000.0);
+        DoFloat(sc, Prop.ReverbPanZ, -2000.0f, 2000.0f);
         HaveReverbPanZ = true;
       }
       else if (sc->Check("EchoTime"))
       {
-        DoFloat(sc, Prop.EchoTime, 0.075, 0.25);
+        DoFloat(sc, Prop.EchoTime, 0.075f, 0.25f);
         HaveEchoTime = true;
       }
       else if (sc->Check("EchoDepth"))
       {
-        DoFloat(sc, Prop.EchoDepth, 0.0, 1.0);
+        DoFloat(sc, Prop.EchoDepth, 0.0f, 1.0f);
         HaveEchoDepth = true;
       }
       else if (sc->Check("ModulationTime"))
       {
-        DoFloat(sc, Prop.ModulationTime, 0.04, 4.0);
+        DoFloat(sc, Prop.ModulationTime, 0.04f, 4.0f);
         HaveModulationTime = true;
       }
       else if (sc->Check("ModulationDepth"))
       {
-        DoFloat(sc, Prop.ModulationDepth, 0.0, 1.0);
+        DoFloat(sc, Prop.ModulationDepth, 0.0f, 1.0f);
         HaveModulationDepth = true;
       }
       else if (sc->Check("AirAbsorptionHF"))
       {
-        DoFloat(sc, Prop.AirAbsorptionHF, -100.0, 0.0);
+        DoFloat(sc, Prop.AirAbsorptionHF, -100.0f, 0.0f);
         HaveAirAbsorptionHF = true;
       }
       else if (sc->Check("HFReference"))
       {
-        DoFloat(sc, Prop.HFReference, 1000.0, 20000.0);
+        DoFloat(sc, Prop.HFReference, 1000.0f, 20000.0f);
         HaveHFReference = true;
       }
       else if (sc->Check("LFReference"))
       {
-        DoFloat(sc, Prop.LFReference, 20.0, 1000.0);
+        DoFloat(sc, Prop.LFReference, 20.0f, 1000.0f);
         HaveLFReference = true;
       }
       else if (sc->Check("RoomRolloffFactor"))
       {
-        DoFloat(sc, Prop.RoomRolloffFactor, 0.0, 10.0);
+        DoFloat(sc, Prop.RoomRolloffFactor, 0.0f, 10.0f);
         HaveRoomRolloffFactor = true;
       }
       else if (sc->Check("Diffusion"))
       {
-        DoFloat(sc, Prop.Diffusion, 0.0, 100.0);
+        DoFloat(sc, Prop.Diffusion, 0.0f, 100.0f);
         HaveDiffusion = true;
       }
       else if (sc->Check("Density"))
       {
-        DoFloat(sc, Prop.Density, 0.0, 100.0);
+        DoFloat(sc, Prop.Density, 0.0f, 100.0f);
         HaveDensity = true;
       }
       else if (sc->Check("bReflectionsScale"))

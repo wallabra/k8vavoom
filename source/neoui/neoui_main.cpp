@@ -1524,9 +1524,9 @@ void VOpenGLTexture::blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0
 
   if (angle != 0) {
     glPushMatrix();
-    glTranslatef(dx0+(dx1-dx0)/2.0, dy0+(dy1-dy0)/2.0, 0);
+    glTranslatef(dx0+(dx1-dx0)/2.0f, dy0+(dy1-dy0)/2.0f, 0);
     glRotatef(angle, 0, 0, 1);
-    glTranslatef(-(dx0+(dx1-dx0)/2.0), -(dy0+(dy1-dy0)/2.0), 0);
+    glTranslatef(-(dx0+(dx1-dx0)/2.0f), -(dy0+(dy1-dy0)/2.0f), 0);
   }
 
   glBegin(GL_QUADS);
@@ -1600,9 +1600,9 @@ void VOpenGLTexture::blitAt (int dx0, int dy0, float scale, float angle) const {
 
   if (angle != 0) {
     glPushMatrix();
-    glTranslatef(dx0+(dx1-dx0)/2.0, dy0+(dy1-dy0)/2.0, 0);
+    glTranslatef(dx0+(dx1-dx0)/2.0f, dy0+(dy1-dy0)/2.0f, 0);
     glRotatef(angle, 0, 0, 1);
-    glTranslatef(-(dx0+(dx1-dx0)/2.0), -(dy0+(dy1-dy0)/2.0), 0);
+    glTranslatef(-(dx0+(dx1-dx0)/2.0f), -(dy0+(dy1-dy0)/2.0f), 0);
   }
 
   glBegin(GL_QUADS);
@@ -1851,8 +1851,8 @@ bool VGLVideo::texFiltering = false;
 void VGLVideo::clearColored (int rgb) {
   if (!NeoUIICB::inited) return;
 
-  glClearColor(((rgb>>16)&0xff)/255.0f, ((rgb>>8)&0xff)/255.0f, (rgb&0xff)/255.0f, 0.0);
-  //glClearDepth(1.0);
+  glClearColor(((rgb>>16)&0xff)/255.0f, ((rgb>>8)&0xff)/255.0f, (rgb&0xff)/255.0f, 0.0f);
+  //glClearDepth(1.0f);
   //glClearStencil(0);
 
   //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);

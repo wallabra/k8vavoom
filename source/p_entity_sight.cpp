@@ -79,10 +79,10 @@ static bool SightCheckPlane (const sight_trace_t &Trace, const sec_plane_t *Plan
   if (Plane->flags&SPF_NOBLOCKSIGHT) return true; // plane doesn't block
 
   const float OrgDist = DotProduct(Trace.LineStart, Plane->normal)-Plane->dist;
-  if (OrgDist < -0.1) return true; // ignore back side
+  if (OrgDist < -0.1f) return true; // ignore back side
 
   const float HitDist = DotProduct(Trace.LineEnd, Plane->normal)-Plane->dist;
-  if (HitDist >= -0.1) return true; // didn't cross plane
+  if (HitDist >= -0.1f) return true; // didn't cross plane
 
   if (Plane->pic == skyflatnum) return false; // hit sky, don't clip
 
@@ -163,7 +163,7 @@ static bool SightTraverseIntercepts (sight_trace_t &Trace, VThinker *Self, secto
   // go through in order
   intercept_t *in = nullptr; // shut up compiler warning
   while (count--) {
-    float dist = 99999.0;
+    float dist = 99999.0f;
     scan = Trace.Intercepts.ptr();
     for (int i = 0; i < Trace.Intercepts.length(); ++i, ++scan) {
       if (scan->frac < dist) {
@@ -172,7 +172,7 @@ static bool SightTraverseIntercepts (sight_trace_t &Trace, VThinker *Self, secto
       }
     }
     if (!SightTraverse(Trace, in)) return false; // don't bother going farther
-    in->frac = 99999.0;
+    in->frac = 99999.0f;
   }
 
   Trace.LineEnd = Trace.End;
@@ -266,11 +266,11 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
   ++validcount;
   Trace.Intercepts.Clear();
 
-  if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0; // don't side exactly on a line
-  if (((FX(y1-Self->XLevel->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0; // don't side exactly on a line
+  if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0f; // don't side exactly on a line
+  if (((FX(y1-Self->XLevel->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0f; // don't side exactly on a line
 
   //k8: check if `Length()` and `SetPointDirXY()` are happy
-  if (x1 == x2 && y1 == y2) { x2 += 0.01; y2 += 0.01; }
+  if (x1 == x2 && y1 == y2) { x2 += 0.002f; y2 += 0.002f; }
 
   Trace.Delta = Trace.End-Trace.Start;
   Trace.Plane.SetPointDirXY(Trace.Start, Trace.Delta);
@@ -298,40 +298,40 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
 
   if (xt2 > xt1) {
     mapxstep = 1;
-    partialx = 1.0-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabs(x2-x1);
+    partialx = 1.0f-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
+    ystep = (y2-y1)/fabsf(x2-x1);
   } else if (xt2 < xt1) {
     mapxstep = -1;
     partialx = FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabs(x2-x1);
+    ystep = (y2-y1)/fabsf(x2-x1);
   } else {
     mapxstep = 0;
-    partialx = 1.0;
-    ystep = 256.0;
+    partialx = 1.0f;
+    ystep = 256.0f;
   }
   yintercept = FL(FX(y1)>>MAPBTOFRAC)+partialx*ystep;
 
   if (yt2 > yt1) {
     mapystep = 1;
-    partialy = 1.0-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabs(y2-y1);
+    partialy = 1.0f-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
+    xstep = (x2-x1)/fabsf(y2-y1);
   } else if (yt2 < yt1) {
     mapystep = -1;
     partialy = FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabs(y2-y1);
+    xstep = (x2-x1)/fabsf(y2-y1);
   } else {
     mapystep = 0;
-    partialy = 1.0;
-    xstep = 256.0;
+    partialy = 1.0f;
+    xstep = 256.0f;
   }
   xintercept = FL(FX(x1)>>MAPBTOFRAC)+partialy*xstep;
 
   // [RH] fix for traces that pass only through blockmap corners. in that case,
   // xintercept and yintercept can both be set ahead of mapx and mapy, so the
   // for loop would never advance anywhere.
-  if (fabs(xstep) == 1.0 && fabs(ystep) == 1.0) {
-    if (ystep < 0.0) partialx = 1.0-partialx;
-    if (xstep < 0.0) partialy = 1.0-partialy;
+  if (fabsf(xstep) == 1.0f && fabsf(ystep) == 1.0f) {
+    if (ystep < 0.0f) partialx = 1.0f-partialx;
+    if (xstep < 0.0f) partialy = 1.0f-partialy;
     if (partialx == partialy) { xintercept = xt1; yintercept = yt1; }
   }
 
@@ -470,10 +470,10 @@ bool VEntity::CanSee (VEntity *Other) {
     // an unobstructed LOS is possible
     // now look from eyes of t1 to any part of t2
     Trace.Start = Origin;
-    Trace.Start.z += Height*0.75;
+    Trace.Start.z += Height*0.75f;
     Trace.End = Other->Origin;
     Trace.End.x += xofs*xmult[d];
-    Trace.End.z += Other->Height*0.5;
+    Trace.End.z += Other->Height*0.5f;
 
     // check middle
 #ifdef USE_BSP

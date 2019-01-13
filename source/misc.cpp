@@ -317,14 +317,14 @@ void M_RgbToHsv (float r, float g, float b, float &h, float &s, float &v) {
     h = 0;
     return;
   }
-  s = 1.0-min/max;
+  s = 1.0f-min/max;
   if (max == r) {
-    h = 0.0+60.0*(g-b)/(max-min);
-    if (h < 0) h += 360.0;
+    h = 0.0f+60.0f*(g-b)/(max-min);
+    if (h < 0) h += 360.0f;
   } else if (max == g) {
-    h = 120.0+60.0*(b-r)/(max-min);
+    h = 120.0f+60.0f*(b-r)/(max-min);
   } else {
-    h = 240.0+60.0*(r-g)/(max-min);
+    h = 240.0f+60.0f*(r-g)/(max-min);
   }
 }
 
@@ -395,11 +395,11 @@ void M_HsvToRgb (float h, float s, float v, float &r, float &g, float &b) {
     b = v;
     return;
   }
-  int i = (int)(h/60.0);
-  float f = h/60.0-i;
-  float p = v*(1.0-s);
-  float q = v*(1.0-f*s);
-  float t = v*(1.0-(1.0-f)*s);
+  int i = (int)(h/60.0f);
+  float f = h/60.0f-i;
+  float p = v*(1.0f-s);
+  float q = v*(1.0f-f*s);
+  float t = v*(1.0f-(1.0f-f)*s);
   switch (i) {
     case 0:
       r = v;

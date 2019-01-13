@@ -516,22 +516,22 @@ static void ReadThing (int num) {
     } else if (!VStr::ICmp(String, "Missile damage")) {
       SetClassFieldInt(Ent, "MissileDamage", value);
     } else if (!VStr::ICmp(String, "Width")) {
-      SetClassFieldFloat(Ent, "Radius", value/65536.0);
+      SetClassFieldFloat(Ent, "Radius", value/65536.0f);
     } else if (!VStr::ICmp(String, "Height")) {
       gotHeight = true; // height changed
-      SetClassFieldFloat(Ent, "Height", value/65536.0);
+      SetClassFieldFloat(Ent, "Height", value/65536.0f);
     } else if (!VStr::ICmp(String, "Mass")) {
-      SetClassFieldFloat(Ent, "Mass", (value == 0x7fffffff ? 99999.0 : value));
+      SetClassFieldFloat(Ent, "Mass", (value == 0x7fffffff ? 99999.0f : value));
     } else if (!VStr::ICmp(String, "Speed")) {
       if (value < 100) {
-        SetClassFieldFloat(Ent, "Speed", 35.0*value);
+        SetClassFieldFloat(Ent, "Speed", 35.0f*value);
       } else {
-        SetClassFieldFloat(Ent, "Speed", 35.0*value/65536.0);
+        SetClassFieldFloat(Ent, "Speed", 35.0f*value/65536.0f);
       }
     } else if (!VStr::ICmp(String, "Pain chance")) {
-      SetClassFieldFloat(Ent, "PainChance", value/256.0);
+      SetClassFieldFloat(Ent, "PainChance", value/256.0f);
     } else if (!VStr::ICmp(String, "Translucency")) {
-      SetClassFieldFloat(Ent, "Alpha", value/65536.0);
+      SetClassFieldFloat(Ent, "Alpha", value/65536.0f);
       SetClassFieldByte(Ent, "RenderStyle", STYLE_Translucent);
     } else if (!VStr::ICmp(String, "Alpha")) {
       SetClassFieldFloat(Ent, "Alpha", VStr::atof(ValueString, 1));
@@ -539,7 +539,7 @@ static void ReadThing (int num) {
       SetClassFieldByte(Ent, "RenderStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Scale")) {
       float Scale = VStr::atof(ValueString, 1);
-      Scale = MID(0.0001, Scale, 256.0);
+      Scale = MID(0.0001f, Scale, 256.0f);
       SetClassFieldFloat(Ent, "ScaleX", Scale);
       SetClassFieldFloat(Ent, "ScaleY", Scale);
     } else if (!VStr::ICmp(String, "Bits")) {
@@ -595,10 +595,10 @@ static void ReadThing (int num) {
         SetClassFieldInt(Ent, "Translation", Values[0]&0x0c000000 ? (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+((Values[0]&0x0c000000)>>26)-1 : 0);
 
         // alpha and render style
-        SetClassFieldFloat(Ent, "Alpha", (Values[0]&0x00040000) ? 0.1 :
-          (Values[0]&0x80000000) ? 0.5 :
-          (Values[0]&0x10000000) ? 0.25 :
-          (Values[0]&0x20000000) ? 0.75 : 1.0);
+        SetClassFieldFloat(Ent, "Alpha", (Values[0]&0x00040000) ? 0.1f :
+          (Values[0]&0x80000000) ? 0.5f :
+          (Values[0]&0x10000000) ? 0.25f :
+          (Values[0]&0x20000000) ? 0.75f : 1.0f);
         SetClassFieldByte(Ent, "RenderStyle", (Values[0]&0x00040000) ?
           STYLE_OptFuzzy : (Values[0]&0xb0000000) ? STYLE_Translucent : STYLE_Normal);
       }
@@ -632,7 +632,7 @@ static void ReadThing (int num) {
         SetClassFieldBool(Ent, "bSeekerMissile", Values[1]&0x40000000);
         SetClassFieldBool(Ent, "bReflective", Values[1]&0x80000000);
         //  Things that used to be flags before.
-        if (Values[1]&0x00000001) SetClassFieldFloat(Ent, "Gravity", 0.125);
+        if (Values[1]&0x00000001) SetClassFieldFloat(Ent, "Gravity", 0.125f);
              if (Values[1]&0x00010000) SetClassFieldName(Ent, "DamageType", "Fire");
         else if (Values[1]&0x20000000) SetClassFieldName(Ent, "DamageType", "Ice");
         if (Values[1]&0x00000004) SetClassFieldByte(Ent, "BounceType", 1);
@@ -742,7 +742,7 @@ static void ReadState (int num) {
       }
       States[num]->Frame = value;
     } else if (!VStr::ICmp(String, "Duration")) {
-      States[num]->Time = (value < 0 ? value : value/35.0);
+      States[num]->Time = (value < 0 ? value : value/35.0f);
     } else if (!VStr::ICmp(String, "Next frame")) {
       if (value >= States.Num() || value < 0) {
         GCon->Logf(NAME_Init, "WARNING! Invalid next state %d", value);
@@ -986,7 +986,7 @@ static void DoPowerupColour (const char *ClassName) {
   r = MID(0, r, 255);
   g = MID(0, g, 255);
   b = MID(0, b, 255);
-  a = MID(0.0, a, 1.0);
+  a = MID(0.0f, a, 1.0f);
   SetClassFieldInt(Power, "BlendColour", (r<<16)|(g<<8)|b|int(a*255)<<24);
   unguard;
 }
@@ -1011,10 +1011,10 @@ static void ReadMisc (int) {
       SetClassFieldInt(ArmorBonusClass, "MaxSaveAmount", value);
     } else if (!VStr::ICmp(String, "Green Armor Class")) {
       SetClassFieldInt(GreenArmorClass, "SaveAmount", 100*value);
-      SetClassFieldFloat(GreenArmorClass, "SavePercent", value == 1 ? 1.0/3.0 : 1.0/2.0);
+      SetClassFieldFloat(GreenArmorClass, "SavePercent", value == 1 ? 1.0f/3.0f : 1.0f/2.0f);
     } else if (!VStr::ICmp(String, "Blue Armor Class")) {
       SetClassFieldInt(BlueArmorClass, "SaveAmount", 100*value);
-      SetClassFieldFloat(BlueArmorClass, "SavePercent", value == 1 ? 1.0/3.0 : 1.0/2.0);
+      SetClassFieldFloat(BlueArmorClass, "SavePercent", value == 1 ? 1.0f/3.0f : 1.0f/2.0f);
     } else if (!VStr::ICmp(String, "Max Soulsphere")) {
       SetClassFieldInt(SoulsphereClass, "MaxAmount", value);
     } else if (!VStr::ICmp(String, "Soulsphere Health")) {

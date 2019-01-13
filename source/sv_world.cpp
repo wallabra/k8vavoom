@@ -186,13 +186,13 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
     toffs = sec->ceiling.TexZ;
   }
   toffs *= MTex->TScale;
-  toffs += sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0);
+  toffs += sidedef->MidRowOffset*(MTex->bWorldPanning ? MTex->TScale : 1.0f);
 
   if (ptextop) *ptextop = toffs;
   if (ptexbot) *ptexbot = toffs-MTex->GetScaledHeight();
 
   /*
-  float totalscale = fabs(sidedef->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
+  float totalscale = fabsf(sidedef->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
   float y_offset = sidedef->GetTextureYOffset(side_t::mid);
   float textureheight = tex->GetHeight() / totalscale;
   if (totalscale != 1. && !tex->bWorldPanning) y_offset /= totalscale;
@@ -369,10 +369,10 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
   sec_region_t *fit_last = nullptr;
 
   sec_region_t *fit_closest = nullptr;
-  float fit_mindist = 200000.0;
+  float fit_mindist = 200000.0f;
 
   sec_region_t *nofit_closest = nullptr;
-  float nofit_mindist = 200000.0;
+  float nofit_mindist = 200000.0f;
 
   // check for trivial gaps
   if (gaps == nullptr) return nullptr;
@@ -392,7 +392,7 @@ sec_region_t *SV_FindThingGap (sec_region_t *InGaps, const TVec &point, float z1
 
     if (z1 >= f && z2 <= c) return gaps; // [1]
 
-    const float dist = fabs(z1-f);
+    const float dist = fabsf(z1-f);
 
     if (z2 - z1 <= c - f) {
       // [2]
@@ -450,10 +450,10 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
   opening_t *fit_last = nullptr;
 
   opening_t *fit_closest = nullptr;
-  float fit_mindist = 99999.0;
+  float fit_mindist = 99999.0f;
 
   opening_t *nofit_closest = nullptr;
-  float nofit_mindist = 99999.0;
+  float nofit_mindist = 99999.0f;
 
   // check for trivial gaps
   if (!gaps) return nullptr;
@@ -466,7 +466,7 @@ opening_t *SV_FindOpening (opening_t *InGaps, float z1, float z2) {
 
     if (z1 >= f && z2 <= c) return gaps; // [1]
 
-    const float dist = fabs(z1-f);
+    const float dist = fabsf(z1-f);
 
     if (z2 - z1 <= c - f) {
       // [2]

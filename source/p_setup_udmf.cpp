@@ -193,21 +193,21 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   sector_t &S = ParsedSectors.Alloc();
   memset((void *)&S, 0, sizeof(sector_t));
   S.floor.Set(TVec(0, 0, 1), 0);
-  S.floor.XScale = 1.0;
-  S.floor.YScale = 1.0;
-  S.floor.Alpha = 1.0;
-  S.floor.MirrorAlpha = 1.0;
+  S.floor.XScale = 1.0f;
+  S.floor.YScale = 1.0f;
+  S.floor.Alpha = 1.0f;
+  S.floor.MirrorAlpha = 1.0f;
   S.floor.LightSourceSector = -1;
   S.ceiling.Set(TVec(0, 0, -1), 0);
-  S.ceiling.XScale = 1.0;
-  S.ceiling.YScale = 1.0;
-  S.ceiling.Alpha = 1.0;
-  S.ceiling.MirrorAlpha = 1.0;
+  S.ceiling.XScale = 1.0f;
+  S.ceiling.YScale = 1.0f;
+  S.ceiling.Alpha = 1.0f;
+  S.ceiling.MirrorAlpha = 1.0f;
   S.ceiling.LightSourceSector = -1;
   S.params.lightlevel = 160;
   S.params.LightColour = 0x00ffffff;
   S.seqType = -1; // default seqType
-  S.Gravity = 1.0;  // default sector gravity of 1.0
+  S.Gravity = 1.0f;  // default sector gravity of 1.0
   S.Zone = -1;
 
   sc.Expect("{");
@@ -279,7 +279,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   memset((void *)&L, 0, sizeof(VParsedLine));
   L.V1Index = -1;
   L.V2Index = -1;
-  L.L.alpha = 1.0;
+  L.L.alpha = 1.0f;
   L.L.LineTag = bExtended ? -1 : 0;
   L.L.sidenum[0] = -1;
   L.L.sidenum[1] = -1;
@@ -340,7 +340,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
 
     // strife specific flags
     if (NS&(NS_Strife|NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
-           if (!Key.ICmp("translucent")) L.L.alpha = (CheckBool() ? 0.666 : 1.0);
+           if (!Key.ICmp("translucent")) L.L.alpha = (CheckBool() ? 0.666f : 1.0f);
       else if (!Key.ICmp("jumpover")) Flag(L.L.flags, ML_RAILING);
       else if (!Key.ICmp("blockfloaters")) Flag(L.L.flags, ML_BLOCK_FLOATERS);
     }

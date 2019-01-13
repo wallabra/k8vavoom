@@ -471,7 +471,7 @@ bool VExpression::IsFloatConst () const { return false; }
 bool VExpression::IsStrConst () const { return false; }
 bool VExpression::IsNameConst () const { return false; }
 vint32 VExpression::GetIntConst () const { ParseError(Loc, "Integer constant expected"); return 0; }
-float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expected"); return 0.0; }
+float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expected"); return 0.0f; }
 const VStr &VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr::EmptyString; }
 VName VExpression::GetNameConst () const { ParseError(Loc, "Name constant expected"); return NAME_None; }
 bool VExpression::IsNoneLiteral () const { return false; }

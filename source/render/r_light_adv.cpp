@@ -165,7 +165,7 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
   if (reg) {
     while (reg->next) {
       float d = DotProduct(p, reg->floor->secplane->normal) - reg->floor->secplane->dist;
-      if (d >= 0.0) break;
+      if (d >= 0.0f) break;
       reg = reg->next;
     }
 
@@ -180,9 +180,9 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
       l = 0;
     }
     int SecLightColour = reg->secregion->params->LightColour;
-    lr = ((SecLightColour >> 16) & 255) * l / 255.0;
-    lg = ((SecLightColour >> 8) & 255) * l / 255.0;
-    lb = (SecLightColour & 255) * l / 255.0;
+    lr = ((SecLightColour >> 16) & 255) * l / 255.0f;
+    lg = ((SecLightColour >> 8) & 255) * l / 255.0f;
+    lb = (SecLightColour & 255) * l / 255.0f;
   }
 
   // add static lights
@@ -202,9 +202,9 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
           if (!RadiusCastRay(p, Lights[i].origin, (mobj ? mobj->Radius : 0), false/*r_dynamic_clip_more*/)) continue;
         }
         l += add;
-        lr += add * ((Lights[i].colour >> 16) & 255) / 255.0;
-        lg += add * ((Lights[i].colour >> 8) & 255) / 255.0;
-        lb += add * (Lights[i].colour & 255) / 255.0;
+        lr += add * ((Lights[i].colour >> 16) & 255) / 255.0f;
+        lg += add * ((Lights[i].colour >> 8) & 255) / 255.0f;
+        lb += add * (Lights[i].colour & 255) / 255.0f;
       }
     }
   }
@@ -231,9 +231,9 @@ vuint32 VAdvancedRenderLevel::LightPoint(const TVec &p, VEntity *mobj)
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
-        lr += add * ((dl.colour >> 16) & 255) / 255.0;
-        lg += add * ((dl.colour >> 8) & 255) / 255.0;
-        lb += add * (dl.colour & 255) / 255.0;
+        lr += add * ((dl.colour >> 16) & 255) / 255.0f;
+        lg += add * ((dl.colour >> 8) & 255) / 255.0f;
+        lb += add * (dl.colour & 255) / 255.0f;
       }
     }
   }
@@ -269,7 +269,7 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p, VEntity *mobj)
   reg = sub->regions;
   while (reg->next) {
     float d = DotProduct(p, reg->floor->secplane->normal) - reg->floor->secplane->dist;
-    if (d >= 0.0) break;
+    if (d >= 0.0f) break;
     reg = reg->next;
   }
 
@@ -284,9 +284,9 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient(const TVec &p, VEntity *mobj)
     l = 0;
   }
   int SecLightColour = reg->secregion->params->LightColour;
-  lr = ((SecLightColour >> 16) & 255) * l / 255.0;
-  lg = ((SecLightColour >> 8) & 255) * l / 255.0;
-  lb = (SecLightColour & 255) * l / 255.0;
+  lr = ((SecLightColour >> 16) & 255) * l / 255.0f;
+  lg = ((SecLightColour >> 8) & 255) * l / 255.0f;
+  lb = (SecLightColour & 255) * l / 255.0f;
 
   return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
   unguard;
@@ -415,7 +415,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces(surface_t *InSurfs, texinfo_t *tex
     return;
   }
 
-  if (texinfo->Alpha < 1.0)
+  if (texinfo->Alpha < 1.0f)
   {
     return;
   }
@@ -730,7 +730,7 @@ void VAdvancedRenderLevel::DrawLightSurfaces(surface_t *InSurfs, texinfo_t *texi
   if (!InSurfs) return;
 
   if (texinfo->Tex->Type == TEXTYPE_Null) return;
-  if (texinfo->Alpha < 1.0) return;
+  if (texinfo->Alpha < 1.0f) return;
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 

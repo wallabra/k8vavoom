@@ -39,7 +39,7 @@
 #include "sv_local.h"
 
 
-#define BUTTONTIME  (1.0) // 1 second
+#define BUTTONTIME  (1.0f) // 1 second
 
 
 enum EBWhere {
@@ -134,7 +134,7 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
   for (TThinkerIterator<VButton> Btn(XLevel); Btn; ++Btn) {
     if (Btn->Side == sidenum) {
       // force advancing to the next frame
-      Btn->Timer = 0.001;
+      Btn->Timer = 0.001f;
       return false;
     }
   }
@@ -180,7 +180,7 @@ void VButton::Tick (float DeltaTime) {
   guard(VButton::Tick);
   // do buttons
   Timer -= DeltaTime;
-  if (Timer <= 0.0) {
+  if (Timer <= 0.0f) {
     TSwitch *Def = Switches[SwitchDef];
     if (Frame == Def->NumFrames-1) {
       SwitchDef = Def->PairIndex;
@@ -225,9 +225,9 @@ bool VButton::AdvanceFrame () {
     }
   } else {
     if (Def->Frames[Frame].RandomRange) {
-      Timer = (Def->Frames[Frame].BaseTime+Random()*Def->Frames[Frame].RandomRange)/35.0;
+      Timer = (Def->Frames[Frame].BaseTime+Random()*Def->Frames[Frame].RandomRange)/35.0f;
     } else {
-      Timer = Def->Frames[Frame].BaseTime/35.0;
+      Timer = Def->Frames[Frame].BaseTime/35.0f;
     }
   }
   return Ret;

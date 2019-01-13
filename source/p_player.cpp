@@ -294,14 +294,14 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
     if (St.State) {
       // drop tic count and possibly change state
       // a -1 tic count never changes
-      if (St.StateTime != -1.0) {
+      if (St.StateTime != -1.0f) {
         St.StateTime -= deltaTime;
         if (eventCheckDoubleFiringSpeed()) {
           // [BC] Apply double firing speed
           St.StateTime -= deltaTime;
         }
-        if (St.StateTime <= 0.0) {
-          St.StateTime = 0.0;
+        if (St.StateTime <= 0.0f) {
+          St.StateTime = 0.0f;
           SetViewState(i, St.State->NextState);
         }
       }

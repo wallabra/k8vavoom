@@ -544,11 +544,11 @@ void VOpenGLDrawer::InitResolution () {
   }
 
 
-  glClearColor(0.0, 0.0, 0.0, 0.0); // Black Background
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   RestoreDepthFunc();
-  glDepthRange(0.0, 1.0);
+  glDepthRange(0.0f, 1.0f);
 
   glClearStencil(0);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
@@ -584,11 +584,11 @@ void VOpenGLDrawer::InitResolution () {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-  glClearColor(0.0, 0.0, 0.0, 0.0); // Black Background
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   RestoreDepthFunc();
-  glDepthRange(0.0, 1.0);
+  glDepthRange(0.0f, 1.0f);
 
   glClearStencil(0);
 
@@ -1004,7 +1004,7 @@ void VOpenGLDrawer::FinishUpdate () {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
@@ -1122,16 +1122,16 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     // normal
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);
-    ProjMat[0][0] = 1.0/rd->fovx;
-    ProjMat[1][1] = 1.0/rd->fovy;
-    ProjMat[2][3] = -1.0;
-    ProjMat[3][3] = 0.0;
+    ProjMat[0][0] = 1.0f/rd->fovx;
+    ProjMat[1][1] = 1.0f/rd->fovy;
+    ProjMat[2][3] = -1.0f;
+    ProjMat[3][3] = 0.0f;
     if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) {
-      ProjMat[2][2] = -1.0;
-      ProjMat[3][2] = -2.0;
+      ProjMat[2][2] = -1.0f;
+      ProjMat[3][2] = -2.0f;
     } else {
-      ProjMat[2][2] = -(maxdist + 1.0) / (maxdist - 1.0);
-      ProjMat[3][2] = -2.0 * maxdist / (maxdist - 1.0);
+      ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
+      ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
     }
   } else {
     // reversed
@@ -1139,10 +1139,10 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     glClearDepth(0.0f);
     glDepthFunc(GL_GEQUAL);
     for (int f = 0; f < 4; ++f) for (int c = 0; c < 4; ++c) ProjMat.m[f][c] = 0;
-    ProjMat[0][0] = 1.0/rd->fovx;
-    ProjMat[1][1] = 1.0/rd->fovy;
-    ProjMat[2][3] = -1.0;
-    ProjMat[3][2] = 0.001;
+    ProjMat[0][0] = 1.0f/rd->fovx;
+    ProjMat[1][1] = 1.0f/rd->fovy;
+    ProjMat[2][3] = -1.0f;
+    ProjMat[3][2] = 0.001f;
   }
   //RestoreDepthFunc();
 
@@ -1228,10 +1228,10 @@ void VOpenGLDrawer::EndView () {
   if (cl && cl->CShift) {
     p_glUseProgramObjectARB(DrawFixedColProgram);
     p_glUniform4fARB(DrawFixedColColourLoc,
-      (float)((cl->CShift >> 16) & 255) / 255.0,
-      (float)((cl->CShift >> 8) & 255) / 255.0,
-      (float)(cl->CShift & 255) / 255.0,
-      (float)((cl->CShift >> 24) & 255) / 255.0);
+      (float)((cl->CShift >> 16) & 255) / 255.0f,
+      (float)((cl->CShift >> 8) & 255) / 255.0f,
+      (float)(cl->CShift & 255) / 255.0f,
+      (float)((cl->CShift >> 24) & 255) / 255.0f);
     glEnable(GL_BLEND);
 
     glBegin(GL_QUADS);
@@ -1350,16 +1350,16 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
     static GLenum fogMode[4] = { GL_LINEAR, GL_LINEAR, GL_EXP, GL_EXP2 };
     float fogColour[4];
 
-    fogColour[0] = float((NewFade >> 16) & 255) / 255.0;
-    fogColour[1] = float((NewFade >> 8) & 255) / 255.0;
-    fogColour[2] = float(NewFade & 255) / 255.0;
-    fogColour[3] = float((NewFade >> 24) & 255) / 255.0;
+    fogColour[0] = float((NewFade >> 16) & 255) / 255.0f;
+    fogColour[1] = float((NewFade >> 8) & 255) / 255.0f;
+    fogColour[2] = float(NewFade & 255) / 255.0f;
+    fogColour[3] = float((NewFade >> 24) & 255) / 255.0f;
     glFogi(GL_FOG_MODE, fogMode[r_fog & 3]);
     glFogfv(GL_FOG_COLOR, fogColour);
     if (NewFade == FADE_LIGHT) {
-      glFogf(GL_FOG_DENSITY, 0.3);
-      glFogf(GL_FOG_START, 1.0);
-      glFogf(GL_FOG_END, 1024.0*r_fade_factor);
+      glFogf(GL_FOG_DENSITY, 0.3f);
+      glFogf(GL_FOG_START, 1.0f);
+      glFogf(GL_FOG_END, 1024.0f*r_fade_factor);
     } else {
       glFogf(GL_FOG_DENSITY, r_fog_density);
       glFogf(GL_FOG_START, r_fog_start);
@@ -1425,7 +1425,7 @@ void VOpenGLDrawer::CopyToSecondaryFBO () {
   glPushMatrix();
   glLoadIdentity();
 
-  glColor4f(1.0, 1.0, 1.0, 1.0);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_BLEND);

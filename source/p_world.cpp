@@ -274,11 +274,11 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 
   ++validcount;
 
-  if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0;  // don't side exactly on a line
-  if (((FX(y1-Self->XLevel->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0;  // don't side exactly on a line
+  if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0f;  // don't side exactly on a line
+  if (((FX(y1-Self->XLevel->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0f;  // don't side exactly on a line
 
   // check if `Length()` and `SetPointDirXY()` are happy
-  if (x1 == x2 && y1 == y2) { x2 += 0.01; y2 += 0.01; }
+  if (x1 == x2 && y1 == y2) { x2 += 0.002f; y2 += 0.002f; }
 
   vptSeenThings.reset(); // don't shrink buckets
 
@@ -302,40 +302,40 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
 
   if (xt2 > xt1) {
     mapxstep = 1;
-    partialx = 1.0-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabs(x2-x1);
+    partialx = 1.0f-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
+    ystep = (y2-y1)/fabsf(x2-x1);
   } else if (xt2 < xt1) {
     mapxstep = -1;
     partialx = FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabs(x2-x1);
+    ystep = (y2-y1)/fabsf(x2-x1);
   } else {
     mapxstep = 0;
-    partialx = 1.0;
-    ystep = 256.0;
+    partialx = 1.0f;
+    ystep = 256.0f;
   }
   yintercept = FL(FX(y1)>>MAPBTOFRAC)+partialx*ystep;
 
   if (yt2 > yt1) {
     mapystep = 1;
-    partialy = 1.0-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabs(y2-y1);
+    partialy = 1.0f-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
+    xstep = (x2-x1)/fabsf(y2-y1);
   } else if (yt2 < yt1) {
     mapystep = -1;
     partialy = FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabs(y2-y1);
+    xstep = (x2-x1)/fabsf(y2-y1);
   } else {
     mapystep = 0;
-    partialy = 1.0;
-    xstep = 256.0;
+    partialy = 1.0f;
+    xstep = 256.0f;
   }
   xintercept = FL(FX(x1)>>MAPBTOFRAC)+partialy*xstep;
 
   // [RH] fix for traces that pass only through blockmap corners. in that case,
   // xintercept and yintercept can both be set ahead of mapx and mapy, so the
   // for loop would never advance anywhere.
-  if (fabs(xstep) == 1.0 && fabs(ystep) == 1.0) {
-    if (ystep < 0.0) partialx = 1.0-partialx;
-    if (xstep < 0.0) partialy = 1.0-partialy;
+  if (fabsf(xstep) == 1.0f && fabsf(ystep) == 1.0f) {
+    if (ystep < 0.0f) partialx = 1.0f-partialx;
+    if (xstep < 0.0f) partialy = 1.0f-partialy;
     if (partialx == partialy) { xintercept = xt1; yintercept = yt1; }
   }
 
@@ -361,7 +361,7 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
     } else if (int(xintercept) == mapx) {
       xintercept += xstep;
       mapy += mapystep;
-    } else if (int(fabs(yintercept)) == mapy && int(fabs(xintercept)) == mapx) {
+    } else if (int(fabsf(yintercept)) == mapy && int(fabsf(xintercept)) == mapx) {
       // the trace is exiting a block through its corner. not only does the block
       // being entered need to be checked (which will happen when this loop
       // continues), but the other two blocks adjacent to the corner also need to

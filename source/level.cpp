@@ -1609,7 +1609,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   }
 
   // actually, we should check animator here, but meh...
-  if (dec->alpha <= 0.1) {
+  if (dec->alpha <= 0.002f) {
     GCon->Logf("Decal '%s' has zero alpha", *dec->name);
     return;
   }
@@ -1637,12 +1637,12 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   // setup flips
   vuint32 flips = 0;
   if (dec->flipX == VDecalDef::FlipRandom) {
-    if (Random() < 0.5) flips |= decal_t::FlipX;
+    if (Random() < 0.5f) flips |= decal_t::FlipX;
   } else if (dec->flipX == VDecalDef::FlipAlways) {
     flips |= decal_t::FlipX;
   }
   if (dec->flipY == VDecalDef::FlipRandom) {
-    if (Random() < 0.5) flips |= decal_t::FlipY;
+    if (Random() < 0.5f) flips |= decal_t::FlipY;
   } else if (dec->flipY == VDecalDef::FlipAlways) {
     flips |= decal_t::FlipY;
   }
@@ -1664,7 +1664,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
   float dx = v2->x-v1->x;
   float dy = v2->y-v1->y;
   float dist = 0; // distance from wall start
-       if (fabs(dx) > fabs(dy)) dist = (org.x-v1->x)/dx;
+       if (fabsf(dx) > fabsf(dy)) dist = (org.x-v1->x)/dx;
   else if (dy != 0) dist = (org.y-v1->y)/dy;
   else dist = 0;
 
@@ -1938,7 +1938,7 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
     }
 
     // check for sloped floor
-    if (inregion->floor->normal.z != 1.0) {
+    if (inregion->floor->normal.z != 1.0f) {
       if (inregion->floor->maxz <= src->ceiling.minz && inregion->ceiling->maxz >= src->floor.minz) {
         region = new sec_region_t;
         memset((void *)region, 0, sizeof(*region));
@@ -1964,7 +1964,7 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
     }
 
     // check for sloped ceiling
-    if (inregion->ceiling->normal.z != -1.0) {
+    if (inregion->ceiling->normal.z != -1.0f) {
       if (inregion->floor->minz <= src->ceiling.maxz && inregion->ceiling->minz >= src->floor.maxz) {
         region = new sec_region_t;
         memset((void *)region, 0, sizeof(*region));
@@ -2038,14 +2038,14 @@ void CalcSecMinMaxs (sector_t *sector) {
   float minz;
   float maxz;
 
-  if (sector->floor.normal.z == 1.0) {
+  if (sector->floor.normal.z == 1.0f) {
     // horisontal floor
     sector->floor.minz = sector->floor.dist;
     sector->floor.maxz = sector->floor.dist;
   } else {
     // sloped floor
-    minz = 99999.0;
-    maxz = -99999.0;
+    minz = 99999.0f;
+    maxz = -99999.0f;
     for (int i = 0; i < sector->linecount; ++i) {
       float z = sector->floor.GetPointZ(*sector->lines[i]->v1);
       if (minz > z) minz = z;
@@ -2058,14 +2058,14 @@ void CalcSecMinMaxs (sector_t *sector) {
     sector->floor.maxz = maxz;
   }
 
-  if (sector->ceiling.normal.z == -1.0) {
+  if (sector->ceiling.normal.z == -1.0f) {
     // horisontal ceiling
     sector->ceiling.minz = -sector->ceiling.dist;
     sector->ceiling.maxz = -sector->ceiling.dist;
   } else {
     // sloped ceiling
-    minz = 99999.0;
-    maxz = -99999.0;
+    minz = 99999.0f;
+    maxz = -99999.0f;
     for (int i = 0; i < sector->linecount; ++i) {
       float z = sector->ceiling.GetPointZ(*sector->lines[i]->v1);
       if (minz > z) minz = z;

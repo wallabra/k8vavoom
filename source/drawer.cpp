@@ -185,12 +185,12 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
       tex = GTextureManager(left);
       Drawer->DrawPic(
         PBarHPad-8, ScreenHeight-PBarVPad-PBarHeight, PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
-        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0);
+        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0f);
       // right end
       tex = GTextureManager(right);
       Drawer->DrawPic(
         ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad+8, ScreenHeight-PBarVPad-PBarHeight+32,
-        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0);
+        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0f);
       // middle
       tex = GTextureManager(mid);
       Drawer->FillRectWithFlatRepeat(

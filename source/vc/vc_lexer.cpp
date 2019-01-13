@@ -777,12 +777,12 @@ void VLexer::ProcessNumberToken () {
       Token = TK_FloatLiteral;
       NextChr(); // skip dot
       Float = Number;
-      float fmul = 0.1;
+      float fmul = 0.1f;
       for (;;) {
         if (currCh != '_') {
           if (ASCIIToChrCode[(vuint8)currCh] != CHR_Number) break;
           Float += (currCh-'0')*fmul;
-          fmul /= 10.0;
+          fmul /= 10.0f;
         }
         NextChr();
       }

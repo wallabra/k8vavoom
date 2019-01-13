@@ -32,8 +32,8 @@
 #include "sv_local.h"
 
 
-#define WATER_SINK_FACTOR  (3.0)
-#define WATER_SINK_SPEED   (0.5)
+#define WATER_SINK_FACTOR  (3.0f)
+#define WATER_SINK_SPEED   (0.5f)
 
 
 struct cptrace_t {
@@ -381,7 +381,7 @@ bool VEntity::CheckWater () {
   int cont;
 
   point = Origin;
-  point.z += 1.0;
+  point.z += 1.0f;
 
   WaterLevel = 0;
   WaterType = 0;
@@ -389,7 +389,7 @@ bool VEntity::CheckWater () {
   if (cont > 0) {
     WaterType = cont;
     WaterLevel = 1;
-    point.z = Origin.z+Height*0.5;
+    point.z = Origin.z+Height*0.5f;
     cont = SV_PointContents(Sector, point);
     if (cont > 0) {
       WaterLevel = 2;
@@ -398,7 +398,7 @@ bool VEntity::CheckWater () {
         cont = SV_PointContents(Sector, point);
         if (cont > 0) WaterLevel = 3;
       } else {
-        point.z = Origin.z+Height*0.75;
+        point.z = Origin.z+Height*0.75f;
         cont = SV_PointContents(Sector, point);
         if (cont > 0) WaterLevel = 3;
       }
@@ -525,8 +525,8 @@ bool VEntity::CheckThing (cptrace_t &cptrace, VEntity *Other) {
 
   float blockdist = Other->Radius+Radius;
 
-  if (fabs(Other->Origin.x-cptrace.Pos.x) >= blockdist ||
-      fabs(Other->Origin.y-cptrace.Pos.y) >= blockdist)
+  if (fabsf(Other->Origin.x-cptrace.Pos.x) >= blockdist ||
+      fabsf(Other->Origin.y-cptrace.Pos.y) >= blockdist)
   {
     // didn't hit it
     return true;
@@ -668,7 +668,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   // the base floor / ceiling is from the subsector that contains the point
   // any contacted lines the step closer together will adjust them
   if (newsubsec->sector->SectorFlags&sector_t::SF_HasExtrafloors) {
-    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height ? 1.0 : Height));
+    sec_region_t *gap = SV_FindThingGap(newsubsec->sector->botregion, tmtrace.End, tmtrace.End.z, tmtrace.End.z+(Height ? 1.0f : Height));
     sec_region_t *reg = gap;
     while (reg->prev && reg->floor->flags&SPF_NOBLOCKING) reg = reg->prev;
     tmtrace.Floor = reg->floor;
@@ -775,9 +775,9 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
             } else {
               const float num = ld->dist-DotProduct(Pos, ld->normal);
               const float frac = num/den;
-              if (fabs(frac) < lastFrac) {
+              if (fabsf(frac) < lastFrac) {
                 fuckhit = ld;
-                lastFrac = fabs(frac);
+                lastFrac = fabsf(frac);
               }
             }
             //if (!fuckhit) {/* printf("*** fuckhit!\n");*/ fuckhit = ld; }
@@ -827,8 +827,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
 
   float blockdist = Other->Radius+Radius;
 
-  if (fabs(Other->Origin.x-tmtrace.End.x) >= blockdist ||
-      fabs(Other->Origin.y-tmtrace.End.y) >= blockdist)
+  if (fabsf(Other->Origin.x-tmtrace.End.x) >= blockdist ||
+      fabsf(Other->Origin.y-tmtrace.End.y) >= blockdist)
   {
     // didn't hit it
     return true;
@@ -844,8 +844,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other) {
       (Other->EntityFlags&EF_ActLikeBridge))
   {
     // allow actors to walk on other actors as well as floors
-    if (fabs(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
-        fabs(Other->Origin.y-tmtrace.End.y) < Other->Radius)
+    if (fabsf(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
+        fabsf(Other->Origin.y-tmtrace.End.y) < Other->Radius)
     {
       if (Other->Origin.z+Other->Height >= tmtrace.FloorZ &&
           Other->Origin.z+Other->Height <= tmtrace.End.z+MaxStepHeight)
@@ -1073,7 +1073,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          Velocity.z = -8.0*35.0;
+          Velocity.z = -8.0f*35.0f;
         }
         PushLine(tmtrace);
         return false;
@@ -1085,7 +1085,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
             (!CheckOnmobj() || (CheckOnmobj() &&
              CheckOnmobj() != tmtrace.BlockingMobj)))
         {
-          Velocity.z = 8.0*35.0;
+          Velocity.z = 8.0f*35.0f;
         }
         PushLine(tmtrace);
         return false;
@@ -1095,9 +1095,9 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
     if (!(EntityFlags&EF_IgnoreFloorStep)) {
       if (tmtrace.FloorZ-Origin.z > MaxStepHeight) {
         // too big a step up
-        if (EntityFlags&EF_CanJump && Health > 0.0) {
+        if (EntityFlags&EF_CanJump && Health > 0.0f) {
           // check to make sure there's nothing in the way for the step up
-          if (!Velocity.z || tmtrace.FloorZ-Origin.z > 48.0 ||
+          if (!Velocity.z || tmtrace.FloorZ-Origin.z > 48.0f ||
               (tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
               TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
           {
@@ -1122,7 +1122,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
         if (EntityFlags&EF_StepMissile) {
           Origin.z = tmtrace.FloorZ;
           // if moving down, cancel vertical component of velocity
-          if (Velocity.z < 0) Velocity.z = 0.0;
+          if (Velocity.z < 0) Velocity.z = 0.0f;
         }
         // check to make sure there's nothing in the way for the step up
         if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ))) {
@@ -1169,7 +1169,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   bool OldAboveFakeFloor = false;
   bool OldAboveFakeCeiling = false;
   if (Sector->heightsec) {
-    float EyeZ = (Player ? Player->ViewOrg.z : Origin.z+Height*0.5);
+    float EyeZ = (Player ? Player->ViewOrg.z : Origin.z+Height*0.5f);
     OldAboveFakeFloor = (EyeZ > Sector->heightsec->floor.GetPointZ(Origin));
     OldAboveFakeCeiling = (EyeZ > Sector->heightsec->ceiling.GetPointZ(Origin));
   }
@@ -1190,7 +1190,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff) {
   if (EntityFlags&EF_FloorClip) {
     eventHandleFloorclip();
   } else {
-    FloorClip = 0.0;
+    FloorClip = 0.0f;
   }
 
   // if any special lines were hit, do the effect
@@ -1360,7 +1360,7 @@ void VEntity::SlideMove (float StepVelScale) {
     }
 
     // trace along the three leading corners
-    if (XMove > 0.0) {
+    if (XMove > 0.0f) {
       leadx = Origin.x+Radius;
       trailx = Origin.x-Radius;
     } else {
@@ -1368,7 +1368,7 @@ void VEntity::SlideMove (float StepVelScale) {
       trailx = Origin.x+Radius;
     }
 
-    if (Velocity.y > 0.0) {
+    if (Velocity.y > 0.0f) {
       leady = Origin.y+Radius;
       traily = Origin.y-Radius;
     } else {
@@ -1393,8 +1393,8 @@ void VEntity::SlideMove (float StepVelScale) {
     }
 
     // fudge a bit to make sure it doesn't hit
-    BestSlideFrac -= 0.03125;
-    if (BestSlideFrac > 0.0) {
+    BestSlideFrac -= 0.03125f;
+    if (BestSlideFrac > 0.0f) {
       newx = XMove*BestSlideFrac;
       newy = YMove*BestSlideFrac;
 
@@ -1408,13 +1408,13 @@ void VEntity::SlideMove (float StepVelScale) {
 
     // now continue along the wall
     // first calculate remainder
-    BestSlideFrac = 1.0-(BestSlideFrac+0.03125);
+    BestSlideFrac = 1.0f-(BestSlideFrac+0.03125f);
 
-    if (BestSlideFrac > 1.0) BestSlideFrac = 1.0;
-    if (BestSlideFrac <= 0.0) return;
+    if (BestSlideFrac > 1.0f) BestSlideFrac = 1.0f;
+    if (BestSlideFrac <= 0.0f) return;
 
     // clip the moves
-    Velocity = ClipVelocity(Velocity*BestSlideFrac, BestSlideLine->normal, 1.0);
+    Velocity = ClipVelocity(Velocity*BestSlideFrac, BestSlideLine->normal, 1.0f);
     XMove = Velocity.x*StepVelScale;
     YMove = Velocity.y*StepVelScale;
   } while (!TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y+YMove, Origin.z), true));
@@ -1439,8 +1439,8 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
   guard(VEntity::BounceWall);
   TVec SlideOrg;
 
-  if (Velocity.x > 0.0) SlideOrg.x = Origin.x+Radius; else SlideOrg.x = Origin.x-Radius;
-  if (Velocity.y > 0.0) SlideOrg.y = Origin.y+Radius; else SlideOrg.y = Origin.y-Radius;
+  if (Velocity.x > 0.0f) SlideOrg.x = Origin.x+Radius; else SlideOrg.x = Origin.x-Radius;
+  if (Velocity.y > 0.0f) SlideOrg.y = Origin.y+Radius; else SlideOrg.y = Origin.y-Radius;
   SlideOrg.z = Origin.z;
   TVec SlideDir = Velocity*host_frametime;
   line_t *BestSlideLine = nullptr;
@@ -1477,13 +1477,13 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
 
     // convert BesSlideLine normal to an angle
     VectorAngles(BestSlideLine->normal, lineang);
-    if (BestSlideLine->PointOnSide(Origin) == 1) lineang.yaw += 180.0;
+    if (BestSlideLine->PointOnSide(Origin) == 1) lineang.yaw += 180.0f;
 
     // convert the line angle back to a vector, so that
     // we can use it to calculate the delta against
     // the Velocity vector
     AngleVector(lineang, delta);
-    delta = (delta*2.0)-Velocity;
+    delta = (delta*2.0f)-Velocity;
 
     // finally get the delta angle to use
     VectorAngles(delta, delta_ang);
@@ -1513,17 +1513,17 @@ void VEntity::UpdateVelocity () {
   */
 
   // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
-  if (!(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || Floor->normal.z <= 0.7)) {
+  if (!(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || Floor->normal.z <= 0.7f)) {
     if (WaterLevel < 2) {
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*host_frametime;
     } else if (!(EntityFlags&EF_IsPlayer) || Health <= 0) {
       float startvelz, sinkspeed;
 
       // water gravity
-      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0*host_frametime;
+      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0f*host_frametime;
       startvelz = Velocity.z;
 
-      if (EntityFlags&EF_Corpse) sinkspeed = -WATER_SINK_SPEED/3.0; else sinkspeed = -WATER_SINK_SPEED;
+      if (EntityFlags&EF_Corpse) sinkspeed = -WATER_SINK_SPEED/3.0f; else sinkspeed = -WATER_SINK_SPEED;
 
       if (Velocity.z < sinkspeed) {
         if (startvelz < sinkspeed) Velocity.z = startvelz; else Velocity.z = sinkspeed;
@@ -1581,8 +1581,8 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
         if (TryOrg.z > Other->Origin.z+Other->Height) continue; // over thing
         if (TryOrg.z+Height < Other->Origin.z) continue; // under thing
         float blockdist = Other->Radius+Radius;
-        if (fabs(Other->Origin.x-TryOrg.x) >= blockdist ||
-            fabs(Other->Origin.y-TryOrg.y) >= blockdist)
+        if (fabsf(Other->Origin.x-TryOrg.x) >= blockdist ||
+            fabsf(Other->Origin.y-TryOrg.y) >= blockdist)
         {
           // didn't hit thing
           continue;
@@ -1779,8 +1779,8 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
           }
           // move away from dropoff at a standard speed
           // multiple contacted linedefs are cumulative (e.g. hanging over corner)
-          DeltaX += Dir.x*32.0;
-          DeltaY += Dir.y*32.0;
+          DeltaX += Dir.x*32.0f;
+          DeltaY += Dir.y*32.0f;
         }
       }
     }

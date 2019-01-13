@@ -29,7 +29,7 @@
 
 #define USE_FASTER_SUBDIVIDER
 
-#define ON_EPSILON      (0.1)
+#define ON_EPSILON      (0.1f)
 #define subdivide_size  (240)
 
 #define MAXWVERTS  (8)
@@ -92,8 +92,8 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       surfs->plane = plane;
     }
 
-    float mins = 99999.0;
-    float maxs = -99999.0;
+    float mins = 99999.0f;
+    float maxs = -99999.0f;
     for (int i = 0; i < surfs->count; ++i) {
       float dot = DotProduct(surfs->verts[i], texinfo->saxis)+texinfo->soffs;
       if (dot < mins) mins = dot;
@@ -110,8 +110,8 @@ void VRenderLevel::InitSurfs (surface_t *ASurfs, texinfo_t *texinfo, TPlane *pla
       surfs->extents[0] = 256;
     }
 
-    mins = 99999.0;
-    maxs = -99999.0;
+    mins = 99999.0f;
+    maxs = -99999.0f;
     for (int i = 0; i < surfs->count; ++i) {
       float dot = DotProduct(surfs->verts[i], texinfo->taxis)+texinfo->toffs;
       if (dot < mins) mins = dot;
@@ -162,8 +162,8 @@ static __attribute__((unused)) inline void intersectAgainstPlane (TVec &res, con
 surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) {
   guard(VRenderLevel::SubdivideFace);
   surface_t *f = InF;
-  float mins = 99999.0;
-  float maxs = -99999.0;
+  float mins = 99999.0f;
+  float maxs = -99999.0f;
 
   for (int i = 0; i < f->count; ++i) {
     if (!isFiniteF(f->verts[i].x) || !isFiniteF(f->verts[i].y) || !isFiniteF(f->verts[i].z)) {
@@ -325,8 +325,8 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *InF, const TVec &axis, const 
 surface_t *VRenderLevel::SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis) {
   guard(VRenderLevel::SubdivideSeg);
   surface_t *surf = InSurf;
-  float mins = 99999.0;
-  float maxs = -99999.0;
+  float mins = 99999.0f;
+  float maxs = -99999.0f;
 
   for (int i = 0; i < surf->count; ++i) {
     if (!isFiniteF(surf->verts[i].x) || !isFiniteF(surf->verts[i].y) || !isFiniteF(surf->verts[i].z)) {

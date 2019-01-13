@@ -437,7 +437,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   /* original
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
-  glAlphaFunc(GL_GREATER, 0.0);
+  glAlphaFunc(GL_GREATER, 0.0f);
   */
 
   //glEnable(GL_BLEND);

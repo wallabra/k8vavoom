@@ -27,8 +27,8 @@
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 34
-#define VERSION_RELEASE 9
-#define VERSION_TEXT  "1.34.9"
+#define VERSION_RELEASE 10
+#define VERSION_TEXT  "1.34.10"
 
 // The version as seen in the Windows resource
 #define RC_FILEVERSION VERSION_MAJOR,VERSION_MINOR,VERSION_RELEASE,666

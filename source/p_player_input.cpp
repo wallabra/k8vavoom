@@ -269,7 +269,7 @@ float TKButton::KeyState () {
     0.5f, // pressed and held this frame
     0.0f, // released this frame
     0.0f, // Sys_Error();
-    0.25f,  // pressed and released this frame
+    0.25f,// pressed and released this frame
     0.75f // released and re-pressed this frame
   };
 
@@ -412,8 +412,8 @@ void VBasePlayer::AdjustAngles () {
       ViewAngles.pitch = 0;
       PlayerFlags &= ~PF_Centreing;
     } else {
-           if (ViewAngles.pitch > 0.0) ViewAngles.pitch -= adelta;
-      else if (ViewAngles.pitch < 0.0) ViewAngles.pitch += adelta;
+           if (ViewAngles.pitch > 0.0f) ViewAngles.pitch -= adelta;
+      else if (ViewAngles.pitch < 0.0f) ViewAngles.pitch += adelta;
     }
   }
 
@@ -422,15 +422,15 @@ void VBasePlayer::AdjustAngles () {
     if (ViewAngles.roll >= 0 && ViewAngles.roll < cl_deathroll) ViewAngles.roll += cl_deathrollspeed*host_frametime;
     if (ViewAngles.roll < 0 && ViewAngles.roll > -cl_deathroll) ViewAngles.roll -= cl_deathrollspeed*host_frametime;
   } else {
-    ViewAngles.roll = 0.0;
+    ViewAngles.roll = 0.0f;
   }
 
   // check angles
-  if (ViewAngles.pitch > 80.0) ViewAngles.pitch = 80.0;
-  if (ViewAngles.pitch < -80.0) ViewAngles.pitch = -80.0;
+  if (ViewAngles.pitch > 80.0f) ViewAngles.pitch = 80.0f;
+  if (ViewAngles.pitch < -80.0f) ViewAngles.pitch = -80.0f;
 
-  if (ViewAngles.roll > 80.0) ViewAngles.roll = 80.0;
-  if (ViewAngles.roll < -80.0) ViewAngles.roll = -80.0;
+  if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
+  if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
 
   if (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook) ViewAngles.pitch = 0;
   unguard;

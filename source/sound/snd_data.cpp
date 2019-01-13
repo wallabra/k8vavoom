@@ -121,7 +121,7 @@ void VSampleLoader::LoadFromAudioCodec (sfxinfo_t &Sfx, VAudioCodec *Codec) {
 //==========================================================================
 VSoundManager::VSoundManager ()
   : NumPlayerReserves(0)
-  , CurrentChangePitch(0) //7.0 / 255.0)
+  , CurrentChangePitch(0) //7.0f / 255.0f)
 {
   CurrentDefaultRolloff.RolloffType = ROLLOFF_Doom;
   CurrentDefaultRolloff.MinDistance = 0;
@@ -198,7 +198,7 @@ void VSoundManager::Init () {
     snprintf(SndName, sizeof(SndName), "svox/%s", *W_LumpName(Lump));
     int id = AddSoundLump(SndName, Lump);
     S_sfx[id].ChangePitch = 0;
-    S_sfx[id].VolumeAmp = 1.0;
+    S_sfx[id].VolumeAmp = 1.0f;
   }
 
   // load SNDINFO script
@@ -265,11 +265,11 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc) {
       sc->ExpectString();
       int sfx = FindOrAddSound(*sc->String);
       sc->ExpectNumber();
-      S_sfx[sfx].ChangePitch = ((1 << MID(0, sc->Number, 7)) - 1) / 255.0;
+      S_sfx[sfx].ChangePitch = ((1 << MID(0, sc->Number, 7)) - 1) / 255.0f;
     } else if (sc->Check("$pitchshiftrange")) {
       // $pitchshiftrange <pitch shift amount>
       sc->ExpectNumber();
-      CurrentChangePitch = ((1 << MID(0, sc->Number, 7)) - 1) / 255.0;
+      CurrentChangePitch = ((1 << MID(0, sc->Number, 7)) - 1) / 255.0f;
     } else if (sc->Check("$alias")) {
       // $alias <name of alias> <name of real sound>
       sc->ExpectString();
@@ -503,8 +503,8 @@ int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   S.Priority = 127;
   S.NumChannels = 6; // max instances of this sound; was 2
   S.ChangePitch = CurrentChangePitch;
-  S.VolumeAmp = 1.0;
-  S.Attenuation = 1.0;
+  S.VolumeAmp = 1.0f;
+  S.Attenuation = 1.0f;
   S.Rolloff = CurrentDefaultRolloff;
   S.LumpNum = Lump;
   S.Link = -1;
@@ -905,7 +905,7 @@ void VSoundManager::DoneWithLump (int sound_id) {
 float VSoundManager::GetMusicVolume (VName SongName) {
   guard(VSoundManager::GetMusicVolume);
   for (int i = 0; i < MusicVolumes.Num(); ++i) if (MusicVolumes[i].SongName == SongName) return MusicVolumes[i].Volume;
-  return 1.0;
+  return 1.0f;
   unguard;
 }
 
@@ -1057,19 +1057,19 @@ void VSoundManager::ParseSequenceScript (VScriptParser *sc) {
       // volume <volume>
       TempData.Append(SSCMD_Volume);
       sc->ExpectFloat();
-      TempData.Append((vint32)(sc->Float * 100.0));
+      TempData.Append((vint32)(sc->Float * 100.0f));
     } else if (sc->Check("volumerel")) {
       // volumerel <volume_delta>
       TempData.Append(SSCMD_VolumeRel);
       sc->ExpectFloat();
-      TempData.Append((vint32)(sc->Float * 100.0));
+      TempData.Append((vint32)(sc->Float * 100.0f));
     } else if (sc->Check("volumerand")) {
       // volumerand <volume_from> <volume_to>
       TempData.Append(SSCMD_VolumeRand);
       sc->ExpectFloat();
-      TempData.Append((vint32)(sc->Float * 100.0));
+      TempData.Append((vint32)(sc->Float * 100.0f));
       sc->ExpectFloat();
-      TempData.Append((vint32)(sc->Float * 100.0));
+      TempData.Append((vint32)(sc->Float * 100.0f));
     } else if (sc->Check("attenuation")) {
       // attenuation none|normal|idle|static|surround
       TempData.Append(SSCMD_Attenuation);

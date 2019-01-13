@@ -82,7 +82,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (radius < 0) radius = 0;
 
   float coeff = r_light_filter_dynamic_coeff;
-  if (coeff <= 0.1) coeff = 0.1; else if (coeff > 1) coeff = 1;
+  if (coeff <= 0.1f) coeff = 0.1f; else if (coeff > 1) coeff = 1;
 
   float radsq = (radius < 1 ? 32*32 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;

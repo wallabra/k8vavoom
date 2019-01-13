@@ -253,7 +253,7 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
     surfs->dlightframe = r_sub->dlightframe;
     surfs->dlightbits = r_sub->dlightbits;
 
-    if (texinfo->Alpha > 1.0) {
+    if (texinfo->Alpha > 1.0f) {
       if (PortalLevel == 0) {
         world_surf_t &S = WorldSurfs.Alloc();
         S.Surf = surfs;
@@ -438,8 +438,8 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
 
   if (line->backsector) {
     // just apply this to sectors without slopes
-    if (line->frontsector->floor.normal.z == 1.0 && line->backsector->floor.normal.z == 1.0 &&
-        line->frontsector->ceiling.normal.z == -1.0 && line->backsector->ceiling.normal.z == -1.0)
+    if (line->frontsector->floor.normal.z == 1.0f && line->backsector->floor.normal.z == 1.0f &&
+        line->frontsector->ceiling.normal.z == -1.0f && line->backsector->ceiling.normal.z == -1.0f)
     {
       // clip sectors that are behind rendered segs
       TVec v1 = *line->v1;
@@ -450,8 +450,8 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
       float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), vieworg);
 
       // there might be a better method of doing this, but this one works for now...
-           if (D1 > 0.0 && D2 < 0.0) v2 += ((v2-v1)*D1)/(D1-D2);
-      else if (D2 > 0.0 && D1 < 0.0) v1 += ((v2-v1)*D1)/(D2-D1);
+           if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
+      else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
 
       if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
     }
@@ -465,8 +465,8 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
     float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), vieworg);
 
     // there might be a better method of doing this, but this one works for now...
-         if (D1 > 0.0 && D2 < 0.0) v2 += ((v2-v1)*D1)/(D1-D2);
-    else if (D2 > 0.0 && D1 < 0.0) v1 += ((v2-v1)*D1)/(D2-D1);
+         if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
+    else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
 
     if (!ViewClip.IsRangeVisible(ViewClip.PointToClipAngle(v2), ViewClip.PointToClipAngle(v1))) return;
   }
@@ -528,7 +528,7 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
 
   if (plane.PointOnSide(vieworg)) return; // viewer is in back side or on plane
 
-  if (plane.MirrorAlpha < 1.0 && MirrorLevel < r_maxmirrors && r_allow_mirrors) {
+  if (plane.MirrorAlpha < 1.0f && MirrorLevel < r_maxmirrors && r_allow_mirrors) {
     VPortal *Portal = nullptr;
     for (int i = 0; i < Portals.Num(); ++i) {
       if (Portals[i] && Portals[i]->MatchMirror(&plane)) {
@@ -547,14 +547,14 @@ void VRenderLevelShared::RenderSecSurface (sec_surface_t *ssurf, VEntity *SkyBox
       surfs = surfs->next;
     } while (surfs);
 
-    if (plane.MirrorAlpha <= 0.0) return;
+    if (plane.MirrorAlpha <= 0.0f) return;
     // k8: is this right?
     ssurf->texinfo.Alpha = plane.MirrorAlpha;
   } else {
     // this is NOT right!
-    //ssurf->texinfo.Alpha = 1.0;
-    if (plane.MirrorAlpha < 1.0) {
-      if (ssurf->texinfo.Alpha >= 1.0) {
+    //ssurf->texinfo.Alpha = 1.0f;
+    if (plane.MirrorAlpha < 1.0f) {
+      if (ssurf->texinfo.Alpha >= 1.0f) {
         //GCon->Logf("MALPHA=%f", plane.MirrorAlpha);
         // darken it a little to simulate mirror
         sec_params_t *oldRegionLightParams = r_region->params;
@@ -591,7 +591,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
   float d;
 
   d = DotProduct(vieworg, region->floor->secplane->normal)-region->floor->secplane->dist;
-  if (region->next && d <= 0.0) {
+  if (region->next && d <= 0.0f) {
     if (!ViewClip.ClipCheckRegion(region->next, r_sub, false)) return;
     RenderSubRegion(region->next);
   }
@@ -621,7 +621,7 @@ void VRenderLevelShared::RenderSubRegion (subregion_t *region) {
   RenderSecSurface(region->floor, r_region->floor->SkyBox);
   RenderSecSurface(region->ceil, r_region->ceiling->SkyBox);
 
-  if (region->next && d > 0.0) {
+  if (region->next && d > 0.0f) {
     if (!ViewClip.ClipCheckRegion(region->next, r_sub, false)) return;
     RenderSubRegion(region->next);
   }

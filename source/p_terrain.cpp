@@ -162,13 +162,13 @@ static void ParseTerrainScript (VScriptParser *sc) {
           SInfo->ChunkClass = VClass::FindClass(*sc->String);
         } else if (sc->Check("chunkxvelshift")) {
           sc->ExpectNumber();
-          SInfo->ChunkXVelMul = sc->Number < 0 ? 0.0 : float((1<<sc->Number)/256);
+          SInfo->ChunkXVelMul = sc->Number < 0 ? 0.0f : float((1<<sc->Number)/256);
         } else if (sc->Check("chunkyvelshift")) {
           sc->ExpectNumber();
-          SInfo->ChunkYVelMul = sc->Number < 0 ? 0.0 : float((1<<sc->Number)/256);
+          SInfo->ChunkYVelMul = sc->Number < 0 ? 0.0f : float((1<<sc->Number)/256);
         } else if (sc->Check("chunkzvelshift")) {
           sc->ExpectNumber();
-          SInfo->ChunkZVelMul = sc->Number < 0 ? 0.0 : float((1<<sc->Number)/256);
+          SInfo->ChunkZVelMul = sc->Number < 0 ? 0.0f : float((1<<sc->Number)/256);
         } else if (sc->Check("chunkbasezvel")) {
           sc->ExpectFloat();
           SInfo->ChunkBaseZVel = sc->Float;
@@ -192,7 +192,7 @@ static void ParseTerrainScript (VScriptParser *sc) {
       TInfo->DamageTimeMask = 0;
       TInfo->DamageAmount = 0;
       TInfo->DamageType = NAME_None;
-      TInfo->Friction = 0.0;
+      TInfo->Friction = 0.0f;
       sc->Expect("{");
       while (!sc->Check("}")) {
         if (sc->Check("splash")) {
@@ -231,7 +231,7 @@ static void ParseTerrainScript (VScriptParser *sc) {
 
           if (movefactor < 32) movefactor = 32;
 
-          TInfo->Friction = (1.0-(float)friction/(float)0x10000)*35.0;
+          TInfo->Friction = (1.0f-(float)friction/(float)0x10000)*35.0f;
           TInfo->MoveFactor = float(movefactor)/float(0x10000);
         } else if (sc->Check("stepvolume")) {
           sc->ExpectFloat();
@@ -300,7 +300,7 @@ void P_InitTerrainTypes () {
   DefT.DamageTimeMask = 0;
   DefT.DamageAmount = 0;
   DefT.DamageType = NAME_None;
-  DefT.Friction = 0.0;
+  DefT.Friction = 0.0f;
 
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_terrain) {

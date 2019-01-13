@@ -120,8 +120,8 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 //==========================================================================
 void VRenderLevel::CalcMinMaxs (surface_t *surf) {
   guard(VRenderLevel::CalcMinMaxs);
-  smins = TVec(99999.0, 99999.0, 99999.0);
-  smaxs = TVec(-999999.0, -999999.0, -999999.0);
+  smins = TVec(99999.0f, 99999.0f, 99999.0f);
+  smaxs = TVec(-999999.0f, -999999.0f, -999999.0f);
   for (int i = 0; i < surf->count; ++i) {
     TVec &v = surf->verts[i];
     if (smins.x > v.x) smins.x = v.x;
@@ -271,7 +271,7 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
         // calculate texture point
         *spt = texorg+textoworld[0]*us+textoworld[1]*ut;
         const TVec fms = facemid-(*spt);
-        if (length2DSquared(fms) < 0.001) break; // same point, got it
+        if (length2DSquared(fms) < 0.002f) break; // same point, got it
         if (Level->TraceLine(Trace, facemid, *spt, SPF_NOBLOCKSIGHT)) break; // got it
         if (i&1) {
           if (us > mids) {
@@ -336,7 +336,7 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
   dist = DotProduct(light->origin, surf->plane->normal)-surf->plane->dist;
 
   // don't bother with lights behind the surface
-  if (dist <= -0.1) return;
+  if (dist <= -0.1f) return;
 
   // don't bother with light too far away
   if (dist > light->radius) return;
@@ -356,9 +356,9 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
   // check it for real
   spt = surfpt;
   squaredist = light->radius*light->radius;
-  rmul = ((light->colour>>16)&255)/255.0;
-  gmul = ((light->colour>>8)&255)/255.0;
-  bmul = (light->colour&255)/255.0;
+  rmul = ((light->colour>>16)&255)/255.0f;
+  gmul = ((light->colour>>8)&255)/255.0f;
+  bmul = (light->colour&255)/255.0f;
   for (c = 0; c < numsurfpt; ++c, ++spt) {
     dist = CastRay(light->origin, *spt, squaredist);
     if (dist < 0) continue; // light doesn't reach
@@ -366,7 +366,7 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
     incoming = NormaliseSafe(light->origin-(*spt));
     angle = DotProduct(incoming, surf->plane->normal);
 
-    angle = 0.5+0.5*angle;
+    angle = 0.5f+0.5f*angle;
     add = light->radius-dist;
     add *= angle;
     if (add < 0) continue;
@@ -437,7 +437,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
               lightmapr[t*2*w*2+s*2+1]+
               lightmapr[(t*2+1)*w*2+s*2]+
               lightmapr[(t*2+1)*w*2+s*2+1];
-          total *= 0.25;
+          total *= 0.25f;
         } else {
           total = lightmapr[i];
         }
@@ -451,7 +451,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
               lightmapg[t*2*w*2+s*2+1]+
               lightmapg[(t*2+1)*w*2+s*2]+
               lightmapg[(t*2+1)*w*2+s*2+1];
-          total *= 0.25;
+          total *= 0.25f;
         } else {
           total = lightmapg[i];
         }
@@ -465,7 +465,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
               lightmapb[t*2*w*2+s*2+1]+
               lightmapb[(t*2+1)*w*2+s*2]+
               lightmapb[(t*2+1)*w*2+s*2+1];
-          total *= 0.25;
+          total *= 0.25f;
         } else {
           total = lightmapb[i];
         }
@@ -494,7 +494,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
             lightmap[t*2*w*2+s*2+1]+
             lightmap[(t*2+1)*w*2+s*2]+
             lightmap[(t*2+1)*w*2+s*2+1];
-        total *= 0.25;
+        total *= 0.25f;
       } else {
         total = lightmap[i];
       }
@@ -593,7 +593,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   if (reg) {
     while (reg->next) {
       float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-      if (d >= 0.0) break;
+      if (d >= 0.0f) break;
       reg = reg->next;
     }
 
@@ -609,9 +609,9 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       l = 0;
     }
     int SecLightColour = reg->secregion->params->LightColour;
-    lr = ((SecLightColour>>16)&255)*l/255.0;
-    lg = ((SecLightColour>>8)&255)*l/255.0;
-    lb = (SecLightColour&255)*l/255.0;
+    lr = ((SecLightColour>>16)&255)*l/255.0f;
+    lg = ((SecLightColour>>8)&255)*l/255.0f;
+    lb = (SecLightColour&255)*l/255.0f;
 
     // light from floor's lightmap
     int s = (int)(DotProduct(p, reg->floor->texinfo.saxis)+reg->floor->texinfo.soffs);
@@ -664,9 +664,9 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
         }
         if (dl.type == DLTYPE_Subtractive) add = -add;
         l += add;
-        lr += add*((dl.colour>>16)&255)/255.0;
-        lg += add*((dl.colour>>8)&255)/255.0;
-        lb += add*(dl.colour&255)/255.0;
+        lr += add*((dl.colour>>16)&255)/255.0f;
+        lg += add*((dl.colour>>8)&255)/255.0f;
+        lb += add*(dl.colour&255)/255.0f;
       }
     }
   }
@@ -740,10 +740,10 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     rad = dl.radius;
     dist = DotProduct(dl.origin, surf->plane->normal)-surf->plane->dist;
     if (r_dynamic_clip) {
-      if (dist <= -0.1) continue;
+      if (dist <= -0.1f) continue;
     }
 
-    rad -= fabs(dist);
+    rad -= fabsf(dist);
     minlight = dl.minlight;
     if (rad < minlight) continue;
     minlight = rad-minlight;
@@ -811,12 +811,12 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
           }
           int i = t*smax+s;
           if (dl.type == DLTYPE_Subtractive) {
-            //blocklightsS[i] += (rad-dist)*256.0;
+            //blocklightsS[i] += (rad-dist)*256.0f;
             blocklightsrS[i] += (rad-dist)*rmul;
             blocklightsgS[i] += (rad-dist)*gmul;
             blocklightsbS[i] += (rad-dist)*bmul;
           } else {
-            //blocklights[i] += (rad-dist)*256.0;
+            //blocklights[i] += (rad-dist)*256.0f;
             blocklightsr[i] += (rad-dist)*rmul;
             blocklightsg[i] += (rad-dist)*gmul;
             blocklightsb[i] += (rad-dist)*bmul;

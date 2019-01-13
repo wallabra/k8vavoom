@@ -134,14 +134,14 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
   switch (aspectRatio) {
     default:
     case 0: // original aspect ratio
-      //return ((float)scrhgt*320.0)/((float)scrwdt*200.0);
+      //return ((float)scrhgt*320.0f)/((float)scrwdt*200.0f);
       return 1.2f; // original vanilla pixels are 20% taller than wide
     case 1: // 4:3 aspect ratio
-      return ((float)scrhgt*4.0)/((float)scrwdt*3.0);
+      return ((float)scrhgt*4.0f)/((float)scrwdt*3.0f);
     case 2: // 16:9 aspect ratio
-      return ((float)scrhgt*16.0)/((float)scrwdt*9.0);
+      return ((float)scrhgt*16.0f)/((float)scrwdt*9.0f);
     case 3: // 16:9 aspect ratio
-      return ((float)scrhgt*16.0)/((float)scrwdt*10.0);
+      return ((float)scrhgt*16.0f)/((float)scrwdt*10.0f);
   }
 }
 
@@ -412,7 +412,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , BspVis(nullptr)
   , r_viewleaf(nullptr)
   , r_oldviewleaf(nullptr)
-  , old_fov(90.0)
+  , old_fov(90.0f)
   , prev_aspect_ratio(0)
   , ExtraLight(0)
   , FixedLight(0)
@@ -645,8 +645,8 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   else if (screen_size > 11) screen_size = 11;
   screenblocks = screen_size;
 
-       if (fov < 5.0) fov = 5.0;
-  else if (fov > 175.0) fov = 175.0;
+       if (fov < 5.0f) fov = 5.0f;
+  else if (fov > 175.0f) fov = 175.0f;
   old_fov = fov;
 
   if (screenblocks > 10) {
@@ -672,10 +672,10 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   refdef.fovx = tan(DEG2RAD(fov)/2);
   refdef.fovy = refdef.fovx*refdef.height/refdef.width/PixelAspect;
 
-  clip_base[0] = Normalise(TVec(1, 1.0/refdef.fovx, 0)); // left side clip
-  clip_base[1] = Normalise(TVec(1, -1.0/refdef.fovx, 0)); // right side clip
-  clip_base[2] = Normalise(TVec(1, 0, -1.0/refdef.fovy)); // top side clip
-  clip_base[3] = Normalise(TVec(1, 0, 1.0/refdef.fovy)); // bottom side clip
+  clip_base[0] = Normalise(TVec(1, 1.0f/refdef.fovx, 0)); // left side clip
+  clip_base[1] = Normalise(TVec(1, -1.0f/refdef.fovx, 0)); // right side clip
+  clip_base[2] = Normalise(TVec(1, 0, -1.0f/refdef.fovy)); // top side clip
+  clip_base[3] = Normalise(TVec(1, 0, 1.0f/refdef.fovy)); // bottom side clip
 
   refdef.drawworld = true;
   unguard;
@@ -747,7 +747,7 @@ void VRenderLevelShared::SetupFrame () {
   AngleVectors(viewangles, viewforward, viewright, viewup);
 
   if (r_chasecam && cl->MO == cl->Camera) {
-    vieworg = cl->MO->Origin+TVec(0.0, 0.0, 32.0)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
   } else {
     vieworg = cl->ViewOrg;
   }
@@ -797,10 +797,10 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   rd->fovx = tan(DEG2RAD(FOV)/2);
   rd->fovy = rd->fovx*rd->height/rd->width/PixelAspect;
 
-  clip_base[0] = Normalise(TVec(1, 1.0/rd->fovx, 0)); // left side clip
-  clip_base[1] = Normalise(TVec(1, -1.0/rd->fovx, 0)); // right side clip
-  clip_base[2] = Normalise(TVec(1, 0, -1.0/rd->fovy)); // top side clip
-  clip_base[3] = Normalise(TVec(1, 0, 1.0/rd->fovy)); // bottom side clip
+  clip_base[0] = Normalise(TVec(1, 1.0f/rd->fovx, 0)); // left side clip
+  clip_base[1] = Normalise(TVec(1, -1.0f/rd->fovx, 0)); // right side clip
+  clip_base[2] = Normalise(TVec(1, 0, -1.0f/rd->fovy)); // top side clip
+  clip_base[3] = Normalise(TVec(1, 0, 1.0f/rd->fovy)); // bottom side clip
 
   rd->drawworld = true;
 
@@ -914,7 +914,7 @@ again:
   }
 
   // draw the psprites on top of everything
-  if (/*fov <= 90.0 &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
+  if (/*fov <= 90.0f &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();
 
   Drawer->EndView();
 
@@ -1189,7 +1189,7 @@ COMMAND(TimeRefresh) {
   int renderPeakFree = 0;
 
   for (int i = 0; i < 128; ++i) {
-    cl->ViewAngles.yaw = (float)(i)*360.0/128.0;
+    cl->ViewAngles.yaw = (float)(i)*360.0f/128.0f;
 
     Drawer->StartUpdate();
 

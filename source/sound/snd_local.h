@@ -353,7 +353,7 @@ public:
   VOpenALDevice *SoundDevice;
 
   VStreamMusicPlayer(VOpenALDevice *InSoundDevice)
-    : lastVolume(1.0)
+    : lastVolume(1.0f)
     , threadInited(false)
     , StrmOpened(false)
     , Codec(nullptr)
@@ -362,8 +362,8 @@ public:
     , Paused(false)
     , SoundDevice(InSoundDevice)
     , stpIsPlaying(false)
-    , stpNewPitch(1.0)
-    , stpNewVolume(1.0)
+    , stpNewPitch(1.0f)
+    , stpNewVolume(1.0f)
   {}
   ~VStreamMusicPlayer()
   {}

@@ -214,10 +214,10 @@ void VPortal::SetUpRanges (VViewClipper &Range, bool Revert) {
         }
         TVec Dir = v2-v1;
         Dir.z = 0;
-        if (Dir.x > -0.01 && Dir.x < 0.01 && Dir.y > -0.01 && Dir.y < 0.01) continue; // too short
+        if (Dir.x > -0.01f && Dir.x < 0.01f && Dir.y > -0.01f && Dir.y < 0.01f) continue; // too short
         TPlane P;
         P.SetPointDirXY(v1, Dir);
-        if ((DotProduct(vieworg, P.normal)-P.dist < 0.01) != Revert) continue; // view origin is on the back side
+        if ((DotProduct(vieworg, P.normal)-P.dist < 0.01f) != Revert) continue; // view origin is on the back side
         float a1 = Range.PointToClipAngle(v2);
         float a2 = Range.PointToClipAngle(v1);
         Range.AddClipRange(a1, a2);

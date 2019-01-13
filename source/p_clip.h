@@ -51,7 +51,7 @@ public:
   void AddClipRange (float From, float To);
   bool IsRangeVisible (float From, float To);
   bool ClipIsFull ();
-  inline float PointToClipAngle (const TVec &Pt) const { float Ret = matan(Pt.y-Origin.y, Pt.x-Origin.x); if (Ret < 0.0) Ret += 360.0; return Ret; }
+  inline float PointToClipAngle (const TVec &Pt) const { float Ret = matan(Pt.y-Origin.y, Pt.x-Origin.x); if (Ret < 0.0f) Ret += 360.0f; return Ret; }
   bool ClipIsBBoxVisible (const float *BBox, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
   bool ClipCheckRegion (subregion_t *region, subsector_t *sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
   bool ClipCheckSubsector (subsector_t *Sub, bool shadowslight, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
@@ -69,8 +69,8 @@ private:
     //if (!fsec || !bsec) return false;
 
     // only apply this to sectors without slopes
-    if (fsec->floor.normal.z == 1.0 && bsec->floor.normal.z == 1.0 &&
-        fsec->ceiling.normal.z == -1.0 && bsec->ceiling.normal.z == -1.0)
+    if (fsec->floor.normal.z == 1.0f && bsec->floor.normal.z == 1.0f &&
+        fsec->ceiling.normal.z == -1.0f && bsec->ceiling.normal.z == -1.0f)
     {
       if (line->sidedef->TopTexture != -1 || // a line without top texture isn't a door
           line->sidedef->BottomTexture != -1 || // a line without bottom texture isn't an elevator/plat
@@ -119,8 +119,8 @@ private:
     //if (!fsec || !bsec) return false;
 
     // only apply this to sectors without slopes
-    if (fsec->floor.normal.z == 1.0 && bsec->floor.normal.z == 1.0 &&
-        fsec->ceiling.normal.z == -1.0 && bsec->ceiling.normal.z == -1.0)
+    if (fsec->floor.normal.z == 1.0f && bsec->floor.normal.z == 1.0f &&
+        fsec->ceiling.normal.z == -1.0f && bsec->ceiling.normal.z == -1.0f)
     {
       if (line->sidedef->TopTexture != -1 || // a line without top texture isn't a door
           line->sidedef->BottomTexture != -1 || // a line without bottom texture isn't an elevator/plat

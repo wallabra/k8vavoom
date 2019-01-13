@@ -306,7 +306,7 @@ int VOpenALDevice::PlaySound(int sound_id, float volume, float pitch, bool Loop)
   alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
   alSourcei(src, AL_SOURCE_RELATIVE, AL_TRUE);
-  alSource3f(src, AL_POSITION, 0.0, 0.0, -16.0);
+  alSource3f(src, AL_POSITION, 0.0f, 0.0f, -16.0f);
   alSourcef(src, AL_REFERENCE_DISTANCE, reference_distance);
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
   alSourcef(src, AL_PITCH, pitch);

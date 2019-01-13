@@ -164,7 +164,7 @@ void CL_ReadFromServer () {
   if (cls.signon) {
     if (GGameInfo->NetMode == NM_Client) {
       GClLevel->Time += host_frametime;
-      GClLevel->TicTime = (int)(GClLevel->Time*35.0);
+      GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
 
     CL_UpdateMobjs();

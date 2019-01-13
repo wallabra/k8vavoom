@@ -257,7 +257,7 @@ IMPLEMENT_FUNCTION(VObject, IsPlainCeiling) {
 //native static final bool IsSlopedFlat (const ref TPlane plane);
 IMPLEMENT_FUNCTION(VObject, IsSlopedFlat) {
   P_GET_PTR(TPlane, plane);
-  RET_BOOL(fabs(plane->normal.z) != 1.0f);
+  RET_BOOL(fabsf(plane->normal.z) != 1.0f);
 }
 
 //native static final bool IsVerticalPlane (const ref TPlane plane);
@@ -453,7 +453,7 @@ IMPLEMENT_FUNCTION(VObject, Random) {
   for (;;) {
     ed25519_randombytes(&rn, sizeof(rn));
     res = (float)(rn&0x3ffff)/(float)(0x3ffff);
-    if (res < 1.0) break;
+    if (res < 1.0f) break;
   }
   RET_FLOAT(res);
 #else
@@ -700,7 +700,7 @@ IMPLEMENT_FUNCTION(VObject, GetStateSpriteFrameSize) {
 
 IMPLEMENT_FUNCTION(VObject, GetStateDuration) {
   P_GET_PTR(VState, State);
-  RET_FLOAT(State ? State->Time : 0.0);
+  RET_FLOAT(State ? State->Time : 0.0f);
 }
 
 IMPLEMENT_FUNCTION(VObject, GetStatePlus) {
@@ -1092,10 +1092,10 @@ static TVec RayLineIntersection2D (TVec rayO, TVec rayDir, TVec vv1, TVec vv2) {
   rayDir.z = 0; // not interested
   //rayDir = Normalise(rayDir);
   const float den = (vv2.y-vv1.y)*rayDir.x-(vv2.x-vv1.x)*rayDir.y;
-  //if (fabs(den) < 0.00001) return rayO;
+  //if (fabsf(den) < 0.00001f) return rayO;
   const float e = rayO.y-vv1.y;
   const float f = rayO.x-vv1.x;
-  const float invden = 1.0/den;
+  const float invden = 1.0f/den;
   if (!isFiniteF(invden)) return rayO;
   const float ua = ((vv2.x-vv1.x)*e-(vv2.y-vv1.y)*f)*invden;
   if (ua >= 0 && ua <= 1) {

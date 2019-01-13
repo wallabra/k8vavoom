@@ -47,14 +47,14 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
   p_glUseProgramObjectARB(DrawSimpleProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
   p_glUniform1fARB(DrawSimpleAlphaLoc, Alpha);
-  if (Alpha < 1.0) glEnable(GL_BLEND);
+  if (Alpha < 1.0f) glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
     glTexCoord2f(s2*tex_iw, t2*tex_ih); glVertex2f(x2, y2);
     glTexCoord2f(s1*tex_iw, t2*tex_ih); glVertex2f(x1, y2);
   glEnd();
-  if (Alpha < 1.0) glDisable(GL_BLEND);
+  if (Alpha < 1.0f) glDisable(GL_BLEND);
   unguard;
 }
 
@@ -73,7 +73,7 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
-  if (max_anisotropy > 1.0) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
+  if (max_anisotropy > 1.0f) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f);
   */
   p_glUseProgramObjectARB(DrawShadowProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
@@ -104,7 +104,7 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
   SetTexture(Tex, CM_Default);
   p_glUseProgramObjectARB(DrawSimpleProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
+  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0f);
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
     glTexCoord2f(s2*tex_iw, t1*tex_ih); glVertex2f(x2, y1);
@@ -129,7 +129,7 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
   SetTexture(Tex, CM_Default);
   p_glUseProgramObjectARB(DrawSimpleProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
+  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0f);
   float oldWS, oldWT;
   glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, &oldWS);
   glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &oldWT);
@@ -156,9 +156,9 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
   guard(VOpenGLDrawer::FillRect);
   p_glUseProgramObjectARB(DrawFixedColProgram);
   p_glUniform4fARB(DrawFixedColColourLoc,
-    (GLfloat)(((colour>>16)&255)/255.0),
-    (GLfloat)(((colour>>8)&255)/255.0),
-    (GLfloat)((colour&255)/255.0), 1.0);
+    (GLfloat)(((colour>>16)&255)/255.0f),
+    (GLfloat)(((colour>>8)&255)/255.0f),
+    (GLfloat)((colour&255)/255.0f), 1.0f);
   glBegin(GL_QUADS);
     glVertex2f(x1, y1);
     glVertex2f(x2, y1);
@@ -201,7 +201,7 @@ void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
 void VOpenGLDrawer::DrawConsoleBackground (int h) {
   guard(VOpenGLDrawer::DrawConsoleBackground);
   p_glUseProgramObjectARB(DrawFixedColProgram);
-  p_glUniform4fARB(DrawFixedColColourLoc, 0, 0, 0.5, 0.75);
+  p_glUniform4fARB(DrawFixedColColourLoc, 0, 0, 0.5f, 0.75f);
   glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glVertex2f(0, 0);
@@ -237,7 +237,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
 
   p_glUseProgramObjectARB(DrawSimpleProgram);
   p_glUniform1iARB(DrawSimpleTextureLoc, 0);
-  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0);
+  p_glUniform1fARB(DrawSimpleAlphaLoc, 1.0f);
   glBegin(GL_QUADS);
     glTexCoord2f(s1, 0); glVertex2f(x1, y1);
     glTexCoord2f(s2, 0); glVertex2f(x2, y1);

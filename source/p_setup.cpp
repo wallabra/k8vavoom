@@ -1404,7 +1404,7 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
       for (int i = 0; i < NumGLVerts; ++i, ++pDst) {
         vint32 x, y;
         *Strm << x << y;
-        *pDst = TVec(x/65536.0, y/65536.0, 0);
+        *pDst = TVec(x/65536.0f, y/65536.0f, 0);
       }
     }
     delete Strm;
@@ -1446,13 +1446,13 @@ void VLevel::LoadSectors (int Lump) {
     ss->floor.pic = TexNumForName(floorpic, TEXTYPE_Flat);
     ss->floor.xoffs = 0;
     ss->floor.yoffs = 0;
-    ss->floor.XScale = 1.0;
-    ss->floor.YScale = 1.0;
-    ss->floor.Angle = 0.0;
+    ss->floor.XScale = 1.0f;
+    ss->floor.YScale = 1.0f;
+    ss->floor.Angle = 0.0f;
     ss->floor.minz = floorheight;
     ss->floor.maxz = floorheight;
-    ss->floor.Alpha = 1.0;
-    ss->floor.MirrorAlpha = 1.0;
+    ss->floor.Alpha = 1.0f;
+    ss->floor.MirrorAlpha = 1.0f;
     ss->floor.LightSourceSector = -1;
 
     // ceiling
@@ -1461,13 +1461,13 @@ void VLevel::LoadSectors (int Lump) {
     ss->ceiling.pic = TexNumForName(ceilingpic, TEXTYPE_Flat);
     ss->ceiling.xoffs = 0;
     ss->ceiling.yoffs = 0;
-    ss->ceiling.XScale = 1.0;
-    ss->ceiling.YScale = 1.0;
-    ss->ceiling.Angle = 0.0;
+    ss->ceiling.XScale = 1.0f;
+    ss->ceiling.YScale = 1.0f;
+    ss->ceiling.Angle = 0.0f;
     ss->ceiling.minz = ceilingheight;
     ss->ceiling.maxz = ceilingheight;
-    ss->ceiling.Alpha = 1.0;
-    ss->ceiling.MirrorAlpha = 1.0;
+    ss->ceiling.Alpha = 1.0f;
+    ss->ceiling.MirrorAlpha = 1.0f;
     ss->ceiling.LightSourceSector = -1;
 
     // params
@@ -1486,7 +1486,7 @@ void VLevel::LoadSectors (int Lump) {
     ss->tag = tag;
 
     ss->seqType = -1; // default seqType
-    ss->Gravity = 1.0;  // default sector gravity of 1.0
+    ss->Gravity = 1.0f;  // default sector gravity of 1.0
     ss->Zone = -1;
   }
   delete Strm;
@@ -1686,7 +1686,7 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->sidenum[0] = side0 == 0xffff ? -1 : side0;
     ld->sidenum[1] = side1 == 0xffff ? -1 : side1;
 
-    ld->alpha = 1.0;
+    ld->alpha = 1.0f;
     ld->LineTag = -1;
 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
@@ -1742,7 +1742,7 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->sidenum[0] = (side0 == 0xffff ? -1 : side0);
     ld->sidenum[1] = (side1 == 0xffff ? -1 : side1);
 
-    ld->alpha = 1.0;
+    ld->alpha = 1.0f;
     ld->LineTag = -1;
 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
@@ -2003,10 +2003,10 @@ void VLevel::LoadNodes (int Lump) {
       no->children[j] = children[j];
       no->bbox[j][0] = bbox[j][BOXLEFT];
       no->bbox[j][1] = bbox[j][BOXBOTTOM];
-      no->bbox[j][2] = -32768.0;
+      no->bbox[j][2] = -32768.0f;
       no->bbox[j][3] = bbox[j][BOXRIGHT];
       no->bbox[j][4] = bbox[j][BOXTOP];
-      no->bbox[j][5] = 32768.0;
+      no->bbox[j][5] = 32768.0f;
     }
   }
   delete Strm;
@@ -2297,10 +2297,10 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
       no->children[j] = children[j];
       no->bbox[j][0] = bbox[j][BOXLEFT];
       no->bbox[j][1] = bbox[j][BOXBOTTOM];
-      no->bbox[j][2] = -32768.0;
+      no->bbox[j][2] = -32768.0f;
       no->bbox[j][3] = bbox[j][BOXRIGHT];
       no->bbox[j][4] = bbox[j][BOXTOP];
-      no->bbox[j][5] = 32768.0;
+      no->bbox[j][5] = 32768.0f;
     }
   }
   unguard;
@@ -2965,8 +2965,8 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
 //
 //==========================================================================
 inline void VLevel::ClearBox (float *box) const {
-  box[BOXTOP] = box[BOXRIGHT] = -99999.0;
-  box[BOXBOTTOM] = box[BOXLEFT] = 99999.0;
+  box[BOXTOP] = box[BOXRIGHT] = -99999.0f;
+  box[BOXBOTTOM] = box[BOXLEFT] = 99999.0f;
 }
 
 
@@ -3068,7 +3068,7 @@ void VLevel::GroupLines () const {
     }
 
     // set the soundorg to the middle of the bounding box
-    sector->soundorg = TVec((bbox[BOXRIGHT]+bbox[BOXLEFT])/2.0, (bbox[BOXTOP]+bbox[BOXBOTTOM])/2.0, 0);
+    sector->soundorg = TVec((bbox[BOXRIGHT]+bbox[BOXLEFT])/2.0f, (bbox[BOXTOP]+bbox[BOXBOTTOM])/2.0f, 0);
 
     // adjust bounding box to map blocks
     block = MapBlock(bbox[BOXTOP]-BlockMapOrgY+MAXRADIUS);
@@ -3287,8 +3287,9 @@ void VLevel::FixSelfRefDeepWater () {
 
     // slopes aren't interesting
     if (bs && fs == bs &&
-        fs->floor.normal.z == 1.0 /*&& fs->ceiling.normal.z == -1.0*/ &&
-        bs->floor.normal.z == 1.0 /*&& bs->ceiling.normal.z == -1.0*/) {
+        fs->floor.normal.z == 1.0f /*&& fs->ceiling.normal.z == -1.0f*/ &&
+        bs->floor.normal.z == 1.0f /*&& bs->ceiling.normal.z == -1.0f*/)
+    {
       self_subs[seg->front_sub-Subsectors] |= 1;
     } else {
       self_subs[seg->front_sub-Subsectors] |= 2;
@@ -3378,7 +3379,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (!sec) return 0;
   if (sec->linecount == 0 || sec->deepref) return 0;
   if (sec->floor.minz >= sec->ceiling.minz) return 0;
-  if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) return 0;
+  if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) return 0;
   //int res = FFBugFloor|FFBugCeiling; // not yet
   int res = FFBugFloor;
   int myside = -1;
@@ -3414,7 +3415,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       // line has no bottom texture?
       if (Sides[line->sidenum[myside]].BottomTexture != 0) { res &= ~FFBugFloor; continue; }
       // slope?
-      if (bs->floor.normal.z != 1.0) { res &= ~FFBugFloor; continue; }
+      if (bs->floor.normal.z != 1.0f) { res &= ~FFBugFloor; continue; }
       // height?
       if (bs->floor.minz <= sec->floor.minz) { res &= ~FFBugFloor; continue; }
       //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
@@ -3425,7 +3426,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       // line has no top texture?
       if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; continue; }
       // slope?
-      if (bs->ceiling.normal.z != -1.0) { res &= ~FFBugCeiling; continue; }
+      if (bs->ceiling.normal.z != -1.0f) { res &= ~FFBugCeiling; continue; }
       // height?
       if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
       if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
@@ -3479,8 +3480,8 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
       }
       // we found a sector without floodbug, check if it is a good one
       // sloped?
-      if (wantFloor && bs->floor.normal.z != 1.0) continue;
-      if (!wantFloor && bs->ceiling.normal.z != -1.0) continue;
+      if (wantFloor && bs->floor.normal.z != 1.0f) continue;
+      if (!wantFloor && bs->ceiling.normal.z != -1.0f) continue;
       // check height
       if (wantFloor && bs->floor.minz < sec->floor.minz) continue;
       if (!wantFloor && bs->ceiling.minz > sec->ceiling.minz) continue;
@@ -3537,7 +3538,7 @@ void VLevel::FixDeepWaters () {
       sector_t *sec = &Sectors[sidx];
       if (sec->linecount == 0 || sec->deepref) continue;
       // slopes aren't interesting
-      if (sec->floor.normal.z != 1.0 || sec->ceiling.normal.z != -1.0) continue;
+      if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) continue;
       if (sec->floor.minz >= sec->ceiling.minz) continue;
       vuint32 bugFlags = IsFloodBugSector(sec);
       if (bugFlags == 0) continue;

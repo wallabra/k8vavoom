@@ -1940,7 +1940,7 @@ VAcs *VAcsLevel::SpawnScript(VAcsInfo *Info, VAcsObject *Object,
   if (Delayed) {
     //k8: this was commented in the original
     // world objects are allotted 1 second for initialization
-    //script->DelayTime = 1.0;
+    //script->DelayTime = 1.0f;
     script->DelayActivationTick = XLevel->TicTime+1; // on next tick
   }
   if (!Always) {
@@ -2391,7 +2391,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
             if (Activator && Activator->SetDecorateFlag(name, !!args[2])) ++count;
           } else {
             for (VEntity *mobj = Level->FindMobjFromTID(args[0], nullptr); mobj; mobj = Level->FindMobjFromTID(args[0], mobj)) {
-              //mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
+              //mobj->StartSound(sound, 0, sp[-1] / 127.0f, 1.0f, false);
               //if (mobj->eventSetFlag(name, !!args[2])) ++count;
               if (mobj->SetDecorateFlag(name, !!args[2])) ++count;
             }
@@ -2525,7 +2525,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
           VName name = GetName(args[1]);
           float ptime = Ent->eventFindActivePowerupTime(name);
           if (ptime == 0) return 0;
-          return int(ptime/35.0);
+          return int(ptime/35.0f);
         }
         return 0;
       }
@@ -2537,7 +2537,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       // ignores interpolation for now (args[2]
       if (argCount >= 2) {
         int count = 0;
-        float newAngle = (float)(args[1]&0xffff)*360.0/(float)0x10000;
+        float newAngle = (float)(args[1]&0xffff)*360.0f/(float)0x10000;
         newAngle = (funcIndex == ACSF_ChangeActorPitch ? AngleMod180(newAngle) : AngleMod(newAngle));
         if (args[0] == 0) {
           VEntity *ent = EntityFromTID(args[0], Activator);
@@ -3618,7 +3618,7 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Delay)
-      DelayTime = float(sp[-1])/35.0;
+      DelayTime = float(sp[-1])/35.0f;
       DelayActivationTick = XLevel->TicTime+sp[-1];
       if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       sp--;
@@ -3626,7 +3626,7 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_DelayDirect)
-      DelayTime = float(READ_INT32(ip))/35.0;
+      DelayTime = float(READ_INT32(ip))/35.0f;
       DelayActivationTick = XLevel->TicTime+READ_INT32(ip);
       if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       ip += 4;
@@ -3927,14 +3927,14 @@ int VAcs::RunScript (float DeltaTime) {
 
     ACSVM_CASE(PCD_SectorSound)
       Level->SectorStartSound(line ? line->frontsector : nullptr,
-        GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1] / 127.0,
-        1.0);
+        GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1] / 127.0f,
+        1.0f);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AmbientSound)
       StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(
-        GetName(sp[-2])), 0, sp[-1] / 127.0, 0.0, false);
+        GetName(sp[-2])), 0, sp[-1] / 127.0f, 0.0f, false);
       sp -= 2;
       ACSVM_BREAK;
 
@@ -4030,7 +4030,7 @@ int VAcs::RunScript (float DeltaTime) {
         for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
           mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
         {
-          mobj->StartSound(sound, 0, sp[-1] / 127.0, 1.0, false);
+          mobj->StartSound(sound, 0, sp[-1] / 127.0f, 1.0f, false);
         }
         sp -= 3;
       }
@@ -4046,12 +4046,12 @@ int VAcs::RunScript (float DeltaTime) {
     ACSVM_CASE(PCD_ActivatorSound)
       if (Activator)
       {
-        Activator->StartSound(GetName(sp[-2]), 0, sp[-1] / 127.0, 1.0, false);
+        Activator->StartSound(GetName(sp[-2]), 0, sp[-1] / 127.0f, 1.0f, false);
       }
       else
       {
         StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(
-          GetName(sp[-2])), 0, sp[-1] / 127.0, 1.0, false);
+          GetName(sp[-2])), 0, sp[-1] / 127.0f, 1.0f, false);
       }
       sp -= 2;
       ACSVM_BREAK;
@@ -4059,8 +4059,8 @@ int VAcs::RunScript (float DeltaTime) {
     ACSVM_CASE(PCD_LocalAmbientSound)
       if (Activator)
       {
-        Activator->StartLocalSound(GetName(sp[-2]), 0, sp[-1] / 127.0,
-          1.0);
+        Activator->StartLocalSound(GetName(sp[-2]), 0, sp[-1] / 127.0f,
+          1.0f);
       }
       sp -= 2;
       ACSVM_BREAK;
@@ -4154,13 +4154,13 @@ int VAcs::RunScript (float DeltaTime) {
 
     ACSVM_CASE(PCD_SetGravity)
       Level->Gravity = ((float)sp[-1] / (float)0x10000) *
-        DEFAULT_GRAVITY / 800.0;
+        DEFAULT_GRAVITY / 800.0f;
       sp--;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetGravityDirect)
       Level->Gravity = ((float)READ_INT32(ip) / (float)0x10000) *
-        DEFAULT_GRAVITY / 800.0;
+        DEFAULT_GRAVITY / 800.0f;
       ip += 4;
       ACSVM_BREAK;
 
@@ -4286,7 +4286,7 @@ int VAcs::RunScript (float DeltaTime) {
         TVec(float(sp[-5]) / float(0x10000),
         float(sp[-4]) / float(0x10000),
         float(sp[-3]) / float(0x10000)),
-        sp[-2], float(sp[-1]) * 45.0 / 32.0);
+        sp[-2], float(sp[-1]) * 45.0f / 32.0f);
       sp -= 5;
       ACSVM_BREAK;
 
@@ -4295,20 +4295,20 @@ int VAcs::RunScript (float DeltaTime) {
         TVec(float(READ_INT32(ip + 4)) / float(0x10000),
         float(READ_INT32(ip + 8)) / float(0x10000),
         float(READ_INT32(ip + 12)) / float(0x10000)),
-        READ_INT32(ip + 16), float(READ_INT32(ip + 20)) * 45.0 / 32.0);
+        READ_INT32(ip + 16), float(READ_INT32(ip + 20)) * 45.0f / 32.0f);
       sp++;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpot)
       sp[-4] = Level->eventAcsSpawnSpot(GetNameLowerCase(sp[-4]),
-        sp[-3], sp[-2], float(sp[-1]) * 45.0 / 32.0);
+        sp[-3], sp[-2], float(sp[-1]) * 45.0f / 32.0f);
       sp -= 3;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpotDirect)
       *sp = Level->eventAcsSpawnSpot(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()),
         READ_INT32(ip + 4), READ_INT32(ip + 8),
-        float(READ_INT32(ip + 12)) * 45.0 / 32.0);
+        float(READ_INT32(ip + 12)) * 45.0f / 32.0f);
       sp++;
       ACSVM_BREAK;
 
@@ -4459,7 +4459,7 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DelayDirectB)
-      DelayTime = float(*ip)/35.0;
+      DelayTime = float(*ip)/35.0f;
       DelayActivationTick = XLevel->TicTime+(*ip);
       if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
       ip++;
@@ -4626,18 +4626,18 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_FadeTo)
-      Level->eventAcsFadeRange(0, 0, 0, -1, (float)sp[-5] / 255.0,
-        (float)sp[-4] / 255.0, (float)sp[-3] / 255.0,
-        (float)sp[-2] / 65536.0, (float)sp[-1] / 65536.0, Activator);
+      Level->eventAcsFadeRange(0, 0, 0, -1, (float)sp[-5] / 255.0f,
+        (float)sp[-4] / 255.0f, (float)sp[-3] / 255.0f,
+        (float)sp[-2] / 65536.0f, (float)sp[-1] / 65536.0f, Activator);
       sp -= 5;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_FadeRange)
-      Level->eventAcsFadeRange((float)sp[-9] / 255.0,
-        (float)sp[-8] / 255.0, (float)sp[-7] / 255.0,
-        (float)sp[-6] / 65536.0, (float)sp[-5] / 255.0,
-        (float)sp[-4] / 255.0, (float)sp[-3] / 255.0,
-        (float)sp[-2] / 65536.0, (float)sp[-1] / 65536.0, Activator);
+      Level->eventAcsFadeRange((float)sp[-9] / 255.0f,
+        (float)sp[-8] / 255.0f, (float)sp[-7] / 255.0f,
+        (float)sp[-6] / 65536.0f, (float)sp[-5] / 255.0f,
+        (float)sp[-4] / 255.0f, (float)sp[-3] / 255.0f,
+        (float)sp[-2] / 65536.0f, (float)sp[-1] / 65536.0f, Activator);
       sp -= 9;
       ACSVM_BREAK;
 
@@ -4954,16 +4954,16 @@ int VAcs::RunScript (float DeltaTime) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Sin)
-      sp[-1] = vint32(msin(float(sp[-1]) * 360.0 / 0x10000) * 0x10000);
+      sp[-1] = vint32(msin(float(sp[-1]) * 360.0f / 0x10000) * 0x10000);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Cos)
-      sp[-1] = vint32(mcos(float(sp[-1]) * 360.0 / 0x10000) * 0x10000);
+      sp[-1] = vint32(mcos(float(sp[-1]) * 360.0f / 0x10000) * 0x10000);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_VectorAngle)
       sp[-2] = vint32(matan(float(sp[-1]) / float(0x10000),
-        float(sp[-2]) / float(0x10000)) / 360.0 * 0x10000);
+        float(sp[-2]) / float(0x10000)) / 360.0f * 0x10000);
       sp--;
       ACSVM_BREAK;
 
@@ -5547,11 +5547,11 @@ int VAcs::RunScript (float DeltaTime) {
     ACSVM_CASE(PCD_SetActorAngle)
       if (!sp[-2]) {
         if (Activator) {
-          Activator->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000;
+          Activator->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000;
         }
       } else {
         for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
-          Ent->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000;
+          Ent->Angles.yaw = (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000;
         }
       }
       sp -= 2;
@@ -6058,7 +6058,7 @@ int VAcs::RunScript (float DeltaTime) {
         if (Activator)
         {
           Activator->Angles.pitch = AngleMod180(
-            (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000);
+            (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000);
         }
       }
       else
@@ -6067,7 +6067,7 @@ int VAcs::RunScript (float DeltaTime) {
           Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
         {
           Ent->Angles.pitch = AngleMod180(
-            (float)(sp[-1] & 0xffff) * 360.0 / (float)0x10000);
+            (float)(sp[-1] & 0xffff) * 360.0f / (float)0x10000);
         }
       }
       sp -= 2;
@@ -6259,7 +6259,7 @@ int VAcs::RunScript (float DeltaTime) {
           Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
         {
           Res += Ent->eventMorphActor(GetNameLowerCase(sp[-6]),
-            GetNameLowerCase(sp[-5]), sp[-4] / 35.0, sp[-3],
+            GetNameLowerCase(sp[-5]), sp[-4] / 35.0f, sp[-3],
             GetNameLowerCase(sp[-2]), GetNameLowerCase(sp[-1]));
         }
         sp[-7] = Res;
@@ -6267,7 +6267,7 @@ int VAcs::RunScript (float DeltaTime) {
       else if (Activator)
       {
         sp[-7] = Activator->eventMorphActor(GetNameLowerCase(sp[-6]),
-            GetNameLowerCase(sp[-5]), sp[-4] / 35.0, sp[-3],
+            GetNameLowerCase(sp[-5]), sp[-4] / 35.0f, sp[-3],
             GetNameLowerCase(sp[-2]), GetNameLowerCase(sp[-1]));
       }
       else

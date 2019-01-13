@@ -76,7 +76,7 @@ void T_SetAlign (halign_e NewHAlign, valign_e NewVAlign) {
 //
 //==========================================================================
 void T_DrawText (int x, int y, const VStr &String, int col) {
-  GRoot->DrawText(x, y, String, col, CR_YELLOW, 1.0);
+  GRoot->DrawText(x, y, String, col, CR_YELLOW, 1.0f);
 }
 
 

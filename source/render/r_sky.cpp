@@ -38,7 +38,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define RADIUS    128.0
+#define RADIUS    (128.0f)
 
 // TYPES -------------------------------------------------------------------
 
@@ -256,8 +256,8 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
 
   for (j = 0; j < VDIVS; j++)
   {
-    float va0 = 90.0 - j * (180.0 / VDIVS);
-    float va1 = 90.0 - (j + 1) * (180.0 / VDIVS);
+    float va0 = 90.0f - j * (180.0f / VDIVS);
+    float va1 = 90.0f - (j + 1) * (180.0f / VDIVS);
     float vsina0 = msin(va0);
     float vcosa0 = mcos(va0);
     float vsina1 = msin(va1);
@@ -274,8 +274,8 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
     for (int i = 0; i < HDIVS; i++)
     {
       sky_t &s = sky[j * HDIVS + i];
-      float a0 = 45 - i * (360.0 / HDIVS);
-      float a1 = 45 - (i + 1) * (360.0 / HDIVS);
+      float a0 = 45 - i * (360.0f / HDIVS);
+      float a1 = 45 - (i + 1) * (360.0f / HDIVS);
       float sina0 = msin(a0);
       float cosa0 = mcos(a0);
       float sina1 = msin(a1);
@@ -415,10 +415,10 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
   sky[3].surf.verts[2] = TVec(128, 128, 128);
   sky[3].surf.verts[3] = TVec(128, 128, -128);
 
-  sky[4].surf.verts[0] = TVec(128.0, 128.0, 128);
-  sky[4].surf.verts[1] = TVec(-128.0, 128.0, 128);
-  sky[4].surf.verts[2] = TVec(-128.0, -128.0, 128);
-  sky[4].surf.verts[3] = TVec(128.0, -128.0, 128);
+  sky[4].surf.verts[0] = TVec(128.0f, 128.0f, 128);
+  sky[4].surf.verts[1] = TVec(-128.0f, 128.0f, 128);
+  sky[4].surf.verts[2] = TVec(-128.0f, -128.0f, 128);
+  sky[4].surf.verts[3] = TVec(128.0f, -128.0f, 128);
 
   sky[5].surf.verts[0] = TVec(128, 128, -128);
   sky[5].surf.verts[1] = TVec(128, -128, -128);
@@ -426,38 +426,38 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
   sky[5].surf.verts[3] = TVec(-128, 128, -128);
 
   sky[0].plane.Set(TVec(-1, 0, 0), -128);
-  sky[0].texinfo.saxis = TVec(0, -1.0, 0);
-  sky[0].texinfo.taxis = TVec(0, 0, -1.0);
+  sky[0].texinfo.saxis = TVec(0, -1.0f, 0);
+  sky[0].texinfo.taxis = TVec(0, 0, -1.0f);
   sky[0].texinfo.soffs = 128;
   sky[0].texinfo.toffs = 128;
 
   sky[1].plane.Set(TVec(0, 1, 0), -128);
-  sky[1].texinfo.saxis = TVec(-1.0, 0, 0);
-  sky[1].texinfo.taxis = TVec(0, 0, -1.0);
+  sky[1].texinfo.saxis = TVec(-1.0f, 0, 0);
+  sky[1].texinfo.taxis = TVec(0, 0, -1.0f);
   sky[1].texinfo.soffs = 128;
   sky[1].texinfo.toffs = 128;
 
   sky[2].plane.Set(TVec(1, 0, 0), -128);
-  sky[2].texinfo.saxis = TVec(0, 1.0, 0);
-  sky[2].texinfo.taxis = TVec(0, 0, -1.0);
+  sky[2].texinfo.saxis = TVec(0, 1.0f, 0);
+  sky[2].texinfo.taxis = TVec(0, 0, -1.0f);
   sky[2].texinfo.soffs = 128;
   sky[2].texinfo.toffs = 128;
 
   sky[3].plane.Set(TVec(0, -1, 0), -128);
-  sky[3].texinfo.saxis = TVec(1.0, 0, 0);
-  sky[3].texinfo.taxis = TVec(0, 0, -1.0);
+  sky[3].texinfo.saxis = TVec(1.0f, 0, 0);
+  sky[3].texinfo.taxis = TVec(0, 0, -1.0f);
   sky[3].texinfo.soffs = 128;
   sky[3].texinfo.toffs = 128;
 
   sky[4].plane.Set(TVec(0, 0, -1), -128);
-  sky[4].texinfo.saxis = TVec(0, -1.0, 0);
-  sky[4].texinfo.taxis = TVec(1.0, 0, 0);
+  sky[4].texinfo.saxis = TVec(0, -1.0f, 0);
+  sky[4].texinfo.taxis = TVec(1.0f, 0, 0);
   sky[4].texinfo.soffs = 128;
   sky[4].texinfo.toffs = 128;
 
   sky[5].plane.Set(TVec(0, 0, 1), -128);
-  sky[5].texinfo.saxis = TVec(0, -1.0, 0);
-  sky[5].texinfo.taxis = TVec(-1.0, 0, 0);
+  sky[5].texinfo.saxis = TVec(0, -1.0f, 0);
+  sky[5].texinfo.taxis = TVec(-1.0f, 0, 0);
   sky[5].texinfo.soffs = 128;
   sky[5].texinfo.toffs = 128;
 
@@ -477,10 +477,10 @@ void VSky::InitSkyBox(VName Name1, VName Name2)
 
     sky[j].surf.extents[0] = STex->GetWidth();
     sky[j].surf.extents[1] = STex->GetHeight();
-    sky[j].texinfo.saxis *= STex->GetWidth() / 256.0;
-    sky[j].texinfo.soffs *= STex->GetWidth() / 256.0;
-    sky[j].texinfo.taxis *= STex->GetHeight() / 256.0;
-    sky[j].texinfo.toffs *= STex->GetHeight() / 256.0;
+    sky[j].texinfo.saxis *= STex->GetWidth() / 256.0f;
+    sky[j].texinfo.soffs *= STex->GetWidth() / 256.0f;
+    sky[j].texinfo.taxis *= STex->GetHeight() / 256.0f;
+    sky[j].texinfo.toffs *= STex->GetHeight() / 256.0f;
   }
   bIsSkyBox = true;
   unguard;

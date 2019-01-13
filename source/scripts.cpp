@@ -810,7 +810,7 @@ void VScriptParser::ExpectFloat () {
     //FIXME: detect when we want to use a really big number
     VStr sl = String.ToLower();
     if (sl.StartsWith("0x7f") || sl.StartsWith("0xff")) {
-      Float = 99999.0;
+      Float = 99999.0f;
     } else {
       /*
       char *stopper;

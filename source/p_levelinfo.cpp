@@ -92,7 +92,7 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
 
   SongLump = Info.SongLump;
 
-  Gravity = (Info.Gravity ? Info.Gravity : sv_gravity)*DEFAULT_GRAVITY/800.0;
+  Gravity = (Info.Gravity ? Info.Gravity : sv_gravity)*DEFAULT_GRAVITY/800.0f;
   AirControl = (Info.AirControl ? Info.AirControl : sv_aircontrol);
 
   Infighting = Info.Infighting;

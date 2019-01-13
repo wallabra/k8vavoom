@@ -116,7 +116,7 @@ void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
     return;
 
   case STYLE_Normal:
-    Alpha = 1.0;
+    Alpha = 1.0f;
     break;
 
   case STYLE_Fuzzy:
@@ -124,14 +124,11 @@ void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
     break;
 
   case STYLE_Add:
-    if (Alpha == 1.0)
-    {
-      Alpha -= 0.00001;
-    }
+    if (Alpha == 1.0f) Alpha -= 0.0002f;
     Additive = true;
     break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
+  Alpha = MID(0.0f, Alpha, 1.0f);
 
   //  Setup lighting
   vuint32 light;
@@ -160,8 +157,8 @@ void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
   float TimeFrac = 0;
   if (mobj->State->Time > 0)
   {
-    TimeFrac = 1.0 - (mobj->StateTime / mobj->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, light, 0, Alpha, Additive, TimeFrac, RPASS_Ambient);
@@ -242,7 +239,7 @@ void VAdvancedRenderLevel::RenderThingTextures(VEntity *mobj)
     return;
 
   case STYLE_Normal:
-    Alpha = 1.0;
+    Alpha = 1.0f;
     break;
 
   case STYLE_Translucent:
@@ -254,20 +251,17 @@ void VAdvancedRenderLevel::RenderThingTextures(VEntity *mobj)
     break;
 
   case STYLE_Add:
-    if (Alpha == 1.0)
-    {
-      Alpha -= 0.00001;
-    }
+    if (Alpha == 1.0f) Alpha -= 0.0002f;
     Additive = true;
     break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
+  Alpha = MID(0.0f, Alpha, 1.0f);
 
   float TimeFrac = 0;
   if (mobj->State->Time > 0)
   {
-    TimeFrac = 1.0 - (mobj->StateTime / mobj->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Textures);
@@ -386,7 +380,7 @@ void VAdvancedRenderLevel::RenderThingLight(VEntity *mobj)
     return;
 
   case STYLE_Normal:
-    Alpha = 1.0;
+    Alpha = 1.0f;
     break;
 
   case STYLE_Fuzzy:
@@ -394,16 +388,13 @@ void VAdvancedRenderLevel::RenderThingLight(VEntity *mobj)
     break;
 
   case STYLE_Add:
-    if (Alpha == 1.0)
-    {
-      Alpha -= 0.00001;
-    }
+    if (Alpha == 1.0f) Alpha -= 0.0002f;
     Additive = true;
     break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
+  Alpha = MID(0.0f, Alpha, 1.0f);
 
-  if (Alpha < 1.0 && RendStyle == STYLE_Fuzzy)
+  if (Alpha < 1.0f && RendStyle == STYLE_Fuzzy)
   {
     return;
   }
@@ -411,8 +402,8 @@ void VAdvancedRenderLevel::RenderThingLight(VEntity *mobj)
   float TimeFrac = 0;
   if (mobj->State->Time > 0)
   {
-    TimeFrac = 1.0 - (mobj->StateTime / mobj->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Light);
@@ -547,7 +538,7 @@ void VAdvancedRenderLevel::RenderThingShadow(VEntity *mobj)
     return;
 
   case STYLE_Normal:
-    Alpha = 1.0;
+    Alpha = 1.0f;
     break;
 
   case STYLE_Fuzzy:
@@ -555,20 +546,17 @@ void VAdvancedRenderLevel::RenderThingShadow(VEntity *mobj)
     break;
 
   case STYLE_Add:
-    if (Alpha == 1.0)
-    {
-      Alpha -= 0.00001;
-    }
+    if (Alpha == 1.0f) Alpha -= 0.0002f;
     Additive = true;
     break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
+  Alpha = MID(0.0f, Alpha, 1.0f);
 
   float TimeFrac = 0;
   if (mobj->State->Time > 0)
   {
-    TimeFrac = 1.0 - (mobj->StateTime / mobj->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_ShadowVolumes);
@@ -654,7 +642,7 @@ void VAdvancedRenderLevel::RenderThingFog(VEntity *mobj)
     return;
 
   case STYLE_Normal:
-    Alpha = 1.0;
+    Alpha = 1.0f;
     break;
 
   case STYLE_Fuzzy:
@@ -662,14 +650,11 @@ void VAdvancedRenderLevel::RenderThingFog(VEntity *mobj)
     break;
 
   case STYLE_Add:
-    if (Alpha == 1.0)
-    {
-      Alpha -= 0.00001;
-    }
+    if (Alpha == 1.0f) Alpha -= 0.0002f;
     Additive = true;
     break;
   }
-  Alpha = MID(0.0, Alpha, 1.0);
+  Alpha = MID(0.0f, Alpha, 1.0f);
 
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
   if (!Fade)
@@ -680,8 +665,8 @@ void VAdvancedRenderLevel::RenderThingFog(VEntity *mobj)
   float TimeFrac = 0;
   if (mobj->State->Time > 0)
   {
-    TimeFrac = 1.0 - (mobj->StateTime / mobj->State->Time);
-    TimeFrac = MID(0.0, TimeFrac, 1.0);
+    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+    TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, Fade, Alpha, Additive, TimeFrac, RPASS_Fog);

@@ -28,7 +28,7 @@
 #define SV_LOCAL_HEADER
 
 #define MAXHEALTH        (100)
-#define DEFAULT_GRAVITY  (1225.0)
+#define DEFAULT_GRAVITY  (1225.0f)
 
 //#define REBORN_DESCRIPTION    "TEMP GAME"
 

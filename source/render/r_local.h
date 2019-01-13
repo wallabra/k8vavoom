@@ -34,7 +34,7 @@
 #define MAX_SPRITE_MODELS 10*1024
 
 // was 0.1
-#define FUZZY_ALPHA  (0.7)
+#define FUZZY_ALPHA  (0.7f)
 
 
 // dynamic light types

@@ -287,7 +287,7 @@ void VEntity::SetInitialState (VState *InState) {
   } else {
     DispSpriteFrame = 0;
     DispSpriteName = NAME_None;
-    StateTime = -1.0;
+    StateTime = -1.0f;
   }
   unguard;
 }
@@ -300,10 +300,10 @@ void VEntity::SetInitialState (VState *InState) {
 //==========================================================================
 bool VEntity::AdvanceState (float deltaTime) {
   guard(VEntity::AdvanceState);
-  if (State && StateTime != -1.0) {
+  if (State && StateTime != -1.0f) {
     StateTime -= deltaTime;
     // you can cycle through multiple states in a tic
-    if (StateTime <= 0.0) {
+    if (StateTime <= 0.0f) {
       //if (!State->NextState && VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(669): Doomer %p: EMPTY NEXT on state=%s (%s)", this, (State ? *State->GetFullName() : "<none>"), (State ? *State->Loc.toStringNoCol() : ""));
       if (!SetState(State->NextState)) return false; // freed itself
     }
@@ -596,8 +596,8 @@ IMPLEMENT_FUNCTION(VEntity, CallStateChain) {
 IMPLEMENT_FUNCTION(VEntity, PlaySound) {
   P_GET_BOOL_OPT(Local, false);
   P_GET_BOOL_OPT(Loop, false);
-  P_GET_FLOAT_OPT(Attenuation, 1.0);
-  P_GET_FLOAT_OPT(Volume, 1.0);
+  P_GET_FLOAT_OPT(Attenuation, 1.0f);
+  P_GET_FLOAT_OPT(Volume, 1.0f);
   P_GET_INT(Channel);
   P_GET_NAME(SoundName);
   P_GET_SELF;

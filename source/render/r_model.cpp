@@ -28,7 +28,7 @@
 #include "r_local.h"
 
 
-#define SMOOTHSTEP(x) ((x) * (x) * (3.0 - 2.0 * (x)))
+#define SMOOTHSTEP(x) ((x) * (x) * (3.0f - 2.0f * (x)))
 
 
 enum { NUMVERTEXNORMALS = 162 };
@@ -322,13 +322,13 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       }
 
       // base offset
-      TVec Offset(0.0, 0.0, 0.0);
+      TVec Offset(0.0f, 0.0f, 0.0f);
       if (SN->HasAttribute("offset_x")) Offset.x = VStr::atof(*SN->GetAttribute("offset_x"));
       if (SN->HasAttribute("offset_y")) Offset.y = VStr::atof(*SN->GetAttribute("offset_y"));
       if (SN->HasAttribute("offset_z")) Offset.z = VStr::atof(*SN->GetAttribute("offset_z"));
 
       // base scaling
-      TVec Scale(1.0, 1.0, 1.0);
+      TVec Scale(1.0f, 1.0f, 1.0f);
       if (SN->HasAttribute("scale")) {
         Scale.x = VStr::atof(*SN->GetAttribute("scale"), 1);
         Scale.y = Scale.x;
@@ -351,7 +351,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       if (SN->HasAttribute("usedepth")) Md2.UseDepth = !SN->GetAttribute("usedepth").ICmp("true");
 
       // allow transparency in skin files
-      // for skins that are transparent in solid models (Alpha = 1.0)
+      // for skins that are transparent in solid models (Alpha = 1.0f)
       Md2.AllowTransparency = false;
       if (SN->HasAttribute("allowtransparency")) {
         Md2.AllowTransparency = !SN->GetAttribute("allowtransparency").ICmp("true");
@@ -384,8 +384,8 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
         if (FN->HasAttribute("scale_z")) F.Scale.z = VStr::atof(*FN->GetAttribute("scale_z"), 1);
 
         // alpha
-        F.AlphaStart = 1.0;
-        F.AlphaEnd = 1.0;
+        F.AlphaStart = 1.0f;
+        F.AlphaEnd = 1.0f;
         if (FN->HasAttribute("alpha_start")) F.AlphaStart = VStr::atof(*FN->GetAttribute("alpha_start"));
         if (FN->HasAttribute("alpha_end")) F.AlphaEnd = VStr::atof(*FN->GetAttribute("alpha_end"), 1);
 
@@ -469,16 +469,16 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm) {
       }
       if (F.ModelIndex == -1) Sys_Error("%s has no model %s", *Mdl->Name, *MdlName);
 
-      F.Inter = 0.0;
+      F.Inter = 0.0f;
       if (N->HasAttribute("inter")) F.Inter = VStr::atof(*N->GetAttribute("inter"));
 
-      F.AngleStart = 0.0;
-      F.AngleEnd = 0.0;
+      F.AngleStart = 0.0f;
+      F.AngleEnd = 0.0f;
       if (N->HasAttribute("angle_start")) F.AngleStart = VStr::atof(*N->GetAttribute("angle_start"));
       if (N->HasAttribute("angle_end")) F.AngleEnd = VStr::atof(*N->GetAttribute("angle_end"));
 
-      F.AlphaStart = 1.0;
-      F.AlphaEnd = 1.0;
+      F.AlphaStart = 1.0f;
+      F.AlphaEnd = 1.0f;
       if (N->HasAttribute("alpha_start")) F.AlphaStart = VStr::atof(*N->GetAttribute("alpha_start"));
       if (N->HasAttribute("alpha_end")) F.AlphaEnd = VStr::atof(*N->GetAttribute("alpha_end"), 1);
 
@@ -877,7 +877,7 @@ static int FindNextFrame (const VClassModelScript &Cls, int FIdx, const VAliasMo
       return FIdx+1;
     }
   }
-  InterpFrac = (Inter-FDef.Inter)/(1.0-FDef.Inter);
+  InterpFrac = (Inter-FDef.Inter)/(1.0f-FDef.Inter);
   return FindFrame(Cls, Frame, 0);
   unguard;
 }
@@ -966,7 +966,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 
     // angle
     TAVec Md2Angle = Angles;
-    if (FDef.AngleStart || FDef.AngleEnd != 1.0) {
+    if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
       Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
     }
 
@@ -979,8 +979,8 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
 
     // alpha
     float Md2Alpha = Alpha;
-    if (FDef.AlphaStart != 1.0 || FDef.AlphaEnd != 1.0) Md2Alpha *= FDef.AlphaStart+(FDef.AlphaEnd-FDef.AlphaStart)*Inter;
-    if (F.AlphaStart != 1.0 || F.AlphaEnd != 1.0) Md2Alpha *= F.AlphaStart+(F.AlphaEnd-F.AlphaStart)*Inter;
+    if (FDef.AlphaStart != 1.0f || FDef.AlphaEnd != 1.0f) Md2Alpha *= FDef.AlphaStart+(FDef.AlphaEnd-FDef.AlphaStart)*Inter;
+    if (F.AlphaStart != 1.0f || F.AlphaEnd != 1.0f) Md2Alpha *= F.AlphaStart+(F.AlphaEnd-F.AlphaStart)*Inter;
 
     switch (Pass) {
       case RPASS_Normal:
@@ -988,7 +988,7 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         break;
 
       case RPASS_ShadowVolumes:
-        if (Md2Alpha < 1.0 || SubMdl.NoShadow) continue;
+        if (Md2Alpha < 1.0f || SubMdl.NoShadow) continue;
         break;
 
       case RPASS_Textures:
@@ -1000,15 +1000,15 @@ static void DrawModel (VLevel *Level, const TVec &Org, const TAVec &Angles,
         break;
 
       case RPASS_Fog:
-        if (Md2Alpha <= 0.666 || SubMdl.NoShadow) continue;
+        if (Md2Alpha <= 0.666f || SubMdl.NoShadow) continue;
         break;
 
       case RPASS_NonShadow:
-        if (Md2Alpha >= 1.0 && !Additive && !SubMdl.NoShadow) continue;
+        if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
         break;
     }
 
-    float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0);
+    float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0f);
 
     // scale, in case of models thing's ScaleX scales x and y and ScaleY scales z
     TVec Scale;
@@ -1266,8 +1266,8 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   rd.y = 0;
   rd.width = ScreenWidth;
   rd.height = ScreenHeight;
-  rd.fovx = tan(DEG2RAD(90)/2.0);
-  rd.fovy = rd.fovx*3.0/4.0;
+  rd.fovx = tan(DEG2RAD(90)/2.0f);
+  rd.fovy = rd.fovx*3.0f/4.0f;
   rd.drawworld = false;
   rd.DrawCamera = false;
 
@@ -1279,9 +1279,9 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
   Angles.pitch = 0;
   Angles.roll = 0;
 
-  DrawModel(nullptr, Origin, Angles, 1.0, 1.0, *Model->DefaultClass, FIdx,
+  DrawModel(nullptr, Origin, Angles, 1.0f, 1.0f, *Model->DefaultClass, FIdx,
     NFIdx, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart,
-    TranslEnd, Colour), nullptr), 0, 0, 0xffffffff, 0, 1.0, false, false,
+    TranslEnd, Colour), nullptr), 0, 0, 0xffffffff, 0, 1.0f, false, false,
     InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();
@@ -1332,7 +1332,7 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   rd.y = 0;
   rd.width = ScreenWidth;
   rd.height = ScreenHeight;
-  rd.fovx = tan(DEG2RAD(90)/2.0);
+  rd.fovx = tan(DEG2RAD(90)/2.0f);
   rd.fovy = rd.fovx*rd.height/rd.width/PixelAspect;
   rd.drawworld = false;
   rd.DrawCamera = false;
@@ -1345,8 +1345,8 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   Angles.pitch = 0;
   Angles.roll = 0;
 
-  DrawModel(nullptr, Origin, Angles, 1.0, 1.0, *Cls, FIdx, NFIdx, nullptr, 0, 0,
-    0xffffffff, 0, 1.0, false, false, InterpFrac, Interpolate,
+  DrawModel(nullptr, Origin, Angles, 1.0f, 1.0f, *Cls, FIdx, NFIdx, nullptr, 0, 0,
+    0xffffffff, 0, 1.0f, false, false, InterpFrac, Interpolate,
     TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();

@@ -579,7 +579,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         if (!sc->IsAtEol()) {
           sc->Check(",");
           sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0;
+          if (HexenMode) sc->Float /= 256.0f;
           if (sc->Float != 0) {
             GCon->Logf(NAME_Warning, "%s:MAPINFO: ignoring sky scroll for skybox '%s' (this is mostly harmless)", *sc->GetLoc().toStringNoCol(), *skbname);
           }
@@ -592,15 +592,15 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
           if (!sc->IsAtEol()) {
             sc->Check(",");
             sc->ExpectFloatWithSign();
-            if (HexenMode) sc->Float /= 256.0;
-            info->Sky1ScrollDelta = sc->Float * 35.0;
+            if (HexenMode) sc->Float /= 256.0f;
+            info->Sky1ScrollDelta = sc->Float*35.0f;
           }
         } else {
           if (!sc->IsAtEol()) {
             sc->Check(",");
             sc->ExpectFloatWithSign();
-            if (HexenMode) sc->Float /= 256.0;
-            info->Sky1ScrollDelta = sc->Float * 35.0;
+            if (HexenMode) sc->Float /= 256.0f;
+            info->Sky1ScrollDelta = sc->Float*35.0f;
           }
         }
       }
@@ -618,15 +618,15 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         if (!sc->IsAtEol()) {
           sc->Check(",");
           sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0;
-          info->Sky1ScrollDelta = sc->Float * 35.0;
+          if (HexenMode) sc->Float /= 256.0f;
+          info->Sky1ScrollDelta = sc->Float*35.0f;
         }
       } else {
         if (!sc->IsAtEol()) {
           sc->Check(",");
           sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0;
-          info->Sky2ScrollDelta = sc->Float * 35.0;
+          if (HexenMode) sc->Float /= 256.0f;
+          info->Sky2ScrollDelta = sc->Float*35.0f;
         }
       }
       sc->SetCMode(ocm);
@@ -1387,7 +1387,7 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
     } else if (sc->Check("Aggressiveness")) {
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
-      sdef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
+      sdef->Aggressiveness = 1.0f-MID(0.0f, sc->Float, 1.0f);
     } else if (sc->Check("SpawnFilter")) {
       if (sc->CheckNumber()) {
         if (sc->Number > 0 && sc->Number < 31) sdef->SpawnFilter = 1<<(sc->Number-1);
@@ -1456,12 +1456,12 @@ static void ParseSkillDef (VScriptParser *sc) {
   }
 
   // set defaults
-  sdef->AmmoFactor = 1.0;
-  sdef->DoubleAmmoFactor = 2.0;
-  sdef->DamageFactor = 1.0;
-  sdef->RespawnTime = 0.0;
+  sdef->AmmoFactor = 1.0f;
+  sdef->DoubleAmmoFactor = 2.0f;
+  sdef->DamageFactor = 1.0f;
+  sdef->RespawnTime = 0.0f;
   sdef->RespawnLimit = 0;
-  sdef->Aggressiveness = 1.0;
+  sdef->Aggressiveness = 1.0f;
   sdef->SpawnFilter = 0;
   sdef->AcsReturn = SkillDefs.Num()-1;
   sdef->MenuName.Clean();
@@ -1503,7 +1503,7 @@ static void ParseSkillDef (VScriptParser *sc) {
       sc->Expect("=");
       sc->ExpectFloatWithSign();
       if (sc->Float < 0) GCon->Logf(NAME_Warning, "%s:MAPINFO: \"Aggressiveness\" should be positive", *sc->GetLoc().toStringNoCol());
-      sdef->Aggressiveness = 1.0-MID(0.0, sc->Float, 1.0);
+      sdef->Aggressiveness = 1.0f-MID(0.0f, sc->Float, 1.0f);
     } else if (sc->Check("SpawnFilter")) {
       sc->Expect("=");
       if (sc->CheckNumber()) {
