@@ -57,7 +57,7 @@ bool run_open_scripts;
 
 VBasePlayer *GPlayersBase[MAXPLAYERS];
 vuint8 deathmatch = false; // only if started as net death
-int TimerGame;
+int TimerGame = 0;
 VLevelInfo *GLevelInfo;
 int LeavePosition;
 bool completed;
@@ -437,6 +437,28 @@ static void SV_RunClients (bool skipFrame=false) {
 }
 
 
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+int main () {
+  double FrameTime = 1.0/35.0;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  // round a little bit up to prevent "slow motion"
+  *(uint64_t *)&FrameTime += 1;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  *(uint64_t *)&FrameTime += 1;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  printf("---\n");
+  FrameTime = 0x1.d41d41d41d41dp-6;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  FrameTime = 0x1.d41d41d41d41ep-6;
+  printf("%a %.21g 0x%08llx\n", FrameTime, FrameTime, *(const uint64_t *)&FrameTime);
+  return 0;
+}
+*/
+
+
 //==========================================================================
 //
 //  SV_Ticker
@@ -446,9 +468,15 @@ void SV_Ticker () {
   guard(SV_Ticker);
   float saved_frametime;
   int exec_times;
+  /*
+  double FrameTime = 1.0f/35.0f;
+  // round a little bit up to prevent "slow motion"
+  *(vuint64 *)&FrameTime += 1;
+  */
+  const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
 
-  if (GGameInfo->NetMode >= NM_DedicatedServer && (!LastMasterUpdate ||
-      host_time - LastMasterUpdate > master_heartbeat_time))
+  if (GGameInfo->NetMode >= NM_DedicatedServer &&
+      (!LastMasterUpdate || host_time-LastMasterUpdate > master_heartbeat_time))
   {
     GNet->UpdateMaster();
     LastMasterUpdate = host_time;
@@ -458,9 +486,9 @@ void SV_Ticker () {
   exec_times = 1;
   if (!real_time) {
     // rounded a little bit up to prevent "slow motion"
-    host_frametime = 0.02857142857142857142857142857143f; //1.0 / 35.0;
+    host_frametime = FrameTime; //0.02857142857142857142857142857143; //1.0 / 35.0;
   } else if (split_frame) {
-    while (host_frametime / exec_times > 0.02857142857142857142857142857143f) { //1.0 / 35.0)
+    while (host_frametime/exec_times > FrameTime) { //0.02857142857142857142857142857143) { //1.0 / 35.0
       ++exec_times;
     }
   }
@@ -477,12 +505,14 @@ void SV_Ticker () {
     for (int i = 0; i < exec_times && !completed; ++i) {
       if (!GGameInfo->IsPaused()) {
         // level timer
+        /*
         if (TimerGame) {
           if (!--TimerGame) {
             LeavePosition = 0;
             completed = true;
           }
         }
+        */
         if (i) {
           // if we're doing additional frames, apply some normal frame logic
           VObject::CollectGarbage();
@@ -492,6 +522,12 @@ void SV_Ticker () {
           }
         }
         GLevel->TickWorld(host_frametime);
+        // level timer
+        if (TimerGame && TimerGame >= GLevel->TicTime) {
+          TimerGame = 0;
+          LeavePosition = 0;
+          completed = true;
+        }
         if (sv.intermission) break;
       }
     }

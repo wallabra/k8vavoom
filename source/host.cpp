@@ -89,9 +89,9 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 // for chex quest support
 //VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
 
-static VCvarF host_framerate("framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
+static VCvarF host_framerate("__dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
 //k8: this was `3`; why 3? looks like arbitrary number
-static VCvarI host_cap_tics("host_cap_tics", "8", "Process no more than this number of ticks if frame rate is too slow; DEBUG CVAR, DON'T USE!");
+static VCvarI host_max_skip_frames("host_max_skip_frames", "18", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
 
 static double last_time;
 
@@ -99,7 +99,7 @@ static VCvarB randomclass("RandomClass", false, "Random player class?"); // chec
 VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?"); // checkparm of -respawn
 VCvarB fastparm("g_fast_monsters", false, "Fast monsters?"); // checkparm of -fast
 
-static VCvarB show_time("show_time", false, "Show current time?");
+static VCvarB show_time("dbg_show_times", false, "Show some debug times?");
 
 static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive);
 
@@ -342,7 +342,7 @@ static bool FilterTime () {
   thistime = (int)(realtime*TICRATE);
   host_frametics = thistime-lasttime;
   if (!real_time && host_frametics < 1) return false; // no tics to run
-  int ticlimit = host_cap_tics;
+  int ticlimit = host_max_skip_frames;
   if (ticlimit < 3) ticlimit = 3; else if (ticlimit > 256) ticlimit = 256;
   if (host_frametics > ticlimit) {
     if (developer) GCon->Logf(NAME_Dev, "want to skip %d tics, but only %d allowed", host_frametics, ticlimit);
