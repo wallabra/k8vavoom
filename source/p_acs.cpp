@@ -1218,83 +1218,6 @@ void VAcsObject::Serialise (VStream &Strm) {
   }
 
   //fprintf(stderr, "ACS COUNT=%d\n", scriptCount);
-/*
-  check(Level);
-  check(Level->XLevel);
-  if (Strm.IsLoading()) {
-    // loading
-    for (int i = 0; i < scriptCount; ++i) {
-      vuint8 isAlive = 69;
-      Strm << isAlive;
-      check(isAlive == 0 || isAlive == 1 || isAlive == 2);
-      switch (isAlive) {
-        case 0: // dead
-          Scripts[i].RunningScript = nullptr;
-          break;
-        case 1: // object
-          {
-            VAcs *script = new VAcs();
-            script->Serialise(strm);
-            Scripts[i].RunningScript = script;
-          }
-          break;
-        case 2: // index
-          {
-          }
-          break;
-      if (isAlive) {
-        vint32 sidx = -666;
-        Strm << STRM_INDEX(sidx);
-        Scripts[i].RunningScript = (VAcs *)Level->XLevel->GetScriptByIndex(sidx);
-        check(Scripts[i].RunningScript);
-      } else {
-        Scripts[i].RunningScript = nullptr;
-      }
-    }
-  } else {
-    // saving
-    for (int i = 0; i < scriptCount; ++i) {
-      vuint8 isAlive = (Scripts[i].RunningScript && !Scripts[i].RunningScript->destroyed ? 1 : 0);
-      if (isAlive) {
-        vint32 sidx = Level->XLevel->FindScriptIndex(Scripts[i].RunningScript);
-        if (sidx >= 0) {
-          // 2: index
-          isAlive = 2;
-          Strm << isAlive;
-          Strm << STRM_INDEX(sidx);
-        } else {
-          // 1: object
-          Strm << isAlive;
-          Strm << Scripts[i].RunningScript;
-        }
-      } else {
-        // 0: dead
-        Strm << isAlive;
-      }
-      / *
-      if (isAlive) {
-        vint32 sidx = Level->XLevel->FindScriptIndex(Scripts[i].RunningScript);
-        Strm << STRM_INDEX(sidx);
-      }
-      * /
-    }
-  }
-  */
-  /*
-  for (int i = 0; i < scriptCount; ++i) {
-    vuint8 isAlive = (Scripts[i].RunningScript ? 1 : 0);
-    Strm << isAlive;
-    if (Strm.IsLoading()) {
-      if (isAlive) {
-        Strm << Scripts[i].RunningScript;
-      } else {
-        Scripts[i].RunningScript = nullptr;
-      }
-    } else {
-      if (isAlive) Strm << Scripts[i].RunningScript;
-    }
-  }
-  */
   for (int i = 0; i < scriptCount; ++i) {
     VLevelScriptThinker *vth = Scripts[i].RunningScript;
     Strm << vth;
@@ -2329,35 +2252,44 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
 #define ACSVM_SWITCH(op)  goto *vm_labels[op];
 #define ACSVM_CASE(x)   Lbl_ ## x:
 #define ACSVM_BREAK \
-  if (fmt == ACS_LittleEnhanced) \
-  { \
-    cmd = *ip; \
-    if (cmd >= 240) \
-    { \
-      cmd = 240 + ((cmd - 240) << 8) + ip[1]; \
-      ip += 2; \
+  if (--scountLeft == 0) { \
+    double currtime = Sys_Time(); \
+    if (currtime-sttime > 3.0f) { \
+      Host_Error("ACS script #%d (%s) took too long to execute", number, *info->Name); \
     } \
-    else \
-    { \
+    scountLeft = 1000000; \
+  } \
+  if (fmt == ACS_LittleEnhanced) { \
+    cmd = *ip; \
+    if (cmd >= 240) { \
+      cmd = 240+((cmd-240)<<8)+ip[1]; \
+      ip += 2; \
+    } else { \
       ip++; \
     } \
-  } \
-  else \
-  { \
+  } else { \
     cmd = READ_INT32(ip); \
     ip += 4; \
   } \
-  if ((vuint32)cmd >= PCODE_COMMAND_COUNT) \
-  { \
+  if ((vuint32)cmd >= PCODE_COMMAND_COUNT) { \
     goto LblDefault; \
   } \
-  goto *vm_labels[cmd];
+  goto *vm_labels[cmd]
+
 #define ACSVM_BREAK_STOP  goto LblFuncStop;
 #define ACSVM_DEFAULT   LblDefault:
 #else
 #define ACSVM_SWITCH(op)  switch (cmd)
 #define ACSVM_CASE(op)    case op:
-#define ACSVM_BREAK     break
+#define ACSVM_BREAK \
+  if (--scountLeft == 0) { \
+    double currtime = Sys_Time(); \
+    if (currtime-sttime > 3.0f) { \
+      Host_Error("ACS script #%d (%s) took too long to execute", number, *info->Name); \
+    } \
+    scountLeft = 1000000; \
+  } \
+  break
 #define ACSVM_BREAK_STOP  break
 #define ACSVM_DEFAULT   default:
 #endif
@@ -3369,6 +3301,11 @@ int VAcs::RunScript (float DeltaTime) {
 #if !USE_COMPUTED_GOTO
   GCon->Logf("ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
 #endif
+
+  // init watchcat
+  double sttime = Sys_Time();
+  int scountLeft = 1000000;
+
   do
   {
     vint32 cmd;
