@@ -84,7 +84,6 @@
 
 
 enum {
-  //ANIM_Normal, // set texture with index `ad.Index` to `fd.Index`
   ANIM_Forward,
   ANIM_Backward,
   ANIM_OscillateUp,
@@ -133,13 +132,10 @@ static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textur
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static TArray<AnimDef_t> AnimDefs;
 static TArray<FrameDef_t> FrameDefs;
 static TArray<VAnimDoorDef> AnimDoorDefs;
 
-//static TStrSet patchesWarned;
 static TMapNC<VName, bool> patchesWarned;
 
 static TMapNC<VName, bool> animPicSeen; // temporary
@@ -434,16 +430,6 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
   if (i == -1) {
     if (!numForNameWarned.put(*Name)) {
       GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d; any:%d)", *Name, (int)Type, (int)bOverload, (int)bCheckAny);
-      /*
-      if (VStr::ICmp(*Name, "ml_sky1") == 0) {
-        GCon->Logf("!!!!!!!!!!!!!!!!!!");
-        for (int f = 0; f < Textures.length(); ++f) {
-          if (VStr::ICmp(*Name, *getTxByIndex(f)->Name) == 0) {
-            GCon->Logf("****************** FOUND ******************");
-          }
-        }
-      }
-      */
     }
     i = DefaultTexture;
   }
@@ -653,26 +639,6 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
 
   warnMissingTexture(Name, Silent);
   return -1;
-
-  /*
-  // find the lump number
-  //GCon->Logf("VTextureManager::AddPatch: '%s' (%d)", *Name, Type);
-  int LumpNum = W_CheckNumForName(Name, WADNS_Graphics);
-  if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Sprites);
-  if (LumpNum < 0) LumpNum = W_CheckNumForName(Name, WADNS_Global);
-  if (LumpNum < 0) LumpNum = W_CheckNumForFileName(VStr(*Name));
-  if (LumpNum < 0) {
-    if (!patchesWarned.put(*VName(*Name, VName::AddLower))) {
-      if (!Silent) {
-        GCon->Logf(NAME_Warning, "VTextureManager::AddPatch: Pic \"%s\" not found", *Name);
-      }
-    }
-    return -1;
-  }
-  */
-
-  // create new patch texture
-  //return AddTexture(VTexture::CreateTexture(Type, LumpNum));
   unguard;
 }
 
@@ -1363,7 +1329,6 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
 void P_InitAnimated () {
   guard(P_InitAnimated);
   AnimDef_t ad;
-  //FrameDef_t fd;
 
   int animlump = W_CheckNumForName(NAME_animated);
   if (animlump < 0) return;
@@ -1399,7 +1364,6 @@ void P_InitAnimated () {
 
     // 0 is flat, 1 is texture, 3 is texture with decals allowed
     int txtype = (Type&1 ? TEXTYPE_Wall : TEXTYPE_Flat);
-    //EWadNamespace txns = (Type&1 ? WADNS_Global : WADNS_Flats);
 
     VName tn18 = VName(TmpName1, VName::AddLower8); // last
     VName tn28 = VName(TmpName2, VName::AddLower8); // first
@@ -1408,12 +1372,6 @@ void P_InitAnimated () {
       GCon->Logf(NAME_Warning, "ANIMATED: skipping animation sequence between '%s' and '%s' due to animdef", TmpName2, TmpName1);
       continue;
     }
-
-    //pic1 = GTextureManager.CheckNumForName(tn28, txtype, true, false);
-    //pic2 = GTextureManager.CheckNumForName(tn18, txtype, true, false);
-
-    // different episode ?
-    //if (pic1 == -1 || pic2 == -1) continue;
 
     // if we have seen this texture in animdef, skip the whole sequence
     TArray<int> ids;
@@ -1431,7 +1389,6 @@ void P_InitAnimated () {
 
     ad.StartFrameDef = FrameDefs.length();
     ad.range = 1; // this is ranged animation
-    //ad.Type = (pic2lmp > pic1lmp ? ANIM_Forward : ANIM_Backward);
     // we are always goind forward, indicies in framedefs will take care of the rest
     ad.Type = ANIM_Forward;
     ad.NumFrames = ids.length();
@@ -1510,8 +1467,6 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
   } else {
     animPicSeen.put(sc->Name8, true);
   }
-  //VName adefname = sc->Name8;
-  //bool missing = (ignore && optional);
 
   bool vanilla = false;
   float vanillaTics = 8;
@@ -1526,7 +1481,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
 
   int CurType = 0;
   ad.StartFrameDef = FrameDefs.length();
-  ad.Type = ANIM_Forward; //ANIM_Normal;
+  ad.Type = ANIM_Forward;
   ad.allowDecals = 0;
   ad.range = (vanilla ? 1 : 0);
   TArray<int> ids;
@@ -1606,7 +1561,6 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
             }
           }
         }
-        //fd.Index = ad.Index+sc->Number-1;
       } else {
         sc->ExpectName8Warn();
         if (!ignore) {
@@ -1641,17 +1595,6 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       if (!vanilla) sc->Error(va("bad command (%s)", *sc->String));
     }
 
-    /*
-    if (ad.Type != ANIM_Normal && ad.Type != ANIM_Random) {
-      if (fd.Index < ad.Index) {
-        int tmp = ad.Index;
-        ad.Index = fd.Index;
-        fd.Index = tmp;
-        ad.Type = ANIM_Backward;
-      }
-    }
-    */
-
     if (ignore) continue;
 
     // create range frames, if necessary
@@ -1671,24 +1614,9 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
     }
   }
 
-  /*
-  if (!ignore && ad.Type == ANIM_Normal && FrameDefs.length()-ad.StartFrameDef < 2) {
-    sc->Error(va("AnimDef '%s' has framecount < 2", *adefname));
-  }
-  */
-
   if (!ignore && FrameDefs.length() > ad.StartFrameDef) {
     ad.NumFrames = FrameDefs.length()-ad.StartFrameDef;
     ad.CurrentFrame = (ad.Type != ANIM_Random ? ad.NumFrames-1 : (int)(Random()*ad.NumFrames));
-    /*
-    if (ad.Type == ANIM_Normal) {
-      ad.NumFrames = FrameDefs.length()-ad.StartFrameDef;
-      ad.CurrentFrame = ad.NumFrames-1;
-    } else {
-      ad.NumFrames = FrameDefs[ad.StartFrameDef].Index-ad.Index+1;
-      if (ad.Type != ANIM_Random) ad.CurrentFrame = 0; else ad.CurrentFrame = (int)(Random()*ad.NumFrames);
-    }
-    */
     ad.Time = 0.0001; // force 1st game tic to animate
     AnimDefs.Append(ad);
   } else if (!ignore && !optional) {
@@ -2177,17 +2105,6 @@ bool R_IsAnimatedTexture (int texid) {
   if (texid < 1 || GTextureManager.IsMapLocalTexture(texid)) return false;
   VTexture *tx = GTextureManager[texid];
   if (!tx) return false;
-  /*
-  const int len = AnimDefs.length();
-  for (int i = 0; i < len; ++i) {
-    AnimDef_t &ad = AnimDefs[i];
-    if (!ad.range) {
-      if (texid == ad.Index) return true;
-    } else {
-    }
-  }
-  return false;
-  */
   return animTexMap.has(texid);
 }
 
@@ -2210,7 +2127,6 @@ void R_AnimateSurfaces () {
       bool validAnimation = true;
       if (ad.NumFrames > 1) {
         switch (ad.Type) {
-          //case ANIM_Normal:
           case ANIM_Forward:
             ad.CurrentFrame = (ad.CurrentFrame+1)%ad.NumFrames;
             break;
@@ -2243,21 +2159,10 @@ void R_AnimateSurfaces () {
       }
       if (!validAnimation) continue;
 
-      //const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.Type == ANIM_Normal ? ad.CurrentFrame : 0)];
-      //fprintf(stderr, "ANIM #%d: texture %d (%s); type=%d; curframe=%d; framenum=%d; fdefs=%d; stfdef=%d; cfr=%d\n", i, ad.Index, *GTextureManager[ad.Index]->Name, (int)ad.Type, ad.CurrentFrame, ad.NumFrames, FrameDefs.length(), ad.StartFrameDef, ad.StartFrameDef+ad.CurrentFrame);
-
-      //const FrameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? (ad.Type == ANIM_Normal ? ad.CurrentFrame : 0) : 0)];
-      //old:const frameDef_t &fd = FrameDefs[ad.StartFrameDef+(validAnimation ? ad.CurrentFrame : 0)];
-
       const FrameDef_t &fd = FrameDefs[ad.StartFrameDef+(ad.range ? 0 : ad.CurrentFrame)];
 
       ad.Time += fd.BaseTime/35.0;
       if (fd.RandomRange) ad.Time += Random()*(fd.RandomRange/35.0); // random tics
-
-      /*
-      static int wantMissingAnimWarning = -1;
-      if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
-      */
 
       if (!ad.range) {
         // simple case
@@ -2285,71 +2190,6 @@ void R_AnimateSurfaces () {
           atx->TextureTranslation = FrameDefs[afdidx].Index;
         }
       }
-
-#if 0
-      VTexture *atx = GTextureManager[ad.Index];
-      if (atx) {
-        atx->noDecals = (ad.allowDecals == 0);
-        atx->animNoDecals = (ad.allowDecals == 0);
-        atx->animated = true;
-        atx->TextureTranslation = ad.Index;
-      }
-
-      /*
-      if (!validAnimation) {
-        if (atx) atx->TextureTranslation = -1;
-      } else {
-        // fix all animated textures
-        for (int fn = 0; fn < ad.NumFrames; ++fn) {
-          atx = GTextureManager[FrameDefs[ad.StartFrameDef+fn].Index];
-          if (atx) {
-            atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
-            if (atx->TextureTranslation == -1) {
-              atx->TextureTranslation = ad.Index+fn;
-              if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
-              if (wantMissingAnimWarning) {
-                GCon->Logf(NAME_Warning, "(1) animated surface got invalid texture index");
-              }
-            }
-            atx->noDecals = (ad.allowDecals == 0);
-            atx->animNoDecals = (ad.allowDecals == 0);
-            atx->animated = true;
-          }
-        }
-      }
-      */
-
-      if (ad.Type == ANIM_Normal || !validAnimation) {
-        if (atx) {
-          atx->TextureTranslation = fd.Index;
-          if (atx->TextureTranslation == -1) {
-            //k8:dunno
-            atx->TextureTranslation = ad.Index;
-            if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
-            if (wantMissingAnimWarning) {
-              GCon->Logf(NAME_Warning, "(0:%d) animated surface got invalid texture index (texidx=%d; '%s'); valid=%d; animtype=%d; curfrm=%d; numfrm=%d", fd.Index, ad.Index, *GTextureManager[ad.Index]->Name, (int)validAnimation, (int)ad.Type, ad.CurrentFrame, ad.NumFrames);
-            }
-          }
-        }
-      } else {
-        for (int fn = 0; fn < ad.NumFrames; ++fn) {
-          atx = GTextureManager[ad.Index+fn];
-          if (atx) {
-            atx->TextureTranslation = ad.Index+(ad.CurrentFrame+fn)%ad.NumFrames;
-            if (atx->TextureTranslation == -1) {
-              atx->TextureTranslation = ad.Index+fn;
-              if (wantMissingAnimWarning < 0) wantMissingAnimWarning = (GArgs.CheckParm("-Wmissing-anim") ? 1 : 0);
-              if (wantMissingAnimWarning) {
-                GCon->Logf(NAME_Warning, "(1) animated surface got invalid texture index");
-              }
-            }
-            atx->noDecals = (ad.allowDecals == 0);
-            atx->animNoDecals = (ad.allowDecals == 0);
-            atx->animated = true;
-          }
-        }
-      }
-#endif
     }
   }
   unguard;
@@ -2366,7 +2206,6 @@ void R_InitTexture () {
   guard(R_InitTexture);
   GTextureManager.Init();
   InitFTAnims(); // init flat and texture animations
-  //GTextureManager.FinishedKnownTextures();
   unguard;
 }
 
