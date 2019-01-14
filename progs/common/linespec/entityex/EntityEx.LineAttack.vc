@@ -222,6 +222,13 @@ final void DebugCheckMidTex () {
     float top, bot;
     bool ok = P_GetMidTexturePosition(tr.line, tr.side, out top, out bot);
     print("DebugCheckMidTex(%B): hitpoint=%s; top=%s; bot=%s; flags=0x%08x", ok, tr.hit, top, bot, (tr.line ? tr.line->flags : 0));
+    if (tr.line) {
+      foreach (auto snum; 0..2) {
+        if (tr.line.sidenum[snum] < 0) continue;
+        side_t *sd = &XLevel.Sides[tr.line.sidenum[snum]];
+        print("side %s: toptex=%s; midtex=%s; bottex=%s", snum, GetTextureName(sd.TopTexture), GetTextureName(sd.MidTexture), GetTextureName(sd.BottomTexture));
+      }
+    }
 
     auto real_hit_point = tr.hit;
     auto hit_point = real_hit_point-(4.0*aimDir);
