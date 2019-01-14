@@ -1262,6 +1262,10 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
 
   EWadNamespace txns = (txtype == TEXTYPE_Flat ? WADNS_Flats : WADNS_Global);
   int pic1lmp = W_FindFirstLumpOccurence(nfirst, txns);
+  if (pic1lmp == -1 && txtype == TEXTYPE_Flat) {
+    pic1lmp = W_FindFirstLumpOccurence(nfirst, WADNS_NewTextures);
+    if (pic1lmp >= 0) txns = WADNS_NewTextures;
+  }
   int pic2lmp = W_FindFirstLumpOccurence(nlast, txns);
   if (pic1lmp == -1 && pic2lmp == -1) return; // invalid episode
 
@@ -1475,21 +1479,48 @@ void P_InitAnimated () {
 //
 //==========================================================================
 static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
+  if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; IsFlat=%d", txbase, offset, IsFlat);
   if (txbase <= 0) return -1; // oops
   if (offset < 0) return -1; // oops
   if (offset == 0) return txbase;
   int txtype = (IsFlat ? TEXTYPE_Flat : TEXTYPE_Wall);
   EWadNamespace txns = (IsFlat ? WADNS_Flats : WADNS_Global);
   VName txname = GTextureManager.GetTextureName(txbase);
-  if (txname == NAME_None) return -1; // oops
+  if (txname == NAME_None) {
+    if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: FOOO (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
+    return -1; // oops
+  }
   int lmp = W_FindFirstLumpOccurence(txname, txns);
-  if (lmp == -1) return -1; // oops
+  if (lmp == -1 && !IsFlat) {
+    lmp = W_FindFirstLumpOccurence(txname, WADNS_NewTextures);
+    if (lmp >= 0) txns = WADNS_NewTextures;
+  }
+  if (lmp == -1) {
+    if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: cannot find first lump (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
+    return -1; // oops
+  }
   // now scan loaded paks until we skip enough textures
   for (;;) {
     lmp = W_IterateNS(lmp, txns); // skip one lump
     if (lmp == -1) break; // oops
-    int txidx = GTextureManager.CheckNumForName(W_LumpName(lmp), txtype, true, false);
-    if (!txidx) continue; // not a texture
+    VName lmpName = W_LumpName(lmp);
+    if (lmpName == NAME_None) continue;
+    int txidx = GTextureManager.CheckNumForName(lmpName, txtype, true, false);
+    if (txidx == -1) {
+      if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: trying to force-load lump 0x%08x (%s)", lmp, *lmpName);
+      // not a texture, try to load one
+      VTexture *tx = VTexture::CreateTexture(txtype, lmp);
+      if (tx) {
+        tx->Name = lmpName;
+        GCon->Logf(NAME_Warning, "force-loaded animation texture '%s'", *tx->Name);
+        txidx = GTextureManager.AddTexture(tx);
+        check(txidx > 0);
+      } else {
+        // not a texture
+        continue;
+      }
+    }
+    if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; txidx=%d; txname=%s; lmpname=%s", txbase, offset, txidx, *GTextureManager.GetTextureName(txidx), *lmpName);
     if (--offset == 0) return txidx;
   }
   return -1; // not found
@@ -1589,6 +1620,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       }
     } else {
       if (sc->CheckNumber()) {
+        //if (developer) GCon->Logf(NAME_Dev, "%s: pic: num=%d", *sc->GetLoc().toStringNoCol(), sc->Number);
         if (!ignore) {
           if (!ad.range) {
             // simple pic
@@ -1620,6 +1652,7 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
         }
       } else {
         sc->ExpectName8Warn();
+        //if (developer) GCon->Logf(NAME_Dev, "%s: pic: name=%s", *sc->GetLoc().toStringNoCol(), *sc->Name8);
         if (!ignore) {
           if (!ad.range) {
             // simple pic
