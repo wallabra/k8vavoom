@@ -105,7 +105,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     vint16 PatchIdx = Streamer<vint16>(Strm);
     if (PatchIdx < 0 || PatchIdx >= patchlist.length()) {
       //Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
-      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index in texture \"%s\" (%d/%d)", *Name, i, PatchCount-1); }
+      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index (%d/%d) in texture \"%s\" (%d/%d)", PatchIdx, patchlist.length()-1, *Name, i, PatchCount-1); }
       patch->Tex = nullptr;
     } else {
       patch->Tex = patchlist[PatchIdx].tx;

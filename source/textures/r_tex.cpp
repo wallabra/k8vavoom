@@ -343,7 +343,9 @@ int VTextureManager::AddTexture (VTexture *Tex) {
       }
       if (repidx > 0) {
         check(repidx > 0 && repidx < FirstMapTextureIndex);
-        GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
+        static int warnReplace = -1;
+        if (warnReplace < 0) warnReplace = (GArgs.CheckParm("-Wduplicate-textures") ? 1 : 0);
+        if (warnReplace > 0) GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
         ReplaceTexture(repidx, Tex);
         return repidx;
       }
@@ -923,10 +925,13 @@ void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
 
   TArray<WallPatchInfo> patchtexlookup;
   // for each PNAMES lump load TEXTURE1 and TEXTURE2 from the same wad
+  int lastPNameFile = -1; // fuck you, slade!
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != NAME_pnames) continue;
-    LoadPNames(Lump, patchtexlookup, numberedNames);
     NamesFile = W_LumpFile(Lump);
+    if (lastPNameFile == NamesFile) continue;
+    lastPNameFile = NamesFile;
+    LoadPNames(Lump, patchtexlookup, numberedNames);
     LumpTex1 = W_CheckNumForNameInFile(NAME_texture1, NamesFile);
     LumpTex2 = W_CheckNumForNameInFile(NAME_texture2, NamesFile);
     FirstTex = Textures.length();
@@ -958,75 +963,92 @@ void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
 //==========================================================================
 void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames) {
   patchtexlookup.clear();
-  VStream *Strm = W_CreateLumpReaderNum(NamesLump);
-  vint32 nummappatches = Streamer<vint32>(*Strm);
-  if (nummappatches < 0 || nummappatches > 1024*1024) Sys_Error("%s: invalid number of patches in pnames", *W_FullLumpName(NamesLump));
-  //VTexture **patchtexlookup = new VTexture *[nummappatches];
-  for (int i = 0; i < nummappatches; ++i) {
-    // read patch name
-    char TmpName[12];
-    Strm->Serialise(TmpName, 8);
-    TmpName[8] = 0;
-
-    if ((vuint8)TmpName[0] < 32 || (vuint8)TmpName[0] >= 127) {
-      Sys_Error("%s: record #%d, name is <%s>", *W_FullLumpName(NamesLump), i, TmpName);
+  if (NamesLump < 0) return;
+  int pncount = 0;
+  int NamesFile = W_LumpFile(NamesLump);
+  while (NamesLump >= 0 && W_LumpFile(NamesLump) == NamesFile) {
+    if (W_LumpName(NamesLump) != NAME_pnames) {
+      // next one
+      NamesLump = W_IterateNS(NamesLump, WADNS_Global);
+      continue;
     }
+    if (pncount++ == 1) {
+      GCon->Logf(NAME_Warning, "duplicate file \"PNAMES\" in archive \"%s\".", *W_FullPakNameForLump(NamesLump));
+      GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
+    }
+    VStream *Strm = W_CreateLumpReaderNum(NamesLump);
+    if (developer) GCon->Logf("READING '%s' 0x%08x (%d)", *W_FullLumpName(NamesLump), NamesLump, Strm->TotalSize());
+    vint32 nummappatches = Streamer<vint32>(*Strm);
+    if (nummappatches < 0 || nummappatches > 1024*1024) Sys_Error("%s: invalid number of patches in pnames (%d)", *W_FullLumpName(NamesLump), nummappatches);
+    //VTexture **patchtexlookup = new VTexture *[nummappatches];
+    for (int i = 0; i < nummappatches; ++i) {
+      // read patch name
+      char TmpName[12];
+      Strm->Serialise(TmpName, 8);
+      if (Strm->IsError()) Sys_Error("%s: error reading PNAMES", *W_FullLumpName(NamesLump));
+      TmpName[8] = 0;
 
-    //if (developer) GCon->Logf("PNAMES entry #%d is '%s'", i, TmpName);
-    if (!TmpName[0]) {
-      GCon->Logf(NAME_Warning, "PNAMES entry #%d is empty!", i);
+      if ((vuint8)TmpName[0] < 32 || (vuint8)TmpName[0] >= 127) {
+        Sys_Error("%s: record #%d, name is <%s>", *W_FullLumpName(NamesLump), i, TmpName);
+      }
+
+      //if (developer) GCon->Logf("PNAMES entry #%d is '%s'", i, TmpName);
+      if (!TmpName[0]) {
+        GCon->Logf(NAME_Warning, "PNAMES entry #%d is empty!", i);
+        WallPatchInfo &wpi = patchtexlookup.alloc();
+        wpi.index = i;
+        wpi.name = NAME_None;
+        wpi.tx = nullptr;
+        continue;
+      }
+
+      VName PatchName(TmpName, VName::AddLower8);
+
+      {
+        const char *txname = *PatchName;
+        int namelen = VStr::length(txname);
+        if (namelen && VStr::digitInBase(txname[namelen-1], 10) >= 0) numberedNames.append(PatchName);
+      }
+
       WallPatchInfo &wpi = patchtexlookup.alloc();
       wpi.index = i;
-      wpi.name = NAME_None;
-      wpi.tx = nullptr;
-      continue;
+      wpi.name = PatchName;
+
+      // check if it's already has been added
+      int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
+      if (PIdx >= 0) {
+        //patchtexlookup[i] = Textures[PIdx];
+        wpi.tx = Textures[PIdx];
+        check(wpi.tx);
+        continue;
+      }
+
+      bool isFlat = false;
+      // get wad lump number
+      int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
+      // sprites, flats, etc. also can be used as patches
+      if (LNum < 0) { LNum = W_CheckNumForName(PatchName, WADNS_Flats); if (LNum >= 0) isFlat = true; } // eh, why not?
+      if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_NewTextures);
+      if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+      if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
+
+      // add it to textures
+      if (LNum < 0) {
+        wpi.tx = nullptr;
+        //patchtexlookup[i] = nullptr;
+        GCon->Logf(NAME_Warning, "PNAMES(%s): cannot find texture patch '%s' (%d/%d)", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
+      } else {
+        //patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
+        //if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
+        wpi.tx = VTexture::CreateTexture((isFlat ? TEXTYPE_Flat : TEXTYPE_WallPatch), LNum);
+        if (!wpi.tx) GCon->Logf(NAME_Warning, "%s: loading patch '%s' (%d/%d) failed", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
+        if (wpi.tx) AddTexture(wpi.tx);
+      }
     }
-
-    VName PatchName(TmpName, VName::AddLower8);
-
-    {
-      const char *txname = *PatchName;
-      int namelen = VStr::length(txname);
-      if (namelen && VStr::digitInBase(txname[namelen-1], 10) >= 0) numberedNames.append(PatchName);
-    }
-
-    WallPatchInfo &wpi = patchtexlookup.alloc();
-    wpi.index = i;
-    wpi.name = PatchName;
-
-    // check if it's already has been added
-    int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
-    if (PIdx >= 0) {
-      //patchtexlookup[i] = Textures[PIdx];
-      wpi.tx = Textures[PIdx];
-      check(wpi.tx);
-      continue;
-    }
-
-    // get wad lump number
-    int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
-    // sprites, flats, etc. also can be used as patches
-    if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Flats); // eh, why not?
-    if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_NewTextures);
-    if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
-    if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
-
-    // add it to textures
-    if (LNum < 0) {
-      wpi.tx = nullptr;
-      //patchtexlookup[i] = nullptr;
-      GCon->Logf(NAME_Warning, "PNAMES(%s): cannot find texture patch '%s' (%d/%d)", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
-    } else {
-      //patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
-      //if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
-      wpi.tx = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
-      GCon->Logf(NAME_Dev, "PNAMES(%s): loading '%s' (%d/%d); success=%d", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1, (wpi.tx ? 1 : 0));
-      if (wpi.tx) AddTexture(wpi.tx);
-    }
+    delete Strm;
+    // next one
+    NamesLump = W_IterateNS(NamesLump, WADNS_Global);
   }
-  delete Strm;
-
-  check(patchtexlookup.length() == nummappatches);
 
   if (developer) {
     for (int f = 0; f < patchtexlookup.length(); ++f) {
