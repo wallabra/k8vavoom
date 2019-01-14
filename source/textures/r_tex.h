@@ -31,13 +31,6 @@
 #include "render/r_shared.h"
 
 
-struct WallPatchInfo {
-  int index;
-  VName name;
-  VTexture *tx; // can be null
-};
-
-
 // dummy texture
 class VDummyTexture : public VTexture {
 public:
@@ -92,7 +85,7 @@ private:
   VTexPatch *Patches;
 
 public:
-  VMultiPatchTexture (VStream &, int, TArray<WallPatchInfo> &, int, bool);
+  VMultiPatchTexture (VStream &, int, TArray<VTextureManager::WallPatchInfo> &, int, bool);
   VMultiPatchTexture (VScriptParser *, int);
   virtual ~VMultiPatchTexture () override;
   virtual void SetFrontSkyLayer () override;

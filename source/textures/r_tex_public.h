@@ -284,6 +284,13 @@ protected:
 
 // ////////////////////////////////////////////////////////////////////////// //
 class VTextureManager {
+public:
+  struct WallPatchInfo {
+    int index;
+    VName name;
+    VTexture *tx; // can be null
+  };
+
 private:
   enum { HASH_SIZE = 4096 };
   enum { FirstMapTextureIndex = 1000000 };
@@ -414,10 +421,11 @@ public:
   inline int GetNumMapTextures () const { return MapTextures.length(); }
 
 private:
+  void LoadPNames (int Lump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames);
   void AddToHash (int Index);
   void AddTextures (TArray<VName> &numberedNames);
   void AddMissingNumberedTextures (TArray<VName> &numberedNames);
-  void AddTexturesLump (int, int, int, bool, TArray<VName> &numberedNames);
+  void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
   void AddGroup (int, EWadNamespace);
   void AddHiResTextures ();
 };

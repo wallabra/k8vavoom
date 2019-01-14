@@ -35,7 +35,7 @@
 //
 //==========================================================================
 VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
-    TArray<WallPatchInfo> &patchlist, int FirstTex, bool IsStrife)
+    TArray<VTextureManager::WallPatchInfo> &patchlist, int FirstTex, bool IsStrife)
   : VTexture()
 {
   Type = TEXTYPE_Wall;
@@ -105,12 +105,12 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
     vint16 PatchIdx = Streamer<vint16>(Strm);
     if (PatchIdx < 0 || PatchIdx >= patchlist.length()) {
       //Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
-      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index in texture \"%s\" (%d/%d)", *Name, PatchIdx, patchlist.length()-1); }
+      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index in texture \"%s\" (%d/%d)", *Name, i, PatchCount-1); }
       patch->Tex = nullptr;
     } else {
       patch->Tex = patchlist[PatchIdx].tx;
       if (!patch->Tex) {
-        if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Missing patch \"%s\" in texture \"%s\" (%d/%d)", *patchlist[PatchIdx].name, *Name, PatchIdx, patchlist.length()-1); }
+        if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Missing patch \"%s\" (%d) in texture \"%s\" (%d/%d)", *patchlist[PatchIdx].name, patchlist[PatchIdx].index, *Name, i, PatchCount-1); }
       }
     }
     if (!patch->Tex) {
@@ -193,6 +193,10 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
         sc->ExpectString();
         VName PatchName = VName(*sc->String.ToLower());
         int Tex = GTextureManager.CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
+        // try other texture types, why not?
+        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Flat, false, false);
+        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Wall, false, false);
+        if (Tex < 0) GTextureManager.CheckNumForName(PatchName, TEXTYPE_Sprite, false, false);
         if (Tex < 0) {
           int LumpNum = W_CheckNumForTextureFileName(sc->String);
           if (LumpNum >= 0) {
