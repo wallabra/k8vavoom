@@ -988,7 +988,8 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
   // load the patch names from pnames.lmp
   VStream *Strm = W_CreateLumpReaderNum(NamesLump);
   vint32 nummappatches = Streamer<vint32>(*Strm);
-  VTexture **patchtexlookup = new VTexture *[nummappatches];
+  //VTexture **patchtexlookup = new VTexture *[nummappatches];
+  TArray<WallPatchInfo> patchtexlookup;
   for (int i = 0; i < nummappatches; ++i) {
     // read patch name
     char TmpName[12];
@@ -1010,10 +1011,15 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
       if (namelen && VStr::digitInBase(txname[namelen-1], 10) >= 0) numberedNames.append(PatchName);
     }
 
+    WallPatchInfo &wpi = patchtexlookup.alloc();
+    wpi.index = i;
+    wpi.name = PatchName;
+
     // check if it's already has been added
     int PIdx = CheckNumForName(PatchName, TEXTYPE_WallPatch, false, false);
     if (PIdx >= 0) {
-      patchtexlookup[i] = Textures[PIdx];
+      //patchtexlookup[i] = Textures[PIdx];
+      wpi.tx = Textures[PIdx];
       continue;
     }
 
@@ -1021,19 +1027,24 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     int LNum = W_CheckNumForName(PatchName, WADNS_Patches);
     // sprites also can be used as patches
     if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Sprites);
+    if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_NewTextures);
     if (LNum < 0) LNum = W_CheckNumForName(PatchName, WADNS_Global); // just in case
 
     // add it to textures
     if (LNum < 0) {
-      patchtexlookup[i] = nullptr;
+      wpi.tx = nullptr;
+      //patchtexlookup[i] = nullptr;
+      //GCon->Logf(NAME_Warning, "PNAMES(%s): cannot find texture patch '%s'", *W_FullLumpName(NamesLump), *PatchName);
     } else {
-      patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
-      if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
+      //patchtexlookup[i] = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
+      //if (patchtexlookup[i]) AddTexture(patchtexlookup[i]);
+      wpi.tx = VTexture::CreateTexture(TEXTYPE_WallPatch, LNum);
+      if (wpi.tx) AddTexture(wpi.tx);
     }
-
   }
   delete Strm;
   Strm = nullptr;
+  check(patchtexlookup.length() == nummappatches);
 
   // load the map texture definitions from textures.lmp
   // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
@@ -1054,7 +1065,7 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
   }
 
   for (int i = 0; i < NumTex; ++i) {
-    VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i, patchtexlookup, nummappatches, FirstTex, IsStrife);
+    VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i, patchtexlookup, FirstTex, IsStrife);
     AddTexture(Tex);
     if (i == 0 && First) {
       // copy dimensions of the first texture to the dummy texture in case they are used
@@ -1064,7 +1075,7 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     }
   }
   delete Strm;
-  delete[] patchtexlookup;
+  //delete[] patchtexlookup;
   unguard;
 }
 

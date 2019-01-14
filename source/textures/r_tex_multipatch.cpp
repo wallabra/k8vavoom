@@ -35,7 +35,7 @@
 //
 //==========================================================================
 VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
-    VTexture **PatchLookup, int NumPatchLookup, int FirstTex, bool IsStrife)
+    TArray<WallPatchInfo> &patchlist, int FirstTex, bool IsStrife)
   : VTexture()
 {
   Type = TEXTYPE_Wall;
@@ -103,15 +103,17 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
 
     // read patch index and find patch texture
     vint16 PatchIdx = Streamer<vint16>(Strm);
-    if (PatchIdx < 0 || PatchIdx >= NumPatchLookup) {
+    if (PatchIdx < 0 || PatchIdx >= patchlist.length()) {
       //Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
-      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index in texture \"%s\" (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
+      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index in texture \"%s\" (%d/%d)", *Name, PatchIdx, patchlist.length()-1); }
       patch->Tex = nullptr;
     } else {
-      patch->Tex = PatchLookup[PatchIdx];
+      patch->Tex = patchlist[PatchIdx].tx;
+      if (!patch->Tex) {
+        if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Missing patch \"%s\" in texture \"%s\" (%d/%d)", *patchlist[PatchIdx].name, *Name, PatchIdx, patchlist.length()-1); }
+      }
     }
     if (!patch->Tex) {
-      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Missing patch in texture \"%s\" (%d/%d)", *Name, PatchIdx, NumPatchLookup-1); }
       --i;
       --PatchCount;
       --patch;
