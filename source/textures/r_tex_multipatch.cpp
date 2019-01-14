@@ -56,9 +56,12 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
   // in Doom, textures were searched from the beginning, so to avoid
   // problems, especially with animated textures, set name to a blank one
   // if this one is a duplicate
+  /*
   if (GTextureManager.CheckNumForName(Name, TEXTYPE_Wall, false, false) >= FirstTex) {
-    Name = NAME_None;
+    GCon->Logf(NAME_Warning, "duplicate multipatch texture '%s'", *Name);
+    //Name = NAME_None;
   }
+  */
 
   // skip unused value
   Streamer<vint16>(Strm); // masked, unused

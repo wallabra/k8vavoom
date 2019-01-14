@@ -338,6 +338,8 @@ public:
   void Init ();
   void Shutdown ();
 
+  void DumpHashStats (EName logName=NAME_Log);
+
   // unload all map-local textures
   void ResetMapTextures ();
 

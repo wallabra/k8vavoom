@@ -250,6 +250,25 @@ void VTextureManager::Shutdown () {
 
 //==========================================================================
 //
+//  VTextureManager::Shutdown
+//
+//==========================================================================
+void VTextureManager::DumpHashStats (EName logName) {
+  int maxBucketLen = 0;
+  int usedBuckets = 0;
+  for (int bidx = 0; bidx < HASH_SIZE; ++bidx) {
+    if (TextureHash[bidx] < 0) continue;
+    ++usedBuckets;
+    int blen = 0;
+    for (int i = TextureHash[bidx]; i >= 0; i = getTxByIndex(i)->HashNext) ++blen;
+    if (maxBucketLen < blen) maxBucketLen = blen;
+  }
+  GCon->Logf(logName, "TextureManager: maximum %d textures in bucket, used %d out of %d buckets", maxBucketLen, usedBuckets, HASH_SIZE-1);
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::rehashTextures
 //
 //==========================================================================
@@ -307,7 +326,28 @@ void VTextureManager::ResetMapTextures () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
+  // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
+    if (Tex->Name != NAME_None) {
+      int repidx = -1;
+      int HashIndex = GetTypeHash(Tex->Name)&(HASH_SIZE-1);
+      for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
+        if (i < 0 || i >= Textures.length()) continue;
+        VTexture *tx = getTxByIndex(i);
+        check(tx);
+        if (tx->Name != Tex->Name) continue;
+        if (tx->Type == TEXTYPE_WallPatch/*TEXTYPE_Null*/) break;
+        if (tx->Type != Tex->Type) continue;
+        repidx = i;
+        break;
+      }
+      if (repidx > 0) {
+        check(repidx > 0 && repidx < FirstMapTextureIndex);
+        GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
+        ReplaceTexture(repidx, Tex);
+        return repidx;
+      }
+    }
     Textures.Append(Tex);
     Tex->TextureTranslation = Textures.length()-1;
     AddToHash(Textures.length()-1);
@@ -389,7 +429,12 @@ int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload, bool
     }
     int HashIndex = GetTypeHash(currname)&(HASH_SIZE-1);
     for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
-      if (i < 0 || i >= Textures.length()) continue;
+      check(i >= 0);
+      if (i >= FirstMapTextureIndex) {
+        if (i-FirstMapTextureIndex >= MapTextures.length()) continue;
+      } else {
+        if (i >= Textures.length()) continue;
+      }
       if (getTxByIndex(i)->Name != currname) continue;
 
       if (Type == TEXTYPE_Any || getTxByIndex(i)->Type == Type ||
@@ -445,11 +490,11 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bChe
 //==========================================================================
 int VTextureManager::FindTextureByLumpNum (int LumpNum) {
   guard(VTextureManager::FindTextureByLumpNum);
-  for (int i = 0; i < Textures.length(); ++i) {
-    if (Textures[i]->SourceLump == LumpNum) return i;
-  }
   for (int i = 0; i < MapTextures.length(); ++i) {
     if (MapTextures[i]->SourceLump == LumpNum) return i+FirstMapTextureIndex;
+  }
+  for (int i = 0; i < Textures.length(); ++i) {
+    if (Textures[i]->SourceLump == LumpNum) return i;
   }
   return -1;
   unguard;
@@ -843,6 +888,15 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
       findAndLoadTexture(Name, Type, WADNS_Global))
   {
     tidx = CheckNumForName(Name, Type, bOverload, bCheckAny);
+    if (developer && tidx <= 0) {
+      GCon->Logf(NAME_Dev, "CheckNumForNameAndForce: OOPS for '%s'; type=%d; overload=%d; any=%d", *Name, Type, (int)bOverload, (int)bCheckAny);
+      int HashIndex = GetTypeHash(Name)&(HASH_SIZE-1);
+      for (int i = TextureHash[HashIndex]; i >= 0; i = getTxByIndex(i)->HashNext) {
+        VTexture *tx = getTxByIndex(i);
+        if (!tx) abort();
+        GCon->Logf(NAME_Dev, "  %d: name='%s'; type=%d", i, *tx->Name, tx->Type);
+      }
+    }
     check(tidx > 0);
     return tidx;
   }
@@ -944,6 +998,9 @@ void VTextureManager::AddTexturesLump (int NamesLump, int TexLump, int FirstTex,
     if ((vuint8)TmpName[0] < 32 || (vuint8)TmpName[0] >= 127) {
       Sys_Error("TEXTURES: record #%d, name is <%s>", i, TmpName);
     }
+
+    if (!TmpName[0]) GCon->Logf(NAME_Warning, "PNAMES entry #%d is empty!", i);
+    if (developer) GCon->Logf("PNAMES entry #%d is '%s'", i, TmpName);
 
     VName PatchName(TmpName, VName::AddLower8);
 
@@ -2206,6 +2263,7 @@ void R_InitTexture () {
   guard(R_InitTexture);
   GTextureManager.Init();
   InitFTAnims(); // init flat and texture animations
+  if (developer) GTextureManager.DumpHashStats(NAME_Dev);
   unguard;
 }
 
