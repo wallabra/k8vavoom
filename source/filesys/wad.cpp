@@ -369,6 +369,24 @@ int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 
 //==========================================================================
 //
+//  W_CheckFirstNumForNameInFile
+//
+//  Returns -1 if name not found.
+//
+//==========================================================================
+int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
+  guard(W_CheckNumForNameInFile);
+  if (File < 0 || File >= SearchPaths.length()) return -1;
+  int i = SearchPaths[File]->CheckNumForName(Name, NS, true);
+  if (i >= 0) return MAKE_HANDLE(File, i);
+  // not found
+  return -1;
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  W_CheckNumForFileName
 //
 //  Returns -1 if name not found.

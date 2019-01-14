@@ -203,14 +203,20 @@ void VWadFile::Close () {
 //  Returns -1 if name not found.
 //
 //==========================================================================
-int VWadFile::CheckNumForName (VName LumpName, EWadNamespace InNS) {
+int VWadFile::CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst) {
   guard(VWadFile::CheckNumForName);
   if (LumpName == NAME_None) return -1;
   // special ZIP-file namespaces in WAD file are in global namespace
   EWadNamespace NS = InNS;
   if (NS > WADNS_ZipSpecial) NS = WADNS_Global;
-  for (int i = NumLumps-1; i >= 0; --i) {
-    if (LumpInfo[i].Namespace == NS && VStr::ICmp(*LumpInfo[i].Name, *LumpName) == 0) return i;
+  if (wantFirst) {
+    for (int i = 0; i < NumLumps; ++i) {
+      if (LumpInfo[i].Namespace == NS && VStr::ICmp(*LumpInfo[i].Name, *LumpName) == 0) return i;
+    }
+  } else {
+    for (int i = NumLumps-1; i >= 0; --i) {
+      if (LumpInfo[i].Namespace == NS && VStr::ICmp(*LumpInfo[i].Name, *LumpName) == 0) return i;
+    }
   }
   // not found
   return -1;

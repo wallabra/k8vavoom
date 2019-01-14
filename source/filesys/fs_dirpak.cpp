@@ -295,14 +295,19 @@ void VDirPakFile::Close () {
 //  VDirPakFile::CheckNumForName
 //
 //==========================================================================
-int VDirPakFile::CheckNumForName (VName lname, EWadNamespace ns) {
+int VDirPakFile::CheckNumForName (VName lname, EWadNamespace ns, bool wantFirst) {
   if (lname == NAME_None) return -1;
   if (!VStr::isLowerCase(*lname)) lname = VName(*lname, VName::AddLower);
   auto fp = lumpmap.find(lname);
   if (!fp) return -1;
   int res = -1; // default: none
-  // find last one
-  for (int f = *fp; f >= 0; f = files[f].nextLump) if (files[f].ns == ns) res = f;
+  if (wantFirst) {
+    // find first one
+    for (int f = *fp; f >= 0; f = files[f].nextLump) if (files[f].ns == ns) { res = f; break; }
+  } else {
+    // find last one
+    for (int f = *fp; f >= 0; f = files[f].nextLump) if (files[f].ns == ns) res = f;
+  }
   return res;
 }
 

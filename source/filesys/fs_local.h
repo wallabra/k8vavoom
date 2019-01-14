@@ -56,7 +56,7 @@ public:
   virtual bool FileExists (const VStr &Name) = 0;
   virtual VStream *OpenFileRead (const VStr &Name) = 0;
   virtual void Close () = 0;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS) = 0;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) = 0;
   virtual int CheckNumForFileName (const VStr &Name) = 0;
   virtual void ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) = 0;
   virtual int LumpLength (int LumpNum) = 0;
@@ -90,7 +90,7 @@ public:
   virtual bool FileExists (const VStr&) override;
   virtual VStream *OpenFileRead (const VStr&) override;
   virtual void Close () override;
-  virtual int CheckNumForName (VName, EWadNamespace) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
   virtual int CheckNumForFileName (const VStr &) override;
   virtual void ReadFromLump (int, void*, int, int) override;
   virtual int LumpLength (int) override;
@@ -129,7 +129,7 @@ public:
   void Open (const VStr &FileName, bool FixVoices, VStream *InStream, const VStr &AGwaDir);
   void OpenSingleLump (const VStr &FileName);
   virtual void Close () override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace NS) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
   virtual int CheckNumForFileName (const VStr &) override;
   virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
   virtual int LumpLength (int) override;
@@ -172,7 +172,7 @@ public:
   virtual bool FileExists (const VStr &) override;
   virtual VStream *OpenFileRead (const VStr &)  override;
   virtual void Close () override;
-  virtual int CheckNumForName (VName, EWadNamespace) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
   virtual int CheckNumForFileName (const VStr &) override;
   virtual void ReadFromLump (int, void*, int, int) override;
   virtual int LumpLength (int) override;
@@ -223,7 +223,7 @@ public:
   virtual bool FileExists (const VStr &) override;
   virtual VStream *OpenFileRead (const VStr &)  override;
   virtual void Close () override;
-  virtual int CheckNumForName (VName, EWadNamespace) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
   virtual int CheckNumForFileName (const VStr &) override;
   virtual void ReadFromLump (int, void *, int, int) override;
   virtual int LumpLength (int) override;

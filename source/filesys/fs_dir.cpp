@@ -211,7 +211,7 @@ void VFilesDir::Close () {
 //  VFilesDir::CheckNumForName
 //
 //==========================================================================
-int VFilesDir::CheckNumForName (VName LumpName, EWadNamespace InNS) {
+int VFilesDir::CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst) {
   /*
   if (InNS >= WADNS_ZipSpecial) InNS = WADNS_Global;
   if (InNS != WADNS_Global) return -1;

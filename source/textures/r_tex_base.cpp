@@ -976,6 +976,25 @@ void VTexture::checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height) {
 
 //==========================================================================
 //
+//  VTexture::WriteToPNGFile
+//
+//  `dest` points at column, `x` is used only to build checker
+//
+//==========================================================================
+void VTexture::WriteToPNG (VStream *strm) {
+  if (!strm) return;
+  (void)GetPixels();
+  ConvertPixelsToRGBA();
+
+  if (!M_CreatePNG(strm, (const vuint8 *)GetPixels(), /*pal*/nullptr, SS_RGBA, Width, Height, Width*4, 1.0f)) {
+    GCon->Log(NAME_Error, "Error writing png");
+  }
+}
+
+
+
+//==========================================================================
+//
 //  VDummyTexture::VDummyTexture
 //
 //==========================================================================

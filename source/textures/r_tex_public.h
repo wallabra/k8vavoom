@@ -247,6 +247,10 @@ public:
 
   static VTexture *CreateTexture (int, int);
 
+  // WARNING! this converts texture to RGBA!
+  // DO NOT USE! DEBUG ONLY!
+  void WriteToPNG (VStream *strm);
+
   int GetWidth () const { return Width; }
   int GetHeight () const { return Height; }
 
@@ -428,6 +432,10 @@ private:
   void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
   void AddGroup (int, EWadNamespace);
   void AddHiResTextures ();
+
+  void WipeWallPatches ();
+
+  friend void R_InitTexture ();
 };
 
 

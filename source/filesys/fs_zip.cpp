@@ -619,14 +619,19 @@ void VZipFile::Close () {
 //  VZipFile::CheckNumForName
 //
 //==========================================================================
-int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS) {
+int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS, bool wantFirst) {
   if (LumpName == NAME_None) return -1;
   if (!VStr::isLowerCase(*LumpName)) LumpName = VName(*LumpName, VName::AddLower);
   auto fp = lumpmap.find(LumpName);
   if (!fp) return -1;
   int res = -1; // default: none
-  // find last one
-  for (int f = *fp; f >= 0; f = Files[f].nextLump) if (Files[f].LumpNamespace == NS) res = f;
+  if (wantFirst) {
+    // find first one
+    for (int f = *fp; f >= 0; f = Files[f].nextLump) if (Files[f].LumpNamespace == NS) { res = f; break; }
+  } else {
+    // find last one
+    for (int f = *fp; f >= 0; f = Files[f].nextLump) if (Files[f].LumpNamespace == NS) res = f;
+  }
   return res;
 }
 

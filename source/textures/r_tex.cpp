@@ -284,6 +284,29 @@ void VTextureManager::rehashTextures () {
 //  VTextureManager::ResetMapTextures
 //
 //==========================================================================
+void VTextureManager::WipeWallPatches () {
+  if (GArgs.CheckParm("-wipe-wall-patches")) {
+    int count = 0;
+    for (int f = 0; f < Textures.length(); ++f) {
+      VTexture *tx = Textures[f];
+      if (!tx || tx->Type != TEXTYPE_WallPatch || tx->Name != NAME_None) continue;
+      tx->Name = NAME_None;
+      tx->Type = TEXTYPE_Null;
+      ++count;
+    }
+    if (count) {
+      rehashTextures();
+      GCon->Logf("WipeWallPatches: %d textures wiped", count);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::ResetMapTextures
+//
+//==========================================================================
 void VTextureManager::ResetMapTextures () {
   if (MapTextures.length() == 0) {
 #ifdef CLIENT
@@ -326,6 +349,23 @@ void VTextureManager::ResetMapTextures () {
 int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
+
+  if (Tex->Name == "w108_4" || Tex->Name == "doortrak") {
+    VStream *strm = nullptr;
+    VStr basename = VStr(Tex->Name != NAME_None ? *Tex->Name : "_untitled");
+    for (int counter = 0; ; ++counter) {
+      VStr fname = VStr(counter ? va("_texdump/%s_%04d.png", *basename, counter) : va("_texdump/%s.png", *basename));
+      if (!Sys_FileExists(fname)) {
+        strm = FL_OpenFileWrite(fname, true); // as full name
+        break;
+      }
+    }
+    if (strm) {
+      Tex->WriteToPNG(strm);
+      delete strm;
+    }
+  }
+
   // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
     if (Tex->Name != NAME_None) {
@@ -932,8 +972,8 @@ void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
     if (lastPNameFile == NamesFile) continue;
     lastPNameFile = NamesFile;
     LoadPNames(Lump, patchtexlookup, numberedNames);
-    LumpTex1 = W_CheckNumForNameInFile(NAME_texture1, NamesFile);
-    LumpTex2 = W_CheckNumForNameInFile(NAME_texture2, NamesFile);
+    LumpTex1 = W_CheckFirstNumForNameInFile(NAME_texture1, NamesFile);
+    LumpTex2 = W_CheckFirstNumForNameInFile(NAME_texture2, NamesFile);
     FirstTex = Textures.length();
     AddTexturesLump(patchtexlookup, LumpTex1, FirstTex, true);
     AddTexturesLump(patchtexlookup, LumpTex2, FirstTex, false);
@@ -1100,36 +1140,54 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
   if (TexLump < 0) return;
 
   check(inMapTextures == 0);
+  VName tlname = W_LumpName(TexLump);
 
-  // load the map texture definitions from textures.lmp
-  // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
-  VStream *Strm = W_CreateLumpReaderNum(TexLump);
-  vint32 NumTex = Streamer<vint32>(*Strm);
-
-  // check the texture file format
-  bool IsStrife = false;
-  vint32 PrevOffset = Streamer<vint32>(*Strm);
-  for (int i = 0; i < NumTex-1; ++i) {
-    vint32 Offset = Streamer<vint32>(*Strm);
-    if (Offset-PrevOffset == 24) {
-      IsStrife = true;
-      GCon->Logf(NAME_Init, "Strife textures detected in lump '%s'", *W_FullLumpName(TexLump));
+  int pncount = 0;
+  int TexFile = W_LumpFile(TexLump);
+  while (TexLump >= 0 && W_LumpFile(TexLump) == TexFile) {
+    if (W_LumpName(TexLump) != tlname) {
+      // next one
+      TexLump = W_IterateNS(TexLump, WADNS_Global);
+      continue;
+    }
+    if (pncount++ == 1) {
+      GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *tlname, *W_FullPakNameForLump(TexLump));
+      GCon->Log(NAME_Warning, "THIS IS *ABSOLUTELY* FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
       break;
     }
-    PrevOffset = Offset;
-  }
 
-  for (int i = 0; i < NumTex; ++i) {
-    VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i, patchtexlookup, FirstTex, IsStrife);
-    AddTexture(Tex);
-    if (i == 0 && First) {
-      // copy dimensions of the first texture to the dummy texture in case they are used
-      Textures[0]->Width = Tex->Width;
-      Textures[0]->Height = Tex->Height;
-      Tex->Type = TEXTYPE_Null;
+    // load the map texture definitions from textures.lmp
+    // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
+    VStream *Strm = W_CreateLumpReaderNum(TexLump);
+    vint32 NumTex = Streamer<vint32>(*Strm);
+
+    // check the texture file format
+    bool IsStrife = false;
+    vint32 PrevOffset = Streamer<vint32>(*Strm);
+    for (int i = 0; i < NumTex-1; ++i) {
+      vint32 Offset = Streamer<vint32>(*Strm);
+      if (Offset-PrevOffset == 24) {
+        IsStrife = true;
+        GCon->Logf(NAME_Init, "Strife textures detected in lump '%s'", *W_FullLumpName(TexLump));
+        break;
+      }
+      PrevOffset = Offset;
     }
+
+    for (int i = 0; i < NumTex; ++i) {
+      VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i, patchtexlookup, FirstTex, IsStrife);
+      AddTexture(Tex);
+      if (i == 0 && First) {
+        // copy dimensions of the first texture to the dummy texture in case they are used
+        Textures[0]->Width = Tex->Width;
+        Textures[0]->Height = Tex->Height;
+        Tex->Type = TEXTYPE_Null;
+      }
+    }
+    delete Strm;
+    // next one
+    TexLump = W_IterateNS(TexLump, WADNS_Global);
   }
-  delete Strm;
   unguard;
 }
 
@@ -2365,6 +2423,7 @@ void R_InitTexture () {
   guard(R_InitTexture);
   GTextureManager.Init();
   InitFTAnims(); // init flat and texture animations
+  GTextureManager.WipeWallPatches();
   if (developer) GTextureManager.DumpHashStats(NAME_Dev);
   unguard;
 }
