@@ -714,16 +714,20 @@ bool VScriptParser::CheckNumber () {
 //  VScriptParser::ExpectNumber
 //
 //==========================================================================
-void VScriptParser::ExpectNumber (bool allowFloat) {
+void VScriptParser::ExpectNumber (bool allowFloat, bool truncFloat) {
   guard(VScriptParser::ExpectNumber);
   if (GetString() && String.length() > 0) {
     char *stopper;
     Number = strtol(*String, &stopper, 0);
     if (*stopper != 0) {
       if (allowFloat && *stopper == '.') {
-        if (stopper[1] >= '5') ++Number;
-        if (Number == 0) Number = 1; // just in case
-        Message(va("Bad numeric constant \"%s\" (integer expected; rounded to %d).", *String, (int)Number));
+        if (truncFloat) {
+          Message(va("Bad numeric constant \"%s\" (integer expected; truncated to %d).", *String, (int)Number));
+        } else {
+          if (stopper[1] >= '5') ++Number;
+          if (Number == 0) Number = 1; // just in case
+          Message(va("Bad numeric constant \"%s\" (integer expected; rounded to %d).", *String, (int)Number));
+        }
         //fprintf(stderr, "%d\n", (int)Number);
         //Error(va("Bad numeric constant \"%s\".", *String));
       } else {

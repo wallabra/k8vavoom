@@ -1746,6 +1746,10 @@ static void ParseFTAnim (VScriptParser *sc, int IsFlat) {
       fd.BaseTime = sc->Number;
       sc->ExpectNumber(true);
       fd.RandomRange = sc->Number-(int)fd.BaseTime+1;
+      if (fd.RandomRange < 0) {
+        sc->Message("ignored invalid random range");
+        fd.RandomRange = 0;
+      }
     } else {
       if (!vanilla) sc->Error(va("bad command (%s)", *sc->String));
     }
