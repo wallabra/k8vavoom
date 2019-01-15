@@ -808,10 +808,10 @@ final bool A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
 
 //==========================================================================
 //
-//  A_k8JumpIfOnFloorCeiling
+//  A_k8JumpIfOnFloorSky
 //
 //==========================================================================
-final bool A_k8JumpIfOnFloorCeiling (state label, optional int aptr) {
+final bool A_k8JumpIfOnFloorSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
@@ -829,10 +829,10 @@ final bool A_k8JumpIfOnFloorCeiling (state label, optional int aptr) {
 
 //==========================================================================
 //
-//  A_k8JumpIfFloorCeiling
+//  A_k8JumpIfFloorSky
 //
 //==========================================================================
-final bool A_k8JumpIfFloorCeiling (state label, optional int aptr) {
+final bool A_k8JumpIfFloorSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
@@ -849,10 +849,10 @@ final bool A_k8JumpIfFloorCeiling (state label, optional int aptr) {
 
 //==========================================================================
 //
-//  A_k8JumpIfSkyCeiling
+//  A_k8JumpIfCeilingSky
 //
 //==========================================================================
-final bool A_k8JumpIfSkyCeiling (state label, optional int aptr) {
+final bool A_k8JumpIfCeilingSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;

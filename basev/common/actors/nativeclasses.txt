@@ -83,9 +83,9 @@ class Actor extends Thinker
   action native A_k8JumpIfLiquidFloor (state label, optional int aptr);
   action native A_k8JumpIfOnLiquidFloor (state label, optional int aptr);
 
-  action native A_k8JumpIfOnFloorCeiling (state label, optional int aptr);
-  action native A_k8JumpIfFloorCeiling (state label, optional int aptr);
-  action native A_k8JumpIfSkyCeiling (state label, optional int aptr);
+  action native A_k8JumpIfOnFloorSky (state label, optional int aptr);
+  action native A_k8JumpIfFloorSky (state label, optional int aptr);
+  action native A_k8JumpIfCeilingSky (state label, optional int aptr);
 
   action native A_RearrangePointers (pointer target, pointer master, pointer tracer, int flags);
 
