@@ -436,12 +436,14 @@ private:
   void WipeWallPatches ();
 
   friend void R_InitTexture ();
+  friend void R_DumpTextures ();
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // r_tex
 void R_InitTexture ();
+void R_DumpTextures ();
 void R_ShutdownTexture ();
 VAnimDoorDef *R_FindAnimDoor (vint32);
 void R_AnimateSurfaces ();
