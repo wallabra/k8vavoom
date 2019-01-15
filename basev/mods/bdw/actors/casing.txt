@@ -79,7 +79,7 @@ Actor BDW_EmptyClip : BDW_CasingBase {
       TNT1 A 0
       ECLI ABCDEFGHABCDEFGHABCDEFGHABCDEFGHABCDEFGH 4
         {
-          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+          if (!A_k8JumpIfOnFloorSky("Disappear")) {
             A_k8JumpIfOnLiquidFloor("Death");
           }
         }
@@ -95,7 +95,7 @@ Actor BDW_EmptyClip : BDW_CasingBase {
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0
         {
-          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+          if (!A_k8JumpIfOnFloorSky("Disappear")) {
             A_k8JumpIfOnLiquidFloor("Stopping");
           }
         }
@@ -162,7 +162,7 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
       CAS3 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3
         {
           A_JumpIf(waterlevel > 1, "Splash");
-          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+          if (!A_k8JumpIfOnFloorSky("Disappear")) {
             A_k8JumpIfOnLiquidFloor("Death");
           }
         }
@@ -183,7 +183,7 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0
         {
-          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+          if (!A_k8JumpIfOnFloorSky("Disappear")) {
             A_k8JumpIfOnLiquidFloor("Stopping");
           }
         }
@@ -300,7 +300,7 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
     Spawn:
       CAS2 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3
         {
-          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+          if (!A_k8JumpIfOnFloorSky("Disappear")) {
             A_k8JumpIfOnLiquidFloor("Death");
           }
         }
@@ -320,7 +320,7 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0
         {
-          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+          if (!A_k8JumpIfOnFloorSky("Disappear")) {
             A_k8JumpIfOnLiquidFloor("Stopping");
           }
         }
