@@ -28,6 +28,8 @@
 #include "textures/r_tex.h"
 #include "ui.h"
 
+#define VAVOOM_NAME_FONT_TEXTURES
+
 
 struct VColTranslationDef {
   rgba_t From;
@@ -1244,6 +1246,10 @@ VSingleTextureFont::VSingleTextureFont (VName AName, int TexNum) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#ifdef VAVOOM_NAME_FONT_TEXTURES
+static int vfontcharTxCount = 0;
+#endif
+
 
 //==========================================================================
 //
@@ -1256,7 +1262,11 @@ VFontChar::VFontChar (VTexture *ATex, rgba_t *APalette)
 {
   Type = TEXTYPE_FontChar;
   mFormat = TEXFMT_8Pal;
+#ifdef VAVOOM_NAME_FONT_TEXTURES
+  Name = VName(va("\x7f_fontchar_%d ", vfontcharTxCount++));
+#else
   Name = NAME_None;
+#endif
   Width = BaseTex->GetWidth();
   Height = BaseTex->GetHeight();
   SOffset = BaseTex->SOffset;
@@ -1345,7 +1355,11 @@ VFontChar2::VFontChar2 (int ALumpNum, int AFilePos, int CharW, int CharH, rgba_t
 {
   Type = TEXTYPE_FontChar;
   mFormat = TEXFMT_8Pal;
+#ifdef VAVOOM_NAME_FONT_TEXTURES
+  Name = VName(va("\x7f_fontchar2_%d ", vfontcharTxCount++));
+#else
   Name = NAME_None;
+#endif
   Width = CharW;
   Height = CharH;
 }
