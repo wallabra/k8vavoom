@@ -35,7 +35,7 @@ public:
   // initialise empty writing stream
   VMemoryStream ();
   // initialise reading streams
-  VMemoryStream (const void *, int);
+  VMemoryStream (const void *, int, bool takeOwnership=false);
   VMemoryStream (const TArray<vuint8> &);
   VMemoryStream (VStream *strm); // from current position to stream end
 

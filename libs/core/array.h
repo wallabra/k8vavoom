@@ -94,6 +94,28 @@ public:
   inline T *ptr () { return ArrData; }
   inline const T *ptr () const { return ArrData; }
 
+  inline void SetPointerData (void *adata, int datalen) {
+    check(datalen >= 0);
+    if (datalen == 0) {
+      if (ArrData && adata) {
+        Flatten();
+        check((uintptr_t)adata < (uintptr_t)ArrData || (uintptr_t)adata >= (uintptr_t)(ArrData+ArrSize));
+      }
+      clear();
+      if (adata) Z_Free(adata);
+    } else {
+      check(adata);
+      check(datalen%(int)sizeof(T) == 0);
+      if (ArrData) {
+        Flatten();
+        check((uintptr_t)adata < (uintptr_t)ArrData || (uintptr_t)adata >= (uintptr_t)(ArrData+ArrSize));
+        clear();
+      }
+      ArrData = (T *)adata;
+      ArrNum = ArrSize = datalen/(int)sizeof(T);
+    }
+  }
+
   // this changes only capacity, length will not be increased (but can be decreased)
   void Resize (int NewSize) {
     check(NewSize >= 0);

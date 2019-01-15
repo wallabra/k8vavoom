@@ -42,11 +42,16 @@ VMemoryStream::VMemoryStream () : Pos(0) {
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-VMemoryStream::VMemoryStream (const void *InData, int InLen) : Pos(0) {
+VMemoryStream::VMemoryStream (const void *InData, int InLen, bool takeOwnership) : Pos(0) {
   if (InLen < 0) InLen = 0;
   bLoading = true;
-  Array.SetNum(InLen);
-  if (InLen) memcpy(Array.Ptr(), InData, InLen);
+  if (!takeOwnership) {
+    Array.SetNum(InLen);
+    if (InLen) memcpy(Array.Ptr(), InData, InLen);
+  } else {
+    Array.SetPointerData((void *)InData, InLen);
+    check(Array.length() == InLen);
+  }
 }
 
 
