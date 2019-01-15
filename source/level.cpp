@@ -1420,10 +1420,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
   for (seg_t *seg = li->firstseg; seg; seg = seg->lsnext) {
     // don't spawn decals at sliding linedefs
     //if (seg->linedef) fprintf(stderr, "ldef(%p): special=%d\n", seg->linedef, seg->linedef->special);
-    if (seg->linedef && (seg->linedef->flags&ML_NODECAL) != 0)
-    {
-      continue;
-    }
+    if (seg->linedef && (seg->linedef->flags&ML_NODECAL) != 0) continue;
 
     if (/*seg->linedef == li &&*/ seg->frontsector == sec) {
       if (segd0 >= seg->offset+seg->length || segd1 < seg->offset) {
@@ -1439,12 +1436,14 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
            if (tinf.width >= 128 || tinf.height >= 128) dcmaxcount = 8;
       else if (tinf.width >= 64 || tinf.height >= 64) dcmaxcount = 16;
       else if (tinf.width >= 32 || tinf.height >= 32) dcmaxcount = 32;
-      // remove old same-typed decals, if necessary
-      if (dcmaxcount > 0 && dcmaxcount < 10000) {
+
+      {
         float hiz = orgz+tinf.yoffset*dec->scaleY;
         float loz = hiz-tinf.height*dec->scaleY;
         {
           side_t *sb = &Sides[li->sidenum[sidenum]];
+          if (sb->MidTexture == skyflatnum) continue; // never on the sky
+          if (sb->MidTexture == skyflatnum) continue; // never on the sky
           if (sb->TopTexture <= 0 && sb->BottomTexture <= 0 && sb->MidTexture <= 0) { /*!GCon->Logf("  *** no textures at all (sidenum=%d)", sidenum);*/ continue; }
           if (sb->MidTexture <= 0) {
             if ((li->flags&ML_TWOSIDED) != 0 && li->sidenum[1-sidenum] >= 0) {
@@ -1480,6 +1479,10 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
             else if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
           }
         }
+      }
+
+      // remove old same-typed decals, if necessary
+      if (dcmaxcount > 0 && dcmaxcount < 10000) {
         int count = 0;
         decal_t *prev = nullptr;
         decal_t *first = nullptr;
