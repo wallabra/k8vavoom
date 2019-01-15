@@ -441,17 +441,17 @@ void VLevel::Serialise (VStream &Strm) {
     for (int j = 0; j < 2; ++j) {
       if (li->sidenum[j] == -1) continue;
       si = &Sides[li->sidenum[j]];
-      Strm << si->TopTextureOffset
-        << si->BotTextureOffset
-        << si->MidTextureOffset
-        << si->TopRowOffset
-        << si->BotRowOffset
-        << si->MidRowOffset
-        << si->TopTexture
-        << si->BottomTexture
-        << si->MidTexture
-        << si->Flags
-        << si->Light;
+      Strm << si->TopTextureOffset;
+      Strm << si->BotTextureOffset;
+      Strm << si->MidTextureOffset;
+      Strm << si->TopRowOffset;
+      Strm << si->BotRowOffset;
+      Strm << si->MidRowOffset;
+      Strm << si->TopTexture;
+      Strm << si->BottomTexture;
+      Strm << si->MidTexture;
+      Strm << si->Flags;
+      Strm << si->Light;
     }
   }
   if (Strm.IsLoading()) HashLines();
