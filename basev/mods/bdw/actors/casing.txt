@@ -77,14 +77,28 @@ Actor BDW_EmptyClip : BDW_CasingBase {
   States {
     Spawn:
       TNT1 A 0
-      ECLI ABCDEFGHABCDEFGHABCDEFGHABCDEFGHABCDEFGH 4 A_k8JumpIfOnLiquidFloor("Death")
+      ECLI ABCDEFGHABCDEFGHABCDEFGHABCDEFGHABCDEFGH 4
+        {
+          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+            A_k8JumpIfOnLiquidFloor("Death");
+          }
+        }
+      Stop
+
+    Disappear:
+      TNT1 A 0
       Stop
 
     Death:
       TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
       ECLI G 180
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
-      "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
+      "####" "#" 0
+        {
+          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+            A_k8JumpIfOnLiquidFloor("Stopping");
+          }
+        }
       //"####" "#" random(800, 1200)
       "####" "#" 0 A_SetTics(GetCVar("K8BDWOpt_EmptyClipTime")*35*60+10)
       //"####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
@@ -148,8 +162,14 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
       CAS3 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3
         {
           A_JumpIf(waterlevel > 1, "Splash");
-          A_k8JumpIfOnLiquidFloor("Death");
+          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+            A_k8JumpIfOnLiquidFloor("Death");
+          }
         }
+      Stop
+
+    Disappear:
+      TNT1 A 0
       Stop
 
     Death:
@@ -161,7 +181,12 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
     RestMain:
       "####" "#" 60
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
-      "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
+      "####" "#" 0
+        {
+          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+            A_k8JumpIfOnLiquidFloor("Stopping");
+          }
+        }
       //"####" "#" random(600, 800)
       "####" "#" 0 A_SetTics(GetCVar("K8BDWOpt_EmptyCasingTime")*35*60+10)
       //"####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
@@ -273,7 +298,16 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
   SeeSound "weapons/shell"
   States {
     Spawn:
-      CAS2 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3 A_k8JumpIfOnLiquidFloor("Death")
+      CAS2 ABCDEFGHABCDEFGHABCDEFGHABCDEFGH 3
+        {
+          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+            A_k8JumpIfOnLiquidFloor("Death");
+          }
+        }
+      Stop
+
+    Disappear:
+      TNT1 A 0
       Stop
 
     Death:
@@ -284,7 +318,12 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
     RestMain:
       "####" "#" 60
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
-      "####" "#" 0 A_k8JumpIfOnLiquidFloor("Stopping")
+      "####" "#" 0
+        {
+          if (!A_k8JumpIfOnFloorCeiling("Disappear")) {
+            A_k8JumpIfOnLiquidFloor("Stopping");
+          }
+        }
       //"####" "#" random(600, 800)
       "####" "#" 0 A_SetTics(GetCVar("K8BDWOpt_EmptyShellTime")*35*60+10)
       //"####" "#" 0 //A_JumpIfInventory("LowGraphicsMode", 1, "Stopping")
