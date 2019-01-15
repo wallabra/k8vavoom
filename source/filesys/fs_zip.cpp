@@ -149,7 +149,7 @@ public:
 //
 //==========================================================================
 VZipFile::VZipFile (VStream *fstream)
-  : VPakFileBase("<memory>")
+  : VPakFileBase("<memory>", true)
 {
   mythread_mutex_init(&rdlock);
   if (fstream->GetName().length()) PakFileName = fstream->GetName();
@@ -165,7 +165,7 @@ VZipFile::VZipFile (VStream *fstream)
 //
 //==========================================================================
 VZipFile::VZipFile (VStream *fstream, const VStr &name)
-  : VPakFileBase(name)
+  : VPakFileBase(name, true)
 {
   mythread_mutex_init(&rdlock);
   OpenArchive(fstream);
@@ -178,7 +178,7 @@ VZipFile::VZipFile (VStream *fstream, const VStr &name)
 //
 //==========================================================================
 VZipFile::VZipFile (const VStr &zipfile)
-  : VPakFileBase(zipfile)
+  : VPakFileBase(zipfile, true)
 {
   mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);

@@ -2076,15 +2076,16 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   }
 
   // create reader stream for the zipped data
-  vuint8 *TmpData = new vuint8[BaseStrm->TotalSize()-4];
+  //vuint8 *TmpData = new vuint8[BaseStrm->TotalSize()-4];
+  vuint8 *TmpData = (vuint8 *)Z_Calloc(BaseStrm->TotalSize()-4);
   BaseStrm->Serialise(TmpData, BaseStrm->TotalSize()-4);
   if (BaseStrm->IsError()) {
     delete BaseStrm;
     GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
-  VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize()-4);
-  delete[] TmpData;
+  VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize()-4, true);
+  //delete[] TmpData;
   TmpData = nullptr;
   delete BaseStrm;
   BaseStrm = nullptr;

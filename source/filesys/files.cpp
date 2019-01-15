@@ -320,12 +320,13 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
 #ifdef VAVOOM_USE_GWA
     if (GwaStrm) {
       Len = GwaStrm->TotalSize();
-      Buf = new vuint8[Len];
+      //Buf = new vuint8[Len];
+      Buf = (vuint8 *)Z_Calloc(Len);
       GwaStrm->Serialise(Buf, Len);
       delete GwaStrm;
       GwaStrm = nullptr;
-      GwaStrm = new VMemoryStream(Buf, Len);
-      delete[] Buf;
+      GwaStrm = new VMemoryStream(Buf, Len, true);
+      //delete[] Buf;
       Buf = nullptr;
     }
 

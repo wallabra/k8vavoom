@@ -56,7 +56,7 @@ public:
   virtual bool FileExists (const VStr &Name) = 0;
   virtual VStream *OpenFileRead (const VStr &Name) = 0;
   virtual void Close () = 0;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) = 0;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) = 0;
   virtual int CheckNumForFileName (const VStr &Name) = 0;
   virtual void ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) = 0;
   virtual int LumpLength (int LumpNum) = 0;
@@ -91,7 +91,7 @@ public:
   virtual VStream *OpenFileRead (const VStr&) override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual void Close () override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int CheckNumForFileName (const VStr &) override;
   virtual void ReadFromLump (int, void*, int, int) override;
   virtual int LumpLength (int) override;
@@ -104,48 +104,7 @@ public:
 
 
 //==========================================================================
-//  VWadFile
-//==========================================================================
-struct lumpinfo_t;
-
-class VWadFile : public VSearchPath {
-private:
-  VStr Name;
-  VStream *Stream;
-  int NumLumps;
-  lumpinfo_t *LumpInfo; // location of each lump on disk
-#ifdef VAVOOM_USE_GWA
-  VStr GwaDir;
-#endif
-
-private:
-  void InitNamespaces ();
-  void FixVoiceNamespaces ();
-  void InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart=NAME_None, VName AltEnd=NAME_None);
-
-public:
-  VWadFile ();
-  virtual ~VWadFile () override;
-  void Open (const VStr &FileName, bool FixVoices, VStream *InStream, const VStr &AGwaDir);
-  void OpenSingleLump (const VStr &FileName);
-  virtual void Close () override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
-  virtual int CheckNumForFileName (const VStr &) override;
-  virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
-  virtual int LumpLength (int) override;
-  virtual VName LumpName (int) override;
-  virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace) override;
-  virtual bool FileExists (const VStr &) override;
-  virtual VStream *OpenFileRead (const VStr &) override;
-  virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
-  virtual VStr GetPrefix () override { return Name; }
-};
-
-
-//==========================================================================
-//  VZipFileInfo
+//  VPakFileInfo
 //==========================================================================
 // information about a file in the zipfile
 // also used for "pakdir", and "wad"
@@ -184,6 +143,7 @@ struct VPakFileInfo {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 class VPakFileBase;
 
 struct VFileDirectory {
@@ -192,21 +152,23 @@ public:
   TArray<VPakFileInfo> files;
   TMap<VName, int> lumpmap; // maps lump names to file entries; names are lowercased
   TMap<VStr, int> filemap; // maps names (with pathes) to file entries; names are lowercased
-
-private:
-  void normalizeFileName (VStr &fname);
-  VName normalizeLumpName (VName lname);
+  bool aszip;
 
 public:
   VFileDirectory ();
-  VFileDirectory (VPakFileBase *aowner);
+  VFileDirectory (VPakFileBase *aowner, bool aaszip=false);
   ~VFileDirectory ();
+
+  static void normalizeFileName (VStr &fname);
+  static VName normalizeLumpName (VName lname);
 
   const VStr getArchiveName () const;
 
   void clear ();
 
   void append (const VPakFileInfo &fi);
+
+  int appendAndRegister (const VPakFileInfo &fi);
 
   // won't touch entries with `lumpName != NAME_None`
   void buildLumpNames ();
@@ -236,7 +198,7 @@ public:
   VFileDirectory pakdir;
 
 public:
-  VPakFileBase (const VStr &apakfilename);
+  VPakFileBase (const VStr &apakfilename, bool aaszip=false);
   virtual ~VPakFileBase () override;
 
   //inline bool hasFiles () const { return (pakdir.files.length() > 0); }
@@ -245,7 +207,7 @@ public:
 
   virtual bool FileExists (const VStr &fname) override;
   //virtual VStream *OpenFileRead (const VStr &fname) override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int CheckNumForFileName (const VStr &fname) override;
   virtual void ReadFromLump (int, void *, int, int) override;
   virtual int LumpLength (int) override;
@@ -259,6 +221,49 @@ public:
   void ListPk3Files (TArray<VStr> &list);
 
   virtual VStr GetPrefix () override { return PakFileName; }
+};
+
+
+//==========================================================================
+//  VWadFile
+//==========================================================================
+//struct lumpinfo_t;
+
+class VWadFile : public VPakFileBase {
+private:
+  mythread_mutex rdlock;
+  //VStr Name;
+  VStream *Stream;
+  //int NumLumps;
+  //lumpinfo_t *LumpInfo; // location of each lump on disk
+#ifdef VAVOOM_USE_GWA
+  VStr GwaDir;
+#endif
+  bool lockInited;
+
+private:
+  void InitNamespaces ();
+  void FixVoiceNamespaces ();
+  void InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart=NAME_None, VName AltEnd=NAME_None);
+
+public:
+  VWadFile ();
+  //virtual ~VWadFile () override;
+  void Open (const VStr &FileName, bool FixVoices, VStream *InStream, const VStr &AGwaDir);
+  void OpenSingleLump (const VStr &FileName);
+  virtual void Close () override;
+  virtual VStream *OpenFileRead (const VStr &) override;
+  virtual VStream *CreateLumpReaderNum (int) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
+  //virtual int CheckNumForFileName (const VStr &) override;
+  virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
+  //virtual int LumpLength (int) override;
+  //virtual VName LumpName (int) override;
+  //virtual VStr LumpFileName (int) override;
+  virtual int IterateNS (int, EWadNamespace) override;
+  //virtual bool FileExists (const VStr &) override;
+  virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
+  //virtual VStr GetPrefix () override { return Name; }
 };
 
 

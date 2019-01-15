@@ -24,29 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//**
-//**  Based on sources from zlib with following notice:
-//**
-//**  Copyright (C) 1998-2004 Gilles Vollant
-//**
-//**  This software is provided 'as-is', without any express or implied
-//**  warranty.  In no event will the authors be held liable for any damages
-//**  arising from the use of this software.
-//**
-//**  Permission is granted to anyone to use this software for any purpose,
-//**  including commercial applications, and to alter it and redistribute it
-//**  freely, subject to the following restrictions:
-//**
-//**  1. The origin of this software must not be misrepresented; you must
-//**  not claim that you wrote the original software. If you use this
-//**  software in a product, an acknowledgment in the product documentation
-//**  would be appreciated but is not required.
-//**  2. Altered source versions must be plainly marked as such, and must
-//**  not be misrepresented as being the original software.
-//**  3. This notice may not be removed or altered from any source
-//**  distribution.
-//**
-//**************************************************************************
 #include "gamedefs.h"
 #include "fs_local.h"
 
@@ -126,11 +103,12 @@ VFileDirectory::VFileDirectory ()
 //  VFileDirectory::VFileDirectory
 //
 //==========================================================================
-VFileDirectory::VFileDirectory (VPakFileBase *aowner)
+VFileDirectory::VFileDirectory (VPakFileBase *aowner, bool aaszip)
   : owner(aowner)
   , files()
   , lumpmap()
   , filemap()
+  , aszip(aaszip)
 {
 }
 
@@ -162,6 +140,39 @@ const VStr VFileDirectory::getArchiveName () const {
 void VFileDirectory::append (const VPakFileInfo &fi) {
   if (files.length() >= 65520) Sys_Error("Archive \"%s\" contains too many files", *getArchiveName());
   files.append(fi);
+}
+
+
+//==========================================================================
+//
+//  VFileDirectory::appendAndRegister
+//
+//==========================================================================
+int VFileDirectory::appendAndRegister (const VPakFileInfo &fi) {
+  // link lumps
+  int f = files.length();
+  files.append(fi);
+  VPakFileInfo &nfo = files[f];
+  VName lmp = nfo.lumpName;
+  nfo.nextLump = -1; // just in case
+  if (lmp != NAME_None) {
+    auto lp = lumpmap.find(lmp);
+    if (lp) {
+      int lnum = *lp, pnum = -1;
+      for (;;) {
+        pnum = lnum;
+        lnum = files[lnum].nextLump;
+        if (lnum == -1) break;
+      }
+      nfo.nextLump = pnum;
+    }
+    lumpmap.put(lmp, f);
+  }
+  if (nfo.fileName.length()) {
+    // put files into hashmap
+    filemap.put(nfo.fileName, f);
+  }
+  return f;
 }
 
 
@@ -278,12 +289,13 @@ void VFileDirectory::buildNameMaps () {
         lastSeenLump.put(lmp, f); // for index chain
       } else {
         // we'we seen it before
-        fi.nextLump = *lsidp; // link to previous one
+        check(files[*lsidp].nextLump == -1);
+        files[*lsidp].nextLump = f; // link to previous one
         *lsidp = f; // update index
       }
     }
     if (fi.fileName.length()) {
-      if (filemap.has(fi.fileName)) {
+      if (aszip && filemap.has(fi.fileName)) {
         GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
         GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
       }
@@ -297,7 +309,7 @@ void VFileDirectory::buildNameMaps () {
     GCon->Logf("======== PAK: %s ========", *getArchiveName());
     for (int f = 0; f < files.length(); ++f) {
       VPakFileInfo &fi = files[f];
-      GCon->Logf("  %d: file=<%s>; lump=<%s>; ns=%d", f, *fi.fileName, *fi.lumpName, fi.lumpNamespace);
+      GCon->Logf("  %d: file=<%s>; lump=<%s>; ns=%d; size=%d; ofs=%d", f, *fi.fileName, *fi.lumpName, fi.lumpNamespace, fi.filesize, fi.pakdataofs);
     }
   }
     //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
@@ -392,11 +404,11 @@ int VFileDirectory::findFirstLump (VName lname, vint32 ns) {
   if (lname == NAME_None) return -1;
   auto fp = lumpmap.find(lname);
   if (!fp) return -1;
-  int res = -1;
+  if (ns < 0) return *fp;
   for (int f = *fp; f >= 0; f = files[f].nextLump) {
-    if (ns < 0 || files[f].lumpNamespace == ns) res = f;
+    if (files[f].lumpNamespace == ns) return f;
   }
-  return res;
+  return -1;
 }
 
 
@@ -410,11 +422,11 @@ int VFileDirectory::findLastLump (VName lname, vint32 ns) {
   if (lname == NAME_None) return -1;
   auto fp = lumpmap.find(lname);
   if (!fp) return -1;
-  if (ns < 0) return *fp;
+  int res = -1;
   for (int f = *fp; f >= 0; f = files[f].nextLump) {
-    if (files[f].lumpNamespace == ns) return f;
+    if (ns < 0 || files[f].lumpNamespace == ns) res = f;
   }
-  return -1;
+  return res;
 }
 
 
@@ -434,9 +446,9 @@ int VFileDirectory::nextLump (vint32 curridx, vint32 ns) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VPakFileBase::VPakFileBase (const VStr &apakfilename)
+VPakFileBase::VPakFileBase (const VStr &apakfilename, bool aaszip)
   : PakFileName(apakfilename)
-  , pakdir(this)
+  , pakdir(this, aaszip)
 {
 }
 
@@ -486,7 +498,9 @@ void VPakFileBase::Close () {
 //
 //==========================================================================
 int VPakFileBase::CheckNumForName (VName lumpName, EWadNamespace NS, bool wantFirst) {
-  return (wantFirst ? pakdir.findFirstLump(lumpName, NS) : pakdir.findLastLump(lumpName, NS));
+  int res = (wantFirst ? pakdir.findFirstLump(lumpName, NS) : pakdir.findLastLump(lumpName, NS));
+  //GCon->Logf("CheckNumForName:<%s>: ns=%d; first=%d; res=%d; name=<%s> (%s)", *PakFileName, NS, (int)wantFirst, res, *pakdir.normalizeLumpName(lumpName), *lumpName);
+  return res;
 }
 
 

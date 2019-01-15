@@ -325,7 +325,7 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS) {
   if (lmpname == NAME_None) return -1;
   for (int wi = 0; wi < SearchPaths.length(); ++wi) {
-    int i = SearchPaths[wi]->CheckNumForName(lmpname, NS);
+    int i = SearchPaths[wi]->CheckNumForName(lmpname, NS, true);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
   return -1;
