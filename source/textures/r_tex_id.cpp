@@ -62,11 +62,17 @@ VStream &operator << (VStream &strm, VTextureID &tid) {
       // name
       VName txname = NAME_None;
       strm << txname;
-      if (txname == NAME_None) Host_Error("save file is broken");
-      if (txname != GTextureManager.GetTextureName(tid.id)) {
+      if (txname == NAME_None) {
+        //Host_Error("save file is broken (empty texture)");
+        GCon->Logf(NAME_Warning, "LOAD: save file is broken (empty texture with id %d)", tid.id);
+        //R_DumpTextures();
+        //abort();
+        tid.id = GTextureManager.DefaultTexture;
+      } else if (txname != GTextureManager.GetTextureName(tid.id)) {
         // try to fix texture
         auto lock = GTextureManager.LockMapLocalTextures();
         int texid = GTextureManager.CheckNumForNameAndForce(txname, TEXTYPE_Wall, true, true, false);
+        if (texid <= 0) texid = GTextureManager.DefaultTexture;
         if (developer) GCon->Logf("LOAD: REPLACED texture '%s' (id %d) with '%s' (id %d)", *txname, tid.id, *GTextureManager.GetTextureName(texid), texid);
         tid.id = texid;
       } else {
@@ -75,14 +81,27 @@ VStream &operator << (VStream &strm, VTextureID &tid) {
     }
   } else {
     // writing
+    //bool errDump = false;
     vint32 aid = tid.id;
     if (aid > 0 && GTextureManager.getIgnoreAnim(aid)) {
       strm << STRM_INDEX(aid);
       // name
       VName txname = GTextureManager.GetTextureName(aid);
       strm << txname;
+      if (txname == NAME_None) {
+        GCon->Logf(NAME_Warning, "SAVE: trying to save empty texture with id #%d", aid);
+        R_DumpTextures();
+        //errDump = true;
+        abort();
+      }
     } else {
-      if (aid > 0) aid = 0;
+      if (aid > 0) {
+        GCon->Logf(NAME_Warning, "SAVE: trying to save inexisting texture with id #%d", aid);
+        aid = 0;
+        R_DumpTextures();
+        //errDump = true;
+        abort();
+      }
       strm << STRM_INDEX(aid);
     }
   }
