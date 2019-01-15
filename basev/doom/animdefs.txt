@@ -1,61 +1,125 @@
 //  Animated textures
-Texture nukage1 vanilla tics 8
+Texture optional nukage1 vanilla tics 8
   pic nukage1
   pic nukage2
   pic nukage3
 
-Texture fwater1 vanilla tics 8
+Texture optional fwater1 vanilla tics 8
   pic fwater1
   pic fwater2
   pic fwater3
   pic fwater4
 
-Texture lava1 vanilla tics 8
+Texture optional swater1 vanilla tics 8
+  pic swater1
+  pic swater2
+  pic swater3
+  pic swater4
+
+Texture optional lava1 vanilla tics 8
   pic lava1
   pic lava2
   pic lava3
   pic lava4
 
-Texture blood1 vanilla tics 8
+Texture optional blood1 vanilla tics 8
   pic blood1
   pic blood2
   pic blood3
 
-Texture rrock05 vanilla tics 8
+Texture optional rrock05 vanilla tics 8
   pic rrock05
   pic rrock06
   pic rrock07
   pic rrock08
 
-Texture slime01 vanilla tics 8
+Texture optional slime01 vanilla tics 8
   pic slime01
   pic slime02
   pic slime03
   pic slime04
 
-Texture slime05 vanilla tics 8
+Texture optional slime05 vanilla tics 8
   pic slime05
   pic slime06
   pic slime07
   pic slime08
 
-Texture slime09 vanilla tics 8
+Texture optional slime09 vanilla tics 8
   pic slime09
   pic slime10
   pic slime11
   pic slime12
 
-Texture bfall1 vanilla tics 8
+Texture optional bloodgr1 vanilla tics 8
+  pic bloodgr1
+  pic bloodgr2
+  pic bloodgr3
+  pic bloodgr4
+
+Texture optional sladrip1 vanilla tics 8
+  pic sladrip1
+  pic sladrip2
+  pic sladrip3
+
+Texture optional blodrip1 vanilla tics 8
+  pic blodrip1
+  pic blodrip2
+  pic blodrip3
+  pic blodrip4
+
+Texture optional firewala vanilla tics 8
+  pic firewala
+  pic firewalb
+  pic firewall
+
+Texture optional gstfont1 vanilla tics 8
+  pic gstfont1
+  pic gstfont2
+  pic gstfont3
+
+Texture optional firelava vanilla tics 8
+  pic firelav2
+  pic firelav3
+
+Texture optional firemag1 vanilla tics 8
+  pic firemag1
+  pic firemag2
+  pic firemag3
+
+Texture optional fireblu1 vanilla tics 8
+  pic fireblu1
+  pic fireblu2
+  pic fireblu3
+
+Texture optional rockred1 vanilla tics 8
+  pic rockred1
+  pic rockred2
+  pic rockred3
+
+Texture optional bfall1 vanilla tics 8
   pic bfall1
   pic bfall2
   pic bfall3
   pic bfall4
 
-Texture sfall1 vanilla tics 8
+Texture optional sfall1 vanilla tics 8
   pic sfall1
   pic sfall2
   pic sfall3
   pic sfall4
+
+Texture optional wfall1 vanilla tics 8
+  pic wfall1
+  pic wfall2
+  pic wfall3
+  pic wfall4
+
+Texture optional dbrain1 vanilla tics 8
+  pic dbrain1
+  pic dbrain2
+  pic dbrain3
+  pic dbrain4
 
 
 //  Switches available in Doom shareware
@@ -103,3 +167,10 @@ switch SW1STON6 on pic SW2STON6 tics 0
 switch SW1TEK   on pic SW2TEK   tics 0
 switch SW1MARB  on pic SW2MARB  tics 0
 switch SW1SKULL on pic SW2SKULL tics 0
+
+
+//  Switches for tnt/plutonia
+switch SW1BRN1T on pic SW2BRN1T tics 0
+switch SW1SKULP on pic SW2SKULP tics 0
+switch SW1SKULT on pic SW2SKULT tics 0
+switch SW1GSTNT on pic SW2GSTNT tics 0
