@@ -128,6 +128,7 @@ enum {
 
 static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 003.\n";
 static bool cacheCleanupComplete = false;
+static TMap<VStr, bool> mapTextureWarns;
 
 
 //==========================================================================
@@ -681,6 +682,8 @@ void VLevel::LoadMap (VName AMapName) {
   decanimlist = nullptr;
   decanimuid = 0;
 
+  mapTextureWarns.clear();
+
 load_again:
   GTextureManager.ResetMapTextures();
 
@@ -1169,6 +1172,8 @@ load_again:
     GCon->Logf("Decal processing %f", DecalProcessingTime);
     //GCon->Logf("%s", ""); // shut up, gcc!
   }
+
+  mapTextureWarns.clear();
 
   unguard;
 }
@@ -2705,17 +2710,26 @@ void VLevel::LoadACScripts (int Lump) {
 //==========================================================================
 static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceLoad) {
   if (!name || !name[0]) return (CMap ? 0 : GTextureManager.DefaultTexture); // just in case
+  if (name[0] == '-' && !name[1]) return 0; // just in case
   int i = -1;
+
+  //GCon->Logf("texForceLoad(*): <%s>", name);
 
   VName loname = NAME_None;
   // try filename if slash is found
   const char *slash = strchr(name, '/');
+  const char *dot = nullptr;
+  for (int f = 0; name[f]; ++f) if (name[f] == '.') dot = name+f;
   if (slash && slash[1]) {
-    loname = VName(name, VName::AddLower);
+    loname = VName(slash+1, VName::AddLower);
+    //GCon->Logf("texForceLoad(**): <%s>", *loname);
     //i = GTextureManager.AddFileTextureChecked(loname, Type);
-  } else if (strchr(name, '.')) {
+  } else if (!dot) {
     loname = VName(name, VName::AddLower);
+    //GCon->Logf("texForceLoad(***): <%s>", *loname);
     //i = GTextureManager.AddFileTextureChecked(loname, Type);
+  } else if (dot) {
+    loname = VName(dot+1, VName::AddLower);
   }
 
   if (loname != NAME_None) {
@@ -2723,23 +2737,37 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
     if (i >= 0) return i;
     if (CMap) return 0;
     if (!allowForceLoad) return GTextureManager.DefaultTexture;
-    i = GTextureManager.AddFileTextureChecked(loname, Type);
+    //i = GTextureManager.AddFileTextureChecked(loname, Type);
+    //if (i != -1) GCon->Logf("texForceLoad(0): <%s><%s> (%d)", *loname, name, i);
   }
 
   if (i == -1) {
-    VName loname8(name, VName::AddLower8);
+    VName loname8((dot ? dot+1 : slash ? slash+1 : name), VName::AddLower8);
     i = GTextureManager.CheckNumForName(loname8, Type, true, true);
+    //if (i != -1) GCon->Logf("texForceLoad(1): <%s><%s> (%d)", *loname8, name, i);
     if (i == -1 && CMap) return 0;
   }
 
   //if (i == -1) i = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, true, true);
   //if (i == -1 && VStr::length(name) > 8) i = GTextureManager.AddFileTexture(VName(name, VName::AddLower), Type);
 
-  if (i == -1 && !slash && allowForceLoad) {
-    i = GTextureManager.AddFileTextureChecked(loname, Type);
+  if (i == -1 /*&& !slash*/ && allowForceLoad) {
+    i = GTextureManager.AddFileTextureChecked(VName(name, VName::AddLower), Type);
+    //if (i != -1) GCon->Logf("texForceLoad(2): <%s> (%d)", name, i);
+    if (i == -1 && loname != NAME_None) {
+      i = GTextureManager.AddFileTextureChecked(loname, Type);
+      //if (i != -1) GCon->Logf("texForceLoad(3): <%s> (%d)", name, i);
+    }
   }
 
-  if (i == -1) i = (CMap ? 0 : GTextureManager.DefaultTexture);
+  if (i == -1) {
+    VStr nn = VStr(name);
+    if (!mapTextureWarns.has(nn)) {
+      mapTextureWarns.put(nn, true);
+      GCon->Logf(NAME_Warning, "MAP TEXTURE NOT FOUND: '%s'", name);
+    }
+    i = (CMap ? 0 : GTextureManager.DefaultTexture);
+  }
   return i;
 }
 
@@ -2770,6 +2798,7 @@ IMPLEMENT_FUNCTION(VLevel, LdrTexNumForName) {
 //==========================================================================
 int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF) const {
   guard(VLevel::TexNumForName);
+  if (!name || !name[0] || VStr::Cmp(name, "-") == 0) return 0;
   return texForceLoad(name, Type, CMap, /*(fromUDMF ? r_udmf_allow_extra_textures : false)*/true);
 /*
   int i = -1;

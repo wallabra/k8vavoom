@@ -350,6 +350,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
   guard(VTextureManager::AddTexture);
   if (!Tex) return -1;
 
+  /*
   if (Tex->Name == "w108_4" || Tex->Name == "doortrak") {
     VStream *strm = nullptr;
     VStr basename = VStr(Tex->Name != NAME_None ? *Tex->Name : "_untitled");
@@ -365,6 +366,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
       delete strm;
     }
   }
+  */
 
   // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
@@ -395,6 +397,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
     AddToHash(Textures.length()-1);
     return Textures.length()-1;
   } else {
+    if (developer) GCon->Logf(NAME_Dev, "***MAP-TEXTURE #%d: <%s>", MapTextures.length(), *Tex->Name);
     MapTextures.Append(Tex);
     Tex->TextureTranslation = FirstMapTextureIndex+MapTextures.length()-1;
     AddToHash(FirstMapTextureIndex+MapTextures.length()-1);
@@ -805,6 +808,8 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
 //==========================================================================
 int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
   guard(VTextureManager::AddFileTextureChecked)
+  if (Name == NAME_None) return 0;
+
   int i = CheckNumForName(Name, Type);
   if (i >= 0) return i;
 
@@ -812,6 +817,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
+      if (developer) GCon->Logf("******************** %s : %s ********************", *Name, *Tex->Name);
       Tex->Name = Name;
       return AddTexture(Tex);
     }
@@ -1006,6 +1012,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
   if (NamesLump < 0) return;
   int pncount = 0;
   int NamesFile = W_LumpFile(NamesLump);
+  VStr pkname = W_FullPakNameForLump(NamesLump);
   while (NamesLump >= 0 && W_LumpFile(NamesLump) == NamesFile) {
     if (W_LumpName(NamesLump) != NAME_pnames) {
       // next one
@@ -1036,7 +1043,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       if (!TmpName[0]) {
         GCon->Logf(NAME_Warning, "PNAMES entry #%d is empty!", i);
         WallPatchInfo &wpi = patchtexlookup.alloc();
-        wpi.index = i;
+        wpi.index = patchtexlookup.length()-1;
         wpi.name = NAME_None;
         wpi.tx = nullptr;
         continue;
@@ -1051,7 +1058,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       }
 
       WallPatchInfo &wpi = patchtexlookup.alloc();
-      wpi.index = i;
+      wpi.index = patchtexlookup.length()-1;
       wpi.name = PatchName;
 
       // check if it's already has been added
@@ -1094,7 +1101,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
     for (int f = 0; f < patchtexlookup.length(); ++f) {
       check(patchtexlookup[f].index == f);
       VTexture *tx = patchtexlookup[f].tx;
-      GCon->Logf(NAME_Dev, "%s:PNAME (%d/%d): name=%s; tx=%d; txname=%s", *W_FullLumpName(NamesLump), f, patchtexlookup.length()-1, *patchtexlookup[f].name, (tx ? 1 : 0), (tx ? *tx->Name : "----"));
+      GCon->Logf(NAME_Dev, "%s:PNAME (%d/%d): name=%s; tx=%d; txname=%s", *pkname, f, patchtexlookup.length()-1, *patchtexlookup[f].name, (tx ? 1 : 0), (tx ? *tx->Name : "----"));
     }
   }
 }
@@ -1602,7 +1609,7 @@ void P_InitAnimated () {
 //
 //==========================================================================
 static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
-  if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; IsFlat=%d", txbase, offset, IsFlat);
+  //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; IsFlat=%d", txbase, offset, IsFlat);
   if (txbase <= 0) return -1; // oops
   if (offset < 0) return -1; // oops
   if (offset == 0) return txbase;
@@ -1610,7 +1617,7 @@ static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
   EWadNamespace txns = (IsFlat ? WADNS_Flats : WADNS_Global);
   VName txname = GTextureManager.GetTextureName(txbase);
   if (txname == NAME_None) {
-    if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: FOOO (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
+    //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: FOOO (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
     return -1; // oops
   }
   int lmp = W_FindFirstLumpOccurence(txname, txns);
@@ -1619,7 +1626,7 @@ static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
     if (lmp >= 0) txns = WADNS_NewTextures;
   }
   if (lmp == -1) {
-    if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: cannot find first lump (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
+    //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: cannot find first lump (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
     return -1; // oops
   }
   // now scan loaded paks until we skip enough textures
@@ -1630,7 +1637,7 @@ static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
     if (lmpName == NAME_None) continue;
     int txidx = GTextureManager.CheckNumForName(lmpName, txtype, true, false);
     if (txidx == -1) {
-      if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: trying to force-load lump 0x%08x (%s)", lmp, *lmpName);
+      //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: trying to force-load lump 0x%08x (%s)", lmp, *lmpName);
       // not a texture, try to load one
       VTexture *tx = VTexture::CreateTexture(txtype, lmp);
       if (tx) {
@@ -1643,7 +1650,7 @@ static int GetTextureIdWithOffset (int txbase, int offset, int IsFlat) {
         continue;
       }
     }
-    if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; txidx=%d; txname=%s; lmpname=%s", txbase, offset, txidx, *GTextureManager.GetTextureName(txidx), *lmpName);
+    //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; txidx=%d; txname=%s; lmpname=%s", txbase, offset, txidx, *GTextureManager.GetTextureName(txidx), *lmpName);
     if (--offset == 0) return txidx;
   }
   return -1; // not found
