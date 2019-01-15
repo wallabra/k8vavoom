@@ -783,7 +783,7 @@ final void common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //==========================================================================
 final void A_k8JumpIfLiquidFloor (state label, optional int aptr) {
   // state jumps should not affect state chain results
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfLiquidFloor', aptr!optional));
   common_k8JumpIfLiquidFloor(tgt, label);
 }
 
@@ -796,9 +796,47 @@ final void A_k8JumpIfLiquidFloor (state label, optional int aptr) {
 final void A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfOnLiquidFloor', aptr!optional));
   if (!tgt) return;
   if (!tgt.Sector) return; // just in case
   if (tgt.Origin.z > tgt.FloorZ) return;
   common_k8JumpIfLiquidFloor(tgt, label);
+}
+
+
+//==========================================================================
+//
+//  A_k8JumpIfFloorCeiling
+//
+//==========================================================================
+final void A_k8JumpIfFloorCeiling (state label, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (!tgt) return;
+  if (!tgt.Sector) return; // just in case
+  if (tgt.Sector.floor.pic == Level.Game.skyflatnum) {
+    //print("ANIM FLOOR: %s", GetTextureName(tgt.Sector.floor.pic));
+    DoJump(label);
+    return;
+  }
+}
+
+
+//==========================================================================
+//
+//  A_k8JumpIfSkyCeiling
+//
+//==========================================================================
+final void A_k8JumpIfSkyCeiling (state label, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (!tgt) return;
+  if (!tgt.Sector) return; // just in case
+  if (tgt.Sector.ceiling.pic == Level.Game.skyflatnum) {
+    //print("ANIM FLOOR: %s", GetTextureName(tgt.Sector.floor.pic));
+    DoJump(label);
+    return;
+  }
 }
