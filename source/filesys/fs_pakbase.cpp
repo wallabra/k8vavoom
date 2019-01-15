@@ -31,6 +31,7 @@
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
+bool fsys_no_dup_reports = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -272,6 +273,21 @@ void VFileDirectory::buildLumpNames () {
 //
 //==========================================================================
 void VFileDirectory::buildNameMaps () {
+  bool doReports = !fsys_no_dup_reports;
+  if (doReports) {
+    VStr fn = getArchiveName().ExtractFileBaseName();
+    doReports =
+      fn != "doom.wad" &&
+      fn != "doom2.wad" &&
+      fn != "tnt.wad" &&
+      fn != "plutonia.wad" &&
+      fn != "nerve.wad" &&
+      fn != "heretic.wad" &&
+      fn != "hexen.wad" &&
+      fn != "strife1.wad" &&
+      fn != "voices.wad" &&
+      true;
+  }
   lumpmap.clear();
   filemap.clear();
   //bool dumpZips = GArgs.CheckParm("-dev-dump-zips");
@@ -295,9 +311,22 @@ void VFileDirectory::buildNameMaps () {
       }
     }
     if (fi.fileName.length()) {
-      if (aszip && filemap.has(fi.fileName)) {
-        GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-        GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
+      if (doReports) {
+        if (aszip && filemap.has(fi.fileName)) {
+          GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+          GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
+        } else if (f > 0) {
+          for (int pidx = f-1; pidx >= 0; --pidx) {
+            if (files[pidx].fileName.length()) {
+              if (files[pidx].fileName == fi.fileName) {
+                //GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
+                GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+                GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE WAD FILES!");
+              }
+              break;
+            }
+          }
+        }
       }
       // put files into hashmap
       filemap.put(fi.fileName, f);

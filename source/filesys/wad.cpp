@@ -197,7 +197,7 @@ int W_AddAuxiliary (const VStr &FileName) {
 //  zipAddWads
 //
 //==========================================================================
-static void zipAddWads (VZipFile *zip) {
+static void zipAddWads (VZipFile *zip, const VStr &zipName) {
   if (!zip) return;
   TArray<VStr> list;
   // scan for wads
@@ -215,7 +215,7 @@ static void zipAddWads (VZipFile *zip) {
     if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete memstrm; continue; }
     memstrm->Seek(0);
     VWadFile *wad = new VWadFile;
-    wad->Open("", false, memstrm, VStr());
+    wad->Open(zipName+":"+list[f], false, memstrm, VStr());
     SearchPaths.Append(wad);
   }
 }
@@ -231,13 +231,14 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
   //if (strm.TotalSize() < 16) return -1;
   if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
   int residx = SearchPaths.length();
+  //GCon->Logf("AUX: %s", *strm->GetName());
 
   if (ftype != WAuxFileType::Wad) {
-    VZipFile *zip = new VZipFile(strm, "");
+    VZipFile *zip = new VZipFile(strm, strm->GetName());
     SearchPaths.Append(zip);
     // scan for wads and pk3s
     if (ftype == WAuxFileType::Zip) {
-      zipAddWads(zip);
+      zipAddWads(zip, strm->GetName());
       // scan for pk3s
       TArray<VStr> list;
       zip->ListPk3Files(list);
@@ -249,14 +250,16 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
         bool err = zipstrm->IsError();
         delete zipstrm;
         if (err) { delete memstrm; continue; }
-        VZipFile *pk3 = new VZipFile(memstrm, "");
+        //GCon->Logf("AUX: %s", *(strm->GetName()+":"+list[f]));
+        VZipFile *pk3 = new VZipFile(memstrm, strm->GetName()+":"+list[f]);
         SearchPaths.Append(pk3);
-        zipAddWads(pk3);
+        zipAddWads(pk3, pk3->GetPrefix());
       }
     }
   } else {
     VWadFile *wad = new VWadFile;
-    wad->Open("", false, strm, VStr());
+    //GCon->Logf("AUX: %s", *(strm->GetName()));
+    wad->Open(strm->GetName(), false, strm, VStr());
     SearchPaths.Append(wad);
   }
 

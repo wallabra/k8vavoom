@@ -347,6 +347,7 @@ extern const VPK3ResDirInfo PK3ResourceDirs[];
 extern TArray<VSearchPath *> SearchPaths;
 
 extern bool fsys_report_added_paks;
+extern bool fsys_no_dup_reports;
 
 
 #endif

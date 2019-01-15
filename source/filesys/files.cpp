@@ -683,10 +683,13 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
     if (games.length() != 1) {
       // try to select DooM or DooM II automatically
       if (true) {
+        bool oldReport = fsys_no_dup_reports;
+        fsys_no_dup_reports = true;
         W_CloseAuxiliary();
         for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
         VStr mname = W_FindMapInAuxuliaries(nullptr);
         W_CloseAuxiliary();
+        fsys_no_dup_reports = oldReport;
         if (!mname.isEmpty()) {
           // found map, find DooM or DooM II game definition
           VStr gamename = (mname[0] == 'e' ? "doom" : "doom2");
