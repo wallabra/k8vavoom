@@ -65,10 +65,6 @@
 
 //#define K8_UNLZMA_DEBUG
 
-extern bool fsys_skipSounds;
-extern bool fsys_skipSprites;
-extern bool fsys_skipDehacked;
-
 
 enum {
   SIZECENTRALDIRITEM = 0x2e,
@@ -76,21 +72,30 @@ enum {
 };
 
 
+static const char *moreresdirs[] = {
+  "models/",
+  nullptr,
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // information about a file in the zipfile
-struct VZipFileInfo {
-  VStr Name; // name of the file
+/*
+struct VPakFileInfo {
+  VStr fileName; // name of the file
   vuint16 flag; // general purpose bit flag
-  vuint16 compression_method; // compression method
-  vuint32 crc; // crc-32
-  vuint32 compressed_size; // compressed size
-  vuint32 uncompressed_size; // uncompressed size
-  vuint16 size_filename; // filename length
-  vuint32 offset_curfile; // relative offset of local header
+  vuint16 compression; // compression method
+  vuint32 crc32; // crc-32
+  vuint32 packedsize; // compressed size
+  vuint32 filesize; // uncompressed size
+  vuint16 filenamesize; // filename length
+  vuint32 pakdataofs; // relative offset of local header
   // for WAD-like access
-  VName LumpName;
-  vint32 LumpNamespace;
+  VName lumpName;
+  vint32 lumpNamespace;
   int nextLump; // next lump with the same name
 };
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -102,7 +107,7 @@ private:
   mythread_mutex *rdlock;
   VStream *FileStream; // source stream of the zipfile
   VStr fname;
-  const VZipFileInfo &Info; // info about the file we are reading
+  const VPakFileInfo &Info; // info about the file we are reading
   FOutputDevice *Error;
 
   Bytef ReadBuffer[UNZ_BUFSIZE]; // internal buffer for compressed data
@@ -124,7 +129,7 @@ private:
   bool LzmaRestart (); // `pos_in_zipfile` must be valid
 
 public:
-  VZipFileReader (const VStr &afname, VStream *, vuint32, const VZipFileInfo &, FOutputDevice *, mythread_mutex *ardlock);
+  VZipFileReader (const VStr &afname, VStream *, vuint32, const VPakFileInfo &, FOutputDevice *, mythread_mutex *ardlock);
   virtual ~VZipFileReader () override;
   virtual const VStr &GetName () const override;
   virtual void Serialise (void *, int) override;
@@ -136,71 +141,6 @@ public:
 };
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-extern "C" {
-  int FileCmpFunc (const void *v1, const void *v2) {
-    return ((VZipFileInfo *)v1)->Name.Cmp(((VZipFileInfo *)v2)->Name);
-  }
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-const VPK3ResDirInfo PK3ResourceDirs[] = {
-  { "sprites/", WADNS_Sprites },
-  { "flats/", WADNS_Flats },
-  { "colormaps/", WADNS_ColourMaps },
-  { "acs/", WADNS_ACSLibrary },
-  { "textures/", WADNS_NewTextures },
-  { "voices/", WADNS_Voices },
-  { "hires/", WADNS_HiResTextures },
-  { "patches/", WADNS_Patches },
-  { "graphics/", WADNS_Graphics },
-  { "sounds/", WADNS_Sounds },
-  { "music/", WADNS_Music },
-  { nullptr, WADNS_ZipSpecial },
-};
-
-
-static const char *moreresdirs[] = {
-  "models/",
-  nullptr,
-};
-
-
-static const char *PK3IgnoreExts[] = {
-  ".wad",
-  ".zip",
-  ".7z",
-  ".pk3",
-  ".pk7",
-  ".exe",
-  ".bat",
-  ".ini",
-  ".cpp",
-  ".acs",
-  ".doc",
-  ".me",
-  ".rtf",
-  ".rsp",
-  ".now",
-  ".htm",
-  ".html",
-  ".wri",
-  ".nfo",
-  ".diz",
-  ".bbs",
-  nullptr
-};
-
-
-bool VFS_ShouldIgnoreExt (const VStr &fname) {
-  if (fname.length() == 0) return false;
-  for (const char **s = PK3IgnoreExts; *s; ++s) if (fname.endsWithNoCase(*s)) return true;
-  //if (fname.length() > 12 && fname.endsWithNoCase(".txt")) return true;
-  return false;
-}
-
-
 //==========================================================================
 //
 //  VZipFile::VZipFile
@@ -209,16 +149,11 @@ bool VFS_ShouldIgnoreExt (const VStr &fname) {
 //
 //==========================================================================
 VZipFile::VZipFile (VStream *fstream)
-  : ZipFileName("<memory>")
-  , Files(nullptr)
-  , NumFiles(0)
-  , filemap()
-  , lumpmap()
+  : VPakFileBase("<memory>")
 {
-  guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
+  if (fstream->GetName().length()) PakFileName = fstream->GetName();
   OpenArchive(fstream);
-  unguard;
 }
 
 
@@ -230,14 +165,10 @@ VZipFile::VZipFile (VStream *fstream)
 //
 //==========================================================================
 VZipFile::VZipFile (VStream *fstream, const VStr &name)
-  : ZipFileName(name)
-  , Files(nullptr)
-  , NumFiles(0)
+  : VPakFileBase(name)
 {
-  guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
   OpenArchive(fstream);
-  unguard;
 }
 
 
@@ -247,17 +178,13 @@ VZipFile::VZipFile (VStream *fstream, const VStr &name)
 //
 //==========================================================================
 VZipFile::VZipFile (const VStr &zipfile)
-  : ZipFileName(zipfile)
-  , Files(nullptr)
-  , NumFiles(0)
+  : VPakFileBase(zipfile)
 {
-  guard(VZipFile::VZipFile);
   mythread_mutex_init(&rdlock);
-  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *ZipFileName);
-  auto fstream = FL_OpenSysFileRead(ZipFileName);
+  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
+  auto fstream = FL_OpenSysFileRead(PakFileName);
   check(fstream);
   OpenArchive(fstream);
-  unguard;
 }
 
 
@@ -278,12 +205,12 @@ VZipFile::~VZipFile () {
 //
 //==========================================================================
 void VZipFile::OpenArchive (VStream *fstream) {
-  guard(VZipFile::OpenArchive);
   FileStream = fstream;
   check(FileStream);
 
   vuint32 central_pos = SearchCentralDir();
-  check(central_pos);
+  if (central_pos == 0 || (vint32)central_pos == -1) Sys_Error("cannot load zip/pk3 file \"%s\"", *PakFileName);
+  //check(central_pos);
 
   FileStream->Seek(central_pos);
 
@@ -292,6 +219,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
   vuint16 number_disk_with_CD; // number the the disk with central dir, used for spaning ZIP
   vuint16 number_entry_CD; // total number of entries in the central dir (same than number_entry on nospan)
   vuint16 size_comment; // size of the global comment of the zipfile
+  vuint16 NumFiles;
 
   *FileStream
     // the signature, already checked
@@ -321,14 +249,15 @@ void VZipFile::OpenArchive (VStream *fstream) {
 
   BytesBeforeZipFile = central_pos-(offset_central_dir+size_central_dir);
 
-  Files = new VZipFileInfo[NumFiles];
+  //files = new VPakFileInfo[NumFiles];
 
   bool canHasPrefix = true;
 
   // set the current file of the zipfile to the first file
   vuint32 pos_in_central_dir = offset_central_dir;
   for (int i = 0; i < NumFiles; ++i) {
-    VZipFileInfo &file_info = Files[i];
+    //VPakFileInfo &file_info = files[i];
+    VPakFileInfo file_info;
 
     FileStream->Seek(pos_in_central_dir+BytesBeforeZipFile);
 
@@ -348,27 +277,28 @@ void VZipFile::OpenArchive (VStream *fstream) {
       << version
       << version_needed
       << file_info.flag
-      << file_info.compression_method
+      << file_info.compression
       << dosDate
-      << file_info.crc
-      << file_info.compressed_size
-      << file_info.uncompressed_size
-      << file_info.size_filename
+      << file_info.crc32
+      << file_info.packedsize
+      << file_info.filesize
+      << file_info.filenamesize
       << size_file_extra
       << size_file_comment
       << disk_num_start
       << internal_fa
       << external_fa
-      << file_info.offset_curfile;
+      << file_info.pakdataofs;
 
     if (Magic != 0x02014b50) Sys_Error("corrupted ZIP file \"%s\"", *fstream->GetName());
 
-    char *filename_inzip = new char[file_info.size_filename+1];
-    filename_inzip[file_info.size_filename] = '\0';
-    FileStream->Serialise(filename_inzip, file_info.size_filename);
+    char *filename_inzip = new char[file_info.filenamesize+1];
+    filename_inzip[file_info.filenamesize] = '\0';
+    FileStream->Serialise(filename_inzip, file_info.filenamesize);
     VStr zfname = VStr(filename_inzip).ToLower().FixFileSlashes();
     delete[] filename_inzip;
     filename_inzip = nullptr;
+
     // fix some idiocity introduced by some shitdoze doom tools
     for (;;) {
            if (zfname.startsWith("./")) zfname.chopLeft(2);
@@ -376,157 +306,48 @@ void VZipFile::OpenArchive (VStream *fstream) {
       else if (zfname.startsWith("/")) zfname.chopLeft(1);
       else break;
     }
-    Files[i].Name = zfname;
+    file_info.fileName = zfname;
 
-    if (canHasPrefix && Files[i].Name.IndexOf('/') == -1) canHasPrefix = false;
+    if (canHasPrefix && file_info.fileName.IndexOf('/') == -1) canHasPrefix = false;
 
     if (canHasPrefix) {
       for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
-        if (Files[i].Name.StartsWith(di->pfx)) { canHasPrefix = false; break; }
+        if (file_info.fileName.StartsWith(di->pfx)) { canHasPrefix = false; break; }
       }
       if (canHasPrefix) {
         for (const char **dn = moreresdirs; *dn; ++dn) {
-          if (Files[i].Name.StartsWith(*dn)) { canHasPrefix = false; break; }
+          if (file_info.fileName.StartsWith(*dn)) { canHasPrefix = false; break; }
         }
       }
     }
 
+    pakdir.append(file_info);
+
     // set the current file of the zipfile to the next file
-    pos_in_central_dir += SIZECENTRALDIRITEM+file_info.size_filename+size_file_extra+size_file_comment;
+    pos_in_central_dir += SIZECENTRALDIRITEM+file_info.filenamesize+size_file_extra+size_file_comment;
   }
 
   // find and remove common prefix
-  if (canHasPrefix && NumFiles > 0) {
-    VStr xpfx = Files[0].Name;
+  if (canHasPrefix && pakdir.files.length() > 0) {
+    VStr xpfx = pakdir.files[0].fileName;
     int sli = xpfx.IndexOf('/');
     if (sli > 0) {
       xpfx = VStr(xpfx, 0, sli+1); // extract prefix
-      for (int i = 0; i < NumFiles; ++i) {
-        if (!Files[i].Name.StartsWith(xpfx)) { canHasPrefix = false; break; }
+      for (int i = 0; i < pakdir.files.length(); ++i) {
+        if (!pakdir.files[i].fileName.StartsWith(xpfx)) { canHasPrefix = false; break; }
       }
       if (canHasPrefix) {
         // remove prefix
-        for (int i = 0; i < NumFiles; ++i) {
-          Files[i].Name = VStr(Files[i].Name, sli+1, Files[i].Name.Length()-sli-1);
+        for (int i = 0; i < pakdir.files.length(); ++i) {
+          pakdir.files[i].fileName = VStr(pakdir.files[i].fileName, sli+1, pakdir.files[i].fileName.length()-sli-1);
           //printf("new: <%s>\n", *Files[i].Name);
         }
       }
     }
   }
 
-  // remove duplicate files
-  /*
-  TMap<VStr, bool> nameset;
-  for (int i = NumFiles-1; i >= 0; --i) {
-    if (nameset.has(Files[i].Name)) {
-      Files[i].Name = VStr("\x01");
-    } else {
-      nameset.put(Files[i].Name, true);
-    }
-  }
-  */
-
-  // build lump names
-  for (int i = 0; i < NumFiles; ++i) {
-    if (Files[i].Name.Length() > 0) {
-      // set up lump name for WAD-like access
-      VStr LumpName = Files[i].Name.ExtractFileName().StripExtension();
-
-      // map some directories to WAD namespaces
-      if (Files[i].Name.IndexOf('/') == -1) {
-        Files[i].LumpNamespace = WADNS_Global;
-      } else {
-        Files[i].LumpNamespace = -1;
-        for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
-          if (Files[i].Name.StartsWith(di->pfx)) {
-            Files[i].LumpNamespace = di->wadns;
-            break;
-          }
-        }
-      }
-
-      // anything from other directories won't be accessed as lump
-      if (Files[i].LumpNamespace == -1) {
-        LumpName = VStr();
-      } else {
-        // hide wad files, 'cause they may conflict with normal files
-        // wads will be correctly added by a separate function
-        if (VFS_ShouldIgnoreExt(Files[i].Name)) {
-          Files[i].LumpNamespace = -1;
-          LumpName = VStr();
-        }
-      }
-
-      if ((fsys_skipSounds && Files[i].LumpNamespace == WADNS_Sounds) ||
-          (fsys_skipSprites && Files[i].LumpNamespace == WADNS_Sprites))
-      {
-        Files[i].LumpNamespace = -1;
-        LumpName = VStr();
-      }
-
-      if (fsys_skipDehacked && LumpName.length() && LumpName.ICmp("dehacked") == 0) {
-        Files[i].LumpNamespace = -1;
-        LumpName = VStr();
-      }
-
-      // for sprites \ is a valid frame character but is not allowed to
-      // be in a file name, so we do a little mapping here
-      if (Files[i].LumpNamespace == WADNS_Sprites) {
-        LumpName = LumpName.Replace("^", "\\");
-      }
-
-      //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
-      //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
-
-      // final lump name
-      if (LumpName.length()) {
-        Files[i].LumpName = VName(*LumpName, VName::AddLower8);
-      } else {
-        Files[i].LumpName = NAME_None;
-      }
-    } else {
-      Files[i].LumpName = NAME_None;
-    }
-  }
-
-  if (NumFiles > 65520) Sys_Error("Archive '%s' has too many files", *ZipFileName);
-  // sort files alphabetically (have to do this, or file searching is failing for some reason)
-  // k8: it seems that we don't need to sort files anymore
-  if (GArgs.CheckParm("-pk3sort")) {
-    GCon->Logf(NAME_Init, "sorting files in '%s'...", *fstream->GetName());
-    qsort(Files, NumFiles, sizeof(VZipFileInfo), FileCmpFunc);
-  }
-
-  bool dumpZips = GArgs.CheckParm("-dev-dump-zips");
-
-  // now create hashmaps, and link lumps
-  TMapNC<VName, int> lastSeenLump;
-  for (int f = 0; f < NumFiles; ++f) {
-    // link lumps
-    VName lmp = Files[f].LumpName;
-    Files[f].nextLump = -1; // just in case
-    if (lmp != NAME_None) {
-      if (!lumpmap.has(lmp)) {
-        // new lump
-        lumpmap.put(lmp, f);
-        lastSeenLump.put(lmp, f); // for index chain
-      } else {
-        // we'we seen it before
-        auto lsidp = lastSeenLump.find(lmp); // guaranteed to succeed
-        Files[*lsidp].nextLump = f; // link previous to this one
-        *lsidp = f; // update index
-      }
-    }
-    if (filemap.has(Files[f].Name)) {
-      GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *Files[f].Name, *fstream->GetName());
-      GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
-    }
-    // put files into hashmap
-    filemap.put(Files[f].Name, f);
-    if (dumpZips) GCon->Logf(NAME_Dev, "%s: %s", *ZipFileName, *Files[f].Name);
-  }
-
-  unguard;
+  pakdir.buildLumpNames();
+  pakdir.buildNameMaps();
 }
 
 
@@ -545,6 +366,7 @@ struct SelfDestructBuf {
     buf = (vuint8 *)Z_Malloc(sz);
     if (!buf) Sys_Error("Out of memory!");
   }
+
   ~SelfDestructBuf () { Z_Free(buf); }
 };
 
@@ -581,11 +403,12 @@ vuint32 VZipFile::SearchCentralDir () {
 
 //==========================================================================
 //
-//  VZipFile::FileExists
+//  VZipFile::Close
 //
 //==========================================================================
-bool VZipFile::FileExists (const VStr &FName) {
-  return filemap.has(FName.toLowerCase());
+void VZipFile::Close () {
+  VPakFileBase::Close();
+  if (FileStream) { delete FileStream; FileStream = 0; }
 }
 
 
@@ -594,122 +417,10 @@ bool VZipFile::FileExists (const VStr &FName) {
 //  VZipFile::OpenFileRead
 //
 //==========================================================================
-VStream *VZipFile::OpenFileRead (const VStr &FName) {
-  auto fp = filemap.find(FName.toLowerCase());
-  if (!fp) return nullptr;
-  return new VZipFileReader(ZipFileName+":"+FName, FileStream, BytesBeforeZipFile, Files[*fp], GCon, &rdlock);
-}
-
-
-//==========================================================================
-//
-//  VZipFile::Close
-//
-//==========================================================================
-void VZipFile::Close () {
-  if (Files) { delete[] Files; Files = nullptr; }
-  if (FileStream) { delete FileStream; FileStream = 0; }
-  filemap.clear();
-  lumpmap.clear();
-}
-
-
-//==========================================================================
-//
-//  VZipFile::CheckNumForName
-//
-//==========================================================================
-int VZipFile::CheckNumForName (VName LumpName, EWadNamespace NS, bool wantFirst) {
-  if (LumpName == NAME_None) return -1;
-  if (!VStr::isLowerCase(*LumpName)) LumpName = VName(*LumpName, VName::AddLower);
-  auto fp = lumpmap.find(LumpName);
-  if (!fp) return -1;
-  int res = -1; // default: none
-  if (wantFirst) {
-    // find first one
-    for (int f = *fp; f >= 0; f = Files[f].nextLump) if (Files[f].LumpNamespace == NS) { res = f; break; }
-  } else {
-    // find last one
-    for (int f = *fp; f >= 0; f = Files[f].nextLump) if (Files[f].LumpNamespace == NS) res = f;
-  }
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VZipFile::CheckNumForFileName
-//
-//==========================================================================
-int VZipFile::CheckNumForFileName (const VStr &Name) {
-  auto fp = filemap.find(Name.toLowerCase());
-  //GCon->Logf(NAME_Dev, "ZIP:%s:%s is %d", *ZipFileName, *Name.toLowerCase(), (fp ? *fp : -1));
-  return (fp ? *fp : -1);
-}
-
-
-//==========================================================================
-//
-//  VZipFile::ReadFromLump
-//
-//==========================================================================
-void VZipFile::ReadFromLump (int Lump, void *Dest, int Pos, int Size) {
-  guard(VZipFile::ReadFromLump);
-  check(Lump >= 0);
-  check(Lump < NumFiles);
-  VStream *Strm = CreateLumpReaderNum(Lump);
-  Strm->Seek(Pos);
-  Strm->Serialise(Dest, Size);
-  delete Strm;
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VZipFile::LumpLength
-//
-//==========================================================================
-int VZipFile::LumpLength (int Lump) {
-  if (Lump < 0 || Lump >= NumFiles) return 0;
-  return Files[Lump].uncompressed_size;
-}
-
-
-//==========================================================================
-//
-//  VZipFile::LumpName
-//
-//==========================================================================
-VName VZipFile::LumpName (int Lump) {
-  if (Lump < 0 || Lump >= NumFiles) return NAME_None;
-  return Files[Lump].LumpName;
-}
-
-
-//==========================================================================
-//
-//  VZipFile::LumpFileName
-//
-//==========================================================================
-VStr VZipFile::LumpFileName (int Lump) {
-  if (Lump < 0 || Lump >= NumFiles) return VStr();
-  return Files[Lump].Name;
-}
-
-
-//==========================================================================
-//
-//  VZipFile::IterateNS
-//
-//==========================================================================
-int VZipFile::IterateNS (int Start, EWadNamespace NS) {
-  if (Start < 0) Start = 0;
-  if (Start >= NumFiles) return -1;
-  for (int li = Start; li < NumFiles; ++li) {
-    if (Files[li].LumpNamespace == NS && Files[li].LumpName != NAME_None) return li;
-  }
-  return -1;
+VStream *VZipFile::OpenFileRead (const VStr &fname) {
+  int fidx = pakdir.findFile(fname);
+  if (fidx < 0) return nullptr;
+  return new VZipFileReader(PakFileName+":"+fname, FileStream, BytesBeforeZipFile, pakdir.files[fidx], GCon, &rdlock);
 }
 
 
@@ -721,8 +432,8 @@ int VZipFile::IterateNS (int Start, EWadNamespace NS) {
 VStream *VZipFile::CreateLumpReaderNum (int Lump) {
   guard(VZipFile::CreateLumpReaderNum);
   check(Lump >= 0);
-  check(Lump < NumFiles);
-  return new VZipFileReader(ZipFileName+":"+Files[Lump].Name, FileStream, BytesBeforeZipFile, Files[Lump], GCon, &rdlock);
+  check(Lump < pakdir.files.length());
+  return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], GCon, &rdlock);
   unguard;
 }
 
@@ -734,79 +445,38 @@ VStream *VZipFile::CreateLumpReaderNum (int Lump) {
 //==========================================================================
 void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
   guard(VZipFile::RenameSprites);
-  for (int i = 0; i < NumFiles; ++i) {
-    VZipFileInfo &L = Files[i];
-    if (L.LumpNamespace != WADNS_Sprites) continue;
+  for (int i = 0; i < pakdir.files.length(); ++i) {
+    VPakFileInfo &L = pakdir.files[i];
+    if (L.lumpNamespace != WADNS_Sprites) continue;
     for (int j = 0; j < A.Num(); ++j) {
-      if ((*L.LumpName)[0] != A[j].Old[0] ||
-          (*L.LumpName)[1] != A[j].Old[1] ||
-          (*L.LumpName)[2] != A[j].Old[2] ||
-          (*L.LumpName)[3] != A[j].Old[3])
+      if ((*L.lumpName)[0] != A[j].Old[0] ||
+          (*L.lumpName)[1] != A[j].Old[1] ||
+          (*L.lumpName)[2] != A[j].Old[2] ||
+          (*L.lumpName)[3] != A[j].Old[3])
       {
         continue;
       }
       char newname[16];
-      auto len = (int)strlen(*L.Name);
+      auto len = (int)strlen(*L.lumpName);
       if (len) {
         if (len > 12) len = 12;
-        memcpy(newname, *L.Name, len);
+        memcpy(newname, *L.lumpName, len);
       }
       newname[len] = 0;
       newname[0] = A[j].New[0];
       newname[1] = A[j].New[1];
       newname[2] = A[j].New[2];
       newname[3] = A[j].New[3];
-      GCon->Logf(NAME_Dev, "renaming ZIP sprite '%s' to '%s'", *L.Name, newname);
-      L.LumpName = newname;
+      GCon->Logf(NAME_Dev, "renaming ZIP sprite '%s' to '%s'", *L.lumpName, newname);
+      L.lumpName = newname;
     }
     for (int j = 0; j < LA.Num(); ++j) {
-      if (L.LumpName == LA[j].Old) L.LumpName = LA[j].New;
+      if (L.lumpName == LA[j].Old) L.lumpName = LA[j].New;
     }
   }
   unguard;
 }
 
-
-//==========================================================================
-//
-//  VZipFile::ListWadFiles
-//
-//==========================================================================
-void VZipFile::ListWadFiles (TArray<VStr> &List) {
-  guard(VZipFile::ListWadFiles);
-  TMap<VStr, bool> hits;
-  for (int i = 0; i < NumFiles; ++i) {
-    // only .wad files
-    if (!Files[i].Name.EndsWith(".wad")) continue;
-    // don't add WAD files in subdirectories
-    if (Files[i].Name.IndexOf('/') != -1) continue;
-    if (hits.has(Files[i].Name)) continue;
-    hits.put(Files[i].Name, true);
-    List.Append(Files[i].Name);
-  }
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VZipFile::ListPk3Files
-//
-//==========================================================================
-void VZipFile::ListPk3Files (TArray<VStr> &List) {
-  guard(VZipFile::ListPk3Files);
-  TMap<VStr, bool> hits;
-  for (int i = 0; i < NumFiles; ++i) {
-    // only .pk3 files
-    if (!Files[i].Name.EndsWith(".pk3")) continue;
-    // don't add pk3 files in subdirectories
-    if (Files[i].Name.IndexOf('/') != -1) continue;
-    if (hits.has(Files[i].Name)) continue;
-    hits.put(Files[i].Name, true);
-    List.Append(Files[i].Name);
-  }
-  unguard;
-}
 
 
 //==========================================================================
@@ -815,7 +485,7 @@ void VZipFile::ListPk3Files (TArray<VStr> &List) {
 //
 //==========================================================================
 VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 BytesBeforeZipFile,
-                               const VZipFileInfo &aInfo, FOutputDevice *InError, mythread_mutex *ardlock)
+                               const VPakFileInfo &aInfo, FOutputDevice *InError, mythread_mutex *ardlock)
   : rdlock(ardlock)
   , FileStream(InStream)
   , fname(afname)
@@ -839,9 +509,9 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
   stream_initialised = false;
   lzmastream = LZMA_STREAM_INIT;
 
-  if (Info.compression_method != Z_STORE && Info.compression_method != Z_DEFLATED && Info.compression_method != Z_LZMA) {
+  if (Info.compression != Z_STORE && Info.compression != Z_DEFLATED && Info.compression != Z_LZMA) {
     bError = true;
-    Error->Logf("Compression method %d is not supported", Info.compression_method);
+    Error->Logf("Compression method %d is not supported", Info.compression);
     return;
   }
 
@@ -849,12 +519,12 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
 
   stream.total_out = 0;
   lzmastream.total_out = 0;
-  pos_in_zipfile = Info.offset_curfile+SIZEZIPLOCALHEADER+iSizeVar+BytesBeforeZipFile;
+  pos_in_zipfile = Info.pakdataofs+SIZEZIPLOCALHEADER+iSizeVar+BytesBeforeZipFile;
   start_pos = pos_in_zipfile;
-  rest_read_compressed = Info.compressed_size;
-  rest_read_uncompressed = Info.uncompressed_size;
+  rest_read_compressed = Info.packedsize;
+  rest_read_uncompressed = Info.filesize;
 
-  if (Info.compression_method == Z_DEFLATED) {
+  if (Info.compression == Z_DEFLATED) {
     stream.zalloc = (alloc_func)0;
     stream.zfree = (free_func)0;
     stream.opaque = (voidpf)0;
@@ -875,7 +545,7 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
       return;
     }
     stream_initialised = true;
-  } else if (Info.compression_method == Z_LZMA) {
+  } else if (Info.compression == Z_LZMA) {
     // LZMA
     usezlib = false;
     if (!LzmaRestart()) return; // error already set
@@ -926,7 +596,7 @@ bool VZipFileReader::LzmaRestart () {
   }
 
   if (stream_initialised) { lzma_end(&lzmastream); stream_initialised = false; }
-  rest_read_uncompressed = Info.uncompressed_size;
+  rest_read_uncompressed = Info.filesize;
   lzmastream = LZMA_STREAM_INIT;
 
   if (rest_read_compressed < 4+5) {
@@ -972,7 +642,7 @@ bool VZipFileReader::LzmaRestart () {
   }
 
 #ifdef K8_UNLZMA_DEBUG
-  fprintf(stderr, "LZMA: %u bytes in header, pksize=%d, unpksize=%d\n", (unsigned)(FileStream->Tell()-pos_in_zipfile), (int)Info.compressed_size, (int)Info.uncompressed_size);
+  fprintf(stderr, "LZMA: %u bytes in header, pksize=%d, unpksize=%d\n", (unsigned)(FileStream->Tell()-pos_in_zipfile), (int)Info.packedsize, (int)Info.filesize);
 #endif
 
   lzma_lzma_preset(&lzmaopts, 9|LZMA_PRESET_EXTREME);
@@ -1030,7 +700,7 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
 
   *piSizeVar = 0;
 
-  FileStream->Seek(Info.offset_curfile + byte_before_the_zipfile);
+  FileStream->Seek(Info.pakdataofs+byte_before_the_zipfile);
 
   *FileStream
     << Magic
@@ -1049,28 +719,28 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
     return false;
   }
 
-  if (ComprMethod != Info.compression_method) {
-    Error->Log("Compression method doesn\'t match");
+  if (ComprMethod != Info.compression) {
+    Error->Log("Compression method doesn't match");
     return false;
   }
 
-  if (Crc != Info.crc && (Flags&8) == 0) {
-    Error->Log("CRC doesn\'t match");
+  if (Crc != Info.crc32 && (Flags&8) == 0) {
+    Error->Log("CRC doesn't match");
     return false;
   }
 
-  if (ComprSize != Info.compressed_size && (Flags&8) == 0) {
-    Error->Log("Compressed size doesn\'t match");
+  if (ComprSize != Info.packedsize && (Flags&8) == 0) {
+    Error->Log("Compressed size doesn't match");
     return false;
   }
 
-  if (UncomprSize != Info.uncompressed_size && (Flags&8) == 0) {
-    Error->Log("Uncompressed size doesn\'t match");
+  if (UncomprSize != (vuint32)Info.filesize && (Flags&8) == 0) {
+    Error->Log("Uncompressed size doesn't match");
     return false;
   }
 
-  if (FileNameSize != Info.size_filename) {
-    Error->Log("File name length doesn\'t match");
+  if (FileNameSize != Info.filenamesize) {
+    Error->Log("File name length doesn't match");
     return false;
   }
 
@@ -1086,14 +756,14 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
 //  VZipFileReader::Serialise
 //
 //==========================================================================
-void VZipFileReader::Serialise (void *V, int Length) {
+void VZipFileReader::Serialise (void *V, int length) {
   guard(VZipFileReader::Serialise);
   MyThreadLocker locker(rdlock);
 
   if (!FileStream || bError) { bError = true; return; } // don't read anything from already broken stream
   if (FileStream->IsError()) { bError = true; return; }
 
-  if (Length == 0) return;
+  if (length == 0) return;
 
   if (!V) {
     bError = true;
@@ -1102,11 +772,11 @@ void VZipFileReader::Serialise (void *V, int Length) {
   }
 
   stream.next_out = (Bytef *)V;
-  stream.avail_out = Length;
+  stream.avail_out = length;
   lzmastream.next_out = (Bytef *)V;
-  lzmastream.avail_out = Length;
+  lzmastream.avail_out = length;
 
-  if ((vuint32)Length > rest_read_uncompressed) {
+  if ((vuint32)length > rest_read_uncompressed) {
     stream.avail_out = rest_read_uncompressed;
     lzmastream.avail_out = rest_read_uncompressed;
   }
@@ -1139,7 +809,7 @@ void VZipFileReader::Serialise (void *V, int Length) {
     }
 
     // decompress data
-    if (Info.compression_method == Z_STORE) {
+    if (Info.compression == Z_STORE) {
       // stored data
       if (stream.avail_in == 0 && rest_read_compressed == 0) break;
       int uDoCopy = (stream.avail_out < stream.avail_in ? stream.avail_out : stream.avail_in);
@@ -1152,7 +822,7 @@ void VZipFileReader::Serialise (void *V, int Length) {
       stream.next_in += uDoCopy;
       stream.total_out += uDoCopy;
       iRead += uDoCopy;
-    } else if (Info.compression_method == Z_DEFLATED) {
+    } else if (Info.compression == Z_DEFLATED) {
       // zlib data
       int flush = Z_SYNC_FLUSH;
       uLong uTotalOutBefore = stream.total_out;
@@ -1164,10 +834,10 @@ void VZipFileReader::Serialise (void *V, int Length) {
         return;
       }
       uLong uTotalOutAfter = stream.total_out;
-      vuint32 uOutThis = uTotalOutAfter - uTotalOutBefore;
+      vuint32 uOutThis = uTotalOutAfter-uTotalOutBefore;
       Crc32 = crc32(Crc32, bufBefore, (uInt)uOutThis);
       rest_read_uncompressed -= uOutThis;
-      iRead += (uInt)(uTotalOutAfter - uTotalOutBefore);
+      iRead += (uInt)(uTotalOutAfter-uTotalOutBefore);
       if (err != Z_OK) break;
     } else {
       // lzma data
@@ -1185,7 +855,7 @@ void VZipFileReader::Serialise (void *V, int Length) {
       }
       vuint32 uOutThis = outbefore-lzmastream.avail_out;
 #ifdef K8_UNLZMA_DEBUG
-      fprintf(stderr, "LZMA: processed %u packed bytes, unpacked %u bytes (err=%d); (want %d, got so far %d, left %d : %d)\n", (unsigned)(inbefore-lzmastream.avail_in), uOutThis, err, Length, iRead, Length-iRead, Length-iRead-uOutThis);
+      fprintf(stderr, "LZMA: processed %u packed bytes, unpacked %u bytes (err=%d); (want %d, got so far %d, left %d : %d)\n", (unsigned)(inbefore-lzmastream.avail_in), uOutThis, err, length, iRead, length-iRead, length-iRead-uOutThis);
 #endif
       Crc32 = crc32(Crc32, bufBefore, (uInt)uOutThis);
       rest_read_uncompressed -= uOutThis;
@@ -1199,9 +869,9 @@ void VZipFileReader::Serialise (void *V, int Length) {
     }
   }
 
-  if (iRead != Length) {
+  if (iRead != length) {
     bError = true;
-    Error->Logf("Only read %d of %d bytes", iRead, Length);
+    Error->Logf("Only read %d of %d bytes", iRead, length);
   }
   unguard;
 }
@@ -1215,7 +885,7 @@ void VZipFileReader::Serialise (void *V, int Length) {
 void VZipFileReader::Seek (int InPos) {
   guard(VZipFileReader::Seek);
   check(InPos >= 0);
-  check(InPos <= (int)Info.uncompressed_size);
+  check(InPos <= (int)Info.filesize);
   //MyThreadLocker locker(rdlock);
 
   if (bError) return;
@@ -1223,16 +893,16 @@ void VZipFileReader::Seek (int InPos) {
   // if seeking backwards, reset input stream to the begining of the file
   if (InPos < Tell()) {
     Crc32 = 0;
-    rest_read_compressed = Info.compressed_size;
-    rest_read_uncompressed = Info.uncompressed_size;
+    rest_read_compressed = Info.packedsize;
+    rest_read_uncompressed = Info.filesize;
     pos_in_zipfile = start_pos;
-    if (Info.compression_method == Z_DEFLATED) {
+    if (Info.compression == Z_DEFLATED) {
       check(stream_initialised);
       check(usezlib);
       if (stream_initialised) inflateEnd(&stream);
       memset(&stream, 0, sizeof(stream));
       verify(inflateInit2(&stream, -MAX_WBITS) == Z_OK);
-    } else if (Info.compression_method == Z_LZMA) {
+    } else if (Info.compression == Z_LZMA) {
 #ifdef K8_UNLZMA_DEBUG
       fprintf(stderr, "LZMA: seek to %d (now at %d)\n", InPos, Tell());
 #endif
@@ -1272,7 +942,7 @@ int VZipFileReader::Tell () {
 //
 //==========================================================================
 int VZipFileReader::TotalSize () {
-  return Info.uncompressed_size;
+  return Info.filesize;
 }
 
 
@@ -1296,7 +966,7 @@ bool VZipFileReader::Close () {
   //MyThreadLocker locker(rdlock);
 
   if (!bError && rest_read_uncompressed == 0) {
-    if (Crc32 != Info.crc) {
+    if (Crc32 != Info.crc32) {
       bError = true;
       Error->Log("Bad CRC");
     }

@@ -89,6 +89,7 @@ public:
   VFilesDir (const VStr &aPath);
   virtual bool FileExists (const VStr&) override;
   virtual VStream *OpenFileRead (const VStr&) override;
+  virtual VStream *CreateLumpReaderNum (int) override;
   virtual void Close () override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
   virtual int CheckNumForFileName (const VStr &) override;
@@ -97,7 +98,6 @@ public:
   virtual VName LumpName (int) override;
   virtual VStr LumpFileName (int) override;
   virtual int IterateNS (int, EWadNamespace) override;
-  virtual VStream *CreateLumpReaderNum (int) override;
   virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
   virtual VStr GetPrefix () override { return path; }
 };
@@ -145,23 +145,134 @@ public:
 
 
 //==========================================================================
+//  VZipFileInfo
+//==========================================================================
+// information about a file in the zipfile
+// also used for "pakdir", and "wad"
+struct VPakFileInfo {
+  VStr fileName; // name of the file (i.e. full name, lowercased)
+  VName lumpName;
+  /*EWadNamespace*/int lumpNamespace;
+  int nextLump; // next lump with the same name
+  // zip info
+  vuint16 flag; // general purpose bit flag
+  vuint16 compression; // compression method
+  vuint32 crc32; // crc-32
+  vuint32 packedsize; // compressed size (if compression is not supported, then 0)
+  vint32 filesize; // uncompressed size
+  // for zips
+  vuint16 filenamesize; // filename length
+  vuint32 pakdataofs; // relative offset of local header
+  // for dirpaks
+  VStr diskName;
+
+  VPakFileInfo ()
+    : fileName()
+    , lumpName(NAME_None)
+    , lumpNamespace(-1)
+    , nextLump(-1)
+    , flag(0)
+    , compression(0)
+    , crc32(0)
+    , packedsize(0)
+    , filesize(0)
+    , filenamesize(0)
+    , pakdataofs(0)
+    , diskName()
+  {
+  }
+};
+
+
+class VPakFileBase;
+
+struct VFileDirectory {
+public:
+  VPakFileBase *owner;
+  TArray<VPakFileInfo> files;
+  TMap<VName, int> lumpmap; // maps lump names to file entries; names are lowercased
+  TMap<VStr, int> filemap; // maps names (with pathes) to file entries; names are lowercased
+
+private:
+  void normalizeFileName (VStr &fname);
+  VName normalizeLumpName (VName lname);
+
+public:
+  VFileDirectory ();
+  VFileDirectory (VPakFileBase *aowner);
+  ~VFileDirectory ();
+
+  const VStr getArchiveName () const;
+
+  void clear ();
+
+  void append (const VPakFileInfo &fi);
+
+  // won't touch entries with `lumpName != NAME_None`
+  void buildLumpNames ();
+
+  // call this when all lump names are built
+  void buildNameMaps ();
+
+  bool fileExists (VStr name);
+  bool lumpExists (VName lname, vint32 ns); // namespace -1 means "any"
+
+  int findFile (VStr fname);
+
+  // namespace -1 means "any"
+  int findFirstLump (VName lname, vint32 ns);
+  int findLastLump (VName lname, vint32 ns);
+
+  int nextLump (vint32 curridx, vint32 ns);
+};
+
+
+//==========================================================================
+//  VPakFileBase
+//==========================================================================
+class VPakFileBase : public VSearchPath {
+public:
+  VStr PakFileName; // never ends with slash
+  VFileDirectory pakdir;
+
+public:
+  VPakFileBase (const VStr &apakfilename);
+  virtual ~VPakFileBase () override;
+
+  //inline bool hasFiles () const { return (pakdir.files.length() > 0); }
+
+  virtual void Close () override;
+
+  virtual bool FileExists (const VStr &fname) override;
+  //virtual VStream *OpenFileRead (const VStr &fname) override;
+  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
+  virtual int CheckNumForFileName (const VStr &fname) override;
+  virtual void ReadFromLump (int, void *, int, int) override;
+  virtual int LumpLength (int) override;
+  virtual VName LumpName (int) override;
+  virtual VStr LumpFileName (int) override;
+  virtual int IterateNS (int, EWadNamespace) override;
+  //virtual VStream *CreateLumpReaderNum (int) override;
+  virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
+
+  void ListWadFiles (TArray<VStr> &list);
+  void ListPk3Files (TArray<VStr> &list);
+
+  virtual VStr GetPrefix () override { return PakFileName; }
+};
+
+
+//==========================================================================
 //  VZipFile
 //==========================================================================
-struct VZipFileInfo;
-
-class VZipFile : public VSearchPath {
+class VZipFile : public VPakFileBase {
 private:
   mythread_mutex rdlock;
-  VStr ZipFileName;
   VStream *FileStream; // source stream of the zipfile
-  VZipFileInfo *Files;
-  vuint16 NumFiles; // total number of files
+  //vuint16 NumFiles; // total number of files
   vuint32 BytesBeforeZipFile; // byte before the zipfile, (>0 for sfx)
-  TMap<VStr, int> filemap;
-  TMap<VName, int> lumpmap; // internally, this is a linked list
 
   vuint32 SearchCentralDir ();
-  //static int FileCmpFunc (const void*, const void*);
   void OpenArchive (VStream *fstream);
 
 public:
@@ -169,74 +280,32 @@ public:
   VZipFile (VStream *fstream); // takes ownership
   VZipFile (VStream *fstream, const VStr &name); // takes ownership
   virtual ~VZipFile () override;
-  virtual bool FileExists (const VStr &) override;
+
   virtual VStream *OpenFileRead (const VStr &)  override;
-  virtual void Close () override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
-  virtual int CheckNumForFileName (const VStr &) override;
-  virtual void ReadFromLump (int, void*, int, int) override;
-  virtual int LumpLength (int) override;
-  virtual VName LumpName (int) override;
-  virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace) override;
   virtual VStream *CreateLumpReaderNum (int) override;
+  virtual void Close () override;
   virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
-
-  void ListWadFiles (TArray<VStr> &);
-  void ListPk3Files (TArray<VStr> &);
-
-  virtual VStr GetPrefix () override { return ZipFileName; }
 };
 
 
 //==========================================================================
 //  VDirPakFile
 //==========================================================================
-class VDirPakFile : public VSearchPath {
-public: // fuck you, shitplusplus
-  struct FileEntry {
-    VStr pakname; // lowercased
-    VName lumpname; // without extension
-    VStr diskname; // real
-    vint32 size; // -1: unknown yet; we'll cache it
-    EWadNamespace ns;
-    int nextLump; // next lump with the same name or -1
-  };
-
+class VDirPakFile : public VPakFileBase {
 private:
-  VStr PakFileName; // never ends with slash
-  TArray<FileEntry> files;
-  TMap<VStr, int> filemap; // maps names (with pathes) to file entries; names are lowercased
-  TMap<VName, int> lumpmap; // see zip reader
-
   // relative to PakFileName
-  void ScanDirectory (VStr relpath, int depth, bool inProgs);
+  void ScanDirectory (VStr relpath, int depth);
 
   void ScanAllDirs ();
 
 public:
   VDirPakFile (const VStr &);
-  virtual ~VDirPakFile () override;
 
-  inline bool hasFiles () const { return (files.length() > 0); }
+  //inline bool hasFiles () const { return (files.length() > 0); }
 
-  virtual bool FileExists (const VStr &) override;
   virtual VStream *OpenFileRead (const VStr &)  override;
-  virtual void Close () override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=false) override;
-  virtual int CheckNumForFileName (const VStr &) override;
-  virtual void ReadFromLump (int, void *, int, int) override;
-  virtual int LumpLength (int) override;
-  virtual VName LumpName (int) override;
-  virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace) override;
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
-
-  void ListWadFiles (TArray<VStr> &);
-  void ListPk3Files (TArray<VStr> &);
-
-  virtual VStr GetPrefix () override { return PakFileName; }
+  virtual int LumpLength (int) override;
 };
 
 

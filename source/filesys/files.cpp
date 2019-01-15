@@ -175,7 +175,7 @@ static void tempMount (const PWadFile &pwf) {
 
   if (pwf.asDirectory) {
     VDirPakFile *dpak = new VDirPakFile(pwf.fname);
-    if (!dpak->hasFiles()) { delete dpak; return; }
+    //if (!dpak->hasFiles()) { delete dpak; return; }
 
     SearchPaths.append(dpak);
 
@@ -400,7 +400,7 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
 static void AddPakDir (const VStr &dirname) {
   if (dirname.length() == 0) return;
   VDirPakFile *dpak = new VDirPakFile(dirname);
-  if (!dpak->hasFiles()) { delete dpak; return; }
+  //if (!dpak->hasFiles()) { delete dpak; return; }
 
   SearchPaths.append(dpak);
 
