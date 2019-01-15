@@ -553,8 +553,11 @@ public:
 
 extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 
-inline vuint32 GetTypeHash (const char *s) { return (s && s[0] ? fnvHashBuf(s, strlen(s)) : 1); }
-inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }
+//inline vuint32 GetTypeHash (const char *s) { return (s && s[0] ? fnvHashBuf(s, strlen(s)) : 1); }
+//inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }
+
+inline vuint32 GetTypeHash (const char *s) { return fnvHashStr(s); }
+inline vuint32 GetTypeHash (const VStr &s) { return fnvHashStr(*s); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

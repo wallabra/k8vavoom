@@ -96,10 +96,26 @@ static __attribute__((unused)) inline vuint32 fnvHashBufCI (const void *buf, siz
 // fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
 static __attribute__((unused)) inline vuint32 fnvHashBuf (const void *buf, size_t len) {
   vuint32 hash = 2166136261U; // fnv offset basis
-  const vuint8 *s = (const vuint8 *)buf;
-  while (len--) {
-    hash ^= *s++;
-    hash *= 16777619U; // 32-bit fnv prime
+  if (len) {
+    const vuint8 *s = (const vuint8 *)buf;
+    while (len--) {
+      hash ^= *s++;
+      hash *= 16777619U; // 32-bit fnv prime
+    }
+  }
+  return (hash ? hash : 1); // this is unlikely, but...
+}
+
+
+// fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
+static __attribute__((unused)) inline vuint32 fnvHashStr (const void *buf) {
+  vuint32 hash = 2166136261U; // fnv offset basis
+  if (buf) {
+    const vuint8 *s = (const vuint8 *)buf;
+    while (*s) {
+      hash ^= *s++;
+      hash *= 16777619U; // 32-bit fnv prime
+    }
   }
   return (hash ? hash : 1); // this is unlikely, but...
 }
