@@ -3721,6 +3721,8 @@ void VParser::ParseReplication (VClass *Class) {
 void VParser::ParseClass () {
   guard(VParser::ParseClass);
 
+  //fprintf(stderr, "***:%s: <%s>\n", *Lex.Location.toStringNoCol(), *Lex.Name);
+
   VName ClassName = Lex.Name;
   TLocation ClassLoc = Lex.Location;
   VClass *ExistingClass = nullptr;

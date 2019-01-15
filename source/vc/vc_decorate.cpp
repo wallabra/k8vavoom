@@ -3157,6 +3157,7 @@ void ProcessDecorateScripts () {
   TArray<VClassFixup> ClassFixups;
   TArray<VWeaponSlotFixups> newWSlots;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
+    //GCon->Logf(NAME_Init, "DC: 0x%08x (%s) : <%s>", Lump, *W_LumpName(Lump), *W_FullLumpName(Lump));
     if (W_LumpName(Lump) == NAME_decorate) {
       mainDecorateLump = Lump;
       GCon->Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
