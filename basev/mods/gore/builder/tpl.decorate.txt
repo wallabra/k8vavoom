@@ -409,8 +409,10 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
           A_ChangeFlag("NoInteraction", true);
+          if (!A_k8JumpIfOnFloorSky("Death")) {
+            A_k8JumpIfLiquidFloor("ItLandedOnWater");
+          }
         }
-      "####" "#" 0 A_k8JumpIfLiquidFloor("ItLandedOnWater")
       "####" "#" random(100, 450)
     FadeOutLoop:
       "####" "#" random(64, 90)
@@ -425,8 +427,10 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
           A_ChangeFlag("NoInteraction", true);
+          if (!A_k8JumpIfOnFloorSky("Death")) {
+            A_k8JumpIfLiquidFloor("ItLandedOnWater");
+          }
         }
-      "####" "#" 0 A_k8JumpIfLiquidFloor("ItLandedOnWater")
     EndlessLoop:
       "####" "#" 800
       // it still may disappear after some time
@@ -562,6 +566,7 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
       Stop
 
     Death:
+      TNT1 A 0 A_k8JumpIfCeilingSky("Xdeath")
       TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpot$(Color)",0,0,0,1)
       TNT1 A 5
       Stop
@@ -590,6 +595,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   States {
     Spawn:
       BPDL A 0
+      "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
       "####" "#" 0 A_JumpIfCVarTrue("r_models", "ModelFriendly")
     DoAfterSpawn:
       "####" "#" 1
@@ -704,6 +710,7 @@ Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
   States {
     Spawn:
       TNT1 A 0
+      "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
 #ifndef TRANSIENT
       TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
       TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
@@ -715,6 +722,10 @@ Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
       TNT1 AAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
       TNT1 AAAAA 24 A_SpawnItem("K8Gore_BloodDripingFromCeiling$(Color)")
 #endif
+      Stop
+
+    DieNow:
+      TNT1 A 0
       Stop
   }
 }
@@ -771,6 +782,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
 
     Death:
       TNT1 A 0
+      TNT1 A 0 A_k8JumpIfOnFloorSky("DieNow")
       TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpot$(Color)")
       TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
 #ifndef TRANSIENT
@@ -778,6 +790,10 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
 #else
       XDT1 EFGHIJKL 2 A_FadeOut(0.1)
 #endif
+      Stop
+
+    DieNow:
+      TNT1 A 0
       Stop
   }
 }
@@ -912,8 +928,10 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
         {
           A_ChangeVelocity(0, 0, 0, CVF_REPLACE);
           A_ChangeFlag("NoInteraction", true);
+          if (!A_k8JumpIfOnFloorSky("Die")) {
+            A_k8JumpIfLiquidFloor("ItLandedOnWater");
+          }
         }
-      "####" "#" 0 A_k8JumpIfLiquidFloor("ItLandedOnWater")
 
     Live:
       "####" "#" random(400, 900)
