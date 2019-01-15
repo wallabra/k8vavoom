@@ -756,6 +756,99 @@ IMPLEMENT_FUNCTION(VObject, FindClassFromScriptId) {
   RET_PTR(SV_FindClassFromScriptId(Id, GameFilter));
 }
 
+
+//==========================================================================
+//
+//  various
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, P_GetMapName) {
+  P_GET_INT(map);
+  RET_STR(P_GetMapName(map));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetMapIndexByLevelNum) {
+  P_GET_INT(map);
+  RET_INT(P_GetMapIndexByLevelNum(map));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetNumMaps) {
+  RET_INT(P_GetNumMaps());
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetMapInfo) {
+  P_GET_INT(map);
+  RET_PTR(P_GetMapInfoPtr(map));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetMapLumpName) {
+  P_GET_INT(map);
+  RET_NAME(P_GetMapLumpName(map));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_TranslateMap) {
+  P_GET_INT(map);
+  RET_NAME(P_TranslateMap(map));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetNumEpisodes) {
+  RET_INT(P_GetNumEpisodes());
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetEpisodeDef) {
+  P_GET_INT(Index);
+  RET_PTR(P_GetEpisodeDef(Index));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetNumSkills) {
+  RET_INT(P_GetNumSkills());
+}
+
+
+IMPLEMENT_FUNCTION(VObject, P_GetSkillDef) {
+  P_GET_INT(Index);
+  RET_PTR(const_cast<VSkillDef*>(P_GetSkillDef(Index)));
+}
+
+
+IMPLEMENT_FUNCTION(VObject, SV_GetSaveString) {
+  P_GET_PTR(VStr, buf);
+  P_GET_INT(i);
+  if (!buf) { RET_INT(0); return; }
+#ifdef SERVER
+  RET_INT(SV_GetSaveString(i, *buf));
+#else
+  RET_INT(0);
+#endif
+}
+
+
+IMPLEMENT_FUNCTION(VObject, SV_GetSaveDateString) {
+  P_GET_PTR(VStr, buf);
+  P_GET_INT(i);
+  if (!buf) return;
+#ifdef SERVER
+  SV_GetSaveDateString(i, *buf);
+#else
+  *buf = VStr("UNKNOWN");
+#endif
+}
+
+
+IMPLEMENT_FUNCTION(VObject, LoadTextLump) {
+  P_GET_NAME(name);
+  RET_STR(W_LoadTextLump(name));
+}
+
+
 #endif // SERVER
 
 
@@ -972,68 +1065,6 @@ IMPLEMENT_FUNCTION(VObject, TranslateKey) {
 }
 
 
-//==========================================================================
-//
-//  various
-//
-//==========================================================================
-IMPLEMENT_FUNCTION(VObject, P_GetMapName) {
-  P_GET_INT(map);
-  RET_STR(P_GetMapName(map));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetMapIndexByLevelNum) {
-  P_GET_INT(map);
-  RET_INT(P_GetMapIndexByLevelNum(map));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetNumMaps) {
-  RET_INT(P_GetNumMaps());
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetMapInfo) {
-  P_GET_INT(map);
-  RET_PTR(P_GetMapInfoPtr(map));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetMapLumpName) {
-  P_GET_INT(map);
-  RET_NAME(P_GetMapLumpName(map));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_TranslateMap) {
-  P_GET_INT(map);
-  RET_NAME(P_TranslateMap(map));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetNumEpisodes) {
-  RET_INT(P_GetNumEpisodes());
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetEpisodeDef) {
-  P_GET_INT(Index);
-  RET_PTR(P_GetEpisodeDef(Index));
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetNumSkills) {
-  RET_INT(P_GetNumSkills());
-}
-
-
-IMPLEMENT_FUNCTION(VObject, P_GetSkillDef) {
-  P_GET_INT(Index);
-  RET_PTR(const_cast<VSkillDef*>(P_GetSkillDef(Index)));
-}
-
-
 IMPLEMENT_FUNCTION(VObject, KeyNameForNum) {
   P_GET_INT(keynum);
   RET_STR(GInput->KeyNameForNum(keynum));
@@ -1056,38 +1087,8 @@ IMPLEMENT_FUNCTION(VObject, IN_SetBinding) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, SV_GetSaveString) {
-  P_GET_PTR(VStr, buf);
-  P_GET_INT(i);
-  if (!buf) { RET_INT(0); return; }
-#ifdef SERVER
-  RET_INT(SV_GetSaveString(i, *buf));
-#else
-  RET_INT(0);
-#endif
-}
-
-
-IMPLEMENT_FUNCTION(VObject, SV_GetSaveDateString) {
-  P_GET_PTR(VStr, buf);
-  P_GET_INT(i);
-  if (!buf) return;
-#ifdef SERVER
-  SV_GetSaveDateString(i, *buf);
-#else
-  *buf = VStr("UNKNOWN");
-#endif
-}
-
-
 IMPLEMENT_FUNCTION(VObject, GetSlist) {
   RET_PTR(GNet->GetSlist());
-}
-
-
-IMPLEMENT_FUNCTION(VObject, LoadTextLump) {
-  P_GET_NAME(name);
-  RET_STR(W_LoadTextLump(name));
 }
 
 

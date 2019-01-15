@@ -73,8 +73,6 @@
   DECLARE_FUNCTION(StartSearch)
   DECLARE_FUNCTION(GetSlist)
 
-  DECLARE_FUNCTION(LoadTextLump)
-
   // graphics
   DECLARE_FUNCTION(SetVirtualScreen)
   DECLARE_FUNCTION(GetVirtualWidth)
@@ -101,6 +99,8 @@
 
 #include "../neoui/vc_object_neoui.h"
 #endif // CLIENT
+
+  DECLARE_FUNCTION(LoadTextLump)
 
   DECLARE_FUNCTION(IsAnimatedTexture)
 
