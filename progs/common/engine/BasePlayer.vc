@@ -353,6 +353,31 @@ Entity eventGetReadyWeapon () {
 }
 
 
+//==========================================================================
+//
+//  IsCheckpointPossible
+//
+//  this should check player's inventory (and maybe some other things), and
+//  return `true` if simple checkpoint-style save is possible
+//  (i.e. loader can simply recreate player inventory and health)
+//
+//  for now, there is no way to inject custom data in checkpoints, so if
+//  you have any, return `false` here
+//
+//==========================================================================
+bool IsCheckpointPossible () {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  eventSetReadyWeapon
+//
+//==========================================================================
+void eventSetReadyWeapon (Entity ent) {}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
 // if commands starts with `Cheat_`, is void, and has no args, it is console command

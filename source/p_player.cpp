@@ -116,7 +116,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
 void VBasePlayer::SpawnClient () {
   guard(VBasePlayer::SpawnClient);
   if (!sv_loading) {
-    if (PlayerFlags & PF_Spawned) GCon->Log(NAME_Dev, "Already spawned");
+    if (PlayerFlags&PF_Spawned) GCon->Log(NAME_Dev, "Already spawned");
     if (MO) GCon->Log(NAME_Dev, "Mobj already spawned");
     eventSpawnClient();
     for (int i = 0; i < Level->XLevel->ActiveSequences.Num(); ++i) {

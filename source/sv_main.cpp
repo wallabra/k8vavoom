@@ -864,7 +864,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
     P_InitThinkers();
 
 #ifdef CLIENT
-    GGameInfo->NetMode = titlemap ? NM_TitleMap : svs.max_clients == 1 ? NM_Standalone : NM_ListenServer;
+    GGameInfo->NetMode = (titlemap ? NM_TitleMap : svs.max_clients == 1 ? NM_Standalone : NM_ListenServer);
 #else
     GGameInfo->NetMode = NM_DedicatedServer;
 #endif
@@ -909,11 +909,11 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   // set up world state
   Host_ResetSkipFrames();
 
+  if (!spawn_thinkers) return;
+
   // P_SpawnSpecials
   // after the map has been loaded, scan for specials that spawn thinkers
-  if (spawn_thinkers) GLevelInfo->eventSpawnSpecials();
-
-  if (!spawn_thinkers) return;
+  GLevelInfo->eventSpawnSpecials();
 
   SV_SendServerInfoToClients();
 
@@ -1075,7 +1075,7 @@ void SV_ShutdownGame () {
       // save net pointer
       VNetConnection *OldNet = GPlayersBase[i]->Net;
       GPlayersBase[i]->GetClass()->DestructObject(GPlayersBase[i]);
-      memset((vuint8*)GPlayersBase[i] + sizeof(VObject), 0, GPlayersBase[i]->GetClass()->ClassSize - sizeof(VObject));
+      memset((vuint8 *)GPlayersBase[i]+sizeof(VObject), 0, GPlayersBase[i]->GetClass()->ClassSize-sizeof(VObject));
       // restore pointer
       GPlayersBase[i]->Net = OldNet;
     }

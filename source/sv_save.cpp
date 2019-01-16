@@ -58,7 +58,8 @@ static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose s
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
-bool sv_autoenter_checkpoints = true;
+//bool sv_autoenter_checkpoints = true;
+static VCvarB sv_autoenter_checkpoints("sv_autoenter_checkpoints", true, "Use checkpoints for autosaves when possible?", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -114,11 +115,43 @@ public:
 };
 
 
+class VSavedCheckpoint {
+public:
+  // inventory item
+  struct InvItem {
+    VStr ClassName; // player inventory class name
+    vint32 amount, maxAmount;
+    vint32 ammo1, ammo2;
+  };
+
+public:
+  //bool isEmpty;
+  vuint8 Active; // is player active?
+  TArray<InvItem> Items;
+  vint32 Health;
+  VStr ReadyWeapon;
+
+  VSavedCheckpoint () : /*isEmpty(true),*/ Items() {}
+  ~VSavedCheckpoint () { Clear(); }
+
+  //inline bool IsEmpty () const { return isEmpty; }
+
+  void Clear () {
+    Items.Clear();
+    //isEmpty = true;
+    Active = 0;
+    Health = 0;
+    ReadyWeapon.clear();
+  }
+};
+
+
 class VSaveSlot {
 public:
   VStr Description;
   VName CurrentMap;
-  TArray<VSavedMap *> Maps;
+  TArray<VSavedMap *> Maps; // if there are no maps, it is a checkpoint
+  VSavedCheckpoint CheckPoint[MAXPLAYERS];
 
   ~VSaveSlot () { Clear(); }
 
@@ -558,6 +591,7 @@ void VSaveSlot::Clear () {
   CurrentMap = NAME_None;
   for (int i = 0; i < Maps.Num(); ++i) { delete Maps[i]; Maps[i] = nullptr; }
   Maps.Clear();
+  for (int i = 0; i < MAXPLAYERS; ++i) CheckPoint[i].Clear();
   unguard;
 }
 
@@ -754,6 +788,53 @@ bool VSaveSlot::LoadSlot (int Slot) {
     Strm->Serialise(Map->Data.Ptr(), Map->Data.Num());
   }
 
+  //HACK: if `NumMaps` is 0, we're loading checkpoint
+  if (NumMaps == 0) {
+    {
+      check(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
+      vuint8 mpl = 255;
+      *Strm << mpl;
+      if (mpl != MAXPLAYERS) {
+        Strm->Close();
+        delete Strm;
+        Strm = nullptr;
+        GCon->Log("Invalid savegame (bad number of players)");
+        return false;
+      }
+    }
+    // load players inventory
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      CheckPoint[i].Clear();
+      *Strm << CheckPoint[i].Active;
+      if (CheckPoint[i].Active) {
+        vint32 itemCount = 0, health = 0;
+        VStr rweapon;
+        *Strm << STRM_INDEX(health) << STRM_INDEX(itemCount) << rweapon;
+        CheckPoint[i].Health = health;
+        CheckPoint[i].ReadyWeapon = rweapon;
+        for (int f = 0; f < itemCount; ++f) {
+          VSavedCheckpoint::InvItem &it = CheckPoint[i].Items.alloc();
+          // save as string, 'cause we have no name map
+          VStr itname;
+          *Strm << itname
+                << STRM_INDEX(it.amount)
+                << STRM_INDEX(it.maxAmount)
+                << STRM_INDEX(it.ammo1)
+                << STRM_INDEX(it.ammo2);
+          if (itname.length() == 0) {
+            Strm->Close();
+            delete Strm;
+            Strm = nullptr;
+            GCon->Log("Invalid savegame (invalid inventory item)");
+            return false;
+          }
+          it.ClassName = itname;
+        }
+      }
+    }
+  }
+
+
   Strm->Close();
   delete Strm;
 
@@ -821,13 +902,42 @@ void VSaveSlot::SaveToSlot (int Slot) {
   VStr TmpName(CurrentMap);
   *Strm << TmpName;
 
-  int NumMaps = Maps.Num();
+  vint32 NumMaps = Maps.Num();
   *Strm << STRM_INDEX(NumMaps);
   for (int i = 0; i < Maps.Num(); ++i) {
     TmpName = VStr(Maps[i]->Name);
     vint32 DataLen = Maps[i]->Data.Num();
     *Strm << TmpName << Maps[i]->DecompressedSize << STRM_INDEX(DataLen);
     Strm->Serialise(Maps[i]->Data.Ptr(), Maps[i]->Data.Num());
+  }
+
+  //HACK: if `NumMaps` is 0, we're saving checkpoint
+  if (NumMaps == 0) {
+    //check(!CheckPoint.IsEmpty());
+    {
+      check(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
+      vuint8 mpl = MAXPLAYERS;
+      *Strm << mpl;
+    }
+    // save players inventory
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      *Strm << CheckPoint[i].Active;
+      if (CheckPoint[i].Active) {
+        vint32 itemCount = CheckPoint[i].Items.length(), health = CheckPoint[i].Health;
+        VStr rweapon = CheckPoint[i].ReadyWeapon;
+        *Strm << STRM_INDEX(health) << STRM_INDEX(itemCount) << rweapon;
+        for (int f = 0; f < itemCount; ++f) {
+          const VSavedCheckpoint::InvItem &it = CheckPoint[i].Items[f];
+          // save as string, 'cause we have no name map
+          VStr itname = it.ClassName;
+          *Strm << itname
+                << STRM_INDEX(it.amount)
+                << STRM_INDEX(it.maxAmount)
+                << STRM_INDEX(it.ammo1)
+                << STRM_INDEX(it.ammo2);
+        }
+      }
+    }
   }
 
   bool err = Strm->IsError();
@@ -1424,13 +1534,120 @@ static void SV_SaveMap (bool savePlayers) {
 
 //==========================================================================
 //
+//  SV_SaveCheckpoint
+//
+//==========================================================================
+static bool SV_SaveCheckpoint () {
+  if (!GGameInfo) return false;
+  if (GGameInfo->NetMode != NM_Standalone) return false; // oops
+
+  // check if checkpoints are possible
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    if (GGameInfo->Players[i]) {
+      if (!GGameInfo->Players[i]->IsCheckpointPossible()) return false;
+    }
+  }
+
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    BaseSlot.CheckPoint[i].Clear();
+    if (!GGameInfo->Players[i] || !GGameInfo->Players[i]->MO) continue;
+    BaseSlot.CheckPoint[i].Active = 1;
+    BaseSlot.CheckPoint[i].Health = GGameInfo->Players[i]->Health;
+    VEntity *rwe = GGameInfo->Players[i]->eventGetReadyWeapon();
+    BaseSlot.CheckPoint[i].ReadyWeapon = VStr(rwe ? rwe->GetClass()->Name : "");
+    for (VEntity *invFirst = GGameInfo->Players[i]->MO->GetEntityInventoryQS();
+         invFirst;
+         invFirst = invFirst->GetEntityInventoryQS())
+    {
+      vint32 amount, maxAmount, ammo1, ammo2;
+      invFirst->GetInventoryAmountsQS(amount, maxAmount, ammo1, ammo2);
+      GCon->Logf("QS: player #%d; inventory item: class='%s'; amount=(%d:%d); ammo=(%d:%d)", i, invFirst->GetClass()->GetName(), amount, maxAmount, ammo1, ammo2);
+      VSavedCheckpoint::InvItem &it = BaseSlot.CheckPoint[i].Items.alloc();
+      it.ClassName = invFirst->GetClass()->GetName();
+      it.amount = amount;
+      it.maxAmount = maxAmount;
+      it.ammo1 = ammo1;
+      it.ammo2 = ammo2;
+    }
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  SV_LoadMap
 //
 //==========================================================================
 static void SV_LoadMap (VName MapName) {
   guard(SV_LoadMap);
-  // load a base level
-  SV_SpawnServer(*MapName, false, false);
+
+  bool isCheckpoint = (BaseSlot.Maps.length() == 0);
+#ifdef CLIENT
+  if (isCheckpoint && svs.max_clients != 1) {
+    Host_Error("Checkpoints aren't supported in networked games!");
+  }
+#else
+  // standalone server
+  if (isCheckpoint) {
+    Host_Error("Checkpoints aren't supported on dedicated servers!");
+  }
+#endif
+
+  // load a base level (spawn thinkers if this is checkpoint save)
+  SV_SpawnServer(*MapName, isCheckpoint, false);
+
+#ifdef CLIENT
+  if (isCheckpoint) {
+    /*if (GGameInfo->NetMode == NM_TitleMap ||
+        GGameInfo->NetMode == NM_Standalone ||
+        GGameInfo->NetMode == NM_ListenServer)*/
+    {
+      bool oldLoading = sv_loading;
+      sv_loading = false;
+      CL_SetUpLocalPlayer();
+      //CL_SetUpStandaloneClient();
+      sv_loading = oldLoading;
+    }
+
+    // launch waiting scripts (guarantees to not be a deathmatch)
+    /*if (!deathmatch)*/ GLevel->Acs->CheckAcsStore();
+
+    Host_ResetSkipFrames();
+
+    // do this here so that clients have loaded info, not initial one
+    SV_SendServerInfoToClients();
+
+    // put inventory
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      //BaseSlot.CheckPoint[i].Clear();
+      if (!GGameInfo->Players[i] || !GGameInfo->Players[i]->MO) continue;
+      if (!BaseSlot.CheckPoint[i].Active) continue;
+      GGameInfo->Players[i]->Health = BaseSlot.CheckPoint[i].Health;
+      GGameInfo->Players[i]->MO->Health = GGameInfo->Players[i]->Health;
+      GGameInfo->Players[i]->MO->ClearEntityInventoryQS();
+      VEntity *rwe = nullptr;
+      // have to do it backwards due to the way `AttachToOwner()` works
+      for (int f = BaseSlot.CheckPoint[i].Items.length()-1; f >= 0; --f) {
+        const VSavedCheckpoint::InvItem &it = BaseSlot.CheckPoint[i].Items[f];
+        GCon->Logf("QS: player #%d; inventory item: class='%s'; amount=(%d:%d); ammo=(%d:%d)", i, *it.ClassName, it.amount, it.maxAmount, it.ammo1, it.ammo2);
+        VEntity *inv = GGameInfo->Players[i]->MO->SpawnEntityInventoryQS(VName(*it.ClassName));
+        if (!inv) Host_Error("cannot spawn inventory item '%s'", *it.ClassName);
+        GCon->Logf("  spawned '%s'", inv->GetClass()->GetName());
+        inv->SetInventoryAmountsQS(it.amount, it.maxAmount, it.ammo1, it.ammo2);
+        if (!rwe && BaseSlot.CheckPoint[i].ReadyWeapon.Cmp(inv->GetClass()->GetName()) == 0) rwe = inv;
+      }
+      if (rwe) GGameInfo->Players[i]->eventSetReadyWeapon(rwe);
+      GGameInfo->Players[i]->PlayerState = PST_LIVE;
+    }
+
+    Host_ResetSkipFrames();
+    return;
+  }
+#endif
+
+  Host_ResetSkipFrames();
 
   VSavedMap *Map = BaseSlot.FindMap(MapName);
   check(Map);
@@ -1466,8 +1683,12 @@ static void SV_LoadMap (VName MapName) {
   delete Loader;
   Loader = nullptr;
 
+  Host_ResetSkipFrames();
+
   // do this here so that clients have loaded info, not initial one
   SV_SendServerInfoToClients();
+
+  Host_ResetSkipFrames();
   unguard;
 }
 
@@ -1496,7 +1717,10 @@ void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
 
   if (checkpoint) {
     // player state save
-    SV_SaveMap(true); // true = save player info
+    if (!SV_SaveCheckpoint()) {
+      GCon->Logf("AUTOSAVE: checkpoint creation failed, perform a full save sequence");
+      SV_SaveMap(true); // true = save player info
+    }
   } else {
     // full save
     SV_SaveMap(true); // true = save player info
@@ -1593,8 +1817,8 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   // collect list of thinkers that will go to the new level
   for (VThinker *Th = GLevel->ThinkerHead; Th; Th = Th->Next) {
     VEntity *vent = Cast<VEntity>(Th);
-    if (vent != nullptr && (//(vent->EntityFlags & VEntity::EF_IsPlayer) ||
-        (vent->Owner && (vent->Owner->EntityFlags & VEntity::EF_IsPlayer))))
+    if (vent != nullptr && (//(vent->EntityFlags&VEntity::EF_IsPlayer) ||
+        (vent->Owner && (vent->Owner->EntityFlags&VEntity::EF_IsPlayer))))
     {
       TravelObjs.Append(vent);
       GLevel->RemoveThinker(vent);

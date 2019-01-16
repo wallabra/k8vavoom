@@ -306,6 +306,9 @@ public:
   void eventUseInventory (const VStr &Inv) { P_PASS_SELF; P_PASS_STR(Inv); EV_RET_VOID(NAME_UseInventory); }
   bool eventCheckDoubleFiringSpeed () { P_PASS_SELF; EV_RET_BOOL(NAME_CheckDoubleFiringSpeed); }
 
+  bool IsCheckpointPossible () { P_PASS_SELF; EV_RET_BOOL(VName("IsCheckpointPossible")); }
+
+
   // cheats
   void eventCheat_VScriptCommand (TArray<VStr> &args) { P_PASS_SELF; P_PASS_PTR((void *)&args); EV_RET_VOID(VName("Cheat_VScriptCommand")); }
 
@@ -427,7 +430,17 @@ public:
   }
 
   VEntity *eventGetReadyWeapon () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventGetReadyWeapon"));
     P_PASS_SELF;
-    EV_RET_REF(VEntity, (VName("eventGetReadyWeapon")));
+    EV_RET_REF_IDX(VEntity, mtindex);
+  }
+
+  void eventSetReadyWeapon (VEntity *ent) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventSetReadyWeapon"));
+    P_PASS_SELF;
+    P_PASS_REF(ent);
+    EV_RET_VOID_IDX(mtindex);
   }
 };

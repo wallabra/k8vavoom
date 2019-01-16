@@ -32,6 +32,47 @@ class!Inventory ArmorClass; // last armor pickup name
 
 //==========================================================================
 //
+//  GetInventoryAmountsQS
+//
+//==========================================================================
+override void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count) {
+  resAmount = Amount;
+  resMaxAmout = MaxAmount;
+  // abuse ammo count (sadly, we cannot save `ArmorClass`)
+  resAmmo1Count = int(SavePercent*100);
+  resAmmo2Count = 0;
+}
+
+
+//==========================================================================
+//
+//  SetInventoryAmountsQS
+//
+//==========================================================================
+override void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count) {
+  Amount = aAmount;
+  MaxAmount = aMaxAmout;
+  SavePercent = aAmmo1Count/100.0;
+  ArmorClass = none;
+  // deduce armor class
+  name aclass = '';
+  if (Amount == 0) { SavePercent = 0; return; }
+
+       if (aAmmo1Count >= 49) aclass = 'BlueArmor';
+  else if (aAmmo1Count > 1) aclass = 'GreenArmor';
+  else if (Amount > 0) aclass = 'ArmorBonus';
+  if (!aclass) return;
+
+  class!Inventory ic = class!Inventory(FindClass(aclass));
+  if (!ic) return;
+  ArmorClass = ic;
+  ic = class!Inventory(GetClassReplacement(ic));
+  if (ic) ArmorClass = ic;
+}
+
+
+//==========================================================================
+//
 //  CreateCopy
 //
 //==========================================================================

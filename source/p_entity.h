@@ -497,13 +497,17 @@ public:
   }
 
   float eventFindActivePowerupTime (VName pname) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("FindActivePowerupTime"));
     P_PASS_SELF;
     P_PASS_NAME(pname);
-    EV_RET_FLOAT(VName("FindActivePowerupTime"));
+    EV_RET_FLOAT_IDX(mtindex);
   }
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   VEntity *eventPickActor (bool specified_orig, TVec orig, TVec dir, float dist, bool specified_actmask, int actmask, bool specified_wallmask, int wallmask) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("PickActor"));
     P_PASS_SELF;
     if (!specified_orig) orig = TVec(0, 0, 0);
     P_PASS_VEC(orig);
@@ -516,31 +520,39 @@ public:
     if (!specified_wallmask) wallmask = 0;
     P_PASS_INT(wallmask);
     P_PASS_BOOL(specified_wallmask);
-    EV_RET_REF(VEntity, VName("PickActor"));
+    EV_RET_REF_IDX(VEntity, mtindex);
   }
 
   VEntity *eventDoAAPtr (int aaptr) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventDoAAPtr"));
     P_PASS_SELF;
     P_PASS_INT(aaptr);
-    EV_RET_REF(VEntity, VName("eventDoAAPtr"));
+    EV_RET_REF_IDX(VEntity, mtindex);
   }
 
   VEntity *eventFindTargetForACS () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventFindTargetForACS"));
     P_PASS_SELF;
-    EV_RET_REF(VEntity, VName("eventFindTargetForACS"));
+    EV_RET_REF_IDX(VEntity, mtindex);
   }
 
   bool eventSetPointerForACS (int assign_slot, int tid, int aptr, int flags) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventSetPointerForACS"));
     P_PASS_SELF;
     P_PASS_INT(assign_slot);
     P_PASS_INT(tid);
     P_PASS_INT(aptr);
     P_PASS_INT(flags);
-    EV_RET_BOOL(VName("eventSetPointerForACS"));
+    EV_RET_BOOL_IDX(mtindex);
   }
 
   //void eventLineAttackACS (TVec dir, float distance, int LADamage, name pufftype, name damagetype, int flags, int pufftid)
   void eventLineAttackACS (TVec dir, float distance, int damage, VName pufftype, VName damagetype, int flags, int pufftid) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("eventLineAttackACS"));
     P_PASS_SELF;
     P_PASS_VEC(dir);
     P_PASS_FLOAT(distance);
@@ -549,7 +561,7 @@ public:
     P_PASS_NAME(damagetype);
     P_PASS_INT(flags);
     P_PASS_INT(pufftid);
-    EV_RET_VOID(VName("eventLineAttackACS"));
+    EV_RET_VOID_IDX(mtindex);
   }
 
   int eventGetArmorPointsForType (VName atype) { P_PASS_SELF; P_PASS_NAME(atype); EV_RET_INT(VName("GetArmorPointsForType")); }
@@ -582,6 +594,53 @@ public:
     EV_RET_BOOL(NAME_decoDoSetFlag);
   }
   */
+
+  void ClearEntityInventoryQS () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("ClearEntityInventoryQS"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  VEntity *GetEntityInventoryQS () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("GetEntityInventoryQS"));
+    P_PASS_SELF;
+    EV_RET_REF_IDX(VEntity, mtindex);
+  }
+
+  //Entity SpawnEntityInventoryQS (name className) { return none; }
+  VEntity *SpawnEntityInventoryQS (VName className) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SpawnEntityInventoryQS"));
+    P_PASS_SELF;
+    P_PASS_NAME(className);
+    EV_RET_REF_IDX(VEntity, mtindex);
+  }
+
+  //void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count)
+  void GetInventoryAmountsQS (vint32 &amount, vint32 &maxAmount, vint32 &ammo1, vint32 &ammo2) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("GetInventoryAmountsQS"));
+    P_PASS_SELF;
+    P_PASS_PTR(&amount);
+    P_PASS_PTR(&maxAmount);
+    P_PASS_PTR(&ammo1);
+    P_PASS_PTR(&ammo2);
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  //void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count)
+  void SetInventoryAmountsQS (int amount, int maxAmount, int ammo1, int ammo2) {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SetInventoryAmountsQS"));
+    P_PASS_SELF;
+    P_PASS_INT(amount);
+    P_PASS_INT(maxAmount);
+    P_PASS_INT(ammo1);
+    P_PASS_INT(ammo2);
+    EV_RET_VOID_IDX(mtindex);
+  }
 
   bool SetState (VState *);
   void SetInitialState (VState *);

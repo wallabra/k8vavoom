@@ -27,6 +27,82 @@
 
 //==========================================================================
 //
+//  IsInventoryCheckpointPossible
+//
+//==========================================================================
+bool IsInventoryCheckpointPossible () {
+  for (Inventory it = Inventory; it; it = it.Inventory) {
+    if (!it.IsCheckpointSaveAllowed()) return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  ClearEntityInventoryQS
+//
+//==========================================================================
+override void ClearEntityInventoryQS () {
+  DestroyAllInventory();
+  if (bIsPlayer && Player && Player.MO == self) {
+    PlayerEx plr = PlayerEx(Player);
+    plr.SetWeapon(none);
+    plr.BringUpWeapon(instant:true);
+  }
+}
+
+
+//==========================================================================
+//
+//  GetEntityInventoryQS
+//
+//  returns first item in inventory, or `none`
+//
+//==========================================================================
+override Entity GetEntityInventoryQS () {
+  return Inventory;
+}
+
+
+//==========================================================================
+//
+//  SpawnEntityInventoryQS
+//
+//  adds to current inventory
+//
+//==========================================================================
+override Entity SpawnEntityInventoryQS (name className) {
+  if (!className) return none;
+
+  class!Inventory ec = class!Inventory(FindClass(className));
+  if (!ec) return none;
+  //ec = GetCompatibleClassReplacement(class!EntityEx, ec);
+  //if (ec) ArmorClass = ec;
+
+  Inventory ent = Spawn(ec);
+  if (!ent) return none;
+
+  /*
+  Inventory it = Inventory;
+  if (!it) {
+    Inventory = ent;
+  } else {
+    while (it.Inventory) it = it.Inventory;
+    it.Inventory = ent;
+  }
+  // set item's owner
+  //ent.Owner = self;
+  */
+
+  ent.AttachToOwner(self);
+
+  return ent;
+}
+
+
+//==========================================================================
+//
 //  AddInventory
 //
 //==========================================================================
@@ -43,7 +119,7 @@ void AddInventory (Inventory Item) {
   Item.Inventory = Inventory;
   Inventory = Item;
 
-  // set itsm's owner
+  // set item's owner
   Item.Owner = self;
 }
 

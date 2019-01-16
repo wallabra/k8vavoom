@@ -56,10 +56,8 @@ float BonusFlash;
 // base height above floor for viewz
 float ViewHeight;
 float PrevViewHeight; // this is used in crouching cheat (and saved there)
-// bob/squat speed
-float DeltaViewHeight;
-// bounded/scaled total momentum
-float Bob;
+float DeltaViewHeight; // bob/squat speed
+float Bob; // bounded/scaled total momentum
 
 // who did damage (none for floors/ceilings)
 EntityEx Attacker;
@@ -76,9 +74,9 @@ float LastHazardTime;
 
 // bit flags, for cheats and debug
 // see cheat_t above
-int Cheats;
+int /*[checkpoint]*/ Cheats;
 
-Weapon ReadyWeapon;
+Weapon /*[checkpoint]*/ ReadyWeapon;
 Weapon PendingWeapon; // is none if not changing
 
 // refired shots are less accurate (this is counter)
@@ -101,8 +99,8 @@ bool onground;
 bool bRevertCamera; // revert camera if player moves
 bool bFrozen; // player cannot move
 bool bTotallyFrozen; // player cannot do anything except press use
-bool bNoTarget; // monster don't target
-bool bInstantWeaponSwitch; // switch weapons instantly
+bool /*[checkpoint]*/ bNoTarget; // monster don't target
+bool /*[checkpoint]*/ bInstantWeaponSwitch; // switch weapons instantly
 bool bFly; // player is flying
 bool bInventoryAlwaysOpen; // inventory bar is always open
 bool bAutoAim; // auto aiming enabled? (weapon can override this)
@@ -138,7 +136,7 @@ name MapsVisited[MAX_MAPS_VISITED];
 float FOV; // current Field Of Vision
 float DesiredFOV; // desired Field Of Vision
 
-bool k8ElvenGifted;
+bool /*[checkpoint]*/ k8ElvenGifted; // always set to `true` in checkpoints
 
 // Health Accumulator
 // if you want to show HA info in UI, replicate those vars
@@ -165,6 +163,57 @@ replication {
 
   reliable if (bIsClient)
     bAutoAim;
+}
+
+
+//==========================================================================
+//
+//  IsCheckpointPossible
+//
+//  this should check player's inventory (and maybe some other things), and
+//  return `true` if simple checkpoint-style save is possible
+//  (i.e. loader can simply recreate player inventory and health)
+//
+//  for now, there is no way to inject custom data in checkpoints, so if
+//  you have any, return `false` here
+//
+//==========================================================================
+override bool IsCheckpointPossible () {
+  if (!MO) return false;
+  return EntityEx(MO).IsInventoryCheckpointPossible();
+}
+
+
+//==========================================================================
+//
+//  ClearEntityInventoryQS
+//
+//==========================================================================
+/*
+override void ClearEntityInventoryQS () {
+  ReadyWeapon = none;
+  PendingWeapon = none;
+  ::ClearEntityInventoryQS();
+}
+*/
+
+
+//==========================================================================
+//
+//  eventSetReadyWeapon
+//
+//==========================================================================
+override void eventSetReadyWeapon (Entity ent) {
+  if (!MO) return;
+  SetWeapon(none);
+  Weapon wpn = Weapon(ent);
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (ent == wpn) {
+      SetWeapon(wpn);
+      break;
+    }
+  }
+  BringUpWeapon(instant:true);
 }
 
 

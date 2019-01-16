@@ -38,4 +38,4 @@ extern void SV_AutoSaveOnLevelExit ();
 extern void SV_AutoSave (bool checkpoint);
 
 
-extern bool sv_autoenter_checkpoints;
+//extern bool sv_autoenter_checkpoints;

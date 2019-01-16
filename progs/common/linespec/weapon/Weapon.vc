@@ -54,20 +54,15 @@ class!Weapon SisterWeaponType;
 name UpSound;
 name ReadySound;
 
-// weapon slot this weapon is placed in
-int SlotNumber = -1;
-// weapons with lower values have greater priority
-int SelectionOrder;
-// position this weapon has in each slot
-int Position;
-// kickback from this weapon
-float Kickback;
 
-// y-adjustment value for full screen
-float PSpriteSY;
+int SlotNumber = -1; // weapon slot this weapon is placed in
+int SelectionOrder; // weapons with lower values have greater priority
+int Position; // position this weapon has in each slot
+float Kickback; // kickback from this weapon
 
-// for displaying weapon with player model
-int PlayerModelVersion;
+float PSpriteSY; // y-adjustment value for full screen
+
+int PlayerModelVersion; // for displaying weapon with player model
 
 ubyte FireMode;
 
@@ -75,45 +70,27 @@ float BotCombatDist;
 
 int ReloadCounter;
 
-// switch away if got ammo for more powerfull weapon
-bool bWimpyWeapon;
-// don't auto fire
-bool bNoAutoFire;
-// this is a powered up version of another weapon
-bool bPoweredUp;
-// does Heretic staff level 2 style kickback
-bool bStaff2Kickback;
-// ammo is optional
-bool bAmmoOptional;
-// ammo is optional for alternate fire
-bool bAltAmmoOptional;
-// can be selected if have any ammo (either normal, or alt)
-bool bCheckAnyAmmo;
-// half a chance to play the reay sound
-bool bReadySndHalf;
-// don't bob weapon
-bool bDontBob;
-// doesn't allert monsters when fired
-bool bNoAlert;
-// not considered a weapon by gimme cheat
-bool bCheatNotWeapon;
-// use axe's blood splatter
-bool bAxeBlood;
-// never switch to this weapon when picked up
-bool bNoAutoSwitch;
-// primary fire uses both ammo types
-bool bPrimaryUsesBoth;
-// alternate fire uses both ammo types
-bool bAltUsesBoth;
-// this weapon was given when owner morphed into something
-bool bGivenAsMorphWeapon;
 
-// it's a melee weapon
-bool bBotMelee;
-// it's a projectile weapon
-bool bBotProjectile;
-// it's a BFG
-bool bBotBfg;
+bool bWimpyWeapon; // switch away if got ammo for more powerfull weapon
+bool bNoAutoFire; // don't auto fire
+bool bPoweredUp; // this is a powered up version of another weapon
+bool bStaff2Kickback; // does Heretic staff level 2 style kickback
+bool bAmmoOptional; // ammo is optional
+bool bAltAmmoOptional; // ammo is optional for alternate fire
+bool bCheckAnyAmmo; // can be selected if have any ammo (either normal, or alt)
+bool bReadySndHalf; // half a chance to play the reay sound
+bool bDontBob; // don't bob weapon
+bool bNoAlert; // doesn't allert monsters when fired
+bool bCheatNotWeapon; // not considered a weapon by gimme cheat
+bool bAxeBlood; // use axe's blood splatter
+bool bNoAutoSwitch; // never switch to this weapon when picked up
+bool bPrimaryUsesBoth; // primary fire uses both ammo types
+bool bAltUsesBoth; // alternate fire uses both ammo types
+bool bGivenAsMorphWeapon; // this weapon was given when owner morphed into something
+
+bool bBotMelee; // it's a melee weapon
+bool bBotProjectile; // it's a projectile weapon
+bool bBotBfg; // it's a BFG
 
 // runtime in-inventory references
 Ammo Ammo1;
@@ -122,9 +99,47 @@ Weapon SisterWeapon;
 
 float FOVScale;
 
+
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     Ammo1, Ammo2;
+}
+
+
+//==========================================================================
+//
+//  IsCheckpointSaveAllowed
+//
+//==========================================================================
+override bool IsCheckpointSaveAllowed () {
+  if (SisterWeapon) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  GetInventoryAmountsQS
+//
+//==========================================================================
+override void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count) {
+  resAmount = Amount;
+  resMaxAmout = MaxAmount;
+  resAmmo1Count = (Ammo1 ? Ammo1.Amount : 0);
+  resAmmo2Count = (Ammo2 ? Ammo2.Amount : 0);
+}
+
+
+//==========================================================================
+//
+//  SetInventoryAmountsQS
+//
+//==========================================================================
+override void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count) {
+  Amount = aAmount;
+  MaxAmount = aMaxAmout;
+  if (Ammo1) Ammo1.Amount = aAmmo1Count;
+  if (Ammo2) Ammo2.Amount = aAmmo2Count;
 }
 
 

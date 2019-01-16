@@ -1052,8 +1052,57 @@ void SetHeight (float newvalue) {
 }
 
 
-defaultproperties
-{
+//==========================================================================
+//
+//  ClearEntityInventoryQS
+//
+//==========================================================================
+void ClearEntityInventoryQS () {}
+
+
+//==========================================================================
+//
+//  GetEntityInventoryQS
+//
+//  returns entity `Inventory` field, or `none`
+//
+//==========================================================================
+Entity GetEntityInventoryQS () { return none; }
+
+
+//==========================================================================
+//
+//  SpawnEntityInventoryQS
+//
+//  adds to current inventory
+//
+//==========================================================================
+Entity SpawnEntityInventoryQS (name className) { return none; }
+
+
+//==========================================================================
+//
+//  GetInventoryAmountsQS
+//
+//==========================================================================
+void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count) {
+  resAmount = 0;
+  resMaxAmout = 0;
+  resAmmo1Count = 0;
+  resAmmo2Count = 0;
+}
+
+
+//==========================================================================
+//
+//  SetInventoryAmountsQS
+//
+//==========================================================================
+void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count) {
+}
+
+
+defaultproperties {
   RenderStyle = STYLE_Normal;
   Alpha = 1.0;
   ScaleX = 1.0;
