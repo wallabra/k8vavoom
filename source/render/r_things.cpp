@@ -33,23 +33,17 @@
 //**  grabbed wrong, so I changed it...
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 #include "sv_local.h"
 
+
 extern VCvarB gl_pic_filtering;
 extern VCvarF fov;
+extern VCvarB r_chasecam;
 
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-enum
-{
+enum {
   SPR_VP_PARALLEL_UPRIGHT,
   SPR_FACING_UPRIGHT,
   SPR_VP_PARALLEL,
@@ -58,19 +52,6 @@ enum
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED,
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern VCvarB   r_chasecam;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", CVAR_Archive);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", CVAR_Archive);
@@ -274,10 +255,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       cr = mcos(thing->Angles.roll);
 
       sprforward = viewforward;
-      sprright = TVec(viewright.x * cr + viewup.x * sr, viewright.y * cr +
-        viewup.y * sr, viewright.z * cr + viewup.z * sr);
-      sprup = TVec(viewright.x * -sr + viewup.x * cr, viewright.y * -sr +
-        viewup.y * cr, viewright.z * -sr + viewup.z * cr);
+      sprright = TVec(viewright.x*cr+viewup.x*sr, viewright.y*cr+viewup.y*sr, viewright.z*cr+viewup.z*sr);
+      sprup = TVec(viewright.x*(-sr)+viewup.x*cr, viewright.y*(-sr)+viewup.y*cr, viewright.z*(-sr)+viewup.z*cr);
       break;
 
     case SPR_VP_PARALLEL_UPRIGHT_ORIENTED:
@@ -301,8 +280,8 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       //  CrossProduct(tvec, TVec(0, 0, 1))
       sprforward = TVec(-tvec.y, tvec.x, 0);
       //  Rotate
-      sprright = TVec(tvec.x * cr, tvec.y * cr, tvec.z * cr + sr);
-      sprup = TVec(tvec.x * -sr, tvec.y * -sr, tvec.z * -sr + cr);
+      sprright = TVec(tvec.x*cr, tvec.y*cr, tvec.z*cr+sr);
+      sprup = TVec(tvec.x*(-sr), tvec.y*(-sr), tvec.z*(-sr)+cr);
       break;
 
     default:
@@ -323,6 +302,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
 #endif
     return;
   }
+
   sprdef = &sprites[SpriteIndex];
   if (FrameIndex >= sprdef->numframes) {
 #ifdef PARANOID
@@ -354,6 +334,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
     lump = sprframe->lump[0];
     flip = sprframe->flip[0];
   }
+
   if (lump <= 0) {
 #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present", SpriteIndex, FrameIndex);
@@ -416,33 +397,21 @@ bool VRenderLevelShared::RenderAliasModel(VEntity *mobj, vuint32 light,
   vuint32 Fade, float Alpha, bool Additive, ERenderPass Pass)
 {
   guard(VRenderLevelShared::RenderAliasModel);
-  if (!r_models)
-  {
-    return false;
-  }
+  if (!r_models) return false;
 
   float TimeFrac = 0;
-  if (mobj->State->Time > 0)
-  {
-    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+  if (mobj->State->Time > 0) {
+    TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
     TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
-  //  Draw it
-  if (Alpha < 1.0f || Additive)
-  {
-    if (!CheckAliasModelFrame(mobj, TimeFrac))
-    {
-      return false;
-    }
-    RenderTranslucentAliasModel(mobj, light, Fade, Alpha, Additive,
-      TimeFrac);
+  // draw it
+  if (Alpha < 1.0f || Additive) {
+    if (!CheckAliasModelFrame(mobj, TimeFrac)) return false;
+    RenderTranslucentAliasModel(mobj, light, Fade, Alpha, Additive, TimeFrac);
     return true;
-  }
-  else
-  {
-    return DrawEntityModel(mobj, light, Fade, 1.0f, false, TimeFrac,
-      Pass);
+  } else {
+    return DrawEntityModel(mobj, light, Fade, 1.0f, false, TimeFrac, Pass);
   }
   unguard;
 }
@@ -457,14 +426,16 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   guard(VRenderLevelShared::RenderThing);
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
-  if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
-
+  //if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
   if (!mobj->State) return;
+  if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return;
 
   int RendStyle = mobj->RenderStyle;
   if (RendStyle == STYLE_None) return;
 
   // skip things in subsectors that are not visible
+  //TODO: for advanced renderer, we may need to render things several times, so
+  //      it is good place to cache them for the given frame
   int SubIdx = mobj->SubSector-Level->Subsectors;
   if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) return;
 
@@ -541,7 +512,7 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 //
 //==========================================================================
 extern "C" {
-  static int traspCmp (const void *a, const void *b, void * /*udata*/) {
+  static int traspCmp (const void *a, const void *b, void */*udata*/) {
     if (a == b) return 0;
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
@@ -898,7 +869,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
     vuint32 light;
          if (RendStyle == STYLE_Fuzzy) light = 0;
-    else if (cl->ViewStates[i].State->Frame & VState::FF_FULLBRIGHT) light = 0xffffffff;
+    else if (cl->ViewStates[i].State->Frame&VState::FF_FULLBRIGHT) light = 0xffffffff;
     else light = LightPoint(vieworg, cl->MO);
 
     //FIXME: fake "solid color" with colored light for now
@@ -953,24 +924,23 @@ void R_DrawSpritePatch (int x, int y, int sprite, int frame, int rot,
   bool flip;
   int lump;
 
-  spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame & VState::FF_FRAMEMASK];
+  spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame&VState::FF_FRAMEMASK];
   flip = sprframe->flip[rot];
   lump = sprframe->lump[rot];
   VTexture *Tex = GTextureManager[lump];
 
   Tex->GetWidth();
 
-  float x1 = x - Tex->SOffset;
-  float y1 = y - Tex->TOffset;
-  float x2 = x1 + Tex->GetWidth();
-  float y2 = y1 + Tex->GetHeight();
+  float x1 = x-Tex->SOffset;
+  float y1 = y-Tex->TOffset;
+  float x2 = x1+Tex->GetWidth();
+  float y2 = y1+Tex->GetHeight();
 
   x1 *= fScaleX;
   y1 *= fScaleY;
   x2 *= fScaleX;
   y2 *= fScaleY;
 
-  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(
-    R_SetMenuPlayerTrans(TranslStart, TranslEnd, Colour), nullptr), flip);
+  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Colour), nullptr), flip);
   unguard;
 }
