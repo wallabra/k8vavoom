@@ -39,3 +39,13 @@ extern void SV_AutoSave (bool checkpoint);
 
 
 //extern bool sv_autoenter_checkpoints;
+enum LastLoadedMapType {
+  LMT_Unknown, // nothing was loaded yet
+  LMT_E1M1,
+  LMT_MAP01,
+  LMT_OtherFirstD1, // first map, but not from standard iwad
+  LMT_OtherFirstD2, // first map, but not from standard iwad
+  LMT_Other, // cannot detect map, stop detection
+};
+
+extern LastLoadedMapType mapLoaded;

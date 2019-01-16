@@ -61,6 +61,9 @@ extern VCvarI Skill;
 //bool sv_autoenter_checkpoints = true;
 static VCvarB sv_autoenter_checkpoints("sv_autoenter_checkpoints", true, "Use checkpoints for autosaves when possible?", CVAR_Archive);
 
+//static bool enterAutosavesEnabled = true;
+LastLoadedMapType mapLoaded = LMT_Unknown;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define QUICKSAVE_SLOT  (-666)
@@ -1875,6 +1878,40 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     CL_SetUpStandaloneClient();
     doSaveGame = sv_new_map_autosave;
   }
+  //if (!enterAutosavesEnabled) doSaveGame = false;
+
+  if (doSaveGame && fsys_hasMapPwads) {
+    switch (mapLoaded) {
+      case LastLoadedMapType::LMT_Unknown:
+        // nothing was loaded yet, the thing that should not be
+        mapLoaded = LastLoadedMapType::LMT_Other;
+        break;
+      case LastLoadedMapType::LMT_E1M1:
+      case LastLoadedMapType::LMT_MAP01:
+        // looks like we're playing stadard iwad, go on
+        mapLoaded = LastLoadedMapType::LMT_Other;
+        break;
+      case LastLoadedMapType::LMT_OtherFirstD1:
+        // first map, but not from standard iwad
+        if (GLevel->MapName == "e1m2" && GLevel->MapHashMD5 == "81a4cc5136cbfa49345654190a626c09") {
+          // second map is from standard iwad, don't autosave
+          doSaveGame = false;
+          GCon->Logf("Detector: autosave skipped");
+        }
+        break;
+      case LastLoadedMapType::LMT_OtherFirstD2:
+        // first map, but not from standard iwad
+        if (GLevel->MapName == "map02" && GLevel->MapHashMD5 == "ab24ae6e2cb13cbdd04600a4d37f9189") {
+          // second map is from standard iwad, don't autosave
+          doSaveGame = false;
+          GCon->Logf("Detector: autosave skipped");
+        }
+        break;
+      case LastLoadedMapType::LMT_Other:
+        // cannot detect map, stop detection
+        break;
+    }
+  }
 #else
   const bool doSaveGame = false;
 #endif
@@ -2152,6 +2189,7 @@ COMMAND(QuickLoad) {
 COMMAND(AutoSaveEnter) {
   guard(COMMAND AutoSaveEnter)
 
+  // there is no reason to autosave on standard maps when we have pwads
   if (!CheckIfSaveIsAllowed()) return;
 
   int aslot = SV_FindAutosaveSlot();

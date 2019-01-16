@@ -62,3 +62,6 @@ extern VStr fl_gamedir;
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
+
+extern bool fsys_hasPwads; // or paks
+extern bool fsys_hasMapPwads; // or paks

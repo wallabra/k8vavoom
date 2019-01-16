@@ -37,6 +37,9 @@ static VCvarB gz_skip_menudef("_gz_skip_menudef", false, "Skip gzdoom menudef pa
 bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
 bool fsys_skipDehacked = false;
+bool fsys_hasPwads = false; // or paks
+bool fsys_hasMapPwads = false; // or paks
+
 
 int fsys_warp_n0 = -1;
 int fsys_warp_n1 = -1;
@@ -1139,6 +1142,7 @@ void FL_Init () {
       if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
       AddAnyFile(pwf.fname, true);
     }
+    fsys_hasPwads = true;
 
     //GCon->Log("**************************");
     if (doStartMap && !mapinfoFound) {
@@ -1147,6 +1151,7 @@ void FL_Init () {
         if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
           GCon->Logf(NAME_Init, "FOUND 'mapinfo'!");
           mapinfoFound = true;
+          fsys_hasMapPwads = true;
           break;
         }
         int midx = -1;
@@ -1154,6 +1159,20 @@ void FL_Init () {
         if (mname.length() && (mapnum < 0 || midx < mapnum)) {
           mapnum = midx;
           mapname = mname;
+          fsys_hasMapPwads = true;
+        }
+      }
+    } else if (!fsys_hasMapPwads) {
+      for (; nextfid < W_NextMountFileId(); ++nextfid) {
+        if (W_CheckNumForNameInFile(NAME_mapinfo, nextfid) >= 0) {
+          fsys_hasMapPwads = true;
+          break;
+        }
+        int midx = -1;
+        VStr mname = W_FindMapInLastFile(nextfid, &midx);
+        if (mname.length() && (mapnum < 0 || midx < mapnum)) {
+          fsys_hasMapPwads = true;
+          break;
         }
       }
     }

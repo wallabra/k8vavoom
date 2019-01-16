@@ -1304,6 +1304,27 @@ COMMAND(Map) {
   else if ((int)Skill >= P_GetNumSkills()) Skill = P_GetNumSkills()-1;
 
   SV_SpawnServer(*mapname, true, false);
+
+  if (mapLoaded == LMT_Unknown) {
+    if (GLevel->MapName == "e1m1") {
+      if (GLevel->MapHashMD5 == "b49f7a6c519757d390d52667db7d8793") {
+        mapLoaded = LastLoadedMapType::LMT_E1M1;
+      } else {
+        mapLoaded = LastLoadedMapType::LMT_OtherFirstD1;
+      }
+    } else if (GLevel->MapName == "map01") {
+      if (GLevel->MapHashMD5 == "3c9902e376cca1e9c3be8763bdc21df5") {
+        mapLoaded = LastLoadedMapType::LMT_MAP01;
+      } else {
+        mapLoaded = LastLoadedMapType::LMT_OtherFirstD2;
+      }
+    } else {
+      mapLoaded = LastLoadedMapType::LMT_Other;
+    }
+  } else {
+    mapLoaded = LastLoadedMapType::LMT_Other;
+  }
+
 #ifdef CLIENT
   if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
 #endif
