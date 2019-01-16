@@ -200,8 +200,8 @@
     <flag_unsupported name="NoSkin" />
     <flag name="DontTranslate" property="bDontTranslate" />
     <flag name="NoPain" property="bNoPain" />
-    <flag_unsupported name="ForceYBillboard" />
-    <flag_unsupported name="ForceXYBillboard" />
+    <flag_byte name="ForceYBillboard" property="SpriteType" true_value="0" false_value="0" />
+    <flag_byte name="ForceXYBillboard" property="SpriteType" true_value="4" false_value="0" />
     <!-- Projectile -->
     <flag name="Missile" property="bMissile" />
     <flag name="Ripper" property="bRip" />
