@@ -272,8 +272,8 @@ void VFileDirectory::buildLumpNames () {
 //  call this when all lump names are built
 //
 //==========================================================================
-void VFileDirectory::buildNameMaps () {
-  bool doReports = !fsys_no_dup_reports;
+void VFileDirectory::buildNameMaps (bool rebuilding) {
+  bool doReports = (rebuilding ? false : !fsys_no_dup_reports);
   if (doReports) {
     VStr fn = getArchiveName().ExtractFileBaseName();
     doReports =
@@ -334,7 +334,7 @@ void VFileDirectory::buildNameMaps () {
     //if (dumpZips) GCon->Logf(NAME_Dev, "%s: %s", *PakFileName, *Files[f].fileName);
   }
 
-  if (GArgs.CheckParm("-dump-paks")) {
+  if (!rebuilding && GArgs.CheckParm("-dump-paks")) {
     GCon->Logf("======== PAK: %s ========", *getArchiveName());
     for (int f = 0; f < files.length(); ++f) {
       VPakFileInfo &fi = files[f];

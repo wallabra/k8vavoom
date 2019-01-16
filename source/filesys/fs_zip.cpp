@@ -445,6 +445,7 @@ VStream *VZipFile::CreateLumpReaderNum (int Lump) {
 //==========================================================================
 void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
   guard(VZipFile::RenameSprites);
+  bool wasRename = false;
   for (int i = 0; i < pakdir.files.length(); ++i) {
     VPakFileInfo &L = pakdir.files[i];
     if (L.lumpNamespace != WADNS_Sprites) continue;
@@ -469,11 +470,16 @@ void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
       newname[3] = A[j].New[3];
       GCon->Logf(NAME_Dev, "renaming ZIP sprite '%s' to '%s'", *L.lumpName, newname);
       L.lumpName = newname;
+      wasRename = true;
     }
     for (int j = 0; j < LA.Num(); ++j) {
-      if (L.lumpName == LA[j].Old) L.lumpName = LA[j].New;
+      if (L.lumpName == LA[j].Old) {
+        L.lumpName = LA[j].New;
+        wasRename = true;
+      }
     }
   }
+  if (wasRename) pakdir.buildNameMaps(true);
   unguard;
 }
 

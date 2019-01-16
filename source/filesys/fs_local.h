@@ -174,7 +174,7 @@ public:
   void buildLumpNames ();
 
   // call this when all lump names are built
-  void buildNameMaps ();
+  void buildNameMaps (bool rebuilding=false); // `true` to suppress warnings
 
   bool fileExists (VStr name);
   bool lumpExists (VName lname, vint32 ns); // namespace -1 means "any"

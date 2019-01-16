@@ -443,6 +443,7 @@ void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
 //==========================================================================
 void VWadFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
   guard(VWadFile::RenameSprites);
+  bool wasRename = false;
   for (int i = 0; i < pakdir.files.length(); ++i) {
     VPakFileInfo &fi = pakdir.files[i];
     if (fi.lumpNamespace != WADNS_Sprites) continue;
@@ -465,10 +466,15 @@ void VWadFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
       newname[3] = A[j].New[3];
       GCon->Logf(NAME_Dev, "renaming WAD sprite '%s' to '%s'", *fi.lumpName, newname);
       fi.lumpName = newname;
+      wasRename = true;
     }
     for (int j = 0; j < LA.Num(); ++j) {
-      if (fi.lumpName == LA[j].Old) fi.lumpName = LA[j].New;
+      if (fi.lumpName == LA[j].Old) {
+        fi.lumpName = LA[j].New;
+        wasRename = true;
+      }
     }
   }
+  if (wasRename) pakdir.buildNameMaps(true);
   unguard;
 }
