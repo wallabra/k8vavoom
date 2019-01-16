@@ -58,6 +58,7 @@ static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose s
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
+bool sv_autoenter_checkpoints = true;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1476,14 +1477,30 @@ static void SV_LoadMap (VName MapName) {
 //  SV_SaveGame
 //
 //==========================================================================
-void SV_SaveGame (int slot, const VStr &Description) {
+void SV_SaveGame (int slot, const VStr &Description, bool checkpoint) {
   guard(SV_SaveGame);
 
   BaseSlot.Description = Description;
   BaseSlot.CurrentMap = GLevel->MapName;
 
   // save out the current map
-  SV_SaveMap(true); // true = save player info
+  if (checkpoint) {
+    // if we have no maps in our base slot, checkpoints are enabled
+    if (BaseSlot.Maps.length() != 0) {
+      GCon->Logf("AUTOSAVE: cannot create checkpoint, perform a full save sequence");
+      checkpoint = false;
+    } else {
+      GCon->Logf("AUTOSAVE: checkpoints allowed");
+    }
+  }
+
+  if (checkpoint) {
+    // player state save
+    SV_SaveMap(true); // true = save player info
+  } else {
+    // full save
+    SV_SaveMap(true); // true = save player info
+  }
 
   // write data to destination slot
   BaseSlot.SaveToSlot(slot);
@@ -1596,12 +1613,13 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     const mapInfo_t &new_info = P_GetMapInfo(mapname);
     // all maps in cluster 0 are treated as in different clusters
     if (old_info.Cluster && old_info.Cluster == new_info.Cluster &&
-        (P_GetClusterDef(old_info.Cluster)->Flags & CLUSTERF_Hub))
+        (P_GetClusterDef(old_info.Cluster)->Flags&CLUSTERF_Hub))
     {
       // same cluster: save map without saving player mobjs
       SV_SaveMap(false);
     } else {
       // entering new cluster: clear base slot
+      GCon->Logf("**** NEW CLUSTER ****");
       BaseSlot.Clear();
     }
   }
@@ -1697,7 +1715,7 @@ static void BroadcastSaveText (const char *msg) {
 }
 
 
-void SV_AutoSave () {
+void SV_AutoSave (bool checkpoint) {
   if (!CheckIfSaveIsAllowed()) return;
 
   int aslot = SV_FindAutosaveSlot();
@@ -1714,7 +1732,7 @@ void SV_AutoSave () {
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("AUTO: ")+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, svname);
+  SV_SaveGame(aslot, svname, checkpoint);
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
@@ -1739,7 +1757,7 @@ void SV_AutoSaveOnLevelExit () {
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+VStr("OUT: ")+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, svname);
+  SV_SaveGame(aslot, svname, false); // not a checkpoint, obviously
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));
@@ -1766,7 +1784,7 @@ COMMAND(Save) {
 
   Draw_SaveIcon();
 
-  SV_SaveGame(atoi(*Args[1]), Args[2]);
+  SV_SaveGame(atoi(*Args[1]), Args[2], false); // not a checkpoint
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game saved.");
@@ -1867,7 +1885,7 @@ COMMAND(QuickSave) {
 
   Draw_SaveIcon();
 
-  SV_SaveGame(QUICKSAVE_SLOT, "quicksave");
+  SV_SaveGame(QUICKSAVE_SLOT, "quicksave", false); // not a checkpoint
   Host_ResetSkipFrames();
 
   BroadcastSaveText("Game quicksaved.");
@@ -1924,7 +1942,7 @@ COMMAND(AutoSaveEnter) {
   GetTimeOfDay(&tv);
   VStr svname = TimeVal2Str(&tv, true)+": "+(*GLevel->MapName);
 
-  SV_SaveGame(aslot, svname);
+  SV_SaveGame(aslot, svname, sv_autoenter_checkpoints);
   Host_ResetSkipFrames();
 
   BroadcastSaveText(va("Game autosaved to slot #%d", -aslot));

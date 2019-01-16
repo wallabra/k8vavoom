@@ -25,7 +25,7 @@
 //**
 //**************************************************************************
 
-extern void SV_SaveGame (int Slot, const VStr &Description);
+extern void SV_SaveGame (int Slot, const VStr &Description, bool checkpoint);
 extern void SV_MapTeleport (VName MapName, int flags=0, int newskill=-1);
 extern void SV_LoadGame (int Slot);
 extern void SV_InitBaseSlot ();
@@ -35,4 +35,7 @@ extern void SV_InitBaseSlot ();
 extern bool SV_GetSaveString (int Slot, VStr &Desc);
 extern void SV_GetSaveDateString (int Slot, VStr &datestr);
 extern void SV_AutoSaveOnLevelExit ();
-extern void SV_AutoSave ();
+extern void SV_AutoSave (bool checkpoint);
+
+
+extern bool sv_autoenter_checkpoints;

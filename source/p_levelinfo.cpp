@@ -461,8 +461,9 @@ IMPLEMENT_FUNCTION(VLevelInfo, FindMobjFromTID) {
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, AutoSave) {
+  P_GET_BOOL_OPT(checkpoint, false);
   P_GET_SELF;
-  if (Self->Game->NetMode == NM_Standalone) SV_AutoSave();
+  if (Self->Game->NetMode == NM_Standalone) SV_AutoSave(checkpoint);
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, ChangeMusic) {

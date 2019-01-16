@@ -205,7 +205,8 @@ native final void Completed (int Map, int Position, int SaveAngle);
 // special thinker utilites
 native final bool ChangeSwitchTexture (int SideNum, int useAgain, name DefaultSound, out ubyte Quest);
 native final Entity FindMobjFromTID (int tid, Entity Prev);
-native final void AutoSave ();
+// checkpoint saves are lightweight, but they aren't saving map state, only player inventory
+native final void AutoSave (optional bool checkpoint);
 
 native final void ChangeMusic (name SongName);
 
