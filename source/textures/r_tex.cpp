@@ -1180,7 +1180,9 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
 
   check(inMapTextures == 0);
   VName tlname = W_LumpName(TexLump);
+  TMapNC<VName, bool> tseen; // only the first seen texture is relevant, so ignore others
 
+  VName dashName = VName("-"); // empty texture
   int pncount = 0;
   int TexFile = W_LumpFile(TexLump);
   while (TexLump >= 0 && W_LumpFile(TexLump) == TexFile) {
@@ -1215,13 +1217,17 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
 
     for (int i = 0; i < NumTex; ++i) {
       VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i, patchtexlookup, FirstTex, IsStrife);
-      AddTexture(Tex);
+      // copy dimensions of the first texture to the dummy texture in case they are used, and
+      // set it to be `TEXTYPE_Null`, as this is how DooM works
       if (i == 0 && First) {
-        // copy dimensions of the first texture to the dummy texture in case they are used
         Textures[0]->Width = Tex->Width;
         Textures[0]->Height = Tex->Height;
         Tex->Type = TEXTYPE_Null;
       }
+      // ignore empty and duplicate textures
+      if (Tex->Name == NAME_None || Tex->Name == dashName || tseen.has(Tex->Name)) { delete Tex; continue; }
+      tseen.put(Tex->Name, true);
+      AddTexture(Tex);
     }
     delete Strm;
     // next one
