@@ -178,6 +178,7 @@ const int CHAN_WEAPON = 2;
 const int CHAN_ITEM = 3;
 const int CHAN_BODY = 4;
 
+// channel 8 is "auto"
 const int CHAN_0 = 0;
 const int CHAN_1 = 1;
 const int CHAN_2 = 2;
@@ -186,6 +187,7 @@ const int CHAN_4 = 4;
 const int CHAN_5 = 5;
 const int CHAN_6 = 6;
 const int CHAN_7 = 7;
+const int CHAN_8 = 0;
 
 const int CHAN_SLOT0 = 0;
 const int CHAN_SLOT1 = 1;
@@ -195,6 +197,7 @@ const int CHAN_SLOT4 = 4;
 const int CHAN_SLOT5 = 5;
 const int CHAN_SLOT6 = 6;
 const int CHAN_SLOT7 = 7;
+const int CHAN_SLOT8 = 0;
 
 const int CHAN_SLOT_0 = 0;
 const int CHAN_SLOT_1 = 1;
@@ -204,6 +207,7 @@ const int CHAN_SLOT_4 = 4;
 const int CHAN_SLOT_5 = 5;
 const int CHAN_SLOT_6 = 6;
 const int CHAN_SLOT_7 = 7;
+const int CHAN_SLOT_8 = 0;
 
 
 const int CHAN_LISTENERZ = 0; //(8): Sound is played from the listener's Z-height. (Needs verifying)
