@@ -1095,7 +1095,7 @@ VPartialStreamReader::~VPartialStreamReader () {
 }
 
 const VStr &VPartialStreamReader::GetName () const {
-  return (srcStream ? srcStream->GetName() : mEmptyName);
+  return (srcStream ? srcStream->GetName() : VStr::EmptyString);
 }
 
 bool VPartialStreamReader::Close () {
@@ -1138,6 +1138,7 @@ bool VPartialStreamReader::AtEnd () { return (bError || srccurpos >= stpos+partl
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+/*
 // VZipStreamReader
 VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, bool asZipArchive, FSysDriverBase *aDriver)
   : VStreamPakFile(aDriver)
@@ -1190,12 +1191,12 @@ void VZipStreamReader::initialize () {
 
   // initialise zip stream structure
   memset(&zStream, 0, sizeof(zStream));
-  /*
+  /+
   zStream.total_out = 0;
   zStream.zalloc = (alloc_func)0;
   zStream.zfree = (free_func)0;
   zStream.opaque = (voidpf)0;
-  */
+  +/
 
   if (srcStream) {
     MyThreadLocker locker(&lock);
@@ -1277,7 +1278,7 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
     }
     // unpack some data
     vuint32 totalOutBefore = zStream.total_out;
-    int err = inflate(&zStream, /*Z_SYNC_FLUSH*/Z_NO_FLUSH);
+    int err = inflate(&zStream, /+Z_SYNC_FLUSH+/Z_NO_FLUSH);
     if (err != Z_OK && err != Z_STREAM_END) return -1;
     vuint32 totalOutAfter = zStream.total_out;
     bytesRead += totalOutAfter-totalOutBefore;
@@ -1507,6 +1508,7 @@ bool VZipStreamWriter::Close () {
   initialised = false;
   return !bError;
 }
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //

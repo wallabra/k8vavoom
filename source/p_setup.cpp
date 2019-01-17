@@ -34,7 +34,6 @@
 
 
 #include "gamedefs.h"
-#include "filesys/zipstream.h"
 #ifdef SERVER
 #include "sv_local.h"
 #endif

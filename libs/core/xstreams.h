@@ -156,3 +156,57 @@ public:
   inline int GetNumBytes () const { return (Num+7)>>3; }
   inline int GetPosBits () const { return Pos; }
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// owns afl
+class VStdFileStream : public VStream {
+private:
+  FILE *mFl;
+  VStr mName;
+  int size; // <0: not determined yet
+
+private:
+  void setError ();
+
+public:
+  VStdFileStream (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
+  virtual ~VStdFileStream () override;
+
+  virtual const VStr &GetName () const override;
+  virtual void Seek (int pos) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+  virtual void Serialise (void *buf, int len) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// doesn't own srcstream by default
+class VPartialStreamRO : public VStream {
+private:
+  mutable mythread_mutex lock;
+  VStream *srcStream;
+  int stpos;
+  int srccurpos;
+  int partlen;
+  bool srcOwned;
+
+private:
+  void setError ();
+
+public:
+  // doesn't own passed stream
+  VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen=-1, bool aOwnSrc=false);
+  virtual ~VPartialStreamRO () override;
+
+  virtual const VStr &GetName () const override;
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+};

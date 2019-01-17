@@ -24,17 +24,27 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#ifndef ZIPSTREAM_HEADER
-#define ZIPSTREAM_HEADER
+#ifndef VAVOOM_CORELIB_ZIPSTREAMS_HEADER
+#define VAVOOM_CORELIB_ZIPSTREAMS_HEADER
 
 #ifdef USE_INTERNAL_ZLIB
-# include "../../libs/zlib/zlib.h"
+# include "../zlib/zlib.h"
 #else
 # include <zlib.h>
 #endif
 
 
+// doesn't own srcstream
 class VZipStreamReader : public VStream {
+public:
+  // stream type
+  enum Type {
+    ZLIB, // and gzip
+    RAW,
+  };
+
+  enum { UNKNOWN_SIZE = 0xffffffffU }; // for uncompressed
+
 private:
   enum { BUFFER_SIZE = 65536 };
 
@@ -44,13 +54,21 @@ private:
   bool Initialised;
   vuint32 UncompressedSize;
   int srcStartPos;
+  int srcCurrPos;
+  Type type;
+  VStr StreamName;
+  bool useInternalStreamName;
+  mutable mythread_mutex lock;
 
 private:
   void initialize ();
+  void reinitialize ();
 
 public:
-  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=0xffffffff);
-  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=0xffffffff);
+  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (const VStr &strmName, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (const VStr &strmName, bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
   virtual ~VZipStreamReader () override;
   virtual const VStr &GetName () const override;
   virtual void Serialise (void*, int) override;
@@ -62,7 +80,15 @@ public:
 };
 
 
+// doesn't own dststream
 class VZipStreamWriter : public VStream {
+public:
+  // stream type
+  enum Type {
+    ZLIB,
+    RAW,
+    GZIP,
+  };
 private:
   enum { BUFFER_SIZE = 65536 };
 
@@ -72,7 +98,7 @@ private:
   bool Initialised;
 
 public:
-  VZipStreamWriter (VStream *, int clevel=6);
+  VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
   virtual ~VZipStreamWriter () override;
   virtual const VStr &GetName () const override;
   virtual void Serialise (void*, int) override;

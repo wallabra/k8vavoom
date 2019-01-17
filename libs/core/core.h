@@ -64,6 +64,7 @@
 #include "str.h" // strings
 #include "args.h" // command line arguments
 #include "xstreams.h" // extended streams
+#include "zipstreams.h" // extended streams
 #include "mathutil.h"
 #include "vector.h" // vector math
 #include "matrix.h" // matrices

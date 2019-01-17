@@ -31,7 +31,6 @@
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
-#include "filesys/zipstream.h"
 
 #include <time.h>
 #include <sys/time.h>

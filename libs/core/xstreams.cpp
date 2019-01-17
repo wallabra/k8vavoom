@@ -770,3 +770,277 @@ vuint32 VBitStreamReader::ReadInt (vuint32 Maximum) {
 bool VBitStreamReader::AtEnd () {
   return (bError || Pos >= Num);
 }
+
+
+
+//==========================================================================
+//
+//  VStdFileStream::VStdFileStream
+//
+//==========================================================================
+VStdFileStream::VStdFileStream (FILE* afl, const VStr &aname, bool asWriter)
+  : mFl(afl)
+  , mName(aname)
+  , size(-1)
+{
+  if (afl) fseek(afl, 0, SEEK_SET);
+  bLoading = !asWriter;
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::~VStdFileStream
+//
+//==========================================================================
+VStdFileStream::~VStdFileStream () {
+  Close();
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::Close
+//
+//==========================================================================
+bool VStdFileStream::Close () {
+  if (mFl) { fclose(mFl); mFl = nullptr; }
+  mName.clear();
+  return !bError;
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::setError
+//
+//==========================================================================
+void VStdFileStream::setError () {
+  if (mFl) { fclose(mFl); mFl = nullptr; }
+  mName.clear();
+  bError = true;
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::GetName
+//
+//==========================================================================
+const VStr &VStdFileStream::GetName () const {
+  return mName;
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::Seek
+//
+//==========================================================================
+void VStdFileStream::Seek (int pos) {
+  if (!mFl) { setError(); return; }
+  if (fseek(mFl, pos, SEEK_SET)) setError();
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::Tell
+//
+//==========================================================================
+int VStdFileStream::Tell () {
+  return (bError || !mFl ? 0 : ftell(mFl));
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::TotalSize
+//
+//==========================================================================
+int VStdFileStream::TotalSize () {
+  if (size < 0 && mFl && !bError) {
+    auto opos = ftell(mFl);
+    fseek(mFl, 0, SEEK_END);
+    size = (int)ftell(mFl);
+    fseek(mFl, opos, SEEK_SET);
+  }
+  return size;
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::AtEnd
+//
+//==========================================================================
+bool VStdFileStream::AtEnd () {
+  return (bError || !mFl || Tell() >= TotalSize());
+}
+
+
+//==========================================================================
+//
+//  VStdFileStream::Serialise
+//
+//==========================================================================
+void VStdFileStream::Serialise (void *buf, int len) {
+  if (bError || !mFl || len < 0) { setError(); return; }
+  if (len == 0) return;
+  if (bLoading) {
+    if (fread(buf, len, 1, mFl) != 1) setError();
+  } else {
+    if (fwrite(buf, len, 1, mFl) != 1) setError();
+  }
+}
+
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::VPartialStreamRO
+//
+//==========================================================================
+VPartialStreamRO::VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen, bool aOwnSrc)
+  : srcStream(ASrcStream)
+  , stpos(astpos)
+  , srccurpos(astpos)
+  , partlen(apartlen)
+  , srcOwned(aOwnSrc)
+{
+  mythread_mutex_init(&lock);
+  bLoading = true;
+  if (!srcStream) { srcOwned = false; bError = true; return; }
+  if (partlen < 0) {
+    MyThreadLocker locker(&lock);
+    partlen = srcStream->TotalSize()-stpos;
+    if (partlen < 0) partlen = 0;
+    if (srcStream->IsError()) setError();
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::~VPartialStreamRO
+//
+//==========================================================================
+VPartialStreamRO::~VPartialStreamRO () {
+  Close();
+  mythread_mutex_destroy(&lock);
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::Close
+//
+//==========================================================================
+bool VPartialStreamRO::Close () {
+  if (srcOwned && srcStream) {
+    MyThreadLocker locker(&lock);
+    delete srcStream;
+  }
+  srcOwned = false;
+  srcStream = nullptr;
+  return !bError;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::GetName
+//
+//==========================================================================
+const VStr &VPartialStreamRO::GetName () const {
+  if (srcStream) {
+    MyThreadLocker locker(&lock);
+    return srcStream->GetName();
+  }
+  return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::setError
+//
+//==========================================================================
+void VPartialStreamRO::setError () {
+  if (srcOwned && srcStream) {
+    MyThreadLocker locker(&lock);
+    delete srcStream;
+  }
+  srcOwned = false;
+  srcStream = nullptr;
+  bError = true;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::Serialise
+//
+//==========================================================================
+void VPartialStreamRO::Serialise (void *buf, int len) {
+  if (!srcStream) { bError = true; return; }
+  if (bError) return;
+  if (len < 0) { setError(); return; }
+  if (len == 0) return;
+  if (srccurpos >= stpos+partlen) { setError(); return; }
+  int left = stpos+partlen-srccurpos;
+  if (left < len) { setError(); return; }
+  {
+    MyThreadLocker locker(&lock);
+    if (srcStream->IsError()) { setError(); return; }
+    srcStream->Seek(srccurpos);
+    if (srcStream->IsError()) { setError(); return; }
+    srcStream->Serialise(buf, len);
+    if (srcStream->IsError()) { setError(); return; }
+  }
+  srccurpos += len;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::Seek
+//
+//==========================================================================
+void VPartialStreamRO::Seek (int pos) {
+  if (!srcStream) { bError = true; return; }
+  if (bError) return;
+  if (pos < 0) pos = 0;
+  if (pos > partlen) pos = partlen;
+  srccurpos = stpos+pos;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::Tell
+//
+//==========================================================================
+int VPartialStreamRO::Tell () {
+  return (bError ? 0 : srccurpos-stpos);
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::TotalSize
+//
+//==========================================================================
+int VPartialStreamRO::TotalSize () {
+  return (bError ? 0 : partlen);
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::AtEnd
+//
+//==========================================================================
+bool VPartialStreamRO::AtEnd () {
+  return (bError || srccurpos >= stpos+partlen);
+}

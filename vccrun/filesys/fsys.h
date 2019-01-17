@@ -255,6 +255,7 @@ public:
 # include <lzma.h>
 #endif
 
+/*
 class VZipStreamReader : public VStreamPakFile {
 private:
   enum { BUFFER_SIZE = 16384 };
@@ -330,6 +331,7 @@ public:
   virtual void Flush () override;
   virtual bool Close () override;
 };
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //

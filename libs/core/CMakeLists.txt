@@ -32,6 +32,8 @@ add_library(core STATIC
   stream.cpp
   xstreams.h
   xstreams.cpp
+  zipstreams.h
+  zipstreams.cpp
   mathutil.h
   vector.h
   vector.cpp

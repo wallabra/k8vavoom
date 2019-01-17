@@ -233,8 +233,6 @@ set(FILESYS_SOURCES
   filesys/files.h
   filesys/wad.cpp
   filesys/wad.h
-  filesys/zipstream.cpp
-  filesys/zipstream.h
 )
 
 
