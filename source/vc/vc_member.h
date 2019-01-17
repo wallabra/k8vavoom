@@ -166,4 +166,4 @@ private:
   static TArray<VStr> definelist;
 };
 
-inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? M->MemberIndex+1 : 0); }
+inline vuint32 GetTypeHash (const VMemberBase *M) { return (M ? hashU32((vuint32)(M->MemberIndex+1)) : 0); }

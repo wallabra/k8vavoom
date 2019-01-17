@@ -332,8 +332,8 @@ public:
 template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
 template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), false); } // don't skip replacement
 
-//inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
-inline vuint32 GetTypeHash (VObject *Obj) { return (Obj ? hashU32(Obj->GetUniqueId()) : 0); }
+//inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
+inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->GetUniqueId()) : 0); }
 
 // helper macros for implementing native VavoomC functions and calls to the VavoomC methods:
 // this will make it simpler to port it to 64 bit platforms
