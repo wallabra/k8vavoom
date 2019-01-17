@@ -188,6 +188,7 @@ const int CHAN_5 = 5;
 const int CHAN_6 = 6;
 const int CHAN_7 = 7;
 const int CHAN_8 = 0;
+const int CHAN_9 = 0;
 
 const int CHAN_SLOT0 = 0;
 const int CHAN_SLOT1 = 1;
@@ -198,6 +199,7 @@ const int CHAN_SLOT5 = 5;
 const int CHAN_SLOT6 = 6;
 const int CHAN_SLOT7 = 7;
 const int CHAN_SLOT8 = 0;
+const int CHAN_SLOT9 = 0;
 
 const int CHAN_SLOT_0 = 0;
 const int CHAN_SLOT_1 = 1;
@@ -208,6 +210,7 @@ const int CHAN_SLOT_5 = 5;
 const int CHAN_SLOT_6 = 6;
 const int CHAN_SLOT_7 = 7;
 const int CHAN_SLOT_8 = 0;
+const int CHAN_SLOT_9 = 0;
 
 
 const int CHAN_LISTENERZ = 0; //(8): Sound is played from the listener's Z-height. (Needs verifying)
