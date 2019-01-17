@@ -63,9 +63,7 @@
 #include "name.h" // names
 #include "str.h" // strings
 #include "args.h" // command line arguments
-#include "memorystream.h"// in-memory streams
-#include "arraystream.h"// stream for reading from array
-#include "bitstream.h" // streams for bit-data
+#include "xstreams.h" // extended streams
 #include "mathutil.h"
 #include "vector.h" // vector math
 #include "matrix.h" // matrices

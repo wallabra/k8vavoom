@@ -27,9 +27,6 @@
 #include "core.h"
 
 
-const VStr VStream::mEmptyName = VStr();
-
-
 //==========================================================================
 //
 //  VStream::~VStream
@@ -45,7 +42,7 @@ VStream::~VStream () {
 //
 //==========================================================================
 const VStr &VStream::GetName () const {
-  return mEmptyName;
+  return VStr::EmptyString;
 }
 
 

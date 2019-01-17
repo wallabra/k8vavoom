@@ -2089,7 +2089,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
-  VStream *DataStrm = new VMemoryStream(TmpData, BaseStrm->TotalSize()-4, true);
+  VStream *DataStrm = new VMemoryStream(W_FullLumpName(Lump), TmpData, BaseStrm->TotalSize()-4, true);
   //delete[] TmpData;
   TmpData = nullptr;
   delete BaseStrm;

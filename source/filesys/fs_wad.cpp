@@ -360,7 +360,7 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   }
 
   // create stream
-  VStream *S = new VMemoryStream(ptr, fi.filesize, true);
+  VStream *S = new VMemoryStream(GetPrefix()+":"+pakdir.files[lump].fileName, ptr, fi.filesize, true);
   //GCon->Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);
   //Z_Free(ptr);
   return S;

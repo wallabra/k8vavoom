@@ -206,7 +206,7 @@ static void zipAddWads (VZipFile *zip, const VStr &zipName) {
     VStream *wadstrm = zip->OpenFileRead(list[f]);
     if (!wadstrm) continue;
     if (wadstrm->TotalSize() < 16) { delete wadstrm; continue; }
-    VStream *memstrm = new VMemoryStream(wadstrm);
+    VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+list[f], wadstrm);
     bool err = wadstrm->IsError();
     delete wadstrm;
     if (err) { delete memstrm; continue; }
@@ -246,7 +246,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
         VStream *zipstrm = zip->OpenFileRead(list[f]);
         if (!zipstrm) continue;
         if (zipstrm->TotalSize() < 16) { delete zipstrm; continue; }
-        VStream *memstrm = new VMemoryStream(zipstrm);
+        VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+list[f], zipstrm);
         bool err = zipstrm->IsError();
         delete zipstrm;
         if (err) { delete memstrm; continue; }

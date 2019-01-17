@@ -3,45 +3,41 @@ add_library(core STATIC
   args.cpp
   args.h
   array.h
-  arraystream.cpp
-  arraystream.h
-  bitstream.cpp
-  bitstream.h
-  common.cpp
   common.h
+  common.cpp
   core.h
-  crc.cpp
   crc.h
+  crc.cpp
   endian.h
-  exception.cpp
   exception.h
+  exception.cpp
   hashfunc.h
   hashset.h
   jh32.h
   jh32.cpp
   rg32.h
   rg32.cpp
-  log.cpp
   log.h
+  log.cpp
   map_impl.h
   map.h
-  matrix.cpp
   matrix.h
-  memorystream.cpp
-  memorystream.h
-  name.cpp
+  matrix.cpp
   name.h
   names.h
-  str.cpp
+  name.cpp
   str.h
-  stream.cpp
+  str.cpp
   stream.h
+  stream.cpp
+  xstreams.h
+  xstreams.cpp
   mathutil.h
   vector.h
   vector.cpp
   wlist.h
-  xml.cpp
   xml.h
+  xml.cpp
   zone.h
   minipng.h
   minipng.cpp

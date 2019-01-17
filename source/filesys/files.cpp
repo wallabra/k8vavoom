@@ -317,7 +317,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
     if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete WadStrm; continue; }
     WadStrm->Seek(0);
     // decompress WAD and GWA files into a memory stream since reading from ZIP will be very slow
-    VStream *MemStrm = new VMemoryStream(WadStrm);
+    VStream *MemStrm = new VMemoryStream(ZipName+":"+Wads[i], WadStrm);
     delete WadStrm;
 
 #ifdef VAVOOM_USE_GWA
@@ -328,7 +328,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
       GwaStrm->Serialise(Buf, Len);
       delete GwaStrm;
       GwaStrm = nullptr;
-      GwaStrm = new VMemoryStream(Buf, Len, true);
+      GwaStrm = new VMemoryStream(ZipName+":"+GwaName, Buf, Len, true);
       //delete[] Buf;
       Buf = nullptr;
     }
@@ -348,7 +348,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
     VStream *ZipStrm = Zip->OpenFileRead(pk3s[i]);
     if (ZipStrm->TotalSize() < 16) { delete ZipStrm; continue; }
     // decompress file into a memory stream since reading from ZIP will be very slow
-    VStream *MemStrm = new VMemoryStream(ZipStrm);
+    VStream *MemStrm = new VMemoryStream(ZipName+":"+pk3s[i], ZipStrm);
     delete ZipStrm;
     if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
     VZipFile *pk3 = new VZipFile(MemStrm, ZipName+":"+pk3s[i]);

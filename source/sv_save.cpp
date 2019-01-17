@@ -77,7 +77,7 @@ LastLoadedMapType mapLoaded = LMT_Unknown;
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
-#define SAVE_VERSION_TEXT          "Version 1.34.11"
+#define SAVE_VERSION_TEXT          "Version 1.34.12"
 #define SAVE_VERSION_TEXT_LENGTH   (16)
 
 static_assert(strlen(SAVE_VERSION_TEXT) <= SAVE_VERSION_TEXT_LENGTH, "oops");
@@ -1522,7 +1522,7 @@ static void SV_SaveMap (bool savePlayers) {
   // compress map data
   Map->DecompressedSize = Buf.Num();
   Map->Data.Clear();
-  VArrayStream *ArrStrm = new VArrayStream(Map->Data);
+  VArrayStream *ArrStrm = new VArrayStream("<savemap>", Map->Data);
   ArrStrm->BeginWrite();
   VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm, (int)save_compression_level);
   ZipStrm->Serialise(Buf.Ptr(), Buf.Num());
@@ -1696,7 +1696,7 @@ static void SV_LoadMap (VName MapName) {
   check(Map);
 
   // decompress map data
-  VArrayStream *ArrStrm = new VArrayStream(Map->Data);
+  VArrayStream *ArrStrm = new VArrayStream("<savemap>", Map->Data);
   VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm);
   TArray<vuint8> DecompressedData;
   DecompressedData.SetNum(Map->DecompressedSize);
@@ -1706,7 +1706,7 @@ static void SV_LoadMap (VName MapName) {
   delete ArrStrm;
   ArrStrm = nullptr;
 
-  VSaveLoaderStream *Loader = new VSaveLoaderStream(new VArrayStream(DecompressedData));
+  VSaveLoaderStream *Loader = new VSaveLoaderStream(new VArrayStream("<savemap>", DecompressedData));
 
   // load names
   UnarchiveNames(Loader);

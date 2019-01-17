@@ -28,15 +28,14 @@
 //**  Streams for loading and saving data.
 //**
 //**************************************************************************
-
-
 class VStr;
 class VLevel;
 class VLevelInfo;
 class VStream;
 
 
-// eh... need to be here, so we can virtual method for it
+// ////////////////////////////////////////////////////////////////////////// //
+// eh... need to be here, so we can have virtual method for it
 class VLevelScriptThinker {
 public:
   bool destroyed; // script `Destroy()` method should set this (and check to avoid double destroying)
@@ -65,12 +64,12 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // base class for various streams
 class VStream {
 protected:
   bool bLoading; // are we loading or saving?
   bool bError; // did we have any errors?
-  static const VStr mEmptyName;
 
 public:
   VStream () : bLoading(false) , bError(false) {}
