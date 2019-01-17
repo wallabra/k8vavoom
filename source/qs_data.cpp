@@ -27,11 +27,24 @@
 // quicksave data
 #include "gamedefs.h"
 
-//TODO: use hashtable instead?
-static TArray<QSValue> qslist;
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct QLItem {
+  QSValue value;
+  int next; // next for this entity, -1 means "no more"
+};
+static TArray<QLItem> qslist;
+static TMapNC<VEntity *, int> qsmap; // value is index in `qslist`
+
+
 QSPhase qsPhase = QSPhase::QSP_None;
 
 
+//==========================================================================
+//
+//  QSValue::Serialise
+//
+//==========================================================================
 void QSValue::Serialise (VStream &strm) {
   vuint8 atype = type;
   strm << atype;
@@ -68,6 +81,11 @@ void QSValue::Serialise (VStream &strm) {
 }
 
 
+//==========================================================================
+//
+//  QSValue::toString
+//
+//==========================================================================
 VStr QSValue::toString () const {
   VStr res = name+":";
   switch (type) {
@@ -99,51 +117,76 @@ VStr QSValue::toString () const {
 
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 TArray<QSValue> QS_GetCurrentArray () {
-  return qslist;
+  TArray<QSValue> res;
+  for (auto it = qsmap.first(); it; ++it) {
+    int idx = it.getValue();
+    while (idx >= 0) {
+      res.append(qslist[idx].value);
+      idx = qslist[idx].next;
+    }
+  }
+  return res;
 }
 
 
 void QS_StartPhase (QSPhase aphase) {
   qslist.reset();
+  qsmap.reset();
   qsPhase = aphase;
 }
 
 
-static int findValue (VEntity *ent, const VStr &name) {
-  const int len = qslist.length();
-  for (int f = 0; f < len; ++f) {
-    if (qslist[f].ent == ent && qslist[f].name.Cmp(name) == 0) return f;
+static void putValue (const QSValue &val) {
+  auto xptr = qsmap.find(val.ent);
+  if (!xptr) {
+    int idx = qslist.length();
+    QLItem &li = qslist.alloc();
+    li.value = val;
+    li.next = -1;
+    qsmap.put(val.ent, idx);
+  } else {
+    int idx = *xptr, prev = -1;
+    while (idx >= 0) {
+      check(qslist[idx].value.ent == val.ent);
+      if (qslist[idx].value.name.Cmp(val.name) == 0) {
+        qslist[idx].value = val;
+        return;
+      }
+      prev = idx;
+      idx = qslist[idx].next;
+    }
+    check(prev != -1);
+    int nidx = qslist.length();
+    QLItem &li = qslist.alloc();
+    li.value = val;
+    li.next = -1;
+    check(qslist[prev].next == -1);
+    qslist[prev].next = nidx;
   }
-  return -1;
 }
 
 
 void QS_EnterValue (const QSValue &val) {
   if (qsPhase != QSPhase::QSP_Load) Host_Error("cannot use CheckPoint API outside of checkpoint handlers");
-  int idx = findValue(val.ent, val.name);
-  if (idx >= 0) {
-    qslist[idx] = val;
-  } else {
-    qslist.append(val);
-  }
+  putValue(val);
 }
 
 
 void QS_PutValue (const QSValue &val) {
   if (qsPhase != QSPhase::QSP_Save) Host_Error("cannot use CheckPoint API outside of checkpoint handlers");
-  int idx = findValue(val.ent, val.name);
-  if (idx >= 0) {
-    qslist[idx] = val;
-  } else {
-    qslist.append(val);
-  }
+  putValue(val);
 }
 
 
 QSValue QS_GetValue (VEntity *ent, const VStr &name) {
   if (qsPhase != QSPhase::QSP_Load) Host_Error("cannot use CheckPoint API outside of checkpoint handlers");
-  int idx = findValue(ent, name);
-  if (idx < 0) return QSValue();
-  return qslist[idx];
+  auto xptr = qsmap.find(ent);
+  if (!xptr) return QSValue();
+  for (int idx = *xptr; idx >= 0; idx = qslist[idx].next) {
+    check(qslist[idx].value.ent == ent);
+    if (qslist[idx].value.name.Cmp(name) == 0) return qslist[idx].value;
+  }
+  return QSValue();
 }

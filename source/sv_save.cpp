@@ -130,21 +130,21 @@ public:
   TArray<QSValue> QSList;
   TArray<EntityInfo> EList;
   vint32 ReadyWeapon; // 0: none, otherwise entity index+1
+  vint32 invCount;
 
   VSavedCheckpoint () : QSList(), EList(), ReadyWeapon(0) {}
   ~VSavedCheckpoint () { Clear(); }
 
-  int AddEntity (VEntity *ent) {
+  void AddEntity (VEntity *ent) {
     check(ent);
     const int len = EList.length();
     for (int f = 0; f < len; ++f) {
-      if (EList[f].ent == ent) return f+1;
+      if (EList[f].ent == ent) return;
     }
     EntityInfo &ei = EList.alloc();
     //ei.index = EList.length()-1;
     ei.ent = ent;
     ei.ClassName = VStr(ent->GetClass()->GetName());
-    return EList.length();
   }
 
   int FindEntity (VEntity *ent) const {
@@ -820,19 +820,22 @@ bool VSaveSlot::LoadSlot (int Slot) {
     // load entity list
     vint32 entCount;
     *Strm << STRM_INDEX(entCount);
-    //GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
+    GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
     if (entCount < 0 || entCount > 1024*1024) Host_Error("invalid entity count (%d)", entCount);
     for (int f = 0; f < entCount; ++f) {
       VSavedCheckpoint::EntityInfo &ei = cp.EList.alloc();
       ei.ent = nullptr;
       *Strm << ei.ClassName;
+      GCon->Logf("  ent #%d: '%s'", f+1, *ei.ClassName);
     }
     // load value list
     vint32 valueCount;
     *Strm << STRM_INDEX(valueCount);
+    GCon->Logf(" valueCount=%d", valueCount);
     for (int f = 0; f < valueCount; ++f) {
       QSValue &v = cp.QSList.alloc();
       v.Serialise(*Strm);
+      GCon->Logf("  val #%d(%d): %s", f, v.objidx, *v.toString());
     }
     if (rw < 0 || rw > cp.EList.length()) Host_Error("invalid ready weapon index (%d)", rw);
   } else {
@@ -1558,25 +1561,26 @@ static bool SV_SaveCheckpoint () {
   VSavedCheckpoint &cp = BaseSlot.CheckPoint;
   cp.Clear();
   VEntity *rwe = plr->eventGetReadyWeapon();
-  plr->QS_Save();
+
   for (VEntity *invFirst = plr->MO->QS_GetEntityInventory();
        invFirst;
        invFirst = invFirst->QS_GetEntityInventory())
   {
-    // make sure that it has at least one saved value
-    QS_PutValue(QSValue::CreateStr(invFirst, "ClassName", VStr(invFirst->GetClass()->GetName())));
-    invFirst->QS_Save();
+    cp.AddEntity(invFirst);
   }
+
+  plr->QS_Save();
+  for (int f = 0; f < cp.EList.length(); ++f) cp.EList[f].ent->QS_Save();
   cp.QSList = QS_GetCurrentArray();
 
   // count entities, build entity list
-  cp.EList.Clear();
   for (int f = 0; f < cp.QSList.length(); ++f) {
-    if (!cp.QSList[f].ent) {
-      cp.QSList[f].objidx = 0;
+    QSValue &qv = cp.QSList[f];
+    if (!qv.ent) {
+      qv.objidx = 0;
     } else {
-      cp.QSList[f].objidx = cp.AddEntity(cp.QSList[f].ent);
-      if (rwe == cp.QSList[f].ent) cp.ReadyWeapon = cp.FindEntity(rwe);
+      qv.objidx = cp.FindEntity(qv.ent);
+      if (rwe == qv.ent) cp.ReadyWeapon = cp.FindEntity(rwe);
     }
   }
 
@@ -1651,7 +1655,7 @@ static void SV_LoadMap (VName MapName) {
       VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
       VEntity *inv = plr->MO->QS_SpawnEntityInventory(VName(*ei.ClassName));
       if (!inv) Host_Error("cannot spawn inventory item '%s'", *ei.ClassName);
-      //GCon->Logf("  spawned '%s'", inv->GetClass()->GetName());
+      GCon->Logf("QS: spawned '%s'", inv->GetClass()->GetName());
       ei.ent = inv;
       if (cp.ReadyWeapon == f+1) rwe = inv;
     }
@@ -1660,11 +1664,11 @@ static void SV_LoadMap (VName MapName) {
       QSValue &qv = cp.QSList[f];
       if (qv.objidx == 0) {
         qv.ent = nullptr;
-        //GCon->Logf("QS #%d:player: %s", f, *qv.toString());
+        GCon->Logf("QS #%d:player: %s", f, *qv.toString());
       } else {
         qv.ent = cp.EList[qv.objidx-1].ent;
         check(qv.ent);
-        //GCon->Logf("QS #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
+        GCon->Logf("QS #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
       }
       QS_EnterValue(qv);
     }
