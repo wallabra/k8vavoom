@@ -53,7 +53,7 @@ static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/
 static VCvarB loader_recalc_z("loader_recalc_z", true, "Recalculate Z on load (this should help with some edge cases)?", CVAR_Archive);
 static VCvarB loader_ignore_kill_on_unarchive("loader_ignore_kill_on_unarchive", false, "Ignore 'Kill On Unarchive' flag when loading a game?", 0/*CVAR_Archive*/);
 
-static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing", CVAR_Archive);
+static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing\b  0x20: dump checkpoints", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -820,22 +820,22 @@ bool VSaveSlot::LoadSlot (int Slot) {
     // load entity list
     vint32 entCount;
     *Strm << STRM_INDEX(entCount);
-    GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
+    if (dbg_save_verbose&0x20) GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
     if (entCount < 0 || entCount > 1024*1024) Host_Error("invalid entity count (%d)", entCount);
     for (int f = 0; f < entCount; ++f) {
       VSavedCheckpoint::EntityInfo &ei = cp.EList.alloc();
       ei.ent = nullptr;
       *Strm << ei.ClassName;
-      GCon->Logf("  ent #%d: '%s'", f+1, *ei.ClassName);
+      if (dbg_save_verbose&0x20) GCon->Logf("  ent #%d: '%s'", f+1, *ei.ClassName);
     }
     // load value list
     vint32 valueCount;
     *Strm << STRM_INDEX(valueCount);
-    GCon->Logf(" valueCount=%d", valueCount);
+    if (dbg_save_verbose&0x20) GCon->Logf(" valueCount=%d", valueCount);
     for (int f = 0; f < valueCount; ++f) {
       QSValue &v = cp.QSList.alloc();
       v.Serialise(*Strm);
-      GCon->Logf("  val #%d(%d): %s", f, v.objidx, *v.toString());
+      if (dbg_save_verbose&0x20) GCon->Logf("  val #%d(%d): %s", f, v.objidx, *v.toString());
     }
     if (rw < 0 || rw > cp.EList.length()) Host_Error("invalid ready weapon index (%d)", rw);
   } else {
@@ -1655,7 +1655,7 @@ static void SV_LoadMap (VName MapName) {
       VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
       VEntity *inv = plr->MO->QS_SpawnEntityInventory(VName(*ei.ClassName));
       if (!inv) Host_Error("cannot spawn inventory item '%s'", *ei.ClassName);
-      GCon->Logf("QS: spawned '%s'", inv->GetClass()->GetName());
+      if (dbg_save_verbose&0x20) GCon->Logf("QS: spawned '%s'", inv->GetClass()->GetName());
       ei.ent = inv;
       if (cp.ReadyWeapon == f+1) rwe = inv;
     }
@@ -1664,11 +1664,11 @@ static void SV_LoadMap (VName MapName) {
       QSValue &qv = cp.QSList[f];
       if (qv.objidx == 0) {
         qv.ent = nullptr;
-        GCon->Logf("QS #%d:player: %s", f, *qv.toString());
+        if (dbg_save_verbose&0x20) GCon->Logf("QS #%d:player: %s", f, *qv.toString());
       } else {
         qv.ent = cp.EList[qv.objidx-1].ent;
         check(qv.ent);
-        GCon->Logf("QS #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
+        if (dbg_save_verbose&0x20) GCon->Logf("QS #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
       }
       QS_EnterValue(qv);
     }
@@ -1886,7 +1886,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
       SV_SaveMap(false);
     } else {
       // entering new cluster: clear base slot
-      GCon->Logf("**** NEW CLUSTER ****");
+      if (dbg_save_verbose&0x20) GCon->Logf("**** NEW CLUSTER ****");
       BaseSlot.Clear();
     }
   }
