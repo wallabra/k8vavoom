@@ -24,6 +24,17 @@ menudef MiscOptions {
   }
 
   option bool {
+    title = "Checkpoints for map enter autosaves";
+    cvar = sv_autoenter_checkpoints;
+    help =
+      "Use smaller (and more resistant to savegame format changes)"
+      "\"checkpoint saves\" on entering new map."
+      "This can work wrong with some complex mods, so you can try if it"
+      "works (by completing one map, quicksave, and load autosave), and"
+      "turn this off if something is wrong.";
+  }
+
+  option bool {
     title = "Overlay automap";
     cvar = am_overlay;
     help = "Draw automap as overlay instead of separate screen?";
