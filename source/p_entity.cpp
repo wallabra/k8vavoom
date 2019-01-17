@@ -656,3 +656,90 @@ IMPLEMENT_FUNCTION(VEntity, GetDecorateFlag) {
   P_GET_SELF;
   RET_BOOL(Self->GetDecorateFlag(Name));
 }
+
+
+
+// native final void QS_PutInt (name fieldname, int value);
+IMPLEMENT_FUNCTION(VEntity, QS_PutInt) {
+  P_GET_INT(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QS_PutValue(QSValue::CreateInt(Self, name, value));
+}
+
+// native final void QS_PutName (name fieldname, name value);
+IMPLEMENT_FUNCTION(VEntity, QS_PutName) {
+  P_GET_NAME(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QS_PutValue(QSValue::CreateName(Self, name, value));
+}
+
+// native final void QS_PutStr (name fieldname, string value);
+IMPLEMENT_FUNCTION(VEntity, QS_PutStr) {
+  P_GET_STR(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QS_PutValue(QSValue::CreateStr(Self, name, value));
+}
+
+// native final void QS_PutFloat (name fieldname, float value);
+IMPLEMENT_FUNCTION(VEntity, QS_PutFloat) {
+  P_GET_FLOAT(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QS_PutValue(QSValue::CreateFloat(Self, name, value));
+}
+
+
+// native final int QS_GetInt (name fieldname, optional int defvalue);
+IMPLEMENT_FUNCTION(VEntity, QS_GetInt) {
+  P_GET_INT_OPT(value, 0);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QSValue ret = QS_GetValue(Self, name);
+  if (ret.type != QSType::QST_Int) {
+    if (!specified_value) Host_Error("value '%s' not found for '%s'", *name, Self->GetClass()->GetName());
+    ret.ival = value;
+  }
+  RET_INT(ret.ival);
+}
+
+// native final name QS_GetName (name fieldname, optional name defvalue);
+IMPLEMENT_FUNCTION(VEntity, QS_GetName) {
+  P_GET_NAME_OPT(value, NAME_None);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QSValue ret = QS_GetValue(Self, name);
+  if (ret.type != QSType::QST_Name) {
+    if (!specified_value) Host_Error("value '%s' not found for '%s'", *name, Self->GetClass()->GetName());
+    ret.nval = value;
+  }
+  RET_NAME(ret.nval);
+}
+
+// native final string QS_GetStr (name fieldname, optional string defvalue);
+IMPLEMENT_FUNCTION(VEntity, QS_GetStr) {
+  P_GET_STR_OPT(value, VStr::EmptyString);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QSValue ret = QS_GetValue(Self, name);
+  if (ret.type != QSType::QST_Str) {
+    if (!specified_value) Host_Error("value '%s' not found for '%s'", *name, Self->GetClass()->GetName());
+    ret.sval = value;
+  }
+  RET_STR(ret.sval);
+}
+
+// native final float QS_GetFloat (name fieldname, optional float defvalue);
+IMPLEMENT_FUNCTION(VEntity, QS_GetFloat) {
+  P_GET_FLOAT_OPT(value, 0.0f);
+  P_GET_STR(name);
+  P_GET_SELF;
+  QSValue ret = QS_GetValue(Self, name);
+  if (ret.type != QSType::QST_Float) {
+    if (!specified_value) Host_Error("value '%s' not found for '%s'", *name, Self->GetClass()->GetName());
+    ret.fval = value;
+  }
+  RET_FLOAT(ret.fval);
+}

@@ -119,27 +119,33 @@ override bool IsCheckpointSaveAllowed () {
 
 //==========================================================================
 //
-//  GetInventoryAmountsQS
+//  QS_Save
 //
 //==========================================================================
-override void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count) {
-  resAmount = Amount;
-  resMaxAmout = MaxAmount;
-  resAmmo1Count = (Ammo1 ? Ammo1.Amount : 0);
-  resAmmo2Count = (Ammo2 ? Ammo2.Amount : 0);
+override void QS_Save () {
+  ::QS_Save(); // inventory
+  QS_PutInt("Ammo1.Amount", (Ammo1 ? Ammo1.Amount : 0));
+  QS_PutInt("Ammo1.MaxAmount", (Ammo1 ? Ammo1.MaxAmount : 0));
+  QS_PutInt("Ammo2.Amount", (Ammo2 ? Ammo2.Amount : 0));
+  QS_PutInt("Ammo2.MaxAmount", (Ammo2 ? Ammo2.MaxAmount : 0));
 }
 
 
 //==========================================================================
 //
-//  SetInventoryAmountsQS
+//  QS_Load
 //
 //==========================================================================
-override void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count) {
-  Amount = aAmount;
-  MaxAmount = aMaxAmout;
-  if (Ammo1) Ammo1.Amount = aAmmo1Count;
-  if (Ammo2) Ammo2.Amount = aAmmo2Count;
+override void QS_Load () {
+  ::QS_Load(); // inventory
+  if (Ammo1) {
+    Ammo1.Amount = QS_GetInt("Ammo1.Amount");
+    Ammo1.MaxAmount = QS_GetInt("Ammo1.MaxAmount");
+  }
+  if (Ammo2) {
+    Ammo2.Amount = QS_GetInt("Ammo2.Amount");
+    Ammo2.MaxAmount = QS_GetInt("Ammo2.MaxAmount");
+  }
 }
 
 

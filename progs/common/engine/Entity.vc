@@ -1057,7 +1057,7 @@ void SetHeight (float newvalue) {
 //  ClearEntityInventoryQS
 //
 //==========================================================================
-void ClearEntityInventoryQS () {}
+void QS_ClearEntityInventory () {}
 
 
 //==========================================================================
@@ -1067,7 +1067,7 @@ void ClearEntityInventoryQS () {}
 //  returns entity `Inventory` field, or `none`
 //
 //==========================================================================
-Entity GetEntityInventoryQS () { return none; }
+Entity QS_GetEntityInventory () { return none; }
 
 
 //==========================================================================
@@ -1077,29 +1077,36 @@ Entity GetEntityInventoryQS () { return none; }
 //  adds to current inventory
 //
 //==========================================================================
-Entity SpawnEntityInventoryQS (name className) { return none; }
+Entity QS_SpawnEntityInventory (name className) { return none; }
 
 
 //==========================================================================
 //
-//  GetInventoryAmountsQS
+//  QS_Save
 //
 //==========================================================================
-void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count) {
-  resAmount = 0;
-  resMaxAmout = 0;
-  resAmmo1Count = 0;
-  resAmmo2Count = 0;
-}
+void QS_Save () {}
 
 
 //==========================================================================
 //
-//  SetInventoryAmountsQS
+//  QS_Load
 //
 //==========================================================================
-void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count) {
-}
+void QS_Load () {}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// this is hack used for quicksaves
+native final void QS_PutInt (string fieldname, int value);
+native final void QS_PutName (string fieldname, name value);
+native final void QS_PutStr (string fieldname, string value);
+native final void QS_PutFloat (string fieldname, float value);
+
+native final int QS_GetInt (string fieldname, optional int defvalue);
+native final name QS_GetName (string fieldname, optional name defvalue);
+native final string QS_GetStr (string fieldname, optional string defvalue);
+native final float QS_GetFloat (string fieldname, optional float defvalue);
 
 
 defaultproperties {

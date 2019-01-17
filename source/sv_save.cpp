@@ -120,31 +120,48 @@ public:
 
 class VSavedCheckpoint {
 public:
-  // inventory item
-  struct InvItem {
-    VStr ClassName; // player inventory class name
-    vint32 amount, maxAmount;
-    vint32 ammo1, ammo2;
+  struct EntityInfo {
+    //vint32 index;
+    VEntity *ent;
+    VStr ClassName; // used only in loader
   };
 
 public:
-  //bool isEmpty;
-  vuint8 Active; // is player active?
-  TArray<InvItem> Items;
-  vint32 Health;
-  VStr ReadyWeapon;
+  TArray<QSValue> QSList;
+  TArray<EntityInfo> EList;
+  vint32 ReadyWeapon; // 0: none, otherwise entity index+1
 
-  VSavedCheckpoint () : /*isEmpty(true),*/ Items() {}
+  VSavedCheckpoint () : QSList(), EList(), ReadyWeapon(0) {}
   ~VSavedCheckpoint () { Clear(); }
 
-  //inline bool IsEmpty () const { return isEmpty; }
+  int AddEntity (VEntity *ent) {
+    check(ent);
+    const int len = EList.length();
+    for (int f = 0; f < len; ++f) {
+      if (EList[f].ent == ent) return f+1;
+    }
+    EntityInfo &ei = EList.alloc();
+    //ei.index = EList.length()-1;
+    ei.ent = ent;
+    ei.ClassName = VStr(ent->GetClass()->GetName());
+    return EList.length();
+  }
+
+  int FindEntity (VEntity *ent) const {
+    if (!ent) return 0;
+    const int len = EList.length();
+    for (int f = 0; f < len; ++f) {
+      if (EList[f].ent == ent) return f+1;
+    }
+    // the thing that should not be
+    abort();
+    return -1;
+  }
 
   void Clear () {
-    Items.Clear();
-    //isEmpty = true;
-    Active = 0;
-    Health = 0;
-    ReadyWeapon.clear();
+    QSList.Clear();
+    EList.Clear();
+    ReadyWeapon = 0;
   }
 };
 
@@ -154,7 +171,7 @@ public:
   VStr Description;
   VName CurrentMap;
   TArray<VSavedMap *> Maps; // if there are no maps, it is a checkpoint
-  VSavedCheckpoint CheckPoint[MAXPLAYERS];
+  VSavedCheckpoint CheckPoint;
 
   ~VSaveSlot () { Clear(); }
 
@@ -594,7 +611,7 @@ void VSaveSlot::Clear () {
   CurrentMap = NAME_None;
   for (int i = 0; i < Maps.Num(); ++i) { delete Maps[i]; Maps[i] = nullptr; }
   Maps.Clear();
-  for (int i = 0; i < MAXPLAYERS; ++i) CheckPoint[i].Clear();
+  CheckPoint.Clear();
   unguard;
 }
 
@@ -779,7 +796,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   *Strm << TmpName;
   CurrentMap = *TmpName;
 
-  int NumMaps;
+  vint32 NumMaps;
   *Strm << STRM_INDEX(NumMaps);
   for (int i = 0; i < NumMaps; ++i) {
     VSavedMap *Map = new VSavedMap();
@@ -793,56 +810,43 @@ bool VSaveSlot::LoadSlot (int Slot) {
 
   //HACK: if `NumMaps` is 0, we're loading checkpoint
   if (NumMaps == 0) {
-    {
-      check(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
-      vuint8 mpl = 255;
-      *Strm << mpl;
-      if (mpl != MAXPLAYERS) {
-        Strm->Close();
-        delete Strm;
-        Strm = nullptr;
-        GCon->Log("Invalid savegame (bad number of players)");
-        return false;
-      }
-    }
     // load players inventory
-    for (int i = 0; i < MAXPLAYERS; ++i) {
-      CheckPoint[i].Clear();
-      *Strm << CheckPoint[i].Active;
-      if (CheckPoint[i].Active) {
-        vint32 itemCount = 0, health = 0;
-        VStr rweapon;
-        *Strm << STRM_INDEX(health) << STRM_INDEX(itemCount) << rweapon;
-        CheckPoint[i].Health = health;
-        CheckPoint[i].ReadyWeapon = rweapon;
-        for (int f = 0; f < itemCount; ++f) {
-          VSavedCheckpoint::InvItem &it = CheckPoint[i].Items.alloc();
-          // save as string, 'cause we have no name map
-          VStr itname;
-          *Strm << itname
-                << STRM_INDEX(it.amount)
-                << STRM_INDEX(it.maxAmount)
-                << STRM_INDEX(it.ammo1)
-                << STRM_INDEX(it.ammo2);
-          if (itname.length() == 0) {
-            Strm->Close();
-            delete Strm;
-            Strm = nullptr;
-            GCon->Log("Invalid savegame (invalid inventory item)");
-            return false;
-          }
-          it.ClassName = itname;
-        }
-      }
+    VSavedCheckpoint &cp = CheckPoint;
+    cp.Clear();
+    // ready weapon
+    vint32 rw;
+    *Strm << STRM_INDEX(rw);
+    cp.ReadyWeapon = rw;
+    // load entity list
+    vint32 entCount;
+    *Strm << STRM_INDEX(entCount);
+    //GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
+    if (entCount < 0 || entCount > 1024*1024) Host_Error("invalid entity count (%d)", entCount);
+    for (int f = 0; f < entCount; ++f) {
+      VSavedCheckpoint::EntityInfo &ei = cp.EList.alloc();
+      ei.ent = nullptr;
+      *Strm << ei.ClassName;
     }
+    // load value list
+    vint32 valueCount;
+    *Strm << STRM_INDEX(valueCount);
+    for (int f = 0; f < valueCount; ++f) {
+      QSValue &v = cp.QSList.alloc();
+      v.Serialise(*Strm);
+    }
+    if (rw < 0 || rw > cp.EList.length()) Host_Error("invalid ready weapon index (%d)", rw);
+  } else {
+    VSavedCheckpoint &cp = CheckPoint;
+    cp.Clear();
   }
 
+  bool err = Strm->IsError();
 
   Strm->Close();
   delete Strm;
 
   Host_ResetSkipFrames();
-  return true;
+  return !err;
   unguard;
 }
 
@@ -916,31 +920,26 @@ void VSaveSlot::SaveToSlot (int Slot) {
 
   //HACK: if `NumMaps` is 0, we're saving checkpoint
   if (NumMaps == 0) {
-    //check(!CheckPoint.IsEmpty());
-    {
-      check(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
-      vuint8 mpl = MAXPLAYERS;
-      *Strm << mpl;
-    }
     // save players inventory
-    for (int i = 0; i < MAXPLAYERS; ++i) {
-      *Strm << CheckPoint[i].Active;
-      if (CheckPoint[i].Active) {
-        vint32 itemCount = CheckPoint[i].Items.length(), health = CheckPoint[i].Health;
-        VStr rweapon = CheckPoint[i].ReadyWeapon;
-        *Strm << STRM_INDEX(health) << STRM_INDEX(itemCount) << rweapon;
-        for (int f = 0; f < itemCount; ++f) {
-          const VSavedCheckpoint::InvItem &it = CheckPoint[i].Items[f];
-          // save as string, 'cause we have no name map
-          VStr itname = it.ClassName;
-          *Strm << itname
-                << STRM_INDEX(it.amount)
-                << STRM_INDEX(it.maxAmount)
-                << STRM_INDEX(it.ammo1)
-                << STRM_INDEX(it.ammo2);
-        }
-      }
+    VSavedCheckpoint &cp = CheckPoint;
+    // ready weapon
+    vint32 rw = cp.ReadyWeapon;
+    *Strm << STRM_INDEX(rw);
+    // save entity list
+    vint32 entCount = cp.EList.length();
+    *Strm << STRM_INDEX(entCount);
+    for (int f = 0; f < entCount; ++f) {
+      VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
+      *Strm << ei.ClassName;
     }
+    // save value list
+    vint32 valueCount = cp.QSList.length();
+    *Strm << STRM_INDEX(valueCount);
+    for (int f = 0; f < valueCount; ++f) {
+      QSValue &v = cp.QSList[f];
+      v.Serialise(*Strm);
+    }
+    //GCon->Logf("*** SAVE: rw=%d; entCount=%d", rw, entCount);
   }
 
   bool err = Strm->IsError();
@@ -1544,35 +1543,44 @@ static bool SV_SaveCheckpoint () {
   if (!GGameInfo) return false;
   if (GGameInfo->NetMode != NM_Standalone) return false; // oops
 
+  VBasePlayer *plr = nullptr;
   // check if checkpoints are possible
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (GGameInfo->Players[i]) {
       if (!GGameInfo->Players[i]->IsCheckpointPossible()) return false;
+      if (plr) return false;
+      plr = GGameInfo->Players[i];
+    }
+  }
+  if (!plr || !plr->MO) return false;
+
+  QS_StartPhase(QSPhase::QSP_Save);
+  VSavedCheckpoint &cp = BaseSlot.CheckPoint;
+  cp.Clear();
+  VEntity *rwe = plr->eventGetReadyWeapon();
+  plr->QS_Save();
+  for (VEntity *invFirst = plr->MO->QS_GetEntityInventory();
+       invFirst;
+       invFirst = invFirst->QS_GetEntityInventory())
+  {
+    // make sure that it has at least one saved value
+    QS_PutValue(QSValue::CreateStr(invFirst, "ClassName", VStr(invFirst->GetClass()->GetName())));
+    invFirst->QS_Save();
+  }
+  cp.QSList = QS_GetCurrentArray();
+
+  // count entities, build entity list
+  cp.EList.Clear();
+  for (int f = 0; f < cp.QSList.length(); ++f) {
+    if (!cp.QSList[f].ent) {
+      cp.QSList[f].objidx = 0;
+    } else {
+      cp.QSList[f].objidx = cp.AddEntity(cp.QSList[f].ent);
+      if (rwe == cp.QSList[f].ent) cp.ReadyWeapon = cp.FindEntity(rwe);
     }
   }
 
-  for (int i = 0; i < MAXPLAYERS; ++i) {
-    BaseSlot.CheckPoint[i].Clear();
-    if (!GGameInfo->Players[i] || !GGameInfo->Players[i]->MO) continue;
-    BaseSlot.CheckPoint[i].Active = 1;
-    BaseSlot.CheckPoint[i].Health = GGameInfo->Players[i]->Health;
-    VEntity *rwe = GGameInfo->Players[i]->eventGetReadyWeapon();
-    BaseSlot.CheckPoint[i].ReadyWeapon = VStr(rwe ? rwe->GetClass()->Name : "");
-    for (VEntity *invFirst = GGameInfo->Players[i]->MO->GetEntityInventoryQS();
-         invFirst;
-         invFirst = invFirst->GetEntityInventoryQS())
-    {
-      vint32 amount, maxAmount, ammo1, ammo2;
-      invFirst->GetInventoryAmountsQS(amount, maxAmount, ammo1, ammo2);
-      GCon->Logf("QS: player #%d; inventory item: class='%s'; amount=(%d:%d); ammo=(%d:%d)", i, invFirst->GetClass()->GetName(), amount, maxAmount, ammo1, ammo2);
-      VSavedCheckpoint::InvItem &it = BaseSlot.CheckPoint[i].Items.alloc();
-      it.ClassName = invFirst->GetClass()->GetName();
-      it.amount = amount;
-      it.maxAmount = maxAmount;
-      it.ammo1 = ammo1;
-      it.ammo2 = ammo2;
-    }
-  }
+  QS_StartPhase(QSPhase::QSP_None);
 
   return true;
 }
@@ -1622,28 +1630,56 @@ static void SV_LoadMap (VName MapName) {
     // do this here so that clients have loaded info, not initial one
     SV_SendServerInfoToClients();
 
+    VSavedCheckpoint &cp = BaseSlot.CheckPoint;
+
     // put inventory
+    VBasePlayer *plr = nullptr;
     for (int i = 0; i < MAXPLAYERS; ++i) {
-      //BaseSlot.CheckPoint[i].Clear();
       if (!GGameInfo->Players[i] || !GGameInfo->Players[i]->MO) continue;
-      if (!BaseSlot.CheckPoint[i].Active) continue;
-      GGameInfo->Players[i]->Health = BaseSlot.CheckPoint[i].Health;
-      GGameInfo->Players[i]->MO->Health = GGameInfo->Players[i]->Health;
-      GGameInfo->Players[i]->MO->ClearEntityInventoryQS();
-      VEntity *rwe = nullptr;
-      // have to do it backwards due to the way `AttachToOwner()` works
-      for (int f = BaseSlot.CheckPoint[i].Items.length()-1; f >= 0; --f) {
-        const VSavedCheckpoint::InvItem &it = BaseSlot.CheckPoint[i].Items[f];
-        GCon->Logf("QS: player #%d; inventory item: class='%s'; amount=(%d:%d); ammo=(%d:%d)", i, *it.ClassName, it.amount, it.maxAmount, it.ammo1, it.ammo2);
-        VEntity *inv = GGameInfo->Players[i]->MO->SpawnEntityInventoryQS(VName(*it.ClassName));
-        if (!inv) Host_Error("cannot spawn inventory item '%s'", *it.ClassName);
-        GCon->Logf("  spawned '%s'", inv->GetClass()->GetName());
-        inv->SetInventoryAmountsQS(it.amount, it.maxAmount, it.ammo1, it.ammo2);
-        if (!rwe && BaseSlot.CheckPoint[i].ReadyWeapon.Cmp(inv->GetClass()->GetName()) == 0) rwe = inv;
-      }
-      if (rwe) GGameInfo->Players[i]->eventSetReadyWeapon(rwe);
-      GGameInfo->Players[i]->PlayerState = PST_LIVE;
+      plr = GGameInfo->Players[i];
+      break;
     }
+    if (!plr) Host_Error("active player not found");
+    VEntity *rwe = nullptr; // ready weapon
+
+    QS_StartPhase(QSPhase::QSP_Load);
+
+    plr->MO->QS_ClearEntityInventory();
+    // create inventory items
+    // have to do it backwards due to the way `AttachToOwner()` works
+    for (int f = cp.EList.length()-1; f >= 0; --f) {
+      VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
+      VEntity *inv = plr->MO->QS_SpawnEntityInventory(VName(*ei.ClassName));
+      if (!inv) Host_Error("cannot spawn inventory item '%s'", *ei.ClassName);
+      //GCon->Logf("  spawned '%s'", inv->GetClass()->GetName());
+      ei.ent = inv;
+      if (cp.ReadyWeapon == f+1) rwe = inv;
+    }
+
+    for (int f = 0; f < cp.QSList.length(); ++f) {
+      QSValue &qv = cp.QSList[f];
+      if (qv.objidx == 0) {
+        qv.ent = nullptr;
+        //GCon->Logf("QS #%d:player: %s", f, *qv.toString());
+      } else {
+        qv.ent = cp.EList[qv.objidx-1].ent;
+        check(qv.ent);
+        //GCon->Logf("QS #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
+      }
+      QS_EnterValue(qv);
+    }
+
+    // call player loader, then entity loaders
+    plr->QS_Load();
+    for (int f = 0; f < cp.EList.length(); ++f) {
+      VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
+      ei.ent->QS_Load();
+    }
+
+    QS_StartPhase(QSPhase::QSP_None);
+
+    plr->PlayerState = PST_LIVE;
+    if (rwe) plr->eventSetReadyWeapon(rwe);
 
     Host_ResetSkipFrames();
     return;

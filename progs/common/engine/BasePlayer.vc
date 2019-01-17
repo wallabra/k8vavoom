@@ -378,6 +378,35 @@ bool IsCheckpointPossible () {
 void eventSetReadyWeapon (Entity ent) {}
 
 
+//==========================================================================
+//
+//  QS_Save
+//
+//==========================================================================
+void QS_Save () {}
+
+
+//==========================================================================
+//
+//  QS_Load
+//
+//==========================================================================
+void QS_Load () {}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// this is hack used for quicksaves
+native final void QS_PutInt (string fieldname, int value);
+native final void QS_PutName (string fieldname, name value);
+native final void QS_PutStr (string fieldname, string value);
+native final void QS_PutFloat (string fieldname, float value);
+
+native final int QS_GetInt (string fieldname, optional int defvalue);
+native final name QS_GetName (string fieldname, optional name defvalue);
+native final string QS_GetStr (string fieldname, optional string defvalue);
+native final float QS_GetFloat (string fieldname, optional float defvalue);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // various cheat commands
 // if commands starts with `Cheat_`, is void, and has no args, it is console command

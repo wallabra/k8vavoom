@@ -293,6 +293,8 @@ set(MAIN_COMMON_SOURCES
   misc.cpp
   misc.h
   ${NETSUB_SOURCES}
+  qs_data.h
+  qs_data.cpp
   p_acs.cpp
   p_acs.h
   p_clip.cpp

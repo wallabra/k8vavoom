@@ -595,50 +595,42 @@ public:
   }
   */
 
-  void ClearEntityInventoryQS () {
+  void QS_ClearEntityInventory () {
     static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("ClearEntityInventoryQS"));
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_ClearEntityInventory"));
     P_PASS_SELF;
     EV_RET_VOID_IDX(mtindex);
   }
 
-  VEntity *GetEntityInventoryQS () {
+  VEntity *QS_GetEntityInventory () {
     static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("GetEntityInventoryQS"));
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_GetEntityInventory"));
     P_PASS_SELF;
     EV_RET_REF_IDX(VEntity, mtindex);
   }
 
-  //Entity SpawnEntityInventoryQS (name className) { return none; }
-  VEntity *SpawnEntityInventoryQS (VName className) {
+  //Entity QS_SpawnEntityInventory (name className) { return none; }
+  VEntity *QS_SpawnEntityInventory (VName className) {
     static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SpawnEntityInventoryQS"));
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_SpawnEntityInventory"));
     P_PASS_SELF;
     P_PASS_NAME(className);
     EV_RET_REF_IDX(VEntity, mtindex);
   }
 
-  //void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count)
-  void GetInventoryAmountsQS (vint32 &amount, vint32 &maxAmount, vint32 &ammo1, vint32 &ammo2) {
+  //void QS_Save ();
+  void QS_Save () {
     static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("GetInventoryAmountsQS"));
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Save"));
     P_PASS_SELF;
-    P_PASS_PTR(&amount);
-    P_PASS_PTR(&maxAmount);
-    P_PASS_PTR(&ammo1);
-    P_PASS_PTR(&ammo2);
     EV_RET_VOID_IDX(mtindex);
   }
 
-  //void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count)
-  void SetInventoryAmountsQS (int amount, int maxAmount, int ammo1, int ammo2) {
+  //void QS_Load ();
+  void QS_Load () {
     static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("SetInventoryAmountsQS"));
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Load"));
     P_PASS_SELF;
-    P_PASS_INT(amount);
-    P_PASS_INT(maxAmount);
-    P_PASS_INT(ammo1);
-    P_PASS_INT(ammo2);
     EV_RET_VOID_IDX(mtindex);
   }
 
@@ -765,4 +757,14 @@ public:
   DECLARE_FUNCTION(RoughBlockSearch)
   DECLARE_FUNCTION(SetDecorateFlag)
   DECLARE_FUNCTION(GetDecorateFlag)
+
+  DECLARE_FUNCTION(QS_PutInt);
+  DECLARE_FUNCTION(QS_PutName);
+  DECLARE_FUNCTION(QS_PutStr);
+  DECLARE_FUNCTION(QS_PutFloat);
+
+  DECLARE_FUNCTION(QS_GetInt);
+  DECLARE_FUNCTION(QS_GetName);
+  DECLARE_FUNCTION(QS_GetStr);
+  DECLARE_FUNCTION(QS_GetFloat);
 };

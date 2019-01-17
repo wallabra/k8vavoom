@@ -291,6 +291,16 @@ public:
 
   DECLARE_FUNCTION(ServerSetUserInfo)
 
+  DECLARE_FUNCTION(QS_PutInt);
+  DECLARE_FUNCTION(QS_PutName);
+  DECLARE_FUNCTION(QS_PutStr);
+  DECLARE_FUNCTION(QS_PutFloat);
+
+  DECLARE_FUNCTION(QS_GetInt);
+  DECLARE_FUNCTION(QS_GetName);
+  DECLARE_FUNCTION(QS_GetStr);
+  DECLARE_FUNCTION(QS_GetFloat);
+
   // player events
   void eventPutClientIntoServer () { P_PASS_SELF; EV_RET_VOID(NAME_PutClientIntoServer); }
   void eventSpawnClient () { P_PASS_SELF; EV_RET_VOID(NAME_SpawnClient); }
@@ -308,6 +318,21 @@ public:
 
   bool IsCheckpointPossible () { P_PASS_SELF; EV_RET_BOOL(VName("IsCheckpointPossible")); }
 
+  //void QS_Save ();
+  void QS_Save () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Save"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
+
+  //void QS_Load ();
+  void QS_Load () {
+    static int mtindex = -666;
+    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("QS_Load"));
+    P_PASS_SELF;
+    EV_RET_VOID_IDX(mtindex);
+  }
 
   // cheats
   void eventCheat_VScriptCommand (TArray<VStr> &args) { P_PASS_SELF; P_PASS_PTR((void *)&args); EV_RET_VOID(VName("Cheat_VScriptCommand")); }

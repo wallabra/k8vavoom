@@ -71,7 +71,7 @@ bool bInitEffectFailed; // powerup failed to activate
 
 bool bNoAutoaim;
 bool bIsHitscanWeapon;
-
+bool bIsCheckpointSaveAllowed = true;
 
 
 replication {
@@ -104,31 +104,29 @@ const int SF_STEALARMOR = 128; // not implemented
 //
 //==========================================================================
 bool IsCheckpointSaveAllowed () {
-  return true;
+  return bIsCheckpointSaveAllowed;
 }
 
 
 //==========================================================================
 //
-//  GetInventoryAmountsQS
+//  QS_Save
 //
 //==========================================================================
-override void GetInventoryAmountsQS (out int resAmount, out int resMaxAmout, out int resAmmo1Count, out int resAmmo2Count) {
-  resAmount = Amount;
-  resMaxAmout = MaxAmount;
-  resAmmo1Count = 0;
-  resAmmo2Count = 0;
+override void QS_Save () {
+  QS_PutInt("Amount", Amount);
+  QS_PutInt("MaxAmount", MaxAmount);
 }
 
 
 //==========================================================================
 //
-//  SetInventoryAmountsQS
+//  QS_Load
 //
 //==========================================================================
-override void SetInventoryAmountsQS (int aAmount, int aMaxAmout, int aAmmo1Count, int aAmmo2Count) {
-  Amount = aAmount;
-  MaxAmount = aMaxAmout;
+override void QS_Load () {
+  Amount = QS_GetInt("Amount");
+  MaxAmount = QS_GetInt("MaxAmount");
 }
 
 

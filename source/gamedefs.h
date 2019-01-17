@@ -87,6 +87,7 @@
 #include "finale.h"
 #include "save.h"
 #include "server.h"
+#include "qs_data.h"
 #include "p_clip.h"
 #include "p_decal.h"
 #include "p_worldinfo.h"

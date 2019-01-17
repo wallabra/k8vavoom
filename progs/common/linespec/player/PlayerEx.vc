@@ -186,6 +186,65 @@ override bool IsCheckpointPossible () {
 
 //==========================================================================
 //
+//  QS_Save
+//
+//==========================================================================
+override void QS_Save () {
+  QS_PutInt("Health", Health);
+  QS_PutInt("Cheats", Cheats);
+
+  QS_PutInt("bNoTarget", (bNoTarget ? 1 : 0));
+  QS_PutInt("bInstantWeaponSwitch", (bInstantWeaponSwitch ? 1 : 0));
+  QS_PutInt("bAutoAim", (bAutoAim ? 1 : 0));
+
+  int viscount = 0;
+  foreach (auto midx; 0..MAX_MAPS_VISITED; reverse) {
+    if (MapsVisited[midx]) {
+      viscount = midx+1;
+      break;
+    }
+  }
+
+  QS_PutInt("MAX_MAPS_VISITED", viscount);
+  foreach (auto midx; 0..viscount) QS_PutName(va("MapVisited.%d", midx), MapsVisited[midx]);
+}
+
+
+//==========================================================================
+//
+//  QS_Load
+//
+//==========================================================================
+override void QS_Load () {
+  Health = QS_GetInt("Health");
+  MO.Health = Health;
+  Cheats = QS_GetInt("Cheats");
+
+  bNoTarget = !!QS_GetInt("bNoTarget");
+  bInstantWeaponSwitch = !!QS_GetInt("bInstantWeaponSwitch");
+  bAutoAim = !!QS_GetInt("bAutoAim");
+
+  int viscount = QS_GetInt("MAX_MAPS_VISITED", 0);
+  if (viscount < 0) Error("invalid number of visited maps in quicksave");
+  //if (MAX_MAPS_VISITED != QS_GetInt("MAX_MAPS_VISITED")) Error("invalid number of visited maps in quicksave");
+  //print("VISCOUNT=%d (%d)", viscount, MAX_MAPS_VISITED);
+  foreach (auto midx; 0..viscount) {
+    name mname = QS_GetName(va("MapVisited.%d", midx));
+    if (midx < MAX_MAPS_VISITED) {
+      MapsVisited[midx] = mname;
+    } else {
+      if (mname) Error("invalid number of visited maps in quicksave");
+    }
+  }
+
+  foreach (auto midx; viscount..MAX_MAPS_VISITED) MapsVisited[midx] = '';
+
+  k8ElvenGifted = true;
+}
+
+
+//==========================================================================
+//
 //  ClearEntityInventoryQS
 //
 //==========================================================================

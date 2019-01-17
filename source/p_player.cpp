@@ -959,3 +959,97 @@ IMPLEMENT_FUNCTION(VBasePlayer, ServerSetUserInfo) {
   P_GET_SELF;
   Self->SetUserInfo(Info);
 }
+
+
+// native final void QS_PutInt (name fieldname, int value);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_PutInt) {
+  P_GET_INT(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QS_PutValue(QSValue::CreateInt(nullptr, name, value));
+}
+
+// native final void QS_PutName (name fieldname, name value);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_PutName) {
+  P_GET_NAME(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QS_PutValue(QSValue::CreateName(nullptr, name, value));
+}
+
+// native final void QS_PutStr (name fieldname, string value);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_PutStr) {
+  P_GET_STR(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QS_PutValue(QSValue::CreateStr(nullptr, name, value));
+}
+
+// native final void QS_PutFloat (name fieldname, float value);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_PutFloat) {
+  P_GET_FLOAT(value);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QS_PutValue(QSValue::CreateFloat(nullptr, name, value));
+}
+
+
+// native final int QS_GetInt (name fieldname, optional int defvalue);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_GetInt) {
+  P_GET_INT_OPT(value, 0);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QSValue ret = QS_GetValue(nullptr, name);
+  if (ret.type != QSType::QST_Int) {
+    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    ret.ival = value;
+  }
+  RET_INT(ret.ival);
+}
+
+// native final name QS_GetName (name fieldname, optional name defvalue);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_GetName) {
+  P_GET_NAME_OPT(value, NAME_None);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QSValue ret = QS_GetValue(nullptr, name);
+  if (ret.type != QSType::QST_Name) {
+    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    ret.nval = value;
+  }
+  RET_NAME(ret.nval);
+}
+
+// native final string QS_GetStr (name fieldname, optional string defvalue);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_GetStr) {
+  P_GET_STR_OPT(value, VStr::EmptyString);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QSValue ret = QS_GetValue(nullptr, name);
+  if (ret.type != QSType::QST_Str) {
+    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    ret.sval = value;
+  }
+  RET_STR(ret.sval);
+}
+
+// native final float QS_GetFloat (name fieldname, optional float defvalue);
+IMPLEMENT_FUNCTION(VBasePlayer, QS_GetFloat) {
+  P_GET_FLOAT_OPT(value, 0.0f);
+  P_GET_STR(name);
+  P_GET_SELF;
+  (void)Self;
+  QSValue ret = QS_GetValue(nullptr, name);
+  if (ret.type != QSType::QST_Float) {
+    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    ret.fval = value;
+  }
+  RET_FLOAT(ret.fval);
+}

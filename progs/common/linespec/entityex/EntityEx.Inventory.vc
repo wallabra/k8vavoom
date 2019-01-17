@@ -40,10 +40,10 @@ bool IsInventoryCheckpointPossible () {
 
 //==========================================================================
 //
-//  ClearEntityInventoryQS
+//  QS_ClearEntityInventory
 //
 //==========================================================================
-override void ClearEntityInventoryQS () {
+override void QS_ClearEntityInventory () {
   DestroyAllInventory();
   if (bIsPlayer && Player && Player.MO == self) {
     PlayerEx plr = PlayerEx(Player);
@@ -55,24 +55,24 @@ override void ClearEntityInventoryQS () {
 
 //==========================================================================
 //
-//  GetEntityInventoryQS
+//  QS_GetEntityInventory
 //
 //  returns first item in inventory, or `none`
 //
 //==========================================================================
-override Entity GetEntityInventoryQS () {
+override Entity QS_GetEntityInventory () {
   return Inventory;
 }
 
 
 //==========================================================================
 //
-//  SpawnEntityInventoryQS
+//  QS_SpawnEntityInventory
 //
 //  adds to current inventory
 //
 //==========================================================================
-override Entity SpawnEntityInventoryQS (name className) {
+override Entity QS_SpawnEntityInventory (name className) {
   if (!className) return none;
 
   class!Inventory ec = class!Inventory(FindClass(className));
@@ -82,18 +82,6 @@ override Entity SpawnEntityInventoryQS (name className) {
 
   Inventory ent = Spawn(ec);
   if (!ent) return none;
-
-  /*
-  Inventory it = Inventory;
-  if (!it) {
-    Inventory = ent;
-  } else {
-    while (it.Inventory) it = it.Inventory;
-    it.Inventory = ent;
-  }
-  // set item's owner
-  //ent.Owner = self;
-  */
 
   ent.AttachToOwner(self);
 
