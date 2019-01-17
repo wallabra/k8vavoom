@@ -27,7 +27,7 @@
 // returns length, doesn't put terminating zero; 25 bytes of buffer is enough
 static int d2s_buffered_n (double f, char *result);
 // returns length without terminating zero, but puts that zero; 26 bytes of buffer is enough
-static int d2s_buffered (double f, char *result);
+static __attribute__((unused)) int d2s_buffered (double f, char *result);
 
 #include <assert.h>
 #include <stdbool.h>
@@ -1183,7 +1183,7 @@ static int d2s_buffered_n(double f, char* result) {
 }
 
 
-static int d2s_buffered(double f, char* result) {
+static __attribute__((unused)) int d2s_buffered(double f, char* result) {
   const int index = d2s_buffered_n(f, result);
   result[index] = '\0';
   return index;

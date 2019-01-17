@@ -24,7 +24,7 @@
 // returns length, doesn't put terminating zero; 15 bytes of buffer is enough
 static int f2s_buffered_n (float f, char *result);
 // returns length without terminating zero, but puts that zero; 16 bytes of buffer is enough
-static int f2s_buffered (float f, char *result);
+static __attribute__((unused)) int f2s_buffered (float f, char *result);
 
 #include <assert.h>
 #include <stdbool.h>
@@ -555,7 +555,7 @@ static int f2s_buffered_n (float f, char *result) {
 }
 
 
-static int f2s_buffered (float f, char *result) {
+static __attribute__((unused)) int f2s_buffered (float f, char *result) {
   const int index = f2s_buffered_n(f, result);
   result[index] = '\0';
   return index;
