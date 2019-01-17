@@ -1296,6 +1296,24 @@ final void A_FireCustomMissile (class!Actor MissileType, optional float Angle,
 
 //===========================================================================
 //
+//  A_FireSTGrenade
+//
+//===========================================================================
+final void A_FireSTGrenade (optional class!Actor GrenadeType) {
+  if (!specified_GrenadeType) {
+    class!Actor gc = class!Actor(FindClassNoCase('Grenade'));
+    if (!gc) return;
+    GrenadeType = gc;
+    gc = GetCompatibleClassReplacement(Actor, gc);
+    if (gc) GrenadeType = gc;
+  }
+  if (!GrenadeType) return;
+  doFireMissileProjectile(GrenadeType, default, default, default, default, FPF_NOAUTOAIM, -6.328125);
+}
+
+
+//===========================================================================
+//
 //  A_FireProjectile
 //
 //===========================================================================
