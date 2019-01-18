@@ -34,6 +34,114 @@
 #endif
 
 
+class VZipStreamReader : public VStream {
+public:
+  // stream type
+  enum Type {
+    ZLIB, // and gzip
+    RAW,
+  };
+
+  enum { UNKNOWN_SIZE = 0xffffffffU }; // for uncompressed
+
+private:
+  enum { BUFFER_SIZE = 16384 };
+
+  mythread_mutex lock;
+  VStream *srcStream;
+  int stpos;
+  int srccurpos;
+  Bytef buffer[BUFFER_SIZE];
+  z_stream zStream;
+  bool initialised;
+  vuint32 compressedSize;
+  vuint32 uncompressedSize;
+  int nextpos;
+  int currpos;
+  //bool zipArchive;
+  Type strmType;
+  vuint32 origCrc32;
+  vuint32 currCrc32;
+  bool doCrcCheck;
+  bool forceRewind;
+  VStr mFileName;
+  bool doSeekToSrcStart;
+
+private:
+  void initialize ();
+
+  void setError ();
+
+  // just read, no `nextpos` advancement
+  // returns number of bytes read, -1 on error, or 0 on EOF
+  int readSomeBytes (void *buf, int len);
+
+public:
+  // doesn't own passed stream
+  VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+
+  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (bool useCurrSrcPos, const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+
+  /*
+  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (const VStr &strmName, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  VZipStreamReader (const VStr &strmName, bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
+  */
+
+  virtual ~VZipStreamReader () override;
+
+  virtual const VStr &GetName () const override;
+
+  void setCrc (vuint32 acrc); // turns on CRC checking
+
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+  virtual bool AtEnd () override;
+  virtual bool Close () override;
+};
+
+
+class VZipStreamWriter : public VStream {
+public:
+  // stream type
+  enum Type {
+    ZLIB,
+    RAW,
+    GZIP,
+  };
+private:
+  enum { BUFFER_SIZE = 16384 };
+
+  mythread_mutex lock;
+  VStream *dstStream;
+  Bytef buffer[BUFFER_SIZE];
+  z_stream zStream;
+  bool initialised;
+  vuint32 currCrc32;
+  bool doCrcCalc;
+
+private:
+  void setError ();
+
+public:
+  // doesn't own passed stream
+  VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
+  virtual ~VZipStreamWriter () override;
+  void setRequireCrc ();
+  vuint32 getCrc32 () const; // crc32 over uncompressed data (if enabled)
+  virtual void Serialise (void *, int) override;
+  virtual void Seek (int) override;
+  virtual void Flush () override;
+  virtual bool Close () override;
+};
+
+
+/*
 // doesn't own srcstream
 class VZipStreamReader : public VStream {
 public:
@@ -106,6 +214,7 @@ public:
   virtual void Flush () override;
   virtual bool Close () override;
 };
+*/
 
 
 #endif
