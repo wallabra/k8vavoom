@@ -79,16 +79,6 @@ VMemoryStreamRO::VMemoryStreamRO (const VStr &strmName, VStream *strm)
 
 //==========================================================================
 //
-//  VMemoryStreamRO::~VMemoryStreamRO
-//
-//==========================================================================
-VMemoryStreamRO::~VMemoryStreamRO () {
-  Clear();
-}
-
-
-//==========================================================================
-//
 //  VMemoryStreamRO::Clear
 //
 //==========================================================================
@@ -498,6 +488,173 @@ const VStr &VArrayStream::GetName () const {
 
 //==========================================================================
 //
+//  VPagedMemoryStream::VPagedMemoryStream
+//
+//  initialise empty writing stream
+//
+//==========================================================================
+VPagedMemoryStream::VPagedMemoryStream (const VStr &strmName)
+  : first(nullptr)
+  , curr(nullptr)
+  , pos(0)
+  , size(0)
+  , StreamName(strmName)
+{
+  bLoading = false;
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::Close
+//
+//==========================================================================
+bool VPagedMemoryStream::Close () {
+  while (first) {
+    vuint8 *next = *(vuint8 **)first;
+    Z_Free(first);
+    first = next;
+  }
+  first = curr = nullptr;
+  pos = size = 0;
+  return !bError;
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::GetName
+//
+//==========================================================================
+const VStr &VPagedMemoryStream::GetName () const {
+  return StreamName;
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::Serialise
+//
+//==========================================================================
+void VPagedMemoryStream::Serialise (void *bufp, int count) {
+  check(count >= 0);
+  if (count == 0 || bError) return;
+  int leftInPage = DATA_BYTES-pos%DATA_BYTES;
+  vuint8 *buf = (vuint8 *)bufp;
+  if (bLoading) {
+    // loading
+    if (pos >= size) { bError = true; return; }
+    if (count > size-pos) { count = size-pos; bError = true; }
+    while (count > 0) {
+      if (count <= leftInPage) {
+        memcpy(buf, curr+sizeof(vuint8 *)+pos%DATA_BYTES, count);
+        pos += count;
+        break;
+      }
+      memcpy(buf, curr+sizeof(vuint8 *)+pos%DATA_BYTES, leftInPage);
+      pos += leftInPage;
+      count -= leftInPage;
+      buf += leftInPage;
+      check(pos%DATA_BYTES == 0);
+      curr = *(vuint8 **)curr; // next page
+      leftInPage = DATA_BYTES; // it is safe to overestimate here
+    }
+  } else {
+    // writing
+    while (count > 0) {
+      if (leftInPage == DATA_BYTES) {
+        // need new page
+        if (first) {
+          if (pos != 0) {
+            vuint8 *next = *(vuint8 **)curr;
+            if (!next) {
+              // allocate next page
+              next = (vuint8 *)Z_Malloc(PAGE_SIZE);
+              *(vuint8 **)next = nullptr; // no next page
+              *(vuint8 **)curr = next; // pointer to next page
+            }
+            curr = next;
+          } else {
+            curr = first;
+          }
+        } else {
+          // allocate first page
+          first = curr = (vuint8 *)Z_Malloc(PAGE_SIZE);
+          *(vuint8 **)first = nullptr; // no next page
+        }
+      }
+      if (count <= leftInPage) {
+        memcpy(curr+sizeof(vuint8 *)+pos%DATA_BYTES, buf, count);
+        pos += count;
+        break;
+      }
+      memcpy(curr+sizeof(vuint8 *)+pos%DATA_BYTES, buf, leftInPage);
+      pos += leftInPage;
+      count -= leftInPage;
+      buf += leftInPage;
+      check(pos%DATA_BYTES == 0);
+      leftInPage = DATA_BYTES;
+    }
+    if (size < pos) size = pos;
+  }
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::Seek
+//
+//==========================================================================
+void VPagedMemoryStream::Seek (int newpos) {
+  if (bError) return;
+  if (newpos < 0 || newpos > size) { bError = true; return; }
+  if (bLoading) {
+    // loading
+  } else {
+    // writing is somewhat special:
+    // we don't have to go to next page if pos is at its first byte
+    if (newpos <= DATA_BYTES) {
+      // in the first page
+      curr = first;
+    } else {
+      // walk pages
+      int pgcount = newpos/DATA_BYTES;
+      // if we are at page boundary, do one step less
+      if (newpos%DATA_BYTES == 0) {
+        --pgcount;
+        check(pgcount > 0);
+      }
+      curr = first;
+      while (pgcount--) curr = *(vuint8 **)curr;
+    }
+  }
+  pos = newpos;
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::Tell
+//
+//==========================================================================
+int VPagedMemoryStream::Tell () {
+  return pos;
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::TotalSize
+//
+//==========================================================================
+int VPagedMemoryStream::TotalSize () {
+  return size;
+}
+
+
+
+//==========================================================================
+//
 //  VBitStreamWriter::VBitStreamWriter
 //
 //==========================================================================
@@ -785,16 +942,6 @@ VStdFileStream::VStdFileStream (FILE* afl, const VStr &aname, bool asWriter)
 {
   if (afl) fseek(afl, 0, SEEK_SET);
   bLoading = !asWriter;
-}
-
-
-//==========================================================================
-//
-//  VStdFileStream::~VStdFileStream
-//
-//==========================================================================
-VStdFileStream::~VStdFileStream () {
-  Close();
 }
 
 

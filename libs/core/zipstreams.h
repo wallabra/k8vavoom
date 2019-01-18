@@ -99,7 +99,7 @@ private:
 
 public:
   VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
-  virtual ~VZipStreamWriter () override;
+
   virtual const VStr &GetName () const override;
   virtual void Serialise (void*, int) override;
   virtual void Seek (int) override;

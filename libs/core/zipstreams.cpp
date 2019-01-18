@@ -395,16 +395,6 @@ VZipStreamWriter::VZipStreamWriter (VStream *ADstStream, int clevel, Type atype)
 
 //==========================================================================
 //
-//  VZipStreamWriter::~VZipStreamWriter
-//
-//==========================================================================
-VZipStreamWriter::~VZipStreamWriter () {
-  Close();
-}
-
-
-//==========================================================================
-//
 //  VZipStreamWriter::Close
 //
 //==========================================================================

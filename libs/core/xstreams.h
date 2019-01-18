@@ -39,8 +39,6 @@ public:
   VMemoryStreamRO (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
   VMemoryStreamRO (const VStr &strmName, VStream *strm); // from current position to stream end
 
-  ~VMemoryStreamRO ();
-
   void Clear ();
 
   void Setup (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
@@ -109,6 +107,37 @@ public:
 };
 
 
+// stream for reading and writing in memory
+// this does allocation by 8KB pages, and you cannot get direct pointer
+// the idea is that you will use this as writer, then switch it to reader,
+// and pass it to zip stream or something
+class VPagedMemoryStream : public VStream {
+private:
+  enum { PAGE_SIZE = 8192 };
+  enum { DATA_BYTES = PAGE_SIZE-sizeof(vuint8 *) };
+  // each page contains pointer to the next page, and `PAGE_SIZE-sizeof(void*)` bytes of data
+  vuint8 *first; // first page
+  vuint8 *curr; // current page for reader, last page for writer
+  int pos; // current position
+  int size; // current size
+  VStr StreamName;
+
+public:
+  // initialise empty writing stream
+  VPagedMemoryStream (const VStr &strmName);
+
+  virtual bool Close () override;
+  virtual void Serialise (void*, int) override;
+  virtual void Seek (int) override;
+  virtual int Tell () override;
+  virtual int TotalSize () override;
+
+  inline void BeginRead () { bLoading = true; pos = 0; curr = first; }
+
+  virtual const VStr &GetName () const override;
+};
+
+
 //**************************************************************************
 //**
 //**  MESSAGE IO FUNCTIONS
@@ -171,7 +200,6 @@ private:
 
 public:
   VStdFileStream (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
-  virtual ~VStdFileStream () override;
 
   virtual const VStr &GetName () const override;
   virtual void Seek (int pos) override;
