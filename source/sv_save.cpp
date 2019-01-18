@@ -221,6 +221,10 @@ public:
   virtual VStream &operator << (VName &Name) override {
     vint32 NameIndex;
     *this << STRM_INDEX(NameIndex);
+    if (NameIndex < 0 || NameIndex >= NameRemap.length()) {
+      GCon->Logf(NAME_Error, "SAVEGAME: invalid name index %d (max is %d)", NameIndex, NameRemap.length()-1);
+      Host_Error("SAVEGAME: invalid name index %d (max is %d)", NameIndex, NameRemap.length()-1);
+    }
     Name = NameRemap[NameIndex];
     return *this;
   }
@@ -1695,8 +1699,8 @@ static void SV_LoadMap (VName MapName) {
   check(Map);
 
   // decompress map data
-  VArrayStream *ArrStrm = new VArrayStream("<savemap>", Map->Data);
-  VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm);
+  VArrayStream *ArrStrm = new VArrayStream("<savemap:mapdata>", Map->Data);
+  VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm, VZipStreamReader::UNKNOWN_SIZE, Map->DecompressedSize);
   TArray<vuint8> DecompressedData;
   DecompressedData.SetNum(Map->DecompressedSize);
   ZipStrm->Serialise(DecompressedData.Ptr(), DecompressedData.Num());
@@ -1705,7 +1709,7 @@ static void SV_LoadMap (VName MapName) {
   delete ArrStrm;
   ArrStrm = nullptr;
 
-  VSaveLoaderStream *Loader = new VSaveLoaderStream(new VArrayStream("<savemap>", DecompressedData));
+  VSaveLoaderStream *Loader = new VSaveLoaderStream(new VArrayStream("<savemap:mapdata>", DecompressedData));
 
   // load names
   UnarchiveNames(Loader);
