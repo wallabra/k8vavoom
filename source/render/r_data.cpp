@@ -33,7 +33,7 @@
 
 
 extern VCvarB dbg_show_missing_classes;
-static VCvarI r_color_distance_algo("r_color_distance_algo", "0", "What algorithm use to calculate color distance?\n  0: standard\n  1: advanced.", CVAR_Archive);
+static VCvarI r_color_distance_algo("r_color_distance_algo", "1", "What algorithm use to calculate color distance?\n  0: standard\n  1: advanced.", CVAR_Archive);
 
 
 struct VTempSpriteEffectDef {
