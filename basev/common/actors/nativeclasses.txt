@@ -413,6 +413,8 @@ class Actor extends Thinker
   action native A_Quake (float intensity, float ticduation, float damrad, float tremrad, optional name soundname);
   action native A_QuakeEx (...);
 
+  action native A_SpawnParticle (...);
+
   action native A_DamageSelf(int amount, optional string damagetype, optional int flags, optional string filter, optional string species, optional int src, optional int inflict);
 
   action native A_k8ConLog (string msg);
