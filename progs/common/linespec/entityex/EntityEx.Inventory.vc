@@ -80,10 +80,12 @@ override Entity QS_SpawnEntityInventory (name className) {
   //ec = GetCompatibleClassReplacement(class!EntityEx, ec);
   //if (ec) ArmorClass = ec;
 
-  Inventory ent = Spawn(ec);
-  if (!ent) return none;
-
-  ent.AttachToOwner(self);
+  Inventory ent = FindInventory(ec);
+  if (!ent) {
+    ent = Spawn(ec);
+    if (!ent) return none;
+    ent.AttachToOwner(self);
+  }
 
   return ent;
 }
