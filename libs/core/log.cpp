@@ -97,13 +97,16 @@ void VLog::RemoveListener (VLogListener *lst) {
 //
 //==========================================================================
 void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
+  if (!Listeners) return;
+
   if (!addEOL && (!fmt || !fmt[0])) return;
   if (!fmt) fmt = "";
 
   // initial allocation
   if (!logbufsize) {
     logbufsize = INITIAL_BUFFER_SIZE;
-    logbuf = (char *)Z_Malloc(logbufsize);
+    logbuf = (char *)malloc(logbufsize);
+    if (!logbuf) { fprintf(stderr, "FATAL: out of memory for log!\n"); abort(); } //FIXME
   }
 
   va_list apcopy;
