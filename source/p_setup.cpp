@@ -125,7 +125,7 @@ enum {
 #define NF_SUBSECTOR_OLD  (0x8000)
 
 
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 003.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 004.\n";
 static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
