@@ -57,6 +57,20 @@ override void OnEntitySpawned (Entity ent) {
       k8LimiterCleanup(K8Gore_BloodBase, allowed, ref bloodEntCounter, ref bloodSkipDeathCounter, GetCvar('K8BDWOpt_LimiterDebug'));
     }
   }
+  if (GetCvar('k8GoreOpt_ForceColoredBlood')) {
+    EntityEx ee = EntityEx(ent);
+    if (ee isa Cacodemon) {
+      ee.BloodType = K8Gore_BloodBlue;
+      ee.BloodSplatterType = K8Gore_BloodBlue;
+      ee.BloodColour = 0xff_00_00_66;
+      ee.BloodTranslation = R_GetBloodTranslation(ee.BloodColour);
+    } else if (ee isa BaronOfHell || ee isa HellKnight) {
+      ee.BloodType = K8Gore_BloodGreen;
+      ee.BloodSplatterType = K8Gore_BloodGreen;
+      ee.BloodColour = 0xff_00_66_00;
+      ee.BloodTranslation = R_GetBloodTranslation(ee.BloodColour);
+    }
+  }
 }
 
 

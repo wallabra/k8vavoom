@@ -31,6 +31,12 @@ menudef GoreModMenu {
     help = "Play special sound on headshot kill?";
   }
 
+  option bool {
+    title = "Force Colored Blood";
+    cvar = k8GoreOpt_ForceColoredBlood;
+    help = "Force Gore Colored Blood on Bruisers and Cacodemon?";
+  }
+
 
   header "Headshots Gore Effects";
 
