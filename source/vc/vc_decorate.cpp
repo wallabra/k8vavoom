@@ -157,6 +157,58 @@ struct PlayerClassWeaponSlots {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// this is workaround for morons overriding the same class several times in
+// the same mod (yes, smoothdoom, i am talking about you).
+// we will cut off old override if we'll find a new one
+static TMapNC<VClass *, bool> currFileRepls; // set; key is old class
+
+
+static void ClearReplacementBase () {
+  currFileRepls.clear();
+}
+
+
+static void ResetReplacementBase () {
+  currFileRepls.reset();
+}
+
+
+static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
+  if (!oldcls) return;
+
+  static int doOldRepl = -1;
+  if (doOldRepl < 0) doOldRepl = (GArgs.CheckParm("-vc-decorate-old-replacement") ? 1 : 0);
+
+  if (doOldRepl) {
+    // old Vavoom method
+    oldcls->Replacement = newcls;
+    newcls->Replacee = oldcls;
+  } else {
+    VClass *repl = oldcls->GetReplacement();
+    check(repl);
+    auto orpp = currFileRepls.find(oldcls);
+    if (orpp) {
+      //GCon->Logf("*** duplicate replacement of '%s' with '%s' (current is '%s')", *oldcls->GetFullName(), *newcls->GetFullName(), *repl->GetFullName());
+      GCon->Logf(NAME_Warning, "DECORATE error: already replaced class '%s' replaced again with '%s' (current replacement is '%s')", oldcls->GetName(), newcls->GetName(), repl->GetName());
+      GCon->Logf(NAME_Warning, "  current replacement is at %s", *repl->Loc.toStringNoCol());
+      GCon->Logf(NAME_Warning, "  new replacement is at %s", *newcls->Loc.toStringNoCol());
+      GCon->Log(NAME_Warning, "  PLEASE, TELL MOD AUTHOR TO STOP BEING A MORON, AND FIX THE CODE!");
+      repl = oldcls;
+    } else {
+      // first occurence
+      //VClass *repl = oldcls->GetReplacement();
+      //GCon->Logf("*** first replacement of '%s' with '%s' (wanted '%s')", *repl->GetFullName(), *newcls->GetFullName(), *oldcls->GetFullName());
+      currFileRepls.put(oldcls, true);
+    }
+    if (repl != newcls) {
+      repl->Replacement = newcls;
+      newcls->Replacee = repl;
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct VWeaponSlotFixups {
   VName plrClassName;
   //bool defined[NUM_WEAPON_SLOTS+1]; // [1..10]
@@ -2517,6 +2569,8 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     //if (nfo) nfo->Class = Class;
   }
 
+  DoClassReplacement(ReplaceeClass, Class);
+  /*
   if (ReplaceeClass) {
     if (GArgs.CheckParm("-vc-decorate-old-replacement")) {
       ReplaceeClass->Replacement = Class;
@@ -2528,6 +2582,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       Class->Replacee = repl;
     }
   }
+  */
   unguard;
 }
 
@@ -3156,11 +3211,16 @@ void ProcessDecorateScripts () {
   // parse scripts
   TArray<VClassFixup> ClassFixups;
   TArray<VWeaponSlotFixups> newWSlots;
+  int lastDecoFile = -1;
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     //GCon->Logf(NAME_Init, "DC: 0x%08x (%s) : <%s>", Lump, *W_LumpName(Lump), *W_FullLumpName(Lump));
     if (W_LumpName(Lump) == NAME_decorate) {
       mainDecorateLump = Lump;
       GCon->Logf(NAME_Init, "Parsing decorate script '%s'...", *W_FullLumpName(Lump));
+      if (lastDecoFile != W_LumpFile(Lump)) {
+        lastDecoFile = W_LumpFile(Lump);
+        ResetReplacementBase();
+      }
       thisIsBasePak = false;
       ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
       thisIsBasePak = false; // reset it
@@ -3168,6 +3228,7 @@ void ProcessDecorateScripts () {
     }
   }
   //VMemberBase::StaticDumpMObjInfo();
+  ClearReplacementBase();
 
   // make sure all import classes were defined
   if (VMemberBase::GDecorateClassImports.Num()) {
