@@ -388,6 +388,8 @@ native static final void R_FillRect (int x, int y, int w, int h, int colour);
 
 native static final float R_GetAspectRatio ();
 
+native static final int R_GetBloodTranslation (int color);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // client sound stuff

@@ -111,6 +111,12 @@ IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
 }
 
 
+IMPLEMENT_FUNCTION(VObject, R_GetBloodTranslation) {
+  P_GET_INT(color);
+  RET_INT(R_GetBloodTranslation(color));
+}
+
+
 //==========================================================================
 //
 //  Misc

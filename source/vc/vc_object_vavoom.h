@@ -92,6 +92,8 @@
 
   DECLARE_FUNCTION(IsAnimatedTexture)
 
+  DECLARE_FUNCTION(R_GetBloodTranslation)
+
   DECLARE_FUNCTION(KBCheatClearAll)
   DECLARE_FUNCTION(KBCheatAppend)
 
