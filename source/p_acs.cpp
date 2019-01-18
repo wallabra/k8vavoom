@@ -2202,6 +2202,7 @@ void VAcs::ClearReferences () {
 //
 //==========================================================================
 void VAcs::Tick (float DeltaTime) {
+  if (DeltaTime <= 0.0f) return;
   if (!destroyed) RunScript(DeltaTime, false);
 }
 
@@ -3302,6 +3303,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     DelayActivationTick = 0;
     DelayTime = 0;
   }
+
+  if (DeltaTime < 0.0f) DeltaTime = 0.0f;
 
   if (DelayActivationTick > XLevel->TicTime) {
     //GCon->Logf("DELAY: DelayActivationTick=%d; DeltaTime=%f; time=%f; tictime=%d", DelayActivationTick, DeltaTime*1000, (double)XLevel->Time, XLevel->TicTime);

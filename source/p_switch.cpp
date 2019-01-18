@@ -178,6 +178,7 @@ void VButton::Serialise (VStream &Strm) {
 //==========================================================================
 void VButton::Tick (float DeltaTime) {
   guard(VButton::Tick);
+  if (DeltaTime <= 0.0f) return;
   // do buttons
   Timer -= DeltaTime;
   if (Timer <= 0.0f) {

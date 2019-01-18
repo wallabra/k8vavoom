@@ -288,6 +288,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
 //
 //==========================================================================
 void VBasePlayer::AdvanceViewStates (float deltaTime) {
+  if (deltaTime <= 0.0f) return;
   for (int i = 0; i < NUMPSPRITES; ++i) {
     VViewState &St = ViewStates[i];
     // a null state means not active

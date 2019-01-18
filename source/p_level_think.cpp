@@ -205,6 +205,7 @@ void VLevel::DestroyAllThinkers () {
 //
 //==========================================================================
 void VLevel::RunScriptThinkers (float DeltaTime) {
+  if (DeltaTime <= 0.0f) return;
   // run script thinkers
   // do not run newly spawned scripts on this frame, though
   //const int sclenOrig = scriptThinkers.length();
@@ -265,6 +266,8 @@ void VLevel::RunScriptThinkers (float DeltaTime) {
 //==========================================================================
 void VLevel::TickWorld (float DeltaTime) {
   guard(VLevel::TickWorld);
+
+  if (DeltaTime <= 0.0f) return;
 
   double stimed = 0, stimet = 0;
 

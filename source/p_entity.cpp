@@ -300,6 +300,7 @@ void VEntity::SetInitialState (VState *InState) {
 //==========================================================================
 bool VEntity::AdvanceState (float deltaTime) {
   guard(VEntity::AdvanceState);
+  if (deltaTime <= 0.0f) return true;
   if (State && StateTime != -1.0f) {
     StateTime -= deltaTime;
     // you can cycle through multiple states in a tic
