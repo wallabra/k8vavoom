@@ -408,7 +408,7 @@ vuint32 VZipFile::SearchCentralDir () {
 //==========================================================================
 void VZipFile::Close () {
   VPakFileBase::Close();
-  if (FileStream) { delete FileStream; FileStream = 0; }
+  if (FileStream) { delete FileStream; FileStream = nullptr; }
 }
 
 
@@ -971,19 +971,17 @@ bool VZipFileReader::Close () {
   guard(VZipFileReader::Close);
   //MyThreadLocker locker(rdlock);
 
-  if (!bError && rest_read_uncompressed == 0) {
-    if (Crc32 != Info.crc32) {
-      bError = true;
-      Error->Log("Bad CRC");
+  if (stream_initialised) {
+    if (!bError && rest_read_uncompressed == 0) {
+      if (Crc32 != Info.crc32) {
+        bError = true;
+        Error->Log("Bad CRC");
+      }
     }
-  }
-  if (usezlib) {
-    if (stream_initialised) inflateEnd(&stream);
-  } else {
-    if (stream_initialised) lzma_end(&lzmastream);
+    if (usezlib) inflateEnd(&stream); else lzma_end(&lzmastream);
+    stream_initialised = false;
   }
 
-  stream_initialised = false;
   return !bError;
   unguard;
 }
