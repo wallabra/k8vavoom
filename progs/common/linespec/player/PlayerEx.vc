@@ -63,7 +63,8 @@ float Bob; // bounded/scaled total momentum
 EntityEx Attacker;
 
 float JumpTime;
-int LocalQuakeHappening;
+//int LocalQuakeHappening;
+TVec LocalQuakeHappening; // for each axis
 
 TVec MoveDir;
 
@@ -2214,7 +2215,7 @@ void ResetPlayerOnSpawn () {
   Rain2 = none;
 
   JumpTime = 0;
-  LocalQuakeHappening = 0;
+  LocalQuakeHappening = vector(0, 0, 0);
   MoveDir = vector(0, 0, 0);
   HazardTime = 0;
   //Weapon ReadyWeapon;
@@ -2494,7 +2495,7 @@ void PlayerReborn () {
   Refire = 0;
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();
-  LocalQuakeHappening = 0;
+  LocalQuakeHappening = vector(0, 0, 0);
 }
 
 
@@ -2577,9 +2578,9 @@ override void PlayerExitMap (bool clusterChange) {
   MO.RenderStyle = Entity::STYLE_Normal;
   MO.Alpha = 1.0;
   EntityEx(MO).bShadow = false; // cancel invisibility
-  ExtraLight = 0;     // cancel gun flashes
-  FixedColourmap = 0;   // cancel ir gogles
-  DamageFlash = 0.0;    // no palette changes
+  ExtraLight = 0; // cancel gun flashes
+  FixedColourmap = 0; // cancel ir gogles
+  DamageFlash = 0.0; // no palette changes
   BonusFlash = 0.0;
   PoisonCount = 0;
   BlendR = 0.0;
@@ -2591,7 +2592,7 @@ override void PlayerExitMap (bool clusterChange) {
   //k8: just in case
   bReloadQueued = false;
   Refire = 0;
-  LocalQuakeHappening = 0;
+  LocalQuakeHappening = vector(0, 0, 0);
 }
 
 
@@ -3193,9 +3194,11 @@ final override void SetViewPos () {
     ViewOrg.y = MO.Origin.y;
 
     if (LocalQuakeHappening) {
-      float intensity = float(LocalQuakeHappening);
-      ViewOrg.x += (Random()-0.5)*(intensity*4.0);
-      ViewOrg.y += (Random()-0.5)*(intensity*4.0);
+      //TODO: implement A_QuakeEx flags!
+      //float intensity = float(LocalQuakeHappening);
+      if (LocalQuakeHappening.x) ViewOrg.x += (Random()-0.5)*(LocalQuakeHappening.x*4.0);
+      if (LocalQuakeHappening.y) ViewOrg.y += (Random()-0.5)*(LocalQuakeHappening.y*4.0);
+      if (LocalQuakeHappening.z) ViewOrg.z += (Random()-0.5)*(LocalQuakeHappening.z*4.0);
     }
 
     if (PlayerState != PST_DEAD) {

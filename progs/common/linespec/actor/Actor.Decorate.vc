@@ -63,6 +63,9 @@ enum /*ERadiusGiveFlags*/ {
 };
 
 
+// flags for A_QuakeEx are in `QuakeFocusEx`
+
+
 //==========================================================================
 //
 //  A_k8ConLog
@@ -314,20 +317,58 @@ final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, 
 //  A_Quake
 //
 //===========================================================================
-final bool A_Quake (float intensity, float ticduation, float damrad, float tremrad, optional name soundname) {
-  if (ticduation < 1) return false;
+final bool A_Quake (float intensity, float ticduration, float damrad, float tremrad, optional name soundname) {
+  if (ticduration < 1) return false;
   if (damrad < 1 && tremrad < 1) return false;
   damrad = fmax(0, damrad);
   tremrad = fmax(0, tremrad);
   if (intensity < 1) return false;
-  if (intensity > 9) intensity = 9;
+  intensity = fmin(intensity, 9);
   QuakeFocus focus = Spawn(QuakeFocus, Origin);
   if (focus) {
     focus.Richters = int(intensity);
-    focus.QuakeDuration = int(ticduation)>>1; // decremented every 2 tics
+    focus.QuakeDuration = int(ticduration)>>1; // decremented every 2 tics
     focus.DamageRadius = damrad;
     focus.TremorRadius = tremrad;
-    if (soundname) PlaySound(soundname, CHAN_AUTO);
+    //if (soundname) PlaySound(soundname, CHAN_AUTO);
+    focus.SoundName = soundname;
+    return true;
+  }
+  return false;
+}
+
+
+//===========================================================================
+//
+//  A_QuakeEx
+//
+//  radii are in map units
+//
+//===========================================================================
+final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
+                      optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,
+                      optional int falloff, optional int highpoint, optional float rollIntensity, optional float rollWave)
+{
+  if (ticduration < 1) return false;
+  if (damrad < 1 && tremrad < 1) return false;
+  damrad = fmax(0, damrad);
+  tremrad = fmax(0, tremrad);
+  if (intensityX < 1 && intensityY < 1 && intensityZ < 1) return false;
+  intensityX = fmin(intensityX, 9);
+  intensityY = fmin(intensityY, 9);
+  intensityZ = fmin(intensityZ, 9);
+  QuakeFocusEx focus = Spawn(QuakeFocusEx, Origin);
+  if (focus) {
+    focus.Richters = vector(int(intensityX), int(intensityY), int(intensityZ));
+    focus.QuakeDuration = int(ticduration)>>1; // decremented every 2 tics
+    focus.DamageRadius = damrad;
+    focus.TremorRadius = tremrad;
+    //if (soundname) PlaySound(soundname, CHAN_AUTO);
+    focus.SoundName = soundname;
+    focus.Flags = flags;
+    focus.MulWave = vector(mulwavex, mulwavey, mulwavez);
+    focus.Falloff = fmax(0, falloff);
+    focus.HighPoint = fmax(0, highpoint);
     return true;
   }
   return false;

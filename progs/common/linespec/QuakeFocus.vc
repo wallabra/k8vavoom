@@ -56,7 +56,7 @@ final void A_FocusQuake () {
       dist = DistTo(victim);
       if (dist < TremorRadius) {
         // in tremor radius
-        pl.LocalQuakeHappening = Richters;
+        pl.LocalQuakeHappening = vector(Richters, Richters, 0);
       }
       // check if in damage radius
       if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ) {
@@ -69,7 +69,7 @@ final void A_FocusQuake () {
   } else {
     foreach (auto playnum; 0..MAXPLAYERS) {
       if (Level.Game.Players[playnum]) {
-        PlayerEx(Level.Game.Players[playnum]).LocalQuakeHappening = 0;
+        PlayerEx(Level.Game.Players[playnum]).LocalQuakeHappening = vector(0, 0, 0);
       }
     }
     SetState(none);
@@ -94,6 +94,119 @@ Spawn:
   TNT1 A 2 A_FocusQuake
   TNT1 A 1 A_ContMobjSound
   TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 2 A_FocusQuake
+  Loop
+}
+
+
+defaultproperties {
+  bNoSector = true;
+  bNoBlockmap = true;
+  SoundName = 'world/quake';
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class QuakeFocusEx : Actor;
+
+// flags for A_QuakeEx
+enum /*EQuakeFlags*/ {
+  QF_RELATIVE      = 1,
+  QF_SCALEDOWN     = 1<<1,
+  QF_SCALEUP       = 1<<2,
+  QF_MAX           = 1<<3,
+  QF_FULLINTENSITY = 1<<4,
+  QF_WAVE          = 1<<5,
+};
+
+/*
+final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
+                      optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,
+                      optional int falloff, optional int highpoint, optional float rollIntensity, optional float rollWave)
+*/
+
+// quake variables
+TVec Richters; // intensity on richter scale (2..9), on each axis
+int QuakeDuration; // duration in tics
+float DamageRadius; // radius for damage
+float TremorRadius; // radius for tremor
+name SoundName;
+int Flags;
+TVec MulWave; // used for QF_WAVE
+// Determines how far away the quake will start to reduce its amplitude
+// based on distance. Takes the same arguments at tremrad in map units.
+// Anything inside this will experience the full effect of the quake.
+// Default is 0, which is no falloff.
+float Falloff;
+// Only used with QF_SCALE<DOWN/UP>. Determines how far into the quake in
+// tics for the quake to reach the peak of its shaking (or lack thereof
+// if QF_MAX is included). Default is 0, or directly half way.
+float HighPoint;
+//rollintensity: The camera roll is affected in a similar way to intensityX/Y/Z if specified. Unlike normal intensity, this is not capped. If QF_WAVE is used, can also be negative to allow randomization. This feature does not rely upon the standard intensities and can be used separately (placing 0 in intensity and mulwave properties), but the flags affect it exactly the same.
+//rollwave: Similar to mulwavex/y/z, but for rolling.
+
+
+//==========================================================================
+//
+//  A_FocusQuake
+//
+//==========================================================================
+final void A_FocusQuakeEx () {
+  float an;
+  PlayerEx pl;
+  EntityEx victim;
+  float dist;
+
+  //print("QuakeFocus: dur=%s; power=%s", QuakeDuration, Richters);
+  if (QuakeDuration-- > 0) {
+    Richters.x = fclamp(Richters.x, 0, int(256/9));
+    Richters.y = fclamp(Richters.y, 0, int(256/9));
+    Richters.z = fclamp(Richters.z, 0, int(256/9));
+
+    foreach (auto playnum; 0..MAXPLAYERS) {
+      pl = PlayerEx(Level.Game.Players[playnum]);
+      if (!pl || !pl.bSpawned) continue;
+      victim = EntityEx(pl.MO);
+      dist = DistTo(victim);
+      if (dist < TremorRadius) {
+        // in tremor radius
+        pl.LocalQuakeHappening = Richters;
+      }
+      // check if in damage radius
+      if (dist < DamageRadius && victim.Origin.z <= victim.FloorZ) {
+        if (Random() < 0.1953125) victim.Damage(none, none, 1+(P_Random()&7), spawnBlood:true);
+        // thrust player around
+        an = victim.Angles.yaw+Random()*256.0;
+        victim.Thrust(an, fmax(Richters.x, Richters.y)/2.0);
+      }
+    }
+  } else {
+    foreach (auto playnum; 0..MAXPLAYERS) {
+      if (Level.Game.Players[playnum]) {
+        PlayerEx(Level.Game.Players[playnum]).LocalQuakeHappening = vector(0, 0, 0);
+      }
+    }
+    SetState(none);
+  }
+}
+
+
+//==========================================================================
+//
+//  A_ContMobjSound
+//
+//==========================================================================
+final void A_ContMobjSound () {
+  //print("QuakeFocus: SOUND! dur=%s; power=%s", QuakeDuration, Richters);
+  if (SoundName) PlaySound(/*'world/quake'*/SoundName, CHAN_VOICE);
+}
+
+
+//???k8: first quake is ignored; this seems to be intended
+states {
+Spawn:
+  TNT1 A 2 A_FocusQuakeEx
+  TNT1 A 1 A_ContMobjSound
+  TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 2 A_FocusQuakeEx
   Loop
 }
 
