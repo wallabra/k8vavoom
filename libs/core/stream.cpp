@@ -27,6 +27,131 @@
 #include "core.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+/*
+if bit 7 of first byte is not set, this is one-byte number in range [0..127].
+if bit 7 is set, this is encoded number in the following format:
+
+  bits 5-6:
+    0: this is 13-bit number in range [0..8191] (max: 0x1fff)
+    1: this is 21-bit number in range [0..2097151] (max: 0x1fffff)
+    2: this is 29-bit number in range [0..536870911] (max: 0x1fffffff)
+    3: extended number, next 2 bits are used to specify format; result should be xored with -1
+
+  bit 3-4 for type 3:
+    0: this is 11-bit number in range [0..2047] (max: 0x7ff)
+    1: this is 19-bit number in range [0..524287] (max: 0x7ffff)
+    2: this is 27-bit number in range [0..134217727] (max: 0x7ffffff)
+    3: read next 4 bytes as 32 bit number (other bits in this byte should be zero)
+*/
+
+
+// returns number of bytes required to decode full number, in range [1..5]
+int decodeVarIntLength (const vuint8 firstByte) {
+  if ((firstByte&0x80) == 0) {
+    return 1;
+  } else {
+    // multibyte
+    switch (firstByte&0x60) {
+      case 0x00: return 2;
+      case 0x20: return 3;
+      case 0x40: return 4;
+      case 0x60: // most complex format
+        switch (firstByte&0x18) {
+          case 0x00: return 2;
+          case 0x08: return 3;
+          case 0x10: return 4;
+          case 0x18: return 5;
+        }
+    }
+  }
+  return -1; // the thing that should not be
+}
+
+
+// returns decoded number; can consume up to 5 bytes
+vuint32 decodeVarInt (const void *data) {
+  const vuint8 *buf = (const vuint8 *)data;
+  if ((buf[0]&0x80) == 0) {
+    return buf[0];
+  } else {
+    // multibyte
+    switch (buf[0]&0x60) {
+      case 0x00: return ((buf[0]&0x1f)<<8)|buf[1];
+      case 0x20: return ((buf[0]&0x1f)<<16)|(buf[1]<<8)|buf[2];
+      case 0x40: return ((buf[0]&0x1f)<<24)|(buf[1]<<16)|(buf[2]<<8)|buf[3];
+      case 0x60: // most complex format
+        switch (buf[0]&0x18) {
+          case 0x00: return (vuint32)(((buf[0]&0x07)<<8)|buf[1])^0xffffffffU;
+          case 0x08: return (vuint32)(((buf[0]&0x07)<<16)|(buf[1]<<8)|buf[2])^0xffffffffU;
+          case 0x10: return (vuint32)(((buf[0]&0x07)<<24)|(buf[1]<<16)|(buf[2]<<8)|buf[3])^0xffffffffU;
+          case 0x18: return (vuint32)((buf[1]<<24)|(buf[2]<<16)|(buf[3]<<8)|buf[4])^0xffffffffU;
+        }
+    }
+  }
+  return 0xffffffffU; // the thing that should not be
+}
+
+
+// returns number of used bytes; can consume up to 5 bytes
+int encodeVarInt (void *data, vuint32 n) {
+  vuint8 *buf = (vuint8 *)data;
+  if (n <= 0x1fffffff) {
+    // positive
+    if (n <= 0x7f) {
+      *buf = (vuint8)n;
+      return 1;
+    }
+    if (n <= 0x1fff) {
+      *buf++ = (vuint8)(n>>8)|0x80;
+      *buf = (vuint8)(n&0xff);
+      return 2;
+    }
+    if (n <= 0x1fffff) {
+      *buf++ = (vuint8)(n>>16)|(0x80|0x20);
+      *buf++ = (vuint8)((n>>8)&0xff);
+      *buf = (vuint8)(n&0xff);
+      return 3;
+    }
+    // invariant: n <= 0x1fffffff
+    *buf++ = (vuint8)(n>>24)|(0x80|0x40);
+    *buf++ = (vuint8)((n>>16)&0xff);
+    *buf++ = (vuint8)((n>>8)&0xff);
+    *buf = (vuint8)(n&0xff);
+    return 4;
+  } else {
+    // either negative, or full 32 bits required; format 3
+    // first, xor it
+    n ^= 0xffffffffU;
+    if (n <= 0x7ff) {
+      *buf++ = (vuint8)(n>>8)|(0x80|0x60);
+      *buf = (vuint8)(n&0xff);
+      return 2;
+    }
+    if (n <= 0x7ffff) {
+      *buf++ = (vuint8)(n>>16)|(0x80|0x60|0x08);
+      *buf++ = (vuint8)((n>>8)&0xff);
+      *buf = (vuint8)(n&0xff);
+      return 3;
+    }
+    if (n <= 0x7ffffff) {
+      *buf++ = (vuint8)(n>>24)|(0x80|0x60|0x10);
+      *buf++ = (vuint8)((n>>16)&0xff);
+      *buf++ = (vuint8)((n>>8)&0xff);
+      *buf = (vuint8)(n&0xff);
+      return 4;
+    }
+    // full 32 bits
+    *buf++ = (vuint8)(0x80|0x60|0x18);
+    *buf++ = (vuint8)((n>>24)&0xff);
+    *buf++ = (vuint8)((n>>16)&0xff);
+    *buf++ = (vuint8)((n>>8)&0xff);
+    *buf = (vuint8)(n&0xff);
+    return 5;
+  }
+}
+
+
 //==========================================================================
 //
 //  VStream::~VStream
@@ -255,59 +380,17 @@ void VStream::SerialiseBigEndian (void *Val, int Len) {
 //
 //==========================================================================
 VStream &operator << (VStream &Strm, VStreamCompactIndex &I) {
-  guard(operator VStream << VStreamCompactIndex);
+  vuint8 buf[5];
   if (Strm.IsLoading()) {
-    vuint8 b;
-    Strm << b;
-    bool Neg = !!(b&0x40);
-    vint32 Val = b&0x3f;
-    if (b&0x80) {
-      Strm << b;
-      Val |= (b&0x7f)<<6;
-      if (b&0x80) {
-        Strm << b;
-        Val |= (b&0x7f)<<13;
-        if (b&0x80) {
-          Strm << b;
-          Val |= (b&0x7f)<<20;
-          if (b & 0x80) {
-            Strm << b;
-            Val |= (b&0x7f)<<27;
-          }
-        }
-      }
-    }
-    if (Neg) Val = -Val;
-    I.Val = Val;
+    Strm << buf[0];
+    const int length = decodeVarIntLength(buf[0]);
+    if (length > 1) Strm.Serialise(buf+1, length-1);
+    I.Val = (vint32)decodeVarInt(buf);
   } else {
-    vint32 Val = I.Val;
-    if (Val < 0) Val = -Val;
-    vuint8 b = Val&0x3f;
-    if (I.Val < 0) b |= 0x40;
-    if (Val & 0xffffffc0) b |= 0x80;
-    Strm << b;
-    if (Val&0xffffffc0) {
-      b = (Val>>6)&0x7f;
-      if (Val&0xffffe000) b |= 0x80;
-      Strm << b;
-      if (Val&0xffffe000) {
-        b = (Val>>13)&0x7f;
-        if (Val&0xfff00000) b |= 0x80;
-        Strm << b;
-        if (Val&0xfff00000) {
-          b = (Val>>20)&0x7f;
-          if (Val&0xf8000000) b |= 0x80;
-          Strm << b;
-          if (Val&0xf8000000) {
-            b = (Val>>27)&0x7f;
-            Strm << b;
-          }
-        }
-      }
-    }
+    const int length = encodeVarInt(buf, (vuint32)I.Val);
+    Strm.Serialise(buf, length);
   }
   return Strm;
-  unguard;
 }
 
 
@@ -317,53 +400,15 @@ VStream &operator << (VStream &Strm, VStreamCompactIndex &I) {
 //
 //==========================================================================
 VStream &operator << (VStream &Strm, VStreamCompactIndexU &I) {
-  guard(operator VStream << VStreamCompactIndexU);
+  vuint8 buf[5];
   if (Strm.IsLoading()) {
-    vuint8 b;
-    Strm << b;
-    vuint32 Val = b&0x7f;
-    if (b&0x80) {
-      Strm << b;
-      Val |= (b&0x7f)<<7;
-      if (b&0x80) {
-        Strm << b;
-        Val |= (b&0x7f)<<14;
-        if (b&0x80) {
-          Strm << b;
-          Val |= (b&0x7f)<<21;
-          if (b & 0x80) {
-            Strm << b;
-            Val |= (b&0x0f)<<28;
-          }
-        }
-      }
-    }
-    I.Val = Val;
+    Strm << buf[0];
+    const int length = decodeVarIntLength(buf[0]);
+    if (length > 1) Strm.Serialise(buf+1, length-1);
+    I.Val = decodeVarInt(buf);
   } else {
-    vuint32 Val = I.Val;
-    vuint8 b = Val&0x7f;
-    if (Val&0xffffff80) b |= 0x80;
-    Strm << b;
-    if (Val&0xffffff80) {
-      b = (Val>>7)&0x7f;
-      if (Val&0xffffc000) b |= 0x80;
-      Strm << b;
-      if (Val&0xffffc000) {
-        b = (Val>>14)&0x7f;
-        if (Val&0xffe00000) b |= 0x80;
-        Strm << b;
-        if (Val&0xffe00000) {
-          b = (Val>>21)&0x7f;
-          if (Val&0xf0000000)b |= 0x80;
-          Strm << b;
-          if (Val&0xf0000000) {
-            b = (Val>>28)&0x7f;
-            Strm << b;
-          }
-        }
-      }
-    }
+    const int length = encodeVarInt(buf, I.Val);
+    Strm.Serialise(buf, length);
   }
   return Strm;
-  unguard;
 }

@@ -35,6 +35,19 @@ class VStream;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// variable-length integer codec
+
+// returns number of bytes required to decode full number, in range [1..5]
+int decodeVarIntLength (const vuint8 firstByte);
+
+// returns decoded number; can consume up to 5 bytes
+vuint32 decodeVarInt (const void *data);
+
+// returns number of used bytes; can consume up to 5 bytes
+int encodeVarInt (void *data, vuint32 n);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // eh... need to be here, so we can have virtual method for it
 class VLevelScriptThinker {
 public:
@@ -123,6 +136,7 @@ public:
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // stream reader helper
 template<class T> T Streamer (VStream &Strm) {
   T Val;
@@ -131,7 +145,9 @@ template<class T> T Streamer (VStream &Strm) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // class for serialising integer values in a compact way
+// uses variable-int encoding
 class VStreamCompactIndex {
 public:
   vint32 Val;
