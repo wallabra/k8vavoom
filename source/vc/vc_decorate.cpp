@@ -192,7 +192,7 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
       GCon->Logf(NAME_Warning, "DECORATE error: already replaced class '%s' replaced again with '%s' (current replacement is '%s')", oldcls->GetName(), newcls->GetName(), repl->GetName());
       GCon->Logf(NAME_Warning, "  current replacement is at %s", *repl->Loc.toStringNoCol());
       GCon->Logf(NAME_Warning, "  new replacement is at %s", *newcls->Loc.toStringNoCol());
-      GCon->Log(NAME_Warning, "  PLEASE, TELL MOD AUTHOR TO STOP BEING A MORON, AND FIX THE CODE!");
+      GCon->Log(NAME_Warning, "  PLEASE, FIX THE CODE!");
       repl = oldcls;
     } else {
       // first occurence
