@@ -27,6 +27,7 @@
 #include "core.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 VLog GLog;
 
 
@@ -35,8 +36,12 @@ VLog GLog;
 //  VLog::VLog
 //
 //==========================================================================
-VLog::VLog () {
-  memset(Listeners, 0, sizeof(Listeners));
+VLog::VLog ()
+  : Listeners(nullptr)
+  , logbuf(nullptr)
+  , logbufsize(0)
+  , inWrite(false)
+{
 }
 
 
@@ -45,12 +50,19 @@ VLog::VLog () {
 //  VLog::AddListener
 //
 //==========================================================================
-void VLog::AddListener (VLogListener *Listener) {
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (!Listeners[i]) {
-      Listeners[i] = Listener;
-      return;
-    }
+void VLog::AddListener (VLogListener *lst) {
+  if (!lst) return;
+  if (inWrite) { fprintf(stderr, "FATAL: cannot add log listeners from log listener!\n"); abort(); }
+  Listener *ls = (Listener *)malloc(sizeof(Listener));
+  if (!ls) { fprintf(stderr, "FATAL: out of memory for log!\n"); abort(); }
+  ls->ls = lst;
+  ls->next = nullptr;
+  if (!Listeners) {
+    Listeners = ls;
+  } else {
+    Listener *curr = Listeners;
+    while (curr->next) curr = curr->next;
+    curr->next = ls;
   }
 }
 
@@ -60,10 +72,70 @@ void VLog::AddListener (VLogListener *Listener) {
 //  VLog::RemoveListener
 //
 //==========================================================================
-void VLog::RemoveListener (VLogListener *Listener) {
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i] == Listener) Listeners[i] = nullptr;
+void VLog::RemoveListener (VLogListener *lst) {
+  if (!lst || !Listeners) return;
+  if (inWrite) { fprintf(stderr, "FATAL: cannot remove log listeners from log listener!\n"); abort(); }
+  Listener *lastCurr = nullptr, *lastPrev = nullptr;
+  Listener *curr = Listeners, *prev = nullptr;
+  for (; curr; prev = curr, curr = curr->next) {
+    if (curr->ls == lst) {
+      lastCurr = curr;
+      lastPrev = prev;
+    }
   }
+  if (lastCurr) {
+    // i found her!
+    if (lastPrev) lastPrev = lastCurr->next; else Listeners = lastCurr->next;
+    free(lastCurr);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLog::doWrite
+//
+//==========================================================================
+void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
+  if (!addEOL && (!fmt || !fmt[0])) return;
+  if (!fmt) fmt = "";
+
+  // initial allocation
+  if (!logbufsize) {
+    logbufsize = INITIAL_BUFFER_SIZE;
+    logbuf = (char *)Z_Malloc(logbufsize);
+  }
+
+  va_list apcopy;
+
+  va_copy(apcopy, ap);
+  int size = vsnprintf(logbuf, (size_t)logbufsize, fmt, apcopy);
+  va_end(apcopy);
+
+  if (size < 0) return; // oops
+
+  if (size >= logbufsize-2) {
+    // not enough room, try again
+    if (size > 0x1fffffff) abort(); // oops
+    size = ((size+2)|0x1fff)+1;
+    logbuf = (char *)realloc(logbuf, (size_t)logbufsize);
+    if (!logbuf) { fprintf(stderr, "FATAL: out of memory for log!\n"); abort(); } //FIXME
+    va_copy(apcopy, ap);
+    size = vsnprintf(logbuf, (size_t)logbufsize, fmt, apcopy);
+    va_end(apcopy);
+    if (size < 0) return;
+  }
+
+  if (addEOL) { logbuf[size] = '\n'; logbuf[size+1] = 0; }
+
+  inWrite = true;
+  for (Listener *ls = Listeners; ls; ls = ls->next) {
+    try {
+      ls->ls->Serialise(logbuf, Type);
+    } catch (...) {
+    }
+  }
+  inWrite = false;
 }
 
 
@@ -72,22 +144,12 @@ void VLog::RemoveListener (VLogListener *Listener) {
 //  VLog::Write
 //
 //==========================================================================
-void VLog::Write (EName Type, const char *Fmt, ...) {
-  va_list ArgPtr;
-  char String[1024];
-
-  va_start(ArgPtr, Fmt);
-  vsprintf(String, Fmt, ArgPtr);
-  va_end(ArgPtr);
-
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i]) {
-      try {
-        Listeners[i]->Serialise(String, Type);
-      } catch (...) {
-      }
-    }
-  }
+__attribute__((format(printf, 3, 4))) void VLog::Write (EName Type, const char *fmt, ...) {
+  va_list ap;
+  if (!fmt || !fmt[0]) return;
+  va_start(ap, fmt);
+  doWrite(Type, fmt, ap, false);
+  va_end(ap);
 }
 
 
@@ -96,23 +158,11 @@ void VLog::Write (EName Type, const char *Fmt, ...) {
 //  VLog::WriteLine
 //
 //==========================================================================
-void VLog::WriteLine (EName Type, const char *Fmt, ...) {
-  va_list ArgPtr;
-  char String[1024];
-
-  va_start(ArgPtr, Fmt);
-  vsprintf(String, Fmt, ArgPtr);
-  va_end(ArgPtr);
-  strcat(String, "\n");
-
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i]) {
-      try {
-        Listeners[i]->Serialise(String, Type);
-      } catch (...) {
-      }
-    }
-  }
+__attribute__((format(printf, 3, 4))) void VLog::WriteLine (EName Type, const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  doWrite(Type, fmt, ap, true);
+  va_end(ap);
 }
 
 
@@ -121,22 +171,12 @@ void VLog::WriteLine (EName Type, const char *Fmt, ...) {
 //  VLog::Write
 //
 //==========================================================================
-void VLog::Write (const char *Fmt, ...) {
-  va_list ArgPtr;
-  char String[1024];
-
-  va_start(ArgPtr, Fmt);
-  vsprintf(String, Fmt, ArgPtr);
-  va_end(ArgPtr);
-
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i]) {
-      try {
-        Listeners[i]->Serialise(String, NAME_Log);
-      } catch (...) {
-      }
-    }
-  }
+__attribute__((format(printf, 2, 3))) void VLog::Write (const char *fmt, ...) {
+  va_list ap;
+  if (!fmt || !fmt[0]) return;
+  va_start(ap, fmt);
+  doWrite(NAME_Log, fmt, ap, false);
+  va_end(ap);
 }
 
 
@@ -145,23 +185,11 @@ void VLog::Write (const char *Fmt, ...) {
 //  VLog::WriteLine
 //
 //==========================================================================
-void VLog::WriteLine (const char *Fmt, ...) {
-  va_list ArgPtr;
-  char String[1024];
-
-  va_start(ArgPtr, Fmt);
-  vsprintf(String, Fmt, ArgPtr);
-  va_end(ArgPtr);
-  strcat(String, "\n");
-
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i]) {
-      try {
-        Listeners[i]->Serialise(String, NAME_Log);
-      } catch (...) {
-      }
-    }
-  }
+__attribute__((format(printf, 2, 3))) void VLog::WriteLine (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  doWrite(NAME_Log, fmt, ap, true);
+  va_end(ap);
 }
 
 
@@ -170,22 +198,12 @@ void VLog::WriteLine (const char *Fmt, ...) {
 //  VLog::DWrite
 //
 //==========================================================================
-void VLog::DWrite (const char *Fmt, ...) {
-  va_list ArgPtr;
-  char String[1024];
-
-  va_start(ArgPtr, Fmt);
-  vsprintf(String, Fmt, ArgPtr);
-  va_end(ArgPtr);
-
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i]) {
-      try {
-        Listeners[i]->Serialise(String, NAME_Dev);
-      } catch (...) {
-      }
-    }
-  }
+__attribute__((format(printf, 2, 3))) void VLog::DWrite (const char *fmt, ...) {
+  va_list ap;
+  if (!fmt || !fmt[0]) return;
+  va_start(ap, fmt);
+  doWrite(NAME_Dev, fmt, ap, false);
+  va_end(ap);
 }
 
 
@@ -194,21 +212,9 @@ void VLog::DWrite (const char *Fmt, ...) {
 //  VLog::DWriteLine
 //
 //==========================================================================
-void VLog::DWriteLine (const char *Fmt, ...) {
-  va_list ArgPtr;
-  char String[1024];
-
-  va_start(ArgPtr, Fmt);
-  vsprintf(String, Fmt, ArgPtr);
-  va_end(ArgPtr);
-  strcat(String, "\n");
-
-  for (int i = 0; i < MAX_LISTENERS; ++i) {
-    if (Listeners[i]) {
-      try {
-        Listeners[i]->Serialise(String, NAME_Dev);
-      } catch (...) {
-      }
-    }
-  }
+__attribute__((format(printf, 2, 3))) void VLog::DWriteLine (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  doWrite(NAME_Dev, fmt, ap, true);
+  va_end(ap);
 }

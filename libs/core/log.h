@@ -30,40 +30,51 @@
 //  VLogListener
 //
 //==========================================================================
-
-class VLogListener : VInterface
-{
+class VLogListener : VInterface {
 public:
-  virtual void Serialise(const char *Text, EName Event) = 0;
+  virtual void Serialise (const char *Text, EName Event) = 0;
 };
+
 
 //==========================================================================
 //
 //  VLog
 //
 //==========================================================================
-
-class VLog
-{
+class VLog {
 private:
-  enum { MAX_LISTENERS  = 8 };
+  enum { INITIAL_BUFFER_SIZE = 32768 };
 
-  VLogListener *Listeners[MAX_LISTENERS];
+  struct Listener {
+    VLogListener *ls;
+    Listener *next;
+  };
+
+private:
+  Listener *Listeners;
+  char *logbuf;
+  int logbufsize;
+  bool inWrite;
+
+private:
+  void doWrite (EName Type, const char *fmt, va_list ap, bool addEOL);
 
 public:
-  VLog();
+  VLog ();
 
-  void AddListener(VLogListener *Listener);
-  void RemoveListener(VLogListener *Listener);
+  void AddListener (VLogListener *Listener);
+  void RemoveListener (VLogListener *Listener);
 
-  void Write(EName Type, const char *Fmt, ...);
-  void WriteLine(EName Type, const char *Fmt, ...);
+  void Write (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+  void WriteLine (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
-  void Write(const char *Fmt, ...);
-  void WriteLine(const char *Fmt, ...);
+  void Write (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+  void WriteLine (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
-  void DWrite(const char *Fmt, ...);
-  void DWriteLine(const char *Fmt, ...);
+  void DWrite (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+  void DWriteLine (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 };
 
-extern VLog     GLog;
+
+// ////////////////////////////////////////////////////////////////////////// //
+extern VLog GLog;
