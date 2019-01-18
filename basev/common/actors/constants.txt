@@ -1,17 +1,17 @@
-//  Flags for A_Chase
-const int CHF_FASTCHASE       = 1;
-const int CHF_NOPLAYACTIVE      = 2;
-const int CHF_NIGHTMAREFAST     = 4;
-const int CHF_RESURRECT       = 8;
-const int CHF_DONTMOVE        = 16;
-const int CHF_NORANDOMTURN = 32;
-const int CHF_NODIRECTIONTURN = 64;
+// flags for A_Chase
+const int CHF_FASTCHASE        = 1;
+const int CHF_NOPLAYACTIVE     = 2;
+const int CHF_NIGHTMAREFAST    = 4;
+const int CHF_RESURRECT        = 8;
+const int CHF_DONTMOVE         = 16;
+const int CHF_NORANDOMTURN     = 32;
+const int CHF_NODIRECTIONTURN  = 64;
 const int CHF_NOPOSTATTACKTURN = 128;
-const int CHF_STOPIFBLOCKED = 256;
+const int CHF_STOPIFBLOCKED    = 256;
 
-const int CHF_DONTTURN = CHF_NORANDOMTURN | CHF_NOPOSTATTACKTURN | CHF_STOPIFBLOCKED;
+const int CHF_DONTTURN = CHF_NORANDOMTURN|CHF_NOPOSTATTACKTURN|CHF_STOPIFBLOCKED;
 
-//  Flags for A_CustomMissile
+// flags for A_CustomMissile
 const int CMF_AIMOFFSET       = 1;
 const int CMF_AIMDIRECTION    = 2;
 const int CMF_TRACKOWNER      = 4;
@@ -26,10 +26,10 @@ const int CMF_ABSOLUTEANGLE   = 128;
 
 // NOT IMPLEMENTED!
 const int CMF_ABSOLUTEPITCH = 16;
-const int CMF_OFFSETPITCH = 32;
-const int CMF_SAVEPITCH = 64;
+const int CMF_OFFSETPITCH   = 32;
+const int CMF_SAVEPITCH     = 64;
 const int CMF_ABSOLUTEANGLE = 128;
-const int CMF_BADPITCH = 256; // for compatibility handling only - avoid!
+const int CMF_BADPITCH      = 256; // for compatibility handling only - avoid!
 
 //  Flags for A_SeekerMissile
 const int SMF_LOOK     = 1;
@@ -39,91 +39,91 @@ const int SMF_CURSPEED = 4;
 //  Flags for A_SpawnItemEx
 const int SXF_TRANSFERTRANSLATION = 1;
 const int SXF_ABSOLUTEPOSITION    = 2;
-const int SXF_ABSOLUTEANGLE     = 4;
+const int SXF_ABSOLUTEANGLE       = 4;
 const int SXF_ABSOLUTEMOMENTUM    = 8;
 const int SXF_ABSOLUTEVELOCITY    = 8; // "momentum" is deprecated by gozzo
-const int SXF_SETMASTER       = 16;
-const int SXF_NOCHECKPOSITION   = 32;
-const int SXF_TELEFRAG        = 64;
-const int SXF_CLIENTSPAWN     = 128;  // only used by Skulltag
-const int SXF_CLIENTSIDE      = 128;  // only used by Skulltag
+const int SXF_SETMASTER           = 16;
+const int SXF_NOCHECKPOSITION     = 32;
+const int SXF_TELEFRAG            = 64;
+const int SXF_CLIENTSPAWN         = 128;  // only used by Skulltag
+const int SXF_CLIENTSIDE          = 128;  // only used by Skulltag
 const int SXF_TRANSFERAMBUSHFLAG  = 256;
-const int SXF_TRANSFERPITCH     = 512;
+const int SXF_TRANSFERPITCH       = 512;
 const int SXF_TRANSFERPOINTERS    = 1024;
 
-const int SXF_USEBLOODCOLOR = 1 << 11; // not implemented
-const int SXF_CLEARCALLERTID = 1 << 12;
-const int SXF_MULTIPLYSPEED = 1 << 13;
-const int SXF_TRANSFERSCALE = 1 << 14;
-const int SXF_TRANSFERSPECIAL = 1 << 15; // not implemented
-const int SXF_CLEARCALLERSPECIAL = 1 << 16; // not implemented
-const int SXF_TRANSFERSTENCILCOL = 1 << 17; // not implemented
-const int SXF_TRANSFERALPHA = 1 << 18;
-const int SXF_TRANSFERRENDERSTYLE = 1 << 19;
-const int SXF_SETTARGET = 1 << 20;
-const int SXF_SETTRACER = 1 << 21;
-const int SXF_NOPOINTERS = 1 << 22;
-const int SXF_ORIGINATOR = 1 << 23;
-const int SXF_TRANSFERSPRITEFRAME = 1 << 24; // not implemented
-const int SXF_TRANSFERROLL = 1 << 25;
-const int SXF_ISTARGET = 1 << 26;
-const int SXF_ISMASTER = 1 << 27;
-const int SXF_ISTRACER = 1 << 28;
+const int SXF_USEBLOODCOLOR       = 1<<11; // not implemented
+const int SXF_CLEARCALLERTID      = 1<<12;
+const int SXF_MULTIPLYSPEED       = 1<<13;
+const int SXF_TRANSFERSCALE       = 1<<14;
+const int SXF_TRANSFERSPECIAL     = 1<<15; // maybe implemented
+const int SXF_CLEARCALLERSPECIAL  = 1<<16; // maybe implemented
+const int SXF_TRANSFERSTENCILCOL  = 1<<17; // maybe implemented
+const int SXF_TRANSFERALPHA       = 1<<18;
+const int SXF_TRANSFERRENDERSTYLE = 1<<19;
+const int SXF_SETTARGET           = 1<<20;
+const int SXF_SETTRACER           = 1<<21;
+const int SXF_NOPOINTERS          = 1<<22;
+const int SXF_ORIGINATOR          = 1<<23;
+const int SXF_TRANSFERSPRITEFRAME = 1<<24; // not implemented
+const int SXF_TRANSFERROLL        = 1<<25;
+const int SXF_ISTARGET            = 1<<26;
+const int SXF_ISMASTER            = 1<<27;
+const int SXF_ISTRACER            = 1<<28;
 
-//  Morph constants
-const int MRF_ADDSTAMINA      = 1;
-const int MRF_FULLHEALTH      = 2;
-const int MRF_UNDOBYTOMEOFPOWER   = 4;
-const int MRF_UNDOBYCHAOSDEVICE   = 8;
+// morph constants
+const int MRF_ADDSTAMINA        = 1;
+const int MRF_FULLHEALTH        = 2;
+const int MRF_UNDOBYTOMEOFPOWER = 4;
+const int MRF_UNDOBYCHAOSDEVICE = 8;
 const int MRF_FAILNOTELEFRAG    = 16;
-const int MRF_FAILNOLAUGH     = 32;
-const int MRF_WHENINVULNERABLE    = 64;
-const int MRF_LOSEACTUALWEAPON    = 128;
+const int MRF_FAILNOLAUGH       = 32;
+const int MRF_WHENINVULNERABLE  = 64;
+const int MRF_LOSEACTUALWEAPON  = 128;
 const int MRF_NEWTIDBEHAVIOUR   = 256;
-const int MRF_UNDOBYDEATH     = 512;
-const int MRF_UNDOBYDEATHFORCED   = 1024;
-const int MRF_UNDOBYDEATHSAVES    = 2048;
+const int MRF_UNDOBYDEATH       = 512;
+const int MRF_UNDOBYDEATHFORCED = 1024;
+const int MRF_UNDOBYDEATHSAVES  = 2048;
 
-// Flags for A_CustomBulletAttack
-const int CBAF_AIMFACING      = 1;
-const int CBAF_NORANDOM       = 2;
+// flags for A_CustomBulletAttack
+const int CBAF_AIMFACING     = 1;
+const int CBAF_NORANDOM      = 2;
 const int CBAF_EXPLICITANGLE = 4;
-const int CBAF_NOPITCH = 8;
+const int CBAF_NOPITCH       = 8;
 const int CBAF_NORANDOMPUFFZ = 16;
-//const int CBAF_PUFFTARGET = 32;
-//const int CBAF_PUFFMASTER = 64;
-//const int CBAF_PUFFTRACER = 128;
+//const int CBAF_PUFFTARGET   = 32;
+//const int CBAF_PUFFMASTER   = 64;
+//const int CBAF_PUFFTRACER   = 128;
 
-// Flags for A_FireBullets
-const int FBF_USEAMMO = 1;
-const int FBF_NORANDOM = 2;
+// flags for A_FireBullets
+const int FBF_USEAMMO       = 1;
+const int FBF_NORANDOM      = 2;
 const int FBF_EXPLICITANGLE = 4;
-const int FBF_NOPITCH = 8;
-const int FBF_NOFLASH = 16;
+const int FBF_NOPITCH       = 8;
+const int FBF_NOFLASH       = 16;
 const int FBF_NORANDOMPUFFZ = 32;
 /* missiles not implemented yet
-const int FBF_PUFFTARGET = 64;
-const int FBF_PUFFMASTER = 128;
-const int FBF_PUFFTRACER = 256;
+const int FBF_PUFFTARGET    = 64;
+const int FBF_PUFFMASTER    = 128;
+const int FBF_PUFFTRACER    = 256;
 */
 
-// Flags for A_LookEx
+// flags for A_LookEx
 const int LOF_NOSIGHTCHECK    = 1;
 const int LOF_NOSOUNDCHECK    = 2;
 const int LOF_DONTCHASEGOAL   = 4;
 const int LOF_NOSEESOUND      = 8;
 const int LOF_FULLVOLSEESOUND = 16;
 
-// Flags for A_Respawn
+// flags for A_Respawn
 const int RSF_FOG        = 1;
 const int RSF_KEEPTARGET = 2;
 const int RSF_TELEFRAG   = 4;
 
-// Flags for A_ChangeVelocity
+// flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
 const int CVF_REPLACE = 2;
 
-// Flags for A_WeaponReady
+// flags for A_WeaponReady
 const int WRF_NOBOB       = 1;
 const int WRF_NOFIRE      = 12;
 const int WRF_NOSWITCH    = 2;
@@ -131,29 +131,29 @@ const int WRF_NOPRIMARY   = 4;
 const int WRF_NOSECONDARY = 8;
 const int WRF_ALLOWREFIRE = 32;
 const int WRF_ALLOWRELOAD = 64;
-//const int WRF_ALLOWZOOM = 128;
+//const int WRF_ALLOWZOOM   = 128;
 const int WRF_ALLOWZOOM   = 0; //k8: not implemented yet
 
-// Flags for A_RailAttack and A_CustomRailgun
-const int RGF_SILENT = 1;
-const int RGF_NOPIERCING = 2;
+// flags for A_RailAttack and A_CustomRailgun
+const int RGF_SILENT        = 1;
+const int RGF_NOPIERCING    = 2;
 // not implemented
 const int RGF_EXPLICITANGLE = 4;
-const int RGF_FULLBRIGHT = 8;
-const int RGF_CENTERZ = 16;
+const int RGF_FULLBRIGHT    = 8;
+const int RGF_CENTERZ       = 16;
 const int RGF_NORANDOMPUFFZ = 32;
 
-// Flags for A_Mushroom
+// flags for A_Mushroom
 const int MSF_Standard = 0;
 const int MSF_Classic  = 1;
 const int MSF_DontHurt = 2;
 
-// Flags for A_Blast
+// flags for A_Blast
 const int BF_USEAMMO      = 1;
 const int BF_DONTWARN     = 2;
 const int BF_AFFECTBOSSES = 4;
 
-// Flags for A_CustomPunch
+// flags for A_CustomPunch
 const int CPF_USEAMMO       = 1;
 const int CPF_DAGGER        = 2;
 const int CPF_PULLIN        = 4;
@@ -161,14 +161,14 @@ const int CPF_NORANDOMPUFFZ = 8;
 const int CPF_NOTURN        = 16;
 const int CPF_STEALARMOR    = 32; // not implemented yet
 
-// Render Style constants
-const int STYLE_None        = 0;  // Do not draw
-const int STYLE_Normal      = 1;  // Normal; just copy the image to the screen
-const int STYLE_Fuzzy       = 2;  // Draw silhouette using "fuzz" effect
-const int STYLE_SoulTrans   = 3;  // Draw translucent with amount in r_transsouls
-const int STYLE_OptFuzzy    = 4;  // Draw as fuzzy or translucent, based on user preference
-const int STYLE_Translucent = 64; // Draw translucent
-const int STYLE_Add         = 65; // Draw additive
+// render style constants
+const int STYLE_None        = 0;  // do not draw
+const int STYLE_Normal      = 1;  // normal; just copy the image to the screen
+const int STYLE_Fuzzy       = 2;  // draw silhouette using "fuzz" effect
+const int STYLE_SoulTrans   = 3;  // draw translucent with amount in r_transsouls
+const int STYLE_OptFuzzy    = 4;  // draw as fuzzy or translucent, based on user preference
+const int STYLE_Translucent = 64; // draw translucent
+const int STYLE_Add         = 65; // draw additive
 
 
 // A_PlaySound constants
@@ -221,24 +221,24 @@ const int CHAN_LOOP = 0; //(256): Sound loops.
 const int CHAN_NOSTOP = 0; //(4096): Do not override the sound that is currently playing on the same channel with this one. This is only the case if both sounds are the same. If they are different, the playing sound is overridden regardless.
 
 
-const int XF_HURTSOURCE = 0x01; // Hurts the source: if set, the source can be damaged by the explosion. Note that the source is not necessarily the calling actor. This flag is set by default.
-const int XF_NOTMISSILE = 0x02; // Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
+const int XF_HURTSOURCE         = 0x01; // Hurts the source: if set, the source can be damaged by the explosion. Note that the source is not necessarily the calling actor. This flag is set by default.
+const int XF_NOTMISSILE         = 0x02; // Not a missile: if set, the calling actor is considered to be the source. By default, the calling actor is assumed to be a projectile, and the source is therefore considered to be the calling actor's target.
 const int XF_EXPLICITDAMAGETYPE = 0x04; // The damagetype parameter will never change to the actor's damagetype.
-const int XF_NOSPLASH = 0x08; // No splash: if set, the explosion does not create any terrain splashes.
+const int XF_NOSPLASH           = 0x08; // No splash: if set, the explosion does not create any terrain splashes.
 
 
-const int SPF_FORCECLAMP = 0x01;
+const int SPF_FORCECLAMP  = 0x01;
 const int SPF_INTERPOLATE = 0x00;
 
 // Pointer constants, bitfield-enabled
 //enum EPointerFlags {
 const int AAPTR_DEFAULT = 0;
-const int AAPTR_NULL = 0x1;
-const int AAPTR_TARGET = 0x2;
-const int AAPTR_MASTER = 0x4;
-const int AAPTR_TRACER = 0x8;
+const int AAPTR_NULL    = 0x1;
+const int AAPTR_TARGET  = 0x2;
+const int AAPTR_MASTER  = 0x4;
+const int AAPTR_TRACER  = 0x8;
 
-const int AAPTR_PLAYER_GETTARGET = 0x10;
+const int AAPTR_PLAYER_GETTARGET       = 0x10;
 const int AAPTR_PLAYER_GETCONVERSATION = 0x20;
 
 const int AAPTR_PLAYER1 = 0x40;
@@ -249,26 +249,27 @@ const int AAPTR_PLAYER5 = 0x400;
 const int AAPTR_PLAYER6 = 0x800;
 const int AAPTR_PLAYER7 = 0x1000;
 const int AAPTR_PLAYER8 = 0x2000;
+
 const int AAPTR_FRIENDPLAYER = 0x4000;
-const int AAPTR_LINETARGET = 0x8000;
+const int AAPTR_LINETARGET   = 0x8000;
 //};
 
 
 // Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
 //enum EJumpFlags
-const int JLOSF_PROJECTILE =    1;
-const int JLOSF_NOSIGHT =     1 << 1;
-//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOFOV =    1 << 2;
-//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOSIGHT =  1 << 3;
-//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOJUMP =   1 << 4;
-const int JLOSF_DEADNOJUMP =    1 << 5;
-const int JLOSF_CHECKMASTER =   1 << 6;
-//!NOT_IMPLEMENTED!const int JLOSF_TARGETLOS =   1 << 7;
-//!NOT_IMPLEMENTED!const int JLOSF_FLIPFOV =     1 << 8;
-const int JLOSF_ALLYNOJUMP =    1 << 9;
-//!NOT_IMPLEMENTED!const int JLOSF_COMBATANTONLY = 1 << 10;
-//!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM =   1 << 11;
-//!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER =   1 << 12;
+const int JLOSF_PROJECTILE = 1;
+const int JLOSF_NOSIGHT = 1<<1;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOFOV = 1<<2;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOSIGHT = 1<<3;
+//!NOT_IMPLEMENTED!const int JLOSF_CLOSENOJUMP = 1<<4;
+const int JLOSF_DEADNOJUMP = 1<<5;
+const int JLOSF_CHECKMASTER = 1<<6;
+//!NOT_IMPLEMENTED!const int JLOSF_TARGETLOS = 1<<7;
+//!NOT_IMPLEMENTED!const int JLOSF_FLIPFOV = 1<<8;
+const int JLOSF_ALLYNOJUMP = 1<<9;
+//!NOT_IMPLEMENTED!const int JLOSF_COMBATANTONLY = 1<<10;
+//!NOT_IMPLEMENTED!const int JLOSF_NOAUTOAIM = 1<<11;
+//!NOT_IMPLEMENTED!const int JLOSF_CHECKTRACER = 1<<12;
 //};
 
 
@@ -290,10 +291,10 @@ const int PROP_SPEED = 15;
 const int PROP_BUDDHA = 16; // not supported
 
 
-// Flags for A_Fade*
+// flags for A_Fade*
 enum EFadeFlags {
-  FTF_REMOVE = 1 << 0,
-  FTF_CLAMP =  1 << 1,
+  FTF_REMOVE = 1<<0,
+  FTF_CLAMP  = 1<<1,
 };
 
 
@@ -301,26 +302,25 @@ const int GFF_NOEXTCHANGE = 1;
 
 
 // sound attenuation values
-const float ATTN_NONE = 0;
-const float ATTN_NORM = 1;
-const float ATTN_IDLE = 1.001;
+const float ATTN_NONE   = 0;
+const float ATTN_NORM   = 1;
+const float ATTN_IDLE   = 1.001;
 const float ATTN_STATIC = 3;
 
 
-// Flags for A_VileAttack
+// flags for A_VileAttack
 enum EVileAttackFlags {
   VAF_DMGTYPEAPPLYTODIRECT = 1,
 };
 
 
-// Flags for A_TakeInventory and A_TakeFromTarget
-enum ETakeFlags
-{
+// flags for A_TakeInventory and A_TakeFromTarget
+enum ETakeFlags {
   TIF_NOTAKEINFINITE = 1,
 };
 
 
-// Flags for A_Remove*
+// flags for A_Remove*
 enum ERemoveFlags {
   RMVF_MISSILES   = 0x00000001,
   RMVF_NOMONSTERS = 0x00000002,
@@ -332,26 +332,26 @@ enum ERemoveFlags {
 };
 
 
-// Flags for A_RadiusGive
+// flags for A_RadiusGive
 enum ERadiusGiveFlags {
   RGF_GIVESELF  = 1,
-  RGF_PLAYERS   = 1 << 1,
-  RGF_MONSTERS  = 1 << 2,
-  RGF_OBJECTS   = 1 << 3,
-  RGF_VOODOO    = 1 << 4,
-  RGF_CORPSES   = 1 << 5,
-  RGF_NOTARGET  = 1 << 6,
-  RGF_NOTRACER  = 1 << 7,
-  RGF_NOMASTER  = 1 << 8,
-  RGF_CUBE      = 1 << 9,
-  RGF_NOSIGHT   = 1 << 10,
-  RGF_MISSILES  = 1 << 11,
-  RGF_INCLUSIVE = 1 << 12,
-  RGF_ITEMS     = 1 << 13,
-  RGF_KILLED    = 1 << 14,
-  RGF_EXFILTER  = 1 << 15,
-  RGF_EXSPECIES = 1 << 16,
-  RGF_EITHER    = 1 << 17,
+  RGF_PLAYERS   = 1<<1,
+  RGF_MONSTERS  = 1<<2,
+  RGF_OBJECTS   = 1<<3,
+  RGF_VOODOO    = 1<<4,
+  RGF_CORPSES   = 1<<5,
+  RGF_NOTARGET  = 1<<6,
+  RGF_NOTRACER  = 1<<7,
+  RGF_NOMASTER  = 1<<8,
+  RGF_CUBE      = 1<<9,
+  RGF_NOSIGHT   = 1<<10,
+  RGF_MISSILES  = 1<<11,
+  RGF_INCLUSIVE = 1<<12,
+  RGF_ITEMS     = 1<<13,
+  RGF_KILLED    = 1<<14,
+  RGF_EXFILTER  = 1<<15,
+  RGF_EXSPECIES = 1<<16,
+  RGF_EITHER    = 1<<17,
 };
 
 
@@ -363,15 +363,15 @@ enum ERadiusThrustFlags {
 };
 
 
-// Flags for A_PainAttack
+// flags for A_PainAttack
 enum EPainAttackFlags {
   PAF_NOSKULLATTACK = 1,
-  PAF_AIMFACING = 2,
-  PAF_NOTARGET = 4,
+  PAF_AIMFACING     = 2,
+  PAF_NOTARGET      = 4,
 };
 
 
-// Flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
+// flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
 /*
 enum EDamageFlags {
   DMSS_FOILINVUL = 0x00000001,
@@ -400,15 +400,15 @@ const int ZOOM_INSTANT = 1;
 const int ZOOM_NOSCALETURNING = 2;
 
 
-// Flags for A_Kill (Master/Target/Tracer/Children/Siblings) series
+// flags for A_Kill (Master/Target/Tracer/Children/Siblings) series
 enum EKillFlags {
-  KILS_FOILINVUL = 0x00000001,
+  KILS_FOILINVUL    = 0x00000001,
   KILS_KILLMISSILES = 0x00000002,
-  KILS_NOMONSTERS = 0x00000004,
-  KILS_FOILBUDDHA = 0x00000008,
-  KILS_EXFILTER = 0x00000010,
-  KILS_EXSPECIES = 0x00000020,
-  KILS_EITHER = 0x00000040,
+  KILS_NOMONSTERS   = 0x00000004,
+  KILS_FOILBUDDHA   = 0x00000008,
+  KILS_EXFILTER     = 0x00000010,
+  KILS_EXSPECIES    = 0x00000020,
+  KILS_EITHER       = 0x00000040,
 };
 
 
@@ -424,14 +424,25 @@ const int SF_NOTURN = 64;
 const int SF_STEALARMOR = 128; // not implemented
 
 
-// Flags for A_AlertMonsters
+// flags for A_AlertMonsters
 enum EAlertFlags {
-  AMF_TARGETEMITTER = 1,
+  AMF_TARGETEMITTER   = 1,
   AMF_TARGETNONPLAYER = 2,
-  AMF_EMITFROMTARGET = 4,
+  AMF_EMITFROMTARGET  = 4,
 }
 
 
 const int PTROP_UNSAFETARGET = 1;
 const int PTROP_UNSAFEMASTER = 2;
 const int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
+
+
+// flags for A_QuakeEx
+enum EQuakeFlags {
+  QF_RELATIVE      = 1,
+  QF_SCALEDOWN     = 1<<1,
+  QF_SCALEUP       = 1<<2,
+  QF_MAX           = 1<<3,
+  QF_FULLINTENSITY = 1<<4,
+  QF_WAVE          = 1<<5,
+};
