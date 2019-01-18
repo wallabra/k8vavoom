@@ -33,6 +33,7 @@
 
 
 extern VCvarB dbg_show_missing_classes;
+static VCvarI r_color_distance_algo("r_color_distance_algo", "0", "What algorithm use to calculate color distance?\n  0: standard\n  1: advanced.", CVAR_Archive);
 
 
 struct VTempSpriteEffectDef {
@@ -210,14 +211,16 @@ static void InitRgbTable () {
         const int g = (int)(ig*255.0f/31.0f+0.5f);
         const int b = (int)(ib*255.0f/31.0f+0.5f);
         int best_colour = -1;
-        int best_dist = 0x1000000;
+        int best_dist = 0x7fffffff;
         for (int i = 1; i < 256; ++i) {
-          /*
-          int dist = (r_palette[i].r-r)*(r_palette[i].r-r)+
-                     (r_palette[i].g-g)*(r_palette[i].g-g)+
-                     (r_palette[i].b-b)*(r_palette[i].b-b);
-          */
-          const vint32 dist = rgbDistanceSquared(r_palette[i].r, r_palette[i].g, r_palette[i].b, r, g, b);
+          vint32 dist;
+          if (r_color_distance_algo) {
+            dist = rgbDistanceSquared(r_palette[i].r, r_palette[i].g, r_palette[i].b, r, g, b);
+          } else {
+            dist = (r_palette[i].r-r)*(r_palette[i].r-r)+
+                   (r_palette[i].g-g)*(r_palette[i].g-g)+
+                   (r_palette[i].b-b)*(r_palette[i].b-b);
+          }
           if (best_colour < 0 || dist < best_dist) {
             best_colour = i;
             best_dist = dist;
