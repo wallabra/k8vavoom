@@ -106,7 +106,7 @@ public:
   bool Suspend (int Number, int MapNum);
   VAcs *SpawnScript (VAcsInfo *Info, VAcsObject *Object, VEntity *Activator,
                      line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
-                     bool Always, bool Delayed);
+                     bool Always, bool Delayed, bool ImmediateRun);
 
   VStr GetNewString (int idx);
   VName GetNewLowerName (int idx);

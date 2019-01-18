@@ -253,6 +253,8 @@ struct VAcsCallReturn {
 class VAcs : public VLevelScriptThinker /*: public VThinker*/ {
   //DECLARE_CLASS(VAcs, VThinker, 0)
   //NO_DEFAULT_CONSTRUCTOR(VAcs)
+public:
+  enum { MAX_LOCAL_VARS = 8192 };
 
 public:
   enum {
@@ -274,7 +276,8 @@ public:
   float DelayTime;
   vint32 DelayActivationTick; // used only when `acs_use_doomtic_granularity` is set
   vint32 WaitValue;
-  vint32 *LocalVars;
+  //vint32 *LocalVars;
+  vint32 LocalVars[MAX_LOCAL_VARS];
   vuint8 *InstructionPointer;
   VAcsObject *ActiveObject;
   int HudWidth;
@@ -293,7 +296,7 @@ public:
     , DelayTime(0.0f)
     , DelayActivationTick(0)
     , WaitValue(0)
-    , LocalVars(nullptr)
+    //, LocalVars(nullptr)
     , InstructionPointer(nullptr)
     , ActiveObject(nullptr)
     , HudWidth(0)
@@ -307,7 +310,7 @@ public:
   virtual void Destroy () override;
   virtual void Serialise (VStream &) override;
   virtual void ClearReferences () override;
-  int RunScript (float);
+  int RunScript (float, bool immediate);
   virtual void Tick (float) override;
   int CallFunction (int argCount, int funcIndex, vint32 *args);
 
@@ -1446,10 +1449,13 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3, /*i
     if (Scripts[i].Type == Type)
     {
       // Auto-activate
-      VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator, nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow);
-      if (RunNow)
-      {
-        Script->RunScript(host_frametime);
+      VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator, nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow, false); // always register thinker
+      if (RunNow) {
+        Script->RunScript(0/*host_frametime:doesn't matter*/, true);
+        if (Script->destroyed) {
+          Script->XLevel->RemoveScriptThinker(Script);
+          delete Script;
+        }
       }
     }
   }
@@ -1816,7 +1822,7 @@ void VAcsLevel::CheckAcsStore () {
             VBasePlayer::PF_Spawned) ?
             GGameInfo->Players[store->PlayerNum]->MO : nullptr, nullptr, 0,
             store->Args[0], store->Args[1], store->Args[2], store->Args[3],
-            (store->Type == VAcsStore::StartAlways), true);
+            (store->Type == VAcsStore::StartAlways), true, false); // always register thinker
           break;
 
         case VAcsStore::Terminate:
@@ -1855,7 +1861,16 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   bool Net, int *realres)
 {
   guard(VAcsLevel::Start);
+
+  /*
+  if (WantResult) {
+    if (realres) *realres = 1;
+    return true;
+  }
+  */
+
   if (MapNum) {
+    if (WantResult) Host_Error("ACS: tried to get result from map script");
     VName Map = P_GetMapLumpNameByLevelNum(MapNum);
     if (Map != NAME_None && Map != XLevel->MapName) {
       // add to the script store
@@ -1876,23 +1891,30 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
     GCon->Logf("VAcsLevel::Start: by direct index (%d)", -(Number+100000));
     Info = FindScript(Number, Object);
   }
+
   if (!Info) {
     // script not found
     GCon->Logf(NAME_Dev, "Start ACS ERROR: Unknown script %d", Number);
     if (realres) *realres = 0;
     return false;
   }
-  if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) && !(Info->Flags & SCRIPTF_Net)) {
+
+  if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) && !(Info->Flags&SCRIPTF_Net)) {
     GCon->Logf("%s tried to puke script %d", *Activator->Player->PlayerName, Number);
     if (realres) *realres = 0;
     return false;
   }
-  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Arg4, Always, false);
+
+  VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Arg4, Always, false, WantResult);
   if (WantResult) {
-    int res = script->RunScript(host_frametime);
+    int res = script->RunScript(0/*host_frametime:doesn't matter*/, true);
+    //GCon->Logf("*** CallACS: %s; res=%d", *script->DebugDumpToString(), res);
+    script->Destroy();
+    delete script;
     if (realres) *realres = res;
     return !!res;
   }
+
   if (realres) *realres = 0;
   return true;
   unguard;
@@ -1971,7 +1993,7 @@ bool VAcsLevel::Suspend (int Number, int MapNum) {
 //==========================================================================
 VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
-  bool Always, bool Delayed)
+  bool Always, bool Delayed, bool ImmediateRun)
 {
   guard(VAcsLevel::SpawnScript);
   if (!Always && Info->RunningScript) {
@@ -1996,7 +2018,13 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   script->Activator = Activator;
   script->line = Line;
   script->side = Side;
-  script->LocalVars = new vint32[Info->VarCount];
+  if (Info->VarCount > VAcs::MAX_LOCAL_VARS) {
+    VStr sdn = script->DebugDumpToString();
+    script->Destroy();
+    delete script;
+    Host_Error("ACS script %s has too many locals (%d)", *sdn, Info->VarCount);
+  }
+  //script->LocalVars = new vint32[Info->VarCount];
   //script->Font = VName("smallfont");
   if (Info->VarCount > 0) script->LocalVars[0] = Arg1;
   if (Info->VarCount > 1) script->LocalVars[1] = Arg2;
@@ -2016,7 +2044,7 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   if (!Always) {
     Info->RunningScript = script;
   }
-  XLevel->AddScriptThinker(script);
+  XLevel->AddScriptThinker(script, ImmediateRun);
   return script;
   unguard;
 }
@@ -2057,10 +2085,12 @@ VLevelScriptThinker *AcsCreateEmptyThinker () {
 void VAcs::Destroy () {
   if (!destroyed) {
     destroyed = true;
+    /*
     if (LocalVars) {
       delete[] LocalVars;
       LocalVars = nullptr;
     }
+    */
     Level = nullptr;
     XLevel = nullptr;
   }
@@ -2120,7 +2150,13 @@ void VAcs::Serialise (VStream &Strm) {
     Strm << STRM_INDEX(TmpInt);
     InstructionPointer = ActiveObject->OffsetToPtr(TmpInt);
     info = ActiveObject->FindScript(number);
-    LocalVars = new vint32[info->VarCount];
+    //LocalVars = new vint32[info->VarCount];
+    //FIXME: memleak!
+    if (info->VarCount > VAcs::MAX_LOCAL_VARS) {
+      VStr sdn = DebugDumpToString();
+      Destroy();
+      Host_Error("ACS script %s has too many locals (%d)", *sdn, info->VarCount);
+    }
   } else {
     TmpInt = ActiveObject->GetLibraryID() >> 16;
     Strm << STRM_INDEX(TmpInt);
@@ -2166,7 +2202,7 @@ void VAcs::ClearReferences () {
 //
 //==========================================================================
 void VAcs::Tick (float DeltaTime) {
-  if (!destroyed) RunScript(DeltaTime);
+  if (!destroyed) RunScript(DeltaTime, false);
 }
 
 
@@ -3229,7 +3265,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 //  VAcs::RunScript
 //
 //==========================================================================
-int VAcs::RunScript (float DeltaTime) {
+int VAcs::RunScript (float DeltaTime, bool immediate) {
   guard(VAcs::RunScript);
   VAcsObject *WaitObject;
 
@@ -3261,6 +3297,11 @@ int VAcs::RunScript (float DeltaTime) {
 
   bool doRunItDT = true;
   bool doRunItVT = true;
+
+  if (immediate) {
+    DelayActivationTick = 0;
+    DelayTime = 0;
+  }
 
   if (DelayActivationTick > XLevel->TicTime) {
     //GCon->Logf("DELAY: DelayActivationTick=%d; DeltaTime=%f; time=%f; tictime=%d", DelayActivationTick, DeltaTime*1000, (double)XLevel->Time, XLevel->TicTime);

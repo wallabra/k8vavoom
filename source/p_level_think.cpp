@@ -40,16 +40,81 @@ double worldThinkTimeDecal = -1;
 //
 //  VLevel::AddScriptThinker
 //
+//  won't call `Destroy()`, won't call `delete`
+//
 //==========================================================================
-void VLevel::AddScriptThinker (VLevelScriptThinker *sth) {
+void VLevel::RemoveScriptThinker (VLevelScriptThinker *sth) {
+  if (!sth) return;
+  const int sclenOrig = scriptThinkers.length();
+  for (int scidx = sclenOrig-1; scidx >= 0; --scidx) {
+    if (scriptThinkers[scidx] == sth) {
+      // remove it
+      for (int c = scidx+1; c < sclenOrig; ++c) scriptThinkers[c-1] = scriptThinkers[c];
+      scriptThinkers.setLength(scidx, false); // don't resize
+      return;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::AddScriptThinker
+//
+//==========================================================================
+void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
   if (!sth) return;
   check(!sth->XLevel);
   check(!sth->Level);
   sth->XLevel = this;
   sth->Level = LevelInfo;
+  if (ImmediateRun) return;
+#if 0
+  {
+    // cleanup script thinkers
+    int firstEmpty = -1;
+    const int sclenOrig = scriptThinkers.length();
+    for (int scidx = 0; scidx < sclenOrig; ++scidx) {
+      VLevelScriptThinker *scthr = scriptThinkers[scidx];
+      if (!scthr) {
+        if (firstEmpty < 0) firstEmpty = scidx;
+        continue;
+      }
+      if (scthr->destroyed) {
+        GCon->Logf("(0)DEAD ACS at slot #%d", scidx);
+        if (firstEmpty < 0) firstEmpty = scidx;
+        delete scthr;
+        scriptThinkers[scidx] = nullptr;
+        continue;
+      }
+    }
+    // remove dead thinkers
+    if (firstEmpty >= 0) {
+      const int sclen = scriptThinkers.length();
+      int currIdx = firstEmpty+1;
+      while (currIdx < sclen) {
+        VLevelScriptThinker *scthr = scriptThinkers[currIdx];
+        if (scthr) {
+          // alive
+          check(firstEmpty < currIdx);
+          scriptThinkers[firstEmpty] = scthr;
+          scriptThinkers[currIdx] = nullptr;
+          // find next empty slot
+          ++firstEmpty;
+          while (firstEmpty < sclen && scriptThinkers[firstEmpty]) ++firstEmpty;
+        } else {
+          // dead, do nothing
+        }
+        ++currIdx;
+      }
+      GCon->Logf("  SHRINKING ACS from %d to %d", sclen, firstEmpty);
+      scriptThinkers.setLength(firstEmpty, false); // don't resize
+    }
+  }
+#endif
   scriptThinkers.append(sth);
-  //GCon->Logf("*** ADDED ACS: %s", *sth->DebugDumpToString());
-  if (scriptThinkers.length() > 1024*1024) Host_Error("too many ACS thinkers spawned");
+  //GCon->Logf("*** ADDED ACS: %s (%d)", *sth->DebugDumpToString(), scriptThinkers.length());
+  if (scriptThinkers.length() > 16384) Host_Error("too many ACS thinkers spawned");
 }
 
 
@@ -141,9 +206,11 @@ void VLevel::DestroyAllThinkers () {
 //==========================================================================
 void VLevel::RunScriptThinkers (float DeltaTime) {
   // run script thinkers
+  // do not run newly spawned scripts on this frame, though
+  //const int sclenOrig = scriptThinkers.length();
   int firstEmpty = -1;
   // don't cache number of thinkers, as scripts may add new thinkers
-  for (int scidx = 0; scidx < scriptThinkers.length(); ++scidx) {
+  for (int scidx = 0; scidx < scriptThinkers.length()/*sclenOrig*/; ++scidx) {
     VLevelScriptThinker *sth = scriptThinkers[scidx];
     if (!sth) {
       if (firstEmpty < 0) firstEmpty = scidx;

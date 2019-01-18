@@ -283,7 +283,9 @@ class VLevel : public VGameObject {
   TArray<VLevelScriptThinker *> scriptThinkers;
 
 public:
-  void AddScriptThinker (VLevelScriptThinker *sth);
+  // if `ImmediateRun` is true, init some script variables, but don't register thinker
+  void AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun);
+  void RemoveScriptThinker (VLevelScriptThinker *sth); // won't call `Destroy()`, won't call `delete`
   void RunScriptThinkers (float DeltaTime);
 
   // used in save/load
