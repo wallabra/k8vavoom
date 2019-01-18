@@ -111,6 +111,8 @@ public:
 
   // interface functions for objects and classes streams
   virtual VStream &operator << (VName &);
+  virtual VStream &operator << (VStr &);
+  virtual VStream &operator << (const VStr &);
   virtual VStream &operator << (VObject *&);
   virtual void SerialiseStructPointer (void *&, VStruct *);
   virtual VStream &operator << (VMemberBase *&);
@@ -122,14 +124,14 @@ public:
   void SerialiseBigEndian (void*, int);
 
   // stream serialisation operators
-  friend VStream &operator << (VStream &Strm, vint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
-  friend VStream &operator << (VStream &Strm, vuint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
-  friend VStream &operator << (VStream &Strm, vint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-  friend VStream &operator << (VStream &Strm, vuint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-  friend VStream &operator << (VStream &Strm, vint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-  friend VStream &operator << (VStream &Strm, vuint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-  friend VStream &operator << (VStream &Strm, float &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-  friend VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+  friend VStream &operator << (VStream &Strm, vint8 &Val);
+  friend VStream &operator << (VStream &Strm, vuint8 &Val);
+  friend VStream &operator << (VStream &Strm, vint16 &Val);
+  friend VStream &operator << (VStream &Strm, vuint16 &Val);
+  friend VStream &operator << (VStream &Strm, vint32 &Val);
+  friend VStream &operator << (VStream &Strm, vuint32 &Val);
+  friend VStream &operator << (VStream &Strm, float &Val);
+  friend VStream &operator << (VStream &Strm, double &Val);
 
   // for custom i/o
   virtual VStream &RegisterObject (VObject *o);

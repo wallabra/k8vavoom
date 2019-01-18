@@ -347,23 +347,8 @@ public:
   VStr Latin1ToUtf8 () const;
 
   // serialisation operator
-  friend VStream &operator << (VStream &Strm, VStr &S) {
-    if (Strm.IsLoading()) {
-      vint32 len;
-      Strm << STRM_INDEX(len);
-      if (len < 0) len = 0;
-      S.resize(len);
-      if (len) {
-        Strm.Serialise(S.dataptr, len+1);
-        S.dataptr[len] = 0; // just in case
-      }
-    } else {
-      vint32 len = vint32(S.Length());
-      Strm << STRM_INDEX(len);
-      if (len) Strm.Serialise(S.getData(), len+1);
-    }
-    return Strm;
-  }
+  VStream &Serialise (VStream &Strm);
+  VStream &Serialise (VStream &Strm) const;
 
   // if `addQCh` is `true`, add '"' if something was quoted
   VStr quote (bool addQCh=false) const;
@@ -406,45 +391,14 @@ public:
   static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
   static inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
 
-  static inline int ICmp (const char *s0, const char *s1) {
-    if (!s0) s0 = "";
-    if (!s1) s1 = "";
-    while (*s0 && *s1) {
-      vuint8 c0 = (vuint8)(*s0++);
-      vuint8 c1 = (vuint8)(*s1++);
-      if (c0 >= 'A' && c0 <= 'Z') c0 += 32;
-      if (c1 >= 'A' && c1 <= 'Z') c1 += 32;
-      if (c0 < c1) return -1;
-      if (c0 > c1) return 1;
-    }
-    if (*s0) return 1;
-    if (*s1) return -1;
-    return 0;
-  }
-
-  static inline int NICmp (const char *s0, const char *s1, size_t max) {
-    if (max == 0) return 0;
-    if (!s0) s0 = "";
-    if (!s1) s1 = "";
-    while (*s0 && *s1) {
-      vuint8 c0 = (vuint8)(*s0++);
-      vuint8 c1 = (vuint8)(*s1++);
-      if (c0 >= 'A' && c0 <= 'Z') c0 += 32;
-      if (c1 >= 'A' && c1 <= 'Z') c1 += 32;
-      if (c0 < c1) return -1;
-      if (c0 > c1) return 1;
-      if (--max == 0) return 0;
-    }
-    if (*s0) return 1;
-    if (*s1) return -1;
-    return 0;
-  }
+  static int ICmp (const char *s0, const char *s1);
+  static int NICmp (const char *s0, const char *s1, size_t max);
 
   static inline void Cpy (char *dst, const char *src) {
     if (dst) { if (src) strcpy(dst, src); else *dst = 0; }
   }
 
-  // will write terminating zero
+  // will write terminating zero; buffer should be at leasn [N+1] bytes long
   static inline void NCpy (char *dst, const char *src, size_t N) {
     if (dst && src && N && src[0]) {
       size_t slen = strlen(src);
@@ -468,8 +422,14 @@ public:
   VStr utf2win () const;
   VStr win2utf () const;
 
+  VStr utf2koi () const;
+  VStr koi2utf () const;
+
   VStr toLowerCase1251 () const;
   VStr toUpperCase1251 () const;
+
+  VStr toLowerCaseKOI () const;
+  VStr toUpperCaseKOI () const;
 
   inline bool equ1251CI (const VStr &s) const {
     size_t slen = (size_t)length();
@@ -486,8 +446,26 @@ public:
     return true;
   }
 
+  inline bool equKOICI (const VStr &s) const {
+    size_t slen = (size_t)length();
+    if (slen != (size_t)s.length()) return false;
+    for (size_t f = 0; f < slen; ++f) if (locaseKOI(getData()[f]) != locaseKOI(s[f])) return false;
+    return true;
+  }
+
+  inline bool equKOICI (const char *s) const {
+    size_t slen = length();
+    if (!s || !s[0]) return (slen == 0);
+    if (slen != strlen(s)) return false;
+    for (size_t f = 0; f < slen; ++f) if (locaseKOI(getData()[f]) != locaseKOI(s[f])) return false;
+    return true;
+  }
+
   inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.getData()); }
   bool fnameEqu1251CI (const char *s) const;
+
+  inline bool fnameEquKOICI (const VStr &s) const { return fnameEquKOICI(s.getData()); }
+  bool fnameEquKOICI (const char *s) const;
 
   static VStr buf2hex (const void *buf, int buflen);
 
@@ -504,8 +482,9 @@ public:
 
 public:
   static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
+  static inline char wchar2koi (vuint32 wc) { return (wc < 65536 ? wc2koimap[wc] : '?'); }
 
-  static inline int digitInBase (char ch, int base=10) {
+  static inline __attribute__((pure)) int digitInBase (char ch, int base=10) {
     if (base < 1 || base > 36 || ch < '0') return -1;
     if (base <= 10) return (ch < 48+base ? ch-48 : -1);
     if (ch >= '0' && ch <= '9') return ch-48;
@@ -514,7 +493,7 @@ public:
     return ch-65+10;
   }
 
-  static inline char upcase1251 (char ch) {
+  static inline __attribute__((pure)) char upcase1251 (char ch) {
     if ((vuint8)ch < 128) return ch-(ch >= 'a' && ch <= 'z' ? 32 : 0);
     if ((vuint8)ch >= 224 && (vuint8)ch <= 255) return (vuint8)ch-32;
     if ((vuint8)ch == 184 || (vuint8)ch == 186 || (vuint8)ch == 191) return (vuint8)ch-16;
@@ -522,7 +501,7 @@ public:
     return ch;
   }
 
-  static inline char locase1251 (char ch) {
+  static inline __attribute__((pure)) char locase1251 (char ch) {
     if ((vuint8)ch < 128) return ch+(ch >= 'A' && ch <= 'Z' ? 32 : 0);
     if ((vuint8)ch >= 192 && (vuint8)ch <= 223) return (vuint8)ch+32;
     if ((vuint8)ch == 168 || (vuint8)ch == 170 || (vuint8)ch == 175) return (vuint8)ch+16;
@@ -530,8 +509,61 @@ public:
     return ch;
   }
 
+  static inline __attribute__((pure)) bool isAlpha2151 (char ch) {
+    if (ch >= 'A' && ch <= 'Z') return true;
+    if (ch >= 'a' && ch <= 'z') return true;
+    if ((vuint8)ch >= 191) return true;
+    switch ((vuint8)ch) {
+      case 161: case 162: case 168: case 170: case 175:
+      case 178: case 179: case 184: case 186:
+        return true;
+    }
+    return false;
+  }
+
+  /* koi8-u */
+  static inline __attribute__((pure)) int locaseKOI (char ch) {
+    if ((vuint8)ch < 128) {
+      if (ch >= 'A' && ch <= 'Z') ch += 32;
+    } else {
+      if ((vuint8)ch >= 224 && (vuint8)ch <= 255) ch -= 32;
+      else {
+        switch ((vuint8)ch) {
+          case 179: case 180: case 182: case 183: case 189: ch -= 16; break;
+        }
+      }
+    }
+    return ch;
+  }
+
+  static inline __attribute__((pure)) int upcaseKOI (char ch) {
+    if ((vuint8)ch < 128) {
+      if (ch >= 'a' && ch <= 'z') ch -= 32;
+    } else {
+      if ((vuint8)ch >= 192 && (vuint8)ch <= 223) ch += 32;
+      else {
+        switch ((vuint8)ch) {
+          case 163: case 164: case 166: case 167: case 173: ch += 16; break;
+        }
+      }
+    }
+    return ch;
+  }
+
+  static inline __attribute__((pure)) bool isAlphaKOI (char ch) {
+    if (ch >= 'A' && ch <= 'Z') return true;
+    if (ch >= 'a' && ch <= 'z') return true;
+    if ((vuint8)ch >= 192) return true;
+    switch ((vuint8)ch) {
+      case 163: case 164: case 166: case 167: case 173:
+      case 179: case 180: case 182: case 183: case 189:
+        return true;
+    }
+    return false;
+  }
+
   // returns length of the following utf-8 sequence from its first char, or -1 for invalid first char
-  static inline int utf8CodeLen (char ch) {
+  static inline __attribute__((pure)) int utf8CodeLen (char ch) {
     if ((vuint8)ch < 0x80) return 1;
     if ((ch&0xFE) == 0xFC) return 6;
     if ((ch&0xFC) == 0xF8) return 5;
@@ -545,9 +577,10 @@ public:
   static const vuint16 cp1251[128];
   static char wc2shitmap[65536];
 
-  static const VStr EmptyString;
+  static const vuint16 cpKOI[128];
+  static char wc2koimap[65536];
 
-  static void vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you ();
+  static const VStr EmptyString;
 };
 
 
@@ -556,8 +589,9 @@ extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 //inline vuint32 GetTypeHash (const char *s) { return (s && s[0] ? fnvHashBuf(s, strlen(s)) : 1); }
 //inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }
 
-inline vuint32 GetTypeHash (const char *s) { return fnvHashStr(s); }
-inline vuint32 GetTypeHash (const VStr &s) { return fnvHashStr(*s); }
+// results MUST be equal
+static inline __attribute__((unused)) vuint32 GetTypeHash (const char *s) { return fnvHashStr(s); }
+static inline __attribute__((unused)) vuint32 GetTypeHash (const VStr &s) { return fnvHashStr(*s); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

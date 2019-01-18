@@ -24,7 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class VProgsReader;
+//class VProgsReader;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -75,11 +75,13 @@ public:
 
   int NumBuiltins;
 
+/*
 #if defined(IN_VCC)
   // run-time fields
   vuint16 Checksum;
   VProgsReader *Reader;
 #endif
+*/
 
 public:
   VPackage ();

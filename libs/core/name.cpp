@@ -142,7 +142,6 @@ const char *VName::SafeString (EName N) {
 
 void VName::StaticInit () {
   guard(VName::StaticInit);
-  VStr::vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you();
   // register hardcoded names
   for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
     Names.Append(&AutoNames[i]);

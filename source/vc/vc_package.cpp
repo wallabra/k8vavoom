@@ -115,10 +115,8 @@ VProgsExport::VProgsExport (VMemberBase *InObj)
   , Obj(InObj)
 {
 }
-#endif
 
 
-#if defined(IN_VCC)
 //==========================================================================
 //
 //  VProgsWriter
@@ -157,6 +155,9 @@ public:
   virtual bool Close () override { return !bError; }
   virtual void Serialise (void *V, int Length) override { if (fwrite(V, Length, 1, File) != 1) bError = true; }
   virtual void Flush () override { if (fflush(File)) bError = true; }
+
+  virtual VStream &operator << (VStr &s) override { s.Serialise(*this); return *this; }
+  virtual VStream &operator << (const VStr &s) override { s.Serialise(*this); return *this; }
 
   virtual VStream &operator << (VName &Name) override {
     int TmpIdx = NamesMap[Name.GetIndex()];
@@ -252,6 +253,9 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
+  virtual VStream &operator << (VStr &s) override { return VStream::operator<<(s); }
+  virtual VStream &operator << (const VStr &s) override { return VStream::operator<<(s); }
+
   virtual VStream &operator << (VName &Name) override {
     int NameIndex;
     *this << STRM_INDEX(NameIndex);
@@ -305,7 +309,7 @@ public:
     for (int i = 0; i < NumImports; ++i) GetImport(i);
   }
 };
-#endif
+#endif // IN_VCC
 
 
 //==========================================================================
@@ -741,7 +745,7 @@ void VPackage::WriteObject (const VStr &name) {
   fclose(f);
   unguard;
 }
-#endif
+#endif // IN_VCC
 
 
 //==========================================================================
@@ -820,10 +824,12 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   VProgsReader *Reader = new VProgsReader(Strm);
 
   // calcutate CRC
+/*
 #if !defined(IN_VCC)
   auto crc = TCRC16();
   for (int i = 0; i < Reader->TotalSize(); ++i) crc += Streamer<vuint8>(*Reader);
 #endif
+*/
 
   // read the header
   dprograms_t Progs;
@@ -860,10 +866,12 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   Reader->Exports = Exports;
   Reader->NumExports = Progs.num_exports;
 
+/*
 #if !defined(IN_VCC)
   Checksum = crc;
   this->Reader = Reader;
 #endif
+*/
 
   // create objects
   Reader->Seek(Progs.ofs_exportinfo);
@@ -958,7 +966,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 #endif
 
   //k8: fuck you, shitplusplus: no finally
-  this->Reader = nullptr;
+  //this->Reader = nullptr;
   delete Reader;
 
   unguard;

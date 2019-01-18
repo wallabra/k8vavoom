@@ -177,6 +177,7 @@ const VStr &VStream::GetName () const {
 //
 //==========================================================================
 void VStream::Serialise (void *, int) {
+  //abort(); // k8: nope, we need dummy one
 }
 
 
@@ -197,12 +198,10 @@ void VStream::Serialise (const void *buf, int len) {
 //
 //==========================================================================
 void VStream::SerialiseBits (void *Data, int Length) {
-  guardSlow(VStream::SerialiseBits);
   Serialise(Data, (Length+7)>>3);
   if (IsLoading() && (Length&7)) {
     ((vuint8*)Data)[Length>>3] &= (1<<(Length&7))-1;
   }
-  unguardSlow;
 }
 
 
@@ -212,9 +211,7 @@ void VStream::SerialiseBits (void *Data, int Length) {
 //
 //==========================================================================
 void VStream::SerialiseInt (vuint32 &Value, vuint32) {
-  guardSlow(VStream::SerialiseInt);
   *this << Value;
-  unguardSlow;
 }
 
 
@@ -283,6 +280,30 @@ bool VStream::Close () {
 //
 //==========================================================================
 VStream &VStream::operator << (VName &) {
+  //abort(); // k8: nope, we need dummy one
+  return *this;
+}
+
+
+//==========================================================================
+//
+//  VStream::operator<<
+//
+//==========================================================================
+VStream &VStream::operator << (VStr &s) {
+  s.Serialise(*this);
+  return *this;
+}
+
+
+//==========================================================================
+//
+//  VStream::operator<<
+//
+//==========================================================================
+VStream &VStream::operator << (const VStr &s) {
+  check(!IsLoading());
+  s.Serialise(*this);
   return *this;
 }
 
@@ -293,6 +314,7 @@ VStream &VStream::operator << (VName &) {
 //
 //==========================================================================
 VStream &VStream::operator << (VObject *&) {
+  //abort(); // k8: nope, we need dummy one
   return *this;
 }
 
@@ -312,6 +334,7 @@ void VStream::SerialiseStructPointer (void *&, VStruct *) {
 //
 //==========================================================================
 VStream &VStream::operator << (VMemberBase *&) {
+  //abort(); // k8: nope, we need dummy one
   return *this;
 }
 
@@ -412,3 +435,14 @@ VStream &operator << (VStream &Strm, VStreamCompactIndexU &I) {
   }
   return Strm;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStream &operator << (VStream &Strm, vint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
+VStream &operator << (VStream &Strm, vuint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
+VStream &operator << (VStream &Strm, vint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+VStream &operator << (VStream &Strm, vuint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+VStream &operator << (VStream &Strm, vint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+VStream &operator << (VStream &Strm, vuint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+VStream &operator << (VStream &Strm, float &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }

@@ -96,14 +96,34 @@ const vuint16 VStr::cp1251[128] = {
   0x0440,0x0441,0x0442,0x0443,0x0444,0x0445,0x0446,0x0447,0x0448,0x0449,0x044A,0x044B,0x044C,0x044D,0x044E,0x044F,
 };
 
+const vuint16 VStr::cpKOI[128] = {
+  0x2500,0x2502,0x250C,0x2510,0x2514,0x2518,0x251C,0x2524,0x252C,0x2534,0x253C,0x2580,0x2584,0x2588,0x258C,0x2590,
+  0x2591,0x2592,0x2593,0x2320,0x25A0,0x2219,0x221A,0x2248,0x2264,0x2265,0x00A0,0x2321,0x00B0,0x00B2,0x00B7,0x00F7,
+  0x2550,0x2551,0x2552,0x0451,0x0454,0x2554,0x0456,0x0457,0x2557,0x2558,0x2559,0x255A,0x255B,0x0491,0x255D,0x255E,
+  0x255F,0x2560,0x2561,0x0401,0x0404,0x2563,0x0406,0x0407,0x2566,0x2567,0x2568,0x2569,0x256A,0x0490,0x256C,0x00A9,
+  0x044E,0x0430,0x0431,0x0446,0x0434,0x0435,0x0444,0x0433,0x0445,0x0438,0x0439,0x043A,0x043B,0x043C,0x043D,0x043E,
+  0x043F,0x044F,0x0440,0x0441,0x0442,0x0443,0x0436,0x0432,0x044C,0x044B,0x0437,0x0448,0x044D,0x0449,0x0447,0x044A,
+  0x042E,0x0410,0x0411,0x0426,0x0414,0x0415,0x0424,0x0413,0x0425,0x0418,0x0419,0x041A,0x041B,0x041C,0x041D,0x041E,
+  0x041F,0x042F,0x0420,0x0421,0x0422,0x0423,0x0416,0x0412,0x042C,0x042B,0x0417,0x0428,0x042D,0x0429,0x0427,0x042A,
+};
+
 char VStr::wc2shitmap[65536];
+char VStr::wc2koimap[65536];
 
+struct VstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you {
+  VstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you () {
+    // wc->1251
+    memset(VStr::wc2shitmap, '?', sizeof(VStr::wc2shitmap));
+    for (int f = 0; f < 128; ++f) VStr::wc2shitmap[f] = (char)f;
+    for (int f = 0; f < 128; ++f) VStr::wc2shitmap[VStr::cp1251[f]] = (char)(f+128);
+    // wc->koi
+    memset(VStr::wc2koimap, '?', sizeof(VStr::wc2koimap));
+    for (int f = 0; f < 128; ++f) VStr::wc2koimap[f] = (char)f;
+    for (int f = 0; f < 128; ++f) VStr::wc2koimap[VStr::cpKOI[f]] = (char)(f+128);
+  }
+};
 
-void VStr::vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you () {
-  memset(VStr::wc2shitmap, '?', sizeof(VStr::wc2shitmap));
-  for (int f = 0; f < 128; ++f) VStr::wc2shitmap[f] = (char)f;
-  for (int f = 0; f < 128; ++f) VStr::wc2shitmap[VStr::cp1251[f]] = (char)(f+128);
-}
+VstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you vstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -167,6 +187,48 @@ VStr::VStr (double v) : dataptr(nullptr) {
   char buf[32];
   int len = d2s_buffered(v, buf);
   setContent(buf, len);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// serialisation operator
+VStream &VStr::Serialise (VStream &Strm) {
+  vint32 len = vint32(length());
+  Strm << STRM_INDEX(len);
+  check(len >= 0);
+  if (Strm.IsLoading()) {
+    if (len) {
+      resize(len);
+      makeMutable();
+      Strm.Serialise(dataptr, len+1); // eat last byte which should be zero...
+      dataptr[len] = 0; // ...and force zero
+    } else {
+      clear();
+      // zero byte is always there
+      vuint8 b;
+      Strm << b;
+      check(b == 0);
+    }
+  } else {
+    if (len) Strm.Serialise(getData(), len);
+    // always write terminating zero
+    vuint8 b = 0;
+    Strm << b;
+  }
+  return Strm;
+}
+
+
+// serialisation operator
+VStream &VStr::Serialise (VStream &Strm) const {
+  check(!Strm.IsLoading());
+  vint32 len = vint32(length());
+  Strm << STRM_INDEX(len);
+  if (len) Strm.Serialise(getData(), len);
+  // always write terminating zero
+  vuint8 b = 0;
+  Strm << b;
+  return Strm;
 }
 
 
@@ -254,29 +316,144 @@ VStr VStr::toUpperCase1251 () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStr VStr::utf2win () const {
-  VStr res;
-  if (length()) {
-    VUtf8DecoderFast dc;
-    const char *data = getData();
-    for (int f = 0; f < length(); ++f) {
-      if (dc.put(data[f])) res += wchar2win(dc.codepoint);
+VStr VStr::toLowerCaseKOI () const {
+  int slen = length();
+  if (slen < 1) return VStr();
+  const char *data = getData();
+  for (int f = 0; f < slen; ++f) {
+    if (locaseKOI(data[f]) != data[f]) {
+      VStr res(*this);
+      res.makeMutable();
+      for (int c = 0; c < slen; ++c) res.dataptr[c] = locaseKOI(res.dataptr[c]);
+      return res;
     }
   }
-  return res;
+  return VStr(*this);
+}
+
+
+VStr VStr::toUpperCaseKOI () const {
+  int slen = length();
+  if (slen < 1) return VStr();
+  const char *data = getData();
+  for (int f = 0; f < slen; ++f) {
+    if (upcaseKOI(data[f]) != data[f]) {
+      VStr res(*this);
+      res.makeMutable();
+      for (int c = 0; c < slen; ++c) res.dataptr[c] = upcaseKOI(res.dataptr[c]);
+      return res;
+    }
+  }
+  return VStr(*this);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+int VStr::ICmp (const char *s0, const char *s1) {
+  if (!s0) s0 = "";
+  if (!s1) s1 = "";
+  for (;;) {
+    const int c0 = locase1251(*s0++)&0xff;
+    const int c1 = locase1251(*s1++)&0xff;
+    const int diff = c0-c1;
+    if (diff) return (diff < 0 ? -1 : 1);
+    // `c0` and `c1` are equal
+    if (!c0) return 0;
+  }
+  if (*s0) return 1;
+  if (*s1) return -1;
+  return 0;
+}
+
+
+int VStr::NICmp (const char *s0, const char *s1, size_t max) {
+  if (max == 0) return 0;
+  if (!s0) s0 = "";
+  if (!s1) s1 = "";
+  while (max--) {
+    const int c0 = locase1251(*s0++)&0xff;
+    const int c1 = locase1251(*s1++)&0xff;
+    const int diff = c0-c1;
+    if (diff) return (diff < 0 ? -1 : 1);
+    // `c0` and `c1` are equal
+    if (!c0) return 0;
+  }
+  // equal up to `max` chars
+  return 0;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStr VStr::utf2win () const {
+  // check if we should do anything at all
+  int len = length();
+  if (!len) return VStr(*this);
+  for (const vuint8 *s = (const vuint8 *)getData(); *s; ++s) {
+    if (*s >= 128) {
+      VStr res;
+      VUtf8DecoderFast dc;
+      const char *data = getData();
+      while (len--) { if (dc.put(*data++)) res += wchar2win(dc.codepoint); }
+      return res;
+    }
+  }
+  return VStr(*this);
 }
 
 
 VStr VStr::win2utf () const {
-  VStr res;
-  if (length()) {
-    const char *data = getData();
-    for (int f = 0; f < length(); ++f) {
-      vuint8 ch = (vuint8)data[f];
-      if (ch > 127) res.utf8Append(cp1251[ch-128]); else res += (char)ch;
+  // check if we should do anything at all
+  int len = length();
+  if (!len) return VStr(*this);
+  for (const vuint8 *s = (const vuint8 *)getData(); *s; ++s) {
+    if (*s >= 128) {
+      VStr res;
+      const vuint8 *data = (const vuint8 *)getData();
+      while (len--) {
+        vuint8 ch = *data++;
+        if (ch > 127) res.utf8Append(cp1251[ch-128]); else res += (char)ch;
+      }
+      return res;
     }
   }
-  return res;
+  return VStr(*this);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VStr VStr::utf2koi () const {
+  // check if we should do anything at all
+  int len = length();
+  if (!len) return VStr(*this);
+  for (const vuint8 *s = (const vuint8 *)getData(); *s; ++s) {
+    if (*s >= 128) {
+      VStr res;
+      VUtf8DecoderFast dc;
+      const char *data = getData();
+      while (len--) { if (dc.put(*data++)) res += wchar2koi(dc.codepoint); }
+      return res;
+    }
+  }
+  return VStr(*this);
+}
+
+
+VStr VStr::koi2utf () const {
+  // check if we should do anything at all
+  int len = length();
+  if (!len) return VStr(*this);
+  for (const vuint8 *s = (const vuint8 *)getData(); *s; ++s) {
+    if (*s >= 128) {
+      VStr res;
+      const vuint8 *data = (const vuint8 *)getData();
+      while (len--) {
+        vuint8 ch = *data++;
+        if (ch > 127) res.utf8Append(cpKOI[ch-128]); else res += (char)ch;
+      }
+      return res;
+    }
+  }
+  return VStr(*this);
 }
 
 
