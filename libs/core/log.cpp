@@ -42,6 +42,11 @@ VLog::VLog ()
   , logbufsize(0)
   , inWrite(false)
 {
+  // initial allocation, so we will have something to use on OOM
+  logbufsize = INITIAL_BUFFER_SIZE;
+  logbuf = (char *)malloc(logbufsize);
+  if (!logbuf) { fprintf(stderr, "FATAL: out of memory for initial log buffer!\n"); abort(); } //FIXME
+  //fprintf(stderr, "VLOG(%p): new log buffer! (%d)\n", (void *)this, logbufsize);
 }
 
 
@@ -54,7 +59,7 @@ void VLog::AddListener (VLogListener *lst) {
   if (!lst) return;
   if (inWrite) { fprintf(stderr, "FATAL: cannot add log listeners from log listener!\n"); abort(); }
   Listener *ls = (Listener *)malloc(sizeof(Listener));
-  if (!ls) { fprintf(stderr, "FATAL: out of memory for log!\n"); abort(); }
+  if (!ls) { fprintf(stderr, "FATAL: out of memory for log listener list!\n"); abort(); }
   ls->ls = lst;
   ls->next = nullptr;
   if (!Listeners) {
@@ -103,30 +108,34 @@ void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
   if (!fmt) fmt = "";
 
   // initial allocation
-  if (!logbufsize) {
-    logbufsize = INITIAL_BUFFER_SIZE;
-    logbuf = (char *)malloc(logbufsize);
-    if (!logbuf) { fprintf(stderr, "FATAL: out of memory for log!\n"); abort(); } //FIXME
-  }
+  if (!logbufsize) abort(); // the thing that should not be
 
   va_list apcopy;
 
   va_copy(apcopy, ap);
-  int size = vsnprintf(logbuf, (size_t)logbufsize, fmt, apcopy);
+  int size = vsnprintf(logbuf, (size_t)(logbufsize-2), fmt, apcopy);
   va_end(apcopy);
 
   if (size < 0) return; // oops
 
-  if (size >= logbufsize-2) {
+  if (size >= logbufsize-4) {
     // not enough room, try again
-    if (size > 0x1fffffff) abort(); // oops
-    size = ((size+2)|0x1fff)+1;
-    logbuf = (char *)realloc(logbuf, (size_t)logbufsize);
-    if (!logbuf) { fprintf(stderr, "FATAL: out of memory for log!\n"); abort(); } //FIXME
+    if (size > 0x1fffff-4) size = 0x1fffff-4;
+    size = ((size+4)|0x1fff)+1;
+    char *newlogbuf = (char *)realloc(logbuf, (size_t)logbufsize);
+    if (!newlogbuf) {
+      //FIXME
+      fprintf(stderr, "FATAL: out of memory for log buffer (new=%d; old=%d)!\n", size, logbufsize);
+    } else {
+      //fprintf(stderr, "VLOG(%p): realloc log buffer! (old=%d; new=%d)\n", (void *)this, logbufsize, size);
+      logbuf = newlogbuf;
+      logbufsize = size;
+    }
     va_copy(apcopy, ap);
-    size = vsnprintf(logbuf, (size_t)logbufsize, fmt, apcopy);
+    size = vsnprintf(logbuf, (size_t)(logbufsize-4), fmt, apcopy);
     va_end(apcopy);
     if (size < 0) return;
+    if (size >= logbufsize) size = (int)strlen(logbuf);
   }
 
   if (addEOL) { logbuf[size] = '\n'; logbuf[size+1] = 0; }
