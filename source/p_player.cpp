@@ -656,6 +656,21 @@ void VBasePlayer::WriteViewData () {
 
 //==========================================================================
 //
+//  VBasePlayer::CallDumpInventory
+//
+//==========================================================================
+void VBasePlayer::CallDumpInventory () {
+  VStr name = "DumpInventory";
+  VMethod *mt = GetClass()->FindConCommandMethod(name);
+  if (!mt) return;
+  // i found her!
+  if ((mt->Flags&FUNC_Static) == 0) P_PASS_SELF;
+  (void)ExecuteFunction(mt);
+}
+
+
+//==========================================================================
+//
 //  VBasePlayer::ListConCommands
 //
 //  append player commands with the given prefix

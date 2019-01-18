@@ -263,6 +263,8 @@ public:
   // autocompleter should filter list
   bool ExecConCommandAC (TArray<VStr> &args, bool newArg, TArray<VStr> &aclist);
 
+  void CallDumpInventory ();
+
   DECLARE_FUNCTION(cprint)
   DECLARE_FUNCTION(centreprint)
   DECLARE_FUNCTION(GetPlayerNum)

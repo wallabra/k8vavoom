@@ -54,6 +54,8 @@ static VCvarB loader_ignore_kill_on_unarchive("loader_ignore_kill_on_unarchive",
 
 static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing\b  0x20: dump checkpoints", CVAR_Archive);
 
+static VCvarB dbg_checkpoints("dbg_checkpoints", false, "Checkpoint save/load debug dumps", 0);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
@@ -1565,20 +1567,26 @@ static bool SV_SaveCheckpoint () {
   cp.Clear();
   VEntity *rwe = plr->eventGetReadyWeapon();
 
+  if (dbg_checkpoints) GCon->Logf("QS: === creating ===");
   for (VEntity *invFirst = plr->MO->QS_GetEntityInventory();
        invFirst;
        invFirst = invFirst->QS_GetEntityInventory())
   {
     cp.AddEntity(invFirst);
+    if (dbg_checkpoints) GCon->Logf("QS: inventory item '%s'", invFirst->GetClass()->GetName());
   }
+  if (dbg_checkpoints) GCon->Logf("QS: getting properties...");
 
   plr->QS_Save();
-  for (int f = 0; f < cp.EList.length(); ++f) cp.EList[f].ent->QS_Save();
+  for (int f = 0; f < cp.EList.length(); ++f) {
+    cp.EList[f].ent->QS_Save();
+  }
   cp.QSList = QS_GetCurrentArray();
 
   // count entities, build entity list
   for (int f = 0; f < cp.QSList.length(); ++f) {
     QSValue &qv = cp.QSList[f];
+    if (dbg_checkpoints) GCon->Logf("QS: property #%d of '%s': %s", f, (qv.ent ? qv.ent->GetClass()->GetName() : "player"), *qv.toString());
     if (!qv.ent) {
       qv.objidx = 0;
     } else {
@@ -1588,6 +1596,7 @@ static bool SV_SaveCheckpoint () {
   }
 
   QS_StartPhase(QSPhase::QSP_None);
+  if (dbg_checkpoints) GCon->Logf("QS: === complete ===");
 
   return true;
 }
@@ -1651,31 +1660,45 @@ static void SV_LoadMap (VName MapName) {
 
     QS_StartPhase(QSPhase::QSP_Load);
 
+    if (dbg_checkpoints) GCon->Logf("QS: === loading ===");
+    if (dbg_checkpoints) GCon->Logf("QS: --- (starting inventory)");
+    if (dbg_checkpoints) plr->CallDumpInventory();
     plr->MO->QS_ClearEntityInventory();
+    if (dbg_checkpoints) GCon->Logf("QS: --- (cleared inventory)");
+    if (dbg_checkpoints) plr->CallDumpInventory();
+    if (dbg_checkpoints) GCon->Logf("QS: ---");
+
     // create inventory items
     // have to do it backwards due to the way `AttachToOwner()` works
     for (int f = cp.EList.length()-1; f >= 0; --f) {
       VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
       VEntity *inv = plr->MO->QS_SpawnEntityInventory(VName(*ei.ClassName));
       if (!inv) Host_Error("cannot spawn inventory item '%s'", *ei.ClassName);
-      if (dbg_save_verbose&0x20) GCon->Logf("QS: spawned '%s'", inv->GetClass()->GetName());
+      if (dbg_checkpoints) GCon->Logf("QS: spawned '%s'", inv->GetClass()->GetName());
       ei.ent = inv;
       if (cp.ReadyWeapon == f+1) rwe = inv;
     }
+    if (dbg_checkpoints) GCon->Logf("QS: --- (spawned inventory)");
+    if (dbg_checkpoints) plr->CallDumpInventory();
+    if (dbg_checkpoints) GCon->Logf("QS: ---");
 
     for (int f = 0; f < cp.QSList.length(); ++f) {
       QSValue &qv = cp.QSList[f];
       if (qv.objidx == 0) {
         qv.ent = nullptr;
-        if (dbg_save_verbose&0x20) GCon->Logf("QS #%d:player: %s", f, *qv.toString());
+        if (dbg_checkpoints) GCon->Logf("QS:  #%d:player: %s", f, *qv.toString());
       } else {
         qv.ent = cp.EList[qv.objidx-1].ent;
         check(qv.ent);
-        if (dbg_save_verbose&0x20) GCon->Logf("QS #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
+        if (dbg_checkpoints) GCon->Logf("QS:  #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
       }
       QS_EnterValue(qv);
     }
 
+    if (dbg_checkpoints) GCon->Logf("QS: --- (inventory before setting properties)");
+    if (dbg_checkpoints) plr->CallDumpInventory();
+    if (dbg_checkpoints) GCon->Logf("QS: ---");
+    if (dbg_checkpoints) GCon->Logf("QS: calling loaders...");
     // call player loader, then entity loaders
     plr->QS_Load();
     for (int f = 0; f < cp.EList.length(); ++f) {
@@ -1683,6 +1706,9 @@ static void SV_LoadMap (VName MapName) {
       ei.ent->QS_Load();
     }
 
+    if (dbg_checkpoints) GCon->Logf("QS: --- (final inventory)");
+    if (dbg_checkpoints) plr->CallDumpInventory();
+    if (dbg_checkpoints) GCon->Logf("QS: === done ===");
     QS_StartPhase(QSPhase::QSP_None);
 
     plr->PlayerState = PST_LIVE;
