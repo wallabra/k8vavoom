@@ -2750,12 +2750,12 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             TLocation ALoc = Args[i]->Loc;
             delete Args[i];
             Args[i] = new VIntLiteral(0, ALoc);
-            ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
+            ParseWarning(ALoc, "`%s` argument #%d should be number; PLEASE, FIX THE CODE! (replaced with 1)", Func->GetName(), i+1);
           } else if (str.ICmp("true") == 0) {
             TLocation ALoc = Args[i]->Loc;
             delete Args[i];
             Args[i] = new VIntLiteral(1, ALoc);
-            ParseWarning(ALoc, "`%s` argument #%d should be number; FIX YOUR FUCKIN' CODE, YOU MORONS!", Func->GetName(), i+1);
+            ParseWarning(ALoc, "`%s` argument #%d should be number; PLEASE, FIX THE CODE! (replaced with 0)", Func->GetName(), i+1);
           }
         }
         break;
@@ -2773,7 +2773,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          ParseWarning(ALoc, "`%s` argument #%d should be string; PLEASE, FIX THE CODE!", Func->GetName(), i+1);
           delete Args[i];
           Args[i] = new VNameLiteral(NAME_None, ALoc);
         }
@@ -2794,7 +2794,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             case 6: chanName = "SoundSlot6"; break;
             case 7: chanName = "SoundSlot7"; break;
           }
-          ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE! (replaced %d with \"%s\")", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
+          ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string; PLEASE, FIX THE CODE! (replaced %d with \"%s\")", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
           VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
           delete Args[i];
           Args[i] = e;
@@ -2807,7 +2807,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "`%s` argument #%d should be string; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          ParseWarning(ALoc, "`%s` argument #%d should be string; PLEASE, FIX THE CODE! (replaced `0` with empty string)", Func->GetName(), i+1);
           delete Args[i];
           Args[i] = new VStringLiteral(VStr(), ec.Package->FindString(""), ALoc);
         }
@@ -2844,7 +2844,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
           // "false" or "0" means "empty"
           TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "`%s` argument #%d should be class; FIX YOUR BROKEN CODE!", Func->GetName(), i+1);
+          ParseWarning(ALoc, "`%s` argument #%d should be class; PLEASE, FIX THE CODE! (replaced with `none`)", Func->GetName(), i+1);
           delete Args[i];
           Args[i] = new VNoneLiteral(ALoc);
         }
@@ -2859,7 +2859,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             if (lbl < 0) {
               ParseError(ALoc, "`%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, *str);
             } else {
-              ParseWarning(ALoc, "`%s` argument #%d should be number %d; FIX YOUR BROKEN CODE!", Func->GetName(), i+1, lbl);
+              ParseWarning(ALoc, "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", Func->GetName(), i+1, lbl);
               delete Args[i];
               Args[i] = new VIntLiteral(lbl, ALoc);
             }
@@ -2931,6 +2931,22 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
         break;
     }
   }
+
+  // some warnings
+  if (NumArgs > maxParams) {
+    ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", Func->GetName(), maxParams, NumArgs);
+  } else {
+    if (Args[0] && Args[0]->IsIntConst() && VStr::Cmp(Func->GetName(), "A_Jump") == 0) {
+      // warn for `A_Jump(256<or-more>, "Label")`
+      int prob = Args[0]->GetIntConst();
+      if (NumArgs < 3 && prob > 255) {
+        ParseWarning(Loc, "this `A_Jump` is uncoditional; this is probably a bug (replace it with `Goto` if it isn't)");
+      } else if (prob < 1) {
+        ParseWarning(Loc, "this `A_Jump` is never taken");
+      }
+    }
+  }
+
   unguard;
 }
 
