@@ -2714,222 +2714,28 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     if (i >= requiredParams) continue;
     if (!Args[i]) continue;
 
-    //FIXME: move this to separate method
-    // simplify a little:
-    //   replace `+number` with `number`
-    {
-      VExpression *e = Args[i];
-      Args[i] = nullptr;
-      for (;;) {
-        if (e->IsUnaryMath()) {
-          VUnary *un = (VUnary *)e;
-          if (un->op) {
-            if (un->Oper == VUnary::Plus && (un->op->IsIntConst() || un->op->IsFloatConst())) {
-              VExpression *etmp = un->op;
-              //fprintf(stderr, "SIMPLIFIED! <%s> -> <%s>\n", *un->toString(), *etmp->toString());
-              un->op = nullptr;
-              delete e;
-              e = etmp;
-              continue;
-            }
-          }
-        }
-        break;
+    // hack for idiotic mod authors (hello, LCA!)
+    if (Func->ParamTypes[i].Type == TYPE_String && Args[i]->IsIntConst() && Func->Params[i].Name == "ChannelNameOrNumber") {
+      int chan = (Args[i]->GetIntConst()&7);
+      const char *chanName;
+      switch (chan) {
+        default:
+        case 0: chanName = "Auto"; break;
+        case 1: chanName = "Weapon"; break;
+        case 2: chanName = "Voice"; break;
+        case 3: chanName = "Item"; break;
+        case 4: chanName = "Body"; break;
+        case 5: chanName = "SoundSlot5"; break;
+        case 6: chanName = "SoundSlot6"; break;
+        case 7: chanName = "SoundSlot7"; break;
       }
+      ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string (replaced %d with \"%s\"); PLEASE, FIX THE CODE!", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
+      VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
+      delete Args[i];
       Args[i] = e;
-      if (!e) continue;
     }
 
-    switch (Func->ParamTypes[i].Type) {
-      case TYPE_Int:
-      case TYPE_Float:
-      case TYPE_Bool:
-        if (Args[i]->IsStrConst()) {
-          const VStr &str = Args[i]->GetStrConst(ec.Package);
-          if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
-            TLocation ALoc = Args[i]->Loc;
-            delete Args[i];
-            Args[i] = new VIntLiteral(0, ALoc);
-            ParseWarning(ALoc, "`%s` argument #%d should be number; PLEASE, FIX THE CODE! (replaced with 1)", Func->GetName(), i+1);
-          } else if (str.ICmp("true") == 0) {
-            TLocation ALoc = Args[i]->Loc;
-            delete Args[i];
-            Args[i] = new VIntLiteral(1, ALoc);
-            ParseWarning(ALoc, "`%s` argument #%d should be number; PLEASE, FIX THE CODE! (replaced with 0)", Func->GetName(), i+1);
-          }
-        }
-        break;
-      case TYPE_Name:
-        if (Args[i]->IsDecorateSingleName()) {
-          VDecorateSingleName *E = (VDecorateSingleName *)Args[i];
-          Args[i] = new VNameLiteral(*E->Name, E->Loc);
-          delete E;
-          E = nullptr;
-        } else if (Args[i]->IsStrConst()) {
-          const VStr &Val = Args[i]->GetStrConst(ec.Package);
-          TLocation ALoc = Args[i]->Loc;
-          delete Args[i];
-          Args[i] = new VNameLiteral(*Val, ALoc);
-        } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
-          // "false" or "0" means "empty"
-          TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "`%s` argument #%d should be string; PLEASE, FIX THE CODE!", Func->GetName(), i+1);
-          delete Args[i];
-          Args[i] = new VNameLiteral(NAME_None, ALoc);
-        }
-        break;
-      case TYPE_String:
-        // hack for idiotic mod authors (hello, LCA!)
-        if (Func->Params[i].Name == VName("ChannelNameOrNumber") && Args[i]->IsIntConst()) {
-          int chan = (Args[i]->GetIntConst()&7);
-          const char *chanName;
-          switch (chan) {
-            default:
-            case 0: chanName = "Auto"; break;
-            case 1: chanName = "Weapon"; break;
-            case 2: chanName = "Voice"; break;
-            case 3: chanName = "Item"; break;
-            case 4: chanName = "Body"; break;
-            case 5: chanName = "SoundSlot5"; break;
-            case 6: chanName = "SoundSlot6"; break;
-            case 7: chanName = "SoundSlot7"; break;
-          }
-          ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string; PLEASE, FIX THE CODE! (replaced %d with \"%s\")", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
-          VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
-          delete Args[i];
-          Args[i] = e;
-        }
-        if (Args[i]->IsDecorateSingleName()) {
-          VDecorateSingleName *E = (VDecorateSingleName *)Args[i];
-          Args[i] = new VStringLiteral(VStr(*E->Name), ec.Package->FindString(*E->Name), E->Loc);
-          delete E;
-          E = nullptr;
-        } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
-          // "false" or "0" means "empty"
-          TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "`%s` argument #%d should be string; PLEASE, FIX THE CODE! (replaced `0` with empty string)", Func->GetName(), i+1);
-          delete Args[i];
-          Args[i] = new VStringLiteral(VStr(), ec.Package->FindString(""), ALoc);
-        }
-        break;
-      case TYPE_Class:
-        if (Args[i]->IsDecorateSingleName()) {
-          VDecorateSingleName *E = (VDecorateSingleName *)Args[i];
-          Args[i] = new VStringLiteral(VStr(*E->Name), ec.Package->FindString(*E->Name), E->Loc);
-          delete E;
-          E = nullptr;
-        }
-        if (Args[i]->IsStrConst()) {
-          const VStr &CName = Args[i]->GetStrConst(ec.Package);
-          TLocation ALoc = Args[i]->Loc;
-          if (CName.length() == 0 || CName.ICmp("None") == 0 || CName.ICmp("nil") == 0 || CName.ICmp("null") == 0) {
-            //ParseWarning(ALoc, "NONE CLASS `%s`", CName);
-            delete Args[i];
-            Args[i] = new VNoneLiteral(ALoc);
-          } else {
-            VClass *Cls = VClass::FindClassNoCase(*CName);
-            if (!Cls) {
-              ParseWarning(ALoc, "No such class `%s` for argument #%d of `%s`", *CName, i+1, Func->GetName());
-              delete Args[i];
-              Args[i] = new VNoneLiteral(ALoc);
-            } else if (Func->ParamTypes[i].Class && !Cls->IsChildOf(Func->ParamTypes[i].Class)) {
-              ParseWarning(ALoc, "Class `%s` is not a descendant of `%s` for argument #%d of `%s`", *CName, Func->ParamTypes[i].Class->GetName(), i+1, Func->GetName());
-              delete Args[i];
-              Args[i] = new VNoneLiteral(ALoc);
-            } else {
-              delete Args[i];
-              Args[i] = new VClassConstant(Cls, ALoc);
-            }
-          }
-        } else if (Args[i]->IsIntConst() && Args[i]->GetIntConst() == 0) {
-          // "false" or "0" means "empty"
-          TLocation ALoc = Args[i]->Loc;
-          ParseWarning(ALoc, "`%s` argument #%d should be class; PLEASE, FIX THE CODE! (replaced with `none`)", Func->GetName(), i+1);
-          delete Args[i];
-          Args[i] = new VNoneLiteral(ALoc);
-        }
-        break;
-      case TYPE_State:
-        // dumbfucks in harddoom does this: `A_JumpIfTargetInLOS("1")` -- brilliant! idiots.
-        if (Args[i]->IsStrConst()) {
-          const VStr &str = Args[i]->GetStrConst(ec.Package);
-          int lbl = -1;
-          if (str.convertInt(&lbl)) {
-            TLocation ALoc = Args[i]->Loc;
-            if (lbl < 0) {
-              ParseError(ALoc, "`%s` argument #%d is something fucked: '%s'", Func->GetName(), i+1, *str);
-            } else {
-              ParseWarning(ALoc, "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", Func->GetName(), i+1, lbl);
-              delete Args[i];
-              Args[i] = new VIntLiteral(lbl, ALoc);
-            }
-          }
-        }
-
-        if (Args[i]->IsIntConst()) {
-          int Offs = Args[i]->GetIntConst();
-          TLocation ALoc = Args[i]->Loc;
-          if (Offs < 0) {
-            ParseError(ALoc, "Negative state jumps are not allowed");
-          } else if (Offs == 0) {
-            // 0 means no state
-            delete Args[i];
-            Args[i] = nullptr;
-            Args[i] = new VNoneLiteral(ALoc);
-          } else {
-            check(CallerState);
-            VState *S = CallerState->GetPlus(Offs, true);
-            if (!S) {
-              ParseError(ALoc, "Bad state jump offset");
-            } else {
-              delete Args[i];
-              Args[i] = nullptr;
-              Args[i] = new VStateConstant(S, ALoc);
-            }
-          }
-        } else if (Args[i]->IsStrConst()) {
-          VStr Lbl = Args[i]->GetStrConst(ec.Package);
-          TLocation ALoc = Args[i]->Loc;
-          int DCol = Lbl.IndexOf("::");
-          if (DCol >= 0) {
-            // jump to a specific parent class state, resolve it and pass value directly
-            VStr ClassName(Lbl, 0, DCol);
-            VClass *CheckClass;
-            if (ClassName.ICmp("Super") == 0) {
-              CheckClass = ec.SelfClass->ParentClass;
-              if (!CheckClass) ParseWarning(ALoc, "`%s` argument #%d wants `Super` without superclass!", Func->GetName(), i+1);
-            } else {
-              CheckClass = VClass::FindClassNoCase(*ClassName);
-              if (!CheckClass) {
-                ParseError(ALoc, "No such class `%s`", *ClassName);
-              } else if (!ec.SelfClass->IsChildOf(CheckClass)) {
-                ParseError(ALoc, "`%s` is not a subclass of `%s`", ec.SelfClass->GetName(), CheckClass->GetName());
-                CheckClass = nullptr;
-              }
-            }
-            if (CheckClass) {
-              VStr LblName(Lbl, DCol+2, Lbl.Length()-DCol-2);
-              TArray<VName> Names;
-              VMemberBase::StaticSplitStateLabel(LblName, Names);
-              VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
-              if (!StLbl) {
-                ParseError(ALoc, "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
-              } else {
-                delete Args[i];
-                Args[i] = nullptr;
-                Args[i] = new VStateConstant(StLbl->State, ALoc);
-              }
-            }
-          } else {
-            // it's a virtual state jump
-            //ParseWarning(Args[i]->Loc, "***VSJMP `%s`: <%s>", Func->GetName(), *Lbl);
-            VExpression *TmpArgs[1];
-            TmpArgs[0] = Args[i];
-            Args[i] = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Args[i]->Loc, 1, TmpArgs);
-          }
-        }
-        break;
-    }
+    Args[i] = Args[i]->MassageDecorateArg(ec, CallerState, Func->GetName(), i+1, Func->ParamTypes[i]);
   }
 
   // some warnings
