@@ -1450,10 +1450,11 @@ void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3, /*i
     {
       // Auto-activate
       VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator, nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow, false); // always register thinker
-      if (RunNow) {
+      if (RunNow && Script) {
+        VLevel *lvl = Script->XLevel;
         Script->RunScript(0/*host_frametime:doesn't matter*/, true);
         if (Script->destroyed) {
-          Script->XLevel->RemoveScriptThinker(Script);
+          lvl->RemoveScriptThinker(Script);
           delete Script;
         }
       }
@@ -2001,6 +2002,9 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
       // resume a suspended script
       Info->RunningScript->State = VAcs::ASTE_Running;
     }
+    //k8: force it
+    Info->RunningScript->Level = XLevel->LevelInfo;
+    Info->RunningScript->XLevel = XLevel;
     // script is already executing
     return Info->RunningScript;
   }
