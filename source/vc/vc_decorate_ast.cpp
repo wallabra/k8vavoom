@@ -678,85 +678,9 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
       return nullptr;
     }
 
-    if (lbl->IsStrConst()) {
-      const VStr &str = lbl->GetStrConst(ec.Package);
-      int lblval = -1;
-      if (str.convertInt(&lblval)) {
-        TLocation ALoc = lbl->Loc;
-        if (lblval < 0) {
-          ParseError(ALoc, "`A_Jump` argument #%d is something fucked: '%s'", lbidx+2, *str);
-        } else {
-          ParseWarning(ALoc, "`A_Jump` argument #%d should be number %d; PLEASE, FIX THE CODE!", lbidx+2, lblval);
-          delete lbl;
-          lbl = new VIntLiteral(lblval, ALoc);
-        }
-      }
-    }
+    lbl = lbl->MassageDecorateArg(ec, CallerState, "A_Jump", lbidx+2, VFieldType(TYPE_State));
+    if (!lbl) { delete this; return nullptr; } // some error
 
-    if (lbl->IsIntConst()) {
-      int Offs = lbl->GetIntConst();
-      TLocation ALoc = lbl->Loc;
-      if (Offs < 0) {
-        ParseError(ALoc, "Negative state jumps are not allowed");
-      } else if (Offs == 0) {
-        // 0 means no state
-        delete lbl;
-        lbl = nullptr;
-        lbl = new VNoneLiteral(ALoc);
-      } else {
-        check(CallerState);
-        VState *S = CallerState->GetPlus(Offs, true);
-        if (!S) {
-          ParseError(ALoc, "Bad state jump offset");
-        } else {
-          delete lbl;
-          lbl = nullptr;
-          lbl = new VStateConstant(S, ALoc);
-        }
-      }
-    } else if (lbl->IsStrConst()) {
-      VStr Lbl = lbl->GetStrConst(ec.Package);
-      TLocation ALoc = lbl->Loc;
-      int DCol = Lbl.IndexOf("::");
-      if (DCol >= 0) {
-        // jump to a specific parent class state, resolve it and pass value directly
-        VStr ClassName(Lbl, 0, DCol);
-        VClass *CheckClass;
-        if (ClassName.ICmp("Super") == 0) {
-          CheckClass = ec.SelfClass->ParentClass;
-          if (!CheckClass) ParseWarning(ALoc, "`A_Jump` argument #%d wants `Super` without superclass!", lbidx+2);
-        } else {
-          CheckClass = VClass::FindClassNoCase(*ClassName);
-          if (!CheckClass) {
-            ParseError(ALoc, "No such class `%s`", *ClassName);
-          } else if (!ec.SelfClass->IsChildOf(CheckClass)) {
-            ParseError(ALoc, "`%s` is not a subclass of `%s`", ec.SelfClass->GetName(), CheckClass->GetName());
-            CheckClass = nullptr;
-          }
-        }
-        if (CheckClass) {
-          VStr LblName(Lbl, DCol+2, Lbl.Length()-DCol-2);
-          TArray<VName> Names;
-          VMemberBase::StaticSplitStateLabel(LblName, Names);
-          VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
-          if (!StLbl) {
-            ParseError(ALoc, "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
-          } else {
-            delete lbl;
-            lbl = nullptr;
-            lbl = new VStateConstant(StLbl->State, ALoc);
-          }
-        }
-      } else {
-        // it's a virtual state jump
-        //ParseWarning(lbl->Loc, "***VSJMP `%s`: <%s>", Func->GetName(), *Lbl);
-        VExpression *TmpArgs[1];
-        TmpArgs[0] = lbl;
-        lbl = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, lbl->Loc, 1, TmpArgs);
-      }
-    }
-
-    check(lbl);
     lbl = new VCastOrInvocation("DoJump", Loc, 1, &lbl);
     lbl = new VDropResult(lbl);
 

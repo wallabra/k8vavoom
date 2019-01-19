@@ -166,6 +166,10 @@ public:
 
   static inline VStr e2s (const VExpression *e) { return (e ? e->toString() : "<{null}>"); }
 
+  // this will try to coerce some decorate argument to something sensible
+  VExpression *MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
+                                   int argnum, const VFieldType &destType, const TLocation *aloc=nullptr);
+
   // checks if expression consists of only numeric literals
   // returns `ExprXXX`
   enum { ExprNotNum, ExprInt, ExprFloat };

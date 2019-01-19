@@ -608,6 +608,246 @@ void VExpression::operator delete[] (void *p) {
 
 //==========================================================================
 //
+//  VInvocation::MassageDecorateArg
+//
+//  this will try to coerce some decorate argument to something sensible
+//
+//==========================================================================
+VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
+                                              int argnum, const VFieldType &destType, const TLocation *aloc) {
+  //FIXME: move this to separate method
+  // simplify a little:
+  //   replace `+number` with `number`
+  if (IsUnaryMath()) {
+    VUnary *un = (VUnary *)this;
+    if (un->op) {
+      if (un->Oper == VUnary::Plus && (un->op->IsIntConst() || un->op->IsFloatConst())) {
+        VExpression *enew = un->op;
+        //fprintf(stderr, "SIMPLIFIED! <%s> -> <%s>\n", *un->toString(), *etmp->toString());
+        un->op = nullptr;
+        delete this;
+        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
+      }
+    }
+  }
+
+  switch (destType.Type) {
+    case TYPE_Int:
+    case TYPE_Byte:
+    case TYPE_Float:
+    case TYPE_Bool:
+      if (IsStrConst()) {
+        const VStr &str = GetStrConst(ec.Package);
+        if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
+          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 1); PLEASE, FIX THE CODE!", funcName, argnum);
+          VExpression *enew = new VIntLiteral(0, Loc);
+          delete this;
+          return enew;
+        }
+        if (str.ICmp("true") == 0) {
+          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
+          VExpression *enew = new VIntLiteral(1, Loc);
+          delete this;
+          return enew;
+        }
+      }
+      break;
+
+    case TYPE_Name:
+      // identifier?
+      if (IsDecorateSingleName()) {
+        VDecorateSingleName *e = (VDecorateSingleName *)this;
+        VExpression *enew = new VNameLiteral(*e->Name, Loc);
+        delete this;
+        return enew;
+      }
+      // string?
+      if (IsStrConst()) {
+        const VStr &val = GetStrConst(ec.Package);
+        VExpression *enew = new VNameLiteral(*val, Loc);
+        delete this;
+        return enew;
+      }
+      // integer zero?
+      if (IsIntConst() && GetIntConst() == 0) {
+        // "false" or "0" means "empty"
+        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
+        VExpression *enew = new VNameLiteral(NAME_None, Loc);
+        delete this;
+        return enew;
+      }
+      break;
+
+    case TYPE_String:
+      // identifier?
+      if (IsDecorateSingleName()) {
+        VDecorateSingleName *e = (VDecorateSingleName *)this;
+        VExpression *enew = new VStringLiteral(VStr(*e->Name), ec.Package->FindString(*e->Name), Loc);
+        delete this;
+        return enew;
+      }
+      // integer zero?
+      if (IsIntConst() && GetIntConst() == 0) {
+        // "false" or "0" means "empty"
+        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
+        VExpression *enew = new VStringLiteral(VStr(), ec.Package->FindString(""), Loc);
+        delete this;
+        return enew;
+      }
+      break;
+
+    case TYPE_Class:
+      // identifier?
+      if (IsDecorateSingleName()) {
+        VDecorateSingleName *e = (VDecorateSingleName *)this;
+        VExpression *enew = new VStringLiteral(VStr(*e->Name), ec.Package->FindString(*e->Name), Loc);
+        delete this;
+        return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
+      }
+      // string?
+      if (IsStrConst()) {
+        const VStr &CName = GetStrConst(ec.Package);
+        //TLocation ALoc = Loc;
+        if (CName.length() == 0 || CName.ICmp("None") == 0 || CName.ICmp("nil") == 0 || CName.ICmp("null") == 0) {
+          //ParseWarning(ALoc, "NONE CLASS `%s`", CName);
+          VExpression *enew = new VNoneLiteral(Loc);
+          delete this;
+          return enew;
+        } else {
+          VClass *Cls = VClass::FindClassNoCase(*CName);
+          if (!Cls) {
+            ParseWarning((aloc ? *aloc : Loc), "No such class `%s` for argument #%d of `%s`", *CName, argnum, funcName);
+            VExpression *enew = new VNoneLiteral(Loc);
+            delete this;
+            return enew;
+          }
+          if (destType.Class && !Cls->IsChildOf(destType.Class)) {
+            ParseWarning((aloc ? *aloc : Loc), "Class `%s` is not a descendant of `%s` for argument #%d of `%s`", *CName, destType.Class->GetName(), argnum, funcName);
+            VExpression *enew = new VNoneLiteral(Loc);
+            delete this;
+            return enew;
+          }
+          VExpression *enew = new VClassConstant(Cls, Loc);
+          delete this;
+          return enew;
+        }
+        break;
+      }
+      // integer zero?
+      if (IsIntConst() && GetIntConst() == 0) {
+        // "false" or "0" means "empty"
+        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be class (replaced with `none`); PLEASE, FIX THE CODE!", funcName, argnum);
+        VExpression *enew = new VNoneLiteral(Loc);
+        delete this;
+        return enew;
+      }
+      break;
+
+    case TYPE_State:
+      // some very bright persons does this: `A_JumpIfTargetInLOS("1")` -- brilliant!
+      // string?
+      if (IsStrConst()) {
+        const VStr &str = GetStrConst(ec.Package);
+        int lbl = -1;
+        if (str.convertInt(&lbl)) {
+          //TLocation ALoc = Args[i]->Loc;
+          if (lbl < 0) {
+            ParseError((aloc ? *aloc : Loc), "`%s` argument #%d is something fucked: '%s'", funcName, argnum, *str);
+            delete this;
+            return nullptr;
+          }
+          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", funcName, argnum, lbl);
+          VExpression *enew = new VIntLiteral(lbl, Loc);
+          delete this;
+          return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc);
+        }
+      }
+      // integer?
+      if (IsIntConst()) {
+        int Offs = GetIntConst();
+        //TLocation ALoc = Args[i]->Loc;
+        if (Offs < 0) {
+          ParseError((aloc ? *aloc : Loc), "Negative state jumps are not allowed");
+          delete this;
+          return nullptr;
+        }
+        if (Offs == 0) {
+          // 0 means no state
+          VExpression *enew = new VNoneLiteral(Loc);
+          delete this;
+          return enew;
+        }
+        // positive jump
+        check(CallerState);
+        VState *S = CallerState->GetPlus(Offs, true);
+        if (!S) {
+          ParseError((aloc ? *aloc : Loc), "Bad state jump offset");
+          delete this;
+          return nullptr;
+        }
+        VExpression *enew = new VStateConstant(S, Loc);
+        delete this;
+        return enew;
+      }
+      // string?
+      if (IsStrConst()) {
+        VStr Lbl = GetStrConst(ec.Package);
+        //TLocation ALoc = Args[i]->Loc;
+        int DCol = Lbl.IndexOf("::");
+        if (DCol >= 0) {
+          // jump to a specific parent class state, resolve it and pass value directly
+          VStr ClassName(Lbl, 0, DCol);
+          VClass *CheckClass;
+          if (ClassName.ICmp("Super") == 0) {
+            CheckClass = ec.SelfClass->ParentClass;
+            if (!CheckClass) {
+              ParseError((aloc ? *aloc : Loc), "`%s` argument #%d wants `Super` without superclass!", funcName, argnum);
+              delete this;
+              return nullptr;
+            }
+          } else {
+            CheckClass = VClass::FindClassNoCase(*ClassName);
+            if (!CheckClass) {
+              ParseError((aloc ? *aloc : Loc), "No such class `%s`", *ClassName);
+              delete this;
+              return nullptr;
+            }
+            if (!ec.SelfClass->IsChildOf(CheckClass)) {
+              ParseError((aloc ? *aloc : Loc), "`%s` is not a subclass of `%s`", ec.SelfClass->GetName(), CheckClass->GetName());
+              delete this;
+              return nullptr;
+            }
+          }
+          check(CheckClass);
+          VStr LblName(Lbl, DCol+2, Lbl.Length()-DCol-2);
+          TArray<VName> Names;
+          VMemberBase::StaticSplitStateLabel(LblName, Names);
+          VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
+          if (!StLbl) {
+            ParseError((aloc ? *aloc : Loc), "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
+            delete this;
+            return nullptr;
+          }
+          VExpression *enew = new VStateConstant(StLbl->State, Loc);
+          delete this;
+          return enew;
+        }
+        // it's a virtual state jump
+        //ParseWarning(Args[i]->Loc, "***VSJMP `%s`: <%s>", Func->GetName(), *Lbl);
+        VExpression *TmpArgs[1];
+        TmpArgs[0] = this;
+        return new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Loc, 1, TmpArgs);
+      }
+      break;
+  }
+  return this;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
 //  VExpression::IsNumericLiteralExpr
 //
 //  checks if expression consists of only numeric literals
