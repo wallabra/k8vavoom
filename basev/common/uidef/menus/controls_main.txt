@@ -342,14 +342,14 @@ menudef ControlsMain {
   }
 
   option bind {
-    title = "Artefact Slot 1";
+    title = "Artifact Slot 1";
     button = ona;
     command = "impulse 11";
     Strife = ona; // don't show/use for Strife
   }
 
   option bind {
-    title = "Artefact Slot 2";
+    title = "Artifact Slot 2";
     button = ona;
     command = "impulse 12";
     Strife = ona; // don't show/use for Strife
