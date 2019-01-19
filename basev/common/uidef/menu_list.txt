@@ -10,4 +10,6 @@ menus {
   "menus/sound.txt",
   "menus/video.txt",
   "menus/xmp.txt",
+
+  "menus/controls_main.txt",
 }

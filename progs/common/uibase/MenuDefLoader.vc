@@ -100,6 +100,16 @@ static final string readText (string fname) {
 */
 
 
+static final bool str2bool (string s) {
+  return
+    stricmp(s, "tan") == 0 ||
+    stricmp(s, "on") == 0 ||
+    stricmp(s, "true") == 0 ||
+    stricmp(s, "yes") == 0 ||
+    stricmp(s, "1") == 0;
+}
+
+
 static final ScriptsParser openParser (string fname) {
   auto par = SpawnObject(ScriptsParser);
   //par.OpenString('menudef', readText(fname));
@@ -199,7 +209,7 @@ void parse (ScriptsParser par) {
     if (par.Check("selector")) {
       par.Expect("=");
       par.ExpectIdentifier();
-      seltype = name(par.String);
+      seltype = (stricmp(par.String, "none") == 0 ? '' : name(par.String));
       par.Expect(";");
       continue;
     }
@@ -316,6 +326,7 @@ final static MenuDefOptionBase parse (ScriptsParser par) {
   else if (par.Check("mod_controls")) res = SpawnObject(MenuDefOptionControls);
   else if (par.Check("console")) res = SpawnObject(MenuDefOptionConsole);
   else if (par.Check("crosshair")) res = SpawnObject(MenuDefOptionCrosshair);
+  else if (par.Check("bind")) res = SpawnObject(MenuDefOptionBind);
   else par.ScriptError("invalid option type '%s'", par.String);
   // condition?
   if (par.Check("[")) {
@@ -824,4 +835,88 @@ override MenuChoice CreateOption (MenuScreen menu) {
   if (textColor != CR_UNDEFINED) opt.TextColour = textColor;
   if (textColorFocus != CR_UNDEFINED) opt.TextColourFocus = textColorFocus;
   return opt;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class MenuDefOptionBind : MenuDefOptionBase;
+
+bool button; // commandOn prepends with "+" and "-"
+string commandOn;
+string commandOff;
+
+int strifeMode; // 0: don't care; -1: disabled in Strife; 1: enabled in Strife
+/*
+  option bind {
+    title = "Show Weapons";
+    button = ona;
+    commandOn = "sb_show_weapons 1";
+    commandOff = "sb_show_weapons 0";
+    Strife = tan; // only for Strife
+  }
+*/
+
+override bool parseOne (ScriptsParser par) {
+  if (::parseOne(par)) return true;
+
+  if (par.Check("button")) {
+    par.Expect("=");
+    par.ExpectIdentifier();
+    button = MenuDefinition.str2bool(par.String);
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("Strife")) {
+    par.Expect("=");
+    par.ExpectIdentifier();
+    strifeMode = (MenuDefinition.str2bool(par.String) ? 1 : -1);
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("command")) {
+    par.Expect("=");
+    par.ExpectString();
+    commandOn = par.String;
+    commandOff = "";
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("commandOn")) {
+    par.Expect("=");
+    par.ExpectString();
+    commandOn = par.String;
+    par.Expect(";");
+    return true;
+  }
+
+  if (par.Check("commandOff")) {
+    par.Expect("=");
+    par.ExpectString();
+    commandOff = par.String;
+    par.Expect(";");
+    return true;
+  }
+
+  return false;
+}
+
+
+override MenuChoice CreateOption (MenuScreen menu) {
+  auto newCtl = MenuControlKey(menu.NewChild(MenuControlKey));
+  //newCtl.SetOrigin(ChoicesStartX, ChoicesStartY+NumControls*10);
+  newCtl.Height = 10;
+  newCtl.Text = title;
+  if (button) {
+    newCtl.CommandOn = va("+%s", commandOn);
+    newCtl.CommandOff = va("-%s", commandOn);
+  } else {
+    newCtl.CommandOn = commandOn;
+    newCtl.CommandOff = commandOff;
+  }
+       if (strifeMode < 0) newCtl.Disabled = IsStrife;
+  else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
+  return newCtl;
 }

@@ -1,0 +1,391 @@
+// module player options menu
+menudef ControlsMain {
+  Title = "CONTROLS";
+  selector = Controls;
+
+  header "Movement and Actions";
+
+  option bind {
+    title = "Move foward";
+    button = tan; // adds "+ctl" and "-ctl"
+    command = "Forward";
+  }
+
+  option bind {
+    title = "Move backward";
+    button = tan;
+    command = "Backward";
+  }
+
+  option bind {
+    title = "Move left";
+    button = tan;
+    command = "MoveLeft";
+  }
+
+  option bind {
+    title = "Move right";
+    button = tan;
+    command = "MoveRight";
+  }
+
+  option bind {
+    title = "Turn left";
+    button = tan;
+    command = "Left";
+  }
+
+  option bind {
+    title = "Turn right";
+    button = tan;
+    command = "Right";
+  }
+
+  option bind {
+    title = "Run";
+    button = tan;
+    command = "Speed";
+  }
+
+  option bind {
+    title = "Strafe";
+    button = tan;
+    command = "Strafe";
+  }
+
+  option bind {
+    title = "Use";
+    button = tan;
+    command = "Use";
+  }
+
+
+  header "Weapon";
+
+  option bind {
+    title = "Fire";
+    button = tan;
+    command = "Attack";
+  }
+
+  option bind {
+    title = "Alt Fire";
+    button = tan;
+    command = "AltAttack";
+  }
+
+  option bind {
+    title = "Reload";
+    button = ona;
+    command = "impulse 56";
+  }
+
+  option bind {
+    title = "Previous weapon";
+    button = ona;
+    command = "impulse 17";
+  }
+
+  option bind {
+    title = "Next weapon";
+    button = ona;
+    command = "impulse 18";
+  }
+
+
+  header "Look";
+
+  option bind {
+    title = "Look up";
+    button = tan;
+    command = "LookUp";
+  }
+
+  option bind {
+    title = "Look down";
+    button = tan;
+    command = "LookDown";
+  }
+
+  option bind {
+    title = "Center view";
+    button = tan;
+    command = "LookCentre";
+  }
+
+  option bind {
+    title = "Mouse look";
+    button = tan;
+    command = "MouseLook";
+  }
+
+
+  header "Additional actions";
+
+  option bind {
+    title = "Jump";
+    button = tan;
+    command = "Jump";
+  }
+
+  option bind {
+    title = "Crouch";
+    button = tan;
+    command = "Crouch";
+  }
+
+
+  header "Flying";
+
+  option bind {
+    title = "Fly up";
+    button = tan;
+    command = "FlyUp";
+  }
+
+  option bind {
+    title = "Fly down";
+    button = tan;
+    command = "FlyDown";
+  }
+
+  option bind {
+    title = "Center flight";
+    button = tan;
+    command = "FlyCentre";
+  }
+
+
+  header "Inventory";
+
+  option bind {
+    title = "Inventory Left";
+    button = ona;
+    command = "Impulse 13";
+  }
+
+  option bind {
+    title = "Inventory Right";
+    button = ona;
+    command = "Impulse 14";
+  }
+
+  option bind {
+    title = "Inventory Use";
+    button = ona;
+    command = "Impulse 15";
+  }
+
+
+  header "Viewport";
+
+  option bind {
+    title = "Smaller view";
+    button = ona;
+    command = "SizeDown";
+  }
+
+  option bind {
+    title = "Larger view";
+    button = ona;
+    command = "SizeUp";
+  }
+
+
+  header "Other Actions";
+
+  option bind {
+    title = "Chat";
+    button = ona;
+    command = "ChatMode";
+  }
+
+  option bind {
+    title = "Toggle Always Run";
+    button = ona;
+    command = "ToggleAlwaysRun";
+  }
+
+  option bind {
+    title = "Toggle Console";
+    button = ona;
+    command = "ToggleConsole";
+  }
+
+  option bind {
+    title = "Screenshot";
+    button = ona;
+    command = "ScreenShot";
+  }
+
+  option bind {
+    title = "Pause";
+    button = ona;
+    command = "Pause";
+  }
+
+  option bind {
+    title = "Suicide";
+    button = ona;
+    command = "Impulse 16";
+  }
+
+
+  header "Quick Save/Load";
+
+  option bind {
+    title = "Quick Save";
+    button = ona;
+    command = "QuickSave";
+  }
+
+  option bind {
+    title = "Quick Load";
+    button = ona;
+    command = "QuickLoad";
+  }
+
+
+  header "Menu Actiation Hotkeys";
+
+  option bind {
+    title = "Help";
+    button = ona;
+    command = "SetMenu Help";
+  }
+
+  option bind {
+    title = "Save";
+    button = ona;
+    command = "SetMenu Save";
+  }
+
+  option bind {
+    title = "Load";
+    button = ona;
+    command = "SetMenu Load";
+  }
+
+  option bind {
+    title = "Options";
+    button = ona;
+    command = "SetMenu Options";
+  }
+
+  option bind {
+    title = "Quit";
+    button = ona;
+    command = "SetMenu Quit";
+  }
+
+
+  header "Weapon Slots";
+
+  option bind {
+    title = "Slot 1";
+    button = ona;
+    command = "impulse 1";
+  }
+
+  option bind {
+    title = "Slot 2";
+    button = ona;
+    command = "impulse 2";
+  }
+
+  option bind {
+    title = "Slot 3";
+    button = ona;
+    command = "impulse 3";
+  }
+
+  option bind {
+    title = "Slot 4";
+    button = ona;
+    command = "impulse 4";
+  }
+
+  option bind {
+    title = "Slot 5";
+    button = ona;
+    command = "impulse 5";
+  }
+
+  option bind {
+    title = "Slot 6";
+    button = ona;
+    command = "impulse 6";
+  }
+
+  option bind {
+    title = "Slot 7";
+    button = ona;
+    command = "impulse 7";
+  }
+
+  option bind {
+    title = "Slot 8";
+    button = ona;
+    command = "impulse 8";
+  }
+
+  option bind {
+    title = "Slot 9";
+    button = ona;
+    command = "impulse 9";
+  }
+
+  option bind {
+    title = "Slot 10";
+    button = ona;
+    command = "impulse 10";
+  }
+
+  option bind {
+    title = "Artefact Slot 1";
+    button = ona;
+    command = "impulse 11";
+    Strife = ona; // don't show/use for Strife
+  }
+
+  option bind {
+    title = "Artefact Slot 2";
+    button = ona;
+    command = "impulse 12";
+    Strife = ona; // don't show/use for Strife
+  }
+
+
+  header "Strife Bindings";
+
+  option bind {
+    title = "Inventory Drop";
+    button = ona;
+    command = "impulse 11";
+    Strife = tan; // only for Strife
+  }
+
+  option bind {
+    title = "Show Weapons";
+    button = ona;
+    commandOn = "sb_show_weapons 1";
+    commandOff = "sb_show_weapons 0";
+    Strife = tan; // only for Strife
+  }
+
+  option bind {
+    title = "Show Keys";
+    button = ona;
+    commandOn = "sb_show_keys 1";
+    commandOff = "sb_show_keys 0";
+    Strife = tan; // only for Strife
+  }
+
+  option bind {
+    title = "Show Objectives";
+    button = ona;
+    commandOn = "sb_show_objectives 1";
+    commandOff = "sb_show_objectives 0";
+    Strife = tan; // only for Strife
+  }
+}

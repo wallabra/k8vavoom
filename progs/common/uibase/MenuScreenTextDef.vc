@@ -27,6 +27,7 @@ class MenuScreenTextDef : MenuScreen;
 
 string defFileName;
 name menuName;
+bool isControls;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -87,7 +88,13 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   menuName = name(mdef.menuName.toLowerCase());
   Title = mdef.title;
 
-  if (mdef.seltype) {
+  if (nameicmp(mdef.seltype, 'Controls') == 0) {
+    isControls = true;
+    class!MenuSelectorBase cc = class!MenuSelectorBase(MenuSelector_SmallRight);
+    if (cc) SelectorType = cc;
+    ChoicesStartX = 190;
+    ChoicesStartY = 26;
+  } else if (mdef.seltype) {
     class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
     if (cc) SelectorType = cc;
   }
@@ -132,6 +139,20 @@ override void CreateTitle () {
     //titleItem.FixSize();
   } else {
     delete titleItem;
+  }
+}
+
+
+//==========================================================================
+//
+//  CursorMoved
+//
+//==========================================================================
+override void CursorMoved () {
+  ::CursorMoved();
+  if (isControls && Selector && ClGame) {
+    Selector.SetPos(160+Items[CursorPos].X+ClGame.ControlColumn*90, Items[CursorPos].Y);
+    Selector.SetYOfs(Items[CursorPos].Height);
   }
 }
 

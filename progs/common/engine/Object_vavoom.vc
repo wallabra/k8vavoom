@@ -233,14 +233,15 @@ struct SkillDef {
 //==========================================================================
 
 // "doom", "doom2", "tnt", "plutonia" -- you got the idea
-final string GameName { get { return GetCvarS('game_name'); } }
+static final string GameName { get { return GetCvarS('game_name'); } }
 
-final bool IsDoom { get { return (GetCvarS('game_name') == "doom"); } }
-final bool IsDoom2 { get { return (GetCvarS('game_name') == "doom2"); } }
-final bool IsAnyDoom2 { get { return (GetCvarS('game_name') != "doom"); } } // FIXME: invalid for heretic/hexen/strife
-final bool IsPlutonia { get { return (GetCvarS('game_name') == "plutonia"); } }
-final bool IsTnt { get { return (GetCvarS('game_name') == "tnt"); } }
-final bool IsNerve { get { return (GetCvarS('game_name') == "nerve"); } }
+final bool IsDoom { get { return (stricmp(GetCvarS('game_name'), "doom") == 0); } }
+final bool IsDoom2 { get { return (stricmp(GetCvarS('game_name'), "doom2") == 0); } }
+final bool IsAnyDoom2 { get { return (stricmp(GetCvarS('game_name'), "doom") != 0); } } // FIXME: invalid for heretic/hexen/strife
+final bool IsPlutonia { get { return (stricmp(GetCvarS('game_name'), "plutonia") == 0); } }
+final bool IsTnt { get { return (stricmp(GetCvarS('game_name'), "tnt") == 0); } }
+final bool IsNerve { get { return (stricmp(GetCvarS('game_name'), "nerve") == 0); } }
+final bool IsStrife { get { return (stricmp(GetCvarS('game_name'), "strife") == 0); } }
 
 final bool IsReleaseMode { get { return GetCvarB('_release_mode'); } }
 

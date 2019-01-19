@@ -5,8 +5,15 @@ menudef OptionsMenu {
 
   option submenu {
     title = "Controls";
+    submenu = ControlsMain;
+  }
+
+  /*
+  option submenu {
+    title = "Controls";
     smclass = MenuScreenControls;
   }
+  */
 
   option mod_controls {
     title = "Special Controls";
