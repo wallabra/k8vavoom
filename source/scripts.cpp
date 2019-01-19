@@ -823,7 +823,24 @@ void VScriptParser::ExpectFloat () {
       */
       float ff = 0;
       if (!String.convertFloat(&ff)) {
-        Error(va("Bad floating point constant \"%s\".", *String));
+        // fuckin' morons from LCA loves numbers like "90000000000000000000000000000000000000000000000000"
+        const char *s = *String;
+        while (*s && *(const vuint8 *)s <= ' ') ++s;
+        bool neg = false;
+        switch (*s) {
+          case '-':
+            neg = true;
+            /* fallthrough */
+          case '+':
+            ++s;
+            break;
+        }
+        while (*s >= '0' && *s <= '9') ++s;
+        while (*s && *(const vuint8 *)s <= ' ') ++s;
+        if (*s) Error(va("Bad floating point constant \"%s\".", *String));
+        GCon->Logf(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
+        ff = 1e14;
+        if (neg) ff = -ff;
       }
       Float = ff;
     }
