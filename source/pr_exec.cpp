@@ -2815,6 +2815,27 @@ func_loop:
         }
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_DupPOD)
+        //{ fprintf(stderr, "OPC_DupPOD at %6u in FUNCTION `%s`; sp=%d\n", (unsigned)(ip-func->Statements.Ptr()), *func->GetFullName(), (int)(sp-pr_stack)); cstDump(ip); }
+        ++ip;
+        sp->p = sp[-1].p; // pointer copies everything
+        ++sp;
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_SwapPOD)
+        ++ip;
+        {
+          void *tmp = sp[-1].p;
+          sp[-1].p = sp[-2].p;
+          sp[-2].p = tmp;
+        }
+        PR_VM_BREAK;
+
+      PR_VM_CASE(OPC_DropPOD)
+        ++ip;
+        --sp;
+        PR_VM_BREAK;
+
       PR_VM_DEFAULT
         cstDump(ip);
         Sys_Error("Invalid opcode %d", *ip);

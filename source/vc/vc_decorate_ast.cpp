@@ -83,6 +83,40 @@ protected:
 
 //==========================================================================
 //
+//  VDecorateAJump
+//
+//  as `A_Jump()` can have insane amounts of arguments, we'll generate
+//  VM code directly instead
+//
+//==========================================================================
+class VDecorateAJump : public VExpression {
+private:
+  VExpression *xstc; // bool(`XLevel.StateCall`) access expression
+  VExpression *xass; // XLevel.StateCall->Result = false
+  VExpression *crnd0; // first call to P_Random()
+  VExpression *crnd1; // second call to P_Random()
+
+public:
+  VExpression *prob; // probability
+  TArray<VExpression *> labels; // jump labels
+  VState *CallerState;
+
+  VDecorateAJump (const TLocation &aloc);
+  virtual ~VDecorateAJump () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+  virtual void Emit (VEmitContext &ec) override;
+  virtual VStr toString () const override;
+
+protected:
+  VDecorateAJump () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+
+//==========================================================================
+//
 //  VDecorateInvocation::VDecorateInvocation
 //
 //==========================================================================
@@ -201,6 +235,7 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   return nullptr;
   unguard;
 }
+
 
 
 //==========================================================================
@@ -539,4 +574,374 @@ void VDecorateSingleName::Emit (VEmitContext &) {
 //==========================================================================
 bool VDecorateSingleName::IsDecorateSingleName () const {
   return true;
+}
+
+
+
+//==========================================================================
+//
+//  VDecorateAJump::VDecorateAJump
+//
+//==========================================================================
+VDecorateAJump::VDecorateAJump (const TLocation &aloc)
+  : VExpression(aloc)
+  , xstc(nullptr)
+  , xass(nullptr)
+  , crnd0(nullptr)
+  , crnd1(nullptr)
+  , prob(nullptr)
+  , labels()
+  , CallerState(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDecorateAJump::~VDecorateAJump
+//
+//==========================================================================
+VDecorateAJump::~VDecorateAJump () {
+  delete xstc; xstc = nullptr;
+  delete xass; xass = nullptr;
+  delete crnd0; crnd0 = nullptr;
+  delete crnd1; crnd1 = nullptr;
+  delete prob; prob = nullptr;
+  for (int f = labels.length()-1; f >= 0; --f) delete labels[f];
+  labels.clear();
+  CallerState = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDecorateAJump::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDecorateAJump::SyntaxCopy () {
+  auto res = new VDecorateAJump();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDecorateAJump::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDecorateAJump::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDecorateAJump *)e;
+  res->prob = (prob ? prob->SyntaxCopy() : nullptr);
+  res->labels.setLength(labels.length());
+  for (int f = 0; f < labels.length(); ++f) {
+    res->labels[f] = (labels[f] ? labels[f]->SyntaxCopy() : nullptr);
+  }
+  res->CallerState = CallerState;
+}
+
+
+//==========================================================================
+//
+//  VDecorateAJump::DoResolve
+//
+//==========================================================================
+VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
+  if (!ec.SelfClass) Sys_Error("VDecorateAJump::DoResolve: internal compiler error");
+
+  //AutoCopy probcopy(op);
+
+  if (labels.length() > 255) {
+    ParseError(Loc, "%d labels in `A_Jump` -- are you nuts?!", labels.length());
+    delete this;
+    return nullptr;
+  }
+
+  if (!prob) { delete this; return nullptr; }
+
+  prob = prob->Resolve(ec);
+  if (!prob) { delete this; return nullptr; }
+
+  if (prob->Type.Type != TYPE_Int && prob->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "`A_Jump` argument #1 should be integer, not `%s`", *prob->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  for (int lbidx = 0; lbidx < labels.length(); ++lbidx) {
+    VExpression *lbl = labels[lbidx];
+
+    if (!lbl) {
+      ParseError(Loc, "`A_Jump` cannot have default arguments");
+      delete this;
+      return nullptr;
+    }
+
+    if (lbl->IsStrConst()) {
+      const VStr &str = lbl->GetStrConst(ec.Package);
+      int lblval = -1;
+      if (str.convertInt(&lblval)) {
+        TLocation ALoc = lbl->Loc;
+        if (lblval < 0) {
+          ParseError(ALoc, "`A_Jump` argument #%d is something fucked: '%s'", lbidx+2, *str);
+        } else {
+          ParseWarning(ALoc, "`A_Jump` argument #%d should be number %d; PLEASE, FIX THE CODE!", lbidx+2, lblval);
+          delete lbl;
+          lbl = new VIntLiteral(lblval, ALoc);
+        }
+      }
+    }
+
+    if (lbl->IsIntConst()) {
+      int Offs = lbl->GetIntConst();
+      TLocation ALoc = lbl->Loc;
+      if (Offs < 0) {
+        ParseError(ALoc, "Negative state jumps are not allowed");
+      } else if (Offs == 0) {
+        // 0 means no state
+        delete lbl;
+        lbl = nullptr;
+        lbl = new VNoneLiteral(ALoc);
+      } else {
+        check(CallerState);
+        VState *S = CallerState->GetPlus(Offs, true);
+        if (!S) {
+          ParseError(ALoc, "Bad state jump offset");
+        } else {
+          delete lbl;
+          lbl = nullptr;
+          lbl = new VStateConstant(S, ALoc);
+        }
+      }
+    } else if (lbl->IsStrConst()) {
+      VStr Lbl = lbl->GetStrConst(ec.Package);
+      TLocation ALoc = lbl->Loc;
+      int DCol = Lbl.IndexOf("::");
+      if (DCol >= 0) {
+        // jump to a specific parent class state, resolve it and pass value directly
+        VStr ClassName(Lbl, 0, DCol);
+        VClass *CheckClass;
+        if (ClassName.ICmp("Super") == 0) {
+          CheckClass = ec.SelfClass->ParentClass;
+          if (!CheckClass) ParseWarning(ALoc, "`A_Jump` argument #%d wants `Super` without superclass!", lbidx+2);
+        } else {
+          CheckClass = VClass::FindClassNoCase(*ClassName);
+          if (!CheckClass) {
+            ParseError(ALoc, "No such class `%s`", *ClassName);
+          } else if (!ec.SelfClass->IsChildOf(CheckClass)) {
+            ParseError(ALoc, "`%s` is not a subclass of `%s`", ec.SelfClass->GetName(), CheckClass->GetName());
+            CheckClass = nullptr;
+          }
+        }
+        if (CheckClass) {
+          VStr LblName(Lbl, DCol+2, Lbl.Length()-DCol-2);
+          TArray<VName> Names;
+          VMemberBase::StaticSplitStateLabel(LblName, Names);
+          VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
+          if (!StLbl) {
+            ParseError(ALoc, "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
+          } else {
+            delete lbl;
+            lbl = nullptr;
+            lbl = new VStateConstant(StLbl->State, ALoc);
+          }
+        }
+      } else {
+        // it's a virtual state jump
+        //ParseWarning(lbl->Loc, "***VSJMP `%s`: <%s>", Func->GetName(), *Lbl);
+        VExpression *TmpArgs[1];
+        TmpArgs[0] = lbl;
+        lbl = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, lbl->Loc, 1, TmpArgs);
+      }
+    }
+
+    check(lbl);
+    lbl = new VCastOrInvocation("DoJump", Loc, 1, &lbl);
+    lbl = new VDropResult(lbl);
+
+    labels[lbidx] = lbl->Resolve(ec);
+    if (!labels[lbidx]) { delete this; return nullptr; }
+  }
+
+  /* generate this code:
+    if (XLevel.StateCall) XLevel.StateCall->Result = false;
+     if (prob > 0) {
+       if (prob > 255 || P_Random() < prob) {
+         switch (P_Random()%label.length()) {
+           case n: do_jump_to_label_n;
+         }
+       }
+     }
+
+     do it by allocate local array for labels, populate it, and generate code
+     for checks and sets
+   */
+
+  // create `XLevel.StateCall` access expression
+  VExpression *xlvl = new VSingleName("XLevel", Loc);
+  xstc = new VDotField(xlvl->SyntaxCopy(), "StateCall", Loc);
+  // XLevel.StateCall->Result
+  VExpression *xres = new VPointerField(xstc->SyntaxCopy(), "Result", Loc);
+  // XLevel.StateCall->Result = false
+  xass = new VAssignment(VAssignment::Assign, xres, new VIntLiteral(0, Loc), Loc);
+  // call to `P_Random()`
+  crnd0 = new VCastOrInvocation("P_Random", Loc, 0, nullptr);
+  crnd1 = crnd0->SyntaxCopy();
+
+  // now resolve all generated expressions
+  xstc = xstc->ResolveBoolean(ec);
+  if (!xstc) { delete this; return nullptr; }
+
+  xass = xass->Resolve(ec);
+  if (!xass) { delete this; return nullptr; }
+
+  crnd0 = crnd0->Resolve(ec);
+  if (!crnd0) { delete this; return nullptr; }
+
+  crnd1 = crnd1->Resolve(ec);
+  if (!crnd1) { delete this; return nullptr; }
+
+  if (crnd0->Type.Type != TYPE_Int && crnd0->Type.Type != TYPE_Byte) {
+    ParseError(Loc, "`P_Random()` should return integer, not `%s`", *crnd0->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+
+  if (labels.length() == 0) {
+    ParseWarning(Loc, "this `A_Jump` is never taken");
+  } else if (labels.length() == 1 && prob->IsIntConst() && prob->GetIntConst() > 255) {
+    ParseWarning(Loc, "this `A_Jump` is uncoditional; this is probably a bug (replace it with `Goto` if it isn't)");
+  }
+
+  Type.Type = TYPE_Void;
+
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDecorateAJump::Emit
+//
+//==========================================================================
+void VDecorateAJump::Emit (VEmitContext &ec) {
+  /* generate this code:
+     if (XLevel.StateCall) XLevel.StateCall->Result = false;
+     if (prob <= 0) goto end;
+     if (prob > 255) goto doit;
+     if (P_Random() >= prob) goto end;
+     doit:
+       switch (P_Random()%label.length()) {
+         case n: do_jump_to_label_n;
+       }
+     end:
+
+     do it by allocate local array for labels, populate it, and generate code
+     for checks and sets
+   */
+
+  //if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  VLabel falseTarget = ec.DefineLabel();
+  // expression
+  xstc->EmitBranchable(ec, falseTarget, false);
+  // true statement
+  xass->Emit(ec);
+  ec.MarkLabel(falseTarget);
+
+  VLabel endTarget = ec.DefineLabel();
+  VLabel doitTarget = ec.DefineLabel();
+
+  bool doDrop; // do we need to drop `prob` at the end?
+
+  if (prob->IsIntConst() && prob->GetIntConst() < 0) {
+    // jump is never taken
+    doDrop = false;
+    ec.AddStatement(OPC_Goto, endTarget, Loc);
+  } else if (prob->IsIntConst() && prob->GetIntConst() > 255) {
+    doDrop = false;
+    // ...and check nothing, jump is always taken
+  } else {
+    doDrop = true;
+    prob->Emit(ec); // prob
+
+    if (!prob->IsIntConst()) {
+      //if (prob <= 0) goto end;
+      ec.AddStatement(OPC_DupPOD, Loc); // prob, prob
+      ec.AddStatement(OPC_PushNumber, 0, Loc); // prob, prob, 0
+      ec.AddStatement(OPC_LessEquals, Loc); // prob, flag
+      ec.AddStatement(OPC_IfGoto, endTarget, Loc); // prob
+
+      //if (prob > 255) goto doit;
+      ec.AddStatement(OPC_DupPOD, Loc); // prob, prob
+      ec.AddStatement(OPC_PushNumber, 255, Loc); // prob, prob, 255
+      ec.AddStatement(OPC_GreaterEquals, Loc); // prob, flag
+      ec.AddStatement(OPC_IfGoto, doitTarget, Loc); // prob
+
+      ec.AddStatement(OPC_DupPOD, Loc); // prob, prob
+    } else {
+      // if we know prob value, we can omit most checks, and
+      // we don't need to keep `prob` on the stack
+      doDrop = false;
+    }
+
+    //if (P_Random() >= prob) goto end;
+    //equals to: if (prob < P_Random()) goto end;
+    crnd0->Emit(ec); // prob, prob, prand
+    ec.AddStatement(OPC_Less, Loc); // prob, flag
+    ec.AddStatement(OPC_IfGoto, endTarget, Loc); // prob
+  }
+
+  ec.MarkLabel(doitTarget); // prob
+
+  if (labels.length() == 1) {
+    labels[0]->Emit(ec); // prob
+  } else if (labels.length() > 0) {
+    // P_Random()%label.length()
+    crnd1->Emit(ec); // prob, rnd
+    ec.AddStatement(OPC_PushNumber, labels.length(), Loc); // prob, rnd, labels.length()
+    ec.AddStatement(OPC_Modulus, Loc); // prob, lblidx
+    // switch:
+    TArray<VLabel> addrs;
+    addrs.setLength(labels.length());
+    for (int lidx = 0; lidx < labels.length(); ++lidx) addrs[lidx] = ec.DefineLabel();
+    for (int lidx = 0; lidx < labels.length(); ++lidx) {
+      if (lidx >= 0 && lidx < 256) {
+        ec.AddStatement(OPC_CaseGotoB, lidx, addrs[lidx], Loc);
+      } else if (lidx >= MIN_VINT16 && lidx < MAX_VINT16) {
+        ec.AddStatement(OPC_CaseGotoS, lidx, addrs[lidx], Loc);
+      } else {
+        ec.AddStatement(OPC_CaseGoto, lidx, addrs[lidx], Loc);
+      }
+    }
+    // just in case (and for optimiser)
+    ec.AddStatement(OPC_DropPOD, Loc); // prob (lidx dropped)
+    ec.AddStatement(OPC_Goto, endTarget, Loc); // prob
+
+    // now generate label jump code
+    for (int lidx = 0; lidx < labels.length(); ++lidx) {
+      ec.MarkLabel(addrs[lidx]); // prob
+      labels[lidx]->Emit(ec); // prob
+      if (lidx != labels.length()-1) ec.AddStatement(OPC_Goto, endTarget, Loc); // prob
+    }
+  }
+
+  ec.MarkLabel(endTarget); // prob
+  if (doDrop) ec.AddStatement(OPC_DropPOD, Loc);
+}
+
+
+//==========================================================================
+//
+//  VDecorateAJump::toString
+//
+//==========================================================================
+VStr VDecorateAJump::toString () const {
+  VStr res = "A_Jump("+e2s(prob);
+  for (int f = 0; f < labels.length(); ++f) {
+    res += ", ";
+    res += e2s(labels[f]);
+  }
+  res += ")";
+  return res;
 }

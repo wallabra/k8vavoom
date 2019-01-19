@@ -27,6 +27,8 @@
 // OPTIMIZER
 //**************************************************************************
 
+//#define VCMCOPT_DISASM_FINAL_RESULT_ANYWAY
+
 //#define VCMOPT_DISABLE_OPTIMIZER
 
 #define VCMOPT_DISABLE_ALL_OUTPUT
@@ -889,6 +891,15 @@ struct Instr {
         spdelta = -1;
         return;
 
+      case OPC_DupPOD:
+        spdelta += 1;
+        return;
+      case OPC_SwapPOD:
+        return;
+      case OPC_DropPOD:
+        spdelta -= 1;
+        return;
+
       // builtins (k8: i'm short of opcodes, so...)
       case OPC_Builtin:
         switch (Arg1) {
@@ -1000,6 +1011,7 @@ struct Instr {
         }
     }
     FatalError("setStackOffsets: unhandled opcode %d", Opcode);
+    //FatalError("setStackOffsets: unhandled opcode %d (%s)", Opcode, StatementInfo[Opcode].name);
   }
 
   // calculate compiled instruction size, in bytes

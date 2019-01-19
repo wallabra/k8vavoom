@@ -520,6 +520,11 @@ enum {
   // universal dispatcher for dictionary type
   DECLARE_OPC(DictDispatch, TypeDD), // type followed by OPC_DictDispatch_XXX
 
+  // valid only for cells without destructors
+  DECLARE_OPC(DupPOD, None),
+  DECLARE_OPC(SwapPOD, None),
+  DECLARE_OPC(DropPOD, None),
+
 #undef DECLARE_OPC
 #ifndef OPCODE_INFO
   NUM_OPCODES

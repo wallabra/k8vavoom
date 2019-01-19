@@ -86,6 +86,38 @@ static VStatement *CheckParseSetUserVarStmt (VScriptParser *sc, VClass *Class, V
 
 //==========================================================================
 //
+//  VExpression
+//
+//==========================================================================
+static VExpression *ParseAJump (VScriptParser *sc, VClass *Class, VState *State) {
+  VDecorateAJump *jexpr = new VDecorateAJump(sc->GetLoc()); //FIXME: MEMLEAK!
+  jexpr->CallerState = State;
+  sc->Expect("(");
+  VExpression *prob = ParseExpression(sc, Class);
+  if (!prob) {
+    ParseError(sc->GetLoc(), "`A_Jump` oops (0)!");
+    sc->Expect(")");
+    return jexpr;
+  }
+  jexpr->prob = prob;
+  if (sc->Check(",")) {
+    do {
+      VExpression *arg = ParseExpression(sc, Class);
+      if (!arg) {
+        ParseError(sc->GetLoc(), "`A_Jump` oops (1)!");
+        sc->Expect(")");
+        return jexpr;
+      }
+      jexpr->labels.append(arg);
+    } while (sc->Check(","));
+  }
+  sc->Expect(")");
+  return jexpr;
+}
+
+
+//==========================================================================
+//
 //  ParseFunCallWithName
 //
 //==========================================================================
@@ -697,20 +729,25 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     }
   }
 
-  VMethod *Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
-  //fprintf(stderr, "***2:<%s>\n", *sc->String);
-
-  VExpression *callExpr = nullptr;
-  if (!Func) {
-    //GCon->Logf("ERROR000: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
-    //return nullptr;
-    callExpr = new VDecorateInvocation(VName(*FuncName/*, VName::AddLower*/), stloc, NumArgs, Args);
+  if (VStr::ICmp(*FuncName, "A_Jump") == 0) {
+    VExpression *jexpr = ParseAJump(sc, Class, State);
+    return new VExpressionStatement(jexpr);
   } else {
-    VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, stloc, NumArgs, Args);
-    Expr->CallerState = State;
-    callExpr = Expr;
+    VMethod *Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
+    //fprintf(stderr, "***2:<%s>\n", *sc->String);
+
+    VExpression *callExpr = nullptr;
+    if (!Func) {
+      //GCon->Logf("ERROR000: %s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+      //return nullptr;
+      callExpr = new VDecorateInvocation(VName(*FuncName/*, VName::AddLower*/), stloc, NumArgs, Args);
+    } else {
+      VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, stloc, NumArgs, Args);
+      Expr->CallerState = State;
+      callExpr = Expr;
+    }
+    return new VExpressionStatement(new VDropResult(callExpr));
   }
-  return new VExpressionStatement(new VDropResult(callExpr));
 }
 
 
@@ -911,22 +948,9 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
     M->Define();
     Func = M;
   } else {
-    Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
-    //fprintf(stderr, "<%s>\n", *FuncNameLower);
-    if (!Func) {
-      GCon->Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
-      // if function is not found, it means something is wrong
-      // in that case we need to free argument expressions
-      for (int i = 0; i < NumArgs; ++i) {
-        if (Args[i]) {
-          delete Args[i];
-          Args[i] = nullptr;
-        }
-      }
-    } else if (Func->NumParams || NumArgs /*|| FuncName.ICmp("a_explode") == 0*/) {
-      VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
-      Expr->CallerState = State;
-      VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
+    if (VStr::ICmp(*FuncName, "A_Jump") == 0) {
+      VExpression *jexpr = ParseAJump(sc, Class, State);
+      VExpressionStatement *Stmt = new VExpressionStatement(jexpr);
       VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
       M->Flags = FUNC_Final;
       M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
@@ -936,6 +960,33 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
       Class->AddMethod(M);
       M->Define();
       Func = M;
+    } else {
+      Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
+      //fprintf(stderr, "<%s>\n", *FuncNameLower);
+      if (!Func) {
+        GCon->Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+        // if function is not found, it means something is wrong
+        // in that case we need to free argument expressions
+        for (int i = 0; i < NumArgs; ++i) {
+          if (Args[i]) {
+            delete Args[i];
+            Args[i] = nullptr;
+          }
+        }
+      } else if (Func->NumParams || NumArgs /*|| FuncName.ICmp("a_explode") == 0*/) {
+        VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
+        Expr->CallerState = State;
+        VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
+        VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+        M->Flags = FUNC_Final;
+        M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
+        M->ReturnType = VFieldType(TYPE_Void);
+        M->Statement = Stmt;
+        M->NumParams = 0;
+        Class->AddMethod(M);
+        M->Define();
+        Func = M;
+      }
     }
   }
 
