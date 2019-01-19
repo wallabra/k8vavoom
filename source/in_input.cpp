@@ -55,9 +55,10 @@ public:
   virtual int ReadKey () override;
 
   // handling of key bindings
-  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2) override;
+  virtual void ClearBindings () override;
+  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2, int strifemode=0) override;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) override;
-  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true) override;
+  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) override;
   virtual void WriteBindings (FILE *f) override;
 
   virtual int TranslateKey (int ch) override;
@@ -74,9 +75,53 @@ public:
 private:
   VInputDevice *Device;
 
-  VStr KeyBindingsDown[256];
-  VStr KeyBindingsUp[256];
+  int strifeMode = -666;
+
+  inline const bool IsStrife () {
+    if (strifeMode == -666) strifeMode = (game_name.asStr().ICmp("strife") == 0 ? 1 : 0);
+    return strifeMode;
+  }
+
+  /*
+  struct Binding {
+    //VStr cmdDown;
+    //VStr cmdUp;
+    VStr cmdDownStrife;
+    VStr cmdUpStrife;
+    VStr cmdDownNonStrife;
+    VStr cmdUpNonStrife;
+    bool save;
+
+    Binding () : cmdDownStrife(), cmdUpStrife(), cmdDownNonStrife(), cmdUpNonStrife(), save(false) {}
+
+    bool IsEmpty () const {
+      return
+        cmdDownStrife.isEmpty() ||
+        cmdUpStrife.isEmpty() ||
+        cmdDownNonStrife.isEmpty() ||
+        cmdUpNonStrife.isEmpty();
+    }
+
+    //bool IsStrifeOnly () const { return (IsEmpty() && (!cmdDownStrife.isEmpty() || !cmdUpStrife.isEmpty())); }
+    //bool IsNonStrifeOnly () const { return (IsEmpty() && (!cmdDownNonStrife.isEmpty() || !cmdUpNonStrife.isEmpty())); }
+  };
+  Binding KeyBindings[256];
+  */
+
+  struct Binding {
+    VStr cmdDown;
+    VStr cmdUp;
+    Binding () : cmdDown(), cmdUp() {}
+    inline bool IsEmpty () const { return (cmdDown.isEmpty() && cmdUp.isEmpty()); }
+    inline void Clear () { cmdDown.clear(); cmdUp.clear(); }
+  };
+
+  Binding KeyBindingsAll[256];
+  Binding KeyBindingsStrife[256];
+  Binding KeyBindingsNonStrife[256];
   bool KeyBindingsSave[256];
+
+  const VStr &getBinding (bool down, int idx);
 
   static const char ShiftXForm[];
 };
@@ -259,6 +304,9 @@ bool VInputPublic::KBCheatProcessor (event_t *ev) {
 //==========================================================================
 VInput::VInput () : Device(0) {
   memset(KeyBindingsSave, 0, sizeof(KeyBindingsSave));
+  memset((void *)&KeyBindingsAll[0], 0, sizeof(KeyBindingsAll[0]));
+  memset((void *)&KeyBindingsStrife[0], 0, sizeof(KeyBindingsStrife[0]));
+  memset((void *)&KeyBindingsNonStrife[0], 0, sizeof(KeyBindingsNonStrife[0]));
 }
 
 
@@ -269,6 +317,42 @@ VInput::VInput () : Device(0) {
 //==========================================================================
 VInput::~VInput () {
   Shutdown();
+}
+
+
+//==========================================================================
+//
+//  VInput::ClearBindings
+//
+//==========================================================================
+void VInput::ClearBindings () {
+  for (int f = 0; f < 256; ++f) {
+    KeyBindingsSave[f] = false;
+    KeyBindingsAll[f].Clear();
+    KeyBindingsStrife[f].Clear();
+    KeyBindingsNonStrife[f].Clear();
+  }
+}
+
+
+//==========================================================================
+//
+//  VInput::getBinding
+//
+//==========================================================================
+const VStr &VInput::getBinding (bool down, int idx) {
+  if (idx < 1 || idx > 255) return VStr::EmptyString;
+  // for all games
+  if (IsStrife()) {
+    if (!KeyBindingsStrife[idx].IsEmpty()) {
+      return (down ? KeyBindingsStrife[idx].cmdDown : KeyBindingsStrife[idx].cmdUp);
+    }
+  } else {
+    if (!KeyBindingsNonStrife[idx].IsEmpty()) {
+      return (down ? KeyBindingsNonStrife[idx].cmdDown : KeyBindingsNonStrife[idx].cmdUp);
+    }
+  }
+  return (down ? KeyBindingsAll[idx].cmdDown : KeyBindingsAll[idx].cmdUp);
 }
 
 
@@ -363,7 +447,9 @@ void VInput::ProcessEvents () {
 
     // key bindings
     if ((ev.type == ev_keydown || ev.type == ev_keyup) && (ev.data1 > 0 && ev.data1 < 256)) {
-      VStr kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.data1&0xff] : KeyBindingsUp[ev.data1&0xff]);
+      //VStr kb;
+      //if (isAllowed(ev.data1&0xff)) kb = (ev.type == ev_keydown ? KeyBindingsDown[ev.data1&0xff] : KeyBindingsUp[ev.data1&0xff]);
+      VStr kb = getBinding((ev.type == ev_keydown), ev.data1&0xff);
       if (kb.IsNotEmpty()) {
         if (kb[0] == '+' || kb[0] == '-') {
           // button commands add keynum as a parm
@@ -406,17 +492,23 @@ int VInput::ReadKey () {
 //  VInput::GetBindingKeys
 //
 //==========================================================================
-void VInput::GetBindingKeys (const VStr &Binding, int &Key1, int &Key2) {
+void VInput::GetBindingKeys (const VStr &bindStr, int &Key1, int &Key2, int strifemode) {
   guard(VInput::GetBindingKeys);
   Key1 = -1;
   Key2 = -1;
-  for (int i = 0; i < 256; ++i) {
-    if (!Binding.ICmp(KeyBindingsDown[i])) {
-      if (Key1 != -1) {
-        Key2 = i;
-        return;
-      }
-      Key1 = i;
+  if (bindStr.isEmpty()) return;
+  for (int i = 1; i < 256; ++i) {
+    int kf = -1;
+    if (strifemode < 0) {
+      if (!KeyBindingsNonStrife[i].IsEmpty() && KeyBindingsNonStrife[i].cmdDown.ICmp(bindStr) == 0) kf = i;
+    } else if (strifemode > 0) {
+      if (!KeyBindingsStrife[i].IsEmpty() && KeyBindingsStrife[i].cmdDown.ICmp(bindStr) == 0) kf = i;
+    } else {
+      if (!KeyBindingsAll[i].IsEmpty() && KeyBindingsAll[i].cmdDown.ICmp(bindStr) == 0) kf = i;
+    }
+    if (kf > 0) {
+      if (Key1 != -1) { Key2 = kf; return; }
+      Key1 = kf;
     }
   }
   unguard;
@@ -430,8 +522,10 @@ void VInput::GetBindingKeys (const VStr &Binding, int &Key1, int &Key2) {
 //==========================================================================
 void VInput::GetBinding (int KeyNum, VStr &Down, VStr &Up) {
   guard(VInput::GetBinding);
-  Down = KeyBindingsDown[KeyNum];
-  Up = KeyBindingsUp[KeyNum];
+  //Down = KeyBindingsDown[KeyNum];
+  //Up = KeyBindingsUp[KeyNum];
+  Down = getBinding(true, KeyNum);
+  Up = getBinding(false, KeyNum);
   unguard;
 }
 
@@ -441,13 +535,21 @@ void VInput::GetBinding (int KeyNum, VStr &Down, VStr &Up) {
 //  VInput::SetBinding
 //
 //==========================================================================
-void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save) {
+void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save, int strifemode) {
   guard(VInput::SetBinding);
-  if (KeyNum == -1) return;
+  if (KeyNum < 1 || KeyNum > 255) return;
   if (Down.IsEmpty() && Up.IsEmpty() && !KeyBindingsSave[KeyNum]) return;
-  KeyBindingsDown[KeyNum] = Down;
-  KeyBindingsUp[KeyNum] = Up;
   KeyBindingsSave[KeyNum] = Save;
+  if (strifemode == 0) {
+    KeyBindingsAll[KeyNum].cmdDown = Down;
+    KeyBindingsAll[KeyNum].cmdUp = Up;
+  } else if (strifemode < 0) {
+    KeyBindingsNonStrife[KeyNum].cmdDown = Down;
+    KeyBindingsNonStrife[KeyNum].cmdUp = Up;
+  } else {
+    KeyBindingsStrife[KeyNum].cmdDown = Down;
+    KeyBindingsStrife[KeyNum].cmdUp = Up;
+  }
   unguard;
 }
 
@@ -462,10 +564,11 @@ void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save
 void VInput::WriteBindings (FILE *f) {
   guard(VInput::WriteBindings);
   fprintf(f, "UnbindAll\n");
-  for (int i = 0; i < 256; ++i) {
-    if ((KeyBindingsDown[i].IsNotEmpty() || KeyBindingsUp[i].IsNotEmpty()) && KeyBindingsSave[i]) {
-      fprintf(f, "bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsDown[i].quote(), *KeyBindingsUp[i].quote());
-    }
+  for (int i = 1; i < 256; ++i) {
+    if (!KeyBindingsSave[i]) continue;
+    if (!KeyBindingsAll[i].IsEmpty()) fprintf(f, "bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsAll[i].cmdDown.quote(), *KeyBindingsAll[i].cmdUp.quote());
+    if (!KeyBindingsStrife[i].IsEmpty()) fprintf(f, "bind strife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsStrife[i].cmdDown.quote(), *KeyBindingsStrife[i].cmdUp.quote());
+    if (!KeyBindingsNonStrife[i].IsEmpty()) fprintf(f, "bind notstrife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsNonStrife[i].cmdDown.quote(), *KeyBindingsNonStrife[i].cmdUp.quote());
   }
   unguard;
 }
@@ -570,18 +673,28 @@ VStr VInput::GetClipboardText () {
 //==========================================================================
 COMMAND(Unbind) {
   guard(COMMAND Unbind);
-  if (Args.Num() != 2) {
+
+  int stidx = 1;
+  int strifeFlag = 0;
+
+  if (Args.length() > 1) {
+         if (Args[1].ICmp("strife") == 0) { strifeFlag = 1; ++stidx; }
+    else if (Args[1].ICmp("notstrife") == 0) { strifeFlag = -1; ++stidx; }
+    else if (Args[1].ICmp("all") == 0) { strifeFlag = 0; ++stidx; }
+  }
+
+  if (Args.length() != stidx+1) {
     GCon->Log("unbind <key> : remove commands from a key");
     return;
   }
 
-  int b = GInput->KeyNumForName(Args[1]);
+  int b = GInput->KeyNumForName(Args[stidx]);
   if (b == -1) {
-    GCon->Logf("\"%s\" isn't a valid key", *Args[1].quote());
+    GCon->Logf("\"%s\" isn't a valid key", *Args[stidx].quote());
     return;
   }
 
-  GInput->SetBinding(b, VStr(), VStr());
+  GInput->SetBinding(b, VStr(), VStr(), true, strifeFlag);
   unguard;
 }
 
@@ -593,7 +706,7 @@ COMMAND(Unbind) {
 //==========================================================================
 COMMAND(UnbindAll) {
   guard(COMMAND UnbindAll);
-  for (int i = 0; i < 256; ++i) GInput->SetBinding(i, VStr(), VStr());
+  GInput->ClearBindings();
   unguard;
 }
 
@@ -603,19 +716,31 @@ COMMAND(UnbindAll) {
 //  COMMAND Bind
 //
 //==========================================================================
-COMMAND(Bind) {
-  guard(COMMAND Bind);
+static void bindCommon (const TArray<VStr> &Args, bool ParsingKeyConf) {
   int c = Args.length();
 
-  if (c != 2 && c != 3 && c != 4) {
-    GCon->Log("bind <key> [down_command] [up_command]: attach a command to a key");
+  if (c != 2 && c != 3 && c != 4 && c != 5) {
+    GCon->Logf("%s [strife|nostrife|all] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
     return;
   }
 
-  if (Args[1].length() == 0) return;
-  int b = GInput->KeyNumForName(Args[1]);
+  int strifeFlag = 0;
+  int stidx = 0;
+
+       if (Args[1].ICmp("strife") == 0) { strifeFlag = 1; ++stidx; --c; }
+  else if (Args[1].ICmp("notstrife") == 0) { strifeFlag = -1; ++stidx; --c; }
+  else if (Args[1].ICmp("all") == 0) { strifeFlag = 0; ++stidx; --c; }
+
+  if (c < 2) {
+    GCon->Logf("%s [strife|nostrife] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
+    return;
+  }
+
+  if (Args[stidx+1].length() == 0) return;
+
+  int b = GInput->KeyNumForName(Args[stidx+1]);
   if (b == -1) {
-    GCon->Logf("\"%s\" isn't a valid key", *Args[1].quote());
+    GCon->Logf(NAME_Error, "\"%s\" isn't a valid key", *Args[stidx+1].quote());
     return;
   }
 
@@ -624,17 +749,27 @@ COMMAND(Bind) {
     GInput->GetBinding(b, Down, Up);
     if (Down.IsNotEmpty() || Up.IsNotEmpty()) {
       if (Up.IsNotEmpty()) {
-        GCon->Logf("\"%s\" = \"%s\" / \"%s\"", *Args[1].quote(), *Down.quote(), *Up.quote());
+        GCon->Logf("\"%s\" = \"%s\" / \"%s\"", *Args[stidx+1].quote(), *Down.quote(), *Up.quote());
       } else {
-        GCon->Logf("\"%s\" = \"%s\"", *Args[1].quote(), *Down.quote());
+        GCon->Logf("\"%s\" = \"%s\"", *Args[stidx+1].quote(), *Down.quote());
       }
     } else {
-      GCon->Logf("\"%s\" is not bound", *Args[1].quote());
+      GCon->Logf("\"%s\" is not bound", *Args[stidx+1].quote());
     }
     return;
   }
-  GInput->SetBinding(b, Args[2], (c > 3 ? Args[3] : VStr()), !ParsingKeyConf);
-  unguard;
+
+  GInput->SetBinding(b, Args[stidx+2], (c > 3 ? Args[stidx+3] : VStr()), !ParsingKeyConf, strifeFlag);
+}
+
+
+//==========================================================================
+//
+//  COMMAND Bind
+//
+//==========================================================================
+COMMAND(Bind) {
+  bindCommon(Args, ParsingKeyConf);
 }
 
 
@@ -644,35 +779,5 @@ COMMAND(Bind) {
 //
 //==========================================================================
 COMMAND(DefaultBind) {
-  guard(COMMAND DefaultBind);
-  int c = Args.length();
-
-  if (c != 2 && c != 3 && c != 4) {
-    GCon->Log("defaultbind <key> [down_command] [up_command]: attach a command to a key");
-    return;
-  }
-
-  if (Args[1].length() == 0) return;
-  int b = GInput->KeyNumForName(Args[1]);
-  if (b == -1) {
-    GCon->Logf("\"%s\" isn't a valid key", *Args[1].quote());
-    return;
-  }
-
-  if (c == 2) {
-    VStr Down, Up;
-    GInput->GetBinding(b, Down, Up);
-    if (Down.IsNotEmpty() || Up.IsNotEmpty()) {
-      if (Up.IsNotEmpty()) {
-        GCon->Logf("\"%s\" = \"%s\" / \"%s\"", *Args[1].quote(), *Down.quote(), *Up.quote());
-      } else {
-        GCon->Logf("\"%s\" = \"%s\"", *Args[1].quote(), *Down.quote());
-      }
-    } else {
-      GCon->Logf("\"%s\" is not bound", *Args[1].quote());
-    }
-    return;
-  }
-  GInput->SetBinding(b, Args[2], (c > 3 ? Args[3] : VStr()), !ParsingKeyConf);
-  unguard;
+  bindCommon(Args, ParsingKeyConf);
 }

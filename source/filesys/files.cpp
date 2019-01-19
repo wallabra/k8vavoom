@@ -255,7 +255,7 @@ static void wpkAppend (const VStr &fname, bool asystem) {
 }
 
 
-static VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
+VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

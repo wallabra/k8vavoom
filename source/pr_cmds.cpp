@@ -1072,18 +1072,20 @@ IMPLEMENT_FUNCTION(VObject, KeyNameForNum) {
 
 
 IMPLEMENT_FUNCTION(VObject, IN_GetBindingKeys) {
+  P_GET_INT_OPT(strifemode, 0);
   P_GET_PTR(int, key2);
   P_GET_PTR(int, key1);
   P_GET_STR(name);
-  GInput->GetBindingKeys(name, *key1, *key2);
+  GInput->GetBindingKeys(name, *key1, *key2, strifemode);
 }
 
 
 IMPLEMENT_FUNCTION(VObject, IN_SetBinding) {
+  P_GET_INT_OPT(strifemode, 0);
   P_GET_STR(onup);
   P_GET_STR(ondown);
   P_GET_INT(keynum);
-  GInput->SetBinding(keynum, ondown, onup);
+  GInput->SetBinding(keynum, ondown, onup, true, strifemode);
 }
 
 

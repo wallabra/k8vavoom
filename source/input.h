@@ -70,9 +70,10 @@ public:
   virtual int ReadKey () = 0;
 
   // handling of key bindings
-  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2) = 0;
-  virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) = 0;
-  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true) = 0;
+  virtual void ClearBindings () = 0;
+  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2, int strifemode=0) = 0;
+  virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) = 0; // for current game mode
+  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) = 0;
   virtual void WriteBindings (FILE *f) = 0;
 
   virtual int TranslateKey (int ch) = 0;
