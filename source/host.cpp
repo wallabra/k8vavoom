@@ -38,6 +38,8 @@ extern int fsys_warp_n0;
 extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
 
+static const double max_fps_cap = 0.004; // no more than 250 FPS
+
 
 // state updates, number of tics/second
 #define TICRATE  (35)
@@ -325,7 +327,6 @@ static bool FilterTime () {
   guard(FilterTime);
   double curr_time = Sys_Time();
   double time = curr_time-last_time;
-  const double max_fps_cap = 0.004; // no more than 250 FPS
 
   //GCon->Logf("*** FilterTime; lasttime=%f; ctime=%f; time=%f", last_time, curr_time, time);
 
@@ -449,28 +450,35 @@ void Host_Frame () {
     GCmdBuf.Exec();
     if (host_request_exit) Host_Quit();
 
+    bool incFrame = false;
+
     GNet->Poll();
 
+    // if we perfomed load/save, frame time will be near zero, so do nothing
+    if (host_frametime >= max_fps_cap) {
+      incFrame = true;
+
 #ifdef CLIENT
-    // make intentions
-    CL_SendMove();
+      // make intentions
+      CL_SendMove();
 #endif
 
 #ifdef SERVER
-    if (GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
-      // server operations
-      ServerFrame(host_frametics);
-    }
+      if (GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
+        // server operations
+        ServerFrame(host_frametics);
+      }
 #endif
 
-    host_time += host_frametime;
+      host_time += host_frametime;
 
 #ifdef CLIENT
-    // fetch results from server
-    CL_ReadFromServer();
+      // fetch results from server
+      CL_ReadFromServer();
 
-    // update user interface
-    GRoot->TickWidgets(host_frametime);
+      // update user interface
+      GRoot->TickWidgets(host_frametime);
+    }
 
     // collect all garbage
     VObject::CollectGarbage();
@@ -494,7 +502,11 @@ void Host_Frame () {
       GCon->Logf("%d tot | %d server | %d gfx | %d snd", pass1+pass2+pass3, pass1, pass2, pass3);
     }
 
-    ++host_framecount;
+    if (incFrame) {
+      ++host_framecount;
+    } else {
+      GCon->Log("Frame delayed due to lengthy operation (this is perfectly ok)");
+    }
   } catch (RecoverableError &e) {
     GCon->Logf("Host_Error: %s", e.message);
 
