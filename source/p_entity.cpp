@@ -113,18 +113,21 @@ void VEntity::Serialise (VStream &Strm) {
 void VEntity::DestroyThinker () {
   guard(VEntity::DestroyThinker)
 
-  if (Role == ROLE_Authority) {
-    eventDestroyed();
-    if (TID) RemoveFromTIDList(); // remove from TID list
-    // stop any playing sound
-    StopSound(0);
+  if ((GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == 0) {
+    if (Role == ROLE_Authority) {
+      eventDestroyed();
+      if (TID) RemoveFromTIDList(); // remove from TID list
+      // stop any playing sound
+      StopSound(0);
+    }
+
+    // unlink from sector and block lists
+    UnlinkFromWorld();
+    if (XLevel) XLevel->DelSectorList();
+
+    Super::DestroyThinker();
   }
 
-  // unlink from sector and block lists
-  UnlinkFromWorld();
-  if (XLevel) XLevel->DelSectorList();
-
-  Super::DestroyThinker();
   unguard;
 }
 
@@ -205,7 +208,6 @@ void VEntity::RemoveFromTIDList () {
 bool VEntity::SetState (VState *InState) {
   guard(VEntity::SetState);
   VState *st = InState;
-  int watchcatCount = 1024;
   //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(000): Doomer %p: state=%s (%s)", this, (st ? *st->GetFullName() : "<none>"), (st ? *st->Loc.toStringNoCol() : ""));
   if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
     if (developer) GCon->Logf(NAME_Dev, "   (00):%s: dead (0x%04x) before state actions, state is %s", *GetClass()->GetFullName(), GetFlags(), (st ? *st->Loc.toStringNoCol() : "<none>"));
@@ -214,13 +216,9 @@ bool VEntity::SetState (VState *InState) {
     DispSpriteName = NAME_None;
     return false;
   }
-  do {
-    if (--watchcatCount <= 0) {
-      //k8: FIXME!
-      GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
-      break;
-    }
 
+  int watchcatCount = 1024;
+  do {
     if (!st) {
       // remove mobj
       DispSpriteFrame = 0;
@@ -229,6 +227,12 @@ bool VEntity::SetState (VState *InState) {
       StateTime = -1;
       DestroyThinker();
       return false;
+    }
+
+    if (--watchcatCount <= 0) {
+      //k8: FIXME!
+      GCon->Logf("ERROR: WatchCat interrupted `VEntity::SetState`!");
+      break;
     }
 
     // remember current sprite and frame
@@ -262,6 +266,8 @@ bool VEntity::SetState (VState *InState) {
       //if (VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(660): Doomer %p IS DEAD", this);
       DispSpriteFrame = 0;
       DispSpriteName = NAME_None;
+      StateTime = -1;
+      if ((GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) == 0) DestroyThinker();
       return false;
     }
     st = State->NextState;
