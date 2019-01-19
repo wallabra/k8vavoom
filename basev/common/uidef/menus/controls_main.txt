@@ -246,7 +246,7 @@ menudef ControlsMain {
   }
 
 
-  header "Menu Actiation Hotkeys";
+  header "Menu Activation Hotkeys";
 
   option bind {
     title = "Help";
