@@ -29,7 +29,9 @@ class ClientGameShared : LineSpecialClientGame abstract;
 enum {
   MB_None,
   MB_Quit,
-  MB_Control,
+  MB_ControlAll,
+  MB_ControlStrife,
+  MB_ControlNonStrife,
   MB_Shareware,
   MB_Nightmare,
   MB_EndGame,
@@ -633,7 +635,7 @@ void MessageBoxStartMessage (string text, int type, bool input) {
   msgBoxX = (GetVirtualWidth()-msgBoxW)/2;
   msgBoxY = (GetVirtualHeight()-msgBoxH)/2;
 
-  if (type == MB_Control) SetCvar('ui_control_waiting', 1);
+  if (type >= MB_ControlAll && type <= MB_ControlNonStrife) SetCvar('ui_control_waiting', 1);
 
   CmdBuf_AddText("HideConsole\n");
 }
@@ -684,7 +686,12 @@ override bool MessageBoxResponder (event_t *event) {
     switch (messageType) {
       case MB_None: break;
       case MB_Quit: QuitResponse(event->data1); break;
-      case MB_Control: SetCvar('ui_control_waiting', 0); ControlResponse(event->data1); break;
+      case MB_ControlAll:
+      case MB_ControlStrife:
+      case MB_ControlNonStrife:
+        SetCvar('ui_control_waiting', 0);
+        ControlResponse(event->data1, messageType);
+        break;
       case MB_Shareware: SharewareResponse(event->data1); break;
       case MB_Nightmare: VerifyNightmare(event->data1); break;
       case MB_EndGame: EndGameResponse(event->data1); break;
@@ -713,23 +720,31 @@ override bool MessageBoxActive () {
 //  ControlResponse
 //
 //==========================================================================
-void ControlResponse (int key) {
+void ControlResponse (int key, int msgtype) {
   string kb_down;
   string kb_up;
   int key1;
   int key2;
+  int strifeMode = 0;
+
+  switch (msgtype) {
+    case MB_ControlAll: strifeMode = 0; break;
+    case MB_ControlStrife: strifeMode = 1; break;
+    case MB_ControlNonStrife: strifeMode = -1; break;
+    default: return;
+  }
 
   if (key != K_ESCAPE) {
     kb_down = CurrentCtl.CommandOn;
     kb_up = CurrentCtl.CommandOff;
-    IN_GetBindingKeys(kb_down, &key1, &key2);
+    IN_GetBindingKeys(kb_down, &key1, &key2, strifeMode);
     if (ControlColumn == 0) {
-      IN_SetBinding(key1, "", "");
-      IN_SetBinding(key, kb_down, kb_up);
+      IN_SetBinding(key1, "", "", strifeMode);
+      IN_SetBinding(key, kb_down, kb_up, strifeMode);
     }
     if (ControlColumn == 1) {
-      IN_SetBinding(key2, "", "");
-      IN_SetBinding(key, kb_down, kb_up);
+      IN_SetBinding(key2, "", "", strifeMode);
+      IN_SetBinding(key, kb_down, kb_up, strifeMode);
     }
   }
 }

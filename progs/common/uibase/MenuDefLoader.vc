@@ -916,6 +916,7 @@ override MenuChoice CreateOption (MenuScreen menu) {
     newCtl.CommandOn = commandOn;
     newCtl.CommandOff = commandOff;
   }
+  newCtl.strifeMode = strifeMode;
        if (strifeMode < 0) newCtl.Disabled = IsStrife;
   else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
   return newCtl;

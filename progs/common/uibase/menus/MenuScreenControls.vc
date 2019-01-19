@@ -57,6 +57,8 @@ array!menukey menukeys_list;
 
 string AltTitle; // alternate title for the screen (if any)
 
+int strifeMode = 0;
+
 
 //==========================================================================
 //
@@ -131,6 +133,9 @@ void AddControl (string Text, string CommandOn, string CommandOff) {
   newCtl.Text = Text;
   newCtl.CommandOn = CommandOn;
   newCtl.CommandOff = CommandOff;
+  newCtl.strifeMode = strifeMode;
+       if (strifeMode < 0) newCtl.Disabled = IsStrife;
+  else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
   ++NumControls;
 }
 
@@ -158,6 +163,8 @@ void AddText (string Text) {
 //
 //==========================================================================
 void CreateControlKeyChoices () {
+  Error("ooops");
+  /*
   //print("=== CreateControlKeyChoices ===");
 
   AddControl("Move foward", "+Forward", "-Forward");
@@ -217,6 +224,7 @@ void CreateControlKeyChoices () {
     Height = GetVirtualHeight();
     MenuScrollable = true;
   }
+  */
 }
 
 

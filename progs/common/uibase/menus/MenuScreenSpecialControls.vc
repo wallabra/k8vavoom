@@ -64,4 +64,5 @@ override void CreateControlKeyChoices () {
 
 
 defaultproperties {
+  strifeMode = 1; // mods are usually for non-stife
 }
