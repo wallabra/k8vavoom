@@ -210,13 +210,13 @@ public:
   vuint8 *OffsetToPtr (int);
   int PtrToOffset (vuint8 *);
   inline EAcsFormat GetFormat () const { return Format; }
-  inline int GetNumScripts() const { return NumScripts; }
+  inline int GetNumScripts () const { return NumScripts; }
   inline VAcsInfo &GetScriptInfo (int i) { return Scripts[i]; }
 
   inline VStr GetString (int i) const {
     if (i < 0 || i >= NumStrings) return "";
     VStr Ret = Strings[i];
-    if (!Ret.IsValidUtf8()) Ret = Ret.Latin1ToUtf8();
+    //if (!Ret.IsValidUtf8()) Ret = Ret.Latin1ToUtf8();//k8:???
     return Ret;
   }
 
@@ -713,33 +713,27 @@ void VAcsObject::LoadEnhancedObject () {
     memset((void *)Scripts, 0, 1*sizeof(VAcsInfo));
   }
 
-  //  Load script flags.
+  // load script flags
   buffer = (int *)FindChunk("SFLG");
-  if (buffer)
-  {
+  if (buffer) {
     int count = LittleLong(buffer[1]) / 4;
     buffer += 2;
-    for (i = 0; i < count; i++, buffer++)
-    {
+    for (i = 0; i < count; i++, buffer++) {
       info = FindScript(LittleShort(((word*)buffer)[0]));
-      if (info)
-      {
+      if (info) {
         info->Flags = LittleShort(((word*)buffer)[1]);
       }
     }
   }
 
-  //  Load script var counts
+  // load script var counts
   buffer = (int*)FindChunk("SVCT");
-  if (buffer)
-  {
+  if (buffer) {
     int count = LittleLong(buffer[1]) / 4;
     buffer += 2;
-    for (i = 0; i < count; i++, buffer++)
-    {
+    for (i = 0; i < count; i++, buffer++) {
       info = FindScript(LittleShort(((word*)buffer)[0]));
-      if (info)
-      {
+      if (info) {
         info->VarCount = LittleShort(((word*)buffer)[1]);
         //  Make sure it's at least 4 so in SpawnScript we can safely
         // assign args to first 4 variables.
@@ -748,64 +742,57 @@ void VAcsObject::LoadEnhancedObject () {
     }
   }
 
-  //  Load functions.
+  // load functions
   buffer = (int*)FindChunk("FUNC");
-  if (buffer)
-  {
+  if (buffer) {
     NumFunctions = LittleLong(buffer[1]) / 8;
     Functions = (VAcsFunction*)(buffer + 2);
-    for (i = 0; i < NumFunctions; i++)
+    for (i = 0; i < NumFunctions; i++) {
       Functions[i].Address = LittleLong(Functions[i].Address);
+    }
   }
 
-  //  Unencrypt strings.
+  // unencrypt strings
   UnencryptStrings();
 
-  //  A temporary hack.
-  buffer = (int*)FindChunk("STRL");
-  if (buffer)
-  {
+  // a temporary hack
+  buffer = (int *)FindChunk("STRL");
+  if (buffer) {
     buffer += 2;
     NumStrings = LittleLong(buffer[1]);
     Strings = new char*[NumStrings];
     LowerCaseNames = new VName[NumStrings];
-    for(i = 0; i < NumStrings; i++)
-    {
-      Strings[i] = (char*)buffer + LittleLong(buffer[i + 3]);
+    for (i = 0; i < NumStrings; i++) {
+      Strings[i] = (char *)buffer + LittleLong(buffer[i + 3]);
       LowerCaseNames[i] = NAME_None;
     }
   }
 
-  //  Initialise this object's map variable pointers to defaults. They can
-  // be changed later once the imported modules are loaded.
-  for (i = 0; i < MAX_ACS_MAP_VARS; i++)
-  {
+  // initialise this object's map variable pointers to defaults
+  // they can be changed later once the imported modules are loaded
+  for (i = 0; i < MAX_ACS_MAP_VARS; i++) {
     MapVars[i] = &MapVarStore[i];
   }
 
-  //  Initialise this object's map variables.
+  // initialise this object's map variables
   memset((void *)MapVarStore, 0, sizeof(MapVarStore));
-  buffer = (int*)FindChunk("MINI");
-  while (buffer)
-  {
+  buffer = (int *)FindChunk("MINI");
+  while (buffer) {
     int numvars = LittleLong(buffer[1]) / 4 - 1;
     int firstvar = LittleLong(buffer[2]);
-    for (i = 0; i < numvars; i++)
-    {
+    for (i = 0; i < numvars; i++) {
       MapVarStore[firstvar + i] = LittleLong(buffer[3 + i]);
     }
-    buffer = (int*)NextChunk((vuint8*)buffer);
+    buffer = (int *)NextChunk((vuint8*)buffer);
   }
 
-  //  Create arrays.
-  buffer = (int*)FindChunk("ARAY");
-  if (buffer)
-  {
+  // create arrays
+  buffer = (int *)FindChunk("ARAY");
+  if (buffer) {
     NumArrays = LittleLong(buffer[1]) / 8;
     ArrayStore = new VArrayInfo[NumArrays];
     memset((void *)ArrayStore, 0, sizeof(*ArrayStore) * NumArrays);
-    for (i = 0; i < NumArrays; ++i)
-    {
+    for (i = 0; i < NumArrays; ++i) {
       MapVarStore[LittleLong(buffer[2 + i * 2])] = i;
       ArrayStore[i].Size = LittleLong(buffer[3 + i * 2]);
       ArrayStore[i].Data = new vint32[ArrayStore[i].Size];
@@ -813,42 +800,33 @@ void VAcsObject::LoadEnhancedObject () {
     }
   }
 
-  //  Initialise arrays.
-  buffer = (int*)FindChunk("AINI");
-  while (buffer)
-  {
+  // initialise arrays
+  buffer = (int *)FindChunk("AINI");
+  while (buffer) {
     int arraynum = MapVarStore[LittleLong(buffer[2])];
-    if ((unsigned)arraynum < (unsigned)NumArrays)
-    {
+    if ((unsigned)arraynum < (unsigned)NumArrays) {
       int initsize = (LittleLong(buffer[1]) - 4) / 4;
-      if (initsize > ArrayStore[arraynum].Size)
-        initsize = ArrayStore[arraynum].Size;
+      if (initsize > ArrayStore[arraynum].Size) initsize = ArrayStore[arraynum].Size;
       int *elems = ArrayStore[arraynum].Data;
-      for (i = 0; i < initsize; i++)
-      {
+      for (i = 0; i < initsize; i++) {
         elems[i] = LittleLong(buffer[3 + i]);
       }
     }
     buffer = (int*)NextChunk((vuint8*)buffer);
   }
 
-  //  Start setting up array pointers.
+  // start setting up array pointers
   NumTotalArrays = NumArrays;
   buffer = (int*)FindChunk("AIMP");
-  if (buffer)
-  {
-    NumTotalArrays += LittleLong(buffer[2]);
-  }
-  if (NumTotalArrays)
-  {
+  if (buffer) NumTotalArrays += LittleLong(buffer[2]);
+  if (NumTotalArrays) {
     Arrays = new VArrayInfo*[NumTotalArrays];
-    for (i = 0; i < NumArrays; ++i)
-    {
+    for (i = 0; i < NumArrays; ++i) {
       Arrays[i] = &ArrayStore[i];
     }
   }
 
-  //  Now that everything is set up, record this object as being among
+  // Now that everything is set up, record this object as being among
   // the loaded objects. We need to do this before resolving any imports,
   // because an import might (indirectly) need to resolve exports in this
   // module. The only things that can be exported are functions and map
@@ -856,58 +834,50 @@ void VAcsObject::LoadEnhancedObject () {
   // is okay.
   LibraryID = Level->LoadedObjects.Append(this) << 16;
 
-  //  Tag the library ID to any map variables that are initialised with
-  // strings.
-  if (LibraryID)
-  {
-    buffer = (int*)FindChunk("MSTR");
-    if (buffer)
-    {
-      for (i = 0; i < LittleLong(buffer[1]) / 4; i++)
-      {
-        MapVarStore[LittleLong(buffer[i + 2])] |= LibraryID;
+  // Tag the library ID to any map variables that are initialised with strings.
+  if (LibraryID) {
+    buffer = (int *)FindChunk("MSTR");
+    if (buffer) {
+      for (i = 0; i < LittleLong(buffer[1]) / 4; i++) {
+        //MapVarStore[LittleLong(buffer[i + 2])] |= LibraryID;
+        int sidx = LittleLong(buffer[i+2]);
+        const char *str = (sidx < 0 || sidx >= NumStrings ? "" : Strings[sidx]);
+        MapVarStore[LittleLong(buffer[i+2])] = Level->PutNewString(str);
       }
     }
 
-    buffer = (int*)FindChunk("ASTR");
-    if (buffer)
-    {
-      for (i = 0; i < LittleLong(buffer[1]) / 4; i++)
-      {
+    buffer = (int *)FindChunk("ASTR");
+    if (buffer) {
+      for (i = 0; i < LittleLong(buffer[1]) / 4; i++) {
         int arraynum = MapVarStore[LittleLong(buffer[i + 2])];
-        if ((unsigned)arraynum < (unsigned)NumArrays)
-        {
+        if ((unsigned)arraynum < (unsigned)NumArrays) {
           int *elems = ArrayStore[arraynum].Data;
-          for (int j = ArrayStore[arraynum].Size; j > 0; j--, elems++)
-          {
-            *elems |= LibraryID;
+          for (int j = ArrayStore[arraynum].Size; j > 0; j--, elems++) {
+            //*elems |= LibraryID;
+            int sidx = *elems;
+            const char *str = (sidx < 0 || sidx >= NumStrings ? "" : Strings[sidx]);
+            *elems = Level->PutNewString(str);
           }
         }
       }
     }
   }
 
-  //  Library loading.
-  buffer = (int*)FindChunk("LOAD");
-  if (buffer)
-  {
+  // library loading
+  buffer = (int *)FindChunk("LOAD");
+  if (buffer) {
     char *parse = (char*)&buffer[2];
-    for (i = 0; i < LittleLong(buffer[1]); i++)
-    {
-      if (parse[i])
-      {
+    for (i = 0; i < LittleLong(buffer[1]); i++) {
+      if (parse[i]) {
         VAcsObject *Object = nullptr;
         int Lump = W_CheckNumForName(VName(&parse[i], VName::AddLower8), WADNS_ACSLibrary);
-        if (Lump < 0)
-        {
+        if (Lump < 0) {
           GCon->Logf("Could not find ACS library %s.", &parse[i]);
-        }
-        else
-        {
+        } else {
           Object = Level->LoadObject(Lump);
         }
         Imports.Append(Object);
-        do ; while (parse[++i]);
+        do {} while (parse[++i]);
       }
     }
 
@@ -1002,7 +972,7 @@ void VAcsObject::LoadEnhancedObject () {
                 *W_LumpName(LumpNum), (int)expectedSize);
             }
           }
-          do ; while (*++parse);
+          do {} while (*++parse);
           ++parse;
         }
       }
@@ -1539,13 +1509,10 @@ int VAcsLevel::PutNewString (VStr str) {
 //  VAcsLevel::LoadObject
 //
 //==========================================================================
-VAcsObject *VAcsLevel::LoadObject(int Lump)
-{
+VAcsObject *VAcsLevel::LoadObject(int Lump) {
   guard(VAcsLevel::LoadObject);
-  for (int i = 0; i < LoadedObjects.Num(); i++)
-  {
-    if (LoadedObjects[i]->LumpNum == Lump)
-    {
+  for (int i = 0; i < LoadedObjects.Num(); i++) {
+    if (LoadedObjects[i]->LumpNum == Lump) {
       return LoadedObjects[i];
     }
   }
@@ -1666,10 +1633,15 @@ VStr VAcsLevel::GetString (int Index) {
 //==========================================================================
 VName VAcsLevel::GetNameLowerCase (int Index) {
   guard(VAcsLevel::GetNameLowerCase);
+  //GCon->Logf("VAcsLevel::GetNameLowerCase: index=0x%08x", (vuint32)Index);
   int ObjIdx = (vuint32)Index>>16;
-  if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) return GetNewLowerName(Index&0xffff);
+  if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) {
+    //GCon->Logf("VAcsLevel::GetNameLowerCase: INTERNAL: '%s'", *GetNewLowerName(Index&0xffff));
+    return GetNewLowerName(Index&0xffff);
+  }
   if (ObjIdx >= LoadedObjects.Num()) return NAME_None;
-  return LoadedObjects[ObjIdx]->GetNameLowerCase(Index & 0xffff);
+  //GCon->Logf("VAcsLevel::GetNameLowerCase: object #%d: '%s'", ObjIdx, *LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff));
+  return LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff);
   unguard;
 }
 
@@ -4474,6 +4446,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Spawn)
+      //GCon->Logf("!!!!!!!! '%s'", *GetNameLowerCase(sp[-6]));
       sp[-6] = Level->eventAcsSpawnThing(GetNameLowerCase(sp[-6]),
         TVec(float(sp[-5]) / float(0x10000),
         float(sp[-4]) / float(0x10000),
@@ -5181,7 +5154,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_TagString)
-      sp[-1] |= ActiveObject->GetLibraryID();
+      //sp[-1] |= ActiveObject->GetLibraryID();
+      sp[-1] = ActiveObject->Level->PutNewString(ActiveObject->GetString(sp[-1]));
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushWorldArray)

@@ -642,6 +642,18 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS) {
 
 //==========================================================================
 //
+//  W_StartIterationFromLumpFile
+//
+//==========================================================================
+int W_StartIterationFromLumpFile (int File) {
+  if (File < 0) return -1;
+  if (File >= SearchPaths.length()) return MAKE_HANDLE(SearchPaths.length()+1, 69)-1;
+  return MAKE_HANDLE(File, 0)-1;
+}
+
+
+//==========================================================================
+//
 //  W_IterateNS
 //
 //==========================================================================

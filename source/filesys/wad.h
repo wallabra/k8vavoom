@@ -101,6 +101,7 @@ void W_LoadLumpIntoArray (VName Lump, TArray<vuint8>& Array);
 VStream *W_CreateLumpReaderNum (int lump);
 VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS = WADNS_Global);
 
+int W_StartIterationFromLumpFile (int File);
 int W_IterateNS (int Prev, EWadNamespace NS);
 int W_IterateFile (int Prev, const VStr &Name);
 

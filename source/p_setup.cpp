@@ -676,7 +676,7 @@ void VLevel::LoadMap (VName AMapName) {
   bool killCache = loader_cache_ignore_one;
   loader_cache_ignore_one = false;
   bool AuxiliaryMap = false;
-  int lumpnum;
+  int lumpnum, xmaplumpnum;
   VName MapLumpName;
   decanimlist = nullptr;
   decanimuid = 0;
@@ -701,24 +701,27 @@ load_again:
   // If working with a devlopment map, reload it.
   // k8: nope, it doesn't work this way: it looks for "maps/xxx.wad" in zips,
   //     and "complete.pk3" takes precedence over any pwads
-  //     so let's do it in a backwards way
+  //     so let's do it backwards
   // Find map and GL nodes.
   lumpnum = W_CheckNumForName(MapName);
   MapLumpName = MapName;
   int wadlumpnum = W_CheckNumForFileName(va("maps/%s.wad", *MapName));
   if (wadlumpnum > lumpnum) lumpnum = -1;
-  // If there is no map lump, try map wad.
+  // if there is no map lump, try map wad
   if (lumpnum < 0) {
-    // Check if map wad is here.
+    // check if map wad is here
     VStr aux_file_name = va("maps/%s.wad", *MapName);
     if (FL_FileExists(aux_file_name)) {
-      // Apped map wad to list of wads (it will be deleted later).
+      // apped map wad to list of wads (it will be deleted later)
+      xmaplumpnum = W_CheckNumForFileName(va("maps/%s.wad", *MapName));
       lumpnum = W_OpenAuxiliary(aux_file_name);
       if (lumpnum >= 0) {
         MapLumpName = W_LumpName(lumpnum);
         AuxiliaryMap = true;
       }
     }
+  } else {
+    xmaplumpnum = lumpnum;
   }
   if (lumpnum < 0) Host_Error("Map %s not found\n", *MapName);
 
@@ -1060,7 +1063,7 @@ load_again:
 
   // ACS object code
   double AcsTime = -Sys_Time();
-  LoadACScripts(BehaviorLump);
+  LoadACScripts(BehaviorLump, xmaplumpnum);
   AcsTime += Sys_Time();
 
   double GroupLinesTime = -Sys_Time();
@@ -2654,8 +2657,41 @@ void VLevel::LoadThings2 (int Lump) {
 //
 //  VLevel::LoadACScripts
 //
+//  load libraries from 'loadacs'
+//
 //==========================================================================
-void VLevel::LoadACScripts (int Lump) {
+void VLevel::LoadLoadACS (int lacsLump, int XMapLump) {
+  if (lacsLump < 0) return;
+  GCon->Logf("Loading ACS libraries from '%s'", *W_FullLumpName(lacsLump));
+  VScriptParser *sc = new VScriptParser(W_FullLumpName(lacsLump), W_CreateLumpReaderNum(lacsLump));
+  while (!sc->AtEnd()) {
+    //sc->ExpectName8();
+    //int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
+    sc->ExpectName();
+    int AcsLump = W_CheckNumForNameInFile(sc->Name, W_LumpFile(lacsLump), WADNS_ACSLibrary);
+    if (AcsLump < 0 && VStr::length(*sc->Name) > 8) {
+      VName n8 = VName(*sc->Name, VName::AddLower8);
+      AcsLump = W_CheckNumForNameInFile(n8, W_LumpFile(lacsLump), WADNS_ACSLibrary);
+      if (AcsLump >= 0) GCon->Logf(NAME_Dev, "ACS: '%s' found as '%s'", *sc->Name, *n8);
+    }
+    if (AcsLump >= 0) {
+      //GCon->Logf(NAME_Dev, "ACS: loading script from '%s'", *W_FullLumpName(AcsLump));
+      GCon->Logf("  loading ACS script from '%s'", *W_FullLumpName(AcsLump));
+      Acs->LoadObject(AcsLump);
+    } else {
+      GCon->Logf(NAME_Warning, "ACS script '%s' not found", *sc->String);
+    }
+  }
+  delete sc;
+}
+
+
+//==========================================================================
+//
+//  VLevel::LoadACScripts
+//
+//==========================================================================
+void VLevel::LoadACScripts (int Lump, int XMapLump) {
   guard(VLevel::LoadACScripts);
   Acs = new VAcsLevel(this);
 
@@ -2675,28 +2711,20 @@ void VLevel::LoadACScripts (int Lump) {
   }
 
   // load user-specified default ACS libraries
-  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
-    if (W_LumpName(ScLump) != NAME_loadacs) continue;
-
-    VScriptParser *sc = new VScriptParser(W_FullLumpName(ScLump), W_CreateLumpReaderNum(ScLump));
-    while (!sc->AtEnd()) {
-      //sc->ExpectName8();
-      //int AcsLump = W_CheckNumForName(sc->Name8, WADNS_ACSLibrary);
-      sc->ExpectName();
-      int AcsLump = W_CheckNumForName(sc->Name, WADNS_ACSLibrary);
-      if (AcsLump < 0 && VStr::length(*sc->Name) > 8) {
-        VName n8 = VName(*sc->Name, VName::AddLower8);
-        AcsLump = W_CheckNumForName(n8, WADNS_ACSLibrary);
-        if (AcsLump >= 0) GCon->Logf(NAME_Dev, "ACS: '%s' found as '%s'", *sc->Name, *n8);
-      }
-      if (AcsLump >= 0) {
-        GCon->Logf(NAME_Dev, "ACS: loading script from '%s'", *W_FullLumpName(AcsLump));
-        Acs->LoadObject(AcsLump);
-      } else {
-        GCon->Logf(NAME_Warning, "No such autoloaded ACS library %s", *sc->String);
-      }
+  // first load all from map file and further, then all before map file
+  // this is done so autoloaded acs won't interfere with libraries
+  if (XMapLump >= 0) {
+    // from map file and further
+    for (int ScLump = W_IterateNS(W_StartIterationFromLumpFile(W_LumpFile(XMapLump)), WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
+      if (W_LumpName(ScLump) != NAME_loadacs) continue;
+      LoadLoadACS(ScLump, XMapLump);
     }
-    delete sc;
+  }
+  // before map file
+  for (int ScLump = W_IterateNS(-1, WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
+    if (XMapLump >= 0 && W_LumpFile(ScLump) >= W_LumpFile(XMapLump)) break;
+    if (W_LumpName(ScLump) != NAME_loadacs) continue;
+    LoadLoadACS(ScLump, XMapLump);
   }
   unguard;
 }

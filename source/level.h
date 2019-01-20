@@ -365,7 +365,8 @@ private:
   void LoadReject (int);
   void LoadThings1 (int);
   void LoadThings2 (int);
-  void LoadACScripts (int);
+  void LoadLoadACS (int lacsLump, int XMapLump); // load libraries from 'loadacs'
+  void LoadACScripts (int BehLump, int XMapLump);
   void LoadTextMap (int, const mapInfo_t &);
   // call this after loading things
   void SetupThingsFromMapinfo ();

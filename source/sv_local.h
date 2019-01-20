@@ -82,6 +82,7 @@ public:
   VLevel *XLevel;
 
   TArray<VAcsObject *> LoadedObjects;
+  //TArray<int> LoadedStaticObjects; // index in `LoadedObjects`
 
 public:
   VAcsLevel (VLevel *ALevel);
