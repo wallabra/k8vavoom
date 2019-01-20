@@ -761,15 +761,37 @@ final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor ch
 //  A_SpawnParticle
 //
 //==========================================================================
-final void A_SpawnParticle (string color1, optional int flags, optional int lifetime,
+final void A_SpawnParticle (string color1, /*optional int flags,*/ optional int lifetime,
                             optional float size, optional float angle,
                             optional float xoff, optional float yoff, optional float zoff,
                             optional float velx, optional float vely, optional float velz,
                             optional float accelx, optional float accely, optional float accelz,
-                            optional float startalphaf, optional float fadestepf, optional float sizestep)
+                            optional int startalpha, optional int fadestep/*, optional float sizestep*/)
 {
-  //TODO: IMPLEMENT ME!
-  //FIXME: IMPLEMENT ME!
+/*
+  if (!specified_lifetime) lifetime = 35;
+  if (lifetime <= 0) return;
+  if (!specified_startalpha) startalpha = 255;
+  if (startalpha <= 0) return;
+  int clr = ParseColour(color1);
+  startalpha = clamp(startalpha, 0, 255);
+  clr |= startalpha<<24;
+  Level.ParticleEffect(
+    count:1,
+    type1:pt_fading,
+    type2:0,
+    origin:vector(Origin.x+xoff, Origin.y+yoff, Origin.z+zoff),
+    orng:0,
+    velocity:vector(velx, vely, velz),
+    vrnd:0,
+    acceleration:0,
+    grav:0,
+    colour:clr,
+    duration:lifetime/35.0,
+    ramp:clamp(fadestep, -1, 255),
+    accelV:vector(accelx, accely, accelz)
+  );
+*/
 }
 
 

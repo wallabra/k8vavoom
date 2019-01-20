@@ -88,6 +88,7 @@ enum {
   pt_rail,
   pt_fountain,
   pt_spark,
+  pt_fading,
 };
 
 // flags for SectorDamage
@@ -7044,76 +7045,84 @@ final void AddPlayerCorpse(EntityEx Corpse)
   bodyqueslot++;
 }
 
+
 //==========================================================================
 //
 //  ParticleEffect
 //
+//  for fading particles (type1 == pt_fading):
+//    high 8 bits of color is starting alpha
+//    ramp is amount of fadeout (can be -1, which means "duration"
+//
 //==========================================================================
-
-override void ParticleEffect(int count, int type1, int type2, TVec origin, float ornd,
-  TVec velocity, float vrnd, float acceleration, float grav, int colour, float duration, float ramp)
+override void ParticleEffect (int count, int type1, int type2, TVec origin, float ornd,
+                              TVec velocity, float vrnd, float acceleration, float grav,
+                              int colour, float duration, float ramp, optional TVec accelV)
 {
-  int i;
-  particle_t *p;
+  if (duration <= 0) return;
 
-  for (i = 0; i < count; i++)
-  {
-    p = Level.NewParticle();
-    if (!p)
+  if (type1 == pt_fading) {
+    if ((colour>>>24) < 1) return; // nothing to do
+  }
+
+  foreach (auto i; 0..count) {
+    particle_t *p = Level.NewParticle();
+    if (!p) return;
+
+    if (type1 == pt_fading) {
       return;
-
-    p->die = Level.XLevel.Time+duration*Random();
-    p->colour = colour;
-    p->Size = 1.0;
-    if(ramp)
-      p->ramp = Random()*ramp;
-
-    if(type2)
-    {
-      // Choose between the two types
-      if (i&1)
-      {
-        p->type = type1;
+      /*
+      p.die = Level.XLevel.Time+duration*Random();
+      p.colour = colour;
+      if (ramp < 0) {
+        int initalpha = colour>>>24;
+        ramp = -initalpha; // hack!
       }
-      else
-      {
-        p->type = type2;
-      }
-    }
-    else
-    {
-      p->type = type1;
-    }
-
-    // No random origin
-    if(!ornd)
-    {
-      p->org = origin;
-    }
-    else
-    {
-      p->org.x = origin.x+((Random()*ornd)-ornd/2.0);
-      p->org.y = origin.y+((Random()*ornd)-ornd/2.0);
-      p->org.z = origin.z+((Random()*ornd)-ornd/2.0);
+      p.ramp = ramp;
+      p.org = origin;
+      p.vel = velocity;
+      p.accel = accelV;
+      p.dur = duration;
+      continue;
+      */
     }
 
-    // No random velocity
-    if(!vrnd)
-    {
-      p->vel = velocity;
+    p.die = Level.XLevel.Time+duration*Random();
+    p.colour = colour;
+    p.Size = 1.0;
+    if (ramp) p.ramp = Random()*ramp;
+
+    if (type2) {
+      // choose between the two types
+      p.type = (i&1 ? type1 : type2);
+    } else {
+      p.type = type1;
     }
-    else
-    {
-      p->vel.x = velocity.x*(Random()-vrnd);
-      p->vel.y = velocity.y*(Random()-vrnd);
-      p->vel.z = velocity.z*(Random()-vrnd);
+
+    // no random origin
+    if (!ornd) {
+      p.org = origin;
+    } else {
+      p.org.x = origin.x+((Random()*ornd)-ornd/2.0);
+      p.org.y = origin.y+((Random()*ornd)-ornd/2.0);
+      p.org.z = origin.z+((Random()*ornd)-ornd/2.0);
     }
-    p->accel.x = acceleration;
-    p->accel.y = acceleration;
-    p->accel.z = acceleration;
-    p->gravity = grav;
+
+    // no random velocity
+    if (!vrnd) {
+      p.vel = velocity;
+    } else {
+      p.vel.x = velocity.x*(Random()-vrnd);
+      p.vel.y = velocity.y*(Random()-vrnd);
+      p.vel.z = velocity.z*(Random()-vrnd);
+    }
+    p.accel.x = acceleration;
+    p.accel.y = acceleration;
+    p.accel.z = acceleration;
+    p.gravity = grav;
   }
 }
+
 
 //==========================================================================
 //
@@ -7130,65 +7139,66 @@ override void UpdateParticle(particle_t *p, float DeltaTime)
   time2 = DeltaTime*10.0; // 15;
   time3 = DeltaTime*15.0;
   dvel = 4.0*DeltaTime;
-  grav = DeltaTime*p->gravity /*sv_gravity.value * 0.05*/;
-  p->vel.z -= grav;
+  grav = DeltaTime*p.gravity /*sv_gravity.value * 0.05*/;
+  p.vel.z -= grav;
 
-  switch (p->type)
+  switch (p.type)
   {
   case pt_static:
-    p->vel += p->accel*DeltaTime;
+    p.vel += p.accel*DeltaTime;
     break;
 
   case pt_explode:
-    p->ramp += time2;
-    if (p->ramp >= 16.0)
-      p->die = -1.0;
+    p.ramp += time2;
+    if (p.ramp >= 16.0)
+      p.die = -1.0;
     else
-      p->colour = LineSpecialGameInfo.default.ramp1[int(p->ramp)];
-    p->vel.x += p->vel.x*dvel;
-    p->vel.y += p->vel.y*dvel;
-    p->vel.z += p->vel.z*dvel;
-    p->vel += p->accel*DeltaTime;
-    p->vel.z -= grav;
+      p.colour = LineSpecialGameInfo.default.ramp1[int(p.ramp)];
+    p.vel.x += p.vel.x*dvel;
+    p.vel.y += p.vel.y*dvel;
+    p.vel.z += p.vel.z*dvel;
+    p.vel += p.accel*DeltaTime;
+    p.vel.z -= grav;
     break;
 
   case pt_explode2:
-    p->ramp += time3;
-    if (p->ramp >= 16.0)
-      p->die = -1.0;
+    p.ramp += time3;
+    if (p.ramp >= 16.0)
+      p.die = -1.0;
     else
-      p->colour = LineSpecialGameInfo.default.ramp2[int(p->ramp)];
-    p->vel.x -= p->vel.x*DeltaTime;
-    p->vel.y -= p->vel.y*DeltaTime;
-    p->vel.z -= p->vel.z*DeltaTime;
-    p->vel += p->accel*DeltaTime;
-    p->vel.z -= grav;
+      p.colour = LineSpecialGameInfo.default.ramp2[int(p.ramp)];
+    p.vel.x -= p.vel.x*DeltaTime;
+    p.vel.y -= p.vel.y*DeltaTime;
+    p.vel.z -= p.vel.z*DeltaTime;
+    p.vel += p.accel*DeltaTime;
+    p.vel.z -= grav;
     break;
 
   case pt_fountain:
-    p->vel += p->accel*DeltaTime;
-    p->colour = (p->colour&0x00ffffff)|(int(
-      float(p->colour>>24)-255.0/51.0*35.0*DeltaTime)<<24);
+    p.vel += p.accel*DeltaTime;
+    p.colour = (p.colour&0x00ffffff)|(int(
+      float(p.colour>>24)-255.0/51.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_spark:
-    p->vel += p->accel*DeltaTime;
-    p->colour = (p->colour&0x00ffffff)|(int(
-      float(p->colour>>24)-255.0/10.0*35.0*DeltaTime)<<24);
+    p.vel += p.accel*DeltaTime;
+    p.colour = (p.colour&0x00ffffff)|(int(
+      float(p.colour>>24)-255.0/10.0*35.0*DeltaTime)<<24);
     break;
 
   case pt_ice_chunk:
-    p->vel.x -= p->vel.x*DeltaTime;
-    p->vel.y -= p->vel.y*DeltaTime;
-    p->vel.z += p->accel.z*DeltaTime;
+    p.vel.x -= p.vel.x*DeltaTime;
+    p.vel.y -= p.vel.y*DeltaTime;
+    p.vel.z += p.accel.z*DeltaTime;
     break;
 
   case pt_rail:
-    p->vel += p->accel*DeltaTime;
-    p->colour = (p->colour&0x00ffffff)|(int(float(p->colour>>24)-255.0*DeltaTime)<<24);
+    p.vel += p.accel*DeltaTime;
+    p.colour = (p.colour&0x00ffffff)|(int(float(p.colour>>24)-255.0*DeltaTime)<<24);
     break;
   }
 }
+
 
 //==========================================================================
 //

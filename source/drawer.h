@@ -60,6 +60,7 @@ struct particle_t {
   int type;
   float ramp;
   float gravity;
+  float dur; // for pt_fading
 };
 
 

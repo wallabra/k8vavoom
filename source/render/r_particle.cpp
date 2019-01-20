@@ -103,7 +103,18 @@ void VRenderLevelShared::UpdateParticles (float frametime) {
   particle_t *p, *kill;
 
   if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
-  if (!r_draw_particles) return; // save some resources
+
+  if (!r_draw_particles) {
+    // save some resources (and remove all particles)
+    kill = ActiveParticles;
+    while (kill) {
+      ActiveParticles = kill->next;
+      kill->next = FreeParticles;
+      FreeParticles = kill;
+      kill = ActiveParticles;
+    }
+    return;
+  }
 
   kill = ActiveParticles;
   while (kill && kill->die < Level->Time) {
