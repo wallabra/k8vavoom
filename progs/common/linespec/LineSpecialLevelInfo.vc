@@ -696,6 +696,14 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_ACSLockedExecuteDoor:
       if (CheckLock(A, Arg5, true)) buttonSuccess = XLevel.StartACS(Arg1, Arg2, Arg3, Arg4, 0, A, Line, Side, false, false);
       break;
+
+    case LNSPEC_PolyobjMoveToSpot:
+      buttonSuccess = EV_MovePolyToSpot(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, false);
+      break;
+    case LNSPEC_PolyobjMoveToSpotOverride:
+      buttonSuccess = EV_MovePolyToSpot(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, true);
+      break;
+
     case LNSPEC_PolyRotateLeftOverride:
       buttonSuccess = EV_RotatePoly(Line, Arg1, Arg2, Arg3, Arg4, Arg5, 1, true);
       break;
@@ -2013,14 +2021,56 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
   return true;
 }
 
-//==========================================================================
-//
-// EV_MovePoly
-//
-//==========================================================================
 
-final bool EV_MovePoly(line_t*line, int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5, bool timesEight, bool overRide)
+//==========================================================================
+//
+//  EV_MovePolyTo
+//
+//  po: polyobj to move
+//  speed: how quickly the polyobject should move, in map units per octic.
+//  target: the tid of the spot to which the polyobject should move.
+//
+//==========================================================================
+final bool EV_MovePolyToSpot (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
+                              int Arg5, bool timesEight, bool overRide)
+{
+  int pnum = Arg1;
+  int speed = Arg2;
+  int ttid = Arg3;
+  if (!speed || !ttid) return false;
+  Entity ent = Level.FindMobjFromTID(ttid, none);
+  if (!ent) return false;
+
+  auto poly = XLevel.GetPolyobj(pnum);
+  if (!poly) return false;
+
+  TVec dst = vector(ent.Origin.x, ent.Origin.y, 0);
+  TVec rel = vector(dst.x-poly.startSpot.x, dst.y-poly.startSpot.y, 0);
+  if (!rel) return true;
+
+  float dist = length2D(rel);
+  if (dist < 1) return true;
+
+  rel = normalize(rel);
+  TAVec angles;
+  VectorAngles(rel, out angles);
+  return EV_MovePoly(line, pnum, speed, 0, 0, 0, timesEight, overRide, angles.yaw, dist);
+}
+
+
+//==========================================================================
+//
+//  EV_MovePoly
+//
+//  po: polyobj to move
+//  2: speed
+//  3: angle
+//  4: distance
+//
+//==========================================================================
+final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
+                        int Arg5, bool timesEight, bool overRide,
+                        optional float floatAngle, optional float floatDist)
 {
   int mirror;
   int polyNum;
@@ -2051,6 +2101,7 @@ final bool EV_MovePoly(line_t*line, int Arg1, int Arg2, int Arg3, int Arg4,
   {
     pe.dist = float(Arg4); // Distance
   }
+  if (specified_floatDist) pe.dist = floatDist;
   pe.speed = float(Arg2)*4.0;
 
   //THRUST
@@ -2058,7 +2109,7 @@ final bool EV_MovePoly(line_t*line, int Arg1, int Arg2, int Arg3, int Arg4,
 
   poly->SpecialData = pe;
 
-  an = float(Arg3)*(90.0/64.0);
+  an = (specified_floatAngle ? floatAngle : float(Arg3)*(90.0/64.0));
 
   pe.angle = an;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);

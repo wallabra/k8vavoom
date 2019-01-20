@@ -380,6 +380,8 @@ enum {
   LNSPEC_SectorChangeFlags,
   LNSPEC_LineSetBlocking, // 55
 
+  LNSPEC_PolyobjMoveToSpotOverride = 59,
+
   LNSPEC_PlatPerpetualRaise = 60,
   LNSPEC_PlatStop,
   LNSPEC_PlatDownWaitUpStay,
@@ -406,6 +408,11 @@ enum {
   LNSPEC_ACSLockedExecute,
   LNSPEC_ACSExecuteWithResult,
   LNSPEC_ACSLockedExecuteDoor,
+
+  LNSPEC_PolyobjMoveToSpot = 86,
+  LNSPEC_PolyobjStop = 87,
+  LNSPEC_PolyobjMoveTo = 88,
+  LNSPEC_PolyobjMoveToOverride = 89,
 
   LNSPEC_PolyRotateLeftOverride = 90,// 90
   LNSPEC_PolyRotateRightOverride,
