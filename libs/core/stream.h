@@ -85,7 +85,10 @@ protected:
   bool bError; // did we have any errors?
 
 public:
-  VStream () : bLoading(false) , bError(false) {}
+  vint16 version; // stream version; purely informational field
+
+public:
+  VStream () : bLoading(false) , bError(false), version(0) {}
   virtual ~VStream ();
 
   // status requests
