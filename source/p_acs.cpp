@@ -1682,7 +1682,7 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 
 //==========================================================================
 //
-//  VAcsLevel::Serialise
+//  VAcsLevel::CollectAcsScriptsNoDups
 //
 //==========================================================================
 void VAcsLevel::CollectAcsScriptsNoDups (TArray<VLevelScriptThinker *> &outlist) {

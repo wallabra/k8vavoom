@@ -178,7 +178,9 @@ public:
   // VObject interface
   virtual void Register ();
   virtual void Destroy ();
-  virtual void Serialise (VStream &);
+  virtual void SerialiseFields (VStream &); // this serialises object fields
+  virtual void SerialiseOther (VStream &); // this serialises other object internal data
+  void Serialise (VStream &); // this calls field serialisation, then other serialisation (and writes metadata)
   virtual void ClearReferences ();
   virtual bool ExecuteNetMethod (VMethod *);
 
@@ -291,10 +293,10 @@ public:
 
 
 // dynamically cast an object type-safely
-template<class T> T *Cast (VObject *Src) { return (Src && Src->IsA(T::StaticClass()) ? (T*)Src : nullptr); }
+template<class T> T *Cast (VObject *Src) { return (Src && Src->IsA(T::StaticClass()) ? (T *)Src : nullptr); }
 template<class T, class U> T *CastChecked (U *Src) {
-  if (!Src || !Src->IsA(T::StaticClass())) Sys_Error("Cast to %s failed", T::StaticClass()->GetName());
-  return (T*)Src;
+  if (!Src || !Src->IsA(T::StaticClass())) Sys_Error("Cast `%s` to `%s` failed", (Src ? Src->GetClass()->GetName() : "none"), T::StaticClass()->GetName());
+  return (T *)Src;
 }
 
 

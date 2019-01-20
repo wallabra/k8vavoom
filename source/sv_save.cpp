@@ -113,6 +113,7 @@ enum gameArchiveSegment_t {
 
 class VSavedMap {
 public:
+  vuint8 Compressed;
   TArray<vuint8> Data;
   VName Name;
   vint32 DecompressedSize;
@@ -807,7 +808,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
     VSavedMap *Map = new VSavedMap();
     Maps.Append(Map);
     vint32 DataLen;
-    *Strm << TmpName << Map->DecompressedSize << STRM_INDEX(DataLen);
+    *Strm << TmpName << Map->Compressed << STRM_INDEX(Map->DecompressedSize) << STRM_INDEX(DataLen);
     Map->Name = *TmpName;
     Map->Data.SetNum(DataLen);
     Strm->Serialise(Map->Data.Ptr(), Map->Data.Num());
@@ -922,7 +923,7 @@ void VSaveSlot::SaveToSlot (int Slot) {
   for (int i = 0; i < Maps.Num(); ++i) {
     TmpName = VStr(Maps[i]->Name);
     vint32 DataLen = Maps[i]->Data.Num();
-    *Strm << TmpName << Maps[i]->DecompressedSize << STRM_INDEX(DataLen);
+    *Strm << TmpName << Maps[i]->Compressed << STRM_INDEX(Maps[i]->DecompressedSize) << STRM_INDEX(DataLen);
     Strm->Serialise(Maps[i]->Data.Ptr(), Maps[i]->Data.Num());
   }
 
@@ -1527,17 +1528,21 @@ static void SV_SaveMap (bool savePlayers) {
   // compress map data
   Map->DecompressedSize = Buf.Num();
   Map->Data.Clear();
-  VArrayStream *ArrStrm = new VArrayStream("<savemap>", Map->Data);
-  ArrStrm->BeginWrite();
-  VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm, (int)save_compression_level);
-  ZipStrm->Serialise(Buf.Ptr(), Buf.Num());
-  delete ZipStrm;
-  ZipStrm = nullptr;
-  delete ArrStrm;
-  ArrStrm = nullptr;
+  if (save_compression_level <= 0) {
+    Map->Compressed = 0;
+    Map->Data.setLength(Buf.length());
+    if (Buf.length()) memcpy(Map->Data.ptr(), Buf.ptr(), Buf.length());
+  } else {
+    Map->Compressed = 1;
+    VArrayStream *ArrStrm = new VArrayStream("<savemap>", Map->Data);
+    ArrStrm->BeginWrite();
+    VZipStreamWriter *ZipStrm = new VZipStreamWriter(ArrStrm, (int)save_compression_level);
+    ZipStrm->Serialise(Buf.Ptr(), Buf.Num());
+    delete ZipStrm;
+    delete ArrStrm;
+  }
 
   delete Saver;
-  Saver = nullptr;
   unguard;
 }
 
@@ -1725,15 +1730,18 @@ static void SV_LoadMap (VName MapName) {
   check(Map);
 
   // decompress map data
-  VArrayStream *ArrStrm = new VArrayStream("<savemap:mapdata>", Map->Data);
-  VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm, VZipStreamReader::UNKNOWN_SIZE, Map->DecompressedSize);
   TArray<vuint8> DecompressedData;
-  DecompressedData.SetNum(Map->DecompressedSize);
-  ZipStrm->Serialise(DecompressedData.Ptr(), DecompressedData.Num());
-  delete ZipStrm;
-  ZipStrm = nullptr;
-  delete ArrStrm;
-  ArrStrm = nullptr;
+  if (!Map->Compressed) {
+    DecompressedData.setLength(Map->Data.length());
+    if (Map->Data.length()) memcpy(DecompressedData.ptr(), Map->Data.ptr(), Map->Data.length());
+  } else {
+    VArrayStream *ArrStrm = new VArrayStream("<savemap:mapdata>", Map->Data);
+    VZipStreamReader *ZipStrm = new VZipStreamReader(ArrStrm, VZipStreamReader::UNKNOWN_SIZE, Map->DecompressedSize);
+    DecompressedData.SetNum(Map->DecompressedSize);
+    ZipStrm->Serialise(DecompressedData.Ptr(), DecompressedData.Num());
+    delete ZipStrm;
+    delete ArrStrm;
+  }
 
   VSaveLoaderStream *Loader = new VSaveLoaderStream(new VArrayStream("<savemap:mapdata>", DecompressedData));
 

@@ -61,7 +61,7 @@ class VButton : public VThinker {
   VName DefaultSound;
   bool UseAgain;
 
-  virtual void Serialise (VStream&) override;
+  virtual void SerialiseOther (VStream&) override;
   virtual void Tick (float) override;
   bool AdvanceFrame ();
 };
@@ -154,12 +154,12 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
 
 //==========================================================================
 //
-//  VButton::Serialise
+//  VButton::SerialiseOther
 //
 //==========================================================================
-void VButton::Serialise (VStream &Strm) {
+void VButton::SerialiseOther (VStream &Strm) {
   guard(VButton::Serialise);
-  Super::Serialise(Strm);
+  Super::SerialiseOther(Strm);
   vuint8 xver = 0;
   Strm << xver;
   Strm << STRM_INDEX(Side)

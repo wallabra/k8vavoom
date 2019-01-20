@@ -1674,20 +1674,20 @@ void VScriptDictElem::streamSkip (VStream &strm) {
 //  VScriptDictElem::Serialise
 //
 //==========================================================================
-void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) {
+void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) {
   if (strm.IsLoading()) {
     // reading
     clear();
     if (type.Type == TYPE_String || isSimpleType(type)) {
       type = dtp;
       setDestroy(true);
-      VField::SerialiseFieldValue(strm, (vuint8 *)&value, type, fullname);
+      VField::SerialiseFieldValue(strm, (vuint8 *)&value, type);
     } else {
       int sz = dtp.GetSize();
       value = Z_Calloc(sz);
       type = dtp;
       setDestroy(true);
-      VField::SerialiseFieldValue(strm, (vuint8 *)value, type, fullname);
+      VField::SerialiseFieldValue(strm, (vuint8 *)value, type);
     }
     //updateHashCache();
   } else {
@@ -1698,7 +1698,7 @@ void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr full
     } else {
       ptr = (vuint8 *)value;
     }
-    VField::SerialiseFieldValue(strm, ptr, type, fullname);
+    VField::SerialiseFieldValue(strm, ptr, type);
   }
 }
 
@@ -1709,7 +1709,7 @@ void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr full
 //  VScriptDictElem::Serialise
 //
 //==========================================================================
-void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) const {
+void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) const {
   check(!strm.IsLoading());
   // writing
   vuint8 *ptr;
@@ -1718,7 +1718,7 @@ void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp, VStr full
   } else {
     ptr = (vuint8 *)value;
   }
-  VField::SerialiseFieldValue(strm, ptr, type, fullname);
+  VField::SerialiseFieldValue(strm, ptr, type);
 }
 
 
@@ -1930,7 +1930,7 @@ void VScriptDict::streamSkip (VStream &strm) {
 //  VScriptDict::Serialise
 //
 //==========================================================================
-void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) {
+void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) {
   VFieldType tp;
   if (strm.IsLoading()) {
     // reading
@@ -1943,8 +1943,8 @@ void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname
     while (count--) {
       // key and value
       VScriptDictElem ke, ve;
-      ke.Serialise(strm, dtp.GetDictKeyType(), fullname);
-      ve.Serialise(strm, dtp.GetDictValueType(), fullname);
+      ke.Serialise(strm, dtp.GetDictKeyType());
+      ve.Serialise(strm, dtp.GetDictValueType());
       put(ke, ve);
     }
   } else {
@@ -1955,8 +1955,8 @@ void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp, VStr fullname
     strm << STRM_INDEX(count);
     if (count) {
       for (auto it = map->first(); it; ++it, --count) {
-        it.getKey().Serialise(strm, dtp.GetDictKeyType(), fullname);
-        it.getValue().Serialise(strm, dtp.GetDictValueType(), fullname);
+        it.getKey().Serialise(strm, dtp.GetDictKeyType());
+        it.getValue().Serialise(strm, dtp.GetDictValueType());
       }
       check(count == 0);
     }

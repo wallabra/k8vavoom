@@ -245,8 +245,8 @@ struct VScriptDictElem {
   }
 
   static void streamSkip (VStream &strm);
-  void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname);
-  void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname) const;
+  void Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/);
+  void Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) const;
 
   // always recalculating, never returns cached hash
   vuint32 calcHash () const;
@@ -295,7 +295,7 @@ public:
 
   static void streamSkip (VStream &strm);
   //friend VStream &operator << (VStream &strm, VScriptDict &dc);
-  void Serialise (VStream &strm, const VFieldType &dtp, VStr fullname);
+  void Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/);
 };
 
 // required for VaVoom C VM

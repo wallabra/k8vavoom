@@ -235,10 +235,10 @@ static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg, b
 
 //==========================================================================
 //
-//  VLevel::Serialise
+//  VLevel::SerialiseOther
 //
 //==========================================================================
-void VLevel::Serialise (VStream &Strm) {
+void VLevel::SerialiseOther (VStream &Strm) {
   guard(VLevel::Serialise);
   int i;
   sector_t *sec;

@@ -71,7 +71,7 @@ public:
 
   // VObject interface
   virtual void Destroy () override;
-  virtual void Serialise (VStream &) override;
+  virtual void SerialiseOther (VStream &) override;
 
   // VThinker interface
   virtual void Tick (float);

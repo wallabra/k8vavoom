@@ -57,7 +57,7 @@ public:
   //VWorldInfo ();
   virtual void PostCtor () override;
 
-  virtual void Serialise (VStream &Strm) override;
+  virtual void SerialiseOther (VStream &Strm) override;
   virtual void Destroy () override;
 
   void SetSkill (int);

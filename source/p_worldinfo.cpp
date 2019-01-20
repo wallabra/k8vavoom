@@ -44,16 +44,16 @@ void VWorldInfo::PostCtor () {
 
 //==========================================================================
 //
-//  VWorldInfo::Serialise
+//  VWorldInfo::SerialiseOther
 //
 //==========================================================================
-void VWorldInfo::Serialise (VStream &Strm) {
+void VWorldInfo::SerialiseOther (VStream &Strm) {
   guard(VWorldInfo::Serialise);
+  Super::SerialiseOther(Strm);
   vuint8 xver = 0;
   Strm << xver;
   // serialise global script info
   Acs->Serialise(Strm);
-  Super::Serialise(Strm);
   unguard;
 }
 

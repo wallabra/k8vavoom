@@ -930,28 +930,159 @@ int VObject::GetObjectsCount () {
 
 //==========================================================================
 //
-//  VObject::Serialise
+//  VObject::SerialiseFields
+//
+//  this serialises object fields
 //
 //==========================================================================
-void VObject::Serialise (VStream &Strm) {
-  guard(VObject::Serialise);
-  vuint8 xver = 1; // current version is 0
-  Strm << xver;
-  if (xver != 1) Host_Error("invalid VM object version (%u)", (unsigned)xver);
-  //check((ObjectFlags&_OF_CleanupRef) == 0);
-  // save flags
+void VObject::SerialiseFields (VStream &Strm) {
+  //GetClass()->SerialiseObject(Strm, this);
   if (Strm.IsLoading()) {
-    //ObjectFlags = 0;
-    vint32 flg;
-    Strm << STRM_INDEX(flg);
-    if (flg) SetFlags(flg);
+    // reading
+    // read field count
+    vint32 fldcount = -1;
+    Strm << STRM_INDEX(fldcount);
+    if (fldcount < 0) Host_Error("invalid number of saved fields in class `%s` (%d)", GetClass()->GetName(), fldcount);
+    if (fldcount == 0) return; // nothing to do
+    // build field list to speedup loading
+    TMapNC<VName, VField *> fldmap;
+    TMapNC<VName, bool> fldseen;
+    for (VClass *cls = GetClass(); cls; cls = cls->GetSuperClass()) {
+      for (VField *fld = cls->Fields; fld; fld = fld->Next) {
+        if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
+        if (fld->Name == NAME_None) continue;
+        if (fldmap.put(fld->Name, fld)) Host_Error("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+      }
+    }
+    // now load fields
+    while (fldcount--) {
+      VName fldname = NAME_None;
+      Strm << fldname;
+      auto fpp = fldmap.find(fldname);
+      if (!fpp) {
+        GLog.WriteLine(NAME_Warning, "saved field `%s` not found in class `%s`, value ignored", *fldname, GetClass()->GetName());
+        VField::SkipSerialisedValue(Strm);
+      } else {
+        if (fldseen.put(fldname, true)) {
+          GLog.WriteLine(NAME_Warning, "duplicate saved field `%s` in class `%s`", *fldname, GetClass()->GetName());
+        }
+        VField *fld = *fpp;
+        VField::SerialiseFieldValue(Strm, (vuint8 *)this+fld->Ofs, fld->Type);
+      }
+    }
+    // show missing fields
+    for (auto fit = fldmap.first(); fit; ++fit) {
+      VName fldname = fit.getKey();
+      if (!fldseen.has(fldname)) {
+        GLog.WriteLine(NAME_Warning, "field `%s` is missing in saved data for class `%s`", *fldname, GetClass()->GetName());
+      }
+    }
   } else {
-    vint32 flg = ObjectFlags;
-    Strm << STRM_INDEX(flg);
+    // writing
+    // count fields, collect them into array
+    // serialise fields
+    TMapNC<VName, bool> fldseen;
+    TArray<VField *> fldlist;
+    for (VClass *cls = GetClass(); cls; cls = cls->GetSuperClass()) {
+      for (VField *fld = cls->Fields; fld; fld = fld->Next) {
+        if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
+        if (fld->Name == NAME_None) continue;
+        if (fldseen.put(fld->Name, true)) Host_Error("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+        fldlist.append(fld);
+      }
+    }
+    // now write all fields in backwards order, so they'll appear in natural order in stream
+    vint32 fldcount = fldlist.length();
+    Strm << STRM_INDEX(fldcount);
+    for (int f = fldlist.length()-1; f >= 0; --f) {
+      VField *fld = fldlist[f];
+      Strm << fld->Name;
+      VField::SerialiseFieldValue(Strm, (vuint8 *)this+fld->Ofs, fld->Type);
+    }
   }
-  if (ObjectFlags&_OF_Destroyed) return;
-  GetClass()->SerialiseObject(Strm, this);
-  unguard;
+}
+
+
+//==========================================================================
+//
+//  VObject::SerialiseOther
+//
+//  this serialises other object internal data
+//
+//==========================================================================
+void VObject::SerialiseOther (VStream &Strm) {
+}
+
+
+//==========================================================================
+//
+//  VObject::Serialise
+//
+//  this calls field serialisation, then other serialisation
+//
+//==========================================================================
+void VObject::Serialise (VStream &strm) {
+  if (strm.IsLoading()) {
+    // reading
+    VName clsname = NAME_None;
+    strm << clsname;
+    if (strm.IsError()) Host_Error("error reading object of class `%s`", GetClass()->GetName());
+    if (clsname == NAME_None) Host_Error("cannot load object of `none` class");
+    VClass *cls = VClass::FindClass(*clsname);
+    if (!cls) Host_Error("cannot load object of unknown `%s` class", *clsname);
+    if (!GetClass()->IsChildOf(cls)) Host_Error("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
+    // skip data size
+    vint32 size;
+    strm << size;
+    if (size < 1) Host_Error("error reading object of class `%s` (invalid size: %d)", *clsname, size);
+    auto endpos = strm.Tell()+size;
+    // read flags
+    vint32 flg;
+    strm << STRM_INDEX(flg);
+    if (strm.IsError()) Host_Error("error reading object of class `%s`", *clsname);
+    if (flg) SetFlags(flg);
+    if (ObjectFlags&_OF_Destroyed) {
+      // no need to read anything, just skip it all
+      if (strm.Tell() > endpos) Host_Error("error reading object of class `%s` (invalid data size)", *clsname);
+      strm.Seek(endpos);
+      if (strm.IsError()) Host_Error("error reading object of class `%s`", *clsname);
+      return;
+    }
+    // read fields
+    SerialiseFields(strm);
+    if (strm.IsError()) Host_Error("error reading object of class `%s`", *clsname);
+    // read other data
+    SerialiseOther(strm);
+    if (strm.IsError()) Host_Error("error reading object of class `%s`", *clsname);
+    // check if all data was read
+    if (strm.Tell() != endpos) Host_Error("error reading object of class `%s` (not all data read)", *clsname);
+  } else {
+    // writing
+    VName clsname = GetClass()->Name;
+    strm << clsname;
+    // write dummy data size (will be fixed later)
+    auto szpos = strm.Tell();
+    vint32 size = 0;
+    strm << size;
+    // write flags
+    vint32 flg = ObjectFlags;
+    strm << STRM_INDEX(flg);
+    // is object dead? don't write data of dead objects
+    if ((ObjectFlags&_OF_Destroyed) == 0) {
+      // write fields
+      SerialiseFields(strm);
+      if (strm.IsError()) return;
+      // write other data
+      SerialiseOther(strm);
+      if (strm.IsError()) return;
+    }
+    // fix data size
+    auto cpos = strm.Tell();
+    size = cpos-(szpos+(int)sizeof(vint32));
+    strm.Seek(szpos);
+    strm << size;
+    strm.Seek(cpos);
+  }
 }
 
 

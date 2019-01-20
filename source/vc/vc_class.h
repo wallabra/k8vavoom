@@ -393,7 +393,7 @@ public:
 
 #if !defined(IN_VCC)
   void CopyObject (const vuint8 *, vuint8 *);
-  void SerialiseObject (VStream &, VObject *);
+  //void SerialiseObject (VStream &, VObject *); // moved to VObject
   void CleanObject (VObject *);
   void DestructObject (VObject *);
   VClass *CreateDerivedClass (VName, VMemberBase *, TArray<VDecorateUserVarDef> &, const TLocation &);

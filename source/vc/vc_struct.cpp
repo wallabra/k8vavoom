@@ -532,88 +532,69 @@ void VStruct::SkipSerialisedObject (VStream &Strm) {
 //
 //==========================================================================
 void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
-  guard(VStruct::SerialiseObject);
-  // serialise parent struct's fields
   if (Strm.IsLoading()) {
-    // load parent struct
-    VName psname = NAME_None;
-    Strm << psname;
-    if (ParentStruct) {
-      if (ParentStruct->Name != psname) Sys_Error("I/O ERROR: expected parent struct '%s', got '%s'", *ParentStruct->Name, *psname);
-      ParentStruct->SerialiseObject(Strm, Data);
-    } else {
-      if (psname != NAME_None) Sys_Error("I/O ERROR: expected no parent struct, got '%s'", *psname);
-    }
-  } else {
-    // save parent struct
-    VName psname = (ParentStruct ? ParentStruct->Name : NAME_None);
-    Strm << psname;
-    if (ParentStruct) ParentStruct->SerialiseObject(Strm, Data);
-  }
-/*
-  // serialise fields
-  for (VField *F = Fields; F; F = F->Next) {
-    // skip native and transient fields
-    if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
-    VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type);
-  }
-*/
-  // serialise fields
-  vint32 fldcount = 0;
-  if (Strm.IsLoading()) {
-    // load fields
-    TMap<VName, VField *> flist;
-    for (VField *F = Fields; F; F = F->Next) {
-      // skip native and transient fields
-      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
-      flist.put(F->Name, F);
-    }
-    // number of fields
+    // reading
+    // read field count
+    vint32 fldcount = -1;
     Strm << STRM_INDEX(fldcount);
+    if (fldcount < 0) Host_Error("invalid number of saved fields in struct `%s` (%d)", *Name, fldcount);
+    if (fldcount == 0) return; // nothing to do
+    // build field list to speedup loading
+    TMapNC<VName, VField *> fldmap;
+    TMapNC<VName, bool> fldseen;
+    for (VStruct *st = this; st; st = st->ParentStruct) {
+      for (VField *fld = st->Fields; fld; fld = fld->Next) {
+        if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
+        if (fld->Name == NAME_None) continue;
+        if (fldmap.put(fld->Name, fld)) Host_Error("duplicate field `%s` in struct `%s`", *fld->Name, *Name);
+      }
+    }
+    // now load fields
     while (fldcount--) {
-      VName fname = NAME_None;
-      Strm << fname;
-      auto ffp = flist.find(fname);
-      if (!ffp) {
-#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
-        fprintf(stderr, "I/O WARNING: field '%s' not found\n", *fname);
-#else
-        GCon->Logf("I/O WARNING: field '%s' not found", *fname);
-#endif
+      VName fldname = NAME_None;
+      Strm << fldname;
+      auto fpp = fldmap.find(fldname);
+      if (!fpp) {
+        GLog.WriteLine(NAME_Warning, "saved field `%s` not found in struct `%s`, value ignored", *fldname, *Name);
         VField::SkipSerialisedValue(Strm);
       } else {
-        VField *F = *ffp;
-        flist.remove(fname);
-        VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type, F->GetFullName());
+        if (fldseen.put(fldname, true)) {
+          GLog.WriteLine(NAME_Warning, "duplicate saved field `%s` in struct `%s`", *fldname, *Name);
+        }
+        VField *fld = *fpp;
+        VField::SerialiseFieldValue(Strm, Data+fld->Ofs, fld->Type);
       }
     }
     // show missing fields
-    while (flist.count()) {
-      auto it = flist.first();
-      VName fname = it.getKey();
-#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
-      fprintf(stderr, "I/O WARNING: field '%s' is missing\n", *fname);
-#else
-      GCon->Logf("I/O WARNING: field '%s' is missing", *fname);
-#endif
-      flist.remove(fname);
+    for (auto fit = fldmap.first(); fit; ++fit) {
+      VName fldname = fit.getKey();
+      if (!fldseen.has(fldname)) {
+        GLog.WriteLine(NAME_Warning, "field `%s` is missing in saved data for struct `%s`", *fldname, *Name);
+      }
     }
   } else {
-    // save fields
-    for (VField *F = Fields; F; F = F->Next) {
-      // skip native and transient fields
-      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
-      ++fldcount;
+    // writing
+    // count fields, collect them into array
+    // serialise fields
+    TMapNC<VName, bool> fldseen;
+    TArray<VField *> fldlist;
+    for (VStruct *st = this; st; st = st->ParentStruct) {
+      for (VField *fld = st->Fields; fld; fld = fld->Next) {
+        if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
+        if (fld->Name == NAME_None) continue;
+        if (fldseen.put(fld->Name, true)) Host_Error("duplicate field `%s` in struct `%s`", *fld->Name, *Name);
+        fldlist.append(fld);
+      }
     }
+    // now write all fields in backwards order, so they'll appear in natural order in stream
+    vint32 fldcount = fldlist.length();
     Strm << STRM_INDEX(fldcount);
-    for (VField *F = Fields; F; F = F->Next) {
-      // skip native and transient fields
-      if (F->Flags&(FIELD_Native|FIELD_Transient)) continue;
-      Strm << F->Name;
-      VField::SerialiseFieldValue(Strm, Data+F->Ofs, F->Type, F->GetFullName());
+    for (int f = fldlist.length()-1; f >= 0; --f) {
+      VField *fld = fldlist[f];
+      Strm << fld->Name;
+      VField::SerialiseFieldValue(Strm, Data+fld->Ofs, fld->Type);
     }
   }
-  unguardf(("(%s)", *Name));
 }
 
 

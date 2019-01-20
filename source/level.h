@@ -292,7 +292,7 @@ public:
   void CollectAcsScripts (TArray<VLevelScriptThinker *> &outlist);
 
 public:
-  virtual void Serialise (VStream &Strm) override;
+  virtual void SerialiseOther (VStream &Strm) override;
   virtual void ClearReferences () override;
   virtual void Destroy () override;
 

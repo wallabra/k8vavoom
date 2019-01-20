@@ -88,14 +88,12 @@ void VEntity::InitFuncIndexes () {
 
 //==========================================================================
 //
-//  VEntity::Serialise
+//  VEntity::SerialiseOther
 //
 //==========================================================================
-void VEntity::Serialise (VStream &Strm) {
+void VEntity::SerialiseOther (VStream &Strm) {
   guard(VEntity::Serialise);
-  Super::Serialise(Strm);
-  vuint8 xver = 0;
-  Strm << xver;
+  Super::SerialiseOther(Strm);
   if (Strm.IsLoading()) {
     if (EntityFlags&EF_IsPlayer) Player->MO = this;
     SubSector = nullptr; // must mark as not linked

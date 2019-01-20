@@ -838,7 +838,7 @@ void VScriptParser::ExpectFloat () {
         while (*s >= '0' && *s <= '9') ++s;
         while (*s && *(const vuint8 *)s <= ' ') ++s;
         if (*s) Error(va("Bad floating point constant \"%s\".", *String));
-        GCon->Logf(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
+        GLog.WriteLine(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
         ff = 1e14;
         if (neg) ff = -ff;
       }
