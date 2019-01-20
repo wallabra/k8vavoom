@@ -3249,6 +3249,9 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         }
       }
       return 0x7FFFFFFF; // doesn't exist
+
+    case ACSF_SpawnParticle:
+      return 0;
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {

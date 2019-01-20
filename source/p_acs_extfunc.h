@@ -119,7 +119,7 @@
   ACS_EXTFUNC(GetMaxInventory)
   ACS_EXTFUNC(SetSectorDamage)
   ACS_EXTFUNC(SetSectorTerrain)
-  ACS_EXTFUNC(SpawnParticle)
+  ACS_EXTFUNC(SpawnParticle) // ignored
   ACS_EXTFUNC(SetMusicVolume) // ignored
   ACS_EXTFUNC(CheckProximity)
   ACS_EXTFUNC(CheckActorState) // 99
