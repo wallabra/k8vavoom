@@ -3236,6 +3236,19 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_SetHUDClipRect:
       GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
       return 0;
+
+    case ACSF_GetPolyobjX:
+    case ACSF_GetPolyobjY:
+      if (argCount > 0) {
+        polyobj_t *pobj = XLevel->GetPolyobj(args[0]);
+        if (!pobj) return 0x7FFFFFFF; // doesn't exist
+        if (funcIndex == ACSF_GetPolyobjX) {
+          return (int)(pobj->startSpot.x*65536.0f);
+        } else {
+          return (int)(pobj->startSpot.y*65536.0f);
+        }
+      }
+      return 0x7FFFFFFF; // doesn't exist
   }
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
