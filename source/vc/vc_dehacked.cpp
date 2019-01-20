@@ -157,6 +157,25 @@ static const VDehFlag DehFlags[] = {
 static int dehCurrLine = 0;
 static bool strEOL = false;
 static bool bexMode = false;
+static VStr dehFileName;
+
+
+//==========================================================================
+//
+//  GetLine
+//
+//==========================================================================
+static __attribute__((format(printf, 1, 2))) void Warning (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  if (!dehFileName.isEmpty()) {
+    GCon->Logf(NAME_Warning, "%s:%d: %s", *dehFileName, dehCurrLine, res);
+  } else {
+    GCon->Logf(NAME_Warning, "DEHACKED: %s", res);
+  }
+}
 
 
 //==========================================================================
@@ -413,7 +432,7 @@ static void ParseFlag (const VStr &FlagName, int *Values, bool *Changed) {
       return;
     }
   }
-  GCon->Logf(NAME_Init, "WARINIG! Unknown flag '%s'", *FlagName);
+  Warning("Unknown flag '%s'", *FlagName);
   unguard;
 }
 
@@ -433,7 +452,7 @@ static int ParseRenderStyle () {
   else if (!VStr::ICmp(ValueString, "STYLE_OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
   else if (!VStr::ICmp(ValueString, "STYLE_Translucent")) RenderStyle = STYLE_Translucent;
   else if (!VStr::ICmp(ValueString, "STYLE_Add")) RenderStyle = STYLE_Add;
-  else GCon->Logf(NAME_Init, "Bad render style '%s'", ValueString);
+  else Warning("Bad render style '%s'", ValueString);
   return RenderStyle;
   unguard;
 }
@@ -447,7 +466,7 @@ static int ParseRenderStyle () {
 static void DoThingState (VClass *Ent, const char *StateLabel) {
   guard(DoThingState);
   if (value < 0 || value >= States.Num()) {
-    GCon->Logf(NAME_Init, "WARNING! Bad thing state '%d'", value);
+    Warning("Bad state '%d' for thing '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
   } else {
     Ent->SetStateLabel(StateLabel, States[value]);
   }
@@ -463,7 +482,7 @@ static void DoThingState (VClass *Ent, const char *StateLabel) {
 static void DoThingSound (VClass *Ent, const char *FieldName) {
   //  If it's not a number, treat it like a sound defined in SNDINFO
        if (ValueString[0] < '0' || ValueString[0] > '9') SetClassFieldName(Ent, FieldName, ValueString);
-  else if (value < 0 || value >= Sounds.Num()) GCon->Logf(NAME_Init, "WARNING! Bad sound index %d", value);
+  else if (value < 0 || value >= Sounds.Num()) Warning("Bad sound index %d for '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
   else SetClassFieldName(Ent, FieldName, Sounds[value]);
 }
 
@@ -476,7 +495,7 @@ static void DoThingSound (VClass *Ent, const char *FieldName) {
 static void ReadThing (int num) {
   guard(ReadThing);
   if (num < 1 || num > EntClasses.Num()) {
-    GCon->Logf(NAME_Init, "WARNING! Invalid thing num %d", num);
+    Warning("Invalid thing num %d", num);
     while (ParseParam()) {}
     return;
   }
@@ -670,13 +689,13 @@ static void ReadThing (int num) {
     } else if (!VStr::ICmp(String, "Death sound")) {
       DoThingSound(Ent, "DeathSound");
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid mobj param '%s'", String);
+      Warning("Invalid mobj param '%s'", String);
     }
   }
   // reset heights for things hanging from the ceiling that don't specify a new height
   if (!gotHeight && gotSpawnCeiling) {
     if (((VEntity *)Ent->Defaults)->Height != VanillaThingHeights[num-1]) {
-      GCon->Logf(NAME_Init, "DEH: forced vanilla thing height for '%s' (our: %d, vanilla: %d)", *Ent->GetFullName(), (int)(((VEntity *)Ent->Defaults)->Height), VanillaThingHeights[num-1]);
+      Warning("forced vanilla thing height for '%s' (our: %d, vanilla: %d) (this is harmless)", *Ent->GetFullName(), (int)(((VEntity *)Ent->Defaults)->Height), VanillaThingHeights[num-1]);
     }
     ((VEntity *)Ent->Defaults)->Height = VanillaThingHeights[num-1];
   }
@@ -701,7 +720,7 @@ static void ReadSound (int) {
     else if (!VStr::ICmp(String, "Zero 4"));     // link - removed
     else if (!VStr::ICmp(String, "Neg. One 1")); // link pitch - removed
     else if (!VStr::ICmp(String, "Neg. One 2")); // link volume - removed
-    else GCon->Logf(NAME_Init, "WARNING! Invalid sound param '%s'", String);
+    else Warning("Invalid sound param '%s'", String);
   }
   unguard;
 }
@@ -716,7 +735,7 @@ static void ReadState (int num) {
   guard(ReadState);
   // check index
   if (num >= States.Num() || num < 0) {
-    GCon->Logf(NAME_Init, "WARNING! Invalid state num %d", num);
+    Warning("Invalid state num %d", num);
     while (ParseParam()) {}
     return;
   }
@@ -730,7 +749,7 @@ static void ReadState (int num) {
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Sprite number")) {
       if (value < 0 || value >= Sprites.Num()) {
-        GCon->Logf(NAME_Init, "WARNING! Bad sprite index %d", value);
+        Warning("Bad sprite index %d", value);
       } else {
         States[num]->SpriteName = Sprites[value];
         States[num]->SpriteIndex = (Sprites[value] != NAME_None ? VClass::FindSprite(Sprites[value]) : 1);
@@ -745,7 +764,7 @@ static void ReadState (int num) {
       States[num]->Time = (value < 0 ? value : value/35.0f);
     } else if (!VStr::ICmp(String, "Next frame")) {
       if (value >= States.Num() || value < 0) {
-        GCon->Logf(NAME_Init, "WARNING! Invalid next state %d", value);
+        Warning("Invalid next state %d", value);
       } else {
         States[num]->NextState = States[value];
       }
@@ -754,9 +773,9 @@ static void ReadState (int num) {
     } else if (!VStr::ICmp(String, "Unknown 2")) {
       States[num]->Misc2 = value;
     } else if (!VStr::ICmp(String, "Action pointer")) {
-      GCon->Logf(NAME_Init, "WARNING! Tried to set action pointer.");
+      Warning("Tried to set action pointer.");
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid state param '%s'", String);
+      Warning("Invalid state param '%s'", String);
     }
   }
   unguard;
@@ -772,7 +791,7 @@ static void ReadSpriteName (int) {
   guard(ReadSpriteName);
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Offset")) {} // can't handle
-    else GCon->Logf(NAME_Init, "WARNING! Invalid sprite name param '%s'", String);
+    else Warning("Invalid sprite name param '%s'", String);
   }
   unguard;
 }
@@ -787,7 +806,7 @@ static void ReadAmmo (int num) {
   guard(ReadAmmo);
   // check index
   if (num >= AmmoClasses.Num() || num < 0) {
-    GCon->Logf(NAME_Init, "WARNING! Invalid ammo num %d", num);
+    Warning("Invalid ammo num %d", num);
     while (ParseParam()) {}
     return;
   }
@@ -801,7 +820,7 @@ static void ReadAmmo (int num) {
       SetClassFieldInt(Ammo, "Amount", value);
       SetClassFieldInt(Ammo, "BackpackAmount", value);
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid ammo param '%s'", String);
+      Warning("Invalid ammo param '%s'", String);
     }
   }
 
@@ -833,7 +852,7 @@ static void ReadAmmo (int num) {
 static void DoWeaponState (VClass *Weapon, const char *StateLabel) {
   guard(DoWeaponState);
   if (value < 0 || value >= States.Num()) {
-    GCon->Logf(NAME_Init, "WARNING! Invalid weapon state %d", value);
+    Warning("Invalid weapon state %d for weapon '%s'", value, (Weapon ? Weapon->GetName() : "<undefined>"));
   } else {
     Weapon->SetStateLabel(StateLabel, States[value]);
   }
@@ -849,9 +868,8 @@ static void DoWeaponState (VClass *Weapon, const char *StateLabel) {
 static void ReadWeapon (int num) {
   guard(ReadWeapon);
   // check index
-  if (num < 0 || num >= WeaponClasses.Num())
-  {
-    GCon->Logf(NAME_Init, "WARNING! Invalid weapon num %d", num);
+  if (num < 0 || num >= WeaponClasses.Num()) {
+    Warning("Invalid weapon num %d", num);
     while (ParseParam()) {}
     return;
   }
@@ -881,7 +899,7 @@ static void ReadWeapon (int num) {
     } else if (!VStr::ICmp(String, "Firing frame")) {
       DoWeaponState(Weapon, "Flash");
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid weapon param '%s'", String);
+      Warning("Invalid weapon param '%s' for weapon '%s'", String, (Weapon ? Weapon->GetName() : "<undefined>"));
     }
   }
   unguard;
@@ -896,7 +914,7 @@ static void ReadWeapon (int num) {
 static void ReadPointer (int num) {
   guard(ReadPointer);
   if (num < 0 || num >= CodePtrStates.Num()) {
-    GCon->Logf(NAME_Init, "WARNING! Invalid pointer");
+    Warning("Invalid pointer");
     while (ParseParam()) {}
     return;
   }
@@ -904,12 +922,12 @@ static void ReadPointer (int num) {
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Codep Frame")) {
       if (value < 0 || value >= States.Num()) {
-        GCon->Logf(NAME_Init, "WARNING! Invalid source state %d", value);
+        Warning("Invalid source state %d", value);
       } else {
         CodePtrStates[num]->Function = StateActions[value];
       }
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid pointer param '%s'", String);
+      Warning("Invalid pointer param '%s'", String);
     }
   }
   unguard;
@@ -927,7 +945,7 @@ static void ReadCodePtr (int) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
       int Index = atoi(String+5);
       if (Index < 0 || Index >= States.Num()) {
-        GCon->Logf(NAME_Init, "Bad frame index %d at line %d", Index, dehCurrLine);
+        Warning("Bad frame index %d", Index);
         continue;
       }
 
@@ -942,9 +960,9 @@ static void ReadCodePtr (int) {
           break;
         }
       }
-      if (!Found) GCon->Logf(NAME_Init, "WARNING! Invalid code pointer '%s' at line %d", ValueString, dehCurrLine);
+      if (!Found) Warning("Invalid code pointer '%s'", ValueString);
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid code pointer param '%s' at line %d", String, dehCurrLine);
+      Warning("Invalid code pointer param '%s'", String);
     }
   }
   unguard;
@@ -973,14 +991,14 @@ static void DoPowerupColour (const char *ClassName) {
   guard(DoPowerupColour);
   VClass *Power = VClass::FindClass(ClassName);
   if (!Power) {
-    GCon->Logf(NAME_Init, "Can't find powerup class '%s'", ClassName);
+    Warning("Can't find powerup class '%s'", ClassName);
     return;
   }
 
   int r, g, b;
   float a;
   if (sscanf(ValueString, "%d %d %d %f", &r, &g, &b, &a) != 4) {
-    GCon->Logf(NAME_Init, "Bad powerup colour '%s'", ValueString);
+    Warning("Bad powerup colour '%s' for class '%s'", ValueString, ClassName);
     return;
   }
   r = MID(0, r, 255);
@@ -1058,7 +1076,7 @@ static void ReadMisc (int) {
     } else if (!VStr::ICmp(String, "Rocket Explosion Alpha")) {
       SetClassFieldFloat(GameInfoClass, "DehExplosionAlpha", VStr::atof(ValueString, 1));
     } else {
-      GCon->Logf(NAME_Init, "WARNING! Invalid misc '%s'", String);
+      Warning("Invalid misc '%s'", String);
     }
   }
 
@@ -1078,7 +1096,7 @@ static void ReadPars (int) {
   guard(ReadPars);
   while (GetLine()) {
     if (strchr(String, '=')) {
-      GCon->Logf(NAME_Init, "WARNING! Unknown key in Pars section (%s).", String);
+      Warning("Unknown key in Pars section (%s)", String);
       continue;
     }
     TArray<VStr> cmda;
@@ -1088,7 +1106,7 @@ static void ReadPars (int) {
     if (cmda.length() < 1) return;
     if (cmda[0].ICmp("par") != 0) return;
     if (cmda.length() < 3 || cmda.length() > 4) {
-      GCon->Logf(NAME_Init, "WARNING! Bad par time around line %d", dehCurrLine);
+      Warning("Bad par time");
       continue;
     }
     int nums[4];
@@ -1096,7 +1114,7 @@ static void ReadPars (int) {
     memset(nums, 0, sizeof(nums));
     for (int f = 1; f < cmda.length(); ++f) {
       if (!cmda[f].convertInt(&nums[f]) || nums[f] < 0) {
-        GCon->Logf(NAME_Init, "WARNING! Bad par time around line %d", dehCurrLine);
+        Warning("Bad par time");
         ok = false;
         break;
       }
@@ -1160,7 +1178,7 @@ static void FindString (const char *oldStr, const char *newStr) {
     return;
   }
 
-  GCon->Logf(NAME_Init, "Not found old \"%s\" new \"%s\"", oldStr, newStr);
+  Warning("Not found old \"%s\" new \"%s\"", oldStr, newStr);
   unguard;
 }
 
@@ -1337,7 +1355,7 @@ static void LoadDehackedFile (VStream *Strm) {
     if (Patch[25] < '3') {
       delete[] Patch;
       Patch = nullptr;
-      GCon->Logf(NAME_Init, "DeHackEd patch is too old");
+      Warning("DeHackEd patch is too old");
       return;
     }
     GetLine();
@@ -1346,16 +1364,16 @@ static void LoadDehackedFile (VStream *Strm) {
     while (ParseParam()) {
            if (!VStr::ICmp(String, "Doom version")) DVer = value;
       else if (!VStr::ICmp(String, "Patch format")) PFmt = value;
-      else GCon->Logf(NAME_Init, "Unknown parameter '%s'", String);
+      else Warning("Unknown parameter '%s'", String);
     }
     if (!String || DVer == -1 || PFmt == -1) {
       delete[] Patch;
       Patch = nullptr;
-      GCon->Logf(NAME_Init, "Not a DeHackEd patch file");
+      Warning("Not a DeHackEd patch file");
       return;
     }
   } else {
-    GCon->Logf(NAME_Init, "Missing DeHackEd header, assuming BEX file");
+    Warning("Missing DeHackEd header, assuming BEX file");
     bexMode = true;
     GetLine();
   }
@@ -1389,7 +1407,7 @@ static void LoadDehackedFile (VStream *Strm) {
         Lump = W_CheckNumForName(VName(*LumpName, VName::AddLower8));
       }
       if (Lump < 0) {
-        GCon->Logf(NAME_Init, "Lump '%s' not found", *LumpName);
+        Warning("Lump '%s' not found", *LumpName);
       } else {
         char *SavedPatch = Patch;
         char *SavedPatchPtr = PatchPtr;
@@ -1401,7 +1419,7 @@ static void LoadDehackedFile (VStream *Strm) {
       }
       GetLine();
     } else {
-      GCon->Logf(NAME_Init, "Don't know how to handle \"%s\"", String);
+      Warning("Don't know how to handle \"%s\"", String);
       GetLine();
     }
   }
@@ -1584,7 +1602,8 @@ void ProcessDehackedFiles () {
 
   // parse dehacked patches
   if (LumpNum >= 0) {
-    GCon->Logf(NAME_Init, "Processing dehacked patch lump: %s", *W_FullLumpName(LumpNum));
+    dehFileName = W_FullLumpName(LumpNum);
+    GCon->Logf(NAME_Init, "Processing dehacked patch lump: %s", *dehFileName);
     LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
   }
   if (p) {
@@ -1592,9 +1611,11 @@ void ProcessDehackedFiles () {
       GCon->Logf(NAME_Init, "Processing dehacked patch '%s'", GArgs[p]);
       VStream *AStrm = FL_OpenSysFileRead(GArgs[p]);
       if (!AStrm) { GCon->Logf(NAME_Init, "No dehacked file '%s'", GArgs[p]); continue; }
+      dehFileName = GArgs[p];
       LoadDehackedFile(AStrm);
     }
   }
+  dehFileName.clear();
 
   for (int i = 0; i < EntClasses.Num(); ++i) {
     // set all classes to use old style pickup handling.
