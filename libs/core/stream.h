@@ -29,8 +29,6 @@
 //**
 //**************************************************************************
 class VStr;
-class VLevel;
-class VLevelInfo;
 class VStream;
 
 
@@ -48,32 +46,15 @@ int encodeVarInt (void *data, vuint32 n);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// eh... need to be here, so we can have virtual method for it
-class VLevelScriptThinker {
+// VObject knows how to serialize itself, others should inherit from this
+class VSerialisable {
 public:
-  bool destroyed; // script `Destroy()` method should set this (and check to avoid double destroying)
-  VLevel *XLevel; // level object
-  VLevelInfo *Level; // level info object
+  VSerialisable () {}
+  virtual ~VSerialisable ();
 
-public:
-  VLevelScriptThinker () : destroyed(false), XLevel(nullptr), Level(nullptr) {}
-
-  virtual ~VLevelScriptThinker () {
-    if (!destroyed) Sys_Error("trying to delete unfinalized Acs script");
-  }
-
-  inline void DestroyThinker () { Destroy(); }
-
-  // it is guaranteed that `Destroy()` will be called by master before deleting the object
-  virtual void Destroy () = 0;
   virtual void Serialise (VStream &) = 0;
-  virtual void ClearReferences () = 0;
-  virtual void Tick (float DeltaTime) = 0;
 
-  virtual VStr DebugDumpToString () = 0;
-
-  // it doesn't matter if there will be duplicates
-  virtual void RegisterObjects (VStream &) = 0;
+  virtual VName GetClassName () = 0;
 };
 
 
@@ -85,10 +66,7 @@ protected:
   bool bError; // did we have any errors?
 
 public:
-  vint16 version; // stream version; purely informational field
-
-public:
-  VStream () : bLoading(false) , bError(false), version(0) {}
+  VStream () : bLoading(false) , bError(false) {}
   virtual ~VStream ();
 
   // status requests
@@ -99,6 +77,8 @@ public:
   inline void Serialize (void *buf, int len) { Serialise(buf, len); }
   inline void Serialize (const void *buf, int len) { Serialise(buf, len); }
   void Serialise (const void *buf, int len); // only write
+
+  virtual vint16 GetVersion (); // stream version; usually purely informational
 
   // stream interface
   virtual const VStr &GetName () const;
@@ -120,7 +100,7 @@ public:
   virtual void SerialiseStructPointer (void *&, VStruct *);
   virtual VStream &operator << (VMemberBase *&);
 
-  virtual VStream &operator << (VLevelScriptThinker *&);
+  virtual VStream &operator << (VSerialisable *&);
 
   // serialise integers in particular byte order
   void SerialiseLittleEndian (void *, int);
@@ -135,9 +115,6 @@ public:
   friend VStream &operator << (VStream &Strm, vuint32 &Val);
   friend VStream &operator << (VStream &Strm, float &Val);
   friend VStream &operator << (VStream &Strm, double &Val);
-
-  // for custom i/o
-  virtual VStream &RegisterObject (VObject *o);
 };
 
 

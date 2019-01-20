@@ -152,6 +152,17 @@ int encodeVarInt (void *data, vuint32 n) {
 }
 
 
+
+//==========================================================================
+//
+//  VSerialisable::~VSerialisable
+//
+//==========================================================================
+VSerialisable::~VSerialisable () {
+}
+
+
+
 //==========================================================================
 //
 //  VStream::~VStream
@@ -169,6 +180,18 @@ VStream::~VStream () {
 //==========================================================================
 const VStr &VStream::GetName () const {
   return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
+//  VStream::GetVersion
+//
+//  stream version; usually purely informational
+//
+//==========================================================================
+vint16 VStream::GetVersion () {
+  return 0;
 }
 
 
@@ -345,18 +368,7 @@ VStream &VStream::operator << (VMemberBase *&) {
 //  VStream::operator<<
 //
 //==========================================================================
-VStream &VStream::operator << (VLevelScriptThinker *&) {
-  abort();
-  return *this;
-}
-
-
-//==========================================================================
-//
-//  VStream::RegisterObject
-//
-//==========================================================================
-VStream &VStream::RegisterObject (VObject *o) {
+VStream &VStream::operator << (VSerialisable *&) {
   abort();
   return *this;
 }
