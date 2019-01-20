@@ -49,6 +49,16 @@ static VCvarF gm_compat_max_hearing_distance("gm_compat_max_hearing_distance", "
 
 //==========================================================================
 //
+//  VLevelScriptThinker::~VLevelScriptThinker
+//
+//==========================================================================
+VLevelScriptThinker::~VLevelScriptThinker () {
+  if (!destroyed) Sys_Error("trying to delete unfinalized Acs script");
+}
+
+
+//==========================================================================
+//
 //  VLevel::PointInSubsector
 //
 //==========================================================================
@@ -511,42 +521,15 @@ void VLevel::SerialiseOther (VStream &Strm) {
     Strm << STRM_INDEX(sthcount);
     if (sthcount < 0) Host_Error("Save is broken (invalid number of scripts)");
     if (Strm.IsLoading()) scriptThinkers.setLength(sthcount);
-    for (int f = 0; f < sthcount; ++f) Strm << scriptThinkers[f];
-  }
-  /*
-  {
-    vuint8 xver = 1;
-    Strm << xver;
-    if (Strm.IsLoading()) {
-      if (xver != 1) Host_Error("Save is broken (invalid scripts version %u)", (unsigned)xver);
-      vint32 sthcount = scriptThinkers.length();
-      Strm << STRM_INDEX(sthcount);
-      if (Strm.IsLoading()) scriptThinkers.setLength(sthcount);
-      for (int f = 0; f < sthcount; ++f) {
-        if (Strm.IsLoading()) {
-          // loading
-          vuint8 isAlive = 69;
-          Strm << isAlive;
-          check(isAlive == 0 || isAlive == 1);
-          if (isAlive) {
-            scriptThinkers[f] = AcsLoadScriptFromStream(this, Strm);
-          } else {
-            scriptThinkers[f] = nullptr;
-          }
-        } else {
-          if (scriptThinkers[f] && !scriptThinkers[f]->destroyed) {
-            vuint8 isAlive = 1;
-            Strm << isAlive;
-            scriptThinkers[f]->Serialise(Strm);
-          } else {
-            vuint8 isAlive = 0;
-            Strm << isAlive;
-          }
-        }
-      }
+    GCon->Logf("VLSR(%p): %d scripts", (void *)this, sthcount);
+    for (int f = 0; f < sthcount; ++f) {
+      VSerialisable *obj = scriptThinkers[f];
+      Strm << obj;
+      if (obj && obj->GetClassName() != "VAcs") Host_Error("Save is broken (loaded `%s` instead of `VAcs`)", *obj->GetClassName());
+      //GCon->Logf("VLSR: script #%d: %p", f, (void *)obj);
+      scriptThinkers[f] = (VLevelScriptThinker *)obj;
     }
   }
-  */
 
   {
     vuint8 xver = 0;

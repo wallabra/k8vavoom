@@ -120,6 +120,29 @@ struct VCameraTextureInfo {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VLevel;
+class VLevelInfo;
+
+class VLevelScriptThinker : public VSerialisable {
+public:
+  bool destroyed; // script `Destroy()` method should set this (and check to avoid double destroying)
+  VLevel *XLevel; // level object
+  VLevelInfo *Level; // level info object
+
+public:
+  VLevelScriptThinker () : destroyed(false), XLevel(nullptr), Level(nullptr) {}
+  virtual ~VLevelScriptThinker ();
+
+  inline void DestroyThinker () { Destroy(); }
+
+  // it is guaranteed that `Destroy()` will be called by master before deleting the object
+  virtual void Destroy () = 0;
+  virtual void ClearReferences () = 0;
+  virtual void Tick (float DeltaTime) = 0;
+
+  virtual VStr DebugDumpToString () = 0;
+};
+
 extern VLevelScriptThinker *AcsCreateEmptyThinker ();
 
 
@@ -287,9 +310,6 @@ public:
   void AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun);
   void RemoveScriptThinker (VLevelScriptThinker *sth); // won't call `Destroy()`, won't call `delete`
   void RunScriptThinkers (float DeltaTime);
-
-  // used in save/load
-  void CollectAcsScripts (TArray<VLevelScriptThinker *> &outlist);
 
 public:
   virtual void SerialiseOther (VStream &Strm) override;

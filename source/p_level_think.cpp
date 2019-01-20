@@ -120,21 +120,6 @@ void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
 
 //==========================================================================
 //
-//  VLevel::CollectAcsScripts
-//
-//==========================================================================
-void VLevel::CollectAcsScripts (TArray<VLevelScriptThinker *> &outlist) {
-  for (int f = 0; f < scriptThinkers.length(); ++f) {
-    if (scriptThinkers[f]) {
-      check(!scriptThinkers[f]->destroyed);
-      outlist.append(scriptThinkers[f]);
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VLevel::AddThinker
 //
 //==========================================================================

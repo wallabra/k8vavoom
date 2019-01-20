@@ -307,6 +307,8 @@ public:
 
   //virtual ~VAcs () override { Destroy(); } // just in case
 
+  virtual VName GetClassName () override { return VName("VAcs"); }
+
   virtual void Destroy () override;
   virtual void Serialise (VStream &) override;
   virtual void ClearReferences () override;
@@ -319,11 +321,13 @@ public:
   }
 
   // it doesn't matter if there will be duplicates
+  /*
   virtual void RegisterObjects (VStream &strm) override {
     strm.RegisterObject(Level); // just in case, ..
     strm.RegisterObject(XLevel); // ..cause why not?
     strm.RegisterObject(Activator);
   }
+  */
 
 private:
   enum { ACS_STACK_DEPTH = 4096 };
@@ -433,22 +437,22 @@ void VAcsGrowingArray::Serialise (VStream &Strm) {
   if (xver != 1) Host_Error("invalid ACS growing array version in save file");
   if (Strm.IsLoading()) {
     values.clear();
-    int count = 0;
+    vint32 count = 0;
     Strm << STRM_INDEX(count);
     while (count-- > 0) {
-      int index = -1, value = 0;
+      vint32 index = -1, value = 0;
       Strm << STRM_INDEX(index) << STRM_INDEX(value);
       values.put(index, value);
     }
   } else {
-    int count = 0;
+    vint32 count = 0;
     // count elements (we can't trust hashtable for now)
     for (auto it = values.first(); it; ++it) ++count;
     Strm << STRM_INDEX(count);
     // write elements
     for (auto it = values.first(); it; ++it) {
-      int index = it.getKey();
-      int value = it.getValue();
+      vint32 index = it.getKey();
+      vint32 value = it.getValue();
       Strm << STRM_INDEX(index) << STRM_INDEX(value);
     }
   }
@@ -489,7 +493,7 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
 
   for (;;) {
     if (W_LumpLength(Lump) < (int)sizeof(VAcsHeader)) {
-      GCon->Log("Behavior lump too small");
+      GCon->Log(NAME_Error, "Behavior lump too small");
     } else {
       VStream *Strm = W_CreateLumpReaderNum(Lump);
       Data = new vuint8[Strm->TotalSize()];
@@ -506,9 +510,10 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
         int fileid = W_LumpFile(Lump);
         VName acsobjname = W_LumpName(Lump);
         int goodLump = -1;
-        for (Lump = W_IterateNS(-1, WADNS_ACSLibrary); Lump >= 0 && Lump < LumpNum; Lump = W_IterateNS(Lump, WADNS_ACSLibrary)) {
+        for (Lump = W_IterateNS(Lump, WADNS_ACSLibrary); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_ACSLibrary)) {
           //GCon->Logf(NAME_Dev, " <%s>", *W_FullLumpName(Lump));
-          if (Lump != LumpNum && W_LumpFile(Lump) == fileid && W_LumpName(Lump) == acsobjname) {
+          if (W_LumpFile(Lump) != fileid) break;
+          if (Lump != LumpNum && W_LumpName(Lump) == acsobjname) {
             goodLump = Lump;
           }
         }
@@ -517,7 +522,7 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
           return;
         }
         Lump = goodLump;
-        GCon->Logf(NAME_Dev, "  trying another ACS obeject '%s'", *W_FullLumpName(Lump));
+        GCon->Logf(NAME_Warning, "  trying another ACS object '%s' (this is harmless)", *W_FullLumpName(Lump));
         LumpNum = Lump;
       } else {
         break;
@@ -530,7 +535,7 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
     case 0: Format = ACS_Old; break;
     case 'E': Format = ACS_Enhanced; break;
     case 'e': Format = ACS_LittleEnhanced; break;
-    default: GCon->Logf("Behavior lump \"%s\" has invalid signature (format)", *W_FullLumpName(Lump)); return;
+    default: GCon->Logf(NAME_Warning, "Behavior lump \"%s\" has invalid signature (format)", *W_FullLumpName(Lump)); return;
   }
   //if (developer) GCon->Logf(NAME_Dev, "Behavior lump \"%s\" fmt id: %u; fmt=%d", *W_FullLumpName(Lump), (vuint8)header->Marker[3], Format);
 
@@ -872,7 +877,7 @@ void VAcsObject::LoadEnhancedObject () {
         VAcsObject *Object = nullptr;
         int Lump = W_CheckNumForName(VName(&parse[i], VName::AddLower8), WADNS_ACSLibrary);
         if (Lump < 0) {
-          GCon->Logf("Could not find ACS library %s.", &parse[i]);
+          GCon->Logf(NAME_Warning, "Could not find ACS library %s.", &parse[i]);
         } else {
           Object = Level->LoadObject(Lump);
         }
@@ -914,8 +919,7 @@ void VAcsObject::LoadEnhancedObject () {
         func->ImportNum = i + 1;
         if (realfunc->ArgCount != func->ArgCount)
         {
-          GCon->Logf("Function %s in %s has %d arguments. "
-            "%s expects it to have %d.",
+          GCon->Logf(NAME_Warning, "ACS: Function %s in %s has %d arguments. %s expects it to have %d.",
             (char *)(buffer + 2) + LittleLong(buffer[3 + j]),
             *W_LumpName(lib->LumpNum), realfunc->ArgCount,
             *W_LumpName(LumpNum), func->ArgCount);
@@ -966,7 +970,7 @@ void VAcsObject::LoadEnhancedObject () {
             if (lib->ArrayStore[impNum].Size != expectedSize)
             {
               Format = ACS_Unknown;
-              GCon->Logf("The array %s in %s has %d elements, but %s expects it to only have %d.",
+              GCon->Logf(NAME_Warning, "ACS: The array %s in %s has %d elements, but %s expects it to only have %d.",
                 parse, *W_LumpName(lib->LumpNum),
                 (int)lib->ArrayStore[impNum].Size,
                 *W_LumpName(LumpNum), (int)expectedSize);
@@ -1011,14 +1015,14 @@ void VAcsObject::LoadEnhancedObject () {
             if (num == -(nameidx+1)) break;
           }
           if (scnum >= NumScripts) {
-            GCon->Logf("ACS: cannot assign name '%s' to script %d", sbuf[nameidx], -(nameidx+1));
+            GCon->Logf(NAME_Warning, "ACS: cannot assign name '%s' to script %d", sbuf[nameidx], -(nameidx+1));
           } else {
             //GCon->Logf("ACS: assigned name '%s' to script %d (%d; index=%d (%d))", sbuf[nameidx], -(nameidx+1), scnum, Scripts[scnum].Number, (vint16)Scripts[scnum].Number);
             Scripts[scnum].Name = VName(sbuf[nameidx], VName::AddLower);
           }
         }
       } else {
-        GCon->Logf("ACS ERROR: invalid `SNAM` chunk!");
+        GCon->Logf(NAME_Error, "ACS ERROR: invalid `SNAM` chunk!");
       }
       delete [] sbuf;
     }
@@ -1190,6 +1194,8 @@ void VAcsObject::Serialise (VStream &Strm) {
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS object version in save file");
 
+  //GCon->Logf("serializing ACS object...");
+
   // scripts
   vint32 scriptCount = NumScripts;
   Strm << STRM_INDEX(scriptCount);
@@ -1199,9 +1205,10 @@ void VAcsObject::Serialise (VStream &Strm) {
 
   //fprintf(stderr, "ACS COUNT=%d\n", scriptCount);
   for (int i = 0; i < scriptCount; ++i) {
-    VLevelScriptThinker *vth = Scripts[i].RunningScript;
+    VSerialisable *vth = Scripts[i].RunningScript;
     Strm << vth;
-    if (Strm.IsLoading()) Scripts[i].RunningScript = (VAcs *)vth;
+    if (vth && vth->GetClassName() != "VAcs") Host_Error("Save is broken (loaded `%s` instead of `VAcs`)", *vth->GetClassName());
+    Scripts[i].RunningScript = (VAcs *)vth;
   }
 
   // map variables
@@ -1211,26 +1218,26 @@ void VAcsObject::Serialise (VStream &Strm) {
     //if (mapvarCount < 0 || mapvarCount > MAX_ACS_MAP_VARS) Host_Error("invalid number of ACS map variables in save file");
     memset((void *)MapVarStore, 0, sizeof(MapVarStore));
     while (mapvarCount-- > 0) {
-      int index, value;
+      vint32 index, value;
       Strm << STRM_INDEX(index) << STRM_INDEX(value);
       if (index < 0 || index >= MAX_ACS_MAP_VARS) Host_Error("invalid ACS map variable index in save file");
       MapVarStore[index] = value;
     }
   } else {
     for (int i = 0; i < MAX_ACS_MAP_VARS; ++i) {
-      int index = i, value = MapVarStore[i];
+      vint32 index = i, value = MapVarStore[i];
       Strm << STRM_INDEX(index) << STRM_INDEX(value);
     }
   }
 
   // arrays
-  int arrCount = NumArrays;
+  vint32 arrCount = NumArrays;
   Strm << STRM_INDEX(arrCount);
   if (Strm.IsLoading()) {
     if (arrCount != NumArrays) Host_Error("invalid number of ACS arrays in save file");
   }
   for (int i = 0; i < NumArrays; ++i) {
-    int asize = ArrayStore[i].Size;
+    vint32 asize = ArrayStore[i].Size;
     Strm << STRM_INDEX(asize);
     if (Strm.IsLoading()) {
       if (asize != ArrayStore[i].Size) Host_Error("invalid ACS script array #%d size in save file", i);
@@ -1240,12 +1247,12 @@ void VAcsObject::Serialise (VStream &Strm) {
   unguard;
 }
 
+
 //==========================================================================
 //
 //  VAcsObject::OffsetToPtr
 //
 //==========================================================================
-
 vuint8 *VAcsObject::OffsetToPtr(int Offs)
 {
   if (Offs < 0 || Offs >= DataSize) Host_Error("Bad offset in ACS file");
@@ -1682,29 +1689,6 @@ void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
 
 //==========================================================================
 //
-//  VAcsLevel::CollectAcsScriptsNoDups
-//
-//==========================================================================
-void VAcsLevel::CollectAcsScriptsNoDups (TArray<VLevelScriptThinker *> &outlist) {
-  for (int f = 0; f < LoadedObjects.length(); ++f) {
-    VAcsObject *ao = LoadedObjects[f];
-    if (!ao) continue;
-    for (int sidx = 0; sidx < ao->NumScripts; ++sidx) {
-      VLevelScriptThinker *sth = ao->Scripts[sidx].RunningScript;
-      if (!sth || sth->destroyed) continue;
-      //FIXME: made this faster!
-      bool found = false;
-      for (int cc = outlist.length()-1; cc >= 0; --cc) {
-        if (outlist[cc] == sth) { found = true; break; }
-      }
-      if (!found) outlist.append(sth);
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VAcsLevel::Serialise
 //
 //==========================================================================
@@ -1714,30 +1698,27 @@ void VAcsLevel::Serialise (VStream &Strm) {
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS level version in save file");
 
+  //GCon->Logf("serializing ACS level...");
+
   // objects
   int objCount = LoadedObjects.length();
   Strm << STRM_INDEX(objCount);
   if (Strm.IsLoading()) {
     if (objCount != LoadedObjects.length()) Host_Error("invalid number of ACS loaded objects in save file");
   }
+
   for (int i = 0; i < objCount; ++i) LoadedObjects[i]->Serialise(Strm);
 
   // dynamically added strings
-  vint32 sllen;
+  vint32 sllen = stringList.length();
+  Strm << STRM_INDEX(sllen);
+
+  if (Strm.IsLoading()) stringList.setLength(sllen);
+  for (int f = 0; f < sllen; ++f) Strm << stringList[f];
+
   if (Strm.IsLoading()) {
-    stringList.clear();
     stringMapByStr.clear();
-    Strm << STRM_INDEX(sllen);
-    for (int f = 0; f < sllen; ++f) {
-      VStr s;
-      Strm << s;
-      stringList.append(s);
-      stringMapByStr.put(s, f);
-    }
-  } else {
-    sllen = stringList.length();
-    Strm << STRM_INDEX(sllen);
-    for (int f = 0; f < sllen; ++f) Strm << stringList[f];
+    for (int f = 0; f < sllen; ++f) stringMapByStr.put(stringList[f], f);
   }
   unguard;
 }
@@ -1861,7 +1842,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
     //if (Info) GCon->Logf("ACS: Start: script=<%d>; found '%s'", Number, *Info->Name);
     //else GCon->Logf("ACS: Start: script=<%d> -- OOPS", Number);
   } else {
-    GCon->Logf("VAcsLevel::Start: by direct index (%d)", -(Number+100000));
+    GCon->Logf(NAME_Warning, "VAcsLevel::Start: by direct index (%d)", -(Number+100000));
     Info = FindScript(Number, Object);
   }
 
@@ -1873,7 +1854,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   }
 
   if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) && !(Info->Flags&SCRIPTF_Net)) {
-    GCon->Logf("%s tried to puke script %d", *Activator->Player->PlayerName, Number);
+    GCon->Logf(NAME_Warning, "%s tried to puke script %d", *Activator->Player->PlayerName, Number);
     if (realres) *realres = 0;
     return false;
   }
@@ -2078,32 +2059,45 @@ void VAcs::Destroy () {
 //  VAcs::Serialise
 //
 //==========================================================================
-VStream &operator << (VStream &strm, VLevelScriptThinker *sth) {
-  sth->Serialise(strm);
-  return strm;
-}
-
-
-//==========================================================================
-//
-//  VAcs::Serialise
-//
-//==========================================================================
 void VAcs::Serialise (VStream &Strm) {
   guard(VAcs::Serialise);
   vint32 TmpInt;
-
-  check(!destroyed);
 
   //Super::Serialise(Strm);
   vuint8 xver = 2;
   Strm << xver;
   if (xver != 2) Host_Error("invalid ACS script version in save file");
 
+  if (Strm.IsLoading()) {
+    vuint8 isDead;
+    Strm << isDead;
+    if (isDead) {
+      //GCon->Logf("serializing (load) destroyed VAcs...");
+      if (!destroyed) Destroy();
+      return;
+    }
+    check(!destroyed);
+  } else {
+    vuint8 isDead = (destroyed ? 1 : 0);
+    Strm << isDead;
+    if (destroyed) {
+      //GCon->Logf("serializing (save) destroyed VAcs...");
+      return;
+    }
+  }
+
+  //GCon->Logf("*** serializing VAcs...");
+
   Strm << Level;
   Strm << XLevel;
 
+  check(Level);
+  check(XLevel);
+
   Strm << Activator;
+
+  //GCon->Logf("  VAcs: Level=%p; XLevel=%p; Activator=%p", (void *)Level, (void *)XLevel, (void *)Activator);
+
   if (Strm.IsLoading()) {
     Strm << STRM_INDEX(TmpInt);
     if (TmpInt < -1 || TmpInt >= XLevel->NumLines) Host_Error("invalid ACS linedef index in save file");
@@ -2537,7 +2531,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       }
 
     case ACSF_PlayActorSound:
-      GCon->Logf("ERROR: unimplemented ACSF function 'PlayActorSound'");
+      GCon->Logf(NAME_Error, "unimplemented ACSF function 'PlayActorSound'");
       return 0;
 
     // void PlaySound (int tid, str sound [, int channel [, fixed volume [, bool looping [, fixed attenuation [, bool local]]]]])
@@ -2859,7 +2853,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 #ifdef CLIENT
         if (argCount < 1) return 0;
         if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone && GGameInfo->NetMode != NM_TitleMap) {
-          GCon->Logf("ACS: Zadro RequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
+          GCon->Logf(NAME_Warning, "ACS: Zadro RequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
           return 0;
         }
         // ignore this in demos
@@ -2884,7 +2878,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         if (!ActiveObject->Level->Start(abs(args[0]), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], plr, line, side, (args[0] < 0)/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
 #else
-        GCon->Log("ACS: Zadro RequestScriptPuke can be executed only by clients.");
+        GCon->Log(NAME_Warning, "ACS: Zadro RequestScriptPuke can be executed only by clients.");
         return 0;
 #endif
       }
@@ -2895,7 +2889,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 #ifdef CLIENT
         if (argCount < 1) return 0;
         if (GGameInfo->NetMode != NM_Client && GGameInfo->NetMode != NM_Standalone && GGameInfo->NetMode != NM_TitleMap) {
-          GCon->Logf("ACS: Zadro NamedRequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
+          GCon->Logf(NAME_Warning, "ACS: Zadro NamedRequestScriptPuke can be executed only by clients (%d).", GGameInfo->NetMode);
           return 0;
         }
         // ignore this in demos
@@ -2918,7 +2912,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         if (!ActiveObject->Level->Start(-name.GetIndex(), 0/*map*/, ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], plr, line, side, false/*always*/, false/*wantresult*/, true/*net*/)) return 0;
         return 1;
 #else
-        GCon->Log("ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
+        GCon->Log(NAME_Warning, "ACS: Zadro NamedRequestScriptPuke can be executed only by clients.");
         return 0;
 #endif
       }
@@ -2955,7 +2949,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         // assign tid
         int flags = (argCount > 7 ? args[7] : 0);
         int newtid = args[4];
-        if (newtid < 0) { GCon->Logf("ACS: PickActor with negative tid (%d)", newtid); return (flags&PICKAF_RETURNTID ? hit->TID : 1); }
+        if (newtid < 0) { GCon->Logf(NAME_Warning, "ACS: PickActor with negative tid (%d)", newtid); return (flags&PICKAF_RETURNTID ? hit->TID : 1); }
         // assign new tid
         if ((flags&PICKAF_FORCETID) != 0 || hit->TID == 0) {
           if (newtid != 0 || (flags&PICKAF_FORCETID) != 0) {
@@ -3206,7 +3200,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return 0;
 
     case ACSF_SetHUDClipRect:
-      GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
+      GCon->Logf(NAME_Error, "unimplemented ACSF function '%s' (%d args)", "SetHUDClipRect", argCount);
       return 0;
 
     case ACSF_GetPolyobjX:
@@ -3228,7 +3222,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 
   for (const ACSF_Info *nfo = ACSF_List; nfo->name; ++nfo) {
     if (nfo->index == funcIndex) {
-      GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
+      //GCon->Logf("ERROR: unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
       Host_Error("unimplemented ACSF function '%s' (%d args)", nfo->name, argCount);
     }
   }
@@ -3999,7 +3993,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             State = ASTE_WaitingForScript;
           }
         } else {
-          GCon->Logf(NAME_Warning, "ACS ERROR: PCD_ScriptWaitNamed wanted to wait for unknown script '%s'", *name);
+          GCon->Logf(NAME_Warning, "ACS: PCD_ScriptWaitNamed wanted to wait for unknown script '%s'", *name);
         }
         action = SCRIPT_Stop;
       }
@@ -4935,13 +4929,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
         func = ActiveObject->GetFunction(funcnum&0xffff, object);
         if (!func) {
-          GCon->Logf("Function %d in script %d out of range", funcnum, number);
+          GCon->Logf(NAME_Warning, "ACS: Function %d in script %d out of range", funcnum, number);
           action = SCRIPT_Terminate;
           ACSVM_BREAK_STOP;
         }
         if ((sp-stack)+func->LocalCount+64 > ACS_STACK_DEPTH) {
           // 64 is the margin for the function's working space
-          GCon->Logf("Out of stack space in script %d", number);
+          GCon->Logf(NAME_Error, "ACS: Out of stack space in script %d", number);
           action = SCRIPT_Terminate;
           ACSVM_BREAK_STOP;
         }
