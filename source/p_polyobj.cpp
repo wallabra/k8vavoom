@@ -32,7 +32,8 @@
 #define PO_LINE_START     (1)
 #define PO_LINE_EXPLICIT  (5)
 
-#define PO_MAXPOLYSEGS    (64)
+//#define PO_MAXPOLYSEGS    (64)
+#define PO_MAXPOLYSEGS    (512)
 
 
 static VCvarB pobj_allow_several_in_subsector("pobj_allow_several_in_subsector", false, "Allow several polyobjs in one subsector (WARNING! THE ENGINE MAY CRASH!)?", CVAR_Archive);
