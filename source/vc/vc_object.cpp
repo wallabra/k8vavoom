@@ -1030,7 +1030,8 @@ void VObject::Serialise (VStream &strm) {
     if (clsname == NAME_None) Host_Error("cannot load object of `none` class");
     VClass *cls = VClass::FindClass(*clsname);
     if (!cls) Host_Error("cannot load object of unknown `%s` class", *clsname);
-    if (!GetClass()->IsChildOf(cls)) Host_Error("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
+    //if (!GetClass()->IsChildOf(cls)) Host_Error("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
+    if (GetClass() != cls) Host_Error("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname);
     // skip data size
     vint32 size;
     strm << size;
