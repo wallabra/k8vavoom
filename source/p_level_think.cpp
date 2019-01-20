@@ -176,7 +176,7 @@ void VLevel::DestroyAllThinkers () {
   guard(VLevel::DestroyAllThinkers);
 
   // destroy scripts
-  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) scriptThinkers[scidx]->Destroy();
+  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) if (scriptThinkers[scidx]) scriptThinkers[scidx]->Destroy();
   for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) delete scriptThinkers[scidx];
   scriptThinkers.clear();
 
