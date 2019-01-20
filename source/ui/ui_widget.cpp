@@ -49,7 +49,7 @@ IMPLEMENT_CLASS(V, Widget);
 //==========================================================================
 VWidget *VWidget::CreateNewWidget (VClass *AClass, VWidget *AParent) {
   guard(VWidget::CreateNewWidget);
-  VWidget *W = (VWidget *)StaticSpawnObject(AClass, false); // don't skip replacement
+  VWidget *W = (VWidget *)StaticSpawnWithReplace(AClass);
   W->OfsX = W->OfsY = 0;
   W->Init(AParent);
   return W;

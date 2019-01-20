@@ -165,7 +165,7 @@ void SV_Init () {
   // load user-specified VaVoom C script files
   G_LoadVCMods("loadvcs", "server");
 
-  GGameInfo = (VGameInfo *)VObject::StaticSpawnObject(VClass::FindClass("MainGameInfo"), false); // don't skip replacement
+  GGameInfo = (VGameInfo *)VObject::StaticSpawnWithReplace(VClass::FindClass("MainGameInfo"));
   GCon->Logf(NAME_Init, "Spawned game info object of class '%s'", *GGameInfo->GetClass()->GetFullName());
   GGameInfo->eventInit();
 
@@ -183,7 +183,7 @@ void SV_Init () {
   ServerNetContext = new VServerNetContext();
 
   VClass *PlayerClass = VClass::FindClass("Player");
-  for (int i = 0; i < MAXPLAYERS; ++i) GPlayersBase[i] = (VBasePlayer *)VObject::StaticSpawnObject(PlayerClass, false); // don't skip replacement
+  for (int i = 0; i < MAXPLAYERS; ++i) GPlayersBase[i] = (VBasePlayer *)VObject::StaticSpawnWithReplace(PlayerClass);
 
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum;

@@ -354,7 +354,8 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   guard(VLevel::SpawnThinker);
   check(AClass);
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
-  VThinker *Ret = (VThinker *)StaticSpawnObject(Class);
+  if (!Class) Class = AClass;
+  VThinker *Ret = (VThinker *)StaticSpawnNoReplace(Class);
   AddThinker(Ret);
 
   if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {

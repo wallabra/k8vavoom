@@ -73,7 +73,7 @@ void CL_Init () {
   G_LoadVCMods("loadvcc", "client");
   //!TLocation::ClearSourceFiles();
   ClientNetContext = new VClientNetContext();
-  GClGame = (VClientGameBase *)VObject::StaticSpawnObject(VClass::FindClass("ClientGame"), false); // don't skip replacement
+  GClGame = (VClientGameBase *)VObject::StaticSpawnWithReplace(VClass::FindClass("ClientGame"));
   GClGame->Game = GGameInfo;
   GClGame->eventPostSpawn();
   unguard;
@@ -457,7 +457,7 @@ VLevel *VClientNetContext::GetLevel () {
 void CL_SetUpNetClient (VSocketPublic *Sock) {
   guard(CL_SetUpNetClient);
   // create player structure
-  cl = (VBasePlayer *)VObject::StaticSpawnObject(VClass::FindClass("Player"), false); // don't skip replacement
+  cl = (VBasePlayer *)VObject::StaticSpawnWithReplace(VClass::FindClass("Player"));
   cl->PlayerFlags |= VBasePlayer::PF_IsClient;
   cl->ClGame = GClGame;
   GClGame->cl = cl;
@@ -533,7 +533,7 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
   cls.demoplayback = true;
 
   // create player structure
-  cl = (VBasePlayer *)VObject::StaticSpawnObject(VClass::FindClass("Player"), false); // don't skip replacement
+  cl = (VBasePlayer *)VObject::StaticSpawnWithReplace(VClass::FindClass("Player"));
   cl->PlayerFlags |= VBasePlayer::PF_IsClient;
   cl->ClGame = GClGame;
   GClGame->cl = cl;

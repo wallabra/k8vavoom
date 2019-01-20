@@ -191,6 +191,9 @@ public:
 
   static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN);
 
+  inline static VObject *StaticSpawnWithReplace (VClass *AClass) { return StaticSpawnObject(AClass, false); }
+  inline static VObject *StaticSpawnNoReplace (VClass *AClass) { return StaticSpawnObject(AClass, true); }
+
   // note that you CANNOT use `delete` on VObjects, you have to call
   // either `Destroy()` or (even better) `ConditionalDestroy()`
   // the difference is that `ConditionalDestroy()` will call `Destroy()`
@@ -333,6 +336,7 @@ public:
 // object creation template
 template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
 template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), false); } // don't skip replacement
+template<class T> T *SpawnNoReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), true); } // skip replacement
 
 //inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? Obj->GetIndex() : 0); }
 inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->GetUniqueId()) : 0); }

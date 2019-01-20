@@ -57,7 +57,7 @@ struct NeoUIICB {
     if (phase == VDrawer::VCB_InitVideo && !nuiMainCls) {
       nuiMainCls = VClass::FindClass("NUI_Main");
       if (nuiMainCls) {
-        nuiMainObj = (VObject *)VObject::StaticSpawnObject(nuiMainCls, false); // don't skip replacement
+        nuiMainObj = (VObject *)VObject::StaticSpawnWithReplace(nuiMainCls);
         if (nuiMainObj) {
           nuiMDispatch = nuiMainCls->FindMethod("Dispatch");
           if (nuiMDispatch) {

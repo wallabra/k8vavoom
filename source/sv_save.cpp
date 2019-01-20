@@ -1335,7 +1335,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
       GCon->Logf("I/O WARNING: No such class '%s'", *CName);
       //Loader->Exports.Append(nullptr);
       Class = VThinker::StaticClass();
-      Obj = VObject::StaticSpawnObject(Class, true); // skip replacement
+      Obj = VObject::StaticSpawnNoReplace(Class);
       //deadThinkers.append((VThinker *)Obj);
       deadThinkers.put(Obj, false);
 #else
@@ -1343,7 +1343,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
 #endif
     } else {
       // allocate object and copy data
-      Obj = VObject::StaticSpawnObject(Class, true); // skip replacement
+      Obj = VObject::StaticSpawnNoReplace(Class);
     }
 
     // handle level info
