@@ -41,6 +41,7 @@ k8VaVoom { basepak = tan }
 #include "actors/doom/deadthings.txt"
 #include "actors/doom/doommisc.txt"
 #include "actors/doom/doomdecorations.txt"
+#include "actors/doom/mbfbeta.txt"
 
 #include "actors/doom/dog.txt"
 #include "actors/doom/grenade.txt"
