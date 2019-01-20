@@ -134,6 +134,8 @@ public:
 
   inline void BeginRead () { bLoading = true; pos = 0; curr = first; }
 
+  void CopyTo (VStream *strm);
+
   virtual const VStr &GetName () const override;
 };
 

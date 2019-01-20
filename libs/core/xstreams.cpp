@@ -652,6 +652,20 @@ int VPagedMemoryStream::TotalSize () {
 }
 
 
+void VPagedMemoryStream::CopyTo (VStream *strm) {
+  if (!strm) return;
+  int left = size;
+  vuint8 *cpg = first;
+  while (left > 0) {
+    int wrt = (left > DATA_BYTES ? DATA_BYTES : left);
+    strm->Serialise(cpg+sizeof(vuint8 *), wrt);
+    if (strm->IsError()) return;
+    left -= wrt;
+    cpg = *(vuint8 **)cpg; // next page
+  }
+}
+
+
 
 //==========================================================================
 //
