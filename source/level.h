@@ -316,7 +316,7 @@ public:
   void InitPolyobjs ();
   polyobj_t *GetPolyobj (int polyNum); // actually, tag
   int GetPolyobjMirror (int poly); // tag again
-  bool MovePolyobj (int num, float x, float y); // tag (GetPolyobj)
+  bool MovePolyobj (int num, float x, float y, bool forced=false); // tag (GetPolyobj)
   bool RotatePolyobj (int num, float angle); // tag (GetPolyobj)
 
   bool ChangeSector (sector_t *sector, int crunch);

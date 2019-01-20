@@ -30,6 +30,7 @@ int polyobj;
 float speed;
 float dist;
 float angle;
+bool carryThings;
 
 
 //==========================================================================
@@ -49,7 +50,7 @@ override void Tick (float deltaTime) {
   if (dist < absMove) move = dist*(move < 0.0 ? -1.0 : 1.0);
   xMove = move*cos(angle);
   yMove = move*sin(angle);
-  if (XLevel.MovePolyobj(polyobj, xMove, yMove)) {
+  if (XLevel.MovePolyobj(polyobj, xMove, yMove, carryThings)) {
     dist -= absMove;
     if (dist <= 0.0) {
       poly = XLevel.GetPolyobj(polyobj);

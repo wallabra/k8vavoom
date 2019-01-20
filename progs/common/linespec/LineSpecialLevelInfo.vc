@@ -2054,7 +2054,7 @@ final bool EV_MovePolyToSpot (line_t *line, int Arg1, int Arg2, int Arg3, int Ar
   rel = normalize(rel);
   TAVec angles;
   VectorAngles(rel, out angles);
-  return EV_MovePoly(line, pnum, speed, 0, 0, 0, timesEight, overRide, angles.yaw, dist);
+  return EV_MovePoly(line, pnum, speed, 0, 0, 0, timesEight, overRide, angles.yaw, dist/*, carryThings:true*/);
 }
 
 
@@ -2070,7 +2070,8 @@ final bool EV_MovePolyToSpot (line_t *line, int Arg1, int Arg2, int Arg3, int Ar
 //==========================================================================
 final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
                         int Arg5, bool timesEight, bool overRide,
-                        optional float floatAngle, optional float floatDist)
+                        optional float floatAngle, optional float floatDist,
+                        optional bool carryThings)
 {
   int mirror;
   int polyNum;
@@ -2123,6 +2124,7 @@ final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
       break;
     }
     pe = Spawn(PolyobjMover);
+    pe.carryThings = carryThings;
     pe.polyobj = mirror;
     poly->SpecialData = pe;
     if (timesEight)

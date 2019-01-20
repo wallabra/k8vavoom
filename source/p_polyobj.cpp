@@ -602,7 +602,7 @@ int VLevel::GetPolyobjMirror(int poly)
 //
 //==========================================================================
 
-bool VLevel::MovePolyobj(int num, float x, float y)
+bool VLevel::MovePolyobj(int num, float x, float y, bool forced)
 {
   guard(VLevel::MovePolyobj);
   int count;
@@ -648,7 +648,7 @@ bool VLevel::MovePolyobj(int num, float x, float y)
     }
   }
   UpdatePolySegs(po);
-  if (IsForServer())
+  if (!forced && IsForServer())
   {
     segList = po->segs;
     for (count = po->numsegs; count; count--, segList++)
@@ -921,11 +921,12 @@ IMPLEMENT_FUNCTION(VLevel, GetPolyobjMirror)
 
 IMPLEMENT_FUNCTION(VLevel, MovePolyobj)
 {
+  P_GET_BOOL_OPT(forced, false);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
   P_GET_INT(num);
   P_GET_SELF;
-  RET_BOOL(Self->MovePolyobj(num, x, y));
+  RET_BOOL(Self->MovePolyobj(num, x, y, forced));
 }
 
 IMPLEMENT_FUNCTION(VLevel, RotatePolyobj)
