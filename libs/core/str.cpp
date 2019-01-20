@@ -1934,6 +1934,59 @@ void VStr::Tokenise (TArray <VStr> &args) const {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+enum { VA_BUFFER_COUNT = 32 };
+
+struct VaBuffer {
+  char *buf;
+  size_t bufsize;
+  bool alloced;
+  char initbuf[32768];
+
+  VaBuffer () : buf(initbuf), bufsize(sizeof(initbuf)), alloced(false) {}
+  ~VaBuffer () { if (alloced) free(buf); buf = nullptr; alloced = false; bufsize = 0; }
+
+  void ensureSize (size_t size) {
+    size = ((size+1)|0x1fff)+1;
+    if (size <= bufsize) return;
+    if (size > 1024*1024*2) Sys_Error("`va` buffer too big");
+    char *newbuf = (char *)(alloced ? realloc(buf, size) : malloc(size));
+    if (!newbuf) Sys_Error("out of memory for `va` buffer");
+    buf = newbuf;
+    bufsize = size;
+    alloced = true;
+    buf[0] = 0; // why not?
+  }
+};
+
+
+static thread_local VaBuffer vabufs[VA_BUFFER_COUNT];
+static thread_local unsigned vabufcurr = 0;
+
+
+//==========================================================================
+//
+//  vavarg
+//
+//==========================================================================
+char *vavarg (const char *text, va_list ap) {
+  const unsigned bufnum = vabufcurr;
+  vabufcurr = (vabufcurr+1)%VA_BUFFER_COUNT;
+  VaBuffer &vbuf = vabufs[bufnum];
+  va_list apcopy;
+  va_copy(apcopy, ap);
+  int size = vsnprintf(vbuf.buf, vbuf.bufsize, text, apcopy);
+  va_end(apcopy);
+  if (size >= 0 && size >= (int)vbuf.bufsize) {
+    vabufs[bufnum].ensureSize((size_t)size);
+    va_copy(apcopy, ap);
+    vsnprintf(vbuf.buf, vbuf.bufsize, text, apcopy);
+    va_end(apcopy);
+  }
+  return vbuf.buf;
+}
+
+
 //==========================================================================
 //
 //  va
@@ -1944,12 +1997,9 @@ void VStr::Tokenise (TArray <VStr> &args) const {
 //
 //==========================================================================
 __attribute__((format(printf, 1, 2))) char *va (const char *text, ...) {
-  static char va_buffer[32][32768];
-  static int va_bufnum = 0;
-  va_list args;
-  va_bufnum = (va_bufnum+1)&31;
-  va_start(args, text);
-  vsnprintf(va_buffer[va_bufnum], 32767, text, args);
-  va_end(args);
-  return va_buffer[va_bufnum];
+  va_list ap;
+  va_start(ap, text);
+  char *res = vavarg(text, ap);
+  va_end(ap);
+  return res;
 }
