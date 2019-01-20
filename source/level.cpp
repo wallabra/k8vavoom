@@ -113,7 +113,7 @@ static void OldStringIO (VStream &Strm, VStr &str) {
 //==========================================================================
 static void DecalIO (VStream &Strm, decal_t *dc) {
   if (!dc) return;
-  float shade[4] = {0, 0, 0, 0};
+  //float shade[4] = {0, 0, 0, 0};
   if (Strm.IsLoading()) {
     // load picture name
     VName picname, dectype;
@@ -135,10 +135,10 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
   Strm << dc->curz;
   Strm << dc->xdist;
   Strm << dc->linelen;
-  Strm << shade[0]; // this
-  Strm << shade[1]; // is done
-  Strm << shade[2]; // to not
-  Strm << shade[3]; // break saves
+  //Strm << shade[0]; // this
+  //Strm << shade[1]; // is done
+  //Strm << shade[2]; // to not
+  //Strm << shade[3]; // break saves
   Strm << dc->ofsX;
   Strm << dc->ofsY;
   Strm << dc->origScaleX;
