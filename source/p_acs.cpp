@@ -61,6 +61,11 @@
 
 //#define ACS_DUMP_EXECUTION
 
+// for PrintName
+#define PRINTNAME_LEVELNAME  (-1)
+#define PRINTNAME_LEVEL      (-2)
+#define PRINTNAME_SKILL      (-3)
+
 
 static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Overrides 'screenblocks' variable for acs scripts (-1: don't).", 0);
 static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode", false, "Halt ACS VM on unimplemented opdode?", CVAR_Archive);
@@ -4277,15 +4282,30 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_PrintName)
       {
         VBasePlayer *Plr;
-        if (sp[-1] <= 0 || sp[-1] > MAXPLAYERS) {
-          Plr = Activator ? Activator->Player : nullptr;
-        } else {
-          Plr = Level->Game->Players[sp[-1] - 1];
+
+        switch (sp[-1]) {
+          case PRINTNAME_LEVELNAME:
+            PrintStr += GClLevel->LevelInfo->GetLevelName();
+            break;
+          case PRINTNAME_LEVEL:
+            PrintStr += XLevel->MapName;
+            break;
+          case PRINTNAME_SKILL:
+            PrintStr += Level->World->GetCurrSkillName();
+            break;
+          default:
+            if (sp[-1] <= 0 || sp[-1] > MAXPLAYERS) {
+              Plr = Activator ? Activator->Player : nullptr;
+            } else {
+              Plr = Level->Game->Players[sp[-1] - 1];
+            }
+                 if (Plr && (Plr->PlayerFlags&VBasePlayer::PF_Spawned)) PrintStr += Plr->PlayerName;
+            else if (Plr && !(Plr->PlayerFlags&VBasePlayer::PF_Spawned)) PrintStr += VStr("Player ") + VStr(sp[-1]);
+            else if (Activator) PrintStr += Activator->GetClass()->GetName();
+            else PrintStr += "Unknown";
+            break;
         }
-             if (Plr && (Plr->PlayerFlags & VBasePlayer::PF_Spawned)) PrintStr += Plr->PlayerName;
-        else if (Plr && !(Plr->PlayerFlags & VBasePlayer::PF_Spawned)) PrintStr += VStr("Player ") + VStr(sp[-1]);
-        else if (Activator) PrintStr += Activator->GetClass()->GetName();
-        else PrintStr += "Unknown";
+
         sp--;
       }
       ACSVM_BREAK;

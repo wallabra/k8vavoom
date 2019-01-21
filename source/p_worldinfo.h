@@ -61,6 +61,7 @@ public:
   virtual void Destroy () override;
 
   void SetSkill (int);
+  const VStr GetCurrSkillName () const;
 
   DECLARE_FUNCTION(SetSkill)
 

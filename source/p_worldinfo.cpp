@@ -101,6 +101,17 @@ void VWorldInfo::SetSkill (int ASkill) {
 
 //==========================================================================
 //
+//  VWorldInfo::GetCurrSkillName
+//
+//==========================================================================
+const VStr VWorldInfo::GetCurrSkillName () const {
+  const VSkillDef *SDef = P_GetSkillDef(GameSkill);
+  return SDef->Name;
+}
+
+
+//==========================================================================
+//
 //  VWorldInfo
 //
 //==========================================================================
