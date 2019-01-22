@@ -95,8 +95,9 @@ void VObjectMapChannel::Update () {
 
   // send names while we have anything to send
   while (CurrName < Connection->ObjMap->NameLookup.Num()) {
-    VNameEntry *E = VName::GetEntry(CurrName);
-    int Len = VStr::Length(E->Name);
+    //const VNameEntry *E = VName::GetEntry(CurrName);
+    const char *EName = *VName::CreateWithIndex(CurrName);
+    int Len = VStr::Length(EName);
     // send message if this name will not fit
     if (Msg.GetNumBytes()+1+Len > OUT_MESSAGE_SIZE/8) {
       SendMessage(&Msg);
@@ -108,7 +109,7 @@ void VObjectMapChannel::Update () {
       Msg.bReliable = true;
     }
     Msg.WriteInt(Len, NAME_SIZE);
-    Msg.Serialise(E->Name, Len);
+    Msg.Serialise((void *)EName, Len);
     ++CurrName;
   }
 

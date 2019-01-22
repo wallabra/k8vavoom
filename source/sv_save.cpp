@@ -1145,7 +1145,13 @@ static void ArchiveNames (VSaveWriterStream *Saver) {
   // serialise names
   vint32 Count = Saver->Names.Num();
   *Saver << STRM_INDEX(Count);
-  for (int i = 0; i < Count; ++i) *Saver << *VName::GetEntry(Saver->Names[i].GetIndex());
+  for (int i = 0; i < Count; ++i) {
+    //*Saver << *VName::GetEntry(Saver->Names[i].GetIndex());
+    const char *EName = *Saver->Names[i];
+    vuint8 len = (vuint8)VStr::Length(EName);
+    *Saver << len;
+    if (len) Saver->Serialise((void *)EName, len);
+  }
 
   // serialise number of ACS exports
   vint32 numScripts = Saver->AcsExports.length();
@@ -1168,9 +1174,17 @@ static void UnarchiveNames (VSaveLoaderStream *Loader) {
   *Loader << STRM_INDEX(Count);
   Loader->NameRemap.SetNum(Count);
   for (int i = 0; i < Count; ++i) {
+    /*
     VNameEntry E;
     *Loader << E;
-    Loader->NameRemap[i] = VName(E.Name);
+    */
+    char EName[NAME_SIZE+1];
+    vuint8 len = 0;
+    *Loader << len;
+    check(len <= NAME_SIZE);
+    if (len) Loader->Serialise(EName, len);
+    EName[len] = 0;
+    Loader->NameRemap[i] = VName(EName);
   }
 
   // unserialise number of ACS exports

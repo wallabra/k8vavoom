@@ -28,44 +28,59 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-TArray<VNameEntry *> VName::Names;
-VNameEntry *VName::HashTable[VName::HASH_SIZE];
-bool VName::Initialised;
+enum { HASH_SIZE = 32768 }; // ~6/4 per bucket
+
+VName::VNameEntry **VName::Names = nullptr;
+size_t VName::NamesAlloced = 0;
+size_t VName::NamesCount = 0;
+bool VName::Initialised = false;
+static VName::VNameEntry *HashTable[HASH_SIZE];
+static VName::VNameEntry *HashTableSpc[HASH_SIZE];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define REGISTER_NAME(name)   { nullptr, NAME_##name, #name },
-static VNameEntry AutoNames[] = {
+VName::VNameEntry VName::AutoNames[] = {
   { nullptr, NAME_none, "" },
 #include "names.h"
 };
 
 
+int VName::GetAutoNameCounter () {
+  return (int)ARRAY_COUNT(AutoNames);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
-VStream &operator << (VStream &Strm, VNameEntry &E) {
-  guard(operator VStream << VNameEntry);
-  vuint8 Size;
-  if (Strm.IsSaving()) Size = (vuint8)(VStr::Length(E.Name)+1);
-  Strm << Size;
-  Strm.Serialise(E.Name, Size);
-  return Strm;
-  unguard;
+int VName::AppendNameEntry (VNameEntry *e) {
+  check(e);
+  if (NamesCount >= NamesAlloced) {
+    if (NamesAlloced > 0x1fffffff) Sys_Error("too many names");
+    size_t newsz = ((NamesCount+1)|0x3fffu)+1;
+    //fprintf(stderr, "VName::AppendNameEntry: going from %u to %u\n", (unsigned)NamesAlloced, (unsigned)newsz);
+    Names = (VNameEntry **)Z_Realloc(Names, newsz*sizeof(VNameEntry *));
+    NamesAlloced = newsz;
+  }
+  int res = (int)NamesCount;
+  Names[NamesCount++] = e;
+  e->Index = res;
+  //fprintf(stderr, "VName::AppendNameEntry: added <%s> (index=%d)\n", e->Name, res);
+  return res;
 }
 
 
-VNameEntry *AllocateNameEntry (const char *Name, vint32 Index, VNameEntry *HashNext) {
-  guard(AllocateNameEntry);
-  size_t Size = sizeof(VNameEntry)-NAME_SIZE+int(VStr::Length(Name))+1;
-  VNameEntry *E = (VNameEntry *)Z_Malloc(Size);
-  memset(E, 0, Size);
-  VStr::Cpy(E->Name, Name);
-  E->Index = Index;
-  E->HashNext = HashNext;
-  return E;
-  unguard;
+static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry *HashNext) {
+  size_t size = sizeof(VName::VNameEntry)-NAME_SIZE+int(VStr::Length(Name))+1;
+  VName::VNameEntry *e = (VName::VNameEntry *)Z_Malloc(size);
+  memset((void *)e, 0, size);
+  //VStr::Cpy(e->Name, Name);
+  if (Name && Name[0]) strcpy(e->Name, Name);
+  e->HashNext = HashNext;
+  return e;
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 VName::VName (const char *Name, ENameFindType FindType) {
   guard(VName::VName);
 
@@ -80,7 +95,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
   char NameBuf[NAME_SIZE+1];
   //memset(NameBuf, 0, sizeof(NameBuf));
 
-  // copy name localy, make sure it's not longer than 64 characters
+  // copy name localy, make sure it's not longer than allowed name size
   if (FindType == AddLower8) {
     for (size_t i = 0; i < 8; ++i) {
       char ch = Name[i];
@@ -91,7 +106,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
   } else {
     size_t nlen = strlen(Name);
     check(nlen > 0);
-    if (nlen >= NAME_SIZE) nlen = NAME_SIZE-1;
+    if (nlen >= NAME_SIZE) nlen = NAME_SIZE;
     if (FindType == AddLower || FindType == FindLower) {
       for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
     } else {
@@ -100,33 +115,65 @@ VName::VName (const char *Name, ENameFindType FindType) {
     NameBuf[nlen] = 0;
   }
 
+  if (!Initialised) {
+    // find in autonames
+    for (size_t aidx = 1; aidx < ARRAY_COUNT(AutoNames); ++aidx) {
+      if (VStr::Cmp(NameBuf, AutoNames[aidx].Name) == 0) {
+        Index = (int)aidx;
+        return;
+      }
+    }
+    StaticInit();
+  }
+
+  VNameEntry **htbl = HashTable;
+  for (const vuint8 *ss = (const vuint8 *)NameBuf; *ss; ++ss) if (*ss <= ' ') { htbl = HashTableSpc; break; }
+
   // search in cache
-  int HashIndex = GetTypeHash(NameBuf)&(HASH_SIZE-1);
-  VNameEntry *TempHash = HashTable[HashIndex];
+  vuint32 HashIndex = GetTypeHash(NameBuf)&(HASH_SIZE-1);
+  VNameEntry *TempHash = htbl[HashIndex];
   while (TempHash) {
-    if (!VStr::Cmp(NameBuf, TempHash->Name)) {
+    if (VStr::Cmp(NameBuf, TempHash->Name) == 0) {
       Index = TempHash->Index;
-      break;
+      return;
     }
     TempHash = TempHash->HashNext;
   }
 
   // add new name if not found
-  if (!TempHash && (FindType != Find && FindType != FindLower)) {
-    Index = Names.Num();
-    Names.Append(AllocateNameEntry(NameBuf, Index, HashTable[HashIndex]));
-    HashTable[HashIndex] = Names[Index];
+  if (FindType != Find && FindType != FindLower) {
+    VNameEntry *e = AllocateNameEntry(NameBuf, htbl[HashIndex]);
+    Index = AppendNameEntry(e);
+    htbl[HashIndex] = Names[Index];
   }
 
   unguard;
 }
 
 
-bool VName::operator == (const VStr &s) const { return (Index == 0 ? s.isEmpty() : (s == Names[Index]->Name)); }
-bool VName::operator != (const VStr &s) const { return !(*this == s); }
+bool VName::operator == (const VStr &s) const {
+  if (Index == NAME_None) return s.isEmpty();
+  if (Initialised) {
+    check(Index >= 0 && Index < (int)NamesCount);
+    return (s == Names[Index]->Name);
+  } else {
+    check(Index >= 0 && Index < (int)ARRAY_COUNT(AutoNames));
+    return (s == AutoNames[Index].Name);
+  }
+}
 
-bool VName::operator == (const char *s) const { return (Index == 0 ? (!s || !s[0]) : (VStr::Cmp(s, Names[Index]->Name) == 0)); }
-bool VName::operator != (const char *s) const { return !(*this == s); }
+
+bool VName::operator == (const char *s) const {
+  if (!s) s = "";
+  if (Index == NAME_None) return (s[0] == 0);
+  if (Initialised) {
+    check(Index >= 0 && Index < (int)NamesCount);
+    return (VStr::Cmp(s, Names[Index]->Name) == 0);
+  } else {
+    check(Index >= 0 && Index < (int)ARRAY_COUNT(AutoNames));
+    return (VStr::Cmp(s, AutoNames[Index].Name) == 0);
+  }
+}
 
 
 const char *VName::SafeString (EName N) {
@@ -135,6 +182,7 @@ const char *VName::SafeString (EName N) {
     if (N > NAME_None && N < (int)ARRAY_COUNT(AutoNames)) return AutoNames[N].Name;
     return "*VName::Uninitialised*";
   } else {
+    if (N < 0 || N >= (int)NamesCount) return "*VName::Uninitialised*";
     return Names[N]->Name;
   }
 }
@@ -142,18 +190,65 @@ const char *VName::SafeString (EName N) {
 
 void VName::StaticInit () {
   guard(VName::StaticInit);
-  // register hardcoded names
-  for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
-    Names.Append(&AutoNames[i]);
-    int HashIndex = GetTypeHash(AutoNames[i].Name)&(HASH_SIZE-1);
-    AutoNames[i].HashNext = HashTable[HashIndex];
-    HashTable[HashIndex] = &AutoNames[i];
+  if (!Initialised) {
+    memset((void *)HashTable, 0, sizeof(HashTable));
+    memset((void *)HashTableSpc, 0, sizeof(HashTableSpc));
+    // register hardcoded names
+    for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
+      AppendNameEntry(&AutoNames[i]);
+      if (i) {
+        vuint32 HashIndex = GetTypeHash(AutoNames[i].Name)&(HASH_SIZE-1);
+        VNameEntry **htbl = HashTable;
+        for (const vuint8 *ss = (const vuint8 *)AutoNames[i].Name; *ss; ++ss) if (*ss <= ' ') { htbl = HashTableSpc; break; }
+        AutoNames[i].HashNext = htbl[HashIndex];
+        htbl[HashIndex] = &AutoNames[i];
+      } else {
+        AutoNames[i].Index = 0;
+      }
+      check(AutoNames[i].Index == i);
+    }
+    // we are now initialised
+    Initialised = true;
   }
-  // we are now initialised
-  Initialised = true;
   unguard;
 }
 
+
+void VName::DebugDumpHashStats () {
+  unsigned bkUsed = 0, bkMax = 0;
+  unsigned bkUsedSpc = 0, bkMaxSpc = 0;
+  for (unsigned f = 0; f < HASH_SIZE; ++f) {
+    const VNameEntry *e = HashTable[f];
+    if (e) {
+      ++bkUsed;
+      unsigned emax = 0;
+      while (e) {
+        ++emax;
+        e = e->HashNext;
+      }
+      if (bkMax < emax) bkMax = emax;
+    }
+    e = HashTableSpc[f];
+    if (e) {
+      ++bkUsedSpc;
+      unsigned emax = 0;
+      while (e) {
+        ++emax;
+        e = e->HashNext;
+      }
+      if (bkMaxSpc < emax) bkMaxSpc = emax;
+    }
+  }
+  fprintf(stderr, "***VNAME: %u names (%u array entries allocated), bucket stats (used/max): %u/%u, spc:%u/%u\n", (unsigned)NamesCount, (unsigned)NamesAlloced, bkUsed, bkMax, bkUsedSpc, bkMaxSpc);
+}
+
+
+struct VNameAutoIniter {
+  VNameAutoIniter () { VName::StaticInit(); }
+  //~VNameAutoIniter () { VName::DebugDumpHashStats(); }
+};
+
+VNameAutoIniter vNameAutoIniter;
 
 /*k8: there is no reason to do this
 void VName::StaticExit () {

@@ -663,7 +663,13 @@ void VPackage::WriteObject (const VStr &name) {
   // serialise names
   progs.ofs_names = Writer.Tell();
   progs.num_names = Writer.Names.Num();
-  for (int i = 0; i < Writer.Names.Num(); ++i) Writer << *VName::GetEntry(Writer.Names[i].GetIndex());
+  for (int i = 0; i < Writer.Names.Num(); ++i) {
+    //Writer << *VName::GetEntry(Writer.Names[i].GetIndex());
+    const char *EName = *Writer.Names[i];
+    vuint8 len = (vuint8)VStr::length(EName);
+    Writer << len;
+    if (len) Writer.Serialise((void *)EName, len);
+  }
 
   progs.ofs_strings = Writer.Tell();
 #if defined(VCC_OLD_PACKAGE_STRING_POOL)
@@ -844,9 +850,18 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
   VName *NameRemap = new VName[Progs.num_names];
   Reader->Seek(Progs.ofs_names);
   for (int i = 0; i < Progs.num_names; ++i) {
+    /*
     VNameEntry E;
     *Reader << E;
     NameRemap[i] = E.Name;
+    */
+    char EName[NAME_SIZE+1];
+    vuint8 len = 0;
+    *Reader << len;
+    check(len <= NAME_SIZE);
+    if (len) Reader->Serialise(EName, len);
+    EName[len] = 0;
+    NameRemap[i] = VName(EName);
   }
   Reader->NameRemap = NameRemap;
 

@@ -59,11 +59,11 @@
 #include "zone.h" // zone memory allocation
 #include "names.h" // built-in names
 #include "log.h" // general logging interface
+#include "name.h" // names
 #include "stream.h" // streams
 #include "array.h" // dynamic arrays
 #include "map.h" // mapping of keys to values
 #include "crc.h" // CRC calcuation
-#include "name.h" // names
 #include "str.h" // strings
 #include "args.h" // command line arguments
 #include "xstreams.h" // extended streams
