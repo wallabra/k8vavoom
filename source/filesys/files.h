@@ -66,5 +66,6 @@ extern bool fsys_skipDehacked;
 extern bool fsys_hasPwads; // or paks
 extern bool fsys_hasMapPwads; // or paks
 
+extern bool fsys_ignoreZScript;
 
 extern VCvarS game_name;

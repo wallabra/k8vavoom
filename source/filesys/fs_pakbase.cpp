@@ -201,66 +201,82 @@ void VFileDirectory::buildLumpNames () {
 
   for (int i = 0; i < files.length(); ++i) {
     VPakFileInfo &fi = files[i];
-    if (fi.lumpName != NAME_None) continue;
-    if (fi.fileName.length() == 0) continue;
+    fi.fileName = fi.fileName.toLowerCase(); // just in case
 
-    //!!!HACK!!!
-    if (fi.fileName.Cmp("default.cfg") == 0) continue;
-    if (fi.fileName.Cmp("startup.vs") == 0) continue;
+    if (fi.lumpName != NAME_None) {
+      if (!VStr::isLowerCase(*fi.lumpName)) {
+        GCon->Logf(NAME_Warning, "Archive \"%s\" contains non-lowercase lump name '%s'", *getArchiveName(), *fi.lumpName);
+      }
+    } else {
+      if (fi.fileName.length() == 0) continue;
 
-    // set up lump name for WAD-like access
-    VStr lumpName = fi.fileName.ExtractFileName().StripExtension();
+      //!!!HACK!!!
+      if (fi.fileName.Cmp("default.cfg") == 0) continue;
+      if (fi.fileName.Cmp("startup.vs") == 0) continue;
 
-    if (fi.lumpNamespace == -1) {
-      // map some directories to WAD namespaces
-      if (fi.fileName.IndexOf('/') == -1) {
-        fi.lumpNamespace = WADNS_Global;
-      } else {
-        fi.lumpNamespace = -1;
-        for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
-          if (fi.fileName.StartsWith(di->pfx)) {
-            fi.lumpNamespace = di->wadns;
-            break;
+      // set up lump name for WAD-like access
+      VStr lumpName = fi.fileName.ExtractFileName().StripExtension();
+
+      if (fi.lumpNamespace == -1) {
+        // map some directories to WAD namespaces
+        if (fi.fileName.IndexOf('/') == -1) {
+          fi.lumpNamespace = WADNS_Global;
+        } else {
+          fi.lumpNamespace = -1;
+          for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
+            if (fi.fileName.StartsWith(di->pfx)) {
+              fi.lumpNamespace = di->wadns;
+              break;
+            }
           }
         }
       }
-    }
 
-    // anything from other directories won't be accessed as lump
-    if (fi.lumpNamespace == -1) {
-      lumpName = VStr();
-    } else {
-      // hide wad files, 'cause they may conflict with normal files
-      // wads will be correctly added by a separate function
-      if (VFS_ShouldIgnoreExt(fi.fileName)) {
+      // anything from other directories won't be accessed as lump
+      if (fi.lumpNamespace == -1) {
+        lumpName = VStr();
+      } else {
+        // hide wad files, 'cause they may conflict with normal files
+        // wads will be correctly added by a separate function
+        if (VFS_ShouldIgnoreExt(fi.fileName)) {
+          fi.lumpNamespace = -1;
+          lumpName = VStr();
+        }
+      }
+
+      if ((fsys_skipSounds && fi.lumpNamespace == WADNS_Sounds) ||
+          (fsys_skipSprites && fi.lumpNamespace == WADNS_Sprites))
+      {
         fi.lumpNamespace = -1;
         lumpName = VStr();
       }
+
+      if (fsys_skipDehacked && lumpName.length() && lumpName.ICmp("dehacked") == 0) {
+        fi.lumpNamespace = -1;
+        lumpName = VStr();
+      }
+
+      // for sprites \ is a valid frame character, but is not allowed to
+      // be in a file name, so we do a little mapping here
+      if (fi.lumpNamespace == WADNS_Sprites) {
+        lumpName = lumpName.Replace("^", "\\");
+      }
+
+      //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
+      //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
+
+      // final lump name
+      if (lumpName.length() != 0) fi.lumpName = VName(*lumpName, VName::AddLower8);
     }
 
-    if ((fsys_skipSounds && fi.lumpNamespace == WADNS_Sounds) ||
-        (fsys_skipSprites && fi.lumpNamespace == WADNS_Sprites))
-    {
-      fi.lumpNamespace = -1;
-      lumpName = VStr();
+    if (fi.lumpName != NAME_None && fi.lumpNamespace == WADNS_Global && VStr::Cmp(*fi.lumpName, "zscript") == 0) {
+      if (fsys_ignoreZScript) {
+        GCon->Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
+      } else {
+        Sys_Error("Archive \"%s\" contains zscript", *getArchiveName());
+      }
+      fi.lumpName = NAME_None;
     }
-
-    if (fsys_skipDehacked && lumpName.length() && lumpName.ICmp("dehacked") == 0) {
-      fi.lumpNamespace = -1;
-      lumpName = VStr();
-    }
-
-    // for sprites \ is a valid frame character, but is not allowed to
-    // be in a file name, so we do a little mapping here
-    if (fi.lumpNamespace == WADNS_Sprites) {
-      lumpName = lumpName.Replace("^", "\\");
-    }
-
-    //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
-    //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
-
-    // final lump name
-    if (lumpName.length() != 0) fi.lumpName = VName(*lumpName, VName::AddLower8);
   }
 }
 
