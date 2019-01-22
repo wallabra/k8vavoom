@@ -215,6 +215,7 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 // doesn't own srcstream by default
+// does full stream proxing (i.e. forwards all virtual methods)
 class VPartialStreamRO : public VStream {
 private:
   mutable mythread_mutex lock;
@@ -232,11 +233,26 @@ public:
   VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen=-1, bool aOwnSrc=false);
   virtual ~VPartialStreamRO () override;
 
+  // stream interface
   virtual const VStr &GetName () const override;
-  virtual void Serialise (void *, int) override;
+  virtual void Serialise (void *Data, int Length) override;
+  virtual void SerialiseBits (void *Data, int Length) override;
+  virtual void SerialiseInt (vuint32 &, vuint32) override;
+
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
   virtual bool AtEnd () override;
+  virtual void Flush () override;
   virtual bool Close () override;
+
+  // interface functions for objects and classes streams
+  virtual void io (VName &) override;
+  virtual void io (VStr &) override;
+  virtual void io (const VStr &) override;
+  virtual void io (VObject *&) override;
+  virtual void io (VMemberBase *&) override;
+  virtual void io (VSerialisable *&) override;
+
+  virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override;
 };

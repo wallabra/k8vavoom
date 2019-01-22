@@ -1057,6 +1057,10 @@ void VStdFileStream::Serialise (void *buf, int len) {
 
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+//  VPartialStreamRO::VPartialStreamRO
+// ////////////////////////////////////////////////////////////////////////// //
+
 //==========================================================================
 //
 //  VPartialStreamRO::VPartialStreamRO
@@ -1094,6 +1098,22 @@ VPartialStreamRO::~VPartialStreamRO () {
 
 //==========================================================================
 //
+//  VPartialStreamRO::setError
+//
+//==========================================================================
+void VPartialStreamRO::setError () {
+  if (srcOwned && srcStream) {
+    MyThreadLocker locker(&lock);
+    delete srcStream;
+  }
+  srcOwned = false;
+  srcStream = nullptr;
+  bError = true;
+}
+
+
+//==========================================================================
+//
 //  VPartialStreamRO::Close
 //
 //==========================================================================
@@ -1124,27 +1144,11 @@ const VStr &VPartialStreamRO::GetName () const {
 
 //==========================================================================
 //
-//  VPartialStreamRO::setError
-//
-//==========================================================================
-void VPartialStreamRO::setError () {
-  if (srcOwned && srcStream) {
-    MyThreadLocker locker(&lock);
-    delete srcStream;
-  }
-  srcOwned = false;
-  srcStream = nullptr;
-  bError = true;
-}
-
-
-//==========================================================================
-//
 //  VPartialStreamRO::Serialise
 //
 //==========================================================================
 void VPartialStreamRO::Serialise (void *buf, int len) {
-  if (!srcStream) { bError = true; return; }
+  if (!srcStream) { setError(); return; }
   if (bError) return;
   if (len < 0) { setError(); return; }
   if (len == 0) return;
@@ -1160,6 +1164,29 @@ void VPartialStreamRO::Serialise (void *buf, int len) {
     if (srcStream->IsError()) { setError(); return; }
   }
   srccurpos += len;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::SerialiseBits
+//
+//==========================================================================
+void VPartialStreamRO::SerialiseBits (void *Data, int Length) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->SerialiseBits(Data, Length);
+  }
+}
+
+
+void VPartialStreamRO::SerialiseInt (vuint32 &Value, vuint32 Max) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->SerialiseInt(Value, Max);
+  }
 }
 
 
@@ -1204,4 +1231,111 @@ int VPartialStreamRO::TotalSize () {
 //==========================================================================
 bool VPartialStreamRO::AtEnd () {
   return (bError || srccurpos >= stpos+partlen);
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::Flush
+//
+//==========================================================================
+void VPartialStreamRO::Flush () {
+  if (!bError && srcStream) {
+    MyThreadLocker locker(&lock);
+    srcStream->Flush();
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::io
+//
+//==========================================================================
+void VPartialStreamRO::io (VName &v) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->io(v);
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void VPartialStreamRO::io (VStr &v) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->io(v);
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::io
+//
+//==========================================================================
+void VPartialStreamRO::io (const VStr &v) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->io(v);
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::io
+//
+//==========================================================================
+void VPartialStreamRO::io (VObject *&v) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->io(v);
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::io
+//
+//==========================================================================
+void VPartialStreamRO::io (VMemberBase *&v) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->io(v);
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::io
+//
+//==========================================================================
+void VPartialStreamRO::io (VSerialisable *&v) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->io(v);
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::SerialiseStructPointer
+//
+//==========================================================================
+void VPartialStreamRO::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
+  if (!srcStream) { setError(); return; }
+  if (!bError) {
+    MyThreadLocker locker(&lock);
+    srcStream->SerialiseStructPointer(Ptr, Struct);
+  }
 }

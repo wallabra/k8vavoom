@@ -300,46 +300,62 @@ bool VStream::Close () {
 
 //==========================================================================
 //
-//  VStream::operator<<
+//  VStream::io
 //
 //==========================================================================
-VStream &VStream::operator << (VName &) {
+void VStream::io (VName &) {
   //abort(); // k8: nope, we need dummy one
-  return *this;
 }
 
 
 //==========================================================================
 //
-//  VStream::operator<<
+//  VStream::io
 //
 //==========================================================================
-VStream &VStream::operator << (VStr &s) {
+void VStream::io (VStr &s) {
   s.Serialise(*this);
-  return *this;
 }
 
 
 //==========================================================================
 //
-//  VStream::operator<<
+//  VStream::io
 //
 //==========================================================================
-VStream &VStream::operator << (const VStr &s) {
+void VStream::io (const VStr &s) {
   check(!IsLoading());
   s.Serialise(*this);
-  return *this;
 }
 
 
 //==========================================================================
 //
-//  VStream::operator<<
+//  VStream::io
 //
 //==========================================================================
-VStream &VStream::operator << (VObject *&) {
+void VStream::io (VObject *&) {
   //abort(); // k8: nope, we need dummy one
-  return *this;
+}
+
+
+//==========================================================================
+//
+//  VStream::io
+//
+//==========================================================================
+void VStream::io (VMemberBase *&) {
+  //abort(); // k8: nope, we need dummy one
+}
+
+
+//==========================================================================
+//
+//  VStream::io
+//
+//==========================================================================
+void VStream::io (VSerialisable *&) {
+  abort();
 }
 
 
@@ -354,28 +370,6 @@ void VStream::SerialiseStructPointer (void *&, VStruct *) {
 
 //==========================================================================
 //
-//  VStream::operator<<
-//
-//==========================================================================
-VStream &VStream::operator << (VMemberBase *&) {
-  //abort(); // k8: nope, we need dummy one
-  return *this;
-}
-
-
-//==========================================================================
-//
-//  VStream::operator<<
-//
-//==========================================================================
-VStream &VStream::operator << (VSerialisable *&) {
-  abort();
-  return *this;
-}
-
-
-//==========================================================================
-//
 //  VStream::SerialiseLittleEndian
 //
 //==========================================================================
@@ -383,7 +377,7 @@ void VStream::SerialiseLittleEndian (void *Val, int Len) {
   guard(VStream::SerialiseLittleEndian);
 #ifdef VAVOOM_BIG_ENDIAN
     // swap byte order
-    for (int i = Len-1; i >= 0; --i) Serialise((vuint8*)Val+i, 1);
+    for (int i = Len-1; i >= 0; --i) Serialise(((vuint8 *)Val)+i, 1);
 #else
     // already in correct byte order
     Serialise(Val, Len);
@@ -401,7 +395,7 @@ void VStream::SerialiseBigEndian (void *Val, int Len) {
   guard(VStream::SerialiseBigEndian);
 #ifdef VAVOOM_LITTLE_ENDIAN
     // swap byte order
-    for (int i = Len - 1; i >= 0; i--) Serialise((vuint8*)Val+i, 1);
+    for (int i = Len - 1; i >= 0; i--) Serialise(((vuint8 *)Val)+i, 1);
 #else
     // already in correct byte order
     Serialise(Val, Len);
@@ -448,14 +442,3 @@ VStream &operator << (VStream &Strm, VStreamCompactIndexU &I) {
   }
   return Strm;
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-VStream &operator << (VStream &Strm, vint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
-VStream &operator << (VStream &Strm, vuint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
-VStream &operator << (VStream &Strm, vint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-VStream &operator << (VStream &Strm, vuint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-VStream &operator << (VStream &Strm, vint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-VStream &operator << (VStream &Strm, vuint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-VStream &operator << (VStream &Strm, float &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
-VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }

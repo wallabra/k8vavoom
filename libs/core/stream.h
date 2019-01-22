@@ -84,7 +84,7 @@ public:
   virtual const VStr &GetName () const;
   virtual void Serialise (void *Data, int Length);
   virtual void SerialiseBits (void *Data, int Length);
-  virtual void SerialiseInt (vuint32 &, vuint32);
+  virtual void SerialiseInt (vuint32 &Value, vuint32 Max);
   virtual void Seek (int);
   virtual int Tell ();
   virtual int TotalSize ();
@@ -93,29 +93,37 @@ public:
   virtual bool Close ();
 
   // interface functions for objects and classes streams
-  virtual VStream &operator << (VName &);
-  virtual VStream &operator << (VStr &);
-  virtual VStream &operator << (const VStr &);
-  virtual VStream &operator << (VObject *&);
-  virtual void SerialiseStructPointer (void *&, VStruct *);
-  virtual VStream &operator << (VMemberBase *&);
+  virtual void io (VName &);
+  virtual void io (VStr &);
+  virtual void io (const VStr &);
+  virtual void io (VObject *&);
+  virtual void io (VMemberBase *&);
+  virtual void io (VSerialisable *&);
 
-  virtual VStream &operator << (VSerialisable *&);
+  virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct);
 
   // serialise integers in particular byte order
   void SerialiseLittleEndian (void *, int);
-  void SerialiseBigEndian (void*, int);
-
-  // stream serialisation operators
-  friend VStream &operator << (VStream &Strm, vint8 &Val);
-  friend VStream &operator << (VStream &Strm, vuint8 &Val);
-  friend VStream &operator << (VStream &Strm, vint16 &Val);
-  friend VStream &operator << (VStream &Strm, vuint16 &Val);
-  friend VStream &operator << (VStream &Strm, vint32 &Val);
-  friend VStream &operator << (VStream &Strm, vuint32 &Val);
-  friend VStream &operator << (VStream &Strm, float &Val);
-  friend VStream &operator << (VStream &Strm, double &Val);
+  void SerialiseBigEndian (void *, int);
 };
+
+// stream serialisation operators
+// it is fuckin' impossible to do template constraints in shit-plus-plus, so fuck it
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VName &v) { Strm.io(v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VStr &v) { Strm.io(v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VStr &v) { Strm.io(v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VObject *&v) { Strm.io(v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VMemberBase *&v) { Strm.io(v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VSerialisable *&v) { Strm.io(v); return Strm; }
+
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vuint8 &Val) { Strm.Serialise(&Val, 1); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vuint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vuint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, float &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
