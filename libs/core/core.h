@@ -72,6 +72,7 @@
 #include "vector.h" // vector math
 #include "matrix.h" // matrices
 #include "xml.h" // xml file parsing
+#include "ntvalue.h"
 
 #include "md5.h"
 
