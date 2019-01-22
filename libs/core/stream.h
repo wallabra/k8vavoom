@@ -59,6 +59,24 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// object i/o is using mappers internally, so let's make it explicit
+class VStreamIOMapper {
+public:
+  VStreamIOMapper () {}
+  virtual ~VStreamIOMapper ();
+
+  // interface functions for objects and classes streams
+  virtual void io (VName &) = 0;
+  virtual void io (VStr &) = 0;
+  virtual void io (VObject *&) = 0;
+  virtual void io (VMemberBase *&) = 0;
+  virtual void io (VSerialisable *&) = 0;
+
+  virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) = 0;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // base class for various streams
 class VStream {
 protected:
@@ -66,7 +84,10 @@ protected:
   bool bError; // did we have any errors?
 
 public:
-  VStream () : bLoading(false) , bError(false) {}
+  VStreamIOMapper *Mapper;
+
+public:
+  VStream () : bLoading(false), bError(false), Mapper(nullptr) {}
   virtual ~VStream ();
 
   // status requests

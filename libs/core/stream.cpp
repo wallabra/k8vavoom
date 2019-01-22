@@ -165,6 +165,16 @@ VSerialisable::~VSerialisable () {
 
 //==========================================================================
 //
+//  VStreamIOMapper::~VStreamIOMapper
+//
+//==========================================================================
+VStreamIOMapper::~VStreamIOMapper () {
+}
+
+
+
+//==========================================================================
+//
 //  VStream::~VStream
 //
 //==========================================================================
@@ -303,8 +313,9 @@ bool VStream::Close () {
 //  VStream::io
 //
 //==========================================================================
-void VStream::io (VName &) {
+void VStream::io (VName &v) {
   //abort(); // k8: nope, we need dummy one
+  if (Mapper) Mapper->io(v);
 }
 
 
@@ -314,7 +325,7 @@ void VStream::io (VName &) {
 //
 //==========================================================================
 void VStream::io (VStr &s) {
-  s.Serialise(*this);
+  if (Mapper) Mapper->io(s); else s.Serialise(*this);
 }
 
 
@@ -325,7 +336,12 @@ void VStream::io (VStr &s) {
 //==========================================================================
 void VStream::io (const VStr &s) {
   check(!IsLoading());
-  s.Serialise(*this);
+  if (Mapper) {
+    VStr str = s;
+    Mapper->io(str);
+  } else {
+    s.Serialise(*this);
+  }
 }
 
 
@@ -334,8 +350,9 @@ void VStream::io (const VStr &s) {
 //  VStream::io
 //
 //==========================================================================
-void VStream::io (VObject *&) {
+void VStream::io (VObject *&v) {
   //abort(); // k8: nope, we need dummy one
+  if (Mapper) Mapper->io(v);
 }
 
 
@@ -344,8 +361,9 @@ void VStream::io (VObject *&) {
 //  VStream::io
 //
 //==========================================================================
-void VStream::io (VMemberBase *&) {
+void VStream::io (VMemberBase *&v) {
   //abort(); // k8: nope, we need dummy one
+  if (Mapper) Mapper->io(v);
 }
 
 
@@ -354,8 +372,8 @@ void VStream::io (VMemberBase *&) {
 //  VStream::io
 //
 //==========================================================================
-void VStream::io (VSerialisable *&) {
-  abort();
+void VStream::io (VSerialisable *&v) {
+  if (Mapper) Mapper->io(v); else abort();
 }
 
 
@@ -364,7 +382,8 @@ void VStream::io (VSerialisable *&) {
 //  VStream::SerialiseStructPointer
 //
 //==========================================================================
-void VStream::SerialiseStructPointer (void *&, VStruct *) {
+void VStream::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
+  if (Mapper) Mapper->SerialiseStructPointer(Ptr, Struct);
 }
 
 
