@@ -210,7 +210,7 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
-  virtual VStream &operator << (/*VLevelScriptThinker*/VSerialisable *&Ref) override {
+  virtual void io (VSerialisable *&Ref) override {
     vint32 scpIndex;
     *this << STRM_INDEX(scpIndex);
     if (scpIndex == 0) {
@@ -219,10 +219,9 @@ public:
       Ref = AcsExports[scpIndex-1];
     }
     //GCon->Logf("LOADING: VSerialisable<%s>(%p); idx=%d", (Ref ? *Ref->GetClassName() : "[none]"), (void *)Ref, scpIndex);
-    return *this;
   }
 
-  virtual VStream &operator << (VName &Name) override {
+  virtual void io (VName &Name) override {
     vint32 NameIndex;
     *this << STRM_INDEX(NameIndex);
     if (NameIndex < 0 || NameIndex >= NameRemap.length()) {
@@ -230,11 +229,9 @@ public:
       Host_Error("SAVEGAME: invalid name index %d (max is %d)", NameIndex, NameRemap.length()-1);
     }
     Name = NameRemap[NameIndex];
-    return *this;
   }
 
-  virtual VStream &operator << (VObject *&Ref) override {
-    guard(Loader::operator<<VObject*&);
+  virtual void io (VObject *&Ref) override {
     vint32 TmpIdx;
     *this << STRM_INDEX(TmpIdx);
     if (TmpIdx == 0) {
@@ -246,8 +243,6 @@ public:
       GCon->Logf("LOAD: playerbase %d", -TmpIdx-1);
       Ref = GPlayersBase[-TmpIdx-1];
     }
-    return *this;
-    unguard;
   }
 
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override {
@@ -310,7 +305,7 @@ public:
     ObjectsMap.put(o->GetUniqueId(), Exports.Num());
   }
 
-  virtual VStream &operator << (/*VLevelScriptThinker*/VSerialisable *&Ref) override {
+  virtual void io (VSerialisable *&Ref) override {
     vint32 scpIndex = 0;
     if (Ref) {
       if (Ref->GetClassName() != "VAcs") Host_Error("trying to save unknown serialisable of class `%s`", *Ref->GetClassName());
@@ -323,17 +318,14 @@ public:
     }
     //GCon->Logf("SAVING: VSerialisable<%s>(%p); idx=%d", (Ref ? *Ref->GetClassName() : "[none]"), (void *)Ref, scpIndex);
     *this << STRM_INDEX(scpIndex);
-    return *this;
   }
 
-  virtual VStream &operator << (VName &Name) override {
+  virtual void io (VName &Name) override {
     if (NamesMap[Name.GetIndex()] == -1) NamesMap[Name.GetIndex()] = Names.Append(Name);
     *this << STRM_INDEX(NamesMap[Name.GetIndex()]);
-    return *this;
   }
 
-  virtual VStream &operator << (VObject *&Ref) override {
-    guard(Saver::operator<<VObject*&);
+  virtual void io (VObject *&Ref) override {
     vint32 TmpIdx;
     if (!Ref /*|| (Ref->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) != 0*/) {
       TmpIdx = 0;
@@ -349,7 +341,8 @@ public:
               GCon->Logf("*** SKIP(1) PLAYER MOBJ: <%s> -- THIS IS HARMLESS", *mobj->GetClass()->GetFullName());
             }
             TmpIdx = 0;
-            return *this << STRM_INDEX(TmpIdx);
+            *this << STRM_INDEX(TmpIdx);
+            return;
           }
         }
         if ((dbg_save_verbose&0x08) /*|| true*/) {
@@ -361,8 +354,7 @@ public:
       }
       //TmpIdx = *ObjectsMap.get(Ref->GetUniqueId());
     }
-    return *this << STRM_INDEX(TmpIdx);
-    unguard;
+    *this << STRM_INDEX(TmpIdx);
   }
 
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) override {

@@ -42,11 +42,15 @@ public:
 
   inline VTextureID &operator = (const VTextureID &b) { id = b.id; return *this; }
   inline operator int () const { return id; }
-  friend VStream &operator << (VStream &strm, const VTextureID &tid);
-  friend VStream &operator << (VStream &strm, VTextureID &tid);
+
+  void Serialise (VStream &strm) const;
+  void Serialise (VStream &strm);
 };
 
 static_assert(sizeof(VTextureID) == sizeof(vint32), "invalid VTextureID size");
+
+static inline __attribute__((unused)) VStream &operator << (VStream &strm, const VTextureID &tid) { tid.Serialise(strm); return strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &strm, VTextureID &tid) { tid.Serialise(strm); return strm; }
 
 
 #endif

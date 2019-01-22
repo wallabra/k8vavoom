@@ -131,7 +131,7 @@ public:
   void Serialise (VStream &Strm);
 };
 
-inline VStream &operator << (VStream &strm, VAcsGrowingArray &arr) { arr.Serialise(strm); return strm; }
+static inline __attribute((unused)) VStream &operator << (VStream &strm, VAcsGrowingArray &arr) { arr.Serialise(strm); return strm; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -149,8 +149,10 @@ struct VAcsStore {
   vint32 Script; // script number on target map
   vint32 Args[4]; // arguments
 
-  friend VStream &operator << (VStream &Strm, VAcsStore &Store);
+  void Serialise (VStream &Strm);
 };
+
+static inline __attribute((unused)) VStream &operator << (VStream &Strm, VAcsStore &Store) { Store.Serialise(Strm); return Strm; }
 
 
 class VAcsGlobal {

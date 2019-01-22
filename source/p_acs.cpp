@@ -6784,21 +6784,21 @@ void VAcsGlobal::SetWorldArrayFloat (int aidx, int index, float value) {
 
 //==========================================================================
 //
-//  operator <<
+//  VAcsStore::Serialise
 //
 //==========================================================================
-VStream &operator << (VStream &Strm, VAcsStore &Store) {
+void VAcsStore::Serialise (VStream &Strm) {
   vuint8 xver = 1;
   Strm << xver;
   if (xver != 1) Host_Error("invalid ACS store version in save file");
-  return Strm << Store.Map
-      << Store.Type
-      << Store.PlayerNum
-      << STRM_INDEX(Store.Script)
-      << STRM_INDEX(Store.Args[0])
-      << STRM_INDEX(Store.Args[1])
-      << STRM_INDEX(Store.Args[2])
-      << STRM_INDEX(Store.Args[3]);
+  Strm << Map
+       << Type
+       << PlayerNum
+       << STRM_INDEX(Script)
+       << STRM_INDEX(Args[0])
+       << STRM_INDEX(Args[1])
+       << STRM_INDEX(Args[2])
+       << STRM_INDEX(Args[3]);
 }
 
 

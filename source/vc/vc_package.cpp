@@ -156,19 +156,17 @@ public:
   virtual void Serialise (void *V, int Length) override { if (fwrite(V, Length, 1, File) != 1) bError = true; }
   virtual void Flush () override { if (fflush(File)) bError = true; }
 
-  virtual VStream &operator << (VStr &s) override { s.Serialise(*this); return *this; }
-  virtual VStream &operator << (const VStr &s) override { s.Serialise(*this); return *this; }
+  //virtual VStream &operator << (VStr &s) override { s.Serialise(*this); return *this; }
+  //virtual VStream &operator << (const VStr &s) override { s.Serialise(*this); return *this; }
 
-  virtual VStream &operator << (VName &Name) override {
+  virtual void io (VName &Name) override {
     int TmpIdx = NamesMap[Name.GetIndex()];
     *this << STRM_INDEX(TmpIdx);
-    return *this;
   }
 
-  virtual VStream &operator << (VMemberBase *&Ref) override {
+  virtual void io (VMemberBase *&Ref) override {
     int TmpIdx = (Ref ? MembersMap[Ref->MemberIndex] : 0);
     *this << STRM_INDEX(TmpIdx);
-    return *this;
   }
 
   int GetMemberIndex (VMemberBase *Obj) {
@@ -199,14 +197,12 @@ public:
     bLoading = false;
   }
 
-  virtual VStream &operator << (VName &Name) override {
+  virtual void io (VName &Name) override {
     if (Writer.NamesMap[Name.GetIndex()] == -1) Writer.NamesMap[Name.GetIndex()] = Writer.Names.Append(Name);
-    return *this;
   }
 
-  virtual VStream &operator << (VMemberBase *&Ref) override {
+  virtual void io (VMemberBase *&Ref) override {
     if (Ref != Package) Writer.GetMemberIndex(Ref);
-    return *this;
   }
 };
 
@@ -253,17 +249,16 @@ public:
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
 
-  virtual VStream &operator << (VStr &s) override { return VStream::operator<<(s); }
-  virtual VStream &operator << (const VStr &s) override { return VStream::operator<<(s); }
+  //virtual VStream &operator << (VStr &s) override { return VStream::operator<<(s); }
+  //virtual VStream &operator << (const VStr &s) override { return VStream::operator<<(s); }
 
-  virtual VStream &operator << (VName &Name) override {
+  virtual void io (VName &Name) override {
     int NameIndex;
     *this << STRM_INDEX(NameIndex);
     Name = NameRemap[NameIndex];
-    return *this;
   }
 
-  virtual VStream &operator << (VMemberBase *&Ref) override {
+  virtual void io (VMemberBase *&Ref) override {
     int ObjIndex;
     *this << STRM_INDEX(ObjIndex);
     if (ObjIndex > 0) {
@@ -275,7 +270,6 @@ public:
     } else {
       Ref = nullptr;
     }
-    return *this;
   }
 
   VMemberBase *GetImport (int Index) {
