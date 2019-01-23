@@ -41,7 +41,7 @@ public:
   VTextureID (vint32 aid) : id(aid) {}
 
   inline VTextureID &operator = (const VTextureID &b) { id = b.id; return *this; }
-  inline operator int () const { return id; }
+  inline operator vint32 () const { return id; }
 
   void Serialise (VStream &strm) const;
   void Serialise (VStream &strm);
