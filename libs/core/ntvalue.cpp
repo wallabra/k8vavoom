@@ -29,6 +29,8 @@
 //**************************************************************************
 #include "core.h"
 
+//#define VNTVALUE_DEBUG_DUMP
+
 
 //==========================================================================
 //
@@ -303,12 +305,45 @@ VNTValueReader::VNTValueReader (VStream *ASrcStream)
   : srcStream(ASrcStream)
   , valleft(0)
   , vlist()
+  , strmendofs(0)
   , bError(false)
 {
   check(srcStream);
   if (srcStream->IsError()) { setError(); return; }
   *srcStream << STRM_INDEX(valleft);
   if (srcStream->IsError()) { setError(); return; }
+#ifdef VNTVALUE_DEBUG_DUMP
+  fprintf(stderr, "*** %d values\n", valleft);
+#endif
+}
+
+
+VNTValueReader::~VNTValueReader () {
+  if (srcStream && !bError && !srcStream->IsError()) {
+    // skip fields
+    do {
+      if (strmendofs) {
+        srcStream->Seek(strmendofs);
+        if (srcStream->IsError()) { setError(); break; }
+      }
+#ifdef VNTVALUE_DEBUG_DUMP
+      fprintf(stderr, "*** rest-skip %d values\n", valleft);
+#endif
+      VName rdname;
+      vuint8 rdtype;
+      while (valleft > 0) {
+        --valleft;
+        if (!VNTValue::ReadTypeName(*srcStream, &rdtype, &rdname)) { setError(); break; }
+        if (srcStream->IsError()) { setError(); break; }
+#ifdef VNTVALUE_DEBUG_DUMP
+        fprintf(stderr, "***   rest-skip: <%s> %u\n", *rdname, (unsigned)rdtype);
+#endif
+        // skip it
+        if (!VNTValue::SkipValue(*srcStream, rdtype)) { setError(); break; }
+      }
+    } while (0);
+    if (srcStream && srcStream->IsError()) setError();
+  }
 }
 
 
@@ -385,10 +420,14 @@ VNTValue VNTValueReader::readValue (VName vname, vuint8 vtype) {
   while (valleft > 0) {
     --valleft;
     if (!VNTValue::ReadTypeName(*srcStream, &rdtype, &rdname)) { setError(); return VNTValue(); }
+#ifdef VNTVALUE_DEBUG_DUMP
+    fprintf(stderr, "***   rd: <%s> %u (%s)\n", *rdname, (unsigned)rdtype, *vname);
+#endif
     if (rdname == vname) {
       // i found her!
       VNTValue res = coerceTo(VNTValue::ReadValue(*srcStream, rdtype, rdname), vtype);
       if (!res.isValid()) { setError(); return VNTValue(); }
+      strmendofs = srcStream->Tell();
       return res;
     }
     // put into vlist
@@ -398,10 +437,14 @@ VNTValue VNTValueReader::readValue (VName vname, vuint8 vtype) {
     vi.ofs = srcStream->Tell();
     if (srcStream->IsError()) { setError(); return VNTValue(); }
     if (!VNTValue::SkipValue(*srcStream, rdtype)) { setError(); return VNTValue(); }
+    strmendofs = srcStream->Tell();
   }
   // we're done, try to find in vlist
   for (int f = 0; f < oldvlen; ++f) {
     if (vlist[f].name == vname) {
+#ifdef VNTVALUE_DEBUG_DUMP
+      fprintf(stderr, "***   found in previous #%d: <%s> %u\n", f, *vlist[f].name, (unsigned)vlist[f].type);
+#endif
       srcStream->Seek(vlist[f].ofs);
       if (srcStream->IsError()) { setError(); return VNTValue(); }
       VNTValue res = coerceTo(VNTValue::ReadValue(*srcStream, vlist[f].type, rdname), vtype);

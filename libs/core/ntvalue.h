@@ -212,6 +212,7 @@ private:
   VStream *srcStream;
   vint32 valleft; // number of unread values left
   TArray<ValInfo> vlist; // usually we don't have enough values to justify hashtable
+  int strmendofs; // 0: unknown; otherwise: after last read value
   bool bError;
 
 private:
@@ -224,7 +225,7 @@ private:
 public:
   // doesn't own passed stream; starts reading from current stream position
   VNTValueReader (VStream *ASrcStream);
-  //~VNTValueReader ();
+  ~VNTValueReader ();
 
   VNTValueReader (const VNTValueReader &) = delete;
   VNTValueReader &operator = (const VNTValueReader &) = delete;
