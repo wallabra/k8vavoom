@@ -149,6 +149,21 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
     vio.io(VName("flags"), dc->flags);
     vio.io(VName("orgz"), dc->orgz);
     vio.io(VName("curz"), dc->curz);
+    /* //debug
+    if (!Strm.IsLoading()) {
+      VStr s = "fuck0";
+      vio.io("FFFuck0", s);
+    }
+    */
+    /* //debug
+    if (!Strm.IsLoading()) {
+      vio.io(VName("linelen"), dc->linelen);
+      vio.io(VName("xdist"), dc->xdist);
+    } else {
+      vio.io(VName("xdist"), dc->xdist);
+      vio.io(VName("linelen"), dc->linelen);
+    }
+    */
     vio.io(VName("xdist"), dc->xdist);
     vio.io(VName("linelen"), dc->linelen);
     vio.io(VName("ofsX"), dc->ofsX);
@@ -160,6 +175,13 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
     vio.io(VName("origAlpha"), dc->origAlpha);
     vio.io(VName("alpha"), dc->alpha);
     vio.io(VName("addAlpha"), dc->addAlpha);
+    /* //debug
+    if (!Strm.IsLoading()) {
+      VStr s = "fuck1";
+      vio.io("FFFuck1", s);
+    }
+    */
+    if (vio.IsError()) Host_Error("error in decal i/o");
   }
   VDecalAnim::Serialise(Strm, dc->animator);
 }
