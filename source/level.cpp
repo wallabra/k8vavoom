@@ -123,41 +123,44 @@ static void OldStringIO (VStream &Strm, VStr &str) {
 //==========================================================================
 static void DecalIO (VStream &Strm, decal_t *dc) {
   if (!dc) return;
-  //float shade[4] = {0, 0, 0, 0};
-  if (Strm.IsLoading()) {
-    // load picture name
-    VName picname, dectype;
-    Strm << picname << dectype;
-    dc->texture = GTextureManager.CheckNumForName(picname, TEXTYPE_Pic, true, false);
-    dc->dectype = dectype;
-    if (dc->texture <= 0) {
-      GCon->Logf(NAME_Warning, "LOAD: decal of type '%s' has missing texture '%s'", *dectype, *picname);
-      dc->texture = 0;
+  {
+    VNTValueIO vio(&Strm);
+    if (Strm.IsLoading()) {
+      // load picture name and decaltype
+      VName picname, dectype;
+      vio.io(VName("picname"), picname);
+      vio.io(VName("dectype"), dectype);
+      if (vio.IsError()) Host_Error("error reading decals");
+      //Strm << picname << dectype;
+      dc->texture = GTextureManager.CheckNumForName(picname, TEXTYPE_Pic, true, false);
+      dc->dectype = dectype;
+      if (dc->texture <= 0) {
+        GCon->Logf(NAME_Warning, "LOAD: decal of type '%s' has missing texture '%s'", *dectype, *picname);
+        dc->texture = 0;
+      }
+    } else {
+      // save picture name and decal type
+      VName picname = GTextureManager.GetTextureName(dc->texture);
+      VName dectype = dc->dectype;
+      //Strm << picname << dectype;
+      vio.io(VName("picname"), picname);
+      vio.io(VName("dectype"), dectype);
     }
-  } else {
-    // save picture name and decal type
-    VName picname = GTextureManager.GetTextureName(dc->texture);
-    VName dectype = dc->dectype;
-    Strm << picname << dectype;
+    vio.io(VName("flags"), dc->flags);
+    vio.io(VName("orgz"), dc->orgz);
+    vio.io(VName("curz"), dc->curz);
+    vio.io(VName("xdist"), dc->xdist);
+    vio.io(VName("linelen"), dc->linelen);
+    vio.io(VName("ofsX"), dc->ofsX);
+    vio.io(VName("ofsY"), dc->ofsY);
+    vio.io(VName("origScaleX"), dc->origScaleX);
+    vio.io(VName("origScaleY"), dc->origScaleY);
+    vio.io(VName("scaleX"), dc->scaleX);
+    vio.io(VName("scaleY"), dc->scaleY);
+    vio.io(VName("origAlpha"), dc->origAlpha);
+    vio.io(VName("alpha"), dc->alpha);
+    vio.io(VName("addAlpha"), dc->addAlpha);
   }
-  Strm << dc->flags;
-  Strm << dc->orgz;
-  Strm << dc->curz;
-  Strm << dc->xdist;
-  Strm << dc->linelen;
-  //Strm << shade[0]; // this
-  //Strm << shade[1]; // is done
-  //Strm << shade[2]; // to not
-  //Strm << shade[3]; // break saves
-  Strm << dc->ofsX;
-  Strm << dc->ofsY;
-  Strm << dc->origScaleX;
-  Strm << dc->origScaleY;
-  Strm << dc->scaleX;
-  Strm << dc->scaleY;
-  Strm << dc->origAlpha;
-  Strm << dc->alpha;
-  Strm << dc->addAlpha;
   VDecalAnim::Serialise(Strm, dc->animator);
 }
 

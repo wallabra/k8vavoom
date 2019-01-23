@@ -321,8 +321,14 @@ public:
   }
 
   virtual void io (VName &Name) override {
-    if (NamesMap[Name.GetIndex()] == -1) NamesMap[Name.GetIndex()] = Names.Append(Name);
-    *this << STRM_INDEX(NamesMap[Name.GetIndex()]);
+    int nidx = Name.GetIndex();
+    const int olen = NamesMap.length();
+    if (olen <= nidx) {
+      NamesMap.setLength(nidx+1);
+      for (int f = olen; f <= nidx; ++f) NamesMap[f] = -1;
+    }
+    if (NamesMap[nidx] == -1) NamesMap[nidx] = Names.Append(Name);
+    *this << STRM_INDEX(NamesMap[nidx]);
   }
 
   virtual void io (VObject *&Ref) override {
