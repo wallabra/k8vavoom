@@ -32,6 +32,9 @@ static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", fal
 VCvarB dbg_show_missing_classes("dbg_show_missing_classes", false, "Show missing classes?", CVAR_Archive);
 VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unknown decorate properties?", CVAR_Archive);
 
+static bool disableBloodReplaces = false;
+static bool bloodOverrideAllowed = false;
+
 
 enum {
   PROPS_HASH_SIZE = 256,
@@ -173,18 +176,44 @@ static void ResetReplacementBase () {
 }
 
 
+static bool IsAnyBloodClass (VClass *c) {
+  for (; c; c = c->GetSuperClass()) {
+    if (c->Name == "Blood" || c->Name == "BloodSplatter" ||
+        c->Name == "BloodGreen" || c->Name == "BloodSplatterGreen" ||
+        c->Name == "BloodBlue" || c->Name == "BloodSplatterBlue")
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
   if (!oldcls) return;
 
   static int doOldRepl = -1;
   if (doOldRepl < 0) doOldRepl = (GArgs.CheckParm("-vc-decorate-old-replacement") ? 1 : 0);
 
+
   if (doOldRepl) {
+    if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(oldcls)) {
+      GCon->Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
+      return;
+    }
     // old Vavoom method
     oldcls->Replacement = newcls;
     newcls->Replacee = oldcls;
   } else {
+    if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(oldcls)) {
+      GCon->Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
+      return;
+    }
     VClass *repl = oldcls->GetReplacement();
+    if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(repl)) {
+      GCon->Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
+      return;
+    }
     check(repl);
     auto orpp = currFileRepls.find(oldcls);
     if (orpp) {
@@ -3058,6 +3087,11 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
                if (sc->Check("true") || sc->Check("tan")) thisIsBasePak = true;
           else if (sc->Check("false") || sc->Check("ona")) thisIsBasePak = false;
           else sc->Error("boolean expected for k8VaVoom command 'basepak'");
+        } else if (sc->Check("AllowBloodReplacement")) {
+          sc->Expect("=");
+               if (sc->Check("true") || sc->Check("tan")) bloodOverrideAllowed = true;
+          else if (sc->Check("false") || sc->Check("ona")) bloodOverrideAllowed = false;
+          else sc->Error("boolean expected for k8VaVoom command 'AllowBloodReplacement'");
         } else {
           sc->Error(va("invalid k8VaVoom command '%s'", *sc->String));
         }
@@ -3119,6 +3153,11 @@ static void dumpFieldDefs (VClass *cls) {
 //==========================================================================
 void ProcessDecorateScripts () {
   guard(ProcessDecorateScripts);
+
+       if (GArgs.CheckParm("-disable-blood-replaces")) disableBloodReplaces = true;
+  else if (GArgs.CheckParm("-disable-blood-replacement")) disableBloodReplaces = true;
+  else if (GArgs.CheckParm("-no-blood-replaces")) disableBloodReplaces = true;
+  else if (GArgs.CheckParm("-no-blood-replacement")) disableBloodReplaces = true;
 
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
     GCon->Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
@@ -3222,6 +3261,7 @@ void ProcessDecorateScripts () {
         ResetReplacementBase();
       }
       thisIsBasePak = false;
+      bloodOverrideAllowed = false;
       ParseDecorate(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
       thisIsBasePak = false; // reset it
       mainDecorateLump = -1;
