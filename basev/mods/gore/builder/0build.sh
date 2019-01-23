@@ -4,6 +4,9 @@ rm decorate.txt decaldef.txt 2>/dev/null
 
 echo 'Actor K8Gore_BloodBase {}' >>decorate.txt
 echo 'Actor K8Gore_BloodBaseTransient : K8Gore_BloodBase {}' >>decorate.txt
+echo "k8VaVoom { AllowBloodReplacement = true }" >>decorate.txt
+
+
 
 echo "////////////////////////////////////////////////////////////////////////////////" >>decorate.txt
 echo "// RED BLOOD" >>decorate.txt
