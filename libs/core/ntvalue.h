@@ -29,6 +29,8 @@
 //**************************************************************************
 class VClass;
 
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct VNTValue {
 public:
   enum {
@@ -142,7 +144,25 @@ public:
   }
 
   void Serialise (VStream &strm);
-  static void SkipSerialised (VStream &strm);
+  void WriteTo (VStream &strm) const;
+
+  // this can optinally return value type and name
+  static void SkipSerialised (VStream &strm, vuint8 *otype=nullptr, VName *oname=nullptr);
+  // doesn't call `Sys_Error()` on invalid type
+  // returns `false` on invalid type
+  static bool ReadTypeName (VStream &strm, vuint8 *otype, VName *oname);
+  // call this after `ReadTypeName()`
+  // doesn't call `Sys_Error()` on errors
+  // returns `false` on invalid type, or on other error
+  static bool SkipValue (VStream &strm, vuint8 atype);
+  // call this after `ReadTypeName()`
+  // doesn't call `Sys_Error()` on errors
+  // returns invalid value on any error
+  static VNTValue ReadValue (VStream &strm, vuint8 atype, VName aname);
+
+  static inline bool isValidType (vuint8 atype) { return (atype > T_Invalid && atype <= T_Blob); }
+
+  inline operator bool () const { return isValid(); }
 
   // checkers
   inline bool isValid () const { return (type > T_Invalid && type <= T_Blob); }
@@ -171,4 +191,107 @@ public:
 
   inline vint32 getBlobSize () const { return (type == T_Blob ? blobSize : 0); }
   inline const vuint8 *getBlobPtr () const { return (type == T_Blob ? blob : nullptr); }
+};
+
+VStream &operator << (VStream &strm, const VNTValue &val);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// doesn't own srcstream
+// note that reading the same field more than once is not guaranteed, it is UB
+// also, having more than one field with the same name is not allowed, it is UB
+class VNTValueReader {
+private:
+  struct ValInfo {
+    VName name;
+    vuint8 type;
+    vint32 ofs; // after `ReadTypeName()`
+  };
+
+private:
+  VStream *srcStream;
+  vint32 valleft; // number of unread values left
+  TArray<ValInfo> vlist; // usually we don't have enough values to justify hashtable
+  bool bError;
+
+private:
+  void setError ();
+
+  // returns invalid value on error
+  // `T_Invalid` `vtype` means "don't coerce"
+  VNTValue coerceTo (VNTValue v, vuint8 vtype);
+
+public:
+  // doesn't own passed stream; starts reading from current stream position
+  VNTValueReader (VStream *ASrcStream);
+  //~VNTValueReader ();
+
+  VNTValueReader (const VNTValueReader &) = delete;
+  VNTValueReader &operator = (const VNTValueReader &) = delete;
+
+  inline bool IsError () const { return bError; }
+
+  // if `vtype` is not `T_Invalid`, returns invalid VNTValue if it is not possible to convert
+  // returns invalid VNTValue if not found
+  VNTValue readValue (VName vname, vuint8 vtype=VNTValue::T_Invalid);
+
+  vint32 readInt (VName vname);
+  float readFloat (VName vname);
+  TVec readVec (VName vname);
+  VName readName (VName vname);
+  VStr readStr (VName vname);
+  VClass *readClass (VName vname);
+  VObject *readObj (VName vname);
+  VSerialisable *readXObj (VName vname);
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class VNTValueWriter {
+private:
+  VStream *strm;
+  TArray<VNTValue> vlist; // usually we don't have enough values to justify hashtable
+
+private:
+  void WriteTo (VStream &strm);
+
+public:
+  VNTValueWriter (VStream *astrm);
+  ~VNTValueWriter ();
+
+  VNTValueWriter (const VNTValueWriter &) = delete;
+  VNTValueWriter &operator = (const VNTValueWriter &) = delete;
+
+  // returns `true` if value was replaced
+  bool putValue (const VNTValue &v);
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// reads or writes named values
+class VNTValueIO {
+private:
+  VNTValueReader *rd;
+  VNTValueWriter *wr;
+  bool bError;
+
+public:
+  VNTValueIO (VStream *astrm);
+  ~VNTValueIO ();
+
+  bool IsError ();
+
+  void io (VName vname, vint32 &v);
+  void io (VName vname, vuint32 &v);
+  void io (VName vname, float &v);
+  void io (VName vname, TVec &v);
+  void io (VName vname, VName &v);
+  void io (VName vname, VStr &v);
+  void io (VName vname, VClass *&v);
+  void io (VName vname, VObject *&v);
+  void io (VName vname, VSerialisable *&v);
+
+  //TODO: find a good way to work with blobs
+  VNTValue readBlob (VName vname);
+  void writeBlob (VName vname, const void *buf, int len);
 };

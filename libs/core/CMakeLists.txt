@@ -58,4 +58,5 @@ add_library(core STATIC
   strtod_plan9.c
   xxhash.h
   xxhash.c
+  ntvalue.cpp
 )
