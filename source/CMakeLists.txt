@@ -334,6 +334,7 @@ set(MAIN_COMMON_SOURCES
   progs.h
   ${RENDERBASE_SOURCES}
   ${TEXTURELIB_SOURCES}
+  ntvalueioex.cpp
   save.h
   sbar.cpp
   sbar.h

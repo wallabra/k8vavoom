@@ -7,8 +7,7 @@
 //**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
 //**       #    ##    ##    #      ####     ####   ##       ##
 //**
-//**  Copyright (C) 1999-2006 Jānis Legzdiņš
-//**  Copyright (C) 2018-2019 Ketmar Dark
+//**  Copyright (C) 2019 Ketmar Dark
 //**
 //**  This program is free software: you can redistribute it and/or modify
 //**  it under the terms of the GNU General Public License as published by
@@ -24,33 +23,25 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#ifndef VAVOOM_COMMON_TYPES_HEADER
-#define VAVOOM_COMMON_TYPES_HEADER
+//**
+//**  extended NTValue-based I/O
+//**
+//**************************************************************************
 
+class VNTValueIOEx : public VNTValueIO {
+public:
+  VNTValueIOEx (VStream *astrm) : VNTValueIO(astrm) {}
 
-//==========================================================================
-//
-//  Forward declarations
-//
-//==========================================================================
-class VName;
-class VStr;
-class VStream;
+  // fuck you, shitplusplus!
+  virtual void io (VName vname, vint32 &v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, vuint32 &v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, float &v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, TVec &v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, VName &v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, VStr &v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, VClass *&v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, VObject *&v) override { VNTValueIO::io(vname, v); }
+  virtual void io (VName vname, VSerialisable *&v) override { VNTValueIO::io(vname, v); }
 
-class VMemberBase;
-class VPackage;
-class VField;
-class VMethod;
-class VState;
-class VConstant;
-class VStruct;
-class VClass;
-class VNetObjectsMap;
-struct mobjinfo_t;
-
-class VObject;
-
-class VNTValueIOEx;
-
-
-#endif
+  virtual void io (VName vname, VTextureID &v);
+};

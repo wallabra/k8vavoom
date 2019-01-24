@@ -729,9 +729,9 @@ void VAcsObject::LoadEnhancedObject () {
     int count = LittleLong(buffer[1]) / 4;
     buffer += 2;
     for (i = 0; i < count; i++, buffer++) {
-      info = FindScript(LittleShort(((word*)buffer)[0]));
+      info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
       if (info) {
-        info->Flags = LittleShort(((word*)buffer)[1]);
+        info->Flags = LittleShort(((vuint16 *)buffer)[1]);
       }
     }
   }
@@ -742,9 +742,9 @@ void VAcsObject::LoadEnhancedObject () {
     int count = LittleLong(buffer[1]) / 4;
     buffer += 2;
     for (i = 0; i < count; i++, buffer++) {
-      info = FindScript(LittleShort(((word*)buffer)[0]));
+      info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
       if (info) {
-        info->VarCount = LittleShort(((word*)buffer)[1]);
+        info->VarCount = LittleShort(((vuint16 *)buffer)[1]);
         //  Make sure it's at least 4 so in SpawnScript we can safely
         // assign args to first 4 variables.
         if (info->VarCount < 4) info->VarCount = 4;

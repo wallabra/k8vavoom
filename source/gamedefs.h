@@ -70,11 +70,12 @@
 #include "screen.h"
 #include "automap.h"
 #include "p_gameobject.h"
+#include "textures/r_tex_id.h"
+#include "ntvalueioex.h"
 #include "level.h"    //  Level data
 #include "mapinfo.h"
 #include "lockdefs.h"
 #include "host.h"
-#include "textures/r_tex_id.h"
 #include "textures/r_tex_public.h"
 #include "render/r_public.h"
 #include "text.h"

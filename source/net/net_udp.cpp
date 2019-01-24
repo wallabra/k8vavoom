@@ -346,7 +346,7 @@ int VUdpDriver::OpenSocket (int port) {
 
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = myAddr;
-  address.sin_port = htons((word)port);
+  address.sin_port = htons((vuint16)port);
   if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == 0) return newsocket;
 
   closesocket(newsocket);
@@ -496,7 +496,7 @@ int VUdpDriver::StringToAddr (const char *string, sockaddr_t *addr) {
 
   addr->sa_family = AF_INET;
   ((sockaddr_in *)addr)->sin_addr.s_addr = htonl(ipaddr);
-  ((sockaddr_in *)addr)->sin_port = htons((word)hp);
+  ((sockaddr_in *)addr)->sin_port = htons((vuint16)hp);
   return 0;
   unguard;
 }

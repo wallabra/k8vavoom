@@ -124,27 +124,15 @@ static void OldStringIO (VStream &Strm, VStr &str) {
 static void DecalIO (VStream &Strm, decal_t *dc) {
   if (!dc) return;
   {
-    VNTValueIO vio(&Strm);
-    if (Strm.IsLoading()) {
-      // load picture name and decaltype
-      VName picname, dectype;
-      vio.io(VName("picname"), picname);
-      vio.io(VName("dectype"), dectype);
-      if (vio.IsError()) Host_Error("error reading decals");
-      //Strm << picname << dectype;
-      dc->texture = GTextureManager.CheckNumForName(picname, TEXTYPE_Pic, true, false);
-      dc->dectype = dectype;
-      if (dc->texture <= 0) {
-        GCon->Logf(NAME_Warning, "LOAD: decal of type '%s' has missing texture '%s'", *dectype, *picname);
-        dc->texture = 0;
-      }
-    } else {
-      // save picture name and decal type
-      VName picname = GTextureManager.GetTextureName(dc->texture);
-      VName dectype = dc->dectype;
-      //Strm << picname << dectype;
-      vio.io(VName("picname"), picname);
-      vio.io(VName("dectype"), dectype);
+    VNTValueIOEx vio(&Strm);
+    //if (!vio.IsLoading()) GCon->Logf("SAVE: texture: id=%d; name=<%s>", dc->texture.id, *GTextureManager.GetTextureName(dc->texture));
+    vio.io(VName("texture"), dc->texture);
+    vio.io(VName("dectype"), dc->dectype);
+    if (vio.IsError()) Host_Error("error reading decals");
+    //if (vio.IsLoading()) GCon->Logf("LOAD: texture: id=%d; name=<%s>", dc->texture.id, *GTextureManager.GetTextureName(dc->texture));
+    if (dc->texture <= 0) {
+      GCon->Logf(NAME_Warning, "LOAD: decal of type '%s' has missing texture", *dc->dectype);
+      dc->texture = 0;
     }
     vio.io(VName("flags"), dc->flags);
     vio.io(VName("orgz"), dc->orgz);
