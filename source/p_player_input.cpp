@@ -44,6 +44,9 @@
 #include "gamedefs.h"
 
 
+extern VCvarB sv_ignore_nomlook;
+
+
 #define BUTTON(name) \
 static TKButton   Key ## name; \
 static TCmdKeyDown  name ## Down_f("+" #name, Key ## name); \
@@ -432,7 +435,7 @@ void VBasePlayer::AdjustAngles () {
   if (ViewAngles.roll > 80.0f) ViewAngles.roll = 80.0f;
   if (ViewAngles.roll < -80.0f) ViewAngles.roll = -80.0f;
 
-  if (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook) ViewAngles.pitch = 0;
+  if (!sv_ignore_nomlook && (Level->LevelInfoFlags&VLevelInfo::LIF_NoFreelook)) ViewAngles.pitch = 0;
   unguard;
 }
 
