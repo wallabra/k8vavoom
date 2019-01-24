@@ -271,28 +271,29 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 // reads or writes named values
 class VNTValueIO {
-private:
+protected:
   VNTValueReader *rd;
   VNTValueWriter *wr;
   bool bError;
 
 public:
   VNTValueIO (VStream *astrm);
-  ~VNTValueIO ();
+  virtual ~VNTValueIO ();
 
   bool IsError ();
+  inline bool IsLoading () const { return !!rd; }
 
-  void io (VName vname, vint32 &v);
-  void io (VName vname, vuint32 &v);
-  void io (VName vname, float &v);
-  void io (VName vname, TVec &v);
-  void io (VName vname, VName &v);
-  void io (VName vname, VStr &v);
-  void io (VName vname, VClass *&v);
-  void io (VName vname, VObject *&v);
-  void io (VName vname, VSerialisable *&v);
+  virtual void io (VName vname, vint32 &v);
+  virtual void io (VName vname, vuint32 &v);
+  virtual void io (VName vname, float &v);
+  virtual void io (VName vname, TVec &v);
+  virtual void io (VName vname, VName &v);
+  virtual void io (VName vname, VStr &v);
+  virtual void io (VName vname, VClass *&v);
+  virtual void io (VName vname, VObject *&v);
+  virtual void io (VName vname, VSerialisable *&v);
 
   //TODO: find a good way to work with blobs
-  VNTValue readBlob (VName vname);
-  void writeBlob (VName vname, const void *buf, int len);
+  virtual VNTValue readBlob (VName vname);
+  virtual void writeBlob (VName vname, const void *buf, int len);
 };
