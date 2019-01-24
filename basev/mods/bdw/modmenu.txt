@@ -1,5 +1,5 @@
 menudef k8BDWModMenu {
-  title = "Gore Mod Options";
+  title = "BDW Mod Options";
 
   option numeric {
     title = "Maximum Allowed Casing Actors";
