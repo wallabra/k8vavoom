@@ -235,6 +235,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
       if (TData) {
         glBindTexture(GL_TEXTURE_2D, TData->Handle);
       } else {
+        //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
         TData = &Tex->DriverTranslated.Alloc();
         TData->Handle = 0;
         TData->Trans = Translation;
@@ -341,6 +342,8 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
   } else if (Translation) {
     // only translation
+    //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+    //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
     UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
   } else if (CMap) {
     // only colormap

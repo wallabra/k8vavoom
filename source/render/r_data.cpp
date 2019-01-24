@@ -246,7 +246,7 @@ static void InitRgbTable () {
           }
         }
         check(best_colour > 0 && best_colour <= 255);
-        r_rgbtable[ir*VAVOOM_COLOR_COMPONENT_MAX+ig*VAVOOM_COLOR_COMPONENT_MAX+ib] = best_colour;
+        r_rgbtable[ir*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+ig*VAVOOM_COLOR_COMPONENT_MAX+ib] = best_colour;
       }
     }
   }
@@ -615,7 +615,6 @@ void R_ShutdownData () {
 //  VTextureTranslation::VTextureTranslation
 //
 //==========================================================================
-
 VTextureTranslation::VTextureTranslation()
   : Crc(0)
   , TranslStart(0)
@@ -707,6 +706,7 @@ void VTextureTranslation::BuildPlayerTrans (int Start, int End, int Col) {
     M_HsvToRgb(h, s, v*TmpV/255, Palette[Idx].r, Palette[Idx].g, Palette[Idx].b);
     Table[Idx] = R_LookupRGB(Palette[Idx].r, Palette[Idx].g, Palette[Idx].b);
   }
+  //for (int f = 0; f < 256; ++f) Table[f] = R_LookupRGB(255, 0, 0);
   CalcCrc();
   TranslStart = Start;
   TranslEnd = End;
@@ -750,6 +750,7 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
     Table[i] = int(CurCol);
     Palette[i] = r_palette[Table[i]];
   }
+  //for (int f = 0; f < 256; ++f) Table[f] = R_LookupRGB(255, 0, 0);
   VTransCmd &C = Commands.Alloc();
   C.Type = 0;
   C.Start = Start;
@@ -850,6 +851,7 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
     Palette[i].g = g*Bright/255;
     Palette[i].b = b*Bright/255;
     Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
+    //Table[i] = R_LookupRGB(255, 0, 0);
   }
   CalcCrc();
   Colour = Col;

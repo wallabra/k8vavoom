@@ -245,7 +245,10 @@ vuint8 *VTexture::GetPixels8 () {
 //==========================================================================
 pala_t *VTexture::GetPixels8A () {
   // if already have converted version, then just return it
-  if (Pixels8BitA && Pixels8BitAValid) return Pixels8BitA;
+  if (Pixels8BitA && Pixels8BitAValid) {
+    //GCon->Logf("***** ALREADY 8A: '%s", *Name);
+    return Pixels8BitA;
+  }
 
   const vuint8 *pixdata = GetPixels();
 
@@ -256,7 +259,7 @@ pala_t *VTexture::GetPixels8A () {
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
     check(Format == mFormat);
     // remap to game palette
-    //GCon->Logf(NAME_Dev, "remapping paletted '%s' to 8A... (%dx%d:%d) (%d)", *Name, Width, Height, NumPixels, mFormat);
+    //GCon->Logf("*** remapping paletted '%s' to 8A... (%dx%d:%d) (%d)", *Name, Width, Height, NumPixels, mFormat);
     vuint8 remap[256];
     if (Format == TEXFMT_8Pal) {
       // own palette, remap
@@ -278,7 +281,7 @@ pala_t *VTexture::GetPixels8A () {
       pDst->a = (*pSrc ? 255 : 0);
     }
   } else if (Format == TEXFMT_RGBA) {
-    //GCon->Logf(NAME_Dev, "remapping 32-bit '%s' to 8A... (%dx%d)", *Name, Width, Height);
+    //GCon->Logf("*** remapping 32-bit '%s' to 8A... (%dx%d)", *Name, Width, Height);
     const rgba_t *pSrc = (const rgba_t *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
       pDst->idx = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
