@@ -3049,6 +3049,14 @@ static void ParseDamageType (VScriptParser *sc) {
 static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
   guard(ParseDecorate);
   while (!sc->AtEnd()) {
+    if (sc->Check("#region") || sc->Check("#endregion")) {
+      //GCon->Logf(NAME_Warning, "REGION: crossed=%d", (sc->Crossed ? 1 : 0));
+      if (!sc->IsAtEol()) {
+        while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
+        if (sc->Crossed) sc->UnGet();
+      }
+      continue;
+    }
     if (sc->Check("#include")) {
       sc->ExpectString();
       int Lump = /*W_CheckNumForFileName*/W_CheckNumForFileNameInSameFile(mainDecorateLump, sc->String);
