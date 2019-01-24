@@ -83,6 +83,131 @@ static VStr warpTpl;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct CustomModeInfo {
+  VStr name;
+  TArray<VStr> aliases;
+  TArray<VStr> pwads;
+  TArray<VStr> postpwads;
+  TArray<VStr> autoskips;
+  VStr basedir;
+
+  void clear () {
+    name.clear();
+    aliases.clear();
+    pwads.clear();
+    postpwads.clear();
+    autoskips.clear();
+  }
+};
+
+
+static CustomModeInfo customMode;
+
+
+static void SetupCustomMode (VStr basedir) {
+  //customMode.clear();
+
+  if (!basedir.isEmpty() && !basedir.endsWith("/")) basedir += "/";
+  VStream *rcstrm = FL_OpenSysFileRead(basedir+"modes.rc");
+  if (!rcstrm) return;
+
+  // load modes
+  TArray<CustomModeInfo> modes;
+  VScriptParser *sc = new VScriptParser(rcstrm->GetName(), rcstrm);
+  while (!sc->AtEnd()) {
+    if (sc->Check("alias")) {
+      sc->ExpectString();
+      VStr k = sc->String;
+      sc->Expect("is");
+      sc->ExpectString();
+      VStr v = sc->String;
+      if (!k.isEmpty() && !v.isEmpty() && k.ICmp(v) != 0) {
+        for (int f = 0; f < modes.length(); ++f) {
+          if (modes[f].name.ICmp(v) == 0) {
+            modes[f].aliases.append(k);
+            break;
+          }
+        }
+      }
+      continue;
+    }
+    sc->Expect("mode");
+    sc->ExpectString();
+    CustomModeInfo mode;
+    mode.clear();
+    mode.name = sc->String;
+    mode.basedir = basedir;
+    sc->Expect("{");
+    while (!sc->Check("}")) {
+      if (sc->Check("pwad")) {
+        sc->ExpectString();
+        mode.pwads.append(sc->String);
+      } else if (sc->Check("postpwad")) {
+        sc->ExpectString();
+        mode.postpwads.append(sc->String);
+      } else if (sc->Check("skipauto")) {
+        sc->ExpectString();
+        mode.autoskips.append(sc->String);
+      } else {
+        sc->Error(va("unknown command '%s'", *sc->String));
+      }
+    }
+    // append mode
+    bool found = false;
+    for (int f = 0; f < modes.length(); ++f) {
+      if (modes[f].name.ICmp(mode.name) == 0) {
+        // i found her!
+        found = true;
+        modes[f] = mode;
+        break;
+      }
+    }
+    if (!found) modes.append(mode);
+  }
+  delete sc;
+
+  if (modes.length() == 0) return; // nothing to do
+
+  // build active mode
+  customMode.basedir = basedir;
+  bool inMode = false;
+  for (int asp = 1; asp < GArgs.Count(); ++asp) {
+    if (VStr::Cmp(GArgs[asp], "-mode") == 0) {
+      inMode = true;
+    } else if (inMode) {
+      VStr mname = GArgs[asp];
+      if (!mname.isEmpty() && (*mname)[0] != '-' && (*mname)[0] != '+') {
+        const CustomModeInfo *nfo = nullptr;
+        for (int f = 0; f < modes.length(); ++f) {
+          if (modes[f].name.ICmp(mname) == 0) {
+            nfo = &modes[f];
+            break;
+          }
+        }
+        if (!nfo) {
+          for (int f = 0; f < modes.length(); ++f) {
+            for (int c = 0; c < modes[f].aliases.length(); ++c) {
+              if (modes[f].aliases[c].ICmp(mname) == 0) {
+                nfo = &modes[f];
+                break;
+              }
+            }
+            if (nfo) break;
+          }
+        }
+        if (nfo) {
+          for (int c = 0; c < nfo->pwads.length(); ++c) customMode.pwads.append(nfo->pwads[c]);
+          for (int c = 0; c < nfo->postpwads.length(); ++c) customMode.postpwads.append(nfo->postpwads[c]);
+          for (int c = 0; c < nfo->autoskips.length(); ++c) customMode.autoskips.append(nfo->autoskips[c]);
+        }
+      }
+      inMode = false;
+    }
+  }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct PWadFile {
   VStr fname;
   bool skipSounds;
@@ -430,6 +555,31 @@ static void AddPakDir (const VStr &dirname) {
 }
 
 
+enum { CM_PRE_PWADS, CM_POST_PWADS };
+
+//==========================================================================
+//
+//  CustomModeLoadPwads
+//
+//==========================================================================
+static void CustomModeLoadPwads (int type) {
+  TArray<VStr> &list = (type == CM_PRE_PWADS ? customMode.pwads : customMode.postpwads);
+  //GCon->Logf(NAME_Init, "CustomModeLoadPwads: type=%d; len=%d", type, list.length());
+  for (int f = 0; f < list.length(); ++f) {
+    VStr fname = list[f];
+    if (fname.isEmpty()) continue;
+    if (!fname.startsWith("/")) fname = customMode.basedir+fname;
+    if (Sys_FileExists(fname)) {
+      GCon->Logf(NAME_Init, "mode pwad: %s...", *fname);
+      VStr ext = fname.ExtractFileExtension().ToLower();
+           if (ext == "wad") W_AddFile(fname, false);
+      else if (ext == "pk3") AddZipFile(fname);
+      else GCon->Logf(NAME_Warning, "ignored unrecognized mode pwad '%s'", *fname);
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  AddAutoloadRC
@@ -441,6 +591,9 @@ void AddAutoloadRC (const VStr &aubasedir) {
 
   // collect autoload groups to skip
   TArray<VStr> skipGrp;
+  // add skips from custom mode
+  for (int f = 0; f < customMode.autoskips.length(); ++f) skipGrp.append(customMode.autoskips[f]);
+  // add skips from command line
   bool inSkipArg = false;
   for (int asp = 1; asp < GArgs.Count(); ++asp) {
     if (VStr::Cmp(GArgs[asp], "-skip-auto") == 0 || VStr::Cmp(GArgs[asp], "-skip-autoload") == 0) {
@@ -500,6 +653,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
   if (bdx.length() == 0) bdx = "./";
   bdx = bdx+"/"+dir;
   //fprintf(stderr, "bdx:<%s>\n", *bdx);
+  //GCon->Logf(NAME_Init, "*** bdx:<%s> ***", *bdx);
 
   if (!Sys_DirExists(bdx)) return;
 
@@ -534,6 +688,9 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     AddZipFile(bdx+"/"+ZipFiles[i]);
   }
+
+  // custom mode
+  SetupCustomMode(bdx);
 
   // add "autoload/*"
   if (!fsys_onlyOneBaseFile) {
@@ -939,6 +1096,7 @@ void FL_InitOptions () {
   GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
   GArgs.AddFileOption("!1-skip-autoload");
   GArgs.AddFileOption("!1-skip-auto");
+  GArgs.AddFileOption("!1-mode");
   GArgs.AddFileOption("-skipsounds");
   GArgs.AddFileOption("-allowsounds");
   GArgs.AddFileOption("-skipsprites");
@@ -1191,6 +1349,9 @@ void FL_Init () {
 
   if (isChex) AddGameDir("basev/mods/chex");
 
+  // load custom mode pwads
+  CustomModeLoadPwads(CM_PRE_PWADS);
+
   int mapnum = -1;
   VStr mapname;
   bool mapinfoFound = false;
@@ -1248,6 +1409,9 @@ void FL_Init () {
   }
   fsys_skipSounds = false;
   fsys_skipSprites = false;
+
+  // load custom mode pwads
+  CustomModeLoadPwads(CM_POST_PWADS);
 
   fsys_report_added_paks = reportIWads;
   if (GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
