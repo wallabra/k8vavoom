@@ -432,6 +432,64 @@ static void AddPakDir (const VStr &dirname) {
 
 //==========================================================================
 //
+//  AddAutoloadRC
+//
+//==========================================================================
+void AddAutoloadRC (const VStr &aubasedir) {
+  VStream *aurc = FL_OpenSysFileRead(aubasedir+"autoload.rc");
+  if (!aurc) return;
+
+  // collect autoload groups to skip
+  TArray<VStr> skipGrp;
+  bool inSkipArg = false;
+  for (int asp = 1; asp < GArgs.Count(); ++asp) {
+    if (VStr::Cmp(GArgs[asp], "-skip-auto") == 0 || VStr::Cmp(GArgs[asp], "-skip-autoload") == 0) {
+      inSkipArg = true;
+    } else if (inSkipArg) {
+      VStr sg = GArgs[asp];
+      if (!sg.isEmpty() && (*sg)[0] != '-' && (*sg)[0] != '+') {
+        skipGrp.append(sg);
+      }
+      inSkipArg = false;
+    }
+  }
+
+  VScriptParser *sc = new VScriptParser(aurc->GetName(), aurc);
+
+  while (!sc->AtEnd()) {
+    sc->Expect("group");
+    sc->ExpectString();
+    VStr grpname = sc->String;
+    sc->Expect("{");
+    bool doSkip = false;
+    for (int f = 0; f < skipGrp.length(); ++f) if (skipGrp[f].ICmp(grpname) == 0) { doSkip = true; break; }
+    if (doSkip) {
+      GCon->Logf(NAME_Init, "skipping autoload group '%s'", *grpname);
+      sc->SkipBracketed(true); // bracket eaten
+      continue;
+    }
+    GCon->Logf(NAME_Init, "processing autoload group '%s'", *grpname);
+    // get file list
+    while (!sc->Check("}")) {
+      if (sc->Check(",")) continue;
+      if (!sc->GetString()) sc->Error("wad/pk3 path expected");
+      if (sc->String.isEmpty()) continue;
+      VStr fname = ((*sc->String)[0] == '/' ? sc->String : aubasedir+sc->String);
+      if (Sys_FileExists(fname)) {
+        VStr ext = fname.ExtractFileExtension().ToLower();
+             if (ext == "wad") W_AddFile(fname, false);
+        else if (ext == "pk3") AddZipFile(fname);
+        else GCon->Logf(NAME_Warning, "ignored unrecognized autoload file '%s'", *fname);
+      }
+    }
+  }
+
+  delete sc;
+}
+
+
+//==========================================================================
+//
 //  AddGameDir
 //
 //==========================================================================
@@ -483,6 +541,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     ZipFiles.clear();
     if (bdx[bdx.length()-1] != '/') bdx += "/";
     bdx += "autoload";
+    VStr bdxSlash = bdx+"/";
     // find all .wad/.pk3 files in that directory
     dirit = Sys_OpenDir(bdx);
     if (dirit) {
@@ -499,13 +558,18 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
     }
 
     // now add wads, then pk3s
-    for (int i = 0; i < WadFiles.length(); ++i) W_AddFile(bdx+"/"+WadFiles[i], false);
-    for (int i = 0; i < ZipFiles.length(); ++i) AddZipFile(bdx+"/"+ZipFiles[i]);
+    for (int i = 0; i < WadFiles.length(); ++i) W_AddFile(bdxSlash+WadFiles[i], false);
+    for (int i = 0; i < ZipFiles.length(); ++i) AddZipFile(bdxSlash+ZipFiles[i]);
+
+    AddAutoloadRC(bdxSlash);
   }
 
   // finally add directory itself
+  // k8: nope
+  /*
   VFilesDir *info = new VFilesDir(bdx);
   SearchPaths.Append(info);
+  */
   unguard;
 }
 
@@ -873,6 +937,8 @@ static int countFmtHash (const VStr &str) {
 void FL_InitOptions () {
   GArgs.AddFileOption("!1-game"); // '!' means "has args, and breaking" (number is argc)
   GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
+  GArgs.AddFileOption("!1-skip-autoload");
+  GArgs.AddFileOption("!1-skip-auto");
   GArgs.AddFileOption("-skipsounds");
   GArgs.AddFileOption("-allowsounds");
   GArgs.AddFileOption("-skipsprites");
