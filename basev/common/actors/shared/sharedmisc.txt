@@ -55,6 +55,22 @@ actor MapSpot 9001
 }
 
 //------------------------------------------------------------------------------
+// Legacy mapspot
+actor FS_MapSpot : MapSpot 5004
+{
+  +NoSector
+  +NoBlockmap
+  +NoGravity
+  +DontSplash
+  states
+  {
+  Spawn:
+    TNT1 A -1
+    Stop
+  }
+}
+
+//------------------------------------------------------------------------------
 actor MapSpotGravity : MapSpot 9013
 {
   -NoSector
