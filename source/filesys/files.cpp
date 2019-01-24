@@ -40,6 +40,7 @@ bool fsys_skipDehacked = false;
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
 bool fsys_ignoreZScript = false;
+bool fsys_DisableBloodReplacement = false; // for custom modes
 
 
 int fsys_warp_n0 = -1;
@@ -89,6 +90,7 @@ struct CustomModeInfo {
   TArray<VStr> pwads;
   TArray<VStr> postpwads;
   TArray<VStr> autoskips;
+  bool disableBloodReplacement;
   VStr basedir;
 
   void clear () {
@@ -97,6 +99,7 @@ struct CustomModeInfo {
     pwads.clear();
     postpwads.clear();
     autoskips.clear();
+    disableBloodReplacement = false;
   }
 };
 
@@ -148,6 +151,8 @@ static void SetupCustomMode (VStr basedir) {
       } else if (sc->Check("skipauto")) {
         sc->ExpectString();
         mode.autoskips.append(sc->String);
+      } else if (sc->Check("DisableBloodReplacement")) {
+        mode.disableBloodReplacement = true;
       } else {
         sc->Error(va("unknown command '%s'", *sc->String));
       }
@@ -199,6 +204,7 @@ static void SetupCustomMode (VStr basedir) {
           for (int c = 0; c < nfo->pwads.length(); ++c) customMode.pwads.append(nfo->pwads[c]);
           for (int c = 0; c < nfo->postpwads.length(); ++c) customMode.postpwads.append(nfo->postpwads[c]);
           for (int c = 0; c < nfo->autoskips.length(); ++c) customMode.autoskips.append(nfo->autoskips[c]);
+          if (nfo->disableBloodReplacement) customMode.disableBloodReplacement = true;
         }
       }
       inMode = false;
@@ -1350,6 +1356,7 @@ void FL_Init () {
   if (isChex) AddGameDir("basev/mods/chex");
 
   // load custom mode pwads
+  if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
   CustomModeLoadPwads(CM_PRE_PWADS);
 
   int mapnum = -1;

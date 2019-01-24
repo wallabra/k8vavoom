@@ -3167,6 +3167,8 @@ void ProcessDecorateScripts () {
   else if (GArgs.CheckParm("-no-blood-replaces")) disableBloodReplaces = true;
   else if (GArgs.CheckParm("-no-blood-replacement")) disableBloodReplaces = true;
 
+  if (!disableBloodReplaces && fsys_DisableBloodReplacement) disableBloodReplaces = true;
+
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
     GCon->Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
