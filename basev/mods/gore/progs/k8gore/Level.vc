@@ -61,12 +61,12 @@ override void OnEntitySpawned (Entity ent) {
     EntityEx ee = EntityEx(ent);
     if (ee isa Cacodemon) {
       ee.BloodType = K8Gore_BloodBlue;
-      ee.BloodSplatterType = K8Gore_BloodBlue;
+      ee.BloodSplatterType = K8Gore_Blood_SplatterReplacerBlue;
       ee.BloodColour = 0xff_00_00_66;
       ee.BloodTranslation = R_GetBloodTranslation(ee.BloodColour);
     } else if (ee isa BaronOfHell || ee isa HellKnight) {
       ee.BloodType = K8Gore_BloodGreen;
-      ee.BloodSplatterType = K8Gore_BloodGreen;
+      ee.BloodSplatterType = K8Gore_Blood_SplatterReplacerGreen;
       ee.BloodColour = 0xff_00_66_00;
       ee.BloodTranslation = R_GetBloodTranslation(ee.BloodColour);
     }
