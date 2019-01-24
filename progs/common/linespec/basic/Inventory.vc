@@ -248,7 +248,7 @@ void DetachedFromOwner () {
 //  TouchSpecial
 //
 //==========================================================================
-final override void TouchSpecial (EntityEx Toucher, optional bool noflash) {
+override void TouchSpecial (EntityEx Toucher, optional bool noflash) {
   if (!Toucher.bPickUp) return; // can't be picked up by toucher
   if (Toucher.Health <= 0) return; // toucher is dead
 

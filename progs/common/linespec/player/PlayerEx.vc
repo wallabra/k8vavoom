@@ -3181,7 +3181,7 @@ override void PlayerTick (float deltaTime) {
 //  SetViewPos
 //
 //==========================================================================
-final override void SetViewPos () {
+override void SetViewPos () {
   // just in a case camera entity has been destroyed
   if (!Camera) Camera = MO;
 

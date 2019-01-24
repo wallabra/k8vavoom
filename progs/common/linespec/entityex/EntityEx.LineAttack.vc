@@ -82,7 +82,7 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
 //  PickActor
 //
 //==========================================================================
-final override Entity PickActor (optional TVec org, TVec dir, float distance, optional int actorMask, optional int wallMask) {
+override Entity PickActor (optional TVec org, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   intercept_t *in;
   TVec lineEnd;
 

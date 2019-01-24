@@ -520,7 +520,7 @@ replication {
 //  eventFindTargetForACS
 //
 //===========================================================================
-final override Entity eventFindTargetForACS () {
+override Entity eventFindTargetForACS () {
   // player?
   if (bIsPlayer) {
     if (Player.PlayerState == PST_DEAD) return (Target ? Target : self); // target holds a killer
@@ -687,7 +687,7 @@ final void A_RearrangePointers (int aptrtarget, int aptrmaster, int aptrtracer, 
 //  eventDoAAPtr
 //
 //===========================================================================
-final override Entity eventDoAAPtr (int ptr) {
+override Entity eventDoAAPtr (int ptr) {
   return DecorDoAAPtr('eventDoAAPtr', ptr);
 }
 

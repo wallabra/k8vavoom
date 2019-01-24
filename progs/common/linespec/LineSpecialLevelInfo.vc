@@ -1099,7 +1099,7 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
 //  StartPlaneWatcher
 //
 //==========================================================================
-final override void StartPlaneWatcher (Entity it, line_t *line, int lineSide,
+override void StartPlaneWatcher (Entity it, line_t *line, int lineSide,
   bool ceiling, int tag, int height, int special, int arg0, int arg1,
   int arg2, int arg3, int arg4)
 {
@@ -3839,7 +3839,7 @@ final void ClampSecPlaneOffsets(sec_plane_t *Plane)
 //
 //==========================================================================
 
-final override bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
+override bool EV_ThingProjectile(int Arg1, int Arg2, int Arg3, int Arg4,
   int Arg5, int gravity, int newtid, name TypeName, Entity Activator)
 {
   return DoThingProjectile(
@@ -4091,7 +4091,7 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //  AcsSpawnThing
 //
 //==========================================================================
-final override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forced) {
+override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forced) {
   class EClass = FindClassNoCase(Name);
   if (!EClass) {
     if (!SetNamePutElement('AcsSpawnThing:NoClass', Name)) print("AcsSpawnThing: No such class `%s`", Name);
@@ -4134,7 +4134,7 @@ final override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, boo
 //  AcsSpawnSpot
 //
 //==========================================================================
-final override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, bool forced) {
+override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, bool forced) {
   int NumSpawned = 0;
   Entity A;
   for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
@@ -4149,7 +4149,7 @@ final override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, b
 //
 //==========================================================================
 
-final override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid, bool forced)
+override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid, bool forced)
 {
   int NumSpawned = 0;
   Entity A;
@@ -4317,7 +4317,7 @@ final int EV_ThingDamage(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //
 //==========================================================================
 
-final override int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
+override int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
 {
   Entity  A;
   int   NumDamaged;
@@ -6209,7 +6209,7 @@ final name ModToDamageType(int Mod)
 //
 //==========================================================================
 
-final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
+override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
 {
   float force;
   PolyobjThinker pe;
@@ -6265,7 +6265,7 @@ final override void PolyThrustMobj(Entity Other, TVec thrustDir, polyobj_t *po)
 //
 //==========================================================================
 
-final override void PolyCrushMobj(Entity Other, polyobj_t *po)
+override void PolyCrushMobj(Entity Other, polyobj_t *po)
 {
   if (po->bCrush)
   {
@@ -6335,7 +6335,7 @@ final override void PolyCrushMobj(Entity Other, polyobj_t *po)
 //
 //==========================================================================
 
-final override bool PolyBusy(int polyobj)
+override bool PolyBusy(int polyobj)
 {
   polyobj_t *poly = XLevel.GetPolyobj(polyobj);
   if (!poly || !poly->SpecialData)
@@ -6354,7 +6354,7 @@ final override bool PolyBusy(int polyobj)
 //
 //==========================================================================
 
-final override int ThingCount(int type, name TypeName, int tid, int SectorTag)
+override int ThingCount(int type, name TypeName, int tid, int SectorTag)
 {
   class!EntityEx   moType;
 
@@ -6470,7 +6470,7 @@ final int DoThingCount(class!EntityEx moType, int tid, int SectorTag)
 //
 //==========================================================================
 
-final override void SectorDamage(int Tag, int Amount, name DamageType,
+override void SectorDamage(int Tag, int Amount, name DamageType,
   name ProtectionType, int Flags)
 {
   class!Inventory ProtectClass = class!Inventory(FindClassNoCase(ProtectionType));
@@ -6546,7 +6546,7 @@ final override void SectorDamage(int Tag, int Amount, name DamageType,
 //  The fields of the mapthing should already be in host byte order.
 //
 //==========================================================================
-final override void SpawnMapThing (mthing_t *mthing) {
+override void SpawnMapThing (mthing_t *mthing) {
   int spawnMask;
   class!EntityEx moClass, oldClass;
 
@@ -7326,7 +7326,7 @@ final int P_Massacre()
 //
 //==========================================================================
 
-final override void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
+override void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
 {
   if (Tid)
   {
@@ -7352,7 +7352,7 @@ final override void SetMarineWeapon(int Tid, int Weapon, Entity Activator)
 //
 //==========================================================================
 
-final override void SetMarineSprite(int Tid, name SrcClassName, Entity Activator)
+override void SetMarineSprite(int Tid, name SrcClassName, Entity Activator)
 {
   //  If there's no such class, print message and do nothing.
   class TmpClass = FindClass(SrcClassName);

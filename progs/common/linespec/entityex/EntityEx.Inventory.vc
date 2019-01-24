@@ -259,7 +259,7 @@ void ObtainInventory (EntityEx Other) {
 //  ClearInventory
 //
 //===========================================================================
-final override void ClearInventory () {
+override void ClearInventory () {
   Inventory Item = Inventory;
   while (Item) {
     Inventory Next = Item.Inventory;
@@ -295,7 +295,7 @@ final override void ClearInventory () {
 //  GiveInventory
 //
 //===========================================================================
-final override void GiveInventory (name ItemName, int Amount) {
+override void GiveInventory (name ItemName, int Amount) {
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
 
@@ -351,7 +351,7 @@ final override void GiveInventory (name ItemName, int Amount) {
 //  TakeInventory
 //
 //===========================================================================
-final override void TakeInventory (name ItemName, int Amount) {
+override void TakeInventory (name ItemName, int Amount) {
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
 
@@ -378,7 +378,7 @@ final override void TakeInventory (name ItemName, int Amount) {
 //  CheckInventory
 //
 //===========================================================================
-final override int CheckInventory (name ItemName) {
+override int CheckInventory (name ItemName) {
        if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
   else if (nameicmp(ItemName, 'health') == 0) return Health;
 
@@ -396,7 +396,7 @@ final override int CheckInventory (name ItemName) {
 //  UseInventoryName
 //
 //===========================================================================
-final override int UseInventoryName (name ItemName) {
+override int UseInventoryName (name ItemName) {
   class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
   if (ItemClass) {
     Inventory Item = FindInventory(ItemClass);
@@ -411,7 +411,7 @@ final override int UseInventoryName (name ItemName) {
 //  GetArmorPoints
 //
 //===========================================================================
-final override int GetArmorPoints () {
+override int GetArmorPoints () {
   Inventory A = FindInventory(BasicArmor);
   return (A ? A.Amount : 0);
 }
@@ -445,7 +445,7 @@ override int GetArmorPointsForType (name armtype) {
 //  CheckNamedWeapon
 //
 //===========================================================================
-final override int CheckNamedWeapon (name Name) {
+override int CheckNamedWeapon (name Name) {
   if (!bIsPlayer || !PlayerEx(Player).ReadyWeapon) return false;
   return (nameicmp(Name, GetClassName(PlayerEx(Player).ReadyWeapon.Class)) == 0);
 }
@@ -456,7 +456,7 @@ final override int CheckNamedWeapon (name Name) {
 //  SetNamedWeapon
 //
 //===========================================================================
-final override int SetNamedWeapon (name Name) {
+override int SetNamedWeapon (name Name) {
   if (!bIsPlayer) return false;
 
   Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassNoCase(Name))));
@@ -482,7 +482,7 @@ final override int SetNamedWeapon (name Name) {
 //  GetAmmoCapacity
 //
 //===========================================================================
-final override int GetAmmoCapacity (name Name) {
+override int GetAmmoCapacity (name Name) {
   class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
   if (!AmmoType) return 0;
 
@@ -501,7 +501,7 @@ final override int GetAmmoCapacity (name Name) {
 //  SetAmmoCapacity
 //
 //===========================================================================
-final override void SetAmmoCapacity (name Name, int Amount) {
+override void SetAmmoCapacity (name Name, int Amount) {
   class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
   if (!AmmoType) return;
 

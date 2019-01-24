@@ -1164,7 +1164,7 @@ final VTerrainInfo *GetFloorType () {
 //  HandleFloorclip
 //
 //==========================================================================
-final override void HandleFloorclip () {
+override void HandleFloorclip () {
   if (bFloorClip) {
     VTerrainInfo *TInfo = GetFloorType();
     if (Origin.z == FloorZ && TInfo->bLiquid) {
@@ -1181,7 +1181,7 @@ final override void HandleFloorclip () {
 //  ApplyFriction
 //
 //==========================================================================
-final override void ApplyFriction () {
+override void ApplyFriction () {
   float dot;
 
   if (bMissile || bSkullFly) return; // no friction for missiles ever

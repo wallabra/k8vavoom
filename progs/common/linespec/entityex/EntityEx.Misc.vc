@@ -291,7 +291,7 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
 //  MoveThing
 //
 //===========================================================================
-final override bool MoveThing (TVec Pos, bool Fog) {
+override bool MoveThing (TVec Pos, bool Fog) {
   TVec OldOrg = Origin;
 
   UnlinkFromWorld();
@@ -485,7 +485,7 @@ final bool HeightClip () {
 //  GetStateTime
 //
 //==========================================================================
-final override float GetStateTime (state AState, float AStateTime) {
+override float GetStateTime (state AState, float AStateTime) {
   if (AState) {
     switch (GetStateTicKind(AState)) {
       //case StateTicKind.Normal: return AStateTime;
@@ -844,7 +844,7 @@ name GetSpecies () {
 //  CheckForPushSpecial
 //
 //===========================================================================
-final override void CheckForPushSpecial (line_t *line, int side) {
+override void CheckForPushSpecial (line_t *line, int side) {
   if (!bNoTrigger) {
     if (bActivatePushWall) {
       LineSpecialLevelInfo(Level).ActivateLine(line, self, side, SPAC_Push);
@@ -861,7 +861,7 @@ final override void CheckForPushSpecial (line_t *line, int side) {
 //  BlastedHitLine
 //
 //==========================================================================
-final override void BlastedHitLine () {
+override void BlastedHitLine () {
   int damage = int(fmax(0, Mass))>>5;
   if (damage > 0) SpawnExploBloodAtHead(damage);
   Damage(none, none, damage);
@@ -873,7 +873,7 @@ final override void BlastedHitLine () {
 //  CrossSpecialLine
 //
 //==========================================================================
-final override void CrossSpecialLine (line_t *ld, int side) {
+override void CrossSpecialLine (line_t *ld, int side) {
   if (!ld) return; //k8: just in case
   if (!bNoTrigger) {
     if (bIsPlayer) {
@@ -1339,7 +1339,7 @@ override void Tick (float deltaTime) {
 //  CrushChange == -666: loader fix
 //
 //==========================================================================
-final override bool SectorChanged (int CrushChange) {
+override bool SectorChanged (int CrushChange) {
   if (CrushChange == -666) {
     // only fix positions for monsters (and don't touch corpses too)
     if (!bMonster && !bIsPlayer) return true;
@@ -1909,7 +1909,7 @@ final EntityEx TossUpObject (class!EntityEx type) {
 //  SetActorProperty
 //
 //==========================================================================
-final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
+override void SetActorProperty (int Prop, int IntVal, string StrVal) {
   switch (Prop) {
     case APROP_Health: Health = IntVal; if (bIsPlayer) Player.Health = IntVal; break;
     case APROP_Speed: Speed = float(IntVal)/65536.0*35.0; break;
@@ -1960,7 +1960,7 @@ final override void SetActorProperty (int Prop, int IntVal, string StrVal) {
 //  GetActorProperty
 //
 //==========================================================================
-final override int GetActorProperty (int Prop) {
+override int GetActorProperty (int Prop) {
   //if (Prop == APROP_SpawnHealth) print("GetActorProperty(%C, APROP_SpawnHealth)=%s", self, self.default.Health);
   switch (Prop) {
     case APROP_Health: return Health;
@@ -3018,7 +3018,7 @@ final bool IsHostile (EntityEx Other) {
 //  ClassifyActor
 //
 //==========================================================================
-final override int ClassifyActor () {
+override int ClassifyActor () {
   int Ret = 0;
   if (bIsPlayer) {
     Ret |= ACTOR_PLAYER;
