@@ -207,8 +207,8 @@ static void InitPalette () {
       }
     }
   }
-  GCon->Logf("black=%d:(%02x_%02x_%02x); while=%d:(%02x_%02x_%02x)", r_black_colour, pal[r_black_colour].r, pal[r_black_colour].g, pal[r_black_colour].b,
-    r_white_colour, pal[r_white_colour].r, pal[r_white_colour].g, pal[r_white_colour].b);
+  //GCon->Logf("black=%d:(%02x_%02x_%02x); while=%d:(%02x_%02x_%02x)", r_black_colour, pal[r_black_colour].r, pal[r_black_colour].g, pal[r_black_colour].b,
+  //  r_white_colour, pal[r_white_colour].r, pal[r_white_colour].g, pal[r_white_colour].b);
   delete Strm;
   unguard;
 }
