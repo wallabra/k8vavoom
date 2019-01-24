@@ -842,7 +842,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
                             (bIsPlayer && PlayerEx(Player).ReadyWeapon && PlayerEx(Player).ReadyWeapon.bBloodSplatter);
 
     // spawn bullet puffs or blood spots, depending on target type
-    if (PuffType.default.bPuffOnActors || th.bNoBlood || th.bInvulnerable || th.bDormant) {
+    if (PuffType && PuffType.default.bPuffOnActors || th.bNoBlood || th.bInvulnerable || th.bDormant) {
       SpawnPuff(hit_point, distance, PuffType, true, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
     }
     if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable && !th.bDormant) {

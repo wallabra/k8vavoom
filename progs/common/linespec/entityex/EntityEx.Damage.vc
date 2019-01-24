@@ -31,7 +31,11 @@
 //
 //==========================================================================
 final static name k8GetBloodClassName (name newblood, name oldblood) {
-  if (FindClass(newblood)) return newblood;
+  if (FindClass(newblood)) {
+    //print("GB: new=%s; old=%s; res=%s", newblood, oldblood, newblood);
+    return newblood;
+  }
+  //print("GB: new=%s; old=%s; res=%s", newblood, oldblood, oldblood);
   return oldblood;
 }
 
@@ -285,16 +289,22 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
         if (doSpray) {
           name bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient', 'Blood');
           name poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool', '');
-          //writeln("bloodtype: ", GetClassName(self.BloodType), "; ", GetClassName(GetClassReplacee(self.BloodType)));
+          //print("bloodtype: %C/%C", self.BloodType, GetClassReplacee(self.BloodType));
 
-          if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') {
-            bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Green', bloodClassName);
-            //mistClassName = 'K8Gore_BloodmistSmallGreen';
-            poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Green', poolClassName);
-          } else if (self.BloodType && GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') {
-            bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Blue', bloodClassName);
-            //mistClassName = 'K8Gore_BloodmistSmallBlue';
-            poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Blue', poolClassName);
+          if (self.BloodType) {
+            name brname = GetClassName(GetClassReplacee(self.BloodType));
+            //print("brname=%s", brname);
+            if (brname == 'BloodGreen') {
+              bloodClassName = 'BloodGreen';
+              bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Green', bloodClassName);
+              //mistClassName = 'K8Gore_BloodmistSmallGreen';
+              poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Green', poolClassName);
+            } else if (brname == 'BloodBlue') {
+              bloodClassName = 'BloodBlue';
+              bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient_Blue', bloodClassName);
+              //mistClassName = 'K8Gore_BloodmistSmallBlue';
+              poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool_Blue', poolClassName);
+            }
           }
 
           //writeln("  bloodclass: ", bloodClassName);
@@ -303,6 +313,7 @@ final int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, nam
           if (bloodClass) bloodClass = class!Actor(GetClassReplacement(bloodClass));
 
           if (bloodClass) {
+            //print("BLOOD CLASS: %C (blcn=%s)", bloodClass, bloodClassName);
             int bcc = int(GetCvarF('k8HSHeadKillBloodCount'));
             if (bcc > 0) {
               bcc += int(Random()*7-3); // -3..3
