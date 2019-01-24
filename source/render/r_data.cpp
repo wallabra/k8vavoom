@@ -55,7 +55,7 @@ rgba_t r_palette[256];
 vuint8 r_black_colour;
 vuint8 r_white_colour;
 
-vuint8 r_rgbtable[32*32*32+4];
+vuint8 r_rgbtable[VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+4];
 
 // variables used to look up
 // and range check thing_t sprites patches
@@ -167,12 +167,13 @@ static void InitPalette () {
   VStream *Strm = W_CreateLumpReaderName(NAME_playpal);
   check(Strm);
   rgba_t *pal = r_palette;
-  int best_dist_black = 0x100000;
-  int best_dist_white = 0;
+  int best_dist_black = 0x7fffffff;
+  int best_dist_white = (r_color_distance_algo ? 0x7fffffff : -0x7fffffff);
   for (int i = 0; i < 256; ++i) {
     *Strm << pal[i].r << pal[i].g << pal[i].b;
     if (i == 0) {
-      //k8: force color 0 to black (it doesn't matter, but anyway)
+      //k8: force color 0 to transparent black (it doesn't matter, but anyway)
+      //GCon->Logf("color #0 is (%02x_%02x_%02x)", pal[0].r, pal[0].g, pal[0].b);
       pal[i].r = 0;
       pal[i].g = 0;
       pal[i].b = 0;
@@ -180,18 +181,34 @@ static void InitPalette () {
     } else {
       pal[i].a = 255;
       // black
-      int dist = pal[i].r*pal[i].r+pal[i].g*pal[i].g+pal[i].b*pal[i].b;
+      int dist;
+      if (r_color_distance_algo) {
+        dist = rgbDistanceSquared(pal[i].r, pal[i].g, pal[i].b, 0, 0, 0);
+      } else {
+        dist = pal[i].r*pal[i].r+pal[i].g*pal[i].g+pal[i].b*pal[i].b;
+      }
       if (dist < best_dist_black) {
         r_black_colour = i;
         best_dist_black = dist;
       }
       // white
-      if (dist > best_dist_white) {
-        r_white_colour = i;
-        best_dist_white = dist;
+      if (r_color_distance_algo) {
+        dist = rgbDistanceSquared(pal[i].r, pal[i].g, pal[i].b, 255, 255, 255);
+        if (dist < best_dist_white) {
+          r_white_colour = i;
+          best_dist_white = dist;
+        }
+      } else {
+        //dist = pal[i].r*pal[i].r+pal[i].g*pal[i].g+pal[i].b*pal[i].b;
+        if (dist > best_dist_white) {
+          r_white_colour = i;
+          best_dist_white = dist;
+        }
       }
     }
   }
+  GCon->Logf("black=%d:(%02x_%02x_%02x); while=%d:(%02x_%02x_%02x)", r_black_colour, pal[r_black_colour].r, pal[r_black_colour].g, pal[r_black_colour].b,
+    r_white_colour, pal[r_white_colour].r, pal[r_white_colour].g, pal[r_white_colour].b);
   delete Strm;
   unguard;
 }
@@ -204,12 +221,13 @@ static void InitPalette () {
 //==========================================================================
 static void InitRgbTable () {
   guard(InitRgbTable);
-  for (int ir = 0; ir < 32; ++ir) {
-    for (int ig = 0; ig < 32; ++ig) {
-      for (int ib = 0; ib < 32; ++ib) {
-        const int r = (int)(ir*255.0f/31.0f+0.5f);
-        const int g = (int)(ig*255.0f/31.0f+0.5f);
-        const int b = (int)(ib*255.0f/31.0f+0.5f);
+  memset(r_rgbtable, 0, sizeof(r_rgbtable));
+  for (int ir = 0; ir < VAVOOM_COLOR_COMPONENT_MAX; ++ir) {
+    for (int ig = 0; ig < VAVOOM_COLOR_COMPONENT_MAX; ++ig) {
+      for (int ib = 0; ib < VAVOOM_COLOR_COMPONENT_MAX; ++ib) {
+        const int r = (int)(ir*255.0f/((float)(VAVOOM_COLOR_COMPONENT_MAX-1))/*+0.5f*/);
+        const int g = (int)(ig*255.0f/((float)(VAVOOM_COLOR_COMPONENT_MAX-1))/*+0.5f*/);
+        const int b = (int)(ib*255.0f/((float)(VAVOOM_COLOR_COMPONENT_MAX-1))/*+0.5f*/);
         int best_colour = -1;
         int best_dist = 0x7fffffff;
         for (int i = 1; i < 256; ++i) {
@@ -227,12 +245,11 @@ static void InitRgbTable () {
             if (!dist) break;
           }
         }
-        check(best_colour >= 0 && best_colour <= 255);
-        r_rgbtable[(ir<<10)+(ig<<5)+ib] = best_colour;
+        check(best_colour > 0 && best_colour <= 255);
+        r_rgbtable[ir*VAVOOM_COLOR_COMPONENT_MAX+ig*VAVOOM_COLOR_COMPONENT_MAX+ib] = best_colour;
       }
     }
   }
-  r_rgbtable[32*32*32] = 0;
   unguard;
 }
 

@@ -209,7 +209,8 @@ vuint8 *VTexture::GetPixels8 () {
     rgba_t *Pal = GetPalette();
     vuint8 Remap[256];
     Remap[0] = 0;
-    for (int i = 1; i < 256; ++i) Remap[i] = r_rgbtable[((Pal[i].r<<7)&0x7c00)+((Pal[i].g<<2)&0x3e0)+((Pal[i].b>>3)&0x1f)];
+    //for (int i = 1; i < 256; ++i) Remap[i] = r_rgbtable[((Pal[i].r<<7)&0x7c00)+((Pal[i].g<<2)&0x3e0)+((Pal[i].b>>3)&0x1f)];
+    for (int i = 1; i < 256; ++i) Remap[i] = R_LookupRGB(Pal[i].r, Pal[i].g, Pal[i].b);
     if (!Pixels8Bit) Pixels8Bit = new vuint8[NumPixels];
     const vuint8 *pSrc = pixdata;
     vuint8 *pDst = Pixels8Bit;
@@ -225,7 +226,7 @@ vuint8 *VTexture::GetPixels8 () {
       if (pSrc->a < 128) {
         *pDst = 0;
       } else {
-        *pDst = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
+        *pDst = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       }
     }
     Pixels8BitValid = true;
@@ -262,7 +263,8 @@ pala_t *VTexture::GetPixels8A () {
       remap[0] = 0;
       const rgba_t *pal = GetPalette();
       if (pal) {
-        for (int i = 1; i < 256; ++i) remap[i] = r_rgbtable[((pal[i].r<<7)&0x7c00)+((pal[i].g<<2)&0x3e0)+((pal[i].b>>3)&0x1f)];
+        //for (int i = 1; i < 256; ++i) remap[i] = r_rgbtable[((pal[i].r<<7)&0x7c00)+((pal[i].g<<2)&0x3e0)+((pal[i].b>>3)&0x1f)];
+        for (int i = 1; i < 256; ++i) remap[i] = R_LookupRGB(pal[i].r, pal[i].g, pal[i].b);
       } else {
         for (int i = 0; i < 256; ++i) remap[i] = i;
       }
@@ -279,7 +281,7 @@ pala_t *VTexture::GetPixels8A () {
     //GCon->Logf(NAME_Dev, "remapping 32-bit '%s' to 8A... (%dx%d)", *Name, Width, Height);
     const rgba_t *pSrc = (const rgba_t *)pixdata;
     for (int i = 0; i < NumPixels; ++i, ++pSrc, ++pDst) {
-      pDst->idx = r_rgbtable[((pSrc->r<<7)&0x7c00)+((pSrc->g<<2)&0x3e0)+((pSrc->b>>3)&0x1f)];
+      pDst->idx = R_LookupRGB(pSrc->r, pSrc->g, pSrc->b);
       pDst->a = pSrc->a;
     }
   } else {

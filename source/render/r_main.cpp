@@ -963,7 +963,7 @@ vuint32 VRenderLevelShared::GetFade (sec_region_t *Reg) {
   if (Reg->params->Fade) return Reg->params->Fade;
   if (Level->LevelInfo->OutsideFog && Reg->ceiling->pic == skyflatnum) return Level->LevelInfo->OutsideFog;
   if (Level->LevelInfo->Fade) return Level->LevelInfo->Fade;
-  if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7f;
+  if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7fU;
   if (r_fade_light) return FADE_LIGHT; // simulate light fading using dark fog
   return 0;
   unguard;

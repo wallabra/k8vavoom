@@ -195,7 +195,7 @@ vuint8 *VPatchTexture::GetPixels () {
       vuint8 *dest = Pixels+top*Width+x;
       while (count--) {
         *Strm << *dest;
-        if (!*dest && !bNoRemap0) *dest = r_black_colour;
+        if (!dest[0] && !bNoRemap0) *dest = r_black_colour;
         dest += Width;
       }
 
