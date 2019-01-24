@@ -841,7 +841,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
-      if (developer) GCon->Logf("******************** %s : %s ********************", *Name, *Tex->Name);
+      if (developer) GCon->Logf(NAME_Dev, "******************** %s : %s ********************", *Name, *Tex->Name);
       Tex->Name = Name;
       return AddTexture(Tex);
     }
@@ -1056,7 +1056,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
     }
     VStream *Strm = W_CreateLumpReaderNum(NamesLump);
-    if (developer) GCon->Logf("READING '%s' 0x%08x (%d)", *W_FullLumpName(NamesLump), NamesLump, Strm->TotalSize());
+    if (developer) GCon->Logf(NAME_Dev, "READING '%s' 0x%08x (%d)", *W_FullLumpName(NamesLump), NamesLump, Strm->TotalSize());
     vint32 nummappatches = Streamer<vint32>(*Strm);
     if (nummappatches < 0 || nummappatches > 1024*1024) Sys_Error("%s: invalid number of patches in pnames (%d)", *W_FullLumpName(NamesLump), nummappatches);
     //VTexture **patchtexlookup = new VTexture *[nummappatches];
@@ -1071,7 +1071,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         Sys_Error("%s: record #%d, name is <%s>", *W_FullLumpName(NamesLump), i, TmpName);
       }
 
-      //if (developer) GCon->Logf("PNAMES entry #%d is '%s'", i, TmpName);
+      //if (developer) GCon->Logf(NAME_Dev, "PNAMES entry #%d is '%s'", i, TmpName);
       if (!TmpName[0]) {
         GCon->Logf(NAME_Warning, "PNAMES entry #%d is empty!", i);
         WallPatchInfo &wpi = patchtexlookup.alloc();
@@ -1462,6 +1462,7 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
 
   int start = (backward ? pic2lmp : pic1lmp);
   int end = (backward ? pic1lmp : pic2lmp);
+  check(start <= end);
 
   // try to find common texture prefix, to filter out accidental shit introduced by pwads
   VStr pfx;
@@ -1476,28 +1477,29 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
     }
   }
 
-  if (developer) GCon->Logf("=== %s : %s === (0x%08x : 0x%08x) [%s]", *nfirst, *nlast, pic1lmp, pic2lmp, *pfx);
+  if (developer) GCon->Logf(NAME_Dev, "=== %s : %s === (0x%08x : 0x%08x) [%s] (0x%08x -> 0x%08x; ns=%d)", *nfirst, *nlast, pic1lmp, pic2lmp, *pfx, start, end, txns);
   // find all textures in animation (up to arbitrary limit)
   // it is safe to not check for `-1` here, as it is guaranteed that the last texture is present
   for (; start <= end; start = W_IterateNS(start, txns)) {
     check(start != -1); // should not happen
+    if (developer) GCon->Logf(NAME_Dev, "  lump: 0x%08x; name=<%s> : <%s>", start, *W_LumpName(start), *W_FullLumpName(start));
     // check prefix
     if (pfx.length()) {
       const char *lname = *W_LumpName(start);
       if (!VStr::startsWith(lname, *pfx)) {
-        if (developer) GCon->Logf("    PFX SKIP: %s : 0x%08x (0x%08x)", lname, start, end);
+        if (developer) GCon->Logf(NAME_Dev, "    PFX SKIP: %s : 0x%08x (0x%08x)", lname, start, end);
         continue;
       }
     }
     int txidx = GTextureManager.CheckNumForName(W_LumpName(start), txtype, true, false);
     if (developer) {
-      GCon->Logf("  %s : 0x%08x (0x%08x)", (txidx == -1 ? "----" : *GTextureManager.GetTextureName(txidx)), start, end);
+      GCon->Logf(NAME_Dev, "  %s : 0x%08x (0x%08x)", (txidx == -1 ? "----" : *GTextureManager.GetTextureName(txidx)), start, end);
     }
     if (txidx == -1) continue;
     // if we have seen this texture in animdef, skip the whole sequence
     if (checkadseen) {
       if (animPicSeen.has(W_LumpName(start))) {
-        if (developer) GCon->Logf(" SEEN IN ANIMDEF, SKIPPED");
+        if (developer) GCon->Logf(NAME_Dev, " SEEN IN ANIMDEF, SKIPPED");
         ids.clear();
         return;
       }
@@ -1509,6 +1511,7 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
       return;
     }
     ids.append(txidx);
+    if (start == end) break;
   }
 
   if (backward && ids.length() > 1) {
