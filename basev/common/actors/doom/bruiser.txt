@@ -15,7 +15,7 @@ actor BaronOfHell 3003
   DeathSound "baron/death"
   Obituary "$ob_baron"
   HitObituary "$ob_baronhit"
-  BloodType BloodGreen
+  BloodType BloodGreen, BloodSplatterGreen
   BloodColor "00 66 00"
   Monster
   +FloorClip
@@ -89,7 +89,7 @@ actor HellKnight : BaronOfHell 69
   DeathSound "knight/death"
   Obituary "$ob_knight"
   HitObituary "$ob_knighthit"
-  BloodType BloodGreen
+  BloodType BloodGreen, BloodSplatterGreen
   BloodColor "00 66 00"
   states
   {
