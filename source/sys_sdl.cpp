@@ -33,7 +33,7 @@
 #include <dirent.h>
 #include <SDL.h>
 #if !defined(_WIN32) && !defined(__SWITCH__)
-# include <execinfo.h>
+//# include <execinfo.h>
 #elif defined(__SWITCH__)
 # include <switch.h>
 #endif
