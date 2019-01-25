@@ -712,7 +712,7 @@ load_again:
     // check if map wad is here
     VStr aux_file_name = va("maps/%s.wad", *MapName);
     if (FL_FileExists(aux_file_name)) {
-      // apped map wad to list of wads (it will be deleted later)
+      // append map wad to list of wads (it will be deleted later)
       xmaplumpnum = W_CheckNumForFileName(va("maps/%s.wad", *MapName));
       lumpnum = W_OpenAuxiliary(aux_file_name);
       if (lumpnum >= 0) {

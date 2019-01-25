@@ -350,6 +350,7 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   const VPakFileInfo &fi = pakdir.files[lump];
 
   // read the lump in
+#if 1
   void *ptr = (fi.filesize ? Z_Malloc(fi.filesize) : nullptr);
   if (fi.filesize) {
     check(lockInited);
@@ -361,6 +362,10 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
 
   // create stream
   VStream *S = new VMemoryStream(GetPrefix()+":"+pakdir.files[lump].fileName, ptr, fi.filesize, true);
+#else
+  VStream *S = new VPartialStreamRO(GetPrefix()+":"+pakdir.files[lump].fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
+#endif
+
   //GCon->Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);
   //Z_Free(ptr);
   return S;
