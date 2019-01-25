@@ -53,8 +53,9 @@ final void SetBloodArgs (EntityEx master, optional int damage) {
 //==========================================================================
 final name GetBloodSmearDecalName () {
   if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearBlue';
+  name dcn = GetClassName(GetClassReplacee(self.BloodType));
+  if (dcn == 'BloodGreen') return 'BloodSmearGreen';
+  if (dcn == 'BloodBlue') return 'BloodSmearBlue';
   //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearGreen';
   //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearBlue';
   return 'BloodSmear';
@@ -68,8 +69,9 @@ final name GetBloodSmearDecalName () {
 //==========================================================================
 final name GetBloodSplatRadiusDecalName () {
   if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatRadiusGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatRadiusBlue';
+  name dcn = GetClassName(GetClassReplacee(self.BloodType));
+  if (dcn == 'BloodGreen') return 'BloodSplatRadiusGreen';
+  if (dcn == 'BloodBlue') return 'BloodSplatRadiusBlue';
   //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatRadiusGreen';
   //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatRadiusBlue';
   return 'BloodSplatRadius';
@@ -83,10 +85,9 @@ final name GetBloodSplatRadiusDecalName () {
 //==========================================================================
 final name GetBloodSmearRadiusDecalName () {
   if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSmearRadiusGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSmearRadiusBlue';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSmearRadiusGreen';
-  if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSmearRadiusBlue';
+  name dcn = GetClassName(GetClassReplacee(self.BloodType));
+  if (dcn == 'BloodGreen') return 'BloodSmearRadiusGreen';
+  if (dcn == 'BloodBlue') return 'BloodSmearRadiusBlue';
   return 'BloodSmearRadius';
 }
 
@@ -98,8 +99,9 @@ final name GetBloodSmearRadiusDecalName () {
 //==========================================================================
 final name GetBloodSplatDecalName () {
   if (bNoBlood || !self.BloodType) return '';
-  if (GetClassName(self.BloodType) == 'BloodGreen') return 'BloodSplatGreen';
-  if (GetClassName(self.BloodType) == 'BloodBlue') return 'BloodSplatBlue';
+  name dcn = GetClassName(GetClassReplacee(self.BloodType));
+  if (dcn == 'BloodGreen') return 'BloodSplatGreen';
+  if (dcn == 'BloodBlue') return 'BloodSplatBlue';
   //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodGreen') return 'BloodSplatGreen';
   //if (GetClassName(GetClassReplacee(self.BloodType)) == 'BloodBlue') return 'BloodSplatBlue';
   return 'BloodSplat';
