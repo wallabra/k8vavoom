@@ -534,7 +534,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
     Strm << STRM_INDEX(sthcount);
     if (sthcount < 0) Host_Error("Save is broken (invalid number of scripts)");
     if (Strm.IsLoading()) scriptThinkers.setLength(sthcount);
-    GCon->Logf("VLSR(%p): %d scripts", (void *)this, sthcount);
+    //GCon->Logf("VLSR(%p): %d scripts", (void *)this, sthcount);
     for (int f = 0; f < sthcount; ++f) {
       VSerialisable *obj = scriptThinkers[f];
       Strm << obj;
