@@ -218,8 +218,9 @@ bool Physics (float DeltaTime) {
         }
         if (onmo.Origin.z+onmo.Height-Origin.z <= MaxStepHeight) {
           if (bIsPlayer) {
-            PlayerEx(Player).ViewHeight -= onmo.Origin.z+onmo.Height-Origin.z;
-            PlayerEx(Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(Player).ViewHeight)*4.0;
+            PlayerEx pex = PlayerEx(Player);
+            pex.ViewHeight -= onmo.Origin.z+onmo.Height-Origin.z;
+            if (PlayerPawn(self)) pex.DeltaViewHeight = (PlayerPawn(self).ViewHeight-pex.ViewHeight)*4.0;
           }
           Origin.z = onmo.Origin.z+onmo.Height;
         }
@@ -234,8 +235,9 @@ bool Physics (float DeltaTime) {
         if (onmo.Origin.z < onmo.FloorZ) {
           Origin.z += onmo.FloorZ-onmo.Origin.z;
           if (onmo.bIsPlayer) {
-            PlayerEx(onmo.Player).ViewHeight -= onmo.FloorZ-onmo.Origin.z;
-            PlayerEx(onmo.Player).DeltaViewHeight = (PlayerPawn(self).ViewHeight-PlayerEx(onmo.Player).ViewHeight)*4.0;
+            PlayerEx pex = PlayerEx(onmo.Player);
+            pex.ViewHeight -= onmo.FloorZ-onmo.Origin.z;
+            if (PlayerPawn(onmo)) pex.DeltaViewHeight = (PlayerPawn(onmo).ViewHeight-pex.ViewHeight)*4.0;
           }
           onmo.Origin.z = onmo.FloorZ;
         }
