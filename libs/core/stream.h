@@ -94,7 +94,8 @@ public:
   // status requests
   inline bool IsLoading () const { return bLoading;}
   inline bool IsSaving () const { return !bLoading; }
-  inline bool IsError () const { return bError; }
+  //inline bool IsError () const { return bError; }
+  virtual bool IsError () const;
 
   inline void Serialize (void *buf, int len) { Serialise(buf, len); }
   inline void Serialize (const void *buf, int len) { Serialise(buf, len); }

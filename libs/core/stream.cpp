@@ -195,6 +195,16 @@ const VStr &VStream::GetName () const {
 
 //==========================================================================
 //
+//  VStream::IsError
+//
+//==========================================================================
+bool VStream::IsError () const {
+  return bError;
+}
+
+
+//==========================================================================
+//
 //  VStream::GetVersion
 //
 //  stream version; usually purely informational

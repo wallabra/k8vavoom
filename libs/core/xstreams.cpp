@@ -1067,20 +1067,59 @@ void VStdFileStream::Serialise (void *buf, int len) {
 //
 //==========================================================================
 VPartialStreamRO::VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen, bool aOwnSrc)
-  : srcStream(ASrcStream)
+  : lockptr(nullptr)
+  , srcStream(ASrcStream)
   , stpos(astpos)
   , srccurpos(astpos)
   , partlen(apartlen)
   , srcOwned(aOwnSrc)
+  , closed(false)
+  , myname()
 {
-  mythread_mutex_init(&lock);
+  lockptr = &lock;
+  mythread_mutex_init(lockptr);
   bLoading = true;
   if (!srcStream) { srcOwned = false; bError = true; return; }
-  if (partlen < 0) {
-    MyThreadLocker locker(&lock);
-    partlen = srcStream->TotalSize()-stpos;
-    if (partlen < 0) partlen = 0;
-    if (srcStream->IsError()) setError();
+  {
+    MyThreadLocker locker(lockptr);
+    if (!srcStream->IsLoading()) {
+      bError = true;
+      partlen = 0;
+    } else {
+      if (partlen < 0) {
+        partlen = srcStream->TotalSize()-stpos;
+             if (partlen < 0) { partlen = 0; bError = true; }
+        else if (srcStream->IsError()) bError = true;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::VPartialStreamRO
+//
+//==========================================================================
+VPartialStreamRO::VPartialStreamRO (const VStr &aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr)
+  : lockptr(alockptr)
+  , srcStream(ASrcStream)
+  , stpos(astpos)
+  , srccurpos(astpos)
+  , partlen(apartlen)
+  , srcOwned(false)
+  , closed(false)
+  , myname(aname)
+{
+  if (!lockptr) {
+    lockptr = &lock;
+    mythread_mutex_init(lockptr);
+  }
+  bLoading = true;
+  if (partlen < 0 || !srcStream) { bError = true; return; }
+  {
+    MyThreadLocker locker(lockptr);
+    if (srcStream->IsError() || !srcStream->IsLoading()) { bError = true; return; }
   }
 }
 
@@ -1092,23 +1131,14 @@ VPartialStreamRO::VPartialStreamRO (VStream *ASrcStream, int astpos, int apartle
 //==========================================================================
 VPartialStreamRO::~VPartialStreamRO () {
   Close();
-  mythread_mutex_destroy(&lock);
-}
-
-
-//==========================================================================
-//
-//  VPartialStreamRO::setError
-//
-//==========================================================================
-void VPartialStreamRO::setError () {
   if (srcOwned && srcStream) {
-    MyThreadLocker locker(&lock);
+    MyThreadLocker locker(lockptr);
     delete srcStream;
   }
   srcOwned = false;
   srcStream = nullptr;
-  bError = true;
+  if (lockptr == &lock) mythread_mutex_destroy(lockptr);
+  lockptr = nullptr;
 }
 
 
@@ -1118,12 +1148,13 @@ void VPartialStreamRO::setError () {
 //
 //==========================================================================
 bool VPartialStreamRO::Close () {
-  if (srcOwned && srcStream) {
-    MyThreadLocker locker(&lock);
-    delete srcStream;
+  {
+    MyThreadLocker locker(lockptr);
+    if (!closed) {
+      closed = true;
+      myname.clear();
+    }
   }
-  srcOwned = false;
-  srcStream = nullptr;
   return !bError;
 }
 
@@ -1134,11 +1165,50 @@ bool VPartialStreamRO::Close () {
 //
 //==========================================================================
 const VStr &VPartialStreamRO::GetName () const {
-  if (srcStream) {
-    MyThreadLocker locker(&lock);
-    return srcStream->GetName();
+  if (!closed) {
+    if (!myname.isEmpty()) return myname;
+    if (srcStream) {
+      MyThreadLocker locker(lockptr);
+      return srcStream->GetName();
+    }
   }
   return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::IsError
+//
+//==========================================================================
+bool VPartialStreamRO::IsError () const {
+  if (lockptr) {
+    MyThreadLocker locker(lockptr);
+    return bError;
+  } else {
+    return bError;
+  }
+}
+
+
+//==========================================================================
+//
+//  VPartialStreamRO::checkValidityCond
+//
+//==========================================================================
+bool VPartialStreamRO::checkValidityCond (bool mustBeTrue) {
+  if (!lockptr) { bError = true; return false; }
+  {
+    MyThreadLocker locker(lockptr);
+    if (!bError) {
+      if (!mustBeTrue || closed || !srcStream || srcStream->IsError()) bError = true;
+    }
+    if (!bError) {
+      if (srccurpos < stpos || srccurpos > stpos+partlen) bError = true;
+    }
+    if (bError) return false;
+  }
+  return true;
 }
 
 
@@ -1148,22 +1218,17 @@ const VStr &VPartialStreamRO::GetName () const {
 //
 //==========================================================================
 void VPartialStreamRO::Serialise (void *buf, int len) {
-  if (!srcStream) { setError(); return; }
-  if (bError) return;
-  if (len < 0) { setError(); return; }
+  if (!checkValidityCond(len >= 0)) return;
   if (len == 0) return;
-  if (srccurpos >= stpos+partlen) { setError(); return; }
-  int left = stpos+partlen-srccurpos;
-  if (left < len) { setError(); return; }
   {
-    MyThreadLocker locker(&lock);
-    if (srcStream->IsError()) { setError(); return; }
+    MyThreadLocker locker(lockptr);
+    if (stpos+partlen-srccurpos < len) { bError = true; return; }
     srcStream->Seek(srccurpos);
-    if (srcStream->IsError()) { setError(); return; }
+    if (srcStream->IsError()) { bError = true; return; }
     srcStream->Serialise(buf, len);
-    if (srcStream->IsError()) { setError(); return; }
+    if (srcStream->IsError()) { bError = true; return; }
+    srccurpos += len;
   }
-  srccurpos += len;
 }
 
 
@@ -1173,19 +1238,33 @@ void VPartialStreamRO::Serialise (void *buf, int len) {
 //
 //==========================================================================
 void VPartialStreamRO::SerialiseBits (void *Data, int Length) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
+  if (!checkValidityCond(Length >= 0)) return;
+  {
+    MyThreadLocker locker(lockptr);
+    srcStream->Seek(srccurpos);
+    if (srcStream->IsError()) { bError = true; return; }
     srcStream->SerialiseBits(Data, Length);
+    int cpos = srcStream->Tell();
+    if (srcStream->IsError()) { bError = true; return; }
+    if (cpos < stpos) { srccurpos = stpos; bError = true; return; }
+    if (cpos > stpos+partlen) { srccurpos = stpos+partlen; bError = true; return; }
+    srccurpos = cpos-stpos;
   }
 }
 
 
 void VPartialStreamRO::SerialiseInt (vuint32 &Value, vuint32 Max) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
+  if (!checkValidity()) return;
+  {
+    MyThreadLocker locker(lockptr);
+    srcStream->Seek(srccurpos);
+    if (srcStream->IsError()) { bError = true; return; }
     srcStream->SerialiseInt(Value, Max);
+    int cpos = srcStream->Tell();
+    if (srcStream->IsError()) { bError = true; return; }
+    if (cpos < stpos) { srccurpos = stpos; bError = true; return; }
+    if (cpos > stpos+partlen) { srccurpos = stpos+partlen; bError = true; return; }
+    srccurpos = cpos-stpos;
   }
 }
 
@@ -1196,11 +1275,11 @@ void VPartialStreamRO::SerialiseInt (vuint32 &Value, vuint32 Max) {
 //
 //==========================================================================
 void VPartialStreamRO::Seek (int pos) {
-  if (!srcStream) { bError = true; return; }
-  if (bError) return;
-  if (pos < 0) pos = 0;
-  if (pos > partlen) pos = partlen;
-  srccurpos = stpos+pos;
+  if (!checkValidityCond(pos >= 0 && pos <= partlen)) return;
+  {
+    MyThreadLocker locker(lockptr);
+    srccurpos = stpos+pos;
+  }
 }
 
 
@@ -1210,7 +1289,11 @@ void VPartialStreamRO::Seek (int pos) {
 //
 //==========================================================================
 int VPartialStreamRO::Tell () {
-  return (bError ? 0 : srccurpos-stpos);
+  if (!checkValidity()) return 0;
+  {
+    MyThreadLocker locker(lockptr);
+    return (srccurpos-stpos);
+  }
 }
 
 
@@ -1220,7 +1303,11 @@ int VPartialStreamRO::Tell () {
 //
 //==========================================================================
 int VPartialStreamRO::TotalSize () {
-  return (bError ? 0 : partlen);
+  if (!checkValidity()) return 0;
+  {
+    MyThreadLocker locker(lockptr);
+    return partlen;
+  }
 }
 
 
@@ -1230,7 +1317,11 @@ int VPartialStreamRO::TotalSize () {
 //
 //==========================================================================
 bool VPartialStreamRO::AtEnd () {
-  return (bError || srccurpos >= stpos+partlen);
+  if (!checkValidity()) return true;
+  {
+    MyThreadLocker locker(lockptr);
+    return (srccurpos >= stpos+partlen);
+  }
 }
 
 
@@ -1240,11 +1331,29 @@ bool VPartialStreamRO::AtEnd () {
 //
 //==========================================================================
 void VPartialStreamRO::Flush () {
-  if (!bError && srcStream) {
-    MyThreadLocker locker(&lock);
+  if (!checkValidity()) return;
+  {
+    MyThreadLocker locker(lockptr);
     srcStream->Flush();
+    if (srcStream->IsError()) bError = true;
   }
 }
+
+
+#define PARTIAL_DO_IO()  do { \
+  if (!checkValidity()) return; \
+  { \
+    MyThreadLocker locker(lockptr); \
+    srcStream->Seek(srccurpos); \
+    if (srcStream->IsError()) { bError = true; return; } \
+    srcStream->io(v); \
+    int cpos = srcStream->Tell(); \
+    if (srcStream->IsError()) { bError = true; return; } \
+    if (cpos < stpos) { srccurpos = stpos; bError = true; return; } \
+    if (cpos > stpos+partlen) { srccurpos = stpos+partlen; bError = true; return; } \
+    srccurpos = cpos-stpos; \
+  } \
+} while (0)
 
 
 //==========================================================================
@@ -1253,21 +1362,17 @@ void VPartialStreamRO::Flush () {
 //
 //==========================================================================
 void VPartialStreamRO::io (VName &v) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
-    srcStream->io(v);
-  }
+  PARTIAL_DO_IO();
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  VPartialStreamRO::io
+//
+//==========================================================================
 void VPartialStreamRO::io (VStr &v) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
-    srcStream->io(v);
-  }
+  PARTIAL_DO_IO();
 }
 
 
@@ -1277,11 +1382,7 @@ void VPartialStreamRO::io (VStr &v) {
 //
 //==========================================================================
 void VPartialStreamRO::io (const VStr &v) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
-    srcStream->io(v);
-  }
+  PARTIAL_DO_IO();
 }
 
 
@@ -1291,11 +1392,7 @@ void VPartialStreamRO::io (const VStr &v) {
 //
 //==========================================================================
 void VPartialStreamRO::io (VObject *&v) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
-    srcStream->io(v);
-  }
+  PARTIAL_DO_IO();
 }
 
 
@@ -1305,11 +1402,7 @@ void VPartialStreamRO::io (VObject *&v) {
 //
 //==========================================================================
 void VPartialStreamRO::io (VMemberBase *&v) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
-    srcStream->io(v);
-  }
+  PARTIAL_DO_IO();
 }
 
 
@@ -1319,11 +1412,7 @@ void VPartialStreamRO::io (VMemberBase *&v) {
 //
 //==========================================================================
 void VPartialStreamRO::io (VSerialisable *&v) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
-    srcStream->io(v);
-  }
+  PARTIAL_DO_IO();
 }
 
 
@@ -1333,9 +1422,16 @@ void VPartialStreamRO::io (VSerialisable *&v) {
 //
 //==========================================================================
 void VPartialStreamRO::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
-  if (!srcStream) { setError(); return; }
-  if (!bError) {
-    MyThreadLocker locker(&lock);
+  if (!checkValidityCond(!!Ptr && !!Struct)) return;
+  {
+    MyThreadLocker locker(lockptr);
+    srcStream->Seek(srccurpos);
+    if (srcStream->IsError()) { bError = true; return; }
     srcStream->SerialiseStructPointer(Ptr, Struct);
+    int cpos = srcStream->Tell();
+    if (srcStream->IsError()) { bError = true; return; }
+    if (cpos < stpos) { srccurpos = stpos; bError = true; return; }
+    if (cpos > stpos+partlen) { srccurpos = stpos+partlen; bError = true; return; }
+    srccurpos = cpos-stpos;
   }
 }

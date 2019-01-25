@@ -219,22 +219,29 @@ public:
 class VPartialStreamRO : public VStream {
 private:
   mutable mythread_mutex lock;
+  mutable mythread_mutex *lockptr;
   VStream *srcStream;
   int stpos;
   int srccurpos;
   int partlen;
   bool srcOwned;
+  bool closed;
+  VStr myname;
 
 private:
-  void setError ();
+  bool checkValidityCond (bool mustBeTrue);
+  inline bool checkValidity () { return checkValidityCond(true); }
 
 public:
   // doesn't own passed stream
   VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen=-1, bool aOwnSrc=false);
+  VPartialStreamRO (const VStr &aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr);
+  // will free source stream if necessary
   virtual ~VPartialStreamRO () override;
 
   // stream interface
   virtual const VStr &GetName () const override;
+  virtual bool IsError () const override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &, vuint32) override;
@@ -244,6 +251,7 @@ public:
   virtual int TotalSize () override;
   virtual bool AtEnd () override;
   virtual void Flush () override;
+  // won't free stream
   virtual bool Close () override;
 
   // interface functions for objects and classes streams
