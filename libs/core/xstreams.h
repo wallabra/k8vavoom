@@ -113,9 +113,9 @@ public:
 // and pass it to zip stream or something
 class VPagedMemoryStream : public VStream {
 private:
-  enum { PAGE_SIZE = 8192 };
-  enum { DATA_BYTES = PAGE_SIZE-sizeof(vuint8 *) };
-  // each page contains pointer to the next page, and `PAGE_SIZE-sizeof(void*)` bytes of data
+  enum { FullPageSize = 8192 };
+  enum { DataPerPage = FullPageSize-sizeof(vuint8 *) };
+  // each page contains pointer to the next page, and `FullPageSize-sizeof(void*)` bytes of data
   vuint8 *first; // first page
   vuint8 *curr; // current page for reader, last page for writer
   int pos; // current position

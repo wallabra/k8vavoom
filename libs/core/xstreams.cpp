@@ -539,7 +539,7 @@ const VStr &VPagedMemoryStream::GetName () const {
 void VPagedMemoryStream::Serialise (void *bufp, int count) {
   check(count >= 0);
   if (count == 0 || bError) return;
-  int leftInPage = DATA_BYTES-pos%DATA_BYTES;
+  int leftInPage = DataPerPage-pos%DataPerPage;
   vuint8 *buf = (vuint8 *)bufp;
   if (bLoading) {
     // loading
@@ -547,29 +547,29 @@ void VPagedMemoryStream::Serialise (void *bufp, int count) {
     if (count > size-pos) { count = size-pos; bError = true; }
     while (count > 0) {
       if (count <= leftInPage) {
-        memcpy(buf, curr+sizeof(vuint8 *)+pos%DATA_BYTES, count);
+        memcpy(buf, curr+sizeof(vuint8 *)+pos%DataPerPage, count);
         pos += count;
         break;
       }
-      memcpy(buf, curr+sizeof(vuint8 *)+pos%DATA_BYTES, leftInPage);
+      memcpy(buf, curr+sizeof(vuint8 *)+pos%DataPerPage, leftInPage);
       pos += leftInPage;
       count -= leftInPage;
       buf += leftInPage;
-      check(pos%DATA_BYTES == 0);
+      check(pos%DataPerPage == 0);
       curr = *(vuint8 **)curr; // next page
-      leftInPage = DATA_BYTES; // it is safe to overestimate here
+      leftInPage = DataPerPage; // it is safe to overestimate here
     }
   } else {
     // writing
     while (count > 0) {
-      if (leftInPage == DATA_BYTES) {
+      if (leftInPage == DataPerPage) {
         // need new page
         if (first) {
           if (pos != 0) {
             vuint8 *next = *(vuint8 **)curr;
             if (!next) {
               // allocate next page
-              next = (vuint8 *)Z_Malloc(PAGE_SIZE);
+              next = (vuint8 *)Z_Malloc(FullPageSize);
               *(vuint8 **)next = nullptr; // no next page
               *(vuint8 **)curr = next; // pointer to next page
             }
@@ -579,21 +579,21 @@ void VPagedMemoryStream::Serialise (void *bufp, int count) {
           }
         } else {
           // allocate first page
-          first = curr = (vuint8 *)Z_Malloc(PAGE_SIZE);
+          first = curr = (vuint8 *)Z_Malloc(FullPageSize);
           *(vuint8 **)first = nullptr; // no next page
         }
       }
       if (count <= leftInPage) {
-        memcpy(curr+sizeof(vuint8 *)+pos%DATA_BYTES, buf, count);
+        memcpy(curr+sizeof(vuint8 *)+pos%DataPerPage, buf, count);
         pos += count;
         break;
       }
-      memcpy(curr+sizeof(vuint8 *)+pos%DATA_BYTES, buf, leftInPage);
+      memcpy(curr+sizeof(vuint8 *)+pos%DataPerPage, buf, leftInPage);
       pos += leftInPage;
       count -= leftInPage;
       buf += leftInPage;
-      check(pos%DATA_BYTES == 0);
-      leftInPage = DATA_BYTES;
+      check(pos%DataPerPage == 0);
+      leftInPage = DataPerPage;
     }
     if (size < pos) size = pos;
   }
@@ -613,14 +613,14 @@ void VPagedMemoryStream::Seek (int newpos) {
   } else {
     // writing is somewhat special:
     // we don't have to go to next page if pos is at its first byte
-    if (newpos <= DATA_BYTES) {
+    if (newpos <= DataPerPage) {
       // in the first page
       curr = first;
     } else {
       // walk pages
-      int pgcount = newpos/DATA_BYTES;
+      int pgcount = newpos/DataPerPage;
       // if we are at page boundary, do one step less
-      if (newpos%DATA_BYTES == 0) {
+      if (newpos%DataPerPage == 0) {
         --pgcount;
         check(pgcount > 0);
       }
@@ -657,7 +657,7 @@ void VPagedMemoryStream::CopyTo (VStream *strm) {
   int left = size;
   vuint8 *cpg = first;
   while (left > 0) {
-    int wrt = (left > DATA_BYTES ? DATA_BYTES : left);
+    int wrt = (left > DataPerPage ? DataPerPage : left);
     strm->Serialise(cpg+sizeof(vuint8 *), wrt);
     if (strm->IsError()) return;
     left -= wrt;
