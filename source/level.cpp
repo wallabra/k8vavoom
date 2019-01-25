@@ -674,7 +674,10 @@ void VLevel::ClearReferences () {
   guard(VLevel::ClearReferences);
   Super::ClearReferences();
   // clear script refs
-  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) scriptThinkers[scidx]->ClearReferences();
+  for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) {
+    VLevelScriptThinker *sth = scriptThinkers[scidx];
+    if (sth && !sth->destroyed) sth->ClearReferences();
+  }
   // clear other refs
   sector_t *sec = Sectors;
   for (int i = NumSectors-1; i >= 0; --i, ++sec) {
