@@ -110,6 +110,7 @@ private:
     return false;
   }
 
+  /*
   static inline bool IsSegAnOpenedSomething (const seg_t *line) {
     if (line->linedef->flags&ML_3DMIDTEX) return true; // 3dmidtex never blocks anything
 
@@ -159,4 +160,5 @@ private:
 
     return false;
   }
+  */
 };

@@ -687,6 +687,7 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
         if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
       } else {
         // sloped sector is always visible
+        // k8: why?
         return true;
       }
     } else if (seg->linedef) {
@@ -790,14 +791,13 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
     if (clip_trans_hack) {
       if (seg->linedef->alpha < 1.0f) return; //k8: skip translucent walls (for now)
       if (seg->sidedef->MidTexture <= 0) {
-        //TODO: here we can check if opposite sector is really visible
-        //      but this is not really necessary (i think). k8.
+        // we can see the opposite sector through midtex (it seems)
         //const sector_t *ops = (seg->side ? seg->frontsector : seg->backsector);
-        //if (ops->ceiling.minz >= ops->floor.maxz) return;
         return;
       }
     }
-    if (IsSegAnOpenedSomething(seg)) return;
+    //if (IsSegAnOpenedSomething(seg)) return;
+    if (!IsSegAClosedSomething(seg)) return;
   }
 
   //k8: this is hack for boom translucency
