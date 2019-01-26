@@ -91,6 +91,7 @@ struct CustomModeInfo {
   TArray<VStr> postpwads;
   TArray<VStr> autoskips;
   bool disableBloodReplacement;
+  bool disableGoreMod;
   VStr basedir;
 
   void clear () {
@@ -100,11 +101,13 @@ struct CustomModeInfo {
     postpwads.clear();
     autoskips.clear();
     disableBloodReplacement = false;
+    disableGoreMod = false;
   }
 };
 
 
 static CustomModeInfo customMode;
+static TArray<VStr> postPWads; // from autoload
 
 
 static void SetupCustomMode (VStr basedir) {
@@ -143,16 +146,27 @@ static void SetupCustomMode (VStr basedir) {
     sc->Expect("{");
     while (!sc->Check("}")) {
       if (sc->Check("pwad")) {
-        sc->ExpectString();
-        mode.pwads.append(sc->String);
+        for (;;) {
+          sc->ExpectString();
+          mode.pwads.append(sc->String);
+          if (!sc->Check(",")) break;
+        }
       } else if (sc->Check("postpwad")) {
-        sc->ExpectString();
-        mode.postpwads.append(sc->String);
+        for (;;) {
+          sc->ExpectString();
+          mode.postpwads.append(sc->String);
+          if (!sc->Check(",")) break;
+        }
       } else if (sc->Check("skipauto")) {
-        sc->ExpectString();
-        mode.autoskips.append(sc->String);
+        for (;;) {
+          sc->ExpectString();
+          mode.autoskips.append(sc->String);
+          if (!sc->Check(",")) break;
+        }
       } else if (sc->Check("DisableBloodReplacement")) {
         mode.disableBloodReplacement = true;
+      } else if (sc->Check("DisableGoreMod")) {
+        mode.disableGoreMod = true;
       } else {
         sc->Error(va("unknown command '%s'", *sc->String));
       }
@@ -205,6 +219,7 @@ static void SetupCustomMode (VStr basedir) {
           for (int c = 0; c < nfo->postpwads.length(); ++c) customMode.postpwads.append(nfo->postpwads[c]);
           for (int c = 0; c < nfo->autoskips.length(); ++c) customMode.autoskips.append(nfo->autoskips[c]);
           if (nfo->disableBloodReplacement) customMode.disableBloodReplacement = true;
+          if (nfo->disableGoreMod) customMode.disableGoreMod = true;
         }
       }
       inMode = false;
@@ -510,12 +525,12 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
     if (!allowFail) Sys_Error("cannot add empty file");
     return;
   }
-  VStr ext = fname.ExtractFileExtension().ToLower();
   if (!Sys_FileExists(fname)) {
     if (!allowFail) Sys_Error("cannot add file \"%s\"", *fname);
     GCon->Logf(NAME_Warning,"cannot add file \"%s\"", *fname);
     return;
   }
+  VStr ext = fname.ExtractFileExtension().ToLower();
   if (ext == "pk3" || ext == "zip") {
     AddZipFile(fname);
   } else {
@@ -571,17 +586,19 @@ enum { CM_PRE_PWADS, CM_POST_PWADS };
 static void CustomModeLoadPwads (int type) {
   TArray<VStr> &list = (type == CM_PRE_PWADS ? customMode.pwads : customMode.postpwads);
   //GCon->Logf(NAME_Init, "CustomModeLoadPwads: type=%d; len=%d", type, list.length());
+
+  // load post-file pwads from autoload here too
+  if (type == CM_POST_PWADS && postPWads.length() > 0) {
+    GCon->Logf(NAME_Init, "loading autoload post-pwads");
+    for (int f = 0; f < postPWads.length(); ++f) AddAnyFile(postPWads[f], true); // allow fail
+  }
+
   for (int f = 0; f < list.length(); ++f) {
     VStr fname = list[f];
     if (fname.isEmpty()) continue;
     if (!fname.startsWith("/")) fname = customMode.basedir+fname;
-    if (Sys_FileExists(fname)) {
-      GCon->Logf(NAME_Init, "mode pwad: %s...", *fname);
-      VStr ext = fname.ExtractFileExtension().ToLower();
-           if (ext == "wad") W_AddFile(fname, false);
-      else if (ext == "pk3") AddZipFile(fname);
-      else GCon->Logf(NAME_Warning, "ignored unrecognized mode pwad '%s'", *fname);
-    }
+    GCon->Logf(NAME_Init, "mode pwad: %s...", *fname);
+    AddAnyFile(fname, true); // allow fail
   }
 }
 
@@ -631,15 +648,12 @@ void AddAutoloadRC (const VStr &aubasedir) {
     // get file list
     while (!sc->Check("}")) {
       if (sc->Check(",")) continue;
+      bool postPWad = false;
+      if (sc->Check("postpwad")) postPWad = true;
       if (!sc->GetString()) sc->Error("wad/pk3 path expected");
       if (sc->String.isEmpty()) continue;
       VStr fname = ((*sc->String)[0] == '/' ? sc->String : aubasedir+sc->String);
-      if (Sys_FileExists(fname)) {
-        VStr ext = fname.ExtractFileExtension().ToLower();
-             if (ext == "wad") W_AddFile(fname, false);
-        else if (ext == "pk3") AddZipFile(fname);
-        else GCon->Logf(NAME_Warning, "ignored unrecognized autoload file '%s'", *fname);
-      }
+      if (postPWad) postPWads.append(fname); else AddAnyFile(fname, true); // allow fail
     }
   }
 
@@ -1347,10 +1361,14 @@ void FL_Init () {
     }
   }
 
-  if (game_release_mode || isChex) {
-    if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");
+  if (!customMode.disableGoreMod) {
+    if (game_release_mode || isChex) {
+      if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");
+    } else {
+      if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
+    }
   } else {
-    if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
+    GCon->Logf(NAME_Init, "Gore mod disabled");
   }
 
   if (isChex) AddGameDir("basev/mods/chex");
