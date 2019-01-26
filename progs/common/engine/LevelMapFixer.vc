@@ -400,18 +400,24 @@ void KnownMapBugFixer () {
   // Skulldash EE first map and credits map, too many static lights, don't precalc
   if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16" ||
       MapHashMD5 == "a8d2a336f0b8e77a84be9460743be70d") {
-#ifdef CLIENT
+//#ifdef CLIENT
     if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
       // hub map
       bForceNoTexturePrecache = true;
       bForceNoPrecalcStaticLights = true;
     }
     //ldr_extrasamples_override = 0;
-#endif
+//#endif
     printwarn("MAPFIX: SkullDash EE: disabled precalculated static lightmaps and texture precaching");
     return;
   }
 
+  // dmp2017 hub map
+  if (MapHashMD5 == "1c5f5371b392663e70c8c7b94ceeb82b") {
+    bForceNoTexturePrecache = true;
+    bForceNoPrecalcStaticLights = true;
+  }
+  //ldr_extrasamples_override = 0;
 
   // Discharge! map04
   // k8: actually, is looks better with dynamic lights:
