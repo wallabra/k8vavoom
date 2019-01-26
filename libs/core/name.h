@@ -131,7 +131,7 @@ public:
   static void DebugDumpHashStats ();
 };
 
-static_assert(sizeof(VName) == sizeof(vint32)); // for VaVoom C
+static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for VaVoom C
 
 
 inline vuint32 GetTypeHash (const VName &N) { return hashU32((vuint32)(N.GetIndex())); }
