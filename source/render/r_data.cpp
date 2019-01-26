@@ -221,6 +221,10 @@ static void InitPalette () {
 //==========================================================================
 static void InitRgbTable () {
   guard(InitRgbTable);
+  VStr rtblsize;
+       if (sizeof(r_rgbtable) < 1024*1024) rtblsize = va("%u KB", (unsigned)(sizeof(r_rgbtable)/1024));
+  else rtblsize = va("%u MB", (unsigned)(sizeof(r_rgbtable)/1024/1024));
+  GCon->Logf(NAME_Init, "building color translation table (%d, %s)...", VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
   memset(r_rgbtable, 0, sizeof(r_rgbtable));
   for (int ir = 0; ir < VAVOOM_COLOR_COMPONENT_MAX; ++ir) {
     for (int ig = 0; ig < VAVOOM_COLOR_COMPONENT_MAX; ++ig) {

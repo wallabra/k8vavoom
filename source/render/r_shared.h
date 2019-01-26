@@ -31,7 +31,8 @@
 #ifndef _R_SHARED_H
 #define _R_SHARED_H
 
-//#define VAVOOM_BIGGER_RGB_TABLE
+#define VAVOOM_BIGGER_RGB_TABLE
+//#define VAVOOM_HUGE_RGB_TABLE
 
 #include "fmd2defs.h"
 #include "drawer.h"
@@ -236,7 +237,9 @@ extern rgba_t r_palette[256];
 extern vuint8 r_black_colour;
 extern vuint8 r_white_colour;
 
-#ifdef VAVOOM_BIGGER_RGB_TABLE
+#if defined(VAVOOM_HUGE_RGB_TABLE)
+# define VAVOOM_COLOR_COMPONENT_MAX  (128)
+#elif defined(VAVOOM_BIGGER_RGB_TABLE)
 # define VAVOOM_COLOR_COMPONENT_MAX  (64)
 #else
 # define VAVOOM_COLOR_COMPONENT_MAX  (32)
@@ -257,7 +260,11 @@ extern VTextureTranslation ColourMaps[CM_Max];
 //  R_LookupRGB
 //
 //==========================================================================
-#ifdef VAVOOM_BIGGER_RGB_TABLE
+#if defined(VAVOOM_HUGE_RGB_TABLE)
+static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+  return r_rgbtable[(((vuint32)clampToByte(r)<<13)&0x1fc000)|(((vuint32)clampToByte(g)<<6)&0x3f80)|((clampToByte(b)>>1)&0x7fU)];
+}
+#elif defined(VAVOOM_BIGGER_RGB_TABLE)
 static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
   return r_rgbtable[(((vuint32)clampToByte(r)<<10)&0x3f000U)|(((vuint32)clampToByte(g)<<4)&0xfc0U)|((clampToByte(b)>>2)&0x3fU)];
 }
