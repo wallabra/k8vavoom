@@ -4109,24 +4109,18 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_SetLineTexture)
       {
-        int Tex = GTextureManager.NumForName(GetName8(sp[-1]),
-          TEXTYPE_Wall, true, true);
-        int searcher = -1;
-        for (line_t *line = XLevel->FindLine(sp[-4], &searcher);
-          line != nullptr; line = XLevel->FindLine(sp[-4], &searcher))
-        {
-          if (sp[-2] == TEXTURE_MIDDLE)
-          {
-            GLevel->Sides[line->sidenum[sp[-3]]].MidTexture = Tex;
-          }
-          else if (sp[-2] == TEXTURE_BOTTOM)
-          {
-            GLevel->Sides[line->sidenum[sp[-3]]].BottomTexture = Tex;
-          }
-          else
-          {
-            // TEXTURE_TOP
-            GLevel->Sides[line->sidenum[sp[-3]]].TopTexture = Tex;
+        int Tex = GTextureManager.NumForName(GetName8(sp[-1]), TEXTYPE_Wall, true, true);
+        if (Tex < 0) {
+          GCon->Logf(NAME_Warning, "ACS: texture '%s' not found!", *GetName8(sp[-1]));
+        } else {
+          int side = sp[-3];
+          int ttype = sp[-2];
+          int searcher = -1;
+          for (line_t *line = XLevel->FindLine(sp[-4], &searcher); line != nullptr; line = XLevel->FindLine(sp[-4], &searcher)) {
+            if (line->sidenum[side] == -1) continue;
+                 if (ttype == TEXTURE_MIDDLE) GLevel->Sides[line->sidenum[side]].MidTexture = Tex;
+            else if (ttype == TEXTURE_BOTTOM) GLevel->Sides[line->sidenum[side]].BottomTexture = Tex;
+            else if (ttype == TEXTURE_TOP) GLevel->Sides[line->sidenum[side]].TopTexture = Tex;
           }
         }
         sp -= 4;
@@ -4136,34 +4130,28 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_SetLineBlocking)
       {
         int searcher = -1;
-        for (line_t *line = XLevel->FindLine(sp[-2], &searcher);
-          line != nullptr; line = XLevel->FindLine(sp[-2], &searcher))
-        {
-          switch (sp[-1])
-          {
-          case BLOCK_NOTHING:
-            line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING |
-              ML_RAILING | ML_BLOCKPLAYERS);
-            break;
-          case BLOCK_CREATURES:
-          default:
-            line->flags &= ~(ML_BLOCKEVERYTHING | ML_RAILING |
-              ML_BLOCKPLAYERS);
-            line->flags |= ML_BLOCKING;
-            break;
-          case BLOCK_EVERYTHING:
-            line->flags &= ~(ML_RAILING | ML_BLOCKPLAYERS);
-            line->flags |= ML_BLOCKING | ML_BLOCKEVERYTHING;
-            break;
-          case BLOCK_RAILING:
-            line->flags &= ~(ML_BLOCKEVERYTHING | ML_BLOCKPLAYERS);
-            line->flags |= ML_BLOCKING | ML_RAILING;
-            break;
-          case BLOCK_PLAYERS:
-            line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING |
-              ML_RAILING);
-            line->flags |= ML_BLOCKPLAYERS;
-            break;
+        for (line_t *line = XLevel->FindLine(sp[-2], &searcher); line != nullptr; line = XLevel->FindLine(sp[-2], &searcher)) {
+          switch (sp[-1]) {
+            case BLOCK_NOTHING:
+              line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_RAILING | ML_BLOCKPLAYERS);
+              break;
+            case BLOCK_CREATURES:
+            default:
+              line->flags &= ~(ML_BLOCKEVERYTHING | ML_RAILING | ML_BLOCKPLAYERS);
+              line->flags |= ML_BLOCKING;
+              break;
+            case BLOCK_EVERYTHING:
+              line->flags &= ~(ML_RAILING | ML_BLOCKPLAYERS);
+              line->flags |= ML_BLOCKING | ML_BLOCKEVERYTHING;
+              break;
+            case BLOCK_RAILING:
+              line->flags &= ~(ML_BLOCKEVERYTHING | ML_BLOCKPLAYERS);
+              line->flags |= ML_BLOCKING | ML_RAILING;
+              break;
+            case BLOCK_PLAYERS:
+              line->flags &= ~(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_RAILING);
+              line->flags |= ML_BLOCKPLAYERS;
+              break;
           }
         }
         sp -= 2;
