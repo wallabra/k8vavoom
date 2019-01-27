@@ -44,7 +44,7 @@ public:
   void Setup (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
   void Setup (const VStr &strmName, VStream *strm); // from current position to stream end
 
-  virtual void Serialise (void*, int) override;
+  virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -71,7 +71,7 @@ public:
   VMemoryStream (const VStr &strmName, const TArray<vuint8> &);
   VMemoryStream (const VStr &strmName, VStream *strm); // from current position to stream end
 
-  virtual void Serialise (void*, int) override;
+  virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -94,7 +94,7 @@ protected:
 public:
   VArrayStream (const VStr &strmName, TArray<vuint8> &);
 
-  virtual void Serialise (void*, int) override;
+  virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -127,7 +127,7 @@ public:
   VPagedMemoryStream (const VStr &strmName);
 
   virtual bool Close () override;
-  virtual void Serialise (void*, int) override;
+  virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -156,9 +156,9 @@ protected:
 
 public:
   VBitStreamWriter (vint32);
-  virtual void Serialise (void*, int) override;
-  virtual void SerialiseBits (void*, int) override;
-  virtual void SerialiseInt (vuint32&, vuint32) override;
+  virtual void Serialise (void *Data, int Length) override;
+  virtual void SerialiseBits (void *Data, int Length) override;
+  virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
   void WriteBit (bool);
   void WriteInt (vuint32, vuint32);
   inline vuint8 *GetData () { return Data.Ptr(); }
@@ -176,8 +176,8 @@ protected:
 public:
   VBitStreamReader (vuint8* = nullptr, vint32 = 0);
   void SetData (VBitStreamReader&, int);
-  virtual void Serialise (void*, int) override;
-  virtual void SerialiseBits (void*, int) override;
+  virtual void Serialise (void *Data, int Length) override;
+  virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
   bool ReadBit ();
   vuint32 ReadInt (vuint32);
@@ -244,7 +244,7 @@ public:
   virtual bool IsError () const override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
-  virtual void SerialiseInt (vuint32 &, vuint32) override;
+  virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
 
   virtual void Seek (int) override;
   virtual int Tell () override;

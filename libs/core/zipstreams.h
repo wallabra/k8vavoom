@@ -47,7 +47,7 @@ public:
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  mythread_mutex lock;
+  //mythread_mutex lock;
   VStream *srcStream;
   int stpos;
   int srccurpos;
@@ -84,20 +84,12 @@ public:
   VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
   VZipStreamReader (bool useCurrSrcPos, const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
 
-  /*
-  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (const VStr &strmName, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (const VStr &strmName, bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  */
-
   virtual ~VZipStreamReader () override;
-
-  virtual const VStr &GetName () const override;
 
   void setCrc (vuint32 acrc); // turns on CRC checking
 
-  virtual void Serialise (void *, int) override;
+  virtual const VStr &GetName () const override;
+  virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -117,7 +109,7 @@ public:
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  mythread_mutex lock;
+  //mythread_mutex lock;
   VStream *dstStream;
   Bytef buffer[BUFFER_SIZE];
   z_stream zStream;
@@ -132,89 +124,15 @@ public:
   // doesn't own passed stream
   VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
   virtual ~VZipStreamWriter () override;
+
   void setRequireCrc ();
   vuint32 getCrc32 () const; // crc32 over uncompressed data (if enabled)
-  virtual void Serialise (void *, int) override;
+
+  virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual void Flush () override;
   virtual bool Close () override;
 };
-
-
-/*
-// doesn't own srcstream
-class VZipStreamReader : public VStream {
-public:
-  // stream type
-  enum Type {
-    ZLIB, // and gzip
-    RAW,
-  };
-
-  enum { UNKNOWN_SIZE = 0xffffffffU }; // for uncompressed
-
-private:
-  enum { BUFFER_SIZE = 65536 };
-
-  VStream *SrcStream;
-  Bytef Buffer[BUFFER_SIZE];
-  z_stream ZStream;
-  bool Initialised;
-  vuint32 UncompressedSize;
-  int srcStartPos;
-  int srcCurrPos;
-  Type type;
-  VStr StreamName;
-  bool useInternalStreamName;
-  mutable mythread_mutex lock;
-
-private:
-  void initialize ();
-  void reinitialize ();
-
-public:
-  VZipStreamReader (VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (const VStr &strmName, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  VZipStreamReader (const VStr &strmName, bool useCurrSrcPos, VStream *ASrcStream, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
-  virtual ~VZipStreamReader () override;
-  virtual const VStr &GetName () const override;
-  virtual void Serialise (void*, int) override;
-  virtual void Seek (int) override;
-  virtual int Tell () override;
-  virtual int TotalSize () override;
-  virtual bool AtEnd () override;
-  virtual bool Close () override;
-};
-
-
-// doesn't own dststream
-class VZipStreamWriter : public VStream {
-public:
-  // stream type
-  enum Type {
-    ZLIB,
-    RAW,
-    GZIP,
-  };
-private:
-  enum { BUFFER_SIZE = 65536 };
-
-  VStream *DstStream;
-  Bytef Buffer[BUFFER_SIZE];
-  z_stream ZStream;
-  bool Initialised;
-
-public:
-  VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
-
-  virtual const VStr &GetName () const override;
-  virtual void Serialise (void*, int) override;
-  virtual void Seek (int) override;
-  virtual void Flush () override;
-  virtual bool Close () override;
-};
-*/
 
 
 #endif

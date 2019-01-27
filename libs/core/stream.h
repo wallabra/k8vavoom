@@ -86,9 +86,10 @@ protected:
 
 public:
   VStreamIOMapper *Mapper;
+  vuint16 version; // stream version; usually purely informational
 
 public:
-  VStream () : bLoading(false), bError(false), Mapper(nullptr) {}
+  VStream () : bLoading(true), bError(false), Mapper(nullptr), version(0) {}
   virtual ~VStream ();
 
   // status requests
@@ -100,8 +101,6 @@ public:
   inline void Serialize (void *buf, int len) { Serialise(buf, len); }
   inline void Serialize (const void *buf, int len) { Serialise(buf, len); }
   void Serialise (const void *buf, int len); // only write
-
-  virtual vint16 GetVersion (); // stream version; usually purely informational
 
   // stream interface
   virtual const VStr &GetName () const;
@@ -126,8 +125,8 @@ public:
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct);
 
   // serialise integers in particular byte order
-  void SerialiseLittleEndian (void *, int);
-  void SerialiseBigEndian (void *, int);
+  void SerialiseLittleEndian (void *Val, int Len);
+  void SerialiseBigEndian (void *Val, int Len);
 };
 
 // stream serialisation operators
