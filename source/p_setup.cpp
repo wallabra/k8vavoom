@@ -165,6 +165,7 @@ static bool hashLump (sha224_ctx *sha224ctx, MD5Context *md5ctx, int lumpnum) {
     if (st.IsError()) { delete strm; return false; }
     if (sha224ctx) sha224_update(sha224ctx, buf, rd);
     if (md5ctx) md5ctx->Update(buf, (unsigned)rd);
+    //if (xxhash) XXH32_update(xxhash, buf, (unsigned)rd);
     left -= rd;
   }
   return true;
@@ -1144,6 +1145,33 @@ load_again:
   // do it here, so it won't touch sloped floors
   // it will set `othersec` for sectors too
   FixDeepWaters();
+
+
+  // calculate xxHash32 of various map parts
+
+  // hash of linedefs, sidedefs, sectors (in this order)
+  {
+    //GCon->Logf("*** LSSHash: 0x%08x (%d:%d:%d)", LSSHash, NumLines, NumSides, NumSectors);
+    XXH32_state_t *lssXXHash = XXH32_createState();
+    XXH32_reset(lssXXHash, (unsigned)(NumLines+NumSides+NumSectors));
+    for (int f = 0; f < NumLines; ++f) xxHashLinedef(lssXXHash, Lines[f]);
+    for (int f = 0; f < NumSides; ++f) xxHashSidedef(lssXXHash, Sides[f]);
+    for (int f = 0; f < NumSectors; ++f) xxHashSectordef(lssXXHash, Sectors[f]);
+    LSSHash = XXH32_digest(lssXXHash);
+    XXH32_freeState(lssXXHash);
+    //GCon->Logf("*** LSSHash: 0x%08x", LSSHash);
+  }
+
+  // hash of segs
+  {
+    //GCon->Logf("*** SegHash: 0x%08x (%d)", SegHash, NumSegs);
+    XXH32_state_t *segXXHash = XXH32_createState();
+    XXH32_reset(segXXHash, (unsigned)NumSegs);
+    for (int f = 0; f < NumSegs; ++f) xxHashSegdef(segXXHash, Segs[f]);
+    SegHash = XXH32_digest(segXXHash);
+    XXH32_freeState(segXXHash);
+    //GCon->Logf("*** SegHash: 0x%08x", SegHash);
+  }
 
 
   TotalTime += Sys_Time();

@@ -180,6 +180,7 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
 //  writeOrCheckName
 //
 //==========================================================================
+/*
 static void writeOrCheckName (VStream &Strm, const VName &value, const char *errmsg) {
   if (Strm.IsLoading()) {
     auto slen = strlen(*value);
@@ -200,6 +201,7 @@ static void writeOrCheckName (VStream &Strm, const VName &value, const char *err
     if (slen) Strm.Serialise((char*)*value, slen);
   }
 }
+*/
 
 
 //==========================================================================
@@ -207,14 +209,18 @@ static void writeOrCheckName (VStream &Strm, const VName &value, const char *err
 //  writeOrCheckUInt
 //
 //==========================================================================
-static void writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg) {
+static bool writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg=nullptr) {
   if (Strm.IsLoading()) {
     vuint32 v;
     Strm << v;
-    if (v != value) Host_Error("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value);
+    if (v != value || Strm.IsError()) {
+      if (errmsg) Host_Error("Save loader: invalid value for %s; got 0x%08x, but expected 0x%08x", errmsg, v, value);
+      return false;
+    }
   } else {
     Strm << value;
   }
+  return !Strm.IsError();
 }
 
 
@@ -223,6 +229,7 @@ static void writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg) 
 //  writeOrCheckInt
 //
 //==========================================================================
+/*
 static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool dofail=true) {
   if (Strm.IsLoading()) {
     int v;
@@ -235,6 +242,7 @@ static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool 
     Strm << value;
   }
 }
+*/
 
 
 //==========================================================================
@@ -242,6 +250,7 @@ static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool 
 //  writeOrCheckFloat
 //
 //==========================================================================
+/*
 static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg, bool dofail=true) {
   if (Strm.IsLoading()) {
     float v;
@@ -254,6 +263,7 @@ static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg, b
     Strm << value;
   }
 }
+*/
 
 
 //==========================================================================
@@ -272,6 +282,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
   // this is not the best or most reliable way to check it, but it is better
   // than nothing...
 
+  /*
   writeOrCheckName(Strm, MapName, "map name");
   writeOrCheckUInt(Strm, LevelFlags, "level flags");
 
@@ -287,86 +298,78 @@ void VLevel::SerialiseOther (VStream &Strm) {
 
   writeOrCheckFloat(Strm, BlockMapOrgX, "blockmap x origin", false);
   writeOrCheckFloat(Strm, BlockMapOrgY, "blockmap y origin", false);
+  */
 
-  {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
+  writeOrCheckUInt(Strm, LSSHash, "geometry hash");
+  bool segsHashOK = writeOrCheckUInt(Strm, SegHash);
 
   // decals
   if (Strm.IsLoading()) decanimlist = nullptr;
 
-  vuint32 sgc = (vuint32)NumSegs;
-  Strm << sgc; // just to be sure
+  //vuint32 sgc = (vuint32)NumSegs;
+  //Strm << sgc; // just to be sure
 
-  if (sgc) {
+  if (segsHashOK) {
     vuint32 dctotal = 0;
     if (Strm.IsLoading()) {
+      vint32 dcSize = 0;
+      Strm << dcSize;
       // load decals
-      bool loadDecals = true;
-      if (sgc != (vuint32)NumSegs) {
-        GCon->Logf("Level load: invalid number of segs, skipping decals");
-        loadDecals = false;
-      }
-      for (int f = 0; f < (int)sgc; ++f) {
+      for (int f = 0; f < (int)NumSegs; ++f) {
         vuint32 dcount = 0;
         // remove old decals
-        if (loadDecals) {
-          decal_t *odcl = Segs[f].decals;
-          while (odcl) {
-            decal_t *c = odcl;
-            odcl = c->next;
-            delete c->animator;
-            delete c;
-          }
-          Segs[f].decals = nullptr;
+        decal_t *odcl = Segs[f].decals;
+        while (odcl) {
+          decal_t *c = odcl;
+          odcl = c->next;
+          delete c->animator;
+          delete c;
         }
+        Segs[f].decals = nullptr;
         // load decal count for this seg
         Strm << dcount;
         decal_t *decal = nullptr; // previous
         while (dcount-- > 0) {
           decal_t *dc = new decal_t;
           memset((void *)dc, 0, sizeof(decal_t));
-          if (loadDecals) dc->seg = &Segs[f]; else dc->seg = &Segs[0];
+          dc->seg = &Segs[f];
           DecalIO(Strm, dc);
-          if (loadDecals) {
-            if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture <= 0) {
-              delete dc->animator;
-              delete dc;
-            } else {
-              // fix backsector
-              if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
-                line_t *lin = Segs[f].linedef;
-                if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
-                int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
-                if (lin->sidenum[bsidenum] < 0) {
-                  bsidenum = 1-bsidenum;
-                  if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
-                }
-                side_t *sb = &Sides[lin->sidenum[bsidenum]];
-                dc->bsec = sb->Sector;
-                if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
-              }
-              // add to decal list
-              if (decal) decal->next = dc; else Segs[f].decals = dc;
-              if (dc->animator) {
-                if (decanimlist) decanimlist->prevanimated = dc;
-                dc->nextanimated = decanimlist;
-                decanimlist = dc;
-              }
-              decal = dc;
-            }
-          } else {
+          if (dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0 || dc->texture <= 0) {
             delete dc->animator;
             delete dc;
+          } else {
+            // fix backsector
+            if (dc->flags&(decal_t::SlideFloor|decal_t::SlideCeil)) {
+              line_t *lin = Segs[f].linedef;
+              if (!lin) Sys_Error("Save loader: invalid seg linedef (0)!");
+              int bsidenum = (dc->flags&decal_t::SideDefOne ? 1 : 0);
+              if (lin->sidenum[bsidenum] < 0) {
+                bsidenum = 1-bsidenum;
+                if (lin->sidenum[bsidenum] < 0) Sys_Error("Save loader: invalid seg linedef (1)!");
+              }
+              side_t *sb = &Sides[lin->sidenum[bsidenum]];
+              dc->bsec = sb->Sector;
+              if (!dc->bsec) Sys_Error("Save loader: invalid seg linedef (2)!");
+            }
+            // add to decal list
+            if (decal) decal->next = dc; else Segs[f].decals = dc;
+            if (dc->animator) {
+              if (decanimlist) decanimlist->prevanimated = dc;
+              dc->nextanimated = decanimlist;
+              decanimlist = dc;
+            }
+            decal = dc;
           }
           ++dctotal;
         }
       }
-      GCon->Logf("%u decals %s", dctotal, (loadDecals ? "loaded" : "skipped"));
+      GCon->Logf("%u decals loaded", dctotal);
     } else {
       // save decals
-      for (int f = 0; f < (int)sgc; ++f) {
+      vint32 dcSize = 0;
+      int dcStartPos = Strm.Tell();
+      Strm << dcSize; // will be fixed later
+      for (int f = 0; f < (int)NumSegs; ++f) {
         // count decals
         vuint32 dcount = 0;
         for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
@@ -376,7 +379,20 @@ void VLevel::SerialiseOther (VStream &Strm) {
           ++dctotal;
         }
       }
+      auto currPos = Strm.Tell();
+      Strm.Seek(dcStartPos);
+      dcSize = currPos-(dcStartPos+4);
+      Strm << dcSize;
+      Strm.Seek(currPos);
       GCon->Logf("%u decals saved", dctotal);
+    }
+  } else {
+    // skip decals
+    vint32 dcSize = 0;
+    Strm << dcSize;
+    if (Strm.IsLoading()) {
+      if (dcSize < 0) Host_Error("decals section is broken");
+      Strm.Seek(Strm.Tell()+dcSize);
     }
   }
 
