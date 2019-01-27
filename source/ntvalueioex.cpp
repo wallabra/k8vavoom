@@ -312,16 +312,6 @@ void VCheckedStream::io (VStr &v) {
 //  VCheckedStream::io
 //
 //==========================================================================
-void VCheckedStream::io (const VStr &v) {
-  PARTIAL_DO_IO();
-}
-
-
-//==========================================================================
-//
-//  VCheckedStream::io
-//
-//==========================================================================
 void VCheckedStream::io (VObject *&v) {
   PARTIAL_DO_IO();
 }

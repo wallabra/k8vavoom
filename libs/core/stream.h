@@ -31,6 +31,7 @@
 class VStr;
 class VNTValue;
 class VStream;
+class VFieldType;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -74,6 +75,7 @@ public:
   virtual void io (VSerialisable *&) = 0;
 
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct) = 0;
+  virtual void SerialisePointer (void *&Ptr, const VFieldType &ptrtype) = 0;
 };
 
 
@@ -117,12 +119,12 @@ public:
   // interface functions for objects and classes streams
   virtual void io (VName &);
   virtual void io (VStr &);
-  virtual void io (const VStr &);
   virtual void io (VObject *&);
   virtual void io (VMemberBase *&);
   virtual void io (VSerialisable *&);
 
   virtual void SerialiseStructPointer (void *&Ptr, VStruct *Struct);
+  virtual void SerialisePointer (void *&Ptr, const VFieldType &ptrtype);
 
   // serialise integers in particular byte order
   void SerialiseLittleEndian (void *Val, int Len);
@@ -133,7 +135,7 @@ public:
 // it is fuckin' impossible to do template constraints in shit-plus-plus, so fuck it
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VName &v) { Strm.io(v); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VStr &v) { Strm.io(v); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VStr &v) { Strm.io(v); return Strm; }
+//static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VStr &v) { Strm.io(v); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VObject *&v) { Strm.io(v); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VMemberBase *&v) { Strm.io(v); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, VSerialisable *&v) { Strm.io(v); return Strm; }

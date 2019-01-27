@@ -88,7 +88,6 @@ public:
   // interface functions for objects and classes streams
   virtual void io (VName &) override;
   virtual void io (VStr &) override;
-  virtual void io (const VStr &) override;
   virtual void io (VObject *&) override;
   virtual void io (VMemberBase *&) override;
   virtual void io (VSerialisable *&) override;

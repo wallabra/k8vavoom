@@ -332,22 +332,6 @@ void VStream::io (VStr &s) {
 //  VStream::io
 //
 //==========================================================================
-void VStream::io (const VStr &s) {
-  check(!IsLoading());
-  if (Mapper) {
-    VStr str = s;
-    Mapper->io(str);
-  } else {
-    s.Serialise(*this);
-  }
-}
-
-
-//==========================================================================
-//
-//  VStream::io
-//
-//==========================================================================
 void VStream::io (VObject *&v) {
   //abort(); // k8: nope, we need dummy one
   if (Mapper) Mapper->io(v);
@@ -382,6 +366,16 @@ void VStream::io (VSerialisable *&v) {
 //==========================================================================
 void VStream::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
   if (Mapper) Mapper->SerialiseStructPointer(Ptr, Struct);
+}
+
+
+//==========================================================================
+//
+//  VStream::SerialisePointer
+//
+//==========================================================================
+void VStream::SerialisePointer (void *&Ptr, const VFieldType &ptrtype) {
+  if (Mapper) Mapper->SerialisePointer(Ptr, ptrtype);
 }
 
 

@@ -1381,16 +1381,6 @@ void VPartialStreamRO::io (VStr &v) {
 //  VPartialStreamRO::io
 //
 //==========================================================================
-void VPartialStreamRO::io (const VStr &v) {
-  PARTIAL_DO_IO();
-}
-
-
-//==========================================================================
-//
-//  VPartialStreamRO::io
-//
-//==========================================================================
 void VPartialStreamRO::io (VObject *&v) {
   PARTIAL_DO_IO();
 }
