@@ -996,7 +996,7 @@ void VScriptParser::UnGet () {
   //AlreadyGot = true;
   ScriptPtr = TokStartPtr;
   Line = TokStartLine;
-  Crossed = false;
+  //Crossed = false;
 }
 
 

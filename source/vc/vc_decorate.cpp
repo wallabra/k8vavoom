@@ -1168,14 +1168,6 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
     return false;
   }
   GCon->Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
-  /*
-  if (!sc->IsAtEol()) {
-    sc->Crossed = false;
-    while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
-  } else {
-    sc->GetString();
-  }
-  */
   return true;
   unguard;
 }
@@ -1938,13 +1930,13 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_IntIdUnsupported:
             //FIXME
             {
-              bool oldcm = sc->IsCMode();
-              sc->SetCMode(true);
+              //bool oldcm = sc->IsCMode();
+              //sc->SetCMode(true);
               sc->CheckNumberWithSign();
               sc->Expect(",");
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
-              sc->SetCMode(oldcm);
+              //sc->SetCMode(oldcm);
               if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             }
             break;
@@ -2929,12 +2921,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       } else {
         GCon->Logf(NAME_Warning, "Unknown property '%s'", *sc->String);
       }
-      if (!sc->IsAtEol()) {
-        sc->Crossed = false;
-        while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
-      } else {
-        sc->GetString();
-      }
+      sc->SkipLine();
       continue;
     }
   }
@@ -3066,10 +3053,7 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
   while (!sc->AtEnd()) {
     if (sc->Check("#region") || sc->Check("#endregion")) {
       //GCon->Logf(NAME_Warning, "REGION: crossed=%d", (sc->Crossed ? 1 : 0));
-      if (!sc->IsAtEol()) {
-        while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
-        if (sc->Crossed) sc->UnGet();
-      }
+      sc->SkipLine();
       continue;
     }
     if (sc->Check("#include")) {
