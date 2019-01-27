@@ -92,6 +92,53 @@ class VScriptsParser : public VObject {
 IMPLEMENT_CLASS(V, ScriptsParser)
 
 
+static vuint32 cidterm[256/32]; // c-like identifier terminator
+static vuint32 cnumterm[256/32]; // c-like number terminator
+static vuint32 ncidterm[256/32]; // non-c-like identifier terminator
+
+struct CharClassifier {
+  static inline bool isCIdTerm (char ch) { return !!(cidterm[(ch>>5)&0x07]&(1U<<(ch&0x1f))); }
+  static inline bool isCNumTerm (char ch) { return !!(cnumterm[(ch>>5)&0x07]&(1U<<(ch&0x1f))); }
+  static inline bool isNCIdTerm (char ch) { return !!(ncidterm[(ch>>5)&0x07]&(1U<<(ch&0x1f))); }
+
+  static inline void setCharBit (vuint32 *set, char ch) { set[(ch>>5)&0x07] |= (1U<<(ch&0x1f)); }
+
+  CharClassifier () {
+    static const char *cIdTerm = "`~!#$%^&*(){}[]/=\\?-+|;:<>,\"'"; // was with '@'
+    static const char *ncIdTerm = "{}|=,;\"'";
+    memset(cidterm, 0, sizeof(cidterm));
+    memset(cnumterm, 0, sizeof(cnumterm));
+    memset(ncidterm, 0, sizeof(ncidterm));
+    for (const char *s = cIdTerm; *s; ++s) {
+      setCharBit(cidterm, *s);
+      setCharBit(cnumterm, *s);
+    }
+    for (const char *s = ncIdTerm; *s; ++s) setCharBit(ncidterm, *s);
+    // blanks will terminate too
+    for (int ch = 0; ch <= 32; ++ch) {
+      setCharBit(cidterm, ch);
+      setCharBit(cnumterm, ch);
+      setCharBit(ncidterm, ch);
+    }
+    // c identified is terminated with dot
+    setCharBit(cidterm, '.');
+    // sanity check
+    for (int f = 0; f < 256; ++f) {
+      if (f <= 32 || f == '.' || strchr(cIdTerm, f)) {
+        check(isCIdTerm(f));
+        if (f == '.') { check(!isCNumTerm(f)); } else { check(isCNumTerm(f)); }
+      } else {
+        check(!isCIdTerm(f));
+        check(!isCNumTerm(f));
+      }
+    }
+  }
+};
+CharClassifier charClassifierInit;
+
+
+
+
 //==========================================================================
 //
 //  VScriptParser::VScriptParser
@@ -252,14 +299,12 @@ bool VScriptParser::IsText () {
 //
 //==========================================================================
 bool VScriptParser::AtEnd () {
-  guard(VScriptParser::AtEnd);
   if (GetString()) {
     //fprintf(stderr, "<%s>\n", *String);
     UnGet();
     return false;
   }
   return true;
-  unguard;
 }
 
 
@@ -269,24 +314,44 @@ bool VScriptParser::AtEnd () {
 //
 //==========================================================================
 bool VScriptParser::IsAtEol () {
-  bool inComment = false;
+  int commentLevel = 0;
   for (const char *s = ScriptPtr; s < ScriptEndPtr; ++s) {
-    if (*s == '\n' || *s == '\r') return true;
-    if (!inComment) {
-      if (s[0] == '/' && s[1] == '/') return true; // this is single-line comment, it always ends with EOL
-      if (!CMode && s[0] == ';') return true; // this is single-line comment, it always ends with EOL
-      if (s[0] == '/' && s[1] == '*') {
+    const vuint8 ch = *(const vuint8 *)s;
+    if (ch == '\r' && s[1] == '\n') return true;
+    if (ch == '\n') return true;
+    if (!commentLevel) {
+      if (!CMode && ch == ';') return true; // this is single-line comment, it always ends with EOL
+      const char c1 = s[1];
+      if (ch == '/' && c1 == '/') return true; // this is single-line comment, it always ends with EOL
+      if (ch == '/' && c1 == '*') {
         // multiline comment
         ++s; // skip slash
-        inComment = true;
+        commentLevel = -1;
         continue;
       }
-      if (*(const vuint8 *)s > ' ') return false;
+      if (ch == '/' && c1 == '+') {
+        // multiline comment
+        ++s; // skip slash
+        commentLevel = 1;
+        continue;
+      }
+      if (ch > ' ') return false;
     } else {
       // in multiline comment
-      if (s[0] == '*' && s[1] == '/') {
-        ++s; // skip star
-        inComment = false;
+      const char c1 = s[1];
+      if (commentLevel < 0) {
+        if (ch == '*' && c1 == '/') {
+          ++s; // skip star
+          commentLevel = 0;
+        }
+      } else {
+        if (ch == '/' && c1 == '+') {
+          ++s; // skip slash
+          ++commentLevel;
+        } else if (ch == '+' && c1 == '/') {
+          ++s; // skip plus
+          --commentLevel;
+        }
       }
     }
   }
@@ -296,129 +361,167 @@ bool VScriptParser::IsAtEol () {
 
 //==========================================================================
 //
+//  VScriptParser::SkipComments
+//
+//  this is moved out of `SkipBlanks()`, so i can use it in `SkipLine()`
+//
+//==========================================================================
+void VScriptParser::SkipComments (bool changeFlags) {
+  while (ScriptPtr < ScriptEndPtr) {
+    const char c0 = *ScriptPtr;
+    const char c1 = (ScriptPtr+1 < ScriptEndPtr ? ScriptPtr[1] : 0);
+    // single-line comment?
+    if ((!CMode && c0 == ';') || (c0 == '/' && c1 == '/')) {
+      while (*ScriptPtr++ != '\n') if (ScriptPtr >= ScriptEndPtr) break;
+      if (changeFlags) { ++Line; Crossed = true; }
+      continue;
+    }
+    // multiline comment?
+    if (c0 == '/' && c1 == '*') {
+      ScriptPtr += 2;
+      while (ScriptPtr < ScriptEndPtr) {
+        if (ScriptPtr[0] == '*' && ScriptPtr[1] == '/') { ScriptPtr += 2; break; }
+        // check for new-line character
+        if (changeFlags && *ScriptPtr == '\n') { ++Line; Crossed = true; }
+        ++ScriptPtr;
+      }
+      continue;
+    }
+    // multiline nesting comment?
+    if (c0 == '/' && c1 == '+') {
+      int level = 1;
+      ScriptPtr += 2;
+      while (ScriptPtr < ScriptEndPtr) {
+        if (ScriptPtr[0] == '/' && ScriptPtr[1] == '+') { ScriptPtr += 2; ++level; continue; }
+        if (ScriptPtr[0] == '+' && ScriptPtr[1] == '/') {
+          ScriptPtr += 2;
+          if (--level == 0) break;
+          continue;
+        }
+        // check for new-line character
+        if (changeFlags && *ScriptPtr == '\n') { ++Line; Crossed = true; }
+        ++ScriptPtr;
+      }
+      continue;
+    }
+    // not a comment, stop skipping
+    break;
+  }
+  if (ScriptPtr >= ScriptEndPtr) {
+    ScriptPtr = ScriptEndPtr;
+    if (changeFlags) End = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::SkipBlanks
+//
+//==========================================================================
+void VScriptParser::SkipBlanks (bool changeFlags) {
+  while (ScriptPtr < ScriptEndPtr) {
+    SkipComments(changeFlags);
+    if (*(const vuint8 *)ScriptPtr <= ' ') {
+      if (changeFlags && *ScriptPtr == '\n') { ++Line; Crossed = true; }
+      ++ScriptPtr;
+      continue;
+    }
+    break;
+  }
+  if (ScriptPtr >= ScriptEndPtr) {
+    ScriptPtr = ScriptEndPtr;
+    if (changeFlags) End = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::PeekChar
+//
+//==========================================================================
+char VScriptParser::PeekOrSkipChar (bool doSkip) {
+  char res = 0;
+  char *oldSPtr = ScriptPtr;
+  int oldLine = Line;
+  bool oldCross = Crossed;
+  bool oldEnd = End;
+  SkipBlanks(true); // change flags
+  if (ScriptPtr < ScriptEndPtr) {
+    res = *ScriptPtr;
+    if (doSkip) ++ScriptPtr;
+  }
+  if (!doSkip) {
+    ScriptPtr = oldSPtr;
+    Line = oldLine;
+    oldCross = Crossed;
+    oldEnd = End;
+  }
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::GetString
 //
 //==========================================================================
 bool VScriptParser::GetString () {
-  guard(VScriptParser::GetString);
-  // check if we already have a token available
-  /*
-  if (AlreadyGot) {
-    AlreadyGot = false;
-    return true;
-  }
-  */
-
   TokStartPtr = ScriptPtr;
   TokStartLine = Line;
 
+  Crossed = false;
+  QuotedString = false;
+
+  SkipBlanks(true); // change flags
   // check for end of script
   if (ScriptPtr >= ScriptEndPtr) {
     TokStartPtr = ScriptEndPtr;
+    TokStartLine = Line;
     End = true;
     return false;
   }
 
   TokLine = Line;
-  Crossed = false;
-  QuotedString = false;
-  bool foundToken = false;
-
-  while (!foundToken) {
-    // skip whitespace
-    while (*(const vuint8 *)ScriptPtr <= 32) {
-      if (ScriptPtr >= ScriptEndPtr) {
-        TokStartPtr = ScriptEndPtr;
-        TokStartLine = Line;
-        End = true;
-        return false;
-      }
-      // check for new-line character
-      if (*ScriptPtr++ == '\n') {
-        ++Line;
-        Crossed = true;
-      }
-    }
-
-    // check for end of script
-    if (ScriptPtr >= ScriptEndPtr) {
-      TokStartPtr = ScriptEndPtr;
-      TokStartLine = Line;
-      End = true;
-      return false;
-    }
-
-    // check for comments
-    if ((!CMode && *ScriptPtr == ';') || (ScriptPtr[0] == '/' && ScriptPtr[1] == '/')) {
-      // skip comment
-      while (*ScriptPtr++ != '\n') {
-        if (ScriptPtr >= ScriptEndPtr) {
-          TokStartPtr = ScriptEndPtr;
-          TokStartLine = Line;
-          End = true;
-          return false;
-        }
-      }
-      ++Line;
-      Crossed = true;
-    } else if (ScriptPtr[0] == '/' && ScriptPtr[1] == '*') {
-      // skip comment
-      ScriptPtr += 2;
-      while (ScriptPtr[0] != '*' || ScriptPtr[1] != '/') {
-        if (ScriptPtr >= ScriptEndPtr) {
-          TokStartPtr = ScriptEndPtr;
-          TokStartLine = Line;
-          End = true;
-          return false;
-        }
-        // check for new-line character
-        if (*ScriptPtr == '\n') {
-          ++Line;
-          Crossed = true;
-        }
-        ++ScriptPtr;
-      }
-      ScriptPtr += 2;
-    } else {
-      // found a token
-      foundToken = true;
-    }
-  }
-
-  TokLine = Line;
-  //TokStartPtr = ScriptPtr;
-  //TokStartLine = Line;
 
   String.Clean();
   if (*ScriptPtr == '\"' || *ScriptPtr == '\'') {
     // quoted string
-    char qch = *ScriptPtr;
+    const char qch = *ScriptPtr++;
     QuotedString = true;
-    ++ScriptPtr;
-    while (ScriptPtr < ScriptEndPtr && *ScriptPtr != qch) {
-      if (Escape && ScriptPtr[0] == '\\' && (ScriptPtr[1] == '\\' || ScriptPtr[1] == '\"' || ScriptPtr[1] == '\'')) {
-        ++ScriptPtr;
-      } else if (ScriptPtr[0] == '\r' && ScriptPtr[1] == '\n') {
+    while (ScriptPtr < ScriptEndPtr) {
+      char ch = *ScriptPtr++;
+      if (ch == qch) break;
+      if (ch == '\r' && *ScriptPtr == '\n') {
         // convert from DOS format to UNIX format
+        ch = '\n';
         ++ScriptPtr;
+      } else if (Escape && ch == '\\') {
+        const char c1 = *ScriptPtr;
+        if (c1 == '\\' || c1 == '\"' || c1 == '\'' || c1 == '\r' || c1 == '\n') {
+          ch = c1;
+          ++ScriptPtr;
+          if (ch == '\r') {
+            ch = '\n';
+            if (*ScriptPtr == '\n') ++ScriptPtr; // convert from DOS format to UNIX format
+          }
+        }
       }
-      if (*ScriptPtr == '\n') {
+      if (ch == '\n') {
         if (CMode) {
-          if (!Escape || String.Length() == 0 || String[String.Length()-1] != '\\') {
+          if (!Escape || String.length() == 0 /*|| String[String.length()-1] != '\\'*/) {
             Error("Unterminated string constant");
           } else {
             // remove the \ character
-            String = VStr(String, 0, String.Length()-1);
+            //String.chopRight(1);
           }
         }
         ++Line;
         Crossed = true;
       }
-      String += *ScriptPtr++;
+      String += ch;
     }
-    ++ScriptPtr;
   } else if (CMode) {
-    static const char *cStringTerm = "`~!#$%^&*(){}[]/=\\?-+|;:<>,.\"'"; // was with '@'
     if ((ScriptPtr[0] == '&' && ScriptPtr[1] == '&') ||
         (ScriptPtr[0] == '|' && ScriptPtr[1] == '|') ||
         (ScriptPtr[0] == '=' && ScriptPtr[1] == '=') ||
@@ -436,38 +539,44 @@ bool VScriptParser::GetString () {
                (ScriptPtr[0] == '.' && ScriptPtr[1] >= '0' && ScriptPtr[1] <= '9'))
     {
       // number
-      while (*(const vuint8 *)ScriptPtr > 32) {
-        if (*ScriptPtr != '.' && strchr(cStringTerm, *ScriptPtr)) break;
-        String += *ScriptPtr++;
-        if (ScriptPtr == ScriptEndPtr) break;
+      while (ScriptPtr < ScriptEndPtr) {
+        const char ch = *ScriptPtr++;
+        if (CharClassifier::isCNumTerm(ch)) { --ScriptPtr; break; }
+        String += ch;
       }
-    } else if (strchr(cStringTerm, *ScriptPtr)) {
+    } else if (CharClassifier::isCIdTerm(*ScriptPtr)) {
       // special single-character token
       String += *ScriptPtr++;
     } else {
       // normal string
-      while (*(const vuint8 *)ScriptPtr > 32 && !strchr(cStringTerm, *ScriptPtr)) {
-        String += *ScriptPtr++;
-        if (ScriptPtr == ScriptEndPtr) break;
+      while (ScriptPtr < ScriptEndPtr) {
+        const char ch = *ScriptPtr++;
+        if (CharClassifier::isCIdTerm(ch)) { --ScriptPtr; break; }
+        String += ch;
       }
     }
   } else {
     // special single-character tokens
-    if (strchr("{}|=,;", *ScriptPtr)) {
+    if (CharClassifier::isNCIdTerm(*ScriptPtr)) {
       String += *ScriptPtr++;
     } else {
       // normal string
-      while (*(const vuint8 *)ScriptPtr > 32 && !strchr("{}|=,;\"'", *ScriptPtr) &&
-             (ScriptPtr[0] != '/' || ScriptPtr[1] != '/') &&
-             (ScriptPtr[0] != '/' || ScriptPtr[1] != '*'))
-      {
-        String += *ScriptPtr++;
-        if (ScriptPtr == ScriptEndPtr) break;
+      while (ScriptPtr < ScriptEndPtr) {
+        const char ch = *ScriptPtr++;
+        if (CharClassifier::isNCIdTerm(ch)) { --ScriptPtr; break; }
+        // check for comments
+        if (ch == '/') {
+          const char c1 = *ScriptPtr;
+          if (c1 == '/' || c1 == '*' || c1 == '+') {
+            --ScriptPtr;
+            break;
+          }
+        }
+        String += ch;
       }
     }
   }
   return true;
-  unguard;
 }
 
 
@@ -480,29 +589,8 @@ void VScriptParser::SkipLine () {
   Crossed = false;
   QuotedString = false;
   while (ScriptPtr < ScriptEndPtr) {
-    // check for comments
-    if ((!CMode && *ScriptPtr == ';') || (ScriptPtr[0] == '/' && ScriptPtr[1] == '/')) {
-      // skip comment
-      while (*ScriptPtr++ != '\n') if (ScriptPtr >= ScriptEndPtr) break;
-      ++Line;
-      break;
-    }
-    if (ScriptPtr[0] == '/' && ScriptPtr[1] == '*') {
-      // skip comment
-      ScriptPtr += 2;
-      while (ScriptPtr[0] != '*' || ScriptPtr[1] != '/') {
-        if (ScriptPtr >= ScriptEndPtr) break;
-        // check for new-line character
-        if (*ScriptPtr == '\n') {
-          ++Line;
-          Crossed = true;
-        }
-        ++ScriptPtr;
-      }
-      ScriptPtr += 2;
-      if (Crossed) break;
-      continue;
-    }
+    SkipComments(true);
+    if (Crossed || ScriptPtr >= ScriptEndPtr) break;
     if (*ScriptPtr++ == '\n') {
       ++Line;
       break;
@@ -526,9 +614,7 @@ void VScriptParser::SkipLine () {
 //
 //==========================================================================
 void VScriptParser::ExpectString () {
-  guard(VScriptParser::ExpectString);
   if (!GetString()) Error("Missing string.");
-  unguard;
 }
 
 
@@ -538,7 +624,6 @@ void VScriptParser::ExpectString () {
 //
 //==========================================================================
 void VScriptParser::ExpectName8 () {
-  guard(VScriptParser::ExpectName8);
   ExpectString();
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
@@ -560,7 +645,6 @@ void VScriptParser::ExpectName8 () {
     Error("Name is too long");
   }
   Name8 = VName(*String, VName::AddLower8);
-  unguard;
 }
 
 
@@ -570,7 +654,6 @@ void VScriptParser::ExpectName8 () {
 //
 //==========================================================================
 void VScriptParser::ExpectName8Warn () {
-  guard(VScriptParser::ExpectName8Warn);
   ExpectString();
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
@@ -593,7 +676,6 @@ void VScriptParser::ExpectName8Warn () {
 
   //Name = VName(*String, VName::AddLower);
   Name8 = VName(*String, VName::AddLower8);
-  unguard;
 }
 
 
@@ -603,7 +685,6 @@ void VScriptParser::ExpectName8Warn () {
 //
 //==========================================================================
 void VScriptParser::ExpectName8Def (VName def) {
-  guard(VScriptParser::ExpectName8Def);
   ExpectString();
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
@@ -622,14 +703,12 @@ void VScriptParser::ExpectName8Def (VName def) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
     GCon->Logf("Name '%s' is too long", *String);
 #else
-    fprintf(stderr, "Name '%s' is too long\n", *String);
+    GLog.WriteLine("Name '%s' is too long", *String);
 #endif
     Name8 = def;
   } else {
     Name8 = VName(*String, VName::AddLower8);
   }
-
-  unguard;
 }
 
 
@@ -639,10 +718,8 @@ void VScriptParser::ExpectName8Def (VName def) {
 //
 //==========================================================================
 void VScriptParser::ExpectName () {
-  guard(VScriptParser::ExpectName);
   ExpectString();
   Name = VName(*String, VName::AddLower);
-  unguard;
 }
 
 
@@ -652,13 +729,11 @@ void VScriptParser::ExpectName () {
 //
 //==========================================================================
 bool VScriptParser::Check (const char *str) {
-  guard(VScriptParser::Check);
   if (GetString()) {
     if (!String.ICmp(str)) return true;
     UnGet();
   }
   return false;
-  unguard;
 }
 
 
@@ -668,7 +743,6 @@ bool VScriptParser::Check (const char *str) {
 //
 //==========================================================================
 bool VScriptParser::CheckStartsWith (const char *str) {
-  guard(VScriptParser::CheckStartsWith);
   if (GetString()) {
     VStr s = VStr(str);
     if (String.length() < s.length()) { UnGet(); return false; }
@@ -677,7 +751,6 @@ bool VScriptParser::CheckStartsWith (const char *str) {
     return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -687,10 +760,8 @@ bool VScriptParser::CheckStartsWith (const char *str) {
 //
 //==========================================================================
 void VScriptParser::Expect (const char *name) {
-  guard(VScriptParser::Expect);
   ExpectString();
   if (String.ICmp(name)) Error(va("Bad syntax, \"%s\" expected", name));
-  unguard;
 }
 
 
@@ -700,14 +771,12 @@ void VScriptParser::Expect (const char *name) {
 //
 //==========================================================================
 bool VScriptParser::CheckQuotedString () {
-  guard(VScriptParser::CheckQuotedString);
   if (!GetString()) return false;
   if (!QuotedString) {
     UnGet();
     return false;
   }
   return true;
-  unguard;
 }
 
 
@@ -717,7 +786,6 @@ bool VScriptParser::CheckQuotedString () {
 //
 //==========================================================================
 bool VScriptParser::CheckIdentifier () {
-  guard(VScriptParser::CheckIdentifier);
   if (!GetString()) return false;
 
   // quoted strings are not valid identifiers
@@ -747,7 +815,6 @@ bool VScriptParser::CheckIdentifier () {
     }
   }
   return true;
-  unguard;
 }
 
 
@@ -757,9 +824,7 @@ bool VScriptParser::CheckIdentifier () {
 //
 //==========================================================================
 void VScriptParser::ExpectIdentifier () {
-  guard(VScriptParser::ExpectIdentifier);
   if (!CheckIdentifier()) Error(va("Identifier expected, got \"%s\".", *String));
-  unguard;
 }
 
 
@@ -769,7 +834,6 @@ void VScriptParser::ExpectIdentifier () {
 //
 //==========================================================================
 bool VScriptParser::CheckNumber () {
-  guard(VScriptParser::CheckNumber);
   if (GetString()) {
     if (String.length() > 0) {
       /*
@@ -785,7 +849,6 @@ bool VScriptParser::CheckNumber () {
     UnGet();
   }
   return false;
-  unguard;
 }
 
 
@@ -795,7 +858,6 @@ bool VScriptParser::CheckNumber () {
 //
 //==========================================================================
 void VScriptParser::ExpectNumber (bool allowFloat, bool truncFloat) {
-  guard(VScriptParser::ExpectNumber);
   if (GetString() && String.length() > 0) {
     char *stopper;
     Number = strtol(*String, &stopper, 0);
@@ -817,7 +879,6 @@ void VScriptParser::ExpectNumber (bool allowFloat, bool truncFloat) {
   } else {
     Error("Missing integer.");
   }
-  unguard;
 }
 
 
@@ -827,7 +888,6 @@ void VScriptParser::ExpectNumber (bool allowFloat, bool truncFloat) {
 //
 //==========================================================================
 bool VScriptParser::CheckNumberWithSign () {
-  guard(VScriptParser::CheckNumberWithSign);
   if (Check("-")) {
     ExpectNumber();
     Number = -Number;
@@ -835,7 +895,6 @@ bool VScriptParser::CheckNumberWithSign () {
   } else {
     return CheckNumber();
   }
-  unguard;
 }
 
 
@@ -845,14 +904,12 @@ bool VScriptParser::CheckNumberWithSign () {
 //
 //==========================================================================
 void VScriptParser::ExpectNumberWithSign () {
-  guard(VScriptParser::ExpectNumberWithSign);
   if (Check("-")) {
     ExpectNumber();
     Number = -Number;
   } else {
     ExpectNumber();
   }
-  unguard;
 }
 
 
@@ -862,7 +919,6 @@ void VScriptParser::ExpectNumberWithSign () {
 //
 //==========================================================================
 bool VScriptParser::CheckFloat () {
-  guard(VScriptParser::CheckFloat);
   if (GetString()) {
     if (String.length() > 0) {
       float ff = 0;
@@ -879,7 +935,6 @@ bool VScriptParser::CheckFloat () {
     UnGet();
   }
   return false;
-  unguard;
 }
 
 
@@ -889,7 +944,6 @@ bool VScriptParser::CheckFloat () {
 //
 //==========================================================================
 void VScriptParser::ExpectFloat () {
-  guard(VScriptParser::ExpectFloat);
   if (GetString() && String.length() > 0) {
     //FIXME: detect when we want to use a really big number
     VStr sl = String.ToLower();
@@ -927,7 +981,6 @@ void VScriptParser::ExpectFloat () {
   } else {
     Error("Missing float.");
   }
-  unguard;
 }
 
 
@@ -937,7 +990,6 @@ void VScriptParser::ExpectFloat () {
 //
 //==========================================================================
 bool VScriptParser::CheckFloatWithSign () {
-  guard(VScriptParser::CheckFloatWithSign);
   if (Check("-")) {
     ExpectFloat();
     Float = -Float;
@@ -945,7 +997,6 @@ bool VScriptParser::CheckFloatWithSign () {
   } else {
     return CheckFloat();
   }
-  unguard;
 }
 
 
@@ -955,14 +1006,12 @@ bool VScriptParser::CheckFloatWithSign () {
 //
 //==========================================================================
 void VScriptParser::ExpectFloatWithSign () {
-  guard(VScriptParser::ExpectFloatWithSign);
   if (Check("-")) {
     ExpectFloat();
     Float = -Float;
   } else {
     ExpectFloat();
   }
-  unguard;
 }
 
 
@@ -1039,14 +1088,12 @@ void VScriptParser::SkipBracketed (bool bracketEaten) {
 //
 //==========================================================================
 void VScriptParser::Message (const char *message) {
-  guard(VScriptParser::Message)
   const char *Msg = (message ? message : "Bad syntax.");
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   GCon->Logf("\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
 #else
-  printf("\"%s\" line %d: %s\n", *ScriptName, TokLine, Msg);
+  GLog.WriteLine("\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
 #endif
-  unguard;
 }
 
 
@@ -1056,10 +1103,8 @@ void VScriptParser::Message (const char *message) {
 //
 //==========================================================================
 void VScriptParser::Error (const char *message) {
-  guard(VScriptParser::Error)
   const char *Msg = (message ? message : "Bad syntax.");
   Sys_Error("Script error, \"%s\" line %d: %s", *ScriptName, TokLine, Msg);
-  unguard;
 }
 
 
@@ -1069,10 +1114,8 @@ void VScriptParser::Error (const char *message) {
 //
 //==========================================================================
 TLocation VScriptParser::GetLoc () {
-  guardSlow(VScriptParser::GetLoc);
   if (SrcIdx == -1) SrcIdx = TLocation::AddSourceFile(ScriptName);
   return TLocation(SrcIdx, TokLine, 1);
-  unguardSlow;
 }
 
 
@@ -1087,13 +1130,11 @@ TLocation VScriptParser::GetLoc () {
 //
 //==========================================================================
 void VScriptsParser::Destroy () {
-  guard(VScriptsParser::Destroy);
   if (Int) {
     delete Int;
     Int = nullptr;
   }
   Super::Destroy();
-  unguard;
 }
 
 
@@ -1103,9 +1144,7 @@ void VScriptsParser::Destroy () {
 //
 //==========================================================================
 void VScriptsParser::CheckInterface () {
-  guard(VScriptsParser::CheckInterface);
   if (!Int) Sys_Error("No script currently open");
-  unguard;
 }
 
 

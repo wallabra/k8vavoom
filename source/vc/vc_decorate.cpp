@@ -1683,32 +1683,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
   // actor options
   bool optionalActor = false;
+  auto cstloc = sc->GetLoc();
 
   // parse actor name
   // in order to allow dots in actor names, this is done in non-C mode,
   // so we have to do a little bit more complex parsing
   sc->ExpectString();
-  auto cstloc = sc->GetLoc();
-  if (sc->String.length() && sc->String.startsWith("(")) {
-    if (sc->String.ICmp("(optional") == 0) {
-      optionalActor = true;
-      sc->Expect(")");
-    } else if (sc->String.ICmp("(optional)") == 0) {
-      optionalActor = true;
-    } else {
-      sc->Error(va("invalid actor options: '%s'", *sc->String));
-    }
-    sc->ExpectString();
-  } else if (sc->String == "(") {
-    sc->ExpectString();
-    if (sc->String.ICmp("optional") == 0) {
-      optionalActor = true;
-      sc->Expect(")");
-    } else if (sc->String.ICmp("optional)") == 0) {
-      optionalActor = true;
-    } else {
-      sc->Error(va("invalid actor options: '%s'", *sc->String));
-    }
+  if (sc->String.ICmp("(optional)") == 0) {
+    optionalActor = true;
     sc->ExpectString();
   }
 

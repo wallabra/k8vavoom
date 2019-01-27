@@ -51,12 +51,25 @@ private:
   bool CMode;
   bool Escape;
 
+private:
   VScriptParser () {}
+
+  // advances current position
+  // if `changeFlags` is `true`, changes `Crossed` and `Line`
+  void SkipComments (bool changeFlags);
+  void SkipBlanks (bool changeFlags);
+
+  // slow! returns 0 on EOF
+  char PeekOrSkipChar (bool doSkip);
 
 public:
   VScriptParser (const VStr &name, VStream *Strm);
   VScriptParser (const VStr &name, const char *atext);
+
   ~VScriptParser ();
+
+  VScriptParser (const VScriptParser &) = delete;
+  VScriptParser &operator = (const VScriptParser &) = delete;
 
   VScriptParser *clone () const;
 
@@ -92,7 +105,15 @@ public:
   void SkipLine ();
   void Message (const char *);
   void Error (const char *);
+
+  // slow! returns 0 on EOF
+  // doesn't affect flags
+  inline char PeekChar () { return PeekOrSkipChar(false); }
+  // affects flags
+  inline char SkipChar () { return PeekOrSkipChar(true); }
+
   TLocation GetLoc ();
+
   inline const VStr &GetScriptName () const { return ScriptName; }
   inline bool IsCMode () const { return CMode; }
   inline bool IsEscape () const { return Escape; }
