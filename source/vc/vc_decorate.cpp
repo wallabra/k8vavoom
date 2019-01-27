@@ -1380,7 +1380,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     }
     if (keepSpriteBase) State->Frame |= VState::FF_KEEPSPRITE;
 
-    sc->ResetCrossed();
     // tics
     // `random(a, b)`?
     if (sc->Check("random")) {
@@ -1504,7 +1503,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     } else {
       if (!sc->Crossed && sc->Check(";")) {}
     }
-    sc->ResetCrossed();
 
     // link previous state
     if (PrevState) PrevState->NextState = State;
@@ -1627,17 +1625,13 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
   sc->SetEscape(false);
 
   sc->CheckNumber();
+  while (sc->Check(";")) {}
   sc->Expect("{");
-  sc->ResetCrossed();
 
   while (!sc->Check("}")) {
     if (!sc->Check("var")) {
       // not a var, skip whole line
       //sc->SkipLine();
-      //while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
-      //sc->UnGet();
-      //sc->ResetCrossed();
-      //GCon->Logf("<%s>", *sc->String);
       sc->GetString();
       continue;
     }
@@ -1873,6 +1867,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     DoomEdNum = sc->Number;
   }
 
+  while (sc->Check(";")) {}
   sc->Expect("{");
   while (!sc->Check("}")) {
     if (sc->Check("+")) {
@@ -2420,7 +2415,6 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 g = (Col>>8)&255;
                 b = Col&255;
               }
-              sc->ResetCrossed();
               sc->Check(",");
               // alpha may be missing
               if (!sc->Crossed) {
@@ -2573,10 +2567,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_SkipLineUnsupported:
             {
               if (dbg_show_decorate_unsupported) GCon->Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
-              sc->ResetCrossed();
-              while (sc->GetString()) {
-                if (sc->Crossed) { sc->UnGet(); break; }
-              }
+              sc->SkipLine();
             }
             break;
         }
@@ -2592,13 +2583,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     } else {
       GCon->Logf(NAME_Warning, "%s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
     }
-    // skip this line
-    if (!sc->IsAtEol()) {
-      sc->ResetCrossed();
-      while (!sc->AtEnd() && !sc->Crossed) sc->GetString();
-    } else {
-      sc->GetString();
-    }
+    sc->SkipLine();
   }
 
   sc->SetCMode(false);

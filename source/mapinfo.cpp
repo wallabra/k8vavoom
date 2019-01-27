@@ -998,7 +998,6 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
     sc->ExpectString();
     *name = sc->String.ToLower();
   } else {
-    sc->ResetQuoted();
     sc->ExpectString();
     if (sc->String.Length() > 1 && sc->String[0] == '$') {
       *flags |= lookupFlag;
@@ -1008,13 +1007,10 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
       *name = sc->String;
       //fprintf(stderr, "CMODE: %d; qs: %d\n", (int)sc->IsCMode(), (int)sc->QuotedString);
       while (sc->IsCMode() && sc->QuotedString) {
-        sc->ResetCrossed();
-        sc->ResetQuoted();
         if (!sc->GetString()) return;
         if (sc->Crossed) { sc->UnGet(); break; }
         if (sc->QuotedString) { sc->UnGet(); sc->Error("comma expected"); break; }
         if (sc->String != ",") { sc->UnGet(); break; }
-        sc->ResetQuoted();
         if (!sc->GetString()) { sc->Error("unexpected EOF"); return; }
         if (!sc->QuotedString) {
           if (sc->String == "}") { sc->UnGet(); break; }
@@ -1698,14 +1694,7 @@ static void ParseMapInfo (VScriptParser *sc) {
             }
           } else {
             sc->ExpectString();
-            sc->ResetCrossed();
-            sc->ResetQuoted();
-            if (sc->Check("=")) {
-              while (!sc->AtEnd()) {
-                sc->GetString();
-                if (sc->Crossed) { sc->UnGet(); break; }
-              }
-            }
+            if (sc->Check("=")) sc->SkipLine();
           }
         }
         //sc->SetCMode(cmode);

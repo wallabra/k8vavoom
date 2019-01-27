@@ -43,9 +43,11 @@ private:
   char *ScriptBuffer;
   char *ScriptPtr;
   char *ScriptEndPtr;
+  char *TokStartPtr;
+  int TokStartLine;
   int ScriptSize;
   int SrcIdx;
-  bool AlreadyGot;
+  //bool AlreadyGot;
   bool CMode;
   bool Escape;
 
@@ -87,6 +89,7 @@ public:
   void ResetCrossed ();
   void UnGet ();
   void SkipBracketed (bool bracketEaten=false);
+  void SkipLine ();
   void Message (const char *);
   void Error (const char *);
   TLocation GetLoc ();

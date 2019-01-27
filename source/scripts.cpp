@@ -104,7 +104,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
   , QuotedString(false)
   , ScriptName(name)
   , SrcIdx(-1)
-  , AlreadyGot(false)
+  //, AlreadyGot(false)
   , CMode(false)
   , Escape(true)
 {
@@ -116,6 +116,9 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
 
   ScriptPtr = ScriptBuffer;
   ScriptEndPtr = ScriptPtr+ScriptSize;
+
+  TokStartPtr = ScriptPtr;
+  TokStartLine = Line;
 
   // skip garbage some editors add in the begining of UTF-8 files
   if (*(const vuint8 *)ScriptPtr == 0xef && *(const vuint8 *)(ScriptPtr+1) == 0xbb && *(const vuint8 *)(ScriptPtr+2) == 0xbf) ScriptPtr += 3;
@@ -135,7 +138,7 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
   , QuotedString(false)
   , ScriptName(name)
   , SrcIdx(-1)
-  , AlreadyGot(false)
+  //, AlreadyGot(false)
   , CMode(false)
   , Escape(true)
 {
@@ -151,6 +154,9 @@ VScriptParser::VScriptParser (const VStr &name, const char *atext)
 
   ScriptPtr = ScriptBuffer;
   ScriptEndPtr = ScriptPtr+ScriptSize;
+
+  TokStartPtr = ScriptPtr;
+  TokStartLine = Line;
 
   // skip garbage some editors add in the begining of UTF-8 files
   if (*(const vuint8 *)ScriptPtr == 0xef && *(const vuint8 *)(ScriptPtr+1) == 0xbb && *(const vuint8 *)(ScriptPtr+2) == 0xbf) ScriptPtr += 3;
@@ -183,6 +189,9 @@ VScriptParser *VScriptParser::clone () const {
   res->ScriptPtr = res->ScriptBuffer+(ScriptPtr-ScriptBuffer);
   res->ScriptEndPtr = res->ScriptBuffer+(ScriptEndPtr-ScriptBuffer);
 
+  res->TokStartPtr = res->ScriptBuffer+(TokStartPtr-ScriptBuffer);
+  res->TokStartLine = res->TokStartLine;
+
   res->Line = Line;
   res->TokLine = TokLine;
   res->End = End;
@@ -197,7 +206,7 @@ VScriptParser *VScriptParser::clone () const {
   res->ScriptName = ScriptName;
   res->ScriptSize = ScriptSize;
   res->SrcIdx = SrcIdx;
-  res->AlreadyGot = AlreadyGot;
+  //res->AlreadyGot = AlreadyGot;
   res->CMode = CMode;
   res->Escape = Escape;
 
@@ -292,13 +301,19 @@ bool VScriptParser::IsAtEol () {
 bool VScriptParser::GetString () {
   guard(VScriptParser::GetString);
   // check if we already have a token available
+  /*
   if (AlreadyGot) {
     AlreadyGot = false;
     return true;
   }
+  */
+
+  TokStartPtr = ScriptPtr;
+  TokStartLine = Line;
 
   // check for end of script
   if (ScriptPtr >= ScriptEndPtr) {
+    TokStartPtr = ScriptEndPtr;
     End = true;
     return false;
   }
@@ -307,10 +322,13 @@ bool VScriptParser::GetString () {
   Crossed = false;
   QuotedString = false;
   bool foundToken = false;
+
   while (!foundToken) {
     // skip whitespace
     while (*(const vuint8 *)ScriptPtr <= 32) {
       if (ScriptPtr >= ScriptEndPtr) {
+        TokStartPtr = ScriptEndPtr;
+        TokStartLine = Line;
         End = true;
         return false;
       }
@@ -323,6 +341,8 @@ bool VScriptParser::GetString () {
 
     // check for end of script
     if (ScriptPtr >= ScriptEndPtr) {
+      TokStartPtr = ScriptEndPtr;
+      TokStartLine = Line;
       End = true;
       return false;
     }
@@ -332,6 +352,8 @@ bool VScriptParser::GetString () {
       // skip comment
       while (*ScriptPtr++ != '\n') {
         if (ScriptPtr >= ScriptEndPtr) {
+          TokStartPtr = ScriptEndPtr;
+          TokStartLine = Line;
           End = true;
           return false;
         }
@@ -343,6 +365,8 @@ bool VScriptParser::GetString () {
       ScriptPtr += 2;
       while (ScriptPtr[0] != '*' || ScriptPtr[1] != '/') {
         if (ScriptPtr >= ScriptEndPtr) {
+          TokStartPtr = ScriptEndPtr;
+          TokStartLine = Line;
           End = true;
           return false;
         }
@@ -359,6 +383,10 @@ bool VScriptParser::GetString () {
       foundToken = true;
     }
   }
+
+  TokLine = Line;
+  //TokStartPtr = ScriptPtr;
+  //TokStartLine = Line;
 
   String.Clean();
   if (*ScriptPtr == '\"' || *ScriptPtr == '\'') {
@@ -439,6 +467,55 @@ bool VScriptParser::GetString () {
   }
   return true;
   unguard;
+}
+
+
+//==========================================================================
+//
+//  VScriptParser::SkipLine
+//
+//==========================================================================
+void VScriptParser::SkipLine () {
+  Crossed = false;
+  QuotedString = false;
+  while (ScriptPtr < ScriptEndPtr) {
+    // check for comments
+    if ((!CMode && *ScriptPtr == ';') || (ScriptPtr[0] == '/' && ScriptPtr[1] == '/')) {
+      // skip comment
+      while (*ScriptPtr++ != '\n') if (ScriptPtr >= ScriptEndPtr) break;
+      ++Line;
+      break;
+    }
+    if (ScriptPtr[0] == '/' && ScriptPtr[1] == '*') {
+      // skip comment
+      ScriptPtr += 2;
+      while (ScriptPtr[0] != '*' || ScriptPtr[1] != '/') {
+        if (ScriptPtr >= ScriptEndPtr) break;
+        // check for new-line character
+        if (*ScriptPtr == '\n') {
+          ++Line;
+          Crossed = true;
+        }
+        ++ScriptPtr;
+      }
+      ScriptPtr += 2;
+      if (Crossed) break;
+      continue;
+    }
+    if (*ScriptPtr++ == '\n') {
+      ++Line;
+      break;
+    }
+  }
+  Crossed = false;
+
+  if (ScriptPtr >= ScriptEndPtr) {
+    ScriptPtr = ScriptEndPtr;
+    End = true;
+  }
+
+  TokStartPtr = ScriptEndPtr;
+  TokStartLine = Line;
 }
 
 
@@ -894,7 +971,7 @@ void VScriptParser::ExpectFloatWithSign () {
 //
 //==========================================================================
 void VScriptParser::ResetQuoted () {
-  if (!AlreadyGot) QuotedString = false;
+  /*if (TokStartPtr != ScriptPtr)*/ QuotedString = false;
 }
 
 
@@ -904,7 +981,7 @@ void VScriptParser::ResetQuoted () {
 //
 //==========================================================================
 void VScriptParser::ResetCrossed () {
-  if (!AlreadyGot) Crossed = false;
+  /*if (TokStartPtr != ScriptPtr)*/ Crossed = false;
 }
 
 
@@ -916,9 +993,10 @@ void VScriptParser::ResetCrossed () {
 //
 //==========================================================================
 void VScriptParser::UnGet () {
-  guard(VScriptParser::UnGet);
-  AlreadyGot = true;
-  unguard;
+  //AlreadyGot = true;
+  ScriptPtr = TokStartPtr;
+  Line = TokStartLine;
+  Crossed = false;
 }
 
 
