@@ -60,6 +60,8 @@ struct SectorLink {
 native readonly name MapName;
 native readonly string MapHash; // lowercase
 native readonly string MapHashMD5; // lowercase
+native readonly int LSSHash; // xxHash32 of linedefs, sidedefs, sectors (in this order)
+native readonly int SegHash; // xxHash32 of segs
 
 // flags
 native readonly private bool bForServer; // true if this level belongs to the server
@@ -74,34 +76,32 @@ native transient bool bForceNoPrecalcStaticLights;
 // not in C++
 native transient bool bConvertSectorLightsToStatic;
 
-// MAP related Lookup tables.
-// Store VERTEXES, LINEDEFS, SIDEDEFS, etc.
-
+// map-related data
 native TVec[] Vertexes;
 native sector_t[] Sectors;
 native side_t[] Sides;
 native line_t[] Lines;
 native readonly seg_t[] Segs;
 native readonly subsector_t[] Subsectors;
-native readonly private int/*node_t*/[] Nodes;
+native readonly private node_t[] Nodes;
 
-native readonly private void *VisData;
-native readonly private void *NoVis;
+native readonly private ubyte *VisData;
+native readonly private ubyte *NoVis;
 
 // !!! Used only during level loading
 native mthing_t[] Things;
 
 native readonly private int BlockMapLumpSize;
-native readonly private void *BlockMapLump;
-native readonly private void *BlockMap;
+native readonly private ubyte *BlockMapLump;
+native readonly private ubyte *BlockMap;
 native readonly private int BlockMapWidth;
 native readonly private int BlockMapHeight;
 native readonly private float BlockMapOrgX;
 native readonly private float BlockMapOrgY;
-native readonly private void *BlockLinks;
-native readonly private void *PolyBlockMap;
+native readonly private ubyte *BlockLinks;
+native readonly private ubyte *PolyBlockMap;
 
-native readonly private void *RejectMatrix;
+native readonly private ubyte *RejectMatrix;
 native readonly private int RejectMatrixSize;
 
 // strife conversations
@@ -131,18 +131,21 @@ native readonly private void *BaseSides;
 native readonly private void *BaseSectors;
 native readonly private void *BasePolyObjs;
 
-native readonly private int[] StaticLights;
+//native readonly private int[] StaticLights;
+native readonly private void *StaticLights;
+native readonly private int NumStaticLights;
 
+// not really array of ints, and properly cleared by C++ code
 native readonly private array!int ActiveSequences;
-
 native readonly private array!int CameraTextures;
 
 native readonly float Time; // game time, in seconds
 native readonly int TicTime; // game time, in tics (35 per second)
 
-native readonly private void *SectorList;
-native readonly private void *HeadSecNode;
+native readonly private msecnode_t *SectorList;
+native readonly private msecnode_t *HeadSecNode;
 
+// not really array of void pointers, and properly cleared by C++ code
 native readonly private array!(void *) Translations;
 native readonly private array!(void *) BodyQueueTransl;
 
@@ -158,6 +161,7 @@ native readonly private int __decanimuid;
 /*native*/ array!int sectorlinkStart; // can be less than sectors; indexed by sector index
 /*native*/ array!SectorLink sectorlinks;
 
+// not really array of void pointers, and properly cleared by C++ code
 native transient array!(/*VLevelScriptThinker*/void *) scriptThinkers;
 
 

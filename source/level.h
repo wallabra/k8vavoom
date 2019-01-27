@@ -164,14 +164,16 @@ class VLevel : public VGameObject {
   friend class VUdmfParser;
 
   struct SectorLink {
-    int index;
-    int mts; // bit 30: set if ceiling; low byte: movetype
-    int next; // index, or -1
+    vint32 index;
+    vint32 mts; // bit 30: set if ceiling; low byte: movetype
+    vint32 next; // index, or -1
   };
 
   VName MapName;
   VStr MapHash;
   VStr MapHashMD5;
+  vuint32 LSSHash; // xxHash32 of linedefs, sidedefs, sectors (in this order)
+  vuint32 SegHash; // xxHash32 of segs
 
   // flags
   enum {
@@ -277,11 +279,10 @@ class VLevel : public VGameObject {
   vint32 NumStaticLights;
 
   TArray<VSndSeqInfo> ActiveSequences;
-
   TArray<VCameraTextureInfo> CameraTextures;
 
   float Time; // game time, in seconds
-  int TicTime; // game time, in tics (35 per second)
+  vint32 TicTime; // game time, in tics (35 per second)
 
   msecnode_t *SectorList;
   // phares 3/21/98
@@ -295,10 +296,10 @@ class VLevel : public VGameObject {
   VState *CallingState;
   VStateCall *StateCall;
 
-  int NextSoundOriginID;
+  vint32 NextSoundOriginID;
 
   decal_t *decanimlist;
-  int decanimuid;
+  vint32 decanimuid;
 
   TArray<vint32> sectorlinkStart;
   TArray<SectorLink> sectorlinks;

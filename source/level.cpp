@@ -689,12 +689,12 @@ void VLevel::ClearReferences () {
     if (sec->ActionList && sec->ActionList->GetFlags()&_OF_CleanupRef) sec->ActionList = nullptr;
   }
   for (int i = 0; i < NumPolyObjs; ++i) {
-    if (PolyObjs[i].SpecialData && PolyObjs[i].SpecialData->GetFlags()&_OF_CleanupRef) {
+    if (PolyObjs[i].SpecialData && (PolyObjs[i].SpecialData->GetFlags()&_OF_CleanupRef)) {
       PolyObjs[i].SpecialData = nullptr;
     }
   }
   for (int i = 0; i < CameraTextures.Num(); ++i) {
-    if (CameraTextures[i].Camera && CameraTextures[i].Camera->GetFlags()&_OF_CleanupRef) {
+    if (CameraTextures[i].Camera && (CameraTextures[i].Camera->GetFlags()&_OF_CleanupRef)) {
       CameraTextures[i].Camera = nullptr;
     }
   }
@@ -864,6 +864,7 @@ void VLevel::Destroy () {
     }
   }
   Translations.Clear();
+
   for (int i = 0; i < BodyQueueTrans.Num(); ++i) {
     if (BodyQueueTrans[i]) {
       delete BodyQueueTrans[i];
