@@ -60,6 +60,7 @@ native void ExpectFloat (optional bool withSign); // default: false
 native void ResetQuoted ();
 native void ResetCrossed ();
 native void SkipBracketed (optional bool bracketEaten); // default is `false`
+native void SkipLine ();
 native void UnGet ();
 native string FileName ();
 native int CurrLine ();

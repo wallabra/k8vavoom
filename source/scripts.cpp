@@ -82,6 +82,7 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(ResetCrossed)
   DECLARE_FUNCTION(SkipBracketed)
   DECLARE_FUNCTION(UnGet)
+  DECLARE_FUNCTION(SkipLine)
   DECLARE_FUNCTION(FileName)
   DECLARE_FUNCTION(CurrLine)
   DECLARE_FUNCTION(ScriptError)
@@ -1351,6 +1352,12 @@ IMPLEMENT_FUNCTION(VScriptsParser, SkipBracketed) {
   P_GET_SELF;
   Self->CheckInterface();
   Self->Int->SkipBracketed(bracketEaten);
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, SkipLine) {
+  P_GET_SELF;
+  Self->CheckInterface();
+  Self->Int->SkipLine();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, UnGet) {
