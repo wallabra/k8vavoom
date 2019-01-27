@@ -51,6 +51,7 @@
 #include "rg32.h"
 #include "sha2.h"
 #include "xxhash32.h"
+#include "xxhash.h"
 #include "chacha20.h"
 #include "poly1305-donna.h"
 #include "ed25519.h"
