@@ -91,22 +91,23 @@ vuint8 *VImgzTexture::GetPixels () {
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+  VCheckedStream Strm(lumpstream);
 
   // read header
-  Strm->Seek(4); // skip magic
-  Width = Streamer<vuint16>(*Strm);
-  Height = Streamer<vuint16>(*Strm);
-  SOffset = Streamer<vint16>(*Strm);
-  TOffset = Streamer<vint16>(*Strm);
-  vuint8 Compression = Streamer<vuint8>(*Strm);
-  Strm->Seek(24); // skip reserved space
+  Strm.Seek(4); // skip magic
+  Width = Streamer<vuint16>(Strm);
+  Height = Streamer<vuint16>(Strm);
+  SOffset = Streamer<vint16>(Strm);
+  TOffset = Streamer<vint16>(Strm);
+  vuint8 Compression = Streamer<vuint8>(Strm);
+  Strm.Seek(24); // skip reserved space
 
   // read data
   Pixels = new vuint8[Width*Height];
   memset(Pixels, 0, Width*Height);
   if (!Compression) {
-    Strm->Serialise(Pixels, Width*Height);
+    Strm.Serialise(Pixels, Width*Height);
   } else {
     // IMGZ compression is the same RLE used by IFF ILBM files
     vuint8 *pDst = Pixels;
@@ -116,7 +117,7 @@ vuint8 *VImgzTexture::GetPixels () {
     for (int y = Height; y != 0; --y) {
       for (int x = Width; x != 0; ) {
         if (runlen != 0) {
-          *Strm << *pDst;
+          Strm << *pDst;
           ++pDst;
           --x;
           --runlen;
@@ -127,18 +128,17 @@ vuint8 *VImgzTexture::GetPixels () {
           --setlen;
         } else {
           vint8 code;
-          *Strm << code;
+          Strm << code;
           if (code >= 0) {
             runlen = code+1;
           } else if (code != -128) {
             setlen = (-code)+1;
-            *Strm << setval;
+            Strm << setval;
           }
         }
       }
     }
   }
-  delete Strm;
 
   ConvertPixelsToShaded();
   return Pixels;

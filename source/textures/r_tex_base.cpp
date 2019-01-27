@@ -96,21 +96,22 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum) {
   };
 
   if (LumpNum < 0) return nullptr;
-  VStream *Strm = W_CreateLumpReaderNum(LumpNum);
+  VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
+  VCheckedStream Strm(lumpstream);
+  bool doSeek = false;
 
   for (size_t i = 0; i < ARRAY_COUNT(TexTable); ++i) {
     if (TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any || Type == TEXTYPE_Any) {
-      VTexture *Tex = TexTable[i].Create(*Strm, LumpNum);
+      if (doSeek) Strm.Seek(0); else doSeek = true;
+      VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
       if (Tex) {
         if (Tex->Name == NAME_None) Tex->Name = W_LumpName(LumpNum);
         Tex->Type = Type;
-        delete Strm;
         return Tex;
       }
     }
   }
 
-  delete Strm;
   return nullptr;
   unguard;
 }

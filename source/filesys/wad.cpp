@@ -718,17 +718,25 @@ int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts) {
 VStr W_LoadTextLump (VName name) {
   guard(W_LoadTextLump);
   VStream *Strm = W_CreateLumpReaderName(name);
+  if (!Strm) {
+    GCon->Logf(NAME_Warning, "cannot load text lump '%s'", *name);
+    return VStr::EmptyString;
+  }
   int msgSize = Strm->TotalSize();
-  char *buf = new char[msgSize + 1];
+  char *buf = new char[msgSize+1];
   Strm->Serialise(buf, msgSize);
+  if (Strm->IsError()) {
+    GCon->Logf(NAME_Warning, "cannot load text lump '%s'", *name);
+    return VStr::EmptyString;
+  }
   delete Strm;
-  Strm = nullptr;
+
   buf[msgSize] = 0; // append terminator
   VStr Ret = buf;
   delete[] buf;
-  buf = nullptr;
+
   if (!Ret.IsValidUtf8()) {
-    GCon->Logf("%s is not a valid UTF-8 text lump, assuming Latin 1", *name);
+    GCon->Logf(NAME_Warning, "'%s' is not a valid UTF-8 text lump, assuming Latin 1", *name);
     Ret = Ret.Latin1ToUtf8();
   }
   return Ret;
@@ -748,8 +756,8 @@ void W_LoadLumpIntoArray (VName LumpName, TArray<vuint8> &Array) {
   check(Strm);
   Array.SetNum(Strm->TotalSize());
   Strm->Serialise(Array.Ptr(), Strm->TotalSize());
+  if (Strm->IsError()) { delete Strm; Host_Error("error reading lump '%s'", *W_FullLumpName(Lump)); }
   delete Strm;
-  Strm = nullptr;
 }
 
 

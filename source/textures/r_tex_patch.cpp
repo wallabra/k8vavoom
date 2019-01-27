@@ -104,10 +104,11 @@ vuint8 *VPatchTexture::GetPixels () {
   if (Pixels) return Pixels; // if already got pixels, then just return them
 
   // open stream
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+  VCheckedStream Strm(lumpstream);
 
   // make sure header is present
-  if (Strm->TotalSize() < 8) {
+  if (Strm.TotalSize() < 8) {
     GCon->Logf(NAME_Warning, "Patch \"%s\" is too small", *Name);
     Width = 1;
     Height = 1;
@@ -120,17 +121,17 @@ vuint8 *VPatchTexture::GetPixels () {
   }
 
   // read header
-  Width = Streamer<vint16>(*Strm);
-  Height = Streamer<vint16>(*Strm);
-  SOffset = Streamer<vint16>(*Strm);
-  TOffset = Streamer<vint16>(*Strm);
+  Width = Streamer<vint16>(Strm);
+  Height = Streamer<vint16>(Strm);
+  SOffset = Streamer<vint16>(Strm);
+  TOffset = Streamer<vint16>(Strm);
 
   // allocate image data
   Pixels = new vuint8[Width*Height];
   memset(Pixels, 0, Width*Height);
 
   // make sure all column offsets are there
-  if (Strm->TotalSize() < 8+Width*4) {
+  if (Strm.TotalSize() < 8+Width*4) {
     GCon->Logf(NAME_Warning, "Patch \"%s\" is too small", *Name);
     checkerFill8(Pixels, Width, Height);
     ConvertPixelsToShaded();
@@ -140,23 +141,23 @@ vuint8 *VPatchTexture::GetPixels () {
   // read data
   for (int x = 0; x < Width; ++x) {
     // get offset of the column
-    Strm->Seek(8+x*4);
-    vint32 Offset = Streamer<vint32>(*Strm);
-    if (Offset < 8+Width*4 || Offset > Strm->TotalSize()-1) {
+    Strm.Seek(8+x*4);
+    vint32 Offset = Streamer<vint32>(Strm);
+    if (Offset < 8+Width*4 || Offset > Strm.TotalSize()-1) {
       GCon->Logf(NAME_Warning, "Bad offset in patch \"%s\"", *Name);
       //checkerFillColumn8(Pixels+x, x, Width, Height);
       checkerFill8(Pixels, Width, Height);
       continue;
     }
-    Strm->Seek(Offset);
+    Strm.Seek(Offset);
 
     // step through the posts in a column
     int top = -1; // DeepSea tall patches support
     vuint8 TopDelta;
-    *Strm << TopDelta;
+    Strm << TopDelta;
     while (TopDelta != 0xff) {
       // make sure length is there
-      if (Strm->TotalSize()-Strm->Tell() < 2) {
+      if (Strm.TotalSize()-Strm.Tell() < 2) {
         GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
         checkerFill8(Pixels, Width, Height);
@@ -169,8 +170,8 @@ vuint8 *VPatchTexture::GetPixels () {
 
       // read column length and skip unused byte
       vuint8 Len;
-      *Strm << Len;
-      Streamer<vuint8>(*Strm);
+      Strm << Len;
+      Streamer<vuint8>(Strm);
 
       // make sure column doesn't go out of the bounds of the image
       if (top+Len > Height) {
@@ -182,7 +183,7 @@ vuint8 *VPatchTexture::GetPixels () {
       }
 
       // make sure all post data is there
-      if (Strm->TotalSize()-Strm->Tell() < Len) {
+      if (Strm.TotalSize()-Strm.Tell() < Len) {
         GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
         checkerFill8(Pixels, Width, Height);
@@ -194,13 +195,13 @@ vuint8 *VPatchTexture::GetPixels () {
       int count = Len;
       vuint8 *dest = Pixels+top*Width+x;
       while (count--) {
-        *Strm << *dest;
+        Strm << *dest;
         if (!dest[0] && !bNoRemap0) *dest = r_black_colour;
         dest += Width;
       }
 
       // make sure unused byte and next post's top offset is there
-      if (Strm->TotalSize()-Strm->Tell() < 2) {
+      if (Strm.TotalSize()-Strm.Tell() < 2) {
         GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
         checkerFill8(Pixels, Width, Height);
@@ -209,13 +210,10 @@ vuint8 *VPatchTexture::GetPixels () {
       }
 
       // skip unused byte and get top offset of the next post
-      Streamer<vuint8>(*Strm);
-      *Strm << TopDelta;
+      Streamer<vuint8>(Strm);
+      Strm << TopDelta;
     }
   }
-
-  // close stream
-  delete Strm;
 
   ConvertPixelsToShaded();
   return Pixels;

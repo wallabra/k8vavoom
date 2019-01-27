@@ -146,11 +146,12 @@ vuint8 *VPcxTexture::GetPixels () {
   if (Pixels) return Pixels;
 
   // open stream
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+  VCheckedStream Strm(lumpstream);
 
   // read header
   pcx_t pcx;
-  *Strm << pcx;
+  Strm << pcx;
 
   // we only support 8-bit pcx files
   if (pcx.bits_per_pixel != 8) Sys_Error("No 8-bit planes\n"); // we like 8 bit colour planes
@@ -169,10 +170,10 @@ vuint8 *VPcxTexture::GetPixels () {
     int x = 0;
 
     while (x < bytes_per_line) {
-      *Strm << ch;
+      Strm << ch;
       if ((ch&0xC0) == 0xC0) {
         c = (ch&0x3F);
-        *Strm << ch;
+        Strm << ch;
       } else {
         c = 1;
       }
@@ -185,16 +186,15 @@ vuint8 *VPcxTexture::GetPixels () {
   }
 
   // if not followed by palette ID, assume palette is at the end of file
-  *Strm << ch;
-  if (ch != 12) Strm->Seek(Strm->TotalSize()-768);
+  Strm << ch;
+  if (ch != 12) Strm.Seek(Strm.TotalSize()-768);
 
   // read palette
   Palette = new rgba_t[256];
   for (c = 0; c < 256; ++c) {
-    *Strm << Palette[c].r << Palette[c].g << Palette[c].b;
+    Strm << Palette[c].r << Palette[c].g << Palette[c].b;
     Palette[c].a = 255;
   }
-  delete Strm;
 
   FixupPalette(Palette);
   ConvertPixelsToShaded();

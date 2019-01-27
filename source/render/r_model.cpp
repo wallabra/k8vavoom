@@ -208,15 +208,14 @@ static VClassModelScript *FindClassModelByName (VName clsName) {
 void R_InitModels () {
   guard(R_InitModels);
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
-    VStream *Strm = W_CreateLumpReaderNum(Lump);
-    check(Strm);
+    VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+    VCheckedStream Strm(lumpstream);
     if (mdl_verbose_loading) {
       GCon->Logf(NAME_Init, "parsing model definition '%s'", *W_FullLumpName(Lump));
     }
     // parse the file
     VXmlDocument *Doc = new VXmlDocument();
-    Doc->Parse(*Strm, "models/models.xml");
-    delete Strm;
+    Doc->Parse(Strm, "models/models.xml");
     for (VXmlNode *N = Doc->Root.FindChild("include"); N; N = N->FindNext()) Mod_FindName(N->GetAttribute("file"));
     delete Doc;
   }

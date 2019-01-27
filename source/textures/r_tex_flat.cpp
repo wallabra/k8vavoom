@@ -93,12 +93,12 @@ vuint8 *VFlatTexture::GetPixels () {
     checkerFill8(Pixels, Width, Height);
   } else {
     // read data
-    VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+    VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+    VCheckedStream Strm(lumpstream);
     for (int i = 0; i < Width*Height; ++i) {
-      *Strm << Pixels[i];
+      Strm << Pixels[i];
       if (!Pixels[i]) Pixels[i] = r_black_colour;
     }
-    delete Strm;
   }
 
   ConvertPixelsToShaded();

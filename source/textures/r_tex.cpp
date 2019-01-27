@@ -1055,16 +1055,17 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       GCon->Logf(NAME_Warning, "duplicate file \"PNAMES\" in archive \"%s\".", *W_FullPakNameForLump(NamesLump));
       GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
     }
-    VStream *Strm = W_CreateLumpReaderNum(NamesLump);
-    if (developer) GCon->Logf(NAME_Dev, "READING '%s' 0x%08x (%d)", *W_FullLumpName(NamesLump), NamesLump, Strm->TotalSize());
-    vint32 nummappatches = Streamer<vint32>(*Strm);
+    VStream *lumpstream = W_CreateLumpReaderNum(NamesLump);
+    VCheckedStream Strm(lumpstream);
+    if (developer) GCon->Logf(NAME_Dev, "READING '%s' 0x%08x (%d)", *W_FullLumpName(NamesLump), NamesLump, Strm.TotalSize());
+    vint32 nummappatches = Streamer<vint32>(Strm);
     if (nummappatches < 0 || nummappatches > 1024*1024) Sys_Error("%s: invalid number of patches in pnames (%d)", *W_FullLumpName(NamesLump), nummappatches);
     //VTexture **patchtexlookup = new VTexture *[nummappatches];
     for (int i = 0; i < nummappatches; ++i) {
       // read patch name
       char TmpName[12];
-      Strm->Serialise(TmpName, 8);
-      if (Strm->IsError()) Sys_Error("%s: error reading PNAMES", *W_FullLumpName(NamesLump));
+      Strm.Serialise(TmpName, 8);
+      //if (Strm.IsError()) Sys_Error("%s: error reading PNAMES", *W_FullLumpName(NamesLump));
       TmpName[8] = 0;
 
       if ((vuint8)TmpName[0] < 32 || (vuint8)TmpName[0] >= 127) {
@@ -1124,7 +1125,6 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         if (wpi.tx) AddTexture(wpi.tx);
       }
     }
-    delete Strm;
     // next one
     NamesLump = W_IterateNS(NamesLump, WADNS_Global);
   }
@@ -1199,14 +1199,15 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
 
     // load the map texture definitions from textures.lmp
     // the data is contained in one or two lumps, TEXTURE1 for shareware, plus TEXTURE2 for commercial
-    VStream *Strm = W_CreateLumpReaderNum(TexLump);
-    vint32 NumTex = Streamer<vint32>(*Strm);
+    VStream *lumpstream = W_CreateLumpReaderNum(TexLump);
+    VCheckedStream Strm(lumpstream);
+    vint32 NumTex = Streamer<vint32>(Strm);
 
     // check the texture file format
     bool IsStrife = false;
-    vint32 PrevOffset = Streamer<vint32>(*Strm);
+    vint32 PrevOffset = Streamer<vint32>(Strm);
     for (int i = 0; i < NumTex-1; ++i) {
-      vint32 Offset = Streamer<vint32>(*Strm);
+      vint32 Offset = Streamer<vint32>(Strm);
       if (Offset-PrevOffset == 24) {
         IsStrife = true;
         GCon->Logf(NAME_Init, "Strife textures detected in lump '%s'", *W_FullLumpName(TexLump));
@@ -1216,7 +1217,7 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
     }
 
     for (int i = 0; i < NumTex; ++i) {
-      VMultiPatchTexture *Tex = new VMultiPatchTexture(*Strm, i, patchtexlookup, FirstTex, IsStrife);
+      VMultiPatchTexture *Tex = new VMultiPatchTexture(Strm, i, patchtexlookup, FirstTex, IsStrife);
       // copy dimensions of the first texture to the dummy texture in case they are used, and
       // set it to be `TEXTYPE_Null`, as this is how DooM works
       if (i == 0 && First) {
@@ -1229,7 +1230,6 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
       tseen.put(Tex->Name, true);
       AddTexture(Tex);
     }
-    delete Strm;
     // next one
     TexLump = W_IterateNS(TexLump, WADNS_Global);
   }
@@ -1566,8 +1566,9 @@ void P_InitAnimated () {
   if (animlump < 0) return;
   GCon->Logf(NAME_Init, "loading Boom animated lump from '%s'", *W_FullLumpName(animlump));
 
-  VStream *Strm = W_CreateLumpReaderName(NAME_animated);
-  while (Strm->TotalSize()-Strm->Tell() >= 23) {
+  VStream *lumpstream = W_CreateLumpReaderName(NAME_animated);
+  VCheckedStream Strm(lumpstream);
+  while (Strm.TotalSize()-Strm.Tell() >= 23) {
     //int pic1, pic2;
     vint8 Type;
     char TmpName1[9];
@@ -1577,22 +1578,22 @@ void P_InitAnimated () {
     memset(TmpName1, 0, sizeof(TmpName1));
     memset(TmpName2, 0, sizeof(TmpName2));
 
-    *Strm << Type;
+    Strm << Type;
     if (Type == 255) break; // terminator marker
 
-    if (Type != 0 && Type != 1 && Type != 3) Sys_Error("P_InitPicAnims: bad type %u (ofs:0x%08x)", (vuint32)Type, (vuint32)(Strm->Tell()-1));
+    if (Type != 0 && Type != 1 && Type != 3) Sys_Error("P_InitPicAnims: bad type %u (ofs:0x%08x)", (vuint32)Type, (vuint32)(Strm.Tell()-1));
 
-    Strm->Serialise(TmpName1, 9);
-    Strm->Serialise(TmpName2, 9);
-    *Strm << BaseTime;
+    Strm.Serialise(TmpName1, 9);
+    Strm.Serialise(TmpName2, 9);
+    Strm << BaseTime;
 
     if (!TmpName1[0] && !TmpName2[0]) {
       GCon->Log(NAME_Init, "ANIMATED: skipping empty entry");
       continue;
     }
 
-    if (!TmpName2[0]) Sys_Error("P_InitPicAnims: empty first texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
-    if (!TmpName1[0]) Sys_Error("P_InitPicAnims: empty second texture (ofs:0x%08x)", (vuint32)(Strm->Tell()-4-2*9-1));
+    if (!TmpName2[0]) Sys_Error("P_InitPicAnims: empty first texture (ofs:0x%08x)", (vuint32)(Strm.Tell()-4-2*9-1));
+    if (!TmpName1[0]) Sys_Error("P_InitPicAnims: empty second texture (ofs:0x%08x)", (vuint32)(Strm.Tell()-4-2*9-1));
 
     // 0 is flat, 1 is texture, 3 is texture with decals allowed
     int txtype = (Type&1 ? TEXTYPE_Wall : TEXTYPE_Flat);
@@ -1639,7 +1640,6 @@ void P_InitAnimated () {
     AnimDefs.Append(ad);
   }
 
-  delete Strm;
   unguard;
 }
 
@@ -2295,16 +2295,17 @@ void P_InitSwitchList () {
   guard(P_InitSwitchList);
   int lump = W_CheckNumForName(NAME_switches);
   if (lump != -1) {
-    VStream *Strm = W_CreateLumpReaderNum(lump);
-    while (Strm->TotalSize()-Strm->Tell() >= 20) {
+    VStream *lumpstream = W_CreateLumpReaderNum(lump);
+    VCheckedStream Strm(lumpstream);
+    while (Strm.TotalSize()-Strm.Tell() >= 20) {
       char TmpName1[9];
       char TmpName2[9];
       vint16 Episode;
 
       // read data
-      Strm->Serialise(TmpName1, 9);
-      Strm->Serialise(TmpName2, 9);
-      *Strm << Episode;
+      Strm.Serialise(TmpName1, 9);
+      Strm.Serialise(TmpName2, 9);
+      Strm << Episode;
       if (!Episode) break; // terminator marker
       TmpName1[8] = 0;
       TmpName2[8] = 0;
@@ -2338,8 +2339,6 @@ void P_InitSwitchList () {
       Def2->PairIndex = AddSwitchDef(Def1);
       Def1->PairIndex = AddSwitchDef(Def2);
     }
-    delete Strm;
-    Strm = nullptr;
   }
   Switches.Condense();
   unguard;

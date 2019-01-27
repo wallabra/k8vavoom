@@ -143,16 +143,17 @@ vuint8 *VTgaTexture::GetPixels () {
   int count;
   int c;
 
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  if (!Strm) Sys_Error("Couldn't find file %s", *Name);
+  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+  if (!lumpstream) Sys_Error("Couldn't find file %s", *Name);
+  VCheckedStream Strm(lumpstream);
 
   TGAHeader_t hdr;
-  *Strm << hdr;
+  Strm << hdr;
 
   Width = hdr.width;
   Height = hdr.height;
 
-  Strm->Seek(Strm->Tell()+hdr.id_length);
+  Strm.Seek(Strm.Tell()+hdr.id_length);
 
   if (hdr.pal_type == 1) {
     Palette = new rgba_t[256];
@@ -160,18 +161,18 @@ vuint8 *VTgaTexture::GetPixels () {
       vuint16 col;
       switch (hdr.pal_entry_size) {
         case 16:
-          *Strm << col;
+          Strm << col;
           Palette[i].r = (col&0x1F)<<3;
           Palette[i].g = ((col>>5)&0x1F)<<3;
           Palette[i].b = ((col>>10)&0x1F)<<3;
           Palette[i].a = 255;
           break;
         case 24:
-          *Strm << Palette[i].b << Palette[i].g << Palette[i].r;
+          Strm << Palette[i].b << Palette[i].g << Palette[i].r;
           Palette[i].a = 255;
           break;
         case 32:
-          *Strm << Palette[i].b << Palette[i].g << Palette[i].r << Palette[i].a;
+          Strm << Palette[i].b << Palette[i].g << Palette[i].r << Palette[i].a;
           break;
       }
     }
@@ -199,7 +200,7 @@ vuint8 *VTgaTexture::GetPixels () {
     for (int y = Height; y; --y) {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
       vuint8 *dst = Pixels+yc*Width;
-      Strm->Serialise(dst, Width);
+      Strm.Serialise(dst, Width);
     }
   } else if (hdr.img_type == 2 && hdr.pal_type == 0 && hdr.bpp == 16) {
     // 16-bit uncompressed
@@ -208,7 +209,7 @@ vuint8 *VTgaTexture::GetPixels () {
       rgba_t *dst = (rgba_t *)(Pixels+yc*Width*4);
       for (int x = 0; x < Width; ++x, ++dst) {
         vuint16 col;
-        *Strm << col;
+        Strm << col;
         dst->r = ((col>>10)&0x1F)<<3;
         dst->g = ((col>>5)&0x1F)<<3;
         dst->b = (col&0x1F)<<3;
@@ -221,7 +222,7 @@ vuint8 *VTgaTexture::GetPixels () {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
       rgba_t *dst = (rgba_t *)(Pixels+yc*Width*4);
       for (int x = 0; x < Width; ++x, ++dst) {
-        *Strm << dst->b << dst->g << dst->r;
+        Strm << dst->b << dst->g << dst->r;
         dst->a = 255;
       }
     }
@@ -231,7 +232,7 @@ vuint8 *VTgaTexture::GetPixels () {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
       rgba_t *dst = (rgba_t *)(Pixels+yc*Width*4);
       for (int x = 0; x < Width; ++x, ++dst) {
-        *Strm << dst->b << dst->g << dst->r << dst->a;
+        Strm << dst->b << dst->g << dst->r << dst->a;
       }
     }
   } else if (hdr.img_type == 3 && hdr.bpp == 8 && hdr.pal_type == 1) {
@@ -245,7 +246,7 @@ vuint8 *VTgaTexture::GetPixels () {
     for (int y = Height; y; --y) {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
       byte *dst = Pixels+yc*Width;
-      Strm->Serialise(dst, Width);
+      Strm.Serialise(dst, Width);
     }
   } else if (hdr.img_type == 9 && hdr.bpp == 8 && hdr.pal_type == 1) {
     // 8-bit RLE compressed
@@ -254,17 +255,17 @@ vuint8 *VTgaTexture::GetPixels () {
       vuint8 *dst = Pixels+yc*Width;
       c = 0;
       do {
-        count = Streamer<vuint8>(*Strm);
+        count = Streamer<vuint8>(Strm);
         if (count&0x80) {
           count = (count&0x7F)+1;
           c += count;
           vuint8 col;
-          *Strm << col;
+          Strm << col;
           while (count--) *(dst++) = col;
         } else {
           ++count;
           c += count;
-          Strm->Serialise(dst, count);
+          Strm.Serialise(dst, count);
           dst += count;
         }
       } while (c < Width);
@@ -276,12 +277,12 @@ vuint8 *VTgaTexture::GetPixels () {
       rgba_t *dst = (rgba_t *)(Pixels+yc*Width*4);
       c = 0;
       do {
-        count = Streamer<vuint8>(*Strm);
+        count = Streamer<vuint8>(Strm);
         if (count&0x80) {
           count = (count&0x7F)+1;
           c += count;
           vuint16 col;
-          *Strm << col;
+          Strm << col;
           while (count--) {
             dst->r = ((col>>10)&0x1F)<<3;
             dst->g = ((col>>5)&0x1F)<<3;
@@ -294,7 +295,7 @@ vuint8 *VTgaTexture::GetPixels () {
           c += count;
           while (count--) {
             vuint16 col;
-            *Strm << col;
+            Strm << col;
             dst->r = ((col>>10)&0x1F)<<3;
             dst->g = ((col>>5)&0x1F)<<3;
             dst->b = (col&0x1F)<<3;
@@ -311,12 +312,12 @@ vuint8 *VTgaTexture::GetPixels () {
       rgba_t *dst = (rgba_t *)(Pixels+yc*Width*4);
       c = 0;
       do {
-        count = Streamer<vuint8>(*Strm);
+        count = Streamer<vuint8>(Strm);
         if (count&0x80) {
           count = (count&0x7F)+1;
           c += count;
           rgba_t col;
-          *Strm << col.b << col.g << col.r;
+          Strm << col.b << col.g << col.r;
           col.a = 255;
           while (count--) {
             *dst = col;
@@ -326,7 +327,7 @@ vuint8 *VTgaTexture::GetPixels () {
           ++count;
           c += count;
           while (count--) {
-            *Strm << dst->b << dst->g << dst->r;
+            Strm << dst->b << dst->g << dst->r;
             dst->a = 255;
             ++dst;
           }
@@ -340,12 +341,12 @@ vuint8 *VTgaTexture::GetPixels () {
       rgba_t *dst = (rgba_t *)(Pixels+yc*Width*4);
       c = 0;
       do {
-        count = Streamer<vuint8>(*Strm);
+        count = Streamer<vuint8>(Strm);
         if (count&0x80) {
           count = (count&0x7F)+1;
           c += count;
           rgba_t col;
-          *Strm << col.b << col.g << col.r << col.a;
+          Strm << col.b << col.g << col.r << col.a;
           while (count--) {
             *dst = col;
             ++dst;
@@ -354,7 +355,7 @@ vuint8 *VTgaTexture::GetPixels () {
           ++count;
           c += count;
           while (count--) {
-            *Strm << dst->b << dst->g << dst->r << dst->a;
+            Strm << dst->b << dst->g << dst->r << dst->a;
             ++dst;
           }
         }
@@ -373,17 +374,17 @@ vuint8 *VTgaTexture::GetPixels () {
       byte *dst = Pixels+yc*Width;
       c = 0;
       do {
-        count = Streamer<vuint8>(*Strm);
+        count = Streamer<vuint8>(Strm);
         if (count&0x80) {
           count = (count&0x7F)+1;
           c += count;
           vuint8 col;
-          *Strm << col;
+          Strm << col;
           while (count--) *(dst++) = col;
         } else {
           ++count;
           c += count;
-          Strm->Serialise(dst, count);
+          Strm.Serialise(dst, count);
           dst += count;
         }
       } while (c < Width);
@@ -391,8 +392,6 @@ vuint8 *VTgaTexture::GetPixels () {
   } else {
     Sys_Error("Nonsupported tga format");
   }
-
-  delete Strm;
 
   // for 8-bit textures remap colour 0
   if (mFormat == TEXFMT_8Pal) FixupPalette(Palette);

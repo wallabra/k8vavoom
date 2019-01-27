@@ -501,10 +501,13 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
       GCon->Log(NAME_Error, "Behavior lump too small");
     } else {
       VStream *Strm = W_CreateLumpReaderNum(Lump);
-      Data = new vuint8[Strm->TotalSize()];
+      check(Strm);
+      int datasize = Strm->TotalSize();
+      check(datasize >= (int)sizeof(VAcsHeader));
+      Data = new vuint8[datasize];
       Strm->Serialise(Data, Strm->TotalSize());
+      if (Strm->IsError()) memset(Data, 0, datasize);
       delete Strm;
-      Strm = nullptr;
       header = (VAcsHeader *)Data;
 
       // check header

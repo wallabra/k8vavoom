@@ -83,15 +83,15 @@ vuint8 *VAutopageTexture::GetPixels () {
   if (Pixels) return Pixels;
 
   // read data
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  int len = Strm->TotalSize();
+  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+  VCheckedStream Strm(lumpstream);
+  int len = Strm.TotalSize();
   Pixels = new vuint8[len];
   vuint8 *dst = Pixels;
   for (int i = 0; i < len; ++i, ++dst) {
-    *Strm << *dst;
+    Strm << *dst;
     if (!*dst) *dst = r_black_colour;
   }
-  delete Strm;
 
   return Pixels;
   unguard;

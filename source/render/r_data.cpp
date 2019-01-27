@@ -164,13 +164,13 @@ static void InitPalette () {
   // with modified graphics.
   // Strife uses colour 0 as transparent. I already had problems with fact
   // that colour 255 is normal colour, now there shouldn't be any problems.
-  VStream *Strm = W_CreateLumpReaderName(NAME_playpal);
-  check(Strm);
+  VStream *lumpstream = W_CreateLumpReaderName(NAME_playpal);
+  VCheckedStream Strm(lumpstream);
   rgba_t *pal = r_palette;
   int best_dist_black = 0x7fffffff;
   int best_dist_white = (r_color_distance_algo ? 0x7fffffff : -0x7fffffff);
   for (int i = 0; i < 256; ++i) {
-    *Strm << pal[i].r << pal[i].g << pal[i].b;
+    Strm << pal[i].r << pal[i].g << pal[i].b;
     if (i == 0) {
       //k8: force color 0 to transparent black (it doesn't matter, but anyway)
       //GCon->Logf("color #0 is (%02x_%02x_%02x)", pal[0].r, pal[0].g, pal[0].b);
@@ -209,7 +209,6 @@ static void InitPalette () {
   }
   //GCon->Logf("black=%d:(%02x_%02x_%02x); while=%d:(%02x_%02x_%02x)", r_black_colour, pal[r_black_colour].r, pal[r_black_colour].g, pal[r_black_colour].b,
   //  r_white_colour, pal[r_white_colour].r, pal[r_white_colour].g, pal[r_white_colour].b);
-  delete Strm;
   unguard;
 }
 
@@ -265,23 +264,25 @@ static void InitRgbTable () {
 //==========================================================================
 static void InitTranslationTables () {
   guard(InitTranslationTables);
-  VStream *Strm = W_CreateLumpReaderName(NAME_translat);
-  NumTranslationTables = Strm->TotalSize()/256;
-  TranslationTables = new VTextureTranslation*[NumTranslationTables];
-  for (int j = 0; j < NumTranslationTables; ++j) {
-    VTextureTranslation *Trans = new VTextureTranslation;
-    TranslationTables[j] = Trans;
-    Strm->Serialise(Trans->Table, 256);
-    // make sure that 0 always maps to 0
-    Trans->Table[0] = 0;
-    Trans->Palette[0] = r_palette[0];
-    for (int i = 1; i < 256; ++i) {
-      // make sure that normal colours doesn't map to colour 0
-      if (Trans->Table[i] == 0) Trans->Table[i] = r_black_colour;
-      Trans->Palette[i] = r_palette[Trans->Table[i]];
+  {
+    VStream *lumpstream = W_CreateLumpReaderName(NAME_translat);
+    VCheckedStream Strm(lumpstream);
+    NumTranslationTables = Strm.TotalSize()/256;
+    TranslationTables = new VTextureTranslation*[NumTranslationTables];
+    for (int j = 0; j < NumTranslationTables; ++j) {
+      VTextureTranslation *Trans = new VTextureTranslation;
+      TranslationTables[j] = Trans;
+      Strm.Serialise(Trans->Table, 256);
+      // make sure that 0 always maps to 0
+      Trans->Table[0] = 0;
+      Trans->Palette[0] = r_palette[0];
+      for (int i = 1; i < 256; ++i) {
+        // make sure that normal colours doesn't map to colour 0
+        if (Trans->Table[i] == 0) Trans->Table[i] = r_black_colour;
+        Trans->Palette[i] = r_palette[Trans->Table[i]];
+      }
     }
   }
-  delete Strm;
 
   // calculate ice translation
   IceTranslation.Table[0] = 0;

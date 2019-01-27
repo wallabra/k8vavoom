@@ -125,11 +125,12 @@ vuint8 *VRawPicTexture::GetPixels () {
   } else {
     // load palette and find black colour for remaping
     Palette = new rgba_t[256];
-    VStream *PStrm = W_CreateLumpReaderNum(PalLumpNum);
+    VStream *lumpstream = W_CreateLumpReaderNum(PalLumpNum);
+    VCheckedStream PStrm(lumpstream);
     int best_dist = 0x10000;
     black = 0;
     for (int i = 0; i < 256; ++i) {
-      *PStrm << Palette[i].r << Palette[i].g << Palette[i].b;
+      PStrm << Palette[i].r << Palette[i].g << Palette[i].b;
       if (i == 0) {
         Palette[i].a = 0;
       } else {
@@ -141,17 +142,16 @@ vuint8 *VRawPicTexture::GetPixels () {
         }
       }
     }
-    delete PStrm;
   }
 
   // read data
-  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+  VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
+  VCheckedStream Strm(lumpstream);
   vuint8 *dst = Pixels;
   for (int i = 0; i < 64000; ++i, ++dst) {
-    *Strm << *dst;
+    Strm << *dst;
     if (!*dst) *dst = black;
   }
-  delete Strm;
 
   ConvertPixelsToShaded();
   return Pixels;

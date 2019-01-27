@@ -436,10 +436,12 @@ VFont *VFont::GetFont (VName AName, VName LumpName) {
   int Lump = W_CheckNumForName(LumpName);
   if (Lump >= 0) {
     // read header
-    VStream *Strm = W_CreateLumpReaderNum(Lump);
     char Hdr[4];
-    Strm->Serialise(Hdr, 4);
-    delete Strm;
+    {
+      VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+      VCheckedStream Strm(lumpstream);
+      Strm.Serialise(Hdr, 4);
+    }
     if (Hdr[0] == 'F' && Hdr[1] == 'O' && Hdr[2] == 'N') {
       if (Hdr[3] == '1') return new VFon1Font(AName, Lump);
       if (Hdr[3] == '2') return new VFon2Font(AName, Lump);
@@ -1033,12 +1035,13 @@ VFon1Font::VFon1Font (VName AName, int LumpNum) {
   Next = Fonts;
   Fonts = this;
 
-  VStream *Strm = W_CreateLumpReaderNum(LumpNum);
+  VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
+  VCheckedStream Strm(lumpstream);
   // skip ID
-  Strm->Seek(4);
+  Strm.Seek(4);
   vuint16 w;
   vuint16 h;
-  *Strm << w << h;
+  Strm << w << h;
   SpaceWidth = w;
   FontHeight = h;
 
@@ -1074,7 +1077,7 @@ VFon1Font::VFon1Font (VName AName, int LumpNum) {
     // create texture objects for all different colours
     FChar.Textures = new VTexture*[TextColours.Num()];
     for (int j = 0; j < TextColours.Num(); ++j) {
-      FChar.Textures[j] = new VFontChar2(LumpNum, Strm->Tell(), SpaceWidth, FontHeight, Translation+j*256, 255);
+      FChar.Textures[j] = new VFontChar2(LumpNum, Strm.Tell(), SpaceWidth, FontHeight, Translation+j*256, 255);
       // currently all render drivers expect all textures to be registered in texture manager
       GTextureManager.AddTexture(FChar.Textures[j]);
     }
@@ -1083,19 +1086,18 @@ VFon1Font::VFon1Font (VName AName, int LumpNum) {
     // skip character data
     int Count = SpaceWidth*FontHeight;
     do {
-      vint8 Code = Streamer<vint8>(*Strm);
+      vint8 Code = Streamer<vint8>(Strm);
       if (Code >= 0) {
         Count -= Code+1;
-        while (Code-- >= 0) Streamer<vint8>(*Strm);
+        while (Code-- >= 0) Streamer<vint8>(Strm);
       } else if (Code != -128) {
         Count -= 1-Code;
-        Streamer<vint8>(*Strm);
+        Streamer<vint8>(Strm);
       }
     } while (Count > 0);
     if (Count < 0) Sys_Error("Overflow decompressing a character %d", i);
   }
 
-  delete Strm;
   unguard;
 }
 
@@ -1123,21 +1125,22 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
   Next = Fonts;
   Fonts = this;
 
-  VStream *Strm = W_CreateLumpReaderNum(LumpNum);
+  VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
+  VCheckedStream Strm(lumpstream);
   // skip ID
-  Strm->Seek(4);
+  Strm.Seek(4);
 
   // read header
-  FontHeight = Streamer<vuint16>(*Strm);
-  FirstChar = Streamer<vuint8>(*Strm);
-  LastChar = Streamer<vuint8>(*Strm);
+  FontHeight = Streamer<vuint16>(Strm);
+  FirstChar = Streamer<vuint8>(Strm);
+  LastChar = Streamer<vuint8>(Strm);
   vuint8 FixedWidthFlag;
   vuint8 RescalePal;
   vuint8 ActiveColours;
   vuint8 KerningFlag;
-  *Strm << FixedWidthFlag << RescalePal << ActiveColours << KerningFlag;
+  Strm << FixedWidthFlag << RescalePal << ActiveColours << KerningFlag;
   Kerning = 0;
-  if (KerningFlag&1) Kerning = Streamer<vint16>(*Strm);
+  if (KerningFlag&1) Kerning = Streamer<vint16>(Strm);
 
   Translation = nullptr;
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
@@ -1147,17 +1150,17 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
   vuint16 *Widths = new vuint16[Count];
   int TotalWidth = 0;
   if (FixedWidthFlag) {
-    *Strm << Widths[0];
+    Strm << Widths[0];
     for (int i = 1; i < Count; ++i) Widths[i] = Widths[0];
     TotalWidth = Widths[0]*Count;
   } else {
     for (int i = 0; i < Count; ++i) {
-      *Strm << Widths[i];
+      Strm << Widths[i];
       TotalWidth += Widths[i];
     }
   }
 
-       if (FirstChar <= ' ' && LastChar >= ' ') SpaceWidth = Widths[' ' - FirstChar];
+       if (FirstChar <= ' ' && LastChar >= ' ') SpaceWidth = Widths[' '-FirstChar];
   else if (FirstChar <= 'N' && LastChar >= 'N') SpaceWidth = (Widths['N'-FirstChar]+1)/2;
   else SpaceWidth = TotalWidth*2/(3*Count);
 
@@ -1168,7 +1171,7 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
   memset(Pal, 0, sizeof(Pal));
   for (int i = 0; i <= ActiveColours; ++i) {
     ColoursUsed[i] = true;
-    *Strm << Pal[i].r << Pal[i].g << Pal[i].b;
+    Strm << Pal[i].r << Pal[i].g << Pal[i].b;
     Pal[i].a = (i ? 255 : 0);
   }
 
@@ -1186,7 +1189,7 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
       // create texture objects for all different colours
       FChar.Textures = new VTexture*[TextColours.Num()];
       for (int j = 0; j < TextColours.Num(); ++j) {
-        FChar.Textures[j] = new VFontChar2(LumpNum, Strm->Tell(), Widths[i], FontHeight, Translation+j*256, ActiveColours);
+        FChar.Textures[j] = new VFontChar2(LumpNum, Strm.Tell(), Widths[i], FontHeight, Translation+j*256, ActiveColours);
         // currently all render drivers expect all textures to be registered in texture manager
         GTextureManager.AddTexture(FChar.Textures[j]);
       }
@@ -1194,20 +1197,19 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
 
       // skip character data
       do {
-        vint8 Code = Streamer<vint8>(*Strm);
+        vint8 Code = Streamer<vint8>(Strm);
         if (Code >= 0) {
           DataSize -= Code+1;
-          while (Code-- >= 0) Streamer<vint8>(*Strm);
+          while (Code-- >= 0) Streamer<vint8>(Strm);
         } else if (Code != -128) {
           DataSize -= 1-Code;
-          Streamer<vint8>(*Strm);
+          Streamer<vint8>(Strm);
         }
       } while (DataSize > 0);
       if (DataSize < 0) Sys_Error("Overflow decompressing a character %d", i);
     }
   }
 
-  delete Strm;
   delete[] Widths;
   unguard;
 }
@@ -1388,31 +1390,32 @@ vuint8 *VFontChar2::GetPixels () {
   if (Pixels) return Pixels;
   shadeColor = -1; //FIXME
 
-  VStream *Strm = W_CreateLumpReaderNum(LumpNum);
-  Strm->Seek(FilePos);
+  VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
+  VCheckedStream Strm(lumpstream);
+
+  Strm.Seek(FilePos);
 
   int Count = Width*Height;
   Pixels = new vuint8[Count];
   vuint8 *pDst = Pixels;
   do {
-    vint32 Code = Streamer<vint8>(*Strm);
+    vint32 Code = Streamer<vint8>(Strm);
     if (Code >= 0) {
       Count -= Code+1;
       while (Code-- >= 0) {
-        *pDst = Streamer<vuint8>(*Strm);
+        *pDst = Streamer<vuint8>(Strm);
         *pDst = MIN(*pDst, MaxCol);
         ++pDst;
       }
     } else if (Code != -128) {
       Code = 1-Code;
       Count -= Code;
-      vuint8 Val = Streamer<vuint8>(*Strm);
+      vuint8 Val = Streamer<vuint8>(Strm);
       Val = MIN(Val, MaxCol);
       while (Code-- > 0) *pDst++ = Val;
     }
   } while (Count > 0);
 
-  delete Strm;
   return Pixels;
   unguard;
 }

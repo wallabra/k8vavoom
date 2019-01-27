@@ -240,7 +240,7 @@ vuint8 *VJpegTexture::GetPixels () {
 
   // open stream
   VStream *Strm = W_CreateLumpReaderNum(SourceLump);
-  check(Strm);
+  if (!Strm) Sys_Error("cannot load jpeg texture from '%s'", *W_FullLumpName(SourceLump));
 
   try {
     // set up the JPEG error routines
@@ -330,6 +330,8 @@ vuint8 *VJpegTexture::GetPixels () {
 
   // release JPEG decompression object
   jpeg_destroy_decompress(&cinfo);
+
+  //TODO: check for errors
 
   // free memory
   delete Strm;
