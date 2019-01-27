@@ -1570,7 +1570,7 @@ void P_InitAnimated () {
   VCheckedStream Strm(lumpstream);
   while (Strm.TotalSize()-Strm.Tell() >= 23) {
     //int pic1, pic2;
-    vint8 Type;
+    vuint8 Type;
     char TmpName1[9];
     char TmpName2[9];
     vint32 BaseTime;
@@ -1581,7 +1581,7 @@ void P_InitAnimated () {
     Strm << Type;
     if (Type == 255) break; // terminator marker
 
-    if (Type != 0 && Type != 1 && Type != 3) Sys_Error("P_InitPicAnims: bad type %u (ofs:0x%08x)", (vuint32)Type, (vuint32)(Strm.Tell()-1));
+    if (Type != 0 && Type != 1 && Type != 3) Sys_Error("P_InitPicAnims: bad type 0x%02x (ofs:0x%02x)", (vuint32)Type, (vuint32)(Strm.Tell()-1));
 
     Strm.Serialise(TmpName1, 9);
     Strm.Serialise(TmpName2, 9);
