@@ -151,93 +151,42 @@ override int GetRebornHealth()
   return MAXHEALTH;
 }
 
+
 //==========================================================================
 //
 //  PlayerImpulse
 //
 //==========================================================================
-
-override void PlayerImpulse()
-{
-  int impulse;
-  int i;
-
-  impulse = Impulse;
+override void PlayerImpulse () {
+  int impulse = Impulse;
   Impulse = 0;
   Inventory Arti = none;
 
-  if (impulse <= PlayerPawn::NUM_WEAPON_SLOTS)
-  {
-    ChangeWeapon(impulse);
-  }
-  else if (impulse == 13)
-  {
-    InventoryLeft();
-  }
-  else if (impulse == 14)
-  {
-    InventoryRight();
-  }
-  else if (impulse == 15)
-  {
-    InventoryUse();
-  }
-  else if (impulse == 16)
-  {
-    Actor(MO).Damage(none, none, 10000);
-  }
-  else if (impulse == 17)
-  {
-    PrevWeapon();
-  }
-  else if (impulse == 18)
-  {
-    NextWeapon();
-  }
-  else if (impulse == 56)
-  {
-    bReloadQueued = true;
-  }
-  else if (impulse >= 200 && impulse <= 205)
-  {
-    LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
-  }
+       if (impulse <= PlayerPawn::NUM_WEAPON_SLOTS) ChangeWeapon(impulse);
+  else if (impulse == 13) InventoryLeft();
+  else if (impulse == 14) InventoryRight();
+  else if (impulse == 15) InventoryUse();
+  else if (impulse == 16) Actor(MO).Damage(none, none, 10000);
+  else if (impulse == 17) PrevWeapon();
+  else if (impulse == 18) NextWeapon();
+  else if (impulse >= 200 && impulse <= 205) LineSpecialLevelInfo(Level).ConChoiceImpulse(impulse - 200);
+
+  else if (impulse == 43) Actor(MO).FireSuperBullet();
+  else if (impulse == 142) Actor(MO).DebugCheckMidTex();
+  else if (impulse == 56) bReloadQueued = true;
+
   // Hexen artifact hot keys
-  if (!Arti)
-  {
-    if (impulse == 12 && (Health < MAXHEALTH))
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiHealth);
-    }
-    else if (impulse == 10)
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiPoisonBag);
-    }
-    else if (impulse == 9)
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiBlastRadius);
-    }
-    else if (impulse == 8)
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiTeleport);
-    }
-    else if (impulse == 7)
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiTeleportOther);
-    }
-    else if (impulse == 6)
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiPork);
-    }
-    else if (impulse == 5 &&
-      !EntityEx(MO).FindInventory(PowerInvulnerable))
-    {
-      Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
-    }
+  if (!Arti) {
+         if (impulse == 12 && (Health < MAXHEALTH)) Arti = EntityEx(MO).FindInventory(ArtiHealth);
+    else if (impulse == 10) Arti = EntityEx(MO).FindInventory(ArtiPoisonBag);
+    else if (impulse == 9) Arti = EntityEx(MO).FindInventory(ArtiBlastRadius);
+    else if (impulse == 8) Arti = EntityEx(MO).FindInventory(ArtiTeleport);
+    else if (impulse == 7) Arti = EntityEx(MO).FindInventory(ArtiTeleportOther);
+    else if (impulse == 6) Arti = EntityEx(MO).FindInventory(ArtiPork);
+    else if (impulse == 5 && !EntityEx(MO).FindInventory(PowerInvulnerable)) Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
   }
 
-  if (Arti)
-  {
+  if (Arti) {
     // Use an artifact
     EntityEx(MO).UseInventory(Arti);
   }
