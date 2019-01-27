@@ -76,7 +76,7 @@ public:
   virtual bool IsError () const override; // this will call `Host_Error()`
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
-  virtual void SerialiseInt (vuint32 &, vuint32) override;
+  virtual void SerialiseInt (vuint32 &Value, vuint32 Max) override;
 
   virtual void Seek (int) override;
   virtual int Tell () override;
