@@ -156,17 +156,17 @@ static bool hashLump (sha224_ctx *sha224ctx, MD5Context *md5ctx, int lumpnum) {
   static vuint8 buf[65536];
   VStream *strm = W_CreateLumpReaderNum(lumpnum);
   if (!strm) return false;
-  auto left = strm->TotalSize();
+  VCheckedStream st(strm);
+  auto left = st.TotalSize();
   while (left > 0) {
     int rd = left;
     if (rd > (int)sizeof(buf)) rd = (int)sizeof(buf);
-    strm->Serialise(buf, rd);
-    if (strm->IsError()) { delete strm; return false; }
+    st.Serialise(buf, rd);
+    if (st.IsError()) { delete strm; return false; }
     if (sha224ctx) sha224_update(sha224ctx, buf, rd);
     if (md5ctx) md5ctx->Update(buf, (unsigned)rd);
     left -= rd;
   }
-  delete strm;
   return true;
 }
 
@@ -828,6 +828,7 @@ load_again:
       VStream *TmpStrm = W_CreateLumpReaderNum(SubsectorsLump);
       if (TmpStrm->TotalSize() > 4) {
         TmpStrm->Serialise(GLNodesHdr, 4);
+        if (TmpStrm->IsError()) GLNodesHdr[0] = 0;
         if ((GLNodesHdr[0] == 'Z' || GLNodesHdr[0] == 'X') &&
             GLNodesHdr[1] == 'G' && GLNodesHdr[2] == 'L' &&
             (GLNodesHdr[3] == 'N' || GLNodesHdr[3] == '2' || GLNodesHdr[3] == '3'))
@@ -842,7 +843,6 @@ load_again:
         }*/
       }
       delete TmpStrm;
-      TmpStrm = nullptr;
     }
   }
   InitTime += Sys_Time();
@@ -1341,10 +1341,11 @@ int VLevel::FindGLNodes (VName name) const {
     if (W_LumpName(Lump) != NAME_gl_level) continue;
     if (W_LumpLength(Lump) < 12) continue; // lump is too short
     char Buf[16];
-    VStream *Strm = W_CreateLumpReaderNum(Lump);
-    Strm->Serialise(Buf, Strm->TotalSize() < 16 ? Strm->TotalSize() : 16);
-    delete Strm;
-    Strm = nullptr;
+    VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+    {
+      VCheckedStream Strm(lumpstream);
+      Strm.Serialise(Buf, Strm.TotalSize() < 16 ? Strm.TotalSize() : 16);
+    }
     if (memcmp(Buf, "LEVEL=", 6)) continue; // "LEVEL" keyword expected, but missing
     for (int i = 11; i < 14; ++i) {
       if (Buf[i] == '\n' || Buf[i] == '\r') {
@@ -1386,35 +1387,38 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
   if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
 
   // load base vertexes
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
-  vertex_t *pDst = Vertexes;
-  for (int i = 0; i < NumBaseVerts; ++i, ++pDst) {
-    vint16 x, y;
-    *Strm << x << y;
-    *pDst = TVec(x, y, 0);
+  vertex_t *pDst;
+  {
+    VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+    VCheckedStream Strm(lumpstream);
+    pDst = Vertexes;
+    for (int i = 0; i < NumBaseVerts; ++i, ++pDst) {
+      vint16 x, y;
+      Strm << x << y;
+      *pDst = TVec(x, y, 0);
+    }
   }
-  delete Strm;
 
   if (GLLump >= 0) {
     // load gl vertexes
-    Strm = W_CreateLumpReaderNum(GLLump);
+    VStream *lumpstream = W_CreateLumpReaderNum(GLLump);
+    VCheckedStream Strm(lumpstream);
     if (GlFormat == 1) {
       // gl version 1 vertexes, same as normal ones
       for (int i = 0; i < NumGLVerts; ++i, ++pDst) {
         vint16 x, y;
-        *Strm << x << y;
+        Strm << x << y;
         *pDst = TVec(x, y, 0);
       }
     } else {
       // gl version 2 or greater vertexes, as fixed point
-      Strm->Seek(4);
+      Strm.Seek(4);
       for (int i = 0; i < NumGLVerts; ++i, ++pDst) {
         vint32 x, y;
-        *Strm << x << y;
+        Strm << x << y;
         *pDst = TVec(x/65536.0f, y/65536.0f, 0);
       }
     }
-    delete Strm;
   }
   unguard;
 }
@@ -1433,7 +1437,8 @@ void VLevel::LoadSectors (int Lump) {
   memset((void *)Sectors, 0, sizeof(sector_t)*NumSectors);
 
   // load sectors
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   sector_t *ss = Sectors;
   for (int i = 0; i < NumSectors; ++i, ++ss) {
     // read data
@@ -1442,10 +1447,10 @@ void VLevel::LoadSectors (int Lump) {
     char ceilingpic[9];
     memset(floorpic, 0, sizeof(floorpic));
     memset(ceilingpic, 0, sizeof(ceilingpic));
-    *Strm << floorheight << ceilingheight;
-    Strm->Serialise(floorpic, 8);
-    Strm->Serialise(ceilingpic, 8);
-    *Strm << lightlevel << special << tag;
+    Strm << floorheight << ceilingheight;
+    Strm.Serialise(floorpic, 8);
+    Strm.Serialise(ceilingpic, 8);
+    Strm << lightlevel << special << tag;
 
     // floor
     ss->floor.Set(TVec(0, 0, 1), floorheight);
@@ -1496,8 +1501,7 @@ void VLevel::LoadSectors (int Lump) {
     ss->Gravity = 1.0f;  // default sector gravity of 1.0
     ss->Zone = -1;
   }
-  delete Strm;
-  //HashSectors();
+  //HashSectors(); //k8: do it later, 'cause map fixer can change loaded map
   unguard;
 }
 
@@ -1584,10 +1588,11 @@ void VLevel::LoadSideDefs (int Lump) {
   CreateSides();
 
   // load data
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   side_t *sd = Sides;
   for (int i = 0; i < NumSides; ++i, ++sd) {
-    Strm->Seek(sd->BottomTexture*30);
+    Strm.Seek(sd->BottomTexture*30);
     vint16 textureoffset;
     vint16 rowoffset;
     char toptexture[9];
@@ -1597,11 +1602,11 @@ void VLevel::LoadSideDefs (int Lump) {
     memset(bottomtexture, 0, sizeof(bottomtexture));
     memset(midtexture, 0, sizeof(midtexture));
     vint16 sector;
-    *Strm << textureoffset << rowoffset;
-    Strm->Serialise(toptexture, 8);
-    Strm->Serialise(bottomtexture, 8);
-    Strm->Serialise(midtexture, 8);
-    *Strm << sector;
+    Strm << textureoffset << rowoffset;
+    Strm.Serialise(toptexture, 8);
+    Strm.Serialise(bottomtexture, 8);
+    Strm.Serialise(midtexture, 8);
+    Strm << sector;
 
     if (sector < 0 || sector >= NumSectors) Host_Error("Bad sector index %d", sector);
 
@@ -1656,7 +1661,6 @@ void VLevel::LoadSideDefs (int Lump) {
         break;
       }
   }
-  delete Strm;
   unguard;
 }
 
@@ -1674,13 +1678,14 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
   Lines = new line_t[NumLines];
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
 
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   line_t *ld = Lines;
   for (int i = 0; i < NumLines; ++i, ++ld) {
     vuint16 v1, v2, flags;
     vuint16 special, tag;
     vuint16 side0, side1;
-    *Strm << v1 << v2 << flags << special << tag << side0 << side1;
+    Strm << v1 << v2 << flags << special << tag << side0 << side1;
 
     if (v1 >= NumBaseVerts) Host_Error("Bad vertex index %d (00)", v1);
     if (v2 >= NumBaseVerts) Host_Error("Bad vertex index %d (01)", v2);
@@ -1699,7 +1704,6 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
   }
-  delete Strm;
   unguard;
 }
 
@@ -1717,13 +1721,14 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
   Lines = new line_t[NumLines];
   memset((void *)Lines, 0, sizeof(line_t)*NumLines);
 
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   line_t *ld = Lines;
   for (int i = 0; i < NumLines; ++i, ++ld) {
     vuint16 v1, v2, flags;
     vuint8 special, arg1, arg2, arg3, arg4, arg5;
     vuint16 side0, side1;
-    *Strm << v1 << v2 << flags << special << arg1 << arg2 << arg3 << arg4 << arg5 << side0 << side1;
+    Strm << v1 << v2 << flags << special << arg1 << arg2 << arg3 << arg4 << arg5 << side0 << side1;
 
     if (v1 >= NumBaseVerts) Host_Error("Bad vertex index %d (02)", v1);
     if (v2 >= NumBaseVerts) Host_Error("Bad vertex index %d (03)", v2);
@@ -1755,7 +1760,6 @@ void VLevel::LoadLineDefs2 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     if (MInfo.Flags&MAPINFOF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&MAPINFOF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
   }
-  delete Strm;
   unguard;
 }
 
@@ -1819,8 +1823,9 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
   memset((void *)Segs, 0, sizeof(seg_t)*NumSegs);
 
   // read data
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
-  if (Format == 3) Strm->Seek(4);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
+  if (Format == 3) Strm.Seek(4);
   seg_t *li = Segs;
   for (int i = 0; i < NumSegs; ++i, ++li) {
     vuint32 v1num;
@@ -1831,13 +1836,13 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
 
     if (Format < 3) {
       vuint16 v1, v2;
-      *Strm << v1 << v2 << linedef << side << partner;
+      Strm << v1 << v2 << linedef << side << partner;
       v1num = v1;
       v2num = v2;
     } else {
       vuint32 v1, v2;
       vint16 flags;
-      *Strm << v1 << v2 << linedef << flags << partner;
+      Strm << v1 << v2 << linedef << flags << partner;
       v1num = v1;
       v2num = v2;
       side = flags&GL_SEG_FLAG_SIDE;
@@ -1889,7 +1894,6 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
     // calc seg's plane params
     CalcSeg(li);
   }
-  delete Strm;
   unguard;
 }
 
@@ -1923,18 +1927,19 @@ void VLevel::LoadSubsectors (int Lump) {
   memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
 
   // read data
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
-  if (Format == 3) Strm->Seek(4);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
+  if (Format == 3) Strm.Seek(4);
   subsector_t *ss = Subsectors;
   for (int i = 0; i < NumSubsectors; ++i, ++ss) {
     if (Format < 3) {
       vuint16 numsegs, firstseg;
-      *Strm << numsegs << firstseg;
+      Strm << numsegs << firstseg;
       ss->numlines = numsegs;
       ss->firstline = firstseg;
     } else {
       vint32 numsegs, firstseg;
-      *Strm << numsegs << firstseg;
+      Strm << numsegs << firstseg;
       ss->numlines = numsegs;
       ss->firstline = firstseg;
     }
@@ -1958,7 +1963,6 @@ void VLevel::LoadSubsectors (int Lump) {
   for (int f = 0; f < NumSegs; ++f) {
     if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
   }
-  delete Strm;
   unguard;
 }
 
@@ -1978,20 +1982,21 @@ void VLevel::LoadNodes (int Lump) {
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, sizeof(node_t)*NumNodes);
 
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   node_t *no = Nodes;
   for (int i = 0; i < NumNodes; ++i, ++no) {
     vint16 x, y, dx, dy;
     vint16 bbox[2][4];
     vuint32 children[2];
-    *Strm << x << y << dx << dy
+    Strm << x << y << dx << dy
       << bbox[0][0] << bbox[0][1] << bbox[0][2] << bbox[0][3]
       << bbox[1][0] << bbox[1][1] << bbox[1][2] << bbox[1][3];
     if (LevelFlags&LF_GLNodesV5) {
-      *Strm << children[0] << children[1];
+      Strm << children[0] << children[1];
     } else {
       vuint16 child0, child1;
-      *Strm << child0 << child1;
+      Strm << child0 << child1;
       children[0] = child0;
       if (children[0]&NF_SUBSECTOR_OLD) children[0] ^= NF_SUBSECTOR_OLD|NF_SUBSECTOR;
       children[1] = child1;
@@ -2016,7 +2021,6 @@ void VLevel::LoadNodes (int Lump) {
       no->bbox[j][5] = 32768.0f;
     }
   }
-  delete Strm;
   unguard;
 }
 
@@ -2039,16 +2043,16 @@ void VLevel::LoadPVS (int Lump) {
   } else {
     //if (NoVis == nullptr && VisData == nullptr) BuildPVS();
     byte *VisDataNew = new byte[W_LumpLength(Lump)];
-    VStream *Strm = W_CreateLumpReaderNum(Lump);
-    Strm->Serialise(VisDataNew, W_LumpLength(Lump));
-    if (Strm->IsError() || W_LumpLength(Lump) < ((NumSubsectors+7)>>3)*NumSubsectors) {
+    VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+    VCheckedStream Strm(lumpstream);
+    Strm.Serialise(VisDataNew, W_LumpLength(Lump));
+    if (Strm.IsError() || W_LumpLength(Lump) < ((NumSubsectors+7)>>3)*NumSubsectors) {
       delete [] VisDataNew;
     } else {
       delete [] VisData;
       delete [] NoVis;
       VisData = VisDataNew;
     }
-    delete Strm;
   }
   unguard;
 }
@@ -2091,11 +2095,11 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     GCon->Logf(NAME_Warning, "error reading GL nodes (VaVoom will use internal node builder)");
     return false;
   }
+
   VStream *DataStrm = new VMemoryStream(W_FullLumpName(Lump), TmpData, BaseStrm->TotalSize()-4, true);
   //delete[] TmpData;
   TmpData = nullptr;
   delete BaseStrm;
-  BaseStrm = nullptr;
 
   VStream *Strm;
   if (hdr[0] == 'X') {
@@ -2177,7 +2181,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   int FirstSeg = 0;
   guard(VLevel::LoadCompressedGLNodes::Subsectors);
   NumSubsectors = Streamer<vuint32>(*Strm);
-  if (NumSubsectors == 0 || NumSubsectors > 0x1fffffff) Host_Error("error reading GL nodes (got %u subsectors)", NumSubsectors);
+  if (NumSubsectors == 0 || NumSubsectors > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (got %u subsectors)", NumSubsectors);
   Subsectors = new subsector_t[NumSubsectors];
   memset((void *)Subsectors, 0, sizeof(subsector_t)*NumSubsectors);
   subsector_t *ss = Subsectors;
@@ -2189,13 +2193,13 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     ss->firstline = FirstSeg;
     FirstSeg += NumSubSegs;
   }
-  if (FirstSeg == 0 || FirstSeg > 0x1fffffff) Host_Error("error reading GL nodes (counted %i subsegs)", FirstSeg);
+  if (FirstSeg == 0 || FirstSeg > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (counted %i subsegs)", FirstSeg);
   unguard;
 
   // load segs
   guard(VLevel::LoadCompressedGLNodes::Segs);
   NumSegs = Streamer<vuint32>(*Strm);
-  if (NumSegs != FirstSeg) Host_Error("error reading GL nodes (got %d segs, expected %d segs)", NumSegs, FirstSeg);
+  if (NumSegs != FirstSeg || Strm->IsError()) Host_Error("error reading GL nodes (got %d segs, expected %d segs)", NumSegs, FirstSeg);
 
   Segs = new seg_t[NumSegs];
   memset((void *)Segs, 0, sizeof(seg_t)*NumSegs);
@@ -2264,7 +2268,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   // load nodes
   guard(VLevel::LoadCompressedGLNodes::Nodes);
   NumNodes = Streamer<vuint32>(*Strm);
-  if (NumNodes == 0 || NumNodes > 0x1fffffff) Host_Error("error reading GL nodes (got %u nodes)", NumNodes);
+  if (NumNodes == 0 || NumNodes > 0x1fffffff || Strm->IsError()) Host_Error("error reading GL nodes (got %u nodes)", NumNodes);
   Nodes = new node_t[NumNodes];
   memset((void *)Nodes, 0, sizeof(node_t)*NumNodes);
   node_t *no = Nodes;
@@ -2355,8 +2359,12 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   // create dummy VIS data
   // k8: no need to do this, main loader will take care of it
 
+  bool wasError = Strm->IsError();
+
   delete Strm;
   delete DataStrm;
+
+  if (wasError) Host_Error("error reading GL Nodes (turn on forced node rebuilder in options to load this map)");
 
   return true;
   unguard;
@@ -2379,6 +2387,7 @@ void VLevel::LoadBlockMap (int Lump) {
   }
 
   if (!Strm || Strm->TotalSize() == 0 || Strm->TotalSize()/2 >= 0x10000) {
+    delete Strm;
     GCon->Logf("Creating BLOCKMAP");
     CreateBlockMap();
   } else {
@@ -2402,9 +2411,18 @@ void VLevel::LoadBlockMap (int Lump) {
       *Strm << Tmp;
       BlockMapLump[i] = Tmp == -1 ? -1 : (vuint16)Tmp&0xffff;
     }
-  }
 
-  if (Strm) delete Strm;
+    bool wasError = Strm->IsError();
+    delete Strm;
+
+    if (wasError) {
+      GCon->Logf(NAME_Warning, "error loading BLOCKMAP, it will be rebuilt");
+      delete BlockMapLump;
+      BlockMapLump = nullptr;
+      BlockMapLumpSize = 0;
+      CreateBlockMap();
+    }
+  }
 
   // read blockmap origin and size
   /*
@@ -2546,18 +2564,19 @@ void VLevel::CreateBlockMap () {
 void VLevel::LoadReject (int Lump) {
   guard(VLevel::LoadReject);
   if (Lump < 0) return;
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   // check for empty reject lump
-  if (Strm->TotalSize()) {
+  if (Strm.TotalSize()) {
     // check if reject lump is required bytes long
     int NeededSize = (NumSectors*NumSectors+7)/8;
-    if (Strm->TotalSize() < NeededSize) {
-      GCon->Logf("Reject data is %d bytes too short", NeededSize-Strm->TotalSize());
+    if (Strm.TotalSize() < NeededSize) {
+      GCon->Logf("Reject data is %d bytes too short", NeededSize-Strm.TotalSize());
     } else {
       // read it
-      RejectMatrixSize = Strm->TotalSize();
+      RejectMatrixSize = Strm.TotalSize();
       RejectMatrix = new vuint8[RejectMatrixSize];
-      Strm->Serialise(RejectMatrix, RejectMatrixSize);
+      Strm.Serialise(RejectMatrix, RejectMatrixSize);
 
       // check if it's an all-zeroes lump, in which case it's useless and can be discarded
       bool Blank = true;
@@ -2574,7 +2593,6 @@ void VLevel::LoadReject (int Lump) {
       }
     }
   }
-  delete Strm;
   unguard;
 }
 
@@ -2590,11 +2608,12 @@ void VLevel::LoadThings1 (int Lump) {
   Things = new mthing_t[NumThings];
   memset((void *)Things, 0, sizeof(mthing_t)*NumThings);
 
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   mthing_t *th = Things;
   for (int i = 0; i < NumThings; ++i, ++th) {
     vint16 x, y, angle, type, options;
-    *Strm << x << y << angle << type << options;
+    Strm << x << y << angle << type << options;
 
     th->x = x;
     th->y = y;
@@ -2606,7 +2625,6 @@ void VLevel::LoadThings1 (int Lump) {
     if (options&2) th->SkillClassFilter |= 0x04;
     if (options&4) th->SkillClassFilter |= 0x18;
   }
-  delete Strm;
   unguard;
 }
 
@@ -2622,12 +2640,13 @@ void VLevel::LoadThings2 (int Lump) {
   Things = new mthing_t[NumThings];
   memset((void *)Things, 0, sizeof(mthing_t)*NumThings);
 
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  VStream *lumpstream = W_CreateLumpReaderNum(Lump);
+  VCheckedStream Strm(lumpstream);
   mthing_t *th = Things;
   for (int i = 0; i < NumThings; ++i, ++th) {
     vint16 tid, x, y, height, angle, type, options;
     vuint8 special, arg1, arg2, arg3, arg4, arg5;
-    *Strm << tid << x << y << height << angle << type << options
+    Strm << tid << x << y << height << angle << type << options
       << special << arg1 << arg2 << arg3 << arg4 << arg5;
 
     th->tid = tid;
@@ -2648,7 +2667,6 @@ void VLevel::LoadThings2 (int Lump) {
     th->arg4 = arg4;
     th->arg5 = arg5;
   }
-  delete Strm;
   unguard;
 }
 
@@ -2941,55 +2959,56 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
 
   SpeechList = new FRogueConSpeech[NumSpeeches];
 
-  VStream *Strm = W_CreateLumpReaderNum(LumpNum);
+  VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
+  VCheckedStream Strm(lumpstream);
   for (int i = 0; i < NumSpeeches; ++i) {
     char Tmp[324];
 
     FRogueConSpeech &S = SpeechList[i];
     if (!teaser) {
       // parse non teaser speech
-      *Strm << S.SpeakerID << S.DropItem << S.CheckItem1 << S.CheckItem2
+      Strm << S.SpeakerID << S.DropItem << S.CheckItem1 << S.CheckItem2
         << S.CheckItem3 << S.JumpToConv;
 
       // parse NPC name
-      Strm->Serialise(Tmp, 16);
+      Strm.Serialise(Tmp, 16);
       Tmp[16] = 0;
       S.Name = Tmp;
 
       // parse sound name (if any)
-      Strm->Serialise(Tmp, 8);
+      Strm.Serialise(Tmp, 8);
       Tmp[8] = 0;
       S.Voice = VName(Tmp, VName::AddLower8);
       if (S.Voice != NAME_None) S.Voice = va("svox/%s", *S.Voice);
 
       // parse backdrop pics (if any)
-      Strm->Serialise(Tmp, 8);
+      Strm.Serialise(Tmp, 8);
       Tmp[8] = 0;
       S.BackPic = VName(Tmp, VName::AddLower8);
 
       // parse speech text
-      Strm->Serialise(Tmp, 320);
+      Strm.Serialise(Tmp, 320);
       Tmp[320] = 0;
       S.Text = Tmp;
     } else {
       // parse teaser speech, which doesn't contain all fields
-      *Strm << S.SpeakerID << S.DropItem;
+      Strm << S.SpeakerID << S.DropItem;
 
       // parse NPC name
-      Strm->Serialise(Tmp, 16);
+      Strm.Serialise(Tmp, 16);
       Tmp[16] = 0;
       S.Name = Tmp;
 
       // parse sound number (if any)
       vint32 Num;
-      *Strm << Num;
+      Strm << Num;
       if (Num) S.Voice = va("svox/voc%d", Num);
 
       // also, teaser speeches don't have backdrop pics
       S.BackPic = NAME_None;
 
       // parse speech text
-      Strm->Serialise(Tmp, 320);
+      Strm.Serialise(Tmp, 320);
       Tmp[320] = 0;
       S.Text = Tmp;
     }
@@ -2997,21 +3016,20 @@ void VLevel::LoadRogueConScript (VName LumpName, int ALumpNum, FRogueConSpeech *
     // parse conversation options for PC
     for (int j = 0; j < 5; ++j) {
       FRogueConChoice &C = S.Choices[j];
-      *Strm << C.GiveItem << C.NeedItem1 << C.NeedItem2 << C.NeedItem3
+      Strm << C.GiveItem << C.NeedItem1 << C.NeedItem2 << C.NeedItem3
         << C.NeedAmount1 << C.NeedAmount2 << C.NeedAmount3;
-      Strm->Serialise(Tmp, 32);
+      Strm.Serialise(Tmp, 32);
       Tmp[32] = 0;
       C.Text = Tmp;
-      Strm->Serialise(Tmp, 80);
+      Strm.Serialise(Tmp, 80);
       Tmp[80] = 0;
       C.TextOK = Tmp;
-      *Strm << C.Next << C.Objectives;
-      Strm->Serialise(Tmp, 80);
+      Strm << C.Next << C.Objectives;
+      Strm.Serialise(Tmp, 80);
       Tmp[80] = 0;
       C.TextNo = Tmp;
     }
   }
-  delete Strm;
   unguard;
 }
 

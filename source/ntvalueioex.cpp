@@ -35,7 +35,6 @@
 //  VNTValueIOEx::io
 //
 //==========================================================================
-
 void VNTValueIOEx::io (VName vname, VTextureID &v) {
   if (IsError()) {
     if (IsLoading()) v.id = 0;
@@ -77,4 +76,284 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     }
     io(vname, tname);
   }
+}
+
+
+
+//==========================================================================
+//
+//  VCheckedStream::VCheckedStream
+//
+//==========================================================================
+VCheckedStream::VCheckedStream (VStream *ASrcStream) : srcStream(ASrcStream) {
+  if (!ASrcStream) Host_Error("source stream is null");
+  bLoading = ASrcStream->IsLoading();
+  checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::~VCheckedStream
+//
+//==========================================================================
+VCheckedStream::~VCheckedStream () {
+  Close();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::SetStream
+//
+//==========================================================================
+void VCheckedStream::SetStream (VStream *ASrcStream) {
+  Close();
+  bError = false; // just in case
+  if (!ASrcStream) Host_Error("source stream is null");
+  srcStream = ASrcStream;
+  bLoading = ASrcStream->IsLoading();
+  checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::checkError
+//
+//==========================================================================
+void VCheckedStream::checkError () const {
+  if (bError) {
+    if (srcStream) {
+      VStr name = srcStream->GetName();
+      delete srcStream;
+      srcStream = nullptr;
+      Host_Error("error %s '%s'", (bLoading ? "loading from" : "writing to"), *name);
+    } else {
+      Host_Error("error %s", (bLoading ? "loading" : "writing"));
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::Close
+//
+//==========================================================================
+bool VCheckedStream::Close () {
+  if (srcStream) {
+    checkError();
+    delete srcStream;
+    srcStream = nullptr;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::GetName
+//
+//==========================================================================
+const VStr &VCheckedStream::GetName () const {
+  return (srcStream ? srcStream->GetName() : VStr::EmptyString);
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::IsError
+//
+//==========================================================================
+bool VCheckedStream::IsError () const {
+  checkError();
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::checkValidityCond
+//
+//==========================================================================
+void VCheckedStream::checkValidityCond (bool mustBeTrue) {
+  if (!bError) {
+    if (!mustBeTrue || !srcStream || srcStream->IsError()) bError = true;
+  }
+  if (bError) checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::Serialise
+//
+//==========================================================================
+void VCheckedStream::Serialise (void *buf, int len) {
+  checkValidityCond(len >= 0);
+  if (len == 0) return;
+  srcStream->Serialise(buf, len);
+  checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::SerialiseBits
+//
+//==========================================================================
+void VCheckedStream::SerialiseBits (void *Data, int Length) {
+  checkValidityCond(Length >= 0);
+  srcStream->SerialiseBits(Data, Length);
+  checkError();
+}
+
+
+void VCheckedStream::SerialiseInt (vuint32 &Value, vuint32 Max) {
+  checkValidity();
+  srcStream->SerialiseInt(Value, Max);
+  checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::Seek
+//
+//==========================================================================
+void VCheckedStream::Seek (int pos) {
+  checkValidityCond(pos >= 0);
+  srcStream->Seek(pos);
+  checkError();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::Tell
+//
+//==========================================================================
+int VCheckedStream::Tell () {
+  checkValidity();
+  int res = srcStream->Tell();
+  checkError();
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::TotalSize
+//
+//==========================================================================
+int VCheckedStream::TotalSize () {
+  checkValidity();
+  int res = srcStream->TotalSize();
+  checkError();
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::AtEnd
+//
+//==========================================================================
+bool VCheckedStream::AtEnd () {
+  checkValidity();
+  bool res = srcStream->AtEnd();
+  checkError();
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::Flush
+//
+//==========================================================================
+void VCheckedStream::Flush () {
+  checkValidity();
+  srcStream->Flush();
+  checkError();
+}
+
+
+#define PARTIAL_DO_IO()  do { \
+  checkValidity(); \
+  srcStream->io(v); \
+  checkError(); \
+} while (0)
+
+
+//==========================================================================
+//
+//  VCheckedStream::io
+//
+//==========================================================================
+void VCheckedStream::io (VName &v) {
+  PARTIAL_DO_IO();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::io
+//
+//==========================================================================
+void VCheckedStream::io (VStr &v) {
+  PARTIAL_DO_IO();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::io
+//
+//==========================================================================
+void VCheckedStream::io (const VStr &v) {
+  PARTIAL_DO_IO();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::io
+//
+//==========================================================================
+void VCheckedStream::io (VObject *&v) {
+  PARTIAL_DO_IO();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::io
+//
+//==========================================================================
+void VCheckedStream::io (VMemberBase *&v) {
+  PARTIAL_DO_IO();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::io
+//
+//==========================================================================
+void VCheckedStream::io (VSerialisable *&v) {
+  PARTIAL_DO_IO();
+}
+
+
+//==========================================================================
+//
+//  VCheckedStream::SerialiseStructPointer
+//
+//==========================================================================
+void VCheckedStream::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
+  checkValidityCond(!!Ptr && !!Struct);
+  srcStream->SerialiseStructPointer(Ptr, Struct);
+  checkError();
 }
