@@ -35,6 +35,11 @@ ACTOR BDW_ShotgunShellBox : BDW_ShotgunShell Replaces ShellBox {
 }
 
 
+// heretic
+Actor (optional) K8BDW_CrossbowAmmo : BDW_ShotgunShell Replaces CrossbowAmmo {}
+Actor (optional) K8DBW_CrossbowHefty : BDW_ShotgunShellBox Replaces CrossbowHefty {}
+
+
 ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   Game Doom
   SpawnID 27
@@ -188,3 +193,7 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
       Goto ReloadMainLoop
   }
 }
+
+
+Actor (optional) K8BDW_CrossbowSG : BDW_Shotgun Replaces Crossbow {}
+Actor (optional) K8DBW_CrossbowPoweredSG : BDW_Shotgun Replaces CrossbowPowered {}
