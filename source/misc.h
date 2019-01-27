@@ -52,7 +52,7 @@ extern FOutputDevice *GLogHostError;
 int superatoi (const char *s);
 
 int ParseHex (const char *Str);
-vuint32 M_ParseColour (VStr Name);
+vuint32 M_ParseColour (const VStr &Name);
 
 void M_RgbToHsv (vuint8, vuint8, vuint8, vuint8&, vuint8&, vuint8&);
 void M_RgbToHsv (float, float, float, float&, float&, float&);

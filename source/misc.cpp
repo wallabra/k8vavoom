@@ -134,67 +134,180 @@ int superatoi (const char *s) {
 //  LookupColourName
 //
 //==========================================================================
-static VStr LookupColourName (VStr &Name) {
-  guard(LookupColourName);
-  // check that X111R6RGB lump exists
-  int Lump = W_CheckNumForName(NAME_x11r6rgb);
-  if (Lump < 0) {
-    GCon->Logf("X11R6RGB lump not found");
-    return Name;
+static vuint32 LookupColourName (const VStr &Name) {
+  static TMapNC<VName, vuint32> cmap; // names are lowercased
+  static bool loaded = false;
+  char tmpbuf[64];
+
+  if (!loaded) {
+    loaded = true;
+
+    // check that X111R6RGB lump exists
+    int Lump = W_CheckNumForName(NAME_x11r6rgb);
+    if (Lump < 0) {
+      GCon->Logf("X11R6RGB lump not found");
+      return 0;
+    }
+
+    // read the lump
+    VStream *Strm = W_CreateLumpReaderNum(Lump);
+    int sz = Strm->TotalSize();
+    char *Buf = new char[sz+2];
+    if (sz) Strm->Serialise(Buf, sz);
+    Buf[sz] = '\n';
+    Buf[sz+1] = 0;
+    if (Strm->IsError()) Buf[0] = 0;
+    delete Strm;
+
+    // parse it
+    vuint8 *pBuf = (vuint8 *)Buf;
+    for (;;) {
+      vuint8 ch = *pBuf++;
+      if (ch == 0) break;
+      if (ch <= ' ') continue;
+      if (ch == '!') {
+        // comment, skip line
+        while (*pBuf != '\n') ++pBuf;
+        continue;
+      }
+      // should have three decimal numbers
+      --pBuf;
+      vuint8 *start = pBuf;
+      int cc[3];
+      cc[0] = cc[1] = cc[2] = -1;
+      for (int f = 0; f < 3; ++f) {
+        while (*pBuf && *pBuf <= ' ' && *pBuf != '\n') ++pBuf;
+        if (pBuf[0] == '\n') break;
+        int n = -1;
+        while (*pBuf > ' ') {
+          int d = VStr::digitInBase(*pBuf, 10);
+          if (d < 0) { n = -1; break; }
+          if (n < 0) n = 0;
+          n = n*10+d;
+          //GCon->Logf("  n=%d; d=%d; char=%c", n, d, (char)*pBuf);
+          if (n > 255) { n = -1; break; }
+          ++pBuf;
+        }
+        //GCon->Logf("DONE: n=%d", n);
+        if (n >= 0 && pBuf[0] == '\n') n = -1;
+        if (n < 0) { cc[0] = cc[1] = cc[2] = -1; break; }
+        cc[f] = n;
+      }
+      if (cc[0] < 0 || cc[1] < 0 || cc[2] < 0 || pBuf[0] == '\n') {
+        // invalid, skip line
+       error:
+        while (*pBuf != '\n') ++pBuf;
+        *pBuf = 0;
+        GCon->Logf(NAME_Warning, "Invalid color definition: <%s>", (char *)start);
+        *pBuf = '\n';
+        continue;
+      }
+      //GCon->Logf("CC: [0]=%d; [1]=%d; [2]=%d", cc[0], cc[1], cc[2]);
+      // get name
+      while (*pBuf != '\n' && *pBuf <= ' ') ++pBuf;
+      if (pBuf[0] == '\n') continue;
+      // collect name
+      size_t tbpos = 0;
+      while (pBuf[0] != '\n') {
+        ch = *pBuf++;
+        if (ch <= ' ') {
+          /*
+          if (tbpos && tmpbuf[tbpos-1] != ' ') {
+            if (tbpos >= sizeof(tmpbuf)-1) goto error;
+            tmpbuf[tbpos++] = ' ';
+          }
+          */
+        } else {
+          if (tbpos >= sizeof(tmpbuf)-1) goto error;
+          if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
+          tmpbuf[tbpos++] = (char)ch;
+        }
+      }
+      // remove trailing spaces
+      while (tbpos > 0 && tmpbuf[tbpos-1] == ' ') --tbpos;
+      if (tbpos > 0) {
+        vuint32 clr = 0xff000000U|(((vuint32)cc[0])<<16)|(((vuint32)cc[1])<<8)|((vuint32)cc[2]);
+        tmpbuf[tbpos] = 0;
+        VName n = VName(tmpbuf);
+        cmap.put(n, clr);
+        /*
+        char *dstr = (char *)Z_Malloc(tbpos+1);
+        strcpy(dstr, tmpbuf);
+        cmap.put(dstr, clr);
+        if (!cmap.find(dstr)) Sys_Error("!!! <%s>", dstr);
+        *pBuf = 0;
+        GCon->Logf("COLOR: %3d %3d %3d  <%s> %08x  <%s>", cc[0], cc[1], cc[2], dstr, clr, (char *)start);
+        *pBuf = '\n';
+        */
+      }
+    }
+    GCon->Logf(NAME_Init, "loaded %d color names", cmap.length());
+
+    if (!cmap.find(VName("ivory"))) Sys_Error("!!! IVORY");
+
+    delete Buf;
   }
 
-  // read the lump
-  VStream *Strm = W_CreateLumpReaderNum(Lump);
-  char *Buf = new char[Strm->TotalSize()+1];
-  Strm->Serialise(Buf, Strm->TotalSize());
-  Buf[Strm->TotalSize()] = 0;
-  char *BufEnd = Buf+Strm->TotalSize();
-  delete Strm;
-
-  vuint8 Col[3];
-  int Count = 0;
-  for (char *pBuf = Buf; pBuf < BufEnd; ) {
-    if (*(const vuint8 *)pBuf <= ' ') {
-      // skip whitespace
-      ++pBuf;
-    } else if (Count == 0 && *pBuf == '!') {
-      // skip comment
-      while (pBuf < BufEnd && *pBuf != '\n') ++pBuf;
-    } else if (Count < 3) {
-      // parse colour component
-      char *pEnd;
-      Col[Count] = strtoul(pBuf, &pEnd, 10);
-      if (pEnd == pBuf) {
-        GCon->Logf("Bad colour component value");
-        break;
+  // normalize color name
+  size_t dpos = 0;
+  for (const vuint8 *s = (const vuint8 *)(*Name); *s; ++s) {
+    vuint8 ch = *s;
+    if (ch == '"' || ch == '\'') continue; // why not?
+    if (ch <= ' ') {
+      /*
+      if (dpos > 0 && tmpbuf[dpos-1] != ' ') {
+        if (dpos >= sizeof(tmpbuf)-1) { dpos = 0; break; }
+        tmpbuf[dpos++] = ' ';
       }
-      pBuf = pEnd;
-      ++Count;
+      */
     } else {
-      // colour name
-      char *Start = pBuf;
-      while (pBuf < BufEnd && *pBuf != '\n') ++pBuf;
-      //  Skip trailing whitespace
-      while (pBuf > Start && (vuint8)pBuf[-1] >= 0 && (vuint8)pBuf[-1] <= ' ') --pBuf;
-      if (pBuf == Start) {
-        GCon->Logf("Missing name of the colour");
-        break;
-      }
-      *pBuf = 0;
-      if ((size_t)(pBuf-Start) == (size_t)Name.Length() && Name.ICmp(Start) == 0) {
-        char ValBuf[16];
-        snprintf(ValBuf, sizeof(ValBuf), "#%02x%02x%02x", Col[0], Col[1], Col[2]);
-        delete[] Buf;
-        Buf = nullptr;
-        return VStr(ValBuf);
-      }
-      Count = 0;
+      if (dpos >= sizeof(tmpbuf)-1) { dpos = 0; break; }
+      if (ch >= 'A' && ch <= 'Z') ch += 32; // poor man's tolower
+      tmpbuf[dpos++] = (char)ch;
     }
   }
-  delete[] Buf;
-  Buf = nullptr;
-  return Name;
-  unguard;
+  if (dpos == 0) return 0;
+  tmpbuf[dpos] = 0;
+
+  if (tmpbuf[0] == '#') {
+    //GCon->Logf("HTML COLOR <%s> (%u)", tmpbuf, (unsigned)dpos);
+    // looks like an HTML-style colur
+    if (dpos == 7) {
+      vuint32 clr = 0;
+      for (int f = 1; f < 7; ++f) {
+        int d = VStr::digitInBase(tmpbuf[f], 16);
+        if (d < 0) return 0;
+        clr = (clr<<4)|(d&0x0f);
+      }
+      //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+      return clr|0xff000000U;
+    } else if (dpos == 4) {
+      vuint32 clr = 0;
+      for (int f = 1; f < 4; ++f) {
+        int d = VStr::digitInBase(tmpbuf[f], 16);
+        if (d < 0) return 0;
+        clr = (clr<<4)|(d&0x0f);
+        clr = (clr<<4)|(d&0x0f);
+      }
+      //GCon->Logf("HTML COLOR <%s>:<%s>=0x%08x", tmpbuf, *Name, clr);
+      return clr|0xff000000U;
+    }
+    return 0;
+  }
+
+  VName cnx = VName(tmpbuf, VName::Find);
+  if (cnx == NAME_None) return 0;
+
+  auto cpp = cmap.find(tmpbuf);
+  /*
+  if (cpp) {
+    GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", *Name, tmpbuf, *cpp);
+  } else {
+    GCon->Logf("*** NOT FOUND COLOR <%s> : <%s>", *Name, tmpbuf);
+  }
+  */
+  //if (cpp) GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", *Name, tmpbuf, *cpp);
+  return (cpp ? *cpp : 0);
 }
 
 
@@ -225,27 +338,28 @@ int ParseHex (const char *Str) {
 //  M_ParseColour
 //
 //==========================================================================
-vuint32 M_ParseColour (VStr Name) {
-  if (!Name.Length()) return 0xff000000;
-  VStr Str = LookupColourName(Name);
+vuint32 M_ParseColour (const VStr &Name) {
+  if (!Name.Length()) return 0xff000000U;
+  vuint32 res = LookupColourName(Name);
+  if (res) return res;
   vuint8 Col[3];
-  if (Str[0] == '#') {
+  if (Name[0] == '#') {
     // looks like an HTML-style colur
-    if (Str.Length() == 7) {
+    if (Name.Length() == 7) {
       // #rrggbb format colour
       for (int i = 0; i < 3; ++i) {
         char Val[3];
-        Val[0] = Str[i*2+1];
-        Val[1] = Str[i*2+2];
+        Val[0] = Name[i*2+1];
+        Val[1] = Name[i*2+2];
         Val[2] = 0;
         Col[i] = ParseHex(Val);
       }
-    } else if (Str.Length() == 4) {
+    } else if (Name.Length() == 4) {
       // #rgb format colour
       for (int i = 0; i < 3; ++i) {
         char Val[3];
-        Val[0] = Str[i+1];
-        Val[1] = Str[i+1];
+        Val[0] = Name[i+1];
+        Val[1] = Name[i+1];
         Val[2] = 0;
         Col[i] = ParseHex(Val);
       }
@@ -256,27 +370,39 @@ vuint32 M_ParseColour (VStr Name) {
       Col[2] = 0;
     }
   } else {
+    bool warnColor = false;
     // treat like space separated hex values
-    int Idx = 0;
+    const vuint8 *s = (const vuint8 *)(*Name);
     for (int i = 0; i < 3; ++i) {
       // skip whitespace and quotes
-      while (Idx < Str.Length() && (((vuint8)Str[Idx] <= ' ') || ((vuint8)Str[Idx] <= '\"'))) ++Idx;
-      int Count = 0;
-      char Val[3];
-      while (Idx < Str.Length() && ((vuint8)Str[Idx] != ' ')) {
-        if (Count < 2) Val[Count++] = Str[Idx];
-        ++Idx;
+      while (*s && (*s <= ' ' || *s == '"' || *s == '\'')) ++s;
+      if (!s[0] || VStr::digitInBase(s[0], 16) < 0) {
+        GCon->Logf(NAME_Warning, "Invalid color <%s>", *Name);
+        return 0xff000000U; // black
       }
-      if (Count == 0) {
-        Col[i] = 0;
-      } else {
-        if (Count == 1) Val[1] = Val[0];
-        Val[2] = 0;
-        Col[i] = ParseHex(Val);
+      // parse hex
+      int digCount = 0;
+      int n = 0;
+      while (*s) {
+        if (s[0] <= ' ') break;
+        int d = VStr::digitInBase(s[0], 16);
+        if (d < 0) {
+          GCon->Logf(NAME_Warning, "Invalid color <%s>", *Name);
+          return 0xff000000U; // black
+        }
+        n = n*16+d;
+        if (n > 0xffffff) n = 0xffff;
+        ++s;
+        ++digCount;
       }
+      if (n > 255) { warnColor = true; n = 255; }
+      if (digCount == 1) n = (n<<4)|n;
+      Col[i] = n;
     }
+    if (warnColor) GCon->Logf(NAME_Warning, "Invalid color <%s>", *Name);
+    //GCon->Logf("*** COLOR <%s> is 0x%08x", *Name, 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]));
   }
-  return 0xff000000|(Col[0]<<16)|(Col[1]<<8)|Col[2];
+  return 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]);
 }
 
 
