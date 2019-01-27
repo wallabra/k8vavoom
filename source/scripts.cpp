@@ -375,7 +375,7 @@ bool VScriptParser::GetString () {
       }
       if (*ScriptPtr == '\n') {
         if (CMode) {
-          if (!Escape || String.Length() == 0 || String[String.Length() - 1] != '\\') {
+          if (!Escape || String.Length() == 0 || String[String.Length()-1] != '\\') {
             Error("Unterminated string constant");
           } else {
             // remove the \ character
@@ -389,6 +389,7 @@ bool VScriptParser::GetString () {
     }
     ++ScriptPtr;
   } else if (CMode) {
+    static const char *cStringTerm = "`~!#$%^&*(){}[]/=\\?-+|;:<>,.\"'"; // was with '@'
     if ((ScriptPtr[0] == '&' && ScriptPtr[1] == '&') ||
         (ScriptPtr[0] == '|' && ScriptPtr[1] == '|') ||
         (ScriptPtr[0] == '=' && ScriptPtr[1] == '=') ||
@@ -406,27 +407,28 @@ bool VScriptParser::GetString () {
                (ScriptPtr[0] == '.' && ScriptPtr[1] >= '0' && ScriptPtr[1] <= '9'))
     {
       // number
-      while (*ScriptPtr > 32 && !strchr("`~!@#$%^&*(){}[]/=\\?-+|;:<>,\"", *ScriptPtr)) {
+      while (*(const vuint8 *)ScriptPtr > 32) {
+        if (*ScriptPtr != '.' && strchr(cStringTerm, *ScriptPtr)) break;
         String += *ScriptPtr++;
         if (ScriptPtr == ScriptEndPtr) break;
       }
-    } else if (strchr("`~!#$%^&*(){}[]/=\\?-+|;:<>,.", *ScriptPtr)) { // was with '@'
+    } else if (strchr(cStringTerm, *ScriptPtr)) {
       // special single-character token
       String += *ScriptPtr++;
     } else {
       // normal string
-      while (*ScriptPtr > 32 && !strchr("`~!#$%^&*(){}[]/=\\?-+|;:<>,\".", *ScriptPtr)) { // was with '@'
+      while (*(const vuint8 *)ScriptPtr > 32 && !strchr(cStringTerm, *ScriptPtr)) {
         String += *ScriptPtr++;
         if (ScriptPtr == ScriptEndPtr) break;
       }
     }
   } else {
     // special single-character tokens
-    if (strchr("{}|=", *ScriptPtr)) {
+    if (strchr("{}|=,;", *ScriptPtr)) {
       String += *ScriptPtr++;
     } else {
       // normal string
-      while (*ScriptPtr > 32 && !strchr("{}|=;\"", *ScriptPtr) &&
+      while (*(const vuint8 *)ScriptPtr > 32 && !strchr("{}|=,;\"'", *ScriptPtr) &&
              (ScriptPtr[0] != '/' || ScriptPtr[1] != '/') &&
              (ScriptPtr[0] != '/' || ScriptPtr[1] != '*'))
       {
