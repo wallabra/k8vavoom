@@ -455,9 +455,10 @@ char VScriptParser::PeekOrSkipChar (bool doSkip) {
   if (!doSkip) {
     ScriptPtr = oldSPtr;
     Line = oldLine;
-    oldCross = Crossed;
-    oldEnd = End;
+    Crossed = oldCross;
+    End = oldEnd;
   }
+  return res;
 }
 
 
