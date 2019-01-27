@@ -215,6 +215,19 @@ vuint8 *VPatchTexture::GetPixels () {
     }
   }
 
+  /*
+  if (Name == "ammoa0" || VStr::startsWith(*Name, "clip")) {
+    VStream *strm = nullptr;
+    VStr fname = VStr(va("%s.png", *Name));
+    strm = FL_OpenFileWrite(fname, true); // as full name
+    if (strm) {
+      WriteToPNG(strm);
+      delete strm;
+    }
+  }
+  */
+
+
   ConvertPixelsToShaded();
   return Pixels;
 }
