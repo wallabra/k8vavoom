@@ -514,7 +514,7 @@ static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
 static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode) {
   guard(ParseMapCommon);
   bool newFormat = sc->Check("{");
-  if (newFormat) sc->SetCMode(true);
+  //if (newFormat) sc->SetCMode(true);
   // process optional tokens
   while (1) {
     if (sc->Check("levelnum")) {
@@ -564,8 +564,9 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       info->SecretMap = ParseNextMapName(sc, HexenMode);
     } else if (sc->Check("sky1")) {
       if (newFormat) sc->Expect("=");
-      auto ocm = sc->IsCMode();
-      sc->SetCMode(true); // we need this to properly parse commas
+      //auto ocm = sc->IsCMode();
+      //!sc->SetCMode(true); // we need this to properly parse commas
+      //sc->SetCMode(false); // we need this to properly parse names with dashes
       sc->ExpectName();
       //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, true, false);
       VName skbname = R_HasNamedSkybox(sc->String);
@@ -604,11 +605,12 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
           }
         }
       }
-      sc->SetCMode(ocm);
+      //sc->SetCMode(ocm);
     } else if (sc->Check("sky2")) {
       if (newFormat) sc->Expect("=");
-      auto ocm = sc->IsCMode();
-      sc->SetCMode(true); // we need this to properly parse commas
+      //auto ocm = sc->IsCMode();
+      //!sc->SetCMode(true); // we need this to properly parse commas
+      //sc->SetCMode(false); // we need this to properly parse names with dashes
       sc->ExpectName8();
       //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, true, false);
       //info->SkyBox = NAME_None; //k8:required or not???
@@ -629,7 +631,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
           info->Sky2ScrollDelta = sc->Float*35.0f;
         }
       }
-      sc->SetCMode(ocm);
+      //sc->SetCMode(ocm);
     } else if (sc->Check("skybox")){
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
@@ -837,7 +839,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("specialaction")) {
       if (newFormat) sc->Expect("=");
       VMapSpecialAction &A = info->SpecialActions.Alloc();
-      sc->SetCMode(true);
+      //sc->SetCMode(true);
       sc->ExpectString();
       A.TypeName = *sc->String.ToLower();
       sc->Expect(",");
@@ -855,7 +857,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
         sc->ExpectNumber();
         A.Args[i] = sc->Number;
       }
-      if (!newFormat) sc->SetCMode(false);
+      //if (!newFormat) sc->SetCMode(false);
     } else if (sc->Check("redirect")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
@@ -975,7 +977,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       break;
     }
   }
-  if (newFormat) sc->SetCMode(false);
+  //if (newFormat) sc->SetCMode(false);
 
   // second sky defaults to first sky
   if (info->Sky2Texture == GTextureManager.DefaultTexture) {
@@ -1189,8 +1191,8 @@ static void ParseClusterDef (VScriptParser *sc) {
 
   //GCon->Logf("=== NEW CLUSTER %d ===", CDef->Cluster);
   bool newFormat = sc->Check("{");
-  if (newFormat) sc->SetCMode(true);
-  while (1) {
+  //if (newFormat) sc->SetCMode(true);
+  for (;;) {
     /*
     if (sc->GetString()) {
       GCon->Logf("::: CLUSTER(%d): <%s>", (newFormat ? 1 : 0), *sc->String);
@@ -1266,7 +1268,7 @@ static void ParseClusterDef (VScriptParser *sc) {
       }
     }
   }
-  if (newFormat) sc->SetCMode(false);
+  //if (newFormat) sc->SetCMode(false);
 
   // make sure text lump names are in lower case
   if (CDef->Flags&CLUSTERF_EnterTextIsLump) CDef->EnterText = CDef->EnterText.ToLower();
@@ -1320,8 +1322,8 @@ static void ParseEpisodeDef (VScriptParser *sc) {
   }
 
   bool newFormat = sc->Check("{");
-  if (newFormat) sc->SetCMode(true);
-  while (1) {
+  //if (newFormat) sc->SetCMode(true);
+  for (;;) {
     if (sc->Check("name")) {
       if (newFormat) sc->Expect("=");
       ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags);
@@ -1342,7 +1344,7 @@ static void ParseEpisodeDef (VScriptParser *sc) {
       break;
     }
   }
-  if (newFormat) sc->SetCMode(false);
+  //if (newFormat) sc->SetCMode(false);
   unguard;
 }
 
@@ -1679,8 +1681,8 @@ static void ParseMapInfo (VScriptParser *sc) {
       }
       // hack for "complete"
       else if (sc->Check("gameinfo")) {
-        auto cmode = sc->IsCMode();
-        sc->SetCMode(true);
+        //auto cmode = sc->IsCMode();
+        //sc->SetCMode(true);
         sc->Expect("{");
         //sc->SkipBracketed(true);
         for (;;) {
@@ -1706,7 +1708,7 @@ static void ParseMapInfo (VScriptParser *sc) {
             }
           }
         }
-        sc->SetCMode(cmode);
+        //sc->SetCMode(cmode);
       } else if (sc->Check("intermission")) {
         GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command Intermission");
         if (!sc->Check("{")) sc->ExpectString();
@@ -1724,8 +1726,8 @@ static void ParseMapInfo (VScriptParser *sc) {
       */
       } else if (sc->Check("DoomEdNums")) {
         //GCon->Logf("*** <%s> ***", *sc->String);
-        auto cmode = sc->IsCMode();
-        sc->SetCMode(true);
+        //auto cmode = sc->IsCMode();
+        //sc->SetCMode(true);
         sc->Expect("{");
         for (;;) {
           if (sc->Check("}")) break;
@@ -1778,10 +1780,10 @@ static void ParseMapInfo (VScriptParser *sc) {
           //GCon->Logf("MAPINFO: DOOMED: '%s', %d (%d)", *clsname, num, flags);
           appendNumFixup(DoomEdNumFixups, clsname, num, flags, special, args[0], args[1], args[2], args[3], args[4]);
         }
-        sc->SetCMode(cmode);
+        //sc->SetCMode(cmode);
       } else if (sc->Check("SpawnNums")) {
-        auto cmode = sc->IsCMode();
-        sc->SetCMode(true);
+        //auto cmode = sc->IsCMode();
+        //sc->SetCMode(true);
         sc->Expect("{");
         for (;;) {
           if (sc->Check("}")) break;
@@ -1791,7 +1793,7 @@ static void ParseMapInfo (VScriptParser *sc) {
           sc->ExpectString();
           appendNumFixup(SpawnNumFixups, VStr(sc->String), num);
         }
-        sc->SetCMode(cmode);
+        //sc->SetCMode(cmode);
       } else if (sc->Check("author")) {
         sc->ExpectString();
       } else {
