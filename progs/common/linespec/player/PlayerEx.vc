@@ -2389,9 +2389,11 @@ void GiveElvenGifts (mthing_t *mthing, bool Voodoo) {
           }
         }
       }
+      /*
       ClientHudMessage("ELVEN GIFT", 'smallfont', 0, 123666, CR_ORANGE, "",
         0.5, 0.45, 0, 0,
         2.5, 0.0, 0.0);
+      */
     }
   }
 }
