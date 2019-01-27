@@ -1694,11 +1694,38 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
 //==========================================================================
 static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TArray<VWeaponSlotFixups> &newWSlots) {
   guard(ParseActor);
+
+  // actor options
+  bool optionalActor = false;
+
   // parse actor name
   // in order to allow dots in actor names, this is done in non-C mode,
   // so we have to do a little bit more complex parsing
   sc->ExpectString();
   auto cstloc = sc->GetLoc();
+  if (sc->String.length() && sc->String.startsWith("(")) {
+    if (sc->String.ICmp("(optional") == 0) {
+      optionalActor = true;
+      sc->Expect(")");
+    } else if (sc->String.ICmp("(optional)") == 0) {
+      optionalActor = true;
+    } else {
+      sc->Error(va("invalid actor options: '%s'", *sc->String));
+    }
+    sc->ExpectString();
+  } else if (sc->String == "(") {
+    sc->ExpectString();
+    if (sc->String.ICmp("optional") == 0) {
+      optionalActor = true;
+      sc->Expect(")");
+    } else if (sc->String.ICmp("optional)") == 0) {
+      optionalActor = true;
+    } else {
+      sc->Error(va("invalid actor options: '%s'", *sc->String));
+    }
+    sc->ExpectString();
+  }
+
   VStr NameStr;
   VStr ParentStr;
   int ColonPos = sc->String.IndexOf(':');
@@ -1738,7 +1765,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   if (ParentStr.IsNotEmpty()) {
     ParentClass = VClass::FindClassLowerCase(*ParentStr.ToLower());
     if (ParentClass == nullptr || ParentClass->MemberType != MEMBER_Class) {
-      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+      if (optionalActor) {
+        sc->Message(va("Skipping optional actor `%s`", *NameStr));
+        ParentClass = nullptr; // just in case
+      } else if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
         sc->Message(va("Parent class `%s` not found", *ParentStr));
         ParentClass = nullptr; // just in case
       } else {
