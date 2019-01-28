@@ -116,9 +116,11 @@ menudef MiscOptions {
     title = "PVS threads";
     cvar = loader_pvs_builder_threads;
     step = 1;
-    min = 1;
+    min = 0;
     max = 16;
-    help = "How many CPU cores can be used to build PVS set?";
+    help =
+      "How many CPU cores can be used to build PVS set?"
+      "0 means 'Use all available cores'.";
   }
 
 
