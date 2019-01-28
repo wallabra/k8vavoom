@@ -48,6 +48,7 @@ static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various nod
 
 // ////////////////////////////////////////////////////////////////////////// //
 #include "p_setup_nodes_aj.cpp"
+#include "p_setup_nodes_zd.cpp"
 #include "p_setup_pvs.cpp"
 
 
@@ -57,5 +58,10 @@ static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various nod
 //
 //==========================================================================
 void VLevel::BuildNodes () {
-  BuildNodesAJ(); // for now
+  R_LdrMsgShowSecondary("BUILDING NODES...");
+  R_PBarReset();
+  //BuildNodesAJ(); // for now
+  BuildNodesZD(); // for now
+  R_PBarUpdate("BSP", 42, 42, true); // final update
+  //abort();
 }

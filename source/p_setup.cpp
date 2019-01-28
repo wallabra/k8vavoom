@@ -988,13 +988,13 @@ load_again:
   if (!cachedDataLoaded || forceNodeRebuildFromFixer) {
     if (NeedNodesBuild || forceNodeRebuildFromFixer) {
       GCon->Logf("building GL nodes...");
-      R_LdrMsgShowSecondary("BUILDING NODES...");
+      //R_LdrMsgShowSecondary("BUILDING NODES...");
       BuildNodes();
       saveCachedData = true;
     } else if (UseComprGLNodes) {
       if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
         GCon->Logf("rebuilding GL nodes...");
-        R_LdrMsgShowSecondary("BUILDING NODES...");
+        //R_LdrMsgShowSecondary("BUILDING NODES...");
         BuildNodes();
         saveCachedData = true;
       }

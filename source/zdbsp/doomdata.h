@@ -51,11 +51,11 @@ struct MapSideDef
 struct IntSideDef
 {
   // the first 5 values are only used for binary format maps
-  short textureoffset;
-  short rowoffset;
-  char  toptexture[8];
-  char  bottomtexture[8];
-  char  midtexture[8];
+  //short textureoffset;
+  //short rowoffset;
+  //char  toptexture[8];
+  //char  bottomtexture[8];
+  //char  midtexture[8];
 
   int sector;
 
@@ -96,11 +96,11 @@ struct IntLineDef
 
 struct MapSector
 {
-  short floorheight;
-  short ceilingheight;
-  char  floorpic[8];
-  char  ceilingpic[8];
-  short lightlevel;
+  //short floorheight;
+  //short ceilingheight;
+  //char  floorpic[8];
+  //char  ceilingpic[8];
+  //short lightlevel;
   short special;
   short tag;
 };
@@ -166,8 +166,12 @@ struct MapSegGLEx
   DWORD partner;
 };
 
-#define NF_SUBSECTOR  0x8000
-#define NFX_SUBSECTOR 0x80000000
+//#define NF_SUBSECTOR  0x8000
+//#define NFX_SUBSECTOR 0x80000000
+enum {
+  NF_SUBSECTOR = 0x8000,
+  NFX_SUBSECTOR = 0x80000000,
+};
 
 struct MapNode
 {

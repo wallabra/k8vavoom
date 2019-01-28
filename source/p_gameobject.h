@@ -545,7 +545,7 @@ struct seg_t : public TPlane {
 
   side_t *sidedef;
   line_t *linedef;
-  seg_t *lsnext; // next seg in linedef
+  seg_t *lsnext; // next seg in linedef; set by `VLevel::PostProcessForDecals()`
 
   // sector references
   // could be retrieved from linedef, too
