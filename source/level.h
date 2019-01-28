@@ -470,7 +470,7 @@ public:
   inline bool IsForServer () const { return !!(LevelFlags&LF_ForServer); }
   inline bool IsForClient () const { return !(LevelFlags&LF_ForServer); }
 
-  void BuildPVS (); // called from `BuildNodes()`
+  void BuildPVS ();
 
   void SaveCachedData (VStream *strm);
   bool LoadCachedData (VStream *strm);
@@ -518,6 +518,8 @@ private:
   void FinaliseLines ();
   void CreateRepBase ();
   void CreateBlockMap ();
+  void BuildNodesAJ ();
+  void BuildNodesZD ();
   void BuildNodes ();
   bool CreatePortals (void *pvsinfo);
   void SimpleFlood (/*portal_t*/void *srcportalp, int leafnum, void *pvsinfo);

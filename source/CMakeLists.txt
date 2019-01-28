@@ -326,7 +326,7 @@ set(MAIN_COMMON_SOURCES
   p_level_think.cpp
   p_levelinfo.cpp
   p_levelinfo.h
-  p_nodebuild.cpp
+  p_setup_calc.cpp
   p_player.cpp
   p_player.h
   p_player_input.cpp
@@ -425,7 +425,7 @@ set(SERVER_COMMON_SOURCES
   p_gameobject.cpp
   p_level_think.cpp
   p_levelinfo.cpp
-  p_nodebuild.cpp
+  p_setup_calc.cpp
   p_player.cpp
   p_player_input.cpp
   p_playerreplicationinfo.cpp
