@@ -275,6 +275,20 @@ void Sys_Yield () {
 }
 
 
+//==========================================================================
+//
+//  Sys_GetCPUCount
+//
+//==========================================================================
+int Sys_GetCPUCount () {
+  //nprocs_max = sysconf(_SC_NPROCESSORS_CONF);
+  int res = sysconf(_SC_NPROCESSORS_ONLN);
+  if (res < 1) return 1;
+  if (res > 64) return 64; // arbitrary limit
+  return res;
+}
+
+
 #else
 // shitdoze
 
@@ -588,4 +602,17 @@ void Sys_Yield () {
 }
 
 
+//==========================================================================
+//
+//  Sys_GetCPUCount
+//
+//==========================================================================
+int Sys_GetCPUCount () {
+  SYSTEM_INFO info;
+  GetSystemInfo(&info);
+  int res = (int)info.dwNumberOfProcessors;
+  if (res < 1) return 1;
+  if (res > 64) return 64; // arbitrary limit
+  return res;
+}
 #endif

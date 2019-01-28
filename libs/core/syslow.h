@@ -47,3 +47,5 @@ void Sys_CloseDir (void *adir);
 
 double Sys_Time ();
 void Sys_Yield ();
+
+int Sys_GetCPUCount ();
