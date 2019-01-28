@@ -218,6 +218,22 @@ set(AJBSP_SOURCES
 
 #---------------------------------------
 #
+# zdbsp sources
+#
+#---------------------------------------
+set(ZDBSP_SOURCES
+  zdbsp/nodebuild.cpp
+  zdbsp/nodebuild_events.cpp
+  zdbsp/nodebuild_extract.cpp
+  zdbsp/nodebuild_gl.cpp
+  zdbsp/nodebuild_utility.cpp
+  zdbsp/nodebuild_classify_nosse2.cpp
+  zdbsp/zdbsp_extr.cpp
+)
+
+
+#---------------------------------------
+#
 # file subsystem sources
 #
 #---------------------------------------
@@ -356,6 +372,7 @@ set(MAIN_COMMON_SOURCES
   ${VCCLIB_SOURCES}
   video.h
   ${AJBSP_SOURCES}
+  ${ZDBSP_SOURCES}
 )
 
 #-- Common OpenGL files --
@@ -432,6 +449,7 @@ set(SERVER_COMMON_SOURCES
   sv_world.cpp
   ${VCCLIB_SOURCES}
   ${AJBSP_SOURCES}
+  ${ZDBSP_SOURCES}
   # for skybox parsing
   render/r_sky.cpp
 )
