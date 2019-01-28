@@ -605,6 +605,7 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
   node_t *Node = &Nodes[NodeIndex];
   ++NodeIndex;
 
+  /*
   GCon->Logf("#%d: (%d,%d)-(%d,%d) : (%d,%d)-(%d,%d) : d=(%f,%f)",
     NodeIndex,
     SrcNode->r.bounds.minx, SrcNode->r.bounds.miny,
@@ -613,6 +614,7 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
     SrcNode->l.bounds.maxx, SrcNode->l.bounds.maxy,
     (float)SrcNode->dx, (float)SrcNode->dy
   );
+  */
 
   TVec org = TVec(SrcNode->x, SrcNode->y, 0);
   TVec dir = TVec(SrcNode->dx, SrcNode->dy, 0);
