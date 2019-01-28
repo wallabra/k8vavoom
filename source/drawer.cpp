@@ -33,6 +33,10 @@
 #include "drawer.h"
 
 
+int R_LdrMsgColorMain = CR_FIRE;
+int R_LdrMsgColorSecondary = CR_ORANGE /*CR_PURPLE*/ /*CR_TEAL*/;
+
+
 enum {
   PBarHPad = 20+16,
   PBarVPad = 20+16,

@@ -1059,145 +1059,59 @@ static int getNextPortalNum () {
 
 
 extern "C" {
-static void SimpleFlood (portal_t *srcportal, int leafnum, PVSInfo *nfo) {
-  if (srcportal->mightsee[leafnum>>3]&(1<<(leafnum&7))) return;
-  srcportal->mightsee[leafnum>>3] |= (1<<(leafnum&7));
+  static void SimpleFlood (portal_t *srcportal, int leafnum, PVSInfo *nfo) {
+    if (srcportal->mightsee[leafnum>>3]&(1<<(leafnum&7))) return;
+    srcportal->mightsee[leafnum>>3] |= (1<<(leafnum&7));
 
-  subsec_extra_t *leaf = &nfo->ssex[leafnum];
-  for (int i = 0; i < leaf->numportals; ++i) {
-    portal_t *p = leaf->portals[i];
-    if (!nfo->portalsee[p-nfo->portals]) continue;
-    SimpleFlood(srcportal, p->leaf, nfo);
-  }
-}
-
-
-static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
-  PVSInfo *nfo = (PVSInfo *)aarg;
-  nfo->portalsee = new vuint8[nfo->numportals];
-  for (;;) {
-    int pnum = getNextPortalNum();
-    if (pnum >= nfo->numportals) break;
-    portal_t *p = &nfo->portals[pnum];
-
-    p->mightsee = new vuint8[nfo->bitbytes];
-    memset(p->mightsee, 0, nfo->bitbytes);
-
-    memset(nfo->portalsee, 0, nfo->numportals);
-    portal_t *tp = nfo->portals;
-    for (int j = 0; j < nfo->numportals; ++j, ++tp) {
-      if (j == pnum) continue;
-      winding_t *w = &tp->winding;
-      int k;
-      for (k = 0; k < 2; ++k) {
-        const double d = DotProduct(w->points[k], p->normal)-p->dist;
-        if (d > ON_EPSILON) break;
-      }
-      if (k == 2) continue; // no points on front
-
-      w = &p->winding;
-      for (k = 0; k < 2; ++k) {
-        const double d = DotProduct(w->points[k], tp->normal)-tp->dist;
-        if (d < -ON_EPSILON) break;
-      }
-      if (k == 2) continue; // no points on front
-
-      nfo->portalsee[j] = 1;
+    subsec_extra_t *leaf = &nfo->ssex[leafnum];
+    for (int i = 0; i < leaf->numportals; ++i) {
+      portal_t *p = leaf->portals[i];
+      if (!nfo->portalsee[p-nfo->portals]) continue;
+      SimpleFlood(srcportal, p->leaf, nfo);
     }
-
-    SimpleFlood(p, p->leaf, nfo);
-
-    // fastvis just uses mightsee for a very loose bound
-    p->visbits = p->mightsee;
   }
-  delete[] nfo->portalsee;
-  return MYTHREAD_RET_VALUE;
-}
-}
-
-enum {
-  PBarHPad = 20+16,
-  PBarVPad = 20+16,
-  PBarHeight = 20,
-};
 
 
-static int lastPBarWdt = -666;
+  static MYTHREAD_RET_TYPE pvsThreadWorker (void *aarg) {
+    PVSInfo *nfo = (PVSInfo *)aarg;
+    nfo->portalsee = new vuint8[nfo->numportals];
+    for (;;) {
+      int pnum = getNextPortalNum();
+      if (pnum >= nfo->numportals) break;
+      portal_t *p = &nfo->portals[pnum];
 
-static void pvsDrawPBar (int cur, int max) {
-/*
-#ifdef CLIENT
-  if (Drawer && Drawer->IsInited()) {
-    int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
-    if (cur < max && wdt == lastPBarWdt) return;
-    lastPBarWdt = wdt;
-    Drawer->StartUpdate(false); // don't clear
-    Drawer->FillRect(PBarHPad-2, ScreenHeight-PBarVPad-PBarHeight-2, ScreenWidth-PBarHPad+2, ScreenHeight-PBarVPad+2, 0xffffffff);
-    Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
-    Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
-    if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
-    Drawer->Update();
-  } else
-#endif
-  {
-    int prc = cur*100/max;
-    GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, max);
-  }
-*/
-#ifdef CLIENT
-  if (Drawer && Drawer->IsInited()) {
-    CL_KeepaliveMessageEx(pvsLastReportTime);
-    int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
-    if (cur < max && wdt == lastPBarWdt) return;
-    lastPBarWdt = wdt;
-    Drawer->StartUpdate(false); // don't clear
-    // load progressbar textures
-    static bool texturesLoaded = false;
-    static int left = -1, right = -1, mid = -1, fill = -1;
-    if (!texturesLoaded) {
-      texturesLoaded = true;
-      left = GTextureManager.AddFileTextureChecked("graphics/progbar/left.png", TEXTYPE_Pic);
-      if (left > 0) right = GTextureManager.AddFileTextureChecked("graphics/progbar/right.png", TEXTYPE_Pic);
-      if (right > 0) mid = GTextureManager.AddFileTextureChecked("graphics/progbar/middle.png", TEXTYPE_Pic);
-      if (mid > 0) fill = GTextureManager.AddFileTextureChecked("graphics/progbar/marker.png", TEXTYPE_Pic);
-    }
-    // which kind of progress bar to draw?
-    if (left > 0) {
-      VTexture *tex;
-      // left end
-      tex = GTextureManager(left);
-      Drawer->DrawPic(
-        PBarHPad-8, ScreenHeight-PBarVPad-PBarHeight, PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
-        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0);
-      // right end
-      tex = GTextureManager(right);
-      Drawer->DrawPic(
-        ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad+8, ScreenHeight-PBarVPad-PBarHeight+32,
-        0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0);
-      // middle
-      tex = GTextureManager(mid);
-      Drawer->FillRectWithFlatRepeat(
-        PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
-        0, 0, /*tex->GetWidth()*/(ScreenWidth-PBarHPad)*2, tex->GetHeight(), tex);
-      // fill
-      if (wdt > 0) {
-        tex = GTextureManager(fill);
-        Drawer->FillRectWithFlatRepeat(
-          PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad-PBarHeight+32,
-          0, 0, /*tex->GetWidth()*/wdt, tex->GetHeight(), tex);
+      p->mightsee = new vuint8[nfo->bitbytes];
+      memset(p->mightsee, 0, nfo->bitbytes);
+
+      memset(nfo->portalsee, 0, nfo->numportals);
+      portal_t *tp = nfo->portals;
+      for (int j = 0; j < nfo->numportals; ++j, ++tp) {
+        if (j == pnum) continue;
+        winding_t *w = &tp->winding;
+        int k;
+        for (k = 0; k < 2; ++k) {
+          const double d = DotProduct(w->points[k], p->normal)-p->dist;
+          if (d > ON_EPSILON) break;
+        }
+        if (k == 2) continue; // no points on front
+
+        w = &p->winding;
+        for (k = 0; k < 2; ++k) {
+          const double d = DotProduct(w->points[k], tp->normal)-tp->dist;
+          if (d < -ON_EPSILON) break;
+        }
+        if (k == 2) continue; // no points on front
+
+        nfo->portalsee[j] = 1;
       }
-    } else {
-      Drawer->FillRect(PBarHPad-2, ScreenHeight-PBarVPad-PBarHeight-2, ScreenWidth-PBarHPad+2, ScreenHeight-PBarVPad+2, 0xffffffff);
-      Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
-      Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
-      if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
+
+      SimpleFlood(p, p->leaf, nfo);
+
+      // fastvis just uses mightsee for a very loose bound
+      p->visbits = p->mightsee;
     }
-    Drawer->Update();
-  } else
-#endif
-  {
-    int prc = cur*100/max;
-    GCon->Logf("PVS: %02d%% done (%d of %d)", prc, cur-1, max);
+    delete[] nfo->portalsee;
+    return MYTHREAD_RET_VALUE;
   }
 }
 
@@ -1236,20 +1150,21 @@ static void pvsStartThreads (const PVSInfo &anfo) {
 
   // loop until we'll get at least one complete progress
   bool wasProgress = false;
-  lastPBarWdt = -666;
   for (;;) {
     mythread_cond_wait(&pvsPingCond, &pvsPingLock);
     // got one!
     bool done = pvsPBarDone;
     if (done && !wasProgress) break; // don't spam with progress messages
-    pvsDrawPBar(pvsPBarCur, pvsPBarMax);
+    //pvsDrawPBar(pvsPBarCur, pvsPBarMax);
+    R_PBarUpdate("PVS", pvsPBarCur, pvsPBarMax);
     wasProgress = true;
     if (done) break;
   }
   mythread_mutex_unlock(&pvsPingLock);
 
 #ifdef CLIENT
-  if (wasProgress && Drawer && Drawer->IsInited()) pvsDrawPBar(42, 42);
+  //if (wasProgress && Drawer && Drawer->IsInited()) pvsDrawPBar(42, 42);
+  R_PBarUpdate("PVS", 42, 42, true); // final update
 #endif
 
   // wait for all threads to complete
@@ -1279,6 +1194,9 @@ void VLevel::BuildPVS () {
   }
 
   GCon->Logf("building PVS...");
+  R_LdrMsgShowSecondary("BUILDING PVS...");
+  R_PBarReset();
+
   PVSInfo nfo;
   memset((void *)&nfo, 0, sizeof(nfo));
 

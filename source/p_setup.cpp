@@ -728,7 +728,7 @@ load_again:
 
   //FIXME: reload saved background screen from FBO
   R_LdrMsgReset();
-  R_LdrMsgShow("LOADING...", CR_FIRE);
+  R_LdrMsgShowMain("LOADING...");
 
   bool saveCachedData = false;
   int gl_lumpnum = -100;
@@ -988,13 +988,13 @@ load_again:
   if (!cachedDataLoaded || forceNodeRebuildFromFixer) {
     if (NeedNodesBuild || forceNodeRebuildFromFixer) {
       GCon->Logf("building GL nodes...");
-      R_LdrMsgShow("BUILDING NODES...", CR_TEAL);
+      R_LdrMsgShowSecondary("BUILDING NODES...");
       BuildNodes();
       saveCachedData = true;
     } else if (UseComprGLNodes) {
       if (!LoadCompressedGLNodes(CompressedGLNodesLump, GLNodesHdr)) {
         GCon->Logf("rebuilding GL nodes...");
-        R_LdrMsgShow("BUILDING NODES...", CR_TEAL);
+        R_LdrMsgShowSecondary("BUILDING NODES...");
         BuildNodes();
         saveCachedData = true;
       }

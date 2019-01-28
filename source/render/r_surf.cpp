@@ -1334,7 +1334,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   if (showCreateWorldSurfProgress) {
-    R_LdrMsgShow("CALCULATING LIGHTMAPS...", CR_TEAL);
+    R_LdrMsgShowSecondary("CALCULATING LIGHTMAPS...");
     R_PBarReset();
   }
 
