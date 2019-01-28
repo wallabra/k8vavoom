@@ -500,6 +500,10 @@ private:
   // call this after loading things
   void SetupThingsFromMapinfo ();
 
+  // call this after level is loaded or nodes are built
+  void PostLoadSegs ();
+  void PostLoadSubsectors ();
+
   void FixDeepWaters ();
   void FixSelfRefDeepWater (); // called from `FixDeepWaters`
 

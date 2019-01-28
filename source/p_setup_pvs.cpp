@@ -429,6 +429,9 @@ void VLevel::BuildPVS () {
   delete [] nfo.portals;
 }
 
+/* k8: no need to rebuild reject table, as PVS is used in every place where
+       reject is checked, and it provides better granularity anyway.
+ */
 
 /*REJECT: rebuild it with PVS
     auto sub = Level->PointInSubsector(cl->ViewOrg);
@@ -473,7 +476,12 @@ bool VLevel::CreatePortals (void *pvsinfo) {
   for (int f = 0; f < NumSegs; ++f) {
     if (Segs[f].partner) ++nfo->numportals;
   }
-  if (nfo->numportals == 0) { GCon->Logf(NAME_Warning, "PVS: no possible portals found"); return false; }
+
+  if (nfo->numportals == 0) {
+    GCon->Logf(NAME_Warning, "PVS: no possible portals found");
+    return false;
+  }
+  //GCon->Logf("PVS: %d partners", nfo->numportals);
 
   nfo->portals = new portal_t[nfo->numportals];
   for (int i = 0; i < nfo->numportals; ++i) {

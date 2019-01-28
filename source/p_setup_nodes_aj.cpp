@@ -174,32 +174,10 @@ void ajbsp_PrintMapName (const char *name) {
 
 //==========================================================================
 //
-//  UploadVertices
-//
-//==========================================================================
-/*
-static void UploadVertices (VLevel *Level) {
-  guard(UploadVertices);
-  const vertex_t *pSrc = Level->Vertexes;
-  for (int i = 0; i < Level->NumVertexes; ++i, ++pSrc) {
-    ajbsp::vertex_t *Vert = ajbsp::NewVertex();
-    Vert->x = pSrc->x;
-    Vert->y = pSrc->y;
-    Vert->index = i;
-  }
-  ajbsp::num_old_vert = ajbsp::num_vertices;
-  unguard;
-}
-*/
-
-
-//==========================================================================
-//
 //  UploadSectors
 //
 //==========================================================================
 static void UploadSectors (VLevel *Level) {
-  guard(UploadSectors);
   const sector_t *pSrc = Level->Sectors;
   for (int i = 0; i < Level->NumSectors; ++i, ++pSrc) {
     ajbsp::sector_t *sector = ajbsp::NewSector();
@@ -209,7 +187,6 @@ static void UploadSectors (VLevel *Level) {
     sector->index = i;
     sector->warned_facing = -1;
   }
-  unguard;
 }
 
 
@@ -219,7 +196,6 @@ static void UploadSectors (VLevel *Level) {
 //
 //==========================================================================
 static void UploadSidedefs (VLevel *Level) {
-  guard(UploadSidedefs);
   const side_t *pSrc = Level->Sides;
   for (int i = 0; i < Level->NumSides; ++i, ++pSrc) {
     ajbsp::sidedef_t *side = ajbsp::NewSidedef();
@@ -229,7 +205,6 @@ static void UploadSidedefs (VLevel *Level) {
     // sidedef indices never change
     side->index = i;
   }
-  unguard;
 }
 
 
@@ -239,8 +214,6 @@ static void UploadSidedefs (VLevel *Level) {
 //
 //==========================================================================
 static void UploadLinedefs (VLevel *Level) {
-  guard(UploadLinedefs);
-
   TArray<int> vertmap;
   vertmap.SetNum(Level->NumVertexes);
   for (int f = 0; f < Level->NumVertexes; ++f) vertmap[f] = -1;
@@ -306,7 +279,6 @@ static void UploadLinedefs (VLevel *Level) {
   }
 
   ajbsp::num_old_vert = ajbsp::num_vertices;
-  unguard;
 }
 
 
@@ -316,7 +288,6 @@ static void UploadLinedefs (VLevel *Level) {
 //
 //==========================================================================
 static void UploadThings (VLevel *Level) {
-  guard(UploadThings);
   const mthing_t *pSrc = Level->Things;
   for (int i = 0; i < Level->NumThings; ++i, ++pSrc) {
     ajbsp::thing_t *Thing = ajbsp::NewThing();
@@ -327,7 +298,6 @@ static void UploadThings (VLevel *Level) {
     Thing->options = pSrc->options;
     Thing->index = i;
   }
-  unguard;
 }
 
 
@@ -344,7 +314,6 @@ struct CopyInfo {
 //
 //==========================================================================
 static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
-  guard(CopyGLVerts);
   // copy new vertices, build linedef vertex translation table
   int oldmaxverts = Level->NumVertexes;
   vertex_t *oldvx = Level->Vertexes;
@@ -402,7 +371,6 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
     ld->v2 = &Level->Vertexes[vxmap[v2idx]];
   }
   delete[] oldvx;
-  unguard;
 }
 
 
@@ -412,8 +380,6 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
 //
 //==========================================================================
 static void CopySegs (VLevel *Level, CopyInfo &nfo) {
-  guard(CopySegs);
-
   Level->NumSegs = 0;
   delete [] Level->Segs;
   Level->Segs = new seg_t[ajbsp::num_segs]; //k8: this may overallocate, but i don't care
@@ -461,48 +427,12 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
     destseg->v2 = &Level->Vertexes[v2mp];
 
     if (srcseg->side != 0 && srcseg->side != 1) Sys_Error("AJBSP: invalid seg #%d side (%d)", i, srcseg->side);
+    destseg->side = srcseg->side;
 
     if (srcseg->linedef) {
       if (srcseg->linedef->index < 0 || srcseg->linedef->index >= Level->NumLines) Sys_Error("AJBSP: invalid seg #%d linedef (%d), max is %d", i, srcseg->linedef->index, Level->NumLines-1);
-
-      line_t *ldef = &Level->Lines[srcseg->linedef->index];
-      destseg->linedef = ldef;
-
-      if (ldef->sidenum[srcseg->side] < 0 || ldef->sidenum[srcseg->side] >= Level->NumSides) {
-        Sys_Error("AJBSP: seg #%d: ldef=%d; seg->side=%d; sidenum=%d (max sidenum is %d)\n", i, srcseg->linedef->index, srcseg->side, ldef->sidenum[srcseg->side], Level->NumSides-1);
-      }
-
-      //fprintf(stderr, "seg #%d: ldef=%d; seg->side=%d; sidenum=%d\n", i, SrcSeg->linedef->index, SrcSeg->side, ldef->sidenum[SrcSeg->side]);
-      destseg->sidedef = &Level->Sides[ldef->sidenum[srcseg->side]];
-      destseg->frontsector = Level->Sides[ldef->sidenum[srcseg->side]].Sector;
-
-      if (ldef->flags&ML_TWOSIDED) {
-        if (ldef->sidenum[srcseg->side^1] < 0 || ldef->sidenum[srcseg->side^1] >= Level->NumSides) Sys_Error("AJBSP: another side of two-sided linedef is fucked");
-        destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
-      } else if (ldef->sidenum[srcseg->side^1] >= 0) {
-        if (ldef->sidenum[srcseg->side^1] >= Level->NumSides) Sys_Error("AJBSP: another side of blocking two-sided linedef is fucked");
-        destseg->backsector = Level->Sides[ldef->sidenum[srcseg->side^1]].Sector;
-        // not a two-sided, so clear backsector (just in case) -- nope
-        //destseg->backsector = nullptr;
-      } else {
-        destseg->backsector = nullptr;
-        ldef->flags &= ~ML_TWOSIDED; // just in case
-      }
-
-      if (srcseg->side) {
-        destseg->offset = Length(*destseg->v1 - *ldef->v2);
-      } else {
-        destseg->offset = Length(*destseg->v1 - *ldef->v1);
-      }
+      destseg->linedef = &Level->Lines[srcseg->linedef->index];
     }
-
-    destseg->length = Length(*destseg->v2 - *destseg->v1);
-    destseg->side = srcseg->side;
-
-    if (destseg->length < 0.0001) Sys_Error("AJBSP: zero-length seg #%d", i);
-
-    // calc seg's plane params
-    CalcSeg(destseg);
   }
   GCon->Logf("AJBSP: copied %d of %d used segs", Level->NumSegs, ajbsp::num_segs);
 
@@ -526,7 +456,6 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
   }
 
   delete[] partners;
-  unguard;
 }
 
 
@@ -536,7 +465,6 @@ static void CopySegs (VLevel *Level, CopyInfo &nfo) {
 //
 //==========================================================================
 static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
-  guard(CopySubsectors);
   Level->NumSubsectors = ajbsp::num_subsecs;
   delete [] Level->Subsectors;
   Level->Subsectors = new subsector_t[Level->NumSubsectors];
@@ -557,36 +485,7 @@ static void CopySubsectors (VLevel *Level, CopyInfo &nfo) {
       if (i2idx < 0) Host_Error("AJBSP: subsector #%d contains miniseg or degenerate seg #%d (%d)", i, ajidx+j, j);
       if (i2idx != destss->firstline+j) Host_Error("AJBSP: subsector #%d contains non-sequential segs", i);
     }
-
-    // setup sector links
-    seg_t *seg = &Level->Segs[destss->firstline];
-    for (int j = 0; j < destss->numlines; ++j) {
-      if (seg[j].linedef) {
-        destss->sector = seg[j].sidedef->Sector;
-        destss->seclink = destss->sector->subsectors;
-        destss->sector->subsectors = destss;
-        break;
-      }
-    }
-
-    // setup front_sub
-    for (int j = 0; j < destss->numlines; j++) seg[j].front_sub = destss;
-    if (!destss->sector) Host_Error("AJBSP: Subsector #%d without sector", i);
   }
-
-  int setcount = Level->NumSegs;
-  for (int f = 0; f < Level->NumSegs; ++f) {
-    if (!Level->Segs[f].front_sub) { GCon->Logf("AJBSP: Seg %d: front_sub is not set!", f); --setcount; }
-    if (Level->Segs[f].sidedef &&
-        ((ptrdiff_t)Level->Segs[f].sidedef < (ptrdiff_t)Level->Sides ||
-         (ptrdiff_t)(Level->Segs[f].sidedef-Level->Sides) >= Level->NumSides))
-    {
-      Sys_Error("AJBSP: seg %d has invalid sidedef (%d)", f, (int)(ptrdiff_t)(Level->Segs[f].sidedef-Level->Sides));
-    }
-  }
-
-  if (setcount != Level->NumSegs) GCon->Logf(NAME_Warning, "AJBSP: %d of %d segs has no front_sub!", Level->NumSegs-setcount, Level->NumSegs);
-  unguard;
 }
 
 
@@ -661,7 +560,6 @@ static void CopyNode (int &NodeIndex, ajbsp::node_t *SrcNode, node_t *Nodes) {
 //
 //==========================================================================
 static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
-  guard(CopyNodes);
   Level->NumNodes = ajbsp::num_nodes;
   delete [] Level->Nodes;
   Level->Nodes = new node_t[Level->NumNodes];
@@ -671,7 +569,6 @@ static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
     CopyNode(NodeIndex, root_node, Level->Nodes);
     if (NodeIndex != ajbsp::num_nodes) Host_Error("AJBSP: invalid total number of nodes (1)");
   }
-  unguard;
 }
 
 
@@ -681,7 +578,6 @@ static void CopyNodes (VLevel *Level, ajbsp::node_t *root_node) {
 //
 //==========================================================================
 void VLevel::BuildNodesAJ () {
-  guard(VLevel::BuildNodesAJ);
   // set up glBSP build globals
   nodebuildinfo_t nb_info;
   nb_info.fast = nodes_fast_mode;
@@ -774,15 +670,6 @@ void VLevel::BuildNodesAJ () {
         memcpy(RejectMatrix, arr.ptr(), RejectMatrixSize);
         // check if it's an all-zeroes lump, in which case it's useless and can be discarded
         // k8: don't do it, or VaVoom will try to rebuild/reload it
-        /*
-        bool blank = true;
-        for (int i = 0; i < RejectMatrixSize; ++i) if (RejectMatrix[i]) { blank = false; break; }
-        if (Blank) {
-          RejectMatrixSize = 0;
-          delete [] RejectMatrix;
-          RejectMatrix = nullptr;
-        }
-        */
       }
       delete xms;
     }
@@ -792,53 +679,6 @@ void VLevel::BuildNodesAJ () {
     delete [] BlockMapLump;
     BlockMapLump = nullptr;
     BlockMapLumpSize = 0;
-    GCon->Logf("AJBSP: creating BLOCKMAP...");
-    CreateBlockMap();
-    /*
-    //FIXME: remove pasta (see p_setup.cpp:LoadBlockMap())
-    if (ajbsp::cur_info->do_blockmap) {
-      // killough 3/1/98: Expand wad blockmap into larger internal one,
-      // by treating all offsets except -1 as unsigned and zero-extending
-      // them. This potentially doubles the size of blockmaps allowed,
-      // because Doom originally considered the offsets as always signed.
-
-      delete [] BlockMapLump;
-      BlockMapLump = nullptr;
-      BlockMapLumpSize = 0;
-
-      VMemoryStream *xms = new VMemoryStream();
-      xms->BeginWrite();
-
-      // `true` means that blockmap was overflowed; let VaVoom rebuild it
-      if (!ajbsp::PutBlockmap(*xms)) {
-        // allocate memory for blockmap
-        int count = xms->TotalSize()/2;
-        xms->Seek(0);
-        xms->BeginRead();
-
-        BlockMapLump = new vint32[count];
-        BlockMapLumpSize = count;
-
-        // read data
-        BlockMapLump[0] = Streamer<vint16>(*xms);
-        BlockMapLump[1] = Streamer<vint16>(*xms);
-        BlockMapLump[2] = Streamer<vuint16>(*xms);
-        BlockMapLump[3] = Streamer<vuint16>(*xms);
-        for (int i = 4; i < count; ++i) {
-          vint16 tmp;
-          *xms << tmp;
-          BlockMapLump[i] = (tmp == -1 ? -1 : (vuint16)tmp&0xffff);
-        }
-      } else {
-        GCon->Logf("AJBSP: blockmap overflowed, will be rebuilt by VaVoom");
-        delete [] BlockMapLump;
-        BlockMapLump = nullptr;
-        BlockMapLumpSize = 0;
-      }
-
-      delete xms;
-    }
-    */
   }
 
   // free any memory used by glBSP
@@ -849,13 +689,4 @@ void VLevel::BuildNodesAJ () {
   ajbsp::cur_info  = nullptr;
 
   if (ret != build_result_e::BUILD_OK) Host_Error("Node build failed");
-
-  /*
-  //  Create dummy VIS data.
-  VisData = nullptr;
-  NoVis = new vuint8[(NumSubsectors + 7) / 8];
-  memset(NoVis, 0xff, (NumSubsectors + 7) / 8);
-  */
-  //BuildPVS();
-  unguard;
 }

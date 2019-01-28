@@ -1005,6 +1005,15 @@ load_again:
       LoadPVS(gl_lumpnum+ML_GL_PVS);
     }
   }
+  PostLoadSegs();
+  PostLoadSubsectors();
+
+  // create blockmap
+  if (!BlockMapLump) {
+    GCon->Logf("creating BLOCKMAP...");
+    CreateBlockMap();
+  }
+
   NodesTime += Sys_Time();
 
   // load blockmap
@@ -1928,6 +1937,89 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
 
 //==========================================================================
 //
+//  VLevel::PostLoadSegs
+//
+//  vertices, side, linedef and partner should be set
+//
+//==========================================================================
+void VLevel::PostLoadSegs () {
+  seg_t *destseg = &Segs[0];
+  for (int i = 0; i < NumSegs; ++i, ++destseg) {
+    int dside = destseg->side;
+    if (dside != 0 && dside != 1) Sys_Error("invalid seg #%d side (%d)", i, dside);
+
+    if (destseg->linedef) {
+      line_t *ldef = destseg->linedef;
+
+      if (ldef->sidenum[dside] < 0 || ldef->sidenum[dside] >= NumSides) {
+        Sys_Error("seg #%d, ldef=%d: invalid sidenum %d (%d) (max sidenum is %d)\n", i, (int)(ptrdiff_t)(ldef-Lines), dside, ldef->sidenum[dside], NumSides-1);
+      }
+
+      destseg->sidedef = &Sides[ldef->sidenum[dside]];
+      destseg->frontsector = Sides[ldef->sidenum[dside]].Sector;
+
+      if (ldef->flags&ML_TWOSIDED) {
+        if (ldef->sidenum[dside^1] < 0 || ldef->sidenum[dside^1] >= NumSides) Sys_Error("another side of two-sided linedef is fucked");
+        destseg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
+      } else if (ldef->sidenum[dside^1] >= 0) {
+        if (ldef->sidenum[dside^1] >= NumSides) Sys_Error("another side of blocking two-sided linedef is fucked");
+        destseg->backsector = Sides[ldef->sidenum[dside^1]].Sector;
+        // not a two-sided, so clear backsector (just in case) -- nope
+        //destseg->backsector = nullptr;
+      } else {
+        destseg->backsector = nullptr;
+        ldef->flags &= ~ML_TWOSIDED; // just in case
+      }
+
+      if (dside) {
+        destseg->offset = Length(*destseg->v1 - *ldef->v2);
+      } else {
+        destseg->offset = Length(*destseg->v1 - *ldef->v1);
+      }
+    }
+
+    destseg->length = Length(*destseg->v2 - *destseg->v1);
+
+    if (destseg->length < 0.0001f) Sys_Error("zero-length seg #%d", i);
+
+    // calc seg's plane params
+    CalcSeg(destseg);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::PostLoadSubsectors
+//
+//==========================================================================
+void VLevel::PostLoadSubsectors () {
+  subsector_t *ss = Subsectors;
+  for (int i = 0; i < NumSubsectors; ++i, ++ss) {
+    if (ss->firstline < 0 || ss->firstline >= NumSegs) Host_Error("Bad seg index %d", ss->firstline);
+    if (ss->numlines <= 0 || ss->firstline+ss->numlines > NumSegs) Host_Error("Bad segs range %d %d", ss->firstline, ss->numlines);
+
+    // look up sector number for each subsector
+    seg_t *seg = &Segs[ss->firstline];
+    for (int j = 0; j < ss->numlines; ++j) {
+      if (seg[j].linedef) {
+        ss->sector = seg[j].sidedef->Sector;
+        ss->seclink = ss->sector->subsectors;
+        ss->sector->subsectors = ss;
+        break;
+      }
+    }
+    for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
+    if (!ss->sector) Host_Error("Subsector %d without sector", i);
+  }
+  for (int f = 0; f < NumSegs; ++f) {
+    if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
+  }
+}
+
+
+//==========================================================================
+//
 //  VLevel::LoadSubsectors
 //
 //==========================================================================
@@ -1971,25 +2063,6 @@ void VLevel::LoadSubsectors (int Lump) {
       ss->numlines = numsegs;
       ss->firstline = firstseg;
     }
-
-    if (ss->firstline < 0 || ss->firstline >= NumSegs) Host_Error("Bad seg index %d", ss->firstline);
-    if (ss->numlines <= 0 || ss->firstline+ss->numlines > NumSegs) Host_Error("Bad segs range %d %d", ss->firstline, ss->numlines);
-
-    // look up sector number for each subsector
-    seg_t *seg = &Segs[ss->firstline];
-    for (int j = 0; j < ss->numlines; ++j) {
-      if (seg[j].linedef) {
-        ss->sector = seg[j].sidedef->Sector;
-        ss->seclink = ss->sector->subsectors;
-        ss->sector->subsectors = ss;
-        break;
-      }
-    }
-    for (int j = 0; j < ss->numlines; j++) seg[j].front_sub = ss;
-    if (!ss->sector) Host_Error("Subsector %d without sector", i);
-  }
-  for (int f = 0; f < NumSegs; ++f) {
-    if (!Segs[f].front_sub) GCon->Logf("Seg %d: front_sub is not set!", f);
   }
   unguard;
 }

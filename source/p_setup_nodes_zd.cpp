@@ -277,10 +277,23 @@ void VLevel::BuildNodesZD () {
 
   GCon->Logf("added %d vertices; created %d nodes, %d segs, and %d subsectors", newvertsCount-NumVertexes, nodeCount, segCount, subCount);
 
+  // copy subsectors
+  {
+    NumSubsectors = subCount;
+    delete [] Subsectors;
+    Subsectors = new subsector_t[subCount];
+    memset((void *)Subsectors, 0, sizeof(subsector_t)*subCount);
+    subsector_t *destss = &Subsectors[0];
+    for (int i = 0; i < subCount; ++i, ++destss) {
+      ZDBSP::MapSubsectorEx &srcss = ssecs[i];
+      destss->numlines = srcss.numlines;
+      destss->firstline = srcss.firstline;
+    }
+    delete [] ssecs;
+  }
+
   // copy vertices, fix linedefs
   {
-    //const int oldmaxverts = NumVertexes;
-    //vertex_t *oldvx = Vertexes;
     delete [] Vertexes;
 
     NumVertexes = newvertsCount;
@@ -297,6 +310,8 @@ void VLevel::BuildNodesZD () {
       Lines[lidx].v1 = &Vertexes[zlvl.Lines[lidx].v1];
       Lines[lidx].v2 = &Vertexes[zlvl.Lines[lidx].v2];
     }
+
+    delete [] newverts;
   }
 
   // copy nodes
@@ -306,26 +321,19 @@ void VLevel::BuildNodesZD () {
     Nodes = new node_t[NumNodes];
     memset((void *)Nodes, 0, sizeof(node_t)*NumNodes);
     for (int f = 0; f < nodeCount; ++f) CopyNodeZD(f, nodes[f], &Nodes[f]);
+    delete [] nodes;
   }
 
   // copy segs
   {
-    NumSegs = 0;
+    NumSegs = segCount;
     delete [] Segs;
     Segs = new seg_t[segCount];
     memset((void *)Segs, 0, sizeof(seg_t)*segCount);
 
-    for (int i = 0; i < segCount; ++i) {
-      //nfo.ajseg2vv[i] = -1;
+    seg_t *destseg = &Segs[0];
+    for (int i = 0; i < segCount; ++i, ++destseg) {
       const ZDBSP::MapSegGLEx &zseg = segs[i];
-
-      const int dsnum = NumSegs++;
-      //nfo.ajseg2vv[i] = dsnum;
-
-      seg_t *destseg = &Segs[dsnum];
-
-      destseg->partner = nullptr;
-      destseg->front_sub = nullptr;
 
       if (zseg.v1 == zseg.v2) Sys_Error("ZDBSP: seg #%d has same vertices (%d)", i, (int)zseg.v1);
 
@@ -333,116 +341,20 @@ void VLevel::BuildNodesZD () {
       destseg->v2 = &Vertexes[zseg.v2];
 
       if (zseg.side != 0 && zseg.side != 1) Sys_Error("ZDBSP: invalid seg #%d side (%d)", i, zseg.side);
+      destseg->side = zseg.side;
 
       if (zseg.linedef != ZDBSP::NO_INDEX) {
         if ((int)zseg.linedef < 0 || (int)zseg.linedef >= NumLines) Sys_Error("ZDBSP: invalid seg #%d linedef (%d), max is %d", i, zseg.linedef, NumLines-1);
-
-        line_t *ldef = &Lines[zseg.linedef];
-        destseg->linedef = ldef;
-
-        if (ldef->sidenum[zseg.side] < 0 || ldef->sidenum[zseg.side] >= NumSides) {
-          Sys_Error("ZDBSP: seg #%d: ldef=%d; seg->side=%d; sidenum=%d (max sidenum is %d)\n", i, zseg.linedef, zseg.side, ldef->sidenum[zseg.side], NumSides-1);
-        }
-
-        destseg->sidedef = &Sides[ldef->sidenum[zseg.side]];
-        destseg->frontsector = Sides[ldef->sidenum[zseg.side]].Sector;
-
-        if (ldef->flags&ML_TWOSIDED) {
-          if (ldef->sidenum[zseg.side^1] < 0 || ldef->sidenum[zseg.side^1] >= NumSides) Sys_Error("ZDBSP: another side of two-sided linedef is fucked");
-          destseg->backsector = Sides[ldef->sidenum[zseg.side^1]].Sector;
-        } else if (ldef->sidenum[zseg.side^1] >= 0) {
-          if (ldef->sidenum[zseg.side^1] >= NumSides) Sys_Error("ZDBSP: another side of blocking two-sided linedef is fucked");
-          destseg->backsector = Sides[ldef->sidenum[zseg.side^1]].Sector;
-          // not a two-sided, so clear backsector (just in case) -- nope
-          //destseg->backsector = nullptr;
-        } else {
-          destseg->backsector = nullptr;
-          ldef->flags &= ~ML_TWOSIDED; // just in case
-        }
-
-        if (zseg.side) {
-          destseg->offset = Length(*destseg->v1 - *ldef->v2);
-        } else {
-          destseg->offset = Length(*destseg->v1 - *ldef->v1);
-        }
+        destseg->linedef = &Lines[zseg.linedef];
       }
-
-      destseg->length = Length(*destseg->v2 - *destseg->v1);
-      destseg->side = zseg.side;
-
-      if (destseg->length < 0.000001f) Sys_Error("ZDBSP: zero-length seg #%d (%d:%d) (%f,%f)(%f,%f)", i, zseg.v1, zseg.v2, destseg->v1->x, destseg->v1->y, destseg->v2->x, destseg->v2->y);
 
       destseg->partner = (zseg.partner == ZDBSP::NO_INDEX ? nullptr : &Segs[zseg.partner]);
-
-      // calc seg's plane params
-      CalcSeg(destseg);
     }
+    delete [] segs;
   }
 
-  // copy subsectors
-  {
-    NumSubsectors = subCount;
-    delete [] Subsectors;
-    Subsectors = new subsector_t[subCount];
-    memset((void *)Subsectors, 0, sizeof(subsector_t)*subCount);
-    for (int i = 0; i < subCount; ++i) {
-      ZDBSP::MapSubsectorEx &srcss = ssecs[i];
-
-      subsector_t *destss = &Subsectors[i];
-      destss->numlines = srcss.numlines;
-      destss->firstline = srcss.firstline;
-
-      // check sector numbers
-      /*
-      for (int j = 0; j < destss->numlines; ++j) {
-        auto i2idx = nfo.ajseg2vv[ajidx+j];
-        if (i2idx < 0) Host_Error("AJBSP: subsector #%d contains miniseg or degenerate seg #%d (%d)", i, ajidx+j, j);
-        if (i2idx != destss->firstline+j) Host_Error("AJBSP: subsector #%d contains non-sequential segs", i);
-      }
-      */
-
-      // setup sector links
-      seg_t *seg = &Segs[destss->firstline];
-      for (int j = 0; j < destss->numlines; ++j) {
-        if (seg[j].linedef) {
-          destss->sector = seg[j].sidedef->Sector;
-          destss->seclink = destss->sector->subsectors;
-          destss->sector->subsectors = destss;
-          break;
-        }
-      }
-
-      // setup front_sub
-      for (int j = 0; j < destss->numlines; j++) seg[j].front_sub = destss;
-      if (!destss->sector) Host_Error("ZDBSP: Subsector #%d without sector", i);
-    }
-
-    int setcount = NumSegs;
-    for (int f = 0; f < NumSegs; ++f) {
-      if (!Segs[f].front_sub) { GCon->Logf("ZDBSP: Seg %d: front_sub is not set!", f); --setcount; }
-      if (Segs[f].sidedef &&
-          ((ptrdiff_t)Segs[f].sidedef < (ptrdiff_t)Sides ||
-           (ptrdiff_t)(Segs[f].sidedef-Sides) >= NumSides))
-      {
-        Sys_Error("ZDBSP: seg %d has invalid sidedef (%d)", f, (int)(ptrdiff_t)(Segs[f].sidedef-Sides));
-      }
-    }
-
-    if (setcount != NumSegs) GCon->Logf(NAME_Warning, "ZDBSP: %d of %d segs has no front_sub!", NumSegs-setcount, NumSegs);
-  }
-
-  delete [] ssecs;
-  delete [] segs;
-  delete [] nodes;
-  delete [] newverts;
-
-
-  {
-    // blockmap
-    delete [] BlockMapLump;
-    BlockMapLump = nullptr;
-    BlockMapLumpSize = 0;
-    GCon->Logf("ZDBSP: creating BLOCKMAP...");
-    CreateBlockMap();
-  }
+  // clear blockmap (just in case), so it will be recreated by the engine
+  delete [] BlockMapLump;
+  BlockMapLump = nullptr;
+  BlockMapLumpSize = 0;
 }
