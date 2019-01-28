@@ -191,7 +191,6 @@ void CL_ReadFromServer () {
 //
 //==========================================================================
 void CL_KeepaliveMessage () {
-  guard(CL_KeepaliveMessage);
   if (GGameInfo->NetMode != NM_Client) return; // no need if server is local
   if (cls.demoplayback) return;
   if (!cl->Net) return;
@@ -200,7 +199,6 @@ void CL_KeepaliveMessage () {
   LastKeepAliveTime = currTime;
   // write out a nop
   cl->Net->Flush();
-  unguard;
 }
 
 

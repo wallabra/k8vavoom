@@ -1374,7 +1374,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
 
   // add dplanes
   for (int i = 0; i < Level->NumSubsectors; ++i) {
-    if (!(i&63)) CL_KeepaliveMessage();
+    //if (!(i&63)) CL_KeepaliveMessage(); // this is done in progressbar code
     sub = &Level->Subsectors[i];
     if (!sub->sector->linecount) continue; // skip sectors containing original polyobjs
     r_surf_sub = sub;

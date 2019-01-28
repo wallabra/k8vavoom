@@ -153,7 +153,11 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
 #ifdef CLIENT
   if (!forced) {
     if (Drawer && Drawer->IsInited()) {
-      if (lastPBarWdt == -666 && Sys_Time()-pbarStartTime < 0.8) return false;
+      double currt = Sys_Time();
+      if (lastPBarWdt == -666 && currt-pbarStartTime < 0.8) {
+        if (currt-pbarStartTime > 0.033) CL_KeepaliveMessageEx(currt); // ~30 FPS
+        return false;
+      }
     }
   }
 #endif
@@ -169,6 +173,7 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
     // delay update if it is too often
     double currt = Sys_Time();
     if (!forced && currt-pbarLastUpdateTime < 0.033) return false; // ~30 FPS
+    CL_KeepaliveMessageEx(currt);
     pbarLastUpdateTime = currt;
     lastPBarWdt = wdt;
     Drawer->StartUpdate(false); // don't clear
