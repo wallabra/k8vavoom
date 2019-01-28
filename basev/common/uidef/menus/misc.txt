@@ -70,6 +70,15 @@ menudef MiscOptions {
 
   header "Internal Node Builder";
 
+  option enum {
+    title = "Internal Node Builder";
+    cvar = nodes_builder;
+    list {
+      "AJBSP",
+      "ZDBSP",
+    }
+  }
+
   option bool {
     title = "Force node rebuilding";
     cvar = loader_force_nodes_rebuild;
