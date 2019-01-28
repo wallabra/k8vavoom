@@ -40,7 +40,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB loader_build_pvs("loader_build_pvs", true, "Build simple PVS on node rebuilding?", CVAR_Archive);
-static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "3", "Number of threads to use in PVS builder.", CVAR_Archive);
+static VCvarI loader_pvs_builder_threads("loader_pvs_builder_threads", "0", "Number of threads to use in PVS builder (0: use number of CPU cores online).", CVAR_Archive);
 
 static VCvarB nodes_fast_mode("nodes_fast_mode", false, "Do faster rebuild, but generate worser BSP tree?", CVAR_Archive);
 static VCvarB nodes_show_warnings("nodes_show_warnings", true, "Show various node builder warnings?", CVAR_Archive);

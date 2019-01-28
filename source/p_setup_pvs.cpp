@@ -29,6 +29,8 @@
 //**
 //**************************************************************************
 
+static int numOfThreads = -1;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // 2d vector
@@ -159,7 +161,7 @@ struct PVSInfo {
 };
 
 
-enum { PVSThreadMax = 16 }; // one is reserved for music
+enum { PVSThreadMax = 64 };
 
 struct PVSThreadInfo {
   PVSInfo nfo;
@@ -282,7 +284,7 @@ static void pvsStartThreads (const PVSInfo &anfo) {
   pvsLastReport = 0;
   pvsMaxPortals = anfo.numportals;
   pvsPBarDone = false;
-  int pvsThreadsToUse = loader_pvs_builder_threads;
+  int pvsThreadsToUse = /*loader_pvs_builder_threads*/numOfThreads;
   if (pvsThreadsToUse < 1) pvsThreadsToUse = 1; else if (pvsThreadsToUse > PVSThreadMax) pvsThreadsToUse = PVSThreadMax;
 
 #ifdef CLIENT
@@ -383,7 +385,12 @@ void VLevel::BuildPVS () {
   bool ok = CreatePortals(&nfo);
 
   if (ok) {
-    if (loader_pvs_builder_threads > 1) {
+    numOfThreads = loader_pvs_builder_threads;
+    if (numOfThreads <= 0) numOfThreads = Sys_GetCPUCount();
+    if (numOfThreads > PVSThreadMax) numOfThreads = PVSThreadMax;
+    GCon->Logf("using %d thread%s for PVS builder", numOfThreads, (numOfThreads != 1 ? "s" : ""));
+    //if (numOfThreads < 2) numOfThreads = 2; // it looks better this way
+    if (numOfThreads > 1) {
       pvsStartThreads(nfo);
     } else {
       BasePortalVis(&nfo);
@@ -405,7 +412,7 @@ void VLevel::BuildPVS () {
   }
 
   if (!ok) {
-    GCon->Logf("PVS building failed.");
+    GCon->Logf(NAME_Warning, "PVS building failed.");
     VisData = nullptr;
     NoVis = new vuint8[(NumSubsectors+7)/8];
     memset(NoVis, 0xff, (NumSubsectors+7)/8);
@@ -466,7 +473,7 @@ bool VLevel::CreatePortals (void *pvsinfo) {
   for (int f = 0; f < NumSegs; ++f) {
     if (Segs[f].partner) ++nfo->numportals;
   }
-  if (nfo->numportals == 0) { GCon->Logf("PVS: no possible portals found"); return false; }
+  if (nfo->numportals == 0) { GCon->Logf(NAME_Warning, "PVS: no possible portals found"); return false; }
 
   nfo->portals = new portal_t[nfo->numportals];
   for (int i = 0; i < nfo->numportals; ++i) {
@@ -493,7 +500,7 @@ bool VLevel::CreatePortals (void *pvsinfo) {
       // create portal
       if (sub->numportals == MAX_PORTALS_ON_LEAF) {
         //throw GLVisError("Leaf with too many portals");
-        GCon->Logf("PVS: Leaf with too many portals!");
+        GCon->Logf(NAME_Warning, "PVS: Leaf with too many portals!");
         return false;
       }
       sub->portals[sub->numportals] = p;
@@ -591,6 +598,8 @@ void VLevel::BasePortalVis (void *pvsinfo) {
     // fastvis just uses mightsee for a very loose bound
     p->visbits = p->mightsee;
     //p->status = stat_done;
+
+    R_PBarUpdate("PVS", i, nfo->numportals);
   }
   //Owner.DisplayBaseVisProgress(numportals, numportals);
   delete[] nfo->portalsee;
@@ -628,7 +637,7 @@ bool VLevel::LeafFlow (int leafnum, void *pvsinfo) {
   }
 
   if (outbuffer[leafnum>>3]&(1<<(leafnum&7))) {
-    GCon->Logf("Leaf portals saw into leaf");
+    GCon->Logf(NAME_Warning, "Leaf portals saw into leaf");
     return false;
   }
 
