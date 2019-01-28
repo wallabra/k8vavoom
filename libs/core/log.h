@@ -56,7 +56,7 @@ private:
   int logbufsize;
   bool inWrite;
 
-private:
+public:
   void doWrite (EName Type, const char *fmt, va_list ap, bool addEOL);
 
 public:
