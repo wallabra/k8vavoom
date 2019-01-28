@@ -350,14 +350,15 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   const VPakFileInfo &fi = pakdir.files[lump];
 
   // read the lump in
-#if 0
+#if 1
   void *ptr = (fi.filesize ? Z_Malloc(fi.filesize) : nullptr);
   if (fi.filesize) {
     check(lockInited);
     MyThreadLocker locker(&rdlock);
     Stream->Seek(fi.pakdataofs);
     Stream->Serialise(ptr, fi.filesize);
-    check(!Stream->IsError());
+    //check(!Stream->IsError());
+    if (Stream->IsError()) Host_Error("cannot load lump '%s'", *W_FullLumpName(lump));
   }
 
   // create stream
