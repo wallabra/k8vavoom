@@ -17,7 +17,6 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 */
-
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -51,9 +50,24 @@ bool ShowWarnings = true;
 
 #include "doomdata.cpp"
 
+enum
+{
+  // Thing numbers used in Hexen maps
+    PO_HEX_ANCHOR_TYPE = 3000,
+    PO_HEX_SPAWN_TYPE,
+    PO_HEX_SPAWNCRUSH_TYPE,
 
+    // Thing numbers used in Doom and Heretic maps
+    PO_ANCHOR_TYPE = 9300,
+    PO_SPAWN_TYPE,
+    PO_SPAWNCRUSH_TYPE,
+  PO_SPAWNHURT_TYPE
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 FNodeBuilder::FNodeBuilder (FLevel &level,
-              TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
+              /*TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,*/
               const char *name, bool makeGLnodes)
   : Level(level), SegsStuffed(0), MapName(name)
 {
@@ -61,7 +75,12 @@ FNodeBuilder::FNodeBuilder (FLevel &level,
   GLNodes = makeGLnodes;
   FindUsedVertices (Level.Vertices, Level.NumVertices);
   MakeSegsFromSides ();
+
+  TArray<FPolyStart> polyspots;
+  TArray<FPolyStart> anchors;
+  GetPolySpots(polyspots, anchors);
   FindPolyContainers (polyspots, anchors);
+
   GroupSegPlanes ();
   BuildTree ();
 }
@@ -78,12 +97,14 @@ void FNodeBuilder::BuildTree ()
 {
   fixed_t bbox[4];
 
-  fprintf (stderr, "   BSP:   0.0%%\r");
+  //fprintf (stderr, "   BSP:   0.0%%\r");
+  //ZDProgress(0, 100);
   HackSeg = DWORD_MAX;
   HackMate = DWORD_MAX;
   CreateNode (0, Segs.Size(), bbox);
   CreateSubsectorsForReal ();
-  fprintf (stderr, "   BSP: 100.0%%\n");
+  //fprintf (stderr, "   BSP: 100.0%%\n");
+  ZDProgress(0, -1);
 }
 
 DWORD FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
@@ -178,8 +199,13 @@ DWORD FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
   SegsStuffed += count;
   if ((SegsStuffed & ~63) != ((SegsStuffed - count) & ~63))
   {
+    /*
     int percent = (int)(SegsStuffed * 1000.0 / Segs.Size());
-    fprintf (stderr, "   BSP: %3d.%d%%\r", percent/10, percent%10);
+    //fprintf (stderr, "   BSP: %3d.%d%%\r", percent/10, percent%10);
+    if (percent < 0) percent = 0; else if (percent > 100) percent = 100; //k8: just in case
+    ZDProgress(percent);
+    */
+    ZDProgress(SegsStuffed, (int)Segs.Size());
   }
 
   D(Printf ("bbox (%d,%d)-(%d,%d)\n", bbox[BOXLEFT]>>16, bbox[BOXBOTTOM]>>16, bbox[BOXRIGHT]>>16, bbox[BOXTOP]>>16));
@@ -1159,6 +1185,57 @@ extern "C" __declspec(noinline) __declspec(naked) int ClassifyLineBackpatch (nod
 }
 #endif
 #endif
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void FNodeBuilder::GetPolySpots (TArray<FPolyStart> &PolyStarts, TArray<FPolyStart> &PolyAnchors) {
+  int spot1, spot2, anchor, i;
+
+  // Determine if this is a Hexen map by looking for things of type 3000
+  // Only Hexen maps use them, and they are the polyobject anchors
+  for (i = 0; i < Level.NumThings(); ++i)
+  {
+    if (Level.Things[i].type == PO_HEX_ANCHOR_TYPE)
+    {
+      break;
+    }
+  }
+
+  if (i < Level.NumThings())
+  {
+    spot1 = PO_HEX_SPAWN_TYPE;
+    spot2 = PO_HEX_SPAWNCRUSH_TYPE;
+    anchor = PO_HEX_ANCHOR_TYPE;
+  }
+  else
+  {
+    spot1 = PO_SPAWN_TYPE;
+    spot2 = PO_SPAWNCRUSH_TYPE;
+    anchor = PO_ANCHOR_TYPE;
+  }
+
+  for (i = 0; i < Level.NumThings(); ++i)
+  {
+    if (Level.Things[i].type == spot1 ||
+      Level.Things[i].type == spot2 ||
+      Level.Things[i].type == PO_SPAWNHURT_TYPE ||
+      Level.Things[i].type == anchor)
+    {
+      FNodeBuilder::FPolyStart newvert;
+      newvert.x = Level.Things[i].x;
+      newvert.y = Level.Things[i].y;
+      newvert.polynum = Level.Things[i].angle;
+      if (Level.Things[i].type == anchor)
+      {
+        PolyAnchors.Push (newvert);
+      }
+      else
+      {
+        PolyStarts.Push (newvert);
+      }
+    }
+  }
+}
 
 
 } // namespace

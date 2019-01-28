@@ -24,3 +24,9 @@ void ZDWarn (const char *format, ...) {
   }
   GCon->Log(buf);
 }
+
+
+// total==-1: complete
+void ZDProgress (int curr, int total) {
+  GCon->Logf("BSP: %d/%d", curr, total);
+}

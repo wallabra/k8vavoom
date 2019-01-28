@@ -1,4 +1,5 @@
 extern void ZDWarn (const char *format, ...) __attribute__((format(printf, 1, 2)));
+extern void ZDProgress (int curr, int total); // total==-1: complete
 
 #include <math.h>
 //#include "../../libs/core/core.h"
@@ -164,14 +165,16 @@ public:
   };
 
   FNodeBuilder (FLevel &level,
-    TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
-    const char *name, bool makeGLnodes);
+    /*TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,*/
+    const char *name, bool makeGLnodes=true);
   ~FNodeBuilder ();
 
   void GetVertices (WideVertex *&verts, int &count);
+  /*
   void GetNodes (MapNodeEx *&nodes, int &nodeCount,
     MapSegEx *&segs, int &segCount,
     MapSubsectorEx *&ssecs, int &subCount);
+  */
 
   void GetGLNodes (MapNodeEx *&nodes, int &nodeCount,
     MapSegGLEx *&segs, int &segCount,
@@ -210,6 +213,8 @@ private:
   int SegsStuffed;
   const char *MapName;
 
+  void GetPolySpots (TArray<FPolyStart> &PolyStarts, TArray<FPolyStart> &PolyAnchors);
+
   void FindUsedVertices (WideVertex *vertices, int max);
   void BuildTree ();
   void MakeSegsFromSides ();
@@ -247,8 +252,8 @@ private:
   DWORD AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg);
   void SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const;
 
-  int RemoveMinisegs (MapNodeEx *nodes, TArray<MapSegEx> &segs, MapSubsectorEx *subs, int node, short bbox[4]);
-  int StripMinisegs (TArray<MapSegEx> &segs, int subsector, short bbox[4]);
+  //int RemoveMinisegs (MapNodeEx *nodes, TArray<MapSegEx> &segs, MapSubsectorEx *subs, int node, short bbox[4]);
+  //int StripMinisegs (TArray<MapSegEx> &segs, int subsector, short bbox[4]);
   void AddSegToShortBBox (short bbox[4], const FPrivSeg *seg);
   int CloseSubsector (TArray<MapSegGLEx> &segs, int subsector);
   DWORD PushGLSeg (TArray<MapSegGLEx> &segs, const FPrivSeg *seg);

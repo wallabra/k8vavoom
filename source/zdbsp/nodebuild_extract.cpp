@@ -398,6 +398,7 @@ void FNodeBuilder::GetVertices (WideVertex *&verts, int &count)
   }
 }
 
+/*
 void FNodeBuilder::GetNodes (MapNodeEx *&outNodes, int &nodeCount,
   MapSegEx *&outSegs, int &segCount,
   MapSubsectorEx *&outSubs, int &subCount)
@@ -536,6 +537,7 @@ int FNodeBuilder::StripMinisegs (TArray<MapSegEx> &segs, int subsector, short bb
   }
   return count;
 }
+*/
 
 void FNodeBuilder::AddSegToShortBBox (short bbox[4], const FPrivSeg *seg)
 {
