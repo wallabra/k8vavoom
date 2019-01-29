@@ -427,7 +427,8 @@ struct sector_t {
   int validcount;
 
   // list of subsectors in sector
-  // used to check if client can see this sector (it needs to be updated)
+  // used to check if client can see this sector
+  // build in map loader; subsectors are linked with `seclink`
   subsector_t *subsectors;
 
   // list of things in sector
