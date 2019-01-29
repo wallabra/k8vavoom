@@ -34,11 +34,13 @@ class LowerStackLookOnly : StackPoint __mobjinfo__(9078);
 //==========================================================================
 override void InitSkyBox () {
   ::InitSkyBox();
+  if (TID == 0) return;
 
   UpperStackLookOnly SkyBox = none;
   for (Entity E = Level.FindMobjFromTID(TID, none); E && !SkyBox; E = Level.FindMobjFromTID(TID, E)) {
     if (UpperStackLookOnly(E)) SkyBox = UpperStackLookOnly(E);
   }
+
   Sector->ceiling.SkyBox = SkyBox;
   if (SkyBox) {
     SkyBox.Mate = self;

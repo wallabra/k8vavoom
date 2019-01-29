@@ -28,6 +28,7 @@ add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
     linespec/hexen/*.vc
     linespec/incomplete/*.vc
     linespec/player/*.vc
+    linespec/portals/*.vc
     linespec/powerup/*.vc
     linespec/raven/*.vc
     linespec/strife/*.vc

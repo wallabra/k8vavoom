@@ -47,6 +47,7 @@
 52  Scroll_Wall
 53  Line_SetTextureOffset
 54  Sector_ChangeFlags
+57  Sector_SetPortal
 60  Plat_PerpetualRaise
 61  Plat_Stop
 62  Plat_DownWaitUpStay
@@ -104,6 +105,7 @@
 138 Floor_Waggle
 139 Thing_SpawnFacing
 140 Sector_ChangeSound
+156 Line_SetPortal
 169 Generic_Crusher2
 170 Sector_SetCeilingScale2
 171 Sector_SetFloorScale2

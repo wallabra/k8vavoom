@@ -191,6 +191,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/hexen/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/incomplete/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/player/*.vc
+    ${CMAKE_SOURCE_DIR}/progs/common/linespec/portals/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/powerup/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/raven/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/strife/*.vc
