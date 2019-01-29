@@ -430,7 +430,7 @@ bool VEntity::CanSee (VEntity *Other) {
   // determine subsector entries in GL_PVS table
   // first check for trivial rejection
   const vuint8 *vis = XLevel->LeafPVS(SubSector);
-  int ss2 = Other->SubSector-XLevel->Subsectors;
+  int ss2 = (int)(ptrdiff_t)(Other->SubSector-XLevel->Subsectors);
   if (!(vis[ss2>>3]&(1<<(ss2&7)))) return false; // can't possibly be connected
 
   if (XLevel->RejectMatrix) {

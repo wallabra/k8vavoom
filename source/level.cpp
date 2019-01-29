@@ -83,7 +83,7 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
 //==========================================================================
 const vuint8 *VLevel::LeafPVS (const subsector_t *ss) const {
   guard(VLevel::LeafPVS);
-  int sub = ss-Subsectors;
+  int sub = (int)(ptrdiff_t)(ss-Subsectors);
   if (VisData) return VisData+(((NumSubsectors+7)>>3)*sub);
   return NoVis;
   unguard;
