@@ -1905,31 +1905,10 @@ void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
     if (linedef >= 0) {
       line_t *ldef = &Lines[linedef];
       li->linedef = ldef;
-      li->sidedef = &Sides[ldef->sidenum[side]];
-      li->frontsector = Sides[ldef->sidenum[side]].Sector;
-
-      //if (ldef->flags&ML_TWOSIDED) li->backsector = Sides[ldef->sidenum[side^1]].Sector;
-      if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
-        li->backsector = Sides[ldef->sidenum[side^1]].Sector;
-      } else {
-        li->backsector = nullptr;
-        ldef->flags &= ~ML_TWOSIDED;
-      }
-
-      if (side) {
-        li->offset = Length(*li->v1 - *ldef->v2);
-      } else {
-        li->offset = Length(*li->v1 - *ldef->v1);
-      }
-      li->length = Length(*li->v2 - *li->v1);
-      li->side = side;
     }
 
     // assign partner (we need it for self-referencing deep water)
     li->partner = (partner >= 0 && partner < NumSegs ? &Segs[partner] : nullptr);
-
-    // calc seg's plane params
-    CalcSeg(li);
   }
   unguard;
 }
