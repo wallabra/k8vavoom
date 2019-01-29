@@ -193,6 +193,12 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
 
+  // HACK: if sprite is additive, move is slightly closer to view
+  // this is mostly for things like light flares
+  if (Additive) {
+    sprorigin -= viewforward*0.2;
+  }
+
   float dot;
   TVec tvec(0, 0, 0);
   float sr;
