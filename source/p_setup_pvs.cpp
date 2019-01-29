@@ -473,9 +473,11 @@ bool VLevel::CreatePortals (void *pvsinfo) {
   PVSInfo *nfo = (PVSInfo *)pvsinfo;
 
   nfo->numportals = 0;
-  for (int f = 0; f < NumSegs; ++f) {
-    if (Segs[f].partner) ++nfo->numportals;
+  seg_t *seg = &Segs[0];
+  for (int f = 0; f < NumSegs; ++f, ++seg) {
+    if (seg->partner) ++nfo->numportals;
   }
+  const int origpcount = nfo->numportals;
 
   if (nfo->numportals == 0) {
     GCon->Logf(NAME_Warning, "PVS: no possible portals found");
@@ -490,17 +492,17 @@ bool VLevel::CreatePortals (void *pvsinfo) {
   }
 
   portal_t *p = nfo->portals;
-  for (int i = 0; i < NumSegs; ++i) {
-    seg_t *line = &Segs[i];
+  seg = &Segs[0];
+  for (int i = 0; i < NumSegs; ++i, ++seg) {
     //subsector_t *sub = &Subsectors[line->leaf];
     //subsector_t *sub = &Subsectors[nfo->leaves[i]];
     subsec_extra_t *sub = &nfo->ssex[nfo->leaves[i]];
-    if (line->partner) {
-      int pnum = (int)(ptrdiff_t)(line->partner-Segs);
+    if (seg->partner) {
+      int pnum = (int)(ptrdiff_t)(seg->partner-Segs);
 
       // skip self-referencing subsector segs
       if (/*line->leaf == line->partner->leaf*/nfo->leaves[i] == nfo->leaves[pnum]) {
-        //GCon->Logf("Self-referencing subsector detected");
+        //GCon->Logf("Self-referencing subsector detected (%d)", i);
         --nfo->numportals;
         continue;
       }
@@ -511,20 +513,23 @@ bool VLevel::CreatePortals (void *pvsinfo) {
         GCon->Logf(NAME_Warning, "PVS: Leaf with too many portals!");
         return false;
       }
-      sub->portals[sub->numportals] = p;
-      ++sub->numportals;
+      sub->portals[sub->numportals++] = p;
 
       p->winding.original = true;
-      p->winding.points[0] = *line->v1;
-      p->winding.points[1] = *line->v2;
-      p->normal = line->partner->normal;
-      p->dist = line->partner->dist;
+      p->winding.points[0] = *seg->v1;
+      p->winding.points[1] = *seg->v2;
+      p->normal = seg->partner->normal;
+      p->dist = seg->partner->dist;
       //p->leaf = line->partner->leaf;
       p->leaf = nfo->leaves[pnum];
       ++p;
     }
   }
-  GCon->Logf("PVS: %d portals found", nfo->numportals);
+  if (origpcount != nfo->numportals) {
+    GCon->Logf("PVS: %d portals found (%d portals dropped)", nfo->numportals, origpcount-nfo->numportals);
+  } else {
+    GCon->Logf("PVS: %d portals found", nfo->numportals);
+  }
   //if (p-portals != numportals) throw GLVisError("Portals miscounted");
   return (nfo->numportals > 0);
 }
