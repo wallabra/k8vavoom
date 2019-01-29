@@ -40,7 +40,7 @@ static sec_region_t *r_region;
 static bool MirrorClipSegs;
 
 static VCvarI r_maxmirrors("r_maxmirrors", "4", "Maximum allowed mirrors.", CVAR_Archive);
-VCvarI r_max_portal_depth("r_max_portal_depth", "-1", "Maximum allowed portal depth (-1: infinite)", 0/*CVAR_Archive*/);
+VCvarI r_max_portal_depth("r_max_portal_depth", "4", "Maximum allowed portal depth (-1: infinite)", CVAR_Archive);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
 static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering (SLOW)?", CVAR_Archive);
 
