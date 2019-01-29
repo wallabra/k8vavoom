@@ -2314,10 +2314,11 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
         line_t *ldef = &Lines[linedef];
 
         li->linedef = ldef;
+        /*
         li->sidedef = &Sides[ldef->sidenum[side]];
         li->frontsector = Sides[ldef->sidenum[side]].Sector;
 
-        if (/*(ldef->flags&ML_TWOSIDED) != 0 &&*/ ldef->sidenum[side^1] >= 0) {
+        if (/ *(ldef->flags&ML_TWOSIDED) != 0 &&* / ldef->sidenum[side^1] >= 0) {
           li->backsector = Sides[ldef->sidenum[side^1]].Sector;
         } else {
           li->backsector = nullptr;
@@ -2336,6 +2337,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
           li->offset = Length(*li->v1 - *ldef->v1);
         }
         li->side = side;
+        */
       } else {
         li->linedef = nullptr;
         li->sidedef = nullptr;
@@ -2409,6 +2411,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
   }
   unguard;
 
+  /*
   guard(VLevel::LoadCompressedGLNodes::Calc segs);
   seg_t *li = Segs;
   for (int i = 0; i < NumSegs; ++i, ++li) {
@@ -2435,6 +2438,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     if (!ss->sector) Host_Error("Subsector %d without sector", i);
   }
   unguard;
+  */
 
   // create dummy VIS data
   // k8: no need to do this, main loader will take care of it
