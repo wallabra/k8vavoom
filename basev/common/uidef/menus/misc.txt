@@ -77,6 +77,11 @@ menudef MiscOptions {
       "AJBSP",
       "ZDBSP",
     }
+    help =
+      "Internal node builder."
+      "AJBSP is slow, but reliable."
+      "ZDBSP is fast, but it breaks PVS calculations."
+      "It is currently not recommended to use ZDBSP.";
   }
 
   option bool {
