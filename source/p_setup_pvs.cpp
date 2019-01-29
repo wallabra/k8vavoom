@@ -349,7 +349,8 @@ static void pvsStartThreads (const PVSInfo &anfo) {
 //
 //==========================================================================
 void VLevel::BuildPVS () {
-  if (!loader_build_pvs) {
+  if (!loader_build_pvs || (nodes_builder && !loader_build_pvs_force)) {
+    if (nodes_builder) GCon->Logf(NAME_Warning, "skipped PVS building due to problems with node builder (only AJBSP is supported for now)");
     VisData = nullptr;
     NoVis = new vuint8[(NumSubsectors+7)/8];
     memset(NoVis, 0xff, (NumSubsectors+7)/8);
