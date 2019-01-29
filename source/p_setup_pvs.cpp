@@ -433,7 +433,7 @@ void VLevel::BuildPVS () {
   // for some reason, zdbsp creates subsectors for "inner sectors" that
   // breaks PVS. i have to investigate the cause and write a real fix, but
   // for now, let's do it this way.
-  if (ok /*&& nodes_builder*/) {
+  if (ok && nodes_builder) {
     int mtfixcount = 0;
     GCon->Log("fixind pvs...");
     const int sslen = NumSubsectors;
