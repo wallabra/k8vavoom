@@ -427,6 +427,37 @@ void VLevel::BuildPVS () {
   delete [] nfo.leaves;
   delete [] nfo.ssex;
   delete [] nfo.portals;
+
+  // for zdbsp, we should check if both given subsectors are mutually visible
+  // for some reason, zdbsp creates subsectors for "inner sectors" that
+  // breaks PVS. i have to investigate the cause and write a real fix, but
+  // for now, let's do it this way.
+  if (ok /*&& nodes_builder*/) {
+    int mtfixcount = 0;
+    GCon->Log("fixind pvs...");
+    const int sslen = NumSubsectors;
+    const int vslen = (sslen+7)>>3;
+    vuint8 *vd0 = VisData;
+    for (int s0idx = 0; s0idx < sslen; ++s0idx, vd0 += vslen) {
+      vuint8 *vd1 = VisData;
+      for (int s1idx = 0; s1idx < sslen; ++s1idx, vd1 += vslen) {
+        if (vd0[s1idx>>3]&(1<<(s1idx&7))) {
+          if ((vd1[s0idx>>3]&(1<<(s0idx&7))) == 0) {
+            //check(s0idx != s1idx);
+            //GCon->Logf("subsector #%d can see subsector #%d, but not vice versa", s0idx, s1idx);
+            vd1[s0idx>>3] |= (1<<(s0idx&7));
+            ++mtfixcount;
+          }
+        } else if (vd1[s0idx>>3]&(1<<(s0idx&7))) {
+          if ((vd0[s1idx>>3]&(1<<(s1idx&7))) == 0) {
+            vd0[s1idx>>3] |= (1<<(s1idx&7));
+            ++mtfixcount;
+          }
+        }
+      }
+    }
+    GCon->Logf("pvs fixing complete, %d fixes done", mtfixcount);
+  }
 }
 
 /* k8: no need to rebuild reject table, as PVS is used in every place where
@@ -496,8 +527,8 @@ bool VLevel::CreatePortals (void *pvsinfo) {
   for (int i = 0; i < NumSegs; ++i, ++seg) {
     //subsector_t *sub = &Subsectors[line->leaf];
     //subsector_t *sub = &Subsectors[nfo->leaves[i]];
-    subsec_extra_t *sub = &nfo->ssex[nfo->leaves[i]];
     if (seg->partner) {
+      subsec_extra_t *sub = &nfo->ssex[nfo->leaves[i]];
       int pnum = (int)(ptrdiff_t)(seg->partner-Segs);
 
       // skip self-referencing subsector segs

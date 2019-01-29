@@ -958,13 +958,10 @@ load_again:
     }
   }
 
-  double Lines2Time = -Sys_Time();
+  //double Lines2Time = -Sys_Time();
   FixKnownMapErrors();
-  HashSectors();
-  HashLines();
   bool forceNodeRebuildFromFixer = !!(LevelFlags&LF_ForceRebuildNodes);
-  FinaliseLines();
-  Lines2Time += Sys_Time();
+  //Lines2Time += Sys_Time();
 
   //HACK! fix things skill settings
   SetupThingsFromMapinfo();
@@ -982,6 +979,7 @@ load_again:
       //if (!glNodesFound) NeedNodesBuild = true;
     }
     delete strm;
+    if (cachedDataLoaded) forceNodeRebuildFromFixer = false; //k8: is this right?
   }
 
   double NodesTime = -Sys_Time();
@@ -1006,6 +1004,11 @@ load_again:
       LoadPVS(gl_lumpnum+ML_GL_PVS);
     }
   }
+
+  HashSectors();
+  HashLines();
+  FinaliseLines();
+
   PostLoadSegs();
   PostLoadSubsectors();
 
@@ -2555,10 +2558,17 @@ void VLevel::CreateBlockMap () {
   int Height = MapBlock(MaxY-MinY)+1;
 
   // add all lines to their corresponding blocks
+  // but skip zero-length lines
   TArray<vuint16> *BlockLines = new TArray<vuint16>[Width*Height];
   for (int i = 0; i < NumLines; ++i) {
     // determine starting and ending blocks
     line_t &Line = Lines[i];
+
+    float ssq = Length2DSquared(*Line.v2 - *Line.v1);
+    if (ssq < 1.0f) continue;
+    ssq = Length2D(*Line.v2 - *Line.v1);
+    if (ssq < 1.0f) continue;
+
     int X1 = MapBlock(Line.v1->x-MinX);
     int Y1 = MapBlock(Line.v1->y-MinY);
     int X2 = MapBlock(Line.v2->x-MinX);

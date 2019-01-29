@@ -58,10 +58,12 @@ struct IntSideDef
   //char  midtexture[8];
 
   int sector;
+  int origindex;
 
   //TArray<UDMFKey> props;
 };
 
+/*
 struct MapLineDef
 {
   WORD  v1;
@@ -81,6 +83,7 @@ struct MapLineDef2
   unsigned char args[5];
   WORD  sidenum[2];
 };
+*/
 
 struct IntLineDef
 {
@@ -90,6 +93,7 @@ struct IntLineDef
   int special;
   int args[5];
   DWORD sidenum[2];
+  int origindex;
 
   //TArray<UDMFKey> props;
 };
@@ -112,6 +116,7 @@ struct IntSector
   // UDMF. Just storing the UDMF keys and leaving the binary fields
   // empty is enough
   MapSector data;
+  int origindex;
 
   //TArray<UDMFKey> props;
 };
