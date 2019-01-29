@@ -3516,6 +3516,25 @@ void VLevel::FixSelfRefDeepWater () {
     } else {
       ss->deepref = hs;
     }
+    // also, add deepref PVS info to the current one
+    // this is unoptimal, but required for zdbsp, until
+    // i'll fix PVS calculations for it.
+    // the easiest way to see why it is required is to
+    // comment this out, and do:
+    //   -tnt +map map02 +notarget +noclip +warpto 866 1660
+    // you will immediately see rendering glitches.
+    // this also affects sight calculations, 'cause PVS is
+    // used for fast rejects there.
+    if (VisData) {
+      vuint8 *vis = VisData+(((NumSubsectors+7)>>3)*i);
+      for (subsector_t *s2 = hs->subsectors; s2; s2 = s2->seclink) {
+        if (s2 == sub) continue; // just in case
+        // or vis data
+        vuint8 *v2 = VisData+(((NumSubsectors+7)>>3)*((int)(ptrdiff_t)(s2-Subsectors)));
+        vuint8 *dest = vis;
+        for (int cc = (NumSubsectors+7)/8; cc > 0; --cc, ++dest, ++v2) *dest |= *v2;
+      }
+    }
   }
 
   Z_Free(self_subs);
