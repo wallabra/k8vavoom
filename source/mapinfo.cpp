@@ -991,7 +991,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
 }
 
 
-static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name, vuint32 *flags) {
+static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name, vuint32 *flags, bool newStyle) {
   if (sc->Check("lookup")) {
     if (sc->IsCMode()) sc->Check(",");
     *flags |= lookupFlag;
@@ -1005,32 +1005,41 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
     } else {
       *flags &= ~lookupFlag;
       *name = sc->String;
-      //fprintf(stderr, "CMODE: %d; qs: %d\n", (int)sc->IsCMode(), (int)sc->QuotedString);
-      while (sc->IsCMode() && sc->QuotedString) {
-        if (!sc->GetString()) return;
-        if (sc->Crossed) { sc->UnGet(); break; }
-        if (sc->QuotedString) { sc->UnGet(); sc->Error("comma expected"); break; }
-        if (sc->String != ",") { sc->UnGet(); break; }
-        if (!sc->GetString()) { sc->Error("unexpected EOF"); return; }
-        if (!sc->QuotedString) {
-          if (sc->String == "}") { sc->UnGet(); break; }
-          sc->UnGet();
-          sc->Error("quoted string expected");
-          break;
+      if (newStyle) {
+        for (;;) {
+          //if (sc->Check("}")) break;
+          if (!sc->Check(",")) break;
+          //sc->Expect(",");
+          //if (sc->Check(",")) continue;
+          sc->ExpectString();
+          while (!sc->QuotedString) {
+            if (sc->String != ",") { sc->UnGet(); sc->Error("comma expected"); break; }
+            sc->ExpectString();
+          }
+          *name += "\n";
+          *name += sc->String;
         }
-        //fprintf(stderr, "  :::<%s>\n", *sc->String);
-        *name += "\n";
-        *name += sc->String;
+      } else {
+        for (;;) {
+          sc->ExpectString();
+          if (sc->Crossed) { sc->UnGet(); break; }
+          while (!sc->QuotedString) {
+            if (sc->String != ",") { sc->UnGet(); sc->Error("comma expected"); break; }
+            sc->ExpectString();
+          }
+          *name += "\n";
+          *name += sc->String;
+        }
       }
-      //fprintf(stderr, "collected: <%s>\n", **name);
+      //GCon->Logf("COLLECTED: <%s>", **name);
     }
   }
 }
 
-static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name, vint32 *flags) {
+static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name, vint32 *flags, bool newStyle) {
   vuint32 lf = (vuint32)lookupFlag;
   vuint32 flg = (vuint32)*flags;
-  ParseNameOrLookup(sc, lf, name, &flg);
+  ParseNameOrLookup(sc, lf, name, &flg, newStyle);
   *flags = (vint32)flg;
 }
 
@@ -1126,7 +1135,7 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   }
 
   // map name must follow the number
-  ParseNameOrLookup(sc, MAPINFOF_LookupName, &info->Name, &info->Flags);
+  ParseNameOrLookup(sc, MAPINFOF_LookupName, &info->Name, &info->Flags, false);
 
   // set song lump name from SNDINFO script
   for (int i = 0; i < MapSongList.Num(); ++i) {
@@ -1199,13 +1208,13 @@ static void ParseClusterDef (VScriptParser *sc) {
       CDef->Flags |= CLUSTERF_Hub;
     } else if (sc->Check("entertext")) {
       if (newFormat) sc->Expect("=");
-      ParseNameOrLookup(sc, CLUSTERF_LookupEnterText, &CDef->EnterText, &CDef->Flags);
+      ParseNameOrLookup(sc, CLUSTERF_LookupEnterText, &CDef->EnterText, &CDef->Flags, newFormat);
       //GCon->Logf("::: <%s>", *CDef->EnterText);
     } else if (sc->Check("entertextislump")) {
       CDef->Flags |= CLUSTERF_EnterTextIsLump;
     } else if (sc->Check("exittext")) {
       if (newFormat) sc->Expect("=");
-      ParseNameOrLookup(sc, CLUSTERF_LookupExitText, &CDef->ExitText, &CDef->Flags);
+      ParseNameOrLookup(sc, CLUSTERF_LookupExitText, &CDef->ExitText, &CDef->Flags, newFormat);
     } else if (sc->Check("exittextislump")) {
       CDef->Flags |= CLUSTERF_ExitTextIsLump;
     } else if (sc->Check("flat")) {
@@ -1322,7 +1331,7 @@ static void ParseEpisodeDef (VScriptParser *sc) {
   for (;;) {
     if (sc->Check("name")) {
       if (newFormat) sc->Expect("=");
-      ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags);
+      ParseNameOrLookup(sc, EPISODEF_LookupText, &EDef->Text, &EDef->Flags, newFormat);
     } else if (sc->Check("picname")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectName8();
