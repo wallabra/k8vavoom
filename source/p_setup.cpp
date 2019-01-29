@@ -72,6 +72,7 @@ static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix inval
 //static VCvarB r_udmf_allow_extra_textures("r_udmf_allow_extra_textures", false, "Allow force-loading UDMF textures? (WARNING: savegames WILL crash!)", CVAR_Archive);
 
 
+extern VCvarI nodes_builder;
 extern VCvarI r_max_portal_depth;
 extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
 #ifdef CLIENT
@@ -3525,7 +3526,7 @@ void VLevel::FixSelfRefDeepWater () {
     // you will immediately see rendering glitches.
     // this also affects sight calculations, 'cause PVS is
     // used for fast rejects there.
-    if (VisData) {
+    if (VisData && nodes_builder) {
       vuint8 *vis = VisData+(((NumSubsectors+7)>>3)*i);
       for (subsector_t *s2 = hs->subsectors; s2; s2 = s2->seclink) {
         if (s2 == sub) continue; // just in case
