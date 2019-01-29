@@ -1085,6 +1085,14 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     // LNSPEC_ScrollTextureModel:
     // LNSPEC_ScrollTextureOffsets:
     // LNSPEC_PointPushSetForce:
+
+    case LNSPEC_SectorSetPortal:
+      print("WARNING: this level uses sector portals; this is not supported by k8VaVoom!");
+      break;
+    case LNSPEC_LineSetPortal:
+      print("WARNING: this level uses line portals; this is not supported by k8VaVoom!");
+      break;
+
     default:
       //  Log everything else to know what needs to be implemented.
       print("Unknown action special %d(%d, %d, %d, %d, %d)", Special, Arg1, Arg2, Arg3, Arg4, Arg5);
