@@ -108,9 +108,13 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
 
     // read patch index and find patch texture
     vint16 PatchIdx = Streamer<vint16>(Strm);
-    if (PatchIdx < 0 || PatchIdx >= patchlist.length()) {
+    // one patch with index `-1` means "use the same named texture, and get out"
+    if (PatchIdx == -1 && PatchCount == 1) {
+      int tid = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Any, true, true, false);
+      patch->Tex = (tid >= 0 ? GTextureManager[tid] : nullptr);
+    } else if (PatchIdx < 0 || PatchIdx >= patchlist.length()) {
       //Sys_Error("InitTextures: Bad patch index in texture %s (%d/%d)", *Name, PatchIdx, NumPatchLookup-1);
-      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad patch index (%d/%d) in texture \"%s\" (%d/%d)", PatchIdx, patchlist.length()-1, *Name, i, PatchCount-1); }
+      if (!warned) { warned = true; GCon->Logf(NAME_Warning, "InitTextures: Bad %spatch index (%d/%d) in texture \"%s\" (%d/%d)", (IsStrife ? "Strife " : ""), PatchIdx, patchlist.length()-1, *Name, i, PatchCount-1); }
       patch->Tex = nullptr;
     } else {
       patch->Tex = patchlist[PatchIdx].tx;
