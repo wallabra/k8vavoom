@@ -83,21 +83,23 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
       const float backfz1 = bsec->floor.GetPointZ(vv1);
       const float backfz2 = bsec->floor.GetPointZ(vv2);
 
-      /*
+#if 0
       {
         int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
-        if (/ *lnum == 243 || lnum == 244* / lnum == 336 || lnum == 337) {
+        if (/*lnum == 243 || lnum == 244*/ /*lnum == 336 || lnum == 337*/ lnum == 458 || lnum == 299)
+        {
           int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
                       line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
                       -1);
-          GCon->Logf("%d: opened(%d:%d)! t=%d; b=%d; m=%d; fcz=(%f,%f); ffz=(%f,%f); bcz=(%f,%f); bfz=(%f,%f)",
+          GCon->Logf("%d: opened(%d:%d)! t=%d; b=%d; m=%d; fcz=(%f,%f); ffz=(%f,%f); bcz=(%f,%f); bfz=(%f,%f); alpha=%f",
             lnum,
             (int)(ptrdiff_t)(line->sidedef-Level->Sides), snum,
             line->sidedef->TopTexture.id, line->sidedef->BottomTexture.id, line->sidedef->MidTexture.id,
-            frontcz1, frontcz2, frontfz1, frontfz2, backcz1, backcz2, backfz1, backfz2);
+            frontcz1, frontcz2, frontfz1, frontfz2, backcz1, backcz2, backfz1, backfz2,
+            line->linedef->alpha);
         }
       }
-      */
+#endif
 
       if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
           backcz2 <= backfz1 && backcz2 <= backfz2)
