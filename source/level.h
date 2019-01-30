@@ -429,7 +429,27 @@ public:
   void LoadMap (VName MapName);
 
   subsector_t *PointInSubsector (const TVec &point) const;
-  const vuint8 *LeafPVS (const subsector_t *ss) const;
+
+  inline bool HasPVS () const { return !!VisData; }
+
+  //const vuint8 *LeafPVS (const subsector_t *ss) const;
+  inline const vuint8 *LeafPVS (const subsector_t *ss) const {
+    if (VisData) {
+      const int sub = (int)(ptrdiff_t)(ss-Subsectors);
+      return VisData+(((NumSubsectors+7)>>3)*sub);
+    }
+    return NoVis;
+  }
+
+  inline const vuint8 IsLeafVisible (const subsector_t *from, const subsector_t *dest) const {
+    if (VisData && from != dest && from && dest) {
+      const int sub = (int)(ptrdiff_t)(from-Subsectors);
+      const vuint8 *vd = VisData+(((NumSubsectors+7)>>3)*sub);
+      const int ss2 = (int)(ptrdiff_t)(dest-Subsectors);
+      return vd[ss2>>3]&(1<<(ss2&7));
+    }
+    return 0xff;
+  }
 
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,

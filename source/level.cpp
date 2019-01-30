@@ -81,6 +81,7 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
 //  VLevel::LeafPVS
 //
 //==========================================================================
+/*
 const vuint8 *VLevel::LeafPVS (const subsector_t *ss) const {
   guard(VLevel::LeafPVS);
   int sub = (int)(ptrdiff_t)(ss-Subsectors);
@@ -88,6 +89,7 @@ const vuint8 *VLevel::LeafPVS (const subsector_t *ss) const {
   return NoVis;
   unguard;
 }
+*/
 
 
 //==========================================================================
