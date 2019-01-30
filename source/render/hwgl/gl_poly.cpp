@@ -1572,7 +1572,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
     if (Portal->useStencil || true) {
       if (Portal->NeedsDepthBuffer()) {
         // clear depth buffer
-        if (CanUseRevZ()) glDepthRange(0, 0); glDepthRange(1, 1);
+        if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
         glDepthFunc(GL_ALWAYS);
         DrawPortalArea(Portal);
         //glDepthFunc(GL_LEQUAL);
