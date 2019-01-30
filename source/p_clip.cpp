@@ -140,7 +140,8 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
   guard(VViewClipper::ClipInitFrustrumRange);
   check(!ClipHead);
 
-  if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
+  //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
+  if (viewforward.z >= 0.985f || viewforward.z <= -0.985f) return; // looking up or down, can see behind
 
   TVec Pts[4];
   TVec TransPts[4];
