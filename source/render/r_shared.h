@@ -135,6 +135,7 @@ public:
   VRenderLevelShared *RLev;
   TArray<surface_t *> Surfs;
   int Level;
+  bool useStencil;
 
   VPortal (VRenderLevelShared *ARLev);
   virtual ~VPortal ();
@@ -147,7 +148,7 @@ public:
   virtual void DrawContents () = 0;
 
 protected:
-  void SetUpRanges (VViewClipper &, bool);
+  void SetUpRanges (VViewClipper &Range, bool Revert, bool SetFrustum);
 };
 
 

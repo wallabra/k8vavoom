@@ -37,8 +37,9 @@
 //  VPortal::VPortal
 //
 //==========================================================================
-VPortal::VPortal(VRenderLevelShared *ARLev)
+VPortal::VPortal (VRenderLevelShared *ARLev)
   : RLev(ARLev)
+  , useStencil(true)
 {
   Level = RLev->PortalLevel+1;
 }
@@ -111,7 +112,11 @@ bool VPortal::MatchMirror (TPlane *) const {
 void VPortal::Draw (bool UseStencil) {
   guard(VPortal::Draw);
 
-  if (!Drawer->StartPortal(this, UseStencil)) return; // all portal polygons are clipped away
+  if (!Drawer->StartPortal(this, UseStencil)) {
+    // all portal polygons are clipped away
+    //GCon->Logf("portal is clipped away");
+    return;
+  }
 
   // save renderer settings
   TVec SavedViewOrg = vieworg;
@@ -185,9 +190,14 @@ void VPortal::Draw (bool UseStencil) {
 //  VPortal::SetUpRanges
 //
 //==========================================================================
-void VPortal::SetUpRanges (VViewClipper &Range, bool Revert) {
+void VPortal::SetUpRanges (VViewClipper &Range, bool Revert, bool SetFrustum) {
   guard(VPortal::SetUpRanges);
   Range.ClearClipNodes(vieworg, RLev->Level);
+  if (SetFrustum) {
+    Range.ClipInitFrustrumRange(viewangles, viewforward, viewright, viewup, refdef.fovx, refdef.fovy);
+    //GCon->Logf("SURFS: %d", Surfs.Num());
+    //return;
+  }
   for (int i = 0; i < Surfs.Num(); ++i) {
     if (Surfs[i]->plane->normal.z == 0) {
       // wall
@@ -341,15 +351,26 @@ bool VSectorStackPortal::MatchSkyBox (VEntity *AEnt) const {
 void VSectorStackPortal::DrawContents () {
   guard(VSectorStackPortal::DrawContents);
   VViewClipper Range;
-  VPortal::SetUpRanges(Range, false);
+  VPortal::SetUpRanges(Range, false, true); //k8: after moving viewport?
 
   RLev->ViewEnt = Viewport;
   VEntity *Mate = Viewport->eventSkyBoxGetMate();
+
+  //GCon->Logf("rendering portal contents; offset=(%f,%f)", Viewport->Origin.x-Mate->Origin.x, Viewport->Origin.y-Mate->Origin.y);
+
   vieworg.x = vieworg.x+Viewport->Origin.x-Mate->Origin.x;
   vieworg.y = vieworg.y+Viewport->Origin.y-Mate->Origin.y;
 
+  //VPortal::SetUpRanges(Range, false, true); //k8: after moving viewport?
+
   // reuse FixedModel flag to prevent recursion
   Viewport->EntityFlags |= VEntity::EF_FixedModel;
+
+  //glClear(GL_COLOR_BUFFER_BIT);
+  //glClearDepth(0.0f);
+  //glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+  //glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
 
   RLev->RenderScene(&refdef, &Range);
 
@@ -393,7 +414,7 @@ void VMirrorPortal::DrawContents () {
   VectorsAngles(viewforward, (MirrorFlip ? -viewright : viewright), viewup, viewangles);
 
   VViewClipper Range;
-  SetUpRanges(Range, true);
+  SetUpRanges(Range, true, false);
 
   view_clipplanes[4].normal = Plane->normal;
   view_clipplanes[4].dist = Plane->dist;
