@@ -54,11 +54,11 @@ static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with pol
 //  IsSegAClosedSomething
 //
 //==========================================================================
-static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
-  if (line->linedef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
+static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
+  if (seg->linedef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
-  auto fsec = line->linedef->frontsector;
-  auto bsec = line->linedef->backsector;
+  auto fsec = seg->linedef->frontsector;
+  auto bsec = seg->linedef->backsector;
 
   //if (!fsec || !bsec) return false;
 
@@ -66,37 +66,49 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
   if (fsec->floor.normal.z == 1.0f && bsec->floor.normal.z == 1.0f &&
       fsec->ceiling.normal.z == -1.0f && bsec->ceiling.normal.z == -1.0f)
   {
-    if (line->sidedef->TopTexture != -1 || // a line without top texture isn't a door
-        line->sidedef->BottomTexture != -1 || // a line without bottom texture isn't an elevator/plat
-        line->sidedef->MidTexture != -1) // a line without mid texture isn't a polyobj door
+    if (seg->sidedef->TopTexture != -1 || // a seg without top texture isn't a door
+        seg->sidedef->BottomTexture != -1 || // a seg without bottom texture isn't an elevator/plat
+        seg->sidedef->MidTexture != -1) // a seg without mid texture isn't a polyobj door
     {
-      const TVec vv1 = *line->linedef->v1;
-      const TVec vv2 = *line->linedef->v2;
+      const TVec vv1 = *seg->linedef->v1;
+      const TVec vv2 = *seg->linedef->v2;
 
       const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
       const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      check(frontcz1 == frontcz2);
       const float frontfz1 = fsec->floor.GetPointZ(vv1);
       const float frontfz2 = fsec->floor.GetPointZ(vv2);
+      check(frontfz1 == frontfz2);
 
       const float backcz1 = bsec->ceiling.GetPointZ(vv1);
       const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      check(backcz1 == backcz2);
       const float backfz1 = bsec->floor.GetPointZ(vv1);
       const float backfz2 = bsec->floor.GetPointZ(vv2);
+      check(backfz1 == backfz2);
+
+      int snum = (seg->sidedef == &Level->Sides[seg->linedef->sidenum[0]] ? 0 :
+                  seg->sidedef == &Level->Sides[seg->linedef->sidenum[1]] ? 1 :
+                  -1);
+      check(snum >= 0);
+      const side_t *s0 = &Level->Sides[seg->linedef->sidenum[0]];
+      const side_t *s1 = &Level->Sides[seg->linedef->sidenum[1]];
+      //const side_t *s2 = &Level->Sides[seg->linedef->sidenum[snum^1]];
 
 #if 0
       {
-        int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
+        int lnum = (int)(ptrdiff_t)(seg->linedef-Level->Lines);
         if (/*lnum == 243 || lnum == 244*/ /*lnum == 336 || lnum == 337*/ lnum == 458 || lnum == 299)
         {
-          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
-                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
+          int snum = (seg->sidedef == &Level->Sides[seg->linedef->sidenum[0]] ? 0 :
+                      seg->sidedef == &Level->Sides[seg->linedef->sidenum[1]] ? 1 :
                       -1);
           GCon->Logf("%d: opened(%d:%d)! t=%d; b=%d; m=%d; fcz=(%f,%f); ffz=(%f,%f); bcz=(%f,%f); bfz=(%f,%f); alpha=%f",
             lnum,
-            (int)(ptrdiff_t)(line->sidedef-Level->Sides), snum,
-            line->sidedef->TopTexture.id, line->sidedef->BottomTexture.id, line->sidedef->MidTexture.id,
+            (int)(ptrdiff_t)(seg->sidedef-Level->Sides), snum,
+            seg->sidedef->TopTexture.id, seg->sidedef->BottomTexture.id, seg->sidedef->MidTexture.id,
             frontcz1, frontcz2, frontfz1, frontfz2, backcz1, backcz2, backfz1, backfz2,
-            line->linedef->alpha);
+            seg->linedef->alpha);
         }
       }
 #endif
@@ -109,46 +121,42 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
         if (frontcz1 > frontfz1 && frontcz1 > frontfz2 &&
             frontcz2 > frontfz1 && frontcz2 > frontfz2)
         {
-          if (line->sidedef->TopTexture > 0) return true;
+          if (seg->sidedef->TopTexture > 0) return true;
           // check other side, this can be a back side of a door
-          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
-                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
-                      -1);
-
           if (snum >= 0) {
-            const side_t *s2 = &Level->Sides[line->linedef->sidenum[snum^1]];
+            const side_t *s2 = &Level->Sides[seg->linedef->sidenum[snum^1]];
             if (s2->TopTexture > 0) return true;
           }
         }
       }
 
-      // common door has only top texture, and the other side has no textures at all
+      // check for lowered lift
+      if (snum == 0 && s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
+          seg->sidedef->BottomTexture > 0) // has bottex
+      {
+        if (backfz1 >= /*seg->sidedef->Sector*/fsec->ceiling.maxz) {
+          // this looks like a raised lift, yay
+          return true;
+        }
+      }
+
+      // check for raised lift
+      if (snum == 1 && s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
+          seg->sidedef->TopTexture > 0) // has bottex
+      {
+        if (backfz1 >= /*seg->sidedef->Sector*/fsec->ceiling.maxz) {
+          // this looks like a raised lift, yay
+          return true;
+        }
+      }
+
       /*
-      if (line->sidedef->BottomTexture == 0 && line->sidedef->MidTexture == 0) {
-        if (line->sidedef->TopTexture > 0) {
-          // looks like it
-          // now, if backsector's ceiling z is the same as backsector's floor z, it is a closed door
-          if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
-              backcz2 <= backfz1 && backcz2 <= backfz2)
-          {
-            return true;
-          }
-        } else if (line->sidedef->TopTexture == 0) {
-          // it must be a back side of a door
-          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
-                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
-                      -1);
-          if (snum >= 0) {
-            const side_t *s2 = &Level->Sides[line->linedef->sidenum[snum^1]];
-            if (s2->BottomTexture == 0 && s2->MidTexture == 0 && s2->TopTexture > 0) {
-              // the same check as for a door front
-              if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
-                  backcz2 <= backfz1 && backcz2 <= backfz2)
-              {
-                return true;
-              }
-            }
-          }
+      if (s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
+          s0->BottomTexture > 0) // has bottex
+      {
+        if (backfz1 >= bsec->ceiling.maxz) {
+          // this looks like a raised lift, yay
+          return true;
         }
       }
       */
@@ -158,7 +166,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
       {
         // it's a closed door/elevator/polydoor
         /*
-        int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
+        int lnum = (int)(ptrdiff_t)(seg->linedef-Level->Lines);
         if (lnum == 47 || lnum == 68) {
           GCon->Logf("%d: closed!", lnum);
         }
@@ -168,15 +176,15 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
 
       /*
       {
-        int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
+        int lnum = (int)(ptrdiff_t)(seg->linedef-Level->Lines);
         if (lnum == 47 || lnum == 68) {
-          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
-                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
+          int snum = (seg->sidedef == &Level->Sides[seg->linedef->sidenum[0]] ? 0 :
+                      seg->sidedef == &Level->Sides[seg->linedef->sidenum[1]] ? 1 :
                       -1);
           GCon->Logf("%d: opened(%d:%d)! t=%d; b=%d; m=%d; fcz=(%f,%f); bcz=(%f,%f); ffz=(%f,%f); bfz=(%f,%f)",
             lnum,
-            (int)(ptrdiff_t)(line->sidedef-Level->Sides), snum,
-            line->sidedef->TopTexture.id, line->sidedef->BottomTexture.id, line->sidedef->MidTexture.id,
+            (int)(ptrdiff_t)(seg->sidedef-Level->Sides), snum,
+            seg->sidedef->TopTexture.id, seg->sidedef->BottomTexture.id, seg->sidedef->MidTexture.id,
             frontcz1, frontcz2, backcz1, backcz2, frontfz1, frontfz2, backfz1, backfz2);
         }
       }
@@ -202,11 +210,11 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
 //  IsSegAnOpenedSomething
 //
 //==========================================================================
-static inline bool IsSegAnOpenedSomething (VLevel *Level, const seg_t *line) {
-  if (line->linedef->flags&ML_3DMIDTEX) return true; // 3dmidtex never blocks anything
+static inline bool IsSegAnOpenedSomething (VLevel *Level, const seg_t *seg) {
+  if (seg->linedef->flags&ML_3DMIDTEX) return true; // 3dmidtex never blocks anything
 
-  auto fsec = line->linedef->frontsector;
-  auto bsec = line->linedef->backsector;
+  auto fsec = seg->linedef->frontsector;
+  auto bsec = seg->linedef->backsector;
 
   //if (!fsec || !bsec) return false;
 
@@ -214,12 +222,12 @@ static inline bool IsSegAnOpenedSomething (VLevel *Level, const seg_t *line) {
   if (fsec->floor.normal.z == 1.0f && bsec->floor.normal.z == 1.0f &&
       fsec->ceiling.normal.z == -1.0f && bsec->ceiling.normal.z == -1.0f)
   {
-    if (line->sidedef->TopTexture != -1 || // a line without top texture isn't a door
-        line->sidedef->BottomTexture != -1 || // a line without bottom texture isn't an elevator/plat
-        line->sidedef->MidTexture != -1) // a line without mid texture isn't a polyobj door
+    if (seg->sidedef->TopTexture != -1 || // a seg without top texture isn't a door
+        seg->sidedef->BottomTexture != -1 || // a seg without bottom texture isn't an elevator/plat
+        seg->sidedef->MidTexture != -1) // a seg without mid texture isn't a polyobj door
     {
-      const TVec vv1 = *line->linedef->v1;
-      const TVec vv2 = *line->linedef->v2;
+      const TVec vv1 = *seg->linedef->v1;
+      const TVec vv2 = *seg->linedef->v2;
 
       const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
       const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
