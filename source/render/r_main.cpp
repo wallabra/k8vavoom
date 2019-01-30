@@ -828,21 +828,31 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 //
 //==========================================================================
 void VRenderLevelShared::MarkLeaves () {
-  guard(VRenderLevelShared::MarkLeaves);
-  node_t *node;
-
   if (r_oldviewleaf == r_viewleaf) return;
 
   ++r_visframecount;
   r_oldviewleaf = r_viewleaf;
 
-  const vuint8 *vis = Level->LeafPVS(r_viewleaf);
-
-  for (int i = 0; i < Level->NumSubsectors; ++i) {
-    if (vis[i>>3]&(1<<(i&7))) {
-      subsector_t *sub = &Level->Subsectors[i];
+  if (Level->HasPVS()) {
+    const vuint8 *vis = Level->LeafPVS(r_viewleaf);
+    subsector_t *sub = &Level->Subsectors[0];
+    for (int i = 0; i < Level->NumSubsectors; ++i, ++sub) {
+      if (vis[i>>3]&(1<<(i&7))) {
+        sub->VisFrame = r_visframecount;
+        node_t *node = sub->parent;
+        while (node) {
+          if (node->VisFrame == r_visframecount) break;
+          node->VisFrame = r_visframecount;
+          node = node->parent;
+        }
+      }
+    }
+  } else {
+    // eh, we have no PVS, so just mark it all
+    subsector_t *sub = &Level->Subsectors[0];
+    for (int i = Level->NumSubsectors-1; i >= 0; --i, ++sub) {
       sub->VisFrame = r_visframecount;
-      node = sub->parent;
+      node_t *node = sub->parent;
       while (node) {
         if (node->VisFrame == r_visframecount) break;
         node->VisFrame = r_visframecount;
@@ -850,7 +860,6 @@ void VRenderLevelShared::MarkLeaves () {
       }
     }
   }
-  unguard;
 }
 
 
