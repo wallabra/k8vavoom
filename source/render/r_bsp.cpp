@@ -33,6 +33,8 @@
 
 #define HORIZON_SURF_SIZE (sizeof(surface_t) + sizeof(TVec) * 3)
 
+//#define VRBSP_DISABLE_SKY_PORTALS
+
 
 static subsector_t *r_sub;
 static subregion_t *r_subregion;
@@ -194,6 +196,7 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
         }
       }
     }
+
     if (!Sky && !SkyBox) {
       InitSky();
       Sky = &BaseSky;
@@ -210,10 +213,13 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
       if (!Portal) {
         if (IsStack) {
           Portal = new VSectorStackPortal(this, SkyBox);
+          Portals.Append(Portal);
         } else {
+#if !defined(VRBSP_DISABLE_SKY_PORTALS)
           Portal = new VSkyBoxPortal(this, SkyBox);
+          Portals.Append(Portal);
+#endif
         }
-        Portals.Append(Portal);
       }
     } else {
       for (int i = 0; i < Portals.Num(); ++i) {
@@ -222,15 +228,28 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
           break;
         }
       }
+#if !defined(VRBSP_DISABLE_SKY_PORTALS)
       if (!Portal) {
         Portal = new VSkyPortal(this, Sky);
         Portals.Append(Portal);
       }
+#endif
     }
+    if (!Portal) return;
+    //GCon->Log("----");
+    int doRenderSurf = -1;
     do {
-      if (surfs->plane->PointOnSide(vieworg)) continue; // viewer is in back side or on plane
+      if (surfs->plane->PointOnSide(vieworg)) {
+        // viewer is in back side or on plane
+        //GCon->Logf("  SURF SKIP!");
+        continue;
+      }
       Portal->Surfs.Append(surfs);
-      if (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha()) {
+      if (doRenderSurf < 0) doRenderSurf = (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() ? 1 : 0);
+      //if (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha())
+      if (doRenderSurf)
+      {
+        //GCon->Logf("  SURF!");
         surfs->Light = (lLev<<24)|LightParams->LightColour;
         surfs->Fade = Fade;
         surfs->dlightframe = r_sub->dlightframe;
