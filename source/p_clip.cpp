@@ -83,12 +83,63 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
       const float backfz1 = bsec->floor.GetPointZ(vv1);
       const float backfz2 = bsec->floor.GetPointZ(vv2);
 
+      // common door has only top texture, and the other side has no textures at all
+      if (line->sidedef->BottomTexture == 0 && line->sidedef->MidTexture == 0) {
+        if (line->sidedef->TopTexture > 0) {
+          // looks like it
+          // now, if backsector's ceiling z is the same as backsector's floor z, it is a closed door
+          if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
+              backcz2 <= backfz1 && backcz2 <= backfz2)
+          {
+            return true;
+          }
+        } else if (line->sidedef->TopTexture == 0) {
+          // it must be a back side of a door
+          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
+                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
+                      -1);
+          if (snum >= 0) {
+            const side_t *s2 = &Level->Sides[line->linedef->sidenum[snum^1]];
+            if (s2->BottomTexture == 0 && s2->MidTexture == 0 && s2->TopTexture > 0) {
+              // the same check as for a door front
+              if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
+                  backcz2 <= backfz1 && backcz2 <= backfz2)
+              {
+                return true;
+              }
+            }
+          }
+        }
+      }
+
       if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
           (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
       {
         // it's a closed door/elevator/polydoor
+        /*
+        int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
+        if (lnum == 47 || lnum == 68) {
+          GCon->Logf("%d: closed!", lnum);
+        }
+        */
         return true;
       }
+
+      /*
+      {
+        int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
+        if (lnum == 47 || lnum == 68) {
+          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
+                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
+                      -1);
+          GCon->Logf("%d: opened(%d:%d)! t=%d; b=%d; m=%d; fcz=(%f,%f); bcz=(%f,%f); ffz=(%f,%f); bfz=(%f,%f)",
+            lnum,
+            (int)(ptrdiff_t)(line->sidedef-Level->Sides), snum,
+            line->sidedef->TopTexture.id, line->sidedef->BottomTexture.id, line->sidedef->MidTexture.id,
+            frontcz1, frontcz2, backcz1, backcz2, frontfz1, frontfz2, backfz1, backfz2);
+        }
+      }
+      */
     }
   } else {
     // sloped
@@ -903,12 +954,15 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
   // 2-sided line, determine if it can be skipped
   if (seg->backsector) {
     if (clip_trans_hack) {
-      if (seg->linedef->alpha < 1.0f) return; //k8: skip translucent walls (for now)
+      if (seg->linedef->alpha != 1.0f) return; //k8: skip translucent walls (for now)
+      // do normal clipping check
+      /*
       if (seg->sidedef->MidTexture <= 0) {
         // we can see the opposite sector through midtex (it seems)
         //const sector_t *ops = (seg->side ? seg->frontsector : seg->backsector);
         return;
       }
+      */
     }
     //if (IsSegAnOpenedSomething(Level, seg)) return;
     if (!IsSegAClosedSomething(Level, seg)) return;
