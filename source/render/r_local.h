@@ -185,7 +185,7 @@ class VSkyPortal : public VPortal {
 public:
   VSky *Sky;
 
-  VSkyPortal (VRenderLevelShared *ARLev, VSky *ASky) : VPortal(ARLev), Sky(ASky) { useStencil = true; }
+  VSkyPortal (VRenderLevelShared *ARLev, VSky *ASky) : VPortal(ARLev), Sky(ASky) { stackedSector = false; }
   virtual bool NeedsDepthBuffer () const override;
   virtual bool IsSky () const override;
   virtual bool MatchSky (VSky *) const override;
@@ -198,7 +198,7 @@ class VSkyBoxPortal : public VPortal {
 public:
   VEntity *Viewport;
 
-  VSkyBoxPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { useStencil = true; }
+  VSkyBoxPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { stackedSector = false; }
   virtual bool IsSky () const override;
   virtual bool MatchSkyBox (VEntity *) const override;
   virtual void DrawContents () override;
@@ -210,7 +210,7 @@ class VSectorStackPortal : public VPortal {
 public:
   VEntity *Viewport;
 
-  VSectorStackPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { useStencil = false; }
+  VSectorStackPortal (VRenderLevelShared *ARLev, VEntity *AViewport) : VPortal(ARLev), Viewport(AViewport) { stackedSector = true; }
   virtual bool MatchSkyBox (VEntity *) const override;
   virtual void DrawContents () override;
 };
@@ -221,7 +221,7 @@ class VMirrorPortal : public VPortal {
 public:
   TPlane *Plane;
 
-  VMirrorPortal (VRenderLevelShared *ARLev, TPlane *APlane) : VPortal(ARLev), Plane(APlane) { useStencil = true; }
+  VMirrorPortal (VRenderLevelShared *ARLev, TPlane *APlane) : VPortal(ARLev), Plane(APlane) { stackedSector = false; }
   virtual bool MatchMirror (TPlane *) const override;
   virtual void DrawContents () override;
 };

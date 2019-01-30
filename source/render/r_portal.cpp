@@ -39,7 +39,7 @@
 //==========================================================================
 VPortal::VPortal (VRenderLevelShared *ARLev)
   : RLev(ARLev)
-  , useStencil(true)
+  , stackedSector(false)
 {
   Level = RLev->PortalLevel+1;
 }

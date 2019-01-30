@@ -32,6 +32,7 @@
 #include "r_local.h"
 
 static VCvarB r_reg_disable_world("r_reg_disable_world", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
+static VCvarB r_reg_disable_portals("r_reg_disable_portals", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
 static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "Show number of properly traced dynlights per frame.", 0/*CVAR_Archive*/);
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
@@ -94,16 +95,19 @@ void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   glWDVertexTotal = 0;
   glWDTextureChangesTotal = 0;
   if (!r_reg_disable_world) {
+    //GCon->Logf("vfz: %f", viewforward.z);
     stt = -Sys_Time();
     Drawer->WorldDrawing();
     stt += Sys_Time();
     if (times_render_lowlevel) GCon->Logf("Drawer->WorldDrawing: %f (%u polys, %u vertices, %u texture changes)", stt, glWDPolyTotal, glWDVertexTotal, glWDTextureChangesTotal);
   }
 
-  stt = -Sys_Time();
-  RenderPortals();
-  stt += Sys_Time();
-  if (times_render_lowlevel && stt > 0.01) GCon->Logf("   RenderPortals: %f", stt);
+  if (!r_reg_disable_portals) {
+    stt = -Sys_Time();
+    RenderPortals();
+    stt += Sys_Time();
+    if (times_render_lowlevel && stt > 0.01) GCon->Logf("   RenderPortals: %f", stt);
+  }
 
   if (dbg_show_dlight_trace_info) GCon->Logf("DYNLIGHT: %u total, %u traced", gf_dynlights_processed, gf_dynlights_traced);
 

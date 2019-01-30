@@ -46,6 +46,8 @@ VCvarI r_max_portal_depth("r_max_portal_depth", "4", "Maximum allowed portal dep
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
 static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering (SLOW)?", CVAR_Archive);
 
+static VCvarB r_disable_sky_portals("r_disable_sky_portals", false, "Disable rendering of sky portals.", 0/*CVAR_Archive*/);
+
 static VCvarB dbg_max_portal_depth_warning("dbg_max_portal_depth_warning", false, "Show maximum allowed portal depth warning?", 0/*CVAR_Archive*/);
 
 VCvarB VRenderLevelShared::times_render_highlevel("times_render_highlevel", false, "Show high-level render times.", 0/*CVAR_Archive*/);
@@ -216,8 +218,10 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
           Portals.Append(Portal);
         } else {
 #if !defined(VRBSP_DISABLE_SKY_PORTALS)
-          Portal = new VSkyBoxPortal(this, SkyBox);
-          Portals.Append(Portal);
+          if (!r_disable_sky_portals) {
+            Portal = new VSkyBoxPortal(this, SkyBox);
+            Portals.Append(Portal);
+          }
 #endif
         }
       }
@@ -229,7 +233,7 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
         }
       }
 #if !defined(VRBSP_DISABLE_SKY_PORTALS)
-      if (!Portal) {
+      if (!Portal && !r_disable_sky_portals) {
         Portal = new VSkyPortal(this, Sky);
         Portals.Append(Portal);
       }
@@ -245,7 +249,9 @@ void VRenderLevelShared::DrawSurfaces (seg_t *seg, surface_t *InSurfs, texinfo_t
         continue;
       }
       Portal->Surfs.Append(surfs);
-      if (doRenderSurf < 0) doRenderSurf = (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() ? 1 : 0);
+      if (doRenderSurf < 0) {
+        doRenderSurf = (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() ? 1 : 0);
+      }
       //if (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha())
       if (doRenderSurf)
       {
@@ -515,19 +521,19 @@ void VRenderLevelShared::RenderLine (drawseg_t *dseg) {
     // two sided line
     DrawSurfaces(line, dseg->top->surfs, &dseg->top->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags & SDF_ABSLIGHT), false);
+      !!(sidedef->Flags&SDF_ABSLIGHT), false);
     DrawSurfaces(nullptr, dseg->topsky->surfs, &dseg->topsky->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags & SDF_ABSLIGHT), false);
+      !!(sidedef->Flags&SDF_ABSLIGHT), false);
     DrawSurfaces(line, dseg->bot->surfs, &dseg->bot->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags & SDF_ABSLIGHT), false);
+      !!(sidedef->Flags&SDF_ABSLIGHT), false);
     DrawSurfaces(line, dseg->mid->surfs, &dseg->mid->texinfo,
       r_region->ceiling->SkyBox, -1, sidedef->Light,
-      !!(sidedef->Flags & SDF_ABSLIGHT), false);
+      !!(sidedef->Flags&SDF_ABSLIGHT), false);
     for (segpart_t *sp = dseg->extra; sp; sp = sp->next) {
       DrawSurfaces(line, sp->surfs, &sp->texinfo, r_region->ceiling->SkyBox,
-        -1, sidedef->Light, !!(sidedef->Flags & SDF_ABSLIGHT), false);
+        -1, sidedef->Light, !!(sidedef->Flags&SDF_ABSLIGHT), false);
     }
   }
   unguard;

@@ -135,7 +135,7 @@ public:
   VRenderLevelShared *RLev;
   TArray<surface_t *> Surfs;
   int Level;
-  bool useStencil;
+  bool stackedSector;
 
   VPortal (VRenderLevelShared *ARLev);
   virtual ~VPortal ();

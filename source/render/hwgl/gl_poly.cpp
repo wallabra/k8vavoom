@@ -41,6 +41,8 @@ static VCvarB gl_sort_textures("gl_sort_textures", true, "Sort surfaces by their
 
 static VCvarB gl_dbg_adv_render_textures_surface("gl_dbg_adv_render_textures_surface", true, "Render surface textures in advanced renderer?", 0);
 
+static VCvarB gl_dbg_render_stack_portal_bounds("gl_dbg_render_stack_portal_bounds", false, "Render sector stack portal bounds.", 0/*CVAR_Archive*/);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 vuint32 glWDPolyTotal = 0;
@@ -1488,18 +1490,19 @@ void VOpenGLDrawer::EndParticles () {
 bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
   guard(VOpenGLDrawer::StartPortal);
   if (UseStencil) {
-    if (Portal->useStencil || true) {
+    if (/*!Portal->stackedSector*/true) {
       // doesn't work for now
       // k8: why?
-      //if (RendLev->NeedsInfiniteFarClip) return false;
+      if (RendLev->NeedsInfiniteFarClip) return false;
 
       // disable drawing
       p_glUseProgramObjectARB(SurfZBufProgram);
+      glDisable(GL_TEXTURE_2D);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
       glDepthMask(GL_FALSE);
 
       // set up stencil test
-      if (!RendLev->PortalDepth) glEnable(GL_STENCIL_TEST);
+      /*if (!RendLev->PortalDepth)*/ glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
       glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
 
@@ -1523,11 +1526,14 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
       }
+    } else {
+      glDisable(GL_STENCIL_TEST);
     }
 
     // enable drawing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
+    glEnable(GL_TEXTURE_2D);
     ++RendLev->PortalDepth;
   } else {
     if (!Portal->NeedsDepthBuffer()) {
@@ -1567,9 +1573,27 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
 
   p_glUseProgramObjectARB(SurfZBufProgram);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  glDisable(GL_TEXTURE_2D);
 
   if (UseStencil) {
-    if (Portal->useStencil || true) {
+    if (/*!Portal->stackedSector*/true) {
+
+      if (gl_dbg_render_stack_portal_bounds && Portal->stackedSector) {
+        p_glUseProgramObjectARB(0);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthFunc(GL_ALWAYS);
+        glDepthMask(GL_FALSE);
+        glColor3f(1, 0, 0);
+        glDisable(GL_BLEND);
+        glDisable(GL_STENCIL_TEST);
+        DrawPortalArea(Portal);
+
+        glEnable(GL_STENCIL_TEST);
+        p_glUseProgramObjectARB(SurfZBufProgram);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthMask(GL_TRUE);
+      }
+
       if (Portal->NeedsDepthBuffer()) {
         // clear depth buffer
         if (CanUseRevZ()) glDepthRange(0, 0); else glDepthRange(1, 1);
@@ -1610,6 +1634,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
     DrawPortalArea(Portal);
   }
 
+  glEnable(GL_TEXTURE_2D);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   unguard;
