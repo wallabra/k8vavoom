@@ -46,10 +46,9 @@ menudef AdvRenderOptions {
     help =
       "Maximum allowed portal depth."
       "Usually has huge effect on levels with mirrors."
-      "If you suddenly see FSP below 30 in some level places,"
-      "this is porbably due portals. Try to decrease this, or"
-      "turn mirrors, or turn this off."
-      "-1 means 'infinite portal depth'."
-      "THIS VAR IS TRANSIENT (i.e. not saved in config)!";
+      "If you suddenly see FPS below 30 in some level places,"
+      "this is probably due portals. Try to decrease this, or"
+      "turn mirrors off, or turn this off."
+      "-1 means 'infinite portal depth'.";
   }
 }
