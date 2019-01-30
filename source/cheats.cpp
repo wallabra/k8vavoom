@@ -214,4 +214,26 @@ COMMAND(my_sector_info) {
   );
   GCon->Logf("  floor texture  : %s", *GTextureManager.GetTextureName(sec->floor.pic));
   GCon->Logf("  ceiling texture: %s", *GTextureManager.GetTextureName(sec->ceiling.pic));
+  GCon->Logf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
+  GCon->Logf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
+}
+
+
+//==========================================================================
+//
+//  my_sector_info
+//
+//==========================================================================
+COMMAND(my_clear_automap) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+  if (!Player) { GCon->Log("NO PLAYER!"); return; }
+  if (!Player->MO) { GCon->Log("NO PLAYER MOBJ!"); return; }
+  for (int i = 0; i < GClLevel->NumLines; ++i) {
+    line_t &line = GClLevel->Lines[i];
+    line.flags &= ~ML_MAPPED;
+  }
+  GCon->Logf("automap cleared");
 }
