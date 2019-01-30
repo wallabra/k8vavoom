@@ -83,7 +83,45 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
       const float backfz1 = bsec->floor.GetPointZ(vv1);
       const float backfz2 = bsec->floor.GetPointZ(vv2);
 
+      /*
+      {
+        int lnum = (int)(ptrdiff_t)(line->linedef-Level->Lines);
+        if (/ *lnum == 243 || lnum == 244* / lnum == 336 || lnum == 337) {
+          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
+                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
+                      -1);
+          GCon->Logf("%d: opened(%d:%d)! t=%d; b=%d; m=%d; fcz=(%f,%f); ffz=(%f,%f); bcz=(%f,%f); bfz=(%f,%f)",
+            lnum,
+            (int)(ptrdiff_t)(line->sidedef-Level->Sides), snum,
+            line->sidedef->TopTexture.id, line->sidedef->BottomTexture.id, line->sidedef->MidTexture.id,
+            frontcz1, frontcz2, frontfz1, frontfz2, backcz1, backcz2, backfz1, backfz2);
+        }
+      }
+      */
+
+      if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
+          backcz2 <= backfz1 && backcz2 <= backfz2)
+      {
+        // this looks like a closed door
+        // if front ceiling is higher than front floor, and we have top texture, this is a closed door
+        if (frontcz1 > frontfz1 && frontcz1 > frontfz2 &&
+            frontcz2 > frontfz1 && frontcz2 > frontfz2)
+        {
+          if (line->sidedef->TopTexture > 0) return true;
+          // check other side, this can be a back side of a door
+          int snum = (line->sidedef == &Level->Sides[line->linedef->sidenum[0]] ? 0 :
+                      line->sidedef == &Level->Sides[line->linedef->sidenum[1]] ? 1 :
+                      -1);
+
+          if (snum >= 0) {
+            const side_t *s2 = &Level->Sides[line->linedef->sidenum[snum^1]];
+            if (s2->TopTexture > 0) return true;
+          }
+        }
+      }
+
       // common door has only top texture, and the other side has no textures at all
+      /*
       if (line->sidedef->BottomTexture == 0 && line->sidedef->MidTexture == 0) {
         if (line->sidedef->TopTexture > 0) {
           // looks like it
@@ -111,6 +149,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *line) {
           }
         }
       }
+      */
 
       if ((backcz2 <= frontfz2 && backcz2 <= frontfz1 && backcz1 <= frontfz2 && backcz1 <= frontfz1) &&
           (frontcz2 <= backfz2 && frontcz2 <= backfz1 && frontcz1 <= backfz2 && frontcz1 <= backfz1))
@@ -656,14 +695,14 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
   vint32 count = sub->numlines;
   drawseg_t *ds = region->lines;
 
-  while (count--) {
+  for (; count--; ++ds) {
     TVec v1 = *ds->seg->v1;
     TVec v2 = *ds->seg->v2;
 
     if (!ds->seg->linedef) {
       // miniseg
       if (!IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) {
-        ++ds;
+        //++ds;
         continue;
       }
     }
@@ -690,17 +729,17 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
       float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
       float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-      if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) { ++ds; continue; }
-      if (D1 > r_lights_radius && D2 > r_lights_radius) { ++ds; continue; }
+      if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) { /*++ds;*/ continue; }
+      if (D1 > r_lights_radius && D2 > r_lights_radius) { /*++ds;*/ continue; }
 
       if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
           (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
       {
-        ++ds;
+        //++ds;
         continue;
       }
     } else {
-      if (D1 <= 0.0f && D2 <= 0.0f) { ++ds; continue; }
+      if (D1 <= 0.0f && D2 <= 0.0f) { /*++ds;*/ continue; }
     }
 
     if (!ds->seg->backsector) {
@@ -715,15 +754,14 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
 
       if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
     } else if (ds->seg->linedef) {
+      /*
       if (ds->seg->backsector) {
         // 2-sided line, determine if it can be skipped
         if (ds->seg->linedef->backsector) {
-          if (IsSegAClosedSomething(Level, ds->seg)) {
-            ++ds;
-            continue;
-          }
+          if (IsSegAClosedSomething(Level, ds->seg)) { / *++ds;* / continue; }
         }
       }
+      */
 
       TVec vv1 = *ds->seg->linedef->v1;
       TVec vv2 = *ds->seg->linedef->v2;
@@ -745,17 +783,17 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
         float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
         float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
 
-        if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) { ++ds; continue; }
-        if (DD1 > r_lights_radius && DD2 > r_lights_radius) { ++ds; continue; }
+        if (D1 <= 0.0f && D2 <= 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) { /*++ds;*/ continue; }
+        if (DD1 > r_lights_radius && DD2 > r_lights_radius) { /*++ds;*/ continue; }
 
         if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
             (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
         {
-          ++ds;
+          //++ds;
           continue;
         }
       } else {
-        if (DD1 <= 0.0f && DD2 <= 0.0f) { ++ds; continue; }
+        if (DD1 <= 0.0f && DD2 <= 0.0f) { /*++ds;*/ continue; }
       }
 
       if (shadowslight) {
@@ -767,13 +805,13 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
         else if (DD2 > 0.0f && DD1 <= 0.0f) vv1 += (vv1-vv2)*DD2/(DD2-DD1);
       }
 
-      if (!ds->seg->linedef->backsector) {
+      if (!ds->seg->linedef->backsector || IsSegAClosedSomething(Level, ds->seg)) {
         if (IsRangeVisible(PointToClipAngle(vv2), PointToClipAngle(vv1))) return true;
       } else {
         return true;
       }
     }
-    ++ds;
+    //++ds;
   }
   return false;
   unguard;
@@ -857,9 +895,11 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
       }
     } else if (seg->linedef) {
       // 2-sided line, determine if it can be skipped
+      /*
       if (seg->backsector) {
         if (IsSegAClosedSomething(Level, seg)) continue;
       }
+      */
 
       // clip sectors that are behind rendered segs
       if (shadowslight) {
@@ -875,7 +915,7 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
         if (D1 < 0.0f && D2 < 0.0f) continue;
       }
 
-      if (!seg->linedef->backsector) {
+      if (!seg->linedef->backsector || IsSegAClosedSomething(Level, seg)) {
         if (shadowslight) {
           // there might be a better method of doing this, but this one works for now...
                if (DLight1 > CurrLightRadius && DLight2 < -CurrLightRadius) v2 += (v2-v1)*DLight1/(DLight1-DLight2);
