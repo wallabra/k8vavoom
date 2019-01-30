@@ -148,7 +148,7 @@ menudef VideoOptions {
   }
 
   option submenu {
-    title = "Advanced Rendeing Options";
+    title = "Advanced Rendering Options";
     submenu = "AdvRenderOptions";
   }
 }
