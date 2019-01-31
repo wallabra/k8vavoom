@@ -189,6 +189,7 @@ COMMAND(MyPos) {
       *GLevel->MapName, Player->MO->Origin.x,
       Player->MO->Origin.y, Player->MO->Origin.z,
       Player->MO->Angles.yaw, Player->MO->Angles.pitch);
+    GCon->Logf("warpto %d %d", (int)Player->MO->Origin.x, (int)Player->MO->Origin.y);
   }
 }
 
