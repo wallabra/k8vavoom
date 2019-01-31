@@ -2537,3 +2537,109 @@ void R_ShutdownTexture () {
   GTextureManager.Shutdown();
   unguard;
 }
+
+
+//==========================================================================
+//
+//  VTextureManager::FillNameAutocompletion
+//
+//  to use in `ExportTexture` command
+//
+//==========================================================================
+void VTextureManager::FillNameAutocompletion (const VStr &prefix, TArray<VStr> &list) {
+  if (prefix.length() == 0) {
+    GCon->Logf("\034KThere are about %d textures, be more specific, please!", Textures.length()+MapTextures.length()-1);
+    return;
+  }
+  for (int f = 1; f < Textures.length(); ++f) {
+    if (Textures[f]->Name == NAME_None) continue;
+    if (VStr::startsWithNoCase(*Textures[f]->Name, *prefix)) list.append(VStr(*Textures[f]->Name));
+  }
+  for (int f = 0; f < MapTextures.length(); ++f) {
+    if (MapTextures[f]->Name == NAME_None) continue;
+    if (VStr::startsWithNoCase(*MapTextures[f]->Name, *prefix)) list.append(VStr(*MapTextures[f]->Name));
+  }
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::GetExistingTextureByName
+//
+//  to use in `ExportTexture` command
+//
+//==========================================================================
+VTexture *VTextureManager::GetExistingTextureByName (const VStr &txname) {
+  for (int f = 1; f < Textures.length(); ++f) {
+    if (txname.ICmp(*Textures[f]->Name) == 0) return Textures[f];
+  }
+  for (int f = 0; f < MapTextures.length(); ++f) {
+    if (txname.ICmp(*MapTextures[f]->Name) == 0) return MapTextures[f];
+  }
+  return nullptr;
+}
+
+
+extern "C" {
+  static int sortCmpVStrCI (const void *a, const void *b, void *udata) {
+    if (a == b) return 0;
+    VStr *sa = (VStr *)a;
+    VStr *sb = (VStr *)b;
+    return sa->ICmp(*sb);
+  }
+}
+
+
+//==========================================================================
+//
+//  ExportTexture
+//
+//==========================================================================
+COMMAND_WITH_AC(ExportTexture) {
+  if (Args.length() != 2) {
+    GCon->Log("(only) texture name expected!");
+    return;
+  }
+
+  VTexture *tx = GTextureManager.GetExistingTextureByName(Args[1]);
+  if (!tx) {
+    GCon->Logf(NAME_Error, "Texture '%s' not found!", *Args[1]);
+    return;
+  }
+
+  // find a file name to save it to
+  VStr BaseDir = FL_GetScreenshotsDir();
+  if (BaseDir.isEmpty()) return;
+
+  VStr fname = va("%s.png", *tx->Name);
+  auto strm = FL_OpenFileWrite(fname, true); // as full name
+  if (!strm) {
+    GCon->Logf(NAME_Error, "cannot create file '%s'", *fname);
+    return;
+  }
+
+  tx->WriteToPNG(strm);
+  delete strm;
+
+  GCon->Logf("Exported to '%s'", *fname);
+}
+
+COMMAND_AC(ExportTexture) {
+  if (aidx != 1) return VStr::EmptyString;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  TArray<VStr> list;
+  GTextureManager.FillNameAutocompletion(prefix, list);
+  if (!list.length()) return VStr::EmptyString;
+  // sort
+  timsort_r(list.ptr(), list.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
+  // remove possible duplicates
+  int pos = 1;
+  while (pos < list.length()) {
+    if (list[pos].ICmp(list[pos-1]) == 0) {
+      list.removeAt(pos);
+    } else {
+      ++pos;
+    }
+  }
+  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+}

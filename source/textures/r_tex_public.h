@@ -430,6 +430,10 @@ public:
   inline int GetNumTextures () const { return Textures.length(); }
   inline int GetNumMapTextures () const { return MapTextures.length(); }
 
+  // to use in `ExportTexture` command
+  void FillNameAutocompletion (const VStr &prefix, TArray<VStr> &list);
+  VTexture *GetExistingTextureByName (const VStr &txname);
+
 private:
   void LoadPNames (int Lump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames);
   void AddToHash (int Index);
