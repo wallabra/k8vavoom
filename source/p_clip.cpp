@@ -49,9 +49,9 @@ static VCvarB clip_trans_hack("clip_trans_hack", true, "Do translucent clipping 
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?"/*, CVAR_Archive*/);
 
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?"/*, CVAR_Archive*/);
-static VCvarB clip_platforms_doors("clip_platforms_doors", true, "Clip geometry behind some closed doors?"/*, CVAR_Archive*/);
-static VCvarB clip_platforms_lift_lo("clip_platforms_lift_lo", true, "Clip geometry behind lowered lifts?"/*, CVAR_Archive*/);
-static VCvarB clip_platforms_lift_hi("clip_platforms_lift_hi", true, "Clip geometry behind raised lifts?"/*, CVAR_Archive*/);
+//static VCvarB clip_platforms_doors("clip_platforms_doors", true, "Clip geometry behind some closed doors?"/*, CVAR_Archive*/);
+//static VCvarB clip_platforms_lift_lo("clip_platforms_lift_lo", true, "Clip geometry behind lowered lifts?"/*, CVAR_Archive*/);
+//static VCvarB clip_platforms_lift_hi("clip_platforms_lift_hi", true, "Clip geometry behind raised lifts?"/*, CVAR_Archive*/);
 
 
 /*
