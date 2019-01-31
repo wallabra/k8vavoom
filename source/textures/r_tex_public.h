@@ -327,7 +327,7 @@ public:
 private:
   void rehashTextures ();
 
-  inline VTexture *getTxByIndex (int idx) {
+  inline VTexture *getTxByIndex (int idx) const {
     VTexture *res;
     if (idx < FirstMapTextureIndex) {
       res = ((vuint32)idx < (vuint32)Textures.length() ? Textures[idx] : nullptr);
@@ -379,14 +379,20 @@ public:
 
   inline bool IsMapLocalTexture (int TexNum) const { return (TexNum >= FirstMapTextureIndex); }
 
+  inline bool IsEmptyTexture (int TexNum) const {
+    if (TexNum <= 0) return true;
+    VTexture *tx = getIgnoreAnim(TexNum);
+    return (!tx || tx->Type == TEXTYPE_Null);
+  }
+
   // get unanimated texture
-  inline VTexture *operator [] (int TexNum) {
+  inline VTexture *operator [] (int TexNum) const {
     VTexture *res = getTxByIndex(TexNum);
     if (res) res->noDecals = res->staticNoDecals;
     return res;
   }
 
-  inline VTexture *getIgnoreAnim (int TexNum) {
+  inline VTexture *getIgnoreAnim (int TexNum) const {
     if (TexNum < FirstMapTextureIndex) {
       return ((vuint32)TexNum < (vuint32)Textures.length() ? Textures[TexNum] : nullptr);
     } else {

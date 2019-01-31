@@ -48,6 +48,111 @@ static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizati
 static VCvarB clip_trans_hack("clip_trans_hack", true, "Do translucent clipping hack?"/*, CVAR_Archive*/);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?"/*, CVAR_Archive*/);
 
+static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?"/*, CVAR_Archive*/);
+static VCvarB clip_platforms_doors("clip_platforms_doors", true, "Clip geometry behind some closed doors?"/*, CVAR_Archive*/);
+static VCvarB clip_platforms_lift_lo("clip_platforms_lift_lo", true, "Clip geometry behind lowered lifts?"/*, CVAR_Archive*/);
+static VCvarB clip_platforms_lift_hi("clip_platforms_lift_hi", true, "Clip geometry behind raised lifts?"/*, CVAR_Archive*/);
+
+
+/*
+  // Mirrors and horizons always block the view
+  //if (linedef->special==Line_Mirror || linedef->special==Line_Horizon) return true;
+
+  // Lines with stacked sectors must never block!
+
+  if (backsector->portals[sector_t::ceiling] != NULL || backsector->portals[sector_t::floor] != NULL ||
+    frontsector->portals[sector_t::ceiling] != NULL || frontsector->portals[sector_t::floor] != NULL)
+  {
+    return false;
+  }
+
+  // on large levels this distinction can save some time
+  // That's a lot of avoided multiplications if there's a lot to see!
+
+  if (frontsector->ceilingplane.a | frontsector->ceilingplane.b)
+  {
+    fs_ceilingheight1=frontsector->ceilingplane.ZatPoint(linedef->v1);
+    fs_ceilingheight2=frontsector->ceilingplane.ZatPoint(linedef->v2);
+  }
+  else
+  {
+    fs_ceilingheight2=fs_ceilingheight1=frontsector->ceilingplane.d;
+  }
+
+  if (frontsector->floorplane.a | frontsector->floorplane.b)
+  {
+    fs_floorheight1=frontsector->floorplane.ZatPoint(linedef->v1);
+    fs_floorheight2=frontsector->floorplane.ZatPoint(linedef->v2);
+  }
+  else
+  {
+    fs_floorheight2=fs_floorheight1=-frontsector->floorplane.d;
+  }
+
+  if (backsector->ceilingplane.a | backsector->ceilingplane.b)
+  {
+    bs_ceilingheight1=backsector->ceilingplane.ZatPoint(linedef->v1);
+    bs_ceilingheight2=backsector->ceilingplane.ZatPoint(linedef->v2);
+  }
+  else
+  {
+    bs_ceilingheight2=bs_ceilingheight1=backsector->ceilingplane.d;
+  }
+
+  if (backsector->floorplane.a | backsector->floorplane.b)
+  {
+    bs_floorheight1=backsector->floorplane.ZatPoint(linedef->v1);
+    bs_floorheight2=backsector->floorplane.ZatPoint(linedef->v2);
+  }
+  else
+  {
+    bs_floorheight2=bs_floorheight1=-backsector->floorplane.d;
+  }
+
+  // now check for closed sectors!
+  if (bs_ceilingheight1<=fs_floorheight1 && bs_ceilingheight2<=fs_floorheight2)
+  {
+    FTexture * tex = TexMan(sidedef->GetTexture(side_t::top));
+    if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+    if (backsector->GetTexture(sector_t::ceiling)==skyflatnum &&
+      frontsector->GetTexture(sector_t::ceiling)==skyflatnum) return false;
+    return true;
+  }
+
+  if (fs_ceilingheight1<=bs_floorheight1 && fs_ceilingheight2<=bs_floorheight2)
+  {
+    FTexture * tex = TexMan(sidedef->GetTexture(side_t::bottom));
+    if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+
+    // properly render skies (consider door "open" if both floors are sky):
+    if (backsector->GetTexture(sector_t::ceiling)==skyflatnum &&
+      frontsector->GetTexture(sector_t::ceiling)==skyflatnum) return false;
+    return true;
+  }
+
+  if (bs_ceilingheight1<=bs_floorheight1 && bs_ceilingheight2<=bs_floorheight2)
+  {
+    // preserve a kind of transparent door/lift special effect:
+    if (bs_ceilingheight1 < fs_ceilingheight1 || bs_ceilingheight2 < fs_ceilingheight2)
+    {
+      FTexture * tex = TexMan(sidedef->GetTexture(side_t::top));
+      if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+    }
+    if (bs_floorheight1 > fs_floorheight1 || bs_floorheight2 > fs_floorheight2)
+    {
+      FTexture * tex = TexMan(sidedef->GetTexture(side_t::bottom));
+      if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+    }
+    if (backsector->GetTexture(sector_t::ceiling)==skyflatnum &&
+      frontsector->GetTexture(sector_t::ceiling)==skyflatnum) return false;
+    if (backsector->GetTexture(sector_t::floor)==skyflatnum && frontsector->GetTexture(sector_t::floor)
+      ==skyflatnum) return false;
+    return true;
+  }
+
+  return false;
+*/
+
 
 //==========================================================================
 //
@@ -55,8 +160,11 @@ static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with pol
 //
 //==========================================================================
 static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
+  if (!clip_platforms) return false;
+
   if (seg->linedef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
 
+  //TODO: check `heightsec` here (see `gl_CheckViewArea()` in Zandronum)
   auto fsec = seg->linedef->frontsector;
   auto bsec = seg->linedef->backsector;
 
@@ -87,6 +195,40 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       const float backfz2 = bsec->floor.GetPointZ(vv2);
       check(backfz1 == backfz2);
 
+      // taken from Zandronum
+      // now check for closed sectors
+      if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
+        // preserve a kind of transparent door/lift special effect:
+        if (GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture)) return false;
+        // properly render skies (consider door "open" if both floors are sky):
+        if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
+        return true;
+      }
+
+      if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
+        // preserve a kind of transparent door/lift special effect:
+        if (GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture)) return false;
+        // properly render skies (consider door "open" if both floors are sky):
+        if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
+        return true;
+      }
+
+      if (backcz1 <= backfz1 && backcz2 <= backfz2) {
+        // preserve a kind of transparent door/lift special effect:
+        if (backcz1 < frontcz1 || backcz2 < frontcz2) {
+          if (GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture)) return false;
+        }
+        if (backfz1 > frontfz1 || backfz2 > frontfz2) {
+          if (GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture)) return false;
+        }
+        // properly render skies
+        if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
+        if (bsec->floor.pic == skyflatnum && fsec->floor.pic == skyflatnum) return false;
+        return true;
+      }
+
+#if 0 // k8 failed attempts
+
       int snum = (seg->sidedef == &Level->Sides[seg->linedef->sidenum[0]] ? 0 :
                   seg->sidedef == &Level->Sides[seg->linedef->sidenum[1]] ? 1 :
                   -1);
@@ -94,7 +236,6 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       const side_t *s0 = &Level->Sides[seg->linedef->sidenum[0]];
       const side_t *s1 = &Level->Sides[seg->linedef->sidenum[1]];
       //const side_t *s2 = &Level->Sides[seg->linedef->sidenum[snum^1]];
-
 #if 0
       {
         int lnum = (int)(ptrdiff_t)(seg->linedef-Level->Lines);
@@ -113,40 +254,46 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       }
 #endif
 
-      if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
-          backcz2 <= backfz1 && backcz2 <= backfz2)
-      {
-        // this looks like a closed door
-        // if front ceiling is higher than front floor, and we have top texture, this is a closed door
-        if (frontcz1 > frontfz1 && frontcz1 > frontfz2 &&
-            frontcz2 > frontfz1 && frontcz2 > frontfz2)
+      if (clip_platforms_doors) {
+        if (backcz1 <= backfz1 && backcz1 <= backfz2 &&
+            backcz2 <= backfz1 && backcz2 <= backfz2)
         {
-          if (seg->sidedef->TopTexture > 0) return true;
-          // check other side, this can be a back side of a door
-          if (snum >= 0) {
-            const side_t *s2 = &Level->Sides[seg->linedef->sidenum[snum^1]];
-            if (s2->TopTexture > 0) return true;
+          // this looks like a closed door
+          // if front ceiling is higher than front floor, and we have top texture, this is a closed door
+          if (frontcz1 > frontfz1 && frontcz1 > frontfz2 &&
+              frontcz2 > frontfz1 && frontcz2 > frontfz2)
+          {
+            if (seg->sidedef->TopTexture > 0) return true;
+            // check other side, this can be a back side of a door
+            if (snum >= 0) {
+              const side_t *s2 = &Level->Sides[seg->linedef->sidenum[snum^1]];
+              if (s2->TopTexture > 0) return true;
+            }
           }
         }
       }
 
-      // check for lowered lift
-      if (snum == 0 && s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
-          seg->sidedef->BottomTexture > 0) // has bottex
-      {
-        if (backfz1 >= /*seg->sidedef->Sector*/fsec->ceiling.maxz) {
-          // this looks like a raised lift, yay
-          return true;
+      if (clip_platforms_lift_lo) {
+        // check for lowered lift
+        if (snum == 0 && s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
+            seg->sidedef->BottomTexture > 0) // has bottex
+        {
+          if (backfz1 >= /*seg->sidedef->Sector*/fsec->ceiling.maxz) {
+            // this looks like a raised lift, yay
+            return true;
+          }
         }
       }
 
-      // check for raised lift
-      if (snum == 1 && s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
-          seg->sidedef->TopTexture > 0) // has bottex
-      {
-        if (backfz1 >= /*seg->sidedef->Sector*/fsec->ceiling.maxz) {
-          // this looks like a raised lift, yay
-          return true;
+      if (clip_platforms_lift_hi) {
+        // check for raised lift
+        if (snum == 1 && s0->MidTexture == 0 && s1->MidTexture == 0 && // no midtex
+            seg->sidedef->TopTexture > 0) // has bottex
+        {
+          if (backfz1 >= /*seg->sidedef->Sector*/fsec->ceiling.maxz) {
+            // this looks like a raised lift, yay
+            return true;
+          }
         }
       }
 
@@ -189,6 +336,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
         }
       }
       */
+#endif
     }
   } else {
     // sloped
