@@ -354,8 +354,8 @@ private:
     XXH32_update(xctx, &pl.normal.y, sizeof(pl.normal.y));
     XXH32_update(xctx, &pl.normal.z, sizeof(pl.normal.z));
     XXH32_update(xctx, &pl.dist, sizeof(pl.dist));
-    XXH32_update(xctx, &pl.type, sizeof(pl.type));
-    XXH32_update(xctx, &pl.signbits, sizeof(pl.signbits));
+    //XXH32_update(xctx, &pl.type, sizeof(pl.type));
+    //XXH32_update(xctx, &pl.signbits, sizeof(pl.signbits));
   }
 
   void xxHashSecPlane (XXH32_state_t *xctx, const sec_plane_t &spl) const {

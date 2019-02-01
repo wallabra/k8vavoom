@@ -230,7 +230,7 @@ static void doCacheCleanup () {
 //==========================================================================
 static void doPlaneIO (VStream *strm, TPlane *n) {
   *strm << n->normal.x << n->normal.y << n->normal.z;
-  *strm << n->dist << n->type << n->signbits;
+  *strm << n->dist /* << n->type << n->signbits */;
 }
 
 

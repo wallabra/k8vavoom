@@ -79,10 +79,12 @@ vector TAVec {
 struct TPlane {
   TVec normal;
   float dist;
+  /*
   int __type;
   int __signbits;
   int __reserved1;
   int __reserved2;
+  */
 };
 
 

@@ -180,11 +180,14 @@ class TPlane {
  public:
   TVec normal;
   float dist;
+  /*
   int type;
   int signbits;
   int reserved1;
   int reserved2;
+  */
 
+  /*
   void CalcBits () {
          if (normal.x == 1.0) type = PLANE_X;
     else if (normal.y == 1.0) type = PLANE_Y;
@@ -199,11 +202,12 @@ class TPlane {
     if (normal.y < 0.0) signbits |= 2;
     if (normal.z < 0.0) signbits |= 4;
   }
+  */
 
   inline void Set (const TVec &Anormal, float Adist) {
     normal = Anormal;
     dist = Adist;
-    CalcBits();
+    //CalcBits();
   }
 
   // initialises vertical plane from point and direction
@@ -219,7 +223,7 @@ class TPlane {
     normal = Normalise(TVec(dir.y, -dir.x, 0));
 #endif
     dist = DotProduct(point, normal);
-    CalcBits();
+    //CalcBits();
   }
 
   // initialises vertical plane from 2 points
