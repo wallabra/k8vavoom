@@ -74,9 +74,12 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       return true;
   }
 
-  //TODO: check `heightsec` here (see `gl_CheckViewArea()` in Zandronum)
   auto fsec = ldef->frontsector;
   auto bsec = ldef->backsector;
+
+  // check transferred (k8: do we need more checks here?)
+  if (fsec->heightsec) fsec = fsec->heightsec;
+  if (bsec->heightsec) bsec = bsec->heightsec;
 
   if (fsec == bsec) return false; // self-referenced sector
 
@@ -113,7 +116,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       if (backcz1 <= frontfz1 && backcz2 <= frontfz2) {
         // preserve a kind of transparent door/lift special effect:
         if (!hasTopTex) return false;
-        // properly render skies (consider door "open" if both floors are sky):
+        // properly render skies (consider door "open" if both ceilings are sky):
         if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
         return true;
       }
@@ -121,7 +124,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       if (frontcz1 <= backfz1 && frontcz2 <= backfz2) {
         // preserve a kind of transparent door/lift special effect:
         if (!hasBotTex) return false;
-        // properly render skies (consider door "open" if both floors are sky):
+        // properly render skies (consider door "open" if both ceilings are sky):
         if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
         return true;
       }
