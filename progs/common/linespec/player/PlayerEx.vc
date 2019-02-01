@@ -2095,7 +2095,7 @@ override void DisconnectClient () {
     MO.bIsPlayer = false;
     Actor(MO).Damage(none, none, 10000, forced:true, spawnBlood:true);
   }
-  Level.bprint("%s left the game\n", PlayerName);
+  Level.bprint("%s left the game", PlayerName);
   MO.PlaySound('misc/chat', CHAN_AUTO, 1.0, ATTN_NONE);
 }
 
