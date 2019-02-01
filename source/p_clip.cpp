@@ -54,6 +54,68 @@ static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some 
 
 //==========================================================================
 //
+//  CopyPlaneIfValid
+//
+//==========================================================================
+static inline bool CopyPlaneIfValid (TPlane *dest, const TPlane *source, const TPlane *opp) {
+  bool copy = false;
+
+  // if the planes do not have matching slopes, then always copy them
+  // because clipping would require creating new sectors
+  if (source->normal != dest->normal) {
+    copy = true;
+  } else if (opp->normal != -dest->normal) {
+    if (source->dist < dest->dist) copy = true;
+  } else if (source->dist < dest->dist && source->dist > -opp->dist) {
+    copy = true;
+  }
+
+  if (copy) *(TPlane *)dest = *(TPlane *)source;
+
+  return copy;
+}
+
+
+//==========================================================================
+//
+//  CopyHeight
+//
+//==========================================================================
+static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cplane, int *fpic, int *cpic) {
+  *cpic = sec->ceiling.pic;
+  *fpic = sec->floor.pic;
+  *fplane = *(TPlane *)&sec->floor;
+  *cplane = *(TPlane *)&sec->ceiling;
+
+  // check transferred (k8: do we need more checks here?)
+  const sector_t *hs = sec->heightsec;
+  if (!hs) return;
+  if ((hs->SectorFlags&sector_t::SF_IgnoreHeightSec) != 0) return;
+
+  if (hs->SectorFlags&sector_t::SF_ClipFakePlanes) {
+    if (!CopyPlaneIfValid(fplane, &hs->floor, &sec->ceiling)) {
+      if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) return;
+    }
+    *fpic = hs->floor.pic;
+    if (!CopyPlaneIfValid(cplane, &hs->ceiling, &sec->floor)) {
+      return;
+    }
+    *cpic = hs->ceiling.pic;
+  } else {
+    if (hs->SectorFlags&sector_t::SF_FakeCeilingOnly) {
+      *cplane = *(TPlane *)&hs->ceiling;
+    } else if (hs->SectorFlags&sector_t::SF_FakeFloorOnly) {
+      *fplane = *(TPlane *)&hs->floor;
+    } else {
+      *cplane = *(TPlane *)&hs->ceiling;
+      *fplane = *(TPlane *)&hs->floor;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  IsSegAClosedSomething
 //
 //  prerequisite: has front and back sectors, has linedef
@@ -77,15 +139,20 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
   auto fsec = ldef->frontsector;
   auto bsec = ldef->backsector;
 
-  // check transferred (k8: do we need more checks here?)
-  if (fsec->heightsec) fsec = fsec->heightsec;
-  if (bsec->heightsec) bsec = bsec->heightsec;
-
   if (fsec == bsec) return false; // self-referenced sector
 
+  int fcpic, ffpic;
+  int bcpic, bfpic;
+
+  TPlane ffplane, fcplane;
+  TPlane bfplane, bcplane;
+
+  CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
+  CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
+
   // only apply this to sectors without slopes
-  if (fsec->floor.normal.z == 1.0f && bsec->floor.normal.z == 1.0f &&
-      fsec->ceiling.normal.z == -1.0f && bsec->ceiling.normal.z == -1.0f)
+  if (ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
+      fcplane.normal.z == -1.0f && bcplane.normal.z == -1.0f)
   {
     bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
     bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
@@ -97,18 +164,18 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
       const TVec vv1 = *ldef->v1;
       const TVec vv2 = *ldef->v2;
 
-      const float frontcz1 = fsec->ceiling.GetPointZ(vv1);
-      const float frontcz2 = fsec->ceiling.GetPointZ(vv2);
+      const float frontcz1 = fcplane.GetPointZ(vv1);
+      const float frontcz2 = fcplane.GetPointZ(vv2);
       //check(frontcz1 == frontcz2);
-      const float frontfz1 = fsec->floor.GetPointZ(vv1);
-      const float frontfz2 = fsec->floor.GetPointZ(vv2);
+      const float frontfz1 = ffplane.GetPointZ(vv1);
+      const float frontfz2 = ffplane.GetPointZ(vv2);
       //check(frontfz1 == frontfz2);
 
-      const float backcz1 = bsec->ceiling.GetPointZ(vv1);
-      const float backcz2 = bsec->ceiling.GetPointZ(vv2);
+      const float backcz1 = bcplane.GetPointZ(vv1);
+      const float backcz2 = bcplane.GetPointZ(vv2);
       //check(backcz1 == backcz2);
-      const float backfz1 = bsec->floor.GetPointZ(vv1);
-      const float backfz2 = bsec->floor.GetPointZ(vv2);
+      const float backfz1 = bfplane.GetPointZ(vv1);
+      const float backfz2 = bfplane.GetPointZ(vv2);
       //check(backfz1 == backfz2);
 
       // taken from Zandronum
@@ -117,7 +184,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
         // preserve a kind of transparent door/lift special effect:
         if (!hasTopTex) return false;
         // properly render skies (consider door "open" if both ceilings are sky):
-        if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
+        if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
         return true;
       }
 
@@ -125,7 +192,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
         // preserve a kind of transparent door/lift special effect:
         if (!hasBotTex) return false;
         // properly render skies (consider door "open" if both ceilings are sky):
-        if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
+        if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
         return true;
       }
 
@@ -138,8 +205,8 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
           if (!hasBotTex) return false;
         }
         // properly render skies
-        if (bsec->ceiling.pic == skyflatnum && fsec->ceiling.pic == skyflatnum) return false;
-        if (bsec->floor.pic == skyflatnum && fsec->floor.pic == skyflatnum) return false;
+        if (bcpic == skyflatnum && fcpic == skyflatnum) return false;
+        if (bfpic == skyflatnum && ffpic == skyflatnum) return false;
         return true;
       }
 
