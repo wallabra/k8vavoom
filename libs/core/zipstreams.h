@@ -34,6 +34,7 @@
 #endif
 
 
+// this will cache the whole stream on 2nd back-seek
 class VZipStreamReader : public VStream {
 public:
   // stream type
@@ -47,7 +48,6 @@ public:
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  //mythread_mutex lock;
   VStream *srcStream;
   int stpos;
   int srccurpos;
@@ -58,7 +58,6 @@ private:
   vuint32 uncompressedSize;
   int nextpos;
   int currpos;
-  //bool zipArchive;
   Type strmType;
   vuint32 origCrc32;
   vuint32 currCrc32;
@@ -66,6 +65,9 @@ private:
   bool forceRewind;
   VStr mFileName;
   bool doSeekToSrcStart;
+  // on second back-seek, read the whole data into this buffer, and use it
+  vuint8 *wholeBuf;
+  vint32 wholeSize; // this is abused as back-seek counter: -2 means none, -1 means "one issued"
 
 private:
   void initialize ();
@@ -75,6 +77,8 @@ private:
   // just read, no `nextpos` advancement
   // returns number of bytes read, -1 on error, or 0 on EOF
   int readSomeBytes (void *buf, int len);
+
+  void cacheAllData ();
 
 public:
   // doesn't own passed stream
@@ -109,7 +113,6 @@ public:
 private:
   enum { BUFFER_SIZE = 16384 };
 
-  //mythread_mutex lock;
   VStream *dstStream;
   Bytef buffer[BUFFER_SIZE];
   z_stream zStream;
