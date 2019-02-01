@@ -350,7 +350,7 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   const VPakFileInfo &fi = pakdir.files[lump];
 
   // read the lump in
-#if 1
+#if 0
   void *ptr = (fi.filesize ? Z_Malloc(fi.filesize) : nullptr);
   if (fi.filesize) {
     check(lockInited);

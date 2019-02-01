@@ -159,6 +159,7 @@ int W_OpenAuxiliary (const VStr &FileName) {
 #else
   VStream *WadStrm = FL_OpenFileRead(FileName);
   if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
+  //fprintf(stderr, "*** AUX: '%s'\n", *FileName);
   auto olen = wadfiles.length();
   W_AddFileFromZip(FileName, WadStrm);
   wadfiles.setLength(olen);
