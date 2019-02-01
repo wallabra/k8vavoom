@@ -160,12 +160,12 @@ static __attribute__((unused)) inline float AngleMod180 (float angle) {
 }
 
 
-static __attribute__((unused)) inline float msin (float angle) { return sin(DEG2RAD(angle)); }
-static __attribute__((unused)) inline float mcos (float angle) { return cos(DEG2RAD(angle)); }
-static __attribute__((unused)) inline float mtan (float angle) { return tan(DEG2RAD(angle)); }
-static __attribute__((unused)) inline float masin (float x) { return RAD2DEG(asin(x)); }
-static __attribute__((unused)) inline float macos (float x) { return RAD2DEG(acos(x)); }
-static __attribute__((unused)) inline float matan (float y, float x) { return RAD2DEG(atan2(y, x)); }
+static __attribute__((unused)) inline float msin (float angle) { return sinf(DEG2RAD(angle)); }
+static __attribute__((unused)) inline float mcos (float angle) { return cosf(DEG2RAD(angle)); }
+static __attribute__((unused)) inline float mtan (float angle) { return tanf(DEG2RAD(angle)); }
+static __attribute__((unused)) inline float masin (float x) { return RAD2DEG(asinf(x)); }
+static __attribute__((unused)) inline float macos (float x) { return RAD2DEG(acosf(x)); }
+static __attribute__((unused)) inline float matan (float y, float x) { return RAD2DEG(atan2f(y, x)); }
 
 
 static __attribute__((unused)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0/256.0); }
