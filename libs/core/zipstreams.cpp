@@ -47,6 +47,8 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
   , forceRewind(false)
   , mFileName(ASrcStream ? ASrcStream->GetName() : VStr::EmptyString)
   , doSeekToSrcStart(true)
+  , wholeBuf(nullptr)
+  , wholeSize(-2)
 {
   initialize();
 }
