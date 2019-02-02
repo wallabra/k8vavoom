@@ -833,7 +833,8 @@ void SV_SendServerInfoToClients () {
 void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   guard(SV_SpawnServer);
 
-  GCon->Logf(/*NAME_Dev,*/ "Spawning server with \"%s\"", mapname);
+  GCon->Log("===============================================");
+  GCon->Logf("Spawning server with \"%s\"", mapname);
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
   mapteleport_issued = false;
   mapteleport_flags = 0;
