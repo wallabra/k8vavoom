@@ -26,6 +26,15 @@ menudef AdvVideoOptions {
       "This *can* reduce sprite flickering, but it is not guaranteed.";
   }
 
+  option bool {
+    title = "Better Thing Rendering";
+    cvar = r_draw_all_sector_things;
+    help =
+      "Render all things from a visible sector."
+      "This can slow down rendering a little, but fixes some cases where"
+      "thing is suddenly disappears when it's subsector is not visible.";
+  }
+
 
   header "Lighting";
 
