@@ -435,7 +435,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
   //if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
-  if (!mobj->State) return;
+  if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) return;
   if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return;
 
   int RendStyle = mobj->RenderStyle;
@@ -447,11 +447,13 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   const int SubIdx = (int)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
   if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) {
     if (!r_draw_all_sector_things) return;
-    const int snum = (int)(ptrdiff_t)(mobj->Sector-Level->Sectors);
+    const sector_t *msec = mobj->Sector;
+    const int snum = (int)(ptrdiff_t)(msec-Level->Sectors);
     int sv = thseclist[snum];
     if (sv == 0) {
       bool found = false;
-      for (const subsector_t *ss = mobj->Sector->subsectors; ss; ss = ss->seclink) {
+      /*
+      for (const subsector_t *ss = msec->subsectors; ss; ss = ss->seclink) {
         const int sidx2 = (int)(ptrdiff_t)(ss-Level->Subsectors);
         if (BspVis[sidx2>>3]&(1<<(sidx2&7))) {
           // i found her!
@@ -459,7 +461,33 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
           break;
         }
       }
-      if (!found) { thseclist[snum] = 1; return; } // invisible
+      */
+      if (true /*!found*/) {
+        // invisible
+        // try neighbour sectors
+        for (int f = 0; f < msec->linecount; ++f) {
+          const line_t *ln = msec->lines[f];
+          if (ln->flags&ML_TWOSIDED) {
+            const sector_t *osec = (ln->frontsector == msec ? ln->backsector : ln->frontsector);
+            const int sn2 = (int)(ptrdiff_t)(osec-Level->Sectors);
+            if (thseclist[sn2] == 2) {
+              // i found her!
+              found = true;
+              break;
+            }
+          }
+        }
+        if (!found) { thseclist[snum] = 1; return; }
+        // mark neighbour sectors (why not?)
+        for (int f = 0; f < msec->linecount; ++f) {
+          const line_t *ln = msec->lines[f];
+          if (ln->flags&ML_TWOSIDED) {
+            const sector_t *osec = (ln->frontsector == msec ? ln->backsector : ln->frontsector);
+            const int sn2 = (int)(ptrdiff_t)(osec-Level->Sectors);
+            if (thseclist[sn2] == 0) thseclist[sn2] = 2;
+          }
+        }
+      }
       thseclist[snum] = 2; // visible
     } else {
       if (sv < 2) return;
@@ -530,6 +558,11 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   if (r_draw_all_sector_things) {
     if (thseclist.length() < Level->NumSectors) thseclist.setLength(Level->NumSectors);
     memset(thseclist.ptr(), 0, Level->NumSectors);
+    for (int sidx = 0; sidx < Level->NumSubsectors; ++sidx) {
+      if (BspVis[sidx>>3]&(1<<(sidx&7))) {
+        thseclist[(int)(ptrdiff_t)(Level->Subsectors[sidx].sector-Level->Sectors)] = 2;
+      }
+    }
   }
   // render things
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
