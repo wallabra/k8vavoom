@@ -369,6 +369,9 @@ protected:
 
   bool showCreateWorldSurfProgress;
 
+  // used in thing renderer, when we are asked to do "better thing rendering"
+  TArray<vuint8> thseclist; // for all sectors: 0 is not checked, 1 is invisible, 2 is visible
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();

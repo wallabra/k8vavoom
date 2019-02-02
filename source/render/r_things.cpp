@@ -73,6 +73,8 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
+static VCvarB r_draw_all_sector_things("r_draw_all_sector_things", true, "Draw all things in sector (can fix disappearing things)?", CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -442,8 +444,27 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   // skip things in subsectors that are not visible
   //TODO: for advanced renderer, we may need to render things several times, so
   //      it is good place to cache them for the given frame
-  int SubIdx = mobj->SubSector-Level->Subsectors;
-  if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) return;
+  const int SubIdx = (int)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+  if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) {
+    if (!r_draw_all_sector_things) return;
+    const int snum = (int)(ptrdiff_t)(mobj->Sector-Level->Sectors);
+    int sv = thseclist[snum];
+    if (sv == 0) {
+      bool found = false;
+      for (const subsector_t *ss = mobj->Sector->subsectors; ss; ss = ss->seclink) {
+        const int sidx2 = (int)(ptrdiff_t)(ss-Level->Subsectors);
+        if (BspVis[sidx2>>3]&(1<<(sidx2&7))) {
+          // i found her!
+          found = true;
+          break;
+        }
+      }
+      if (!found) { thseclist[snum] = 1; return; } // invisible
+      thseclist[snum] = 2; // visible
+    } else {
+      if (sv < 2) return;
+    }
+  }
 
   float Alpha = mobj->Alpha;
   bool Additive = false;
@@ -505,6 +526,12 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
   guard(VRenderLevelShared::RenderMobjs);
   if (!r_draw_mobjs) return;
+  // clear sector flag array
+  if (r_draw_all_sector_things) {
+    if (thseclist.length() < Level->NumSectors) thseclist.setLength(Level->NumSectors);
+    memset(thseclist.ptr(), 0, Level->NumSectors);
+  }
+  // render things
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
     RenderThing(*Ent, Pass);
   }
