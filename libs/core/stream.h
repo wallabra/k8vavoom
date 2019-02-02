@@ -146,6 +146,8 @@ static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vint1
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vuint16 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vuint32 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vint64 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, vuint64 &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, float &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 
