@@ -1005,6 +1005,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
     } else {
       *flags &= ~lookupFlag;
       *name = sc->String;
+      if (lookupFlag == MAPINFOF_LookupName) return;
       if (newStyle) {
         for (;;) {
           //if (sc->Check("}")) break;
