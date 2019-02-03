@@ -626,6 +626,35 @@ static void G_DoCompleted () {
 
 //==========================================================================
 //
+//  COMMAND TestFinale
+//
+//==========================================================================
+COMMAND(TestFinale) {
+  guard(COMMAND TestFinale);
+
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (Args.length() != 2) return;
+
+  if (GGameInfo->NetMode == NM_Standalone && !deathmatch) {
+    for (int i = 0; i < svs.max_clients; ++i) {
+      if (GGameInfo->Players[i]) {
+        GGameInfo->Players[i]->eventClientFinale(Args[1]);
+      }
+    }
+    sv.intermission = 2;
+  }
+
+  //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  COMMAND TeleportNewMap
 //
 //  mapname [leaveposition]
