@@ -920,10 +920,25 @@ IMPLEMENT_FUNCTION(VObject, R_GetPicInfo) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VObject, R_DrawPic) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_INT(y);
   P_GET_INT(x);
-  R_DrawPic(x, y, handle);
+  R_DrawPic(x, y, handle, alpha);
+}
+
+
+//==========================================================================
+//
+//  PF_R_DrawPicFloat
+//
+//==========================================================================
+IMPLEMENT_FUNCTION(VObject, R_DrawPicFloat) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
+  P_GET_INT(handle);
+  P_GET_FLOAT(y);
+  P_GET_FLOAT(x);
+  R_DrawPicFloat(x, y, handle, alpha);
 }
 
 

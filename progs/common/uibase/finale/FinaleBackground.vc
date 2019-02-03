@@ -106,7 +106,7 @@ override void OnDraw () {
        if (FScreen.FinaleType == 'EndGameBunny') DrawBunnyScroll();
   else if (FScreen.FinaleType == 'EndGameDemon') DrawDemonScroll();
   else if (FScreen.FinaleType == 'EndGameChess') DrawChess();
-  else DrawPic(0, 0, fpage1);
+  else DrawPicFS320(0, 0, fpage1);
 }
 
 
@@ -116,20 +116,21 @@ override void OnDraw () {
 //
 //==========================================================================
 void DrawBunnyScroll () {
-  int scrolled = int((FScreen.FinaleTime-6.5)*16.0);
+  float scrolled = (FScreen.FinaleTime-6.5)*16.0;
+
   if (scrolled <= 0) {
-    DrawPic(0, 0, fpage1);
+    DrawPicFS320(0, 0, fpage1);
   } else if (scrolled >= 320) {
-    DrawPic(0, 0, fpage2);
+    DrawPicFS320(0, 0, fpage2);
   } else {
-    DrawPic(scrolled, 0, fpage1);
-    DrawPic(scrolled-320, 0, fpage2);
+    DrawPicFS320(scrolled, 0, fpage1);
+    DrawPicFS320(scrolled-320, 0, fpage2);
   }
 
   if (FScreen.FinaleTime < 32.0) return;
 
   if (FScreen.FinaleTime < 35.0) {
-    DrawPic((320-13*8)/2, (200-8*8)/2, fend[0]);
+    DrawPicFS320((320-13*8)/2, (200-8*8)/2, fend[0]);
     laststage = 0;
     return;
   }
@@ -139,7 +140,7 @@ void DrawBunnyScroll () {
     LocalSound('weapons/pistol');
     laststage = stage;
   }
-  DrawPic((320-13*8)/2, (200-8*8)/2, fend[stage]);
+  DrawPicFS320((320-13*8)/2, (200-8*8)/2, fend[stage]);
 }
 
 
@@ -150,14 +151,14 @@ void DrawBunnyScroll () {
 //==========================================================================
 void DrawDemonScroll () {
   if (FScreen.FinaleTime < 2.0) {
-    DrawPic(0, 0, fpage1);
+    DrawPicFS320(0, 0, fpage1);
   } else if (FScreen.FinaleTime < 22.0) {
-    int yval = int((FScreen.FinaleTime-2.0)*10.0);
-    DrawPic(0, yval, fpage1);
-    DrawPic(0, yval-200, fpage2);
+    float yval = (FScreen.FinaleTime-2.0)*10.0;
+    DrawPicFS320(0, yval, fpage1);
+    DrawPicFS320(0, yval-200, fpage2);
   } else {
     // otherwise, we'll just sit here and wait, for now
-    DrawPic(0, 0, fpage2);
+    DrawPicFS320(0, 0, fpage2);
   }
 }
 
@@ -168,11 +169,11 @@ void DrawDemonScroll () {
 //
 //===========================================================================
 void DrawChess () {
-  DrawPic(0, 0, fpage1);
+  DrawPicFS320(0, 0, fpage1);
   if (FScreen.FinaleStage == 4 || FScreen.FinaleStage == 5) {
     // chess pic, draw the correct character graphic
-         if (FScreen.ClGame.maxclients > 1) DrawPic(20, 0, fpage2);
-    else if (GetCvar('class')) DrawPic(60, 0, fpage2);
+         if (FScreen.ClGame.maxclients > 1) DrawPicFS320(20, 0, fpage2);
+    else if (GetCvar('class')) DrawPicFS320(60, 0, fpage2);
   }
 
   switch (FScreen.FinaleStage) {
@@ -196,7 +197,12 @@ void DrawChess () {
 //==========================================================================
 void FadeOut () {
   float fade = fclamp(FScreen.FinaleTime/FScreen.FinaleEndTime, 0.0, 0.99);
-  ShadeRect(0, 0, Width, Height, fade);
+  //ShadeRect(0, 0, Width, Height, fade);
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  scope(exit) SetVirtualScreen(ovw, ovh);
+  SetVirtualScreen(320, 200);
+  ShadeRect(0, 0, GetVirtualWidth, GetVirtualHeight, fade);
 }
 
 
@@ -207,7 +213,12 @@ void FadeOut () {
 //==========================================================================
 void FadeIn () {
   float fade = fclamp(1.0-FScreen.FinaleTime/FScreen.FinaleEndTime, 0.0, 0.99);
-  ShadeRect(0, 0, Width, Height, fade);
+  //ShadeRect(0, 0, Width, Height, fade);
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  scope(exit) SetVirtualScreen(ovw, ovh);
+  SetVirtualScreen(320, 200);
+  ShadeRect(0, 0, GetVirtualWidth, GetVirtualHeight, fade);
 }
 
 

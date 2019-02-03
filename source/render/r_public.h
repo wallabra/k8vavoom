@@ -71,7 +71,8 @@ void R_DrawSpritePatch (int, int, int, int, int, int = 0, int = 0, int = 0);
 void R_InitSprites ();
 
 //  2D graphics
-void R_DrawPic (int x, int y, int handle, float Aplha = 1.0f);
+void R_DrawPic (int x, int y, int handle, float Aplha=1.0f);
+void R_DrawPicFloat (float x, float y, int handle, float Aplha=1.0f);
 
 float R_GetAspectRatio ();
 

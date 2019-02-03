@@ -372,7 +372,9 @@ native static final int R_RegisterPicPal (name Name, name palname);
 // retrieves pic info
 native static final void R_GetPicInfo (int handle, picinfo_t *info);
 // draws a pic
-native static final void R_DrawPic (int x, int y, int handle);
+native static final void R_DrawPic (int x, int y, int handle, optional float alpha);
+// draws a pic
+native static final void R_DrawPicFloat (float x, float y, int handle, optional float alpha);
 // installs a sprite model
 native static final void R_InstallSprite (string Name, int index);
 // draws a sprite

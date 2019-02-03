@@ -554,6 +554,16 @@ static void DrawFullScreenPic (int Handle) {
 }
 
 
+final void DrawPicFS320 (float X, float Y, int Handle, optional float alpha) {
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+  scope(exit) SetVirtualScreen(ovw, ovh);
+  SetVirtualScreen(320, 200);
+  R_DrawPicFloat(X, Y, Handle, alpha!optional);
+  //DrawPic(X, Y, Handle);
+}
+
+
 #ifdef VCC_STANDALONE_EXECUTOR
 #else
 static int ConvertBoundKey (int key) {

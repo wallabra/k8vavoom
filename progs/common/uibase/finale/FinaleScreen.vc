@@ -155,7 +155,7 @@ bool Responder (event_t *event) {
 override void Tick (float DeltaTime) {
   FinaleTime += DeltaTime;
        if (FinaleType == 'EndGameCast') CastTicker(DeltaTime);
-  else if (FinaleType == 'EndGameChess')ChessTicker();
+  else if (FinaleType == 'EndGameChess') ChessTicker();
   else if (FinaleType == 'EndGameStrife') StrifeFinalTicker(DeltaTime);
 }
 

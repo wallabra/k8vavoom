@@ -997,6 +997,22 @@ void R_DrawPic (int x, int y, int handle, float Alpha) {
 
 //==========================================================================
 //
+//  R_DrawPicFloat
+//
+//==========================================================================
+void R_DrawPicFloat (float x, float y, int handle, float Alpha) {
+  guard(R_DrawPicFloat);
+  if (handle < 0) return;
+  VTexture *Tex = GTextureManager(handle);
+  x -= Tex->GetScaledSOffset();
+  y -= Tex->GetScaledTOffset();
+  Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()), fScaleY*(y+Tex->GetScaledHeight()), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
+  unguard;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::PrecacheLevel
 //
 //  Preloads all relevant graphics for the level.
