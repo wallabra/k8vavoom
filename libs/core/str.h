@@ -380,6 +380,9 @@ public:
   inline VStr defaultExtension (const VStr &extension) const { return DefaultExtension(extension); }
   inline VStr fixSlashes () const { return FixFileSlashes(); }
 
+  bool IsAbsolutePath () const;
+  inline bool isAbsolutePath () const { return IsAbsolutePath(); }
+
   static inline int Length (const char *s) { return (s ? (int)strlen(s) : 0); }
   static inline int length (const char *s) { return (s ? (int)strlen(s) : 0); }
   static int Utf8Length (const char *s, int len=-1);

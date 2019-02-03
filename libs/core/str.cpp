@@ -1461,6 +1461,19 @@ VStr VStr::FixFileSlashes () const {
 }
 
 
+bool VStr::IsAbsolutePath () const {
+  if (length() < 1) return false;
+  const char *data = getData();
+#ifdef _WIN32
+  if (data[0] == '/' || data[0] == '\\') return true;
+  if (length() > 1 && data[1] == ':') return true;
+#else
+  if (data[0] == '/') return true;
+#endif
+  return false;
+}
+
+
 int VStr::Utf8Length (const char *s, int len) {
   guard(VStr::Utf8Length);
   if (len < 0) len = (s && s[0] ? (int)strlen(s) : 0);
