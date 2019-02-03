@@ -1007,7 +1007,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
       *name = sc->String;
       if (lookupFlag == MAPINFOF_LookupName) return;
       if (newStyle) {
-        for (;;) {
+        while (!sc->AtEnd()) {
           //if (sc->Check("}")) break;
           if (!sc->Check(",")) break;
           //sc->Expect(",");
@@ -1021,7 +1021,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vuint32 lookupFlag, VStr *name
           *name += sc->String;
         }
       } else {
-        for (;;) {
+        while (!sc->AtEnd()) {
           sc->ExpectString();
           if (sc->Crossed) { sc->UnGet(); break; }
           while (!sc->QuotedString) {
