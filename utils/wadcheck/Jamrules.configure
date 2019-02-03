@@ -1,0 +1,30 @@
+PROJECT_NAME = "wadcheck" ;
+
+
+rule -configure-zlib-not-found- {
+  -configure-add-line- DEFINES "+=" USE_INTERNAL_ZLIB ";" ;
+  -configure-add-line- USE_INTERNAL_ZLIB "=" tan ";" ;
+  -configure-add-line- STATIC_ZLIB_LIB "=" libzlib.a ";" ;
+}
+
+rule -configure-liblzma-not-found- {
+  -configure-add-line- DEFINES "+=" USE_INTERNAL_LZMA ";" ;
+  -configure-add-line- USE_INTERNAL_LZMA "=" tan ";" ;
+  -configure-add-line- STATIC_LZMA_LIB "=" liblzma.a ";" ;
+}
+
+
+rule -configure- {
+  -configure-add-line- DEFINES "+=" HAVE_INTTYPES_H ";" ;
+  if $(NT) || $(WINDOZE) {
+    -configure-add-line- LINKLIBS.all "+=" "-lwinmm" ";" ;
+    -configure-add-line- LINKFLAGS.all "+=" '-Wl,-subsystem,console' ";" ;
+  }
+  -configure-pkg-config- "zlib" : zlib : : "[-configure-zlib-not-found-]" ;
+  -configure-pkg-config- "liblzma" : liblzma : : "[-configure-liblzma-not-found-]" ;
+}
+
+
+check-setup-windoze ;
+if $(NT) || $(WINDOZE) { K8JAM-CONFIGURE-FILE = $(TOP)/Jamrules.auto.shitdoze.configure ; }
+configure ;

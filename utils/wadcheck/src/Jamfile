@@ -1,0 +1,15 @@
+SubDir TOP src ;
+
+Main wadcheck :
+  main_wadcheck.cpp
+;
+LinkLibraries wadcheck :
+  libfsys.a
+  libcore.a
+  $(STATIC_LZMA_LIB)
+  $(STATIC_ZLIB_LIB)
+;
+
+
+SubInclude TOP src libs ;
+SubInclude TOP src fsys ;

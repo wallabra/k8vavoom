@@ -1,0 +1,40 @@
+SubDir TOP src libs zlib ;
+
+
+if $(USE_INTERNAL_ZLIB) {
+
+SubDirDefines
+  HAVE_SYS_TYPES_H
+  HAVE_STDINT_H
+  HAVE_STDDEF_H
+  HAVE_UNISTD_H
+  #Z_HAVE_UNISTD_H
+  #_LARGEFILE64_SOURCE=1
+  #NO_FSEEKO
+;
+
+
+SubDirHdrs $(TOP) src libs zlib src ;
+
+
+Library libzlib.a :
+  src/adler32.c
+  src/compress.c
+  src/crc32.c
+  src/deflate.c
+  #src/gzclose.c
+  #src/gzlib.c
+  #src/gzread.c
+  #src/gzwrite.c
+  src/inflate.c
+  src/infback.c
+  src/inftrees.c
+  src/inffast.c
+  src/trees.c
+  src/uncompr.c
+  src/zutil.c
+  #src/win32/zlib1.rc
+;
+
+
+}
