@@ -60,6 +60,9 @@ public:
 
   // return `true` if given index is valid, and arg starts with '-' or '+'
   bool IsCommand (int idx) const;
+
+public:
+  static char *GetBinaryDir ();
 };
 
 

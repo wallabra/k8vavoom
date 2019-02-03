@@ -41,10 +41,10 @@ VArgs GArgs;
 
 //==========================================================================
 //
-//  getBinaryDir
+//  VArgs::GetBinaryDir
 //
 //==========================================================================
-static char *getBinaryDir () {
+char *VArgs::GetBinaryDir () {
   static char mydir[8192];
   memset(mydir, 0, sizeof(mydir));
 #ifdef __SWITCH__
@@ -101,7 +101,7 @@ void VArgs::Init (int argc, char **argv, const char *filearg) {
   Argc = argc;
   Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS); // memleak, but nobody cares
   memset(Argv, 0, sizeof(char*)*MAXARGVS);
-  Argv[0] = xstrdup(getBinaryDir());
+  Argv[0] = xstrdup(GetBinaryDir());
   for (int f = 1; f < argc; ++f) if (argv[f] && argv[f][0]) Argv[f] = xstrdup(argv[f]);
 #ifdef __SWITCH__
   // add static response file if it exists
