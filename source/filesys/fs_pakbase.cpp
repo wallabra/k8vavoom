@@ -324,20 +324,24 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         check(files[*lsidp].nextLump == -1);
         files[*lsidp].nextLump = f; // link to previous one
         *lsidp = f; // update index
+        if (lmp == "decorate" || lmp == "sndinfo" || lmp == "dehacked") {
+          GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+          GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+        }
       }
     }
     if (fi.fileName.length()) {
       if (doReports) {
-        if (aszip && filemap.has(fi.fileName)) {
+        if ((aszip || lmp == "decorate") && filemap.has(fi.fileName)) {
           GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-          GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3 FILES!");
+          GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
         } else if (f > 0) {
           for (int pidx = f-1; pidx >= 0; --pidx) {
             if (files[pidx].fileName.length()) {
               if (files[pidx].fileName == fi.fileName) {
                 //GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
                 GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-                GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE WAD FILES!");
+                GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
               }
               break;
             }
