@@ -37,17 +37,26 @@ private:
   EName lastEvent;
 
 public:
-  VConLogger () : wasNL(true), lastEvent(NAME_None) { /*GLog.AddListener(this);*/
+  VConLogger () : wasNL(true), lastEvent(NAME_None) {
     VName::StaticInit();
     GLog.AddListener(this);
   }
 
   virtual void Serialise (const char *Text, EName Event) override {
-    //fprintf(stderr, "%s: %s", *VName(Event), Text);
+    //fprintf(stderr, "%s: <%s>\n", *VName(Event), *VStr(Text).quote());
     while (*Text) {
-      if (lastEvent != Event) { if (!wasNL) fputc('\n', stdout); wasNL = true; lastEvent = Event; }
+      if (lastEvent != Event) {
+        if (!wasNL) fputc('\n', stdout);
+        wasNL = true;
+        lastEvent = Event;
+      }
       if (Text[0] == '\n') {
-        if (wasNL) { fputs(*VName(Event), stdout); fputs(": ", stdout); }
+        if (wasNL) {
+          if (Event != NAME_Log) {
+            fputs(*VName(Event), stdout);
+            fputc(':', stdout);
+          }
+        }
         fputc('\n', stdout);
         ++Text;
         wasNL = true;
@@ -55,15 +64,27 @@ public:
       } else {
         const char *eol = strchr(Text, '\n');
         if (!eol) {
-          if (wasNL) { fputs(*VName(Event), stdout); fputs(": ", stdout); wasNL = false; }
+          if (wasNL) {
+            if (Event != NAME_Log) {
+              fputs(*VName(Event), stdout);
+              fputs(": ", stdout);
+            }
+            wasNL = false;
+          }
           fputs(Text, stdout);
           return;
-        } else {
-          // ends with eol
-          if (wasNL) { fputs(*VName(Event), stdout); fputs(": ", stdout); wasNL = false; }
-          fwrite(Text, (size_t)(ptrdiff_t)(eol+1-Text), 1, stdout);
-          Text = eol+1;
         }
+        check(eol != Text);
+        // ends with eol
+        if (wasNL) {
+          if (Event != NAME_Log) {
+            fputs(*VName(Event), stdout);
+            fputs(": ", stdout);
+          }
+          wasNL = false;
+        }
+        fwrite(Text, (size_t)(ptrdiff_t)(eol-Text), 1, stdout);
+        Text = eol;
       }
     }
   }

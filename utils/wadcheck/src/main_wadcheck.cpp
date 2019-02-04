@@ -251,6 +251,7 @@ static __attribute__((noreturn)) void usage () {
 // ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
   GLog.WriteLine("WADCHECK build date: %s  %s", __DATE__, __TIME__);
+  //GLog.WriteLine("%s", "");
 
   VStr dbname = ".wadhash.wdb";
   if (argc > 1 && strcmp(argv[1], "--db") == 0) {
