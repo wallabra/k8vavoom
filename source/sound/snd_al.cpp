@@ -33,8 +33,10 @@ VCvarF VOpenALDevice::doppler_velocity("snd_doppler_velocity", "10000.0", "OpenA
 VCvarF VOpenALDevice::rolloff_factor("snd_rolloff_factor", "1.0", "OpenAL rolloff factor.", 0/*CVAR_Archive*/);
 //VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "64.0", "OpenAL reference distance.", CVAR_Archive);
 //VCvarF VOpenALDevice::max_distance("snd_max_distance", "2024.0", "OpenAL max distance.", CVAR_Archive);
-VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "384.0", "OpenAL reference distance.", 0/*CVAR_Archive*/);
-VCvarF VOpenALDevice::max_distance("snd_max_distance", "4096.0", "OpenAL max distance.", 0/*CVAR_Archive*/);
+//VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "384.0", "OpenAL reference distance.", 0/*CVAR_Archive*/);
+VCvarF VOpenALDevice::reference_distance("snd_reference_distance", "192.0", "OpenAL reference distance.", 0/*CVAR_Archive*/);
+//VCvarF VOpenALDevice::max_distance("snd_max_distance", "4096.0", "OpenAL max distance.", 0/*CVAR_Archive*/);
+VCvarF VOpenALDevice::max_distance("snd_max_distance", "8192.0", "OpenAL max distance.", 0/*CVAR_Archive*/);
 
 static VCvarB openal_show_extensions("openal_show_extensions", false, "Show available OpenAL extensions?", CVAR_Archive);
 
@@ -113,8 +115,13 @@ bool VOpenALDevice::Init () {
   if (E != AL_NO_ERROR) Sys_Error("OpenAL error: %s", alGetString(E));
 
   alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+  alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+  alEnable(AL_SOURCE_DISTANCE_MODEL);
 
-  //  Print some information.
+  // clear error code
+  alGetError();
+
+  // print some information
   if (openal_show_extensions) {
     GCon->Logf(NAME_Init, "AL_VENDOR: %s", alGetString(AL_VENDOR));
     GCon->Logf(NAME_Init, "AL_RENDERER: %s", alGetString(AL_RENDERER));
@@ -128,7 +135,7 @@ bool VOpenALDevice::Init () {
     for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
-  //  Allocate array for buffers.
+  // allocate array for buffers
   /*
   Buffers = new ALuint[GSoundManager->S_sfx.Num()];
   memset(Buffers, 0, sizeof(ALuint) * GSoundManager->S_sfx.Num());
