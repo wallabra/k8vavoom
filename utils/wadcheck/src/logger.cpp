@@ -50,7 +50,8 @@ public:
         wasNL = true;
         lastEvent = Event;
       }
-      if (Text[0] == '\n') {
+      if (Text[0] == '\r' && Text[1] == '\n') ++Text;
+      if (Text[0] == '\n' || Text[0] == '\r') {
         if (wasNL) {
           if (Event != NAME_Log) {
             fputs(*VName(Event), stdout);
@@ -62,8 +63,9 @@ public:
         wasNL = true;
         lastEvent = Event;
       } else {
-        const char *eol = strchr(Text, '\n');
-        if (!eol) {
+        const char *eol0 = strchr(Text, '\n');
+        const char *eol1 = strchr(Text, '\r');
+        if (!eol0 && !eol1) {
           if (wasNL) {
             if (Event != NAME_Log) {
               fputs(*VName(Event), stdout);
@@ -74,6 +76,7 @@ public:
           fputs(Text, stdout);
           return;
         }
+        const char *eol = (eol0 && eol1 ? (eol0 < eol1 ? eol0 : eol1) : eol0 ? eol0 : eol1);
         check(eol != Text);
         // ends with eol
         if (wasNL) {
