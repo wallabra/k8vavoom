@@ -30,6 +30,8 @@
 // ////////////////////////////////////////////////////////////////////////// //
 VLog GLog;
 
+VLog::Listener *VLog::Listeners = nullptr;
+
 
 //==========================================================================
 //
@@ -37,8 +39,7 @@ VLog GLog;
 //
 //==========================================================================
 VLog::VLog ()
-  : Listeners(nullptr)
-  , logbuf(nullptr)
+  : logbuf(nullptr)
   , logbufsize(0)
   , inWrite(false)
 {
@@ -46,7 +47,6 @@ VLog::VLog ()
   logbufsize = INITIAL_BUFFER_SIZE;
   logbuf = (char *)malloc(logbufsize);
   if (!logbuf) { fprintf(stderr, "FATAL: out of memory for initial log buffer!\n"); abort(); } //FIXME
-  //fprintf(stderr, "VLOG(%p): new log buffer! (%d)\n", (void *)this, logbufsize);
 }
 
 
@@ -57,7 +57,7 @@ VLog::VLog ()
 //==========================================================================
 void VLog::AddListener (VLogListener *lst) {
   if (!lst) return;
-  if (inWrite) { fprintf(stderr, "FATAL: cannot add log listeners from log listener!\n"); abort(); }
+  //if (inWrite) { fprintf(stderr, "FATAL: cannot add log listeners from log listener!\n"); abort(); }
   Listener *ls = (Listener *)malloc(sizeof(Listener));
   if (!ls) { fprintf(stderr, "FATAL: out of memory for log listener list!\n"); abort(); }
   ls->ls = lst;
@@ -79,7 +79,7 @@ void VLog::AddListener (VLogListener *lst) {
 //==========================================================================
 void VLog::RemoveListener (VLogListener *lst) {
   if (!lst || !Listeners) return;
-  if (inWrite) { fprintf(stderr, "FATAL: cannot remove log listeners from log listener!\n"); abort(); }
+  //if (inWrite) { fprintf(stderr, "FATAL: cannot remove log listeners from log listener!\n"); abort(); }
   Listener *lastCurr = nullptr, *lastPrev = nullptr;
   Listener *curr = Listeners, *prev = nullptr;
   for (; curr; prev = curr, curr = curr->next) {

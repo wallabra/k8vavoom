@@ -51,7 +51,7 @@ private:
   };
 
 private:
-  Listener *Listeners;
+  static Listener *Listeners;
   char *logbuf;
   int logbufsize;
   bool inWrite;
@@ -62,8 +62,8 @@ public:
 public:
   VLog ();
 
-  void AddListener (VLogListener *Listener);
-  void RemoveListener (VLogListener *Listener);
+  static void AddListener (VLogListener *Listener);
+  static void RemoveListener (VLogListener *Listener);
 
   void Write (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
   void WriteLine (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
@@ -77,4 +77,6 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// WARNING! THERE SHOULD BE ONLY ONE!
+// FIXME: implement proper singleton
 extern VLog GLog;
