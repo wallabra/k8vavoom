@@ -78,7 +78,6 @@ VOpenALDevice::~VOpenALDevice () {
 //
 //==========================================================================
 bool VOpenALDevice::Init () {
-  guard(VOpenALDevice::Init);
   ALenum E;
 
   Device = nullptr;
@@ -123,10 +122,10 @@ bool VOpenALDevice::Init () {
     GCon->Log(NAME_Init, "AL_EXTENSIONS:");
     TArray<VStr> Exts;
     VStr((char*)alGetString(AL_EXTENSIONS)).Split(' ', Exts);
-    for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+    for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
     GCon->Log(NAME_Init, "ALC_EXTENSIONS:");
     VStr((char*)alcGetString(Device, ALC_EXTENSIONS)).Split(' ', Exts);
-    for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ") + Exts[i]);
+    for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
   //  Allocate array for buffers.
@@ -137,7 +136,6 @@ bool VOpenALDevice::Init () {
 
   GCon->Log(NAME_Init, "OpenAL initialized.");
   return true;
-  unguard;
 }
 
 
@@ -167,11 +165,9 @@ void VOpenALDevice::RemoveCurrentThread () {
 //
 //==========================================================================
 int VOpenALDevice::SetChannels (int InNumChannels) {
-  guard(VOpenALDevice::SetChannels);
   int NumChannels = MAX_VOICES;
   if (NumChannels > InNumChannels) NumChannels = InNumChannels;
   return NumChannels;
-  unguard;
 }
 
 
@@ -181,8 +177,6 @@ int VOpenALDevice::SetChannels (int InNumChannels) {
 //
 //==========================================================================
 void VOpenALDevice::Shutdown () {
-  guard(VOpenALDevice::Shutdown);
-
   // delete buffers
   if (Buffers) {
     //alDeleteBuffers(GSoundManager->S_sfx.length(), Buffers);
@@ -209,7 +203,6 @@ void VOpenALDevice::Shutdown () {
     alcCloseDevice(Device);
     Device = nullptr;
   }
-  unguard;
 }
 
 
@@ -218,11 +211,7 @@ void VOpenALDevice::Shutdown () {
 //  VOpenALDevice::LoadSound
 //
 //==========================================================================
-
-bool VOpenALDevice::LoadSound(int sound_id)
-{
-  guard(VOpenALDevice::LoadSound);
-
+bool VOpenALDevice::LoadSound (int sound_id) {
   if (BufferCount < sound_id+1) {
     int newsz = ((sound_id+4)|0xfff)+1;
     ALuint *newbuf = new ALuint[newsz];
@@ -232,71 +221,55 @@ bool VOpenALDevice::LoadSound(int sound_id)
     BufferCount = newsz;
   }
 
-  if (Buffers[sound_id])
-  {
-    return true;
-  }
+  if (Buffers[sound_id]) return true;
 
-  //  Check, that sound lump is loaded
-  if (!GSoundManager->LoadSound(sound_id))
-  {
-    //  Missing sound.
-    return false;
-  }
+  // check, that sound lump is loaded
+  if (!GSoundManager->LoadSound(sound_id)) return false; // missing sound
 
-  //  Clear error code.
+  // clear error code
   alGetError();
 
-  //  Create buffer.
+  // create buffer
   alGenBuffers(1, &Buffers[sound_id]);
-  if (alGetError() != AL_NO_ERROR)
-  {
+  if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to gen buffer");
     GSoundManager->DoneWithLump(sound_id);
     return false;
   }
 
-  //  Load buffer data.
+  // load buffer data
   alBufferData(Buffers[sound_id],
-    GSoundManager->S_sfx[sound_id].SampleBits == 8 ? AL_FORMAT_MONO8 :
-    AL_FORMAT_MONO16, GSoundManager->S_sfx[sound_id].Data,
+    (GSoundManager->S_sfx[sound_id].SampleBits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16),
+    GSoundManager->S_sfx[sound_id].Data,
     GSoundManager->S_sfx[sound_id].DataSize,
     GSoundManager->S_sfx[sound_id].SampleRate);
-  if (alGetError() != AL_NO_ERROR)
-  {
+  if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to load buffer data");
     GSoundManager->DoneWithLump(sound_id);
     return false;
   }
 
-  //  We don't need to keep lump static
+  // we don't need to keep lump static
   GSoundManager->DoneWithLump(sound_id);
   return true;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::PlaySound
 //
 //  This function adds a sound to the list of currently active sounds, which
-// is maintained as a given number of internal channels.
+//  is maintained as a given number of internal channels.
 //
 //==========================================================================
-
-int VOpenALDevice::PlaySound(int sound_id, float volume, float pitch, bool Loop)
-{
-  guard(VOpenALDevice::PlaySound);
-  if (!LoadSound(sound_id))
-  {
-    return -1;
-  }
+int VOpenALDevice::PlaySound (int sound_id, float volume, float pitch, bool Loop) {
+  if (!LoadSound(sound_id)) return -1;
 
   ALuint src;
-  alGetError(); //  Clear error code.
+  alGetError(); // clear error code
   alGenSources(1, &src);
-  if (alGetError() != AL_NO_ERROR)
-  {
+  if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to gen source");
     return -1;
   }
@@ -313,29 +286,23 @@ int VOpenALDevice::PlaySound(int sound_id, float volume, float pitch, bool Loop)
   if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
   alSourcePlay(src);
   return src;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::PlaySound3D
 //
 //==========================================================================
-
-int VOpenALDevice::PlaySound3D(int sound_id, const TVec &origin,
-  const TVec &velocity, float volume, float pitch, bool Loop)
+int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity,
+                                float volume, float pitch, bool Loop)
 {
-  guard(VOpenALDevice::PlaySound3D);
-  if (!LoadSound(sound_id))
-  {
-    return -1;
-  }
+  if (!LoadSound(sound_id)) return -1;
 
   ALuint src;
-  alGetError(); //  Clear error code.
+  alGetError(); // clear error code
   alGenSources(1, &src);
-  if (alGetError() != AL_NO_ERROR)
-  {
+  if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to gen source");
     return -1;
   }
@@ -353,7 +320,6 @@ int VOpenALDevice::PlaySound3D(int sound_id, const TVec &origin,
   if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
   alSourcePlay(src);
   return src;
-  unguard;
 }
 
 
@@ -362,76 +328,55 @@ int VOpenALDevice::PlaySound3D(int sound_id, const TVec &origin,
 //  VOpenALDevice::UpdateChannel3D
 //
 //==========================================================================
-
-void VOpenALDevice::UpdateChannel3D(int Handle, const TVec &Org,
-  const TVec &Vel)
-{
-  guard(VOpenALDevice::UpdateChannel3D);
-  if (Handle == -1)
-  {
-    return;
-  }
+void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel) {
+  if (Handle == -1) return;
   alSource3f(Handle, AL_POSITION, Org.x, Org.y, Org.z);
   alSource3f(Handle, AL_VELOCITY, Vel.x, Vel.y, Vel.z);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::IsChannelPlaying
 //
 //==========================================================================
-
-bool VOpenALDevice::IsChannelPlaying(int Handle)
-{
-  guard(VOpenALDevice::IsChannelPlaying);
-  if (Handle == -1)
-  {
-    return false;
-  }
+bool VOpenALDevice::IsChannelPlaying (int Handle) {
+  if (Handle == -1) return false;
   ALint State;
   alGetSourcei(Handle, AL_SOURCE_STATE, &State);
   return State == AL_PLAYING;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::StopChannel
 //
 //  Stop the sound. Necessary to prevent runaway chainsaw, and to stop
-// rocket launches when an explosion occurs.
+//  rocket launches when an explosion occurs.
 //  All sounds MUST be stopped;
 //
 //==========================================================================
-
-void VOpenALDevice::StopChannel(int Handle)
-{
-  guard(VOpenALDevice::StopChannel);
-  if (Handle == -1)
-  {
-    return;
-  }
-  //  Stop buffer
+void VOpenALDevice::StopChannel (int Handle) {
+  if (Handle == -1) return;
+  // stop buffer
   alSourceStop(Handle);
   alDeleteSources(1, (ALuint*)&Handle);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::UpdateListener
 //
 //==========================================================================
-
-void VOpenALDevice::UpdateListener(const TVec &org, const TVec &vel,
-  const TVec &fwd, const TVec&, const TVec &up
+void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel,
+                                    const TVec &fwd, const TVec&, const TVec &up
 #if defined(VAVOOM_REVERB)
-  , VReverbInfo *Env
+                                    , VReverbInfo *Env
 #endif
 )
 {
-  guard(VOpenALDevice::UpdateListener);
   alListener3f(AL_POSITION, org.x, org.y, org.z);
   alListener3f(AL_VELOCITY, vel.x, vel.y, vel.z);
 
@@ -440,28 +385,23 @@ void VOpenALDevice::UpdateListener(const TVec &org, const TVec &vel,
 
   alDopplerFactor(doppler_factor);
   alDopplerVelocity(doppler_velocity);
-
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::OpenStream
 //
 //==========================================================================
-
-bool VOpenALDevice::OpenStream(int Rate, int Bits, int Channels)
-{
-  guard(VOpenALDevice::OpenStream);
+bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
   StrmSampleRate = Rate;
   StrmFormat = Channels == 2 ?
     Bits == 8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16 :
     Bits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
 
-  alGetError(); //  Clear error code.
+  alGetError(); // clear error code
   alGenSources(1, &StrmSource);
-  if (alGetError() != AL_NO_ERROR)
-  {
+  if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to gen source");
     return false;
   }
@@ -471,105 +411,77 @@ bool VOpenALDevice::OpenStream(int Rate, int Bits, int Channels)
   alSourcePlay(StrmSource);
   StrmNumAvailableBuffers = 0;
   return true;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::CloseStream
 //
 //==========================================================================
-
-void VOpenALDevice::CloseStream()
-{
-  guard(VOpenALDevice::CloseStream);
-  if (StrmSource)
-  {
+void VOpenALDevice::CloseStream () {
+  if (StrmSource) {
     alDeleteBuffers(NUM_STRM_BUFFERS, StrmBuffers);
     alDeleteSources(1, &StrmSource);
     StrmSource = 0;
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::GetStreamAvailable
 //
 //==========================================================================
-
-int VOpenALDevice::GetStreamAvailable()
-{
-  guard(VOpenALDevice::GetStreamAvailable);
-  if (!StrmSource)
-    return 0;
+int VOpenALDevice::GetStreamAvailable () {
+  if (!StrmSource) return 0;
 
   ALint NumProc;
   alGetSourcei(StrmSource, AL_BUFFERS_PROCESSED, &NumProc);
-  if (NumProc > 0)
-  {
-    alSourceUnqueueBuffers(StrmSource, NumProc,
-      StrmAvailableBuffers + StrmNumAvailableBuffers);
+  if (NumProc > 0) {
+    alSourceUnqueueBuffers(StrmSource, NumProc, StrmAvailableBuffers+StrmNumAvailableBuffers);
     StrmNumAvailableBuffers += NumProc;
   }
-  return StrmNumAvailableBuffers > 0 ? STRM_BUFFER_SIZE : 0;
-  unguard;
+  return (StrmNumAvailableBuffers > 0 ? STRM_BUFFER_SIZE : 0);
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::GetStreamBuffer
 //
 //==========================================================================
-
-short *VOpenALDevice::GetStreamBuffer()
-{
-  guard(VOpenALDevice::GetStreamBuffer);
+short *VOpenALDevice::GetStreamBuffer () {
   return StrmDataBuffer;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::SetStreamData
 //
 //==========================================================================
-
-void VOpenALDevice::SetStreamData(short *Data, int Len)
-{
-  guard(VOpenALDevice::SetStreamData);
-  ALuint Buf;
+void VOpenALDevice::SetStreamData (short *Data, int Len) {
   ALint State;
 
-  Buf = StrmAvailableBuffers[StrmNumAvailableBuffers - 1];
-  StrmNumAvailableBuffers--;
-  alBufferData(Buf, StrmFormat, Data, Len * 4, StrmSampleRate);
+  ALuint Buf = StrmAvailableBuffers[StrmNumAvailableBuffers-1];
+  --StrmNumAvailableBuffers;
+  alBufferData(Buf, StrmFormat, Data, Len*4, StrmSampleRate);
   alSourceQueueBuffers(StrmSource, 1, &Buf);
   alGetSourcei(StrmSource, AL_SOURCE_STATE, &State);
-  if (State != AL_PLAYING)
-  {
-    if (StrmSource)
-    {
-      alSourcePlay(StrmSource);
-    }
+  if (State != AL_PLAYING) {
+    if (StrmSource) alSourcePlay(StrmSource);
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::SetStreamVolume
 //
 //==========================================================================
-
-void VOpenALDevice::SetStreamVolume(float Vol)
-{
-  guard(VOpenALDevice::SetStreamVolume);
-  if (StrmSource)
-  {
-      alSourcef(StrmSource, AL_GAIN, Vol);
-  }
-  unguard;
+void VOpenALDevice::SetStreamVolume (float Vol) {
+  if (StrmSource) alSourcef(StrmSource, AL_GAIN, Vol);
 }
 
 
@@ -579,39 +491,25 @@ void VOpenALDevice::SetStreamVolume(float Vol)
 //
 //==========================================================================
 void VOpenALDevice::SetStreamPitch (float pitch) {
-  if (StrmSource) {
-    alSourcef(StrmSource, AL_PITCH, pitch);
-  }
+  if (StrmSource) alSourcef(StrmSource, AL_PITCH, pitch);
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::PauseStream
 //
 //==========================================================================
-
-void VOpenALDevice::PauseStream()
-{
-  guard(VOpenALDevice::PauseStream);
-  if (StrmSource)
-  {
-    alSourcePause(StrmSource);
-  }
-  unguard;
+void VOpenALDevice::PauseStream () {
+  if (StrmSource) alSourcePause(StrmSource);
 }
+
 
 //==========================================================================
 //
 //  VOpenALDevice::ResumeStream
 //
 //==========================================================================
-
-void VOpenALDevice::ResumeStream()
-{
-  guard(VOpenALDevice::ResumeStream);
-  if (StrmSource)
-  {
-    alSourcePlay(StrmSource);
-  }
-  unguard;
+void VOpenALDevice::ResumeStream () {
+  if (StrmSource) alSourcePlay(StrmSource);
 }
