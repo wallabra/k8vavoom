@@ -3571,6 +3571,9 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (sec->floor.minz >= sec->ceiling.minz) return 0;
   if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) return 0;
   int res = (deepwater_hacks_floor ? FFBugFloor : 0)|(deepwater_hacks_ceiling ? FFBugCeiling : 0); // not yet
+  // don't fix alphas
+  if (sec->floor.Alpha != 1.0f) res &= ~FFBugFloor;
+  if (sec->ceiling.Alpha != 1.0f) res &= ~FFBugCeiling;
   int myside = -1;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) return 0;
@@ -3578,12 +3581,6 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
     if (!(!!line->frontsector && !!line->backsector)) continue;
     //if (!line->frontsector || !line->backsector) return 0;
     sector_t *bs;
-    /*
-    if (myside >= 0) {
-      if (myside == 0 && line->backsector == sec) continue;
-      if (myside == 1 && line->frontsector == sec) continue;
-    }
-    */
     if (line->frontsector == sec) {
       // back
       bs = line->backsector;
@@ -3600,29 +3597,40 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
     if (bs == sec) return 0; // this is self-referenced sector, nothing to see here, come along
     if (bs->floor.minz >= bs->ceiling.minz) return 0; // this looks like a door, don't "fix" anything
     // check for possible floor floodbug
-    if (res&FFBugFloor) {
-      // line has no bottom texture?
-      if (Sides[line->sidenum[myside]].BottomTexture != 0) { res &= ~FFBugFloor; continue; }
-      // slope?
-      if (bs->floor.normal.z != 1.0f) { res &= ~FFBugFloor; continue; }
-      // height?
-      if (bs->floor.minz <= sec->floor.minz) { res &= ~FFBugFloor; continue; }
-      //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
-    }
+    do {
+      if (res&FFBugFloor) {
+        // line has no bottom texture?
+        if (Sides[line->sidenum[myside]].BottomTexture != 0) { res &= ~FFBugFloor; break; }
+        // slope?
+        if (bs->floor.normal.z != 1.0f) { res &= ~FFBugFloor; break; }
+        // height?
+        if (bs->floor.minz <= sec->floor.minz) { res &= ~FFBugFloor; break; }
+        //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
+      }
+    } while (0);
     // check for possible ceiling floodbug
-    //TODO: here we should ignore lifts
-    if (res&FFBugCeiling) {
-      int fsnum = (int)(ptrdiff_t)(line->frontsector-Sectors);
-      int bsnum = (int)(ptrdiff_t)(line->backsector-Sectors);
-      GCon->Logf("fs: %d; bs: %d", fsnum, bsnum);
-      // line has no top texture?
-      if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; continue; }
-      // slope?
-      if (bs->ceiling.normal.z != -1.0f) { res &= ~FFBugCeiling; continue; }
-      // height?
-      if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
-      if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
-    }
+    do {
+      //TODO: here we should ignore lifts
+      if (res&FFBugCeiling) {
+        /*
+        int ssnum = (int)(ptrdiff_t)(sec-Sectors);
+        if (ssnum == 314) {
+          int fsnum = (int)(ptrdiff_t)(line->frontsector-Sectors);
+          int bsnum = (int)(ptrdiff_t)(line->backsector-Sectors);
+          GCon->Logf("fs: %d; bs: %d", fsnum, bsnum);
+        } else {
+          //GCon->Logf("ss: %d", ssnum);
+        }
+        */
+        // line has no top texture?
+        if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; break; }
+        // slope?
+        if (bs->ceiling.normal.z != -1.0f) { res &= ~FFBugCeiling; break; }
+        // height?
+        if (bs->ceiling.minz >= sec->ceiling.minz) { res &= ~FFBugCeiling; break; }
+        //if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
+      }
+    } while (0);
   }
   return res;
 }
@@ -3725,7 +3733,6 @@ void VLevel::FixDeepWaters () {
   if (deepwater_hacks) FixSelfRefDeepWater();
 
   if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
-    //GCon->Logf("!!!!!!!!!!");
     // fix "floor holes"
     for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
@@ -3738,6 +3745,8 @@ void VLevel::FixDeepWaters () {
       sector_t *fsecFloor = nullptr, *fsecCeiling = nullptr;
       if (bugFlags&FFBugFloor) fsecFloor = FindGoodFloodSector(sec, true);
       if (bugFlags&FFBugCeiling) fsecCeiling = FindGoodFloodSector(sec, false);
+      if (fsecFloor == sec) fsecFloor = nullptr;
+      if (fsecCeiling == sec) fsecCeiling = nullptr;
       if (!fsecFloor && !fsecCeiling) continue;
       GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%s; ceiling:%s)", sidx, (fsecFloor ? "tan" : "ona"), (fsecCeiling ? "tan" : "ona"));
       sec->othersecFloor = fsecFloor;
