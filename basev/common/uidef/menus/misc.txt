@@ -187,7 +187,7 @@ menudef MiscOptions {
   }
 
   option bool {
-    title = "Fix floor floodfill bugs (unreliable)";
+    title = "Fix floor floodfill bugs";
     cvar = deepwater_hacks_floor;
     //textColor = LIGHTBLUE;
     //textColor = DARKRED;
@@ -201,7 +201,7 @@ menudef MiscOptions {
   }
 
   option bool {
-    title = "Fix ceiling floodfill bugs (unreliable)";
+    title = "Fix ceiling floodfill bugs";
     cvar = deepwater_hacks_ceiling;
     //textColor = LIGHTBLUE;
     //textColor = DARKRED;
