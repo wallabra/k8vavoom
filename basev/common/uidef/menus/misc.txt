@@ -187,13 +187,27 @@ menudef MiscOptions {
   }
 
   option bool {
-    title = "Fix floodfill bugs (unreliable)";
-    cvar = deepwater_hacks_extra_ex;
+    title = "Fix floor floodfill bugs (unreliable)";
+    cvar = deepwater_hacks_floor;
     //textColor = LIGHTBLUE;
     //textColor = DARKRED;
     textColor = PURPLE;
     help =
       "This tries to fix sectors without low texture."
+      "You may know it as 'flat floodfill bug' in Vanilla."
+      "Currently this fixer is very simple, and can fix only simple cases."
+      "It may cause rendering glitches, but such cases are rare."
+      "If in doubt, turn this ON. Yes, 'ON'!";
+  }
+
+  option bool {
+    title = "Fix ceiling floodfill bugs (unreliable)";
+    cvar = deepwater_hacks_ceiling;
+    //textColor = LIGHTBLUE;
+    //textColor = DARKRED;
+    textColor = PURPLE;
+    help =
+      "This tries to fix sectors without high texture."
       "You may know it as 'flat floodfill bug' in Vanilla."
       "Currently this fixer is very simple, and can fix only simple cases."
       "It may cause rendering glitches, but such cases are rare."
