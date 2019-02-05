@@ -53,7 +53,8 @@ static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remov
 
 //static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
 static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply self-referenced deepwater hacks?", CVAR_Archive);
-static VCvarB deepwater_hacks_extra("deepwater_hacks_extra_ex", true, "Apply deepwater hacks to fix some map errors? (not working right yet)", CVAR_Archive);
+static VCvarB deepwater_hacks_floor("deepwater_hacks_floor", true, "Apply deepwater hacks to fix some map errors? (not working right yet)", CVAR_Archive);
+static VCvarB deepwater_hacks_ceiling("deepwater_hacks_ceiling", true, "Apply deepwater hacks to fix some map errors? (not working right yet)", CVAR_Archive);
 static VCvarB build_blockmap("loader_force_blockmap_rebuild", false, "Force blockmap rebuild on map loading?", CVAR_Archive);
 //static VCvarB show_level_load_times("show_level_load_times", false, "Show loading times?", CVAR_Archive);
 
@@ -3569,8 +3570,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (sec->linecount == 0 || sec->deepref) return 0;
   if (sec->floor.minz >= sec->ceiling.minz) return 0;
   if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) return 0;
-  //int res = FFBugFloor|FFBugCeiling; // not yet
-  int res = FFBugFloor;
+  int res = (deepwater_hacks_floor ? FFBugFloor : 0)|(deepwater_hacks_ceiling ? FFBugCeiling : 0); // not yet
   int myside = -1;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) return 0;
@@ -3612,6 +3612,9 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
     // check for possible ceiling floodbug
     //TODO: here we should ignore lifts
     if (res&FFBugCeiling) {
+      int fsnum = (int)(ptrdiff_t)(line->frontsector-Sectors);
+      int bsnum = (int)(ptrdiff_t)(line->backsector-Sectors);
+      GCon->Logf("fs: %d; bs: %d", fsnum, bsnum);
       // line has no top texture?
       if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; continue; }
       // slope?
@@ -3721,7 +3724,8 @@ void VLevel::FixDeepWaters () {
 
   if (deepwater_hacks) FixSelfRefDeepWater();
 
-  if (deepwater_hacks_extra) {
+  if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
+    //GCon->Logf("!!!!!!!!!!");
     // fix "floor holes"
     for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];

@@ -1804,10 +1804,12 @@ void VRenderLevelShared::UpdateFloodBug (sector_t *sec) {
   if (sec->othersecFloor && sec->floor.minz < sec->othersecFloor->floor.minz) {
     ff->floorplane = sec->othersecFloor->floor;
     ff->params = sec->othersecFloor->params;
+    ff->floorplane.LightSourceSector = (int)(ptrdiff_t)(sec->othersecFloor-Level->Sectors);
   }
   if (sec->othersecCeiling && sec->ceiling.minz > sec->othersecCeiling->ceiling.minz) {
     ff->ceilplane = sec->othersecCeiling->ceiling;
     ff->params = sec->othersecCeiling->params;
+    ff->ceilplane.LightSourceSector = (int)(ptrdiff_t)(sec->othersecCeiling-Level->Sectors);
   }
 }
 
