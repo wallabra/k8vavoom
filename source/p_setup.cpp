@@ -3632,6 +3632,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       }
     } while (0);
   }
+  //if (res&FFBugCeiling) GCon->Logf("css: %d", (int)(ptrdiff_t)(sec-Sectors));
   return res;
 }
 
@@ -3652,16 +3653,20 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
   TArray<sector_t *> sameBug;
   seen.append(sec);
   vuint32 bugMask = (wantFloor ? FFBugFloor : FFBugCeiling);
+  //int ssnum = (int)(ptrdiff_t)(sec-Sectors);
   for (;;) {
     for (int f = 0; f < sec->linecount; ++f) {
       line_t *line = sec->lines[f];
       if (!(!!line->frontsector && !!line->backsector)) continue;
+      sector_t *fs;
       sector_t *bs;
       if (line->frontsector == sec) {
         // back
+        fs = line->frontsector;
         bs = line->backsector;
       } else if (line->backsector == sec) {
         // front
+        fs = line->backsector;
         bs = line->frontsector;
       } else {
         return nullptr; // something's strange in the neighbourhood
@@ -3669,9 +3674,14 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
       // bs is possible sector to move to
       bool wasSeen = false;
       for (int c = seen.length(); c > 0; --c) if (seen[c-1] == bs) { wasSeen = true; break; }
-      seen.append(bs);
       if (wasSeen) continue; // we already rejected this sector
+      seen.append(bs);
+      if (fs == bs) continue;
+      //vuint32 xxbug = IsFloodBugSector(fs);
       vuint32 ffbug = IsFloodBugSector(bs);
+      //ffbug |= xxbug;
+      //if (ssnum == 981) GCon->Logf("xxx: %d (%d); xxbug=%d; ffbug=%d", ssnum, (int)(ptrdiff_t)(bs-Sectors), xxbug, ffbug);
+      //if (ssnum == 981) GCon->Logf("xxx: %d (%d); ffbug=%d", ssnum, (int)(ptrdiff_t)(bs-Sectors), ffbug);
       if (ffbug) {
         if ((ffbug&bugMask) != 0) {
           sameBug.append(bs);
@@ -3690,17 +3700,25 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
     }
     // if we have no good sectors, try neighbour sector with the same bug
     if (good.length() != 0) break;
-    if (good.length() == 0) return nullptr; // oops
+    //if (good.length() == 0) return nullptr; // oops
+    /*
     sec = good[0];
     good.removeAt(0);
+    */
+    if (sameBug.length() == 0) return nullptr;
+    sec = sameBug[0];
+    sameBug.removeAt(0);
   }
   // here we should have some good sectors
   if (good.length() == 0) return nullptr; // sanity check
   if (good.length() == 1) return good[0];
   // we have several good sectors; check if they have the same height, and the same flat texture
+  //if (ssnum == 981) GCon->Logf("xxx: %d; len=%d", ssnum, good.length());
   sector_t *res = good[0];
+  //sector_t *best = (IsFloodBugSector(res) ? nullptr : res);
   for (int f = 1; f < good.length(); ++f) {
     sec = good[f];
+    //if (ssnum == 981) GCon->Logf("yyy(%d): %d; res=%d; ff=%d", f, ssnum, (int)(ptrdiff_t)(sec-Sectors), IsFloodBugSector(sec));
     //!if (sec->params.lightlevel != res->params.lightlevel) return nullptr; //k8: ignore this?
     //!if (sec->params.LightColour != res->params.LightColour) return nullptr; //k8: ignore this?
     if (wantFloor) {
@@ -3709,10 +3727,23 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
       if (sec->floor.pic != res->floor.pic) return nullptr;
     } else {
       // ceiling
-      if (sec->ceiling.minz != res->ceiling.minz) return nullptr;
-      if (sec->ceiling.pic != res->ceiling.pic) return nullptr;
+      if (sec->ceiling.minz != (/*best ? best :*/ res)->ceiling.minz) {
+        //GCon->Logf("000: %d (%d)", ssnum, (int)(ptrdiff_t)(sec-Sectors));
+        //if (IsFloodBugSector(sec)) continue;
+        //GCon->Logf("000: %d; %d (%d)  %f : %f", ssnum, (int)(ptrdiff_t)(res-Sectors), (int)(ptrdiff_t)(sec-Sectors), sec->ceiling.minz, (best ? best : res)->ceiling.minz);
+        return nullptr;
+      }
+      if (sec->ceiling.pic != res->ceiling.pic) {
+        //if (IsFloodBugSector(sec)) continue;
+        //GCon->Logf("001: %d (%d)", ssnum, (int)(ptrdiff_t)(sec-Sectors));
+        return nullptr;
+      }
     }
+    //if (!best && !IsFloodBugSector(sec)) best = sec;
   }
+  //if (!best) return nullptr;
+  //if (best) res = best;
+  //if (ssnum == 981) GCon->Logf("zzz: %d; res=%d", ssnum, (int)(ptrdiff_t)(res-Sectors));
   return res;
 }
 
