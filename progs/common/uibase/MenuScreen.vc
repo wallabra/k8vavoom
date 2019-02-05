@@ -30,6 +30,7 @@ ClientGameShared ClGame;
 
 MenuTitleText titleItem;
 array!MenuChoice Items;
+MenuChoice_BackButton BackButton;
 
 bool MenuScrollable;
 bool AllowVerticalResize;
@@ -82,6 +83,7 @@ void CreateMenu () {
     }
     Height = newHeight;
   }
+  FixTitleWidthClosePos();
   // center menu
   SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
 }
@@ -101,7 +103,7 @@ void CreateTitle () {
     if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));
     titleItem.Text = Title;
     titleItem.SetOrigin(TitleX, TitleY);
-    //titleItem.FixSize();
+    titleItem.FixSize();
   } else {
     delete titleItem;
   }
@@ -119,12 +121,26 @@ void ChangeTitle (string newtitle) {
 
 void DrawBackButton () {
   // draw the back button on the top left corner of the menu screen
-  MenuChoice_BackButton BackButton = MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
-  BackButton.SetOrigin(Width-20, 1);
+  if (!BackButton) {
+    /*MenuChoice_BackButton*/ BackButton = MenuChoice_BackButton(NewChild(MenuChoice_BackButton));
+    BackButton.Width = BackButton.CalcTextWidth()+8;
+    BackButton.SetOrigin(Width-20, 1);
+  }
 }
 
 
 void CreateChoices () {
+}
+
+
+void FixTitleWidthClosePos () {
+  //print("FixTitleWidthClosePos: %C", Class);
+  if (titleItem) {
+    //titleItem.centerText = false;
+    titleItem.FixSize();
+    titleItem.SetPos((Width-titleItem.Width)/2, titleItem.Y);
+  }
+  if (BackButton) BackButton.SetOrigin(Width-20, 1);
 }
 
 

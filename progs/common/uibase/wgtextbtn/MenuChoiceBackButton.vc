@@ -26,43 +26,40 @@
 //**************************************************************************
 class MenuChoice_BackButton : MenuTextButton;
 
+
 //==========================================================================
 //
 //  OnDraw
 //
 //==========================================================================
-
-override void OnDraw()
-{
+override void OnDraw () {
   SetFont('bigfont');
   int Col = IsFocus() ? CR_YELLOW : CR_UNTRANSLATED;
   DrawText(0, 0, Text, Col);
 }
+
 
 //==========================================================================
 //
 //  OnMouseClick
 //
 //==========================================================================
-
-override void OnMouseClick(int X, int Y)
-{
+override void OnMouseClick (int X, int Y) {
   GetClGame().PopMenu();
 }
+
 
 //==========================================================================
 //
 //  OnFocusReceived
 //
 //==========================================================================
-
-override void OnFocusReceived()
-{
+override void OnFocusReceived() {
   //::OnFocusReceived();
 }
 
-defaultproperties
-{
+
+defaultproperties {
   TextFont = 'bigfont';
   Text = "x";
   Height = 23;

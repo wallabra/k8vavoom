@@ -59,6 +59,12 @@ void SetText (string AText) {
 }
 
 
+int CalcTextWidth () {
+  SetFont(TextFont);
+  return TextWidth(Text);
+}
+
+
 void ActivateEvent () {
   // there was(?) the bug: parent can be destroyed before activation event comes (wtf?!)
   if (!Parent) print("*** WARNING: button '%s' (%C) has no parent! pos=(%d,%d)", Text, self, X, Y);

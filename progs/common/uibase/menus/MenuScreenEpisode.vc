@@ -38,25 +38,40 @@ override void CreateChoices () {
   int ecount = P_GetNumEpisodes();
   //if (ecount > 6) Height = 400;
   int calcHeight = ChoicesStartY;
+  int maxwdt = -1;
   foreach (auto i; 0..ecount) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
     if (EDef->bOptional && !IsMapPresent(EDef->Name)) continue;
     Epi = MenuChoiceEpisode(NewChild(MenuChoiceEpisode));
     Epi.SetPos(ChoicesStartX, currentY);
-         if (EDef->PicName) Epi.PicHandle = R_RegisterPic(EDef->PicName);
-    else if (EDef->bLookupText) Epi.Text = GetLangString(name(EDef->Text));
-    else Epi.Text = EDef->Text;
+    int wdt = -1;
+    if (EDef->PicName) {
+      Epi.PicHandle = R_RegisterPic(EDef->PicName);
+      picinfo_t pinf;
+      R_GetPicInfo(Epi.PicHandle, &pinf);
+      wdt = pinf.width;
+    } else if (EDef->bLookupText) {
+      Epi.Text = GetLangString(name(EDef->Text));
+    } else {
+      Epi.Text = EDef->Text;
+    }
+    if (wdt < 0) wdt = Epi.CalcTextWidth();
+    //print("i=%d; wdt=%d; curmax=%d; <%q> (%s)", i, wdt, maxwdt, Epi.Text, Epi.TextFont);
+    maxwdt = max(maxwdt, wdt);
     Epi.EDef = EDef;
     Epi.Activated = &ActivateEpisode;
     currentY += Epi.Height;
     calcHeight += Epi.Height;
   }
+  foreach (auto it; Items) if (it.Width < maxwdt) it.Width = maxwdt;
   calcHeight = clamp(calcHeight, 200, 440);
   if (calcHeight > Height) {
     Height = calcHeight;
     Y = (GetVirtualHeight()-calcHeight)/2;
     Width = 370; // for "the plutonia experiment"
   }
+  maxwdt += 60;
+  if (Width < maxwdt) Width = maxwdt;
 }
 
 

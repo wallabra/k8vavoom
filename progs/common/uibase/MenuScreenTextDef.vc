@@ -106,6 +106,7 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   currentY = ChoicesStartY;
 
   CreateMenuItemsFromList(mdef.options);
+
 }
 
 
@@ -123,6 +124,8 @@ void FinishCreatingMenu () {
     Height = newHeight;
   }
 
+  FixTitleWidthClosePos();
+
   // center menu
   SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
 }
@@ -135,7 +138,7 @@ override void CreateTitle () {
     titleItem.Text = Title;
     //titleItem.SetOrigin(TitleX, TitleY);
     titleItem.SetOrigin(0, TitleY);
-    titleItem.centerText = true;
+    //titleItem.centerText = true;
     //titleItem.FixSize();
   } else {
     delete titleItem;
