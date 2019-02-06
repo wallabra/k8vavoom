@@ -761,7 +761,7 @@ final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor ch
 //  A_SpawnParticle
 //
 //==========================================================================
-final void A_SpawnParticle (string color1, /*optional int flags,*/ optional int lifetime,
+final void A_SpawnParticle (string color1, optional int flags, optional int lifetime,
                             optional float size, optional float angle,
                             optional float xoff, optional float yoff, optional float zoff,
                             optional float velx, optional float vely, optional float velz,
