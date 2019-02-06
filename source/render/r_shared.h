@@ -73,11 +73,11 @@ struct texinfo_t {
   TVec taxis;
   float toffs;
   VTexture *Tex;
-  bool noDecals;
+  /*bool*/vint32 noDecals;
   // 1.1 for solid surfaces
   // alpha for masked surfaces
   float Alpha;
-  bool Additive;
+  /*bool*/vint32 Additive;
   vuint8 ColourMap;
 };
 
@@ -93,6 +93,8 @@ struct surface_t {
   sec_plane_t *HorizonPlane;
   vuint32 Light; // light level and colour
   vuint32 Fade;
+  subsector_t *subsector;
+  // not exposed to VC
   vuint8 *lightmap; // can be equal to `SURF_NEED_TO_BUILD_LIGHMAP`
   rgb_t *lightmap_rgb;
   int dlightframe;
@@ -103,7 +105,7 @@ struct surface_t {
   surfcache_t *CacheSurf;
   seg_t *dcseg; // seg with decals for this surface
   vuint32 lmapflags; // Lightmap_XXX
-  subsector_t *subsector;
+  //subsector_t *subsector;
   TVec verts[1]; // dynamic array
 };
 

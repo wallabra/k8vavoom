@@ -562,6 +562,91 @@ enum {
 
 //==========================================================================
 //
+//  internal renderer structs; exposed for debugging
+//
+//==========================================================================
+
+// TODO: document this!
+struct texinfo_t {
+  native transient TVec saxis;
+  native transient float soffs;
+  native transient TVec taxis;
+  native transient float toffs;
+  native transient void/*VTexture*/ *Tex;
+  native transient int noDecals;
+  // 1.1 for solid surfaces
+  // alpha for masked surfaces
+  native transient float Alpha;
+  native transient int Additive;
+  native transient ubyte ColourMap;
+};
+
+
+// TODO: document this!
+struct segpart_t {
+  segpart_t *next;
+  texinfo_t texinfo;
+  surface_t *surfs;
+  float frontTopDist;
+  float frontBotDist;
+  float backTopDist;
+  float backBotDist;
+  float TextureOffset;
+  float RowOffset;
+};
+
+// TODO: document this!
+struct drawseg_t {
+  seg_t *seg;
+  drawseg_t *next;
+
+  segpart_t *top;
+  segpart_t *mid;
+  segpart_t *bot;
+  segpart_t *topsky;
+  segpart_t *extra;
+
+  surface_t *HorizonTop;
+  surface_t *HorizonBot;
+};
+
+struct sec_surface_t {
+  sec_plane_t *secplane;
+  texinfo_t texinfo;
+  float dist;
+  float XScale;
+  float YScale;
+  float Angle;
+  surface_t *surfs;
+};
+
+struct surface_t {
+  surface_t *next;
+  private surface_t *DrawNext;
+  texinfo_t *texinfo;
+  TPlane *plane;
+  sec_plane_t *HorizonPlane;
+  int Light; // light level and colour (unsigned)
+  int Fade; // (unsigned)
+  subsector_t *subsector;
+/*
+  ubyte *lightmap; // can be equal to `SURF_NEED_TO_BUILD_LIGHMAP`
+  rgb_t *lightmap_rgb;
+  int dlightframe;
+  int dlightbits;
+  int count;
+  short texturemins[2];
+  short extents[2];
+  surfcache_t *CacheSurf;
+  seg_t *dcseg; // seg with decals for this surface
+  vuint32 lmapflags; // Lightmap_XXX
+  TVec verts[1]; // dynamic array
+*/
+};
+
+
+//==========================================================================
+//
 //  Level
 //
 //==========================================================================
@@ -573,7 +658,7 @@ struct line_t : TPlane {
   TVec *v2;
 
   // precalculated v2-v1 for side checking
-  TVec __dir;
+  TVec dir;
 
   // animation related
   int flags;
@@ -587,7 +672,7 @@ struct line_t : TPlane {
   float[4] bbox;
 
   // to aid move clipping
-  int __slopetype;
+  int slopetype;
 
   // front and back sector
   // note: redundant? can be retrieved from SideDefs
@@ -733,6 +818,14 @@ struct msecnode_t {
   int Visited; // killough 4/4/98, 4/7/98: used in search algorithms
 };
 
+
+struct fakefloor_t {
+  sec_plane_t floorplane;
+  sec_plane_t ceilplane;
+  sec_params_t params;
+};
+
+
 //
 //  The SECTORS record, at runtime.
 //  Stores things/mobjs.
@@ -768,7 +861,7 @@ struct sector_t {
 
   // list of subsectors in sector
   // used to check if client can see this sector (it needs to be updated)
-  subsector_t *__subsectors;
+  subsector_t *subsectors;
 
   // list of things in sector
   Entity ThingList;
@@ -780,7 +873,7 @@ struct sector_t {
 
   // Boom's fake floors
   sector_t *heightsec;
-  void *fakefloorinfo; // info for rendering
+  native transient fakefloor_t *fakefloorinfo; // info for rendering
 
   // flags
   bool bHasExtrafloors;   // this sector has extrafloors
@@ -851,27 +944,27 @@ struct seg_t : TPlane {
   // side of line (for light calculations: 0 or 1)
   int side;
 
-  void/*drawseg_t*/ *drawsegs;
-  void/*decal_t*/ *decals;
+  native transient drawseg_t *drawsegs;
+  native transient void/*decal_t*/ *decals;
 };
 
 //
 //  Polyobj data
 //
 struct polyobj_t {
-  seg_t **__segs;
-  int __numsegs;
+  seg_t **segs;
+  int numsegs;
   TVec startSpot;
-  TVec *__originalPts; // used as the base for the rotations
-  TVec *__prevPts; // use to restore the old point values
+  TVec *originalPts; // used as the base for the rotations
+  TVec *prevPts; // use to restore the old point values
   float angle;
   int tag; // reference tag assigned in HereticEd
-  int[4] __bbox;
+  int[4] bbox;
   int validcount;
   bool bCrush; // should the polyobj attempt to crush mobjs?
   bool bHurtOnTouch;
   int seqType;
-  subsector_t *__subsector;
+  subsector_t *subsector;
   Thinker SpecialData;  // pointer a thinker, if the poly is moving
 };
 
@@ -884,10 +977,10 @@ struct subregion_t {
   subregion_t *next;
   sec_plane_t *floorplane;
   sec_plane_t *ceilplane;
-  void/*sec_surface_t*/ *floor;
-  void/*sec_surface_t*/ *ceil;
+  native transient sec_surface_t *floor;
+  native transient sec_surface_t *ceil;
   int count;
-  void/*drawseg_t*/ *lines;
+  native transient drawseg_t *lines;
 };
 
 
@@ -896,21 +989,21 @@ struct subregion_t {
 // the visible walls that define (all or some) sides of a convex BSP leaf
 struct subsector_t {
   sector_t *sector;
-  subsector_t *__seclink;
-  int __numlines;
-  int __firstline;
-  polyobj_t *__poly;
+  native transient subsector_t *seclink;
+  int numlines;
+  int firstline;
+  polyobj_t *poly;
 
-  node_t *__parent;
-  int __VisFrame;
-  int __SkyVisFrame;
+  native transient node_t *parent;
+  int VisFrame;
+  int SkyVisFrame;
 
-  sector_t *__deepref;
+  sector_t *deepref;
 
-  int __dlightbits;
-  int __dlightframe;
+  int dlightbits;
+  int dlightframe;
 
-  subregion_t *__regions;
+  native transient subregion_t *regions;
 };
 
 
@@ -935,7 +1028,7 @@ struct node_t : TPlane {
   // if NF_SUBSECTOR its a subsector
   int[2] children; // unsigned
 
-  node_t *parent;
+  native transient node_t *parent;
   int VisFrame;
   int SkyVisFrame;
 };
@@ -1098,7 +1191,7 @@ struct dlight_t {
   float minlight; // don't add when contributing less
   int type;
   int colour;
-  private void *__owner;
+  Thinker owner;
   bool bPlayerLight; // set in alloc, player lights should survive
 };
 
