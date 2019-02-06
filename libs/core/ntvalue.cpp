@@ -628,6 +628,19 @@ bool VNTValueWriter::putValue (const VNTValue &v) {
 //  VNTValueIO::VNTValueIO
 //
 //==========================================================================
+VNTValueIO::VNTValueIO ()
+  : rd(nullptr)
+  , wr(nullptr)
+  , bError(false)
+{
+}
+
+
+//==========================================================================
+//
+//  VNTValueIO::VNTValueIO
+//
+//==========================================================================
 VNTValueIO::VNTValueIO (VStream *astrm)
   : rd(nullptr)
   , wr(nullptr)
@@ -653,6 +666,29 @@ VNTValueIO::~VNTValueIO () {
 }
 
 
+//==========================================================================
+//
+//  VNTValueIO::setup
+//
+//==========================================================================
+void VNTValueIO::setup (VStream *astrm) {
+  check(!rd);
+  check(!wr);
+  check(!bError);
+  check(astrm);
+  if (astrm->IsLoading()) {
+    rd = new VNTValueReader(astrm);
+  } else {
+    wr = new VNTValueWriter(astrm);
+  }
+}
+
+
+//==========================================================================
+//
+//  VNTValueIO::IsError
+//
+//==========================================================================
 bool VNTValueIO::IsError () {
   if (bError) return true;
   if (rd) return rd->IsError();

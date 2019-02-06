@@ -277,8 +277,11 @@ protected:
   bool bError;
 
 public:
+  VNTValueIO ();
   VNTValueIO (VStream *astrm);
   virtual ~VNTValueIO ();
+
+  virtual void setup (VStream *astrm);
 
   bool IsError ();
   inline bool IsLoading () const { return !!rd; }
