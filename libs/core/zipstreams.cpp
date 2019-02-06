@@ -456,7 +456,7 @@ void VZipStreamReader::cacheAllData () {
       memcpy(wholeBuf+wholeSize, buffer, rd);
       wholeSize += rd;
     }
-    uncompressedSize = (vuint32)wholeBuf;
+    uncompressedSize = (vuint32)wholeSize;
     if (nextpos > wholeSize) { setError(); return; }
   } else {
     wholeSize = (vint32)uncompressedSize;
