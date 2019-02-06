@@ -32,6 +32,41 @@
 
 //==========================================================================
 //
+//  VNTValueIOEx::VNTValueIOEx
+//
+//==========================================================================
+VNTValueIOEx::VNTValueIOEx (VStream *astrm)
+  : VNTValueIO(astrm)
+{
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VThinker *&v) {
+  VObject *o = (VObject *)v;
+  io(vname, o);
+  if (IsLoading()) v = (VThinker *)o;
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, VEntity *&v) {
+  VObject *o = (VObject *)v;
+  io(vname, o);
+  if (IsLoading()) v = (VEntity *)o;
+}
+
+
+//==========================================================================
+//
 //  VNTValueIOEx::io
 //
 //==========================================================================
@@ -51,7 +86,7 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     }
     if (tname == NAME_None) {
       //GCon->Log(NAME_Warning, "LOAD: save file is probably broken (empty texture name)");
-      v.id = -1;
+      v.id = 0;
     } else {
       auto lock = GTextureManager.LockMapLocalTextures();
       int texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, true, false);
@@ -63,7 +98,9 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
       }
       v.id = texid;
     }
+    //GCon->Logf("txrd: <%s> : %d", *vname, v.id);
   } else {
+    //GCon->Logf("txwr: <%s> : %d", *vname, v.id);
     // writing
     VName tname = NAME_None;
     if (v.id >= 0) {
@@ -76,6 +113,18 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     }
     io(vname, tname);
   }
+}
+
+
+//==========================================================================
+//
+//  VNTValueIOEx::io
+//
+//==========================================================================
+void VNTValueIOEx::io (VName vname, vuint8 &v) {
+  vuint32 n = v;
+  io(vname, n);
+  if (IsLoading()) v = clampToByte(n);
 }
 
 

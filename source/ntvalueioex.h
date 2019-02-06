@@ -32,7 +32,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 class VNTValueIOEx : public VNTValueIO {
 public:
-  VNTValueIOEx (VStream *astrm) : VNTValueIO(astrm) {}
+  VNTValueIOEx (VStream *astrm);
 
   // fuck you, shitplusplus!
   virtual void io (VName vname, vint32 &v) override { VNTValueIO::io(vname, v); }
@@ -46,6 +46,11 @@ public:
   virtual void io (VName vname, VSerialisable *&v) override { VNTValueIO::io(vname, v); }
 
   virtual void io (VName vname, VTextureID &v);
+
+  virtual void io (VName vname, VThinker *&v);
+  virtual void io (VName vname, VEntity *&v);
+
+  virtual void io (VName vname, vuint8 &v);
 };
 
 

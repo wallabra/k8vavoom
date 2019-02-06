@@ -78,48 +78,6 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
 
 //==========================================================================
 //
-//  VLevel::LeafPVS
-//
-//==========================================================================
-/*
-const vuint8 *VLevel::LeafPVS (const subsector_t *ss) const {
-  guard(VLevel::LeafPVS);
-  int sub = (int)(ptrdiff_t)(ss-Subsectors);
-  if (VisData) return VisData+(((NumSubsectors+7)>>3)*sub);
-  return NoVis;
-  unguard;
-}
-*/
-
-
-//==========================================================================
-//
-//  OldStringIO
-//
-//==========================================================================
-/*
-static void OldStringIO (VStream &Strm, VStr &str) {
-  vuint32 namelen = 0;
-  if (Strm.IsLoading()) {
-    Strm << namelen;
-    if (namelen > 1024*1024*32) Host_Error("Level load: invalid string length");
-    if (namelen == 0) {
-      str.clear();
-    } else {
-      str.setLength(namelen);
-      Strm.Serialise(str.GetMutableCharPointer(0), (vint32)namelen);
-    }
-  } else {
-    namelen = (vuint32)str.length();
-    Strm << namelen;
-    if (namelen) Strm.Serialise(*str, (vint32)namelen);
-  }
-}
-*/
-
-
-//==========================================================================
-//
 //  DecalIO
 //
 //==========================================================================
@@ -179,35 +137,6 @@ static void DecalIO (VStream &Strm, decal_t *dc) {
 
 //==========================================================================
 //
-//  writeOrCheckName
-//
-//==========================================================================
-/*
-static void writeOrCheckName (VStream &Strm, const VName &value, const char *errmsg) {
-  if (Strm.IsLoading()) {
-    auto slen = strlen(*value);
-    vuint32 v;
-    Strm << v;
-    if (v != slen) Host_Error("Save loader: invalid string length for %s", errmsg);
-    if (v > 0) {
-      auto buf = new char[v];
-      memset(buf, 0, v);
-      Strm.Serialise(buf, v);
-      int res = memcmp(buf, *value, v);
-      delete[] buf;
-      if (res != 0) Host_Error("Save loader: invalid string value for %s", errmsg);
-    }
-  } else {
-    vuint32 slen = (vuint32)strlen(*value);
-    Strm << slen;
-    if (slen) Strm.Serialise((char*)*value, slen);
-  }
-}
-*/
-
-
-//==========================================================================
-//
 //  writeOrCheckUInt
 //
 //==========================================================================
@@ -228,48 +157,6 @@ static bool writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg=n
 
 //==========================================================================
 //
-//  writeOrCheckInt
-//
-//==========================================================================
-/*
-static void writeOrCheckInt (VStream &Strm, int value, const char *errmsg, bool dofail=true) {
-  if (Strm.IsLoading()) {
-    int v;
-    Strm << v;
-    if (v != value) {
-      if (dofail) Host_Error("Save loader: invalid value for %s; got %d, but expected %d", errmsg, v, value);
-      GCon->Logf("Save loader: invalid value for %s; got %d, but expected %d (should be harmless)", errmsg, v, value);
-    }
-  } else {
-    Strm << value;
-  }
-}
-*/
-
-
-//==========================================================================
-//
-//  writeOrCheckFloat
-//
-//==========================================================================
-/*
-static void writeOrCheckFloat (VStream &Strm, float value, const char *errmsg, bool dofail=true) {
-  if (Strm.IsLoading()) {
-    float v;
-    Strm << v;
-    if (v != value) {
-      if (dofail) Host_Error("Save loader: invalid value for %s; got %f, but expected %f", errmsg, v, value);
-      GCon->Logf("Save loader: invalid value for %s; got %f, but expected %f (should be harmless)", errmsg, v, value);
-    }
-  } else {
-    Strm << value;
-  }
-}
-*/
-
-
-//==========================================================================
-//
 //  VLevel::SerialiseOther
 //
 //==========================================================================
@@ -284,32 +171,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
   // this is not the best or most reliable way to check it, but it is better
   // than nothing...
 
-  /*
-  writeOrCheckName(Strm, MapName, "map name");
-  writeOrCheckUInt(Strm, LevelFlags, "level flags");
-
-  writeOrCheckInt(Strm, NumVertexes, "vertex count", false);
-  writeOrCheckInt(Strm, NumSectors, "sector count");
-  writeOrCheckInt(Strm, NumSides, "side count");
-  writeOrCheckInt(Strm, NumLines, "line count");
-  writeOrCheckInt(Strm, NumSegs, "seg count", false);
-  writeOrCheckInt(Strm, NumSubsectors, "subsector count", false);
-  writeOrCheckInt(Strm, NumNodes, "node count", false);
-  writeOrCheckInt(Strm, NumPolyObjs, "polyobj count");
-  writeOrCheckInt(Strm, NumZones, "zone count");
-
-  writeOrCheckFloat(Strm, BlockMapOrgX, "blockmap x origin", false);
-  writeOrCheckFloat(Strm, BlockMapOrgY, "blockmap y origin", false);
-  */
-
   writeOrCheckUInt(Strm, LSSHash, "geometry hash");
   bool segsHashOK = writeOrCheckUInt(Strm, SegHash);
 
   // decals
   if (Strm.IsLoading()) decanimlist = nullptr;
-
-  //vuint32 sgc = (vuint32)NumSegs;
-  //Strm << sgc; // just to be sure
 
   if (segsHashOK) {
     vuint32 dctotal = 0;
@@ -399,150 +265,161 @@ void VLevel::SerialiseOther (VStream &Strm) {
   }
 
   // sectors
-  guard(VLevel::Serialise::Sectors);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  for (i = 0, sec = Sectors; i < NumSectors; ++i, ++sec) {
-    Strm << sec->floor.dist
-      << sec->floor.TexZ
-      << sec->floor.pic
-      << sec->floor.xoffs
-      << sec->floor.yoffs
-      << sec->floor.XScale
-      << sec->floor.YScale
-      << sec->floor.Angle
-      << sec->floor.BaseAngle
-      << sec->floor.BaseYOffs
-      << sec->floor.flags
-      << sec->floor.Alpha
-      << sec->floor.MirrorAlpha
-      << sec->floor.LightSourceSector
-      << sec->floor.SkyBox
-      << sec->ceiling.dist
-      << sec->ceiling.TexZ
-      << sec->ceiling.pic
-      << sec->ceiling.xoffs
-      << sec->ceiling.yoffs
-      << sec->ceiling.XScale
-      << sec->ceiling.YScale
-      << sec->ceiling.Angle
-      << sec->ceiling.BaseAngle
-      << sec->ceiling.BaseYOffs
-      << sec->ceiling.flags
-      << sec->ceiling.Alpha
-      << sec->ceiling.MirrorAlpha
-      << sec->ceiling.LightSourceSector
-      << sec->ceiling.SkyBox
-      << sec->params.lightlevel
-      << sec->params.LightColour
-      << sec->params.Fade
-      << sec->params.contents
-      << sec->special
-      << sec->tag
-      << sec->seqType
-      << sec->SectorFlags
-      << sec->SoundTarget
-      << sec->FloorData
-      << sec->CeilingData
-      << sec->LightingData
-      << sec->AffectorData
-      << sec->ActionList
-      << sec->Damage
-      << sec->Friction
-      << sec->MoveFactor
-      << sec->Gravity
-      << sec->Sky;
+    vint32 cnt = NumSectors;
+    Strm << STRM_INDEX(cnt);
     if (Strm.IsLoading()) {
-      CalcSecMinMaxs(sec);
-      sec->ThingList = nullptr;
+      if (cnt != NumSectors) Host_Error("invalid number of sectors");
     }
+
+    for (i = 0, sec = Sectors; i < NumSectors; ++i, ++sec) {
+      VNTValueIOEx vio(&Strm);
+      vio.io(VName("floor.dist"), sec->floor.dist);
+      vio.io(VName("floor.TexZ"), sec->floor.TexZ);
+      vio.io(VName("floor.pic"), sec->floor.pic);
+      vio.io(VName("floor.xoffs"), sec->floor.xoffs);
+      vio.io(VName("floor.yoffs"), sec->floor.yoffs);
+      vio.io(VName("floor.XScale"), sec->floor.XScale);
+      vio.io(VName("floor.YScale"), sec->floor.YScale);
+      vio.io(VName("floor.Angle"), sec->floor.Angle);
+      vio.io(VName("floor.BaseAngle"), sec->floor.BaseAngle);
+      vio.io(VName("floor.BaseYOffs"), sec->floor.BaseYOffs);
+      vio.io(VName("floor.flags"), sec->floor.flags);
+      vio.io(VName("floor.Alpha"), sec->floor.Alpha);
+      vio.io(VName("floor.MirrorAlpha"), sec->floor.MirrorAlpha);
+      vio.io(VName("floor.LightSourceSector"), sec->floor.LightSourceSector);
+      vio.io(VName("floor.SkyBox"), sec->floor.SkyBox);
+      vio.io(VName("ceiling.dist"), sec->ceiling.dist);
+      vio.io(VName("ceiling.TexZ"), sec->ceiling.TexZ);
+      vio.io(VName("ceiling.pic"), sec->ceiling.pic);
+      vio.io(VName("ceiling.xoffs"), sec->ceiling.xoffs);
+      vio.io(VName("ceiling.yoffs"), sec->ceiling.yoffs);
+      vio.io(VName("ceiling.XScale"), sec->ceiling.XScale);
+      vio.io(VName("ceiling.YScale"), sec->ceiling.YScale);
+      vio.io(VName("ceiling.Angle"), sec->ceiling.Angle);
+      vio.io(VName("ceiling.BaseAngle"), sec->ceiling.BaseAngle);
+      vio.io(VName("ceiling.BaseYOffs"), sec->ceiling.BaseYOffs);
+      vio.io(VName("ceiling.flags"), sec->ceiling.flags);
+      vio.io(VName("ceiling.Alpha"), sec->ceiling.Alpha);
+      vio.io(VName("ceiling.MirrorAlpha"), sec->ceiling.MirrorAlpha);
+      vio.io(VName("ceiling.LightSourceSector"), sec->ceiling.LightSourceSector);
+      vio.io(VName("ceiling.SkyBox"), sec->ceiling.SkyBox);
+      vio.io(VName("params.lightlevel"), sec->params.lightlevel);
+      vio.io(VName("params.LightColour"), sec->params.LightColour);
+      vio.io(VName("params.Fade"), sec->params.Fade);
+      vio.io(VName("params.contents"), sec->params.contents);
+      vio.io(VName("special"), sec->special);
+      vio.io(VName("tag"), sec->tag);
+      vio.io(VName("seqType"), sec->seqType);
+      vio.io(VName("SectorFlags"), sec->SectorFlags);
+      vio.io(VName("SoundTarget"), sec->SoundTarget);
+      vio.io(VName("FloorData"), sec->FloorData);
+      vio.io(VName("CeilingData"), sec->CeilingData);
+      vio.io(VName("LightingData"), sec->LightingData);
+      vio.io(VName("AffectorData"), sec->AffectorData);
+      vio.io(VName("ActionList"), sec->ActionList);
+      vio.io(VName("Damage"), sec->Damage);
+      vio.io(VName("Friction"), sec->Friction);
+      vio.io(VName("MoveFactor"), sec->MoveFactor);
+      vio.io(VName("Gravity"), sec->Gravity);
+      vio.io(VName("Sky"), sec->Sky);
+      if (Strm.IsLoading()) {
+        CalcSecMinMaxs(sec);
+        sec->ThingList = nullptr;
+      }
+    }
+    if (Strm.IsLoading()) HashSectors();
   }
-  if (Strm.IsLoading()) HashSectors();
-  unguard;
 
   // lines
-  guard(VLevel::Serialise::Lines);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  for (i = 0, li = Lines; i < NumLines; ++i, ++li) {
-    Strm << li->flags
-      << li->SpacFlags
-      << li->special
-      << li->arg1
-      << li->arg2
-      << li->arg3
-      << li->arg4
-      << li->arg5
-      << li->LineTag
-      << li->alpha;
-    for (int j = 0; j < 2; ++j) {
-      if (li->sidenum[j] == -1) continue;
-      si = &Sides[li->sidenum[j]];
-      Strm << si->TopTextureOffset;
-      Strm << si->BotTextureOffset;
-      Strm << si->MidTextureOffset;
-      Strm << si->TopRowOffset;
-      Strm << si->BotRowOffset;
-      Strm << si->MidRowOffset;
-      Strm << si->TopTexture;
-      Strm << si->BottomTexture;
-      Strm << si->MidTexture;
-      Strm << si->Flags;
-      Strm << si->Light;
+    vint32 cnt = NumLines;
+    Strm << STRM_INDEX(cnt);
+    if (Strm.IsLoading()) {
+      if (cnt != NumLines) Host_Error("invalid number of linedefs");
     }
+
+    for (i = 0, li = Lines; i < NumLines; ++i, ++li) {
+      VNTValueIOEx vio(&Strm);
+      vio.io(VName("flags"), li->flags);
+      vio.io(VName("SpacFlags"), li->SpacFlags);
+      vio.io(VName("special"), li->special);
+      vio.io(VName("arg1"), li->arg1);
+      vio.io(VName("arg2"), li->arg2);
+      vio.io(VName("arg3"), li->arg3);
+      vio.io(VName("arg4"), li->arg4);
+      vio.io(VName("arg5"), li->arg5);
+      vio.io(VName("LineTag"), li->LineTag);
+      vio.io(VName("alpha"), li->alpha);
+
+      for (int j = 0; j < 2; ++j) {
+        if (li->sidenum[j] == -1) {
+          // do nothing
+        } else {
+          si = &Sides[li->sidenum[j]];
+          vio.io(VName("TopTextureOffset"), si->TopTextureOffset);
+          vio.io(VName("BotTextureOffset"), si->BotTextureOffset);
+          vio.io(VName("MidTextureOffset"), si->MidTextureOffset);
+          vio.io(VName("TopRowOffset"), si->TopRowOffset);
+          vio.io(VName("BotRowOffset"), si->BotRowOffset);
+          vio.io(VName("MidRowOffset"), si->MidRowOffset);
+          vio.io(VName("TopTexture"), si->TopTexture);
+          vio.io(VName("BottomTexture"), si->BottomTexture);
+          vio.io(VName("MidTexture"), si->MidTexture);
+          vio.io(VName("Flags"), si->Flags);
+          vio.io(VName("Light"), si->Light);
+        }
+      }
+    }
+    if (Strm.IsLoading()) HashLines();
   }
-  if (Strm.IsLoading()) HashLines();
-  unguard;
 
   // polyobjs
-  guard(VLevel::Serialise::Polyobjs);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  for (i = 0; i < NumPolyObjs; ++i) {
+    vint32 cnt = NumPolyObjs;
+    Strm << STRM_INDEX(cnt);
     if (Strm.IsLoading()) {
-      float angle, polyX, polyY;
-      Strm << angle << polyX << polyY;
-      RotatePolyobj(PolyObjs[i].tag, angle);
-      MovePolyobj(PolyObjs[i].tag, polyX-PolyObjs[i].startSpot.x, polyY-PolyObjs[i].startSpot.y);
-    } else {
-      Strm << PolyObjs[i].angle
-        << PolyObjs[i].startSpot.x
-        << PolyObjs[i].startSpot.y;
+      if (cnt != NumPolyObjs) Host_Error("invalid number of polyobjects");
     }
-    Strm << PolyObjs[i].SpecialData;
+
+    for (i = 0; i < NumPolyObjs; ++i) {
+      VNTValueIOEx vio(&Strm);
+      if (Strm.IsLoading()) {
+        float angle, polyX, polyY;
+        vio.io(VName("angle"), angle);
+        vio.io(VName("polyX"), polyX);
+        vio.io(VName("polyY"), polyY);
+        RotatePolyobj(PolyObjs[i].tag, angle);
+        MovePolyobj(PolyObjs[i].tag, polyX-PolyObjs[i].startSpot.x, polyY-PolyObjs[i].startSpot.y);
+      } else {
+        vio.io(VName("angle"), PolyObjs[i].angle);
+        vio.io(VName("startSpot.x"), PolyObjs[i].startSpot.x);
+        vio.io(VName("startSpot.y"), PolyObjs[i].startSpot.y);
+      }
+      vio.io(VName("SpecialData"), PolyObjs[i].SpecialData);
+    }
   }
-  unguard;
 
   // static lights
-  guard(VLevel::Serialise::StaticLights);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  Strm << STRM_INDEX(NumStaticLights);
-  if (Strm.IsLoading()) {
-    if (StaticLights) {
-      delete[] StaticLights;
-      StaticLights = nullptr;
+    Strm << STRM_INDEX(NumStaticLights);
+    if (Strm.IsLoading()) {
+      if (StaticLights) {
+        delete[] StaticLights;
+        StaticLights = nullptr;
+      }
+      if (NumStaticLights) StaticLights = new rep_light_t[NumStaticLights];
     }
-    if (NumStaticLights) StaticLights = new rep_light_t[NumStaticLights];
+    for (i = 0; i < NumStaticLights; ++i) {
+      VNTValueIOEx vio(&Strm);
+      vio.io(VName("Origin"), StaticLights[i].Origin);
+      vio.io(VName("Radius"), StaticLights[i].Radius);
+      vio.io(VName("Colour"), StaticLights[i].Colour);
+    }
   }
-  for (i = 0; i < NumStaticLights; ++i) {
-    Strm << StaticLights[i].Origin
-      << StaticLights[i].Radius
-      << StaticLights[i].Colour;
-  }
-  unguard;
 
   // ACS: script thinkers must be serialized first
   guard(VLevel::Serialise::ACS);
-
   // script thinkers
   {
     vuint8 xver = 1;
@@ -562,6 +439,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
     }
   }
 
+  // script manager
   {
     vuint8 xver = 0;
     Strm << xver;
@@ -571,113 +449,75 @@ void VLevel::SerialiseOther (VStream &Strm) {
   unguard;
 
   // camera textures
-  guard(VLevel::Serialise::CameraTextures);
   {
-    vuint8 xver = 0;
-    Strm << xver;
+    int NumCamTex = CameraTextures.Num();
+    Strm << STRM_INDEX(NumCamTex);
+    if (Strm.IsLoading()) CameraTextures.SetNum(NumCamTex);
+    for (i = 0; i < NumCamTex; ++i) {
+      VNTValueIOEx vio(&Strm);
+      vio.io(VName("Camera"), CameraTextures[i].Camera);
+      vio.io(VName("TexNum"), CameraTextures[i].TexNum);
+      vio.io(VName("FOV"), CameraTextures[i].FOV);
+    }
   }
-  int NumCamTex = CameraTextures.Num();
-  Strm << STRM_INDEX(NumCamTex);
-  if (Strm.IsLoading()) CameraTextures.SetNum(NumCamTex);
-  for (i = 0; i < NumCamTex; ++i) {
-    Strm << CameraTextures[i].Camera
-      << CameraTextures[i].TexNum
-      << CameraTextures[i].FOV;
-  }
-  unguard;
 
   // translation tables
-  guard(VLevel::Serialise::Translations);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  int NumTrans = Translations.Num();
-  Strm << STRM_INDEX(NumTrans);
-  if (Strm.IsLoading()) Translations.SetNum(NumTrans);
-  for (i = 0; i < NumTrans; ++i) {
-    vuint8 Present = !!Translations[i];
-    Strm << Present;
-    if (Strm.IsLoading()) {
-      if (Present) {
-        Translations[i] = new VTextureTranslation;
-      } else {
-        Translations[i] = nullptr;
+    int NumTrans = Translations.Num();
+    Strm << STRM_INDEX(NumTrans);
+    if (Strm.IsLoading()) Translations.SetNum(NumTrans);
+    for (i = 0; i < NumTrans; ++i) {
+      vuint8 Present = !!Translations[i];
+      {
+        VNTValueIOEx vio(&Strm);
+        vio.io(VName("Present"), Present);
       }
+      if (Strm.IsLoading()) {
+        if (Present) {
+          Translations[i] = new VTextureTranslation;
+        } else {
+          Translations[i] = nullptr;
+        }
+      }
+      if (Present) Translations[i]->Serialise(Strm);
     }
-    if (Present) Translations[i]->Serialise(Strm);
   }
-  unguard;
 
   // body queue translation tables
-  guard(VLevel::Serialise::BodyQueueTranslations);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  int NumTrans = BodyQueueTrans.Num();
-  Strm << STRM_INDEX(NumTrans);
-  if (Strm.IsLoading()) BodyQueueTrans.SetNum(NumTrans);
-  for (i = 0; i < NumTrans; ++i) {
-    vuint8 Present = !!BodyQueueTrans[i];
-    Strm << Present;
-    if (Strm.IsLoading()) {
-      if (Present) {
-        BodyQueueTrans[i] = new VTextureTranslation;
-      } else {
-        BodyQueueTrans[i] = nullptr;
+    int NumTrans = BodyQueueTrans.Num();
+    Strm << STRM_INDEX(NumTrans);
+    if (Strm.IsLoading()) BodyQueueTrans.SetNum(NumTrans);
+    for (i = 0; i < NumTrans; ++i) {
+      vuint8 Present = !!BodyQueueTrans[i];
+      {
+        VNTValueIOEx vio(&Strm);
+        vio.io(VName("Present"), Present);
       }
+      if (Strm.IsLoading()) {
+        if (Present) {
+          BodyQueueTrans[i] = new VTextureTranslation;
+        } else {
+          BodyQueueTrans[i] = nullptr;
+        }
+      }
+      if (Present) BodyQueueTrans[i]->Serialise(Strm);
     }
-    if (Present) BodyQueueTrans[i]->Serialise(Strm);
   }
-  unguard;
 
   // zones
-  guard(VLevel::Serialise::Zones);
   {
-    vuint8 xver = 0;
-    Strm << xver;
-  }
-  for (i = 0; i < NumZones; ++i) {
-    Strm << STRM_INDEX(Zones[i]);
-  }
-  unguard;
-
-
-/*
-  // sector links subversion; 0 was manual
-  if (Strm.IsLoading()) {
-    vuint8 xver = 0;
-    Strm << xver;
-
-    if (xver != 0 && xver != 1) Host_Error("Save is broken (invalid sector links version)");
-
-    // load sector links
-    if (xver == 0) {
-      vint32 slscount = sectorlinkStart.length();
-      Strm << STRM_INDEX(slscount);
-      if (Strm.IsLoading()) sectorlinkStart.setLength(slscount);
-      for (int f = 0; f < slscount; ++f) {
-        vint32 sv = sectorlinkStart[f];
-        Strm << STRM_INDEX(sv);
-        if (Strm.IsLoading()) sectorlinkStart[f] = sv;
-      }
-      slscount = sectorlinks.length();
-      Strm << STRM_INDEX(slscount);
-      if (Strm.IsLoading()) sectorlinks.setLength(slscount);
-      for (int f = 0; f < slscount; ++f) {
-        SectorLink *sl = &sectorlinks[f];
-        Strm << STRM_INDEX(sl->index);
-        Strm << STRM_INDEX(sl->mts);
-        Strm << STRM_INDEX(sl->next);
-      }
+    vint32 cnt = NumZones;
+    Strm << STRM_INDEX(cnt);
+    if (Strm.IsLoading()) {
+      if (cnt != NumZones) Host_Error("invalid number of zones");
     }
-  } else {
-    // version 1: no sector links
-    vuint8 xver = 1;
-    Strm << xver;
+
+    for (i = 0; i < NumZones; ++i) {
+      VNTValueIOEx vio(&Strm);
+      vio.io(VName("zoneid"), Zones[i]);
+    }
   }
-*/
 
   unguard;
 }
