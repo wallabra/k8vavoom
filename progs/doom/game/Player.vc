@@ -78,13 +78,14 @@ override void UserinfoChanged()
 //
 //==========================================================================
 
-override void SetClientModel()
-{
-  string model;
+override void SetClientModel() {
+  // k8: not yet
+  MO.bFixedModel = false;
+  return;
 
-  model = Info_ValueForKey(UserInfo, "model");
-  if (!model)
-  {
+  string model = Info_ValueForKey(UserInfo, "model");
+
+  if (!model) {
     MO.bFixedModel = false;
     return;
   }
