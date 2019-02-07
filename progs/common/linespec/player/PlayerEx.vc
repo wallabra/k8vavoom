@@ -2988,7 +2988,7 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //==========================================================================
 override void PlayerTick (float deltaTime) {
   if (bIsBot) {
-    if (Level.bFrozen && !(Cheats&CF_TIMEFREEZE)) BotTick(deltaTime);
+    if (!Level.bFrozen && !(Cheats&CF_TIMEFREEZE)) BotTick(deltaTime);
   }
 
   /*
