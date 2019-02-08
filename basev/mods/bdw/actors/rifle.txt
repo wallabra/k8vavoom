@@ -64,6 +64,9 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
   +WEAPON.NOALERT
   +FORCEXYBILLBOARD
   Scale 0.8
+  Weapon.BotCombatDist 256
+  -Weapon.Wimpy_Weapon
+  +Weapon.HitscanWeapon
 
   var int user_HadAmmo; // this tells if we should drop empty clip
   var int user_spread; // from 0 to 6

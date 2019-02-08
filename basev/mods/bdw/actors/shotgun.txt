@@ -64,6 +64,9 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   +FORCEXYBILLBOARD
   +WEAPON.NO_AUTO_SWITCH
   Scale 0.9
+  Weapon.BotCombatDist 256
+  -Weapon.Wimpy_Weapon
+  +Weapon.HitscanWeapon
 
   var int user_ShotgunWasEmpty;
 
