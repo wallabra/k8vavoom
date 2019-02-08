@@ -168,6 +168,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     textures/-noflat-.png
     uidef/*.txt
     uidef/menus/*.txt
+    ${CMAKE_SOURCE_DIR}/progs/common/botai/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/engine/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/newui/*.vc
     ${CMAKE_SOURCE_DIR}/progs/common/linespec/*.vc
