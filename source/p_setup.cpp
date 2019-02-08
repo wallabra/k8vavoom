@@ -81,6 +81,7 @@ extern int ldr_extrasamples_override; // -1: no override; 0: disable; 1: enable
 extern int r_precalc_static_lights_override; // <0: not set
 extern int r_precache_textures_override; // <0: not set
 #endif
+extern VCvarI nodes_builder;
 
 
 // lump order in a map WAD: each map needs a couple of lumps
@@ -127,7 +128,7 @@ enum {
 #define NF_SUBSECTOR_OLD  (0x8000)
 
 
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 004.\n";
+static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 005.\n";
 static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
@@ -323,6 +324,9 @@ void VLevel::SaveCachedData (VStream *strm) {
   // signature
   strm->Serialize(CACHE_DATA_SIGNATURE, 32);
 
+  vuint8 bspbuilder = nodes_builder;
+  *strm << bspbuilder;
+
   VZipStreamWriter *arrstrm = new VZipStreamWriter(strm, (int)loader_cache_compression_level);
 
   // flags (nothing for now)
@@ -469,6 +473,10 @@ bool VLevel::LoadCachedData (VStream *strm) {
   // signature
   strm->Serialise(sign, 32);
   if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, 32) != 0) { GCon->Log("invalid cache file signature"); return false; }
+
+  vuint8 bspbuilder = 255;
+  *strm << bspbuilder;
+  if (bspbuilder != nodes_builder) { GCon->Log("invalid cache nodes builder"); return false; }
 
   VZipStreamReader *arrstrm = new VZipStreamReader(true, strm);
   if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cannot create cache decompressor"); return false; }
