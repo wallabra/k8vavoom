@@ -27,6 +27,7 @@
 #include "gamedefs.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct VViewClipper::VClipNode {
   float From;
   float To;
@@ -35,6 +36,10 @@ struct VViewClipper::VClipNode {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+#ifdef CLIENT
+extern VCvarF r_lights_radius;
+#endif
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?"/*, CVAR_Archive*/);
@@ -42,6 +47,7 @@ static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with pol
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?"/*, CVAR_Archive*/);
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 /*
   // Lines with stacked sectors must never block!
   if (backsector->portals[sector_t::ceiling] != NULL || backsector->portals[sector_t::floor] != NULL ||
@@ -50,6 +56,98 @@ static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some 
     return false;
   }
 */
+
+
+//==========================================================================
+//
+//  CheckAndClipVerts
+//
+//==========================================================================
+static inline bool CheckAndClipVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
+  // clip sectors that are behind rendered segs
+  const TVec r1 = Origin-v1;
+  const TVec r2 = Origin-v2;
+  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
+  const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+
+  if (D1 < 0.0f && D2 < 0.0f) return false;
+
+  /*k8: i don't know what Janis wanted to accomplish with this, but it actually
+        makes clipping WORSE due to limited precision
+  if (doClipVerts) {
+    // there might be a better method of doing this, but this one works for now...
+         if (D1 > 0.0f && D2 <= 0.0f) v2 += (v2-v1)*D1/(D1-D2);
+    else if (D2 > 0.0f && D1 <= 0.0f) v1 += (v1-v2)*D2/(D2-D1);
+  }
+  */
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  CheckVerts
+//
+//==========================================================================
+static inline bool CheckVerts (const TVec &v1, const TVec &v2, const TVec &Origin) {
+  return CheckAndClipVerts(v1, v2, Origin);
+}
+
+
+//==========================================================================
+//
+//  CheckAndClipVertsWithLight
+//
+//==========================================================================
+static inline bool CheckAndClipVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, float CurrLightRadius) {
+#ifdef CLIENT
+  // clip sectors that are behind rendered segs
+  const TVec r1 = Origin-v1;
+  const TVec r2 = Origin-v2;
+  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Origin);
+  const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Origin);
+  if (D1 > r_lights_radius && D2 > r_lights_radius) return false;
+
+  const TVec rLight1 = CurrLightPos-v1;
+  const TVec rLight2 = CurrLightPos-v2;
+  const float DLight1 = DotProduct(Normalise(CrossProduct(rLight1, rLight2)), CurrLightPos);
+  const float DLight2 = DotProduct(Normalise(CrossProduct(rLight2, rLight1)), CurrLightPos);
+
+  const TVec rView1 = Origin-v1-CurrLightPos;
+  const TVec rView2 = Origin-v2-CurrLightPos;
+  const float DView1 = DotProduct(Normalise(CrossProduct(rView1, rView2)), Origin);
+  const float DView2 = DotProduct(Normalise(CrossProduct(rView2, rView1)), Origin);
+
+  if (D1 < 0.0f && D2 < 0.0f && DView1 < -CurrLightRadius && DView2 < -CurrLightRadius) return false;
+
+  if ((DLight1 > CurrLightRadius && DLight2 > CurrLightRadius) ||
+      (DLight1 < -CurrLightRadius && DLight2 < -CurrLightRadius))
+  {
+    return false;
+  }
+
+  /*k8: i don't know what Janis wanted to accomplish with this, but it actually
+        makes clipping WORSE due to limited precision
+  if (doClipVerts) {
+    // there might be a better method of doing this, but this one works for now...
+         if (DLight1 > 0.0f && DLight2 <= 0.0f) v2 += (v2-v1)*D1/(D1-D2);
+    else if (DLight2 > 0.0f && DLight1 <= 0.0f) v1 += (v1-v2)*D2/(D2-D1);
+  }
+  */
+#endif
+  return true;
+}
+
+
+//==========================================================================
+//
+//  CheckVertsWithLight
+//
+//==========================================================================
+static inline bool CheckVertsWithLight (const TVec &v1, const TVec &v2, const TVec &Origin, const TVec &CurrLightPos, float CurrLightRadius) {
+  return CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius);
+}
 
 
 //==========================================================================
@@ -271,11 +369,9 @@ VViewClipper::~VViewClipper () {
 //
 //==========================================================================
 VViewClipper::VClipNode *VViewClipper::NewClipNode () {
-  guard(VViewClipper::NewClipNode);
   VClipNode *Ret = FreeClipNodes;
   if (Ret) FreeClipNodes = Ret->Next; else Ret = new VClipNode();
   return Ret;
-  unguard;
 }
 
 
@@ -285,14 +381,12 @@ VViewClipper::VClipNode *VViewClipper::NewClipNode () {
 //
 //==========================================================================
 void VViewClipper::RemoveClipNode (VViewClipper::VClipNode *Node) {
-  guard(VViewClipper::RemoveClipNode);
   if (Node->Next) Node->Next->Prev = Node->Prev;
   if (Node->Prev) Node->Prev->Next = Node->Next;
   if (Node == ClipHead) ClipHead = Node->Next;
   if (Node == ClipTail) ClipTail = Node->Prev;
   Node->Next = FreeClipNodes;
   FreeClipNodes = Node;
-  unguard;
 }
 
 
@@ -302,7 +396,6 @@ void VViewClipper::RemoveClipNode (VViewClipper::VClipNode *Node) {
 //
 //==========================================================================
 void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
-  guard(VViewClipper::ClearClipNodes);
   if (ClipHead) {
     ClipTail->Next = FreeClipNodes;
     FreeClipNodes = ClipHead;
@@ -311,7 +404,6 @@ void VViewClipper::ClearClipNodes (const TVec &AOrigin, VLevel *ALevel) {
   ClipTail = nullptr;
   Origin = AOrigin;
   Level = ALevel;
-  unguard;
 }
 
 
@@ -324,7 +416,6 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
                                           const TVec &viewright, const TVec &viewup,
                                           float fovx, float fovy)
 {
-  guard(VViewClipper::ClipInitFrustrumRange);
   check(!ClipHead);
 
   //if (viewforward.z > 0.9f || viewforward.z < -0.9f) return; // looking up or down, can see behind
@@ -376,7 +467,6 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
     ClipTail->Prev = ClipHead;
     ClipTail->Next = nullptr;
   }
-  unguard;
 }
 
 
@@ -386,10 +476,33 @@ void VViewClipper::ClipInitFrustrumRange (const TAVec &viewangles, const TVec &v
 //
 //==========================================================================
 void VViewClipper::ClipToRanges (const VViewClipper &Range) {
-  guard(VViewClipper::ClipToRanges);
+  if (&Range == this) return; // just in case
+
   if (!Range.ClipHead) {
     // no ranges, everything is clipped away
-    DoAddClipRange(0.0f, 360.0f);
+    //DoAddClipRange(0.0f, 360.0f);
+    // remove free clip nodes
+    VClipNode *Node = FreeClipNodes;
+    while (Node) {
+      VClipNode *Next = Node->Next;
+      delete Node;
+      Node = Next;
+    }
+    FreeClipNodes = nullptr;
+    // remove used clip nodes
+    Node = ClipHead;
+    while (Node) {
+      VClipNode *Next = Node->Next;
+      delete Node;
+      Node = Next;
+    }
+    // add new clip node
+    ClipHead = NewClipNode();
+    ClipTail = ClipHead;
+    ClipHead->From = 0.0f;
+    ClipHead->To = 360.0f;
+    ClipHead->Prev = nullptr;
+    ClipHead->Next = nullptr;
     return;
   }
 
@@ -399,7 +512,6 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
 
   // add middle ranges
   for (VClipNode *N = Range.ClipHead; N->Next; N = N->Next) DoAddClipRange(N->To, N->Next->From);
-  unguard;
 }
 
 
@@ -409,8 +521,6 @@ void VViewClipper::ClipToRanges (const VViewClipper &Range) {
 //
 //==========================================================================
 void VViewClipper::DoAddClipRange (float From, float To) {
-  guard(VViewClipper::DoAddClipRange);
-
   if (From < 0.0f) From = 0.0f; else if (From >= 360.0f) From = 360.0f;
   if (To < 0.0f) To = 0.0f; else if (To >= 360.0f) To = 360.0f;
   check(From <= To || (From > To && To == 360.0f));
@@ -468,7 +578,6 @@ void VViewClipper::DoAddClipRange (float From, float To) {
   NewTail->Next = nullptr;
   ClipTail->Next = NewTail;
   ClipTail = NewTail;
-  unguard;
 }
 
 
@@ -478,14 +587,12 @@ void VViewClipper::DoAddClipRange (float From, float To) {
 //
 //==========================================================================
 void VViewClipper::AddClipRange (float From, float To) {
-  guard(VViewClipper::AddClipRange);
   if (From > To) {
     DoAddClipRange(0.0f, To);
     DoAddClipRange(From, 360.0f);
   } else {
     DoAddClipRange(From, To);
   }
-  unguard;
 }
 
 
@@ -494,26 +601,11 @@ void VViewClipper::AddClipRange (float From, float To) {
 //  VViewClipper::DoIsRangeVisible
 //
 //==========================================================================
-bool VViewClipper::DoIsRangeVisible (float From, float To) {
-  guard(VViewClipper::DoIsRangeVisible);
-  for (VClipNode *N = ClipHead; N; N = N->Next) {
+bool VViewClipper::DoIsRangeVisible (float From, float To) const {
+  for (const VClipNode *N = ClipHead; N; N = N->Next) {
     if (From >= N->From && To <= N->To) return false;
   }
   return true;
-  unguard;
-}
-
-
-//==========================================================================
-//
-//  VViewClipper::IsRangeVisible
-//
-//==========================================================================
-bool VViewClipper::IsRangeVisible (float From, float To) {
-  guard(VViewClipper::IsRangeVisible);
-  if (From > To) return (DoIsRangeVisible(0.0f, To) || DoIsRangeVisible(From, 360.0f));
-  return DoIsRangeVisible(From, To);
-  unguard;
 }
 
 
@@ -522,10 +614,19 @@ bool VViewClipper::IsRangeVisible (float From, float To) {
 //  VViewClipper::ClipIsFull
 //
 //==========================================================================
-bool VViewClipper::ClipIsFull () {
-  guard(VViewClipper::ClipIsFull);
+bool VViewClipper::ClipIsFull () const {
   return (ClipHead && ClipHead->From == 0.0f && ClipHead->To == 360.0f);
-  unguard;
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::IsRangeVisible
+//
+//==========================================================================
+bool VViewClipper::IsRangeVisible (float From, float To) const {
+  if (From > To) return (DoIsRangeVisible(0.0f, To) || DoIsRangeVisible(From, 360.0f));
+  return DoIsRangeVisible(From, To);
 }
 
 
@@ -534,53 +635,54 @@ bool VViewClipper::ClipIsFull () {
 //  CreateBBVerts
 //
 //==========================================================================
-inline static void CreateBBVerts (const float *BBox, const TVec origin, TVec *v1, TVec *v2) {
-  v1->z = v2->z = 0;
+inline static void CreateBBVerts (TVec &v1, TVec &v2, const float *BBox, const TVec &origin) {
+  v1 = TVec(0, 0, 0);
+  v2 = TVec(0, 0, 0);
   if (BBox[0] > origin.x) {
     if (BBox[1] > origin.y) {
-      v1->x = BBox[3];
-      v1->y = BBox[1];
-      v2->x = BBox[0];
-      v2->y = BBox[4];
+      v1.x = BBox[3];
+      v1.y = BBox[1];
+      v2.x = BBox[0];
+      v2.y = BBox[4];
     } else if (BBox[4] < origin.y) {
-      v1->x = BBox[0];
-      v1->y = BBox[1];
-      v2->x = BBox[3];
-      v2->y = BBox[4];
+      v1.x = BBox[0];
+      v1.y = BBox[1];
+      v2.x = BBox[3];
+      v2.y = BBox[4];
     } else {
-      v1->x = BBox[0];
-      v1->y = BBox[1];
-      v2->x = BBox[0];
-      v2->y = BBox[4];
+      v1.x = BBox[0];
+      v1.y = BBox[1];
+      v2.x = BBox[0];
+      v2.y = BBox[4];
     }
   } else if (BBox[3] < origin.x) {
     if (BBox[1] > origin.y) {
-      v1->x = BBox[3];
-      v1->y = BBox[4];
-      v2->x = BBox[0];
-      v2->y = BBox[1];
+      v1.x = BBox[3];
+      v1.y = BBox[4];
+      v2.x = BBox[0];
+      v2.y = BBox[1];
     } else if (BBox[4] < origin.y) {
-      v1->x = BBox[0];
-      v1->y = BBox[4];
-      v2->x = BBox[3];
-      v2->y = BBox[1];
+      v1.x = BBox[0];
+      v1.y = BBox[4];
+      v2.x = BBox[3];
+      v2.y = BBox[1];
     } else {
-      v1->x = BBox[3];
-      v1->y = BBox[4];
-      v2->x = BBox[3];
-      v2->y = BBox[1];
+      v1.x = BBox[3];
+      v1.y = BBox[4];
+      v2.x = BBox[3];
+      v2.y = BBox[1];
     }
   } else {
     if (BBox[1] > origin.y) {
-      v1->x = BBox[3];
-      v1->y = BBox[1];
-      v2->x = BBox[0];
-      v2->y = BBox[1];
+      v1.x = BBox[3];
+      v1.y = BBox[1];
+      v2.x = BBox[0];
+      v2.y = BBox[1];
     } else {
-      v1->x = BBox[0];
-      v1->y = BBox[4];
-      v2->x = BBox[3];
-      v2->y = BBox[4];
+      v1.x = BBox[0];
+      v1.y = BBox[4];
+      v2.x = BBox[3];
+      v2.y = BBox[4];
     }
   }
 }
@@ -591,11 +693,9 @@ inline static void CreateBBVerts (const float *BBox, const TVec origin, TVec *v1
 //  VViewClipper::ClipIsBBoxVisible
 //
 //==========================================================================
-bool VViewClipper::ClipIsBBoxVisible (const float *BBox, bool shadowslight, const TVec &CurrLightPos, float CurrLightRadius) {
-  guard(VViewClipper::ClipIsBBoxVisible);
+bool VViewClipper::ClipIsBBoxVisible (const float *BBox, bool shadowslight, const TVec &CurrLightPos, float CurrLightRadius) const {
+  if (!clip_enabled || !clip_bsp) return true;
   if (!ClipHead) return true; // no clip nodes yet
-
-  if (!clip_enabled) return true;
 
   if (shadowslight) {
     if (BBox[0] <= CurrLightPos.x && BBox[3] >= CurrLightPos.x &&
@@ -611,18 +711,17 @@ bool VViewClipper::ClipIsBBoxVisible (const float *BBox, bool shadowslight, cons
     return true;
   }
 
-  TVec v1(0, 0, 0), v2(0, 0, 0);
-  CreateBBVerts(BBox, (shadowslight ? CurrLightPos : Origin), &v1, &v2);
+  TVec v1, v2;
+  CreateBBVerts(v1, v2, BBox, (shadowslight ? CurrLightPos : Origin));
 
   // clip sectors that are behind rendered segs
   if (!shadowslight) {
-    if (!ClipVerts(v1, v2)) return false;
+    if (!CheckAndClipVerts(v1, v2, Origin)) return false;
   } else {
-    if (!ClipVertsWithLight(v1, v2, CurrLightPos, CurrLightRadius)) return false;
+    if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
   }
 
   return IsRangeVisible(PointToClipAngle(v1), PointToClipAngle(v2));
-  unguard;
 }
 
 
@@ -631,16 +730,14 @@ bool VViewClipper::ClipIsBBoxVisible (const float *BBox, bool shadowslight, cons
 //  VViewClipper::ClipCheckRegion
 //
 //==========================================================================
-bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool shadowslight, const TVec &CurrLightPos, float CurrLightRadius) {
-  guard(VViewClipper::ClipCheckRegion);
-  if (!ClipHead) return true;
-
+bool VViewClipper::ClipCheckRegion (const subregion_t *region, const subsector_t *sub, bool shadowslight, const TVec &CurrLightPos, float CurrLightRadius) const {
   if (!clip_enabled) return true;
+  if (!ClipHead) return true; // no clip nodes yet
 
-  drawseg_t *ds = region->lines;
-  for (auto count = sub->numlines; count--; ++ds) {
-    TVec v1 = *ds->seg->v1;
-    TVec v2 = *ds->seg->v2;
+  const drawseg_t *ds = region->lines;
+  for (auto count = sub->numlines-1; count--; ++ds) {
+    const TVec &v1 = *ds->seg->v1;
+    const TVec &v2 = *ds->seg->v2;
 
     /*
     if (!ds->seg->linedef) {
@@ -651,15 +748,14 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
 
     // clip sectors that are behind rendered segs
     if (!shadowslight) {
-      if (!ClipVerts(v1, v2)) return false;
+      if (!CheckAndClipVerts(v1, v2, Origin)) return false;
     } else {
-      if (!ClipVertsWithLight(v1, v2, CurrLightPos, CurrLightRadius)) return false;
+      if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
     }
 
     if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -668,17 +764,14 @@ bool VViewClipper::ClipCheckRegion (subregion_t *region, subsector_t *sub, bool 
 //  VViewClipper::ClipCheckSubsector
 //
 //==========================================================================
-bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, const TVec &CurrLightPos, float CurrLightRadius) {
-  guard(VViewClipper::ClipCheckSubsector);
-  if (!ClipHead) return true;
-
+bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool shadowslight, const TVec &CurrLightPos, float CurrLightRadius) const {
   if (!clip_enabled) return true;
+  if (!ClipHead) return true; // no clip nodes yet
 
-  for (int i = 0; i < Sub->numlines; ++i) {
-    seg_t *seg = &Level->Segs[Sub->firstline+i];
-
-    TVec v1 = *seg->v1;
-    TVec v2 = *seg->v2;
+  const seg_t *seg = &Level->Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
+    const TVec &v1 = *seg->v1;
+    const TVec &v2 = *seg->v2;
 
     /*
     if (!seg->linedef) {
@@ -689,15 +782,14 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
 
     // clip sectors that are behind rendered segs
     if (!shadowslight) {
-      if (!ClipVerts(v1, v2)) return false;
+      if (!CheckAndClipVerts(v1, v2, Origin)) return false;
     } else {
-      if (!ClipVertsWithLight(v1, v2, CurrLightPos, CurrLightRadius)) return false;
+      if (!CheckAndClipVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return false;
     }
 
     if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
   }
   return false;
-  unguard;
 }
 
 
@@ -706,12 +798,12 @@ bool VViewClipper::ClipCheckSubsector (subsector_t *Sub, bool shadowslight, cons
 //  VViewClipper::CheckAddClipSeg
 //
 //==========================================================================
-void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
+void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, const TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
   if (!seg->linedef) return; // miniseg
   if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane
 
-  TVec v1 = *seg->v1;
-  TVec v2 = *seg->v2;
+  const TVec &v1 = *seg->v1;
+  const TVec &v2 = *seg->v2;
 
 #if 0
   // only apply this to sectors without slopes
@@ -747,9 +839,9 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
   }
 #endif
   if (!shadowslight) {
-    if (!ClipVerts(v1, v2, false)) return;
+    if (!CheckVerts(v1, v2, Origin)) return;
   } else {
-    if (!ClipVertsWithLight(v1, v2, CurrLightPos, CurrLightRadius, false)) return;
+    if (!CheckVertsWithLight(v1, v2, Origin, CurrLightPos, CurrLightRadius)) return;
   }
 
   if (Mirror) {
@@ -760,13 +852,16 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
     if (Dist1 <= 0.0f && Dist2 <= 0.0f) return;
 
     // and clip it while we are here
+    // k8: really?
+    /*
          if (Dist1 > 0.0f && Dist2 <= 0.0f) v2 = v1+(v2-v1)*Dist1/(Dist1-Dist2);
     else if (Dist2 > 0.0f && Dist1 <= 0.0f) v1 = v2+(v1-v2)*Dist2/(Dist2-Dist1);
+    */
   }
 
   // for 2-sided line, determine if it can be skipped
   if (seg->backsector && (seg->linedef->flags&ML_TWOSIDED) != 0) {
-    if (seg->linedef->alpha != 1.0f) return; //k8: skip translucent walls (for now)
+    if (seg->linedef->alpha < 1.0f) return; // skip translucent walls
     if (!IsSegAClosedSomething(Level, seg)) return;
   }
 
@@ -779,22 +874,19 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, TPlane 
 //  VViewClipper::ClipAddSubsectorSegs
 //
 //==========================================================================
-void VViewClipper::ClipAddSubsectorSegs (subsector_t *Sub, bool shadowslight, TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
-  guard(VViewClipper::ClipAddSubsectorSegs);
-
+void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, bool shadowslight, const TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
   if (!clip_enabled) return;
 
-  for (int i = 0; i < Sub->numlines; ++i) {
-    const seg_t *seg = &Level->Segs[Sub->firstline+i];
+  const seg_t *seg = &Level->Segs[sub->firstline];
+  for (int count = sub->numlines; count--; ++seg) {
     CheckAddClipSeg(seg, shadowslight, Mirror, CurrLightPos, CurrLightRadius);
   }
 
-  if (Sub->poly && clip_with_polyobj) {
-    seg_t **polySeg = Sub->poly->segs;
-    for (int polyCount = Sub->poly->numsegs; --polyCount; ++polySeg) {
-      const seg_t *seg = *polySeg;
+  if (sub->poly && clip_with_polyobj) {
+    seg_t **polySeg = sub->poly->segs;
+    for (int count = sub->poly->numsegs; count--; ++polySeg) {
+      seg = *polySeg;
       CheckAddClipSeg(seg, shadowslight, nullptr, CurrLightPos, CurrLightRadius);
     }
   }
-  unguard;
 }
