@@ -31,6 +31,7 @@
 //  procedures, such as B_CheckStuff and B_SetEnemy.
 //
 //**************************************************************************
+//class RocketLauncher : Weapon decorate;
 
 // Main bot class
 class BotPlayerBase : GameObject;
@@ -153,7 +154,7 @@ Actor ally; // ally to tag along with
 float t_strafe;
 float t_react;
 float t_fire; // tics left until our gun will actually fire again
-float t_anticip;
+float t_shootcooldown;
 
 float forwardmove; // for building ucmd
 float sidemove;
@@ -171,6 +172,7 @@ float angle; // the wanted angle that the bot tries to get every tic
 
 // bot options
 bool boptCheckWimpyWeapon = true;
+array!Weapon weaponList;
 
 
 //==========================================================================
@@ -182,6 +184,8 @@ bool boptCheckWimpyWeapon = true;
 //==========================================================================
 void BotTick (float deltaTime) {
   botmo = Actor(player.MO);
+
+  //print("BOTMO is %C", botmo);
 
   player.ForwardMove = 0.0;
   player.SideMove = 0.0;
@@ -223,7 +227,8 @@ void BotTick (float deltaTime) {
   player.ForwardMove = forwardmove;
 
   t_react = fmax(0, t_react-deltaTime);
-  t_anticip = fmax(0, t_anticip-deltaTime);
+  t_shootcooldown = fmax(0, t_shootcooldown-deltaTime);
+  t_fire = fmax(0, t_fire-deltaTime);
 }
 
 
@@ -249,13 +254,16 @@ final float AngleTo (TVec dest) {
 //
 //==========================================================================
 bool CheckWeaponItem (Weapon Wpn, out bool res) {
-  // If we don't have the weapon, pick it up
+  if (!Wpn) return false;
+
+  // if we don't have the weapon, pick it up
   if (!botmo.FindInventory(class!Inventory(Wpn.Class))) { res = true; return true; }
 
-  // If we have no more room for the ammo it gives
-  if (botmo.FindInventory(Wpn.AmmoType1).Amount == botmo.FindInventory(Wpn.AmmoType1).MaxAmount) { res = false; return true; }
+  // if we have no more room for the ammo it gives
+  auto ammo1 = (Wpn.AmmoType1 ? botmo.FindInventory(Wpn.AmmoType1) : none);
+  if (ammo1 && ammo1.Amount == ammo1.MaxAmount) { res = false; return true; }
 
-  // Can't pick it up because we have it and it's not a dropped weapon
+  // can't pick it up because we have it and it's not a dropped weapon
   if (!Wpn.bDropped) { res = false; return true; }
 
   res = true;
@@ -378,9 +386,9 @@ void SetEnemy () {
 //
 //==========================================================================
 bool CheckTo (TVec pos) {
-  float dist = Length(botmo.Origin-pos);
+  float dist = Length2D(botmo.Origin-pos);
   float an = GetAngle();
-  if (!CheckPath(an, dist)) return false;
+  if (!CheckPath(an, dist, onlyCheck:true)) return false;
   return true;
 }
 
@@ -395,7 +403,7 @@ bool CheckTo (TVec pos) {
 void CheckStuff () {
   if (item) {
     if (!item.bSpecial || item.IsDestroyed() || // somebody picked
-        !CheckTo(item.Origin)) // Can't reach
+        !CheckTo(item.Origin)) // can't reach
       item = none;
   }
 
@@ -413,7 +421,7 @@ void CheckStuff () {
   if (posdest_valid) {
     TVec dir = posdest-botmo.Origin;
     dir.z = 0.0;
-    if (Length(dir) < botmo.Radius || !CheckTo(posdest)) {
+    if (Length2D(dir) < botmo.Radius || !CheckTo(posdest)) {
       posdest_valid = false;
     }
   }
@@ -421,7 +429,7 @@ void CheckStuff () {
   if (lastpos_valid) {
     TVec dir = lastpos-botmo.Origin;
     dir.z = 0.0;
-    if (Length(dir) < botmo.Radius || !CheckTo(lastpos)) {
+    if (Length2D(dir) < botmo.Radius || !CheckTo(lastpos)) {
       lastpos_valid = false;
     }
   }
@@ -441,8 +449,10 @@ void CheckStuff () {
 //
 //==========================================================================
 void Scan () {
-  Actor actor;
-  foreach botmo.AllThinkers(Actor, actor) {
+  Entity ee;
+  foreach botmo.RadiusThings(out ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
+    Actor actor = Actor(ee);
+    if (!actor) continue;
     if (!actor.bSpecial && !actor.bMissile) {
       // not interested in this one
       continue;
@@ -515,7 +525,7 @@ bool IsDangerous (sector_t *sec) {
 //  the path is clear, and false is the path is blocked.
 //
 //==========================================================================
-bool CheckPath (float ang, float dist) {
+bool CheckPath (float ang, float dist, optional bool onlyCheck) {
   intercept_t *in;
   TVec bottracedir;
 
@@ -529,6 +539,8 @@ bool CheckPath (float ang, float dist) {
   float y2 = y1+dist*bottracedir.y;
 
   EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
+
+  bool wantJump = false;
 
   foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES/*|PT_EARLYOUT*/) {
     if (in->bIsALine) {
@@ -582,7 +594,7 @@ bool CheckPath (float ang, float dist) {
           return false;
         } else if (diffheight <= 48.0 && diffheight >= 24.0) {
           //botmo.Player.Buttons |= BT_JUMP;
-          player.Buttons |= BT_JUMP;
+          wantJump = true;
         }
       }
     } else {
@@ -605,6 +617,8 @@ bool CheckPath (float ang, float dist) {
       */
     }
   }
+
+  if (!onlyCheck && wantJump) player.Buttons |= BT_JUMP;
   return true;
 }
 
@@ -636,6 +650,20 @@ final bool Check_LOS (Actor to, float vangle, optional bool skipCanSee) {
 
 //==========================================================================
 //
+//  GoodAngle
+//
+//==========================================================================
+final bool GoodAngle (Actor to, float vangle) {
+  if (!to) return true;
+  if (vangle <= 0) return false; // looker seems to be blind
+  if (vangle >= 360.0) return true;
+  // check FOV
+  return (fabs(AngleMod180(AngleTo(to.Origin)-botmo.Angles.yaw)) <= vangle/2.0);
+}
+
+
+//==========================================================================
+//
 //  BotAimProjectile
 //
 //==========================================================================
@@ -661,7 +689,7 @@ void BotAimProjectile (float dist, bool right, float an) {
         SetAngle(an-Random()*20.0);
       break;
     default:
-      Error("Unknown bot skill level: %d", info.accuracy);
+      Error("Unknown bot skill level: %d", info.intelect);
       return;
   }
 }
@@ -775,6 +803,46 @@ void BotAim () {
 
 //==========================================================================
 //
+//  FindMonsterEnemy
+//
+//==========================================================================
+Actor FindMonsterEnemy () {
+  auto oldEnemy = enemy;
+  scope(exit) enemy = oldEnemy;
+  Actor narrowTarget = none;
+  float bestNarrowDist = 99999.0;
+  Actor roughTarget = none;
+  float bestRoughDist = 99999.0;
+  Entity ee;
+  foreach botmo.RadiusThings(ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
+    if (ee == botmo) continue; // don't target self
+    Actor act = Actor(ee);
+    if (!act) continue;
+    if (!act.bShootable || !act.bMonster || act.bMissile) continue; // not interesting
+    if (act.Health <= 0) continue; // it is dead
+    float temp = act.DistTo(botmo);
+    if (temp < 512 && temp < bestNarrowDist && GoodAngle(act, 120)) {
+      enemy = act; // for `Check_LOS()`
+      if (Check_LOS(act, 360) || CheckTo(act.Origin)) {
+        bestNarrowDist = temp;
+        narrowTarget = act;
+      }
+    }
+    if (!roughTarget && temp < bestRoughDist && GoodAngle(act, 180)) {
+      enemy = act; // for `Check_LOS()`
+      if (Check_LOS(act, 360) || CheckTo(act.Origin)) {
+        bestRoughDist = temp;
+        roughTarget = act;
+      }
+    }
+  }
+  if (narrowTarget) return narrowTarget;
+  return roughTarget;
+}
+
+
+//==========================================================================
+//
 //  FindEnemy
 //
 //==========================================================================
@@ -804,24 +872,8 @@ Actor FindEnemy () {
   }
 
   // if no target, try to find some monster
-  if (!target) {
-    Entity ee;
-    closest_dist = 99999.0;
-    foreach botmo.RadiusThings(ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
-      if (ee == botmo) continue; // don't target self
-      Actor act = Actor(ee);
-      if (!act) continue;
-      if (!act.bShootable || !act.bMonster || act.bMissile) continue; // not interesting
-      if (act.Health <= 0) continue; // it is dead
-      float temp = act.DistTo(botmo);
-      if (temp < closest_dist) {
-        if (Check_LOS(act, vangle)) {
-          closest_dist = temp;
-          target = act;
-        }
-      }
-    }
-  }
+  if (!target) target = FindMonsterEnemy();
+
   return target;
 }
 
@@ -839,8 +891,10 @@ void Roam () {
   if (lastpos_valid) {
     TVec dir = lastpos-botmo.Origin;
     dir.z = 0.0;
-    if (Length(dir) <= 32.0) lastpos_valid = false;
+    if (Length2D(dir) <= 32.0) lastpos_valid = false;
   }
+
+  if (item && !CheckTo(item.Origin)) item = none;
 
   // order of item response precedence
        if (goal) dest = goal.Origin;
@@ -886,14 +940,43 @@ void Roam () {
     if (posdest_valid) {
       dest = posdest;
     } else {
-      SetAngle(GetAngle()+45.0/3.0);
-      forwardmove = -FORWARDWALK;
+      float wlksign = FORWARDWALK*(P_Random() > 128 ? 1 : -1);
+      an = botmo.Angles.yaw;
+      if (!CheckPath(an, wlksign)) {
+        if (CheckPath(an, -wlksign)) {
+          wlksign = -wlksign;
+        } else {
+          SetAngle(GetAngle()+45.0*FRandomFull());
+          //SetAngle(GetAngle()+45.0/3.0);
+          //player.ViewAngles.yaw = GetAngle();
+          //wlksign = 0;
+        }
+      }
+      forwardmove = wlksign;
       return;
     }
   }
 
   forwardmove = FORWARDRUN;
   SetAngle(AngleTo(dest));
+}
+
+
+//==========================================================================
+//
+//  CheckWantCurrentItem
+//
+//==========================================================================
+bool CheckWantCurrentItem () {
+  if (!item) return false;
+  if (bItemIsPowerup) return true; // always collect powerups
+  if (!bItemIsWeapon) return false; // don't bother with non-weapons
+  if (!player.ReadyWeapon || !CanAttackWithCurrentWeapon()) return true; // want any weapon
+  Weapon wpn = Weapon(item);
+  if (!wpn) return false;
+  if (boptCheckWimpyWeapon && player.ReadyWeapon.bWimpyWeapon) return false;
+  if (player.ReadyWeapon && player.ReadyWeapon.bBotMelee) return true;
+  return true;
 }
 
 
@@ -924,7 +1007,7 @@ void Move (float deltaTime) {
   }
 
   // anticipate a shot: time to dodge!
-  if (enemy && t_anticip <= 0.25) {
+  if (enemy && t_shootcooldown <= 0.25) {
     if (!sidemove) sidemove = SIDERUN;
 
     switch (info.anticip) {
@@ -956,12 +1039,12 @@ void Move (float deltaTime) {
 
       case bsk_high:
         // switch directions when we think our opponent will fire
-        if (!t_anticip) sidemove = -sidemove;
+        if (!t_shootcooldown) sidemove = -sidemove;
         break;
 
       case bsk_excellent:
         // move in a somewhat random direction when we think our opponent will fire
-        if (!t_anticip) {
+        if (!t_shootcooldown) {
           sidemove = (Random() < 0.5 ? SIDERUN : -SIDERUN);
           if (Random() < 0.5) forwardmove = -FORWARDWALK;
         }
@@ -969,7 +1052,7 @@ void Move (float deltaTime) {
 
       case bsk_supreme:
         // what a squirmy little fucker!
-        if (!t_anticip) {
+        if (!t_shootcooldown) {
           switch (P_Random()&3) {
             case 0: sidemove = SIDERUN; break;
             case 1: sidemove = SIDEWALK; break;
@@ -1015,9 +1098,7 @@ void Move (float deltaTime) {
 
     // check if we'd rather pick up something than fight
     if (item) {
-      if (bItemIsPowerup ||
-          (bItemIsWeapon && (boptCheckWimpyWeapon && player.ReadyWeapon.bWimpyWeapon)))
-      {
+      if (CheckWantCurrentItem()) {
         Roam();
         return;
       }
@@ -1048,6 +1129,36 @@ void Move (float deltaTime) {
     }
   }
 
+  // run to human player to give some support
+  if (!player.Level.Game.deathmatch) {
+    // search for player enemies in deathmatch
+    //print("looking for player...");
+    Actor target = none;
+    float closest_dist = 99999.0;
+    foreach (auto i; 0..MAXPLAYERS) {
+      auto plr = player.Level.Game.Players[i];
+      if (!plr) continue;
+      if (!plr.bIsBot && plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
+        float temp = plr.MO.DistTo(botmo);
+        if (temp > SAFE_SELF_MISDIST && temp < closest_dist) {
+          if (Check_LOS(Actor(plr.MO), 360) || CheckTo(plr.MO.Origin)) {
+            closest_dist = temp;
+            target = Actor(plr.MO);
+          }
+        }
+      }
+    }
+    if (target) {
+      //print("  found player; dist=%f", target.DistTo(botmo));
+      SetAngle(AngleTo(target.Origin));
+      player.ViewAngles.yaw = GetAngle();
+      lastpos = target.Origin;
+      lastpos_valid = true;
+      posdest_valid = false;
+      item = none;
+    }
+  }
+
   // roam after an item
   Roam();
 }
@@ -1074,19 +1185,133 @@ bool AttackSpecial () {
 
 //==========================================================================
 //
+//  CanAttackWithCurrentWeapon
+//
+//
+//==========================================================================
+bool CanAttackWithCurrentWeapon (optional bool ignorePending) {
+  if (ignorePending) {
+    if (player.PendingWeapon) return false; // we're going to switch weapons, cannot attack
+  } else {
+    if (player.PendingWeapon) {
+      if (player.PendingWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false)) return true;
+    }
+  }
+
+  if (player.ReadyWeapon) {
+    if (player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false)) return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  BuildWeaponList
+//
+//==========================================================================
+void BuildWeaponList () {
+  weaponList.reset(); // don't reallocate
+  if (!botmo) return;
+
+  auto pawn = PlayerPawn(botmo);
+  if (!pawn) return;
+
+  int currSlot = 0;
+  int currIndex = -1;
+
+  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT*(PlayerPawn::NUM_WEAPON_SLOTS+1)) {
+    if (++currIndex == PlayerPawn::MAX_WEAPONS_PER_SLOT) {
+      currIndex = 0;
+      currSlot = (currSlot+1)%(PlayerPawn::NUM_WEAPON_SLOTS+1);
+    }
+    class!Weapon swc = pawn.GetWeaponInSlot(currSlot, currIndex);
+    if (!swc) continue;
+    Weapon Wpn = Weapon(botmo.FindInventory(swc));
+    if (Wpn) {
+      if (Wpn.SisterWeapon && Wpn.SisterWeapon.bPoweredUp) {
+        bool Powered = !!botmo.FindInventory(PowerWeaponLevel2);
+        if (Powered) Wpn = Wpn.SisterWeapon;
+      }
+      weaponList[$] = Wpn;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  BotSwitchWeapon
+//
+//==========================================================================
+void BotSwitchWeapon () {
+  BuildWeaponList();
+  Weapon bestwpn = player.ReadyWeapon;
+  if (bestwpn && !bestwpn.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false)) bestwpn = none;
+  foreach (Weapon wpn; weaponList) {
+    if (!wpn.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false)) continue;
+    if (!bestwpn) { bestwpn = wpn; continue; }
+    if (wpn.bBotProjectile) {
+      if (!enemy) continue;
+      if (enemy.DistTo(botmo) <= SAFE_SELF_MISDIST) continue;
+      if (!bestwpn || !bestwpn.bBotBfg) bestwpn = wpn;
+      continue;
+    }
+    if (wpn.bBotBfg) {
+      bestwpn = wpn;
+      continue;
+    }
+    if (bestwpn && bestwpn.bBotMelee && !wpn.bBotMelee) {
+      bestwpn = wpn;
+    }
+  }
+  //print("  found weapon %C", bestwpn);
+  if (bestwpn && bestwpn != player.ReadyWeapon) {
+    //print("   setting weapon %C (ready is %C, pending is %C)", bestwpn, player.ReadyWeapon, player.PendingWeapon);
+    player.PendingWeapon = bestwpn;
+  }
+}
+
+
+//==========================================================================
+//
 //  Attack
 //
 //==========================================================================
 void Attack () {
-  // still reacting to something or we don't have an enemy to fight
-  if (t_react || !enemy) return;
+  // still reacting to something
+  if (t_react) return;
+
+  // check if we can fire current weapon, and
+  // try to switch weapons if we can't
+  if (!player.PendingWeapon /*&&
+      (!player.ReadyWeapon || !player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false) ||
+       player.ReadyWeapon isa RocketLauncher)*/)
+  {
+    BotSwitchWeapon();
+  }
+
+  if (player.PendingWeapon) return;
+
+  // don't have an enemy to fight
+  if (!enemy || enemy.Health <= 0) return;
+  if (!CanAttackWithCurrentWeapon(ignorePending:true)) return;
+
+  //if (player.ReadyWeapon) print("CANATTACK with %C: %B", player.ReadyWeapon, player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false));
 
   // no point in firing if we won't hit them
   if (!Check_LOS(enemy, SHOOTFOV)) return;
 
+  // set dodge time
+  t_shootcooldown = 0.3+0.5*FRandomFull();
+
   if (AttackSpecial()) return;
 
-  player.Buttons |= BT_ATTACK;
+  if (!t_fire) {
+    player.Buttons |= BT_ATTACK;
+    t_fire = 1.0/35.0*2.5;
+  }
 }
 
 
@@ -1136,10 +1361,31 @@ void Turn () {
 //==========================================================================
 void Pitch () {
   if (enemy) {
+    TVec org = botmo.Origin;
+    org.z += botmo.Height*0.5-botmo.FloorClip;
+    org.z += player.GetAttackZOfs;
+
+    TVec eorig = enemy.Origin;
+    bool doHeadshot = (enemy.Height > 12);
+    if (doHeadshot) {
+      if (!player.Level.Game.deathmatch) {
+        if (P_Random() <= 50) doHeadshot = false;
+      } else {
+        if (P_Random() <= 180) doHeadshot = false;
+      }
+    }
+
+    // do headshots?
+    if (doHeadshot) {
+      eorig.z += enemy.Height-12;
+    } else {
+      eorig.z += enemy.Height/2;
+    }
+
+    TVec dir = eorig-org;
     TAVec ang;
-    TVec dir = enemy.Origin-botmo.Origin;
     VectorAngles(dir, out ang);
-    botmo.Angles.pitch = ang.pitch;
+    botmo.Angles.pitch = ang.pitch*0.8;
   } else {
     botmo.Angles.pitch = 0.0;
   }
@@ -1176,7 +1422,7 @@ void Died (EntityEx killer) {
 //
 //==========================================================================
 void OnBeginPlay () {
-  int botskill = 2;
+  int botskill = 4;
   int bottype = 0;
   botinfo_t *binfo;
 
@@ -1209,6 +1455,14 @@ void OnBeginPlay () {
   info.anticip = SkillLower(binfo->anticip, 4-botskill);
   info.reaction = SkillLower(binfo->reaction, 4-botskill);
   player.UserInfo = binfo->userinfo;
+
+  if (!player.Level.Game.deathmatch) {
+    info.accuracy = bsk_high;
+    info.intelect = bsk_high;
+    info.evade = bsk_high;
+    info.anticip = bsk_high;
+    info.reaction = bsk_high;
+  }
 }
 
 
