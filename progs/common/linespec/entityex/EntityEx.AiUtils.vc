@@ -118,8 +118,13 @@ final bool CheckMissileRange () {
 final bool LookForMonsters () {
   if (!Level.Game.Players[0].MO.CanSee(self)) return false; // player can't see monster
   int count = 0;
-  EntityEx mo;
-  foreach AllThinkers(EntityEx, mo) {
+  Entity ee;
+  //EntityEx mo;
+  //foreach AllThinkers(EntityEx, mo)
+  foreach RadiusThings(out ee, Origin, MONS_LOOK_RANGE+8)
+  {
+    EntityEx mo = EntityEx(ee);
+    if (!mo) continue;
     if (!mo.bMonster || mo == self || mo.Health <= 0) continue; // not a valid monster
     if (DistTo(mo) > MONS_LOOK_RANGE) continue; // out of range
     if (P_Random() < 16) continue; // skip
@@ -140,8 +145,13 @@ final bool LookForMonsters () {
 //
 //==========================================================================
 final bool LookForMonsters2 (bool allaround) {
-  EntityEx mo;
-  foreach AllThinkers(EntityEx, mo) {
+  //EntityEx mo;
+  //foreach AllThinkers(EntityEx, mo)
+  Entity ee;
+  foreach RadiusThings(out ee, Origin, 4096)
+  {
+    EntityEx mo = EntityEx(ee);
+    if (!mo) continue;
     if (mo.Health <= 0) continue; // dead
     if (mo == self) continue; // self
     if (!mo.bMonster) continue; // not a monster
