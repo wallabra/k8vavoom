@@ -474,6 +474,51 @@ state GetReloadState () {
 
 //==========================================================================
 //
+//  CheckSpecialWeaponAmmo
+//
+//  Special hack for BDW Assault Rifle and BDW Shotgun
+//
+//==========================================================================
+bool CheckSpecialWeaponAmmo (ubyte Mode) {
+  name ammoName;
+       if (GetClassName(Class) == 'BDW_Rifle') ammoName = 'BDW_RifleAmmo';
+  else if (GetClassName(Class) == 'BDW_Shotgun') ammoName = 'BDW_ShotgunAmmo';
+  else return true;
+
+  for (Inventory a2 = EntityEx(Owner).Inventory; a2; a2 = a2.Inventory) {
+    if (GetClassName(a2.Class) == ammoName) {
+      //print("%C; AmountX=%s; AmmoUse1=%s", self, a2.Amount, AmmoUse1);
+      return (a2.Amount > 0);
+    }
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  CheckAmmoIfZero
+//
+//  Special hack for BDW Assault Rifle and BDW Shotgun
+//
+//==========================================================================
+final bool CheckAmmoAmount (ubyte Mode) {
+  if (Mode == FIRE_Primary) {
+    int Amount1 = (Ammo1 ? Ammo1.Amount : 0);
+    //print("%C; Amount1=%s; AmmoUse1=%s", self, Amount1, AmmoUse1);
+    if (Amount1 == 0 && AmmoUse1 == 0) return CheckSpecialWeaponAmmo(Mode);
+    return (Amount1 >= AmmoUse1);
+  } else {
+    int Amount2 = (Ammo2 ? Ammo2.Amount : 0);
+    if (Amount2 == 0 && AmmoUse2 == 0) return CheckSpecialWeaponAmmo(Mode);
+    return (Amount2 >= AmmoUse2);
+  }
+}
+
+
+//==========================================================================
+//
 //  CheckAmmo
 //
 //  Returns true if there is enough mana to shoot.  If not, selects the
@@ -502,20 +547,60 @@ bool CheckAmmo (ubyte Mode, bool AutoSwitch, optional bool RequireAmmo) {
   } else {
     if (!RequireAmmo && bAmmoOptional) return true;
 
-    int Amount1 = (Ammo1 ? Ammo1.Amount : 0);
-    int Amount2 = (Ammo2 ? Ammo2.Amount : 0);
-
     bool Good = true;
     if (bCheckAnyAmmo) {
       // for any fire mode, any ammo will do
-      if ((Mode == FIRE_Primary || Mode == Mode == FIRE_Secondary) &&
-          Amount1 < AmmoUse1 && Amount2 < AmmoUse2) Good = false;
+      if (!CheckAmmoAmount(FIRE_Primary) || !CheckAmmoAmount(FIRE_Secondary)) Good = false;
     } else {
-      if ((Mode == FIRE_Primary || bAltUsesBoth) && Amount1 < AmmoUse1) Good = false;
-      if ((Mode == FIRE_Secondary || bPrimaryUsesBoth) && Amount2 < AmmoUse2) Good = false;
-      // if weapon has no secondary fire, there's never enough ammo for it
-      if (Mode == FIRE_Secondary && !FindState('AltFire')) Good = false;
+      if ((Mode == FIRE_Primary || bAltUsesBoth) && !CheckAmmoAmount(FIRE_Primary)) Good = false;
+      if (Good && (Mode == FIRE_Secondary || bPrimaryUsesBoth) && !CheckAmmoAmount(FIRE_Secondary)) Good = false;
+      if (Good && Mode == FIRE_Secondary && !FindState('AltFire')) Good = false;
     }
+
+    /*
+    int Amount1 = (Ammo1 ? Ammo1.Amount : 0);
+    int Amount2 = (Ammo2 ? Ammo2.Amount : 0);
+
+    if (bCheckAnyAmmo) {
+      // for any fire mode, any ammo will do
+      if ((Mode == FIRE_Primary || Mode == FIRE_Secondary) &&
+          Amount1 < AmmoUse1 && Amount2 < AmmoUse2)
+      {
+        //HACK
+        if ((Amount1 == 0 && AmmoUse1 == 0) && (Amount2 == 0 && AmmoUse2 == 0)) {
+          // more checks!
+          Good = false;
+        } else {
+          Good = false;
+        }
+      }
+    } else {
+      //HACK!
+      if ((Mode == FIRE_Primary || bAltUsesBoth) && Amount1 < AmmoUse1) {
+        Good = false;
+      } else {
+        //HACK
+        if (Amount1 == 0 && AmmoUse1 == 0) {
+          // more checks!
+          Good = false;
+        }
+      }
+      print("%C is %B (both=%B; Amount1=%s; AmmoUse1=%s)", self, Good, bAltUsesBoth, Amount1, AmmoUse1);
+      //HACK!
+      if (Good && (Mode == FIRE_Secondary || bPrimaryUsesBoth) && Amount2 < AmmoUse2) {
+        //HACK
+        if (Amount2 == 0 && AmmoUse2 == 0) {
+          // more checks!
+          Good = false;
+        } else {
+          Good = false;
+        }
+      }
+      // if weapon has no secondary fire, there's never enough ammo for it
+      if (Good && Mode == FIRE_Secondary && !FindState('AltFire')) Good = false;
+    }
+    */
+
     if (Good) return true;
   }
 
