@@ -796,8 +796,11 @@ void BotAim () {
   //FIXME: implement botskill, accuracy, and intelligence
   if (BotAimSpecial(dist, right, an)) return;
 
-  if (player.ReadyWeapon.bBotProjectile) { BotAimProjectile(dist, right, an); return; }
-  BotAimInstant(dist, right, an);
+  if (player.ReadyWeapon.bBotProjectile) {
+    BotAimProjectile(dist, right, an);
+  } else {
+    BotAimInstant(dist, right, an);
+  }
 }
 
 
@@ -1282,17 +1285,11 @@ void BotSwitchWeapon () {
 void Attack () {
   // still reacting to something
   if (t_react) return;
+  if (player.PendingWeapon) return;
 
   // check if we can fire current weapon, and
   // try to switch weapons if we can't
-  if (!player.PendingWeapon /*&&
-      (!player.ReadyWeapon || !player.ReadyWeapon.CheckAmmo(Weapon::FIRE_Primary, AutoSwitch:false) ||
-       player.ReadyWeapon isa RocketLauncher)*/)
-  {
-    BotSwitchWeapon();
-  }
-
-  if (player.PendingWeapon) return;
+  if (!player.PendingWeapon) BotSwitchWeapon();
 
   // don't have an enemy to fight
   if (!enemy || enemy.Health <= 0) return;
@@ -1363,29 +1360,55 @@ void Pitch () {
   if (enemy) {
     TVec org = botmo.Origin;
     org.z += botmo.Height*0.5-botmo.FloorClip;
-    org.z += player.GetAttackZOfs;
+    //org.z += player.GetAttackZOfs;
 
-    TVec eorig = enemy.Origin;
+    /*
     bool doHeadshot = (enemy.Height > 12);
     if (doHeadshot) {
       if (!player.Level.Game.deathmatch) {
         if (P_Random() <= 50) doHeadshot = false;
+        doHeadshot = true;
       } else {
         if (P_Random() <= 180) doHeadshot = false;
       }
     }
+    */
 
+    TVec eorig = enemy.Origin;
+    eorig.z += enemy.Height*0.5-enemy.FloorClip;
     // do headshots?
+    /*
     if (doHeadshot) {
       eorig.z += enemy.Height-12;
     } else {
       eorig.z += enemy.Height/2;
     }
+    */
 
     TVec dir = eorig-org;
-    TAVec ang;
-    VectorAngles(dir, out ang);
-    botmo.Angles.pitch = ang.pitch*0.8;
+
+    //TAVec ang;
+    //VectorAngles(dir, out ang);
+    float len = Length2D(dir);
+    if (len > 0.1) {
+      float pitch = -atan2(dir.z, len);
+      botmo.Angles.pitch = pitch;
+    }
+
+    /*
+    float dist = Length2D(dir);
+
+    if (dist < 0.01) {
+      // too close, must be above or below
+      botmo.Angles.pitch = 0.0;
+      return;
+    }
+
+    float aimslope = eorig.z/dist;
+    botmo.Angles.pitch = -atan(aimslope);
+    */
+
+    //print("AIM to %C", enemy);
   } else {
     botmo.Angles.pitch = 0.0;
   }
