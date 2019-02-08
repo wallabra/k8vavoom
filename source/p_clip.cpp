@@ -43,8 +43,9 @@ extern VCvarF r_lights_radius;
 static VCvarB clip_bsp("clip_bsp", true, "Clip geometry behind some BSP nodes?"/*, CVAR_Archive*/);
 static VCvarB clip_enabled("clip_enabled", true, "Do geometry cliping optimizations?"/*, CVAR_Archive*/);
 static VCvarB clip_with_polyobj("clip_with_polyobj", true, "Do clipping with polyobjects?"/*, CVAR_Archive*/);
-
 static VCvarB clip_platforms("clip_platforms", true, "Clip geometry behind some closed doors and lifts?"/*, CVAR_Archive*/);
+
+static VCvarB clip_skip_slopes_1side("clip_skip_slopes_1side", false, "Skip clipping with one-sided slopes?"/*, CVAR_Archive*/);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -214,6 +215,47 @@ static inline void CopyHeight (const sector_t *sec, TPlane *fplane, TPlane *cpla
 
 //==========================================================================
 //
+//  IsSlopedSeg
+//
+//==========================================================================
+static inline bool IsGoodSegForPoly (VLevel *Level, const seg_t *seg) {
+  const line_t *ldef = seg->linedef;
+  if (!ldef) return false;
+
+  if (ldef->flags&ML_3DMIDTEX) return false; // 3dmidtex never blocks anything
+  if ((ldef->flags&ML_TWOSIDED) == 0) return true; // one-sided wall always blocks everything
+
+  // mirrors and horizons always block the view
+  switch (ldef->special) {
+    case LNSPEC_LineHorizon:
+    case LNSPEC_LineMirror:
+      return false;
+  }
+
+  auto fsec = ldef->frontsector;
+  auto bsec = ldef->backsector;
+
+  if (fsec == bsec) return false; // self-referenced sector
+
+  int fcpic, ffpic;
+  TPlane ffplane, fcplane;
+
+  CopyHeight(fsec, &ffplane, &fcplane, &ffpic, &fcpic);
+  if (ffplane.normal.z != 1.0f || fcplane.normal.z != -1.0f) return false;
+
+  if (bsec) {
+    TPlane bfplane, bcplane;
+    int bcpic, bfpic;
+    CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
+    if (bfplane.normal.z != 1.0f || bcplane.normal.z != -1.0f) return false;
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
 //  IsSegAClosedSomething
 //
 //  prerequisite: has front and back sectors, has linedef
@@ -249,8 +291,8 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
   CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
 
   // only apply this to sectors without slopes
-  if (true /*ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
-      fcplane.normal.z == -1.0f && bcplane.normal.z == -1.0f*/)
+  if (ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
+      fcplane.normal.z == -1.0f && bcplane.normal.z == -1.0f)
   {
     bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
     bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
@@ -320,6 +362,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
     }
   } else {
     // sloped
+    /*
     if (((fsec->floor.maxz > bsec->ceiling.minz && fsec->ceiling.maxz < bsec->floor.minz) ||
          (fsec->floor.minz > bsec->ceiling.maxz && fsec->ceiling.minz < bsec->floor.maxz)) ||
         ((bsec->floor.maxz > fsec->ceiling.minz && bsec->ceiling.maxz < fsec->floor.minz) ||
@@ -327,6 +370,7 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
     {
       return true;
     }
+    */
   }
 
   return false;
@@ -799,8 +843,20 @@ bool VViewClipper::ClipCheckSubsector (const subsector_t *sub, bool shadowslight
 //
 //==========================================================================
 void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, const TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
-  if (!seg->linedef) return; // miniseg
+  const line_t *ldef = seg->linedef;
+  if (!ldef) return; // miniseg
   if (seg->PointOnSide(Origin)) return; // viewer is in back side or on plane
+
+  if (clip_skip_slopes_1side) {
+    // do not clip with slopes, if it has no midsec
+    if ((ldef->flags&ML_TWOSIDED) == 0) {
+      int fcpic, ffpic;
+      TPlane ffplane, fcplane;
+      CopyHeight(ldef->frontsector, &ffplane, &fcplane, &ffpic, &fcpic);
+      // only apply this to sectors without slopes
+      if (ffplane.normal.z != 1.0f || fcplane.normal.z != -1.0f) return;
+    }
+  }
 
   const TVec &v1 = *seg->v1;
   const TVec &v2 = *seg->v2;
@@ -877,16 +933,21 @@ void VViewClipper::CheckAddClipSeg (const seg_t *seg, bool shadowslight, const T
 void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, bool shadowslight, const TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius) {
   if (!clip_enabled) return;
 
+  bool doPoly = (sub->poly && clip_with_polyobj);
+
   const seg_t *seg = &Level->Segs[sub->firstline];
   for (int count = sub->numlines; count--; ++seg) {
     CheckAddClipSeg(seg, shadowslight, Mirror, CurrLightPos, CurrLightRadius);
+    if (doPoly && !IsGoodSegForPoly(Level, seg)) doPoly = false;
   }
 
-  if (sub->poly && clip_with_polyobj) {
+  if (doPoly) {
     seg_t **polySeg = sub->poly->segs;
     for (int count = sub->poly->numsegs; count--; ++polySeg) {
       seg = *polySeg;
-      CheckAddClipSeg(seg, shadowslight, nullptr, CurrLightPos, CurrLightRadius);
+      if (IsGoodSegForPoly(Level, seg)) {
+        CheckAddClipSeg(seg, shadowslight, nullptr, CurrLightPos, CurrLightRadius);
+      }
     }
   }
 }
