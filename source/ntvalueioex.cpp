@@ -79,7 +79,9 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
   if (IsLoading()) {
     // reading
     VName tname;
+    int ttype;
     io(vname, tname);
+    io(VName(va("%s.ttype", *vname)), ttype);
     if (IsError()) {
       if (IsLoading()) v.id = 0;
       return;
@@ -89,7 +91,13 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
       v.id = 0;
     } else {
       auto lock = GTextureManager.LockMapLocalTextures();
+      /*
       int texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Flat, true, true, false);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Sprite, true, true, false);
+      */
+      int texid = GTextureManager.CheckNumForName(tname, ttype, true/*overload*/, true/*checkany*/);
+      if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Wall, true, true, false);
       if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Flat, true, true, false);
       if (texid < 0) texid = GTextureManager.CheckNumForNameAndForce(tname, TEXTYPE_Sprite, true, true, false);
       if (texid < 0) {
@@ -97,21 +105,28 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
         texid = GTextureManager.DefaultTexture;
       }
       v.id = texid;
+      if (GTextureManager.getIgnoreAnim(v.id)->Type != ttype) {
+        GCon->Logf(NAME_Warning, "TXRD<%s>: %5d <%s> (%d)", *vname, v.id, *tname, GTextureManager.getIgnoreAnim(v.id)->Type);
+      }
     }
     //GCon->Logf("txrd: <%s> : %d", *vname, v.id);
   } else {
     //GCon->Logf("txwr: <%s> : %d", *vname, v.id);
     // writing
     VName tname = NAME_None;
-    if (v.id >= 0) {
+    int ttype = TEXTYPE_Wall;
+    if (v.id > 0) {
       if (!GTextureManager.getIgnoreAnim(v.id)) {
         GCon->Logf(NAME_Warning, "SAVE: trying to save inexisting texture with id #%d", v.id);
         tname = VName(" ! ");
       } else {
         tname = GTextureManager.GetTextureName(v.id);
+        ttype = GTextureManager.getIgnoreAnim(v.id)->Type;
+        //GCon->Logf("TXWR<%s>: %5d <%s> (%d)", *vname, v.id, *tname, GTextureManager.getIgnoreAnim(v.id)->Type);
       }
     }
     io(vname, tname);
+    io(VName(va("%s.ttype", *vname)), ttype);
   }
 }
 
