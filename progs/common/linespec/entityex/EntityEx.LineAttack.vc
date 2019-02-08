@@ -454,7 +454,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, opt
   } else {
     aim_z += 8.0;
   }
-  aim_range2d = Length(vector(distance*aim_dir.x, distance*aim_dir.y, 0.0));
+  aim_range2d = Length2D(vector(distance*aim_dir.x, distance*aim_dir.y));
 
   // can't shoot outside view angles
   topangle = AngleMod180(-angles.pitch+30.0);
@@ -536,7 +536,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, opt
     aim_slope = (thingtopslope+thingbottomslope)/2.0;
     linetarget = th;
 
-    break;  // don't go any farther
+    break; // don't go any farther
   }
 
   if (linetarget && !noVertAutoAim) angles.pitch = -atan(aim_slope);
