@@ -340,32 +340,35 @@ void VLevel::SerialiseOther (VStream &Strm) {
     }
 
     for (i = 0, li = Lines; i < NumLines; ++i, ++li) {
-      VNTValueIOEx vio(&Strm);
-      vio.io(VName("flags"), li->flags);
-      vio.io(VName("SpacFlags"), li->SpacFlags);
-      vio.io(VName("special"), li->special);
-      vio.io(VName("arg1"), li->arg1);
-      vio.io(VName("arg2"), li->arg2);
-      vio.io(VName("arg3"), li->arg3);
-      vio.io(VName("arg4"), li->arg4);
-      vio.io(VName("arg5"), li->arg5);
-      vio.io(VName("LineTag"), li->LineTag);
-      vio.io(VName("alpha"), li->alpha);
+      {
+        VNTValueIOEx vio(&Strm);
+        vio.io(VName("flags"), li->flags);
+        vio.io(VName("SpacFlags"), li->SpacFlags);
+        vio.io(VName("special"), li->special);
+        vio.io(VName("arg1"), li->arg1);
+        vio.io(VName("arg2"), li->arg2);
+        vio.io(VName("arg3"), li->arg3);
+        vio.io(VName("arg4"), li->arg4);
+        vio.io(VName("arg5"), li->arg5);
+        vio.io(VName("LineTag"), li->LineTag);
+        vio.io(VName("alpha"), li->alpha);
+      }
 
       for (int j = 0; j < 2; ++j) {
+        VNTValueIOEx vio(&Strm);
         if (li->sidenum[j] == -1) {
           // do nothing
         } else {
           si = &Sides[li->sidenum[j]];
+          vio.io(VName("TopTexture"), si->TopTexture);
+          vio.io(VName("BottomTexture"), si->BottomTexture);
+          vio.io(VName("MidTexture"), si->MidTexture);
           vio.io(VName("TopTextureOffset"), si->TopTextureOffset);
           vio.io(VName("BotTextureOffset"), si->BotTextureOffset);
           vio.io(VName("MidTextureOffset"), si->MidTextureOffset);
           vio.io(VName("TopRowOffset"), si->TopRowOffset);
           vio.io(VName("BotRowOffset"), si->BotRowOffset);
           vio.io(VName("MidRowOffset"), si->MidRowOffset);
-          vio.io(VName("TopTexture"), si->TopTexture);
-          vio.io(VName("BottomTexture"), si->BottomTexture);
-          vio.io(VName("MidTexture"), si->MidTexture);
           vio.io(VName("Flags"), si->Flags);
           vio.io(VName("Light"), si->Light);
         }
@@ -384,17 +387,17 @@ void VLevel::SerialiseOther (VStream &Strm) {
 
     for (i = 0; i < NumPolyObjs; ++i) {
       VNTValueIOEx vio(&Strm);
+      float angle = PolyObjs[i].angle;
+      float polyX = PolyObjs[i].startSpot.x;
+      float polyY = PolyObjs[i].startSpot.y;
+      vio.io(VName("angle"), angle);
+      vio.io(VName("startSpot.x"), polyX);
+      vio.io(VName("startSpot.y"), polyY);
       if (Strm.IsLoading()) {
-        float angle, polyX, polyY;
-        vio.io(VName("angle"), angle);
-        vio.io(VName("polyX"), polyX);
-        vio.io(VName("polyY"), polyY);
         RotatePolyobj(PolyObjs[i].tag, angle);
+        //GCon->Logf("poly #%d: oldpos=(%f,%f)", i, PolyObjs[i].startSpot.x, PolyObjs[i].startSpot.y);
         MovePolyobj(PolyObjs[i].tag, polyX-PolyObjs[i].startSpot.x, polyY-PolyObjs[i].startSpot.y);
-      } else {
-        vio.io(VName("angle"), PolyObjs[i].angle);
-        vio.io(VName("startSpot.x"), PolyObjs[i].startSpot.x);
-        vio.io(VName("startSpot.y"), PolyObjs[i].startSpot.y);
+        //GCon->Logf("poly #%d: newpos=(%f,%f) (%f,%f)", i, PolyObjs[i].startSpot.x, PolyObjs[i].startSpot.y, polyX, polyY);
       }
       vio.io(VName("SpecialData"), PolyObjs[i].SpecialData);
     }
