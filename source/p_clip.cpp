@@ -249,8 +249,8 @@ static inline bool IsSegAClosedSomething (VLevel *Level, const seg_t *seg) {
   CopyHeight(bsec, &bfplane, &bcplane, &bfpic, &bcpic);
 
   // only apply this to sectors without slopes
-  if (ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
-      fcplane.normal.z == -1.0f && bcplane.normal.z == -1.0f)
+  if (true /*ffplane.normal.z == 1.0f && bfplane.normal.z == 1.0f &&
+      fcplane.normal.z == -1.0f && bcplane.normal.z == -1.0f*/)
   {
     bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
     bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
