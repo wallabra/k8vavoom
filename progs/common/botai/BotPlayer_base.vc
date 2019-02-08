@@ -41,16 +41,16 @@ const float SIDEWALK    = 192.0;
 const float SIDERUN     = 320.0;
 
 /*const float MAX_TRAVERSE_DIST     (1024*FRACUNIT) //10 meters, used within b_func.c*/
-const float AVOID_DIST          = 512.0;  //Try avoid incoming missiles once they reached this close
-const float SAFE_SELF_MISDIST     = 128.0;  //Distance from self to target where it's safe to pull a rocket.
+const float AVOID_DIST        = 512.0;  //Try avoid incoming missiles once they reached this close
+const float SAFE_SELF_MISDIST = 128.0;  //Distance from self to target where it's safe to pull a rocket.
 /*const float FRIEND_DIST         (128*FRACUNIT)  //To friend.
 const float DARK_DIST         (256*FRACUNIT)  //Distance that bot can see enemies in the dark from.
 const float WHATS_DARK          64        //light value thats classed as dark.
 const float MAX_MONSTER_TARGET_DIST   (1024*FRACUNIT) //Too high can slow down the performance, see P_mobj.c*/
-const float ENEMY_SCAN_FOV        = 120.0;
+const float ENEMY_SCAN_FOV = 120.0;
 /*const float MAXMOVEHEIGHT       (32*FRACUNIT) //MAXSTEPMOVE but with jumping counted in.
 const float GETINCOMBAT         (512*FRACUNIT)  //Max distance to item. if it's due to be icked up in a combat situation.*/
-const float SHOOTFOV          = 60.0;
+const float SHOOTFOV = 60.0;
 /*const float MAXROAM           (5*TICRATE)   //When this time is elapsed the bot will roam after something else.*/
 
 /*
@@ -58,8 +58,7 @@ const float SHOOTFOV          = 60.0;
   other various bot information thingamabobers.
 */
 
-enum
-{
+enum {
   bsk_verypoor,
   bsk_poor,
   bsk_low,
@@ -69,108 +68,105 @@ enum
   bsk_supreme
 };
 
-struct botinfo_t
-{
-  string Name;    // Bot's name*/
-  int accuracy;   // Accuracy with "instant" weapons (this includes "leading")
-  int intelect;   // Accuracy with "missile" weapons (rocket launcher, etc.)
-  int evade;      // Ability to dodge incoming missiles
-  int anticip;    // Ability to anticipate "instant" shots
-  int reaction;   // Overall reaction time (lower is "better")
-/*  int pisschance;   // Chance the bot will get pissed when his threshold is reached
-  int threshold;    // How much it takes to frustrate/piss off the bot
-  int dangerlevel;  // When health is below this, we need some health
-  int wpfav;      // Favorite weapon
-  int chatinfo;   // Bot's chat strings
-  int chattime;   // How long it takes us to type a line
-  int chatty;     // How talkative the bot is
-  char *colour;   // Colour (in form of a string)
-  char *gender;   // Male/female/it :)
-  char *skin;     // Skin
-  int railcolour;   // Railgun trail colour
-  bool revealed;    // Hidden bots must be revealed*/
+struct botinfo_t {
+  string Name;    // bot's name
+  int accuracy;   // accuracy with "instant" weapons (this includes "leading")
+  int intelect;   // accuracy with "missile" weapons (rocket launcher, etc.)
+  int evade;      // ability to dodge incoming missiles
+  int anticip;    // ability to anticipate "instant" shots
+  int reaction;   // overall reaction time (lower is "better")
+/*
+  int pisschance;   // chance the bot will get pissed when his threshold is reached
+  int threshold;    // how much it takes to frustrate/piss off the bot
+  int dangerlevel;  // when health is below this, we need some health
+  int wpfav;      // favorite weapon
+  int chatinfo;   // bot's chat strings
+  int chattime;   // how long it takes us to type a line
+  int chatty;     // how talkative the bot is
+  char *colour;   // colour (in form of a string)
+  char *gender;   // male/female/it :)
+  char *skin;     // skin
+  int railcolour;   // railgun trail colour
+  bool revealed;    // hidden bots must be revealed
+*/
   string userinfo;
 };
 
-/*struct chatline_t
-{
-  char    *string;
-  chattype_t  bot;
-  chatline_t  *line;
+/*
+struct chatline_t {
+  char *string;
+  chattype_t bot;
+  chatline_t *line;
 };
 
-struct chatinfo_t
-{
-  chatline_t    intro[5];
-  chatline_t    inter[5];
-  chatline_t    rare[5];
-  chatline_t    frag[15];
-  chatline_t    died[10];
-  chatline_t    roam[10];
-  chatline_t    pissed[5];
-  chatline_t    frustrated[5];
-  chatline_t    special[20];
-} chatinfo_t;*/
+struct chatinfo_t {
+  chatline_t intro[5];
+  chatline_t inter[5];
+  chatline_t rare[5];
+  chatline_t frag[15];
+  chatline_t died[10];
+  chatline_t roam[10];
+  chatline_t pissed[5];
+  chatline_t frustrated[5];
+  chatline_t special[20];
+} chatinfo_t;
+*/
 
 // The things the bot knows about their enemy
-//struct enemyinfo_t
-//{
-//  int       health;
-//  weapontype_t  weap;
-//};
+/*
+struct enemyinfo_t {
+  int health;
+  weapontype_t weap;
+};
+*/
 
 //
 // Bot states
 //
-enum
-{
-  // Deciding what to do
-  BST_NOTHING,
-  // Bot is "fetching" something (skull, whatever)
-  BST_OFFENSE,
-  // Bot is defending something
-  BST_DEFENSE,
-  // Bot is heading to scoring place
-  BST_RETURN
+enum {
+  BST_NOTHING, // deciding what to do
+  BST_OFFENSE, // bot is "fetching" something (skull, whatever)
+  BST_DEFENSE, // bot is defending something
+  BST_RETURN, // bot is heading to scoring place
 };
 
 
-Player player;    // Points to reference player
+Player player; // points to reference player
 Actor botmo;
 
-// Destinations
-Actor item;     // Item (roam towards weapon, etc)
+// destinations
+Actor item; // item (roam towards weapon, etc)
 bool bItemIsWeapon;
 bool bItemIsPowerup;
-Actor goal;     // Teamgame goal spot
-Actor node;     // Node we're heading towards
-Actor prev;     // Previous node we were at
-TVec posdest;     // Position of our destination (doesn't have to be an actor)
+Actor goal; // teamgame goal spot
+Actor node; // node we're heading towards
+Actor prev; // previous node we were at
+TVec posdest; // position of our destination (doesn't have to be an actor)
 bool posdest_valid;
-Actor enemy;      // The dead meat.
-TVec lastpos;     // Last place we saw our enemy
+Actor enemy; // the dead meat
+TVec lastpos; // last place we saw our enemy
 bool lastpos_valid;
-Actor missile;      // A threathing missile that got to be avoided.
+Actor missile; // a threathing missile that got to be avoided
 
-Actor ally;     // Ally to tag along with
+Actor ally; // ally to tag along with
 float t_strafe;
 float t_react;
-float t_fire;     // Tics left until our gun will actually fire again
+float t_fire; // tics left until our gun will actually fire again
 float t_anticip;
 
-float forwardmove;  // For building ucmd
+float forwardmove; // for building ucmd
 float sidemove;
 
-// Misc booleans
+// misc booleans
 bool bAllRound;
 bool bNewItemIsWeapon;
 bool bNewItemIsPowerup;
 
-botinfo_t info;     // Aiming, name, perfection, yadda yadda
+botinfo_t info; // aiming, name, perfection, yadda yadda
 
 int angerlevel;
 
-float angle;      // The wanted angle that the bot tries to get every tic.
+float angle; // the wanted angle that the bot tries to get every tic
 
 // bot options
 bool boptCheckWimpyWeapon = true;
@@ -183,9 +179,7 @@ bool boptCheckWimpyWeapon = true;
 //  Main bot function
 //
 //==========================================================================
-
-void BotTick(float deltaTime)
-{
+void BotTick (float deltaTime) {
   botmo = Actor(player.MO);
 
   player.ForwardMove = 0.0;
@@ -193,70 +187,53 @@ void BotTick(float deltaTime)
   player.FlyMove = 0.0;
   player.Buttons = 0;
 
-  // We're dead, so hit space to respawn
-  if (!player.Health)
-  {
+  // we're dead, so hit space to respawn
+  if (!player.Health) {
     player.Buttons |= BT_USE;
     return;
   }
 
-  // Weed out any bad destinations/enemies
+  // weed out any bad destinations/enemies
   CheckStuff();
 
-  // Destination setting...
+  // destination setting
   SetEnemy();
   Scan();
 
-  // Turning towards destination...
+  // turning towards destination
   BotAim();
   Turn();
 
-  // Moving towards destination
+  // moving towards destination
   Attack();
   Move(deltaTime);
 
   Pitch();
 
-  // Only walk if we're on skill 0
-  if (!MainGameInfo(player.Level.Game).botskill)
-  {
-    if (forwardmove == FORWARDRUN)
-      forwardmove = FORWARDWALK;
-    if (forwardmove == -FORWARDRUN)
-      forwardmove = -FORWARDWALK;
-    if (sidemove == SIDERUN)
-      sidemove = SIDEWALK;
-    if (sidemove == -SIDERUN)
-      sidemove = -SIDEWALK;
+  // only walk if we're on skill 0
+  if (!MainGameInfo(player.Level.Game).botskill) {
+    if (forwardmove == FORWARDRUN) forwardmove = FORWARDWALK;
+    if (forwardmove == -FORWARDRUN) forwardmove = -FORWARDWALK;
+    if (sidemove == SIDERUN) sidemove = SIDEWALK;
+    if (sidemove == -SIDERUN) sidemove = -SIDEWALK;
   }
 
   player.SideMove = sidemove;
   player.ForwardMove = forwardmove;
 
-  t_react -= deltaTime;
-  if (t_react <= 0.0)
-  {
-    t_react = 0.0;
-  }
-  t_anticip -= deltaTime;
-  if (t_anticip <= 0.0)
-  {
-    t_anticip = 0.0;
-  }
+  t_react = fmax(0, t_react-deltaTime);
+  t_anticip = fmax(0, t_anticip-deltaTime);
 }
+
 
 //==========================================================================
 //
 //  AngleTo
 //
 //==========================================================================
-
-float AngleTo(TVec dest)
-{
-  TVec dir;
+final float AngleTo (TVec dest) {
   TAVec ang;
-
-  dir = dest - botmo.Origin;
+  TVec dir = dest-botmo.Origin;
   VectorAngles(dir, out ang);
   return ang.yaw;
 }
@@ -345,8 +322,7 @@ bool CheckOtherItem (Actor item, out bool res) {
 //  Determines if we should bother picking up an item or not
 //
 //==========================================================================
-bool CheckItem(Actor item)
-{
+bool CheckItem (Actor item) {
   bool res;
 
   bNewItemIsWeapon = false;
@@ -372,30 +348,26 @@ bool CheckItem(Actor item)
   return true;
 }
 
+
 //==========================================================================
 //
 //  SetEnemy
 //
 //==========================================================================
-
-void SetEnemy()
-{
-  if (enemy && enemy.Health > 0 && player.MO &&
-    player.MO.CanSee(enemy))
-  {
+void SetEnemy () {
+  if (enemy && enemy.Health > 0 && player.MO && player.MO.CanSee(enemy)) {
     return;
   }
 
   bAllRound = !!enemy;
   enemy = FindEnemy();
 
-  if (!enemy)
-    return;
+  if (!enemy) return;
 
-  // Double check the validity of the enemy
-  if (!enemy.bShootable)
-    enemy = none;
+  // double check the validity of the enemy
+  if (!enemy.bShootable) enemy = none;
 }
+
 
 //==========================================================================
 //
@@ -404,20 +376,13 @@ void SetEnemy()
 //  Checks if an location is reachable
 //
 //==========================================================================
-
-bool CheckTo(TVec pos)
-{
-  float dist;
-  float an;
-
-  dist = Length(botmo.Origin - pos);
-  an = GetAngle();
-
-  if (!CheckPath(an, dist))
-    return false;
-
+bool CheckTo (TVec pos) {
+  float dist = Length(botmo.Origin-pos);
+  float an = GetAngle();
+  if (!CheckPath(an, dist)) return false;
   return true;
 }
+
 
 //==========================================================================
 //
@@ -426,141 +391,108 @@ bool CheckTo(TVec pos)
 //  Make sure that our destinations/enemies and everything are valid.
 //
 //==========================================================================
-
-void CheckStuff()
-{
-  if (item)
-  {
+void CheckStuff () {
+  if (item) {
     if (!item.bSpecial || item.IsDestroyed() || // somebody picked
         !CheckTo(item.Origin)) // Can't reach
       item = none;
   }
 
-  if (missile)
-  {
-    if (!missile.bMissile || missile.IsDestroyed())
-      missile = none;
+  if (missile) {
+    if (!missile.bMissile || missile.IsDestroyed()) missile = none;
   }
 
-  if (node)
-  {
-    if (!CheckTo(node.Origin) ||
-      (botmo.DistTo2(node) < botmo.Radius))
-    {
+  if (node) {
+    if (!CheckTo(node.Origin) || botmo.DistTo2(node) < botmo.Radius) {
       prev = node;
       node = none;
     }
   }
 
-  if (posdest_valid)
-  {
-    TVec dir;
-    dir = posdest - botmo.Origin;
+  if (posdest_valid) {
+    TVec dir = posdest-botmo.Origin;
     dir.z = 0.0;
-    if ((Length(dir) < botmo.Radius) || !CheckTo(posdest))
-    {
+    if (Length(dir) < botmo.Radius || !CheckTo(posdest)) {
       posdest_valid = false;
     }
   }
 
-  if (lastpos_valid)
-  {
-    TVec dir;
-    dir = lastpos - botmo.Origin;
+  if (lastpos_valid) {
+    TVec dir = lastpos-botmo.Origin;
     dir.z = 0.0;
-    if ((Length(dir) < botmo.Radius) || !CheckTo(lastpos))
-    {
+    if (Length(dir) < botmo.Radius || !CheckTo(lastpos)) {
       lastpos_valid = false;
     }
   }
 
-  if (enemy)
-  {
-    if (enemy.IsDestroyed() || enemy.Health <= 0 || !enemy.bShootable)
-      enemy = none;
+  if (enemy) {
+    if (enemy.IsDestroyed() || enemy.Health <= 0 || !enemy.bShootable) enemy = none;
   }
 }
+
 
 //==========================================================================
 //
 //  Scan
 //
 //  Scan all mobj's visible to the bot for incoming missiles, enemies, and
-// various items to pick up.
+//  various items to pick up.
 //
 //==========================================================================
-
-void Scan()
-{
+void Scan () {
   Actor actor;
-
-  foreach botmo.AllThinkers(Actor, actor)
-  {
-    if (!actor.bSpecial && !actor.bMissile)
-    {
-      // Not interested in this one
+  foreach botmo.AllThinkers(Actor, actor) {
+    if (!actor.bSpecial && !actor.bMissile) {
+      // not interested in this one
       continue;
     }
-    if (Check_LOS(actor, 90.0))
-    {
-      // Look for special items
-      if (!item && actor.bSpecial)
-      {
-        if (CheckItem(actor))
-        {
+    if (Check_LOS(actor, 90.0)) {
+      // look for special items
+      if (!item && actor.bSpecial) {
+        if (CheckItem(actor)) {
           item = actor;
           bItemIsWeapon = bNewItemIsWeapon;
           bItemIsPowerup = bNewItemIsPowerup;
         }
-      }
-      else if (!missile && actor.bMissile &&
-        (botmo.DistTo(actor) < AVOID_DIST))
-      {
+      } else if (!missile && actor.bMissile && botmo.DistTo(actor) < AVOID_DIST) {
         missile = actor;
       }
     }
   }
 }
 
+
 //==========================================================================
 //
 //  SkillLower
 //
 //==========================================================================
-
-int SkillLower(int skill, int num)
-{
-  if (num <= 0)
-    return skill;
-
-  skill -= num;
-  if (skill < 0)
-    skill = 0;
-
+int SkillLower (int skill, int num) {
+  if (num <= 0) return skill;
+  skill = max(0, skill-num);
   return skill;
 }
+
 
 //==========================================================================
 //
 //  SetAngle
 //
 //==========================================================================
-
-void SetAngle(float an)
-{
+final void SetAngle (float an) {
   angle = AngleMod360(an);
 }
+
 
 //==========================================================================
 //
 //  GetAngle
 //
 //==========================================================================
-
-float GetAngle()
-{
+final float GetAngle () {
   return angle;
 }
+
 
 //==========================================================================
 //
@@ -569,132 +501,98 @@ float GetAngle()
 //  Checks if a sector is dangerous.
 //
 //==========================================================================
-
-bool IsDangerous(sector_t *sec)
-{
+bool IsDangerous (sector_t *sec) {
   return false;
 }
+
 
 //==========================================================================
 //
 //  CheckPath
 //
 //  Checks for obstructions at a certain angle and distance. Returns true if
-// the path is clear, and false is the path is blocked.
+//  the path is clear, and false is the path is blocked.
 //
 //==========================================================================
-
-bool CheckPath(float ang, float dist)
-{
-  float x1, y1, x2, y2;
+bool CheckPath (float ang, float dist) {
   intercept_t *in;
-  float bottracerange;
   TVec bottracedir;
 
-  bottracerange = dist;
+  float bottracerange = dist;
   bottracedir.x = cos(ang);
   bottracedir.y = sin(ang);
   bottracedir.z = 0.0;
-  x1 = botmo.Origin.x;
-  y1 = botmo.Origin.y;
-  x2 = x1 + dist * bottracedir.x;
-  y2 = y1 + dist * bottracedir.y;
+  float x1 = botmo.Origin.x;
+  float y1 = botmo.Origin.y;
+  float x2 = x1+dist*bottracedir.x;
+  float y2 = y1+dist*bottracedir.y;
 
   EntityEx(player.MO).UseLines(Player::USERANGE, Player::USETHINGRANGE, '*usefail');
 
-  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES/*|PT_EARLYOUT*/)
-  {
-    Actor th;
-    line_t *ld;
-    TVec hit_point;
-
-    if (in->bIsALine)
-    {
+  foreach botmo.PathTraverse(in, x1, y1, x2, y2, PT_ADDLINES/*|PT_EARLYOUT*/) {
+    if (in->bIsALine) {
       sector_t *back;
       sector_t *front;
       opening_t *open;
       float diffheight;
 
-      ld = in->line;          // This linedef
-      hit_point = botmo.Origin + (bottracerange * in->frac) * bottracedir;
+      line_t *ld = in->line; // this linedef
+      TVec hit_point = botmo.Origin+(bottracerange*in->frac)*bottracedir;
 
-      // Line is impassible
-      if (!(ld->flags & ML_TWOSIDED) || (ld->flags & (ML_BLOCKING | ML_BLOCKPLAYERS | ML_BLOCKEVERYTHING)))
-        return false;
+      // line is impassible
+      if (!(ld->flags&ML_TWOSIDED) || (ld->flags&(ML_BLOCKING|ML_BLOCKPLAYERS|ML_BLOCKEVERYTHING))) return false;
 
-      // Line isn't two sided
-      if (!ld->backsector)
-        return false;
+      // line isn't two sided
+      if (!ld->backsector) return false;
 
-      if (!PointOnPlaneSide(botmo.Origin, *ld))
-      {
+      if (!PointOnPlaneSide(botmo.Origin, *ld)) {
         back = ld->backsector;
         front = ld->frontsector;
-      }
-      else
-      {
+      } else {
         back = ld->frontsector;
         front = ld->backsector;
       }
 
-      // Sector is dangerous
-      if (IsDangerous(back))
-        return false;
+      // sector is dangerous
+      if (IsDangerous(back)) return false;
 
       // crosses a two sided line
       open = LineOpenings(ld, hit_point);
-      open = FindOpening(open, hit_point.z, hit_point.z + botmo.Height);
-      // No valid openings
-      if (!open)
-      {
-        return false;
-      }
+      open = FindOpening(open, hit_point.z, hit_point.z+botmo.Height);
+      // no valid openings
+      if (!open) return false;
 
-      diffheight = GetPlanePointZ(ref back->floor, hit_point) -
-        GetPlanePointZ(ref front->floor, hit_point);
+      diffheight = GetPlanePointZ(ref back->floor, hit_point)-GetPlanePointZ(ref front->floor, hit_point);
 
-      // No cliff jumping unless we're going after something
-      if (-diffheight > 32.0 && !enemy)
-      {
-        return false;
-      }
+      // no cliff jumping unless we're going after something
+      if (-diffheight > 32.0 && !enemy) return false;
 
-      if (diffheight > 0.0)
-      {
-        if (diffheight > 48.0)
-        {
-/*          if (front->SSpecial == ThrustThingZ || front->springpadzone)
-          {
-            if (P_GetPlayerNum(bot->player) == displayplayer && netstate != NS_SERVER)
+      if (diffheight > 0.0) {
+        if (diffheight > 48.0) {
+          /*
+          if (front->SSpecial == ThrustThingZ || front->springpadzone) {
+            if (P_GetPlayerNum(bot->player) == displayplayer && netstate != NS_SERVER) {
               Printf (PRINT_HIGH, "B_CheckPath: Bouncy sector, should be okay\n");
+            }
             return true;
           }
-          else*/
-            return false;
-        }
-        else if (diffheight <= 48.0 && diffheight >= 24.0)
-        {
+          else
+          */
+          return false;
+        } else if (diffheight <= 48.0 && diffheight >= 24.0) {
           //botmo.Player.Buttons |= BT_JUMP;
           player.Buttons |= BT_JUMP;
         }
       }
-    }
-    else
-    {
-      th = Actor(in->Thing);
-
-      if (th == botmo)
-        continue;
-
-      if (th.bSolid)
-        return false;
-
-/*      fixed_t diffheight = (th->z + th->Height) - shootthing->z;
-
-      if (diffheight > 0)
-      {
-        if (diffheight <= 48*FRACUNIT && diffheight >= 24*FRACUNIT)
-        {
+    } else {
+      Actor th = Actor(in->Thing);
+      if (!th) continue;
+      if (th == botmo) continue;
+      if (th.bSolid) return false;
+      /*
+      fixed_t diffheight = (th->z + th->Height) - shootthing->z;
+      if (diffheight > 0) {
+        if (diffheight <= 48*FRACUNIT && diffheight >= 24*FRACUNIT) {
           bot->player->cmd.ucmd.buttons |= BT_JUMP;
           return true;
         }
@@ -702,13 +600,13 @@ bool CheckPath(float ang, float dist)
           return true;
         else
           return false;
-
       }
-*/
+      */
     }
   }
   return true;
 }
+
 
 //==========================================================================
 //
@@ -723,18 +621,11 @@ bool CheckPath(float ang, float dist)
 // doom is 90 degrees infront.
 //
 //==========================================================================
-
-bool Check_LOS(Actor to, float vangle)
-{
-  if (!botmo.CanSee(to))
-    return false; // out of sight
-  if (vangle == 360.0)
-    return true;
-  if (vangle == 0.0)
-    return false; //Looker seems to be blind.
-
-  return fabs(AngleMod180(AngleTo(to.Origin) - botmo.Angles.yaw)) <=
-    vangle / 2.0;
+bool Check_LOS (Actor to, float vangle) {
+  if (!botmo.CanSee(to)) return false; // out of sight
+  if (vangle == 360.0) return true;
+  if (vangle == 0.0) return false; // looker seems to be blind
+  return (fabs(AngleMod180(AngleTo(to.Origin)-botmo.Angles.yaw)) <= vangle/2.0);
 }
 
 
@@ -744,31 +635,29 @@ bool Check_LOS(Actor to, float vangle)
 //
 //==========================================================================
 void BotAimProjectile (float dist, bool right, float an) {
-  // Splash weapons
+  // splash weapons
   //bot->SetAngle(R_PointToAngle2(MO->x, MO->y, enemy->x, enemy->y));
 
-  // Projectile weapons
-  switch (info.intelect)
-  {
-  case bsk_verypoor:
-  case bsk_poor:
-  case bsk_low:
-    // Aim right at the enemy
-    SetAngle(an);
-    break;
-  case bsk_medium:
-  case bsk_high:
-  case bsk_excellent:
-  case bsk_supreme:
-    if (right)
-      SetAngle(an + Random() * 20.0);
-    else
-      SetAngle(an - Random() * 20.0);
-    break;
-
-  default:
-    Error("Unknown bot skill level: %d", info.accuracy);
-    return;
+  // projectile weapons
+  switch (info.intelect) {
+    case bsk_verypoor:
+    case bsk_poor:
+    case bsk_low:
+      // aim right at the enemy
+      SetAngle(an);
+      break;
+    case bsk_medium:
+    case bsk_high:
+    case bsk_excellent:
+    case bsk_supreme:
+      if (right)
+        SetAngle(an+Random()*20.0);
+      else
+        SetAngle(an-Random()*20.0);
+      break;
+    default:
+      Error("Unknown bot skill level: %d", info.accuracy);
+      return;
   }
 }
 
@@ -779,45 +668,44 @@ void BotAimProjectile (float dist, bool right, float an) {
 //
 //==========================================================================
 void BotAimInstant (float dist, bool right, float an) {
-  // Instant weapons
-  switch (info.accuracy)
-  {
-  case bsk_verypoor:
-    if (right)
-      SetAngle(an + Random() * 60.0);
-    else
-      SetAngle(an - Random() * 60.0);
-    break;
-  case bsk_poor:
-    if (right)
-      SetAngle(an + Random() * 45.0);
-    else
-      SetAngle(an - Random() * 45.0);
-    break;
-  case bsk_low:
-    if (right)
-      SetAngle(an + Random() * 30.0);
-    else
-      SetAngle(an - Random() * 30.0);
-    break;
-  case bsk_medium:
-    if (right)
-      SetAngle(an + Random() * 15.0);
-    else
-      SetAngle(an - Random() * 15.0);
-    break;
-  case bsk_high:
-    SetAngle(an);
-    break;
-  case bsk_excellent:
-    SetAngle(AngleTo(enemy.Origin + enemy.Velocity * 0.1));
-    break;
-  case bsk_supreme://FIXME
-    SetAngle(AngleTo(enemy.Origin + enemy.Velocity * 0.1));
-    break;
-  default:
-    Error("Unknown bot skill level: %d", info.accuracy);
-    return;
+  // instant weapons
+  switch (info.accuracy) {
+    case bsk_verypoor:
+      if (right)
+        SetAngle(an+Random()*60.0);
+      else
+        SetAngle(an-Random()*60.0);
+      break;
+    case bsk_poor:
+      if (right)
+        SetAngle(an+Random()*45.0);
+      else
+        SetAngle(an-Random()*45.0);
+      break;
+    case bsk_low:
+      if (right)
+        SetAngle(an+Random()*30.0);
+      else
+        SetAngle(an-Random()*30.0);
+      break;
+    case bsk_medium:
+      if (right)
+        SetAngle(an+Random()*15.0);
+      else
+        SetAngle(an-Random()*15.0);
+      break;
+    case bsk_high:
+      SetAngle(an);
+      break;
+    case bsk_excellent:
+      SetAngle(AngleTo(enemy.Origin+enemy.Velocity*0.1));
+      break;
+    case bsk_supreme://FIXME
+      SetAngle(AngleTo(enemy.Origin+enemy.Velocity*0.1));
+      break;
+    default:
+      Error("Unknown bot skill level: %d", info.accuracy);
+      return;
   }
 }
 
@@ -844,22 +732,19 @@ bool BotAimSpecial (float dist, bool right, float an) {
 //  BotAim
 //
 //==========================================================================
-void BotAim()
-{
+void BotAim () {
   float dist;
   bool right;
   float an;
 
-  if (!enemy)
-    return;
+  if (!enemy) return;
 
-  if (t_react)
-    return;
+  if (t_react) return;
 
-  // Distance to enemy.
+  // distance to enemy
   dist = botmo.DistTo2(enemy);
 
-  right = !!(P_Random() & 1);
+  right = !!(P_Random()&1);
   an = AngleTo(enemy.Origin);
 
   // [BC] Cajun prediction... maybe use this somewhere
@@ -875,52 +760,44 @@ void BotAim()
       }
   */
 
-  // Fix me: Implement botskill, accuracy, and intelligence
+  //FIXME: implement botskill, accuracy, and intelligence
   if (BotAimSpecial(dist, right, an)) return;
 
   if (player.ReadyWeapon.bBotProjectile) { BotAimProjectile(dist, right, an); return; }
   BotAimInstant(dist, right, an);
 }
 
+
 //==========================================================================
 //
 //  FindEnemy
 //
 //==========================================================================
-
-Actor FindEnemy()
-{
-  float closest_dist, temp;
-  Actor target;
-  float vangle;
-  int i;
-
-  //Note: It's hard to ambush a bot who is not alone
-  if (bAllRound || ally)
-    vangle = 360.0;
-  else
-    vangle = ENEMY_SCAN_FOV;
+Actor FindEnemy () {
+  // note: it's hard to ambush a bot who is not alone
+  float vangle = (bAllRound || ally ? 360.0 : ENEMY_SCAN_FOV);
   bAllRound = false;
 
-  target = none;
-  closest_dist = 99999.0;
+  Actor target = none;
+  float closest_dist = 99999.0;
 
-  // Search for player enemies
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (player.Level.Game.Players[i] && player.Level.Game.Players[i].bSpawned &&
-      player.Level.Game.Players[i].MO.Health > 0 && botmo != player.Level.Game.Players[i].MO)
-    {
-       //Here's a strange one, when bot is standing still, the CanSee within Check_LOS almost always returns false. tought it should be the same checksight as below but.. (below works) something must be fuckin wierd screded up.
-      if (Check_LOS(Actor(player.Level.Game.Players[i].MO), vangle))
-      {
-        if (botmo.CanSee(player.Level.Game.Players[i].MO))
-        {
-          temp = player.Level.Game.Players[i].MO.DistTo(botmo);
-          if (temp < closest_dist)
-          {
+  //if (!player.Level.Game.deathmatch) return none;
+
+  // search for player enemies
+  foreach (auto i; 0..MAXPLAYERS) {
+    auto plr = player.Level.Game.Players[i];
+    if (!plr) continue;
+    if (plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
+      // here's a strange one, when bot is standing still,
+      // the CanSee within Check_LOS almost always returns false.
+      // tought it should be the same checksight as below but..
+      // (below works) something must be fuckin wierd screded up.
+      if (Check_LOS(Actor(player.Level.Game.Players[i].MO), vangle)) {
+        if (botmo.CanSee(player.Level.Game.Players[i].MO)) {
+          float temp = plr.MO.DistTo(botmo);
+          if (temp < closest_dist) {
             closest_dist = temp;
-            target = Actor(player.Level.Game.Players[i].MO);
+            target = Actor(plr.MO);
           }
         }
       }
@@ -930,6 +807,7 @@ Actor FindEnemy()
   return target;
 }
 
+
 //==========================================================================
 //
 //  Roam
@@ -937,91 +815,60 @@ Actor FindEnemy()
 //  Handle non-attack/dodging movement
 //
 //==========================================================================
-
-void Roam()
-{
+void Roam () {
   TVec dest;
 
-  if (lastpos_valid)
-  {
-    TVec dir;
-
-    dir = lastpos - botmo.Origin;
+  if (lastpos_valid) {
+    TVec dir = lastpos-botmo.Origin;
     dir.z = 0.0;
-    if (Length(dir) <= 32.0)
-    {
-      lastpos_valid = false;
-    }
+    if (Length(dir) <= 32.0) lastpos_valid = false;
   }
 
-  // Order of item response precedence:
-  if (goal)
-  {
-    dest = goal.Origin;
-  }
-  else if (lastpos_valid)
-  {
-    dest = lastpos;
-  }
-  else if (item)
-  {
-    dest = item.Origin;
-  }
-  else if (node)
-  {
-    dest = node.Origin;
-  }
-  else if (posdest_valid)
-  {
-    dest = posdest;
-  }
-  else
-  {
-    // No target, so just run around until we find something
+  // order of item response precedence
+       if (goal) dest = goal.Origin;
+  else if (lastpos_valid) dest = lastpos;
+  else if (item) dest = item.Origin;
+  else if (node) dest = node.Origin;
+  else if (posdest_valid) dest = posdest;
+  else {
+    // no target, so just run around until we find something
     int r = P_Random();
     float an = GetAngle();
-    float dist;
 
-    for (dist = 256.0; dist >= 64.0; dist -= 64.0)
-    {
-      if (CheckPath(an, dist))
-      {
+    for (float dist = 256.0; dist >= 64.0; dist -= 64.0) {
+      if (CheckPath(an, dist)) {
         posdest_valid = true;
-        posdest.x = botmo.Origin.x + dist * cos(an);
-        posdest.y = botmo.Origin.y + dist * sin(an);
+        posdest.x = botmo.Origin.x+dist*cos(an);
+        posdest.y = botmo.Origin.y+dist*sin(an);
         posdest.z = botmo.Origin.z;
         SetAngle(an);
         break;
       }
 
-      if (CheckPath(an + 45.0, dist))
-      {
+      if (CheckPath(an+45.0, dist)) {
         posdest_valid = true;
-        posdest.x = botmo.Origin.x + dist * cos(an + 45.0);
-        posdest.y = botmo.Origin.y + dist * sin(an + 45.0);
+        posdest.x = botmo.Origin.x+dist*cos(an+45.0);
+        posdest.y = botmo.Origin.y+dist*sin(an+45.0);
         posdest.z = botmo.Origin.z;
-        SetAngle(an + 45.0);
+        SetAngle(an+45.0);
         break;
       }
 
-      // Left is no good, try right
-      if (CheckPath(an - 45.0, dist))
-      {
+      // left is no good, try right
+      if (CheckPath(an-45.0, dist)) {
         posdest_valid = true;
-        posdest.x = botmo.Origin.x + dist * cos(an - 45.0);
-        posdest.y = botmo.Origin.y + dist * sin(an - 45.0);
+        posdest.x = botmo.Origin.x+dist*cos(an-45.0);
+        posdest.y = botmo.Origin.y+dist*sin(an-45.0);
         posdest.z = botmo.Origin.z;
-        SetAngle(an - 45.0);
+        SetAngle(an-45.0);
         break;
       }
     }
-    if (posdest_valid)
-    {
+
+    if (posdest_valid) {
       dest = posdest;
-    }
-    else
-    {
-      SetAngle(GetAngle() + 45.0 / 3.0);
+    } else {
+      SetAngle(GetAngle()+45.0/3.0);
       forwardmove = -FORWARDWALK;
       return;
     }
@@ -1031,169 +878,125 @@ void Roam()
   SetAngle(AngleTo(dest));
 }
 
+
 //==========================================================================
 //
 //  Move
 //
-//  Main bot movement function. Dodging/attacking movement is also handled
-// here
+//  main bot movement function.
+//  dodging/attacking movement is also handled here
 //
 //==========================================================================
-
-void Move(float deltaTime)
-{
-  float dist;
-
-  // Worry about missiles above all else
-  if (missile)
-  {
-    if (t_strafe)
-    {
-      t_strafe -= deltaTime;
-      if (!t_strafe)
-      {
-        // Don't change direction while dodging missiles (that could be bad)
+void Move (float deltaTime) {
+  // worry about missiles above all else
+  if (missile) {
+    if (t_strafe) {
+      t_strafe = fmax(0, t_strafe-deltaTime);
+      if (!t_strafe) {
+        // don't change direction while dodging missiles (that could be bad)
         //bot->sidemove = -bot->sidemove;
         t_strafe = 2.0;
       }
     }
 
-    // Look at the missle and sidestep it
+    // look at the missle and sidestep it
     SetAngle(AngleTo(missile.Origin));
     forwardmove = -FORWARDRUN;
     return;
   }
 
-  // Anticipate a shot: time to dodge!
-  if (enemy && t_anticip <= 0.25)
-  {
-    if (!sidemove)
-      sidemove = SIDERUN;
+  // anticipate a shot: time to dodge!
+  if (enemy && t_anticip <= 0.25) {
+    if (!sidemove) sidemove = SIDERUN;
 
-    switch (info.anticip)
-    {
-    case bsk_verypoor:
-      // Deer caught in the headlights
-      sidemove = 0.0;
-      return;
+    switch (info.anticip) {
+      case bsk_verypoor:
+        // deer caught in the headlights
+        sidemove = 0.0;
+        return;
 
-    case bsk_poor:
-      // Always walk right
-      sidemove = SIDEWALK;
-      break;
+      case bsk_poor:
+        // always walk right
+        sidemove = SIDEWALK;
+        break;
 
-    case bsk_low:
-      // Always run right
-      sidemove = SIDERUN;
-      break;
+      case bsk_low:
+        // always run right
+        sidemove = SIDERUN;
+        break;
 
-    case bsk_medium:
-      // Just switch directions every couple seconds
-      if (t_strafe)
-      {
-        t_strafe -= deltaTime;
-        if (t_strafe <= 0.0)
-        {
-          sidemove = -sidemove;
-          t_strafe = 2.0;
+      case bsk_medium:
+        // just switch directions every couple seconds
+        if (t_strafe) {
+          t_strafe = fmax(0, t_strafe-deltaTime);
+          if (!t_strafe) {
+            sidemove = -sidemove;
+            t_strafe = 2.0;
+          }
         }
-      }
-      break;
+        break;
 
-    case bsk_high:
-      // Switch directions when we think our opponent will fire
-      if (!t_anticip)
-        sidemove = -sidemove;
-      break;
+      case bsk_high:
+        // switch directions when we think our opponent will fire
+        if (!t_anticip) sidemove = -sidemove;
+        break;
 
-    case bsk_excellent:
-      // Move in a somewhat random direction when we think our opponent will fire
-      if (!t_anticip)
-      {
-        sidemove = Random() < 0.5 ? SIDERUN : -SIDERUN;
-
-        if (Random() < 0.5)
-        {
-          forwardmove = -FORWARDWALK;
+      case bsk_excellent:
+        // move in a somewhat random direction when we think our opponent will fire
+        if (!t_anticip) {
+          sidemove = (Random() < 0.5 ? SIDERUN : -SIDERUN);
+          if (Random() < 0.5) forwardmove = -FORWARDWALK;
         }
-      }
-      break;
+        break;
 
-    case bsk_supreme:
-      // What a squirmy little fucker!
-      if (!t_anticip)
-      {
-        switch (P_Random() & 3)
-        {
-        case 0:
-          sidemove = SIDERUN;
-          break;
-        case 1:
-          sidemove = SIDEWALK;
-          break;
-        case 2:
-          sidemove = -SIDERUN;
-          break;
-        case 3:
-          sidemove = -SIDEWALK;
-          break;
+      case bsk_supreme:
+        // what a squirmy little fucker!
+        if (!t_anticip) {
+          switch (P_Random()&3) {
+            case 0: sidemove = SIDERUN; break;
+            case 1: sidemove = SIDEWALK; break;
+            case 2: sidemove = -SIDERUN; break;
+            case 3: sidemove = -SIDEWALK; break;
+          }
+          switch (P_Random()&3) {
+            case 0: forwardmove = FORWARDRUN; break;
+            case 1: forwardmove = FORWARDWALK; break;
+            case 2: forwardmove = -FORWARDRUN; break;
+            case 3: forwardmove = -FORWARDWALK; break;
+          }
         }
+        break;
 
-        switch (P_Random() & 3)
-        {
-        case 0:
-          forwardmove = FORWARDRUN;
-          break;
-        case 1:
-          forwardmove = FORWARDWALK;
-          break;
-        case 2:
-          forwardmove = -FORWARDRUN;
-          break;
-        case 3:
-          forwardmove = -FORWARDWALK;
-          break;
-        }
-      }
-      break;
-
-    default:
-      Error("Unknown bot skill level: %d", info.anticip);
-      return;
+      default:
+        Error("Unknown bot skill level: %d", info.anticip);
+        return;
     }
   }
 
-  // Now handle attack movement
-  if (enemy)
-  {
-    bool noforward;
-    bool noside;
+  // now handle attack movement
+  if (enemy) {
     float an;
 
-    noforward = false;
-    noside = false;
-    if (!sidemove )
-      sidemove = SIDERUN;
+    bool noforward = false;
+    bool noside = false;
+    if (!sidemove) sidemove = SIDERUN;
 
-    if (t_strafe)
-    {
-      t_strafe -= deltaTime;
-      if (t_strafe <= 0.0)
-      {
+    if (t_strafe) {
+      t_strafe = fmax(0, t_strafe-deltaTime);
+      if (!t_strafe) {
         sidemove = -sidemove;
         t_strafe = 2.0;
       }
     }
 
-    dist = botmo.DistTo(enemy);
+    float dist = botmo.DistTo(enemy);
 
-    // Remember where we saw him last in case he gets away
+    // remember where we saw him last in case he gets away
     lastpos = enemy.Origin;
     lastpos_valid = true;
 
-    // Check if we'd rather pick up something than fight
-    if (item)
-    {
+    // check if we'd rather pick up something than fight
+    if (item) {
       if (bItemIsPowerup ||
           (bItemIsWeapon && (boptCheckWimpyWeapon && player.ReadyWeapon.bWimpyWeapon)))
       {
@@ -1203,33 +1006,31 @@ void Move(float deltaTime)
     }
 
     an = botmo.Angles.yaw;
-    if (sidemove < 0.0)
-      an -= 90.0;
-    else
-      an += 90.0;
+    if (sidemove < 0.0) an -= 90.0; else an += 90.0;
 
-    if (!CheckPath(an, 48.0)) // We're blocked, so go the other way!
+    if (!CheckPath(an, 48.0)) {
+      // we're blocked, so go the other way!
       sidemove = -sidemove;
+    }
 
-    if (CheckTo(enemy.Origin) && dist > player.ReadyWeapon.BotCombatDist)
+    if (CheckTo(enemy.Origin) && dist > player.ReadyWeapon.BotCombatDist) {
       forwardmove = FORWARDRUN;
-    else
+    } else {
       forwardmove = -FORWARDRUN;
+    }
 
     return;
   }
 
-  if (t_strafe)
-  {
-    t_strafe -= deltaTime;
-    if (t_strafe <= 0.0)
-    {
+  if (t_strafe) {
+    t_strafe = fmax(0, t_strafe-deltaTime);
+    if (!t_strafe) {
       sidemove = -sidemove;
       t_strafe = 2.0;
     }
   }
 
-  // Roam after an item
+  // roam after an item
   Roam();
 }
 
@@ -1258,20 +1059,18 @@ bool AttackSpecial () {
 //  Attack
 //
 //==========================================================================
-void Attack()
-{
-  // Still reacting to something or we don't have an enemy to fight
-  if (t_react || !enemy)
-    return;
+void Attack () {
+  // still reacting to something or we don't have an enemy to fight
+  if (t_react || !enemy) return;
 
-  // No point in firing if we won't hit them
-  if (!Check_LOS(enemy, SHOOTFOV))
-    return;
+  // no point in firing if we won't hit them
+  if (!Check_LOS(enemy, SHOOTFOV)) return;
 
   if (AttackSpecial()) return;
 
   player.Buttons |= BT_ATTACK;
 }
+
 
 //==========================================================================
 //
@@ -1280,89 +1079,61 @@ void Attack()
 //  [BC] Ahh, the new and improved turning...
 //
 //==========================================================================
+void Turn () {
+  float distance = GetAngle()-botmo.Angles.yaw;
 
-void Turn()
-{
-  float distance;
-
-  distance = GetAngle() - botmo.Angles.yaw;
-
-  if (!enemy)
-  {
+  if (!enemy) {
     player.ViewAngles.yaw = GetAngle();
     return;
   }
 
   // [BC] Don't act crazy while trying to aim
-  switch (info.accuracy)
-  {
-  case bsk_verypoor:
-  case bsk_poor:
-  case bsk_low:
-    if (distance > 7.5)
-      distance = 7.5;
-    if (distance < -7.5)
-      distance = -7.5;
-    break;
-  case bsk_medium:
-    if (distance > 15.0)
-      distance = 15.0;
-    if (distance < -15.0)
-      distance = -15.0;
-    break;
-  case bsk_high:
-    if (distance > 22.5)
-      distance = 22.5;
-    if (distance < -22.5)
-      distance = -22.5;
-    break;
-  case bsk_excellent:
-    if (distance > 30.0)
-      distance = 30.0;
-    if (distance < -30.0)
-      distance = -30.0;
-    break;
-  case bsk_supreme:
-    if (distance > 37.5)
-      distance = 37.5;
-    if (distance < -37.5)
-      distance = -37.5;
-    break;
+  switch (info.accuracy) {
+    case bsk_verypoor:
+    case bsk_poor:
+    case bsk_low:
+      distance = fclamp(distance, -7.5, 7.5);
+      break;
+    case bsk_medium:
+      distance = fclamp(distance, -15, 15);
+      break;
+    case bsk_high:
+      distance = fclamp(distance, -22.5, 22.5);
+      break;
+    case bsk_excellent:
+      distance = fclamp(distance, -30, 30);
+      break;
+    case bsk_supreme:
+      distance = fclamp(distance, -37.5, 37.5);
+      break;
   }
-  player.ViewAngles.yaw = AngleMod360(botmo.Angles.yaw + distance);
+  player.ViewAngles.yaw = AngleMod360(botmo.Angles.yaw+distance);
 }
+
 
 //==========================================================================
 //
 //  Pitch
 //
 //==========================================================================
-
-void Pitch()
-{
-  if (enemy)
-  {
-    TVec dir;
+void Pitch () {
+  if (enemy) {
     TAVec ang;
-
-    dir = enemy.Origin - botmo.Origin;
+    TVec dir = enemy.Origin-botmo.Origin;
     VectorAngles(dir, out ang);
     botmo.Angles.pitch = ang.pitch;
-  }
-  else
-  {
+  } else {
     botmo.Angles.pitch = 0.0;
   }
 }
+
 
 //==========================================================================
 //
 //  Killed
 //
 //==========================================================================
-
-void Killed(EntityEx victim)
-{
+void Killed (EntityEx victim) {
   // [BC] Let some anger out
   angerlevel -= 5;
   enemy = none;
@@ -1371,77 +1142,66 @@ void Killed(EntityEx victim)
   lastpos_valid = false;
 }
 
+
 //==========================================================================
 //
 //  Died
 //
 //==========================================================================
-
-void Died(EntityEx killer)
-{
+void Died (EntityEx killer) {
 }
+
 
 //==========================================================================
 //
 //  OnBeginPlay
 //
 //==========================================================================
-
-void OnBeginPlay()
-{
+void OnBeginPlay () {
   int botskill = 2;
   int bottype = 0;
   botinfo_t *binfo;
-  int i;
 
-  if (strcmp(player.PlayerName, ""))
-  {
-    for (i = 0; i < MainGameInfo::NUMTOTALBOTS; i++)
-    {
-      if (!stricmp(MainGameInfo(player.Level.Game).botinfo[i].Name, player.PlayerName))
-      {
+  if (strcmp(player.PlayerName, "")) {
+    foreach (auto i; 0..MainGameInfo::NUMTOTALBOTS) {
+      if (stricmp(MainGameInfo(player.Level.Game).botinfo[i].Name, player.PlayerName) == 0) {
         bottype = i;
         break;
       }
     }
-    // We've already handled the "what if there's no match" exception
-  }
-  else
-  {
-    // If the user doesn't input a name, don't
+    // we've already handled the "what if there's no match" exception
+  } else {
+    // if the user doesn't input a name, don't
     // spawn one of the "special" bots, only one of the
     // normal ones.
-    bottype = P_Random() % MainGameInfo::NUMBOTTYPES;
+    bottype = P_Random()%MainGameInfo::NUMBOTTYPES;
   }
 
   binfo = &MainGameInfo(player.Level.Game).botinfo[bottype];
 
   t_strafe = 1.0;
 
-  if (botskill > 4)
-    botskill = 4;
-  if (botskill < 0)
-    botskill = 0;
+  if (botskill > 4) botskill = 4;
+  if (botskill < 0) botskill = 0;
 
-  // Implement skill settings
-  info.accuracy = SkillLower(binfo->accuracy, 4 - botskill);
-  info.intelect = SkillLower(binfo->intelect, 4 - botskill);
-  info.evade = SkillLower(binfo->evade, 4 - botskill);
-  info.anticip = SkillLower(binfo->anticip, 4 - botskill);
-  info.reaction = SkillLower(binfo->reaction, 4 - botskill);
+  // implement skill settings
+  info.accuracy = SkillLower(binfo->accuracy, 4-botskill);
+  info.intelect = SkillLower(binfo->intelect, 4-botskill);
+  info.evade = SkillLower(binfo->evade, 4-botskill);
+  info.anticip = SkillLower(binfo->anticip, 4-botskill);
+  info.reaction = SkillLower(binfo->reaction, 4-botskill);
   player.UserInfo = binfo->userinfo;
 }
+
 
 //==========================================================================
 //
 //  OnSpawn
 //
 //==========================================================================
-
-void OnSpawn()
-{
+void OnSpawn () {
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
