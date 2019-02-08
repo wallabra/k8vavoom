@@ -52,6 +52,7 @@ const float ENEMY_SCAN_FOV = 120.0;
 const float GETINCOMBAT         (512*FRACUNIT)  //Max distance to item. if it's due to be icked up in a combat situation.*/
 const float SHOOTFOV = 60.0;
 /*const float MAXROAM           (5*TICRATE)   //When this time is elapsed the bot will roam after something else.*/
+const float MONSTER_SCAN_RADIUS = 2048.0;
 
 /*
   Class definitions for botinfo, chatinfo, and
@@ -621,11 +622,15 @@ bool CheckPath (float ang, float dist) {
 // doom is 90 degrees infront.
 //
 //==========================================================================
-bool Check_LOS (Actor to, float vangle) {
-  if (!botmo.CanSee(to)) return false; // out of sight
-  if (vangle == 360.0) return true;
-  if (vangle == 0.0) return false; // looker seems to be blind
-  return (fabs(AngleMod180(AngleTo(to.Origin)-botmo.Angles.yaw)) <= vangle/2.0);
+final bool Check_LOS (Actor to, float vangle, optional bool skipCanSee) {
+  if (!to) return false;
+  if (vangle <= 0) return false; // looker seems to be blind
+  if (vangle < 360.0) {
+    // check FOV
+    if (fabs(AngleMod180(AngleTo(to.Origin)-botmo.Angles.yaw)) > vangle/2.0) return false;
+  }
+  if (!skipCanSee && !botmo.CanSee(to)) return false; // out of sight
+  return true;
 }
 
 
@@ -781,21 +786,15 @@ Actor FindEnemy () {
   Actor target = none;
   float closest_dist = 99999.0;
 
-  //if (!player.Level.Game.deathmatch) return none;
-
-  // search for player enemies
-  foreach (auto i; 0..MAXPLAYERS) {
-    auto plr = player.Level.Game.Players[i];
-    if (!plr) continue;
-    if (plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
-      // here's a strange one, when bot is standing still,
-      // the CanSee within Check_LOS almost always returns false.
-      // tought it should be the same checksight as below but..
-      // (below works) something must be fuckin wierd screded up.
-      if (Check_LOS(Actor(player.Level.Game.Players[i].MO), vangle)) {
-        if (botmo.CanSee(player.Level.Game.Players[i].MO)) {
-          float temp = plr.MO.DistTo(botmo);
-          if (temp < closest_dist) {
+  if (player.Level.Game.deathmatch) {
+    // search for player enemies in deathmatch
+    foreach (auto i; 0..MAXPLAYERS) {
+      auto plr = player.Level.Game.Players[i];
+      if (!plr) continue;
+      if (plr.bSpawned && plr.MO.Health > 0 && botmo != plr.MO) {
+        float temp = plr.MO.DistTo(botmo);
+        if (temp < closest_dist) {
+          if (Check_LOS(Actor(plr.MO), vangle)) {
             closest_dist = temp;
             target = Actor(plr.MO);
           }
@@ -804,6 +803,25 @@ Actor FindEnemy () {
     }
   }
 
+  // if no target, try to find some monster
+  if (!target) {
+    Entity ee;
+    closest_dist = 99999.0;
+    foreach botmo.RadiusThings(ee, botmo.Origin, MONSTER_SCAN_RADIUS) {
+      if (ee == botmo) continue; // don't target self
+      Actor act = Actor(ee);
+      if (!act) continue;
+      if (!act.bShootable || !act.bMonster || act.bMissile) continue; // not interesting
+      if (act.Health <= 0) continue; // it is dead
+      float temp = act.DistTo(botmo);
+      if (temp < closest_dist) {
+        if (Check_LOS(act, vangle)) {
+          closest_dist = temp;
+          target = act;
+        }
+      }
+    }
+  }
   return target;
 }
 
