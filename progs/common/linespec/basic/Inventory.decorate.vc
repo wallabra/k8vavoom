@@ -1,0 +1,1121 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+//**
+//**  Base class for all items that a player can carry.
+//**
+//**************************************************************************
+
+//**************************************************************************
+//  State jumps
+//**************************************************************************
+
+//==========================================================================
+//
+//  A_JumpIfNoAmmo
+//
+//==========================================================================
+final void A_JumpIfNoAmmo (state Label) {
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+
+  // only for weapons
+  if (!bIsPlayer || XLevel.StateCall) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
+
+  if (!Wpn.CheckAmmo(Wpn.FireMode, false, true)) {
+    PlayerEx(Player).SetViewObject(Wpn);
+    DoJump(Label);
+  }
+}
+
+//**************************************************************************
+//  Weapon functions
+//**************************************************************************
+
+//==========================================================================
+//
+//  A_Lower
+//
+//  Lowers current weapon, and changes weapon at bottom.
+//
+//==========================================================================
+final void A_Lower () {
+  decorate_A_Lower();
+}
+
+
+//==========================================================================
+//
+//  A_Lower
+//
+//  Lowers current weapon, and changes weapon at bottom.
+//
+//==========================================================================
+final void decorate_A_Lower (optional float lowerspeed) {
+  if (!bIsPlayer) return;
+
+  Weapon ready = PlayerEx(Player).ReadyWeapon;
+  Weapon pending = PlayerEx(Player).PendingWeapon;
+
+  if (ready && ready == pending) {
+    if (Player.PlayerState != PST_DEAD &&
+        Player.MO == self && // voodoo doll
+        !Player.bIsBot)
+    {
+      print("%C: LOWERING UNRAISED WEAPON! (3)", self);
+    }
+  }
+
+  if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
+  if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
+
+  if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
+    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+  } else {
+    // FIXME!!
+    if (Level.Game.frametime < 1.0/35.0) {
+      Player.ViewStates[ps_weapon].SY += lowerspeed;
+    } else {
+      Player.ViewStates[ps_weapon].SY += lowerspeed*35.0*Level.Game.frametime;
+    }
+  }
+
+  if (Player.ViewStates[ps_weapon].SY < Weapon::WEAPONBOTTOM) return; // not lowered all the way yet
+
+  if (Player.PlayerState == PST_DEAD) {
+    // player is dead, so don't bring up a pending weapon
+    Player.ViewStates[ps_weapon].SY = Weapon::WEAPONBOTTOM;
+    return;
+  }
+
+  if (Player.MO.Health <= 0) {
+    // player is dead, so keep the weapon off screen
+    Player.SetViewObject(none);
+    Player.SetViewState(ps_weapon, none);
+    return;
+  }
+
+  // clear flash state, needed for Strife
+  Player.SetViewState(ps_flash, none);
+
+  if (!pending) {
+    PlayerEx(Player).SetWeapon(none);
+    if (Player.PlayerState == PST_DEAD) return;
+    if (Player.MO != self) return; // voodoo doll
+    if (Player.bIsBot) return;
+    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
+    return;
+  }
+
+  PlayerEx(Player).SetWeapon(pending/*PlayerEx(Player).PendingWeapon*/);
+  PlayerEx(Player).BringUpWeapon();
+}
+
+
+//==========================================================================
+//
+//  A_Raise
+//
+//==========================================================================
+final void A_Raise () {
+  decorate_A_Raise();
+}
+
+
+//==========================================================================
+//
+//  A_Raise
+//
+//==========================================================================
+final void decorate_A_Raise (optional float raisespeed) {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
+  if (raisespeed <= 0) raisespeed = Weapon::RAISESPEED; //k8: sanity guard
+
+  // FIXME!!
+  if (Level.Game.frametime < 1.0/35.0) {
+    Player.ViewStates[ps_weapon].SY -= raisespeed;
+  } else {
+    Player.ViewStates[ps_weapon].SY -= raisespeed*35.0*Level.Game.frametime;
+  }
+
+  if (Player.ViewStates[ps_weapon].SY > Weapon::WEAPONTOP) return; // not raised all the way yet
+  Player.ViewStates[ps_weapon].SY = Weapon::WEAPONTOP;
+  Player.SetViewObject(Wpn);
+  if (Wpn) {
+    Player.SetViewState(ps_weapon, Wpn.GetReadyState());
+  } else {
+    Player.SetViewState(ps_weapon, none);
+  }
+}
+
+
+//===========================================================================
+//
+//  A_ReFire
+//
+//  The player can re-fire the weapon without lowering it entirely.
+//
+//===========================================================================
+private final void do_A_ReFire (optional state refirestate) {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  if (!Wpn) {
+    PlayerEx(Player).Refire = 0;
+    return;
+  }
+
+  if (Wpn.FireMode == Weapon::FIRE_Primary &&
+      (Player.Buttons&BT_ATTACK) &&
+      !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+  {
+    //writeln("A_ReFire: primary");
+    ++PlayerEx(Player).Refire;
+    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon(refirestate!optional);
+  }
+  else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
+           (Player.Buttons&BT_ALT_ATTACK) &&
+           !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+  {
+    //writeln("A_ReFire: secondary");
+    ++PlayerEx(Player).Refire;
+    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon(refirestate!optional);
+  } else {
+    //writeln("A_ReFire: nothing");
+    PlayerEx(Player).Refire = 0;
+    Wpn.CheckAmmo(Wpn.FireMode, true);
+  }
+}
+
+
+//===========================================================================
+//
+//  A_ReFire
+//
+//  VC state function cannot have arguments yet
+//
+//===========================================================================
+final void A_ReFire () {
+  do_A_ReFire();
+}
+
+
+//===========================================================================
+//
+//  A_ReFire
+//
+//===========================================================================
+final void decorate_A_ReFire (optional state refirestate) {
+  do_A_ReFire(refirestate!optional);
+}
+
+
+//===========================================================================
+//
+//  A_ClearReFire
+//
+//===========================================================================
+final void A_ClearReFire () {
+  if (bIsPlayer) PlayerEx(Player).Refire = 0;
+}
+
+
+//===========================================================================
+//
+//  A_GunFlash
+//
+//===========================================================================
+final void A_GunFlash () {
+  decorate_A_GunFlash();
+}
+
+
+//===========================================================================
+//
+//  A_GunFlash
+//
+//  GFF_NOEXTCHANGE is 1
+//
+//===========================================================================
+final void decorate_A_GunFlash (optional name newstate, optional int flags) {
+  if (!bIsPlayer) return;
+
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return; // just in case
+  Player.SetViewObject(Wpn);
+
+  if (!specified_newstate) newstate = 'Flash';
+
+  if (MeleeState) SetState(MeleeState);
+  if (newstate && !(flags&1)) Player.SetViewState(ps_flash, Wpn.FindState(newstate));
+}
+
+
+//===========================================================================
+//
+//  A_CheckReload
+//
+//===========================================================================
+final void A_CheckReload () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn) Wpn.CheckAmmo(Wpn.FireMode, true);
+}
+
+
+//===========================================================================
+//
+//  A_Light
+//
+//===========================================================================
+final void A_Light (int LightValue) {
+  if (bIsPlayer) Player.ExtraLight = clamp(LightValue, 0, 20);
+}
+
+
+//===========================================================================
+//
+//  A_Light0
+//
+//===========================================================================
+final void A_Light0 () {
+  if (bIsPlayer) Player.ExtraLight = 0;
+}
+
+
+//===========================================================================
+//
+//  A_Light1
+//
+//===========================================================================
+final void A_Light1 () {
+  if (bIsPlayer) Player.ExtraLight = 1;
+}
+
+
+//===========================================================================
+//
+//  A_Light2
+//
+//===========================================================================
+final void A_Light2 () {
+  if (bIsPlayer) Player.ExtraLight = 2;
+}
+
+
+//==========================================================================
+//
+//  A_LightInverse
+//
+//==========================================================================
+final void A_LightInverse () {
+  if (bIsPlayer) Player.ExtraLight = 255;
+}
+
+
+//**************************************************************************
+//  Weapon attack functions
+//**************************************************************************
+
+//===========================================================================
+//
+//  A_Saw
+//
+//===========================================================================
+final void A_Saw () {
+  decorate_A_Saw();
+}
+
+
+//===========================================================================
+//
+//  decorate_A_Saw
+//
+//===========================================================================
+final void decorate_A_Saw (optional name FullSound, optional name HitSound,
+  optional int SawDamage, optional class!Actor PuffType,
+  optional int flags, optional float range, optional float spread_xy, optional float spread_z
+  /*, optional float lifesteal, optional float lifestealmax, string armorbonustype*/)
+{
+  //float angle;
+  //int damage;
+  //TAVec aimAng;
+  //EntityEx AimTarget;
+  TVec dir;
+
+  if (!bIsPlayer) return;
+
+  if (!specified_FullSound) {
+    FullSound = 'weapons/sawfull';
+    HitSound = 'weapons/sawhit';
+  }
+
+  if (!SawDamage) SawDamage = 2;
+  if (!PuffType) PuffType = BulletPuff;
+  if (!specified_range || !range) range = SAWRANGE;
+  range = fmax(1.0, range); // just in case
+
+  int oldAmmo1, oldAmmo2;
+
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn) {
+    oldAmmo1 = (Wpn.Ammo1 ? Wpn.Ammo1.Amount : 0);
+    oldAmmo2 = (Wpn.Ammo2 ? Wpn.Ammo2.Amount : 0);
+    if (!(flags&SF_NOUSEAMMO)) {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+    }
+  }
+
+  int damage = SawDamage;
+  if (!(flags&SF_NORANDOM)) damage *= P_Random()%10+1;
+
+  TAVec aimAng = Angles;
+  aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
+
+  EntityEx AimTarget = AimLineAttack(dir, aimAng, range/*SAWRANGE*/);
+  LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw');
+
+  if (!AimTarget) {
+    // miss
+    if (Wpn && !(flags&SF_NOUSEAMMO) && (flags&SF_NOUSEAMMOMISS)) {
+      // restore ammo
+      if (Wpn.Ammo1) Wpn.Ammo1.Amount = oldAmmo1;
+      if (Wpn.Ammo2) Wpn.Ammo2.Amount = oldAmmo2;
+    }
+    // light
+    if (flags&SF_RANDOMLIGHTMISS) {
+      auto randVal = P_Random();
+           if (randVal < 64) Player.ExtraLight = 0;
+      else if (randVal < 160) Player.ExtraLight = 1;
+      else Player.ExtraLight = 2;
+    }
+    PlaySound(FullSound, CHAN_WEAPON);
+    return;
+  }
+
+  PlaySound(HitSound, CHAN_WEAPON);
+
+  // turn to face target
+  if (!(flags&SF_NOTURN)) {
+    float angle = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
+    if (AngleMod360(angle-Angles.yaw) > 180.0) {
+      if (AngleMod360(angle-Angles.yaw) < -90.0/20.0) {
+        Angles.yaw = angle+90.0/21.0;
+      } else {
+        Angles.yaw = Angles.yaw-90.0/20.0;
+      }
+    } else {
+      if (AngleMod360(angle-Angles.yaw) > 90.0/20.0) {
+        Angles.yaw = angle-90.0/21.0;
+      } else {
+        Angles.yaw += 90.0/20.0;
+      }
+    }
+  }
+  Angles.yaw = AngleMod360(Angles.yaw);
+
+  bJustAttacked = true;
+  if (bIsPlayer) {
+    Player.bFixAngle = true;
+    // light
+    if (flags&SF_RANDOMLIGHTHIT) {
+      auto randVal = P_Random();
+           if (randVal < 64) Player.ExtraLight = 0;
+      else if (randVal < 160) Player.ExtraLight = 1;
+      else Player.ExtraLight = 2;
+    }
+  }
+}
+
+
+//===========================================================================
+const int CPF_USEAMMO       = 1;
+const int CPF_DAGGER        = 2;
+const int CPF_PULLIN        = 4;
+const int CPF_NORANDOMPUFFZ = 8;
+const int CPF_NOTURN        = 16;
+const int CPF_STEALARMOR    = 32; // not implemented yet
+
+
+//===========================================================================
+//
+//  A_CustomPunch
+//
+//===========================================================================
+final void A_CustomPunch (int PunchDamage, optional bool NoRandom,
+  optional int Flags, optional class!Actor PuffType,
+  optional float Range, optional float LifeSteal,
+  optional float lifestealmax, optional class!BasicArmorBonus armorbonustype,
+  optional name meleesound, optional name misssound)
+{
+  TAVec aimAngles;
+  TVec dir;
+  EntityEx AimTarget;
+
+  if (!bIsPlayer) return;
+  if (Range < 0) return; //k8: sanity check
+  if (!Range) Range = MELEERANGE; //SAWRANGE; // use saw range instead of melee range here, for puffs
+
+  bool UseAmmo = (specified_Flags ? !!(Flags&CPF_USEAMMO) : false);
+  if (!PuffType) PuffType = BulletPuff;
+
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  aimAngles = Angles;
+  aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
+  AimTarget = AimLineAttack(dir, aimAngles, Range);
+
+  // use ammo only if hit something
+  if (Wpn && AimTarget && UseAmmo) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+  }
+
+  if (!NoRandom) PunchDamage *= (P_Random()%8+1);
+
+  LineAttack(dir, Range, PunchDamage, PuffType, default, default, PuffType.default.DamageType);
+
+  // turn to face target
+  if (AimTarget) {
+    if (LifeSteal > 0) {
+      float stealed = fmax(0, float(PunchDamage)*LifeSteal);
+      if (stealed > 0 && lifestealmax > 0) stealed = fmin(stealed, lifestealmax);
+      if (stealed > 0) {
+        if (Flags&CPF_STEALARMOR) {
+          RepairArmorWith(int(stealed), armorbonustype!optional);
+        } else {
+          GiveBody(int(stealed));
+        }
+      }
+    }
+    if (Wpn) PlaySound((meleesound ? meleesound : Wpn.AttackSound), CHAN_WEAPON);
+    if (!(Flags&CPF_NOTURN)) {
+      Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
+      if (bIsPlayer) Player.bFixAngle = true;
+    }
+    if (Flags&CPF_PULLIN) bJustAttacked = true;
+    if (Flags&CPF_DAGGER) A_AttackAlert(self, AimTarget); // incorrect; see https://zdoom.org/wiki/A_CustomPunch
+  } else {
+    if (misssound) PlaySound(misssound, CHAN_WEAPON);
+  }
+}
+
+
+//===========================================================================
+const int FBF_USEAMMO = 1;
+const int FBF_NORANDOM = 2;
+const int FBF_EXPLICITANGLE = 4;
+const int FBF_NOPITCH = 8;
+const int FBF_NOFLASH = 16;
+const int FBF_NORANDOMPUFFZ = 32;
+
+
+//===========================================================================
+//
+//  A_FireBullets
+//
+//===========================================================================
+final void A_FireBullets (float SpreadHoriz, float SpreadVert, int NumBullets,
+  int DamagePerBullet, optional class!Actor PuffType, optional int Flags,
+  optional float Range)
+{
+  TVec dir;
+  int damage;
+  TAVec rot;
+  TVec aimDir;
+  bool UseAmmo = (specified_Flags ? !!(Flags&FBF_USEAMMO) : true);
+  bool randDamage = true;
+  bool randSpread = true;
+  bool noAimPitch = false;
+  bool doFlash = false; // not implemented yet
+  bool doRandPuffZ = false; // not implemented yet
+
+  if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
+  if (!specified_Range || !Range) Range = 8192; //MISSILERANGE;
+
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  if (UseAmmo) {
+    if (!Wpn) return;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+  }
+
+  if (specified_Flags) {
+    randDamage = !(Flags&FBF_NORANDOM);
+    randSpread = !(Flags&FBF_EXPLICITANGLE);
+    noAimPitch = !!(Flags&FBF_NOPITCH);
+    doFlash = !(Flags&FBF_NOFLASH);
+    doRandPuffZ = !(Flags&FBF_NORANDOMPUFFZ);
+  }
+
+  if (MeleeState) SetState(MeleeState);
+
+  bool noAAim = false;
+  name decal = ''; // default
+  if (Wpn) {
+    PlaySound(Wpn.AttackSound, CHAN_WEAPON);
+    noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
+    decal = Wpn.DecalName;
+  }
+
+  Aim(aimDir, 16.0*64.0, default, noAAim, noAimPitch);
+
+  if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0) {
+    damage = DamagePerBullet;
+    if (randDamage) damage *= (P_Random()%3+1);
+    LineAttack(aimDir, Range, damage, PuffType, default, default, PuffType.default.DamageType, false, decal);
+  } else {
+    if (NumBullets == -1) NumBullets = 1;
+    foreach (auto i; 0..NumBullets) {
+      if (randSpread) {
+        rot.pitch = (Random()-Random())*SpreadVert;
+        rot.yaw = (Random()-Random())*SpreadHoriz;
+      } else {
+        rot.pitch = SpreadVert;
+        rot.yaw = SpreadHoriz;
+      }
+      rot.roll = 0.0;
+      dir = RotateDirectionVector(aimDir, rot);
+      damage = DamagePerBullet;
+      if (randDamage) damage *= (P_Random()%3+1);
+      LineAttack(dir, Range, damage, PuffType, default, default, PuffType.default.DamageType, (i != 0), decal);
+    }
+  }
+}
+
+
+//===========================================================================
+//
+//  doFireMissileProjectile
+//
+//  `A_FireCustomMissile()` and `A_FireProjectile()` are the same thing, so
+//  they both will use this code
+//
+//===========================================================================
+final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
+  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional int Flags, optional float Pitch)
+{
+  if (!MissileType || !bIsPlayer) return;
+
+  if (!specified_UseAmmo) UseAmmo = true;
+
+  name decal = ''; // default
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (UseAmmo) {
+    if (!Wpn) return;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+  }
+  if (Wpn) decal = Wpn.DecalName;
+
+  TVec ShootOrg = Origin;
+  if (SpawnXY) {
+    ShootOrg.x += float(SpawnXY)*cos(Angles.yaw-90.0);
+    ShootOrg.y += float(SpawnXY)*sin(Angles.yaw-90.0);
+  }
+  ShootOrg.z += SpawnZ;
+
+  float ShootAngle = Angles.yaw;
+  if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
+  // Temporarily adjusts the pitch
+  float SavedPitch = Angles.pitch;
+  if (Flags&FPF_NOAUTOAIM) Angles.pitch += Pitch; // `A_FireCustomMissile()` does this another way
+
+  EntityEx AimTarget;
+  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
+  Angles.pitch = SavedPitch;
+
+  if (A) {
+    if (Flags&FPF_TRANSFERTRANSLATION) A.Translation = self.Translation;
+    // handle seeker missiles
+    if (A.bSeekerMissile) A.Tracer = AimTarget;
+    if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);
+  }
+}
+
+
+//===========================================================================
+//
+//  A_FireCustomMissile
+//
+//===========================================================================
+final void A_FireCustomMissile (class!Actor MissileType, optional float Angle,
+  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional int Flags, optional float Pitch)
+{
+  Pitch = -Pitch; // this does it this way
+  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
+}
+
+
+//===========================================================================
+//
+//  A_FireSTGrenade
+//
+//===========================================================================
+final void A_FireSTGrenade (optional class!Actor GrenadeType) {
+  if (!specified_GrenadeType) {
+    class!Actor gc = class!Actor(FindClassNoCase('Grenade'));
+    if (!gc) return;
+    GrenadeType = gc;
+    gc = GetCompatibleClassReplacement(Actor, gc);
+    if (gc) GrenadeType = gc;
+  }
+  if (!GrenadeType) return;
+  doFireMissileProjectile(GrenadeType, default, default, default, default, FPF_NOAUTOAIM, -6.328125);
+}
+
+
+//===========================================================================
+//
+//  A_FireProjectile
+//
+//===========================================================================
+final void A_FireProjectile (class!Actor MissileType, optional float Angle, optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+   optional int Flags, optional float Pitch)
+{
+  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
+}
+
+
+//===========================================================================
+//
+//  A_RailAttack
+//
+//  TODO: process other arguments
+//
+//===========================================================================
+final void A_RailAttack (int RailDamage, optional float Offset,
+  optional bool UseAmmo, optional string Colour1, optional string Colour2,
+  optional int Flags, optional float MaxDiff, optional class!Actor PuffType,
+  optional float spread_xy, optional float spread_z,
+  optional float range,
+  optional int duration, optional float sparsity, optional float driftspeed, // for particles
+  optional class!Actor spawnclass, // for particles
+  optional float spawnofs_z, optional int spiraloffset, optional int limit)
+{
+  if (!specified_UseAmmo) UseAmmo = true;
+
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return;
+
+  if ((specified_Flags && (Flags&1)) || UseAmmo) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+  }
+
+  int Col1 = ParseColour(Colour1);
+  int Col2 = ParseColour(Colour2);
+  TVec Dir;
+  AngleVector(Angles, out Dir);
+  RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType, !!(Flags&1), !!(Flags&2),
+    distance:range!optional, spawnofs_z:spawnofs_z!optional, pierceLimit:limit!optional);
+}
+
+
+//**************************************************************************
+//  Doom weapon atack functions
+//**************************************************************************
+
+//===========================================================================
+//
+//  A_FirePistol
+//
+//===========================================================================
+final void A_FirePistol () {
+  TVec dir;
+  bool Accurate;
+
+  bool noAAim = false;
+  name decal = ''; // default
+  if (bIsPlayer) {
+    Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (Wpn) {
+      if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+      decal = Wpn.DecalName;
+      noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+      if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
+    }
+    if (MeleeState) SetState(MeleeState);
+    Accurate = !PlayerEx(Player).Refire;
+    //writeln("PISTOL: Accurate=", Accurate, "; refire=", PlayerEx(Player).Refire);
+  } else {
+    Accurate = true;
+  }
+
+  PlaySound('weapons/pistol', CHAN_WEAPON);
+
+  Aim(dir, 16.0*64.0, default, noAAim);
+  GunShot(Accurate, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
+}
+
+
+//===========================================================================
+//
+//  A_FireShotgun
+//
+//===========================================================================
+final void A_FireShotgun () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  PlaySound('weapons/shotgf', CHAN_WEAPON);
+  if (MeleeState) SetState(MeleeState);
+
+  bool noAAim = false;
+  name decal = ''; // default
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+    Player.SetViewObject(Wpn);
+    Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    decal = Wpn.DecalName;
+    noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
+  }
+
+  TVec dir;
+  Aim(dir, 16.0*64.0, default, noAAim);
+  foreach (auto i; 0..7) GunShot(false, dir, 'Shell', (i != 0), decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
+}
+
+
+//===========================================================================
+//
+//  A_FireShotgun2
+//
+//===========================================================================
+final void A_FireShotgun2 () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  PlaySound('weapons/sshotf', CHAN_WEAPON);
+  if (MeleeState) SetState(MeleeState);
+
+  bool noAAim = false;
+  name decal = ''; // default
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 2)) return;
+    Player.SetViewObject(Wpn);
+    Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    decal = Wpn.DecalName;
+    noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
+  }
+
+  TAVec rot;
+  TVec aimDir;
+  Aim(aimDir, 16.0*64.0, default, noAAim);
+  foreach (auto i; 0..20) {
+    rot.pitch = (Random()-Random())*45.0/8.0;
+    rot.yaw = (Random()-Random())*45.0/4.0;
+    rot.roll = 0.0;
+    TVec dir = RotateDirectionVector(aimDir, rot);
+    int damage = 5*(P_Random()%3+1);
+    LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, BulletPuff, default, default, 'Shell', (i != 0), decal);
+  }
+}
+
+
+//===========================================================================
+//
+//  A_OpenShotgun2
+//
+//===========================================================================
+final void A_OpenShotgun2 () {
+  PlaySound('weapons/sshoto', CHAN_WEAPON);
+}
+
+
+//===========================================================================
+//
+//  A_LoadShotgun2
+//
+//===========================================================================
+final void A_LoadShotgun2 () {
+  PlaySound('weapons/sshotl', CHAN_WEAPON);
+}
+
+
+//===========================================================================
+//
+//  A_CloseShotgun2
+//
+//===========================================================================
+final void A_CloseShotgun2 () {
+  PlaySound('weapons/sshotc', CHAN_WEAPON);
+  A_ReFire();
+}
+
+
+//===========================================================================
+//
+//  A_FireCGun
+//
+//===========================================================================
+final void A_FireCGun () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  PlaySound('weapons/chngun', CHAN_WEAPON);
+
+  bool noAAim = false;
+  name decal = ''; // default
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+    Player.SetViewObject(Wpn);
+    if (Player.ViewStates[ps_weapon].State == Wpn.GetAttackState(false)) {
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    } else {
+      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+    decal = Wpn.DecalName;
+    noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
+    if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
+  }
+
+  if (MeleeState) SetState(MeleeState);
+
+  TVec dir;
+  Aim(dir, 16.0*64.0, default, noAAim);
+  GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
+}
+
+
+//===========================================================================
+//
+//  A_FireMissile
+//
+//===========================================================================
+final void A_FireMissile () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  name decal = ''; // default
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+    decal = Wpn.DecalName;
+  }
+  SpawnPlayerMissile(Rocket, decal);
+}
+
+
+//===========================================================================
+//
+//  A_FirePlasma
+//
+//===========================================================================
+final void A_FirePlasma () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  name decal = ''; // default
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+    Player.SetViewObject(Wpn);
+    if (!(P_Random()&1)) {
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    } else {
+      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+    decal = Wpn.DecalName;
+  }
+  SpawnPlayerMissile(PlasmaBall, decal);
+}
+
+
+//===========================================================================
+//
+//  DoFireRailgun
+//
+//===========================================================================
+final void DoFireRailgun (float Offset) {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+    Player.SetViewObject(Wpn);
+    if (!(P_Random()&1)) {
+      Player.SetViewState(ps_flash, Wpn.FindState('Flash'));
+    } else {
+      Player.SetViewState(ps_flash, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+  }
+  int RailDamage = (Level.Game.deathmatch ? 100 : 150);
+  TVec Dir;
+  AngleVector(Angles, out Dir);
+  RailAttack(Dir, Offset, RailDamage);
+}
+
+
+//===========================================================================
+//
+//  A_FireRailgun
+//
+//===========================================================================
+final void A_FireRailgun () {
+  DoFireRailgun(0.0);
+}
+
+
+//===========================================================================
+//
+//  A_FireRailgunLeft
+//
+//===========================================================================
+final void A_FireRailgunLeft () {
+  DoFireRailgun(-10.0);
+}
+
+
+//===========================================================================
+//
+//  A_FireRailgunRight
+//
+//===========================================================================
+final void A_FireRailgunRight () {
+  DoFireRailgun(10.0);
+}
+
+
+//===========================================================================
+//
+//  A_RailWait
+//
+//===========================================================================
+final void A_RailWait () {
+}
+
+
+//===========================================================================
+//
+//  A_BFGsound
+//
+//===========================================================================
+final void A_BFGsound () {
+  PlaySound('weapons/bfgf', CHAN_WEAPON);
+}
+
+
+//===========================================================================
+//
+//  A_FireBFG
+//
+//===========================================================================
+final void A_FireBFG () {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  name decal = ''; // default
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, BFG9000.default.AmmoUse1)) return;
+    decal = Wpn.DecalName;
+  }
+  SpawnPlayerMissile(BFGBall, decal);
+}
+
+
+//**************************************************************************
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  A_RestoreSpecialThing1
+//
+//  Make a special thing visible again.
+//
+//==========================================================================
+final void A_RestoreSpecialThing1 () {
+  bInvisible = false;
+  if (DoRespawn()) PlaySound('misc/spawn', CHAN_VOICE);
+}
+
+
+//==========================================================================
+//
+//  A_RestoreSpecialThing2
+//
+//==========================================================================
+final void A_RestoreSpecialThing2 () {
+  bSpecial = true;
+  SetState(IdleState);
+}
+
+
+states {
+  // hide pickup like in Doom and Strife
+DormantPickup:
+  TNT1 A 1050
+  TNT1 A -1
+  {
+    EntityEx  A;
+
+    bInvisible = false;
+    bSpecial = true;
+    SetState(IdleState);
+
+    // spawn a teleport fog at the new spot
+    A = Spawn(ItemFog, Origin);
+    A.PlaySound('misc/spawn', CHAN_ITEM);
+  }
+  Stop
+
+  // hide for 40 secs
+HideSpecial:
+  ACLO E 1400
+  ACLO A 4 A_RestoreSpecialThing1
+  ACLO BABCBCDC 4
+  ACLO D 4 A_RestoreSpecialThing2
+  Stop
+
+  // invisible state for held items
+Held:
+  TNT1 A -1
+  Stop
+
+  // will destroy item as soon as possible
+HoldAndDestroy:
+  TNT1 A 1
+  Stop
+}
+
+
+defaultproperties {
+  Amount = 1;
+  InterHubAmount = 1;
+  MaxAmount = 1;
+  bSpecial = true;
+  PickupMessage = "You got a pickup";
+  PickupSound = 'misc/i_pkup';
+  UseSound = 'misc/invuse';
+  bNoAutoaim = false;
+  bIsHitscanWeapon = false;
+}

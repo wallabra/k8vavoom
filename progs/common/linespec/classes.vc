@@ -98,6 +98,7 @@ enum {
 #include "RandomSpawner.vc"
 
 #include "basic/Inventory.vc"
+#include "basic/Inventory.decorate.vc"
 #include "basic/PickupFlash.vc"
 #include "basic/Ammo.vc"
 #include "basic/BackpackItem.vc"
