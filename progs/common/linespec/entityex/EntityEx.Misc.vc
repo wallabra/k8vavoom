@@ -754,6 +754,7 @@ override bool Touch (Entity InOther) {
     } else {
       Other.TouchSpecial(self); // can remove thing
     }
+    if (solid && (!Other || Other.IsDestroyed())) solid = false; // k8: it is no more
   }
 
   return !solid;

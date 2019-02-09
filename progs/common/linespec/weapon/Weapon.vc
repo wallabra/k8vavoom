@@ -316,7 +316,7 @@ final Ammo AddAmmo (EntityEx Toucher, class!Ammo AmmoType, int count) {
 //  AddExistingAmmo
 //
 //==========================================================================
-final bool AddExistingAmmo (Ammo AmmoItem, int count) {
+final bool AddExistingAmmo (Ammo AmmoItem, int count, optional bool checkOnly) {
   int oldammo;
 
   if (!AmmoItem || count <= 0) return false;
@@ -331,6 +331,12 @@ final bool AddExistingAmmo (Ammo AmmoItem, int count) {
   AmmoItem.Amount += count;
   if (AmmoItem.Amount > AmmoItem./*MaxAmount*/k8GetAmmoKingMax()) {
     AmmoItem.Amount = AmmoItem./*MaxAmount*/k8GetAmmoKingMax();
+  }
+
+  if (checkOnly) {
+    if (AmmoItem.Amount == oldammo) return false;
+    AmmoItem.Amount = oldammo;
+    return true;
   }
 
   if (oldammo <= 0 && AmmoItem.Owner.Player) {
@@ -359,12 +365,56 @@ final Weapon AddWeapon (class!Weapon WeaponType) {
 
 //==========================================================================
 //
+//  Tick
+//
+//==========================================================================
+/*k8: this isn't working as i thought it is
+override void Tick (float DeltaTime) {
+  // make inactive weapons transparent in netgames
+  if (!Owner) {
+    if (Alpha == 1) {
+      if (!bDropped && ShouldStay()) {
+        RenderStyle = Entity::STYLE_Translucent;
+        //RenderStyle = Entity::STYLE_Add;
+        Alpha = 0.8;
+        print("TRANS: %C", self);
+      }
+    } else {
+      if (!bDropped) {
+        RenderStyle = Entity::STYLE_Normal;
+        Alpha = 1;
+        print("NORMAL: %C", self);
+      }
+    }
+  }
+  ::Tick(DeltaTime);
+}
+*/
+
+
+//==========================================================================
+//
+//  CanPickupForAmmo
+//
+//==========================================================================
+bool CanPickupForAmmo (Weapon ExistingWeapon) {
+  // leave placed weapons forever on net games
+  if (!bDropped && ShouldStay()) return false;
+  bool gaveammo = false;
+  if (AddExistingAmmo(ExistingWeapon.Ammo1, AmmoGive1, checkOnly:true)) gaveammo = true;
+  if (AddExistingAmmo(ExistingWeapon.Ammo2, AmmoGive2, checkOnly:true)) gaveammo = true;
+  return gaveammo;
+}
+
+
+//==========================================================================
+//
 //  PickupForAmmo
 //
 //==========================================================================
 bool PickupForAmmo (Weapon ExistingWeapon) {
   // leave placed weapons forever on net games
-  if (ShouldStay() && !bDropped) return false;
+  if (!bDropped && ShouldStay()) return false;
   bool gaveammo = false;
   if (AddExistingAmmo(ExistingWeapon.Ammo1, AmmoGive1)) gaveammo = true;
   if (AddExistingAmmo(ExistingWeapon.Ammo2, AmmoGive2)) gaveammo = true;

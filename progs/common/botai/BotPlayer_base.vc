@@ -257,7 +257,10 @@ bool CheckWeaponItem (Weapon Wpn, out bool res) {
   if (!Wpn) return false;
 
   // if we don't have the weapon, pick it up
-  if (!botmo.FindInventory(class!Inventory(Wpn.Class))) { res = true; return true; }
+  Weapon exwpn = Weapon(botmo.FindInventory(class!Inventory(Wpn.Class)));
+  if (!exwpn) { res = true; return true; }
+
+  if (!Wpn.CanPickupForAmmo(exwpn)) { res = false; return true; }
 
   // if we have no more room for the ammo it gives
   auto ammo1 = (Wpn.AmmoType1 ? botmo.FindInventory(Wpn.AmmoType1) : none);

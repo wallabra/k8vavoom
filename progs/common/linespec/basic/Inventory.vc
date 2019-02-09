@@ -450,6 +450,7 @@ final bool GoAway () {
       return false;
     }
   }
+
   return true;
 }
 

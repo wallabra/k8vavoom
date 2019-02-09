@@ -439,7 +439,7 @@ final void A_FadeTo (float target, optional float amount, optional int flags) {
     if (flags&FTF_REMOVE) { Destroy(); return; }
   }
   if (flags&FTF_CLAMP) Alpha = fclamp(Alpha, 0, 1);
-  if (Alpha == 1) RenderStyle = Entity::STYLE_Normal;
+  if (Alpha == 1) RenderStyle = STYLE_Normal;
 }
 
 
