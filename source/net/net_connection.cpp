@@ -28,7 +28,7 @@
 #include "network.h"
 
 
-static VCvarF net_test_loss("net_test_loss", "0", "Test packet loss code?");
+static VCvarF net_test_loss("net_test_loss", "0", "Test packet loss code?", CVAR_PreInit);
 
 
 //==========================================================================

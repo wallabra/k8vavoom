@@ -212,6 +212,8 @@ int main (int argc, char **argv) {
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");
 
+    FL_CollectPreinits();
+
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers
     signal(SIGABRT, signal_handler);

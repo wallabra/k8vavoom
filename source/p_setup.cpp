@@ -42,10 +42,10 @@
 #include "render/r_local.h"
 
 
-static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", 0/*CVAR_Archive*/);
-static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", 0/*CVAR_Archive*/);
+static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarB dbg_use_old_decal_pp("dbg_use_old_decal_pp", false, "Use old decal processor? (for timing)", CVAR_PreInit/*|CVAR_Archive*/);
 
-static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", 0/*CVAR_Archive*/);
+static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit/*|CVAR_Archive*/);
 
 static VCvarB loader_cache_rebuilt_data("loader_cache_rebuilt_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
 static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3.0", "Cache data if building took more than this number of seconds.", CVAR_Archive);
@@ -65,10 +65,10 @@ static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loa
 static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
 
 static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
-static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", 0);
+static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", CVAR_PreInit);
 static VCvarI loader_cache_compression_level("loader_cache_compression_level", "9", "Cache file compression level [0..9]", CVAR_Archive);
 
-static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", 0/*CVAR_Archive*/);
+static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", CVAR_PreInit/*|CVAR_Archive*/);
 
 //static VCvarB r_udmf_allow_extra_textures("r_udmf_allow_extra_textures", false, "Allow force-loading UDMF textures? (WARNING: savegames WILL crash!)", CVAR_Archive);
 

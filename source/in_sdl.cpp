@@ -88,7 +88,7 @@ static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
 static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
-static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", 0);
+static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", CVAR_PreInit);
 
 //extern VCvarB screen_fsmode;
 extern VCvarB gl_current_screen_fsmode;

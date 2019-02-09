@@ -36,7 +36,7 @@
 #define PO_MAXPOLYSEGS    (512)
 
 
-static VCvarB pobj_allow_several_in_subsector("pobj_allow_several_in_subsector", false, "Allow several polyobjs in one subsector (WARNING! THE ENGINE MAY CRASH!)?", CVAR_Archive);
+static VCvarB pobj_allow_several_in_subsector("pobj_allow_several_in_subsector", false, "Allow several polyobjs in one subsector (WARNING! THE ENGINE MAY CRASH!)?", CVAR_PreInit|CVAR_Archive);
 int pobj_allow_several_in_subsector_override = 0; // <0: disable; >0: enable
 
 

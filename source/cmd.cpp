@@ -578,6 +578,8 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
   if (!Args.Num()) return;
 
   if (Args[0] == "__run_cli_commands__") {
+    FL_ProcessPreInits(); // override configs
+    FL_ClearPreInits();
     if (!cliInserted) {
 #ifdef CLIENT
       if (!Drawer || !Drawer->IsInited()) {
@@ -628,6 +630,7 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
   }
 
   // Cvar
+  if (FL_HasPreInit(Args[0])) return;
   if (VCvar::Command(Args)) return;
 
   // command defined with ALIAS

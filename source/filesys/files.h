@@ -24,6 +24,11 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+struct ArgVarValue {
+  VStr varname;
+  VStr value;
+};
+
 
 void FL_InitOptions ();
 void FL_Init ();
@@ -52,6 +57,16 @@ VStr FL_GetConfigDir ();
 VStr FL_GetCacheDir ();
 VStr FL_GetSavesDir ();
 VStr FL_GetScreenshotsDir ();
+
+
+// used to set "preinit" cvars
+int FL_GetPreInitCount ();
+const ArgVarValue &FL_GetPreInitAt (int idx);
+void FL_ClearPreInits ();
+bool FL_HasPreInit (const VStr &varname);
+
+void FL_CollectPreinits ();
+void FL_ProcessPreInits ();
 
 
 //extern bool fl_devmode;

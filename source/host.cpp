@@ -94,8 +94,8 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 static VCvarF host_framerate("__dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
 //k8: this was `3`; why 3? looks like arbitrary number
 VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
-static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)");
-static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)");
+static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
+static VCvarB host_show_skip_frames("dbg_host_show_skip_frames", false, "Show skipframe hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
 
 static double last_time;
 
@@ -103,7 +103,7 @@ static VCvarB randomclass("RandomClass", false, "Random player class?"); // chec
 VCvarB respawnparm("RespawnMonsters", false, "Respawn monsters?"); // checkparm of -respawn
 VCvarB fastparm("g_fast_monsters", false, "Fast monsters?"); // checkparm of -fast
 
-static VCvarB show_time("dbg_show_times", false, "Show some debug times?");
+static VCvarB show_time("dbg_show_times", false, "Show some debug times?", CVAR_PreInit);
 
 static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive);
 
@@ -163,6 +163,8 @@ void Host_Init () {
   if (GArgs.CheckParm("-developer")) developer = true;
 
   if (GArgs.CheckParm("-gd-debug")) VObject::GCDebugMessagesAllowed = true;
+
+  FL_ProcessPreInits();
 
   FL_Init();
 

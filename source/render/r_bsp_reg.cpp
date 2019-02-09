@@ -32,7 +32,7 @@
 #include "r_local.h"
 
 static VCvarB r_reg_disable_world("r_reg_disable_world", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
-static VCvarB r_reg_disable_portals("r_reg_disable_portals", false, "Disable rendering of world (regular renderer).", 0/*CVAR_Archive*/);
+static VCvarB r_reg_disable_portals("r_reg_disable_portals", false, "Disable rendering of portals (regular renderer).", 0/*CVAR_Archive*/);
 static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "Show number of properly traced dynlights per frame.", 0/*CVAR_Archive*/);
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp

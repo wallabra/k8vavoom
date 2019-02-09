@@ -35,7 +35,7 @@
 #endif
 
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-static VCvarB dbg_show_name_remap("dbg_show_name_remap", false, "Show hacky name remapping", 0);
+static VCvarB dbg_show_name_remap("dbg_show_name_remap", false, "Show hacky name remapping", CVAR_PreInit);
 #endif
 
 

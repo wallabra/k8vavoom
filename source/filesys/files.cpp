@@ -31,8 +31,10 @@
 extern VCvarB game_release_mode;
 //extern VCvarI game_override_mode;
 
-static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", 0);
-static VCvarB gz_skip_menudef("_gz_skip_menudef", false, "Skip gzdoom menudef parsing?", 0);
+static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", CVAR_PreInit);
+static VCvarB gz_skip_menudef("_gz_skip_menudef", false, "Skip gzdoom menudef parsing?", CVAR_PreInit);
+
+static VCvarB __dbg_debug_preinit("__dbg_debug_preinit", false, "Dump preinits?", CVAR_PreInit);
 
 bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
@@ -81,6 +83,130 @@ TArray<VStr> wadfiles;
 static TArray<VStr> IWadDirs;
 static int IWadIndex;
 static VStr warpTpl;
+static TArray<ArgVarValue> preinitCV;
+static ArgVarValue emptyAV;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+void FL_CollectPreinits () {
+  int aidx = 1;
+  bool inMinus = false;
+  while (aidx < GArgs.Count()) {
+    const char *args = GArgs[aidx];
+    if (!inMinus) {
+      if (!args[0]) {
+        GArgs.removeAt(aidx);
+        continue;
+      }
+    }
+    ++aidx;
+    // skip "-" commands
+    if (args[0] == '-') {
+      inMinus = true;
+      continue;
+    }
+    if (args[0] != '+') {
+      continue;
+    }
+    if (!args[1]) {
+      inMinus = true;
+      continue;
+    }
+    inMinus = false;
+    // extract command name
+    int spos = 2;
+    while (args[spos] && (vuint8)(args[spos]) > ' ') ++spos;
+    VStr vname = VStr(args+1, spos-1);
+    int flg = VCvar::GetVarFlags(*vname);
+    if (flg < 0 || !(flg&CVAR_PreInit)) {
+      inMinus = true;
+      continue;
+    }
+    // collect value
+    VStr val;
+    while (args[spos] && (vuint8)(args[spos]) <= ' ') ++spos;
+    if (args[spos]) {
+      // in the same arg
+      if (aidx < GArgs.Count()) {
+        const char *a2 = GArgs[aidx];
+        if (a2[0] != '+' && a2[0] != '-') {
+          inMinus = true;
+          continue;
+        }
+      }
+      val = VStr(args+spos);
+      // remove this arg
+      --aidx;
+      GArgs.removeAt(aidx);
+    } else {
+      // in another arg
+      if (aidx >= GArgs.Count()) break;
+      if (aidx+1 < GArgs.Count()) {
+        const char *a2 = GArgs[aidx+1];
+        if (a2[0] != '+' && a2[0] != '-') {
+          inMinus = true;
+          continue;
+        }
+      }
+      val = VStr(GArgs[aidx]);
+      // remove two args
+      --aidx;
+      GArgs.removeAt(aidx);
+      GArgs.removeAt(aidx);
+    }
+    // save it
+    ArgVarValue &vv = preinitCV.alloc();
+    vv.varname = vname;
+    vv.value = val;
+    //HACK!
+    if (vname.ICmp("__dbg_debug_preinit") == 0) VCvar::Set(*vname, val);
+  }
+  if (__dbg_debug_preinit && preinitCV.length()) {
+    for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf("::: %d: <%s>", f, GArgs[f]);
+    for (int f = 0; f < preinitCV.length(); ++f) {
+      const ArgVarValue &vv = preinitCV[f];
+      GCon->Logf(":DOSET:%d: <%s> = <%s>", f, *vv.varname.quote(), *vv.value.quote());
+    }
+  }
+}
+
+
+void FL_ProcessPreInits () {
+  if (__dbg_debug_preinit) {
+    if (preinitCV.length()) for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf("::: %d: <%s>", f, GArgs[f]);
+  }
+  for (int f = 0; f < preinitCV.length(); ++f) {
+    const ArgVarValue &vv = preinitCV[f];
+    VCvar::Set(*vv.varname, vv.value);
+    if (__dbg_debug_preinit) GCon->Logf(":SET:%d: <%s> = <%s>", f, *vv.varname.quote(), *vv.value.quote());
+  }
+}
+
+
+bool FL_HasPreInit (const VStr &varname) {
+  if (varname.length() == 0 || preinitCV.length() == 0) return false;
+  for (int f = 0; f < preinitCV.length(); ++f) {
+    if (preinitCV[f].varname.ICmp(varname) == 0) return true;
+  }
+  return false;
+}
+
+
+void FL_ClearPreInits () {
+  preinitCV.clear();
+}
+
+
+// used to set "preinit" cvars
+int FL_GetPreInitCount () {
+  return preinitCV.length();
+}
+
+
+const ArgVarValue &FL_GetPreInitAt (int idx) {
+  if (idx < 0 || idx >= preinitCV.length()) return emptyAV;
+  return preinitCV[idx];
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -335,6 +335,8 @@ static void mainloop (int argc, char **argv) {
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");
 
+    FL_CollectPreinits();
+
     // if( SDL_InitSubSystem(SDL_INIT_VIDEO) < 0 )
     if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
     //SDL_WM_SetCaption("VaVoom", "VaVoom");

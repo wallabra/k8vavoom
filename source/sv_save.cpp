@@ -40,19 +40,19 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_Archive);
-static VCvarI save_compression_level("save_compression_level", "1", "Save file compression level [0..9]", CVAR_Archive);
+static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_PreInit/*|CVAR_Archive*/);
+static VCvarI save_compression_level("save_compression_level", "6", "Save file compression level [0..9]", CVAR_Archive);
 
-static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore list of loaded wads in savegame when hash mated?", 0/*CVAR_Archive*/);
+static VCvarB dbg_save_ignore_wadlist("dbg_save_ignore_wadlist", false, "Ignore list of loaded wads in savegame when hash mated?", CVAR_PreInit/*|CVAR_Archive*/);
 
-static VCvarB sv_new_map_autosave("sv_new_map_autosave", true, "Autosave when entering new map (except first one)?", 0/*CVAR_Archive*/);
+static VCvarB sv_new_map_autosave("sv_new_map_autosave", true, "Autosave when entering new map (except first one)?", CVAR_PreInit/*|CVAR_Archive*/);
 
 static VCvarB sv_save_messages("sv_save_messages", true, "Show messages on save/load?", CVAR_Archive);
 
 static VCvarB loader_recalc_z("loader_recalc_z", true, "Recalculate Z on load (this should help with some edge cases)?", CVAR_Archive);
-static VCvarB loader_ignore_kill_on_unarchive("loader_ignore_kill_on_unarchive", false, "Ignore 'Kill On Unarchive' flag when loading a game?", 0/*CVAR_Archive*/);
+static VCvarB loader_ignore_kill_on_unarchive("loader_ignore_kill_on_unarchive", false, "Ignore 'Kill On Unarchive' flag when loading a game?", CVAR_PreInit/*|CVAR_Archive*/);
 
-static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing\b  0x20: dump checkpoints", CVAR_Archive);
+static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose save. DO NOT USE, THIS IS FOR DEBUGGING!\n  0x01: register skips player\n  0x02: registered object\n  0x04: skipped actual player write\n  0x08: skipped unknown object\n  0x10: dump object data writing\b  0x20: dump checkpoints", CVAR_PreInit|CVAR_Archive);
 
 static VCvarB dbg_checkpoints("dbg_checkpoints", false, "Checkpoint save/load debug dumps", 0);
 
