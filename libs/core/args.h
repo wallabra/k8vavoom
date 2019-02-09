@@ -61,6 +61,8 @@ public:
   // return `true` if given index is valid, and arg starts with '-' or '+'
   bool IsCommand (int idx) const;
 
+  void removeAt (int idx);
+
 public:
   static char *GetBinaryDir ();
 };

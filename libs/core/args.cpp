@@ -369,3 +369,17 @@ bool VArgs::IsCommand (int idx) const {
   if (idx < 1 || idx >= Argc) return false;
   return (Argv[idx][0] == '-' || Argv[idx][0] == '+');
 }
+
+
+//==========================================================================
+//
+//  VArgs::removeAt
+//
+//==========================================================================
+void VArgs::removeAt (int idx) {
+  if (idx < 1 || idx >= Argc) return;
+  Z_Free(Argv[idx]);
+  for (int f = idx+1; f < Argc; ++f) Argv[f-1] = Argv[f];
+  Argv[Argc-1] = nullptr;
+  --Argc;
+}
