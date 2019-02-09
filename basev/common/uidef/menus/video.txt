@@ -77,6 +77,10 @@ menudef VideoOptions {
   option bool {
     title = "High Resolution Textures";
     cvar = r_hirestex;
+    textColor = PURPLE;
+    help =
+      "This mode is partially broken (especially with lightmapped renderer)."
+      "Use with caution, and be prepared to various texture and lighting bugs.";
   }
 
   option bool {
