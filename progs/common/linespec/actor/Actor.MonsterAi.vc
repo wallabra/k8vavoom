@@ -46,6 +46,24 @@ enum /*EAlertFlags*/ {
 }
 
 
+// A_CheckProximity flags
+enum /*EProximityFlags*/ {
+  CPXF_ANCESTOR    = 1,
+  CPXF_LESSOREQUAL = 1<<1,
+  CPXF_NOZ         = 1<<2,
+  CPXF_COUNTDEAD   = 1<<3,
+  CPXF_DEADONLY    = 1<<4,
+  CPXF_EXACT       = 1<<5,
+  CPXF_SETTARGET   = 1<<6,
+  CPXF_SETMASTER   = 1<<7,
+  CPXF_SETTRACER   = 1<<8,
+  CPXF_FARTHEST    = 1<<9,
+  CPXF_CLOSEST     = 1<<10,
+  CPXF_SETONPTR    = 1<<11,
+  CPXF_CHECKSIGHT  = 1<<12,
+};
+
+
 //==========================================================================
 //
 //  A_Look
@@ -920,4 +938,117 @@ final void A_Burst (class!Actor ChunkType) {
   // drop items and go away
   A_NoBlocking();
   Destroy();
+}
+
+
+//==========================================================================
+//
+//  A_CheckProximity
+//
+//==========================================================================
+final void A_CheckProximity (state Label, name classname, float distance, optional int count, optional int flags, optional int aptr) {
+  // state jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+
+  if (!specified_aptr) aptr = AAPTR_DEFAULT;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckProximity', aptr));
+  //if (!specified_aptr && tgt != Target) Error("WUTA?! in `A_CheckProximity`");
+  if (!tgt) return;
+
+  if (flags&CPXF_SETONPTR) {
+    //k8: is this right?
+    if (flags&CPXF_SETTARGET) tgt.Target = none;
+    if (flags&CPXF_SETMASTER) tgt.Master = none;
+    if (flags&CPXF_SETTRACER) tgt.Tracer = none;
+  } else {
+    if (flags&CPXF_SETTARGET) Target = none;
+    if (flags&CPXF_SETMASTER) Master = none;
+    if (flags&CPXF_SETTRACER) Tracer = none;
+  }
+
+  distance = fmax(0.1, distance);
+
+  if (!specified_count) count = 1;
+  if (count < 1) return; // oops
+  if (!classname) return; // oops
+
+  EntityEx bestent = none;
+  float bestdist = (flags&CPXF_FARTHEST ? -1 : float.max);
+
+  Entity ee;
+  foreach RadiusThings(out ee, tgt.Origin, distance) {
+    EntityEx ent = EntityEx(ee);
+    if (!ent) continue;
+    // k8: is this right?
+    if (flags&CPXF_COUNTDEAD) {
+      // nothing to do
+    } else if (flags&CPXF_DEADONLY) {
+      if (ent.bMonster && !ent.bCorpse) continue;
+    } else {
+      if (ent.bMonster && ent.bCorpse) continue;
+    }
+    // check class match
+    if (nameicmp(GetClassName(ent.Class), classname) != 0) {
+      if (!(flags&CPXF_ANCESTOR)) continue;
+      class!EntityEx tc = class!EntityEx(ent.Class);
+      bool found = false;
+      while (tc) {
+        if (nameicmp(GetClassName(tc), classname) == 0) { found = true; break; }
+        tc = class!EntityEx(GetClassParent(tc));
+      }
+      if (!found) continue;
+    }
+    // check distance (save it, we may need it later)
+    float dist = (flags&CPXF_NOZ ? tgt.DistTo2(ent) : tgt.DistTo(ent));
+    if (dist > distance) continue;
+    // check LOS
+    if (flags&CPXF_CHECKSIGHT) {
+      if (!tgt.CanSee(ent)) continue;
+    }
+    // count things
+    --count;
+    // early exit, if possible
+    if (count < 0 && (flags&(CPXF_EXACT|CPXF_LESSOREQUAL))) return; // oops, too many
+    // if we want it to be saved with a distance condition, we cannot exit early
+    if ((flags&(CPXF_SETTARGET|CPXF_SETMASTER|CPXF_SETTRACER)) && (flags&(CPXF_FARTHEST|CPXF_CLOSEST))) {
+      if (flags&CPXF_FARTHEST) {
+        if (dist <= bestdist) continue;
+      } else {
+        // closest
+        if (dist >= bestdist) continue;
+      }
+      bestent = ent;
+      bestdist = dist;
+    } else {
+      if (!bestent) bestent = ent; // take first one
+      // early exit, if possible
+      if (count == 0 && !(flags&(CPXF_LESSOREQUAL|CPXF_EXACT))) break;
+    }
+  }
+
+  if (!bestent) return; // nothing was found, oops
+
+  // check condition
+  if (flags&CPXF_EXACT) {
+    if (count != 0) return;
+  } else if (flags&CPXF_LESSOREQUAL) {
+    if (count < 0) return;
+  }
+
+  // set pointers
+  if (flags&(CPXF_SETTARGET|CPXF_SETMASTER|CPXF_SETTRACER)) {
+    if (flags&CPXF_SETONPTR) {
+      //k8: is this right?
+      if (flags&CPXF_SETTARGET) tgt.Target = bestent;
+      if (flags&CPXF_SETMASTER) tgt.Master = bestent;
+      if (flags&CPXF_SETTRACER) tgt.Tracer = bestent;
+    } else {
+      if (flags&CPXF_SETTARGET) Target = bestent;
+      if (flags&CPXF_SETMASTER) Master = bestent;
+      if (flags&CPXF_SETTRACER) Tracer = bestent;
+    }
+  }
+
+  // perform jump
+  DoJump(Label);
 }

@@ -116,6 +116,8 @@ class Actor extends Thinker
 
   action native A_SetArg (int n, int v);
 
+  action native A_CheckProximity (state jump, name classname, float distance, optional int count, optional int flags, optional int ptr);
+
   //
   //  Generic monster attacks
   //
