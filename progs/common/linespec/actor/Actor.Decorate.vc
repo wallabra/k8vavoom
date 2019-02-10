@@ -701,12 +701,13 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
 //  decorate_CheckClass
 //
 //==========================================================================
-final bool decorate_CheckClass (string classname, optional int ptr_select, optional bool match_superclass) {
+final bool decorate_CheckClass (name classname, optional int ptr_select, optional bool match_superclass) {
   Entity tgt = DecorDoAAPtr('decorate_CheckClass', ptr_select!optional);
   if (!tgt) return false;
+  if (!classname) return false;
   class!Entity tc = class!Entity(tgt.Class);
   while (tc) {
-    if (stricmp(string(GetClassName(tc)), classname) == 0) return true;
+    if (nameicmp(GetClassName(tc), classname) == 0) return true;
     if (!match_superclass) break;
     tc = class!Entity(GetClassParent(tc));
   }
