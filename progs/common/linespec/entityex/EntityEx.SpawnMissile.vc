@@ -30,25 +30,14 @@
 //  PlayMissileSpawnSound
 //
 //==========================================================================
-
-final void PlayMissileSpawnSound(EntityEx Source)
-{
-  if (SightSound)
-  {
-    if (!bSpawnSoundSource)
-    {
-      PlaySound(SightSound, CHAN_VOICE);
-    }
-    else if (Source)
-    {
-      Source.PlaySound(SightSound, CHAN_WEAPON);
-    }
-    else
-    {
-      PlaySound(SightSound, CHAN_WEAPON);
-    }
+final void PlayMissileSpawnSound (EntityEx Source) {
+  if (SightSound) {
+         if (!bSpawnSoundSource) PlaySound(SightSound, CHAN_VOICE);
+    else if (Source) Source.PlaySound(SightSound, CHAN_WEAPON);
+    else PlaySound(SightSound, CHAN_WEAPON);
   }
 }
+
 
 //==========================================================================
 //
@@ -57,54 +46,41 @@ final void PlayMissileSpawnSound(EntityEx Source)
 //  Moves the missile forward a bit and possibly explodes it right there.
 //
 //==========================================================================
-
-final bool CheckMissileSpawn()
-{
-  if (bRandomise && StateTime > 0.0)
-  {
-    StateTime -= Random() * 0.1;
-    if (StateTime < 1.0 / 35.0)
-      StateTime = 1.0 / 35.0;
+final bool CheckMissileSpawn () {
+  if (bRandomise && StateTime > 0.0) {
+    StateTime -= Random()*0.1;
+    StateTime = fmax(1.0/35.0, StateTime);
   }
 
-  // move a little forward so an angle can be computed if it
-  // immediately explodes
+  // move a little forward so an angle can be computed if it immediately explodes
   UnlinkFromWorld();
-  if (Speed > 100.0 * 35.0)
-  {
+  if (Speed > 100.0*35.0) {
     //  Ultra-fast missile
-    Origin += Velocity * 0.0142857143 / 8.0;
-  }
-  else
-  {
-    //  Normal missile
-    Origin += Velocity * 0.0142857143;
+    Origin += Velocity*0.0142857143/8.0;
+  } else {
+    // normal missile
+    Origin += Velocity*0.0142857143;
   }
   LinkToWorld();
+
   tmtrace_t tmtrace;
-  if (!TryMoveEx(&tmtrace, Origin, false))
-  {
-    //  Don't explode ripping missiles that spawn inside another thing.
-    if (!tmtrace.BlockingMobj || !bRip ||
-      EntityEx(tmtrace.BlockingMobj).bDontRip)
-    {
-      if (CountsAsKill())
-      {
+  if (!TryMoveEx(&tmtrace, Origin, false)) {
+    // don't explode ripping missiles that spawn inside another thing
+    if (!tmtrace.BlockingMobj || !bRip || EntityEx(tmtrace.BlockingMobj).bDontRip) {
+      if (CountsAsKill()) {
         bCountKill = false;
-        Level.TotalKills--;
+        --Level.TotalKills;
       }
-      //  Don't explode missiles on horizon lines.
-      if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon)
-      {
+      // don't explode missiles on horizon lines
+      if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
         Destroy();
-      }
-      else
-      {
+      } else {
         ExplodeMissile(EntityEx(tmtrace.BlockingMobj));
       }
       return false;
     }
   }
+
   return true;
 }
 
@@ -203,79 +179,56 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
 //  SpawnMissile
 //
 //  Returns nullptr if the missile exploded immediately, otherwise returns
-// a Actor reference to the missile.
+//  a Actor reference to the missile.
 //
 //==========================================================================
-
-final EntityEx SpawnMissile(EntityEx dest, class!EntityEx type,
-  optional float SpawnHeight)
-{
-  EntityEx A;
-  TVec org;
+final EntityEx SpawnMissile (EntityEx dest, class!EntityEx type, optional float SpawnHeight) {
   TVec dir;
 
-  org = Origin;
-  if (specified_SpawnHeight)
-  {
-    org.z += SpawnHeight;
-  }
-  else if (type.default.bIgnoreFloorStep)
-  {
-    org.z = ONFLOORZ + FloorClip;
-  }
-  else if (type.default.bIgnoreCeilingStep)
-  {
-    org.z = ONCEILINGZ;
-  }
-  else
-  {
-    org.z += 32.0;
-  }
-  if (org.z != ONFLOORZ)
-  {
-    org.z -= FloorClip;
-  }
-  A = Spawn(type, org);
+  TVec org = Origin;
+       if (specified_SpawnHeight) org.z += SpawnHeight;
+  else if (type.default.bIgnoreFloorStep) org.z = ONFLOORZ+FloorClip;
+  else if (type.default.bIgnoreCeilingStep) org.z = ONCEILINGZ;
+  else org.z += 32.0;
+
+  if (org.z != ONFLOORZ) org.z -= FloorClip;
+
+  EntityEx A = Spawn(type, org);
   if (A) A.DecalName = A.default.DecalName;
 
   A.PlayMissileSpawnSound(self);
 
-  A.Target = self;  // where it came from
+  A.Target = self; // where it came from
 
-  if (dest)
-  {
-    dir = dest.Origin - Origin;
-    if (dest.bShadow)
-    {
-      // Invisible target
-      VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
+  if (dest) {
+    dir = dest.Origin-Origin;
+    if (dest.bShadow) {
+      // invisible target
+      VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
     }
-  }
-  else
-  {
+  } else {
     dir = Velocity;
   }
   dir = Normalise(dir);
-  A.Velocity = dir * A.Speed;
-  // Floor and ceiling huggers should never have a vertical component to their velocity
-  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep)
-  {
+  A.Velocity = dir*A.Speed;
+
+  // floor and ceiling huggers should never have a vertical component to their velocity
+  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep) {
     A.Velocity.z = 0.0;
-  }
-  // Adjust the trajectory if the missile will go over the target's head.
-  else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z + dest.Height && A.Origin.z >= dest.Origin.z + dest.Height)
-  {
+  } else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z+dest.Height && A.Origin.z >= dest.Origin.z+dest.Height) {
+    // adjust the trajectory if the missile will go over the target's head
     float dist = fmax(1.0, A.DistTo(dest));
     if (!dist.isfinite) dist = 1;
-    dir.z += (dest.Origin.z + dest.Height - A.Origin.z) / dist;
+    dir.z += (dest.Origin.z+dest.Height-A.Origin.z)/dist;
     dir = Normalise(dir);
 
-    A.Velocity.z = dir.z * A.Speed;
+    A.Velocity.z = dir.z*A.Speed;
   }
   VectorAngles(dir, out A.Angles);
 
-  return A.CheckMissileSpawn() ? A : none;
+  return (A.CheckMissileSpawn() ? A : none);
 }
+
 
 //==========================================================================
 //
@@ -285,99 +238,82 @@ final EntityEx SpawnMissile(EntityEx dest, class!EntityEx type,
 // a Actor reference to the missile.
 //
 //==========================================================================
+final EntityEx SpawnMissileXYZ (TVec org, EntityEx dest, class!EntityEx type) {
+  TVec dir;
 
-final EntityEx SpawnMissileXYZ(TVec org, EntityEx dest, class!EntityEx type)
-{
-  TVec    dir;
-  EntityEx  A;
+  if (org.z != ONFLOORZ) org.z -= FloorClip;
 
-  if (org.z != ONFLOORZ)
-  {
-    org.z -= FloorClip;
-  }
-  A = Spawn(type, org);
+  EntityEx A = Spawn(type, org);
   if (A) A.DecalName = A.default.DecalName;
   A.PlayMissileSpawnSound(self);
   A.Target = self;  // Originator
-  dir = dest.Origin - Origin;
-  if (dest.bShadow)
-  {
-    // Invisible target
-    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0);
+  dir = dest.Origin-Origin;
+  if (dest.bShadow) {
+    // invisible target
+    VectorRotateAroundZ(ref dir, (Random()-Random())*45.0);
   }
   dir = Normalise(dir);
-  A.Velocity = dir * A.Speed;
-  // Floor and ceiling huggers should never have a vertical component to their velocity
-  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep)
-  {
+  A.Velocity = dir*A.Speed;
+
+  // floor and ceiling huggers should never have a vertical component to their velocity
+  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep) {
     A.Velocity.z = 0.0;
-  }
-  // Adjust the trajectory if the missile will go over the target's head.
-  else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z + dest.Height && A.Origin.z >= dest.Origin.z + dest.Height)
-  {
+  } else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z+dest.Height && A.Origin.z >= dest.Origin.z+dest.Height) {
+    // adjust the trajectory if the missile will go over the target's head
     float dist = fmax(1.0, A.DistTo(dest));
     if (!dist.isfinite) dist = 1;
-    dir.z += (dest.Origin.z + dest.Height - A.Origin.z) / dist;
+    dir.z += (dest.Origin.z+dest.Height-A.Origin.z)/dist;
     dir = Normalise(dir);
 
-    A.Velocity.z = dir.z * A.Speed;
+    A.Velocity.z = dir.z*A.Speed;
   }
   VectorAngles(dir, out A.Angles);
-  return A.CheckMissileSpawn() ? A : none;
+
+  return (A.CheckMissileSpawn() ? A : none);
 }
+
 
 //==========================================================================
 //
 //  SpawnMissileZAimed
 //
 //==========================================================================
+final EntityEx SpawnMissileZAimed (float z, EntityEx dest, class!EntityEx type) {
+  TVec dir;
 
-final EntityEx SpawnMissileZAimed(float z, EntityEx dest, class!EntityEx type)
-{
-  EntityEx  A;
-  TVec    dir;
-  TVec        org;
-  float   dist;
+  TVec org = Origin+vector(0.0, 0.0, z != ONFLOORZ ? z-FloorClip : z);
 
-  org = Origin + vector(0.0, 0.0, z != ONFLOORZ ? z - FloorClip : z);
-
-  A = Spawn(type, org);
+  EntityEx A = Spawn(type, org);
   if (A) A.DecalName = A.default.DecalName;
 
   A.PlayMissileSpawnSound(self);
 
   A.Target = self;  // where it came from
 
-  dist = fmax(1.0, DistTo2(dest));
+  float dist = fmax(1.0, DistTo2(dest));
   if (!dist.isfinite) dist = 0;
   dir.x = cos(Angles.yaw);
   dir.y = sin(Angles.yaw);
-  dir.z = (dist != 0.0 ? (dest.Origin.z - Origin.z) / dist : A.Speed);
+  dir.z = (dist != 0.0 ? (dest.Origin.z-Origin.z)/dist : A.Speed);
   // fuzzy player
-  if (dest.bShadow)
-  {
-    VectorRotateAroundZ(ref dir, (Random() - Random()) * 45.0 / 2.0);
-  }
+  if (dest.bShadow) VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
   dir = Normalise(dir);
-  A.Velocity = dir * A.Speed;
-  // Floor and ceiling huggers should never have a vertical component to their velocity
-  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep)
-  {
+  A.Velocity = dir*A.Speed;
+  // floor and ceiling huggers should never have a vertical component to their velocity
+  if (A.bIgnoreCeilingStep || A.bIgnoreFloorStep) {
     A.Velocity.z = 0.0;
-  }
-  // Adjust the trajectory if the missile will go over the target's head.
-  else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z + dest.Height && A.Origin.z >= dest.Origin.z + dest.Height)
-  {
+  } else if (dest && Origin.z >= dest.Origin.z && Origin.z <= dest.Origin.z+dest.Height && A.Origin.z >= dest.Origin.z+dest.Height) {
+    // adjust the trajectory if the missile will go over the target's head
     float dist2 = fmax(1.0, A.DistTo(dest));
     if (!dist2.isfinite) dist2 = 1;
-    dir.z += (dest.Origin.z + dest.Height - A.Origin.z) / dist2;
+    dir.z += (dest.Origin.z+dest.Height-A.Origin.z)/dist2;
     dir = Normalise(dir);
 
-    A.Velocity.z = dir.z * A.Speed;
+    A.Velocity.z = dir.z*A.Speed;
   }
   VectorAngles(dir, out A.Angles);
 
-  return A.CheckMissileSpawn() ? A : none;
+  return (A.CheckMissileSpawn() ? A : none);
 }
 
 
@@ -473,8 +409,8 @@ final EntityEx SpawnMissileAngleSpeed (class!EntityEx type, float angle,
   if (!mo.DecalName) mo.DecalName = type.default.DecalName;
   mo.Tracer = self; // Originator
   mo.Angles.yaw = angle;
-  mo.Velocity.x = speed * cos(angle);
-  mo.Velocity.y = speed * sin(angle);
+  mo.Velocity.x = speed*cos(angle);
+  mo.Velocity.y = speed*sin(angle);
   mo.Velocity.z = momz;
   mo.PlayMissileSpawnSound(self);
   return mo.CheckMissileSpawn() ? mo : none;
@@ -498,7 +434,7 @@ final EntityEx SpawnSubMissile (class!EntityEx type, EntityEx AInstigator) {
 
   other.Velocity.x = other.Speed*cos(Angles.yaw);
   other.Velocity.y = other.Speed*sin(Angles.yaw);
-  AimLineAttack(dir, Angles, 1024.0);
+  AimLineAttack(dir, Angles, 1024.0, isRocket:true);
   other.Velocity.z = other.Speed*dir.z;
   other.CheckMissileSpawn();
   return other;
@@ -554,9 +490,9 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
 
   // try to find a target
   if (specified_angle) {
-    AimTarget = Aim(dir, 16.0*64.0, angle, noAutoaim:noAutoAim!optional);
+    AimTarget = Aim(dir, 16.0*64.0, angle, noAutoaim:noAutoAim!optional, isRocket:true);
   } else {
-    AimTarget = Aim(dir, 16.0*64.0, noAutoaim:noAutoAim!optional);
+    AimTarget = Aim(dir, 16.0*64.0, noAutoaim:noAutoAim!optional, isRocket:true);
   }
 
   TVec org = (specified_SpawnOrg ? SpawnOrg : Origin);
@@ -569,9 +505,9 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
     dir.z = 0.0;
     dir = Normalise(dir);
   } else {
-    org.z += Height*0.5-FloorClip;
     // missiles are spawned 4 units lower than hitscan attacks
     // add an extra unit to simulate Doom's original behaviour
+    org.z += Height*0.5-FloorClip;
     if (bIsPlayer) {
       org.z += PlayerEx(Player).GetAttackZOfs(missile:true)-3.0;
     } else {

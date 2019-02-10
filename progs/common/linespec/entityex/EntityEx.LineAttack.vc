@@ -428,7 +428,8 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 //  Sets linetaget and aim_slope when a target is aimed at.
 //
 //==========================================================================
-final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, optional bool noVertAutoAim) {
+final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
+                              optional bool noVertAutoAim, optional bool isRocket) {
   float x2, y2;
   float topangle, botangle;
   TVec dir;
@@ -448,9 +449,9 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, opt
   AngleVector(angles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
-  aim_z = Origin.z+Height/2.0-FloorClip;
+  aim_z = Origin.z+Height*0.5-FloorClip;
   if (bIsPlayer) {
-    aim_z += PlayerEx(Player).GetAttackZOfs;
+    aim_z += PlayerEx(Player).GetAttackZOfs(missile:isRocket);
   } else {
     aim_z += 8.0;
   }
@@ -554,7 +555,9 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance, opt
 //  intended target
 //
 //===========================================================================
-final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optional bool noAutoaim, optional bool noVertAutoAim) {
+final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
+                    optional bool noAutoaim, optional bool noVertAutoAim,
+                    optional bool isRocket) {
   TAVec ang;
   TVec dir;
   EntityEx LineTarget;
@@ -576,14 +579,14 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
 
   // try to aim at a target
   // this is done even when autoaim is off so that we get a LineTarget that is needed for seeker missiles
-  LineTarget = AimLineAttack(dir, ang, distance);
+  LineTarget = AimLineAttack(dir, ang, distance, isRocket:isRocket!optional);
   if (!LineTarget) {
     auto origYaw = ang.yaw;
     ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
-    LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional);
+    LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
     if (!LineTarget) {
       ang.yaw = AngleMod360(ang.yaw-45.0/4.0);
-      LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional);
+      LineTarget = AimLineAttack(dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
       if (!LineTarget) {
         //ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
         ang.yaw = origYaw;
@@ -603,7 +606,8 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw, optiona
 //  AimEx
 //
 //==========================================================================
-final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps, optional float FinalRange) {
+final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps,
+                      optional float FinalRange, optional bool isRocket) {
   TAVec angles;
   //TVec vforward;
   EntityEx LineTarget;
@@ -612,20 +616,20 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
     // try to the left
     angles = Angles;
     angles.yaw = AngleMod360(angles.yaw+float(i)*AngleInc);
-    LineTarget = AimLineAttack(OutDir, angles, Range);
+    LineTarget = AimLineAttack(OutDir, angles, Range, isRocket:isRocket!optional);
     if (LineTarget) return LineTarget;
 
     // try to the right
     angles = Angles;
     angles.yaw = AngleMod360(angles.yaw-float(i)*AngleInc);
-    LineTarget = AimLineAttack(OutDir, angles, Range);
+    LineTarget = AimLineAttack(OutDir, angles, Range, isRocket:isRocket!optional);
     if (LineTarget) return LineTarget;
   }
 
   if (FinalRange) {
     // didn't find any creatures, so try to strike any walls
     angles = Angles;
-    LineTarget = AimLineAttack(out OutDir, angles, FinalRange);
+    LineTarget = AimLineAttack(out OutDir, angles, FinalRange, isRocket:isRocket!optional);
   } else {
     //AngleVector(Angles, out vforward);
     //OutDir = vforward;
