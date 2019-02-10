@@ -826,11 +826,9 @@ final float DistTo(Entity Other)
 
 final float DistTo2(Entity Other)
 {
-  TVec dir;
-
-  dir = Other.Origin - Origin;
+  TVec dir = Other.Origin - Origin;
   dir.z = 0.0;
-  return Length(dir);
+  return Length2D(dir);
 }
 
 
