@@ -670,6 +670,10 @@ void VOpenGLDrawer::WorldDrawing () {
 //
 //  VOpenGLDrawer::DrawWorldAmbientPass
 //
+//  this renders sector ambient based on sector light level
+//  it can be optimised: we don't need to do any texture interpolation for
+//  textures without transparent pixels
+//
 //==========================================================================
 void VOpenGLDrawer::DrawWorldAmbientPass () {
   guard(VOpenGLDrawer::DrawWorldAmbientPass);
