@@ -55,90 +55,12 @@ static bool xstrcmpCI (const char *s, const char *pat) {
   while (*s && *pat) {
     const char c0 = (*s++)|32; // lowercase
     const char c1 = *pat++;
-    if (c0 != c1) {
-      /*
-      if (c0 >= 'A' && c0 <= 'Z') c0 += 32; // poor man's tolower
-      if (c1 >= 'A' && c1 <= 'Z') c1 += 32; // poor man's tolower
-      if (c0 != c1) return false;
-      */
-      return false;
-    }
+    if (c0 != c1) return false;
   }
   if (*pat || *(const vuint8 *)s > ' ') return false;
   while (*s && *(const vuint8 *)s <= ' ') ++s;
   return (s[0] == 0);
 }
-
-
-/*
-static bool convertInt (const char *s, int *outv) {
-  bool neg = false;
-  *outv = 0;
-  if (!s || !s[0]) return false;
-  while (*s && *s <= ' ') ++s;
-  if (*s == '+') ++s; else if (*s == '-') { neg = true; ++s; }
-  if (!s[0]) return false;
-  if (s[0] < '0' || s[0] > '9') return false;
-  while (*s) {
-    char ch = *s++;
-    if (ch < '0' || ch > '9') { *outv = 0; return false; }
-    *outv = (*outv)*10+ch-'0';
-  }
-  while (*s && *s <= ' ') ++s;
-  if (*s) { *outv = 0; return false; }
-  if (neg) *outv = -(*outv);
-  return true;
-}
-
-
-static bool convertFloat (const char *s, float *outv) {
-  *outv = 0.0f;
-  if (!s || !s[0]) return false;
-  while (*s && *s <= ' ') ++s;
-  bool neg = (s[0] == '-');
-  if (s[0] == '+' || s[0] == '-') ++s;
-  if (!s[0]) return false;
-  // int part
-  bool wasNum = false;
-  if (s[0] >= '0' && s[0] <= '9') {
-    wasNum = true;
-    while (s[0] >= '0' && s[0] <= '9') *outv = (*outv)*10+(*s++)-'0';
-  }
-  // fractional part
-  if (s[0] == '.') {
-    ++s;
-    if (s[0] >= '0' && s[0] <= '9') {
-      wasNum = true;
-      float v = 0, div = 1.0f;
-      while (s[0] >= '0' && s[0] <= '9') {
-        div *= 10.0f;
-        v = v*10+(*s++)-'0';
-      }
-      *outv += v/div;
-    }
-  }
-  // 'e' part
-  if (wasNum && (s[0] == 'e' || s[0] == 'E')) {
-    ++s;
-    bool negexp = (s[0] == '-');
-    if (s[0] == '-' || s[0] == '+') ++s;
-    if (s[0] < '0' || s[0] > '9') { *outv = 0; return false; }
-    int exp = 0;
-    while (s[0] >= '0' && s[0] <= '9') exp = exp*10+(*s++)-'0';
-    while (exp != 0) {
-      if (negexp) *outv /= 10.0f; else *outv *= 10.0f;
-      --exp;
-    }
-  }
-  // skip trailing 'f', if any
-  if (wasNum && s[0] == 'f') ++s;
-  // trailing spaces
-  while (*s && *s <= ' ') ++s;
-  if (*s || !wasNum) { *outv = 0; return false; }
-  if (neg) *outv = -(*outv);
-  return true;
-}
-*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -153,18 +75,15 @@ VCvar::VCvar(const char *AName, const char *ADefault, const char *AHelp, int AFl
   , BoolValue(false)
   , nextInBucket(nullptr)
 {
-  guard(VCvar::VCvar);
-
   if (!DefaultString) DefaultString = ""; // 'cause why not?
 
   if (!HelpString || !HelpString[0]) HelpString = "no help yet (FIXME!)";
 
+  DoSet(DefaultString);
   if (Name && Name[0]) {
     insertIntoHash(); // insert into hash (this leaks on duplicate vars)
     if (Initialised) Register();
   }
-
-  unguard;
 }
 
 
@@ -178,8 +97,6 @@ VCvar::VCvar(const char *AName, const VStr &ADefault, const VStr &AHelp, int AFl
   , BoolValue(false)
   , nextInBucket(nullptr)
 {
-  guard(VCvar::VCvar);
-
   char *Tmp = new char[ADefault.Length()+1];
   VStr::Cpy(Tmp, *ADefault);
   DefaultString = Tmp;
@@ -190,13 +107,12 @@ VCvar::VCvar(const char *AName, const VStr &ADefault, const VStr &AHelp, int AFl
     HelpString = Tmp;
   }
 
+  DoSet(DefaultString);
   if (Name && Name[0]) {
     insertIntoHash(); // insert into hash (this leaks on duplicate vars)
     check(Initialised);
     Register();
   }
-
-  unguard;
 }
 
 
@@ -227,31 +143,24 @@ VCvar *VCvar::insertIntoHash () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VCvar::Register() {
-  guard(VCvar::Register);
+void VCvar::Register () {
   VCommand::AddToAutoComplete(Name);
-  DoSet(DefaultString);
-  unguard;
+  //DoSet(DefaultString);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VCvar::Set (int value) {
-  guard(VCvar::Set);
   Set(VStr(value));
-  unguard;
 }
 
 
 void VCvar::Set (float value) {
-  guard(VCvar::Set);
   Set(VStr(value));
-  unguard;
 }
 
 
 void VCvar::Set (const VStr &AValue) {
-  guard(VCvar::Set);
   if (Flags&CVAR_Latch) {
     LatchedString = AValue;
     return;
@@ -259,23 +168,22 @@ void VCvar::Set (const VStr &AValue) {
 
   if (AValue == StringValue) return;
 
-  if ((Flags&CVAR_Cheat) != 0 && !Cheating) {
-    GCon->Logf("'%s' cannot be changed while cheating is disabled", Name);
-    return;
+  if (Initialised) {
+    if ((Flags&CVAR_Cheat) != 0 && !Cheating) {
+      GCon->Logf("'%s' cannot be changed while cheating is disabled", Name);
+      return;
+    }
   }
 
   DoSet(AValue);
 
-  Flags |= CVAR_Modified;
-  unguard;
+  if (Initialised) Flags |= CVAR_Modified;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // does the actual value assignement
 void VCvar::DoSet (const VStr &AValue) {
-  guard(VCvar::DoSet);
-
   StringValue = AValue;
   bool validInt = VStr::convertInt(*StringValue, &IntValue);
   bool validFloat = VStr::convertFloat(*StringValue, &FloatValue);
@@ -312,59 +220,58 @@ void VCvar::DoSet (const VStr &AValue) {
     }
   }
 
+  if (Initialised) {
 #ifdef CLIENT
-  if (Flags&CVAR_UserInfo) {
-    Info_SetValueForKey(cls.userinfo, Name, *StringValue);
-    if (cl) {
-      if (GGameInfo->NetMode == NM_TitleMap ||
-          GGameInfo->NetMode == NM_Standalone ||
-          GGameInfo->NetMode == NM_ListenServer)
-      {
-        VCommand::ExecuteString(VStr("setinfo \"")+Name+"\" \""+StringValue+"\"\n", VCommand::SRC_Client, cl);
-      } else if (cl->Net) {
-        cl->Net->SendCommand(VStr("setinfo \"")+Name+"\" \""+StringValue+"\"\n");
-      }
-    }
-  }
-#endif
-
-#ifdef SERVER
-  if (Flags&CVAR_ServerInfo) {
-    Info_SetValueForKey(svs.serverinfo, Name, *StringValue);
-    if (GGameInfo && GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
-      for (int i = 0; i < MAXPLAYERS; ++i) {
-        if (GGameInfo->Players[i]) {
-          GGameInfo->Players[i]->eventClientSetServerInfo(Name, StringValue);
+    if (Flags&CVAR_UserInfo) {
+      Info_SetValueForKey(cls.userinfo, Name, *StringValue);
+      if (cl) {
+        if (GGameInfo->NetMode == NM_TitleMap ||
+            GGameInfo->NetMode == NM_Standalone ||
+            GGameInfo->NetMode == NM_ListenServer)
+        {
+          VCommand::ExecuteString(VStr("setinfo \"")+Name+"\" \""+StringValue+"\"\n", VCommand::SRC_Client, cl);
+        } else if (cl->Net) {
+          cl->Net->SendCommand(VStr("setinfo \"")+Name+"\" \""+StringValue+"\"\n");
         }
       }
     }
-  }
 #endif
-  unguard;
+
+#ifdef SERVER
+    if (Flags&CVAR_ServerInfo) {
+      Info_SetValueForKey(svs.serverinfo, Name, *StringValue);
+      if (GGameInfo && GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
+        for (int i = 0; i < MAXPLAYERS; ++i) {
+          if (GGameInfo->Players[i]) {
+            GGameInfo->Players[i]->eventClientSetServerInfo(Name, StringValue);
+          }
+        }
+      }
+    }
+#endif
+  }
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool VCvar::IsModified () {
-  guard(VCvar::IsModified);
-  bool ret = !!(Flags & CVAR_Modified);
+  bool ret = !!(Flags&CVAR_Modified);
   // clear modified flag
   Flags &= ~CVAR_Modified;
   return ret;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VCvar::Init () {
-  guard(VCvar::Init);
-  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
-      cvar->Register();
+  if (!Initialised) {
+    for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+      for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+        cvar->Register();
+      }
     }
+    Initialised = true;
   }
-  Initialised = true;
-  unguard;
 }
 
 
@@ -385,25 +292,24 @@ void VCvar::dumpHashStats () {
 // ////////////////////////////////////////////////////////////////////////// //
 // this is called only once on engine shutdown, so don't bother with deletion
 void VCvar::Shutdown () {
-  guard(VCvar::Shutdown);
-  dumpHashStats();
-  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
-    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
-      // free default value
-      if (cvar->defstrOwned) {
-        delete[] const_cast<char*>(cvar->DefaultString);
-        cvar->DefaultString = ""; // set to some sensible value
+  if (Initialised) {
+    dumpHashStats();
+    for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+      for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+        // free default value
+        if (cvar->defstrOwned) {
+          delete[] const_cast<char *>(cvar->DefaultString);
+          cvar->DefaultString = ""; // set to some sensible value
+        }
       }
     }
+    Initialised = false;
   }
-  Initialised = false;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VCvar::Unlatch () {
-  guard(VCvar::Unlatch);
   for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
     for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
       if (cvar->LatchedString.IsNotEmpty()) {
@@ -412,14 +318,13 @@ void VCvar::Unlatch () {
       }
     }
   }
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VCvar::SetCheating (bool new_state) {
-  guard(VCvar::SetCheating);
   Cheating = new_state;
+  /*
   if (!Cheating) {
     for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
       for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
@@ -427,7 +332,7 @@ void VCvar::SetCheating (bool new_state) {
       }
     }
   }
-  unguard;
+  */
 }
 
 
@@ -439,7 +344,7 @@ void VCvar::CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, 
     new VCvar(*var_name, ADefault, AHelp, AFlags);
   } else {
     // delete old default value if necessary
-    if (cvar->defstrOwned) delete[] const_cast<char*>(cvar->DefaultString);
+    if (cvar->defstrOwned) delete[] const_cast<char *>(cvar->DefaultString);
     // set new default value
     {
       char *Tmp = new char[ADefault.Length()+1];
@@ -491,110 +396,87 @@ bool VCvar::CanBeModified (const char *var_name, bool modonly, bool noserver) {
 
 
 VCvar *VCvar::FindVariable (const char *name) {
-  guard(VCvar::FindVariable);
   if (!name || name[0] == 0) return nullptr;
   vuint32 nhash = cvnamehash(name);
   for (VCvar *cvar = cvhBuckets[nhash%CVAR_HASH_SIZE]; cvar; cvar = cvar->nextInBucket) {
     if (cvar->lnhash == nhash && !VStr::ICmp(name, cvar->Name)) return cvar;
   }
   return nullptr;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 int VCvar::GetInt (const char *var_name) {
-  guard(VCvar::GetInt);
   VCvar *var = FindVariable(var_name);
   return (var ? var->IntValue : 0);
-  unguard;
 }
 
 
 float VCvar::GetFloat (const char *var_name) {
-  guard(VCvar::GetFloat);
   VCvar *var = FindVariable(var_name);
   return (var ? var->FloatValue : 0.0f);
-  unguard;
 }
 
 
 bool VCvar::GetBool (const char *var_name) {
-  guard(VCvar::GetBool);
   VCvar *var = FindVariable(var_name);
   return (var ? var->BoolValue : false);
-  unguard;
 }
 
 
 const char *VCvar::GetCharp (const char *var_name) {
-  guard(VCvar::GetCharp);
   VCvar *var = FindVariable(var_name);
   return (var ? *var->StringValue : "");
-  unguard;
 }
 
 
 VStr VCvar::GetString (const char *var_name) {
-  guard(VCvar::GetString);
   VCvar *var = FindVariable(var_name);
   if (!var) return VStr();
   return var->StringValue;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 const char *VCvar::GetHelp (const char *var_name) {
-  guard(VCvar::GetHelp);
   VCvar *var = FindVariable(var_name);
   if (!var) return nullptr;
   return var->HelpString;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 int VCvar::GetVarFlags (const char *var_name) {
-  guard(VCvar::GetHelp);
   VCvar *var = FindVariable(var_name);
   if (!var) return -1;
   return var->getFlags();
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VCvar::Set (const char *var_name, int value) {
-  guard(VCvar::Set);
   VCvar *var = FindVariable(var_name);
   if (!var) Sys_Error("Cvar_Set: variable %s not found\n", var_name);
   var->Set(value);
-  unguard;
 }
 
 
 void VCvar::Set (const char *var_name, float value) {
-  guard(VCvar::Set);
   VCvar *var = FindVariable(var_name);
   if (!var) Sys_Error("Cvar_Set: variable %s not found\n", var_name);
   var->Set(value);
-  unguard;
 }
 
 
 void VCvar::Set (const char *var_name, const VStr &value) {
-  guard(VCvar::Set);
   VCvar *var = FindVariable(var_name);
   if (!var) Sys_Error("Cvar_SetString: variable %s not found\n", var_name);
   var->Set(value);
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 bool VCvar::Command (const TArray<VStr> &Args) {
-  guard(VCvar::Command);
   VCvar *cvar = FindVariable(*Args[0]);
   if (!cvar) return false;
 
@@ -611,7 +493,7 @@ bool VCvar::Command (const TArray<VStr> &Args) {
   // perform a variable print or set
   if (Args.Num() == 1) {
     GCon->Log(VStr(cvar->Name)+" is \""+cvar->StringValue+"\"");
-    if (cvar->Flags & CVAR_Latch && cvar->LatchedString.IsNotEmpty()) {
+    if ((cvar->Flags&CVAR_Latch) && cvar->LatchedString.IsNotEmpty()) {
       GCon->Log(VStr("Latched \"")+cvar->LatchedString+"\"");
     }
   } else if (needHelp) {
@@ -619,20 +501,18 @@ bool VCvar::Command (const TArray<VStr> &Args) {
   } else {
     if (cvar->Flags&CVAR_Rom) {
       GCon->Logf("%s is read-only", cvar->Name);
-    } else if (cvar->Flags & CVAR_Init && host_initialised) {
+    } else if ((cvar->Flags&CVAR_Init) && host_initialised) {
       GCon->Logf("%s can be set only from command-line", cvar->Name);
     } else {
       cvar->Set(Args[1]);
     }
   }
   return true;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 vuint32 VCvar::countCVars () {
-  guard(VCvar::countCVars);
   vuint32 count = 0;
   for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
     for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
@@ -640,32 +520,29 @@ vuint32 VCvar::countCVars () {
     }
   }
   return count;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
-static int vcvcmp (const void *aa, const void *bb) {
-  const VCvar *a = *(const VCvar **)aa;
-  const VCvar *b = *(const VCvar **)bb;
-  if (a == b) return 0;
-  // mod vars should came last
-  if (a->isModVar()) {
-    if (!b->isModVar()) return 1;
-  } else if (b->isModVar()) {
-    if (!a->isModVar()) return -1;
+  static int vcvcmp (const void *aa, const void *bb, void *udata) {
+    const VCvar *a = *(const VCvar **)aa;
+    const VCvar *b = *(const VCvar **)bb;
+    if (a == b) return 0;
+    // mod vars should came last
+    if (a->isModVar()) {
+      if (!b->isModVar()) return 1;
+    } else if (b->isModVar()) {
+      if (!a->isModVar()) return -1;
+    }
+    return VStr::ICmp(a->GetName(), b->GetName());
   }
-  return VStr::ICmp(a->GetName(), b->GetName());
-}
 }
 
 
 // contains `countCVars()` elements, must be `delete[]`d.
 // can return `nullptr`.
 VCvar **VCvar::getSortedList () {
-  guard(VCvar::getSortedList);
-
   vuint32 count = countCVars();
   if (count == 0) return nullptr;
 
@@ -680,41 +557,25 @@ VCvar **VCvar::getSortedList () {
     }
   }
 
-  // sort it (yes, i know, bubble sort sux. idc.)
-  if (count > 1) {
-    // straight from wikipedia, lol
-    /*
-    vuint32 n = count;
-    do {
-      vuint32 newn = 0;
-      for (vuint32 i = 1; i < n; ++i) {
-        if (VStr::ICmp(list[i-1]->Name, list[i]->Name) > 0) {
-          VCvar *tmp = list[i];
-          list[i] = list[i-1];
-          list[i-1] = tmp;
-          newn = i;
-        }
-      }
-      n = newn;
-    } while (n != 0);
-    */
-    qsort(list, count, sizeof(list[0]), &vcvcmp);
-  }
+  // sort it
+  if (count > 1) timsort_r(list, count, sizeof(list[0]), &vcvcmp, nullptr);
 
   return list;
-  unguard;
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 void VCvar::WriteVariablesToFile (FILE *f) {
-  guard(VCvar::WriteVariables);
   if (!f) return;
   vuint32 count = countCVars();
   VCvar **list = getSortedList();
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
-    if (cvar->Flags&CVAR_Archive) {
+    if (cvar->Flags&(CVAR_Archive|CVAR_AlwaysArchive)) {
+      // do not write variables with default values
+      if (!(cvar->Flags&CVAR_AlwaysArchive)) {
+        if (cvar->StringValue.Cmp(cvar->DefaultString) == 0) continue;
+      }
       if (cvar->Flags&CVAR_FromMod) {
         fprintf(f, "cvarinfovar");
         if (cvar->Flags&CVAR_ServerInfo) fprintf(f, " server"); else fprintf(f, " user");
@@ -727,7 +588,6 @@ void VCvar::WriteVariablesToFile (FILE *f) {
     }
   }
   delete[] list;
-  unguard;
 }
 
 
@@ -737,7 +597,6 @@ void VCvar::WriteVariablesToFile (FILE *f) {
 // This is slightly more complicated, as we want nicely sorted list.
 // It can be fairly slow, we don't care.
 COMMAND(CvarList) {
-  guard(COMMAND CvarList);
   vuint32 count = VCvar::countCVars();
   VCvar **list = VCvar::getSortedList();
   bool showValues = (Args.length() > 1 && (Args[1].ICmp("values") == 0 || Args[1].ICmp("value") == 0));
@@ -751,7 +610,6 @@ COMMAND(CvarList) {
   }
   GCon->Logf("%u variables.", count);
   delete[] list;
-  unguard;
 }
 
 
@@ -760,7 +618,6 @@ COMMAND(CvarList) {
 //
 // Show short description for a cvar.
 COMMAND(WhatIs) {
-  guard(COMMAND WhatIs);
   if (Args.Num() != 2) {
     GCon->Logf("Show short cvar description.");
     GCon->Logf("usage: whatis varname");
@@ -772,7 +629,6 @@ COMMAND(WhatIs) {
       GCon->Logf("Unknown cvar: '%s'", *(Args[1]));
     }
   }
-  unguard;
 }
 
 
@@ -781,7 +637,6 @@ COMMAND(WhatIs) {
 //
 // create temp variable from user mod
 COMMAND(CvarInfoVar) {
-  guard(COMMAND CvarInfoVar);
   if (Args.Num() < 3) {
     GCon->Logf("usage: cvarinfovar varname varvalue");
   } else {
@@ -794,9 +649,9 @@ COMMAND(CvarInfoVar) {
       cvar->Set(vvalue);
       return;
     }
-    int flags = CVAR_FromMod|CVAR_Archive;
+    int flags = CVAR_FromMod|CVAR_Archive|CVAR_AlwaysArchive;
     for (int f = 1; f < Args.length()-2; ++f) {
-           if (Args[f].ICmp("noarchive") == 0) flags &= ~CVAR_Archive;
+           if (Args[f].ICmp("noarchive") == 0) flags &= ~(CVAR_Archive|CVAR_AlwaysArchive);
       else if (Args[f].ICmp("cheat") == 0) flags |= CVAR_Cheat;
       else if (Args[f].ICmp("latch") == 0) flags |= CVAR_Latch;
       else if (Args[f].ICmp("server") == 0) flags |= CVAR_ServerInfo;
@@ -806,7 +661,6 @@ COMMAND(CvarInfoVar) {
     //GCon->Logf("cvarinfo var '%s' (flags=0x%04x) val=\"%s\"", *vname, flags, *(vvalue.quote()));
     VCvar::CreateNew(*vname, vvalue, "cvarinfo variable", flags);
   }
-  unguard;
 }
 
 

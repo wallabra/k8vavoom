@@ -35,7 +35,9 @@ enum {
   CVAR_Cheat      = 0x0040, // Can not be changed if cheats are disabled
   CVAR_Modified   = 0x0080, // Set each time the cvar is changed
   CVAR_FromMod    = 0x0100, // This cvar came from cvarinfo
-  CVAR_PreInit    = 0x8000, // CLI change for this cvar should be processed before initializing main game
+  CVAR_PreInit    = 0x4000, // CLI change for this cvar should be processed before initializing main game
+  //
+  CVAR_AlwaysArchive = 0x8000, // always write to config
 };
 
 
