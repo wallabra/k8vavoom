@@ -573,6 +573,10 @@ void VLevel::Destroy () {
 
   decanimlist = nullptr; // why not?
 
+  if (csTouched) Z_Free(csTouched);
+  csTouchCount = 0;
+  csTouched = nullptr;
+
   // destroy all thinkers (including scripts)
   DestroyAllThinkers();
 

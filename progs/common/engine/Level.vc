@@ -164,6 +164,9 @@ native readonly private int __decanimuid;
 // not really array of void pointers, and properly cleared by C++ code
 native transient array!(/*VLevelScriptThinker*/void *) scriptThinkers;
 
+native transient private int csTouchCount;
+native transient private int *csTouched; // for ChangeSector; Z_Malloc'ed, NumSectors elements
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // natives

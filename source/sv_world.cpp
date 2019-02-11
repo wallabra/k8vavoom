@@ -556,18 +556,21 @@ int SV_PointContents (const sector_t *sector, const TVec &p) {
 
 //==========================================================================
 //
-//  VLevel::ChangeSector
+//  VLevel::ChangeSectorInternal
 //
 //  jff 3/19/98 added to just check monsters on the periphery of a moving
 //  sector instead of all in bounding box of the sector. Both more accurate
 //  and faster.
 //
 //==========================================================================
-bool VLevel::ChangeSector (sector_t *sector, int crunch) {
-  guard(VLevel::ChangeSector);
-  sector_t *sec2;
-  sec_region_t *reg;
+bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
+  guard(VLevel::ChangeSectorInternal);
   msecnode_t *n;
+
+  check(sector);
+  int secnum = (int)(ptrdiff_t)(sector-Sectors);
+  if ((csTouched[secnum]&0x7fffffffU) == csTouchCount) return !!(csTouched[secnum]&0x80000000U);
+  csTouched[secnum] = csTouchCount;
 
   CalcSecMinMaxs(sector);
 
@@ -594,7 +597,11 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
         if (!n->Thing->eventSectorChanged(crunch)) {
           // doesn't fit, keep checking (crush other things)
           // k8: no need to check flags, VC code does this for us
-          /*if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap))*/ ret = true;
+          /*if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap))*/
+          {
+            if (ret) csTouched[secnum] |= 0x80000000U;
+            ret = true;
+          }
         }
         // exit and start over
         break;
@@ -604,11 +611,12 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
 
   if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) {
     for (int i = 0; i < NumSectors; ++i) {
-      sec2 = &Sectors[i];
+      sector_t *sec2 = &Sectors[i];
       if ((sec2->SectorFlags&sector_t::SF_HasExtrafloors) != 0 && sec2 != sector) {
-        for (reg = sec2->botregion; reg; reg = reg->next) {
+        for (sec_region_t *reg = sec2->botregion; reg; reg = reg->next) {
           if (reg->floor == &sector->floor || reg->ceiling == &sector->ceiling) {
-            ret |= ChangeSector(sec2, crunch);
+            ret |= ChangeSectorInternal(sec2, crunch);
+            if (ret) csTouched[secnum] |= 0x80000000U;
             break;
           }
         }
@@ -617,4 +625,18 @@ bool VLevel::ChangeSector (sector_t *sector, int crunch) {
   }
   return ret;
   unguard;
+}
+
+
+bool VLevel::ChangeSector (sector_t *sector, int crunch) {
+  if (!sector || NumSectors == 0) return false; // just in case
+  if (!csTouched) {
+    csTouched = (vuint32 *)Z_Calloc(NumSectors*sizeof(csTouched[0]));
+    csTouchCount = 0;
+  }
+  if (++csTouchCount == 0x80000000U) {
+    memset(csTouched, 0, NumSectors*sizeof(csTouched[0]));
+    csTouchCount = 1;
+  }
+  return ChangeSectorInternal(sector, crunch);
 }

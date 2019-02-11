@@ -306,7 +306,15 @@ class VLevel : public VGameObject {
 
   TArray<VLevelScriptThinker *> scriptThinkers;
 
+  vuint32 csTouchCount;
+  // for ChangeSector; Z_Malloc'ed, NumSectors elements
+  // bit 31 is return value from `ChangeSectorInternal()`
+  // if other bits are equal to csTouchCount
+  vuint32 *csTouched;
+
 private:
+  bool ChangeSectorInternal (sector_t *sector, int crunch);
+
   void xxHashLinedef (XXH32_state_t *xctx, const line_t &line) const {
     if (!xctx) return;
     vuint32 v0idx = (vuint32)(ptrdiff_t)(line.v1-Vertexes);

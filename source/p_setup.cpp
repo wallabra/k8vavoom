@@ -694,6 +694,10 @@ void VLevel::LoadMap (VName AMapName) {
 
   mapTextureWarns.clear();
 
+  if (csTouched) Z_Free(csTouched);
+  csTouchCount = 0;
+  csTouched = nullptr;
+
 load_again:
   GTextureManager.ResetMapTextures();
 
