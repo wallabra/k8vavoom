@@ -18,7 +18,7 @@ void main () {
   vec4 TexColour = texture2D(Texture, TextureCoordinate);
   if (TexColour.a < 0.01) discard;
 
-  float ClampTransp = clamp(((Light.w*TexColour.w)-0.1)/0.9, 0.0, 1.0);
+  float ClampTransp = clamp(((Light.a*TexColour.a)-0.1)/0.9, 0.0, 1.0);
 
   if (!AllowTransparency) {
     if (InAlpha == 1.0 && ClampTransp < 0.666) discard;

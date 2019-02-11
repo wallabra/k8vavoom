@@ -47,7 +47,7 @@ void main () {
 
   float DistToView = dot(VertToView, VertToView);
 
-  float ClampTrans = clamp(((TexColour.w-0.1)/0.9), 0.0, 1.0);
+  float ClampTrans = clamp(((TexColour.a-0.1)/0.9), 0.0, 1.0);
 
   // if signs of Dist and DistToView aren't equal, use (1.0-FogFactor)  (-1)
   // if signs of Dist and DistToView are equal, use (0.75-FogFactor)    (0, 1)
@@ -58,7 +58,7 @@ void main () {
   FinalColour_1.a = (FogFactor*InAlpha)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
 
   if (!AllowTransparency) {
-    if (InAlpha == 1.0 && FinalColour_1.w < 0.666) discard;
+    if (InAlpha == 1.0 && FinalColour_1.a < 0.666) discard;
   } else {
     if (FinalColour_1.a < 0.01) discard;
   }
@@ -75,9 +75,9 @@ void main () {
       FogFactor = (clamp ((1.0 - FogFactor), 0.0, 1.0) * InAlpha);
       float ClampTrans;
 
-      ClampTrans = clamp (((TexColour.w - 0.1) / 0.9), 0.0, 1.0);
+      ClampTrans = clamp (((TexColour.a - 0.1) / 0.9), 0.0, 1.0);
       DarkColour.xyz = FogColour.xyz;
-      DarkColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans * (3.0 - (2.0 * ClampTrans))
+      DarkColour.a = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans * (3.0 - (2.0 * ClampTrans))
       )));
       FinalColour_1 = DarkColour;
     }
@@ -88,9 +88,9 @@ void main () {
       FogFactor = (clamp ((0.75 - FogFactor), 0.0, 0.75) * InAlpha);
       float ClampTrans;
 
-      ClampTrans = clamp (((TexColour.w - 0.1) / 0.9), 0.0, 1.0);
+      ClampTrans = clamp (((TexColour.a - 0.1) / 0.9), 0.0, 1.0);
       BrightColour.xyz = (FogColour.xyz * 0.75);
-      BrightColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans * (3.0 - (2.0 * ClampTrans))
+      BrightColour.a = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans * (3.0 - (2.0 * ClampTrans))
       )));
       FinalColour_1 = BrightColour;
     };
@@ -104,9 +104,9 @@ void main () {
       FogFactor = (clamp ((1.0 - FogFactor), 0.0, 1.0) * InAlpha);
       float ClampTrans;
 
-      ClampTrans = clamp (((TexColour.w - 0.1) / 0.9), 0.0, 1.0);
+      ClampTrans = clamp (((TexColour.a - 0.1) / 0.9), 0.0, 1.0);
       DarkColour.xyz = FogColour.xyz;
-      DarkColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans *
+      DarkColour.a = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans *
       (3.0 - (2.0 * ClampTrans))
       )));
       FinalColour_1 = DarkColour;
@@ -118,9 +118,9 @@ void main () {
       FogFactor = (clamp ((0.75 - FogFactor), 0.0, 0.75) * InAlpha);
       float ClampTrans;
 
-      ClampTrans = clamp (((TexColour.w - 0.1) / 0.9), 0.0, 1.0);
+      ClampTrans = clamp (((TexColour.a - 0.1) / 0.9), 0.0, 1.0);
       BrighColour.xyz = (FogColour.xyz * 0.75);
-      BrighColour.w = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans *
+      BrighColour.a = ((FogFactor * InAlpha) * (ClampTrans * (ClampTrans *
       (3.0 - (2.0 * ClampTrans))
       )));
       FinalColour_1 = BrighColour;
@@ -129,14 +129,14 @@ void main () {
 
   if ((AllowTransparency == bool(0)))
   {
-    if (((InAlpha == 1.0) && (FinalColour_1.w < 0.666)))
+    if (((InAlpha == 1.0) && (FinalColour_1.a < 0.666)))
     {
       discard;
     };
   }
   else
   {
-    if ((FinalColour_1.w < 0.1))
+    if ((FinalColour_1.a < 0.1))
     {
       discard;
     };
