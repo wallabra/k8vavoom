@@ -225,17 +225,43 @@ void VCommand::InsertCLICommands () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  static int vapcmp (const void *aa, const void *bb, void *udata) {
+    const VCommand::VAlias *a = *(const VCommand::VAlias **)aa;
+    const VCommand::VAlias *b = *(const VCommand::VAlias **)bb;
+    if (a == b) return 0;
+    return a->Name.ICmp(b->Name);
+  }
+}
+
+
 //==========================================================================
 //
 //  VCommand::WriteAlias
 //
 //==========================================================================
-void VCommand::WriteAlias (FILE *f) {
-  guard(VCommand::WriteAlias);
-  for (VAlias *a = Alias; a; a = a->Next) {
-    fprintf(f, "alias %s \"%s\"\n", *a->Name, *a->CmdLine.quote());
+void VCommand::WriteAlias (FILE *fl) {
+  // count items
+  size_t acount = 0;
+  for (VAlias *a = Alias; a; a = a->Next) ++acount;
+  if (acount == 0) return;
+  // build list
+  VAlias **list = new VAlias*[acount];
+  acount = 0;
+  for (VAlias *a = Alias; a; a = a->Next) list[acount++] = a;
+  // sort list
+  if (acount > 1) timsort_r(list, acount, sizeof(list[0]), &vapcmp, nullptr);
+  // write list
+  for (size_t f = 0; f < acount; ++f) {
+    fprintf(fl, "alias %s \"%s\"\n", *list[f]->Name, *list[f]->CmdLine.quote());
   }
-  unguard;
+  delete [] list;
+  /*
+  for (VAlias *a = Alias; a; a = a->Next) {
+    fprintf(fl, "alias %s \"%s\"\n", *a->Name, *a->CmdLine.quote());
+  }
+  */
 }
 
 

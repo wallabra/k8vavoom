@@ -33,7 +33,7 @@ public:
     SRC_Client,
   };
 
-private:
+public: // fuck you, shitplusplus
   // console command alias
   struct VAlias {
     VStr Name;
@@ -42,6 +42,7 @@ private:
     bool Save;
   };
 
+private:
   const char *Name;
   VCommand *Next;
 
