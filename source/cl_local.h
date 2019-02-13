@@ -35,7 +35,7 @@ struct VModel;
 
 
 struct dlight_t {
-  TVec  origin; // origin of the light
+  TVec origin; // origin of the light
   float radius; // radius - how far light goes
   float die; // stop lighting after this time
   float decay; // drop this each second
