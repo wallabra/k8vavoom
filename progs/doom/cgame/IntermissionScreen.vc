@@ -532,9 +532,21 @@ void IM_DrawSingleStats () {
   DrawText(SP_STATSX, SP_STATSY+lh, "items");
   DrawText(SP_STATSX, SP_STATSY+2*lh, "scrt");
 
-  IM_DrawPercent(640-SP_STATSX, SP_STATSY, cnt_kills[0]);
-  IM_DrawPercent(640-SP_STATSX, SP_STATSY+lh, cnt_items[0]);
-  IM_DrawPercent(640-SP_STATSX, SP_STATSY+2*lh, cnt_secret[0]);
+  if (sp_state < 2 || ClGame.cl.Level.TotalKills > 0) {
+    IM_DrawPercent(640-SP_STATSX, SP_STATSY, cnt_kills[0]);
+  } else {
+    DrawText(640-SP_STATSX, SP_STATSY, "all");
+  }
+  if (sp_state < 4 || ClGame.cl.Level.TotalItems > 0) {
+    IM_DrawPercent(640-SP_STATSX, SP_STATSY+lh, cnt_items[0]);
+  } else {
+    DrawText(640-SP_STATSX, SP_STATSY+lh, "all");
+  }
+  if (sp_state < 6 || ClGame.cl.Level.TotalSecret > 0) {
+    IM_DrawPercent(640-SP_STATSX, SP_STATSY+2*lh, cnt_secret[0]);
+  } else {
+    DrawText(640-SP_STATSX, SP_STATSY+2*lh, "all");
+  }
   IM_DrawTime(SP_TIMEX, SP_TIMEY, cnt_time, "time: ", true);
   if (cnt_time >= 0 && ClGame.cl.Level.ParTime) {
     IM_DrawTime(SP_PARX, SP_PARY, ClGame.cl.Level.ParTime, "par: ", false);
