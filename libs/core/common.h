@@ -46,11 +46,12 @@
 #define MAX_VUINT16 ((vuint16)0xffff)
 #define MAX_VUINT32 ((vuint32)0xffffffff)
 
-typedef unsigned char  byte;
+//typedef unsigned char  byte;
 
 //#define HAVE_INTTYPES_H
 
 #include <inttypes.h>
+//typedef uint8_t   __attribute__((__may_alias__)) ubyte;
 typedef int8_t    __attribute__((__may_alias__)) vint8;
 typedef uint8_t   __attribute__((__may_alias__)) vuint8;
 typedef int16_t   __attribute__((__may_alias__)) vint16;
@@ -60,6 +61,7 @@ typedef uint32_t  __attribute__((__may_alias__)) vuint32;
 typedef int64_t   __attribute__((__may_alias__)) vint64;
 typedef uint64_t  __attribute__((__may_alias__)) vuint64;
 
+//static_assert(sizeof(ubyte) == 1, "invalid ubyte");
 static_assert(sizeof(vint8) == 1, "invalid vint8");
 static_assert(sizeof(vuint8) == 1, "invalid vuint8");
 static_assert(sizeof(vint16) == 2, "invalid vint16");
