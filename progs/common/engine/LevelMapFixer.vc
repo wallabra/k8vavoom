@@ -440,4 +440,12 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: DTWID: E1M2 detected and fixed");
     return;
   }
+
+  // Decade
+  if (MapHashMD5 == "77d1fc9f463239d3f117767854303241") {
+    // missing textures
+    Sides[Lines[9420].sidenum[1]].BottomTexture = LdrTexNumForName("SILVER1", TEXTYPE_Wall);
+    printwarn("MAPFIX: Decade detected and fixed");
+    return;
+  }
 }
