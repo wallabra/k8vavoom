@@ -41,6 +41,9 @@
 # include <climits>
 #endif
 
+#define USE_NEUMAIER_KAHAN
+
+
 #include "mythreadlite.h"
 
 #include "common.h" // common types and definitions

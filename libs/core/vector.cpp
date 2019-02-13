@@ -47,11 +47,21 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
   forward.x = cp*cy;
   forward.y = cp*sy;
   forward.z = -sp;
+#ifdef USE_NEUMAIER_KAHAN
+  right.x = neumsum2(-sr*sp*cy, cr*sy);
+  right.y = neumsum2(-sr*sp*sy, -(cr*cy));
+#else /* USE_NEUMAIER_KAHAN */
   right.x = -sr*sp*cy+cr*sy;
   right.y = -sr*sp*sy-cr*cy;
+#endif /* USE_NEUMAIER_KAHAN */
   right.z = -sr*cp;
+#ifdef USE_NEUMAIER_KAHAN
+  up.x = neumsum2(cr*sp*cy, sr*sy);
+  up.y = neumsum2(cr*sp*sy, -(sr*cy));
+#else /* USE_NEUMAIER_KAHAN */
   up.x = cr*sp*cy+sr*sy;
   up.y = cr*sp*sy-sr*cy;
+#endif /* USE_NEUMAIER_KAHAN */
   up.z = cr*cp;
 }
 
@@ -79,15 +89,20 @@ void AngleVector (const TAVec &angles, TVec &forward) {
 //
 //==========================================================================
 void VectorAngles (const TVec &vec, TAVec &angles) {
-  double length = sqrt(vec.x*vec.x+vec.y*vec.y);
-  if (!length) {
+  const double fx = vec.x;
+  const double fy = vec.y;
+#ifdef USE_NEUMAIER_KAHAN
+  const double len2d = sqrt(neumsum2D(fx*fx, fy*fy));
+#else /* USE_NEUMAIER_KAHAN */
+  const double len2d = sqrt(fx*fx+fy*fy);
+#endif /* USE_NEUMAIER_KAHAN */
+  if (fabs(len2d) < 0.00001) {
     angles.pitch = (vec.z > 0 ? 90 : 270);
     angles.yaw = 0;
-    angles.roll = 0;
-    return;
+  } else {
+    angles.pitch = -matan(vec.z, len2d);
+    angles.yaw = matan(vec.y, vec.x);
   }
-  angles.pitch = -matan(vec.z, length);
-  angles.yaw = matan(vec.y, vec.x);
   angles.roll = 0;
 }
 
@@ -98,7 +113,8 @@ void VectorAngles (const TVec &vec, TAVec &angles) {
 //
 //==========================================================================
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles) {
-  if (!forward.x && !forward.y) {
+  /*
+  if (fabsf(forward.x) < 0.00001 && fabsf(forward.y) < 0.00001) {
     angles.yaw = 0;
     if (forward.z > 0) {
       angles.pitch = 90;
@@ -109,10 +125,28 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
     }
     return;
   }
-  const double length = sqrt(forward.x*forward.x+forward.y*forward.y);
-  angles.pitch = matan(-forward.z, length);
-  angles.yaw = matan(forward.y, forward.x);
-  angles.roll = matan(-right.z/length, up.z/length);
+  */
+  const double fx = forward.x;
+  const double fy = forward.y;
+#ifdef USE_NEUMAIER_KAHAN
+  const double len2d = sqrt(neumsum2D(fx*fx, fy*fy));
+#else /* USE_NEUMAIER_KAHAN */
+  const double len2d = sqrt(fx*fx+fy*fy);
+#endif /* USE_NEUMAIER_KAHAN */
+  if (fabs(len2d) < 0.00001) {
+    angles.yaw = 0;
+    if (forward.z > 0) {
+      angles.pitch = 90;
+      angles.roll = matan(-up.y, -up.x);
+    } else {
+      angles.pitch = 270;
+      angles.roll = matan(-up.y, up.x);
+    }
+  } else {
+    angles.pitch = matan(-forward.z, len2d);
+    angles.yaw = matan(forward.y, forward.x);
+    angles.roll = matan(-right.z/len2d, up.z/len2d);
+  }
 }
 
 
@@ -136,6 +170,7 @@ TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle
 //==========================================================================
 void ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) {
   const float inv_denom = 1.0f/DotProduct(normal, normal);
+  if (!isFiniteF(inv_denom)) { dst = TVec(0, 0, 0); return; } //k8: what to do here?
   const float d = DotProduct(normal, p)*inv_denom;
   dst = p-d*(normal*inv_denom);
 }
@@ -168,5 +203,5 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
   ProjectPointOnPlane(dst, tempvec, src);
 
   // normalise the result
-  dst = Normalise(dst);
+  dst = NormaliseSafe(dst);
 }

@@ -173,14 +173,66 @@ static __attribute__((unused)) inline vuint8 AngleToByte (float angle) { return 
 
 
 // this is actually branch-less for ints on x86, and even for longs on x86_64
-static __attribute__((unused)) vuint8 clampToByte (vint32 n) {
+static __attribute__((unused)) inline vuint8 clampToByte (vint32 n) {
   n &= -(vint32)(n >= 0);
   return (vuint8)(n|((255-(vint32)n)>>31));
   //return (n < 0 ? 0 : n > 255 ? 255 : n);
 }
 
-static __attribute__((unused)) vuint8 clampToByteU (vuint32 n) {
+static __attribute__((unused)) inline vuint8 clampToByteU (vuint32 n) {
   return (vuint8)((n&0xff)|(255-((-(vint32)(n < 256))>>24)));
+}
+
+
+// Neumaier-Kahan algorithm
+static __attribute__((unused)) inline float neumsum2 (float v0, const float v1) {
+  // one iteration
+  const float t = v0+v1;
+  return t+(fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
+}
+
+// Neumaier-Kahan algorithm
+static __attribute__((unused)) inline float neumsum3 (float v0, const float v1, const float v2) {
+  // first iteration
+  const float t = v0+v1;
+  const float c = (fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
+  // second iteration
+  const float t1 = t+v2;
+  return t1+c+(fabsf(t) >= fabsf(v2) ? (t-t1)+v2 : (v2-t1)+t);
+}
+
+// Neumaier-Kahan algorithm
+static __attribute__((unused)) inline float neumsum4 (float v0, const float v1, const float v2, const float v3) {
+  // first iteration
+  float t = v0+v1;
+  float c = (fabsf(v0) >= fabsf(v1) ? (v0-t)+v1 : (v1-t)+v0);
+  v0 = t;
+  // second iteration
+  t = v0+v2;
+  c += (fabsf(v0) >= fabsf(v2) ? (v0-t)+v2 : (v2-t)+v0);
+  v0 = t;
+  // third iteration
+  t = v0+v3;
+  c += (fabsf(v0) >= fabsf(v3) ? (v0-t)+v3 : (v3-t)+v0);
+  return t+c;
+}
+
+
+// Neumaier-Kahan algorithm
+static __attribute__((unused)) inline double neumsum2D (double v0, const double v1) {
+  // one iteration
+  const double t = v0+v1;
+  return t+(fabs(v0) >= fabs(v1) ? (v0-t)+v1 : (v1-t)+v0);
+}
+
+// Neumaier-Kahan algorithm
+static __attribute__((unused)) inline double neumsum3D (double v0, const double v1, const double v2) {
+  // first iteration
+  const double t = v0+v1;
+  const double c = (fabs(v0) >= fabs(v1) ? (v0-t)+v1 : (v1-t)+v0);
+  // second iteration
+  const double t1 = t+v2;
+  return t1+c+(fabs(t) >= fabs(v2) ? (t-t1)+v2 : (v2-t1)+t);
 }
 
 

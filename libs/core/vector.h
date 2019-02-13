@@ -24,7 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-
 class TVec {
 public:
   float x;
@@ -118,6 +117,17 @@ static __attribute__((unused)) inline TVec operator / (const TVec &v, float s) {
 static __attribute__((unused)) inline bool operator == (const TVec &v1, const TVec &v2) { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
 static __attribute__((unused)) inline bool operator != (const TVec &v1, const TVec &v2) { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
 
+#ifdef USE_NEUMAIER_KAHAN
+static __attribute__((unused)) inline float Length (const TVec &v) { return sqrtf(neumsum3(v.x*v.x, v.y*v.y, v.z*v.z)); }
+static __attribute__((unused)) inline float length (const TVec &v) { return sqrtf(neumsum3(v.x*v.x, v.y*v.y, v.z*v.z)); }
+static __attribute__((unused)) inline float Length2D (const TVec &v) { return sqrtf(neumsum2(v.x*v.x, v.y*v.y)); }
+static __attribute__((unused)) inline float length2D (const TVec &v) { return sqrtf(neumsum2(v.x*v.x, v.y*v.y)); }
+
+static __attribute__((unused)) inline float LengthSquared (const TVec &v) { return neumsum3(v.x*v.x, v.y*v.y, v.z*v.z); }
+static __attribute__((unused)) inline float lengthSquared (const TVec &v) { return neumsum3(v.x*v.x, v.y*v.y, v.z*v.z); }
+static __attribute__((unused)) inline float Length2DSquared (const TVec &v) { return neumsum2(v.x*v.x, v.y*v.y); }
+static __attribute__((unused)) inline float length2DSquared (const TVec &v) { return neumsum2(v.x*v.x, v.y*v.y); }
+#else /* USE_NEUMAIER_KAHAN */
 static __attribute__((unused)) inline float Length (const TVec &v) { return sqrtf(v.x*v.x+v.y*v.y+v.z*v.z); }
 static __attribute__((unused)) inline float length (const TVec &v) { return sqrtf(v.x*v.x+v.y*v.y+v.z*v.z); }
 static __attribute__((unused)) inline float Length2D (const TVec &v) { return sqrtf(v.x*v.x+v.y*v.y); }
@@ -127,6 +137,7 @@ static __attribute__((unused)) inline float LengthSquared (const TVec &v) { retu
 static __attribute__((unused)) inline float lengthSquared (const TVec &v) { return v.x*v.x+v.y*v.y+v.z*v.z; }
 static __attribute__((unused)) inline float Length2DSquared (const TVec &v) { return v.x*v.x+v.y*v.y; }
 static __attribute__((unused)) inline float length2DSquared (const TVec &v) { return v.x*v.x+v.y*v.y; }
+#endif /* USE_NEUMAIER_KAHAN */
 
 static __attribute__((unused)) inline TVec Normalise (const TVec &v) { return v/v.Length(); }
 static __attribute__((unused)) inline TVec normalise (const TVec &v) { return v/v.Length(); }
@@ -136,6 +147,20 @@ static __attribute__((unused)) inline TVec normaliseSafe (const TVec &v) { const
 
 static __attribute__((unused)) inline TVec normalise2D (const TVec &v) { const float invlen = 1.0f/v.length2D(); return TVec(v.x*invlen, v.y*invlen, v.z); }
 
+#ifdef USE_NEUMAIER_KAHAN
+static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return neumsum3(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z); }
+static __attribute__((unused)) inline float dot (const TVec &v1, const TVec &v2) { return neumsum3(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z); }
+
+static __attribute__((unused)) inline float DotProduct2D (const TVec &v1, const TVec &v2) { return neumsum2(v1.x*v2.x, v1.y*v2.y); }
+static __attribute__((unused)) inline float dot2D (const TVec &v1, const TVec &v2) { return neumsum2(v1.x*v2.x, v1.y*v2.y); }
+
+static __attribute__((unused)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) { return TVec(neumsum2(v1.y*v2.z, -(v1.z*v2.y)), neumsum2(v1.z*v2.x, -(v1.x*v2.z)), neumsum2(v1.x*v2.y, -(v1.y*v2.x))); }
+static __attribute__((unused)) inline TVec cross (const TVec &v1, const TVec &v2) { return TVec(neumsum2(v1.y*v2.z, -(v1.z*v2.y)), neumsum2(v1.z*v2.x, -(v1.x*v2.z)), neumsum2(v1.x*v2.y, -(v1.y*v2.x))); }
+
+// returns signed magnitude of cross-product (z, as x and y are effectively zero in 2d)
+static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return neumsum2((v1.x*v2.y), -(v1.y*v2.x)); }
+static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return neumsum2((v1.x*v2.y), -(v1.y*v2.x)); }
+#else /* USE_NEUMAIER_KAHAN */
 static __attribute__((unused)) inline float DotProduct (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
 static __attribute__((unused)) inline float dot (const TVec &v1, const TVec &v2) { return v1.x*v2.x+v1.y*v2.y+v1.z*v2.z; }
 
@@ -148,6 +173,7 @@ static __attribute__((unused)) inline TVec cross (const TVec &v1, const TVec &v2
 // returns signed magnitude of cross-product (z, as x and y are effectively zero in 2d)
 static __attribute__((unused)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) { return (v1.x*v2.y)-(v1.y*v2.x); }
 static __attribute__((unused)) inline float cross2D (const TVec &v1, const TVec &v2) { return (v1.x*v2.y)-(v1.y*v2.x); }
+#endif /* USE_NEUMAIER_KAHAN */
 
 static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
 
@@ -234,7 +260,11 @@ class TPlane {
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
   inline float GetPointZ (float x, float y) const {
+#ifdef USE_NEUMAIER_KAHAN
+    return (neumsum3(dist, -(normal.x*x), -(normal.y*y))/normal.z);
+#else /* USE_NEUMAIER_KAHAN */
     return (dist-normal.x*x-normal.y*y)/normal.z;
+#endif /* USE_NEUMAIER_KAHAN */
   }
 
   inline float GetPointZ (const TVec &v) const {
