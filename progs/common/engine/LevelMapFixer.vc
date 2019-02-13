@@ -432,4 +432,12 @@ void KnownMapBugFixer () {
     return;
   }
   */
+
+  // DTWID: E1M2
+  if (MapHashMD5 == "27927a9ee6c29c38cd8fb42f54f16efa") {
+    // missing textures
+    Sides[Lines[82].sidenum[1]].TopTexture = LdrTexNumForName("STARTAN3", TEXTYPE_Wall);
+    printwarn("MAPFIX: DTWID: E1M2 detected and fixed");
+    return;
+  }
 }
