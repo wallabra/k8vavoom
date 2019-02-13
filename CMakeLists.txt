@@ -139,10 +139,20 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.7)
   set(UNFUCK_GXX_FLAGS "${UNFUCK_GCC_FLAGS} -Wsuggest-override")
 endif()
 
+# some math/FPU options
 if(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
   # use -ffast-math, 'cause why not?
-  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
+  # k8: nope, i command my former self to not do this
+  #set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -ffast-math")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-math-errno")
 endif(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-unsafe-math-optimizations")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-associative-math")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-reciprocal-math")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-finite-math-only")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsigned-zeros")
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fsignaling-nans") # do not touch my NaNs!
+set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -frounding-math") # get lost!
 
 if(NOT NO_SSE)
   if(DEBUG_FPU_CHECKS)
