@@ -41,7 +41,6 @@ bool fsys_skipSprites = false;
 bool fsys_skipDehacked = false;
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
-bool fsys_ignoreZScript = false;
 bool fsys_DisableBloodReplacement = false; // for custom modes
 
 
@@ -1273,8 +1272,6 @@ void FL_Init () {
   if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
 
   if (GArgs.CheckParm("-nomenudef") != 0) gz_skip_menudef = true;
-
-  if (GArgs.CheckParm("-ignore-zscript") != 0) fsys_ignoreZScript = true;
 
   bool isChex = false;
 

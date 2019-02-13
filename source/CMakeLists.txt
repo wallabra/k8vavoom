@@ -468,6 +468,18 @@ set(SERVER_COMMON_SOURCES
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+set(K8VAVOOMDEV )
+if("$ENV{K8VAVOOMDEV}" STREQUAL "tan")
+  set(K8VAVOOMDEV ON)
+endif()
+if("$ENV{USER}" STREQUAL "ketmar")
+  set(K8VAVOOMDEV ON)
+endif()
+
+if(K8VAVOOMDEV)
+  add_definitions(-DVAVOOM_K8_DEVELOPER)
+endif(K8VAVOOMDEV)
+
 
 #---------------------------------------
 #

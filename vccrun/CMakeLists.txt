@@ -1,3 +1,16 @@
+set(VCCRUN_HAXPAK )
+set(VCCRUN_K8BUILD )
+
+if("$ENV{USER}" STREQUAL "ketmar")
+  set(VCCRUN_HAXPAK ON)
+  set(VCCRUN_K8BUILD ON)
+endif()
+
+if("$ENV{K8VAVOOMDEV}" STREQUAL "tan")
+  set(VCCRUN_HAXPAK ON)
+  set(VCCRUN_K8BUILD ON)
+endif()
+
 if (ENABLE_VCCRUN)
   if(WIN32)
     # unfuck all build types

@@ -268,15 +268,6 @@ void VFileDirectory::buildLumpNames () {
       // final lump name
       if (lumpName.length() != 0) fi.lumpName = VName(*lumpName, VName::AddLower8);
     }
-
-    if (fi.lumpName != NAME_None && fi.lumpNamespace == WADNS_Global && VStr::Cmp(*fi.lumpName, "zscript") == 0) {
-      if (fsys_ignoreZScript) {
-        GCon->Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
-      } else {
-        Sys_Error("Archive \"%s\" contains zscript", *getArchiveName());
-      }
-      fi.lumpName = NAME_None;
-    }
   }
 }
 
@@ -313,6 +304,20 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
     // link lumps
     VName lmp = fi.lumpName;
     fi.nextLump = -1; // just in case
+    if (lmp != NAME_None && fi.lumpNamespace == WADNS_Global && VStr::Cmp(*lmp, "zscript") == 0) {
+#ifdef VAVOOM_K8_DEVELOPER
+      if (GArgs.CheckParm("-ignore-zscript") != 0)
+#else
+      if (false)
+#endif
+      {
+        GCon->Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
+        fi.lumpName = NAME_None;
+        lmp = NAME_None;
+      } else {
+        Sys_Error("Archive \"%s\" contains zscript", *getArchiveName());
+      }
+    }
     if (lmp != NAME_None) {
       auto lsidp = lastSeenLump.find(lmp);
       if (!lsidp) {
