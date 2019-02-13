@@ -60,7 +60,7 @@ void VRenderLevelShared::AddStaticLight (const TVec &origin, float radius, vuint
   L.origin = origin;
   L.radius = radius;
   L.colour = colour;
-  L.leafnum = Level->PointInSubsector(origin) - Level->Subsectors;
+  L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
   L.active = true;
   unguard;
 }
@@ -118,12 +118,23 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   }
 
   // look for any free slot (or free one if necessary)
-  dlight_t *dl = DLights;
+  dlight_t *dl;
 
   // first try to find owned light to replace
   if (Owner) {
+    /*
+    dl = DLights;
     for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
       if (dl->Owner == Owner) { dlowner = dl; break; }
+    }
+    */
+    auto idxp = dlowners.find((vuint64)Owner);
+    if (idxp) {
+      if (DLights[*idxp].Owner == Owner) {
+        dlowner = &DLights[*idxp];
+      } else {
+        dlowners.del((vuint64)Owner);
+      }
     }
   }
 
@@ -178,11 +189,14 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (dlowner) {
     // remove replaced light
     //if (dlreplace && dlreplace != dlowner) memset((void *)dlreplace, 0, sizeof(*dlreplace));
+    check(dlowner->Owner == Owner);
     dl = dlowner;
   } else {
     dl = dlreplace;
     if (!dl) { dl = dldying; if (!dl) { dl = dlbestdist; if (!dl) return nullptr; } }
   }
+
+  if (dl->Owner != Owner) dlowners.del((vuint64)(dl->Owner));
 
   // clean new light, and return it
   memset((void *)dl, 0, sizeof(*dl));
@@ -191,6 +205,9 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dl->radius = radius;
   dl->type = DLTYPE_Point;
   if (isPlr) dl->flags |= dlight_t::PlayerLight;
+
+  if (!dlowner && dl->Owner) dlowners.put((vuint64)(dl->Owner), (vuint32)(ptrdiff_t)(dl-&DLights[0]));
+
   return dl;
 
   unguard;

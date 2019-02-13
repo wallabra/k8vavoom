@@ -296,6 +296,11 @@ public:
   };
 
 protected:
+  struct DLightInfo {
+    int needTrace; // <0: no; >1: yes; 0: don't know
+  };
+
+protected:
   VLevel *Level;
 
   VEntity *ViewEnt;
@@ -352,6 +357,8 @@ protected:
   // light variables
   TArray<light_t> Lights;
   dlight_t DLights[MAX_DLIGHTS];
+  DLightInfo dlinfo[MAX_DLIGHTS];
+  TMapNC<vuint64, vuint32> dlowners; // key: pointer; value: index
 
   // only regular renderer needs this
   vuint32 cacheframecount;

@@ -68,14 +68,6 @@ int light_reset_surface_cache = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct DLightInfo {
-  int needTrace; // <0: no; >1: yes; 0: don't know
-};
-
-static DLightInfo dlinfo[VRenderLevel::MAX_DLIGHTS];
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 static TVec smins, smaxs;
 static TVec worldtotex[2];
 static TVec textoworld[2];
