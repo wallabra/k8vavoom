@@ -68,6 +68,14 @@ int light_reset_surface_cache = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct DLightInfo {
+  int needTrace; // <0: no; >1: yes; 0: don't know
+};
+
+static DLightInfo dlinfo[VRenderLevel::MAX_DLIGHTS];
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 static TVec smins, smaxs;
 static TVec worldtotex[2];
 static TVec textoworld[2];
@@ -559,15 +567,19 @@ void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
 //==========================================================================
 void VRenderLevel::PushDlights () {
   guard(VRenderLevel::PushDlights);
-  if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
+  //???:if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
   ++r_dlightframecount;
 
   if (!r_dynamic) return;
 
   dlight_t *l = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++l) {
-    if (!l->radius || l->die < Level->Time) continue;
+    if (l->radius < 1.0f || l->die < Level->Time) {
+      dlinfo[i].needTrace = 0;
+      continue;
+    }
     MarkLights(l, 1U<<i, Level->NumNodes-1);
+    dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
   }
   unguard;
 }
@@ -717,9 +729,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   TVec impact(0, 0, 0), local(0, 0, 0);
   int smax, tmax;
   texinfo_t *tex;
-  //subsector_t *sub;
-  int leafnum;
-  float mids=0, midt=0;
+  float mids = 0, midt = 0;
   TVec facemid = TVec(0,0,0);
   bool pointsCalced = false;
 
@@ -732,6 +742,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   const float step = 16;
 
   const bool hasPVS = Level->HasPVS();
+
+  bool doCheckTrace = (r_dynamic_clip && r_dynamic_clip_more);
 
   for (int lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
     if (!(surf->dlightbits&(1<<lnum))) continue; // not lit by this light
@@ -756,7 +768,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     if (hasPVS && r_dynamic_clip) {
       subsector_t *sub = Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+      int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }
@@ -771,11 +783,19 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     local.x -= starts;
     local.y -= startt;
 
+    //TODO: we can use clipper to check if destination subsector is occluded
+
     // check if we have some blocking lines
     // to make proper shadows, we have to check if we have any 2-sided lines
     // around our light. if not, we can skip raycasting
     // bleeding to nearest sectors will be prevented by PVS
-    bool needProperTrace = (r_dynamic_clip && r_dynamic_clip_more) && Level->NeedProperLightTraceAt(dl.origin, dl.radius);
+    bool needProperTrace;
+    const int xnfo = dlinfo[lnum].needTrace;
+    if (xnfo) {
+      needProperTrace = (xnfo > 0);
+    } else {
+      needProperTrace = ((dlinfo[lnum].needTrace = (doCheckTrace && Level->NeedProperLightTraceAt(dl.origin, dl.radius) ? 1 : -1)) > 0);
+    }
 
     ++gf_dynlights_processed;
     if (needProperTrace) ++gf_dynlights_traced;
@@ -783,8 +803,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     if (!pointsCalced && /*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
       pointsCalced = true;
       CalcFaceVectors(surf);
-      mids = starts+surf->extents[0]/2.0f;
-      midt = startt+surf->extents[1]/2.0f;
+      mids = starts+surf->extents[0]*0.5f;
+      midt = startt+surf->extents[1]*0.5f;
       facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
     }
 

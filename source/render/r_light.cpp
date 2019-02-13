@@ -78,7 +78,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   dlight_t *dldying = nullptr;
   dlight_t *dlreplace = nullptr;
   dlight_t *dlbestdist = nullptr;
-  float bestdist = length2DSquared(lorg-cl->ViewOrg);
+  float bestdist = lengthSquared(lorg-cl->ViewOrg);
   if (radius < 0) radius = 0;
 
   float coeff = r_light_filter_dynamic_coeff;
@@ -100,7 +100,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   if (!isPlr) {
     // don't add too far-away lights
-    if (length2DSquared(cl->ViewOrg-lorg) >= r_lights_radius*r_lights_radius) return nullptr;
+    if (lengthSquared(cl->ViewOrg-lorg) >= r_lights_radius*r_lights_radius) return nullptr;
     if (r_dynamic_clip && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
       if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
@@ -151,14 +151,14 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       // don't replace player's lights
       if (dl->flags&dlight_t::PlayerLight) continue;
       // replace furthest light
-      float dist = length2DSquared(dl->origin-cl->ViewOrg);
+      float dist = lengthSquared(dl->origin-cl->ViewOrg);
       if (dist > bestdist) {
         bestdist = dist;
         dlbestdist = dl;
       }
       // check if we already have dynamic light around new origin
       if (!isPlr) {
-        float dd = length2DSquared(dl->origin-lorg);
+        float dd = lengthSquared(dl->origin-lorg);
         if (dd <= 6*6) {
           if (radius > 0 && dl->radius >= radius) return nullptr;
           dlreplace = dl;
@@ -206,9 +206,9 @@ void VRenderLevelShared::DecayLights (float time) {
   guard(VRenderLevelShared::DecayLights);
   dlight_t *dl = DLights;
   for (int i = 0; i < MAX_DLIGHTS; ++i, ++dl) {
-    if (!dl->radius || dl->die < Level->Time) continue;
+    if (dl->radius <= 0.0f || dl->die < Level->Time) continue;
     dl->radius -= time*dl->decay;
-    if (dl->radius <= 0) {
+    if (dl->radius <= 0.0f) {
       dl->radius = 0;
       dl->flags = 0;
     }
