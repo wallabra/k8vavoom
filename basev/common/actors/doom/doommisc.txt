@@ -76,29 +76,3 @@ actor DoomUnusedStates
     Stop
   }
 }
-
-
-//------------------------------------------------------------------------------
-// MBF Beta emulation items
-
-actor EvilSceptre 2016
-{
-  Inventory.PickupMessage "$beta_bonus3"
-  states
-  {
-  Spawn:
-    BON3 A 6
-    Loop
-  }
-}
-
-actor UnholyBible 2017
-{
-  Inventory.PickupMessage "$beta_bonus4"
-  states
-  {
-  Spawn:
-    BON4 A 6
-    Loop
-  }
-}

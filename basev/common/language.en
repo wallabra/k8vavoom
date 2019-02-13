@@ -1221,3 +1221,9 @@ SSKILL_EASY       = "Rookie";
 SSKILL_NORMAL     = "Veteran";
 SSKILL_HARD       = "Elite";
 SSKILL_NIGHTMARE  = "Bloodbath";
+
+
+BETA_BONUS1 = "You pick up a demonic dagger.";
+BETA_BONUS2 = "You pick up a skullchest.";
+BETA_BONUS3 = "You pick up an evil sceptre.";
+BETA_BONUS4 = "You pick up an unholy bible.";

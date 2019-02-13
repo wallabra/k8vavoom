@@ -14,7 +14,7 @@ Actor ScoreItem : Inventory {
 }
 
 
-Actor EvilSceptre : ScoreItem {
+Actor EvilSceptre : ScoreItem 2016 {
   Inventory.PickupMessage "$BETA_BONUS3"
 
   States {
@@ -25,7 +25,7 @@ Actor EvilSceptre : ScoreItem {
 }
 
 
-Actor UnholyBible : ScoreItem {
+Actor UnholyBible : ScoreItem 2017 {
   Inventory.PickupMessage "$BETA_BONUS4"
 
   States {
