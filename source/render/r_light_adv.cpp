@@ -182,12 +182,13 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   if (r_static_lights) {
     if (!staticLightsFiltered) RefilterStaticLights();
     const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    const bool hasPVS = Level->HasPVS();
     for (int i = 0; i < Lights.Num(); i++) {
       //if (!Lights[i].radius) continue;
       if (!Lights[i].active) continue;
 
       // check potential visibility
-      if (!(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
+      if (hasPVS && !(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
 
       const float add = Lights[i].radius-Length(p-Lights[i].origin);
       if (add > 0) {
@@ -205,6 +206,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
   // add dynamic lights
   if (r_dynamic) {
     const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+    const bool hasPVS = Level->HasPVS();
     for (int i = 0; i < MAX_DLIGHTS; i++) {
       const dlight_t &dl = DLights[i];
       if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
@@ -212,7 +214,7 @@ vuint32 VAdvancedRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
       if (!dl.radius || dl.die < Level->Time) continue;
 
       // check potential visibility
-      if (r_dynamic_clip) {
+      if (r_dynamic_clip && hasPVS) {
         int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }

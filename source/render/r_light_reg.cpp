@@ -530,7 +530,7 @@ void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
     }
     subsector_t *ss = &Level->Subsectors[num];
 
-    if (r_dynamic_clip && Level->VisData) {
+    if (r_dynamic_clip && Level->HasPVS()) {
       const vuint8 *dyn_facevis = Level->LeafPVS(ss);
       int leafnum = Level->PointInSubsector(light->origin)-Level->Subsectors;
       // check potential visibility
@@ -645,6 +645,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
 
   // add dynamic lights
   if (sub->dlightframe == r_dlightframecount) {
+    const bool hasPVS = Level->HasPVS();
     for (int i = 0; i < MAX_DLIGHTS; ++i) {
       if (!(sub->dlightbits&(1<<i))) continue;
       const dlight_t &dl = DLights[i];
@@ -654,7 +655,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
         //fprintf(stderr, "add=%f\n", add);
         // 6 is arbitrary; add correlates with light radius
         if (r_dynamic_clip && add > 6) {
-          if (Level->VisData) {
+          if (hasPVS) {
             const vuint8 *dyn_facevis = Level->LeafPVS(sub);
             int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
             // check potential visibility
@@ -730,6 +731,8 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   const float startt = surf->texturemins[1];
   const float step = 16;
 
+  const bool hasPVS = Level->HasPVS();
+
   for (int lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
     if (!(surf->dlightbits&(1<<lnum))) continue; // not lit by this light
 
@@ -750,7 +753,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     impact = dl.origin-surf->plane->normal*dist;
 
-    if (r_dynamic_clip && Level->VisData) {
+    if (hasPVS && r_dynamic_clip) {
       subsector_t *sub = Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
@@ -802,7 +805,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
             float us = starts+s*step;
             float ut = startt+t*step;
             TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-            if (length2DSquared(spt-dl.origin) > 8) {
+            if (length2DSquared(spt-dl.origin) > 2) {
               //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
               //linetrace_t Trace;
               //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;

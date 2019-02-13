@@ -101,7 +101,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (!isPlr) {
     // don't add too far-away lights
     if (length2DSquared(cl->ViewOrg-lorg) >= r_lights_radius*r_lights_radius) return nullptr;
-    if (r_dynamic_clip && Level->VisData) {
+    if (r_dynamic_clip && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
       if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
         lastDLightView = cl->ViewOrg;

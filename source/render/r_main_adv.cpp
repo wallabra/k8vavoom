@@ -108,6 +108,8 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   const float rlightraduisSq = r_lights_radius*r_lights_radius;
   const float rlightraduisSightSq = r_lights_radius_sight_check*r_lights_radius_sight_check;
 
+  const bool hasPVS = Level->HasPVS();
+
   if (!FixedLight && r_static_lights) {
 #ifdef RADVLIGHT_GRID_OPTIMIZER
     static TMapNC<vuint32, int> slmhash;
@@ -122,16 +124,18 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
       if (!Lights[i].active) continue;
 
       // don't do lights that are too far away
-      Delta = Lights[i].origin - vieworg;
+      Delta = Lights[i].origin-vieworg;
       Delta.z = 0;
       const float dlenSq = Delta.length2DSquared();
 
       if (dlenSq > rlightraduisSq) continue;
 
       // check potential visibility (this should be moved to sight check for precise pvs, but...)
-      subsector_t *sub = Level->PointInSubsector(Lights[i].origin);
-      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      if (!(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
+      if (hasPVS) {
+        subsector_t *sub = Level->PointInSubsector(Lights[i].origin);
+        const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+        if (!(dyn_facevis[Lights[i].leafnum>>3]&(1<<(Lights[i].leafnum&7)))) continue;
+      }
 
       if (dlenSq > rlightraduisSightSq) {
         // check some more rays
@@ -182,18 +186,20 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     for (int i = 0; i < MAX_DLIGHTS; i++, l++) {
       if (!l->radius || l->die < Level->Time) continue;
 
-      //  Don't do lights that are too far away.
-      Delta = l->origin - vieworg;
+      // don't do lights that are too far away
+      Delta = l->origin-vieworg;
       Delta.z = 0;
       const float dlenSq = Delta.length2DSquared();
 
       if (dlenSq > rlightraduisSq) continue;
 
       // check potential visibility (this should be moved to sight check for precise pvs, but...)
-      subsector_t *sub = Level->PointInSubsector(l->origin);
-      const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      int leafnum = Level->PointInSubsector(l->origin) - Level->Subsectors;
-      if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+      if (hasPVS) {
+        subsector_t *sub = Level->PointInSubsector(l->origin);
+        const vuint8 *dyn_facevis = Level->LeafPVS(sub);
+        int leafnum = Level->PointInSubsector(l->origin)-Level->Subsectors;
+        if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
+      }
 
       if (dlenSq > rlightraduisSightSq) {
         // check some more rays

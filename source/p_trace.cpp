@@ -27,8 +27,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-//#define CAST_CAN_SEE_MORE_TRACES
-
 
 //==========================================================================
 //
@@ -647,13 +645,11 @@ static bool SightPathTraverse (SightTraceInfo &Trace, const VLevel *level, secto
 //  Rechecks Trace.Intercepts with different ending z value.
 //
 //==========================================================================
-#ifdef CAST_CAN_SEE_MORE_TRACES
 static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
   Trace.Delta = Trace.End-Trace.Start;
   Trace.LineStart = Trace.Start;
   return SightTraverseIntercepts(Trace, EndSector);
 }
-#endif
 
 
 //==========================================================================
@@ -666,7 +662,7 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector) const {
   SightTraceInfo Trace;
 
-  if (length2DSquared(org-dest) < 8) return true;
+  if (length2DSquared(org-dest) <= 2) return true;
 
   //sector_t *Sector = PointInSubsector(org)->sector;
   sector_t *OtherSector = DestSector;
@@ -690,54 +686,41 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector
   }
   */
 
-#ifdef CAST_CAN_SEE_MORE_TRACES
-  static const float xmult[3] = { 0.0f, -1.0f, 1.0f };
-  const float xofs = radius*0.73f;
-
-  //for (int d = 0; d < 3; ++d)
-#else
-  do
-#endif
-  {
-    // an unobstructed LOS is possible
-    // now look from eyes of t1 to any part of t2
+  if (radius <= /*12*/32) {
     Trace.Start = org;
     Trace.End = dest;
-#ifdef CAST_CAN_SEE_MORE_TRACES
-    Trace.End.x += xofs*xmult[d];
-#endif
+    return SightPathTraverse(Trace, this, OtherSector);
+  } else {
+    static const float xmult[3] = { 0.0f, -1.0f, 1.0f };
+    const float xofs = radius*0.73f;
 
-    // check middle
-    if (SightPathTraverse(Trace, this, OtherSector)) return true;
-    if (Trace.EarlyOut) {
-#ifdef CAST_CAN_SEE_MORE_TRACES
-      if (radius < 12) return false; // player is 16
-      continue;
-#else
-      break;
-#endif
-    }
-
-#ifdef CAST_CAN_SEE_MORE_TRACES
-    // check up and down
-    if (radius >= 12) {
+    for (unsigned d = 0; d < 3; ++d) {
+      // an unobstructed LOS is possible
+      // now look from eyes of t1 to any part of t2
+      Trace.Start = org;
       Trace.End = dest;
       Trace.End.x += xofs*xmult[d];
-      Trace.End.z += radius*0.73f;
-      if (SightPathTraverse2(Trace, OtherSector)) return true;
 
-      Trace.End = dest;
-      Trace.End.x += xofs*xmult[d];
-      Trace.End.z -= radius*0.73f;
-      if (SightPathTraverse2(Trace, OtherSector)) return true;
+      // check middle
+      if (SightPathTraverse(Trace, this, OtherSector)) return true;
+      if (Trace.EarlyOut) {
+        //if (radius < 12) return false; // player is 16
+        continue;
+      }
+
+      //if (radius < 12) break; // player is 16
+
+      // check up and down
+      //if (radius >= 12)
+      for (unsigned zd = 1; zd < 3; ++zd) {
+        Trace.Start = org;
+        Trace.End = dest;
+        Trace.End.x += xofs*xmult[d];
+        Trace.End.z += xofs*xmult[zd];
+        if (SightPathTraverse2(Trace, OtherSector)) return true;
+      }
     }
-
-    if (radius < 12) break; // player is 16
-#endif
   }
-#ifndef CAST_CAN_SEE_MORE_TRACES
-  while (0);
-#endif
 
   return false;
 }
