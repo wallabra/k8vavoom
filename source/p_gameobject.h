@@ -285,9 +285,9 @@ struct side_t {
   // sector the SideDef is facing
   sector_t *Sector;
 
-  int LineNum;
+  int LineNum; // line index in `Lines`
 
-  vuint32 Flags;
+  vuint32 Flags; // SDF_XXX
 
   int Light;
 };

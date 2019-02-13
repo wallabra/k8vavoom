@@ -336,6 +336,7 @@ private:
 
   void xxHashSidedef (XXH32_state_t *xctx, const side_t &side) const {
     if (!xctx) return;
+    /*!
     XXH32_update(xctx, &side.TopTextureOffset, sizeof(side.TopTextureOffset));
     XXH32_update(xctx, &side.BotTextureOffset, sizeof(side.BotTextureOffset));
     XXH32_update(xctx, &side.MidTextureOffset, sizeof(side.MidTextureOffset));
@@ -347,12 +348,13 @@ private:
     XXH32_update(xctx, &side.TopTexture.id, sizeof(side.TopTexture.id));
     XXH32_update(xctx, &side.BottomTexture.id, sizeof(side.BottomTexture.id));
     XXH32_update(xctx, &side.MidTexture.id, sizeof(side.MidTexture.id));
+    */
 
     vuint32 secnum = (side.Sector ? (vuint32)(ptrdiff_t)(side.Sector-Sectors) : 0xffffffffU);
     XXH32_update(xctx, &secnum, sizeof(secnum));
 
     XXH32_update(xctx, &side.LineNum, sizeof(side.LineNum));
-    XXH32_update(xctx, &side.Flags, sizeof(side.Flags));
+    //!XXH32_update(xctx, &side.Flags, sizeof(side.Flags));
     //hash something else?
   }
 
@@ -362,8 +364,6 @@ private:
     XXH32_update(xctx, &pl.normal.y, sizeof(pl.normal.y));
     XXH32_update(xctx, &pl.normal.z, sizeof(pl.normal.z));
     XXH32_update(xctx, &pl.dist, sizeof(pl.dist));
-    //XXH32_update(xctx, &pl.type, sizeof(pl.type));
-    //XXH32_update(xctx, &pl.signbits, sizeof(pl.signbits));
   }
 
   void xxHashSecPlane (XXH32_state_t *xctx, const sec_plane_t &spl) const {
@@ -371,16 +371,16 @@ private:
     xxHashPlane(xctx, spl);
     XXH32_update(xctx, &spl.minz, sizeof(spl.minz));
     XXH32_update(xctx, &spl.maxz, sizeof(spl.maxz));
-    XXH32_update(xctx, &spl.TexZ, sizeof(spl.TexZ));
-    XXH32_update(xctx, &spl.pic.id, sizeof(spl.pic.id));
+    //!XXH32_update(xctx, &spl.TexZ, sizeof(spl.TexZ));
+    //!XXH32_update(xctx, &spl.pic.id, sizeof(spl.pic.id));
     //XXH32_update(xctx, &spl.xoffs, sizeof(spl.xoffs));
     //XXH32_update(xctx, &spl.yoffs, sizeof(spl.yoffs));
     //XXH32_update(xctx, &spl.XScale, sizeof(spl.XScale));
     //XXH32_update(xctx, &spl.YScale, sizeof(spl.YScale));
-    XXH32_update(xctx, &spl.Angle, sizeof(spl.Angle));
-    XXH32_update(xctx, &spl.BaseAngle, sizeof(spl.BaseAngle));
-    XXH32_update(xctx, &spl.BaseYOffs, sizeof(spl.BaseYOffs));
-    XXH32_update(xctx, &spl.flags, sizeof(spl.flags));
+    //!XXH32_update(xctx, &spl.Angle, sizeof(spl.Angle));
+    //!XXH32_update(xctx, &spl.BaseAngle, sizeof(spl.BaseAngle));
+    //!XXH32_update(xctx, &spl.BaseYOffs, sizeof(spl.BaseYOffs));
+    //!XXH32_update(xctx, &spl.flags, sizeof(spl.flags));
     //XXH32_update(xctx, &spl.Alpha, sizeof(spl.Alpha));
     //XXH32_update(xctx, &spl.MirrorAlpha, sizeof(spl.MirrorAlpha));
     //XXH32_update(xctx, &spl.LightSourceSector, sizeof(spl.LightSourceSector));
@@ -406,8 +406,8 @@ private:
     XXH32_update(xctx, &v0idx, sizeof(v0idx));
     vuint32 v1idx = (vuint32)(ptrdiff_t)(seg.v2-Vertexes);
     XXH32_update(xctx, &v1idx, sizeof(v1idx));
-    XXH32_update(xctx, &seg.offset, sizeof(seg.offset));
-    XXH32_update(xctx, &seg.length, sizeof(seg.length));
+    //!XXH32_update(xctx, &seg.offset, sizeof(seg.offset));
+    //!XXH32_update(xctx, &seg.length, sizeof(seg.length));
     vuint32 sdnum = (seg.sidedef ? (vuint32)(ptrdiff_t)(seg.sidedef-Sides) : 0xffffffffU);
     XXH32_update(xctx, &sdnum, sizeof(sdnum));
     vuint32 ldnum = (seg.linedef ? (vuint32)(ptrdiff_t)(seg.linedef-Lines) : 0xffffffffU);

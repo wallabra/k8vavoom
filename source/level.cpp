@@ -360,6 +360,9 @@ void VLevel::SerialiseOther (VStream &Strm) {
           // do nothing
         } else {
           si = &Sides[li->sidenum[j]];
+          vint32 lnum = si->LineNum;
+          vio.io(VName("LineNum"), lnum);
+          if (lnum != si->LineNum) Host_Error("invalid sidedef");
           vio.io(VName("TopTexture"), si->TopTexture);
           vio.io(VName("BottomTexture"), si->BottomTexture);
           vio.io(VName("MidTexture"), si->MidTexture);
