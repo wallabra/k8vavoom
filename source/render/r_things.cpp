@@ -73,7 +73,7 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
-static VCvarB r_draw_all_sector_things("r_draw_all_sector_things", true, "Draw all things in sector (can fix disappearing things)?", CVAR_Archive);
+static VCvarB r_draw_all_sector_things("r_draw_all_sector_things", false, "Draw all things in sector (can fix disappearing things)?", CVAR_Archive);
 
 
 //==========================================================================
