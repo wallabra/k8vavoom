@@ -716,7 +716,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   TVec impact(0, 0, 0), local(0, 0, 0);
   int smax, tmax;
   texinfo_t *tex;
-  subsector_t *sub;
+  //subsector_t *sub;
   int leafnum;
   float mids=0, midt=0;
   TVec facemid = TVec(0,0,0);
@@ -751,7 +751,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     impact = dl.origin-surf->plane->normal*dist;
 
     if (r_dynamic_clip && Level->VisData) {
-      sub = Level->PointInSubsector(impact);
+      subsector_t *sub = Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
       leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
       // check potential visibility
@@ -802,7 +802,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
             float us = starts+s*step;
             float ut = startt+t*step;
             TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-            if (length2DSquared(spt-dl.origin) > 1) {
+            if (length2DSquared(spt-dl.origin) > 8) {
               //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
               //linetrace_t Trace;
               //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;

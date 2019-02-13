@@ -27,6 +27,8 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
+//#define CAST_CAN_SEE_MORE_TRACES
+
 
 //==========================================================================
 //
@@ -645,11 +647,13 @@ static bool SightPathTraverse (SightTraceInfo &Trace, const VLevel *level, secto
 //  Rechecks Trace.Intercepts with different ending z value.
 //
 //==========================================================================
+#ifdef CAST_CAN_SEE_MORE_TRACES
 static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
   Trace.Delta = Trace.End-Trace.Start;
   Trace.LineStart = Trace.Start;
   return SightTraverseIntercepts(Trace, EndSector);
 }
+#endif
 
 
 //==========================================================================
@@ -659,13 +663,14 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius) const {
+bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector) const {
   SightTraceInfo Trace;
 
-  if (length2DSquared(org-dest) < 1) return true;
+  if (length2DSquared(org-dest) < 8) return true;
 
   //sector_t *Sector = PointInSubsector(org)->sector;
-  sector_t *OtherSector = PointInSubsector(dest)->sector;
+  sector_t *OtherSector = DestSector;
+  if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
 
   // killough 4/19/98: make fake floors and ceilings block monster view
   /*
@@ -685,23 +690,35 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius) const 
   }
   */
 
+#ifdef CAST_CAN_SEE_MORE_TRACES
   static const float xmult[3] = { 0.0f, -1.0f, 1.0f };
   const float xofs = radius*0.73f;
 
-  for (int d = 0; d < 3; ++d) {
+  //for (int d = 0; d < 3; ++d)
+#else
+  do
+#endif
+  {
     // an unobstructed LOS is possible
     // now look from eyes of t1 to any part of t2
     Trace.Start = org;
     Trace.End = dest;
+#ifdef CAST_CAN_SEE_MORE_TRACES
     Trace.End.x += xofs*xmult[d];
+#endif
 
     // check middle
     if (SightPathTraverse(Trace, this, OtherSector)) return true;
     if (Trace.EarlyOut) {
+#ifdef CAST_CAN_SEE_MORE_TRACES
       if (radius < 12) return false; // player is 16
       continue;
+#else
+      break;
+#endif
     }
 
+#ifdef CAST_CAN_SEE_MORE_TRACES
     // check up and down
     if (radius >= 12) {
       Trace.End = dest;
@@ -716,7 +733,11 @@ bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius) const 
     }
 
     if (radius < 12) break; // player is 16
+#endif
   }
+#ifndef CAST_CAN_SEE_MORE_TRACES
+  while (0);
+#endif
 
   return false;
 }
@@ -761,8 +782,10 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
     for (int by = yl; by <= yh; ++by) {
       line_t *ld;
       for (VBlockLinesIterator It(this, bx, by, &ld); It.GetNext(); ) {
-        // don't check flags, check sector link
+        // check sector link
         if (ld->backsector && ld->frontsector != ld->backsector) {
+          // non two-sided walls are not transparent
+          if ((ld->flags&(ML_TWOSIDED|ML_BLOCKEVERYTHING)) != ML_TWOSIDED) continue;
           // if one of sectors is slope, should check
           if (ld->frontsector->floor.minz != ld->frontsector->floor.maxz || ld->frontsector->ceiling.minz != ld->frontsector->ceiling.maxz) return true;
           if (ld->backsector->floor.minz != ld->backsector->floor.maxz || ld->backsector->ceiling.minz != ld->backsector->ceiling.maxz) return true;

@@ -91,7 +91,7 @@ VCvarB game_release_mode("_release_mode", false, "Affects some default settings.
 // for chex quest support
 //VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
 
-static VCvarF host_framerate("__dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!");
+static VCvarF host_framerate("dbg_framerate", "0", "Hard limit on frame time (in seconds); DEBUG CVAR, DON'T USE!", CVAR_PreInit);
 //k8: this was `3`; why 3? looks like arbitrary number
 VCvarI host_max_skip_frames("dbg_host_max_skip_frames", "12", "Process no more than this number of full frames if frame rate is too slow; DEBUG CVAR, DON'T USE!");
 static VCvarB host_show_skip_limit("dbg_host_show_skip_limit", false, "Show skipframe limit hits? (DEBUG CVAR, DON'T USE!)", CVAR_PreInit);
