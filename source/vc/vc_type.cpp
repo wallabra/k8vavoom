@@ -725,7 +725,7 @@ VStr VFieldType::GetName () const {
   switch (Type) {
     case TYPE_Void: return "void";
     case TYPE_Int: return "int";
-    case TYPE_Byte: return "byte";
+    case TYPE_Byte: return "ubyte";
     case TYPE_Bool: return "bool";
     case TYPE_Float: return "float";
     case TYPE_Name: return "name";

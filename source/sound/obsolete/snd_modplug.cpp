@@ -251,7 +251,7 @@ VAudioCodec *VModPlugAudioCodec::Create(VStream *InStrm)
     // so we have to make sure that it is really a MOD_TYPE
     // file by checking some of it's internal data here
 
-    byte Hdr[4];
+    vuint8 Hdr[4];
     InStrm->Seek(0);
     InStrm->Serialise(Hdr, 4);
 

@@ -46,7 +46,7 @@ public:
   mad_stream      Stream;
   mad_frame     Frame;
   mad_synth     Synth;
-  byte        InputBuffer[INPUT_BUFFER_SIZE + MAD_BUFFER_GUARD];
+  vuint8        InputBuffer[INPUT_BUFFER_SIZE + MAD_BUFFER_GUARD];
   int         FramePos;
   bool        HaveFrame;
 
@@ -144,7 +144,7 @@ bool VMp3AudioCodec::Init()
   guard(VMp3AudioCodec::Init);
 
   //  Check for ID3v2 header.
-  byte Id3Hdr[10];
+  vuint8 Id3Hdr[10];
   int SavedPos = Strm->Tell();
   Strm->Serialise(Id3Hdr, 10);
   if (Id3Hdr[0] == 'I' && Id3Hdr[1] == 'D' && Id3Hdr[2] == '3')
@@ -276,7 +276,7 @@ int VMp3AudioCodec::ReadData()
   guard(VMp3AudioCodec::ReadData);
   int     ReadSize;
   int     Remaining;
-  byte *ReadStart;
+  vuint8 *ReadStart;
 
   //  If there are some bytes left, move them to the beginning of the
   // buffer.

@@ -191,8 +191,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   glTranslatef(Offset.x, Offset.y, Offset.z);
 
   //mmdl_t *pmdl = Mdl->Data;
-  //mframe_t *framedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
-  //mframe_t *nextframedesc = (mframe_t*)((byte *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
+  //mframe_t *framedesc = (mframe_t*)((vuint8 *)pmdl + pmdl->ofsframes + frame * pmdl->framesize);
+  //mframe_t *nextframedesc = (mframe_t*)((vuint8 *)pmdl + pmdl->ofsframes + nextframe * pmdl->framesize);
 
   SetPicModel(Skin, Trans, CMap);
 

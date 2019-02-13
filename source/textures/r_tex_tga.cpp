@@ -245,7 +245,7 @@ vuint8 *VTgaTexture::GetPixels () {
     }
     for (int y = Height; y; --y) {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
-      byte *dst = Pixels+yc*Width;
+      vuint8 *dst = Pixels+yc*Width;
       Strm.Serialise(dst, Width);
     }
   } else if (hdr.img_type == 9 && hdr.bpp == 8 && hdr.pal_type == 1) {
@@ -371,7 +371,7 @@ vuint8 *VTgaTexture::GetPixels () {
     }
     for (int y = Height; y; --y) {
       int yc = (hdr.descriptor_bits&0x20 ? Height-y : y-1);
-      byte *dst = Pixels+yc*Width;
+      vuint8 *dst = Pixels+yc*Width;
       c = 0;
       do {
         count = Streamer<vuint8>(Strm);

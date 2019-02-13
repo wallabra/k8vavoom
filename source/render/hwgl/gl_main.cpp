@@ -229,7 +229,7 @@ void VOpenGLDrawer::InitResolution () {
   } else {
     bool found = true;
 
-    _(glMultiTexCoord2fARB);
+    //_(glMultiTexCoord2fARB);
     _(glActiveTextureARB);
 
     if (!found) Sys_Error("OpenGL FATAL: Multitexture extensions not found.");

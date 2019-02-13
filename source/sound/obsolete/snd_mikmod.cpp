@@ -319,7 +319,7 @@ int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
   }
   else
   {
-    byte c;
+    vuint8 c;
     *Strm << c;
     return c;
   }

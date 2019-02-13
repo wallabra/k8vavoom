@@ -607,7 +607,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   if (pmodel->numframes < 1) Sys_Error("Mod_LoadAliasModel: Invalid # of frames: %d\n", pmodel->numframes);
 
   // base s and t vertices
-  pstverts = (mstvert_t *)((byte *)pmodel+pmodel->ofsstverts);
+  pstverts = (mstvert_t *)((vuint8 *)pmodel+pmodel->ofsstverts);
   for (int i = 0; i < pmodel->numstverts; ++i) {
     pstverts[i].s = LittleShort(pstverts[i].s);
     pstverts[i].t = LittleShort(pstverts[i].t);
@@ -617,7 +617,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   TArray<TVertMap> VertMap;
   TArray<VTempEdge> Edges;
   mod->Tris.SetNum(pmodel->numtris);
-  ptri = (mtriangle_t *)((byte *)pmodel+pmodel->ofstris);
+  ptri = (mtriangle_t *)((vuint8 *)pmodel+pmodel->ofstris);
   for (int i = 0; i < pmodel->numtris; ++i) {
     for (int j = 0; j < 3; ++j) {
       ptri[i].vertindex[j] = LittleShort(ptri[i].vertindex[j]);
@@ -675,7 +675,7 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
   mod->AllVerts.SetNum(pmodel->numframes*VertMap.Num());
   mod->AllNormals.SetNum(pmodel->numframes*VertMap.Num());
   mod->AllPlanes.SetNum(pmodel->numframes*pmodel->numtris);
-  pframe = (mframe_t *)((byte *)pmodel+pmodel->ofsframes);
+  pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
 
   for (int i = 0; i < pmodel->numframes; ++i) {
     pframe->scale[0] = LittleFloat(pframe->scale[0]);
@@ -742,18 +742,18 @@ static void Mod_SwapAliasModel (VMeshModel *mod) {
       const float PlaneDist = DotProduct(PlaneNormal, v3);
       Frame.Planes[j].Set(PlaneNormal, PlaneDist);
     }
-    pframe = (mframe_t *)((byte *)pframe+pmodel->framesize);
+    pframe = (mframe_t *)((vuint8 *)pframe+pmodel->framesize);
   }
   if (!mdl_report_errors && hadError && showError) {
     GCon->Logf("WARNING: Alias model '%s' has some degenerate triangles!%s", *mod->Name, (cannotFix ? " (cannot fix)" : ""));
   }
 
   // commands
-  pcmds = (vint32 *)((byte *)pmodel+pmodel->ofscmds);
+  pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
   for (int i = 0; i < pmodel->numcmds; ++i) pcmds[i] = LittleLong(pcmds[i]);
 
   // skins
-  mskin_t *pskindesc = (mskin_t *)((byte *)pmodel+pmodel->ofsskins);
+  mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
   for (int i = 0; i < pmodel->numskins; ++i) mod->Skins.Append(*VStr(pskindesc[i].name).ToLower());
   unguard;
 }
@@ -802,8 +802,8 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
   mmdl_t *pmdl = (mmdl_t *)Mod_Extradata(wpmodel);
   int frame = InFrame;
   if (frame >= pmdl->numframes || frame < 0) frame = 0;
-  mtriangle_t *ptris = (mtriangle_t *)((byte *)pmdl+pmdl->ofstris);
-  mframe_t *pframe = (mframe_t *)((byte *)pmdl+pmdl->ofsframes+frame*pmdl->framesize);
+  mtriangle_t *ptris = (mtriangle_t *)((vuint8 *)pmdl+pmdl->ofstris);
+  mframe_t *pframe = (mframe_t *)((vuint8 *)pmdl+pmdl->ofsframes+frame*pmdl->framesize);
   trivertx_t *pverts = (trivertx_t *)(pframe+1);
   TVec p[3];
   for (int vi = 0; vi < 3; ++vi) {

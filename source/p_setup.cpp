@@ -2139,7 +2139,7 @@ void VLevel::LoadPVS (int Lump) {
     */
   } else {
     //if (NoVis == nullptr && VisData == nullptr) BuildPVS();
-    byte *VisDataNew = new byte[W_LumpLength(Lump)];
+    vuint8 *VisDataNew = new vuint8[W_LumpLength(Lump)];
     VStream *lumpstream = W_CreateLumpReaderNum(Lump);
     VCheckedStream Strm(lumpstream);
     Strm.Serialise(VisDataNew, W_LumpLength(Lump));

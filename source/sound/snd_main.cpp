@@ -1015,7 +1015,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     return;
   }
 
-  byte Hdr[4];
+  vuint8 Hdr[4];
   Strm->Serialise(Hdr, 4);
   if (!memcmp(Hdr, MUSMAGIC, 4)) {
     // convert mus to mid with a wonderfull function

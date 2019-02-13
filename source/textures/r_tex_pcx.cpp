@@ -262,10 +262,10 @@ void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp,
   // pack the image
   if (bpp == 8) {
     for (int j = 0; j < height; ++j) {
-      byte *src = (byte*)data+j*width;
+      vuint8 *src = (vuint8 *)data+j*width;
       for (int i = 0; i < width; ++i) {
         if ((src[i]&0xc0) == 0xc0) {
-          byte tmp = 0xc1;
+          vuint8 tmp = 0xc1;
           *Strm << tmp;
         }
         *Strm << src[i];
@@ -273,7 +273,7 @@ void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp,
     }
 
     // write the palette
-    byte PalId = 0x0c; // palette ID byte
+    vuint8 PalId = 0x0c; // palette ID byte
     *Strm << PalId;
     for (int i = 0; i < 256; ++i) {
       *Strm << r_palette[i].r << r_palette[i].g << r_palette[i].b;
@@ -286,7 +286,7 @@ void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp,
           const rgb_t *src = (const rgb_t *)(srcb+i*(bpp/8));
           vuint8 c = (p == 0 ? src->r : p == 1 ? src->g : src->b);
           if ((c&0xc0) == 0xc0) {
-            byte tmp = 0xc1;
+            vuint8 tmp = 0xc1;
             *Strm << tmp;
           }
           *Strm << c;

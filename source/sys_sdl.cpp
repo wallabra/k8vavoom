@@ -92,7 +92,7 @@ static void PutEndText (const char *text) {
   // print 80x25 text and deal with the attributes too
   for (i = 1; i <= 80 * 25; ++i, text += 2) {
     // attribute first
-    j = (byte)text[1];
+    j = (vuint8)text[1];
     // attribute changed?
     if (j != att) {
       static const char map[] = "04261537";

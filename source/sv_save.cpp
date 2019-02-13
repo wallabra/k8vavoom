@@ -1222,7 +1222,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
   Saver->RegisterObject(GLevel);
 
   // add world info
-  vuint8 WorldInfoSaved = (byte)SavingPlayers;
+  vuint8 WorldInfoSaved = (vuint8)SavingPlayers;
   *Saver << WorldInfoSaved;
   if (WorldInfoSaved) Saver->RegisterObject(GGameInfo->WorldInfo);
 
@@ -1233,7 +1233,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
     *Saver << mpl;
   }
   for (int i = 0; i < MAXPLAYERS; ++i) {
-    byte Active = (byte)(SavingPlayers && GGameInfo->Players[i]);
+    vuint8 Active = (vuint8)(SavingPlayers && GGameInfo->Players[i]);
     *Saver << Active;
     if (!Active) continue;
     Saver->RegisterObject(GGameInfo->Players[i]);
@@ -1299,7 +1299,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   }
   sv_load_num_players = 0;
   for (int i = 0; i < MAXPLAYERS; ++i) {
-    byte Active;
+    vuint8 Active;
     *Loader << Active;
     if (Active) {
       ++sv_load_num_players;

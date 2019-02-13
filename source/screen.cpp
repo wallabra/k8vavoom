@@ -31,8 +31,6 @@
 #include "neoui/neoui.h"
 
 
-void CalcFadetable16 (byte *pal);
-
 extern int screenblocks;
 
 extern VCvarB dbg_world_think_vm_time;

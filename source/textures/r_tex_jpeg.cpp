@@ -454,7 +454,7 @@ void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, in
       // convert image to 24 bit
       TmpData.SetNum(Width*Height*3);
       for (int i = 0; i < Width*Height; ++i) {
-        int Col = ((byte*)Data)[i];
+        int Col = ((vuint8 *)Data)[i];
         TmpData[i*3] = r_palette[Col].r;
         TmpData[i*3+1] = r_palette[Col].g;
         TmpData[i*3+2] = r_palette[Col].b;
@@ -464,7 +464,7 @@ void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, in
       }
     } else {
       for (int i = 0; i < Height; ++i) {
-        RowPointers[i] = ((byte*)Data)+(Bot2top ? Height-i-1 : i)*Width*3;
+        RowPointers[i] = ((vuint8 *)Data)+(Bot2top ? Height-i-1 : i)*Width*3;
       }
     }
     jpeg_write_scanlines(&cinfo, RowPointers.Ptr(), Height);

@@ -592,8 +592,8 @@ public:
 class VAdvancedRenderLevel : public VRenderLevelShared {
 private:
   VViewClipper LightClip;
-  byte *LightVis;
-  byte *LightBspVis;
+  vuint8 *LightVis;
+  vuint8 *LightBspVis;
   vuint32 CurrLightColour;
 
 protected:
@@ -678,7 +678,7 @@ extern spritedef_t sprites[MAX_SPRITE_MODELS];
 extern int screenblocks;
 extern int r_visframecount;
 
-extern byte light_remap[256];
+extern vuint8 light_remap[256];
 extern VCvarB r_darken;
 extern VCvarB r_dynamic;
 extern VCvarB r_static_lights;

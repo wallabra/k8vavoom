@@ -552,12 +552,12 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
     int err = inflateInit2(&stream, -MAX_WBITS);
     if (err != Z_OK) {
       /* windowBits is passed < 0 to tell that there is no zlib header.
-      * Note that in this case inflate *requires* an extra "dummy" byte
-      * after the compressed stream in order to complete decompression and
-      * return Z_STREAM_END.
-      * In unzip, i don't wait absolutely Z_STREAM_END because I known the
-      * size of both compressed and uncompressed data
-      */
+       * Note that in this case inflate *requires* an extra "dummy" byte
+       * after the compressed stream in order to complete decompression and
+       * return Z_STREAM_END.
+       * In unzip, i don't wait absolutely Z_STREAM_END because I known the
+       * size of both compressed and uncompressed data
+       */
       bError = true;
       Error->Logf("Failed to initialise inflate stream for file '%s'", *fname);
       return;

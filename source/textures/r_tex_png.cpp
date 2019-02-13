@@ -235,7 +235,7 @@ void WritePNG(const VStr &FileName, const void *Data, int Width, int Height, int
   TArray<png_bytep> RowPointers;
   RowPointers.SetNum(Height);
   for (int i = 0; i < Height; ++i) {
-    RowPointers[i] = ((byte *)Data)+(Bot2top ? Height-i-1 : i)*Width*(Bpp/8);
+    RowPointers[i] = ((vuint8 *)Data)+(Bot2top ? Height-i-1 : i)*Width*(Bpp/8);
   }
   png_write_image(png_ptr, RowPointers.Ptr());
 

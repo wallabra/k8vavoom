@@ -61,7 +61,7 @@ static vuint32 blocklightsrS[18*18];
 static vuint32 blocklightsgS[18*18];
 static vuint32 blocklightsbS[18*18];
 
-byte light_remap[256];
+vuint8 light_remap[256];
 int light_mem = 0;
 
 int light_reset_surface_cache = 0;
@@ -443,7 +443,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
         }
         if (total > 255) total = 255;
         if (total < 0) Sys_Error("light < 0");
-        surf->lightmap_rgb[i].r = byte(total);
+        surf->lightmap_rgb[i].r = clampToByte((int)total);
 
         if (r_extrasamples) {
           // filtered sample
@@ -457,7 +457,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
         }
         if (total > 255) total = 255;
         if (total < 0) Sys_Error("light < 0");
-        surf->lightmap_rgb[i].g = byte(total);
+        surf->lightmap_rgb[i].g = clampToByte((int)total);
 
         if (r_extrasamples) {
           // filtered sample
@@ -471,7 +471,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
         }
         if (total > 255) total = 255;
         if (total < 0) Sys_Error("light < 0");
-        surf->lightmap_rgb[i].b = byte(total);
+        surf->lightmap_rgb[i].b = clampToByte((int)total);
       }
     }
   } else {
@@ -482,7 +482,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
   }
 
   if (surf->lightmap) Z_Free(surf->lightmap);
-  surf->lightmap = (byte *)Z_Malloc(w*h);
+  surf->lightmap = (vuint8 *)Z_Malloc(w*h);
   light_mem += w*h;
 
   i = 0;
@@ -500,7 +500,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       }
       if (total > 255) total = 255;
       if (total < 0) Sys_Error("light < 0");
-      surf->lightmap[i] = byte(total);
+      surf->lightmap[i] = clampToByte((int)total);
     }
   }
   unguard;
@@ -857,7 +857,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   int smax, tmax;
   int t;
   int i, size;
-  byte *lightmap;
+  vuint8 *lightmap;
   rgb_t *lightmap_rgb;
 
   if (surf->lmapflags&Lightmap_Required) {
@@ -1255,9 +1255,9 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   for (j = 0; j < tmax; ++j) {
     for (i = 0; i < smax; ++i) {
       rgba_t &lb = light_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
-      lb.r = 255-byte(blocklightsr[j*smax+i]>>8);
-      lb.g = 255-byte(blocklightsg[j*smax+i]>>8);
-      lb.b = 255-byte(blocklightsb[j*smax+i]>>8);
+      lb.r = 255-clampToByte(blocklightsr[j*smax+i]>>8);
+      lb.g = 255-clampToByte(blocklightsg[j*smax+i]>>8);
+      lb.b = 255-clampToByte(blocklightsb[j*smax+i]>>8);
       lb.a = 255;
     }
   }
@@ -1269,9 +1269,9 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   for (j = 0; j < tmax; ++j) {
     for (i = 0; i < smax; ++i) {
       rgba_t &lb = add_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
-      lb.r = byte(blockaddlightsr[j*smax+i]>>8);
-      lb.g = byte(blockaddlightsg[j*smax+i]>>8);
-      lb.b = byte(blockaddlightsb[j*smax+i]>>8);
+      lb.r = clampToByte(blockaddlightsr[j*smax+i]>>8);
+      lb.g = clampToByte(blockaddlightsg[j*smax+i]>>8);
+      lb.b = clampToByte(blockaddlightsb[j*smax+i]>>8);
       lb.a = 255;
     }
   }

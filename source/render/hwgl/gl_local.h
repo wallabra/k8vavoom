@@ -89,7 +89,7 @@
 #define GL_MAX_TEXTURE_UNITS_ARB      0x84E2
 #endif
 
-typedef void (APIENTRY*glMultiTexCoord2fARB_t)(GLenum, GLfloat, GLfloat);
+//typedef void (APIENTRY*glMultiTexCoord2fARB_t)(GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY*glActiveTextureARB_t)(GLenum);
 
 // EXT_point_parameters
@@ -897,7 +897,7 @@ protected:
   void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
 
 #define _(x)  x##_t p_##x
-  _(glMultiTexCoord2fARB);
+  //_(glMultiTexCoord2fARB);
   _(glActiveTextureARB);
 
   _(glPointParameterfEXT);
@@ -1010,19 +1010,12 @@ protected:
   _(glClipControl);
 #undef _
 
-  void MultiTexCoord(int level, GLfloat s, GLfloat t)
-  {
-    p_glMultiTexCoord2fARB(GLenum(GL_TEXTURE0_ARB + level), s, t);
-  }
-  void SelectTexture(int level)
-  {
-    p_glActiveTextureARB(GLenum(GL_TEXTURE0_ARB + level));
-  }
+  //void MultiTexCoord(int level, GLfloat s, GLfloat t) { p_glMultiTexCoord2fARB(GLenum(GL_TEXTURE0_ARB + level), s, t); }
 
-  static void SetColour(vuint32 c)
-  {
-    glColor4ub(byte((c >> 16) & 255), byte((c >> 8) & 255),
-      byte(c & 255), byte(c >> 24));
+  inline void SelectTexture (int level) { p_glActiveTextureARB(GLenum(GL_TEXTURE0_ARB+level)); }
+
+  static inline void SetColour (vuint32 c) {
+    glColor4ub((vuint8)((c>>16)&255), (vuint8)((c>>8)&255), (vuint8)(c&255), (vuint8)((c>>24)&255));
   }
 
 public:

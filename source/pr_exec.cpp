@@ -2165,13 +2165,13 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ClearPointedStruct)
-        ((VStruct *)ReadPtr(ip+1))->DestructObject((byte *)sp[-1].p);
+        ((VStruct *)ReadPtr(ip+1))->DestructObject((vuint8 *)sp[-1].p);
         ip += 1+sizeof(void *);
         --sp;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_ZeroPointedStruct)
-        ((VStruct *)ReadPtr(ip+1))->ZeroObject((byte *)sp[-1].p);
+        ((VStruct *)ReadPtr(ip+1))->ZeroObject((vuint8 *)sp[-1].p);
         ip += 1+sizeof(void *);
         --sp;
         PR_VM_BREAK;
