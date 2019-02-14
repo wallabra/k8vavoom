@@ -2608,9 +2608,6 @@ COMMAND_WITH_AC(ExportTexture) {
   }
 
   // find a file name to save it to
-  VStr BaseDir = FL_GetScreenshotsDir();
-  if (BaseDir.isEmpty()) return;
-
   VStr fname = va("%s.png", *tx->Name);
   auto strm = FL_OpenFileWrite(fname, true); // as full name
   if (!strm) {
