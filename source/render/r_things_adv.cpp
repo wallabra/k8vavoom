@@ -33,19 +33,12 @@
 //**  grabbed wrong, so I changed it...
 //**
 //**************************************************************************
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "gamedefs.h"
 #include "r_local.h"
 #include "sv_local.h"
 
-// MACROS ------------------------------------------------------------------
 
-// TYPES -------------------------------------------------------------------
-
-enum
-{
+enum {
   SPR_VP_PARALLEL_UPRIGHT,
   SPR_FACING_UPRIGHT,
   SPR_VP_PARALLEL,
@@ -54,666 +47,403 @@ enum
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED,
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+extern VCvarB r_chasecam;
+extern VCvarB r_draw_mobjs;
+extern VCvarB r_draw_psprites;
+extern VCvarB r_models;
+extern VCvarB r_view_models;
+extern VCvarB r_model_shadows;
+extern VCvarB r_model_light;
+extern VCvarB r_sort_sprites;
+extern VCvarB r_fix_sprite_offsets;
+extern VCvarI r_sprite_fix_delta;
+extern VCvarB r_drawfuzz;
+extern VCvarF r_transsouls;
+extern VCvarI crosshair;
+extern VCvarF crosshair_alpha;
+extern VCvarI r_max_model_lights;
+extern VCvarI r_max_model_shadows;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern VCvarB   r_chasecam;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-extern VCvarB     r_draw_mobjs;
-extern VCvarB     r_draw_psprites;
-extern VCvarB     r_models;
-extern VCvarB     r_view_models;
-extern VCvarB     r_model_shadows;
-extern VCvarB     r_model_light;
-extern VCvarB     r_sort_sprites;
-extern VCvarB     r_fix_sprite_offsets;
-extern VCvarI     r_sprite_fix_delta;
-extern VCvarB     r_drawfuzz;
-extern VCvarF     r_transsouls;
-extern VCvarI     crosshair;
-extern VCvarF     crosshair_alpha;
-extern VCvarI     r_max_model_lights;
-extern VCvarI     r_max_model_shadows;
-
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderThingAmbient
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderThingAmbient(VEntity *mobj)
-{
-  guard(VAdvancedRenderLevel::RenderThingAmbient);
+void VAdvancedRenderLevel::RenderThingAmbient (VEntity *mobj) {
   int RendStyle = mobj->RenderStyle;
   float Alpha = mobj->Alpha;
   bool Additive = false;
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+  } else if (RendStyle == STYLE_OptFuzzy) {
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0f;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    if (Alpha == 1.0f) Alpha -= 0.0002f;
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None:
+      return;
+    case STYLE_Normal:
+      Alpha = 1.0f;
+      break;
+    case STYLE_Fuzzy:
+      Alpha = FUZZY_ALPHA;
+      break;
+    case STYLE_Add:
+      if (Alpha == 1.0f) Alpha -= 0.0002f;
+      Additive = true;
+      break;
   }
   Alpha = MID(0.0f, Alpha, 1.0f);
+  if (!Alpha) return;
 
-  //  Setup lighting
+  // setup lighting
   vuint32 light;
-  if (RendStyle == STYLE_Fuzzy)
-  {
+  if (RendStyle == STYLE_Fuzzy) {
     light = 0;
-  }
-  else if ((mobj->State->Frame & VState::FF_FULLBRIGHT) ||
-    (mobj->EntityFlags & (VEntity::EF_FullBright | VEntity::EF_Bright)))
+  } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
+             (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright)))
   {
     light = 0xffffffff;
-  }
-  else
-  {
-    if (!r_model_light || !r_model_shadows)
-    {
-      // Use old way of lighting
+  } else {
+    if (!r_model_light || !r_model_shadows) {
+      // use old way of lighting
       light = LightPoint(mobj->Origin, mobj);
-    }
-    else
-    {
+    } else {
       light = LightPointAmbient(mobj->Origin, mobj);
     }
   }
 
   float TimeFrac = 0;
-  if (mobj->State->Time > 0)
-  {
-    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+  if (mobj->State->Time > 0) {
+    TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
     TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, light, 0, Alpha, Additive, TimeFrac, RPASS_Ambient);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderMobjsAmbient
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderMobjsAmbient()
-{
-  guard(VAdvancedRenderLevel::RenderMobjsAmbient);
-  if (!r_draw_mobjs || !r_models)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO))
-    {
-      //  Don't draw camera actor.
-      continue;
-    }
-
-    if ((Ent->EntityFlags & VEntity::EF_NoSector) ||
-      (Ent->EntityFlags & VEntity::EF_Invisible))
-    {
-      continue;
-    }
-
-    if (!Ent->State)
-    {
-      continue;
-    }
-
-    //  Skip things in subsectors that are not visible.
-    int SubIdx = Ent->SubSector - Level->Subsectors;
-    if (!(BspVis[SubIdx >> 3] & (1 << (SubIdx & 7))))
-    {
-      continue;
-    }
-
+void VAdvancedRenderLevel::RenderMobjsAmbient () {
+  if (!r_draw_mobjs || !r_models) return;
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!Ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
     RenderThingAmbient(*Ent);
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderThingTextures
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderThingTextures(VEntity *mobj)
-{
-  guard(VAdvancedRenderLevel::RenderThingAmbient);
+void VAdvancedRenderLevel::RenderThingTextures (VEntity *mobj) {
   int RendStyle = mobj->RenderStyle;
   float Alpha = mobj->Alpha;
   bool Additive = false;
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+  } else if (RendStyle == STYLE_OptFuzzy) {
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0f;
-    break;
-
-  case STYLE_Translucent:
-    Alpha = mobj->Alpha;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    if (Alpha == 1.0f) Alpha -= 0.0002f;
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None:
+      return;
+    case STYLE_Normal:
+      Alpha = 1.0f;
+      break;
+    case STYLE_Translucent:
+      Alpha = mobj->Alpha;
+      break;
+    case STYLE_Fuzzy:
+      Alpha = FUZZY_ALPHA;
+      break;
+    case STYLE_Add:
+      if (Alpha == 1.0f) Alpha -= 0.0002f;
+      Additive = true;
+      break;
   }
   Alpha = MID(0.0f, Alpha, 1.0f);
+  if (!Alpha) return;
 
   float TimeFrac = 0;
-  if (mobj->State->Time > 0)
-  {
-    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+  if (mobj->State->Time > 0) {
+    TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
     TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Textures);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderMobjsTextures
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderMobjsTextures()
-{
-  guard(VAdvancedRenderLevel::RenderMobjsTextures);
-  if (!r_draw_mobjs || !r_models)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO))
-    {
-      //  Don't draw camera actor.
-      continue;
-    }
-
-    if ((Ent->EntityFlags & VEntity::EF_NoSector) ||
-      (Ent->EntityFlags & VEntity::EF_Invisible))
-    {
-      continue;
-    }
-
-    if (!Ent->State)
-    {
-      continue;
-    }
-
-    //  Skip things in subsectors that are not visible.
-    int SubIdx = Ent->SubSector - Level->Subsectors;
-    if (!(BspVis[SubIdx >> 3] & (1 << (SubIdx & 7))))
-    {
-      continue;
-    }
-
+void VAdvancedRenderLevel::RenderMobjsTextures () {
+  if (!r_draw_mobjs || !r_models) return;
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!Ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
     RenderThingTextures(*Ent);
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::IsTouchedByLight
 //
 //==========================================================================
-
-bool VAdvancedRenderLevel::IsTouchedByLight(VEntity *Ent, bool Count)
-{
-  guard(VAdvancedRenderLevel::IsTouchedByLight);
-  TVec Delta = Ent->Origin - CurrLightPos;
-  float Dist = Ent->Radius + CurrLightRadius;
-  if (Delta.x > Dist || Delta.y > Dist)
-  {
-    return false;
-  }
-  if (Delta.z < -CurrLightRadius)
-  {
-    return false;
-  }
-  if (Delta.z > CurrLightRadius + Ent->Height)
-  {
-    return false;
-  }
-  Delta.z = 0;
-  if (Delta.Length() > Dist)
-  {
-    return false;
-  }
-  if (Count)
-  {
-    Ent->NumTouchingLights += 1;
-  }
-
+bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *Ent, bool Count) {
+  const TVec Delta = Ent->Origin-CurrLightPos;
+  const float Dist = Ent->Radius+CurrLightRadius;
+  if (Delta.x > Dist || Delta.y > Dist) return false;
+  if (Delta.z < -CurrLightRadius) return false;
+  if (Delta.z > CurrLightRadius+Ent->Height) return false;
+  //Delta.z = 0;
+  if (Delta.Length2DSquared() > Dist*Dist) return false;
+  if (Count) Ent->NumTouchingLights += 1;
   return true;
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderThingLight
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderThingLight(VEntity *mobj)
-{
-  guard(VAdvancedRenderLevel::RenderThingLight);
-  // Use advanced lighting style
+void VAdvancedRenderLevel::RenderThingLight (VEntity *mobj) {
+  // use advanced lighting style
   int RendStyle = mobj->RenderStyle;
   float Alpha = mobj->Alpha;
   bool Additive = false;
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+  } else if (RendStyle == STYLE_OptFuzzy) {
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0f;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    if (Alpha == 1.0f) Alpha -= 0.0002f;
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None:
+      return;
+    case STYLE_Normal:
+      Alpha = 1.0f;
+      break;
+    case STYLE_Fuzzy:
+      Alpha = FUZZY_ALPHA;
+      break;
+    case STYLE_Add:
+      if (Alpha == 1.0f) Alpha -= 0.0002f;
+      Additive = true;
+      break;
   }
   Alpha = MID(0.0f, Alpha, 1.0f);
+  if (!Alpha) return;
 
-  if (Alpha < 1.0f && RendStyle == STYLE_Fuzzy)
-  {
-    return;
-  }
+  if (Alpha < 1.0f && RendStyle == STYLE_Fuzzy) return;
 
   float TimeFrac = 0;
-  if (mobj->State->Time > 0)
-  {
-    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+  if (mobj->State->Time > 0) {
+    TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
     TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Light);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::ResetMobjsLightCount
 //
 //==========================================================================
+void VAdvancedRenderLevel::ResetMobjsLightCount () {
+  if (!r_draw_mobjs || !r_models) return;
 
-void VAdvancedRenderLevel::ResetMobjsLightCount()
-{
-  guard(VAdvancedRenderLevel::RenderMobjsLight);
-  if (!r_draw_mobjs || !r_models)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
-    if (Ent->NumTouchingLights == 0)
-    {
-      // No need to do anything
-      continue;
-    }
-
-    if ((Ent->EntityFlags & VEntity::EF_NoSector) ||
-      (Ent->EntityFlags & VEntity::EF_Invisible))
-    {
-      continue;
-    }
-
-    if (!Ent->State)
-    {
-      continue;
-    }
-
-    if (!IsTouchedByLight(*Ent, false))
-    {
-      continue;
-    }
-
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    if (Ent->NumTouchingLights == 0) continue; // no need to do anything
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!Ent->State) continue;
+    if (!IsTouchedByLight(*Ent, false)) continue;
     Ent->NumTouchingLights = 0;
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderMobjsLight
 //
 //==========================================================================
+void VAdvancedRenderLevel::RenderMobjsLight () {
+  if (!r_draw_mobjs || !r_models || !r_model_light) return;
 
-void VAdvancedRenderLevel::RenderMobjsLight()
-{
-  guard(VAdvancedRenderLevel::RenderMobjsLight);
-  if (!r_draw_mobjs || !r_models || !r_model_light)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
-    if (Ent->NumTouchingLights > r_max_model_lights)
-    {
-      // Limit maximum lights for this Entity
-      continue;
-    }
-
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO))
-    {
-      //  Don't draw camera actor.
-      continue;
-    }
-
-    if ((Ent->EntityFlags & VEntity::EF_NoSector) ||
-      (Ent->EntityFlags & VEntity::EF_Invisible))
-    {
-      continue;
-    }
-
-    if (!Ent->State)
-    {
-      continue;
-    }
-
-    //  Skip things in subsectors that are not visible.
-    int SubIdx = Ent->SubSector - Level->Subsectors;
-    if (!(LightBspVis[SubIdx >> 3] & (1 << (SubIdx & 7))))
-    {
-      continue;
-    }
-
-    if (!IsTouchedByLight(*Ent, true))
-    {
-      continue;
-    }
-
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    if (Ent->NumTouchingLights > r_max_model_lights) continue; // limit maximum lights for this Entity
+    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!Ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!IsTouchedByLight(*Ent, true)) continue;
     RenderThingLight(*Ent);
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderThingShadow
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderThingShadow(VEntity *mobj)
-{
-  guard(VAdvancedRenderLevel::RenderThingShadow);
+void VAdvancedRenderLevel::RenderThingShadow (VEntity *mobj) {
   int RendStyle = mobj->RenderStyle;
   float Alpha = mobj->Alpha;
   bool Additive = false;
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+  } else if (RendStyle == STYLE_OptFuzzy) {
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0f;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    if (Alpha == 1.0f) Alpha -= 0.0002f;
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None:
+      return;
+    case STYLE_Normal:
+      Alpha = 1.0f;
+      break;
+    case STYLE_Fuzzy:
+      Alpha = FUZZY_ALPHA;
+      break;
+    case STYLE_Add:
+      if (Alpha == 1.0f) Alpha -= 0.0002f;
+      Additive = true;
+      break;
   }
   Alpha = MID(0.0f, Alpha, 1.0f);
+  if (!Alpha) return;
 
   float TimeFrac = 0;
-  if (mobj->State->Time > 0)
-  {
-    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+  if (mobj->State->Time > 0) {
+    TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
     TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_ShadowVolumes);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderMobjsShadow
 //
 //==========================================================================
+void VAdvancedRenderLevel::RenderMobjsShadow () {
+  if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
 
-void VAdvancedRenderLevel::RenderMobjsShadow()
-{
-  guard(VAdvancedRenderLevel::RenderMobjsShadow);
-  if (!r_draw_mobjs || !r_models || !r_model_shadows)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
-    if (Ent->NumTouchingLights > r_max_model_shadows)
-    {
-      // Limit maximum shadows for this Entity
-      continue;
-    }
-
-    if ((Ent->EntityFlags & VEntity::EF_NoSector) ||
-      (Ent->EntityFlags & VEntity::EF_Invisible))
-    {
-      continue;
-    }
-
-    if (!Ent->State)
-    {
-      continue;
-    }
-
-    //  Skip things in subsectors that are not visible.
-    int SubIdx = Ent->SubSector - Level->Subsectors;
-    if (!(LightVis[SubIdx >> 3] & (1 << (SubIdx & 7))))
-    {
-      continue;
-    }
-
-    if (!IsTouchedByLight(*Ent, true))
-    {
-      continue;
-    }
-
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    if (Ent->NumTouchingLights > r_max_model_shadows) continue; // limit maximum shadows for this Entity
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!Ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    if (!(LightVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    if (!IsTouchedByLight(*Ent, true)) continue;
     RenderThingShadow(*Ent);
   }
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderThingFog
 //
 //==========================================================================
-
-void VAdvancedRenderLevel::RenderThingFog(VEntity *mobj)
-{
-  guard(VAdvancedRenderLevel::RenderThingFog);
+void VAdvancedRenderLevel::RenderThingFog (VEntity *mobj) {
   int RendStyle = mobj->RenderStyle;
   float Alpha = mobj->Alpha;
   bool Additive = false;
 
-  if (RendStyle == STYLE_SoulTrans)
-  {
+  if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
     Alpha = r_transsouls;
-  }
-  else if (RendStyle == STYLE_OptFuzzy)
-  {
-    RendStyle = r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+  } else if (RendStyle == STYLE_OptFuzzy) {
+    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
   }
 
-  switch (RendStyle)
-  {
-  case STYLE_None:
-    return;
-
-  case STYLE_Normal:
-    Alpha = 1.0f;
-    break;
-
-  case STYLE_Fuzzy:
-    Alpha = FUZZY_ALPHA;
-    break;
-
-  case STYLE_Add:
-    if (Alpha == 1.0f) Alpha -= 0.0002f;
-    Additive = true;
-    break;
+  switch (RendStyle) {
+    case STYLE_None:
+      return;
+    case STYLE_Normal:
+      Alpha = 1.0f;
+      break;
+    case STYLE_Fuzzy:
+      Alpha = FUZZY_ALPHA;
+      break;
+    case STYLE_Add:
+      if (Alpha == 1.0f) Alpha -= 0.0002f;
+      Additive = true;
+      break;
   }
   Alpha = MID(0.0f, Alpha, 1.0f);
+  if (!Alpha) return;
 
   vuint32 Fade = GetFade(SV_PointInRegion(mobj->Sector, mobj->Origin));
-  if (!Fade)
-  {
-    return;
-  }
+  if (!Fade) return;
 
   float TimeFrac = 0;
-  if (mobj->State->Time > 0)
-  {
-    TimeFrac = 1.0f - (mobj->StateTime / mobj->State->Time);
+  if (mobj->State->Time > 0) {
+    TimeFrac = 1.0f-(mobj->StateTime/mobj->State->Time);
     TimeFrac = MID(0.0f, TimeFrac, 1.0f);
   }
 
   DrawEntityModel(mobj, 0xffffffff, Fade, Alpha, Additive, TimeFrac, RPASS_Fog);
-  unguard;
 }
+
 
 //==========================================================================
 //
 //  VAdvancedRenderLevel::RenderMobjsFog
 //
 //==========================================================================
+void VAdvancedRenderLevel::RenderMobjsFog () {
+  if (!r_draw_mobjs || !r_models) return;
 
-void VAdvancedRenderLevel::RenderMobjsFog()
-{
-  guard(VAdvancedRenderLevel::RenderMobjsFog);
-  if (!r_draw_mobjs || !r_models)
-  {
-    return;
-  }
-
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent)
-  {
-    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO))
-    {
-      //  Don't draw camera actor.
-      continue;
-    }
-
-    if ((Ent->EntityFlags & VEntity::EF_NoSector) ||
-      (Ent->EntityFlags & VEntity::EF_Invisible))
-    {
-      continue;
-    }
-
-    if (!Ent->State)
-    {
-      continue;
-    }
-
-    //  Skip things in subsectors that are not visible.
-    int SubIdx = Ent->SubSector - Level->Subsectors;
-    if (!(BspVis[SubIdx >> 3] & (1 << (SubIdx & 7))))
-    {
-      continue;
-    }
-
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    if (*Ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
+    if (Ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    if (!Ent->State) continue;
+    // skip things in subsectors that are not visible
+    const int SubIdx = (int)(ptrdiff_t)(Ent->SubSector-Level->Subsectors);
+    if (!(BspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
     RenderThingFog(*Ent);
   }
-  unguard;
 }
