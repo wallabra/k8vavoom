@@ -951,3 +951,43 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, bool shadowslig
     }
   }
 }
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipCheckLine
+//
+//==========================================================================
+bool VViewClipper::ClipCheckLine (const line_t *ldef) const {
+  if (!ldef) return false;
+  const TVec &v1 = *ldef->v1;
+  const TVec &v2 = *ldef->v2;
+
+  if (!CheckAndClipVerts(v1, v2, Origin)) return false;
+  if (IsRangeVisible(PointToClipAngle(v2), PointToClipAngle(v1))) return true;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VViewClipper::ClipAddLine
+//
+//==========================================================================
+void VViewClipper::ClipAddLine (const line_t *ldef) {
+  if (!ldef) return; // miniseg
+  if (ldef->PointOnSide(Origin)) return; // viewer is in back side or on plane
+
+  const TVec &v1 = *ldef->v1;
+  const TVec &v2 = *ldef->v2;
+
+  if (!CheckVerts(v1, v2, Origin)) return;
+
+  // for 2-sided line, determine if it can be skipped
+  if (ldef->backsector && (ldef->flags&ML_TWOSIDED) != 0) {
+    if (ldef->alpha < 1.0f) return; // skip translucent walls
+    //if (!IsSegAClosedSomething(Level, seg)) return;
+  }
+
+  AddClipRange(PointToClipAngle(v2), PointToClipAngle(v1));
+}

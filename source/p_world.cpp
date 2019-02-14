@@ -272,7 +272,8 @@ void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, floa
   int mapxstep;
   int mapystep;
 
-  ++validcount;
+  //++validcount;
+  Self->XLevel->IncrementValidCount();
 
   if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0f;  // don't side exactly on a line
   if (((FX(y1-Self->XLevel->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0f;  // don't side exactly on a line

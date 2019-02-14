@@ -429,6 +429,9 @@ public:
   void RunScriptThinkers (float DeltaTime);
 
 public:
+  void IncrementValidCount ();
+
+public:
   virtual void SerialiseOther (VStream &Strm) override;
   virtual void ClearReferences () override;
   virtual void Destroy () override;
@@ -478,10 +481,10 @@ public:
 
   bool ChangeSector (sector_t *sector, int crunch);
 
-  bool TraceLine (linetrace_t &, const TVec &, const TVec &, int) const;
+  bool TraceLine (linetrace_t &, const TVec &, const TVec &, int);
 
   // doesn't check pvs or reject
-  bool CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector=nullptr) const;
+  bool CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector=nullptr);
 
   bool NeedProperLightTraceAt (const TVec &org, float radius);
 

@@ -565,7 +565,7 @@ protected:
   // light methods
   static void CalcMinMaxs (surface_t *surf);
   float CastRay (const TVec &p1, const TVec &p2, float squaredist);
-  static void CalcFaceVectors (surface_t *surf);
+  static bool CalcFaceVectors (surface_t *surf);
   void CalcPoints (surface_t *surf);
   void SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis);
   void LightFace (surface_t *surf, subsector_t *leaf);

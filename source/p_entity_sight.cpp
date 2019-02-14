@@ -263,7 +263,8 @@ static bool SightPathTraverse (sight_trace_t &Trace, VThinker *Self, sector_t *E
   float xintercept, yintercept;
   int mapx, mapy, mapxstep, mapystep;
 
-  ++validcount;
+  //++validcount;
+  Self->XLevel->IncrementValidCount();
   Trace.Intercepts.Clear();
 
   if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0f; // don't side exactly on a line

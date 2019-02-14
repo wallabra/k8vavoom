@@ -157,7 +157,8 @@ void VEntity::CreateSecNodeList () {
   tmbbox[BOXRIGHT] = Origin.x+Radius;
   tmbbox[BOXLEFT] = Origin.x-Radius;
 
-  ++validcount; // used to make sure we only process a line once
+  //++validcount; // used to make sure we only process a line once
+  XLevel->IncrementValidCount();
 
   xl = MapBlock(tmbbox[BOXLEFT]-XLevel->BlockMapOrgX);
   xh = MapBlock(tmbbox[BOXRIGHT]-XLevel->BlockMapOrgX);
@@ -463,7 +464,8 @@ bool VEntity::CheckPosition (TVec Pos) {
   cptrace.Ceiling = reg->ceiling;
   cptrace.CeilingZ = reg->ceiling->GetPointZ(Pos);
 
-  ++validcount;
+  //++validcount;
+  XLevel->IncrementValidCount();
 
   if (EntityFlags&EF_ColideWithThings) {
     // Check things first, possibly picking things up.
@@ -687,7 +689,8 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
     tmtrace.CeilingZ = reg->ceiling->GetPointZ(tmtrace.End);
   }
 
-  ++validcount;
+  //++validcount;
+  XLevel->IncrementValidCount();
   tmtrace.SpecHit.Clear();
 
   tmtrace.BlockingMobj = nullptr;
@@ -746,7 +749,8 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos) {
   }
 
   // check lines
-  ++validcount;
+  //++validcount;
+  XLevel->IncrementValidCount();
 
   float thingdropoffz = tmtrace.FloorZ;
   tmtrace.FloorZ = tmtrace.DropOffZ;
@@ -1669,7 +1673,8 @@ bool VEntity::CheckSides (TVec lsPos) {
   int projblk = (EntityFlags&VEntity::EF_Missile ? ML_BLOCKPROJECTILE : 0);
 
   // xl->xh, yl->yh determine the mapblock set to search
-  ++validcount; // prevents checking same line twice
+  //++validcount; // prevents checking same line twice
+  XLevel->IncrementValidCount();
   for (bx = xl; bx <= xh; ++bx) {
     for (by = yl; by <= yh; ++by) {
       line_t *ld;
@@ -1747,7 +1752,8 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
   yh = MapBlock(t_bbox[BOXTOP]-XLevel->BlockMapOrgY);
 
   // check lines
-  ++validcount;
+  //++validcount;
+  XLevel->IncrementValidCount();
   for (bx = xl; bx <= xh; ++bx) {
     for (by = yl; by <= yh; ++by) {
       line_t *line;

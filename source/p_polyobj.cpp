@@ -397,7 +397,8 @@ void VLevel::TranslatePolyobjToStartSpot(float originX, float originY, int tag)
 void VLevel::UpdatePolySegs(polyobj_t *po)
 {
   guard(VLevel::UpdatePolySegs);
-  validcount++;
+  //validcount++;
+  IncrementValidCount();
   seg_t **segList = po->segs;
   for (int count = po->numsegs; count; count--, segList++)
   {

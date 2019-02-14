@@ -63,6 +63,9 @@ public:
 
   void ClipAddSubsectorSegs (const subsector_t *sub, bool shadowslight, const TPlane *Mirror=nullptr, const TVec &CurrLightPos = TVec(0, 0, 0), float CurrLightRadius=0);
 
+  bool ClipCheckLine (const line_t *ldef) const;
+  void ClipAddLine (const line_t *ldef);
+
 private:
   void CheckAddClipSeg (const seg_t *line, bool shadowslight, const TPlane *Mirror, const TVec &CurrLightPos, float CurrLightRadius);
 };

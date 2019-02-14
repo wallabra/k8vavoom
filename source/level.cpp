@@ -59,6 +59,20 @@ VLevelScriptThinker::~VLevelScriptThinker () {
 
 //==========================================================================
 //
+//  VLevel::IncrementValidCount
+//
+//==========================================================================
+void VLevel::IncrementValidCount () {
+  if (++validcount == 0x7fffffff) {
+    validcount = 1;
+    line_t *ld = &Lines[0];
+    for (int count = NumLines; count--; ++ld) ld->validcount = 0;
+  }
+}
+
+
+//==========================================================================
+//
 //  VLevel::PointInSubsector
 //
 //==========================================================================

@@ -95,8 +95,9 @@ struct surface_t {
   vuint32 Fade;
   subsector_t *subsector;
   // not exposed to VC
-  vuint8 *lightmap; // can be equal to `SURF_NEED_TO_BUILD_LIGHMAP`
+  vuint8 *lightmap;
   rgb_t *lightmap_rgb;
+  //int lmapwdt, lmaphgt; // must be set if any lightmap is allocated
   int dlightframe;
   int dlightbits;
   int count;

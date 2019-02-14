@@ -82,7 +82,7 @@ static float lightmapb[18*18*4];
 static bool light_hit;
 static bool is_coloured;
 
-static int c_bad;
+//static int c_bad;
 
 
 //==========================================================================
@@ -94,8 +94,8 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient);
-  if (slins > 255) slins = 255;
-  return slins;
+  //if (slins > 255) slins = 255;
+  return clampToByte(slins);
 }
 
 
@@ -108,8 +108,8 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
   if (!surf || !r_allow_ambient) return 0;
   int slins = (surf->Light>>24)&0xff;
   slins = MAX(slins, r_ambient);
-  if (slins > 255) slins = 255;
-  return (surf->Light&0xffffff)|(slins<<24);
+  //if (slins > 255) slins = 255;
+  return (surf->Light&0xffffff)|(((vuint32)clampToByte(slins))<<24);
 }
 
 
@@ -119,19 +119,17 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevel::CalcMinMaxs (surface_t *surf) {
-  guard(VRenderLevel::CalcMinMaxs);
   smins = TVec(99999.0f, 99999.0f, 99999.0f);
   smaxs = TVec(-999999.0f, -999999.0f, -999999.0f);
-  for (int i = 0; i < surf->count; ++i) {
-    TVec &v = surf->verts[i];
-    if (smins.x > v.x) smins.x = v.x;
-    if (smins.y > v.y) smins.y = v.y;
-    if (smins.z > v.z) smins.z = v.z;
-    if (smaxs.x < v.x) smaxs.x = v.x;
-    if (smaxs.y < v.y) smaxs.y = v.y;
-    if (smaxs.z < v.z) smaxs.z = v.z;
+  const TVec *v = &surf->verts[0];
+  for (int i = surf->count; i--; ++v) {
+    if (smins.x > v->x) smins.x = v->x;
+    if (smins.y > v->y) smins.y = v->y;
+    if (smins.z > v->z) smins.z = v->z;
+    if (smaxs.x < v->x) smaxs.x = v->x;
+    if (smaxs.y < v->y) smaxs.y = v->y;
+    if (smaxs.z < v->z) smaxs.z = v->z;
   }
-  unguard;
 }
 
 
@@ -143,7 +141,6 @@ void VRenderLevel::CalcMinMaxs (surface_t *surf) {
 //
 //==========================================================================
 float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
-  guard(VRenderLevel::CastRay);
   linetrace_t Trace;
 
   TVec delta = p2-p1;
@@ -154,7 +151,6 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
 
   if (t == 0) t = 1; // don't blow up...
   return sqrt(t);
-  unguard;
 }
 
 
@@ -165,10 +161,7 @@ float VRenderLevel::CastRay (const TVec &p1, const TVec &p2, float squaredist) {
 //  fills in texorg, worldtotex, and textoworld
 //
 //==========================================================================
-void VRenderLevel::CalcFaceVectors (surface_t *surf) {
-  guard(VRenderLevel::CalcFaceVectors);
-  TVec texnormal(0, 0, 0);
-
+bool VRenderLevel::CalcFaceVectors (surface_t *surf) {
   texinfo_t *tex = surf->texinfo;
 
   // convert from float to vec_t
@@ -177,10 +170,12 @@ void VRenderLevel::CalcFaceVectors (surface_t *surf) {
 
   // calculate a normal to the texture axis
   // points can be moved along this without changing their S/T
+  TVec texnormal;
   texnormal.x = tex->taxis.y*tex->saxis.z-tex->taxis.z*tex->saxis.y;
   texnormal.y = tex->taxis.z*tex->saxis.x-tex->taxis.x*tex->saxis.z;
   texnormal.z = tex->taxis.x*tex->saxis.y-tex->taxis.y*tex->saxis.x;
   texnormal = Normalise(texnormal);
+  if (!isFiniteF(texnormal.x)) return false; // no need to check other coords
 
   // flip it towards plane normal
   float distscale = DotProduct(texnormal, surf->plane->normal);
@@ -193,9 +188,11 @@ void VRenderLevel::CalcFaceVectors (surface_t *surf) {
   // distscale is the ratio of the distance along the texture normal to
   // the distance along the plane normal
   distscale = 1.0f/distscale;
+  if (!isFiniteF(distscale)) return false;
 
   for (int i = 0; i < 2; ++i) {
     float len = Length(worldtotex[i]);
+    if (!isFiniteF(len)) return false; // just in case
     float dist = DotProduct(worldtotex[i], surf->plane->normal);
     dist *= distscale;
     textoworld[i] = worldtotex[i]-dist*texnormal;
@@ -211,7 +208,8 @@ void VRenderLevel::CalcFaceVectors (surface_t *surf) {
     dist *= distscale;
     texorg = texorg-dist*texnormal;
   }
-  unguard;
+
+  return true;
 }
 
 
@@ -224,24 +222,19 @@ void VRenderLevel::CalcFaceVectors (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevel::CalcPoints (surface_t *surf) {
-  guard(VRenderLevel::CalcPoints);
-  int i;
-  int s, t;
   int w, h;
-  int step;
-  float starts, startt, us, ut;
-  TVec *spt;
-  TVec facemid(0, 0, 0);
+  float step;
+  float starts, startt;
   linetrace_t Trace;
 
   // fill in surforg
   // the points are biased towards the centre of the surface
   // to help avoid edge cases just inside walls
-  spt = surfpt;
-  float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
-  float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
+  TVec *spt = surfpt;
+  const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
+  const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
 
-  facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
+  TVec facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
 
   bool doExtra = r_extrasamples;
   if (ldr_extrasamples_override >= 0) doExtra = (ldr_extrasamples_override > 0);
@@ -261,13 +254,13 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
   }
 
   numsurfpt = w*h;
-  for (t = 0; t < h; ++t) {
-    for (s = 0; s < w; ++s, ++spt) {
-      us = starts+s*step;
-      ut = startt+t*step;
+  for (int t = 0; t < h; ++t) {
+    for (int s = 0; s < w; ++s, ++spt) {
+      float us = starts+s*step;
+      float ut = startt+t*step;
 
       // if a line can be traced from surf to facemid, the point is good
-      for (i = 0; i < 6; ++i) {
+      for (int i = 0; i < 6; ++i) {
         // calculate texture point
         *spt = texorg+textoworld[0]*us+textoworld[1]*ut;
         const TVec fms = facemid-(*spt);
@@ -294,10 +287,9 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
         // move surf 8 pixels towards the centre
         *spt += 8*Normalise(fms);
       }
-      if (i == 2) ++c_bad;
+      //if (i == 2) ++c_bad;
     }
   }
-  unguard;
 }
 
 
@@ -307,16 +299,6 @@ void VRenderLevel::CalcPoints (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint8 *facevis) {
-  guard(VRenderLevel::SingleLightFace);
-  float dist;
-  TVec incoming(0, 0, 0);
-  float angle;
-  float add;
-  TVec *spt;
-  int c;
-  float squaredist;
-  float rmul, gmul, bmul;
-
   // check potential visibility
   if (facevis) {
     if (!(facevis[light->leafnum>>3]&(1<<(light->leafnum&7)))) return;
@@ -333,7 +315,7 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
     return;
   }
 
-  dist = DotProduct(light->origin, surf->plane->normal)-surf->plane->dist;
+  float dist = DotProduct(light->origin, surf->plane->normal)-surf->plane->dist;
 
   // don't bother with lights behind the surface
   if (dist <= -0.1f) return;
@@ -343,31 +325,31 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
 
   // calc points only when surface may be lit by a light
   if (!points_calculated) {
-    CalcFaceVectors(surf);
-    CalcPoints(surf);
-
     memset(lightmap, 0, numsurfpt*4);
     memset(lightmapr, 0, numsurfpt*4);
     memset(lightmapg, 0, numsurfpt*4);
     memset(lightmapb, 0, numsurfpt*4);
+
+    if (!CalcFaceVectors(surf)) return;
+    CalcPoints(surf);
     points_calculated = true;
   }
 
   // check it for real
-  spt = surfpt;
-  squaredist = light->radius*light->radius;
-  rmul = ((light->colour>>16)&255)/255.0f;
-  gmul = ((light->colour>>8)&255)/255.0f;
-  bmul = (light->colour&255)/255.0f;
-  for (c = 0; c < numsurfpt; ++c, ++spt) {
+  const TVec *spt = surfpt;
+  const float squaredist = light->radius*light->radius;
+  const float rmul = ((light->colour>>16)&255)/255.0f;
+  const float gmul = ((light->colour>>8)&255)/255.0f;
+  const float bmul = (light->colour&255)/255.0f;
+  for (int c = 0; c < numsurfpt; ++c, ++spt) {
     dist = CastRay(light->origin, *spt, squaredist);
     if (dist < 0) continue; // light doesn't reach
 
-    incoming = NormaliseSafe(light->origin-(*spt));
-    angle = DotProduct(incoming, surf->plane->normal);
+    TVec incoming = NormaliseSafe(light->origin-(*spt));
+    float angle = DotProduct(incoming, surf->plane->normal);
 
     angle = 0.5f+0.5f*angle;
-    add = light->radius-dist;
+    float add = light->radius-dist;
     add *= angle;
     if (add < 0) continue;
     lightmap[c] += add;
@@ -380,7 +362,6 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
       if (light->colour != 0xffffffff) is_coloured = true;
     }
   }
-  unguard;
 }
 
 
@@ -390,19 +371,19 @@ void VRenderLevel::SingleLightFace (light_t *light, surface_t *surf, const vuint
 //
 //==========================================================================
 void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
-  guard(VRenderLevel::LightFace);
-  int i, s, t, w, h;
   float total;
 
-  const vuint8 *facevis = (leaf ? Level->LeafPVS(leaf) : nullptr);
+  const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
   points_calculated = false;
   light_hit = false;
   is_coloured = false;
 
   // cast all lights
   CalcMinMaxs(surf);
+
   if (r_static_lights) {
-    for (i = 0; i < Lights.Num(); ++i) SingleLightFace(&Lights[i], surf, facevis);
+    light_t *stl = Lights.ptr();
+    for (int i = Lights.length(); i--; ++stl) SingleLightFace(stl, surf, facevis);
   }
 
   if (!light_hit) {
@@ -418,19 +399,23 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
     return;
   }
 
-  w = (surf->extents[0]>>4)+1;
-  h = (surf->extents[1]>>4)+1;
+  const int w = (surf->extents[0]>>4)+1;
+  const int h = (surf->extents[1]>>4)+1;
 
   // if the surface already has a lightmap, we will reuse it,
-  // otherwiese we must allocate a new block
+  // otherwise we must allocate a new block
   if (is_coloured) {
+    /*
     if (surf->lightmap_rgb) Z_Free(surf->lightmap_rgb);
     surf->lightmap_rgb = (rgb_t *)Z_Malloc(w*h*3);
-    light_mem += w*h*3;
+    */
+    // use realloc, just in case
+    if (!surf->lightmap_rgb) light_mem += w*h*3;
+    surf->lightmap_rgb = (rgb_t *)Z_Realloc(surf->lightmap_rgb, w*h*3);
 
-    i = 0;
-    for (t = 0; t < h; ++t) {
-      for (s = 0; s < w; ++s, ++i) {
+    int i = 0;
+    for (int t = 0; t < h; ++t) {
+      for (int s = 0; s < w; ++s, ++i) {
         if (r_extrasamples) {
           // filtered sample
           total = lightmapr[t*w*4+s*2]+
@@ -441,8 +426,8 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
         } else {
           total = lightmapr[i];
         }
-        if (total > 255) total = 255;
-        if (total < 0) Sys_Error("light < 0");
+        //if (total > 255) total = 255;
+        //if (total < 0) Sys_Error("light < 0");
         surf->lightmap_rgb[i].r = clampToByte((int)total);
 
         if (r_extrasamples) {
@@ -455,8 +440,8 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
         } else {
           total = lightmapg[i];
         }
-        if (total > 255) total = 255;
-        if (total < 0) Sys_Error("light < 0");
+        //if (total > 255) total = 255;
+        //if (total < 0) Sys_Error("light < 0");
         surf->lightmap_rgb[i].g = clampToByte((int)total);
 
         if (r_extrasamples) {
@@ -469,8 +454,8 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
         } else {
           total = lightmapb[i];
         }
-        if (total > 255) total = 255;
-        if (total < 0) Sys_Error("light < 0");
+        //if (total > 255) total = 255;
+        //if (total < 0) Sys_Error("light < 0");
         surf->lightmap_rgb[i].b = clampToByte((int)total);
       }
     }
@@ -481,13 +466,14 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
     }
   }
 
-  if (surf->lightmap) Z_Free(surf->lightmap);
-  surf->lightmap = (vuint8 *)Z_Malloc(w*h);
-  light_mem += w*h;
+  if (!surf->lightmap) light_mem += w*h;
+  surf->lightmap = (vuint8 *)Z_Realloc(surf->lightmap, w*h);
+  //if (surf->lightmap) Z_Free(surf->lightmap);
+  //surf->lightmap = (vuint8 *)Z_Malloc(w*h);
 
-  i = 0;
-  for (t = 0; t < h; ++t) {
-    for (s = 0; s < w; ++s, ++i) {
+  int i = 0;
+  for (int t = 0; t < h; ++t) {
+    for (int s = 0; s < w; ++s, ++i) {
       if (r_extrasamples) {
         // filtered sample
         total = lightmap[t*w*4+s*2]+
@@ -498,12 +484,11 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       } else {
         total = lightmap[i];
       }
-      if (total > 255) total = 255;
-      if (total < 0) Sys_Error("light < 0");
+      //if (total > 255) total = 255;
+      //if (total < 0) Sys_Error("light < 0");
       surf->lightmap[i] = clampToByte((int)total);
     }
   }
-  unguard;
 }
 
 
@@ -519,7 +504,6 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 //
 //==========================================================================
 void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
-  guard(VRenderLevel::MarkLights);
   if (bspnum&NF_SUBSECTOR) {
     int num;
 
@@ -548,7 +532,6 @@ void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
     if (dist > -light->radius+light->minlight) MarkLights(light, bit, node->children[0]);
     if (dist < light->radius-light->minlight) MarkLights(light, bit, node->children[1]);
   }
-  unguard;
 }
 
 
@@ -558,7 +541,6 @@ void VRenderLevel::MarkLights (dlight_t *light, vuint32 bit, int bspnum) {
 //
 //==========================================================================
 void VRenderLevel::PushDlights () {
-  guard(VRenderLevel::PushDlights);
   //???:if (GGameInfo->IsPaused() || (Level->LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_Frozen)) return;
   ++r_dlightframecount;
 
@@ -573,7 +555,6 @@ void VRenderLevel::PushDlights () {
     MarkLights(l, 1U<<i, Level->NumNodes-1);
     dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
   }
-  unguard;
 }
 
 
@@ -583,17 +564,12 @@ void VRenderLevel::PushDlights () {
 //
 //==========================================================================
 vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
-  guard(VRenderLevel::LightPoint);
-  subsector_t *sub;
-  subregion_t *reg;
-  float l = 0, lr = 0, lg = 0, lb = 0;
-  surface_t *surf;
-  rgb_t *rgbtmp;
-
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
-  sub = Level->PointInSubsector(p);
-  reg = sub->regions;
+  float l = 0, lr = 0, lg = 0, lb = 0;
+  subsector_t *sub = Level->PointInSubsector(p);
+  subregion_t *reg = sub->regions;
+
   if (reg) {
     while (reg->next) {
       float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
@@ -612,6 +588,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     } else {
       l = 0;
     }
+
     int SecLightColour = reg->secregion->params->LightColour;
     lr = ((SecLightColour>>16)&255)*l/255.0f;
     lg = ((SecLightColour>>8)&255)*l/255.0f;
@@ -621,7 +598,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     int s = (int)(DotProduct(p, reg->floor->texinfo.saxis)+reg->floor->texinfo.soffs);
     int t = (int)(DotProduct(p, reg->floor->texinfo.taxis)+reg->floor->texinfo.toffs);
     int ds, dt;
-    for (surf = reg->floor->surfs; surf; surf = surf->next) {
+    for (surface_t *surf = reg->floor->surfs; surf; surf = surf->next) {
       if (surf->lightmap == nullptr) continue;
       if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
 
@@ -632,7 +609,7 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
 
       if (surf->lightmap_rgb) {
         l += surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
-        rgbtmp = &surf->lightmap_rgb[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+        const rgb_t *rgbtmp = &surf->lightmap_rgb[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
         lr += rgbtmp->r;
         lg += rgbtmp->g;
         lb += rgbtmp->b;
@@ -676,13 +653,18 @@ vuint32 VRenderLevel::LightPoint (const TVec &p, VEntity *mobj) {
     }
   }
 
+  /*
   if (l > 255) l = 255; else if (l < 0) l = 0;
   if (lr > 255) lr = 255; else if (lr < 0) lr = 0;
   if (lg > 255) lg = 255; else if (lg < 0) lg = 0;
   if (lb > 255) lb = 255; else if (lb < 0) lb = 0;
+  */
 
-  return ((int)l<<24)|((int)lr<<16)|((int)lg<<8)|((int)lb);
-  unguard;
+  return
+    (((vuint32)clampToByte((int)l))<<24)|
+    (((vuint32)clampToByte((int)lr))<<16)|
+    (((vuint32)clampToByte((int)lg))<<8)|
+    ((vuint32)clampToByte((int)lb));
 }
 
 
@@ -716,18 +698,13 @@ this way, when level geometry changed, we can re-trace static lights too.
 //
 //==========================================================================
 void VRenderLevel::AddDynamicLights (surface_t *surf) {
-  guard(VRenderLevel::AddDynamicLights);
-  float dist, rad, minlight, rmul, gmul, bmul;
-  TVec impact(0, 0, 0), local(0, 0, 0);
-  int smax, tmax;
-  texinfo_t *tex;
-  float mids = 0, midt = 0;
-  TVec facemid = TVec(0,0,0);
+  //float mids = 0, midt = 0;
+  //TVec facemid = TVec(0,0,0);
   bool pointsCalced = false;
 
-  smax = (surf->extents[0]>>4)+1;
-  tmax = (surf->extents[1]>>4)+1;
-  tex = surf->texinfo;
+  int smax = (surf->extents[0]>>4)+1;
+  int tmax = (surf->extents[1]>>4)+1;
+  texinfo_t *tex = surf->texinfo;
 
   const float starts = surf->texturemins[0];
   const float startt = surf->texturemins[1];
@@ -744,18 +721,18 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
     //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
     if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
 
-    rad = dl.radius;
-    dist = DotProduct(dl.origin, surf->plane->normal)-surf->plane->dist;
+    float rad = dl.radius;
+    float dist = DotProduct(dl.origin, surf->plane->normal)-surf->plane->dist;
     if (r_dynamic_clip) {
       if (dist <= -0.1f) continue;
     }
 
     rad -= fabsf(dist);
-    minlight = dl.minlight;
+    float minlight = dl.minlight;
     if (rad < minlight) continue;
     minlight = rad-minlight;
 
-    impact = dl.origin-surf->plane->normal*dist;
+    TVec impact = dl.origin-surf->plane->normal*dist;
 
     if (hasPVS && r_dynamic_clip) {
       subsector_t *sub = Level->PointInSubsector(impact);
@@ -765,12 +742,14 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }
 
-    rmul = (dl.colour>>16)&255;
-    gmul = (dl.colour>>8)&255;
-    bmul = dl.colour&255;
+    const float rmul = (dl.colour>>16)&255;
+    const float gmul = (dl.colour>>8)&255;
+    const float bmul = dl.colour&255;
 
+    TVec local;
     local.x = DotProduct(impact, tex->saxis)+tex->soffs;
     local.y = DotProduct(impact, tex->taxis)+tex->toffs;
+    local.z = 0;
 
     local.x -= starts;
     local.y -= startt;
@@ -794,10 +773,10 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
     if (!pointsCalced && /*r_dynamic_clip && r_dynamic_clip_more*/needProperTrace) {
       pointsCalced = true;
-      CalcFaceVectors(surf);
-      mids = starts+surf->extents[0]*0.5f;
-      midt = startt+surf->extents[1]*0.5f;
-      facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
+      if (!CalcFaceVectors(surf)) return;
+      //mids = starts+surf->extents[0]*0.5f;
+      //midt = startt+surf->extents[1]*0.5f;
+      //facemid = texorg+textoworld[0]*mids+textoworld[1]*midt;
     }
 
     for (int t = 0; t < tmax; ++t) {
@@ -817,7 +796,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
             float us = starts+s*step;
             float ut = startt+t*step;
             TVec spt = texorg+textoworld[0]*us+textoworld[1]*ut;
-            if (length2DSquared(spt-dl.origin) > 2) {
+            if (length2DSquared(spt-dl.origin) > 2*2) {
               //fprintf(stderr, "ldst: %f\n", length2D(spt-dl.origin));
               //linetrace_t Trace;
               //if (!Level->TraceLine(Trace, dl.origin, spt, SPF_NOBLOCKSIGHT)) continue;
@@ -841,7 +820,6 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
       }
     }
   }
-  unguard;
 }
 
 
@@ -868,13 +846,6 @@ static inline int xblight (int add, int sub) {
 //
 //==========================================================================
 void VRenderLevel::BuildLightMap (surface_t *surf) {
-  guard(VRenderLevel::BuildLightMap);
-  int smax, tmax;
-  int t;
-  int i, size;
-  vuint8 *lightmap;
-  rgb_t *lightmap_rgb;
-
   if (surf->lmapflags&Lightmap_Required) {
     surf->lmapflags &= ~Lightmap_Required;
     //GCon->Logf("%p: Need to calculate static lightmap for subsector %p!", surf, surf->subsector);
@@ -883,21 +854,21 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 
   is_coloured = false;
   r_light_add = false;
-  smax = (surf->extents[0]>>4)+1;
-  tmax = (surf->extents[1]>>4)+1;
-  size = smax*tmax;
-  lightmap = surf->lightmap;
-  lightmap_rgb = surf->lightmap_rgb;
+  int smax = (surf->extents[0]>>4)+1;
+  int tmax = (surf->extents[1]>>4)+1;
+  int size = smax*tmax;
+  vuint8 *lightmap = surf->lightmap;
+  rgb_t *lightmap_rgb = surf->lightmap_rgb;
 
   // clear to ambient
-  t = getSurfLightLevelInt(surf);
+  int t = getSurfLightLevelInt(surf);
   t <<= 8;
   int tR = ((surf->Light>>16)&255)*t/255;
   int tG = ((surf->Light>>8)&255)*t/255;
   int tB = (surf->Light&255)*t/255;
   if (tR != tG || tR != tB) is_coloured = true;
 
-  for (i = 0; i < size; ++i) {
+  for (int i = 0; i < size; ++i) {
     //blocklights[i] = t;
     blocklightsr[i] = tR;
     blocklightsg[i] = tG;
@@ -910,7 +881,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   if (lightmap_rgb) {
     if (!lightmap) Sys_Error("RGB lightmap without uncoloured lightmap");
     is_coloured = true;
-    for (i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) {
       //blocklights[i] += lightmap[i]<<8;
       blocklightsr[i] += lightmap_rgb[i].r<<8;
       blocklightsg[i] += lightmap_rgb[i].g<<8;
@@ -922,7 +893,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
       }
     }
   } else if (lightmap) {
-    for (i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i) {
       t = lightmap[i]<<8;
       //blocklights[i] += t;
       blocklightsr[i] += t;
@@ -941,7 +912,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 
   // calc additive light
   // this must be done before lightmap procesing because it will clamp all lights
-  for (i = 0; i < size; ++i) {
+  for (int i = 0; i < size; ++i) {
     t = blocklightsr[i]-blocklightsrS[i];
     //if (t < 0) { t = 0; blocklightsr[i] = 0; } // subtractive light fix
     t -= 0x10000;
@@ -974,7 +945,7 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   }
 
   // bound, invert, and shift
-  for (i = 0; i < size; ++i) {
+  for (int i = 0; i < size; ++i) {
     //if (blocklightsrS[i]|blocklightsgS[i]|blocklightsbS[i]) fprintf(stderr, "*** SBL: (%d,%d,%d)\n", blocklightsrS[i], blocklightsgS[i], blocklightsbS[i]);
     blocklightsr[i] = xblight((int)blocklightsr[i], (int)blocklightsrS[i]);
     blocklightsg[i] = xblight((int)blocklightsg[i], (int)blocklightsgS[i]);
@@ -988,7 +959,6 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   }
 
   //return is_coloured;
-  unguard;
 }
 
 
@@ -998,7 +968,6 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevel::FlushCaches () {
-  guard(VRenderLevel::FlushCaches);
   memset(blockbuf, 0, sizeof(blockbuf));
   freeblocks = nullptr;
   for (int i = 0; i < NUM_CACHE_BLOCKS; ++i) {
@@ -1013,7 +982,6 @@ void VRenderLevel::FlushCaches () {
     cacheblocks[i]->blocknum = i;
   }
   light_reset_surface_cache = 0;
-  unguard;
 }
 
 
@@ -1023,7 +991,6 @@ void VRenderLevel::FlushCaches () {
 //
 //==========================================================================
 void VRenderLevel::FlushOldCaches () {
-  guard(VRenderLevel::FlushOldCaches);
   for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       for (surfcache_t *block = blines; block; block = block->lnext) {
@@ -1034,7 +1001,6 @@ void VRenderLevel::FlushOldCaches () {
   }
   if (!freeblocks) Sys_Error("No more free blocks");
   GCon->Logf("Surface cache overflow, old caches flushed");
-  unguard;
 }
 
 
@@ -1044,7 +1010,6 @@ void VRenderLevel::FlushOldCaches () {
 //
 //==========================================================================
 void VRenderLevel::GentlyFlushAllCaches () {
-  guard(VRenderLevel::GentlyFlushAllCaches);
   light_reset_surface_cache = 0;
   for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
@@ -1055,7 +1020,6 @@ void VRenderLevel::GentlyFlushAllCaches () {
     }
   }
   if (!freeblocks) Sys_Error("No more free blocks");
-  unguard;
 }
 
 
@@ -1065,7 +1029,6 @@ void VRenderLevel::GentlyFlushAllCaches () {
 //
 //==========================================================================
 surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
-  guard(VRenderLevel::AllocBlock);
   surfcache_t *blines;
   surfcache_t *block;
   surfcache_t *other;
@@ -1145,7 +1108,6 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
     light_reset_surface_cache = 1;
   }
   return nullptr;
-  unguard;
 }
 
 
@@ -1155,7 +1117,6 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
 //
 //==========================================================================
 surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
-  guard(VRenderLevel::FreeBlock);
   surfcache_t *other;
 
   if (block->owner) {
@@ -1200,7 +1161,6 @@ surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
     freeblocks = other;
   }
   return block;
-  unguard;
 }
 
 
@@ -1210,9 +1170,7 @@ surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
 //
 //==========================================================================
 void VRenderLevel::FreeSurfCache (surfcache_t *block) {
-  guard(VRenderLevel::FreeSurfCache);
   FreeBlock(block, true);
-  unguard;
 }
 
 
@@ -1222,13 +1180,10 @@ void VRenderLevel::FreeSurfCache (surfcache_t *block) {
 //
 //==========================================================================
 bool VRenderLevel::CacheSurface (surface_t *surface) {
-  guard(VRenderLevel::CacheSurface);
-  surfcache_t *cache;
-  int smax, tmax;
-  int i, j, bnum;
+  int bnum;
 
   // see if the cache holds appropriate data
-  cache = surface->CacheSurf;
+  surfcache_t *cache = surface->CacheSurf;
 
   const vuint32 srflight = fixSurfLightLevel(surface);
 
@@ -1241,8 +1196,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   }
 
   // determine shape of surface
-  smax = (surface->extents[0]>>4)+1;
-  tmax = (surface->extents[1]>>4)+1;
+  int smax = (surface->extents[0]>>4)+1;
+  int tmax = (surface->extents[1]>>4)+1;
 
   // allocate memory if needed
   // if a texture just animated, don't reallocate it
@@ -1267,8 +1222,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   bnum = cache->blocknum;
   block_changed[bnum] = true;
 
-  for (j = 0; j < tmax; ++j) {
-    for (i = 0; i < smax; ++i) {
+  for (int j = 0; j < tmax; ++j) {
+    for (int i = 0; i < smax; ++i) {
       rgba_t &lb = light_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
       lb.r = 255-clampToByte(blocklightsr[j*smax+i]>>8);
       lb.g = 255-clampToByte(blocklightsg[j*smax+i]>>8);
@@ -1281,8 +1236,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   cache->lastframe = cacheframecount;
 
   // specular highlights
-  for (j = 0; j < tmax; ++j) {
-    for (i = 0; i < smax; ++i) {
+  for (int j = 0; j < tmax; ++j) {
+    for (int i = 0; i < smax; ++i) {
       rgba_t &lb = add_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
       lb.r = clampToByte(blockaddlightsr[j*smax+i]>>8);
       lb.g = clampToByte(blockaddlightsg[j*smax+i]>>8);
@@ -1297,5 +1252,4 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   }
 
   return true;
-  unguard;
 }

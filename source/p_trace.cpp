@@ -234,9 +234,10 @@ bool VLevel::CrossBSPNode (linetrace_t &Trace, int BspNum) const {
 //  VLevel::TraceLine
 //
 //==========================================================================
-bool VLevel::TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, int PlaneNoBlockFlags) const {
+bool VLevel::TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, int PlaneNoBlockFlags) {
   guard(VLevel::TraceLine);
-  ++validcount;
+  //++validcount;
+  IncrementValidCount();
 
   TVec realEnd = End;
 
@@ -504,7 +505,7 @@ static bool SightBlockLinesIterator (SightTraceInfo &Trace, const VLevel *level,
 //  each. Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightPathTraverse (SightTraceInfo &Trace, const VLevel *level, sector_t *EndSector) {
+static bool SightPathTraverse (SightTraceInfo &Trace, VLevel *level, sector_t *EndSector) {
   float x1 = Trace.Start.x;
   float y1 = Trace.Start.y;
   float x2 = Trace.End.x;
@@ -514,7 +515,8 @@ static bool SightPathTraverse (SightTraceInfo &Trace, const VLevel *level, secto
   float xintercept, yintercept;
   int mapx, mapy, mapxstep, mapystep;
 
-  ++validcount;
+  //++validcount;
+  level->IncrementValidCount();
   //Trace.Intercepts.Clear();
   interUsed = 0;
 
@@ -659,7 +661,7 @@ static bool SightPathTraverse2 (SightTraceInfo &Trace, sector_t *EndSector) {
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector) const {
+bool VLevel::CastCanSee (const TVec &org, const TVec &dest, float radius, sector_t *DestSector) {
   SightTraceInfo Trace;
 
   if (length2DSquared(org-dest) <= 2) return true;
@@ -741,11 +743,58 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radius, c
 }
 
 
+struct CLineInfo {
+  line_t *ldef;
+  float dist; // distance to origin
+  int pside; // side number
+  bool twosided;
+};
+
+/*
+extern "C" {
+  static int clinfoCmp (const void *aa, const void *bb, void *udata) {
+    if (aa == bb) return 0;
+    const CLineInfo *a = (const CLineInfo *)aa;
+    const CLineInfo *b = (const CLineInfo *)bb;
+    const float dd = (a->dist-b->dist);
+    if (dd == 0) {
+      if (a->twosided) return (b->twosided ? 0 : 1);
+      if (b->twosided) return (a->twosided ? 0 : -1);
+      return 0;
+    } else {
+      return (dd < 0 ? -1 : 1);
+    }
+  }
+}
+*/
+
+/*
+to check if we need to trace light, we will start from light sector.
+for each 2-sided line, we should do the following:
+  0. if current or neightbour sector has floorz == ceilingz, trace: this looks like a door
+  1. check if other side sector is not checked yet; if it is, skip all checks
+  2. check if light touches midtex; if it isn't, this line can be considered solid
+     (but only if both sectors has no tags)
+  3. if light touches only midtex, don't trace if we don't touched other solid walls or non-midtexes
+     this check is complicated: we should check if we have any solid wall with the same direction.
+WRONG! ALL WRONG!
+
+we have to check each subsector separately: some subsectors may not need any tracing at all, but
+some other subsectors may be obstructed. we should create a beam (1d for now), and check if it contains
+a mix of solid and non-solid walls (two-sided walls can be considered solid sometimes, see above).
+if there is no such mix, we can skip tracing: it is lit.
+
+also, we should use floodfill-like algorithm to check what subsectors are lit: we can walk through
+two-sided walls, using that wall as 1d clippers, kinda like advlight does. it is easier to build 1d
+pvs for this case, though: we know for sure that nothing out of light sphere is interesting, so we can
+perform limited height clipping too: there is no need to walk over two-sided wall if light isn't touching
+midtex.
+*/
+
+
 //==========================================================================
 //
 //  VLevel::NeedProperLightTraceAt
-//
-//  we should have 2S lines around
 //
 //==========================================================================
 bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
@@ -756,8 +805,10 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
   const int yl = MapBlock(org.y-radius-BlockMapOrgY);
   const int yh = MapBlock(org.y+radius-BlockMapOrgY);
 
-  ++validcount; // used to make sure we only process a line once
+  //++validcount; // used to make sure we only process a line once
+  IncrementValidCount();
 
+#if 1
   static TMapNC<int, int> seen; // linedef side for each sector; key is sector number, value is side
   seen.reset();
 
@@ -839,19 +890,93 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
           */
           if (!isCircleTouchingLine(org, radius, *ld->v1, *ld->v2)) continue;
           int snum = (int)(ptrdiff_t)(ld->frontsector-Sectors);
-          int ps = ld->PointOnSide2(org);
-          if (ps > 1) continue; // on a line
+          int pside = ld->PointOnSide2(org);
+          if (pside > 1) continue; // on a line
           // check sector
           int *mpsp = seen.find(snum);
           if (mpsp) {
-            if (*mpsp != ps) return true; // different sides, better do tracing
+            if (*mpsp != pside) return true; // different sides, better do tracing
           } else {
-            seen.put(snum, ps);
+            seen.put(snum, pside);
           }
         }
       }
     }
   }
+#else
+  // collect lines
+  static TArray<CLineInfo> lines;
+  lines.reset();
+
+  bool seenTwoSectors = false;
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
+      line_t *ld;
+      for (VBlockLinesIterator It(this, bx, by, &ld); It.GetNext(); ) {
+        if (ld->frontsector == ld->backsector) continue;
+        // check line side
+        int pside = ld->PointOnSide2(org);
+        if (pside > 1) continue; // on a line
+        if (ld->sidenum[pside] == -1) continue; // not interested
+        // check line distance
+        float ldist = ld->Distance(org);
+        if (ldist >= radius) continue;
+        CLineInfo &li = lines.alloc();
+        li.ldef = ld;
+        li.dist = ldist;
+        li.pside = pside;
+        li.twosided = (ld->backsector && (ld->flags&(ML_TWOSIDED|ML_BLOCKEVERYTHING)) == ML_TWOSIDED);
+        if (!seenTwoSectors && li.twosided) seenTwoSectors = true;
+      }
+    }
+  }
+  if (lines.length() == 0) return false; // no need to trace anything
+  if (!seenTwoSectors) return false; // we are surrounded by one-side walls, who cares
+
+  timsort_r(lines.ptr(), (size_t)lines.length(), sizeof(CLineInfo), &clinfoCmp, nullptr);
+
+  static VViewClipper lclip;
+  lclip.ClearClipNodes(org, this);
+
+  CLineInfo *li = lines.ptr();
+  for (int count = lines.length(); count--; ++li) {
+    line_t *ld = li->ldef;
+    if (!lclip.ClipCheckLine(ld)) continue;
+    // check two-sided line
+    if (li->twosided) {
+      // if one of sectors is slope, should check
+      // this is because slopes can be oriented in different direction
+      const float ffz = ld->frontsector->floor.minz;
+      const float fcz = ld->frontsector->ceiling.minz;
+      const float bfz = ld->backsector->floor.minz;
+      const float bcz = ld->backsector->ceiling.minz;
+      //TODO: check slope direction in tracer
+      if (ffz != ld->frontsector->floor.maxz || fcz != ld->frontsector->ceiling.maxz) return true;
+      if (bfz != ld->backsector->floor.maxz || bcz != ld->backsector->ceiling.maxz) return true;
+      // if both sectors has the same floor and ceiling height, don't bother tracing
+      if (ffz == bfz && fcz == bcz) continue;
+      // if floor and ceiling has the same height, this is either door, or lowered platform
+      //TODO: check corresponding top/bottom textures
+      if (ffz == fcz) return true;
+      if (bfz == bcz) return true;
+      // check if we're touching midtex; if not, we can use this line as blocking one
+      sector_t *front = (li->pside ? ld->backsector : ld->frontsector);
+      sector_t *back = (li->pside ? ld->frontsector : ld->backsector);
+      // is back sector floor higher than our sector floor?
+      bool floorClip = false, ceilingClip = false;
+      if (back->floor.minz > front->floor.minz) {
+        // yes, check if
+      } else {
+        // nope, and we have to trace light
+        return true;
+      }
+      if (!floorClip || !ceilingClip) return true; //
+      // this line seems to be blocking, so add it to clipper
+    }
+    lclip.ClipAddLine(li->ldef);
+    if (count && lclip.ClipIsFull()) break; // everything is clipped away
+  }
+#endif
 
   return false;
 }
