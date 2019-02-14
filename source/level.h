@@ -431,6 +431,9 @@ public:
 public:
   void IncrementValidCount ();
 
+  // this saves everything except thinkers, so i can load it for further experiments
+  void DebugSaveLevel (VStream &strm);
+
 public:
   virtual void SerialiseOther (VStream &Strm) override;
   virtual void ClearReferences () override;

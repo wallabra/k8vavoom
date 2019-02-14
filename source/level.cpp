@@ -77,7 +77,6 @@ void VLevel::IncrementValidCount () {
 //
 //==========================================================================
 subsector_t *VLevel::PointInSubsector (const TVec &point) const {
-  guard(VLevel::PointInSubsector);
   // single subsector is a special case
   if (!NumNodes) return Subsectors;
   int nodenum = NumNodes-1;
@@ -86,7 +85,6 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
     nodenum = node->children[node->PointOnSide(point)];
   } while (!(nodenum&NF_SUBSECTOR));
   return &Subsectors[nodenum&~NF_SUBSECTOR];
-  unguard;
 }
 
 
@@ -175,7 +173,6 @@ static bool writeOrCheckUInt (VStream &Strm, vuint32 value, const char *errmsg=n
 //
 //==========================================================================
 void VLevel::SerialiseOther (VStream &Strm) {
-  guard(VLevel::Serialise);
   int i;
   sector_t *sec;
   line_t *li;
@@ -439,7 +436,6 @@ void VLevel::SerialiseOther (VStream &Strm) {
   }
 
   // ACS: script thinkers must be serialized first
-  guard(VLevel::Serialise::ACS);
   // script thinkers
   {
     vuint8 xver = 1;
@@ -466,7 +462,6 @@ void VLevel::SerialiseOther (VStream &Strm) {
     if (xver != 0) Host_Error("Save is broken (invalid acs manager version %u)", (unsigned)xver);
     Acs->Serialise(Strm);
   }
-  unguard;
 
   // camera textures
   {
@@ -538,8 +533,6 @@ void VLevel::SerialiseOther (VStream &Strm) {
       vio.io(VName("zoneid"), Zones[i]);
     }
   }
-
-  unguard;
 }
 
 
@@ -549,7 +542,6 @@ void VLevel::SerialiseOther (VStream &Strm) {
 //
 //==========================================================================
 void VLevel::ClearReferences () {
-  guard(VLevel::ClearReferences);
   Super::ClearReferences();
   // clear script refs
   for (int scidx = scriptThinkers.length()-1; scidx >= 0; --scidx) {
@@ -576,7 +568,6 @@ void VLevel::ClearReferences () {
       CameraTextures[i].Camera = nullptr;
     }
   }
-  unguard;
 }
 
 
@@ -586,8 +577,6 @@ void VLevel::ClearReferences () {
 //
 //==========================================================================
 void VLevel::Destroy () {
-  guard(VLevel::Destroy);
-
   decanimlist = nullptr; // why not?
 
   if (csTouched) Z_Free(csTouched);
@@ -759,7 +748,6 @@ void VLevel::Destroy () {
 
   // call parent class' `Destroy()` method
   Super::Destroy();
-  unguard;
 }
 
 
@@ -769,7 +757,6 @@ void VLevel::Destroy () {
 //
 //==========================================================================
 void VLevel::SetCameraToTexture (VEntity *Ent, VName TexName, int FOV) {
-  guard(VLevel::SetCameraToTexture);
   if (!Ent) return;
 
   // get texture index
@@ -794,7 +781,6 @@ void VLevel::SetCameraToTexture (VEntity *Ent, VName TexName, int FOV) {
   C.Camera = Ent;
   C.TexNum = TexNum;
   C.FOV = FOV;
-  unguard;
 }
 
 
@@ -811,7 +797,6 @@ void VLevel::SetCameraToTexture (VEntity *Ent, VName TexName, int FOV) {
 //
 //=============================================================================
 msecnode_t *VLevel::AddSecnode (sector_t *Sec, VEntity *Thing, msecnode_t *NextNode) {
-  guard(VLevel::AddSecnode);
   msecnode_t *Node;
 
   if (!Sec) Sys_Error("AddSecnode of 0 for %s\n", Thing->GetClass()->GetName());
@@ -852,7 +837,6 @@ msecnode_t *VLevel::AddSecnode (sector_t *Sec, VEntity *Thing, msecnode_t *NextN
   if (Sec->TouchingThingList) Node->SNext->SPrev = Node;
   Sec->TouchingThingList = Node;
   return Node;
-  unguard;
 }
 
 
@@ -865,7 +849,6 @@ msecnode_t *VLevel::AddSecnode (sector_t *Sec, VEntity *Thing, msecnode_t *NextN
 //
 //=============================================================================
 msecnode_t *VLevel::DelSecnode (msecnode_t *Node) {
-  guard(VLevel::DelSecnode);
   msecnode_t *tp; // prev node on thing thread
   msecnode_t *tn; // next node on thing thread
   msecnode_t *sp; // prev node on sector thread
@@ -892,7 +875,6 @@ msecnode_t *VLevel::DelSecnode (msecnode_t *Node) {
     return tn;
   }
   return nullptr;
-  unguard;
 }
 // phares 3/13/98
 
@@ -905,13 +887,11 @@ msecnode_t *VLevel::DelSecnode (msecnode_t *Node) {
 //
 //=============================================================================
 void VLevel::DelSectorList () {
-  guard(VLevel::DelSectorList);
   if (SectorList) {
     msecnode_t *Node = SectorList;
     while (Node) Node = DelSecnode(Node);
     SectorList = nullptr;
   }
-  unguard;
 }
 
 
@@ -921,7 +901,6 @@ void VLevel::DelSectorList () {
 //
 //==========================================================================
 int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
-  guard(VLevel::SetBodyQueueTrans);
   int Type = Trans>>TRANSL_TYPE_SHIFT;
   int Index = Trans&((1<<TRANSL_TYPE_SHIFT)-1);
   if (Type != TRANSL_Player) return Trans;
@@ -942,7 +921,6 @@ int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
   VBasePlayer *P = LevelInfo->Game->Players[Index];
   Tr->BuildPlayerTrans(P->TranslStart, P->TranslEnd, P->Colour);
   return (TRANSL_BodyQueue<<TRANSL_TYPE_SHIFT)+Slot;
-  unguard;
 }
 
 
@@ -952,7 +930,6 @@ int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
 //
 //==========================================================================
 int VLevel::FindSectorFromTag (int tag, int start) {
-  guard(VLevel::FindSectorFromTag);
   for (int i = start < 0 ? Sectors[(vuint32)tag%(vuint32)NumSectors].HashFirst : Sectors[start].HashNext;
        i >= 0;
        i = Sectors[i].HashNext)
@@ -960,7 +937,6 @@ int VLevel::FindSectorFromTag (int tag, int start) {
     if (Sectors[i].tag == tag) return i;
   }
   return -1;
-  unguard;
 }
 
 
@@ -970,7 +946,6 @@ int VLevel::FindSectorFromTag (int tag, int start) {
 //
 //==========================================================================
 line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
-  guard(VLevel::FindLine);
   for (int i = *searchPosition < 0 ? Lines[(vuint32)lineTag%(vuint32)NumLines].HashFirst : Lines[*searchPosition].HashNext;
        i >= 0;
        i = Lines[i].HashNext)
@@ -982,7 +957,6 @@ line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
   }
   *searchPosition = -1;
   return nullptr;
-  unguard;
 }
 
 
@@ -1237,8 +1211,6 @@ static bool isDecalsOverlap (VDecalDef *dec, float segdist, float orgz, decal_t 
 //
 //==========================================================================
 void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec, sector_t *sec, line_t *li, int prevdir, vuint32 flips) {
-  guard(VLevel::PutDecalAtLine);
-
   if (tex < 0 || tex >= GTextureManager.GetNumTextures()) return;
 
   // don't process linedef twice
@@ -1519,8 +1491,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float segdist, VDecalDef *dec,
       }
     }
   }
-
-  unguard;
 }
 
 
@@ -1641,8 +1611,6 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, sector_t *sec, li
 //
 //==========================================================================
 void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level) {
-  guard(VLevel::AddDecal);
-
   if (!r_decals_enabled) return;
   if (!li || dectype == NAME_None) return; // just in case
 
@@ -1677,8 +1645,6 @@ void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int
   } else {
     if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
   }
-
-  unguard;
 }
 
 
@@ -1688,8 +1654,6 @@ void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int
 //
 //==========================================================================
 void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
-  guard(VLevel::AddDecalById);
-
   if (!r_decals_enabled) return;
   if (!li || id < 0) return; // just in case
 
@@ -1724,8 +1688,6 @@ void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
   } else {
     //if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
   }
-
-  unguard;
 }
 
 
@@ -1735,7 +1697,6 @@ void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level) {
 //
 //==========================================================================
 void CalcLine (line_t *line) {
-  guard(CalcLine);
   // calc line's slopetype
   line->dir = (*line->v2)-(*line->v1);
   if (!line->dir.x) {
@@ -1768,7 +1729,6 @@ void CalcLine (line_t *line) {
     line->bbox[BOXBOTTOM] = line->v2->y;
     line->bbox[BOXTOP] = line->v1->y;
   }
-  unguard;
 }
 
 
@@ -1778,9 +1738,7 @@ void CalcLine (line_t *line) {
 //
 //==========================================================================
 void CalcSeg (seg_t *seg) {
-  guardSlow(CalcSeg);
   seg->Set2Points(*seg->v1, *seg->v2);
-  unguardSlow;
 }
 
 
@@ -1791,7 +1749,6 @@ void CalcSeg (seg_t *seg) {
 //
 //==========================================================================
 void SV_LoadLevel (VName MapName) {
-  guard(SV_LoadLevel);
 #ifdef CLIENT
   GClLevel = nullptr;
 #endif
@@ -1805,7 +1762,6 @@ void SV_LoadLevel (VName MapName) {
 
   GLevel->LoadMap(MapName);
   Host_ResetSkipFrames();
-  unguard;
 }
 #endif
 
@@ -1817,7 +1773,6 @@ void SV_LoadLevel (VName MapName) {
 //
 //==========================================================================
 void CL_LoadLevel (VName MapName) {
-  guard(CL_LoadLevel);
   if (GClLevel) {
     delete GClLevel;
     GClLevel = nullptr;
@@ -1828,7 +1783,6 @@ void CL_LoadLevel (VName MapName) {
 
   GClLevel->LoadMap(MapName);
   Host_ResetSkipFrames();
-  unguard;
 }
 #endif
 
@@ -1839,7 +1793,6 @@ void CL_LoadLevel (VName MapName) {
 //
 //==========================================================================
 sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
-  guard(AddExtraFloor);
   sec_region_t *region;
   sec_region_t *inregion;
   sector_t *src;
@@ -1941,7 +1894,6 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
   GCon->Logf("Invalid extra floor, tag %d", dst->tag);
 
   return nullptr;
-  unguard;
 }
 
 
@@ -1951,7 +1903,6 @@ sec_region_t *AddExtraFloor (line_t *line, sector_t *dst) {
 //
 //==========================================================================
 void SwapPlanes (sector_t *s) {
-  guard(SwapPlanes);
   float tempHeight;
   int tempTexture;
 
@@ -1971,7 +1922,6 @@ void SwapPlanes (sector_t *s) {
 
   s->floor.pic = s->ceiling.pic;
   s->ceiling.pic = tempTexture;
-  unguard;
 }
 
 
@@ -1981,7 +1931,6 @@ void SwapPlanes (sector_t *s) {
 //
 //==========================================================================
 void CalcSecMinMaxs (sector_t *sector) {
-  guard(CalcSecMinMaxs);
   float minz;
   float maxz;
 
@@ -2024,7 +1973,6 @@ void CalcSecMinMaxs (sector_t *sector) {
     sector->ceiling.minz = minz;
     sector->ceiling.maxz = maxz;
   }
-  unguard;
 }
 
 
