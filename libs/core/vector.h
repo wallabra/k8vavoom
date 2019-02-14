@@ -184,7 +184,7 @@ enum {
 
 
 class TPlane {
- public:
+public:
   TVec normal;
   float dist;
 
@@ -239,6 +239,13 @@ class TPlane {
   inline int PointOnSide2 (const TVec &point) const {
     float dot = DotProduct(point, normal)-dist;
     return (dot < -0.1 ? 1 : dot > 0.1 ? 0 : 2);
+  }
+
+  // distance from point to plane
+  // plane must be normalized
+  inline float Distance (const TVec &p) const {
+    //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
+    return TVEC_SUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
   }
 };
 
