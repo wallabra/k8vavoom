@@ -207,18 +207,18 @@ struct line_t : public TPlane {
   TVec dir;
 
   // animation related
-  int flags;
-  int SpacFlags;
+  vint32 flags;
+  vint32 SpacFlags;
 
   // visual appearance: SideDefs
   // sidenum[1] will be -1 if one sided
-  int sidenum[2];
+  vint32 sidenum[2];
 
   // neat. another bounding box, for the extent of the LineDef
   float bbox[4];
 
   // to aid move clipping
-  int slopetype;
+  vint32 slopetype;
 
   // front and back sector
   // note: redundant? can be retrieved from SideDefs
@@ -226,32 +226,32 @@ struct line_t : public TPlane {
   sector_t *backsector;
 
   // if == validcount, already checked (used in various traversing, like LOS, and other line tracing)
-  int validcount;
+  vint32 validcount;
 
   float alpha;
 
-  int special;
-  int arg1;
-  int arg2;
-  int arg3;
-  int arg4;
-  int arg5;
+  vint32 special;
+  vint32 arg1;
+  vint32 arg2;
+  vint32 arg3;
+  vint32 arg4;
+  vint32 arg5;
 
-  int LineTag;
-  int HashFirst;
-  int HashNext;
+  vint32 LineTag;
+  vint32 HashFirst;
+  vint32 HashNext;
 
   seg_t *firstseg; // linked by lsnext
 
-  int decalMark; // uid of current decal placement loop, to avoid endless looping
+  vint32 decalMark; // uid of current decal placement loop, to avoid endless looping
 
   // lines connected to `v1`
   line_t **v1lines;
-  int v1linesCount;
+  vint32 v1linesCount;
 
   // lines connected to `v2`
   line_t **v2lines;
-  int v2linesCount;
+  vint32 v2linesCount;
 };
 
 
@@ -285,11 +285,11 @@ struct side_t {
   // sector the SideDef is facing
   sector_t *Sector;
 
-  int LineNum; // line index in `Lines`
+  vint32 LineNum; // line index in `Lines`
 
   vuint32 Flags; // SDF_XXX
 
-  int Light;
+  vint32 Light;
 };
 
 
@@ -330,20 +330,20 @@ struct sec_plane_t : public TPlane {
   float BaseAngle;
   float BaseYOffs;
 
-  int flags;
+  vint32 flags;
   float Alpha;
   float MirrorAlpha;
 
-  int LightSourceSector;
+  vint32 LightSourceSector;
   VEntity *SkyBox;
 };
 
 
 struct sec_params_t {
-  int lightlevel;
-  int LightColour;
-  int Fade;
-  int contents;
+  vint32 lightlevel;
+  vint32 LightColour;
+  vint32 Fade;
+  vint32 contents;
 };
 
 
@@ -386,7 +386,7 @@ struct msecnode_t {
   msecnode_t *TNext; // next msecnode_t for this thing
   msecnode_t *SPrev; // prev msecnode_t for this sector
   msecnode_t *SNext; // next msecnode_t for this sector
-  int Visited; // killough 4/4/98, 4/7/98: used in search algorithms
+  vint32 Visited; // killough 4/4/98, 4/7/98: used in search algorithms
 };
 
 
@@ -407,24 +407,24 @@ struct sector_t {
 
   sector_t *deepref; // deep water hack
 
-  int special;
-  int tag;
-  int HashFirst;
-  int HashNext;
+  vint32 special;
+  vint32 tag;
+  vint32 HashFirst;
+  vint32 HashNext;
 
   float skyheight;
 
   // stone, metal, heavy, etc...
-  int seqType;
+  vint32 seqType;
 
   // mapblock bounding box for height changes
-  int blockbox[4];
+  vint32 blockbox[4];
 
   // origin for any sounds played by the sector
   TVec soundorg;
 
   // if == validcount, already checked (used in various traversing, like LOS, and other line tracing)
-  int validcount;
+  vint32 validcount;
 
   // list of subsectors in sector
   // used to check if client can see this sector
@@ -436,7 +436,7 @@ struct sector_t {
   msecnode_t *TouchingThingList;
 
   line_t **lines; // [linecount] size
-  int linecount;
+  vint32 linecount;
 
   // Boom's fake floors (and deepwater)
   sector_t *heightsec;
@@ -479,9 +479,9 @@ struct sector_t {
   float MoveFactor;
   float Gravity; // Sector gravity (1.0 is normal)
 
-  int Sky; //k8:??? document this!
+  vint32 Sky; //k8:??? document this!
 
-  int Zone; // reverb zone id
+  vint32 Zone; // reverb zone id
 
   // this is used to check for "floor holes" that should be filled to emulate original flat floodfill bug
   // if sector has more than one neighbour, this is `nullptr`
@@ -499,20 +499,20 @@ struct sector_t {
 // polyobj data
 struct polyobj_t {
   seg_t **segs;
-  int numsegs;
+  vint32 numsegs;
   TVec startSpot;
   vertex_t *originalPts; // used as the base for the rotations
   vertex_t *prevPts; // use to restore the old point values
   float angle;
-  int tag; // reference tag assigned in HereticEd
-  int bbox[4];
-  int validcount;
+  vint32 tag; // reference tag assigned in HereticEd
+  vint32 bbox[4];
+  vint32 validcount;
   enum {
     PF_Crush        = 0x01, // should the polyobj attempt to crush mobjs?
     PF_HurtOnTouch  = 0x02,
   };
   vuint32 PolyFlags;
-  int seqType;
+  vint32 seqType;
   subsector_t *subsector;
   VThinker *SpecialData; // pointer a thinker, if the poly is moving
 };
@@ -528,7 +528,7 @@ struct polyblock_t {
 struct PolyAnchorPoint_t {
   float x;
   float y;
-  int tag;
+  vint32 tag;
 };
 
 
@@ -558,7 +558,7 @@ struct seg_t : public TPlane {
   struct subsector_t *front_sub; // front subsector (we need this for self-referencing deep water)
 
   // side of line (for light calculations: 0 or 1)
-  int side;
+  vint32 side;
 
   drawseg_t *drawsegs;
   decal_t *decals;
@@ -579,7 +579,7 @@ struct subregion_t {
   sec_plane_t *ceilplane;
   sec_surface_t *floor;
   sec_surface_t *ceil;
-  int count;
+  vint32 count;
   drawseg_t *lines;
 };
 
@@ -596,18 +596,18 @@ struct subregion_t {
 struct subsector_t {
   sector_t *sector;
   subsector_t *seclink;
-  int numlines;
-  int firstline;
+  vint32 numlines;
+  vint32 firstline;
   polyobj_t *poly;
 
   node_t *parent;
-  int VisFrame;
-  int SkyVisFrame;
+  vint32 VisFrame;
+  vint32 SkyVisFrame;
 
   sector_t *deepref; // for deepwater
 
   vuint32 dlightbits; // bitmask of active dynamic lights
-  int dlightframe; // `dlightbits` validity counter
+  vint32 dlightframe; // `dlightbits` validity counter
   subregion_t *regions;
 };
 
@@ -632,8 +632,8 @@ struct node_t : public TPlane {
   vuint32 children[2];
 
   node_t *parent;
-  int VisFrame;
-  int SkyVisFrame;
+  vint32 VisFrame;
+  vint32 SkyVisFrame;
 };
 
 
@@ -645,20 +645,20 @@ struct node_t : public TPlane {
 
 // map thing definition with initialised fields for global use
 struct mthing_t {
-  int tid;
+  vint32 tid;
   float x;
   float y;
   float height;
-  int angle;
-  int type;
-  int options;
-  int SkillClassFilter;
-  int special;
-  int arg1;
-  int arg2;
-  int arg3;
-  int arg4;
-  int arg5;
+  vint32 angle;
+  vint32 type;
+  vint32 options;
+  vint32 SkillClassFilter;
+  vint32 special;
+  vint32 arg1;
+  vint32 arg2;
+  vint32 arg3;
+  vint32 arg4;
+  vint32 arg5;
 };
 
 
