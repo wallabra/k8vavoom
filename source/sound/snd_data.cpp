@@ -846,7 +846,7 @@ bool VSoundManager::IsSoundPresent (VName ClassName, VName GenderName, VName Sou
 //==========================================================================
 bool VSoundManager::LoadSound (int sound_id) {
   guard(VSoundManager::LoadSound);
-  static const char *Exts[] = { "flac", "wav", "raw", "ogg", "mp3", nullptr };
+  static const char *Exts[] = { "flac", "opus", "wav", "raw", "ogg", "mp3", nullptr };
   if (!S_sfx[sound_id].Data) {
     int Lump = S_sfx[sound_id].LumpNum;
     if (S_sfx[sound_id].LumpNum < 0) {
