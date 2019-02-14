@@ -770,10 +770,16 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
           // non two-sided walls are not transparent
           if ((ld->flags&(ML_TWOSIDED|ML_BLOCKEVERYTHING)) != ML_TWOSIDED) continue;
           // if one of sectors is slope, should check
-          if (ld->frontsector->floor.minz != ld->frontsector->floor.maxz || ld->frontsector->ceiling.minz != ld->frontsector->ceiling.maxz) return true;
-          if (ld->backsector->floor.minz != ld->backsector->floor.maxz || ld->backsector->ceiling.minz != ld->backsector->ceiling.maxz) return true;
+          // this is because slopes can be oriented in different direction
+          const float ffz = ld->frontsector->floor.minz;
+          const float fcz = ld->frontsector->ceiling.minz;
+          const float bfz = ld->backsector->floor.minz;
+          const float bcz = ld->backsector->ceiling.minz;
+          //TODO: check slope direction in tracer
+          if (ffz != ld->frontsector->floor.maxz || fcz != ld->frontsector->ceiling.maxz) return true;
+          if (bfz != ld->backsector->floor.maxz || bcz != ld->backsector->ceiling.maxz) return true;
           // if both sectors has the same floor and ceiling height, don't bother tracing
-          if (ld->frontsector->floor.minz == ld->backsector->floor.minz && ld->frontsector->ceiling.minz == ld->backsector->ceiling.minz) continue;
+          if (ffz == bfz && fcz == bcz) continue;
           // check distance
           /*
           TVec ab = (*ld->v2)-(*ld->v1);
@@ -786,16 +792,25 @@ bool VLevel::NeedProperLightTraceAt (const TVec &org, float radius) {
           }
           */
           if (!isCircleTouchingLine(org, radius, *ld->v1, *ld->v2)) continue;
+          // if floor and ceiling has the same height, this is either door, or lowered platform
+          //TODO: check corresponding top/bottom textures
+          if (ffz == fcz) return true;
+          if (bfz == bcz) return true;
           // check for noticeable height difference
           // can reach floor or ceiling of sectors?
-          bool fsReachFloor = (org.z > ld->frontsector->floor.minz-radius && org.z < ld->frontsector->floor.minz+radius);
-          bool fsReachCeil = (org.z > ld->frontsector->ceiling.minz-radius && org.z < ld->frontsector->ceiling.minz+radius);
-          bool bsReachFloor = (org.z > ld->backsector->floor.minz-radius && org.z < ld->backsector->floor.minz+radius);
-          bool bsReachCeil = (org.z > ld->backsector->ceiling.minz-radius && org.z < ld->backsector->ceiling.minz+radius);
+          bool fsReachFloor = (org.z > ffz-radius && org.z < ffz+radius);
+          bool fsReachCeil = (org.z > fcz-radius && org.z < fcz+radius);
+          bool bsReachFloor = (org.z > bfz-radius && org.z < bfz+radius);
+          bool bsReachCeil = (org.z > bcz-radius && org.z < bcz+radius);
           if (!fsReachFloor && !fsReachCeil && !bsReachFloor && !bsReachCeil) continue; // come along, nothing to see here
           // if can reach both floor and ceiling, it looks like a door
           if (fsReachFloor && fsReachCeil) return true;
           if (bsReachFloor && bsReachCeil) return true;
+          // if light cannot cross ceil/floor, there is no reason to trace anything
+          if (ffz < bfz && bsReachFloor) return true; // front sector floor is lower than back sector, check if we can reach back sector floor
+          if (bfz < ffz && fsReachFloor) return true; // back sector floor is lower than front sector, check if we can reach front sector floor
+          if (fcz > bcz && bsReachCeil) return true; // front sector ceiling is higher than back sector, check if we can reach back sector ceiling
+          if (bcz > fcz && fsReachCeil) return true; // back sector ceiling is higher than front sector, check if we can reach front sector ceiling
           /*
           // check for transparent midtexture
           if (Sides[ld->sidenum[0]].MidTexture || (ld->sidenum[1] >= 0 && Sides[ld->sidenum[1]].MidTexture)) {
